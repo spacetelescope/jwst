@@ -1,4 +1,5 @@
 import logging
+import math
 import warnings
 
 import numpy as np
@@ -12,23 +13,23 @@ from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
-from gwcs.geometry import SphericalToCartesian
+
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.util import compute_scale, wrap_ra
+from jwst.assign_wcs.util import compute_scale, wcs_bbox_from_shape, wrap_ra
 from jwst.resample import resample_utils
-from jwst.resample.resample import ResampleData
+from jwst.resample.resample import ResampleImage
+from jwst.datamodels import ModelLibrary
 
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-_S2C = SphericalToCartesian()
 
-__all__ = ["ResampleSpecData"]
+__all__ = ["ResampleSpec"]
 
 
-class ResampleSpecData(ResampleData):
+class ResampleSpec(ResampleImage):
     """
     This is the controlling routine for the resampling process for spectral data.
 
@@ -44,10 +45,11 @@ class ResampleSpecData(ResampleData):
       3. Updates output data model with output arrays from drizzle, including
          a record of metadata from all input models.
     """
-
-    def __init__(self, input_models, output=None, single=False, blendheaders=False,
-                 pixfrac=1.0, kernel="square", fillval=0, wht_type="ivm",
-                 good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
+    def __init__(self, input_models, pixfrac=1.0, kernel="square",
+                 fillval="NAN", weight_type="ivm", good_bits=0,
+                 blendheaders=True, output_wcs=None, wcs_pars=None,
+                 output=None, enable_ctx=True, enable_var=True,
+                 compute_err=None, asn_id=None, in_memory=True):
         """
         Parameters
         ----------
@@ -60,145 +62,198 @@ class ResampleSpecData(ResampleData):
         kwargs : dict
             Other parameters
         """
-        self.output_dir = None
-        self.output_filename = output
-        if output is not None and '.fits' not in str(output):
-            self.output_dir = output
-            self.output_filename = None
-        self.intermediate_suffix = 'outlier_s2d'
+        shape = None
+        pixel_scale = None
+        pixel_area = None
+        pixel_scale_ratio = 1.0
 
-        self.pscale_ratio = pscale_ratio
-        self.single = single
-        self.blendheaders = blendheaders
-        self.pixfrac = pixfrac
-        self.kernel = kernel
-        self.fillval = fillval
-        self.weight_type = wht_type
-        self.good_bits = good_bits
-        self.in_memory = kwargs.get('in_memory', True)
-        self._recalc_pscale_ratio = False
+        if isinstance(output_wcs, dict):
+            output_wcs_dict = {
+                k: v for k, v in output_wcs.items() if k != "wcs"
+            }
+            output_wcs = output_wcs["wcs"]
+            pixel_scale = output_wcs_dict.get("pixel_scale")
+            pixel_area = output_wcs_dict.get("pixel_area")
+            pixel_scale_ratio = output_wcs_dict.get("pixel_scale_ratio", 1.0)
+            shape = output_wcs.array_shape
+        else:
+            output_wcs_dict = None
+            if output_wcs is None and wcs_pars is not None:
+                shape = wcs_pars.get("output_shape")
+                pixel_scale = wcs_pars.get("pixel_scale")
+                pixel_scale_ratio = wcs_pars.get("pixel_scale_ratio", 1.0)
 
-        log.info(f"Driz parameter kernel: {self.kernel}")
-        log.info(f"Driz parameter pixfrac: {self.pixfrac}")
-        log.info(f"Driz parameter fillval: {self.fillval}")
-        log.info(f"Driz parameter weight_type: {self.weight_type}")
-
-        output_wcs = kwargs.get('output_wcs', None)
-        output_shape = kwargs.get('output_shape', None)
-        self.asn_id = kwargs.get('asn_id', None)
+        if pixel_scale is None and pixel_area is not None:
+            pixel_scale = math.sqrt(pixel_area)
+        elif pixel_scale is not None and pixel_area is None:
+            pixel_area = pixel_scale**2
 
         # Get an average input pixel scale for parameter calculations
         disp_axis = input_models[0].meta.wcsinfo.dispersion_direction
-        self.input_pixscale0 = compute_spectral_pixel_scale(
+        input_pixscale0 = 3600.0 * compute_spectral_pixel_scale(
             input_models[0].meta.wcs, disp_axis=disp_axis)
-        if np.isnan(self.input_pixscale0):
+        if np.isnan(input_pixscale0):
             log.warning('Input pixel scale could not be determined.')
-            if pscale is not None:
-                log.warning('Output pixel scale setting is not supported '
-                            'without an input pixel scale. Setting pscale=None.')
-                pscale = None
+            if pixel_scale is not None:
+                log.warning(
+                    "Output pixel scale setting is not supported without an "
+                    "input pixel scale. Setting pixel_scale=None."
+                )
+                pixel_scale = None
+                pixel_area = None
 
         nominal_area = input_models[0].meta.photometry.pixelarea_steradians
         if nominal_area is None:
             log.warning('Nominal pixel area not set in input data.')
-            if pscale is not None:
-                log.warning('Output pixel scale setting is not supported '
-                            'without a nominal pixel scale. Setting pscale=None.')
-                pscale = None
+            log.warning(
+                "Setting output pixel scale is not supported without an "
+                "input pixel scale. Setting pixel_scale=None."
+            )
+            pixel_scale = None
+            pixel_area = None
 
         if output_wcs:
             # Use user-supplied reference WCS for the resampled image:
-            self.output_wcs = output_wcs
-            if output_wcs.pixel_area is None:
-                if nominal_area is not None:
+            if pixel_area is None:
+                if nominal_area is None:
+                    log.warning("Unable to compute output pixel area "
+                                "from 'output_wcs'.")
+                    output_pix_area = None
+                else:
                     # Compare input and output spatial scale to update nominal area
-                    output_pscale = compute_spectral_pixel_scale(
+                    output_pscale = 3600.0 * compute_spectral_pixel_scale(
                         output_wcs, disp_axis=disp_axis)
-                    if np.isnan(output_pscale) or np.isnan(self.input_pixscale0):
+                    if np.isnan(output_pscale) or np.isnan(input_pixscale0):
                         log.warning('Output pixel scale could not be determined.')
                         output_pix_area = None
                     else:
                         log.debug(f'Setting output pixel area from the approximate '
                                   f'output spatial scale: {output_pscale}')
                         output_pix_area = (output_pscale * nominal_area
-                                           / self.input_pixscale0)
-                else:
-                    log.warning("Unable to compute output pixel area "
-                                "from 'output_wcs'.")
-                    output_pix_area = None
-            else:
-                log.debug(f'Setting output pixel area from wcs.pixel_area: '
-                          f'{output_wcs.pixel_area}')
-                output_pix_area = output_wcs.pixel_area
+                                           / input_pixscale0)
 
-            # Set the pscale ratio for scaling reasons
-            if output_pix_area is not None:
-                self.pscale_ratio = nominal_area / output_pix_area
             else:
-                self.pscale_ratio = 1.0
+                log.debug(f'Using output pixel area: {pixel_area}')
+                output_pix_area = pixel_area
+
+            # Set the pixel scale ratio for scaling reasons
+            if output_pix_area is None:
+                pixel_scale_ratio = 1.0
+            else:
+                pixel_scale_ratio = nominal_area / output_pix_area
+
             # Set the output shape if specified
-            if output_shape is not None:
-                self.output_wcs.array_shape = output_shape[::-1]
+            if shape is not None:
+                output_wcs.array_shape = shape
         else:
-            if pscale is not None and nominal_area is not None:
-                log.info(f'Specified output pixel scale: {pscale} arcsec.')
-                pscale /= 3600.0
+            if pixel_scale is not None and nominal_area is not None:
+                log.info(f'Specified output pixel scale: {pixel_scale} arcsec.')
 
                 # Set the pscale ratio from the input pixel scale
-                # (pscale is input / output)
-                if self.pscale_ratio != 1.0:
+                # (pixel scale ratio is output / input)
+                if pixel_scale_ratio != 1.0:
                     log.warning('Ignoring input pixel_scale_ratio in favor '
                                 'of explicit pixel_scale.')
-                self.pscale_ratio = self.input_pixscale0 / pscale
-                log.info(f'Computed output pixel scale ratio: {self.pscale_ratio:.5g}')
+                pixel_scale_ratio = input_pixscale0 / pixel_scale
+                log.info(f'Computed output pixel scale ratio: {pixel_scale_ratio:.5g}')
 
             # Define output WCS based on all inputs, including a reference WCS.
-            # These functions internally use self.pscale_ratio to accommodate
+            # These functions internally use pixel_scale_ratio to accommodate
             # user settings.
             # Any other customizations (crpix, crval, rotation) are ignored.
             if resample_utils.is_sky_like(input_models[0].meta.wcs.output_frame):
                 if input_models[0].meta.instrument.name != "NIRSPEC":
-                    self.output_wcs = self.build_interpolated_output_wcs(input_models)
+                    output_wcs = self.build_interpolated_output_wcs(
+                        input_models,
+                        pixel_scale_ratio=pixel_scale_ratio
+                    )
                 else:
-                    self.output_wcs = self.build_nirspec_output_wcs(input_models)
+                    output_wcs = self.build_nirspec_output_wcs(
+                        input_models,
+                        good_bits=good_bits,
+                        pixel_scale_ratio=pixel_scale_ratio
+                    )
             else:
-                self.output_wcs = self.build_nirspec_lamp_output_wcs(input_models)
+                output_wcs = self.build_nirspec_lamp_output_wcs(
+                    input_models,
+                    pixel_scale_ratio=pixel_scale_ratio
+                )
 
             # Use the nominal output pixel area in sr if available,
             # scaling for user-set pixel_scale ratio if needed.
             if nominal_area is not None:
                 # Note that there is only one spatial dimension so the
-                # pscale_ratio is not squared.
-                output_pix_area = nominal_area / self.pscale_ratio
+                # pixel_scale_ratio is not squared.
+                output_pix_area = nominal_area / pixel_scale_ratio
             else:
                 output_pix_area = None
 
-        self.output_pix_area = output_pix_area
-        self.output_array_shape = tuple(self.output_wcs.array_shape)
-        log.debug(f"Output mosaic size: {self.output_array_shape}")
+        self._spec_output_pix_area = output_pix_area
 
-        if pscale is None:
-            log.info(f'Specified output pixel scale ratio: {self.pscale_ratio}.')
-            pscale = compute_spectral_pixel_scale(
-                self.output_wcs, disp_axis=disp_axis)
-            log.info(f'Computed output pixel scale: {3600.0 * pscale:.5g} arcsec.')
+        if pixel_scale is None:
+            log.info(f'Specified output pixel scale ratio: {pixel_scale_ratio}.')
+            pixel_scale = 3600.0 * compute_spectral_pixel_scale(
+                output_wcs, disp_axis=disp_axis)
+            log.info(f'Computed output pixel scale: {pixel_scale:.5g} arcsec.')
 
-    def _create_output_model(self, ref_input_model=None):
-        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        if output_wcs_dict is None:
+            output_wcs_dict = {}
+
+        output_wcs_dict["wcs"] = output_wcs
+        output_wcs_dict["pixel_scale"] = pixel_scale
+        output_wcs_dict["pixel_scale_ratio"] = pixel_scale_ratio
+
+        library = ModelLibrary(input_models, on_disk=False)
+
+        super().__init__(
+            input_models=library,
+            pixfrac=pixfrac,
+            kernel=kernel,
+            fillval=fillval,
+            weight_type=weight_type,
+            good_bits=good_bits,
+            blendheaders=blendheaders,
+            output_wcs=output_wcs_dict,
+            wcs_pars=None,
+            output=output,
+            enable_ctx=enable_ctx,
+            enable_var=enable_var,
+            compute_err=compute_err,
+            asn_id=asn_id
+        )
+        self.intermediate_suffix = 'outlier_s2d'
+
+    def create_output_jwst_model(self, ref_input_model=None):
+        """ Create a new blank model and update its meta with info from ``ref_input_model``. """
         output_model = datamodels.SlitModel(None)
-
         # update meta data and wcs
         if ref_input_model is not None:
             output_model.update(ref_input_model)
         output_model.meta.wcs = self.output_wcs
-        if self.output_pix_area is not None:
-            output_model.meta.photometry.pixelarea_steradians = self.output_pix_area
-            output_model.meta.photometry.pixelarea_arcsecsq = (
-                self.output_pix_area * np.rad2deg(3600)**2
-            )
         return output_model
 
-    def build_nirspec_output_wcs(self, input_models, refmodel=None):
+    def update_output_model(self, model, info_dict):
+        super().update_output_model(model, info_dict)
+        if self._spec_output_pix_area is None:
+            model.meta.photometry.pixelarea_steradians = None
+            model.meta.photometry.pixelarea_arcsecsq = None
+        else:
+            model.meta.photometry.pixelarea_steradians = self._spec_output_pix_area
+            model.meta.photometry.pixelarea_arcsecsq = (
+                self._spec_output_pix_area * np.rad2deg(3600)**2
+            )
+
+        # TODO: this is helpful info that should be stored in products.
+        #       Not storing this at this time in order to reduce the number of
+        #       failures in the regression tests.
+        # model.meta.resample.pixel_scale_ratio
+        # model.meta.resample.pixfrac
+        # model.meta.resample.weight_type
+        # model.meta.resample.pointings
+        # model.meta.cal_step.resample
+
+    def build_nirspec_output_wcs(self, input_models, refmodel=None,
+                                 good_bits=None, pixel_scale_ratio=1.0):
         """
         Create a spatial/spectral WCS covering the footprint of the input.
 
@@ -239,7 +294,7 @@ class ResampleSpecData(ResampleData):
             # Use the first model with a reasonable amount of good data
             # as the reference model
             for model in input_models:
-                dq_mask = resample_utils.build_mask(model.dq, self.good_bits)
+                dq_mask = resample_utils.build_mask(model.dq, good_bits)
                 good = np.isfinite(model.data) & (model.data != 0) & dq_mask
                 if np.sum(good) > 100 and refmodel is None:
                     refmodel = model
@@ -323,9 +378,9 @@ class ResampleSpecData(ResampleData):
         fitter = LinearLSQFitter()
         fit_model = Linear1D()
 
-        xstop = x_tan.shape[0] * self.pscale_ratio
+        xstop = x_tan.shape[0] * pixel_scale_ratio
         x_idx = np.linspace(0, xstop, x_tan.shape[0], endpoint=False)
-        ystop = y_tan.shape[0] * self.pscale_ratio
+        ystop = y_tan.shape[0] * pixel_scale_ratio
         y_idx = np.linspace(0, ystop, y_tan.shape[0], endpoint=False)
         pix_to_xtan = fitter(fit_model, x_idx, x_tan)
         pix_to_ytan = fitter(fit_model, y_idx, y_tan)
@@ -456,10 +511,9 @@ class ResampleSpecData(ResampleData):
         output_wcs = WCS(pipeline)
 
         # Compute bounding box and output array shape.
-        self.data_size = (ny, n_lam)
-        bounding_box = resample_utils.wcs_bbox_from_shape(self.data_size)
-        output_wcs.bounding_box = bounding_box
-        output_wcs.array_shape = self.data_size
+        data_size = (ny, n_lam)
+        output_wcs.bounding_box = wcs_bbox_from_shape(data_size)
+        output_wcs.array_shape = data_size
 
         return output_wcs
 
@@ -489,7 +543,7 @@ class ResampleSpecData(ResampleData):
 
         return *limits_x, *limits_y
 
-    def build_interpolated_output_wcs(self, input_models):
+    def build_interpolated_output_wcs(self, input_models, pixel_scale_ratio=1.0):
         """
         Create a spatial/spectral WCS output frame using all the input models.
 
@@ -597,9 +651,9 @@ class ResampleSpecData(ResampleData):
                 fitter = LinearLSQFitter()
                 fit_model = Linear1D()
 
-                xstop = x_tan_array.shape[0] * self.pscale_ratio
+                xstop = x_tan_array.shape[0] * pixel_scale_ratio
                 x_idx = np.linspace(0, xstop, x_tan_array.shape[0], endpoint=False)
-                ystop = y_tan_array.shape[0] * self.pscale_ratio
+                ystop = y_tan_array.shape[0] * pixel_scale_ratio
                 y_idx = np.linspace(0, ystop, y_tan_array.shape[0], endpoint=False)
                 pix_to_xtan = fitter(fit_model, x_idx, x_tan_array)
                 pix_to_ytan = fitter(fit_model, y_idx, y_tan_array)
@@ -740,12 +794,12 @@ class ResampleSpecData(ResampleData):
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]
         output_wcs.pixel_shape = output_array_size
-        bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
+        bounding_box = wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
 
-    def build_nirspec_lamp_output_wcs(self, input_models):
+    def build_nirspec_lamp_output_wcs(self, input_models, pixel_scale_ratio):
         """
         Create a spatial/spectral WCS output frame for NIRSpec lamp mode
 
@@ -791,9 +845,9 @@ class ResampleSpecData(ResampleData):
         # Estimate and fit the spatial sampling
         fitter = LinearLSQFitter()
         fit_model = Linear1D()
-        xstop = x_msa_array.shape[0] * self.pscale_ratio
+        xstop = x_msa_array.shape[0] * pixel_scale_ratio
         x_idx = np.linspace(0, xstop, x_msa_array.shape[0], endpoint=False)
-        ystop = y_msa_array.shape[0] * self.pscale_ratio
+        ystop = y_msa_array.shape[0] * pixel_scale_ratio
         y_idx = np.linspace(0, ystop, y_msa_array.shape[0], endpoint=False)
         pix_to_x_msa = fitter(fit_model, x_idx, x_msa_array)
         pix_to_y_msa = fitter(fit_model, y_idx, y_msa_array)
@@ -844,12 +898,12 @@ class ResampleSpecData(ResampleData):
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = len(wavelength_array)
         x_size = len(x_msa_array)
-        output_array_size[spatial_axis] = int(np.ceil(x_size * self.pscale_ratio))
+        output_array_size[spatial_axis] = int(np.ceil(x_size * pixel_scale_ratio))
 
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]
         output_wcs.pixel_shape = output_array_size
-        bounding_box = resample_utils.wcs_bbox_from_shape(output_array_size[::-1])
+        bounding_box = wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
 
         return output_wcs
