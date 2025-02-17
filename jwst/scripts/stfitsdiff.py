@@ -109,10 +109,7 @@ def main():
     # Find the differences
     print('\n STScI Custom FITSDiff')
     diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
-    if not diff.identical:
-        print(diff.report())
-    else:
-        print(' Files are identical. \n')
+    print(diff.report())
 
 
 if __name__ == '__main__':
