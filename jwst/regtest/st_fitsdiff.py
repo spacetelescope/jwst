@@ -17,7 +17,7 @@ from astropy.io.fits.hdu.hdulist import HDUList
 from astropy.io.fits.hdu.table import _TableLikeHDU
 
 import numpy as np
-from astropy.io.fits.diff import (FITSDiff, HDUDiff, HeaderDiff, TableDataDiff, ImageDataDiff, RawDataDiff,
+from astropy.io.fits.diff import (FITSDiff, HDUDiff, HeaderDiff, TableDataDiff, ImageDataDiff,
                                   report_diff_keyword_attr, _get_differences, _COL_ATTRS)
 
 
