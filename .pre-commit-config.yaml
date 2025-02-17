@@ -47,15 +47,6 @@ repos:
             jwst/emicorr/.* |
             jwst/engdblog/.* |
             jwst/exp_to_source/.* |
-            jwst/extract_1d/apply_apcorr.py |
-            jwst/extract_1d/extract.py |
-            jwst/extract_1d/extract1d.py |
-            jwst/extract_1d/extract_1d_step.py |
-            jwst/extract_1d/ifu.py |
-            jwst/extract_1d/psf_profile.py |
-            jwst/extract_1d/source_location.py |
-            jwst/extract_1d/spec_wcs.py |
-            jwst/extract_1d/tests/conftest.py |
             jwst/extract_2d/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
