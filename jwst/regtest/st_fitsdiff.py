@@ -4,12 +4,8 @@ STScI edits to astropy FitsDiff.
 """
 
 import fnmatch
-import glob
-import os
 import operator
-import os.path
 import textwrap
-from collections import defaultdict
 from itertools import islice
 
 from astropy import __version__
@@ -17,15 +13,12 @@ from astropy.utils.diff import diff_values, report_diff_values, where_not_allclo
 
 from astropy.io.fits.card import BLANK_CARD, Card
 
-from astropy.io.fits.hdu.hdulist import HDUList, fitsopen
-from astropy.io.fits.header import Header
+from astropy.io.fits.hdu.hdulist import HDUList
 from astropy.io.fits.hdu.table import _TableLikeHDU
 
 import numpy as np
-from astropy.io.fits.diff import _BaseDiff, report_diff_keyword_attr, _get_differences, _COL_ATTRS
-
-
-np.seterr(divide='ignore', invalid='ignore')
+from astropy.io.fits.diff import (FITSDiff, HDUDiff, HeaderDiff, TableDataDiff, ImageDataDiff, RawDataDiff,
+                                  report_diff_keyword_attr, _get_differences, _COL_ATTRS)
 
 
 __all__ = [
@@ -38,7 +31,7 @@ __all__ = [
 ]
 
 
-class STFITSDiff(_BaseDiff):
+class STFITSDiff(FITSDiff):
     """FITSDiff class from astropy with the STScI edits.
 
     Diff two FITS files by filename, or two `HDUList` objects
@@ -172,54 +165,16 @@ class STFITSDiff(_BaseDiff):
             if 'DEFAULT' not in [key.upper() for key in extension_tolerances if isinstance(key, str)]:
                 self.extension_tolerances['DEFAULT'] = {'rtol': rtol, 'atol': atol}
 
-        if isinstance(a, (str, os.PathLike)):
-            try:
-                a = fitsopen(a)
-            except Exception as exc:
-                raise OSError(f"error opening file a ({a})") from exc
-            close_a = True
-        else:
-            close_a = False
-
-        if isinstance(b, (str, os.PathLike)):
-            try:
-                b = fitsopen(b)
-            except Exception as exc:
-                raise OSError(f"error opening file b ({b})") from exc
-            close_b = True
-        else:
-            close_b = False
-
-        # Normalize keywords/fields to ignore to upper case
-        self.ignore_hdus = {k.upper() for k in ignore_hdus}
-        self.ignore_keywords = {k.upper() for k in ignore_keywords}
-        self.ignore_comments = {k.upper() for k in ignore_comments}
-        self.ignore_fields = {k.upper() for k in ignore_fields}
-
-        self.numdiffs = numdiffs
-        self.rtol = rtol
-        self.atol = atol
-
-        self.ignore_blanks = ignore_blanks
-        self.ignore_blank_cards = ignore_blank_cards
-
-        # Some hdu names may be pattern wildcards.  Find them.
-        self.ignore_hdu_patterns = set()
-        for name in list(self.ignore_hdus):
-            if name != "*" and glob.has_magic(name):
-                self.ignore_hdus.remove(name)
-                self.ignore_hdu_patterns.add(name)
-
-        self.diff_hdu_count = ()
-        self.diff_hdus = []
-
-        try:
-            super().__init__(a, b)
-        finally:
-            if close_a:
-                a.close()
-            if close_b:
-                b.close()
+        super().__init__(a, b,
+                         ignore_hdus=ignore_hdus,
+                         ignore_keywords=ignore_keywords,
+                         ignore_comments=ignore_comments,
+                         ignore_fields=ignore_fields,
+                         numdiffs=numdiffs,
+                         rtol=rtol,
+                         atol=atol,
+                         ignore_blanks=ignore_blanks,
+                         ignore_blank_cards=ignore_blank_cards)
 
     def _diff(self):
         if len(self.a) != len(self.b):
@@ -379,7 +334,7 @@ class STFITSDiff(_BaseDiff):
             hdu_diff.report(self._fileobj, indent=self._indent + 1)
 
 
-class STHDUDiff(_BaseDiff):
+class STHDUDiff(HDUDiff):
     """
     HDUDiff class from astropy with the STScI edits.
 
@@ -492,25 +447,15 @@ class STHDUDiff(_BaseDiff):
         self.header_tolerances = header_tolerances
         self.nans, self.percentages, self.stats = None, None, None
         self.diff_dimensions = ()
-        self.ignore_keywords = {k.upper() for k in ignore_keywords}
-        self.ignore_comments = {k.upper() for k in ignore_comments}
-        self.ignore_fields = {k.upper() for k in ignore_fields}
-
-        self.rtol = rtol
-        self.atol = atol
-
-        self.numdiffs = numdiffs
-        self.ignore_blanks = ignore_blanks
-        self.ignore_blank_cards = ignore_blank_cards
-
-        self.diff_extnames = ()
-        self.diff_extvers = ()
-        self.diff_extlevels = ()
-        self.diff_extension_types = ()
-        self.diff_headers = None
-        self.diff_data = None
-
-        super().__init__(a, b)
+        super().__init__(a, b,
+                         ignore_keywords=ignore_keywords,
+                         ignore_comments=ignore_comments,
+                         ignore_fields=ignore_fields,
+                         numdiffs=numdiffs,
+                         rtol=rtol,
+                         atol=atol,
+                         ignore_blanks=ignore_blanks,
+                         ignore_blank_cards=ignore_blank_cards)
 
     def _diff(self):
         if self.a.name != self.b.name:
@@ -579,7 +524,10 @@ class STHDUDiff(_BaseDiff):
                 stats['no_rel_stats_available'] = np.nan
             else:
                 stats['max_rel_diff'] = np.max(relative_values)
-                stats['min_rel_diff'] = np.min(values / np.abs(bnonan))
+                if 0.0 in values:
+                    stats['min_rel_diff'] = 0.0
+                else:
+                    stats['min_rel_diff'] = np.min(relative_values)
                 stats['mean_rel_diff'] = np.mean(relative_values)
                 stats['std_dev_rel_diff'] = np.std(relative_values)
             # Calculate difference percentages
@@ -709,7 +657,7 @@ class STHDUDiff(_BaseDiff):
             self.diff_data.report(self._fileobj, indent=self._indent + 1)
 
 
-class STHeaderDiff(_BaseDiff):
+class STHeaderDiff(HeaderDiff):
     """
     HeaderDiff class from astropy with the STScI edits.
 
@@ -818,67 +766,13 @@ class STHeaderDiff(_BaseDiff):
             Ignore all cards that are blank, i.e. they only contain
             whitespace (default: True).
         """
-        self.ignore_keywords = {k.upper() for k in ignore_keywords}
-        self.ignore_comments = {k.upper() for k in ignore_comments}
-
-        self.rtol = rtol
-        self.atol = atol
-
-        self.ignore_blanks = ignore_blanks
-        self.ignore_blank_cards = ignore_blank_cards
-
-        self.ignore_keyword_patterns = set()
-        self.ignore_comment_patterns = set()
-        for keyword in list(self.ignore_keywords):
-            keyword = keyword.upper()
-            if keyword != "*" and glob.has_magic(keyword):
-                self.ignore_keywords.remove(keyword)
-                self.ignore_keyword_patterns.add(keyword)
-        for keyword in list(self.ignore_comments):
-            keyword = keyword.upper()
-            if keyword != "*" and glob.has_magic(keyword):
-                self.ignore_comments.remove(keyword)
-                self.ignore_comment_patterns.add(keyword)
-
-        # Keywords appearing in each header
-        self.common_keywords = []
-
-        # Set to the number of keywords in each header if the counts differ
-        self.diff_keyword_count = ()
-
-        # Set if the keywords common to each header (excluding ignore_keywords)
-        # appear in different positions within the header
-        # TODO: Implement this
-        self.diff_keyword_positions = ()
-
-        # Keywords unique to each header (excluding keywords in
-        # ignore_keywords)
-        self.diff_keywords = ()
-
-        # Keywords that have different numbers of duplicates in each header
-        # (excluding keywords in ignore_keywords)
-        self.diff_duplicate_keywords = {}
-
-        # Keywords common to each header but having different values (excluding
-        # keywords in ignore_keywords)
-        self.diff_keyword_values = defaultdict(list)
-
-        # Keywords common to each header but having different comments
-        # (excluding keywords in ignore_keywords or in ignore_comments)
-        self.diff_keyword_comments = defaultdict(list)
-
-        if isinstance(a, str):
-            a = Header.fromstring(a)
-        if isinstance(b, str):
-            b = Header.fromstring(b)
-
-        if not (isinstance(a, Header) and isinstance(b, Header)):
-            raise TypeError(
-                "HeaderDiff can only diff astropy.io.fits.Header "
-                "objects or strings containing FITS headers."
-            )
-
-        super().__init__(a, b)
+        super().__init__(a, b,
+                         ignore_keywords=ignore_keywords,
+                         ignore_comments=ignore_comments,
+                         rtol=rtol,
+                         atol=atol,
+                         ignore_blanks=ignore_blanks,
+                         ignore_blank_cards=ignore_blank_cards)
 
     def _diff(self):
         if self.ignore_blank_cards:
@@ -1033,7 +927,7 @@ class STHeaderDiff(_BaseDiff):
                 )
 
 
-class STImageDataDiff(_BaseDiff):
+class STImageDataDiff(ImageDataDiff):
     """
     Diff two image data arrays (really any array from a PRIMARY HDU or an IMAGE
     extension HDU, though the data unit is assumed to be "pixels").
@@ -1107,20 +1001,10 @@ class STImageDataDiff(_BaseDiff):
 
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
 
-        self.numdiffs = numdiffs
-        self.rtol = rtol
-        self.atol = atol
-
-        self.diff_dimensions = ()
-        self.diff_pixels = []
-        self.diff_ratio = 0
-
-        # self.diff_pixels only holds up to numdiffs differing pixels, but this
-        # self.diff_total stores the total count of differences between
-        # the images, but not the different values
-        self.diff_total = 0
-
-        super().__init__(a, b)
+        super().__init__(a, b,
+                         numdiffs=numdiffs,
+                         rtol=rtol,
+                         atol=atol)
 
     def _diff(self):
         shapea, shapeb = self.a.shape, self.b.shape
@@ -1351,7 +1235,7 @@ class STRawDataDiff(STImageDataDiff):
             )
 
 
-class STTableDataDiff(_BaseDiff):
+class STTableDataDiff(TableDataDiff):
     """
     Diff two table data arrays. It doesn't matter whether the data originally
     came from a binary or ASCII table--the data should be passed in as a
@@ -1448,35 +1332,13 @@ class STTableDataDiff(_BaseDiff):
         """
 
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
-        self.ignore_fields = set(ignore_fields)
-        self.numdiffs = numdiffs
-        self.rtol = rtol
-        self.atol = atol
-
-        self.common_columns = []
-        self.common_column_names = set()
-
-        # self.diff_columns contains columns with different column definitions,
-        # but not different column data. Column data is only compared in
-        # columns that have the same definitions
-        self.diff_rows = ()
-        self.diff_column_count = ()
-        self.diff_columns = ()
-
-        # If two columns have the same name+format, but other attributes are
-        # different (such as TUNIT or such) they are listed here
-        self.diff_column_attributes = []
-
-        # Like self.diff_columns, but just contains a list of the column names
-        # unique to each table, and in the order they appear in the tables
-        self.diff_column_names = ()
-        self.diff_values = []
         self.total_diff_per_col = {}
 
-        self.diff_ratio = 0
-        self.diff_total = 0
-
-        super().__init__(a, b)
+        super().__init__(a, b,
+                         ignore_fields=ignore_fields,
+                         numdiffs=numdiffs,
+                         rtol=rtol,
+                         atol=atol)
 
     def _diff(self):
         # Much of the code for comparing columns is similar to the code for
