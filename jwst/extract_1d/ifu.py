@@ -71,7 +71,7 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
 
     ifu_rfcorr : bool
         Switch to select whether or not to apply a 1d residual fringe correction
-        for MIRI MRS IFU spectra.  Default is True.  
+        for MIRI MRS IFU spectra.  Default is True.
 
     ifu_rscale: float
         For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
@@ -106,8 +106,13 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     else:
         log.info(f"Source type = {source_type}")
 
-    #output_model = datamodels.MultiSpecModel()
-    output_model = datamodels.MrsSpecModel()
+    output_model = datamodels.MultiSpecModel()
+    spec_dtype = datamodels.SpecModel().spec_table.dtype
+
+    if input_model.meta.instrument.name == 'MIRI':
+        output_model = datamodels.MRSMultiSpecModel()
+        spec_dtype = datamodels.MRSSpecModel().spec_table.dtype
+
     output_model.update(input_model, only="PRIMARY")
 
     slitname = input_model.meta.exposure.type
@@ -165,6 +170,10 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     del npixels_temp
     del npixels_bkg_temp
 
+    temp_flux_rf = None
+    surf_bright_rf = None
+    background_rf = None
+
     # If selected, apply 1d residual fringe correction to the extracted spectrum
     if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rfcorr'] is True)):
         log.info("Applying 1d residual fringe correction.")
@@ -181,6 +190,7 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
 
         # Embed all calls to residual fringe code in try/except blocks as the default behavior
         # if problems are encountered should be to not apply this optional step
+
 
         # Apply residual fringe to the flux array
         try:
@@ -211,18 +221,27 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
 
     # Convert flux from MJy / steradian to Jy
     flux = temp_flux * pixel_solid_angle * 1.e6
-    flux_rf = temp_flux_rf * pixel_solid_angle * 1.e6
     f_var_poisson *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
     f_var_rnoise *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
     f_var_flat *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
     # surf_bright and background were computed above
+
+    if temp_flux_rf is None: # the all residual fringe corrected values to NA
+
+        flux_rf = np.zeros_like(flux)
+        flux_rf[:] = np.nan
+        surf_bright_rf = np.zeros_like(surf_bright)
+        surf_bright_rf[:] = np.nan
+        background_rf = np.zeros_like(background)
+        background_rf[:] = np.nan
+    else:
+        flux_rf = temp_flux_rf * pixel_solid_angle * 1.e6
+
     del temp_flux
     del temp_flux_rf
     error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
     sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
     berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
-    spec_dtype = datamodels.MrsSpecModel().mrs_spec_table.dtype
-
 
     # If we only used the Poisson variance array as a vehicle to pass through
     # non-differentiated errors, clear it again here so that only the total
@@ -250,42 +269,53 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
         b_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
         b_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
 
-    otab = np.array(
-        list(
-            zip(wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
-                surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
-                dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat, npixels,
-                flux_rf, surf_bright_rf, background_rf)
-        ),
-        dtype=spec_dtype
-    )
-    if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rfcorr'] is True)):
-        spec = datamodels.MrsSpecModel(mrs_spec_table=otab)
-    else:
+
+    if input_model.meta.instrument.name == 'MIRI':
+        otab = np.array(
+            list(
+                zip(wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
+                    surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
+                    dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat, npixels,
+                    flux_rf, surf_bright_rf, background_rf)
+            ),
+            dtype=spec_dtype
+        )
+        spec = datamodels.MRSSpecModel(spec_table=otab)
+
+    else: # NIRSPEC
+        otab = np.array(
+            list(
+                zip(wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
+                    surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
+                    dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
+            ),
+            dtype=spec_dtype
+        )
         spec = datamodels.SpecModel(spec_table=otab)
+
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
-    spec.mrs_spec_table.columns['wavelength'].unit = 'um'
-    spec.mrs_spec_table.columns['flux'].unit = "Jy"
-    spec.mrs_spec_table.columns['flux_error'].unit = "Jy"
-    spec.mrs_spec_table.columns['flux_var_poisson'].unit = "Jy^2"
-    spec.mrs_spec_table.columns['flux_var_rnoise'].unit = "Jy^2"
-    spec.mrs_spec_table.columns['flux_var_flat'].unit = "Jy^2"
-    spec.mrs_spec_table.columns['surf_bright'].unit = "MJy/sr"
-    spec.mrs_spec_table.columns['sb_error'].unit = "MJy/sr"
-    spec.mrs_spec_table.columns['sb_var_poisson'].unit = "(MJy/sr)^2"
-    spec.mrs_spec_table.columns['sb_var_rnoise'].unit = "(MJy/sr)^2"
-    spec.mrs_spec_table.columns['sb_var_flat'].unit = "(MJy/sr)^2"
-    spec.mrs_spec_table.columns['background'].unit = "MJy/sr"
-    spec.mrs_spec_table.columns['bkgd_error'].unit = "MJy/sr"
-    spec.mrs_spec_table.columns['bkgd_var_poisson'].unit = "(MJy/sr)^2"
-    spec.mrs_spec_table.columns['bkgd_var_rnoise'].unit = "(MJy/sr)^2"
-    spec.mrs_spec_table.columns['bkgd_var_flat'].unit = "(MJy/sr)^2"
-    spec.mrs_spec_table.columns['rf_flux'].unit = "Jy"
-    spec.mrs_spec_table.columns['rf_surf_bright'].unit = "MJy/sr"
-    spec.mrs_spec_table.columns['rf_background'].unit = "MJy/sr"
+    spec.spec_table.columns['wavelength'].unit = 'um'
+    spec.spec_table.columns['flux'].unit = "Jy"
+    spec.spec_table.columns['flux_error'].unit = "Jy"
+    spec.spec_table.columns['flux_var_poisson'].unit = "Jy^2"
+    spec.spec_table.columns['flux_var_rnoise'].unit = "Jy^2"
+    spec.spec_table.columns['flux_var_flat'].unit = "Jy^2"
+    spec.spec_table.columns['surf_bright'].unit = "MJy/sr"
+    spec.spec_table.columns['sb_error'].unit = "MJy/sr"
+    spec.spec_table.columns['sb_var_poisson'].unit = "(MJy/sr)^2"
+    spec.spec_table.columns['sb_var_rnoise'].unit = "(MJy/sr)^2"
+    spec.spec_table.columns['sb_var_flat'].unit = "(MJy/sr)^2"
+    spec.spec_table.columns['background'].unit = "MJy/sr"
+    spec.spec_table.columns['bkgd_error'].unit = "MJy/sr"
+    spec.spec_table.columns['bkgd_var_poisson'].unit = "(MJy/sr)^2"
+    spec.spec_table.columns['bkgd_var_rnoise'].unit = "(MJy/sr)^2"
+    spec.spec_table.columns['bkgd_var_flat'].unit = "(MJy/sr)^2"
+    spec.spec_table.columns['rf_flux'].unit = "Jy"
+    spec.spec_table.columns['rf_surf_bright'].unit = "MJy/sr"
+    spec.spec_table.columns['rf_background'].unit = "MJy/sr"
     spec.slit_ra = ra
     spec.slit_dec = dec
-        
+
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
 
@@ -318,12 +348,9 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
 
         apcorr.apply(spec.mrs_spec_table)
 
-    #output_model.spec.append(spec)
-    output_model = spec
-    print(spec.mrs_spec_table['FLUX'])
-    print(spec.mrs_spec_table['RF_FLUX'])
-    print(spec.mrs_spec_table['RF_SURF_BRIGHT'])
-    print(spec.mrs_spec_table['RF_BACKGROUND'])    
+    output_model.spec.append(spec)
+
+    #output_model = spec
     # See output_model.spec[0].meta.wcs instead.
     output_model.meta.wcs = None
 

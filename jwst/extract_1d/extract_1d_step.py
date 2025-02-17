@@ -201,7 +201,7 @@ class Extract1dStep(Step):
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
-    ifu_rfcorr = boolean(default=True) # Apply 1d residual fringe correction
+    ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
@@ -339,12 +339,37 @@ class Extract1dStep(Step):
 
         return result
 
+    def _check_mrs_type(self,model):
+        # check channel is only 1 value and band is only 1 value
+        validch = ['1', '2', '3', '4']
+        validband = ['short', 'medium', 'long']
+        band_check = False
+        ch_check = False
+        b_check = False
+        if model.meta.instrument.channel  in validch:
+            ch_check = True
+        if model.meta.instrument.band.lower()  in validband:
+            b_check = True
+
+        if ch_check and b_check:
+            band_check = True
+
+        print(model.meta.instrument.channel, model.meta.instrument.band, band_check)
+        return band_check
+
     def _extract_ifu(self, model, exp_type, extract_ref, apcorr_ref):
         """Extract IFU spectra from a single datamodel."""
         source_type = model.meta.target.source_type
         if self.ifu_set_srctype is not None and exp_type == 'MIR_MRS':
             source_type = self.ifu_set_srctype
             self.log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
+
+        if exp_type == 'MIR_MRS':
+            band_cube = self._check_mrs_type(model)
+            print('Result of band_cube')
+            if self.ifu_rfcorr and  not band_cube:
+                print('Turning off rf correction')
+                self.ifu_rfcorr = False
 
         result = ifu_extract1d(
             model, extract_ref, source_type, self.subtract_background,
@@ -353,6 +378,7 @@ class Extract1dStep(Step):
             self.ifu_covar_scale
         )
         return result
+
 
     def _save_intermediate(self, intermediate_model, suffix, idx):
         """Save an intermediate output file."""
