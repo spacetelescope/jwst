@@ -76,7 +76,7 @@ def ifu_extract1d(
         Switch to select whether or not to apply a 1d residual fringe correction
         for MIRI MRS IFU spectra.  Default is False.
     ifu_rscale : float, optional
-        For MRS IFU data a value for changing the extraction radius. The value
+        For MRS IFU data, a value for changing the extraction radius. The value
         provided is the number of PSF FWHMs to use for the extraction radius.
         Values accepted are between 0.5 to 3.0. The default extraction size is
         set to 2 * FWHM. Values below 2 will result in a smaller radius, a value

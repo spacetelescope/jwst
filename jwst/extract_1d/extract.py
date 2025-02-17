@@ -351,12 +351,13 @@ def get_extract_parameters(
                     # parameter value on the command line is highest precedence,
                     # then parameter value from the extract1d reference file,
                     # and finally a default setting based on exposure type.
-                    use_source_posn_aper = aper.get(
-                        "use_source_posn", None
-                    )  # value from the ref file
-                    if use_source_posn is None:  # no value set on command line
-                        if use_source_posn_aper is None:  # no value set in ref file
-                            # Use a suitable default
+
+                    # value from the ref file
+                    use_source_posn_aper = aper.get("use_source_posn", None)
+                    if use_source_posn is None:
+                        # no value set on command line
+                        if use_source_posn_aper is None:
+                            # no value set in ref file - use a suitable default
                             if meta.exposure.type in SRCPOS_EXPTYPES:
                                 use_source_posn = True
                                 log.info(
@@ -365,7 +366,8 @@ def get_extract_parameters(
                                 )
                             else:
                                 use_source_posn = False
-                        else:  # use the value from the ref file
+                        else:
+                            # use the value from the ref file
                             use_source_posn = use_source_posn_aper
                     extract_params["use_source_posn"] = use_source_posn
                     extract_params["position_offset"] = position_offset
@@ -546,9 +548,8 @@ def populate_time_keywords(input_model, output_model):
         )
         for j in range(num_j):  # for each spectrum or order
             for k in range(num_integ):  # for each integration
-                output_model.spec[(j * num_integ) + k].int_num = (
-                    k + 1
-                )  # set int_num to (k+1) - 1-indexed integration
+                # set int_num to (k+1) - 1-indexed integration
+                output_model.spec[(j * num_integ) + k].int_num = k + 1
         return
 
     # If we have a single plane (e.g. ImageModel or MultiSlitModel),
@@ -597,10 +598,8 @@ def populate_time_keywords(input_model, output_model):
     mid_tdb = input_model.int_times["int_mid_BJD_TDB"]
     end_tdb = input_model.int_times["int_end_BJD_TDB"]
 
-    data_range = (
-        int_start,
-        int_end,
-    )  # Inclusive range of integration numbers in the input data, zero indexed.
+    # Inclusive range of integration numbers in the input data, zero indexed.
+    data_range = (int_start, int_end)
 
     # Inclusive range of integration numbers in the INT_TIMES table, zero indexed.
     table_range = (int_num[0] - 1, int_num[-1] - 1)

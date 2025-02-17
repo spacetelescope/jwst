@@ -21,7 +21,7 @@ def build_coef_matrix(image, profiles_2d=None, profile_bg=None, weights=None, or
         to extract.  If set to None, the coefficient matrix values default
         to unity.
     profile_bg : ndarray of bool or None, optional
-        2D rray of the same shape as image, with nonzero elements where the
+        2D array of the same shape as image, with nonzero elements where the
         background is to be estimated.  If not specified, no additional
         pixels are included for background calculations.
     weights : ndarray or None, optional
