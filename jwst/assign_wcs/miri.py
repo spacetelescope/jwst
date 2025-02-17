@@ -307,9 +307,6 @@ def lrs_xytoabl(input_model, reference_files):
     # This function will give slit dX as a function of Y subarray pixel value
     dxmodel = models.Tabular1D(lookup_table=xshiftref, points=ycen_subarray, name='xshiftref',
                                  bounds_error=False, fill_value=np.nan)
-    # remove commented out how after testing
-    #if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
-    #    bb_sub = (bb_sub[0], (dxmodel.points[0].min(), dxmodel.points[0].max()))
 
     # Fit for the wavelength as a function of Y
     # Reverse the vectors so that yinv is increasing (needed for spline fitting function)

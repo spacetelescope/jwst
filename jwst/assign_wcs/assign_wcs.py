@@ -73,7 +73,7 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
 
         if output_model.meta.exposure.type.lower() not in exclude_types:
             imaging_types = IMAGING_TYPES.copy()
-            imaging_lrs_types = ['mir_lrs-fixedslit'] # keep it separate
+            imaging_lrs_types = ['mir_lrs-fixedslit']
             imaging_types.update(['mir_lrs-slitless'])
             if output_model.meta.exposure.type.lower() in imaging_lrs_types:
                 # uses slits corners in V2, V3 that are read in from the
