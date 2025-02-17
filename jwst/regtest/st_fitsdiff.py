@@ -1186,8 +1186,6 @@ class STRawDataDiff(STImageDataDiff):
             differences are found but instead of pixels is byte locations.
         """
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
-        self.diff_dimensions = ()
-        self.diff_bytes = []
 
         super().__init__(a, b, numdiffs=numdiffs)
 
