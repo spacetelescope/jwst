@@ -833,8 +833,7 @@ def update_s_region_lrs(model, reference_files):
         log.info("The V2,V3 coordinates of the MIRI LRS-Fixed slit contains NaN values.")
         log.info("The s_region will not be updated")
 
-    lam = 7.0 # wavelength does not matter for s region assign a value in
-              # wavelength of MIRI LRS
+    lam = 7.0 # wavelength does not matter for s region assign a value in range of LRS
     s = model.meta.wcs.transform('v2v3', 'world', v2, v3, lam)
     a = s[0]
     b = s[1]
@@ -844,7 +843,6 @@ def update_s_region_lrs(model, reference_files):
                           [a[3], b[3]]])
 
     update_s_region_keyword(model, footprint)
-    print('in  assign_wcs util.py',model.meta.wcsinfo.s_region)
 
 def compute_footprint_spectral(model):
     """
