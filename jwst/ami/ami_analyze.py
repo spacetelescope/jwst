@@ -68,19 +68,21 @@ def apply_lg_plus(
         AMI cropped data, model, and residual data from LG algorithm fringe fitting
     """
     # Create copy of input_model to avoid overwriting input
-    input_copy = copy.deepcopy(input_model)
-
-    # If the input image is 2D, expand all relevant extensions to be 3D
-    # Incl. those not currently used?
-    if len(input_model.data.shape) == 2:
-        if isinstance(input_copy, ImageModel):
-            input_copy = CubeModel(input_copy)
-        input_copy.data = np.expand_dims(input_copy.data, axis=0)
-        input_copy.dq = np.expand_dims(input_copy.dq, axis=0)
-        # input_copy.err = np.expand_dims(input_copy.err, axis=0)
-        # input_copy.var_poisson = np.expand_dims(input_copy.var_poisson, axis=0)
-        # input_copy.var_rnoise = np.expand_dims(input_copy.var_rnoise, axis=0)
-        # input_copy.var_flat = np.expand_dims(input_copy.var_flat, axis=0)
+    if isinstance(input_model, ImageModel):
+        # If the input image is 2D, expand all relevant extensions to be 3D
+        data = np.expand_dims(input_model.data, axis=0)
+        dq = np.expand_dims(input_model.dq, axis=0)
+        input_copy = CubeModel(data=data, dq=dq)
+        input_copy.update(input_model)
+        # Incl. those not currently used?
+        # input_copy.err = np.expand_dims(input_model.err, axis=0)
+        # input_copy.var_poisson = np.expand_dims(input_model.var_poisson, axis=0)
+        # input_copy.var_rnoise = np.expand_dims(input_model.var_rnoise, axis=0)
+        # input_copy.var_flat = np.expand_dims(input_model.var_flat, axis=0)
+    elif isinstance(input_model, CubeModel):
+        input_copy = copy.deepcopy(input_model)
+    else:
+        raise TypeError("Input model must be a CubeModel or ImageModel.")
 
     # If the input data were taken in full-frame mode, extract a region
     # equivalent to the SUB80 subarray mode to make execution time acceptable.
