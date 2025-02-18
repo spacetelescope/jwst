@@ -1,1 +1,0 @@
-Clarified documentation to explicitly state that ``crval`` values to the ``resample`` step are 0-based image coordinates.
