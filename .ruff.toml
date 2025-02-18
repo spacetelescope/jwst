@@ -31,7 +31,6 @@ exclude = [
     "jwst/dark_current/**.py",
     "jwst/emicorr/**.py",
     "jwst/engdblog/**.py",
-    "jwst/exp_to_source/**.py",
     "jwst/extract_1d/{apply_apcorr.py,extract1d.py,ifu.py,spec_wcs.py,extract.py,extract_1d_step.py,psf_profile.py,source_location.py,tests/conftest.py}",
     "jwst/extract_2d/**.py",
     "jwst/flatfield/**.py",
