@@ -41,6 +41,14 @@ image.
     be a comma-separated list of floats. Ignored when ``output_wcs``
     is provided.
 
+``--crpix`` (tuple of float, default=None)
+    0-based coordinates of the reference pixel in the image array in the
+    ``x, y`` order. This is the image coordinate to which ``crval`` maps to.
+    If ``crpix`` is not specified, it will be set to the center of the bounding
+    box of the returned WCS object. When supplied from command line, it should
+    be a comma-separated list of floats. Ignored when ``output_wcs``
+    is provided.
+
 ``--crval`` (tuple of float, default=None)
     Right ascension and declination of the reference pixel. Automatically
     computed if not provided. When supplied from command line, it should be a

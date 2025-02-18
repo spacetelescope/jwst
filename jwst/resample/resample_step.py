@@ -42,8 +42,8 @@ class ResampleStep(Step):
         fillval = string(default='NAN')  # Output value for pixels with no weight or flux
         weight_type = option('ivm', 'exptime', None, default='ivm')  # Input image weighting type
         output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
-        crpix = float_list(min=2, max=2, default=None)
-        crval = float_list(min=2, max=2, default=None)
+        crpix = float_list(min=2, max=2, default=None)  # 0-based image coordinates of the reference pixel
+        crval = float_list(min=2, max=2, default=None)  # world coordinates of the reference pixel
         rotation = float(default=None)  # Output image Y-axis PA relative to North
         pixel_scale_ratio = float(default=1.0)  # Ratio of input to output pixel scale
         pixel_scale = float(default=None)  # Absolute pixel scale in arcsec
