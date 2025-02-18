@@ -6,7 +6,7 @@ from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
-from jwst.resample.resample_utils import load_custom_wcs
+from jwst.resample.resample_utils import load_custom_wcs, find_miri_lrs_sregion
 
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
@@ -267,9 +267,13 @@ class ResampleSpecStep(Step):
         result.meta.resample.pixfrac = self.pixfrac
 
         self.update_slit_metadata(result)
-        if result.meta.exposure.type.lower() != 'mir_lrs-fixedslit':
+        if result.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+            s_region_model1 = input_models[0].meta.wcsinfo.s_region
+            s_region = find_miri_lrs_sregion(s_region_model1, result.meta.wcs)
+            result.meta.wcsinfo.s_region = s_region
+            self.log.info(f'Updating S_REGION: {s_region}.')
+        else:
             update_s_region_spectral(result)
-
         return result
 
     def update_slit_metadata(self, model):
