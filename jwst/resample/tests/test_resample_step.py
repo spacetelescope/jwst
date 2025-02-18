@@ -957,10 +957,8 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
 
     # make sure pixel values are similar, accounting for scale factor
     # (assuming inputs are in surface brightness units)
-    iscale = np.sqrt(
-        im.meta.photometry.pixelarea_steradians
-        / compute_mean_pixel_area(im.meta.wcs, shape=im.data.shape)
-    )
+    iscale2 = (im.meta.photometry.pixelarea_steradians
+               / compute_mean_pixel_area(im.meta.wcs, shape=im.data.shape))
     input_mean = np.nanmean(im.data)
     total_weight = np.sum(weight1)
     output_mean_1 = np.nansum(data1 * weight1) / total_weight
