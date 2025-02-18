@@ -147,7 +147,7 @@ def _profile_residual(
         The first value is used as the `extra_shift` parameter to
         `_make_cutout_profile`.  If two are provided, the second value is
         used as the `nod_offset` parameter to `_make_cutout_profile`.
-        Otherwise, no nod offset is applied.
+        If only one value is provided, no nod offset is applied.
     cutout : ndarray
         Input data array, trimmed to the bounding box.
     cutout_var : ndarray

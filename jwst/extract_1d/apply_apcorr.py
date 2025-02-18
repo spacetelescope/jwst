@@ -209,22 +209,23 @@ class ApCorrBase(abc.ABC):
 
 
 class ApCorrPhase(ApCorrBase):
-    """
-    Produce and apply aperture correction for input data with pixel phase.
-
-    Parameters
-    ----------
-    *args : list
-        Input arguments.  See `ApCorrBase` for more.
-    pixphase : float, optional
-        Pixel phase of the input data.
-    **kwargs : dict, optional
-        Optional parameters. See `ApCorrBase` for more.
-    """
+    """Produce and apply aperture correction for input data with pixel phase."""
 
     size_key = "size"
 
     def __init__(self, *args, pixphase=0.5, **kwargs):
+        """
+        Create an aperture correction for data with pixel phase.
+
+        Parameters
+        ----------
+        *args : list
+            Input arguments.  See `ApCorrBase` for more.
+        pixphase : float, optional
+            Pixel phase of the input data.
+        **kwargs : dict, optional
+            Additional parameters. See `ApCorrBase` for more.
+        """
         self.phase = pixphase
 
         super().__init__(*args, **kwargs)
@@ -378,9 +379,9 @@ class ApCorrRadial(ApCorrBase):
         """
         Implement the approximation method.
 
-        Has no effect for this class.
+        Has no effect for this class.  The base class requires that it be implemented,
+        but the equivalent functionality for this class is performed in `find_apcorr_func`.
         """
-        # Base class needs this. For ApCorrRadial, this is done in find_apcorr_func
         pass
 
     def _convert_size_units(self):
