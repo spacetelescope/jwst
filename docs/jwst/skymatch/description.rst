@@ -6,15 +6,17 @@ Description
 
 Overview
 --------
-The ``skymatch`` step can be used to compute sky values in a collection of input
-images that contain both sky and source signal. The sky values can be computed
-for each image separately or in a way that matches the sky levels amongst the
-collection of images so as to minimize their differences. This operation is
-typically applied before doing cosmic-ray rejection and combining multiple
-images into a mosaic. When running the ``skymatch`` step in a matching mode,
+The ``skymatch`` step can be used to compute sky values in a collection of
+input images that contain both sky and source signal. The sky values can be
+computed for each image separately or in a way that matches the sky levels
+amongst the collection of images so as to minimize their differences.
+This operation is typically applied before doing cosmic-ray rejection and
+combining multiple images into a mosaic.
+When running the ``skymatch`` step in a matching mode,
 it compares *total* signal levels in *the overlap regions* of a set of input
 images and computes the signal offsets either for each image *or a set/group of
-images* (see Image Groups section below) that will minimize -- in a least squares sense -- the residuals across
+images* (see Image Groups section below) that will
+minimize -- in a least squares sense -- the residuals across
 the entire set. This comparison is performed directly on the input images
 without resampling them onto a common grid. The overlap regions are computed
 directly on the sky (celestial sphere) for each pair of input images.
@@ -24,13 +26,13 @@ difficult -- if not impossible -- to find and measure true sky.
 
 Note that the meaning of "sky background" depends on the chosen sky computation
 method. When the matching method is used, for example, the reported "sky" value
-is only the offset in levels between images and does not necessarily include the
-true total sky level.
+is only the offset in levels between images and does not necessarily include
+the true total sky level.
 
 .. note::
-   Throughout this document the term "sky" is used in a generic sense, referring
-   to any kind of non-source background signal, which may include actual sky,
-   as well as instrumental (e.g. thermal) background, etc.
+   Throughout this document the term "sky" is used in a generic sense,
+   referring to any kind of non-source background signal, which may include
+   actual sky, as well as instrumental (e.g. thermal) background, etc.
 
 The step records information in three keywords that are included in the output
 files:
@@ -45,16 +47,18 @@ BKGSUB
   a boolean indicating whether or not the sky was subtracted from the
   output images. Note that by default the step argument "subtract" is set to
   ``False``, which means that the sky will *NOT* be subtracted
-  (see the :ref:`skymatch step arguments <skymatch_arguments>` for more details).
+  (see the :ref:`skymatch step arguments <skymatch_arguments>` for more
+  details).
 
 Both the "BKGSUB" and "BKGLEVEL" keyword values are important information for
 downstream tasks, such as
 :ref:`outlier detection <outlier_detection_step>` and
 :ref:`resampling <resample_step>`.
-Outlier detection will use the BKGLEVEL values to internally equalize the images,
-which is necessary to prevent false detections due to overall differences in
-signal levels between images, and the resample step will subtract the BKGLEVEL
-values from each input image when combining them into a mosaic.
+Outlier detection will use the BKGLEVEL values to internally equalize the
+images, which is necessary to prevent false detections due to overall
+differences in signal levels between images, and the resample step will
+subtract the BKGLEVEL values from each input image when combining them into
+a mosaic.
 
 Sky background
 --------------
@@ -67,7 +71,8 @@ Here we just note that some components (e.g., in-field zodiacal light)
 result in reproducible background structures in all detectors when they are
 exposed simultaneously, while other components (e.g. stray light, thermal
 emission) can produce varying background from one exposure to the next
-exposure. The type of background structure that dominates a particular dataset affects the optimal way to group images in the skymatch step.
+exposure. The type of background structure that dominates a particular dataset
+affects the optimal way to group images in the skymatch step.
 
 Image Groups
 ------------
@@ -84,8 +89,9 @@ with an offset level (common to all images in an exposure). Using grouped
 images with a common background level offers several advantages:
 more data are used to compute the single sky level, and the
 background level of images that do not overlap individually
-with any other images in other exposures can still be adjusted (as long as they belong to a group). This is the default operating mode
-for the ``skymatch`` step.
+with any other images in other exposures can still be adjusted (as long as they
+belong to a group). This is the default operating mode for the ``skymatch``
+step.
 
 Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
@@ -124,9 +130,10 @@ value computations.
 The first method, called "local", essentially is an enhanced version of the
 original sky subtraction method used in older versions of
 `astrodrizzle <https://drizzlepac.readthedocs.io/en/latest/astrodrizzle.html>`_.
-This method simply computes the mean/median/mode/etc. value of the sky separately
-in each input image. This method was upgraded to be able to use DQ flags
-to remove bad pixels from being used in the computations of sky statistics.
+This method simply computes the mean/median/mode/etc. value of the sky
+separately in each input image. This method was upgraded to be able to use DQ
+flags to remove bad pixels from being used in the computations of sky
+statistics.
 
 In addition to the classic "local" method, two other methods have been
 introduced: "global" and "match", as well as a combination of the
@@ -149,9 +156,9 @@ two -- "global+match".
    only pair-wise intersection of adjacent images without having
    a common intersection region (on the sky) in all images.
 
-   Note that if the argument "match_down=True", matching will be done to the image
-   with the lowest sky value, and if "match_down=False" it will be done to the
-   image with the highest value
+   Note that if the argument "match_down=True", matching will be done to the
+   image with the lowest sky value, and if "match_down=False" it will be done
+   to the image with the highest value
    (see :ref:`skymatch step arguments <skymatch_arguments>` for full details).
 
 #. The "global+match" algorithm combines the "global" and "match" methods.
@@ -184,12 +191,13 @@ per image in the input list.
 
 Examples
 --------
-To get a better idea of the behavior of these different methods, the tables below
-show the results for two hypothetical sets of images. The first example is for a
-set of 6 images that form a 2x3 mosaic, with every image having overlap with its
-immediate neighbors. The first column of the table gives the actual (fake) sky
-signal that was imposed in each image, and the subsequent columns show the
-results computed by each method (i.e. the values of the resulting BKGLEVEL keywords).
+To get a better idea of the behavior of these different methods, the tables
+below show the results for two hypothetical sets of images. The first example
+is for a set of 6 images that form a 2x3 mosaic, with every image having
+overlap with its immediate neighbors. The first column of the table gives the
+actual (fake) sky signal that was imposed in each image, and the subsequent
+columns show the results computed by each method (i.e. the values of the
+resulting BKGLEVEL keywords).
 All results are for the case where the step argument ``match_down = True``,
 which means matching is done to the image with the lowest sky value.
 Note that these examples are for the highly simplistic case where each example
@@ -284,7 +292,8 @@ accomplishes this by comparing the sky values in the
 overlap regions of each image pair. The quality of sky matching will
 obviously depend on how well these sky values can be estimated.
 True background may not be present at all in some images, in which case
-the computed "sky" may be the surface brightness of a large galaxy, nebula, etc.
+the computed "sky" may be the surface brightness of a large galaxy, nebula,
+etc.
 
 Here is a brief list of possible limitations and factors that can affect
 the outcome of the matching (sky subtraction in general) algorithm:
@@ -292,8 +301,8 @@ the outcome of the matching (sky subtraction in general) algorithm:
 #. Because sky computation is performed on *flat-fielded* but
    *not distortion corrected* images, it is important to keep in mind
    that flat-fielding is performed to obtain correct surface brightnesses.
-   Because the surface brightness of a pixel containing a point-like source will
-   change inversely with a change to the pixel area, it is advisable to
+   Because the surface brightness of a pixel containing a point-like source
+   will change inversely with a change to the pixel area, it is advisable to
    mask point-like sources through user-supplied mask files. Values
    different from zero in user-supplied masks indicate good data pixels.
    Alternatively, one can use the ``upper`` parameter to exclude the use of
