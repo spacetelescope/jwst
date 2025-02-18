@@ -810,6 +810,19 @@ def update_s_region_imaging(model):
 def update_s_region_lrs(model, reference_files):
     """
     Determine ``S_REGION`` using V2,V3 of the slit corners from reference file.
+
+    Parameters
+    ----------
+    model : DataModel
+        Input model
+    reference_files : list
+        List of reference files for assign_wcs.
+
+    Returns
+    -------
+    None
+        s_region for model is updated in place .
+
     """
 
     refmodel = MiriLRSSpecwcsModel(reference_files['specwcs'])
