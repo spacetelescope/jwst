@@ -45,7 +45,7 @@ def mk_data_mdl(data, subarray, readpatt, detector):
     return input_model
 
 
-def test_EmiCorrStep():
+def test_emicorrstep():
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     expected_outmdl = input_model.copy()
@@ -60,30 +60,30 @@ def test_EmiCorrStep():
     assert expected_outmdl.data.all() == nir_result.data.all()
 
 
-def test_do_correction():
+def test_apply_emicorr():
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     pars = {
-        'save_intermediate_results': False,
+        'save_onthefly_reffile': None,
         'nints_to_phase': None,
         'nbins': None,
         'scale_reference': True,
         'onthefly_corr_freq': None,
         'use_n_cycles': None
     }
-    save_onthefly_reffile = None
-    outmdl = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
+    outmdl = emicorr.apply_emicorr(input_model, emicorr_model, **pars)
 
     assert outmdl is not None
 
 
-def test_apply_emicorr():
+def test_apply_emicorr_with_freq():
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     emicorr_model, onthefly_corr_freq, save_onthefly_reffile = None, [218.3], None
-    outmdl = emicorr.apply_emicorr(input_model, emicorr_model, onthefly_corr_freq,
-                save_onthefly_reffile, save_intermediate_results=False,
-                nints_to_phase=None, nbins_all=None, scale_reference=True)
+    outmdl = emicorr.apply_emicorr(
+        input_model, emicorr_model, onthefly_corr_freq=onthefly_corr_freq,
+        save_onthefly_reffile=save_onthefly_reffile, nints_to_phase=None,
+        nbins=None, scale_reference=True)
 
     assert outmdl is not None
 

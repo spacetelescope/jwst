@@ -1,7 +1,3 @@
-#
-#  Module for applying MIRI EMI correction
-#
-
 import numpy as np
 from scipy import interpolate
 import logging
@@ -59,158 +55,148 @@ subarray_clocks = {
 }
 
 
-def do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars):
+def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
+                  algorithm='sequential', nints_to_phase=None,
+                  nbins=None, scale_reference=True, onthefly_corr_freq=None,
+                  use_n_cycles=3, fit_ints_separately=False):
     """
-    EMI-correct a JWST data model using an emicorr model
+    Apply an EMI correction to MIRI ramps.
+
+    The sequential algorithm corrects data for EMI by the following procedure:
+         [repeat iteratively for each discrete EMI frequency desired]
+
+    1) Make very crude slope image and fixed pattern superbias for each
+       integration, ignoring everything (nonlin, saturation, badpix, etc).
+    2) Subtract scaled slope image and bias from each frame of each integration.
+    3) Calculate phase of every pixel in the image at the desired EMI frequency
+       (e.g. 390 Hz) relative to the first pixel in the image.
+    4) Make a binned, phased amplitude (PA) wave from the cleaned data.
+    5) Either:
+       -  Measure the phase shift between the binned pa wave and the input
+          reference wave. Use look-up table to get the aligned reference wave
+          value for each pixel (the noise array corresponding to the input image).
+       Or:
+       - Use the binned PA wave instead of the reference wave to "self-correct".
+    6) Subtract the noise array from the input image and return the cleaned result.
+
+         [repeat for next frequency using cleaned output as input]
+
+    The joint algorithm proceeds similarly, except that the linear ramps and
+    the EMI noise are fit simultaneously. It works by choosing pixels with modest
+    scatter among the reads, and then finding the amplitude and phase of a supplied
+    reference waveform that, when subtracted, makes these pixels' ramps as straight
+    as possible. The straightness of the ramps is measured by chi squared after
+    fitting lines to each one.  As for the sequential algorithm, the noise at each
+    frequency is fit and removed iteratively, for each desired frequency.
+
+    For either algorithm, removing the highest amplitude EMI first will probably
+    give best results.
 
     Parameters
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
-        Input science data model to be emi-corrected
-
+        Input science data model to be EMI-corrected.
     emicorr_model : `~jwst.datamodels.EmiModel`
-        Data model containing emi correction
-
-    save_onthefly_reffile : str or None
-        Full path and root name of on-the-fly reference file
-
-    pars : dict
-        Optional user-specified parameters to modify how emicorr
-        will operate.  Valid parameters include:
-            save_intermediate_results - saves the output into a file and the
-                                        reference file (if created on-the-fly)
-
-    Returns
-    -------
-    output_model : JWST data model
-        emi-corrected science data model
-
-    """
-    save_intermediate_results = pars['save_intermediate_results']
-    nints_to_phase = pars['nints_to_phase']
-    nbins = pars['nbins']
-    scale_reference = pars['scale_reference']
-    onthefly_corr_freq = pars['onthefly_corr_freq']
-    use_n_cycles = pars['use_n_cycles']
-
-    output_model = apply_emicorr(input_model, emicorr_model,
-                        onthefly_corr_freq, save_onthefly_reffile,
-                        save_intermediate_results=save_intermediate_results,
-                        nints_to_phase=nints_to_phase,
-                        nbins_all=nbins,
-                        scale_reference=scale_reference,
-                        use_n_cycles=use_n_cycles
-                        )
-
-    return output_model
-
-
-def apply_emicorr(output_model, emicorr_model,
-        onthefly_corr_freq, save_onthefly_reffile,
-        save_intermediate_results=False, nints_to_phase=None,
-        nbins_all=None, scale_reference=True, use_n_cycles=3):
-    """
-    -> NOTE: This is translated from IDL code fix_miri_emi.pro
-
-    EMI-corrects data by the following procedure:
-         [repeat recursively for each discrete EMI frequency desired]
-    1) Read image data.
-    2) Make very crude slope image and fixed pattern "super"bias for each
-       integration, ignoring everything (nonlin, saturation, badpix, etc).
-    3) Subtract scaled slope image and bias from each frame of each integration.
-    4) Calculate phase of every pixel in the image at the desired emi frequency
-       (e.g. 390 Hz) relative to the first pixel in the image.
-    5) Make a binned, phased amplitude (pa) wave from the cleaned data (plot
-       cleaned vs phase, then bin by phase).
-    6)* Measure the phase shift between the binned pa wave and the input
-       reference wave
-    7)* Use look-up table to get the aligned reference wave value for each pixel
-       (the noise array corresponding to the input image).
-
-     6a-7a) Alternately, use the binned pa wave instead of the reference wave to
-       "self-correct"
-
-    8) Subtract the noise array from the input image and return the cleaned result.
-
-         [repeat for next frequency using cleaned output as input]
-      [removing highest amplitude emi first will probably give best results]
-
-    Parameters
-    ----------
-    output_model : `~jwst.datamodels.JwstDataModel`
-        input science data model to be emi-corrected
-
-    emicorr_model : `~jwst.datamodels.EmiModel`
-         ImageModel of emi
-
-    onthefly_corr_freq : float
-        Frequency number to do correction with on-the-fly reference file
-
-    save_onthefly_reffile : str or None
-        Full path and root name of on-the-fly reference file
-
-    save_intermediate_results : bool
-        Saves the output into a file and the reference file (if created on-the-fly)
-
-    nints_to_phase : int
-        Number of integrations to phase
-
-    nbins_all : int
-        Number of bins in one phased wave (this number will be used for all
-        frequencies to be corrected)
-
-    scale_reference : bool
-        If True, the reference wavelength will be scaled to the data's phase amplitude
-
-    use_n_cycles : int
-        Only use N cycles to calculate the phase to reduce code running time
+        Data model containing EMI correction.
+    save_onthefly_reffile : str or None, optional
+        Full path and root name to save an on-the-fly reference file to.
+    algorithm : {'sequential', 'joint'}, optional
+        Algorithm for fitting EMI noise in ramps.  If 'sequential', ramps are fit
+        and then EMI noise is fit to the residuals.  If 'joint', ramps and noise
+        are fit simultaneously.  The 'sequential' algorithm can be used without
+        a reference waveform, generating a new reference file on-the-fly, but it
+        requires 10 or more groups for a reliable fit.  The 'joint' algorithm
+        requires a reference waveform but can successfully fit EMI in ramps with
+        3 or more groups.
+    nints_to_phase : int or None, optional
+        Number of integrations to phase, when `algorithm` is 'sequential'.
+    nbins : int or None, optional
+        Number of bins to use in one phased wave, when `algorithm` is 'sequential'.
+    scale_reference : bool, optional
+        If True and `algorithm` is 'sequential', the reference wavelength will be scaled
+        to the data's phase amplitude.
+    onthefly_corr_freq : list of float or None, optional
+        Frequency values to use to create a correction on-the-fly, when
+        `algorithm` is 'sequential'.
+    use_n_cycles : int, optional
+        Only use N cycles to calculate the phase to reduce code running time,
+        when `algorithm` is 'sequential'.
+    fit_ints_separately : bool, optional
+        If True, fit each integration separately, when `algorithm` is 'joint'.
 
     Returns
     -------
     output_model : JWST data model
         input science data model which has been emi-corrected
-    """
-    # get the subarray case and other info
-    detector = output_model.meta.instrument.detector
-    subarray = output_model.meta.subarray.name
-    readpatt = output_model.meta.exposure.readpatt
-    xsize = output_model.meta.subarray.xsize   # SUBSIZE1 keyword
-    xstart = output_model.meta.subarray.xstart   # SUBSTRT1 keyword
-    # get the number of samples, 10us sample times per pixel (1 for fastmode, 9 for slowmode)
-    nsamples = output_model.meta.exposure.nsamples
 
-    # get the subarray case from either the ref file or set default values
+    Notes
+    -----
+    The 'sequential' algorithm was originally translated from the IDL
+    procedure 'fix_miri_emi.pro', written by E. Bergeron.  The 'joint'
+    algorithm was developed by T. Brandt.
+    """
+    # Get the subarray case and other info
+    detector = input_model.meta.instrument.detector
+    subarray = input_model.meta.subarray.name
+    readpatt = input_model.meta.exposure.readpatt
+    xsize = input_model.meta.subarray.xsize   # SUBSIZE1 keyword
+    xstart = input_model.meta.subarray.xstart   # SUBSTRT1 keyword
+
+    # Get the number of samples, 10us sample times per pixel (1 for fastmode, 9 for slowmode)
+    nsamples = input_model.meta.exposure.nsamples
+
+    # Get the shape of the input data
+    nints, ngroups, ny, nx = np.shape(input_model.data)
+
+    if ngroups < 3:
+        log.warning(f'EMI correction cannot be performed for ngroups={ngroups}')
+        return None
+    if ngroups < 10 and algorithm == 'sequential':
+        log.warning(f"The 'sequential' algorithm is selected and ngroups={ngroups}.")
+        log.warning("The 'joint' algorithm is recommended for ngroups < 10.")
+    if algorithm == 'joint' and emicorr_model is None:
+        log.warning("The 'joint' algorithm cannot be used without an EMICORR "
+                    "reference file.  Setting the algorithm to 'sequential'.")
+        algorithm = 'sequential'
+
+    # Get the subarray case from either the ref file or set default values
     freqs_numbers = []
     if emicorr_model is not None:
         log.info('Using reference file to get subarray case.')
         subname, rowclocks, frameclocks, freqs2correct = get_subarcase(emicorr_model, subarray, readpatt, detector)
         reference_wave_list = []
 
-        log.info('With configuration: Subarray={}, Read_pattern={}, Detector={}'.format(subarray, readpatt, detector))
-        log.info('Will correct data for the following {} frequencies: '.format(len(freqs2correct)))
-        log.info('   {}'.format(freqs2correct))
-
+        log.info(f'With configuration: Subarray={subarray}, '
+                 f'Read_pattern={readpatt}, Detector={detector}')
         if freqs2correct is not None:
+            log.info(f'Will correct data for the following {len(freqs2correct)} frequencies: ')
+            log.info(f'   {freqs2correct}')
+
             for fnme in freqs2correct:
+                # For the sequential algorithm, just collect the reference wave list
                 freq, ref_wave = get_frequency_info(emicorr_model, fnme)
                 freqs_numbers.append(freq)
                 reference_wave_list.append(ref_wave)
 
-                if readpatt.upper() == 'FASTR1' or readpatt.upper() == 'SLOWR1':
-                    _frameclocks = frameclocks
-                else:
-                    _frameclocks = 0
+                # For the joint algorithm, use the reference wave to correct the data
+                if algorithm == 'joint':
+                    if readpatt.upper() == 'FASTR1' or readpatt.upper() == 'SLOWR1':
+                        _frameclocks = frameclocks
+                    else:
+                        _frameclocks = 0
 
-                period_in_pixels = (1./freq) / 10.0e-6
+                    period_in_pixels = (1./freq) / 10.0e-6
 
-                # New routine gets called here.
-                d = emicorr_refwave(output_model.data, output_model.pixeldq,
-                                    np.array(ref_wave),
-                                    nsamples, rowclocks, _frameclocks,
-                                    period_in_pixels)
-                output_model.data[:] = d
+                    corrected_data = emicorr_refwave(
+                        input_model.data, input_model.pixeldq, np.array(ref_wave),
+                        nsamples, rowclocks, _frameclocks,
+                        period_in_pixels, fit_ints_separately=fit_ints_separately)
 
-            return output_model
+                    # Data is updated in place, to be corrected iteratively
+                    input_model.data[:] = corrected_data
+            if algorithm == 'joint':
+                # All done, return the corrected model.
+                return input_model
     else:
         # if we got here, the user requested to do correction with on-the-fly reference file
         subname = subarray
@@ -224,27 +210,28 @@ def apply_emicorr(output_model, emicorr_model,
             frameclocks = subarray_clocks[subname]['frameclocks']
             freqs_numbers = onthefly_corr_freq
             freqs2correct = [repr(freq) for freq in onthefly_corr_freq]
+
+            log.info(f'Will correct data for the following {len(freqs2correct)} frequencies: ')
+            log.info(f'   {freqs2correct}')
         else:
             subname, rowclocks, frameclocks, freqs2correct = None, None, None, None
 
-    log.info('With configuration: Subarray={}, Read_pattern={}, Detector={}'.format(subarray, readpatt, detector))
     if rowclocks is None or len(freqs_numbers) == 0:
         # no subarray or read pattern match found, print to log and skip correction
-        return subname
-
-    # Initialize the output model as a copy of the input
-    nints, ngroups, ny, nx = np.shape(output_model.data)
+        log.warning('No correction match for this configuration')
+        return None
 
     # create the dictionary to store the frequencies and corresponding phase amplitudes
-    if save_intermediate_results and save_onthefly_reffile is not None:
+    if save_onthefly_reffile is not None:
         freq_pa_dict = {'frequencies': {}, 'subarray_cases': {}}
 
+    # Copy the input nbins setting, so it can be set to different values for different frequencies
+    nbins_all = nbins
+
     # Loop over the frequencies to correct
-    log.info('Will correct data for the following {} frequencies: '.format(len(freqs2correct)))
-    log.info('   {}'.format(freqs2correct))
     for fi, frequency_name in enumerate(freqs2correct):
         frequency = freqs_numbers[fi]
-        log.info('Correcting for frequency: {} Hz  ({} out of {})'.format(frequency, fi+1, len(freqs2correct)))
+        log.info(f'Correcting for frequency: {frequency} Hz  ({fi+1} out of {len(freqs2correct)})')
 
         # Set up some variables
 
@@ -257,7 +244,7 @@ def apply_emicorr(output_model, emicorr_model,
         nx4 = int(nx/4)
 
         dd_all = np.zeros((nints, ngroups, ny, nx4))
-        log.info('Subtracting self-superbias from each group of each integration and')
+        log.info('Subtracting self-superbias from each group of each integration')
 
         # Calculate times of all pixels in the input integration, then use that to calculate
         # phase of all pixels. Times here is in integer numbers of 10us pixels starting from
@@ -298,12 +285,12 @@ def apply_emicorr(output_model, emicorr_model,
         # calculate it from the input image header here just in case the subarray definitions
         # are not available to this routine.
         colstop = int(xsize/4 + xstart - 1)
-        log.info('doing phase calculation per integration')
+        log.info('Doing phase calculation per integration')
 
         for ninti in range(nints):
             log.debug('  Working on integration: {}'.format(ninti+1))
             # Read in this integration
-            data = output_model.data[ninti].copy()
+            data = input_model.data[ninti].copy()
 
             # Remove source signal and fixed bias from each integration ramp
             # (linear is good enough for phase finding)
@@ -313,7 +300,7 @@ def apply_emicorr(output_model, emicorr_model,
 
             # subtract source+sky from each frame of this ramp
             for ngroupi in range(ngroups):
-                data[ngroupi, ...] = output_model.data[ninti, ngroupi, ...] - (s0 * ngroupi)
+                data[ngroupi, ...] = input_model.data[ninti, ngroupi, ...] - (s0 * ngroupi)
 
             # make a self-superbias
             m0 = minmed(data[1:ngroups-1, :, :])
@@ -452,7 +439,7 @@ def apply_emicorr(output_model, emicorr_model,
 
             lut = lut_reference
 
-        if save_intermediate_results and save_onthefly_reffile is not None:
+        if save_onthefly_reffile is not None:
             freq_pa_dict['frequencies'][frequency_name] = {'frequency': frequency,
                                                            'phase_amplitudes': pa}
 
@@ -468,7 +455,7 @@ def apply_emicorr(output_model, emicorr_model,
 
         # Interleave (straight copy) into 4 amps
         for k in range(4):
-            output_model.data[..., k::4] -= dd_noise
+            input_model.data[..., k::4] -= dd_noise
 
         # clean up
         del dd_all
@@ -476,7 +463,7 @@ def apply_emicorr(output_model, emicorr_model,
         del phaseall
         del dd_noise
 
-    if save_intermediate_results and save_onthefly_reffile is not None:
+    if save_onthefly_reffile is not None:
         if 'FAST' in readpatt:
             freqs_dict = {readpatt: freqs2correct}
         else:
@@ -490,7 +477,7 @@ def apply_emicorr(output_model, emicorr_model,
         freq_pa_dict['subarray_cases'] = on_the_fly_subarr_case
         mk_reffile(freq_pa_dict, save_onthefly_reffile)
 
-    return output_model
+    return input_model
 
 
 def sloper(data):
@@ -702,7 +689,8 @@ def rebin(arr, newshape):
 
 
 def mk_reffile(freq_pa_dict, emicorr_ref_filename):
-    """ Create the reference file hdulist object.
+    """
+    Create the reference file hdulist object.
 
     Parameters
     ----------
@@ -712,19 +700,14 @@ def mk_reffile(freq_pa_dict, emicorr_ref_filename):
 
     emicorr_ref_filename : str
         Full path and root name of on-the-fly reference file
-
-    Returns
-    -------
-    Nothing
     """
-    # save the reference file if save_intermediate_results=True and no CRDS file exists
+    # save the reference file if desired
     emicorr_model = datamodels.EmiModel(freq_pa_dict)
     if 'fits' in emicorr_ref_filename:
         emicorr_ref_filename = emicorr_ref_filename.replace('fits', 'asdf')
     emicorr_model.save(emicorr_ref_filename)
     emicorr_model.close()
     log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
-
 
 
 def emicorr_refwave(data, pdq, refwave, nsamples, rowclocks, frameclocks,
@@ -742,35 +725,27 @@ def emicorr_refwave(data, pdq, refwave, nsamples, rowclocks, frameclocks,
 
     Parameters
     ----------
-    data : numpy array
+    data : ndarray
         4D data to correct, shape (nints, ngroups, nrows, ncols).
         Modified in-place.
-
-    pdq : numpy array
+    pdq : ndarray
         2D pixeldq array, shape (nrows, ncols)
-
-    refwave : numpy array
-        reference waveform, 1D array
-
+    refwave : ndarray
+        Reference waveform, 1D array
     nsamples : int
-        number of samples of each pixel in each group:
+        Number of samples of each pixel in each group:
         1 for fast, 9 for slow
-
     rowclocks : int
-        extra pixel times in each row before reading out the following row
-
+        Extra pixel times in each row before reading out the following row
     frameclocks : int
-        pixel clock cycles in a reset frame
-
+        Pixel clock cycles in a reset frame
     period_in_pixels : float
-        period in pixel clock times of the waveform given by refwave
-
-    fit_ints_separately : bool, default False
-        fit the integrations separately? If True, fit amplitude and phase
+        Period in pixel clock times of the waveform given by refwave
+    fit_ints_separately : bool, optional
+        Fit the integrations separately? If True, fit amplitude and phase
         for refwave independently for each integration.  If False, fit
         for a single amplitude and phase across all integrations.
-
-    nphases_opt : int, default 500
+    nphases_opt : int, optional
         Number of phases to sample chi squared as a function of phase
 
     Returns
@@ -778,7 +753,6 @@ def emicorr_refwave(data, pdq, refwave, nsamples, rowclocks, frameclocks,
     data : ndarray
         The input 4D data array with the model waveform phased, scaled,
         and subtracted.
-
     """
 
     nints, ngroups, ny, nx = data.shape
@@ -918,7 +892,6 @@ def get_best_phase(phases, chisq):
     phases : ndarray
         1D array of phases. Assumed to be periodic: phases[0] comes
         after phases[-1]
-
     chisq : ndarray
         1D array of chi squared values.
 
@@ -928,9 +901,7 @@ def get_best_phase(phases, chisq):
         phase where chisq is minimized, computed by fitting a parabola
         to the three points centered on the input phase with the
         lowest chisq.
-
     """
-
     ibest = np.argmin(chisq)
 
     # If ibest is zero, ibest_m1 will give the final element.
@@ -948,8 +919,8 @@ def get_best_phase(phases, chisq):
     # Just in case all of these chi squared values are equal
     # (in which case fitting a parabola would give a=0)
     if np.std(chisq_opt) == 0:
-        log.info('Chi squared values as a function of phase offset are '
-                 'unexpectedly equal in EMIcorr')
+        log.warning('Chi squared values as a function of phase offset are '
+                    'unexpectedly equal in EMIcorr')
         return phases[ibest]
 
     a, b, _ = np.polyfit(x, chisq_opt, 2)
@@ -967,29 +938,26 @@ def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
 
     Parameters
     ----------
-    emifitter : EMIfitter class
-        Convenience class containing all of the parameters and intermediate
+    emifitter : EMIFitter
+        Convenience object containing all the parameters and intermediate
         arrays needed to compute the best amplitude and the corresponding
         chi squared value at one or more input phases.
-
-    ints : list of ints or None, default None
+    ints : list of int or None
         Integration(s) to combine for computing amplitude and chi
         squared. If None, use all integrations.
-
-    phases : list of floats or None, default None
+    phases : list of float or None
         Phase(s) at which to compute the amplitude and best chi squared.
         If None, use all phases in emifitter.phaselist.
 
     Returns
     -------
-    chisq : list of floats
+    chisq : list of float
         best chi squared value for each phase used. Will be the same
         length as phases (or emifitter.phaselist, if phases is None).
 
-    amplitudes : list of floats
+    amplitudes : list of float
         best-fit ampltiudes for each phase used. Will be the same
         length as phases (or emifitter.phaselist, if phases is None).
-
     """
 
     E = emifitter  # Alias to simplify subsequent references
@@ -1053,10 +1021,7 @@ def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
 
 
 class EMIfitter:
-    """
-    Convenience class to facilitate chi2, amplitude calculation.
-
-    """
+    """Convenience class to facilitate chi2, amplitude calculation."""
     def __init__(self, all_y, all_N, phasefunc, phases_template,
                  phaselist, dphase_frame):
         """
@@ -1069,27 +1034,21 @@ class EMIfitter:
         all_y : ndarray
             3D array of phased, summed y values,
             shape (nints, nphases, ngroups)
-
         all_N : ndarray
             2D array of the number of pixels used for the calculation
             shape (nints, nphases): number of values summed to create
             all_y at each group
-
-        phasefunc : interp1d function
+        phasefunc : callable
             Spline function to compute the waveform as a function of
             input phase (input phase should be between 0 and 1).
-
         phases_template : ndarray
             2D array of phases corresponding to all_y[0]
-
         phaselist : ndarray
             1D array of phases at which to pre-compute quantities
             needed for chi squared, amplitude calculation.  Typically
             uniformly spaced between 0 and 1.
-
         dphase_frame : float
             Phase difference between successive integrations
-
         """
 
         self.all_y = all_y
