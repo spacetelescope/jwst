@@ -51,9 +51,7 @@ repos:
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/guider_cds/.* |
-            jwst/imprint/.* |
             jwst/ipc/.* |
-            jwst/lastframe/.* |
             jwst/lib/.* |
             jwst/linearity/.* |
             jwst/mrs_imatch/.* |
@@ -68,7 +66,6 @@ repos:
             jwst/rscd/.* |
             jwst/saturation/.* |
             jwst/scripts/.* |
-            jwst/skymatch/.* |
             jwst/spectral_leak/.* |
             jwst/srctype/.* |
             jwst/straylight/.* |
