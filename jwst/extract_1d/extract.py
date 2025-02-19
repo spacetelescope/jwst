@@ -604,9 +604,8 @@ def populate_time_keywords(input_model, output_model):
     # Inclusive range of integration numbers in the INT_TIMES table, zero indexed.
     table_range = (int_num[0] - 1, int_num[-1] - 1)
     offset = data_range[0] - table_range[0]
-    if (data_range[0] < table_range[0] or data_range[1] > table_range[1]) or offset > table_range[
-        1
-    ]:
+    data_range_test = data_range[0] < table_range[0] or data_range[1] > table_range[1]
+    if data_range_test or offset > table_range[1]:
         log.warning(
             "Not using the INT_TIMES table because it does not include "
             "rows for all integrations in the data."
