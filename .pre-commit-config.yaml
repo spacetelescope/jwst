@@ -77,7 +77,6 @@ repos:
             jwst/rscd/.* |
             jwst/saturation/.* |
             jwst/scripts/.* |
-            jwst/skymatch/.* |
             jwst/spectral_leak/.* |
             jwst/srctype/.* |
             jwst/straylight/.* |
