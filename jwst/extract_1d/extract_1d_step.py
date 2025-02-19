@@ -113,7 +113,7 @@ class Extract1dStep(Step):
 
     ifu_rfcorr : bool
         Switch to select whether or not to apply a 1d residual fringe correction
-        for MIRI MRS IFU spectra.  Default is True.
+        for MIRI MRS IFU spectra.  Default is False.
     ifu_set_srctype : str
         For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
 
@@ -340,6 +340,7 @@ class Extract1dStep(Step):
         return result
 
     def _check_mrs_type(self,model):
+        """ Check if the MIRI MRS data is for a single band """
         # check channel is only 1 value and band is only 1 value
         validch = ['1', '2', '3', '4']
         validband = ['short', 'medium', 'long']
@@ -354,7 +355,6 @@ class Extract1dStep(Step):
         if ch_check and b_check:
             band_check = True
 
-        print(model.meta.instrument.channel, model.meta.instrument.band, band_check)
         return band_check
 
     def _extract_ifu(self, model, exp_type, extract_ref, apcorr_ref):
