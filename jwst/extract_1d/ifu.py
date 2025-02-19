@@ -310,9 +310,10 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     spec.spec_table.columns['bkgd_var_poisson'].unit = "(MJy/sr)^2"
     spec.spec_table.columns['bkgd_var_rnoise'].unit = "(MJy/sr)^2"
     spec.spec_table.columns['bkgd_var_flat'].unit = "(MJy/sr)^2"
-    spec.spec_table.columns['rf_flux'].unit = "Jy"
-    spec.spec_table.columns['rf_surf_bright'].unit = "MJy/sr"
-    spec.spec_table.columns['rf_background'].unit = "MJy/sr"
+    if input_model.meta.instrument.name == 'MIRI':
+        spec.spec_table.columns['rf_flux'].unit = "Jy"
+        spec.spec_table.columns['rf_surf_bright'].unit = "MJy/sr"
+        spec.spec_table.columns['rf_background'].unit = "MJy/sr"
     spec.slit_ra = ra
     spec.slit_dec = dec
 
@@ -346,15 +347,13 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
             radius = radius_match[i]
             apcorr.find_apcorr_func(i, radius)
 
-        apcorr.apply(spec.mrs_spec_table)
+        apcorr.apply(spec.spec_table)
 
     output_model.spec.append(spec)
 
-    #output_model = spec
     # See output_model.spec[0].meta.wcs instead.
     output_model.meta.wcs = None
 
-    output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
 
     return output_model
 
