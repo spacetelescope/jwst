@@ -973,7 +973,7 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
             else:
                 log.warning("Source is outside slit.")
         else:
-            log.warning(f"Cannot find matching pathloss model for slit with{slitlength} shutters")
+            log.warning(f"Cannot find matching pathloss model for slit with {slitlength} shutters")
     else:
         log.warning(f"Slit has data size = {size}")
 
