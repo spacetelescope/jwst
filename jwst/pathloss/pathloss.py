@@ -516,7 +516,7 @@ def interpolate_onto_grid(wavelength_grid, wavelength_vector, pathloss_vector):
 
 def is_pointsource(srctype):
     """
-    Source type to boolean.
+    Check whether srctype is a point source.
 
     Parameters
     ----------
@@ -526,7 +526,7 @@ def is_pointsource(srctype):
     Returns
     -------
     result : bool
-        Returns True if srctype is POINT
+        Returns True if srctype is "POINT"
     """
     if srctype is None:
         return False
