@@ -1,5 +1,5 @@
-"""exp_to_source: Reformat Level2b multi-source data to be source-based.
-"""
+"""exp_to_source: Reformat Level2b multi-source data to be source-based."""
+
 import logging
 
 from collections import defaultdict
@@ -9,7 +9,7 @@ from stdatamodels.jwst.datamodels import MultiExposureModel
 
 from jwst.datamodels import SourceModelContainer
 
-__all__ = ['exp_to_source', 'multislit_to_container']
+__all__ = ["exp_to_source", "multislit_to_container"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -106,7 +106,7 @@ def multislit_to_container(inputs):
         The key is the ID of each slit, i.e. ``source_id``.
     """
     containers = exp_to_source(inputs)
-    for id in containers:
-        containers[id] = SourceModelContainer(containers[id])
+    for container_id in containers:
+        containers[container_id] = SourceModelContainer(containers[container_id])
 
     return containers
