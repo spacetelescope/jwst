@@ -57,7 +57,7 @@ class LogWatcher:
     """
     def __init__(self, message):
         self.seen = False
-        self.message = message
+        self._message = message
 
     def __call__(self, *args, **kwargs):
         if not args or not isinstance(args[0], str):
@@ -65,8 +65,26 @@ class LogWatcher:
         if self.message in args[0]:
             self.seen = True
 
+    @property
+    def message(self):
+        return self._message
+
+    @message.setter
+    def message(self, new_message):
+        """
+        When message is set, clear the `seen` flag.
+
+        Parameters
+        ----------
+        new_message : str
+            New value for the `message` property.
+        """
+        self.seen = False
+        self._message = new_message
+
     def assert_seen(self):
-        """Check if message has been seen.
+        """
+        Check if message has been seen.
 
         After calling, the `seen` attribute is reset to False.
         """
@@ -76,7 +94,8 @@ class LogWatcher:
         self.seen = False
 
     def assert_not_seen(self):
-        """Check if message has not been seen.
+        """
+        Check if message has not been seen.
 
         After calling, the `seen` attribute is reset to False.
         """
