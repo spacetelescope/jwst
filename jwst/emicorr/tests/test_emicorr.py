@@ -173,12 +173,13 @@ def test_emicorrstep_skip_for_small_groups(module_log_watcher):
     assert result.meta.cal_step.emicorr == "SKIPPED"
 
 
-def test_emicorrstep_succeeds():
+@pytest.mark.parametrize("algorithm", ["sequential", "joint"])
+def test_emicorrstep_succeeds(algorithm):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
     step = emicorr_step.EmiCorrStep()
-    result = step.call(input_model, skip=False)
+    result = step.call(input_model, skip=False, algorithm=algorithm)
 
     # step completes but we expect no change for flat data
     assert np.all(input_model.data == result.data)
@@ -358,7 +359,7 @@ def test_rebin_shrink():
     data[1] = 0.55
     data[5] = 1.55
     data[9] = 2.0
-    rebinned_data = emicorr.rebin(data, [7])
+    rebinned_data = emicorr.rebin(data, (7,))
     compare_arr = np.array([1.0, 0.55, 1.0, 1.0, 1.55, 1.0, 1.0])
     assert np.all(compare_arr == rebinned_data)
 
@@ -368,8 +369,10 @@ def test_rebin_grow():
     data[1] = 0.55
     data[5] = 1.55
     data[9] = 2.0
-    rebinned_data = emicorr.rebin(data, [15])
-    compare_arr = np.array([1.,1.,0.55,1.,1.,1.,1.,1.,1.55,1.,1.,1.,1.,1.,2.])
+    rebinned_data = emicorr.rebin(data, (15,))
+    compare_arr = np.array(
+        [1.0, 1.0, 0.55, 1.0, 1.0, 1.0, 1.0, 1.0, 1.55, 1.0, 1.0, 1.0, 1.0, 1.0, 2.0]
+    )
     assert np.all(compare_arr == rebinned_data)
 
 
@@ -378,5 +381,11 @@ def test_rebin_same():
     data[1] = 0.55
     data[5] = 1.55
     data[9] = 2.0
-    rebinned_data = emicorr.rebin(data, [10])
+    rebinned_data = emicorr.rebin(data, (10,))
     assert np.all(data == rebinned_data)
+
+
+def test_rebin_error():
+    data = np.ones(10)
+    with pytest.raises(ValueError, match="dimensions must match"):
+        emicorr.rebin(data, (10, 10))

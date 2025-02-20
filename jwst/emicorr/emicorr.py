@@ -1,5 +1,6 @@
 import datetime
 import logging
+import warnings
 
 import numpy as np
 from scipy import interpolate
@@ -131,30 +132,21 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
     -------
     output_model : JWST data model
         input science data model which has been emi-corrected
-
-    Notes
-    -----
-    The 'sequential' algorithm was originally translated from the IDL
-    procedure 'fix_miri_emi.pro', written by E. Bergeron.  The 'joint'
-    algorithm was developed by T. Brandt.
     """
     # Get the subarray case and other info
     detector = input_model.meta.instrument.detector
     subarray = input_model.meta.subarray.name
     readpatt = input_model.meta.exposure.readpatt
-    xsize = input_model.meta.subarray.xsize   # SUBSIZE1 keyword
-    xstart = input_model.meta.subarray.xstart   # SUBSTRT1 keyword
 
     # Get the number of samples, 10us sample times per pixel (1 for fastmode, 9 for slowmode)
     nsamples = input_model.meta.exposure.nsamples
-
-    # Get the shape of the input data
-    nints, ngroups, ny, nx = np.shape(input_model.data)
 
     # Ignore emicorr model if user frequencies provided
     if onthefly_corr_freq is not None:
         emicorr_model = None
 
+    # Check algorithm against input data shape
+    ngroups = input_model.data.shape[1]
     if ngroups < 3:
         log.warning(f'EMI correction cannot be performed for ngroups={ngroups}')
         return None
@@ -167,11 +159,12 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
         algorithm = 'sequential'
 
     # Get the subarray case from either the ref file or set default values
-    freqs_numbers = []
+    freq_numbers = []
+    reference_wave_list = []
+    subname, rowclocks, frameclocks, freqs2correct = None, None, None, None
     if emicorr_model is not None:
         log.info('Using reference file to get subarray case.')
         subname, rowclocks, frameclocks, freqs2correct = get_subarcase(emicorr_model, subarray, readpatt, detector)
-        reference_wave_list = []
 
         log.info(f'With configuration: Subarray={subarray}, '
                  f'Read_pattern={readpatt}, Detector={detector}')
@@ -180,30 +173,10 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
             log.info(f'   {freqs2correct}')
 
             for freq_val in freqs2correct:
-                # For the sequential algorithm, just collect the reference wave list
+                # Collect the frequency numbers and reference wave list
                 freq, ref_wave = get_frequency_info(emicorr_model, freq_val)
-                freqs_numbers.append(freq)
+                freq_numbers.append(freq)
                 reference_wave_list.append(ref_wave)
-
-                # For the joint algorithm, use the reference wave to correct the data
-                if algorithm == 'joint':
-                    if readpatt.upper() == 'FASTR1' or readpatt.upper() == 'SLOWR1':
-                        _frameclocks = frameclocks
-                    else:
-                        _frameclocks = 0
-
-                    period_in_pixels = (1./freq) / 10.0e-6
-
-                    corrected_data = emicorr_refwave(
-                        input_model.data, input_model.pixeldq, np.array(ref_wave),
-                        nsamples, rowclocks, _frameclocks,
-                        period_in_pixels, fit_ints_separately=fit_ints_separately)
-
-                    # Data is updated in place, to be corrected iteratively
-                    input_model.data[:] = corrected_data
-            if algorithm == 'joint':
-                # All done, return the corrected model.
-                return input_model
     else:
         # if we got here, the user requested to do correction with on-the-fly reference file
         subname = subarray
@@ -215,18 +188,144 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
         if subname in subarray_clocks:
             rowclocks = subarray_clocks[subname]['rowclocks']
             frameclocks = subarray_clocks[subname]['frameclocks']
-            freqs_numbers = onthefly_corr_freq
+            freq_numbers = onthefly_corr_freq
             freqs2correct = [repr(freq) for freq in onthefly_corr_freq]
 
             log.info(f'Will correct data for the following {len(freqs2correct)} frequencies: ')
             log.info(f'   {freqs2correct}')
-        else:
-            subname, rowclocks, frameclocks, freqs2correct = None, None, None, None
 
-    if rowclocks is None or len(freqs_numbers) == 0:
-        # no subarray or read pattern match found, print to log and skip correction
+    # No subarray or read pattern match found, print to log and skip correction
+    if rowclocks is None or len(freq_numbers) == 0:
         log.warning('No correction match for this configuration')
         return None
+
+    # For the joint algorithm, use the reference wave to correct the data
+    if algorithm == 'joint':
+        output_model = _run_joint_algorithm(
+            input_model, freq_numbers, reference_wave_list,
+            nsamples, rowclocks, frameclocks,
+            fit_ints_separately=fit_ints_separately)
+    else:
+        output_model = _run_sequential_algorithm(
+            input_model, freqs2correct, freq_numbers, reference_wave_list,
+            nsamples, rowclocks, frameclocks,
+            save_onthefly_reffile=save_onthefly_reffile,
+            nints_to_phase=nints_to_phase,
+            nbins=nbins, scale_reference=scale_reference,
+            use_n_cycles=use_n_cycles)
+
+    return output_model
+
+
+def _run_joint_algorithm(input_model, freq_numbers, reference_wave_list,
+                         nsamples, rowclocks, frameclocks, fit_ints_separately=False):
+    """
+    Remove EMI noise with a joint fit to ramps and EMI signal.
+
+    Parameters
+    ----------
+    input_model : DataModel
+        Input datamodel.  Will be modified in place.
+    freq_numbers : list of float
+        Frequency values to correct.
+    reference_wave_list : list of ndarray
+        Reference waveforms.
+    nsamples : int
+        Number of samples of each pixel in each group:
+        1 for fast, 9 for slow
+    rowclocks : int
+        Extra pixel times in each row before reading out the following row
+    frameclocks : int
+        Pixel clock cycles in a reset frame
+    fit_ints_separately : bool, optional
+        Fit the integrations separately? If True, fit amplitude and phase
+        for refwave independently for each integration.  If False, fit
+        for a single amplitude and phase across all integrations.
+
+    Returns
+    -------
+    DataModel
+        The output datamodel, with noise fit and subtracted.
+    """
+    readpatt = str(input_model.meta.exposure.readpatt).upper()
+    for freq, ref_wave in zip(freq_numbers, reference_wave_list, strict=True):
+        if readpatt == 'FASTR1' or readpatt == 'SLOWR1':
+            _frameclocks = frameclocks
+        else:
+            _frameclocks = 0
+
+        period_in_pixels = (1. / freq) / 10.0e-6
+
+        corrected_data = emicorr_refwave(
+            input_model.data, input_model.pixeldq, np.array(ref_wave),
+            nsamples, rowclocks, _frameclocks,
+            period_in_pixels, fit_ints_separately=fit_ints_separately)
+
+        # Data is updated in place, to be corrected iteratively
+        input_model.data[:] = corrected_data
+
+    # Return the corrected model.
+    return input_model
+
+
+def _run_sequential_algorithm(
+        input_model, freqs2correct, freq_numbers, reference_wave_list,
+        nsamples, rowclocks, frameclocks,
+        save_onthefly_reffile=None,
+        nints_to_phase=None,
+        nbins=None, scale_reference=True,
+        use_n_cycles=3):
+    """
+    Remove EMI noise with a sequential fit to ramps and EMI signal.
+
+    Parameters
+    ----------
+    input_model : DataModel
+        Input datamodel.  Will be modified in place.
+    freqs2correct : list of str
+        Names of the frequencies to correct.
+    freq_numbers : list of float
+        Frequency values to correct.
+    reference_wave_list : list of ndarray
+        Reference waveforms.
+    nsamples : int
+        Number of samples of each pixel in each group:
+        1 for fast, 9 for slow
+    rowclocks : int
+        Extra pixel times in each row before reading out the following row
+    frameclocks : int
+        Pixel clock cycles in a reset frame
+    save_onthefly_reffile : str or None, optional
+        Full path and root name to save an on-the-fly reference file to.
+    nints_to_phase : int or None, optional
+        Number of integrations to phase, when `algorithm` is 'sequential'.
+    nbins : int or None, optional
+        Number of bins to use in one phased wave, when `algorithm` is 'sequential'.
+    scale_reference : bool, optional
+        If True and `algorithm` is 'sequential', the reference wavelength will be scaled
+        to the data's phase amplitude.
+    use_n_cycles : int, optional
+        Only use N cycles to calculate the phase to reduce code running time,
+        when `algorithm` is 'sequential'.
+
+    Returns
+    -------
+    DataModel
+        The output datamodel, with noise fit and subtracted.
+
+    Notes
+    -----
+    The 'sequential' algorithm was originally translated from the IDL
+    procedure 'fix_miri_emi.pro', written by E. Bergeron.
+    """
+
+    # Get the shape and metadata for the input data
+    nints, ngroups, ny, nx = np.shape(input_model.data)
+    xsize = input_model.meta.subarray.xsize   # SUBSIZE1 keyword
+    xstart = input_model.meta.subarray.xstart   # SUBSTRT1 keyword
+    detector = input_model.meta.instrument.detector
+    subarray = input_model.meta.subarray.name
+    readpatt = input_model.meta.exposure.readpatt
 
     # create the dictionary to store the frequencies and corresponding phase amplitudes
     if save_onthefly_reffile is not None:
@@ -237,7 +336,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
 
     # Loop over the frequencies to correct
     for fi, frequency_name in enumerate(freqs2correct):
-        frequency = freqs_numbers[fi]
+        frequency = freq_numbers[fi]
         log.info(f'Correcting for frequency: {frequency} Hz  ({fi+1} out of {len(freqs2correct)})')
 
         # Set up some variables
@@ -395,7 +494,9 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
         for nb in range(nbins):
             u = (phase_temp > nb_over_nbins[nb]) & (phase_temp <= nbp1_over_nbins[nb])
             # calculate the sigma-clipped mean
-            dmean, _, _ = scs(dd_temp[u])
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                dmean, _, _ = scs(dd_temp[u])
             pa[nb] = dmean   # amplitude in this bin
 
         pa -= np.median(pa)
@@ -414,10 +515,10 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
         # pixels long. This will be the noise amplitude look-up table.
         lut = rebin(pa, [period_in_pixels])   # shift and resample reference_wave at pa's phase
 
-        # If a reference_wave_filename was provided, use it to measure phase shift between
+        # If a reference waveform was provided, use it to measure phase shift between
         # pa (binned phased wave) from the input image vs. the reference_wave using xcorr.
         # These two methods give the same integer-reference_wave-element resolution results.
-        if emicorr_model is not None:
+        if len(reference_wave_list) > 0:
             log.info('Using reference file to measure phase shift')
             reference_wave = np.array(reference_wave_list[fi])
             reference_wave_size = np.size(reference_wave)
@@ -425,7 +526,9 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
             cc = np.zeros(reference_wave_size)
             for i in range(reference_wave_size):
                 shifted_ref_wave = np.roll(reference_wave, i)
-                pears_coeff = np.corrcoef(shifted_ref_wave, rebinned_pa)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    pears_coeff = np.corrcoef(shifted_ref_wave, rebinned_pa)
                 cc[i] = pears_coeff[0, 1]
 
             # Use the reference file (shifted to match the phase of pa,
@@ -438,7 +541,9 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
             # Scale reference wave amplitude to match the pa amplitude from this dataset by
             # fitting a line rather than taking a mean ratio so that any DC offset drops out
             # in the intercept (and to avoid potential divide-by-zeros)
-            m, b = np.polyfit(lut_reference, lut, 1)   # the slope is the amplitude ratio
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                m, b = np.polyfit(lut_reference, lut, 1)   # the slope is the amplitude ratio
 
             # check pa-to-reference_wave phase match and optional scale
             if scale_reference:
@@ -560,13 +665,10 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
     ----------
     subarray_cases : dict or model object
         Either default corrections dictionary or datamodel
-
     subarray : str
         Keyword value
-
     readpatt : str
         Keyword value
-
     detector : str
         Keyword value
 
@@ -574,11 +676,10 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
     -------
     subname : str
         Modified subarray name
-
     rowclocks : int
-
+        Row clock value.
     frameclocks : int
-
+        Frame clock value.
     frequencies : list
         List of frequencies to correct according to subarray name
     """
@@ -669,7 +770,7 @@ def rebin(arr, newshape):
     ----------
     arr : ndarray
         Array to rebin.
-    newshape : list
+    newshape : list or tuple
         New shape for the input array.
 
     Returns
