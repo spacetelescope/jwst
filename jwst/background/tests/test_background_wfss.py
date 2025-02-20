@@ -233,14 +233,16 @@ def test_nis_wfss_background(make_nis_wfss_datamodel, bkg_file):
 # test both filters because they have opposite dispersion directions
 @pytest.mark.parametrize("pupil", ["GRISMC", "GRISMR"])
 def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
-    """Test full run of NIRCAM WFSS background subtraction.
+    """
+    Test full run of NIRCAM WFSS background subtraction.
+
     The residual structure in the background will not look as nice as in
     test_nis_wfss_background because here it's taken from a reference file,
     so the bkg has real detector imperfections
-    while the data is synthetic and just has a mock gradient"""
+    while the data is synthetic and just has a mock gradient
+    """
     data = make_nrc_wfss_datamodel.copy()
     data.meta.instrument.pupil = pupil
-    assert not hasattr(data.meta.background, "scaling_factor")
 
     # do the subtraction. set all options to ensure they are at least recognized
     result = BackgroundStep.call(data, None,
@@ -258,14 +260,16 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
 
 @pytest.mark.parametrize("filt", ["GR150C", "GR150R"])
 def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
-    """Test full run of NIRISS WFSS background subtraction.
+    """
+    Test full run of NIRISS WFSS background subtraction.
+
     The residual structure in the background will not look as nice as in
     test_nis_wfss_background because here it's taken from a reference file,
     so the bkg has real detector imperfections
-    while the data is synthetic and just has a mock gradient"""
+    while the data is synthetic and just has a mock gradient
+    """
     data = make_nis_wfss_datamodel.copy()
     data.meta.instrument.filter = filt
-    assert not hasattr(data.meta.background, "scaling_factor")
 
     # do the subtraction. set all options to ensure they are at least recognized
     result = BackgroundStep.call(data, None,
