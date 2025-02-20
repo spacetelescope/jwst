@@ -32,8 +32,8 @@ class EmiCorrStep(Step):
 
     def process(self, step_input):
 
-        # Open the input data model
-        with datamodels.open(step_input) as input_model:
+        # Open the input data model as a RampModel
+        with datamodels.RampModel(step_input) as input_model:
 
             # Catch the cases to skip
             instrument = input_model.meta.instrument.name
@@ -86,15 +86,12 @@ class EmiCorrStep(Step):
                 emicorr_model = datamodels.EmiModel(self.user_supplied_reffile)
 
             # Do the correction
+            save_onthefly_reffile = None
             if self.save_intermediate_results:
                 if emicorr_ref_filename is None and self.user_supplied_reffile is None:
                     # get the same full path as input file to save the on-the-fly reference file
                     emicorr_ref_filename = Step._make_output_path(self, suffix='emi_ref_waves')
                     save_onthefly_reffile = emicorr_ref_filename
-                else:
-                    save_onthefly_reffile = None
-            else:
-                save_onthefly_reffile = None
             emicorr_output = emicorr.apply_emicorr(
                 result, emicorr_model, save_onthefly_reffile=save_onthefly_reffile, **pars)
             if emicorr_output is None:
