@@ -27,18 +27,18 @@ def emicorr_model():
         }
     }
     frequencies = {
-            "Hz390": {"frequency": 390.625, "phase_amplitudes": np.ones(20) + 0.1},
-            "Hz10": {"frequency": 10.039216, "phase_amplitudes": np.ones(20) + 0.5},
-        }
+        "Hz390": {"frequency": 390.625, "phase_amplitudes": np.ones(20) + 0.1},
+        "Hz10": {"frequency": 10.039216, "phase_amplitudes": np.ones(20) + 0.5},
+    }
 
     emi_model = EmiModel()
     emi_model.frequencies = frequencies
     emi_model.subarray_cases = subarray_example_case
 
-    emi_model.meta.reftype = 'emicorr'
-    emi_model.meta.author = 'JWST calibration pipeline'
-    emi_model.meta.description = 'EMI correction file'
-    emi_model.meta.pedigree = 'GROUND'
+    emi_model.meta.reftype = "emicorr"
+    emi_model.meta.author = "JWST calibration pipeline"
+    emi_model.meta.description = "EMI correction file"
+    emi_model.meta.pedigree = "GROUND"
     emi_model.meta.useafter = "2024-01-01T00:00:00"
 
     return emi_model
@@ -61,7 +61,7 @@ def mk_data_mdl(data, subarray, readpatt, detector):
 
 
 @pytest.fixture
-def log_watcher(monkeypatch):
+def module_log_watcher(monkeypatch):
     # Set a log watcher to check for a log message at any level
     # in the emicorr module
     watcher = LogWatcher("")
@@ -130,10 +130,10 @@ def test_emicorrstep_skip_no_reffile(monkeypatch, step_log_watcher):
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
     # mock no reference file found
-    monkeypatch.setattr(emicorr_step.EmiCorrStep, 'get_reference_file', lambda *args: 'N/A')
+    monkeypatch.setattr(emicorr_step.EmiCorrStep, "get_reference_file", lambda *args: "N/A")
     step = emicorr_step.EmiCorrStep()
 
-    step_log_watcher.message = 'No reference file'
+    step_log_watcher.message = "No reference file"
     result = step.call(input_model, skip=False)
     step_log_watcher.assert_seen()
 
@@ -147,14 +147,28 @@ def test_emicorrstep_skip_for_failure(monkeypatch, step_log_watcher):
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
     # mock a failure internal to the correction algorithm
-    monkeypatch.setattr(emicorr, 'apply_emicorr', lambda *args, **kwargs: None)
+    monkeypatch.setattr(emicorr, "apply_emicorr", lambda *args, **kwargs: None)
     step = emicorr_step.EmiCorrStep()
 
-    step_log_watcher.message = 'Step skipped'
+    step_log_watcher.message = "Step skipped"
     result = step.call(input_model, skip=False)
     step_log_watcher.assert_seen()
 
     # expect no change because step is skipped
+    assert np.all(input_model.data == result.data)
+    assert result.meta.cal_step.emicorr == "SKIPPED"
+
+
+def test_emicorrstep_skip_for_small_groups(module_log_watcher):
+    data = np.ones((1, 2, 20, 20))
+    input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
+
+    module_log_watcher.message = "cannot be performed for ngroups=2"
+    step = emicorr_step.EmiCorrStep()
+    result = step.call(input_model, skip=False)
+    module_log_watcher.assert_seen()
+
+    # step is skipped
     assert np.all(input_model.data == result.data)
     assert result.meta.cal_step.emicorr == "SKIPPED"
 
@@ -174,26 +188,31 @@ def test_emicorrstep_succeeds():
 def test_emicorrstep_user_freq(tmp_path):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
-    input_model.meta.filename = 'test.fits'
+    input_model.meta.filename = "test.fits"
 
     corr_freq = [218.3]
     step = emicorr_step.EmiCorrStep()
-    result = step.call(input_model, skip=False, onthefly_corr_freq=corr_freq,
-                       save_intermediate_results=True, output_dir=str(tmp_path))
+    result = step.call(
+        input_model,
+        skip=False,
+        onthefly_corr_freq=corr_freq,
+        save_intermediate_results=True,
+        output_dir=str(tmp_path),
+    )
 
     # step completes but we expect no change for flat data
     assert np.all(input_model.data == result.data)
     assert result.meta.cal_step.emicorr == "COMPLETE"
 
     # on-the-fly reference file is saved
-    assert (tmp_path / 'test_emi_ref_waves.asdf').exists()
+    assert (tmp_path / "test_emi_ref_waves.asdf").exists()
 
 
 def test_emicorrstep_user_reffile(tmp_path, emicorr_model):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
-    model_name = str(tmp_path / 'emicorr.asdf')
+    model_name = str(tmp_path / "emicorr.asdf")
     emicorr_model.save(model_name)
 
     step = emicorr_step.EmiCorrStep()
@@ -231,7 +250,9 @@ def test_apply_emicorr(data_case, algorithm, emicorr_model):
 @pytest.mark.parametrize("algorithm", ["sequential", "joint"])
 @pytest.mark.parametrize("model_placeholder", ["bad_model", None])
 @pytest.mark.parametrize("output_ext", ["fits", "asdf"])
-def test_apply_emicorr_with_freq(tmp_path, algorithm, log_watcher, model_placeholder, output_ext):
+def test_apply_emicorr_with_freq(
+    tmp_path, algorithm, module_log_watcher, model_placeholder, output_ext
+):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
@@ -240,7 +261,7 @@ def test_apply_emicorr_with_freq(tmp_path, algorithm, log_watcher, model_placeho
     output_name = tmp_path / f"otf_reffile.{output_ext}"
     expected_output_name = tmp_path / "otf_reffile.asdf"
 
-    log_watcher.message = "'joint' algorithm cannot be used"
+    module_log_watcher.message = "'joint' algorithm cannot be used"
 
     # emicorr model is ignored if user frequencies are provided - any placeholder will work
     outmdl = emicorr.apply_emicorr(
@@ -259,9 +280,9 @@ def test_apply_emicorr_with_freq(tmp_path, algorithm, log_watcher, model_placeho
 
     # joint model should warn and fall back to sequential for user frequencies
     if algorithm == "joint":
-        log_watcher.assert_seen()
+        module_log_watcher.assert_seen()
     else:
-        log_watcher.assert_not_seen()
+        module_log_watcher.assert_not_seen()
 
     # reference file is saved to an asdf file
     assert expected_output_name.exists()
@@ -291,14 +312,48 @@ def test_sloper():
     assert np.all(compare_intercept == intercept)
 
 
-def test_minmed():
+def test_minmed_ones():
     data = np.ones((5, 5, 5))
     compare_arr = data.copy()
     medimg = emicorr.minmed(data)
     assert np.all(compare_arr == medimg)
 
 
-def test_rebin():
+def test_minmed_2_arrays():
+    shape = (5, 5)
+    data = np.array([np.full(shape, 0.5), np.full(shape, 0.2)])
+
+    # takes the minimum for two arrays
+    medimg = emicorr.minmed(data)
+    assert np.all(medimg == 0.2)
+
+
+def test_minmed_3_arrays():
+    shape = (5, 5)
+    data = np.array([np.full(shape, 0.5), np.full(shape, 0.3), np.full(shape, 0.2)])
+
+    # takes the median for >2 arrays
+    medimg = emicorr.minmed(data)
+    assert np.all(medimg == 0.3)
+
+
+def test_minmed_ignore_nans():
+    shape = (5, 5)
+    data = np.array([np.full(shape, 0.5), np.full(shape, 0.3), np.full(shape, 0.2)])
+    data[0, 0, 0] = np.nan
+    data[1, 0, 1] = np.nan
+    data[2, 0, 2] = np.nan
+
+    # takes the median for >2 arrays, ignores NaNs
+    medimg = emicorr.minmed(data)
+
+    assert medimg[0, 0] == 0.25
+    assert medimg[0, 1] == 0.35
+    assert medimg[0, 2] == 0.4
+    assert np.all(medimg.flat[3:] == 0.3)
+
+
+def test_rebin_shrink():
     data = np.ones(10)
     data[1] = 0.55
     data[5] = 1.55
@@ -306,3 +361,22 @@ def test_rebin():
     rebinned_data = emicorr.rebin(data, [7])
     compare_arr = np.array([1.0, 0.55, 1.0, 1.0, 1.55, 1.0, 1.0])
     assert np.all(compare_arr == rebinned_data)
+
+
+def test_rebin_grow():
+    data = np.ones(10)
+    data[1] = 0.55
+    data[5] = 1.55
+    data[9] = 2.0
+    rebinned_data = emicorr.rebin(data, [15])
+    compare_arr = np.array([1.,1.,0.55,1.,1.,1.,1.,1.,1.55,1.,1.,1.,1.,1.,2.])
+    assert np.all(compare_arr == rebinned_data)
+
+
+def test_rebin_same():
+    data = np.ones(10)
+    data[1] = 0.55
+    data[5] = 1.55
+    data[9] = 2.0
+    rebinned_data = emicorr.rebin(data, [10])
+    assert np.all(data == rebinned_data)
