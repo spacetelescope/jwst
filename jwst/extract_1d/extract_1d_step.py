@@ -201,7 +201,7 @@ class Extract1dStep(Step):
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
-    ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
+    ifu_rfcorr = boolean(default=True) # Apply 1d residual fringe correction
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
@@ -366,9 +366,8 @@ class Extract1dStep(Step):
 
         if exp_type == 'MIR_MRS':
             band_cube = self._check_mrs_type(model)
-            print('Result of band_cube')
             if self.ifu_rfcorr and  not band_cube:
-                print('Turning off rf correction')
+                self.log.info(f"Turning off residual fringe correction because the input is not a single IFU band")
                 self.ifu_rfcorr = False
 
         result = ifu_extract1d(
