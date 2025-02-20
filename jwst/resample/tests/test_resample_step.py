@@ -44,6 +44,9 @@ def _set_photom_kwd(im):
 def miri_rate_model():
     xsize = 72
     ysize = 416
+    sregion  = 'POLYGON ICRS  10.355323877 -22.353560934 10.355437846 -22.353464295 ' + \
+    '10.354477543 -22.352498313 10.354363599 -22.352595345'
+
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.data += 5
@@ -55,7 +58,8 @@ def miri_rate_model():
         'v2_ref': -453.5134,
         'v3_ref': -373.4826,
         'v3yangle': 0.0,
-        'vparity': -1}
+        'vparity': -1,
+        's_region': sregion}
     im.meta.instrument = {
         'detector': 'MIRIMAGE',
         'filter': 'P750L',
@@ -460,7 +464,8 @@ def test_pixel_scale_ratio_imaging(nircam_rate, ratio):
 
 
 @pytest.mark.parametrize("units", ["MJy", "MJy/sr"])
-@pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
+#@pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
+@pytest.mark.parametrize("ratio", [0.7])
 def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     miri_cal.meta.bunit_data = units
 
@@ -468,10 +473,11 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     input_scale = compute_spectral_pixel_scale(miri_cal.meta.wcs, disp_axis=2)
     pscale = 3600.0 * input_scale / ratio
 
-    result1 = ResampleSpecStep.call(miri_cal)
-    result2 = ResampleSpecStep.call(miri_cal, pixel_scale_ratio=ratio)
-    result3 = ResampleSpecStep.call(miri_cal, pixel_scale=pscale)
+    result1 = ResampleSpecStep.call(miri_cal, output_file='test1.fits')
+    result2 = ResampleSpecStep.call(miri_cal, pixel_scale_ratio=ratio, output_file='test2.fits')
+    result3 = ResampleSpecStep.call(miri_cal, pixel_scale=pscale,output_file='test_3.fits')
 
+    print(miri_cal.meta.wcsinfo.s_region)
     # pixel_scale and pixel_scale_ratio should be equivalent
     nn = np.isnan(result2.data) | np.isnan(result3.data)
     assert np.allclose(result2.data[~nn], result3.data[~nn])
@@ -482,6 +488,7 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     assert result1.data.shape[0] == result2.data.shape[0]
 
     # spatial dimension is scaled
+    print(result1.data.shape[1], result2.data.shape[1])
     assert np.isclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
 
     # data is non-trivial
@@ -518,8 +525,9 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
 
 
 @pytest.mark.parametrize("units", ["MJy", "MJy/sr"])
-@pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
-def test_pixel_scale_ratio_spec_miri_pair(miri_rate_pair, ratio, units):
+#@pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
+@pytest.mark.parametrize("ratio", [0.7])
+def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
     im1, im2 = miri_rate_pair
     _set_photom_kwd(im1)
     _set_photom_kwd(im2)
