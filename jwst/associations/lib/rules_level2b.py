@@ -20,6 +20,7 @@ from jwst.associations.lib.rules_level2_base import (
     AsnMixin_Lv2Image,
     AsnMixin_Lv2Spectral,
     AsnMixin_Lv2Nod,
+    AsnMixin_Lv2Imprint,
     AsnMixin_Lv2Special,
     DMSLevel2bBase,
     DMSAttrConstraint,
@@ -293,6 +294,7 @@ class Asn_Lv2FGS(
 @RegistryMarker.rule
 class Asn_Lv2Spec(
         AsnMixin_Lv2Spectral,
+        AsnMixin_Lv2Imprint,
         DMSLevel2bBase
 ):
     """Level2b Science Spectral Association
@@ -318,7 +320,7 @@ class Asn_Lv2Spec(
             Constraint(
                 [
                     #  Allow either any background, or ensure imprint and science members
-                    #  match on mosaic tile number and dither pointing position.
+                    #  match on mosaic tile number
                     Constraint_Background(),
                     Constraint(
                         [
@@ -333,10 +335,6 @@ class Asn_Lv2Spec(
                                 name='mostilno',
                                 sources=['mostilno']
                             ),
-                            DMSAttrConstraint(
-                                name='dithptin',
-                                sources=['dithptin']
-                            )
                         ],
                         reduce=Constraint.all
                     ),
@@ -407,6 +405,7 @@ class Asn_Lv2SpecImprint(
 class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Spectral,
+        AsnMixin_Lv2Imprint,
         DMSLevel2bBase
 ):
     """Level2b Auxiliary Science Spectral Association
@@ -989,6 +988,7 @@ class Asn_Lv2NRSFSS(
 
 @RegistryMarker.rule
 class Asn_Lv2NRSIFUNod(
+        AsnMixin_Lv2Imprint,
         AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
