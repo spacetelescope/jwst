@@ -578,7 +578,6 @@ class ResampleSpec(ResampleImage):
         all_dec_slit = []
         xstop = 0
 
-        #sregion_list = []
         all_wcs = [m.meta.wcs for m in input_models]
         for im, model in enumerate(input_models):
             wcs = model.meta.wcs
@@ -767,9 +766,9 @@ class ResampleSpec(ResampleImage):
         slope_sign_x = np.sign(pix_to_xtan.slope)
 
         if swap_xy:
-            ny = int(np.ceil(diff_y / pix_to_tan_slope_y)) + 1
+            ny = int(np.ceil(diff_y / pix_to_tan_slope_y))# + 1
         else:
-            ny = int(np.ceil(diff_x / pix_to_tan_slope_x)) + 1
+            ny = int(np.ceil(diff_x / pix_to_tan_slope_x))# + 1
 
         offset_y  = (ny)/2 * pix_to_tan_slope_y
         offset_x  = (ny)/2 * pix_to_tan_slope_x
