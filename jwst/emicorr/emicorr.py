@@ -1,6 +1,8 @@
+import datetime
+import logging
+
 import numpy as np
 from scipy import interpolate
-import logging
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
 
@@ -96,7 +98,7 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
         Input science data model to be EMI-corrected.
-    emicorr_model : `~jwst.datamodels.EmiModel`
+    emicorr_model : `~jwst.datamodels.EmiModel` or None
         Data model containing EMI correction.
     save_onthefly_reffile : str or None, optional
         Full path and root name to save an on-the-fly reference file to.
@@ -117,7 +119,8 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
         to the data's phase amplitude.
     onthefly_corr_freq : list of float or None, optional
         Frequency values to use to create a correction on-the-fly, when
-        `algorithm` is 'sequential'.
+        `algorithm` is 'sequential'.  If provided, any input `emicorr_model` is
+        ignored.
     use_n_cycles : int, optional
         Only use N cycles to calculate the phase to reduce code running time,
         when `algorithm` is 'sequential'.
@@ -147,6 +150,10 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
 
     # Get the shape of the input data
     nints, ngroups, ny, nx = np.shape(input_model.data)
+
+    # Ignore emicorr model if user frequencies provided
+    if onthefly_corr_freq is not None:
+        emicorr_model = None
 
     if ngroups < 3:
         log.warning(f'EMI correction cannot be performed for ngroups={ngroups}')
@@ -694,20 +701,29 @@ def mk_reffile(freq_pa_dict, emicorr_ref_filename):
 
     Parameters
     ----------
-    freq_pa_dict : dictionary
+    freq_pa_dict : dict
         Dictionary containing the phase amplitude (pa) array
         corresponding to the appropriate frequency
-
     emicorr_ref_filename : str
         Full path and root name of on-the-fly reference file
     """
-    # save the reference file if desired
-    emicorr_model = datamodels.EmiModel(freq_pa_dict)
-    if 'fits' in emicorr_ref_filename:
-        emicorr_ref_filename = emicorr_ref_filename.replace('fits', 'asdf')
+    # Save the reference file if desired
+    emicorr_model = datamodels.EmiModel()
+    emicorr_model.frequencies = freq_pa_dict['frequencies']
+    emicorr_model.subarray_cases = freq_pa_dict['subarray_cases']
+
+    # Add some placeholder values required for validation
+    emicorr_model.meta.reftype = 'emicorr'
+    emicorr_model.meta.author = 'JWST calibration pipeline'
+    emicorr_model.meta.description = 'EMI correction file'
+    emicorr_model.meta.pedigree = 'GROUND'
+    emicorr_model.meta.useafter = datetime.datetime.now(datetime.UTC).strftime("%Y-%m-%dT%H:%M:%S")
+
+    if emicorr_ref_filename.endswith('.fits'):
+        emicorr_ref_filename = emicorr_ref_filename.replace('.fits', '.asdf')
+    log.info(f'Writing on-the-fly reference file to: {emicorr_ref_filename}')
     emicorr_model.save(emicorr_ref_filename)
     emicorr_model.close()
-    log.info('On-the-fly reference file written as: %s', emicorr_ref_filename)
 
 
 def emicorr_refwave(data, pdq, refwave, nsamples, rowclocks, frameclocks,
@@ -902,7 +918,11 @@ def get_best_phase(phases, chisq):
         to the three points centered on the input phase with the
         lowest chisq.
     """
-    ibest = np.argmin(chisq)
+    if np.all(~np.isfinite(chisq)):
+        log.warning('Chi squared values are all NaN')
+        return phases[0]
+
+    ibest = np.nanargmin(chisq)
 
     # If ibest is zero, ibest_m1 will give the final element.
     ibest_m1 = ibest - 1
@@ -918,7 +938,7 @@ def get_best_phase(phases, chisq):
 
     # Just in case all of these chi squared values are equal
     # (in which case fitting a parabola would give a=0)
-    if np.std(chisq_opt) == 0:
+    if np.nanstd(chisq_opt) == 0:
         log.warning('Chi squared values as a function of phase offset are '
                     'unexpectedly equal in EMIcorr')
         return phases[ibest]
@@ -931,7 +951,7 @@ def get_best_phase(phases, chisq):
 
 def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
     """
-    Compute chi2 and amplitude of EMI waveform at phase(s)
+    Compute chi2 and amplitude of EMI waveform at phase(s).
 
     This routine has the math from the writeup in it; see that for the
     definitions and derivations.
@@ -954,25 +974,24 @@ def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
     chisq : list of float
         best chi squared value for each phase used. Will be the same
         length as phases (or emifitter.phaselist, if phases is None).
-
     amplitudes : list of float
-        best-fit ampltiudes for each phase used. Will be the same
+        best-fit amplitudes for each phase used. Will be the same
         length as phases (or emifitter.phaselist, if phases is None).
     """
 
-    E = emifitter  # Alias to simplify subsequent references
+    ef = emifitter  # Alias to simplify subsequent references
 
     # By default, compute a single phase and amplitudes over all
     # integrations.
 
     if ints is None:
-        ints = np.arange(E.nints)
+        ints = np.arange(ef.nints)
 
     # By default, calculate chi squared and the best-fit amplitude
     # for every phase in the input EMIfitter's phaselist.
 
     if phases is None:
-        phases = E.phaselist
+        phases = ef.phaselist
 
     chisq = []
     amplitudes = []
@@ -986,38 +1005,41 @@ def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
 
         for i in ints:
 
-            y = E.all_y[i]
-            N = E.all_N[i]
-            Sy = E.all_Sy[i]
-            Sty = E.all_Sty[i]
+            y = ef.all_y[i]
+            N = ef.all_N[i]
+            Sy = ef.all_Sy[i]
+            Sty = ef.all_Sty[i]
 
             # Phase difference between the start of this integration
             # and the start of the first integration
 
-            phase_diff = E.dphase_frame*i
+            phase_diff = ef.dphase_frame*i
 
             # Choose the closest phase in emifitter's phaselist
 
-            k = np.argmin(np.abs((E.phaselist - phase - phase_diff)%1))
+            k = np.argmin(np.abs((ef.phaselist - phase - phase_diff)%1))
 
-            z = E.zlist[k]
-            Stz = E.Stzlist[k]
-            Sz = E.Szlist[k]
-            Szz = E.Szzlist[k]
+            z = ef.zlist[k]
+            Stz = ef.Stzlist[k]
+            Sz = ef.Szlist[k]
+            Szz = ef.Szzlist[k]
             Syz = np.sum(z * y, axis=1)
 
-            A += np.sum(N / E.Delta*(-E.Stt * Sz**2 + 2 * E.St * Sz * Stz
-                                     - E.ngroups * Stz**2 + Szz * E.Delta))
-            B += (2 / E.Delta)*np.sum(E.Stt * Sz * Sy - E.St * Stz * Sy
-                                      - E.St * Sz * Sty + E.ngroups * Stz * Sty)
+            A += np.sum(N / ef.Delta*(-ef.Stt * Sz**2 + 2 * ef.St * Sz * Stz
+                                      - ef.ngroups * Stz**2 + Szz * ef.Delta))
+            B += (2 / ef.Delta)*np.sum(ef.Stt * Sz * Sy - ef.St * Stz * Sy
+                                       - ef.St * Sz * Sty + ef.ngroups * Stz * Sty)
             B -= 2 * np.sum(Syz)
 
-        c = -B / (2 * A)
-        chisq += [A * c**2 + B * c]
-        amplitudes += [c]
+        if A == 0 or ~np.isfinite(A) or ~np.isfinite(B):
+            chisq.append(np.nan)
+            amplitudes.append(0.0)
+        else:
+            c = -B / (2 * A)
+            chisq.append(A * c**2 + B * c)
+            amplitudes.append(c)
 
     return chisq, amplitudes
-
 
 
 class EMIfitter:
