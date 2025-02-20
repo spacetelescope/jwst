@@ -1,14 +1,15 @@
-import os
 import sys
 import argparse
+from pathlib import Path
 
 from stdatamodels.jwst.datamodels import MultiSlitModel
 
 from jwst.exp_to_source import exp_to_source
 
 
-class Main():
-    """Convert exposure-based slits data to source-based data
+class Main:
+    """Convert exposure-based slits data to source-based data.
+
     Docs from the source.
 
     Parameters
@@ -65,7 +66,7 @@ class Main():
         if not parsed.dry_run:
             for source in self.sources:
                 out_path = '.'.join([source, 'fits'])
-                out_path = os.path.join(parsed.output_path, out_path)
+                out_path = Path(parsed.output_path) / out_path
                 self.sources[source].save(out_path)
 
 
