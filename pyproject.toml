@@ -34,7 +34,7 @@ dependencies = [
     "scikit-image>=0.20.0",
     "scipy>=1.14.1",
     "spherical-geometry>=1.2.22",
-    "stdatamodels @ git+https://github.com/emolter/stdatamodels.git@main",
+    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     "stpipe>=0.8.0,<0.9.0",
     "stsci.imagestats>=1.6.3",
