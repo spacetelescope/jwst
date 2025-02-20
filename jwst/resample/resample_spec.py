@@ -766,9 +766,9 @@ class ResampleSpec(ResampleImage):
         slope_sign_x = np.sign(pix_to_xtan.slope)
 
         if swap_xy:
-            ny = int(np.ceil(diff_y / pix_to_tan_slope_y))# + 1
+            ny = int(np.ceil(diff_y / pix_to_tan_slope_y))
         else:
-            ny = int(np.ceil(diff_x / pix_to_tan_slope_x))# + 1
+            ny = int(np.ceil(diff_x / pix_to_tan_slope_x))
 
         offset_y  = (ny)/2 * pix_to_tan_slope_y
         offset_x  = (ny)/2 * pix_to_tan_slope_x
