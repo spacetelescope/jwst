@@ -12,4 +12,4 @@ def t_path(partial_path):
 
 
 # Calculate some extra constants
-INPUT_FILES = t_path(INPUT_FILES_GLOB).glob()
+INPUT_FILES = list(t_path(INPUT_FILES_GLOB).glob("*"))
