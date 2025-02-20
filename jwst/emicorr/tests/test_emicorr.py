@@ -1,13 +1,13 @@
-"""
+"""Unit tests for EMI correction."""
 
-Unit tests for EMI correction
-
-"""
-
+import logging
 
 import numpy as np
-from jwst.emicorr import emicorr, emicorr_step
+import pytest
 from stdatamodels.jwst.datamodels import RampModel, EmiModel
+
+from jwst.emicorr import emicorr, emicorr_step
+from jwst.tests.helpers import LogWatcher
 
 
 subarray_example_case = {
@@ -45,6 +45,17 @@ def mk_data_mdl(data, subarray, readpatt, detector):
     return input_model
 
 
+@pytest.fixture
+def log_watcher(monkeypatch):
+    # Set a log watcher to check for a log message at any level
+    # in the emicorr module
+    watcher = LogWatcher('')
+    logger = logging.getLogger('jwst.emicorr.emicorr')
+    for level in ['debug', 'info', 'warning', 'error']:
+        monkeypatch.setattr(logger, level, watcher)
+    return watcher
+
+
 def test_emicorrstep():
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
@@ -60,8 +71,13 @@ def test_emicorrstep():
     assert expected_outmdl.data.all() == nir_result.data.all()
 
 
-def test_apply_emicorr():
+@pytest.mark.parametrize('data_case', ['flat', 'linear'])
+@pytest.mark.parametrize('algorithm', ['sequential', 'joint'])
+def test_apply_emicorr(data_case, algorithm):
     data = np.ones((1, 5, 20, 20))
+    if data_case == 'linear':
+        linear_ramp = np.arange(1, 6, dtype=float)
+        data[0, :, ...] = linear_ramp[:, None, None]
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     pars = {
         'save_onthefly_reffile': None,
@@ -69,33 +85,52 @@ def test_apply_emicorr():
         'nbins': None,
         'scale_reference': True,
         'onthefly_corr_freq': None,
-        'use_n_cycles': None
+        'use_n_cycles': None,
+        'algorithm': algorithm
     }
-    outmdl = emicorr.apply_emicorr(input_model, emicorr_model, **pars)
+    outmdl = emicorr.apply_emicorr(input_model.copy(), emicorr_model, **pars)
+    assert isinstance(outmdl, RampModel)
 
-    assert outmdl is not None
+    # flat or linear ramp data shows no correction
+    assert np.allclose(outmdl.data, input_model.data)
 
 
-def test_apply_emicorr_with_freq():
+@pytest.mark.parametrize('algorithm', ['sequential', 'joint'])
+@pytest.mark.parametrize('emicorr_model', ['bad_model', None])
+@pytest.mark.parametrize('output_ext', ['fits', 'asdf'])
+def test_apply_emicorr_with_freq(tmp_path, algorithm, log_watcher, emicorr_model, output_ext):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
-    emicorr_model, onthefly_corr_freq, save_onthefly_reffile = None, [218.3], None
-    outmdl = emicorr.apply_emicorr(
-        input_model, emicorr_model, onthefly_corr_freq=onthefly_corr_freq,
-        save_onthefly_reffile=save_onthefly_reffile, nints_to_phase=None,
-        nbins=None, scale_reference=True)
 
-    assert outmdl is not None
+    # emicorr_model is ignored if user frequencies are provided
+    onthefly_corr_freq = [218.3]
+
+    output_name = tmp_path / f'otf_reffile.{output_ext}'
+    expected_output_name = tmp_path / 'otf_reffile.asdf'
+
+    log_watcher.message = "'joint' algorithm cannot be used"
+    outmdl = emicorr.apply_emicorr(
+        input_model.copy(), emicorr_model, onthefly_corr_freq=onthefly_corr_freq,
+        save_onthefly_reffile=str(output_name), nints_to_phase=None,
+        nbins=None, scale_reference=True, algorithm=algorithm)
+
+    # flat data has no correction
+    assert np.allclose(outmdl.data, input_model.data)
+
+    # joint model should warn and fall back to sequential for user frequencies
+    if algorithm == 'joint':
+        log_watcher.assert_seen()
+    else:
+        log_watcher.assert_not_seen()
+
+    # reference file is saved to an asdf file
+    assert expected_output_name.exists()
 
 
 def test_get_subarcase():
     subarray, readpatt, detector = 'MASK1550', 'FAST', 'MIRIMAGE'
     subarray_info_r = emicorr.get_subarcase(emicorr_model, subarray, readpatt, detector)
     subname_r, rowclocks_r, frameclocks_r, freqs2correct_r = subarray_info_r
-
-    # set up a fake configuration
-    subarray_info_f = emicorr.get_subarcase(emicorr_model, 'FULL', 'kkkkk', detector)
-    subname_f, rowclocks_f, frameclocks_f, freqs2correct_f = subarray_info_f
 
     # test if we get the right configuration
     compare_real = ['MASK1550', 82, 23968, ["Hz390", "Hz10"]]
@@ -112,7 +147,6 @@ def test_sloper():
     outarray, intercept = emicorr.sloper(data)
 
     compare_arr, compare_intercept = np.zeros((5, 5)), np.ones((5, 5))
-
     assert compare_arr.all() == outarray.all()
     assert compare_intercept.all() == intercept.all()
 
@@ -120,9 +154,7 @@ def test_sloper():
 def test_minmed():
     data = np.ones((5, 5, 5))
     compare_arr = data.copy()
-
     medimg = emicorr.minmed(data)
-
     assert compare_arr.all() == medimg.all()
 
 
@@ -132,7 +164,5 @@ def test_rebin():
     data[5] = 1.55
     data[9] = 2.0
     rebinned_data = emicorr.rebin(data, [7])
-
     compare_arr = np.array([1., 0.55, 1., 1., 1.55, 1., 1.])
-
     assert compare_arr.all() == rebinned_data.all()
