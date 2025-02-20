@@ -369,6 +369,10 @@ class Extract1dStep(Step):
             if self.ifu_rfcorr and  not band_cube:
                 self.log.info("Turning off residual fringe correction because the input is not a single IFU band")
                 self.ifu_rfcorr = False
+        else:
+            self.ifu_rfcorr = False
+            self.log.info("Turning off residual fringe correction because it only works on MIRI MRS data")
+
 
         result = ifu_extract1d(
             model, extract_ref, source_type, self.subtract_background,
