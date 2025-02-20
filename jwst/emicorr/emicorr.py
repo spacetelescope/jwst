@@ -179,9 +179,9 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
             log.info(f'Will correct data for the following {len(freqs2correct)} frequencies: ')
             log.info(f'   {freqs2correct}')
 
-            for fnme in freqs2correct:
+            for freq_val in freqs2correct:
                 # For the sequential algorithm, just collect the reference wave list
-                freq, ref_wave = get_frequency_info(emicorr_model, fnme)
+                freq, ref_wave = get_frequency_info(emicorr_model, freq_val)
                 freqs_numbers.append(freq)
                 reference_wave_list.append(ref_wave)
 
@@ -529,40 +529,27 @@ def sloper(data):
     return outarray, intercept
 
 
-def minmed(data, minval=False, avgval=False, maxval=False):
-    """ Returns the median image of a stack of images, or if there are 2 or less
-    non-zero frames, returns the minimum (or this minimum can be forced).
+def minmed(data):
+    """
+    Calculate the median image from a stack of images.
+
+    If there are 2 or fewer frames, the minimum image is computed
+    instead of the median.
 
     Parameters
     ----------
-    data : numpy array
-        3-D integration data array
-
-    minval : bool
-        Returned image will be the minimum
-
-    avgval : bool
-        Returned image will be the mean
-
-    maxval : bool
-        Returned image will be the maximum
+    data : ndarray
+        3D data array, to be stacked along the first axis.
 
     Returns
     -------
-    medimg : numpy array
-        Median image of a stack of images
+    medimg : ndarray
+        2D median or minimum image.
     """
-
-    n = data.size
-    if n > 0:
-        if n <= 2 or minval:
-            medimg = np.nanmin(data, axis=0)
-        if maxval:
-            medimg = np.nanmax(data, axis=0)
-        if not minval and not maxval and not avgval:
-            medimg = np.nanmedian(data, axis=0)
-        if avgval:
-            medimg = np.nanmean(data, axis=0)
+    if data.shape[0] <= 2:
+        medimg = np.nanmin(data, axis=0)
+    else:
+        medimg = np.nanmedian(data, axis=0)
     return medimg
 
 
@@ -671,27 +658,41 @@ def get_frequency_info(freqs_names_vals, frequency_name):
 
 
 def rebin(arr, newshape):
-    """Rebin an array to a new shape.
+    """
+    Rebin an array to a new shape.
+
+    Rebinned values are taken from the input at nearest-neighbor indices.
+    No interpolation is performed.  If a value falls between two input
+    pixels, the smaller index value is used.
 
     Parameters
     ----------
-    arr : numpy array
-        array to rebin
-
+    arr : ndarray
+        Array to rebin.
     newshape : list
-        New shape for the input array
+        New shape for the input array.
 
     Returns
     -------
-    arr : numpy array
-        rebinned array
+    arr : ndarray
+        Rebinned array.
+
+    Notes
+    -----
+    The intent for this function is to replicate the behavior of the
+    IDL function `congrid`, without the /INTERP flag.
     """
-    assert len(arr.shape) == len(newshape)
+    if len(arr.shape) != len(newshape):
+        raise ValueError("New shape dimensions must match old shape")
 
-    slices = [ slice(0,old, float(old)/new) for old,new in zip(arr.shape,newshape) ]
+    # get coordinates for old values in the new array
+    slices = [slice(0, old, float(old)/new) for old, new in zip(arr.shape, newshape)]
     coordinates = np.mgrid[slices]
-    indices = coordinates.astype('i')   # choose the biggest smaller integer index
 
+    # take the nearest smaller integer value (truncate to an integer index)
+    indices = coordinates.astype('i')
+
+    # take elements from the array at the specified indices
     return arr[tuple(indices)]
 
 
