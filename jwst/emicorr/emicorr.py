@@ -164,7 +164,8 @@ def apply_emicorr(input_model, emicorr_model, save_onthefly_reffile=None,
     subname, rowclocks, frameclocks, freqs2correct = None, None, None, None
     if emicorr_model is not None:
         log.info('Using reference file to get subarray case.')
-        subname, rowclocks, frameclocks, freqs2correct = get_subarcase(emicorr_model, subarray, readpatt, detector)
+        subname, rowclocks, frameclocks, freqs2correct = get_subarcase(
+            emicorr_model, subarray, readpatt, detector)
 
         log.info(f'With configuration: Subarray={subarray}, '
                  f'Read_pattern={readpatt}, Detector={detector}')
@@ -658,13 +659,17 @@ def minmed(data):
     return medimg
 
 
-def get_subarcase(subarray_cases, subarray, readpatt, detector):
-    """ Get the rowclocks and frameclocks values for the given configuration.
+def get_subarcase(emi_model, subarray, readpatt, detector):
+    """
+    Get the rowclocks and frameclocks values for the given configuration.
+
+    If no match is found for the configuration, None will be returned
+    for all values.
 
     Parameters
     ----------
-    subarray_cases : dict or model object
-        Either default corrections dictionary or datamodel
+    emi_model : EmiModel
+        EMI datamodel containing subarray_cases.
     subarray : str
         Keyword value
     readpatt : str
@@ -674,88 +679,77 @@ def get_subarcase(subarray_cases, subarray, readpatt, detector):
 
     Returns
     -------
-    subname : str
-        Modified subarray name
-    rowclocks : int
+    subname : str or None
+        Modified subarray name.
+    rowclocks : int or None
         Row clock value.
-    frameclocks : int
+    frameclocks : int or None
         Frame clock value.
-    frequencies : list
-        List of frequencies to correct according to subarray name
+    frequencies : list of str or None
+        List of frequencies to correct according to subarray name.
     """
     subname, rowclocks, frameclocks, frequencies = None, None, None, None
 
-    # make sure the readpattern is defined as expected to read data from reference file
-    readpatt, no_slow_match_readpatt, no_fast_match_readpatt = readpatt.upper(), False, False
-    if "SLOW" not in readpatt:
-        no_slow_match_readpatt = True
-    if "FAST" not in readpatt:
-        no_fast_match_readpatt = True
-    if no_slow_match_readpatt and no_fast_match_readpatt:
-        log.info('Read pattern {} does not include expected string FAST or SLOW'.format(readpatt))
+    # make sure the read pattern is defined as expected to read data from reference file
+    readpatt = readpatt.upper()
+    if "SLOW" in readpatt:
+        readout_speed = "SLOW"
+    elif "FAST" in readpatt:
+        readout_speed = "FAST"
+    else:
+        log.warning(f'Read pattern {readpatt} does not include expected string FAST or SLOW')
         return subname, rowclocks, frameclocks, frequencies
 
-    # search and return the specific values for the configuration
-    frequencies = []
-    mdl_dict = subarray_cases.to_flat_dict()
-    for subname in subarray_cases.subarray_cases:
-        subname = subname.split(sep='.')[0]
-        dataconfig = subarray
-        if 'FULL' in dataconfig:
-            dataconfig = subarray + '_' + readpatt.replace('R1', '')
-        if dataconfig != subname:
-            continue
-        log.debug('Found subarray case {}!'.format(subname))
-        for item, val in mdl_dict.items():
-            if subname in item:
-                if "rowclocks" in item:
-                    rowclocks = val
-                elif "frameclocks" in item:
-                    frameclocks = val
-                else:
-                    if "SLOW" in readpatt and "SLOW" in item and detector in item:
-                        frequencies.append(val)
-                    elif "FAST" in readpatt and "FAST" in item:
-                        frequencies.append(val)
-            if subname is not None and rowclocks is not None and frameclocks is not None and frequencies is not None:
-                break
+    # modify the subarray name for matching if needed,
+    # appending FAST or SLOW for full frame data
+    subname = subarray
+    if 'FULL' in subarray:
+        subname = f"{subarray}_{readout_speed}"
+
+    try:
+        subarray_case = getattr(emi_model.subarray_cases, subname)
+        rowclocks = getattr(subarray_case, 'rowclocks')
+        frameclocks = getattr(subarray_case, 'frameclocks')
+        freqs = getattr(subarray_case, 'freqs')
+        rp_freqs = getattr(freqs, readout_speed)
+        if readout_speed == "FAST":
+            frequencies = rp_freqs
+        else:
+            frequencies = getattr(rp_freqs, detector)
+    except AttributeError:
+        # match not found, will return None for all values
+        pass
+
     return subname, rowclocks, frameclocks, frequencies
 
 
-def get_frequency_info(freqs_names_vals, frequency_name):
-    """Get the frequency number from the given dictionary
+def get_frequency_info(emi_model, frequency_name):
+    """
+    Get the frequency number from the given EMI model.
+
     Parameters
     ----------
-    freqs_names_vals : dict or model object
-        Either default corrections dictionary or datamodel
-
+    freqs_names_vals : EmiModel
+        EMI reference datamodel.
     frequency_name : str
-        Frequency of interest
+        Frequency of interest.
 
     Returns
     -------
     frequency_number : float
         Frequency
-
     phase_amplitudes : array
         1-D array of the corresponding phase amplidues for this frequency
+
+    Raises
+    ------
+    AttributeError
+        If the `frequency_name` was not found in the `emi_model`.
     """
-    if isinstance(freqs_names_vals, dict):
-        for freq_nme, val in freqs_names_vals.items():
-            if freq_nme == frequency_name:
-                return val
-    else:
-        freq_number, phase_amplitudes = None, None
-        mdl_dict = freqs_names_vals.to_flat_dict()
-        for item, val in mdl_dict.items():
-            if frequency_name in item:
-                if 'frequency' in item:
-                    freq_number = val
-                if 'phase_amplitudes' in item:
-                    phase_amplitudes = val
-            if freq_number is not None and phase_amplitudes is not None:
-                break
-        return freq_number, phase_amplitudes
+    freq_set = getattr(emi_model.frequencies, frequency_name)
+    freq_number = freq_set.frequency
+    phase_amplitudes = freq_set.phase_amplitudes
+    return freq_number, phase_amplitudes
 
 
 def rebin(arr, newshape):
@@ -887,7 +881,6 @@ def emicorr_refwave(data, pdq, refwave, nsamples, rowclocks, frameclocks,
     t0_arr = np.zeros((ny, nx4))
     for i in range(ny):
         t0_arr[i] = i * rowclocks + np.arange(nx4) * nsamples
-
     phase = (t0_arr / period_in_pixels) % 1
 
     # Phase gap between groups
@@ -938,7 +931,6 @@ def emicorr_refwave(data, pdq, refwave, nsamples, rowclocks, frameclocks,
             # so rounding down here is appropriate.
 
             indx = int(phase[j, k] * nphases)
-
             # All four output channels.
             for l in range(4):
                 pixok = pixel_ok[:, j, k * 4 + l]
@@ -994,7 +986,6 @@ def emicorr_refwave(data, pdq, refwave, nsamples, rowclocks, frameclocks,
             # scale, and subtract from each output channel.
 
             phased_emi = phasefunc((phase + dphase * j + phases_to_correct[i]) % 1)
-
             for k in range(4):
                 data[i, j, :, k::4] -= amplitudes_to_correct[i] * phased_emi
 
