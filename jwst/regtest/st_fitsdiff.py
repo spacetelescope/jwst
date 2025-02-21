@@ -18,7 +18,7 @@ from astropy.io.fits.hdu.table import _TableLikeHDU
 
 import numpy as np
 from astropy.io.fits.diff import (FITSDiff, HDUDiff, HeaderDiff, TableDataDiff, ImageDataDiff,
-                                  report_diff_keyword_attr, _get_differences, _COL_ATTRS)
+                                  report_diff_keyword_attr, _COL_ATTRS)
 
 
 __all__ = [
@@ -32,19 +32,12 @@ __all__ = [
 
 
 class STFITSDiff(FITSDiff):
-    """FITSDiff class from astropy with the STScI edits.
+    """FITSDiff class from astropy with the STScI edits. Statistics about how far
+    off values are from tolerances will be printed, from 0.1 through 0.0, along
+    with maximum and minimum values.
 
-    Diff two FITS files by filename, or two `HDUList` objects
-
-    `FITSDiff` objects have the following diff attributes:
-
-    - ``diff_hdu_count``: If the FITS files being compared have different
-      numbers of HDUs, this contains a 2-tuple of the number of HDUs in each
-      file.
-
-    - ``diff_hdus``: If any HDUs with the same index are different, this
-      contains a list of 2-tuples of the HDU index and the `HDUDiff` object
-      representing the differences between the two HDUs.
+    Full documentation of the class is provided at:
+    https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
 
     def __init__(
@@ -74,60 +67,35 @@ class STFITSDiff(FITSDiff):
             compare to the first file.
 
         ignore_hdus : sequence, optional
-            HDU names to ignore when comparing two FITS files or HDU lists; the
-            presence of these HDUs and their contents are ignored.  Wildcard
-            strings may also be included in the list.
+            HDU names to ignore when comparing two FITS files or HDU lists.
 
         ignore_keywords : sequence, optional
-            Header keywords to ignore when comparing two headers; the presence
-            of these keywords and their values are ignored.  Wildcard strings
-            may also be included in the list.
+            Header keywords to ignore when comparing two headers.
 
         ignore_comments : sequence, optional
-            A list of header keywords whose comments should be ignored in the
-            comparison.  May contain wildcard strings as with ignore_keywords.
+            List of header keywords whose comments should be ignored.
 
         ignore_fields : sequence, optional
-            The (case-insensitive) names of any table columns to ignore if any
-            table data is to be compared.
+            Case-insensitive names of any table columns to ignore.
 
         numdiffs : int, optional
-            The number of pixel/table values to output when reporting HDU data
-            differences.  Though the count of differences is the same either
-            way, this allows controlling the number of different values that
-            are kept in memory or output.  If a negative value is given, then
-            numdiffs is treated as unlimited (default: 10).
+            Number of pixel/table values to output when reporting HDU data differences.
 
         rtol : float, optional
-            The relative difference to allow when comparing two float values
-            either in header values, image arrays, or table columns
-            (default: 0.0). Values which satisfy the expression
-
-            .. math::
-
-                \\left| a - b \\right| > \\text{atol} + \\text{rtol} \\cdot \\left| b \\right|
-
-            are considered to be different.
-            The underlying function used for comparison is `numpy.allclose`.
-
-            .. versionadded:: 2.0
+            Relative difference to allow when comparing two float values.
 
         atol : float, optional
-            The allowed absolute difference. See also ``rtol`` parameter.
-
-            .. versionadded:: 2.0
+            Allowed absolute difference when comparing two float values.
 
         ignore_blanks : bool, optional
             Ignore extra whitespace at the end of string values either in
-            headers or data. Extra leading whitespace is not ignored
-            (default: True).
+            headers or data. Extra leading whitespace is not ignored.
 
         ignore_blank_cards : bool, optional
-            Ignore all cards that are blank, i.e. they only contain
-            whitespace (default: True).
+            Ignore all cards that are blank, i.e. they only contain whitespace.
 
         report_pixel_loc_diffs : bool, optional
-            Report all the pixel locations where differences are found
+            Report all the pixel locations where differences are found.
 
         extension_tolerances : dict, optional
             Provide a different relative and absolute tolerance for the given extensions, e.g.
@@ -338,31 +306,8 @@ class STHDUDiff(HDUDiff):
     """
     HDUDiff class from astropy with the STScI edits.
 
-    Diff two HDU objects, including their headers and their data (but only if
-    both HDUs contain the same type of data (image, table, or unknown).
-
-    `HDUDiff` objects have the following diff attributes:
-
-    - ``diff_extnames``: If the two HDUs have different EXTNAME values, this
-      contains a 2-tuple of the different extension names.
-
-    - ``diff_extvers``: If the two HDUS have different EXTVER values, this
-      contains a 2-tuple of the different extension versions.
-
-    - ``diff_extlevels``: If the two HDUs have different EXTLEVEL values, this
-      contains a 2-tuple of the different extension levels.
-
-    - ``diff_extension_types``: If the two HDUs have different XTENSION values,
-      this contains a 2-tuple of the different extension types.
-
-    - ``diff_headers``: Contains a `HeaderDiff` object for the headers of the
-      two HDUs. This will always contain an object--it may be determined
-      whether the headers are different through ``diff_headers.identical``.
-
-    - ``diff_data``: Contains either a `ImageDataDiff`, `TableDataDiff`, or
-      `RawDataDiff` as appropriate for the data in the HDUs, and only if the
-      two HDUs have non-empty data of the same type (`RawDataDiff` is used for
-      HDUs containing non-empty data of an indeterminate type).
+    Full documentation of the class is provided at:
+    https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
 
     def __init__(
@@ -390,52 +335,29 @@ class STHDUDiff(HDUDiff):
             An HDU object to compare to the first HDU object.
 
         ignore_keywords : sequence, optional
-            Header keywords to ignore when comparing two headers; the presence
-            of these keywords and their values are ignored.  Wildcard strings
-            may also be included in the list.
+            Header keywords to ignore when comparing two headers.
 
         ignore_comments : sequence, optional
-            A list of header keywords whose comments should be ignored in the
-            comparison.  May contain wildcard strings as with ignore_keywords.
+            List of header keywords whose comments should be ignored.
 
         ignore_fields : sequence, optional
-            The (case-insensitive) names of any table columns to ignore if any
-            table data is to be compared.
+            Case-insensitive names of any table columns to ignore.
 
         numdiffs : int, optional
-            The number of pixel/table values to output when reporting HDU data
-            differences.  Though the count of differences is the same either
-            way, this allows controlling the number of different values that
-            are kept in memory or output.  If a negative value is given, then
-            numdiffs is treated as unlimited (default: 10).
+            Number of pixel/table values to output when reporting HDU data differences.
 
         rtol : float, optional
-            The relative difference to allow when comparing two float values
-            either in header values, image arrays, or table columns
-            (default: 0.0). Values which satisfy the expression
-
-            .. math::
-
-                \\left| a - b \\right| > \\text{atol} + \\text{rtol} \\cdot \\left| b \\right|
-
-            are considered to be different.
-            The underlying function used for comparison is `numpy.allclose`.
-
-            .. versionadded:: 2.0
+            Relative difference to allow when comparing two float values.
 
         atol : float, optional
-            The allowed absolute difference. See also ``rtol`` parameter.
-
-            .. versionadded:: 2.0
+            Allowed absolute difference when comparing two float values.
 
         ignore_blanks : bool, optional
             Ignore extra whitespace at the end of string values either in
-            headers or data. Extra leading whitespace is not ignored
-            (default: True).
+            headers or data. Extra leading whitespace is not ignored.
 
         ignore_blank_cards : bool, optional
-            Ignore all cards that are blank, i.e. they only contain
-            whitespace (default: True).
+            Ignore all cards that are blank, i.e. they only contain whitespace.
 
         report_pixel_loc_diffs : bool, optional
             Report all the pixel locations where differences are found.
@@ -661,45 +583,8 @@ class STHeaderDiff(HeaderDiff):
     """
     HeaderDiff class from astropy with the STScI edits.
 
-    Diff two `Header` objects.
-
-    `HeaderDiff` objects have the following diff attributes:
-
-    - ``diff_keyword_count``: If the two headers contain a different number of
-      keywords, this contains a 2-tuple of the keyword count for each header.
-
-    - ``diff_keywords``: If either header contains one or more keywords that
-      don't appear at all in the other header, this contains a 2-tuple
-      consisting of a list of the keywords only appearing in header a, and a
-      list of the keywords only appearing in header b.
-
-    - ``diff_duplicate_keywords``: If a keyword appears in both headers at
-      least once, but contains a different number of duplicates (for example, a
-      different number of HISTORY cards in each header), an item is added to
-      this dict with the keyword as the key, and a 2-tuple of the different
-      counts of that keyword as the value.  For example::
-
-          {'HISTORY': (20, 19)}
-
-      means that header a contains 20 HISTORY cards, while header b contains
-      only 19 HISTORY cards.
-
-    - ``diff_keyword_values``: If any of the common keyword between the two
-      headers have different values, they appear in this dict.  It has a
-      structure similar to ``diff_duplicate_keywords``, with the keyword as the
-      key, and a 2-tuple of the different values as the value.  For example::
-
-          {'NAXIS': (2, 3)}
-
-      means that the NAXIS keyword has a value of 2 in header a, and a value of
-      3 in header b.  This excludes any keywords matched by the
-      ``ignore_keywords`` list.
-
-    - ``diff_keyword_comments``: Like ``diff_keyword_values``, but contains
-      differences between keyword comments.
-
-    `HeaderDiff` objects also have a ``common_keywords`` attribute that lists
-    all keywords that appear in both headers.
+    Full documentation of the class is provided at:
+    https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
 
     def __init__(
@@ -723,48 +608,23 @@ class STHeaderDiff(HeaderDiff):
             A header to compare to the first header.
 
         ignore_keywords : sequence, optional
-            Header keywords to ignore when comparing two headers; the presence
-            of these keywords and their values are ignored.  Wildcard strings
-            may also be included in the list.
+            Header keywords to ignore when comparing two headers.
 
         ignore_comments : sequence, optional
-            A list of header keywords whose comments should be ignored in the
-            comparison.  May contain wildcard strings as with ignore_keywords.
-
-        numdiffs : int, optional
-            The number of pixel/table values to output when reporting HDU data
-            differences.  Though the count of differences is the same either
-            way, this allows controlling the number of different values that
-            are kept in memory or output.  If a negative value is given, then
-            numdiffs is treated as unlimited (default: 10).
+            List of header keywords whose comments should be ignored.
 
         rtol : float, optional
-            The relative difference to allow when comparing two float values
-            either in header values, image arrays, or table columns
-            (default: 0.0). Values which satisfy the expression
-
-            .. math::
-
-                \\left| a - b \\right| > \\text{atol} + \\text{rtol} \\cdot \\left| b \\right|
-
-            are considered to be different.
-            The underlying function used for comparison is `numpy.allclose`.
-
-            .. versionadded:: 2.0
+            Relative difference to allow when comparing two float values.
 
         atol : float, optional
-            The allowed absolute difference. See also ``rtol`` parameter.
-
-            .. versionadded:: 2.0
+            Allowed absolute difference when comparing two float values.
 
         ignore_blanks : bool, optional
             Ignore extra whitespace at the end of string values either in
-            headers or data. Extra leading whitespace is not ignored
-            (default: True).
+            headers or data. Extra leading whitespace is not ignored.
 
         ignore_blank_cards : bool, optional
-            Ignore all cards that are blank, i.e. they only contain
-            whitespace (default: True).
+            Ignore all cards that are blank, i.e. they only contain whitespace.
         """
         super().__init__(a, b,
                          ignore_keywords=ignore_keywords,
@@ -929,34 +789,10 @@ class STHeaderDiff(HeaderDiff):
 
 class STImageDataDiff(ImageDataDiff):
     """
-    Diff two image data arrays (really any array from a PRIMARY HDU or an IMAGE
-    extension HDU, though the data unit is assumed to be "pixels").
+    ImageDataDiff class with STScI edits.
 
-    `ImageDataDiff` objects have the following diff attributes:
-
-    - ``diff_dimensions``: If the two arrays contain either a different number
-      of dimensions or different sizes in any dimension, this contains a
-      2-tuple of the shapes of each array.  Currently no further comparison is
-      performed on images that don't have the exact same dimensions.
-
-    - ``diff_pixels``: If the two images contain any different pixels, this
-      contains a list of 2-tuples of the array index where the difference was
-      found, and another 2-tuple containing the different values.  For example,
-      if the pixel at (0, 0) contains different values this would look like::
-
-          [(0, 0), (1.1, 2.2)]
-
-      where 1.1 and 2.2 are the values of that pixel in each array.  This
-      array only contains up to ``self.numdiffs`` differences, for storage
-      efficiency.
-
-    - ``diff_total``: The total number of different pixels found between the
-      arrays.  Although ``diff_pixels`` does not necessarily contain all the
-      different pixel values, this can be used to get a count of the total
-      number of differences found.
-
-    - ``diff_ratio``: Contains the ratio of ``diff_total`` to the total number
-      of pixels in the arrays.
+    Full documentation of the class is provided at:
+    https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
 
     def __init__(self, a, b, numdiffs=10, rtol=0.0, atol=0.0, report_pixel_loc_diffs=False):
@@ -970,30 +806,13 @@ class STImageDataDiff(ImageDataDiff):
             An HDU object to compare to the first HDU object.
 
         numdiffs : int, optional
-            The number of pixel/table values to output when reporting HDU data
-            differences.  Though the count of differences is the same either
-            way, this allows controlling the number of different values that
-            are kept in memory or output.  If a negative value is given, then
-            numdiffs is treated as unlimited (default: 10).
+            Number of pixel/table values to output when reporting HDU data differences.
 
         rtol : float, optional
-            The relative difference to allow when comparing two float values
-            either in header values, image arrays, or table columns
-            (default: 0.0). Values which satisfy the expression
-
-            .. math::
-
-                \\left| a - b \\right| > \\text{atol} + \\text{rtol} \\cdot \\left| b \\right|
-
-            are considered to be different.
-            The underlying function used for comparison is `numpy.allclose`.
-
-            .. versionadded:: 2.0
+            Relative difference to allow when comparing two float values.
 
         atol : float, optional
-            The allowed absolute difference. See also ``rtol`` parameter.
-
-            .. versionadded:: 2.0
+            Allowed absolute difference when comparing two float values.
 
         report_pixel_loc_diffs : bool, optional
             Report all the pixel locations where differences are found.
@@ -1128,9 +947,11 @@ class STImageDataDiff(ImageDataDiff):
                     rtol=self.rtol,
                     atol=self.atol,
                 )
-                rdiff, adiff = _get_differences(values[0], values[1])
-                max_relative = max(max_relative, rdiff)
-                max_absolute = max(max_absolute, adiff)
+
+                rdiff = np.abs(values[1] - values[0]) / np.abs(values[0])
+                adiff = float(np.abs(values[1] - values[0]))
+                max_relative = np.max(max_relative, rdiff)
+                max_absolute = np.max(max_absolute, adiff)
 
             if self.diff_total > self.numdiffs:
                 self._writeln(" ...")
@@ -1144,24 +965,10 @@ class STImageDataDiff(ImageDataDiff):
 
 class STRawDataDiff(STImageDataDiff):
     """
-    `RawDataDiff` is just a special case of `ImageDataDiff` where the images
-    are one-dimensional, and the data is treated as a 1-dimensional array of
-    bytes instead of pixel values.  This is used to compare the data of two
-    non-standard extension HDUs that were not recognized as containing image or
-    table data.
+    Special instance of the STImageDataDiff class.
 
-    `ImageDataDiff` objects have the following diff attributes:
-
-    - ``diff_dimensions``: Same as the ``diff_dimensions`` attribute of
-      `ImageDataDiff` objects. Though the "dimension" of each array is just an
-      integer representing the number of bytes in the data.
-
-    - ``diff_bytes``: Like the ``diff_pixels`` attribute of `ImageDataDiff`
-      objects, but renamed to reflect the minor semantic difference that these
-      are raw bytes and not pixel values.  Also the indices are integers
-      instead of tuples.
-
-    - ``diff_total`` and ``diff_ratio``: Same as `ImageDataDiff`.
+    Full documentation of the RawDataDiff class is provided at:
+    https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
 
     def __init__(self, a, b, numdiffs=10, report_pixel_loc_diffs=False):
@@ -1175,11 +982,7 @@ class STRawDataDiff(STImageDataDiff):
             An HDU object to compare to the first HDU object.
 
         numdiffs : int, optional
-            The number of pixel/table values to output when reporting HDU data
-            differences.  Though the count of differences is the same either
-            way, this allows controlling the number of different values that
-            are kept in memory or output.  If a negative value is given, then
-            numdiffs is treated as unlimited (default: 10).
+            Number of pixel/table values to output when reporting HDU data differences.
 
         report_pixel_loc_diffs : bool, optional
             As for ImageDiff, this will report all the locations where
@@ -1235,51 +1038,10 @@ class STRawDataDiff(STImageDataDiff):
 
 class STTableDataDiff(TableDataDiff):
     """
-    Diff two table data arrays. It doesn't matter whether the data originally
-    came from a binary or ASCII table--the data should be passed in as a
-    recarray.
+    TableDataDiff class with STScI edits.
 
-    `TableDataDiff` objects have the following diff attributes:
-
-    - ``diff_column_count``: If the tables being compared have different
-      numbers of columns, this contains a 2-tuple of the column count in each
-      table.  Even if the tables have different column counts, an attempt is
-      still made to compare any columns they have in common.
-
-    - ``diff_columns``: If either table contains columns unique to that table,
-      either in name or format, this contains a 2-tuple of lists. The first
-      element is a list of columns (these are full `Column` objects) that
-      appear only in table a.  The second element is a list of tables that
-      appear only in table b.  This only lists columns with different column
-      definitions, and has nothing to do with the data in those columns.
-
-    - ``diff_column_names``: This is like ``diff_columns``, but lists only the
-      names of columns unique to either table, rather than the full `Column`
-      objects.
-
-    - ``diff_column_attributes``: Lists columns that are in both tables but
-      have different secondary attributes, such as TUNIT or TDISP.  The format
-      is a list of 2-tuples: The first a tuple of the column name and the
-      attribute, the second a tuple of the different values.
-
-    - ``diff_values``: `TableDataDiff` compares the data in each table on a
-      column-by-column basis.  If any different data is found, it is added to
-      this list.  The format of this list is similar to the ``diff_pixels``
-      attribute on `ImageDataDiff` objects, though the "index" consists of a
-      (column_name, row) tuple.  For example::
-
-          [('TARGET', 0), ('NGC1001', 'NGC1002')]
-
-      shows that the tables contain different values in the 0-th row of the
-      'TARGET' column.
-
-    - ``diff_total`` and ``diff_ratio``: Same as `ImageDataDiff`.
-
-    `TableDataDiff` objects also have a ``common_columns`` attribute that lists
-    the `Column` objects for columns that are identical in both tables, and a
-    ``common_column_names`` attribute which contains a set of the names of
-    those columns.
-
+    Full documentation of the class is provided at:
+    https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
 
     def __init__(self, a, b, ignore_fields=[], numdiffs=10, rtol=0.0, atol=0.0,
@@ -1294,34 +1056,17 @@ class STTableDataDiff(TableDataDiff):
             An HDU object to compare to the first HDU object.
 
         ignore_fields : sequence, optional
-            The (case-insensitive) names of any table columns to ignore if any
-            table data is to be compared.
+            Case-insensitive names of any table columns to ignore.
 
         numdiffs : int, optional
-            The number of pixel/table values to output when reporting HDU data
-            differences.  Though the count of differences is the same either
-            way, this allows controlling the number of different values that
-            are kept in memory or output.  If a negative value is given, then
-            numdiffs is treated as unlimited (default: 10).
+            Number of pixel/table values to output when reporting HDU data differences.
 
         rtol : float, optional
-            The relative difference to allow when comparing two float values
-            either in header values, image arrays, or table columns
-            (default: 0.0). Values which satisfy the expression
-
-            .. math::
-
-                \\left| a - b \\right| > \\text{atol} + \\text{rtol} \\cdot \\left| b \\right|
-
-            are considered to be different.
-            The underlying function used for comparison is `numpy.allclose`.
-
-            .. versionadded:: 2.0
+            Relative difference to allow when comparing two float values
+            either in header values, image arrays, or table columns.
 
         atol : float, optional
-            The allowed absolute difference. See also ``rtol`` parameter.
-
-            .. versionadded:: 2.0
+            Allowed absolute difference.
 
         report_pixel_loc_diffs : bool, optional
             As for ImageDiff, this will report all the locations where
