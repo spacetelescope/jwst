@@ -3,15 +3,20 @@
 from functools import wraps
 import logging
 import warnings
+import time
 
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
-from stpipe import crds_client
-from stpipe import Step
-from stpipe import Pipeline
+from stpipe import crds_client, Step, Pipeline
 
 from jwst import __version_commit__, __version__
 from ..lib.suffix import remove_suffix
+
+_LOG_FORMATTER = logging.Formatter(
+    "%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
+_LOG_FORMATTER.converter = time.gmtime
 
 
 log = logging.getLogger(__name__)
@@ -24,6 +29,8 @@ class JwstStep(Step):
     spec = """
     output_ext = string(default='.fits')  # Output file type
     """  # noqa: E501
+
+    _log_records_formatter = _LOG_FORMATTER
 
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
@@ -105,6 +112,13 @@ class JwstStep(Step):
                 if self.parent is None:
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
+            if hasattr(result, "cal_logs"):
+                tmpdict = result.cal_logs.instance
+            else:
+                tmpdict = {}
+            tmpdict[self.class_alias] = "\n".join(self._log_records)
+            result.cal_logs = tmpdict
+
     def remove_suffix(self, name):
         """
         Remove the suffix if a known suffix is already in name.
@@ -184,3 +198,14 @@ class JwstPipeline(Pipeline, JwstStep):
                 "Results used CRDS context: "
                 f"{crds_client.get_context_used(result.crds_observatory)}"
             )
+
+            if hasattr(result, "cal_logs"):
+                tmpdict = result.cal_logs.instance
+            else:
+                tmpdict = {}
+            tmpdict[self.class_alias] = "\n".join(self._log_records)
+
+            for _, step in self.step_defs.items():
+                if step.class_alias in tmpdict.keys():
+                    del tmpdict[step.class_alias]
+            result.cal_logs = tmpdict
