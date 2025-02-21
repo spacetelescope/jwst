@@ -15,7 +15,7 @@ def test_default_run(tmp_path, capsys):
         '-o',
         str(tmp_path)
     ]
-    args.extend(helpers.INPUT_FILES)
+    args.extend([str(infile) for infile in helpers.INPUT_FILES])
     result = Main(args)
     assert len(result.sources) == 5
     files = glob(str(tmp_path / '*.fits'))
