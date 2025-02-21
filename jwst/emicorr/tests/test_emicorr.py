@@ -24,6 +24,29 @@ def emicorr_model():
                 },
             },
             "rowclocks": 82,
+        },
+        "FULL_FAST": {
+            "frameclocks": 277504,
+            "freqs": {
+                "FAST": ["Hz10"],
+                "SLOW": {
+                    "MIRIFULONG": ["Hz10_slow_MIRIFULONG"],
+                    "MIRIFUSHORT": ["Hz10_slow_MIRIFUSHORT"],
+                    "MIRIMAGE": ["Hz10_slow_MIRIMAGE"],
+                },
+            },
+            "rowclocks": 271,
+        },
+        "FULL_SLOW": {
+            "frameclocks": 2388992,
+            "freqs": {
+                "SLOW": {
+                    "MIRIFULONG": ["Hz10_slow_MIRIFULONG"],
+                    "MIRIFUSHORT": ["Hz10_slow_MIRIFUSHORT"],
+                    "MIRIMAGE": ["Hz10_slow_MIRIMAGE"],
+                },
+            },
+            "rowclocks": 2333,
         }
     }
     frequencies = {
@@ -60,7 +83,64 @@ def mk_data_mdl(data, subarray, readpatt, detector):
     return input_model
 
 
-@pytest.fixture
+@pytest.fixture()
+def data_without_emi():
+    nint = 1
+    ngroup = 10
+    ny = 400
+    nx = 200
+    data = np.ones((nint, ngroup, ny, nx))
+    linear_ramp = np.arange(1, ngroup + 1, dtype=float)
+    data[:, :, ...] = linear_ramp[None, :, None, None]
+    return data
+
+
+@pytest.fixture()
+def data_with_emi(data_without_emi):
+    amp = 0.1
+    phase = 1 / 3
+
+    freq = 10.0
+    rowclocks = 2000
+    period = (1. / freq) / 10.0e-6
+
+    ni, ng, ny, nx = data_without_emi.shape
+    extra_rowclocks = (1024. - ny) * (4 + 3.)
+    readtimes = np.zeros((ng, ny, nx))
+    for i in range(ng):
+        for j in range(ny):
+            for k in range(nx // 4):
+                readtimes[i, j, k*4:k*4+4] = i * extra_rowclocks + j * rowclocks + k
+
+    emi = amp * np.sin(2 * np.pi * readtimes / period + phase)
+    data = data_without_emi + emi[None, :, :, :]
+    return data
+
+
+@pytest.fixture()
+def model_with_emi(emicorr_model):
+    freq = 10.0
+    pa = np.sin(2 * np.pi * np.arange(500) / 500)
+
+    subarray_cases = {
+        "FULL_FAST": {
+            "frameclocks": 200000,
+            "freqs": {
+                "FAST": ["test"],
+            },
+            "rowclocks": 2000,
+        }
+    }
+    frequencies = {
+        "test": {"frequency": freq, "phase_amplitudes": pa},
+    }
+
+    emicorr_model.frequencies = frequencies
+    emicorr_model.subarray_cases = subarray_cases
+    return emicorr_model
+
+
+@pytest.fixture()
 def module_log_watcher(monkeypatch):
     # Set a log watcher to check for a log message at any level
     # in the emicorr module
@@ -71,7 +151,7 @@ def module_log_watcher(monkeypatch):
     return watcher
 
 
-@pytest.fixture
+@pytest.fixture()
 def step_log_watcher(monkeypatch):
     # Set a log watcher to check for a log message at any level
     # in the emicorr step
@@ -174,9 +254,10 @@ def test_emicorrstep_skip_for_small_groups(module_log_watcher):
 
 
 @pytest.mark.parametrize("algorithm", ["sequential", "joint"])
-def test_emicorrstep_succeeds(algorithm):
+@pytest.mark.parametrize("subarray", ["MASK1550", "FULL"])
+def test_emicorrstep_succeeds(algorithm, subarray):
     data = np.ones((1, 5, 20, 20))
-    input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
+    input_model = mk_data_mdl(data, subarray, "FAST", "MIRIMAGE")
 
     step = emicorr_step.EmiCorrStep()
     result = step.call(input_model, skip=False, algorithm=algorithm)
@@ -226,7 +307,7 @@ def test_emicorrstep_user_reffile(tmp_path, emicorr_model):
 
 @pytest.mark.parametrize("data_case", ["flat", "linear"])
 @pytest.mark.parametrize("algorithm", ["sequential", "joint"])
-def test_apply_emicorr(data_case, algorithm, emicorr_model):
+def test_apply_emicorr_noiseless(data_case, algorithm, emicorr_model):
     data = np.ones((1, 5, 20, 20))
     if data_case == "linear":
         linear_ramp = np.arange(1, 6, dtype=float)
@@ -246,6 +327,17 @@ def test_apply_emicorr(data_case, algorithm, emicorr_model):
 
     # flat or linear ramp data shows no correction
     assert np.allclose(outmdl.data, input_model.data)
+
+
+@pytest.mark.parametrize("algorithm,accuracy", [("sequential", 0.1), ("joint", 0.0001)])
+def test_apply_emicorr(data_without_emi, data_with_emi, model_with_emi, algorithm, accuracy):
+    input_model = mk_data_mdl(data_with_emi, 'FULL', 'FAST', 'MIRIMAGE')
+    expected_model = mk_data_mdl(data_without_emi, 'FULL', 'FAST', 'MIRIMAGE')
+
+    outmdl = emicorr.apply_emicorr(input_model.copy(), model_with_emi, algorithm=algorithm)
+
+    # Corrected ramp should be close to ramp without noise
+    assert np.allclose(outmdl.data, expected_model.data, rtol=accuracy)
 
 
 @pytest.mark.parametrize("algorithm", ["sequential", "joint"])
@@ -289,13 +381,17 @@ def test_apply_emicorr_with_freq(
     assert expected_output_name.exists()
 
 
-def test_get_subarcase(emicorr_model):
-    subarray, readpatt, detector = "MASK1550", "FAST", "MIRIMAGE"
+@pytest.mark.parametrize('subarray', ['FULL', 'MASK1550'])
+def test_get_subarcase(emicorr_model, subarray):
+    readpatt, detector = "FAST", "MIRIMAGE"
     subarray_info_r = emicorr.get_subarcase(emicorr_model, subarray, readpatt, detector)
     subname_r, rowclocks_r, frameclocks_r, freqs2correct_r = subarray_info_r
 
     # test if we get the right configuration
-    compare_real = ["MASK1550", 82, 23968, ["Hz390", "Hz10"]]
+    if subarray == 'FULL':
+        compare_real = ["FULL_FAST", 271, 277504, ["Hz10"]]
+    else:
+        compare_real = ["MASK1550", 82, 23968, ["Hz390", "Hz10"]]
     subname_real, rowclocks_real, frameclocks_real, freqs2correct_real = compare_real
 
     assert subname_real == subname_r
@@ -303,6 +399,23 @@ def test_get_subarcase(emicorr_model):
     assert frameclocks_real == frameclocks_r
     assert freqs2correct_real[0] == freqs2correct_r[0]
 
+
+def test_get_frequency_info(emicorr_model):
+    freqname = 'Hz10'
+    expected = (10.039216, np.full(20, 1.5))
+    freq, pa = emicorr.get_frequency_info(emicorr_model, freqname)
+    assert freq == expected[0]
+    assert np.all(pa == expected[1])
+
+    freqname = 'Hz390'
+    expected = (390.625, np.full(20, 1.1))
+    freq, pa = emicorr.get_frequency_info(emicorr_model, freqname)
+    assert freq == expected[0]
+    assert np.all(pa == expected[1])
+
+    freqname = 'Hz218'
+    with pytest.raises(AttributeError, match=f"No attribute '{freqname}'"):
+        emicorr.get_frequency_info(emicorr_model, freqname)
 
 def test_sloper():
     data = np.ones((5, 5, 5))
