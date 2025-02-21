@@ -249,12 +249,12 @@ def _run_joint_algorithm(input_model, freq_numbers, reference_wave_list,
         The output datamodel, with noise fit and subtracted.
     """
     readpatt = str(input_model.meta.exposure.readpatt).upper()
-    for freq, ref_wave in zip(freq_numbers, reference_wave_list, strict=True):
-        if readpatt == 'FASTR1' or readpatt == 'SLOWR1':
-            _frameclocks = frameclocks
-        else:
-            _frameclocks = 0
+    if readpatt == 'FASTR1' or readpatt == 'SLOWR1':
+        _frameclocks = frameclocks
+    else:
+        _frameclocks = 0
 
+    for freq, ref_wave in zip(freq_numbers, reference_wave_list, strict=True):
         period_in_pixels = (1. / freq) / 10.0e-6
 
         corrected_data = emicorr_refwave(
@@ -262,7 +262,7 @@ def _run_joint_algorithm(input_model, freq_numbers, reference_wave_list,
             nsamples, rowclocks, _frameclocks,
             period_in_pixels, fit_ints_separately=fit_ints_separately)
 
-        # Data is updated in place, to be corrected iteratively
+        # Data is updated in place, so it is corrected iteratively
         input_model.data[:] = corrected_data
 
     # Return the corrected model.
@@ -718,6 +718,7 @@ def get_subarcase(emi_model, subarray, readpatt, detector):
             frequencies = getattr(rp_freqs, detector)
     except AttributeError:
         # match not found, will return None for all values
+        log.debug(f'Subarray {subname} not found')
         pass
 
     return subname, rowclocks, frameclocks, frequencies

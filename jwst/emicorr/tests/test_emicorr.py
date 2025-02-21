@@ -9,10 +9,9 @@ from stdatamodels.jwst.datamodels import RampModel, EmiModel
 from jwst.emicorr import emicorr, emicorr_step
 from jwst.tests.helpers import LogWatcher
 
-
 @pytest.fixture()
-def emicorr_model():
-    subarray_example_case = {
+def subarray_example_case():
+    example = {
         "MASK1550": {
             "frameclocks": 23968,
             "freqs": {
@@ -49,6 +48,11 @@ def emicorr_model():
             "rowclocks": 2333,
         }
     }
+    return example
+
+
+@pytest.fixture()
+def emicorr_model(subarray_example_case):
     frequencies = {
         "Hz390": {"frequency": 390.625, "phase_amplitudes": np.ones(20) + 0.1},
         "Hz10": {"frequency": 10.039216, "phase_amplitudes": np.ones(20) + 0.5},
@@ -83,6 +87,27 @@ def mk_data_mdl(data, subarray, readpatt, detector):
     return input_model
 
 
+def add_emi(data):
+    amp = 0.1
+    phase = 1 / 3
+
+    freq = 10.0
+    rowclocks = 2000
+    period = (1. / freq) / 10.0e-6
+
+    ni, ng, ny, nx = data.shape
+    extra_rowclocks = (1024. - ny) * (4 + 3.)
+    readtimes = np.zeros((ng, ny, nx))
+    for i in range(ng):
+        for j in range(ny):
+            for k in range(nx // 4):
+                readtimes[i, j, k*4:k*4+4] = i * extra_rowclocks + j * rowclocks + k
+
+    emi = amp * np.sin(2 * np.pi * readtimes / period + phase)
+    data = data + emi[None, :, :, :]
+    return data
+
+
 @pytest.fixture()
 def data_without_emi():
     nint = 1
@@ -96,25 +121,25 @@ def data_without_emi():
 
 
 @pytest.fixture()
-def data_with_emi(data_without_emi):
-    amp = 0.1
-    phase = 1 / 3
-
-    freq = 10.0
-    rowclocks = 2000
-    period = (1. / freq) / 10.0e-6
-
-    ni, ng, ny, nx = data_without_emi.shape
-    extra_rowclocks = (1024. - ny) * (4 + 3.)
-    readtimes = np.zeros((ng, ny, nx))
-    for i in range(ng):
-        for j in range(ny):
-            for k in range(nx // 4):
-                readtimes[i, j, k*4:k*4+4] = i * extra_rowclocks + j * rowclocks + k
-
-    emi = amp * np.sin(2 * np.pi * readtimes / period + phase)
-    data = data_without_emi + emi[None, :, :, :]
+def data_without_emi_3int():
+    nint = 3
+    ngroup = 10
+    ny = 400
+    nx = 200
+    data = np.ones((nint, ngroup, ny, nx))
+    linear_ramp = np.arange(1, ngroup + 1, dtype=float)
+    data[:, :, ...] = linear_ramp[None, :, None, None]
     return data
+
+
+@pytest.fixture()
+def data_with_emi(data_without_emi):
+    return add_emi(data_without_emi)
+
+
+@pytest.fixture()
+def data_with_emi_3int(data_without_emi_3int):
+    return add_emi(data_without_emi_3int)
 
 
 @pytest.fixture()
@@ -267,9 +292,10 @@ def test_emicorrstep_succeeds(algorithm, subarray):
     assert result.meta.cal_step.emicorr == "COMPLETE"
 
 
-def test_emicorrstep_user_freq(tmp_path):
+@pytest.mark.parametrize('readpatt', ['FAST', 'SLOW'])
+def test_emicorrstep_user_freq(tmp_path, readpatt):
     data = np.ones((1, 5, 20, 20))
-    input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
+    input_model = mk_data_mdl(data, "FULL", readpatt, "MIRIMAGE")
     input_model.meta.filename = "test.fits"
 
     corr_freq = [218.3]
@@ -307,12 +333,13 @@ def test_emicorrstep_user_reffile(tmp_path, emicorr_model):
 
 @pytest.mark.parametrize("data_case", ["flat", "linear"])
 @pytest.mark.parametrize("algorithm", ["sequential", "joint"])
-def test_apply_emicorr_noiseless(data_case, algorithm, emicorr_model):
+@pytest.mark.parametrize("readpatt", ["FAST", "FASTR1"])
+def test_apply_emicorr_noiseless(data_case, algorithm, emicorr_model, readpatt):
     data = np.ones((1, 5, 20, 20))
     if data_case == "linear":
         linear_ramp = np.arange(1, 6, dtype=float)
         data[0, :, ...] = linear_ramp[:, None, None]
-    input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
+    input_model = mk_data_mdl(data, "MASK1550", readpatt, "MIRIMAGE")
     pars = {
         "save_onthefly_reffile": None,
         "nints_to_phase": None,
@@ -338,6 +365,17 @@ def test_apply_emicorr(data_without_emi, data_with_emi, model_with_emi, algorith
 
     # Corrected ramp should be close to ramp without noise
     assert np.allclose(outmdl.data, expected_model.data, rtol=accuracy)
+
+
+def test_apply_emicorr_separate_ints(data_without_emi_3int, data_with_emi_3int, model_with_emi):
+    input_model = mk_data_mdl(data_with_emi_3int, 'FULL', 'FAST', 'MIRIMAGE')
+    expected_model = mk_data_mdl(data_without_emi_3int, 'FULL', 'FAST', 'MIRIMAGE')
+
+    outmdl = emicorr.apply_emicorr(input_model.copy(), model_with_emi, algorithm='joint',
+                                   fit_ints_separately=True)
+
+    # Corrected ramp should be close to ramp without noise
+    assert np.allclose(outmdl.data, expected_model.data, rtol=1e-2)
 
 
 @pytest.mark.parametrize("algorithm", ["sequential", "joint"])
@@ -381,23 +419,68 @@ def test_apply_emicorr_with_freq(
     assert expected_output_name.exists()
 
 
+def test_apply_emicorr_no_config_found(module_log_watcher, emicorr_model):
+    data = np.ones((1, 5, 20, 20))
+    input_model = mk_data_mdl(data, "SUB64", "FAST", "MIRIMAGE")
+
+    module_log_watcher.message = "No correction match"
+    result = emicorr.apply_emicorr(input_model, emicorr_model)
+    assert result is None
+    module_log_watcher.assert_seen()
+
+
+@pytest.mark.parametrize('detector', ['MIRIMAGE', 'MIRIFULONG'])
 @pytest.mark.parametrize('subarray', ['FULL', 'MASK1550'])
-def test_get_subarcase(emicorr_model, subarray):
-    readpatt, detector = "FAST", "MIRIMAGE"
+@pytest.mark.parametrize('readpatt', ['FAST', 'SLOW'])
+def test_get_subarcase(emicorr_model, subarray_example_case, detector, subarray, readpatt):
     subarray_info_r = emicorr.get_subarcase(emicorr_model, subarray, readpatt, detector)
     subname_r, rowclocks_r, frameclocks_r, freqs2correct_r = subarray_info_r
 
     # test if we get the right configuration
     if subarray == 'FULL':
-        compare_real = ["FULL_FAST", 271, 277504, ["Hz10"]]
+        if readpatt == 'FAST':
+            subname_real = "FULL_FAST"
+        else:
+            subname_real = "FULL_SLOW"
     else:
-        compare_real = ["MASK1550", 82, 23968, ["Hz390", "Hz10"]]
-    subname_real, rowclocks_real, frameclocks_real, freqs2correct_real = compare_real
+        subname_real = subarray
+    rowclocks_real = subarray_example_case[subname_real]['rowclocks']
+    frameclocks_real = subarray_example_case[subname_real]['frameclocks']
+    freqs2correct_real = subarray_example_case[subname_real]['freqs'][readpatt]
+    if readpatt == 'SLOW':
+        freqs2correct_real = freqs2correct_real[detector]
 
     assert subname_real == subname_r
     assert rowclocks_real == rowclocks_r
     assert frameclocks_real == frameclocks_r
-    assert freqs2correct_real[0] == freqs2correct_r[0]
+    assert freqs2correct_real == freqs2correct_r
+
+
+def test_get_subarcase_bad_readpatt(emicorr_model, module_log_watcher):
+    subarray = 'FULL'
+    detector = 'MIRIMAGE'
+
+    # readpattern not recognized
+    readpatt = 'ANY'
+    module_log_watcher.message = "does not include expected string"
+    subarray_info_r = emicorr.get_subarcase(emicorr_model, subarray, readpatt, detector)
+    module_log_watcher.assert_seen()
+
+    assert subarray_info_r == (None, None, None, None)
+
+
+def test_get_subarcase_missing_subarray(emicorr_model, module_log_watcher):
+    detector = 'MIRIMAGE'
+    readpatt = 'FAST'
+
+    # subarray not recognized
+    subarray = 'ANY'
+    module_log_watcher.message = "Subarray ANY not found"
+    subarray_info_r = emicorr.get_subarcase(emicorr_model, subarray, readpatt, detector)
+    module_log_watcher.assert_seen()
+
+    assert subarray_info_r == (subarray, None, None, None)
+
 
 
 def test_get_frequency_info(emicorr_model):
