@@ -3,20 +3,14 @@
 from functools import wraps
 import logging
 import warnings
-import time
 
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
 from stpipe import crds_client, Step, Pipeline
 
 from jwst import __version_commit__, __version__
+from ._cal_logs import _LOG_FORMATTER
 from ..lib.suffix import remove_suffix
-
-_LOG_FORMATTER = logging.Formatter(
-    "%(asctime)s.%(msecs)03d - %(name)s - %(levelname)s - %(message)s",
-    datefmt="%Y-%m-%dT%H:%M:%S",
-)
-_LOG_FORMATTER.converter = time.gmtime
 
 
 log = logging.getLogger(__name__)
@@ -112,12 +106,10 @@ class JwstStep(Step):
                 if self.parent is None:
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
-            if hasattr(result, "cal_logs"):
-                tmpdict = result.cal_logs.instance
-            else:
-                tmpdict = {}
-            tmpdict[self.class_alias] = "\n".join(self._log_records)
-            result.cal_logs = tmpdict
+            if self.class_alias:
+                if not hasattr(result, "cal_logs"):
+                    result.cal_logs = {}
+                setattr(result.cal_logs, self.class_alias, self._log_records)
 
     def remove_suffix(self, name):
         """
@@ -199,13 +191,13 @@ class JwstPipeline(Pipeline, JwstStep):
                 f"{crds_client.get_context_used(result.crds_observatory)}"
             )
 
-            if hasattr(result, "cal_logs"):
-                tmpdict = result.cal_logs.instance
-            else:
-                tmpdict = {}
-            tmpdict[self.class_alias] = "\n".join(self._log_records)
+            if self.class_alias:
+                if not hasattr(result, "cal_logs"):
+                    result.cal_logs = {}
 
-            for _, step in self.step_defs.items():
-                if step.class_alias in tmpdict.keys():
-                    del tmpdict[step.class_alias]
-            result.cal_logs = tmpdict
+                # remove the step logs as they're captured by the pipeline log
+                for _, step in self.step_defs.items():
+                    if hasattr(result.cal_logs, step.class_alias):
+                        delattr(result.cal_logs, step.class_alias)
+
+                setattr(result.cal_logs, self.class_alias, self._log_records)
