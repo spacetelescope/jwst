@@ -104,8 +104,8 @@ final output product.  Specifically,
 These concerns have been addressed by implementing an overall memory model for outlier detection that
 includes options to minimize memory usage at the expense of temporary file I/O and runtime.
 Control over this memory model happens
-with the use of the ``in_memory`` parameter. The full impact of setting this parameter
-to `False` includes:
+with the use of the ``in_memory`` parameter, which defaults to True.
+The full impact of setting this parameter to `False` includes:
 
 #. The input :py:class:`~jwst.datamodels.ModelLibrary` object is loaded with `on_disk=True`.
    This ensures that input models are loaded into memory one at at time,
