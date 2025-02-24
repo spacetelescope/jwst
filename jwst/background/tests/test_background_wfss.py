@@ -168,10 +168,13 @@ def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
 
 
 def shared_tests(sci, mask, original_data_mean):
-    """Tests that are common to all WFSS modes
+    """
+    Tests that are common to all WFSS modes.
+    
     Note that NaN fraction test in test_nrc_wfss_background and test_nis_wfss_background
     cannot be applied to the full run tests because the background reference files contain
-    NaNs in some cases (specifically for NIRISS)"""
+    NaNs in some cases (specifically for NIRISS)
+    """
 
     # re-mask data so "real" sources are ignored here
     sci[~mask] = np.nan
@@ -230,11 +233,14 @@ def test_nis_wfss_background(make_nis_wfss_datamodel, bkg_file):
 # test both filters because they have opposite dispersion directions
 @pytest.mark.parametrize("pupil", ["GRISMC", "GRISMR"])
 def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
-    """Test full run of NIRCAM WFSS background subtraction.
+    """
+    Test full run of NIRCAM WFSS background subtraction.
+
     The residual structure in the background will not look as nice as in
     test_nis_wfss_background because here it's taken from a reference file,
     so the bkg has real detector imperfections
-    while the data is synthetic and just has a mock gradient"""
+    while the data is synthetic and just has a mock gradient
+    """
     data = make_nrc_wfss_datamodel.copy()
     data.meta.instrument.pupil = pupil
 
@@ -249,15 +255,19 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
     mask = _mask_from_source_cat(result, wavelenrange)
     shared_tests(sci, mask, data.original_data_mean)
+    assert isinstance(result.meta.background.scaling_factor, float)
 
 
 @pytest.mark.parametrize("filt", ["GR150C", "GR150R"])
 def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
-    """Test full run of NIRISS WFSS background subtraction.
+    """
+    Test full run of NIRISS WFSS background subtraction.
+
     The residual structure in the background will not look as nice as in
     test_nis_wfss_background because here it's taken from a reference file,
     so the bkg has real detector imperfections
-    while the data is synthetic and just has a mock gradient"""
+    while the data is synthetic and just has a mock gradient
+    """
     data = make_nis_wfss_datamodel.copy()
     data.meta.instrument.filter = filt
 
@@ -272,6 +282,7 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
     mask = _mask_from_source_cat(result, wavelenrange)
     shared_tests(sci, mask, data.original_data_mean)
+    assert isinstance(result.meta.background.scaling_factor, float)
 
 
 def test_sufficient_background_pixels():

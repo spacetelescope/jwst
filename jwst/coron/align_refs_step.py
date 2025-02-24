@@ -1,6 +1,6 @@
 """ Replace bad pixels and align psf image with target image."""
 
-from stdatamodels.dqflags import interpret_bit_flags
+from astropy.nddata.bitmask import interpret_bit_flags
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
@@ -53,7 +53,7 @@ class AlignRefsStep(Step):
 
             # Get the bit value of bad pixels. A value of 0 treats all pixels as good.
             bad_bitvalue = self.bad_bits
-            bad_bitvalue = interpret_bit_flags(bad_bitvalue, mnemonic_map=pixel)
+            bad_bitvalue = interpret_bit_flags(bad_bitvalue, flag_name_map=pixel)
             if bad_bitvalue is None:
                 bad_bitvalue = 0
 
