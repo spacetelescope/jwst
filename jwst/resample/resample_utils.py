@@ -12,7 +12,6 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from stcal.alignment.util import (
     compute_scale,
-    wcs_bbox_from_shape,
     wcs_from_sregions,
 )
 from stcal.resample import UnsupportedWCSError
@@ -36,7 +35,6 @@ log.setLevel(logging.DEBUG)
 
 def resampled_wcs_from_models(
         input_models,
-        ref_wcs=None,
         pixel_scale_ratio=1.0,
         pixel_scale=None,
         output_shape=None,
@@ -53,10 +51,6 @@ def resampled_wcs_from_models(
 
     input_models : `~jwst.datamodel.ModelLibrary`
         Each datamodel must have a ``model.meta.wcs`` set to a ~gwcs.WCS object.
-
-    ref_wcs : WCS object
-        A WCS used as reference for the creation of the output
-        coordinate frame, projection, and scaling and rotation transforms.
 
     pixel_scale_ratio : float, optional
         Desired pixel scale ratio defined as the ratio of the desired output
@@ -111,22 +105,16 @@ def resampled_wcs_from_models(
     # build a list of WCS of all input models:
     sregion_list = []
     ref_wcs = None
-    ref_wcsinfo = None
-    shape = None
 
     with input_models:
         for model in input_models:
-            w = model.meta.wcs
-            if ref_wcsinfo is None:
-                ref_wcsinfo = model.meta.wcsinfo.instance
-                shape = model.data.shape
             if ref_wcs is None:
-                ref_wcs = w
-            # make sure all WCS objects have the bounding_box defined:
-            if w.bounding_box is None:
-                w.bounding_box = wcs_bbox_from_shape(shape)
+                ref_wcsinfo = model.meta.wcsinfo.instance
+                ref_wcs = deepcopy(model.meta.wcs)
+                shape = model.data.shape
+
             sregion_list.append(model.meta.wcsinfo.s_region)
-            input_models.shelve(model)
+            input_models.shelve(model, modify=False)
 
     if not sregion_list:
         raise ValueError("No input models.")
@@ -173,6 +161,7 @@ def resampled_wcs_from_models(
         crpix=crpix,
         crval=crval
     )
+
     return wcs, pscale_in0, pixel_scale, pixel_scale_ratio
 
 
