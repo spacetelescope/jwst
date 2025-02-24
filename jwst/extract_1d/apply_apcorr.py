@@ -1,9 +1,6 @@
 import abc
 
-from typing import Tuple, Union, Type
 from scipy.interpolate import RectBivariateSpline, interp1d
-from astropy.io import fits
-from stdatamodels import DataModel
 from stdatamodels.jwst.datamodels import MultiSlitModel
 
 from ..assign_wcs.util import compute_scale
@@ -55,10 +52,8 @@ class ApCorrBase(abc.ABC):
         }
     }
 
-    size_key = None
-
-    def __init__(self, input_model: DataModel, apcorr_table: fits.FITS_rec, sizeunit: str,
-                 location: Tuple[float, float, float] = None, slit_name: str = None, **match_kwargs):
+    def __init__(self, input_model, apcorr_table, sizeunit,
+                 location=None, slit_name=None, **match_kwargs):
         self.correction = None
 
         self.model = input_model
@@ -73,6 +68,11 @@ class ApCorrBase(abc.ABC):
         self.reference = self._reduce_reftable()
         self._convert_size_units()
         self.apcorr_func = self.approximate()
+        self.tabulated_correction = None
+
+    @property
+    def size_key(self):
+        return None
 
     def _convert_size_units(self):
         """If the SIZE or Radius column is in units of arcseconds, convert to pixels."""
@@ -101,7 +101,7 @@ class ApCorrBase(abc.ABC):
                     'pixels.'
                 )
 
-    def _get_match_keys(self) -> dict:
+    def _get_match_keys(self):
         """Get column keys needed for reducing the reference table based on input."""
         instrument = self.model.meta.instrument.name.upper()
         exptype = self.model.meta.exposure.type.upper()
@@ -112,7 +112,7 @@ class ApCorrBase(abc.ABC):
             if key in exptype:
                 return relevant_pars[key]
 
-    def _get_match_pars(self) -> dict:
+    def _get_match_pars(self):
         """Get meta parameters required for reference table row-selection."""
         match_pars = {}
 
@@ -124,7 +124,7 @@ class ApCorrBase(abc.ABC):
 
         return match_pars
 
-    def _reduce_reftable(self) -> fits.FITS_record:
+    def _reduce_reftable(self):
         """Reduce full reference table to a single matched row."""
         table = self._reference_table.copy()
 
@@ -144,7 +144,7 @@ class ApCorrBase(abc.ABC):
         """Generate an approximate aperture correction function based on input data."""
         pass
 
-    def apply(self, spec_table: fits.FITS_rec):
+    def apply(self, spec_table):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
 
         Parameters
@@ -153,15 +153,17 @@ class ApCorrBase(abc.ABC):
             Table of aperture corrections values from apcorr reference file.
 
         """
-        cols_to_correct = ('flux', 'flux_error', 'flux_var_poisson', 'flux_var_rnoise',
-                           'flux_var_flat', 'surf_bright', 'sb_error', 'sb_var_poisson',
-                           'sb_var_rnoise', 'sb_var_flat')
+        flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat',
+                               'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
         for row in spec_table:
             correction = self.apcorr_func(row['npixels'], row['wavelength'])
 
-            for col in cols_to_correct:
+            for col in flux_cols_to_correct:
                 row[col] *= correction.item()
+            for col in var_cols_to_correct:
+                row[col] *= correction.item() * correction.item()
 
 
 class ApCorrPhase(ApCorrBase):
@@ -178,14 +180,14 @@ class ApCorrPhase(ApCorrBase):
     """
     size_key = 'size'
 
-    def __init__(self, *args, pixphase: float = 0.5, **kwargs):
+    def __init__(self, *args, pixphase=0.5, **kwargs):
         self.phase = pixphase  # In the future we'll attempt to measure the pixel phase from inputs.
 
         super().__init__(*args, **kwargs)
 
     def approximate(self):
         """Generate an approximate function for interpolating apcorr values to input wavelength and size."""
-        def _approx_func(wavelength: float, size: float, pixel_phase: float) -> RectBivariateSpline:
+        def _approx_func(wavelength, size, pixel_phase):
             """Create a 'custom' approximation function that approximates the aperture correction in two stages based on
             input data.
 
@@ -225,8 +227,11 @@ class ApCorrPhase(ApCorrBase):
     def measure_phase(self):  # Future method in determining pixel phase
         pass
 
-    def apply(self, spec_table: fits.FITS_rec):
-        """Apply interpolated aperture correction value to source-related extraction results in-place.
+    def tabulate_correction(self, spec_table):
+        """Tabulate the interpolated aperture correction value.
+
+         This will save time when applying it later, especially if it is to be applied to multiple integrations.
+         Modifies self.tabulated_correction.
 
         Parameters
         ----------
@@ -234,26 +239,65 @@ class ApCorrPhase(ApCorrBase):
             Table of aperture corrections values from apcorr reference file.
 
         """
-        cols_to_correct = ('flux', 'flux_error', 'flux_var_poisson', 'flux_var_rnoise',
-                           'flux_var_flat', 'surf_bright', 'sb_error', 'sb_var_poisson',
-                           'sb_var_rnoise', 'sb_var_flat')
 
+        coefs = []
         for row in spec_table:
             try:
                 correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
             except ValueError:
                 correction = None  # Some input wavelengths might not be supported (especially at the ends of the range)
 
-            for col in cols_to_correct:
+            if correction:
+                coefs += [correction.item()]
+            else:
+                coefs += [1]
+
+        self.tabulated_correction = np.asarray(coefs)
+
+    def apply(self, spec_table, use_tabulated=False):
+        """Apply interpolated aperture correction value to source-related extraction results in-place.
+
+        Parameters
+        ----------
+        spec_table : `~fits.FITS_rec`
+            Table of aperture corrections values from apcorr reference file.
+        use_tabulated : bool, Optional
+            Use self.tabulated_correction to perform the aperture correction?
+            Default False (recompute correction from scratch).
+
+        """
+        flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat',
+                            'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
+
+        if use_tabulated:
+            if self.tabulated_correction is None:
+                raise ValueError("Cannot call apply_tabulated_correction without first "
+                                 "calling tabulate_correction")
+
+            for col in flux_cols_to_correct:
+                spec_table[col] *= self.tabulated_correction
+            for col in var_cols_to_correct:
+                spec_table[col] *= self.tabulated_correction**2
+        else:
+            for row in spec_table:
+                try:
+                    correction = self.apcorr_func(row['wavelength'], row['npixels'], self.phase)
+                except ValueError:
+                    correction = None  # Some input wavelengths might not be supported (especially at the ends of the range)
+
                 if correction:
-                    row[col] *= correction.item()
+                    for col in flux_cols_to_correct:
+                        row[col] *= correction.item()
+                    for col in var_cols_to_correct:
+                        row[col] *= correction.item() * correction.item()
 
 
 class ApCorrRadial(ApCorrBase):
     """Aperture correction class used with spectral data produced from an extraction aperture radius."""
 
-    def __init__(self, input_model: DataModel, apcorr_table,
-                 location: Tuple[float, float, float] = None):
+    def __init__(self, input_model, apcorr_table,
+                 location=None):
 
         self.correction = None
         self.model = input_model
@@ -284,7 +328,7 @@ class ApCorrRadial(ApCorrBase):
                     'pixels.'
                 )
 
-    def apply(self, spec_table: fits.FITS_rec):
+    def apply(self, spec_table):
         """Apply interpolated aperture correction value to source-related extraction results in-place.
 
         Parameters
@@ -293,14 +337,16 @@ class ApCorrRadial(ApCorrBase):
             Table of aperture corrections values from apcorr reference file.
 
         """
-        cols_to_correct = ('flux', 'flux_error', 'flux_var_poisson', 'flux_var_rnoise',
-                           'flux_var_flat', 'surf_bright', 'sb_error', 'sb_var_poisson',
-                           'sb_var_rnoise', 'sb_var_flat')
+        flux_cols_to_correct = ('flux', 'flux_error', 'surf_bright', 'sb_error')
+        var_cols_to_correct = ('flux_var_poisson', 'flux_var_rnoise', 'flux_var_flat',
+                               'sb_var_poisson', 'sb_var_rnoise', 'sb_var_flat')
 
         for i, row in enumerate(spec_table):
             correction = self.apcorr_correction[i]
-            for col in cols_to_correct:
+            for col in flux_cols_to_correct:
                 row[col] *= correction
+            for col in var_cols_to_correct:
+                row[col] *= correction * correction
 
     def match_wavelengths(self, wavelength_ifu):
         # given the ifu wavelength value - redefine the apcor func and radius to this wavelength
@@ -331,7 +377,7 @@ class ApCorrRadial(ApCorrBase):
     def find_apcorr_func(self, iwave, radius_ifu):
         # at ifu wavelength plane (iwave), the extraction radius is radius_ifu
         # pull out the radius values (self.size)  to use in the apcor ref file for this iwave
-        # self.size and self.apcorr have already been interpolated in wavelength to match the
+        # self.size and self.apcorr have already been interpolated in wavelength to match
         # the ifu wavelength range.
 
         radius_apcor = self.size[:, iwave]
@@ -363,7 +409,7 @@ class ApCorr(ApCorrBase):
         return RectBivariateSpline(size, wavelength, apcorr.T, ky=1, kx=1)
 
 
-def select_apcorr(input_model: DataModel) -> Union[Type[ApCorr], Type[ApCorrPhase], Type[ApCorrRadial]]:
+def select_apcorr(input_model):
     """Select appropriate Aperture correction class based on input DataModel.
 
     Parameters

@@ -9,7 +9,7 @@ from astropy.io import fits
 
 from jwst.associations.tests import helpers
 from jwst.associations import AssociationPool
-from jwst.associations.mkpool import from_cmdline, mkpool
+from jwst.associations.mkpool import from_cmdline, mkpool, NON_HEADER_COLS
 
 # Optional column settings
 OPT_COLS = [('asn_candidate', [('a3001', 'coron')]),
@@ -19,6 +19,7 @@ OPT_COLS = [('asn_candidate', [('a3001', 'coron')]),
 
 # Required column names
 REQUIRED_PARAMS = set(('program', 'filename'))
+NON_HEADER_PARAMS = set(NON_HEADER_COLS.keys())
 
 
 def test_hdu(exposures):
@@ -29,6 +30,7 @@ def test_hdu(exposures):
     pool = mkpool(hdus)
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
+    assert NON_HEADER_PARAMS.issubset(pool.colnames)
     assert len(pool) == len(exposures)
 
 
@@ -40,6 +42,7 @@ def test_hdulist(exposures):
     pool = mkpool(hduls)
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
+    assert NON_HEADER_PARAMS.issubset(pool.colnames)
     assert len(pool) == len(exposures)
     [h.close() for h in hduls]
 
@@ -48,6 +51,7 @@ def test_mkpool(exposures):
     pool = mkpool(exposures)
     assert isinstance(pool, AssociationPool)
     assert REQUIRED_PARAMS.issubset(pool.colnames)
+    assert NON_HEADER_PARAMS.issubset(pool.colnames)
     assert len(pool) == len(exposures)
     filenames = [
         filename
@@ -66,6 +70,16 @@ def test_opt_cols(mkpool_with_args, opt_cols):
 def test_opt_cols_cmdline(mkpool_cmdline, opt_cols):
     """Ensure that the command line with optional arguments are properly used"""
     _test_opt_cols(mkpool_cmdline, opt_cols)
+
+
+def test_nonheader_cols(mkpool_with_args):
+    """Ensure that non-header defaults are properly set."""
+    _test_nonheader_cols(mkpool_with_args)
+
+
+def test_nonheader_cols_cmdline(mkpool_cmdline):
+    """Ensure that non-header defaults are properly set with the command line."""
+    _test_nonheader_cols(mkpool_cmdline)
 
 
 # ####################
@@ -111,3 +125,14 @@ def _test_opt_cols(mkpool_with_args, opt_cols):
     if column == 'asn_candidate':
         expected = '[' + str(('o001', 'observation')) + ', ' + str(expected)[1:]
     assert mkpool_with_args[0][column] == expected
+
+
+def _test_nonheader_cols(mkpool_with_args):
+    """Ensure that non-header defaults are properly set"""
+    opt_dict = dict(OPT_COLS)
+    for column, expected in NON_HEADER_COLS.items():
+        if column in opt_dict:
+            expected = opt_dict[column]
+        if column == 'asn_candidate':
+            expected = '[' + str(('o001', 'observation')) + ', ' + str(expected)[1:]
+        assert mkpool_with_args[0][column] == expected

@@ -1,8 +1,6 @@
 import numpy as np
 import pytest
-import warnings
 
-from stdatamodels.validate import ValidationWarning
 from stdatamodels.jwst.datamodels import MaskModel, GuiderRawModel, RampModel, dqflags
 
 from jwst.dq_init import DQInitStep
@@ -105,45 +103,6 @@ def test_groupdq():
                                           dtype=int),
                                   groupdq,
                                   err_msg='groupdq not initialized to zero')
-
-
-def test_err():
-    """Check that a 4-D ERR array is initialized and all values are zero."""
-
-    # size of integration
-    instrument = 'MIRI'
-    nints = 1
-    ngroups = 5
-    xsize = 1032
-    ysize = 1024
-    xstart = 1
-    ystart = 1
-
-    # create raw input data for step
-    dm_ramp = make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart)
-
-    # create a MaskModel for the dq input mask
-    dq, dq_def = make_maskmodel(ysize, xsize)
-
-    # write mask model
-    ref_data = MaskModel(dq=dq, dq_def=dq_def)
-    ref_data.meta.instrument.name = instrument
-    ref_data.meta.subarray.xstart = xstart
-    ref_data.meta.subarray.xsize = xsize
-    ref_data.meta.subarray.ystart = ystart
-    ref_data.meta.subarray.ysize = ysize
-
-    # Filter out validation warnings from ref_data
-    warnings.filterwarnings("ignore", category=ValidationWarning)
-
-    # run correction step
-    outfile = do_dqinit(dm_ramp, ref_data)
-
-    # check that ERR array was created and initialized to zero
-    errarr = outfile.err
-
-    assert errarr.ndim == 4  # check that output err array is 4-D
-    assert np.all(errarr == 0)  # check that values are 0
 
 
 def test_dq_subarray():
@@ -259,12 +218,12 @@ def test_dq_add1_groupdq():
 
 # Set parameters for multiple runs of guider data
 args = "xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector"
-test_data = [(1, 1, 2048, 2048, 2, 2, 'FGS', 'FGS_ID-IMAGE', 'GUIDER1'),
+test_data_multiple = [(1, 1, 2048, 2048, 2, 2, 'FGS', 'FGS_ID-IMAGE', 'GUIDER1'),
              (1, 1, 1032, 1024, 1, 5, 'MIRI', 'MIR_IMAGE', 'MIRIMAGE')]
 ids = ["GuiderRawModel-Image", "RampModel"]
 
 
-@pytest.mark.parametrize(args, test_data, ids=ids)
+@pytest.mark.parametrize(args, test_data_multiple, ids=ids)
 def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector):
     """Test that the full step runs"""
 

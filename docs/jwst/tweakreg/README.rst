@@ -21,8 +21,8 @@ format automatically recognized by :py:meth:`~astropy.table.Table.read`.
 When the ``meta.tweakreg_catalog`` attribute of input data models is `None` or
 an empty string, then the ``tweakreg`` step will attempt to detect sources in the
 input images. Stars are detected in the image with one of the following source
-detection algorithms: ``photutils.detection.DAOStarFinder`` (default), 
-``photutils.detection.IRAFStarFinder``, or ``photutils.segmentation.SourceFinder`` 
+detection algorithms: ``photutils.detection.DAOStarFinder`` (default),
+``photutils.detection.IRAFStarFinder``, or ``photutils.segmentation.SourceFinder``
 in conjunction with ``photutils.segmentation.SourceCatalog``.
 
 DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
@@ -38,26 +38,26 @@ specified.
 IRAFStarFinder is a Python implementation of the IRAF star finding algorithm,
 which also calculates the objects' centroids, roundness, and sharpness.
 However, IRAFStarFinder uses image moments
-instead of 1-D Gaussian fits to projected light distributions like 
+instead of 1-D Gaussian fits to projected light distributions like
 DAOStarFinder.
 
 SourceFinder implements a segmentation algorithm that identifies
-sources in an image based on a number of connected pixels above a 
-specified threshold value.  The sources are deblended using a 
-combination of multi-thresholding and watershed segmentation. 
+sources in an image based on a number of connected pixels above a
+specified threshold value.  The sources are deblended using a
+combination of multi-thresholding and watershed segmentation.
 SourceCatalog finds the centroids of these sources, which are used
-as the retrieved star positions. 
+as the retrieved star positions.
 
 .. warning::
-    It has been shown (`STScI Technical Report JWST-STScI-008116, SM-12 
-    <https://www.stsci.edu/~goudfroo/NIRISSdoc/Centroid_Accuracies_Precisions_NIRISS_v2.pdf>`_) 
+    It has been shown (`STScI Technical Report JWST-STScI-008116, SM-12
+    <https://www.stsci.edu/~goudfroo/NIRISSdoc/Centroid_Accuracies_Precisions_NIRISS_v2.pdf>`_)
     that for undersampled PSFs, e.g. for short-wavelength NIRISS
     imaging data, ``DAOStarFinder`` gives bad results no matter the input parameters
     due to its use of 1-D Gaussian fits.
     ``IRAFStarFinder`` or ``SourceFinder`` should be used instead.
 
-.. note:: 
-    ``SourceFinder`` is likely to detect non-stellar sources 
+.. note::
+    ``SourceFinder`` is likely to detect non-stellar sources
     such as galaxies because sources are not assumed to be
     point-source-like. This may lead to mismatches between the
     derived source catalog and the reference catalog during the
@@ -86,7 +86,7 @@ models to the custom catalog file name, the ``tweakreg_step`` also supports two
 other ways of supplying custom source catalogs to the step:
 
 1. Adding ``tweakreg_catalog`` attribute to the ``members`` of the input ASN
-   table - see `~jwst.datamodels.ModelContainer` for more details.
+   table - see `~jwst.datamodels.ModelLibrary` for more details.
    Catalog file names are relative to ASN file path.
 
 2. Providing a simple two-column text file, specified via step's parameter
@@ -165,17 +165,17 @@ telescope pointing will be identical in all these images and it is assumed
 that the relative positions of (e.g., NIRCam) detectors do not change.
 Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
-`~jwst.datamodels.ModelContainer`. This grouping is performed automatically
+`~jwst.datamodels.ModelLibrary`. This grouping is performed automatically
 in the ``tweakreg`` step using the
-`~jwst.datamodels.ModelContainer.models_grouped` property, which assigns
-a group ID to each input image model in ``meta.group_id``.
+`~jwst.datamodels.ModelLibrary.group_names` property.
+
 
 However, when detector calibrations are not accurate, alignment of groups
 of images may fail (or result in poor alignment). In this case, it may be
 desirable to align each image independently. This can be achieved either by
 setting the ``image_model.meta.group_id`` attribute to a unique string or integer
 value for each image, or by adding the ``group_id`` attribute to the ``members`` of the input ASN
-table - see `~jwst.datamodels.ModelContainer` for more details.
+table - see `~jwst.datamodels.ModelLibrary` for more details.
 
 .. note::
     Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps
@@ -218,7 +218,7 @@ The ``tweakreg`` step has the following optional arguments:
   in pixels. (Default=400)
 
 * ``starfinder``: A `str` indicating the source detection algorithm to use.
-  Allowed values: `'iraf'`, `'dao'`, `'segmentation'`. (Default= `'dao'`)
+  Allowed values: `'iraf'`, `'dao'`, `'segmentation'`. (Default= `'iraf'`)
 
 * ``snr_threshold``: A `float` value indicating SNR threshold above the
   background. Required for all star finders. (Default=10.0)
@@ -235,16 +235,16 @@ The ``tweakreg`` step has the following optional arguments:
   Gaussian kernel in units of number of FWHMs. (Default=2.5)
 
 * ``sharplo``: A `float` value indicating The lower bound on sharpness
-  for object detection. (Default=0.2)
+  for object detection. (Default=0.5)
 
 * ``sharphi``: A `float` value indicating the upper bound on sharpness
-  for object detection. (Default=1.0)
+  for object detection. (Default=2.0)
 
 * ``roundlo``: A `float` value indicating the lower bound on roundness
-  for object detection. (Default=-1.0)
+  for object detection. (Default=0.0)
 
 * ``roundhi``: A `float` value indicating the upper bound on roundness
-  for object detection. (Default=1.0)
+  for object detection. (Default=0.2)
 
 * ``brightest``: A positive `int` value indicating the number of brightest
   objects to keep. If None, keep all objects above the threshold. (Default=200)
@@ -252,9 +252,17 @@ The ``tweakreg`` step has the following optional arguments:
 * ``peakmax``: A `float` value used to filter out objects with pixel values
   >= ``peakmax``. (Default=None)
 
+.. warning::
+  Different source finding algorithms have different values for the
+  ``sharplo``, ``sharphi``, ``roundlo`` and ``roundhi`` parameters. These
+  parameters should be adjusted to match the algorithm selected by the
+  ``starfinder`` parameter. See documentation for
+  [IRAFStarFinder](https://photutils.readthedocs.io/en/stable/api/photutils.detection.IRAFStarFinder.html)
+  and [DAOStarFinder](https://photutils.readthedocs.io/en/stable/api/photutils.detection.DAOStarFinder.html).
+
 **Additional source finding parameters for segmentation:**
 
-* ``npixels``: An `int` value indicating the minimum number of 
+* ``npixels``: An `int` value indicating the minimum number of
   connected pixels that comprises a segment (Default=10)
 
 * ``connectivity``: An `int` value indicating the connectivity defining the
@@ -280,7 +288,7 @@ The ``tweakreg`` step has the following optional arguments:
   Allowed values: `'correct'`, `'mask'`, `'none'`. (Default= `'correct'`)
 
 * ``kron_params``: A tuple of `float` values indicating the
-  parameters defining Kron aperture. If None, 
+  parameters defining Kron aperture. If None,
   the parameters `(2.5, 1.4, 0.0)` are used. (Default=None)
 
 **Optimize alignment order:**
@@ -307,7 +315,8 @@ The ``tweakreg`` step has the following optional arguments:
 * ``use2dhist``: A boolean indicating whether to use 2D histogram to find
   initial offset. (Default=True)
 
-* ``separation``: Minimum object separation in arcsec. (Default=1.0)
+* ``separation``: Minimum object separation in arcsec. It **must be** at least
+  ``sqrt(2)`` times larger than ``tolerance``. (Default=1.0)
 
 * ``tolerance``: Matching tolerance for ``xyxymatch`` in arcsec. (Default=0.7)
 
@@ -330,7 +339,7 @@ The ``tweakreg`` step has the following optional arguments:
   .. note::
       Mathematically, alignment of images observed in different tangent planes
       requires ``fitgeometry='general'`` in order to fit source catalogs
-      in the different images even if mis-alignment is caused only by a shift
+      in the different images even if misalignment is caused only by a shift
       or rotation in the tangent plane of one of the images.
 
       However, under certain circumstances, such as small alignment errors or
@@ -374,9 +383,8 @@ Parameters used for absolute astrometry to a reference catalog.
   Otherwise the initial guess for the offsets will be set to zero
   (Default=True)
 
-* ``abs_separation``: Minimum object separation in arcsec. It is recommended
-  that a value smaller than ``separation`` be used for this parameter
-  (e.g. 10 times smaller) (Default=0.1)
+* ``abs_separation``: Minimum object separation in arcsec. It **must be** at
+  least ``sqrt(2)`` times larger than ``abs_tolerance``. (Default=1.0)
 
 * ``abs_tolerance``: Matching tolerance for ``xyxymatch`` in arcsec.
   (Default=0.7)
@@ -393,7 +401,7 @@ Parameters used for absolute astrometry to a reference catalog.
   that apply to ``fitgeometry`` also apply to ``abs_fitgeometry``.
 
 * ``abs_nclip``: A non-negative integer number of clipping iterations
-  to use in the fit. (Default = 3)
+  to use in the fit. (Default=3)
 
 * ``abs_sigma``: A positive `float` indicating the clipping limit, in sigma
   units, used when performing fit. (Default=3.0)
@@ -401,6 +409,40 @@ Parameters used for absolute astrometry to a reference catalog.
 * ``save_abs_catalog``: A boolean specifying whether or not to write out the
   astrometric catalog used for the fit as a separate product. (Default=False)
 
+**SIP approximation parameters:**
+
+Parameters used to provide a SIP-based approximation to the WCS,
+for FITS display. These parameter values should match the ones used
+in the ``assign_wcs`` step.
+
+* ``sip_approx``: A boolean flag to enable the computation of a SIP
+  approximation. (Default=True)
+
+* ``sip_degree``: A positive `int`, specifying the polynomial degree for
+  the forward SIP fit. `None` uses the best fit; the maximum value allowed
+  is 6. (Default=None)
+
+* ``sip_max_pix_error``: A positive `float`, specifying the maximum
+  error for the SIP forward fit, in units of pixels. Ignored if
+  ``sip_degree`` is set to an explicit value. (Default=0.01)
+
+* ``sip_inv_degree``: A positive `int`, specifying the polynomial degree for
+  the inverse SIP fit. `None` uses the best fit; the maximum value allowed
+  is 6. (Default=None)
+
+* ``sip_max_inv_pix_error``: A positive `float`, specifying the maximum
+  error for the SIP inverse fit, in units of pixels. Ignored if
+  ``sip_inv_degree`` is set to an explicit value. (Default=0.01)
+
+* ``sip_npoints``: Number of points for the SIP fit. (Default=12).
+
+**stpipe general options:**
+
+* ``output_use_model``: A boolean indicating whether to use `DataModel.meta.filename`
+  when saving the results. (Default=True)
+
+* ``in_memory``: A boolean indicating whether to keep models in memory, or to save
+  temporary files on disk while not in use to save memory. (Default=True)
 
 Further Documentation
 ---------------------
@@ -421,6 +463,9 @@ can be found at the following links:
 .. _IRAFStarFinder: https://photutils.readthedocs.io/en/stable/api/photutils.detection.IRAFStarFinder.html
 .. _SourceFinder: https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceFinder.html
 .. _SourceCatalog: https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceCatalog.html
+
+The alignment and WCS correction portions of the step are handled by the `stcal` package.
+Additional documentation may be found `here <https://stcal.readthedocs.io/en/latest/stcal/tweakreg/index.html>`_.
 
 
 Reference Files

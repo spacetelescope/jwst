@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def do_correction(input_model, rscd_model, type):
+def do_correction(output_model, rscd_model, type):
     """
     Short Summary
     -------------
@@ -21,7 +21,7 @@ def do_correction(input_model, rscd_model, type):
 
     Parameters
     ----------
-    input_model: ~jwst.datamodels.RampModel
+    output_model: ~jwst.datamodels.RampModel
         science data to be corrected
 
     rscd_model: ~jwst.datamodels.RSCDModel
@@ -38,28 +38,28 @@ def do_correction(input_model, rscd_model, type):
     """
 
     # Retrieve the reference parameters for this exposure type
-    param = get_rscd_parameters(input_model, rscd_model)
+    param = get_rscd_parameters(output_model, rscd_model)
 
     if not bool(param):  # empty dictionary
         log.warning('READPATT, SUBARRAY combination not found in ref file: RSCD correction will be skipped')
-        input_model.meta.cal_step.rscd = 'SKIPPED'
-        return input_model
+        output_model.meta.cal_step.rscd = 'SKIPPED'
+        return output_model
 
     if type == 'baseline':
         group_skip = param['skip']
-        output = correction_skip_groups(input_model, group_skip)
+        output_model = correction_skip_groups(output_model, group_skip)
     else:
         # enhanced algorithm is not enabled yet (updated code and validation needed)
         log.warning('Enhanced algorithm not support yet: RSCD correction will be skipped')
-        input_model.meta.cal_step.rscd = 'SKIPPED'
-        return input_model
+        output_model.meta.cal_step.rscd = 'SKIPPED'
+        return output_model
         # decay function algorithm update needed
-        # output = correction_decay_function(input_model, param)
+        # output_model = correction_decay_function(input_model, param)
 
-    return output
+    return output_model
 
 
-def correction_skip_groups(input_model, group_skip):
+def correction_skip_groups(output, group_skip):
     """
     Short Summary
     -------------
@@ -68,7 +68,7 @@ def correction_skip_groups(input_model, group_skip):
 
     Parameters
     ----------
-    input_model: ~jwst.datamodels.RampModel
+    output: ~jwst.datamodels.RampModel
         science data to be corrected
 
     group_skip: int
@@ -80,15 +80,22 @@ def correction_skip_groups(input_model, group_skip):
         RSCD-corrected science data
     """
 
-    # Save some data params for easy use later
-    sci_nints = input_model.data.shape[0]       # number of integrations
-    sci_ngroups = input_model.data.shape[1]     # number of groups
+    # General exposure parameters
+    sci_ngroups = output.meta.exposure.ngroups
+    sci_nints = output.meta.exposure.nints
+
+    # values defined for segmented data
+    sci_int_start = output.meta.exposure.integration_start
+
+    if sci_int_start is None:
+        sci_int_start = 1
+
 
     log.debug("RSCD correction using: nints=%d, ngroups=%d" %
               (sci_nints, sci_ngroups))
-
-    # Create output as a copy of the input science data model
-    output = input_model.copy()
+    log.debug("The first integration in the data is integration: %d" %
+              (sci_int_start))
+    log.info("Number of groups to skip for integrations 2 and higher: %d " %group_skip)
 
     # If ngroups <= group_skip+3, skip the flagging
     # the +3 is to ensure there is a slope to be fit including the flagging for
@@ -99,16 +106,26 @@ def correction_skip_groups(input_model, group_skip):
         output.meta.cal_step.rscd = 'SKIPPED'
         return output
 
-    # If ngroups > group_skip+3, set all of the GROUPDQ in the first group to 'DO_NOT_USE'
-    output.groupdq[1:, 0:group_skip:, :] = \
-        np.bitwise_or(output.groupdq[1:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
+    # The RSCD correction is applied to integrations 2 and higher.
+    # For segmented data the first integration in the file may not be the first integration in the
+    # exposure. The value in meta.exposure.integration_start holds the value of the first integration
+    # in the file.
+    # If a correction is to be done and if  ngroups > group_skip+3, then  set all of the GROUPDQ
+    # in 0: group_skip to 'DO_NOT_USE'
+
+    int_start = 1
+    if sci_int_start !=1: # we have segmented data
+        int_start = 0
+
+    output.groupdq[int_start:, 0:group_skip, :, :] = \
+        np.bitwise_or(output.groupdq[int_start:, 0:group_skip, :, :], dqflags.group['DO_NOT_USE'])
     log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
     output.meta.cal_step.rscd = 'COMPLETE'
 
     return output
 
 
-def correction_decay_function(input_model, param):
+def correction_decay_function(output, param):
     """
     Short Summary
     -------------
@@ -133,7 +150,7 @@ def correction_decay_function(input_model, param):
 
     Parameters
     ----------
-    input_model: ~jwst.datamodels.RampModel
+    output: ~jwst.datamodels.RampModel
         science data to be corrected
 
     param: dict
@@ -147,14 +164,11 @@ def correction_decay_function(input_model, param):
     """
 
     # Save some data params for easy use later
-    sci_nints = input_model.data.shape[0]       # number of integrations
-    sci_ngroups = input_model.data.shape[1]     # number of groups
+    sci_nints = output.data.shape[0]       # number of integrations
+    sci_ngroups = output.data.shape[1]     # number of groups
 
     log.debug("RSCD correction using: nints=%d, ngroups=%d" %
               (sci_nints, sci_ngroups))
-
-    # Create output as a copy of the input science data model
-    output = input_model.copy()
 
     # Check for valid parameters
     if sci_ngroups < 2:
@@ -208,17 +222,15 @@ def correction_decay_function(input_model, param):
             log.info(' Working on integration %d', i + 1)
 
         sat, dn_last23, dn_lastfit = \
-            get_DNaccumulated_last_int(input_model, i, sci_ngroups)
+            get_DNaccumulated_last_int(output, i, sci_ngroups)
 
         lastframe_even = dn_last23[1::2, :]
         lastframe_odd = dn_last23[0::2, :]
 
-        correction_even = lastframe_even.copy() * 0.0
-        correction_odd = lastframe_odd.copy() * 0.0
         factor2_even = lastframe_even.copy() * 0.0
         factor2_odd = lastframe_odd.copy() * 0.0
-        a1_even = lastframe_even.copy() * 0.0
-        a1_odd = lastframe_odd.copy() * 0.0
+        # these will be created in the loop: correction_even, correction_odd,
+        # a1_even, and a1_odd
 
         counts2_even = lastframe_even - crossopt_even
         counts2_odd = lastframe_odd - crossopt_odd
@@ -434,13 +446,8 @@ def get_DNaccumulated_last_int(input_model, i, sci_ngroups):
     dn_lastframe_fit: extrapolated last frame using the fit to the entire ramp
     """
 
-    nrows = input_model.data.shape[2]
-    ncols = input_model.data.shape[3]
     dn_lastframe2 = input_model.data[i - 1][sci_ngroups - 2]
     dn_lastframe3 = input_model.data[i - 1][sci_ngroups - 3]
-    dn_lastframe23 = dn_lastframe2.copy() * 0.0
-    dn_lastframe_fit = dn_lastframe2.copy() * 0.0
-    saturated = np.full((nrows, ncols), False)
 
     diff = dn_lastframe2 - dn_lastframe3
     dn_lastframe23 = dn_lastframe2 + diff

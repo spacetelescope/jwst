@@ -34,7 +34,9 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 Arguments
 ---------
 
-The ``calwebb_image3`` pipeline does not have any optional arguments.
+``--in_memory``
+  Boolean governing whether to load all models in the input association to memory at once (faster) 
+  or to save to temporary files when not in use (slower, less memory usage). Default is True.
 
 Inputs
 ------

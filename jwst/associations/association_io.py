@@ -14,7 +14,7 @@ from .lib.member import Member
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-__all__ = []
+__all__: list = []
 
 
 # Define JSON encoder to convert `Member` to `dict`

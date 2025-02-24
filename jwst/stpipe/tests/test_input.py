@@ -9,7 +9,7 @@ from stdatamodels.jwst.datamodels import JwstDataModel
 from jwst.stpipe import Step
 from jwst.datamodels import ModelContainer
 
-from jwst.stpipe.tests.steps import StepWithModel
+from jwst.stpipe.tests.steps import StepWithModel, StepWithContainer
 from jwst.stpipe.tests.util import t_path
 
 
@@ -18,7 +18,7 @@ def test_default_input_with_container(mk_tmp_dirs):
 
     model_path = t_path('data/flat.fits')
     with ModelContainer([model_path]) as container:
-        step = StepWithModel()
+        step = StepWithContainer()
         step.run(container)
 
         assert step._input_filename is None

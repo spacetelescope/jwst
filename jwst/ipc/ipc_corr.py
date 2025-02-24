@@ -50,12 +50,12 @@ def do_correction(input_model, ipc_model):
     return output_model
 
 
-def ipc_correction(input_model, ipc_model):
+def ipc_correction(output, ipc_model):
     """Apply the IPC correction to the science arrays.
 
     Parameters
     ----------
-    input_model : data model object
+    output : data model object
         The input science data.
 
     ipc_model : IPCModel object
@@ -69,32 +69,29 @@ def ipc_correction(input_model, ipc_model):
     """
 
     log.debug("ipc_correction: nints=%d, ngroups=%d, size=%d,%d",
-              input_model.meta.exposure.nints,
-              input_model.meta.exposure.ngroups,
-              input_model.data.shape[-1],
-              input_model.data.shape[-2])
-
-    # Create output as a copy of the input science data model.
-    output = input_model.copy()
+              output.meta.exposure.nints,
+              output.meta.exposure.ngroups,
+              output.data.shape[-1],
+              output.data.shape[-2])
 
     # Was IRS2 readout used?
-    is_irs2_format = pipe_utils.is_irs2(input_model)
+    is_irs2_format = pipe_utils.is_irs2(output)
     if is_irs2_format:
-        irs2_mask = x_irs2.make_mask(input_model)
+        irs2_mask = x_irs2.make_mask(output)
 
-    detector = input_model.meta.instrument.detector
+    detector = output.meta.instrument.detector
 
     # The number of reference pixels along the bottom edge, top edge,
     # left edge, and right edge.
-    nref = get_num_ref_pixels(input_model)
+    nref = get_num_ref_pixels(output)
 
     # Get the data for the IPC kernel.  This can be a slice, if input_model
     # is a subarray.
-    kernel = get_ipc_slice(input_model, ipc_model)
+    kernel = get_ipc_slice(output, ipc_model)
 
     log.debug("substrt1 = %d, subsize1 = %d, substrt2 = %d, subsize2 = %d" %
-              (input_model.meta.subarray.xstart, input_model.meta.subarray.xsize,
-               input_model.meta.subarray.ystart, input_model.meta.subarray.ysize))
+              (output.meta.subarray.xstart, output.meta.subarray.xsize,
+               output.meta.subarray.ystart, output.meta.subarray.ysize))
     log.debug('Number of reference pixels: bottom, top, left, right ='
               ' %d, %d, %d, %d' %
               (nref.bottom_rows, nref.top_rows,
@@ -102,8 +99,8 @@ def ipc_correction(input_model, ipc_model):
     log.debug("Shape of ipc image = %s" % repr(ipc_model.data.shape))
 
     # Loop over all integrations and groups in input science data.
-    for i in range(input_model.data.shape[0]):                  # integrations
-        for j in range(input_model.data.shape[1]):              # groups
+    for i in range(output.data.shape[0]):                  # integrations
+        for j in range(output.data.shape[1]):              # groups
             # Convolve the current group in-place with the IPC kernel.
             if is_irs2_format:
                 # Extract normal data from input IRS2-format data.

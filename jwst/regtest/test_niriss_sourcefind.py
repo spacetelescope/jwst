@@ -18,12 +18,15 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
     rtdata.get_data(f"niriss/imaging/{stem}_nis_cal.fits")
     model = datamodels.ImageModel(rtdata.input)
     catalog = tweakreg_catalog.make_tweakreg_catalog(
-        model, 2.5, 10.0, starfinder=starfinder, starfinder_kwargs={
+        model, 2.5, 10.0, starfinder_name=starfinder, starfinder_kwargs={
             'brightest': None,
             'sharphi': 3.0,
             'minsep_fwhm': 2.5,
             'sigma_radius': 2.5,
         })
+    output_name = f"{stem}_{starfinder}_cat.ecsv"
+    catalog.write(output_name, format='ascii.ecsv')
+    rtdata.output = output_name
     rtdata.get_truth(f"truth/test_niriss_sourcefind/{stem}_{starfinder}_cat.ecsv")
     catalog_truth = ascii.read(rtdata.truth)
 

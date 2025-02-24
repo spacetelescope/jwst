@@ -12,24 +12,33 @@ def test_rscd_baseline_set_groupdq():
     groupdq flags in the 1st integration
     """
 
+    exposure = {
+        'integration_start' : None,
+        'integration_end':  None,
+        'ngroups' : 10,
+        'nints' : 2
+        }
     # size of integration
-    ngroups = 10
+    ngroups = exposure['ngroups']
+    nints  = exposure['nints']
+
     xsize = 10
     ysize = 10
 
     # create the data and groupdq arrays
-    csize = (2, ngroups, ysize, xsize)
+    csize = (nints, ngroups, ysize, xsize)
     data = np.full(csize, 1.0, dtype=np.float32)
     groupdq = np.zeros(csize, dtype=np.uint8)
 
     # create a JWST datamodel for MIRI data
     dm_ramp = RampModel(data=data, groupdq=groupdq)
+    dm_ramp.meta.exposure._instance.update(exposure)
 
     # get the number of groups to flag
     nflag = 3
 
-    # run the RSCD baseline correction step
-    dm_ramp_rscd = correction_skip_groups(dm_ramp, nflag)
+    # run the RSCD baseline correction step on a copy (the copy is created at the step script)
+    dm_ramp_rscd = correction_skip_groups(dm_ramp.copy(), nflag)
 
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag for the 2nd integration
@@ -71,8 +80,19 @@ def test_rscd_baseline_too_few_groups():
     """
 
     # size of exposure
-    nints = 2
-    ngroups = 3
+    xsize = 10
+    ysize = 10
+
+    exposure = {
+        'integration_start' : None,
+        'integration_end':  None,
+        'ngroups' : 3,
+        'nints' : 2
+        }
+    # size of integration
+    ngroups = exposure['ngroups']
+    nints  = exposure['nints']
+
     xsize = 10
     ysize = 10
 
@@ -81,14 +101,15 @@ def test_rscd_baseline_too_few_groups():
     data = np.full(csize, 1.0, dtype=np.float32)
     groupdq = np.zeros(csize, dtype=np.uint8)
 
-    # create a JWST datamodel for MIRI data
+    # create a JWST datamodel for MIRI data on a copy (the copy is created at the step script)
     dm_ramp = RampModel(data=data, groupdq=groupdq)
+    dm_ramp.meta.exposure._instance.update(exposure)
 
     # get the number of groups to flag
     nflag = 3
 
     # run the RSCD baseline correction step
-    dm_ramp_rscd = correction_skip_groups(dm_ramp, nflag)
+    dm_ramp_rscd = correction_skip_groups(dm_ramp.copy(), nflag)
 
     # test that the groupdq flags are not changed for any integration
     dq_diff = (dm_ramp_rscd.groupdq[:, :, :, :]
@@ -99,3 +120,63 @@ def test_rscd_baseline_too_few_groups():
                                   dq_diff,
                                   err_msg='groupdq flags changed when '
                                   + 'not enough groups are present')
+
+
+def test_rscd_tso():
+    """
+    The RSCD correction is generally skipped for TSO data, but some users
+    have been running it on TSO data. So this test was added.
+    Test for TSO segmented data that the correct groups are flagged as 'DO_NOT_USE'
+    for integration 2 and higher. Set up the segmented data so the segment
+    is for integration 25 to 50. A rscd correction should be applied to all
+    the data.
+
+    """
+    exposure = {
+        'integration_start' : 25,
+        'integration_end':  50,
+        'ngroups' : 8,
+        'nints' : 50
+        }
+
+    xsize = 10
+    ysize = 10
+    ngroups = exposure['ngroups']
+    seg_nints = exposure['integration_end'] - exposure['integration_start'] + 1
+    input_model = RampModel((seg_nints, exposure['ngroups'],
+                                        ysize, xsize))
+
+    input_model.groupdq[:,:,:,:] = 0 # initize to 0 - all good
+    input_model.meta.exposure._instance.update(exposure)
+
+    # get the number of groups to flag
+    nflag = 4
+
+    # run the RSCD baseline correction step on a copy (the copy is created at the step script)
+    ramp_rscd = correction_skip_groups(input_model.copy(), nflag)
+
+
+    # check that the difference in the groupdq flags is equal to
+    #  the 'DO_NOT_USE' flag for the 1st integration in the segment
+    # which is actually the 25th integration
+    dq_diff = (ramp_rscd.groupdq[0, 0:nflag, :, :]
+               - input_model.groupdq[0, 0:nflag, :, :])
+
+    np.testing.assert_array_equal(np.full((nflag, ysize, xsize),
+                                          dqflags.group['DO_NOT_USE'],
+                                          dtype=int),
+                                  dq_diff,
+                                  err_msg='Diff in groupdq flags is not '
+                                  + 'equal to the DO_NOT_USE flag')
+
+    # test that the groupdq flags are not changed for the rest of the groups
+    # in the 1st  integration in the segment
+    dq_diff = (ramp_rscd.groupdq[0, nflag:ngroups, :, :]
+               - input_model.groupdq[0, nflag:ngroups, :, :])
+    np.testing.assert_array_equal(np.full((ngroups - nflag, ysize, xsize),
+                                          0,
+                                          dtype=int),
+                                  dq_diff,
+                                  err_msg='groupdq flags changed after '
+                                  + 'maximum requested')
+

@@ -48,8 +48,7 @@ extraction locations within the image, so different elements of ``apertures``
 are needed in order to specify those locations.
 If key ``dispaxis`` is specified, its value will be used to set the
 dispersion direction within the image.  If ``dispaxis`` is
-not specified, the dispersion direction will be taken to be the axis
-along which the wavelengths change more rapidly.
+not specified, the dispersion direction will be taken from the metadata for the exposure.
 Key ``region_type`` can be omitted, but if it is specified, its value must
 be "target".  The remaining keys specify the characteristics of the source
 and background extraction regions.
@@ -58,21 +57,21 @@ and background extraction regions.
 * spectral_order: the spectral order number (optional); this can be either
   positive or negative, but it should not be zero (int)
 * dispaxis: dispersion direction, 1 for X, 2 for Y (int)
-* xstart: first pixel in the horizontal direction, X (int) (0-indexed)
-* xstop: last pixel in the horizontal direction, X (int) (0-indexed)
-* ystart: first pixel in the vertical direction, Y (int) (0-indexed)
-* ystop: last pixel in the vertical direction, Y (int) (0-indexed)
-* src_coeff: this takes priority for specifying the source extraction region
-  (list of lists of float)
-* bkg_coeff: for specifying background subtraction regions
-  (list of lists of float)
+* xstart: first pixel in the horizontal direction, X (float) (0-indexed)
+* xstop: last pixel in the horizontal direction, X (float) (0-indexed)
+* ystart: first pixel in the vertical direction, Y (float) (0-indexed)
+* ystop: last pixel in the vertical direction, Y (float) (0-indexed)
+* src_coeff: polynomial coefficients for source extraction region
+  limits (list of lists of float); takes precedence over start/stop values.
+* bkg_coeff: polynomial coefficients for background extraction region
+  limits (list of lists of float)
 * independent_var: "wavelength" or "pixel" (string)
 * smoothing_length: width of boxcar for smoothing background regions along
   the dispersion direction (odd int)
 * bkg_fit: the type of background fit or computation (string)
-* bkg_order: order of polynomial fit to background regions (int)
+* bkg_order: order of polynomial fit to background data in the cross-dispersion direction (int)
 * extract_width: number of pixels in cross-dispersion direction (int)
-* use_source_posn: adjust the extraction limits based on source RA/Dec (bool)
+* use_source_posn: allow the extraction limits to be adjusted based on source RA/Dec (bool)
 
 .. note::
 
@@ -92,7 +91,7 @@ and use this modified file in ``extract_1d`` by specifying this modified referen
 (:ref:`override in python <override_ref_python>` or :ref:`override in strun <override_ref_strun>`). The format for
 JSON files has to be exact, for example, the format of a floating-point value with a fractional portion must include
 at least one decimal digit, so "1." is invalid, while "1.0" is valid. The best practice after editing a JSON reference
-file is to run a JSON validator off-line, such as `https://jsonlint.com/`,  and correct any format errors before using
+file is to run a JSON validator off-line, such as `https://jsonlint.com/`, and correct any format errors before using
 the JSON reference file in the pipeline.
 
 
@@ -126,54 +125,35 @@ are used in the extraction process.
 Example EXTRACT1D Reference File
 --------------------------------
 The following JSON was taken as an example from reference file
-jwst_niriss_extract1d_0003.json::
+jwst_miri_extract1d_0006.json::
 
-  {
-      "REFTYPE": "EXTRACT1D",
-      "INSTRUME": "NIRISS",
-      "TELESCOP": "JWST",
-      "DETECTOR": "NIS",
-      "EXP_TYPE": "NIS_SOSS",
-      "PEDIGREE": "GROUND",
-      "DESCRIP": "NIRISS SOSS extraction params for ground testing",
-      "AUTHOR": "M.Wolfe, H.Bushouse",
-      "HISTORY": "Build 7.1 of the JWST Calibration pipeline. The regions are rectangular and do not follow the trace.",
-      "USEAFTER": "2015-11-01T00:00:00",
-      "apertures": [
-        {
-        "id": "FULL",
-        "region_type": "target",
-        "bkg_coeff": [[2014.5],[2043.5]],
-        "xstart":    4,
-        "xstop":  2044,
-        "ystart": 1792,
-        "ystop":  1972,
-        "dispaxis": 1,
-        "extract_width": 181
-        },
-
-        {
-        "id": "SUBSTRIP256",
-        "region_type": "target",
-        "bkg_coeff": [[221.5],[251.5]],
-        "xstart":   4,
-        "xstop": 2044,
-        "ystart": 20,
-        "ystop":  220,
-        "dispaxis": 1,
-        "extract_width": 201
-        },
-
-        {
-        "id": "SUBSTRIP96",
-        "region_type": "target",
-        "bkg_coeff": [[1.5],[8.5],[92.5],[94.5]],
-        "xstart":   4,
-        "xstop": 2044,
-        "ystart":  10,
-        "ystop":   92,
-        "dispaxis": 1,
-        "extract_width": 83
-        }]
-  }
-
+    {
+        "reftype": "EXTRACT1D",
+        "instrument": "MIRI",
+        "telescope": "JWST",
+        "exp_type": "MIR_LRS-FIXEDSLIT|MIR_LRS-SLITLESS",
+        "pedigree": "INFLIGHT 2022-06-01 2022-12-01",
+        "description": "MIRI LRS extraction params for in-flight data",
+        "author": "K.Murray",
+        "history": "2024-Jun-25",
+        "useafter": "2022-01-01T00:00:00",
+        "apertures": [
+            {
+                "id": "MIR_LRS-FIXEDSLIT",
+                "region_type": "target",
+                "bkg_order": 0,
+                "dispaxis": 2,
+                "xstart": 27,
+                "xstop": 34
+            },
+            {
+                "id": "MIR_LRS-SLITLESS",
+                "region_type": "target",
+                "bkg_order": 0,
+                "dispaxis": 2,
+                "xstart": 30,
+                "xstop": 41,
+                "use_source_posn": false
+            }
+        ]
+    }

@@ -166,7 +166,9 @@ def main():
 
     # Calculate WCS for all inputs.
     for filename in args.exposure:
-        logger.info('\n------' 'Setting pointing for {}'.format(filename))
+        logger.info("")
+        logger.info('------')
+        logger.info('Setting pointing for {}'.format(filename))
 
         # Create path for saving the transforms.
         transform_path = None

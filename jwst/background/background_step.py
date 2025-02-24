@@ -2,7 +2,8 @@
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
-from . import background_sub
+from .background_sub import background_sub
+from .background_sub_wfss import subtract_wfss_bkg
 import numpy as np
 __all__ = ["BackgroundStep"]
 
@@ -19,7 +20,10 @@ class BackgroundStep(Step):
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
         wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
-    """
+        wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
+        wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
+        wfss_outlier_percent = float(default=1)  # WFSS outlier percentile to reject per iteration
+    """ # noqa: E501
 
     # These reference files are only used for WFSS/GRISM data.
     reference_file_types = ["wfssbkg", "wavelengthrange"]
@@ -60,8 +64,16 @@ class BackgroundStep(Step):
                               wlrange_name)
 
                 # Do the background subtraction for WFSS/GRISM data
-                result = background_sub.subtract_wfss_bkg(
-                    input_model, bkg_name, wlrange_name, self.wfss_mmag_extract)
+                rescaler_kwargs = {"p": self.wfss_outlier_percent,
+                                   "maxiter": self.wfss_maxiter,
+                                   "delta_rms_thresh": self.wfss_rms_stop/100,
+                                   }
+                result = subtract_wfss_bkg(
+                    input_model,
+                    bkg_name,
+                    wlrange_name,
+                    self.wfss_mmag_extract,
+                    rescaler_kwargs=rescaler_kwargs)
                 if result is None:
                     result = input_model
                     result.meta.cal_step.back_sub = 'SKIPPED'
@@ -88,10 +100,10 @@ class BackgroundStep(Step):
                                 break
                 # Do the background subtraction
                 if do_sub:
-                    bkg_model, result = background_sub.background_sub(input_model,
-                                                                      bkg_list,
-                                                                      self.sigma,
-                                                                      self.maxiters)
+                    bkg_model, result = background_sub(input_model,
+                                                       bkg_list,
+                                                       self.sigma,
+                                                       self.maxiters)
                     result.meta.cal_step.back_sub = 'COMPLETE'
                     if self.save_combined_background:
                         comb_bkg_path = self.save_model(bkg_model, suffix=self.bkg_suffix, force=True)

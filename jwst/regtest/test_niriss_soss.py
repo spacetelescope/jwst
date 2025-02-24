@@ -2,6 +2,8 @@ import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
+from stdatamodels.jwst.datamodels import SossWaveGridModel
+import numpy as np
 
 
 @pytest.fixture(scope="module")
@@ -127,24 +129,6 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
 
 
 @pytest.fixture(scope='module')
-def run_extract1d_spsolve_failure(rtdata_module):
-    """
-    Test coverage for fix to error thrown when spsolve fails to find
-    a good solution in ATOCA and needs to be replaced with a least-
-    squares solver. Note this failure is architecture-dependent
-    and also only trips for specific values of the transform parameters.
-    Pin tikfac for faster runtime.
-    """
-    rtdata = rtdata_module
-    rtdata.get_data("niriss/soss/jw04098007001_04101_00001-seg003_nis_int01.fits")
-    args = ["extract_1d", rtdata.input,
-            "--soss_tikfac=3.1881637371089252e-15",
-            "--soss_transform=-0.00038201755227297866, -0.24237455427848956, 0.5404013401742825",
-            ]
-    Step.from_cmdline(args)
-
-
-@pytest.fixture(scope='module')
 def run_extract1d_null_order2(rtdata_module):
     """
     Test coverage for fix to error thrown when all of the pixels
@@ -156,23 +140,8 @@ def run_extract1d_null_order2(rtdata_module):
     rtdata.get_data("niriss/soss/jw01201008001_04101_00001-seg003_nis_int72.fits")
     args = ["extract_1d", rtdata.input,
             "--soss_tikfac=4.290665733550672e-17",
-            "--soss_transform=0.0794900761418923, -1.3197790951056494, -0.796875809148081",
             ]
     Step.from_cmdline(args)
-
-
-@pytest.mark.bigdata
-def test_extract1d_spsolve_failure(rtdata_module, run_extract1d_spsolve_failure, fitsdiff_default_kwargs):
-
-    rtdata = rtdata_module
-
-    output = "jw04098007001_04101_00001-seg003_nis_int01_extract1dstep.fits"
-    rtdata.output = output
-
-    rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
-
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
 
 
 @pytest.mark.bigdata
@@ -181,6 +150,49 @@ def test_extract1d_null_order2(rtdata_module, run_extract1d_null_order2, fitsdif
     rtdata = rtdata_module
 
     output = "jw01201008001_04101_00001-seg003_nis_int72_extract1dstep.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.fixture(scope='module')
+def run_spec2_substrip96(rtdata_module):
+    """
+    Run stage 2 pipeline on substrip96 data.
+
+    Solving for the optimal Tikhonov factor is time-consuming, and the code to do
+    so is identical between substrip96 and substrip256 data. Therefore just set
+    it to a reasonable value here.
+
+    Similarly, computing the wave_grid is already tested for other modes and is also
+    time-consuming. Therefore, set it to be just 1000 evenly spaced grid points here.
+    """
+    rtdata = rtdata_module
+    rtdata.get_data("niriss/soss/jw03596001001_03102_00001-seg001_nis_ints0-2_rateints.fits")
+
+    # further reduce runtime by setting the input wave_grid instead of calculating it
+    # this also serves to test that input parameter
+    wave_fname = "jw03596001001_wavegrid.fits"
+    wave_grid = np.linspace(0.55, 2.8, 1000)
+    wave_grid = SossWaveGridModel(wavegrid=wave_grid)
+    wave_grid.save(wave_fname)
+
+    args = ["calwebb_spec2", rtdata.input,
+            "--steps.extract_1d.soss_tikfac=1.0e-16",
+            "--steps.extract_1d.soss_wave_grid_in=jw03596001001_wavegrid.fits",]
+    Step.from_cmdline(args)
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("suffix", ["calints", "x1dints"])
+def test_spec2_substrip96(rtdata_module, run_spec2_substrip96, fitsdiff_default_kwargs, suffix):
+    """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
+    rtdata = rtdata_module
+
+    output = f"jw03596001001_03102_00001-seg001_nis_ints0-2_{suffix}.fits"
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")

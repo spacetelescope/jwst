@@ -1,4 +1,5 @@
 from ..lib.engdb_tools import ENGDB_Service
+from ..lib.engdb_mast import EngdbMast
 from ..stpipe import Step
 
 
@@ -21,11 +22,11 @@ class EngDBLogStep(Step):
     """
 
     spec = """
-    stime = string(default='2021-01-25')  # Start time
-    etime = string(default='2021-01-27')  # End time
+    stime = string(default='2022-01-25 02:00:00')  # Start time
+    etime = string(default='2022-01-26 02:10:00')  # End time
     verbosity = option('initial', 'all', default='initial')  # How much to report.
-    engdb_url = string(default='http://localhost')  # Mock url
-    """
+    engdb_url = string(default=None)  # Mock url
+    """ # noqa: E501
 
     def process(self, mnemonics):
         """
@@ -46,7 +47,10 @@ class EngDBLogStep(Step):
         stime = self.stime
         etime = self.etime
         verbosity = self.verbosity
-        edb = ENGDB_Service(base_url=self.engdb_url)
+        if self.engdb_url is not None:
+            edb = ENGDB_Service(base_url=self.engdb_url)
+        else:
+            edb = EngdbMast()
 
         if isinstance(mnemonics, str):
             mnemonics = [mnemonics]

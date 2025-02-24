@@ -111,9 +111,11 @@ is defined as:
 
 * ``--min_diffs_single_pass``: The minimum number of differences to switch to flagging all outliers at once
 
+* ``--max_shower_amplitude``: The maximum allowable amplitude for MIRI showers in DN/s
+
 **Parameter that affects both Snowball and Shower flagging**
 
-* ``--max_extended_radius``: The maxiumum extension of the jump and saturation that will be flagged for showers or snowballs
+* ``--max_extended_radius``: The maximum extension of the jump and saturation that will be flagged for showers or snowballs
 
 **Parameters that affect Sigma Clipping**
 

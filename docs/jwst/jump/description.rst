@@ -49,7 +49,8 @@ detectors are almost always circles with a central region that is saturated.
 The saturated core allows the search for smaller events without false positives.
 The mid-IR (MIRI) detectors do not, in general, have a saturated center and are only rarely circular.
 Thus, we fit the minimum enclosing ellipse and do not require that there are saturated pixels
-within the ellipse.
+within the ellipse.  Likewise, MIRI showers are only flagged when detected features are consistent
+with the maximum known amplitude (in DN/s) of shower artifacts.
 
 Multiprocessing
 ---------------

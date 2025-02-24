@@ -8,8 +8,16 @@ from jwst.refpix.reference_pixels import (
     Dataset, NIRDataset, correct_model, create_dataset, NRS_edgeless_subarrays)
 
 
+conv_kernel_params = {
+    'refpix_algorithm': 'median',
+    'sirs_kernel_model': None,
+    'sigreject': 4,
+    'gaussmooth': 1,
+    'halfwidth': 30}
+
+
 def test_refpix_subarray_miri():
-    '''Check that the correction is skipped for MIR subarray data '''
+    """Check that the correction is skipped for MIR subarray data """
 
     # For MIRI, no reference pixel correction is performed on subarray data
     # No changes should be seen in the data arrays before and after correction
@@ -73,8 +81,8 @@ def test_refpix_subarray_nirspec(subarray, ysize, xsize):
 
 
 def test_each_amp():
-    '''Test that each amp is calculated separately using the average of left
-     and right pixels'''
+    """Test that each amp is calculated separately using the average of left
+     and right pixels"""
 
     # create input data
     # create model of data with 0 value array
@@ -110,7 +118,7 @@ def test_each_amp():
 
 
 def test_firstframe_sub():
-    '''For MIR data, check that the first group is subtracted from each group in an integration
+    """For MIR data, check that the first group is subtracted from each group in an integration
     and added back in after the correction.
 
     This was found in testing the amp step. Make sure that the first frame is
@@ -118,7 +126,7 @@ def test_firstframe_sub():
     in the first group match the reference pixels in all other groups, then the
     subtraction will result in zeros, leaving zeros to be calculated as the reference
     pixel values, and the output data will match the input data after the frame is
-    added back in. So there should be no change to the data.'''
+    added back in. So there should be no change to the data."""
 
     # create input data
     # create model of data with 0 value array
@@ -150,7 +158,7 @@ def test_firstframe_sub():
     np.testing.assert_array_equal(im.data, outim.data)
 
 def test_odd_even():
-    '''Check that odd/even rows are applied when flag is set'''
+    """Check that odd/even rows are applied when flag is set"""
 
     # Test that odd and even rows are calculated separately
 
@@ -280,7 +288,7 @@ def test_odd_even_amp_nirspec(detector, ysize, odd_even):
 
 
 def test_no_odd_even():
-    '''Check that odd/even rows are not applied if flag is set to False'''
+    """Check that odd/even rows are not applied if flag is set to False"""
     # Test that odd and even rows are calculated together
 
     # create input data
@@ -333,8 +341,8 @@ def test_no_odd_even():
 
 
 def test_side_averaging():
-    '''For MIRI data, check that the mean value in the reference pixels is calculated for each amplifier
-    using the average of the left and right side reference pixels.'''
+    """For MIRI data, check that the mean value in the reference pixels is calculated for each amplifier
+    using the average of the left and right side reference pixels."""
     # Test that the left and right side pixels are averaged.
 
     # create input data
@@ -364,8 +372,8 @@ def test_side_averaging():
 
 
 def test_above_sigma():
-    '''Test that a value greater than 3 sigma above mean of reference pixels is rejected
-       in the averaging of the reference pixels to be subtracted.'''
+    """Test that a value greater than 3 sigma above mean of reference pixels is rejected
+       in the averaging of the reference pixels to be subtracted."""
 
     # create input data
     # create model of data with 0 value array
@@ -395,11 +403,11 @@ def test_above_sigma():
 
 
 def test_nan_refpix():
-    '''Verify that the reference pixels flagged DO_NOT_USE are not used in the calculation
+    """Verify that the reference pixels flagged DO_NOT_USE are not used in the calculation
 
     Test that flagging a reference pixel with DO_NOT_USE does not use the pixel in the
     average. Set the pixel to NaN, which results in a NaN average value if used. If the test
-    passes, then the NaN was correctly flagged and rejected from the average.'''
+    passes, then the NaN was correctly flagged and rejected from the average."""
 
     # create input data
     # create model of data with 0 value array
@@ -430,7 +438,7 @@ def test_nan_refpix():
 
 
 def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
-    '''Test all corrections for subarray data with no even/odd.'''
+    """Test all corrections for subarray data with no even/odd."""
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
     ngroups = 3
@@ -462,7 +470,8 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
                                   use_side_ref_pixels,
                                   side_smoothing_length,
                                   side_gain,
-                                  odd_even_rows)
+                                  odd_even_rows,
+                                  conv_kernel_params)
 
     init_dataset.do_corrections()
 
@@ -472,7 +481,7 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
 
 
 def test_do_corrections_subarray(setup_subarray_cube):
-    '''Test all corrections for subarray data.'''
+    """Test all corrections for subarray data."""
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
     ngroups = 3
@@ -504,7 +513,8 @@ def test_do_corrections_subarray(setup_subarray_cube):
                                   use_side_ref_pixels,
                                   side_smoothing_length,
                                   side_gain,
-                                  odd_even_rows)
+                                  odd_even_rows,
+                                  conv_kernel_params)
 
     init_dataset.do_corrections()
 
@@ -514,7 +524,7 @@ def test_do_corrections_subarray(setup_subarray_cube):
 
 
 def test_do_corrections_subarray_4amp(setup_subarray_cube):
-    '''Test all corrections for subarray data.'''
+    """Test all corrections for subarray data."""
 
     # Create inputs and subarray SUBGRISM64 data, and set correction parameters
     ngroups = 3
@@ -575,7 +585,8 @@ def test_do_corrections_subarray_4amp(setup_subarray_cube):
                                   use_side_ref_pixels,
                                   side_smoothing_length,
                                   side_gain,
-                                  odd_even_rows)
+                                  odd_even_rows,
+                                  conv_kernel_params)
 
     init_dataset.do_corrections()
 
@@ -583,7 +594,7 @@ def test_do_corrections_subarray_4amp(setup_subarray_cube):
 
 
 def test_get_restore_group_subarray(setup_subarray_cube):
-    '''Test subarray input model data is replaced with group data.'''
+    """Test subarray input model data is replaced with group data."""
 
     # Create inputs and subarray SUB320A335R data, and set correction parameters
     ngroups = 3
@@ -606,6 +617,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
                            use_side_ref_pixels,
                            side_smoothing_length,
                            side_gain,
+                           conv_kernel_params,
                            odd_even_rows)
 
     # Make sure get_group properly copied the subarray
@@ -622,7 +634,7 @@ def test_get_restore_group_subarray(setup_subarray_cube):
 
 
 def test_do_top_bottom_correction(setup_cube):
-    '''Test top/bottom correction for NIRCam data.'''
+    """Test top/bottom correction for NIRCam data."""
 
     ngroups = 3
     nrows = 2048
@@ -639,7 +651,8 @@ def test_do_top_bottom_correction(setup_cube):
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
-                              side_gain)
+                              side_gain,
+                              conv_kernel_params)
 
     abounds = [0, 512, 1024, 1536, 2048]
     top_even_amps = [12, 13, 14, 15]
@@ -695,7 +708,7 @@ def test_do_top_bottom_correction(setup_cube):
 
 
 def test_do_top_bottom_correction_no_even_odd(setup_cube):
-    '''Test top/bottom correction with no even/odd.'''
+    """Test top/bottom correction with no even/odd."""
 
     ngroups = 3
     nrows = 2048
@@ -712,7 +725,8 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
                               odd_even_columns,
                               use_side_ref_pixels,
                               side_smoothing_length,
-                              side_gain)
+                              side_gain,
+                              conv_kernel_params)
 
     abounds = [0, 512, 1024, 1536, 2048]
     top_amps = [12, 13, 14, 15]
@@ -750,7 +764,7 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
 
 
 def make_rampmodel(ngroups, ysize, xsize, instrument='MIRI', fill_value=None):
-    '''Make MIRI or NIRSpec ramp model for testing'''
+    """Make MIRI or NIRSpec ramp model for testing."""
 
     # create the data and groupdq arrays
     csize = (1, ngroups, ysize, xsize)
@@ -796,7 +810,7 @@ def make_rampmodel(ngroups, ysize, xsize, instrument='MIRI', fill_value=None):
 
 @pytest.fixture(scope='function')
 def setup_cube():
-    ''' Set up fake data to test.'''
+    """ Set up fake data to test."""
 
     def _cube(instr, detector, ngroups, nrows, ncols):
 
@@ -822,7 +836,7 @@ def setup_cube():
 
 @pytest.fixture(scope='function')
 def setup_subarray_cube():
-    ''' Set up fake NIRCam subarray data to test.'''
+    """ Set up fake NIRCam subarray data to test."""
 
     def _cube(name, detector, xstart, ystart, ngroups, nrows, ncols):
 
@@ -861,7 +875,7 @@ def setup_subarray_cube():
     ('FGS', "GUIDER2")
 ])
 def test_correct_model(setup_cube, instr, det):
-    '''Test all corrections for full frame data for all detectors.'''
+    """Test all corrections for full frame data for all detectors."""
 
     ngroups = 2
     nrows = 2048
@@ -885,7 +899,8 @@ def test_correct_model(setup_cube, instr, det):
                   use_side_ref_pixels,
                   side_smoothing_length,
                   side_gain,
-                  odd_even_rows)
+                  odd_even_rows,
+                  conv_kernel_params)
 
     np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, :4, 4:-4]), 0, decimal=0)
     np.testing.assert_almost_equal(np.mean(input_model.data[0, 0, 4:-4, 4:-4]), dataval - rpix, decimal=0)
@@ -929,7 +944,8 @@ def test_zero_frame(setup_cube):
                   use_side_ref_pixels,
                   side_smoothing_length,
                   side_gain,
-                  odd_even_rows)
+                  odd_even_rows,
+                  conv_kernel_params)
 
     # Make sure the SCI data is as expected.
     data = np.zeros(input_model.data.shape, dtype=input_model.data.dtype)
@@ -971,15 +987,12 @@ def test_preserve_refpix(detector, irs2, preserve):
     if not irs2:
         # parameter ignored for non-irs2 data
         assert out.data.shape == (1, ngroups, ysize, xsize)
-        assert out.err.shape == (1, ngroups, ysize, xsize)
         assert out.pixeldq.shape == (ysize, xsize)
     elif preserve:
         # output data shape is the same
         assert out.data.shape == (1, ngroups, ysize, xsize)
-        assert out.err.shape == (1, ngroups, ysize, xsize)
         assert out.pixeldq.shape == (ysize, xsize)
     else:
         # output data is trimmed to remove interleaved refpix
         assert out.data.shape == (1, ngroups, xsize, xsize)
-        assert out.err.shape == (1, ngroups, xsize, xsize)
         assert out.pixeldq.shape == (xsize, xsize)

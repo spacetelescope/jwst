@@ -27,8 +27,8 @@ def test_basic_superbias_subtraction(setup_full_cube):
     data.data[:] = blevel
     bias.data[:] = blevel
 
-    # Run the pipeline
-    output = do_correction(data, bias)
+    # Run the pipeline on a copy as this is now being done in superbias_step
+    output = do_correction(data.copy(), bias)
 
     # Make sure that manual superbias subtraction matches pipeline output
     manual = data.data - bias.data
@@ -54,8 +54,8 @@ def test_subarray_correction(setup_subarray_cube):
     data.data[:] = blevel
     manualbias[:] = blevel
 
-    # Run the pipeline
-    output = do_correction(data, bias)
+    # Run the pipeline on a copy as this is now being done in superbias_step
+    output = do_correction(data.copy(), bias)
 
     # Make sure the subarray was extracted correctly from superbias file
     # Make sure that manual superbias subtraction matches pipeline output
@@ -106,8 +106,8 @@ def test_nans_in_superbias(setup_full_cube):
     # Set superbias value for pixel to NaN
     bias.data[500, 500] = np.nan
 
-    # Run the pipeline
-    output = do_correction(data, bias)
+    # Run the pipeline on a copy as this is now being done in superbias_step
+    output = do_correction(data.copy(), bias)
 
     # Check that subtraction was not done on pixel with NaN reference value
     # Check that subtraction was done on other pixels

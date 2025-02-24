@@ -148,7 +148,8 @@ def test_frame_from_model_3d(tmp_path, create_model_3d):
     # Test CompositeFrame initialization (celestial and spectral)
     im = create_model_3d
     frame = pointing.frame_from_model(im)
-    radec, lam = frame.coordinates(1, 2, 3)
+
+    radec, lam = frame.to_high_level_coordinates(1, 2, 3)
 
     assert_allclose(radec.spherical.lon.value, 1)
     assert_allclose(radec.spherical.lat.value, 2)
@@ -248,7 +249,9 @@ def test_sip_approx(tmp_path):
     im = ImageModel(hdu1)
 
     pipe = AssignWcsStep()
-    result = pipe.call(im)
+    result = pipe.call(im, sip_max_pix_error=0.1, sip_degree=3,
+                       sip_max_inv_pix_error=0.1, sip_inv_degree=3,
+                       sip_npoints=12)
 
     # check that result.meta.wcsinfo has correct
     # values after SIP approx.
@@ -278,4 +281,4 @@ def test_sip_approx(tmp_path):
     result.write(path)
 
     with open(path) as result_read:
-        result.meta.wcsinfo == result_read.meta.wcsinfo
+        assert result.meta.wcsinfo == result_read.meta.wcsinfo

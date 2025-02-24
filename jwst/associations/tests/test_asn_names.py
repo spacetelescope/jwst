@@ -1,11 +1,9 @@
 import os
 import pytest
 import re
-import warnings
 
 from jwst.associations.tests import helpers
 
-from jwst import associations
 from jwst.associations import generate
 from jwst.associations import load_asn
 from jwst.associations.lib.utilities import constrain_on_candidates

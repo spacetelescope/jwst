@@ -1,5 +1,4 @@
 """Test the MAST Engineering interface"""
-import os
 import pytest
 import requests
 
@@ -68,36 +67,26 @@ def test_get_records(engdb):
     [
         ({}, [-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368]),
         ({'include_obstime': True},
-         [EngDB_Value(obstime=Time('2022-02-02T22:24:58.053', scale='utc', format='isot'), value=-0.7914494276),
-          EngDB_Value(obstime=Time('2022-02-02T22:24:58.309', scale='utc', format='isot'), value=-0.7914494276),
-          EngDB_Value(obstime=Time('2022-02-02T22:24:58.565', scale='utc', format='isot'), value=-0.7914494276),
-          EngDB_Value(obstime=Time('2022-02-02T22:24:58.821', scale='utc', format='isot'), value=-0.791449368)]),
+         [EngDB_Value(obstime=Time(59612.9340052431, format='mjd'), value=-0.7914494276),
+          EngDB_Value(obstime=Time(59612.9340082060, format='mjd'), value=-0.7914494276),
+          EngDB_Value(obstime=Time(59612.9340111690, format='mjd'), value=-0.7914494276),
+          EngDB_Value(obstime=Time(59612.9340141319, format='mjd'), value=-0.791449368)]),
         ({'include_obstime': True, 'zip_results': False}, EngDB_Value(
-            obstime=[Time('2022-02-02T22:24:58.053', scale='utc', format='isot'),
-                     Time('2022-02-02T22:24:58.309', scale='utc', format='isot'),
-                     Time('2022-02-02T22:24:58.565', scale='utc', format='isot'),
-                     Time('2022-02-02T22:24:58.821', scale='utc', format='isot')],
+            obstime=[
+                Time(59612.9340052431, format='mjd'),
+                Time(59612.9340082060, format='mjd'),
+                Time(59612.9340111690, format='mjd'),
+                Time(59612.9340141319, format='mjd')],
             value=[-0.7914494276, -0.7914494276, -0.7914494276, -0.791449368])),
         ({'include_bracket_values': True},
          [-0.791449368, -0.7914494276, -0.7914494276, -0.7914494276, -0.791449368, -0.791449368])
     ])
 def test_get_values(engdb, pars, expected):
     values = engdb.get_values(*QUERY, **pars)
-    assert str(values) == str(expected)
+    assert values == expected
 
 
 def test_negative_aliveness():
     """Ensure failure occurs with a bad url"""
     with pytest.raises(RuntimeError):
         engdb_mast.EngdbMast(base_url='https://127.0.0.1/_engdb_mast_test', token='dummytoken')
-
-
-def test_notoken(jail_environ):
-    """Check that failure occurs without a token"""
-    try:
-        del os.environ['MAST_API_TOKEN']
-    except KeyError:
-        pass
-
-    with pytest.raises(RuntimeError):
-        engdb_mast.EngdbMast()

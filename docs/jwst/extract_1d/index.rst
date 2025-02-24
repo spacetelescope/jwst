@@ -10,6 +10,6 @@ Extract 1D Spectra
    description.rst
    arguments.rst
    reference_files.rst
-   reference_image.rst
+   extract1d_api.rst
 
 .. automodapi:: jwst.extract_1d

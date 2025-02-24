@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.10"
+requires-python = ">=3.11,<3.14"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -13,35 +13,34 @@ classifiers = [
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "asdf>=3.1.0,<4",
-    "astropy>=5.3",
+    "asdf>=3.3,<5",
+    "astropy>=6.1",
     "BayesicFitting>=3.0.1",
-    "crds>=11.17.14",
-    "drizzle>=1.15.0",
-    "gwcs>=0.21.0,<0.22.0",
-    "numpy>=1.22",
+    "crds>=12.0.3",
+    "drizzle>=2.0.1",
+    # "gwcs>=0.22.0,<0.23.0",
+    "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
+    "numpy>=1.25",
     "opencv-python-headless>=4.6.0.66",
     "photutils>=1.5.0",
-    "psutil>=5.7.2",
     "poppy>=1.0.2",
     "pyparsing>=2.2.1",
     "requests>=2.22",
-    "scikit-image>=0.19",
-    "scipy>=1.7.2",
+    "scikit-image>=0.20.0",
+    "scipy>=1.14.1",
     "spherical-geometry>=1.2.22",
-    "stcal>=1.7.0,<1.8.0",
-    "stdatamodels>=1.10.1,<1.11.0",
-    "stpipe>=0.5.2,<0.6.0",
-    "stsci.image>=2.3.5",
-    "stsci.imagestats>=1.6.3,<1.7.0",
+    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
+    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
+    "stpipe>=0.8.0,<0.9.0",
+    "stsci.imagestats>=1.6.3",
     "synphot>=1.2",
-    "tweakwcs>=0.8.6",
-    "asdf-astropy>=0.3.0",
+    "tweakwcs>=0.8.8",
+    "asdf-astropy>=0.6.0",
     "wiimatch>=0.2.1",
     "packaging>20.0",
     "importlib-metadata>=4.11.4",
@@ -72,39 +71,16 @@ asn_from_list = "jwst.associations.asn_from_list:main"
 asn_gather = "jwst.scripts.asn_gather:main"
 asn_generate = "jwst.associations.main:main"
 asn_make_pool = "jwst.scripts.asn_make_pool:main"
-assign_wcs = "jwst.scripts.assign_wcs:main"
 collect_pipeline_cfgs = "jwst.scripts.collect_pipeline_cfgs:main"
-coron = "jwst.scripts.coron:main"
 create_data = "jwst.scripts.create_data:main"
 csvconvert = "jwst.csv_tools.csvconvert:CSVConvertScript"
-cube_build = "jwst.scripts.cube_build:main"
-dark_current = "jwst.scripts.dark_current:main"
-data_generate = "jwst.scripts.data_generate:main"
-dqinit = "jwst.scripts.dqinit:main"
 exp_to_source = "jwst.exp_to_source.main:Main"
-flatfieldcorr = "jwst.scripts.flatfieldcorr:main"
-fringecorr = "jwst.scripts.fringecorr:main"
-ipc = "jwst.scripts.ipc:main"
-jump = "jwst.scripts.jump:main"
-linearitycorr = "jwst.scripts.linearitycorr:main"
-make_header = "jwst.scripts.make_header:main"
-okify_regtests = "jwst.scripts.okify_regtests:main"
-outlier_detection = "jwst.scripts.outlier_detection:main"
-persistencecorr = "jwst.scripts.persistencecorr:main"
-photomcorr = "jwst.scripts.photomcorr:main"
 pointing_summary = "jwst.scripts.pointing_summary:main"
-rampfitcorr = "jwst.scripts.rampfitcorr:main"
-refpix = "jwst.scripts.refpix:main"
-resample = "jwst.scripts.resample:main"
-saturationcorr = "jwst.scripts.saturationcorr:main"
-schema_editor = "jwst.scripts.schema_editor:main"
 schemadoc = "jwst.scripts.schemadoc:main"
 set_telescope_pointing = "jwst.scripts.set_telescope_pointing:main"
 "set_telescope_pointing.py" = "jwst.scripts.set_telescope_pointing:deprecated_name"
 set_velocity_aberration = "jwst.scripts.set_velocity_aberration:main"
 "set_velocity_aberration.py" = "jwst.scripts.set_velocity_aberration:deprecated_name"
-straylight = "jwst.scripts.straylight:main"
-superbias = "jwst.scripts.superbias:main"
 v1_calculate = "jwst.scripts.v1_calculate:main"
 verify_install_requires = "jwst.scripts.verify_install_requires:main"
 world_coords = "jwst.scripts.world_coords:main"
@@ -113,7 +89,7 @@ world_coords = "jwst.scripts.world_coords:main"
 jwst = "jwst.stpipe.integration:get_steps"
 
 [project.entry-points.pytest11]
-report_crds_context = "pytest_crds.plugin"
+report_crds_context = "pytest_jwst.plugin"
 
 [project.optional-dependencies]
 docs = [
@@ -122,7 +98,6 @@ docs = [
     "sphinx-astropy",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
-    "tomli; python_version <\"3.11\"",
 ]
 sdp = [
     "jplephem>=2.9",
@@ -130,13 +105,15 @@ sdp = [
 ]
 test = [
     "ci-watson>=0.5.0",
-    "colorama>=0.4.1",
-    "readchar>=3.0",
-    "ruff",
+    "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
     "pytest-doctestplus>=0.10.0",
     "requests_mock>=1.0",
+]
+contrib = [
+    "pre-commit>=4.1.0",
+    "jwst[test, docs]",
 ]
 
 [build-system]
@@ -144,7 +121,7 @@ requires = [
     "setuptools>=61.2",
     "setuptools_scm[toml]>=3.4",
     "wheel",
-    "oldest-supported-numpy",
+    "numpy>=2.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -154,6 +131,7 @@ include-package-data = false
 
 [tool.setuptools.packages.find]
 namespaces = false
+include = ["pytest_jwst*", "jwst*"]
 
 [tool.setuptools.package-data]
 "*" = [
@@ -171,14 +149,10 @@ namespaces = false
     "*.cat",
     "*.hdr",
 ]
-"jwst.fits_generator" = [
-    "templates/*.inc",
-    "templates/*.txt",
-    "tests/okfile/*.prop",
-]
 "jwst.lib" = [
     "tests/data/*.asdf",
-    "tests/data/*.db",
+    "tests/data/**/*.db",
+    "tests/data/**/*.xml",
     "tests/data/*.ecsv",
     "tests/data/*.fits",
 ]
@@ -215,29 +189,29 @@ minversion = "6.0"
 norecursedirs = [
     "docs/_build",
     "docs/exts",
-    "jwst/timeconversion",
     "jwst/associations/tests/data",
+    "pytest_jwst",
     "scripts",
     ".tox",
     ".eggs",
     "build",
     "venv",
 ]
-asdf_schema_tests_enabled = true
-asdf_schema_validate_default = false
-asdf_schema_root = "jwst/transforms/resources/schemas jwst/datamodels/schemas"
 junit_family = "xunit2"
 inputs_root = "jwst-pipeline"
 results_root = "jwst-pipeline-results"
 text_file_format = "rst"
 doctest_plus = "enabled"
 doctest_rst = "enabled"
-addopts = ["-p no:legacypath",
+addopts = [
+    "-p no:legacypath",
     "--show-capture=no",
     "--report-crds-context",
+    "--color=yes",
 ]
 filterwarnings = [
     "error::ResourceWarning",
+    "error::stdatamodels.validate.ValidationWarning",
     "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
 ]
 
@@ -276,34 +250,395 @@ omit = [
 [tool.setuptools_scm]
 write_to = "jwst/_version.py"
 
-[tool.ruff]
-exclude = [
-    "jwst/extern",
-    "docs",
-    "jwst/associations",
-    "jwst/fits_generator",
-    ".tox",
-    ".eggs",
-    "build",
+[tool.numpydoc_validation]
+checks = [
+    "all",
+    "EX01", # No examples section found
+    "SA01", # See Also section not found
+    "ES01", # No extended summary found
+    "GL08", # Object does not have a docstring. Ruff catches these, and allows more granular ignores.
+    "PR01", # Parameters not documented. Already caught by ruff.
+    "PR09", # Parameter description should finish with a period
+    "RT02", # First line of return should contain only the type
+    "RT05", # Return value description should finish with a period
 ]
-lint.ignore = [
-    "E741",
-]
-line-length = 130
 
-[tool.ruff.lint.per-file-ignores]
-"jwst/ramp_fitting/tests/compare_cr_navg_files.py" = [
-    "E402",
+[tool.codespell]
+skip = "*.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
+ignore-words-list = "indx, delt, Shepard, tread, usig"
+
+[tool.mypy]
+warn_return_any = true
+warn_unused_configs = true
+disable_error_code = "import-untyped" # do not check imports
+exclude = ["build"]
+python_version = "3.11"
+
+[[tool.mypy.overrides]]
+# don't complain about the installed c parts of this library
+module = [
+    "jwst.cube_build.cube_match_internal",
+    "jwst.cube_build.cube_match_sky_driz",
+    "jwst.cube_build.cube_match_sky_pointcloud",
+    "jwst.lib.winclip",
+    "jwst.straylight.calc_xart",
 ]
-"jwst/ramp_fitting/tests/compare_crs.py" = [
-    "E402",
-]
-"jwst/ramp_fitting/tests/compare_cr_files.py" = [
-    "E402",
-]
-"jwst/ramp_fitting/tests/create_cube.py" = [
-    "E402",
-]
-"jwst/ramp_fitting/tests/mc_3d.py" = [
-    "E402",
-]
+ignore_missing_imports = true
+
+[tool.towncrier]
+filename = "CHANGES.rst"
+directory = "changes"
+package = "jwst"
+title_format = "{version} ({project_date})"
+ignore = [".gitkeep"]
+wrap = true
+issue_format = "`#{issue} <https://github.com/spacetelescope/jwst/issues/{issue}>`_"
+
+[[tool.towncrier.type]]
+directory = "general"
+name = "General"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "docs"
+name = "Documentation"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "stpipe"
+name = '``stpipe``'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "datamodels"
+name = "Data Models"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "associations"
+name = "Associations"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "scripts"
+name = "Scripts"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "set_telescope_pointing"
+name = '``set_telescope_pointing``'
+showcontent = true
+
+# pipeline
+
+[[tool.towncrier.type]]
+directory = "pipeline"
+name = 'Pipeline'
+showcontent = true
+
+# steps
+
+[[tool.towncrier.type]]
+directory = "align_refs"
+name = 'align_refs (coron3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "ami"
+name = 'ami_analyze / ami_normalize / ami_average (ami3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "assign_mtwcs"
+name = 'assign_mtwcs (image3, spec3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "assign_wcs"
+name = 'assign_wcs (image2, spec2)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "background"
+name = 'background (image2, spec2)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "badpix_selfcal"
+name = 'badpix_selfcal (spec2)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "barshadow"
+name = 'barshadow (spec2 MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "charge_migration"
+name = "charge_migration (detector1 NIR)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "clean_flicker_noise"
+name = "clean_flicker_noise (detector1)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "combine_1d"
+name = 'combine_1d (spec3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "cube_build"
+name = 'cube_build (spec2 IFU, spec3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "cube_skymatch"
+name = 'cube_skymatch'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "dark_current"
+name = 'dark_current (detector1 NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "dq_init"
+name = 'dq_init (detector1)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "emicorr"
+name = 'emicorr (detector1 MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "engdb_tools"
+name = 'engdb_tools'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "exp_to_source"
+name = 'exp_to_source (spec3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "extract_1d"
+name = 'extract_1d (spec2, spec3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "extract_2d"
+name = 'extract_2d (spec2 MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "firstframe"
+name = 'firstframe (detector1 MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "flatfield"
+name = 'flatfield (image2, spec2)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "fringe"
+name = 'fringe (spec2 IFU)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "gain_scale"
+name = 'gain_scale (detector1 NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "group_scale"
+name = 'group_scale (detector1 NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "guider_cds"
+name = 'guider_cds (FGS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "imprint"
+name = 'imprint (spec2 IFU, spec2 MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "ipc"
+name = 'ipc (detector1)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "jump"
+name = 'jump (detector1)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "klip"
+name = "klip (coron3)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "lastframe"
+name = 'lastframe (detector1 MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "linearity"
+name = 'linearity (detector1)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "master_background"
+name = 'master_background (spec2 MOS, spec3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "mrs_imatch"
+name = 'mrs_imatch (spec3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "msaflagopen"
+name = 'msaflagopen (spec2 IFU, spec2 MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "nsclean"
+name = "nsclean (spec2 IFU, spec2 MOS)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "outlier_detection"
+name = 'outlier_detection (image3, tso3, spec3, coron3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "pathloss"
+name = 'pathloss (spec2 IFU, spec2 MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "persistence"
+name = 'persistence (detector1 NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "photom"
+name = 'photom (image2, spec2)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "pixel_replace"
+name = 'pixel_replace (spec2 MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "ramp_fitting"
+name = 'ramp_fitting (detector1)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "refpix"
+name = 'refpix (detector1)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "resample"
+name = 'resample (image2, image3, coron3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "resample_spec"
+name = 'resample_spec (spec2 MOS, spec3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "reset"
+name = 'reset (detector1 MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "residual_fringe"
+name = 'residual_fringe (spec2 IFU)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "rscd"
+name = 'rscd (detector1 MIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "saturation"
+name = 'saturation (detector1)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "skymatch"
+name = 'skymatch (image3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "source_catalog"
+name = 'source_catalog (image3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "spectral_leak"
+name = "spectral_leak (spec3)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "srctype"
+name = 'srctype (spec2)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "stack_refs"
+name = "stack_refs (coron3)"
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "straylight"
+name = 'straylight (spec2 IFU)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "superbias"
+name = 'superbias (detector1 NIR)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "tso_photometry"
+name = 'tso_photometry (tso3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "tweakreg"
+name = 'tweakreg (image3)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "wavecorr"
+name = 'wavecorr (spec2 MOS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "wfs_combine"
+name = 'wfs_combine'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "wfss_contam"
+name = 'wfss_contam (spec2 WFSS)'
+showcontent = true
+
+[[tool.towncrier.type]]
+directory = "white_light"
+name = 'white_light'
+showcontent = true

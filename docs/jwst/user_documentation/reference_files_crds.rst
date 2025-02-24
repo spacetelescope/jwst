@@ -6,7 +6,7 @@ Reference Files, Parameter Files and CRDS
 
 The JWST pipeline uses version-controlled :ref:`reference files <crds_reference_files>` and
 :ref:`parameter files <crds_parameter_files>` to supply pipeline steps with necessary data
-and set pipeline/step parameters, respectivley. These files both use the ASDF format,
+and set pipeline/step parameters, respectively. These files both use the ASDF format,
 and are managed by the Calibration References Data System (:ref:`CRDS <crds>`) system.
 
 .. _crds_reference_files:
@@ -39,7 +39,7 @@ Parameter Files
 
 Parameter files, which like reference files are encoded in ASDF and
 version-controlled by CRDS, define the 'best' set of parameters for pipeline
-steps as determined by the JWST instrument teams, based on insturment, observing
+steps as determined by the JWST instrument teams, based on instrument, observing
 model, filter, etc. They also may evolve over time as understanding of caibration
 improves.
 
@@ -80,17 +80,15 @@ the reference file mapping at any point in time, and revert to any previous set
 of reference files if desired. 
 
 
-The CRDS context is usually set by default to always give access
-to the most recent reference file deliveries and selection rules - i.e the
-'best', most up-to-date set of reference files. On occasion it might be
-necessary or desirable to use one of the non-default mappings in order to, for
-example, run different versions of the pipeline software or use older versions
-of the reference files. This can be accomplished by setting the environment
-variable ``CRDS_CONTEXT`` to the desired project mapping version, e.g.
+The CRDS context is usually set by default to always give the 'best' reference files
+associated with a given pipeline version.
+To use a specific CRDS context other than that automatically associated with a given pipeline version
+(see https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates),
+the environment variable ``CRDS_CONTEXT`` can be used, e.g.
 
 ::
 
-  $ export CRDS_CONTEXT='jwst_0421.pmap'
+  $ export CRDS_CONTEXT='jwst_1293.pmap'
 
 For all information about CRDS, including context lists, see the JWST CRDS
 website:
@@ -106,21 +104,63 @@ The CRDS server can be found at
 
    https://jwst-crds.stsci.edu
 
-Inside the STScI network, the pipeline defaults are sufficient and no further action is necessary.
+To run the pipeline inside the STScI network, CRDS must be configured to find the CRDS server
+by setting the environment variable
+
+::
+
+    export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will obtain individual reference files within this context from a local shared disk.
 
 To run the pipeline outside the STScI network, CRDS must be configured by setting
 two environment variables:
-
-  - CRDS_PATH: Local folder where CRDS content will be cached.
-  - CRDS_SERVER_URL: The server from which to pull reference information
-
-To setup to use the server, use the following settings:
 
 ::
 
     export CRDS_PATH=$HOME/crds_cache/
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will automatically download individual
+reference files within this context to the local cache specified by ``CRDS_PATH``.
+
+CRDS Cache Configuration for Developers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+For most pipeline users, the above settings will suffice for establishing a consistent
+local cache.  For pipeline developers or testers, however, it is important to be aware
+that if you need to switch between CRDS servers (e.g. the `ops` and `test` servers), you
+will need to establish a separate cache for each server.  Using the same cache for
+more than one server will lead to a corrupted local cache.
+
+For example, the recommended configuration for developers while using the `ops` server is :
+
+::
+
+    export CRDS_PATH=$HOME/crds_cache/jwst_ops
+    export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+
+and while using the `test` server:
+
+::
+
+    export CRDS_PATH=$HOME/crds_cache/jwst_test
+    export CRDS_SERVER_URL=https://jwst-test-crds.stsci.edu
+
+If your cache does become corrupted, the best way to fix it is simply to remove
+the local cache and allow subsequent pipeline runs to repopulate it as needed.
+For example:
+
+::
+
+    rm -r $CRDS_PATH
+
+For more information on CRDS configuration, see the
+`CRDS user guide
+<https://jwst-crds.stsci.edu/static/users_guide/environment.html>`__
+posted to the JWST CRDS server.
 
 .. _python_crds_variables:
 

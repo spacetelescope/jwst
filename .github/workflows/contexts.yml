@@ -1,0 +1,24 @@
+name: contexts
+
+on:
+  workflow_call:
+    outputs:
+      jwst:
+        value: ${{ jobs.contexts.outputs.jwst }}
+  workflow_dispatch:
+
+jobs:
+  contexts:
+    name: retrieve latest CRDS contexts
+    runs-on: ubuntu-latest
+    outputs:
+      jwst: ${{ steps.jwst_crds_context.outputs.pmap }}
+    steps:
+      - id: jwst_crds_context
+        env:
+          OBSERVATORY: jwst
+          CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+        run: |
+          pip install crds
+          echo "pmap=$(crds list --resolve-contexts  --contexts jwst-edit)" >> $GITHUB_OUTPUT
+      - run: if [[ ! -z "${{ steps.jwst_crds_context.outputs.pmap }}" ]]; then echo ${{ steps.jwst_crds_context.outputs.pmap }}; else exit 1; fi

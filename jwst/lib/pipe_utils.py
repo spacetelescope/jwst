@@ -1,8 +1,16 @@
 """Pipeline utilities objects"""
 
-import numpy as np
+import logging
 
-from ..associations.lib.dms_base import TSO_EXP_TYPES
+import numpy as np
+from stdatamodels.properties import ObjectNode
+from stdatamodels.jwst.datamodels import dqflags, JwstDataModel
+
+from jwst.associations.lib.dms_base import TSO_EXP_TYPES
+
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
 def is_tso(model):
@@ -76,3 +84,70 @@ def is_irs2(model):
         return True
     else:
         return False
+
+
+def match_nans_and_flags(input_model):
+    """Ensure data, error, variance, and DQ are marked consistently for invalid data.
+
+    Invalid data is assumed to be any pixel set to NaN in any one of the
+    data, error, or variance arrays, or else set to the DO_NOT_USE flag
+    in the DQ array.
+
+    The input model is updated in place with NaNs or DO_NOT_USE flags, as
+    appropriate, at all invalid data locations.
+
+    Parameters
+    ----------
+    input_model : DataModel
+        Input model containing some combination of data, dq, err, var_rnoise,
+        var_poisson, and var_flat extensions. These extensions must all have
+        matching dimensions if present.
+    """
+    # Check for datamodel input or slit instance
+    if (not isinstance(input_model, JwstDataModel)
+            and not isinstance(input_model, ObjectNode)):
+        raise ValueError(f"Input {type(input_model)} is not a datamodel.")
+
+    # Build up the invalid data flags from each available data extension.
+    is_invalid = None
+    data_shape = None
+    nan_extensions = ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']
+    for extension in nan_extensions:
+        if not hasattr(input_model, extension):
+            continue
+        data = getattr(input_model, extension)
+        if is_invalid is None:
+            is_invalid = np.isnan(data)
+            data_shape = data.shape
+        else:
+            if data.shape != data_shape:
+                log.warning(f"Mismatched data shapes; skipping invalid data "
+                            f"updates for extension '{extension}'")
+                continue
+            is_invalid |= np.isnan(data)
+
+    # Nothing to do if no extensions were found to update
+    if is_invalid is None:
+        return
+
+    # Add in invalid flags from the DQ extension if present
+    if hasattr(input_model, 'dq'):
+        do_not_use = (input_model.dq & dqflags.pixel['DO_NOT_USE']).astype(bool)
+        if input_model.dq.shape != data_shape:
+            log.warning("Mismatched data shapes; skipping invalid data "
+                        "updates for extension 'dq'")
+        else:
+            is_invalid |= do_not_use
+
+    # Update all the data extensions
+    for extension in nan_extensions:
+        if not hasattr(input_model, extension):
+            continue
+        data = getattr(input_model, extension)
+        if data.shape != data_shape:
+            continue
+        data[is_invalid] = np.nan
+
+    # Update the DQ extension
+    if input_model.dq.shape == data_shape:
+        input_model.dq[is_invalid] |= dqflags.pixel['DO_NOT_USE']

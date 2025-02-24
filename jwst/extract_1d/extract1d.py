@@ -1,30 +1,331 @@
-"""
-1-D spectral extraction
+import warnings
 
-:Authors: Mihai Cara (contact: help@stsci.edu)
-
-"""
-
-# STDLIB
-import logging
-import math
-import copy
-
-# THIRD PARTY
 import numpy as np
-from astropy.modeling import models, fitting
+from astropy import convolution
 
 __all__ = ['extract1d']
-__taskname__ = 'extract1d'
-__author__ = 'Mihai Cara'
-
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
-def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
-              p_src, p_bkg=None, independent_var="wavelength",
-              smoothing_length=0, bkg_fit="poly", bkg_order=0, weights=None):
+def build_coef_matrix(image, profiles_2d=None, profile_bg=None,
+                      weights=None, order=0):
+    """Build matrices and vectors to enable least-squares fits.
+
+    Parameters:
+    -----------
+    image : 2-D ndarray
+        The array may have been transposed so that the dispersion direction
+        is the second index.
+
+    profiles_2d : list of 2-D ndarrays or None, optional
+        These arrays contain the weights for the extraction.  These arrays
+        should be the same shape as image, with one array for each object
+        to extract.  If set to None, the coefficient matrix values default
+        to unity.
+
+    profile_bg : boolean 2-D ndarray or None, optional
+        Array of the same shape as image, with nonzero elements where the
+        background is to be estimated.  If not specified, no additional
+        pixels are included for background calculations.
+
+    weights : 2-D ndarray or None, optional
+        Array of (float) weights for the extraction.  If using inverse
+        variance weighting, these should be the square root of the inverse
+        variance.  If not supplied, unit weights will be used.
+
+    order : int, optional
+        Polynomial order for fitting to each column of background.
+        Default 0 (uniform background).
+
+    Returns:
+    --------
+    matrix : ndarray, 3-D, float64
+        Design matrix for each pixel, shape (npixels, npar, npar)
+
+    vec : ndarray, 2-D, float64
+        Target vectors for the design matrix, shape (npixels, npar)
+
+    coefmatrix : ndarray, 3-D, float64
+        Matrix of coefficients for each parameter for each pixel,
+        used to reconstruct the model fit.  Shape (npixels, npixels_y, npar)
+
+    """
+    if profiles_2d is None:
+        profiles_2d = []
+
+    # Independent variable values for the polynomial fit.
+    y = np.linspace(-1, 1, image.shape[0])
+
+    # Build the matrix of terms that multiply the coefficients.
+    # Polynomial terms first, then source terms if those arrays
+    # are supplied.
+    coefmatrix = np.ones((image.shape[1], image.shape[0], order + 1 + len(profiles_2d)))
+    for i in range(1, order + 1):
+        coefmatrix[..., i] = coefmatrix[..., i - 1] * y[np.newaxis, :]
+
+    # Here are the source terms.
+    for i in range(len(profiles_2d)):
+        coefmatrix[..., i + order + 1] = profiles_2d[i].T
+
+    # Construct a boolean array for the pixels that are nonzero
+    # in any of our profiles.
+    pixels_used = np.zeros(image.T.shape, dtype=bool)
+    for profile_2d in profiles_2d:
+        pixels_used = pixels_used | (profile_2d.T != 0)
+    if profile_bg is not None:
+        pixels_used = pixels_used | (profile_bg.T != 0)
+    pixels_used = pixels_used & np.isfinite(image.T)
+
+    # Target vector and coefficient vector for the least squares fit.
+    targetvector = image.T.copy()
+
+    # We don't want to be ruined by NaNs in regions we are not fitting anyway.
+    targetvector[~pixels_used] = 0
+    coefmatrix_masked = coefmatrix * pixels_used[:, :, np.newaxis]
+
+    # Weighting goes here.  If we are using inverse variance weighting,
+    # weight here is the square root of the inverse variance.
+    if weights is not None:
+        coefmatrix_masked *= weights.T[:, :, np.newaxis]
+        targetvector *= weights.T
+
+    # Products of the coefficient matrices suitable for passing to
+    # linalg.solve.  These are matrices of size (npixels, npar, npar)
+    # and (npixels, npar).
+    matrix = np.einsum('lji,ljk->lik', coefmatrix_masked, coefmatrix_masked)
+    vec = np.einsum('lji,lj->li', coefmatrix_masked, targetvector)
+
+    return matrix, vec, coefmatrix, coefmatrix_masked
+
+
+def _fit_background_for_box_extraction(
+        image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+        profile_bg, weights, bg_smooth_length, bkg_fit_type, bkg_order):
+    """Fit a background level for box extraction."""
+
+    # Start by copying the input image
+    input_background = image.copy()
+
+    # Smooth the image, if desired, for computing a background.
+    # Astropy's convolve routine will replace NaNs.  The convolution
+    # is done along the dispersion direction.
+    if bg_smooth_length > 1:
+        if not bg_smooth_length % 2 == 1:
+            raise ValueError("bg_smooth_length should be an odd integer >= 1.")
+        kernel = np.ones((1, bg_smooth_length)) / bg_smooth_length
+        input_background = convolution.convolve(input_background, kernel, boundary='extend')
+
+    if bkg_fit_type == 'median':
+        input_background[profile_bg == 0] = np.nan
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="All-NaN")
+            bkg_1d = np.nanmedian(input_background, axis=0)
+        bkg_2d = bkg_1d[np.newaxis, :]
+
+        # Putting an uncertainty on the median is a bit harder.
+        # It is typically about 1.2 times the uncertainty on the mean.
+        # The details depend on the number of pixels averaged...
+        # bkg_npix is the total weight that we will need to apply
+        # to the background value when removing it from the 2D image.
+        # pixwgt normalizes the total weights of all pixels used to 1.
+        bkg_npix = np.sum(profiles_2d[0], axis=0)
+        variance = variance_rn + variance_phnoise + variance_flat
+        wgt = np.isfinite(image) * np.isfinite(variance) * (profile_bg != 0)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
+            pixwgt = wgt / np.sum(wgt, axis=0)[np.newaxis, :]
+
+        var_bkg_rn = 1.2 ** 2 * bkg_npix ** 2 * np.array([np.nansum(variance_rn * pixwgt ** 2, axis=0)])
+        var_bkg_phnoise = 1.2 ** 2 * bkg_npix ** 2 * np.array([np.nansum(variance_phnoise * pixwgt ** 2, axis=0)])
+        var_bkg_flat = 1.2 ** 2 * bkg_npix ** 2 * np.array([np.nansum(variance_flat * pixwgt ** 2, axis=0)])
+
+    elif bkg_fit_type == 'poly' and bkg_order >= 0:
+
+        if not bkg_order == int(bkg_order):
+            raise ValueError("If bkg_fit_type is 'poly', bkg_order must be an integer >= 0.")
+
+        # Build the matrices to fit a polynomial column-by-column.
+        result = build_coef_matrix(input_background, profile_bg=profile_bg,
+                                   weights=weights, order=bkg_order)
+        matrix, vec, coefmatrix, coefmatrix_masked = result
+
+        # Don't try to solve singular matrices.  Background will be
+        # zero in these cases.  Could make them NaN if you want.
+        ok = np.linalg.cond(matrix) < 1e10
+        cov_bg_coefs = np.zeros(matrix.shape)
+        cov_bg_coefs[ok] = np.linalg.inv(matrix[ok])
+
+        # These are the pixel-dependent weights to compute our coefficients.
+        # We will use them to propagate errors.
+        pixwgt = weights.T[:, :, np.newaxis] * np.einsum('ijk,ilj->ilk', cov_bg_coefs, coefmatrix_masked)
+        bkg_mat = np.sum(np.swapaxes(coefmatrix, 0, 1) * profiles_2d[0][:, :, np.newaxis], axis=0)
+
+        # Sum of all the contributions to the background at the pixels
+        # where we will do the extraction.  Used to propagate errors.
+        pixwgt_tot = np.sum(bkg_mat[:, np.newaxis, :] * pixwgt, axis=-1)
+
+        var_bkg_rn = np.array([np.nansum(variance_rn.T * pixwgt_tot ** 2, axis=1)])
+        var_bkg_phnoise = np.array([np.nansum(variance_phnoise.T * pixwgt_tot ** 2, axis=1)])
+        var_bkg_flat = np.array([np.nansum(variance_flat.T * pixwgt_tot ** 2, axis=1)])
+
+        coefs = np.einsum('ijk,ij->ik', cov_bg_coefs, vec)
+
+        # Reconstruct the 2D background.
+        bkg_2d = np.sum(coefs[:, np.newaxis, :] * coefmatrix, axis=-1).T
+
+    else:
+        raise ValueError("bkg_fit_type should be 'median' or 'poly'. "
+                         "If 'poly', bkg_order must be an integer >= 0.")
+
+    return bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat
+
+
+def _box_extract(
+        image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+        bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, model):
+    """Perform box extraction."""
+    # This only makes sense with a single profile, i.e., pulling out
+    # a single spectrum.
+    nobjects = 1
+    profile_2d = profiles_2d[0].copy()
+    image_masked = image.copy()
+
+    # Mask NaNs and infs for the extraction
+    profile_2d[~np.isfinite(image_masked)] = 0
+    image_masked[profile_2d == 0] = 0
+
+    # Return array of shape (1, npixels) for generality
+    fluxes = np.array([np.sum(image_masked * profile_2d, axis=0)])
+
+    # Number of contributing pixels at each wavelength.
+    npixels = np.array([np.sum(profile_2d, axis=0)])
+
+    # Add average flux over the aperture to the model, so that
+    # a sum over the cross-dispersion direction reproduces the summed flux
+    valid = npixels[0] > 0
+    model[:, valid] += (fluxes[0][valid] / npixels[0][valid]) * profile_2d[:, valid]
+
+    # Compute the variance on the sum, same shape as f.
+    # Need to decompose this into read noise, photon noise, and flat noise.
+    var_rn = np.array([np.nansum(variance_rn * profile_2d ** 2, axis=0)])
+    var_phnoise = np.array([np.nansum(variance_phnoise * profile_2d ** 2, axis=0)])
+    var_flat = np.array([np.nansum(variance_flat * profile_2d ** 2, axis=0)])
+
+    if bkg_2d is not None:
+        var_rn += var_bkg_rn
+        var_phnoise += var_bkg_phnoise
+        var_flat += var_bkg_flat
+        bkg = np.array([np.sum(bkg_2d * profile_2d, axis=0)])
+        bkg[~np.isfinite(bkg)] = 0.0
+    else:
+        bkg = np.zeros((nobjects, image.shape[1]))
+
+    return (fluxes, var_rn, var_phnoise, var_flat,
+            bkg, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, npixels, model)
+
+
+def _optimal_extract(
+        image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+        weights, profile_bg, fit_bkg, bkg_order,
+        bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, model):
+    """Perform optimal extraction."""
+
+    # Background fitting needs to be done simultaneously with the
+    # fitting of the spectra in this case.  If we are not fitting a
+    # background, pass -1 for the order of the polynomial correction.
+    if fit_bkg:
+        order = bkg_order
+        if order != int(order) or order < 0:
+            raise ValueError("For optimal extraction, bkg_order must be an integer >= 0.")
+    else:
+        order = -1
+
+    result = build_coef_matrix(image, profiles_2d=profiles_2d, weights=weights,
+                               profile_bg=profile_bg, order=order)
+    matrix, vec, coefmatrix, coefmatrix_masked = result
+
+    # Don't try to solve equations with singular matrices.
+    # Fluxes will be zero in these cases.  We will make them NaN later.
+    ok = np.linalg.cond(matrix) < 1e10
+
+    # These are the covariance matrices for all parameters if inverse
+    # variance weights are passed to the build_coef_matrix above.  For
+    # generality, variances are actually computed using the weights on
+    # each pixel and the associated variance in the input image.
+    covariances = np.zeros(matrix.shape)
+    covariances[ok] = np.linalg.inv(matrix[ok])
+
+    # These are the pixel-dependent weights to compute our coefficients.
+    # We will use them to propagate errors.
+    pixwgt = weights.T[:, :, np.newaxis] * np.einsum('ijk,ilj->ilk', covariances, coefmatrix_masked)
+
+    # Don't use NaN pixels in the sum.  These will already be zero in
+    # pixwgt.  coefs are the best-fit coefficients of the source and
+    # background components.
+    coefs = np.nansum(pixwgt * image.T[:, :, np.newaxis], axis=1)
+
+    # Effective number of contributing pixels at each wavelength for each source.
+    nobjects = len(profiles_2d)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
+        wgt_src_pix = [profiles_2d[i] * (weights > 0) / np.sum(profiles_2d[i] ** 2, axis=0)
+                       for i in range(nobjects)]
+    npixels = np.sum(wgt_src_pix, axis=1)
+
+    if order > -1:
+        bkg_2d = np.sum(coefs[:, np.newaxis, :order + 1] * coefmatrix[..., :order + 1], axis=-1).T
+
+    # Variances for each object (discard variances for background here)
+    var_rn = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_rn.T[:, :, np.newaxis], axis=1).T
+    var_phnoise = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_phnoise.T[:, :, np.newaxis], axis=1).T
+    var_flat = np.nansum(pixwgt[..., -nobjects:] ** 2 * variance_flat.T[:, :, np.newaxis], axis=1).T
+
+    # Computing a background contribution to the noise is harder in a joint fit.
+    # Here, I am computing the weighting coefficients I would have without a background.
+    # I then compute those variances, and subtract them from the actual variances.
+    if order > -1:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value")
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
+
+            wgt_nobkg = [profiles_2d[i] * weights
+                         / np.sum(profiles_2d[i] ** 2 * weights, axis=0)
+                         for i in range(nobjects)]
+
+            bkg = np.array([np.sum(wgt_nobkg[i] * bkg_2d, axis=0) for i in range(nobjects)])
+
+            # Avoid overflow in squaring weights by multiplying by variance first
+            var_bkg_rn = np.array(
+                [var_rn[i] - np.sum(variance_rn * wgt_nobkg[i] * wgt_nobkg[i], axis=0)
+                 for i in range(nobjects)])
+            var_bkg_phnoise = np.array(
+                [var_phnoise[i] - np.sum(variance_phnoise * wgt_nobkg[i] * wgt_nobkg[i], axis=0)
+                 for i in range(nobjects)])
+            var_bkg_flat = np.array(
+                [var_flat[i] - np.sum(variance_flat * wgt_nobkg[i] * wgt_nobkg[i], axis=0)
+                 for i in range(nobjects)])
+
+        # Make sure background values are finite
+        bkg[~np.isfinite(bkg)] = 0.0
+
+        # We did our best to estimate the background contribution to the variance
+        # in this case.  Don't let it go negative.
+        var_bkg_rn *= var_bkg_rn > 0
+        var_bkg_phnoise *= var_bkg_phnoise > 0
+        var_bkg_flat *= var_bkg_flat > 0
+    else:
+        bkg = np.zeros((nobjects, image.shape[1]))
+
+    # Reshape to (nobjects, npixels)
+    fluxes = coefs[:, -nobjects:].T
+    model += np.sum(coefs[:, np.newaxis, :] * coefmatrix, axis=-1).T
+
+    return (fluxes, var_rn, var_phnoise, var_flat,
+            bkg, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, npixels, model)
+
+
+def extract1d(image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+              weights=None, profile_bg=None, extraction_type='box',
+              bg_smooth_length=0, fit_bkg=False, bkg_fit_type='poly', bkg_order=0):
     """Extract the spectrum, optionally subtracting background.
 
     Parameters:
@@ -33,46 +334,44 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
         The array may have been transposed so that the dispersion direction
         is the second index.
 
-    var_poisson : 2-D ndarray
-        The array may have been transposed so that the dispersion direction
-        is the second index.
+    profiles_2d : list of 2-D ndarray
+        These arrays contain the weights for the extraction.  A box
+        extraction will add up the flux multiplied by these weights; an
+        optimal extraction will fit an amplitude to the weight map at each
+        column in the dispersion direction.  These arrays should be the
+        same shape as image, with one array for each object to extract.
+        Box extraction only works if exactly one profile is supplied
+        (i.e. this is a one-element list).
 
-    var_rnoise : 2-D ndarray
-        The array may have been transposed so that the dispersion direction
-        is the second index.
+    variance_rn : 2-D ndarray
+        Read noise component of the variance.
 
-    var_flat : 2-D ndarray
-        The array may have been transposed so that the dispersion direction
-        is the second index.
+    variance_phnoise : 2-D ndarray
+        Photon noise component of the variance.
 
-    lambdas : 1-D array
-        Wavelength at each pixel within `disp_range`.  For example,
-        lambdas[0] is the wavelength for image[:, disp_range[0]].
+    variance_flat : 2-D ndarray
+        Flat component of the variance.
 
-    disp_range : two-element list
-        Limits of a slice for extracting the spectrum from `image`.
+    weights : 2-D ndarray or None
+        Weights for the individual pixels in fitting a profile.  If None
+        (default), use uniform weights (ones for all valid pixels).
 
-    p_src : list of two-element lists of functions
-        These are Astropy polynomial functions defining the limits in the
-        cross-dispersion direction of the source extraction region(s).
+    profile_bg : 2-D ndarray or None
+        Array of the same shape as image, with nonzero elements where the
+        background is to be estimated.
 
-    p_bkg : list of two-element lists of functions, or None
-        These are Astropy polynomial functions defining the limits in the
-        cross-dispersion direction of the background extraction regions.
+    extraction_type : string
+        Type of spectral extraction.  Currently must be either "box"
+        or "optimal".
 
-    independent_var : string
-        The value may be "wavelength" or "pixel", indicating whether the
-        independent variable for the source and background polynomial
-        functions is wavelength or pixel number.
+    bg_smooth_length : int
+        Smoothing length for box smoothing of the background along the
+        dispersion direction.  Should be odd, >=1.
 
-    smoothing_length : int
-        If this is greater than one and background regions have been
-        specified, the background regions will be boxcar smoothed by this
-        length (must be zero or an odd integer).
-        This argument is only used if background regions have been
-        specified.
+    fit_bkg : bool
+        Fit a background?  Default False
 
-    bkg_fit : string
+    bkg_fit_type : string
         Type of fitting to apply to background values in each column (or
         row, if the dispersion is vertical).
 
@@ -83,712 +382,108 @@ def extract1d(image, var_poisson, var_rnoise, var_flat, lambdas, disp_range,
         This argument must be positive or zero, and it is only used if
         background regions have been specified and if `bkg_fit` is `poly`.
 
-    weights : function or None
-        If not None, this computes the weights for the source extraction
-        region as a function of the wavelength (a single float) for the
-        current column and an array of Y pixel coordinates.
-
     Returns:
     --------
-    temp_flux : ndarray, 1-D, float64
-        The extracted spectrum, typically in units of MJy/sr, except for observations
-        with NIRSpec and NIRISS SOSS, where temp_flux is in units of MJy.
+    fluxes : ndarray, n-D, float64
+        The extracted spectrum/spectra.  Units are currently arbitrary.
+        The first dimension is the same as the length of profiles_2d
 
-    f_var_poisson : ndarray, 1-D, float64
-        The extracted variance due to Poisson noise, units of (counts/s)^2
+    var_rn : ndarray, n-D, float64
+        The variances of the extracted spectrum/spectra due to read noise.
+        Units are the same as flux^2, shape is the same as flux.
 
-    f_var_rnoise : ndarray, 1-D, float64
-        The extracted variance due to read noise, units of (counts/s)^2
+    var_phnoise : ndarray, n-D, float64
+        The variances of the extracted spectrum/spectra due to photon noise.
+        Units are the same as flux^2, shape is the same as flux.
 
-    f_var_flat : ndarray, 1-D, float64
-        The extracted flat-field variance, units of (counts/s)^2
+    var_flat : ndarray, n-D, float64
+        The variances of the extracted spectrum/spectra due to flatfield
+        uncertainty. Units are the same as flux^2, shape is the same as flux.
 
-    background : ndarray, 1-D, float64
-        The background that was subtracted from the source.
+    bkg : ndarray, n-D, float64
+        Background level that would be obtained for each source if performing
+        a 1-D extraction on the 2D background.
 
-    b_var_poisson : ndarray, 1-D, float64
-        The extracted background variance due to Poisson noise, units of (counts/s)^2
+    var_bkg_rn : ndarray, n-D, float64
+        As above, for read noise.  Nonzero because read noise adds an error term
+        to the derived background level.
 
-    b_var_rnoise : ndarray, 1-D, float64
-        The extracted background variance due to read noise, units of (counts/s)^2
+    var_bkg_phnoise : ndarray, n-D, float64
+        The variances of the extracted spectrum/spectra due to background photon
+        noise. Units are the same as flux^2, shape is the same as flux.  This
+        background contribution is already included in var_phnoise.
 
-    b_var_flat : ndarray, 1-D, float64
-        The extracted background flat-field variance, units of (counts/s)^2
+    var_bkg_flat : ndarray, n-D, float64
+        As above, for the flatfield.
 
-    npixels : ndarray, 1-D, float64
-        For each column, this is the number of pixels that were added
-        together to get `temp_flux`.
-    """
-    nl = lambdas.shape[0]
+    npixels : ndarray, n-D, int64
+        Number of pixels that contribute to the flux measurement for each source
 
-    # Evaluate the functions for source and (optionally) background limits,
-    # saving the resulting arrays of lower and upper limits in srclim and
-    # bkglim.
-    # If independent_var is pixel, the zero point is the first column in
-    # the input image, rather than the first pixel in the extracted
-    # spectrum.  The spectrum will be extracted from image columns
-    # disp_range[0] to disp_range[1], so disp_range[0] is the value of
-    # the independent variable (if not wavelength) at the first pixel of
-    # the extracted spectrum.
+    model : ndarray, 2-D, float64
+        The model of the scene, the same shape as the input image (and
+        hopefully also similar in value).
 
-    if not (independent_var.startswith("pixel") or
-            independent_var.startswith("wavelength")):
-        log.warning("independent_var was '%s'; using 'pixel' instead.",
-                    independent_var)
-        independent_var = "pixel"
-    if independent_var.startswith("pixel"):
-        # Temporary array for the independent variable.
-        pixels = np.arange(disp_range[0], disp_range[1], dtype=np.float64)
-
-    srclim = []                 # this will be a list of lists, like p_src
-    n_srclim = len(p_src)
-    for i in range(n_srclim):
-        lower = p_src[i][0]
-        upper = p_src[i][1]
-        if independent_var.startswith("wavelength"):    # OK if 'wavelengths'
-            srclim.append([lower(lambdas), upper(lambdas)])
-        else:
-            srclim.append([lower(pixels), upper(pixels)])
-
-    if p_bkg is None:
-        nbkglim = 0
-    else:
-        nbkglim = len(p_bkg)
-        bkglim = []             # this will be a list of lists, like p_bkg
-        for i in range(nbkglim):
-            lower = p_bkg[i][0]
-            upper = p_bkg[i][1]
-            if independent_var.startswith("wavelength"):
-                bkglim.append([lower(lambdas), upper(lambdas)])
-            else:
-                bkglim.append([lower(pixels), upper(pixels)])
-
-    # Sanity check:  check for extraction limits that are out of bounds,
-    # or a lower limit that's above the upper limit (limit curves just
-    # swapped, or crossing each other).
-    # Truncate extraction limits that are out of bounds, but log a warning.
-    shape = image.shape
-    for i in range(n_srclim):
-        lower = srclim[i][0]
-        upper = srclim[i][1]
-        diff = upper - lower
-        if diff.min() < 0.:
-            if diff.max() < 0.:
-                log.error("Lower and upper source extraction limits"
-                          " appear to be swapped.")
-                raise ValueError("Lower and upper source extraction limits"
-                                 " appear to be swapped.")
-            else:
-                log.error("Lower and upper source extraction limits"
-                          " cross each other.")
-                raise ValueError("Lower and upper source extraction limits"
-                                 " cross each other.")
-        del diff
-        if np.any(lower < -0.5) or np.any(upper < -0.5):
-            log.warning("Source extraction limit extends below -0.5")
-            srclim[i][0][:] = np.where(lower < -0.5, -0.5, lower)
-            srclim[i][1][:] = np.where(upper < -0.5, -0.5, upper)
-        upper_limit = float(shape[0]) - 0.5
-        if np.any(lower > upper_limit) or np.any(upper > upper_limit):
-            log.warning("Source extraction limit extends above %g", upper_limit)
-            srclim[i][0][:] = np.where(lower > upper_limit, upper_limit, lower)
-            srclim[i][1][:] = np.where(upper > upper_limit, upper_limit, upper)
-    for i in range(nbkglim):
-        lower = bkglim[i][0]
-        upper = bkglim[i][1]
-        diff = upper - lower
-        if diff.min() < 0.:
-            if diff.max() < 0.:
-                log.error("Lower and upper background extraction limits"
-                          " appear to be swapped.")
-                raise ValueError("Lower and upper background extraction limits"
-                                 " appear to be swapped.")
-            else:
-                log.error("Lower and upper background extraction limits"
-                          " cross each other.")
-                raise ValueError("Lower and upper background extraction limits"
-                                 " cross each other.")
-        del diff
-        if np.any(lower < -0.5) or np.any(upper < -0.5):
-            log.warning("Background limit extends below -0.5")
-            bkglim[i][0][:] = np.where(lower < -0.5, -0.5, lower)
-            bkglim[i][1][:] = np.where(upper < -0.5, -0.5, upper)
-        upper_limit = float(shape[0]) - 0.5
-        if np.any(lower > upper_limit) or np.any(upper > upper_limit):
-            log.warning("Background limit extends above %g", upper_limit)
-            bkglim[i][0][:] = np.where(lower > upper_limit, upper_limit, lower)
-            bkglim[i][1][:] = np.where(upper > upper_limit, upper_limit, upper)
-
-    # Smooth the input image, and use the smoothed image for extracting
-    # the background.  temp_image is only needed for background data.
-    if nbkglim > 0 and smoothing_length > 1:
-        temp_image = bxcar(image, smoothing_length)
-    else:
-        temp_image = image
-
-    #################################################
-    #          Perform spectral extraction:         #
-    #################################################
-
-    bkg_model = None
-    b_var_poisson_model = None
-    b_var_rnoise_model = None
-    b_var_flat_model = None
-
-    temp_flux = np.zeros(nl, dtype=np.float64)
-    f_var_poisson = np.zeros(nl, dtype=np.float64)
-    f_var_rnoise = np.zeros(nl, dtype=np.float64)
-    f_var_flat = np.zeros(nl, dtype=np.float64)
-    background = np.zeros(nl, dtype=np.float64)
-    b_var_poisson = np.zeros(nl, dtype=np.float64)
-    b_var_rnoise = np.zeros(nl, dtype=np.float64)
-    b_var_flat = np.zeros(nl, dtype=np.float64)
-    npixels = np.zeros(nl, dtype=np.float64)
-    # x is an index (column number) within `image`, while j is an index in
-    # lambdas, temp_flux, background, npixels, and the arrays in
-    # srclim and bkglim.
-    x = disp_range[0]
-    for j in range(nl):
-        lam = lambdas[j]
-
-        if nbkglim > 0:
-
-            # Compute the background for the current column,
-            # using the (optionally) smoothed background.
-            (bkg_model, b_var_poisson_model, b_var_rnoise_model,
-             b_var_flat_model, bkg_npts) = _fit_background_model(
-                temp_image, var_poisson, var_rnoise, var_flat, x,
-                j, bkglim, bkg_fit, bkg_order
-            )
-
-            if bkg_npts == 0:
-                bkg_model = None
-                log.debug(f"Not enough valid pixels to determine background "
-                          f"for lambda={lam:.6f} (column {x:d})")
-
-            elif len(bkg_model) < bkg_order:
-                log.debug(f"Not enough valid pixels to determine background "
-                          f"with the required order for lambda={lam:.6f} "
-                          f"(column {x:d})\n"
-                          f"Lowering background order to {len(bkg_model)}")
-
-        # Extract the source, and optionally subtract background using the
-        # fit to the background for this column.  Even if
-        # background smoothing was done, we must extract the source from
-        # the original, unsmoothed image.
-        # source total flux, background total flux, area, total weight
-        (temp_flux[j], f_var_poisson[j], f_var_rnoise[j], f_var_flat[j],
-         bkg_flux, b_var_poisson_val, b_var_rnoise_val, b_var_flat_val,
-         npixels[j], twht) = _extract_src_flux(
-            image, var_poisson, var_rnoise, var_flat, x, j, lam, srclim,
-            weights=weights, bkgmodels=[bkg_model, b_var_poisson_model,
-                                        b_var_rnoise_model, b_var_flat_model]
-        )
-        if nbkglim > 0:
-            background[j] = bkg_flux
-            b_var_poisson[j] = b_var_poisson_val
-            b_var_rnoise[j] = b_var_rnoise_val
-            b_var_flat[j] = b_var_flat_val
-
-        x += 1
-        continue
-
-    return (temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-            background, b_var_poisson, b_var_rnoise, b_var_flat, npixels)
-
-
-def bxcar(image, smoothing_length):
-    """Smooth with a 1-D interval, along the last axis.
-
-    Extended summary
-    ----------------
-    Note that the entire input array will be smoothed, including the
-    region containing the source.  The source extraction must therefore
-    be done from the original, unsmoothed array.
-
-    Parameters:
-    -----------
-    image : 2-D ndarray
-        The input data array.
-
-    Returns:
-    --------
-    ndarray, 1-D
-        The smoothed input array.
     """
 
-    half = smoothing_length // 2
+    nobjects = len(profiles_2d)  # hopefully at least one!
+    model = np.zeros(image.shape)
 
-    shape0 = image.shape
-    width = shape0[-1]
-    shape = shape0[0:-1] + (width + 2 * half,)
-    temp_im = np.zeros(shape, dtype=np.float64)
-
-    i = 0
-    for k in range(smoothing_length):
-        temp_im[..., i:i + width] += image
-        i += 1
-    temp_im /= float(smoothing_length)
-
-    return temp_im[..., half:half + width].astype(image.dtype)
-
-
-def _extract_src_flux(image, var_poisson, var_rnoise, var_flat, x, j, lam, srclim, weights, bkgmodels):
-    """Extract the source and subtract background.
-
-    Parameters:
-    -----------
-    image : 2-D ndarray
-        The input data array.
-
-    var_poisson : 2-D ndarray
-        The input poisson variance array.
-
-    var_rnoise : 2-D ndarray
-        The input read noise variance array.
-
-    var_flat : 2-D ndarray
-        The input flat field variance array.
-
-    x : int
-        This is an index (column number) within `image`.
-
-    j : int
-        This is an index starting with 0 at the first pixel of the
-        extracted spectrum.  See `disp_range` in function `extract1d`.
-        j = 0 when x = disp_range[0].
-
-    lam : float
-
-    srclim : list of lists of ndarrays
-        For each i, srclim[i] is a two-element list.  Those two elements
-        are arrays of the lower and upper limits of one of the extraction
-        regions.  Of course, there may only be one extraction region.
-
-    weights : function or None
-        If not None, this function gives the weights for pixels within
-        an extraction region.
-
-    bkgmodels : function
-
-    Returns:
-    --------
-    total_flux : float or NaN
-        Sum of counts within the source extraction region for the current
-        column.  This will be NaN if there is no data in the source
-        extraction region for the current column.
-
-    f_var_poisson : float or NaN
-        Sum of variance within source extraction region for current column.
-
-    f_var_rnoise : float or NaN
-        Sum of variance within source extraction region for current column.
-
-    f_var_flat : float or NaN
-        Sum of variance within source extraction region for current column.
-
-    bkg_flux : float
-        Sum of counts within the background extraction regions for the
-        current column.
-
-    b_var_poisson : float or NaN
-        Sum of variance within background extraction region for current column.
-
-    b_var_rnoise : float or NaN
-        Sum of variance within background extraction region for current column.
-
-    b_var_flat : float or NaN
-        Sum of variance within background extraction region for current column.
-
-    tarea : float
-        The sum of the number of pixels in the source extraction region for
-        the current column.  If only a fraction of a pixel is included at
-        an endpoint, that fraction is what would be included in the sum.
-        For example, if the source limits (in `srclim`) are (3, 7), then
-        the extraction region extends from the middle of pixel 3 to the
-        middle of pixel 7, so the pixel areas in the extraction region
-        would be:  0.5, 1.0, 1.0, 1.0, 0.5, resulting in `tarea` = 4.
-
-    twht : float
-        Two different weights are applied to the pixels.  One is the
-        fraction of a pixel that is included in the extraction (this will
-        be 1.0 except possibly at the endpoints); see also `tarea`.  The
-        other weight depends on the `weights` argument.  If `weights` is
-        None, then this weight will be 1.0 for each pixel, and `twht` will
-        be the sum of these values.  If the source limits are (3, 7) as in
-        the example for `tarea`, `twht` would be 5.0.
-    """
-
-    # extract pixel values along the column that are within
-    # source limits:
-    y, val, area = _extract_colpix(image, x, j, srclim)
-
-    # find indices of "good" (finite) values:
-    good = np.isfinite(val)
-    npts = good.sum()
-
-    if npts == 0:
-        return np.nan, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
-
-    # filter-out bad values:
-    # TODO: in the future we may need to develop a way of interpolating
-    #       over missing values either from a model or from adjacent columns
-    val = val[good]
-    area = area[good]
-    y = y[good]
-    if bkgmodels[0] is None:
-        bkg = np.zeros_like(val, dtype=np.float64)
-        b_var_poisson = np.zeros_like(val, dtype=np.float64)
-        b_var_rnoise = np.zeros_like(val, dtype=np.float64)
-        b_var_flat = np.zeros_like(val, dtype=np.float64)
-    else:
-        bkg = bkgmodels[0](y)
-        b_var_poisson = bkgmodels[1](y) * area
-        b_var_rnoise = bkgmodels[2](y) * area
-        b_var_flat = bkgmodels[3](y) * area
-
-    dummy_y, f_var_poisson_val, dummy_area = _extract_colpix(var_poisson, x, j, srclim)
-    f_var_poisson = f_var_poisson_val[good] * area
-    dummy_y, f_var_rnoise_val, dummy_area = _extract_colpix(var_rnoise, x, j, srclim)
-    f_var_rnoise = f_var_rnoise_val[good] * area
-    dummy_y, f_var_flat_val, dummy_area = _extract_colpix(var_flat, x, j, srclim)
-    f_var_flat = f_var_flat_val[good] * area
-
-    # subtract background per pixel:
-    val -= bkg
-
-    # scale per pixel values by pixel area included in extraction
-    val *= area
-    bkg *= area
-
-    # compute weights:
+    # If weights are not supplied, equally weight all valid pixels.
+    variance = variance_rn + variance_phnoise + variance_flat
     if weights is None:
-        wht = np.ones_like(y, dtype=np.float64)
+        weights = np.isfinite(variance) * np.isfinite(image)
+
+    # This is the case of a background fit independent of a flux fit.
+    # This is done only if we have a background region to fit, the
+    # boolean variable to fit is set, and we are using box extraction.
+    # Inverse variance weights should be used with care, as they have the
+    # potential to introduce biases.
+    if profile_bg is not None and fit_bkg and extraction_type == 'box':
+        (bkg_2d, var_bkg_rn,
+         var_bkg_phnoise, var_bkg_flat) = _fit_background_for_box_extraction(
+            image, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+            profile_bg, weights, bg_smooth_length, bkg_fit_type, bkg_order)
+
+        model += bkg_2d
+        image_sub = image - bkg_2d
     else:
-        wht = weights(lam, y)
+        image_sub = image.copy()
 
-    # compute weighted total flux
-    # NOTE: the correct formulae must be derived depending on
-    #       final interpretation of weights [not available at
-    #       initial release v0.0.1]
-    tarea = area.sum(dtype=np.float64)
-    twht = wht.sum(dtype=np.float64)
-    mwht = twht / wht.shape[0]
-    total_flux = (val * wht).sum(dtype=np.float64) / mwht
-    f_var_poisson = (f_var_poisson * wht).sum(dtype=np.float64) / mwht
-    f_var_rnoise = (f_var_rnoise * wht).sum(dtype=np.float64) / mwht
-    f_var_flat = (f_var_flat * wht).sum(dtype=np.float64) / mwht
-    bkg_flux = bkg.sum(dtype=np.float64)
-    b_var_poisson = b_var_poisson.sum(dtype=np.float64)
-    b_var_rnoise = b_var_rnoise.sum(dtype=np.float64)
-    b_var_flat = b_var_flat.sum(dtype=np.float64)
+        # Set background image to None
+        bkg_2d = None
 
-    return (total_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-            bkg_flux, b_var_poisson, b_var_rnoise, b_var_flat, tarea, twht)
+        # Set background uncertainties to zero.
+        var_bkg_rn = np.zeros((nobjects, image.shape[1]))
+        var_bkg_phnoise = np.zeros((nobjects, image.shape[1]))
+        var_bkg_flat = np.zeros((nobjects, image.shape[1]))
 
+    # This is the case of box extraction.
+    if extraction_type == 'box' and len(profiles_2d) == 1:
 
-def _fit_background_model(image, var_poisson, var_rnoise, var_flat,
-                          x, j, bkglim, bkg_fit, bkg_order):
-    """Extract background pixels and fit a polynomial. If the number of good data
-    points is <= 1, the fit model will be forced to 0 to avoid divergence.
+        (fluxes, var_rn, var_phnoise, var_flat,
+         bkg, var_bkg_rn, var_bkg_phnoise,
+         var_bkg_flat, npixels, model) = _box_extract(
+            image_sub, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+            bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, model)
 
-    Parameters:
-    -----------
-    image : 2-D ndarray
-        The input data array.
+    # This is optimal extraction (well, profile-based extraction).  It
+    # is "optimal extraction" if the weights are the inverse variances,
+    # but you must be careful about biases in this case.
+    elif extraction_type == 'optimal':
 
-    var_poisson : 2-D ndarray
-        The input poisson variance array.
+        (fluxes, var_rn, var_phnoise, var_flat,
+         bkg, var_bkg_rn, var_bkg_phnoise,
+         var_bkg_flat, npixels, model) = _optimal_extract(
+            image_sub, profiles_2d, variance_rn, variance_phnoise, variance_flat,
+            weights, profile_bg, fit_bkg, bkg_order,
+            bkg_2d, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, model)
 
-    var_rnoise : 2-D ndarray
-        The input read noise variance array.
-
-    var_flat : 2-D ndarray
-        The input flat field variance array.
-
-    x : int
-        This is an index (column number) within `image`.
-
-    j : int
-        This is an index starting with 0 at the first pixel of the
-        extracted spectrum.  See `disp_range` in function `extract1d`.
-        j = 0 when x = disp_range[0].
-
-    bkglim : list of lists of arrays
-        For each i, bkglim[i] is a two-element list.  Those two elements
-        are arrays of the lower and upper limits of one of the background
-        extraction regions.
-
-    bkg_fit : str
-        Type of "fitting" to perform: "poly" = polynomial, "mean", or
-        "median". Note that mathematically the result for "mean" is
-        identical to "poly" with `bkg_order`=0.
-
-    bkg_order : int
-        Polynomial order for fitting to the background regions of the
-        current column.
-
-    Returns:
-    --------
-    bkg_model : function
-        Polynomial fit to the background regions for the current column.
-        When the requested fit is either "mean" or "median", the returned
-        model is a 0th-order polynomial with c0 equal to the mean/median.
-
-    b_var_poisson_model : function
-        Polynomial fit to the background regions for var_poisson values.
-
-    b_var_rnoise_model : function
-        Polynomial fit to the background regions for var_rnoise values.
-
-    b_var_flat_model : function
-        Polynomial fit to the background regions for var_flat values.
-
-    npts : int
-        This is intended to be the number of good values in the background
-        regions.  If the background limits are at pixel edges, however,
-        `npts` can include a pixel with zero weight; that is, `npts` can be
-        1 larger than one might expect.
-    """
-
-    # extract pixel values along the column that are within
-    # background limits:
-    y, val, wht = _extract_colpix(image, x, j, bkglim)
-
-    # find indices of "good" (finite) values:
-    good = np.isfinite(val)
-    npts = good.sum()
-
-    if npts <= 1 or not np.any(good):
-        return (models.Polynomial1D(0), models.Polynomial1D(0),
-                models.Polynomial1D(0), models.Polynomial1D(0), 0)
-
-    # filter-out bad values:
-    val = val[good]
-    wht = wht[good]
-    y = y[good]
-
-    if wht.sum() == 0:
-        return (models.Polynomial1D(0), models.Polynomial1D(0),
-                models.Polynomial1D(0), models.Polynomial1D(0), 0)
-
-    # Find values for each variance array according to locations of
-    # "good" image values
-    dummy_y, var_poisson_val, dummy_area = _extract_colpix(var_poisson, x, j, bkglim)
-    var_poisson_val = var_poisson_val[good]
-    dummy_y, var_rnoise_val, dummy_area = _extract_colpix(var_rnoise, x, j, bkglim)
-    var_rnoise_val = var_rnoise_val[good]
-    dummy_y, var_flat_val, dummy_area = _extract_colpix(var_flat, x, j, bkglim)
-    var_flat_val = var_flat_val[good]
-
-    # Compute the fit
-    if bkg_fit == 'poly':
-
-        # Fit the background values with a polynomial of the requested order
-        lsqfitter = fitting.LinearLSQFitter()
-        bkg_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                              y, val, weights=wht)
-        b_var_poisson_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                                        y, var_poisson_val, weights=wht)
-        b_var_rnoise_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                                       y, var_rnoise_val, weights=wht)
-        b_var_flat_model = lsqfitter(models.Polynomial1D(min(bkg_order, npts - 1)),
-                                     y, var_flat_val, weights=wht)
-
-    elif bkg_fit == 'mean':
-
-        # Compute the mean of the (good) background values
-        # only use values with weight=1
-        bkg_model = models.Polynomial1D(degree=0, c0=np.mean(val[wht == 1]))
-        b_var_poisson_model = models.Polynomial1D(degree=0, c0=np.mean(var_poisson_val[wht == 1]))
-        b_var_rnoise_model = models.Polynomial1D(degree=0, c0=np.mean(var_rnoise_val[wht == 1]))
-        b_var_flat_model = models.Polynomial1D(degree=0, c0=np.mean(var_flat_val[wht == 1]))
-
-    elif bkg_fit == 'median':
-
-        # Compute the median of the (good) background values
-        # only use values with weight=1
-        bkg_model = models.Polynomial1D(degree=0, c0=np.median(val[wht == 1]))
-        b_var_poisson_model = models.Polynomial1D(degree=0, c0=np.median(var_poisson_val[wht == 1]))
-        b_var_rnoise_model = models.Polynomial1D(degree=0, c0=np.median(var_rnoise_val[wht == 1]))
-        b_var_flat_model = models.Polynomial1D(degree=0, c0=np.median(var_flat_val[wht == 1]))
-
-    return bkg_model, b_var_poisson_model, b_var_rnoise_model, b_var_flat_model, npts
-
-
-def _extract_colpix(image_data, x, j, limits):
-    """Extract either the source or background data.
-
-    Parameters:
-    -----------
-    image_data : 2-D ndarray
-        The input data array.
-
-    x : int
-        This is an index (column number) within `image_data`.
-
-    j : int
-        This is an index starting with 0 at the first pixel of the
-        extracted spectrum.  See `disp_range` in function `extract1d`.
-        j = 0 when x = disp_range[0].
-
-    limits : list of lists of ndarrays
-        For each i, limits[i] is a two-element list.  Those two elements
-        are 1-D arrays of the pixel coordinates for the lower and upper
-        limits of one of the source or background extraction regions.  The
-        number of elements in each of these arrays is the number of pixels
-        in the domain from disp_range[0] to and including disp_range[1].
-
-    Returns:
-    --------
-    y : ndarray, float64
-        Y pixel coordinates within the current column, for every pixel that
-        is included in any of the intervals in `limits`.
-
-    val : ndarray, float64
-        The image values at the pixels given by `y`.  That is,
-        val[i] = image_data[y[i], x].
-
-    wht : ndarray, float64
-        The weight associated with each element in `val`.  The weight
-        ranges from 0 to 1, giving the fraction of a pixel that is included
-        within an interval.  For example, suppose one of the elements in
-        `limits` has values 3.0 and 9.0 for the lower and upper limits for
-        pixel number `x`.  That corresponds to this list of Y pixel values:
-        [3., 4., 5., 6., 7., 8., 9.].  (You would then see this list as a
-        section in `y`.)  Because the integer value is the center of the
-        pixel, the lower and upper limits are in the middle of those
-        pixels, so the corresponding weights would be:
-        [0.5, 1., 1., 1., 1., 1., 0.5].
-    """
-
-    # These are the extraction limits in image pixel coordinates:
-    intervals = []
-    for lim in limits:
-        intervals.append([lim[0][j], lim[1][j]])
-
-    if len(intervals) == 0:
-        return [], [], []
-
-    # optimize limits:
-    intervals = _coalesce_bounds(intervals)
-
-    # compute number of data points:
-    ns = image_data.shape[0] - 1
-    ns12 = ns + 0.5
-
-    npts = sum(map(lambda x: min(ns, int(math.floor(x[1] + 0.5))) -
-                   max(0, int(math.floor(x[0] + 0.5))) + 1, intervals))
-    npts = max(npts, 1)
-
-    # pre-allocate data arrays:
-    y = np.empty(npts, dtype=np.float64)
-    val = np.empty(npts, dtype=np.float64)
-    wht = np.ones(npts, dtype=np.float64)
-
-    # populate data and weights:
-    k = 0
-    for i in intervals:
-        i1 = i[0] if i[0] >= -0.5 else -0.5
-        i2 = i[1] if i[1] <= ns12 else ns12
-
-        ii1 = max(0, int(math.floor(i1 + 0.5)))
-        ii1 = min(ii1, ns)
-        ii2 = min(ns, int(math.floor(i2 + 0.5)))
-
-        # special case: ii1 == ii2:
-        if ii1 == ii2:
-            v = image_data[ii1, x]
-            val[k] = v
-            wht[k] = i2 - i1
-            k += 1
-            continue
-
-        # bounds in different pixels:
-        # a. lower bound:
-        v = image_data[ii1, x]
-        val[k] = v
-        wht[k] = 1.0 - divmod(i1 - 0.5, 1)[1] if i1 >= -0.5 else 1.0
-
-        # b. upper bound:
-        v = image_data[ii2, x]
-        kn = k + ii2 - ii1
-        val[kn] = v
-        wht[kn] = divmod(i2 + 0.5, 1)[1] if i2 < ns12 else 1.0
-
-        # c. all other intermediate pixels:
-        val[k + 1:kn] = image_data[ii1 + 1:ii2, x]
-        y[k:kn + 1] = np.arange(ii1, ii2 + 1, 1, dtype=np.float64)
-
-        k += ii2 - ii1 + 1
-
-    return y, val, wht  # pixel coordinate, value, wheight=fractional pixel area
-
-
-def _coalesce_bounds(segments):
-    """Optimize limits.
-
-    Parameters:
-    -----------
-    segments : list of two-element lists of float
-        Each element of `segments` is a list containing the lower and upper
-        limits of a source or background extraction region for one of the
-        columns in the input image.
-
-    Returns:
-    --------
-    list of two-element lists of float
-        A copy of `segments`, but sorted, and with overlapping intervals
-        merged into a smaller number of equivalent intervals.
-    """
-    if not isinstance(segments, list):
-        raise TypeError("'segments' must be a list")
-
-    intervals = copy.deepcopy(segments)
-
-    if all([isinstance(x, list) for x in intervals]):
-        # make sure each nested list is a list of two numbers:
-        for x in intervals:
-            if len(x) != 2:
-                raise ValueError("Each list in the 'segments' list must have "
-                                 "exactly two elements")
-            try:
-                map(float, x)
-            except TypeError:
-                raise TypeError("Each segment in 'segments' must be a list of "
-                                "two numbers")
     else:
-        # we have a single "interval" (or "segment"):
-        if len(intervals) != 2:
-            raise ValueError("'segments' list must be a list of lists of two "
-                             "numbers or 'segments' must be a list of exactly "
-                             "two numbers")
-        try:
-            map(float, intervals)
-        except TypeError:
-            raise TypeError("Each bound in 'segments' must be a number")
+        raise ValueError(f"Extraction method {extraction_type} not "
+                         f"supported with {nobjects} input profiles.")
 
-        intervals.sort()
-        return intervals
+    no_data = np.isclose(npixels, 0)
+    fluxes[no_data] = np.nan
 
-    # sort each "segment" in an increasing order, then sort the entire list
-    # in the increasing order of lower limit:
-    for segment in intervals:
-        segment.sort()
-    intervals.sort(key=lambda x: x[0])
-
-    # coalesce intervals/segments:
-    if len(intervals) > 0:
-        cint = [intervals.pop(0)]
-    else:
-        return [[]]
-
-    while len(intervals) > 0:
-        pint = cint[-1]
-        interval = intervals.pop(0)
-        if interval[0] <= pint[1]:
-            pint[1] = interval[1]
-            continue
-        cint.append(interval)
-
-    return cint
+    return (fluxes, var_rn, var_phnoise, var_flat,
+            bkg, var_bkg_rn, var_bkg_phnoise, var_bkg_flat, npixels, model)

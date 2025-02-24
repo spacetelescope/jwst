@@ -3,6 +3,7 @@ import logging
 import asdf
 from astropy import coordinates as coord
 from astropy import units as u
+from astropy.modeling import bind_bounding_box
 from astropy.modeling.models import Const1D, Mapping, Identity, Shift
 from astropy.modeling.bounding_box import CompoundBoundingBox
 import gwcs.coordinate_frames as cf
@@ -191,11 +192,11 @@ def niriss_soss(input_model, reference_files):
         cm_order2 = subarray2full | cm_order2
         cm_order3 = subarray2full | cm_order3
 
-        bbox = ((-0.5, input_model.meta.subarray.ysize - 0.5),
-                (-0.5, input_model.meta.subarray.xsize - 0.5))
-        cm_order1.bounding_box = bbox
-        cm_order2.bounding_box = bbox
-        cm_order3.bounding_box = bbox
+        bbox = ((-0.5, input_model.meta.subarray.xsize - 0.5),
+                (-0.5, input_model.meta.subarray.ysize - 0.5))
+        bind_bounding_box(cm_order1, bbox, order='F')
+        bind_bounding_box(cm_order2, bbox, order='F')
+        bind_bounding_box(cm_order3, bbox, order='F')
 
     # Define the transforms, they should accept (x,y) and return (ra, dec, lambda)
     soss_model = NirissSOSSModel([1, 2, 3],
@@ -253,7 +254,10 @@ def imaging(input_model, reference_files):
     subarray2full = subarray_transform(input_model)
     if subarray2full is not None:
         distortion = subarray2full | distortion
-        distortion.bounding_box = bounding_box_from_subarray(input_model)
+
+        # Bind the bounding box to the distortion model using the bounding box ordering
+        # used by GWCS. This makes it clear the bounding box is set correctly to GWCS
+        bind_bounding_box(distortion, bounding_box_from_subarray(input_model, order="F"), order="F")
 
     tel2sky = pointing.v23tosky(input_model)
     pipeline = [(detector, distortion),
@@ -282,7 +286,7 @@ def imaging_distortion(input_model, reference_files):
     distortion = dist.model
 
     try:
-        bbox = distortion.bounding_box
+        bbox = distortion.bounding_box.bounding_box(order='F')
     except NotImplementedError:
         # Check if the transform in the reference file has a ``bounding_box``.
         # If not set a ``bounding_box`` equal to the size of the image after
@@ -308,10 +312,15 @@ def imaging_distortion(input_model, reference_files):
                 distortion = Shift(col_offset) & Shift(row_offset) | distortion
         else:
             log.debug("No match in fitleroffset file.")
-    if bbox is None:
-        distortion.bounding_box = transform_bbox_from_shape(input_model.data.shape)
-    else:
-        distortion.bounding_box = bbox
+
+    # Bind the bounding box to the distortion model using the bounding box ordering used by GWCS.
+    # This makes it clear the bounding box is set correctly to GWCS
+    bind_bounding_box(
+        distortion,
+        transform_bbox_from_shape(input_model.data.shape, order="F") if bbox is None else bbox,
+        order="F"
+    )
+
     return distortion
 
 

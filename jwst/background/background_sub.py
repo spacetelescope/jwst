@@ -1,13 +1,10 @@
 import copy
-import math
 import numpy as np
 import warnings
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from . import subtract_images
-from ..assign_wcs.util import create_grism_bbox
 from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
 
@@ -91,16 +88,24 @@ class ImageSubsetArray:
         if jmax < jmin:
             jmax = jmin
 
+        # To ensure that we can mix and match subarray obs, take
+        # the x/y shape from self.data. To ensure we can work
+        # with mismatched NINTS, if we have that third dimension
+        # use the value from other
+        data_shape = list(self.data.shape)
+        if self.im_dim == 3:
+            data_shape[0] = other.data.shape[0]
+
         # Set up arrays, NaN out data/err for sigma clipping, keep DQ as 0 for bitwise_or
-        data_overlap = np.ones_like(other.data) * np.nan
-        err_overlap = np.ones_like(other.data) * np.nan
-        dq_overlap = np.zeros_like(other.data, dtype=np.uint32)
+        data_overlap = np.full(data_shape, np.nan, dtype=other.data.dtype)
+        err_overlap = np.full(data_shape, np.nan, dtype=other.data.dtype)
+        dq_overlap = np.zeros(data_shape, dtype=np.uint32)
 
         if self.im_dim == 2:
             idx = (slice(jmin - other.jmin, jmax - other.jmin),
                    slice(imin - other.imin, imax - other.imin),
                    )
-        if self.im_dim == 3:
+        else:
             idx = (slice(None, None),
                    slice(jmin - other.jmin, jmax - other.jmin),
                    slice(imin - other.imin, imax - other.imin),
@@ -112,9 +117,9 @@ class ImageSubsetArray:
         dq_cutout = other.dq[idx]
 
         # Put them into the right place in the original image array shape
-        data_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(data_cutout)
-        err_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(err_cutout)
-        dq_overlap[:data_cutout.shape[0], :data_cutout.shape[1]] = copy.deepcopy(dq_cutout)
+        data_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(data_cutout)
+        err_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(err_cutout)
+        dq_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(dq_cutout)
 
         return data_overlap, err_overlap, dq_overlap
 
@@ -262,186 +267,3 @@ def average_background(input_model, bkg_list, sigma, maxiters):
     avg_bkg.err = (np.sqrt(merr.sum(axis=0)) / (num_bkg - merr.mask.sum(axis=0))).data
 
     return avg_bkg
-
-
-def subtract_wfss_bkg(input_model, bkg_filename, wl_range_name, mmag_extract=None):
-    """Scale and subtract a background reference image from WFSS/GRISM data.
-
-    Parameters
-    ----------
-    input_model : JWST data model
-        input target exposure data model
-
-    bkg_filename : str
-        name of master background file for WFSS/GRISM
-
-    wl_range_name : str
-        name of wavelengthrange reference file
-
-    mmag_extract : float
-        minimum abmag of grism objects to extract
-
-    Returns
-    -------
-    result : JWST data model
-        background-subtracted target data model
-    """
-
-    bkg_ref = datamodels.open(bkg_filename)
-
-    if hasattr(input_model.meta, "source_catalog"):
-        got_catalog = True
-    else:
-        log.warning("No source_catalog found in input.meta.")
-        got_catalog = False
-
-    # If there are NaNs, we have to replace them with something harmless.
-    bkg_ref = no_NaN(bkg_ref)
-
-    # Create a mask from the source catalog, True where there are no sources,
-    # i.e. in regions we can use as background.
-    if got_catalog:
-        bkg_mask = mask_from_source_cat(input_model, wl_range_name, mmag_extract)
-        # Ensure mask has 100 pixels and that those pixels correspond to valid
-        # pixels using model DQ array
-        if np.count_nonzero(input_model.dq[bkg_mask]
-                            ^ pixel['DO_NOT_USE']
-                            & pixel['DO_NOT_USE']
-                            ) < 100:
-            log.warning("Not enough background pixels to work with.")
-            log.warning("Step will be SKIPPED.")
-            return None
-    else:
-        bkg_mask = np.ones(input_model.data.shape, dtype=bool)
-
-    # Compute the mean values of science image and background reference
-    # image, including only regions where there are no identified sources.
-    # Exclude pixel values in the lower and upper 25% of the histogram.
-    lowlim = 25.
-    highlim = 75.
-    sci_mean = robust_mean(input_model.data[bkg_mask],
-                           lowlim=lowlim, highlim=highlim)
-    bkg_mean = robust_mean(bkg_ref.data[bkg_mask],
-                           lowlim=lowlim, highlim=highlim)
-
-    log.debug("mean of [{}, {}] percentile grism image = {}"
-              .format(lowlim, highlim, sci_mean))
-    log.debug("mean of [{}, {}] percentile background image = {}"
-              .format(lowlim, highlim, bkg_mean))
-
-    result = input_model.copy()
-    if bkg_mean != 0.:
-        subtract_this = (sci_mean / bkg_mean) * bkg_ref.data
-        result.data = input_model.data - subtract_this
-        log.info(f"Average of background image subtracted = {subtract_this.mean(dtype=float)}")
-    else:
-        log.warning("Background image has zero mean; nothing will be subtracted.")
-    result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
-
-    bkg_ref.close()
-
-    return result
-
-
-def no_NaN(model, fill_value=0.):
-    """Replace NaNs with a harmless value.
-
-    Parameters
-    ----------
-    model : JWST data model
-        Reference file model.
-
-    fill_value : float
-        NaNs will be replaced with this value.
-
-    Returns
-    -------
-    result : JWST data model
-        Reference file model without NaNs in data array.
-    """
-
-    mask = np.isnan(model.data)
-    if mask.sum(dtype=np.intp) == 0:
-        return model
-    else:
-        temp = model.copy()
-        temp.data[mask] = fill_value
-        return temp
-
-
-def mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
-    """Create a mask that is False within bounding boxes of sources.
-
-    Parameters
-    ----------
-    input_model : JWST data model
-        input target exposure data model
-
-    wl_range_name : str
-        Name of the wavelengthrange reference file
-
-    mmag_extract : float
-        Minimum abmag of grism objects to extract
-
-    Returns
-    -------
-    bkg_mask : ndarray
-        Boolean mask:  True for background, False for pixels that are
-        inside at least one of the source regions defined in the source
-        catalog.
-    """
-
-    shape = input_model.data.shape
-    bkg_mask = np.ones(shape, dtype=bool)
-
-    reference_files = {"wavelengthrange": wl_range_name}
-    grism_obj_list = create_grism_bbox(input_model, reference_files, mmag_extract)
-
-    for obj in grism_obj_list:
-        order_bounding = obj.order_bounding
-        for order in order_bounding.keys():
-            ((ymin, ymax), (xmin, xmax)) = order_bounding[order]
-            xmin = int(math.floor(xmin))
-            xmax = int(math.ceil(xmax)) + 1  # convert to slice limit
-            ymin = int(math.floor(ymin))
-            ymax = int(math.ceil(ymax)) + 1
-            xmin = max(xmin, 0)
-            xmax = min(xmax, shape[-1])
-            ymin = max(ymin, 0)
-            ymax = min(ymax, shape[-2])
-            bkg_mask[..., ymin:ymax, xmin:xmax] = False
-
-    return bkg_mask
-
-
-def robust_mean(x, lowlim=25., highlim=75.):
-    """Compute a mean value, excluding outliers.
-
-    Parameters
-    ----------
-    x : ndarray
-        The array for which we want a mean value.
-
-    lowlim : float
-        The lower `lowlim` percent of the data will not be used when
-        computing the mean.
-
-    highlim : float
-        The upper `highlim` percent of the data will not be used when
-        computing the mean.
-
-    Returns
-    -------
-    mean_value : float
-        The mean of `x`, excluding data outside `lowlim` to `highlim`
-        percentile limits.
-    """
-
-    nan_mask = np.isnan(x)
-    cleaned_x = x[~nan_mask]
-    limits = np.percentile(cleaned_x, (lowlim, highlim))
-    mask = np.logical_and(cleaned_x >= limits[0], cleaned_x <= limits[1])
-
-    mean_value = np.mean(cleaned_x[mask], dtype=float)
-
-    return mean_value

@@ -1,3 +1,11 @@
-# automatically requests pull request reviews for files matching the given pattern; the last match takes precendence
+# automatically requests pull request reviews for files matching the given pattern; the last match takes precedence
 
-*       @spacetelescope/jwst-pipeline-maintainers 
+# maintainers own everything
+* @spacetelescope/jwst-pipeline-maintainers 
+
+# developers can own some specific paths
+/.github/ @spacetelescope/jwst-pipeline-developers  # CI files
+/* @spacetelescope/jwst-pipeline-developers  # top level files only
+/changes/** @spacetelescope/jwst-pipeline-developers  # changelogs
+/docs/** @spacetelescope/jwst-pipeline-developers  # docs
+/jwst/regtest/** @spacetelescope/jwst-pipeline-developers  # regtest code

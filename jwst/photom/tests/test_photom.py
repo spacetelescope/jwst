@@ -1357,6 +1357,21 @@ def test_expected_failure_niriss_cubemodel():
         ds.calc_niriss(None)
 
 
+def test_expected_failure_soss_imagemodel():
+    """
+    Test that passing a CubeModel to calc_niriss raises an exception
+    This occurs when extract_1d step is skipped, e.g. for NIRISS SOSS data
+    in FULL subarray.
+    """
+
+    input_model = create_input('NIRISS', 'NIS', 'NIS_SOSS',
+                               filter='CLEAR', pupil='GR700XD')
+    ds = photom.DataSet(input_model)
+    ds.input = datamodels.ImageModel()
+    with pytest.raises(photom.DataModelTypeError):
+        ds.calc_niriss(None)
+
+
 def test_miri_mrs():
     """Test calc_miri, MRS data"""
 
@@ -1504,7 +1519,7 @@ def test_nircam_spec():
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
-        # Incude the dispersion in the correction, as per JP-3238
+        # Include the dispersion in the correction, as per JP-3238
         dispaxis = get_dispersion_direction(ds.exptype, ds.grating, ds.filter, ds.pupil)
         dispersion_array = ds.get_dispersion_array(slit.wavelength, dispaxis)
         # Convert dispersion in micron/pixel to Angstrom/pixel

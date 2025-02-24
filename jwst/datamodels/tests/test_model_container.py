@@ -125,3 +125,31 @@ def test_group_id(tmp_path):
             model_droup_ids.add(m.meta.group_id)
 
     assert asn_group_ids == model_droup_ids
+
+
+@pytest.mark.parametrize("path", ["foo", "foo.fits"])
+def test_save(tmp_cwd, container, path):
+
+    # container pushes us to data/ directory so need to go back to tmp_cwd
+    # to avoid polluting the data/ directory
+    with pushdir(tmp_cwd):
+
+        # test default just saves things at model meta filename
+        container.save()
+        expected_fnames = []
+        for model in container:
+            expected_fnames.append(model.meta.filename)
+        for fname in expected_fnames:
+            assert os.path.exists(fname)
+
+        # test specifying path saves to custom path with indices
+        container.save(path)
+        expected_fnames = [path.replace(".fits", "")+str(i)+".fits" for i in range(len(container))]
+        for fname in expected_fnames:
+            assert os.path.exists(fname)
+
+        # test saving path when the container has length 1: no index appended
+        container = ModelContainer([container[0]])
+        container.save(path)
+        expected_fname = path.replace(".fits", "") + ".fits"
+        assert os.path.exists(expected_fname)

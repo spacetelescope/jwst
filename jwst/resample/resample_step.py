@@ -1,19 +1,13 @@
 import logging
-import re
-from copy import deepcopy
 
-import numpy as np
-import asdf
-from astropy.extern.configobj.validate import Validator
-from astropy.extern.configobj.configobj import ConfigObj
-
-from stdatamodels.jwst import datamodels
-
-from jwst.datamodels import ModelContainer
+from stdatamodels.jwst import datamodels as dm
+from stdatamodels import filetype
+from jwst.datamodels import ModelLibrary, ImageModel  # type: ignore[attr-defined]
+from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.resample.resample_utils import load_custom_wcs
 
 from . import resample
 from ..stpipe import Step
-from ..assign_wcs import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -43,117 +37,118 @@ class ResampleStep(Step):
     class_alias = "resample"
 
     spec = """
-        pixfrac = float(default=1.0) # change back to None when drizpar reference files are updated
-        kernel = string(default='square') # change back to None when drizpar reference files are updated
-        fillval = string(default='INDEF' ) # change back to None when drizpar reference files are updated
-        weight_type = option('ivm', 'exptime', None, default='ivm')  # change back to None when drizpar ref update
+        pixfrac = float(min=0.0, max=1.0, default=1.0)  # Pixel shrinkage factor
+        kernel = option('square','gaussian','point','turbo','lanczos2','lanczos3',default='square')  # Flux distribution kernel
+        fillval = string(default='NAN')  # Output value for pixels with no weight or flux
+        weight_type = option('ivm', 'exptime', None, default='ivm')  # Input image weighting type
         output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
-        crpix = float_list(min=2, max=2, default=None)
-        crval = float_list(min=2, max=2, default=None)
-        rotation = float(default=None)
-        pixel_scale_ratio = float(default=1.0) # Ratio of input to output pixel scale
-        pixel_scale = float(default=None) # Absolute pixel scale in arcsec
-        output_wcs = string(default='')  # Custom output WCS.
-        single = boolean(default=False)
-        blendheaders = boolean(default=True)
-        allowed_memory = float(default=None)  # Fraction of memory to use for the combined image.
-        in_memory = boolean(default=True)
-    """
+        crpix = float_list(min=2, max=2, default=None)  # 0-based image coordinates of the reference pixel
+        crval = float_list(min=2, max=2, default=None)  # world coordinates of the reference pixel
+        rotation = float(default=None)  # Output image Y-axis PA relative to North
+        pixel_scale_ratio = float(default=1.0)  # Ratio of input to output pixel scale
+        pixel_scale = float(default=None)  # Absolute pixel scale in arcsec
+        output_wcs = string(default='')  # Custom output WCS
+        single = boolean(default=False)  # Resample each input to its own output grid
+        blendheaders = boolean(default=True)  # Blend metadata from inputs into output
+        in_memory = boolean(default=True)  # Keep images in memory
+    """ # noqa: E501
 
-    reference_file_types = ['drizpars']
+    reference_file_types: list = []
 
     def process(self, input):
 
-        input = datamodels.open(input)
-
-        if isinstance(input, ModelContainer):
+        if isinstance(input, str):
+            ext = filetype.check(input)
+            if ext in ("fits", "asdf"):
+                input = dm.open(input)
+        if isinstance(input, ModelLibrary):
             input_models = input
-            try:
-                output = input_models.meta.asn_table.products[0].name
-            except AttributeError:
-                # coron data goes through this path by the time it gets to
-                # resampling.
-                # TODO: figure out why and make sure asn_table is carried along
-                output = None
-        else:
-            input_models = ModelContainer([input])
-            input_models.asn_pool_name = input.meta.asn.pool_name
-            input_models.asn_table_name = input.meta.asn.table_name
+        elif isinstance(input, (str, dict, list)):
+            input_models = ModelLibrary(input, on_disk=not self.in_memory)
+        elif isinstance(input, ImageModel):
+            input_models = ModelLibrary([input], on_disk=not self.in_memory)
             output = input.meta.filename
             self.blendheaders = False
+        else:
+            raise RuntimeError(f"Input {input} is not a 2D image.")
+
+        try:
+            output = input_models.asn["products"][0]["name"]
+        except KeyError:
+            # coron data goes through this path by the time it gets to
+            # resampling.
+            # TODO: figure out why and make sure asn_table is carried along
+            output = None
 
         # Check that input models are 2D images
-        if len(input_models[0].data.shape) != 2:
-            # resample can only handle 2D images, not 3D cubes, etc
-            raise RuntimeError("Input {} is not a 2D image.".format(input_models[0]))
+        with input_models:
+            example_model = input_models.borrow(0)
+            data_shape = example_model.data.shape
+            input_models.shelve(example_model, 0, modify=False)
+            if len(data_shape) != 2:
+                # resample can only handle 2D images, not 3D cubes, etc
+                raise RuntimeError(f"Input {example_model} is not a 2D image.")
+            del example_model
 
-        #  Get drizzle parameters reference file, if there is one
-        self.wht_type = self.weight_type
-        if 'drizpars' in self.reference_file_types:
-            ref_filename = self.get_reference_file(input_models[0], 'drizpars')
-        else:  # no drizpars reference file found
-            ref_filename = 'N/A'
+            # Make sure all input models have consistent NaN and DO_NOT_USE values
+            for model in input_models:
+                match_nans_and_flags(model)
+                input_models.shelve(model)
+            del model
 
-        if ref_filename == 'N/A':
-            self.log.info('No drizpars reference file found.')
-            kwargs = self._set_spec_defaults()
-        else:
-            self.log.info('Using drizpars reference file: {}'.format(ref_filename))
-            kwargs = self.get_drizpars(ref_filename, input_models)
-
-        kwargs['allowed_memory'] = self.allowed_memory
-
-        # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
-            self.log.warning("Use of EXPTIME weighting will result in incorrect")
-            self.log.warning("propagated errors in the resampled product")
-
-        # Custom output WCS parameters.
-        # Modify get_drizpars if any of these get into reference files:
-        kwargs['output_shape'] = self._check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
-        )
-        kwargs['output_wcs'] = self._load_custom_wcs(
-            self.output_wcs,
-            kwargs['output_shape']
-        )
-        kwargs['crpix'] = self._check_list_pars(self.crpix, 'crpix')
-        kwargs['crval'] = self._check_list_pars(self.crval, 'crval')
-        kwargs['rotation'] = self.rotation
-        kwargs['pscale'] = self.pixel_scale
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
-        kwargs['in_memory'] = self.in_memory
+        # Setup drizzle-related parameters
+        kwargs = self.get_drizpars()
 
         # Call the resampling routine
-        resamp = resample.ResampleData(input_models, output=output, **kwargs)
-        result = resamp.do_drizzle()
+        if self.single:
+            resamp = resample.ResampleImage(
+                input_models,
+                output=output,
+                enable_var=False,
+                compute_err="driz_err",
+                **kwargs
+            )
+            result = resamp.resample_many_to_many(
+                in_memory=self.in_memory
+            )
 
-        for model in result:
-            model.meta.cal_step.resample = 'COMPLETE'
-            self.update_fits_wcs(model)
-            util.update_s_region_imaging(model)
-            model.meta.asn.pool_name = input_models.asn_pool_name
-            model.meta.asn.table_name = input_models.asn_table_name
+        else:
+            resamp = resample.ResampleImage(
+                input_models,
+                output=output,
+                enable_var=True,
+                compute_err="from_var",
+                **kwargs
+            )
+            result = resamp.resample_many_to_one()
 
-            # if pixel_scale exists, it will override pixel_scale_ratio.
-            # calculate the actual value of pixel_scale_ratio based on pixel_scale
-            # because source_catalog uses this value from the header.
-            if self.pixel_scale is None:
-                model.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
-            else:
-                model.meta.resample.pixel_scale_ratio = resamp.pscale_ratio
-            model.meta.resample.pixfrac = kwargs['pixfrac']
-
-        if len(result) == 1:
-            result = result[0]
-
-        input_models.close()
         return result
 
     @staticmethod
-    def _check_list_pars(vals, name, min_vals=None):
+    def check_list_pars(vals, name, min_vals=None):
+        """
+        Validate step parameters that may take a 2-element list.
+
+        Parameters
+        ----------
+        vals : list or None
+            Values to validate.
+        name : str
+            Parameter name.
+        min_vals : list, optional
+            Minimum allowed values for the parameter. Must
+            have 2 values.
+
+        Returns
+        -------
+        values : list
+            The validated list of values.
+
+        Raises
+        ------
+        ValueError
+            If the values do not have expected values.
+        """
         if vals is None:
             return None
         if len(vals) != 2:
@@ -168,196 +163,44 @@ class ResampleStep(Step):
         else:
             raise ValueError(f"Both '{name}' values must be either None or not None.")
 
-    @staticmethod
-    def _load_custom_wcs(asdf_wcs_file, output_shape):
-        if not asdf_wcs_file:
-            return None
-
-        with asdf.open(asdf_wcs_file) as af:
-            wcs = deepcopy(af.tree["wcs"])
-            wcs.pixel_area = af.tree.get("pixel_area", None)
-            wcs.array_shape = af.tree.get("pixel_shape", None)
-            wcs.array_shape = af.tree.get("array_shape", None)
-
-        if output_shape is not None:
-            wcs.array_shape = output_shape[::-1]
-            wcs.pixel_shape = output_shape
-        elif wcs.pixel_shape is not None:
-            wcs.array_shape = wcs.pixel_shape[::-1]
-        elif wcs.array_shape is not None:
-            wcs.pixel_shape = wcs.array_shape[::-1]
-        elif wcs.bounding_box is not None:
-            wcs.array_shape = tuple(
-                int(axs[1] + 0.5)
-                for axs in wcs.bounding_box.bounding_box(order="C")
-            )
-        else:
-            raise ValueError(
-                "Step argument 'output_shape' is required when custom WCS "
-                "does not have neither of 'array_shape', 'pixel_shape', or "
-                "'bounding_box' attributes set."
-            )
-
-        return wcs
-
-    def get_drizpars(self, ref_filename, input_models):
+    def get_drizpars(self):
         """
-        Extract drizzle parameters from reference file.
-
-        This method extracts parameters from the drizpars reference file and
-        uses those to set defaults on the following ResampleStep configuration
-        parameters:
-
-        pixfrac = float(default=None)
-        kernel = string(default=None)
-        fillval = string(default=None)
-        wht_type = option('ivm', 'exptime', None, default=None)
-
-        Once the defaults are set from the reference file, if the user has
-        used a resample.cfg file or run ResampleStep using command line args,
-        then these will overwrite the defaults pulled from the reference file.
+        Load all drizzle-related parameter values into kwargs list.
         """
-        with datamodels.DrizParsModel(ref_filename) as drpt:
-            drizpars_table = drpt.data
-
-        num_groups = len(input_models.group_names)
-        filtname = input_models[0].meta.instrument.filter
-        row = None
-        filter_match = False
-        # look for row that applies to this set of input data models
-        for n, filt, num in zip(
-            range(0, len(drizpars_table)),
-            drizpars_table['filter'],
-            drizpars_table['numimages']
-        ):
-            # only remember this row if no exact match has already been made for
-            # the filter. This allows the wild-card row to be anywhere in the
-            # table; since it may be placed at beginning or end of table.
-
-            if str(filt) == "ANY" and not filter_match and num_groups >= num:
-                row = n
-            # always go for an exact match if present, though...
-            if filtname == filt and num_groups >= num:
-                row = n
-                filter_match = True
-
-        # With presence of wild-card rows, code should never trigger this logic
-        if row is None:
-            self.log.error("No row found in %s matching input data.", ref_filename)
-            raise ValueError
-
-        # Define the keys to pull from drizpars reffile table.
-        # All values should be None unless the user set them on the command
-        # line or in the call to the step
-
-        drizpars = dict(
+        # Define the keys pulled from step parameters
+        kwargs = dict(
             pixfrac=self.pixfrac,
             kernel=self.kernel,
             fillval=self.fillval,
-            wht_type=self.weight_type
-            # pscale_ratio=self.pixel_scale_ratio, # I think this can be removed JEM (??)
-        )
-
-        # For parameters that are set in drizpars table but not set by the
-        # user, use these.  Otherwise, use values set by user.
-        reffile_drizpars = {k: v for k, v in drizpars.items() if v is None}
-        user_drizpars = {k: v for k, v in drizpars.items() if v is not None}
-
-        # read in values from that row for each parameter
-        for k in reffile_drizpars:
-            if k in drizpars_table.names:
-                reffile_drizpars[k] = drizpars_table[k][row]
-
-        # Convert the strings in the FITS binary table from np.bytes_ to str
-        for k, v in reffile_drizpars.items():
-            if isinstance(v, np.bytes_):
-                reffile_drizpars[k] = v.decode('UTF-8')
-
-        all_drizpars = {**reffile_drizpars, **user_drizpars}
-
-        kwargs = dict(
+            weight_type=self.weight_type,
             good_bits=GOOD_BITS,
-            single=self.single,
-            blendheaders=self.blendheaders
+            blendheaders=self.blendheaders,
         )
 
-        kwargs.update(all_drizpars)
+        # Custom output WCS parameters.
+        output_shape = self.check_list_pars(
+            self.output_shape,
+            'output_shape',
+            min_vals=[1, 1]
+        )
+        kwargs['output_wcs'] = load_custom_wcs(
+            self.output_wcs,
+            output_shape
+        )
 
+        wcs_pars = {
+            'crpix': self.check_list_pars(self.crpix, 'crpix'),
+            'crval': self.check_list_pars(self.crval, 'crval'),
+            'rotation': self.rotation,
+            'pixel_scale': self.pixel_scale,
+            'pixel_scale_ratio': self.pixel_scale_ratio,
+            'output_shape': None if output_shape is None else output_shape[::-1],
+        }
+
+        kwargs['wcs_pars'] = wcs_pars
+
+        # Report values to processing log
         for k, v in kwargs.items():
             self.log.debug('   {}={}'.format(k, v))
 
         return kwargs
-
-    def _set_spec_defaults(self):
-        """NIRSpec currently has no default drizpars reference file, so default
-        drizzle parameters are not set properly.  This method sets them.
-
-        Remove this class method when a drizpars reffile is delivered.
-        """
-        configspec = self.load_spec_file()
-        config = ConfigObj(configspec=configspec)
-        if config.validate(Validator()):
-            kwargs = config.dict()
-
-        if self.pixfrac is None:
-            self.pixfrac = 1.0
-        if self.kernel is None:
-            self.kernel = 'square'
-        if self.fillval is None:
-            self.fillval = 'INDEF'
-        # Force definition of good bits
-        kwargs['good_bits'] = GOOD_BITS
-        kwargs['pixfrac'] = self.pixfrac
-        kwargs['kernel'] = str(self.kernel)
-        kwargs['fillval'] = str(self.fillval)
-        #  self.weight_type has a default value of None
-        # The other instruments read this parameter from a reference file
-        if self.wht_type is None:
-            self.wht_type = 'ivm'
-
-        kwargs['wht_type'] = str(self.wht_type)
-        kwargs['pscale_ratio'] = self.pixel_scale_ratio
-        kwargs.pop('pixel_scale_ratio')
-
-        for k, v in kwargs.items():
-            if k in ['pixfrac', 'kernel', 'fillval', 'wht_type', 'pscale_ratio']:
-                log.info('  using: %s=%s', k, repr(v))
-
-        return kwargs
-
-    def update_fits_wcs(self, model):
-        """
-        Update FITS WCS keywords of the resampled image.
-        """
-        # Delete any SIP-related keywords first
-        pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
-        regex = re.compile(pattern)
-
-        keys = list(model.meta.wcsinfo.instance.keys())
-        for key in keys:
-            if regex.match(key):
-                del model.meta.wcsinfo.instance[key]
-
-        # Write new PC-matrix-based WCS based on GWCS model
-        transform = model.meta.wcs.forward_transform
-        model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
-        model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
-        model.meta.wcsinfo.cdelt1 = transform[3].factor.value
-        model.meta.wcsinfo.cdelt2 = transform[4].factor.value
-        model.meta.wcsinfo.ra_ref = transform[6].lon.value
-        model.meta.wcsinfo.dec_ref = transform[6].lat.value
-        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
-        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
-        model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
-        model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
-        model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
-        model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
-        model.meta.wcsinfo.ctype1 = "RA---TAN"
-        model.meta.wcsinfo.ctype2 = "DEC--TAN"
-
-        # Remove no longer relevant WCS keywords
-        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                   'v3yangle', 'vparity']
-        for key in rm_keys:
-            if key in model.meta.wcsinfo.instance:
-                del model.meta.wcsinfo.instance[key]

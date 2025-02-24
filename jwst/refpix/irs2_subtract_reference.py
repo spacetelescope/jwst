@@ -10,13 +10,13 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default=4,
+def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_default=4,
                   pad=8, preserve_refpix=False):
     """Correct an input NIRSpec IRS2 datamodel using reference pixels.
 
     Parameters
     ----------
-    input_model: ramp model
+    output_model: ramp model
         The input science data model.
 
     irs2_model: IRS2 model
@@ -76,9 +76,8 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
 
     # Copy in SCI and PIXELDQ arrays for now; that's all we need. The rest
     # of the input model will be copied to output at the end of the step.
-    data = input_model.data.copy()
-    pixeldq = input_model.pixeldq.copy()
-    input_model.meta.cal_step.refpix = 'not specified yet'
+    data = output_model.data.copy()
+    pixeldq = output_model.pixeldq.copy()
 
     # Load the reference file data.
     # The reference file data are complex, but they're stored as float, with
@@ -90,8 +89,8 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
     if nrows != expected_nrows:
         log.error("Number of rows in reference file = {},"
                   " but it should be {}.".format(nrows, expected_nrows))
-        input_model.meta.cal_step.refpix = 'SKIPPED'
-        return input_model
+        output_model.meta.cal_step.refpix = 'SKIPPED'
+        return output_model
     alpha = np.ones((4, nrows // 2), dtype=np.complex64)
     beta = np.zeros((4, nrows // 2), dtype=np.complex64)
 
@@ -105,20 +104,20 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
     beta[2, :] = float_to_complex(irs2_model.irs2_table.field("beta_2"))
     beta[3, :] = float_to_complex(irs2_model.irs2_table.field("beta_3"))
 
-    scipix_n = input_model.meta.exposure.nrs_normal
+    scipix_n = output_model.meta.exposure.nrs_normal
     if scipix_n is None:
         log.warning("Keyword NRS_NORM not found; using default value %d" %
                     scipix_n_default)
         scipix_n = scipix_n_default
 
-    refpix_r = input_model.meta.exposure.nrs_reference
+    refpix_r = output_model.meta.exposure.nrs_reference
     if refpix_r is None:
         log.warning("Keyword NRS_REF not found; using default value %d" %
                     refpix_r_default)
         refpix_r = refpix_r_default
 
     # Convert from sky (DMS) orientation to detector orientation.
-    detector = input_model.meta.instrument.detector
+    detector = output_model.meta.instrument.detector
     if detector == "NRS1":
         data = np.swapaxes(data, 2, 3)
         pixeldq = np.swapaxes(pixeldq, 0, 1)
@@ -176,7 +175,6 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
             data[integ, :, :, :] = data0
 
     # Convert corrected data back to sky orientation
-    output_model = input_model.copy()
     if not preserve_refpix:
         temp_data = data[:, :, :, nx - ny:]
     else:
@@ -188,7 +186,7 @@ def correct_model(input_model, irs2_model, scipix_n_default=16, refpix_r_default
     else:                       # don't change orientation
         output_model.data = temp_data
 
-    # Strip interleaved ref pixels from the PIXELDQ, GROUPDQ, and ERR extensions.
+    # Strip interleaved ref pixels from the PIXELDQ and GROUPDQ extensions.
     if not preserve_refpix:
         strip_ref_pixels(output_model, irs2_mask)
 
@@ -246,7 +244,7 @@ def make_irs2_mask(nx, ny, scipix_n, refpix_r):
 
 
 def strip_ref_pixels(output_model, irs2_mask):
-    """Copy out the normal pixels from PIXELDQ, GROUPDQ, and ERR arrays.
+    """Copy out the normal pixels from PIXELDQ and GROUPDQ arrays.
 
     Parameters
     ----------
@@ -269,8 +267,6 @@ def strip_ref_pixels(output_model, irs2_mask):
         temp_array = output_model.groupdq
         output_model.groupdq = temp_array[..., irs2_mask, :]
 
-        temp_array = output_model.err
-        output_model.err = temp_array[..., irs2_mask, :]
     elif detector == "NRS2":
         # Reverse the direction of the mask, and select rows.
         temp_mask = irs2_mask[::-1]
@@ -281,8 +277,6 @@ def strip_ref_pixels(output_model, irs2_mask):
         temp_array = output_model.groupdq
         output_model.groupdq = temp_array[..., temp_mask, :]
 
-        temp_array = output_model.err
-        output_model.err = temp_array[..., temp_mask, :]
     else:
         # Select columns.
         temp_array = output_model.pixeldq
@@ -290,9 +284,6 @@ def strip_ref_pixels(output_model, irs2_mask):
 
         temp_array = output_model.groupdq
         output_model.groupdq = temp_array[..., irs2_mask]
-
-        temp_array = output_model.err
-        output_model.err = temp_array[..., irs2_mask]
 
 
 def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2,
@@ -1082,19 +1073,19 @@ def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm
            (scipix_n + refpix_r + 2) * ny // 2 - elen // 2
 
     # Construct the filter [1, cos, 0, cos, 1].
-    temp_a1 = (np.cos(np.arange(elen, dtype=np.float32) *
+    temp_a1 = (np.cos(np.arange(elen, dtype=np.float64) *
                       np.pi / float(elen)) + 1.) / 2.
 
     # elen = 5000
     # blen = 30268
     # row * ny // 2 - 2 * blen - 2 * elen = 658552
     # len(temp_a2) = 729088
-    temp_a2 = np.concatenate((np.ones(blen, dtype=np.float32),
+    temp_a2 = np.concatenate((np.ones(blen, dtype=np.float64),
                               temp_a1.copy(),
                               np.zeros(row * ny // 2 - 2 * blen - 2 * elen,
-                                       dtype=np.float32),
+                                       dtype=np.float64),
                               temp_a1[::-1].copy(),
-                              np.ones(blen, dtype=np.float32)))
+                              np.ones(blen, dtype=np.float64)))
 
     roll_a2 = np.roll(temp_a2, -1)
     aa = np.concatenate((temp_a2, roll_a2[::-1]))

@@ -75,3 +75,43 @@ def test_container_structure():
     container.close()
     for model in inputs:
         model.close()
+    for model in outputs.values():
+        model.close()
+
+
+def test_slit_exptype():
+    """Test for slit exposure type handling."""
+
+    # Setup input
+    inputs = [MultiSlitModel(f) for f in helpers.INPUT_FILES]
+    container = ModelContainer(inputs)
+
+    # Add a slit exposure type to each input
+    for model in container:
+        for slit in model.slits:
+            if slit.source_id == 1:
+                slit.meta.exposure = {'type': 'NRS_MSASPEC'}
+            else:
+                slit.meta.exposure = {'type': 'NRS_FIXEDSLIT'}
+
+    # Make the source-based containers
+    outputs = multislit_to_container(container)
+
+    # Check that exposure type was passed from input to output
+    assert len(container) == 3
+    assert len(outputs) == 5
+    for i, model in enumerate(container):
+        for slit in model.slits:
+            exposure = outputs[str(slit.source_id)][i]
+            assert exposure.meta.exposure.type == slit.meta.exposure.type
+            if slit.source_id == 1:
+                assert exposure.meta.exposure.type == 'NRS_MSASPEC'
+            else:
+                assert exposure.meta.exposure.type == 'NRS_FIXEDSLIT'
+
+    # Closeout
+    container.close()
+    for model in inputs:
+        model.close()
+    for model in outputs.values():
+        model.close()

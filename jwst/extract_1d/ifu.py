@@ -1,30 +1,26 @@
 import logging
+
 import numpy as np
+from astropy import stats
+from astropy.stats import sigma_clipped_stats as sigclip
 from photutils.aperture import (CircularAperture, CircularAnnulus,
                                 RectangularAperture, aperture_photometry)
+from photutils.detection import DAOStarFinder
+from scipy.interpolate import interp1d
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from .apply_apcorr import select_apcorr
-from ..assign_wcs.util import compute_scale
-from astropy import stats
+from jwst.assign_wcs.util import compute_scale
+from jwst.extract_1d import spec_wcs
+from jwst.extract_1d.apply_apcorr import select_apcorr
+from jwst.extract_1d.extract import read_apcorr_ref
+from jwst.residual_fringe import utils as rfutils
 
-from . import spec_wcs
-from scipy.interpolate import interp1d
-
-from astropy.stats import sigma_clipped_stats as sigclip
-from photutils.detection import DAOStarFinder
-from ..residual_fringe import utils as rfutils
+__all__ = ['ifu_extract1d']
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
-
-# These values are used to indicate whether the input extract1d reference file
-# (if any) is ASDF (default) or IMAGE
-
-FILE_TYPE_ASDF = "ASDF"
-FILE_TYPE_IMAGE = "IMAGE"
 
 # This is to prevent calling offset_from_offset multiple times for
 # multi-integration data.
@@ -35,9 +31,9 @@ OFFSET_NOT_ASSIGNED_YET = "not assigned yet"
 HUGE_DIST = 1.e10
 
 
-def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
-                  bkg_sigma_clip, apcorr_ref_model=None, center_xy=None,
-                  ifu_autocen=False, ifu_rfcorr=False, ifu_rscale=None):
+def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
+                  bkg_sigma_clip, apcorr_ref_file=None, center_xy=None,
+                  ifu_autocen=False, ifu_rfcorr=False, ifu_rscale=None, ifu_covar_scale=1.0):
     """Extract a 1-D spectrum from an IFU cube.
 
     Parameters
@@ -45,8 +41,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     input_model : JWST data model for an IFU cube (IFUCubeModel)
         The input model.
 
-    ref_dict : dict
-        The contents of the extract1d reference file.
+    ref_file : str
+        File name for the extract1d reference file, in ASDF format.
 
     source_type : string
         "POINT" or "EXTENDED"
@@ -60,8 +56,8 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     bkg_sigma_clip : float
         Background sigma clipping value to use to remove noise/outliers in background
 
-    apcorr_ref_model : apcorr datamodel or None
-        Aperture correction table.
+    apcorr_ref_file : str or None
+        File name for aperture correction reference file.
 
     center_xy : float or None
         A list of 2 pixel coordinate values at which to place the center
@@ -80,9 +76,13 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     ifu_rscale: float
         For MRS IFU data a value for changing the extraction radius. The value provided is the number of PSF
         FWHMs to use for the extraction radius. Values accepted are between 0.5 to 3.0. The
-        default extraction size is set to 2 * FWHM. Values below 2 will resuls in a smaller
+        default extraction size is set to 2 * FWHM. Values below 2 will result in a smaller
         radius, a value of 2 results in no change to radius and a value above 2 results in a larger
         extraction radius.
+
+    ifu_covar_scale : float
+        Scaling factor by which to multiply the ERR values in extracted spectra to account
+        for covariance between adjacent spaxels in the IFU data cube.
 
     Returns
     -------
@@ -113,13 +113,14 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     if slitname is None:
         slitname = "ANY"
 
-    extract_params = get_extract_parameters(ref_dict, bkg_sigma_clip, slitname)
+    extract_params = get_extract_parameters(ref_file, bkg_sigma_clip)
 
     # Add info about IFU auto-centroiding, residual fringe correction and extraction radius scale
     # to extract_params for use later
     extract_params['ifu_autocen'] = ifu_autocen
     extract_params['ifu_rfcorr'] = ifu_rfcorr
     extract_params['ifu_rscale'] = ifu_rscale
+    extract_params['ifu_covar_scale'] = ifu_covar_scale
 
     # If the user supplied extraction center coords,
     # load them into extract_params for use later.
@@ -141,20 +142,10 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
                      "the source is extended.")
         extract_params['subtract_background'] = subtract_background
 
-    if extract_params:
-        if extract_params['ref_file_type'] == FILE_TYPE_ASDF:
-            (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-             background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, npixels_bkg,
-             radius_match, x_center, y_center) = \
-                extract_ifu(input_model, source_type, extract_params)
-        else:                                   # FILE_TYPE_IMAGE
-            (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-             background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, npixels_bkg,
-             x_center, y_center) = \
-                image_extract_ifu(input_model, source_type, extract_params)
-    else:
-        log.critical('Missing extraction parameters.')
-        raise ValueError('Missing extraction parameters.')
+    (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
+     background, b_var_poisson, b_var_rnoise, b_var_flat, npixels, dq, npixels_bkg,
+     radius_match, x_center, y_center) = \
+        extract_ifu(input_model, source_type, extract_params)
 
     npixels_temp = np.where(npixels > 0., npixels, 1.)
     npixels_bkg_temp = np.where(npixels_bkg > 0., npixels_bkg, 1.)
@@ -239,6 +230,22 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
         sb_var_poisson *= 0
         b_var_poisson *= 0
 
+    # Deal with covariance in the IFU cube by multiplying 1d spectra errors by a scaling factor
+    if (extract_params['ifu_covar_scale'] != 1.0):
+        log.info("Applying ERR covariance prefactor of %g", extract_params['ifu_covar_scale'])
+        error *= extract_params['ifu_covar_scale']
+        sb_error *= extract_params['ifu_covar_scale']
+        berror *= extract_params['ifu_covar_scale']
+        f_var_poisson *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+        f_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+        f_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+        sb_var_poisson *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+        sb_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+        sb_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+        b_var_poisson *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+        b_var_rnoise *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+        b_var_flat *= extract_params['ifu_covar_scale'] * extract_params['ifu_covar_scale']
+
     otab = np.array(
         list(
             zip(wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
@@ -275,9 +282,10 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     spec.extraction_x = x_center
     spec.extraction_y = y_center
 
-    if source_type == 'POINT' and apcorr_ref_model is not None:
-        log.info('Applying Aperture correction.')
+    if source_type == 'POINT' and apcorr_ref_file is not None and apcorr_ref_file != 'N/A':
+        apcorr_ref_model = read_apcorr_ref(apcorr_ref_file, input_model.meta.exposure.type)
 
+        log.info('Applying Aperture correction.')
         if instrument == 'NIRSPEC':
             wl = np.median(wavelength)
         else:
@@ -304,69 +312,50 @@ def ifu_extract1d(input_model, ref_dict, source_type, subtract_background,
     # See output_model.spec[0].meta.wcs instead.
     output_model.meta.wcs = None
 
+    output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
+
     return output_model
 
 
-def get_extract_parameters(ref_dict, bkg_sigma_clip, slitname):
+def get_extract_parameters(ref_file, bkg_sigma_clip):
     """Read extraction parameters for an IFU.
 
     Parameters
     ----------
-    ref_dict : dict
-        The contents of the extract1d reference file.
+    ref_file : dict
+        File name for the extract1d reference file, in ASDF format
 
-    slitname : str
-        The name of the slit, or "ANY".
+    bkg_sigma_clip : float
+        Background sigma clipping value to use to remove noise/outliers in background.
 
     Returns
     -------
     dict
         The extraction parameters.
     """
-
     extract_params = {}
+
     # for consistency put the bkg_sigma_clip in dictionary: extract_params
     extract_params['bkg_sigma_clip'] = bkg_sigma_clip
 
-    if ref_dict['ref_file_type'] == FILE_TYPE_ASDF:
-        extract_params['ref_file_type'] = FILE_TYPE_ASDF
-        refmodel = ref_dict['ref_model']
-        subtract_background = refmodel.meta.subtract_background
-        method = refmodel.meta.method
-        subpixels = refmodel.meta.subpixels
+    refmodel = datamodels.Extract1dIFUModel(ref_file)
+    subtract_background = refmodel.meta.subtract_background
+    method = refmodel.meta.method
+    subpixels = refmodel.meta.subpixels
 
-        data = refmodel.data
-        wavelength = data.wavelength
-        radius = data.radius
-        inner_bkg = data.inner_bkg
-        outer_bkg = data.outer_bkg
+    data = refmodel.data
+    wavelength = data.wavelength
+    radius = data.radius
+    inner_bkg = data.inner_bkg
+    outer_bkg = data.outer_bkg
 
-        extract_params['subtract_background'] = bool(subtract_background)
-        extract_params['method'] = method
-        extract_params['subpixels'] = subpixels
-        extract_params['wavelength'] = wavelength
-        extract_params['radius'] = radius
-        extract_params['inner_bkg'] = inner_bkg
-        extract_params['outer_bkg'] = outer_bkg
-
-    elif ref_dict['ref_file_type'] == FILE_TYPE_IMAGE:
-        extract_params['ref_file_type'] = FILE_TYPE_IMAGE
-        foundit = False
-        for im in ref_dict['ref_model'].images:
-            if (im.name is None or im.name == "ANY" or slitname == "ANY" or
-                    im.name == slitname):
-                extract_params['ref_image'] = im
-                foundit = True
-                break
-
-        if not foundit:
-            log.error("No match for slit name %s in reference image", slitname)
-            raise RuntimeError("Specify slit name or use 'any' in ref image.")
-
-    else:
-        log.error("Reference file type %s not recognized",
-                  ref_dict['ref_file_type'])
-        raise RuntimeError("extract1d reference file must be ASDF, JSON or  FITS image.")
+    extract_params['subtract_background'] = bool(subtract_background)
+    extract_params['method'] = method
+    extract_params['subpixels'] = subpixels
+    extract_params['wavelength'] = wavelength
+    extract_params['radius'] = radius
+    extract_params['inner_bkg'] = inner_bkg
+    extract_params['outer_bkg'] = outer_bkg
 
     return extract_params
 
@@ -547,9 +536,6 @@ def extract_ifu(input_model, source_type, extract_params):
     subpixels = extract_params['subpixels']
     subtract_background = extract_params['subtract_background']
 
-    radius = None
-    inner_bkg = None
-    outer_bkg = None
     width = None
     height = None
     theta = None
@@ -629,7 +615,6 @@ def extract_ifu(input_model, source_type, extract_params):
     # get aperture for extended it will not change with wavelength
     if source_type == 'EXTENDED':
         aperture = RectangularAperture(position, width, height, theta)
-        annulus = None
 
     for k in range(shape[0]):  # looping over wavelength
         inner_bkg = None
@@ -656,7 +641,6 @@ def extract_ifu(input_model, source_type, extract_params):
         normalization = 1.
         temp_weightmap = weightmap[k, :, :]
         temp_weightmap[temp_weightmap > 1] = 1
-        aperture_area = 0
         annulus_area = 0
 
         # Make a boolean mask to ignore voxels with no valid data
@@ -736,6 +720,11 @@ def extract_ifu(input_model, source_type, extract_params):
                                                  method=method, subpixels=subpixels)
             b_var_flat[k] = float(var_flat_table['aperture_sum'][0])
 
+            # Propagate errors in background to the background-subtracted science spectrum
+            f_var_poisson[k] += b_var_poisson[k] * normalization * normalization
+            f_var_rnoise[k] += b_var_rnoise[k] * normalization * normalization
+            f_var_flat[k] += b_var_flat[k] * normalization * normalization
+
         # Extended source data - background determined from sigma clipping
         if source_type == 'EXTENDED':
             bkg_data = data[k, :, :]
@@ -803,7 +792,7 @@ def locn_from_wcs(input_model, ra_targ, dec_targ):
 
     Parameters
     ----------
-    input_model : data model
+    input_model : JWSTDataModel
         The input science model.
 
     ra_targ, dec_targ : float or None
@@ -886,256 +875,6 @@ def celestial_to_cartesian(ra, dec):
     cart[..., 0] = r_xy * np.cos(ra * np.pi / 180.)
 
     return cart
-
-
-def image_extract_ifu(input_model, source_type, extract_params):
-    """Extraction using a extract1d reference image.
-
-    Extended summary
-    ----------------
-    The IMAGE extract1d reference file should have pixels with avalue of 1 for the
-    source extraction region, 0 for pixels not to include in source or background,
-    and -1 for the background region.
-    For SRCTYPE=POINT the source extraction region is defined by pixels in the ref
-    image = 1 and the background region is defined by pixels in the ref image with
-    -1.
-    For SRCTYPE=EXTENDED the extraction region is defined by pixels in the ref image
-    =  1 (only the source region is used). The default procedure of using the extract 1d
-    asdf reference files extracts the entire region for EXTENDED source data. However,
-    if the user supplies the reference image it is assumed they have defined a specific
-    region to be extracted instead of the entire field. At each wavelength bin sigma
-    clipping is performed on the extraction region and is store in the background column of
-    spec table to be used in masterbackground subtraction. In the extended source case
-    pixels flagged as background (-1) in the reference image are ignored.
-
-    Parameters
-    ----------
-    input_model : IFUCubeModel
-        The input model.
-
-    source_type : string
-        "POINT" or "EXTENDED"
-
-    extract_params : dict
-        The extraction parameters.  One of these is an open file handle
-        for an image that specifies which pixels should be included as
-        source and which (if any) should be used as background.
-
-    Returns
-    -------
-    ra, dec : float
-        ra and dec are the right ascension and declination respectively
-        at the centroid of the target region in the reference image.
-
-    wavelength : ndarray, 1-D
-        The wavelength in micrometers at each plane of the IFU cube.
-
-    temp_flux : ndarray, 1-D
-        The sum of the data values in the extraction aperture minus the
-        sum of the data values in the background region (scaled by the
-        ratio of areas), for each plane.
-        The data values are in units of surface brightness, so this value
-        isn't really the flux, it's an intermediate value.  Dividing by
-        `npixels` (to compute the average) will give the value for the
-        `surf_bright` (surface brightness) column, and multiplying by
-        the solid angle of a pixel will give the flux for a point source.
-
-    f_var_poisson : ndarray, 1-D
-        The extracted poisson variance values to go along with the
-        temp_flux array.
-
-    f_var_rnoise : ndarray, 1-D
-        The extracted read noise variance values to go along with the
-        temp_flux array.
-
-    f_var_flat : ndarray, 1-D
-        The extracted flat field variance values to go along with the
-        temp_flux array.
-
-    background : ndarray, 1-D
-        The background count rate that was subtracted from the total
-        source data values to get `temp_flux`.
-
-    b_var_poisson : ndarray, 1-D
-        The extracted poisson variance values to go along with the
-        background array.
-
-    b_var_rnoise : ndarray, 1-D
-        The extracted read noise variance values to go along with the
-        background array.
-
-    b_var_flat : ndarray, 1-D
-        The extracted flat field variance values to go along with the
-        background array.
-
-    npixels : ndarray, 1-D, float64
-        For each slice, this is the number of pixels that were added
-        together to get `temp_flux`.
-
-    dq : ndarray, 1-D, uint32
-        The data quality array.
-
-    n_bkg : ndarray, 1-D, float64
-        For each slice, this is the number of pixels that were added
-        together to get background.
-
-    x_center, y_center : float
-        The x and y center of the extraction region
-    """
-
-    data = input_model.data
-    try:
-        var_poisson = input_model.var_poisson
-        var_rnoise = input_model.var_rnoise
-        var_flat = input_model.var_flat
-    except AttributeError:
-        log.info("Input model does not break out variance information. Passing only generalized errors.")
-        var_poisson = input_model.err * input_model.err
-        var_rnoise = np.zeros_like(input_model.data)
-        var_flat = np.zeros_like(input_model.data)
-    # The axes are (z, y, x) in the sense that (x, y) are the ordinary
-    # axes of the image for one plane, i.e. at one wavelength.  The
-    # wavelengths vary along the z-axis.
-    shape = data.shape
-
-    # The dispersion direction is the first axis.
-    npixels = np.ones(shape[0], dtype=np.float64)
-    n_bkg = np.ones(shape[0], dtype=np.float64)
-
-    dq = np.zeros(shape[0], dtype=np.uint32)
-
-    ref_image = extract_params['ref_image']
-    ref = ref_image.data
-    subtract_background = extract_params['subtract_background']
-
-    (mask_target, mask_bkg) = separate_target_and_background(ref)
-
-    # subtracting the background is only allowed for source_type=POINT
-    # subtract_background = False for EXTENDED data (set in ifu_extract1d)
-
-    if subtract_background:
-        if mask_bkg is None:
-            log.info("Skipping background subtraction because "
-                     "background regions are not defined.")
-        subtract_background = False
-
-    ra_targ = input_model.meta.target.ra
-    dec_targ = input_model.meta.target.dec
-    locn = locn_from_wcs(input_model, ra_targ, dec_targ)
-    x_center = None
-    y_center = None
-    if locn is not None:
-        log.info("Target location is x_center = %g, y_center = %g, "
-                 "based on TARG_RA and TARG_DEC.", locn[0], locn[1])
-
-    # Use the centroid of mask_target as the point where the target
-    # would be without any source position correction.
-    (y0, x0) = im_centroid(data, mask_target)
-    log.debug("Target location based on reference image is X = %g, Y = %g",
-              x0, y0)
-
-    # TODO - check if shifting location should be done for reference_image option
-    if locn is None or np.isnan(locn[0]):
-        log.warning("Couldn't determine pixel location from WCS, so "
-                    "source position correction will not be applied.")
-    else:
-        (x_center, y_center) = locn
-        # Shift the reference image so it will be centered at locn.
-        # Only shift by a whole number of pixels.
-        delta_x = int(round(x_center - x0))         # must be integer
-        delta_y = int(round(y_center - y0))
-        log.debug("Shifting reference image by %g in X and %g in Y",
-                  delta_x, delta_y)
-        temp = shift_ref_image(mask_target, delta_y, delta_x)
-        if temp is not None:
-            mask_target = temp
-            del temp
-            if mask_bkg is not None:
-                mask_bkg = shift_ref_image(mask_bkg, delta_y, delta_x)
-            # Since we have shifted mask_target and mask_bkg to
-            # x_center and y_center, update x0 and y0.
-            x0 = x_center
-            y0 = y_center
-
-    # Extract the data.
-    # First add up the values along the x direction, then add up the
-    # values along the y direction.
-    gross = np.nansum(np.nansum(data * mask_target, axis=2, dtype=np.float64), axis=1)
-    f_var_poisson = np.nansum(np.nansum(var_poisson * mask_target, axis=2, dtype=np.float64), axis=1)
-    f_var_rnoise = np.nansum(np.nansum(var_rnoise * mask_target, axis=2, dtype=np.float64), axis=1)
-    f_var_flat = np.nansum(np.nansum(var_flat * mask_target, axis=2, dtype=np.float64), axis=1)
-
-    # Compute the number of pixels that were added together to get gross.
-    normalization = 1.
-
-    weightmap = input_model.weightmap
-    temp_weightmap = weightmap
-    temp_weightmap[temp_weightmap > 1] = 1
-    npixels[:] = np.nansum(np.nansum(temp_weightmap * mask_target, axis=2, dtype=np.float64), axis=1)
-    bkg_sigma_clip = extract_params['bkg_sigma_clip']
-
-    # Point Source data 1. extract background and subtract 2. do not
-    if source_type == 'POINT':
-        if subtract_background and mask_bkg is not None:
-            n_bkg[:] = np.nansum(np.nansum(temp_weightmap * mask_bkg, axis=2, dtype=np.float64), axis=1)
-            n_bkg[:] = np.where(n_bkg <= 0., 1., n_bkg)
-            normalization = npixels / n_bkg
-            background = np.nansum(np.nansum(data * mask_bkg, axis=2, dtype=np.float64), axis=1)
-            b_var_poisson = np.nansum(np.nansum(var_poisson * mask_bkg, axis=2, dtype=np.float64), axis=1)
-            b_var_rnoise = np.nansum(np.nansum(var_rnoise * mask_bkg, axis=2, dtype=np.float64), axis=1)
-            b_var_flat = np.nansum(np.nansum(var_flat * mask_bkg, axis=2, dtype=np.float64), axis=1)
-            temp_flux = gross - background * normalization
-        else:
-            background = np.zeros_like(gross)
-            b_var_poisson = np.zeros_like(gross)
-            b_var_rnoise = np.zeros_like(gross)
-            b_var_flat = np.zeros_like(gross)
-            temp_flux = gross.copy()
-    else:
-        temp_flux = np.nansum(np.nansum(data * mask_target, axis=2, dtype=np.float64), axis=1)
-
-    # Extended source data, sigma clip outliers of extraction region is performed
-    # at each wavelength plane.
-        (background, b_var_poisson, b_var_rnoise,
-         b_var_flat, n_bkg) = sigma_clip_extended_region(data, var_poisson, var_rnoise,
-                                                         var_flat, mask_target,
-                                                         temp_weightmap, bkg_sigma_clip)
-
-    del temp_weightmap
-
-    # Compute the ra, dec, and wavelength at the pixels of a column through
-    # the IFU cube at the target location.  ra and dec should be constant
-    # (so they're scalars), but wavelength will vary from plane to plane.
-
-    log.debug("IFU 1-D extraction parameters (using reference image):")
-    log.debug("  x_center = %s", str(x0))
-    log.debug("  y_center = %s", str(y0))
-    log.debug("  subtract_background parameter = %s", str(subtract_background))
-    if mask_bkg is not None:
-        log.debug("    background will be subtracted")
-    else:
-        log.debug("    background will not be subtracted")
-
-    (ra, dec, wavelength) = get_coordinates(input_model, x0, y0)
-
-    # Check for NaNs in the wavelength array, flag them in the dq array,
-    # and truncate the arrays if NaNs are found at endpoints (unless the
-    # entire array is NaN).
-    wavelength, dq, nan_slc = nans_in_wavelength(wavelength, dq)
-    temp_flux = temp_flux[nan_slc]
-    background = background[nan_slc]
-    npixels = npixels[nan_slc]
-    n_bkg = n_bkg[nan_slc]
-    f_var_poisson = f_var_poisson[nan_slc]
-    f_var_rnoise = f_var_rnoise[nan_slc]
-    f_var_flat = f_var_flat[nan_slc]
-    b_var_poisson = b_var_poisson[nan_slc]
-    b_var_rnoise = b_var_rnoise[nan_slc]
-    b_var_flat = b_var_flat[nan_slc]
-
-    return (ra, dec, wavelength, temp_flux, f_var_poisson, f_var_rnoise, f_var_flat,
-            background, b_var_poisson, b_var_rnoise, b_var_flat,
-            npixels, dq, n_bkg, x_center, y_center)
 
 
 def get_coordinates(input_model, x0, y0):

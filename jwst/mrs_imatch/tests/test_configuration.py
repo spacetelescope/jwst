@@ -70,7 +70,20 @@ def test_imatch_background_subtracted(tmp_cwd, miri_dither_ch12):
     # test if background subtracted - raise error
     with pytest.raises(ValueError):
         step = MRSIMatchStep()
-        step.run(new_container)
+        step.call(new_container, skip=False)
+
+
+def test_imatch_default_run(tmp_cwd, miri_dither_ch12):
+    """ Test mrs_imatch test is skipped by default """
+
+    all_models = ModelContainer(miri_dither_ch12)
+
+    # test if default running results in skipping step
+    step = MRSIMatchStep()
+    results = step.call(all_models)
+    n = len(all_models)
+    for i  in range(n):
+        assert results[i].meta.cal_step.mrs_imatch =='SKIPPED'
 
 
 def test_imatch_background_reset(tmp_cwd, miri_dither_ch12):

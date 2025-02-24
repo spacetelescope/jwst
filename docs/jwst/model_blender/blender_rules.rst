@@ -5,39 +5,15 @@ Model Blender Rules
 
 Blending models relies on rules to define how to evaluate all the input values
 for a model attribute in order to determine the final output value. These rules
-then get specified in the model schema for each attribute.
+are derived from the model schema for each attribute.
 
-The rules get interpreted and applied as list or array operations that work on
-the set of input values for each attribute.  The full set of pre-defined rules
-includes
+The rules are applied to a collection of all values to be blended (for example
+if blending models that have different exposure times, the blended exposure
+time will be the sum of all exposure times).
 
-.. code-block:: python
+Supported rule names and corresponding functions are listed in
+`jwst.model_blender.rules.RULE_FUNCTIONS`.
 
-    import numpy as np
-    # translation dictionary for function entries from rules files
-    blender_funcs = {'first': first,
-                      'last': last,
-                      'float_one': float_one,
-                      'int_one': int_one,
-                      'zero': zero,
-                      'multi': multi,
-                      'multi?': multi1,
-                      'mean': np.mean,
-                      'sum': np.sum,
-                      'max': np.max,
-                      'min': np.min,
-                      'stddev': np.std,
-                      'mintime': mintime,
-                      'maxtime': maxtime,
-                      'mindate': mindate,
-                      'maxdate': maxdate,
-		      'mindatetime': mindatetime,
-		      'maxdatetime': maxdatetime}
-
-The rules that should be referenced in the model schema definition are the
-keys defined for `jwst.model_blender.blender_rules.blender_funcs` listed
-above.  This definition illustrates how several rules are simply interfaces for
-numpy array operations, while others are defined internally to `model_blender`.
-
-.. automodapi:: jwst.model_blender.blendrules
+.. automodapi:: jwst.model_blender.rules
   :no-inheritance-diagram:
+  :include-all-objects:

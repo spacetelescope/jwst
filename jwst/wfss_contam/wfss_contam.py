@@ -1,6 +1,7 @@
+"""Top-level module for WFSS contamination correction."""
+
 import logging
 import multiprocessing
-from typing import Protocol, Union
 import numpy as np
 
 from stdatamodels.jwst import datamodels
@@ -14,13 +15,13 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def determine_multiprocessing_ncores(max_cores: Union[str, int], num_cores) -> int:
-
-    """Determine the number of cores to use for multiprocessing.
+def determine_multiprocessing_ncores(max_cores, num_cores):
+    """
+    Determine the number of cores to use for multiprocessing.
 
     Parameters
     ----------
-    max_cores : string or int
+    max_cores : str or int
         Number of cores to use for multiprocessing. If set to 'none'
         (the default), then no multiprocessing will be done. The other
         allowable string values are 'quarter', 'half', and 'all', which indicate
@@ -36,34 +37,38 @@ def determine_multiprocessing_ncores(max_cores: Union[str, int], num_cores) -> i
         Number of cores to use for multiprocessing
     """
     match max_cores:
-        case 'none':
+        case "none":
             return 1
         case None:
             return 1
-        case 'quarter':
+        case "quarter":
             return num_cores // 4 or 1
-        case 'half':
+        case "half":
             return num_cores // 2 or 1
-        case 'all':
+        case "all":
             return num_cores
         case int():
             if max_cores <= num_cores and max_cores > 0:
                 return max_cores
-            log.warning(f"Requested {max_cores} cores exceeds the number of cores available on this machine ({num_cores}). Using all available cores.")
+            log.warning(
+                f"Requested {max_cores} cores exceeds the number of cores available "
+                "on this machine ({num_cores}). Using all available cores."
+            )
             return max_cores
         case _:
             raise ValueError(f"Invalid value for max_cores: {max_cores}")
 
 
 class UnmatchedSlitIDError(Exception):
+    """Exception raised when a slit ID is not found in the list of simulated slits."""
+
     pass
 
 
-def _find_matching_simul_slit(slit: datamodels.SlitModel,
-                              simul_slit_sids: list[int],
-                              simul_slit_orders: list[int],
-                              ) -> int:
+def _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders):
     """
+    Find the index of the matching simulated slit in the list of simulated slits.
+
     Parameters
     ----------
     slit : `~jwst.datamodels.SlitModel`
@@ -78,20 +83,21 @@ def _find_matching_simul_slit(slit: datamodels.SlitModel,
     good_idx : int
         Index of the matching simulated slit in the list of simulated slits
     """
-
-        # Retrieve simulated slit for this source only
     sid = slit.source_id
     order = slit.meta.wcsinfo.spectral_order
     good = (np.array(simul_slit_sids) == sid) * (np.array(simul_slit_orders) == order)
     if not any(good):
-        raise UnmatchedSlitIDError(f"Source ID {sid} order {order} requested by input slit model \
-                but not found in simulated slits. Setting contamination correction to zero for that slit.")
+        raise UnmatchedSlitIDError(
+            f"Source ID {sid} order {order} requested by input slit model "
+            "but not found in simulated slits. "
+            "Setting contamination correction to zero for that slit."
+        )
     return np.where(good)[0][0]
 
 
-def _cut_frame_to_match_slit(contam: np.ndarray, slit: datamodels.SlitModel) -> np.ndarray:
-    
-    """Cut out the contamination image to match the extent of the source slit.
+def _cut_frame_to_match_slit(contam, slit):
+    """
+    Cut out the contamination image to match the extent of the source slit.
 
     Parameters
     ----------
@@ -104,134 +110,127 @@ def _cut_frame_to_match_slit(contam: np.ndarray, slit: datamodels.SlitModel) -> 
     -------
     cutout : 2D array
         Contamination image cutout that matches the extent of the source slit
-
     """
     x1 = slit.xstart
     y1 = slit.ystart
-    cutout = contam[y1:y1 + slit.ysize, x1:x1 + slit.xsize]
+    cutout = contam[y1 : y1 + slit.ysize, x1 : x1 + slit.xsize]
 
     return cutout
 
 
 class SlitOverlapError(Exception):
+    """Exception raised when there is no overlap between data and model for a slit."""
+
     pass
 
-class CommonSlit(Protocol):
-    '''
-    class protocol for two slits that represent the same source and order, e.g. data and model
-    '''
-    slit0: datamodels.SlitModel
-    slit1: datamodels.SlitModel
-    
-    def match_backplane(self) -> tuple[datamodels.SlitModel, datamodels.SlitModel]:
-        ...
 
-
-class CommonSlitPreferFirst(CommonSlit):
-    '''
-    Treat slit0 as the reference slit, and match attributes of slit1 to it
-    '''
-    def __init__(self, slit0: datamodels.SlitModel, slit1: datamodels.SlitModel):
-        self.slit0 = slit0
-        self.slit1 = slit1
-
-    def match_backplane(self) -> tuple[datamodels.SlitModel, datamodels.SlitModel]:
-
-        data0 = self.slit0.data
-        data1 = self.slit1.data
-
-        x1 = self.slit1.xstart - self.slit0.xstart
-        y1 = self.slit1.ystart - self.slit0.ystart
-        backplane1 = np.zeros_like(data0)
-        
-        i0 = max([y1,0])
-        i1 = min([y1+data1.shape[0], data0.shape[0], data1.shape[0]])
-        j0 = max([x1,0])
-        j1 = min([x1+data1.shape[1], data0.shape[1], data1.shape[1]])
-        if i0 >= i1 or j0 >= j1:
-            raise SlitOverlapError(f"No overlap region between data and model for slit {self.slit0.source_id}, \
-                                    order {self.slit0.meta.wcsinfo.spectral_order}. \
-                                    Setting contamination correction to zero for that slit.")
-
-        backplane1[i0:i1, j0:j1] = data1[i0:i1, j0:j1]
-
-        self.slit1.data = backplane1
-        self.slit1.xstart = self.slit0.xstart
-        self.slit1.ystart = self.slit0.ystart
-        self.slit1.xsize = self.slit0.xsize
-        self.slit1.ysize = self.slit0.ysize
-        
-        return self.slit0, self.slit1
-
-
-class CommonSlitEncompass(CommonSlit):
-    '''
-    Encompass the data from both slits in a common backplane
-    '''
-    def __init__(self, slit0: datamodels.SlitModel, slit1: datamodels.SlitModel):
-        self.slit0 = slit0
-        self.slit1 = slit1
-    
-    def match_backplane(self) -> tuple[datamodels.SlitModel, datamodels.SlitModel]:
-        '''
-        put data from the two slits into a common backplane
-        so outputs have the same dimensions
-        and alignment is based on slit.xstart, slit.ystart
-
-        Parameters
-        ----------
-        slit0 : SlitModel
-            First slit model
-        slit1 : SlitModel
-            Second slit model
-
-        Returns
-        -------
-        slit0 : SlitModel
-            First slit model with data updated to common backplane
-        slit1 : SlitModel
-            Second slit model with data updated to common backplane
-        '''
-            
-        data0 = self.slit0.data
-        data1 = self.slit1.data
-
-        shape = (max(data0.shape[0], data1.shape[0]), max(data0.shape[1], data1.shape[1]))
-        xmin = min(self.slit0.xstart, self.slit1.xstart)
-        ymin = min(self.slit0.ystart, self.slit1.ystart)
-        shape = max(self.slit0.xsize + self.slit0.xstart - xmin, 
-                    self.slit1.xsize + self.slit1.xstart - xmin), \
-                    max(self.slit0.ysize + self.slit0.ystart - ymin, 
-                        self.slit1.ysize + self.slit1.ystart - ymin)
-        x0 = self.slit0.xstart - xmin
-        y0 = self.slit0.ystart - ymin
-        x1 = self.slit1.xstart - xmin
-        y1 = self.slit1.ystart - ymin
-
-        backplane0 = np.zeros(shape).T
-        backplane0[y0:y0+data0.shape[0], x0:x0+data0.shape[1]] = data0
-        backplane1 = np.zeros(shape).T
-        backplane1[y1:y1+data1.shape[0], x1:x1+data1.shape[1]] = data1
-
-        self.slit0.data = backplane0
-        self.slit1.data = backplane1
-        for slit in [self.slit0, self.slit1]:
-            slit.xstart = xmin
-            slit.ystart = ymin
-            slit.xsize = shape[0]
-            slit.ysize = shape[1]
-        
-        return self.slit0, self.slit1
-
-
-def contam_corr(input_model: datamodels.MultiSlitModel, 
-                waverange: datamodels.WavelengthrangeModel, 
-                photom: datamodels.NrcWfssPhotomModel | datamodels.NisWfssPhotomModel,
-                max_cores: str | int = "none", 
-                brightest_n: int = None,
-                ) -> tuple[datamodels.MultiSlitModel, datamodels.ImageModel, datamodels.MultiSlitModel, datamodels.MultiSlitModel]:
+def match_backplane_prefer_first(slit0, slit1):
     """
-    The main WFSS contamination correction function
+    Reshape slit1 to the backplane of slit0.
+
+    Parameters
+    ----------
+    slit0 : `~jwst.datamodels.SlitModel`
+        Slit model for the first slit, which is used as reference.
+    slit1 : `~jwst.datamodels.SlitModel`
+        Slit model for the second slit, which is reshaped to match slit0.
+
+    Returns
+    -------
+    slit0, slit1 : `~jwst.datamodels.SlitModel`
+        Reshaped slit models slit0, slit1.
+    """
+    data0 = slit0.data
+    data1 = slit1.data
+
+    x1 = slit1.xstart - slit0.xstart
+    y1 = slit1.ystart - slit0.ystart
+    backplane1 = np.zeros_like(data0)
+
+    i0 = max([y1, 0])
+    i1 = min([y1 + data1.shape[0], data0.shape[0], data1.shape[0]])
+    j0 = max([x1, 0])
+    j1 = min([x1 + data1.shape[1], data0.shape[1], data1.shape[1]])
+    if i0 >= i1 or j0 >= j1:
+        raise SlitOverlapError(
+            f"No overlap region between data and model for slit {slit0.source_id}, "
+            f"order {slit0.meta.wcsinfo.spectral_order}. "
+            "setting contamination correction to zero for that slit."
+        )
+
+    backplane1[i0:i1, j0:j1] = data1[i0:i1, j0:j1]
+
+    slit1.data = backplane1
+    slit1.xstart = slit0.xstart
+    slit1.ystart = slit0.ystart
+    slit1.xsize = slit0.xsize
+    slit1.ysize = slit0.ysize
+
+    return slit0, slit1
+
+
+def match_backplane_encompass_both(slit0, slit1):
+    """
+    Put data from the two slits into a common backplane, encompassing both.
+
+    Slits are zero-padded where their new extent does not overlap with the original data.
+
+    Parameters
+    ----------
+    slit0, slit1 : `~jwst.datamodels.SlitModel`
+        Slit model for the first and second slit.
+
+    Returns
+    -------
+    slit0, slit1 : `~jwst.datamodels.SlitModel`
+        Reshaped slit models slit0, slit1.
+    """
+    data0 = slit0.data
+    data1 = slit1.data
+
+    shape = (max(data0.shape[0], data1.shape[0]), max(data0.shape[1], data1.shape[1]))
+    xmin = min(slit0.xstart, slit1.xstart)
+    ymin = min(slit0.ystart, slit1.ystart)
+    shape = (
+        max(
+            slit0.xsize + slit0.xstart - xmin,
+            slit1.xsize + slit1.xstart - xmin,
+        ),
+        max(
+            slit0.ysize + slit0.ystart - ymin,
+            slit1.ysize + slit1.ystart - ymin,
+        ),
+    )
+    x0 = slit0.xstart - xmin
+    y0 = slit0.ystart - ymin
+    x1 = slit1.xstart - xmin
+    y1 = slit1.ystart - ymin
+
+    backplane0 = np.zeros(shape).T
+    backplane0[y0 : y0 + data0.shape[0], x0 : x0 + data0.shape[1]] = data0
+    backplane1 = np.zeros(shape).T
+    backplane1[y1 : y1 + data1.shape[0], x1 : x1 + data1.shape[1]] = data1
+
+    slit0.data = backplane0
+    slit1.data = backplane1
+    for slit in [slit0, slit1]:
+        slit.xstart = xmin
+        slit.ystart = ymin
+        slit.xsize = shape[0]
+        slit.ysize = shape[1]
+
+    return slit0, slit1
+
+
+def contam_corr(
+    input_model,
+    waverange,
+    photom,
+    max_cores,
+    brightest_n,
+):
+    """
+    Correct contamination in WFSS spectral cutouts.
 
     Parameters
     ----------
@@ -240,8 +239,8 @@ def contam_corr(input_model: datamodels.MultiSlitModel,
     waverange : `~jwst.datamodels.WavelengthrangeModel`
         Wavelength range reference file model
     photom : `~jwst.datamodels.NrcWfssPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel`
-        Photom (flux cal) reference file model    
-    max_cores : string or int
+        Photom (flux cal) reference file model
+    max_cores : str or int
         Number of cores to use for multiprocessing. If set to 'none'
         (the default), then no multiprocessing will be done. The other
         allowable string values are 'quarter', 'half', and 'all', which indicate
@@ -263,9 +262,7 @@ def contam_corr(input_model: datamodels.MultiSlitModel,
         Full-frame simulated image of the grism exposure
     contam_model : `~jwst.datamodels.MultiSlitModel`
         Contamination estimate images for each source slit
-
     """
-
     num_cores = multiprocessing.cpu_count()
     ncpus = determine_multiprocessing_ncores(max_cores, num_cores)
 
@@ -302,33 +299,40 @@ def contam_corr(input_model: datamodels.MultiSlitModel,
     # the opposite. It has gratings in the FILTER wheel and filters in the
     # PUPIL wheel. So when processing NIRISS grism exposures the name of
     # filter needs to come from the PUPIL keyword value.
-    if input_model.meta.instrument.name == 'NIRISS':
+    if input_model.meta.instrument.name == "NIRISS":
         filter_name = pupil_kwd
     else:
         filter_name = filter_kwd
 
     # select a subset of the brightest sources using source catalog
     if brightest_n is not None:
-        source_catalog = Table.read(input_model.meta.source_catalog, format='ascii.ecsv')
-        source_catalog.sort("isophotal_abmag", reverse=False) #magnitudes in ascending order, since brighter is smaller mag number
-        selected_IDs = list(source_catalog["label"])[:brightest_n]
+        source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
+        source_catalog.sort(
+            "isophotal_abmag", reverse=False
+        )  # magnitudes in ascending order, since brighter is smaller mag number
+        selected_ids = list(source_catalog["label"])[:brightest_n]
     else:
-        selected_IDs = None
+        selected_ids = None
 
-    obs = Observation(image_names, seg_model, grism_wcs, filter_name,
-                      boundaries=[0, 2047, 0, 2047], offsets=[xoffset, yoffset], max_cpu=ncpus,
-                      ID=selected_IDs)
-    
-    good_slits = [slit for slit in output_model.slits if slit.source_id in obs.IDs]
+    obs = Observation(
+        image_names,
+        seg_model,
+        grism_wcs,
+        filter_name,
+        boundaries=[0, 2047, 0, 2047],
+        offsets=[xoffset, yoffset],
+        max_cpu=ncpus,
+        source_id=selected_ids,
+    )
+
+    good_slits = [slit for slit in output_model.slits if slit.source_id in obs.source_ids]
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
     output_model.slits.extend(good_slits)
     log.info(f"Simulating only the brightest {brightest_n} sources")
 
-
     simul_all = None
     for order in spec_orders:
-
         # Load lists of wavelength ranges and flux cal info
         wavelength_range = waverange.get_wfss_wavelength_range(filter_name, [order])
         wmin = wavelength_range[order][0]
@@ -357,18 +361,17 @@ def contam_corr(input_model: datamodels.MultiSlitModel,
     contam_model.update(input_model)
     slits = []
     for slit in output_model.slits:
-
         try:
             good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
             this_simul = obs.simul_slits.slits[good_idx]
-            slit, this_simul = CommonSlitPreferFirst(slit, this_simul).match_backplane()
+            slit, this_simul = match_backplane_prefer_first(slit, this_simul)
             simul_all_cut = _cut_frame_to_match_slit(simul_all, slit)
             contam_cut = simul_all_cut - this_simul.data
 
         except (UnmatchedSlitIDError, SlitOverlapError) as e:
             log.warning(e)
-            contam_cut = np.zeros_like(slit.data)     
-        
+            contam_cut = np.zeros_like(slit.data)
+
         contam_slit = copy.copy(slit)
         contam_slit.data = contam_cut
         slits.append(contam_slit)
@@ -379,6 +382,6 @@ def contam_corr(input_model: datamodels.MultiSlitModel,
     # Save the contamination estimates for all slits
     contam_model.slits.extend(slits)
 
-    output_model.meta.cal_step.wfss_contam = 'COMPLETE'
+    output_model.meta.cal_step.wfss_contam = "COMPLETE"
 
     return output_model, simul_model, contam_model, obs.simul_slits

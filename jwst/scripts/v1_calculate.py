@@ -94,12 +94,11 @@ def main():
             logger.info(f'Retrieving V1 over the time span {obsstart.isot} - {obsend.isot}')
             input_as_files = False
             if args.pointing != 'all':
-                logger.warning(
-                    'V1 pointings have been requested over a time range.'
-                    ' However, the \'pointing\' option is not \'all\'.'
-                    '\nThere will only be a single result returned. Is this what was desired?'
-                    '\nSuggestion: Use \'--pointing=all\''
-                )
+                logger.warning("V1 pointings have been requested over a time range. "
+                               "However, the 'pointing' option is not 'all'.")
+                logger.warning('There will only be a single result returned. '
+                               'Is this what was desired?')
+                logger.warning("Suggestion: Use '--pointing=all'")
     else:
         input_as_files = True
 

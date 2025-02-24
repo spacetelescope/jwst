@@ -22,14 +22,10 @@ def klip(target_model, refs_model, truncate):
         a single exposure are stacked along the first (NINTS) axis of
         the data arrays.
 
-    refs_model : QuadModel (NTARG x NINTS x NROWS x NCOLS)
-        The input 4D stack of reference images. The first (NTARG) axis
-        corresponds to the index of each target integration. The second
-        (NINTS) axis is the stack of aligned PSF integrations for that
-        target image. The length of the target_model first (NINTS) axis
-        should be equal to the length of the refs_model first (NTARG)
-        axis (i.e. one stack of aligned PSF images for each target
-        integration).
+    refs_model : CubeModel (NINTS_PSF x NROWS x NCOLS)
+        The input 3D stack of reference images. The first
+        (NINTS_PSF) axis is the stack of aligned PSF integrations for that
+        target image.
 
     truncate : int
         Indicates how many rows to keep in the Karhunen-Loeve transform.
@@ -48,7 +44,7 @@ def klip(target_model, refs_model, truncate):
         target = target.reshape(-1)
 
         # Load the reference psf arrays and flatten them from 3-D to 2-D
-        refs = refs_model.data[i].astype(np.float64)
+        refs = refs_model.data.astype(np.float64)
         rshape = refs.shape
         nrefs = rshape[0]
         refs = refs.reshape(nrefs, rshape[1] * rshape[2])

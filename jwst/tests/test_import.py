@@ -8,7 +8,7 @@ import pytest
 import jwst
 
 
-def dependencies(package, exclude: [str]):
+def dependencies(package, exclude: list[str]):
     return [
         module[1]
         for module in pkgutil.walk_packages(

@@ -75,7 +75,7 @@ class DataTypes():
         # if input if an association name or ModelContainer then it is opened as a container
 
         input_models = datamodels.open(input)
-        # if input is a filename, we will need to close the opened file 
+        # if input is a filename, we will need to close the opened file
         self._opened = [input_models]
 
         if isinstance(input_models, datamodels.IFUImageModel):
@@ -89,7 +89,7 @@ class DataTypes():
             self.output_name = 'Temp'
             self.input_models = input_models
             if not single:  # find the name of the output file from the association
-                self.output_name = input_models.meta.asn_table.products[0].name
+                self.output_name = input_models.asn_table["products"][0]["name"]
         else:
             # close files opened above
             self.close()
@@ -97,7 +97,6 @@ class DataTypes():
         # If the user has set the output name, strip off *.fits.
         # Suffixes will be added to this name later, to designate the
         # channel+subchannel (MIRI MRS) or grating+filter (NRS IFU) the output cube covers.
-
 
         if output_file is not None:
             basename, ext = os.path.splitext(os.path.basename(output_file))

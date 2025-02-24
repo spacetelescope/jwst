@@ -4,4 +4,4 @@ Notes
 -----
 These associations are specifically defined for use in DMS.
 """
-from jwst.associations.tests.data.rules_level3_set1 import *
+from jwst.associations.tests.data.rules_level3_set1 import * # noqa F403

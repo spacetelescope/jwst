@@ -18,13 +18,19 @@ TRUTH_PATH = 'truth/test_nirspec_ifu'
 @pytest.mark.bigdata
 def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test using predefined interpolated flat"""
-    with dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits')) as data:
-        with dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_interpolated_flat.fits')) as user_supplied_flat:
+    basename = 'jw01251004001_03107_00001_nrs1'
+    output_file = f'{basename}_flat_from_user_model.fits'
+    with dm.open(rtdata.get_data(f'nirspec/ifu/{basename}_assign_wcs.fits')) as data:
+        with dm.open(rtdata.get_data(
+                f'nirspec/ifu/{basename}_interpolatedflat.fits')) as user_supplied_flat:
+
+            # Call the flat field function directly with a user flat
             nirspec_ifu(data, None, None, None, None, user_supplied_flat=user_supplied_flat)
-            rtdata.output = 'ff_using_interpolated.fits'
+
+            rtdata.output = output_file
             data.write(rtdata.output)
 
-    rtdata.get_truth(TRUTH_PATH + '/' + 'ff_using_interpolated.fits')
+    rtdata.get_truth(TRUTH_PATH + '/' + output_file)
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -32,15 +38,20 @@ def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
-    data = rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits')
-    user_supplied_flat = rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_interpolated_flat.fits')
+    basename = 'jw01251004001_03107_00001_nrs1'
+    output_file = f'{basename}_flat_from_user_file.fits'
 
-    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat)
-    rtdata.output = 'flat_fielded_step_user_supplied.fits'
+    data = rtdata.get_data(f'nirspec/ifu/{basename}_assign_wcs.fits')
+    user_supplied_flat = rtdata.get_data(f'nirspec/ifu/{basename}_interpolatedflat.fits')
+
+    # Call the step with a user flat
+    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat,
+                                           save_results=False)
+    rtdata.output = output_file
     data_flat_fielded.write(rtdata.output)
     del data_flat_fielded
 
-    rtdata.get_truth(TRUTH_PATH + '/' + 'flat_fielded_step_user_supplied.fits')
+    rtdata.get_truth(TRUTH_PATH + '/' + output_file)
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -49,7 +60,7 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    with dm.open(rtdata.get_data('nirspec/ifu/nrs_ifu_nrs1_assign_wcs.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_assign_wcs.fits')) as data:
         flatted = FlatFieldStep.call(data)
         unflatted = FlatFieldStep.call(flatted, inverse=True)
 
@@ -60,11 +71,18 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     # make sure NaNs are only at do_not_use pixels
     assert np.all(unflatted.dq[is_nan] & dm.dqflags.pixel['DO_NOT_USE'])
 
+    # make sure NaNs at science pixels are also NaN in error and var arrays
+    assert np.all(np.isnan(unflatted.err[is_nan]))
+    assert np.all(np.isnan(unflatted.var_poisson[is_nan]))
+    assert np.all(np.isnan(unflatted.var_rnoise[is_nan]))
+    assert np.all(np.isnan(unflatted.var_flat[is_nan]))
+
+
 @pytest.mark.slow
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    with dm.open(rtdata.get_data('nirspec/ifu/nrs1_flat_field.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -78,7 +96,7 @@ def test_pathloss_corrpars(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using correction_pars"""
-    with dm.open(rtdata.get_data('nirspec/ifu/nrs1_flat_field.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -93,7 +111,7 @@ def test_pathloss_inverse(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    with dm.open(rtdata.get_data('nirspec/ifu/nrs1_flat_field.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
         pls = PathLossStep()
         pls.source_type = 'extended'
         pls.run(data)

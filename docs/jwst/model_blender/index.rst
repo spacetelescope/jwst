@@ -10,4 +10,3 @@ Model Blender
    blender_rules.rst
 
 .. automodapi:: jwst.model_blender
-   :skip: "OrderedDict"

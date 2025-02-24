@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.properties import ObjectNode
 
 from jwst.lib import pipe_utils
 from jwst.associations.lib import dms_base
@@ -84,3 +85,134 @@ def test_is_irs2_2():
     x = np.ones((3200, 2), dtype=np.float32)
     model = datamodels.ImageModel(data=x)
     assert pipe_utils.is_irs2(model)
+
+
+@pytest.mark.parametrize('shape', [(10,), (10, 10), (10, 10, 10)])
+@pytest.mark.parametrize('extensions',
+                         [('data',), ('data', 'dq'),
+                          ('data', 'err', 'var_rnoise'),
+                          ('data', 'err', 'var_rnoise', 'var_poisson',
+                           'var_flat', 'dq')])
+def test_match_nans_and_flags(shape, extensions):
+    # Set up a model with matching data shapes, variable extensions
+    dnu = datamodels.dqflags.pixel['DO_NOT_USE']
+    model = datamodels.SlitModel()
+    invalid = np.full(shape, False)
+    for i, extname in enumerate(extensions):
+        if extname == 'dq':
+            data = np.zeros(shape, dtype=np.uint32)
+            data.flat[i] = dnu
+        else:
+            data = np.ones(shape)
+            data.flat[i] = np.nan
+        setattr(model, extname, data)
+        invalid.flat[i] = True
+
+    # Match flags and NaNs across all extensions
+    pipe_utils.match_nans_and_flags(model)
+
+    # Check that all extensions have all invalid flags
+    for extname in extensions:
+        data = getattr(model, extname)
+        if extname == 'dq':
+            assert np.all(data[invalid] == dnu)
+            assert np.all(data[~invalid] == 0)
+        else:
+            assert np.all(np.isnan(data[invalid]))
+            assert np.all(data[~invalid] == 1)
+
+    model.close()
+
+
+def test_match_nans_and_flags_dq_only():
+    # Set up a model with only a DQ array, to test edge conditions
+    dnu = datamodels.dqflags.pixel['DO_NOT_USE']
+    model = datamodels.MaskModel()
+    shape = (10, 10)
+    invalid = np.full(shape, False)
+
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.dq.flat[5] = dnu
+    invalid.flat[5] = True
+
+    # Match flags and NaNs across all extensions
+    dq_copy = model.dq.copy()
+    pipe_utils.match_nans_and_flags(model)
+
+    # Check that DQ extension is unchanged
+    assert np.all(model.dq == dq_copy)
+
+    model.close()
+
+
+def test_match_nans_and_flags_no_data(caplog):
+    # Set up a model with no data, to test edge conditions
+    model = datamodels.JwstDataModel()
+    model_copy = model.copy()
+    pipe_utils.match_nans_and_flags(model)
+
+    # nothing happens
+    assert model == model_copy
+    assert 'WARNING' not in caplog.text
+    assert 'ERROR' not in caplog.text
+
+    model.close()
+    model_copy.close()
+
+
+def test_match_nans_and_flags_not_a_model():
+    # Make sure the function throws an error if input is not a model
+    model = "not_a_model"
+    with pytest.raises(ValueError, match="not a datamodel"):
+        pipe_utils.match_nans_and_flags(model)
+
+    # empty JwstDataModel is okay
+    model = datamodels.JwstDataModel()
+    pipe_utils.match_nans_and_flags(model)
+
+    # a datamodel object node is also okay
+    multislit = datamodels.MultiSlitModel()
+    multislit.slits.append(datamodels.SlitModel())
+    assert not isinstance(multislit.slits[0], datamodels.JwstDataModel)
+    assert isinstance(multislit.slits[0], ObjectNode)
+    pipe_utils.match_nans_and_flags(multislit.slits[0])
+
+
+def test_match_nans_and_flags_shape_mismatch():
+    # Set up a model with mismatched data shapes
+    dnu = datamodels.dqflags.pixel['DO_NOT_USE']
+    model = datamodels.SlitModel()
+
+    shape = (10, 10)
+    bad_shape = (10, 5)
+    invalid = np.full(shape, False)
+    extensions = ['data', 'err', 'dq', 'var_poisson']
+    for i, extname in enumerate(extensions):
+        if extname == 'dq':
+            data = np.zeros(bad_shape, dtype=np.uint32)
+            data.flat[i] = dnu
+        elif extname == 'var_poisson':
+            data = np.ones(bad_shape, dtype=np.uint32)
+            data.flat[i] = dnu
+        else:
+            data = np.ones(shape)
+            data.flat[i] = np.nan
+            invalid.flat[i] = True
+        setattr(model, extname, data)
+
+    # Match flags and NaNs across all extensions:
+    # will warn for data mismatch
+    model_copy = model.copy()
+    pipe_utils.match_nans_and_flags(model)
+
+    # Only data and err are updated
+    for extname in extensions:
+        data = getattr(model, extname)
+        if extname == 'data' or extname == 'err':
+            assert np.all(np.isnan(data[invalid]))
+            assert np.all(data[~invalid] == 1)
+        else:
+            assert np.allclose(data, getattr(model_copy, extname))
+
+    model.close()
+    model_copy.close()

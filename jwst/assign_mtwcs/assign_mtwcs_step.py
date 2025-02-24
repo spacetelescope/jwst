@@ -1,9 +1,8 @@
 #! /usr/bin/env python
 import logging
 
-from stdatamodels.jwst import datamodels
-
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelLibrary
+from jwst.stpipe.utilities import record_step_status
 
 from ..stpipe import Step
 from .moving_target_wcs import assign_moving_target_wcs
@@ -15,34 +14,36 @@ __all__ = ["AssignMTWcsStep"]
 
 
 class AssignMTWcsStep(Step):
-    """
-    AssignMTWcsStep: Create a gWCS object for a moving target.
-
-    Parameters
-    ----------
-    input : `~jwst.associations.Association`
-        A JWST association file.
-    """
+    """Create a gWCS object for a moving target."""
 
     class_alias = "assign_mtwcs"
 
     spec = """
         suffix = string(default='assign_mtwcs')    # Default suffix for output files
         output_use_model = boolean(default=True)   # When saving use `DataModel.meta.filename`
-    """
+    """  # noqa: E501
 
-    def process(self, input):
-        if isinstance(input, str):
-            input = datamodels.open(input)
+    def process(self, input_lib):
+        """
+        Run the assign_mtwcs step.
 
-        # Can't apply the step if we aren't given a ModelContainer as input
-        if not isinstance(input, ModelContainer):
-            log.warning("Input data type is not supported.")
-            # raise ValueError("Expected input to be an association file name or a ModelContainer.")
-            input.meta.cal_step.assign_mtwcs = 'SKIPPED'
-            return input
+        Parameters
+        ----------
+        input_lib : `~jwst.datamodels.ModelLibrary`
+            A collection of data models.
 
-        # Apply the step
-        result = assign_moving_target_wcs(input)
+        Returns
+        -------
+        `~jwst.datamodels.ModelLibrary`
+            The modified data models.
+        """
+        if not isinstance(input_lib, ModelLibrary):
+            try:
+                input_lib = ModelLibrary(input_lib)
+            except Exception:
+                log.warning("Input data type is not supported.")
+                record_step_status(input_lib, "assign_mtwcs", False)
+                return input_lib
 
+        result = assign_moving_target_wcs(input_lib)
         return result

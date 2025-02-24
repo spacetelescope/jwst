@@ -15,6 +15,8 @@ from astropy.nddata.bitmask import (
     interpret_bit_flags,
 )
 
+from stcal.skymatch import SkyStats
+
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.datamodels import ModelContainer
@@ -22,7 +24,6 @@ from jwst.datamodels import ModelContainer
 # LOCAL:
 from .skymatch import match
 from .skycube import SkyCube
-from ..skymatch.skystatistics import SkyStats
 
 __all__ = ['CubeSkyMatchStep']
 
@@ -50,9 +51,9 @@ class CubeSkyMatchStep(Step):
         lsigma = float(min=0.0, default=4.0) # Lower clipping limit, in sigma
         usigma = float(min=0.0, default=4.0) # Upper clipping limit, in sigma
         binwidth = float(min=0.0, default=0.1) # Bin width for 'mode' and 'midpt' `skystat`, in sigma
-    """
+    """ # noqa: E501
 
-    reference_file_types = []
+    reference_file_types: list = []
 
     def process(self, input1, input2):
         cube_models = ModelContainer(input1)

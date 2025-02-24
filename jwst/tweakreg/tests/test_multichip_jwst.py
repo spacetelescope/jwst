@@ -27,8 +27,6 @@ from jwst.tweakreg.tests import data
 
 _REF_RMSE_RA = 3e-9
 _REF_RMSE_DEC = 3e-10
-_RAD2ARCSEC = 3600.0 * np.rad2deg(1.0)
-_ARCSEC2RAD = 1.0 / _RAD2ARCSEC
 
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
@@ -83,7 +81,7 @@ def _make_gwcs_wcs(fits_hdr):
              Mapping((1, 2), name='xtyt'))
     c2tan.name = 'Cartesian 3D to TAN'
 
-    tan2c = (Mapping((0, 0, 1), n_inputs=2, name='xtyt2xyz') |
+    tan2c = (Mapping((0, 0, 1), name='xtyt2xyz') |
              (Const1D(1, name='one') & Identity(2, name='I(2D)')))
     tan2c.name = 'TAN to cartesian 3D'
 
@@ -224,7 +222,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     # 2. test_multichip_alignment_step() does not have access to 'fit_info'
     #    in the meta data and so test_multichip_jwst_alignment() can test
     #    the fit more extensively.
-    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(tweakreg_step.twk, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
     w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
@@ -293,8 +291,9 @@ def test_multichip_jwst_alignment(monkeypatch):
     assert rmse_dec < _REF_RMSE_DEC
 
 
-def test_multichip_alignment_step(monkeypatch):
-    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+def test_multichip_alignment_step_rel(monkeypatch):
+
+    monkeypatch.setattr(tweakreg_step.twk, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
     # image 1
@@ -377,7 +376,7 @@ def test_multichip_alignment_step(monkeypatch):
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
-    x, y = wr.world_to_pixel(refcat['RA'], refcat['DEC'])
+    x, y = wr.invert(refcat['RA'].value, refcat['DEC'].value,  with_bounding_box=False)
     refcat['x'] = x
     refcat['y'] = y
     mr.tweakreg_catalog = refcat
@@ -403,26 +402,35 @@ def test_multichip_alignment_step(monkeypatch):
     # Alternatively, disable this '_is_wcs_correction_small' test:
     # step._is_wcs_correction_small = lambda x, y: True
 
-    mr, m1, m2 = step.process(mc)
+    result = step.process(mc)
+    with result:
+        for im in result:
+            assert im.meta.cal_step.tweakreg == 'COMPLETE'
+            result.shelve(im, modify=False)
 
-    wc1 = m1.meta.wcs
-    wc2 = m2.meta.wcs
+    with result:
+        m1 = result.borrow(1)
+        m2 = result.borrow(2)
+        wc1 = m1.meta.wcs
+        wc2 = m2.meta.wcs
 
-    ra1, dec1 = wc1(imcat1['x'], imcat1['y'])
-    ra2, dec2 = wc2(imcat2['x'], imcat2['y'])
-    ra = np.concatenate([ra1, ra2])
-    dec = np.concatenate([dec1, dec2])
-    rra = refcat['RA']
-    rdec = refcat['DEC']
-    rmse_ra = np.sqrt(np.mean((ra - rra)**2))
-    rmse_dec = np.sqrt(np.mean((dec - rdec)**2))
+        ra1, dec1 = wc1(imcat1['x'], imcat1['y'])
+        ra2, dec2 = wc2(imcat2['x'], imcat2['y'])
+        ra = np.concatenate([ra1, ra2])
+        dec = np.concatenate([dec1, dec2])
+        rra = refcat['RA']
+        rdec = refcat['DEC']
+        rmse_ra = np.sqrt(np.mean((ra - rra)**2))
+        rmse_dec = np.sqrt(np.mean((dec - rdec)**2))
 
-    assert rmse_ra < _REF_RMSE_RA
-    assert rmse_dec < _REF_RMSE_DEC
+        assert rmse_ra < _REF_RMSE_RA
+        assert rmse_dec < _REF_RMSE_DEC
+        result.shelve(m1, 1, modify=False)
+        result.shelve(m2, 2, modify=False)
 
 
 def test_multichip_alignment_step_abs(monkeypatch):
-    monkeypatch.setattr(tweakreg_step, 'align_wcs', _align_wcs)
+    monkeypatch.setattr(tweakreg_step.twk, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
     refcat_path = os.path.join(data_path, 'ref.ecsv')
@@ -439,6 +447,7 @@ def test_multichip_alignment_step_abs(monkeypatch):
     mr.meta.observation.sequence_id = '0'
     mr.meta.observation.activity_id = '0'
     mr.meta.observation.exposure_number = '0'
+    mr.meta.observation.date = '2019-01-01'
 
     mr.meta.wcsinfo.v2_ref = 0
     mr.meta.wcsinfo.v3_ref = 0
@@ -450,7 +459,7 @@ def test_multichip_alignment_step_abs(monkeypatch):
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
-    x, y = wr.world_to_pixel(refcat['RA'], refcat['DEC'])
+    x, y = wr.invert(refcat['RA'].value, refcat['DEC'].value, with_bounding_box=False)
     refcat['x'] = x
     refcat['y'] = y
     mr.tweakreg_catalog = refcat

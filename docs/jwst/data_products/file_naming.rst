@@ -42,14 +42,14 @@ Just as for Stage 2, the suffix distinguishes the different file products of Sta
 
 The FITS file naming scheme for Stage 3 "source-based" products is as follows, where items in parentheses are optional:
 
- jw<ppppp>-<AC_ID>_[<"t"TargID | "s"SourceID>](-<"epoch"X>)_<instr>_<optElements>(-<subarray>)_<prodType>(-<ACT_ID>).fits
+ jw<ppppp>-<AC_ID>_[<"t"TargID | [<"s" | "b" | "v">]<SourceID>](-<"epoch"X>)_<instr>_<optElements>(-<subarray>)_<prodType>(-<ACT_ID>).fits
 
 where
 
  - ppppp: Program ID number
  - AC_ID: Association candidate ID
  - TargID: 3-digit Target ID (either TargID or SourceID must be present)
- - SourceID: 5-digit Source ID
+ - SourceID: 9-digit Source ID
  - epochX: The text "epoch" followed by a single digit epoch number (optional)
  - instr: Science instrument name (e.g. 'nircam', 'miri')
  - optElements: A single or hyphen-separated list of optical elements (e.g. filter, grating)
@@ -57,9 +57,11 @@ where
  - prodType: Product type identifier (e.g. 'i2d', 's3d', 'x1d')
  - ACT_ID: 2-digit activity ID (optional)
 
-An example Stage 3 product FITS file name is:
+Example Stage 3 product FITS file names are:
 
  jw87600-a3001_t001_niriss_f480m-nrm_amiavg.fits
+
+ jw54321-o066_s000123456_nirspec_f170lp_g235m_s2d.fits
 
 Optional Components
 """""""""""""""""""
@@ -72,7 +74,14 @@ TargID vs SourceID
 
     For single-target modes, this is the target identifier as defined in the APT proposal.
 
-    For multi-object modes, such as NIRSpec MOS, this will be the slit ID for each object.
+    For multi-object modes, such as NIRSpec MOS, this will be the source ID for each object.
+    Note that the SourceID value is preceded by one of three characters "s", "b", or "v".
+    For most multi-source observation modes, such as Wide Field Slitless Spectroscopy (WFSS) and
+    NIRSpec Fixed-Slit (FS) spectroscopy, the "s" prefix is used to indicate that the data
+    correspond to a defined source. In some NIRSpec MOS observations, however,
+    there can also be "background" and "virtual" sources
+    (see :ref:`NIRSpec MSA slitlets <msa_background_and_virtual_slits>`).
+    These cases use the "b" and "v" SourceID prefixes.
 
 epochX
 

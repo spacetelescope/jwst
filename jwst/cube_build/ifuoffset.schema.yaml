@@ -1,0 +1,28 @@
+%YAML 1.1
+---
+$schema: "http://stsci.edu/schemas/asdf/asdf-schema-1.0.0"
+id: "http://stsci.edu/schemas/yaml-schema/ifuoffset.schema"
+title: IFUoffset reference file model
+type: object
+properties:
+  units:
+    description: Units of the ra and dec offset values.
+    type: string
+    enum: ['arcsec']
+  filename:
+    description: list of filenames
+    type: array
+    items:
+      type: string
+  raoffset:
+    description: list of ra offsets
+    type: array
+    items:
+      type: number
+  decoffset:
+    description: list of dec offsets
+    type: array
+    items:
+      type: number
+
+required: [filename, raoffset, decoffset, units]

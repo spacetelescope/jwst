@@ -1,10 +1,8 @@
 """Convert old-style Level2 associations to new style"""
 import argparse
-from glob import glob
 import json
 import logging
 import os.path as path
-import re
 
 from ...lib.suffix import remove_suffix
 

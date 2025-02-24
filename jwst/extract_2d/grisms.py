@@ -7,12 +7,15 @@ import logging
 
 import numpy as np
 
+from astropy.modeling import bind_bounding_box
 from astropy.modeling.models import Shift, Const1D, Mapping
 from gwcs.wcstools import grid_from_bounding_box
 from gwcs.utils import _toindex
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import WavelengthrangeModel
+from stdatamodels.jwst.datamodels import WavelengthrangeModel, ImageModel
+from stdatamodels.jwst.transforms.models import IdealToV2V3
+from astropy.modeling import CompoundModel
 
 from ..assign_wcs import util
 
@@ -133,7 +136,8 @@ def extract_tso_object(input_model,
         lmin, lmax = range_select.pop()
 
         # Create the order bounding box
-        source_xpos = input_model.meta.wcsinfo.siaf_xref_sci - 1  # remove FITS 1-indexed offset
+        distortion = subwcs.get_transform("v2v3", "direct_image")
+        source_xpos, _ = compute_tso_offset_center(input_model, distortion) # 1-indexing already handled
         source_ypos = input_model.meta.wcsinfo.siaf_yref_sci - 1  # remove FITS 1-indexed offset
         transform = input_model.meta.wcs.get_transform('direct_image', 'grism_detector')
         xmin, ymin, _ = transform(source_xpos,
@@ -150,9 +154,6 @@ def extract_tso_object(input_model,
         # Also replace the object center location inputs to the GrismDispersion
         # model with the known object center and order information (in pixels of direct image)
         # This changes the user input to the model from (x,y,x0,y0,order) -> (x,y)
-        #
-        # The bounding box is limited to the size of the detector in the dispersion direction
-        # and 64 pixels in the cross-dispersion direction (at request of instrument team).
         #
         # The team wants the object to fall near row 34 for all cutouts, but the default cutout
         # height is 64 pixels (32 on either side). So bump the extraction ycenter, when necessary,
@@ -177,6 +178,8 @@ def extract_tso_object(input_model,
             raise ValueError("Something bad happened calculating extraction y-size")
 
         # Limit the bounding box to the detector edges
+        # The bounding box is limited to the size of the detector in the dispersion direction
+        # and 64 pixels in the cross-dispersion direction (at request of instrument team).
         ymin, ymax = (max(extract_y_min, 0), min(extract_y_max, input_model.meta.subarray.ysize))
         xmin, xmax = (max(xmin, 0), min(xmax, input_model.meta.subarray.xsize))
 
@@ -240,14 +243,15 @@ def extract_tso_object(input_model,
             output_model.var_flat = var_flat
             output_model.meta.wcs = subwcs
             output_model.meta.wcs.bounding_box = util.wcs_bbox_from_shape(ext_data.shape)
+            if compute_wavelength:
+                # this seems to happen near-instantly, suggest remove this message
+                #log.debug("Computing wavelengths (this takes a while ...)")
+                output_model.wavelength = compute_tso_wavelength_array(output_model)
             output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same
-            output_model.meta.wcsinfo.siaf_xref_sci = input_model.meta.wcsinfo.siaf_xref_sci
+            output_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
             output_model.meta.wcsinfo.spectral_order = order
             output_model.meta.wcsinfo.dispersion_direction = \
                 input_model.meta.wcsinfo.dispersion_direction
-            if compute_wavelength:
-                log.debug("Computing wavelengths (this takes a while ...)")
-                output_model.wavelength = compute_wavelength_array(output_model)
             output_model.name = '1'
             output_model.source_type = input_model.meta.target.source_type
             output_model.source_name = input_model.meta.target.catalog_name
@@ -467,7 +471,7 @@ def extract_grism_objects(input_model,
                 else:
                     var_flat = None
 
-                tr.bounding_box = util.transform_bbox_from_shape(ext_data.shape)
+                bind_bounding_box(tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order='F')
                 subwcs.set_transform('grism_detector', 'detector', tr)
 
                 new_slit = datamodels.SlitModel(data=ext_data,
@@ -562,7 +566,7 @@ def compute_dispersion(wcs):
     raise NotImplementedError
 
 
-def compute_wavelength_array(slit):
+def compute_tso_wavelength_array(slit):
     """
     Compute the wavelength array for a slit with gwcs object
 
@@ -576,10 +580,48 @@ def compute_wavelength_array(slit):
     wavelength : numpy.array
         The wavelength array
     """
-    transform = slit.meta.wcs.forward_transform
-    x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    wavelength = transform(x, y)[2]
+    wcs = slit.meta.wcs
+    full_transform = slit.meta.wcs.forward_transform
+    x, y = grid_from_bounding_box(wcs.bounding_box)
+    wavelength = full_transform(x, y)[2]
     return wavelength
+
+
+def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel) -> tuple[float, float]:
+    """
+    In the case that an Offset Special Requirement is requested in the APT,
+    the source is no longer at the aperture reference point.
+    The dither.x_offset and dither.y_offset values encode the offset
+    in units of arcseconds. They need to be translated from Ideal to
+    detector coordinates and into pixel units.
+
+    Parameters
+    ----------
+    input_model : ImageModel
+        The input data model
+    distortion : DistortionModel
+        The distortion model
+
+    Returns
+    -------
+    xc, yc : tuple
+        The x and y center of the image in direct image coordinates
+
+    Notes
+    -----
+    The wavelength is not used for the distortion calculation between
+    v2v3 and direct image coordinates, so this can be hardcoded to NaN.
+    """
+
+    idltov23 = IdealToV2V3(input_model.meta.wcsinfo.v3yangle,
+                input_model.meta.wcsinfo.v2_ref,
+                input_model.meta.wcsinfo.v3_ref,
+                input_model.meta.wcsinfo.vparity)
+    v2_offset, v3_offset = idltov23(input_model.meta.dither.x_offset, input_model.meta.dither.y_offset)
+    wavelength = np.nan
+    xc, yc, _, _ = distortion(v2_offset, v3_offset, wavelength, 1)
+
+    return xc, yc
 
 
 def compute_wfss_wavelength(slit):

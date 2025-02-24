@@ -1,6 +1,5 @@
-from .outlier_detection_step import OutlierDetectionStep
-from .outlier_detection_scaled_step import OutlierDetectionScaledStep
-from .outlier_detection_stack_step import OutlierDetectionStackStep
+"""Detect outliers and set DQ flags accordingly."""
 
-__all__ = ['OutlierDetectionStep', 'OutlierDetectionScaledStep',
-           'OutlierDetectionStackStep']
+from .outlier_detection_step import OutlierDetectionStep
+
+__all__ = ["OutlierDetectionStep"]

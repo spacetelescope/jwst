@@ -1,8 +1,10 @@
 # JWST Calibration Pipeline
 
-[![Build Status](https://github.com/spacetelescope/jwst/workflows/CI/badge.svg?branch=master)](https://github.com/spacetelescope/jwst/actions)
-[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/master/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
+[![Build Status](https://github.com/spacetelescope/jwst/workflows/CI/badge.svg)](https://github.com/spacetelescope/jwst/actions)
+[![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/main/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
 [![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
+[![Pre-Commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
 [![Powered by Astropy Badge](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
 [![DOI](https://zenodo.org/badge/60551519.svg)](https://zenodo.org/badge/latestdoi/60551519)
@@ -10,12 +12,15 @@
 ![STScI Logo](docs/_static/stsci_logo.png)
 
 > [!IMPORTANT]
-> JWST requires a C compiler for dependencies and is currently limited to Python 3.10, 3.11, or 3.12.
+> JWST requires a C compiler for dependencies.
 
 > [!NOTE]
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 > [!WARNING]
+> Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
+> this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
+> 
 > Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 ## Installation
@@ -51,22 +56,22 @@ Remember that all conda operations must be done from within a bash/zsh shell.
 
 You can install the latest released version via `pip`.  From a bash/zsh shell:
 
-    conda create -n <env_name> python=3.11
+    conda create -n <env_name> python=3.12
     conda activate <env_name>
     pip install jwst
 
 You can also install a specific version:
 
-    conda create -n <env_name> python=3.11
+    conda create -n <env_name> python=3.12
     conda activate <env_name>
-    pip install jwst==1.9.4
+    pip install jwst==1.16.1
 
 ### Installing the development version from Github
 
 You can install the latest development version (not as well tested) from the
-Github master branch:
+Github main branch:
 
-    conda create -n <env_name> python=3.11
+    conda create -n <env_name> python=3.12
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
 
@@ -89,22 +94,43 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_stable-deps.txt
-    conda activate jwstdp-1.12.5
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_stable-deps.txt
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-linux-x86_64.yml
+    conda activate JWSTDP-1.17.1-1-py312-linux-x86_64
+
+MacOS arm64:
+
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-arm64.yml
+    conda activate JWSTDP-1.17.1-1-py312-macos-arm64
+
+MacOS x86_64:
+
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-x86_64.yml
+    conda activate JWSTDP-1.17.1-1-py312-macos-x86_64
+
+
+Starting with the jwst 1.16.1 release, we updated our release procedures to use 
+[stasis](https://github.com/spacetelescope/stasis). Each DMS delivery has its own installation instructions, 
+which may be found in the corresponding release documentation, e.g.:
+https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.16.1/delivery/README-py312-macos-x86_64.html
+The installation procedures may change from time to time, so consulting the
+documentation page for the specific version in question is the best way to get
+that version installed. You can find the list of available releases at the  
+[top-level stasis domain](https://ssb.stsci.edu/stasis/releases/jwst/).
+
+For releases prior to 1.16.1, please instead follow the directions below. The complete list of releases prior to 1.16.1
+is available on [astroconda-releases](https://github.com/astroconda/astroconda-releases/tree/master/jwstdp).
+
+Linux:
+
+    conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_stable-deps.txt
+    conda activate jwstdp-1.16.1
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_stable-deps.txt
 
 MacOS:
 
-    conda create -n jwstdp-1.12.5 --file https://ssb.stsci.edu/releases/jwstdp/1.12.5/conda_python_macos-stable-deps.txt
-    conda activate jwstdp-1.12.5
-    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.12.5/reqs_macos-stable-deps.txt
-
-Each DMS delivery has its own installation instructions, which may be found in
-the corresponding release documentation linked from this page:
-https://github.com/astroconda/astroconda-releases/tree/master/jwstdp
-The installation procedures may change from time to time, so consulting the
-documentation page for the specific version in question is the best way to get
-that version installed.
+    conda create -n jwstdp-1.16.1 --file https://ssb.stsci.edu/releases/jwstdp/1.16.1/conda_python_macos-stable-deps.txt
+    conda activate jwstdp-1.16.1
+    pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_macos-stable-deps.txt
 
 
 ### Installing for Developers
@@ -118,7 +144,7 @@ already installed with released versions of the `jwst` package.
 
 As usual, the first two steps are to create and activate an environment:
 
-    conda create -n <env_name> python=3.11
+    conda create -n <env_name> python=3.12
     conda activate <env_name>
 
 To install your own copy of the code into that environment, you first need to
@@ -150,7 +176,7 @@ Need other useful packages in your development environment?
 
 **Note: As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
 For details, refer to the [CRDS PUB Server Freeze
-and Deprecation page](https://jwst-pipeline.readthedocs.io/en/stable/jwst/pub_deprecation.html#pub-deprecation)**
+and Deprecation page](https://jwst-pipeline.readthedocs.io/en/stable/jwst/user_documentation/pub_deprecation.html#crds-pub-server-freeze-and-deprecation)**
 
 
 CRDS is the system that manages the reference files needed to run the pipeline.
@@ -159,26 +185,37 @@ Guide](https://jwst-crds.stsci.edu/static/users_guide/index.html)
 
 The JWST CRDS server is available at  https://jwst-crds.stsci.edu
 
-It supports the automatic processing pipeline at STScI.
-Inside the STScI network, the same server is used by the pipeline by default with no modifications.
+To run the pipeline inside the STScI network, CRDS must be configured to find the CRDS server
+by setting the environment variable
+
+    export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will obtain individual reference files within this context from a local shared disk.
+
 To run the pipeline outside the STScI network, CRDS must be configured by setting
 two environment variables:
 
     export CRDS_PATH=<locally-accessable-path>/crds_cache/jwst_ops
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will automatically download individual
+reference files within this context to the local cache specified by CRDS_PATH.
 
 ``<locally-accessable-path>`` can be any the user has permissions to use, such as `$HOME`.
 Expect to use upwards of 200GB of disk space to cache the latest couple of contexts.
 
-To use a specific CRDS context, other than the current default, set the ``CRDS_CONTEXT``
+To use a specific CRDS context other than that 
+[automatically associated](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates) 
+with a given pipeline version, set the ``CRDS_CONTEXT``
 environment variable:
 
     export CRDS_CONTEXT=jwst_1179.pmap
 
 ## Documentation
 
-Documentation (built daily from the Github `master` branch) is available at:
+Documentation (built daily from the Github `main` branch) is available at:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
 
@@ -216,8 +253,15 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.14.0              | B10.2rc1  |          | 1215         | 2024-03-29 |             | First release candidate for B10.2             |
-| 1.13.4              |           |          | 1185         | 2024-01-25 |             | PyPI-only release for external users          |
+| 1.17.1              | B11.2     | TBD      | 1321         | 2024-01-02 | TBD         | Second release candidate for B11.2            |
+| 1.17.0              | B11.2     | TBD      | 1321         | 2024-12-20 | TBD         | First release candidate for B11.2             |
+| 1.16.1              | B11.1.1   | 2024.3.1 | 1303         | 2024-11-13 | 2024-12-06  | Final release candidate for B11.1             |
+| 1.16.0              | B11.1     | 2024.3.0 | 1298         | 2024-09-20 |             | First release candidate for B11.1             |
+| 1.15.1              | B11.0     | 2024.2.2 | 1293         | 2024-07-08 | 2024-09-12  | Final release candidate for B11.0             |
+| 1.15.0              | B11.0rc1  |          | 1274         | 2024-06-26 |             | First release candidate for B11.0             |
+| 1.14.1              |           |          | 1240         | 2024-06-27 |             | PyPI-only release for external users          |
+| 1.14.0              | B10.2.1   | 2024.1.1 | 1240         | 2024-03-29 | 2024-06-12  | Final release candidate for B10.2.1           |
+| 1.13.4              |           |          | 1210         | 2024-01-25 |             | PyPI-only release for external users          |
 | 1.13.3              | B10.1     | 2023.4.0 | 1181         | 2024-01-05 |             | Final release candidate for B10.1             |
 | 1.13.2              | B10.1rc3  | 2023.4.0 | 1181         | 2023-12-21 |             | Third release candidate for B10.1             |
 | 1.13.1              | B10.1rc2  | 2023.4.0 | 1181         | 2023-12-19 |             | Second release candidate for B10.1            |

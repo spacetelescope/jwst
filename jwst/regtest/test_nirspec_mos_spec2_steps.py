@@ -13,14 +13,18 @@ from jwst.photom import PhotomStep
 @pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
-    data = rtdata.get_data('nirspec/mos/usf_wavecorr.fits')
-    user_supplied_flat = rtdata.get_data('nirspec/mos/usf_flat.fits')
+    basename = 'jw01345066001_05101_00001_nrs1'
+    output_file = f'{basename}_flat_from_user_file.fits'
 
-    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat)
-    rtdata.output = 'flat_fielded_step_user_supplied.fits'
+    data = rtdata.get_data(f'nirspec/mos/{basename}_wavecorr.fits')
+    user_supplied_flat = rtdata.get_data(f'nirspec/mos/{basename}_interpolatedflat.fits')
+
+    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat,
+                                           save_results=False)
+    rtdata.output = output_file
     data_flat_fielded.write(rtdata.output)
 
-    rtdata.get_truth('truth/test_nirspec_mos_spec2/flat_fielded_step_user_supplied.fits')
+    rtdata.get_truth(f'truth/test_nirspec_mos_spec2/{output_file}')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -28,7 +32,7 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
         flatted = FlatFieldStep.call(data)
         unflatted = FlatFieldStep.call(flatted, inverse=True)
 
@@ -52,7 +56,7 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -70,7 +74,7 @@ def test_pathloss_corrpars(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using inversion"""
-    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -90,7 +94,7 @@ def test_pathloss_inverse(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
         pls = PathLossStep()
         pls.source_type = 'extended'
         pls.run(data)
@@ -106,7 +110,7 @@ def test_pathloss_source_type(rtdata):
 @pytest.mark.bigdata
 def test_barshadow_corrpars(rtdata):
     """BarShadowStep using correction_pars"""
-    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
         pls = BarShadowStep()
         corrected = pls.run(data)
 
@@ -124,7 +128,7 @@ def test_barshadow_corrpars(rtdata):
 @pytest.mark.bigdata
 def test_barshadow_inverse(rtdata):
     """BarShadowStep using inversion"""
-    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
         pls = BarShadowStep()
         corrected = pls.run(data)
 
@@ -144,7 +148,7 @@ def test_barshadow_inverse(rtdata):
 @pytest.mark.bigdata
 def test_barshadow_source_type(rtdata):
     """Test BarShadowStep forcing source type"""
-    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
         pls = BarShadowStep()
         pls.source_type = 'extended'
         corrected = pls.run(data)
@@ -159,7 +163,7 @@ def test_barshadow_source_type(rtdata):
 @pytest.mark.bigdata
 def test_photom_corrpars(rtdata):
     """Test for photom correction parameters"""
-    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
         pls = PhotomStep()
         corrected = pls.run(data)
 
@@ -177,7 +181,7 @@ def test_photom_corrpars(rtdata):
 @pytest.mark.bigdata
 def test_photom_inverse(rtdata):
     """PhotomStep using inversion"""
-    with dm.open(rtdata.get_data('nirspec/mos/usf_wavecorr.fits')) as data:
+    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
         pls = PhotomStep()
         corrected = pls.run(data)
 

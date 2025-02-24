@@ -1,217 +1,574 @@
 import logging
+import json
 import os
+import re
 
 import numpy as np
-from drizzle import util
-from drizzle import cdrizzle
-import psutil
+
 from spherical_geometry.polygon import SphericalPolygon
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.library.basic_utils import bytes2human
+from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from jwst.datamodels import ModelContainer
+from stcal.resample import Resample
+from stcal.resample.utils import is_imaging_wcs
 
-from . import gwcs_drizzle
-from . import resample_utils
-from ..model_blender import blendmeta
+from jwst.datamodels import ModelLibrary
+from jwst.associations.asn_from_list import asn_from_list
+
+from jwst.model_blender.blender import ModelBlender
+from jwst.resample import resample_utils
+from jwst.assign_wcs import util as assign_wcs_util
+
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-__all__ = ["OutputTooLargeError", "ResampleData"]
+
+__all__ = [
+    "input_jwst_model_to_dict",
+    "is_imaging_wcs",
+    "ResampleImage",
+]
+
+_SUPPORTED_CUSTOM_WCS_PARS = [
+    'pixel_scale_ratio',
+    'pixel_scale',
+    'output_shape',
+    'crpix',
+    'crval',
+    'rotation',
+]
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
-class OutputTooLargeError(RuntimeError):
-    """Raised when the output is too large for in-memory instantiation"""
+class ResampleImage(Resample):
+    dq_flag_name_map = pixel
 
-
-class ResampleData:
-    """
-    This is the controlling routine for the resampling process.
-
-    Notes
-    -----
-    This routine performs the following operations::
-
-      1. Extracts parameter settings from input model, such as pixfrac,
-         weight type, exposure time (if relevant), and kernel, and merges
-         them with any user-provided values.
-      2. Creates output WCS based on input images and define mapping function
-         between all input arrays and the output array.
-      3. Updates output data model with output arrays from drizzle, including
-         a record of metadata from all input models.
-    """
-
-    def __init__(self, input_models, output=None, single=False, blendheaders=True,
-                 pixfrac=1.0, kernel="square", fillval="INDEF", wht_type="ivm",
-                 good_bits=0, pscale_ratio=1.0, pscale=None, **kwargs):
+    def __init__(self, input_models, pixfrac=1.0, kernel="square",
+                 fillval="NAN", weight_type="ivm", good_bits=0,
+                 blendheaders=True, output_wcs=None, wcs_pars=None,
+                 output=None, enable_ctx=True, enable_var=True,
+                 compute_err=None, asn_id=None):
         """
         Parameters
         ----------
-        input_models : list of objects
-            list of data models, one for each input image
+        input_models : ModelLibrary
+            A `ModelLibrary`-based object allowing iterating over
+            all contained models of interest.
 
-        output : str
-            filename for output
+        pixfrac : float, optional
+            The fraction of a pixel that the pixel flux is confined to. The
+            default value of 1 has the pixel flux evenly spread across the
+            image. A value of 0.5 confines it to half a pixel in the linear
+            dimension, so the flux is confined to a quarter of the pixel area
+            when the square kernel is used.
 
-        kwargs : dict
-            Other parameters.
+        kernel : {"square", "gaussian", "point", "turbo", "lanczos2", "lanczos3"}, optional
+            The name of the kernel used to combine the input. The choice of
+            kernel controls the distribution of flux over the kernel.
+            The square kernel is the default.
+
+            .. warning::
+               The "gaussian" and "lanczos2/3" kernels **DO NOT**
+               conserve flux.
+
+        fillval : float, None, str, optional
+            The value of output pixels that did not have contributions from
+            input images' pixels. When ``fillval`` is either `None` or
+            ``"INDEF"`` and ``out_img`` is provided, the values of ``out_img``
+            will not be modified. When ``fillval`` is either `None` or
+            ``"INDEF"`` and ``out_img`` is **not provided**, the values of
+            ``out_img`` will be initialized to `numpy.nan`. If ``fillval``
+            is a string that can be converted to a number, then the output
+            pixels with no contributions from input images will be set to this
+            ``fillval`` value.
+
+        weight_type : {"exptime", "ivm"}, optional
+            The weighting type for adding models' data. For
+            ``weight_type="ivm"`` (the default), the weighting will be
+            determined per-pixel using the inverse of the read noise
+            (VAR_RNOISE) array stored in each input image.
+            If the ``VAR_RNOISE`` array does not exist,
+            the variance is set to 1 for all pixels (i.e., equal weighting).
+            If ``weight_type="exptime"``, the weight will be set equal
+            to the measurement time when available and to
+            the exposure time otherwise.
+
+        good_bits : int, str, None, optional
+            An integer bit mask, `None`, a Python list of bit flags, a comma-,
+            or ``'|'``-separated, ``'+'``-separated string list of integer
+            bit flags or mnemonic flag names that indicate what bits in models'
+            DQ bitfield array should be *ignored* (i.e., zeroed).
+
+            When co-adding models using :py:meth:`add_model`, any pixels with
+            a non-zero DQ values are assigned a weight of zero and therefore
+            they do not contribute to the output (resampled) data.
+            ``good_bits`` provides a mean to ignore some of the DQ bitflags.
+
+            When ``good_bits`` is an integer, it must be
+            the sum of all the DQ bit values from the input model's
+            DQ array that should be considered "good" (or ignored). For
+            example, if pixels in the DQ array can be
+            combinations of 1, 2, 4, and 8 flags and one wants to consider DQ
+            "defects" having flags 2 and 4 as being acceptable, then
+            ``good_bits`` should be set to 2+4=6. Then a pixel with DQ values
+            2,4, or 6 will be considered a good pixel, while a pixel with
+            DQ value, e.g., 1+2=3, 4+8=12, etc. will be flagged as
+            a "bad" pixel.
+
+            Alternatively, when ``good_bits`` is a string, it can be a
+            comma-separated or '+' separated list of integer bit flags that
+            should be summed to obtain the final "good" bits. For example,
+            both "4,8" and "4+8" are equivalent to integer ``good_bits=12``.
+
+            Finally, instead of integers, ``good_bits`` can be a string of
+            comma-separated mnemonics. For example, for JWST, all the following
+            specifications are equivalent:
+
+            `"12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"`
+
+            In order to "translate" mnemonic code to integer bit flags,
+            ``Resample.dq_flag_name_map`` attribute must be set to either
+            a dictionary (with keys being mnemonc codes and the values being
+            integer flags) or a `~astropy.nddata.BitFlagNameMap`.
+
+            In order to reverse the meaning of the flags
+            from indicating values of the "good" DQ flags
+            to indicating the "bad" DQ flags, prepend '~' to the string
+            value. For example, in order to exclude pixels with
+            DQ flags 4 and 8 for computations and to consider
+            as "good" all other pixels (regardless of their DQ flag),
+            use a value of ``~4+8``, or ``~4,8``. A string value of
+            ``~0`` would be equivalent to a setting of ``None``.
+
+            Default value (0) will make *all* pixels with non-zero DQ
+            values be considered "bad" pixels, and the corresponding data
+            pixels will be assigned zero weight and thus these pixels
+            will not contribute to the output resampled data array.
+
+            Set `good_bits` to `None` to turn off the use of model's DQ
+            array.
+
+            For more details, see documentation for
+            `astropy.nddata.bitmask.extend_bit_flag_map`.
+
+        blendheaders : bool, optional
+            Indicates whether to blend metadata from all input models and
+            store the combined result to the output model.
+
+        output_wcs : dict, None, optional
+            Specifies output WCS as a dictionary
+            with keys ``'wcs'`` (WCS object) and ``'pixel_scale'``
+            (pixel scale in arcseconds). ``'pixel_scale'``, when provided,
+            will be used for computation of drizzle scaling factor. When it is
+            not provided, output pixel scale will be *estimated* from the
+            provided WCS object. ``output_wcs`` object is required when
+            ``output_model`` is `None`. ``output_wcs`` is ignored when
+            ``output_model`` is provided.
+
+        wcs_pars : dict, None, optional
+            A dictionary of custom WCS parameters used to define an
+            output WCS from input models' outlines. This argument is ignored
+            when ``output_wcs`` is specified.
+
+            List of supported parameters (keywords in the dictionary):
+
+                - ``pixel_scale_ratio`` : float
+
+                    Desired pixel scale ratio defined as the ratio of the
+                    desired output pixel scale to the first input model's pixel
+                    scale computed from this model's WCS at the fiducial point
+                    (taken as the ``ref_ra`` and ``ref_dec`` from the
+                    ``wcsinfo`` meta attribute of the first input image).
+                    Ignored when ``pixel_scale`` is specified. Default value
+                    is ``1.0``.
+
+                - ``pixel_scale`` : float, None
+
+                    Desired pixel scale (in degrees) of the output WCS. When
+                    provided, overrides ``pixel_scale_ratio``. Default value
+                    is `None`.
+
+                - ``output_shape`` : tuple of two integers (int, int), None
+
+                    Shape of the image (data array) using ``np.ndarray``
+                    convention (``ny`` first and ``nx`` second). This value
+                    will be assigned to ``pixel_shape`` and ``array_shape``
+                    properties of the returned WCS object. Default value is
+                    `None`.
+
+                - ``rotation`` : float, None
+
+                    Position angle of output image's Y-axis relative to North.
+                    A value of ``0.0`` would orient the final output image to
+                    be North up. The default of `None` specifies that the
+                    images will not be rotated, but will instead be resampled
+                    in the default orientation for the camera with the x and y
+                    axes of the resampled image corresponding approximately
+                    to the detector axes. Ignored when ``transform`` is
+                    provided. Default value is `None`.
+
+                - ``crpix`` : tuple of float, None
+
+                    Position of the reference pixel in the resampled image
+                    array. If ``crpix`` is not specified, it will be set to
+                    the center of the bounding box of the returned WCS object.
+                    Default value is `None`.
+
+                - ``crval`` : tuple of float, None
+
+                    Right ascension and declination of the reference pixel.
+                    Automatically computed if not provided. Default value is
+                    `None`.
+
+        output : str, None, optional
+            Filename for the output model.
+
+        enable_ctx : bool, optional
+            Indicates whether to create a context image. If ``disable_ctx``
+            is set to `True`, parameters ``out_ctx``, ``begin_ctx_id``, and
+            ``max_ctx_id`` will be ignored.
+
+        enable_var : bool, optional
+            Indicates whether to resample variance arrays.
+
+        compute_err : {"from_var", "driz_err"}, None, optional
+            - ``"from_var"``: compute output model's error array from
+              all (Poisson, flat, readout) resampled variance arrays.
+              Setting ``compute_err`` to ``"from_var"`` will assume
+              ``enable_var`` was set to `True` regardless of actual
+              value of the parameter ``enable_var``.
+
+            - ``"driz_err"``: compute output model's error array by drizzling
+              together all input models' error arrays.
+
+            Error array will be assigned to ``'err'`` key of the output model.
 
             .. note::
-                ``output_shape`` is in the ``x, y`` order.
+                At this time, output error array is not equivalent to
+                error propagation results.
 
-            .. note::
-                ``in_memory`` controls whether or not the resampled
-                array from ``resample_many_to_many()``
-                should be kept in memory or written out to disk and
-                deleted from memory. Default value is `True` to keep
-                all products in memory.
+        asn_id : str, None, optional
+            The association id. The id is what appears in
+            the :ref:`asn-jwst-naming`.
+
         """
         self.input_models = input_models
+        self.output_jwst_model = None
+
+        self.output_dir = None
         self.output_filename = output
-        self.pscale_ratio = pscale_ratio
-        self.single = single
+        if output is not None and '.fits' not in str(output):
+            self.output_dir = output
+            self.output_filename = None
+        self.intermediate_suffix = 'outlier_i2d'
+
         self.blendheaders = blendheaders
-        self.pixfrac = pixfrac
-        self.kernel = kernel
-        self.fillval = fillval
-        self.weight_type = wht_type
-        self.good_bits = good_bits
-        self.in_memory = kwargs.get('in_memory', True)
-        self.input_pixscale0 = None  # computed pixel scale of the first image (deg)
-        self._recalc_pscale_ratio = pscale is not None
-
-        log.info(f"Driz parameter kernel: {self.kernel}")
-        log.info(f"Driz parameter pixfrac: {self.pixfrac}")
-        log.info(f"Driz parameter fillval: {self.fillval}")
-        log.info(f"Driz parameter weight_type: {self.weight_type}")
-
-        output_wcs = kwargs.get('output_wcs', None)
-        output_shape = kwargs.get('output_shape', None)
-        crpix = kwargs.get('crpix', None)
-        crval = kwargs.get('crval', None)
-        rotation = kwargs.get('rotation', None)
-
-        self.asn_id = kwargs.get('asn_id', None)
-
-        if pscale is not None:
-            log.info(f'Output pixel scale: {pscale} arcsec.')
-            pscale /= 3600.0
-        else:
-            log.info(f'Output pixel scale ratio: {pscale_ratio}')
-
-        if output_wcs:
-            # Use user-supplied reference WCS for the resampled image:
-            self.output_wcs = output_wcs
-            if output_shape is not None:
-                self.output_wcs.array_shape = output_shape[::-1]
-
-            if output_wcs.pixel_area is None:
-                output_pix_area = _compute_image_pixel_area(self.output_wcs)
-                if output_pix_area is None:
-                    raise ValueError(
-                        "Unable to compute output pixel area from 'output_wcs'."
-                    )
-            else:
-                output_pix_area = output_wcs.pixel_area
-
-        else:
-            # Define output WCS based on all inputs, including a reference WCS:
-            self.output_wcs = resample_utils.make_output_wcs(
-                self.input_models,
-                ref_wcs=output_wcs,
-                pscale_ratio=self.pscale_ratio,
-                pscale=pscale,
-                rotation=rotation,
-                shape=None if output_shape is None else output_shape[::-1],
-                crpix=crpix,
-                crval=crval
+        if blendheaders:
+            self._blender = ModelBlender(
+                blend_ignore_attrs=[
+                    'meta.photometry.pixelarea_steradians',
+                    'meta.photometry.pixelarea_arcsecsq',
+                    'meta.filename',
+                ]
             )
 
-            # Estimate output pixel area in Sr. NOTE: in principle we could
-            # use the same algorithm as for when output_wcs is provided by the
-            # user.
-            tr = self.output_wcs.pipeline[0].transform
-            output_pix_area = (
-                np.deg2rad(tr['cdelt1'].factor.value) *
-                np.deg2rad(tr['cdelt2'].factor.value)
+        self.asn_id = asn_id
+
+        # check wcs_pars has supported keywords:
+        if wcs_pars is None:
+            wcs_pars = {}
+        elif wcs_pars:
+            unsup = []
+            unsup = set(wcs_pars.keys()).difference(_SUPPORTED_CUSTOM_WCS_PARS)
+            if unsup:
+                raise KeyError(
+                    "Unsupported custom WCS parameters: "
+                    f"{','.join(map(repr, unsup))}."
+                )
+
+        if output_wcs is None:
+            # determine output WCS:
+            shape = wcs_pars.get("output_shape")
+            if (pscale := wcs_pars.get("pixel_scale")) is not None:
+                pscale /= 3600.0
+            wcs, _, ps, ps_ratio = resample_utils.resampled_wcs_from_models(
+                input_models,
+                pixel_scale_ratio=wcs_pars.get("pixel_scale_ratio", 1.0),
+                pixel_scale=pscale,
+                output_shape=shape,
+                rotation=wcs_pars.get("rotation"),
+                crpix=wcs_pars.get("crpix"),
+                crval=wcs_pars.get("crval"),
             )
 
-        if pscale is None:
-            pscale = np.rad2deg(np.sqrt(output_pix_area))
-            log.info(f'Computed output pixel scale: {3600.0 * pscale} arcsec.')
+            output_wcs = {
+                "wcs": wcs,
+                "pixel_scale": 3600.0 * ps,
+                "pixel_scale_ratio": ps_ratio,
+            }
 
-        self.pscale = pscale  # in deg
-
-        log.debug('Output mosaic size: {}'.format(self.output_wcs.array_shape))
-
-        allowed_memory = kwargs['allowed_memory']
-        if allowed_memory is None:
-            allowed_memory = os.environ.get('DMODEL_ALLOWED_MEMORY', allowed_memory)
-        if allowed_memory:
-            allowed_memory = float(allowed_memory)
-            # make a small image model to get the dtype
-            dtype = datamodels.ImageModel((1, 1)).data.dtype
-
-            # get the available memory
-            available_memory = psutil.virtual_memory().available + psutil.swap_memory().total
-
-            # compute the output array size
-            required_memory = np.prod(self.output_wcs.array_shape) * dtype.itemsize
-
-            # compare used to available
-            used_fraction = required_memory / available_memory
-            can_allocate = used_fraction <= allowed_memory
         else:
-            can_allocate = True
+            if wcs_pars:
+                log.warning(
+                    "Ignoring 'wcs_pars' since 'output_wcs' is not None."
+                )
+            if output_wcs["wcs"].array_shape is None:
+                raise ValueError(
+                    "Custom WCS objects must have the 'array_shape' "
+                    "attribute set (defined)."
+                )
 
-        if not can_allocate:
-            raise OutputTooLargeError(
-                f'Combined ImageModel size {self.output_wcs.array_shape} '
-                f'requires {bytes2human(required_memory)}. '
-                f'Model cannot be instantiated.'
-            )
-        self.blank_output = datamodels.ImageModel(tuple(self.output_wcs.array_shape))
+        super().__init__(
+            n_input_models=len(input_models),
+            pixfrac=pixfrac,
+            kernel=kernel,
+            fillval=fillval,
+            weight_type=weight_type,
+            good_bits=good_bits,
+            output_wcs=output_wcs,
+            enable_ctx=enable_ctx,
+            enable_var=enable_var,
+            compute_err=compute_err,
+        )
+
+    def input_model_to_dict(self, model, weight_type, enable_var, compute_err):
+        """ Converts a data model to a dictionary of keywords and values
+        expected by `stcal.resample`. Input parameters are the same as used
+        when initializing `ResampleImage`.
+
+        .. note:: Subclasses can override this method to add additional fields
+          to the dictionary as needed.
+
+        Returns
+        -------
+        model_dict : dict
+
+        """
+        return input_jwst_model_to_dict(
+            model=model,
+            weight_type=weight_type,
+            enable_var=enable_var,
+            compute_err=compute_err
+        )
+
+    def create_output_jwst_model(self, ref_input_model=None):
+        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        output_model = datamodels.ImageModel(None)  # tuple(self.output_wcs.array_shape))
 
         # update meta data and wcs
-        self.blank_output.update(input_models[0])
-        self.blank_output.meta.wcs = self.output_wcs
-        self.blank_output.meta.photometry.pixelarea_steradians = output_pix_area
-        self.blank_output.meta.photometry.pixelarea_arcsecsq = (
-            output_pix_area * np.rad2deg(3600)**2
-        )
+        if ref_input_model is not None:
+            output_model.update(ref_input_model)
+        output_model.meta.wcs = self.output_wcs
+        return output_model
 
-        self.output_models = ModelContainer(open_models=False)
+    def update_output_model(self, model, info_dict):
+        model.data = info_dict["data"]
+        model.wht = info_dict["wht"]
+        if self._enable_ctx:
+            model.con = info_dict["con"]
+        if self._compute_err:
+            model.err = info_dict["err"]
+        if self._enable_var:
+            model.var_rnoise = info_dict["var_rnoise"]
+            model.var_flat = info_dict["var_flat"]
+            model.var_poisson = info_dict["var_poisson"]
 
-    def do_drizzle(self):
-        """Pick the correct drizzling mode based on self.single
+        model.meta.wcs = info_dict["wcs"]
+        model.meta.photometry.pixelarea_steradians = info_dict["pixelarea_steradians"]
+        model.meta.photometry.pixelarea_arcsecsq = info_dict["pixelarea_arcsecsq"]
+
+        model.meta.resample.pointings = info_dict["pointings"]
+        model.meta.resample.pixel_scale_ratio = info_dict["pixel_scale_ratio"]
+        model.meta.resample.pixfrac = info_dict["pixfrac"]
+        model.meta.resample.kernel = info_dict["kernel"]
+        model.meta.resample.fillval = info_dict["fillval"]
+        model.meta.resample.weight_type = info_dict["weight_type"]
+
+        model.meta.exposure.exposure_time = info_dict["exposure_time"]
+        model.meta.exposure.start_time = info_dict["start_time"]
+        model.meta.exposure.end_time = info_dict["end_time"]
+        model.meta.exposure.duration = info_dict["duration"]
+        model.meta.exposure.measurement_time = info_dict["measurement_time"]
+        model.meta.exposure.effective_exposure_time = info_dict["exposure_time"]
+        model.meta.exposure.elapsed_exposure_time = info_dict["elapsed_exposure_time"]
+
+    def add_model(self, model):
+        """ Resamples model image and either variance data (if ``enable_var``
+        was `True`) or error data (if ``enable_err`` was `True`) and adds
+        them using appropriate weighting to the corresponding
+        arrays of the output model. It also updates resampled data weight,
+        the context array (if ``enable_ctx`` is `True`), relevant output
+        model's values.
+
+        Whenever ``model`` has a unique group ID that was never processed
+        before, the "pointings" value of the output model is incremented and
+        the "group_id" attribute is updated. Also, time counters are updated
+        with new values from the input ``model`` by calling
+        :py:meth:`~Resample.update_time`.
+
+        Parameters
+        ----------
+        model : dict
+            A dictionary containing data arrays and other meta attributes
+            and values of actual models used by pipelines.
+
         """
-        if self.single:
-            return self.resample_many_to_many()
-        else:
-            return self.resample_many_to_one()
+        super().add_model(
+            self.input_model_to_dict(
+                model,
+                weight_type=self.weight_type,
+                enable_var=self._enable_var,
+                compute_err=self._compute_err,
+            )
+        )
+        if self.output_jwst_model is None:
+            self.output_jwst_model = self.create_output_jwst_model(
+                ref_input_model=model
+            )
+        if self.blendheaders:
+            self._blender.accumulate(model)
 
-    def blend_output_metadata(self, output_model):
-        """Create new output metadata based on blending all input metadata."""
-        # Run fitsblender on output product
-        output_file = output_model.meta.filename
+    def finalize(self, free_memory=True):
+        """ Performs final computations from any intermediate values,
+        sets output model values, and optionally frees temporary/intermediate
+        objects.
 
-        ignore_list = [
-            'meta.photometry.pixelarea_steradians',
-            'meta.photometry.pixelarea_arcsecsq',
-        ]
+        ``finalize`` calls :py:meth:`~Resample.finalize_resample_variance` and
+        :py:meth:`~Resample.finalize_time_info`.
 
-        log.info('Blending metadata for {}'.format(output_file))
-        blendmeta.blendmodels(
-            output_model,
-            inputs=self.input_models,
-            output=output_file,
-            ignore=ignore_list
+        .. warning::
+          If ``enable_var=True`` then intermediate arrays holding variance
+          weights will be lost and so continuing adding new models after
+          a call to :py:meth:`~Resample.finalize` will result in incorrect
+          variance. In this case `finalize` will set the finalized flag to
+          `True`.
+
+        """
+        if self.blendheaders:
+            self._blender.finalize_model(self.output_jwst_model)
+        super().finalize()
+
+        self.update_output_model(
+            self.output_jwst_model,
+            self.output_model,
         )
 
-    def resample_many_to_many(self):
+        if is_imaging_wcs(self.output_jwst_model.meta.wcs):
+            # only for an imaging WCS:
+            self.update_fits_wcsinfo(self.output_jwst_model)
+            assign_wcs_util.update_s_region_imaging(self.output_jwst_model)
+
+        self.output_jwst_model.meta.cal_step.resample = 'COMPLETE'
+
+    def reset_arrays(self, n_input_models=None):
+        """ Initialize/reset `Drizzle` objects, `ModelBlender`, output model
+        and arrays, and time counters. Output WCS and shape are not modified
+        from `Resample` object initialization. This method needs to be called
+        before calling :py:meth:`add_model` for the first time after
+        :py:meth:`finalize` was previously called.
+
+        Parameters
+        ----------
+        n_input_models : int, None, optional
+            Number of input models expected to be resampled. When provided,
+            this is used to estimate memory requirements and optimize memory
+            allocation for the context array.
+
+        """
+        super().reset_arrays(n_input_models=n_input_models)
+        if self.blendheaders:
+            self._blender = ModelBlender(
+                blend_ignore_attrs=[
+                    'meta.photometry.pixelarea_steradians',
+                    'meta.photometry.pixelarea_arcsecsq',
+                    'meta.filename',
+                ]
+            )
+        self.output_jwst_model = None
+
+    def resample_group(self, indices):
+        """ Resample multiple input images that belong to a single
+        ``group_id`` as specified by ``indices``. If ``output_jwst_model``
+        was created by a previous call to this method, ``output_jwst_model``
+        as well as other arrays (weights, context, etc.) will be cleared.
+        Upon completion, this method calls :py:meth:`finalize` to compute
+        final values for various attributes of the resampled model
+        (e.g., exposure start and end times, etc.)
+
+        Parameters
+        ----------
+        indices : list
+            Indices of models in ``input_models`` model library (used
+            to initialize this object) that have the same ``group_id``
+            and need to be resampled together.
+
+        Returns
+        -------
+        output_jwst_model
+            Resampled model with populated data, weights, error arrays and
+            other attributes.
+
+        """
+        if self.output_jwst_model is not None:
+            self.reset_arrays(n_input_models=len(indices))
+
+        output_model_filename = ''
+
+        log.info(f"{len(indices)} exposures to drizzle together")
+        first = True
+        with self.input_models:
+            for index in indices:
+                model = self.input_models.borrow(index)
+                model_modified = False
+                if self.output_jwst_model is None:
+                    # Determine output file type from input exposure filenames
+                    # Use this for defining the output filename
+                    indx = model.meta.filename.rfind('.')
+                    output_type = model.meta.filename[indx:]
+                    output_root = '_'.join(model.meta.filename.replace(
+                        output_type,
+                        ''
+                    ).split('_')[:-1])
+                    output_model_filename = (
+                        f'{output_root}_'
+                        f'{self.intermediate_suffix}{output_type}'
+                    )
+
+                if isinstance(model, datamodels.SlitModel):
+                    # must call this explicitly to populate area extension
+                    # although the existence of this extension may not be
+                    # necessary
+                    model.area = model.area
+                    model_modified = True
+
+                self.add_model(model)
+                if first:
+                    self.output_jwst_model.meta.bunit_data = model.meta.bunit_data
+                    first = False
+                self.input_models.shelve(model, index, modify=model_modified)
+                del model
+
+        self.finalize()
+        copy_asn_info_from_library(self.input_models, self.output_jwst_model)
+        self.output_jwst_model.meta.filename = output_model_filename
+        return self.output_jwst_model
+
+    def resample_many_to_many(self, in_memory=True):
         """Resample many inputs to many outputs where outputs have a common frame.
+
+        Parameters
+        ----------
+
+        in_memory : bool, optional
+            Indicates whether to return a `ModelLibrary` with resampled models
+            loaded in memory or whether to serialize resampled models to
+            files on disk and return a `ModelLibrary` with only the associacion
+            info. See https://stpipe.readthedocs.io/en/latest/model_library.html#on-disk-mode
+            for more details.
 
         Coadd only different detectors of the same exposure, i.e. map NRCA5 and
         NRCB5 onto the same output image, as they image different areas of the
@@ -219,457 +576,146 @@ class ResampleData:
 
         Used for outlier detection
         """
-        for exposure in self.input_models.models_grouped:
-            output_model = self.blank_output
-            # Determine output file type from input exposure filenames
-            # Use this for defining the output filename
-            indx = exposure[0].meta.filename.rfind('.')
-            output_type = exposure[0].meta.filename[indx:]
-            output_root = '_'.join(exposure[0].meta.filename.replace(
-                output_type, '').split('_')[:-1])
-            if self.asn_id is not None:
-                output_model.meta.filename = f'{output_root}_{self.asn_id}_outlier_i2d{output_type}'
-            else:
-                output_model.meta.filename = f'{output_root}_outlier_i2d{output_type}'
+        output_models = []
 
-            # Initialize the output with the wcs
-            driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
-                                            kernel=self.kernel, fillval=self.fillval)
+        for group_id, indices in self.input_models.group_indices.items():
 
-            log.info(f"{len(exposure)} exposures to drizzle together")
-            for img in exposure:
-                img = datamodels.open(img)
+            output_model = self.resample_group(indices)
 
-                input_pixflux_area = img.meta.photometry.pixelarea_steradians
-                if (input_pixflux_area and
-                        'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
-                    img.meta.wcs.array_shape = img.data.shape
-                    input_pixel_area = _compute_image_pixel_area(img.meta.wcs)
-                    if input_pixel_area is None:
-                        raise ValueError(
-                            "Unable to compute input pixel area from WCS of input "
-                            f"image {repr(img.meta.filename)}."
-                        )
-                    if self.input_pixscale0 is None:
-                        self.input_pixscale0 = np.rad2deg(
-                            np.sqrt(input_pixel_area)
-                        )
-                        if self._recalc_pscale_ratio:
-                            self.pscale_ratio = self.pscale / self.input_pixscale0
-                    iscale = np.sqrt(input_pixflux_area / input_pixel_area)
-                else:
-                    iscale = 1.0
-
-                # TODO: should weight_type=None here?
-                inwht = resample_utils.build_driz_weight(
-                    img,
-                    weight_type=self.weight_type,
-                    good_bits=self.good_bits
-                )
-
-                # apply sky subtraction
-                blevel = img.meta.background.level
-                if not img.meta.background.subtracted and blevel is not None:
-                    data = img.data - blevel
-                else:
-                    data = img.data
-
-                xmin, xmax, ymin, ymax = resample_utils._resample_range(
-                    data.shape,
-                    img.meta.wcs.bounding_box
-                )
-
-                driz.add_image(
-                    data,
-                    img.meta.wcs,
-                    iscale=iscale,
-                    inwht=inwht,
-                    xmin=xmin,
-                    xmax=xmax,
-                    ymin=ymin,
-                    ymax=ymax
-                )
-                del data
-                img.close()
-
-            if not self.in_memory:
+            if not in_memory:
                 # Write out model to disk, then return filename
                 output_name = output_model.meta.filename
+                if self.output_dir is not None:
+                    output_name = os.path.join(
+                        self.output_dir,
+                        output_name
+                    )
                 output_model.save(output_name)
                 log.info(f"Saved model in {output_name}")
-                self.output_models.append(output_name)
+                output_models.append(output_name)
             else:
-                self.output_models.append(output_model.copy())
-            output_model.data *= 0.
-            output_model.wht *= 0.
+                output_models.append(output_model)
 
-        return self.output_models
+        if in_memory:
+            # build ModelLibrary as a list of in-memory models
+            return ModelLibrary(output_models, on_disk=False)
+        else:
+            # build ModelLibrary as an association from the output files
+            # this saves memory if there are multiple groups
+            asn = asn_from_list(output_models, product_name='outlier_i2d', asn_id="abcdefg")
+            asn_dict = json.loads(asn.dump()[1])  # serializes the asn and converts to dict
+            return ModelLibrary(asn_dict, on_disk=True)
 
     def resample_many_to_one(self):
         """Resample and coadd many inputs to a single output.
 
         Used for stage 3 resampling
         """
-        output_model = self.blank_output.copy()
-        output_model.meta.filename = self.output_filename
-        output_model.meta.resample.weight_type = self.weight_type
-        output_model.meta.resample.pointings = len(self.input_models.group_names)
+        log.info("Resampling science and variance data")
 
-        if self.blendheaders:
-            self.blend_output_metadata(output_model)
+        with self.input_models:
+            for model in self.input_models:
+                self.add_model(model)
+                self.input_models.shelve(model)
 
-        # Initialize the output with the wcs
-        driz = gwcs_drizzle.GWCSDrizzle(output_model, pixfrac=self.pixfrac,
-                                        kernel=self.kernel, fillval=self.fillval)
+        self.finalize()
+        self.output_jwst_model.meta.filename = self.output_filename
+        copy_asn_info_from_library(self.input_models, self.output_jwst_model)
 
-        log.info("Resampling science data")
-        for img in self.input_models:
-            input_pixflux_area = img.meta.photometry.pixelarea_steradians
-            if (input_pixflux_area and
-                    'SPECTRAL' not in img.meta.wcs.output_frame.axes_type):
-                img.meta.wcs.array_shape = img.data.shape
-                input_pixel_area = _compute_image_pixel_area(img.meta.wcs)
-                if input_pixel_area is None:
-                    raise ValueError(
-                        "Unable to compute input pixel area from WCS of input "
-                        f"image {repr(img.meta.filename)}."
-                    )
-                if self.input_pixscale0 is None:
-                    self.input_pixscale0 = np.rad2deg(
-                        np.sqrt(input_pixel_area)
-                    )
-                    if self._recalc_pscale_ratio:
-                        self.pscale_ratio = self.pscale / self.input_pixscale0
-                iscale = np.sqrt(input_pixflux_area / input_pixel_area)
-            else:
-                iscale = 1.0
-
-            img.meta.iscale = iscale
-
-            inwht = resample_utils.build_driz_weight(img,
-                                                     weight_type=self.weight_type,
-                                                     good_bits=self.good_bits)
-            # apply sky subtraction
-            blevel = img.meta.background.level
-            if not img.meta.background.subtracted and blevel is not None:
-                data = img.data - blevel
-            else:
-                data = img.data.copy()
-
-            xmin, xmax, ymin, ymax = resample_utils._resample_range(
-                data.shape,
-                img.meta.wcs.bounding_box
-            )
-
-            driz.add_image(
-                data,
-                img.meta.wcs,
-                iscale=iscale,
-                inwht=inwht,
-                xmin=xmin,
-                xmax=xmax,
-                ymin=ymin,
-                ymax=ymax
-            )
-            del data, inwht
-
-        # Resample variances array in self.input_models to output_model
-        self.resample_variance_array("var_rnoise", output_model)
-        self.resample_variance_array("var_poisson", output_model)
-        self.resample_variance_array("var_flat", output_model)
-        output_model.err = np.sqrt(
-            np.nansum(
-                [
-                    output_model.var_rnoise,
-                    output_model.var_poisson,
-                    output_model.var_flat
-                ],
-                axis=0
-            )
-        )
-
-        self.update_exposure_times(output_model)
-        self.output_models.append(output_model)
-
-        for img in self.input_models:
-            del img.meta.iscale
-
-        return self.output_models
-
-    def resample_variance_array(self, name, output_model):
-        """Resample variance arrays from self.input_models to the output_model
-
-        Resample the ``name`` variance array to the same name in output_model,
-        using a cumulative sum.
-
-        This modifies output_model in-place.
-        """
-        output_wcs = output_model.meta.wcs
-        inverse_variance_sum = np.full_like(output_model.data, np.nan)
-
-        log.info(f"Resampling {name}")
-        for model in self.input_models:
-            variance = getattr(model, name)
-            if variance is None or variance.size == 0:
-                log.debug(
-                    f"No data for '{name}' for model "
-                    f"{repr(model.meta.filename)}. Skipping ..."
-                )
-                continue
-
-            elif variance.shape != model.data.shape:
-                log.warning(
-                    f"Data shape mismatch for '{name}' for model "
-                    f"{repr(model.meta.filename)}. Skipping ..."
-                )
-                continue
-
-            # Make input weight map of unity where there is science data
-            inwht = resample_utils.build_driz_weight(
-                model,
-                weight_type=None,
-                good_bits=self.good_bits
-            )
-
-            resampled_variance = np.zeros_like(output_model.data)
-            outwht = np.zeros_like(output_model.data)
-            outcon = np.zeros_like(output_model.con)
-
-            xmin, xmax, ymin, ymax = resample_utils._resample_range(
-                variance.shape,
-                model.meta.wcs.bounding_box
-            )
-
-            iscale = model.meta.iscale
-
-            # Resample the variance array. Fill "unpopulated" pixels with NaNs.
-            self.drizzle_arrays(
-                variance,
-                inwht,
-                model.meta.wcs,
-                output_wcs,
-                resampled_variance,
-                outwht,
-                outcon,
-                iscale=iscale**2,
-                pixfrac=self.pixfrac,
-                kernel=self.kernel,
-                fillval=np.nan,
-                xmin=xmin,
-                xmax=xmax,
-                ymin=ymin,
-                ymax=ymax
-            )
-
-            # Add the inverse of the resampled variance to a running sum.
-            # Update only pixels (in the running sum) with valid new values:
-            mask = resampled_variance > 0
-
-            inverse_variance_sum[mask] = np.nansum(
-                [inverse_variance_sum[mask], np.reciprocal(resampled_variance[mask])],
-                axis=0
-            )
-
-        # We now have a sum of the inverse resampled variances.  We need the
-        # inverse of that to get back to units of variance.
-        output_variance = np.reciprocal(inverse_variance_sum)
-
-        setattr(output_model, name, output_variance)
-
-    def update_exposure_times(self, output_model):
-        """Modify exposure time metadata in-place"""
-        total_exposure_time = 0.
-        exposure_times = {'start': [], 'end': []}
-        duration = 0.0
-        total_measurement_time = 0.0
-        measurement_time_failures = []
-        for exposure in self.input_models.models_grouped:
-            total_exposure_time += exposure[0].meta.exposure.exposure_time
-            if not resample_utils._check_for_tmeasure(exposure[0]):
-                measurement_time_failures.append(1)
-            else:
-                total_measurement_time += exposure[0].meta.exposure.measurement_time
-                measurement_time_failures.append(0)
-            exposure_times['start'].append(exposure[0].meta.exposure.start_time)
-            exposure_times['end'].append(exposure[0].meta.exposure.end_time)
-            duration += exposure[0].meta.exposure.duration
-
-        # Update some basic exposure time values based on output_model
-        output_model.meta.exposure.exposure_time = total_exposure_time
-        if not any(measurement_time_failures):
-            output_model.meta.exposure.measurement_time = total_measurement_time
-        output_model.meta.exposure.start_time = min(exposure_times['start'])
-        output_model.meta.exposure.end_time = max(exposure_times['end'])
-
-        # Update other exposure time keywords:
-        # XPOSURE (identical to the total effective exposure time, EFFEXPTM)
-        xposure = total_exposure_time
-        output_model.meta.exposure.effective_exposure_time = xposure
-        # DURATION (identical to TELAPSE, elapsed time)
-        output_model.meta.exposure.duration = duration
-        output_model.meta.exposure.elapsed_exposure_time = duration
+        return self.output_jwst_model
 
     @staticmethod
-    def drizzle_arrays(insci, inwht, input_wcs, output_wcs, outsci, outwht,
-                       outcon, uniqid=1, xmin=0, xmax=0, ymin=0, ymax=0,
-                       iscale=1.0, pixfrac=1.0, kernel='square',
-                       fillval="INDEF", wtscale=1.0):
+    def update_fits_wcsinfo(model):
         """
-        Low level routine for performing 'drizzle' operation on one image.
-
-        The interface is compatible with STScI code. All images are Python
-        ndarrays, instead of filenames. File handling (input and output) is
-        performed by the calling routine.
-
-        Parameters
-        ----------
-
-        insci : 2d array
-            A 2d numpy array containing the input image to be drizzled.
-
-        inwht : 2d array
-            A 2d numpy array containing the pixel by pixel weighting.
-            Must have the same dimensions as insci. If none is supplied,
-            the weighting is set to one.
-
-        input_wcs : gwcs.WCS object
-            The world coordinate system of the input image.
-
-        output_wcs : gwcs.WCS object
-            The world coordinate system of the output image.
-
-        outsci : 2d array
-            A 2d numpy array containing the output image produced by
-            drizzling. On the first call it should be set to zero.
-            Subsequent calls it will hold the intermediate results.  This
-            is modified in-place.
-
-        outwht : 2d array
-            A 2d numpy array containing the output counts. On the first
-            call it should be set to zero. On subsequent calls it will
-            hold the intermediate results.  This is modified in-place.
-
-        outcon : 2d or 3d array, optional
-            A 2d or 3d numpy array holding a bitmap of which image was an input
-            for each output pixel. Should be integer zero on first call.
-            Subsequent calls hold intermediate results.  This is modified
-            in-place.
-
-        uniqid : int, optional
-            The id number of the input image. Should be one the first time
-            this function is called and incremented by one on each subsequent
-            call.
-
-        xmin : int, optional
-            This and the following three parameters set a bounding rectangle
-            on the input image. Only pixels on the input image inside this
-            rectangle will have their flux added to the output image. Xmin
-            sets the minimum value of the x dimension. The x dimension is the
-            dimension that varies quickest on the image. All four parameters
-            are zero based, counting starts at zero.
-
-        xmax : int, optional
-            Sets the maximum value of the x dimension on the bounding box
-            of the input image. If ``xmax = 0``, no maximum will
-            be set in the x dimension (all pixels in a row of the input image
-            will be resampled).
-
-        ymin : int, optional
-            Sets the minimum value in the y dimension on the bounding box. The
-            y dimension varies less rapidly than the x and represents the line
-            index on the input image.
-
-        ymax : int, optional
-            Sets the maximum value in the y dimension. If ``ymax = 0``,
-            no maximum will be set in the y dimension (all pixels in a column
-            of the input image will be resampled).
-
-        iscale : float, optional
-            A scale factor to be applied to pixel intensities of the
-            input image before resampling.
-
-        pixfrac : float, optional
-            The fraction of a pixel that the pixel flux is confined to. The
-            default value of 1 has the pixel flux evenly spread across the image.
-            A value of 0.5 confines it to half a pixel in the linear dimension,
-            so the flux is confined to a quarter of the pixel area when the square
-            kernel is used.
-
-        kernel: str, optional
-            The name of the kernel used to combine the input. The choice of
-            kernel controls the distribution of flux over the kernel. The kernel
-            names are: "square", "gaussian", "point", "turbo", "lanczos2",
-            and "lanczos3". The square kernel is the default.
-
-        fillval: str, optional
-            The value a pixel is set to in the output if the input image does
-            not overlap it. The default value of INDEF does not set a value.
-
-        Returns
-        -------
-        A tuple with three values: a version string, the number of pixels
-        on the input image that do not overlap the output image, and the
-        number of complete lines on the input image that do not overlap the
-        output input image.
-
+        Update FITS WCS keywords of the resampled image.
         """
+        # Delete any SIP-related keywords first
+        pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
+        regex = re.compile(pattern)
 
-        # Insure that the fillval parameter gets properly interpreted for use with tdriz
-        if util.is_blank(str(fillval)):
-            fillval = 'INDEF'
-        else:
-            fillval = str(fillval)
+        keys = list(model.meta.wcsinfo.instance.keys())
+        for key in keys:
+            if regex.match(key):
+                del model.meta.wcsinfo.instance[key]
 
-        if insci.dtype > np.float32:
-            insci = insci.astype(np.float32)
+        # Write new PC-matrix-based WCS based on GWCS model
+        transform = model.meta.wcs.forward_transform
+        model.meta.wcsinfo.crpix1 = -transform[0].offset.value + 1
+        model.meta.wcsinfo.crpix2 = -transform[1].offset.value + 1
+        model.meta.wcsinfo.cdelt1 = transform[3].factor.value
+        model.meta.wcsinfo.cdelt2 = transform[4].factor.value
+        model.meta.wcsinfo.ra_ref = transform[6].lon.value
+        model.meta.wcsinfo.dec_ref = transform[6].lat.value
+        model.meta.wcsinfo.crval1 = model.meta.wcsinfo.ra_ref
+        model.meta.wcsinfo.crval2 = model.meta.wcsinfo.dec_ref
+        model.meta.wcsinfo.pc1_1 = transform[2].matrix.value[0][0]
+        model.meta.wcsinfo.pc1_2 = transform[2].matrix.value[0][1]
+        model.meta.wcsinfo.pc2_1 = transform[2].matrix.value[1][0]
+        model.meta.wcsinfo.pc2_2 = transform[2].matrix.value[1][1]
+        model.meta.wcsinfo.ctype1 = "RA---TAN"
+        model.meta.wcsinfo.ctype2 = "DEC--TAN"
 
-        # Add input weight image if it was not passed in
-        if inwht is None:
-            inwht = np.ones_like(insci)
+        # Remove no longer relevant WCS keywords
+        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
+                   'v3yangle', 'vparity']
+        for key in rm_keys:
+            if key in model.meta.wcsinfo.instance:
+                del model.meta.wcsinfo.instance[key]
 
-        # Compute what plane of the context image this input would
-        # correspond to:
-        planeid = int((uniqid - 1) / 32)
 
-        # Check if the context image has this many planes
-        if outcon.ndim == 3:
-            nplanes = outcon.shape[0]
-        elif outcon.ndim == 2:
-            nplanes = 1
-        else:
-            nplanes = 0
+def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
+    """ Converts a data model to a dictionary of keywords and values
+    expected by `stcal.resample`. Input parameters are the same as used
+    when initializing `ResampleImage`.
 
-        if nplanes <= planeid:
-            raise IndexError("Not enough planes in drizzle context image")
+    Returns
+    -------
+    model_dict : dict
 
-        # Alias context image to the requested plane if 3d
-        if outcon.ndim == 3:
-            outcon = outcon[planeid]
+    """
 
-        # Compute the mapping between the input and output pixel coordinates
-        # for use in drizzle.cdrizzle.tdriz
-        pixmap = resample_utils.calc_gwcs_pixmap(input_wcs, output_wcs, insci.shape)
+    model_dict = {
+        # arrays:
+        "data": model.data,
+        "dq": model.dq,
 
-        log.debug(f"Pixmap shape: {pixmap[:,:,0].shape}")
-        log.debug(f"Input Sci shape: {insci.shape}")
-        log.debug(f"Output Sci shape: {outsci.shape}")
+        # meta:
+        "filename": model.meta.filename,
+        "group_id": model.meta.group_id,
+        "wcs": model.meta.wcs,
+        "wcsinfo": model.meta.wcsinfo,
+        "bunit_data": model.meta.bunit_data,
 
-        log.info(f"Drizzling {insci.shape} --> {outsci.shape}")
+        "exposure_time": model.meta.exposure.exposure_time,
+        "start_time": model.meta.exposure.start_time,
+        "end_time": model.meta.exposure.end_time,
+        "duration": model.meta.exposure.duration,
+        "measurement_time": model.meta.exposure.measurement_time,
 
-        _vers, _nmiss, _nskip = cdrizzle.tdriz(
-            insci, inwht, pixmap,
-            outsci, outwht, outcon,
-            uniqid=uniqid,
-            xmin=xmin, xmax=xmax,
-            ymin=ymin, ymax=ymax,
-            scale=iscale,
-            pixfrac=pixfrac,
-            kernel=kernel,
-            in_units="cps",
-            expscale=1.0,
-            wtscale=wtscale,
-            fillstr=fillval
-        )
+        "pixelarea_steradians": model.meta.photometry.pixelarea_steradians,
+        "pixelarea_arcsecsq": model.meta.photometry.pixelarea_arcsecsq,
+
+        "level": model.meta.background.level,  # sky level
+        "subtracted": model.meta.background.subtracted,
+
+        # spectroscopy-specific:
+        "instrument_name": model.meta.instrument.name,
+        "exposure_type": model.meta.exposure.type,
+    }
+
+    if enable_var:
+        model_dict["var_flat"] = model.var_flat
+        model_dict["var_rnoise"] = model.var_rnoise
+        model_dict["var_poisson"] = model.var_poisson
+
+    elif (weight_type is not None and
+            weight_type.startswith('ivm')):
+        model_dict["var_rnoise"] = model.var_rnoise
+
+    if compute_err == "driz_err":
+        model_dict["err"] = model.err
+
+    return model_dict
 
 
 def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
@@ -723,7 +769,7 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
     return x, y, area, center, b, r, t, l
 
 
-def _compute_image_pixel_area(wcs):
+def compute_image_pixel_area(wcs):
     """ Computes pixel area in steradians.
     """
     if wcs.array_shape is None:
@@ -733,7 +779,6 @@ def _compute_image_pixel_area(wcs):
     spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
 
     ny, nx = wcs.array_shape
-
     ((xmin, xmax), (ymin, ymax)) = wcs.bounding_box
 
     xmin = max(0, int(xmin + 0.5))
@@ -747,7 +792,7 @@ def _compute_image_pixel_area(wcs):
 
     k = 0
     dxy = [1, -1, -1, 1]
-
+    ra, dec, center = np.nan, np.nan, (np.nan, np.nan)
     while xmin < xmax and ymin < ymax:
         try:
             x, y, image_area, center, b, r, t, l = _get_boundary_points(
@@ -772,7 +817,6 @@ def _compute_image_pixel_area(wcs):
             if not (np.all(np.isfinite(ra[sl])) and
                     np.all(np.isfinite(dec[sl]))):
                 limits[k] += dxy[k]
-                ymin, xmax, ymax, xmin = limits
                 k = (k + 1) % 4
                 break
             k = (k + 1) % 4
@@ -798,3 +842,28 @@ def _compute_image_pixel_area(wcs):
     pix_area = sky_area / image_area
 
     return pix_area
+
+
+def copy_asn_info_from_library(library, output_model):
+    """
+    Transfer association information from the input library to the output model.
+
+    Parameters
+    ----------
+    library : ModelLibrary
+        The input library of data models.
+
+    output_model : DataModel
+        The output data model to which the association information will be copied.
+    """
+    if not hasattr(library, "asn"):
+        # No ASN table, occurs when input comes from ModelContainer in spectroscopic modes
+        # in this case do nothing; the asn info will be passed along later
+        # by code inside ResampleSpecStep
+        return
+    if (asn_pool := library.asn.get("asn_pool", None)) is not None:
+        output_model.meta.asn.pool_name = asn_pool
+    if (
+        asn_table_name := library.asn.get("table_name", None)
+    ) is not None:
+        output_model.meta.asn.table_name = asn_table_name

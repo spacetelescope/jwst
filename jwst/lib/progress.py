@@ -32,7 +32,7 @@ class _BarStub:
 
 # Stub the Bar functionality if the actual module does not exist.
 try:
-    from progress.bar import Bar as _Bar
+    from progress.bar import Bar as _Bar  # type: ignore[import-not-found]
 except ModuleNotFoundError:
     _Bar = _BarStub
 

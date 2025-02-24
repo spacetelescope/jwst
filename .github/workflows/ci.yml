@@ -3,47 +3,73 @@ name: test
 on:
   push:
     branches:
-      - master
+      - main
       - '*x'
     tags:
       - '*'
   pull_request:
     branches:
-      - master
+      - main
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      crds_context:
+        description: CRDS context (leave blank for latest)
+        type: string
+        required: false
+        default: ''
+      crds_server:
+        description: CRDS server
+        type: string
+        required: false
+        default: https://jwst-crds.stsci.edu
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.crds_context }}
   cancel-in-progress: true
 
 jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+    - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38  # v5.4.0
+      with:
+        python-version: '3.12'
+    - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd  # v3.0.1
   check:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@8c0fde6f7e926df6ed7057255d29afa9c1ad5320  # v1.16.0
     with:
       default_python: "3.12"
       envs: |
-        - linux: check-style
-        - linux: check-security
         - linux: check-dependencies
-  crds_contexts:
-    uses: spacetelescope/crds/.github/workflows/contexts.yml@master
+  latest_crds_contexts:
+    uses: ./.github/workflows/contexts.yml
+  crds_context:
+    needs: [ latest_crds_contexts ]
+    runs-on: ubuntu-latest
+    steps:
+      - id: context
+        run: echo context=${{ github.event_name == 'workflow_dispatch' && (inputs.crds_context != '' && inputs.crds_context || needs.latest_crds_contexts.outputs.jwst) || needs.latest_crds_contexts.outputs.jwst }} >> $GITHUB_OUTPUT
+    outputs:
+      context: ${{ steps.context.outputs.context }}
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@v1
-    needs: [ crds_contexts ]
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@8c0fde6f7e926df6ed7057255d29afa9c1ad5320  # v1.16.0
+    needs: [ crds_context ]
     with:
       setenv: |
         CRDS_PATH: /tmp/data/crds_cache
-        CRDS_SERVER_URL: https://jwst-crds.stsci.edu
+        CRDS_SERVER_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
+        CRDS_CONTEXT: ${{ needs.crds_context.outputs.context }}
         CRDS_CLIENT_RETRY_COUNT: 3
         CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
       cache-path: /tmp/data/crds_cache
-      cache-key: crds-${{ needs.crds_contexts.outputs.jwst }}
+      cache-key: crds-${{ needs.crds_context.outputs.context }}
       envs: |
-        - linux: py310-oldestdeps-xdist-cov
+        - linux: py311-oldestdeps-xdist-cov
           pytest-results-summary: true
-        - linux: py310-xdist
         - linux: py311-xdist
           pytest-results-summary: true
         - macos: py311-xdist
@@ -52,3 +78,4 @@ jobs:
           coverage: codecov
           pytest-results-summary: true
         - linux: py312-xdist
+        - linux: py313-xdist

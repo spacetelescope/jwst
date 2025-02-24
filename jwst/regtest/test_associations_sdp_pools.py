@@ -22,11 +22,11 @@ pool_regex = re.compile(r'(?P<proposal>jw.+?)_(?P<versionid>.+)_pool')
 
 # Mark expected failures. Key is the pool name
 # and value is the reason message.
-EXPECTED_FAILS = {
+EXPECTED_FAILS: dict = {
 }
 
 # Pools that require special handling
-SPECIAL_DEFAULT = {
+SPECIAL_DEFAULT: dict = {
     'args': [],
     'xfail': None,
     'slow': False,
@@ -76,6 +76,11 @@ SPECIAL_POOLS = {
         'args': [],
         'xfail': None,
         'slow': True,
+    },
+    'jw00818_20230407t030411_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': False,
     },
     'jw00839_20221220t025418_pool': {
         'args': ['-i', 'o002', 'c1000'],
@@ -127,6 +132,11 @@ SPECIAL_POOLS = {
         'xfail': None,
         'slow': False,
     },
+    'jw01678_20240721t195707_pool': {
+        'args': [],
+        'xfail': None,
+        'slow': False,
+    },
     'jw02064_20230302t112350_pool': {
         'args': [],
         'xfail': None,
@@ -134,6 +144,24 @@ SPECIAL_POOLS = {
     },
     'jw02064_20230302t112350_withids_pool': {
         'args': ['-i', 'o061', 'c1008', 'c1017'],
+        'xfail': None,
+        'slow': False,
+    },
+    # This association tests the Asn_Lv3ImageMosaic rule
+    'jw02739_20230710t150016_pool': {
+        'args': ['-i', 'c1000'],
+        'xfail': None,
+        'slow': False,
+    },
+    # This pair of pools test the DMS flag usage to prevent o-type asns when
+    # a background c-type candidate is attached to the science exposure.
+    'jw04225_20241213t150701_pool': {
+        'args': ['-i', 'o001', 'o002'],
+        'xfail': None,
+        'slow': False,
+    },
+    'jw04225_20241213t150701DMS_pool': {
+        'args': ['-i', 'o001', 'o002', '--DMS'],
         'xfail': None,
         'slow': False,
     },

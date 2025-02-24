@@ -5,7 +5,7 @@ Description
 Stage 2 exposure-based data products to Stage 3 source-based data products.
 It is only used when there is a known source list for the exposure data,
 which is required in order to reorganize the data by source. Hence it is
-only useable for NIRSpec MOS, NIRSpec fixed-slit, NIRCam WFSS, and NIRISS
+only usable for NIRSpec MOS, NIRSpec fixed-slit, NIRCam WFSS, and NIRISS
 WFSS data. Details on the operation for each mode are given below.
 
 The tool is run near the beginning of the :ref:`calwebb_spec3 <calwebb_spec3>`
@@ -34,14 +34,21 @@ configuration of MSA slitlets with a source assigned to each slitlet.
 The source-to-slitlet linkage is carried along in the information contained
 in the MSA metadata file used during :ref:`calwebb_spec2 <calwebb_spec2>`
 processing. Each slitlet instance created by the :ref:`extract_2d <extract_2d_step>`
-step stores the source ID (a simple integer number) in the SOURCEID keyword of
+step stores the source name in the SRCNAME keyword of
 the SCI extension header for the slitlet. The ``exp_to_source`` tool uses
-the SOURCEID values to sort the data from each input product into an
+the SRCNAME values to sort the data from each input product into an
 appropriate source-based output product.
 
-NIRSpec Fixed-Slit
+If fixed slit targets are planned as part of a NIRSpec MOS exposure, they
+will also have sources identified by the MSA metadata file.  The associated
+SRCNAME values are used to sort the data from these slits in the same way the
+MSA slitlets are sorted.  In this combined mode, the products containing
+MOS slitlets are marked with EXP_TYPE = "NRS_MSASPEC" after sorting; the models
+containing fixed slits are marked with EXP_TYPE = "NRS_FIXEDSLIT".
+
+NIRSpec Fixed Slit
 ^^^^^^^^^^^^^^^^^^
-NIRSpec fixed-slit observations do not have sources identified with each
+NIRSpec fixed slit observations do not have sources identified with each
 slit, so the slit names, e.g. S200A1, S1600A1, etc., are mapped to predefined
 source ID values, as follows:
 
@@ -83,8 +90,8 @@ on the meaning of each field in the file names.
 The FITS file naming scheme for the source-based "cal" products follows
 the standard Stage 3 syntax, such as::
 
- jw10006-o010_s00061_nirspec_f170lp-g235m_cal.fits
+ jw10006-o010_s000000061_nirspec_f170lp-g235m_cal.fits
 
-where "s00061" in this example is the source ID.
+where "s000000061" in this example is the source ID.
 See :ref:`source-based file names <src_file_names>` for more details
 on the meaning of each field in this type of file name.

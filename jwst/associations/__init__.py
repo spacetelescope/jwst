@@ -9,7 +9,7 @@ For more, see the :ref:`documentation overview <asn-overview>`.
 """
 
 # Take version from the upstream package
-from .. import __version__
+from jwst import __version__
 
 
 # Utility

@@ -12,10 +12,10 @@ def run_pipeline(rtdata_module):
     rtdata = rtdata_module
 
     # Get the MSA metadata file referenced in the input exposure
-    rtdata.get_data("nirspec/mos/jw01180025001_01_msa.fits")
+    rtdata.get_data("nirspec/mos/jw01345066001_01_msa.fits")
 
     # Get the input ASN file and exposures
-    rtdata.get_asn("nirspec/mos/jw01180-o025_20221129t204108_spec2_00037_asn.json")
+    rtdata.get_asn("nirspec/mos/jw01345-o066_20230831t181155_spec2_00010_asn.json")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
@@ -41,11 +41,13 @@ def run_pipeline(rtdata_module):
     "srctype", "pathloss", "barshadow", "cal", "s2d", "x1d"])
 def test_nirspec_mos_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
-       NIRSpec MOS exposure."""
+       NIRSpec MOS exposure. Using an exposure that's part of a
+       3-shutter nod sequence, so there are nodded exposures available
+       with which to do background subtraction."""
 
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
-    output = f"jw01180025001_05101_00001_nrs2_{suffix}.fits"
+    output = f"jw01345066001_05101_00003_nrs1_{suffix}.fits"
     rtdata.output = output
 
     # Get the truth files

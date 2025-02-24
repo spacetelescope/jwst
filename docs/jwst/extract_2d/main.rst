@@ -69,6 +69,26 @@ corresponding to the FITS keywords "SLTNAME", "SLTSTRT1", "SLTSIZE1",
 "SLTSTRT2", and "SLTSIZE2."  Keyword "DISPAXIS" (dispersion direction)
 will be copied from the input file to each of the output cutout images.
 
+The "SRCXPOS" and "SRCYPOS" keywords in the SCI extension header of each slitlet 
+are also populated with estimates of the source
+x (dispersion) and y (cross-dispersion) location within the slitlet.
+For MOS data, these values are taken from the :ref:`MSA metadata file<msa_metadata>`.
+Fixed slit data do not have an *a priori* estimate of the source
+location within a given slit, so the estimated source location is
+computed by the ``extract_2d`` step. It uses the target coordinates in
+conjunction with the aperture reference point in V2/V3 space to
+estimate the fractional location of the source within the given slit.
+Note that this computation can only be performed for the primary slit
+in the exposure, which is given in the "FXD_SLIT" keyword. The positions
+of sources in any additional slits cannot be estimated and therefore
+are set to 0.0 (the center of the slit).\ :sup:`1`
+
+:sup:`1`\ Note that fixed slits that are planned as part of a combined
+MOS and FS observation do have *a priori* estimates of their source
+locations, via the :ref:`MSA metadata file<msa_metadata>`. When available,
+these source locations are directly used, instead of recomputing the source
+position from the WCS information.
+
 
 NIRCam and NIRISS WFSS
 ++++++++++++++++++++++
@@ -113,7 +133,7 @@ WFSS Examples
 The extraction of sources from WFSS grism images is a multi-step process, as outlined above.
 Here we show detailed examples of how to customize the list of WFSS grism objects to be
 extracted, in order to better explain the various steps.
-First, the input file (or data model) must aleady have a WCS object assigned to it by running
+First, the input file (or data model) must already have a WCS object assigned to it by running
 the :ref:`assign_wcs <assign_wcs_step>` step. The default values
 for the wavelength range of each spectral order to be extracted are also required;
 they are stored in the ``wavelengthrange`` reference file, which can be retrieved from CRDS.
@@ -245,6 +265,13 @@ extension header of the input image. These values are used to set the source loc
 for all computations involving the extent of the spectral trace and pixel wavelength
 assignments.
 
+In rare cases, it may be desirable to shift the source location in the X-direction, e.g.
+for a custom noise suppression scheme. This is achieved in the APT by specifying an 
+offset special requirement, and shows up in the header keyword "XOFFSET". The 
+``extract_2d`` step accounts for this offset by simply shifting the wavelength array by
+the appropriate amount. The WCS information remains unchanged. Note that offsets in the 
+Y-direction (cross-dispersion direction) are not supported and should not be attempted.
+
 NIRCam subarrays used for TSGRISM observations always have their "bottom" edge located
 at the physical bottom edge of the detector and vary in size vertically.
 The source spectrum trace will always be centered somewhere near row 34 in the vertical
@@ -270,9 +297,15 @@ Step Arguments
 The ``extract_2d`` step has various optional arguments that apply to certain observation
 modes. For NIRSpec observations there is one applicable argument:
 
-``--slit_name``
-  name [string value] of a specific slit region to extract. The default value of None
+``--slit_names``
+  names [comma-separated list containing integers or strings] of specific slits to extract. The default value of None
   will cause all known slits for the instrument mode to be extracted.
+
+``--source_ids``
+  source_ids [comma-separated list containing integers or strings] of specific slits to extract.  The default value
+  of None will cause all known slits for the instrument to be extracted.
+
+``slit_names`` and ``source_ids`` can be used at the same time, duplicates will be filtered out.
 
 There are several arguments available for Wide-Field Slitless Spectroscopy (WFSS) and
 Time-Series (TSO) grism spectroscopy:

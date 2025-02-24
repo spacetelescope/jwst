@@ -5,7 +5,7 @@ from jwst.associations.tests.helpers import (
     t_path
 )
 
-from jwst.associations.lib.process_list import *
+from jwst.associations.lib.process_list import ProcessItem, ProcessList, ProcessQueue, ProcessQueueSorted, ListCategory
 
 
 def test_item():
@@ -43,7 +43,7 @@ def test_process_queue():
         idx += 1
         try:
             to_add = items_to_add[idx]
-        except:
+        except IndexError:
             pass
         else:
             queue.extend(to_add)
@@ -84,7 +84,7 @@ def test_process_queue_sorted():
         idx += 1
         try:
             to_add = items_to_add[idx]
-        except:
+        except IndexError:
             pass
         else:
             queue.extend(to_add)
@@ -125,7 +125,7 @@ def test_process_queue_dups():
         idx += 1
         try:
             to_add = items_to_add[idx]
-        except:
+        except IndexError:
             pass
         else:
             queue.extend(to_add)

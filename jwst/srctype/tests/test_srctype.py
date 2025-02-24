@@ -191,6 +191,14 @@ def test_nrs_fixedslit():
     assert result.slits[1].source_type == 'POINT'
     assert result.slits[2].source_type == 'EXTENDED'
 
+    # Check that source_xpos and source_ypos are reset to zero for primary slit
+    # if the source is EXTENDED
+    input.slits[1].source_xpos = 0.5
+    input.slits[1].source_ypos = -0.5
+    result = srctype.set_source_type(input, "EXTENDED")
+    assert result.slits[1].source_xpos == 0.0
+    assert result.slits[1].source_ypos == 0.0
+
 
 def test_valid_user_spec():
     """ Overwrite source_type with valid user-specified value

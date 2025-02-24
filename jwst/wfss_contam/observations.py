@@ -5,8 +5,6 @@ import multiprocessing as mp
 from scipy import sparse
 
 from stdatamodels.jwst import datamodels
-from astropy.wcs import WCS
-from typing import Sequence
 
 from .disperse import dispersed_pixel
 
@@ -18,8 +16,8 @@ from astropy.stats import SigmaClip
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-def disperse_multiprocess(pars, max_cpu):
 
+def _disperse_multiprocess(pars, max_cpu):
     ctx = mp.get_context("forkserver")
     with ctx.Pool(max_cpu) as mypool:
         all_res = mypool.starmap(dispersed_pixel, pars)
@@ -27,21 +25,22 @@ def disperse_multiprocess(pars, max_cpu):
     return all_res
 
 
-def background_subtract(data: np.ndarray, 
-                        box_size: tuple = None, 
-                        filter_size: tuple = (3,3), 
-                        sigma: float = 3.0, 
-                        exclude_percentile: float = 30.0,
-                        ) -> np.ndarray:
+def background_subtract(
+    data,
+    box_size,
+    filter_size,
+    sigma,
+    exclude_percentile,
+):
     """
-    Simple astropy background subtraction
+    Apply a simple astropy background subtraction.
 
     Parameters
     ----------
     data : np.ndarray
         2D array of pixel values
     box_size : tuple
-        Size of box in pixels to use for background estimation. 
+        Size of box in pixels to use for background estimation.
         If not set, defaults to 1/5 of the image size.
     filter_size : tuple
         Size of filter to use for background estimation
@@ -62,66 +61,75 @@ def background_subtract(data: np.ndarray,
     in a previous version.
     """
     if box_size is None:
-        box_size = (int(data.shape[0]/5), int(data.shape[1]/5))
+        box_size = (int(data.shape[0] / 5), int(data.shape[1] / 5))
     sigma_clip = SigmaClip(sigma=sigma)
     bkg_estimator = MedianBackground()
-    bkg = Background2D(data, box_size, filter_size=filter_size,
-                   sigma_clip=sigma_clip, bkg_estimator=bkg_estimator, 
-                   exclude_percentile=exclude_percentile)
+    bkg = Background2D(
+        data,
+        box_size,
+        filter_size=filter_size,
+        sigma_clip=sigma_clip,
+        bkg_estimator=bkg_estimator,
+        exclude_percentile=exclude_percentile,
+    )
 
     return data - bkg.background
 
 
-def _select_ids(ID: int, all_IDs: list[int]) -> list[int]:
-    '''
+def _select_ids(source_id, all_ids):
+    """
     Select the source IDs to be processed based on the input ID parameter.
 
     Parameters
     ----------
-    ID : int or list-like
+    source_id : int or list-like
         ID(s) of source to process. If None, all sources processed.
-    all_IDs : np.ndarray
+    all_ids : np.ndarray
         Array of all source IDs in the segmentation map
 
     Returns
     -------
     selected_IDs : list
         List of selected source IDs
-    '''
-    if ID is None:
-        log.info(f"Loading all {len(all_IDs)} sources from segmentation map")
-        return all_IDs
-        
-    elif isinstance(ID, int):
-        log.info(f"Loading single source {ID} from segmentation map")
-        return [ID]
-    
-    elif isinstance(ID, list) or isinstance(ID, np.ndarray):
-        log.info(f"Loading {len(ID)} of {len(all_IDs)} selected sources from segmentation map")
-        return list(ID)
+    """
+    if source_id is None:
+        log.info(f"Loading all {len(all_ids)} sources from segmentation map")
+        return all_ids
+
+    elif isinstance(source_id, int):
+        log.info(f"Loading single source {source_id} from segmentation map")
+        return [source_id]
+
+    elif isinstance(source_id, list) or isinstance(source_id, np.ndarray):
+        log.info(
+            f"Loading {len(source_id)} of {len(all_ids)} selected sources from segmentation map"
+        )
+        return list(source_id)
     else:
         raise ValueError("ID must be an integer or a list of integers")
 
 
 class Observation:
-    """This class defines an actual observation. It is tied to a single grism image."""
+    """Define an observation leading to a single grism image."""
 
-    def __init__(self,
-                 direct_images: list[str], 
-                 segmap_model: datamodels.SegmentationMapModel, 
-                 grism_wcs: WCS, 
-                 filter: str,
-                 ID: int = None,
-                 sed_file: str = None, 
-                 extrapolate_sed: bool = False,
-                 boundaries: Sequence = [], 
-                 offsets: Sequence = [0, 0], 
-                 renormalize: bool = True, 
-                 max_cpu: int = 1,
-                 ) -> None:
-
+    def __init__(
+        self,
+        direct_images,
+        segmap_model,
+        grism_wcs,
+        filter_name,
+        source_id,
+        sed_file,
+        extrapolate_sed,
+        boundaries,
+        offsets,
+        renormalize,
+        max_cpu,
+    ):
         """
-        Initialize all data and metadata for a given observation. Creates lists of
+        Initialize all data and metadata for a given observation.
+
+        Creates lists of
         direct image pixel values for selected objects.
 
         Parameters
@@ -132,33 +140,38 @@ class Observation:
             Segmentation map model
         grism_wcs : gwcs object
             WCS object from grism image
-        filter : str
+        filter_name : str
             Filter name
-        ID : int or list-like, optional
-            ID(s) of source to process. If zero, all sources processed.
-        sed_file : str
+        source_id : int, optional, default 0
+            ID of source to process. If 0, all sources processed.
+        sed_file : str, optional, default None
             Name of Spectral Energy Distribution (SED) file containing datasets matching
             the ID in the segmentation file and each consisting of a [[lambda],[flux]] array.
-        extrapolate_sed : bool
+        extrapolate_sed : bool, optional, default False
             Flag indicating whether to extrapolate wavelength range of SED
-        boundaries : tuple
+        boundaries : list, optional, default []
             Start/Stop coordinates of the FOV within the larger seed image.
-        renormalize : bool
+        offsets : list, optional, default [0,0]
+            Offset values for x and y axes
+        renormalize : bool, optional, default True
             Flag indicating whether to renormalize SED's
-        max_cpu : int
+        max_cpu : int, optional, default 1
             Max number of cpu's to use when multiprocessing
         """
-
+        if boundaries is None:
+            boundaries = []
+        if offsets is None:
+            offsets = [0, 0]
         # Load all the info for this grism mode
         self.seg_wcs = segmap_model.meta.wcs
         self.grism_wcs = grism_wcs
-        self.ID = ID
+        self.source_id = source_id
         self.dir_image_names = direct_images
         self.seg = segmap_model.data
         all_ids = np.array(list(set(np.ravel(self.seg))))
-        self.IDs = _select_ids(ID, all_ids)
-        self.filter = filter
-        self.sed_file = sed_file   # should always be NONE for baseline pipeline (use flat SED)
+        self.source_ids = _select_ids(source_id, all_ids)
+        self.filter = filter_name
+        self.sed_file = sed_file  # should always be NONE for baseline pipeline (use flat SED)
         self.cache = False
         self.renormalize = renormalize
         self.max_cpu = max_cpu
@@ -191,15 +204,15 @@ class Observation:
         self.simul_slits_sid = []
 
     def create_pixel_list(self):
-        '''
+        """
         Create a list of pixels to be dispersed, grouped per object ID.
-        When ID is None, all sources in the segmentation map are processed.
-        '''
 
+        When ID is None, all sources in the segmentation map are processed.
+        """
         self.xs = []
         self.ys = []
-        for ID in self.IDs:
-            ys, xs = np.nonzero(self.seg == ID)
+        for source_id in self.source_ids:
+            ys, xs = np.nonzero(self.seg == source_id)
             if len(xs) > 0 and len(ys) > 0:
                 self.xs.append(xs)
                 self.ys.append(ys)
@@ -207,7 +220,6 @@ class Observation:
         # Populate lists of direct image flux values for the sources.
         self.fluxes = {}
         for dir_image_name in self.dir_image_names:
-
             log.info(f"Using direct image {dir_image_name}")
             with datamodels.open(dir_image_name) as model:
                 dimage = model.data
@@ -217,19 +229,19 @@ class Observation:
                     # Default pipeline will use sed_file=None, so we need to compute
                     # photometry values that used to come from HST-style header keywords.
                     # Set pivlam, in units of microns, based on filter name.
-                    pivlam = float(self.filter[1:4]) / 100.
+                    pivlam = float(self.filter[1:4]) / 100.0
 
                     # Use pixel fluxes from the direct image.
                     self.fluxes[pivlam] = []
-                    for i in range(len(self.IDs)):
+                    for i in range(len(self.source_ids)):
                         # This loads lists of pixel flux values for each source
                         # from the direct image
                         self.fluxes[pivlam].append(dimage[self.ys[i], self.xs[i]])
 
                 else:
                     # Use an SED file. Need to normalize the object stamps.
-                    for ID in self.IDs:
-                        vg = self.seg == ID
+                    for source_id in self.source_ids:
+                        vg = self.seg == source_id
                         dnew = dimage
                         if self.renormalize:
                             sum_seg = np.sum(dimage[vg])  # But normalize by the whole flux
@@ -239,19 +251,20 @@ class Observation:
                             log.debug("not renormalizing sources to unity")
 
                     self.fluxes["sed"] = []
-                    for i in range(len(self.IDs)):
+                    for i in range(len(self.source_ids)):
                         self.fluxes["sed"].append(dnew[self.ys[i], self.xs[i]])
 
-    def disperse_all(self,
-                     order: int,
-                     wmin: float,
-                     wmax: float,
-                     sens_waves: np.ndarray,
-                     sens_resp:np.ndarray, 
-                     cache=False):
+    def disperse_all(
+        self,
+        order,
+        wmin,
+        wmax,
+        sens_waves,
+        sens_resp,
+        cache=False,
+    ):
         """
-        Compute dispersed pixel values for all sources identified in
-        the segmentation map.
+        Compute dispersed pixel values for all sources identified in the segmentation map.
 
         Parameters
         ----------
@@ -276,20 +289,26 @@ class Observation:
 
         # Loop over all source ID's from segmentation map
         pool_args = []
-        for i in range(len(self.IDs)):
-
+        for i in range(len(self.source_ids)):
             if self.cache:
                 self.cached_object[i] = {}
-                self.cached_object[i]['x'] = []
-                self.cached_object[i]['y'] = []
-                self.cached_object[i]['f'] = []
-                self.cached_object[i]['w'] = []
-                self.cached_object[i]['minx'] = []
-                self.cached_object[i]['maxx'] = []
-                self.cached_object[i]['miny'] = []
-                self.cached_object[i]['maxy'] = []
+                self.cached_object[i]["x"] = []
+                self.cached_object[i]["y"] = []
+                self.cached_object[i]["f"] = []
+                self.cached_object[i]["w"] = []
+                self.cached_object[i]["minx"] = []
+                self.cached_object[i]["maxx"] = []
+                self.cached_object[i]["miny"] = []
+                self.cached_object[i]["maxy"] = []
 
-            disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp,]
+            disperse_chunk_args = [
+                i,
+                order,
+                wmin,
+                wmax,
+                sens_waves,
+                sens_resp,
+            ]
             pool_args.append(disperse_chunk_args)
 
         t0 = time.time()
@@ -301,10 +320,10 @@ class Observation:
         for i in range(len(self.IDs)):
             disperse_chunk_output.append(self.disperse_chunk(*pool_args[i]))
         t1 = time.time()
-        log.info(f"Wall clock time for disperse_chunk order {order}: {(t1-t0):.1f} sec")
-        
+        log.info(f"Wall clock time for disperse_chunk order {order}: {(t1 - t0):.1f} sec")
+
         # Collect results into simulated image and slit models
-        for i, this_output in enumerate(disperse_chunk_output):
+        for this_output in disperse_chunk_output:
             [this_image, this_bounds, this_sid, this_order] = this_output
             slit = self.construct_slitmodel_for_chunk(this_image, this_bounds, this_sid, this_order)
             self.simulated_image += this_image
@@ -313,18 +332,18 @@ class Observation:
                 self.simul_slits_order.append(this_order)
                 self.simul_slits_sid.append(this_sid)
 
-
-    def disperse_chunk(self,
-                       c: int, 
-                       order: int,
-                       wmin: float,
-                       wmax: float,
-                       sens_waves: np.ndarray,
-                       sens_resp: np.ndarray,
-                       ) -> tuple[np.ndarray, list, int, int]:
+    def disperse_chunk(
+        self,
+        c,
+        order,
+        wmin,
+        wmax,
+        sens_waves,
+        sens_resp,
+    ):
         """
-        Method that computes dispersion for a single source.
-        To be called after create_pixel_list().
+        Compute dispersion for a single source; to be called after create_pixel_list().
+
         Parameters
         ----------
         c : int
@@ -351,8 +370,7 @@ class Observation:
         order : int
             Spectral order number
         """
-
-        sid = int(self.IDs[c])
+        sid = int(self.source_ids[c])
         self.order = order
         self.wmin = wmin
         self.wmax = wmax
@@ -379,22 +397,46 @@ class Observation:
             # "fluxes" is the array of pixel values from the direct image(s).
             # For the simple case of 1 combined direct image, this contains a
             # a single value (just like "lams").
-            fluxes, lams = map(np.array, zip(*[
-                (self.fluxes[lm][c][i], lm) for lm in sorted(self.fluxes.keys())
-                if self.fluxes[lm][c][i] != 0
-            ]))
-            pars_i = [xc, yc, width, height, lams, fluxes, self.order,
-                      self.wmin, self.wmax, self.sens_waves, self.sens_resp,
-                      self.seg_wcs, self.grism_wcs, i, self.dims[::-1], 2,
-                      self.extrapolate_sed, self.xoffset, self.yoffset]
+            fluxes, lams = map(
+                np.array,
+                zip(
+                    *[
+                        (self.fluxes[lm][c][i], lm)
+                        for lm in sorted(self.fluxes.keys())
+                        if self.fluxes[lm][c][i] != 0
+                    ],
+                    strict=True,
+                ),
+            )
+            pars_i = [
+                xc,
+                yc,
+                width,
+                height,
+                lams,
+                fluxes,
+                self.order,
+                self.wmin,
+                self.wmax,
+                self.sens_waves,
+                self.sens_resp,
+                self.seg_wcs,
+                self.grism_wcs,
+                i,
+                self.dims[::-1],
+                2,
+                self.extrapolate_sed,
+                self.xoffset,
+                self.yoffset,
+            ]
             pars.append(pars_i)
-            #if i == 0:
+            # if i == 0:
             #    print([type(arg) for arg in pars_i]) #all these need to be pickle-able
 
         # pass parameters into dispersed_pixel, either using multiprocessing or not
         time1 = time.time()
         if self.max_cpu > 1:
-            all_res = disperse_multiprocess(pars, self.max_cpu)
+            all_res = _disperse_multiprocess(pars, self.max_cpu)
         else:
             all_res = []
             for i in range(len(pars)):
@@ -419,25 +461,26 @@ class Observation:
             maxx = int(max(x))
             miny = int(min(y))
             maxy = int(max(y))
-            a = sparse.coo_matrix((f, (y - miny, x - minx)),
-                                  shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
-            
+            a = sparse.coo_matrix(
+                (f, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)
+            ).toarray()
+
             # Accumulate results into simulated images
-            this_object[miny:maxy + 1, minx:maxx + 1] += a
+            this_object[miny : maxy + 1, minx : maxx + 1] += a
             bounds.append([minx, maxx, miny, maxy])
 
             if self.cache:
-                self.cached_object[c]['x'].append(x)
-                self.cached_object[c]['y'].append(y)
-                self.cached_object[c]['f'].append(f)
-                self.cached_object[c]['w'].append(w)
-                self.cached_object[c]['minx'].append(minx)
-                self.cached_object[c]['maxx'].append(maxx)
-                self.cached_object[c]['miny'].append(miny)
-                self.cached_object[c]['maxy'].append(maxy)
+                self.cached_object[c]["x"].append(x)
+                self.cached_object[c]["y"].append(y)
+                self.cached_object[c]["f"].append(f)
+                self.cached_object[c]["w"].append(w)
+                self.cached_object[c]["minx"].append(minx)
+                self.cached_object[c]["maxx"].append(maxx)
+                self.cached_object[c]["miny"].append(miny)
+                self.cached_object[c]["maxy"].append(maxy)
 
         time2 = time.time()
-        log.debug(f"Elapsed time {time2-time1} sec")
+        log.debug(f"Elapsed time {time2 - time1} sec")
         # figure out global bounds of object
         if len(bounds) > 0:
             bounds = np.array(bounds)
@@ -448,15 +491,17 @@ class Observation:
             thisobj_bounds = [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy]
             return (this_object, thisobj_bounds, sid, order)
         return (this_object, None, sid, order)
-    
-    
+
     @staticmethod
-    def construct_slitmodel_for_chunk(chunk_data: np.ndarray, 
-                                      bounds: list,
-                                      sid: int,
-                                      order: int,
-                                      ) -> datamodels.SlitModel:
-        '''
+    def construct_slitmodel_for_chunk(
+        chunk_data,
+        bounds,
+        sid,
+        order,
+    ):
+        """
+        Turn output image from a chunk into a slit model.
+
         Parameters
         ----------
         chunk_data : np.ndarray
@@ -472,10 +517,10 @@ class Observation:
         -------
         slit : `jwst.datamodels.SlitModel`
             Slit model containing the dispersed pixel values
-        '''
+        """
         if bounds is None:
             return None
-        
+
         [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy] = bounds
         slit = datamodels.SlitModel()
         slit.source_id = sid
@@ -485,10 +530,9 @@ class Observation:
         slit.ystart = thisobj_miny
         slit.ysize = thisobj_maxy - thisobj_miny + 1
         slit.meta.wcsinfo.spectral_order = order
-        slit.data = chunk_data[thisobj_miny:thisobj_maxy + 1, thisobj_minx:thisobj_maxx + 1]
+        slit.data = chunk_data[thisobj_miny : thisobj_maxy + 1, thisobj_minx : thisobj_maxx + 1]
 
         return slit
-
 
 
 # class ObservationFromCache:

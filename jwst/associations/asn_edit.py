@@ -1,5 +1,4 @@
 import os
-import sys
 import json
 import warnings
 import os.path as op
@@ -190,9 +189,9 @@ def _lookup(asn, filename, ignore_suffix=False):
     found = []
     path = _path(filename)
     basename = op.basename(path)
-    (root, ext) = op.splitext(basename)
+    (root, _) = op.splitext(basename)
     if ignore_suffix:
-        search_key, separator = suffix.remove_suffix(root)
+        search_key, _ = suffix.remove_suffix(root)
     else:
         search_key = basename
 
@@ -201,8 +200,8 @@ def _lookup(asn, filename, ignore_suffix=False):
             expname = member.get('expname')
             if expname:
                 if ignore_suffix:
-                    (root, ext) = op.splitext(expname)
-                    match_key, separator = suffix.remove_suffix(root)
+                    (root, _) = op.splitext(expname)
+                    match_key, _ = suffix.remove_suffix(root)
                 else:
                     match_key = expname
                 if search_key == match_key:

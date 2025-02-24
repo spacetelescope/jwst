@@ -9,7 +9,7 @@ __all__ = ['asn_from_list']
 
 
 def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
-    """Creat an association from a list
+    """Create an association from a list
 
     Parameters
     ----------
@@ -32,7 +32,7 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
     -----
     This is a lower-level tool for artificially creating
     an association. As such, the association created may not be valid.
-    It is presume the user knows what they are doing.
+    It is presumed the user knows what they are doing.
     """
 
     asn = rule()

@@ -8,7 +8,7 @@ The ``skymatch`` step uses the following optional arguments:
 
 ``skymethod`` (str, default='match')
   The sky computation algorithm to be used.
-  Allowed values: `local`, `global`, `match`, `global+match`
+  Allowed values: `local`, `global`, `match`, `global+match`, `user`
 
 ``match_down`` (boolean, default=True)
   Specifies whether the sky *differences* should be subtracted from images with
@@ -22,6 +22,12 @@ The ``skymatch`` step uses the following optional arguments:
   Specifies whether the computed sky background values are to be subtracted from
   the images. The BKGSUB keyword (boolean) will be set in each output image to
   record whether or not the background was subtracted.
+
+``skylist`` (string, default=None)
+  A filename pointing to a two-column whitespace-delimited list of user-defined
+  (filename, skyval) pairs to be used for sky subtraction. The list
+  must have the same length as the input images and contain exactly one line per
+  image. This argument is used only when ``skymethod`` is set to `user`.
 
 **Image bounding polygon parameters:**
 
@@ -67,3 +73,9 @@ The ``skymatch`` step uses the following optional arguments:
   Bin width, in sigma, used to sample the distribution of pixel
   values in order to compute the sky background using statistics
   that require binning, such as `mode` and `midpt`.
+
+**Memory management parameters:**
+
+``in_memory`` (boolean, default=True)
+  If False, preserve memory using temporary files
+  at the expense of having to run many I/O operations.

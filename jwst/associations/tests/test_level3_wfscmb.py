@@ -1,9 +1,6 @@
-import pytest
 
-from pprint import pprint
 
 from jwst.associations.tests.helpers import (
-    level3_rule_path,
     mkstemp_pool_file,
     t_path,
 )
@@ -62,14 +59,14 @@ def get_expnames(asn):
 
 def jitter_present(jitter, associations):
     """
-    For level 3 images make sure pool candidates identifed as
+    For level 3 images make sure pool candidates identified as
     jitter are not present in association files.
     """
     for asn in associations:
         # Only care about level 3 images
         if "image3" not in asn.asn_name:
             continue
-        # For level 3 images make sure pool candidates identifed as
+        # For level 3 images make sure pool candidates identified as
         # jitter are not present in association files.
         exp_names = get_expnames(asn)
         for jit in jitter:
@@ -91,5 +88,4 @@ def test_level3_wfscmb_jitter_suppression(tmp_path):
         generated = Main.cli(cmd_args)
         jitter = get_jitter_not_jitter(pool_path)
 
-    jitter_present_in_asn = jitter_present(jitter, generated.associations)
-    assert jitter_present_in_asn == False
+    assert not jitter_present(jitter, generated.associations)

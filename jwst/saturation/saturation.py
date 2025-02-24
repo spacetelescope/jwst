@@ -22,7 +22,7 @@ NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
 ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
 
 
-def flag_saturation(input_model, ref_model, n_pix_grow_sat):
+def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     """
     Short Summary
     -------------
@@ -30,7 +30,7 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.RampModel`
+    output_model : `~jwst.datamodels.RampModel`
         The input science data to be corrected
 
     ref_model : `~jwst.datamodels.SaturationModel`
@@ -38,8 +38,11 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
     n_pix_grow_sat : int
         Number of layers of pixels adjacent to a saturated pixel to also flag
-        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        as saturated (i.e '1' will flag the surrounding 8 pixels) to account for
         charge spilling.
+
+    use_readpatt : bool
+        Use grouped read pattern information to assist with flagging
 
     Returns
     -------
@@ -48,29 +51,36 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
         the GROUPDQ array
     """
 
-    data = input_model.data
+    ngroups = output_model.meta.exposure.ngroups
+    nframes = output_model.meta.exposure.nframes
 
-    # Create the output model as a copy of the input
-    output_model = input_model.copy()
     gdq = output_model.groupdq
     pdq = output_model.pixeldq
+    data = output_model.data
 
-    zframe = input_model.zeroframe if input_model.meta.exposure.zero_frame else None
+    zframe = output_model.zeroframe if output_model.meta.exposure.zero_frame else None
 
     # Extract subarray from saturation reference file, if necessary
-    if reffile_utils.ref_matches_sci(input_model, ref_model):
+    if reffile_utils.ref_matches_sci(output_model, ref_model):
         sat_thresh = ref_model.data
         sat_dq = ref_model.dq
     else:
         log.info('Extracting reference file subarray to match science data')
-        ref_sub_model = reffile_utils.get_subarray_model(input_model, ref_model)
+        ref_sub_model = reffile_utils.get_subarray_model(output_model, ref_model)
         sat_thresh = ref_sub_model.data.copy()
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
+    # Enable use of read_pattern specific treatment if selected
+    if use_readpatt:
+        read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
+        log.info(f"Using read_pattern with nframes {nframes}")
+    else:
+        read_pattern=None
+
     gdq_new, pdq_new, zframe = flag_saturated_pixels(
         data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
-        n_pix_grow_sat=n_pix_grow_sat, zframe=zframe)
+        n_pix_grow_sat=n_pix_grow_sat, read_pattern=read_pattern, zframe=zframe)
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
@@ -84,7 +94,7 @@ def flag_saturation(input_model, ref_model, n_pix_grow_sat):
     return output_model
 
 
-def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
+def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     """
     Short Summary
     -------------
@@ -95,7 +105,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.RampModel`
+    output_model : `~jwst.datamodels.RampModel`
         The input science data to be corrected
 
     ref_model : `~jwst.datamodels.SaturationModel`
@@ -103,8 +113,11 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
     n_pix_grow_sat : int
         Number of layers of pixels adjacent to a saturated pixel to also flag
-        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        as saturated (i.e '1' will flag the surrounding 8 pixels) to account for
         charge spilling.
+
+    use_readpatt : bool
+        Use grouped read pattern information to assist with flagging
 
     Returns
     -------
@@ -113,25 +126,32 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
         the GROUPDQ array
     """
 
-    data = input_model.data
-    nints = data.shape[0]
-    ngroups = data.shape[1]
-    detector = input_model.meta.instrument.detector
-
-    # create a mask of the appropriate size
-    irs2_mask = x_irs2.make_mask(input_model)
-
     # Create the output model as a copy of the input
-    output_model = input_model.copy()
     groupdq = output_model.groupdq
 
+    data = output_model.data
+    nints = data.shape[0]
+    ngroups = data.shape[1]
+    detector = output_model.meta.instrument.detector
+    nframes = output_model.meta.exposure.nframes
+
+    if use_readpatt:
+        read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
+        log.info(f"Using read_pattern with nframes {nframes}")
+    else:
+        read_pattern=None
+
+
+    # create a mask of the appropriate size
+    irs2_mask = x_irs2.make_mask(output_model)
+
     # Extract subarray from saturation reference file, if necessary
-    if reffile_utils.ref_matches_sci(input_model, ref_model):
+    if reffile_utils.ref_matches_sci(output_model, ref_model):
         sat_thresh = ref_model.data
         sat_dq = ref_model.dq
     else:
         log.info('Extracting reference file subarray to match science data')
-        ref_sub_model = reffile_utils.get_subarray_model(input_model, ref_model)
+        ref_sub_model = reffile_utils.get_subarray_model(output_model, ref_model)
         sat_thresh = ref_sub_model.data.copy()
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
@@ -149,7 +169,7 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
     flagarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
     flaglowarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
 
-    if input_model.meta.exposure.zero_frame:
+    if output_model.meta.exposure.zero_frame:
         zflagarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
         zflaglowarray = np.zeros(data.shape[-2:], dtype=groupdq.dtype)
 
@@ -160,6 +180,32 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
                                         irs2_mask, detector)
             # check for saturation
             flag_temp = np.where(sci_temp >= sat_thresh, SATURATED, 0)
+            # Additional checks for group 2 saturation in grouped data
+            if ((group == 2) & (read_pattern is not None)):
+                # Identify groups which we wouldn't expect to saturate by the third group,
+                # on the basis of the first group
+                scigp1 = x_irs2.from_irs2(data[ints, 0, :, :], irs2_mask, detector)
+                mask = scigp1 / np.mean(read_pattern[0]) * read_pattern[2][-1] < sat_thresh
+
+                # Identify groups with suspiciously large values in the second group
+                scigp2 = x_irs2.from_irs2(data[ints, 1, :, :], irs2_mask, detector)
+                mask &= scigp2 > sat_thresh / len(read_pattern[1])
+
+                # Identify groups that are saturated in the third group
+                gp3mask = np.where(flag_temp & SATURATED, True, False)
+                mask &= gp3mask
+
+                # Flag the 2nd group for the pixels passing that gauntlet in the 3rd group
+                dq_temp = np.zeros_like(mask,dtype='uint8')
+                dq_temp[mask] = SATURATED
+                # flag any pixels that border saturated pixels
+                if n_pix_grow_sat > 0:
+                    dq_temp = adjacency_sat(dq_temp, SATURATED, n_pix_grow_sat)
+                # set the flags in dq array for group 2, i.e. index 1
+                x_irs2.to_irs2(flagarray, dq_temp, irs2_mask, detector)
+                np.bitwise_or(groupdq[ints, 1, ...], flagarray,
+                              groupdq[ints, 1, ...])
+
             # check for A/D floor
             flaglow_temp = np.where(sci_temp <= 0, AD_FLOOR | DONOTUSE, 0)
 
@@ -181,8 +227,8 @@ def irs2_flag_saturation(input_model, ref_model, n_pix_grow_sat):
 
         # Process ZEROFRAME.  Instead of setting a ZEROFRAME DQ array, data
         # in the ZEROFRAME that is flagged will be set to 0.
-        if input_model.meta.exposure.zero_frame:
-            zplane = input_model.zeroframe[ints, :, :]
+        if output_model.meta.exposure.zero_frame:
+            zplane = output_model.zeroframe[ints, :, :]
             zdq = np.zeros(groupdq.shape[-2:], dtype=groupdq.dtype)
             ztemp = x_irs2.from_irs2(zplane, irs2_mask, detector)
 
@@ -229,7 +275,7 @@ def adjacency_sat(flag_temp, saturated, n_pix_grow_sat):
 
     n_pix_grow_sat : int
         Number of layers of pixels adjacent to a saturated pixel to also flag
-        as saturated (i.e '1' will flag the surrouding 8 pixels) to account for
+        as saturated (i.e '1' will flag the surrounding 8 pixels) to account for
         charge spilling.
     """
     only_sat = np.bitwise_and(flag_temp, saturated).astype(np.uint8)

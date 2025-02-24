@@ -1,16 +1,40 @@
-name: Ensure changelog
+name: changelog
 
 on:
   pull_request:
-    types: [labeled, unlabeled, opened, synchronize, reopened]
+    types:
+      - labeled
+      - unlabeled
+      - opened
+      - synchronize
+      - reopened
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  ensure_changelog:
-    name: Verify that a changelog entry exists for this pull request
+  check:
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-changelog-entry-needed') }}
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/setup-python@42375524e23c412d93fb67b49958b491fce71c38  # v5.4.0
         with:
-          submodules: true
-      - run: grep -P '\[[^\]]*#${{github.event.number}}[,\]]' CHANGES.rst
-        if: ${{ !contains(github.event.pull_request.labels.*.name, 'no-changelog-entry-needed') }}
+          python-version: 3
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
+      - run: pip install .
+      - run: pip install towncrier
+      - run: towncrier check
+      - run: towncrier build --draft | grep -P '#${{ github.event.number }}'
+  prevent_manually_editing_changlog:
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'allow-manual-changelog-edit') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          fetch-depth: 0
+      - name: prevent direct changes to `CHANGES.rst`
+        run: git diff HEAD ${{ github.event.pull_request.base.sha }} --no-patch --exit-code CHANGES.rst
+

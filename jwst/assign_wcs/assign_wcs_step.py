@@ -5,8 +5,8 @@ from ..stpipe import Step
 from ..lib.exposure_types import IMAGING_TYPES
 import logging
 from .assign_wcs import load_wcs
-from .util import MSAFileError, update_fits_wcsinfo
-from .util import wfss_imaging_wcs, wcs_bbox_from_shape
+from .util import (MSAFileError, wfss_imaging_wcs,
+                   wcs_bbox_from_shape, update_fits_wcsinfo)
 from .nircam import imaging as nircam_imaging
 from .niriss import imaging as niriss_imaging
 
@@ -52,15 +52,14 @@ class AssignWcsStep(Step):
 
     spec = """
         sip_approx = boolean(default=True)  # enables SIP approximation for imaging modes.
-        sip_max_pix_error = float(default=0.1)  # max err for SIP fit, forward.
+        sip_max_pix_error = float(default=0.01)  # max err for SIP fit, forward.
         sip_degree = integer(max=6, default=None)  # degree for forward SIP fit, None to use best fit.
-        sip_max_inv_pix_error = float(default=0.1)  # max err for SIP fit, inverse.
+        sip_max_inv_pix_error = float(default=0.01)  # max err for SIP fit, inverse.
         sip_inv_degree = integer(max=6, default=None)  # degree for inverse SIP fit, None to use best fit.
         sip_npoints = integer(default=12)  #  number of points for SIP
         slit_y_low = float(default=-.55)  # The lower edge of a slit.
         slit_y_high = float(default=.55)  # The upper edge of a slit.
-
-    """
+    """ # noqa: E501
 
     reference_file_types = ['distortion', 'filteroffset', 'specwcs', 'regions',
                             'wavelengthrange', 'camera', 'collimator', 'disperser',
@@ -118,7 +117,8 @@ class AssignWcsStep(Step):
 
             except (ValueError, RuntimeError) as e:
                 log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
-                            f'approximation. Reported error is:\n"{e.args[0]}"')
+                            "approximation. Reported error is:")
+                log.warning(f'"{e.args[0]}"')
         else:  # WFSS modes
             try:
                 # A bounding_box is needed for the imaging WCS
@@ -131,10 +131,13 @@ class AssignWcsStep(Step):
                 wfss_imaging_wcs(result, imaging_func, bbox=bbox,
                                  max_pix_error=self.sip_max_pix_error,
                                  degree=self.sip_degree,
+                                 max_inv_pix_error=self.sip_max_inv_pix_error,
+                                 inv_degree=self.sip_inv_degree,
                                  npoints=self.sip_npoints,
                                  )
             except (ValueError, RuntimeError) as e:
                 log.warning("Failed to update 'meta.wcsinfo' with FITS SIP "
-                            f'approximation. Reported error is:\n"{e.args[0]}"')
+                            "approximation. Reported error is:")
+                log.warning(f'"{e.args[0]}"')
 
         return result

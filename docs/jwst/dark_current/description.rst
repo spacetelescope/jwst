@@ -6,8 +6,7 @@ Description
 
 Assumptions
 -----------
-It is assumed that the input science data have *NOT* had the zero group (or
-bias) subtracted. We also do not want the dark subtraction process to remove
+We do not want the dark subtraction process to remove
 the bias signal from the science exposure, therefore the dark reference data
 should have their own group zero subtracted from all groups. This means that
 group zero of the dark reference data will effectively be zero-valued.
@@ -49,8 +48,6 @@ reference files contain data for only 2 or 3 integrations, which are directly
 subtracted from the corresponding first few integrations of the science exposure.
 The data in the last integration of the dark reference file is applied to all
 remaining science integrations.
-
-The ERR arrays of the science data are currently not modified by this step.
 
 The DQ flags from the dark reference file are propagated into the science
 exposure PIXELDQ array using a bitwise OR operation.

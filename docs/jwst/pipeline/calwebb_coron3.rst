@@ -32,7 +32,7 @@ The high-level processing provided by these steps is:
 
 1) CR-flag all PSF and science target exposures
 2) Accumulate all reference PSF images into a single product
-3) Align every PSF image to every science target image
+3) Align every PSF image to the first science integration image
 4) Compute an optimal PSF fit and subtract it from every science target image
 5) Combine the PSF-subtracted and CR-flagged images into a single resampled image
 
@@ -115,17 +115,21 @@ steps. The stacked PSF data get written to disk in the form of a "_psfstack" pro
 The output file name is source-based, using the product name specified in the
 ASN file, e.g. "jw86073-a3001_t001_nircam_f140m-maskbar_psfstack.fits."
 
-4D aligned PSF images
+3D aligned PSF images
 ^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.QuadModel`
+:Data model: `~jwst.datamodels.CubeModel`
 :File suffix: _psfalign
 
-For each science target exposure, all of the reference PSF images in the
-"_psfstack" product are aligned to each science target integration and saved to
-a 4D "_psfalign" product by the :ref:`align_refs <align_refs_step>` step. The output file
+All of the reference PSF images in the
+"_psfstack" product are aligned to the first science target integration and saved to
+a 3D "_psfalign" product by the :ref:`align_refs <align_refs_step>` step. The output file
 name is exposure-based, with the addition of the associated candidate ID, e.g.
-"jw8607342001_02102_00001_nrcb3_a3001_psfalign.fits."
+"jw8607342001_02102_00001_nrcb3_a3001_psfalign.fits." In-flight data show that
+neither line-of-sight pointing drift nor PSF property changes are significant over the
+timescales relevant to JWST coronagraphic observations; therefore it's sufficient to align
+the PSF images to the first science target integration rather than separately for each science
+target integration as was done in the pre-flight pipeline.
 
 3D PSF-subtracted images
 ^^^^^^^^^^^^^^^^^^^^^^^^

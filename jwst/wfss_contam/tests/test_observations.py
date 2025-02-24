@@ -12,7 +12,7 @@ from photutils.segmentation import SourceFinder
 from jwst.wfss_contam.observations import background_subtract, _select_ids, Observation
 from jwst.wfss_contam.disperse import dispersed_pixel
 from jwst.wfss_contam.tests import data
-from jwst.datamodels import SegmentationMapModel, ImageModel, MultiSlitModel
+from stdatamodels.jwst.datamodels import SegmentationMapModel, ImageModel, MultiSlitModel
 
 data_path = os.path.split(os.path.abspath(data.__file__))[0]
 DIR_IMAGE = "direct_image.fits"
@@ -76,19 +76,19 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     '''
     filter_name = "F200W"
     seg = segmentation_map.data
-    all_IDs = np.array(list(set(np.ravel(seg))))
-    IDs = all_IDs[50:52]
-    obs = Observation([DIR_IMAGE], segmentation_map, grism_wcs, filter_name, ID=IDs,
+    all_ids = np.array(list(set(np.ravel(seg))))
+    source_ids = all_ids[50:52]
+    obs = Observation([DIR_IMAGE], segmentation_map, grism_wcs, filter_name, source_id=source_ids,
                  sed_file=None, extrapolate_sed=False,
                  boundaries=[], offsets=[0, 0], renormalize=True, max_cpu=1)
     return obs
 
 
-@pytest.mark.parametrize("ID, expected", [(None, [1,2,3]), (2, [2]), (np.array([1,3]), [1,3])])
-def test_select_ids(ID, expected):
+@pytest.mark.parametrize("source_id, expected", [(None, [1,2,3]), (2, [2]), (np.array([1,3]), [1,3])])
+def test_select_ids(source_id, expected):
     all_ids = [1, 2, 3]
-    assert _select_ids(ID, all_ids) == expected
-    assert isinstance(_select_ids(ID, all_ids), list)
+    assert _select_ids(source_id, all_ids) == expected
+    assert isinstance(_select_ids(source_id, all_ids), list)
 
 
 def test_select_ids_expected_raises():
@@ -113,10 +113,10 @@ def test_create_pixel_list(observation, segmentation_map):
     Note: still need test coverage for flux dictionary
     '''
     seg = segmentation_map.data
-    all_IDs = np.array(list(set(np.ravel(seg))))
-    IDs = all_IDs[50:52]
-    for i, ID in enumerate(IDs):
-        pixels_y, pixels_x = np.where(seg == ID)
+    all_ids = np.array(list(set(np.ravel(seg))))
+    source_ids = all_ids[50:52]
+    for i, source_id in enumerate(source_ids):
+        pixels_y, pixels_x = np.where(seg == source_id)
         assert np.all(np.isin(observation.xs[i], pixels_x))
         assert np.all(np.isin(observation.ys[i], pixels_y))
         assert len(observation.fluxes[2.0][i]) == pixels_x.size
@@ -149,7 +149,7 @@ def test_disperse_chunk(observation):
     (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
 
     #trivial bookkeeping
-    assert sid == obs.IDs[i] 
+    assert sid == obs.source_ids[i] 
     assert order == order_out
 
     # check size of object is same as input dims
@@ -211,9 +211,9 @@ def test_disperse_all(observation):
     assert np.median(obs.simulated_image) == 0.0
 
     # test simulated slits and their associated metadata
-    # only the second of the two obs IDs is in the simulated image
+    # only the second of the two obs ids is in the simulated image
     assert obs.simul_slits_order == [order,]*1
-    assert obs.simul_slits_sid == obs.IDs[-1:]
+    assert obs.simul_slits_sid == obs.source_ids[-1:]
     assert type(obs.simul_slits) == MultiSlitModel
 
 
@@ -233,26 +233,26 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
     height = 1.0
     lams = [2.0]
     flxs = [1.0]
-    ID = 0
+    source_id = 0
     naxis = (300, 500)
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_resp = np.ones(100)
     seg_wcs = segmentation_map.meta.wcs
-    0, (300, 500), 2, False, 
+    0, (300, 500), 2, False,
     xoffset = 2200
     yoffset = 1000
 
 
-    xs, ys, areas, lams_out, counts_1, ID = dispersed_pixel(
+    xs, ys, areas, lams_out, counts_1, source_id = dispersed_pixel(
                     x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                    sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
+                    sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
                     oversample_factor=1, extrapolate_sed=False, xoffset=xoffset,
                     yoffset=yoffset)
     
-    xs, ys, areas, lams_out, counts_3, ID = dispersed_pixel(
+    xs, ys, areas, lams_out, counts_3, source_id = dispersed_pixel(
                 x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                sens_waves, sens_resp, seg_wcs, grism_wcs, ID, naxis,
+                sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
                 oversample_factor=3, extrapolate_sed=False, xoffset=xoffset,
                 yoffset=yoffset)
 

@@ -7,6 +7,7 @@ from astropy import units as u
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
+from .. lib.pipe_utils import match_nans_and_flags
 from .. lib.wcs_utils import get_wavelengths
 from .. lib.dispaxis import get_dispersion_direction
 from . import miri_mrs
@@ -425,6 +426,9 @@ class DataSet():
             raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
 
         elif self.exptype in ['NIS_SOSS']:
+            if isinstance(self.input, datamodels.ImageModel):
+                raise DataModelTypeError(f"Unexpected input data model type for NIRISS: {self.input.__class__.__name__}")
+
             for spec in self.input.spec:
                 self.specnum += 1
                 self.order = spec.spectral_order
@@ -490,7 +494,10 @@ class DataSet():
                 photom_corr = miri_imager.time_corr_photom(ftab.timecoeff[row], mid_time)
 
                 data = np.array(
-                    [(self.filter, self.subarray, ftab.phot_table[row]['photmjsr'] + photom_corr, ftab.phot_table[row]['uncertainty'])],
+                    [(self.filter,
+                      self.subarray,
+                      ftab.phot_table[row]['photmjsr'] + photom_corr,
+                      ftab.phot_table[row]['uncertainty'])],
                     dtype=[
                         ("filter", "O"),
                         ("subarray", "O"),
@@ -508,18 +515,10 @@ class DataSet():
         # MRS detectors
         elif self.detector == 'MIRIFUSHORT' or self.detector == 'MIRIFULONG':
 
-            # Reset conversion and pixel size values with DQ=NON_SCIENCE to 1,
-            # so no conversion is applied
-            where_dq = np.bitwise_and(ftab.dq, dqflags.pixel['NON_SCIENCE'])
-            ftab.data[where_dq > 0] = 1.0
-
-            # Reset NaN's in conversion array to 1
+            # Make sure all NaN's have DO_NOT_USE flag set
             where_nan = np.isnan(ftab.data)
-            ftab.data[where_nan] = 1.0
-
-            # Make sure all NaN's and zeros have DQ flags set
             ftab.dq[where_nan] = np.bitwise_or(ftab.dq[where_nan],
-                                               dqflags.pixel['NON_SCIENCE'])
+                                               dqflags.pixel['DO_NOT_USE'])
 
             # Compute the combined 2D sensitivity factors
             sens2d = ftab.data
@@ -686,10 +685,15 @@ class DataSet():
         dqmap = np.zeros_like(self.input.dq) + dqflags.pixel['NON_SCIENCE']
 
         # Get the list of wcs's for the IFU slices
-        list_of_wcs = nirspec.nrs_ifu_wcs(self.input)
+        # Note: 30 in the line below is hardcoded in nirspec.nrs.ifu_wcs, which
+        # the line below replaces.
+        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(self.input, np.arange(30))
 
         # Loop over the slices
-        for (k, ifu_wcs) in enumerate(list_of_wcs):
+        for k in range(len(tr2)):
+
+            ifu_wcs = nirspec._nrs_wcs_set_input_lite(self.input, wcsobj, k,
+                                                     [tr1, tr2[k], tr3[k]])
 
             # Construct array indexes for pixels in this slice
             x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box,
@@ -856,9 +860,8 @@ class DataSet():
                 slit = self.input.slits[self.slitnum]
                 # The NIRSpec fixed-slit primary slit needs special handling if
                 # it contains a point source
-                if self.exptype.upper() == 'NRS_FIXEDSLIT' and \
-                   slit.name == self.input.meta.instrument.fixed_slit and \
-                   slit.source_type.upper() == 'POINT':
+                if (self.exptype.upper() == 'NRS_FIXEDSLIT'
+                        and slit.source_type.upper() == 'POINT'):
 
                     # First, compute 2D array of photom correction values using
                     # uncorrected wavelengths, which is appropriate for a uniform source
@@ -946,6 +949,9 @@ class DataSet():
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
 
+            # Make sure output model has consistent NaN and DO_NOT_USE values
+            match_nans_and_flags(slit)
+
         elif isinstance(self.input, datamodels.MultiSpecModel):
             # Does this block need to address SB columns as well, or will
             # they (presumably) never be populated for SOSS?
@@ -998,6 +1004,9 @@ class DataSet():
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
+
+            # Make sure output model has consistent NaN and DO_NOT_USE values
+            match_nans_and_flags(self.input)
 
         return
 

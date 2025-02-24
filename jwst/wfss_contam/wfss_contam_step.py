@@ -9,9 +9,7 @@ __all__ = ["WfssContamStep"]
 
 
 class WfssContamStep(Step):
-    """
-    This Step performs contamination correction of WFSS spectra.
-    """
+    """Perform contamination correction of WFSS spectra."""
 
     class_alias = "wfss_contam"
 
@@ -21,31 +19,38 @@ class WfssContamStep(Step):
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none')
         skip = boolean(default=True)
         brightest_n = integer(default=None)
-    """
+    """  # noqa: E501
 
-    reference_file_types = ['photom', 'wavelengthrange']
+    reference_file_types = ["photom", "wavelengthrange"]
 
-    def process(self, 
-                input_model: str | datamodels.MultiSlitModel, 
-                ) -> datamodels.MultiSlitModel:
+    def process(self, input_model):
+        """
+        Run the WFSS contamination correction step.
 
+        Parameters
+        ----------
+        input_model : `~jwst.datamodels.MultiSlitModel`
+            The input data model containing 2-D cutouts for each identified source.
+
+        Returns
+        -------
+        output_model : `~jwst.datamodels.MultiSlitModel`
+            A copy of the input_model with contamination removed
+        """
         with datamodels.open(input_model) as dm:
-
             # Get the wavelengthrange ref file
-            waverange_ref = self.get_reference_file(dm, 'wavelengthrange')
-            self.log.info(f'Using WAVELENGTHRANGE reference file {waverange_ref}')
+            waverange_ref = self.get_reference_file(dm, "wavelengthrange")
+            self.log.info(f"Using WAVELENGTHRANGE reference file {waverange_ref}")
             waverange_model = datamodels.WavelengthrangeModel(waverange_ref)
 
             # Get the photom ref file
-            photom_ref = self.get_reference_file(dm, 'photom')
-            self.log.info(f'Using PHOTOM reference file {photom_ref}')
+            photom_ref = self.get_reference_file(dm, "photom")
+            self.log.info(f"Using PHOTOM reference file {photom_ref}")
             photom_model = datamodels.open(photom_ref)
 
-            result, simul, contam, simul_slits = wfss_contam.contam_corr(dm,
-                                                            waverange_model,
-                                                            photom_model,
-                                                            self.maximum_cores,
-                                                            brightest_n=self.brightest_n)
+            result, simul, contam, simul_slits = wfss_contam.contam_corr(
+                dm, waverange_model, photom_model, self.maximum_cores, brightest_n=self.brightest_n
+            )
 
             # Save intermediate results, if requested
             if self.save_simulated_image:

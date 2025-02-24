@@ -1,58 +1,42 @@
-Description
-===========
+.. _outlier_design:
 
-:Classes: `jwst.outlier_detection.OutlierDetectionStep`, `jwst.outlier_detection.OutlierDetectionScaledStep`, `jwst.outlier_detection.OutlierDetectionStackStep`
-:Aliases: outlier_detection, outlier_detection_scaled, outlier_detection_stack
+Overview
+========
+
+This module provides the sole interface to all methods of performing outlier
+detection on JWST observations.
 
 Processing multiple datasets together allows for the identification of bad pixels
-or cosmic-rays that remain in each of the input images, many times at levels which
-were not detectable by the :ref:`jump <jump_step>` step. The ``outlier_detection`` step 
-implements the following algorithm to identify and flag any remaining cosmic-rays or
-other artifacts left over from previous calibrations:
+or cosmic rays that remain in each of the input images, often at levels which
+were not detectable by the :ref:`jump <jump_step>` step.
+The ``outlier_detection`` step supports multiple
+algorithms and determines the appropriate algorithm for the type of observation
+being processed.  This step supports:
 
-#. build a stack of input data
-  
-   - all inputs will need to have the same WCS since outlier detection assumes 
-     the same flux for each point on the sky, and variations from one image to
-     the next would indicate a problem with the detector during readout of that pixel
-   - if needed, each input will be resampled to a common output WCS
-  
-#. create a median image from the stack of input data
+* **Image modes**: 'FGS_IMAGE', 'MIR_IMAGE', 'NRC_IMAGE', 'NIS_IMAGE'
+   - See :ref:`outlier-detection-imaging` for algorithm details
+* **Slit-like Spectroscopic modes**: 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC'
+   - See :ref:`outlier-detection-spec` for algorithm details
+* **Time-Series-Observation (TSO) modes**: 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NIS_SOSS', 'NRS_BRIGHTOBJ', 'NRC_TSIMAGE'
+   - See :ref:`outlier-detection-tso` for algorithm details
+* **IFU Spectroscopic modes**: 'MIR_MRS', 'NRS_IFU'
+   - See :ref:`outlier-detection-ifu` for algorithm details
+* **Coronagraphic Image modes**: 'MIR_LYOT', 'MIR_4QPM', 'NRC_CORON'
+   - See :ref:`outlier-detection-coron` for algorithm details
 
-   - this median operation will ignore any input pixels which have a weight 
-     which is too low (<70% max weight)
-  
-#. create "blotted" data from the median image to exactly match each original
-   input dataset
-  
-#. perform a statistical comparison (pixel-by-pixel) between the median blotted
-   data with the original input data to look for pixels with values that are  
-   different from the mean value by more than some specified sigma 
-   based on the noise model
+This step uses the following logic to apply the appropriate algorithm to the
+input data:
 
-   - the noise model used relies on the error array computed by previous 
-     calibration steps based on the readnoise and calibration errors
-  
-#. flag the DQ array for the input data for any pixel (or affected neighboring
-   pixels) identified as a statistical outlier
+#. Interpret inputs (Association, ModelContainer, ModelLibrary, or CubeModel)
+   to identify all input observations to be processed
 
-The outlier detection step serves as a single interface to apply this general 
-process to any JWST data, with specific variations of this algorithm for each 
-type of data.  Sub-classes of the outlier detection algorithm have been developed
-specifically for:
+#. Read in parameters set by user. See :ref:`outlier_detection_step_args` for the full list
+   of parameters.
 
-#. Imaging data
-#. IFU spectroscopic data
-#. TSO data
-#. coronagraphic data
-#. spectroscopic data
-  
-This allows the outlier_detection step to be tuned to the variations in each type 
-of JWST data.
-           
-Reference Files
-===============
+#. Select outlier detection algorithm based on exposure type in input model ``meta.exposure.type``.
 
-The ``outlier_detection`` step uses the PARS-OUTLIERDETECTIONSTEP parameter reference file.
+#. Instantiate and run outlier detection class determined for the exposure type
+   using parameter values interpreted from inputs.
 
-.. include:: ../references_general/pars-outlierdetectionstep_reffile.inc
+#. Update DQ arrays with flags and set SCI, ERR, and variance arrays to NaN at the location
+   of identified outliers.

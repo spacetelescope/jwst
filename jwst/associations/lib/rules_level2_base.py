@@ -8,7 +8,6 @@ from os.path import (
     splitext
 )
 import re
-import warnings
 
 from jwst.associations import (
     Association,
@@ -22,13 +21,12 @@ from jwst.associations.lib.constraint import (
 )
 from jwst.associations.lib.dms_base import (
     Constraint_TargetAcq,
-    CORON_EXP_TYPES,
     DMSAttrConstraint,
     DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     IMAGE2_SCIENCE_EXP_TYPES,
     PRODUCT_NAME_DEFAULT,
-    SPEC2_SCIENCE_EXP_TYPES,
+    SPEC2_SCIENCE_EXP_TYPES
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ListCategory
@@ -48,6 +46,7 @@ __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
     'AsnMixin_Lv2Nod',
+    'AsnMixin_Lv2Imprint',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'AsnMixin_Lv2WFSS',
@@ -393,98 +392,6 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         # fail.
         return False
 
-    def make_nod_asns(self):
-        """Make background nod Associations
-
-        For observing modes, such as NIRSpec MSA, exposures can be
-        nodded, such that the object is in a different position in the
-        slitlet. The association creation simply groups these all
-        together as a single association, all exposures marked as
-        `science`. When complete, this method will create separate
-        associations each exposure becoming the single science
-        exposure, and the other exposures then become `background`.
-
-        Returns
-        -------
-        associations : [association[, ...]]
-            List of new associations to be used in place of
-            the current one.
-
-        """
-
-        for product in self['products']:
-            members = product['members']
-
-            # Split out the science vs. non-science
-            # The non-science exposures will get attached
-            # to every resulting association.
-            science_exps = [
-                member
-                for member in members
-                if member['exptype'] == 'science'
-            ]
-            nonscience_exps = [
-                member
-                for member in members
-                if member['exptype'] != 'science'
-            ]
-
-            # Create new associations for each science, using
-            # the other science as background.
-            results = []
-            for science_exp in science_exps:
-                asn = copy.deepcopy(self)
-                asn.data['products'] = None
-
-                product_name = remove_suffix(
-                    splitext(split(science_exp['expname'])[1])[0]
-                )[0]
-                asn.new_product(product_name)
-                new_members = asn.current_product['members']
-                new_members.append(science_exp)
-
-                for other_science in science_exps:
-                    if other_science['expname'] != science_exp['expname']:
-                        if science_exp.item['exp_type'] in ['nrs_fixedslit', 'nrs_msaspec']:
-                            try:
-                                sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
-                                                  int(science_exp.item['subpxpts'])
-                                other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
-                                                    int(other_science.item['subpxpts'])
-                                if sci_prim_dithpt != other_prim_dithpt:
-                                    now_background = Member(other_science)
-                                    now_background['exptype'] = 'background'
-                                    new_members.append(now_background)
-                            #  Catch missing values with KeyError, NULL values with ValueError
-                            except (ValueError, KeyError):
-                                try:
-                                    sci_prim_dithpt = (int(science_exp.item['patt_num']) - 1) // \
-                                                      int(science_exp.item['subpxpns'])
-                                    other_prim_dithpt = (int(other_science.item['patt_num']) - 1) // \
-                                                        int(other_science.item['subpxpns'])
-                                    if sci_prim_dithpt != other_prim_dithpt:
-                                        now_background = Member(other_science)
-                                        now_background['exptype'] = 'background'
-                                        new_members.append(now_background)
-                                except (ValueError, KeyError, ZeroDivisionError):
-                                    if science_exp.item['exp_type'] == 'nrs_msaspec':
-                                        now_background = Member(other_science)
-                                        now_background['exptype'] = 'background'
-                                        new_members.append(now_background)
-                                    else:
-                                        pass
-                        else:
-                            now_background = Member(other_science)
-                            now_background['exptype'] = 'background'
-                            new_members.append(now_background)
-
-                new_members += nonscience_exps
-
-                if asn.is_valid:
-                    results.append(asn)
-
-            return results
-
     def __repr__(self):
         try:
             file_name, json_repr = self.ioregistry['json'].dump(self)
@@ -652,7 +559,7 @@ class Utility():
 
         Notes
         -----
-        The current definition of candidates allows strictly lexigraphical
+        The current definition of candidates allows strictly alphabetical
         sorting:
         aXXXX > cXXXX > oXXX
 
@@ -788,9 +695,11 @@ class Constraint_Imprint_Special(Constraint):
         # If an association is not provided, the check for original
         # exposure type is ignored.
         if association is None:
-            sources = lambda item: 'not imprint'
+            def sources(item):
+                return 'not imprint'
         else:
-            sources = lambda item: association.original_exposure_type
+            def sources(item):
+                return association.original_exposure_type
 
         super(Constraint_Imprint_Special, self).__init__(
             [
@@ -1021,14 +930,27 @@ class Constraint_Spectral_Science(Constraint):
         )
 
 
-class Constraint_Target(DMSAttrConstraint):
+class Constraint_Target(Constraint):
     """Select on target id"""
 
     def __init__(self):
-        super(Constraint_Target, self).__init__(
-            name='target',
-            sources=['targetid'],
-        )
+        constraints = [
+            Constraint([
+                DMSAttrConstraint(
+                    name='acdirect',
+                    sources=['asn_candidate'],
+                    value=r"\[\('c\d{4}', 'direct_image'\)\]"
+                ),
+                SimpleConstraint(
+                    name='target',
+                    sources=lambda item: '000'
+                )]),
+            DMSAttrConstraint(
+                name='target',
+                sources=['targetid'],
+            )
+        ]
+        super(Constraint_Target, self).__init__(constraints, reduce=Constraint.any)
 
 
 # ---------------------------------------------
@@ -1044,10 +966,127 @@ class AsnMixin_Lv2Image:
         self.data['asn_type'] = 'image2'
 
 
+class AsnMixin_Lv2Imprint:
+    """Level 2 association handling for matching imprint images."""
+
+    def prune_imprints(self):
+        """
+        Prune extra imprint exposures from the association members.
+
+        First, check for imprints that match the background flag
+        for the "science" member.  Any included imprints that do
+        not match the background flag are left in the association
+        without further checks.
+
+        Among these imprints, check to see if any have target IDs that
+        match the science member. If not, use all imprints for further
+        matches.  If so, use only the matching ones for further checks;
+        remove the non-matching imprints.
+
+        If there are more imprints than science members remaining, and
+        if any of the remaining imprints match the science dither position
+        index, discard any imprints that do not match the dither position.
+        """
+        # Only one product for Lv2 associations
+        members = self['products'][0]['members']
+
+        # Check for science and imprint members
+        science = []
+        imprint_sci = []
+        imprint_bkg = []
+        science_is_background = False
+        science_targets = set()
+        for member in members:
+            try:
+                target = member.item['targetid']
+                bkgdtarg = member.item['bkgdtarg']
+            except KeyError:
+                # ignore any members with missing data -
+                # no pruning will happen in this case
+                continue
+
+            if member['exptype'] == 'science':
+                science.append(member)
+                science_targets.add(str(target))
+                if bkgdtarg == 't':
+                    science_is_background = True
+            elif member['exptype'] == 'imprint':
+                # Store imprints by background status
+                if bkgdtarg == 't':
+                    imprint_bkg.append(member)
+                else:
+                    imprint_sci.append(member)
+
+        # Only check the imprints that match the "science" members
+        if science_is_background:
+            imprints_to_check = imprint_bkg
+        else:
+            imprints_to_check = imprint_sci
+
+        # If there are multiple targets in the imprints to check,
+        # and if one of them matches the science data, keep only that one
+        imprints_matching_target = []
+        imprints_not_matching_target = []
+        for imprint_exp in imprints_to_check:
+            try:
+                target = imprint_exp.item['targetid']
+            except KeyError:
+                # Imprint does not match target if it is missing a target ID
+                imprints_not_matching_target.append(imprint_exp)
+                continue
+            if str(target) in science_targets:
+                imprints_matching_target.append(imprint_exp)
+            else:
+                imprints_not_matching_target.append(imprint_exp)
+        if len(imprints_matching_target) > 0:
+            imprints_to_check = imprints_matching_target
+            for imprint_exp in imprints_not_matching_target:
+                members.remove(imprint_exp)
+
+        # If 1 or more science and more imprints than science,
+        # discard any imprints that don't match the science dither index
+        if 1 <= len(science) < len(imprints_to_check):
+            imprint_to_keep = set()
+            for science_exp in science:
+                if 'dithptin' not in science_exp.item:
+                    continue
+                for imprint_exp in imprints_to_check:
+                    if 'dithptin' not in imprint_exp.item:
+                        continue
+                    if imprint_exp.item['dithptin'] == science_exp.item['dithptin']:
+                        imprint_to_keep.add(imprint_exp['expname'])
+
+            # if there were any matching imprints, remove the extras
+            if len(imprint_to_keep) > 0:
+                for imprint_exp in imprints_to_check:
+                    if imprint_exp['expname'] not in imprint_to_keep:
+                        members.remove(imprint_exp)
+
+    def finalize(self):
+        """
+        Finalize the association.
+
+        For some spectrographic modes, imprint images are taken alongside
+        the science data, the background data, or both.  If there are
+        extra imprints in the association, we should keep only the best
+        matches to the science data.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+        """
+        if self.is_valid:
+            self.prune_imprints()
+        return super().finalize()
+
+
 class AsnMixin_Lv2Nod:
     """Associations that need to create nodding associations
 
-    For some spectragraphic modes, background spectra are taken by
+    For some spectrographic modes, background spectra are taken by
     nodding between different slits, or internal slit positions.
     The main associations rules will collect all the exposures of all the nods
     into a single association. Then, on finalization, this one association
@@ -1055,10 +1094,173 @@ class AsnMixin_Lv2Nod:
     as science, and the other nods are treated as background.
     """
 
+    @staticmethod
+    def nod_background_overlap(science_item, background_item):
+        """
+        Check that a candidate background nod will not overlap with science.
+
+        For NIRSpec fixed slit or MOS data, this returns True if the
+        background candidate shares a primary dither point with the
+        science.
+
+        In addition, for NIRSpec fixed slit exposures taken with slit
+        S1600A1 in a 5-point nod pattern, this returns True when the
+        background candidate is in the next closest primary position
+        to the science.
+
+        For any other data, this function returns False (no overlap).
+        """
+        # Get exp_type, needed for any data:
+        # if not present, return False
+        try:
+            exptype = str(science_item['exp_type']).lower()
+        except KeyError:
+            return False
+
+        # Return False for any non-FS or MOS data
+        if exptype not in ['nrs_fixedslit', 'nrs_msaspec']:
+            return False
+
+        # Get pattern number values, needed for FS or MOS
+        try:
+            numdthpt = int(science_item['numdthpt'])
+            patt_num = int(science_item['patt_num'])
+            bkg_num = int(background_item['patt_num'])
+        except (KeyError, ValueError):
+            numdthpt = 0
+            patt_num = None
+            bkg_num = None
+
+        # Get subpxpts (or old alternate 'subpxpns')
+        try:
+            subpx = int(science_item['subpxpts'])
+        except (KeyError, ValueError):
+            try:
+                subpx = int(science_item['subpxpns'])
+            except (KeyError, ValueError):
+                subpx = None
+        try:
+            bkg_subpx = int(background_item['subpxpts'])
+        except (KeyError, ValueError):
+            try:
+                bkg_subpx = int(background_item['subpxpns'])
+            except (KeyError, ValueError):
+                bkg_subpx = None
+
+        # If values not found, return False for MOS, True for FS
+        if (None in [patt_num, bkg_num, subpx, bkg_subpx]
+                or subpx == 0 or bkg_subpx == 0):
+            if exptype == 'nrs_fixedslit':
+                # These values are required for background
+                # candidates for FS: report an overlap.
+                return True
+            else:
+                # For MOS, it's okay to go ahead and use them.
+                # Report no overlap.
+                return False
+
+        # Check for primary point overlap
+        sci_prim_dithpt = (patt_num - 1) // subpx
+        bkg_prim_dithpt = (bkg_num - 1) // bkg_subpx
+        if sci_prim_dithpt == bkg_prim_dithpt:
+            # Primary points are the same - overlap is present
+            return True
+
+        # Primary points are not the same -
+        # no further check needed for MOS
+        if exptype == 'nrs_msaspec':
+            return False
+
+        # Get slit name, needed only for FS S1600A1 check
+        try:
+            slit = str(science_item['fxd_slit']).lower()
+        except KeyError:
+            slit = None
+
+        # Background is currently only expected to overlap severely for
+        # 5 point dithers with fixed slit S1600A1.  Only the nearest
+        # dithers to the science observation need to be excluded.
+        if (exptype == 'nrs_fixedslit'
+                and slit == 's1600a1'
+                and numdthpt // subpx == 5
+                and abs(sci_prim_dithpt - bkg_prim_dithpt) <= 1):
+            return True
+
+        # For anything else, return False
+        return False
+
+    def make_nod_asns(self):
+        """Make background nod Associations
+
+        For observing modes, such as NIRSpec MSA, exposures can be
+        nodded, such that the object is in a different position in the
+        slitlet. The association creation simply groups these all
+        together as a single association, all exposures marked as
+        `science`. When complete, this method will create separate
+        associations each exposure becoming the single science
+        exposure, and the other exposures then become `background`.
+
+        Returns
+        -------
+        associations : [association[, ...]]
+            List of new associations to be used in place of
+            the current one.
+
+        """
+
+        for product in self['products']:
+            members = product['members']
+
+            # Split out the science vs. non-science
+            # The non-science exposures will get attached
+            # to every resulting association.
+            science_exps = [
+                member
+                for member in members
+                if member['exptype'] == 'science'
+            ]
+            nonscience_exps = [
+                member
+                for member in members
+                if member['exptype'] != 'science'
+            ]
+
+            # Create new associations for each science, using
+            # the other science as background.
+            results = []
+            for science_exp in science_exps:
+                asn = copy.deepcopy(self)
+                asn.data['products'] = None
+
+                product_name = remove_suffix(
+                    splitext(split(science_exp['expname'])[1])[0]
+                )[0]
+                asn.new_product(product_name)
+                new_members = asn.current_product['members']
+                new_members.append(science_exp)
+
+                for other_science in science_exps:
+                    if other_science['expname'] != science_exp['expname']:
+                        # check for likely overlap between science
+                        # and background candidate
+                        overlap = self.nod_background_overlap(
+                            science_exp.item, other_science.item)
+                        if not overlap:
+                            now_background = Member(other_science)
+                            now_background['exptype'] = 'background'
+                            new_members.append(now_background)
+
+                new_members += nonscience_exps
+
+                if asn.is_valid:
+                    results.append(asn)
+
+            return results
+
     def finalize(self):
         """Finalize association
 
-        For some spectragraphic modes, background spectra and taken by
+        For some spectrographic modes, background spectra are taken by
         nodding between different slits, or internal slit positions.
         The main associations rules will collect all the exposures of all the nods
         into a single association. Then, on finalization, this one association
@@ -1117,7 +1319,7 @@ class AsnMixin_Lv2Special:
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):
-    """Level 2 Spectral association base"""
+    """Level 2 Spectral association base."""
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
@@ -1148,32 +1350,6 @@ class AsnMixin_Lv2WFSS:
             )
         science = sciences[0]
 
-        # Get the exposure sequence for the science. Then, find
-        # the direct image greater than but closest to this value.
-        closest = directs[0]  # If the search fails, just use the first.
-        try:
-            expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
-        except KeyError:
-            # If exposure sequence cannot be determined, just fall through.
-            logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
-        else:
-            min_diff = 9999         # Initialize to an invalid value.
-            for direct in directs:
-                try:
-                    direct_expspcin = int(getattr_from_list(
-                        direct.item, ['expspcin'], _EMPTY
-                    )[1])
-                except KeyError:
-                    # Try the next one.
-                    logger.debug('Direct image %s has no EXPSPCIN defined.', direct)
-                    continue
-                diff = direct_expspcin - expspcin
-                if diff < min_diff and diff > 0:
-                    min_diff = diff
-                    closest = direct
-
-        # Note the selected direct image. Used in `Asn_Lv2WFSS._get_opt_element`
-        self.direct_image = closest
 
         # Remove all direct images from the association.
         members = self.current_product['members']
@@ -1188,6 +1364,7 @@ class AsnMixin_Lv2WFSS:
         ))
 
         # Add the Level3 catalog, direct image, and segmentation map members
+        self.direct_image = self.find_closest_direct(science, directs)
         lv3_direct_image_root = DMS_Level3_Base._dms_product_name(self)
         members.append(
             Member({
@@ -1238,6 +1415,49 @@ class AsnMixin_Lv2WFSS:
             exp_type = 'direct_image'
 
         return exp_type
+
+    @staticmethod
+    def find_closest_direct(science, directs):
+        """Find the direct image that is closest to the science
+
+        Closeness is defined as number difference in the exposure sequence number,
+        as defined in the column EXPSPCIN.
+
+        Parameters
+        ----------
+        science : dict
+            The science member to compare against
+
+        directs : [dict[,...]]
+            The available direct members
+
+        Returns
+        -------
+        closest : dict
+            The direct image that is the "closest"
+        """
+        closest = directs[0]  # If the search fails, just use the first.
+        try:
+            expspcin = int(getattr_from_list(science.item, ['expspcin'], _EMPTY)[1])
+        except KeyError:
+            # If exposure sequence cannot be determined, just fall through.
+            logger.debug('Science exposure %s has no EXPSPCIN defined.', science)
+        else:
+            min_diff = 9999         # Initialize to an invalid value.
+            for direct in directs:
+                try:
+                    direct_expspcin = int(getattr_from_list(
+                        direct.item, ['expspcin'], _EMPTY
+                    )[1])
+                except KeyError:
+                    # Try the next one.
+                    logger.debug('Direct image %s has no EXPSPCIN defined.', direct)
+                    continue
+                diff = direct_expspcin - expspcin
+                if diff < min_diff and diff > 0:
+                    min_diff = diff
+                    closest = direct
+        return closest
 
     def _get_opt_element(self):
         """Get string representation of the optical elements

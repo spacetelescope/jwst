@@ -10,19 +10,20 @@ from jwst.stpipe import Step
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
-    """Run the calwebb_spec2 pipeline on a NIRSpec lamp exposure."""
+    """Run the calwebb_spec2 pipeline on a NIRSpec lamp exposure.
+
+    Input data has EXP_TYPE = NRS_AUTOWAVE, OPMODE = IFU
+    """
     rtdata = rtdata_module
 
     # Get the input exposure
-    rtdata.get_data('nirspec/lamp/jw00626030001_02103_00005_nrs1_rate.fits')
+    rtdata.get_data('nirspec/lamp/jw01125006001_03104_00003_nrs1_rate.fits')
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["jwst.pipeline.Spec2Pipeline", rtdata.input,
             "--steps.assign_wcs.save_results=true",
             "--steps.msa_flagging.save_results=true",
-            "--steps.flat_field.save_results=true",
-            # Hardwire extract1d ref file selection until CRDS-525 is implemented
-            "--steps.extract_1d.override_extract1d=/grp/crds/jwst/references/jwst/jwst_nirspec_extract1d_0001.asdf"]
+            "--steps.flat_field.save_results=true"]
     Step.from_cmdline(args)
 
     return rtdata
@@ -32,8 +33,7 @@ def run_pipeline(rtdata_module):
 @pytest.mark.parametrize("suffix", [
     "assign_wcs", "msa_flagging", "flat_field", "cal", "s3d", "x1d"])
 def test_nirspec_lamp_ifu_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
-    """Regression test of the calwebb_spec2 pipeline on a
-       NIRSpec lamp exposure in IFU mode."""
+    """Regression test for calwebb_spec2 on NIRSpec lamp in IFU mode."""
 
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline

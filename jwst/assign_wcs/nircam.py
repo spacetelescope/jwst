@@ -2,6 +2,7 @@ import logging
 
 from astropy import coordinates as coord
 from astropy import units as u
+from astropy.modeling import bind_bounding_box
 from astropy.modeling.models import Identity, Const1D, Mapping, Shift
 import gwcs.coordinate_frames as cf
 
@@ -84,7 +85,10 @@ def imaging(input_model, reference_files):
     subarray2full = subarray_transform(input_model)
     if subarray2full is not None:
         distortion = subarray2full | distortion
-        distortion.bounding_box = bounding_box_from_subarray(input_model)
+
+        # Bind the bounding box to the distortion model using the bounding box ordering
+        # used by GWCS. This makes it clear the bounding box is set correctly to GWCS
+        bind_bounding_box(distortion, bounding_box_from_subarray(input_model, order="F"), order="F")
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
@@ -121,7 +125,9 @@ def imaging_distortion(input_model, reference_files):
     transform = dist.model
 
     try:
-        bbox = transform.bounding_box
+        # Purposefully grab the bounding box tuple from the transform model in the
+        # GWCS ordering
+        bbox = transform.bounding_box.bounding_box(order="F")
     except NotImplementedError:
         # Check if the transform in the reference file has a ``bounding_box``.
         # If not set a ``bounding_box`` equal to the size of the image after
@@ -146,10 +152,15 @@ def imaging_distortion(input_model, reference_files):
                 transform = Shift(col_offset) & Shift(row_offset) | transform
         else:
             log.debug("No match in fitleroffset file.")
-    if bbox is None:
-        transform.bounding_box = transform_bbox_from_shape(input_model.data.shape)
-    else:
-        transform.bounding_box = bbox
+
+    # Bind the bounding box to the distortion model using the bounding box ordering used by GWCS.
+    # This makes it clear the bounding box is set correctly to GWCS
+    bind_bounding_box(
+        transform,
+        transform_bbox_from_shape(input_model.data.shape, order="F") if bbox is None else bbox,
+        order="F"
+    )
+
     return transform
 
 
@@ -178,6 +189,11 @@ def tsgrism(input_model, reference_files):
     frame coordinates around the trace transform.
 
     TSGRISM is only slated to work with GRISMR and Mod A
+
+    For this mode, the source is typically at crpix1 x crpix2, which
+    are stored in keywords XREF_SCI, YREF_SCI.
+    offset special requirements may be encoded in the X_OFFSET parameter,
+    but those are handled in extract_2d.
     """
 
     # make sure this is a grism image
@@ -230,14 +246,12 @@ def tsgrism(input_model, reference_files):
 
     # input into the forward transform is x,y,x0,y0,order
     # where x,y is the pixel location in the grism image
-    # and x0,y0 is the source location in the "direct" image
-    # For this mode, the source is always at crpix1 x crpix2, which
-    # are stored in keywords XREF_SCI, YREF_SCI.
-    # Discussion with nadia that wcsinfo might not be available
-    # here but crpix info could be in wcs.source_location or similar
-    # TSGRISM mode places the sources at crpix, and all subarrays
-    # begin at 0,0, so no need to translate the crpix to full frame
-    # because they already are in full frame coordinates.
+    # and x0,y0 is the source location in the "direct" image.
+    # For this mode (tsgrism), it is assumed that the source is
+    # at the nominal aperture reference point, i.e.,
+    # crpix1 <--> xref_sci and crpix2 <--> yref_sci
+    # offsets in X are handled in extract_2d, e.g. if an offset
+    # special requirement was specified in the APT.
     xc, yc = (input_model.meta.wcsinfo.siaf_xref_sci, input_model.meta.wcsinfo.siaf_yref_sci)
 
     if xc is None:

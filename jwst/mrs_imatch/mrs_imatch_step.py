@@ -9,7 +9,6 @@ JWST pipeline step for image intensity matching for MIRI images.
 import numpy as np
 
 from jwst.datamodels import ModelContainer
-
 from .. stpipe import Step
 from wiimatch.match import match_lsq
 from astropy.stats import sigma_clipped_stats as sigclip
@@ -29,16 +28,18 @@ class MRSIMatchStep(Step):
         # General sky matching parameters:
         bkg_degree = integer(min=0, default=1) # Degree of the polynomial for background fitting
         subtract = boolean(default=False) # subtract computed sky from 'images' cube data?
+        skip = boolean(default=True) # Step must be turned on by parameter reference or user
+    """ # noqa: E501
 
-    """
-
-    reference_file_types = []
+    reference_file_types: list = []
 
     def process(self, images):
-        all_models2d = ModelContainer(images)
+
+        # Provide warning to user this code is deprecated
+        self.log.warning('mrs_imatch is deprecated')
 
         chm = {}
-
+        all_models2d = ModelContainer(images)
         for m in all_models2d:
             ch = m.meta.instrument.channel
             if ch not in chm:

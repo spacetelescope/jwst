@@ -1,7 +1,3 @@
-#
-#  Module for calculation of the optimal rotation for an image plane
-#
-
 import logging
 import numpy as np
 
@@ -14,91 +10,78 @@ log.setLevel(logging.DEBUG)
 
 def create_afflist_rot(rotdegs):
     """
-    Create a list of affine objects with various rotations to use in order to
-    go through and find which fits an image plane data best.
+    Create a list of affine objects with various rotations.
+
+    Find which affine rotation fits an image plane data best.
 
     Parameters
     ----------
-    rotdegs: float 1D array
+    rotdegs : float 1D array
         Search window for rotation fine_tuning, in degrees
 
     Returns
     -------
-    alist: list
+    alist : list
         Affine2d objects having various rotations
     """
     alist = []
-    for nrot, rotd in enumerate(rotdegs):
+    for rotd in rotdegs:
         rotd_ = utils.avoidhexsingularity(rotd)
-        alist.append(utils.Affine2d(rotradccw=np.pi * rotd_ / 180.0,
-                                    name="affrot_{0:+.3f}".format(rotd_)))
+        alist.append(utils.Affine2d(rotradccw=np.pi * rotd_ / 180.0, name=f"affrot_{rotd_:+.3f}"))
     return alist
 
 
-def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
-                  pixel, npix, bandpass, over, holeshape):
+def find_rotation(
+    imagedata, nrm_model, psf_offset, rotdegs, pixel, npix, bandpass, over, holeshape
+):
     """
     Create an affine2d object using the known rotation and scale.
 
     Parameters
     ----------
-    imagedata: 2D float array
-        image data
+    imagedata : 2D float array
+        Image data
 
-    psf_offset: 2D float array
-        offset from image center in detector pixels
+    nrm_model : NRMModel datamodel
+        Datamodel containing mask geometry information
 
-    rotdegs: list of floats
-        range of rotations to search (degrees)
+    psf_offset : 2D float array
+        Offset from image center in detector pixels
 
-    mx: float
-        dimensionless x-magnification
+    rotdegs : list of floats
+        Range of rotations to search (degrees)
 
-    my: float
-        dimensionless y-magnification
+    pixel : float
+        Pixel size
 
-    sx: float
-        dimensionless x shear
+    npix : int
+        Number of detector pixels on a side
 
-    sy: float
-        dimensionless y shear
+    bandpass : 2D float array, default=None
+        Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
 
-    xo: float
-        x-offset in pupil space
+    over : int
+        Oversampling factor
 
-    yo: float
-        y-offset in pupil space
-
-    pixel: float
-        pixel size
-
-    npix: integer
-        number of detector pixels on a side
-
-    bandpass: 2D float array, default=None
-        array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
-
-    over: integer
-        oversampling factor
-
-    holeshape: string
-        shape of hole; possible values are 'circ', 'hex', and 'fringe'
+    holeshape : str
+        Shape of hole; possible values are 'circ', 'hex', and 'fringe'
 
     Returns
     -------
-    new_affine2d: Affine2d object
+    new_affine2d : Affine2d object
         Affine2d object using the known rotation and scale.
-
     """
-    if hasattr(rotdegs, '__iter__') is False:
+    if hasattr(rotdegs, "__iter__") is False:
         rotdegs = (rotdegs,)
 
     affine2d_list = create_afflist_rot(rotdegs)
 
     crosscorr_rots = []
 
-    for (rot, aff) in zip(rotdegs, affine2d_list):
-        jw = lg_model.NrmModel(mask='jwst_g7s6c', holeshape=holeshape, over=over, affine2d=aff)
+    for _rot, aff in zip(rotdegs, affine2d_list, strict=False):
+        jw = lg_model.LgModel(
+            nrm_model, mask="jwst_ami", holeshape=holeshape, over=over, affine2d=aff
+        )
 
         jw.set_pixelscale(pixel)
         # psf_offset in data coords & pixels.  Does it get rotated?  Second order errors poss.
@@ -111,7 +94,8 @@ def find_rotation(imagedata, psf_offset, rotdegs, mx, my, sx, sy, xo, yo,
     rot_measured_d, max_cor = utils.findpeak_1d(crosscorr_rots, rotdegs)
 
     # return convenient affine2d
-    new_affine2d = utils.Affine2d(rotradccw=np.pi * rot_measured_d / 180.0,
-                                  name="{0:.4f}".format(rot_measured_d))
+    new_affine2d = utils.Affine2d(
+        rotradccw=np.pi * rot_measured_d / 180.0, name=f"{rot_measured_d:.4f}"
+    )
 
     return new_affine2d

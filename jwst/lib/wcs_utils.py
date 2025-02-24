@@ -41,19 +41,23 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
         got_wavelength = False
         wl_array = None
 
-    # If we've been asked to use the corrected wavelengths stored in
-    # the wavelength array, return those wavelengths. Otherwise, the
-    # results computed from the WCS object (below) will be returned.
-    if use_wavecorr is not None:
-        if use_wavecorr:
-            return wl_array
-        else:
-            got_wavelength = False  # force wl computation below
-
     # Evaluate the WCS on the grid of pixel indexes, capturing only the
     # resulting wavelength values
     shape = model.data.shape
     grid = np.indices(shape[-2:], dtype=np.float64)
+
+    # If we've been asked to use the uncorrected wavelengths we need to
+    # recalculate them from the wcs by skipping the transformation between
+    # the slit frame and the wavelength corrected slit frame.  If the wavecorr_frame
+    # is not in the wcs assume that the wavelength correction has not been applied.
+    if use_wavecorr is not None:
+        if (not use_wavecorr and hasattr(model.meta, "wcs")
+                and 'wavecorr_frame' in model.meta.wcs.available_frames):
+            wcs = model.meta.wcs
+            detector2slit = wcs.get_transform('detector', 'slit_frame')
+            wavecorr2world = wcs.get_transform("wavecorr_frame", "world")
+            wl_array = (detector2slit | wavecorr2world)(grid[1], grid[0])[2]
+            return wl_array
 
     # If no existing wavelength array, compute one
     if hasattr(model.meta, "wcs") and not got_wavelength:

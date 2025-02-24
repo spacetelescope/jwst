@@ -88,6 +88,18 @@ def test_constraint_get_all_attr():
     assert set(result) == set(expected)
 
 
+def test_constraint_get_all_attr_with_name():
+    """Get attribute value of all constraints with a name"""
+    names = ['sc1', 'sc2']
+    constraints = [
+        SimpleConstraint(name=name)
+        for name in names
+    ]
+    c = Constraint(constraints, name='c1')
+    result = c.get_all_attr('name', name='sc1')
+    assert result == [(constraints[0], 'sc1')]
+
+
 def test_simpleconstraint_reprocess_match():
     """Test options for reprocessing"""
     sc = SimpleConstraint(

@@ -7,7 +7,6 @@ import functools
 import numpy as np
 
 from astropy.coordinates import SkyCoord
-from astropy.utils.misc import isiterable
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
@@ -15,15 +14,14 @@ from astropy.constants import c
 from typing import Union, List
 
 from gwcs import WCS
-from gwcs.wcstools import wcs_from_fiducial, grid_from_bounding_box
+from gwcs.wcstools import grid_from_bounding_box
 from gwcs import utils as gwutils
 from stpipe.exceptions import StpipeExitException
+from stcal.alignment.util import compute_s_region_keyword, compute_s_region_imaging
 
-from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst.datamodels import WavelengthrangeModel
 from stdatamodels.jwst.transforms.models import GrismObject
 
-from . import pointing
 from ..lib.catalog_utils import SkyObject
 
 
@@ -34,7 +32,7 @@ log.setLevel(logging.DEBUG)
 _MAX_SIP_DEGREE = 6
 
 
-__all__ = ["reproject", "wcs_from_footprints", "velocity_correction",
+__all__ = ["reproject", "velocity_correction",
            "MSAFileError", "NoDataOnDetectorError", "compute_scale",
            "calc_rotation_matrix", "wrap_ra", "update_fits_wcsinfo"]
 
@@ -101,7 +99,7 @@ def reproject(wcs1, wcs2):
 
 
 def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
-                  disp_axis: int = None, pscale_ratio: float = None) -> float:
+                  disp_axis: int | None = None, pscale_ratio: float | None = None) -> float:
     """Compute scaling transform.
 
     Parameters
@@ -129,7 +127,7 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
     if spectral and disp_axis is None:
         raise ValueError('If input WCS is spectral, a disp_axis must be given')
 
-    crpix = np.array(wcs.invert(*fiducial))
+    crpix = np.array(wcs.invert(*fiducial, with_bounding_box=False))
 
     delta = np.zeros_like(crpix)
     spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
@@ -139,8 +137,8 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
     crval_with_offsets = wcs(*crpix_with_offsets, with_bounding_box=False)
 
     coords = SkyCoord(ra=crval_with_offsets[spatial_idx[0]], dec=crval_with_offsets[spatial_idx[1]], unit="deg")
-    xscale = np.abs(coords[0].separation(coords[1]).value)
-    yscale = np.abs(coords[0].separation(coords[2]).value)
+    xscale: float = np.abs(coords[0].separation(coords[1]).value)
+    yscale: float = np.abs(coords[0].separation(coords[2]).value)
 
     if pscale_ratio is not None:
         xscale *= pscale_ratio
@@ -151,7 +149,8 @@ def compute_scale(wcs: WCS, fiducial: Union[tuple, np.ndarray],
         # Assuming disp_axis is consistent with DataModel.meta.wcsinfo.dispersion.direction
         return yscale if disp_axis == 1 else xscale
 
-    return np.sqrt(xscale * yscale)
+    scale: float = np.sqrt(xscale * yscale)
+    return scale
 
 
 def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> List[float]:
@@ -195,163 +194,6 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
     pc2_2 = np.cos(rel_angle)
 
     return [pc1_1, pc1_2, pc2_1, pc2_2]
-
-
-def wcs_from_footprints(dmodels, refmodel=None, transform=None, bounding_box=None,
-                        pscale_ratio=None, pscale=None, rotation=None,
-                        shape=None, crpix=None, crval=None):
-    """
-    Create a WCS from a list of input data models.
-
-    A fiducial point in the output coordinate frame is created from  the
-    footprints of all WCS objects. For a spatial frame this is the center
-    of the union of the footprints. For a spectral frame the fiducial is in
-    the beginning of the footprint range.
-    If ``refmodel`` is None, the first WCS object in the list is considered
-    a reference. The output coordinate frame and projection (for celestial frames)
-    is taken from ``refmodel``.
-    If ``transform`` is not supplied, a compound transform is created using
-    CDELTs and PC.
-    If ``bounding_box`` is not supplied, the bounding_box of the new WCS is computed
-    from bounding_box of all input WCSs.
-
-    Parameters
-    ----------
-    dmodels : list of `~jwst.datamodels.JwstDataModel`
-        A list of data models.
-    refmodel : `~jwst.datamodels.JwstDataModel`, optional
-        This model's WCS is used as a reference.
-        WCS. The output coordinate frame, the projection and a
-        scaling and rotation transform is created from it. If not supplied
-        the first model in the list is used as ``refmodel``.
-    transform : `~astropy.modeling.core.Model`, optional
-        A transform, passed to :meth:`~gwcs.wcstools.wcs_from_fiducial`
-        If not supplied Scaling | Rotation is computed from ``refmodel``.
-    bounding_box : tuple, optional
-        Bounding_box of the new WCS.
-        If not supplied it is computed from the bounding_box of all inputs.
-    pscale_ratio : float, None, optional
-        Ratio of input to output pixel scale. Ignored when either
-        ``transform`` or ``pscale`` are provided.
-    pscale : float, None, optional
-        Absolute pixel scale in degrees. When provided, overrides
-        ``pscale_ratio``. Ignored when ``transform`` is provided.
-    rotation : float, None, optional
-        Position angle of output image’s Y-axis relative to North.
-        A value of 0.0 would orient the final output image to be North up.
-        The default of `None` specifies that the images will not be rotated,
-        but will instead be resampled in the default orientation for the camera
-        with the x and y axes of the resampled image corresponding
-        approximately to the detector axes. Ignored when ``transform`` is
-        provided.
-    shape : tuple of int, None, optional
-        Shape of the image (data array) using ``numpy.ndarray`` convention
-        (``ny`` first and ``nx`` second). This value will be assigned to
-        ``pixel_shape`` and ``array_shape`` properties of the returned
-        WCS object.
-    crpix : tuple of float, None, optional
-        Position of the reference pixel in the image array.  If ``crpix`` is not
-        specified, it will be set to the center of the bounding box of the
-        returned WCS object.
-    crval : tuple of float, None, optional
-        Right ascension and declination of the reference pixel. Automatically
-        computed if not provided.
-
-    """
-    bb = bounding_box
-    wcslist = [im.meta.wcs for im in dmodels]
-
-    if not isiterable(wcslist):
-        raise ValueError("Expected 'wcslist' to be an iterable of WCS objects.")
-
-    if not all([isinstance(w, WCS) for w in wcslist]):
-        raise TypeError("All items in wcslist are to be instances of gwcs.WCS.")
-
-    if refmodel is None:
-        refmodel = dmodels[0]
-    else:
-        if not isinstance(refmodel, JwstDataModel):
-            raise TypeError("Expected refmodel to be an instance of DataModel.")
-
-    fiducial = compute_fiducial(wcslist, bb)
-    if crval is not None:
-        # overwrite spatial axes with user-provided CRVAL:
-        i = 0
-        for k, axt in enumerate(wcslist[0].output_frame.axes_type):
-            if axt == 'SPATIAL':
-                fiducial[k] = crval[i]
-                i += 1
-
-    ref_fiducial = np.array([refmodel.meta.wcsinfo.ra_ref, refmodel.meta.wcsinfo.dec_ref])
-
-    prj = astmodels.Pix2Sky_TAN()
-
-    if transform is None:
-        transform = []
-        wcsinfo = pointing.wcsinfo_from_model(refmodel)
-        sky_axes, spec, other = gwutils.get_axes(wcsinfo)
-
-        # Need to put the rotation matrix (List[float, float, float, float])
-        # returned from calc_rotation_matrix into the correct shape for
-        # constructing the transformation
-        v3yangle = np.deg2rad(refmodel.meta.wcsinfo.v3yangle)
-        vparity = refmodel.meta.wcsinfo.vparity
-        if rotation is None:
-            roll_ref = np.deg2rad(refmodel.meta.wcsinfo.roll_ref)
-        else:
-            roll_ref = np.deg2rad(rotation) + (vparity * v3yangle)
-
-        pc = np.reshape(
-            calc_rotation_matrix(roll_ref, v3yangle, vparity=vparity),
-            (2, 2)
-        )
-
-        rotation = astmodels.AffineTransformation2D(pc, name='pc_rotation_matrix')
-        transform.append(rotation)
-
-        if sky_axes:
-            if not pscale:
-                pscale = compute_scale(refmodel.meta.wcs, ref_fiducial,
-                                       pscale_ratio=pscale_ratio)
-            transform.append(astmodels.Scale(pscale, name='cdelt1') & astmodels.Scale(pscale, name='cdelt2'))
-
-        if transform:
-            transform = functools.reduce(lambda x, y: x | y, transform)
-
-    out_frame = refmodel.meta.wcs.output_frame
-    input_frame = refmodel.meta.wcs.input_frame
-    wnew = wcs_from_fiducial(fiducial, coordinate_frame=out_frame, projection=prj,
-                             transform=transform, input_frame=input_frame)
-
-    footprints = [w.footprint().T for w in wcslist]
-    domain_bounds = np.hstack([wnew.backward_transform(*f) for f in footprints])
-    axis_min_values = np.min(domain_bounds, axis=1)
-    domain_bounds = (domain_bounds.T - axis_min_values).T
-
-    output_bounding_box = []
-    for axis in out_frame.axes_order:
-        axis_min, axis_max = domain_bounds[axis].min(), domain_bounds[axis].max()
-        output_bounding_box.append((axis_min, axis_max))
-
-    output_bounding_box = tuple(output_bounding_box)
-    if crpix is None:
-        offset1, offset2 = wnew.backward_transform(*fiducial)
-        offset1 -= axis_min_values[0]
-        offset2 -= axis_min_values[1]
-    else:
-        offset1, offset2 = crpix
-    offsets = astmodels.Shift(-offset1, name='crpix1') & astmodels.Shift(-offset2, name='crpix2')
-
-    wnew.insert_transform('detector', offsets, after=True)
-    wnew.bounding_box = output_bounding_box
-
-    if shape is None:
-        shape = [int(axs[1] - axs[0] + 0.5) for axs in output_bounding_box[::-1]]
-
-    wnew.pixel_shape = shape[::-1]
-    wnew.array_shape = shape
-
-    return wnew
 
 
 def compute_fiducial(wcslist, bounding_box=None):
@@ -879,7 +721,7 @@ def get_num_msa_open_shutters(shutter_state):
     return num
 
 
-def transform_bbox_from_shape(shape):
+def transform_bbox_from_shape(shape, order="C"):
     """Create a bounding box from the shape of the data.
 
     This is appropriate to attached to a transform.
@@ -888,15 +730,19 @@ def transform_bbox_from_shape(shape):
     ----------
     shape : tuple
         The shape attribute from a `numpy.ndarray` array
+    order : str
+        The order of the array.  Either "C" or "F".
 
     Returns
     -------
     bbox : tuple
-        Bounding box in y, x order.
+        Bounding box in y, x order if order is "C" (default)
+        Boundsing box in x, y order if order is "F"
     """
     bbox = ((-0.5, shape[-2] - 0.5),
             (-0.5, shape[-1] - 0.5))
-    return bbox
+
+    return bbox if order == "C" else bbox[::-1]
 
 
 def wcs_bbox_from_shape(shape):
@@ -918,7 +764,7 @@ def wcs_bbox_from_shape(shape):
     return bbox
 
 
-def bounding_box_from_subarray(input_model):
+def bounding_box_from_subarray(input_model, order='C'):
     """Create a bounding box from the subarray size.
 
     Note: The bounding_box assumes full frame coordinates.
@@ -929,11 +775,14 @@ def bounding_box_from_subarray(input_model):
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
         The data model.
+    order : str
+        The order of the array.  Either "C" or "F".
 
     Returns
     -------
     bbox : tuple
-        Bounding box in y, x order.
+        Bounding box in y, x order if order is "C" (default)
+        Boundsing box in x, y order if order is "F"
     """
     bb_xstart = -0.5
     bb_xend = -0.5
@@ -946,33 +795,16 @@ def bounding_box_from_subarray(input_model):
         bb_yend = input_model.meta.subarray.ysize - 0.5
 
     bbox = ((bb_ystart, bb_yend), (bb_xstart, bb_xend))
-    return bbox
+    return bbox if order == 'C' else bbox[::-1]
 
 
 def update_s_region_imaging(model):
     """
     Update the ``S_REGION`` keyword using ``WCS.footprint``.
     """
-
-    bbox = model.meta.wcs.bounding_box
-
-    if bbox is None:
-        bbox = wcs_bbox_from_shape(model.data.shape)
-        model.meta.wcs.bounding_box = bbox
-
-    # footprint is an array of shape (2, 4) as we
-    # are interested only in the footprint on the sky
-    footprint = model.meta.wcs.footprint(bbox, center=True, axis_type="spatial").T
-    # take only imaging footprint
-    footprint = footprint[:2, :]
-
-    # Make sure RA values are all positive
-    negative_ind = footprint[0] < 0
-    if negative_ind.any():
-        footprint[0][negative_ind] = 360 + footprint[0][negative_ind]
-
-    footprint = footprint.T
-    update_s_region_keyword(model, footprint)
+    s_region = compute_s_region_imaging(model.meta.wcs, shape=model.data.shape, center=False)
+    if s_region is not None:
+        model.meta.wcsinfo.s_region = s_region
 
 
 def compute_footprint_spectral(model):
@@ -1051,18 +883,9 @@ def update_s_region_nrs_slit(slit):
 def update_s_region_keyword(model, footprint):
     """ Update the S_REGION keyword.
     """
-    s_region = (
-        "POLYGON ICRS "
-        " {0:.9f} {1:.9f}"
-        " {2:.9f} {3:.9f}"
-        " {4:.9f} {5:.9f}"
-        " {6:.9f} {7:.9f}".format(*footprint.flatten()))
-    if "nan" in s_region:
-        # do not update s_region if there are NaNs.
-        log.info("There are NaNs in s_region, S_REGION not updated.")
-    else:
+    s_region = compute_s_region_keyword(footprint)
+    if s_region is not None:
         model.meta.wcsinfo.s_region = s_region
-        log.info("Update S_REGION to {}".format(model.meta.wcsinfo.s_region))
 
 
 def compute_footprint_nrs_ifu(dmodel, mod):
@@ -1253,8 +1076,10 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
     return onslice_ind
 
 
-def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
-                        crpix=None, projection='TAN', imwcs=None, **kwargs):
+def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None,
+                        max_inv_pix_error=0.01, inv_degree=None,
+                        npoints=12, crpix=None, projection='TAN',
+                        imwcs=None, **kwargs):
     """
     Update ``datamodel.meta.wcsinfo`` based on a FITS WCS + SIP approximation
     of a GWCS object. By default, this function will approximate
@@ -1280,7 +1105,6 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
 
     Parameters
     ----------
-
     datamodel : `ImageModel`
         The input data model for imaging or WFSS mode whose ``meta.wcsinfo``
         field should be updated from GWCS. By default, ``datamodel.meta.wcs``
@@ -1306,6 +1130,23 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
         to be fit to the WCS transformation. In this case
         ``max_pixel_error`` is ignored.
 
+    max_inv_pix_error : float, None, optional
+        Maximum allowed inverse error over the domain of the pixel array
+        in pixel units. With the default value of `None` no inverse
+        is generated.
+
+    inv_degree : int, iterable, None, optional
+        Degree of the SIP polynomial. Default value `None` indicates that
+        all allowed degree values (``[1...6]``) will be considered and
+        the lowest degree that meets accuracy requerements set by
+        ``max_pix_error`` will be returned. Alternatively, ``degree`` can be
+        an iterable containing allowed values for the SIP polynomial degree.
+        This option is similar to default `None` but it allows caller to
+        restrict the range of allowed SIP degrees used for fitting.
+        Finally, ``degree`` can be an integer indicating the exact SIP degree
+        to be fit to the WCS transformation. In this case
+        ``max_inv_pixel_error`` is ignored.
+
     npoints : int, optional
         The number of points in each dimension to sample the bounding box
         for use in the SIP fit. Minimum number of points is 3.
@@ -1313,7 +1154,7 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
     crpix : list of float, None, optional
         Coordinates (1-based) of the reference point for the new FITS WCS.
         When not provided, i.e., when set to `None` (default) the reference
-        pixel already specified in ``wcsinfo`` will be re-used. If
+        pixel already specified in ``wcsinfo`` will be reused. If
         ``wcsinfo`` does not contain ``crpix`` information, then the
         reference pixel will be chosen near the center of the bounding box
         for axes corresponding to the celestial frame.
@@ -1345,24 +1186,6 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
 
     Other Parameters
     ----------------
-
-    max_inv_pix_error : float, None, optional
-        Maximum allowed inverse error over the domain of the pixel array
-        in pixel units. With the default value of `None` no inverse
-        is generated.
-
-    inv_degree : int, iterable, None, optional
-        Degree of the SIP polynomial. Default value `None` indicates that
-        all allowed degree values (``[1...6]``) will be considered and
-        the lowest degree that meets accuracy requerements set by
-        ``max_pix_error`` will be returned. Alternatively, ``degree`` can be
-        an iterable containing allowed values for the SIP polynomial degree.
-        This option is similar to default `None` but it allows caller to
-        restrict the range of allowed SIP degrees used for fitting.
-        Finally, ``degree`` can be an integer indicating the exact SIP degree
-        to be fit to the WCS transformation. In this case
-        ``max_inv_pixel_error`` is ignored.
-
     bounding_box : tuple, None, optional
         A pair of tuples, each consisting of two numbers
         Represents the range of pixel values in both dimensions
@@ -1371,11 +1194,9 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
     verbose : bool, optional
         Print progress of fits.
 
-
     Returns
     -------
     FITS header with all SIP WCS keywords
-
 
     Raises
     ------
@@ -1384,10 +1205,8 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
         specified accuracy (both forward and inverse, both rms and maximum)
         is not achieved an exception will be raised.
 
-
     Notes
     -----
-
     Use of this requires a judicious choice of required accuracies.
     Attempts to use higher degrees (~7 or higher) will typically fail due
     to floating point problems that arise with high powers.
@@ -1408,15 +1227,11 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
     # make a copy of kwargs:
     kwargs = {k: v for k, v in kwargs.items()}
 
-    # override default values for "other parameters":
-    max_inv_pix_error = kwargs.pop('max_inv_pix_error', None)
-    inv_degree = kwargs.pop('inv_degree', None)
-    if inv_degree is None:
-        inv_degree = range(1, _MAX_SIP_DEGREE)
-
-    # limit default 'degree' range to _MAX_SIP_DEGREE:
+    # limit default 'degree' ranges to _MAX_SIP_DEGREE:
     if degree is None:
         degree = range(1, _MAX_SIP_DEGREE)
+    if inv_degree is None:
+        inv_degree = range(1, _MAX_SIP_DEGREE)
 
     hdr = imwcs.to_fits_sip(
         max_pix_error=max_pix_error,
@@ -1425,6 +1240,7 @@ def update_fits_wcsinfo(datamodel, max_pix_error=0.01, degree=None, npoints=32,
         inv_degree=inv_degree,
         npoints=npoints,
         crpix=crpix,
+        projection=projection,
         **kwargs
     )
 

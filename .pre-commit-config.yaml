@@ -1,0 +1,90 @@
+exclude: ".*\\.asdf$"
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-ast
+      - id: check-case-conflict
+      - id: check-yaml
+        args: ["--unsafe"]
+      - id: check-toml
+      - id: check-merge-conflict
+      - id: check-symlinks
+      - id: debug-statements
+      - id: detect-private-key
+      # - id: end-of-file-fixer
+      # - id: trailing-whitespace
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: 'v0.9.2'
+    hooks:
+      - id: ruff
+        args: ["--fix"]
+      - id: ruff-format
+  - repo: https://github.com/codespell-project/codespell
+    rev: v2.4.0
+    hooks:
+    - id: codespell
+      args: ["--write-changes", "--summary"]
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.6.1  # Use the latest stable version
+    hooks:
+      - id: mypy
+  - repo: https://github.com/numpy/numpydoc
+    rev: v1.8.0
+    hooks:
+      - id: numpydoc-validation
+        exclude: |
+          (?x)^(
+            jwst/assign_wcs/.* |
+            jwst/associations/.* |
+            jwst/background/.* |
+            jwst/coron/.* |
+            jwst/cube_build/.* |
+            jwst/cube_skymatch/.* |
+            jwst/dark_current/.* |
+            jwst/emicorr/.* |
+            jwst/engdblog/.* |
+            jwst/exp_to_source/.* |
+            jwst/extract_1d/apply_apcorr.py |
+            jwst/extract_1d/extract.py |
+            jwst/extract_1d/extract1d.py |
+            jwst/extract_1d/extract_1d_step.py |
+            jwst/extract_1d/ifu.py |
+            jwst/extract_1d/psf_profile.py |
+            jwst/extract_1d/source_location.py |
+            jwst/extract_1d/spec_wcs.py |
+            jwst/extract_1d/tests/conftest.py |
+            jwst/extract_2d/.* |
+            jwst/flatfield/.* |
+            jwst/fringe/.* |
+            jwst/guider_cds/.* |
+            jwst/ipc/.* |
+            jwst/lib/.* |
+            jwst/linearity/.* |
+            jwst/mrs_imatch/.* |
+            jwst/persistence/.* |
+            jwst/photom/.* |
+            jwst/refpix/.* |
+            jwst/regtest/.* |
+            jwst/resample/.* |
+            jwst/reset/.* |
+            jwst/residual_fringe/.* |
+            jwst/rscd/.* |
+            jwst/saturation/.* |
+            jwst/scripts/.* |
+            jwst/spectral_leak/.* |
+            jwst/srctype/.* |
+            jwst/straylight/.* |
+            jwst/superbias/.* |
+            jwst/tests/.* |
+            jwst/tso_photometry/.* |
+            jwst/wfs_combine/.* |
+            jwst/white_light/.* |
+            jwst/conftest.py |
+            .*/tests/.* |
+            setup.py |
+            pytest_jwst/.* |
+            docs/.*
+          )$

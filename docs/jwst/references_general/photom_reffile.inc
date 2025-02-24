@@ -298,15 +298,15 @@ TIMECOEFF_CH4 [1]_  BINTABLE    2    TFIELDS = 5  N/A
 
 The SCI extension contains a 2D array of inverse sensitivity factors
 corresponding to each pixel in a 2D MRS slice image. The sensitivity factors
-are in units of (MJy/pixel)/(DN/sec). The ERR extension contains a 2D array of
+are in units of (MJy/steradian)/(DN/sec). The ERR extension contains a 2D array of
 uncertainties for the SCI values, in the same units. The DQ extension
 contains a 2D array of bit-encoded data quality flags for the SCI values.
 The DQ_DEF extension contains a table listing the definitions of the values
 used in the DQ array. The PIXSIZ extension contains a 2D array of pixel
-sizes (i.e. solid angles), in units of square-arcsec.
+sizes (i.e. solid angles), in units of steradians.
 
-The SCI and PIXSIZ array values are both divided into the science product
-SCI and ERR arrays, yielding surface brightness in units of mJy/sq-arcsec.
+The SCI array values are divided into the science product
+SCI and ERR arrays, yielding surface brightness in units of MJy/steradian.
 
 Scalar PHOTMJSR and PHOTUJA2 values are stored in primary header keywords
 in the MIRI MRS PHOTOM reference files and are copied into the science

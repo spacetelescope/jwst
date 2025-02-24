@@ -1,3 +1,4 @@
+import logging
 import os
 from os.path import (
     abspath,
@@ -15,8 +16,10 @@ from stpipe.config_parser import ValidationError
 
 from stdatamodels.jwst import datamodels
 
+from jwst import __version__ as jwst_version
 from jwst.white_light import WhiteLightStep
 from jwst.stpipe import Step
+from jwst.tests.helpers import LogWatcher
 
 from jwst.stpipe.tests.steps import (
     EmptyPipeline, MakeListPipeline, MakeListStep,
@@ -105,7 +108,7 @@ def test_saving_pars(tmp_path):
     """Save the step parameters from the commandline"""
     cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
     saved_path = os.path.join(tmp_path, 'savepars.asdf')
-    step = Step.from_cmdline([
+    Step.from_cmdline([
         cfg_path,
         '--save-parameters',
         str(saved_path)
@@ -119,8 +122,6 @@ def test_saving_pars(tmp_path):
     with asdf.open(str(saved_path)) as af:
         config = StepConfig.from_asdf(af)
         assert config.parameters == original_config.parameters
-
-    step.closeout()
 
 
 @pytest.mark.parametrize(
@@ -609,3 +610,22 @@ def test_call_with_config(caplog, tmp_cwd):
     ProperPipeline.call(model, config_file=cfg)
 
     assert "newpar1" in caplog.text
+
+
+def test_finalize_logging(monkeypatch):
+    """
+    Check that the jwst version and crds context are logged
+    when a step/pipeline is run.
+    """
+    pipeline = EmptyPipeline()
+    model = datamodels.ImageModel()
+    watcher = LogWatcher(f"Results used jwst version: {jwst_version}")
+    monkeypatch.setattr(logging.getLogger("jwst.stpipe.core"), "info", watcher)
+    pipeline.run(model)
+    assert watcher.seen
+
+
+def test_dunder_call_warning():
+    pipeline = EmptyPipeline()
+    with pytest.warns(UserWarning, match="Step.__call__ is deprecated"):
+        pipeline(None)

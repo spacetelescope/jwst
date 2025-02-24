@@ -20,15 +20,26 @@ class PathLossStep(Step):
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type
         user_slit_loc = float(default=None)   # User-provided correction to MIRI LRS source location
-    """
+    """  # noqa: E501
 
-    reference_file_types = ['pathloss']
+    reference_file_types = ["pathloss"]
 
-    def process(self, input):
+    def process(self, model_input):
+        """
+        Execute the pathloss step.
 
+        Parameters
+        ----------
+        model_input : DataModel
+            The input datamodel to be corrected.
+
+        Returns
+        -------
+        result : DataModel
+            The result of the pathloss calibration step.
+        """
         # Open the input data model
-        with datamodels.open(input) as input_model:
-
+        with datamodels.open(model_input) as input_model:
             if self.use_correction_pars:
                 correction_pars = self.correction_pars
                 pathloss_model = None
@@ -36,15 +47,15 @@ class PathLossStep(Step):
                 correction_pars = None
 
                 # Get the name of the pathloss reference file to use
-                self.pathloss_name = self.get_reference_file(input_model, 'pathloss')
-                self.log.info(f'Using PATHLOSS reference file {self.pathloss_name}')
+                self.pathloss_name = self.get_reference_file(input_model, "pathloss")
+                self.log.info(f"Using PATHLOSS reference file {self.pathloss_name}")
 
                 # Check for a valid reference file
-                if self.pathloss_name == 'N/A':
-                    self.log.warning('No PATHLOSS reference file found')
-                    self.log.warning('Pathloss step will be skipped')
+                if self.pathloss_name == "N/A":
+                    self.log.warning("No PATHLOSS reference file found")
+                    self.log.warning("Pathloss step will be skipped")
                     result = input_model.copy()
-                    result.meta.cal_step.pathloss = 'SKIPPED'
+                    result.meta.cal_step.pathloss = "SKIPPED"
                     return result
 
                 # Open the pathloss ref file data model
@@ -55,9 +66,12 @@ class PathLossStep(Step):
 
             # Do the pathloss correction
             result, self.correction_pars = pathloss.do_correction(
-                input_model, pathloss_model,
-                inverse=self.inverse, source_type=self.source_type,
-                correction_pars=correction_pars, user_slit_loc=self.user_slit_loc
+                input_model,
+                pathloss_model,
+                inverse=self.inverse,
+                source_type=self.source_type,
+                correction_pars=correction_pars,
+                user_slit_loc=self.user_slit_loc,
             )
 
             if pathloss_model:

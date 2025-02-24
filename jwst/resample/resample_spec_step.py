@@ -3,16 +3,22 @@ __all__ = ["ResampleSpecStep"]
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.lib.wcs_utils import get_wavelengths
+from jwst.resample.resample_utils import load_custom_wcs
+
 from . import resample_spec, ResampleStep
 from ..exp_to_source import multislit_to_container
 from ..assign_wcs.util import update_s_region_spectral
+from ..stpipe import Step
+
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
 
 
-class ResampleSpecStep(ResampleStep):
+class ResampleSpecStep(Step):
     """
     ResampleSpecStep: Resample input data onto a regular grid using the
     drizzle algorithm.
@@ -20,13 +26,26 @@ class ResampleSpecStep(ResampleStep):
     Parameters
     -----------
     input : `~jwst.datamodels.MultiSlitModel`, `~jwst.datamodels.ModelContainer`, Association
-        A singe datamodel, a container of datamodels, or an association file
+        A single datamodel, a container of datamodels, or an association file
     """
 
     class_alias = "resample_spec"
 
+    spec = """
+        pixfrac = float(min=0.0, max=1.0, default=1.0)  # Pixel shrinkage factor
+        kernel = option('square', 'point', default='square')  # Flux distribution kernel
+        fillval = string(default='NAN')  # Output value for pixels with no weight or flux
+        weight_type = option('ivm', 'exptime', None, default='ivm')  # Input image weighting type
+        output_shape = int_list(min=2, max=2, default=None)  # [x, y] order
+        pixel_scale_ratio = float(default=1.0)  # Ratio of input to output spatial pixel scale
+        pixel_scale = float(default=None)  # Spatial pixel scale in arcsec
+        output_wcs = string(default='')  # Custom output WCS
+        single = boolean(default=False)  # Resample each input to its own output grid
+        blendheaders = boolean(default=True)  # Blend metadata from inputs into output
+        in_memory = boolean(default=True)  # Keep images in memory
+    """ # noqa: E501
+
     def process(self, input):
-        self.wht_type = self.weight_type
         input_new = datamodels.open(input)
 
         # Check if input_new is a MultiSlitModel
@@ -35,7 +54,7 @@ class ResampleSpecStep(ResampleStep):
         #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
         if model_is_msm and len((input_new[0]).shape) == 3:
             self.log.warning('Resample spec step will be skipped')
-            input_new.meta.cal_step.resample_spec = 'SKIPPED'
+            input_new.meta.cal_step.resample = 'SKIPPED'
 
             return input_new
 
@@ -60,40 +79,12 @@ class ResampleSpecStep(ResampleStep):
             output = input_new.meta.filename
             self.blendheaders = False
 
-        # Get the drizpars reference file
-        for reftype in self.reference_file_types:
-            ref_filename = self.get_reference_file(input_models[0], reftype)
-
-        if ref_filename != 'N/A':
-            self.log.info('Drizpars reference file: {}'.format(ref_filename))
-            kwargs = self.get_drizpars(ref_filename, input_models)
-        else:
-            # Deal with NIRSpec, which currently has no default drizpars reffile
-            self.log.info("No DRIZPARS reffile")
-            kwargs = self._set_spec_defaults()
-            kwargs['blendheaders'] = self.blendheaders
-
-        kwargs['output_shape'] = self._check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
-        )
-        kwargs['output_wcs'] = self._load_custom_wcs(
-            self.output_wcs,
-            kwargs['output_shape']
-        )
-
-        kwargs['allowed_memory'] = self.allowed_memory
+        # Setup drizzle-related parameters
+        kwargs = self.get_drizpars()
         kwargs['output'] = output
-
-        # Issue a warning about the use of exptime weighting
-        if self.wht_type == 'exptime':
-            self.log.warning("Use of EXPTIME weighting will result in incorrect")
-            self.log.warning("propagated errors in the resampled product")
-
-        # Call resampling
         self.drizpars = kwargs
 
+        # Call resampling
         if isinstance(input_models[0], MultiSlitModel):
             result = self._process_multislit(input_models)
 
@@ -106,8 +97,19 @@ class ResampleSpecStep(ResampleStep):
             result = self._process_slit(input_models)
 
         # Update ASNTABLE in output
+        result.meta.cal_step.resample = "COMPLETE"
         result.meta.asn.table_name = input_models[0].meta.asn.table_name
         result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
+
+        # populate the result wavelength attribute for MultiSlitModel
+        if isinstance(result, MultiSlitModel):
+            for slit_idx, slit in enumerate(result.slits):
+                wl_array = get_wavelengths(result.slits[slit_idx])
+                result.slits[slit_idx].wavelength = wl_array
+        else:
+            # populate the result wavelength attribute for SlitModel
+            wl_array = get_wavelengths(result)
+            result.wavelength = wl_array
 
         return result
 
@@ -130,23 +132,88 @@ class ResampleSpecStep(ResampleStep):
 
         result.update(input_models[0])
 
+        pscale_ratio = None
         for container in containers.values():
-            resamp = resample_spec.ResampleSpecData(container, **self.drizpars)
+            # Make sure all input models have consistent NaN and DO_NOT_USE values
+            for model in container:
+                match_nans_and_flags(model)
 
-            drizzled_models = resamp.do_drizzle()
+            # Call the resampling routine
+            if self.single:
+                resamp = resample_spec.ResampleSpec(
+                    container,
+                    enable_var=False,
+                    compute_err="driz_err",
+                    **self.drizpars
+                )
+                drizzled_library = resamp.resample_many_to_many(
+                    in_memory=self.in_memory
+                )
+            else:
+                resamp = resample_spec.ResampleSpec(
+                    container,
+                    enable_var=True,
+                    compute_err="from_var",
+                    **self.drizpars
+                )
+                drizzled_library = resamp.resample_many_to_one()
+                drizzled_library = ModelLibrary([drizzled_library,], on_disk=False)
 
-            for model in drizzled_models:
-                self.update_slit_metadata(model)
-                update_s_region_spectral(model)
-                result.slits.append(model)
+            with drizzled_library:
+                for i, model in enumerate(drizzled_library):
+                    self.update_slit_metadata(model)
+                    update_s_region_spectral(model)
+                    result.slits.append(model)
+                    drizzled_library.shelve(model, i, modify=False)
+            del drizzled_library
 
-        result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.asn_pool_name
-        result.meta.asn.table_name = input_models.asn_table_name
-        result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+            # Keep the first computed pixel scale ratio for storage
+            if self.pixel_scale is not None and pscale_ratio is None:
+                pscale_ratio = resamp.pixel_scale_ratio
+
+        if self.pixel_scale is None or pscale_ratio is None:
+            result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        else:
+            result.meta.resample.pixel_scale_ratio = pscale_ratio
         result.meta.resample.pixfrac = self.pixfrac
 
         return result
+
+    def get_drizpars(self):
+        """
+        Load all drizzle-related parameter values into kwargs list.
+        """
+        # Define the keys pulled from step parameters
+        kwargs = dict(
+            pixfrac=self.pixfrac,
+            kernel=self.kernel,
+            fillval=self.fillval,
+            weight_type=self.weight_type,
+            good_bits=GOOD_BITS,
+            blendheaders=self.blendheaders,
+        )
+
+        # Custom output WCS parameters
+        wcs_pars = {}
+        wcs_pars['output_shape'] = ResampleStep.check_list_pars(
+            self.output_shape,
+            'output_shape',
+            min_vals=[1, 1]
+        )
+        kwargs['output_wcs'] = load_custom_wcs(
+            self.output_wcs,
+            wcs_pars['output_shape']
+        )
+        wcs_pars['pixel_scale'] = self.pixel_scale
+        wcs_pars['pixel_scale_ratio'] = self.pixel_scale_ratio
+
+        # Report values to processing log
+        for k, v in kwargs.items():
+            self.log.debug('   {}={}'.format(k, v))
+
+        kwargs["wcs_pars"] = wcs_pars
+
+        return kwargs
 
     def _process_slit(self, input_models):
         """
@@ -163,17 +230,40 @@ class ResampleSpecStep(ResampleStep):
         result : `~jwst.datamodels.SlitModel`
             The resampled output
         """
+        # Make sure all input models have consistent NaN and DO_NOT_USE values
+        for model in input_models:
+            match_nans_and_flags(model)
 
-        resamp = resample_spec.ResampleSpecData(input_models, **self.drizpars)
+        # Call the resampling routine
+        if self.single:
+            resamp = resample_spec.ResampleSpec(
+                input_models,
+                enable_var=False,
+                compute_err="driz_err",
+                **self.drizpars
+            )
+            drizzled_library = resamp.resample_many_to_many(
+                in_memory=self.in_memory
+            )
+            with drizzled_library:
+                result = drizzled_library.borrow(0)
+                drizzled_library.shelve(result, 0, modify=False)
+            del drizzled_library
 
-        drizzled_models = resamp.do_drizzle()
+        else:
+            resamp = resample_spec.ResampleSpec(
+                input_models,
+                enable_var=True,
+                compute_err="from_var",
+                **self.drizpars
+            )
+            result = resamp.resample_many_to_one()
 
-        result = drizzled_models[0]
-        result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.pool_name = input_models.asn_pool_name
-        result.meta.asn.table_name = input_models.asn_table_name
-        result.meta.bunit_data = drizzled_models[0].meta.bunit_data
-        result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        # result.meta.bunit_data = input_models[0].meta.bunit_data
+        if self.pixel_scale is None:
+            result.meta.resample.pixel_scale_ratio = self.pixel_scale_ratio
+        else:
+            result.meta.resample.pixel_scale_ratio = resamp.pixel_scale_ratio
         result.meta.resample.pixfrac = self.pixfrac
         self.update_slit_metadata(result)
         update_s_region_spectral(result)

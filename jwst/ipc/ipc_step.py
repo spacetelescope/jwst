@@ -14,9 +14,12 @@ class IPCStep(Step):
 
     class_alias = "ipc"
 
+    spec = """
+    """ # noqa: E501
+
     reference_file_types = ['ipc']
 
-    def process(self, input):
+    def process(self, step_input):
         """Apply the IPC correction.
 
         Parameters
@@ -31,7 +34,7 @@ class IPCStep(Step):
         """
 
         # Open the input data model
-        with datamodels.RampModel(input) as input_model:
+        with datamodels.RampModel(step_input) as input_model:
 
             # Get the name of the ipc reference file to use
             self.ipc_name = self.get_reference_file(input_model, 'ipc')
@@ -41,18 +44,20 @@ class IPCStep(Step):
             if self.ipc_name == 'N/A':
                 self.log.warning('No IPC reference file found')
                 self.log.warning('IPC step will be skipped')
-                result = input_model.copy()
-                result.meta.cal_step.ipc = 'SKIPPED'
-                return result
+                input_model.meta.cal_step.ipc = 'SKIPPED'
+                return input_model
 
             # Open the ipc reference file data model
             ipc_model = datamodels.IPCModel(self.ipc_name)
 
-            # Do the ipc correction
-            result = ipc_corr.do_correction(input_model, ipc_model)
+            # Work on a copy
+            result = input_model.copy()
 
-            # Close the reference file and update the step status
-            ipc_model.close()
+            # Do the ipc correction
+            result = ipc_corr.do_correction(result, ipc_model)
             result.meta.cal_step.ipc = 'COMPLETE'
+
+            # Cleanup
+            del ipc_model
 
         return result

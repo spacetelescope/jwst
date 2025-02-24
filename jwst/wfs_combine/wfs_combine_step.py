@@ -23,13 +23,16 @@ class WfsCombineStep(Step):
         blur_size = integer(default=10)
         n_size = integer(default=2)
         suffix = string(default="wfscmb")
-    """
+    """ # noqa: E501
+
+    def make_output_path(self, basepath, *args, **kwargs):
+        # bypass all stpipe filename formatting
+        return basepath
 
     def process(self, input_table):
 
         self.suffix = 'wfscmb'
         self.output_use_model = True
-        self.name_format = False
 
         # Load the input ASN table
         asn_table = self.load_as_level3_asn(input_table)
@@ -69,7 +72,8 @@ class WfsCombineStep(Step):
             output_model.meta.cal_step.wfs_combine = 'COMPLETE'
             output_model.meta.asn.pool_name = asn_table['asn_pool']
             output_model.meta.asn.table_name = os.path.basename(input_table)
-            output_model.meta.filename = which_set['name']
+            # format the filename here
+            output_model.meta.filename = which_set['name'].format(suffix=self.suffix) + self.output_ext
 
             output_container.append(output_model)
 

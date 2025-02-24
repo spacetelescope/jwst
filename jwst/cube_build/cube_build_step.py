@@ -1,15 +1,18 @@
 """ This is the main ifu spectral cube building routine.
 """
 
+import time
 from jwst.datamodels import ModelContainer
-
-from ..stpipe import Step
+from jwst.lib.pipe_utils import match_nans_and_flags
 from . import cube_build
 from . import ifu_cube
 from . import data_types
+import asdf
+from asdf.exceptions import ValidationError
 from ..assign_wcs.util import update_s_region_keyword
-import time
-
+from ..stpipe import Step, record_step_status
+from pathlib import Path
+from astropy import units
 __all__ = ["CubeBuildStep"]
 
 
@@ -28,7 +31,7 @@ class CubeBuildStep (Step):
        merges them with any user-provided values.
        2. Creates the output WCS from the input images and defines the mapping
        between all the input arrays and the output array
-       3. Passes the input data to the function to map all thei input data
+       3. Passes the input data to the function to map all their input data
        to the output array.
        4. Updates the output data model with correct meta data
 
@@ -62,8 +65,9 @@ class CubeBuildStep (Step):
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
          suffix = string(default='s3d')
+         offset_file = string(default=None) # Filename containing a list of Ra and Dec offsets to apply to files.
          debug_spaxel = string(default='-1 -1 -1') # Default not used
-       """
+       """ # noqa: E501
 
     reference_file_types = ['cubepar']
 
@@ -233,7 +237,18 @@ class CubeBuildStep (Step):
                 self.output_type = 'channel'
         self.pars_input['output_type'] = self.output_type
         self.log.info(f'Setting output type to: {self.output_type}')
+# ________________________________________________________________________________
+# If an offset file is provided do some basic checks on the file and its contents.
+# The offset list contains a matching list to the files in the association
+# used in calspec3 (for offline cube building).
+# The offset list is an asdf file.
+        self.offsets = None
 
+        if self.offset_file is not None:
+            offsets = self.check_offset_file()
+            if offsets is not None:
+                self.offsets = offsets
+# ________________________________________________________________________________
 # Read in Cube Parameter Reference file
 # identify what reference file has been associated with these input
 
@@ -274,12 +289,17 @@ class CubeBuildStep (Step):
             'roiw': self.roiw,
             'wavemin': self.wavemin,
             'wavemax': self.wavemax,
+            'offsets': self.offsets,
             'skip_dqflagging': self.skip_dqflagging,
             'suffix': self.suffix,
             'debug_spaxel': self.debug_spaxel}
 
 # ________________________________________________________________________________
 # create an instance of class CubeData
+
+        # Make sure all input models have consistent NaN and DO_NOT_USE values
+        for model in self.input_models:
+            match_nans_and_flags(model)
 
         cubeinfo = cube_build.CubeData(
             self.input_models,
@@ -396,13 +416,12 @@ class CubeBuildStep (Step):
                 if key in cube.meta.wcsinfo.instance:
                     del cube.meta.wcsinfo.instance[key]
         if status_cube == 1:
-            self.skip = True
+            record_step_status(cube_container, "cube_build", success=False)
+        else:
+            record_step_status(cube_container, "cube_build", success=True)
 
         t1 = time.time()
         self.log.debug(f'Time to build all cubes {t1-t0}')
-
-        if status_cube == 1:
-            self.skip = True
 
         input_table.close()
         return cube_container
@@ -525,3 +544,64 @@ class CubeBuildStep (Step):
 # remove duplicates if needed
             self.pars_input['grating'] = list(set(self.pars_input['grating']))
 # ________________________________________________________________________________
+
+    def check_offset_file(self):
+        """Read in an optional ra and dec offset for each file.
+
+        Summary
+        ----------
+        Check that is file is asdf file.
+        Check the file has the correct format using an local schema file.
+        The schema file, ifuoffset.schema.yaml, is located in the jwst/cube_build directory.
+        For each file in the input  association check that there is a corresponding
+        file in the offset file.
+
+       """
+
+        # validate the offset file using the schema file
+        DATA_PATH = Path(__file__).parent
+
+        try:
+            af = asdf.open(self.offset_file, custom_schema=DATA_PATH/'ifuoffset.schema.yaml')
+        except ValidationError:
+            schema_message = ('Validation Error for offset file. Fix the offset file. \n' + \
+                              'The offset file needs to have the same number of elements ' + \
+                              'in the three lists: filename, raoffset and decoffset.\n' +\
+                              'The units need to provided and only arcsec is allowed.')
+
+            raise Exception(schema_message)
+
+        offset_filename = af['filename']
+        offset_ra = af['raoffset']
+        offset_dec = af['decoffset']
+        # Note:
+        # af['units'] is checked by the schema validation. It must be arcsec or a validation error occurs.
+
+        # check that all the file names in input_model are in the offset filename
+        for model in self.input_models:
+            file_check = model.meta.filename
+            if file_check in offset_filename:
+                continue
+            else:
+                af.close()
+                raise ValueError('Error in offset file. A file in the association is not found in offset list %s', file_check)
+
+        # check that all the lists have the same length
+        len_file  = len(offset_filename)
+        len_ra = len(offset_ra)
+        len_dec = len(offset_dec)
+        if (len_file != len_ra or len_ra != len_dec or len_file != len_dec):
+            af.close()
+            raise ValueError('The offset file does not have the same number of values for filename, raoffset, decoffset')
+
+        offset_ra =   offset_ra* units.arcsec
+        offset_dec =   offset_dec* units.arcsec
+
+        # The offset file has passed tests so set the offset dictionary
+        offsets = {}
+        offsets['filename'] = offset_filename
+        offsets['raoffset'] = offset_ra
+        offsets['decoffset'] = offset_dec
+
+        af.close()
+        return offsets

@@ -1,8 +1,8 @@
 .. _resample_step:
 
-==========
-Resampling
-==========
+=======================
+Resampling Imaging Data
+=======================
 
 .. toctree::
    :maxdepth: 2

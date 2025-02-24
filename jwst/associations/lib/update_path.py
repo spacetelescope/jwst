@@ -44,7 +44,8 @@ def update_key_value(obj, target, func_args, mod_func=None):
     the function.
     """
     if mod_func is None:
-        mod_func = lambda value, args: args
+        def mod_func(value, args):
+            return args
 
     if hasattr(obj, 'items'):
         for key, value in obj.items():
@@ -116,7 +117,8 @@ def test_update_key_value_mod_func():
     obj = deepcopy(_test_obj)
     target = 'a'
     new_value = 'changed'
-    mod_func = lambda v, suffix: v + suffix
+    def mod_func(v, suffix):
+        return v + suffix
     update_key_value(obj, target, (new_value,), mod_func=mod_func)
     assert_values = [
         mod_func(value, new_value)

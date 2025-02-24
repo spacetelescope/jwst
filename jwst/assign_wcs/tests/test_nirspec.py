@@ -2,26 +2,25 @@
 Test functions for NIRSPEC WCS - all modes.
 """
 import functools
-from math import cos, sin
 import os.path
+import shutil
+from math import cos, sin
 
-import pytest
+import astropy.units as u
+import astropy.coordinates as coords
 import numpy as np
-from numpy.testing import assert_allclose
+import pytest
 from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy import table
 from astropy import wcs as astwcs
-import astropy.units as u
-import astropy.coordinates as coords
-from gwcs import wcs
-from gwcs import wcstools
+from gwcs import wcs, wcstools
+from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
-from jwst.assign_wcs import nirspec
-from jwst.assign_wcs import assign_wcs_step
+from jwst.assign_wcs import nirspec, assign_wcs_step
 from jwst.assign_wcs.tests import data
 from jwst.assign_wcs.util import MSAFileError, in_ifu_slice
 
@@ -40,7 +39,8 @@ wcs_kw = {'wcsaxes': 2, 'ra_ref': 165, 'dec_ref': 54,
 
 slit_fields_num = ["shutter_id", "dither_position", "xcen", "ycen",
                    "ymin", "ymax", "quadrant", "source_id",
-                   "stellarity", "source_xpos", "source_ypos"]
+                   "stellarity", "source_xpos", "source_ypos",
+                   "slit_xscale", "slit_yscale"]
 
 
 slit_fields_str = ["name", "shutter_state", "source_name", "source_alias"]
@@ -70,6 +70,7 @@ def create_hdul(detector='NRS1'):
     phdu.header['detector'] = detector
     phdu.header['time-obs'] = '8:59:37'
     phdu.header['date-obs'] = '2016-09-05'
+    phdu.header['program'] = '1234'
 
     scihdu = fits.ImageHDU()
     scihdu.header['EXTNAME'] = "SCI"
@@ -91,11 +92,13 @@ def create_reference_files(datamodel):
     return refs
 
 
-def create_nirspec_imaging_file():
+def create_nirspec_imaging_file(filter_name='F290LP'):
     image = create_hdul()
     image[0].header['exp_type'] = 'NRS_IMAGE'
-    image[0].header['filter'] = 'F290LP'
+    image[0].header['filter'] = filter_name
     image[0].header['grating'] = 'MIRROR'
+    image[0].header['lamp'] = 'NONE'
+
     return image
 
 
@@ -161,6 +164,39 @@ def test_nirspec_imaging():
     im.meta.wcs = w
     # Test evaluating the WCS
     im.meta.wcs(1, 2)
+
+    # Test that the MSA to detector transforms can be retrieved
+    det2msa = im.meta.wcs.get_transform('detector', 'msa')
+    result = det2msa(1.0, 2.0)
+    assert len(result) == 3
+
+    msa2det = im.meta.wcs.get_transform('msa', 'detector')
+    result = msa2det(1.0, 2.0)
+    assert len(result) == 2
+
+
+def test_nirspec_imaging_opaque():
+    """Test NIRSpec Imaging mode with OPAQUE filter."""
+    f = create_nirspec_imaging_file(filter_name='OPAQUE')
+    im = datamodels.ImageModel(f)
+
+    # Test creating the WCS
+    refs = create_reference_files(im)
+    pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-.5, .5])
+    w = wcs.WCS(pipe)
+    im.meta.wcs = w
+
+    # Test evaluating the WCS
+    im.meta.wcs(1, 2)
+
+    # Test that the MSA to detector transforms can be retrieved
+    det2msa = im.meta.wcs.get_transform('detector', 'msa')
+    result = det2msa(1.0, 2.0)
+    assert len(result) == 3
+
+    msa2det = im.meta.wcs.get_transform('msa', 'detector')
+    result = msa2det(1.0, 2.0)
+    assert len(result) == 2
 
 
 def test_nirspec_ifu_against_esa(wcs_ifu_grating):
@@ -276,13 +312,30 @@ def test_msa_configuration_normal():
     """
 
     # Test 1: Reasonably normal as well
+    prog_id = '1234'
     msa_meta_id = 12
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
-                             0.13, -0.31716078999999997, -0.18092266)
+                             0.13, -0.31716078999999997, -0.18092266, 0.0, 0.0,
+                             *nirspec.MSA_SLIT_SCALES)
+    _compare_slits(slitlet_info[0], ref_slit)
+
+
+def test_msa_configuration_slit_scales():
+    prog_id = '1234'
+    msa_meta_id = 12
+    msaconfl = get_file_path('msa_configuration.fits')
+    dither_position = 1
+
+    # mock slit scale for quadrant 4
+    slit_scales = {4: (2.0, 3.0)}
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
+                                              slit_y_range=[-.5, .5], slit_scales=slit_scales)
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
+                             0.13, -0.31716078999999997, -0.18092266, 0.0, 0.0, 2.0, 3.0)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -291,11 +344,12 @@ def test_msa_configuration_no_background():
     Test the get_open_msa_slits function.
     """
     # Test 2: Two main shutters, not allowed and should fail
+    prog_id = '1234'
     msa_meta_id = 13
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
     with pytest.raises(MSAFileError):
-        nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+        nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                    slit_y_range=[-.5, .5])
 
 
@@ -305,13 +359,14 @@ def test_msa_configuration_all_background():
     """
 
     # Test 3:  No non-background, not acceptable.
+    prog_id = '1234'
     msa_meta_id = 14
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
-    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 0, '1x1', 'background_57', 'bkg_57',
-                             0, -0.5, -0.5)
+    ref_slit = trmodels.Slit(57, 8281, 1, 251, 23, -2.15, 2.15, 4, 57, '1x1', '1234_BKG57', 'BKG57',
+                             0.0, 0.0, 0.0, 0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -321,13 +376,15 @@ def test_msa_configuration_row_skipped():
     """
 
     # Test 4: One row is skipped, should be acceptable.
+    prog_id = '1234'
     msa_meta_id = 15
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit = trmodels.Slit(58, 8646, 1, 251, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
-                             0.130, -0.31716078999999997, -0.18092266)
+                             0.130, -0.31716078999999997, -0.18092266,
+                             0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[0], ref_slit)
 
 
@@ -336,17 +393,150 @@ def test_msa_configuration_multiple_returns():
     Test the get_open_msa_slits function.
     """
     # Test 4: One row is skipped, should be acceptable.
+    prog_id = '1234'
     msa_meta_id = 16
     msaconfl = get_file_path('msa_configuration.fits')
     dither_position = 1
-    slitlet_info = nirspec.get_open_msa_slits(msaconfl, msa_meta_id, dither_position,
+    slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
     ref_slit1 = trmodels.Slit(59, 8651, 1, 256, 24, -3.3, 5.6, 4, 1, '11x1011', '95065_1', '2122',
-                              0.13000000000000003, -0.31716078999999997, -0.18092266)
+                              0.13000000000000003, -0.31716078999999997, -0.18092266,
+                              0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
     ref_slit2 = trmodels.Slit(60, 11573, 1, 258, 32, -3.3, 4.45, 4, 2, '11x111', '95065_2', '172',
-                              0.70000000000000007, -0.31716078999999997, -0.18092266)
+                              0.70000000000000007, -0.31716078999999997, -0.18092266,
+                              0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
     _compare_slits(slitlet_info[0], ref_slit1)
     _compare_slits(slitlet_info[1], ref_slit2)
+
+
+def test_msa_fs_configuration():
+    """
+    Test the get_open_msa_slits function with FS and MSA slits defined.
+    """
+    prog_id = '1234'
+    msa_meta_id = 12
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    dither_position = 1
+    slitlet_info = nirspec.get_open_msa_slits(
+        prog_id, msaconfl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
+
+    # MSA slit: reads in as normal
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x', '95065_1', '2122',
+                             0.13, -0.31716078999999997, -0.18092266,
+                             0.0, 0.0, *nirspec.MSA_SLIT_SCALES)
+    _compare_slits(slitlet_info[0], ref_slit)
+
+    # FS primary: S200A1, shutter id 0, quadrant 5
+    ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x', '95065_3', '3',
+                             1.0, -0.161, -0.229, 53.139904, -27.805002,
+                             *nirspec.MSA_SLIT_SCALES)
+    _compare_slits(slitlet_info[1], ref_slit)
+
+    # The remaining fixed slits may be in the MSA file but not primary:
+    # they should not be defined.
+    fs_slits_defined = ['S200A1']
+    n_fixed = 0
+    for slit in slitlet_info:
+        if slit.quadrant == 5:
+            assert slit.name in fs_slits_defined
+            n_fixed += 1
+    assert n_fixed == len(fs_slits_defined)
+
+
+def test_msa_fs_configuration_unsupported(tmp_path):
+    """
+    Test the get_open_msa_slits function with unsupported FS defined.
+    """
+    # modify an existing MSA file to add a bad row
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    bad_confl = str(tmp_path / 'bad_msa_fs_configuration.fits')
+    shutil.copy(msaconfl, bad_confl)
+
+    with fits.open(bad_confl) as msa_hdu_list:
+        shutter_table = table.Table(msa_hdu_list['SHUTTER_INFO'].data)
+        shutter_table.add_row(shutter_table[-1])
+        msa_hdu_list['SHUTTER_INFO'] = fits.table_to_hdu(shutter_table)
+        msa_hdu_list[2].name = 'SHUTTER_INFO'
+        msa_hdu_list.writeto(bad_confl, overwrite=True)
+
+    prog_id = '1234'
+    msa_meta_id = 12
+    dither_position = 1
+    with pytest.raises(MSAFileError, match='unsupported fixed slit'):
+        nirspec.get_open_msa_slits(
+            prog_id, bad_confl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
+
+
+def test_msa_missing_source(tmp_path):
+    """
+    Test the get_open_msa_slits function with missing source information.
+    """
+    # modify an existing MSA file to remove source info
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    bad_confl = str(tmp_path / 'bad_msa_fs_configuration.fits')
+    shutil.copy(msaconfl, bad_confl)
+
+    with fits.open(bad_confl) as msa_hdu_list:
+        source_table = table.Table(msa_hdu_list['SOURCE_INFO'].data)
+        source_table.remove_rows(slice(0, -1))
+        msa_hdu_list['SOURCE_INFO'] = fits.table_to_hdu(source_table)
+        msa_hdu_list[3].name = 'SOURCE_INFO'
+        msa_hdu_list.writeto(bad_confl, overwrite=True)
+
+    prog_id = '1234'
+    msa_meta_id = 12
+    dither_position = 1
+
+    slitlet_info = nirspec.get_open_msa_slits(
+        prog_id, bad_confl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
+
+    # MSA slit: virtual source name assigned
+    ref_slit = trmodels.Slit(55, 9376, 1, 251, 26, -5.6, 1.0, 4, 1, '1111x',
+                             '1234_VRT55', 'VRT55', 0.0,
+                             -0.31716078999999997, -0.18092266, 0.0, 0.0,
+                             *nirspec.MSA_SLIT_SCALES)
+    _compare_slits(slitlet_info[0], ref_slit)
+
+    # FS primary: S200A1, virtual source name assigned
+    ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x',
+                             '1234_VRTS200A1', 'VRTS200A1', 0.0,
+                             -0.161, -0.229, 0.0, 0.0,
+                             *nirspec.MSA_SLIT_SCALES)
+    _compare_slits(slitlet_info[1], ref_slit)
+
+
+def test_msa_nan_source_posn(tmp_path):
+    """
+    Test the get_open_msa_slits function with nan values for source position.
+    """
+    # modify an existing MSA file to remove source info
+    msaconfl = get_file_path('msa_fs_configuration.fits')
+    bad_confl = str(tmp_path / 'nan_msa_fs_configuration.fits')
+    shutil.copy(msaconfl, bad_confl)
+
+    with fits.open(bad_confl) as msa_hdu_list:
+        shutter_table = table.Table(msa_hdu_list['SHUTTER_INFO'].data)
+        shutter_table[-5:]['estimated_source_in_shutter_x'] = np.nan
+        msa_hdu_list['SHUTTER_INFO'] = fits.table_to_hdu(shutter_table)
+        msa_hdu_list[2].name = 'SHUTTER_INFO'
+        msa_hdu_list.writeto(bad_confl, overwrite=True)
+
+    prog_id = '1234'
+    msa_meta_id = 12
+    dither_position = 1
+
+    slitlet_info = nirspec.get_open_msa_slits(
+        prog_id, bad_confl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
+
+    # MSA slit: virtual source name assigned
+    ref_slit = trmodels.Slit(name='S200A1', shutter_id=0, dither_position=1, xcen=0, ycen=0,
+                             ymin=-0.5, ymax=0.5, quadrant=5, source_id=3, shutter_state='x',
+                             source_name='95065_3', source_alias='3', stellarity=1.0,
+                             source_xpos=0.0, source_ypos=-0.2290000021457672,
+                             source_ra=53.139904, source_dec=-27.805002,
+                             slit_xscale=nirspec.MSA_SLIT_SCALES[0],
+                             slit_yscale=nirspec.MSA_SLIT_SCALES[1])
+    _compare_slits(slitlet_info[1], ref_slit)
 
 
 open_shutters = [[24], [23, 24], [22, 23, 25, 27], [22, 23, 25, 27, 28]]

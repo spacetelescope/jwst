@@ -10,7 +10,6 @@ from jwst.datamodels import ModelContainer
 # Define artificial memory size
 MEMORY = 100  # 100 bytes
 
-
 # Utilities
 def t_path(partial_path):
     """Construction the full path for test files"""

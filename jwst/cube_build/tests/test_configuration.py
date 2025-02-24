@@ -3,11 +3,11 @@ Unit test for Cube Build testing setting up configuration
 """
 
 import pytest
-
 from stdatamodels.jwst import datamodels
 
 from jwst.cube_build import cube_build
 from jwst.cube_build import file_table
+
 
 wcsinfo = {
     'dec_ref': -0.00244536159612126,
@@ -99,7 +99,6 @@ subarray_nirspec = {
     'ystart': 1
 }
 
-
 @pytest.fixture(scope='function')
 def miri_ifushort_short():
     """ Generate a IFU image """
@@ -111,7 +110,6 @@ def miri_ifushort_short():
     input_model.meta.subarray._instance.update(subarray)
     input_model.meta.cal_step.assign_wcs = 'COMPLETE'
     return input_model
-
 
 @pytest.fixture(scope='function')
 def miri_full_coverage():

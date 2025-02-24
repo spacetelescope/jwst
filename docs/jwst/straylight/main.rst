@@ -10,17 +10,18 @@ The ``straylight`` correction is only valid for MIRI MRS data.
 
 Overview
 --------
-This routine removes contamination of MIRI MRS spectral data
-by the MIRI cross artifact feature produced by internal reflections
-within the detector arrays.  As discussed in depth for the MIRI Imager
-by A. Gáspár et al. 2021 (PASP, 133, 4504), the cross artifact manifests
+This routine removes contamination of MIRI MRS spectral data due to a variety of stray light
+sources including the MIRI cross artifact, variable detector dark current, and residual cosmic ray showers.
+
+As discussed in depth for the MIRI Imager
+by A. Gáspár et al. 2021 (PASP, 133, 4504), the MIRI cross artifact feature is produced by internal reflections
+within the detector arrays.  For the MIRI MRS, the cross artifact manifests
 as a signal extending up to hundreds of pixels along the detector column and row directions from
 bright sources.  This signal has both smooth and structured components whose
 profiles vary as a function of wavelength.
 Although the peak intensity of the cross artifact is at
 most 1% of the source intensity in Channel 1 (decreasing toward longer wavelengths),
 the total integrated light in this feature can be of order 20% of the total light from a given source.
-
 
 In the MIRI MRS, such a signal extending along detector rows is more disruptive
 than for the MIRI imager.
@@ -32,11 +33,18 @@ The purpose of this routine is thus to model the cross artifact feature in a giv
 and subtract it at the detector level prior to reformatting
 the data into three-dimensional cubes.
 
-At the same time, this step also ensures that the median count rate (in DN/s) in regions of the detector that
-see no direct light from the sky is zero for consistency with the applied flux calibration vectors.
+This step also ensures that the median count rate (in DN/s) in regions of the detector that
+see no direct light from the sky is zero for consistency with the applied flux calibration vectors.  This
+correction is necessary because the MRS darks are strongly time-variable, and significant signal can remain
+after subtraction of the reference dark in the ``dark_current`` step.
 
-Algorithm
----------
+Finally, this step optionally applies a correction for residual cosmic ray showers that can produce
+blotchy straylight features across the detector.  While the ``jump`` detection step masks the cores of the largest
+such artifacts, the extended halos of showers can cover hundreds of pixels and are best corrected as
+coherent extended stray light artifacts.
+
+Algorithm: Cross-Artifact Correction
+------------------------------------
 The basic idea of the cross artifact correction is to convolve a given science detector image with a
 kernel function that has been pre-calibrated based on observations
 of isolated sources and subtract the corresponding convolved image.
@@ -85,3 +93,25 @@ as the magnitude of the correction is typically too small to be visible from poi
 channels use only a Lorentzian kernel with the Gaussian amplitudes set to zero as such structured components are less
 obvious at these longer wavelengths.  In Channel 4 no correction appears to be necessary,
 and the amplitudes of all model components are set equal to zero.
+
+Algorithm: Residual Shower Correction
+-------------------------------------
+The residual cosmic ray shower correction relies upon the fact that cosmic rays shower artifacts tend to
+have extremely large, blobby halos that extend across one or more IFU slices and the inter-slice pixels between
+them.  These inter-slice pixels receive little to no direct light from the sky, and can be used to construct
+a model of residual showers which are coherent in detector space.
+
+Algorithmically, this routine first uses the :ref:`REGIONS <regions_reffile>` reference file to locate and
+mask all pixels on the detector that receive direct light from the sky.  Pixels that are flagged as
+DO_NOT_USE or REFERENCE_PIXEL are similarly masked, as are some highest and lowest percentile of pixel values
+to help ensure robustness against unmasked bad pixels.
+
+The unmasked remaining pixels are then used to construct a model of the detector rates in DN/s across
+both the masked and unmasked regions using a 2D Gaussian kernel.  This model of the residual shower artifacts
+is then subtracted from the data.
+
+Since the inter-slice pixels never reach truly zero throughput from the sky (particularly at short wavelengths)
+this correction is most reliable in cases for which the observations contain only faint sources and
+have had a pixel-based dedicated background subtraction applied.  While the correction can be applied to brighter
+sources, this may result in artifacts as the subtracted model may be dominated more by spilled source flux
+than by residual cosmic ray showers.

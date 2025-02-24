@@ -100,10 +100,14 @@ def run_spec3_ifushort_extract1d(rtdata_module):
 @pytest.mark.parametrize(
     'output',
     [
-        'jw01024-c1000_t002_miri_ch3-mediumlong_x1d.fits',
-        'jw01024-c1000_t002_miri_ch4-mediumlong_x1d.fits',
-        'jw01024-c1000_t002_miri_ch3-mediumlong_s3d.fits',
-        'jw01024-c1000_t002_miri_ch4-mediumlong_s3d.fits',
+        'jw01024-c1000_t002_miri_ch3-long_x1d.fits',
+        'jw01024-c1000_t002_miri_ch3-medium_x1d.fits',
+        'jw01024-c1000_t002_miri_ch4-long_x1d.fits',
+        'jw01024-c1000_t002_miri_ch4-medium_x1d.fits',
+        'jw01024-c1000_t002_miri_ch3-long_s3d.fits',
+        'jw01024-c1000_t002_miri_ch3-medium_s3d.fits',
+        'jw01024-c1000_t002_miri_ch4-long_s3d.fits',
+        'jw01024-c1000_t002_miri_ch4-medium_s3d.fits',
         ]
 )
 def test_spec3_ifulong(run_spec3_ifulong, fitsdiff_default_kwargs, output):
@@ -122,10 +126,14 @@ def test_spec3_ifulong(run_spec3_ifulong, fitsdiff_default_kwargs, output):
 @pytest.mark.parametrize(
     'output',
     [
-        'jw01024-c1000_t002_miri_ch1-mediumlong_x1d.fits',
-        'jw01024-c1000_t002_miri_ch2-mediumlong_x1d.fits',
-        'jw01024-c1000_t002_miri_ch1-mediumlong_s3d.fits',
-        'jw01024-c1000_t002_miri_ch2-mediumlong_s3d.fits'
+        'jw01024-c1000_t002_miri_ch1-long_x1d.fits',
+        'jw01024-c1000_t002_miri_ch1-medium_x1d.fits',
+        'jw01024-c1000_t002_miri_ch2-long_x1d.fits',
+        'jw01024-c1000_t002_miri_ch2-medium_x1d.fits',
+        'jw01024-c1000_t002_miri_ch1-long_s3d.fits',
+        'jw01024-c1000_t002_miri_ch1-medium_s3d.fits',
+        'jw01024-c1000_t002_miri_ch2-long_s3d.fits',
+        'jw01024-c1000_t002_miri_ch2-medium_s3d.fits'
     ],
 )
 def test_spec3_ifushort(run_spec3_ifushort, fitsdiff_default_kwargs, output):
@@ -145,10 +153,14 @@ def test_spec3_ifushort(run_spec3_ifushort, fitsdiff_default_kwargs, output):
 @pytest.mark.parametrize(
     'output',
     [
-        'miri_mrs_emsm_ch1-mediumlong_x1d.fits',
-        'miri_mrs_emsm_ch2-mediumlong_x1d.fits',
-        'miri_mrs_emsm_ch1-mediumlong_s3d.fits',
-        'miri_mrs_emsm_ch2-mediumlong_s3d.fits'
+        'miri_mrs_emsm_ch1-long_x1d.fits',
+        'miri_mrs_emsm_ch1-medium_x1d.fits',
+        'miri_mrs_emsm_ch2-long_x1d.fits',
+        'miri_mrs_emsm_ch2-medium_x1d.fits',
+        'miri_mrs_emsm_ch1-long_s3d.fits',
+        'miri_mrs_emsm_ch1-medium_s3d.fits',
+        'miri_mrs_emsm_ch2-long_s3d.fits',
+        'miri_mrs_emsm_ch2-medium_s3d.fits'
     ],
 )
 def test_spec3_ifushort_emsm(run_spec3_ifushort_emsm, fitsdiff_default_kwargs, output):
@@ -168,8 +180,10 @@ def test_spec3_ifushort_emsm(run_spec3_ifushort_emsm, fitsdiff_default_kwargs, o
 @pytest.mark.parametrize(
     'output',
     [
-        'jw01024-c1000_t002_extract1dtest_miri_ch1-mediumlong_x1d.fits',
-        'jw01024-c1000_t002_extract1dtest_miri_ch2-mediumlong_x1d.fits'
+        'jw01024-c1000_t002_extract1dtest_miri_ch1-long_x1d.fits',
+        'jw01024-c1000_t002_extract1dtest_miri_ch1-medium_x1d.fits',
+        'jw01024-c1000_t002_extract1dtest_miri_ch2-long_x1d.fits',
+        'jw01024-c1000_t002_extract1dtest_miri_ch2-medium_x1d.fits'
     ],
 )
 def test_spec3_ifushort_extract1d(run_spec3_ifushort_extract1d, fitsdiff_default_kwargs, output):

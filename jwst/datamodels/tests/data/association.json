@@ -13,12 +13,12 @@
             "members": [
                 {
                     "exptype": "SCIENCE",
-                    "expname": "test.fits",
+                    "expname": "test.fits"
                 },
                 {
                     "exptype": "SCIENCE",
-                    "expname": "test.fits",
-                },
+                    "expname": "test.fits"
+                }
             ]
         }
     ],

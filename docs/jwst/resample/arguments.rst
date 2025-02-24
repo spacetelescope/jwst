@@ -16,7 +16,8 @@ image.
     `turbo`, `lanczos2`, and `lanczos3`.
 
 ``--pixel_scale_ratio`` (float, default=1.0)
-    Ratio of input to output pixel scale.  A value of 0.5 means the output
+    Ratio of input to output pixel scale.
+    For imaging data, a value of 0.5 means the output
     image would have 4 pixels sampling each input pixel.
     Ignored when ``pixel_scale`` or ``output_wcs`` are provided.
 
@@ -34,7 +35,8 @@ image.
     or ``output_wcs`` are provided.
 
 ``--crpix`` (tuple of float, default=None)
-    Position of the reference pixel in the image array in the ``x, y`` order.
+    0-based coordinates of the reference pixel in the image array in the
+    ``x, y`` order. This is the image coordinate to which ``crval`` maps to.
     If ``crpix`` is not specified, it will be set to the center of the bounding
     box of the returned WCS object. When supplied from command line, it should
     be a comma-separated list of floats. Ignored when ``output_wcs``
@@ -47,7 +49,7 @@ image.
 
 ``--output_shape`` (tuple of int, default=None)
     Shape of the image (data array) using "standard" ``nx`` first and ``ny``
-    second (as opposite to the ``numpy.ndarray`` convention - ``ny`` first and
+    second (opposite to the ``numpy.ndarray`` convention - ``ny`` first and
     ``nx`` second). This value will be assigned to
     ``pixel_shape`` and ``array_shape`` properties of the returned
     WCS object. When supplied from command line, it should be a comma-separated
@@ -58,7 +60,7 @@ image.
         ``output_wcs`` does not have ``bounding_box`` property set.
 
 ``--output_wcs`` (str, default='')
-    File name of a ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
+    File name of an ``ASDF`` file with a GWCS stored under the ``"wcs"`` key
     under the root of the file. The output image size is determined from the
     bounding box of the WCS (if any). Argument ``output_shape`` overrides
     computed image size and it is required when output WCS does not have
@@ -85,7 +87,7 @@ image.
         ``pixel_scale_ratio``, ``pixel_scale``, ``rotation``, ``crpix``,
         and ``crval`` will be ignored.
 
-``--fillval`` (str, default='INDEF')
+``--fillval`` (str, default='NAN')
     The value to assign to output pixels that have zero weight or do not
     receive any flux from any input pixels during drizzling.
 
@@ -102,20 +104,11 @@ image.
 ``--single`` (bool, default=False)
     If set to `True`, resample each input image into a separate output.  If
     `False` (the default), each input is resampled additively (with weights) to
-    a common output
+    a common output.
 
 ``--blendheaders`` (bool, default=True)
     Blend metadata from all input images into the resampled output image.
 
-``--allowed_memory`` (float, default=None)
-    Specifies the fractional amount of free memory to allow when creating the
-    resampled image. If ``None``, the environment variable
-    ``DMODEL_ALLOWED_MEMORY`` is used. If not defined, no check is made. If the
-    resampled image would be larger than specified, an ``OutputTooLargeError``
-    exception will be generated.
-
-    For example, if set to ``0.5``, only resampled images that use less than
-    half the available memory can be created.
 
 ``--in_memory`` (boolean, default=True)
   Specifies whether or not to load and create all images that are used during

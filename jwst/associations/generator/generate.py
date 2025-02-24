@@ -49,7 +49,7 @@ def generate(pool, rules, version_id=None, finalize=True):
     documentation for a full description.
     """
     associations = []
-    if type(version_id) is bool:
+    if isinstance(version_id, bool):
         version_id = make_timestamp()
     process_queue = ProcessQueueSorted([
         ProcessList(

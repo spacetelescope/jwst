@@ -74,8 +74,29 @@ authors:
 - family-names: "Pena-Guerrero"
   given-names: "Maria"
   orcid: "https://orcid.org/0000-0003-2314-3453"
+- family-names: "Graham"
+  given-names: "Brett"
+  orcid: "https://orcid.org/0000-0001-6315-4507"
+- family-names: "Molter"
+  given-names: "Edward"
+  orcid: "https://orcid.org/0000-0003-3799-9033"
+- family-names: "Brandt"
+  given-names: "Timothy"
+  orcid: "https://orcid.org/0000-0003-2630-8073"
+- family-names: "Hayes"
+  given-names: "Christian"
+  orcid: "https://orcid.org/0000-0003-2969-2445"
+- family-names: "Cooper"
+  given-names: "Rachel"
+  orcid: "https://orcid.org/0000-0001-7864-308X"
+- family-names: "Clarke"
+  given-names: "Melanie"
+  orcid: "https://orcid.org/0009-0002-3561-4347"
+- family-names: "Filippazzo"
+  given-names: "Joseph"
+  orcid: "https://orcid.org/0000-0002-0201-8306"
 title: "JWST Calibration Pipeline"
-version: 1.14.0
+version: 1.17.1
 doi: 10.5281/zenodo.7038885
-date-released: 2024-03-29
+date-released: 2025-01-02
 url: "https://github.com/spacetelescope/jwst"

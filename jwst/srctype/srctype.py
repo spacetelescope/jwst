@@ -131,13 +131,17 @@ def set_source_type(input_model, source_type=None):
             # NIRSpec fixed-slit is a special case: Apply the source type
             # determined above to only the primary slit (the one in which
             # the target is located). Set all other slits to the default
-            # value, which for NRS_FIXEDSLIT is 'POINT'.
+            # value, which for NRS_FIXEDSLIT is 'EXTENDED'.
             default_type = 'EXTENDED'
             primary_slit = input_model.meta.instrument.fixed_slit
             log.debug(f' primary_slit = {primary_slit}')
             for slit in input_model.slits:
                 if slit.name == primary_slit:
                     slit.source_type = src_type
+                    # Ensure x,y position reset to zero if source type is EXTENDED
+                    if src_type == 'EXTENDED':
+                        slit.source_xpos = 0.0
+                        slit.source_ypos = 0.0
                 else:
                     slit.source_type = default_type
                 log.debug(f' slit {slit.name} = {slit.source_type}')

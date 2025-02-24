@@ -38,7 +38,7 @@ shell.
 
 .. warning::
 
-    JWST requires a C compiler for dependencies and is currently limited to Python 3.10, 3.11, or 3.12.
+    JWST requires a C compiler for dependencies.
 
 .. warning::
     Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
@@ -48,7 +48,7 @@ Installing Latest Release
 
 You can install the latest released version via `pip`.  From a bash/zsh shell:
 
-    | >> conda create -n <env_name> python=3.11
+    | >> conda create -n <env_name> python=3.12
     | >> conda activate <env_name>
     | >> pip install jwst
 
@@ -59,7 +59,7 @@ Installing Previous Releases
 
 You can also install a specific version (from `jwst 0.17.0` onward):
 
-    | >> conda create -n <env_name> python=3.11
+    | >> conda create -n <env_name> python=3.12
     | >> conda activate <env_name>
     | >> pip install jwst==1.12.5
 
@@ -69,9 +69,9 @@ Installing the Development Version from Github
 ----------------------------------------------
 
 You can install the latest development version (not as well tested) from the
-Github master branch:
+Github main branch:
 
-    | >> conda create -n <env_name> python=3.11
+    | >> conda create -n <env_name> python=3.12
     | >> conda activate <env_name>
     | >> pip install git+https://github.com/spacetelescope/jwst
 
@@ -93,7 +93,7 @@ environment of choice and then reinstall:
 
 This will ensure that all dependency packages are also upgraded. This also
 applies when using the development version of jwst - to upgrade and grab recent
-changes, uninstall and re-install the master branch from Github:
+changes, uninstall and re-install the main branch from Github:
 
     | >> pip uninstall jwst
     | >> pip install git+https://github.com/spacetelescope/jwst

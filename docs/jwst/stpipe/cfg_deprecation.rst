@@ -4,7 +4,7 @@ CFG Usage Deprecation Notice
 ============================
 
 As of March 18, 2021, a significant change to how JWST pipelines operate was
-completed and pushed to the JWST master branch on github. Theoretically the
+completed and pushed to the JWST main branch on github. Theoretically the
 change should be transparent. However, we are all familiar with the difference
 between theory and practice and hence we want to alert all users.
 

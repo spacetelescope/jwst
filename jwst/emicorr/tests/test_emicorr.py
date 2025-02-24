@@ -7,7 +7,7 @@ Unit tests for EMI correction
 
 import numpy as np
 from jwst.emicorr import emicorr, emicorr_step
-from stdatamodels.jwst.datamodels import Level1bModel, EmiModel
+from stdatamodels.jwst.datamodels import RampModel, EmiModel
 
 
 subarray_example_case = {
@@ -33,7 +33,7 @@ emicorr_model = EmiModel(emimdl)
 
 def mk_data_mdl(data, subarray, readpatt, detector):
     # create input_model
-    input_model = Level1bModel(data=data)
+    input_model = RampModel(data=data)
     input_model.meta.instrument.name = 'MIRI'
     input_model.meta.instrument.detector = detector
     input_model.meta.exposure.type = 'MIR_4QPM'
@@ -65,11 +65,11 @@ def test_do_correction():
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     pars = {
         'save_intermediate_results': False,
-        'user_supplied_reffile': None,
         'nints_to_phase': None,
         'nbins': None,
         'scale_reference': True,
-        'onthefly_corr_freq': None
+        'onthefly_corr_freq': None,
+        'use_n_cycles': None
     }
     save_onthefly_reffile = None
     outmdl = emicorr.do_correction(input_model, emicorr_model, save_onthefly_reffile, **pars)
@@ -81,9 +81,8 @@ def test_apply_emicorr():
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, 'MASK1550', 'FAST', 'MIRIMAGE')
     emicorr_model, onthefly_corr_freq, save_onthefly_reffile = None, [218.3], None
-    outmdl = emicorr.apply_emicorr(input_model, emicorr_model,
-                onthefly_corr_freq, save_onthefly_reffile,
-                save_intermediate_results=False, user_supplied_reffile=None,
+    outmdl = emicorr.apply_emicorr(input_model, emicorr_model, onthefly_corr_freq,
+                save_onthefly_reffile, save_intermediate_results=False,
                 nints_to_phase=None, nbins_all=None, scale_reference=True)
 
     assert outmdl is not None
@@ -127,25 +126,6 @@ def test_minmed():
     assert compare_arr.all() == medimg.all()
 
 
-def test_iter_stat_sig_clip():
-    data = np.ones((5, 5, 5, 5))
-    data[0, 0, 0, 0] = 0.55
-    data[1, 1, 1, 1] = 1.11
-    data[2, 2, 2, 2] = 2.22
-    data[3, 3, 3, 3] = 3.33
-    data[4, 4, 4, 4] = 4.44
-    u = np.where(data > 1)
-    dmean, dmedian, dsigma, dmask = emicorr.iter_stat_sig_clip(data[u])
-
-    compare_mean, compare_median = 2.7750000000000004, 0.0
-    compare_sigma, compare_mask = 1.326703756361177, np.ones(np.size(data), dtype='b')+1
-
-    assert compare_mean == dmean
-    assert compare_median == dmedian
-    assert compare_sigma == dsigma
-    assert compare_mask.all() == dmask.all()
-
-
 def test_rebin():
     data = np.ones(10)
     data[1] = 0.55
@@ -153,6 +133,6 @@ def test_rebin():
     data[9] = 2.0
     rebinned_data = emicorr.rebin(data, [7])
 
-    compare_arr = np.array([1., 0.55, 1. , 1., 1.55, 1., 1.])
+    compare_arr = np.array([1., 0.55, 1., 1., 1.55, 1., 1.])
 
     assert compare_arr.all() == rebinned_data.all()

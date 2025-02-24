@@ -1,4 +1,3 @@
-import os
 from jwst.associations.tests.helpers import t_path
 from jwst.associations import AssociationPool
 

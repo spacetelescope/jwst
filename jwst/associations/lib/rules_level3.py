@@ -3,12 +3,21 @@
 import logging
 
 from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.dms_base import (Constraint_TargetAcq, Constraint_TSO, nrsfss_valid_detector, nrsifu_valid_detector)
-from jwst.associations.lib.dms_base import (nrccoron_valid_detector)
+from jwst.associations.lib.dms_base import (
+    Constraint_TargetAcq, Constraint_TSO,
+    nissoss_calibrated_filter, nrccoron_valid_detector,
+    nrsfss_valid_detector, nrsifu_valid_detector)
 from jwst.associations.lib.process_list import ListCategory
-from jwst.associations.lib.rules_level3_base import *
 from jwst.associations.lib.rules_level3_base import (
-    dms_product_name_sources, dms_product_name_nrsfs_sources, dms_product_name_noopt, dms_product_name_coronimage,
+    ASN_SCHEMA, # noqa F401
+    AsnMixin_Science, AsnMixin_AuxData, AsnMixin_Coronagraphy, AsnMixin_Spectrum,
+    DMS_Level3_Base, DMSAttrConstraint,
+    Utility, # noqa F401
+    Constraint, SimpleConstraint, Constraint_Optical_Path, Constraint_Target, Constraint_Image, Constraint_MSA, Constraint_IFU
+)
+from jwst.associations.lib.rules_level3_base import (
+    dms_product_name_sources, dms_product_name_nrsfs_sources,
+    dms_product_name_noopt, dms_product_name_coronimage,
     format_product
 )
 
@@ -16,6 +25,7 @@ __all__ = [
     'Asn_Lv3ACQ_Reprocess',
     'Asn_Lv3AMI',
     'Asn_Lv3Image',
+    'Asn_Lv3ImageMosaic',
     'Asn_Lv3ImageBackground',
     'Asn_Lv3MIRCoron',
     'Asn_Lv3MIRMRS',
@@ -457,7 +467,7 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
                         value = ('T')
                     )],
                     reduce=Constraint.notany
-                ),  
+                ),
                 DMSAttrConstraint(
                     name='channel',
                     sources=['channel'],
@@ -881,19 +891,19 @@ class Asn_Lv3TSO(AsnMixin_Science):
                         DMSAttrConstraint(
                             name='restricted_grism',
                             sources=['exp_type'],
-                            value = ('nrc_tsgrism')
+                            value='nrc_tsgrism'
                         ),
                         DMSAttrConstraint(
                             name='grism_clear',
                             sources=['pupil'],
-                            value = ('clear')
+                            value='clear'
                         ),
                     ]),
                     Constraint([
                         DMSAttrConstraint(
                             name='restricted_ts',
                             sources=['exp_type'],
-                            value = 'nrc_tsgrism'
+                            value='nrc_tsgrism'
                         ),
                         DMSAttrConstraint(
                             name='module',
@@ -904,19 +914,49 @@ class Asn_Lv3TSO(AsnMixin_Science):
                 ],
                 reduce=Constraint.notany
             ),
-            # Don't allow NIRISS SOSS with NINTS=1 in tso3
+            # Don't allow NIRISS SOSS with NINTS=1 or uncalibrated filters
             Constraint(
                 [
                     Constraint([
                         DMSAttrConstraint(
                             name='exp_type',
                             sources=['exp_type'],
-                            value = ('nis_soss')
+                            value='nis_soss'
                         ),
                         DMSAttrConstraint(
                             name='nints',
                             sources=['nints'],
-                            value = ('1')
+                            value='1'
+                        ),
+                    ]),
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value='nis_soss'
+                        ),
+                        SimpleConstraint(
+                            value=False,
+                            test=lambda value, item: nissoss_calibrated_filter(item) == value,
+                            force_unique=False
+                        ),
+                    ]),
+                ],
+                reduce=Constraint.notany
+            ),
+            # Don't allow NIRSpec invalid optical paths in TSO3
+            Constraint(
+                [
+                    Constraint([
+                        DMSAttrConstraint(
+                            name='exp_type',
+                            sources=['exp_type'],
+                            value='nrs_brightobj'
+                        ),
+                        SimpleConstraint(
+                            value=False,
+                            test=lambda value, item: nrsfss_valid_detector(item) == value,
+                            force_unique=False
                         ),
                     ]),
                 ],
@@ -1133,3 +1173,72 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
     @property
     def dms_product_name(self):
         return dms_product_name_sources(self)
+
+
+@RegistryMarker.rule
+class Asn_Lv3ImageMosaic(AsnMixin_Science):
+    """Level 3 Science Image Mosaic Association
+
+    Characteristics:
+        - Association type: ``image3``
+        - Pipeline: ``calwebb_image3``
+        - Non-TSO
+        - Non-WFS&C
+        - Collect separate tiles of mosaic into one product
+    """
+
+    def __init__(self, *args, **kwargs):
+
+        # Setup constraints
+        self.constraints = Constraint([
+            Constraint_Optical_Path(),
+            Constraint_Image(),
+            DMSAttrConstraint(
+                name='wfsvisit',
+                sources=['visitype'],
+                value='((?!wfsc).)*',
+                required=False
+            ),
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name='bkgdtarg',
+                        sources=['bkgdtarg'],
+                    ),
+                    Constraint_TSO()
+                ],
+                reduce=Constraint.notany
+            ),
+        ])
+
+        # Only valid if candidate type is 'mosaic'.
+        self.validity.update({
+            'is_type_mosaic': {
+                'validated': False,
+                'check': self._validate_candidates
+            }
+        })
+
+        # Now check and continue initialization.
+        super(Asn_Lv3ImageMosaic, self).__init__(*args, **kwargs)
+
+    def _init_hook(self, item):
+        """Post-check and pre-add initialization"""
+
+        self.data['asn_type'] = 'image3'
+        super(Asn_Lv3ImageMosaic, self)._init_hook(item)
+
+    def _validate_candidates(self, item):
+        """Allow only mosaic asn candidates
+
+        Returns
+        -------
+        True if candidate type is mosaic.
+        False otherwise.
+        """
+
+        # If a group candidate, reject.
+        if self.acid.type.lower() != 'mosaic':
+            return False
+
+        return True

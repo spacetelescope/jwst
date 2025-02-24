@@ -7,8 +7,7 @@ calwebb_ami3: Stage 3 Aperture Masking Interferometry (AMI) Processing
 :Alias: calwebb_ami3
 
 The stage 3 AMI pipeline is applied to associations of calibrated NIRISS AMI exposures.
-It computes fringe parameters for individual exposures, averages the fringe results from
-multiple exposures, and, optionally, corrects science target fringe parameters using the
+It computes fringe parameters for individual exposures, and, optionally, corrects science target fringe parameters using the
 fringe results from reference PSF targets.
 The steps applied by the ``calwebb_ami3`` pipeline are shown below.
 
@@ -83,15 +82,14 @@ Interferometric observables
 :Data model: `~jwst.datamodels.AmiOIModel`
 :File suffix: _ami-oi.fits
 
-
-For every input exposure, the fringe parameters and closure phases calculated
+For every input exposure, the interferometric observables calculated
 by the :ref:`ami_analyze <ami_analyze_step>` step are saved to an "_ami-oi.fits" product file,
-which is a FITS table of median observables over all integrations of the input file.
+which is a FITS table of averaged observables over all integrations of the input file.
 Product names use the input "_calints" exposure-based file name, with the association candidate ID
 included and the product type changed to "_ami-oi.fits", e.g.
 "jw93210001001_03101_00001_nis_a0003_ami-oi.fits."
 
-Normalized Interferometric Observables
+Normalized interferometric observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 :Data model: `~jwst.datamodels.AmiOIModel`
 :File suffix: _aminorm-oi.fits
@@ -102,3 +100,8 @@ via the :ref:`ami_normalize <ami_normalize_step>` step, and will be saved to an 
 product file. This file has the same FITS table format as the "_ami-oi.fits" products.
 The file name root uses the source-based output product name given in the ASN file,
 e.g. "jw93210-a0003_t001_niriss_f480m-nrm_aminorm-oi.fits."
+
+.. note:: 
+   
+   Users may wish to run the :ref:`ami_analyze step <ami_analyze_step>` separately for access to flexible input arguments and to save additional diagnostic output products. See the step documentation for more details.
+

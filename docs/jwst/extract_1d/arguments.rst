@@ -3,6 +3,63 @@ Step Arguments
 
 The ``extract_1d`` step has the following step-specific arguments.
 
+General Step Arguments
+----------------------
+The following arguments apply to all modes unless otherwise specified.
+
+``--subtract_background``
+  Flag to specify whether the background should be subtracted.  If None or True,
+  background subtraction will be performed if there are background regions
+  specified in the reference file.  If False, no background subtraction will be
+  performed.  Has no effect for NIRISS SOSS data.
+
+``--apply_apcorr``
+  Switch to select whether or not to apply an APERTURE correction during the
+  Extract1dStep processing. Default is ``True``. Has no effect for NIRISS SOSS data
+  or for optimal extractions.
+
+Step Arguments for Slit and Slitless Spectroscopic Data
+-------------------------------------------------------
+
+``--extraction_type``
+  Specify the extraction type.
+  If 'box', a standard extraction is performed, summing over an aperture box.
+  If 'optimal', a PSF-based optimal extraction is performed.
+  If None, optimal extraction is attempted whenever use_source_posn is True.
+  Box extraction is suitable for any input data (point sources and extended sources;
+  resampled and unresampled images).  Optimal extraction is best suited for unresampled
+  point sources. Currently, optimal extraction is only available for MIRI LRS Fixed Slit data.
+  The default extraction type is 'box'.
+
+``--use_source_posn``
+  Specify whether the target and background extraction
+  region locations specified in the :ref:`EXTRACT1D <extract1d_reffile>` reference
+  file should be shifted to account for the expected position of the source. If None (the default),
+  the step will decide whether to use the source position based
+  on the observing mode and the source type. By default, source position corrections
+  are attempted only for point sources in NIRSpec MOS/FS/BOTS and MIRI LRS fixed-slit exposures.
+  Set to False to ignore position estimates for all modes; set to True to additionally attempt
+  source position correction for extended sources.
+
+``--position_offset``
+  Specify a number of pixels (fractional pixels are allowed) to offset the 
+  extraction aperture from the nominal position.  The default is 0.
+
+``--model_nod_pair``
+  Flag to enable fitting a negative trace during optimal extraction.
+  If True, and the extraction type is 'optimal', then a negative trace
+  from nod subtraction is modeled alongside the positive source during
+  extraction.  This will be attempted only if the input data has been background
+  subtracted and the dither pattern type indicates that 2 nods were used.
+  The default value is True.
+
+``--optimize_psf_location``
+  Flag to enable PSF location optimization during optimal extraction.
+  If True, and the extraction type is 'optimal', then the placement of
+  the PSF model for the source location (and negative nod, if present)
+  will be iteratively optimized. This parameter is recommended if
+  negative nods are modeled.  The default value is True.
+
 ``--smoothing_length``
   If ``smoothing_length`` is greater than 1 (and is an odd integer), the
   image data used to perform background extraction will be smoothed in the
@@ -20,7 +77,7 @@ The ``extract_1d`` step has the following step-specific arguments.
 ``--bkg_fit``
   The type of fit to perform to the background data in each image column
   (or row, if the dispersion is vertical). There are four allowed values:
-  "poly", "mean", and "median", and None (the default value). If left as None,
+  "poly", "mean", "median", and None (the default value). If left as None,
   the step will search the reference file for a value - if none is found,
   ``bkg_fit`` will be set to "poly". If set to "poly", the background
   values for each pixel within all background regions in a given column (or
@@ -45,59 +102,32 @@ The ``extract_1d`` step has the following step-specific arguments.
   0 for that particular column (or row). If "bkg_fit" is not "poly", this
   parameter will be ignored.
 
-``--bkg_sigma_clip``
-  The background values will be sigma-clipped to remove outlier values from
-  the determination of the background. The default value is a 3.0 sigma clip.
-
 ``--log_increment``
-  Most log messages are suppressed while looping over integrations, i.e. when
-  the input is a CubeModel or a 3-D SlitModel.  Messages will be logged while
-  processing the first integration, but since they would be the same for
-  every integration, most messages will only be written once.  However, since
-  there can be hundreds or thousands of integrations, which can take a long
-  time to process, it would be useful to log a message every now and then to
-  let the user know that the step is still running.
+  For multi-integration extractions, if this parameter is set to a value greater
+  than zero, an INFO-level log message will be printed every `log_increment` integrations
+  to report on progress. Default value is 50.
 
-  ``log_increment`` is an integer, with default value 50.  If it is greater
-  than 0, an INFO message will be printed every ``log_increment``
-  integrations, e.g. "... 150 integrations done".
+``--save_profile``
+  Flag to enable saving the spatial profile representing the extraction aperture or model.
+  If True, the profile is saved to disk with suffix "profile".
 
-``--subtract_background``
-  This is a boolean flag to specify whether the background should be
-  subtracted.  If None, the value in the :ref:`EXTRACT1D <extract1d_reffile>`
-  reference file (if any) will be used.  If not None, this parameter overrides
-  the value in the reference file.
+``--save_scene_model``
+  Flag to enable saving a model of the 2D flux as defined by the extraction aperture or PSF model.
+  If True, the model is saved to disk with suffix "scene_model".
 
-``--use_source_posn``
-  This is a boolean flag to specify whether the target and background extraction
-  region locations specified in the :ref:`EXTRACT1D <extract1d_reffile>` reference
-  file should be shifted
-  to account for the expected position of the source. If None (the default),
-  the step will make the decision of whether to use the source position based
-  on the observing mode and the source type. The source position will only be
-  used for point sources and for modes where the source could be located
-  off-center due to things like nodding or dithering. If turned on, the position
-  of the source is used in conjunction with the World Coordinate System (WCS) to
-  compute the x/y source location. For NIRSpec non-IFU modes, the source position
-  is determined from the ``source_xpos/source_ypos`` parameters. For MIRI LRS fixed slit,
-  the dither offset is applied to the sky pointing location to determine source position.
-  All other modes use ``targ_ra/targ_dec``. If this parameter is specified in the
-  :ref:`EXTRACT1D <extract1d_reffile>` reference file, the reference file value will
-  override any automatic settings based on exposure and source type. As always, a value
-  given by the user as an argument to the step overrides all settings in the reference
-  file or within the step code.
+``--save_residual_image``
+  Flag to enable saving the residual image (from the input minus the scene model)
+  If True, the model is saved to disk with suffix "residual".
+
+Step Arguments for IFU Data
+---------------------------
 
 ``--center_xy``
   A list of two integer values giving the desired x/y location for the center
   of the circular extraction aperture used for extracting spectra from 3-D
-  IFU cubes. Ignored for non-IFU modes and non-point sources. Must be given in
-  x,y order and in units of pixels along the x,y axes of the 3-D IFU cube, e.g.
-  ``--center_xy="27,28"``. If given, the values override any position derived
-  from the use of the ``use_source_posn`` argument. Default is None.
-
-``--apply_apcorr``
-  Switch to select whether or not to apply an APERTURE correction during the
-  Extract1dStep processing. Default is ``True``
+  IFU cubes. Must be given in x,y order and in units of pixels along the x,y
+  axes of the 3-D IFU cube, e.g. ``--center_xy="27,28"``.
+  Default is None.
 
 ``--ifu_autocen``
   Switch to select whether or not to enable auto-centroiding of the extraction
@@ -105,6 +135,10 @@ The ``extract_1d`` step has the following step-specific arguments.
   IFU cube across all wavelengths (shortward of 26 microns where the MRS throughput
   becomes extremely low) and using DAOStarFinder to locate the brightest
   source in the field. Default is ``False``.
+
+``--bkg_sigma_clip``
+  The background values will be sigma-clipped to remove outlier values from
+  the determination of the background. The default value is a 3.0 sigma clip.
 
 ``--ifu_rfcorr``
   Switch to select whether or not to run 1d residual fringe correction on the
@@ -118,74 +152,76 @@ The ``extract_1d`` step has the following step-specific arguments.
 
 ``--ifu_rscale``
    A float designating the number of PSF FWHMs to use for the extraction radius. This
-   is a MIRI MRS only paramenter. Values accepted are between 0.5 to 3.0. The default extraction
+   is a MIRI MRS only parameter. Values accepted are between 0.5 to 3.0. The default extraction
    size is set to 2 * FWHM. Values below 2 will result in a smaller
    radius, a value of 2 results in no change to radius and a value above 2 results in a larger
-   extraction radius.  
-   
+   extraction radius.
+
+``--ifu_covar_scale``
+   A float to be multiplied into the error arrays of the extracted spectra to account
+   for covariance between adjacent spaxels in the IFU data cube.  The default value is
+   1.0 (i.e., no correction) unless set by a user or a parameter reference file.  This
+   parameter only affects MIRI and NIRSpec IFU spectroscopy.
+
+Step Arguments for NIRISS SOSS Data
+-----------------------------------
+
 ``--soss_atoca``
-  This is a NIRISS-SOSS algorithm-specific parameter; if True, use the ATOCA
-  algorithm to treat order contamination. Default is ``True``.
+  Flag to enable using the ATOCA algorithm to treat order contamination. Default is ``True``.
 
 ``--soss_threshold``
-  This is a NIRISS-SOSS algorithm-specific parameter; this sets the threshold
-  value for a pixel to be included when modelling the spectral trace. The default
+  Threshold value for a pixel to be included when modeling the spectral trace. The default
   value is 0.01.
 
 ``--soss_n_os``
-  This is a NIRISS-SOSS algorithm-specific parameter; this is an integer that sets
+  An integer that sets
   the oversampling factor of the underlying wavelength grid used when modeling the
   trace. The default value is 2.
 
-``--soss_estimate``
-  This is a NIRISS-SOSS algorithm-specific parameter; filename or SpecModel of the
-  estimate of the target flux. The estimate must be a SpecModel with wavelength and
-  flux values.
-
 ``--soss_wave_grid_in``
-  This is a NIRISS-SOSS algorithm-specific parameter; filename or SossWaveGridModel
+  Filename or SossWaveGridModel
   containing the wavelength grid used by ATOCA to model each valid pixel of the
   detector. If not given, the grid is determined based on an estimate of the flux
   (soss_estimate), the relative tolerance (soss_rtol) required on each pixel model
   and the maximum grid size (soss_max_grid_size).
 
 ``--soss_wave_grid_out``
-  This is a NIRISS-SOSS algorithm-specific parameter; filename to hold the wavelength
+  Filename to hold the wavelength
   grid calculated by ATOCA, stored in a SossWaveGridModel.
 
+``--soss_estimate``
+  Filename or SpecModel of the
+  estimate of the target flux. The estimate must be a SpecModel with wavelength and
+  flux values.
+
 ``--soss_rtol``
-  This is a NIRISS-SOSS algorithm-specific parameter; the relative tolerance needed on a
+  The relative tolerance needed on a
   pixel model. It is used to determine the sampling of the soss_wave_grid when not
   directly given. Default value is 1.e-4.
 
 ``--soss_max_grid_size``
-  This is a NIRISS-SOSS algorithm-specific parameter; the maximum grid size allowed. It is
+  The maximum grid size allowed. It is
   used when soss_wave_grid is not provided to make sure the computation time or the memory
   used stays reasonable. Default value is 20000.
 
-``--soss_transform``
-  This is a NIRISS-SOSS algorithm-specific parameter; this defines a rotation to
-  apply to the reference files to match the observation. It should be specified as
-  a list of three floats, with default values of None.
-
 ``--soss_tikfac``
-  This is a NIRISS-SOSS algorithm-specific parameter; this is the regularization
+  This is the regularization
   factor used in the SOSS extraction. If not specified, ATOCA will calculate a
   best-fit value for the Tikhonov factor.
 
 ``--soss_width``
-  This is a NIRISS-SOSS algorithm-specific parameter; this specifies the aperture
+  This specifies the aperture
   width used to extract the 1D spectrum from the decontaminated trace. The default
   value is 40.0 pixels.
 
 ``--soss_bad_pix``
-  This is a NIRISS-SOSS algorithm-specific parameter; this parameter sets the method
+  This parameter sets the method
   used to handle bad pixels. There are currently two options: "model" will replace
   the bad pixel values with a modeled value, while "masking" will omit those pixels
   from the spectrum. The default value is "model".
 
 ``--soss_modelname``
-  This is a NIRISS-SOSS algorithm-specific parameter; if set, this will provide
+  If set, this will provide
   the optional ATOCA model output of traces and pixel weights, with the filename
   set by this parameter. By default this is set to None and this output is
   not provided.
