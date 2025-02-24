@@ -64,8 +64,8 @@ def apply_emicorr(
     scatter among the reads, and then finding the amplitude and phase of a supplied
     reference waveform that, when subtracted, makes these pixels' ramps as straight
     as possible. The straightness of the ramps is measured by chi squared after
-    fitting lines to each one.  As for the sequential algorithm, the noise at each
-    frequency is fit and removed iteratively, for each desired frequency.
+    fitting lines to each one.  As for the sequential algorithm, the EMI signal at
+    each frequency is fit and removed iteratively, for each desired frequency.
 
     For either algorithm, removing the highest amplitude EMI first will probably
     give best results.
@@ -246,8 +246,10 @@ def _run_joint_algorithm(
     Returns
     -------
     DataModel
-        The output datamodel, with noise fit and subtracted.
+        The input datamodel, with noise fit and subtracted.
     """
+    # Additional frame time to account for the extra frame reset between
+    # MIRI integrations
     readpatt = str(input_model.meta.exposure.readpatt).upper()
     if readpatt == "FASTR1" or readpatt == "SLOWR1":
         _frameclocks = frameclocks
@@ -941,7 +943,7 @@ def emicorr_refwave(
     all_n = np.zeros((nints, nphases))
 
     # "Good" pixel here has no more than twice the median standard
-    # deviation among group differences and is not flagged in the pdq
+    # deviation among group values and is not flagged in the pdq
     # array.  This should discard most bad and high-flux pixels.
 
     pixel_std = np.std(data, axis=1)
@@ -949,9 +951,7 @@ def emicorr_refwave(
 
     for j in range(ny):
         for k in range(nx4):
-            # Bad reference column?  I am not sure whether this is needed,
-            # but I think so. I carried it from the current routine.
-
+            # Bad reference column
             if k == 1 or k == 2:
                 continue
 
@@ -1051,6 +1051,10 @@ def get_best_phase(phases, chisq):
 
     # Calculate the vertex of the parabola.
     chisq_opt = [chisq[ibest_m1], chisq[ibest], chisq[ibest_p1]]
+    if np.any(~np.isfinite(chisq_opt)):
+        log.warning("Chi squared values in final optimization are unexpectedly NaN")
+        return phases[ibest]
+
     x = [phases[ibest_m1], phases[ibest], phases[ibest_p1]]
 
     # Just in case all of these chi squared values are equal
@@ -1177,7 +1181,14 @@ class EMIfitter:
         """
         Compute and store quantities needed for chi2, amplitude calculation.
 
-        Some of the math from the writeup goes in here.
+        This class precomputes a series of arrays so that the sums in
+        `calc_chisq_amplitudes` do not need to be fully recomputed at every
+        possible phase of the EMI signal.
+
+        Sums of pixel read values are precomputed over pixels that share the
+        same EMI phase to avoid double sums over pixels and reads later. Sums over
+        the EMI waveform itself are also precomputed at each trial phase offset for
+        the same reason.
 
         Parameters
         ----------
