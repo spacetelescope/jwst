@@ -1,4 +1,5 @@
 Implement a new EMIcorr algorithm that optimizes the phase and amplitude of
 a reference waveform of known frequency. The best phase and amplitude are the
 ones that, when applied to the waveform and subtracted from the data, produce
-ramps for the pixels that are as linear as possible.
+ramps for the pixels that are as linear as possible. Also, fix a minor bug in
+the existing algorithm that prevented saving intermediate reference files.
