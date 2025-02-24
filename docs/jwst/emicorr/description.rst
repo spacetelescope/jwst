@@ -63,7 +63,7 @@ the EMI noise are fit simultaneously. It works by choosing pixels with modest
 scatter among the reads, and then finding the amplitude and phase of a supplied
 reference waveform that, when subtracted, makes these pixels' ramps as straight
 as possible. The straightness of the ramps is measured by a chi-squared metric, after
-fitting lines to each one.  As for the sequential algorithm, the noise at each
+fitting lines to each one.  As for the sequential algorithm, the EMI signal at each
 frequency is fit and removed iteratively, for each desired frequency.
 
 The optimal choice for the fitting algorithm depends on the input.
