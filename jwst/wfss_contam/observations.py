@@ -27,10 +27,10 @@ def _disperse_multiprocess(pars, max_cpu):
 
 def background_subtract(
     data,
-    box_size,
-    filter_size,
-    sigma,
-    exclude_percentile,
+    box_size=None,
+    filter_size=(3, 3),
+    sigma=3.0,
+    exclude_percentile=30.0,
 ):
     """
     Apply a simple astropy background subtraction.
@@ -317,7 +317,7 @@ class Observation:
             log.info(f"Using multiprocessing with {self.max_cpu} cores to compute dispersion")
 
         disperse_chunk_output = []
-        for i in range(len(self.IDs)):
+        for i in range(len(self.source_ids)):
             disperse_chunk_output.append(self.disperse_chunk(*pool_args[i]))
         t1 = time.time()
         log.info(f"Wall clock time for disperse_chunk order {order}: {(t1 - t0):.1f} sec")
@@ -554,7 +554,7 @@ class Observation:
 
 #         self.simulated_image = np.zeros(self.dims, float)
 
-#         for i in range(len(self.IDs)):
+#         for i in range(len(self.source_ids)):
 #             this_object = self.disperse_chunk_from_cache(i, trans=trans)
 
 #         return this_object

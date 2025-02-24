@@ -54,7 +54,7 @@ def determine_multiprocessing_ncores(max_cores, num_cores):
                 f"Requested {max_cores} cores exceeds the number of cores available "
                 "on this machine ({num_cores}). Using all available cores."
             )
-            return max_cores
+            return num_cores
         case _:
             raise ValueError(f"Invalid value for max_cores: {max_cores}")
 

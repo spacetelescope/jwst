@@ -1,6 +1,14 @@
 import pytest
-from jwst.wfss_contam.wfss_contam import CommonSlitEncompass, CommonSlitPreferFirst, SlitOverlapError, UnmatchedSlitIDError, determine_multiprocessing_ncores, _cut_frame_to_match_slit, _find_matching_simul_slit
-from jwst.datamodels import SlitModel
+from jwst.wfss_contam.wfss_contam import (
+    match_backplane_prefer_first,
+    match_backplane_encompass_both,
+    SlitOverlapError,
+    UnmatchedSlitIDError,
+    determine_multiprocessing_ncores,
+    _cut_frame_to_match_slit,
+    _find_matching_simul_slit
+)
+from stdatamodels.jwst.datamodels import SlitModel
 import numpy as np
 
 
@@ -74,7 +82,7 @@ def test_cut_frame_to_match_slit(slit0, contam):
 
 
 def test_common_slit_encompass(slit0, slit1):
-    slit0_final, slit1_final = CommonSlitEncompass(slit0.copy(), slit1.copy()).match_backplane()
+    slit0_final, slit1_final = match_backplane_encompass_both(slit0.copy(), slit1.copy())
 
     # check indexing in metadata
     assert slit0_final.xstart == slit1_final.xstart
@@ -95,7 +103,7 @@ def test_common_slit_encompass(slit0, slit1):
 
 def test_common_slit_prefer(slit0, slit1):
 
-    slit0_final, slit1_final = CommonSlitPreferFirst(slit0.copy(), slit1.copy()).match_backplane()
+    slit0_final, slit1_final = match_backplane_prefer_first(slit0.copy(), slit1.copy())
     assert slit0_final.xstart == slit0.xstart
     assert slit0_final.ystart == slit0.ystart
     assert slit0_final.xsize == slit0.xsize
@@ -114,4 +122,4 @@ def test_common_slit_prefer(slit0, slit1):
 def test_common_slit_prefer_expected_raise(slit0, slit2):
 
     with pytest.raises(SlitOverlapError):
-        CommonSlitPreferFirst(slit0.copy(), slit2.copy()).match_backplane()
+        match_backplane_prefer_first(slit0.copy(), slit2.copy())
