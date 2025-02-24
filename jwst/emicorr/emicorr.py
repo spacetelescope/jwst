@@ -94,9 +94,9 @@ def apply_emicorr(
         If True and `algorithm` is 'sequential', the reference wavelength will be scaled
         to the data's phase amplitude.
     onthefly_corr_freq : list of float or None, optional
-        Frequency values to use to create a correction on-the-fly, when
-        `algorithm` is 'sequential'.  If provided, any input `emicorr_model` is
-        ignored.
+        Frequency values to use to create a correction on-the-fly.  If provided,
+        any input `emicorr_model` is ignored and the `algorithm` is set to
+        'sequential'.
     use_n_cycles : int, optional
         Only use N cycles to calculate the phase to reduce code running time,
         when `algorithm` is 'sequential'.
