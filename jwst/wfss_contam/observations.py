@@ -118,13 +118,13 @@ class Observation:
         segmap_model,
         grism_wcs,
         filter_name,
-        source_id,
-        sed_file,
-        extrapolate_sed,
-        boundaries,
-        offsets,
-        renormalize,
-        max_cpu,
+        source_id=None,
+        sed_file=None,
+        extrapolate_sed=False,
+        boundaries=None,
+        offsets=None,
+        renormalize=True,
+        max_cpu=1,
     ):
         """
         Initialize all data and metadata for a given observation.
@@ -376,11 +376,13 @@ class Observation:
         self.wmax = wmax
         self.sens_waves = sens_waves
         self.sens_resp = sens_resp
-        log.info(f"Dispersing source {sid}, order {self.order}")
-        pars = []  # initialize params for this object
+        log.info(
+            f"Dispersing source {sid}, order {self.order}. "
+            f"Source contains {len(self.xs[c])} pixels."
+        )
 
         # Loop over all pixels in list for object "c"
-        log.debug(f"source contains {len(self.xs[c])} pixels")
+        pars = []  # initialize params for this object
         for i in range(len(self.xs[c])):
             # Here "i" is just an index into the pixel list for the object
             # being processed, as opposed to the ID number of the object itself
