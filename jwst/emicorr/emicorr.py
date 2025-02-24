@@ -135,7 +135,7 @@ def apply_emicorr(
         )
         algorithm = "sequential"
 
-    # Get the subarray case from either the ref file or set default values
+    # Get the subarray case from the ref file
     freq_numbers = []
     reference_wave_list = []
     subname, rowclocks, frameclocks, freqs2correct = None, None, None, None
@@ -179,7 +179,8 @@ def apply_emicorr(
         log.warning("No correction match for this configuration")
         return None
 
-    # For the joint algorithm, use the reference wave to correct the data
+    # Run either the joint or sequential fitting algorithm
+    # to fit and correct for EMI data
     if algorithm == "joint":
         output_model = _run_joint_algorithm(
             input_model,
