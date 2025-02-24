@@ -46,7 +46,6 @@ repos:
             jwst/dark_current/.* |
             jwst/emicorr/.* |
             jwst/engdblog/.* |
-            jwst/exp_to_source/.* |
             jwst/extract_1d/apply_apcorr.py |
             jwst/extract_1d/extract.py |
             jwst/extract_1d/extract1d.py |
