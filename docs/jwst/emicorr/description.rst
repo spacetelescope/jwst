@@ -71,9 +71,7 @@ The sequential algorithm can be used without a reference waveform, generating
 a new reference file on-the-fly for user-specified frequencies, but it
 requires 10 or more groups for a reliable fit.  The joint algorithm
 requires a reference waveform but can successfully fit EMI in ramps with
-3 or more groups.  Currently, the default algorithm is "sequential", but users
-should consider specifying the joint algorithm if the number of groups
-in the input data is less than 10.
+3 or more groups.
 
 Input
 -----
