@@ -181,6 +181,7 @@ def apply_emicorr(
 
     # Run either the joint or sequential fitting algorithm
     # to fit and correct for EMI data
+    log.info(f"Running EMI fit with algorithm = '{algorithm}'.")
     if algorithm == "joint":
         output_model = _run_joint_algorithm(
             input_model,
