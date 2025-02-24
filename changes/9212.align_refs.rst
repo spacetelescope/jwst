@@ -1,0 +1,1 @@
+Use astropy version of interpret_bit_flags.
