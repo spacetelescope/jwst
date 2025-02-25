@@ -1,49 +1,47 @@
 import numpy as np
 import pytest
 
-from stdatamodels.jwst import datamodels
-
-from jwst.guider_cds.guider_cds import get_dataset_info, guider_cds
+from jwst import datamodels
+from crds import getreferences
+from jwst.guider_cds.guider_cds import guider_cds
 
 
 @pytest.fixture
-def make_guider_image():
-    """Generate science image"""
+def make_guider_image_and_refs():
+    """Generate science image."""
 
     image = datamodels.GuiderRawModel()
 
-    image.meta.instrument.name = 'FGS'
+    image.meta.instrument.name = "FGS"
+    image.meta.instrument.detector = "GUIDER1"
+    image.meta.observation.date = "2016-04-07"
+    image.meta.observation.time = "14:44:57"
     image.meta.exposure.frame_time = 234.3423235
     image.meta.exposure.ngroups = 4
     image.meta.exposure.group_time = 465.643643
     image.meta.exposure.type = "FGS_FINEGUIDE"
 
     image.data = np.random.rand(4, 10, 10, 10)
+    image.meta.subarray.xstart = 1226
+    image.meta.subarray.ystart = 209
+    image.meta.subarray.xsize = 10
+    image.meta.subarray.ysize = 10
 
-    return image
+    refs = getreferences(image, reftypes=['gain', 'readnoise'])
+    gain_model = datamodels.GainModel(refs['gain'])
+    readnoise_model = datamodels.ReadnoiseModel(refs['gain'])
 
-
-def test_get_dataset_info(make_guider_image):
-    """Make sure information assigned to datamodel is retrieved correctly."""
-
-    model = make_guider_image
-
-    imshape, n_int, grp_time, exp_type = get_dataset_info(model)
-
-    assert imshape == (10, 10)
-    assert n_int == model.data.shape[0]
-    assert grp_time == model.meta.exposure.group_time
-    assert exp_type == model.meta.exposure.type
+    return image, gain_model, readnoise_model
 
 
-def test_guider_cds_fineguide_mode(make_guider_image):
-    """Test the fine guiding mode"""
+def test_guider_cds_fineguide_mode(make_guider_image_and_refs):
+    """Test the fine guiding mode."""
 
-    model = make_guider_image
+    model, gain_model, readnoise_model = make_guider_image_and_refs
 
     truth = np.zeros(model.data.shape)
 
-    result = guider_cds(model)
+    result = guider_cds(model, gain_model, readnoise_model)
 
     n_int = model.data.shape[0]
     imshape = (model.data.shape[2], model.data.shape[3])
@@ -62,15 +60,15 @@ def test_guider_cds_fineguide_mode(make_guider_image):
 
 
 @pytest.mark.parametrize("exptype", ['FGS_ACQ1', 'FGS_ACQ2', 'FGS_TRACK'])
-def test_guider_cds_acq_track_modes(exptype, make_guider_image):
-    """Test acq and track exptypes"""
+def test_guider_cds_acq_track_modes(exptype, make_guider_image_and_refs):
+    """Test acq and track exptypes."""
 
-    model = make_guider_image
+    model, gain_model, readnoise_model = make_guider_image_and_refs
     model.meta.exposure.type = exptype
 
     truth = np.zeros(model.data.shape)
 
-    result = guider_cds(model)
+    result = guider_cds(model, gain_model, readnoise_model)
 
     n_int = model.data.shape[0]
     imshape = (model.data.shape[2], model.data.shape[3])
@@ -88,13 +86,13 @@ def test_guider_cds_acq_track_modes(exptype, make_guider_image):
 
 
 @pytest.mark.parametrize("exptype", ['FGS_ID-IMAGE', 'FGS_ID-STACK'])
-def test_guider_cds_id_modes(exptype, make_guider_image):
-    """Test fgs id exptypes"""
+def test_guider_cds_id_modes(exptype, make_guider_image_and_refs):
+    """Test fgs id exptypes."""
 
-    model = make_guider_image
+    model, gain_model, readnoise_model = make_guider_image_and_refs
     model.meta.exposure.type = exptype
 
-    result = guider_cds(model)
+    result = guider_cds(model, gain_model, readnoise_model)
 
     n_int = model.data.shape[0]
     imshape = (model.data.shape[2], model.data.shape[3])
@@ -116,20 +114,20 @@ def test_guider_cds_id_modes(exptype, make_guider_image):
     assert np.allclose(result.data[0, :, :], truth[0, :, :])
 
 
-def test_unit_assignment(make_guider_image):
-    """Test that correct units are returned"""
+def test_unit_assignment(make_guider_image_and_refs):
+    """Test that correct units are returned."""
 
-    model = make_guider_image
+    model, gain_model, readnoise_model = make_guider_image_and_refs
 
-    result = guider_cds(model)
+    result = guider_cds(model, gain_model, readnoise_model)
 
     assert result.meta.bunit_data == 'DN/s'
 
 
-def test_table_extensions(make_guider_image):
-    """Test that tables are assigned to result of pipeline"""
+def test_table_extensions(make_guider_image_and_refs):
+    """Test that tables are assigned to result of pipeline."""
 
-    model = make_guider_image
+    model, gain_model, readnoise_model = make_guider_image_and_refs
 
     model.planned_star_table = np.arange(0, 11)
     model.flight_star_table = np.arange(0, 11)
@@ -137,7 +135,7 @@ def test_table_extensions(make_guider_image):
     model.centroid_table = np.arange(0, 11)
     model.track_sub_table = np.arange(0, 11)
 
-    result = guider_cds(model)
+    result = guider_cds(model, gain_model, readnoise_model)
 
     assert 'planned_star_table' in result
     assert 'flight_star_table' in result
@@ -146,11 +144,11 @@ def test_table_extensions(make_guider_image):
     assert 'track_sub_table' in result
 
 
-def test_err_nonzero(make_guider_image):
+def test_err_nonzero(make_guider_image_and_refs):
     """Make sure that the ERR array in output are not all zero."""
 
-    model = make_guider_image
+    model, gain_model, readnoise_model = make_guider_image_and_refs
 
-    result = guider_cds(model)
+    result = guider_cds(model, gain_model, readnoise_model)
 
     assert result.err.max() > 0
