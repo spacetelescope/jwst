@@ -44,7 +44,6 @@ repos:
             jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
             jwst/dark_current/.* |
-            jwst/emicorr/.* |
             jwst/engdblog/.* |
             jwst/exp_to_source/.* |
             jwst/extract_1d/apply_apcorr.py |
