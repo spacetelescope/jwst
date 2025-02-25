@@ -37,7 +37,7 @@ def artifactory_repos(pytestconfig):
     results_root = pytestconfig.getini('results_root')
     # see not above about inputs_root
     if not results_root:
-        results_root = "jwst-pipeline-results"
+        results_root = "jwst-pipeline-results/regression-tests/runs/"
     else:
         results_root = results_root[0]
     return inputs_root, results_root
