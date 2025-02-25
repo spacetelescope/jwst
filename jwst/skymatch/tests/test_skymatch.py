@@ -403,9 +403,9 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     im2_path = "skymatch_im2.fits"
     im3_path = "skymatch_im3.fits"
 
-    im1.write(im1_path)
-    im2.write(im2_path)
-    im3.write(im3_path)
+    im1.save(im1_path)
+    im2.save(im2_path)
+    im3.save(im3_path)
 
     assoc_out = asn_from_list(
         [im1_path, im2_path, im3_path],
@@ -484,9 +484,9 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     im2_path = "skymatch_im2.fits"
     im3_path = "skymatch_im3.fits"
 
-    im1.write(im1_path)
-    im2.write(im2_path)
-    im3.write(im3_path)
+    im1.save(im1_path)
+    im2.save(im2_path)
+    im3.save(im3_path)
 
     assoc_out = asn_from_list(
         [im1_path, im2_path, im3_path],

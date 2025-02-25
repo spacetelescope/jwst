@@ -193,8 +193,8 @@ def test_transfer_wcs_correction(nircam_rate, tmp_path, input_type):
         model_file1 = str(tmp_path / 'model1.fits')
         model_file2 = str(tmp_path / 'model2.fits')
 
-        m1.write(model_file1)
-        m2.write(model_file2)
+        m1.save(model_file1)
+        m2.save(model_file2)
         m1 = model_file1
         m2 = model_file2
         from_model = model_file2
