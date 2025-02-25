@@ -113,9 +113,17 @@ def _cut_frame_to_match_slit(contam, slit):
     """
     x1 = slit.xstart
     y1 = slit.ystart
-    cutout = contam[y1 : y1 + slit.ysize, x1 : x1 + slit.xsize]
+    xf = x1 + slit.xsize
+    yf = y1 + slit.ysize
 
-    return cutout
+    # zero-pad the contamination image if the slit extends beyond the contamination image
+    # fixes an off-by-one bug when sources extend to the edge of the contamination image
+    if xf > contam.shape[1]:
+        contam = np.pad(contam, ((0, 0), (0, xf - contam.shape[1])), mode="constant")
+    if yf > contam.shape[0]:
+        contam = np.pad(contam, ((0, yf - contam.shape[0]), (0, 0)), mode="constant")
+
+    return contam[y1 : y1 + slit.ysize, x1 : x1 + slit.xsize]
 
 
 class SlitOverlapError(Exception):
@@ -306,10 +314,10 @@ def contam_corr(
 
     # select a subset of the brightest sources using source catalog
     if brightest_n is not None:
+        log.info(f"Simulating only the brightest {brightest_n} sources")
         source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
-        source_catalog.sort(
-            "isophotal_abmag", reverse=False
-        )  # magnitudes in ascending order, since brighter is smaller mag number
+        # magnitudes in ascending order, since brighter is smaller mag number
+        source_catalog.sort("isophotal_abmag", reverse=False)
         selected_ids = list(source_catalog["label"])[:brightest_n]
     else:
         selected_ids = None
@@ -325,11 +333,11 @@ def contam_corr(
         source_id=selected_ids,
     )
 
+    # Initialize output multislitmodel
     good_slits = [slit for slit in output_model.slits if slit.source_id in obs.source_ids]
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
     output_model.slits.extend(good_slits)
-    log.info(f"Simulating only the brightest {brightest_n} sources")
 
     simul_all = None
     for order in spec_orders:
@@ -348,7 +356,7 @@ def contam_corr(
         else:
             simul_all += obs.simulated_image
 
-    # Save the full-frame simulated grism image
+    # Make the full-frame simulated grism image
     simul_model = datamodels.ImageModel(data=simul_all)
     simul_model.update(input_model, only="PRIMARY")
 

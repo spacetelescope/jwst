@@ -188,7 +188,7 @@ class Observation:
         else:
             self.xstart, self.xend, self.ystart, self.yend = boundaries
         self.dims = (self.yend - self.ystart + 1, self.xend - self.xstart + 1)
-        log.debug(f"Using simulated image size of {self.dims[1]} {self.dims[0]}")
+        log.debug(f"Using simulated image size of ({self.dims[1]}, {self.dims[0]}).")
 
         # Allow for SED extrapolation
         self.extrapolate_sed = extrapolate_sed
