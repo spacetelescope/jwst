@@ -121,17 +121,17 @@ class STFITSDiff(FITSDiff):
             for key in extension_tolerances:
                 # Make sure both tolerances exist in key
                 tols = extension_tolerances[key]
-                if 'rtol' not in tols:
-                    tols['rtol'] = rtol
-                if 'atol' not in tols:
-                    tols['atol'] = atol
+                if "rtol" not in tols:
+                    tols["rtol"] = rtol
+                if "atol" not in tols:
+                    tols["atol"] = atol
                 if isinstance(key, str):
                     self.extension_tolerances[key.upper()] = tols
                 else:
                     self.extension_tolerances[key] = tols
             # Make sure the other extensions get a default relative and absolute tolerance
-            if 'DEFAULT' not in [key.upper() for key in extension_tolerances if isinstance(key, str)]:
-                self.extension_tolerances['DEFAULT'] = {'rtol': rtol, 'atol': atol}
+            if "DEFAULT" not in [key.upper() for key in extension_tolerances if isinstance(key, str)]:
+                self.extension_tolerances["DEFAULT"] = {"rtol": rtol, "atol": atol}
 
         super().__init__(a, b,
                          ignore_hdus=ignore_hdus,
@@ -398,7 +398,7 @@ class STHDUDiff(HDUDiff):
         # If specific header tolerances were given set them temporarily
         if self.header_tolerances:
             rtol, atol = self.rtol, self.atol
-            self.rtol, self.atol = self.header_tolerances['rtol'], self.header_tolerances['atol']
+            self.rtol, self.atol = self.header_tolerances["rtol"], self.header_tolerances["atol"]
 
         # Get the header differences
         self.diff_headers = STHeaderDiff.fromdiff(
@@ -418,8 +418,8 @@ class STHDUDiff(HDUDiff):
             shapea = a.shape
             shapeb = b.shape
             if shapea != shapeb:
-                percentages['array_shapes_are_different'] = ''
-                stats['no_stats_available'] = ''
+                percentages["array_shapes_are_different"] = ""
+                stats["no_stats_available"] = ""
                 return nans_zero_info, percentages, stats
             nan_idx = (np.isnan(a) | np.isnan(b))
             anonan = a[~nan_idx]
@@ -428,53 +428,60 @@ class STHDUDiff(HDUDiff):
             if (values == 0.0).all():
                 return None, None, None
             # Calculate stats
-            stats['mean_value_in_a'] = np.mean(anonan)
-            stats['mean_value_in_b'] = np.mean(bnonan)
+            stats["mean_value_in_a"] = np.mean(anonan)
+            stats["mean_value_in_b"] = np.mean(bnonan)
             # Catch the all NaNs case
             if values.size == 0:
-                percentages['NaN'] = 100
-                stats['no_stats_available'] = ''
+                percentages["NaN"] = 100
+                stats["no_stats_available"] = ""
                 return nans_zero_info, percentages, stats
-            stats['max_abs_diff'] = np.max(values)
-            stats['min_abs_diff'] = np.min(values)
-            stats['mean_abs_diff'] = np.mean(values)
-            stats['std_dev_abs_diff'] = np.std(values)
+            stats["max_abs_diff"] = np.max(values)
+            stats["min_abs_diff"] = np.min(values)
+            stats["mean_abs_diff"] = np.mean(values)
+            stats["std_dev_abs_diff"] = np.std(values)
             nozeros = (values != 0.0) & (bnonan != 0.0)
             relative_values = values[nozeros] / np.abs(bnonan[nozeros])
             # Catch an empty sequence
             if relative_values.size == 0:
-                stats['no_rel_stats_available'] = np.nan
+                stats["no_rel_stats_available"] = np.nan
             else:
-                stats['max_rel_diff'] = np.max(relative_values)
+                stats["max_rel_diff"] = np.max(relative_values)
                 if 0.0 in values:
-                    stats['min_rel_diff'] = 0.0
+                    stats["min_rel_diff"] = 0.0
                 else:
-                    stats['min_rel_diff'] = np.min(relative_values)
-                stats['mean_rel_diff'] = np.mean(relative_values)
-                stats['std_dev_rel_diff'] = np.std(relative_values)
+                    stats["min_rel_diff"] = np.min(relative_values)
+                stats["mean_rel_diff"] = np.mean(relative_values)
+                stats["std_dev_rel_diff"] = np.std(relative_values)
             # Calculate difference percentages
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
             n_total = values.size
             percent_abs_list = []
             for threshold in thresholds:
                 n = values[values > threshold + self.atol].size
-                percent_abs = np.round((n / n_total) * 100, decimals=2)
-                percent_abs_list.append(percent_abs)
-            if (percent_abs_list == percent_abs).all():
-                percentages['abdiffs_too_large'] = percent_abs
-            else:
-                # Only include the percentage for 0.0
-                percentages['0.0_abs'] = percent_abs
+                percent_abs = (n / n_total) * 100
+                percent_abs_round = np.round(percent_abs, decimals=5)
+                if percent_abs_round != 0.0:
+                    percent_abs_list.append(percent_abs_round)
+                else:
+                    percent_abs_list.append(percent_abs)
+            if np.nan not in percent_abs_list:
+                if (np.array(percent_abs_list) == percent_abs).all():
+                    percentages["abdiffs_too_large"] = percent_abs_round
+                else:
+                    # Only include the percentage for 0.0
+                    percentages['0.0_abs'] = percent_abs_round
             if relative_values.size > 0:
                 percent_rel_list = []
                 # Differences are too large values. Calculating percentages on relative numbers.
                 for threshold in thresholds:
                     n = relative_values[relative_values > threshold + self.rtol].size
-                    percent_rel = np.round((n / n_total) * 100, decimals=2)
-                    percentages[str(threshold) + '_rel'] = percent_rel
+                    percent_rel = (n / n_total) * 100
+                    percent_rel_round = np.round(percent_rel, decimals=5)
+                    if percent_rel_round != 0.0:
+                        percentages[str(threshold) + "_rel"] = percent_rel_round
+                    else:
+                        percentages[str(threshold) + "_rel"] = percent_rel
                     percent_rel_list.append(percent_rel)
-                if (percent_rel_list == percent_rel).all():
-                    percentages['reldiffs_too_large'] = percent_rel
             return nans_zero_info, percentages, stats
 
         if self.a.data is None or self.b.data is None:
@@ -558,11 +565,11 @@ class STHDUDiff(HDUDiff):
                 self._writeln(f"  b: {self.nans[5]}")
             # Calculate difference percentages
             self._writeln(" Difference of a from b:")
-            if 'abdiffs_too_large' in self.percentages:
+            if "abdiffs_too_large" in self.percentages:
                 self._writeln("  * Absolute number differences are too large.")
                 self._writeln(f"  {'0.0_abs':>10} ..... {self.percentages['abdiffs_too_large']:<5}%")
                 del self.percentages['abdiffs_too_large']
-            if 'reldiffs_too_large' in self.percentages:
+            if "reldiffs_too_large" in self.percentages:
                 self._writeln("  * Relative number differences are too large.")
                 self._writeln(f"  {'0.0_rel':>10} ..... {self.percentages['reldiffs_too_large']:<5}%")
             else:
