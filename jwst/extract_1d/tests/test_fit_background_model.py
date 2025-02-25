@@ -1,6 +1,7 @@
 """
 Tests for extract_1d background fitting
 """
+
 import numpy as np
 import pytest
 
@@ -24,8 +25,17 @@ def inputs_constant():
     bkg_order = 0
     bkg_fit = "poly"
 
-    return (image, var_rnoise, var_poisson, var_rflat,
-            profile, weights, profile_bg, bkg_fit, bkg_order)
+    return (
+        image,
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        profile,
+        weights,
+        profile_bg,
+        bkg_fit,
+        bkg_order,
+    )
 
 
 @pytest.fixture
@@ -56,24 +66,49 @@ def inputs_with_source():
 
     profile_bg = None
 
-    return (image, var_rnoise, var_poisson, var_rflat,
-            profile, weights, profile_bg)
+    return (image, var_rnoise, var_poisson, var_rflat, profile, weights, profile_bg)
 
 
-@pytest.mark.parametrize('bkg_fit_type', ['poly', 'median'])
+@pytest.mark.parametrize("bkg_fit_type", ["poly", "median"])
 def test_fit_background(inputs_constant, bkg_fit_type):
-    (image, var_rnoise, var_poisson, var_rflat,
-     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    (
+        image,
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        profile,
+        weights,
+        profile_bg,
+        bkg_fit,
+        bkg_order,
+    ) = inputs_constant
 
-    (total_flux, f_var_rnoise, f_var_poisson, f_var_flat,
-     bkg_flux, b_var_rnoise, b_var_poisson, b_var_flat,
-     npixels, model) = extract1d.extract1d(
-        image, [profile], var_rnoise, var_poisson, var_rflat,
-        weights=weights, profile_bg=profile_bg, fit_bkg=True,
-        bkg_fit_type=bkg_fit_type, bkg_order=bkg_order)
+    (
+        total_flux,
+        f_var_rnoise,
+        f_var_poisson,
+        f_var_flat,
+        bkg_flux,
+        b_var_rnoise,
+        b_var_poisson,
+        b_var_flat,
+        npixels,
+        model,
+    ) = extract1d.extract1d(
+        image,
+        [profile],
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        weights=weights,
+        profile_bg=profile_bg,
+        fit_bkg=True,
+        bkg_fit_type=bkg_fit_type,
+        bkg_order=bkg_order,
+    )
 
-    if bkg_fit_type == 'median':
-        extra_factor = 1.2 ** 2
+    if bkg_fit_type == "median":
+        extra_factor = 1.2**2
     else:
         extra_factor = 1.0
 
@@ -83,20 +118,47 @@ def test_fit_background(inputs_constant, bkg_fit_type):
     assert np.allclose(b_var_flat[0], extra_factor * np.sum(image[4:8], axis=0) / 16)
 
 
-@pytest.mark.parametrize('bkg_fit_type', ['poly', 'median'])
+@pytest.mark.parametrize("bkg_fit_type", ["poly", "median"])
 def test_fit_background_with_smoothing(inputs_constant, bkg_fit_type):
-    (image, var_rnoise, var_poisson, var_rflat,
-     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    (
+        image,
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        profile,
+        weights,
+        profile_bg,
+        bkg_fit,
+        bkg_order,
+    ) = inputs_constant
 
-    (total_flux, f_var_rnoise, f_var_poisson, f_var_flat,
-     bkg_flux, b_var_rnoise, b_var_poisson, b_var_flat,
-     npixels, model) = extract1d.extract1d(
-        image, [profile], var_rnoise, var_poisson, var_rflat,
-        weights=weights, profile_bg=profile_bg, fit_bkg=True,
-        bkg_fit_type=bkg_fit_type, bkg_order=bkg_order, bg_smooth_length=3)
+    (
+        total_flux,
+        f_var_rnoise,
+        f_var_poisson,
+        f_var_flat,
+        bkg_flux,
+        b_var_rnoise,
+        b_var_poisson,
+        b_var_flat,
+        npixels,
+        model,
+    ) = extract1d.extract1d(
+        image,
+        [profile],
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        weights=weights,
+        profile_bg=profile_bg,
+        fit_bkg=True,
+        bkg_fit_type=bkg_fit_type,
+        bkg_order=bkg_order,
+        bg_smooth_length=3,
+    )
 
-    if bkg_fit_type == 'median':
-        extra_factor = 1.2 ** 2
+    if bkg_fit_type == "median":
+        extra_factor = 1.2**2
     else:
         extra_factor = 1.0
 
@@ -110,16 +172,42 @@ def test_fit_background_with_smoothing(inputs_constant, bkg_fit_type):
 
 
 def test_handles_nan(inputs_constant):
-    (image, var_rnoise, var_poisson, var_rflat,
-     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    (
+        image,
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        profile,
+        weights,
+        profile_bg,
+        bkg_fit,
+        bkg_order,
+    ) = inputs_constant
     image[:, 2] = np.nan
 
-    (total_flux, f_var_rnoise, f_var_poisson, f_var_flat,
-     bkg_flux, b_var_rnoise, b_var_poisson, b_var_flat,
-     npixels, model) = extract1d.extract1d(
-        image, [profile], var_rnoise, var_poisson, var_rflat,
-        weights=weights, profile_bg=profile_bg, fit_bkg=True,
-        bkg_fit_type=bkg_fit, bkg_order=bkg_order)
+    (
+        total_flux,
+        f_var_rnoise,
+        f_var_poisson,
+        f_var_flat,
+        bkg_flux,
+        b_var_rnoise,
+        b_var_poisson,
+        b_var_flat,
+        npixels,
+        model,
+    ) = extract1d.extract1d(
+        image,
+        [profile],
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        weights=weights,
+        profile_bg=profile_bg,
+        fit_bkg=True,
+        bkg_fit_type=bkg_fit,
+        bkg_order=bkg_order,
+    )
 
     assert np.allclose(bkg_flux[0], np.nansum(image[4:8], axis=0) / 4)
     assert np.allclose(b_var_rnoise[0], np.nansum(image[4:8], axis=0) / 16)
@@ -127,20 +215,46 @@ def test_handles_nan(inputs_constant):
     assert np.allclose(b_var_flat[0], np.nansum(image[4:8], axis=0) / 16)
 
 
-@pytest.mark.parametrize('bkg_order_val', [0, 1, 2])
+@pytest.mark.parametrize("bkg_order_val", [0, 1, 2])
 def test_handles_one_value(inputs_constant, bkg_order_val):
-    (image, var_rnoise, var_poisson, var_rflat,
-     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    (
+        image,
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        profile,
+        weights,
+        profile_bg,
+        bkg_fit,
+        bkg_order,
+    ) = inputs_constant
     profile_bg[:] = 0.0
     profile_bg[4:6] = 1.0
     image[4] = np.nan
 
-    (total_flux, f_var_rnoise, f_var_poisson, f_var_flat,
-     bkg_flux, b_var_rnoise, b_var_poisson, b_var_flat,
-     npixels, model) = extract1d.extract1d(
-        image, [profile], var_rnoise, var_poisson, var_rflat,
-        weights=weights, profile_bg=profile_bg, fit_bkg=True,
-        bkg_fit_type=bkg_fit, bkg_order=bkg_order_val)
+    (
+        total_flux,
+        f_var_rnoise,
+        f_var_poisson,
+        f_var_flat,
+        bkg_flux,
+        b_var_rnoise,
+        b_var_poisson,
+        b_var_flat,
+        npixels,
+        model,
+    ) = extract1d.extract1d(
+        image,
+        [profile],
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        weights=weights,
+        profile_bg=profile_bg,
+        fit_bkg=True,
+        bkg_fit_type=bkg_fit,
+        bkg_order=bkg_order_val,
+    )
 
     if bkg_order_val == 0:
         expected = image[5]
@@ -155,16 +269,42 @@ def test_handles_one_value(inputs_constant, bkg_order_val):
 
 
 def test_handles_empty_interval(inputs_constant):
-    (image, var_rnoise, var_poisson, var_rflat,
-     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    (
+        image,
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        profile,
+        weights,
+        profile_bg,
+        bkg_fit,
+        bkg_order,
+    ) = inputs_constant
     profile_bg[:] = 0.0
 
-    (total_flux, f_var_rnoise, f_var_poisson, f_var_flat,
-     bkg_flux, b_var_rnoise, b_var_poisson, b_var_flat,
-     npixels, model) = extract1d.extract1d(
-        image, [profile], var_rnoise, var_poisson, var_rflat,
-        weights=weights, profile_bg=profile_bg, fit_bkg=True,
-        bkg_fit_type=bkg_fit, bkg_order=bkg_order)
+    (
+        total_flux,
+        f_var_rnoise,
+        f_var_poisson,
+        f_var_flat,
+        bkg_flux,
+        b_var_rnoise,
+        b_var_poisson,
+        b_var_flat,
+        npixels,
+        model,
+    ) = extract1d.extract1d(
+        image,
+        [profile],
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        weights=weights,
+        profile_bg=profile_bg,
+        fit_bkg=True,
+        bkg_fit_type=bkg_fit,
+        bkg_order=bkg_order,
+    )
 
     assert np.allclose(bkg_flux[0], 0.0)
     assert np.allclose(b_var_rnoise[0], 0.0)
@@ -173,53 +313,112 @@ def test_handles_empty_interval(inputs_constant):
 
 
 def test_bad_fit_type(inputs_constant):
-    (image, var_rnoise, var_poisson, var_rflat,
-     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    (
+        image,
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        profile,
+        weights,
+        profile_bg,
+        bkg_fit,
+        bkg_order,
+    ) = inputs_constant
     with pytest.raises(ValueError, match="bkg_fit_type should be 'median' or 'poly'"):
         extract1d.extract1d(
-            image, [profile], var_rnoise, var_poisson, var_rflat,
-            weights=weights, profile_bg=profile_bg, fit_bkg=True,
-            bkg_fit_type='mean', bkg_order=bkg_order)
+            image,
+            [profile],
+            var_rnoise,
+            var_poisson,
+            var_rflat,
+            weights=weights,
+            profile_bg=profile_bg,
+            fit_bkg=True,
+            bkg_fit_type="mean",
+            bkg_order=bkg_order,
+        )
 
 
-@pytest.mark.parametrize('smooth', [1.5, 2])
+@pytest.mark.parametrize("smooth", [1.5, 2])
 def test_smooth_length(inputs_constant, smooth):
-    (image, var_rnoise, var_poisson, var_rflat,
-     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    (
+        image,
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        profile,
+        weights,
+        profile_bg,
+        bkg_fit,
+        bkg_order,
+    ) = inputs_constant
     with pytest.raises(ValueError, match="should be an odd integer >= 1"):
         extract1d.extract1d(
-            image, [profile], var_rnoise, var_poisson, var_rflat,
-            weights=weights, profile_bg=profile_bg, fit_bkg=True,
-            bkg_fit_type=bkg_fit, bkg_order=bkg_order, bg_smooth_length=smooth)
+            image,
+            [profile],
+            var_rnoise,
+            var_poisson,
+            var_rflat,
+            weights=weights,
+            profile_bg=profile_bg,
+            fit_bkg=True,
+            bkg_fit_type=bkg_fit,
+            bkg_order=bkg_order,
+            bg_smooth_length=smooth,
+        )
 
 
-@pytest.mark.parametrize('extraction_type', ['box', 'optimal'])
-@pytest.mark.parametrize('bkg_order_val', [-1, 2.3])
+@pytest.mark.parametrize("extraction_type", ["box", "optimal"])
+@pytest.mark.parametrize("bkg_order_val", [-1, 2.3])
 def test_bad_fit_order(inputs_constant, extraction_type, bkg_order_val):
-    (image, var_rnoise, var_poisson, var_rflat,
-     profile, weights, profile_bg, bkg_fit, bkg_order) = inputs_constant
+    (
+        image,
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        profile,
+        weights,
+        profile_bg,
+        bkg_fit,
+        bkg_order,
+    ) = inputs_constant
     with pytest.raises(ValueError, match="bkg_order must be an integer >= 0"):
         extract1d.extract1d(
-            image, [profile], var_rnoise, var_poisson, var_rflat,
-            weights=weights, profile_bg=profile_bg, fit_bkg=True,
-            bkg_fit_type='poly', bkg_order=bkg_order_val,
-            extraction_type=extraction_type)
+            image,
+            [profile],
+            var_rnoise,
+            var_poisson,
+            var_rflat,
+            weights=weights,
+            profile_bg=profile_bg,
+            fit_bkg=True,
+            bkg_fit_type="poly",
+            bkg_order=bkg_order_val,
+            extraction_type=extraction_type,
+        )
 
 
-@pytest.mark.parametrize('use_weights', [True, False])
-@pytest.mark.parametrize('bkg_order_val', [0, 1, 2])
+@pytest.mark.parametrize("use_weights", [True, False])
+@pytest.mark.parametrize("bkg_order_val", [0, 1, 2])
 def test_fit_background_optimal(inputs_with_source, use_weights, bkg_order_val):
-    (image, var_rnoise, var_poisson, var_rflat,
-     profile, weights, profile_bg) = inputs_with_source
+    (image, var_rnoise, var_poisson, var_rflat, profile, weights, profile_bg) = inputs_with_source
 
     if not use_weights:
         weights = None
 
     result = extract1d.extract1d(
-        image, [profile], var_rnoise, var_poisson, var_rflat,
-        weights=weights, profile_bg=profile_bg, fit_bkg=True,
-        bkg_fit_type='poly', bkg_order=bkg_order_val,
-        extraction_type='optimal')
+        image,
+        [profile],
+        var_rnoise,
+        var_poisson,
+        var_rflat,
+        weights=weights,
+        profile_bg=profile_bg,
+        fit_bkg=True,
+        bkg_fit_type="poly",
+        bkg_order=bkg_order_val,
+        extraction_type="optimal",
+    )
 
     flux = result[0][0]
     background = result[4][0]

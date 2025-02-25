@@ -7,8 +7,7 @@ from stdatamodels.jwst.transforms.models import IdealToV2V3
 from jwst.assign_wcs.util import wcs_bbox_from_shape
 
 
-__all__ = ['middle_from_wcs', 'location_from_wcs', 'trace_from_wcs',
-           'nod_pair_location']
+__all__ = ["middle_from_wcs", "location_from_wcs", "trace_from_wcs", "nod_pair_location"]
 
 HORIZONTAL = 1
 """Horizontal dispersion axis."""
@@ -20,7 +19,8 @@ log.setLevel(logging.DEBUG)
 
 
 def middle_from_wcs(wcs, bounding_box, dispaxis):
-    """Calculate the effective middle of the spectral region.
+    """
+    Calculate the effective middle of the spectral region.
 
     Parameters
     ----------
@@ -49,7 +49,7 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
         xd_width = int(round(bounding_box[1][1]))  # must be an int
 
         # Middle of the bounding_box in the dispersion direction.
-        middle_disp = (bounding_box[0][0] + bounding_box[0][1]) / 2.
+        middle_disp = (bounding_box[0][0] + bounding_box[0][1]) / 2.0
         x = np.full(xd_width, middle_disp)
 
         # 1-D vector of cross-dispersion (y) pixel indices
@@ -60,7 +60,7 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
         xd_width = int(round(bounding_box[0][1]))
 
         # Middle of the bounding_box in the dispersion direction.
-        middle_disp = (bounding_box[1][0] + bounding_box[1][1]) / 2.
+        middle_disp = (bounding_box[1][0] + bounding_box[1][1]) / 2.0
         y = np.full(xd_width, middle_disp)
 
         # 1-D vector of cross-dispersion (x) pixel indices
@@ -81,20 +81,21 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
             middle_xdisp = np.mean(y)
         else:
             middle_xdisp = np.interp(
-                middle_wavelength, center_wavelengths[sort_idx][valid],
-                y[sort_idx[valid]])
+                middle_wavelength, center_wavelengths[sort_idx][valid], y[sort_idx[valid]]
+            )
     else:
         if np.allclose(center_wavelengths, middle_wavelength):
             middle_xdisp = np.mean(x)
         else:
             middle_xdisp = np.interp(
-                middle_wavelength, center_wavelengths[sort_idx][valid],
-                x[sort_idx[valid]])
+                middle_wavelength, center_wavelengths[sort_idx][valid], x[sort_idx[valid]]
+            )
     return middle_disp, middle_xdisp, middle_wavelength
 
 
 def location_from_wcs(input_model, slit, make_trace=True):
-    """Get the cross-dispersion location of the spectrum, based on the WCS.
+    """
+    Get the cross-dispersion location of the spectrum, based on the WCS.
 
     None values will be returned if there was insufficient information
     available, e.g. if the wavelength attribute or wcs function is not
@@ -162,7 +163,7 @@ def location_from_wcs(input_model, slit, make_trace=True):
 
     exp_type = input_model.meta.exposure.type
     trace = None
-    if exp_type in ['NRS_FIXEDSLIT', 'NRS_MSASPEC', 'NRS_BRIGHTOBJ']:
+    if exp_type in ["NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_BRIGHTOBJ"]:
         log.info("Using source_xpos and source_ypos to center extraction.")
         if slit is None:
             xpos = input_model.source_xpos
@@ -171,8 +172,8 @@ def location_from_wcs(input_model, slit, make_trace=True):
             xpos = slit.source_xpos
             ypos = slit.source_ypos
 
-        slit2det = wcs.get_transform('slit_frame', 'detector')
-        if 'gwa' in wcs.available_frames:
+        slit2det = wcs.get_transform("slit_frame", "detector")
+        if "gwa" in wcs.available_frames:
             # Input is not resampled, wavelengths need to be meters
             _, location = slit2det(xpos, ypos, middle_wl * 1e-6)
         else:
@@ -181,7 +182,7 @@ def location_from_wcs(input_model, slit, make_trace=True):
         if ~np.isnan(location) and make_trace:
             trace = _nirspec_trace_from_wcs(shape, bb, wcs, xpos, ypos)
 
-    elif exp_type == 'MIR_LRS-FIXEDSLIT':
+    elif exp_type == "MIR_LRS-FIXEDSLIT":
         log.info("Using dithered_ra and dithered_dec to center extraction.")
         try:
             if slit is None:
@@ -203,14 +204,16 @@ def location_from_wcs(input_model, slit, make_trace=True):
         return None, None, None, None
 
     if np.isnan(location):
-        log.warning('Source position could not be determined from WCS.')
+        log.warning("Source position could not be determined from WCS.")
         return None, None, None, None
 
     # If the target is at the edge of the image or at the edge of the
     # non-NaN area, we can't use the WCS to find the
     # location of the target spectrum.
     if location < lower or location > upper:
-        log.warning(f"WCS implies the target is at {location:.2f}, which is outside the bounding box,")
+        log.warning(
+            f"WCS implies the target is at {location:.2f}, which is outside the bounding box,"
+        )
         log.warning("so we can't get spectrum location using the WCS")
         return None, None, None, None
 
@@ -218,7 +221,8 @@ def location_from_wcs(input_model, slit, make_trace=True):
 
 
 def _nirspec_trace_from_wcs(shape, bounding_box, wcs_ref, source_xpos, source_ypos):
-    """Calculate NIRSpec source trace from WCS.
+    """
+    Calculate NIRSpec source trace from WCS.
 
     The source trace is calculated by projecting the recorded source
     positions source_xpos/ypos from the NIRSpec "slit_frame" onto
@@ -269,7 +273,7 @@ def _nirspec_trace_from_wcs(shape, bounding_box, wcs_ref, source_xpos, source_yp
 
     # Interpolate the trace to a regular pixel grid in the dispersion
     # direction
-    interp_trace = interp1d(trace_x, trace_y, fill_value='extrapolate')
+    interp_trace = interp1d(trace_x, trace_y, fill_value="extrapolate")
 
     # Get the trace position for each dispersion element
     trace = interp_trace(np.arange(nx))
@@ -277,13 +281,14 @@ def _nirspec_trace_from_wcs(shape, bounding_box, wcs_ref, source_xpos, source_yp
     # Place the trace in the full array
     full_trace = np.full(shape[1], np.nan)
     x0 = int(np.ceil(bounding_box[0][0]))
-    full_trace[x0:x0 + nx] = trace
+    full_trace[x0 : x0 + nx] = trace
 
     return full_trace
 
 
 def _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec):
-    """Calculate MIRI LRS fixed slit source trace from WCS.
+    """
+    Calculate MIRI LRS fixed slit source trace from WCS.
 
     The source trace is calculated by projecting the recorded source
     positions dithered_ra/dec from the world frame onto detector pixels.
@@ -328,7 +333,7 @@ def _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec):
 
     # Interpolate the trace to a regular pixel grid in the dispersion
     # direction
-    interp_trace = interp1d(trace_y, trace_x, fill_value='extrapolate')
+    interp_trace = interp1d(trace_y, trace_x, fill_value="extrapolate")
 
     # Get the trace position for each dispersion element within the bounding box
     trace = interp_trace(np.arange(ny))
@@ -336,13 +341,14 @@ def _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec):
     # Place the trace in the full array
     full_trace = np.full(shape[0], np.nan)
     y0 = int(np.ceil(bounding_box[1][0]))
-    full_trace[y0:y0 + ny] = trace
+    full_trace[y0 : y0 + ny] = trace
 
     return full_trace
 
 
 def trace_from_wcs(exp_type, shape, bounding_box, wcs_ref, source_x, source_y, dispaxis):
-    """Calculate a source trace from WCS.
+    """
+    Calculate a source trace from WCS.
 
     The source trace is calculated by projecting a fixed source
     positions onto detector pixels, to get a source location at each
@@ -377,10 +383,10 @@ def trace_from_wcs(exp_type, shape, bounding_box, wcs_ref, source_x, source_y, d
         Pixel positions in the cross-dispersion direction
         of the trace for each dispersion pixel.
     """
-    if exp_type == 'MIR_LRS-FIXEDSLIT':
+    if exp_type == "MIR_LRS-FIXEDSLIT":
         source_ra, source_dec, _ = wcs_ref(source_x, source_y)
         trace = _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec)
-    elif exp_type.startswith('NRS'):
+    elif exp_type.startswith("NRS"):
         d2s = wcs_ref.get_transform("detector", "slit_frame")
         source_xpos, source_ypos, _ = d2s(source_x, source_y)
         trace = _nirspec_trace_from_wcs(shape, bounding_box, wcs_ref, source_xpos, source_ypos)
@@ -390,18 +396,19 @@ def trace_from_wcs(exp_type, shape, bounding_box, wcs_ref, source_x, source_y, d
             trace = np.full(shape[1], np.nan)
             x0 = int(np.ceil(bounding_box[0][0]))
             nx = int(bounding_box[0][1] - bounding_box[0][0])
-            trace[x0:x0 + nx] = source_y
+            trace[x0 : x0 + nx] = source_y
         else:
             trace = np.full(shape[0], np.nan)
             y0 = int(np.ceil(bounding_box[1][0]))
             ny = int(bounding_box[1][1] - bounding_box[1][0])
-            trace[y0:y0 + ny] = source_x
+            trace[y0 : y0 + ny] = source_x
 
     return trace
 
 
 def _nod_pair_from_dither(input_model, middle_wl, dispaxis):
-    """Estimate a nod pair location from the dither offsets.
+    """
+    Estimate a nod pair location from the dither offsets.
 
     Expected location is at the opposite spatial offset from
     the input model.  Requires 'v2v3' transform in the WCS, so
@@ -422,13 +429,14 @@ def _nod_pair_from_dither(input_model, middle_wl, dispaxis):
         The expected location of the negative trace, in the
         cross-dispersion direction, at the middle wavelength.
     """
-    if 'v2v3' not in input_model.meta.wcs.available_frames:
+    if "v2v3" not in input_model.meta.wcs.available_frames:
         return np.nan
 
     idltov23 = IdealToV2V3(
         input_model.meta.wcsinfo.v3yangle,
-        input_model.meta.wcsinfo.v2_ref, input_model.meta.wcsinfo.v3_ref,
-        input_model.meta.wcsinfo.vparity
+        input_model.meta.wcsinfo.v2_ref,
+        input_model.meta.wcsinfo.v3_ref,
+        input_model.meta.wcsinfo.vparity,
     )
 
     if dispaxis == HORIZONTAL:
@@ -441,7 +449,7 @@ def _nod_pair_from_dither(input_model, middle_wl, dispaxis):
     dithered_v2, dithered_v3 = idltov23(x_offset, y_offset)
 
     # v23toworld requires a wavelength along with v2, v3, but value does not affect return
-    v23toworld = input_model.meta.wcs.get_transform('v2v3', 'world')
+    v23toworld = input_model.meta.wcs.get_transform("v2v3", "world")
     dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)
 
     x, y = input_model.meta.wcs.backward_transform(dithered_ra, dithered_dec, middle_wl)
@@ -453,7 +461,8 @@ def _nod_pair_from_dither(input_model, middle_wl, dispaxis):
 
 
 def _nod_pair_from_slitpos(input_model, middle_wl):
-    """Estimate a nod pair location from the source slit position.
+    """
+    Estimate a nod pair location from the source slit position.
 
     Expected location is at the opposite spatial position from
     the input model.  Requires 'slit_frame' transform in the WCS.
@@ -475,8 +484,8 @@ def _nod_pair_from_slitpos(input_model, middle_wl):
     xpos = input_model.source_xpos
     ypos = -input_model.source_ypos
     wcs = input_model.meta.wcs
-    slit2det = wcs.get_transform('slit_frame', 'detector')
-    if 'gwa' in wcs.available_frames:
+    slit2det = wcs.get_transform("slit_frame", "detector")
+    if "gwa" in wcs.available_frames:
         # Input is not resampled, wavelengths need to be meters
         _, location = slit2det(xpos, ypos, middle_wl * 1e-6)
     else:
@@ -485,7 +494,8 @@ def _nod_pair_from_slitpos(input_model, middle_wl):
 
 
 def nod_pair_location(input_model, middle_wl):
-    """Estimate a nod pair location from the WCS.
+    """
+    Estimate a nod pair location from the WCS.
 
     For MIRI, it will guess the location from the dither offsets.
     For NIRSpec, it will guess from the slit position.
@@ -507,10 +517,10 @@ def nod_pair_location(input_model, middle_wl):
     """
     exp_type = input_model.meta.exposure.type
     nod_center = np.nan
-    if exp_type == 'MIR_LRS-FIXEDSLIT':
+    if exp_type == "MIR_LRS-FIXEDSLIT":
         dispaxis = input_model.meta.wcsinfo.dispersion_direction
         nod_center = _nod_pair_from_dither(input_model, middle_wl, dispaxis)
-    elif exp_type.startswith('NRS'):
+    elif exp_type.startswith("NRS"):
         nod_center = _nod_pair_from_slitpos(input_model, middle_wl)
 
     return nod_center
