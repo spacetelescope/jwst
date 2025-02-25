@@ -367,7 +367,7 @@ class Extract1dStep(Step):
         if exp_type == 'MIR_MRS':
             band_cube = self._check_mrs_type(model)
             if self.ifu_rfcorr and  not band_cube:
-                self.log.info("Turning off residual fringe correction because the input is not a single IFU band")
+                self.log.info("Turning off residual fringe correction for MIRI MRS data because the input is not a single IFU band")
                 self.ifu_rfcorr = False
         else:
             self.ifu_rfcorr = False
