@@ -227,7 +227,7 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     # surf_bright and background were computed above
 
     if temp_flux_rf is None or surf_bright_rf is None or background_rf is None : # the all residual fringe corrected values to NA
-        
+
         flux_rf = np.zeros_like(flux)
         flux_rf[:] = np.nan
         surf_bright_rf = np.zeros_like(surf_bright)
