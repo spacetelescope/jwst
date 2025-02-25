@@ -106,12 +106,12 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     else:
         log.info(f"Source type = {source_type}")
 
-    output_model = datamodels.MultiSpecModel()
-    spec_dtype = datamodels.SpecModel().spec_table.dtype
-
     if input_model.meta.instrument.name == 'MIRI':
         output_model = datamodels.MRSMultiSpecModel()
         spec_dtype = datamodels.MRSSpecModel().spec_table.dtype
+    else:
+        output_model = datamodels.MultiSpecModel()
+        spec_dtype = datamodels.SpecModel().spec_table.dtype
 
     output_model.update(input_model, only="PRIMARY")
 
@@ -175,7 +175,7 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     background_rf = None
 
     # If selected, apply 1d residual fringe correction to the extracted spectrum
-    if ((input_model.meta.instrument.name == 'MIRI') & (extract_params['ifu_rfcorr'] is True)):
+    if ((input_model.meta.instrument.name == 'MIRI') and (extract_params['ifu_rfcorr'] is True)):
         log.info("Applying 1d residual fringe correction.")
         # Determine which MRS channel the spectrum is from
         thischannel = input_model.meta.instrument.channel
@@ -225,23 +225,8 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
     f_var_rnoise *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
     f_var_flat *= (pixel_solid_angle ** 2 * 1.e12)  # (MJy / sr)**2 --> Jy**2
     # surf_bright and background were computed above
-
-    if temp_flux_rf is None:
-        flux_rf = np.zeros_like(flux)
-        flux_rf[:] = np.nan
-    else:
-        flux_rf = temp_flux_rf * pixel_solid_angle * 1.e6
-
-    if background_rf is None:
-        background_rf = np.zeros_like(background)
-        background_rf[:] = np.nan
-
-    if surf_bright_rf is None:
-        surf_bright_rf = np.zeros_like(surf_bright)
-        surf_bright_rf[:] = np.nan
-
     del temp_flux
-    del temp_flux_rf
+
     error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
     sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
     berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
@@ -274,6 +259,21 @@ def ifu_extract1d(input_model, ref_file, source_type, subtract_background,
 
 
     if input_model.meta.instrument.name == 'MIRI':
+        if temp_flux_rf is None:
+            flux_rf = np.zeros_like(flux)
+            flux_rf[:] = np.nan
+        else:
+            flux_rf = temp_flux_rf * pixel_solid_angle * 1.e6
+
+        del temp_flux_rf
+        if background_rf is None:
+            background_rf = np.zeros_like(background)
+            background_rf[:] = np.nan
+
+        if surf_bright_rf is None:
+            surf_bright_rf = np.zeros_like(surf_bright)
+            surf_bright_rf[:] = np.nan
+
         otab = np.array(
             list(
                 zip(wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,

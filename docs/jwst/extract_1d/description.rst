@@ -78,7 +78,7 @@ have columns WAVELENGTH, FLUX, FLUX_ERROR, FLUX_VAR_POISSON, FLUX_VAR_RNOISE,
 FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
 BKGD_VAR_FLAT and NPIXELS. In the case of MIRI MRS data there are three additional
-columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and  RF_BACKGROUND
+columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
 
 Some metadata for the slit will be written to the header for
@@ -433,7 +433,7 @@ single band data. The parameter controlling applying the residual fringe correct
 Empirically, the 1-D correction step has been found to work better than the 2-D correction step if it is
 applied to per-band spectra. If the MIRI MRS data is from multiple bands/channels the residual fringe correction
 is turned off. Three additional columns are present in MIRI MRS extracted spectra: RF_FLUX, RF_SURF_BRIGHT, and 
-RF_BACKGROUND  These three columns are the flux, surface brightness and background arrays with the residiual
+RF_BACKGROUND. These three columns are the flux, surface brightness and background arrays with the residiual
 fringe correction applied. If the data is not from a single band or the residual fringe correction fails
 NULL values are reported for the arrays. 
 

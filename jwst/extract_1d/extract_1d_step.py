@@ -349,7 +349,7 @@ class Extract1dStep(Step):
         b_check = False
         if model.meta.instrument.channel  in validch:
             ch_check = True
-        if model.meta.instrument.band.lower()  in validband:
+        if str(model.meta.instrument.band).lower()  in validband:
             b_check = True
 
         if ch_check and b_check:
@@ -366,7 +366,7 @@ class Extract1dStep(Step):
 
         if exp_type == 'MIR_MRS':
             band_cube = self._check_mrs_type(model)
-            if self.ifu_rfcorr and  not band_cube:
+            if self.ifu_rfcorr and not band_cube:
                 self.log.info("Turning off residual fringe correction for MIRI MRS data because the input is not a single IFU band")
                 self.ifu_rfcorr = False
         else:
