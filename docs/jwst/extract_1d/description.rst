@@ -79,7 +79,7 @@ FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
 BKGD_VAR_FLAT and NPIXELS. In the case of MIRI MRS data there are three additional
 columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and  RF_BACKGROUND
-For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe.`
+For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
 
 Some metadata for the slit will be written to the header for
 the table extension, mostly copied from the input SCI extension headers.
