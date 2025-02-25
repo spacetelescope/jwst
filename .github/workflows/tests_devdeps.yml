@@ -55,21 +55,9 @@ jobs:
       cache-path: /tmp/data/crds_cache
       cache-key: crds-${{ needs.crds_context.outputs.context }}
       envs: |
-        - linux: py3-xdist
-          pytest-results-summary: true
-        - macos: py3-xdist
-          pytest-results-summary: true
-        - linux: py311-stdevdeps-xdist
-          pytest-results-summary: true
-        - macos: py311-stdevdeps-xdist
-          pytest-results-summary: true
         - linux: py3-stdevdeps-xdist
           pytest-results-summary: true
         - macos: py3-stdevdeps-xdist
-          pytest-results-summary: true
-        - linux: py311-devdeps-xdist
-          pytest-results-summary: true
-        - macos: py311-devdeps-xdist
           pytest-results-summary: true
         - linux: py3-devdeps-xdist
           pytest-results-summary: true
