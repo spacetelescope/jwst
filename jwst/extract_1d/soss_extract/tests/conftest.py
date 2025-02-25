@@ -164,7 +164,7 @@ def throughput():
     """
 
     def filter_function(wl, wl_max):
-        """Set free parameters to roughly mimic throughput functions on main."""
+        # Set free parameters to roughly mimic throughput functions on main.
         maxthru = 0.4
         thresh = 0.01
         scaling = 0.3

@@ -77,6 +77,7 @@ def match_log(log, expected):
     Parameters
     ----------
     log : list of LogRecord objects
+        The log to match.
 
     expected : list of strings
         Each string may contain embedded regular expressions inside of

@@ -22,7 +22,41 @@ def setup_inputs(
     gain=1,
     deltatime=1,
 ):
-    """Set up data."""
+    """
+    Set up the input data.
+
+    Parameters
+    ----------
+    ngroups : int
+        Number of groups in the ramp.
+    readnoise : float
+        Read noise.
+    nints : int
+        Number of integrations.
+    nrows : int
+        Number of rows in the image.
+    ncols : int
+        Number of columns in the image.
+    gain : float
+        Gain.
+    deltatime : float
+        Time between groups.
+
+    Returns
+    -------
+    model1 : RampModel
+        Data model.
+    gdq : ndarray
+        Group data quality array.
+    rnoise : ReadnoiseModel
+        Read noise data model.
+    pixdq : ndarray
+        Pixel data quality array.
+    err : ndarray
+        Error array.
+    gain : GainModel
+        Gain data model.
+    """
     times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
     gain = np.ones(shape=(nrows, ncols), dtype=np.float64) * gain
     err = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
@@ -63,7 +97,23 @@ def setup_inputs(
 
 
 def simple_ramp(fit_method="OLS", ngroups=10, cr_group=None):
-    """Create a simple ramp."""
+    """
+    Create a simple ramp.
+
+    Parameters
+    ----------
+    fit_method : str
+        Fitting method.
+    ngroups : int
+        Number of groups in the ramp.
+    cr_group : int
+        Group with a cosmic ray.
+
+    Returns
+    -------
+    slopes : ndarray
+        Fitted slopes.
+    """
     # Here given a 10 group ramp with an exact slope of 20/group.
     # The output slope should be 20.
     slope_per_group = 20.0
