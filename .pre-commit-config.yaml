@@ -50,7 +50,6 @@ repos:
             jwst/extract_2d/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
-            jwst/guider_cds/.* |
             jwst/ipc/.* |
             jwst/lib/.* |
             jwst/linearity/.* |
