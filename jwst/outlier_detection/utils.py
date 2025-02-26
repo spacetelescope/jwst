@@ -50,6 +50,7 @@ def create_cube_median(cube_model, maskpt):
         cube_model.data, np.less(cube_model.wht, weight_threshold)
     ).filled(np.nan)
 
+    # not safe to use overwrite_input=True here because we are operating on model.data directly
     return nanmedian3D(masked_cube, overwrite_input=False)
 
 
