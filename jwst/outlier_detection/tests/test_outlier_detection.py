@@ -426,7 +426,7 @@ def three_sci_as_asn(mirimage_three_sci, tmp_cwd):
     # Drop a CR on the science array
     with datamodels.open(filenames[0]) as dm0:
         dm0.data[12, 12] += 1
-        dm0.write(dm0.meta.filename)
+        dm0.save(dm0.meta.filename)
 
     # Initialize inputs for the test based on filenames only
     # needs to be an asn for ModelLibrary to load it in on_disk mode
