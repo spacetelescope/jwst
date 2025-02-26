@@ -15,7 +15,7 @@ def test_default_run(tmp_path, capsys):
         '-o',
         str(tmp_path)
     ]
-    args.extend([str(infile) for infile in helpers.INPUT_FILES])
+    args.extend(helpers.INPUT_FILES)
     result = Main(args)
     assert len(result.sources) == 5
     files = glob(str(tmp_path / '*.fits'))
@@ -27,7 +27,7 @@ def test_dry_run(tmp_cwd, capsys):
     assert len(no_files) == 0
 
     args = ['--dry-run']
-    args.extend([str(infile) for infile in helpers.INPUT_FILES])
+    args.extend(helpers.INPUT_FILES)
     result = Main(args)
     assert len(result.sources) == 5
     no_files = glob('*.fits')
