@@ -459,7 +459,7 @@ class STHDUDiff(HDUDiff):
             for threshold in thresholds:
                 n = values[values > threshold + self.atol].size
                 percent_abs = (n / n_total) * 100
-                percent_abs_round = np.round(percent_abs, decimals=5)
+                percent_abs_round = np.round(percent_abs, decimals=6)
                 if percent_abs_round != 0.0:
                     percent_abs_list.append(percent_abs_round)
                 else:
@@ -476,7 +476,7 @@ class STHDUDiff(HDUDiff):
                 for threshold in thresholds:
                     n = relative_values[relative_values > threshold + self.rtol].size
                     percent_rel = (n / n_total) * 100
-                    percent_rel_round = np.round(percent_rel, decimals=5)
+                    percent_rel_round = np.round(percent_rel, decimals=6)
                     if percent_rel_round != 0.0:
                         percentages[str(threshold) + "_rel"] = percent_rel_round
                     else:
