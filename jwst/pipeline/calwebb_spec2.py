@@ -744,11 +744,19 @@ class Spec2Pipeline(Pipeline):
                 current_suffix = step.suffix
                 step.suffix = f"{current_suffix}_fs"
 
+                # Set an additional intermediate suffix for the flat field step
+                current_flat_suffix = None
+                if step_name == "flat_field":
+                    current_flat_suffix = step.flat_suffix
+                    step.flat_suffix = f"{current_flat_suffix}_fs"
+
                 # Run step
                 calib_fss = step.run(calib_fss)
 
                 # Reset suffix
                 step.suffix = current_suffix
+                if step_name == "flat_field":
+                    step.flat_suffix = current_flat_suffix
 
             # Append the FS results to the MOS results
             for slit in calib_fss.slits:
