@@ -5,10 +5,9 @@ from scipy import ndimage, optimize
 from stdatamodels.jwst.datamodels import SpecPsfModel
 
 from jwst.extract_1d.extract1d import extract1d
-from jwst.extract_1d.source_location import (
-    middle_from_wcs, nod_pair_location, trace_from_wcs)
+from jwst.extract_1d.source_location import middle_from_wcs, nod_pair_location, trace_from_wcs
 
-__all__ = ['psf_profile']
+__all__ = ["psf_profile"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -17,11 +16,12 @@ HORIZONTAL = 1
 VERTICAL = 2
 """Dispersion direction, predominantly horizontal or vertical."""
 
-NOD_PAIR_PATTERN = ['ALONG-SLIT-NOD', '2-POINT-NOD']
+NOD_PAIR_PATTERN = ["ALONG-SLIT-NOD", "2-POINT-NOD"]
 
 
 def open_psf(psf_refname, exp_type):
-    """Open the PSF reference file.
+    """
+    Open the PSF reference file.
 
     Parameters
     ----------
@@ -34,9 +34,8 @@ def open_psf(psf_refname, exp_type):
     -------
     psf_model : SpecPsfModel
         Returns the EPSF model.
-
     """
-    if exp_type == 'MIR_LRS-FIXEDSLIT':
+    if exp_type == "MIR_LRS-FIXEDSLIT":
         # The information we read in from PSF file is:
         # center_col: psf_model.meta.psf.center_col
         # super sample factor: psf_model.meta.psf.subpix)
@@ -50,8 +49,9 @@ def open_psf(psf_refname, exp_type):
         try:
             psf_model = SpecPsfModel(psf_refname)
         except (ValueError, AttributeError):
-            raise NotImplementedError(f'PSF file for EXP_TYPE {exp_type} '
-                                      f'could not be read as SpecPsfModel.') from None
+            raise NotImplementedError(
+                f"PSF file for EXP_TYPE {exp_type} could not be read as SpecPsfModel."
+            ) from None
     return psf_model
 
 
@@ -59,20 +59,22 @@ def _normalize_profile(profile, dispaxis):
     """Normalize a spatial profile along the cross-dispersion axis."""
     if dispaxis == HORIZONTAL:
         psum = np.nansum(profile, axis=0)
-        nz = (psum != 0)
+        nz = psum != 0
         profile[:, nz] = profile[:, nz] / psum[nz]
         profile[:, ~nz] = 0.0
     else:
         psum = np.nansum(profile, axis=1)
-        nz = (psum != 0)
+        nz = psum != 0
         profile[nz, :] = profile[nz, :] / psum[nz, None]
         profile[~nz, :] = 0.0
     profile[~np.isfinite(profile)] = 0.0
 
 
-def _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
-                         extra_shift=0.0, nod_offset=None):
-    """Make a spatial profile corresponding to the data cutout.
+def _make_cutout_profile(
+    xidx, yidx, psf_subpix, psf_data, dispaxis, extra_shift=0.0, nod_offset=None
+):
+    """
+    Make a spatial profile corresponding to the data cutout.
 
     Input index values should already contain the shift to the trace location
     in the cross-dispersion direction and any wavelength shifts necessary
@@ -129,37 +131,84 @@ def _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
     return [sprofile, nod_profile * -1]
 
 
-def _profile_residual(shifts_to_optimize, cutout, cutout_var, xidx, yidx,
-                      psf_subpix, psf_data, dispaxis, fit_bkg=True):
-    """Residual function to minimize for optimizing trace locations."""
+def _profile_residual(
+    shifts_to_optimize, cutout, cutout_var, xidx, yidx, psf_subpix, psf_data, dispaxis, fit_bkg=True
+):
+    """
+    Residual function to minimize for optimizing trace locations.
+
+    Call `_make_cutout_profile` to generate a profile from input parameters.
+    Call `extract1d` to generate a scene model from the data and the new profile.
+    Compute a residual value from the sum of (model - cutout) ** 2 / cutout_var.
+
+    Parameters
+    ----------
+    shifts_to_optimize : list of float
+        The first value is used as the `extra_shift` parameter to
+        `_make_cutout_profile`.  If two are provided, the second value is
+        used as the `nod_offset` parameter to `_make_cutout_profile`.
+        If only one value is provided, no nod offset is applied.
+    cutout : ndarray
+        Input data array, trimmed to the bounding box.
+    cutout_var : ndarray
+        Input variance, matching the data array, used for weighting the
+        output residuals.
+    xidx : ndarray of float
+        Index array for x values.
+    yidx : ndarray of float
+        Index array for y values.
+    psf_subpix : float
+        Scaling factor for pixel size in the PSF data.
+    psf_data : ndarray of float
+        2D PSF model.
+    dispaxis : int
+        Dispersion axis.
+    fit_bkg : bool, optional
+        If True, background subtraction is performed during extraction.
+
+    Returns
+    -------
+    float
+        The residual value to minimize.
+    """
     if len(shifts_to_optimize) > 1:
         nod_offset = shifts_to_optimize[1]
     else:
         nod_offset = None
-    sprofiles = _make_cutout_profile(xidx, yidx, psf_subpix, psf_data, dispaxis,
-                                     extra_shift=shifts_to_optimize[0],
-                                     nod_offset=nod_offset)
-    extract_kwargs = {'extraction_type': 'optimal',
-                      'fit_bkg': fit_bkg,
-                      'bkg_fit_type': 'poly',
-                      'bkg_order': 0}
+    sprofiles = _make_cutout_profile(
+        xidx,
+        yidx,
+        psf_subpix,
+        psf_data,
+        dispaxis,
+        extra_shift=shifts_to_optimize[0],
+        nod_offset=nod_offset,
+    )
+    extract_kwargs = {
+        "extraction_type": "optimal",
+        "fit_bkg": fit_bkg,
+        "bkg_fit_type": "poly",
+        "bkg_order": 0,
+    }
     if dispaxis == HORIZONTAL:
         empty_var = np.zeros_like(cutout)
-        result = extract1d(cutout, sprofiles, cutout_var, empty_var, empty_var,
-                           **extract_kwargs)
+        result = extract1d(cutout, sprofiles, cutout_var, empty_var, empty_var, **extract_kwargs)
         model = result[-1]
     else:
         sprofiles = [profile.T for profile in sprofiles]
         empty_var = np.zeros_like(cutout.T)
-        result = extract1d(cutout.T, sprofiles, cutout_var.T, empty_var, empty_var,
-                           **extract_kwargs)
+        result = extract1d(
+            cutout.T, sprofiles, cutout_var.T, empty_var, empty_var, **extract_kwargs
+        )
         model = result[-1].T
     return np.nansum((model - cutout) ** 2 / cutout_var)
 
 
-def psf_profile(input_model, trace, wl_array, psf_ref_name,
-                optimize_shifts=True, model_nod_pair=True):
-    """Create a spatial profile from a PSF reference.
+def psf_profile(
+    input_model, trace, wl_array, psf_ref_name, optimize_shifts=True, model_nod_pair=True
+):
+    """
+    Create a spatial profile from a PSF reference.
 
     Provides PSF-based profiles for point sources in slit-like data containing
     one positive trace and, optionally, one negative trace resulting from nod
@@ -235,24 +284,27 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     psf_wave = psf_model.wave
     sort_idx = np.argsort(psf_wave)
     valid_wave = np.isfinite(psf_wave[sort_idx])
-    wave_idx = np.interp(cutout_wl, psf_wave[sort_idx][valid_wave], sort_idx[valid_wave],
-                         left=np.nan, right=np.nan)
+    wave_idx = np.interp(
+        cutout_wl, psf_wave[sort_idx][valid_wave], sort_idx[valid_wave], left=np.nan, right=np.nan
+    )
 
     if trace is None:
         # Don't try to model a negative pair if we don't have a trace to start
         if model_nod_pair:
-            log.warning('Cannot model a negative nod without position information')
+            log.warning("Cannot model a negative nod without position information")
             model_nod_pair = False
 
         # Set the location to the middle of the cross-dispersion
         # all the way across the array
         location = middle_xdisp
         if dispaxis == HORIZONTAL:
-            trace = trace_from_wcs(exp_type, data_shape, bbox, wcs,
-                                   middle_disp, middle_xdisp, dispaxis)
+            trace = trace_from_wcs(
+                exp_type, data_shape, bbox, wcs, middle_disp, middle_xdisp, dispaxis
+            )
         else:
-            trace = trace_from_wcs(exp_type, data_shape, bbox, wcs,
-                                   middle_xdisp, middle_disp, dispaxis)
+            trace = trace_from_wcs(
+                exp_type, data_shape, bbox, wcs, middle_xdisp, middle_disp, dispaxis
+            )
 
     else:
         # Nominal location from the middle dispersion point
@@ -267,29 +319,28 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     # Check if we need to add a negative nod pair trace
     nod_offset = None
     if model_nod_pair:
-        nod_subtracted = str(input_model.meta.cal_step.back_sub) == 'COMPLETE'
+        nod_subtracted = str(input_model.meta.cal_step.back_sub) == "COMPLETE"
         pattype_ok = str(input_model.meta.dither.primary_type) in NOD_PAIR_PATTERN
         if not nod_subtracted:
-            log.info('Input data was not nod-subtracted. '
-                     'A negative trace will not be modeled.')
+            log.info("Input data was not nod-subtracted. A negative trace will not be modeled.")
         elif not pattype_ok:
-            log.info('Input data was not a two-point nod. '
-                     'A negative trace will not be modeled.')
+            log.info("Input data was not a two-point nod. A negative trace will not be modeled.")
         else:
             nod_center = nod_pair_location(input_model, middle_wl)
             if np.isnan(nod_center) or (np.abs(location - nod_center) < 2):
-                log.warning('Nod center could not be estimated from the WCS.')
-                log.warning('The negative nod will not be modeled.')
+                log.warning("Nod center could not be estimated from the WCS.")
+                log.warning("The negative nod will not be modeled.")
             else:
                 if not optimize_shifts:
-                    log.warning('Negative nod locations are currently approximations only.')
-                    log.warning('PSF location optimization is recommended when '
-                                'negative nods are modeled.')
+                    log.warning("Negative nod locations are currently approximations only.")
+                    log.warning(
+                        "PSF location optimization is recommended when negative nods are modeled."
+                    )
                 nod_offset = location - nod_center
 
     # Get an index grid for the data cutout
     cutout_shape = cutout.shape
-    _y, _x = np.mgrid[:cutout_shape[0], :cutout_shape[1]]
+    _y, _x = np.mgrid[: cutout_shape[0], : cutout_shape[1]]
 
     # Scale the trace location to the subsampled psf and
     # add the wavelength and spatial shifts to the coordinates to map to
@@ -307,30 +358,42 @@ def psf_profile(input_model, trace, wl_array, psf_ref_name,
     # If desired, add additional spatial shifts to the starting locations of
     # the primary trace (and negative nod pair trace if necessary)
     if optimize_shifts:
-        log.info('Optimizing trace locations')
+        log.info("Optimizing trace locations")
         if nod_offset is None:
-            extra_shift, = optimize.minimize(
-                _profile_residual, [0.0],
-                (cutout, cutout_var, xidx, yidx,
-                 psf_subpix, psf_model.data, dispaxis), method='Nelder-Mead').x
+            (extra_shift,) = optimize.minimize(
+                _profile_residual,
+                [0.0],
+                (cutout, cutout_var, xidx, yidx, psf_subpix, psf_model.data, dispaxis),
+                method="Nelder-Mead",
+            ).x
         else:
             extra_shift, nod_offset = optimize.minimize(
-                _profile_residual, [0.0, nod_offset],
-                (cutout, cutout_var, xidx, yidx,
-                 psf_subpix, psf_model.data, dispaxis), method='Nelder-Mead').x
+                _profile_residual,
+                [0.0, nod_offset],
+                (cutout, cutout_var, xidx, yidx, psf_subpix, psf_model.data, dispaxis),
+                method="Nelder-Mead",
+            ).x
         location -= extra_shift
     else:
         extra_shift = 0.0
 
-    log.info(f'Centering profile on spectrum at {location:.2f}, wavelength {middle_wl:.2f}')
+    log.info(f"Centering profile on spectrum at {location:.2f}, wavelength {middle_wl:.2f}")
     if nod_offset is not None:
-        log.info(f'Also modeling a negative trace at {location - nod_offset:.2f} '
-                 f'(offset: {nod_offset:.2f})')
+        log.info(
+            f"Also modeling a negative trace at {location - nod_offset:.2f} "
+            f"(offset: {nod_offset:.2f})"
+        )
 
     # Make a spatial profile from the shifted PSF data
-    sprofiles = _make_cutout_profile(xidx, yidx, psf_subpix, psf_model.data,
-                                     dispaxis, extra_shift=extra_shift,
-                                     nod_offset=nod_offset)
+    sprofiles = _make_cutout_profile(
+        xidx,
+        yidx,
+        psf_subpix,
+        psf_model.data,
+        dispaxis,
+        extra_shift=extra_shift,
+        nod_offset=nod_offset,
+    )
 
     # Make the output profile, matching the input data
     output_y = _y + y0
