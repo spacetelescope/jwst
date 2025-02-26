@@ -484,7 +484,6 @@ def find_miri_lrs_sregion(sregion_model1, wcs):
         s_region for the resample data.
     """
     # use the first sregion to set the width of the slit
-
     spatial_box = sregion_model1
     s = spatial_box.split(' ')
     a1 = float(s[3])

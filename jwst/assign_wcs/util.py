@@ -809,7 +809,7 @@ def update_s_region_imaging(model):
 
 def update_s_region_lrs(model, reference_files):
     """
-    Determine ``S_REGION`` using V2,V3 of the slit corners from reference file.
+    Update ``S_REGION`` using V2,V3 of the slit corners from reference file.
 
     Parameters
     ----------
@@ -821,7 +821,8 @@ def update_s_region_lrs(model, reference_files):
     Returns
     -------
     None
-        s_region for model is updated in place .
+
+        s_region for model is updated in place.
 
     """
 
@@ -846,7 +847,7 @@ def update_s_region_lrs(model, reference_files):
         log.info("The V2,V3 coordinates of the MIRI LRS-Fixed slit contains NaN values.")
         log.info("The s_region will not be updated")
 
-    lam = 7.0 # wavelength does not matter for s region assign a value in range of LRS
+    lam = 7.0 # wavelength does not matter for s region so jwst assign a value in range of LRS
     s = model.meta.wcs.transform('v2v3', 'world', v2, v3, lam)
     a = s[0]
     b = s[1]

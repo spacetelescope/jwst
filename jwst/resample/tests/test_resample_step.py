@@ -489,7 +489,6 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     assert result1.data.shape[0] == result2.data.shape[0]
 
     # spatial dimension is scaled
-    print(result1.data.shape[1], result2.data.shape[1])
     assert np.isclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
 
     # data is non-trivial
