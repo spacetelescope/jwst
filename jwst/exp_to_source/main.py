@@ -11,12 +11,14 @@ class Main:
     """
     Convert exposure-based slits data to source-based data.
 
-    Docs from the source.
+    Command-line interface to the exp_to_source step. For help, use
+    exp_to_source -h. See also the exp_to_source readthedocs page:
+    https://jwst-pipeline.readthedocs.io/en/latest/api/jwst.exp_to_source.exp_to_source.html#jwst.exp_to_source.exp_to_source
     """
 
     def __init__(self, args=None):
         """
-        Full documentation from the source.
+        Initialize and run the exp_to_source step.
 
         Parameters
         ----------
