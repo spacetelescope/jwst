@@ -58,8 +58,8 @@ class Main:
         except SystemExit:
             return
 
-        # sources : {source: MultiExposureModel, ...}
-        #    A dict keyed on source name whose value is the corresponding MultiExposureModel.
+        # self.sources is a dict keyed on source name whose value is the corresponding MultiExposureModel, e.g.
+        # {source_name: MultiExposureModel, ...}
         exposures = [MultiSlitModel(f) for f in parsed.files]
         self.sources = exp_to_source(exposures)
         if not parsed.dry_run:
