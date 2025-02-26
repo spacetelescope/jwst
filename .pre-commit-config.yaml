@@ -55,7 +55,6 @@ repos:
             jwst/lib/.* |
             jwst/linearity/.* |
             jwst/mrs_imatch/.* |
-            jwst/pathloss/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
             jwst/refpix/.* |
