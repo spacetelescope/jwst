@@ -1,4 +1,4 @@
-"""Step exp_to_source: Reformat Level2b multi-source data to be source-based."""
+"""Reformat Level2b multi-source data to be source-based."""
 
 import logging
 
