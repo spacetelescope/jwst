@@ -22,9 +22,15 @@ pipeline to custom process their JWST data. Additionally, the `jwst` package
 contains the interface to JWST datamodels, the recommended method of reading and
 writing JWST data files in Python.
 
-
 If you have questions or concerns regarding the software, please contact the JWST Help
 desk at `JWST Help Desk <https://jwsthelp.stsci.edu>`_.
+
+Additional user-focused documentation on the
+`JWST science calibration pipeline <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline>`__
+and the
+`latest build information <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information>`__
+is also available on `JDox <https://jwst-docs.stsci.edu>`__.
+
 
 --------------------------------
 
