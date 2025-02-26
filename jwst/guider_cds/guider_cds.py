@@ -159,8 +159,8 @@ def get_ref_arr(model, reference_model):
                 if model.data.shape[-2:] != reference_model.data.shape:
                     log.debug(
                         f"The {reference_model.meta.model_type} reference file array does not "
-                        f"match the shape of stacked FGS data;"
-                        f"applying the mean value to the data."
+                        "match the shape of stacked FGS data;"
+                        "applying the mean value to the data."
                     )
                     ref_arr = np.zeros(model.data.shape[-2:], dtype=np.float32) + np.mean(
                         reference_model.data
