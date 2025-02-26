@@ -278,7 +278,7 @@ def test_sip_approx(tmp_path):
 
     # now write the file out, read it back in, and check that the fit values are preserved
     path = tmp_path / "tmp_sip_wcs.fits"
-    result.write(path)
+    result.save(path)
 
     with open(path) as result_read:
         assert result.meta.wcsinfo == result_read.meta.wcsinfo
