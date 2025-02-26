@@ -14,47 +14,42 @@ def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
     """
     Make convolution kernels from Fourier coefficients in the reference file.
 
-    Parameters:
-    -----------
-
+    Parameters
+    ----------
     sirs_kernel_model : `~jwst.datamodels.SIRSKernelModel`
         Data model containing the Fourier coefficients from the reference files for
         Simple Improved Reference Subtraction (SIRS)
-
     detector : str
         Name of the detector of the input data
-
     gaussmooth : float
-        Width of Gaussian smoothing kernel to use as a low-pass filter on reference file's coefficients
-
+        Width of Gaussian smoothing kernel to use as a low-pass filter on
+        reference file's coefficients
     halfwidth : int
         Half-width of convolution kernel to build from reference file's coefficients
 
-    Returns:
-    --------
+    Returns
+    -------
     kernels: list
         List of kernels appropriate for convolution with the left and right reference pixels.
-
     """
-
     gamma, zeta = get_conv_kernel_coeffs(sirs_kernel_model, detector)
     if gamma is None or zeta is None:
-        log.info(f'Optimized convolution kernel coefficients NOT found for detector {detector}')
+        log.info(f"Optimized convolution kernel coefficients NOT found for detector {detector}")
         return None
 
     kernels_left = []
     kernels_right = []
     for chan in range(gamma.shape[0]):
         n = len(gamma[chan]) - 1
-        kernel_left = np.fft.fftshift(np.fft.irfft(gamma[chan]))[n - halfwidth:n + halfwidth + 1]
-        kernel_right = np.fft.fftshift(np.fft.irfft(zeta[chan]))[n - halfwidth:n + halfwidth + 1]
+        kernel_left = np.fft.fftshift(np.fft.irfft(gamma[chan]))[n - halfwidth : n + halfwidth + 1]
+        kernel_right = np.fft.fftshift(np.fft.irfft(zeta[chan]))[n - halfwidth : n + halfwidth + 1]
 
         x = np.arange(-halfwidth, halfwidth + 1)
-        window = np.exp(-x ** 2 / (2 * gaussmooth ** 2))
+        window = np.exp(-(x**2) / (2 * gaussmooth**2))
         window /= np.sum(window)
 
-        kernel_right = np.convolve(kernel_right, window, mode='same')
-        kernel_left = np.convolve(kernel_left, window, mode='same')
+        kernel_right = np.convolve(kernel_right, window, mode="same")
+        kernel_left = np.convolve(kernel_left, window, mode="same")
 
         kernels_right += [kernel_right]
         kernels_left += [kernel_left]
@@ -64,36 +59,32 @@ def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
 
 def get_conv_kernel_coeffs(sirs_kernel_model, detector):
     """
-    Get the convolution kernels coefficients from the reference file
+    Get the convolution kernels coefficients from the reference file.
 
-    Parameters:
-    -----------
-
+    Parameters
+    ----------
     sirs_kernel_model : `~jwst.datamodels.SIRSKernelModel`
         Data model containing the Fourier coefficients from the reference files for
         Simple Improved Reference Subtraction (SIRS)
-
     detector : str
         Name of the detector of the input data
 
-    Returns:
-    --------
-
+    Returns
+    -------
     gamma: numpy array
         Fourier coefficients
-
     zeta: numpy array
         Fourier coefficients
     """
     mdl_dict = sirs_kernel_model.to_flat_dict()
     gamma, zeta = None, None
     for item in mdl_dict:
-        det = item.split(sep='.')[0]
+        det = item.split(sep=".")[0]
         if detector.lower() == det.lower():
-            arr_name = item.split(sep='.')[1]
-            if arr_name == 'gamma':
+            arr_name = item.split(sep=".")[1]
+            if arr_name == "gamma":
                 gamma = np.array(mdl_dict[item])
-            elif arr_name == 'zeta':
+            elif arr_name == "zeta":
                 zeta = np.array(mdl_dict[item])
         if gamma is not None and zeta is not None:
             break
@@ -104,21 +95,17 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
     """
     Apply the convolution kernel.
 
-    Parameters:
-    -----------
-
+    Parameters
+    ----------
     data : 2-D numpy array
         Data to be corrected
-
     kernels : list
         List containing the left and right kernels
-
-    sigreject: float
+    sigreject : float
         Number of sigmas to reject as outliers
 
-    Returns:
-    --------
-
+    Returns
+    -------
     data : 2-D numpy array
         Data model with convolution
     """
@@ -128,8 +115,8 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
     kernels_l, kernels_r = kernels
     nchan = len(kernels_l)
 
-    L = data[:, :4]
-    R = data[:, -4:]
+    l = data[:, :4]
+    r = data[:, -4:]
 
     # Find the approximate standard deviations of the reference pixels
     # using an outlier-robust median approach. Mask pixels that differ
@@ -143,38 +130,37 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
     #   local environment around every pixel of a large image. The
     #   calculation is MAD = np.median(np.abs(x-np.median(x))).
     #   Reference: https://www.interstellarmedium.org/numerical_tools/mad/
-    MAD = 1.48
-    medL = np.median(L)
-    sigL = MAD * np.median(np.abs(L - medL))
-    medR = np.median(R)
-    sigR = MAD * np.median(np.abs(R - medR))
+    median_absolute_deviation = 1.48
+    medl = np.median(l)
+    sigl = median_absolute_deviation * np.median(np.abs(l - medl))
+    medr = np.median(r)
+    sigr = median_absolute_deviation * np.median(np.abs(r - medr))
 
-    # nL and nR are the number of good reference pixels in the left and right
+    # nl and nr are the number of good reference pixels in the left and right
     # channel in each row. These will be used in lieu of replacing the values
     # of those pixels directly.
-    goodL = 1 * (np.abs(L - medL) <= sigreject * sigL)
-    nL = np.sum(goodL, axis=1)
-    goodR = 1 * (np.abs(R - medR) <= sigreject * sigR)
-    nR = np.sum(goodR, axis=1)
+    goodl = 1 * (np.abs(l - medl) <= sigreject * sigl)
+    nl = np.sum(goodl, axis=1)
+    goodr = 1 * (np.abs(r - medr) <= sigreject * sigr)
+    nr = np.sum(goodr, axis=1)
 
     # Average of the left and right channels, replacing masked pixels with zeros.
     # Appropriate normalization factors will be computed later.
-    L = np.sum(L * goodL, axis=1) / 4
-    R = np.sum(R * goodR, axis=1) / 4
+    l = np.sum(l * goodl, axis=1) / 4
+    r = np.sum(r * goodr, axis=1) / 4
     for chan in range(nchan):
         kernel_l = kernels_l[chan]
         kernel_r = kernels_r[chan]
 
         # Compute normalizations so that we don't have to directly
         # replace the values of flagged/masked reference pixels.
-        norm_L = np.convolve(np.ones(nL.shape), kernel_l, mode='same')
-        norm_L /= np.convolve(nL / 4, kernel_l, mode='same')
-        norm_R = np.convolve(np.ones(nR.shape), kernel_r, mode='same')
-        norm_R /= np.convolve(nR / 4, kernel_r, mode='same')
-        template = np.convolve(L, kernel_l, mode='same') * norm_L
-        template += np.convolve(R, kernel_r, mode='same') * norm_R
+        norm_l = np.convolve(np.ones(nl.shape), kernel_l, mode="same")
+        norm_l /= np.convolve(nl / 4, kernel_l, mode="same")
+        norm_r = np.convolve(np.ones(nr.shape), kernel_r, mode="same")
+        norm_r /= np.convolve(nr / 4, kernel_r, mode="same")
+        template = np.convolve(l, kernel_l, mode="same") * norm_l
+        template += np.convolve(r, kernel_r, mode="same") * norm_r
         data[:, chan * npix // 4:(chan + 1) * npix // 4] -= template[:, np.newaxis]
 
-    log.debug('Optimized convolution kernel applied')
+    log.debug("Optimized convolution kernel applied")
     return data
-
