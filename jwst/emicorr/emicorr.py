@@ -387,7 +387,7 @@ def _run_sequential_algorithm(
         # e.g. ((1./390.625) / 10e-6) = 256.0 pix and ((1./218.52055) / 10e-6) = 457.62287 pix
         period_in_pixels = (1.0 / frequency) / 10.0e-6
 
-        if nints_to_phase is None and use_n_cycles is None:  # user wats to use all integrations
+        if nints_to_phase is None and use_n_cycles is None:  # user wants to use all integrations
             # use all integrations
             nints_to_phase = nints
         elif (
