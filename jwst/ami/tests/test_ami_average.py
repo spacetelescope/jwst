@@ -1,3 +1,5 @@
+"""Unit tests for ami_average module and step."""
+
 from jwst.ami.ami_average_step import AmiAverageStep
 
 
