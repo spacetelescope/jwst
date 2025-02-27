@@ -212,12 +212,12 @@ def tsgrism(input_model, reference_files):
     # Get the disperser parameters which are defined as a model for each
     # spectral order
     with NIRCAMGrismModel(reference_files['specwcs']) as f:
-        displ = f.displ
-        dispx = f.dispx
-        dispy = f.dispy
-        invdispx = f.invdispx
-        invdispl = f.invdispl
-        orders = f.orders
+        displ = f.displ.instance
+        dispx = f.dispx.instance
+        dispy = f.dispy.instance
+        invdispx = f.invdispx.instance
+        invdispl = f.invdispl.instance
+        orders = f.orders.instance
 
     # now create the appropriate model for the grismr
     det2det = NIRCAMForwardRowGrismDispersion(orders,
@@ -377,13 +377,13 @@ def wfss(input_model, reference_files):
     # Get the disperser parameters which are defined as a model for each
     # spectral order
     with NIRCAMGrismModel(reference_files['specwcs']) as f:
-        displ = f.displ
-        dispx = f.dispx
-        dispy = f.dispy
-        invdispx = f.invdispx
-        invdispy = f.invdispy
-        invdispl = f.invdispl
-        orders = f.orders
+        displ = f.displ.instance
+        dispx = f.dispx.instance
+        dispy = f.dispy.instance
+        invdispx = f.invdispx.instance
+        invdispy = f.invdispy.instance
+        invdispl = f.invdispl.instance
+        orders = f.orders.instance
 
     # now create the appropriate model for the grism[R/C]
     if "GRISMR" in input_model.meta.instrument.pupil:
