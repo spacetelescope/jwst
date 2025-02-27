@@ -39,7 +39,7 @@ class STFITSDiff(FITSDiff):
     off values are from tolerances will be printed, from 0.1 through 0.0, along
     with maximum and minimum values.
 
-    Full documentation of the class is provided at:
+    Full documentation of the base class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
 
