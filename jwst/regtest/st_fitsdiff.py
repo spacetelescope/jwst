@@ -32,7 +32,10 @@ __all__ = [
 
 
 class STFITSDiff(FITSDiff):
-    """FITSDiff class from astropy with the STScI edits. Statistics about how far
+    """
+    FITSDiff class from astropy with STScI edits. 
+    
+    Statistics about how far
     off values are from tolerances will be printed, from 0.1 through 0.0, along
     with maximum and minimum values.
 
