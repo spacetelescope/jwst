@@ -145,33 +145,31 @@ SUBARRAY_SKIPPED = 3
 
 
 class Dataset:
-    """Base Class to handle passing stuff from routine to routine.
+    """
+    Base Class to handle passing stuff from routine to routine.
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : data model object
         Science data model to be corrected
-    is_subarray: boolean
-        flag that shows whether the dataset was created from subarray
-        data
-    odd_even_columns: boolean
-        flag that controls whether odd and even-numbered columns are
+    odd_even_columns : bool
+        Flag that controls whether odd and even-numbered columns are
         processed separately (NIR only)
-    use_side_ref_pixels: boolean
-        flag the controls whether the side reference pixels are used in
+    use_side_ref_pixels : bool
+        Flag that controls whether the side reference pixels are used in
         the correction (NIR only)
-    side_smoothing_length: integer
-        smoothing length the use in calculating the running median of
+    side_smoothing_length : int
+        Smoothing length to use in calculating the running median of
         the side reference pixels (NIR only)
-    side_gain: float
-        gain to use in applying the side reference pixel correction
+    side_gain : float
+        Gain to use in applying the side reference pixel correction
         (NIR only)
-    odd_even_rows: boolean
-        flag that controls whether odd and even-numbered rows are handled
-        separately (MIR only)
     conv_kernel_params : dict
         Dictionary containing the parameters needed for the optimized convolution kernel
         for Simple Improved Reference Subtraction (SIRS)
+    odd_even_rows : bool
+        Flag that controls whether odd and even-numbered rows are handled
+        separately (MIR only)
     """
 
     def __init__(
@@ -242,23 +240,24 @@ class Dataset:
         self.group = None
 
     def sigma_clip(self, data, dq, low=3.0, high=3.0):
-        """Wrap scipy.stats.sigmaclip so that data with zero variance is handled cleanly.
+        """
+        Wrap scipy.stats.sigmaclip so that data with zero variance is handled cleanly.
 
         Parameters
         ----------
-        data: NDArray
+        data : NDArray
             Array of pixels to be sigma-clipped
-        dq: NDArray
+        dq : NDArray
             DQ array for data
-        low: float
-            lower clipping boundary, in standard deviations from the mean (default=3.0)
-        high: float
-            upper clipping boundary, in standard deviations from the mean (default=3.0)
+        low : float
+            Lower clipping boundary, in standard deviations from the mean (default=3.0)
+        high : float
+            Upper clipping boundary, in standard deviations from the mean (default=3.0)
 
         Returns
         -------
-        mean: float
-            clipped mean of data array
+        mean : float
+            Clipped mean of data array
         """
         #
         # Only calculate the clipped mean for pixels that don't have the DO_NOT_USE
@@ -279,16 +278,13 @@ class Dataset:
         return mean
 
     def get_pixeldq(self):
-        """Get the properly sized pixeldq array from the input model.
-
-        Parameters
-        ----------
-        None
+        """
+        Get the properly sized pixeldq array from the input model.
 
         Returns
         -------
         pixeldq : NDArray
-            numpy array for the pixeldq data with the full shape of the detector
+            Numpy array for the pixeldq data with the full shape of the detector
         """
         if self.is_subarray:
             # deal with subarrays by embedding the pixeldq array in a full-sized
@@ -330,7 +326,8 @@ class Dataset:
         return pixeldq
 
     def get_group(self, integration, group):
-        """Get a properly sized copy of the array for each group.
+        """
+        Get a properly sized copy of the array for each group.
 
         Parameters
         ----------
@@ -351,7 +348,8 @@ class Dataset:
             self.group[:, :] = self.input_model.data[integration, group].copy()
 
     def restore_group(self, integration, group):
-        """Replace input model data with processed group array.
+        """
+        Replace input model data with processed group array.
 
         Parameters
         ----------
@@ -370,18 +368,10 @@ class Dataset:
             self.input_model.data[integration, group] = self.group.copy()
 
     def log_parameters(self):
-        """Log the parameters that are valid for this type of data.
+        """
+        Log the parameters that are valid for this type of data.
 
         Also log those that aren't.
-
-        Parameters
-        ----------
-        input_model : JWST datamodel
-            Datamodel being processed
-
-        Returns
-        -------
-        None
         """
         is_nir = isinstance(self, NIRDataset)
         if is_nir:
@@ -458,7 +448,14 @@ class Dataset:
                 log.info("refpix processing skipped for this mode")
 
     def count_good_side_refpixels(self):
-        """Count the number of good side reference pixels."""
+        """
+        Count the number of good side reference pixels.
+
+        Returns
+        -------
+        ngood : int
+            Number of good side reference pixels
+        """
         donotuse = dqflags.pixel["DO_NOT_USE"]
         ngood = 0
         for amplifier in "AD":
@@ -471,7 +468,14 @@ class Dataset:
         return ngood
 
     def count_good_top_bottom_refpixels(self):
-        """Count the number of good top & bottom reference pixels."""
+        """
+        Count the number of good top & bottom reference pixels.
+
+        Returns
+        -------
+        ngood : int
+            Number of good top & bottom reference pixels
+        """
         donotuse = dqflags.pixel["DO_NOT_USE"]
         refdq = dqflags.pixel["REFERENCE_PIXEL"]
         ngood = 0
@@ -499,35 +503,31 @@ class Dataset:
 
 
 class NIRDataset(Dataset):
-    """Generic NIR detector Class.
+    """
+    Generic NIR detector Class.
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : data model object
         Science data model to be corrected
 
-    is_subarray: boolean
-        flag that shows whether the dataset was created from subarray
-        data
-
-    odd_even_columns: boolean
-        flag that controls whether odd and even-numbered columns are
+    odd_even_columns : bool
+        Flag that controls whether odd and even-numbered columns are
         processed separately
 
-    use_side_ref_pixels: boolean
-        flag the controls whether the side reference pixels are used in
+    use_side_ref_pixels : bool
+        Flag that controls whether the side reference pixels are used in
         the correction
 
-    side_smoothing_length: integer
-        smoothing length the use in calculating the running median of
+    side_smoothing_length : int
+        Smoothing length to use in calculating the running median of
         the side reference pixels
 
-    side_gain: float
-        gain to use in applying the side reference pixel correction
+    side_gain : float
+        Gain to use in applying the side reference pixel correction
 
     conv_kernel_params : dict
         Dictionary containing the parameters needed for the optimized convolution kernel
-
     """
 
     def __init__(
@@ -657,7 +657,8 @@ class NIRDataset(Dataset):
     #  combined top and bottom reference sections, there's a good chance we
     #  might want to calculate them separately
     def collect_odd_refpixels(self, group, amplifier, top_or_bottom):
-        """Collect odd reference pixels.
+        """
+        Collect odd reference pixels.
 
         For traditional readouts, odd pixels correspond to odd-numbered
         rows (first, third, fifth, etc.), which are even array indices.
@@ -671,10 +672,10 @@ class NIRDataset(Dataset):
         group : NDArray
             The group that is being processed
 
-        amplifier: string ['A'|'B'|'C'|'D']
+        amplifier : str ['A'|'B'|'C'|'D']
             String corresponding to the amplifier being processed
 
-        top_or_bottom: string ['top'|'bottom']
+        top_or_bottom : str ['top'|'bottom']
             String corresponding to whether top or bottom reference pixels
             are bing processed
 
@@ -683,9 +684,8 @@ class NIRDataset(Dataset):
         oddref : NDArray
             Array containing all the odd reference pixels
 
-        odddq: NDArray
+        odddq : NDArray
             Array containing all the odd dq values for those reference pixels
-
         """
         rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier][top_or_bottom]
 
@@ -701,7 +701,8 @@ class NIRDataset(Dataset):
         return oddref, odddq
 
     def collect_even_refpixels(self, group, amplifier, top_or_bottom):
-        """Collect even reference pixels.
+        """
+        Collect even reference pixels.
 
         For traditional readouts, even pixels correspond to even-numbered
         rows (second, fourth, sixth, etc.), which are odd array indices.
@@ -714,9 +715,9 @@ class NIRDataset(Dataset):
         ----------
         group : NDArray
             The group that is being processed
-        amplifier: string ['A'|'B'|'C'|'D']
+        amplifier : str ['A'|'B'|'C'|'D']
             String corresponding to the amplifier being processed
-        top_or_bottom: string ['top'|'bottom']
+        top_or_bottom : str ['top'|'bottom']
             String corresponding to whether top or bottom reference pixels
             are bing processed
 
@@ -743,20 +744,21 @@ class NIRDataset(Dataset):
         return evenref, evendq
 
     def get_odd_refvalue(self, group, amplifier, top_or_bottom):
-        """Calculate the reference pixel mean in odd-numbered columns.
+        """
+        Calculate the reference pixel mean in odd-numbered columns.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group that is being processed
-        amplifier: string (['A'|'B'|'C'|'D'])
+        amplifier : str (['A'|'B'|'C'|'D'])
             Amplifier that is being processed
-        top_or_bottom: string (['top'|'bottom'])
+        top_or_bottom : str (['top'|'bottom'])
             Processing top or bottom reference pixels?
 
         Returns
         -------
-        odd: float
+        odd : float
             Value of the clipped mean of the reference pixels in odd-numbered
             columns
         """
@@ -765,20 +767,21 @@ class NIRDataset(Dataset):
         return odd
 
     def get_even_refvalue(self, group, amplifier, top_or_bottom):
-        """Calculate the reference pixel mean in even-numbered columns.
+        """
+        Calculate the reference pixel mean in even-numbered columns.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group that is being processed
-        amplifier: string (['A'|'B'|'C'|'D'])
+        amplifier : str (['A'|'B'|'C'|'D'])
             Amplifier that is being processed
-        top_or_bottom: string (['top'|'bottom'])
+        top_or_bottom : str (['top'|'bottom'])
             Processing top or bottom reference pixels?
 
         Returns
         -------
-        even: float
+        even : float
             Value of the clipped mean of the reference pixels in even-numbered
             columns
         """
@@ -787,30 +790,29 @@ class NIRDataset(Dataset):
         return even
 
     def get_amplifier_refvalue(self, group, amplifier, top_or_bottom):
-        """Calculate the reference pixel mean for a given amplifier.
+        """
+        Calculate the reference pixel mean for a given amplifier.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group that is being processed
-        amplifier: string (['A'|'B'|'C'|'D'])
+        amplifier : str (['A'|'B'|'C'|'D'])
             Amplifier that is being processed
-        top_or_bottom: string (['top'|'bottom'])
+        top_or_bottom : str (['top'|'bottom'])
             Processing top or bottom reference pixels?
 
         Returns
         -------
-        Either:
-            odd: float
-                Value of the clipped mean of the reference pixels in odd-numbered
-                columns
-            even: float
-                 Value of the clipped mean of the reference pixels in even-numbered
-                 columns
-        Or:
-            mean: float
-                Value of the clipped mean of the reference pixels in both odd-numbered
-                and even-numbered columns
+        odd : float
+            Value of the clipped mean of the reference pixels in odd-numbered
+            columns (if self.odd_even_columns)
+        even : float
+            Value of the clipped mean of the reference pixels in even-numbered
+            columns (if self.odd_even_columns)
+        mean : float
+            Value of the clipped mean of the reference pixels in both odd-numbered
+            and even-numbered columns (if not self.odd_even_columns)
         """
         if self.odd_even_columns:
             odd = self.get_odd_refvalue(group, amplifier, top_or_bottom)
@@ -828,19 +830,20 @@ class NIRDataset(Dataset):
             return mean
 
     def get_refvalues(self, group):
-        """Get the reference pixel values.
+        """
+        Get the reference pixel values.
 
         Get values for each amplifier, odd and even columns
         and top and bottom reference pixels
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group that is being processed
 
         Returns
         -------
-        refpix: dictionary
+        refpix : dictionary
             Dictionary containing the clipped mean of the reference pixels for
             each amplifier, odd and even columns (if selected, otherwise all columns)
             and top and bottom.
@@ -860,23 +863,16 @@ class NIRDataset(Dataset):
         return refpix
 
     def do_top_bottom_correction(self, group, refvalues):
-        """Do the top/bottom correction.
+        """
+        Do the top/bottom correction.
 
         Parameters
         ----------
-        group: NDArray
-            Group that is being processed
-        refvalues: dictionary
+        group : NDArray
+            Group that is being processed.  The parameter _group_ is corrected
+            for the bias drift using the top and bottom reference pixels
+        refvalues : dict
             Dictionary of reference pixel clipped means
-
-        Returns
-        -------
-        None
-
-        Side Effect
-        -----------
-        The parameter _group_ is corrected for the bias drift using the
-        top and bottom reference pixels
         """
         for amplifier in self.amplifiers:
             datarowstart, datarowstop, datacolstart, datacolstop = self.reference_sections[
@@ -928,7 +924,8 @@ class NIRDataset(Dataset):
         return
 
     def average_with_none(self, a, b):
-        """Average two numbers.
+        """
+        Average two numbers.
 
         If one is None, return the other.  If both are None, return None
 
@@ -941,7 +938,8 @@ class NIRDataset(Dataset):
 
         Returns
         -------
-        result = Number or None
+        result : Number or None
+            Average of the two numbers
         """
         if a is None and b is None:
             return None
@@ -956,7 +954,8 @@ class NIRDataset(Dataset):
             return 0.5 * (a + b)
 
     def create_reflected(self, data, smoothing_length):
-        """Make an array bigger by extending it at the top and bottom.
+        """
+        Make an array bigger by extending it at the top and bottom.
 
         Extend by an amount equal to .5(smoothing length-1)
         (as the smoothing length will be odd)
@@ -964,17 +963,17 @@ class NIRDataset(Dataset):
 
         Parameters
         ----------
-        data: NDArray
-            input data array
-        smoothing_length: integer (should be odd, will be converted if not)
-            smoothing length.  Amount by which the input array is extended is
+        data : NDArray
+            Input data array
+        smoothing_length : int (should be odd, will be converted if not)
+            Smoothing length.  Amount by which the input array is extended is
             smoothing_length // 2 at the bottom and smoothing_length // 2 at
             the top
 
         Returns
         -------
-        reflected: NDArray
-            array that has been extended at the top and bottom by reflecting the
+        reflected : NDArray
+            Array that has been extended at the top and bottom by reflecting the
             first and last few rows
         """
         nrows, ncols = data.shape
@@ -990,23 +989,24 @@ class NIRDataset(Dataset):
         return reflected
 
     def median_filter(self, data, dq, smoothing_length):
-        """Perform simple median filter.
+        """
+        Perform simple median filter.
 
         Run a box of the same width as the data and height = smoothing_length.
         Reflect the data at the top and bottom
 
         Parameters
         ----------
-        data: NDArray
-            input 2-d science array
-        dq: NDArray
-            input 2-d dq array
-        smoothing_length: integer (should be odd)
-            height of box within which the median value is calculated
+        data : NDArray
+            Input 2-d science array
+        dq : NDArray
+            Input 2-d dq array
+        smoothing_length : int (should be odd)
+            Height of box within which the median value is calculated
 
         Returns
         -------
-        result: NDArray
+        result : NDArray
             1-d array that is a median filtered version of the input data
         """
         augmented_data = self.create_reflected(data, smoothing_length)
@@ -1027,18 +1027,19 @@ class NIRDataset(Dataset):
         return result
 
     def calculate_side_ref_signal(self, group, colstart, colstop):
-        """Calculate the reference pixel signal from the side reference pixels.
+        """
+        Calculate the reference pixel signal from the side reference pixels.
 
         Calculate by running a box up the side reference pixels and calculating
         the running median
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group that is being processed
-        colstart: integer
+        colstart : int
             Starting column
-        colstop: integer
+        colstop : int
             Ending column
 
         Returns
@@ -1052,20 +1053,21 @@ class NIRDataset(Dataset):
         return self.median_filter(data, dq, smoothing_length)
 
     def combine_ref_signals(self, left, right):
-        """Combine the left and right reference signals.
+        """
+        Combine the left and right reference signals.
 
         Average row-by-row.
 
         Parameters
         ----------
-        left: NDArray
+        left : NDArray
             1-d array of median-filtered reference pixel values from the left side
-        right: NDArray
+        right : NDArray
             1-d array of median-filtered reference pixel values from the right side
 
         Returns
         -------
-        sidegroup: NDArray
+        sidegroup : NDArray
             2-d array of average reference pixel vector replicated horizontally
         """
         combined = self.combine_with_nans(left, right)
@@ -1075,7 +1077,8 @@ class NIRDataset(Dataset):
         return sidegroup
 
     def combine_with_nans(self, a, b):
-        """Combine 2 1-d arrays that have NaNs.
+        """
+        Combine 2 1-d arrays that have NaNs.
 
         Wherever both arrays are NaN, output is 0.0.
         Wherever a is NaN and b is not, return b.
@@ -1112,34 +1115,36 @@ class NIRDataset(Dataset):
         return result
 
     def apply_side_correction(self, group, sidegroup):
-        """Apply reference pixel correction from the side reference pixels.
+        """
+        Apply reference pixel correction from the side reference pixels.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group being processed
-        sidegroup: NDArray
+        sidegroup : NDArray
             Side reference pixel signal replicated horizontally
 
         Returns
         -------
-        corrected_group: NDArray
+        corrected_group : NDArray
             The group corrected for the side reference pixel signal
         """
         corrected_group = group - self.side_gain * sidegroup
         return corrected_group
 
     def do_side_correction(self, group):
-        """Do all the steps of the side reference pixel correction.
+        """
+        Do all the steps of the side reference pixel correction.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group being processed
 
         Returns
         -------
-        corrected_group: NDArray
+        corrected_group : NDArray
             Corrected group
         """
         continue_apply_conv_kernel = False
@@ -1179,7 +1184,8 @@ class NIRDataset(Dataset):
             self.do_fullframe_corrections()
 
     def do_fullframe_corrections(self):
-        """Do Reference Pixels Corrections for full frame data.
+        """
+        Do Reference Pixels Corrections for full frame data.
 
         Correct all amplifiers, NIR detectors.  The first read of each integration
         is NOT subtracted, as the signal is removed in the superbias subtraction step
@@ -1210,7 +1216,8 @@ class NIRDataset(Dataset):
         return
 
     def do_subarray_corrections(self):
-        """Do corrections for subarrays.
+        """
+        Do corrections for subarrays.
 
         Reference pixel values are calculated separately for odd and even columns
         if odd_even_columns is True, otherwise a single number calculated from
@@ -1282,7 +1289,8 @@ class NRS1Dataset(NIRDataset):
     """Handle NRS1 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRS1 data from DMS to detector frame.
+        """
+        Convert NRS1 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1297,7 +1305,8 @@ class NRS1Dataset(NIRDataset):
         self.group = np.swapaxes(self.group, 0, 1)
 
     def detector_to_dms(self, integration, group):
-        """Convert NRS1 data from detector to DMS frame.
+        """
+        Convert NRS1 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1321,7 +1330,8 @@ class NRS2Dataset(NIRDataset):
     """Handle NRS2 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRS2 data from DMS to detector frame.
+        """
+        Convert NRS2 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1341,7 +1351,8 @@ class NRS2Dataset(NIRDataset):
         self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)[::-1, ::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRS2 data from detector to DMS frame.
+        """
+        Convert NRS2 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1360,7 +1371,8 @@ class NRCA1Dataset(NIRDataset):
     """Handle NRCA1 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCA1 data from DMS to detector frame.
+        """
+        Convert NRCA1 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1380,7 +1392,8 @@ class NRCA1Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCA1 data from detector to DMS frame.
+        """
+        Convert NRCA1 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1399,7 +1412,8 @@ class NRCA2Dataset(NIRDataset):
     """Handle NRCA2 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCA2 data from DMS to detector frame.
+        """
+        Convert NRCA2 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1419,7 +1433,8 @@ class NRCA2Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCA2 data from detector to DMS frame.
+        """
+        Convert NRCA2 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1438,7 +1453,8 @@ class NRCA3Dataset(NIRDataset):
     """Handle NRCA3 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCA3 data from DMS to detector frame.
+        """
+        Convert NRCA3 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1458,7 +1474,8 @@ class NRCA3Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCA3 data from detector to DMS frame.
+        """
+        Convert NRCA3 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1477,7 +1494,8 @@ class NRCA4Dataset(NIRDataset):
     """Handle NRCA4 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCA4 data from DMS to detector frame.
+        """
+        Convert NRCA4 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1497,7 +1515,8 @@ class NRCA4Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCA4 data from detector to DMS frame.
+        """
+        Convert NRCA4 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1516,7 +1535,8 @@ class NRCALONGDataset(NIRDataset):
     """Handle NRCALONG transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCALONG data from DMS to detector frame.
+        """
+        Convert NRCALONG data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1536,7 +1556,8 @@ class NRCALONGDataset(NIRDataset):
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCALONG data from detector to DMS frame.
+        """
+        Convert NRCALONG data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1555,7 +1576,8 @@ class NRCB1Dataset(NIRDataset):
     """Handle NRCB1 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCB1 data from DMS to detector frame.
+        """
+        Convert NRCB1 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1575,7 +1597,8 @@ class NRCB1Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCB1 data from detector to DMS frame.
+        """
+        Convert NRCB1 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1594,7 +1617,8 @@ class NRCB2Dataset(NIRDataset):
     """Handle NRCB2 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCB2 data from DMS to detector frame.
+        """
+        Convert NRCB2 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1614,7 +1638,8 @@ class NRCB2Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCB2 data from detector to DMS frame.
+        """
+        Convert NRCB2 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1634,16 +1659,8 @@ class NRCB3Dataset(NIRDataset):
     """Handle NRCB3 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCB3 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
         """
-        """Convert MIRI data from DMS to detector frame.
+        Convert NRCB3 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1663,7 +1680,8 @@ class NRCB3Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCB3 data from detector to DMS frame.
+        """
+        Convert NRCB3 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1682,7 +1700,8 @@ class NRCB4Dataset(NIRDataset):
     """Handle NRCB4 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCB4 data from DMS to detector frame.
+        """
+        Convert NRCB4 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1702,7 +1721,8 @@ class NRCB4Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCB4 data from detector to DMS frame.
+        """
+        Convert NRCB4 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1721,7 +1741,8 @@ class NRCBLONGDataset(NIRDataset):
     """Handle NRCBLONG transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NRCBLONG data from DMS to detector frame.
+        """
+        Convert NRCBLONG data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1741,7 +1762,8 @@ class NRCBLONGDataset(NIRDataset):
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert NRCBLONG data from detector to DMS frame.
+        """
+        Convert NRCBLONG data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1760,7 +1782,8 @@ class NIRISSDataset(NIRDataset):
     """Handle NIRISS transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert NIRISS data from DMS to detector frame.
+        """
+        Convert NIRISS data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1781,7 +1804,8 @@ class NIRISSDataset(NIRDataset):
         self.pixeldq = np.swapaxes(self.pixeldq[::-1, ::-1], 0, 1)
 
     def detector_to_dms(self, integration, group):
-        """Convert NIRISS data from detector to DMS frame.
+        """
+        Convert NIRISS data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1800,7 +1824,8 @@ class GUIDER1Dataset(NIRDataset):
     """Handle GUIDER1 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert GUIDER1 data from DMS to detector frame.
+        """
+        Convert GUIDER1 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1820,7 +1845,8 @@ class GUIDER1Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[::-1, ::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert GUIDER1 data from detector to DMS frame.
+        """
+        Convert GUIDER1 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1839,7 +1865,8 @@ class GUIDER2Dataset(NIRDataset):
     """Handle GUIDER2 transformations between DMS and detector frames."""
 
     def dms_to_detector(self, integration, group):
-        """Convert GUIDER2 data from DMS to detector frame.
+        """
+        Convert GUIDER2 data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1859,7 +1886,8 @@ class GUIDER2Dataset(NIRDataset):
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
-        """Convert GUIDER2 data from detector to DMS frame.
+        """
+        Convert GUIDER2 data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1883,14 +1911,13 @@ class MIRIDataset(Dataset):
 
         Parameters
         ----------
-        input_model: data model object
+        input_model : data model object
             Science data model to be corrected
-        is_subarray: boolean
-            flag that shows whether the dataset was created from subarray
-            data
-        odd_even_rows: boolean
+        odd_even_rows : bool
             Flag that controls whether odd and even-numbered rows are
             handled separately
+        conv_kernel_params : dict
+            Dictionary containing the parameters needed for the optimized convolution kernel
         """
         super(MIRIDataset, self).__init__(
             input_model,
@@ -1905,7 +1932,8 @@ class MIRIDataset(Dataset):
         self.reference_sections = MIR_reference_sections
 
     def dms_to_detector(self, integration, group):
-        """Convert MIRI data from DMS to detector frame.
+        """
+        Convert MIRI data from DMS to detector frame.
 
         Parameters
         ----------
@@ -1919,7 +1947,8 @@ class MIRIDataset(Dataset):
         pass
 
     def detector_to_dms(self, integration, group):
-        """Convert MIRI data from detector to DMS frame.
+        """
+        Convert MIRI data from detector to DMS frame.
 
         Parameters
         ----------
@@ -1933,22 +1962,23 @@ class MIRIDataset(Dataset):
         pass
 
     def collect_odd_refpixels(self, group, amplifier, left_or_right):
-        """Collect reference pixels from odd-numbered rows.
+        """
+        Collect reference pixels from odd-numbered rows.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group being processed
-        amplifier: string
+        amplifier : str
             Amplifier being processed (['A'|'B'|'C'|'D'])
-        left_or_right: string
+        left_or_right : str
             Process left or right side reference pixels (['left'|'right'])
 
         Returns
         -------
-        oddref: NDArray
+        oddref : NDArray
             Reference pixels from odd-numbered rows
-        odddq: NDArray
+        odddq : NDArray
             DQ values for reference pixels from odd-numbered rows
         """
         rowstart, rowstop, column = self.reference_sections[amplifier][left_or_right]
@@ -1957,22 +1987,23 @@ class MIRIDataset(Dataset):
         return oddref, odddq
 
     def collect_even_refpixels(self, group, amplifier, left_or_right):
-        """Collect reference pixels from even-numbered rows.
+        """
+        Collect reference pixels from even-numbered rows.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group being processed
-        amplifier: string
+        amplifier : str
             Amplifier being processed (['A'|'B'|'C'|'D'])
-        left_or_right: string
+        left_or_right : str
             Process left or right side reference pixels (['left'|'right'])
 
         Returns
         -------
-        evenref: NDArray
+        evenref : NDArray
             Reference pixels from even-numbered rows
-        evendq: NDArray
+        evendq : NDArray
             DQ values for reference pixels from even-numbered rows
         """
         rowstart, rowstop, column = self.reference_sections[amplifier][left_or_right]
@@ -1984,20 +2015,21 @@ class MIRIDataset(Dataset):
         return evenref, evendq
 
     def get_odd_refvalue(self, group, amplifier, left_or_right):
-        """Calculate reference values in odd-numbered rows.
+        """
+        Calculate reference values in odd-numbered rows.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group that is being processed
-        amplifier: string (['A'|'B'|'C'|'D'])
+        amplifier : str (['A'|'B'|'C'|'D'])
             Amplifier that is being processed
-        left_or_right: string (['left'|'right'])
+        left_or_right : str (['left'|'right'])
             Processing left or right reference pixels?
 
         Returns
         -------
-        odd: float
+        odd : float
             Value of the clipped mean of the reference pixels in odd-numbered
             rows
         """
@@ -2006,20 +2038,21 @@ class MIRIDataset(Dataset):
         return odd
 
     def get_even_refvalue(self, group, amplifier, left_or_right):
-        """Calculate reference value in even-numbered rows.
+        """
+        Calculate reference value in even-numbered rows.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group that is being processed
-        amplifier: string (['A'|'B'|'C'|'D'])
+        amplifier : str (['A'|'B'|'C'|'D'])
             Amplifier that is being processed
-        left_or_right: string (['left'|'right'])
+        left_or_right : str (['left'|'right'])
             Processing left or right reference pixels?
 
         Returns
         -------
-        even: float
+        even : float
             Value of the clipped mean of the reference pixels in even-numbered
             rows
         """
@@ -2028,30 +2061,29 @@ class MIRIDataset(Dataset):
         return even
 
     def get_amplifier_refvalue(self, group, amplifier, left_or_right):
-        """Calculate the reference pixel mean for a given amplifier.
+        """
+        Calculate the reference pixel mean for a given amplifier.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group that is being processed
-        amplifier: string (['A'|'B'|'C'|'D'])
+        amplifier : str (['A'|'B'|'C'|'D'])
             Amplifier that is being processed
-        left_or_right: string (['left'|'right'])
+        left_or_right : str (['left'|'right'])
             Processing left or right side reference pixels?
 
         Returns
         -------
-        Either:
-            odd: float
-                Value of the clipped mean of the reference pixels in odd-numbered
-                rows
-            even: float
-                 Value of the clipped mean of the reference pixels in even-numbered
-                 rows
-        Or:
-            mean: float
-                Value of the clipped mean of the reference pixels in both odd-numbered
-                and even-numbered rows
+        odd : float
+            Value of the clipped mean of the reference pixels in odd-numbered
+            rows (if self.odd_even_rows)
+        even : float
+            Value of the clipped mean of the reference pixels in even-numbered
+            rows (if self.odd_even_rows)
+        mean : float
+            Value of the clipped mean of the reference pixels in both odd-numbered
+            and even-numbered rows (if not self.odd_even_rows)
         """
         if self.odd_even_rows:
             odd = self.get_odd_refvalue(group, amplifier, left_or_right)
@@ -2073,19 +2105,20 @@ class MIRIDataset(Dataset):
             return mean
 
     def get_refvalues(self, group):
-        """Get the reference pixel values.
+        """
+        Get the reference pixel values.
 
         Values for each amplifier, odd and even rows and left and right side
         reference pixels are returned in a dictionary.
 
         Parameters
         ----------
-        group: NDArray
+        group : NDArray
             Group that is being processed.
 
         Returns
         -------
-        refpix: dictionary
+        refpix : dict
             Dictionary containing the clipped mean of the reference pixels for
             each amplifier, odd and even rows (if selected, otherwise all rows)
             and left and right.
@@ -2105,23 +2138,16 @@ class MIRIDataset(Dataset):
         return refpix
 
     def do_left_right_correction(self, group, refvalues):
-        """Do the reference pixel correction.
+        """
+        Do the reference pixel correction.
 
         Parameters
         ----------
-        group: NDArray
-            Group that is being processed
-        refvalues: dictionary
+        group : NDArray
+            Group that is being processed.  This parameter is corrected for the
+            bias drift using the left and right reference pixels
+        refvalues : dict
             Dictionary of reference pixel clipped means
-
-        Returns
-        -------
-        None
-
-        Side Effect
-        -----------
-        The parameter _group_ is corrected for the bias drift using the
-        left and right side reference pixels
         """
         for amplifier in self.amplifiers:
             datarowstart, datarowstop, datacolstart, datacolstop, stride = self.reference_sections[
@@ -2165,7 +2191,8 @@ class MIRIDataset(Dataset):
             self.do_fullframe_corrections()
 
     def do_subarray_corrections(self):
-        """Perform reference pixel correction for MIRI subarrays.
+        """
+        Perform reference pixel correction for MIRI subarrays.
 
         Currently skipped.
         """
@@ -2228,29 +2255,35 @@ def create_dataset(
     odd_even_rows,
     conv_kernel_params,
 ):
-    """Create a dataset object from an input model.
+    """
+    Create a dataset object from an input model.
 
     Parameters
     ----------
-    input_model: data model object
+    input_model : data model object
         Science data model to be corrected
-    odd_even_columns: boolean
-        flag that controls whether odd and even-numbered columns are
+    odd_even_columns : bool
+        Flag that controls whether odd and even-numbered columns are
         processed separately (NIR only)
-    use_side_ref_pixels: boolean
-        flag the controls whether the side reference pixels are used in
+    use_side_ref_pixels : bool
+        Flag that controls whether the side reference pixels are used in
         the correction (NIR only)
-    side_smoothing_length: integer
-        smoothing length the use in calculating the running median of
+    side_smoothing_length : int
+        Smoothing length to use in calculating the running median of
         the side reference pixels (NIR only)
-    side_gain: float
-        gain to use in applying the side reference pixel correction
+    side_gain : float
+        Gain to use in applying the side reference pixel correction
         (NIR only)
-    odd_even_rows: boolean
-        flag that controls whether odd and even-numbered rows are handled
+    odd_even_rows : bool
+        Flag that controls whether odd and even-numbered rows are handled
         separately (MIR only)
     conv_kernel_params : dict
         Dictionary containing the parameters needed for the optimized convolution kernel
+
+    Returns
+    -------
+    dataset_subclass : dataset
+        The appropriate subclass of the dataset class
     """
     detector = input_model.meta.instrument.detector
 
@@ -2420,29 +2453,35 @@ def correct_model(
     odd_even_rows,
     conv_kernel_params,
 ):
-    """Perform Reference Pixel Correction on a JWST Model.
+    """
+    Perform Reference Pixel Correction on a JWST Model.
 
     Parameters
     ----------
-    input_model: jwst.datamodels.model
+    input_model : jwst.datamodels.model
         Model to be corrected
-    odd_even_columns: boolean
-        flag that controls whether odd and even-numbered columns are
+    odd_even_columns : bool
+        Flag that controls whether odd and even-numbered columns are
         processed separately (NIR only)
-    use_side_ref_pixels: boolean
-        flag the controls whether the side reference pixels are used in
+    use_side_ref_pixels : bool
+        Flag that controls whether the side reference pixels are used in
         the correction (NIR only)
-    side_smoothing_length: integer
-        smoothing length the use in calculating the running median of
+    side_smoothing_length : int
+        Smoothing length the use in calculating the running median of
         the side reference pixels (NIR only)
-    side_gain: float
-        gain to use in applying the side reference pixel correction
+    side_gain : float
+        Gain to use in applying the side reference pixel correction
         (NIR only)
-    odd_even_rows: boolean
-        flag that controls whether odd and even-numbered rows are handled
+    odd_even_rows : bool
+        Flag that controls whether odd and even-numbered rows are handled
         separately (MIR only)
     conv_kernel_params : dict
         Dictionary containing the parameters needed for the optimized convolution kernel
+
+    Returns
+    -------
+    status : int
+        Return status
     """
     if input_model.meta.instrument.name == "MIRI":
         if reffile_utils.is_subarray(input_model):
@@ -2474,12 +2513,12 @@ def reference_pixel_correction(input_dataset):
 
     Parameters
     ----------
-    input_dataset: Dataset
+    input_dataset : Dataset
         Dataset to be corrected
 
     Returns
     -------
-    input_dataset: Dataset
+    input_dataset : Dataset
         Corrected dataset
     """
     input_dataset.do_corrections()
@@ -2589,7 +2628,8 @@ def setup_dataset_for_zeroframe(input_dataset, saved_values):
 
 
 def save_science_values(input_dataset):
-    """Save corrected data for the SCI extension.
+    """
+    Save corrected data for the SCI extension.
 
     Parameters
     ----------

@@ -11,7 +11,8 @@ log.setLevel(logging.DEBUG)
 
 
 def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
-    """Make convolution kernels from Fourier coefficients in the reference file.
+    """
+    Make convolution kernels from Fourier coefficients in the reference file.
 
     Parameters
     ----------
@@ -57,7 +58,8 @@ def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
 
 
 def get_conv_kernel_coeffs(sirs_kernel_model, detector):
-    """Get the convolution kernels coefficients from the reference file.
+    """
+    Get the convolution kernels coefficients from the reference file.
 
     Parameters
     ----------
@@ -90,7 +92,8 @@ def get_conv_kernel_coeffs(sirs_kernel_model, detector):
 
 
 def apply_conv_kernel(data, kernels, sigreject=4.0):
-    """Apply the convolution kernel.
+    """
+    Apply the convolution kernel.
 
     Parameters
     ----------
@@ -98,7 +101,7 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
         Data to be corrected
     kernels : list
         List containing the left and right kernels
-    sigreject: float
+    sigreject : float
         Number of sigmas to reject as outliers
 
     Returns
