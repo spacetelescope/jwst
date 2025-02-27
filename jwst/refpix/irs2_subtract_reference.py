@@ -13,37 +13,38 @@ log.setLevel(logging.DEBUG)
 def correct_model(
     output_model, irs2_model, scipix_n_default=16, refpix_r_default=4, pad=8, preserve_refpix=False
 ):
-    """Correct an input NIRSpec IRS2 datamodel using reference pixels.
+    """
+    Correct an input NIRSpec IRS2 datamodel using reference pixels.
 
     Parameters
     ----------
-    output_model: ramp model
+    output_model : ramp model
         The input science data model.
 
-    irs2_model: IRS2 model
+    irs2_model : IRS2 model
         The reference file model for IRS2 correction.
 
-    scipix_n_default: int
+    scipix_n_default : int
         Number of regular samples before stepping out to collect
         reference samples.
 
-    refpix_r_default: int
+    refpix_r_default : int
         Number of reference samples before stepping back in to collect
         regular samples.
 
-    pad: int
+    pad : int
         The effective number of pixels sampled during the pause at the end
         of each row (new-row overhead).  The padding is needed to preserve
         the phase of temporally periodic signals.
 
-    preserve_refpix: bool
+    preserve_refpix : bool
         If True, reference pixels will be preserved in the output.
         This is not used in the science pipeline, but is necessary to
         create new bias files for IRS2 mode.
 
     Returns
     -------
-    output_model: ramp model
+    output_model : ramp model
         The science data with reference output and reference pixels
         subtracted.
     """
@@ -194,14 +195,28 @@ def correct_model(
 
 
 def float_to_complex(data):
-    """Convert real and imaginary parts to complex."""
+    """
+    Convert real and imaginary parts to complex.
+
+    Returns
+    -------
+    data : ndarray
+        Complex array made from real and imaginary parts
+    """
     nelem = len(data)
 
     return data[0:-1:2] + 1j * data[1:nelem:2]
 
 
 def make_irs2_mask(nx, ny, scipix_n, refpix_r):
-    """Make IRS2 mask."""
+    """
+    Make IRS2 mask.
+
+    Returns
+    -------
+    irs2_mask : ndarray
+        The IRS2 mask
+    """
     # Number of (scipix_n + refpix_r) per output, assuming four amplifier
     # outputs and one reference output.
     irs2_nx = max((ny, nx))
@@ -242,14 +257,15 @@ def make_irs2_mask(nx, ny, scipix_n, refpix_r):
 
 
 def strip_ref_pixels(output_model, irs2_mask):
-    """Copy out the normal pixels from PIXELDQ and GROUPDQ arrays.
+    """
+    Copy out the normal pixels from PIXELDQ and GROUPDQ arrays.
 
     Parameters
     ----------
-    output_model: ramp model
+    output_model : ramp model
         The output science data model, to be modified in-place
 
-    irs2_mask: Boolean, 1-D array of length 3200
+    irs2_mask : bool ndarray of length 3200
         True means the element corresponds to a normal pixel in the raw,
         IRS2-format data.  False corresponds either to a reference output
         pixel or to one of the interspersed reference pixel values.
@@ -284,10 +300,9 @@ def strip_ref_pixels(output_model, irs2_mask):
 
 
 def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2, scipix_n=16, refpix_r=4):
-    """Set some interleaved reference pixel values to zero.
+    """
+    Set some interleaved reference pixel values to zero.
 
-    Long Description
-    ----------------
     This is an explanation of the arithmetic for computing `ref` in the loop
     over the list of bit numbers that is returned by `decode_mask`.
     Reads of reference pixels are interleaved with reads of science data.  The
@@ -386,7 +401,8 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2, scipix_n=16, r
 
 
 def decode_mask(mask):
-    """Interpret the MASK column of the DQ table.
+    """
+    Interpret the MASK column of the DQ table.
 
     As per the ESA CDP3 document:
     "There is also a DQ extension that holds a binary table with three
@@ -400,8 +416,6 @@ def decode_mask(mask):
 
     Parameters
     ----------
-    output : int
-        An amplifier output number, 1, 2, 3, or 4.
     mask : uint32
         A mask value.
 
@@ -653,7 +667,8 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
 def subtract_reference(
     data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad, preserve_refpix=False
 ):
-    """Subtract reference output and pixels for the current integration.
+    """
+    Subtract reference output and pixels for the current integration.
 
     Parameters
     ----------
@@ -981,7 +996,23 @@ def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1, ny, ngroups, aa, n_iter_norm
 
 
 def ols_line(x, y):
-    """Fit a straight line using ordinary least squares."""
+    """
+    Fit a straight line using ordinary least squares.
+
+    Parameters
+    ----------
+    x : ndarray
+        Array of independent variables
+    y : ndarray
+        Array of dependent variables
+
+    Returns
+    -------
+    intercept : float
+        Intercept of straight line fit
+    slope : float
+        Slope of straight line fit
+    """
     xf = x.ravel()
     yf = y.ravel()
     if len(xf) < 1 or len(yf) < 1:

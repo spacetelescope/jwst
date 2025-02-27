@@ -53,7 +53,6 @@ repos:
             jwst/mrs_imatch/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
-            jwst/refpix/.* |
             jwst/residual_fringe/.* |
             jwst/rscd/.* |
             jwst/saturation/.* |

@@ -32,7 +32,8 @@ class RefPixStep(Step):
     reference_file_types = ['refpix', 'sirskernel']
 
     def process(self, step_input):
-        """Execute the reference pixel correction step.
+        """
+        Execute the reference pixel correction step.
 
         Parameters
         ----------
