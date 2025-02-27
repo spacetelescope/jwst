@@ -1,0 +1,1 @@
+Fix bad input type to median computation for coron data
