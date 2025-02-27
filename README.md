@@ -215,7 +215,7 @@ environment variable:
 
 ## Documentation
 
-Documentation (built daily from the Github `main` branch) is available at:
+Software documentation (built daily from the GitHub `main` branch) is available at:
 
 https://jwst-pipeline.readthedocs.io/en/latest/
 
@@ -226,6 +226,13 @@ To build the docs yourself, clone this repository and build the documentation wi
     make html
     make latexpdf
 
+For more user-focused documentation on the JWST calibration pipeline, see also the JDox pages at: 
+
+https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline
+
+The latest build information is also available on JDox at:
+
+https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/jwst-operations-pipeline-build-information
 
 ## Contributions and Feedback
 
