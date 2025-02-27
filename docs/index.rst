@@ -58,6 +58,7 @@ is also available on `JDox <https://jwst-docs.stsci.edu>`__.
    jwst/user_documentation/logging_configuration.rst
    jwst/user_documentation/datamodels.rst
    jwst/user_documentation/pub_deprecation.rst
+   jwst/user_documentation/more_information.rst
 
 .. toctree::
    :maxdepth: 2
