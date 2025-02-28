@@ -6,6 +6,11 @@ from jwst.stpipe import Step
 import stdatamodels.jwst.datamodels as dm
 
 
+PXSC_DEG = 65.6 / (60.0 * 60.0 * 1000)
+PXSC_RAD = PXSC_DEG * np.pi / (180)
+PXSC_MAS = PXSC_DEG * 3600 * 1000
+
+
 @pytest.fixture()
 def example_model():
     """Create a simple CubeModel simulating input to the ami3 pipeline."""
@@ -49,11 +54,6 @@ def circular_pupil():
 def nrm_model_circular(circular_pupil):
     """Make a simple NRMModel with a circular pupil."""
     return dm.NRMModel(nrm=circular_pupil)
-
-
-PXSC_DEG = 65.6 / (60.0 * 60.0 * 1000)
-PXSC_RAD = PXSC_DEG * np.pi / (180)
-PXSC_MAS = PXSC_DEG * 3600 * 1000
 
 
 @pytest.fixture
