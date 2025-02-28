@@ -77,13 +77,10 @@ def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
     ----------
     filtername : str
         AMI filter name
-
     sqfov_npix : float
         Square field of view in number of pixels
-
     pxsc_rad : float
         Detector pixel scale in rad/px
-
     pupil_mask : array
         Pupil mask model (NRM)
 
@@ -130,13 +127,10 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
     ----------
     wl : float
         Wavelength (meters)
-
     fovnpix : float
         Square field of view in number of pixels
-
     pxsc_rad : float
         Detector pixel scale in rad/px
-
     pupil_mask : array
         Pupil mask model (NRM)
 
@@ -171,13 +165,13 @@ def bad_pixels(data, median_size, median_tres):
 
     Returns
     -------
-    pxdq : int array
+    pxdq : np.ndarray[int]
         Bad pixel mask identified by median filtering
     """
     mfil_data = median_filter(data, size=median_size)
     diff_data = np.abs(data - mfil_data)
     pxdq = diff_data > median_tres * np.median(diff_data)
-    pxdq = pxdq.astype("int")
+    pxdq = pxdq.astype("int")  # TODO: There is no reason this can't be bool
 
     log.info(
         f"         Identified {np.sum(pxdq):.0f} bad pixels "
@@ -269,8 +263,14 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     -------
     data : numpy array
         Corrected data
-    pxdq : numpy array
+    pxdq : np.ndarray[int]
         Mask of bad pixels, updated if new ones were found
+
+    Notes
+    -----
+    This function only works with input data shape that is odd.
+    For even shapes, raises IndexError at line `data_ft = np.fft.rfft2(data_out)[ww_ft]`.
+    TODO: Fix this.
     """
     dq_dnu = pxdq0 & DO_NOT_USE == DO_NOT_USE
     dq_jump = pxdq0 & JUMP_DET == JUMP_DET
@@ -373,6 +373,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
             # If new bad pixels were identified, add them to the bad pixel
             # map.
+            # TODO: There is no reason this can't be bool
             pxdq_cut = ((pxdq_cut > 0.5) | (temp > 0.5)).astype("int")
 
         # Put the modified frames back into the data cube.
