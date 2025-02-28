@@ -47,7 +47,7 @@ def test_spec3_moving_target(run_spec3_moving_target, fitsdiff_default_kwargs, o
     rtdata = run_spec3_moving_target
     rtdata.output = output
 
-    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+    rtdata.get_truth(os.path.join(TRUTH_PATH, output))
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
