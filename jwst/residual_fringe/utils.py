@@ -191,45 +191,6 @@ def fit_envelope(wavenum, signal):
     return pcl(wavenum), l_x, l_y, pcu(wavenum), u_x, u_y
 
 
-def find_lines_resfringe(signal, max_amp):
-    """
-    *** Replaced with find_lines below. This version does not include some of the
-    feature finding functionality***
-
-    Take signal and max amp array, determine location of spectral
-    features with amplitudes greater than max amp
-
-    :param signal:
-    :param max_amp:
-    :return:
-    """
-
-    r_x = np.arange(signal.shape[0] - 1)
-
-    # setup the output arrays
-    signal_check = signal.copy()
-    weights_factors = np.ones(signal.shape[0])
-
-    # Detect peaks
-
-    u_y, u_x, l_y, l_x = [], [], [], []
-
-    for x in r_x:
-        if ((np.sign(signal_check[x] - signal_check[x - 1]) == 1) and
-                (np.sign(signal_check[x] - signal_check[x + 1]) == 1)):
-            u_y.append(signal_check[x])
-            u_x.append(x)
-
-        if ((np.sign(signal_check[x] - signal_check[x - 1]) == -1) and
-                (np.sign(signal_check[x] - signal_check[x + 1]) == -1)):
-            l_y.append(signal[x])
-            l_x.append(x)
-
-    log.debug("find_lines: Found {} peaks   {} troughs".format(len(u_x), len(l_x)))
-    weights_factors[signal_check > max_amp] = 0
-    return weights_factors
-
-
 def find_lines(signal, max_amp):
     """
     Take signal and max amp array, determine location of spectral

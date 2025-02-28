@@ -45,6 +45,24 @@ def run_spec2(rtdata_module):
     Step.from_cmdline(args)
 
 
+@pytest.fixture(scope='module')
+def run_spec2_with_residual_fringe(rtdata_module):
+    """Run the Spec2Pipeline on a single exposure"""
+    rtdata = rtdata_module
+
+    # Get the input rate file
+    rtdata.get_data(INPUT_PATH + '/' + 'jw01024001001_04101_00001_mirifulong_rate.fits')
+
+    # Run the pipeline
+    args = ["calwebb_spec2", rtdata.input,
+            '--output_file=jw01024001001_04101_00001_mirifulong_rf',
+            '--steps.residual_fringe.skip=false',
+            '--steps.residual_fringe.save_results=true',
+            ]
+
+    Step.from_cmdline(args)
+
+
 @pytest.mark.slow
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
@@ -83,3 +101,12 @@ def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs, rtdata_module):
         xtruth, ytruth = im_truth.meta.wcs.backward_transform(ratruth, dectruth, lamtruth)
         assert_allclose(xtest, xtruth)
         assert_allclose(ytest, ytruth)
+
+
+@pytest.mark.slow
+@pytest.mark.bigdata
+@pytest.mark.parametrize('suffix', ['rf_residual_fringe', 'rf_s3d', 'rf_x1d', 'rf_cal'])
+def test_miri_mrs_spec2_with_rf(run_spec2_with_residual_fringe,
+                                fitsdiff_default_kwargs, suffix, rtdata_module):
+    rtdata = rtdata_module
+    rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path=TRUTH_PATH)

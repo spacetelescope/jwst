@@ -1,9 +1,7 @@
-#! /usr/bin/env python
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from . import residual_fringe
-from functools import partial
+from jwst.stpipe import Step
+from jwst.residual_fringe import residual_fringe
 
 __all__ = ["ResidualFringeStep"]
 
@@ -27,7 +25,7 @@ class ResidualFringeStep(Step):
         ignore_region_min = list(default = None)
         ignore_region_max = list(default = None)
         suffix = string(default = 'residual_fringe')
-    """ # noqa: E501
+    """  # noqa: E501
 
     reference_file_types = ['fringefreq', 'regions']
 
@@ -58,7 +56,7 @@ class ResidualFringeStep(Step):
         ignore_regions['num'] = min_num
 
         if min_num > 0:
-            self.log.info('Ignoring {} wavelength regions'.format(min_num))
+            self.log.info(f'Ignoring {min_num} wavelength regions')
 
         self.ignore_regions = ignore_regions
 
@@ -67,25 +65,7 @@ class ResidualFringeStep(Step):
         if isinstance(input, datamodels.IFUImageModel):
             exptype = input.meta.exposure.type
         else:
-            raise TypeError("Failed to process file type {}".format(type(input)))
-
-        # Setup output path naming if associations are involved.
-        asn_id = None
-        try:
-            asn_id = self.input.meta.asn_table.asn_id
-        except (AttributeError, KeyError):
-            pass
-        if asn_id is None:
-            asn_id = self.search_attr('asn_id')
-        if asn_id is not None:
-            _make_output_path = self.search_attr(
-                '_make_output_path', parent_first=True
-            )
-
-            self._make_output_path = partial(
-                _make_output_path,
-                asn_id=asn_id
-            )
+            raise TypeError(f"Failed to process input type: {type(input)}")
 
         # Set up residual fringe correction parameters
         pars = {
@@ -95,8 +75,8 @@ class ResidualFringeStep(Step):
         }
 
         if exptype != 'MIR_MRS':
-            self.log(" Residual Fringe correction is only for MIRI MRS data")
-            self.log.error("Unsupported ", f"exposure type: {exptype}")
+            self.log.warning("Residual fringe correction is only for MIRI MRS data")
+            self.log.warning(f"Input is: {exptype}")
             input.meta.cal_step.residual_fringe = "SKIPPED"
             return input
 

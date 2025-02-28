@@ -1,3 +1,4 @@
+
 import numpy as np
 
 import scipy.interpolate
@@ -16,7 +17,6 @@ def spline_fitter(x, y, weights, knots, degree, reject_outliers=False, domain=10
     def chi_sq(spline, weights):
         return np.nansum((y - spline(x)) ** 2 * weights)
 
-
     # initial fit
     spline = _lsq_spline(x, y, weights, knots, degree)
     chi = chi_sq(spline, weights)
@@ -24,6 +24,9 @@ def spline_fitter(x, y, weights, knots, degree, reject_outliers=False, domain=10
     # astropy code used the model params which pad the knots based on degree
     nparams = len(knots) + (degree + 1) * 2
     deg_of_freedom = np.sum(weights) - nparams
+
+    if deg_of_freedom <= 0:
+        raise RuntimeError("Degrees of freedom <= 0")
 
     for _ in range(1000 * nparams):
         scale = np.sqrt(chi / deg_of_freedom)
