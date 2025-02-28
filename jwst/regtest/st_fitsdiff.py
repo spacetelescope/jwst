@@ -883,8 +883,6 @@ class STImageDataDiff(ImageDataDiff):
             if nansa.shape != nansb.shape or a.shape != b.shape:
                 # Don't care about the actual numbers or locations, just set to something high
                 data_within_tol = False
-                self.diff_total = 999
-                self.diff_ratio = 999.0
             elif a.shape == b.shape:
                 # Check if data is within the tolerances (the non-nan data arrays are the same shape)
                 if shapea == 4:
@@ -892,28 +890,26 @@ class STImageDataDiff(ImageDataDiff):
                         for ngrp in range(shapea[1]):
                             diff_total = np.abs(a[nint, ngrp, ...] - b[nint, ngrp, ...]) > (
                                     atol + rtol * np.abs(b[nint, ngrp, ...]))
-                            self.diff_total = a[diff_total].size
-                            if self.diff_total != 0:
+                            if a[diff_total].size != 0:
                                 data_within_tol = False
                                 break
                         if not data_within_tol:
                             break
-                if shapea == 3:
+                elif shapea == 3:
                     for ngrp in range(shapea[0]):
                         diff_total = np.abs(a[ngrp, ...] - b[ngrp, ...]) > (atol + rtol * np.abs(b[ngrp, ...]))
-                        self.diff_total = a[diff_total].size
-                        if self.diff_total != 0:
+                        if a[diff_total].size != 0:
                             data_within_tol = False
                             break
                 else:
                     diff_total = np.abs(a - b) > (atol + rtol * np.abs(b))
-                    self.diff_total = a[diff_total].size
-                    if self.diff_total != 0:
+                    if a[diff_total].size != 0:
                         data_within_tol = False
 
             if not data_within_tol:
                 # Don't care about the actual numbers or locations, just set to something high
                 self.diff_ratio = 999.0
+                self.diff_total = 999
             else:
                 # Data is the same, nothing to do
                 self.diff_ratio = 0
@@ -999,6 +995,10 @@ class STRawDataDiff(STImageDataDiff):
         super().__init__(a, b, numdiffs=numdiffs)
 
     def _diff(self):
+        # This function is exactly the same as the original, but it needs
+        # to remain here because RawDataDiff is a special case of ImageDataDiff,
+        # and since this was changed to use our version, the code would not
+        # have access to the original _diff function in the RawDataDiff class.
         super()._diff()
         if self.diff_dimensions:
             self.diff_dimensions = (
