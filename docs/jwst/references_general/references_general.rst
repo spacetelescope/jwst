@@ -105,10 +105,6 @@ documentation on each reference file.
 |                                                       | SPECKERNEL (NIRISS SOSS ATOCA only)              |
 +                                                       +--------------------------------------------------+
 |                                                       | SPECPROFILE (NIRISS SOSS ATOCA only)             |
-+                                                       +--------------------------------------------------+
-|                                                       | SPECTRACE (NIRISS SOSS ATOCA only)               |
-+                                                       +--------------------------------------------------+
-|                                                       | WAVEMAP (NIRISS SOSS ATOCA only)                 |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`extract_2d <extract_2d_step>`                   | :ref:`WAVECORR <wavecorr_reffile>`               |
 +                                                       +--------------------------------------------------+
