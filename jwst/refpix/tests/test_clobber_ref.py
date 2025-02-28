@@ -74,7 +74,7 @@ def test_decode_mask():
                [0, 3],
                [0, 7, 15]]
     for row in range(nrows):
-        bits = decode_mask(output[row], mask[row])
+        bits = decode_mask(mask[row])
         check[row] = (bits == compare[row])
 
     assert np.all(check)

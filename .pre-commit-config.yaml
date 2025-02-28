@@ -55,7 +55,6 @@ repos:
             jwst/mrs_imatch/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
-            jwst/refpix/.* |
             jwst/regtest/.* |
             jwst/resample/.* |
             jwst/reset/.* |
