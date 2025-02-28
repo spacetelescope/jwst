@@ -16,18 +16,9 @@ import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
 
-
-# hard coded parameters, have been selected based on testing but can be changed
-NUM_KNOTS = 80  # number of knots for bkg model if no other info provided
-
-
-def find_nearest(array, value):
-    """ Utility function to find the index of pixel with value in 'array' nearest to 'value'.
-
-    Used by det_pixel_trace function
-    """
-    idx = (np.abs(array - value)).argmin()
-    return idx
+# Number of knots for bkg model if no other info provided
+# Hard coded parameter, has been selected based on testing but can be changed
+NUM_KNOTS = 80
 
 
 def slice_info(slice_map, c):
