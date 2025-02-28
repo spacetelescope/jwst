@@ -998,6 +998,17 @@ class STRawDataDiff(STImageDataDiff):
 
         super().__init__(a, b, numdiffs=numdiffs)
 
+    def _diff(self):
+        super()._diff()
+        if self.diff_dimensions:
+            self.diff_dimensions = (
+                self.diff_dimensions[0][0],
+                self.diff_dimensions[1][0],
+            )
+
+        self.diff_bytes = [(x[0], y) for x, y in self.diff_pixels]
+        del self.diff_pixels
+
     def _report(self):
         if self.diff_dimensions:
             self._writeln(" Data sizes differ:")
