@@ -15,7 +15,7 @@ from .fitter import spline_fitter
 import logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
-#
+
 
 # hard coded parameters, have been selected based on testing but can be changed
 NUM_KNOTS = 80  # number of knots for bkg model if no other info provided
@@ -105,22 +105,6 @@ def fill_wavenumbers(wnums):
     del idx, coefs
 
     return wnums_filled
-
-
-def fit_quality_stats(stats):
-    """Get simple statistics for the fits
-
-    :Parameters:
-
-    fit_stats: np.array
-        the fringe contrast per fit
-
-    :Returns:
-
-   median, stddev, max of stat numpy array
-
-    """
-    return np.mean(stats), np.median(stats), np.std(stats),  np.amax(stats)
 
 
 def multi_sine(n):
@@ -453,73 +437,6 @@ def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, chann
         pass
 
     return bg_fit, bgindx
-
-
-def fit_quality(wavenum, res_fringes, weights, ffreq, dffreq, save_results=False):
-    """Determine the post correction fringe residual
-
-    Fit a single sine model to the corrected array to get the post correction fringe residual
-
-    :Parameters:
-
-    wavenum: numpy array
-        the wavenum array
-
-    res_fringes: numpy array
-        the residual fringe fit data
-
-    weights: numpy array
-        the weights array
-
-    ffreq: float, required
-        the central scan frequency
-
-    dffreq:  float, required
-        the one-sided interval of scan frequencies
-
-    :Returns:
-
-    fringe_res_amp: numpy array
-        the post correction fringe residual amplitude
-
-    """
-    ffreq, dffreq = 2.8, 0.2
-
-    # fit the residual with a single sine model
-    # use a Lomb-Scargle periodogram to get PSD and identify the strongest frequency
-    freq = np.linspace(ffreq - dffreq, ffreq + dffreq, 100)
-
-    # handle out of slice pixels
-    res_fringes = np.nan_to_num(res_fringes)
-    res_fringe_scan = res_fringes[np.where(weights > 1e-05)]
-    wavenum_scan = wavenum[np.where(weights > 1e-05)]
-    pgram = LombScargle(wavenum_scan[::-1], res_fringe_scan[::-1]).power(1 / freq)
-    peak = np.argmax(pgram)
-    peak_freq = freq[peak]
-    log.debug("fit_quality: strongest frequency is {}".format(peak_freq))
-
-    # create the model
-    mdl = SineModel(pars=[0.1, 0.1], fixed={0: 1 / peak_freq})
-
-    fitter = LevenbergMarquardtFitter(wavenum[10:-10], mdl)
-    ftr = RobustShell(fitter, domain=10)
-
-    fr_par = ftr.fit(res_fringes[10:-10], weights=weights[10:-10])
-    log.debug("fit_quality: best fit pars: {}".format(fr_par))
-
-    if np.abs(fr_par[0]) > np.abs(fr_par[1]):
-        contrast = np.abs(round(fr_par[0] * 2, 3))
-    else:
-        contrast = np.abs(round(fr_par[1] * 2, 3))
-
-    # make data to return for fit quality
-    quality = None
-    if save_results:
-        best_mdl = SineModel(fixed={0: 1 / peak_freq, 1: fr_par[0], 2: fr_par[1]})
-        fit = best_mdl.result(wavenum)
-        quality = np.array([(10000.0 / wavenum), res_fringes, fit])
-
-    return contrast, quality
 
 
 def new_fit_1d_fringes_bayes_evidence(res_fringes, weights, wavenum, ffreq, dffreq, min_nfringes, max_nfringes,
