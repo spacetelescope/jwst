@@ -147,20 +147,13 @@ class ResidualFringeCorrection:
         self.knot_locations = np.full_like(self.input_model.data, np.nan)
         allregions.close()
 
-        # intermediate output product - Table
+        # intermediate output product - Tables
         stat_table = Table(names=('Slice', 'mean', 'median', 'stddev', 'max', 'pmean', 'pmedian', 'pstddev', 'pmax'),
                            dtype=('i4', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
 
-        out_table = Table(names=('Slice', 'col', 'fringe', 'sn', 'pre_contrast', 'post_contrast',
-                                 'periodogram_res', 'opt_fringes', 'peak_freq', 'freq_min', 'freq_max'),
-                          dtype=('i4', 'i4', 'i4', 'f8', 'f8', 'f8',
-                                 'f8', 'f8', 'f8', 'f8', 'f8'))
-
-        # intermediate output
-        n_wav_samples = 1024
-        qual_table = Table(names=('column', 'quality'),
-                           units=('', ''),
-                           dtype=('i4', '(3,{})f8'.format(n_wav_samples)))
+        out_table = Table(names=('Slice', 'col', 'fringe', 'sn', 'periodogram_res',
+                                 'opt_fringes', 'peak_freq', 'freq_min', 'freq_max'),
+                          dtype=('i4', 'i4', 'i4', 'f8', 'f8', 'f8', 'f8', 'f8', 'f8'))
 
         wave_map = self._get_wave_map()
         for c in self.channels:
@@ -182,15 +175,12 @@ class ResidualFringeCorrection:
             for n, ss in enumerate(slices_in_band):
                 log.info(" Processing slice {} =================================".format(ss))
                 log.debug(" X ranges of slice {} {}".format(slice_x_ranges[n, 1], slice_x_ranges[n, 2]))
-                # initialise the list to store correction quality numbers for slice
-                correction_quality = []
 
                 # use the mask to set all out-of-slice pixels to 0 in wmap and data
                 # set out-of-slice pixels to 0 in arrays
                 ss_data = all_slice_masks[n] * output_data.copy()
                 ss_wmap = all_slice_masks[n] * wave_map
                 ss_weight = all_slice_masks[n] * self.input_weights.copy()
-                #  ss_mask = all_slice_masks[n]
 
                 # get the freq_table info for this slice
                 this_row = np.where(self.freq_table['slice'] == float(ss))[0][0]
@@ -292,11 +282,10 @@ class ResidualFringeCorrection:
                             weight_factors = utils.find_lines(mod, col_max_amp * 2)
                             weights_feat *= weight_factors
 
-                        # iterate over the fringe components to fit, initialize pre-contrast, other output arrays
+                        # iterate over the fringe components to fit, initialize other output arrays
                         # in case fit fails
                         proc_data = col_data.copy()
                         proc_factors = np.ones(col_data.shape)
-                        pre_contrast = 0.0
                         bg_fit = col_data.copy()
                         res_fringe_fit_flag = np.zeros(col_data.shape)
                         wpix_num = 1024
@@ -339,21 +328,7 @@ class ResidualFringeCorrection:
                                                                 where=bg_fit != 0)
                                         res_fringes = np.subtract(res_fringes, 1, where=res_fringes != 0)
                                         res_fringes *= np.where(col_weight > 1e-07, 1, 1e-08)
-                                        # get the pre-correction contrast using fringe component 1
-                                        # TODO: REMOVE CONTRAST CHECKS
-                                        # set dummy values for contrast check parameters until removed
-                                        pre_contrast = 0.0
-                                        quality = np.array([np.zeros(col_data.shape), np.zeros(col_data.shape),
-                                                            np.zeros(col_data.shape)])
-                                        # if fn == 0:
-                                        #    pre_contrast, quality = utils.fit_quality(col_wnum,
-                                        #                                              res_fringes,
-                                        #                                              weights_feat,
-                                        #                                              ffreq[0],
-                                        #                                              dffreq[0])
-                                        #
-                                        #   log.debug(" pre-correction contrast = {}".format(pre_contrast))
-                                        #
+
                                         # fit the residual fringes
                                         log.debug(" set up bayes ")
                                         res_fringe_fit, wpix_num, opt_nfringe, peak_freq, freq_min, freq_max = \
@@ -385,44 +360,25 @@ class ResidualFringeCorrection:
                                         proc_data = np.nan_to_num(proc_data, posinf=1e-08, neginf=1e-08)
                                         proc_data[proc_data < 0] = 1e-08
 
-                                        out_table.add_row((ss, col, fn, snr2, pre_contrast, pre_contrast, pgram_res[fn],
+                                        out_table.add_row((ss, col, fn, snr2, pgram_res[fn],
                                                            opt_nfringe, peak_freq, freq_min, freq_max))
 
                             # define fringe sub after all fringe components corrections
                             fringe_sub = proc_data.copy()
                             rfc_factors = proc_factors.copy()
 
-                            # get the new fringe contrast
-                            log.debug(" analysing fit quality")
-
+                            # get the residual fringes as fraction of signal
                             pbg_fit, pbgindx = utils.fit_1d_background_complex(fringe_sub,
                                                                                weights_feat,
                                                                                col_wnum,
                                                                                ffreq=ffreq[0], channel=c)
-
-                            # get the residual fringes as fraction of signal
                             fit_res = np.divide(fringe_sub, pbg_fit, out=np.zeros_like(fringe_sub),
                                                 where=pbg_fit != 0)
                             fit_res = np.subtract(fit_res, 1, where=fit_res != 0)
                             fit_res *= np.where(col_weight > 1e-07, 1, 1e-08)
 
-                            # TODO: REMOVE CONTRAST CHECKS
-                            # set dummy values for contrast check parameters until removed
-                            contrast = 0.0
-                            quality = np.array([np.zeros(col_data.shape), np.zeros(col_data.shape), np.zeros(col_data.shape)])
-                            # contrast, quality = utils.fit_quality(col_wnum,
-                            #                                      fit_res,
-                            #                                      weights_feat,
-                            #                                      ffreq,
-                            #                                      dffreq,
-                            #                                      save_results=self.save_intermediate_results)
-
-                            out_table.add_row((ss, col, fn, snr2, pre_contrast, contrast, pgram_res[0],
+                            out_table.add_row((ss, col, fn, snr2, pgram_res[0],
                                                opt_nfringe, peak_freq, freq_min, freq_max))
-
-                            qual_table.add_row((col, quality))
-                            correction_quality.append([contrast, pre_contrast])
-                            log.debug(" residual contrast = {}".format(contrast))
 
                             # replace the corrected in-slice column pixels in the data_cor array
                             log.debug(" updating the trace pixels in the output")
@@ -441,17 +397,6 @@ class ResidualFringeCorrection:
                             log.warning(' %s' % (str(e)))
 
                 del ss_data, ss_wmap, ss_weight  # end on column
-
-                # asses the fit quality statistics and set up data to make plot outside of step
-                log.debug(" analysing fit statistics")
-                if len(correction_quality) > 0:
-                    contrasts = np.asarray(correction_quality)[:, 0]
-                    pre_contrasts = np.asarray(correction_quality)[:, 1]
-                    mean, median, stddev, fmax = utils.fit_quality_stats(contrasts)
-                    pmean, pmedian, pstddev, pfmax = utils.fit_quality_stats(pre_contrasts)
-
-                    # add the statistics to the Table
-                    stat_table.add_row((ss, mean, median, stddev, fmax, pmean, pmedian, pstddev, pfmax))
 
             del slice_x_ranges, all_slice_masks, slices_in_band  # end of channel
             log.info('Number of columns corrected for channel {}'.format(num_corrected))
@@ -475,15 +420,13 @@ class ResidualFringeCorrection:
             out_table_name = self.make_output_path(
                 basepath=self.input_model.meta.filename,
                 suffix='out_table', ext='.ecsv')
-            log.info(' Saving intermediate Output table {}'.format(out_table_name))
+            log.info(f'Saving intermediate output table {out_table_name}')
             ascii.write(out_table, out_table_name, format='ecsv', fast_writer=False, overwrite=True)
-
-            t = fits.BinTableHDU(data=qual_table, name='FIT_QUAL')
 
             fit_results_name = self.make_output_path(
                 basepath=self.input_model.meta.filename,
                 suffix='fit_results', ext='.fits')
-            log.info('Saving intermediate fit results output {}'.format(fit_results_name))
+            log.info(f'Saving intermediate fit results output {fit_results_name}')
 
             # Get a primary header from the input model
             hdul = fits_support.to_fits(self.input_model._instance, self.input_model._schema)
@@ -498,7 +441,7 @@ class ResidualFringeCorrection:
             hdu5 = fits.ImageHDU(self.background_fit, name='BACKGROUND_FIT')
             hdu6 = fits.ImageHDU(self.knot_locations, name='KNOT_LOCATIONS')
 
-            hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5, hdu6, t])
+            hdu = fits.HDUList([hdu0, hdu1, hdu2, hdu3, hdu4, hdu5, hdu6])
             hdu.writeto(fit_results_name, overwrite=True)
             hdu.close()
 
