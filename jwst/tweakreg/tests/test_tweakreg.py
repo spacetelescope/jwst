@@ -94,6 +94,9 @@ def test_is_wcs_correction_small(offset, is_good):
     twcs.bounding_box = wcs.bounding_box
 
     step = tweakreg_step.TweakRegStep()
+    # TODO: remove 'roundlo' once
+    # https://github.com/astropy/photutils/issues/1977 is fixed
+    step.roundlo=-1.0e-12
 
     class FakeCorrector:
         def __init__(self, wcs, original_skycoord):
@@ -113,7 +116,7 @@ def test_expected_failure_bad_starfinder():
 
     model = ImageModel()
     with pytest.raises(ValueError):
-        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, bkg_boxsize=400, starfinder='bad_value')
+        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, bkg_boxsize=400, starfinder_name='bad_value')
 
 
 def test_write_catalog(dummy_source_catalog, tmp_cwd):
@@ -191,6 +194,9 @@ def test_tweakreg_step(example_input, with_shift):
 
     # make the step with default arguments
     step = tweakreg_step.TweakRegStep()
+    # TODO: remove 'roundlo' once
+    # https://github.com/astropy/photutils/issues/1977 is fixed
+    step.roundlo=-1.0e-12
 
     # run the step on the example input modified above
     result = step.run(example_input)
@@ -225,6 +231,9 @@ def test_src_confusion_pars(example_input, alignment_type):
         f"{alignment_type}separation": 1.0,
         f"{alignment_type}tolerance": 1.0,
         "abs_refcat": REFCAT,
+        # TODO: remove 'roundlo' once
+        # https://github.com/astropy/photutils/issues/1977 is fixed
+        "roundlo": -1.0e-12,
     }
     step = tweakreg_step.TweakRegStep(**pars)
     result = step.run(example_input)
@@ -337,7 +346,12 @@ def test_custom_catalog(custom_catalog_path, example_input, catfile, asn, meta, 
             elif asn == "no_cat_in_asn" and meta == "cat_in_meta":
                 n_custom_sources = N_CUSTOM_SOURCES
 
-    kwargs = {'use_custom_catalogs': custom}
+    kwargs = {
+        'use_custom_catalogs': custom,
+        # TODO: remove 'roundlo' once
+        # https://github.com/astropy/photutils/issues/1977 is fixed
+        'roundlo': -1.0e-12,
+    }
     if catfile != "no_catfile":
         kwargs["catfile"] = str(catfile_path)
 
@@ -384,6 +398,9 @@ def test_sip_approx(example_input, with_shift):
     step.sip_max_inv_pix_error = 0.1
     step.sip_inv_degree = 3
     step.sip_npoints = 12
+    # TODO: remove 'roundlo' once
+    # https://github.com/astropy/photutils/issues/1977 is fixed
+    step.roundlo=-1.0e-12
 
     # run the step on the example input modified above
     result = step.run(example_input)

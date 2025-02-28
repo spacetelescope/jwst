@@ -95,19 +95,19 @@ of the FITS file. Each pixel in the context image is a bit field that encodes
 information about which input image has contributed to the corresponding
 pixel in the resampled data array. Context image uses 32 bit integers to encode
 this information and hence it can keep track of only 32 input images.
-First bit corresponds to the first input image, second bit corrsponds to the
+First bit corresponds to the first input image, second bit corresponds to the
 second input image, and so on. If the number of input images is larger than 32,
 then it is necessary to have multiple context images ("planes") to hold
-information about all input images
+information about all input images,
 with the first plane encoding which of the first 32 images contributed
-to the output data pixel, second plane representing next 32 input images
+to the output data pixel, the second plane representing next 32 input images
 (number 33-64), etc. For this reason, context array is a 3D array of the type
 `numpy.int32` and shape ``(np, ny, nx)`` where ``nx`` and ``ny``
-are dimensions of image's data. ``np`` is the number of "planes" equal to
+are dimensions of the image data. ``np`` is the number of "planes" computed as
 ``(number of input images - 1) // 32 + 1``. If a bit at position ``k`` in a
-pixel with coordinates ``(p, y, x)`` is 0 then input image number
+pixel with coordinates ``(p, y, x)`` is 0, then input image number
 ``32 * p + k`` (0-indexed) did not contribute to the output data pixel
-with array coordinates ``(y, x)`` and if that bit is 1 then input image number
+with array coordinates ``(y, x)`` and if that bit is 1, then input image number
 ``32 * p + k`` did contribute to the pixel ``(y, x)`` in the resampled image.
 
 As an example, let's assume we have 8 input images. Then, when ``'CON'`` pixel
@@ -143,7 +143,7 @@ context array ``con``, one can do something like this:
     >>> np.flatnonzero([v & (1 << k) for v in con[:, y, x] for k in range(32)])
 
 For convenience, this functionality was implemented in the
-:py:func:`~jwst.resample.resample_utils.decode_context` function.
+:py:func:`~drizzle.utils.decode_context` function.
 
 
 References

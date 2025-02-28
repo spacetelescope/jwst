@@ -126,11 +126,6 @@ firstframe:
     - any-glob-to-any-file:
       - 'jwst/firstframe/**'
 
-fits_generator:
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'jwst/fits_generator/**'
-
 flatfield:
   - changed-files:
     - any-glob-to-any-file:

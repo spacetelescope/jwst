@@ -15,10 +15,21 @@ The following arguments apply to all modes unless otherwise specified.
 
 ``--apply_apcorr``
   Switch to select whether or not to apply an APERTURE correction during the
-  Extract1dStep processing. Default is ``True``. Has no effect for NIRISS SOSS data.
+  Extract1dStep processing. Default is ``True``. Has no effect for NIRISS SOSS data
+  or for optimal extractions.
 
 Step Arguments for Slit and Slitless Spectroscopic Data
 -------------------------------------------------------
+
+``--extraction_type``
+  Specify the extraction type.
+  If 'box', a standard extraction is performed, summing over an aperture box.
+  If 'optimal', a PSF-based optimal extraction is performed.
+  If None, optimal extraction is attempted whenever use_source_posn is True.
+  Box extraction is suitable for any input data (point sources and extended sources;
+  resampled and unresampled images).  Optimal extraction is best suited for unresampled
+  point sources. Currently, optimal extraction is only available for MIRI LRS Fixed Slit data.
+  The default extraction type is 'box'.
 
 ``--use_source_posn``
   Specify whether the target and background extraction
@@ -26,9 +37,28 @@ Step Arguments for Slit and Slitless Spectroscopic Data
   file should be shifted to account for the expected position of the source. If None (the default),
   the step will decide whether to use the source position based
   on the observing mode and the source type. By default, source position corrections
-  are attempted only for NIRSpec MOS and NIRSpec and MIRI LRS fixed-slit point sources.
+  are attempted only for point sources in NIRSpec MOS/FS/BOTS and MIRI LRS fixed-slit exposures.
   Set to False to ignore position estimates for all modes; set to True to additionally attempt
-  source position correction for NIRSpec BOTS data or extended sources.
+  source position correction for extended sources.
+
+``--position_offset``
+  Specify a number of pixels (fractional pixels are allowed) to offset the 
+  extraction aperture from the nominal position.  The default is 0.
+
+``--model_nod_pair``
+  Flag to enable fitting a negative trace during optimal extraction.
+  If True, and the extraction type is 'optimal', then a negative trace
+  from nod subtraction is modeled alongside the positive source during
+  extraction.  This will be attempted only if the input data has been background
+  subtracted and the dither pattern type indicates that 2 nods were used.
+  The default value is True.
+
+``--optimize_psf_location``
+  Flag to enable PSF location optimization during optimal extraction.
+  If True, and the extraction type is 'optimal', then the placement of
+  the PSF model for the source location (and negative nod, if present)
+  will be iteratively optimized. This parameter is recommended if
+  negative nods are modeled.  The default value is True.
 
 ``--smoothing_length``
   If ``smoothing_length`` is greater than 1 (and is an odd integer), the
@@ -78,12 +108,16 @@ Step Arguments for Slit and Slitless Spectroscopic Data
   to report on progress. Default value is 50.
 
 ``--save_profile``
-  Flag to enable saving the spatial profile representing the extraction aperture.
+  Flag to enable saving the spatial profile representing the extraction aperture or model.
   If True, the profile is saved to disk with suffix "profile".
 
 ``--save_scene_model``
-  Flag to enable saving a model of the 2D flux as defined by the extraction aperture.
+  Flag to enable saving a model of the 2D flux as defined by the extraction aperture or PSF model.
   If True, the model is saved to disk with suffix "scene_model".
+
+``--save_residual_image``
+  Flag to enable saving the residual image (from the input minus the scene model)
+  If True, the model is saved to disk with suffix "residual".
 
 Step Arguments for IFU Data
 ---------------------------
@@ -118,7 +152,7 @@ Step Arguments for IFU Data
 
 ``--ifu_rscale``
    A float designating the number of PSF FWHMs to use for the extraction radius. This
-   is a MIRI MRS only paramenter. Values accepted are between 0.5 to 3.0. The default extraction
+   is a MIRI MRS only parameter. Values accepted are between 0.5 to 3.0. The default extraction
    size is set to 2 * FWHM. Values below 2 will result in a smaller
    radius, a value of 2 results in no change to radius and a value above 2 results in a larger
    extraction radius.

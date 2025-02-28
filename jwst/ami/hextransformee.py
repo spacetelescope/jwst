@@ -4,38 +4,41 @@ import numpy as np
 
 def gfunction(xi, eta, **kwargs):
     """
-    Calculate the Fourier transform of one half of a hexagon that is bisected
-    from one corner to its diametrically opposite corner.
+    Fourier transform a half-hexagon.
+
+    By half-hexagon, it is meant that
+    the hexagon is bisected from one corner to its diametrically opposite corner.
 
     Parameters
     ----------
-    xi: 2D float array
-        hexagon's coordinate center at center of symmetry, along flat edge
+    xi : 2D float array
+        Hexagon's coordinate center at center of symmetry, along flat edge
 
-    eta: 2D float array
-        hexagon's coordinate center at center of symmetry, normal to xi
+    eta : 2D float array
+        Hexagon's coordinate center at center of symmetry, normal to xi
 
-    c (optional, via **kwargs): tuple(float, float)
-        coordinates of center
+    **kwargs : dict
+        Keyword arguments
+        c (optional, via **kwargs): tuple(float, float)
+            coordinates of center
 
-    pixel (optional, via **kwargs): float
-        pixel scale
+        pixel (optional, via **kwargs): float
+            pixel scale
 
-    d (optional, via **kwargs): float
-        flat-to-flat distance across hexagon
+        d (optional, via **kwargs): float
+            flat-to-flat distance across hexagon
 
-    lam (optional, via **kwargs): float
-        wavelength
+        lam (optional, via **kwargs): float
+            wavelength
 
-    minus: (optional, via **kwargs) boolean
-        if set, use flipped sign of xi in calculation
+        minus: (optional, via **kwargs) boolean
+            if set, use flipped sign of xi in calculation
 
     Returns
     -------
     g*affine2d.distortphase(xi,eta): 2D complex array
         Fourier transform of one half of a hexagon.
     """
-
     c = kwargs["c"]
     pixel = kwargs["pixel"]
     d = kwargs["d"]
@@ -45,25 +48,22 @@ def gfunction(xi, eta, **kwargs):
     affine2d = kwargs["affine2d"]
 
     i = 1j
-    Pi = np.pi
+    pi = np.pi
 
-    xip, etap = affine2d.distortFargs(xi, eta)
+    xip, etap = affine2d.distort_f_args(xi, eta)
 
     if kwargs["minus"] is True:
         xip = -1 * xip
 
     g = (
-        np.exp(-i * Pi * (2 * etap / np.sqrt(3) + xip))
+        np.exp(-i * pi * (2 * etap / np.sqrt(3) + xip))
         * (
             (np.sqrt(3) * etap - 3 * xip)
-            * (
-                np.exp(i * Pi * np.sqrt(3) * etap)
-                - np.exp(i * Pi * (4 * etap / np.sqrt(3) + xip))
-            )
+            * (np.exp(i * pi * np.sqrt(3) * etap) - np.exp(i * pi * (4 * etap / np.sqrt(3) + xip)))
             + (np.sqrt(3) * etap + 3 * xip)
-            * (np.exp(i * Pi * etap / np.sqrt(3)) - np.exp(i * Pi * xip))
+            * (np.exp(i * pi * etap / np.sqrt(3)) - np.exp(i * pi * xip))
         )
-        / (4 * Pi * Pi * (etap * etap * etap - 3 * etap * xip * xip))
+        / (4 * pi * pi * (etap * etap * etap - 3 * etap * xip * xip))
     )
 
     return g * affine2d.distortphase(xi, eta)
@@ -71,32 +71,32 @@ def gfunction(xi, eta, **kwargs):
 
 def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
     """
-    Calculate the complex array analytical transform of a (distorted if necessary) hexagon
+    Calculate the complex array analytical transform of a (distorted if necessary) hexagon.
 
     Parameters
     ----------
-    s: (int,int) tuple
-        size of hexagonal primary beam
+    s : (int,int) tuple
+        Size of hexagonal primary beam
 
-    c: (float,float) tuple
-        location of center of hexagonal primary beam
+    c : (float,float) tuple
+        Location of center of hexagonal primary beam
 
-    d: float
-        flat-to-flat distance across hexagon
+    d : float
+        Flat-to-flat distance across hexagon
 
-    lam: float
-        wavelength
+    lam : float
+        Vavelength
 
-    pitch: float
-        sampling pitch in radians in image plane
+    pitch : float
+        Sampling pitch in radians in image plane
 
-    affine2d: Affine2d object
+    affine2d : Affine2d object
+        Distortion object
 
     Returns
     -------
-    hex_complex:
-        complex array analytical transform of a hexagon
-
+    hex_complex : 2D complex array
+        Complex array analytical transform of a hexagon
     """
     if c is None:
         c = (float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5)
@@ -135,6 +135,6 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
         affine2d=affine2d,
         minus=True,
     )
-    hex_complex[int(c[0]), int(c[1])] = (np.sqrt(3) / 2.0)
+    hex_complex[int(c[0]), int(c[1])] = np.sqrt(3) / 2.0
 
     return hex_complex

@@ -15,7 +15,7 @@ class SuperBiasStep(Step):
     class_alias = "superbias"
 
     spec = """
-    """
+    """ # noqa: E501
 
     reference_file_types = ['superbias']
 

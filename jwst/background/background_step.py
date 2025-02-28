@@ -23,7 +23,7 @@ class BackgroundStep(Step):
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
         wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
         wfss_outlier_percent = float(default=1)  # WFSS outlier percentile to reject per iteration
-    """
+    """ # noqa: E501
 
     # These reference files are only used for WFSS/GRISM data.
     reference_file_types = ["wfssbkg", "wavelengthrange"]

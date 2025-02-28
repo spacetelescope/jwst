@@ -14,6 +14,8 @@ updates:
   - package-ecosystem: "pip"
     directory: "/"
     target-branch: "main"
+    ignore:
+      - dependency-name: "requirements-sdp.txt"
     schedule:
       interval: "weekly"
     reviewers:

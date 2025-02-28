@@ -39,6 +39,9 @@ log.setLevel(logging.DEBUG)
 FIXED_SLIT_NUMS = {'NONE': 0, 'S200A1': 1, 'S200A2': 2,
                    'S400A1': 3, 'S1600A1': 4, 'S200B1': 5}
 
+# Approximate fallback values for MSA slit scaling
+MSA_SLIT_SCALES = (1.35, 1.15)
+
 __all__ = ["create_pipeline", "imaging", "ifu", "slits_wcs", "get_open_slits", "nrs_wcs_set_input",
            "nrs_ifu_wcs", "get_spectral_order_wrange"]
 
@@ -108,6 +111,10 @@ def imaging(input_model, reference_files):
 
     lam = wrange[0] + (wrange[1] - wrange[0]) * .5
 
+    # Scale wavelengths to microns if msa coordinates are terminal
+    if input_model.meta.instrument.filter == 'OPAQUE':
+        lam *= 1e6
+
     lam_model = Mapping((0, 1, 1)) | Identity(2) & Const1D(lam)
 
     gwa2msa = gwa_through | rotation | dircos2unitless | col | lam_model
@@ -148,8 +155,7 @@ def imaging(input_model, reference_files):
                             (v2v3vacorr, tel2sky),
                             (world, None)]
     else:
-        # convert to microns if the pipeline ends earlier
-        gwa2msa = (gwa2msa | Identity(2) & Scale(1e6)).rename('gwa2msa')
+        # Pipeline ends with MSA coordinates
         imaging_pipeline = [(det, dms2detector),
                             (sca, det2gwa),
                             (gwa, gwa2msa),
@@ -229,7 +235,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
     # SLICER to MSA Entrance
     slicer2msa = slicer_to_msa(reference_files)
 
-    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
+    det, sca, gwa, slit_frame, slicer_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
 
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -241,7 +247,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
                     (slit_frame, slit2slicer),
-                    ('slicer', slicer2msa),
+                    (slicer_frame, slicer2msa),
                     (msa_frame, None)]
     else:
         # MSA to OTEIP transform
@@ -271,7 +277,7 @@ def ifu(input_model, reference_files, slit_y_range=[-.55, .55]):
                     (sca, det2gwa.rename('detector2gwa')),
                     (gwa, gwa2slit.rename('gwa2slit')),
                     (slit_frame, slit2slicer),
-                    ('slicer', slicer2msa),
+                    (slicer_frame, slicer2msa),
                     (msa_frame, msa2oteip.rename('msa2oteip')),
                     (oteip, oteip2v23.rename('oteip2v23')),
                     (v2v3, va_corr),
@@ -352,7 +358,8 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     # "detector", "gwa", "slit_frame", "msa_frame", "oteip", "v2v3", "v2v3vacorr", "world"
-    det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
+    # _ would be the slicer_frame that is not used
+    det, sca, gwa, slit_frame, _, msa_frame, oteip, v2v3, v2v3vacorr, world = create_frames()
 
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -414,7 +421,12 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=[-.55, .55]):
                                                        (lamp_mode == "msaspec")):
         prog_id = input_model.meta.observation.program_number.lstrip("0")
         msa_metadata_file, msa_metadata_id, dither_point = get_msa_metadata(input_model, reference_files)
-        slits = get_open_msa_slits(prog_id, msa_metadata_file, msa_metadata_id, dither_point, slit_y_range)
+        if reference_files is not None and 'msa' in reference_files:
+            slit_scales = get_msa_slit_scales(reference_files['msa'])
+        else:
+            slit_scales = None
+        slits = get_open_msa_slits(prog_id, msa_metadata_file, msa_metadata_id,
+                                   dither_point, slit_y_range, slit_scales)
 
     # Fixed slits exposure (non-TSO)
     elif exp_type == "nrs_fixedslit":
@@ -526,8 +538,35 @@ def get_msa_metadata(input_model, reference_files):
     return msa_config, msa_metadata_id, dither_position
 
 
+def get_msa_slit_scales(msa_ref_file):
+    """
+    Get slit area scaling factors for MSA shutters.
+
+    Parameters
+    ----------
+    msa_ref_file : str
+        The name of the MSA reference file (not metadata file).
+
+    Returns
+    -------
+    scales : dict
+        Keys are integer quadrant values (one-indexed).  Values
+        are 2-tuples of float values (scale_x, scale_y).
+    """
+    msa = MSAModel(msa_ref_file)
+    scales = {}
+    for quadrant in range(1, 5):
+        msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
+
+        msa_data = msa_quadrant.data
+        scale_x = (msa_data['XC'][1] - msa_data['XC'][0]) / msa_data['SIZEX'][0]
+        scale_y = msa_data['YC'][365] / msa_data['SIZEY'][0]
+        scales[quadrant] = (scale_x, scale_y)
+    return scales
+
+
 def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
-                       slit_y_range=[-.55, .55]):
+                       slit_y_range=[-.55, .55], slit_scales=None):
     """
     Return the opened MOS slitlets.
 
@@ -591,6 +630,10 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
         message = "Problem reading MSA metafile (MSAMETFL) {0}".format(msa_file)
         log.error(message)
         raise MSAFileError(message)
+
+    # Set an empty dictionary for slit_scales if not provided
+    if slit_scales is None:
+        slit_scales = {}
 
     # Get the shutter and source info tables from the _msa.fits file.
     msa_conf = msa_file[('SHUTTER_INFO', 1)]  # EXTNAME = 'SHUTTER_INFO'
@@ -794,25 +837,28 @@ def get_open_msa_slits(prog_id, msa_file, msa_metadata_id, dither_position,
             msa_file.close()
             raise MSAFileError(message)
 
-        # Create the output list of tuples that contain the required
-        # data for further computations
-        """
-        Convert source positions from PPS to Model coordinate frame.
-        The source x,y position in the shutter is given in the msa configuration file,
-        columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
-        The source position is in a coordinate system associated with each shutter whose
-        origin is the lower left corner of the shutter, positive x is to the right
-        and positive y is upwards.
-        """
+        # Convert source positions from PPS to Model coordinate frame.
+        # The source x,y position in the shutter is given in the msa configuration file,
+        # columns "estimated_source_in_shutter_x" and "estimated_source_in_shutter_y".
+        # The source position is in a coordinate system associated with each shutter whose
+        # origin is the lower left corner of the shutter, positive x is to the right
+        # and positive y is upwards.
         source_xpos -= 0.5
         source_ypos -= 0.5
 
         # Create the shutter_state string
         all_shutters = _shutter_id_to_str(open_shutters, ycen)
 
+        # Get the slit scale by quadrant, or return approximate
+        # fallback values if not available
+        scale_x, scale_y = slit_scales.get(quadrant, MSA_SLIT_SCALES)
+
+        # Create the output list of tuples that contain the required
+        # data for further computations
         slit_parameters = (slitlet_id, shutter_id, dither_position, xcen, ycen, ymin, ymax,
                            quadrant, source_id, all_shutters, source_name, source_alias,
-                           stellarity, source_xpos, source_ypos, source_ra, source_dec)
+                           stellarity, source_xpos, source_ypos, source_ra, source_dec,
+                           scale_x, scale_y)
         log.debug(f'Appending slit: {slit_parameters}')
         slitlets.append(Slit(*slit_parameters))
 
@@ -970,9 +1016,11 @@ def slit_to_msa(open_slits, msafile):
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
         msa_quadrant = getattr(msa, 'Q{0}'.format(quadrant))
+
         if any(slits_in_quadrant):
             msa_data = msa_quadrant.data
             msa_model = msa_quadrant.model
+
             for slit in slits_in_quadrant:
                 slit_id = slit.shutter_id
                 # Shutters are numbered starting from 1.
@@ -1572,7 +1620,7 @@ def oteip_to_v23(reference_files, input_model):
     # Create the transform to v2/v3/lambda.  The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
     # So we are going to Scale the spectral units by 1e6 (meters -> microns)
-    # The spatial units are currently in deg. Convertin to arcsec.
+    # The spatial units are currently in deg. Converting to arcsec.
     oteip2v23 = fore2ote_mapping | (ote & Scale(1e6))
 
     return oteip2v23
@@ -1593,6 +1641,8 @@ def create_frames():
                              axes_names=('x_msa', 'y_msa'))
     slit_spatial = cf.Frame2D(name='slit_spatial', axes_order=(0, 1), unit=("", ""),
                               axes_names=('x_slit', 'y_slit'))
+    slicer_spatial = cf.Frame2D(name='slicer_spatial', axes_order=(0, 1), unit=("", ""),
+                                axes_names=('x_slicer', 'y_slicer'))
     sky = cf.CelestialFrame(name='sky', axes_order=(0, 1), reference_frame=coord.ICRS())
     v2v3_spatial = cf.Frame2D(name='v2v3_spatial', axes_order=(0, 1),
                               unit=(u.arcsec, u.arcsec), axes_names=('v2', 'v3'))
@@ -1606,12 +1656,13 @@ def create_frames():
     v2v3 = cf.CompositeFrame([v2v3_spatial, spec], name='v2v3')
     v2v3vacorr = cf.CompositeFrame([v2v3vacorr_spatial, spec], name='v2v3vacorr')
     slit_frame = cf.CompositeFrame([slit_spatial, spec], name='slit_frame')
+    slicer_frame = cf.CompositeFrame([slicer_spatial, spec], name='slicer')
     msa_frame = cf.CompositeFrame([msa_spatial, spec], name='msa_frame')
     oteip_spatial = cf.Frame2D(name='oteip', axes_order=(0, 1), unit=(u.deg, u.deg),
                                axes_names=('X_OTEIP', 'Y_OTEIP'))
     oteip = cf.CompositeFrame([oteip_spatial, spec], name='oteip')
     world = cf.CompositeFrame([sky, spec], name='world')
-    return det, sca, gwa, slit_frame, msa_frame, oteip, v2v3, v2v3vacorr, world
+    return det, sca, gwa, slit_frame, slicer_frame, msa_frame, oteip, v2v3, v2v3vacorr, world
 
 
 def create_imaging_frames():

@@ -592,7 +592,7 @@ def compute_tso_offset_center(input_model: ImageModel, distortion: CompoundModel
     In the case that an Offset Special Requirement is requested in the APT,
     the source is no longer at the aperture reference point.
     The dither.x_offset and dither.y_offset values encode the offset
-    in units of arcseconds. They need to be translated from Ideal to 
+    in units of arcseconds. They need to be translated from Ideal to
     detector coordinates and into pixel units.
 
     Parameters

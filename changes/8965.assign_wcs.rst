@@ -1,0 +1,1 @@
+Fix use of a string name for the WCS coordinate frame for nirspec ifu.

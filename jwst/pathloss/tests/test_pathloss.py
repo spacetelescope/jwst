@@ -118,7 +118,7 @@ def test_calculate_pathloss_vector_pointsource_data():
     assert np.allclose(wavelength, wavelength_comparison)
 
     # pathloss vector gets assigned at beginning of calculate_pathloss_vector and in this
-    # case, doesnt change (np.zeros(wavesize, dtype=np.float32))
+    # case, doesn't change (np.zeros(wavesize, dtype=np.float32))
     pathloss_comparison = np.zeros(10, dtype=np.float32)
     assert np.all(pathloss == pathloss_comparison)
 

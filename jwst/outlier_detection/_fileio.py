@@ -1,10 +1,12 @@
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
 def save_median(median_model, make_output_path):
-    """Save a median model.
+    """
+    Save a median model.
 
     Output suffix is 'median'.
 
@@ -16,13 +18,13 @@ def save_median(median_model, make_output_path):
     make_output_path : function
         A function to be used to create an output path from
         an input path and an optional suffix.
-
     """
     _save_intermediate_output(median_model, "median", make_output_path)
 
 
 def save_drizzled(drizzled_model, make_output_path):
-    """Save a drizzled model.
+    """
+    Save a drizzled model.
 
     Input model is expected to have a filename that ends with
     either 'outlier_i2d.fits' or 'outlier_s2d.fits'.
@@ -35,17 +37,15 @@ def save_drizzled(drizzled_model, make_output_path):
     make_output_path : function
         A function to be used to create an output path from
         an input path and an optional suffix.
-
     """
     expected_tail = "outlier_?2d.fits"
-    suffix = drizzled_model.meta.filename[-len(expected_tail):-5]
+    suffix = drizzled_model.meta.filename[-len(expected_tail) : -5]
     _save_intermediate_output(drizzled_model, suffix, make_output_path)
 
 
 def save_blot(input_model, blot, blot_err, make_output_path):
-    """Save a blotted model.
-
-    Output suffix is 'blot'.
+    """
+    Save a blotted model with output suffix 'blot'.
 
     Parameters
     ----------
@@ -62,14 +62,14 @@ def save_blot(input_model, blot, blot_err, make_output_path):
     make_output_path : function
         A function to be used to create an output path from
         an input path and an optional suffix.
-
     """
     blot_model = _make_blot_model(input_model, blot, blot_err)
     _save_intermediate_output(blot_model, "blot", make_output_path)
 
 
 def _make_blot_model(input_model, blot, blot_err):
-    """Assemble a blot model.
+    """
+    Assemble a blot model.
 
     Parameters
     ----------
@@ -87,7 +87,6 @@ def _make_blot_model(input_model, blot, blot_err):
     -------
     blot_model : ~jwst.datamodels.ImageModel
         An image model containing the blotted data.
-
     """
     blot_model = type(input_model)()
     blot_model.data = blot
@@ -98,7 +97,8 @@ def _make_blot_model(input_model, blot, blot_err):
 
 
 def _save_intermediate_output(model, suffix, make_output_path):
-    """Save an intermediate output from outlier detection.
+    """
+    Save an intermediate output from outlier detection.
 
     Ensure all intermediate outputs from OutlierDetectionStep have
     consistent file naming conventions.
@@ -119,7 +119,6 @@ def _save_intermediate_output(model, suffix, make_output_path):
     -----
     self.make_output_path() is updated globally for the step in the main pipeline
     to include the asn_id in the output path, so no need to handle it here.
-
     """
     # outlier_?2d is not a known suffix, and make_output_path cannot handle an
     # underscore in an unknown suffix, so do a manual string replacement
@@ -127,7 +126,7 @@ def _save_intermediate_output(model, suffix, make_output_path):
 
     # Add a slit name to the output path for MultiSlitModel data if not present
     if hasattr(model, "name") and model.name is not None:
-        if "_"+model.name.lower() not in input_path:
+        if "_" + model.name.lower() not in input_path:
             suffix = f"{model.name.lower()}_{suffix}"
 
     output_path = make_output_path(input_path, suffix=suffix)

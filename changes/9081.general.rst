@@ -1,0 +1,1 @@
+Add code style rules, using AMI module as an example case

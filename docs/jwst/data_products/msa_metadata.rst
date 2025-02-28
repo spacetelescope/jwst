@@ -109,8 +109,8 @@ The structure of the ``SHUTTER_INFO`` table extension is as follows:
 - SHUTTER_STATE: OPEN or CLOSED. Generally will always be OPEN, unless
   the shutter is part of a long slit that is not contiguous.
 - ESTIMATED_SOURCE_IN_SHUTTER_X/Y: the position of the source within the
-  shutter in relative units, where 0,0 is bottom-left, 0.5,0.5 is center,
-  and 1,1 is upper-right, as planned in the MPT.
+  shutter in relative units, where 0,0 is upper-right, 0.5,0.5 is center,
+  and 1,1 is bottom-left, as planned in the MPT.
 - DITHER_POINT_INDEX: integer index of the nod sequence; matches to
   header keyword `PATT_NUM`.
 - PRIMARY_SOURCE: Y or N. Y indicates that the shutter contains the
@@ -303,7 +303,7 @@ pre-image ID, and source stellarity.
 +------+------+-----------+-------+------------+-------------+--------------+------------+
 
 For each slitlet identified as having a source assigned to it in the shutter metadata,
-the source name, alias, RA, Dec, and stellarity are retreived from the `SOURCE_INFO`
+the source name, alias, RA, Dec, and stellarity are retrieved from the `SOURCE_INFO`
 table and stored with the ``Slit`` object created in the calibration software.
 The stellarity values are used in the :ref:`source type <srctype_step>`
 step to determine whether the source should be treated as point-like or extended.

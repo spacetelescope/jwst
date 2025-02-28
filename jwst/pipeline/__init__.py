@@ -1,3 +1,5 @@
+"""JWST data processing pipelines."""
+
 from .calwebb_ami3 import Ami3Pipeline
 from .calwebb_coron3 import Coron3Pipeline
 from .calwebb_dark import DarkPipeline
@@ -9,5 +11,15 @@ from .calwebb_spec2 import Spec2Pipeline
 from .calwebb_spec3 import Spec3Pipeline
 from .calwebb_tso3 import Tso3Pipeline
 
-__all__ = ['Ami3Pipeline', 'Coron3Pipeline', 'DarkPipeline', 'Detector1Pipeline', 'GuiderPipeline',
-           'Image2Pipeline', 'Image3Pipeline', 'Spec2Pipeline', 'Spec3Pipeline', 'Tso3Pipeline']
+__all__ = [
+    "Ami3Pipeline",
+    "Coron3Pipeline",
+    "DarkPipeline",
+    "Detector1Pipeline",
+    "GuiderPipeline",
+    "Image2Pipeline",
+    "Image3Pipeline",
+    "Spec2Pipeline",
+    "Spec3Pipeline",
+    "Tso3Pipeline",
+]

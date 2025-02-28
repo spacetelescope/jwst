@@ -36,7 +36,7 @@ def run_tso1_pipeline(rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_detector1_pipeline(rtdata_module):
-    """Run calwebb_detector pipeline on a MIRI LRS slitless exposure for Segment 2 data. 
+    """Run calwebb_detector pipeline on a MIRI LRS slitless exposure for Segment 2 data.
        Focusing on the steps that depend on integration # and not covered by run_tso1_pipeline.
        Also test running RSC step"""
     rtdata = rtdata_module
@@ -122,7 +122,7 @@ def test_miri_lrs_slitless_detector1(run_detector1_pipeline, rtdata_module,
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
-    
+
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["assign_wcs", "srctype", "flat_field",

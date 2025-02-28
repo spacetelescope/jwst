@@ -40,7 +40,7 @@ The MSA reference file has 5 fields, named
           y_center
             Y coordinate of the center (in meters)
           x_size
-            X size of teh aperture (in meters)
+            X size of the aperture (in meters)
           y_size
             Y size of the aperture (in meters)
    :model: Transform from relative positions within Quadrant 1 to absolute positions within the MSA

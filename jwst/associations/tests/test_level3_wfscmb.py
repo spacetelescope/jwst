@@ -59,14 +59,14 @@ def get_expnames(asn):
 
 def jitter_present(jitter, associations):
     """
-    For level 3 images make sure pool candidates identifed as
+    For level 3 images make sure pool candidates identified as
     jitter are not present in association files.
     """
     for asn in associations:
         # Only care about level 3 images
         if "image3" not in asn.asn_name:
             continue
-        # For level 3 images make sure pool candidates identifed as
+        # For level 3 images make sure pool candidates identified as
         # jitter are not present in association files.
         exp_names = get_expnames(asn)
         for jit in jitter:

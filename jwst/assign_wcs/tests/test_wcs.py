@@ -148,7 +148,8 @@ def test_frame_from_model_3d(tmp_path, create_model_3d):
     # Test CompositeFrame initialization (celestial and spectral)
     im = create_model_3d
     frame = pointing.frame_from_model(im)
-    radec, lam = frame.coordinates(1, 2, 3)
+
+    radec, lam = frame.to_high_level_coordinates(1, 2, 3)
 
     assert_allclose(radec.spherical.lon.value, 1)
     assert_allclose(radec.spherical.lat.value, 2)
@@ -277,7 +278,7 @@ def test_sip_approx(tmp_path):
 
     # now write the file out, read it back in, and check that the fit values are preserved
     path = tmp_path / "tmp_sip_wcs.fits"
-    result.write(path)
+    result.save(path)
 
     with open(path) as result_read:
         assert result.meta.wcsinfo == result_read.meta.wcsinfo

@@ -403,9 +403,9 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     im2_path = "skymatch_im2.fits"
     im3_path = "skymatch_im3.fits"
 
-    im1.write(im1_path)
-    im2.write(im2_path)
-    im3.write(im3_path)
+    im1.save(im1_path)
+    im2.save(im2_path)
+    im3.save(im3_path)
 
     assoc_out = asn_from_list(
         [im1_path, im2_path, im3_path],
@@ -484,9 +484,9 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     im2_path = "skymatch_im2.fits"
     im3_path = "skymatch_im3.fits"
 
-    im1.write(im1_path)
-    im2.write(im2_path)
-    im3.write(im3_path)
+    im1.save(im1_path)
+    im2.save(im2_path)
+    im3.save(im3_path)
 
     assoc_out = asn_from_list(
         [im1_path, im2_path, im3_path],
@@ -547,3 +547,96 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
             else:
                 assert abs(np.mean(im2.data[dq_mask]) - lev) < 0.01
             result2.shelve(im2)
+
+
+@pytest.mark.parametrize("subtract", (False, True))
+def test_user_skyfile(tmp_cwd, nircam_rate, subtract):
+
+    # give them all different suffixes to ensure they get stripped properly
+    im1 = nircam_rate.copy()
+    im1.meta.filename = "one_tweakregstep.fits"
+    im2 = im1.copy()
+    im2.meta.filename = "two_unknown.fits"
+    im3 = im1.copy()
+    im3.meta.filename = "dir/three.fits"
+
+    # give filenames in skyfile same stems but different suffix
+    fnames_skyfile = ["other_dir/one_cal.fits", "two_unknown_cal.fits", "three_cal.fits"]
+
+    container = [im1, im2, im3]
+
+    # put levels into the skylist file for when skylist='user'
+    levels = [9.12, 8.28, 2.56]
+    fnames = [model.meta.filename for model in container]
+
+    for im, lev in zip(container, levels):
+        im.data += lev
+
+    skyfile = "skylist.txt"
+    with open(skyfile, "w") as f:
+        for fname, lev in zip(fnames_skyfile, levels):
+            f.write(f"{fname} {lev}\n")
+
+    #test good inputs
+    result = SkyMatchStep.call(
+        container,
+        subtract=subtract,
+        skymethod="user",
+        skylist=skyfile,
+    )
+
+    ref_levels = levels
+    sub_levels = np.subtract(levels, ref_levels)
+
+    with result:
+        for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
+            # check that meta was set correctly:
+            assert im.meta.background.method == "user"
+            assert im.meta.background.subtracted == subtract
+
+            # test computed/measured sky values:
+            assert abs(im.meta.background.level - rlev) < 0.01
+
+            # test
+            if subtract:
+                assert abs(np.mean(im.data) - slev) < 0.01
+            else:
+                assert abs(np.mean(im.data) - lev) < 0.01
+            result.shelve(im, modify=False)
+
+
+    # test failures
+    # no skylist file
+    with pytest.raises(ValueError):
+        # skylist must be provided
+        SkyMatchStep.call(
+            container,
+            skymethod='user',
+        )
+
+    # skylist file doesn't have right number of lines
+    skyfile = "skylist_short.txt"
+    with open(skyfile, "w") as f:
+        for fname, lev in zip(fnames[1:], levels[1:]):
+            f.write(f"{fname} {lev}\n")
+
+    with pytest.raises(ValueError):
+        SkyMatchStep.call(
+            container,
+            skymethod='user',
+            skylist=skyfile
+        )
+
+    # skylist file does not contain all filenames
+    skyfile = "skylist_missing.txt"
+    fnames_wrong = ["two.fits"] + fnames[1:]
+    with open(skyfile, "w") as f:
+        for fname, lev in zip(fnames_wrong, levels):
+            f.write(f"{fname} {lev}\n")
+
+    with pytest.raises(ValueError):
+        SkyMatchStep.call(
+            container,
+            skymethod='user',
+            skylist=skyfile
+        )

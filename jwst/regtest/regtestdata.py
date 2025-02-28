@@ -23,7 +23,7 @@ from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 from jwst.stpipe import Step
 
-# Define location of default Artifactory API key, for Jenkins use only
+# Define location of default Artifactory API key
 ARTIFACTORY_API_KEY_FILE = '/eng/ssb2/keys/svc_rodata.key'
 
 

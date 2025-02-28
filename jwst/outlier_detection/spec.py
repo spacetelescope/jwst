@@ -4,12 +4,15 @@ from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.utilities import record_step_status
 
 from ..resample import resample_spec
-from .utils import (flag_crs_in_models,
-                    flag_crs_in_models_with_resampling,
-                    median_with_resampling,
-                    median_without_resampling)
+from .utils import (
+    flag_crs_in_models,
+    flag_crs_in_models_with_resampling,
+    median_with_resampling,
+    median_without_resampling,
+)
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
@@ -32,12 +35,52 @@ def detect_outliers(
     pixfrac,
     kernel,
     fillval,
-    in_memory,
     make_output_path,
 ):
-    """Flag outliers in spec data.
+    """
+    Flag outliers in slit-like spectroscopic data.
 
-    See `OutlierDetectionStep.spec` for documentation of these arguments.
+    Parameters
+    ----------
+    input_models : ModelContainer
+        A container of data models.
+    save_intermediate_results : bool
+        If True, save intermediate results.
+    good_bits : int
+        Bit values indicating good pixels.
+    maskpt : float
+        The percentage of the mean weight to use as a threshold for masking.
+    snr1 : float
+        The signal-to-noise ratio threshold for first pass flagging, prior to smoothing.
+    snr2 : float
+        The signal-to-noise ratio threshold for secondary flagging, after smoothing.
+    scale1 : float
+        Scale factor used to scale the absolute derivative of the blot model for the first pass.
+    scale2 : float
+        Scale factor used to scale the absolute dervative of the blot model for the second pass.
+    backg : float
+        Scalar background level to add to the blotted image.
+        Ignored if `input_model.meta.background.level` is not None but
+        `input_model.meta.background.subtracted` is False.
+    resample_data : bool
+        If True, resample the data before detecting outliers.
+    weight_type : str
+        The type of weighting kernel to use when resampling.
+        Options are 'ivm' or 'exptime'.
+    pixfrac : float
+        The pixel shrinkage factor to pass to drizzle.
+    kernel : str
+        The flux distribution kernel function to use when resampling.
+    fillval : str
+        The value to use in the output for pixels with no weight or flux
+    make_output_path : function
+        The functools.partial instance to pass to save_blot. Must be
+        specified if save_blot is True.
+
+    Returns
+    -------
+    ModelContainer
+        The input models with outliers flagged.
     """
     if not isinstance(input_models, ModelContainer):
         input_models = ModelContainer(input_models)
@@ -55,15 +98,17 @@ def detect_outliers(
     if resample_data is True:
         # Start by creating resampled/mosaic images for
         #  each group of exposures
-        resamp = resample_spec.ResampleSpecData(
+        resamp = resample_spec.ResampleSpec(
             input_models,
-            single=True,
             blendheaders=False,
-            wht_type=weight_type,
+            weight_type=weight_type,
             pixfrac=pixfrac,
             kernel=kernel,
             fillval=fillval,
             good_bits=good_bits,
+            enable_ctx=False,
+            enable_var=False,
+            compute_err="driz_err",
         )
 
         median_data, median_wcs, median_err = median_with_resampling(
@@ -72,7 +117,8 @@ def detect_outliers(
             maskpt,
             save_intermediate_results=save_intermediate_results,
             make_output_path=make_output_path,
-            return_error=True)
+            return_error=True,
+        )
     else:
         median_data, median_wcs, median_err = median_without_resampling(
             library,
@@ -81,7 +127,7 @@ def detect_outliers(
             good_bits,
             save_intermediate_results=save_intermediate_results,
             make_output_path=make_output_path,
-            return_error=True
+            return_error=True,
         )
 
     # Perform outlier detection using statistical comparisons between
@@ -98,11 +144,8 @@ def detect_outliers(
             backg,
             median_err=median_err,
             save_blot=save_intermediate_results,
-            make_output_path=make_output_path
+            make_output_path=make_output_path,
         )
     else:
-        flag_crs_in_models(input_models,
-                           median_data,
-                           snr1,
-                           median_err=median_err)
+        flag_crs_in_models(input_models, median_data, snr1, median_err=median_err)
     return input_models

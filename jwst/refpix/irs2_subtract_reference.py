@@ -186,7 +186,7 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
     else:                       # don't change orientation
         output_model.data = temp_data
 
-    # Strip interleaved ref pixels from the PIXELDQ, GROUPDQ, and ERR extensions.
+    # Strip interleaved ref pixels from the PIXELDQ and GROUPDQ extensions.
     if not preserve_refpix:
         strip_ref_pixels(output_model, irs2_mask)
 
@@ -244,7 +244,7 @@ def make_irs2_mask(nx, ny, scipix_n, refpix_r):
 
 
 def strip_ref_pixels(output_model, irs2_mask):
-    """Copy out the normal pixels from PIXELDQ, GROUPDQ, and ERR arrays.
+    """Copy out the normal pixels from PIXELDQ and GROUPDQ arrays.
 
     Parameters
     ----------
@@ -267,8 +267,6 @@ def strip_ref_pixels(output_model, irs2_mask):
         temp_array = output_model.groupdq
         output_model.groupdq = temp_array[..., irs2_mask, :]
 
-        temp_array = output_model.err
-        output_model.err = temp_array[..., irs2_mask, :]
     elif detector == "NRS2":
         # Reverse the direction of the mask, and select rows.
         temp_mask = irs2_mask[::-1]
@@ -279,8 +277,6 @@ def strip_ref_pixels(output_model, irs2_mask):
         temp_array = output_model.groupdq
         output_model.groupdq = temp_array[..., temp_mask, :]
 
-        temp_array = output_model.err
-        output_model.err = temp_array[..., temp_mask, :]
     else:
         # Select columns.
         temp_array = output_model.pixeldq
@@ -288,9 +284,6 @@ def strip_ref_pixels(output_model, irs2_mask):
 
         temp_array = output_model.groupdq
         output_model.groupdq = temp_array[..., irs2_mask]
-
-        temp_array = output_model.err
-        output_model.err = temp_array[..., irs2_mask]
 
 
 def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2,

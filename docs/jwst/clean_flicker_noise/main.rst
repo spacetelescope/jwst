@@ -184,6 +184,9 @@ information on all referenced parameters.
       This will mask out regions of the detector under the metering
       structure.
 
+   #. If `apply_flat_field` is set and a flat file is available, divide the
+      draft rate data by the flat image.
+
    #. Iteratively sigma clip the data to get a center value (mean or median)
       and sigma value (standard deviation).
 
@@ -199,6 +202,9 @@ information on all referenced parameters.
    for noise.
 
    #. Make a diff image (current group – previous group) to correct.
+
+   #. If `apply_flat_field` is set and a flat file is available, divide the
+      diff image by the flat image.
 
    #. Fit and remove a background level, using the scene mask to identify
       background pixels.
@@ -231,7 +237,8 @@ information on all referenced parameters.
          detector channel.
 
    #. Restore the background level to the cleaned, background-subtracted
-      diff image.
+      diff image.  Also restore the flat structure if needed by multiplying the
+      cleaned diff by the flat image.
 
    #. Add the cleaned diff back to a cleaned version of the previous
       group image.

@@ -352,7 +352,7 @@ def check_res_fringes(res_fringe_fit, max_amp):
 
     # check which signal env the blow ups are located in and set to 1, and set a flag array
     if len(runaway_rfc) > 0:
-        log.debug("check_res_fringes: {} data points exceed threhold".format(len(runaway_rfc)))
+        log.debug("check_res_fringes: {} data points exceed threshold".format(len(runaway_rfc)))
         log.debug("check_res_fringes: resetting fits to related beats")
         for i in runaway_rfc:
             # find where the index is compared to the nodes
@@ -386,7 +386,7 @@ def interp_helper(mask):
 
 
 def fit_1d_background_complex(flux, weights, wavenum, order=2, ffreq=None, channel=1, test=False):
-    """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
+    """Fit the background signal using a piecewise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
 
     :Parameters:
@@ -776,7 +776,7 @@ def new_make_knots(flux, nknots=20, weights=None):
     # the last diff will sometimes be different than the others
     last_split = knot_split[-1]
 
-    # create new knot array with knots at 0 and 1023, then inital and final splits = last_split/2
+    # create new knot array with knots at 0 and 1023, then initial and final splits = last_split/2
     knot_idx = np.ones(nknots + 2)
     for n in range(nknots):
         knot_idx[n + 1] = (n * knot_step) + (last_split / 2)
@@ -845,7 +845,7 @@ MAXAMP_1d = 0.2
 
 # functions
 def fit_1d_background_complex_1d(flux, weights, wavenum, order=2, ffreq=None, channel=1, test=False):
-    """Fit the background signal using a pieceweise spline of n knots. Note that this will also try to identify
+    """Fit the background signal using a piecewise spline of n knots. Note that this will also try to identify
     obvious emission lines and flag them so they aren't considered in the fitting.
 
     Parameters

@@ -235,22 +235,30 @@ The ``tweakreg`` step has the following optional arguments:
   Gaussian kernel in units of number of FWHMs. (Default=2.5)
 
 * ``sharplo``: A `float` value indicating The lower bound on sharpness
-  for object detection. (Default=0.2)
+  for object detection. (Default=0.5)
 
 * ``sharphi``: A `float` value indicating the upper bound on sharpness
-  for object detection. (Default=1.0)
+  for object detection. (Default=2.0)
 
 * ``roundlo``: A `float` value indicating the lower bound on roundness
-  for object detection. (Default=-1.0)
+  for object detection. (Default=0.0)
 
 * ``roundhi``: A `float` value indicating the upper bound on roundness
-  for object detection. (Default=1.0)
+  for object detection. (Default=0.2)
 
 * ``brightest``: A positive `int` value indicating the number of brightest
   objects to keep. If None, keep all objects above the threshold. (Default=200)
 
 * ``peakmax``: A `float` value used to filter out objects with pixel values
   >= ``peakmax``. (Default=None)
+
+.. warning::
+  Different source finding algorithms have different values for the
+  ``sharplo``, ``sharphi``, ``roundlo`` and ``roundhi`` parameters. These
+  parameters should be adjusted to match the algorithm selected by the
+  ``starfinder`` parameter. See documentation for
+  [IRAFStarFinder](https://photutils.readthedocs.io/en/stable/api/photutils.detection.IRAFStarFinder.html)
+  and [DAOStarFinder](https://photutils.readthedocs.io/en/stable/api/photutils.detection.DAOStarFinder.html).
 
 **Additional source finding parameters for segmentation:**
 
@@ -331,7 +339,7 @@ The ``tweakreg`` step has the following optional arguments:
   .. note::
       Mathematically, alignment of images observed in different tangent planes
       requires ``fitgeometry='general'`` in order to fit source catalogs
-      in the different images even if mis-alignment is caused only by a shift
+      in the different images even if misalignment is caused only by a shift
       or rotation in the tangent plane of one of the images.
 
       However, under certain circumstances, such as small alignment errors or
