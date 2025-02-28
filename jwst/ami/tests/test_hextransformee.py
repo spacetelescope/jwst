@@ -30,5 +30,6 @@ def test_hextransform(example_model):
 
     # test proper normalization and centering
     hex_real = np.abs(hex_complex)
-    assert_allclose(np.max(hex_real), np.sqrt(3) / 2.0, atol=1.0e-8)
+    assert np.isclose(np.max(hex_real), np.sqrt(3) / 2.0, atol=1.0e-8)
     assert np.argmax(hex_real) == ctr[0] * shape[1] + ctr[1]
+    assert all(hex_real <= np.sqrt(3) / 2.0)
