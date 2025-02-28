@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import ast
 from argparse import ArgumentParser
 
 from jwst.regtest.st_fitsdiff import STFITSDiff
@@ -100,7 +101,7 @@ def main():
     # If provided, make sure the extension_tolerances is a dictionary and not a string
     if args.extension_tolerances is not None:
         try:
-            stfitsdiff_default_kwargs['extension_tolerances'] = eval(args.extension_tolerances)
+            stfitsdiff_default_kwargs['extension_tolerances'] = ast.literal_eval(args.extension_tolerances)
         except NameError:
             print('''Dictionary format error. Use no spaces and double quotes encasing the whole dictionary, e.g.
                   --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2},'err':{'rtol':1e-1,'atol':1e-2}}" ''')

@@ -1001,23 +1001,12 @@ class STRawDataDiff(STImageDataDiff):
 
         super().__init__(a, b, numdiffs=numdiffs)
 
-    def _diff(self):
-        super()._diff()
-        if self.diff_dimensions:
-            self.diff_dimensions = (
-                self.diff_dimensions[0][0],
-                self.diff_dimensions[1][0],
-            )
-
-        self.diff_bytes = [(x[0], y) for x, y in self.diff_pixels]
-        del self.diff_pixels
-
     def _report(self):
         if self.diff_dimensions:
             self._writeln(" Data sizes differ:")
             self._writeln(f"  a: {self.diff_dimensions[0]} bytes")
             self._writeln(f"  b: {self.diff_dimensions[1]} bytes")
-            # For now we don't do any further comparison if the dimensions
+            # For now, we don't do any further comparison if the dimensions
             # differ; though in the future it might be nice to be able to
             # compare at least where the images intersect
             self._writeln(" No further data comparison performed.")
