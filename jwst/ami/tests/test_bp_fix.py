@@ -3,9 +3,9 @@
 import pytest
 import numpy as np
 from numpy.testing import assert_allclose
-import stdatamodels.jwst.datamodels as dm
 
-from jwst.ami import bp_fix, utils
+from jwst.ami import bp_fix
+from .conftest import PXSC_RAD, PXSC_MAS
 
 
 @pytest.mark.parametrize("filt", bp_fix.filts)
@@ -21,25 +21,6 @@ def test_create_wavelengths(filt):
     assert wl_right > halfpower_right
 
 
-@pytest.fixture
-def circular_pupil():
-    shape = (1024, 1024)
-    r = 0.2
-    x = np.linspace(-1, 1, shape[0])
-    y = np.linspace(-1, 1, shape[1])
-    xx, yy = np.meshgrid(x, y)
-    rr = np.sqrt(xx**2 + yy**2)
-    pupil = np.zeros(shape)
-    pupil[rr < r] = 1
-    return pupil
-
-
-@pytest.fixture
-def nrm_model(circular_pupil):
-
-    return dm.NRMModel(nrm=circular_pupil)
-
-
 def test_calc_psf(example_model, circular_pupil):
     """
     Tests for calc_psf and calc_pupil_support.
@@ -49,12 +30,10 @@ def test_calc_psf(example_model, circular_pupil):
 
     filt = example_model.meta.instrument.filter
     wl = bp_fix.filtwl_d[filt]
-    pxsc_deg = utils.degrees_per_pixel(example_model)[0]
-    pxsc_rad = pxsc_deg * np.pi / (180)
     fov_npix = example_model.data.shape[1]
 
-    im_single_psf = bp_fix.calcpsf(wl, fov_npix, pxsc_rad, circular_pupil)
-    im_pupil = bp_fix.calc_pupil_support(filt, fov_npix, pxsc_rad, circular_pupil)
+    im_single_psf = bp_fix.calcpsf(wl, fov_npix, PXSC_RAD, circular_pupil)
+    im_pupil = bp_fix.calc_pupil_support(filt, fov_npix, PXSC_RAD, circular_pupil)
 
     for im in [im_single_psf, im_pupil]:
         # basic checks: no NaNs or infs, right shape and data type
@@ -104,15 +83,14 @@ def test_fourier_corr(data_with_bad_pixels):
     assert np.abs(data_fixed[20, 20]) < 1
 
 
-def test_fix_bad_pixels(example_model, data_with_bad_pixels, nrm_model):
+def test_fix_bad_pixels(example_model, data_with_bad_pixels, nrm_model_circular):
 
     data = data_with_bad_pixels
+    nrm_model = nrm_model_circular
     pxdq0 = np.zeros_like(data, dtype=np.bool_)
     filt = example_model.meta.instrument.filter  
-    pxsc_deg = utils.degrees_per_pixel(example_model)[0]
-    pxsc_mas = pxsc_deg * 3600000
 
-    data_out, pxdq_out = bp_fix.fix_bad_pixels(data, pxdq0, filt, pxsc_mas, nrm_model)
+    data_out, pxdq_out = bp_fix.fix_bad_pixels(data, pxdq0, filt, PXSC_MAS, nrm_model)
 
     assert data_out.shape == data.shape
     assert pxdq_out.shape == data.shape

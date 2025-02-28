@@ -30,6 +30,9 @@ def test_ami_analyze_no_reffile_fail(monkeypatch, example_model):
 def test_ami_analyze_step(example_model):
     AmiAnalyzeStep.call(example_model)
 
+def test_ami_analyze_step_no_affine(example_model):
+    AmiAnalyzeStep.call(example_model, affine2d=None)
+
 
 def create_throughput(nelem):
     """Create a symmetric dummy throughput function that has values near

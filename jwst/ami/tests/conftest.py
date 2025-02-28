@@ -1,13 +1,15 @@
 """Fixtures for AMI tests."""
 
-from stdatamodels.jwst import datamodels
 import pytest
+import numpy as np
+from jwst.stpipe import Step
+import stdatamodels.jwst.datamodels as dm
 
 
 @pytest.fixture()
 def example_model():
     """Create a simple CubeModel simulating input to the ami3 pipeline."""
-    model = datamodels.CubeModel((2, 81, 81))
+    model = dm.CubeModel((2, 81, 81))
     # some non-zero data is required as this step will center
     # the image and find the centroid (both fail with all zeros)
     model.data[:, 24, 24] = 1
@@ -27,3 +29,36 @@ def example_model():
     model.meta.instrument.pupil = "NRM"
     model.meta.exposure.type = "NIS_AMI"
     return model
+
+
+@pytest.fixture
+def circular_pupil():
+    """Make a simple circular pupil mask."""
+    shape = (1024, 1024)
+    r = 0.2
+    x = np.linspace(-1, 1, shape[0])
+    y = np.linspace(-1, 1, shape[1])
+    xx, yy = np.meshgrid(x, y)
+    rr = np.sqrt(xx**2 + yy**2)
+    pupil = np.zeros(shape)
+    pupil[rr < r] = 1
+    return pupil
+
+
+@pytest.fixture
+def nrm_model_circular(circular_pupil):
+    """Make a simple NRMModel with a circular pupil."""
+    return dm.NRMModel(nrm=circular_pupil)
+
+
+PXSC_DEG = 65.6 / (60.0 * 60.0 * 1000)
+PXSC_RAD = PXSC_DEG * np.pi / (180)
+PXSC_MAS = PXSC_DEG * 3600 * 1000
+
+
+@pytest.fixture
+def nrm_model(example_model):
+    """Retrieve a real NRMModel reference file from CRDS."""
+    nrm_reffile = Step().get_reference_file(example_model, "nrm")
+    nrm_model = dm.NRMModel(nrm_reffile)
+    return nrm_model
