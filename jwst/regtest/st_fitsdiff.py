@@ -593,7 +593,7 @@ class STHeaderDiff(HeaderDiff):
     """
     HeaderDiff class from astropy with the STScI edits.
 
-    Full documentation of the class is provided at:
+    Full documentation of the base class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
 
