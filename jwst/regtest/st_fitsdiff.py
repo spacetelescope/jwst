@@ -1,7 +1,5 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
-"""
-STScI edits to astropy FitsDiff.
-"""
+"""STScI edits to astropy FitsDiff."""
 
 import fnmatch
 import operator
@@ -35,8 +33,8 @@ class STFITSDiff(FITSDiff):
     """
     FITSDiff class from astropy with STScI edits.
 
-    Statistics about how far
-    off values are from tolerances will be printed, from 0.1 through 0.0, along
+    Statistics about how far off values are from tolerances
+    will be printed, from 0.1 through 0.0, along
     with maximum and minimum values.
 
     Full documentation of the base class is provided at:
@@ -112,7 +110,6 @@ class STFITSDiff(FITSDiff):
             It does not matter if the keys in the dictionary are upper or lower case.
             The key 'default' is optional, i.e. if it is not provided then the default values will
             be used, otherwise the default value will be the one in the dictionary.
-
         """
         self.diff_dimensions = ()
         self.diff_extnames = ()
