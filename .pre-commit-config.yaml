@@ -46,7 +46,6 @@ repos:
             jwst/dark_current/.* |
             jwst/emicorr/.* |
             jwst/engdblog/.* |
-            jwst/exp_to_source/.* |
             jwst/extract_2d/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
