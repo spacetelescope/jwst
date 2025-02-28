@@ -1,14 +1,14 @@
-"""
-Unit test for Residual Fringe Correction for testing interface
-"""
+"""Unit tests for Residual Fringe Correction step interface."""
+
+import logging
 
 import pytest
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
 from jwst.residual_fringe import ResidualFringeStep
 from jwst.residual_fringe import residual_fringe
+from jwst.tests.helpers import LogWatcher
 
 
 @pytest.fixture(scope='function')
@@ -25,9 +25,18 @@ def miri_image():
     return image
 
 
-def test_call_residual_fringe(tmp_cwd,  miri_image):
-    """ test defaults of step are set up and user input are defined correctly """
+@pytest.fixture()
+def step_log_watcher(monkeypatch):
+    # Set a log watcher to check for a log message at any level
+    # in the emicorr step
+    watcher = LogWatcher("")
+    logger = logging.getLogger("stpipe.ResidualFringeStep")
+    for level in ["debug", "info", "warning", "error"]:
+        monkeypatch.setattr(logger, level, watcher)
+    return watcher
 
+
+def test_bad_ignore_regions(tmp_cwd, miri_image):
     # testing the ignore_regions_min
     # There has to be an equal number of min and max ignore region values
     # --ignore_region_min="4.9,"  --ignore_region_max='5.5,"
@@ -40,6 +49,24 @@ def test_call_residual_fringe(tmp_cwd,  miri_image):
     # If the number ignore min and max regions is not the same a value error is returned
     with pytest.raises(ValueError):
         step.run(miri_image)
+
+
+def test_ignore_regions(tmp_cwd, monkeypatch, miri_image, step_log_watcher):
+    # Set some reasonable wavelength regions - these should be read in properly
+    step_log_watcher.message = "Ignoring 2 wavelength regions"
+
+    step = ResidualFringeStep()
+    step.ignore_region_min = [4.9, 5.7]
+    step.ignore_region_max = [5.6, 6.5]
+    step.skip = False
+
+    # monkeypatch the reference file retrieval so step aborts but does
+    # not error out for this incomplete input
+    monkeypatch.setattr(step, 'get_reference_file', lambda *args: 'N/A')
+
+    # check for ignore regions log message
+    step.run(miri_image)
+    step_log_watcher.assert_seen()
 
 
 def test_fringe_flat_applied(tmp_cwd, miri_image):
@@ -62,3 +89,19 @@ def test_fringe_flat_applied(tmp_cwd, miri_image):
 
     with pytest.raises(residual_fringe.ErrorNoFringeFlat):
         rfc.do_correction()
+
+
+def test_rf_step_wrong_input_type():
+    model = datamodels.ImageModel()
+    with pytest.raises(TypeError, match="Failed to process input type"):
+        ResidualFringeStep.call(model, skip=False)
+
+
+def test_rf_step_wrong_exptype(miri_image, step_log_watcher):
+    model = miri_image
+    model.meta.exposure.type = 'NRS_IFU'
+
+    step_log_watcher.message = "only for MIRI MRS"
+    result = ResidualFringeStep.call(model, skip=False)
+    assert result.meta.cal_step.residual_fringe == 'SKIPPED'
+    step_log_watcher.assert_seen()

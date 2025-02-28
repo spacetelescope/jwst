@@ -1,42 +1,45 @@
-#
-#  Module for applying fringe correction
-#
-
-import numpy as np
-from functools import partial
-
-from stdatamodels.jwst import datamodels
-
-from ..stpipe import Step
-from astropy.table import Table
-from astropy.io import ascii
-from astropy.io import fits
-from . import utils
+"""Apply residual fringe correction."""
 
 import logging
+from functools import partial
+
+import numpy as np
+from astropy.table import Table
+from astropy.io import ascii, fits
+from stdatamodels import fits_support
+from stdatamodels.jwst import datamodels
+
+from jwst.stpipe import Step
+from jwst.residual_fringe import utils
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class ResidualFringeCorrection():
+class ResidualFringeCorrection:
 
     def __init__(self,
                  input_model,
                  residual_fringe_reference_file,
                  regions_reference_file,
                  ignore_regions,
-                 **pars):
+                 save_intermediate_results=False,
+                 transmission_level=80,
+                 make_output_path=None):
 
         self.input_model = input_model.copy()
         self.model = input_model.copy()
         self.residual_fringe_reference_file = residual_fringe_reference_file
         self.regions_reference_file = regions_reference_file
         self.ignore_regions = ignore_regions
-        self.save_intermediate_results = pars['save_intermediate_results']
-        self.transmission_level = int(pars['transmission_level'])
+        self.save_intermediate_results = save_intermediate_results
+        self.transmission_level = transmission_level
+
         # define how filenames are created
-        self.make_output_path = pars.get('make_output_path',
-                                         partial(Step._make_output_path, None))
+        if make_output_path is None:
+            self.make_output_path = partial(Step._make_output_path, None)
+        else:
+            self.make_output_path = make_output_path
 
         self.rfc_factors = None
         self.fit_mask = None
@@ -159,9 +162,7 @@ class ResidualFringeCorrection():
                            units=('', ''),
                            dtype=('i4', '(3,{})f8'.format(n_wav_samples)))
 
-        ysize = self.input_model.data.shape[0]
-        xsize = self.input_model.data.shape[1]
-
+        wave_map = self._get_wave_map()
         for c in self.channels:
             num_corrected = 0
             log.info("Processing channel {}".format(c))
@@ -169,9 +170,6 @@ class ResidualFringeCorrection():
                 utils.slice_info(slice_map, c)
 
             log.debug(' Slice Ranges {}'.format(slice_x_ranges))
-
-            y, x = np.mgrid[:ysize, :xsize]
-            _, _, wave_map = self.input_model.meta.wcs(x, y)
 
             # if the user wants to ignore some values use the wave_map array to set the corresponding
             # weight values to 0
@@ -237,213 +235,210 @@ class ResidualFringeCorrection():
 
                         # Sometimes can return nan, inf for bad data so include this in check
                         if snr2 < min_snr[0]:
-                            log.debug('SNR too high not fitting column {}, {}, {}'.format(col, snr2, min_snr[0]))
-                            pass
-                        else:
-                            log.debug("Fitting column{} ".format(col))
-                            log.debug("SNR > {} ".format(min_snr[0]))
+                            log.debug(f'SNR too low not fitting column {col}, {snr2}, {min_snr[0]}')
+                            continue
 
-                            col_weight = ss_weight[:, col]
-                            col_max_amp = np.interp(col_wmap, self.max_amp['Wavelength'], self.max_amp['Amplitude'])
-                            col_snr2 = np.where(col_snr > 10, 1, 0)  # hardcoded at snr > 10 for now
+                        log.debug(f"Fitting column {col}")
+                        log.debug(f"SNR > {min_snr[0]} ")
 
-                            # get the in-slice pixel indices for replacing in output later
-                            idx = np.where(col_data > 0)
+                        col_weight = ss_weight[:, col]
+                        col_max_amp = np.interp(col_wmap, self.max_amp['Wavelength'], self.max_amp['Amplitude'])
+                        col_snr2 = np.where(col_snr > 10, 1, 0)  # hardcoded at snr > 10 for now
 
-                            # BayesicFitting doesn't like 0s at data or weight array edges so set to small value
-                            # replacing array 0s with arbitrarily low number
-                            col_data[col_data <= 0] = 1e-08
-                            col_weight[col_weight <= 0] = 1e-08
+                        # get the in-slice pixel indices for replacing in output later
+                        idx = np.where(col_data > 0)
 
-                            # check for off-slice pixels and send to be filled with interpolated/extrapolated wnums
-                            # to stop BayesicFitting crashing, will not be fitted anyway
-                            # finding out-of-slice pixels in column and filling
+                        # BayesicFitting doesn't like 0s at data or weight array edges so set to small value
+                        # replacing array 0s with arbitrarily low number
+                        col_data[col_data <= 0] = 1e-08
+                        col_weight[col_weight <= 0] = 1e-08
 
-                            found_bad = np.logical_or(np.isnan(col_wnum), np.isinf(col_wnum))
-                            num_bad = len(np.where(found_bad)[0])
+                        # check for off-slice pixels and send to be filled with interpolated/extrapolated wnums
+                        # to stop BayesicFitting crashing, will not be fitted anyway
+                        # finding out-of-slice pixels in column and filling
 
-                            if num_bad > 0:
-                                col_wnum[found_bad] = 0
-                                col_wnum = utils.fill_wavenumbers(col_wnum)
+                        found_bad = np.logical_or(np.isnan(col_wnum), np.isinf(col_wnum))
+                        num_bad = len(np.where(found_bad)[0])
 
-                            # do feature finding on slice now column-by-column
-                            log.debug(" starting feature finding")
+                        if num_bad > 0:
+                            col_wnum[found_bad] = 0
+                            col_wnum = utils.fill_wavenumbers(col_wnum)
 
-                            # narrow features (similar or less than fringe #1 period)
+                        # do feature finding on slice now column-by-column
+                        log.debug(" starting feature finding")
+
+                        # narrow features (similar or less than fringe #1 period)
+                        # find spectral features (env is spline fit of troughs and peaks)
+                        env, l_x, l_y, _, _, _ = utils.fit_envelope(np.arange(col_data.shape[0]), col_data)
+                        mod = np.abs(col_data / env) - 1
+
+                        # given signal in mod find location of lines > col_max_amp * 2 (fringe contrast)
+                        # use col_snr to ignore noisy pixels
+                        weight_factors = utils.find_lines(mod * col_snr2, col_max_amp * 2)
+                        weights_feat = col_weight * weight_factors
+
+                        # account for fringe 2 on broad features in channels 3 and 4
+                        # need to smooth out the dichroic fringe as it breaks the feature finding method
+                        if c in [3, 4]:
+                            win = 7  # smoothing window hardcoded to 7 for now (based on testing)
+                            cumsum = np.cumsum(np.insert(col_data, 0, 0))
+                            sm_col_data = (cumsum[win:] - cumsum[:-win]) / float(win)
+
                             # find spectral features (env is spline fit of troughs and peaks)
-                            env, l_x, l_y, _, _, _ = utils.fit_envelope(np.arange(col_data.shape[0]), col_data)
+                            env, l_x, l_y, _, _, _ = utils.fit_envelope(np.arange(col_data.shape[0]), sm_col_data)
                             mod = np.abs(col_data / env) - 1
 
-                            # given signal in mod find location of lines > col_max_amp * 2 (fringe contrast)
-                            # use col_snr to ignore noisy pixels
-                            weight_factors = utils.find_lines(mod * col_snr2, col_max_amp * 2)
-                            weights_feat = col_weight * weight_factors
+                            # given signal in mod find location of lines > col_max_amp * 2
+                            weight_factors = utils.find_lines(mod, col_max_amp * 2)
+                            weights_feat *= weight_factors
 
-                            # account for fringe 2 on broad features in channels 3 and 4
-                            # need to smooth out the dichroic fringe as it breaks the feature finding method
-                            if c in [3, 4]:
-                                win = 7  # smoothing window hardcoded to 7 for now (based on testing)
-                                cumsum = np.cumsum(np.insert(col_data, 0, 0))
-                                sm_col_data = (cumsum[win:] - cumsum[:-win]) / float(win)
+                        # iterate over the fringe components to fit, initialize pre-contrast, other output arrays
+                        # in case fit fails
+                        proc_data = col_data.copy()
+                        proc_factors = np.ones(col_data.shape)
+                        pre_contrast = 0.0
+                        bg_fit = col_data.copy()
+                        res_fringe_fit_flag = np.zeros(col_data.shape)
+                        wpix_num = 1024
 
-                                # find spectral features (env is spline fit of troughs and peaks)
-                                env, l_x, l_y, _, _, _ = utils.fit_envelope(np.arange(col_data.shape[0]), sm_col_data)
-                                mod = np.abs(col_data / env) - 1
+                        # check the end points. A single value followed by gap of zero can cause
+                        # problems in the fitting.
+                        index = np.where(weights_feat != 0.0)
+                        length = np.diff(index[0])
+                        #print(weights_feat, index, length)
+                        if weights_feat[0] != 0 and length[0] > 1:
+                            weights_feat[0] = 1e-08
 
-                                # given signal in mod find location of lines > col_max_amp * 2
-                                weight_factors = utils.find_lines(mod, col_max_amp * 2)
-                                weights_feat *= weight_factors
+                        if weights_feat[-1] != 0 and length[-1] > 1:
+                            weights_feat[-1] = 1e-08
 
-                            # iterate over the fringe components to fit, initialize pre-contrast, other output arrays
-                            # in case fit fails
-                            proc_data = col_data.copy()
-                            proc_factors = np.ones(col_data.shape)
-                            pre_contrast = 0.0
-                            bg_fit = col_data.copy()
-                            res_fringes = np.zeros(col_data.shape)
-                            res_fringe_fit = np.zeros(col_data.shape)
-                            res_fringe_fit_flag = np.zeros(col_data.shape)
-                            wpix_num = 1024
+                        # jane added this - fit can fail in evidence function.
+                        # once we replace evidence function with astropy routine - we can test
+                        # removing setting weights < 0.003 to zero (1e-08)
+                        weights_feat[weights_feat <= 0.003] = 1e-08
 
-                            # check the end points. A single value followed by gap of zero can cause
-                            # problems in the fitting.
-                            index = np.where(weights_feat != 0.0)
-                            length = np.diff(index[0])
+                        # currently the reference file fits one fringe originating in the detector pixels, and a
+                        # second high frequency, low amplitude fringe in channels 3 and 4 which has been
+                        # attributed to the dichroics.
+                        try:
+                            for fn, ff in enumerate(ffreq):
+                                # ignore place holder fringes
+                                if ff > 1e-03:
+                                    log.debug(' starting ffreq = {}'.format(ff))
 
-                            if weights_feat[0] != 0 and length[0] > 1:
-                                weights_feat[0] = 1e-08
+                                    # check if snr criteria is met for fringe component, should always be true for fringe 1
+                                    if snr2 > min_snr[fn]:
+                                        log.debug(" fitting spectral baseline")
 
-                            if weights_feat[-1] != 0 and length[-1] > 1:
-                                weights_feat[-1] = 1e-08
+                                        bg_fit, bgindx = \
+                                            utils.fit_1d_background_complex(proc_data, weights_feat,
+                                                                            col_wnum, ffreq=ffreq[fn], channel=c)
 
-                            # jane added this - fit can fail in evidence function.
-                            # once we replace evidence function with astropy routine - we can test
-                            # removing setting weights < 0.003 to zero (1e-08)
+                                        # get the residual fringes as fraction of signal
+                                        res_fringes = np.divide(proc_data, bg_fit, out=np.zeros_like(proc_data),
+                                                                where=bg_fit != 0)
+                                        res_fringes = np.subtract(res_fringes, 1, where=res_fringes != 0)
+                                        res_fringes *= np.where(col_weight > 1e-07, 1, 1e-08)
+                                        # get the pre-correction contrast using fringe component 1
+                                        # TODO: REMOVE CONTRAST CHECKS
+                                        # set dummy values for contrast check parameters until removed
+                                        pre_contrast = 0.0
+                                        quality = np.array([np.zeros(col_data.shape), np.zeros(col_data.shape),
+                                                            np.zeros(col_data.shape)])
+                                        # if fn == 0:
+                                        #    pre_contrast, quality = utils.fit_quality(col_wnum,
+                                        #                                              res_fringes,
+                                        #                                              weights_feat,
+                                        #                                              ffreq[0],
+                                        #                                              dffreq[0])
+                                        #
+                                        #   log.debug(" pre-correction contrast = {}".format(pre_contrast))
+                                        #
+                                        # fit the residual fringes
+                                        log.debug(" set up bayes ")
+                                        res_fringe_fit, wpix_num, opt_nfringe, peak_freq, freq_min, freq_max = \
+                                            utils.new_fit_1d_fringes_bayes_evidence(res_fringes,
+                                                                                    weights_feat,
+                                                                                    col_wnum,
+                                                                                    ffreq[fn],
+                                                                                    dffreq[fn],
+                                                                                    min_nfringes=min_nfringes[fn],
+                                                                                    max_nfringes=max_nfringes[fn],
+                                                                                    pgram_res=pgram_res[fn],
+                                                                                    col_snr2=col_snr2)
 
-                            weights_feat[weights_feat <= 0.003] = 1e-08
+                                        # check for fit blowing up, reset rfc fit to 0, raise a flag
+                                        log.debug("check residual fringe fit for bad fit regions")
+                                        res_fringe_fit, res_fringe_fit_flag = utils.check_res_fringes(res_fringe_fit,
+                                                                                                      col_max_amp)
 
-                            # currently the reference file fits one fringe originating in the detector pixels, and a
-                            # second high frequency, low amplitude fringe in channels 3 and 4 which has been
-                            # attributed to the dichroics.
-                            try:
-                                for fn, ff in enumerate(ffreq):
-                                    # ignore place holder fringes
-                                    if ff > 1e-03:
-                                        log.debug(' starting ffreq = {}'.format(ff))
+                                        # correct for residual fringes
+                                        log.debug(" divide out residual fringe fit, get fringe corrected column")
+                                        _, _, _, env, u_x, u_y = utils.fit_envelope(np.arange(res_fringe_fit.shape[0]),
+                                                                                    res_fringe_fit)
 
-                                        # check if snr criteria is met for fringe component, should always be true for fringe 1
-                                        if snr2 > min_snr[fn]:
-                                            log.debug(" fitting spectral baseline")
+                                        rfc_factors = 1 / (res_fringe_fit * (col_weight > 1e-05).astype(int) + 1)
+                                        proc_data *= rfc_factors
+                                        proc_factors *= rfc_factors
 
-                                            bg_fit, bgindx = \
-                                                utils.fit_1d_background_complex(proc_data, weights_feat,
-                                                                                col_wnum, ffreq=ffreq[fn], channel=c)
+                                        # handle nans or infs that may exist
+                                        proc_data = np.nan_to_num(proc_data, posinf=1e-08, neginf=1e-08)
+                                        proc_data[proc_data < 0] = 1e-08
 
-                                            # get the residual fringes as fraction of signal
-                                            res_fringes = np.divide(proc_data, bg_fit, out=np.zeros_like(proc_data),
-                                                                    where=bg_fit != 0)
-                                            res_fringes = np.subtract(res_fringes, 1, where=res_fringes != 0)
-                                            res_fringes *= np.where(col_weight > 1e-07, 1, 1e-08)
-                                            # get the pre-correction contrast using fringe component 1
-                                            # TODO: REMOVE CONTRAST CHECKS
-                                            # set dummy values for contrast check parameters until removed
-                                            pre_contrast = 0.0
-                                            quality = np.array([np.zeros(col_data.shape), np.zeros(col_data.shape),
-                                                                np.zeros(col_data.shape)])
-                                            # if fn == 0:
-                                            #    pre_contrast, quality = utils.fit_quality(col_wnum,
-                                            #                                              res_fringes,
-                                            #                                              weights_feat,
-                                            #                                              ffreq[0],
-                                            #                                              dffreq[0])
-                                            #
-                                            #   log.debug(" pre-correction contrast = {}".format(pre_contrast))
-                                            #
-                                            # fit the residual fringes
-                                            log.debug(" set up bayes ")
-                                            res_fringe_fit, wpix_num, opt_nfringe, peak_freq, freq_min, freq_max = \
-                                                utils.new_fit_1d_fringes_bayes_evidence(res_fringes,
-                                                                                        weights_feat,
-                                                                                        col_wnum,
-                                                                                        ffreq[fn],
-                                                                                        dffreq[fn],
-                                                                                        min_nfringes=min_nfringes[fn],
-                                                                                        max_nfringes=max_nfringes[fn],
-                                                                                        pgram_res=pgram_res[fn],
-                                                                                        col_snr2=col_snr2)
+                                        out_table.add_row((ss, col, fn, snr2, pre_contrast, pre_contrast, pgram_res[fn],
+                                                           opt_nfringe, peak_freq, freq_min, freq_max))
 
-                                            # check for fit blowing up, reset rfc fit to 0, raise a flag
-                                            log.debug("check residual fringe fit for bad fit regions")
-                                            res_fringe_fit, res_fringe_fit_flag = utils.check_res_fringes(res_fringe_fit,
-                                                                                                          col_max_amp)
+                            # define fringe sub after all fringe components corrections
+                            fringe_sub = proc_data.copy()
+                            rfc_factors = proc_factors.copy()
 
-                                            # correct for residual fringes
-                                            log.debug(" divide out residual fringe fit, get fringe corrected column")
-                                            _, _, _, env, u_x, u_y = utils.fit_envelope(np.arange(res_fringe_fit.shape[0]),
-                                                                                        res_fringe_fit)
+                            # get the new fringe contrast
+                            log.debug(" analysing fit quality")
 
-                                            rfc_factors = 1 / (res_fringe_fit * (col_weight > 1e-05).astype(int) + 1)
-                                            proc_data *= rfc_factors
-                                            proc_factors *= rfc_factors
+                            pbg_fit, pbgindx = utils.fit_1d_background_complex(fringe_sub,
+                                                                               weights_feat,
+                                                                               col_wnum,
+                                                                               ffreq=ffreq[0], channel=c)
 
-                                            # handle nans or infs that may exist
-                                            proc_data = np.nan_to_num(proc_data, posinf=1e-08, neginf=1e-08)
-                                            proc_data[proc_data < 0] = 1e-08
+                            # get the residual fringes as fraction of signal
+                            fit_res = np.divide(fringe_sub, pbg_fit, out=np.zeros_like(fringe_sub),
+                                                where=pbg_fit != 0)
+                            fit_res = np.subtract(fit_res, 1, where=fit_res != 0)
+                            fit_res *= np.where(col_weight > 1e-07, 1, 1e-08)
 
-                                            out_table.add_row((ss, col, fn, snr2, pre_contrast, pre_contrast, pgram_res[fn],
-                                                               opt_nfringe, peak_freq, freq_min, freq_max))
+                            # TODO: REMOVE CONTRAST CHECKS
+                            # set dummy values for contrast check parameters until removed
+                            contrast = 0.0
+                            quality = np.array([np.zeros(col_data.shape), np.zeros(col_data.shape), np.zeros(col_data.shape)])
+                            # contrast, quality = utils.fit_quality(col_wnum,
+                            #                                      fit_res,
+                            #                                      weights_feat,
+                            #                                      ffreq,
+                            #                                      dffreq,
+                            #                                      save_results=self.save_intermediate_results)
 
-                                # define fringe sub after all fringe components corrections
-                                fringe_sub = proc_data.copy()
-                                rfc_factors = proc_factors.copy()
+                            out_table.add_row((ss, col, fn, snr2, pre_contrast, contrast, pgram_res[0],
+                                               opt_nfringe, peak_freq, freq_min, freq_max))
 
-                                # get the new fringe contrast
-                                log.debug(" analysing fit quality")
+                            qual_table.add_row((col, quality))
+                            correction_quality.append([contrast, pre_contrast])
+                            log.debug(" residual contrast = {}".format(contrast))
 
-                                pbg_fit, pbgindx = utils.fit_1d_background_complex(fringe_sub,
-                                                                                   weights_feat,
-                                                                                   col_wnum,
-                                                                                   ffreq=ffreq[0], channel=c)
+                            # replace the corrected in-slice column pixels in the data_cor array
+                            log.debug(" updating the trace pixels in the output")
+                            output_data[idx, col] = fringe_sub[idx]
+                            self.rfc_factors[idx, col] = rfc_factors[idx]
+                            self.fit_mask[idx, col] = np.ones(1024)[idx]
+                            self.weights_feat[idx, col] = weights_feat[idx]
+                            self.weighted_pix_num[idx, col] = np.ones(1024)[idx] * (wpix_num / 1024)
+                            self.rejected_fit[idx, col] = res_fringe_fit_flag[idx]
+                            self.background_fit[idx, col] = bg_fit[idx]
+                            self.knot_locations[:bgindx.shape[0], col] = bgindx
+                            num_corrected = num_corrected + 1
 
-                                # get the residual fringes as fraction of signal
-                                fit_res = np.divide(fringe_sub, pbg_fit, out=np.zeros_like(fringe_sub),
-                                                    where=pbg_fit != 0)
-                                fit_res = np.subtract(fit_res, 1, where=fit_res != 0)
-                                fit_res *= np.where(col_weight > 1e-07, 1, 1e-08)
-
-                                # TODO: REMOVE CONTRAST CHECKS
-                                # set dummy values for contrast check parameters until removed
-                                contrast = 0.0
-                                quality = np.array([np.zeros(col_data.shape), np.zeros(col_data.shape), np.zeros(col_data.shape)])
-                                # contrast, quality = utils.fit_quality(col_wnum,
-                                #                                      fit_res,
-                                #                                      weights_feat,
-                                #                                      ffreq,
-                                #                                      dffreq,
-                                #                                      save_results=self.save_intermediate_results)
-
-                                out_table.add_row((ss, col, fn, snr2, pre_contrast, contrast, pgram_res[0],
-                                                   opt_nfringe, peak_freq, freq_min, freq_max))
-
-                                qual_table.add_row((col, quality))
-                                correction_quality.append([contrast, pre_contrast])
-                                log.debug(" residual contrast = {}".format(contrast))
-
-                                # replace the corrected in-slice column pixels in the data_cor array
-                                log.debug(" updating the trace pixels in the output")
-                                output_data[idx, col] = fringe_sub[idx]
-                                self.rfc_factors[idx, col] = rfc_factors[idx]
-                                self.fit_mask[idx, col] = np.ones(1024)[idx]
-                                self.weights_feat[idx, col] = weights_feat[idx]
-                                self.weighted_pix_num[idx, col] = np.ones(1024)[idx] * (wpix_num / 1024)
-                                self.rejected_fit[idx, col] = res_fringe_fit_flag[idx]
-                                self.background_fit[idx, col] = bg_fit[idx]
-                                self.knot_locations[:bgindx.shape[0], col] = bgindx
-                                num_corrected = num_corrected + 1
-
-                            except Exception as e:
-                                log.warning(" Skipping col={} {} ".format(col, ss))
-                                log.warning(' %s' % (str(e)))
+                        except Exception as e:
+                            log.warning(" Skipping col={} {} ".format(col, ss))
+                            log.warning(' %s' % (str(e)))
 
                 del ss_data, ss_wmap, ss_weight  # end on column
 
@@ -458,7 +453,7 @@ class ResidualFringeCorrection():
                     # add the statistics to the Table
                     stat_table.add_row((ss, mean, median, stddev, fmax, pmean, pmedian, pstddev, pfmax))
 
-            del slice_x_ranges, all_slice_masks, slices_in_band, wave_map  # end of channel
+            del slice_x_ranges, all_slice_masks, slices_in_band  # end of channel
             log.info('Number of columns corrected for channel {}'.format(num_corrected))
         log.info("Processing complete")
 
@@ -489,9 +484,11 @@ class ResidualFringeCorrection():
                 basepath=self.input_model.meta.filename,
                 suffix='fit_results', ext='.fits')
             log.info('Saving intermediate fit results output {}'.format(fit_results_name))
-            h = fits.open(self.input_model.meta.filename)
-            hdr = h[0].header
-            h.close()
+
+            # Get a primary header from the input model
+            hdul = fits_support.to_fits(self.input_model._instance, self.input_model._schema)
+            hdr = hdul[0].header
+            hdul.close()
 
             hdu0 = fits.PrimaryHDU(header=hdr)
             hdu1 = fits.ImageHDU(self.rfc_factors, name='RFC_FACTORS')
@@ -536,6 +533,20 @@ class ResidualFringeCorrection():
         weights[np.isnan(weights)] = 0
         return weights
 
+    def _get_wave_map(self):
+        """
+        Get a wavelength map from the input WCS.
+
+        Returns
+        -------
+        ndarray
+            2D map of wavelengths matching self.input.data.
+        """
+        ysize = self.input_model.data.shape[0]
+        xsize = self.input_model.data.shape[1]
+        y, x = np.mgrid[:ysize, :xsize]
+        _, _, wave_map = self.input_model.meta.wcs(x, y)
+        return wave_map
 
 class ErrorNoFringeFlat(Exception):
     pass
