@@ -33,8 +33,8 @@ __all__ = [
 
 class STFITSDiff(FITSDiff):
     """
-    FITSDiff class from astropy with STScI edits. 
-    
+    FITSDiff class from astropy with STScI edits.
+
     Statistics about how far
     off values are from tolerances will be printed, from 0.1 through 0.0, along
     with maximum and minimum values.
@@ -118,7 +118,7 @@ class STFITSDiff(FITSDiff):
         self.diff_extnames = ()
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
         self.header_tolerances = {}
-        self.extension_tolerances = {}
+        self.expected_extension_tolerances = {}
         if extension_tolerances is not None:
             # Make sure the given dict keys are all upper case
             for key in extension_tolerances:
@@ -129,12 +129,12 @@ class STFITSDiff(FITSDiff):
                 if "atol" not in tols:
                     tols["atol"] = atol
                 if isinstance(key, str):
-                    self.extension_tolerances[key.upper()] = tols
+                    self.expected_extension_tolerances[key.upper()] = tols
                 else:
-                    self.extension_tolerances[key] = tols
+                    self.expected_extension_tolerances[key] = tols
             # Make sure the other extensions get a default relative and absolute tolerance
-            if "DEFAULT" not in [key.upper() for key in extension_tolerances if isinstance(key, str)]:
-                self.extension_tolerances["DEFAULT"] = {"rtol": rtol, "atol": atol}
+            if "DEFAULT" not in [str(key).upper() for key in extension_tolerances]:
+                self.expected_extension_tolerances["DEFAULT"] = {"rtol": rtol, "atol": atol}
 
         super().__init__(a, b,
                          ignore_hdus=ignore_hdus,
@@ -181,9 +181,9 @@ class STFITSDiff(FITSDiff):
             self.diff_extnames = (ext_namesa, ext_namesb, ext_intersection, ext_not_in_both)
 
         # Set the tolerance for the headers
-        if "HEADERS" in [key for key in self.extension_tolerances]:
-            self.header_tolerances["rtol"] = self.extension_tolerances["HEADERS"]["rtol"]
-            self.header_tolerances["atol"] = self.extension_tolerances["HEADERS"]["atol"]
+        if "HEADERS" in [key for key in self.expected_extension_tolerances]:
+            self.header_tolerances["rtol"] = self.expected_extension_tolerances["HEADERS"]["rtol"]
+            self.header_tolerances["atol"] = self.expected_extension_tolerances["HEADERS"]["atol"]
 
         # Make sure to compare the same extensions
         for idxa, extname in enumerate(ext_namesa):
@@ -199,17 +199,16 @@ class STFITSDiff(FITSDiff):
                         same_version = True
                         break
                 if same_version:
-                    if self.extension_tolerances:
-                        if idxa in self.extension_tolerances:
-                            if idxa in self.extension_tolerances:
-                                self.rtol = self.extension_tolerances[idxa]["rtol"]
-                                self.atol = self.extension_tolerances[idxa]["atol"]
-                            elif extname in self.extension_tolerances:
-                                self.rtol = self.extension_tolerances[extname]["rtol"]
-                                self.atol = self.extension_tolerances[extname]["atol"]
-                            else:
-                                self.rtol = self.extension_tolerances["DEFAULT"]["rtol"]
-                                self.atol = self.extension_tolerances["DEFAULT"]["atol"]
+                    if self.expected_extension_tolerances:
+                        if idxa in self.expected_extension_tolerances:
+                            self.rtol = self.expected_extension_tolerances[idxa]["rtol"]
+                            self.atol = self.expected_extension_tolerances[idxa]["atol"]
+                        elif extname in self.expected_extension_tolerances:
+                            self.rtol = self.expected_extension_tolerances[extname]["rtol"]
+                            self.atol = self.expected_extension_tolerances[extname]["atol"]
+                        else:
+                            self.rtol = self.expected_extension_tolerances["DEFAULT"]["rtol"]
+                            self.atol = self.expected_extension_tolerances["DEFAULT"]["atol"]
                     hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
                     if not hdu_diff.identical:
                         self.diff_hdus.append((idxa, hdu_diff, extname, extver))
@@ -254,7 +253,7 @@ class STFITSDiff(FITSDiff):
             f" Maximum number of different data values to be reported: {self.numdiffs}"
         )
 
-        if not self.extension_tolerances:
+        if not self.expected_extension_tolerances:
             self._writeln(f"\n Relative tolerance: {self.rtol}, Absolute tolerance: {self.atol}")
 
         if self.diff_hdu_count:
@@ -277,7 +276,7 @@ class STFITSDiff(FITSDiff):
 
         self._fileobj.write("\n")
         for idx, hdu_diff, extname, extver in self.diff_hdus:
-            if not self.extension_tolerances:
+            if not self.expected_extension_tolerances:
                 if idx == 0:
                     self._fileobj.write("\n")
                     self._writeln("Primary HDU:")
@@ -290,15 +289,15 @@ class STFITSDiff(FITSDiff):
             else:
                 self._fileobj.write("\n")
                 self._writeln(f"Extension HDU {idx} ({extname}, {extver}):")
-                if idx in self.extension_tolerances:
-                    rtol = self.extension_tolerances[idx]["rtol"]
-                    atol = self.extension_tolerances[idx]["atol"]
-                elif extname in self.extension_tolerances:
-                    rtol = self.extension_tolerances[extname]["rtol"]
-                    atol = self.extension_tolerances[extname]["atol"]
+                if idx in self.expected_extension_tolerances:
+                    rtol = self.expected_extension_tolerances[idx]["rtol"]
+                    atol = self.expected_extension_tolerances[idx]["atol"]
+                elif extname in self.expected_extension_tolerances:
+                    rtol = self.expected_extension_tolerances[extname]["rtol"]
+                    atol = self.expected_extension_tolerances[extname]["atol"]
                 else:
-                    rtol = self.extension_tolerances["DEFAULT"]["rtol"]
-                    atol = self.extension_tolerances["DEFAULT"]["atol"]
+                    rtol = self.expected_extension_tolerances["DEFAULT"]["rtol"]
+                    atol = self.expected_extension_tolerances["DEFAULT"]["atol"]
                 self._writeln(
                     f"\n  Relative tolerance: {rtol:.1e}, Absolute tolerance: {atol:.1e}"
                 )
