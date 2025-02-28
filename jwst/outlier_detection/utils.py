@@ -46,14 +46,12 @@ def create_cube_median(cube_model, maskpt):
     log.info("Computing median")
 
     weight_threshold = compute_weight_threshold(cube_model.wht, maskpt)
+    masked_cube = np.ma.masked_array(
+        cube_model.data, np.less(cube_model.wht, weight_threshold)
+    ).filled(np.nan)
 
     # not safe to use overwrite_input=True here because we are operating on model.data directly
-    return nanmedian3D(
-        np.ma.masked_array(
-            cube_model.data, np.less(cube_model.wht, weight_threshold), fill_value=np.nan
-        ),
-        overwrite_input=False,
-    )
+    return nanmedian3D(masked_cube, overwrite_input=False)
 
 
 def median_without_resampling(

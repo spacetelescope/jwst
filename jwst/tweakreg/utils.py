@@ -228,4 +228,4 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
     update_fits_wcsinfo(to_image)
 
     if to_file:
-        to_image.write(to_file)
+        to_image.save(to_file)
