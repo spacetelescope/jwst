@@ -26,7 +26,31 @@ the behavior of the processing.
   Number of points for the SIP fit.
 
 ``--slit_y_low`` (float, default=-0.55)
-  Lower edge of a NIRSpec slit.
+  Lower edge of a NIRSpec slit in slit units (see below).
 
 ``--slit_y_high`` (float, default=0.55)
-  Upper edge of a NIRSpec slit.
+  Upper edge of a NIRSpec slit in slit units.
+
+  Slit units are specified as a fraction of the nominal slit or shutter height
+  in detector orientation. In these relative units, -0.5 is the nominal *top*
+  edge of the slit open area in science orientation, 0.0 is the center of the slit,
+  and 0.5 is the nominal *bottom* edge of the slit open area in science orientation.
+
+  Set the `slit_y_low` value to a larger negative value to include more pixels
+  at the *top* of a slit bounding box; a smaller negative value to to include fewer
+  pixels.
+
+  Set the `slit_y_high` value to a larger positive value to include more pixels
+  at the *bottom* of a slit bounding box; a smaller positive value to to include fewer
+  pixels.
+
+  For MSA slits in NIRSpec MOS mode, the slit units are relative to a single open shutter
+  height, not a full "slitlet" composed of multiple shutters.  For this mode, an
+  extra margin of half a shutter is automatically added to the slit boundaries specified
+  here, corresponding to a couple extra detector pixels at the top and bottom of each
+  slitlet.
+
+  Please note that significantly enlarging the slit limit values may introduce
+  contamination from adjacent open slits when the slit images are extracted
+  in the :ref:`extract_2d <extract_2d_step>` step, so these parameters should be used
+  with caution.
