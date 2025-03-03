@@ -14,14 +14,14 @@ def do_correction(input_model, bias_model):
 
     Parameters
     ----------
-    input_model : data model object
+    input_model : stdatamodels.jwst.datamodels.ramp.RampModel
         Science data to be corrected
-    bias_model : super-bias model object
+    bias_model : sustdatamodels.jwst.datamodels.superbias.SuperBiasModel
         Bias data
 
     Returns
     -------
-    output_model : data model object
+    output_model : stdatamodels.jwst.datamodels.ramp.RampModel
         Bias-subtracted science data
     """
     # Check for subarray mode and extract subarray from the
