@@ -435,7 +435,7 @@ applied to per-band spectra. If the MIRI MRS data is from multiple bands/channel
 is turned off. Three additional columns are present in MIRI MRS extracted spectra: RF_FLUX, RF_SURF_BRIGHT, and 
 RF_BACKGROUND. These three columns are the flux, surface brightness and background arrays with the residiual
 fringe correction applied. If the data is not from a single band or the residual fringe correction fails
-NULL values are reported for the arrays. 
+NaN values are reported for the arrays. 
 
 When using the `ifu_rfcorr` option in the ``extract_1d`` step  to apply a 1-D residual fringe
 correction, it is applied during the extraction of spectra from the IFU cube. The 1D residual fringe code can also
