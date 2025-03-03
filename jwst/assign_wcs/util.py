@@ -811,21 +811,15 @@ def update_s_region_lrs(model, reference_files):
     """
     Update ``S_REGION`` using V2,V3 of the slit corners from reference file.
 
+    s_region for model is updated in place.
+
     Parameters
     ----------
     model : DataModel
         Input model
     reference_files : list
         List of reference files for assign_wcs.
-
-    Returns
-    -------
-    None
-
-        s_region for model is updated in place.
-
     """
-
     refmodel = MiriLRSSpecwcsModel(reference_files['specwcs'])
 
     v2vert1 = refmodel.meta.v2_vert1
