@@ -7,11 +7,7 @@ __all__ = ["SuperBiasStep"]
 
 
 class SuperBiasStep(Step):
-    """
-    Perform super-bias subtraction.
-
-    Subtract super-bias reference data from the input science data model.
-    """
+    """Subtract super-bias reference data from the input science data model."""
 
     class_alias = "superbias"
 
@@ -26,12 +22,12 @@ class SuperBiasStep(Step):
 
         Parameters
         ----------
-        step_input : data model object
-            Science data model to be corrected.
+        step_input : str or stdatamodels.jwst.datamodels.ramp.RampModel
+            Either the path to the file or the science data model to be corrected.
 
         Returns
         -------
-        data model object
+        stdatamodels.jwst.datamodels.ramp.RampModel
             Superbias-corrected science data model.
         """
         # Open the input data model

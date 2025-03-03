@@ -42,23 +42,21 @@ def do_correction(input_model, bias_model):
 
 def subtract_bias(output, bias):
     """
-    Subtract a superbias image from a science data set.
-
-    Subtract the superbias from each group of each integration in the science data.
+    Subtract the superbias image from each group of each integration in the science data.
 
     The DQ flags in the bias reference image are propagated into the science
-    data pixel dq array. The error array is unchanged.
+    data pixel DQ array. The error array is unchanged.
 
     Parameters
     ----------
-    output : data model object
+    output : stdatamodels.jwst.datamodels.ramp.RampModel
         Input science data
-    bias : superbias model object
+    bias : stdatamodels.jwst.datamodels.superbias.SuperBiasModel
         Superbias image data
 
     Returns
     -------
-    output : data model object
+    output : stdatamodels.jwst.datamodels.ramp.RampModel
         Bias-subtracted science data
     """
     # combine the science and superbias DQ arrays
