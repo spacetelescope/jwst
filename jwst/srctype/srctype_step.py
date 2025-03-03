@@ -39,7 +39,7 @@ class SourceTypeStep(Step):
 
         Returns
         -------
-        stdatamodels.jwst.datamodels.ifuimage.IFUImageModel
+        datamodel of same type as input
             Data model with keyword “SRCTYPE” populated with either “POINT” or “EXTENDED.”.
         """
         if self.source_type is not None:
