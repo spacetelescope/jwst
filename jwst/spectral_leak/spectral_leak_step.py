@@ -49,8 +49,11 @@ class SpectralLeakStep(Step):
 
                 for i, x1d in enumerate(input_model):  # input_model is a Model Container
                     # check that we have the correct type of data
-                    if  not isinstance(x1d, datamodels.MultiSpecModel) or \
-                        not isinstance(x1d, datamodels.MRSMultiSpecModel):
+                    if  isinstance(x1d, datamodels.MultiSpecModel):
+                        self.log.debug(' Data is MIRI MRS MultiSpecModel data')
+                    elif isinstance(x1d, datamodels.MRSMultiSpecModel):
+                        self.log.debug(' Data is  MIRI MRS MRSMultiSpecModel data')
+                    else:
                         self.log.warning("Data sent to spectral_leak step is not an extracted spectrum. "
                                          " It is  {}." .format(type(x1d)))
                         for r in result:
