@@ -56,7 +56,6 @@ repos:
             jwst/persistence/.* |
             jwst/photom/.* |
             jwst/refpix/.* |
-            jwst/regtest/.* |
             jwst/resample/.* |
             jwst/reset/.* |
             jwst/residual_fringe/.* |
@@ -70,9 +69,7 @@ repos:
             jwst/tso_photometry/.* |
             jwst/wfs_combine/.* |
             jwst/white_light/.* |
-            jwst/conftest.py |
-            .*/tests/.* |
-            setup.py |
-            pytest_jwst/.* |
-            docs/.*
+            docs/.* |
+            jwst/regtest/test_.* |
+            .*/tests/test_.*
           )$
