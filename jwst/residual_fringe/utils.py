@@ -198,7 +198,6 @@ def find_lines(signal, max_amp):
 
     for n, amp in enumerate(u_y):
         max_amp_val = max_amp[u_x[n]]
-        log.debug("find_lines: check if peak above max amp")
         if amp > max_amp_val:
 
             # peak in x
