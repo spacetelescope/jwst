@@ -5,7 +5,6 @@ from astropy.modeling import bind_bounding_box
 from astropy.modeling import models
 from astropy import coordinates as coord
 from astropy import units as u
-
 from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
@@ -258,7 +257,6 @@ def lrs_xytoabl(input_model, reference_files):
         zero_point = refmodel.meta.x_ref_slitless - 1, refmodel.meta.y_ref_slitless - 1
         # Transform to slitless subarray from full array
         zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
-    print('zero point', zero_point)
 
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
@@ -276,10 +274,6 @@ def lrs_xytoabl(input_model, reference_files):
     y0 = refmodel.wavetable.y0
     x1 = refmodel.wavetable.x1
     y2 = refmodel.wavetable.y2
-    print('xcen', xcen)
-    print('ycen', ycen)
-    print('wavetab', wavetab)
-
     refmodel.close()
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.
@@ -294,8 +288,6 @@ def lrs_xytoabl(input_model, reference_files):
     if input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
         bb_sub = ((input_model.meta.subarray.xstart - 1 + 4 - 0.5, input_model.meta.subarray.xsize - 1 + 0.5),
                   (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
-
-    print('bb_sub', bb_sub)
 
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
@@ -312,7 +304,11 @@ def lrs_xytoabl(input_model, reference_files):
     # This function will give slit dX as a function of Y subarray pixel value
     dxmodel = models.Tabular1D(lookup_table=xshiftref, points=ycen_subarray, name='xshiftref',
                                  bounds_error=False, fill_value=np.nan)
-
+    print('bb_sub', bb_sub)
+    #### CHECK WITH NADIA
+    if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+        bb_sub = (bb_sub[0], (dxmodel.points[0].min(), dxmodel.points[0].max()))
+    print('second bb_sub', bb_sub)
     # Fit for the wavelength as a function of Y
     # Reverse the vectors so that yinv is increasing (needed for spline fitting function)
     # Spline fit with enforced smoothness
@@ -322,7 +318,6 @@ def lrs_xytoabl(input_model, reference_files):
     # This model will now give the wavelength corresponding to a given Y subarray pixel value
     wavemodel = models.Tabular1D(lookup_table=wavereference, points=ycen_subarray, name='waveref',
                                  bounds_error=False, fill_value=np.nan)
-
     # Wavelength barycentric correction
     try:
         velosys = input_model.meta.wcsinfo.velosys
@@ -380,6 +375,7 @@ def lrs_xytoabl(input_model, reference_files):
 
     return dettoabl
 
+
 def lrs_abltov2v3l(input_model, reference_files):
     """
     The second part of LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
@@ -411,7 +407,6 @@ def lrs_abltov2v3l(input_model, reference_files):
         # Transform to slitless subarray from full array
         zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
 
-    print('in lrs_abltov2v3l zero pt',zero_point)
     refmodel.close()
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
@@ -441,6 +436,7 @@ def lrs_abltov2v3l(input_model, reference_files):
     abl_to_v2v3l.inverse = models.Mapping((0,1,2)) | aa & models.Identity(1)
 
     return abl_to_v2v3l
+
 
 def ifu(input_model, reference_files):
     """
