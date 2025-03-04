@@ -1,0 +1,1 @@
+Fix MIRI LRS s_region in assign_wcs
