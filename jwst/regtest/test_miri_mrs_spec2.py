@@ -105,7 +105,7 @@ def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs, rtdata_module):
 
 @pytest.mark.slow
 @pytest.mark.bigdata
-@pytest.mark.parametrize('suffix', ['rf_residual_fringe', 'rf_s3d', 'rf_x1d', 'rf_cal'])
+@pytest.mark.parametrize('suffix', ['residual_fringe', 'rf_s3d', 'rf_x1d', 'rf_cal'])
 def test_miri_mrs_spec2_with_rf(run_spec2_with_residual_fringe,
                                 fitsdiff_default_kwargs, suffix, rtdata_module):
     rtdata = rtdata_module
