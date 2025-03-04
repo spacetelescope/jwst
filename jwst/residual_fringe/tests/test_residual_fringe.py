@@ -44,14 +44,14 @@ def fringed_spectrum(linear_spectrum):
 def miri_mrs_model_linear(monkeypatch, linear_spectrum):
     shape = (1024, 10)
     model = datamodels.IFUImageModel(shape)
-    model.meta.instrument.name = 'MIRI'
-    model.meta.instrument.detector = 'MIRIFUSHORT'
-    model.meta.instrument.channel = '12'
-    model.meta.instrument.band = 'SHORT'
-    model.meta.exposure.type = 'MIR_MRS'
-    model.meta.observation.date = '2022-05-01'
-    model.meta.observation.time = '01:01:01'
-    model.meta.cal_step.fringe = 'COMPLETE'
+    model.meta.instrument.name = "MIRI"
+    model.meta.instrument.detector = "MIRIFUSHORT"
+    model.meta.instrument.channel = "12"
+    model.meta.instrument.band = "SHORT"
+    model.meta.exposure.type = "MIR_MRS"
+    model.meta.observation.date = "2022-05-01"
+    model.meta.observation.time = "01:01:01"
+    model.meta.cal_step.fringe = "COMPLETE"
 
     wave, flux = linear_spectrum
     model.data[:, :] = flux[:, None]
@@ -77,7 +77,7 @@ def mock_wavemap(monkeypatch, wave):
         wavemap[:, :] = wave[:, None]
         return wavemap
 
-    monkeypatch.setattr(ResidualFringeCorrection, '_get_wave_map', return_wavelength)
+    monkeypatch.setattr(ResidualFringeCorrection, "_get_wave_map", return_wavelength)
 
 
 @pytest.fixture()
@@ -91,33 +91,33 @@ def mock_wavemap_with_nans(monkeypatch, wave):
         wavemap[::20, ::2] = np.nan
         return wavemap
 
-    monkeypatch.setattr(ResidualFringeCorrection, '_get_wave_map', return_wavelength)
+    monkeypatch.setattr(ResidualFringeCorrection, "_get_wave_map", return_wavelength)
 
 
 @pytest.fixture()
 def mock_slice_info_short(monkeypatch):
     # mock a single slice to fit matching the test data, for testing speed
     def one_slice(*args):
-        slices_in_band = [101]
+        slices_in_channel = [101]
         xrange_channel = np.array([[0, 10]])
         slice_x_ranges = np.array([[101, 0, 10]])
         all_slice_masks = np.ones((1, 1024, 10))
-        return slices_in_band, xrange_channel, slice_x_ranges, all_slice_masks
+        return slices_in_channel, xrange_channel, slice_x_ranges, all_slice_masks
 
-    monkeypatch.setattr(utils, 'slice_info', one_slice)
+    monkeypatch.setattr(utils, "slice_info", one_slice)
 
 
 @pytest.fixture()
 def mock_slice_info_long(monkeypatch):
     # mock a single slice to fit matching the test data, for testing speed
     def one_slice(*args):
-        slices_in_band = [301]
+        slices_in_channel = [301]
         xrange_channel = np.array([[0, 10]])
         slice_x_ranges = np.array([[301, 0, 10]])
         all_slice_masks = np.ones((1, 1024, 10))
-        return slices_in_band, xrange_channel, slice_x_ranges, all_slice_masks
+        return slices_in_channel, xrange_channel, slice_x_ranges, all_slice_masks
 
-    monkeypatch.setattr(utils, 'slice_info', one_slice)
+    monkeypatch.setattr(utils, "slice_info", one_slice)
 
 
 @pytest.fixture()
@@ -148,11 +148,11 @@ def test_rf1d(linear_spectrum, fringed_spectrum):
 
     # corrected output has small diffs from linear on average
     # (edge effects might be larger)
-    relative_diff_output = np.abs(outflux - expected_flux)/expected_flux
+    relative_diff_output = np.abs(outflux - expected_flux) / expected_flux
     assert np.nanmean(relative_diff_output) < 0.005
 
     # input diffs from linear are much bigger
-    relative_diff_input = np.abs(flux - expected_flux)/expected_flux
+    relative_diff_input = np.abs(flux - expected_flux) / expected_flux
     assert np.nanmean(relative_diff_input) > 0.01
 
 
@@ -164,6 +164,7 @@ def test_get_wavemap():
     # Mock a WCS that returns 1 for wavelengths
     def return_ones(x, y):
         return None, None, np.ones(x.shape)
+
     model.meta.wcs = return_ones
 
     rf = ResidualFringeCorrection(model, "N/A", "N/A", None)
@@ -172,14 +173,15 @@ def test_get_wavemap():
     assert np.all(wavemap == 1.0)
 
 
-@pytest.mark.parametrize('band', ['SHORT', 'MEDIUM', 'LONG'])
-def test_rf_step_short(miri_mrs_model_linear, miri_mrs_model_with_fringe,
-                       mock_slice_info_short, mock_wavemap, band):
+@pytest.mark.parametrize("band", ["SHORT", "MEDIUM", "LONG"])
+def test_rf_step_short(
+    miri_mrs_model_linear, miri_mrs_model_with_fringe, mock_slice_info_short, mock_wavemap, band
+):
     model = miri_mrs_model_with_fringe
     model.meta.instrument.band = band
     result = ResidualFringeStep.call(model, skip=False)
 
-    assert result.meta.cal_step.residual_fringe == 'COMPLETE'
+    assert result.meta.cal_step.residual_fringe == "COMPLETE"
 
     # output should be closer to a linear spectrum than input,
     # correction will not be precise
@@ -189,12 +191,13 @@ def test_rf_step_short(miri_mrs_model_linear, miri_mrs_model_with_fringe,
     assert np.nanmean(relative_diff_output) < np.nanmean(relative_diff_input)
 
 
-@pytest.mark.parametrize('band', ['SHORT', 'MEDIUM', 'LONG'])
-def test_rf_step_long(miri_mrs_model_with_fringe, mock_slice_info_long, mock_wavemap,
-                      band, module_log_watcher):
+@pytest.mark.parametrize("band", ["SHORT", "MEDIUM", "LONG"])
+def test_rf_step_long(
+    miri_mrs_model_with_fringe, mock_slice_info_long, mock_wavemap, band, module_log_watcher
+):
     model = miri_mrs_model_with_fringe
-    model.meta.instrument.detector = 'MIRIFULONG'
-    model.meta.instrument.channel = '34'
+    model.meta.instrument.detector = "MIRIFULONG"
+    model.meta.instrument.channel = "34"
     model.meta.instrument.band = band
 
     # Synthetic input data is reasonable for MIRIFUSHORT, but is expected
@@ -204,13 +207,13 @@ def test_rf_step_long(miri_mrs_model_with_fringe, mock_slice_info_long, mock_wav
     module_log_watcher.assert_seen()
 
     # Output data should be identical to input, although step is complete
-    assert result.meta.cal_step.residual_fringe == 'COMPLETE'
+    assert result.meta.cal_step.residual_fringe == "COMPLETE"
     assert np.allclose(model.data, result.data)
 
 
 def test_rf_step_nans_in_wavelength(
-        miri_mrs_model_linear, miri_mrs_model_with_fringe,
-        mock_slice_info_short, mock_wavemap_with_nans):
+    miri_mrs_model_linear, miri_mrs_model_with_fringe, mock_slice_info_short, mock_wavemap_with_nans
+):
     model = miri_mrs_model_with_fringe
 
     # wavelength array has some scattered NaNs:
@@ -219,25 +222,32 @@ def test_rf_step_nans_in_wavelength(
 
     # output should be closer to a linear spectrum than input,
     # correction will not be precise
-    assert result.meta.cal_step.residual_fringe == 'COMPLETE'
+    assert result.meta.cal_step.residual_fringe == "COMPLETE"
     expected = miri_mrs_model_linear.data
     relative_diff_input = np.abs(model.data - expected) / expected
     relative_diff_output = np.abs(result.data - expected) / expected
     assert np.nanmean(relative_diff_output) < np.nanmean(relative_diff_input)
 
 
-
-def test_rf_step_save_intermediate(tmp_path, miri_mrs_model_with_fringe,
-                                   mock_slice_info_short, mock_wavemap):
+def test_rf_step_save_intermediate(
+    tmp_path, miri_mrs_model_with_fringe, mock_slice_info_short, mock_wavemap
+):
     model = miri_mrs_model_with_fringe
-    model.meta.filename = 'test.fits'
-    ResidualFringeStep.call(model, skip=False, output_dir=str(tmp_path),
-                            save_results=True, save_intermediate_results=True)
+    model.meta.filename = "test.fits"
+    ResidualFringeStep.call(
+        model,
+        skip=False,
+        output_dir=str(tmp_path),
+        save_results=True,
+        save_intermediate_results=True,
+    )
 
-    output_files = ['test_residual_fringe.fits',
-                    'test_stat_table.ecsv',
-                    'test_out_table.ecsv',
-                    'test_fit_results.fits']
+    output_files = [
+        "test_residual_fringe.fits",
+        "test_stat_table.ecsv",
+        "test_out_table.ecsv",
+        "test_fit_results.fits",
+    ]
     for output_file in output_files:
         assert (tmp_path / output_file).exists()
 
@@ -249,15 +259,16 @@ def test_rf_step_ignore_regions(miri_mrs_model_with_fringe, mock_slice_info_shor
     ignore_region_min = [model.wavelength.min()]
     ignore_region_max = [model.wavelength.max()]
     result = ResidualFringeStep.call(
-        model, skip=False, ignore_region_min=ignore_region_min,
-        ignore_region_max=ignore_region_max)
+        model, skip=False, ignore_region_min=ignore_region_min, ignore_region_max=ignore_region_max
+    )
 
     # output should be the same as input
     assert np.allclose(model.data, result.data)
 
 
-def test_rf_step_low_snr(miri_mrs_model_with_fringe, mock_slice_info_short, mock_wavemap,
-                         module_log_watcher):
+def test_rf_step_low_snr(
+    miri_mrs_model_with_fringe, mock_slice_info_short, mock_wavemap, module_log_watcher
+):
     model = miri_mrs_model_with_fringe
 
     # set all the data to a very small value so SNR is too low to fit
