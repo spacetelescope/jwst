@@ -70,7 +70,6 @@ repos:
             jwst/tests/.* |
             jwst/tso_photometry/.* |
             jwst/wfs_combine/.* |
-            jwst/white_light/.* |
             jwst/conftest.py |
             .*/tests/.* |
             setup.py |
