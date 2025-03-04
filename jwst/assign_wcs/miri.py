@@ -258,7 +258,7 @@ def lrs_xytoabl(input_model, reference_files):
         zero_point = refmodel.meta.x_ref_slitless - 1, refmodel.meta.y_ref_slitless - 1
         # Transform to slitless subarray from full array
         zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
-
+    print('zero point', zero_point)
 
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
@@ -276,6 +276,10 @@ def lrs_xytoabl(input_model, reference_files):
     y0 = refmodel.wavetable.y0
     x1 = refmodel.wavetable.x1
     y2 = refmodel.wavetable.y2
+    print('xcen', xcen)
+    print('ycen', ycen)
+    print('wavetab', wavetab)
+
     refmodel.close()
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.
@@ -290,6 +294,8 @@ def lrs_xytoabl(input_model, reference_files):
     if input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
         bb_sub = ((input_model.meta.subarray.xstart - 1 + 4 - 0.5, input_model.meta.subarray.xsize - 1 + 0.5),
                   (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5))
+
+    print('bb_sub', bb_sub)
 
     # Now deal with the fact that the spectral trace isn't perfectly up and down along detector.
     # This information is contained in the xcenter/ycenter values in the CDP table, but we'll handle it
@@ -405,6 +411,7 @@ def lrs_abltov2v3l(input_model, reference_files):
         # Transform to slitless subarray from full array
         zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
 
+    print('in lrs_abltov2v3l zero pt',zero_point)
     refmodel.close()
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
