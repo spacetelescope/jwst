@@ -1,6 +1,6 @@
+import warnings
 
 import numpy as np
-
 import scipy.interpolate
 
 
@@ -25,11 +25,10 @@ def spline_fitter(x, y, weights, knots, degree, reject_outliers=False, domain=10
     nparams = len(knots) + (degree + 1) * 2
     deg_of_freedom = np.sum(weights) - nparams
 
-    if deg_of_freedom <= 0:
-        raise RuntimeError("Degrees of freedom <= 0")
-
     for _ in range(1000 * nparams):
-        scale = np.sqrt(chi / deg_of_freedom)
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+            scale = np.sqrt(chi / deg_of_freedom)
 
         # Calculate new weights
         resid = (y - spline(x)) / (scale * domain)
