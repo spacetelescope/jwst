@@ -48,4 +48,14 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
 
     # Correct the data
     spec3a_corr = spec3a - leak
-    return spec3a_corr
+
+    # now check if there exists residual fringe corrected data
+    spec3a_corr_rf = None
+
+    if isinstance(ch1b, datamodels.MRSMultiSpecModel) and isinstance(ch3a, datamodels.MRSMultiSpecModel):
+        spec1b_rf = ch1b.spec[0].spec_table.RF_FLUX
+        spec3a_rf = ch3a.spec[0].spec_table.RF_FLUX
+        leak_rf = np.interp(wave3a, 2*wave1b, spec1b_rf) * np.interp(wave3a, leak_wave, leak_percent)
+        # Correct the data
+        spec3a_corr_rf = spec3a_rf - leak_rf
+    return spec3a_corr, spec3a_corr_rf

@@ -77,7 +77,11 @@ be an output table extension with the name EXTRACT1D.  This extension will
 have columns WAVELENGTH, FLUX, FLUX_ERROR, FLUX_VAR_POISSON, FLUX_VAR_RNOISE,
 FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
-BKGD_VAR_FLAT and NPIXELS. Some metadata for the slit will be written to the header for
+BKGD_VAR_FLAT and NPIXELS. In the case of MIRI MRS data there are three additional
+columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
+For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
+
+Some metadata for the slit will be written to the header for
 the table extension, mostly copied from the input SCI extension headers.
 
 For slit-like modes, the extraction region is
@@ -423,10 +427,15 @@ can be applied to the flux-calibrated detector data in the :ref:`residual_fringe
 is part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, but currently it is skipped by default. For more
 information see :ref:`residual_fringe <residual_fringe_step>`.
 
-The pipeline also can apply a 1-D residual fringe correction. This correction is only relevant for MIRI MRS data and 
-can be turned on by setting the optional parameter `ifu_rfcorr = True`  in the ``extract_1d`` step.
+The pipeline also can apply a 1-D residual fringe correction. This correction is only relevant for MIRI MRS
+single band data. The parameter controlling applying the residual fringe correction is by default set to true, 
+`ifu_rfcorr = True`,  in the ``extract_1d`` step.
 Empirically, the 1-D correction step has been found to work better than the 2-D correction step if it is
-applied to per-band spectra.
+applied to per-band spectra. If the MIRI MRS data is from multiple bands/channels the residual fringe correction
+is turned off. Three additional columns are present in MIRI MRS extracted spectra: RF_FLUX, RF_SURF_BRIGHT, and 
+RF_BACKGROUND. These three columns are the flux, surface brightness and background arrays with the residiual
+fringe correction applied. If the data is not from a single band or the residual fringe correction fails
+NaN values are reported for the arrays. 
 
 When using the `ifu_rfcorr` option in the ``extract_1d`` step  to apply a 1-D residual fringe
 correction, it is applied during the extraction of spectra from the IFU cube. The 1D residual fringe code can also

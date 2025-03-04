@@ -49,7 +49,11 @@ class SpectralLeakStep(Step):
 
                 for i, x1d in enumerate(input_model):  # input_model is a Model Container
                     # check that we have the correct type of data
-                    if not isinstance(x1d, datamodels.MultiSpecModel):
+                    if  isinstance(x1d, datamodels.MultiSpecModel):
+                        self.log.debug(' Data is MIRI MRS MultiSpecModel data')
+                    elif isinstance(x1d, datamodels.MRSMultiSpecModel):
+                        self.log.debug(' Data is  MIRI MRS MRSMultiSpecModel data')
+                    else:
                         self.log.warning("Data sent to spectral_leak step is not an extracted spectrum. "
                                          " It is  {}." .format(type(x1d)))
                         for r in result:
@@ -91,8 +95,10 @@ class SpectralLeakStep(Step):
                 # done looping over data now if 1B and 3A data exists make a correction
                 # update result and return
                 if ch1b is not None and ch3a is not None:
-                    corrected_3a = spectral_leak.do_correction(sp_leak_ref, ch1b, ch3a)
+                    corrected_3a, corrected_3a_rf = spectral_leak.do_correction(sp_leak_ref, ch1b, ch3a)
                     result[ich3a].spec[0].spec_table.FLUX = corrected_3a
+                    if corrected_3a_rf is not None:
+                        result[ich3a].spec[0].spec_table.RF_FLUX = corrected_3a_rf
                     result[ich3a].meta.cal_step.spectral_leak = 'COMPLETE'
                     return result
                 else:

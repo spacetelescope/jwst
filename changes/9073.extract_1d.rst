@@ -1,0 +1,1 @@
+For MIRI MRS data added residual fringe corrected columns to extracted spectrum table
