@@ -22,15 +22,14 @@ def update_asn_basedir(asn_file, root=None):
 
     Parameters
     ----------
-    asn_file: str
+    asn_file : str
         The original association file
-
-    root: str
+    root : str
         The root directory where the data actually resides
 
     Returns
     -------
-    updated_asn_path: str
+    updated_asn_path : str
         The updated association file path
     """
     if root is None:
