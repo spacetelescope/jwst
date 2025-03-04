@@ -3,7 +3,14 @@ from pathlib import Path
 
 
 def t_path(partial_path):
-    """Construct the full path for test files."""
+    """
+    Construct the full path for test files.
+
+    Returns
+    -------
+    Path
+        The full path to the test file.
+    """
     test_dir = Path(__file__).parent
     return Path(test_dir) / partial_path
 
