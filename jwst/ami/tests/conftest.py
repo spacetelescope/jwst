@@ -4,6 +4,7 @@ import pytest
 import numpy as np
 from jwst.stpipe import Step
 import stdatamodels.jwst.datamodels as dm
+from jwst.ami.bp_fix import filthp_d
 
 
 PXSC_DEG = 65.6 / (60.0 * 60.0 * 1000)
@@ -11,7 +12,7 @@ PXSC_RAD = PXSC_DEG * np.pi / (180)
 PXSC_MAS = PXSC_DEG * 3600 * 1000
 
 
-@pytest.fixture()
+@pytest.fixture(scope="package")
 def example_model():
     """Create a simple CubeModel simulating input to the ami3 pipeline."""
     model = dm.CubeModel((2, 81, 81))
@@ -36,7 +37,7 @@ def example_model():
     return model
 
 
-@pytest.fixture
+@pytest.fixture(scope="package")
 def circular_pupil():
     """Make a simple circular pupil mask."""
     shape = (1024, 1024)
@@ -50,15 +51,28 @@ def circular_pupil():
     return pupil
 
 
-@pytest.fixture
+@pytest.fixture(scope="package")
 def nrm_model_circular(circular_pupil):
     """Make a simple NRMModel with a circular pupil."""
     return dm.NRMModel(nrm=circular_pupil)
 
 
-@pytest.fixture
+@pytest.fixture(scope="package")
 def nrm_model(example_model):
     """Retrieve a real NRMModel reference file from CRDS."""
     nrm_reffile = Step().get_reference_file(example_model, "nrm")
     nrm_model = dm.NRMModel(nrm_reffile)
     return nrm_model
+
+
+@pytest.fixture(scope="package")
+def bandpass(example_model):
+    """Simulate the bandpass of the example_model with a top-hat function."""
+    filt = example_model.meta.instrument.filter
+    wl_low, wl_high = filthp_d[filt]
+
+    wls = np.linspace(wl_low, wl_high, 9)
+    weights = np.ones_like(wls)
+    weights[0] = 0.01
+    weights[-1] = 0.01
+    return np.array(list(zip(weights, wls, strict=True)))

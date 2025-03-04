@@ -1,9 +1,6 @@
 """Unit tests for AMI find_affine2d_parameters module."""
 
-import pytest
 import numpy as np
-from numpy.testing import assert_allclose
-import stdatamodels.jwst.datamodels as dm
 
 from jwst.ami import find_affine2d_parameters, utils
 from .conftest import PXSC_DEG
@@ -19,16 +16,6 @@ def test_create_afflist_rot():
     
     # check that singularity has been avoided at 15 degrees
     assert alist[-1].rotradccw != np.pi * rotdegs[-1] / 180.0
-
-
-@pytest.fixture
-def bandpass():
-    """Simulate the F277W bandpass with a top-hat function."""
-    wls = np.linspace(2.4, 3.2, 9)
-    weights = np.ones_like(wls)
-    weights[0] = 0.01
-    weights[-1] = 0.01
-    return np.array(list(zip(weights, wls)))
 
 
 def test_find_rotation(example_model, nrm_model, bandpass):

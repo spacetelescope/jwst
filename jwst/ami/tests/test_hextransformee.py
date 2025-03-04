@@ -1,8 +1,6 @@
 """Unit tests for AMI hextransformee module."""
 
-import pytest
 import numpy as np
-from numpy.testing import assert_allclose
 
 from jwst.ami import hextransformee
 from jwst.ami.bp_fix import filtwl_d
@@ -32,4 +30,4 @@ def test_hextransform(example_model):
     hex_real = np.abs(hex_complex)
     assert np.isclose(np.max(hex_real), np.sqrt(3) / 2.0, atol=1.0e-8)
     assert np.argmax(hex_real) == ctr[0] * shape[1] + ctr[1]
-    assert all(hex_real <= np.sqrt(3) / 2.0)
+    assert (hex_real <= np.sqrt(3) / 2.0).all()

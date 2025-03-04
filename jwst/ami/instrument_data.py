@@ -32,39 +32,41 @@ class NIRISS:
         """
         Initialize NIRISS class for NIRISS/AMI instrument.
 
+        TODO: None is an invalid input to bandpass, which means bandpass should be
+        made into a required argument.
+        TODO: Several of the attributes are unused or only used in the init.
+        If the AMI team is not interactively using those attributes, this should
+        be refactored to remove them.
+        TODO: why is cvsupport_threshold an attribute of the class?
+        Since filt is a required input, it stands to reason this should contain info
+        only about a single filter. It appears cvsupport_threshold should be moved
+        into a constant, or an optional input to the class.
+        Also it looks like the threshold attribute (which cvsupport_threshold is used to set)
+        is not used. Can we just remove all of this?
+        TODO: setting chooseholes to a non-default value does not work.
+        Failure is in mask_definition_ami.read_nrm_model, where there is an
+        IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed.
+
         Parameters
         ----------
         filt : str
             Filter name
-
         nrm_model : NRMModel datamodel
             Datamodel containing mask geometry information
-
         chooseholes : list
             None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
-
         affine2d : Affine2d object
             Affine2d object
-
         bandpass : synphot spectrum or array
             None, synphot object or [(wt,wlen),(wt,wlen),...].
             Monochromatic would be e.g. [(1.0, 4.3e-6)]
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
             the given bandpass, so you could simulate, for example,
             a 21cm psf through something called "F430M"!
-
         usebp : bool
             If True, exclude pixels marked DO_NOT_USE from fringe fitting
-
         firstfew : int
             If not None, process only the first few integrations
-
-        chooseholes : str
-            If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
-
-        affine2d : Affine2D object
-            None or user-defined Affine2d object
-
         run_bpfix : bool
             Run Fourier bad pixel fix on cropped data
         """
@@ -153,6 +155,13 @@ class NIRISS:
         Retrieve info from input data model and store in NIRISS class.
         Trim refpix and roughly center science data and dq array.
         Run Fourier bad pixel correction before returning science data.
+
+        TODO: Is setting all of the input model metadata to attributes
+        really necessary?
+        If we need to access lots of attributes from the model,
+        could we just make the model itself accessible?
+        Currently, NONE of these attributes are used anywhere in the pipeline
+        except nwav and wls (this function is just used to center science data and mask).
 
         Parameters
         ----------
