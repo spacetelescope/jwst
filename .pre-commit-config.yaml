@@ -58,7 +58,6 @@ repos:
             jwst/refpix/.* |
             jwst/resample/.* |
             jwst/reset/.* |
-            jwst/residual_fringe/.* |
             jwst/rscd/.* |
             jwst/saturation/.* |
             jwst/scripts/.* |
