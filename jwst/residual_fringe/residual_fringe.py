@@ -16,6 +16,10 @@ from jwst.residual_fringe import utils
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+# Noise factor for DER_SNR spectroscopic signal-to-noise calculation
+# (see Stoehr, ADASS 2008: https://archive.stsci.edu/vodocs/der_snr.pdf)
+DER_SNR_FACTOR = 1.482602 / np.sqrt(6)
+
 
 class ResidualFringeCorrection:
     """Calculate and apply correction for residual fringes."""
@@ -42,10 +46,10 @@ class ResidualFringeCorrection:
         regions_reference_file : str
             Path to REGIONS reference file.
         ignore_regions : dict
-            Wavelength regions to ignore. Keys are "num", "min", and "max.
+            Wavelength regions to ignore. Keys are "num", "min", and "max".
             Values are the number of regions specified (int), the list
             of minimum wavelength values, and the list of maximum wavelength
-            values.  Minimum and maximum lists must match.
+            values.  Length of minimum and maximum lists must match.
         save_intermediate_results : bool, optional
             If True, intermediate files are saved to disk.
         transmission_level : int, optional
@@ -90,9 +94,7 @@ class ResidualFringeCorrection:
 
     def do_correction(self):
         """
-        Apply residual fringe correction.
-
-        Correction is applied to a model copied from self.input_model.
+        Apply residual fringe correction to a copy of self.input_model.
 
         Returns
         -------
@@ -267,17 +269,17 @@ class ResidualFringeCorrection:
                     # reasonable signal. If the SNR < min_snr (CDP), pass
                     n = len(test_flux)
                     signal = np.nanmean(test_flux)
-                    noise = 0.6052697 * np.nanmedian(
+                    noise = DER_SNR_FACTOR * np.nanmedian(
                         np.abs(2.0 * test_flux[2 : n - 2] - test_flux[0 : n - 4] - test_flux[4:n])
                     )
 
-                    snr2 = 0.0  # initialize
+                    snr2 = 0.0
                     if noise != 0:
                         snr2 = signal / noise
 
                     # Sometimes can return nan, inf for bad data so include this in check
                     if snr2 < min_snr[0]:
-                        log.debug(f"SNR too low not fitting column {col}, {snr2}, {min_snr[0]}")
+                        log.debug(f"SNR too low; not fitting column {col}, {snr2}, {min_snr[0]}")
                         continue
 
                     log.debug(f"Fitting column {col}")
@@ -372,89 +374,90 @@ class ResidualFringeCorrection:
                     try:
                         for fn, ff in enumerate(ffreq):
                             # ignore place holder fringes
-                            if ff > 1e-03:
-                                log.debug(f"  Start ffreq = {ff}")
+                            if ff <= 1e-03:
+                                continue
 
-                                # check if snr criteria is met for fringe component,
-                                # should always be true for fringe 1
-                                if snr2 > min_snr[fn]:
-                                    log.debug("  Fit spectral baseline")
+                            # check if snr criteria is met for fringe component,
+                            # should always be true for fringe 1
+                            if snr2 <= min_snr[fn]:
+                                continue
 
-                                    bg_fit, bgindx = utils.fit_1d_background_complex(
-                                        proc_data,
-                                        weights_feat,
-                                        col_wnum,
-                                        ffreq=ffreq[fn],
-                                        channel=c,
-                                    )
+                            log.debug(f"  Start ffreq = {ff}")
+                            log.debug("  Fit spectral baseline")
 
-                                    # get the residual fringes as fraction of signal
-                                    res_fringes = np.divide(
-                                        proc_data,
-                                        bg_fit,
-                                        out=np.zeros_like(proc_data),
-                                        where=bg_fit != 0,
-                                    )
-                                    res_fringes = np.subtract(
-                                        res_fringes, 1, where=res_fringes != 0
-                                    )
-                                    res_fringes *= np.where(col_weight > 1e-07, 1, 1e-08)
+                            bg_fit, bgindx = utils.fit_1d_background_complex(
+                                proc_data,
+                                weights_feat,
+                                col_wnum,
+                                ffreq=ffreq[fn],
+                                channel=c,
+                            )
 
-                                    # fit the residual fringes
-                                    log.debug("  Set up Bayes evidence")
-                                    (
-                                        res_fringe_fit,
-                                        wpix_num,
-                                        opt_nfringe,
-                                        peak_freq,
-                                        freq_min,
-                                        freq_max,
-                                    ) = utils.fit_1d_fringes_bayes_evidence(
-                                        res_fringes,
-                                        weights_feat,
-                                        col_wnum,
-                                        ffreq[fn],
-                                        dffreq[fn],
-                                        max_nfringes[fn],
-                                        pgram_res[fn],
-                                        col_snr2,
-                                    )
+                            # get the residual fringes as fraction of signal
+                            res_fringes = np.divide(
+                                proc_data,
+                                bg_fit,
+                                out=np.zeros_like(proc_data),
+                                where=bg_fit != 0,
+                            )
+                            res_fringes = np.subtract(res_fringes, 1, where=res_fringes != 0)
+                            res_fringes *= np.where(col_weight > 1e-07, 1, 1e-08)
 
-                                    # check for fit blowing up, reset rfc fit to 0, raise a flag
-                                    log.debug("  Check residual fringe fit for bad fit regions")
-                                    res_fringe_fit, res_fringe_fit_flag = utils.check_res_fringes(
-                                        res_fringe_fit, col_max_amp
-                                    )
+                            # fit the residual fringes
+                            log.debug("  Set up Bayes evidence")
+                            (
+                                res_fringe_fit,
+                                wpix_num,
+                                opt_nfringe,
+                                peak_freq,
+                                freq_min,
+                                freq_max,
+                            ) = utils.fit_1d_fringes_bayes_evidence(
+                                res_fringes,
+                                weights_feat,
+                                col_wnum,
+                                ffreq[fn],
+                                dffreq[fn],
+                                max_nfringes[fn],
+                                pgram_res[fn],
+                                col_snr2,
+                            )
 
-                                    # correct for residual fringes
-                                    log.debug("  Divide out residual fringe fit")
-                                    _, _, _, env, u_x, u_y = utils.fit_envelope(
-                                        np.arange(res_fringe_fit.shape[0]), res_fringe_fit
-                                    )
+                            # check for fit blowing up, reset rfc fit to 0, raise a flag
+                            log.debug("  Check residual fringe fit for bad fit regions")
+                            res_fringe_fit, res_fringe_fit_flag = utils.check_res_fringes(
+                                res_fringe_fit, col_max_amp
+                            )
 
-                                    rfc_factors = 1 / (
-                                        res_fringe_fit * (col_weight > 1e-05).astype(int) + 1
-                                    )
-                                    proc_data *= rfc_factors
-                                    proc_factors *= rfc_factors
+                            # correct for residual fringes
+                            log.debug("  Divide out residual fringe fit")
+                            _, _, _, env, u_x, u_y = utils.fit_envelope(
+                                np.arange(res_fringe_fit.shape[0]), res_fringe_fit
+                            )
 
-                                    # handle nans or infs that may exist
-                                    proc_data = np.nan_to_num(proc_data, posinf=1e-08, neginf=1e-08)
-                                    proc_data[proc_data < 0] = 1e-08
+                            rfc_factors = 1 / (
+                                res_fringe_fit * (col_weight > 1e-05).astype(int) + 1
+                            )
+                            proc_data *= rfc_factors
+                            proc_factors *= rfc_factors
 
-                                    out_table.add_row(
-                                        (
-                                            ss,
-                                            col,
-                                            fn,
-                                            snr2,
-                                            pgram_res[fn],
-                                            opt_nfringe,
-                                            peak_freq,
-                                            freq_min,
-                                            freq_max,
-                                        )
-                                    )
+                            # handle nans or infs that may exist
+                            proc_data = np.nan_to_num(proc_data, posinf=1e-08, neginf=1e-08)
+                            proc_data[proc_data < 0] = 1e-08
+
+                            out_table.add_row(
+                                (
+                                    ss,
+                                    col,
+                                    fn,
+                                    snr2,
+                                    pgram_res[fn],
+                                    opt_nfringe,
+                                    peak_freq,
+                                    freq_min,
+                                    freq_max,
+                                )
+                            )
 
                         # define fringe sub after all fringe components corrections
                         fringe_sub = proc_data.copy()

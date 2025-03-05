@@ -30,7 +30,7 @@ def miri_image():
 @pytest.fixture()
 def step_log_watcher(monkeypatch):
     # Set a log watcher to check for a log message at any level
-    # in the emicorr step
+    # in the residual_fringe step
     watcher = LogWatcher("")
     logger = logging.getLogger("stpipe.ResidualFringeStep")
     for level in ["debug", "info", "warning", "error"]:
