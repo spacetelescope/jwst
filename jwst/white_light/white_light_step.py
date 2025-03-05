@@ -14,9 +14,9 @@ class WhiteLightStep(Step):
     """
     Sum the spectroscopic flux over all wavelengths in each integration.
 
-    Specific to multi-integration extracted spectrum to produce an integrated (“white”)
-    flux as a function of time for the target. This is to be applied to the _x1dints
-    product in a spectroscopic Time-Series Observation (TSO).
+    Produce an integrated (“white”) flux as a function of time for the target. This
+    is to be applied to the _x1dints product in a spectroscopic
+    Time-Series Observation (TSO).
     """
 
     class_alias = "white_light"
