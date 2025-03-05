@@ -52,13 +52,13 @@ def get_reference_file_subarrays(model, readnoise_model, gain_model):
         gain_2d = gain_model.data
     else:
         log.info("Extracting gain subarray to match science data")
-        gain_2d = reffile_utils.get_subarray_data(model, gain_model)
+        gain_2d = reffile_utils.get_subarray_model(model, gain_model).data
 
     if reffile_utils.ref_matches_sci(model, readnoise_model):
         readnoise_2d = readnoise_model.data
     else:
         log.info("Extracting readnoise subarray to match science data")
-        readnoise_2d = reffile_utils.get_subarray_data(model, readnoise_model)
+        readnoise_2d = reffile_utils.get_subarray_model(model, readnoise_model).data
 
     return readnoise_2d, gain_2d
 
