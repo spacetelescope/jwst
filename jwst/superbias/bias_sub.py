@@ -14,9 +14,9 @@ def do_correction(input_model, bias_model):
 
     Parameters
     ----------
-    input_model : stdatamodels.jwst.datamodels.ramp.RampModel
+    input_model : RampModel
         Science data to be corrected
-    bias_model : sustdatamodels.jwst.datamodels.superbias.SuperBiasModel
+    bias_model : SuperBiasModel
         Bias data
 
     Returns
