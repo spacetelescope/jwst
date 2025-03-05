@@ -10,17 +10,18 @@ from astropy.modeling.models import (
 )
 from astropy.modeling.fitting import LinearLSQFitter
 from astropy.stats import sigma_clip
+
 from astropy.utils.exceptions import AstropyUserWarning
 from gwcs import wcstools, WCS
 from gwcs import coordinate_frames as cf
 
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.util import compute_scale, wcs_bbox_from_shape, wrap_ra
+from jwst.assign_wcs.util import compute_scale, wcs_bbox_from_shape,\
+    wrap_ra
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleImage
 from jwst.datamodels import ModelLibrary
-
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -163,6 +164,7 @@ class ResampleSpec(ResampleImage):
             # Any other customizations (crpix, crval, rotation) are ignored.
             if resample_utils.is_sky_like(input_models[0].meta.wcs.output_frame):
                 if input_models[0].meta.instrument.name != "NIRSPEC":
+
                     output_wcs = self.build_interpolated_output_wcs(
                         input_models,
                         pixel_scale_ratio=pixel_scale_ratio
@@ -576,13 +578,15 @@ class ResampleSpec(ResampleImage):
         all_dec_slit = []
         xstop = 0
 
+        all_wcs = [m.meta.wcs for m in input_models]
         for im, model in enumerate(input_models):
             wcs = model.meta.wcs
             bbox = wcs.bounding_box
             grid = wcstools.grid_from_bounding_box(bbox)
             ra, dec, lam = np.array(wcs(*grid))
-            # Handle vertical (MIRI) or horizontal (NIRSpec) dispersion.  The
-            # following 2 variables are 0 or 1, i.e. zero-indexed in x,y WCS order
+
+            # Handle vertical (MIRI).  The following 2 variables are
+            # 0 or 1, i.e. zero-indexed in x,y WCS order
             spectral_axis = find_dispersion_axis(model)
             spatial_axis = spectral_axis ^ 1
 
@@ -599,7 +603,7 @@ class ResampleSpec(ResampleImage):
             # sampling.
 
             # Steps to do this for first input model:
-            # 1. find the middle of the spectrum in wavelength
+            # 1. Find the middle of the spectrum in wavelength
             # 2. Pull out the ra and dec at the center of the slit.
             # 3. Find the mean ra,dec and the center of the slit this will
             #    represent the tangent point
@@ -614,7 +618,7 @@ class ResampleSpec(ResampleImage):
                 lam_center_index = int((bbox[spectral_axis][1] -
                                         bbox[spectral_axis][0]) / 2)
                 if spatial_axis == 0:
-                    # MIRI LRS, the WCS x axis is spatial
+                    # MIRI LRS spectral = 1, the spatial axis = 0
                     ra_slice = ra[lam_center_index, :]
                     dec_slice = dec[lam_center_index, :]
                 else:
@@ -637,10 +641,10 @@ class ResampleSpec(ResampleImage):
                 x_tan, y_tan = undist2sky1.inverse(ra, dec)
 
                 # pull out data from center
-                if spectral_axis == 0:  # MIRI LRS, the WCS x axis is spatial
+                if spectral_axis == 0:
                     x_tan_array = x_tan.T[lam_center_index]
                     y_tan_array = y_tan.T[lam_center_index]
-                else:
+                else: # MIRI LRS Spectral Axis = 1, the WCS x axis is spatial
                     x_tan_array = x_tan[lam_center_index]
                     y_tan_array = y_tan[lam_center_index]
 
@@ -750,26 +754,26 @@ class ResampleSpec(ResampleImage):
 
         native2celestial = RotateNative2Celestial(ra_center_final, dec_center_final, 180)
         undist2sky = tan | native2celestial
-        # find the spatial size of the output - same in x,y
-        if swap_xy:
-            _, x_tan_all = undist2sky.inverse(all_ra, all_dec)
-            pix_to_tan_slope = pix_to_ytan.slope
-        else:
-            x_tan_all, _ = undist2sky.inverse(all_ra, all_dec)
-            pix_to_tan_slope = pix_to_xtan.slope
 
-        x_min = np.amin(x_tan_all)
-        x_max = np.amax(x_tan_all)
-        x_size = int(np.ceil((x_max - x_min) / np.absolute(pix_to_tan_slope)))
-        if swap_xy:
-            pix_to_ytan.intercept = -0.5 * (x_size - 1) * pix_to_ytan.slope
-        else:
-            pix_to_xtan.intercept = -0.5 * (x_size - 1) * pix_to_xtan.slope
+        ## Use all the wcs
+        min_tan_x, max_tan_x, min_tan_y, max_tan_y = self._max_spatial_extent(
+            all_wcs, undist2sky.inverse)
+        diff_y = np.abs(max_tan_y - min_tan_y)
+        diff_x = np.abs(max_tan_x - min_tan_x)
+        pix_to_tan_slope_y = np.abs(pix_to_ytan.slope)
+        slope_sign_y = np.sign(pix_to_ytan.slope)
+        pix_to_tan_slope_x = np.abs(pix_to_xtan.slope)
+        slope_sign_x = np.sign(pix_to_xtan.slope)
 
-        # single model: use size of x_tan_array
-        # to be consistent with method before
-        if len(input_models) == 1:
-            x_size = int(np.ceil(xstop))
+        if swap_xy:
+            ny = int(np.ceil(diff_y / pix_to_tan_slope_y))
+        else:
+            ny = int(np.ceil(diff_x / pix_to_tan_slope_x))
+
+        offset_y  = (ny)/2 * pix_to_tan_slope_y
+        offset_x  = (ny)/2 * pix_to_tan_slope_x
+        pix_to_ytan.intercept =  - slope_sign_y * offset_y
+        pix_to_xtan.intercept =  - slope_sign_x * offset_x
 
         # define the output wcs
         transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
@@ -789,14 +793,13 @@ class ResampleSpec(ResampleImage):
         # compute the output array size in WCS axes order, i.e. (x, y)
         output_array_size = [0, 0]
         output_array_size[spectral_axis] = int(np.ceil(len(wavelength_array)))
-        output_array_size[spatial_axis] = x_size
+        output_array_size[spatial_axis] = ny
 
         # turn the size into a numpy shape in (y, x) order
         output_wcs.array_shape = output_array_size[::-1]
         output_wcs.pixel_shape = output_array_size
         bounding_box = wcs_bbox_from_shape(output_array_size[::-1])
         output_wcs.bounding_box = bounding_box
-
         return output_wcs
 
     def build_nirspec_lamp_output_wcs(self, input_models, pixel_scale_ratio):
@@ -1011,3 +1014,4 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
 
     pixel_scale = compute_scale(wcs, fiducial, disp_axis=disp_axis)
     return float(pixel_scale)
+
