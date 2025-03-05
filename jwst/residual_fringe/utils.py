@@ -41,12 +41,12 @@ def slice_info(slice_map, channel):
     slices_in_channel : ndarray of int
         1D array of slice IDs included in the channel.
     xrange_channel : ndarray of int
-        1D array with two elements: minimum and maximum x values
+        1D array with two elements: minimum and maximum x indices
         for the channel.
     slice_x_ranges : ndarray of int
         N x 3 array for N slices, where the first column is the slice ID,
-        second column is the minimum x value for the slice,
-        and the third column is the maximum x value for the slice.
+        second column is the minimum x index for the slice,
+        and the third column is the maximum x index for the slice.
     all_slice_masks : ndarray of int
         N x nx x ny for N slices, matching the x and y shape of the
         input slice_map.  Values are 1 for pixels included in the slice,
@@ -137,7 +137,7 @@ def fill_wavenumbers(wnums):
 
 def multi_sine(n_sines):
     """
-    Create a mult-sine model.
+    Create a multi-sine model.
 
     Parameters
     ----------
@@ -146,7 +146,7 @@ def multi_sine(n_sines):
 
     Returns
     -------
-    model : SineModel
+    model : BayesicFitting.SineModel
         The model composed of n sines.
     """
     # make the first sine
