@@ -30,12 +30,8 @@ class SourceTypeStep(Step):
 
         Parameters
         ----------
-        step_input : str or datamodel
-            Either the path to the file or the science data model to be corrected. The
-            datamodel can be one of the following:
-            stdatamodels.jwst.datamodels.ifuimage.IFUImageModel,
-            stdatamodels.jwst.datamodels.multislit.MultiSlitModel,
-            stdatamodels.jwst.datamodels.slit.SlitModel
+        step_input : str, IFUImageModel, MultiSlitModel, or SlitModel
+            Either the path to the file or the science data model to be corrected.
 
         Returns
         -------
