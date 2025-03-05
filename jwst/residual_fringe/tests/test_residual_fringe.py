@@ -123,7 +123,7 @@ def mock_slice_info_long(monkeypatch):
 @pytest.fixture()
 def module_log_watcher(monkeypatch):
     # Set a log watcher to check for a log message at any level
-    # in the emicorr module
+    # in the residual_fringe module
     watcher = LogWatcher("")
     logger = logging.getLogger("jwst.residual_fringe.residual_fringe")
     for level in ["debug", "info", "warning", "error"]:
@@ -157,8 +157,12 @@ def test_rf1d(linear_spectrum, fringed_spectrum):
 
 
 def test_get_wavemap():
-    # Test the _get_wavemap function directly, since
-    # all full calls to the correction method mock it
+    """
+    Test the _get_wavemap function directly.
+
+    A separate test is needed, since calls to the higher level correction method
+    mock this function for synthetic data simplicity.
+    """
     model = datamodels.IFUImageModel()
 
     # Mock a WCS that returns 1 for wavelengths
