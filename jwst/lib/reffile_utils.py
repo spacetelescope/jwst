@@ -197,101 +197,6 @@ def ref_matches_sci(sci_model, ref_model):
         return False
 
 
-def get_subarray_data(sci_model, ref_model):
-    """
-    Extract a subarray from the data attribute of a reference file
-    data model that matches the subarray characteristics of a
-    science data model. Only the extracted data array is returned.
-
-    Parameters
-    ----------
-    sci_model: JWST data model
-        science data model
-
-    ref_model: JWST data model
-        reference file data model
-
-    Returns
-    -------
-    array: 2-D extracted data array
-    """
-
-    # Make sure xstart/ystart exist in science data model
-    if sci_model.meta.subarray.xstart is None or sci_model.meta.subarray.ystart is None:
-
-        # If the science file is full-frame, set the missing params to
-        # default values
-        if sci_model.data.shape[-1] == 2048 and sci_model.data.shape[-2] == 2048:
-            sci_model.meta.subarray.xstart = 1
-            sci_model.meta.subarray.ystart = 1
-            sci_model.meta.subarray.xsize = 2048
-            sci_model.meta.subarray.ysize = 2048
-        else:
-            raise ValueError('xstart or ystart metadata values not found in input model')
-
-    # Make sure xstart/ystart exist in reference data model
-    if ref_model.meta.subarray.xstart is None or ref_model.meta.subarray.ystart is None:
-
-        # If the ref file is full-frame, set the missing params to
-        # default values
-        if ref_model.meta.instrument.name.upper() == 'MIRI':
-            if ref_model.data.shape[-1] == 1032 and ref_model.data.shape[-2] == 1024:
-                ref_model.meta.subarray.xstart = 1
-                ref_model.meta.subarray.ystart = 1
-                ref_model.meta.subarray.xsize = 1032
-                ref_model.meta.subarray.ysize = 1024
-            else:
-                raise ValueError('xstart or ystart metadata values not found in reference model')
-        else:
-            if ref_model.data.shape[-1] == 2048 and ref_model.data.shape[-2] == 2048:
-                ref_model.meta.subarray.xstart = 1
-                ref_model.meta.subarray.ystart = 1
-                ref_model.meta.subarray.xsize = 2048
-                ref_model.meta.subarray.ysize = 2048
-            else:
-                raise ValueError('xstart or ystart metadata values not found in reference model')
-
-    # Get subarray limits from metadata of input model
-    xstart_sci = sci_model.meta.subarray.xstart
-    xsize_sci = sci_model.meta.subarray.xsize
-    ystart_sci = sci_model.meta.subarray.ystart
-    ysize_sci = sci_model.meta.subarray.ysize
-    log.debug('science xstart=%d, xsize=%d, ystart=%d, ysize=%d',
-              xstart_sci, xsize_sci, ystart_sci, ysize_sci)
-
-    # Get subarray limits from metadata of reference model
-    xstart_ref = ref_model.meta.subarray.xstart
-    xsize_ref = ref_model.meta.subarray.xsize
-    ystart_ref = ref_model.meta.subarray.ystart
-    ysize_ref = ref_model.meta.subarray.ysize
-    log.debug('reference xstart=%d, xsize=%d, ystart=%d, ysize=%d',
-              xstart_ref, xsize_ref, ystart_ref, ysize_ref)
-
-    # Compute slice limits, in 0-indexed python notation
-    xstart = xstart_sci - xstart_ref
-    ystart = ystart_sci - ystart_ref
-    xstop = xstart + xsize_sci
-    ystop = ystart + ysize_sci
-    log.debug('slice xstart=%d, xstop=%d, ystart=%d, ystop=%d',
-              xstart, xstop, ystart, ystop)
-
-    # Make sure that the slice limits are within the bounds of
-    # the reference file data array
-    if (xstart < 0 or ystart < 0 or xstop > ref_model.meta.subarray.xsize or
-            ystop > ref_model.meta.subarray.ysize):
-        log.error('Computed reference file slice indexes are ' +
-                  'incompatible with size of reference data array')
-        log.error('Science: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                  xstart_sci, ystart_sci, xsize_sci, ysize_sci)
-        log.error('Reference: SUBSTRT1=%d, SUBSTRT2=%d, SUBSIZE1=%d, SUBSIZE2=%d',
-                  xstart_ref, ystart_ref, xsize_ref, ysize_ref)
-        log.error('Slice indexes: xstart=%d, xstop=%d, ystart=%d, ystop=%d',
-                  xstart, xstop, ystart, ystop)
-        raise ValueError('Bad reference file slice indexes')
-
-    return ref_model.data[ystart:ystop, xstart:xstop]
-
-
 def get_subarray_model(sci_model, ref_model):
     """
     Create a subarray version of a reference file model that matches
@@ -312,6 +217,10 @@ def get_subarray_model(sci_model, ref_model):
     sub_model: JWST data model
         subarray version of the reference file model
     """
+    # If science data is in multistripe readout, use
+    # multistripe-specific subarray reconstruction.
+    if getattr(sci_model.meta.subarray, 'multistripe_reads1') is not None:
+        return get_multistripe_subarray_model(sci_model, ref_model)
 
     # Get the science model subarray params
     xstart_sci = sci_model.meta.subarray.xstart
@@ -386,6 +295,176 @@ def get_subarray_model(sci_model, ref_model):
         sub_model = None
 
     return sub_model
+
+
+def get_multistripe_subarray_model(sci_model, ref_model):
+    """
+    Create a subarray version of a reference file model that matches
+    the multistripe-specific subarray characteristics of a science
+    data model. A new model is created that contains subarrays of
+    all data arrays contained in the reference file model.
+
+    Parameters
+    ----------
+    sci_model: JWST data model
+        science data model
+
+    ref_model: JWST data model
+        reference file data model
+
+    Returns
+    -------
+    sub_model: JWST data model
+        subarray version of the reference file model
+    """
+    # Could consider just brute-forcing every attribute in a list,
+    # catching any errors for those attribs that don't exist for
+    # a given reftype? Catching unknown reftypes is probably safer,
+    # given possibility of unknown attrib.
+    if isinstance(ref_model, datamodels.MaskModel):
+        sub_model = stripe_read(sci_model, ref_model, ['dq'])
+    elif isinstance(ref_model, datamodels.GainModel):
+        sub_model = stripe_read(sci_model, ref_model, ['data'])
+    elif isinstance(ref_model, datamodels.LinearityModel):
+        sub_model = stripe_read(sci_model, ref_model, ['coeffs', 'dq'])
+    elif isinstance(ref_model, datamodels.ReadnoiseModel):
+        sub_model = stripe_read(sci_model, ref_model, ['data'])
+    elif isinstance(ref_model, datamodels.SaturationModel):
+        sub_model = stripe_read(sci_model, ref_model, ['data', 'dq'])
+    elif isinstance(ref_model, datamodels.SuperBiasModel):
+        sub_model = stripe_read(sci_model, ref_model, ['data', 'err', 'dq'])
+    else:
+        log.warning('Unsupported reference file model type')
+        sub_model = None
+
+    # Temporary saving of all sub_models created
+    sub_model.write(
+        sub_model.meta.filename.split('.')[0]
+        + '_'
+        + sci_model.meta.subarray.name
+        + '.fits'
+    )
+    return sub_model
+
+
+def stripe_read(sci_model, ref_model, attribs):
+    # Get the science model multistripe params
+    nreads1 = sci_model.meta.subarray.multistripe_reads1
+    nskips1 = sci_model.meta.subarray.multistripe_skips1
+    nreads2 = sci_model.meta.subarray.multistripe_reads2
+    nskips2 = sci_model.meta.subarray.multistripe_skips2
+    repeat_stripe = sci_model.meta.subarray.repeat_stripe
+    xsize_sci = sci_model.meta.subarray.xsize
+    ysize_sci = sci_model.meta.subarray.ysize
+
+    # Get the reference model subarray params
+
+
+    sub_model = type(ref_model)()
+    sub_model.update(ref_model)
+    for attrib in attribs:
+        ref_array = getattr(ref_model, attrib)
+
+        # TEMP: are skips1 starting from inverted position for
+        # nrca2 and nrca4? Test flipping the rows
+        if ('2' in sci_model.meta.instrument.detector or
+                '4' in sci_model.meta.instrument.detector):
+            ref_array = ref_array[..., ::-1, :]
+
+        sub_model[attrib] = generate_stripe_array(
+            ref_array,
+            xsize_sci,
+            ysize_sci,
+            nreads1,
+            nreads2,
+            nskips1,
+            nskips2,
+            repeat_stripe
+        )
+    return sub_model
+
+
+def generate_stripe_array(
+        ref_array,
+        xsize_sci,
+        ysize_sci,
+        nreads1,
+        nreads2,
+        nskips1,
+        nskips2,
+        repeat_stripe
+):
+    """
+
+    Parameters
+    ----------
+    ref_array : nd-array
+        The scene to be sliced.
+    xsize_sci : int
+        Output shape in x dim.
+    ysize_sci : int
+        Output shape in y dim.
+    nreads1 : int
+        Multistripe header keyword.
+    nreads2 : int
+        Multistripe header keyword.
+    nskips1 : int
+        Multistripe header keyword.
+    nskips2 : int
+        Multistripe header keyword.
+    repeat_stripe : int
+        Multistripe header keyword.
+
+    Returns
+    -------
+
+    """
+    ref_shape = np.shape(ref_array)
+    stripe_out = np.zeros(
+        (*ref_shape[:-2], ysize_sci, xsize_sci), dtype=getattr(ref_array, 'dtype')
+    )
+    # Track the read position in the full frame with linecount, and number of lines
+    # read into subarray with sub_lines
+    linecount = 0
+    sub_lines = 0
+
+    # Start at 0, make nreads1 row reads
+    stripe_out[..., sub_lines: sub_lines + nreads1, :] = \
+        ref_array[..., linecount: linecount + nreads1, :]
+    linecount += nreads1
+    sub_lines += nreads1
+    # Now skip nskips1
+    linecount += nskips1
+    # Nreads2
+    stripe_out[..., sub_lines: sub_lines + nreads2, :] = \
+        ref_array[..., linecount: linecount + nreads2, :]
+    linecount += nreads2
+    sub_lines += nreads2
+    # Nskips2
+    linecount += nskips2
+
+    # Now, while the output size is less than the science array size,
+    # repeat the steps of any interleaved nreads1 followed by
+    # nreads2 + nskips2 until the appropriate size is reached.
+    while sub_lines < ysize_sci:
+        # If interleaved nreads1, add interleaved rows to output and increment sub_lines
+        if repeat_stripe > 0:
+            stripe_out[..., sub_lines: sub_lines + nreads1, :] = \
+                ref_array[..., 0: 0 + nreads1, :]
+            sub_lines += nreads1
+
+        # Nreads2
+        stripe_out[..., sub_lines: sub_lines + nreads2, :] = \
+            ref_array[..., linecount: linecount + nreads2, :]
+        linecount += nreads2
+        sub_lines += nreads2
+        # Nskips2
+        linecount += nskips2
+
+    if sub_lines != ysize_sci:
+        raise ValueError('Stripe readout resulted in mismatched reference array shape '
+                         'with respect to science array!')
+    return stripe_out
 
 
 class MatchRowError(Exception):
