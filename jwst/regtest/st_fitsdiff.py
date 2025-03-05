@@ -9,14 +9,20 @@ from itertools import islice
 from astropy import __version__
 from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
 
-from astropy.io.fits.card import BLANK_CARD, Card
+from astropy.io.fits.card import BLANK_CARD
 
 from astropy.io.fits.hdu.hdulist import HDUList
 from astropy.io.fits.hdu.table import _TableLikeHDU
 
 import numpy as np
-from astropy.io.fits.diff import (FITSDiff, HDUDiff, HeaderDiff, TableDataDiff, ImageDataDiff,
-                                  report_diff_keyword_attr, _COL_ATTRS)
+from astropy.io.fits.diff import (
+    FITSDiff,
+    HDUDiff,
+    HeaderDiff,
+    TableDataDiff,
+    ImageDataDiff,
+    _COL_ATTRS,
+)
 
 
 __all__ = [
@@ -29,13 +35,18 @@ __all__ = [
 ]
 
 
+def set_variable_to_empty_list(variable):
+    if variable is None:
+        variable = []
+    return variable
+
+
 class STFITSDiff(FITSDiff):
     """
-    FITSDiff class from astropy with STScI edits.
+    FITSDiff class from astropy with STScI ad hoc changes for STScI regression test reports.
 
-    Statistics about how far off values are from tolerances
-    will be printed, from 0.1 through 0.0, along
-    with maximum and minimum values.
+    Statistics about how far off values are from tolerances will be printed, from 0.1
+    through 0.0, along with maximum and minimum values.
 
     Full documentation of the base class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
@@ -45,10 +56,10 @@ class STFITSDiff(FITSDiff):
         self,
         a,
         b,
-        ignore_hdus=[],
-        ignore_keywords=[],
-        ignore_comments=[],
-        ignore_fields=[],
+        ignore_hdus=None,
+        ignore_keywords=None,
+        ignore_comments=None,
+        ignore_fields=None,
         numdiffs=10,
         rtol=0.0,
         atol=0.0,
@@ -58,6 +69,8 @@ class STFITSDiff(FITSDiff):
         extension_tolerances=None,
     ):
         """
+        For full documentation on variables, see original astropy code.
+
         Parameters
         ----------
         a : str or `HDUList`
@@ -133,18 +146,23 @@ class STFITSDiff(FITSDiff):
             if "DEFAULT" not in [str(key).upper() for key in extension_tolerances]:
                 self.expected_extension_tolerances["DEFAULT"] = {"rtol": rtol, "atol": atol}
 
-        super().__init__(a, b,
-                         ignore_hdus=ignore_hdus,
-                         ignore_keywords=ignore_keywords,
-                         ignore_comments=ignore_comments,
-                         ignore_fields=ignore_fields,
-                         numdiffs=numdiffs,
-                         rtol=rtol,
-                         atol=atol,
-                         ignore_blanks=ignore_blanks,
-                         ignore_blank_cards=ignore_blank_cards)
+        super().__init__(
+            a,
+            b,
+            ignore_hdus=set_variable_to_empty_list(ignore_hdus),
+            ignore_keywords=set_variable_to_empty_list(ignore_keywords),
+            ignore_comments=set_variable_to_empty_list(ignore_comments),
+            ignore_fields=set_variable_to_empty_list(ignore_fields),
+            numdiffs=numdiffs,
+            rtol=rtol,
+            atol=atol,
+            ignore_blanks=ignore_blanks,
+            ignore_blank_cards=ignore_blank_cards,
+        )
 
     def _diff(self):
+        # The following lines are identical to the original FITSDiff code
+
         if len(self.a) != len(self.b):
             self.diff_hdu_count = (len(self.a), len(self.b))
 
@@ -169,6 +187,12 @@ class STFITSDiff(FITSDiff):
                 b_ignored = fnmatch.filter(b_names, pattern)
                 self.b = HDUList([h for h in self.b if h.name not in b_ignored])
 
+        # The following lines are STScI's additions:
+        # 1. Make sure that the files to be compared contain the same extensions
+        #    and versions, regardless of order; if not, it will be reported.
+        # 2. Option to provide a relative and/or absolute tolerance per extension,
+        #    either with name or number.
+
         # Check if the files contain the same extension names and find the intersection
         ext_namesa = [ext.name for ext in self.a]
         ext_namesb = [ext.name for ext in self.b]
@@ -178,7 +202,7 @@ class STFITSDiff(FITSDiff):
             self.diff_extnames = (ext_namesa, ext_namesb, ext_intersection, ext_not_in_both)
 
         # Set the tolerance for the headers
-        if "HEADERS" in [key for key in self.expected_extension_tolerances]:
+        if "HEADERS" in list(self.expected_extension_tolerances):
             self.header_tolerances["rtol"] = self.expected_extension_tolerances["HEADERS"]["rtol"]
             self.header_tolerances["atol"] = self.expected_extension_tolerances["HEADERS"]["atol"]
 
@@ -211,6 +235,8 @@ class STFITSDiff(FITSDiff):
                         self.diff_hdus.append((idxa, hdu_diff, extname, extver))
 
     def _report(self):
+        # The following lines are identical to the original FITSDiff code
+
         wrapper = textwrap.TextWrapper(initial_indent="  ", subsequent_indent="  ")
 
         self._fileobj.write("\n")
@@ -223,15 +249,11 @@ class STFITSDiff(FITSDiff):
 
         if self.ignore_hdu_patterns:
             ignore_hdu_patterns = " ".join(sorted(self.ignore_hdu_patterns))
-            self._writeln(
-                " HDU(s) not to be compared:\n" + wrapper.fill(ignore_hdu_patterns)
-            )
+            self._writeln(" HDU(s) not to be compared:\n" + wrapper.fill(ignore_hdu_patterns))
 
         if self.ignore_keywords:
             ignore_keywords = " ".join(sorted(self.ignore_keywords))
-            self._writeln(
-                " Keyword(s) not to be compared:\n" + wrapper.fill(ignore_keywords)
-            )
+            self._writeln(" Keyword(s) not to be compared:\n" + wrapper.fill(ignore_keywords))
 
         if self.ignore_comments:
             ignore_comments = " ".join(sorted(self.ignore_comments))
@@ -242,13 +264,13 @@ class STFITSDiff(FITSDiff):
 
         if self.ignore_fields:
             ignore_fields = " ".join(sorted(self.ignore_fields))
-            self._writeln(
-                " Table column(s) not to be compared:\n" + wrapper.fill(ignore_fields)
-            )
+            self._writeln(" Table column(s) not to be compared:\n" + wrapper.fill(ignore_fields))
 
-        self._writeln(
-            f" Maximum number of different data values to be reported: {self.numdiffs}"
-        )
+        self._writeln(f" Maximum number of different data values to be reported: {self.numdiffs}")
+
+        # The following lines are STScI's additions:
+        # 1. Report the tolerances used per extension
+        # 2. Specify the extensions present in each file, in both, and missing
 
         if not self.expected_extension_tolerances:
             self._writeln(f"\n Relative tolerance: {self.rtol}, Absolute tolerance: {self.atol}")
@@ -258,8 +280,8 @@ class STFITSDiff(FITSDiff):
             self._writeln("Files contain different numbers of HDUs:")
             self._writeln(f" a: {self.diff_hdu_count[0]}, {self.diff_extnames[0]}")
             self._writeln(f" b: {self.diff_hdu_count[1]}, {self.diff_extnames[1]}")
-            self._writeln(f" Common HDUs: {[en for en in self.diff_extnames[2]]}")
-            self._writeln(f" Missing HDUs: {[en for en in self.diff_extnames[3]]}")
+            self._writeln(f" Common HDUs: {list(self.diff_extnames[2])}")
+            self._writeln(f" Missing HDUs: {list(self.diff_extnames[3])}")
 
             if not self.diff_hdus:
                 self._fileobj.write("\n")
@@ -295,15 +317,13 @@ class STFITSDiff(FITSDiff):
                 else:
                     rtol = self.expected_extension_tolerances["DEFAULT"]["rtol"]
                     atol = self.expected_extension_tolerances["DEFAULT"]["atol"]
-                self._writeln(
-                    f"\n  Relative tolerance: {rtol:.1e}, Absolute tolerance: {atol:.1e}"
-                )
+                self._writeln(f"\n  Relative tolerance: {rtol:.1e}, Absolute tolerance: {atol:.1e}")
             hdu_diff.report(self._fileobj, indent=self._indent + 1)
 
 
 class STHDUDiff(HDUDiff):
     """
-    HDUDiff class from astropy with the STScI edits.
+    HDUDiff class from astropy with the STScI ad hoc changes for STScI regression test reports.
 
     Full documentation of the class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
@@ -313,18 +333,20 @@ class STHDUDiff(HDUDiff):
         self,
         a,
         b,
-        ignore_keywords=[],
-        ignore_comments=[],
-        ignore_fields=[],
+        ignore_keywords=None,
+        ignore_comments=None,
+        ignore_fields=None,
         numdiffs=10,
         rtol=0.0,
         atol=0.0,
         ignore_blanks=True,
         ignore_blank_cards=True,
         report_pixel_loc_diffs=False,
-        header_tolerances={}
+        header_tolerances=None,
     ):
         """
+        For full documentation on variables, see original astropy code.
+
         Parameters
         ----------
         a : BaseHDU
@@ -365,20 +387,27 @@ class STHDUDiff(HDUDiff):
             Dictionary with the relative and absolute tolerances for all headers.
         """
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
+        if header_tolerances is None:
+            header_tolerances = {}
         self.header_tolerances = header_tolerances
         self.nans, self.percentages, self.stats = None, None, None
         self.diff_dimensions = ()
-        super().__init__(a, b,
-                         ignore_keywords=ignore_keywords,
-                         ignore_comments=ignore_comments,
-                         ignore_fields=ignore_fields,
-                         numdiffs=numdiffs,
-                         rtol=rtol,
-                         atol=atol,
-                         ignore_blanks=ignore_blanks,
-                         ignore_blank_cards=ignore_blank_cards)
+        super().__init__(
+            a,
+            b,
+            ignore_keywords=set_variable_to_empty_list(ignore_keywords),
+            ignore_comments=set_variable_to_empty_list(ignore_comments),
+            ignore_fields=set_variable_to_empty_list(ignore_fields),
+            numdiffs=numdiffs,
+            rtol=rtol,
+            atol=atol,
+            ignore_blanks=ignore_blanks,
+            ignore_blank_cards=ignore_blank_cards,
+        )
 
     def _diff(self):
+        # The following lines are identical to the original HDUDiff code
+
         if self.a.name != self.b.name:
             self.diff_extnames = (self.a.name, self.b.name)
 
@@ -394,24 +423,43 @@ class STHDUDiff(HDUDiff):
                 self.b.header.get("XTENSION"),
             )
 
+        # The following lines are STScI's additions:
+        # 1. Make sure to use header-specific absolute and relative tolerances
+        # 2. Generate the stats report, which includes the following
+        #    - number of nans
+        #    - number of no nan values
+        #    - number of zeros
+        #    - Percentage difference of a from b for 0.0 absolute tolerance and
+        #      0.1, 0.001, 0.0001, 1e-4, 1e-5, 1e-6, 1e-7, and 0.0 for relative tolerance
+        #    - mean value
+        #    - maximum value
+        #    - minimum value
+        #    - mean absolute difference
+        #    - standard deviation for absolute difference
+        #    - mean relative difference
+        #    - standard deviation for relative difference
+
         # If specific header tolerances were given set them temporarily
         if self.header_tolerances:
             rtol, atol = self.rtol, self.atol
             self.rtol, self.atol = self.header_tolerances["rtol"], self.header_tolerances["atol"]
 
         # Get the header differences
-        self.diff_headers = STHeaderDiff.fromdiff(
-            self, self.a.header.copy(), self.b.header.copy()
-        )
+        self.diff_headers = STHeaderDiff.fromdiff(self, self.a.header.copy(), self.b.header.copy())
         # Reset the object tolerances
         if self.header_tolerances:
             self.rtol, self.atol = rtol, atol
 
         def get_quick_report(a, b):
             # Get the number of NaN in each array and other info
-            nans_zero_info = [a[np.isnan(a)].size, b[np.isnan(b)].size,
-                              a[~np.isnan(a)].size, b[~np.isnan(b)].size,
-                              a[a == 0.0].size, b[b == 0.0].size]
+            nans_zero_info = [
+                a[np.isnan(a)].size,
+                b[np.isnan(b)].size,
+                a[~np.isnan(a)].size,
+                b[~np.isnan(b)].size,
+                a[a == 0.0].size,
+                b[b == 0.0].size,
+            ]
             # Match nans for all arrays and remove them for logical comparison
             percentages, stats = {}, {}
             shapea = a.shape
@@ -420,7 +468,7 @@ class STHDUDiff(HDUDiff):
                 percentages["array_shapes_are_different"] = ""
                 stats["no_stats_available"] = ""
                 return nans_zero_info, percentages, stats
-            nan_idx = (np.isnan(a) | np.isnan(b))
+            nan_idx = np.isnan(a) | np.isnan(b)
             anonan = a[~nan_idx]
             bnonan = b[~nan_idx]
             values = np.abs(anonan - bnonan)
@@ -468,7 +516,7 @@ class STHDUDiff(HDUDiff):
                     percentages["abdiffs_too_large"] = percent_abs_round
                 else:
                     # Only include the percentage for 0.0
-                    percentages['0.0_abs'] = percent_abs_round
+                    percentages["0.0_abs"] = percent_abs_round
             if relative_values.size > 0:
                 percent_rel_list = []
                 # Differences are too large values. Calculating percentages on relative numbers.
@@ -482,6 +530,9 @@ class STHDUDiff(HDUDiff):
                         percentages[str(threshold) + "_rel"] = percent_rel
                     percent_rel_list.append(percent_rel)
             return nans_zero_info, percentages, stats
+
+        # Code below contains mixed original HDUDiff lines as well as STScI's
+        # to include the new classes and the stats reporting changes.
 
         if self.a.data is None or self.b.data is None:
             # TODO: Perhaps have some means of marking this case
@@ -513,36 +564,33 @@ class STHDUDiff(HDUDiff):
             self.diff_data.b = None
 
     def _report(self):
+        # The following lines are identical to the original HDUDiff code
+
         if self.identical:
             self._writeln(" No differences found.")
         if self.diff_extension_types:
             self._writeln(
-                " Extension types differ:\n  a: {}\n  b: {}".format(
-                    *self.diff_extension_types
-                )
+                " Extension types differ:\n  a: {}\n  b: {}".format(*self.diff_extension_types)
             )
         if self.diff_extnames:
-            self._writeln(
-                " Extension names differ:\n  a: {}\n  b: {}".format(*self.diff_extnames)
-            )
+            self._writeln(" Extension names differ:\n  a: {}\n  b: {}".format(*self.diff_extnames))
         if self.diff_extvers:
             self._writeln(
-                " Extension versions differ:\n  a: {}\n  b: {}".format(
-                    *self.diff_extvers
-                )
+                " Extension versions differ:\n  a: {}\n  b: {}".format(*self.diff_extvers)
             )
 
         if self.diff_extlevels:
             self._writeln(
-                " Extension levels differ:\n  a: {}\n  b: {}".format(
-                    *self.diff_extlevels
-                )
+                " Extension levels differ:\n  a: {}\n  b: {}".format(*self.diff_extlevels)
             )
 
         if not self.diff_headers.identical:
             self._fileobj.write("\n")
             self._writeln(" Headers contain differences:")
             self.diff_headers.report(self._fileobj, indent=self._indent + 1)
+
+        # The following lines include STScI's changes to report the stats
+        # as calculated in the _diff function above
 
         if self.diff_dimensions:
             dimsa = " x ".join(str(d) for d in reversed(self.diff_dimensions[0]))
@@ -566,11 +614,15 @@ class STHDUDiff(HDUDiff):
             self._writeln(" Difference of a from b:")
             if "abdiffs_too_large" in self.percentages:
                 self._writeln("  * Absolute number differences are too large.")
-                self._writeln(f"  {'0.0_abs':>10} ..... {self.percentages['abdiffs_too_large']:<5}%")
-                del self.percentages['abdiffs_too_large']
+                self._writeln(
+                    f"  {'0.0_abs':>10} ..... {self.percentages['abdiffs_too_large']:<5}%"
+                )
+                del self.percentages["abdiffs_too_large"]
             if "reldiffs_too_large" in self.percentages:
                 self._writeln("  * Relative number differences are too large.")
-                self._writeln(f"  {'0.0_rel':>10} ..... {self.percentages['reldiffs_too_large']:<5}%")
+                self._writeln(
+                    f"  {'0.0_rel':>10} ..... {self.percentages['reldiffs_too_large']:<5}%"
+                )
             else:
                 for key, val in self.percentages.items():
                     self._writeln(f"  {key:>10} ..... {val:<5}%")
@@ -587,7 +639,7 @@ class STHDUDiff(HDUDiff):
 
 class STHeaderDiff(HeaderDiff):
     """
-    HeaderDiff class from astropy with the STScI edits.
+    HeaderDiff class from astropy with the STScI ad hoc changes for STScI regression test reports.
 
     Full documentation of the base class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
@@ -597,14 +649,16 @@ class STHeaderDiff(HeaderDiff):
         self,
         a,
         b,
-        ignore_keywords=[],
-        ignore_comments=[],
+        ignore_keywords=None,
+        ignore_comments=None,
         rtol=0.0,
         atol=0.0,
         ignore_blanks=True,
         ignore_blank_cards=True,
     ):
         """
+        For full documentation on variables, see original astropy code.
+
         Parameters
         ----------
         a : `~astropy.io.fits.Header` or string or bytes
@@ -632,15 +686,20 @@ class STHeaderDiff(HeaderDiff):
         ignore_blank_cards : bool, optional
             Ignore all cards that are blank, i.e. they only contain whitespace.
         """
-        super().__init__(a, b,
-                         ignore_keywords=ignore_keywords,
-                         ignore_comments=ignore_comments,
-                         rtol=rtol,
-                         atol=atol,
-                         ignore_blanks=ignore_blanks,
-                         ignore_blank_cards=ignore_blank_cards)
+        super().__init__(
+            a,
+            b,
+            ignore_keywords=set_variable_to_empty_list(ignore_keywords),
+            ignore_comments=set_variable_to_empty_list(ignore_comments),
+            rtol=rtol,
+            atol=atol,
+            ignore_blanks=ignore_blanks,
+            ignore_blank_cards=ignore_blank_cards,
+        )
 
     def _diff(self):
+        # The following lines are identical to the original HeaderDiff code
+
         if self.ignore_blank_cards:
             cardsa = [c for c in self.a.cards if str(c) != BLANK_CARD]
             cardsb = [c for c in self.b.cards if str(c) != BLANK_CARD]
@@ -648,7 +707,7 @@ class STHeaderDiff(HeaderDiff):
             cardsa = list(self.a.cards)
             cardsb = list(self.b.cards)
 
-        # build dictionaries of keyword values and comments
+        # Build dictionaries of keyword values and comments
         def get_header_values_comments(cards):
             values = {}
             comments = {}
@@ -706,12 +765,17 @@ class STHeaderDiff(HeaderDiff):
             if counta != countb:
                 self.diff_duplicate_keywords[keyword] = (counta, countb)
 
+            # The following lines include STScI's changes:
+            # - Make sure that the keyword in 'a' exists in 'b', or continue
+
             # Compare keywords' values and comments
             for a in valuesa[keyword]:
                 if a not in valuesb[keyword]:
                     continue
                 bidx = valuesb[keyword].index(a)
                 b = valuesb[keyword][bidx]
+
+                # The following lines are identical to the original HeaderDiff code
 
                 if diff_values(a, b, rtol=self.rtol, atol=self.atol):
                     self.diff_keyword_values[keyword].append((a, b))
@@ -736,11 +800,17 @@ class STHeaderDiff(HeaderDiff):
                 if skip:
                     continue
 
+            # The following lines include STScI's changes:
+            # - Make sure that the comment in 'a' exists in 'b', or continue
+
             for a in commentsa[keyword]:
                 if a not in commentsb[keyword]:
                     continue
                 bidx = commentsb[keyword].index(a)
                 b = commentsb[keyword][bidx]
+
+                # The following lines are identical to the original HeaderDiff code
+
                 if diff_values(a, b):
                     self.diff_keyword_comments[keyword].append((a, b))
                 else:
@@ -749,53 +819,10 @@ class STHeaderDiff(HeaderDiff):
             if not any(self.diff_keyword_comments[keyword]):
                 del self.diff_keyword_comments[keyword]
 
-    def _report(self):
-        if self.diff_keyword_count:
-            self._writeln(" Headers have different number of cards:")
-            self._writeln(f"  a: {self.diff_keyword_count[0]}")
-            self._writeln(f"  b: {self.diff_keyword_count[1]}")
-        if self.diff_keywords:
-            for keyword in self.diff_keywords[0]:
-                if keyword in Card._commentary_keywords:
-                    val = self.a[keyword][0]
-                else:
-                    val = self.a[keyword]
-                self._writeln(f" Extra keyword {keyword!r:8} in a: {val!r}")
-            for keyword in self.diff_keywords[1]:
-                if keyword in Card._commentary_keywords:
-                    val = self.b[keyword][0]
-                else:
-                    val = self.b[keyword]
-                self._writeln(f" Extra keyword {keyword!r:8} in b: {val!r}")
-
-        if self.diff_duplicate_keywords:
-            for keyword, count in sorted(self.diff_duplicate_keywords.items()):
-                self._writeln(f" Inconsistent duplicates of keyword {keyword!r:8}:")
-                self._writeln(
-                    "  Occurs {} times in a, {} times in (b)".format(*count)
-                )
-
-        if self.diff_keyword_values or self.diff_keyword_comments:
-            for keyword in self.common_keywords:
-                report_diff_keyword_attr(
-                    self._fileobj,
-                    "values",
-                    self.diff_keyword_values,
-                    keyword,
-                    ind=self._indent,
-                )
-                report_diff_keyword_attr(
-                    self._fileobj,
-                    "comments",
-                    self.diff_keyword_comments,
-                    keyword,
-                    ind=self._indent,
-                )
-
 
 class STImageDataDiff(ImageDataDiff):
     """
-    ImageDataDiff class with STScI edits.
+    ImageDataDiff class with STScI ad hoc changes for STScI regression test reports.
 
     Full documentation of the class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
@@ -803,6 +830,8 @@ class STImageDataDiff(ImageDataDiff):
 
     def __init__(self, a, b, numdiffs=10, rtol=0.0, atol=0.0, report_pixel_loc_diffs=False):
         """
+        For full documentation on variables, see original astropy code.
+
         Parameters
         ----------
         a : BaseHDU
@@ -823,15 +852,21 @@ class STImageDataDiff(ImageDataDiff):
         report_pixel_loc_diffs : bool, optional
             Report all the pixel locations where differences are found.
         """
-
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
 
-        super().__init__(a, b,
-                         numdiffs=numdiffs,
-                         rtol=rtol,
-                         atol=atol)
+        super().__init__(a, b, numdiffs=numdiffs, rtol=rtol, atol=atol)
 
     def _diff(self):
+        # Code below contains mixed original ImageDiff lines as well as STScI's
+        # to include stats reporting changes:
+        # 1. Store the shapes in variables to use later
+        # 2. If the report_pixel_loc_diffs is False, print report as original ImageDiff
+        #    report described in the _diff function of STHDUDiff.
+        #    If report_pixel_loc_diffs is True:
+        #    - Use the shape to search for differences per integration or group, and
+        #      truncate the loop and improve performance in large data.
+        #    - Generate the ad hoc stats report described in the _diff function of STHDUDiff
+
         shapea, shapeb = self.a.shape, self.b.shape
         if shapea != shapeb:
             self.diff_dimensions = (shapea, shapeb)
@@ -842,10 +877,7 @@ class STImageDataDiff(ImageDataDiff):
 
         # If neither a nor b are floating point (or complex), ignore rtol and
         # atol
-        if not (
-                np.issubdtype(self.a.dtype, np.inexact)
-                or np.issubdtype(self.b.dtype, np.inexact)
-        ):
+        if not (np.issubdtype(self.a.dtype, np.inexact) or np.issubdtype(self.b.dtype, np.inexact)):
             rtol = 0
             atol = 0
         else:
@@ -869,7 +901,7 @@ class STImageDataDiff(ImageDataDiff):
 
             self.diff_pixels = [
                 (idx, (self.a[idx], self.b[idx]))
-                for idx in islice(zip(*diffs), 0, numdiffs)
+                for idx in islice(zip(*diffs, strict=False), 0, numdiffs)
             ]
             self.diff_ratio = float(self.diff_total) / float(len(self.a.flat))
 
@@ -884,12 +916,14 @@ class STImageDataDiff(ImageDataDiff):
                 # Don't care about the actual numbers or locations, just set to something high
                 data_within_tol = False
             elif a.shape == b.shape:
-                # Check if data is within the tolerances (the non-nan data arrays are the same shape)
+                # Check if data is within the tolerances (the non-nan data
+                # arrays are the same shape)
                 if shapea == 4:
                     for nint in range(shapea[0]):
                         for ngrp in range(shapea[1]):
                             diff_total = np.abs(a[nint, ngrp, ...] - b[nint, ngrp, ...]) > (
-                                    atol + rtol * np.abs(b[nint, ngrp, ...]))
+                                atol + rtol * np.abs(b[nint, ngrp, ...])
+                            )
                             if a[diff_total].size != 0:
                                 data_within_tol = False
                                 break
@@ -897,7 +931,9 @@ class STImageDataDiff(ImageDataDiff):
                             break
                 elif shapea == 3:
                     for ngrp in range(shapea[0]):
-                        diff_total = np.abs(a[ngrp, ...] - b[ngrp, ...]) > (atol + rtol * np.abs(b[ngrp, ...]))
+                        diff_total = np.abs(a[ngrp, ...] - b[ngrp, ...]) > (
+                            atol + rtol * np.abs(b[ngrp, ...])
+                        )
                         if a[diff_total].size != 0:
                             data_within_tol = False
                             break
@@ -917,6 +953,11 @@ class STImageDataDiff(ImageDataDiff):
                 return
 
     def _report(self):
+        # Code below contains mixed original ImageDiff lines as well as STScI's
+        # to include stats reporting changes:
+        # 1. No change with respect to original code for different dimensions
+        # 2. Only print original report if report_pixel_loc_diffs is True
+
         if self.diff_dimensions:
             dimsa = " x ".join(str(d) for d in reversed(self.diff_dimensions[0]))
             dimsb = " x ".join(str(d) for d in reversed(self.diff_dimensions[1]))
@@ -930,7 +971,6 @@ class STImageDataDiff(ImageDataDiff):
             return
 
         if self.report_pixel_loc_diffs:
-
             if not self.diff_pixels:
                 return
 
@@ -958,8 +998,7 @@ class STImageDataDiff(ImageDataDiff):
             if self.diff_total > self.numdiffs:
                 self._writeln(" ...")
             self._writeln(
-                f" {self.diff_total} different pixels found "
-                f"({self.diff_ratio:.2%} different)."
+                f" {self.diff_total} different pixels found ({self.diff_ratio:.2%} different)."
             )
             self._writeln(f" Maximum relative difference: {max_relative}")
             self._writeln(f" Maximum absolute difference: {max_absolute}")
@@ -975,6 +1014,8 @@ class STRawDataDiff(STImageDataDiff):
 
     def __init__(self, a, b, numdiffs=10, report_pixel_loc_diffs=False):
         """
+        For full documentation on variables, see original astropy code.
+
         Parameters
         ----------
         a : BaseHDU
@@ -999,6 +1040,7 @@ class STRawDataDiff(STImageDataDiff):
         # to remain here because RawDataDiff is a special case of ImageDataDiff,
         # and since this was changed to use our version, the code would not
         # have access to the original _diff function in the RawDataDiff class.
+
         super()._diff()
         if self.diff_dimensions:
             self.diff_dimensions = (
@@ -1010,6 +1052,11 @@ class STRawDataDiff(STImageDataDiff):
         del self.diff_pixels
 
     def _report(self):
+        # Code below contains mixed original RawDataDiff lines as well as STScI's
+        # to include stats reporting changes.
+        # 1. No change with respect to original code for different dimensions
+        # 2. Only print original report if report_pixel_loc_diffs is True
+
         if self.diff_dimensions:
             self._writeln(" Data sizes differ:")
             self._writeln(f"  a: {self.diff_dimensions[0]} bytes")
@@ -1037,22 +1084,31 @@ class STRawDataDiff(STImageDataDiff):
 
             self._writeln(" ...")
             self._writeln(
-                f" {self.diff_total} different bytes found "
-                f"({self.diff_ratio:.2%} different)."
+                f" {self.diff_total} different bytes found ({self.diff_ratio:.2%} different)."
             )
 
 
 class STTableDataDiff(TableDataDiff):
     """
-    TableDataDiff class with STScI edits.
+    TableDataDiff class with STScI ad hoc changes for STScI regression test reports.
 
     Full documentation of the class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
 
-    def __init__(self, a, b, ignore_fields=[], numdiffs=10, rtol=0.0, atol=0.0,
-                 report_pixel_loc_diffs=False):
+    def __init__(
+        self,
+        a,
+        b,
+        ignore_fields=None,
+        numdiffs=10,
+        rtol=0.0,
+        atol=0.0,
+        report_pixel_loc_diffs=False,
+    ):
         """
+        For full documentation on variables, see original astropy code.
+
         Parameters
         ----------
         a : BaseHDU
@@ -1077,19 +1133,22 @@ class STTableDataDiff(TableDataDiff):
         report_pixel_loc_diffs : bool, optional
             As for ImageDiff, this will report all the locations where
             differences are found but instead of pixels is column locations.
-
         """
-
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
         self.total_diff_per_col = {}
 
-        super().__init__(a, b,
-                         ignore_fields=ignore_fields,
-                         numdiffs=numdiffs,
-                         rtol=rtol,
-                         atol=atol)
+        super().__init__(
+            a,
+            b,
+            ignore_fields=set_variable_to_empty_list(ignore_fields),
+            numdiffs=numdiffs,
+            rtol=rtol,
+            atol=atol,
+        )
 
     def _diff(self):
+        # The following lines are identical to the original TableDataDiff code
+
         # Much of the code for comparing columns is similar to the code for
         # comparing headers--consider refactoring
         colsa = self.a.columns
@@ -1129,12 +1188,8 @@ class STTableDataDiff(TableDataDiff):
 
         self.common_column_names = {col.name.lower() for col in self.common_columns}
 
-        left_only_columns = {
-            col.name.lower(): col for col in colsa_set.difference(colsb_set)
-        }
-        right_only_columns = {
-            col.name.lower(): col for col in colsb_set.difference(colsa_set)
-        }
+        left_only_columns = {col.name.lower(): col for col in colsa_set.difference(colsb_set)}
+        right_only_columns = {col.name.lower(): col for col in colsb_set.difference(colsa_set)}
 
         if left_only_columns or right_only_columns:
             self.diff_columns = (left_only_columns, right_only_columns)
@@ -1186,31 +1241,29 @@ class STTableDataDiff(TableDataDiff):
                 vala = getattr(cola, attr, None)
                 valb = getattr(colb, attr, None)
                 if diff_values(vala, valb):
-                    self.diff_column_attributes.append(
-                        ((col.name.upper(), attr), (vala, valb))
-                    )
+                    self.diff_column_attributes.append(((col.name.upper(), attr), (vala, valb)))
 
             arra = self.a[col.name]
             arrb = self.b[col.name]
 
-            if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
-                arrb.dtype, np.floating
-            ):
+            if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(arrb.dtype, np.floating):
                 diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
             elif "P" in col.format or "Q" in col.format:
                 diffs = (
                     [
                         idx
                         for idx in range(len(arra))
-                        if not np.allclose(
-                            arra[idx], arrb[idx], rtol=self.rtol, atol=self.atol
-                        )
+                        if not np.allclose(arra[idx], arrb[idx], rtol=self.rtol, atol=self.atol)
                     ],
                 )
             else:
                 diffs = np.where(arra != arrb)
 
             self.diff_total += len(set(diffs[0]))
+
+            # The following lines include STScI's changes:
+            # - If report_pixel_loc_diffs is False, just get the total differences,
+            #   it is not important where they come from
 
             # Find the total differences per column
             if not self.report_pixel_loc_diffs:
@@ -1219,6 +1272,8 @@ class STTableDataDiff(TableDataDiff):
                         self.total_diff_per_col[col.name] = len(set(diffs[0]))
                     else:
                         self.total_diff_per_col[col.name] += len(set(diffs[0]))
+
+            # The following lines are identical to the original TableDataDiff code
 
             if self.numdiffs >= 0:
                 if len(self.diff_values) >= self.numdiffs:
@@ -1244,6 +1299,8 @@ class STTableDataDiff(TableDataDiff):
         self.diff_ratio = float(self.diff_total) / float(total_values)
 
     def _report(self):
+        # The following lines are identical to the original TableDataDiff code
+
         if self.diff_column_count:
             self._writeln(" Tables have different number of columns:")
             self._writeln(f"  a: {self.diff_column_count[0]}")
@@ -1252,11 +1309,11 @@ class STTableDataDiff(TableDataDiff):
         if self.diff_column_names:
             # Show columns with names unique to either table
             for name in self.diff_column_names[0]:
-                format = self.diff_columns[0][name.lower()].format
-                self._writeln(f" Extra column {name} of format {format} in a")
+                colformat = self.diff_columns[0][name.lower()].format
+                self._writeln(f" Extra column {name} of format {colformat} in a")
             for name in self.diff_column_names[1]:
-                format = self.diff_columns[1][name.lower()].format
-                self._writeln(f" Extra column {name} of format {format} in b")
+                colformat = self.diff_columns[1][name.lower()].format
+                self._writeln(f" Extra column {name} of format {colformat} in b")
 
         col_attrs = dict(_COL_ATTRS)
         # Now go through each table again and show columns with common
@@ -1283,6 +1340,10 @@ class STTableDataDiff(TableDataDiff):
         if not self.diff_values:
             return
 
+        # The following lines include STScI's changes:
+        # - Only report the locations of the differences if report_pixel_loc_diffs is True,
+        #   otherwise report the column and the total number of differences
+
         if self.report_pixel_loc_diffs:
             # Finally, let's go through and report column data differences:
             for indx, values in self.diff_values:
@@ -1306,12 +1367,11 @@ class STTableDataDiff(TableDataDiff):
 
         else:
             for colname in self.total_diff_per_col:
-                self._writeln(" Column {} data differs on {} values".format(colname,
-                                                                            self.total_diff_per_col[colname]))
+                self._writeln(
+                    f" Column {colname} data differs on {self.total_diff_per_col[colname]} values"
+                )
 
         self._writeln(
             f" {self.diff_total} different table data element(s) found "
             f"({self.diff_ratio:.2%} different)."
         )
-
-
