@@ -93,18 +93,15 @@ class LogWatcher:
 
     @property
     def message(self):
+        """
+        str: The message to watch for.
+
+        When the message is set, the `seen` flag is set to False.
+        """
         return self._message
 
     @message.setter
     def message(self, new_message):
-        """
-        When message is set, clear the `seen` flag.
-
-        Parameters
-        ----------
-        new_message : str
-            New value for the `message` property.
-        """
         self.seen = False
         self._message = new_message
 
