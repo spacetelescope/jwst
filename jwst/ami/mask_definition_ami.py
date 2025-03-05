@@ -31,7 +31,6 @@ class NRMDefinition:
         self.hdia = nrm_model.flat_to_flat
         self.active_D = nrm_model.diameter
         self.OD = nrm_model.pupil_circumscribed
-        self.ctrs = []
 
         self.read_nrm_model(nrm_model, chooseholes=chooseholes)
 
