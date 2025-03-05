@@ -369,10 +369,12 @@ def stripe_read(sci_model, ref_model, attribs):
         # nrca2 and nrca4? Test flipping the rows
         if ('2' in sci_model.meta.instrument.detector or
                 '4' in sci_model.meta.instrument.detector):
-            ref_array = ref_array[..., ::-1, :]
+            fliprows = -1
+        else:
+            fliprows = 1
 
         sub_model[attrib] = generate_stripe_array(
-            ref_array,
+            ref_array[..., ::fliprows, :],
             xsize_sci,
             ysize_sci,
             nreads1,
@@ -380,7 +382,7 @@ def stripe_read(sci_model, ref_model, attribs):
             nskips1,
             nskips2,
             repeat_stripe
-        )
+        )[..., ::fliprows, :]
     return sub_model
 
 
