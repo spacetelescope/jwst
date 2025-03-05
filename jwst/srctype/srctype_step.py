@@ -35,8 +35,8 @@ class SourceTypeStep(Step):
 
         Returns
         -------
-        datamodel of same type as input
-            Data model with keyword “SRCTYPE” populated with either “POINT” or “EXTENDED.”.
+        datamodel : IFUImageModel, MultiSlitModel, or SlitModel
+            Data model with keyword “SRCTYPE” populated with either “POINT” or “EXTENDED”.
         """
         if self.source_type is not None:
             self.source_type = self.source_type.upper()
