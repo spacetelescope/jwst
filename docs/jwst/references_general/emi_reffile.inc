@@ -7,7 +7,7 @@ EMICORR Reference File
 :Data model: `~jwst.datamodels.EmiModel`
 
 The EMICORR reference file contains data necessary for removing
-contaminating MIRI EMI frequencies.
+noise from contaminating EMI frequencies in MIRI ramp data.
 
 .. include:: ../references_general/emi_selection.inc
 
@@ -19,6 +19,7 @@ EMICORR Reference File Format
 MIRI EMICORR reference files are in ASDF format.  The EMICORR
 reference file contains the frequencies for which the image will
 be corrected.
+
 Example file contents::
 
   root (AsdfObject)
@@ -66,5 +67,5 @@ Frequency Selection
 
 The frequency to be corrected for will be selected according to the
 dictionary contained in the key ``subarray_cases`` in the reference
-file. This contains the subarray names and the names of the
-corresponding frequencies to be used in the correction.
+file. This contains the subarray name, readout pattern, and detector
+to match to the names of the frequencies to be used in the correction.
