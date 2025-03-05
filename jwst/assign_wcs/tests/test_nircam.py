@@ -10,7 +10,6 @@ file.
 """
 import numpy as np
 import pytest
-import re
 
 
 from astropy.io import fits
@@ -21,6 +20,7 @@ from stdatamodels.jwst.datamodels import CubeModel, ImageModel
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
 from jwst.assign_wcs import nircam
 from jwst.assign_wcs import util
+from stcal.alignment.util import sregion_to_footprint
 
 
 # Allowed settings for nircam
@@ -247,22 +247,6 @@ def test_wfss_sip():
         assert key in wfss_model.meta.wcsinfo.instance
 
 
-def _sregion_to_footprint(s_region):
-    """
-    Parameters
-    ----------
-    s_region : str
-        The S_REGION header keyword
-
-    Returns
-    -------
-    footprint : np.array
-        A 2D array of the footprint of the region, shape (N, 2)
-    """
-    no_prefix = re.sub(r"[a-zA-Z]", "", s_region)
-    return np.array(no_prefix.split(), dtype=float).reshape(-1, 2)
-
-
 def test_update_s_region_imaging():
     """Ensure the s_region keyword matches output of wcs.footprint()"""
     model = ImageModel(create_hdul())
@@ -271,5 +255,5 @@ def test_update_s_region_imaging():
 
     s_region = model.meta.wcsinfo.s_region
     footprint = model.meta.wcs.footprint().flatten()
-    footprint_sregion = _sregion_to_footprint(s_region).flatten()
+    footprint_sregion = sregion_to_footprint(s_region).flatten()
     assert np.allclose(footprint, footprint_sregion, rtol=1e-9)
