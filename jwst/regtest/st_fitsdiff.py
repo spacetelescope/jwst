@@ -661,10 +661,10 @@ class STHeaderDiff(HeaderDiff):
 
         Parameters
         ----------
-        a : `~astropy.io.fits.Header` or string or bytes
+        a : `~astropy.io.fits.Header` or str or bytes
             A header.
 
-        b : `~astropy.io.fits.Header` or string or bytes
+        b : `~astropy.io.fits.Header` or str or bytes
             A header to compare to the first header.
 
         ignore_keywords : sequence, optional
