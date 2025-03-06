@@ -45,8 +45,11 @@ class STFITSDiff(FITSDiff):
     """
     FITSDiff class from astropy with STScI ad hoc changes for STScI regression test reports.
 
-    Statistics about how far off values are from tolerances will be printed, from 0.1
-    through 0.0, along with maximum and minimum values.
+    STScI changes include making sure that the files to be compared contain the same extensions
+    and versions, regardless of order; if not, it will be reported. An option was implemented
+    to provide a relative and/or absolute tolerance per extension, either with name or number.
+    Additionally, header-specific tolerances can be provided for the primary extension or an
+    absolute and relative tolerance can be provided to use for all headers.
 
     Full documentation of the base class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
@@ -325,6 +328,21 @@ class STHDUDiff(HDUDiff):
     """
     HDUDiff class from astropy with the STScI ad hoc changes for STScI regression test reports.
 
+    STScI changes include making sure to use the header- or extension-specific absolute and
+    relative tolerances, and print a stats report, which includes the following information:
+    - number of nans
+    - number of no nan values
+    - number of zeros
+    - Percentage difference of a from b for 0.0 absolute tolerance and 0.1, 0.001, 0.0001,
+      1e-4, 1e-5, 1e-6, 1e-7, and 0.0 for relative tolerance
+    - mean value
+    - maximum value
+    - minimum value
+    - mean absolute difference
+    - standard deviation for absolute difference
+    - mean relative difference
+    - standard deviation for relative difference
+
     Full documentation of the class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
@@ -472,7 +490,8 @@ class STHDUDiff(HDUDiff):
             anonan = a[~nan_idx]
             bnonan = b[~nan_idx]
             values = np.abs(anonan - bnonan)
-            if (values == 0.0).all():
+            # Nothing to report if all values are 0 and the number of nans is the same
+            if (values == 0.0).all() and nans_zero_info[2] == nans_zero_info[3]:
                 return None, None, None
             # Calculate stats
             stats["mean_value_in_a"] = np.mean(anonan)
@@ -512,14 +531,10 @@ class STHDUDiff(HDUDiff):
                 else:
                     percent_abs_list.append(percent_abs)
             if np.nan not in percent_abs_list:
-                if (np.array(percent_abs_list) == percent_abs).all():
-                    percentages["abdiffs_too_large"] = percent_abs_round
-                else:
-                    # Only include the percentage for 0.0
-                    percentages["0.0_abs"] = percent_abs_round
+                # Only include the percentage for 0.0
+                percentages["0.0_abs"] = percent_abs_round
             if relative_values.size > 0:
                 percent_rel_list = []
-                # Differences are too large values. Calculating percentages on relative numbers.
                 for threshold in thresholds:
                     n = relative_values[relative_values > threshold + self.rtol].size
                     percent_rel = (n / n_total) * 100
@@ -612,20 +627,8 @@ class STHDUDiff(HDUDiff):
                 self._writeln(f"  b: {self.nans[5]}")
             # Calculate difference percentages
             self._writeln(" Difference of a from b:")
-            if "abdiffs_too_large" in self.percentages:
-                self._writeln("  * Absolute number differences are too large.")
-                self._writeln(
-                    f"  {'0.0_abs':>10} ..... {self.percentages['abdiffs_too_large']:<5}%"
-                )
-                del self.percentages["abdiffs_too_large"]
-            if "reldiffs_too_large" in self.percentages:
-                self._writeln("  * Relative number differences are too large.")
-                self._writeln(
-                    f"  {'0.0_rel':>10} ..... {self.percentages['reldiffs_too_large']:<5}%"
-                )
-            else:
-                for key, val in self.percentages.items():
-                    self._writeln(f"  {key:>10} ..... {val:<5}%")
+            for key, val in self.percentages.items():
+                self._writeln(f"  {key:>10} ..... {val:<5}%")
             self._writeln(" Stats:")
             for key, val in self.stats.items():
                 self._writeln(f"  {key} = {val}")
@@ -640,6 +643,9 @@ class STHDUDiff(HDUDiff):
 class STHeaderDiff(HeaderDiff):
     """
     HeaderDiff class from astropy with the STScI ad hoc changes for STScI regression test reports.
+
+    STScI changes include making sure that the keyword and comments in 'a' exist in 'b' (regardless
+    of order), otherwise continue without error.
 
     Full documentation of the base class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
@@ -824,6 +830,13 @@ class STImageDataDiff(ImageDataDiff):
     """
     ImageDataDiff class with STScI ad hoc changes for STScI regression test reports.
 
+    STScI changes include storing the shapes in variables to use later, and if the
+    variable report_pixel_loc_diffs is True, print report as the original ImageDiff
+    astropy class, otherwise if report_pixel_loc_diffs is False, use the shape to
+    search for differences per integration or group, and truncate the loop and improve
+    performance in large data; generate the ad hoc stats report described in
+    the _diff function of the STHDUDiff class.
+
     Full documentation of the class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
@@ -860,12 +873,13 @@ class STImageDataDiff(ImageDataDiff):
         # Code below contains mixed original ImageDiff lines as well as STScI's
         # to include stats reporting changes:
         # 1. Store the shapes in variables to use later
-        # 2. If the report_pixel_loc_diffs is False, print report as original ImageDiff
+        # 2. If the report_pixel_loc_diffs is True, print report as original ImageDiff
         #    report described in the _diff function of STHDUDiff.
-        #    If report_pixel_loc_diffs is True:
+        #    If report_pixel_loc_diffs is False:
         #    - Use the shape to search for differences per integration or group, and
         #      truncate the loop and improve performance in large data.
-        #    - Generate the ad hoc stats report described in the _diff function of STHDUDiff
+        #    - Generate the ad hoc stats report described in the _diff function of
+        #      the STHDUDiff class
 
         shapea, shapeb = self.a.shape, self.b.shape
         if shapea != shapeb:
@@ -1008,6 +1022,10 @@ class STRawDataDiff(STImageDataDiff):
     """
     Special instance of the STImageDataDiff class.
 
+    STScI changes are to only print original report from the astropy RawDataDiff
+    class if report_pixel_loc_diffs is True. Otherwise, generate the ad hoc stats
+    report described report in the _diff function of the STHDUDiff class.
+
     Full documentation of the RawDataDiff class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
     """
@@ -1091,6 +1109,11 @@ class STRawDataDiff(STImageDataDiff):
 class STTableDataDiff(TableDataDiff):
     """
     TableDataDiff class with STScI ad hoc changes for STScI regression test reports.
+
+    STScI changes are to only report with the original format of the TableDataDiff astropy
+    class if report_pixel_loc_diffs is True. Otherwise, the only relevant issue is if there
+    are any differences, find out how many there are regardless of where they come from
+    in the column. The report will only be the total differences per column.
 
     Full documentation of the class is provided at:
     https://docs.astropy.org/en/stable/io/fits/api/diff.html
