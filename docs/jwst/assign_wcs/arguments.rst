@@ -32,9 +32,9 @@ the behavior of the processing.
   Upper edge of a NIRSpec slit in slit units.
 
   Slit units are specified as a fraction of the nominal slit or shutter height.
-  In these relative units, -0.5 is the nominal *top*
-  edge of the slit open area in science orientation, 0.0 is the center of the slit,
-  and 0.5 is the nominal *bottom* edge of the slit open area in science orientation.
+  In these relative units, -0.5 is the nominal *top* edge of the slit open area in
+  the image frame, 0.0 is the center of the slit, and 0.5 is the nominal *bottom* edge
+  of the slit open area in the image frame.
 
   Set the `slit_y_low` value to a larger negative value to include more pixels
   at the *top* of a slit bounding box; a smaller negative value to to include fewer
