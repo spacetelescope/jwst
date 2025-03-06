@@ -306,7 +306,6 @@ def lrs_xytoabl(input_model, reference_files):
                                  bounds_error=False, fill_value=np.nan)
     if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
         bb_sub = (bb_sub[0], (dxmodel.points[0].min(), dxmodel.points[0].max()))
-
     # Fit for the wavelength as a function of Y
     # Reverse the vectors so that yinv is increasing (needed for spline fitting function)
     # Spline fit with enforced smoothness
