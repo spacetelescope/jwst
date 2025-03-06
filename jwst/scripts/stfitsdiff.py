@@ -105,7 +105,7 @@ def main():
     )
 
     parser.add_argument(
-        "ibc",
+        "-ibc",
         "--ignore_blank_cards",
         dest="ignore_blank_cards",
         action="store_false",
