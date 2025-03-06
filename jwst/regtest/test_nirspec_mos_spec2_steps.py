@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+from astropy.io.fits.diff import FITSDiff
 
 import stdatamodels.jwst.datamodels as dm
 

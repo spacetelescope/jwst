@@ -1,6 +1,6 @@
 """Regression tests for NIRISS WFSS mode"""
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
 

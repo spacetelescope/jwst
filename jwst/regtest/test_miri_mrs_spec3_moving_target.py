@@ -1,7 +1,7 @@
 """Regression tests for Moving Target MIRI MRS mode"""
 import os
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+from astropy.io.fits.diff import FITSDiff
 from jwst.stpipe import Step
 
 # Define artifactory source and truth
