@@ -54,5 +54,5 @@ the behavior of the processing.
   Please note that significantly expanding the slit limit values may introduce
   contamination from adjacent open slits when the slit images are extracted
   in the :ref:`extract_2d <extract_2d_step>` step, and/or may expand the slits
-  into regions that cannot be flat fielded in the :ref:`flat_field <flat_field_step>`
+  into regions that cannot be flat fielded in the :ref:`flat_field <flatfield_step>`
   step.  These parameters should be used with caution.
