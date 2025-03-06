@@ -67,7 +67,6 @@ def test_miri_lrs_extract1d_from_cal(run_pipeline, rtdata_module, fitsdiff_defau
 @pytest.mark.bigdata
 def test_miri_lrs_slit_wcs(run_pipeline, rtdata_module, fitsdiff_default_kwargs):
     rtdata = rtdata_module
-
     # get input assign_wcs and truth file
     output = "jw01530005001_03103_00001_mirimage_assign_wcs.fits"
     rtdata.output = output
