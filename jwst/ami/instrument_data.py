@@ -44,8 +44,7 @@ class NIRISS:
         Also it looks like the threshold attribute (which cvsupport_threshold is used to set)
         is not used. Can we just remove all of this?
         TODO: setting chooseholes to a non-default value does not work.
-        Failure is in mask_definition_ami.read_nrm_model, where there is an
-        IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed.
+        Failure is in mask_definition_ami.read_nrm_model, see that function for details.
 
         Parameters
         ----------

@@ -1,7 +1,6 @@
 """Unit tests for AMI hextransformee module."""
 
 import pytest
-import numpy as np
 
 from jwst.ami import instrument_data
 from jwst.ami.utils import Affine2d

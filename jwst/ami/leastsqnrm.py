@@ -497,6 +497,7 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     A is the model, b is the data (img), and x is the coefficient vector we are solving for.
     In 2-D, data x = inv(At.A).(At.b).  If a flux is given, it will be used it
     to normalize the data.
+    TODO: replace linearfit with scipy fitting.
 
     Parameters
     ----------

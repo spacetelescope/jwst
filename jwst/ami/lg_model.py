@@ -19,7 +19,7 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 class LgModel:
     """
-    A class for conveniently dealing with an "NRM object.
+    A class for conveniently dealing with an NRM object.
 
     This should be able to take an NRMDefinition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
@@ -35,7 +35,7 @@ class LgModel:
     def __init__(
         self,
         nrm_model,
-        mask=None,
+        mask="jwst_ami",
         holeshape="hex",
         pixscale=None,
         over=1,
@@ -48,36 +48,38 @@ class LgModel:
         """
         Set attributes of LgModel class.
 
+        TODO: kwargs do not make a lot of sense, as they are not passed into
+        any other functions.  They are only used to set the debug attribute.
+        Also is the debug attribute ever used? It doesn't look like it, and
+        there is already log.debug if debug messages are needed.
+        TODO: The pixweight attribute is never used, is it needed?
+        TODO: Although pixscale is not needed until the simulate method is
+        called, I don't think this class makes much sense with pixscale=None.
+        Should this be made required?
+        TODO: every method needs a bandpass, should it just be ade a required input
+        to this init?
+
         Parameters
         ----------
-        nrm_model : NRMModel datamodel
+        nrm_model : NRMModel (or NRMDefinition object? test.)
             Datamodel containing mask geometry information
-
         mask : str
             Keyword for built-in values
-
         holeshape : str
            Shape of apertures, default="hex"
-
         pixscale : float
            Initial estimate of pixel scale in radians
-
         over : int
            Oversampling factor
-
         pixweight : 2D float array, default None
             Weighting array
-
         phi : float 1D array
             Distance of fringe from hole center in units of waves
-
         chooseholes : list of strings, default None
             E.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
             If None, use the real seven-hole mask.
-
         affine2d : Affine2d object
             Affine2d object
-
         **kwargs : dict
             Keyword arguments
             debug: boolean
@@ -93,32 +95,23 @@ class LgModel:
         self.over = over
         self.pixweight = pixweight
 
-        # get these from mask_definition_ami instead
-        if mask is None:
-            log.info("Using JWST AMI mask geometry from LgModel")
-            mask = mask_definition_ami.NRMDefinition(
-                nrm_model, maskname="jwst_ami", chooseholes=chooseholes
-            )
-        elif isinstance(mask, str):
-            mask = mask_definition_ami.NRMDefinition(
-                nrm_model, maskname=mask, chooseholes=chooseholes
-            )  # retain ability to possibly  use other named masks, for now
-        self.ctrs = mask.ctrs
-        self.d = mask.hdia
-        self.D = mask.active_D
+        log.info(f"Using AMI mask geometry for {mask} from NRMModel.")
+        self.mask = mask_definition_ami.NRMDefinition(
+            nrm_model, maskname=mask, chooseholes=chooseholes
+        )
+        self.ctrs = self.mask.ctrs
+        self.d = self.mask.hdia
+        self.D = self.mask.active_D
 
         self.N = len(self.ctrs)
         self.fmt = "%10.4e"
 
         # get closest in time OPD from WebbPSF?
 
-        if phi:  # meters of OPD at central wavelength
-            if phi == "perfect":
-                self.phi = np.zeros(self.N)  # backwards compatibility
-            else:
-                self.phi = phi
+        if (phi is None) or (phi == "perfect"):  # meters of OPD at central wavelength
+            self.phi = np.zeros(self.N)  # backwards compatibility
         else:
-            self.phi = np.zeros(self.N)
+            self.phi = phi
 
         self.chooseholes = chooseholes
 
@@ -135,7 +128,7 @@ class LgModel:
         else:
             self.affine2d = affine2d
 
-    def simulate(self, fov=None, bandpass=None, over=None, psf_offset=(0, 0)):
+    def simulate(self, fov, bandpass, over=None, psf_offset=(0, 0)):
         """
         Simulate a detector-scale psf.
 
@@ -143,25 +136,29 @@ class LgModel:
         already stored in the object, and generate a simulation fits header
         storing all of the  parameters used to generate that psf.  If the input
         bandpass is one number it will calculate a monochromatic psf.
+        TODO: If over is None, shouldn't it be taken from self.over instead
+        of setting it to 1? If this receives an over, should self.over be set to that value?
+        Shouldn't the default of over just be 1 instead of allowing None?
+        TODO: Should the PSF be normalized? Currently it is not normalized.
+        TODO: psf_offset somehow gets flipped in the call to analyticnrm2.psf.
+        Need to add tests for that function and fix that.
 
         Parameters
         ----------
-        fov : int, default=None
+        fov : int
             Number of detector pixels on a side
-
-        bandpass : 2D float array, default=None
+        bandpass : np.ndarray[float]
             Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
-
-        over : int
-            Oversampling factor
-
+        over : int, optional, default 1
+            Oversampling factor for computing PSF. Increasing the value of this parameter
+            improves the accuracy of the PSF, but does not change the output shape.
         psf_offset : detector pixels
             Center offset from center of array
 
         Returns
         -------
         Object's 'psf' : float 2D array
-            Simulated psf
+            Simulated psf of shape (fov, fov).
         """
         # First set up conditions for choosing various parameters
         self.bandpass = bandpass
@@ -194,7 +191,7 @@ class LgModel:
 
         return self.psf
 
-    def make_model(self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None):
+    def make_model(self, fov, bandpass, over=1, psf_offset=(0, 0), pixscale=None):
         """
         Generate the fringe model.
 
@@ -203,33 +200,45 @@ class LgModel:
         [(weight1, wavl1), (weight2, wavl2),...].  The model is
         a collection of fringe intensities, where nholes = 7 means the model
         has a @D slice for each of 21 cosines, 21 sines, a DC-like, and a flux
-        slice for a toal of 44 2D slices.
+        slice for a total of 44 2D slices.
+        TODO: The pixscale_measured and modelpix attributes are redundant.
+        pixscale_measured is only set in fit_image,
+        where it's set to the same value as the pixel attribute. That same pixel attribute
+        is then immediately passed in as the pixscale argument to this function.
+        Then in this function, self.modelpix first gets set to the value of pixscale_measured,
+        then gets overwritten by the value of pixscale.
+        In the calling code, the pixscale argument is always the same as the pixel attribute.
+        The best solution here would be to make pixscale required in the __init__ and then always
+        use self.pixel here, removing both additional attributes and the optional pixscale argument.
+        Need to check with the AMI team first because there is some small chance they are directly
+        accessing these attributes, or using pixscale arg to non-trivially override self.pixel.
+        TODO: The modelctrs attribute is redundant with ctrs and could be removed.
+        TODO: why is self.fov set here, but not by the simulate method?
+        TODO: why is self.over set here, but not by the simulate method?
+        TODO: why is self.bandpass set by the simulate method, but not here?
+        TODO: why does model_over get reassigned every iteration of the loop?
+        Should it be accumulated instead, like the fringe model? Or if not, is it appropriate for
+        it to be an attribute, or should it remain internal to this function?
 
         Parameters
         ----------
-        fov : int, default=None
+        fov : int
             Number of detector pixels on a side
-
-        bandpass : 2D float array, default=None
+        bandpass : np.ndarray[float]
             Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
-
         over : int
-           Cversampling factor
-
+           Oversampling factor
         psf_offset : detector pixels
             Center offset from center of array
-
         pixscale : float, default=None
             Pixel scale
 
         Returns
         -------
-        Object's 'model': fringe model
-            Generated fringe model
+        model : np.ndarray[float]
+            Generated fringe model, shape (fov, fov, N * (N - 1) + 2)
         """
-        if fov:
-            self.fov = fov
-
+        self.fov = fov
         self.over = over
 
         if hasattr(self, "pixscale_measured"):
@@ -308,24 +317,34 @@ class LgModel:
         reference image (a cropped deNaNed version of the data) to run
         correlations. It is recommended that the symmetric part of the data be
         used to avoid piston confusion in scaling.
+        TODO: model_in=None case errors out because of
+        AttributeError: 'LgModel' object has no attribute 'bestcenter'.
+        There's a note elsewhere that says bestcenter was renamed to psf_offset.
+        But psf_offset is also not passed in here, nor ever set as an attribute.
+        TODO: The .reference attribute is only set in the case where model_in is None.
+        The .reference attribute is set separately in nrm_core.py, but does that make sense?
+        Would it make more sense input reference here?
+        TODO: self.model_in is never used, does it need to be an attribute?
+        self.saveval is never used, does it need to be an attribute?
+        self.weighted is only used in this function, does it need to be an attribute?
+        TODO: dqm=None case errors out. It seems it would be ok to set this to an array of zeros.
+        This should be fixed.
+        TODO: change name of self.singvals with self.linfit_results for consistency.
+        This would be easier if matrix_operations and weighted_operations both did their fitting
+        with scipy
 
         Parameters
         ----------
         image : 2D float array
             Input image
-
         reference : 2D float array
             Input reference image
-
         model_in : 2D array
             Optional model image
-
         savepsfs : bool
             Save the psfs for writing to file (currently unused)
-
         dqm : 2D array
             Bad pixel mask of same dimensions as image
-
         weighted : bool
             Use weighted operations in the least squares routine
         """
@@ -393,8 +412,6 @@ class LgModel:
         for ind, coeff in enumerate(self.soln):
             self.modelpsf += self.flux * coeff * self.fittingmodel[:, :, ind]
 
-        return None
-
     def improve_scaling(self, img):
         """
         Determine the scale and rotation that best fits the data.
@@ -402,6 +419,9 @@ class LgModel:
         Correlations
         are calculated in the image plane, in anticipation of data with many
         bad pixels.
+        TODO: The call to self.simulate() is missing the fov argument and would cause an error.
+        TODO: This requires the self.scallist attribute, which is never initialized.
+        TODO: This is unused. Remove?
 
         Parameters
         ----------
@@ -412,10 +432,8 @@ class LgModel:
         -------
         self.pixscale_factor: float
             Improved estimate of pixel scale in radians
-
         self.rot_measured : float
             Value of mag at the extreme value of rotation from quadratic fit
-
         self.gof : float
             Goodness of fit
         """
@@ -433,8 +451,6 @@ class LgModel:
         #  from data at an earlier iteration
         if not hasattr(self, "refphi"):
             self.refphi = np.zeros(len(self.ctrs))
-        else:
-            pass
 
         self.pixscales = np.zeros(len(self.scallist))
         for q, scal in enumerate(self.scallist):
@@ -484,6 +500,9 @@ class LgModel:
         """
         Set piston's phi in meters of OPD at center wavelength LG++.
 
+        TODO: This is pointless, as it just sets a single attribute that can also
+        be set directly and/or when initializing the object. It is unused. Remove?
+
         Parameters
         ----------
         phi_m : float
@@ -495,10 +514,13 @@ class LgModel:
         """
         Set the detector pixel scale.
 
+        TODO: This is pointless, as it just sets a single attribute that can also
+        be set directly and/or when initializing the object. It is unused. Remove?
+
         Parameters
         ----------
         pixel_rad : float
-            Detector pixel scale
+            Detector pixel scale in radians.
         """
         self.pixel = pixel_rad
 
@@ -511,16 +533,14 @@ def goodness_of_fit(data, bestfit, disk_r=8):
     ----------
     data : 2D float array
         Input image
-
     bestfit : 2D float array
         Fit to input image
-
     disk_r : int
         Radius of disk
 
     Returns
     -------
-    gof : float
+    float
         Goodness of fit
     """
     mask = (
@@ -533,9 +553,7 @@ def goodness_of_fit(data, bestfit, disk_r=8):
 
     masked_data = np.ma.masked_invalid(mask * data)
 
-    gof = abs(difference).sum() / abs(masked_data).sum()
-
-    return gof
+    return abs(difference).sum() / abs(masked_data).sum()
 
 
 def run_data_correlate(data, model):
@@ -546,18 +564,15 @@ def run_data_correlate(data, model):
     ----------
     data : 2D float array
         Reference image
-
     model : 2D float array
         Simulated psf
 
     Returns
     -------
-    cor: 2D float array
+    2D float array
         Correlation between data and model
     """
     sci = data
     log.debug("shape sci: %s", np.shape(sci))
 
-    cor = utils.rcrosscorrelate(sci, model)
-
-    return cor
+    return utils.rcrosscorrelate(sci, model)

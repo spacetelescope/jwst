@@ -34,3 +34,13 @@ def test_NRMDefinition(nrm_model):
         ]
     )
     assert np.allclose(nrm.ctrs, -np.fliplr(ctrs_asdesigned))
+
+    # TODO: test the options for chooseholes
+    # currently fails
+    # chooseholes = ["B2", "B4", "B5", "B6"]
+    # nrm = NRMDefinition(nrm_model, chooseholes=chooseholes)
+    # assert nrm.ctrs.shape == (4, 2)
+    # assert np.allclose(nrm.ctrs, -np.fliplr(ctrs_asdesigned)[[3, 0, 2, 5]])
+
+    with pytest.raises(ValueError):
+        NRMDefinition(nrm_model, maskname="jwst_unsupported")

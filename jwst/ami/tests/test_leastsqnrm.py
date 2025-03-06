@@ -1,6 +1,5 @@
 """Unit tests for AMI leastsqnrm module."""
 
-import pytest
 import numpy as np
 import math
 from numpy.testing import assert_allclose

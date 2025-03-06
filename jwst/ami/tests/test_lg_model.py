@@ -1,0 +1,128 @@
+"""Unit tests for AMI lg_model module."""
+
+import pytest
+import numpy as np
+from numpy.testing import assert_allclose
+
+from jwst.ami import lg_model
+from .conftest import PXSC_RAD
+
+
+PSF_FOV = 21
+
+@pytest.fixture(scope="module")
+def lgmodel(nrm_model):
+    """Create an LgModel object."""
+    model = lg_model.LgModel(
+        nrm_model,
+        mask="jwst_ami",
+        holeshape="hex",
+        pixscale=PXSC_RAD,
+        over=1,
+        pixweight=None,
+        phi=None,
+        chooseholes=None,
+        affine2d=None,
+        debug=True,
+    )
+    return model
+
+
+@pytest.mark.parametrize("over", [None, 1, 3])
+# TODO: for some reason PSF offset indexing gets flipped, should be fixed.
+@pytest.mark.parametrize("psf_offset", [(0, 0), (1, -3)])
+def test_simulate(lgmodel, bandpass, over, psf_offset):
+
+    psf = lgmodel.simulate(PSF_FOV, bandpass, over=over, psf_offset=psf_offset)
+    psf_over = lgmodel.psf_over
+
+    # check attribute setting by this method
+    assert np.all(psf == lgmodel.psf)
+    assert np.all(bandpass == lgmodel.bandpass)
+
+    # Check shapes and basic values
+    if over is None:
+        over = 1
+    assert psf.shape == (PSF_FOV, PSF_FOV)
+    assert psf_over.shape == (PSF_FOV*over, PSF_FOV*over)
+    assert np.all(psf >= 0)
+    assert np.sum(np.isnan(psf)) == 0
+    assert np.sum(np.isinf(psf)) == 0
+
+    # Check that the PSF is centered, respecting offset
+    expected_center = (int(PSF_FOV / 2 + psf_offset[1]), int(PSF_FOV / 2 + psf_offset[0]))
+    max_idx = np.unravel_index(np.argmax(psf), psf.shape)
+    assert np.all(max_idx == expected_center)
+
+
+@pytest.mark.parametrize("over", [1, 3])
+@pytest.mark.parametrize("psf_offset", [(0, 0), (1, -3)])
+@pytest.mark.parametrize("pixscale", [None, PXSC_RAD*1.2])
+def test_make_model(lgmodel, bandpass, over, psf_offset, pixscale):
+
+    fringemodel = lgmodel.make_model(
+        PSF_FOV,
+        bandpass,
+        over=over,
+        psf_offset=psf_offset,
+        pixscale=pixscale,
+    )
+
+    # Check attribute setting by this method
+    assert np.all(fringemodel == lgmodel.model)
+    assert lgmodel.PSF_FOV == PSF_FOV
+    assert lgmodel.over == over
+    assert hasattr(lgmodel, "model_beam")
+    assert hasattr(lgmodel, "fringes")
+    assert hasattr(lgmodel, "model_over")
+
+    # Check shapes and basic values
+    n_coeffs = lgmodel.N * (lgmodel.N - 1) + 2
+    sz = PSF_FOV*over
+    assert fringemodel.shape == (PSF_FOV, PSF_FOV, n_coeffs)
+    assert lgmodel.model_beam.shape == (sz, sz)
+    assert lgmodel.fringes.shape == (n_coeffs-1, sz, sz)
+    assert lgmodel.model_over.shape == (sz, sz, n_coeffs)
+    assert np.sum(np.isnan(fringemodel)) == 0
+    assert np.sum(np.isinf(fringemodel)) == 0
+
+    # Check that the beam is centered, respecting offset
+    expected_center = (int(sz / 2 + psf_offset[1]*over), int(sz / 2 + psf_offset[0]*over))
+    max_idx = np.unravel_index(np.argmax(lgmodel.model_beam), lgmodel.model_beam.shape)
+    assert np.all(max_idx == expected_center)
+
+
+def test_fit_image(example_model, lgmodel, bandpass):
+    """
+    Test fit_image and create_modelpsf methods.
+    These two methods are intended to be called in sequence.
+    """
+    # TODO: finish this test once leastsqnrm tests are done
+
+    image = example_model.data[0]
+    fov = image.shape[0]
+    dqm = np.zeros(image.shape, dtype="bool")
+    lgmodel.bandpass = bandpass
+
+    fringemodel = lgmodel.make_model(
+        fov,
+        bandpass,
+    )
+    lgmodel.fit_image(
+        image,
+        model_in=fringemodel,
+        dqm=dqm,
+    )
+    lgmodel.create_modelpsf()
+
+    # print("rawDC", lgmodel.rawDC)
+    # print("flux", lgmodel.flux)
+    # print("soln", lgmodel.soln)
+    # print("fringeamp", lgmodel.fringeamp)
+    # print("fringephase", lgmodel.fringephase)
+    # print("fringepistons", lgmodel.fringepistons)
+    # print("redundant_cps", lgmodel.redundant_cps)
+    # print("t3_amplitudes", lgmodel.t3_amplitudes)
+    # print("redundant_cas", lgmodel.redundant_cas)
+    # print("q4_phases", lgmodel.q4_phases)
+    # print("modelpsf", lgmodel.modelpsf)
