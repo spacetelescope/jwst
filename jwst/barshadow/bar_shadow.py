@@ -73,6 +73,20 @@ def do_correction(
             correction = _calc_correction(slitlet, barshadow_model, source_type)
         corrections.slits.append(correction)
 
+        if correction is None:
+            # For extended sources, there is no real correction applied.
+            # Record the correction status as False in this case.
+            slitlet.barshadow_corrected = False
+
+            # Store a blank barshadow image
+            slitlet.barshadow = np.ones_like(slitlet.data)
+
+            # No further processing needed
+            continue
+
+        # Otherwise, record the correction status as True.
+        slitlet.barshadow_corrected = True
+
         # Apply the correction by dividing into the science and uncertainty arrays:
         #     var_poisson and var_rnoise are divided by correction**2,
         #     because they're variance, while err is standard deviation
@@ -118,7 +132,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     slitlet_number = slitlet.slitlet_id
 
     # Correction only applies to extended/uniform sources
-    correction = datamodels.SlitModel(data=np.ones(slitlet.data.shape))
+    correction = None
     if not has_uniform_source(slitlet, source_type):
         log.info(f"Bar shadow correction skipped for slitlet {slitlet_number} (source not uniform)")
         return correction
@@ -171,6 +185,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     wcol = (wavelength - w0) / wave_increment
 
     # Interpolate the bar shadow correction for non-Nan pixels
+    correction = datamodels.SlitModel()
     correction.data = ndimage.map_coordinates(
         shadow, [yrow, wcol], cval=np.nan, order=1, mode="nearest"
     )

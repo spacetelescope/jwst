@@ -11,8 +11,7 @@ from jwst.extract_2d import Extract2dStep
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_mos_file
 
 
-@pytest.fixture(scope="module")
-def nirspec_mos_model():
+def create_nirspec_mos_model():
     hdul = create_nirspec_mos_file()
     msa_meta = os.path.join(
         jwst.__path__[0], *["assign_wcs", "tests", "data", "msa_configuration.fits"]
@@ -20,6 +19,8 @@ def nirspec_mos_model():
     hdul[0].header["MSAMETFL"] = msa_meta
     hdul[0].header["MSAMETID"] = 12
     im = datamodels.ImageModel(hdul)
+    hdul.close()
+
     im.data = np.full((2048, 2048), 1.0)
     im_wcs = AssignWcsStep.call(im)
     im_ex2d = Extract2dStep.call(im_wcs)
@@ -30,17 +31,19 @@ def nirspec_mos_model():
     im_ex2d.slits[0].var_poisson = im_ex2d.slits[0].data * 0.01
     im_ex2d.slits[0].var_flat = im_ex2d.slits[0].data * 0.01
 
-    yield im_ex2d
-    im_ex2d.close()
-    im_wcs.close()
-    im.close()
-    hdul.close()
+    return im_ex2d
+
+
+@pytest.fixture(scope="module")
+def nirspec_mos_model():
+    return create_nirspec_mos_model()
 
 
 def test_barshadow_step(nirspec_mos_model):
     model = nirspec_mos_model.copy()
     result = BarShadowStep.call(model)
     assert result.meta.cal_step.barshadow == "COMPLETE"
+    assert result.slits[0].barshadow_corrected is True
 
     # 5 shutter slitlet, correction should not be uniform
     shadow = result.slits[0].barshadow
@@ -83,9 +86,13 @@ def test_barshadow_step_zero_length(nirspec_mos_model, log_watcher):
     result = BarShadowStep.call(model)
     watcher.assert_seen()
 
-    # correction ran, but is all 1s
+    # correction step ran, but is all 1s
     assert result.meta.cal_step.barshadow == "COMPLETE"
     assert np.all(result.slits[0].barshadow == 1)
+
+    # correction status is False
+    assert result.slits[0].barshadow_corrected is False
+
     result.close()
 
 
@@ -100,6 +107,7 @@ def test_barshadow_step_not_uniform(nirspec_mos_model, log_watcher):
     # correction ran, but is all 1s
     assert result.meta.cal_step.barshadow == "COMPLETE"
     assert np.all(result.slits[0].barshadow == 1)
+    assert result.slits[0].barshadow_corrected is False
     result.close()
 
 
@@ -114,6 +122,7 @@ def test_barshadow_no_reffile(monkeypatch, nirspec_mos_model):
     # correction did not run
     assert result.meta.cal_step.barshadow == "SKIPPED"
     assert result.slits[0].barshadow.size == 0
+    assert result.slits[0].barshadow_corrected is None
     result.close()
 
 
@@ -126,6 +135,7 @@ def test_barshadow_wrong_exptype():
     # correction did not run
     assert result.meta.cal_step.barshadow == "SKIPPED"
     assert result.slits[0].barshadow.size == 0
+    assert result.slits[0].barshadow_corrected is None
 
     result.close()
 
