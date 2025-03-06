@@ -742,6 +742,9 @@ def copy_keyword_info(slit, slitname, spec):
         "quadrant",
         "slit_xscale",
         "slit_yscale",
+        "wavelength_corrected",
+        "pathloss_correction_type",
+        "barshadow_corrected",
     ]
     for key in copy_populated_attributes:
         if getattr(slit, key, None) is not None:
