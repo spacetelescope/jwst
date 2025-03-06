@@ -354,35 +354,29 @@ def stripe_read(sci_model, ref_model, attribs):
     nreads2 = sci_model.meta.subarray.multistripe_reads2
     nskips2 = sci_model.meta.subarray.multistripe_skips2
     repeat_stripe = sci_model.meta.subarray.repeat_stripe
+    interleave_reads1 = sci_model.meta.subarray.interleave_reads1
     xsize_sci = sci_model.meta.subarray.xsize
     ysize_sci = sci_model.meta.subarray.ysize
 
     # Get the reference model subarray params
-
-
     sub_model = type(ref_model)()
     sub_model.update(ref_model)
     for attrib in attribs:
         ref_array = getattr(ref_model, attrib)
 
-        # TEMP: are skips1 starting from inverted position for
-        # nrca2 and nrca4? Test flipping the rows
-        if ('2' in sci_model.meta.instrument.detector or
-                '4' in sci_model.meta.instrument.detector):
-            fliprows = -1
-        else:
-            fliprows = 1
-
         sub_model[attrib] = generate_stripe_array(
-            ref_array[..., ::fliprows, :],
+            ref_array,
             xsize_sci,
             ysize_sci,
             nreads1,
             nreads2,
             nskips1,
             nskips2,
-            repeat_stripe
-        )[..., ::fliprows, :]
+            repeat_stripe,
+            interleave_reads1,
+            sci_model.meta.subarray.fastaxis,
+            sci_model.meta.subarray.slowaxis,
+        )
     return sub_model
 
 
@@ -394,13 +388,16 @@ def generate_stripe_array(
         nreads2,
         nskips1,
         nskips2,
-        repeat_stripe
+        repeat_stripe,
+        interleave_reads1,
+        fastaxis,
+        slowaxis,
 ):
     """
 
     Parameters
     ----------
-    ref_array : nd-array
+    ref_array : np.array
         The scene to be sliced.
     xsize_sci : int
         Output shape in x dim.
@@ -416,11 +413,21 @@ def generate_stripe_array(
         Multistripe header keyword.
     repeat_stripe : int
         Multistripe header keyword.
+    interleave_reads1 : int
+        Multistripe header keyword.
+    fastaxis : int
+        The subarray keyword describing
+        the fast readout axis and direction.
+    slowaxis : int
+        The subarray keyword describing
+        the slow readout axis and direction.
 
     Returns
     -------
 
     """
+    # Transform science data to detector frame
+    ref_array = science_detector_frame_transform(ref_array, fastaxis, slowaxis)
     ref_shape = np.shape(ref_array)
     stripe_out = np.zeros(
         (*ref_shape[:-2], ysize_sci, xsize_sci), dtype=getattr(ref_array, 'dtype')
@@ -442,31 +449,82 @@ def generate_stripe_array(
         ref_array[..., linecount: linecount + nreads2, :]
     linecount += nreads2
     sub_lines += nreads2
-    # Nskips2
-    linecount += nskips2
 
-    # Now, while the output size is less than the science array size,
-    # repeat the steps of any interleaved nreads1 followed by
-    # nreads2 + nskips2 until the appropriate size is reached.
+    # Now, while the output size is less than the science array size:
+    # 1a. If repeat_stripe, reset linecount (HEAD) to initial position
+    #     after every nreads2.
+    # 1b. Else, do nskips2 followed by nreads2 until subarray complete.
+    # 2.  Following 1a., repeat sequence of nreads1, skips*, nreads2
+    #     until complete. For skips*:
+    # 3a. If interleave_reads1, value of skips increments by nskips2
+    #     for each stripe read.
+    # 3b. If not interleave, each loop after linecount reset is simply
+    #     nreads1 + nskips1 + nreads2.
+    interleave_skips = nskips1
     while sub_lines < ysize_sci:
-        # If interleaved nreads1, add interleaved rows to output and increment sub_lines
+        # If repeat_stripe, add interleaved rows to output and increment sub_lines
         if repeat_stripe > 0:
+            linecount = 0
             stripe_out[..., sub_lines: sub_lines + nreads1, :] = \
-                ref_array[..., 0: 0 + nreads1, :]
+                ref_array[..., linecount: linecount + nreads1, :]
+            linecount += nreads1
             sub_lines += nreads1
-
-        # Nreads2
+            if interleave_reads1:
+                interleave_skips += nskips2
+                linecount += interleave_skips
+            else:
+                linecount += nskips1
+        else:
+            linecount += nskips2
         stripe_out[..., sub_lines: sub_lines + nreads2, :] = \
             ref_array[..., linecount: linecount + nreads2, :]
         linecount += nreads2
         sub_lines += nreads2
-        # Nskips2
-        linecount += nskips2
 
     if sub_lines != ysize_sci:
         raise ValueError('Stripe readout resulted in mismatched reference array shape '
                          'with respect to science array!')
+
+    # Transform from detector frame back to science frame
+    stripe_out = science_detector_frame_transform(stripe_out, fastaxis, slowaxis)
+
     return stripe_out
+
+
+def science_detector_frame_transform(data, fastaxis, slowaxis):
+    """
+    Swap data array between science and detector frames.
+
+    Use the fastaxis and slowaxis keywords to invert
+    and/or transpose data array axes to move between the
+    science frame and the detector frame.
+
+    Parameters
+    ----------
+    data : np.array
+        Science array containing at least two dimensions.
+    fastaxis : int
+        Value of the fastaxis keyword for the data array
+        to be transformed.
+    slowaxis : int
+        Value of the slowaxis keyword for the data array
+        to be transformed.
+
+    Returns
+    -------
+    np.array
+        Data array transformed between science and
+        detector frames.
+    """
+    # If fastaxis is x-axis
+    if np.abs(fastaxis) == 1:
+        # Use sign of keywords to possibly reverse the ordering of the axes.
+        data = data[..., ::slowaxis//np.abs(slowaxis), ::fastaxis//np.abs(fastaxis)]
+    # Else fastaxis is y-axis, also need to transpose array
+    else:
+        data = data[..., ::fastaxis//np.abs(fastaxis), ::slowaxis//np.abs(slowaxis)]
+        data = np.swapaxes(data, -2, -1)
+    return data
 
 
 class MatchRowError(Exception):
