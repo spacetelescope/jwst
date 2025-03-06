@@ -158,20 +158,24 @@ def main():
     }
 
     # If provided, make sure the extension_tolerances is a dictionary and not a string
+    err_msg = """Dictionary format error. Use no spaces and double quotes encasing the whole dictionary, e.g.
+                  --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2},'err':{'rtol':1e-1,'atol':1e-2}}" """
     if args.extension_tolerances is not None:
         try:
             stfitsdiff_default_kwargs["extension_tolerances"] = ast.literal_eval(
                 args.extension_tolerances
             )
         except (NameError, TypeError, ValueError, SyntaxError):
-            print("""Dictionary format error. Use no spaces and double quotes encasing the whole dictionary, e.g.
-                  --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2},'err':{'rtol':1e-1,'atol':1e-2}}" """)
+            print(err_msg)
             exit()
 
     # Find the differences
     print("\n STScI Custom FITSDiff")
-    diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
-    print(diff.report())
+    try:
+        diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
+        print(diff.report())
+    except (NameError, TypeError, ValueError, SyntaxError):
+        print(err_msg)
 
 
 if __name__ == "__main__":
