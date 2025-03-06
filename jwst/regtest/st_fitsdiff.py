@@ -964,7 +964,6 @@ class STImageDataDiff(ImageDataDiff):
                 # Data is the same, nothing to do
                 self.diff_ratio = 0
                 self.diff_total = 0
-                return
 
     def _report(self):
         # Code below contains mixed original ImageDiff lines as well as STScI's
