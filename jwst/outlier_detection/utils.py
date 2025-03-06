@@ -222,13 +222,15 @@ def median_with_resampling(
     median_err = None
 
     eval_med_err = False
-    if return_error and resamp.compute_err == "driz_err":
-        eval_med_err = True
-        log.warning(
-            "Returning median_error has been disabled since input "
-            "'resamp' object does not have 'compute_err' attribute set to "
-            "'driz_err'."
-        )
+    if return_error:
+        if resamp.compute_err == "driz_err":
+            eval_med_err = True
+        else:
+            log.warning(
+                "Returning median_error has been disabled since input "
+                "'resamp' object does not have 'compute_err' attribute set to "
+                "'driz_err'."
+            )
 
     if save_intermediate_results:
         # create an empty image model for the median data
