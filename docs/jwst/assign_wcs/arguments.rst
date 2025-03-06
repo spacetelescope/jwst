@@ -31,8 +31,8 @@ the behavior of the processing.
 ``--slit_y_high`` (float, default=0.55)
   Upper edge of a NIRSpec slit in slit units.
 
-  Slit units are specified as a fraction of the nominal slit or shutter height
-  in detector orientation. In these relative units, -0.5 is the nominal *top*
+  Slit units are specified as a fraction of the nominal slit or shutter height.
+  In these relative units, -0.5 is the nominal *top*
   edge of the slit open area in science orientation, 0.0 is the center of the slit,
   and 0.5 is the nominal *bottom* edge of the slit open area in science orientation.
 
@@ -45,12 +45,14 @@ the behavior of the processing.
   pixels.
 
   For MSA slits in NIRSpec MOS mode, the slit units are relative to a single open shutter
-  height, not a full "slitlet" composed of multiple shutters.  For this mode, an
-  extra margin of half a shutter is automatically added to the slit boundaries specified
-  here, corresponding to a couple extra detector pixels at the top and bottom of each
-  slitlet.
+  height, not a full "slitlet" composed of multiple shutters.  For this mode,
+  the `slit_y_low` and `slit_y_high` values determine the padding of the slitlet edges relative
+  to the centers of the edge shutters. An additional margin of half a shutter is also
+  automatically added to the slit boundaries specified by these parameters, corresponding
+  to a couple extra detector pixels at the top and bottom of each slitlet.
 
-  Please note that significantly enlarging the slit limit values may introduce
+  Please note that significantly expanding the slit limit values may introduce
   contamination from adjacent open slits when the slit images are extracted
-  in the :ref:`extract_2d <extract_2d_step>` step, so these parameters should be used
-  with caution.
+  in the :ref:`extract_2d <extract_2d_step>` step, and/or may expand the slits
+  into regions that cannot be flat fielded in the :ref:`flat_field <flat_field_step>`
+  step.  These parameters should be used with caution.
