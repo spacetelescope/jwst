@@ -1,0 +1,1 @@
+Implement new STFITSDiff class based off of FITSDiff with STScI custom reporting for regression test support.
