@@ -1,5 +1,4 @@
 import logging
-import warnings
 
 import asdf
 from astropy import coordinates as coord
@@ -120,10 +119,6 @@ def niriss_bounding_box(input_model):
     """
     Create a bounding box for the NIRISS model.
 
-    .. deprecated:: 1.17.2
-        :py:func:`niriss_bounding_box` has been deprecated and will be removed
-        in a future release.
-
     Parameters
     ----------
     input_model : JwstDataModel
@@ -134,13 +129,6 @@ def niriss_bounding_box(input_model):
     CompoundBoundingBox
         The bounding box for the NIRISS model.
     """
-    warnings.warn(
-        "'niriss_bounding_bo()' has been deprecated since 1.17.2 and "
-        "will be removed in a future release. ",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
     bbox = {(order,): _niriss_order_bounding_box(input_model, order) for order in [1, 2, 3]}
     model = input_model.meta.wcs.forward_transform
     return CompoundBoundingBox.validate(
