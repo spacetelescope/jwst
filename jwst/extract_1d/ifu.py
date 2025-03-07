@@ -40,7 +40,7 @@ def ifu_extract1d(
     apcorr_ref_file=None,
     center_xy=None,
     ifu_autocen=False,
-    ifu_rfcorr=False,
+    ifu_rfcorr=True,
     ifu_rscale=None,
     ifu_covar_scale=1.0,
 ):
@@ -275,19 +275,15 @@ def ifu_extract1d(
 
     if input_model.meta.instrument.name == "MIRI":
         if temp_flux_rf is None:
-            flux_rf = np.zeros_like(flux)
-            flux_rf[:] = np.nan
+            flux_rf = np.full_like(flux, np.nan)
         else:
             flux_rf = temp_flux_rf * pixel_solid_angle * 1.0e6
         del temp_flux_rf
 
         if background_rf is None:
-            background_rf = np.zeros_like(background)
-            background_rf[:] = np.nan
-
+            background_rf = np.full_like(background, np.nan)
         if surf_bright_rf is None:
-            surf_bright_rf = np.zeros_like(surf_bright)
-            surf_bright_rf[:] = np.nan
+            surf_bright_rf = np.full_like(surf_bright, np.nan)
 
         otab = np.array(
             list(
