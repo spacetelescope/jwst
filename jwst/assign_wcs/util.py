@@ -19,10 +19,10 @@ from gwcs import utils as gwutils
 from stpipe.exceptions import StpipeExitException
 from stcal.alignment.util import compute_s_region_keyword, compute_s_region_imaging
 
-from stdatamodels.jwst.datamodels import WavelengthrangeModel
+from stdatamodels.jwst.datamodels import WavelengthrangeModel, MiriLRSSpecwcsModel
 from stdatamodels.jwst.transforms.models import GrismObject
 
-from ..lib.catalog_utils import SkyObject
+from jwst.lib.catalog_utils import SkyObject
 
 
 log = logging.getLogger(__name__)
@@ -807,6 +807,51 @@ def update_s_region_imaging(model):
         model.meta.wcsinfo.s_region = s_region
 
 
+def update_s_region_lrs(model, reference_files):
+    """
+    Update ``S_REGION`` using V2,V3 of the slit corners from reference file.
+
+    s_region for model is updated in place.
+
+    Parameters
+    ----------
+    model : DataModel
+        Input model
+    reference_files : list
+        List of reference files for assign_wcs.
+    """
+    refmodel = MiriLRSSpecwcsModel(reference_files['specwcs'])
+
+    v2vert1 = refmodel.meta.v2_vert1
+    v2vert2 = refmodel.meta.v2_vert2
+    v2vert3 = refmodel.meta.v2_vert3
+    v2vert4 = refmodel.meta.v2_vert4
+
+    v3vert1 = refmodel.meta.v3_vert1
+    v3vert2 = refmodel.meta.v3_vert2
+    v3vert3 = refmodel.meta.v3_vert3
+    v3vert4 = refmodel.meta.v3_vert4
+
+    refmodel.close()
+    v2 = [v2vert1, v2vert2, v2vert3, v2vert4]
+    v3 = [v3vert1, v3vert2, v3vert3, v3vert4]
+
+    if (any(elem is None for elem in v2) or
+        any(elem is None for elem in v3)):
+        log.info("The V2,V3 coordinates of the MIRI LRS-Fixed slit contains NaN values.")
+        log.info("The s_region will not be updated")
+
+    lam = 7.0 # wavelength does not matter for s region so just assign a value in range of LRS
+    s = model.meta.wcs.transform('v2v3', 'world', v2, v3, lam)
+    a = s[0]
+    b = s[1]
+    footprint = np.array([[a[0], b[0]],
+                          [a[1], b[1]],
+                          [a[2], b[2]],
+                          [a[3], b[3]]])
+
+    update_s_region_keyword(model, footprint)
+
 def compute_footprint_spectral(model):
     """
     Determine spatial footprint for spectral observations using the instrument model.
@@ -844,9 +889,11 @@ def compute_footprint_spectral(model):
     return footprint, (lam_min, lam_max)
 
 
+
 def update_s_region_spectral(model):
     """ Update the S_REGION keyword.
     """
+
     footprint, spectral_region = compute_footprint_spectral(model)
     update_s_region_keyword(model, footprint)
     model.meta.wcsinfo.spectral_region = spectral_region

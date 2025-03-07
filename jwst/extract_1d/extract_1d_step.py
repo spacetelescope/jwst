@@ -97,7 +97,7 @@ class Extract1dStep(Step):
         and maximize the quality of the 1d spectrum. Used for IFU mode only.
     ifu_rfcorr : bool
         Switch to select whether or not to apply a 1d residual fringe correction
-        for MIRI MRS IFU spectra.  Default is False.
+        for MIRI MRS IFU spectra.  Default is True.
     ifu_set_srctype : str
         For MIRI MRS IFU data override srctype and set it to either POINT or EXTENDED.
     ifu_rscale : float
@@ -170,7 +170,7 @@ class Extract1dStep(Step):
     center_xy = float_list(min=2, max=2, default=None)  # IFU extraction x/y center
     ifu_autocen = boolean(default=False) # Auto source centering for IFU point source data.
     bkg_sigma_clip = float(default=3.0)  # background sigma clipping threshold for IFU
-    ifu_rfcorr = boolean(default=False) # Apply 1d residual fringe correction
+    ifu_rfcorr = boolean(default=True) # Apply 1d residual fringe correction (MIRI MRS only)
     ifu_set_srctype = option("POINT", "EXTENDED", None, default=None) # user-supplied source type
     ifu_rscale = float(default=None, min=0.5, max=3) # Radius in terms of PSF FWHM to scale extraction radii
     ifu_covar_scale = float(default=1.0) # Scaling factor to apply to errors to account for IFU cube covariance
@@ -342,6 +342,36 @@ class Extract1dStep(Step):
 
         return result
 
+    def _check_mrs_type(self, model):
+        """
+        Check if the MIRI MRS data is for a single band.
+
+        Parameters
+        ----------
+        model : DataModel
+            Input model.
+
+        Returns
+        -------
+        band_check : bool
+            Flag is data is for a single MIRI MRS band.
+        """
+        # check channel is only 1 value and band is only 1 value
+        validch = ["1", "2", "3", "4"]
+        validband = ["short", "medium", "long"]
+        band_check = False
+        ch_check = False
+        b_check = False
+        if model.meta.instrument.channel in validch:
+            ch_check = True
+        if str(model.meta.instrument.band).lower() in validband:
+            b_check = True
+
+        if ch_check and b_check:
+            band_check = True
+
+        return band_check
+
     def _extract_ifu(self, model, exp_type, extract_ref, apcorr_ref):
         """
         Extract IFU spectra from a single datamodel.
@@ -366,6 +396,21 @@ class Extract1dStep(Step):
         if self.ifu_set_srctype is not None and exp_type == "MIR_MRS":
             source_type = self.ifu_set_srctype
             self.log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
+
+        if exp_type == "MIR_MRS":
+            band_cube = self._check_mrs_type(model)
+            if self.ifu_rfcorr and not band_cube:
+                message = (
+                    "Turning off residual fringe correction for MIRI MRS data "
+                    "because the input is not a single IFU band"
+                )
+                self.log.info(message)
+                self.ifu_rfcorr = False
+        else:
+            self.ifu_rfcorr = False
+            self.log.info(
+                "Turning off residual fringe correction because it only works on MIRI MRS data"
+            )
 
         result = ifu_extract1d(
             model,
