@@ -1,5 +1,3 @@
-#! /usr/bin/env python
-
 """Get integrated flux as a function of time for a multi-integration spectroscopic observation."""
 
 from stdatamodels.jwst import datamodels
@@ -34,7 +32,7 @@ class WhiteLightStep(Step):
 
         Parameters
         ----------
-        step_input : str or stdatamodels.jwst.datamodels.multispec.MultiSpecModel
+        step_input : str or MultiSpecModel
             Either the path to the file or the science data model for the sum.
 
         Returns
