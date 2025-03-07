@@ -30,7 +30,9 @@ class SaturationStep(Step):
 
             # Get the name of the saturation reference file
             self.ref_name = self.get_reference_file(input_model, 'saturation')
+            self.bias_name = self.get_reference_file(input_model, 'superbias')
             self.log.info('Using SATURATION reference file %s', self.ref_name)
+            self.log.info('Using SUPERBIAS reference file %s', self.bias_name)
 
             # Check for a valid reference file
             if self.ref_name == 'N/A':
@@ -41,13 +43,14 @@ class SaturationStep(Step):
 
             # Open the reference file data model
             ref_model = datamodels.SaturationModel(self.ref_name)
+            bias_model = datamodels.SuperBiasModel(self.bias_name)
 
             # Work on a copy
             result = input_model.copy()
 
             # Do the saturation check
             if pipe_utils.is_irs2(result):
-                result = saturation.irs2_flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
+                result = saturation.irs2_flag_saturation(result, ref_model, bias_model, self.n_pix_grow_sat, self.use_readpatt)
             else:
                 result = saturation.flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
             result.meta.cal_step.saturation = 'COMPLETE'

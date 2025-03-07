@@ -94,7 +94,7 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     return output_model
 
 
-def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
+def irs2_flag_saturation(output_model, ref_model, bias_model, n_pix_grow_sat, use_readpatt):
     """
     Short Summary
     -------------
@@ -184,12 +184,12 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
             if ((group == 2) & (read_pattern is not None)):
                 # Identify groups which we wouldn't expect to saturate by the third group,
                 # on the basis of the first group
-                scigp1 = x_irs2.from_irs2(data[ints, 0, :, :], irs2_mask, detector)
-                mask = scigp1 / np.mean(read_pattern[0]) * read_pattern[2][-1] < sat_thresh
+                scigp1 = x_irs2.from_irs2(data[ints, 0, :, :] - bias_model.data, irs2_mask, detector)
+                mask = ((scigp1 / np.mean(read_pattern[0])) * read_pattern[2][-1]) + x_irs2.from_irs2(bias_model.data, irs2_mask, detector) < sat_thresh
 
                 # Identify groups with suspiciously large values in the second group
-                scigp2 = x_irs2.from_irs2(data[ints, 1, :, :], irs2_mask, detector)
-                mask &= scigp2 > sat_thresh / len(read_pattern[1])
+                scigp2 = x_irs2.from_irs2(data[ints, 1, :, :] - data[ints, 0, :, :], irs2_mask, detector)
+                mask &= scigp2 > (sat_thresh - x_irs2.from_irs2(bias_model.data, irs2_mask, detector)) / len(read_pattern[1])
 
                 # Identify groups that are saturated in the third group
                 gp3mask = np.where(flag_temp & SATURATED, True, False)
