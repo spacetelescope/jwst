@@ -44,6 +44,9 @@ def _set_photom_kwd(im):
 def miri_rate_model():
     xsize = 72
     ysize = 416
+    sregion  = 'POLYGON ICRS  10.355323877 -22.353560934 10.355437846 -22.353464295 ' + \
+    '10.354477543 -22.352498313 10.354363599 -22.352595345'
+
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.data += 5
@@ -55,7 +58,8 @@ def miri_rate_model():
         'v2_ref': -453.5134,
         'v3_ref': -373.4826,
         'v3yangle': 0.0,
-        'vparity': -1}
+        'vparity': -1,
+        's_region': sregion}
     im.meta.instrument = {
         'detector': 'MIRIMAGE',
         'filter': 'P750L',
@@ -115,6 +119,8 @@ def miri_cal(miri_rate):
 def miri_rate_zero_crossing():
     xsize = 1032
     ysize = 1024
+    sregion  = 'POLYGON ICRS  10.355323877 -22.353560934 10.355437846 -22.353464295 ' + \
+        '10.354477543 -22.352498313 10.354363599 -22.352595345'
     shape = (ysize, xsize)
     im = ImageModel(shape)
     im.var_rnoise = np.random.random(shape)
@@ -125,7 +131,8 @@ def miri_rate_zero_crossing():
         'v2_ref': -415.0690466121227,
         'v3_ref': -400.575920398547,
         'v3yangle': 0.0,
-        'vparity': -1}
+        'vparity': -1,
+        's_region': sregion}
     im.meta.instrument = {
         'detector': 'MIRIMAGE',
         'filter': 'P750L',
@@ -519,7 +526,7 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
 
 @pytest.mark.parametrize("units", ["MJy", "MJy/sr"])
 @pytest.mark.parametrize("ratio", [0.7, 1.0, 1.3])
-def test_pixel_scale_ratio_spec_miri_pair(miri_rate_pair, ratio, units):
+def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
     im1, im2 = miri_rate_pair
     _set_photom_kwd(im1)
     _set_photom_kwd(im2)
