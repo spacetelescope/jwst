@@ -80,7 +80,6 @@ def load_wcs(input_model, reference_files={}, nrs_slit_y_range=None):
                 # lrs specwcs reference file
                 update_s_region_lrs(output_model, reference_files)
             elif output_model.meta.exposure.type.lower() in imaging_types:
-                print(output_model.meta.exposure.type.lower())
                 try:
                     update_s_region_imaging(output_model)
                 except Exception as exc:

@@ -502,7 +502,7 @@ def find_miri_lrs_sregion(sregion_model1, wcs):
     coord4 = SkyCoord(a4, b4, unit='deg')
 
     # Find the distance between the corners
-    # corners are counter clockwize from 1,2,3,4
+    # corners are counterclockwize from 1,2,3,4
     sep1 = coord1.separation(coord2)
     sep2 = coord2.separation(coord3)
     sep3 = coord3.separation(coord4)
