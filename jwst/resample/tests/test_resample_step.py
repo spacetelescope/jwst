@@ -10,7 +10,7 @@ from stcal.resample.utils import compute_mean_pixel_area
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.util import compute_fiducial, compute_scale
+from jwst.assign_wcs.util import compute_scale
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
@@ -1186,14 +1186,14 @@ def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     im.data += 5
 
-    fiducial = compute_fiducial([im.meta.wcs])
-    input_scale = compute_scale(wcs=im.meta.wcs, fiducial=fiducial)
+    crval = (22.04019, 11.98262)
+    input_scale = compute_scale(wcs=im.meta.wcs, fiducial=crval)
     result = ResampleStep.call(
         im,
         pixel_scale_ratio=ratio,
         pixel_scale=3600 * input_scale * 0.75
     )
-    output_scale = compute_scale(wcs=result.meta.wcs, fiducial=fiducial)
+    output_scale = compute_scale(wcs=result.meta.wcs, fiducial=crval)
 
     # test scales are close
     assert np.allclose(output_scale, input_scale * 0.75)
