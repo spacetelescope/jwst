@@ -74,7 +74,7 @@ def do_correction(
         corrections.slits.append(correction)
 
         if correction is None:
-            # For extended sources, there is no real correction applied.
+            # For point sources, there is no real correction applied.
             # Record the correction status as False in this case.
             slitlet.barshadow_corrected = False
 
