@@ -64,7 +64,6 @@ repos:
             jwst/scripts/.* |
             jwst/spectral_leak/.* |
             jwst/straylight/.* |
-            jwst/superbias/.* |
             jwst/tests/.* |
             jwst/tso_photometry/.* |
             jwst/wfs_combine/.* |
