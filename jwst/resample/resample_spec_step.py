@@ -95,7 +95,7 @@ class ResampleSpecStep(Step):
 
         elif len(input_models[0].data.shape) != 2:
             # resample can only handle 2D images, not 3D cubes, etc
-            raise RuntimeError(f"Input {input_models[0]} is not a 2D image.")
+            raise TypeError(f"Input {input_models[0]} is not a 2D image.")
 
         else:
             # result is a SlitModel
