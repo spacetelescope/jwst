@@ -107,7 +107,13 @@ def ifu_extract1d(
     else:
         log.info(f"Source type = {source_type}")
 
-    output_model = datamodels.MultiSpecModel()
+    if input_model.meta.instrument.name == "MIRI":
+        output_model = datamodels.MRSMultiSpecModel()
+        spec_dtype = datamodels.MRSSpecModel().spec_table.dtype
+    else:
+        output_model = datamodels.MultiSpecModel()
+        spec_dtype = datamodels.SpecModel().spec_table.dtype
+
     output_model.update(input_model, only="PRIMARY")
 
     slitname = input_model.meta.exposure.type
@@ -179,8 +185,13 @@ def ifu_extract1d(
     del npixels_temp
     del npixels_bkg_temp
 
+    temp_flux_rf = None
+    surf_bright_rf = None
+    background_rf = None
+
     # If selected, apply 1d residual fringe correction to the extracted spectrum
-    if (input_model.meta.instrument.name == "MIRI") & (extract_params["ifu_rfcorr"] is True):
+
+    if (input_model.meta.instrument.name == "MIRI") and (extract_params["ifu_rfcorr"] is True):
         log.info("Applying 1d residual fringe correction.")
         # Determine which MRS channel the spectrum is from
         thischannel = input_model.meta.instrument.channel
@@ -198,7 +209,7 @@ def ifu_extract1d(
 
         # Apply residual fringe to the flux array
         try:
-            temp_flux = rfutils.fit_residual_fringes_1d(
+            temp_flux_rf = rfutils.fit_residual_fringes_1d(
                 temp_flux, wavelength, channel=channel, dichroic_only=False, max_amp=None
             )
         except Exception:
@@ -206,7 +217,7 @@ def ifu_extract1d(
 
         # Apply residual fringe to the surf_bright array
         try:
-            surf_bright = rfutils.fit_residual_fringes_1d(
+            surf_bright_rf = rfutils.fit_residual_fringes_1d(
                 surf_bright, wavelength, channel=channel, dichroic_only=False, max_amp=None
             )
         except Exception:
@@ -214,7 +225,7 @@ def ifu_extract1d(
 
         # Apply residual fringe to the background array
         try:
-            background = rfutils.fit_residual_fringes_1d(
+            background_rf = rfutils.fit_residual_fringes_1d(
                 background, wavelength, channel=channel, dichroic_only=False, max_amp=None
             )
         except Exception:
@@ -230,12 +241,13 @@ def ifu_extract1d(
     f_var_poisson *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
     f_var_rnoise *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
     f_var_flat *= pixel_solid_angle**2 * 1.0e12  # (MJy / sr)**2 --> Jy**2
+
     # surf_bright and background were computed above
     del temp_flux
+
     error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
     sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
     berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
-    spec_dtype = datamodels.SpecModel().spec_table.dtype
 
     # If we only used the Poisson variance array as a vehicle to pass through
     # non-differentiated errors, clear it again here so that only the total
@@ -261,35 +273,80 @@ def ifu_extract1d(
         b_var_rnoise *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
         b_var_flat *= extract_params["ifu_covar_scale"] * extract_params["ifu_covar_scale"]
 
-    otab = np.array(
-        list(
-            zip(
-                wavelength,
-                flux,
-                error,
-                f_var_poisson,
-                f_var_rnoise,
-                f_var_flat,
-                surf_bright,
-                sb_error,
-                sb_var_poisson,
-                sb_var_rnoise,
-                sb_var_flat,
-                dq,
-                background,
-                berror,
-                b_var_poisson,
-                b_var_rnoise,
-                b_var_flat,
-                npixels,
-                strict=False,
-            )
-        ),
-        dtype=spec_dtype,
-    )
+    if input_model.meta.instrument.name == "MIRI":
+        if temp_flux_rf is None:
+            flux_rf = np.full_like(flux, np.nan)
+        else:
+            flux_rf = temp_flux_rf * pixel_solid_angle * 1.0e6
+        del temp_flux_rf
 
-    spec = datamodels.SpecModel(spec_table=otab)
+        if background_rf is None:
+            background_rf = np.full_like(background, np.nan)
+        if surf_bright_rf is None:
+            surf_bright_rf = np.full_like(surf_bright, np.nan)
+
+        otab = np.array(
+            list(
+                zip(
+                    wavelength,
+                    flux,
+                    error,
+                    f_var_poisson,
+                    f_var_rnoise,
+                    f_var_flat,
+                    surf_bright,
+                    sb_error,
+                    sb_var_poisson,
+                    sb_var_rnoise,
+                    sb_var_flat,
+                    dq,
+                    background,
+                    berror,
+                    b_var_poisson,
+                    b_var_rnoise,
+                    b_var_flat,
+                    npixels,
+                    flux_rf,
+                    surf_bright_rf,
+                    background_rf,
+                    strict=False,
+                )
+            ),
+            dtype=spec_dtype,
+        )
+        spec = datamodels.MRSSpecModel(spec_table=otab)
+
+    else:  # NIRSPEC
+        otab = np.array(
+            list(
+                zip(
+                    wavelength,
+                    flux,
+                    error,
+                    f_var_poisson,
+                    f_var_rnoise,
+                    f_var_flat,
+                    surf_bright,
+                    sb_error,
+                    sb_var_poisson,
+                    sb_var_rnoise,
+                    sb_var_flat,
+                    dq,
+                    background,
+                    berror,
+                    b_var_poisson,
+                    b_var_rnoise,
+                    b_var_flat,
+                    npixels,
+                    strict=False,
+                )
+            ),
+            dtype=spec_dtype,
+        )
+        spec = datamodels.SpecModel(spec_table=otab)
+
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
+
     spec.spec_table.columns["wavelength"].unit = "um"
     spec.spec_table.columns["flux"].unit = "Jy"
     spec.spec_table.columns["flux_error"].unit = "Jy"
@@ -306,8 +363,14 @@ def ifu_extract1d(
     spec.spec_table.columns["bkgd_var_poisson"].unit = "(MJy/sr)^2"
     spec.spec_table.columns["bkgd_var_rnoise"].unit = "(MJy/sr)^2"
     spec.spec_table.columns["bkgd_var_flat"].unit = "(MJy/sr)^2"
+    if input_model.meta.instrument.name == "MIRI":
+        spec.spec_table.columns["rf_flux"].unit = "Jy"
+        spec.spec_table.columns["rf_surf_bright"].unit = "MJy/sr"
+        spec.spec_table.columns["rf_background"].unit = "MJy/sr"
+
     spec.slit_ra = ra
     spec.slit_dec = dec
+
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
 
@@ -341,8 +404,6 @@ def ifu_extract1d(
 
     # See output_model.spec[0].meta.wcs instead.
     output_model.meta.wcs = None
-
-    output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
 
     return output_model
 
