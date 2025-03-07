@@ -9,7 +9,7 @@ __all__ = ["SourceTypeStep"]
 
 class SourceTypeStep(Step):
     """
-    Select and sets a source type based on various inputs.
+    Select and set a source type based on various inputs.
 
     The source type is used in later calibrations to determine the appropriate
     methods to use. Input comes from either the SRCTYAPT keyword value, which
