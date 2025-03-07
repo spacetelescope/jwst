@@ -1327,14 +1327,14 @@ def update_fits_wcsinfo(
             FITS WCS descriptions to diverge.
 
     **kwargs : dict, optional
-        Additional parameters to be passed to
-        :py:meth:`~gwcs.wcs.WCS.to_fits_sip`.
+        Additional parameters to be passed to :py:meth:`~gwcs.wcs.WCS.to_fits_sip`.
         These may include:
-        bounding_box : tuple, None, optional
+
+        * bounding_box : tuple, None, optional
             A pair of tuples, each consisting of two numbers
             Represents the range of pixel values in both dimensions
             ((xmin, xmax), (ymin, ymax))
-        verbose : bool, optional
+        * verbose : bool, optional
             Print progress of fits.
 
     Returns
