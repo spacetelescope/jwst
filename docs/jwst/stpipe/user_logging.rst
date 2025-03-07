@@ -109,30 +109,3 @@ hitting any warning for that Step:
     level = INFO
     break_level = WARNING
 
-.. _cal_logs:
-
-DataModel cal_logs
-==================
-
-Saved files that contain :ref:`jwst-data-models` will contain log messages
-from the run that produced the file. These are stored in the ASDF portion
-of the file and can be inspected by opening the file as a
-:ref:`jwst-data-models`.
-
-The ``cal_logs`` attribute contains log messages as lists of strings
-organized by step or pipeline name. For example to see log messages from
-:ref:`calwebb_detector1`:
-
-::
-
-        import stdatamodels.jwst.datamodels as dm
-        model = dm.open("jw00001001001_01101_00001_mirimage_cal.fits")
-        print(model.cal_logs.calwebb_detector1)
-
-Files processed by a pipeline will contain all logs messages for that
-run under the pipeline name (and not contain ``cal_logs`` for individual
-steps that were part of the pipeline).
-
-Log messages that contain sensitive information (user, hostname, paths,
-IP addresses) are replaced with empty strings. Please see the console
-logs for those messages.
