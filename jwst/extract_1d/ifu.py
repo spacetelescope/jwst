@@ -40,7 +40,7 @@ def ifu_extract1d(
     apcorr_ref_file=None,
     center_xy=None,
     ifu_autocen=False,
-    ifu_rfcorr=True,
+    ifu_rfcorr=False,
     ifu_rscale=None,
     ifu_covar_scale=1.0,
 ):
@@ -74,7 +74,7 @@ def ifu_extract1d(
         in IFU mode.  Default is False.
     ifu_rfcorr : bool, optional
         Switch to select whether or not to apply a 1d residual fringe correction
-        for MIRI MRS IFU spectra.  Default is True.
+        for MIRI MRS IFU spectra.  Default is False.
     ifu_rscale : float, optional
         For MRS IFU data, a value for changing the extraction radius. The value
         provided is the number of PSF FWHMs to use for the extraction radius.
