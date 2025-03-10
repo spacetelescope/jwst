@@ -5,15 +5,13 @@ from astropy.modeling import bind_bounding_box
 from astropy.modeling import models
 from astropy import coordinates as coord
 from astropy import units as u
-from astropy.io import fits
-
 from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
 
 from stdatamodels.jwst.datamodels import (DistortionModel, FilteroffsetModel,
                                           DistortionMRSModel, WavelengthrangeModel,
-                                          RegionsModel, SpecwcsModel)
+                                          RegionsModel, SpecwcsModel, MiriLRSSpecwcsModel)
 from stdatamodels.jwst.transforms.models import (MIRI_AB2Slice, IdealToV2V3)
 
 from . import pointing
@@ -239,7 +237,6 @@ def lrs_xytoabl(input_model, reference_files):
     the "specwcs" and "distortion" reference files.
 
     """
-
     # subarray to full array transform
     subarray2full = subarray_transform(input_model)
 
@@ -253,19 +250,13 @@ def lrs_xytoabl(input_model, reference_files):
     else:
         subarray_dist = distortion
 
-    ref = fits.open(reference_files['specwcs'])
-
-    with ref:
-        lrsdata = np.array([d for d in ref[1].data])
-        # Get the zero point from the reference data.
-        # The zero_point is X, Y  (which should be COLUMN, ROW)
-        # These are 1-indexed in CDP-7 (i.e., SIAF convention) so must be converted to 0-indexed
-        if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
-            zero_point = ref[0].header['imx'] - 1, ref[0].header['imy'] - 1
-        elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
-            zero_point = ref[0].header['imxsltl'] - 1, ref[0].header['imysltl'] - 1
-            # Transform to slitless subarray from full array
-            zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
+    refmodel = MiriLRSSpecwcsModel(reference_files['specwcs'])
+    if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+        zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1
+    elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
+        zero_point = refmodel.meta.x_ref_slitless - 1, refmodel.meta.y_ref_slitless - 1
+        # Transform to slitless subarray from full array
+        zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
 
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
@@ -276,14 +267,14 @@ def lrs_xytoabl(input_model, reference_files):
     # centroid trace along the detector in pixels relative to nominal location.
     # x0,y0(ul) x1,y1 (ur) x2,y2(lr) x3,y3(ll) define corners of the box within which the distortion
     # and wavelength calibration was derived
-    xcen = lrsdata[:, 0]
-    ycen = lrsdata[:, 1]
-    wavetab = lrsdata[:, 2]
-    x0 = lrsdata[:, 3]
-    y0 = lrsdata[:, 4]
-    x1 = lrsdata[:, 5]
-    y2 = lrsdata[:, 8]
-
+    xcen = refmodel.wavetable.x_center
+    ycen = refmodel.wavetable.y_center
+    wavetab = refmodel.wavetable.wavelength
+    x0 = refmodel.wavetable.x0
+    y0 = refmodel.wavetable.y0
+    x1 = refmodel.wavetable.x1
+    y2 = refmodel.wavetable.y2
+    refmodel.close()
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.
     if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
@@ -313,7 +304,6 @@ def lrs_xytoabl(input_model, reference_files):
     # This function will give slit dX as a function of Y subarray pixel value
     dxmodel = models.Tabular1D(lookup_table=xshiftref, points=ycen_subarray, name='xshiftref',
                                  bounds_error=False, fill_value=np.nan)
-
     if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
         bb_sub = (bb_sub[0], (dxmodel.points[0].min(), dxmodel.points[0].max()))
     # Fit for the wavelength as a function of Y
@@ -325,7 +315,6 @@ def lrs_xytoabl(input_model, reference_files):
     # This model will now give the wavelength corresponding to a given Y subarray pixel value
     wavemodel = models.Tabular1D(lookup_table=wavereference, points=ycen_subarray, name='waveref',
                                  bounds_error=False, fill_value=np.nan)
-
     # Wavelength barycentric correction
     try:
         velosys = input_model.meta.wcsinfo.velosys
@@ -383,6 +372,7 @@ def lrs_xytoabl(input_model, reference_files):
 
     return dettoabl
 
+
 def lrs_abltov2v3l(input_model, reference_files):
     """
     The second part of LRS-FIXEDSLIT and LRS-SLITLESS WCS pipeline.
@@ -405,19 +395,16 @@ def lrs_abltov2v3l(input_model, reference_files):
     else:
         subarray_dist = distortion
 
-    ref = fits.open(reference_files['specwcs'])
+    refmodel = MiriLRSSpecwcsModel(reference_files['specwcs'])
+    if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
+        zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1
+    elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
+        zero_point = refmodel.meta.x_ref_slitless - 1, \
+            refmodel.meta.y_ref_slitless - 1
+        # Transform to slitless subarray from full array
+        zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
 
-    with ref:
-        # Get the zero point from the reference data.
-        # The zero_point is X, Y  (which should be COLUMN, ROW)
-        # These are 1-indexed in CDP-7 (i.e., SIAF convention) so must be converted to 0-indexed
-        if input_model.meta.exposure.type.lower() == 'mir_lrs-fixedslit':
-            zero_point = ref[0].header['imx'] - 1, ref[0].header['imy'] - 1
-        elif input_model.meta.exposure.type.lower() == 'mir_lrs-slitless':
-            zero_point = ref[0].header['imxsltl'] - 1, ref[0].header['imysltl'] - 1
-            # Transform to slitless subarray from full array
-            zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
-
+    refmodel.close()
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
     v2_off, v3_off = subarray_dist(zero_point[0] + 1, zero_point[1])
@@ -446,6 +433,7 @@ def lrs_abltov2v3l(input_model, reference_files):
     abl_to_v2v3l.inverse = models.Mapping((0,1,2)) | aa & models.Identity(1)
 
     return abl_to_v2v3l
+
 
 def ifu(input_model, reference_files):
     """
