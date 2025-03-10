@@ -1,3 +1,4 @@
+from functools import partial
 import numpy as np
 import warnings
 
@@ -5,6 +6,86 @@ from scipy.interpolate import interp1d
 
 from ..lib.winclip import get_clipped_pixels
 from .sens1d import create_1d_sens
+
+
+def _flat_lam(fluxes, _lams) -> np.ndarray:
+    return fluxes[0]
+
+
+def flux_interpolator_injector(
+    lams,
+    flxs,
+    extrapolate_sed,
+):
+    """
+    Create a function that returns the flux at a given wavelength.
+
+    If only one direct image is in use, this function will always return the same value.
+
+    Parameters
+    ----------
+    lams : np.ndarray[float]
+        Array of wavelengths corresponding to the fluxes (flxs) for each pixel.
+        One wavelength per direct image, so can be a single value.
+    flxs : np.ndarray[float]
+        Array of fluxes (flam) for the pixels contained in x0, y0. If a single
+        direct image is in use, this will be a single value.
+    extrapolate_sed : bool
+        Whether to allow for the SED of the object to be extrapolated
+        when it does not fully cover the needed wavelength range. Default if False.
+
+    Returns
+    -------
+    flux : function
+        Function that returns the flux at a given wavelength.
+        If only one direct image is in use, this function will always return the same value.
+    """
+    if len(lams) > 1:
+        # If we have direct image flux values from more than one filter (lams),
+        # we have the option to extrapolate the fluxes outside the
+        # wavelength range of the direct images
+        if extrapolate_sed is False:
+            return interp1d(lams, flxs, fill_value=0.0, bounds_error=False)
+        else:
+            return interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
+    else:
+        # If we only have flux from one wavelength, just use that
+        # single flux value at all wavelengths
+        return partial(_flat_lam, flxs)
+
+
+def determine_wl_spacing(
+    dw,
+    lams,
+    oversample_factor,
+):
+    """
+    Determine the wavelength spacing to use for the dispersed pixels.
+
+    Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
+    whichever is smaller, divided by oversampling requested
+
+    Parameters
+    ----------
+    dw : float
+        The natural wavelength scale of the grism image
+    lams : np.ndarray[float]
+        Array of wavelengths corresponding to the fluxes (flxs) for each pixel.
+        One wavelength per direct image, so can be a single value.
+    oversample_factor : int
+        The amount of oversampling
+
+    Returns
+    -------
+    dlam : float
+        The wavelength spacing to use for the dispersed pixels
+    """
+    #
+    if len(lams) > 1:
+        input_dlam = np.median(lams[1:] - lams[:-1])
+        if input_dlam < dw:
+            return input_dlam / oversample_factor
+    return dw / oversample_factor
 
 
 def dispersed_pixel(
@@ -95,25 +176,17 @@ def dispersed_pixel(
         1D array of the wavelengths of each dispersed pixel
     counts : array
         1D array of counts for each dispersed pixel
+    source_id : int
+        The source ID of the source being processed. Returned in the output unmodified;
+        used only for bookkeeping. TODO this is not implemented properly right now and
+        should probably just be removed.
     """
     # Setup the transforms we need from the input WCS objects
     sky_to_imgxy = grism_wcs.get_transform("world", "detector")
     imgxy_to_grismxy = grism_wcs.get_transform("detector", "grism_detector")
 
-    # Setup function for retrieving flux values at each dispersed wavelength
-    if len(lams) > 1:
-        # If we have direct image flux values from more than one filter (lambda),
-        # we have the option to extrapolate the fluxes outside the
-        # wavelength range of the direct images
-        if extrapolate_sed is False:
-            flux = interp1d(lams, flxs, fill_value=0.0, bounds_error=False)
-        else:
-            flux = interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
-    else:
-        # If we only have flux from one lambda, just use that
-        # single flux value at all wavelengths
-        def flux(_x):
-            return flxs[0]
+    # Set up function for retrieving flux values at each dispersed wavelength
+    flux_interpolator = flux_interpolator_injector(lams, flxs, extrapolate_sed)
 
     # Get x/y positions in the grism image corresponding to wmin and wmax:
     # Start with RA/Dec of the input pixel position in segmentation map,
@@ -127,20 +200,9 @@ def dispersed_pixel(
     dxw = xwmax - xwmin
     dyw = ywmax - ywmin
 
-    # Compute the delta-wave per pixel
-    dw = np.abs((wmax - wmin) / (dyw - dxw))
-
-    # Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
-    # whichever is smaller, divided by oversampling requested
-    if len(lams) > 1:
-        input_dlam = np.median(lams[1:] - lams[:-1])
-        if input_dlam < dw:
-            dlam = input_dlam / oversample_factor
-    else:
-        # this value gets used when we only have 1 direct image wavelength
-        dlam = dw / oversample_factor
-
     # Create list of wavelengths on which to compute dispersed pixels
+    dw = np.abs((wmax - wmin) / (dyw - dxw))
+    dlam = determine_wl_spacing(dw, lams, oversample_factor)
     lambdas = np.arange(wmin, wmax + dlam, dlam)
     n_lam = len(lambdas)
 
@@ -174,9 +236,11 @@ def dispersed_pixel(
     # values are naturally in units of physical fluxes, so we divide out
     # the sensitivity (flux calibration) values to convert to units of
     # countrate (DN/s).
+    # flux_interpolator(lams) is either single-valued (for a single direct image)
+    # or an array of the same length as lams (for multiple direct images in different filters)
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-        counts = flux(lams) * areas / (sens * oversample_factor)
+        counts = flux_interpolator(lams) * areas / (sens * oversample_factor)
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
     return xs, ys, areas, lams, counts, source_id
