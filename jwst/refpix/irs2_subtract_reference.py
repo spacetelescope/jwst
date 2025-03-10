@@ -198,6 +198,11 @@ def float_to_complex(data):
     """
     Convert real and imaginary parts to complex.
 
+    Parameters
+    ----------
+    data : ndarray
+        Data array with interleaved real and imaginary parts
+
     Returns
     -------
     data : ndarray
@@ -211,6 +216,17 @@ def float_to_complex(data):
 def make_irs2_mask(nx, ny, scipix_n, refpix_r):
     """
     Make IRS2 mask.
+
+    Parameters
+    ----------
+    nx : int
+        Number of columns in input data
+    ny : int
+        Number of rows in input data
+    scipix_n : int
+        Number of regular samples before stepping out to collect reference samples
+    refpix_r : int
+        Number of reference samples before stepping back in to collect regular samples
 
     Returns
     -------
@@ -372,7 +388,7 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2, scipix_n=16, r
             odd_even_row = odd_even[row]
         bits = decode_mask(mask[row])
         log.debug(
-            f"output {output[row]}  odd_even {odd_even[row]}  mask {mask[row]} DQ bits {{bits}}"
+            f"output {output[row]}  odd_even {odd_even[row]}  mask {mask[row]} DQ bits {bits}"
         )
         new_bad_pix = []
         for k in bits:
@@ -522,7 +538,7 @@ def replace_refpix(
 
     if v1 is not None and v2 is not None:
         log.debug(
-            f"   Pixel {bad_pix} replaced with value averaged from {nearest_low}{{nearest_high}}"
+            f"   Pixel {bad_pix} replaced with value averaged from {nearest_low},{nearest_high}"
         )
         replace_value = np.mean([v1, v2], axis=0)
     elif v1 is not None:
@@ -672,7 +688,7 @@ def subtract_reference(
 
     Parameters
     ----------
-    data0 : ramp data
+    data0 : ndarray
         The science data for the current integration.  The shape is
         expected to be (ngroups, ny, 3200), where ngroups is the number of
         groups, and ny is the pixel height of the image.  The width 3200
@@ -707,7 +723,7 @@ def subtract_reference(
 
     Returns
     -------
-    data0 : ramp data
+    data0 : ndarray
         The science data for the current integration, with reference output
         and embedded reference pixels subtracted and also removed, leaving
         only the normal pixel data (including the reference pixels on each
@@ -980,7 +996,32 @@ def subtract_reference(
 
 
 def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1, ny, ngroups, aa, n_iter_norm):
-    """Do something FFT related."""
+    """
+    Filter iteratively in FFT space of the normal pixels in each group.
+
+    Parameters
+    ----------
+    dd0 : ndarray
+        Data array containing all groups, updated in place
+    mask0 : ndarray
+        Mask for pixels to filter, with dimensions ny x nrow. 1 means use the pixel,
+        0 means do not use it.
+    row : int
+        Row size. Computed from the number of science pixels, reference pixels
+        and padding in an amplifier.
+    hnorm : ndarray
+        Array of column indices for normal pixels.
+    hnorm1 : ndarray
+        Shifted index values for normal pixels.
+    ny : int
+        Y size of data array.
+    ngroups : int
+        Number of groups.
+    aa : ndarray
+        Filter to apply.
+    n_iter_norm : int
+        Number of filtering iterations.
+    """
     mm = np.zeros((ny, row), dtype=np.int8)
     mm[:, hnorm1] = mask0[:, hnorm]
     hm = mm != 0  # 2-D boolean mask
@@ -1031,10 +1072,23 @@ def ols_line(x, y):
 
 
 def remove_slopes(data0, ngroups, ny, row):
-    """Remove slopes."""
-    # Fitting and removal of slopes per frame to remove issues at frame boundaries.
-    # IDL:  time = findgen(row, s[2])
+    """
+    Remove slopes.
 
+    Fitting and removal of slopes per frame to remove issues at frame boundaries.
+    IDL:  time = findgen(row, s[2])
+
+    Parameters
+    ----------
+    data0 : ndarray
+        Input data array
+    ngroups : int
+        Number of groups in input data
+    ny : int
+        Number of rows in input data
+    row : int
+        Row size
+    """
     time_arr = np.arange(ny * row, dtype=np.float32).reshape((ny, row))
     time_arr -= time_arr.mean(dtype=np.float64)
     row4plus4 = np.array([0, 1, 2, 3, 2044, 2045, 2046, 2047], dtype=np.intp)
@@ -1059,11 +1113,26 @@ def remove_slopes(data0, ngroups, ny, row):
 
 
 def replace_bad_pixels(data0, ngroups, ny, row):
-    """Replace bad pixels."""
-    # Use cosine weighted interpolation to replace 0.0 values and bad
-    # pixels and gaps. (initial guess)
+    """
+    Replace bad pixels.
 
-    # s[1] = nx  s[2] = ny  s[3] = ngroups
+    Use cosine weighted interpolation to replace 0.0 values and bad
+    pixels and gaps. (initial guess)
+
+    s[1] = nx  s[2] = ny  s[3] = ngroups
+
+    Parameters
+    ----------
+    data0 : ndarray
+        Input data array
+    ngroups : int
+        Number of groups in input data array
+    ny : int
+        Number of rows in input data array
+    row : int
+        Row definition - row = (scipix_n + refpix_r + 2) * 512 // scipix_n + pad
+        row = 712, if scipix_n = 16, refpix_r = 4, pad = 8
+    """
     w_ind = np.arange(1, 32, dtype=np.float32) / 32.0
     w = np.sin(w_ind * np.pi)
     kk = 0

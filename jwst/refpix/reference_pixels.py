@@ -63,6 +63,7 @@ log.setLevel(logging.DEBUG)
 # The 'stop' values are one more than the actual final row or column, in
 # accordance with how Python slices work
 
+# fmt: off
 NIR_reference_sections = {
     "A": {
         "top": (2044, 2048, 0, 512),
@@ -92,7 +93,11 @@ NIR_reference_sections = {
 # interleaved reference pixels and the reference sector.
 
 IRS2_reference_sections = {
-    "0": {"top": (2044, 2048, 0, 640), "bottom": (0, 4, 0, 640), "data": (0, 2048, 0, 640)},
+    "0": {
+        "top": (2044, 2048, 0, 640),
+        "bottom": (0, 4, 0, 640),
+        "data": (0, 2048, 0, 640)
+    },
     "A": {
         "top": (2044, 2048, 640, 1280),
         "bottom": (0, 4, 640, 1280),
@@ -129,11 +134,28 @@ NRS_edgeless_subarrays = ["SUB512", "SUB512S", "SUB32"]
 # 'data': (rowstart, rowstop, colstart, colstop, stride)
 
 MIR_reference_sections = {
-    "A": {"left": (0, 1024, 0), "right": (0, 1024, 1028), "data": (0, 1024, 0, 1032, 4)},
-    "B": {"left": (0, 1024, 1), "right": (0, 1024, 1029), "data": (0, 1024, 1, 1032, 4)},
-    "C": {"left": (0, 1024, 2), "right": (0, 1024, 1030), "data": (0, 1024, 2, 1032, 4)},
-    "D": {"left": (0, 1024, 3), "right": (0, 1024, 1031), "data": (0, 1024, 3, 1032, 4)},
+    "A": {
+        "left": (0, 1024, 0),
+        "right": (0, 1024, 1028),
+        "data": (0, 1024, 0, 1032, 4)
+        },
+    "B": {
+        "left": (0, 1024, 1),
+        "right": (0, 1024, 1029),
+        "data": (0, 1024, 1, 1032, 4)
+        },
+    "C": {
+        "left": (0, 1024, 2),
+        "right": (0, 1024, 1030),
+        "data": (0, 1024, 2, 1032, 4)
+        },
+    "D": {
+        "left": (0, 1024, 3),
+        "right": (0, 1024, 1031),
+        "data": (0, 1024, 3, 1032, 4)
+        },
 }
+# fmt: on
 
 #
 # Status returns
@@ -145,32 +167,7 @@ SUBARRAY_SKIPPED = 3
 
 
 class Dataset:
-    """
-    Base Class to handle passing stuff from routine to routine.
-
-    Parameters
-    ----------
-    input_model : data model object
-        Science data model to be corrected
-    odd_even_columns : bool
-        Flag that controls whether odd and even-numbered columns are
-        processed separately (NIR only)
-    use_side_ref_pixels : bool
-        Flag that controls whether the side reference pixels are used in
-        the correction (NIR only)
-    side_smoothing_length : int
-        Smoothing length to use in calculating the running median of
-        the side reference pixels (NIR only)
-    side_gain : float
-        Gain to use in applying the side reference pixel correction
-        (NIR only)
-    conv_kernel_params : dict
-        Dictionary containing the parameters needed for the optimized convolution kernel
-        for Simple Improved Reference Subtraction (SIRS)
-    odd_even_rows : bool
-        Flag that controls whether odd and even-numbered rows are handled
-        separately (MIR only)
-    """
+    """Base Class to handle passing data from routine to routine."""
 
     def __init__(
         self,
@@ -182,6 +179,32 @@ class Dataset:
         conv_kernel_params,
         odd_even_rows,
     ):
+        """
+        Construct a Dataset.
+
+        Parameters
+        ----------
+        input_model : data model object
+            Science data model to be corrected
+        odd_even_columns : bool
+            Flag that controls whether odd and even-numbered columns are
+            processed separately (NIR only)
+        use_side_ref_pixels : bool
+            Flag that controls whether the side reference pixels are used in
+            the correction (NIR only)
+        side_smoothing_length : int
+            Smoothing length to use in calculating the running median of
+            the side reference pixels (NIR only)
+        side_gain : float
+            Gain to use in applying the side reference pixel correction
+            (NIR only)
+        conv_kernel_params : dict
+            Dictionary containing the parameters needed for the optimized convolution kernel
+            for Simple Improved Reference Subtraction (SIRS)
+        odd_even_rows : bool
+            Flag that controls whether odd and even-numbered rows are handled
+            separately (MIR only)
+        """
         self.refpix_algorithm = conv_kernel_params["refpix_algorithm"]
         self.sirs_kernel_model = conv_kernel_params["sirs_kernel_model"]
         self.sigreject = conv_kernel_params["sigreject"]
@@ -368,11 +391,7 @@ class Dataset:
             self.input_model.data[integration, group] = self.group.copy()
 
     def log_parameters(self):
-        """
-        Log the parameters that are valid for this type of data.
-
-        Also log those that aren't.
-        """
+        """Log the parameters that are valid for this type of data, and those that aren't."""
         is_nir = isinstance(self, NIRDataset)
         if is_nir:
             if not self.is_subarray:
@@ -503,32 +522,7 @@ class Dataset:
 
 
 class NIRDataset(Dataset):
-    """
-    Generic NIR detector Class.
-
-    Parameters
-    ----------
-    input_model : data model object
-        Science data model to be corrected
-
-    odd_even_columns : bool
-        Flag that controls whether odd and even-numbered columns are
-        processed separately
-
-    use_side_ref_pixels : bool
-        Flag that controls whether the side reference pixels are used in
-        the correction
-
-    side_smoothing_length : int
-        Smoothing length to use in calculating the running median of
-        the side reference pixels
-
-    side_gain : float
-        Gain to use in applying the side reference pixel correction
-
-    conv_kernel_params : dict
-        Dictionary containing the parameters needed for the optimized convolution kernel
-    """
+    """Base class for all NIR detector datasets."""
 
     def __init__(
         self,
@@ -539,6 +533,32 @@ class NIRDataset(Dataset):
         side_gain,
         conv_kernel_params,
     ):
+        """
+        Construct the NIRDataset base class.
+
+        Parameters
+        ----------
+        input_model : data model object
+            Science data model to be corrected
+
+        odd_even_columns : bool
+            Flag that controls whether odd and even-numbered columns are
+            processed separately
+
+        use_side_ref_pixels : bool
+            Flag that controls whether the side reference pixels are used in
+            the correction
+
+        side_smoothing_length : int
+            Smoothing length to use in calculating the running median of
+            the side reference pixels
+
+        side_gain : float
+            Gain to use in applying the side reference pixel correction
+
+        conv_kernel_params : dict
+            Dictionary containing the parameters needed for the optimized convolution kernel
+        """
         super(NIRDataset, self).__init__(
             input_model,
             odd_even_columns,
@@ -1223,12 +1243,9 @@ class NIRDataset(Dataset):
         if odd_even_columns is True, otherwise a single number calculated from
         all reference pixels
         """
-        #
-        #  First transform to detector coordinates
-        #
         refdq = dqflags.pixel["REFERENCE_PIXEL"]
         donotuse = dqflags.pixel["DO_NOT_USE"]
-        #
+        # First transform to detector coordinates
         # This transforms the pixeldq array from DMS to detector coordinates,
         # only needs to be done once
         self.dms_to_detector_dq()
@@ -1257,10 +1274,7 @@ class NIRDataset(Dataset):
 
         for integration in range(self.nints):
             for group in range(self.ngroups):
-                #
-                # Get the reference values from the top and bottom reference
-                # pixels
-                #
+                # Get the reference values from the top and bottom reference pixels
                 self.dms_to_detector(integration, group)
                 thisgroup = self.group
 
@@ -1278,7 +1292,6 @@ class NIRDataset(Dataset):
                         thisgroup[refpixindices], self.pixeldq[refpixindices]
                     )
                     thisgroup -= refpixvalue
-                #
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration, group)
         log.setLevel(logging.INFO)
@@ -1286,7 +1299,11 @@ class NIRDataset(Dataset):
 
 
 class NRS1Dataset(NIRDataset):
-    """Handle NRS1 transformations between DMS and detector frames."""
+    """
+    Handle NRS1 transformations between DMS and detector frames.
+
+    NRS1 data is flipped over the line Y=X.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1299,8 +1316,6 @@ class NRS1Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRS1 is just flipped over the line X=Y
         self.get_group(integration, group)
         self.group = np.swapaxes(self.group, 0, 1)
 
@@ -1315,19 +1330,20 @@ class NRS1Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = np.swapaxes(self.group, 0, 1)
         self.restore_group(integration, group)
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)
 
 
 class NRS2Dataset(NIRDataset):
-    """Handle NRS2 transformations between DMS and detector frames."""
+    """
+    Handle NRS2 transformations between DMS and detector frames.
+
+    NRS2 data is flipped over the line Y=X, then rotated 180 degrees.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1340,19 +1356,18 @@ class NRS2Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRS2 is flipped over the line Y=X, then rotated 180 degrees
         self.get_group(integration, group)
         self.group = np.swapaxes(self.group, 0, 1)[::-1, ::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)[::-1, ::-1]
 
     def detector_to_dms(self, integration, group):
         """
         Convert NRS2 data from detector to DMS frame.
+
+        The inverse of the above is to rotate 180 degrees, then flip over the line Y=X
 
         Parameters
         ----------
@@ -1361,14 +1376,16 @@ class NRS2Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # The inverse is to rotate 180 degrees, then flip over the line Y=X
         self.group = np.swapaxes(self.group[::-1, ::-1], 0, 1)
         self.restore_group(integration, group)
 
 
 class NRCA1Dataset(NIRDataset):
-    """Handle NRCA1 transformations between DMS and detector frames."""
+    """
+    Handle NRCA1 transformations between DMS and detector frames.
+
+    NRCA1 data is flipped in the X direction.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1381,14 +1398,11 @@ class NRCA1Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCA1 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1402,14 +1416,16 @@ class NRCA1Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
 
 class NRCA2Dataset(NIRDataset):
-    """Handle NRCA2 transformations between DMS and detector frames."""
+    """
+    Handle NRCA2 transformations between DMS and detector frames.
+
+    NRCA2 data is flipped in Y.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1422,14 +1438,11 @@ class NRCA2Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCA2 is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1443,14 +1456,16 @@ class NRCA2Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
 
 
 class NRCA3Dataset(NIRDataset):
-    """Handle NRCA3 transformations between DMS and detector frames."""
+    """
+    Handle NRCA3 transformations between DMS and detector frames.
+
+    NRCA3 data is flipped in X.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1463,14 +1478,11 @@ class NRCA3Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCA3 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1484,14 +1496,16 @@ class NRCA3Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
 
 class NRCA4Dataset(NIRDataset):
-    """Handle NRCA4 transformations between DMS and detector frames."""
+    """
+    Handle NRCA4 transformations between DMS and detector frames.
+
+    NRCA4 data is flipped in Y.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1504,14 +1518,11 @@ class NRCA4Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCA4 is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1525,14 +1536,16 @@ class NRCA4Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
 
 
 class NRCALONGDataset(NIRDataset):
-    """Handle NRCALONG transformations between DMS and detector frames."""
+    """
+    Handle NRCALONG transformations between DMS and detector frames.
+
+    NRCALONG data is flipped in X.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1545,14 +1558,11 @@ class NRCALONGDataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCALONG is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1566,14 +1576,16 @@ class NRCALONGDataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
 
 class NRCB1Dataset(NIRDataset):
-    """Handle NRCB1 transformations between DMS and detector frames."""
+    """
+    Handle NRCB1 transformations between DMS and detector frames.
+
+    NRCB1 data is flipped in Y.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1586,14 +1598,11 @@ class NRCB1Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCB1 is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1607,14 +1616,16 @@ class NRCB1Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
 
 
 class NRCB2Dataset(NIRDataset):
-    """Handle NRCB2 transformations between DMS and detector frames."""
+    """
+    Handle NRCB2 transformations between DMS and detector frames.
+
+    NRCB2 data is flipped in X.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1627,14 +1638,11 @@ class NRCB2Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCB2 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1648,15 +1656,16 @@ class NRCB2Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
-        # self.pixeldq = self.pixeldq[:, ::-1]
 
 
 class NRCB3Dataset(NIRDataset):
-    """Handle NRCB3 transformations between DMS and detector frames."""
+    """
+    Handle NRCB3 transformations between DMS and detector frames.
+
+    NRCB3 data is flipped in Y.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1669,14 +1678,11 @@ class NRCB3Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCB3 is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1690,14 +1696,16 @@ class NRCB3Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
 
 
 class NRCB4Dataset(NIRDataset):
-    """Handle NRCB4 transformations between DMS and detector frames."""
+    """
+    Handle NRCB4 transformations between DMS and detector frames.
+
+    NRCB4 data is flipped in X.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1710,14 +1718,11 @@ class NRCB4Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCB4 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1731,14 +1736,16 @@ class NRCB4Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
 
 class NRCBLONGDataset(NIRDataset):
-    """Handle NRCBLONG transformations between DMS and detector frames."""
+    """
+    Handle NRCBLONG transformations between DMS and detector frames.
+
+    NRCBLONG data is flipped in Y.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1751,14 +1758,11 @@ class NRCBLONGDataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NRCBLONG is just flipped in Y
         self.get_group(integration, group)
         self.group = self.group[::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1772,14 +1776,16 @@ class NRCBLONGDataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[::-1]
         self.restore_group(integration, group)
 
 
 class NIRISSDataset(NIRDataset):
-    """Handle NIRISS transformations between DMS and detector frames."""
+    """
+    Handle NIRISS transformations between DMS and detector frames.
+
+    NIRISS data is rotated 180 degrees then flipped across the line Y=X.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1792,15 +1798,11 @@ class NIRISSDataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # NIRISS has a 180 degree rotation followed by a flip across the line
-        # X=Y
         self.get_group(integration, group)
         self.group = np.swapaxes(self.group[::-1, ::-1], 0, 1)
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = np.swapaxes(self.pixeldq[::-1, ::-1], 0, 1)
 
     def detector_to_dms(self, integration, group):
@@ -1814,14 +1816,16 @@ class NIRISSDataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip and rotate back
         self.group = np.swapaxes(self.group, 0, 1)[::-1, ::-1]
         self.restore_group(integration, group)
 
 
 class GUIDER1Dataset(NIRDataset):
-    """Handle GUIDER1 transformations between DMS and detector frames."""
+    """
+    Handle GUIDER1 transformations between DMS and detector frames.
+
+    GUIDER1 data is flipped in X and Y.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1834,14 +1838,11 @@ class GUIDER1Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # GUIDER1 is flipped in X and Y
         self.get_group(integration, group)
         self.group = self.group[::-1, ::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[::-1, ::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1855,14 +1856,16 @@ class GUIDER1Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[::-1, ::-1]
         self.restore_group(integration, group)
 
 
 class GUIDER2Dataset(NIRDataset):
-    """Handle GUIDER2 transformations between DMS and detector frames."""
+    """
+    Handle GUIDER2 transformations between DMS and detector frames.
+
+    GUIDER2 data is flipped in X.
+    """
 
     def dms_to_detector(self, integration, group):
         """
@@ -1875,14 +1878,11 @@ class GUIDER2Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # GUIDER2 is just flipped in X
         self.get_group(integration, group)
         self.group = self.group[:, ::-1]
 
     def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
-        # pixeldq only has to be done once
         self.pixeldq = self.pixeldq[:, ::-1]
 
     def detector_to_dms(self, integration, group):
@@ -1896,8 +1896,6 @@ class GUIDER2Dataset(NIRDataset):
         group : int
             Group number
         """
-        #
-        # Just flip back
         self.group = self.group[:, ::-1]
         self.restore_group(integration, group)
 
@@ -1935,6 +1933,8 @@ class MIRIDataset(Dataset):
         """
         Convert MIRI data from DMS to detector frame.
 
+        MIRI data is the same in detector and DMS frames.
+
         Parameters
         ----------
         integration : int
@@ -1942,8 +1942,6 @@ class MIRIDataset(Dataset):
         group : int
             Group number
         """
-        #
-        # MIRI data doesn't need transforming
         pass
 
     def detector_to_dms(self, integration, group):
@@ -1957,8 +1955,6 @@ class MIRIDataset(Dataset):
         group : int
             Group number
         """
-        #
-        # Do the opposite of above
         pass
 
     def collect_odd_refpixels(self, group, amplifier, left_or_right):
@@ -2007,8 +2003,6 @@ class MIRIDataset(Dataset):
             DQ values for reference pixels from even-numbered rows
         """
         rowstart, rowstop, column = self.reference_sections[amplifier][left_or_right]
-        #
-        # Even reference pixels start on the second row
         rowstart = rowstart + 1
         evenref = group[rowstart:rowstop:2, column]
         evendq = self.pixeldq[rowstart:rowstop:2, column]
@@ -2201,29 +2195,17 @@ class MIRIDataset(Dataset):
 
     def do_fullframe_corrections(self):
         """Do Reference Pixels Corrections for all amplifiers, MIRI detectors."""
-        #
-        #  First we need to subtract the first read of each integration
-
         first_read = np.zeros((self.nints, self.nrows, self.ncols))
         log.info("Subtracting initial read from each integration")
-
         for i in range(self.nints):
             first_read[i] = self.input_model.data[i, 0].copy()
             self.input_model.data[i] = self.input_model.data[i] - first_read[i]
 
-        #
-        #  First transform to detector coordinates
-        #
         for integration in range(self.nints):
-            #
             #  Don't process the first group as it's all zeros and the clipped
             #  mean will return NaN
-            #
             for group in range(1, self.ngroups):
-                #
-                # Get the reference values from the top and bottom reference
-                # pixels
-                #
+                # Get the reference values from the top and bottom reference pixels
                 self.get_group(integration, group)
                 thisgroup = self.group
                 refvalues = self.get_refvalues(thisgroup)
@@ -2231,12 +2213,8 @@ class MIRIDataset(Dataset):
                     log.warning(f"Group {group} has no reference pixels")
                     break
                 self.do_left_right_correction(thisgroup, refvalues)
-                #
-                #  Transform back from detector to DMS coordinates & transfer results to output
                 self.restore_group(integration, group)
         log.setLevel(logging.INFO)
-        #
-        #  All done, now add the first read back in
         log.info("Adding initial read back in")
 
         for i in range(self.nints):
@@ -2458,7 +2436,7 @@ def correct_model(
 
     Parameters
     ----------
-    input_model : jwst.datamodels.model
+    input_model : datamodel
         Model to be corrected
     odd_even_columns : bool
         Flag that controls whether odd and even-numbered columns are
