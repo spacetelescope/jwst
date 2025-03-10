@@ -1,6 +1,7 @@
 """Set project defaults and add fixtures for pytest."""
 
 import os
+import logging
 import tempfile
 import pytest
 import inspect
@@ -8,6 +9,7 @@ from pathlib import Path
 
 from jwst.associations import AssociationRegistry, AssociationPool
 from jwst.associations.tests.helpers import t_path
+from jwst.tests.helpers import LogWatcher
 
 
 @pytest.fixture
@@ -141,3 +143,63 @@ class TestDescriptionPlugin:
             yield
             if self.desc:
                 self.terminal_reporter.write(f"\n{self.desc} ")
+
+
+@pytest.fixture()
+def log_watcher(monkeypatch):
+    """
+    Provide a fixture to watch for log messages.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.monkeypatch.MonkeyPatch
+        Monkeypatch fixture.
+
+    Returns
+    -------
+    _log_watcher : callable
+        A function that when called, produces a LogWatcher object for
+        a specified log name. Signature is:
+        `_log_watcher(log_name, level=None, message="")`.
+    """
+
+    def _log_watcher(log_name, message="", level=None):
+        """
+        Set a log watcher to check for a log message in a specific module.
+
+        To change the message to watch for, set the `message`
+        attribute in the returned LogWatcher instance, prior to the
+        call that is expected to trigger the message.
+
+        Parameters
+        ----------
+        log_name : str
+            Name of the log to watch.
+        message : str, optional
+            The message to watch for.  If not provided, the message
+            is an empty string, which will match any log message.
+        level : str or list of str None, optional
+            The log level(s) to watch.  If not provided, the message may
+            be raised at any log level.  Level options are:
+            "debug", "info", "warning", "error", "critical".
+
+        Returns
+        -------
+        LogWatcher
+            The log watcher for the module.
+        """
+        # Set a log watcher to check for a log message at any level
+        # in the barshadow module
+        watcher = LogWatcher(message)
+        logger = logging.getLogger(log_name)
+
+        if level is None:
+            level = ["debug", "info", "warning", "error", "critical"]
+        elif isinstance(level, str):
+            level = [level]
+
+        for level_name in level:
+            monkeypatch.setattr(logger, level_name, watcher)
+        return watcher
+
+    return _log_watcher
