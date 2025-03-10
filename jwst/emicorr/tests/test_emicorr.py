@@ -1,13 +1,10 @@
 """Unit tests for EMI correction."""
 
-import logging
-
 import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import RampModel, EmiModel
 
 from jwst.emicorr import emicorr, emicorr_step
-from jwst.tests.helpers import LogWatcher
 
 
 @pytest.fixture()
@@ -177,17 +174,6 @@ def module_log_watcher(monkeypatch):
     return watcher
 
 
-@pytest.fixture()
-def step_log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in the emicorr step
-    watcher = LogWatcher("")
-    logger = logging.getLogger("stpipe.EmiCorrStep")
-    for level in ["debug", "info", "warning", "error"]:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
-
-
 def test_emicorrstep_skip_default():
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
@@ -200,38 +186,38 @@ def test_emicorrstep_skip_default():
     assert result.meta.cal_step.emicorr == "SKIPPED"
 
 
-def test_emicorrstep_skip_instrument(step_log_watcher):
+def test_emicorrstep_skip_instrument(log_watcher):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
     nirmdl = input_model.copy()
     nirmdl.meta.instrument.name = "NIRISS"
 
-    step_log_watcher.message = "not implemented for instrument"
+    watcher = log_watcher("stpipe.EmiCorrStep", message="not implemented for instrument")
     step = emicorr_step.EmiCorrStep()
     nir_result = step.call(nirmdl, skip=False)
-    step_log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # expect no change because instrument is not MIRI
     assert np.all(input_model.data == nir_result.data)
     assert nir_result.meta.cal_step.emicorr == "SKIPPED"
 
 
-def test_emicorrstep_skip_readpatt(step_log_watcher):
+def test_emicorrstep_skip_readpatt(log_watcher):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "ANY", "MIRIMAGE")
 
-    step_log_watcher.message = "not implemented for read pattern"
+    watcher = log_watcher("stpipe.EmiCorrStep", message="not implemented for read pattern")
     step = emicorr_step.EmiCorrStep()
     result = step.call(input_model, skip=False)
-    step_log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # expect no change because read pattern is not supported
     assert np.all(input_model.data == result.data)
     assert result.meta.cal_step.emicorr == "SKIPPED"
 
 
-def test_emicorrstep_skip_no_reffile(monkeypatch, step_log_watcher):
+def test_emicorrstep_skip_no_reffile(monkeypatch, log_watcher):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
@@ -239,16 +225,16 @@ def test_emicorrstep_skip_no_reffile(monkeypatch, step_log_watcher):
     monkeypatch.setattr(emicorr_step.EmiCorrStep, "get_reference_file", lambda *args: "N/A")
     step = emicorr_step.EmiCorrStep()
 
-    step_log_watcher.message = "No reference file"
+    watcher = log_watcher("stpipe.EmiCorrStep", message="No reference file")
     result = step.call(input_model, skip=False)
-    step_log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # expect no change because step is skipped
     assert np.all(input_model.data == result.data)
     assert result.meta.cal_step.emicorr == "SKIPPED"
 
 
-def test_emicorrstep_skip_for_failure(monkeypatch, step_log_watcher):
+def test_emicorrstep_skip_for_failure(monkeypatch, log_watcher):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
@@ -256,23 +242,23 @@ def test_emicorrstep_skip_for_failure(monkeypatch, step_log_watcher):
     monkeypatch.setattr(emicorr, "apply_emicorr", lambda *args, **kwargs: None)
     step = emicorr_step.EmiCorrStep()
 
-    step_log_watcher.message = "Step skipped"
+    watcher = log_watcher("stpipe.EmiCorrStep", message="Step skipped")
     result = step.call(input_model, skip=False)
-    step_log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # expect no change because step is skipped
     assert np.all(input_model.data == result.data)
     assert result.meta.cal_step.emicorr == "SKIPPED"
 
 
-def test_emicorrstep_skip_for_small_groups(module_log_watcher):
+def test_emicorrstep_skip_for_small_groups(log_watcher):
     data = np.ones((1, 2, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
-    module_log_watcher.message = "cannot be performed for ngroups=2"
+    watcher = log_watcher("jwst.emicorr.emicorr", message="cannot be performed for ngroups=2")
     step = emicorr_step.EmiCorrStep()
     result = step.call(input_model, skip=False)
-    module_log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # step is skipped
     assert np.all(input_model.data == result.data)
@@ -384,7 +370,7 @@ def test_apply_emicorr_separate_ints(data_without_emi_3int, data_with_emi_3int, 
 @pytest.mark.parametrize("model_placeholder", ["bad_model", None])
 @pytest.mark.parametrize("output_ext", ["fits", "asdf"])
 def test_apply_emicorr_with_freq(
-    tmp_path, algorithm, module_log_watcher, model_placeholder, output_ext
+    tmp_path, algorithm, log_watcher, model_placeholder, output_ext
 ):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
@@ -394,7 +380,7 @@ def test_apply_emicorr_with_freq(
     output_name = tmp_path / f"otf_reffile.{output_ext}"
     expected_output_name = tmp_path / "otf_reffile.asdf"
 
-    module_log_watcher.message = "'joint' algorithm cannot be used"
+    watcher = log_watcher("jwst.emicorr.emicorr", message="'joint' algorithm cannot be used")
 
     # emicorr model is ignored if user frequencies are provided - any placeholder will work
     outmdl = emicorr.apply_emicorr(
@@ -413,22 +399,22 @@ def test_apply_emicorr_with_freq(
 
     # joint model should warn and fall back to sequential for user frequencies
     if algorithm == "joint":
-        module_log_watcher.assert_seen()
+        watcher.assert_seen()
     else:
-        module_log_watcher.assert_not_seen()
+        watcher.assert_not_seen()
 
     # reference file is saved to an asdf file
     assert expected_output_name.exists()
 
 
-def test_apply_emicorr_no_config_found(module_log_watcher, emicorr_model):
+def test_apply_emicorr_no_config_found(log_watcher, emicorr_model):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "SUB64", "FAST", "MIRIMAGE")
 
-    module_log_watcher.message = "No correction match"
+    watcher = log_watcher("jwst.emicorr.emicorr", message="No correction match")
     result = emicorr.apply_emicorr(input_model, emicorr_model)
     assert result is None
-    module_log_watcher.assert_seen()
+    watcher.assert_seen()
 
 
 @pytest.mark.parametrize("detector", ["MIRIMAGE", "MIRIFULONG"])
@@ -458,28 +444,28 @@ def test_get_subarcase(emicorr_model, subarray_example_case, detector, subarray,
     assert freqs2correct_real == freqs2correct_r
 
 
-def test_get_subarcase_bad_readpatt(emicorr_model, module_log_watcher):
+def test_get_subarcase_bad_readpatt(emicorr_model, log_watcher):
     subarray = "FULL"
     detector = "MIRIMAGE"
 
     # readpattern not recognized
     readpatt = "ANY"
-    module_log_watcher.message = "does not include expected string"
+    watcher = log_watcher("jwst.emicorr.emicorr", message="does not include expected string")
     subarray_info_r = emicorr.get_subarcase(emicorr_model, subarray, readpatt, detector)
-    module_log_watcher.assert_seen()
+    watcher.assert_seen()
 
     assert subarray_info_r == (None, None, None, None)
 
 
-def test_get_subarcase_missing_subarray(emicorr_model, module_log_watcher):
+def test_get_subarcase_missing_subarray(emicorr_model, log_watcher):
     detector = "MIRIMAGE"
     readpatt = "FAST"
 
     # subarray not recognized
     subarray = "ANY"
-    module_log_watcher.message = "Subarray ANY not found"
+    watcher = log_watcher("jwst.emicorr.emicorr", message="Subarray ANY not found")
     subarray_info_r = emicorr.get_subarcase(emicorr_model, subarray, readpatt, detector)
-    module_log_watcher.assert_seen()
+    watcher.assert_seen()
 
     assert subarray_info_r == (subarray, None, None, None)
 
