@@ -1,4 +1,3 @@
-import logging
 import os
 
 import numpy as np
@@ -9,19 +8,7 @@ import jwst
 from jwst.assign_wcs import AssignWcsStep
 from jwst.barshadow import BarShadowStep
 from jwst.extract_2d import Extract2dStep
-from jwst.tests.helpers import LogWatcher
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_mos_file
-
-
-@pytest.fixture
-def log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in the barshadow module
-    watcher = LogWatcher("")
-    logger = logging.getLogger("jwst.barshadow.bar_shadow")
-    for level in ["debug", "info", "warning", "error"]:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
 
 
 @pytest.fixture(scope="module")
@@ -91,9 +78,10 @@ def test_barshadow_step_zero_length(nirspec_mos_model, log_watcher):
     model = nirspec_mos_model.copy()
     model.slits[0].shutter_state = ""
 
-    log_watcher.message = "has zero length, correction skipped"
+    watcher = log_watcher("jwst.barshadow.bar_shadow",
+                          message="has zero length, correction skipped", level="info")
     result = BarShadowStep.call(model)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # correction ran, but is all 1s
     assert result.meta.cal_step.barshadow == "COMPLETE"
@@ -105,9 +93,9 @@ def test_barshadow_step_not_uniform(nirspec_mos_model, log_watcher):
     model = nirspec_mos_model.copy()
     model.slits[0].source_type = "POINT"
 
-    log_watcher.message = "source not uniform"
+    watcher = log_watcher("jwst.barshadow.bar_shadow", message="source not uniform")
     result = BarShadowStep.call(model)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # correction ran, but is all 1s
     assert result.meta.cal_step.barshadow == "COMPLETE"
@@ -173,9 +161,9 @@ def test_barshadow_step_missing_scale(nirspec_mos_model, log_watcher):
     model = nirspec_mos_model.copy()
     model.slits[0].slit_yscale = None
 
-    log_watcher.message = "Using default value"
+    watcher = log_watcher("jwst.barshadow.bar_shadow", message="Using default value")
     result = BarShadowStep.call(model)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # correction ran and has an appropriate correction - the
     # default value is close enough for most purposes.

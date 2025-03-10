@@ -1,4 +1,3 @@
-import logging
 import os
 
 import pytest
@@ -7,18 +6,6 @@ from stdatamodels.jwst import datamodels
 from jwst.clean_flicker_noise import CleanFlickerNoiseStep
 from jwst.clean_flicker_noise.tests.test_clean_flicker_noise import (
     make_small_ramp_model, make_nirspec_fs_model)
-from jwst.tests.helpers import LogWatcher
-
-
-@pytest.fixture
-def log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in CleanFlickerNoiseStep
-    watcher = LogWatcher('')
-    logger = logging.getLogger('stpipe.CleanFlickerNoiseStep')
-    for level in ['debug', 'info', 'warning', 'error']:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
 
 
 @pytest.mark.parametrize('skip', [True, False])
@@ -99,9 +86,9 @@ def test_save_noise(tmp_path):
 def test_apply_flat(log_watcher):
     input_model = make_small_ramp_model()
 
-    log_watcher.message = 'Using FLAT'
+    watcher = log_watcher("stpipe.CleanFlickerNoiseStep", message="Using FLAT")
     cleaned = CleanFlickerNoiseStep.call(input_model, skip=False, apply_flat_field=True)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # Flat file was used, but flat_field step was not applied
     assert cleaned.meta.ref_file.flat.name is not None
@@ -114,9 +101,10 @@ def test_apply_flat(log_watcher):
 def test_apply_flat_not_available(log_watcher):
     input_model = make_nirspec_fs_model()
 
-    log_watcher.message = 'Flat correction is not available'
+    watcher = log_watcher("stpipe.CleanFlickerNoiseStep",
+                          message="Flat correction is not available")
     cleaned = CleanFlickerNoiseStep.call(input_model, skip=False, apply_flat_field=True)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # Flat file was not used but step proceeded
     assert cleaned.meta.ref_file.flat.name == 'N/A'
