@@ -1,5 +1,3 @@
-import logging
-
 import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
@@ -7,7 +5,6 @@ from stdatamodels.jwst import datamodels
 from jwst.residual_fringe.residual_fringe import utils, ResidualFringeCorrection
 from jwst.residual_fringe.residual_fringe_step import ResidualFringeStep
 from jwst.residual_fringe.utils import fit_residual_fringes_1d as rf1d
-from jwst.tests.helpers import LogWatcher
 
 
 @pytest.fixture()
@@ -120,17 +117,6 @@ def mock_slice_info_long(monkeypatch):
     monkeypatch.setattr(utils, "slice_info", one_slice)
 
 
-@pytest.fixture()
-def module_log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in the residual_fringe module
-    watcher = LogWatcher("")
-    logger = logging.getLogger("jwst.residual_fringe.residual_fringe")
-    for level in ["debug", "info", "warning", "error"]:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
-
-
 def test_rf1d(linear_spectrum, fringed_spectrum):
     """
     Test the performance of the 1d residual defringe routine.
@@ -197,7 +183,7 @@ def test_rf_step_short(
 
 @pytest.mark.parametrize("band", ["SHORT", "MEDIUM", "LONG"])
 def test_rf_step_long(
-    miri_mrs_model_with_fringe, mock_slice_info_long, mock_wavemap, band, module_log_watcher
+    miri_mrs_model_with_fringe, mock_slice_info_long, mock_wavemap, band, log_watcher
 ):
     model = miri_mrs_model_with_fringe
     model.meta.instrument.detector = "MIRIFULONG"
@@ -206,9 +192,9 @@ def test_rf_step_long(
 
     # Synthetic input data is reasonable for MIRIFUSHORT, but is expected
     # to fail with a warning when treated as MIRIFULONG.
-    module_log_watcher.message = "Skipping col"
+    watcher = log_watcher("jwst.residual_fringe.residual_fringe", message="Skipping col")
     result = ResidualFringeStep.call(model, skip=False)
-    module_log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # Output data should be identical to input, although step is complete
     assert result.meta.cal_step.residual_fringe == "COMPLETE"
@@ -271,16 +257,16 @@ def test_rf_step_ignore_regions(miri_mrs_model_with_fringe, mock_slice_info_shor
 
 
 def test_rf_step_low_snr(
-    miri_mrs_model_with_fringe, mock_slice_info_short, mock_wavemap, module_log_watcher
+    miri_mrs_model_with_fringe, mock_slice_info_short, mock_wavemap, log_watcher
 ):
     model = miri_mrs_model_with_fringe
 
     # set all the data to a very small value so SNR is too low to fit
     model.data[:] = 1e-6
 
-    module_log_watcher.message = "SNR too low"
+    watcher = log_watcher("jwst.residual_fringe.residual_fringe", message="SNR too low")
     result = ResidualFringeStep.call(model, skip=False)
-    module_log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # output should be the same as input
     assert np.allclose(model.data, result.data)

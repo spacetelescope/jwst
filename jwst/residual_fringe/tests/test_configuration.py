@@ -1,14 +1,11 @@
 """Unit tests for Residual Fringe Correction step interface."""
 
-import logging
-
 import pytest
 import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.residual_fringe import ResidualFringeStep
 from jwst.residual_fringe import residual_fringe
-from jwst.tests.helpers import LogWatcher
 
 
 @pytest.fixture(scope="function")
@@ -27,17 +24,6 @@ def miri_image():
     return image
 
 
-@pytest.fixture()
-def step_log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in the residual_fringe step
-    watcher = LogWatcher("")
-    logger = logging.getLogger("stpipe.ResidualFringeStep")
-    for level in ["debug", "info", "warning", "error"]:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
-
-
 def test_bad_ignore_regions(tmp_cwd, miri_image):
     # testing the ignore_regions_min
     # There has to be an equal number of min and max ignore region values
@@ -53,9 +39,9 @@ def test_bad_ignore_regions(tmp_cwd, miri_image):
         step.run(miri_image)
 
 
-def test_ignore_regions(tmp_cwd, monkeypatch, miri_image, step_log_watcher):
+def test_ignore_regions(tmp_cwd, monkeypatch, miri_image, log_watcher):
     # Set some reasonable wavelength regions - these should be read in properly
-    step_log_watcher.message = "Ignoring 2 wavelength regions"
+    watcher = log_watcher("stpipe.ResidualFringeStep", message="Ignoring 2 wavelength regions")
 
     step = ResidualFringeStep()
     step.ignore_region_min = [4.9, 5.7]
@@ -68,7 +54,7 @@ def test_ignore_regions(tmp_cwd, monkeypatch, miri_image, step_log_watcher):
 
     # check for ignore regions log message
     step.run(miri_image)
-    step_log_watcher.assert_seen()
+    watcher.assert_seen()
 
 
 def test_fringe_flat_applied(tmp_cwd, miri_image):
@@ -99,11 +85,11 @@ def test_rf_step_wrong_input_type():
         ResidualFringeStep.call(model, skip=False)
 
 
-def test_rf_step_wrong_exptype(miri_image, step_log_watcher):
+def test_rf_step_wrong_exptype(miri_image, log_watcher):
     model = miri_image
     model.meta.exposure.type = "NRS_IFU"
 
-    step_log_watcher.message = "only for MIRI MRS"
+    watcher = log_watcher("stpipe.ResidualFringeStep", message="only for MIRI MRS")
     result = ResidualFringeStep.call(model, skip=False)
     assert result.meta.cal_step.residual_fringe == "SKIPPED"
-    step_log_watcher.assert_seen()
+    watcher.assert_seen()
