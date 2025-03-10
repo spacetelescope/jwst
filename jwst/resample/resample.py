@@ -596,7 +596,7 @@ class ResampleImage(Resample):
                 # Write out model to disk, then return filename
                 output_name = output_model.meta.filename
                 if self.output_dir is not None:
-                    output_name = Path(self.output_dir) / output_name
+                    output_name = str(Path(self.output_dir) / output_name)
                 output_model.save(output_name)
                 log.info(f"Saved model in {output_name}")
                 output_models.append(output_name)
