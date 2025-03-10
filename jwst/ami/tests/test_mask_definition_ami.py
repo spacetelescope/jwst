@@ -36,7 +36,7 @@ def test_NRMDefinition(nrm_model):
     assert np.allclose(nrm.ctrs, -np.fliplr(ctrs_asdesigned))
 
     # TODO: test the options for chooseholes
-    # currently fails
+    # these currently fail
     # chooseholes = ["B2", "B4", "B5", "B6"]
     # nrm = NRMDefinition(nrm_model, chooseholes=chooseholes)
     # assert nrm.ctrs.shape == (4, 2)

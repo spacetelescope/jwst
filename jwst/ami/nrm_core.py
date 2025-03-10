@@ -19,7 +19,15 @@ class FringeFitter:
     Original python was by A. Greenbaum & A. Sivaramakrishnan
     """
 
-    def __init__(self, instrument_data, **kwargs):
+    def __init__(
+        self,
+        instrument_data,
+        oversample=3,
+        find_rotation=False,
+        psf_offset_ff=None,
+        npix="default",
+        weighted=False,
+    ):
         """
         Initialize the FringeFitter object.
 
@@ -28,43 +36,29 @@ class FringeFitter:
         instrument_data : jwst.ami.instrument_data.NIRISS object
             Information on the mask geometry (namely # holes), instrument,
             wavelength obs mode.
-
-        **kwargs : dict
-            Keyword arguments.
-            oversample - model oversampling (also how fine to measure the centering)
-            psf_offset - subpixel centering of your data, if known
-            npix - number of data pixels to use. Default is the shape of the data frame.
-            find_rotation - will find the best pupil rotation that matches the data
+        oversample : int, optional
+            Model oversampling (also how fine to measure the centering). Default is 3.
+        find_rotation : bool, optional
+            If True, automatically find the best pupil rotation that matches the data.
+            Default is False.
+        psf_offset_ff : float, optional
+            Subpixel centering of your data, if known. Default is None.
+        npix : int, optional
+            Number of data pixels to use. Default is to use the shape of the data frame.
+            TODO: the default of this option should be None instead of a string.
+        weighted : bool, optional
+            If True, use Poisson variance for weighting, otherwise do not apply
+            any weighting. Default is False.
         """
         self.instrument_data = instrument_data
 
-        # Options
-        if "oversample" in kwargs:
-            self.oversample = kwargs["oversample"]
-        else:
-            # default oversampling is 3
-            self.oversample = 3
+        self.oversample = oversample
+        self.find_rotation = find_rotation
+        self.psf_offset_ff = psf_offset_ff
+        self.npix = npix
+        self.weighted = weighted
 
-        if "find_rotation" in kwargs:
-            # can be True/False or 1/0
-            self.find_rotation = kwargs["find_rotation"]
-        else:
-            self.find_rotation = False
-
-        if "psf_offset_ff" in kwargs:  # if so do not find center of image in data
-            self.psf_offset_ff = kwargs["psf_offset_ff"]
-        else:
-            self.psf_offset_ff = None  # find center of image in data
-
-        if "npix" in kwargs:
-            self.npix = kwargs["npix"]
-        else:
-            self.npix = "default"
-        # Default: unweighted fit
-        self.weighted = False
-        if "weighted" in kwargs:
-            self.weighted = kwargs["weighted"]
-        if self.weighted is True:
+        if self.weighted:
             log.info("leastsqnrm.weighted_operations() - weighted by Poisson variance")
         else:
             log.info("leastsqnrm.matrix_operations() - equally-weighted")
@@ -165,6 +159,9 @@ class FringeFitter:
         """
         Generate the best model to match a single slice.
 
+        TODO: What is the point of making nrm, ctrd, dqslice attributes?
+        They are not used outside this function, and get changed for every integration.
+
         Parameters
         ----------
         slc : numpy array
@@ -190,9 +187,11 @@ class FringeFitter:
         fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
         -----------------------------------------------------------------------------
         """
+        # TODO: LgModel is internally just re-creating instrument_data object
+        # This could be simplified.
         nrm = lg_model.LgModel(
             self.instrument_data.nrm_model,
-            mask=self.instrument_data.mask,
+            mask=self.instrument_data.mask.maskname,
             pixscale=self.instrument_data.pscale_rad,
             holeshape=self.instrument_data.holeshape,
             affine2d=self.instrument_data.affine2d,

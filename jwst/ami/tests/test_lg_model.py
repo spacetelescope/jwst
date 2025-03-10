@@ -70,7 +70,7 @@ def test_make_model(lgmodel, bandpass, over, psf_offset, pixscale):
 
     # Check attribute setting by this method
     assert np.all(fringemodel == lgmodel.model)
-    assert lgmodel.PSF_FOV == PSF_FOV
+    assert lgmodel.fov == PSF_FOV
     assert lgmodel.over == over
     assert hasattr(lgmodel, "model_beam")
     assert hasattr(lgmodel, "fringes")
