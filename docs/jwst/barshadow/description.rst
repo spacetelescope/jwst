@@ -54,3 +54,8 @@ Output product
 The output is a new copy of the input `~jwst.datamodels.MultiSlitModel`, with the
 corrections applied to the slit data arrays. The 2-D correction array for each slit
 is also added to the datamodel in the "BARSHADOW" extension.
+
+Upon successful completion of the step, the status keyword "S_BARSHA"
+in the primary header is set to "COMPLETE".  For each SCI extension, the "BARSHDW"
+keyword is set to True if the slit was barshadow corrected (it is an extended
+source) or False if it was not corrected (it is a point source).
