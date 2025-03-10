@@ -62,12 +62,10 @@ repos:
             jwst/saturation/.* |
             jwst/scripts/.* |
             jwst/spectral_leak/.* |
-            jwst/srctype/.* |
             jwst/straylight/.* |
             jwst/tests/.* |
             jwst/tso_photometry/.* |
             jwst/wfs_combine/.* |
-            jwst/white_light/.* |
             docs/.* |
             jwst/regtest/test_.* |
             .*/tests/test_.*

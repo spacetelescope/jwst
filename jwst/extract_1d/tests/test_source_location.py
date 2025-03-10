@@ -1,20 +1,7 @@
-import logging
 import numpy as np
 import pytest
 
 from jwst.extract_1d import source_location as sl
-from jwst.tests.helpers import LogWatcher
-
-
-@pytest.fixture
-def log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in the extract_1d.extract module
-    watcher = LogWatcher("")
-    logger = logging.getLogger("jwst.extract_1d.source_location")
-    for level in ["debug", "info", "warning", "error"]:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
 
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
@@ -127,20 +114,24 @@ def test_location_from_wcs_miri(monkeypatch, mock_miri_lrs_fs, is_slit):
 def test_location_from_wcs_missing_data(mock_miri_lrs_fs, log_watcher):
     model = mock_miri_lrs_fs
     model.meta.wcs.backward_transform = None
+    watcher = log_watcher("jwst.extract_1d.source_location",
+                          message="Dithered pointing location not found",
+                          level="warning")
 
     # model is missing WCS information - None values are returned
-    log_watcher.message = "Dithered pointing location not found"
     result = sl.location_from_wcs(model, None)
     assert result == (None, None, None, None)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
 
 def test_location_from_wcs_wrong_exptype(mock_niriss_soss, log_watcher):
     # model is not a handled exposure type
-    log_watcher.message = "Source position cannot be found for EXP_TYPE"
+    watcher = log_watcher("jwst.extract_1d.source_location",
+                          message="Source position cannot be found for EXP_TYPE",
+                          level="warning")
     result = sl.location_from_wcs(mock_niriss_soss, None)
     assert result == (None, None, None, None)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
 
 def test_location_from_wcs_bad_location(monkeypatch, mock_nirspec_fs_one_slit, log_watcher):
@@ -156,10 +147,12 @@ def test_location_from_wcs_bad_location(monkeypatch, mock_nirspec_fs_one_slit, l
     monkeypatch.setattr(model.meta.wcs, "get_transform", slit2det)
 
     # WCS transform returns NaN for the location
-    log_watcher.message = "Source position could not be determined"
+    watcher = log_watcher("jwst.extract_1d.source_location",
+                          message="Source position could not be determined",
+                          level="warning")
     result = sl.location_from_wcs(model, None)
     assert result == (None, None, None, None)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
 
 def test_location_from_wcs_location_out_of_range(
@@ -183,10 +176,11 @@ def test_location_from_wcs_location_out_of_range(
     monkeypatch.setattr(sl, "_nirspec_trace_from_wcs", mock_trace)
 
     # WCS transform a value outside the bounding box
-    log_watcher.message = "outside the bounding box"
+    watcher = log_watcher("jwst.extract_1d.source_location",
+                          message="outside the bounding box", level="warning")
     result = sl.location_from_wcs(model, None)
     assert result == (None, None, None, None)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
 
 def test_nirspec_trace_from_wcs(mock_nirspec_fs_one_slit):
