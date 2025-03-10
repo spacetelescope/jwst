@@ -40,7 +40,6 @@ def rotatevectors(vectors, thetarad):
     vectors : 2D float array
         List of vectors - e.g. nrm hole centers; positive x decreases under
         slight rotation, and positive y increases under slight rotation
-
     thetarad : float
         Rotation angle
 
@@ -288,27 +287,20 @@ def model_array(ctrs, lam, oversample, pitch, fov, d, centering="PIXELCENTERED",
     ----------
     ctrs : 2D float array
         Centers of holes
-
     lam : float
         Wavelength in the bandpass for this particular model
-
     oversample : int
         Oversampling factor
-
     pitch : float
         Sampling pitch in radians in image plane
-
     fov : int
         Number of detector pixels on a side.
-
     d : float
         Hole diameter for 'circ'; flat to flat distance for 'hex
-
     centering : str
         Subpixel centering; for now only option is PIXELCENTERED, which means
         putting the brightest detector pixel at the center of the trimmed data
         frame or simulated image.
-
     shape : str
         Shape of hole; possible values are 'circ', 'hex', and 'fringe'
 
@@ -422,10 +414,8 @@ def weighted_operations(img, model, dqm=None):
     ----------
     img : 2D float array
         Input data
-
     model : 2D float array
         Analytic model
-
     dqm : 2D bool array
         Bad pixel mask
 
@@ -433,7 +423,6 @@ def weighted_operations(img, model, dqm=None):
     -------
     x : 1D float array
         Coefficient vector
-
     res : 2D float array
         Residual; difference between model and fit
 
@@ -503,16 +492,12 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     ----------
     img : 2D float array
         Input data
-
     model : 2D float array
         Analytic model
-
     flux : float
         Normalization factor
-
     linfit : bool
         Whether to perform linear fit
-
     dqm : 2D bool array
         Bad pixel mask slice
 
@@ -520,10 +505,8 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     -------
     x : 1D float array
         Solution to fit
-
     res : 2D float array
         Residuals in fit
-
     cond : float
         Condition number of the inverse of the product of model and its
         transpose
@@ -644,7 +627,6 @@ def multiplyenv(env, fringeterms):
     ----------
     env : 2D float array
         Envelope
-
     fringeterms : list of 3 2D float arrays
         Model
 
@@ -726,7 +708,6 @@ def populate_antisymmphasearray(deltaps, n=7):
     ----------
     deltaps : 1D float array
         Pistons between each pair of holes
-
     n : int, optional
         Number of holes (default=7)
 
@@ -758,7 +739,6 @@ def populate_symmamparray(amps, n=7):
     ----------
     amps : 1D float array
         Fringe visibility between each pair of holes
-
     n : int, optional
         Number of holes (default=7)
 
@@ -790,7 +770,6 @@ def t3_amplitudes(amps, n=7):
     ----------
     amps : 1D float array
         Fringe visibility between each pair of holes
-
     n : int, optional
         Number of holes (default=7)
 
@@ -826,7 +805,6 @@ def redundant_cps(deltaps, n=7):
     ----------
     deltaps : 1D float array
         Pistons between each pair of holes
-
     n : int, optional
         Number of holes (default=7)
 
@@ -862,7 +840,6 @@ def closurephase(deltap, n=7):
     ----------
     deltap : 1D float array
         Pistons between each pair of holes
-
     n : int
         Number of holes in the mask; 7 and 10 holes available (JWST & GPI))
 
@@ -922,7 +899,6 @@ def closure_amplitudes(amps, n=7):
     ----------
     amps : 1D float array
         Fringe amplitudes
-
     n : int, optional
         Number of holes (default=7)
 
@@ -958,7 +934,6 @@ def q4_phases(deltaps, n=7):
     ----------
     deltaps : 1D float array
         Pistons between each pair of holes
-
     n : int, optional
         Number of holes (default=7)
 

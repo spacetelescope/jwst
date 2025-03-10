@@ -161,6 +161,8 @@ class FringeFitter:
 
         TODO: What is the point of making nrm, ctrd, dqslice attributes?
         They are not used outside this function, and get changed for every integration.
+        TODO: The nrm object is created from scratch every time, but this method is called
+        repeatedly for each slice. Couldn't the nrm model be created at initialization and reused?
 
         Parameters
         ----------

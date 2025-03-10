@@ -4,7 +4,7 @@ import pytest
 import numpy as np
 from jwst.stpipe import Step
 import stdatamodels.jwst.datamodels as dm
-from jwst.ami.bp_fix import filthp_d
+from jwst.ami.bp_fix import filthp_d, calc_pupil_support
 
 
 PXSC_DEG = 65.6 / (60.0 * 60.0 * 1000)
@@ -26,7 +26,7 @@ def example_model():
     # some non-zero data is required as this step will center
     # the image and find the centroid (both fail with all zeros)
     model.data[:, 24, 24] = 1
-    model.data[:, 28, 28] = 1
+    model.data[:, 28, 28] = 0.9
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.filter = "F277W"
     model.meta.subarray.name = "SUB80"
@@ -90,6 +90,21 @@ def nrm_model(example_model):
     """
     nrm_reffile = Step().get_reference_file(example_model, "nrm")
     return dm.NRMModel(nrm_reffile)
+
+
+@pytest.fixture(scope="package")
+def nrm_psf(example_model, nrm_model):
+    """
+    Compute the PSF from the nrm model.
+
+    Returns
+    -------
+    psf : np.ndarray
+        The PSF computed from the nrm model.
+    """
+    filt = example_model.meta.instrument.filter
+    fov_npix = example_model.data.shape[1]
+    return calc_pupil_support(filt, fov_npix, PXSC_RAD, nrm_model.nrm)
 
 
 @pytest.fixture(scope="package")
