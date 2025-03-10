@@ -413,7 +413,18 @@ class ApCorrRadial(ApCorrBase):
         spec_table : `~fits.FITS_rec`
             Table of aperture corrections values from apcorr reference file.
         """
-        flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
+        # check if MIRI data and correct the residual fringe flux and surface brightness columns.
+        if self.model.meta.instrument.name == "MIRI":
+            flux_cols_to_correct = (
+                "flux",
+                "flux_error",
+                "surf_bright",
+                "sb_error",
+                "rf_flux",
+                "rf_surf_bright",
+            )
+        else:
+            flux_cols_to_correct = ("flux", "flux_error", "surf_bright", "sb_error")
         var_cols_to_correct = (
             "flux_var_poisson",
             "flux_var_rnoise",
