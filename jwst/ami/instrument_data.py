@@ -136,7 +136,6 @@ class NIRISS:
         ----------
         pscalex_deg : float, degrees
             Pixel scale in x-direction
-
         pscaley_deg : float, degrees
             Pixel scale in y-direction
         """
