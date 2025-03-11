@@ -18,7 +18,7 @@ log.setLevel(logging.DEBUG)
 
 
 def _disperse_multiprocess(pars, max_cpu):
-    ctx = mp.get_context("forkserver")
+    ctx = mp.get_context("spawn")
     with ctx.Pool(max_cpu) as mypool:
         all_res = mypool.starmap(dispersed_pixel, pars)
 
