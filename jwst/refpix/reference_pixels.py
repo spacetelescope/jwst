@@ -507,11 +507,8 @@ class Dataset:
             for edge in ["top", "bottom"]:
                 for amplifier in self.amplifiers:
                     rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier][edge]
-                    log.debug(
-                        f"Ref sections for {edge} & {amplifier}: {
-                            rowstart, rowstop, colstart, colstop
-                        }"
-                    )
+                    log.debug(f"Ref sections for {edge} & {amplifier}:")
+                    log.debug(f" [{rowstart}:{rowstop}], [{colstart}:{colstop}]")
                     good = np.where(
                         np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse)
                         != donotuse
