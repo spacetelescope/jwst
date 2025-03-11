@@ -7,7 +7,7 @@ __all__ = ["ResetStep"]
 
 
 class ResetStep(Step):
-    """Subtracting the reset correction reference data from the MIRI input science data model."""
+    """Subtract the reset correction reference data from the MIRI input science data model."""
 
     class_alias = "reset"
 
@@ -18,7 +18,7 @@ class ResetStep(Step):
 
     def process(self, step_input):
         """
-        Open reset data model and subtracted the reset correction from the MIRI ramp model.
+        Subtract the reset correction from the MIRI ramp model.
 
         Parameters
         ----------
@@ -42,7 +42,7 @@ class ResetStep(Step):
 
             # Get the name of the reset reference file to use
             self.reset_name = self.get_reference_file(input_model, "reset")
-            self.log.info("Using RESET reference file %s", self.reset_name)
+            self.log.info(f"Using RESET reference file {self.reset_name}")
 
             # Check for a valid reference file
             if self.reset_name == "N/A":

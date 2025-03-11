@@ -14,8 +14,8 @@ def do_correction(output_model, reset_model):
 
     Subtracts the reset correction from science arrays and updates data quality array based
     on DQ flags in the reset arrays. The reset data model contains the number of initial
-    frames in an integration to correct in the reset_ngroups parameter and the number
-    integrations a  correction exists for in the reset_nints parameter. Only the
+    frames in an integration to correct in the reset_ngroups parameter and the number of
+    integrations for which a correction exists in the reset_nints parameter. Only the
     first reset_ngroups in each integration will have a reset correction applied. If the
     number of integrations in the science data is larger than reset_nints, then the reset correction
     applied is the correction contained  in the reset_nints integration.
