@@ -267,15 +267,26 @@ class Spec3Pipeline(Pipeline):
                     self.extract_1d.save_results = False
                     result = self.extract_1d.run(result)
 
-                    # SOSS F277W may return None - don't bother with that.
-                    if result is not None:
+                    # Check whether extraction was completed
+                    extraction_complete = (
+                        result is not None and result.meta.cal_step.extract_1d == "COMPLETE"
+                    )
+
+                    # SOSS F277W or FULL frame may return None - don't bother with that.
+                    if extraction_complete:
                         self.photom.save_results = self.save_results
                         self.photom.suffix = "x1d"
                         result = self.photom.run(result)
                 else:
                     result = self.extract_1d.run(result)
 
-                result = self.combine_1d.run(result)
+                    # Check whether extraction was completed
+                    extraction_complete = (
+                        result is not None and result.meta.cal_step.extract_1d == "COMPLETE"
+                    )
+
+                if extraction_complete:
+                    result = self.combine_1d.run(result)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
                 # If 2D data were resampled and combined, just do a 1D extraction
