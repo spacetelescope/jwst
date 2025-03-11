@@ -41,6 +41,15 @@ def example_model():
     model.meta.filename = "test_calints.fits"
     model.meta.instrument.pupil = "NRM"
     model.meta.exposure.type = "NIS_AMI"
+
+    # Pointing information copied from regression test data
+    model.meta.target.ra = 82.18735041666667
+    model.meta.target.dec = -65.44798333333335
+    model.meta.target.proper_motion_ra = 0.02914965139708291
+    model.meta.target.proper_motion_dec = 0.1644210871070447
+    model.meta.target.ra_uncertainty = 0.000125653517585233
+    model.meta.target.dec_uncertainty = 0.000153823202400172
+
     return model
 
 
