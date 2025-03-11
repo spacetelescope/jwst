@@ -1,22 +1,8 @@
-import logging
-
 import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import SpecPsfModel
 
 from jwst.extract_1d import psf_profile as pp
-from jwst.tests.helpers import LogWatcher
-
-
-@pytest.fixture
-def log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in the extract_1d.psf_profile module
-    watcher = LogWatcher("")
-    logger = logging.getLogger("jwst.extract_1d.psf_profile")
-    for level in ["debug", "info", "warning", "error"]:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
 
 
 @pytest.mark.parametrize("exp_type", ["MIR_LRS-FIXEDSLIT", "NRS_FIXEDSLIT", "UNKNOWN"])
@@ -297,11 +283,12 @@ def test_psf_profile_model_nod_no_trace(mock_miri_lrs_fs, psf_reference_file, lo
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "Cannot model a negative nod without position"
+    watcher = log_watcher("jwst.extract_1d.psf_profile",
+                          message="Cannot model a negative nod without position")
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # does not return nod profile
     assert len(profiles) == 1
@@ -315,11 +302,11 @@ def test_psf_profile_model_nod_not_subtracted(mock_miri_lrs_fs, psf_reference_fi
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "data was not nod-subtracted"
+    watcher = log_watcher("jwst.extract_1d.psf_profile", message="data was not nod-subtracted")
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # does not return nod profile
     assert len(profiles) == 1
@@ -334,11 +321,11 @@ def test_psf_profile_model_nod_wrong_pattern(mock_miri_lrs_fs, psf_reference_fil
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "data was not a two-point nod"
+    watcher = log_watcher("jwst.extract_1d.psf_profile", message="data was not a two-point nod")
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # does not return nod profile
     assert len(profiles) == 1
@@ -354,11 +341,11 @@ def test_psf_profile_model_nod_bad_position(mock_miri_lrs_fs, psf_reference_file
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "Nod center could not be estimated"
+    watcher = log_watcher("jwst.extract_1d.psf_profile", message="Nod center could not be estimated")
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # does not return nod profile
     assert len(profiles) == 1
@@ -381,7 +368,7 @@ def test_psf_profile_optimize(
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "Centering profile on spectrum at 24.5"
+    watcher = log_watcher("jwst.extract_1d.psf_profile", message="Centering profile on spectrum at 24.5")
     profiles, lower, upper = pp.psf_profile(
         model,
         trace,
@@ -390,7 +377,7 @@ def test_psf_profile_optimize(
         optimize_shifts=True,
         model_nod_pair=False,
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # profile is centered at 24.5
     profile = profiles[0]
@@ -432,7 +419,7 @@ def test_psf_profile_optimize_with_nod(
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    log_watcher.message = "Also modeling a negative trace at 39.50"
+    watcher = log_watcher("jwst.extract_1d.psf_profile", message="Also modeling a negative trace at 39.50")
     profiles, lower, upper = pp.psf_profile(
         model,
         trace,
@@ -441,7 +428,7 @@ def test_psf_profile_optimize_with_nod(
         optimize_shifts=True,
         model_nod_pair=True,
     )
-    log_watcher.assert_seen()
+    watcher.assert_seen()
 
     # profile is centered at 10
     source, nod = profiles

@@ -267,3 +267,29 @@ class MakeListPipeline(Pipeline):
 
     def process(self, *args):  # noqa: D102
         return self.make_list.run(*args)
+
+
+class CalLogsStep(Step):
+    """Step for testing cal_logs."""
+
+    class_alias = "cal_logs_step"
+
+    def process(self, msg):  # noqa: D102
+        from stdatamodels.jwst.datamodels import ImageModel
+
+        self.log.info(msg)
+        return ImageModel()
+
+
+class CalLogsPipeline(Pipeline):
+    """Pipeline for testing cal_logs."""
+
+    class_alias = "cal_logs_pipeline"
+
+    step_defs = {
+        "a_step": CalLogsStep,
+    }
+
+    def process(self, msg):  # noqa: D102
+        self.log.info(msg)
+        return self.a_step.run(msg)

@@ -9,11 +9,15 @@ from astropy import units as u
 from drizzle.utils import decode_context as _drizzle_decode_context
 
 from stdatamodels.jwst.datamodels.dqflags import pixel
+from astropy.coordinates import SkyCoord
 
 from stcal.alignment.util import (
     compute_scale,
     wcs_from_sregions,
 )
+from gwcs import wcstools
+
+from stcal.alignment.util import compute_s_region_keyword
 from stcal.resample import UnsupportedWCSError
 from stcal.resample.utils import compute_mean_pixel_area
 from stcal.resample.utils import (
@@ -462,3 +466,85 @@ def load_custom_wcs(asdf_wcs_file, output_shape=None):
         "pixel_scale": user_pixel_scale,
     }
     return wcs_dict
+
+
+def find_miri_lrs_sregion(sregion_model1, wcs):
+    """ Find s region for MIRI LRS resampled data.
+
+    Parameters
+    ----------
+    sregion_model1 : string
+        s_regions of the first input model
+    wcs : gwcs.WCS
+        Spatial/spectral WCS.
+
+    Returns
+    -------
+    sregion : string
+        s_region for the resample data.
+    """
+    # use the first sregion to set the width of the slit
+    spatial_box = sregion_model1
+    s = spatial_box.split(' ')
+    a1 = float(s[3])
+    b1 = float(s[4])
+    a2 = float(s[5])
+    b2 = float(s[6])
+    a3 = float(s[7])
+    b3 = float(s[8])
+    a4 = float(s[9])
+    b4 = float(s[10])
+
+    # convert each corner to SkyCoord
+    coord1 = SkyCoord(a1, b1, unit='deg')
+    coord2 = SkyCoord(a2, b2, unit='deg')
+    coord3 = SkyCoord(a3, b3, unit='deg')
+    coord4 = SkyCoord(a4, b4, unit='deg')
+
+    # Find the distance between the corners
+    # corners are counterclockwize from 1,2,3,4
+    sep1 = coord1.separation(coord2)
+    sep2 = coord2.separation(coord3)
+    sep3 = coord3.separation(coord4)
+    sep4 = coord4.separation(coord1)
+
+    # use the separation values so we can find the min value later
+    sep = [sep1.value, sep2.value, sep3.value, sep4.value]
+
+    # the minimum separation is the slit width
+    min_sep = np.min(sep)
+    min_sep = min_sep* u.deg # set the units to degrees
+
+    log.info(f'Estimated MIRI LRS slit width: {min_sep*3600} arcsec.')
+    # now use the combined WCS to map all pixels to the slit center
+    bbox = wcs.bounding_box
+    grid = wcstools.grid_from_bounding_box(bbox)
+    ra, dec, _ = np.array(wcs(*grid))
+    ra = ra.flatten()
+    dec = dec.flatten()
+    # ra and dec are the values along the output resampled slit center
+    # using the first point and last point find the position angle
+    star1 = SkyCoord(ra[0]*u.deg, dec[0]*u.deg, frame='icrs')
+    star2 = SkyCoord(ra[-1]*u.deg, dec[-1]*u.deg, frame='icrs')
+    position_angle = star1.position_angle(star2).to(u.deg)
+
+    # 90 degrees to the position angle of the slit will define s_region
+    pos_angle = position_angle - 90.0*u.deg
+
+    star_c1 = star1.directional_offset_by(pos_angle, min_sep/2)
+    star_c2 = star1.directional_offset_by(pos_angle, -min_sep/2)
+    star_c3 = star2.directional_offset_by(pos_angle, min_sep/2)
+    star_c4 = star2.directional_offset_by(pos_angle, -min_sep/2)
+
+    # set  these values to footprint
+    # ra,dec corners are in counter-clockwise direction
+    footprint = [star_c1.ra.value, star_c1.dec.value,
+                 star_c3.ra.value, star_c3.dec.value,
+                 star_c4.ra.value, star_c4.dec.value,
+                 star_c2.ra.value, star_c2.dec.value]
+    footprint = np.array(footprint)
+    s_region = compute_s_region_keyword(footprint)
+    return s_region
+
+
+

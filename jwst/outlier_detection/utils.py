@@ -46,14 +46,12 @@ def create_cube_median(cube_model, maskpt):
     log.info("Computing median")
 
     weight_threshold = compute_weight_threshold(cube_model.wht, maskpt)
+    masked_cube = np.ma.masked_array(
+        cube_model.data, np.less(cube_model.wht, weight_threshold)
+    ).filled(np.nan)
 
     # not safe to use overwrite_input=True here because we are operating on model.data directly
-    return nanmedian3D(
-        np.ma.masked_array(
-            cube_model.data, np.less(cube_model.wht, weight_threshold), fill_value=np.nan
-        ),
-        overwrite_input=False,
-    )
+    return nanmedian3D(masked_cube, overwrite_input=False)
 
 
 def median_without_resampling(
@@ -224,13 +222,15 @@ def median_with_resampling(
     median_err = None
 
     eval_med_err = False
-    if return_error and resamp.compute_err == "driz_err":
-        eval_med_err = True
-        log.warning(
-            "Returning median_error has been disabled since input "
-            "'resamp' object does not have 'compute_err' attribute set to "
-            "'driz_err'."
-        )
+    if return_error:
+        if resamp.compute_err == "driz_err":
+            eval_med_err = True
+        else:
+            log.warning(
+                "Returning median_error has been disabled since input "
+                "'resamp' object does not have 'compute_err' attribute set to "
+                "'driz_err'."
+            )
 
     if save_intermediate_results:
         # create an empty image model for the median data

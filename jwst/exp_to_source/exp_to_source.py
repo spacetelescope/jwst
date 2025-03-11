@@ -1,5 +1,5 @@
-"""exp_to_source: Reformat Level2b multi-source data to be source-based.
-"""
+"""Reformat Level2b multi-source data to be source-based."""
+
 import logging
 
 from collections import defaultdict
@@ -9,14 +9,15 @@ from stdatamodels.jwst.datamodels import MultiExposureModel
 
 from jwst.datamodels import SourceModelContainer
 
-__all__ = ['exp_to_source', 'multislit_to_container']
+__all__ = ["exp_to_source", "multislit_to_container"]
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
 def exp_to_source(inputs):
-    """Reformat exposure-based MSA data to source-based.
+    """
+    Reformat exposure-based MSA data to source-based.
 
     Parameters
     ----------
@@ -33,7 +34,7 @@ def exp_to_source(inputs):
     result = defaultdict(MultiExposureModel)
 
     for exposure in inputs:
-        log.info(f'Reorganizing data from exposure {exposure.meta.filename}')
+        log.info(f"Reorganizing data from exposure {exposure.meta.filename}")
 
         for slit in exposure.slits:
             if slit.source_name is None:
@@ -43,7 +44,7 @@ def exp_to_source(inputs):
             else:
                 # NIRSpec MOS slits get sorted by source_name
                 key = slit.source_name
-            log.debug(f'Copying source {key}')
+            log.debug(f"Copying source {key}")
             result_slit = result[str(key)]
             result_slit.exposures.append(slit)
 
@@ -55,8 +56,8 @@ def exp_to_source(inputs):
             slit_model = slit.meta.model_type
             slit_wcsinfo = slit.meta.wcsinfo.instance
             slit_exptype = None
-            if hasattr(slit.meta, 'exposure'):
-                if hasattr(slit.meta.exposure, 'type'):
+            if hasattr(slit.meta, "exposure"):
+                if hasattr(slit.meta.exposure, "type"):
                     slit_exptype = slit.meta.exposure.type
 
             # Before merge_tree the slits have a model_type of SlitModel.
@@ -74,8 +75,8 @@ def exp_to_source(inputs):
             if slit_exptype is not None:
                 result_slit.exposures[-1].meta.exposure.type = slit_exptype
                 result_slit.meta.exposure.type = slit_exptype
-                log.debug(f'Input exposure type: {exposure.meta.exposure.type}')
-                log.debug(f'Output exposure type: {result_slit.meta.exposure.type}')
+                log.debug(f"Input exposure type: {exposure.meta.exposure.type}")
+                log.debug(f"Output exposure type: {result_slit.meta.exposure.type}")
 
             if result_slit.meta.instrument.name is None:
                 result_slit.update(exposure)
@@ -90,7 +91,8 @@ def exp_to_source(inputs):
 
 
 def multislit_to_container(inputs):
-    """Reformat exposure-based MSA data to source-based containers.
+    """
+    Reformat exposure-based MSA data to source-based containers.
 
     Parameters
     ----------
@@ -106,7 +108,7 @@ def multislit_to_container(inputs):
         The key is the ID of each slit, i.e. ``source_id``.
     """
     containers = exp_to_source(inputs)
-    for id in containers:
-        containers[id] = SourceModelContainer(containers[id])
+    for container_id in containers:
+        containers[container_id] = SourceModelContainer(containers[container_id])
 
     return containers

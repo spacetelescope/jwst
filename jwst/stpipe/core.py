@@ -6,11 +6,10 @@ import warnings
 
 from stdatamodels.jwst.datamodels import JwstDataModel
 from stdatamodels.jwst import datamodels
-from stpipe import crds_client
-from stpipe import Step
-from stpipe import Pipeline
+from stpipe import crds_client, Step, Pipeline
 
 from jwst import __version_commit__, __version__
+from ._cal_logs import _LOG_FORMATTER
 from ..lib.suffix import remove_suffix
 
 
@@ -24,6 +23,8 @@ class JwstStep(Step):
     spec = """
     output_ext = string(default='.fits')  # Output file type
     """  # noqa: E501
+
+    _log_records_formatter = _LOG_FORMATTER
 
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
@@ -105,6 +106,11 @@ class JwstStep(Step):
                 if self.parent is None:
                     log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
 
+            if self.class_alias:
+                if not hasattr(result, "cal_logs"):
+                    result.cal_logs = {}
+                setattr(result.cal_logs, self.class_alias, self._log_records)
+
     def remove_suffix(self, name):
         """
         Remove the suffix if a known suffix is already in name.
@@ -184,3 +190,14 @@ class JwstPipeline(Pipeline, JwstStep):
                 "Results used CRDS context: "
                 f"{crds_client.get_context_used(result.crds_observatory)}"
             )
+
+            if self.class_alias:
+                if not hasattr(result, "cal_logs"):
+                    result.cal_logs = {}
+
+                # remove the step logs as they're captured by the pipeline log
+                for _, step in self.step_defs.items():
+                    if hasattr(result.cal_logs, step.class_alias):
+                        delattr(result.cal_logs, step.class_alias)
+
+                setattr(result.cal_logs, self.class_alias, self._log_records)
