@@ -1,18 +1,32 @@
-"""Handy helpful pytest helpers helping pytest test"""
+"""Handy helpful pytest helpers helping pytest test."""
+
 from os import path as op
+from pathlib import Path
 
 
 def abspath(filepath):
-    """Get the absolute file path"""
-    return op.abspath(op.expanduser(op.expandvars(filepath)))
+    """
+    Get the absolute file path.
+
+    Parameters
+    ----------
+    filepath: str
+        The file path to get the absolute path for.
+
+    Returns
+    -------
+    str
+        The absolute file path.
+    """
+    return Path(op.expandvars(filepath)).expanduser().resolve()
 
 
 # Check strings based on words using length precision
 def word_precision_check(str1, str2, length=5):
-    """Check to strings word-by-word based for word length
+    """
+    Check two strings word-by-word based for word length.
 
-    The strings are checked word for word, but only for the first
-    `length` characters
+    The strings are checked word for word, but only for the first `length` characters
 
     Parameters
     ----------
@@ -31,7 +45,7 @@ def word_precision_check(str1, str2, length=5):
     words2 = str2.split()
     if len(words1) != len(words2):
         return False
-    for w1, w2 in zip(words1, words2):
+    for w1, w2 in zip(words1, words2, strict=False):
         if w1[:length] != w2[:length]:
             break
     else:
@@ -41,6 +55,8 @@ def word_precision_check(str1, str2, length=5):
 
 class LogWatcher:
     """
+    Watch a logger for a specific message.
+
     The pytest caplog fixture only works for the root
     logger. We use all sorts of loggers which can lead
     to random test failures with caplog.
@@ -55,11 +71,21 @@ class LogWatcher:
     to False. This allows the same watcher to be reused for
     multiple function calls.
     """
+
     def __init__(self, message):
+        """
+        Initialize the watcher with a message to watch for.
+
+        Parameters
+        ----------
+        message : str
+            The message of interest
+        """
         self.seen = False
         self.message = message
 
-    def __call__(self, *args, **kwargs):
+    def __call__(self, *args):
+        """Watch the logs for a specific message."""
         if not args or not isinstance(args[0], str):
             return
         if self.message in args[0]:
@@ -70,7 +96,7 @@ class LogWatcher:
 
         After calling, the `seen` attribute is reset to False.
         """
-        assert self.seen, f"{self.message} not in logs"
+        assert self.seen, f"{self.message} not in logs"  # noqa: S101
 
         # reset flag after check
         self.seen = False
@@ -80,7 +106,7 @@ class LogWatcher:
 
         After calling, the `seen` attribute is reset to False.
         """
-        assert not self.seen, f"{self.message} is in logs"
+        assert not self.seen, f"{self.message} is in logs"  # noqa: S101
 
         # reset flag after check
         self.seen = False
