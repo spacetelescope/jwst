@@ -68,6 +68,9 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
     before and after applying fft2 or else it will introduce a checkerboard
     pattern in the signs of alternating pixels!)
 
+    TODO: It's not clear that the error handling as it currently exists is any more
+    useful than Python built-in error handling, this should be fixed.
+
     Parameters
     ----------
     plane : 2D ndarray
@@ -157,7 +160,7 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
         else:
             try:
                 offset_y, offset_x = offset
-            except ValueError as e:
+            except (ValueError, TypeError) as e:
                 raise ValueError(
                     "'offset' must be supplied as a 2-tuple with "
                     "(y_offset, x_offset) as floating point values"
@@ -218,6 +221,10 @@ class MatrixFourierTransform:
             is deprecated.
     2015-01-21: Internals updated to use refactored `matrix_dft` function,
                 docstrings made consistent with each other -- J. Long
+
+    TODO: This class is just a thin wrapper for the matrix_dft function.
+    In all cases where this is used, it can easily be replaced with a single
+    direct call to the function. So we can probably just remove this class entirely.
     """
 
     def __init__(self, centering="ADJUSTABLE", verbose=False):

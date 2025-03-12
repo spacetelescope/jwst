@@ -34,24 +34,18 @@ def g_eeag(xi, eta, **kwargs):
     ----------
     xi : 2D float array
         Hexagon's coordinate center at center of symmetry, along flat edge
-
     eta : 2D float array
         Hexagon's coordinate center at center of symmetry, normal to xi
-
     **kwargs : dict
         Keyword arguments
         c (optional, via **kwargs): tuple(float, float)
             coordinates of center
-
         pixel (optional, via **kwargs): float
             pixel scale
-
         d (optional, via **kwargs): float
             flat-to-flat distance across hexagon
-
         lambda (optional, via **kwargs): float
             wavelength
-
         minus: (optional, via **kwargs) boolean
             if set, use flipped sign of xi in calculation
 
@@ -91,21 +85,16 @@ def glimit(xi, **kwargs):
     ----------
     xi : 2D float array
         Hexagon's coordinate center at center of symmetry, along flat edge
-
     **kwargs : dict
         Keyword arguments
         c (optional, via **kwargs): tuple(float, float)
             coordinates of center
-
         pixel (optional, via **kwargs): float
             pixel scale
-
         d (optional, via **kwargs): float
             flat-to-flat distance across hexagon
-
         lam: (optional, via **kwargs): float
             wavelength
-
         minus: (optional, via **kwargs) boolean
             if set, use flipped sign of xi in calculation
 
@@ -176,16 +165,12 @@ def hex_eeag(s=(121, 121), c=None, d=0.80, lam=4.3e-6, pitch=None):
     ----------
     s : (int,int) tuple
         Size of hexagonal primary beam
-
     c : (float,float) tuple
         Location of center of hexagonal primary beam
-
     d : float
         Flat-to-flat distance across hexagon
-
     lam : float
         Wavelength
-
     pitch : float
         Sampling pitch in radians in image plane
 

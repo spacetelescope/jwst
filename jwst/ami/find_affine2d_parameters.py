@@ -41,28 +41,20 @@ def find_rotation(
     ----------
     imagedata : 2D float array
         Image data
-
     nrm_model : NRMModel datamodel
         Datamodel containing mask geometry information
-
     psf_offset : 2D float array
         Offset from image center in detector pixels
-
     rotdegs : list of floats
         Range of rotations to search (degrees)
-
     pixel : float
-        Pixel size
-
+        Pixel size in radians
     npix : int
         Number of detector pixels on a side
-
     bandpass : 2D float array, default=None
         Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
-
     over : int
         Oversampling factor
-
     holeshape : str
         Shape of hole; possible values are 'circ', 'hex', and 'fringe'
 
@@ -80,10 +72,14 @@ def find_rotation(
 
     for _rot, aff in zip(rotdegs, affine2d_list, strict=False):
         jw = lg_model.LgModel(
-            nrm_model, mask="jwst_ami", holeshape=holeshape, over=over, affine2d=aff
+            nrm_model,
+            mask="jwst_ami",
+            holeshape=holeshape,
+            over=over,
+            affine2d=aff,
+            pixscale=pixel,
         )
 
-        jw.set_pixelscale(pixel)
         # psf_offset in data coords & pixels.  Does it get rotated?  Second order errors poss.
         #  Some numerical testing needed for big eg 90 degree affine2d rotations.  Later.
         jw.simulate(fov=npix, bandpass=bandpass, over=over, psf_offset=psf_offset)
