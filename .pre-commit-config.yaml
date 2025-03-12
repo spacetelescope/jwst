@@ -56,7 +56,6 @@ repos:
             jwst/persistence/.* |
             jwst/photom/.* |
             jwst/refpix/.* |
-            jwst/reset/.* |
             jwst/residual_fringe/.* |
             jwst/rscd/.* |
             jwst/saturation/.* |
