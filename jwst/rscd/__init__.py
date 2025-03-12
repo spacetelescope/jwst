@@ -1,4 +1,4 @@
-"""Set the groupdq flag for the initial groups of MIRI ramp data do not use in integrations 2 and higher."""
+"""Flag initial groups of MIRI ramp data to 'DO_NOT_USE' in integrations 2 and higher."""
 
 from .rscd_step import RscdStep
 
