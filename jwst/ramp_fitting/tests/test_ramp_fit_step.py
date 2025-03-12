@@ -1,21 +1,9 @@
 import pytest
-import logging
 import numpy as np
 
 from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep, set_groupdq
-from jwst.tests.helpers import LogWatcher
-
-@pytest.fixture
-def log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in RampFitStep
-    watcher = LogWatcher('')
-    logger = logging.getLogger('jwst.ramp_fitting.ramp_fit_step')
-    for level in ['debug', 'info', 'warning', 'error']:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
 
 DELIM = "-" * 80
 
@@ -276,7 +264,8 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
 
     assert len(cube_model.int_times) == nints
 
-def test_set_groups(generate_miri_reffiles, setup_inputs, log_watcher):
+
+def test_set_groups(generate_miri_reffiles, setup_inputs):
     # Test results when using the firstgroup and lastgroup options
     ngroups = 20
     rampmodel, gdq, rnmodel, pixdq, err, gain = setup_inputs(ngroups=ngroups)
@@ -290,15 +279,18 @@ def test_set_groups(generate_miri_reffiles, setup_inputs, log_watcher):
                                          firstgroup=firstgroup, lastgroup=lastgroup)
     np.testing.assert_allclose(slopes.data, firstgroup+lastgroup, rtol=1e-7)
 
+
 @pytest.mark.parametrize("firstgroup, lastgroup, message", GROUP_SELECTION_PARAMETERS)
 def test_set_group_warnings(firstgroup, lastgroup, message, log_watcher):
     # Test user warnings
     ngroups = 20
     groupdqflags = dqflags.group
     groupdq = np.zeros((1, ngroups, 1024, 1024), dtype=np.uint16)
-    log_watcher.message = message
+
+    watcher = log_watcher("jwst.ramp_fitting.ramp_fit_step", message=message)
     set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
-    log_watcher.assert_seen()
+    watcher.assert_seen()
+
 
 def one_group_suppressed(nints, suppress, setup_inputs):
     """
