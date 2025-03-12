@@ -11,9 +11,12 @@ class RscdStep(Step):
     Flags the first N groups of MIRI data to 'DO_NOT_USE' in the 2nd and later integrations.
 
     Input data is expected to be a ramp file (RampModel). The number of groups, N,  to
-    set to 'DO_NOT_USE' is read in from the RSCD reference file. The RSCD reference file
-    contains the number of groups to set to DO_NOT_USE based on readout mode and
-    subarray size.
+    set the GROUPDQ flag to 'DO_NOT_USE' is read in from the RSCD reference file. The RSCD
+    reference file contains the number of groups to set to 'DO_NOT_USE' based on readout mode and
+    subarray size. The step checks that the total number of groups in an integration is
+    greater than N+3 before flagging the GROUPDQ array. If the number of groups is less than
+    N+3 then no flagging is performed, because doing so would leave too few groups to work
+    with in later steps.
     """
 
     class_alias = "rscd"
