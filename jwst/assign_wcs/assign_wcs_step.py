@@ -51,8 +51,8 @@ class AssignWcsStep(Step):
         sip_max_inv_pix_error = float(default=0.01)  # max err for SIP fit, inverse.
         sip_inv_degree = integer(max=6, default=None)  # degree for inverse SIP fit, None to use best fit.
         sip_npoints = integer(default=12)  #  number of points for SIP
-        slit_y_low = float(default=-.55)  # The lower edge of a slit.
-        slit_y_high = float(default=.55)  # The upper edge of a slit.
+        slit_y_low = float(default=-.55)  # The lower edge of a slit (NIRSpec only).
+        slit_y_high = float(default=.55)  # The upper edge of a slit (NIRSpec only).
     """  # noqa: E501
 
     reference_file_types = [

@@ -1,4 +1,5 @@
 import logging
+import numpy as np
 
 import asdf
 from astropy import coordinates as coord
@@ -98,8 +99,6 @@ def niriss_soss_set_input(model, order_number):
 
 
 def _niriss_order_bounding_box(input_model, order):
-    import numpy as np
-
     bbox_y = np.array([-0.5, input_model.meta.subarray.ysize - 0.5])
     bbox_x = np.array([-0.5, input_model.meta.subarray.xsize - 0.5])
 
@@ -163,7 +162,7 @@ def niriss_soss(input_model, reference_files):
     except TypeError:
         # There was an error getting the target RA and DEC, so we are not going to continue.
         raise ValueError(
-            "Problem getting the TARG_RA or TARG_DEC from input model {input_model}"
+            f"Problem getting the TARG_RA or TARG_DEC from input model {input_model}"
         ) from None
 
     # Define the frames
@@ -202,15 +201,17 @@ def niriss_soss(input_model, reference_files):
 
     # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
     # Consider changing it in modeling ?
-    cm_order1 = (Mapping((0, 1, 1, 0)) | (Const1D(target_ra) & Const1D(target_dec) & wl1)).rename(
-        "Order1"
-    )
-    cm_order2 = (Mapping((0, 1, 1, 0)) | (Const1D(target_ra) & Const1D(target_dec) & wl2)).rename(
-        "Order2"
-    )
-    cm_order3 = (Mapping((0, 1, 1, 0)) | (Const1D(target_ra) & Const1D(target_dec) & wl3)).rename(
-        "Order3"
-    )
+    # fmt: off
+    cm_order1 = (Mapping((0, 1, 1, 0)) |
+        (Const1D(target_ra) & Const1D(target_dec) & wl1)
+        ).rename("Order1")
+    cm_order2 = (Mapping((0, 1, 1, 0)) |
+        (Const1D(target_ra) & Const1D(target_dec) & wl2)
+        ).rename("Order2")
+    cm_order3 = (Mapping((0, 1, 1, 0)) |
+        (Const1D(target_ra) & Const1D(target_dec) & wl3)
+        ).rename("Order3")
+    # fmt: on
 
     subarray2full = subarray_transform(input_model)
     if subarray2full is not None:
@@ -452,7 +453,7 @@ def wfss(input_model, reference_files):
             orders, lmodels=displ, xmodels=dispx, ymodels=dispy, theta=fwcpos - fwcpos_ref
         )
     else:
-        raise ValueError("FILTER keyword {input_model.meta.instrument.filter} is not valid.")
+        raise ValueError(f"FILTER keyword {input_model.meta.instrument.filter} is not valid.")
 
     backward = NIRISSBackwardGrismDispersion(
         orders, lmodels=invdispl, xmodels=dispx, ymodels=dispy, theta=-(fwcpos - fwcpos_ref)

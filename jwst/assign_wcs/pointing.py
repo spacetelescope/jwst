@@ -41,9 +41,9 @@ def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
     ----------
     input_model : JwstDataModel
         The input data model.
-    wrap_v2_at : float
+    wrap_v2_at : float, optional
         The value at which to wrap the V2 coordinate.
-    wrap_lon_at : float
+    wrap_lon_at : float, optional
         The value at which to wrap the longitude.
 
     Returns
@@ -65,7 +65,7 @@ def v23tosky(input_model, wrap_v2_at=180, wrap_lon_at=360):
 
 def compute_roll_ref(v2_ref, v3_ref, roll_ref, ra_ref, dec_ref, new_v2_ref, new_v3_ref):
     """
-    Compute the position of V3 (measured N to E) at the center af an aperture.
+    Compute the position of V3 (measured N to E) at the center of an aperture.
 
     Parameters
     ----------
@@ -162,7 +162,7 @@ def fitswcs_transform_from_model(wcsinfo, wavetable=None):
     ----------
     wcsinfo : dict-like
         ``~jwst.meta.wcsinfo`` structure.
-    wavetable : `~astropy.table.Table`, None
+    wavetable : `~astropy.table.Table` or None, optional
         A table with wavelength values. If None, a linear transformation
         will be used.
 
@@ -250,7 +250,7 @@ def frame_from_model(wcsinfo):
         world = cf.CompositeFrame(frames, name="world")
         return world
     else:
-        raise ValueError("WCSAXES can be 2 or 3, got {wcsaxes}")
+        raise ValueError(f"WCSAXES can be 2 or 3, got {wcsaxes}")
 
 
 def create_fitswcs(inp, input_frame=None):
@@ -259,9 +259,9 @@ def create_fitswcs(inp, input_frame=None):
 
     Parameters
     ----------
-    inp : JwstDataModel or str
-        Either a JWST data model or a FITS file.
-    input_frame : `~gwcs.coordinate_frames.CoordinateFrame`, None
+    inp : JwstDataModel
+        A JWST data model instance.
+    input_frame : `~gwcs.coordinate_frames.CoordinateFrame` or None, optional
         The input coordinate frame. If None, a default frame will be created.
 
     Returns
@@ -270,7 +270,7 @@ def create_fitswcs(inp, input_frame=None):
         A WCS object.
     """
     if not isinstance(inp, JwstDataModel):
-        raise TypeError("Input is expected to be a JwstDataModel instance or a FITS file.")
+        raise TypeError("Input is expected to be a JwstDataModel instance.")
     wcsinfo = wcsinfo_from_model(inp)
     wavetable = None
     spatial_axes, spectral_axes, unknown = gwutils.get_axes(wcsinfo)

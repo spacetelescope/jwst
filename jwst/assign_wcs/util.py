@@ -918,7 +918,7 @@ def update_s_region_lrs(model, reference_files):
         log.info("The V2,V3 coordinates of the MIRI LRS-Fixed slit contains NaN values.")
         log.info("The s_region will not be updated")
 
-    lam = 7.0  # wavelength does not matter for s region so jwst assign a value in range of LRS
+    lam = 7.0  # wavelength does not matter for s region so just assign a value in range of LRS
     s = model.meta.wcs.transform("v2v3", "world", v2, v3, lam)
     a = s[0]
     b = s[1]
@@ -984,7 +984,7 @@ def update_s_region_spectral(model):
 
 def compute_footprint_nrs_slit(slit):
     """
-    Compute the footprint of a Nirspec slit using the instrument model.
+    Compute the footprint of a NIRSpec slit using the instrument model.
 
     Parameters
     ----------
@@ -1153,10 +1153,10 @@ def velocity_correction(velosys):
 
 def wrap_ra(ravalues):
     """
-    Test for 0/360 wrapping in ra values.
+    Test for 0/360 wrapping in RA values.
 
     If exists it makes it difficult to determine
-    ra range of a region on the sky. This problem is solved by putting them all
+    RA range of a region on the sky. This problem is solved by putting them all
     on "one side" of 0/360 border
 
     Parameters
@@ -1167,7 +1167,7 @@ def wrap_ra(ravalues):
     Returns
     -------
     np.ndarray
-        A numpy array of ra values all on "same side" of 0/360 border
+        A numpy array of RA values all on "same side" of 0/360 border
     """
     ravalues_array = np.array(ravalues)
     index_good = np.where(np.isfinite(ravalues_array))
@@ -1432,6 +1432,8 @@ def wfss_imaging_wcs(wfss_model, imaging, bbox=None, **kwargs):
     bbox : tuple or None
         The bounding box over which to approximate the distortion solution.
         Typically this is based on the shape of the direct image.
+    **kwargs : dict
+        Additional parameters to be passed to update_fits_wcsinfo().
     """
     xstart = wfss_model.meta.subarray.xstart
     ystart = wfss_model.meta.subarray.ystart

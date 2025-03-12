@@ -386,7 +386,7 @@ def slits_wcs(input_model, reference_files, slit_y_range):
 
 def slitlets_wcs(input_model, reference_files, open_slits_id):
     """
-    Create WCS pipeline for MOS and Fixed slits for the specific opened shutters/slits.
+    Create WCS pipeline for MOS and Fixed slits for the specific open shutters/slits.
 
     ``slit_y_range`` is taken from ``slit.ymin`` and ``slit.ymax``.
 
@@ -494,7 +494,7 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
 
 def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)):
     """
-    Return the opened slits/shutters in a MOS or Fixed Slits exposure.
+    Return the open slits/shutters in a MOS or Fixed Slits exposure.
 
     Parameters
     ----------
@@ -565,7 +565,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
 
 def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
     """
-    Return the opened fixed slits.
+    Return the open fixed slits.
 
     Parameters
     ----------
@@ -748,7 +748,7 @@ def get_open_msa_slits(
     slit_scales=None,
 ):
     """
-    Return the opened MOS slitlets.
+    Return the open MOS slitlets.
 
     Computes (ymin, ymax) for each open slitlet.
 
@@ -782,9 +782,10 @@ def get_open_msa_slits(
         The index in the dither pattern, FITS keyword ``PATT_NUM``.
     slit_y_range : tuple
         The slit Y-range for Nirspec slits, relative to (0, 0) in the center.
-    slit_scales : dict
+    slit_scales : dict or None
         A dictionary of scaling factors for MSA shutters.  Keys are integer quadrant values
         (one-indexed).  Values are 2-tuples of float values (scale_x, scale_y).
+        If not provided, default values from `MSA_SLIT_SCALES` are used.
 
     Returns
     -------
@@ -1628,7 +1629,7 @@ def dms_to_sca(input_model):
 
     Returns
     -------
-    model : `~astropy.modeling.core.Model` model.
+    model : `~astropy.modeling.core.Model`
         Transform from DMS frame to SCA frame.
     """
     detector = input_model.meta.instrument.detector
@@ -1840,7 +1841,7 @@ def correct_tilt(disperser, xtilt, ytilt):
     disp = disperser.copy()
     disperser.close()
     log.info(f"gwa_ytilt is {ytilt} deg")
-    log.info("gwa_xtilt is {xtilt} deg")
+    log.info(f"gwa_xtilt is {xtilt} deg")
 
     if xtilt is not None:
         theta_y_correction = _get_correction(disp.gwa_tiltx, xtilt)
@@ -1850,7 +1851,7 @@ def correct_tilt(disperser, xtilt, ytilt):
         log.info("gwa_xtilt not applied")
     if ytilt is not None:
         theta_x_correction = _get_correction(disp.gwa_tilty, ytilt)
-        log.info("theta_x correction: {theta_x_correction} deg")
+        log.info(f"theta_x correction: {theta_x_correction} deg")
         disp.theta_x = disp.theta_x + theta_x_correction
     else:
         log.info("gwa_ytilt not applied")
@@ -2032,9 +2033,12 @@ def get_slit_location_model(slitdata):
         absolute positions in the MSA.
     """
     num, xcenter, ycenter, xsize, ysize = slitdata
-    model = models.Scale(xsize) & models.Scale(ysize) | models.Shift(xcenter) & models.Shift(
-        ycenter
-    )
+    # fmt: off
+    model = models.Scale(xsize) & \
+        models.Scale(ysize) | \
+        models.Shift(xcenter) & \
+        models.Shift(ycenter)
+    # fmt: on
     return model
 
 

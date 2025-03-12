@@ -205,7 +205,7 @@ def tsgrism(input_model, reference_files):
         raise ValueError("NRC_TSGRISM mode only supports module A")
 
     if input_model.meta.instrument.pupil != "GRISMR":
-        raise ValueError("NRC_TSGRIM mode only supports GRISMR")
+        raise ValueError("NRC_TSGRISM mode only supports GRISMR")
 
     frames = create_coord_frames()
 

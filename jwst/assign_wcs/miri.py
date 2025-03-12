@@ -56,7 +56,7 @@ def create_pipeline(input_model, reference_files):
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
     if pipeline:
-        log.info("Created a MIRI {exp_type} pipeline with references {reference_files}")
+        log.info(f"Created a MIRI {exp_type} pipeline with references {reference_files}")
     return pipeline
 
 
@@ -417,9 +417,12 @@ def lrs_xytoabl(input_model, reference_files):
     # Define a shift by the reference point and immediately back again
     # This doesn't do anything effectively,
     # but it stores the reference point for later use in pathloss
-    reftransform = models.Shift(-zero_point[0]) & models.Shift(-zero_point[1]) | models.Shift(
-        +zero_point[0]
-    ) & models.Shift(+zero_point[1])
+    # fmt: off
+    reftransform = models.Shift(-zero_point[0]) \
+        & models.Shift(-zero_point[1]) \
+        | models.Shift(+zero_point[0]) \
+        & models.Shift(+zero_point[1])
+    # fmt: on
     # Put the transforms together
     xytoab = reftransform | xymodel | abmodel
 
