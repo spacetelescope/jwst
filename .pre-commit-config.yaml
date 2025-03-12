@@ -40,65 +40,32 @@ repos:
             jwst/assign_wcs/.* |
             jwst/associations/.* |
             jwst/background/.* |
-            jwst/charge_migration/.* |
-            jwst/combine_1d/.* |
             jwst/coron/.* |
             jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
             jwst/dark_current/.* |
-            jwst/dq_init/.* |
             jwst/emicorr/.* |
             jwst/engdblog/.* |
-            jwst/exp_to_source/.* |
-            jwst/extract_1d/apply_apcorr.py |
-            jwst/extract_1d/extract.py |
-            jwst/extract_1d/extract1d.py |
-            jwst/extract_1d/extract_1d_step.py |
-            jwst/extract_1d/ifu.py |
-            jwst/extract_1d/psf_profile.py |
-            jwst/extract_1d/source_location.py |
-            jwst/extract_1d/spec_wcs.py |
-            jwst/extract_1d/tests/conftest.py |
             jwst/extract_2d/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
-            jwst/gain_scale/.* |
-            jwst/group_scale/.* |
-            jwst/guider_cds/.* |
-            jwst/imprint/.* |
             jwst/ipc/.* |
-            jwst/jump/.* |
             jwst/lib/.* |
             jwst/linearity/.* |
-            jwst/master_background/.* |
-            jwst/model_blender/.* |
             jwst/mrs_imatch/.* |
-            jwst/pathloss/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
-            jwst/pipeline/.* |
-            jwst/ramp_fitting/.* |
             jwst/refpix/.* |
-            jwst/regtest/.* |
-            jwst/resample/.* |
-            jwst/reset/.* |
             jwst/residual_fringe/.* |
             jwst/rscd/.* |
             jwst/saturation/.* |
             jwst/scripts/.* |
-            jwst/skymatch/.* |
             jwst/spectral_leak/.* |
-            jwst/srctype/.* |
             jwst/straylight/.* |
-            jwst/superbias/.* |
             jwst/tests/.* |
             jwst/tso_photometry/.* |
-            jwst/wavecorr/.* |
             jwst/wfs_combine/.* |
-            jwst/white_light/.* |
-            jwst/conftest.py |
-            .*/tests/.* |
-            setup.py |
-            pytest_jwst/.* |
-            docs/.*
+            docs/.* |
+            jwst/regtest/test_.* |
+            .*/tests/test_.*
           )$

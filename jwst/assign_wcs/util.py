@@ -5,9 +5,9 @@ Utility function for assign_wcs.
 import logging
 import functools
 import numpy as np
+import warnings
 
 from astropy.coordinates import SkyCoord
-from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
 from astropy.constants import c
@@ -19,10 +19,10 @@ from gwcs import utils as gwutils
 from stpipe.exceptions import StpipeExitException
 from stcal.alignment.util import compute_s_region_keyword, compute_s_region_imaging
 
-from stdatamodels.jwst.datamodels import WavelengthrangeModel
+from stdatamodels.jwst.datamodels import WavelengthrangeModel, MiriLRSSpecwcsModel
 from stdatamodels.jwst.transforms.models import GrismObject
 
-from ..lib.catalog_utils import SkyObject
+from jwst.lib.catalog_utils import SkyObject
 
 
 log = logging.getLogger(__name__)
@@ -64,16 +64,12 @@ class NoDataOnDetectorError(StpipeExitException):
         super().__init__(64, message)
 
 
-def _domain_to_bounding_box(domain):
-    # TODO: remove this when domain is completely removed
-    bb = tuple([(item['lower'], item['upper']) for item in domain])
-    if len(bb) == 1:
-        bb = bb[0]
-    return bb
-
-
 def reproject(wcs1, wcs2):
     """
+    .. deprecated:: 1.17.2
+        :py:func:`reproject()` has been deprecated and will be removed
+        in a future release. Use :py:func:`stcal.alignment.util.reproject` instead.
+
     Given two WCSs return a function which takes pixel coordinates in
     the first WCS and computes their location in the second one.
 
@@ -91,6 +87,13 @@ def reproject(wcs1, wcs2):
         Function to compute the transformations.  It takes x, y
         positions in ``wcs1`` and returns x, y positions in ``wcs2``.
     """
+    warnings.warn(
+        "'reproject()' has been deprecated since 1.17.2 and "
+        "will be removed in a future release. "
+        "Use 'stcal.alignment.util.reproject()' instead.",
+        DeprecationWarning,
+        stacklevel=2
+    )
 
     def _reproject(x, y):
         sky = wcs1.forward_transform(x, y)
@@ -194,101 +197,6 @@ def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> 
     pc2_2 = np.cos(rel_angle)
 
     return [pc1_1, pc1_2, pc2_1, pc2_2]
-
-
-def compute_fiducial(wcslist, bounding_box=None):
-    """
-    For a celestial footprint this is the center.
-    For a spectral footprint, it is the beginning of the range.
-
-    This function assumes all WCSs have the same output coordinate frame.
-    """
-
-    axes_types = wcslist[0].output_frame.axes_type
-    spatial_axes = np.array(axes_types) == 'SPATIAL'
-    spectral_axes = np.array(axes_types) == 'SPECTRAL'
-    footprints = np.hstack([w.footprint(bounding_box=bounding_box).T for w in wcslist])
-    spatial_footprint = footprints[spatial_axes]
-    spectral_footprint = footprints[spectral_axes]
-
-    fiducial = np.empty(len(axes_types))
-    if spatial_footprint.any():
-        lon, lat = spatial_footprint
-        lon, lat = np.deg2rad(lon), np.deg2rad(lat)
-        x = np.cos(lat) * np.cos(lon)
-        y = np.cos(lat) * np.sin(lon)
-        z = np.sin(lat)
-
-        x_mid = (np.max(x) + np.min(x)) / 2.
-        y_mid = (np.max(y) + np.min(y)) / 2.
-        z_mid = (np.max(z) + np.min(z)) / 2.
-        lon_fiducial = np.rad2deg(np.arctan2(y_mid, x_mid)) % 360.0
-        lat_fiducial = np.rad2deg(np.arctan2(z_mid, np.sqrt(x_mid ** 2 + y_mid ** 2)))
-        fiducial[spatial_axes] = lon_fiducial, lat_fiducial
-    if spectral_footprint.any():
-        fiducial[spectral_axes] = spectral_footprint.min()
-    return fiducial
-
-
-def is_fits(input_img):
-    """
-    Returns
-    --------
-    isFits: tuple
-        An ``(isfits, fitstype)`` tuple.  The values of ``isfits`` and
-        ``fitstype`` are specified as:
-
-         - ``isfits``: True|False
-         - ``fitstype``: if True, one of 'waiver', 'mef', 'simple'; if False, None
-
-    Notes
-    -----
-    Input images which do not have a valid FITS filename will automatically
-    result in a return of (False, None).
-
-    In the case that the input has a valid FITS filename but runs into some
-    error upon opening, this routine will raise that exception for the calling
-    routine/user to handle.
-    """
-
-    isfits = False
-    fitstype = None
-    names = ['fits', 'fit', 'FITS', 'FIT']
-    # determine if input is a fits file based on extension
-    # Only check type of FITS file if filename ends in valid FITS string
-    f = None
-    fileclose = False
-    if isinstance(input_img, fits.HDUList):
-        isfits = True
-        f = input_img
-    else:
-        isfits = True in [input_img.endswith(suffix) for suffix in names]
-
-    # if input is a fits file determine what kind of fits it is
-    # waiver fits len(shape) == 3
-    if isfits:
-        if not f:
-            try:
-                f = fits.open(input_img, mode='readonly')
-                fileclose = True
-            except Exception:
-                if f is not None:
-                    f.close()
-                raise
-        data0 = f[0].data
-        if data0 is not None:
-            try:
-                if isinstance(f[1], fits.TableHDU):
-                    fitstype = 'waiver'
-            except IndexError:
-                fitstype = 'simple'
-
-        else:
-            fitstype = 'mef'
-        if fileclose:
-            f.close()
-
-    return isfits, fitstype
 
 
 def subarray_transform(input_model):
@@ -705,22 +613,6 @@ def _create_grism_bbox(input_model, mmag_extract=None, wfss_extract_half_height=
     return final_objects
 
 
-def get_num_msa_open_shutters(shutter_state):
-    """
-    Return the number of open shutters in a slitlet.
-
-    Parameters
-    ----------
-    shutter_state : str
-        ``Slit.shutter_state`` attribute - a combination of
-        ``1`` - open shutter, ``0`` - closed shutter, ``x`` - main shutter.
-    """
-    num = shutter_state.count('1')
-    if 'x' in shutter_state:
-        num += 1
-    return num
-
-
 def transform_bbox_from_shape(shape, order="C"):
     """Create a bounding box from the shape of the data.
 
@@ -807,6 +699,51 @@ def update_s_region_imaging(model):
         model.meta.wcsinfo.s_region = s_region
 
 
+def update_s_region_lrs(model, reference_files):
+    """
+    Update ``S_REGION`` using V2,V3 of the slit corners from reference file.
+
+    s_region for model is updated in place.
+
+    Parameters
+    ----------
+    model : DataModel
+        Input model
+    reference_files : list
+        List of reference files for assign_wcs.
+    """
+    refmodel = MiriLRSSpecwcsModel(reference_files['specwcs'])
+
+    v2vert1 = refmodel.meta.v2_vert1
+    v2vert2 = refmodel.meta.v2_vert2
+    v2vert3 = refmodel.meta.v2_vert3
+    v2vert4 = refmodel.meta.v2_vert4
+
+    v3vert1 = refmodel.meta.v3_vert1
+    v3vert2 = refmodel.meta.v3_vert2
+    v3vert3 = refmodel.meta.v3_vert3
+    v3vert4 = refmodel.meta.v3_vert4
+
+    refmodel.close()
+    v2 = [v2vert1, v2vert2, v2vert3, v2vert4]
+    v3 = [v3vert1, v3vert2, v3vert3, v3vert4]
+
+    if (any(elem is None for elem in v2) or
+        any(elem is None for elem in v3)):
+        log.info("The V2,V3 coordinates of the MIRI LRS-Fixed slit contains NaN values.")
+        log.info("The s_region will not be updated")
+
+    lam = 7.0 # wavelength does not matter for s region so just assign a value in range of LRS
+    s = model.meta.wcs.transform('v2v3', 'world', v2, v3, lam)
+    a = s[0]
+    b = s[1]
+    footprint = np.array([[a[0], b[0]],
+                          [a[1], b[1]],
+                          [a[2], b[2]],
+                          [a[3], b[3]]])
+
+    update_s_region_keyword(model, footprint)
+
 def compute_footprint_spectral(model):
     """
     Determine spatial footprint for spectral observations using the instrument model.
@@ -844,9 +781,11 @@ def compute_footprint_spectral(model):
     return footprint, (lam_min, lam_max)
 
 
+
 def update_s_region_spectral(model):
     """ Update the S_REGION keyword.
     """
+
     footprint, spectral_region = compute_footprint_spectral(model)
     update_s_region_keyword(model, footprint)
     model.meta.wcsinfo.spectral_region = spectral_region

@@ -1,0 +1,1 @@
+For MIRI MRS data apply aperture correction to residual fringe corrected flux and surface brightness

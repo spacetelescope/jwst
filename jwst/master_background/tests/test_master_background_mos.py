@@ -19,29 +19,31 @@ def create_msa_hdul():
     # Four shutters open on MSA, the first three are background slits only
     # with the fourth having a source
     shutter_data = {
-        'slitlet_id': [12, 13, 14, 100],
-        'msa_metadata_id': [1, 1, 1, 1],
-        'shutter_quadrant': [4, 4, 4, 4],
-        'shutter_row': [10, 10, 10, 10],
-        'shutter_column': [22, 23, 24, 25],
-        'source_id': [0, 0, 0, 1],
-        'background': ['Y', 'Y', 'Y', 'N'],
-        'shutter_state': ['OPEN', 'OPEN', 'OPEN', 'OPEN'],
-        'estimated_source_in_shutter_x': [np.nan, np.nan, np.nan, 0.18283921],
-        'estimated_source_in_shutter_y': [np.nan, np.nan, np.nan, 0.31907734],
-        'dither_point_index': [1, 1, 1, 1],
-        'primary_source': ['N', 'N', 'N', 'Y'],
-        'fixed_slit': ['NONE', 'NONE', 'NONE', 'NONE']}
+        "slitlet_id": [12, 13, 14, 100],
+        "msa_metadata_id": [1, 1, 1, 1],
+        "shutter_quadrant": [4, 4, 4, 4],
+        "shutter_row": [10, 10, 10, 10],
+        "shutter_column": [22, 23, 24, 25],
+        "source_id": [0, 0, 0, 1],
+        "background": ["Y", "Y", "Y", "N"],
+        "shutter_state": ["OPEN", "OPEN", "OPEN", "OPEN"],
+        "estimated_source_in_shutter_x": [np.nan, np.nan, np.nan, 0.18283921],
+        "estimated_source_in_shutter_y": [np.nan, np.nan, np.nan, 0.31907734],
+        "dither_point_index": [1, 1, 1, 1],
+        "primary_source": ["N", "N", "N", "Y"],
+        "fixed_slit": ["NONE", "NONE", "NONE", "NONE"],
+    }
 
     source_data = {
-        'program': [95065],
-        'source_id': [2],
-        'source_name': ['95065_2'],
-        'alias': ['2123'],
-        'ra': [53.15],
-        'dec': [-27.81],
-        'preimage_id': ['95065001_000'],
-        'stellarity': [1.0]}
+        "program": [95065],
+        "source_id": [2],
+        "source_name": ["95065_2"],
+        "alias": ["2123"],
+        "ra": [53.15],
+        "dec": [-27.81],
+        "preimage_id": ["95065001_000"],
+        "stellarity": [1.0],
+    }
 
     shutter_table = Table(shutter_data)
     source_table = Table(source_data)
@@ -51,8 +53,8 @@ def create_msa_hdul():
     hdul.append(fits.ImageHDU())
     hdul.append(fits.table_to_hdu(shutter_table))
     hdul.append(fits.table_to_hdu(source_table))
-    hdul[2].name = 'SHUTTER_INFO'
-    hdul[3].name = 'SOURCE_INFO'
+    hdul[2].name = "SHUTTER_INFO"
+    hdul[3].name = "SOURCE_INFO"
 
     return hdul
 
@@ -60,10 +62,10 @@ def create_msa_hdul():
 @pytest.fixture
 def nirspec_msa_rate(tmp_path):
     hdul = create_nirspec_hdul()
-    hdul[0].header['MSAMETFL'] = str(tmp_path / 'test_msa_01.fits')
-    hdul[0].header['EFFEXPTM'] = 1.0
-    hdul[0].header['DURATION'] = 1.0
-    filename = str(tmp_path / 'test_nrs_msa_rate.fits')
+    hdul[0].header["MSAMETFL"] = str(tmp_path / "test_msa_01.fits")
+    hdul[0].header["EFFEXPTM"] = 1.0
+    hdul[0].header["DURATION"] = 1.0
+    filename = str(tmp_path / "test_nrs_msa_rate.fits")
     hdul.writeto(filename, overwrite=True)
     hdul.close()
     return filename
@@ -72,7 +74,7 @@ def nirspec_msa_rate(tmp_path):
 @pytest.fixture
 def nirspec_msa_metfl(tmp_path):
     hdul = create_msa_hdul()
-    filename = str(tmp_path / 'test_msa_01.fits')
+    filename = str(tmp_path / "test_msa_01.fits")
     hdul.writeto(filename, overwrite=True)
     hdul.close()
     return filename
@@ -106,7 +108,7 @@ def test_master_background_mos(nirspec_msa_extracted2d):
     result = MasterBackgroundMosStep.call(model)
 
     # Check that the master_background_mos step was run
-    assert query_step_status(result, "master_background") == 'COMPLETE'
+    assert query_step_status(result, "master_background") == "COMPLETE"
 
     finite = np.isfinite(result.slits[-1].data) & np.isfinite(model.slits[-1].data)
     sci_orig = model.slits[-1].data[finite]
@@ -125,27 +127,24 @@ def test_create_background_from_multispec(nirspec_msa_extracted2d):
     # Insert outliers into one of the background spectra
     nypix = len(model.slits[0].data)
     nxpix = len(model.slits[0].data)
-    model.slits[0].data[nypix//2, nxpix//2-1:nxpix//2+1] = 10
+    model.slits[0].data[nypix // 2, nxpix // 2 - 1 : nxpix // 2 + 1] = 10
 
     specs_model = mk_multispec(model)
 
     # First check that we can make a master background from the inputs
 
     # Check that with sigma_clip=None, the outlier is retained
-    master_background = nirspec_utils.create_background_from_multispec(
-        specs_model, sigma_clip=None)
-    assert np.any(master_background.spec[0].spec_table['surf_bright'] > 1)
+    master_background = nirspec_utils.create_background_from_multispec(specs_model, sigma_clip=None)
+    assert np.any(master_background.spec[0].spec_table["surf_bright"] > 1)
 
     # Confirm that using a median_filter will filter out the outlier
-    master_background = nirspec_utils.create_background_from_multispec(
-        specs_model, median_kernel=4)
-    assert np.allclose(master_background.spec[0].spec_table['surf_bright'], 1)
+    master_background = nirspec_utils.create_background_from_multispec(specs_model, median_kernel=4)
+    assert np.allclose(master_background.spec[0].spec_table["surf_bright"], 1)
 
     # Confirm that using a sigma clipping when combining background spectra
     # removes the outlier
-    master_background = nirspec_utils.create_background_from_multispec(
-        specs_model, sigma_clip=3)
-    assert np.allclose(master_background.spec[0].spec_table['surf_bright'], 1)
+    master_background = nirspec_utils.create_background_from_multispec(specs_model, sigma_clip=3)
+    assert np.allclose(master_background.spec[0].spec_table["surf_bright"], 1)
 
     del model
     del specs_model
@@ -202,5 +201,3 @@ def test_apply_master_background(nirspec_msa_extracted2d):
     del model
     del result
     del specs_model
-
-

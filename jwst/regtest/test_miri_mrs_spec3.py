@@ -115,7 +115,7 @@ def test_spec3_ifulong(run_spec3_ifulong, fitsdiff_default_kwargs, output):
     rtdata = run_spec3_ifulong
     rtdata.output = output
 
-    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+    rtdata.get_truth(os.path.join(TRUTH_PATH, output))
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -142,7 +142,7 @@ def test_spec3_ifushort(run_spec3_ifushort, fitsdiff_default_kwargs, output):
     rtdata = run_spec3_ifushort
     rtdata.output = output
 
-    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+    rtdata.get_truth(os.path.join(TRUTH_PATH, output))
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -169,7 +169,7 @@ def test_spec3_ifushort_emsm(run_spec3_ifushort_emsm, fitsdiff_default_kwargs, o
     rtdata = run_spec3_ifushort_emsm
     rtdata.output = output
 
-    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+    rtdata.get_truth(os.path.join(TRUTH_PATH, output))
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
@@ -193,7 +193,7 @@ def test_spec3_ifushort_extract1d(run_spec3_ifushort_extract1d, fitsdiff_default
     rtdata = run_spec3_ifushort_extract1d
     rtdata.output = output
 
-    rtdata.get_truth(os.path.join(TRUTH_PATH, rtdata.output))
+    rtdata.get_truth(os.path.join(TRUTH_PATH, output))
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

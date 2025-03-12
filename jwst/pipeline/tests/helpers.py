@@ -1,53 +1,51 @@
-"""test helpers"""
+"""Build fixtures for testing pipelines."""
 
 import json
-import os
-from os import path
+from pathlib import Path
 import pytest
 import tempfile
 
 # Import from the common helpers module
 # simply to make available from this module.
-from ...tests.helpers import abspath # noqa: F401
+from ...tests.helpers import abspath  # noqa: F401
 
 from ...associations import load_asn
 
-SCRIPT_PATH = path.dirname(__file__)
-SCRIPT_DATA_PATH = path.join(SCRIPT_PATH, 'data')
+SCRIPT_PATH = Path(__file__).parent
+SCRIPT_DATA_PATH = SCRIPT_PATH / "data"
 
 
 @pytest.fixture
 def update_asn_basedir(asn_file, root=None):
-    """Create an association with filenames update
-    for a different directory
+    """
+    Create an association with filenames update for a different directory.
 
     Parameters
     ----------
-    asn_file: str
+    asn_file : str
         The original association file
-
-    root: str
+    root : str
         The root directory where the data actually resides
 
     Returns
     -------
-    updated_asn_path: str
+    updated_asn_path : str
         The updated association file path
     """
     if root is None:
-        root = os.getcwd()
+        root = Path.cwd()
 
-    with open(asn_file) as fd:
+    with Path(asn_file).open() as fd:
         asn = load_asn(fd)
 
-    for product in asn['products']:
-        for member in product['members']:
-            expname = member['expname']
-            old_root, expname = path.split(expname)
-            member['expname'] = path.join(root, expname)
+    for product in asn["products"]:
+        for member in product["members"]:
+            expname = member["expname"]
+            expname = Path(expname).name
+            member["expname"] = root / expname
 
-    _, updated_asn_path = tempfile.mkstemp(suffix='.json')
-    with open(updated_asn_path, 'w') as fd:
+    _, updated_asn_path = tempfile.mkstemp(suffix=".json")
+    with Path(updated_asn_path).open("w") as fd:
         json.dump(asn, fd)
 
     return updated_asn_path
