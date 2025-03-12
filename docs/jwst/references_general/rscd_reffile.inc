@@ -6,8 +6,9 @@ RSCD Reference File
 :REFTYPE: RSCD
 :Data model: `~jwst.datamodels.RSCDModel`
 
-The RSCD reference file contains the number of groups to set to 'DO_NOT_USE' based on
-readout mode and subarray size. 
+The RSCD reference file contains the number of groups to flag as 'DO_NOT_USE' based on
+readout mode and subarray size. Integrations two and higher are flagged, the first integration
+groups values are not flagged. 
 
 .. include:: ../references_general/rscd_selection.inc
 
