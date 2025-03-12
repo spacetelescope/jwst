@@ -44,7 +44,6 @@ repos:
             jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
             jwst/dark_current/.* |
-            jwst/engdblog/.* |
             jwst/extract_2d/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
