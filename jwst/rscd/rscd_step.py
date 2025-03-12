@@ -8,19 +8,18 @@ __all__ = ["RscdStep"]
 
 class RscdStep(Step):
     """
-    Flags the first N groups of MIRI data as 'DO_NOT_USE' in the 2nd and later integrations.
+    Flags the first N groups of MIRI data to 'DO_NOT_USE' in the 2nd and later integrations.
 
-    Input data is expected to be a ramp file (RampModel). The number of groups to 
+    Input data is expected to be a ramp file (RampModel). The number of groups, N,  to
     set to 'DO_NOT_USE' is read in from the RSCD reference file. The RSCD reference file
-    contains the number of groups to set to DO_NOT_USE based on readout mode and 
-    subarray size. 
+    contains the number of groups to set to DO_NOT_USE based on readout mode and
+    subarray size.
     """
 
     class_alias = "rscd"
 
     # allow switching between baseline and enhanced algorithms
     spec = """
-        type = option('baseline','enhanced',default = 'baseline') # Type of correction
         """  # noqa: E501
 
     #  only do this for the 2nd+ integrations
@@ -29,7 +28,23 @@ class RscdStep(Step):
     reference_file_types = ["rscd"]
 
     def process(self, step_input):
-        """ Sets the dqgroup of the first N groups as 'DO_NOT_USE' in the 2nd and later integrations."""
+        """
+        Flag the initial groups to 'DO_NOT_USE' in the 2nd and later integrations.
+
+        The number of initial groups to flag is read in from the RSCD reference file. This number
+        varies based on readout mode and subarray size.
+
+        Parameters
+        ----------
+        step_input : Ramp DataModel
+            Ramp datamodel to be corrected
+
+        Returns
+        -------
+        result : Ramp DataModel
+            Ramp datamodel with initial groups in an integration flagged as DO_NOT_USE.
+            Flags are only set of integration 2 and higher.
+        """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
             # check the data is MIRI data
@@ -58,7 +73,7 @@ class RscdStep(Step):
             result = input_model.copy()
 
             # Do the rscd correction
-            result = rscd_sub.do_correction(result, rscd_model, self.type)
+            result = rscd_sub.do_correction(result, rscd_model)
 
             # Cleanup
             del rscd_model
