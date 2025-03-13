@@ -2,7 +2,7 @@
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
-from ..lib import pipe_utils
+from ..lib import pipe_utils, reffile_utils
 from . import saturation
 
 
@@ -48,6 +48,10 @@ class SaturationStep(Step):
             bias_model = None
             if self.bias_name != 'N/A':
                 bias_model = datamodels.SuperBiasModel(self.bias_name)
+                # Check for subarray mode and extract subarray from the
+                # bias reference data if necessary
+                if not reffile_utils.ref_matches_sci(input_model, bias_model):
+                    bias_model = reffile_utils.get_subarray_model(input_model, bias_model)
 
             # Work on a copy
             result = input_model.copy()
