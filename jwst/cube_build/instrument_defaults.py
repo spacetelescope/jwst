@@ -693,7 +693,6 @@ class InstrumentInfo:
     # Functions
 
     def set_multi_channel_table(self, wave, sroi, wroi, power, softrad):
-        
         self.multich_wavelength.append(wave)
         self.multich_sroi.append(sroi)
         self.multich_wroi.append(wroi)
