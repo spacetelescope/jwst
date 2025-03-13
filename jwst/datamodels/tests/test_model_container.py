@@ -6,7 +6,7 @@ import pytest
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import JwstDataModel
-from stdatamodels.jwst.datamodels.util import NoTypeWarning
+from stdatamodels.exceptions import NoTypeWarning
 
 from jwst.datamodels import ModelContainer
 from jwst.associations.asn_from_list import asn_from_list
