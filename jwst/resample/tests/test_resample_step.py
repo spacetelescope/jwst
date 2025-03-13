@@ -506,20 +506,22 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
         # flux density conservation: sum over pixels in each row
         # needs to be about the same, other than the edges
         # Check the maximum sums, to avoid edges.
-        assert_allclose(
-            np.max(np.nansum(result1.data, axis=1)),
-            np.max(np.nansum(result1.data, axis=1)),
-            rtol=0.05,
-        )
+        assert_allclose(np.max(np.nansum(result1.data, axis=1)),
+                        np.max(np.nansum(result2.data, axis=1)), rtol=0.05)
     else:
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=RuntimeWarning, message="Mean of empty slice"
-            )
-            res1 = np.nanmean(result1.data, axis=1)
-            res2 = np.nanmean(result2.data, axis=1)
-        # surface brightness conservation: mean values are the same
-        assert_allclose(res1, res2, rtol=0.05, equal_nan=True)
+        # surface brightness conservation: weighted total values are the same
+        assert np.allclose(
+            np.nansum(result1.data * result1.wht),
+            np.nansum(result2.data * result2.wht),
+            rtol=5.0e-3,
+            equal_nan=True
+        )
+        assert np.allclose(
+            np.nansum(result1.data * result1.wht, axis=1),
+            np.nansum(result2.data * result2.wht, axis=1),
+            rtol=5.0e-3,
+            equal_nan=True
+        )
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
@@ -579,20 +581,29 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
         # flux density conservation: sum over pixels in each row
         # needs to be about the same, other than the edges
         # Check the maximum sums, to avoid edges.
-        assert_allclose(
-            np.max(np.nansum(result1.data, axis=1)),
-            np.max(np.nansum(result1.data, axis=1)),
-            rtol=0.05,
-        )
+        assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
+                           np.max(np.nansum(result2.data, axis=1)), rtol=0.05)
     else:
-        with warnings.catch_warnings():  # MJy/sr
+        # surface brightness conservation: weighted total values are the same
+        assert np.allclose(
+            np.sum(result1.data * result1.wht),
+            np.sum(result2.data * result2.wht),
+            rtol=1.0e-5,
+            equal_nan=True
+        )
+
+        with warnings.catch_warnings():
             warnings.filterwarnings(
-                "ignore", category=RuntimeWarning, message="Mean of empty slice"
+                "ignore",
+                category=RuntimeWarning,
+                message="All-NaN slice encountered"
             )
-            res1 = np.nanmean(result1.data, axis=1)
-            res2 = np.nanmean(result2.data, axis=1)
-        # surface brightness conservation: mean values are the same
-        assert_allclose(res1, res2, rtol=0.05, equal_nan=True)
+            assert np.allclose(
+                np.nanmedian(result1.data, axis=1),
+                np.nanmedian(result2.data, axis=1),
+                rtol=1.0e-5,
+                equal_nan=True
+            )
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
@@ -652,12 +663,12 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
                 rtol=0.05,
             )
         else:
-            # surface brightness conservation: mean values are the same
-            assert_allclose(
-                np.nanmean(slit1.data, axis=0),
-                np.nanmean(slit2.data, axis=0),
-                rtol=0.05,
-                equal_nan=True,
+            # surface brightness conservation: weighted total values are the same
+            assert np.allclose(
+                np.nansum(slit1.data * slit1.wht, axis=0),
+                np.nansum(slit2.data * slit2.wht, axis=0),
+                rtol=1.0e-5,
+                equal_nan=True
             )
 
         # output area is updated either way
