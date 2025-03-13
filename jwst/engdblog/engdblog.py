@@ -30,7 +30,7 @@ class EngDBLogStep(Step):
 
     def process(self, mnemonics):
         """
-        Step processing.
+        Retrieve selected engineering mnemonic values.
 
         Parameters
         ----------
@@ -58,18 +58,18 @@ class EngDBLogStep(Step):
             try:
                 values = edb.get_values(mnemonic, stime, etime)
             except Exception:
-                self.log.info(f"Cannot retrieve info for {mnemonic}")
+                self.log.info("Cannot retrieve info for %s", mnemonic)
                 continue
 
             if len(values) < 1:
-                self.log.info(f"{mnemonic} has no entries in time range {stime}:{etime}")
+                self.log.info("%s has no entries in time range %s:%s", mnemonic, stime, etime)
                 continue
 
             if verbosity == "initial":
                 result[mnemonic] = values[0]
-                self.log.info(f"{mnemonic}[{stime}:{etime}] = {values[0]}")
+                self.log.info("%s[%s:%s] = %s", mnemonic, stime, etime, str(values[0]))
             elif verbosity == "all":
                 result[mnemonic] = values
-                self.log.info(f"{mnemonic}[{stime}:{etime}] = {values}")
+                self.log.info("%s[%s:%s] = %s", mnemonic, stime, etime, str(values))
 
         return result
