@@ -1153,12 +1153,15 @@ class Asn_Lv2WFSSParallel(
     def find_closest_direct(science, directs):
         """Find the direct image that is closest to the science.
 
-        For pure parallel observations, there should only be one
-        long-wavelength direct image in a given direct_image
-        candidate. Find it by searching for 'long' filenames.
-        All [a|b]long filenames should belong to the same
-        level 3 product, which will be associated to the grism
-        image.
+        For NIRCam pure parallel observations, there should
+        only be one long-wavelength direct image in a given
+        direct_image candidate. Find it by searching for 'long'
+        filenames. All [a|b]long filenames should belong to the
+        same level 3 product, which will be associated to the
+        grism image.
+
+        For NIRISS, only one direct image optical path should
+        be associated with a given grism image.
 
         Parameters
         ----------
