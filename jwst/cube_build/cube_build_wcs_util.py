@@ -1,5 +1,5 @@
-""" Routines related to WCS procedures of cube_build
-"""
+"""Routines related to WCS procedures of cube_build"""
+
 import numpy as np
 from ..assign_wcs import nirspec
 from ..assign_wcs.util import wrap_ra
@@ -12,7 +12,7 @@ log.setLevel(logging.DEBUG)
 
 # ******************************************************************************
 def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
-    """ For MIRI channel data find the footprint of this data on the sky
+    """For MIRI channel data find the footprint of this data on the sky
 
     For a specific channel on an exposure find the min and max of the
     spatial coordinates, either in alpha,beta or ra,dec depending
@@ -44,11 +44,10 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
 
     y, x = np.mgrid[:ysize, xstart:xend]
 
-    if coord_system == 'internal_cal':
+    if coord_system == "internal_cal":
         # coord1 = along slice
         # coord2 = across slice
-        detector2alpha_beta = input.meta.wcs.get_transform('detector',
-                                                           'alpha_beta')
+        detector2alpha_beta = input.meta.wcs.get_transform("detector", "alpha_beta")
         coord1, coord2, lam = detector2alpha_beta(x, y)
 
         valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
@@ -111,7 +110,7 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
     lambda_min = np.nanmin(lam)
     lambda_max = np.nanmax(lam)
 
-    if coord_system != 'internal_cal':
+    if coord_system != "internal_cal":
         # before returning,  ra should be between 0 to 360
         a_min %= 360
         a_max %= 360
@@ -120,6 +119,8 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
         a2 %= 360
 
     return a_min, b1, a_max, b2, a1, b_min, a2, b_max, lambda_min, lambda_max
+
+
 # *****************************************************************************
 
 
@@ -140,6 +141,7 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
 
     Notes
     -----
+
     Returns
     -------
     min and max spatial coordinates and wavelength for slice.
@@ -153,19 +155,17 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
     lambda_slice = np.zeros(nslices * 2)
     k = 0
     # for NIRSPEC there are 30 regions
-    log.info('Looping over slices to determine cube size')
+    log.info("Looping over slices to determine cube size")
 
     wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input, np.arange(nslices))
 
     for i in range(nslices):
-        slice_wcs = nirspec._nrs_wcs_set_input_lite(input, wcsobj, i,
-                                                   [tr1, tr2[i], tr3[i]])
-        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box,
-                                               step=(1, 1), center=True)
-        if coord_system == 'internal_cal':
+        slice_wcs = nirspec._nrs_wcs_set_input_lite(input, wcsobj, i, [tr1, tr2[i], tr3[i]])
+        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
+        if coord_system == "internal_cal":
             # coord1 = along slice
             # coord2 = across slice
-            detector2slicer = slice_wcs.get_transform('detector', 'slicer')
+            detector2slicer = slice_wcs.get_transform("detector", "slicer")
             coord2, coord1, lam = detector2slicer(x, y)  # lam ~0 for this transform
             valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
             coord1 = coord1[valid]
@@ -189,7 +189,7 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
             # ra range
             coord1_wrap = wrap_ra(coord1)
             coord1 = coord1_wrap
-# ________________________________________________________________________________
+        # ________________________________________________________________________________
         coord1 = coord1.flatten()
         coord2 = coord2.flatten()
         lam = lam.flatten()
@@ -217,8 +217,8 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
         lambda_slice[k + 1] = np.nanmax(lam)
 
         k = k + 2
-# ________________________________________________________________________________
-# now test the ra slices for consistency. Adjust if needed.
+    # ________________________________________________________________________________
+    # now test the ra slices for consistency. Adjust if needed.
 
     a_min = np.nanmin(a_slice)
     a_max = np.nanmax(a_slice)

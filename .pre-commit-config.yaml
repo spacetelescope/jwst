@@ -39,7 +39,6 @@ repos:
           (?x)^(
             jwst/associations/.* |
             jwst/coron/.* |
-            jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
             jwst/dark_current/.* |
             jwst/flatfield/.* |
