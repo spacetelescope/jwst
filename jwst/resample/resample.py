@@ -1,6 +1,6 @@
 import logging
 import json
-import os
+from pathlib import Path
 import re
 
 import numpy as np
@@ -32,12 +32,12 @@ __all__ = [
 ]
 
 _SUPPORTED_CUSTOM_WCS_PARS = [
-    'pixel_scale_ratio',
-    'pixel_scale',
-    'output_shape',
-    'crpix',
-    'crval',
-    'rotation',
+    "pixel_scale_ratio",
+    "pixel_scale",
+    "output_shape",
+    "crpix",
+    "crval",
+    "rotation",
 ]
 
 log = logging.getLogger(__name__)
@@ -45,14 +45,30 @@ log.setLevel(logging.DEBUG)
 
 
 class ResampleImage(Resample):
+    """Resample imaging data."""
+
     dq_flag_name_map = pixel
 
-    def __init__(self, input_models, pixfrac=1.0, kernel="square",
-                 fillval="NAN", weight_type="ivm", good_bits=0,
-                 blendheaders=True, output_wcs=None, wcs_pars=None,
-                 output=None, enable_ctx=True, enable_var=True,
-                 compute_err=None, asn_id=None):
+    def __init__(
+        self,
+        input_models,
+        pixfrac=1.0,
+        kernel="square",
+        fillval="NAN",
+        weight_type="ivm",
+        good_bits=0,
+        blendheaders=True,
+        output_wcs=None,
+        wcs_pars=None,
+        output=None,
+        enable_ctx=True,
+        enable_var=True,
+        compute_err=None,
+        asn_id=None,
+    ):
         """
+        Initialize the ResampleImage object.
+
         Parameters
         ----------
         input_models : ModelLibrary
@@ -254,25 +270,24 @@ class ResampleImage(Resample):
         asn_id : str, None, optional
             The association id. The id is what appears in
             the :ref:`asn-jwst-naming`.
-
         """
         self.input_models = input_models
         self.output_jwst_model = None
 
         self.output_dir = None
         self.output_filename = output
-        if output is not None and '.fits' not in str(output):
+        if output is not None and ".fits" not in str(output):
             self.output_dir = output
             self.output_filename = None
-        self.intermediate_suffix = 'outlier_i2d'
+        self.intermediate_suffix = "outlier_i2d"
 
         self.blendheaders = blendheaders
         if blendheaders:
             self._blender = ModelBlender(
                 blend_ignore_attrs=[
-                    'meta.photometry.pixelarea_steradians',
-                    'meta.photometry.pixelarea_arcsecsq',
-                    'meta.filename',
+                    "meta.photometry.pixelarea_steradians",
+                    "meta.photometry.pixelarea_arcsecsq",
+                    "meta.filename",
                 ]
             )
 
@@ -285,10 +300,7 @@ class ResampleImage(Resample):
             unsup = []
             unsup = set(wcs_pars.keys()).difference(_SUPPORTED_CUSTOM_WCS_PARS)
             if unsup:
-                raise KeyError(
-                    "Unsupported custom WCS parameters: "
-                    f"{','.join(map(repr, unsup))}."
-                )
+                raise KeyError(f"Unsupported custom WCS parameters: {','.join(map(repr, unsup))}.")
 
         if output_wcs is None:
             # determine output WCS:
@@ -313,13 +325,10 @@ class ResampleImage(Resample):
 
         else:
             if wcs_pars:
-                log.warning(
-                    "Ignoring 'wcs_pars' since 'output_wcs' is not None."
-                )
+                log.warning("Ignoring 'wcs_pars' since 'output_wcs' is not None.")
             if output_wcs["wcs"].array_shape is None:
                 raise ValueError(
-                    "Custom WCS objects must have the 'array_shape' "
-                    "attribute set (defined)."
+                    "Custom WCS objects must have the 'array_shape' attribute set (defined)."
                 )
 
         super().__init__(
@@ -336,27 +345,43 @@ class ResampleImage(Resample):
         )
 
     def input_model_to_dict(self, model, weight_type, enable_var, compute_err):
-        """ Converts a data model to a dictionary of keywords and values
-        expected by `stcal.resample`. Input parameters are the same as used
-        when initializing `ResampleImage`.
+        """
+        Convert a data model to a dictionary of keywords and values expected by `stcal.resample`.
 
-        .. note:: Subclasses can override this method to add additional fields
-          to the dictionary as needed.
+        Parameters
+        ----------
+        model : DataModel
+            A JWST data model.
+        weight_type : str
+            The weighting type for adding models' data.
+        enable_var : bool
+            Indicates whether to resample variance arrays.
+        compute_err : str
+            The method to compute the output model's error array.
 
         Returns
         -------
-        model_dict : dict
-
+        dict
+            A dictionary of keywords and values expected by `stcal.resample`.
         """
         return input_jwst_model_to_dict(
-            model=model,
-            weight_type=weight_type,
-            enable_var=enable_var,
-            compute_err=compute_err
+            model=model, weight_type=weight_type, enable_var=enable_var, compute_err=compute_err
         )
 
     def create_output_jwst_model(self, ref_input_model=None):
-        """ Create a new blank model and update it's meta with info from ``ref_input_model``. """
+        """
+        Create a new blank model and update its meta with info from ``ref_input_model``.
+
+        Parameters
+        ----------
+        ref_input_model : `~jwst.datamodels.JwstDataModel`, optional
+            The reference input model from which to copy meta data.
+
+        Returns
+        -------
+        ImageModel
+            A new blank model with updated meta data.
+        """
         output_model = datamodels.ImageModel(None)  # tuple(self.output_wcs.array_shape))
 
         # update meta data and wcs
@@ -366,6 +391,16 @@ class ResampleImage(Resample):
         return output_model
 
     def update_output_model(self, model, info_dict):
+        """
+        Add meta information to the output model.
+
+        Parameters
+        ----------
+        model : ImageModel
+            The output model to be updated.
+        info_dict : dict
+            A dictionary containing information about the resampling process.
+        """
         model.data = info_dict["data"]
         model.wht = info_dict["wht"]
         if self._enable_ctx:
@@ -397,25 +432,13 @@ class ResampleImage(Resample):
         model.meta.exposure.elapsed_exposure_time = info_dict["elapsed_exposure_time"]
 
     def add_model(self, model):
-        """ Resamples model image and either variance data (if ``enable_var``
-        was `True`) or error data (if ``enable_err`` was `True`) and adds
-        them using appropriate weighting to the corresponding
-        arrays of the output model. It also updates resampled data weight,
-        the context array (if ``enable_ctx`` is `True`), relevant output
-        model's values.
-
-        Whenever ``model`` has a unique group ID that was never processed
-        before, the "pointings" value of the output model is incremented and
-        the "group_id" attribute is updated. Also, time counters are updated
-        with new values from the input ``model`` by calling
-        :py:meth:`~Resample.update_time`.
+        """
+        Add a single input model to the resampling.
 
         Parameters
         ----------
-        model : dict
-            A dictionary containing data arrays and other meta attributes
-            and values of actual models used by pipelines.
-
+        model : ImageModel
+            A JWST data model to be resampled.
         """
         super().add_model(
             self.input_model_to_dict(
@@ -426,28 +449,12 @@ class ResampleImage(Resample):
             )
         )
         if self.output_jwst_model is None:
-            self.output_jwst_model = self.create_output_jwst_model(
-                ref_input_model=model
-            )
+            self.output_jwst_model = self.create_output_jwst_model(ref_input_model=model)
         if self.blendheaders:
             self._blender.accumulate(model)
 
-    def finalize(self, free_memory=True):
-        """ Performs final computations from any intermediate values,
-        sets output model values, and optionally frees temporary/intermediate
-        objects.
-
-        ``finalize`` calls :py:meth:`~Resample.finalize_resample_variance` and
-        :py:meth:`~Resample.finalize_time_info`.
-
-        .. warning::
-          If ``enable_var=True`` then intermediate arrays holding variance
-          weights will be lost and so continuing adding new models after
-          a call to :py:meth:`~Resample.finalize` will result in incorrect
-          variance. In this case `finalize` will set the finalized flag to
-          `True`.
-
-        """
+    def finalize(self):
+        """Perform final computations and set output model values and metadata."""
         if self.blendheaders:
             self._blender.finalize_model(self.output_jwst_model)
         super().finalize()
@@ -462,10 +469,13 @@ class ResampleImage(Resample):
             self.update_fits_wcsinfo(self.output_jwst_model)
             assign_wcs_util.update_s_region_imaging(self.output_jwst_model)
 
-        self.output_jwst_model.meta.cal_step.resample = 'COMPLETE'
+        self.output_jwst_model.meta.cal_step.resample = "COMPLETE"
 
     def reset_arrays(self, n_input_models=None):
-        """ Initialize/reset `Drizzle` objects, `ModelBlender`, output model
+        """
+        Initialize/reset between finalize() and add_model() calls.
+
+        Resets or re-initializes `Drizzle` objects, `ModelBlender`, output model
         and arrays, and time counters. Output WCS and shape are not modified
         from `Resample` object initialization. This method needs to be called
         before calling :py:meth:`add_model` for the first time after
@@ -477,22 +487,23 @@ class ResampleImage(Resample):
             Number of input models expected to be resampled. When provided,
             this is used to estimate memory requirements and optimize memory
             allocation for the context array.
-
         """
         super().reset_arrays(n_input_models=n_input_models)
         if self.blendheaders:
             self._blender = ModelBlender(
                 blend_ignore_attrs=[
-                    'meta.photometry.pixelarea_steradians',
-                    'meta.photometry.pixelarea_arcsecsq',
-                    'meta.filename',
+                    "meta.photometry.pixelarea_steradians",
+                    "meta.photometry.pixelarea_arcsecsq",
+                    "meta.filename",
                 ]
             )
         self.output_jwst_model = None
 
     def resample_group(self, indices):
-        """ Resample multiple input images that belong to a single
-        ``group_id`` as specified by ``indices``. If ``output_jwst_model``
+        """
+        Resample multiple input images belonging to a single ``group_id``.
+
+        If ``output_jwst_model``
         was created by a previous call to this method, ``output_jwst_model``
         as well as other arrays (weights, context, etc.) will be cleared.
         Upon completion, this method calls :py:meth:`finalize` to compute
@@ -511,12 +522,11 @@ class ResampleImage(Resample):
         output_jwst_model
             Resampled model with populated data, weights, error arrays and
             other attributes.
-
         """
         if self.output_jwst_model is not None:
             self.reset_arrays(n_input_models=len(indices))
 
-        output_model_filename = ''
+        output_model_filename = ""
 
         log.info(f"{len(indices)} exposures to drizzle together")
         first = True
@@ -527,16 +537,12 @@ class ResampleImage(Resample):
                 if self.output_jwst_model is None:
                     # Determine output file type from input exposure filenames
                     # Use this for defining the output filename
-                    indx = model.meta.filename.rfind('.')
+                    indx = model.meta.filename.rfind(".")
                     output_type = model.meta.filename[indx:]
-                    output_root = '_'.join(model.meta.filename.replace(
-                        output_type,
-                        ''
-                    ).split('_')[:-1])
-                    output_model_filename = (
-                        f'{output_root}_'
-                        f'{self.intermediate_suffix}{output_type}'
+                    output_root = "_".join(
+                        model.meta.filename.replace(output_type, "").split("_")[:-1]
                     )
+                    output_model_filename = f"{output_root}_{self.intermediate_suffix}{output_type}"
 
                 if isinstance(model, datamodels.SlitModel):
                     # must call this explicitly to populate area extension
@@ -558,11 +564,17 @@ class ResampleImage(Resample):
         return self.output_jwst_model
 
     def resample_many_to_many(self, in_memory=True):
-        """Resample many inputs to many outputs where outputs have a common frame.
+        """
+        Resample many inputs to many outputs where outputs have a common frame.
+
+        Coadd only different detectors of the same exposure, i.e. map NRCA5 and
+        NRCB5 onto the same output image, as they image different areas of the
+        sky.
+
+        Used for outlier detection.
 
         Parameters
         ----------
-
         in_memory : bool, optional
             Indicates whether to return a `ModelLibrary` with resampled models
             loaded in memory or whether to serialize resampled models to
@@ -570,26 +582,21 @@ class ResampleImage(Resample):
             info. See https://stpipe.readthedocs.io/en/latest/model_library.html#on-disk-mode
             for more details.
 
-        Coadd only different detectors of the same exposure, i.e. map NRCA5 and
-        NRCB5 onto the same output image, as they image different areas of the
-        sky.
-
-        Used for outlier detection
+        Returns
+        -------
+        ModelLibrary
+            A library of resampled models.
         """
         output_models = []
 
-        for group_id, indices in self.input_models.group_indices.items():
-
+        for _group_id, indices in self.input_models.group_indices.items():
             output_model = self.resample_group(indices)
 
             if not in_memory:
                 # Write out model to disk, then return filename
                 output_name = output_model.meta.filename
                 if self.output_dir is not None:
-                    output_name = os.path.join(
-                        self.output_dir,
-                        output_name
-                    )
+                    output_name = str(Path(self.output_dir) / output_name)
                 output_model.save(output_name)
                 log.info(f"Saved model in {output_name}")
                 output_models.append(output_name)
@@ -602,14 +609,20 @@ class ResampleImage(Resample):
         else:
             # build ModelLibrary as an association from the output files
             # this saves memory if there are multiple groups
-            asn = asn_from_list(output_models, product_name='outlier_i2d', asn_id="abcdefg")
+            asn = asn_from_list(output_models, product_name="outlier_i2d", asn_id="abcdefg")
             asn_dict = json.loads(asn.dump()[1])  # serializes the asn and converts to dict
             return ModelLibrary(asn_dict, on_disk=True)
 
     def resample_many_to_one(self):
-        """Resample and coadd many inputs to a single output.
+        """
+        Resample and coadd many inputs to a single output.
 
-        Used for stage 3 resampling
+        Used for stage 3 resampling.
+
+        Returns
+        -------
+        ImageModel
+            The resampled and coadded image.
         """
         log.info("Resampling science and variance data")
 
@@ -628,6 +641,11 @@ class ResampleImage(Resample):
     def update_fits_wcsinfo(model):
         """
         Update FITS WCS keywords of the resampled image.
+
+        Parameters
+        ----------
+        model : ImageModel
+            The resampled image
         """
         # Delete any SIP-related keywords first
         pattern = r"^(cd[12]_[12]|[ab]p?_\d_\d|[ab]p?_order)$"
@@ -656,48 +674,51 @@ class ResampleImage(Resample):
         model.meta.wcsinfo.ctype2 = "DEC--TAN"
 
         # Remove no longer relevant WCS keywords
-        rm_keys = ['v2_ref', 'v3_ref', 'ra_ref', 'dec_ref', 'roll_ref',
-                   'v3yangle', 'vparity']
+        rm_keys = ["v2_ref", "v3_ref", "ra_ref", "dec_ref", "roll_ref", "v3yangle", "vparity"]
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]
 
 
 def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
-    """ Converts a data model to a dictionary of keywords and values
-    expected by `stcal.resample`. Input parameters are the same as used
-    when initializing `ResampleImage`.
+    """
+    Convert a data model to a dictionary of keywords and values expected by `stcal.resample`.
+
+    Parameters
+    ----------
+    model : DataModel
+        A JWST data model.
+    weight_type : str
+        The weighting type for adding models' data.
+    enable_var : bool
+        Indicates whether to resample variance arrays.
+    compute_err : str
+        The method to compute the output model's error array.
 
     Returns
     -------
-    model_dict : dict
-
+    dict
+        A dictionary of keywords and values expected by `stcal.resample`.
     """
-
     model_dict = {
         # arrays:
         "data": model.data,
         "dq": model.dq,
-
         # meta:
         "filename": model.meta.filename,
         "group_id": model.meta.group_id,
         "wcs": model.meta.wcs,
         "wcsinfo": model.meta.wcsinfo,
         "bunit_data": model.meta.bunit_data,
-
         "exposure_time": model.meta.exposure.exposure_time,
         "start_time": model.meta.exposure.start_time,
         "end_time": model.meta.exposure.end_time,
         "duration": model.meta.exposure.duration,
         "measurement_time": model.meta.exposure.measurement_time,
-
         "pixelarea_steradians": model.meta.photometry.pixelarea_steradians,
         "pixelarea_arcsecsq": model.meta.photometry.pixelarea_arcsecsq,
-
         "level": model.meta.background.level,  # sky level
         "subtracted": model.meta.background.subtracted,
-
         # spectroscopy-specific:
         "instrument_name": model.meta.instrument.name,
         "exposure_type": model.meta.exposure.type,
@@ -708,8 +729,7 @@ def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
         model_dict["var_rnoise"] = model.var_rnoise
         model_dict["var_poisson"] = model.var_poisson
 
-    elif (weight_type is not None and
-            weight_type.startswith('ivm')):
+    elif weight_type is not None and weight_type.startswith("ivm"):
         model_dict["var_rnoise"] = model.var_rnoise
 
     if compute_err == "driz_err":
@@ -720,11 +740,27 @@ def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
 
 def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
     """
-    xmin, xmax, ymin, ymax - integer coordinates of pixel boundaries
-    step - distance between points along an edge
-    shrink - number of pixels by which to reduce `shape`
+    Compute list of boundary points for a rectangle.
 
-    Returns a list of points and the area of the rectangle
+    Parameters
+    ----------
+    xmin, xmax, ymin, ymax : int
+        Coordinates of pixel boundaries.
+    dx, dy : int
+        Distance between points along an edge in the X and Y directions, respectively.
+    shrink : int
+        Number of pixels by which to reduce `shape`
+
+    Returns
+    -------
+    x, y : numpy.ndarray
+        Arrays of X and Y coordinates of the boundary points.
+    area : float
+        Area of the rectangle.
+    center : tuple
+        Center of the rectangle.
+    b, r, t, l : slice
+        Slices for the bottom, right, top, and left edges, respectively.
     """
     nx = xmax - xmin + 1
     ny = ymax - ymin + 1
@@ -750,9 +786,9 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
     y = np.empty(size)
 
     b = np.s_[0:sx]  # bottom edge
-    r = np.s_[sx:sx + sy]  # right edge
-    t = np.s_[sx + sy:2 * sx + sy]  # top edge
-    l = np.s_[2 * sx + sy:2 * sx + 2 * sy]  # left
+    r = np.s_[sx : sx + sy]  # right edge
+    t = np.s_[sx + sy : 2 * sx + sy]  # top edge
+    l = np.s_[2 * sx + sy : 2 * sx + 2 * sy]  # left
 
     x[b] = np.linspace(xmin, xmax, sx, False)
     y[b] = ymin
@@ -770,13 +806,24 @@ def _get_boundary_points(xmin, xmax, ymin, ymax, dx=None, dy=None, shrink=0):
 
 
 def compute_image_pixel_area(wcs):
-    """ Computes pixel area in steradians.
+    """
+    Compute pixel area in steradians from a WCS.
+
+    Parameters
+    ----------
+    wcs : gwcs.WCS
+        A WCS object.
+
+    Returns
+    -------
+    float
+        Pixel area in steradians.
     """
     if wcs.array_shape is None:
         raise ValueError("WCS must have array_shape attribute set.")
 
     valid_polygon = False
-    spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == 'SPATIAL')[0]
+    spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == "SPATIAL")[0]
 
     ny, nx = wcs.array_shape
     ((xmin, xmax), (ymin, ymax)) = wcs.bounding_box
@@ -801,7 +848,7 @@ def compute_image_pixel_area(wcs):
                 ymin=ymin,
                 ymax=ymax,
                 dx=min((xmax - xmin) // 4, 15),
-                dy=min((ymax - ymin) // 4, 15)
+                dy=min((ymax - ymin) // 4, 15),
             )
         except ValueError:
             return None
@@ -812,10 +859,9 @@ def compute_image_pixel_area(wcs):
 
         limits = [ymin, xmax, ymax, xmin]
 
-        for j in range(4):
+        for _ in range(4):
             sl = [b, r, t, l][k]
-            if not (np.all(np.isfinite(ra[sl])) and
-                    np.all(np.isfinite(dec[sl]))):
+            if not (np.all(np.isfinite(ra[sl])) and np.all(np.isfinite(dec[sl]))):
                 limits[k] += dxy[k]
                 k = (k + 1) % 4
                 break
@@ -835,8 +881,7 @@ def compute_image_pixel_area(wcs):
     sky_area = SphericalPolygon.from_radec(ra, dec, center=wcenter).area()
     if sky_area > 2 * np.pi:
         log.warning(
-            "Unexpectedly large computed sky area for an image. "
-            "Setting area to: 4*Pi - area"
+            "Unexpectedly large computed sky area for an image. Setting area to: 4*Pi - area"
         )
         sky_area = 4 * np.pi - sky_area
     pix_area = sky_area / image_area
@@ -863,7 +908,5 @@ def copy_asn_info_from_library(library, output_model):
         return
     if (asn_pool := library.asn.get("asn_pool", None)) is not None:
         output_model.meta.asn.pool_name = asn_pool
-    if (
-        asn_table_name := library.asn.get("table_name", None)
-    ) is not None:
+    if (asn_table_name := library.asn.get("table_name", None)) is not None:
         output_model.meta.asn.table_name = asn_table_name

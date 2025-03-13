@@ -31,7 +31,7 @@ class RefPixStep(Step):
         halfwidth = integer(default=30) # Half-width of convolution kernel to build
     """ # noqa: E501
 
-    reference_file_types = ['refpix']
+    reference_file_types = ['refpix', 'sirskernel']
 
     def process(self, step_input):
 
