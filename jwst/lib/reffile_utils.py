@@ -456,8 +456,8 @@ def generate_stripe_array(
     # 1b. Else, do nskips2 followed by nreads2 until subarray complete.
     # 2.  Following 1a., repeat sequence of nreads1, skips*, nreads2
     #     until complete. For skips*:
-    # 3a. If interleave_reads1, value of skips increments by nskips2
-    #     for each stripe read.
+    # 3a. If interleave_reads1, value of skips increments by nreads2 +
+    #     nskips2 for each stripe read.
     # 3b. If not interleave, each loop after linecount reset is simply
     #     nreads1 + nskips1 + nreads2.
     interleave_skips = nskips1
@@ -470,7 +470,7 @@ def generate_stripe_array(
             linecount += nreads1
             sub_lines += nreads1
             if interleave_reads1:
-                interleave_skips += nskips2
+                interleave_skips += nskips2 + nreads2
                 linecount += interleave_skips
             else:
                 linecount += nskips1
