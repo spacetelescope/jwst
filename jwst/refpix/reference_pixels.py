@@ -1963,9 +1963,9 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group being processed
-        amplifier : str {'A', 'B', 'C', 'D'}
+        amplifier : {'A', 'B', 'C', 'D'}
             Amplifier being processed
-        left_or_right : str {'left', 'right'}
+        left_or_right : {'left', 'right'}
             Process left or right side reference pixels
 
         Returns
@@ -1988,9 +1988,9 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group being processed
-        amplifier : str {'A', 'B', 'C', 'D'}
+        amplifier : {'A', 'B', 'C', 'D'}
             Amplifier being processed
-        left_or_right : str {'left', 'right'}
+        left_or_right : {'left', 'right'}
             Process left or right side reference pixels
 
         Returns
@@ -2014,9 +2014,9 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group that is being processed
-        amplifier : str {'A', 'B', 'C', 'D'}
+        amplifier : {'A', 'B', 'C', 'D'}
             Amplifier that is being processed
-        left_or_right : str {'left', 'right'}
+        left_or_right : {'left', 'right'}
             Processing left or right reference pixels?
 
         Returns
@@ -2037,9 +2037,9 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group that is being processed
-        amplifier : str {'A', 'B', 'C', 'D'}
+        amplifier : {'A', 'B', 'C', 'D'}
             Amplifier that is being processed
-        left_or_right : str {'left', 'right'}
+        left_or_right : {'left', 'right'}
             Processing left or right reference pixels?
 
         Returns
@@ -2060,9 +2060,9 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group that is being processed
-        amplifier : str {'A', 'B', 'C', 'D'}
+        amplifier : {'A', 'B', 'C', 'D'}
             Amplifier that is being processed
-        left_or_right : str {'left', 'right'}
+        left_or_right : {'left', 'right'}
             Processing left or right side reference pixels?
 
         Returns
