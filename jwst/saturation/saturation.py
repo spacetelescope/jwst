@@ -22,7 +22,7 @@ NO_SAT_CHECK = dqflags.pixel['NO_SAT_CHECK']
 ATOD_LIMIT = 65535.  # Hard DN limit of 16-bit A-to-D converter
 
 
-def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
+def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, bias_model=None):
     """
     Short Summary
     -------------
@@ -43,6 +43,9 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
 
     use_readpatt : bool
         Use grouped read pattern information to assist with flagging
+
+    bias_model : `~jwst.datamodels.SuperBiasModel` or None
+        Superbias reference file data model.
 
     Returns
     -------
@@ -78,9 +81,14 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     else:
         read_pattern=None
 
+    bias = None
+    if bias_model is not None:
+        # Obtain the bias data, used for group 2 saturation flagging in frame-averaged groups
+        bias = bias_model.data
+
     gdq_new, pdq_new, zframe = flag_saturated_pixels(
         data, gdq, pdq, sat_thresh, sat_dq, ATOD_LIMIT, dqflags.pixel,
-        n_pix_grow_sat=n_pix_grow_sat, read_pattern=read_pattern, zframe=zframe)
+        n_pix_grow_sat=n_pix_grow_sat, read_pattern=read_pattern, zframe=zframe, bias=bias)
 
     # Save the flags in the output GROUPDQ array
     output_model.groupdq = gdq_new
@@ -123,7 +131,7 @@ def irs2_flag_saturation(output_model,
     use_readpatt : bool
         Use grouped read pattern information to assist with flagging
 
-    bias_model : `~jwst.datamodels.SuperBiasModel`
+    bias_model : `~jwst.datamodels.SuperBiasModel` or None
         Superbias reference file data model.
 
     Returns
@@ -163,10 +171,10 @@ def irs2_flag_saturation(output_model,
         sat_dq = ref_sub_model.dq.copy()
         ref_sub_model.close()
 
-    sci_bias = 0.
+    bias = 0.
     if bias_model is not None:
         # Trim the irs2 bias to only the science regions
-        sci_bias = x_irs2.from_irs2(bias_model.data, irs2_mask, detector)
+        bias = x_irs2.from_irs2(bias_model.data, irs2_mask, detector)
 
     # For pixels flagged in reference file as NO_SAT_CHECK,
     # set the saturation check threshold to above the A-to-D converter limit,
@@ -196,12 +204,12 @@ def irs2_flag_saturation(output_model,
             if ((group == 2) & (read_pattern is not None)):
                 # Identify groups which we wouldn't expect to saturate by the third group,
                 # on the basis of the first group
-                scigp1 = x_irs2.from_irs2(data[ints, 0, :, :], irs2_mask, detector) - sci_bias
-                mask = ((scigp1 / np.mean(read_pattern[0])) * read_pattern[2][-1]) + sci_bias < sat_thresh
+                scigp1 = x_irs2.from_irs2(data[ints, 0, :, :], irs2_mask, detector) - bias
+                mask = ((scigp1 / np.mean(read_pattern[0])) * read_pattern[2][-1]) + bias < sat_thresh
 
                 # Identify groups with suspiciously large values in the second group
                 scigp2 = x_irs2.from_irs2(data[ints, 1, :, :] - data[ints, 0, :, :], irs2_mask, detector)
-                mask &= scigp2 > (sat_thresh - sci_bias) / len(read_pattern[1])
+                mask &= scigp2 > (sat_thresh - bias) / len(read_pattern[1])
 
                 # Identify groups that are saturated in the third group
                 gp3mask = np.where(flag_temp & SATURATED, True, False)
