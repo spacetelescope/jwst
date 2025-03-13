@@ -160,7 +160,7 @@ def apply_conv_kernel(data, kernels, sigreject=4.0):
         norm_r /= np.convolve(nr / 4, kernel_r, mode="same")
         template = np.convolve(l, kernel_l, mode="same") * norm_l
         template += np.convolve(r, kernel_r, mode="same") * norm_r
-        data[:, chan * npix // 4:(chan + 1) * npix // 4] -= template[:, np.newaxis]
+        data[:, chan * npix // 4 : (chan + 1) * npix // 4] -= template[:, np.newaxis]
 
     log.debug("Optimized convolution kernel applied")
     return data

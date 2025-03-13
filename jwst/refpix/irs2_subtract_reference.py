@@ -88,9 +88,7 @@ def correct_model(
     nrows = len(irs2_model.irs2_table.field("alpha_0"))
     expected_nrows = 2 * 712 * 2048
     if nrows != expected_nrows:
-        log.error(
-            f"Number of rows in reference file = {nrows},", f" but it should be {expected_nrows}."
-        )
+        log.error(f"Number of rows in reference file = {nrows}, but it should be {expected_nrows}.")
         output_model.meta.cal_step.refpix = "SKIPPED"
         return output_model
     alpha = np.ones((4, nrows // 2), dtype=np.complex64)
@@ -281,10 +279,10 @@ def strip_ref_pixels(output_model, irs2_mask):
     output_model : ramp model
         The output science data model, to be modified in-place
 
-    irs2_mask : bool ndarray of length 3200
-        True means the element corresponds to a normal pixel in the raw,
-        IRS2-format data.  False corresponds either to a reference output
-        pixel or to one of the interspersed reference pixel values.
+    irs2_mask : ndarray of bool
+        1D array of length 3200.  True means the element corresponds to a normal
+        pixel in the raw, IRS2-format data.  False corresponds either to a reference
+        output pixel or to one of the interspersed reference pixel values.
     """
     detector = output_model.meta.instrument.detector
 
@@ -1076,7 +1074,6 @@ def remove_slopes(data0, ngroups, ny, row):
     Remove slopes.
 
     Fitting and removal of slopes per frame to remove issues at frame boundaries.
-    IDL:  time = findgen(row, s[2])
 
     Parameters
     ----------
@@ -1117,7 +1114,7 @@ def replace_bad_pixels(data0, ngroups, ny, row):
     Replace bad pixels.
 
     Use cosine weighted interpolation to replace 0.0 values and bad
-    pixels and gaps. (initial guess)
+    pixels and gaps.
 
     s[1] = nx  s[2] = ny  s[3] = ngroups
 
@@ -1151,13 +1148,41 @@ def replace_bad_pixels(data0, ngroups, ny, row):
 
 
 def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm, hnorm1):
-    """Fill the bad regions in the data."""
-    # Use Fourier filter/interpolation to replace
-    # (a) bad pixel, gaps, and reference data in the time-ordered normal data
-    # (b) gaps and normal data in the time-ordered reference data
-    # This "improves" upon the cosine interpolation performed above.
+    """
+    Fill the bad regions in the data.
 
-    # Parameters for the filter to be used.
+    Use Fourier filter/interpolation to replace
+      (a) bad pixel, gaps, and reference data in the time-ordered normal data
+      (b) gaps and normal data in the time-ordered reference data
+    This "improves" upon the cosine interpolation performed above.
+
+    Parameters
+    ----------
+    data0 : ndarray
+        Input data array.  Modified in place.
+    ngroups : int
+        Number of groups in input data
+    ny : int
+        Number of rows in input data
+    nx : int
+        Number of columns in input data
+    row : int
+        Row definition: row = (scipix_n + refpix_r + 2) * 512 // scipix_n + pad
+        row = 712, if scipix_n = 16, refpix_r = 4, pad = 8
+    scipix_n : int
+        Number of regular samples before stepping out to collect reference samples
+    refpix_r : int
+        Number of reference samples before stepping back in to collect regular samples
+    pad : int
+        The effective number of pixels sampled during the pause at the end
+        of each row (new-row overhead).  The padding is needed to preserve
+        the phase of temporally periodic signals.
+    hnorm : ndarray
+        Array of column indices for normal pixels
+    hnorm1 : ndarray
+        Shifted index values for normal pixels
+    """
+    # Parameters for the filter to be used:
     # length of apodization cosine filter
     elen = 110000 // (scipix_n + refpix_r + 2)
 

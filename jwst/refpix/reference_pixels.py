@@ -184,7 +184,7 @@ class Dataset:
 
         Parameters
         ----------
-        input_model : data model object
+        input_model : DataModel
             Science data model to be corrected
         odd_even_columns : bool
             Flag that controls whether odd and even-numbered columns are
@@ -272,9 +272,9 @@ class Dataset:
             Array of pixels to be sigma-clipped
         dq : NDArray
             DQ array for data
-        low : float
+        low : float, optional
             Lower clipping boundary, in standard deviations from the mean (default=3.0)
-        high : float
+        high : float, optional
             Upper clipping boundary, in standard deviations from the mean (default=3.0)
 
         Returns
@@ -535,7 +535,7 @@ class NIRDataset(Dataset):
 
         Parameters
         ----------
-        input_model : data model object
+        input_model : DataModel
             Science data model to be corrected
 
         odd_even_columns : bool
@@ -689,10 +689,10 @@ class NIRDataset(Dataset):
         group : NDArray
             The group that is being processed
 
-        amplifier : str ['A'|'B'|'C'|'D']
+        amplifier : {'A', 'B', 'C', 'D'}
             String corresponding to the amplifier being processed
 
-        top_or_bottom : str ['top'|'bottom']
+        top_or_bottom : {'top', 'bottom'}
             String corresponding to whether top or bottom reference pixels
             are bing processed
 
@@ -732,9 +732,9 @@ class NIRDataset(Dataset):
         ----------
         group : NDArray
             The group that is being processed
-        amplifier : str ['A'|'B'|'C'|'D']
+        amplifier : {'A', 'B', 'C', 'D'}
             String corresponding to the amplifier being processed
-        top_or_bottom : str ['top'|'bottom']
+        top_or_bottom : {'top', 'bottom'}
             String corresponding to whether top or bottom reference pixels
             are bing processed
 
@@ -768,9 +768,9 @@ class NIRDataset(Dataset):
         ----------
         group : NDArray
             Group that is being processed
-        amplifier : str (['A'|'B'|'C'|'D'])
+        amplifier : {'A', 'B', 'C', 'D'}
             Amplifier that is being processed
-        top_or_bottom : str (['top'|'bottom'])
+        top_or_bottom : {'top', 'bottom'}
             Processing top or bottom reference pixels?
 
         Returns
@@ -791,9 +791,9 @@ class NIRDataset(Dataset):
         ----------
         group : NDArray
             Group that is being processed
-        amplifier : str (['A'|'B'|'C'|'D'])
+        amplifier : {'A', 'B', 'C', 'D'}
             Amplifier that is being processed
-        top_or_bottom : str (['top'|'bottom'])
+        top_or_bottom : {'top', 'bottom'}
             Processing top or bottom reference pixels?
 
         Returns
@@ -814,9 +814,9 @@ class NIRDataset(Dataset):
         ----------
         group : NDArray
             Group that is being processed
-        amplifier : str (['A'|'B'|'C'|'D'])
+        amplifier : {'A', 'B', 'C', 'D'}
             Amplifier that is being processed
-        top_or_bottom : str (['top'|'bottom'])
+        top_or_bottom : {'top', 'bottom'}
             Processing top or bottom reference pixels?
 
         Returns
@@ -948,14 +948,14 @@ class NIRDataset(Dataset):
 
         Parameters
         ----------
-        a : Number or None
+        a : float or None
             First number to be averaged
-        b : Number or None
+        b : float or None
             Second number to be averaged
 
         Returns
         -------
-        result : Number or None
+        result : float or None
             Average of the two numbers
         """
         if a is None and b is None:
@@ -982,8 +982,9 @@ class NIRDataset(Dataset):
         ----------
         data : NDArray
             Input data array
-        smoothing_length : int (should be odd, will be converted if not)
-            Smoothing length.  Amount by which the input array is extended is
+        smoothing_length : int
+            Smoothing length; should be odd, will be converted if not.
+            Amount by which the input array is extended is
             smoothing_length // 2 at the bottom and smoothing_length // 2 at
             the top
 
@@ -1018,8 +1019,8 @@ class NIRDataset(Dataset):
             Input 2-d science array
         dq : NDArray
             Input 2-d dq array
-        smoothing_length : int (should be odd)
-            Height of box within which the median value is calculated
+        smoothing_length : int
+            Height of box within which the median value is calculated.  Should be odd.
 
         Returns
         -------
@@ -1906,7 +1907,7 @@ class MIRIDataset(Dataset):
 
         Parameters
         ----------
-        input_model : data model object
+        input_model : DataModel
             Science data model to be corrected
         odd_even_rows : bool
             Flag that controls whether odd and even-numbered rows are
@@ -1962,10 +1963,10 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group being processed
-        amplifier : str
-            Amplifier being processed (['A'|'B'|'C'|'D'])
-        left_or_right : str
-            Process left or right side reference pixels (['left'|'right'])
+        amplifier : str {'A', 'B', 'C', 'D'}
+            Amplifier being processed
+        left_or_right : str {'left', 'right'}
+            Process left or right side reference pixels
 
         Returns
         -------
@@ -1987,10 +1988,10 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group being processed
-        amplifier : str
-            Amplifier being processed (['A'|'B'|'C'|'D'])
-        left_or_right : str
-            Process left or right side reference pixels (['left'|'right'])
+        amplifier : str {'A', 'B', 'C', 'D'}
+            Amplifier being processed
+        left_or_right : str {'left', 'right'}
+            Process left or right side reference pixels
 
         Returns
         -------
@@ -2013,9 +2014,9 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group that is being processed
-        amplifier : str (['A'|'B'|'C'|'D'])
+        amplifier : str {'A', 'B', 'C', 'D'}
             Amplifier that is being processed
-        left_or_right : str (['left'|'right'])
+        left_or_right : str {'left', 'right'}
             Processing left or right reference pixels?
 
         Returns
@@ -2036,9 +2037,9 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group that is being processed
-        amplifier : str (['A'|'B'|'C'|'D'])
+        amplifier : str {'A', 'B', 'C', 'D'}
             Amplifier that is being processed
-        left_or_right : str (['left'|'right'])
+        left_or_right : str {'left', 'right'}
             Processing left or right reference pixels?
 
         Returns
@@ -2059,9 +2060,9 @@ class MIRIDataset(Dataset):
         ----------
         group : NDArray
             Group that is being processed
-        amplifier : str (['A'|'B'|'C'|'D'])
+        amplifier : str {'A', 'B', 'C', 'D'}
             Amplifier that is being processed
-        left_or_right : str (['left'|'right'])
+        left_or_right : str {'left', 'right'}
             Processing left or right side reference pixels?
 
         Returns
@@ -2235,7 +2236,7 @@ def create_dataset(
 
     Parameters
     ----------
-    input_model : data model object
+    input_model : DataModel
         Science data model to be corrected
     odd_even_columns : bool
         Flag that controls whether odd and even-numbered columns are
@@ -2257,7 +2258,7 @@ def create_dataset(
 
     Returns
     -------
-    dataset_subclass : dataset
+    dataset_subclass : Dataset
         The appropriate subclass of the dataset class
     """
     detector = input_model.meta.instrument.detector
@@ -2433,7 +2434,7 @@ def correct_model(
 
     Parameters
     ----------
-    input_model : datamodel
+    input_model : DataModel
         Model to be corrected
     odd_even_columns : bool
         Flag that controls whether odd and even-numbered columns are
