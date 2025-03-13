@@ -1,13 +1,16 @@
+import pytest
 import warnings
+from copy import deepcopy
 
 import asdf
 import numpy as np
-import pytest
 from astropy.io import fits
+
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-from stdatamodels.jwst.datamodels import ImageModel
-from stcal.resample.utils import compute_mean_pixel_area
+
+from stdatamodels.jwst.datamodels import ImageModel, dqflags
+from stcal.resample.utils import compute_mean_pixel_area, build_driz_weight
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
@@ -15,6 +18,8 @@ from jwst.assign_wcs.util import compute_scale
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
+from jwst.resample.resample import input_jwst_model_to_dict
+from jwst.resample.resample_step import GOOD_BITS
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
 from jwst.resample.resample_utils import load_custom_wcs
 
@@ -1079,18 +1084,43 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match, tmp_p
     result.close()
 
 
-def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
+@pytest.mark.parametrize(
+    'weight_type', ["ivm", "exptime"]
+)
+def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
+
     # make some data with a WCS and some random values
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     rng = np.random.default_rng(seed=77)
-    im.data[:, :] = rng.random(im.data.shape)
+    im.data[:, :] = 0.0
+    im.data[5:-5, 5:-5] = rng.random(tuple(i - 10 for i in im.data.shape))
+    im.dq[:, :] = 1
+    im.dq[5:-5, 5:-5] = 0
+
+    data0 = deepcopy(im.data)
 
     crpix = (600, 550)
     crval = (22.04019, 11.98262)
     rotation = 15
     ratio = 0.7
 
+    im.meta.group_id = "1"
+    im_dict = input_jwst_model_to_dict(
+        im,
+        weight_type=weight_type,
+        enable_var=True,
+        compute_err=True
+    )
+
+    in_weight = build_driz_weight(
+        im_dict,
+        weight_type=weight_type,
+        good_bits=GOOD_BITS,
+        flag_name_map=dqflags.pixel
+    )
+
     # first pass - create a reference output WCS:
+    assert np.all(np.isfinite(im.data))
     result = ResampleStep.call(
         im,
         output_shape=(1205, 1100),
@@ -1098,22 +1128,25 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
         crval=crval,
         rotation=rotation,
         pixel_scale_ratio=ratio,
+        weight_type=weight_type,
     )
+    # TODO: next assert would fail. Why does resample step modify input data???
+    # assert np.all(np.isfinite(im.data))
 
-    # make sure results are nontrivial
     data1 = result.data
-    assert not np.all(np.isnan(data1))
+    wht1 = result.wht
 
     # remove the bounding box so shape is set from pixel_shape
     # and also set a top-level pixel area
     pixel_area = 1e-13
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     result.meta.wcs.bounding_box = None
-    asdf.AsdfFile({"wcs": result.meta.wcs, "pixel_area": pixel_area}).write_to(refwcs)
-
-    result = ResampleStep.call(im, output_wcs=refwcs)
+    asdf.AsdfFile({"wcs": result.meta.wcs,
+                   "pixel_area": pixel_area}).write_to(refwcs)
+    result = ResampleStep.call(im, output_wcs=refwcs, weight_type=weight_type)
 
     data2 = result.data
+    wht2 = result.wht
     assert not np.all(np.isnan(data2))
 
     # test output image shape
@@ -1122,15 +1155,16 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
 
     # make sure pixel values are similar, accounting for scale factor
     # (assuming inputs are in surface brightness units)
-    iscale = np.sqrt(
-        im.meta.photometry.pixelarea_steradians
-        / compute_mean_pixel_area(im.meta.wcs, shape=im.data.shape)
+    assert np.isclose(
+        np.sum(data0 * in_weight) / np.sum(in_weight),
+        np.nansum(data1 * wht1) / np.sum(wht1),
+        atol=1e-4
     )
-    input_mean = np.nanmean(im.data)
-    output_mean_1 = np.nanmean(data1)
-    output_mean_2 = np.nanmean(data2)
-    assert_allclose(input_mean * iscale**2, output_mean_1, atol=1e-4)
-    assert_allclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
+    assert np.isclose(
+        np.sum(data0 * in_weight),
+        np.nansum(data2 * wht2),
+        atol=1e-4
+    )
 
     # check that output pixel area is set from input
     # rtol and atol values are from np.isclose default settings.
