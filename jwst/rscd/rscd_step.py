@@ -8,25 +8,20 @@ __all__ = ["RscdStep"]
 
 class RscdStep(Step):
     """
-    Flags the first N groups of MIRI data to 'DO_NOT_USE' in the 2nd and later integrations.
+    Flag the first N groups of MIRI data to 'DO_NOT_USE' in the 2nd and later integrations.
 
-    Input data is expected to be a ramp file (RampModel). The number of groups, N,  to
-    set the GROUPDQ flag to 'DO_NOT_USE' is read in from the RSCD reference file. The RSCD
-    reference file contains the number of groups to set to 'DO_NOT_USE' based on readout mode and
-    subarray size. The step checks that the total number of groups in an integration is
-    greater than N+3 before flagging the GROUPDQ array. If the number of groups is less than
-    N+3 then no flagging is performed, because doing so would leave too few groups to work
-    with in later steps.
+    The number of groups, N, for which to
+    set the GROUPDQ flag to 'DO_NOT_USE' is read in from the RSCD reference file. This number
+    depends on the readout model and subarray size. The step checks that the total number of groups
+    in an integration is greater than N+3 before flagging the GROUPDQ array. If the number of groups
+    is less than N+3 then no flagging is performed, because doing so would leave too few groups
+    to work with in later steps.
     """
 
     class_alias = "rscd"
 
-    # allow switching between baseline and enhanced algorithms
     spec = """
         """  # noqa: E501
-
-    #  only do this for the 2nd+ integrations
-    #  do nothing for single integration exposures
 
     reference_file_types = ["rscd"]
 
@@ -39,12 +34,12 @@ class RscdStep(Step):
 
         Parameters
         ----------
-        step_input : Ramp DataModel
-            Ramp datamodel to be corrected
+        step_input : RampModel
+            Ramp datamodel to be corrected, or the path to the ramp file.
 
         Returns
         -------
-        result : Ramp DataModel
+        result : RampModel
             Ramp datamodel with initial groups in an integration flagged as DO_NOT_USE.
             Flags are only set of integration 2 and higher.
         """
