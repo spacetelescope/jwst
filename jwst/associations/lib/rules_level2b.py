@@ -480,7 +480,7 @@ class Asn_Lv2SpecTSO(
                         DMSAttrConstraint(
                             name='pupil',
                             sources=['pupil'],
-                            value='clear',
+                            value='clear|gdhs0',
                         )],
                     )
                 ],

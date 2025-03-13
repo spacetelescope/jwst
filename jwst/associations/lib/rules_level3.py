@@ -896,7 +896,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
                         DMSAttrConstraint(
                             name='grism_clear',
                             sources=['pupil'],
-                            value='clear'
+                            value='clear|gdhs0'
                         ),
                     ]),
                     Constraint([
