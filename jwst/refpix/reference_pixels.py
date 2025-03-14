@@ -1339,9 +1339,7 @@ class NIRDataset(Dataset):
             amp_xi, amp_xf = MULTISTRIPE_AMPLIFIER_REGIONS[amplifier]
             refpix[amplifier] = {}
             mask = np.where(
-                self.pixeldq[:, amp_xi:amp_xf]
-                & dqflags.pixel['REFERENCE_PIXEL']
-                == dqflags.pixel['REFERENCE_PIXEL'],
+                self.pixeldq[:, amp_xi:amp_xf] & dqflags.pixel['REFERENCE_PIXEL'] > 0,
                 True,
                 False
             )

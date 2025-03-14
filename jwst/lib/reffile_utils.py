@@ -219,7 +219,7 @@ def get_subarray_model(sci_model, ref_model):
     """
     # If science data is in multistripe readout, use
     # multistripe-specific subarray reconstruction.
-    if getattr(sci_model.meta.subarray, 'multistripe_reads1') is not None:
+    if getattr(sci_model.meta.subarray, 'multistripe_reads1', None) is not None:
         return get_multistripe_subarray_model(sci_model, ref_model)
 
     # Get the science model subarray params
@@ -299,28 +299,26 @@ def get_subarray_model(sci_model, ref_model):
 
 def get_multistripe_subarray_model(sci_model, ref_model):
     """
-    Create a subarray version of a reference file model that matches
-    the multistripe-specific subarray characteristics of a science
-    data model. A new model is created that contains subarrays of
-    all data arrays contained in the reference file model.
+    Create a multistripe subarray cutout of a reference file.
+
+    Use the multistripe subarray characteristics of a science
+    data model to generate a new reference file datamodel,
+    containing subarray cutouts of all relevant data arrays
+    contained in the reference file model.
 
     Parameters
     ----------
-    sci_model: JWST data model
-        science data model
+    sci_model : JWST data model
+        The science data model.
 
-    ref_model: JWST data model
-        reference file data model
+    ref_model : JWST data model
+        The reference file data model.
 
     Returns
     -------
-    sub_model: JWST data model
-        subarray version of the reference file model
+    sub_model : JWST data model
+        Subarray cutout reference file model.
     """
-    # Could consider just brute-forcing every attribute in a list,
-    # catching any errors for those attribs that don't exist for
-    # a given reftype? Catching unknown reftypes is probably safer,
-    # given possibility of unknown attrib.
     if isinstance(ref_model, datamodels.MaskModel):
         sub_model = stripe_read(sci_model, ref_model, ['dq'])
     elif isinstance(ref_model, datamodels.GainModel):
@@ -334,16 +332,10 @@ def get_multistripe_subarray_model(sci_model, ref_model):
     elif isinstance(ref_model, datamodels.SuperBiasModel):
         sub_model = stripe_read(sci_model, ref_model, ['data', 'err', 'dq'])
     else:
-        log.warning('Unsupported reference file model type')
+        log.warning('Unsupported reference file model type for'
+                    'multistripe subarray cutouts.')
         sub_model = None
 
-    # Temporary saving of all sub_models created
-    sub_model.write(
-        sub_model.meta.filename.split('.')[0]
-        + '_'
-        + sci_model.meta.subarray.name
-        + '.fits'
-    )
     return sub_model
 
 
@@ -429,9 +421,7 @@ def generate_stripe_array(
     # Transform science data to detector frame
     ref_array = science_detector_frame_transform(ref_array, fastaxis, slowaxis)
     ref_shape = np.shape(ref_array)
-    stripe_out = np.zeros(
-        (*ref_shape[:-2], ysize_sci, xsize_sci), dtype=getattr(ref_array, 'dtype')
-    )
+    stripe_out = np.zeros((*ref_shape[:-2], ysize_sci, xsize_sci), dtype=ref_array.dtype)
     # Track the read position in the full frame with linecount, and number of lines
     # read into subarray with sub_lines
     linecount = 0
@@ -461,6 +451,10 @@ def generate_stripe_array(
     # 3b. If not interleave, each loop after linecount reset is simply
     #     nreads1 + nskips1 + nreads2.
     interleave_skips = nskips1
+    if nreads2 <= 0:
+        raise ValueError("Invalid value for multistripe_reads2 - "
+                         "cutout for reference file could not be "
+                         "generated!")
     while sub_lines < ysize_sci:
         # If repeat_stripe, add interleaved rows to output and increment sub_lines
         if repeat_stripe > 0:
