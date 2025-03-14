@@ -21,7 +21,7 @@ nonlinearities at the start of an integration, non-linear ramps with increasing 
 latent images, and drifts in the slopes.
 
 THE MIRI readout electronics use field effect transisitors (FETs) in their opertation,
-which have been show to be the source of the ramp offsets, nonlinearities at the start
+which have been shown to be the source of the ramp offsets, nonlinearities at the start
 of an integration, and overall changes in the slopes. The FET acts as a switch to allow
 charge to build up and to also initialize (clear) the charge.
 However, the reset FETs do not instantaneously reset the level. Instead, the exponential
