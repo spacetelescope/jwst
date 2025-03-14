@@ -1,0 +1,1 @@
+Add reference file utility to generate multistripe cutout model from full frame reference files; remove get_subarray_data function in favor of existing get_subarray_model.
