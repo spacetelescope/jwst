@@ -109,6 +109,12 @@ Like for the point source case, the 1-d arrays of pathloss correction and wavele
 are used to interpolate the correction for each pixel in the science data, using the
 wavelength of each pixel to interpolate into the pathloss correction array.
 
+Upon successful completion of the step, the status keyword "S_PTHLOS"
+in the primary header is set to "COMPLETE".  For each SCI extension, the "PTHLOSS"
+keyword is set to "POINT" if the point source correction type was applied to the
+slit data. It is set to "UNIFORM" if the uniform correction type was applied.
+The keyword is not set if no correction was applied.
+
 MIRI LRS
 ++++++++
 The algorithm for MIRI LRS mode is largely the same as that for NIRSpec described
