@@ -690,15 +690,18 @@ class InstrumentInfo:
         self.Info["g395h"]["opaque"]["bscale"] = 0.1
 
     # ******************************************************************
-    # Functions
+
 
     def set_multi_channel_table(self, wave, sroi, wroi, power, softrad):
+        """ Set parameters for multiple channels."""
+        
         self.multich_wavelength.append(wave)
         self.multich_sroi.append(sroi)
         self.multich_wroi.append(wroi)
         self.multich_power.append(power)
         self.multich_softrad.append(softrad)
         self.multich_scalerad.append(None)
+
 
     def set_multi_channel_emsm_table(self, wave, sroi, wroi, scalerad):
         self.multich_wavelength.append(wave)
