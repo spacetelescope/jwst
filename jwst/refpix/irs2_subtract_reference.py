@@ -10,39 +10,41 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_default=4,
-                  pad=8, preserve_refpix=False):
-    """Correct an input NIRSpec IRS2 datamodel using reference pixels.
+def correct_model(
+    output_model, irs2_model, scipix_n_default=16, refpix_r_default=4, pad=8, preserve_refpix=False
+):
+    """
+    Correct an input NIRSpec IRS2 datamodel using reference pixels.
 
     Parameters
     ----------
-    output_model: ramp model
+    output_model : ramp model
         The input science data model.
 
-    irs2_model: IRS2 model
+    irs2_model : IRS2 model
         The reference file model for IRS2 correction.
 
-    scipix_n_default: int
+    scipix_n_default : int
         Number of regular samples before stepping out to collect
         reference samples.
 
-    refpix_r_default: int
+    refpix_r_default : int
         Number of reference samples before stepping back in to collect
         regular samples.
 
-    pad: int
+    pad : int
         The effective number of pixels sampled during the pause at the end
         of each row (new-row overhead).  The padding is needed to preserve
         the phase of temporally periodic signals.
 
-    preserve_refpix: bool
+    preserve_refpix : bool
         If True, reference pixels will be preserved in the output.
         This is not used in the science pipeline, but is necessary to
         create new bias files for IRS2 mode.
 
     Returns
     -------
-    output_model: ramp model
+    output_model : ramp model
         The science data with reference output and reference pixels
         subtracted.
     """
@@ -73,7 +75,6 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
         * TPIX
     This agrees with the above value of tframe (14.5889 s) if NFOH = 714.
     """
-
     # Copy in SCI and PIXELDQ arrays for now; that's all we need. The rest
     # of the input model will be copied to output at the end of the step.
     data = output_model.data.copy()
@@ -87,9 +88,8 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
     nrows = len(irs2_model.irs2_table.field("alpha_0"))
     expected_nrows = 2 * 712 * 2048
     if nrows != expected_nrows:
-        log.error("Number of rows in reference file = {},"
-                  " but it should be {}.".format(nrows, expected_nrows))
-        output_model.meta.cal_step.refpix = 'SKIPPED'
+        log.error(f"Number of rows in reference file = {nrows}, but it should be {expected_nrows}.")
+        output_model.meta.cal_step.refpix = "SKIPPED"
         return output_model
     alpha = np.ones((4, nrows // 2), dtype=np.complex64)
     beta = np.zeros((4, nrows // 2), dtype=np.complex64)
@@ -106,14 +106,12 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
 
     scipix_n = output_model.meta.exposure.nrs_normal
     if scipix_n is None:
-        log.warning("Keyword NRS_NORM not found; using default value %d" %
-                    scipix_n_default)
+        log.warning(f"Keyword NRS_NORM not found; using default value {scipix_n_default}")
         scipix_n = scipix_n_default
 
     refpix_r = output_model.meta.exposure.nrs_reference
     if refpix_r is None:
-        log.warning("Keyword NRS_REF not found; using default value %d" %
-                    refpix_r_default)
+        log.warning(f"Keyword NRS_REF not found; using default value {refpix_r_default}")
         refpix_r = refpix_r_default
 
     # Convert from sky (DMS) orientation to detector orientation.
@@ -125,24 +123,23 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
         data = np.swapaxes(data, 2, 3)[:, :, ::-1, ::-1]
         pixeldq = np.swapaxes(pixeldq, 0, 1)[::-1, ::-1]
     else:
-        log.warning("Detector '%s'; not changing orientation (sky vs detector)"
-                    % detector)
+        log.warning(f"Detector {detector}; not changing orientation (sky vs detector)")
 
-    n_int = data.shape[0]               # number of integrations in file
-    ny = data.shape[-2]                 # 2048
-    nx = data.shape[-1]                 # 3200
+    n_int = data.shape[0]  # number of integrations in file
+    ny = data.shape[-2]  # 2048
+    nx = data.shape[-1]  # 3200
 
     # Create a mask that indicates the locations of normal vs interspersed
     # reference pixels. True flags normal pixels, False is reference pixels.
     irs2_mask = make_irs2_mask(nx, ny, scipix_n, refpix_r)
 
     # Get bad ref pixel flags from the pixeldq, collapsed along rows
-    ref_flags = (pixeldq & dqflags.pixel['BAD_REF_PIXEL'])
+    ref_flags = pixeldq & dqflags.pixel["BAD_REF_PIXEL"]
     ref_flags = np.any(ref_flags, axis=0)
 
     # If the IRS2 reference file includes data quality info, use that to
     # set bad reference pixel values to zero.
-    if hasattr(irs2_model, 'dq_table') and len(irs2_model.dq_table) > 0:
+    if hasattr(irs2_model, "dq_table") and len(irs2_model.dq_table) > 0:
         output = irs2_model.dq_table.field("output")
         odd_even = irs2_model.dq_table.field("odd_even")
         mask = irs2_model.dq_table.field("mask")
@@ -152,38 +149,40 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
         is_irs2 = ~irs2_mask.copy()
         # treat the refout like the other sections
         amplifier = nx // 5
-        is_irs2[:amplifier] = is_irs2[2 * amplifier:3 * amplifier]
-        clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2,
-                    scipix_n=scipix_n, refpix_r=refpix_r)
+        is_irs2[:amplifier] = is_irs2[2 * amplifier : 3 * amplifier]
+        clobber_ref(
+            data, output, odd_even, mask, ref_flags, is_irs2, scipix_n=scipix_n, refpix_r=refpix_r
+        )
     else:
         log.warning("DQ extension not found in reference file")
 
     # Compute and apply the correction to one integration at a time
     for integ in range(n_int):
-        log.info(f'Working on integration {integ+1} out of {n_int}')
+        log.info(f"Working on integration {integ + 1} out of {n_int}")
 
         # The input data have a length of 3200 for the last axis (X), while
         # the output data have an X axis with length 2048, the same as the
         # Y axis.  This is the reason for the slice `nx-ny:` that is used
         # below.  The last axis of output_model.data should be 2048.
         data0 = data[integ, :, :, :]
-        data0 = subtract_reference(data0, alpha, beta, irs2_mask, scipix_n,
-                                   refpix_r, pad, preserve_refpix=preserve_refpix)
+        data0 = subtract_reference(
+            data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad, preserve_refpix=preserve_refpix
+        )
         if not preserve_refpix:
-            data[integ, :, :, nx - ny:] = data0
+            data[integ, :, :, nx - ny :] = data0
         else:
             data[integ, :, :, :] = data0
 
     # Convert corrected data back to sky orientation
     if not preserve_refpix:
-        temp_data = data[:, :, :, nx - ny:]
+        temp_data = data[:, :, :, nx - ny :]
     else:
         temp_data = data
     if detector == "NRS1":
         output_model.data = np.swapaxes(temp_data, 2, 3)
     elif detector == "NRS2":
         output_model.data = np.swapaxes(temp_data[:, :, ::-1, ::-1], 2, 3)
-    else:                       # don't change orientation
+    else:  # don't change orientation
         output_model.data = temp_data
 
     # Strip interleaved ref pixels from the PIXELDQ and GROUPDQ extensions.
@@ -194,14 +193,44 @@ def correct_model(output_model, irs2_model, scipix_n_default=16, refpix_r_defaul
 
 
 def float_to_complex(data):
-    """Convert real and imaginary parts to complex"""
+    """
+    Convert real and imaginary parts to complex.
+
+    Parameters
+    ----------
+    data : ndarray
+        Data array with interleaved real and imaginary parts
+
+    Returns
+    -------
+    data : ndarray
+        Complex array made from real and imaginary parts
+    """
     nelem = len(data)
 
     return data[0:-1:2] + 1j * data[1:nelem:2]
 
 
 def make_irs2_mask(nx, ny, scipix_n, refpix_r):
+    """
+    Make IRS2 mask.
 
+    Parameters
+    ----------
+    nx : int
+        Number of columns in input data
+    ny : int
+        Number of rows in input data
+    scipix_n : int
+        Number of regular samples before stepping out to collect reference samples
+    refpix_r : int
+        Number of reference samples before stepping back in to collect regular samples
+
+    Returns
+    -------
+    irs2_mask : ndarray
+        The IRS2 mask
+    """
     # Number of (scipix_n + refpix_r) per output, assuming four amplifier
     # outputs and one reference output.
     irs2_nx = max((ny, nx))
@@ -221,42 +250,40 @@ def make_irs2_mask(nx, ny, scipix_n, refpix_r):
     # locations regardless of readout direction.
     if stuff_at_end == scipix_n // 2:
         # Yes, they are in the same locations.
-        for i in range(refout + scipix_n // 2, irs2_nx + 1,
-                       scipix_n + refpix_r):
-            irs2_mask[i:i + refpix_r] = False
+        for i in range(refout + scipix_n // 2, irs2_nx + 1, scipix_n + refpix_r):
+            irs2_mask[i : i + refpix_r] = False
     else:
         # Set the flags for each readout direction separately.
-        nelem = refout                  # number of elements per output
+        nelem = refout  # number of elements per output
         temp = np.ones(nelem, dtype=bool)
-        for i in range(scipix_n // 2, nelem + 1,
-                       scipix_n + refpix_r):
-            temp[i:i + refpix_r] = False
+        for i in range(scipix_n // 2, nelem + 1, scipix_n + refpix_r):
+            temp[i : i + refpix_r] = False
         j = refout
-        irs2_mask[j:j + nelem] = temp.copy()
+        irs2_mask[j : j + nelem] = temp.copy()
         j += nelem
-        irs2_mask[j:j + nelem] = temp[::-1].copy()
+        irs2_mask[j : j + nelem] = temp[::-1].copy()
         j += nelem
-        irs2_mask[j:j + nelem] = temp.copy()
+        irs2_mask[j : j + nelem] = temp.copy()
         j += nelem
-        irs2_mask[j:j + nelem] = temp[::-1].copy()
+        irs2_mask[j : j + nelem] = temp[::-1].copy()
 
     return irs2_mask
 
 
 def strip_ref_pixels(output_model, irs2_mask):
-    """Copy out the normal pixels from PIXELDQ and GROUPDQ arrays.
+    """
+    Copy out the normal pixels from PIXELDQ and GROUPDQ arrays.
 
     Parameters
     ----------
-    output_model: ramp model
+    output_model : ramp model
         The output science data model, to be modified in-place
 
-    irs2_mask: Boolean, 1-D array of length 3200
-        True means the element corresponds to a normal pixel in the raw,
-        IRS2-format data.  False corresponds either to a reference output
-        pixel or to one of the interspersed reference pixel values.
+    irs2_mask : ndarray of bool
+        1D array of length 3200.  True means the element corresponds to a normal
+        pixel in the raw, IRS2-format data.  False corresponds either to a reference
+        output pixel or to one of the interspersed reference pixel values.
     """
-
     detector = output_model.meta.instrument.detector
 
     if detector == "NRS1":
@@ -286,12 +313,10 @@ def strip_ref_pixels(output_model, irs2_mask):
         output_model.groupdq = temp_array[..., irs2_mask]
 
 
-def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2,
-                scipix_n=16, refpix_r=4):
-    """Set some interleaved reference pixel values to zero.
+def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2, scipix_n=16, refpix_r=4):
+    """
+    Set some interleaved reference pixel values to zero.
 
-    Long Description
-    ----------------
     This is an explanation of the arithmetic for computing `ref` in the loop
     over the list of bit numbers that is returned by `decode_mask`.
     Reads of reference pixels are interleaved with reads of science data.  The
@@ -346,29 +371,27 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2,
         Number of reference samples before stepping back in to collect
         regular samples.
     """
-
-    nx = data.shape[-1]                 # 3200
+    nx = data.shape[-1]  # 3200
     nrows = len(output)
 
     for row in range(nrows):
         # `offset` is the offset in pixels from the beginning of the row
         # to the start of the current amp output.  `offset` starts with
         # 640 in order to skip over the reference output.
-        offset = output[row] * (nx // 5)                # nx // 5 is 640
+        offset = output[row] * (nx // 5)  # nx // 5 is 640
         # The readout direction alternates from one amp output to the next.
         if output[row] // 2 * 2 == output[row]:
-            odd_even_row = 3 - odd_even[row]            # 1 --> 2;  2 --> 1
+            odd_even_row = 3 - odd_even[row]  # 1 --> 2;  2 --> 1
         else:
             odd_even_row = odd_even[row]
-        bits = decode_mask(output[row], mask[row])
-        log.debug("output {}  odd_even {}  mask {}  DQ bits {}"
-                  .format(output[row], odd_even[row], mask[row], bits))
+        bits = decode_mask(mask[row])
+        log.debug(
+            f"output {output[row]}  odd_even {odd_even[row]}  mask {mask[row]} DQ bits {bits}"
+        )
         new_bad_pix = []
         for k in bits:
-            ref = (offset + scipix_n // 2 + k * (scipix_n + refpix_r) +
-                   2 * (odd_even_row - 1))
-            log.debug("bad interleaved reference at pixels {} {}"
-                      .format(ref, ref + 1))
+            ref = offset + scipix_n // 2 + k * (scipix_n + refpix_r) + 2 * (odd_even_row - 1)
+            log.debug(f"bad interleaved reference at pixels {ref} {ref + 1}")
 
             # track new bad pixel if not already handled
             for bad_pix in (ref, ref + 1):
@@ -378,13 +401,22 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2,
 
         # replace new bad pixels
         for bad_pix in new_bad_pix:
-            replace_refpix(bad_pix, data, ref_flags, is_irs2,
-                           offset, offset + nx // 5,
-                           scipix_n, refpix_r, axis=-1)
+            replace_refpix(
+                bad_pix,
+                data,
+                ref_flags,
+                is_irs2,
+                offset,
+                offset + nx // 5,
+                scipix_n,
+                refpix_r,
+                axis=-1,
+            )
 
 
-def decode_mask(output, mask):
-    """Interpret the MASK column of the DQ table.
+def decode_mask(mask):
+    """
+    Interpret the MASK column of the DQ table.
 
     As per the ESA CDP3 document:
     "There is also a DQ extension that holds a binary table with three
@@ -398,9 +430,6 @@ def decode_mask(output, mask):
 
     Parameters
     ----------
-    output : int
-        An amplifier output number, 1, 2, 3, or 4.
-
     mask : uint32
         A mask value.
 
@@ -409,7 +438,6 @@ def decode_mask(output, mask):
     bits : list
         A list of the indices of bits set in the `mask` value.
     """
-
     # The bit number corresponds to a count of groups of reads of the
     # interleaved reference pixels. The 32-bit unsigned integer encoding
     # has increasing index, from left to right.
@@ -423,8 +451,9 @@ def decode_mask(output, mask):
     return bits
 
 
-def replace_refpix(bad_pix, data, bad_mask, is_irs2, low_limit, high_limit,
-                   scipix_n, refpix_r, axis=-2):
+def replace_refpix(
+    bad_pix, data, bad_mask, is_irs2, low_limit, high_limit, scipix_n, refpix_r, axis=-2
+):
     """
     Replace a bad reference pixel with its nearest neighboring value.
 
@@ -478,13 +507,9 @@ def replace_refpix(bad_pix, data, bad_mask, is_irs2, low_limit, high_limit,
     neighbor = None
     lower_neighbor = bad_pix - 2
     upper_neighbor = bad_pix + 2
-    if (lower_neighbor >= low_limit
-            and is_irs2[lower_neighbor]
-            and ~bad_mask[lower_neighbor]):
+    if lower_neighbor >= low_limit and is_irs2[lower_neighbor] and ~bad_mask[lower_neighbor]:
         neighbor = lower_neighbor
-    elif (upper_neighbor < high_limit
-          and is_irs2[upper_neighbor]
-          and ~bad_mask[upper_neighbor]):
+    elif upper_neighbor < high_limit and is_irs2[upper_neighbor] and ~bad_mask[upper_neighbor]:
         neighbor = upper_neighbor
 
     if neighbor is not None:
@@ -510,18 +535,20 @@ def replace_refpix(bad_pix, data, bad_mask, is_irs2, low_limit, high_limit,
             v2 = data[:, :, nearest_high, :]
 
     if v1 is not None and v2 is not None:
-        log.debug(f'   Pixel {bad_pix} replaced with value averaged from {nearest_low}, {nearest_high}')
+        log.debug(
+            f"   Pixel {bad_pix} replaced with value averaged from {nearest_low},{nearest_high}"
+        )
         replace_value = np.mean([v1, v2], axis=0)
     elif v1 is not None:
-        log.debug(f'   Pixel {bad_pix} replaced with value at {nearest_low}')
+        log.debug(f"   Pixel {bad_pix} replaced with value at {nearest_low}")
         replace_value = v1
     elif v2 is not None:
-        log.debug(f'   Pixel {bad_pix} replaced with value at {nearest_high}')
+        log.debug(f"   Pixel {bad_pix} replaced with value at {nearest_high}")
         replace_value = v2
     elif neighbor is not None:
-        log.debug(f'   Pixel {bad_pix} replaced with value at neighbor {neighbor}')
+        log.debug(f"   Pixel {bad_pix} replaced with value at neighbor {neighbor}")
     else:
-        log.debug(f'   Pixel {bad_pix} replaced with 0.0')
+        log.debug(f"   Pixel {bad_pix} replaced with 0.0")
 
     if axis == -1:
         data[:, :, :, bad_pix] = replace_value
@@ -553,13 +580,13 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
     pixeldq = datamodel.pixeldq
     scipix_n = datamodel.meta.exposure.nrs_normal
     refpix_r = datamodel.meta.exposure.nrs_reference
-    log.debug('Using flagging threshold n_sigma = {}'.format(n_sigma))
+    log.debug(f"Using flagging threshold n_sigma = {n_sigma}")
 
     # bad pixels will be replaced for all integrations and all groups
     nints, ngroups, ny, nx = np.shape(data)
 
     # initialize the mask with any previously marked bad pixels
-    ref_flags = (pixeldq & dqflags.pixel['BAD_REF_PIXEL'])
+    ref_flags = pixeldq & dqflags.pixel["BAD_REF_PIXEL"]
     mask_bad = np.any(ref_flags, axis=1)
     is_irs2 = np.full(ny, False)
 
@@ -586,12 +613,12 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
                 for ri in range(0, refpix_r, 2):
                     ri = rpstart + ri
                     rp_d = np.mean(np.abs(data[j, :, ri + 1, :] - data[j, :, ri, :]))
-                    rp_m = np.mean(data[j, :, ri:ri + 2, :])
-                    rp_s = np.std(data[j, :, ri:ri + 2, :])
-                    is_irs2[ri:ri + 2] = True
+                    rp_m = np.mean(data[j, :, ri : ri + 2, :])
+                    rp_s = np.std(data[j, :, ri : ri + 2, :])
+                    is_irs2[ri : ri + 2] = True
 
                     # exclude ref pix already flagged
-                    good = ~np.any(int_bad[ri:ri + 2])
+                    good = ~np.any(int_bad[ri : ri + 2])
                     if good and not replace_only:
                         ref_pix.append(ri)
                         rp_means.append(rp_m)
@@ -615,9 +642,11 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
                 high_means = (rp_means - mean_of_means) > (n_sigma * std_of_means)
                 high_stds = (rp_stds - mean_of_stds) > (n_sigma * std_of_stds)
 
-                log.debug(f'High diffs={np.sum(high_diffs)}, '
-                          f'high means={np.sum(high_means)}, '
-                          f'high stds={np.sum(high_stds)}')
+                log.debug(
+                    f"High diffs={np.sum(high_diffs)}, "
+                    f"high means={np.sum(high_means)}, "
+                    f"high stds={np.sum(high_stds)}"
+                )
                 int_bad[ref_pix[high_diffs]] = True
                 int_bad[pair_pixel[high_diffs]] = True
                 int_bad[ref_pix[high_means]] = True
@@ -625,86 +654,80 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
                 int_bad[ref_pix[high_stds]] = True
                 int_bad[pair_pixel[high_stds]] = True
 
-                log.debug(f'{np.sum(int_bad[offset:offset + amplifier])} '
-                          f'suspicious bad reference pixels in '
-                          f'amplifier {k}, integration {j}')
+                log.debug(
+                    f"{np.sum(int_bad[offset : offset + amplifier])} "
+                    f"suspicious bad reference pixels in "
+                    f"amplifier {k}, integration {j}"
+                )
                 mask_bad |= int_bad
 
         # replace any flagged pixels if desired
         if not flag_only:
             # list of all bad pixels
-            all_bad = np.arange(offset, offset + amplifier)[
-                mask_bad[offset:offset + amplifier]]
+            all_bad = np.arange(offset, offset + amplifier)[mask_bad[offset : offset + amplifier]]
             for bad_pix in all_bad:
-                replace_refpix(bad_pix, data, mask_bad, is_irs2,
-                               offset, offset + amplifier,
-                               scipix_n, refpix_r)
+                replace_refpix(
+                    bad_pix, data, mask_bad, is_irs2, offset, offset + amplifier, scipix_n, refpix_r
+                )
 
     if flag_only:
-        log.info(f'Total bad reference pixels flagged: {np.sum(mask_bad)}')
+        log.info(f"Total bad reference pixels flagged: {np.sum(mask_bad)}")
     else:
-        log.info(f'Total bad reference pixels replaced: {np.sum(mask_bad)}')
+        log.info(f"Total bad reference pixels replaced: {np.sum(mask_bad)}")
     if pixeldq is not None:
-        pixeldq[mask_bad] |= (dqflags.pixel['BAD_REF_PIXEL']
-                              | dqflags.pixel['DO_NOT_USE'])
+        pixeldq[mask_bad] |= dqflags.pixel["BAD_REF_PIXEL"] | dqflags.pixel["DO_NOT_USE"]
 
 
-def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n,
-                       refpix_r, pad, preserve_refpix=False):
-    """Subtract reference output and pixels for the current integration.
+def subtract_reference(
+    data0, alpha, beta, irs2_mask, scipix_n, refpix_r, pad, preserve_refpix=False
+):
+    """
+    Subtract reference output and pixels for the current integration.
 
     Parameters
     ----------
-    data0: ramp data
+    data0 : ndarray
         The science data for the current integration.  The shape is
         expected to be (ngroups, ny, 3200), where ngroups is the number of
         groups, and ny is the pixel height of the image.  The width 3200
         of the image includes the "normal" pixel data, plus the embedded
         reference pixels, and the reference output.
-
-    alpha: ndarray
+    alpha : ndarray
         This is a 2-D array of values read from the reference file.  The
         first axis is the sector number (but only for the normal pixel
         data and reference pixels, not the reference output).  The second
         axis has length 2048 * 712, corresponding to the time-ordered
         arrangement of the data.  For each sector, the correction is
         applied as follows:  data * alpha[i] + reference_output * beta[i].
-
-    beta: ndarray
+    beta : ndarray
         Data read from the reference file.  See `alpha` for details.
-
-    irs2_mask: Boolean, 1-D array
+    irs2_mask : Boolean, 1-D array
         True means the element corresponds to a normal pixel in the raw,
         IRS2-format data.  False corresponds either to a reference output
         pixel or to one of the interspersed reference pixel values.
-
-    scipix_n: int
+    scipix_n : int
         Number of regular samples before stepping out to collect
         reference samples.
-
-    refpix_r: int
+    refpix_r : int
         Number of reference samples before stepping back in to collect
         regular samples.
-
-    pad: int
+    pad : int
         The effective number of pixels sampled during the pause at the end
         of each row (new-row overhead).
-
-    preserve_refpix: bool
+    preserve_refpix : bool
         If True, reference pixels will be preserved in the output.
         This is not used in the science pipeline, but is necessary to
         create new bias files for IRS2 mode.
 
     Returns
     -------
-    data0: ramp data
+    data0 : ndarray
         The science data for the current integration, with reference output
         and embedded reference pixels subtracted and also removed, leaving
         only the normal pixel data (including the reference pixels on each
         edge).  The shape is expected to be (ngroups, ny, nx), where
         nx = ny = 2048.
     """
-
     shape = data0.shape
     ngroups = shape[0]
     ny = shape[1]
@@ -799,13 +822,13 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n,
     # The comments are for scipix_n = 16, refpix_r = 4
     n0 = 512 // scipix_n
     n1 = scipix_n + refpix_r + 2
-    ht = np.arange(n0 * n1, dtype=np.int32).reshape((n0, n1))   # (32, 22)
-    ht[:, 0:(scipix_n - refpix_r) // 2 + 1] = -1
-    ht[:, scipix_n // 2 + 1 + 3 * refpix_r // 2:] = -1
+    ht = np.arange(n0 * n1, dtype=np.int32).reshape((n0, n1))  # (32, 22)
+    ht[:, 0 : (scipix_n - refpix_r) // 2 + 1] = -1
+    ht[:, scipix_n // 2 + 1 + 3 * refpix_r // 2 :] = -1
     hs = ht.copy()
     # ht is like href1, but extended over gaps and first and last norm pix
-    mask = (ht >= 0)
-    ht = ht[mask]               # 1-D, length = 2 * refpix_r * 512 / scipix_n
+    mask = ht >= 0
+    ht = ht[mask]  # 1-D, length = 2 * refpix_r * 512 / scipix_n
 
     # IDL:  hs[scipix_n/2 + 1-refpix_r/2:scipix_n/2 + refpix_r + refpix_r/2,*] =
     #       hs[reform([transpose(reform(indgen(refpix_r),refpix_r/2,2)),
@@ -823,11 +846,12 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n,
     #  [1 3 1 3]]
     # After flattening, two_indr_t = [0 2 0 2 1 3 1 3].
     two_indr_t = np.concatenate((indr_t, indr_t), axis=1).flatten()
-    two_indr_t += (scipix_n // 2 + 1)     # [9 11 9 11 10 12 10 12]
-    hs[:, scipix_n // 2 + 1 - refpix_r // 2:
-       scipix_n // 2 + 1 + refpix_r // 2 + refpix_r] = hs[:, two_indr_t]
-    mask = (hs >= 0)
-    hs = hs[mask]    # hs is now 1-D
+    two_indr_t += scipix_n // 2 + 1  # [9 11 9 11 10 12 10 12]
+    hs[:, scipix_n // 2 + 1 - refpix_r // 2 : scipix_n // 2 + 1 + refpix_r // 2 + refpix_r] = hs[
+        :, two_indr_t
+    ]
+    mask = hs >= 0
+    hs = hs[mask]  # hs is now 1-D
 
     if refpix_r % 4 == 2:
         len_hs = len(hs)
@@ -841,7 +865,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n,
     # the corrections are subtracted from each sector independently.
     shape_d = data0.shape
     for k in range(1, 5):
-        log.debug(f'processing sector {k}')
+        log.debug(f"processing sector {k}")
 
         # At this point in the processing data0 has shape (5, ngroups, 2048, 712),
         # assuming normal IRS2 readout settings. r0k contains a subset of the
@@ -890,7 +914,7 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n,
         # IDL:  for k=0,3 do oBridge[k]->Execute,
         #           "for i=0, s3-1 do r0[*,i] += beta * refout0[*,i]"
         if alpha is not None:
-            r0k_fft += (alpha[k - 1] * refout0)
+            r0k_fft += alpha[k - 1] * refout0
         del refout0
 
         # IDL:  for k=0,3 do oBridge[k]->Execute,
@@ -964,20 +988,45 @@ def subtract_reference(data0, alpha, beta, irs2_mask, scipix_n,
         # reference mean should be subtracted if not stripped,
         # except in reference sector
         data0[..., irs2_mask] += b_offset[..., irs2_mask]
-        data0[..., :nx // 5] += b_offset[..., :nx // 5]
+        data0[..., : nx // 5] += b_offset[..., : nx // 5]
 
     return data0
 
 
 def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1, ny, ngroups, aa, n_iter_norm):
+    """
+    Filter iteratively in FFT space of the normal pixels in each group.
 
+    Parameters
+    ----------
+    dd0 : ndarray
+        Data array containing all groups, updated in place
+    mask0 : ndarray
+        Mask for pixels to filter, with dimensions ny x nrow. 1 means use the pixel,
+        0 means do not use it.
+    row : int
+        Row size. Computed from the number of science pixels, reference pixels
+        and padding in an amplifier.
+    hnorm : ndarray
+        Array of column indices for normal pixels.
+    hnorm1 : ndarray
+        Shifted index values for normal pixels.
+    ny : int
+        Y size of data array.
+    ngroups : int
+        Number of groups.
+    aa : ndarray
+        Filter to apply.
+    n_iter_norm : int
+        Number of filtering iterations.
+    """
     mm = np.zeros((ny, row), dtype=np.int8)
     mm[:, hnorm1] = mask0[:, hnorm]
-    hm = (mm != 0)                      # 2-D boolean mask
+    hm = mm != 0  # 2-D boolean mask
     for j in range(ngroups):
-        dd = dd0[j, :, :].copy()        # make a copy, not a view
+        dd = dd0[j, :, :].copy()  # make a copy, not a view
         p = dd.flatten()
-        for it in range(n_iter_norm):
+        for _it in range(n_iter_norm):
             pp = np.fft.fft(p)
             pp *= aa
             p[:] = np.fft.ifft(pp).real
@@ -986,12 +1035,27 @@ def fft_interp_norm(dd0, mask0, row, hnorm, hnorm1, ny, ngroups, aa, n_iter_norm
 
 
 def ols_line(x, y):
-    """Fit a straight line using ordinary least squares."""
+    """
+    Fit a straight line using ordinary least squares.
 
+    Parameters
+    ----------
+    x : ndarray
+        Array of independent variables
+    y : ndarray
+        Array of dependent variables
+
+    Returns
+    -------
+    intercept : float
+        Intercept of straight line fit
+    slope : float
+        Slope of straight line fit
+    """
     xf = x.ravel()
     yf = y.ravel()
     if len(xf) < 1 or len(yf) < 1:
-        return 0., 0.
+        return 0.0, 0.0
 
     groups = float(len(xf))
     mean_x = xf.mean()
@@ -999,18 +1063,29 @@ def ols_line(x, y):
     sum_x2 = (xf**2).sum()
     sum_xy = (xf * yf).sum()
 
-    slope = (sum_xy - groups * mean_x * mean_y) / \
-            (sum_x2 - groups * mean_x**2)
+    slope = (sum_xy - groups * mean_x * mean_y) / (sum_x2 - groups * mean_x**2)
     intercept = mean_y - slope * mean_x
 
     return intercept, slope
 
 
 def remove_slopes(data0, ngroups, ny, row):
+    """
+    Remove slopes.
 
-    # Fitting and removal of slopes per frame to remove issues at frame boundaries.
-    # IDL:  time = findgen(row, s[2])
+    Fitting and removal of slopes per frame to remove issues at frame boundaries.
 
+    Parameters
+    ----------
+    data0 : ndarray
+        Input data array
+    ngroups : int
+        Number of groups in input data
+    ny : int
+        Number of rows in input data
+    row : int
+        Row size
+    """
     time_arr = np.arange(ny * row, dtype=np.float32).reshape((ny, row))
     time_arr -= time_arr.mean(dtype=np.float64)
     row4plus4 = np.array([0, 1, 2, 3, 2044, 2045, 2046, 2047], dtype=np.intp)
@@ -1020,72 +1095,118 @@ def remove_slopes(data0, ngroups, ny, row):
     for i in range(5):
         for k in range(ngroups):
             # mask is 2-D, since both row4plus4 and : have more than one element.
-            mask = (data0[i, k, row4plus4, :] != 0.)
-            (intercept, slope) = ols_line(time_arr[row4plus4, :][mask],
-                                          data0[i, k, row4plus4, :][mask])
+            mask = data0[i, k, row4plus4, :] != 0.0
+            (intercept, slope) = ols_line(
+                time_arr[row4plus4, :][mask], data0[i, k, row4plus4, :][mask]
+            )
             ab_3[0, k, i] = intercept
             ab_3[1, k, i] = slope
 
     for i in range(5):
         for k in range(ngroups):
             # weight is 0 where data0 is 0, else 1.
-            weight = (data0[i, k, :, :] != 0.).astype(np.int8)
-            data0[i, k, :, :] -= (ab_3[0, k, i] +
-                                  time_arr * ab_3[1, k, i]) * weight
+            weight = (data0[i, k, :, :] != 0.0).astype(np.int8)
+            data0[i, k, :, :] -= (ab_3[0, k, i] + time_arr * ab_3[1, k, i]) * weight
 
 
 def replace_bad_pixels(data0, ngroups, ny, row):
+    """
+    Replace bad pixels.
 
-    # Use cosine weighted interpolation to replace 0.0 values and bad
-    # pixels and gaps. (initial guess)
+    Use cosine weighted interpolation to replace 0.0 values and bad
+    pixels and gaps.
 
-    # s[1] = nx  s[2] = ny  s[3] = ngroups
-    w_ind = np.arange(1, 32, dtype=np.float32) / 32.
+    s[1] = nx  s[2] = ny  s[3] = ngroups
+
+    Parameters
+    ----------
+    data0 : ndarray
+        Input data array
+    ngroups : int
+        Number of groups in input data array
+    ny : int
+        Number of rows in input data array
+    row : int
+        Row definition - row = (scipix_n + refpix_r + 2) * 512 // scipix_n + pad
+        row = 712, if scipix_n = 16, refpix_r = 4, pad = 8
+    """
+    w_ind = np.arange(1, 32, dtype=np.float32) / 32.0
     w = np.sin(w_ind * np.pi)
     kk = 0
     for jj in range(ngroups):
         dat = data0[kk, jj, :, :].reshape(row * ny)
-        mask = (dat != 0.).astype(np.float32)
-        numerator = convolve1d(dat, w, mode='wrap')
-        denominator = convolve1d(mask, w, mode='wrap')
-        div_zero = (denominator == 0.)          # check for divide by zero
-        numerator = np.where(div_zero, 0., numerator)
-        denominator = np.where(div_zero, 1., denominator)
+        mask = (dat != 0.0).astype(np.float32)
+        numerator = convolve1d(dat, w, mode="wrap")
+        denominator = convolve1d(mask, w, mode="wrap")
+        div_zero = denominator == 0.0  # check for divide by zero
+        numerator = np.where(div_zero, 0.0, numerator)
+        denominator = np.where(div_zero, 1.0, denominator)
         dat = numerator / denominator
         dat = dat.reshape(ny, row)
         mask = mask.reshape(ny, row)
-        data0[kk, jj, :, :] += dat * (1. - mask)
+        data0[kk, jj, :, :] += dat * (1.0 - mask)
 
 
 def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm, hnorm1):
+    """
+    Fill the bad regions in the data.
 
-    # Use Fourier filter/interpolation to replace
-    # (a) bad pixel, gaps, and reference data in the time-ordered normal data
-    # (b) gaps and normal data in the time-ordered reference data
-    # This "improves" upon the cosine interpolation performed above.
+    Use Fourier filter/interpolation to replace
+      (a) bad pixel, gaps, and reference data in the time-ordered normal data
+      (b) gaps and normal data in the time-ordered reference data
+    This "improves" upon the cosine interpolation performed above.
 
-    # Parameters for the filter to be used.
+    Parameters
+    ----------
+    data0 : ndarray
+        Input data array.  Modified in place.
+    ngroups : int
+        Number of groups in input data
+    ny : int
+        Number of rows in input data
+    nx : int
+        Number of columns in input data
+    row : int
+        Row definition: row = (scipix_n + refpix_r + 2) * 512 // scipix_n + pad
+        row = 712, if scipix_n = 16, refpix_r = 4, pad = 8
+    scipix_n : int
+        Number of regular samples before stepping out to collect reference samples
+    refpix_r : int
+        Number of reference samples before stepping back in to collect regular samples
+    pad : int
+        The effective number of pixels sampled during the pause at the end
+        of each row (new-row overhead).  The padding is needed to preserve
+        the phase of temporally periodic signals.
+    hnorm : ndarray
+        Array of column indices for normal pixels
+    hnorm1 : ndarray
+        Shifted index values for normal pixels
+    """
+    # Parameters for the filter to be used:
     # length of apodization cosine filter
     elen = 110000 // (scipix_n + refpix_r + 2)
 
     # max unfiltered frequency
-    blen = (512 + 512 // scipix_n * (refpix_r + 2) + pad) // \
-           (scipix_n + refpix_r + 2) * ny // 2 - elen // 2
+    blen = (512 + 512 // scipix_n * (refpix_r + 2) + pad) // (
+        scipix_n + refpix_r + 2
+    ) * ny // 2 - elen // 2
 
     # Construct the filter [1, cos, 0, cos, 1].
-    temp_a1 = (np.cos(np.arange(elen, dtype=np.float64) *
-                      np.pi / float(elen)) + 1.) / 2.
+    temp_a1 = (np.cos(np.arange(elen, dtype=np.float64) * np.pi / float(elen)) + 1.0) / 2.0
 
     # elen = 5000
     # blen = 30268
     # row * ny // 2 - 2 * blen - 2 * elen = 658552
     # len(temp_a2) = 729088
-    temp_a2 = np.concatenate((np.ones(blen, dtype=np.float64),
-                              temp_a1.copy(),
-                              np.zeros(row * ny // 2 - 2 * blen - 2 * elen,
-                                       dtype=np.float64),
-                              temp_a1[::-1].copy(),
-                              np.ones(blen, dtype=np.float64)))
+    temp_a2 = np.concatenate(
+        (
+            np.ones(blen, dtype=np.float64),
+            temp_a1.copy(),
+            np.zeros(row * ny // 2 - 2 * blen - 2 * elen, dtype=np.float64),
+            temp_a1[::-1].copy(),
+            np.ones(blen, dtype=np.float64),
+        )
+    )
 
     roll_a2 = np.roll(temp_a2, -1)
     aa = np.concatenate((temp_a2, roll_a2[::-1]))
@@ -1099,9 +1220,17 @@ def fill_bad_regions(data0, ngroups, ny, nx, row, scipix_n, refpix_r, pad, hnorm
     dd0 = data0[0, :, :, :]
     # IDL:  fft_interp_norm, dd0, 2, replicate(1, s[1] / 4, s[2], 4),
     #                        row, hnorm, hnorm1, s, aa , n_iter_norm
-    fft_interp_norm(dd0, np.ones((ny, nx // 4), dtype=np.int64),
-                    row, hnorm, hnorm1,
-                    ny, ngroups, aa, n_iter_norm)
+    fft_interp_norm(
+        dd0,
+        np.ones((ny, nx // 4), dtype=np.int64),
+        row,
+        hnorm,
+        hnorm1,
+        ny,
+        ngroups,
+        aa,
+        n_iter_norm,
+    )
 
     data0[0, :, :, :] = dd0.copy()
     del aa, dd0

@@ -37,15 +37,12 @@ repos:
       - id: numpydoc-validation
         exclude: |
           (?x)^(
-            jwst/assign_wcs/.* |
             jwst/associations/.* |
             jwst/background/.* |
             jwst/coron/.* |
             jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
             jwst/dark_current/.* |
-            jwst/emicorr/.* |
-            jwst/engdblog/.* |
             jwst/extract_2d/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
@@ -55,7 +52,6 @@ repos:
             jwst/mrs_imatch/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
-            jwst/refpix/.* |
             jwst/residual_fringe/.* |
             jwst/rscd/.* |
             jwst/saturation/.* |
