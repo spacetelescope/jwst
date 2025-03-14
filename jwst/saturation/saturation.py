@@ -208,8 +208,12 @@ def irs2_flag_saturation(output_model,
                 mask = ((scigp1 / np.mean(read_pattern[0])) * read_pattern[2][-1]) + bias < sat_thresh
 
                 # Identify groups with suspiciously large values in the second group
+                # by comparing the change between group 1 and 2 to the dynamic range between
+                # the group 1 and saturation threshold.  Flag any differences sufficiently large
+                # that they could come from a saturating event in the last frame of the group.
                 scigp2 = x_irs2.from_irs2(data[ints, 1, :, :] - data[ints, 0, :, :], irs2_mask, detector)
-                mask &= scigp2 > (sat_thresh - bias) / len(read_pattern[1])
+                scigp1_counts = x_irs2.from_irs2(data[ints, 0, :, :], irs2_mask, detector)
+                mask &= scigp2 > (sat_thresh - scigp1_counts) / len(read_pattern[1])
 
                 # Identify groups that are saturated in the third group
                 gp3mask = np.where(flag_temp & SATURATED, True, False)
