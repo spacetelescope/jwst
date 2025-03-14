@@ -1121,6 +1121,20 @@ class AsnMixin_Lv2Nod:
         if exptype not in ['nrs_fixedslit', 'nrs_msaspec']:
             return False
 
+        # Check for target ID - if present,
+        # it must match for either FS or MOS
+        try:
+            sci_target_id = str(science_item['targetid']).lower()
+            bkg_target_id = str(background_item['targetid']).lower()
+        except KeyError:
+            sci_target_id = None
+            bkg_target_id = None
+        if sci_target_id != bkg_target_id:
+            # Report overlap - different activities contain
+            # different sources that may overlap, even if not
+            # at the same primary nod position.
+            return True
+
         # Get pattern number values, needed for FS or MOS
         try:
             numdthpt = int(science_item['numdthpt'])
