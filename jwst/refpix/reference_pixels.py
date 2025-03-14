@@ -132,10 +132,10 @@ NRS_edgeless_subarrays = ["SUB512", "SUB512S", "SUB32"]
 # and last 4 columns as they do not contain science pixels to be corrected.
 
 MULTISTRIPE_AMPLIFIER_REGIONS = {
-    'A': (4, 512),
-    'B': (512, 1024),
-    'C': (1024, 1536),
-    'D': (1536, 2044),
+    "A": (4, 512),
+    "B": (512, 1024),
+    "C": (1024, 1536),
+    "D": (1536, 2044),
 }
 
 #
@@ -239,7 +239,7 @@ class Dataset:
             self.subarray = input_model.meta.subarray.name
         self.is_subarray = is_subarray
         self.is_multistripe = False
-        if getattr(input_model.meta.subarray, 'multistripe_reads1', None) is not None:
+        if getattr(input_model.meta.subarray, "multistripe_reads1", None) is not None:
             self.is_multistripe = True
 
         self.zeroframe_proc = False
@@ -1339,9 +1339,7 @@ class NIRDataset(Dataset):
             amp_xi, amp_xf = MULTISTRIPE_AMPLIFIER_REGIONS[amplifier]
             refpix[amplifier] = {}
             mask = np.where(
-                self.pixeldq[:, amp_xi:amp_xf] & dqflags.pixel['REFERENCE_PIXEL'] > 0,
-                True,
-                False
+                self.pixeldq[:, amp_xi:amp_xf] & dqflags.pixel["REFERENCE_PIXEL"] > 0, True, False
             )
             if self.odd_even_columns:
                 odd_mask = mask.copy()
@@ -1356,13 +1354,13 @@ class NIRDataset(Dataset):
                 odd_dq = self.pixeldq[:, amp_xi:amp_xf][odd_mask]
                 odd = self.sigma_clip(odd_ref, odd_dq)
 
-                refpix[amplifier]['odd'] = odd
-                refpix[amplifier]['even'] = even
+                refpix[amplifier]["odd"] = odd
+                refpix[amplifier]["even"] = even
             else:
                 ref = group[:, amp_xi:amp_xf][mask]
                 dq = self.pixeldq[:, amp_xi:amp_xf][mask]
                 mean = self.sigma_clip(ref, dq)
-                refpix[amplifier]['mean'] = mean
+                refpix[amplifier]["mean"] = mean
 
         return refpix
 
@@ -1387,10 +1385,10 @@ class NIRDataset(Dataset):
         for amplifier in self.amplifiers:
             amp_xi, amp_xf = MULTISTRIPE_AMPLIFIER_REGIONS[amplifier]
             if self.odd_even_columns:
-                group[:, amp_xi: amp_xf: 2] -= refvalues[amplifier]['even']
-                group[:, amp_xi + 1: amp_xf: 2] -= refvalues[amplifier]['odd']
+                group[:, amp_xi:amp_xf:2] -= refvalues[amplifier]["even"]
+                group[:, amp_xi + 1 : amp_xf : 2] -= refvalues[amplifier]["odd"]
             else:
-                group[:, amp_xi: amp_xf] -= refvalues[amplifier]['mean']
+                group[:, amp_xi:amp_xf] -= refvalues[amplifier]["mean"]
 
         return group
 
