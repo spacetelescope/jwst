@@ -66,7 +66,7 @@ class SaturationStep(Step):
                     bias_model=bias_model
                 )
             else:
-                result = saturation.flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
+                result = saturation.flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt, bias_model=bias_model)
             result.meta.cal_step.saturation = 'COMPLETE'
 
             # Cleanup
