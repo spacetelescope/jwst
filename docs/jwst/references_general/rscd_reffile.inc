@@ -29,7 +29,7 @@ DETECTOR   model.meta.instrument.detector
 
 Reference File Format
 +++++++++++++++++++++
-RSCD reference files are in  FITS format. The number of groups to set to 'DO_NOT_USE'
+RSCD reference files are in FITS format. The number of groups to set to 'DO_NOT_USE'
 is contained in the first BINTABLE extension.
 The FITS primary HDU does not contain a data array.
 The BINTABLE extension uses the identifier EXTNAME = "RSCD_GROUP_SKIP" and
