@@ -1178,7 +1178,7 @@ class Asn_Lv2WFSSParallel(
         """
 
         long_directs = [d for d in directs if 'long' in d['expname']]
-        if long_directs == 0:
+        if len(long_directs) == 0:
             long_directs.append(directs[0])  # If the search fails, just use the first.
 
         return long_directs[0]
