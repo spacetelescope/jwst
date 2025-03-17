@@ -16,22 +16,17 @@ __all__ = ["ResampleStep"]
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
-GOOD_BITS = '~DO_NOT_USE+NON_SCIENCE'
+GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
 
 
 class ResampleStep(Step):
     """
-    Resample input data onto a regular grid using the drizzle algorithm.
+    Resample imaging data onto a regular grid using the drizzle algorithm.
 
     .. note::
         When supplied via ``output_wcs``, a custom WCS overrides other custom
         WCS parameters such as ``output_shape`` (now computed from by
         ``output_wcs.bounding_box``), ``crpix``
-
-    Parameters
-    -----------
-    input :  ~jwst.datamodels.JwstDataModel or ~jwst.associations.Association
-        Single filename for either a single image or an association table.
     """
 
     class_alias = "resample"
@@ -51,26 +46,40 @@ class ResampleStep(Step):
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
         in_memory = boolean(default=True)  # Keep images in memory
-    """ # noqa: E501
+    """  # noqa: E501
 
     reference_file_types: list = []
 
-    def process(self, input):
+    def process(self, input_data):
+        """
+        Run the resample step on the input data.
 
-        if isinstance(input, str):
-            ext = filetype.check(input)
+        Parameters
+        ----------
+        input_data : str, ImageModel, or any asn-type input loadable into ModelLibrary
+            Filename pointing to an ImageModel or an association, or the ImageModel or
+            association itself.
+
+        Returns
+        -------
+        ModelLibrary or ImageModel
+            The final output data. If the `single` parameter is set to True, then this
+            is a single ImageModel; otherwise, it is a ModelLibrary.
+        """
+        if isinstance(input_data, str):
+            ext = filetype.check(input_data)
             if ext in ("fits", "asdf"):
-                input = dm.open(input)
-        if isinstance(input, ModelLibrary):
-            input_models = input
-        elif isinstance(input, (str, dict, list)):
-            input_models = ModelLibrary(input, on_disk=not self.in_memory)
-        elif isinstance(input, ImageModel):
-            input_models = ModelLibrary([input], on_disk=not self.in_memory)
-            output = input.meta.filename
+                input_data = dm.open(input_data)
+        if isinstance(input_data, ModelLibrary):
+            input_models = input_data
+        elif isinstance(input_data, (str, dict, list)):
+            input_models = ModelLibrary(input_data, on_disk=not self.in_memory)
+        elif isinstance(input_data, ImageModel):
+            input_models = ModelLibrary([input_data], on_disk=not self.in_memory)
+            output = input_data.meta.filename
             self.blendheaders = False
         else:
-            raise RuntimeError(f"Input {input} is not a 2D image.")
+            raise TypeError(f"Input {input_data} is not a 2D image.")
 
         try:
             output = input_models.asn["products"][0]["name"]
@@ -102,23 +111,13 @@ class ResampleStep(Step):
         # Call the resampling routine
         if self.single:
             resamp = resample.ResampleImage(
-                input_models,
-                output=output,
-                enable_var=False,
-                compute_err="driz_err",
-                **kwargs
+                input_models, output=output, enable_var=False, compute_err="driz_err", **kwargs
             )
-            result = resamp.resample_many_to_many(
-                in_memory=self.in_memory
-            )
+            result = resamp.resample_many_to_many(in_memory=self.in_memory)
 
         else:
             resamp = resample.ResampleImage(
-                input_models,
-                output=output,
-                enable_var=True,
-                compute_err="from_var",
-                **kwargs
+                input_models, output=output, enable_var=True, compute_err="from_var", **kwargs
             )
             result = resamp.resample_many_to_one()
 
@@ -157,7 +156,7 @@ class ResampleStep(Step):
         if n == 2:
             return None
         elif n == 0:
-            if min_vals and sum(x >= y for x, y in zip(vals, min_vals)) != 2:
+            if min_vals and sum(x >= y for x, y in zip(vals, min_vals, strict=True)) != 2:
                 raise ValueError(f"'{name}' values must be larger or equal to {list(min_vals)}")
             return list(vals)
         else:
@@ -166,41 +165,39 @@ class ResampleStep(Step):
     def get_drizpars(self):
         """
         Load all drizzle-related parameter values into kwargs list.
+
+        Returns
+        -------
+        kwargs : dict
+            Dictionary of drizzle parameters
         """
         # Define the keys pulled from step parameters
-        kwargs = dict(
-            pixfrac=self.pixfrac,
-            kernel=self.kernel,
-            fillval=self.fillval,
-            weight_type=self.weight_type,
-            good_bits=GOOD_BITS,
-            blendheaders=self.blendheaders,
-        )
-
-        # Custom output WCS parameters.
-        output_shape = self.check_list_pars(
-            self.output_shape,
-            'output_shape',
-            min_vals=[1, 1]
-        )
-        kwargs['output_wcs'] = load_custom_wcs(
-            self.output_wcs,
-            output_shape
-        )
-
-        wcs_pars = {
-            'crpix': self.check_list_pars(self.crpix, 'crpix'),
-            'crval': self.check_list_pars(self.crval, 'crval'),
-            'rotation': self.rotation,
-            'pixel_scale': self.pixel_scale,
-            'pixel_scale_ratio': self.pixel_scale_ratio,
-            'output_shape': None if output_shape is None else output_shape[::-1],
+        kwargs = {
+            "pixfrac": self.pixfrac,
+            "kernel": self.kernel,
+            "fillval": self.fillval,
+            "weight_type": self.weight_type,
+            "good_bits": GOOD_BITS,
+            "blendheaders": self.blendheaders,
         }
 
-        kwargs['wcs_pars'] = wcs_pars
+        # Custom output WCS parameters.
+        output_shape = self.check_list_pars(self.output_shape, "output_shape", min_vals=[1, 1])
+        kwargs["output_wcs"] = load_custom_wcs(self.output_wcs, output_shape)
+
+        wcs_pars = {
+            "crpix": self.check_list_pars(self.crpix, "crpix"),
+            "crval": self.check_list_pars(self.crval, "crval"),
+            "rotation": self.rotation,
+            "pixel_scale": self.pixel_scale,
+            "pixel_scale_ratio": self.pixel_scale_ratio,
+            "output_shape": None if output_shape is None else output_shape[::-1],
+        }
+
+        kwargs["wcs_pars"] = wcs_pars
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug('   {}={}'.format(k, v))
+            self.log.debug(f"   {k}={v}")
 
         return kwargs
