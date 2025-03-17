@@ -29,7 +29,8 @@ for use by multiple observatories.
 
 The keywords ``PRIMECRS`` and ``EXTNCRS`` are set in this step.  The ``PRIMECRS`` keyword
 is the number of prime cosmic rays found per thousand pixels per second.  The ``EXTNCRS``
-keyword is the number of extended events per 100,000 pixels per second.
+keyword is the number of extended events (snowball and shower) per million pixels per
+second.
 
 
 :ref:`Algorithm <stcal:jump_algorithm>`
