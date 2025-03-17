@@ -20,15 +20,15 @@ def do_correction(output_model, rscd_model):
 
     Parameters
     ----------
-    output_model : Ramp datamodel
+    output_model : RampModel
         Input ramp datamodel
 
-    rscd_model : RSCD datamodel
+    rscd_model : RSCDModel
         RSCD reference datamodel
 
     Returns
     -------
-    output_model : Ramp datamodel
+    output_model : RampModel
         Ramp datamodel with RSCD affected groups flagged as DO_NOT_USE
     """
     # Retrieve the reference parameters for this exposure type
@@ -52,7 +52,7 @@ def correction_skip_groups(output, group_skip):
 
     Parameters
     ----------
-    output : Ramp datamodel
+    output : RampModel
         Science data to be flagged
 
     group_skip : Int
@@ -60,7 +60,7 @@ def correction_skip_groups(output, group_skip):
 
     Returns
     -------
-    output_model: Ramp datamodel
+    output_model: RampModel
         Ramp datamodel with RSCD affected groups flagged as DO_NOT_USE
     """
     # General exposure parameters
@@ -112,15 +112,15 @@ def get_rscd_parameters(input_model, rscd_model):
 
     Parameters
     ----------
-    input_model : Ramp datamodel
+    input_model : RampModel
         Science data to be flagged
 
-    rscd_model : RSCD datamodel
+    rscd_model : RSCDModel
         RSCD reference file data
 
     Returns
     -------
-    param : Dictionary
+    param : dict
         Dictionary of parameters
     """
     # Reference file parameters held in dictionary: param
