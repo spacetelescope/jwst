@@ -61,7 +61,6 @@ repos:
             jwst/residual_fringe/.* |
             jwst/rscd/.* |
             jwst/saturation/.* |
-            jwst/scripts/.* |
             jwst/spectral_leak/.* |
             jwst/srctype/.* |
             jwst/straylight/.* |
