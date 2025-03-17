@@ -8,35 +8,31 @@ def gfunction(xi, eta, **kwargs):
 
     By half-hexagon, it is meant that
     the hexagon is bisected from one corner to its diametrically opposite corner.
+    TODO: The kwargs are not optional, so there's no reason they should be kwargs at all.
 
     Parameters
     ----------
     xi : 2D float array
         Hexagon's coordinate center at center of symmetry, along flat edge
-
     eta : 2D float array
         Hexagon's coordinate center at center of symmetry, normal to xi
-
     **kwargs : dict
-        Keyword arguments
-        c (optional, via **kwargs): tuple(float, float)
-            coordinates of center
-
-        pixel (optional, via **kwargs): float
-            pixel scale
-
-        d (optional, via **kwargs): float
-            flat-to-flat distance across hexagon
-
-        lam (optional, via **kwargs): float
-            wavelength
-
-        minus: (optional, via **kwargs) boolean
-            if set, use flipped sign of xi in calculation
+        Keyword arguments, which at present are NOT optional:
+        c : tuple(float, float), required
+            Coordinates of center
+        pixel : float, required
+            Pixel scale
+        d : float, required
+            Flat-to-flat distance across hexagon
+        lam : float, required
+            Wavelength
+        affine2d : Affine2d object, required
+        minus : bool, required
+            If True, use flipped sign of xi in calculation
 
     Returns
     -------
-    g*affine2d.distortphase(xi,eta): 2D complex array
+    2D complex array
         Fourier transform of one half of a hexagon.
     """
     c = kwargs["c"]
@@ -73,23 +69,32 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
     """
     Calculate the complex array analytical transform of a (distorted if necessary) hexagon.
 
+    TODO: Many of the inputs are not optional, and None is not a valid input.
+    So they should not have defaults. The function signature
+    will need to be re-ordered to have the required inputs first.
+    TODO: This function modifies input parameter c (offsets it by a small amount)
+    and there is no real reason for this. Could lead to bugs in the future
+    and should be fixed.
+    TODO: Why does this function force the center pixel to have value sqrt(3)/2
+    but does not normalize the rest of the PSF accordingly?
+    TODO: Functionality was written to handle the case that c is None, but it fails
+    with TypeError: 'tuple' object does not support item assignment at the line
+    c_adjust[0] = c[0] + eps_offset. This should either be fixed, or the option
+    to have c=None should be removed.
+
     Parameters
     ----------
-    s : (int,int) tuple
-        Size of hexagonal primary beam
-
-    c : (float,float) tuple
-        Location of center of hexagonal primary beam
-
-    d : float
-        Flat-to-flat distance across hexagon
-
-    lam : float
-        Vavelength
-
-    pitch : float
+    s : (int,int) tuple, required
+        Size of output hexagonal beam in pixels
+    c : (float,float) tuple, required
+        Location of center of hexagonal primary beam in pixels.
+        If None, the center is assumed to be at the center of the array.
+    d : float, required
+        Flat-to-flat distance across hexagon in meters
+    lam : float, required
+        Wavelength of the observation in meters
+    pitch : float, required
         Sampling pitch in radians in image plane
-
     affine2d : Affine2d object
         Distortion object
 

@@ -31,13 +31,17 @@ class NRMDefinition:
         self.hdia = nrm_model.flat_to_flat
         self.active_D = nrm_model.diameter
         self.OD = nrm_model.pupil_circumscribed
-        self.ctrs = []
 
         self.read_nrm_model(nrm_model, chooseholes=chooseholes)
 
     def read_nrm_model(self, nrm_model, chooseholes=None):
         """
         Calculate hole centers with appropriate rotation.
+
+        TODO: setting chooseholes to a non-default value does not work.
+        Failure is in mask_definition_ami.read_nrm_model, where there is an
+        IndexError: too many indices for array: array is 1-dimensional, but 2 were indexed.
+        on line ctrs_asbuilt[:, 0] *= -1
 
         Parameters
         ----------

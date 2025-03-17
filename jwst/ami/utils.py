@@ -107,28 +107,21 @@ class Affine2d:
         ----------
         mx : float
             Dimensionless x-magnification
-
         my : float
             Dimensionless y-magnification
-
         sx : float
             Dimensionless x shear
-
         sy : float
             Dimensionless y shear
-
         xo : float
             X-offset in pupil space
-
         yo : float
             Y-offset in pupil space
-
         rotradccw : float
             A counter-clockwise rotation of *THE VECTOR FROM THE ORIGIN TO A
             POINT*, in a FIXED COORDINATE FRAME, by this angle (radians)
             (as viewed in ds9 or with fits NAXIS1 on X and NAXIS2 on Y);
             default is None
-
         name : str, optional
             Name of the Affine2d object to store in name attribute
         """
@@ -151,13 +144,12 @@ class Affine2d:
         self.absdeterminant = np.abs(self.determinant)
         self.name = name
 
-        """
-        numpy vector of length 2, (xprime,yprime) for use in manually writing
-        the dot product needed for the exponent in the transform theorem.  Use
-        this 2vec to dot with (x,y) in fromfunc to create the 'phase argument'
-        Since this uses an offset xo yo in pixels of the affine transformation,
-        these are *NOT* affected by the 'oversample' in image space.  The
-        vector it is dotted with is in image space."""
+        # numpy vector of length 2, (xprime,yprime) for use in manually writing
+        # the dot product needed for the exponent in the transform theorem.  Use
+        # this 2vec to dot with (x,y) in fromfunc to create the 'phase argument'
+        # Since this uses an offset xo yo in pixels of the affine transformation,
+        # these are *NOT* affected by the 'oversample' in image space.  The
+        # vector it is dotted with is in image space.
         self.phase_2vector = np.array((my * xo - sx * yo, mx * yo - sy * xo)) / self.determinant
 
     def forward(self, point):
@@ -219,7 +211,6 @@ class Affine2d:
         ----------
         u : float
             1st argument of F
-
         v : float
             2nd argument of F
 
@@ -248,7 +239,6 @@ class Affine2d:
         ----------
         u : float
             1st argument of F, in units of inverse length units
-
         v : float
             2nd argument of F, in units of inverse length units
 
@@ -291,7 +281,6 @@ def affinepars2header(hdr, affine2d):
     ----------
     hdr : fits header
         FITS header to write affine2d parameters into
-
     affine2d : Affine2d object
         The affine2d object to write into
 
@@ -318,15 +307,15 @@ def makedisk(n, r, ctr=(0, 0)):
 
     Disk is defined as an array whose values =1 in a circular region near
     the center of the array, and =0 elsewhere.
+    TODO: For the n=even case, the default is off-center by 0.5 pixels.
+    ctr=(-0.5, -0.5) would center the disk in the array.
 
     Parameters
     ----------
     n : int
         Size of 1 dimension of the array to be returned
-
     r : int
         Radius of disk
-
     ctr : (int, int)
         Center of disk
 
@@ -361,7 +350,6 @@ def trim(m, s):
     ----------
     m : (int, int) array
         2d index mask
-
     s : int
         Side of the parent array that was used to generate m.
 
@@ -389,8 +377,8 @@ def avoidhexsingularity(rotation):
 
     Parameters
     ----------
-    rotation : float
-       Rotation in degrees int or float
+    rotation : float or int
+       Rotation in degrees
 
     Returns
     -------
@@ -415,10 +403,8 @@ def center_imagepeak(img, r="default", cntrimg=True):
     ----------
     img : 2D float array
         Input image array
-
     r : int
         Offset for center determination
-
     cntrimg : bool
         If True, center on the peak pixel
 
@@ -462,11 +448,15 @@ def min_distance_to_edge(img, cntrimg=False):
     """
     Calculate distance from the brightest pixel in img to the nearest edge of img.
 
+    TODO: Why is the cntrimg distance hard-coded?
+    Would be better if cntrimg=None as default, and then a distance optionally.
+    But if can delete center_imagepeak, then cntrimg=True case is never used and
+    the parameter could perhaps be removed.
+
     Parameters
     ----------
     img : 2D array
         Input array
-
     cntrimg : bool
         If True, only look for the peak pixel near the center of the image
 
@@ -474,7 +464,6 @@ def min_distance_to_edge(img, cntrimg=False):
     -------
     peakx, peaky : integer, integer
         Coordinates of the peak pixel
-
     h : integer
         Distance to the nearest image edge
     """
@@ -529,7 +518,7 @@ def find_centroid(a):
     if you simulate a psf with pixel_offset = ( (0.2, 0.4), ) then blind
         application  centroid = utils.find_centroid()
 
-    returns the image centroid (0.40036, 0.2000093) pixels in image space. To
+    Returns the image centroid (0.40036, 0.2000093) pixels in image space. To
     use this in lg_model, nrm_core,... you will want to calculate the new image
     center using:
     image_center = utils.centerpoint(s) + np.array((centroid[1], centroid[0])
@@ -549,32 +538,36 @@ def find_centroid(a):
 
 def quadratic_extremum(p):
     """
-    Calculate maximum of the quadratic.
+    Calculate extremum of the quadratic.
 
     Parameters
     ----------
     p : float, float, float
-        Quadratic coefficients
+        Quadratic coefficients p[0]*x*x + p[1]*x + p[2]
 
     Returns
     -------
-    y_max : float
-        Maximum of the quadratic
+    float
+        Extremum of the quadratic
     """
-    y_max = -p[1] / (2.0 * p[0]), -p[1] * p[1] / (4.0 * p[0]) + p[2]
-
-    return y_max
+    return -p[1] / (2.0 * p[0]), -p[1] * p[1] / (4.0 * p[0]) + p[2]
 
 
 def findpeak_1d(yvec, xvec):
     """
     Calculate the fit function extreme for a given input vector.
 
+    TODO: there is apparently a bug here. If the inputs were un-swapped
+    in the function call, this function would work fine.
+    This is used only once, in find_affine2d_parameters.find_rotation().
+    Check if the inputs are swapped there too (such that the function "works").
+    If so, swap both so this is self-consistent.
+    If not, see what the impacts of the bug are.
+
     Parameters
     ----------
     yvec : 1D float array
        Function values for input vector
-
     xvec : 1D float array
        Input vector
 
@@ -679,7 +672,6 @@ def quadratic(p, x):
     ----------
     p : float, float, float
         Coefficients of quadratic function: p[0]*x*x + p[1]*x + p[2]
-
     x : 1D float array
         Arguments of p()
 
@@ -784,7 +776,6 @@ def fringes2pistons(fringephases, nholes):
     ----------
     fringephases : 1D int array
         Fringe phases
-
     nholes : int
         Number of holes
 
@@ -810,7 +801,6 @@ def rebin(a=None, rc=(2, 2)):
     ----------
     a : 2D float array
         Input array to bin
-
     rc : 2D float array
         Binning kernel
 
@@ -832,7 +822,6 @@ def krebin(a, shape):
     ----------
     a : 2D float array
         Input array to rebin
-
     shape : tuple (int, int)
         Dimensions of array 'a' binned down by dimensions of binning kernel
 
@@ -855,7 +844,6 @@ def rcrosscorrelate(a=None, b=None):
     ----------
     a : 2D float array
         First input array
-
     b : 2D float array
         Second input array
 
@@ -876,10 +864,8 @@ def lambdasteps(lam, frac_width, steps=4):
     ----------
     lam : float
         Lambda
-
     frac_width : float
         Fractional bandwidth
-
     steps : int
         With lam and frac, determines bin size of lambda array
 
@@ -905,10 +891,8 @@ def tophatfilter(lam_c, frac_width, npoints=10):
     ----------
     lam_c : float
         Lambda
-
     frac_width : float
         Fractional bandwidth
-
     npoints : int
         Number of bins in lambda array
 
@@ -932,7 +916,6 @@ def crosscorrelate(a=None, b=None):
     ----------
     a : 2D complex float array
         First input array
-
     b : 2D complex float array
         Second input array
 
@@ -978,15 +961,14 @@ def rotate2dccw(vectors, thetarad):
 
     Parameters
     ----------
-    vectors : list
-       2D vectors
-
+    vectors : np.ndarray[float]
+       List of 2-D vectors, so the shape is Nx2
     thetarad : float
-       Rotation
+       Rotation to apply in radians
 
     Returns
     -------
-    rot_vectors : array of floats
+    np.ndarray[float]
         Rotated vectors
     """
     c, s = (np.cos(thetarad), np.sin(thetarad))
@@ -994,7 +976,6 @@ def rotate2dccw(vectors, thetarad):
     for vector in vectors:
         ctrs_rotated.append([c * vector[0] - s * vector[1], s * vector[0] + c * vector[1]])
     rot_vectors = np.array(ctrs_rotated)
-
     return rot_vectors
 
 
@@ -1006,10 +987,8 @@ def findmax(mag, vals, mid=1.0):
     ----------
     mag : 1D float array
         Array for abscissa
-
     vals : 1D float array
         Array for ordinate
-
     mid : float
         Midpoint of range
 
@@ -1017,7 +996,6 @@ def findmax(mag, vals, mid=1.0):
     -------
     maxx : float
         Value of mag at the extreme value of vals
-
     maxy : float
         Value of vals corresponding to maxx
     """
@@ -1110,7 +1088,6 @@ def img_median_replace(img_model, box_size):
     ----------
     img_model : image model
         Image model containing input array to filter.
-
     box_size : scalar
         Box size for the median filter
 
@@ -1177,12 +1154,10 @@ def get_flat_spec():
 
     Returns
     -------
-    flatspec : synphot Spectrum object
+    synphot Spectrum object
         Spectrum with constant flux
     """
-    flatspec = synphot.SourceSpectrum(synphot.models.ConstFlux1D, amplitude=1)
-
-    return flatspec
+    return synphot.SourceSpectrum(synphot.models.ConstFlux1D, amplitude=1)
 
 
 def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
@@ -1293,18 +1268,25 @@ def handle_bandpass(bandpass, throughput_model):
     fetch filter throughput and combine with flat spectrum to
     produce appropriate array.
 
+    TODO: When given a synphot object as input, this does NOT return
+    a numpy array; instead it returns a synphot SpectralElement object.
+    This is a bug.
+
     Parameters
     ----------
     bandpass : Synphot spectrum or array, or None
-        User-defined bandpass to override filter/source
+        User-defined bandpass to override filter/source.
+        If bandpass is an array, wavelengths must have units of meters.
     throughput_model : ThroughputModel
         Datamodel containing filter throughput info.
+        Wavelengths are in Angstroms.
         Will not be used if bandpass is not None.
 
     Returns
     -------
     bandpass : array
-        Array of weights, wavelengths used to generate model
+        Array of weights, wavelengths used to generate model.
+        Wavelengths are in meters.
     """
     if bandpass is not None:
         # bandpass can be user-defined synphot object or appropriate array
