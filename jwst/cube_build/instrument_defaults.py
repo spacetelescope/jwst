@@ -693,8 +693,27 @@ class InstrumentInfo:
 
 
     def set_multi_channel_table(self, wave, sroi, wroi, power, softrad):
-        """ Set parameters for multiple channels."""
-        
+        """ Set modified shepard cube parameters for multiple channels.
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters vary with wavelength. This function fills in
+        the self.multich_* parameters
+
+        Parameters
+        ----------
+        wave : numpy float32 array
+            Wave length array of the cube pars reference table
+        sroi : numpy float32 array
+            Spatial roi value to use for corresponding wavelength 
+        wroi : numpy float32 array
+            Wavelength roo values to use for corresponding wavelength
+        power : numpy float32 array
+            Power of the modified shepard weighting function to use 
+            for corresponding wavelength
+        softrad : numpy float32 array
+            Modified shepard weighting function scale factor to use
+            for corresponding wavelength
+        """  
         self.multich_wavelength.append(wave)
         self.multich_sroi.append(sroi)
         self.multich_wroi.append(wroi)
@@ -704,6 +723,27 @@ class InstrumentInfo:
 
 
     def set_multi_channel_emsm_table(self, wave, sroi, wroi, scalerad):
+        """ Set cube parameters for multiple channels for 
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters vary with wavelength. This function fills in
+        the self.multich_* parameters
+
+        Parameters
+        ----------
+        wave : numpy float32 array
+            Wave length array of the cube pars reference table
+        sroi : numpy float32 array
+            Spatial roi value to use for corresponding wavelength 
+        wroi : numpy float32 array
+            Wavelength roo values to use for corresponding wavelength
+        power : numpy float32 array
+            Power of the modified shepard weighting function to use 
+            for corresponding wavelength
+        softrad : numpy float32 array
+            Modified shepard weighting function scale factor to use
+            for corresponding wavelength
+        """        
         self.multich_wavelength.append(wave)
         self.multich_sroi.append(sroi)
         self.multich_wroi.append(wroi)
