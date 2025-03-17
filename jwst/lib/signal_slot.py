@@ -247,7 +247,7 @@ class Signals(dict):
         if key not in self:
             super(Signals, self).__setitem__(key, value)
         else:
-            logger.warning('Signals: signal "{}" already exists.'.format(key))
+            logger.warning("Signals: signal '%s' already exists.", key)
 
     def __getattr__(self, key):
         for signal in self:
