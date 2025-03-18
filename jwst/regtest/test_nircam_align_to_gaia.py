@@ -4,6 +4,7 @@ from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 from jwst.stpipe import Step
+from jwst.tweakreg import TweakRegStep
 
 
 @pytest.fixture(scope="module")
@@ -40,3 +41,20 @@ def test_tweakreg_with_gaia(run_image3pipeline, rtdata_module, root):
 
         assert_allclose(ra, ra_truth)
         assert_allclose(dec, dec_truth)
+
+
+@pytest.mark.bigdata
+def test_sourcecat_as_abs_refcat(run_image3pipeline, rtdata_module):
+    """
+    Test that source catalog output is compatible with tweakreg.
+    
+    Some workflows require using source catalog step output as the
+    absolute reference catalog for tweakreg. This test ensures that
+    this is possible. This is not nircam-specific, but is included here
+    to avoid adding an additional test run through image3.
+    """
+    rtdata = rtdata_module
+    rtdata.output = "LMC_F277W_modA_dither_mosaic_cat.ecsv" # output from source catalog step
+    rtdata.get_asn("nircam/image/level3_F277W_3img_asn.json")
+
+    TweakRegStep.call(rtdata.input, abs_refcat = rtdata.output)
