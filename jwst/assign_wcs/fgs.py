@@ -1,6 +1,5 @@
-"""
-FGS WCS pipeline - depends on EXP_TYPE.
-"""
+"""FGS WCS pipeline - depends on EXP_TYPE."""
+
 import logging
 
 from astropy import units as u
@@ -10,8 +9,12 @@ from gwcs import coordinate_frames as cf
 
 from stdatamodels.jwst.datamodels import DistortionModel
 
-from .util import (not_implemented_mode, subarray_transform,
-                   transform_bbox_from_shape, bounding_box_from_subarray)
+from .util import (
+    not_implemented_mode,
+    subarray_transform,
+    transform_bbox_from_shape,
+    bounding_box_from_subarray,
+)
 from . import pointing
 
 log = logging.getLogger(__name__)
@@ -28,45 +31,49 @@ def create_pipeline(input_model, reference_files):
     Parameters
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
-        The data model.
+        The input data model.
     reference_files : dict
-        {reftype: file_name} mapping.
-        Reference files.
+        Mapping between reftype (keys) and reference file name (vals).
+
+    Returns
+    -------
+    pipeline : list
+        The WCS pipeline, suitable for input into `gwcs.WCS`.
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
-    log.info("Creating a FGS {0} pipeline with references {1}".format(
-        exp_type, reference_files))
+    log.info(f"Creating a FGS {exp_type} pipeline with references {reference_files}")
     return pipeline
 
 
 def imaging(input_model, reference_files):
     """
-    The FGS imaging WCS pipeline.
+    Create the WCS pipeline for FGS imaging data.
 
     It includes 3 coordinate frames - "detector", "v2v3" and "world".
-    Uses a ``distortion`` reference file.
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
-        The data model.
+    input_model : ImageModel
+        The input data model.
     reference_files : dict
-        {reftype: file_name} mapping.
-        Reference files.
+        Mapping between reftype (keys) and reference file name (vals).
+        Requires 'distortion' reference files
 
     Returns
     -------
     pipeline : list
-        The WCS pipeline.
+        The WCS pipeline, suitable for input into `gwcs.WCS`.
     """
     # Create coordinate frames for the ``imaging`` mode.
-    detector = cf.Frame2D(name='detector', axes_order=(0, 1), unit=(u.pix, u.pix))
-    v2v3 = cf.Frame2D(name='v2v3', axes_order=(0, 1), axes_names=('v2', 'v3'),
-                      unit=(u.arcsec, u.arcsec))
-    v2v3vacorr = cf.Frame2D(name='v2v3vacorr', axes_order=(0, 1),
-                            axes_names=('v2', 'v3'), unit=(u.arcsec, u.arcsec))
-    world = cf.CelestialFrame(name='world', reference_frame=coord.ICRS())
+    detector = cf.Frame2D(name="detector", axes_order=(0, 1), unit=(u.pix, u.pix))
+    v2v3 = cf.Frame2D(
+        name="v2v3", axes_order=(0, 1), axes_names=("v2", "v3"), unit=(u.arcsec, u.arcsec)
+    )
+    v2v3vacorr = cf.Frame2D(
+        name="v2v3vacorr", axes_order=(0, 1), axes_names=("v2", "v3"), unit=(u.arcsec, u.arcsec)
+    )
+    world = cf.CelestialFrame(name="world", reference_frame=coord.ICRS())
 
     # Create the v2v3 to sky transform.
     tel2sky = pointing.v23tosky(input_model)
@@ -88,29 +95,41 @@ def imaging(input_model, reference_files):
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
-        v3_ref=input_model.meta.wcsinfo.v3_ref
+        v3_ref=input_model.meta.wcsinfo.v3_ref,
     )
 
-    pipeline = [(detector, distortion),
-                (v2v3, va_corr),
-                (v2v3vacorr, tel2sky),
-                (world, None)]
+    pipeline = [(detector, distortion), (v2v3, va_corr), (v2v3vacorr, tel2sky), (world, None)]
     return pipeline
 
 
 def imaging_distortion(input_model, reference_files):
     """
     Create the transform from "detector" to "v2v3".
+
+    Parameters
+    ----------
+    input_model : ImageModel
+        The input data model.
+    reference_files : dict
+        Mapping between reftype (keys) and reference file name (vals).
+        Requires 'distortion' reference file.
+
+    Returns
+    -------
+    transform : `astropy.modeling.Model
+        The transform from "detector" to "v2v3".
     """
-    dist = DistortionModel(reference_files['distortion'])
+    dist = DistortionModel(reference_files["distortion"])
     transform = dist.model
 
     # Check if the transform in the reference file has a ``bounding_box``.
     # If not set a ``bounding_box`` equal to the size of the image.
     try:
-        transform.bounding_box
+        transform.bounding_box  # noqa: B018
     except NotImplementedError:
-        bind_bounding_box(transform, transform_bbox_from_shape(input_model.data.shape, order="F"), order="F")
+        bind_bounding_box(
+            transform, transform_bbox_from_shape(input_model.data.shape, order="F"), order="F"
+        )
 
     dist.close()
     return transform
@@ -118,9 +137,10 @@ def imaging_distortion(input_model, reference_files):
 
 # EXP_TYPE to function mapping.
 # The function creates the WCS pipeline.
-exp_type2transform = {'fgs_image': imaging,
-                      'fgs_focus': imaging,
-                      'fgs_skyflat': not_implemented_mode,
-                      'fgs_intflat': not_implemented_mode,
-                      'fgs_dark': not_implemented_mode
-                      }
+exp_type2transform = {
+    "fgs_image": imaging,
+    "fgs_focus": imaging,
+    "fgs_skyflat": not_implemented_mode,
+    "fgs_intflat": not_implemented_mode,
+    "fgs_dark": not_implemented_mode,
+}

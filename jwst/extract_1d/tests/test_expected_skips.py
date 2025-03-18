@@ -1,4 +1,5 @@
 import stdatamodels.jwst.datamodels as dm
+from jwst.combine_1d import Combine1dStep
 from jwst.extract_1d import Extract1dStep
 from jwst.photom import PhotomStep
 import pytest
@@ -41,8 +42,10 @@ def test_expected_skip_niriss_soss_full(mock_niriss_full):
     with mock_niriss_full as model:
         result = Extract1dStep().process(model)
         result2 = PhotomStep().process(result)
+        result3 = Combine1dStep().process(result)
         assert result2.meta.cal_step.photom == "SKIPPED"
         assert result2.meta.cal_step.extract_1d == "SKIPPED"
+        assert result3.meta.cal_step.combine_1d == "SKIPPED"
         assert np.all(result2.data == model.data)
 
 
@@ -50,8 +53,10 @@ def test_expected_skip_niriss_soss_f277w(mock_niriss_f277w):
     with mock_niriss_f277w as model:
         result = Extract1dStep().process(model)
         result2 = PhotomStep().process(result)
+        result3 = Combine1dStep().process(result)
         assert result2.meta.cal_step.photom == "SKIPPED"
         assert result2.meta.cal_step.extract_1d == "SKIPPED"
+        assert result3.meta.cal_step.combine_1d == "SKIPPED"
         assert np.all(result2.data == model.data)
 
 
