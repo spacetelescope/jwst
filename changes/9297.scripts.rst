@@ -1,1 +1,1 @@
-Remove verify_install_requires this was a test script that should not have been installed.
+Removed ``verify_install_requires`` command. This was a test script that should not have been installed.
