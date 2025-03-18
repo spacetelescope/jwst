@@ -5,6 +5,8 @@ from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, Readnois
 
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep, set_groupdq
 
+from jwst.lib.tests.test_reffile_utils import generate_test_refmodel_metadata
+
 DELIM = "-" * 80
 
 test_dq_flags = dqflags.pixel
@@ -21,14 +23,6 @@ GROUP_SELECTION_PARAMETERS = [
     (3, 20, "Last group number >= #groups (20), reset to 19"),
     (10, 6, "firstgroup (10) cannot be >= lastgroup (6)")
 ]
-
-
-def generate_refmodel_metadata(refmodel):
-    refmodel.meta.description = "filler"
-    refmodel.meta.reftype = "filler"
-    refmodel.meta.author = "Py Test"
-    refmodel.meta.pedigree = "Pytest"
-    refmodel.meta.useafter = "2015-01-01T01:00:00"
 
 
 @pytest.fixture(scope="module")
