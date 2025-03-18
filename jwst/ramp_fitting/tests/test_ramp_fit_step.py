@@ -38,7 +38,7 @@ def generate_miri_reffiles():
     gain_model.meta.subarray.ystart = 1
     gain_model.meta.subarray.xsize = xsize
     gain_model.meta.subarray.ysize = ysize
-    generate_refmodel_metadata(gain_model)
+    generate_test_refmodel_metadata(gain_model)
 
     inreadnoise = 5
     rnoise = np.ones(shape=(ysize, xsize), dtype=np.float64) * inreadnoise
@@ -48,7 +48,7 @@ def generate_miri_reffiles():
     readnoise_model.meta.subarray.ystart = 1
     readnoise_model.meta.subarray.xsize = xsize
     readnoise_model.meta.subarray.ysize = ysize
-    generate_refmodel_metadata(readnoise_model)
+    generate_test_refmodel_metadata(readnoise_model)
 
     return gain_model, readnoise_model
 
@@ -196,8 +196,8 @@ def test_subarray_5groups(tmp_path_factory):
 
     model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(
         ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50)
-    generate_refmodel_metadata(rnModel)
-    generate_refmodel_metadata(gain)
+    generate_test_refmodel_metadata(rnModel)
+    generate_test_refmodel_metadata(gain)
     gain.save(gainfile)
     rnModel.save(readnoisefile)
 
