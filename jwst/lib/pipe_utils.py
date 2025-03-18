@@ -121,8 +121,8 @@ def match_nans_and_flags(input_model):
             data_shape = data.shape
         else:
             if data.shape != data_shape:
-                log.warning(f"Mismatched data shapes; skipping invalid data "
-                            f"updates for extension '{extension}'")
+                log.warning("Mismatched data shapes; skipping invalid data "
+                            "updates for extension '%s'", extension)
                 continue
             is_invalid |= np.isnan(data)
 

@@ -596,14 +596,14 @@ def add_wcs(filename, allow_any_file=False, force_level1bmodel=False,
         model = datamodels.open(filename, guess=allow_any_file)
     except TypeError:
         if force_level1bmodel:
-            logger.warning(f'Input {filename} is an unknown model, opening as a Level1bModel.')
+            logger.warning("Input %s is an unknown model, opening as a Level1bModel.", filename)
             model = datamodels.Level1bModel(filename)
         else:
             raise
 
     try:
         if type(model) not in EXPECTED_MODELS:
-            logger.warning(f'Input {model} is not of an expected type (uncal, rate, rateints)')
+            logger.warning("Input %s is not of an expected type (uncal, rate, rateints)", model)
             logger.warning('    Updating pointing may have no effect or detrimental effects on the WCS information,')
             logger.warning('    especially if the input is the result of Level2b or higher calibration.')
             if not allow_any_file:
@@ -815,9 +815,9 @@ def update_wcs_from_fgs_guiding(model, t_pars, default_roll_ref=0.0, default_vpa
     )
 
     logger.info('WCS info:')
-    logger.info(f'\tcrpix1: {crpix1} crpix2: {crpix2}')
-    logger.info(f'\tcrval1: {crval1} crval2: {crval2}')
-    logger.info(f'\tpc_matrix: {pc_matrix}')
+    logger.info("\tcrpix1: %s crpix2: %s", crpix1, crpix2)
+    logger.info("\tcrval1: %s crval2: %s", crval1, crval2)
+    logger.info("\tpc_matrix: %s", pc_matrix)
 
     model.meta.wcsinfo.crpix1 = crpix1
     model.meta.wcsinfo.crpix2 = crpix2
@@ -1166,7 +1166,7 @@ def calc_transforms_coarse_tr_202111(t_pars: TransformParameters):
             fgsid = 1
             if detector == 'guider1':
                 fgsid = 2
-            logger.info(f'COARSE mode using detector {detector} implies use of FGS{fgsid}')
+            logger.info("COARSE mode using detector %s implies use of FGS%s", detector, fgsid)
     if fgsid not in FGSIDS:
         fgsid = 1
     t_pars.fgsid = fgsid
@@ -1241,14 +1241,14 @@ def calc_transforms_track_tr_202111(t_pars: TransformParameters):
     # Check on telemetry for FGS ID. If invalid, use either user-specified or default to 1.
     fgsid = t_pars.pointing.fgsid
     if fgsid not in FGSIDS:
-        logger.warning(f'Method {t_pars.method} requires a valid FGS ID in telementry.')
-        logger.warning('However telemetry reports an invalid id of {fgsid}')
+        logger.warning("Method %s requires a valid FGS ID in telementry.", t_pars.method)
+        logger.warning("However telemetry reports an invalid id of %s", fgsid)
         if t_pars.fgsid in FGSIDS:
             fgsid = t_pars.fgsid
-            logger.warning(f'Using user-specified ID of {fgsid}')
+            logger.warning("Using user-specified ID of %s", fgsid)
         else:
             fgsid = 1
-            logger.warning(f'Using FGS{fgsid} as the default for the guiding FGS')
+            logger.warning("Using FGS%s as the default for the guiding FGS", fgsid)
     t_pars.fgsid = fgsid
 
     # Determine V3PA@GS
