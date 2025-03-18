@@ -1,0 +1,1 @@
+Remove verify_install_requires this was a test script that should not have been installed.
