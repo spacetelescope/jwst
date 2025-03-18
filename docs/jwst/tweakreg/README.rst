@@ -135,7 +135,10 @@ measured sources in the combined field-of-view of the set of input
 images. This catalog is generated from the catalogs available
 through the `STScI MAST Catalogs`_ and has the ability to account
 for proper motion to a given epoch. The epoch is computed from the observation date and time
-of the input data.
+of the input data. If ``abs_refcat`` is set to a path to an existing
+file, then the catalog will be read from that file. The catalog must
+contain either ``'RA'`` and ``'DEC'`` columns or an Astropy-readable
+``sky_centroid``.
 
 .. _STScI MAST Catalogs: https://outerspace.stsci.edu/display/MASTDATA/Catalog+Access
 
@@ -212,6 +215,10 @@ The ``tweakreg`` step has the following optional arguments:
   (Default= `'ecsv'`)
 
 * ``catfile``: Name of the file with a list of custom user-provided catalogs.
+  The file must contain a two-column list of format
+  ``<input file name> <catalog file name>`` with one entry per input filename
+  in the input association.
+  This parameter has no effect if ``use_custom_catalogs`` is `False`.
   (Default= `''`)
 
 * ``bkg_boxsize``: A positive `int` indicating the background mesh box size
