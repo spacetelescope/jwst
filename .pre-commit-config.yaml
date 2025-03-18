@@ -59,7 +59,6 @@ repos:
             jwst/spectral_leak/.* |
             jwst/straylight/.* |
             jwst/tests/.* |
-            jwst/tso_photometry/.* |
             jwst/wfs_combine/.* |
             docs/.* |
             jwst/regtest/test_.* |
