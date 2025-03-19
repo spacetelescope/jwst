@@ -252,8 +252,6 @@ def extract_tso_object(
             output_model.meta.wcs = subwcs
             output_model.meta.wcs.bounding_box = util.wcs_bbox_from_shape(ext_data.shape)
             if compute_wavelength:
-                # this seems to happen near-instantly, suggest remove this message
-                # log.debug("Computing wavelengths (this takes a while ...)")
                 output_model.wavelength = compute_tso_wavelength_array(output_model)
             output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same
             output_model.meta.wcsinfo.siaf_xref_sci = source_xpos + 1  # back to 1-indexed
@@ -400,7 +398,7 @@ def extract_grism_objects(
     if len(grism_objects) == 0:
         raise ValueError("No grism objects created from source catalog")
 
-    log.info("Extracting {len(grism_objects)} grism objects")
+    log.info(f"Extracting {len(grism_objects)} grism objects")
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
 

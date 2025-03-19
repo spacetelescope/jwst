@@ -33,9 +33,8 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
 
     Returns
     -------
-    output_model : DataModel
-        DataModel containing extracted slit(s).  Could be a SlitModel or MultiSlitModel,
-        depending on how many slits are extracted.
+    output_model : SlitModel or MultiSlitModel
+        DataModel containing extracted slit(s)
     """
     exp_type = input_model.meta.exposure.type.upper()
 
@@ -124,8 +123,6 @@ def select_slits(open_slits, slit_names, source_ids):
     """
     Select the slits to process.
 
-    Given the full set of open slits and the slit_names and source_ids lists.
-
     Parameters
     ----------
     open_slits : list
@@ -188,6 +185,8 @@ def process_slit(input_model, slit):
         Input data model. The ``CubeModel`` is used only for TSO data, i.e.
         ``NRS_BRIGHTOBJ`` exposure or internal lamp exposures with lamp_mode
         set to ``BRIGHTOBJ``.
+    slit : `~stdatamodels.jwst.transforms.models.Slit`
+        A slit object.
 
     Returns
     -------
@@ -350,7 +349,12 @@ def extract_slit(input_model, slit):
 
 
 class DitherMetadataError(Exception):
-    """Handle DitherMetadataError exception."""
+    """
+    Handle DitherMetadataError exception.
+
+    This exception is raised if a Slit object doesn't have the required
+    dither attribute, or the x_ and y_ offsets aren't numeric.
+    """
 
     pass
 

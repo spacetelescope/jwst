@@ -24,7 +24,7 @@ def extract2d(
     nbright=None,
 ):
     """
-    Perform the main extract_2d function.
+    Extract rectangular cutouts around each spectrum from a spectral dataset.
 
     Parameters
     ----------
