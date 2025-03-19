@@ -30,7 +30,7 @@ def run_detector1pipeline(rtdata_module):
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
                                     "refpix", "linearity",
                                     "dark_current", "jump", "rate", "rateints"])
-def test_nircam_image_stages12(run_detector1pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
+def test_nircam_dhs_detector1(run_detector1pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on NIRCam DHS mock data."""
     rtdata = rtdata_module
     rtdata.input = "jw04453010001_02106_00001_nrca1_genheader_uncal.fits"
