@@ -1,1 +1,0 @@
-Refactor for maintainability, fix intermediate filenames when input datamodel is read from memory, and stop producing an unused intermediate output file.

@@ -1,1 +1,0 @@
-Increase minimum version of asdf-astropy to 0.6.0
