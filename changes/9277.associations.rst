@@ -1,0 +1,1 @@
+Spec2 associations for NIRCam pure parallel WFSS observations now select the first long-wavelength image, if present, rather than the first image listed.

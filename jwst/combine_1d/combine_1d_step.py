@@ -57,8 +57,13 @@ class Combine1dStep(Step):
             A single combined 1D spectrum.
         """
         with datamodels.open(input_data) as input_model:
-            result = combine1d.combine_1d_spectra(
-                input_model, self.exptime_key, sigma_clip=self.sigma_clip
-            )
+            try:
+                result = combine1d.combine_1d_spectra(
+                    input_model, self.exptime_key, sigma_clip=self.sigma_clip
+                )
+            except TypeError:
+                self.log.error("Invalid input model for combine_1d; skipping.")
+                result = input_model.copy()
+                result.meta.cal_step.combine_1d = "SKIPPED"
 
         return result
