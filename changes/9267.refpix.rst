@@ -1,1 +1,0 @@
-Fix an indexing bug in the SIRS kernel convolution code.

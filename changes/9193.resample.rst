@@ -1,1 +1,0 @@
-Fix MIRI LRS s_region and WCS in resample_spec
