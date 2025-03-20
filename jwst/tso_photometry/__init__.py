@@ -1,4 +1,4 @@
-"""Find TSO photometry sources and save them in a catalog."""
+"""Perform aperture photometry for a time-series observation."""
 
 from .tso_photometry_step import TSOPhotometryStep
 
