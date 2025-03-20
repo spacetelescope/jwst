@@ -1,1 +1,0 @@
-Gracefully skip processing when input data does not contain spectra.
