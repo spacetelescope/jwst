@@ -135,25 +135,22 @@ measured sources in the combined field-of-view of the set of input
 images. This catalog is generated from the catalogs available
 through the `STScI MAST Catalogs`_ and has the ability to account
 for proper motion to a given epoch. The epoch is computed from the observation date and time
-of the input data.
+of the input data. If ``abs_refcat`` is set to a path to an existing
+file, i.e., a user-supplied external reference catalog,
+then the catalog will be read from that file. The catalog must be readable
+into an :py:meth:`~astropy.table.Table` object and contain either
+``'RA'`` and ``'DEC'`` columns (in degrees) or an Astropy-readable ``sky_centroid``.
+An optional column in the catalog is the ``'weight'`` column, which when present,
+will be used in fitting.
 
 .. _STScI MAST Catalogs: https://outerspace.stsci.edu/display/MASTDATA/Catalog+Access
 
 The combined source catalog derived in the first step
 then gets cross-matched and fit to this astrometric reference catalog.
-The pipeline initially supports fitting to the
-GAIADR3 catalog, with the option to select the GAIADR2 or GAIADR1 instead.
 The results of this one fit then gets back-propagated to all the
 input images to align them all to the astrometric reference frame while
 maintaining the relative alignment between the images.
 
-For this part of alignment, instead of 'GAIADR1', 'GAIADR2', or 'GAIADR3', users can
-supply an external reference catalog by providing a path to an existing
-file. A user-supplied catalog must contain ``'RA'`` and ``'DEC'`` columns
-indicating reference source world coordinates (in degrees). An optional column
-in the catalog is the ``'weight'`` column, which when present, will be used
-in fitting. The catalog must be in a format automatically recognized by
-:py:meth:`~astropy.table.Table.read`.
 
 Grouping
 --------
@@ -212,6 +209,10 @@ The ``tweakreg`` step has the following optional arguments:
   (Default= `'ecsv'`)
 
 * ``catfile``: Name of the file with a list of custom user-provided catalogs.
+  The file must contain a two-column list of format
+  ``<input file name> <catalog file name>`` with one entry per input filename
+  in the input association.
+  This parameter has no effect if ``use_custom_catalogs`` is `False`.
   (Default= `''`)
 
 * ``bkg_boxsize``: A positive `int` indicating the background mesh box size
