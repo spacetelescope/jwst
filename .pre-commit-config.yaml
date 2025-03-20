@@ -60,7 +60,6 @@ repos:
             jwst/straylight/.* |
             jwst/tests/.* |
             jwst/tso_photometry/.* |
-            jwst/wfs_combine/.* |
             docs/.* |
             jwst/regtest/test_.* |
             .*/tests/test_.*
