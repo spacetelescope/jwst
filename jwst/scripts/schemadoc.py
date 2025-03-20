@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""Create documentation from the schema file of a datamodel class."""
+
 # Copyright (C) 2018 Association of Universities for Research in Astronomy (AURA)
 
 # Redistribution and use in source and binary forms, with or without
@@ -30,16 +32,25 @@
 # DAMAGE.
 
 import argparse
-import sys
+import logging
+from pathlib import Path
 
 from stdatamodels.schema import build_docstring
 
 
-def get_docstrings(template, model_names, all=False):
-    # Get the docstring for every model class
+# Set logger to only print to screen
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
+stream_handle = logging.StreamHandler()
+stream_handle.setLevel(logging.INFO)
+logger.addHandler(stream_handle)
+
+
+def get_docstrings(template, model_names, all_models=False):
+    """Get the docstring for every model class."""
     from stdatamodels.jwst.datamodels import _defined_models as defined_models
 
-    if all:
+    if all_models:
         klasses = defined_models
     else:
         klasses = {}
@@ -50,35 +61,34 @@ def get_docstrings(template, model_names, all=False):
         try:
             docstring = build_docstring(klass, template)
         except Exception as err:
-            print(klassname, ':', str(err), file=sys.stderr)
+            logging.error(f"{klassname} : {err}")
         else:
-            print('.. ' + klassname + ' ..')
-            print(docstring, end='')
+            logging.info(f".. {klassname} ..")
+            logging.info(docstring)
 
 
 def main():
+    """Get docsitrings from a specific or all datamodel(s)."""
     long_description = """
-    Create documentation from the schema file of a datamodel class
+    Create documentation from the schema file of a datamodel class.
     """
-
     parser = argparse.ArgumentParser(description=long_description)
-    parser.add_argument('-a', '--all', action='store_true',
-                        help='generate docstring for all models')
-    parser.add_argument('-t', '--template', type=str,
-                        help='input file containing templates')
-    parser.add_argument('models', nargs='*',
-                        help='Models to generate docstrings for')
+    parser.add_argument(
+        "-a", "--all_models", action="store_true", help="generate docstring for all models"
+    )
+    parser.add_argument("-t", "--template", type=str, help="input file containing templates")
+    parser.add_argument("models", nargs="*", help="Models to generate docstrings for")
     args = parser.parse_args()
 
     if args.template is None:
-        template = '{path} : {title} ({datatype})\n'
+        template = "{path} : {title} ({datatype})\n"
     else:
-        with open(args.template, 'r') as fd:
+        with Path.open(args.template, "r") as fd:
             template = fd.readlines()
-            template = ''.join(template)
+            template = "".join(template)
 
-    get_docstrings(template, args.models, all=args.all)
+    get_docstrings(template, args.models, all_models=args.all_models)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
