@@ -126,6 +126,18 @@ IRS2_reference_sections = {
 
 NRS_edgeless_subarrays = ["SUB512", "SUB512S", "SUB32"]
 
+# Special sections used for multistripe reads - we will capture refpix
+# locations in a given amplifier by selecting on the reference pixel
+# dq flag, so we only need to provide amplifier regions. We skip the first
+# and last 4 columns as they do not contain science pixels to be corrected.
+
+MULTISTRIPE_AMPLIFIER_REGIONS = {
+    "A": (4, 512),
+    "B": (512, 1024),
+    "C": (1024, 1536),
+    "D": (1536, 2044),
+}
+
 #
 # MIR Reference section dictionaries are zero indexed and specify the values
 # to be used in the following slice:
@@ -226,6 +238,9 @@ class Dataset:
             is_subarray = True
             self.subarray = input_model.meta.subarray.name
         self.is_subarray = is_subarray
+        self.is_multistripe = False
+        if getattr(input_model.meta.subarray, "multistripe_reads1", None) is not None:
+            self.is_multistripe = True
 
         self.zeroframe_proc = False
 
@@ -309,7 +324,7 @@ class Dataset:
         pixeldq : NDArray
             Numpy array for the pixeldq data with the full shape of the detector
         """
-        if self.is_subarray:
+        if self.is_subarray and not self.is_multistripe:
             # deal with subarrays by embedding the pixeldq array in a full-sized
             # array with DO_NOT_USE and REFERENCE_PIXEL dqflags bit set where the
             # reference pixels live, except where the data are embedded
@@ -363,7 +378,7 @@ class Dataset:
         """
         if self.group is None:
             self.group = np.zeros(self.full_shape, dtype=self.input_model.data.dtype)
-        if self.is_subarray:
+        if self.is_subarray and not self.is_multistripe:
             self.group[self.rowstart : self.rowstop, self.colstart : self.colstop] = (
                 self.input_model.data[integration, group].copy()
             )
@@ -383,7 +398,7 @@ class Dataset:
             Index of the group, within the integration, which needs to be
             updated with the newly processed group array
         """
-        if self.is_subarray:
+        if self.is_subarray and not self.is_multistripe:
             self.input_model.data[integration, group] = self.group[
                 self.rowstart : self.rowstop, self.colstart : self.colstop
             ]
@@ -1194,7 +1209,9 @@ class NIRDataset(Dataset):
     def do_corrections(self):
         """Do reference pixel correction for NIR data."""
         if self.is_subarray:
-            if self.noutputs == 4:
+            if self.is_multistripe:
+                self.do_multistripe_corrections()
+            elif self.noutputs == 4:
                 self.do_fullframe_corrections()
             else:
                 self.do_subarray_corrections()
@@ -1293,6 +1310,115 @@ class NIRDataset(Dataset):
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration, group)
         log.setLevel(logging.INFO)
+        return
+
+    def get_multistripe_refvalues(self, group):
+        """
+        Collect refpix values for each amplifier.
+
+        If odd_even_columns, additionally separate
+        each amplifier reference value by odd and
+        even column. All values returned are sigma-
+        clipped.
+
+        Parameters
+        ----------
+        group : np.array[float]
+            The current group to be corrected.
+
+        Returns
+        -------
+        refpix : dict
+            The dictionary of reference values,
+            keyed on amplifier name and stored
+            either as odd and even values, or
+            as the mean value.
+        """
+        refpix = {}
+        for amplifier in self.amplifiers:
+            amp_xi, amp_xf = MULTISTRIPE_AMPLIFIER_REGIONS[amplifier]
+            refpix[amplifier] = {}
+            mask = np.where(
+                self.pixeldq[:, amp_xi:amp_xf] & dqflags.pixel["REFERENCE_PIXEL"] > 0, True, False
+            )
+            if self.odd_even_columns:
+                odd_mask = mask.copy()
+                odd_mask[:, ::2] = False
+                even_mask = mask.copy()
+                even_mask[:, 1::2] = False
+
+                even_ref = group[:, amp_xi:amp_xf][even_mask]
+                even_dq = self.pixeldq[:, amp_xi:amp_xf][even_mask]
+                even = self.sigma_clip(even_ref, even_dq)
+                odd_ref = group[:, amp_xi:amp_xf][odd_mask]
+                odd_dq = self.pixeldq[:, amp_xi:amp_xf][odd_mask]
+                odd = self.sigma_clip(odd_ref, odd_dq)
+
+                refpix[amplifier]["odd"] = odd
+                refpix[amplifier]["even"] = even
+            else:
+                ref = group[:, amp_xi:amp_xf][mask]
+                dq = self.pixeldq[:, amp_xi:amp_xf][mask]
+                mean = self.sigma_clip(ref, dq)
+                refpix[amplifier]["mean"] = mean
+
+        return refpix
+
+    def apply_multistripe_correction(self, group, refvalues):
+        """
+        Remove the reference pixel signal from the data.
+
+        Parameters
+        ----------
+        group : np.array[float]
+            The current group being corrected.
+        refvalues : dict
+            The dictionary of reference pixel
+            signals.
+
+        Returns
+        -------
+        np.array[float]
+            The group with the reference pixel
+            signal removed.
+        """
+        for amplifier in self.amplifiers:
+            amp_xi, amp_xf = MULTISTRIPE_AMPLIFIER_REGIONS[amplifier]
+            if self.odd_even_columns:
+                group[:, amp_xi:amp_xf:2] -= refvalues[amplifier]["even"]
+                group[:, amp_xi + 1 : amp_xf : 2] -= refvalues[amplifier]["odd"]
+            else:
+                group[:, amp_xi:amp_xf] -= refvalues[amplifier]["mean"]
+
+        return group
+
+    def do_multistripe_corrections(self):
+        """
+        Do reference pixel corrections for multistripe data.
+
+        Existing reference pixel algorithms assume
+        fixed, contiguous refpix regions; multistripe
+        needs separate methods.
+        """
+        #  First transform pixeldq array to detector coordinates
+        self.dms_to_detector_dq()
+
+        for integration_num in range(self.nints):
+            for group_num in range(self.ngroups):
+                # Select group and transform to detector frame.
+                self.dms_to_detector(integration_num, group_num)
+                thisgroup = self.group
+
+                refvalues = self.get_multistripe_refvalues(thisgroup)
+
+                thisgroup = self.apply_multistripe_correction(thisgroup, refvalues)
+
+                self.group = thisgroup
+                #  Now transform back from detector to DMS coordinates.
+                self.detector_to_dms(integration_num, group_num)
+
+        log.setLevel(logging.INFO)
+
         return
 
 
