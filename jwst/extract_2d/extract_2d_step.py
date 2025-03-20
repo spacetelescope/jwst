@@ -28,7 +28,7 @@ class Extract2dStep(Step):
 
     def process(self, input_model):
         """
-        Perform the extract_ed calibration step.
+        Perform the extract_2d calibration step.
 
         Parameters
         ----------
