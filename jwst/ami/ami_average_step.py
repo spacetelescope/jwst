@@ -5,7 +5,7 @@ __all__ = ["AmiAverageStep"]
 
 
 # TODO: What is the history of this step? It's not used in the pipeline.
-# Was it superseded by ami_average_step.py, or does it remain useful?
+# Was it superseded or does it remain useful?
 
 
 class AmiAverageStep(Step):

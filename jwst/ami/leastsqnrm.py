@@ -4,8 +4,6 @@ import numpy as np
 import numpy.linalg as linalg
 from scipy.special import comb, jv
 
-from . import hexee
-
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
@@ -210,26 +208,6 @@ def primarybeam(kx, ky):
     return env_int
 
 
-def hexpb():
-    """
-    Calculate the primary beam for hexagonal holes.
-
-    Returns
-    -------
-    pb * pb.conj() : 2D float array
-        Primary beam for hexagonal holes
-    """
-    pb = hexee.hex_eeag(
-        s=hexpb.size,
-        c=(hexpb.offx, hexpb.offy),
-        d=hexpb.d,
-        lam=hexpb.lam,
-        pitch=hexpb.pitch,
-    )
-
-    return pb * pb.conj()
-
-
 def ffc(kx, ky):
     """
     Calculate cosine terms of analytic model.
@@ -277,121 +255,6 @@ def ffs(kx, ky):
     )
 
     return sin_array
-
-
-def model_array(ctrs, lam, oversample, pitch, fov, d, centering="PIXELCENTERED", shape="circ"):
-    """
-    Create a model using the specified wavelength.
-
-    Parameters
-    ----------
-    ctrs : 2D float array
-        Centers of holes
-    lam : float
-        Wavelength in the bandpass for this particular model
-    oversample : int
-        Oversampling factor
-    pitch : float
-        Sampling pitch in radians in image plane
-    fov : int
-        Number of detector pixels on a side.
-    d : float
-        Hole diameter for 'circ'; flat to flat distance for 'hex
-    centering : str
-        Subpixel centering; for now only option is PIXELCENTERED, which means
-        putting the brightest detector pixel at the center of the trimmed data
-        frame or simulated image.
-    shape : str
-        Shape of hole; possible values are 'circ', 'hex', and 'fringe'
-
-    Returns
-    -------
-    ffmodel : list of 3 2D float arrays
-        Model array
-        if 'shape' == 'circ', returns the primary beam (2D float array)
-            for circular holes.
-        if 'shape' == 'hex', returns the primary beam (2D float array)
-            for hexagonal holes.
-    """
-    if centering == "PIXELCORNER":
-        off = np.array([0.0, 0.0])
-    elif centering == "PIXELCENTERED":
-        off = np.array([0.5, 0.5])
-    else:
-        off = centering
-
-    log.debug("------------------")
-    log.debug("Model Parameters:")
-    log.debug("------------------")
-    log.debug("pitch:%s fov:%s oversampling:%s ", pitch, fov, oversample)
-    log.debug("centers:%s", ctrs)
-    log.debug("wavelength:%s  centering:%s off:%s ", lam, centering, off)
-    log.debug("shape:%s d:%s ", shape, d)
-
-    # primary beam parameters:
-    primarybeam.shape = shape
-    primarybeam.lam = lam
-    primarybeam.size = (oversample * fov, oversample * fov)
-    primarybeam.offx = oversample * fov / 2.0 - off[0]  # in pixels
-    primarybeam.offy = oversample * fov / 2.0 - off[1]
-    primarybeam.pitch = pitch / float(oversample)
-    primarybeam.d = d
-
-    hexpb.shape = shape
-    hexpb.lam = lam
-    hexpb.size = (oversample * fov, oversample * fov)
-    hexpb.offx = oversample * fov / 2.0 - off[0]  # in pixels
-    hexpb.offy = oversample * fov / 2.0 - off[1]
-    hexpb.pitch = pitch / float(oversample)
-    hexpb.d = d
-
-    # model fringe matrix parameters:
-    ffc.N = len(ctrs)  # number of holes
-    ffc.lam = lam
-    ffc.over = oversample
-    ffc.pitch = pitch / float(oversample)
-    ffc.size = (oversample * fov, oversample * fov)
-    ffc.offx = oversample * fov / 2.0 - off[0]
-    ffc.offy = oversample * fov / 2.0 - off[1]
-
-    ffs.N = len(ctrs)  # number of holes
-    ffs.lam = lam
-    ffs.over = oversample
-    ffs.pitch = pitch / float(oversample)
-    ffs.size = (oversample * fov, oversample * fov)
-    ffs.offx = oversample * fov / 2.0 - off[0]
-    ffs.offy = oversample * fov / 2.0 - off[1]
-
-    alist = []
-    for i in range(ffc.N - 1):
-        for j in range(ffc.N - 1):
-            if j + i + 1 < ffc.N:
-                alist = np.append(alist, i)
-                alist = np.append(alist, j + i + 1)
-    alist = alist.reshape(len(alist) // 2, 2)
-
-    ffmodel = []
-    ffmodel.append(ffc.N * np.ones(ffc.size))
-    for r in alist:
-        # r[0] and r[1] are holes i and j, x-coord: 0, y-coord: 1
-        ffc.ri = ctrs[int(r[0])]
-        ffc.rj = ctrs[int(r[1])]
-        ffs.ri = ctrs[int(r[0])]
-        ffs.rj = ctrs[int(r[1])]
-
-        ffmodel.append(np.transpose(np.fromfunction(ffc, ffc.size)))
-        ffmodel.append(np.transpose(np.fromfunction(ffs, ffs.size)))
-
-    if shape == "circ":  # if unspecified (default), or specified as 'circ'
-        return np.fromfunction(primarybeam, ffc.size), ffmodel
-    elif shape == "hex":
-        return hexpb(), ffmodel
-    else:
-        log.critical(
-            "Must provide a valid hole shape. Current supported shapes \
-        are circ and hex."
-        )
-        return None
 
 
 def weighted_operations(img, model, dqm=None):
