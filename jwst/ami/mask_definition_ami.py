@@ -1,5 +1,4 @@
 import numpy as np
-import math
 
 from .utils import rotate2dccw
 
@@ -99,18 +98,3 @@ class NRMDefinition:
 
         # create 'live' hole centers in an ideal, orthogonal undistorted xy pupil space,
         self.ctrs = ctrs_asbuilt
-
-    def showmask(self):
-        """
-        Calculate the diameter of the smallest centered circle (D) enclosing the live mask area.
-
-        Returns
-        -------
-        float
-            Diameter of the smallest centered circle
-        """
-        radii = []
-        for ctr in self.ctrs:
-            radii.append(math.sqrt(ctr[0] * ctr[0] + ctr[1] * ctr[1]))
-
-        return 2.0 * (max(radii) + 0.5 * self.hdia)
