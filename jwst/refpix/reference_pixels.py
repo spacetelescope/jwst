@@ -1401,12 +1401,12 @@ class NIRDataset(Dataset):
         needs separate methods.
         """
         #  First transform pixeldq array to detector coordinates
-        self.DMS_to_detector_dq()
+        self.dms_to_detector_dq()
 
         for integration_num in range(self.nints):
             for group_num in range(self.ngroups):
                 # Select group and transform to detector frame.
-                self.DMS_to_detector(integration_num, group_num)
+                self.dms_to_detector(integration_num, group_num)
                 thisgroup = self.group
 
                 refvalues = self.get_multistripe_refvalues(thisgroup)
@@ -1415,7 +1415,7 @@ class NIRDataset(Dataset):
 
                 self.group = thisgroup
                 #  Now transform back from detector to DMS coordinates.
-                self.detector_to_DMS(integration_num, group_num)
+                self.detector_to_dms(integration_num, group_num)
 
         log.setLevel(logging.INFO)
 

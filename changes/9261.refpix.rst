@@ -1,1 +1,0 @@
-Add 'sirskernel' to the reference types for the step, so that 'override_sirskernel' is available as a step parameter.
