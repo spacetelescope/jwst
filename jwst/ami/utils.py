@@ -1,5 +1,3 @@
-from stdatamodels.jwst.datamodels import dqflags
-
 from . import matrix_dft
 
 import logging
@@ -273,34 +271,6 @@ class Affine2d:
             return None
 
 
-def affinepars2header(hdr, affine2d):
-    """
-    Write the affine2d parameters into fits header (will be modified or deleted in later build).
-
-    Parameters
-    ----------
-    hdr : fits header
-        FITS header to write affine2d parameters into
-    affine2d : Affine2d object
-        The affine2d object to write into
-
-    Returns
-    -------
-    hdr : fits header
-        FITS header, updated with affine2d parameters
-    """
-    hdr["affine"] = (affine2d.name, "Affine2d in pupil: name")
-    hdr["aff_mx"] = (affine2d.mx, "Affine2d in pupil: xmag")
-    hdr["aff_my"] = (affine2d.my, "Affine2d in pupil: ymag")
-    hdr["aff_sx"] = (affine2d.sx, "Affine2d in pupil: xshear")
-    hdr["aff_sy"] = (affine2d.sx, "Affine2d in pupil: yshear")
-    hdr["aff_xo"] = (affine2d.xo, "Affine2d in pupil: x offset")
-    hdr["aff_yo"] = (affine2d.yo, "Affine2d in pupil: y offset")
-    hdr["aff_dev"] = ("analyticnrm2", "dev_phasor")
-
-    return hdr
-
-
 def makedisk(n, r, ctr=(0, 0)):
     """
     Calculate a 'disk'.
@@ -342,35 +312,6 @@ def makedisk(n, r, ctr=(0, 0)):
     return array
 
 
-def trim(m, s):
-    """
-    Remove the edge pixels from an index mask m.
-
-    Parameters
-    ----------
-    m : (int, int) array
-        2d index mask
-    s : int
-        Side of the parent array that was used to generate m.
-
-    Returns
-    -------
-    m_masked : (integer, integer) array
-        2d index mask with edge pixels trimmed
-    """
-    xl, yl = [], []  # trimmed lists
-    for ii in range(len(m[0])):
-        # Go through all indices in the mask:
-        # the x & y lists test for any index being an edge index - if none are
-        # on the edge, remember the indices in new list
-        if (m[0][ii] == 0 or m[1][ii] == 0 or m[0][ii] == s - 1 or m[1][ii] == s - 1) is False:
-            xl.append(m[0][ii])
-            yl.append(m[1][ii])
-    m_masked = (np.asarray(xl), np.asarray(yl))
-
-    return m_masked
-
-
 def avoidhexsingularity(rotation):
     """
     Avoid rotation of exact multiples of 15 degrees to avoid NaNs in hextransformee().
@@ -393,36 +334,6 @@ def avoidhexsingularity(rotation):
     else:
         rotation_adjusted = rotation
     return rotation_adjusted
-
-
-def center_imagepeak(img, r="default", cntrimg=True):
-    """
-    Calculate a cropped version of the input image centered on the peak pixel.
-
-    Parameters
-    ----------
-    img : 2D float array
-        Input image array
-    r : int
-        Offset for center determination
-    cntrimg : bool
-        If True, center on the peak pixel
-
-    Returns
-    -------
-    cropped : 2D float array
-        Cropped to place the brightest pixel at the center of the img array
-    """
-    peakx, peaky, h = min_distance_to_edge(img, cntrimg=cntrimg)
-    log.debug(" peakx=%g, peaky=%g, distance to edge=%g", peakx, peaky, h)
-    if r == "default":
-        r = h.copy()
-    else:
-        pass
-
-    cropped = img[int(peakx - r) : int(peakx + r + 1), int(peaky - r) : int(peaky + r + 1)]
-
-    return cropped
 
 
 def centerpoint(s):
@@ -827,58 +738,6 @@ def rcrosscorrelate(a=None, b=None):
     return c.real.copy()
 
 
-def lambdasteps(lam, frac_width, steps=4):
-    """
-    Create array of increments of lambda.
-
-    Parameters
-    ----------
-    lam : float
-        Lambda
-    frac_width : float
-        Fractional bandwidth
-    steps : int
-        With lam and frac, determines bin size of lambda array
-
-    Returns
-    -------
-    lambda_array : 1D float array
-        Array of increments of lambda
-    """
-    frac = frac_width / 2.0
-    steps = steps / 2.0
-
-    # add some very small number to the end to include the last number.
-    lambda_array = np.arange(-1 * frac * lam + lam, frac * lam + lam + 10e-10, frac * lam / steps)
-
-    return lambda_array
-
-
-def tophatfilter(lam_c, frac_width, npoints=10):
-    """
-    Create tophat filter list from array of lambda values.
-
-    Parameters
-    ----------
-    lam_c : float
-        Lambda
-    frac_width : float
-        Fractional bandwidth
-    npoints : int
-        Number of bins in lambda array
-
-    Returns
-    -------
-    filt : list
-        Tophat filter list
-    """
-    wllist = lambdasteps(lam_c, frac_width, steps=npoints)
-    filt = []
-    for ii in range(len(wllist)):
-        filt.append(np.array([1.0, wllist[ii]]))
-    return filt
-
-
 def crosscorrelate(a=None, b=None):
     """
     Calculate cross correlation of two identically-shaped real or complex arrays.
@@ -950,59 +809,6 @@ def rotate2dccw(vectors, thetarad):
     return rot_vectors
 
 
-def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
-    """
-    Calculate the median value of good values within the box of neighboring pixels.
-
-    For the pixel specified by (xc, yc), calculate the median value of the
-    good values within the box of size bsize neighboring pixels. If any of
-    the box is outside the data, 0 will be returned.
-
-    Parameters
-    ----------
-    input_array : ndarray
-        2D input array to filter
-    input_dq_array : ndarray
-        2D input data quality array
-    bsize : scalar
-        Square box size of the data to extract
-    xc : scalar
-        X position of the data extraction
-    yc : scalar
-        Y position of the data extraction
-
-    Returns
-    -------
-    median_value : float
-        Median value of good values within box of neighboring pixels
-    """
-    # set the half box size
-    hbox = int(bsize / 2)
-
-    # Extract the region of interest for the data
-    try:
-        data_array = input_array[yc - hbox : yc + hbox + 1, xc - hbox : xc + hbox + 1]
-        dq_array = input_dq_array[yc - hbox : yc + hbox + 1, xc - hbox : xc + hbox + 1]
-    except IndexError:
-        # If the box is outside the data, return 0
-        log.warning("Box for median filter is outside the data")
-        return 0.0
-
-    # only keep pixels not flagged with DO_NOT_USE
-    wh_good = np.where(np.bitwise_and(dq_array, dqflags.pixel["DO_NOT_USE"]) == 0)
-    filtered_array = data_array[wh_good]
-
-    # compute the median, excluding NaN's
-    median_value = np.nanmedian(filtered_array)
-
-    # check for bad result
-    if np.isnan(median_value):
-        log.warning("Median filter returned NaN; setting value to 0.")
-        median_value = 0.0
-
-    return median_value
-
-
 def mas2rad(mas):
     """
     Convert angle in milli arc-sec to radians.
@@ -1019,53 +825,6 @@ def mas2rad(mas):
     """
     rad = mas * (10 ** (-3)) / (3600 * 180 / np.pi)
     return rad
-
-
-def img_median_replace(img_model, box_size):
-    """
-    Replace bad pixels with the median value of surrounding good pixels.
-
-    Bad pixels may arise here either due to a DQ value of DO_NOT_USE or having a
-    value of NaN.
-
-    Parameters
-    ----------
-    img_model : image model
-        Image model containing input array to filter.
-    box_size : scalar
-        Box size for the median filter
-
-    Returns
-    -------
-    img_model : datamodel
-        Input image model whose input array has its bad pixels replaced
-        by the median of the surrounding good-value pixels.
-    """
-    input_data = img_model.data
-    input_dq = img_model.dq
-
-    num_nan = np.count_nonzero(np.isnan(input_data))
-    num_dq_bad = np.count_nonzero(input_dq == dqflags.pixel["DO_NOT_USE"])
-
-    # check to see if any of the pixels are bad
-    if num_nan + num_dq_bad > 0:
-        log.info(f"Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels")
-        bad_locations = np.where(
-            np.isnan(input_data) | np.equal(input_dq, dqflags.pixel["DO_NOT_USE"])
-        )
-
-        # fill the bad pixel values with the median of the data in a box region
-        for i_pos in range(len(bad_locations[0])):
-            y_box_pos = bad_locations[0][i_pos]
-            x_box_pos = bad_locations[1][i_pos]
-            median_fill = pix_median_fill_value(
-                input_data, input_dq, box_size, x_box_pos, y_box_pos
-            )
-            input_data[y_box_pos, x_box_pos] = median_fill
-
-        img_model.data = input_data
-
-    return img_model
 
 
 def get_filt_spec(throughput_model):
