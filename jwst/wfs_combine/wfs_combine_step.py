@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from jwst.datamodels import ModelContainer
 
@@ -24,7 +24,7 @@ class WfsCombineStep(Step):
 
     def make_output_path(self, basepath, *args, **kwargs):  # noqa:  ARG002
         """
-        Ensure to bypass all stpipe filename formatting.
+        Filename formatting bypass in stpipe.
 
         Returns
         -------
@@ -35,11 +35,11 @@ class WfsCombineStep(Step):
 
     def process(self, input_table):
         """
-        Do combination of image pairs.
+        Combine image pairs.
 
         Returns
         -------
-        output_container : model container
+        output_container : ModelContainer
             Model container with all combined data
         """
         self.suffix = "wfscmb"
@@ -85,7 +85,7 @@ class WfsCombineStep(Step):
             # Update necessary meta info in the output
             output_model.meta.cal_step.wfs_combine = "COMPLETE"
             output_model.meta.asn.pool_name = asn_table["asn_pool"]
-            output_model.meta.asn.table_name = os.path.basename(input_table)  # noqa: PTH119
+            output_model.meta.asn.table_name = Path(input_table).name
             # format the filename here
             output_model.meta.filename = (
                 which_set["name"].format(suffix=self.suffix) + self.output_ext
