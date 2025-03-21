@@ -314,17 +314,6 @@ class NIRISS:
 
         return scidata_ctrd, dqmask_ctrd
 
-    def reset_nwav(self, nwav):
-        """
-        Reset self.nwav parameter.
-
-        Parameters
-        ----------
-        nwav : int
-            Length of axis3 for 3D input
-        """
-        self.nwav = nwav
-
     def mast2sky(self):
         """
         Rotate hole center coordinates.
