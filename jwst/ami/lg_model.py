@@ -357,6 +357,7 @@ class LgModel:
             # A Cleaned up version of your image to enable Fourier fitting for
             # centering crosscorrelation with FindCentering() and
             # magnification and rotation via improve_scaling().
+            # TODO: this comment seems outdated and confusing.
 
             if reference is None:
                 self.reference = image
@@ -412,90 +413,6 @@ class LgModel:
         for ind, coeff in enumerate(self.soln):
             self.modelpsf += self.flux * coeff * self.fittingmodel[:, :, ind]
 
-    def improve_scaling(self, img):
-        """
-        Determine the scale and rotation that best fits the data.
-
-        Correlations
-        are calculated in the image plane, in anticipation of data with many
-        bad pixels.
-        TODO: The call to self.simulate() is missing the fov argument and would cause an error.
-        TODO: This requires the self.scallist attribute, which is never initialized.
-        TODO: This is unused. Remove?
-
-        Parameters
-        ----------
-        img : 2D float array
-            Input image
-
-        Returns
-        -------
-        self.pixscale_factor: float
-            Improved estimate of pixel scale in radians
-        self.rot_measured : float
-            Value of mag at the extreme value of rotation from quadratic fit
-        self.gof : float
-            Goodness of fit
-        """
-        if not hasattr(self, "bandpass"):
-            raise ValueError("This obj has no specified bandpass/wavelength")
-
-        reffov = img.shape[0]
-        scal_corrlist = np.zeros((len(self.scallist), reffov, reffov))
-        pixscl_corrlist = scal_corrlist.copy()
-        scal_corr = np.zeros(len(self.scallist))
-        self.pixscl_corr = scal_corr.copy()
-
-        # User can specify a reference set of phases (m) at an earlier point so
-        #  that all PSFs are simulated with those phase pistons (e.g. measured
-        #  from data at an earlier iteration
-        if not hasattr(self, "refphi"):
-            self.refphi = np.zeros(len(self.ctrs))
-
-        self.pixscales = np.zeros(len(self.scallist))
-        for q, scal in enumerate(self.scallist):
-            self.test_pixscale = self.pixel * scal
-            self.pixscales[q] = self.test_pixscale
-            psf = self.simulate(
-                bandpass=self.bandpass,
-                pixel=self.test_pixscale,
-            )
-            pixscl_corrlist[q, :, :] = run_data_correlate(img, psf)
-            self.pixscl_corr[q] = np.max(pixscl_corrlist[q])
-            if True in np.isnan(self.pixscl_corr):
-                raise ValueError("Correlation produced NaNs, check your work!")
-
-        self.pixscale_optimal, scal_maxy = utils.findmax(mag=self.pixscales, vals=self.pixscl_corr)
-        self.pixscale_factor = self.pixscale_optimal / self.pixel
-
-        radlist = self.rotlist_rad
-        corrlist = np.zeros((len(radlist), reffov, reffov))
-        self.corrs = np.zeros(len(radlist))
-
-        self.rots = radlist
-        for q in range(len(radlist)):
-            psf = self.simulate(
-                bandpass=self.bandpass,
-                fov=reffov,
-            )
-
-            corrlist[q, :, :] = run_data_correlate(psf, img)
-            self.corrs[q] = np.max(corrlist[q])
-
-        self.rot_measured, maxy = utils.findmax(mag=self.rots, vals=self.corrs)
-        self.refpsf = self.simulate(
-            bandpass=self.bandpass,
-            pixel=self.pixscale_factor * self.pixel,
-            fov=reffov,
-        )
-
-        try:
-            self.gof = goodness_of_fit(img, self.refpsf)
-        except Exception:
-            self.gof = False
-
-        return self.pixscale_factor, self.rot_measured, self.gof
-
     def set_pistons(self, phi_m):
         """
         Set piston's phi in meters of OPD at center wavelength LG++.
@@ -509,20 +426,6 @@ class LgModel:
             Piston angle
         """
         self.phi = phi_m
-
-    def set_pixelscale(self, pixel_rad):
-        """
-        Set the detector pixel scale.
-
-        TODO: This is pointless, as it just sets a single attribute that can also
-        be set directly and/or when initializing the object. It is unused. Remove?
-
-        Parameters
-        ----------
-        pixel_rad : float
-            Detector pixel scale in radians.
-        """
-        self.pixel = pixel_rad
 
 
 def goodness_of_fit(data, bestfit, disk_r=8):

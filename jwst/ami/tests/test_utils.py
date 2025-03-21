@@ -134,22 +134,6 @@ def test_quadratic_extremum():
     # assert_allclose([minx, miny], [true_minx, true_miny])
 
 
-def test_quadratic():
-    """Test of quadratic in utils module"""
-    x = np.array([0.5, 0.55, 0.55, 0.65, 0.70, 0.8, 0.85, 1.0, 1.01, 1.02, 1.03, 1.04, 1.05])
-    p = np.array([-2.0, 3.0, 7.0])
-
-    maxx, maxy, fit_vals = utils.quadratic(p, x)
-
-    true_maxx = 0.75
-    true_maxy = 8.125
-    assert_allclose([maxx, maxy], [true_maxx, true_maxy])
-
-    true_fit_vals = np.array(
-        [8.0, 8.045, 8.045, 8.105, 8.12, 8.12, 8.105, 8.0, 7.9898, 7.9792, 7.9682, 7.9568, 7.945]
-    )
-    assert_allclose(fit_vals, true_fit_vals)
-
 def test_make_a():
     """Test of make_a in utils module"""
     nh = 4  # number of holes
@@ -267,27 +251,6 @@ def test_rotate2dccw():
     assert rotated[0] < vector[0][0]
     assert rotated[1] > vector[0][1]
 
-
-def test_findmax():
-    """Test of findmax in utils module"""
-    mag = np.arange(9) + 1.0
-    delt = 1.0e-7
-    mag[2] += delt
-    mag[5] += delt  # Add a bit of deterministic noise
-    mag[1] -= delt
-    mag[7] -= delt
-
-    vals = (mag - 3.0) ** 2 + 5  # Is quadratic ...
-    vals[1] += delt
-    vals[6] += delt  # ... with a bit more noise
-    vals[4] -= delt
-    vals[3] -= delt
-
-    maxx, maxy = utils.findmax(mag, vals)
-
-    true_maxx = 3.0
-    true_maxy = 5.0
-    assert_allclose([maxx, maxy], [true_maxx, true_maxy])
 
 @pytest.mark.parametrize(
     "mas, rad",

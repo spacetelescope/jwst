@@ -664,35 +664,6 @@ def findslope(a):
     return slopes
 
 
-def quadratic(p, x):
-    """
-    Calculate value of x at min or max value of y given coefficients of quadratic function.
-
-    Parameters
-    ----------
-    p : float, float, float
-        Coefficients of quadratic function: p[0]*x*x + p[1]*x + p[2]
-    x : 1D float array
-        Arguments of p()
-
-    Returns
-    -------
-    maxx : float
-        Value of x at minimum or maximum value of y
-
-    maxy : float
-        Max y = -b^2/4a occurs at x = -b^2/2a
-
-    fit_val : 1D float array
-        Values of quadratic function at arguments in x array
-    """
-    maxx = -p[1] / (2.0 * p[0])
-    maxy = -p[1] * p[1] / (4.0 * p[0]) + p[2]
-    fit_val = p[0] * x * x + p[1] * x + p[2]
-
-    return maxx, maxy, fit_val
-
-
 def make_a(nh):
     """
     Write the 'NRM matrix'.
@@ -977,33 +948,6 @@ def rotate2dccw(vectors, thetarad):
         ctrs_rotated.append([c * vector[0] - s * vector[1], s * vector[0] + c * vector[1]])
     rot_vectors = np.array(ctrs_rotated)
     return rot_vectors
-
-
-def findmax(mag, vals, mid=1.0):
-    """
-    Find values at extrema of input vals using quadratic fit to mags, vals.
-
-    Parameters
-    ----------
-    mag : 1D float array
-        Array for abscissa
-    vals : 1D float array
-        Array for ordinate
-    mid : float
-        Midpoint of range
-
-    Returns
-    -------
-    maxx : float
-        Value of mag at the extreme value of vals
-    maxy : float
-        Value of vals corresponding to maxx
-    """
-    p = np.polyfit(mag, vals, 2)
-    fitr = np.arange(0.95 * mid, 1.05 * mid, 0.01)
-    maxx, maxy, fitc = quadratic(p, fitr)
-
-    return maxx, maxy
 
 
 def pix_median_fill_value(input_array, input_dq_array, bsize, xc, yc):
