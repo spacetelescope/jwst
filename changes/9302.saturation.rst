@@ -1,0 +1,1 @@
+Account for non-zero bias in group 2 saturation flagging in frame-averaged groups.
