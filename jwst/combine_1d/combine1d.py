@@ -702,12 +702,16 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     output_spectra = {}
     if isinstance(input_model, ModelContainer):
         for ms in input_model:
+            if not hasattr(ms, "spec"):
+                raise TypeError(f"Invalid input datamodel: {type(ms)}")
             for in_spec in ms.spec:
                 spectral_order = in_spec.spectral_order
                 if spectral_order not in input_spectra:
                     input_spectra[spectral_order] = []
                 input_spectra[spectral_order].append(InputSpectrumModel(ms, in_spec, exptime_key))
     else:
+        if not hasattr(input_model, "spec"):
+            raise TypeError(f"Invalid input datamodel: {type(input_model)}")
         for in_spec in input_model.spec:
             spectral_order = in_spec.spectral_order
             if spectral_order not in input_spectra:
