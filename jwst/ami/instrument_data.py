@@ -22,9 +22,9 @@ class NIRISS:
         self,
         filt,
         nrm_model,
+        bandpass,
         chooseholes=None,
         affine2d=None,
-        bandpass=None,
         usebp=True,
         firstfew=None,
         run_bpfix=True,
@@ -32,17 +32,9 @@ class NIRISS:
         """
         Initialize NIRISS class for NIRISS/AMI instrument.
 
-        TODO: None is an invalid input to bandpass, which means bandpass should be
-        made into a required argument.
         TODO: Several of the attributes are unused or only used in the init.
         If the AMI team is not interactively using those attributes, this should
         be refactored to remove them.
-        TODO: why is cvsupport_threshold an attribute of the class?
-        Since filt is a required input, it stands to reason this should contain info
-        only about a single filter. It appears cvsupport_threshold should be moved
-        into a constant, or an optional input to the class.
-        Also it looks like the threshold attribute (which cvsupport_threshold is used to set)
-        is not used. Can we just remove all of this?
         TODO: setting chooseholes to a non-default value does not work.
         Failure is in mask_definition_ami.read_nrm_model, see that function for details.
 
@@ -52,16 +44,17 @@ class NIRISS:
             Filter name
         nrm_model : NRMModel datamodel
             Datamodel containing mask geometry information
-        chooseholes : list
-            None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
-        affine2d : Affine2d object
-            Affine2d object
         bandpass : synphot spectrum or array
             None, synphot object or [(wt,wlen),(wt,wlen),...].
             Monochromatic would be e.g. [(1.0, 4.3e-6)]
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
             the given bandpass, so you could simulate, for example,
             a 21cm psf through something called "F430M"!
+        chooseholes : list, optional
+            List of hole names to use, e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask,
+            If not specified, all the holes will be used.
+        affine2d : Affine2d object, optional
+            Affine2d object. If not specified, an ideal affine2d object will be used.
         usebp : bool
             If True, exclude pixels marked DO_NOT_USE from fringe fitting
         firstfew : int
@@ -77,9 +70,9 @@ class NIRISS:
         self.firstfew = firstfew
         self.nrm_model = nrm_model
 
-        self.lam_c, self.lam_w = utils.get_cw_beta(self.throughput)
+        self.lam_c, self.lam_w = utils.get_cw_beta(bandpass)
         self.wls = [
-            self.throughput,
+            bandpass,
         ]
         # Wavelength info for NIRISS bands F277W, F380M, F430M, or F480M
         self.wavextension = (
@@ -97,9 +90,7 @@ class NIRISS:
         self.instrument = "NIRISS"
         self.arrname = "jwst_ami"
         self.holeshape = "hex"
-        self.mask = NRMDefinition(
-            self.nrm_model, maskname=self.arrname, chooseholes=self.chooseholes
-        )
+        self.mask = NRMDefinition(self.nrm_model, maskname=self.arrname, chooseholes=chooseholes)
 
         # save affine deformation of pupil object or create a no-deformation object.
         # We apply this when sampling the PSF, not to the pupil geometry.
@@ -113,20 +104,6 @@ class NIRISS:
             )
         else:
             self.affine2d = affine2d
-
-        # finding centroid from phase slope only considered cv_phase data
-        # when cv_abs data exceeds this cvsupport_threshold.
-        # Absolute value of cv data normalized to unity maximum
-        # for the threshold application.
-        # Data reduction gurus: tweak the threshold value with experience...
-        # Gurus: tweak cvsupport with use...
-        self.cvsupport_threshold = {
-            "F277W": 0.02,
-            "F380M": 0.02,
-            "F430M": 0.02,
-            "F480M": 0.02,
-        }
-        self.threshold = self.cvsupport_threshold[filt]
 
     def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
         """

@@ -47,8 +47,6 @@ def test_niriss(example_model, nrm_model, bandpass, chooseholes, affine2d, usebp
         "instrument",
         "holeshape",
         "mask",
-        "cvsupport_threshold",
-        "threshold",
     ]:
         assert hasattr(niriss, att)
 

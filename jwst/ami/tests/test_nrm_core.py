@@ -23,7 +23,7 @@ def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
     """
     
     filt = example_model.meta.instrument.filter 
-    niriss = NIRISS(filt, nrm_model, bandpass=bandpass,)
+    niriss = NIRISS(filt, nrm_model, bandpass,)
 
     # Need data to be convolved with the PSF
     sci_data = example_model.data[0]
