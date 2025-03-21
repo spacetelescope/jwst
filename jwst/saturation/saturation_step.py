@@ -21,7 +21,7 @@ class SaturationStep(Step):
         use_readpatt = boolean(default=True) # Use grouped read pattern information to assist with flagging
     """ # noqa: E501
 
-    reference_file_types = ['saturation']
+    reference_file_types = ['saturation', 'superbias']
 
     def process(self, step_input):
 
