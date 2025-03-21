@@ -171,7 +171,7 @@ def bad_pixels(data, median_size, median_tres):
     mfil_data = median_filter(data, size=median_size)
     diff_data = np.abs(data - mfil_data)
     pxdq = diff_data > median_tres * np.median(diff_data)
-    pxdq = pxdq.astype("int")  # TODO: There is no reason this can't be bool
+    pxdq = pxdq.astype("bool")
 
     log.info(
         f"         Identified {np.sum(pxdq):.0f} bad pixels "
@@ -373,8 +373,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
             # If new bad pixels were identified, add them to the bad pixel
             # map.
-            # TODO: There is no reason this can't be bool
-            pxdq_cut = ((pxdq_cut > 0.5) | (temp > 0.5)).astype("int")
+            pxdq_cut = ((pxdq_cut > 0.5) | (temp > 0.5)).astype("bool")
 
         # Put the modified frames back into the data cube.
         data[j, :-1, :-1] = fourier_corr(data_orig, pxdq_cut, fmas)

@@ -67,7 +67,7 @@ def test_fourier_corr(data_with_bad_pixels):
     assert badpx.shape == data.shape
     assert badpx[20, 20] == 1
     assert np.sum(badpx) == 1
-    assert badpx.dtype == np.int64
+    assert badpx.dtype == np.bool_
 
     # fmas needs to be half-size
     fmas = bp_fix.transform_image(data)[:, : data.shape[1] // 2 + 1]
