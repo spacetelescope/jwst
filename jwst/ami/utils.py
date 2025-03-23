@@ -271,14 +271,12 @@ class Affine2d:
             return None
 
 
-def makedisk(n, r, ctr=(0, 0)):
+def makedisk(n, r):
     """
     Calculate a 'disk'.
 
     Disk is defined as an array whose values =1 in a circular region near
     the center of the array, and =0 elsewhere.
-    TODO: For the n=even case, the default is off-center by 0.5 pixels.
-    ctr=(-0.5, -0.5) would center the disk in the array.
 
     Parameters
     ----------
@@ -286,8 +284,6 @@ def makedisk(n, r, ctr=(0, 0)):
         Size of 1 dimension of the array to be returned
     r : int
         Radius of disk
-    ctr : (int, int)
-        Center of disk
 
     Returns
     -------
@@ -297,14 +293,12 @@ def makedisk(n, r, ctr=(0, 0)):
     """
     if n % 2 == 1:  # odd
         m = (n - 1) / 2
-        xx = np.linspace(-m - ctr[0], m - ctr[0], n)
-        yy = np.linspace(-m - ctr[1], m - ctr[1], n)
+        xx = np.linspace(-m, m, n)
     if n % 2 == 0:  # even
         m = n / 2
-        xx = np.linspace(-m - ctr[0], m - ctr[0] - 1, n)
-        yy = np.linspace(-m - ctr[1], m - ctr[1] - 1, n)
+        xx = np.linspace(-m + 0.5, m - 0.5, n)
 
-    (x, y) = np.meshgrid(xx, yy.T)
+    (x, y) = np.meshgrid(xx, xx.T)
     rad = np.sqrt((x**2) + (y**2))
     array = np.zeros((n, n))
     array[rad < r] = 1

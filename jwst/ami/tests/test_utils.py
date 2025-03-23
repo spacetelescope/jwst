@@ -13,15 +13,10 @@ def test_affine2d():
     pass
 
 
-@pytest.mark.parametrize("n, ctr",
-    [
-        (20, (-0.5, -0.5)),
-        (21, (0.0, 0.0)),
-    ]
-)
-def test_makedisk(n, ctr):
+@pytest.mark.parametrize("n", [20, 21])
+def test_makedisk(n):
     r = 4
-    arr = utils.makedisk(n, r, ctr=ctr)
+    arr = utils.makedisk(n, r)
 
     # test disk is symmetric about center in both directions
     assert_allclose(arr[:10,:], arr[-10:,:][::-1,:])
