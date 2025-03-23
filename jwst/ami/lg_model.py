@@ -168,11 +168,7 @@ class LgModel:
         a collection of fringe intensities, where nholes = 7 means the model
         has a @D slice for each of 21 cosines, 21 sines, a DC-like, and a flux
         slice for a total of 44 2D slices.
-        TODO: The modelctrs attribute is redundant with ctrs and could be removed.
         TODO: why is self.fov set here, but not by the simulate method?
-        TODO: why is self.over set here, but not by the simulate method?
-        TODO: why is self.bandpass set by the simulate method, but not here?
-        TODO: why does model_over get reassigned every iteration of the loop?
         Should it be accumulated instead, like the fringe model? Or if not, is it appropriate for
         it to be an attribute, or should it remain internal to this function?
 
@@ -190,8 +186,6 @@ class LgModel:
         """
         self.fov = fov
 
-        self.modelctrs = self.ctrs
-
         # The model shape is (fov) x (fov) x (# solution coefficients)
         # the coefficient refers to the terms in the analytic equation
         # There are N(N-1) independent pistons, double-counted by cosine
@@ -207,7 +201,7 @@ class LgModel:
             # model_array returns the envelope and fringe model as a list of
             #   oversampled fov x fov slices
             pb, ff = analyticnrm2.model_array(
-                self.modelctrs,
+                self.ctrs,
                 l,
                 self.over,
                 self.pixel,
@@ -224,14 +218,12 @@ class LgModel:
             self.fringes += ff
 
             # this routine multiplies the envelope by each fringe "image"
-            self.model_over = leastsqnrm.multiplyenv(pb, ff)
+            model_over = leastsqnrm.multiplyenv(pb, ff)
 
-            model_binned = np.zeros((self.fov, self.fov, self.model_over.shape[2]))
+            model_binned = np.zeros((self.fov, self.fov, model_over.shape[2]))
             # loop over slices "sl" in the model
-            for sl in range(self.model_over.shape[2]):
-                model_binned[:, :, sl] = utils.rebin(
-                    self.model_over[:, :, sl], (self.over, self.over)
-                )
+            for sl in range(model_over.shape[2]):
+                model_binned[:, :, sl] = utils.rebin(model_over[:, :, sl], (self.over, self.over))
 
             self.model += w * model_binned
 
@@ -240,8 +232,7 @@ class LgModel:
     def fit_image(
         self,
         image,
-        reference=None,
-        model_in=None,
+        model_in,
         savepsfs=False,
         dqm=None,
         weighted=False,
@@ -257,19 +248,9 @@ class LgModel:
         reference image (a cropped deNaNed version of the data) to run
         correlations. It is recommended that the symmetric part of the data be
         used to avoid piston confusion in scaling.
-        TODO: model_in=None case errors out because of
-        AttributeError: 'LgModel' object has no attribute 'bestcenter'.
-        There's a note elsewhere that says bestcenter was renamed to psf_offset.
-        But psf_offset is also not passed in here, nor ever set as an attribute.
-        TODO: The .reference attribute is only set in the case where model_in is None.
-        The .reference attribute is set separately in nrm_core.py, but does that make sense?
-        Would it make more sense input reference here?
-        TODO: self.model_in is never used, does it need to be an attribute?
-        self.saveval is never used, does it need to be an attribute?
-        self.weighted is only used in this function, does it need to be an attribute?
-        TODO: dqm=None case errors out. It seems it would be ok to set this to an array of zeros.
-        This should be fixed.
-        TODO: change name of self.singvals with self.linfit_results for consistency.
+        TODO: self.saveval is never used, does it need to be an attribute?
+        TODO: self.weighted is only used in this function, does it need to be an attribute?
+        TODO: change name of self.singvals or self.linfit_results to be the same, for consistency.
         This would be easier if matrix_operations and weighted_operations both did their fitting
         with scipy
 
@@ -277,10 +258,8 @@ class LgModel:
         ----------
         image : 2D float array
             Input image
-        reference : 2D float array
-            Input reference image
-        model_in : 2D array
-            Optional model image
+        model_in : 2D float array
+            Model image
         savepsfs : bool
             Save the psfs for writing to file (currently unused)
         dqm : 2D array
@@ -288,36 +267,13 @@ class LgModel:
         weighted : bool
             Use weighted operations in the least squares routine
         """
-        self.model_in = model_in
         self.weighted = weighted
         self.saveval = savepsfs
+        self.fittingmodel = model_in
+        if dqm is None:
+            dqm = np.zeros(image.shape, dtype="bool")
 
-        if model_in is None:  # No model provided
-            # Perform a set of automatic routines
-            # A Cleaned up version of your image to enable Fourier fitting for
-            # centering crosscorrelation with FindCentering() and
-            # magnification and rotation via improve_scaling().
-            # TODO: this comment seems outdated and confusing.
-
-            if reference is None:
-                self.reference = image
-                if np.isnan(image.any()):
-                    raise ValueError(
-                        "Must have non-NaN image to "
-                        "crosscorrelate for scale. Reference "
-                        "image should also be centered."
-                    )
-            else:
-                self.reference = reference
-
-            self.fov = image.shape[0]
-            self.fittingmodel = self.make_model(
-                self.fov,
-                psf_offset=self.bestcenter,
-            )
-        else:
-            self.fittingmodel = model_in
-        if self.weighted is False:
+        if not weighted:
             self.soln, self.residual, self.cond, self.linfit_result = leastsqnrm.matrix_operations(
                 image, self.fittingmodel, dqm=dqm
             )
@@ -348,20 +304,6 @@ class LgModel:
 
         for ind, coeff in enumerate(self.soln):
             self.modelpsf += self.flux * coeff * self.fittingmodel[:, :, ind]
-
-    def set_pistons(self, phi_m):
-        """
-        Set piston's phi in meters of OPD at center wavelength LG++.
-
-        TODO: This is pointless, as it just sets a single attribute that can also
-        be set directly and/or when initializing the object. It is unused. Remove?
-
-        Parameters
-        ----------
-        phi_m : float
-            Piston angle
-        """
-        self.phi = phi_m
 
 
 def goodness_of_fit(data, bestfit, disk_r=8):

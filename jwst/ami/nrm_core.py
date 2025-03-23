@@ -226,14 +226,14 @@ class FringeFitter:
                 self.psf_offset_ff
             )  # user-provided psf_offsetoffsets from array center are here.
 
-        nrm.make_model(
+        model = nrm.make_model(
             fov=self.ctrd.shape[0],
             psf_offset=nrm.psf_offset,
         )
 
         nrm.fit_image(
             self.ctrd,
-            model_in=nrm.model,
+            model_in=model,
             dqm=self.dqslice,
             weighted=self.weighted,
         )

@@ -65,7 +65,6 @@ def test_make_model(lgmodel, psf_offset):
     assert lgmodel.fov == PSF_FOV
     assert hasattr(lgmodel, "model_beam")
     assert hasattr(lgmodel, "fringes")
-    assert hasattr(lgmodel, "model_over")
 
     # Check shapes and basic values
     n_coeffs = lgmodel.N * (lgmodel.N - 1) + 2
@@ -73,7 +72,6 @@ def test_make_model(lgmodel, psf_offset):
     assert fringemodel.shape == (PSF_FOV, PSF_FOV, n_coeffs)
     assert lgmodel.model_beam.shape == (sz, sz)
     assert lgmodel.fringes.shape == (n_coeffs-1, sz, sz)
-    assert lgmodel.model_over.shape == (sz, sz, n_coeffs)
     assert np.sum(np.isnan(fringemodel)) == 0
     assert np.sum(np.isinf(fringemodel)) == 0
 
@@ -93,7 +91,6 @@ def test_fit_image(example_model, lgmodel):
 
     image = example_model.data[0]
     fov = image.shape[0]
-    dqm = np.zeros(image.shape, dtype="bool")
 
     fringemodel = lgmodel.make_model(
         fov,
@@ -101,7 +98,6 @@ def test_fit_image(example_model, lgmodel):
     lgmodel.fit_image(
         image,
         model_in=fringemodel,
-        dqm=dqm,
     )
     lgmodel.create_modelpsf()
 
