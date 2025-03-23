@@ -334,8 +334,6 @@ def centerpoint(s):
     """
     Calculate center of image, accounting for odd/even pixel size.
 
-    Used for jinc() and hex transform functions.
-
     Parameters
     ----------
     s : 2D int or float tuple
