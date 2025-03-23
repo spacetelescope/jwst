@@ -4,7 +4,7 @@ import numpy as np
 import logging
 
 from copy import deepcopy
-from poppy import matrixDFT
+from .matrix_dft import matrix_dft
 from scipy.ndimage import median_filter
 
 from stdatamodels.jwst.datamodels import dqflags
@@ -113,8 +113,12 @@ def transform_image(image):
     np.array
         Absolute value of FT(image)
     """
-    ft = matrixDFT.MatrixFourierTransform()
-    ftimage = ft.perform(image, image.shape[0], image.shape[0])  # fake the no-loss fft w/ dft
+    ftimage = matrix_dft(
+        image,
+        image.shape[0],
+        image.shape[0],
+        centering="ADJUSTABLE",
+    )
 
     return np.abs(ftimage)
 
@@ -141,10 +145,14 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
     """
     reselt = wl / PUPLDIAM  # radian
     nlam_d = fovnpix * pxsc_rad / reselt  # Soummer nlamD FOV in reselts
-    # instantiate an mft object:
-    ft = matrixDFT.MatrixFourierTransform()
 
-    image_field = ft.perform(pupil_mask, nlam_d, fovnpix)
+    image_field = matrix_dft(
+        pupil_mask,
+        nlam_d,
+        fovnpix,
+        centering="ADJUSTABLE",
+    )
+
     image_intensity = (image_field * image_field.conj()).real
 
     return image_intensity

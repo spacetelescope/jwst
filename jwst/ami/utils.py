@@ -1,4 +1,4 @@
-from . import matrix_dft
+from .matrix_dft import matrix_dft
 
 import logging
 import numpy as np
@@ -415,15 +415,10 @@ def find_centroid(a):
     image_center = utils.centerpoint(s) + np.array((centroid[1], centroid[0])
     and everything holds together sensibly looking at DS9 images of a.
     """
-    ft = matrix_dft.MatrixFourierTransform()
-
-    cv = ft.perform(a, a.shape[0], a.shape[0])
+    cv = matrix_dft(a, a.shape[0], a.shape[0], centering="ADJUSTABLE")
     cvmod, cvpha = np.abs(cv), np.angle(cv)
-
     cvmod = cvmod / cvmod.max()  # normalize to unity peak
-
     htilt, vtilt = findslope(cvpha)
-
     return htilt, vtilt
 
 
