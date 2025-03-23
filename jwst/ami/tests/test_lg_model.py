@@ -10,30 +10,29 @@ from .conftest import PXSC_RAD
 
 PSF_FOV = 21
 
-@pytest.fixture(scope="module")
-def lgmodel(nrm_model):
+@pytest.fixture(scope="module", params=[1, 3]) #parametrize oversample
+def lgmodel(request, nrm_model, bandpass):
     """Create an LgModel object."""
     model = lg_model.LgModel(
         nrm_model,
+        PXSC_RAD,
+        bandpass,
         mask="jwst_ami",
         holeshape="hex",
-        pixscale=PXSC_RAD,
-        over=1,
-        pixweight=None,
+        over=request.param,
         phi=None,
         chooseholes=None,
         affine2d=None,
-        debug=True,
     )
     return model
 
 
-@pytest.mark.parametrize("over", [None, 1, 3])
 # TODO: for some reason PSF offset indexing gets flipped, should be fixed.
 @pytest.mark.parametrize("psf_offset", [(0, 0), (1, -3)])
-def test_simulate(lgmodel, bandpass, over, psf_offset):
+def test_simulate(request, lgmodel, bandpass, psf_offset):
 
-    psf = lgmodel.simulate(PSF_FOV, bandpass, over=over, psf_offset=psf_offset)
+    over = lgmodel.over
+    psf = lgmodel.simulate(PSF_FOV, psf_offset=psf_offset)
     psf_over = lgmodel.psf_over
 
     # check attribute setting by this method
@@ -41,8 +40,6 @@ def test_simulate(lgmodel, bandpass, over, psf_offset):
     assert np.all(bandpass == lgmodel.bandpass)
 
     # Check shapes and basic values
-    if over is None:
-        over = 1
     assert psf.shape == (PSF_FOV, PSF_FOV)
     assert psf_over.shape == (PSF_FOV*over, PSF_FOV*over)
     assert np.all(psf >= 0)
@@ -55,30 +52,24 @@ def test_simulate(lgmodel, bandpass, over, psf_offset):
     assert np.all(max_idx == expected_center)
 
 
-@pytest.mark.parametrize("over", [1, 3])
 @pytest.mark.parametrize("psf_offset", [(0, 0), (1, -3)])
-@pytest.mark.parametrize("pixscale", [None, PXSC_RAD*1.2])
-def test_make_model(lgmodel, bandpass, over, psf_offset, pixscale):
+def test_make_model(lgmodel, psf_offset):
 
     fringemodel = lgmodel.make_model(
         PSF_FOV,
-        bandpass,
-        over=over,
         psf_offset=psf_offset,
-        pixscale=pixscale,
     )
 
     # Check attribute setting by this method
     assert np.all(fringemodel == lgmodel.model)
     assert lgmodel.fov == PSF_FOV
-    assert lgmodel.over == over
     assert hasattr(lgmodel, "model_beam")
     assert hasattr(lgmodel, "fringes")
     assert hasattr(lgmodel, "model_over")
 
     # Check shapes and basic values
     n_coeffs = lgmodel.N * (lgmodel.N - 1) + 2
-    sz = PSF_FOV*over
+    sz = PSF_FOV*lgmodel.over
     assert fringemodel.shape == (PSF_FOV, PSF_FOV, n_coeffs)
     assert lgmodel.model_beam.shape == (sz, sz)
     assert lgmodel.fringes.shape == (n_coeffs-1, sz, sz)
@@ -87,12 +78,13 @@ def test_make_model(lgmodel, bandpass, over, psf_offset, pixscale):
     assert np.sum(np.isinf(fringemodel)) == 0
 
     # Check that the beam is centered, respecting offset
-    expected_center = (int(sz / 2 + psf_offset[1]*over), int(sz / 2 + psf_offset[0]*over))
+    expected_center = (int(sz / 2 + psf_offset[1]*lgmodel.over),
+                       int(sz / 2 + psf_offset[0]*lgmodel.over))
     max_idx = np.unravel_index(np.argmax(lgmodel.model_beam), lgmodel.model_beam.shape)
     assert np.all(max_idx == expected_center)
 
 
-def test_fit_image(example_model, lgmodel, bandpass):
+def test_fit_image(example_model, lgmodel):
     """
     Test fit_image and create_modelpsf methods.
     These two methods are intended to be called in sequence.
@@ -102,11 +94,9 @@ def test_fit_image(example_model, lgmodel, bandpass):
     image = example_model.data[0]
     fov = image.shape[0]
     dqm = np.zeros(image.shape, dtype="bool")
-    lgmodel.bandpass = bandpass
 
     fringemodel = lgmodel.make_model(
         fov,
-        bandpass,
     )
     lgmodel.fit_image(
         image,

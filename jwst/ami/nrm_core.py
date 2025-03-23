@@ -193,14 +193,13 @@ class FringeFitter:
         # This could be simplified.
         nrm = lg_model.LgModel(
             self.instrument_data.nrm_model,
+            bandpass=self.instrument_data.wls[0],
             mask=self.instrument_data.mask.maskname,
             pixscale=self.instrument_data.pscale_rad,
             holeshape=self.instrument_data.holeshape,
             affine2d=self.instrument_data.affine2d,
             over=self.oversample,
         )
-
-        nrm.bandpass = self.instrument_data.wls[0]
 
         if self.npix == "default":
             self.npix = self.scidata[slc, :, :].shape[0]
@@ -229,10 +228,7 @@ class FringeFitter:
 
         nrm.make_model(
             fov=self.ctrd.shape[0],
-            bandpass=nrm.bandpass,
-            over=self.oversample,
             psf_offset=nrm.psf_offset,
-            pixscale=nrm.pixel,
         )
 
         nrm.fit_image(

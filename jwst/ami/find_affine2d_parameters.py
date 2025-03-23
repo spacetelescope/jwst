@@ -73,6 +73,7 @@ def find_rotation(
     for _rot, aff in zip(rotdegs, affine2d_list, strict=False):
         jw = lg_model.LgModel(
             nrm_model,
+            bandpass=bandpass,
             mask="jwst_ami",
             holeshape=holeshape,
             over=over,
@@ -82,7 +83,7 @@ def find_rotation(
 
         # psf_offset in data coords & pixels.  Does it get rotated?  Second order errors poss.
         #  Some numerical testing needed for big eg 90 degree affine2d rotations.  Later.
-        jw.simulate(fov=npix, bandpass=bandpass, over=over, psf_offset=psf_offset)
+        jw.simulate(fov=npix, psf_offset=psf_offset)
 
         crosscorr_rots.append(utils.rcrosscorrelate(imagedata, jw.psf).max())
         del jw
