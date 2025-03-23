@@ -168,9 +168,6 @@ class LgModel:
         a collection of fringe intensities, where nholes = 7 means the model
         has a @D slice for each of 21 cosines, 21 sines, a DC-like, and a flux
         slice for a total of 44 2D slices.
-        TODO: why is self.fov set here, but not by the simulate method?
-        Should it be accumulated instead, like the fringe model? Or if not, is it appropriate for
-        it to be an attribute, or should it remain internal to this function?
 
         Parameters
         ----------
@@ -233,7 +230,6 @@ class LgModel:
         self,
         image,
         model_in,
-        savepsfs=False,
         dqm=None,
         weighted=False,
     ):
@@ -248,7 +244,6 @@ class LgModel:
         reference image (a cropped deNaNed version of the data) to run
         correlations. It is recommended that the symmetric part of the data be
         used to avoid piston confusion in scaling.
-        TODO: self.saveval is never used, does it need to be an attribute?
         TODO: self.weighted is only used in this function, does it need to be an attribute?
         TODO: change name of self.singvals or self.linfit_results to be the same, for consistency.
         This would be easier if matrix_operations and weighted_operations both did their fitting
@@ -260,15 +255,12 @@ class LgModel:
             Input image
         model_in : 2D float array
             Model image
-        savepsfs : bool
-            Save the psfs for writing to file (currently unused)
         dqm : 2D array
             Bad pixel mask of same dimensions as image
         weighted : bool
             Use weighted operations in the least squares routine
         """
         self.weighted = weighted
-        self.saveval = savepsfs
         self.fittingmodel = model_in
         if dqm is None:
             dqm = np.zeros(image.shape, dtype="bool")

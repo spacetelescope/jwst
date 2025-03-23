@@ -23,7 +23,6 @@ class FringeFitter:
         self,
         instrument_data,
         oversample=3,
-        find_rotation=False,
         psf_offset_ff=None,
         npix="default",
         weighted=False,
@@ -38,15 +37,10 @@ class FringeFitter:
             wavelength obs mode.
         oversample : int, optional
             Model oversampling (also how fine to measure the centering). Default is 3.
-        find_rotation : bool, optional
-            If True, automatically find the best pupil rotation that matches the data.
-            Default is False.
-            TODO: this doesn't actually do anything whatsoever
         psf_offset_ff : float, optional
             Subpixel centering of your data, if known. Default is None.
         npix : int, optional
             Number of data pixels to use. Default is to use the shape of the data frame.
-            TODO: the default of this option should be None instead of a string.
         weighted : bool, optional
             If True, use Poisson variance for weighting, otherwise do not apply
             any weighting. Default is False.
@@ -54,7 +48,6 @@ class FringeFitter:
         self.instrument_data = instrument_data
 
         self.oversample = oversample
-        self.find_rotation = find_rotation
         self.psf_offset_ff = psf_offset_ff
         self.npix = npix
         self.weighted = weighted
@@ -160,10 +153,9 @@ class FringeFitter:
         """
         Generate the best model to match a single slice.
 
-        TODO: What is the point of making nrm, ctrd, dqslice attributes?
-        They are not used outside this function, and get changed for every integration.
-        TODO: The nrm object is created from scratch every time, but this method is called
-        repeatedly for each slice. Couldn't the nrm model be created at initialization and reused?
+        TODO: Is it a bug that the LgModel is being initialized with the
+        zeroth wavelength every time?  When we iterate over this, it's an iteration over
+        wavelength.
 
         Parameters
         ----------
@@ -173,7 +165,7 @@ class FringeFitter:
         Returns
         -------
         nrm : LgModel object
-            Model with best fit results
+            Model with best fit results for the given slice.
 
         Notes
         -----
@@ -205,16 +197,16 @@ class FringeFitter:
         if self.npix == "default":
             self.npix = self.scidata[slc, :, :].shape[0]
 
-        self.ctrd = self.scidata[slc]
-        self.dqslice = self.dqmask[slc]
+        ctrd = self.scidata[slc]
+        dqslice = self.dqmask[slc]
 
-        nrm.reference = self.ctrd  # self.ctrd is the cropped image centered on the brightest pixel
+        nrm.reference = ctrd  # self.ctrd is the cropped image centered on the brightest pixel
 
         if self.psf_offset_ff is None:
             # returned values have offsets x-y flipped:
             # Finding centroids the Fourier way assumes no bad pixels case:
             # Fourier domain mean slope
-            centroid = utils.find_centroid(self.ctrd)
+            centroid = utils.find_centroid(ctrd)
             # centroid represents offsets from brightest pixel ctr
             # use flipped centroids to update centroid of image for JWST:
             # check parity for GPI, Vizier,...
@@ -228,18 +220,16 @@ class FringeFitter:
             )  # user-provided psf_offsetoffsets from array center are here.
 
         model = nrm.make_model(
-            fov=self.ctrd.shape[0],
+            fov=ctrd.shape[0],
             psf_offset=nrm.psf_offset,
         )
 
         nrm.fit_image(
-            self.ctrd,
+            ctrd,
             model_in=model,
-            dqm=self.dqslice,
+            dqm=dqslice,
             weighted=self.weighted,
         )
 
         nrm.create_modelpsf()
-        # model now stored as nrm.modelpsf, also nrm.residual
-        self.nrm = nrm  # this gets updated with each slice
         return nrm  # to fit_fringes_all, where output model is created from list of nrm objects

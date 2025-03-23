@@ -35,8 +35,6 @@ class NIRISS:
         TODO: Several of the attributes are unused or only used in the init.
         If the AMI team is not interactively using those attributes, this should
         be refactored to remove them.
-        TODO: setting chooseholes to a non-default value does not work.
-        Failure is in mask_definition_ami.read_nrm_model, see that function for details.
 
         Parameters
         ----------
