@@ -308,11 +308,14 @@ def test_handle_bandpass(bandpass, throughput_model):
 
     # test case where user-defined bandpass is provided as a synphot object
     # Again the bandpass just gets converted to array then returned without modification
-    # or at least, that's what is supposed to happen but there is a bug where it remains
-    # a synphot object
-    bandpass2 = utils.get_filt_spec(throughput_model)
-    # print(type(bandpass2))
-    # assert np.all(bandpass2 == bandpass)
+    bandpass_synphot = utils.get_filt_spec(throughput_model)
+    bandpass2 = utils.handle_bandpass(bandpass_synphot, throughput_model)
+
+    # use atol here because bandpass is normalized to unity.
+    # There is some small numerical problem that makes some of the low-throughput values
+    # not exactly equal to 0.001 in the synphot object, but the atol is small enough
+    # that we don't care
+    assert np.allclose(bandpass2, bandpass1, atol=1e-4)
 
 
 def test_degrees_per_pixel(example_model):

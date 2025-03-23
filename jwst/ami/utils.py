@@ -946,10 +946,6 @@ def handle_bandpass(bandpass, throughput_model):
     fetch filter throughput and combine with flat spectrum to
     produce appropriate array.
 
-    TODO: When given a synphot object as input, this does NOT return
-    a numpy array; instead it returns a synphot SpectralElement object.
-    This is a bug.
-
     Parameters
     ----------
     bandpass : Synphot spectrum or array, or None
@@ -966,29 +962,26 @@ def handle_bandpass(bandpass, throughput_model):
         Array of weights, wavelengths used to generate model.
         Wavelengths are in meters.
     """
+    # user-defined bandpass can be synphot object or appropriate array
     if bandpass is not None:
-        # bandpass can be user-defined synphot object or appropriate array
         if isinstance(bandpass, synphot.spectrum.SpectralElement):
             log.info("User-defined synphot spectrum provided")
-            wl, wt = bandpass._get_arrays(bandpass.waveset)  # noqa: SLF001
-            bandpass = np.array((wt, wl)).T
-        else:
-            bandpass = np.array(bandpass)
+            wl, wt = bandpass._get_arrays(bandpass.waveset.to(u.m))  # noqa: SLF001
+            return np.array((wt, wl)).T
+        return np.array(bandpass)
 
-    else:
-        # Default behavior: get the filter and source spectrum
-        log.info(f"Reading throughput model data for {throughput_model.meta.instrument.filter}.")
-        filt_spec = get_filt_spec(throughput_model)
-        log.info("Using flat spectrum model.")
-        flat_spec = get_flat_spec()
-        nspecbin = 19  # how many wavelngth bins used across bandpass -- affects runtime
-        bandpass = combine_src_filt(
-            filt_spec,
-            flat_spec,
-            trim=0.01,
-            nlambda=nspecbin,
-        )
-
+    # Default behavior: get the filter and source spectrum
+    log.info(f"Reading throughput model data for {throughput_model.meta.instrument.filter}.")
+    filt_spec = get_filt_spec(throughput_model)
+    log.info("Using flat spectrum model.")
+    flat_spec = get_flat_spec()
+    nspecbin = 19  # how many wavelngth bins used across bandpass -- affects runtime
+    bandpass = combine_src_filt(
+        filt_spec,
+        flat_spec,
+        trim=0.01,
+        nlambda=nspecbin,
+    )
     return bandpass
 
 

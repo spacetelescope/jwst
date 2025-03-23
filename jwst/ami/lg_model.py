@@ -244,7 +244,6 @@ class LgModel:
         reference image (a cropped deNaNed version of the data) to run
         correlations. It is recommended that the symmetric part of the data be
         used to avoid piston confusion in scaling.
-        TODO: self.weighted is only used in this function, does it need to be an attribute?
         TODO: change name of self.singvals or self.linfit_results to be the same, for consistency.
         This would be easier if matrix_operations and weighted_operations both did their fitting
         with scipy
