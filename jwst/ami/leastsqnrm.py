@@ -126,6 +126,8 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
 
     TODO: replace linearfit with scipy fitting.
     This probably requires running regtests before and after to ensure minimal changes.
+    TODO: Instead of above, can the linfit option be removed entirely? it's never set
+    to True in the pipeline.
 
     Parameters
     ----------
@@ -218,39 +220,33 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     log.info("flat img * transpose dimensions %s", np.shape(inverse))
 
     if linfit:
-        try:
-            from linearfit import linearfit  # type: ignore[import-not-found]
+        # dependent variables
+        M = np.asmatrix(flatimg)  # noqa: N806
 
-            # dependent variables
-            M = np.asmatrix(flatimg)  # noqa: N806
+        # photon noise
+        noise = np.sqrt(np.abs(flatimg))
 
-            # photon noise
-            noise = np.sqrt(np.abs(flatimg))
+        # this sets the weights of pixels fulfilling condition to zero
+        weights = np.where(np.abs(flatimg) <= 1.0, 0.0, 1.0 / (noise**2))
 
-            # this sets the weights of pixels fulfilling condition to zero
-            weights = np.where(np.abs(flatimg) <= 1.0, 0.0, 1.0 / (noise**2))
+        # uniform weight
+        wy = weights
+        S = np.asmatrix(np.diag(wy))  # noqa: N806
+        # matrix of independent variables
+        C = np.asmatrix(flatmodeltransp)  # noqa: N806
 
-            # uniform weight
-            wy = weights
-            S = np.asmatrix(np.diag(wy))  # noqa: N806
-            # matrix of independent variables
-            C = np.asmatrix(flatmodeltransp)  # noqa: N806
+        # initialize object
+        result = LinearFit(M, S, C)
 
-            # initialize object
-            result = linearfit.LinearFit(M, S, C)
+        # do the fit
+        result.fit()
 
-            # do the fit
-            result.fit()
+        # delete inverse_covariance_matrix to reduce size of pickled file
+        result.inverse_covariance_matrix = []
 
-            # delete inverse_covariance_matrix to reduce size of pickled file
-            result.inverse_covariance_matrix = []
+        linfit_result = result
+        log.info("Returned linearfit result")
 
-            linfit_result = result
-            log.info("Returned linearfit result")
-
-        except ImportError:
-            linfit_result = None
-            log.info("linearfit module not imported, no covariances saved.")
     else:
         linfit_result = None
         log.info("linearfit not attempted, no covariances saved.")
@@ -539,3 +535,118 @@ def q4_phases(deltaps, n=7):
                 nn = nn + ll + 1
 
     return quad_phases
+
+
+class LinearFit:
+    """
+    Perform a general least-squares fit of a linear model using numpy matrix inversion.
+
+    Uncertainties in the dependent variables (but not in the independent variables)
+    can be taken into account.
+    All inputs have to be numpy matrices.
+
+    Math is based on Press'
+    Numerical Recipes p661 : Section 15.2 Fitting Data to a Straight Line
+    Numerical Recipes p671 : Section 15.4 General Linear Least Squares
+
+    Code is based on an early yorick implementation by Damien Segransan (University of Geneva)
+    Python implementation and tools by Johannes Sahlmann 2009-2017
+    (University of Geneva, European Space Agency, STScI/AURA)
+
+    Attributes
+    ----------
+    dependent_variable : np.matrix (1xN)
+        Dependent_variables of the linear equation system (N equations, M unknown coefficients)
+    inverse_covariance_matrix : np.matrix (NxN)
+        Inverse covariance matrix corresponding to the dependent_variable.
+        i.e. data weights proportional to 1/sigma**2 where sigma=uncertainty
+    independent_variable : np.matrix (MxN)
+        The independent_variables that are multiplied by the unknown coefficients
+
+    Calculated Attributes
+    ----------
+    p : np.ndarray
+        Coefficients of the solution
+    p_formal_uncertainty : np.ndarray
+        Formal uncertainty of the coefficients
+    p_formal_covariance_matrix : np.matrix
+        Formal covariance matrix of the coefficients (not rescaled)
+    p_normalised_uncertainty : np.ndarray
+        Normalised uncertainty (chi2 = 1) of the coefficients
+    p_normalised_covariance_matrix : np.matrix
+        Normalised covariance matrix of the coefficients (rescaled to yield chi2=1)
+    p_correlation_matrix : np.matrix
+        Coefficient correlation matrix
+    fit : np.ndarray
+        Values of the best-fit model
+    residuals : np.ndarray
+        Observed - Calculated (O-C) residuals
+    chi2 : float
+        Chi-square value of the best fit
+    """
+
+    def __init__(self, dependent_variable, inverse_covariance_matrix, independent_variable):
+        self.y_i = dependent_variable
+        self.X_ij = independent_variable
+        self.inverse_covariance_matrix = inverse_covariance_matrix
+
+    def fit(self):
+        """Perform the linear fit."""
+        # number of measurements/constraints, i.e. number of equations
+        self.n_measurement = self.X_ij.shape[1]
+        # number of coefficients, i.e. free parameters
+        self.n_param = self.X_ij.shape[0]
+        # number of degrees of freedom
+        self.n_freedom = self.n_measurement - self.n_param
+
+        a_ij = (self.X_ij) * self.inverse_covariance_matrix
+        alpha_kj = a_ij * (self.X_ij.T)
+        beta_k = a_ij * self.y_i.T
+
+        a_j = np.linalg.solve(alpha_kj, beta_k)
+
+        yfit_i = (self.X_ij.T * a_j).T
+        chi2 = ((yfit_i - self.y_i) * self.inverse_covariance_matrix) * (yfit_i - self.y_i).T
+        c_jk = np.linalg.inv(alpha_kj)
+        var_aj = np.asmatrix(np.diag(c_jk))
+
+        # the variance on the fitted coefficients are the diagonal terms
+        # of the coefficient covariance matrix
+        # if the error bars are not well estimated, it is useful to
+        # renormalize the variance by the measured chi2
+        # divided by the expected chi2.
+        # That means the normalised variances take into account the residual dispersion in the data
+        normalized_variance_aj = var_aj.T * chi2 / self.n_freedom
+        stdev_aj = np.sqrt(normalized_variance_aj)
+
+        # coefficients of the solution
+        self.p = np.array(a_j).flatten()
+
+        # normalised uncertainty (chi2 = 1) of the coefficients
+        self.p_normalised_uncertainty = np.array(stdev_aj).flatten()
+
+        # values of the best-fit model
+        self.fit_values = np.array(yfit_i).flatten()
+
+        # Observed - Calculated (O-C) residuals
+        self.residuals = np.array(self.y_i - yfit_i).flatten()
+
+        # chi-square value of the best fit
+        self.chi2 = np.array(chi2)[0][0]
+
+        # formal uncertainty  of the coefficients
+        self.p_formal_uncertainty = np.array(np.sqrt(var_aj)).flatten()
+
+        # formal covariance matrix of the coefficients (not rescaled)
+        self.p_formal_covariance_matrix = c_jk
+
+        # normalised covariance matrix of the coefficients (rescaled to yield chi2=1)
+        self.p_normalised_covariance_matrix = c_jk * self.chi2 / self.n_freedom
+
+        #     compute correlation Matrix
+        tmp_v = 1.0 / self.p_formal_uncertainty
+        tmp = np.vstack((tmp_v, np.tile(np.zeros(len(tmp_v)), (len(tmp_v) - 1, 1))))
+        m = np.asmatrix(tmp.T)
+        err_matrix = m.dot(m.T)
+        correlation_matrix = np.multiply(err_matrix, self.p_formal_covariance_matrix.T)
+        self.p_correlation_matrix = correlation_matrix

@@ -115,9 +115,6 @@ class LgModel:
         already stored in the object, and generate a simulation fits header
         storing all of the  parameters used to generate that psf.  If the input
         bandpass is one number it will calculate a monochromatic psf.
-        TODO: Should the PSF be normalized? Currently it is not normalized.
-        TODO: psf_offset somehow gets flipped in the call to analyticnrm2.psf.
-        Need to add tests for that function and fix that.
 
         Parameters
         ----------

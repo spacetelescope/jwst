@@ -63,7 +63,8 @@ def hextransform(s, d, lam, pitch, affine2d, c=None):
     Calculate the complex array analytical transform of a (distorted if necessary) hexagon.
 
     TODO: Why does this function force the center pixel to have value sqrt(3)/2
-    but does not normalize the rest of the PSF accordingly?
+    but does not normalize the rest of the PSF accordingly? Is this intended behavior
+    or is it a bug?
 
     Parameters
     ----------
