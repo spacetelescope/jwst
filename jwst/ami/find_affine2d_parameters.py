@@ -88,7 +88,7 @@ def find_rotation(
         crosscorr_rots.append(utils.rcrosscorrelate(imagedata, jw.psf).max())
         del jw
 
-    rot_measured_d, max_cor = utils.findpeak_1d(crosscorr_rots, rotdegs)
+    rot_measured_d, _max_cor = utils.findpeak_1d(rotdegs, crosscorr_rots)
 
     # return convenient affine2d
     new_affine2d = utils.Affine2d(

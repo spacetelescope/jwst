@@ -41,6 +41,7 @@ class FringeFitter:
         find_rotation : bool, optional
             If True, automatically find the best pupil rotation that matches the data.
             Default is False.
+            TODO: this doesn't actually do anything whatsoever
         psf_offset_ff : float, optional
             Subpixel centering of your data, if known. Default is None.
         npix : int, optional

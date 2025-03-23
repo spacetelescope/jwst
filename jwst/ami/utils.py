@@ -464,23 +464,16 @@ def quadratic_extremum(p):
     return -p[1] / (2.0 * p[0]), -p[1] * p[1] / (4.0 * p[0]) + p[2]
 
 
-def findpeak_1d(yvec, xvec):
+def findpeak_1d(xvec, yvec):
     """
     Calculate the fit function extreme for a given input vector.
 
-    TODO: there is apparently a bug here. If the inputs were un-swapped
-    in the function call, this function would work fine.
-    This is used only once, in find_affine2d_parameters.find_rotation().
-    Check if the inputs are swapped there too (such that the function "works").
-    If so, swap both so this is self-consistent.
-    If not, see what the impacts of the bug are.
-
     Parameters
     ----------
-    yvec : 1D float array
-       Function values for input vector
     xvec : 1D float array
        Input vector
+    yvec : 1D float array
+       Function values for input vector
 
     Returns
     -------

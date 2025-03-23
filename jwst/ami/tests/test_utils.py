@@ -115,10 +115,9 @@ def test_quadratic_extremum():
     assert_allclose([maxx, maxy], [true_maxx, true_maxy])
 
     # test findpeak_1d will find the same maximum
-    # TODO: these currently fail because of bug in findpeak_1d
-    # y = quadratic(p, x)
-    # maxx, maxy = utils.findpeak_1d(x, y)
-    # assert_allclose([maxx, maxy], [true_maxx, true_maxy])
+    y = quadratic(p, x)
+    maxx, maxy = utils.findpeak_1d(x, y)
+    assert_allclose([maxx, maxy], [true_maxx, true_maxy])
 
     # Test of quadratic_extremum with a minimum
     p = np.array([2.0, 3.0, 7.0])
@@ -127,11 +126,10 @@ def test_quadratic_extremum():
     true_miny = 5.875
     assert_allclose([minx, miny], [true_minx, true_miny])
 
-    # test findpeak_1d will find the same maximum
-    # TODO: these currently fail because of bug in findpeak_1d
-    # y = quadratic(p, x)
-    # minx, miny = utils.findpeak_1d(x, y)
-    # assert_allclose([minx, miny], [true_minx, true_miny])
+    # test findpeak_1d will find the same minimum
+    y = quadratic(p, x)
+    minx, miny = utils.findpeak_1d(x, y)
+    assert_allclose([minx, miny], [true_minx, true_miny])
 
 
 def test_make_a():
