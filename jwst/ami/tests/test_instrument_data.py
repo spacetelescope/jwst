@@ -6,7 +6,7 @@ from jwst.ami import instrument_data
 from jwst.ami.utils import Affine2d
 
 
-@pytest.mark.parametrize("chooseholes", (None,)) #["B2", "B4", "B5", "B6"]))
+@pytest.mark.parametrize("chooseholes", (None, ["B2", "B4", "B5", "B6"]))
 @pytest.mark.parametrize("affine2d", (None, Affine2d(rotradccw=0.4)))
 @pytest.mark.parametrize("usebp", (True, False))
 @pytest.mark.parametrize("firstfew", (None, 3))
