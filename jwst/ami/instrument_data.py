@@ -99,24 +99,6 @@ class NIRISS:
         else:
             self.affine2d = affine2d
 
-    def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
-        """
-        Override pixel scale in header.
-
-        Parameters
-        ----------
-        pscalex_deg : float, degrees
-            Pixel scale in x-direction
-        pscaley_deg : float, degrees
-            Pixel scale in y-direction
-        """
-        if pscalex_deg is not None:
-            self.pscalex_deg = pscalex_deg
-        if pscaley_deg is not None:
-            self.pscaley_deg = pscaley_deg
-        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60 * 60 * 1000)
-        self.pscale_rad = utils.mas2rad(self.pscale_mas)
-
     def read_data_model(self, input_model):
         """
         Read the NIRISS data model.

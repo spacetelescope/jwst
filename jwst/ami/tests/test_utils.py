@@ -245,17 +245,6 @@ def test_rotate2dccw():
     assert rotated[1] > vector[0][1]
 
 
-@pytest.mark.parametrize(
-    "mas, rad",
-    [
-        (206264.8062471, 0.001),
-        (103132403.12355, 0.5),
-    ],
-)
-def test_mas2rad(mas, rad):
-    assert np.isclose(utils.mas2rad(mas), rad)
-
-
 def test_get_cw_beta(example_model, bandpass):
 
     filt = example_model.meta.instrument.filter

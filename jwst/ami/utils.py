@@ -775,24 +775,6 @@ def rotate2dccw(vectors, thetarad):
     return rot_vectors
 
 
-def mas2rad(mas):
-    """
-    Convert angle in milli arc-sec to radians.
-
-    Parameters
-    ----------
-    mas : float
-        Angle in milli arc-sec
-
-    Returns
-    -------
-    rad : float
-        Angle in radians
-    """
-    rad = mas * (10 ** (-3)) / (3600 * 180 / np.pi)
-    return rad
-
-
 def get_filt_spec(throughput_model):
     """
     Load filter throughput data into synphot spectrum object.
