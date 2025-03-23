@@ -349,21 +349,14 @@ def centerpoint(s):
     return (0.5 * s[0] - 0.5, 0.5 * s[1] - 0.5)
 
 
-def min_distance_to_edge(img, cntrimg=False):
+def min_distance_to_edge(img):
     """
     Calculate distance from the brightest pixel in img to the nearest edge of img.
-
-    TODO: Why is the cntrimg distance hard-coded?
-    Would be better if cntrimg=None as default, and then a distance optionally.
-    But if can delete center_imagepeak, then cntrimg=True case is never used and
-    the parameter could perhaps be removed.
 
     Parameters
     ----------
     img : 2D array
         Input array
-    cntrimg : bool
-        If True, only look for the peak pixel near the center of the image
 
     Returns
     -------
@@ -372,12 +365,7 @@ def min_distance_to_edge(img, cntrimg=False):
     h : integer
         Distance to the nearest image edge
     """
-    if cntrimg is True:
-        # Only look for the peak pixel at the center of the image
-        ann = makedisk(img.shape[0], 31)  # search radius around array center
-    else:
-        # Peak of the image can be anywhere
-        ann = np.ones((img.shape[0], img.shape[1]))
+    ann = np.ones((img.shape[0], img.shape[1]))
 
     peakmask = np.where(img == np.nanmax(np.ma.masked_invalid(img[ann == 1])))
     # following line takes care of peaks at two or more identical-value max

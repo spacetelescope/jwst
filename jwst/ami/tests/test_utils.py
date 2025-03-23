@@ -60,28 +60,28 @@ def test_min_distance_to_edge():
     img[10, 10] = 1
     
     # basic test
-    x_out, y_out, dist = utils.min_distance_to_edge(img, cntrimg=False)
+    x_out, y_out, dist = utils.min_distance_to_edge(img)
     assert dist == 10.0
     assert x_out == 10
     assert y_out == 10
 
     # add an equally bright source closer to the edge
     img[5, 8] = 1
-    x_out, y_out, dist = utils.min_distance_to_edge(img, cntrimg=False)
+    x_out, y_out, dist = utils.min_distance_to_edge(img)
     assert dist == 5.0
     assert x_out == 5
     assert y_out == 8
 
     # add a fainter source closer to the edge
     img[4, 8] = 0.5
-    x_out, y_out, dist = utils.min_distance_to_edge(img, cntrimg=False)
+    x_out, y_out, dist = utils.min_distance_to_edge(img)
     assert dist == 5.0
     assert x_out == 5
     assert y_out == 8
 
     # No failure when no sources, just dist goes to zero
     img = np.zeros(shp)
-    x_out, y_out, dist = utils.min_distance_to_edge(img, cntrimg=False)
+    x_out, y_out, dist = utils.min_distance_to_edge(img)
     assert dist == 0.0
 
 
