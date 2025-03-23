@@ -24,10 +24,6 @@ class RawOifits:
     Produces averaged and multi-integration versions, with sigma-clipped stats over
     integrations.
 
-    TODO: the separation between this class and FringeFitter is not clear. This class
-    takes in a FringeFitter, and FringeFitter calls this class to make its output.
-    I think they should be merged or else separated.
-
     Notes
     -----
     Based on ObservablesFromText from ImPlaneIA, e.g.

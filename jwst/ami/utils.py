@@ -553,9 +553,7 @@ def make_a(nh):
     Write the 'NRM matrix'.
 
     The NRM matrix later (?) gets pseudo-inverted to provide (arbitrarily constrained)
-    zero-mean phases of the holes. TODO: check with Rachel the inversion happens outside
-    the function!
-
+    zero-mean phases of the holes.
     Algorithm is taken verbatim from Anand's pseudoinverse.py
 
     Parameters

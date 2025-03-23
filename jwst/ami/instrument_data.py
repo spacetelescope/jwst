@@ -32,10 +32,6 @@ class NIRISS:
         """
         Initialize NIRISS class for NIRISS/AMI instrument.
 
-        TODO: Several of the attributes are unused or only used in the init.
-        If the AMI team is not interactively using those attributes, this should
-        be refactored to remove them.
-
         Parameters
         ----------
         filt : str
@@ -128,13 +124,6 @@ class NIRISS:
         Retrieve info from input data model and store in NIRISS class.
         Trim refpix and roughly center science data and dq array.
         Run Fourier bad pixel correction before returning science data.
-
-        TODO: Is setting all of the input model metadata to attributes
-        really necessary?
-        If we need to access lots of attributes from the model,
-        could we just make the model itself accessible?
-        Currently, NONE of these attributes are used anywhere in the pipeline
-        except nwav and wls (this function is just used to center science data and mask).
 
         Parameters
         ----------

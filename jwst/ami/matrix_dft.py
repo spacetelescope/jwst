@@ -68,9 +68,6 @@ def matrix_dft(plane, nlam_d, npix, offset=None, inverse=False, centering=FFTSTY
     before and after applying fft2 or else it will introduce a checkerboard
     pattern in the signs of alternating pixels!)
 
-    TODO: It's not clear that the error handling as it currently exists is any more
-    useful than Python built-in error handling, this should be fixed.
-
     Parameters
     ----------
     plane : 2D ndarray

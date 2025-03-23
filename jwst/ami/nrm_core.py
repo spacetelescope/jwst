@@ -182,8 +182,6 @@ class FringeFitter:
         fringepistons   --- zero-mean piston opd in radians on each hole (eigenphases)
         -----------------------------------------------------------------------------
         """
-        # TODO: LgModel is internally just re-creating instrument_data object
-        # This could be simplified.
         nrm = lg_model.LgModel(
             self.instrument_data.nrm_model,
             bandpass=self.instrument_data.wls[0],
