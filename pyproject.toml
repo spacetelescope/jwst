@@ -212,6 +212,7 @@ addopts = [
 ]
 filterwarnings = [
     "error::ResourceWarning",
+    "error::DeprecationWarning",
     "error::stdatamodels.exceptions.ValidationWarning",
     "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
 ]

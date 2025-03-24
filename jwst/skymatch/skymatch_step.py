@@ -280,11 +280,12 @@ class SkyMatchStep(Step):
                         f"Image with stem '{fname}' found multiple times in the skylist."
                     )
 
+                sky_float = float(sky[0])
                 log.debug(
-                    f"Setting sky background of image '{model.meta.filename}' to {float(sky)}."
+                    f"Setting sky background of image '{model.meta.filename}' to {sky_float}."
                 )
 
-                model.meta.background.level = float(sky)
+                model.meta.background.level = sky_float
                 model.meta.background.subtracted = self.subtract
                 model.meta.background.method = self.skymethod
                 if self.subtract:
