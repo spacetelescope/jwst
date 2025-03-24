@@ -28,7 +28,7 @@ def read_fit_column(file):
     # residual_fringe.py to write out a column of data
     # The function we are testing is fit_1d_background_complex.
 
-    file_dir = Path(__file__).parent.resolve()
+    file_dir = Path(__file__).parent.resolve() / "data"
     file_path = str(file_dir / file)
 
     with fits.open(file_path) as hdu:
