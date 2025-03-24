@@ -286,6 +286,11 @@ module = [
 ]
 ignore_missing_imports = true
 
+[tool.changelog-bot]
+    [tool.changelog-bot.towncrier_changelog]
+        enabled = true
+        verify_pr_number = true
+
 [tool.towncrier]
 filename = "CHANGES.rst"
 directory = "changes"
