@@ -244,6 +244,7 @@ class LgModel:
         TODO: change name of self.singvals or self.linfit_results to be the same, for consistency.
         This would be easier if matrix_operations and weighted_operations both did their fitting
         with scipy
+        TODO: weighted mode is never used by the pipeline. is that still needed?
 
         Parameters
         ----------

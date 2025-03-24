@@ -22,11 +22,18 @@ def example_model():
     CubeModel
         A simple CubeModel simulating NIRISS AMI data.
     """
-    model = dm.CubeModel((2, 81, 81))
-    # some non-zero data is required as this step will center
-    # the image and find the centroid (both fail with all zeros)
-    model.data[:, 24, 24] = 1
-    model.data[:, 28, 28] = 0.9
+    model = dm.CubeModel((5, 81, 81))
+
+    # make a simple data array, pure noise but with one bad pixel
+    rng = np.random.default_rng(0)
+    data = rng.normal(size=model.data.shape).astype(np.float32)
+    data[0, 20, 20] = 100
+
+    # add a "real" source that is not time varying
+    # leave it a bit off-center to test centering in instrument_data.NIRISS.read_data_model
+    data[:, 35, 35] = 10.0
+
+    model.data = data
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.filter = "F277W"
     model.meta.subarray.name = "SUB80"
@@ -75,19 +82,6 @@ def circular_pupil():
 
 
 @pytest.fixture(scope="package")
-def nrm_model_circular(circular_pupil):
-    """
-    Make a simple NRMModel with a circular pupil.
-
-    Returns
-    -------
-    NRMModel
-        A simple NRMModel with a circular pupil.
-    """
-    return dm.NRMModel(nrm=circular_pupil)
-
-
-@pytest.fixture(scope="package")
 def nrm_model(example_model):
     """
     Retrieve a real NRMModel reference file from CRDS.
@@ -99,6 +93,21 @@ def nrm_model(example_model):
     """
     nrm_reffile = Step().get_reference_file(example_model, "nrm")
     return dm.NRMModel(nrm_reffile)
+
+
+@pytest.fixture(scope="package")
+def nrm_model_circular(circular_pupil, nrm_model):
+    """
+    Make a simple NRMModel with a circular pupil.
+
+    Returns
+    -------
+    NRMModel
+        A simple NRMModel with a circular pupil.
+    """
+    model = nrm_model.copy()
+    model.nrm = circular_pupil
+    return model
 
 
 @pytest.fixture(scope="package")

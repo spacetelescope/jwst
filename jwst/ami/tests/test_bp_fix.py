@@ -50,20 +50,15 @@ def test_calc_psf(example_model, circular_pupil):
         assert np.max(im) == im[fov_npix // 2, fov_npix // 2]
 
 
-@pytest.fixture
-def data_with_bad_pixels(example_model):
-    rng = np.random.default_rng(0)
-    shp = example_model.data.shape
-    data = rng.normal(size=shp)
-    data[0, 20, 20] = 100
-    return data
+def test_fourier_corr(example_model):
+    """
+    Test bad_pixels and fourier_corr functions.
+    
+    Example model has a bad pixel at (0, 20, 20).
+    """
 
-
-def test_fourier_corr(data_with_bad_pixels):
-    """Test bad_pixels and fourier_corr functions."""
-
-    data = data_with_bad_pixels[0]
-    badpx = bp_fix.bad_pixels(data, 8, 10)
+    data = example_model.data[0]
+    badpx = bp_fix.bad_pixels(data, 3, 20)
     assert badpx.shape == data.shape
     assert badpx[20, 20] == 1
     assert np.sum(badpx) == 1
@@ -76,16 +71,20 @@ def test_fourier_corr(data_with_bad_pixels):
     assert data_fixed.shape == data.shape
     assert not np.isnan(data_fixed).any()
     assert not np.isinf(data_fixed).any()
-    assert data_fixed.dtype == np.float64
+    assert data_fixed.dtype == np.float32
 
     # check that the bad pixel was fixed. should be within 1 sigma of the noise
     # since we are using a relatively large median region
     assert np.abs(data_fixed[20, 20]) < 1
 
 
-def test_fix_bad_pixels(example_model, data_with_bad_pixels, nrm_model_circular):
-
-    data = data_with_bad_pixels
+def test_fix_bad_pixels(example_model, nrm_model_circular):
+    """
+    Test fix_bad_pixels function.
+    
+    Example model has a bad pixel at (0, 20, 20).
+    """
+    data = example_model.data.copy()
     nrm_model = nrm_model_circular
     pxdq0 = np.zeros_like(data, dtype=np.bool_)
     filt = example_model.meta.instrument.filter  
@@ -96,7 +95,7 @@ def test_fix_bad_pixels(example_model, data_with_bad_pixels, nrm_model_circular)
     assert pxdq_out.shape == data.shape
     assert pxdq_out[0, 20, 20] == 1
     assert np.sum(pxdq_out) == 1
-    assert data_out.dtype == np.float64
+    assert data_out.dtype == np.float32
     assert pxdq_out.dtype == np.int64
     
     # replace bad pixel in both arrays with a placeholder so can assert the rest did not change
@@ -105,10 +104,10 @@ def test_fix_bad_pixels(example_model, data_with_bad_pixels, nrm_model_circular)
     assert_allclose(data_out, data, rtol=1e-5)
 
 
-def test_fix_bad_pixels_even_size(example_model, data_with_bad_pixels, nrm_model_circular):
+def test_fix_bad_pixels_even_size(example_model, nrm_model_circular):
     """Test coverage for bug where even-sized arrays were failing."""
     
-    data = data_with_bad_pixels
+    data = example_model.data.copy()
     nrm_model = nrm_model_circular
     pxdq0 = np.zeros_like(data, dtype=np.bool_)
     filt = example_model.meta.instrument.filter
@@ -121,9 +120,10 @@ def test_fix_bad_pixels_even_size(example_model, data_with_bad_pixels, nrm_model
 
     assert data_out.shape == data.shape
     assert pxdq_out.shape == data.shape
+    assert data_out[0, 20, 20] < 10
     assert pxdq_out[0, 20, 20] == 1
     assert np.sum(pxdq_out) == 1
-    assert data_out.dtype == np.float64
+    assert data_out.dtype == np.float32
     assert pxdq_out.dtype == np.int64
 
     # replace bad pixel in both arrays with a placeholder so can assert the rest did not change

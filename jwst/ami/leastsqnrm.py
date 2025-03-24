@@ -125,7 +125,6 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     to normalize the data.
 
     TODO: replace linearfit with scipy fitting.
-    This probably requires running regtests before and after to ensure minimal changes.
     TODO: Instead of above, can the linfit option be removed entirely? it's never set
     to True in the pipeline.
 

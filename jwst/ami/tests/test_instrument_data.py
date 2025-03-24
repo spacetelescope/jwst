@@ -1,7 +1,7 @@
 """Unit tests for AMI hextransformee module."""
 
 import pytest
-
+import numpy as np
 from jwst.ami import instrument_data
 from jwst.ami.utils import Affine2d
 
@@ -11,13 +11,22 @@ from jwst.ami.utils import Affine2d
 @pytest.mark.parametrize("usebp", (True, False))
 @pytest.mark.parametrize("firstfew", (None, 3))
 @pytest.mark.parametrize("run_bpfix", (True, False))
-def test_niriss(example_model, nrm_model, bandpass, chooseholes, affine2d, usebp, firstfew, run_bpfix):
+def test_niriss(
+    example_model,
+    nrm_model_circular,
+    bandpass,
+    chooseholes,
+    affine2d,
+    usebp,
+    firstfew,
+    run_bpfix,
+):
     """Test initialize NIRISS class with all available options."""
 
     filt = example_model.meta.instrument.filter 
     niriss = instrument_data.NIRISS(
         filt,
-        nrm_model,
+        nrm_model_circular,
         chooseholes=chooseholes,
         affine2d=affine2d,
         bandpass=bandpass,
@@ -52,15 +61,33 @@ def test_niriss(example_model, nrm_model, bandpass, chooseholes, affine2d, usebp
 
     scidata_ctrd, dqmask_ctrd = niriss.read_data_model(example_model)
 
-    # TODOs:
-    # test centering
+    assert scidata_ctrd.shape == dqmask_ctrd.shape
+    if firstfew:
+        assert scidata_ctrd.shape[0] == firstfew
+        assert dqmask_ctrd.shape[0] == firstfew
 
-    # test bad pixels are found and applied if run_bpfix is True
+    # test centering. should be centered around "real" source originally at (35, 35)
+    shp_out = scidata_ctrd.shape[1:]
+    assert shp_out == (63, 63)
 
-    # test bad pixel mask is returned as zeros if usebp is False,
-    # and has actual DQ values if usebp is True
+    # Ensure real source is in the center of the image
+    # Don't use zeroth integration because there's a bad pixel in that one, which
+    # is not always masked out depending on input options
+    assert np.unravel_index(np.argmax(scidata_ctrd[1]), shp_out) == (31, 31)
 
-    # check attributes are set.
+    # test bad pixels are fixed if run_bpfix is True
+    if run_bpfix:
+        assert np.max(scidata_ctrd) < 50 # bad pixel is fixed
+    else:
+        assert np.max(scidata_ctrd) == 100 # bad pixel retains original value of 100
+
+    # test bad pixels are added to dq mask if usebp is True
+    if run_bpfix and usebp:
+        assert np.sum(dqmask_ctrd) == 1 # single bad pixel
+    else:
+        assert np.sum(dqmask_ctrd) == 0 # no masking
+
+    # check attributes are set by read_data_model
     # no more checks here for now, because this is likely to get refactored
     for att in [
         "pscale_rad",

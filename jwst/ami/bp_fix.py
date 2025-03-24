@@ -302,7 +302,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     # These values were determined empirically for NIRISS/AMI and need to be
     # tweaked for any other instrument.
     median_size = 3  # pix
-    median_tres = 50.0  # JK: changed from 28 to 20 in order to capture all bad pixels
+    median_tres = 50.0
 
     pupil_mask = nrm_model.nrm
     imsz = data.shape
@@ -378,7 +378,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
             # If no new bad pixels were identified, terminate the
             # iteration.
-            if pxdq_new == 0.0:
+            if pxdq_new == 0:
                 break
 
             # If new bad pixels were identified, add them to the bad pixel

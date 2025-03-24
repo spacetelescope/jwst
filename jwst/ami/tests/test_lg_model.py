@@ -27,7 +27,6 @@ def lgmodel(request, nrm_model, bandpass):
     return model
 
 
-# TODO: for some reason PSF offset indexing gets flipped, should be fixed.
 @pytest.mark.parametrize("psf_offset", [(0, 0), (1, -3)])
 def test_simulate(request, lgmodel, bandpass, psf_offset):
 
@@ -82,13 +81,13 @@ def test_make_model(lgmodel, psf_offset):
     assert np.all(max_idx == expected_center)
 
 
-def test_fit_image(example_model, lgmodel):
+@pytest.mark.parametrize("weighted", [True, False])
+def test_fit_image(example_model, lgmodel, weighted):
     """
     Test fit_image and create_modelpsf methods.
+
     These two methods are intended to be called in sequence.
     """
-    # TODO: finish this test once leastsqnrm tests are done
-
     image = example_model.data[0]
     fov = image.shape[0]
 
@@ -98,17 +97,36 @@ def test_fit_image(example_model, lgmodel):
     lgmodel.fit_image(
         image,
         model_in=fringemodel,
+        weighted=weighted,
     )
     lgmodel.create_modelpsf()
 
-    # print("rawDC", lgmodel.rawDC)
-    # print("flux", lgmodel.flux)
-    # print("soln", lgmodel.soln)
-    # print("fringeamp", lgmodel.fringeamp)
-    # print("fringephase", lgmodel.fringephase)
-    # print("fringepistons", lgmodel.fringepistons)
-    # print("redundant_cps", lgmodel.redundant_cps)
-    # print("t3_amplitudes", lgmodel.t3_amplitudes)
-    # print("redundant_cas", lgmodel.redundant_cas)
-    # print("q4_phases", lgmodel.q4_phases)
-    # print("modelpsf", lgmodel.modelpsf)
+    # Check attribute setting by this method
+    for attr in [
+        "rawDC",
+        "flux",
+        "soln",
+        "fringeamp",
+        "fringephase",
+        "fringepistons",
+        "redundant_cps",
+        "t3_amplitudes",
+        "redundant_cas",
+        "q4_phases",
+        "modelpsf",
+    ]:
+        assert hasattr(lgmodel, attr)
+    
+    # Check shapes and basic values
+    assert lgmodel.soln.size == 44
+    assert lgmodel.fringeamp.size == 21
+    assert lgmodel.fringephase.size == 21
+    assert lgmodel.fringepistons.size == 7
+    assert lgmodel.redundant_cps.size == 35
+    assert lgmodel.t3_amplitudes.size == 35
+    assert lgmodel.redundant_cas.size == 35
+    assert lgmodel.q4_phases.size == 35
+    assert lgmodel.modelpsf.shape == image.shape
+
+    # check soln normalized
+    assert lgmodel.soln[0] == 1.0

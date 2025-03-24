@@ -53,7 +53,17 @@ def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
         t3_amp_err = oimodel.t3["T3AMPERR"]
         t3_phase_err = oimodel.t3["T3PHIERR"]
 
-        for arr in [vis_amp, vis_amp_err, vis_phase, vis_phase_err, vis2, vis2_err, t3_amp, t3_amp_err, t3_phase_err]:
+        for arr in [
+            vis_amp,
+            vis_amp_err,
+            vis_phase,
+            vis_phase_err,
+            vis2,
+            vis2_err,
+            t3_amp,
+            t3_amp_err,
+            t3_phase_err,
+        ]:
             assert arr.dtype == np.float64
             if i == 0:
                 assert arr.ndim == 1 # the mean data
@@ -82,10 +92,5 @@ def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
     coeffs = lgfit.solns_table["coeffs"]
     # identical because input data are identical in both planes
     # Why is the shape hard-coded to 44?
-    assert coeffs.shape == (2, 44)
+    assert coeffs.shape == (example_model.data.shape[0], 44)
     assert np.allclose(coeffs[0], coeffs[1])
-
-    # TODO: test the reasonableness of the amp, phase output given the input data
-    # Test the reasonableness of the fit images too
-
-    # TODO: test all the initialization options
