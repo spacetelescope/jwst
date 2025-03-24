@@ -446,8 +446,6 @@ class DataSet():
 
     def calc_miri(self, ftab):
         """
-        Extended Summary
-        -------------
         For MIRI imaging and LRS modes, matching is based on FILTER and SUBARRAY.
         MIRI MRS uses dedicated photom reference files per CHANNEL+BAND.
 
@@ -462,10 +460,8 @@ class DataSet():
         ftab : `~jwst.datamodels.MirImgPhotomModel` or
                `~jwst.datamodels.MirMrsPhotomModel` or
                `~jwst.datamodels.MirLrsPhotomModel`
-            MIRI photom reference file data model
+            MIRI photom reference file data model.
 
-        Returns
-        -------
         """
 
         # Imaging detector
@@ -522,6 +518,7 @@ class DataSet():
 
             # Compute the combined 2D sensitivity factors
             sens2d = ftab.data
+            sens2d_sq = sens2d**2
 
             # Multiply the science data and uncertainty arrays by the 2D
             # sensitivity factors
@@ -530,10 +527,13 @@ class DataSet():
             else:
                 self.input.data /= sens2d
             self.input.err *= sens2d
-            self.input.var_poisson *= sens2d**2
-            self.input.var_rnoise *= sens2d**2
+            self.input.var_poisson *= sens2d_sq
+            self.input.var_rnoise *= sens2d_sq
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                self.input.var_flat *= sens2d**2
+                process_var_flat = True
+                self.input.var_flat *= sens2d_sq
+            else:
+                process_var_flat = False
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
@@ -553,8 +553,13 @@ class DataSet():
                 mid_time = self.input.meta.exposure.mid_time
                 correction = miri_mrs.time_correction(self.input, self.detector,
                                                       ftab, mid_time)
+                inv_correction_sq = 1 / (correction * correction)
                 self.input.data /= correction
                 self.input.err /= correction
+                self.input.var_poisson *= inv_correction_sq
+                self.input.var_rnoise *= inv_correction_sq
+                if process_var_flat:
+                    self.input.var_flat *= inv_correction_sq
             else:
                 log.info("Not applying MRS IFU time dependent correction.")
 
@@ -574,8 +579,6 @@ class DataSet():
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
-
-        return
 
     def calc_nircam(self, ftab):
         """
