@@ -273,12 +273,6 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
         Corrected data
     pxdq : np.ndarray[int]
         Mask of bad pixels, updated if new ones were found
-
-    Notes
-    -----
-    This function only works with input data shape that is odd.
-    For even shapes, raises IndexError at line `data_ft = np.fft.rfft2(data_out)[ww_ft]`.
-    TODO: Fix this.
     """
     dq_dnu = pxdq0 & DO_NOT_USE == DO_NOT_USE
     dq_jump = pxdq0 & JUMP_DET == JUMP_DET
@@ -336,12 +330,20 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     for j in range(imsz[0]):
         log.info(f"         Frame {j + 1:.0f} of {imsz[0]:.0f}")
 
-        # Now cut out the subframe.
-        # no need to cut out sub-frame; data already cropped
-        # odd/even size issues?
-        data_cut = deepcopy(data[j, :-1, :-1])
+        # Handle odd/even size issues by cropping out the -1th pixel in odd data
+        xshape = data.shape[1]
+        yshape = data.shape[2]
+        if xshape % 2 == 0:
+            idx_x = xshape
+        elif data.shape[1] % 2 == 1:
+            idx_x = xshape - 1
+        if yshape % 2 == 0:
+            idx_y = yshape
+        elif yshape % 2 == 1:
+            idx_y = yshape - 1
+        data_cut = deepcopy(data[j, :idx_x, :idx_y])
         data_orig = deepcopy(data_cut)
-        pxdq_cut = deepcopy(pxdq[j, :-1, :-1])
+        pxdq_cut = deepcopy(pxdq[j, :idx_x, :idx_y])
         pxdq_cut = pxdq_cut > 0.5
         # Correct the bad pixels. This is an iterative process. After each
         # iteration, we check whether new (residual) bad pixels are
@@ -384,7 +386,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
             pxdq_cut = ((pxdq_cut > 0.5) | (temp > 0.5)).astype("bool")
 
         # Put the modified frames back into the data cube.
-        data[j, :-1, :-1] = fourier_corr(data_orig, pxdq_cut, fmas)
-        pxdq[j, :-1, :-1] = pxdq_cut
+        data[j, :idx_x, :idx_y] = fourier_corr(data_orig, pxdq_cut, fmas)
+        pxdq[j, :idx_x, :idx_y] = pxdq_cut
 
     return data, pxdq

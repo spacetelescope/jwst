@@ -103,3 +103,30 @@ def test_fix_bad_pixels(example_model, data_with_bad_pixels, nrm_model_circular)
     data[0, 20, 20] = 0
     data_out[0, 20, 20] = 0
     assert_allclose(data_out, data, rtol=1e-5)
+
+
+def test_fix_bad_pixels_even_size(example_model, data_with_bad_pixels, nrm_model_circular):
+    """Test coverage for bug where even-sized arrays were failing."""
+    
+    data = data_with_bad_pixels
+    nrm_model = nrm_model_circular
+    pxdq0 = np.zeros_like(data, dtype=np.bool_)
+    filt = example_model.meta.instrument.filter
+
+    # Make the data even-sized
+    data = data[:, :data.shape[1] - 1, :data.shape[2] - 1]
+    pxdq0 = pxdq0[:, :pxdq0.shape[1] - 1, :pxdq0.shape[2] - 1]
+
+    data_out, pxdq_out = bp_fix.fix_bad_pixels(data, pxdq0, filt, PXSC_MAS, nrm_model)
+
+    assert data_out.shape == data.shape
+    assert pxdq_out.shape == data.shape
+    assert pxdq_out[0, 20, 20] == 1
+    assert np.sum(pxdq_out) == 1
+    assert data_out.dtype == np.float64
+    assert pxdq_out.dtype == np.int64
+
+    # replace bad pixel in both arrays with a placeholder so can assert the rest did not change
+    data[0, 20, 20] = 0
+    data_out[0, 20, 20] = 0
+    assert_allclose(data_out, data, rtol=1e-5)  # Use assert_allclose to compare arrays
