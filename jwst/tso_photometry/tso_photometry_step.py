@@ -25,8 +25,8 @@ class TSOPhotometryStep(Step):
 
         Parameters
         ----------
-        input_data : str or `CubeModel`
-            Filename for a FITS image or association table, or a `CubeModel`.
+        input_data : str or CubeModel
+            Filename for a FITS image, or a `CubeModel`.
 
         Returns
         -------
