@@ -38,7 +38,6 @@ exclude = [
     "jwst/saturation/**.py",
     "jwst/spectral_leak/**.py",
     "jwst/straylight/**.py",
-    "jwst/tso_photometry/**.py",
     "jwst/wfs_combine/**.py",
 ]
 
@@ -128,7 +127,6 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 "jwst/saturation/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/spectral_leak/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/straylight/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/tso_photometry/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/wfs_combine/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "!jwst/engdblog/**.py" = [ # Package-wide logger formatting is https://jira.stsci.edu/browse/JP-3927
     "G004", # logging-f-string
