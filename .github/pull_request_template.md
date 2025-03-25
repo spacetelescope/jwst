@@ -11,7 +11,7 @@ This PR addresses ...
 <!-- if you can't perform these tasks due to permissions, please ask a maintainer to do them -->
 ## Tasks
 - [ ] **request a review from someone specific**, to avoid making the maintainers review every PR
-- [ ] add a build milestone, i.e. `Build 11.3` (use the [latest build](https://github.com/spacetelescope/jwst/milestones) if not sure)
+- [ ] add a build milestone, i.e. `Build 12.0` (use the [latest build](https://github.com/spacetelescope/jwst/milestones) if not sure)
 - [ ] Does this PR change user-facing code / API? (if not, label with `no-changelog-entry-needed`)
   - [ ] write news fragment(s) in `changes/`: `echo "changed something" > changes/<PR#>.<changetype>.rst` (see below for change types) 
   - [ ] update or add relevant tests
