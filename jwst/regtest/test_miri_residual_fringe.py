@@ -1,7 +1,9 @@
 """Test ResidualFringeStep on MIRI MRS"""
-import pytest
+import warnings
 
+import pytest
 from astropy.io.fits.diff import FITSDiff
+
 from jwst.stpipe import Step
 
 
@@ -19,7 +21,11 @@ def test_residual_fringe_cal(rtdata, fitsdiff_default_kwargs):
         '--save_results=true',
         '--skip=False'
     ]
-    Step.from_cmdline(args)
+    # Without this ignore, pytest turns RuntimeWarning into RuntimeError
+    # and triggers exception logic in the step.
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
     output = input_file.replace('cal', 'residual_fringe')
     rtdata.output = output

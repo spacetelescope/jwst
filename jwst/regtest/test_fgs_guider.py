@@ -1,9 +1,10 @@
 """Regression tests for FGS Guidestar in ID and FINEGUIDE modes"""
+import warnings
+
 import pytest
 
 from jwst.regtest import regtestdata as rt
 from jwst.stpipe import Step
-
 
 EXP_TYPES = ['fgs_acq1', 'fgs_fineguide', 'fgs_id-image', 'fgs_id-stack']
 FILE_ROOTS = ['jw01029001001_gs-acq1_2022142180746',
@@ -25,7 +26,10 @@ def run_guider_pipelines(rtdata_module, request):
         '--steps.dq_init.save_results=true',
         '--steps.guider_cds.save_results=true',
     ]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: divide by zero encountered in divide
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
     return rtdata
 

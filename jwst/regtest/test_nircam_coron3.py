@@ -1,8 +1,9 @@
+import warnings
+
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
-import warnings
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata]
@@ -18,7 +19,9 @@ def run_pipeline(rtdata_module, resource_tracker):
     args = ["calwebb_coron3", rtdata.input]
     with warnings.catch_warnings():
         # warning is explicitly raised by the pipeline
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message="'var_rnoise' array not available")
+        # RuntimeWarning: 'var_rnoise' array not available
+        # RuntimeWarning: Mean of empty slice
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         with resource_tracker.track():
             Step.from_cmdline(args)
 

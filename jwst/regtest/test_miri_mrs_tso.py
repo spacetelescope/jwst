@@ -1,4 +1,6 @@
 """Regression test for MIRI MRS TSO mode"""
+import warnings
+
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -28,7 +30,10 @@ def run_spec2(rtdata_module):
             '--steps.photom.mrs_time_correction=true',
             ]
 
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: invalid value encountered in add
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata

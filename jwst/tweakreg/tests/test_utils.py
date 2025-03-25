@@ -1,23 +1,21 @@
-from os import path
 from copy import deepcopy
 
 import pytest
 import numpy as np
 import asdf
 from astropy.coordinates import SkyCoord
+from astropy.utils.data import get_pkg_data_filename
 from astropy import units as u
+from numpy.testing import assert_allclose
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.linearfit import build_fit_matrix
 
-from jwst.tweakreg.tests import data
 from stdatamodels.jwst.datamodels import ImageModel
 from jwst.tweakreg.utils import (
     adjust_wcs,
     transfer_wcs_correction,
 )
 from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
-
-data_path = path.split(path.abspath(data.__file__))[0]
 
 
 def _get_test_pts(model, npts=5):
@@ -37,7 +35,8 @@ def _get_test_pts(model, npts=5):
 
 @pytest.fixture
 def nircam_rate():
-    wcs_file = path.join(data_path, 'nrcb1-wcs.asdf')
+    wcs_file = get_pkg_data_filename(
+        "data/nrcb1-wcs.asdf", package="jwst.tweakreg.tests")
     with asdf.open(wcs_file) as af:
         wcs = deepcopy(af['wcs'])
 
@@ -126,7 +125,8 @@ def nircam_rate():
 
 
 def test_adjust_wcs():
-    wcs_file = path.join(data_path, 'nrcb1-wcs.asdf')
+    wcs_file = get_pkg_data_filename(
+        "data/nrcb1-wcs.asdf", package="jwst.tweakreg.tests")
     with asdf.open(wcs_file) as af:
         w0 = deepcopy(af['wcs'])
 
@@ -145,7 +145,7 @@ def test_adjust_wcs():
 
     crval1a, crval2a = wa(crpix10, crpix20)
 
-    assert np.allclose(
+    assert_allclose(
         [crval1a - crval10, crval2a - crval20],
         [0.0135, 0.0208],
         rtol=0,
@@ -164,10 +164,10 @@ def test_adjust_wcs():
     sepa = ca0.separation(ca1).degree
 
     # test scale:
-    assert np.allclose(sepa / sep0, 1.003, rtol=0, atol=1e-8)
+    assert_allclose(sepa / sep0, 1.003, rtol=0, atol=1e-8)
 
     # test roll:
-    assert np.allclose(
+    assert_allclose(
         ca1.position_angle(ca0).degree - c01.position_angle(c0).degree,
         25.7,
         rtol=1.0e-5,
@@ -215,7 +215,7 @@ def test_transfer_wcs_correction(nircam_rate, tmp_path, input_type):
 
     x, y = _get_test_pts(m1, 5)
 
-    assert np.allclose(
+    assert_allclose(
         np.linalg.norm(
             np.subtract(m2.meta.wcs(x, y), m1.meta.wcs(x, y)),
             axis=0
