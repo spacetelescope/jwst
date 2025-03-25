@@ -281,9 +281,7 @@ class SkyMatchStep(Step):
                     )
 
                 sky = float(sky[0])
-                log.debug(
-                    f"Setting sky background of image '{model.meta.filename}' to {sky}."
-                )
+                log.debug(f"Setting sky background of image '{model.meta.filename}' to {sky}.")
 
                 model.meta.background.level = sky
                 model.meta.background.subtracted = self.subtract
