@@ -343,7 +343,7 @@ def decode_context(context, x, y):
     obtained by resampling 80 input images.
 
     >>> import numpy as np
-    >>> from jwst.resample.resample_utils import decode_context
+    >>> from drizzle.utils import decode_context
     >>> con = np.array(
     ...     [
     ...         [
