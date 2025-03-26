@@ -54,7 +54,7 @@ def weighted_operations(img, model, dqm=None):
     model : 2D float array
         Analytic model
     dqm : 2D bool array
-        Bad pixel mask
+        Bad pixel mask, same shape as image.
 
     Returns
     -------
@@ -69,12 +69,12 @@ def weighted_operations(img, model, dqm=None):
     """
     # Remove not-to-be-fit data from the flattened "img" data vector
     flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
-    flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
 
     if dqm is not None:
+        flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
         nanlist = np.where(flatdqm)  # where DO_NOT_USE up.
     else:
-        nanlist = (np.array(()),)  # shouldn't occur w/MAST JWST data
+        nanlist = (np.array((), dtype=np.int32),)  # shouldn't occur w/MAST JWST data
 
     # see original linearfit https://github.com/agreenbaum/ImPlaneIA:
     # agreenbaum committed on May 21, 2017 1 parent 3e0fb8b
@@ -116,13 +116,12 @@ def weighted_operations(img, model, dqm=None):
     return x, res, cond, singvals  # no condition number yet...
 
 
-def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
+def matrix_operations(img, model, linfit=False, dqm=None):
     """
     Use least squares matrix operations to solve A x = b.
 
     A is the model, b is the data (img), and x is the coefficient vector we are solving for.
-    In 2-D, data x = inv(At.A).(At.b).  If a flux is given, it will be used it
-    to normalize the data.
+    In 2-D, data x = inv(At.A).(At.b).
 
     TODO: replace linearfit with scipy fitting.
     TODO: Instead of above, can the linfit option be removed entirely? it's never set
@@ -134,12 +133,10 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
         Input data
     model : 2D float array
         Analytic model
-    flux : float
-        Normalization factor
     linfit : bool
         Whether to perform linear fit
     dqm : 2D bool array
-        Bad pixel mask slice
+        Bad pixel mask slice, same shape as image.
 
     Returns
     -------
@@ -152,22 +149,20 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
         transpose
     """
     flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
-    flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
     log.info("fringefitting.leastsqnrm.matrix_operations(): ")
     log.info(f"\timg {img.shape:}")
-    log.info(f"\tdqm {dqm.shape:}")
     log.info(
         f"\tL x W = {img.shape[0]:d} x {img.shape[1]:d} = {img.shape[0] * img.shape[1]:d}",
     )
     log.info(f"\tflatimg {flatimg.shape:}")
-    log.info(f"\tflatdqm {flatdqm.shape:}")
 
     log.info("")
     log.info("\ttype(dqm) %s", type(dqm))
     if dqm is not None:
+        flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
         nanlist = np.where(flatdqm)  # where DO_NOT_USE up.
     else:
-        nanlist = (np.array(()),)  # shouldn't occur w/MAST JWST data
+        nanlist = (np.array((), dtype=np.int32),)  # shouldn't occur w/MAST JWST data
 
     log.info(f"\ttype(nanlist) {type(nanlist):}, len={len(nanlist):}")
     log.info(f"\tnumber of nanlist pixels: {len(nanlist[0]):d} items")
@@ -176,9 +171,6 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     flatimg = np.delete(flatimg, nanlist)
 
     log.info(f"\tflatimg {flatimg.shape:} after deleting {len(nanlist[0]):d}")
-
-    if flux is not None:
-        flatimg = flux * flatimg / flatimg.sum()
 
     # A
     flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1], np.shape(model)[2])
@@ -210,7 +202,6 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     res = np.insert(res, naninsert, np.nan)
     res = res.reshape(img.shape[0], img.shape[1])
 
-    log.info("model flux %s", flux)
     log.info("data flux %s", flatimg.sum())
     log.info("flat model dimensions %s", np.shape(flatmodel))
     log.info("model transpose dimensions %s", np.shape(flatmodeltransp))
