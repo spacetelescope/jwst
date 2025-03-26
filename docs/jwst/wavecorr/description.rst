@@ -12,7 +12,7 @@ known to be off center (in the dispersion direction) in their slit.
 Upon successful completion of the step, the status keyword "S_WAVCOR"
 in the primary header is set to "COMPLETE".  For each SCI extension, the "WAVECOR"
 keyword is set to True if the slit was wavelength corrected (it is a point
-source) or False if it was not corrected (it is a point source).
+source) or False if it was not corrected (it is not a point source).
 
 NIRSpec MOS
 -----------
