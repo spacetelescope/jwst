@@ -24,19 +24,24 @@ class PhotomStep(Step):
 
     reference_file_types = ['photom', 'area']
 
-    def process(self, input):
+    def process(self, input_data):
 
         try:
-            input_model = datamodels.open(input)
+            input_model = datamodels.open(input_data)
         except IOError:
             self.log.error('Input can not be opened as a Model.')
 
         # Report the detected type of input model
-        model_type = input_model.__class__.__name__
-        self.log.debug("Input is {}".format(model_type))
-        if model_type not in ('CubeModel', 'ImageModel', 'SlitModel',
-                              'IFUImageModel', 'MultiSlitModel',
-                              'MultiSpecModel'):
+        self.log.debug(f"Input is {input_model}")
+        if not isinstance(
+            input_model,
+            datamodels.CubeModel
+            | datamodels.SlitModel
+            | datamodels.ImageModel
+            | datamodels.IFUImageModel
+            | datamodels.MultiSlitModel
+            | datamodels.MultiSpecModel
+        ):
             self.log.warning("Input is not one of the supported model types: "
                              "CubeModel, ImageModel, IFUImageModel, "
                              "MultiSlitModel, or MultiSpecModel.")
@@ -75,7 +80,7 @@ class PhotomStep(Step):
 
         except photom.DataModelTypeError:
             # should trip e.g. for NIRISS SOSS data in FULL subarray
-            self.log.error(f'Unexpected data model type {model_type} for '
+            self.log.error(f'Unexpected data model type {input_model} for '
                            f'{input_model.meta.instrument.name.upper()}. '
                            'Photom will be skipped.')
             result = input_model.copy()

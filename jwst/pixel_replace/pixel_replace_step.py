@@ -62,11 +62,11 @@ class PixelReplaceStep(Step):
                 | datamodels.IFUImageModel
                 | datamodels.CubeModel,
             ):
-                self.log.debug(f"Input is a {str(type(input_model))}.")
+                self.log.debug(f"Input is a {input_model}.")
             elif isinstance(input_model, datamodels.ModelContainer):
                 self.log.debug("Input is a ModelContainer.")
             else:
-                self.log.error(f"Input is of type {str(type(input_model))} for which")
+                self.log.error(f"Input is of type {input_model} for which")
                 self.log.error("pixel_replace does not have an algorithm.")
                 self.log.error("Pixel replacement will be skipped.")
                 input_model.meta.cal_step.pixel_replace = "SKIPPED"
@@ -105,9 +105,9 @@ class PixelReplaceStep(Step):
                         | datamodels.IFUImageModel
                         | datamodels.CubeModel,
                     ):
-                        self.log.debug(f"Input is a {str(type(model))}.")
+                        self.log.debug(f"Input is a {model}.")
                     else:
-                        self.log.error(f"Input is of type {str(type(model))} for which")
+                        self.log.error(f"Input is of type {model} for which")
                         self.log.error("pixel_replace does not have an algorithm.")
                         self.log.error("Pixel replacement will be skipped.")
                         model.meta.cal_step.pixel_replace = "SKIPPED"
