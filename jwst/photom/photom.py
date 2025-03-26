@@ -518,7 +518,6 @@ class DataSet():
 
             # Compute the combined 2D sensitivity factors
             sens2d = ftab.data
-            sens2d_sq = sens2d**2
 
             # Multiply the science data and uncertainty arrays by the 2D
             # sensitivity factors
@@ -527,13 +526,10 @@ class DataSet():
             else:
                 self.input.data /= sens2d
             self.input.err *= sens2d
-            self.input.var_poisson *= sens2d_sq
-            self.input.var_rnoise *= sens2d_sq
+            self.input.var_poisson *= sens2d**2
+            self.input.var_rnoise *= sens2d**2
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                process_var_flat = True
-                self.input.var_flat *= sens2d_sq
-            else:
-                process_var_flat = False
+                self.input.var_flat *= sens2d**2
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
@@ -558,7 +554,7 @@ class DataSet():
                 self.input.err /= correction
                 self.input.var_poisson *= inv_correction_sq
                 self.input.var_rnoise *= inv_correction_sq
-                if process_var_flat:
+                if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
                     self.input.var_flat *= inv_correction_sq
             else:
                 log.info("Not applying MRS IFU time dependent correction.")
