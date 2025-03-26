@@ -28,7 +28,7 @@ Note that the core algorithms for this step are called from the external package
 for use by multiple observatories.
 
 The keywords ``PRIMECRS`` and ``EXTNCRS`` are set in this step.  The ``PRIMECRS`` keyword
-is the number of prime cosmic rays found per thousand pixels per second.  The ``EXTNCRS``
+is the number of primary cosmic rays found per thousand pixels per second.  The ``EXTNCRS``
 keyword is the number of extended events (snowball and shower) per million pixels per
 second.
 
