@@ -1,5 +1,6 @@
 from ..stpipe import Step
 from . import ami_average
+import warnings
 
 __all__ = ["AmiAverageStep"]
 
@@ -9,13 +10,28 @@ __all__ = ["AmiAverageStep"]
 
 
 class AmiAverageStep(Step):
-    """Average LG results for multiple NIRISS AMI mode exposures."""
+    """
+    Average LG results for multiple NIRISS AMI mode exposures.
+
+    .. deprecated:: 1.18.1
+        The `AmiAverageStep` has been deprecated and will be removed
+        in a future release.
+    """
 
     class_alias = "ami_average"
 
     spec = """
     skip = boolean(default=True) # Do not run this step
     """  # noqa: E501
+
+    def __init__(self, *args, **kwargs):
+        warnings.warn(
+            "'AmiAverageStep' has been deprecated since 1.18.1 and "
+            "will be removed in a future release. ",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(*args, **kwargs)
 
     def flatten_input(self, input_items):
         """Return generator to provide iterable simple list with no nested structure."""
