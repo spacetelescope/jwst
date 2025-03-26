@@ -105,7 +105,7 @@ class PixelReplaceStep(Step):
                         | datamodels.IFUImageModel
                         | datamodels.CubeModel,
                     ):
-                        self.log.debug(f"Input is a {model}.")
+                        self.log.debug(f"Input is a {str(model)}.")
                     else:
                         self.log.error(f"Input is of type {str(model)} for which")
                         self.log.error("pixel_replace does not have an algorithm.")
