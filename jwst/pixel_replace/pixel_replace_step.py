@@ -62,7 +62,7 @@ class PixelReplaceStep(Step):
                 | datamodels.IFUImageModel
                 | datamodels.CubeModel,
             ):
-                self.log.debug(f"Input is a {input_model.meta.model_type}.")
+                self.log.debug(f"Input is a {str(type(input_model))}.")
             elif isinstance(input_model, datamodels.ModelContainer):
                 self.log.debug("Input is a ModelContainer.")
             else:
@@ -97,16 +97,17 @@ class PixelReplaceStep(Step):
                 # Check models to confirm they are the correct type
                 for i, model in enumerate(output_model):
                     run_pixel_replace = True
-                    if model.meta.model_type in [
-                        "MultiSlitModel",
-                        "SlitModel",
-                        "ImageModel",
-                        "IFUImageModel",
-                        "CubeModel",
-                    ]:
-                        self.log.debug("Input is a {model.meta.model_type}.")
+                    if isinstance(
+                        model,
+                        datamodels.MultiSlitModel
+                        | datamodels.SlitModel
+                        | datamodels.ImageModel
+                        | datamodels.IFUImageModel
+                        | datamodels.CubeModel,
+                    ):
+                        self.log.debug(f"Input is a {str(type(model))}.")
                     else:
-                        self.log.error(f"Input is of type {model.meta.model_type} for which")
+                        self.log.error(f"Input is of type {str(type(model))} for which")
                         self.log.error("pixel_replace does not have an algorithm.")
                         self.log.error("Pixel replacement will be skipped.")
                         model.meta.cal_step.pixel_replace = "SKIPPED"
