@@ -1,3 +1,4 @@
+from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
@@ -48,6 +49,7 @@ def create_nirspec_mos_model(source_type="POINT"):
     im_ex2d = Extract2dStep.call(im_wcs)
 
     # add error/variance arrays
+    im_ex2d.slits[0].name = "0"
     im_ex2d.slits[0].err = im_ex2d.slits[0].data * 0.1
     im_ex2d.slits[0].var_rnoise = im_ex2d.slits[0].data * 0.01
     im_ex2d.slits[0].var_poisson = im_ex2d.slits[0].data * 0.01
@@ -57,6 +59,12 @@ def create_nirspec_mos_model(source_type="POINT"):
     im_ex2d.slits[0].source_type = source_type
     im_ex2d.slits[0].source_xpos = 0.25
     im_ex2d.slits[0].source_ypos = 0.25
+
+    # add a couple more slits
+    for i in [1, 2]:
+        slit_copy = deepcopy(im_ex2d.slits[0])
+        slit_copy.name = str(i)
+        im_ex2d.slits.append(slit_copy)
 
     return im_ex2d
 
@@ -86,39 +94,41 @@ def test_pathloss_step_mos_point(nirspec_mos_model_point):
     result = PathLossStep.call(model)
     assert result.meta.cal_step.pathloss == "COMPLETE"
 
-    # correction type should be "POINT"
-    assert result.slits[0].pathloss_correction_type == "POINT"
+    # check all slits for appropriate correction
+    for slit in result.slits:
+        # correction type should be "POINT"
+        assert slit.pathloss_correction_type == "POINT"
 
-    # uniform also present, but point is used
-    pathloss = result.slits[0].pathloss_point
-    pathloss_un = result.slits[0].pathloss_uniform
-    assert not np.all(pathloss == 1)
-    assert not np.all(pathloss == pathloss_un)
+        # uniform also present, but point is used
+        pathloss = slit.pathloss_point
+        pathloss_un = slit.pathloss_uniform
+        assert not np.all(pathloss == 1)
+        assert not np.all(pathloss == pathloss_un)
 
-    # maximum correction value should be 1.0, minimum should be above zero
-    assert np.nanmax(pathloss) <= 1.0
-    assert np.nanmin(pathloss) > 0.0
+        # maximum correction value should be 1.0, minimum should be above zero
+        assert np.nanmax(pathloss) <= 1.0
+        assert np.nanmin(pathloss) > 0.0
 
-    # data should have been divided by pathloss
-    nnan = ~np.isnan(result.slits[0].data)
-    assert np.allclose(
-        result.slits[0].data[nnan] * pathloss[nnan], model.slits[0].data[nnan]
-    )
-    assert np.allclose(
-        result.slits[0].err[nnan] * pathloss[nnan], model.slits[0].err[nnan]
-    )
-    assert np.allclose(
-        result.slits[0].var_rnoise[nnan] * pathloss[nnan] ** 2,
-        model.slits[0].var_rnoise[nnan],
-    )
-    assert np.allclose(
-        result.slits[0].var_poisson[nnan] * pathloss[nnan] ** 2,
-        model.slits[0].var_poisson[nnan],
-    )
-    assert np.allclose(
-        result.slits[0].var_flat[nnan] * pathloss[nnan] ** 2,
-        model.slits[0].var_flat[nnan],
-    )
+        # data should have been divided by pathloss
+        nnan = ~np.isnan(slit.data)
+        assert np.allclose(
+            slit.data[nnan] * pathloss[nnan], model.slits[0].data[nnan]
+        )
+        assert np.allclose(
+            slit.err[nnan] * pathloss[nnan], model.slits[0].err[nnan]
+        )
+        assert np.allclose(
+            slit.var_rnoise[nnan] * pathloss[nnan] ** 2,
+            model.slits[0].var_rnoise[nnan],
+        )
+        assert np.allclose(
+            slit.var_poisson[nnan] * pathloss[nnan] ** 2,
+            model.slits[0].var_poisson[nnan],
+        )
+        assert np.allclose(
+            slit.var_flat[nnan] * pathloss[nnan] ** 2,
+            model.slits[0].var_flat[nnan],
+        )
 
     result.close()
 
@@ -128,39 +138,41 @@ def test_pathloss_step_mos_uniform(nirspec_mos_model_extended):
     result = PathLossStep.call(model)
     assert result.meta.cal_step.pathloss == "COMPLETE"
 
-    # correction type should be "UNIFORM"
-    assert result.slits[0].pathloss_correction_type == "UNIFORM"
+    # check all slits for appropriate correction
+    for slit in result.slits:
+        # correction type should be "UNIFORM"
+        assert slit.pathloss_correction_type == "UNIFORM"
 
-    # point also present, but uniform is used
-    pathloss = result.slits[0].pathloss_uniform
-    pathloss_pt = result.slits[0].pathloss_point
-    assert not np.all(pathloss == 1)
-    assert not np.all(pathloss == pathloss_pt)
+        # point also present, but uniform is used
+        pathloss = slit.pathloss_uniform
+        pathloss_pt = slit.pathloss_point
+        assert not np.all(pathloss == 1)
+        assert not np.all(pathloss == pathloss_pt)
 
-    # maximum correction value can be > 1.0 for uniform correction,
-    # minimum should be above zero
-    assert np.nanmin(pathloss) > 0.0
+        # maximum correction value can be > 1.0 for uniform correction,
+        # minimum should be above zero
+        assert np.nanmin(pathloss) > 0.0
 
-    # data should have been divided by pathloss
-    nnan = ~np.isnan(result.slits[0].data)
-    assert np.allclose(
-        result.slits[0].data[nnan] * pathloss[nnan], model.slits[0].data[nnan]
-    )
-    assert np.allclose(
-        result.slits[0].err[nnan] * pathloss[nnan], model.slits[0].err[nnan]
-    )
-    assert np.allclose(
-        result.slits[0].var_rnoise[nnan] * pathloss[nnan] ** 2,
-        model.slits[0].var_rnoise[nnan],
-    )
-    assert np.allclose(
-        result.slits[0].var_poisson[nnan] * pathloss[nnan] ** 2,
-        model.slits[0].var_poisson[nnan],
-    )
-    assert np.allclose(
-        result.slits[0].var_flat[nnan] * pathloss[nnan] ** 2,
-        model.slits[0].var_flat[nnan],
-    )
+        # data should have been divided by pathloss
+        nnan = ~np.isnan(slit.data)
+        assert np.allclose(
+            slit.data[nnan] * pathloss[nnan], model.slits[0].data[nnan]
+        )
+        assert np.allclose(
+            slit.err[nnan] * pathloss[nnan], model.slits[0].err[nnan]
+        )
+        assert np.allclose(
+            slit.var_rnoise[nnan] * pathloss[nnan] ** 2,
+            model.slits[0].var_rnoise[nnan],
+        )
+        assert np.allclose(
+            slit.var_poisson[nnan] * pathloss[nnan] ** 2,
+            model.slits[0].var_poisson[nnan],
+        )
+        assert np.allclose(
+            slit.var_flat[nnan] * pathloss[nnan] ** 2,
+            model.slits[0].var_flat[nnan],
+        )
 
     result.close()
 
@@ -170,8 +182,13 @@ def test_pathloss_step_fs_point(nirspec_fs_model_point):
     result = PathLossStep.call(model)
     assert result.meta.cal_step.pathloss == "COMPLETE"
 
-    # correction type should be "POINT"
-    assert result.slits[0].pathloss_correction_type == "POINT"
+    # correction type should be "POINT" for the first slit,
+    # with source type set; uniform otherwise
+    for i, slit in enumerate(result.slits):
+        if i == 0:
+            assert slit.pathloss_correction_type == "POINT"
+        else:
+            assert slit.pathloss_correction_type == "UNIFORM"
 
 
 def test_pathloss_step_fs_uniform(nirspec_fs_model_extended):
@@ -179,8 +196,9 @@ def test_pathloss_step_fs_uniform(nirspec_fs_model_extended):
     result = PathLossStep.call(model)
     assert result.meta.cal_step.pathloss == "COMPLETE"
 
-    # correction type should be "UNIFORM"
-    assert result.slits[0].pathloss_correction_type == "UNIFORM"
+    # correction type should be "UNIFORM" for all slits
+    for slit in result.slits:
+        assert slit.pathloss_correction_type == "UNIFORM"
 
 
 @pytest.mark.parametrize('mode', ['mos', 'fs'])
