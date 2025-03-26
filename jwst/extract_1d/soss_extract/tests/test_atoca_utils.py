@@ -1,7 +1,8 @@
-
-import pytest
-from jwst.extract_1d.soss_extract import atoca_utils as au
 import numpy as np
+import pytest
+from scipy.integrate import trapezoid
+
+from jwst.extract_1d.soss_extract import atoca_utils as au
 
 
 def test_arange_2d():
@@ -252,7 +253,7 @@ def test_adapt_grid(max_iter, rtol):
     grid_diff = grid[1:] - grid[:-1]
     assert np.min(grid_diff) >= input_grid_diff/(2**max_iter)
 
-    numerical_integral = np.trapz(xsinx(grid), grid)
+    numerical_integral = trapezoid(xsinx(grid), grid)
 
     # ensure this converges for at least one of our test cases
     if max_iter == 10 and rtol == 1e-3:
@@ -314,7 +315,7 @@ def test_make_combined_adaptive_grid():
     combined_grid = au.make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
                                 max_iter=10, rtol=rtol, max_total_size=100)
 
-    numerical_integral = np.trapz(xsinx(combined_grid), combined_grid)
+    numerical_integral = trapezoid(xsinx(combined_grid), combined_grid)
 
     assert np.unique(combined_grid).size == combined_grid.size
     assert np.isclose(numerical_integral, np.pi, rtol=rtol)
