@@ -1,4 +1,4 @@
-"""Read in reference files for the cube_build setp"""
+"""Read in reference files for the cube_build step."""
 
 from stdatamodels.jwst import datamodels
 
@@ -18,7 +18,8 @@ def read_cubepars(
     all_filter,
     instrument_info,
 ):
-    """Read in cube parameter reference file
+    """
+    Read in cube parameter reference file.
 
     Based on the instrument and channel/subchannels (MIRI) or
     grating/filter(NIRSPEC), read in the appropriate columns in the
@@ -28,29 +29,23 @@ def read_cubepars(
     Parameters
     ----------
     par_filename : str
-       cube parameter reference filename
+       Cube parameter reference filename
     instrument : str
         Either MIRI or NIRSPEC
     weighting : str
         Type of weighting, msm, emem or drizzle
     all_channel : list
-        all the channels contained in input data
+        All the channels contained in input data
     all_subchannel : list
-        all subchannels contained in input data
-    all_grating: list
-        all the gratings contained in the input data
-    all_filter: list
-        all the filters contained in the input data
+        All subchannels contained in input data
+    all_grating : list
+        All the gratings contained in the input data
+    all_filter : list
+        All the filters contained in the input data
     instrument_info : dictionary
-        holds the defaults spatial scales, spectral scales, roi size,
+        Holds the defaults spatial scales, spectral scales, roi size,
         weighting parameters, and min and max wavelengths for each
         for each band
-
-    Returns
-    -------
-    The dictionary, instrument_info, is filled in for each band covered
-    by the input data
-
     """
     if instrument == "MIRI":
         with datamodels.MiriIFUCubeParsModel(par_filename) as ptab:
@@ -75,7 +70,7 @@ def read_cubepars(
                             table_spectralstep, this_channel, this_sub
                         )
                         instrument_info.set_wave_min(table_wavemin, this_channel, this_sub)
-                        instrument_info.set_Wave_max(table_wavemax, this_channel, this_sub)
+                        instrument_info.set_wave_max(table_wavemax, this_channel, this_sub)
                 #  modified Shepard method 1/r weighting
                 if weighting == "msm":
                     for tabdata in ptab.ifucubepars_msm_table:

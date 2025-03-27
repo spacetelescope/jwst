@@ -1,4 +1,4 @@
-"""Routines related to WCS procedures of cube_build"""
+"""Routines related to WCS procedures of cube_build."""
 
 import numpy as np
 from ..assign_wcs import nirspec
@@ -11,8 +11,9 @@ log.setLevel(logging.DEBUG)
 
 
 # ******************************************************************************
-def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
-    """For MIRI channel data find the footprint of this data on the sky
+def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
+    """
+    For MIRI channel data find the footprint of this data on the sky.
 
     For a specific channel on an exposure find the min and max of the
     spatial coordinates, either in alpha,beta or ra,dec depending
@@ -21,33 +22,50 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
 
     Parameters
     ----------
-    input : data model
-       input model (or file)
+    input_data : IFUImage model
+       Input model (or file)
     this_channel : str
-       channel working with
+       Channel working with
     instrument_info : dictionary
-       dictionary holding x pixel min and max values for each channel
+       Dictionary holding x pixel min and max values for each channel
     coord_system : str
-       coordinate system of output cube: skyalign, ifualign, internal_cal
+       Coordinate system of output cube: skyalign, ifualign, internal_cal
 
     Returns
     -------
-    corners of the spatial system determined from min and max of spatial values
-    min and max of wavelength
-
+    a_min : float
+        Minimum value of coord 1 - along axis 1 of the IFUcube
+    b1 : float
+        Coord 2 value corresponding  to a_min
+    a_max : float
+        Maximum value of coord 1 - along the axis 1 of the IFUcube
+    b2 : float
+        Coord 2 value corresponding to a_min
+    a1 : float
+        Coord 1 value coorsponding to b_min
+    b_min : float
+        Minimum value of coord 2 - along the axis 2 of the IFU cube
+    a2 : float
+        Coord 1 value coorsponding to b_max
+    b_max : float
+        Maximum value of coord 2 - along the axis 2 of the IFU cube
+    lambda_min : float
+        Minimum wavelength
+    lambda_max : float
+        Maximum wavelength
     """
     # x,y values for channel - convert to output coordinate system
     # return the min & max of spatial coords and wavelength
 
-    xstart, xend = instrument_info.GetMIRISliceEndPts(this_channel)
-    ysize = input.data.shape[0]
+    xstart, xend = instrument_info.get_miri_slice_endpts(this_channel)
+    ysize = input_data.data.shape[0]
 
     y, x = np.mgrid[:ysize, xstart:xend]
 
     if coord_system == "internal_cal":
         # coord1 = along slice
         # coord2 = across slice
-        detector2alpha_beta = input.meta.wcs.get_transform("detector", "alpha_beta")
+        detector2alpha_beta = input_data.meta.wcs.get_transform("detector", "alpha_beta")
         coord1, coord2, lam = detector2alpha_beta(x, y)
 
         valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
@@ -77,7 +95,7 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
     else:  # skyalign or ifualign
         # coord1 = ra
         # coord2 = dec
-        coord1, coord2, lam = input.meta.wcs(x, y)
+        coord1, coord2, lam = input_data.meta.wcs(x, y)
         valid = np.logical_and(np.isfinite(coord1), np.isfinite(coord2))
         coord1 = coord1[valid]
         coord2 = coord2[valid]
@@ -124,8 +142,9 @@ def find_corners_MIRI(input, this_channel, instrument_info, coord_system):
 # *****************************************************************************
 
 
-def find_corners_NIRSPEC(input, instrument_info, coord_system):
-    """Find the sky footprint of a slice of a NIRSpec exposure
+def find_corners_nirspec(input_data, coord_system):
+    """
+    Find the sky footprint of a slice of a NIRSpec exposure.
 
     For each slice find:
     a. the min and max spatial coordinates (along slice, across slice) or
@@ -134,18 +153,33 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
 
     Parameters
     ----------
-    input: data model
-       input model (or file)
+    input_data : IFUImage model
+       Input calibrated model (or file)
     coord_system : str
-       coordinate system of output cube: skyalign, ifualign, internal_cal
-
-    Notes
-    -----
+       Coordinate system of output cube: skyalign, ifualign, internal_cal
 
     Returns
     -------
-    min and max spatial coordinates and wavelength for slice.
-
+    a_min : float
+        Minimum value of coord 1 - along axis 1 of the IFUcube
+    b1 : float
+        Coord 2 value corresponding  to a_min
+    a_max : float
+        Maximum value of coord 1 - along the axis 1 of the IFUcube
+    b2 : float
+        Coord 2 value corresponding to a_min
+    a1 : float
+        Coord 1 value coorsponding to b_min
+    b_min : float
+        Minimum value of coord 2 - along the axis 2 of the IFU cube
+    a2 : float
+        Coord 1 value coorsponding to b_max
+    b_max : float
+        Maximum value of coord 2 - along the axis 2 of the IFU cube
+    lambda_min : float
+        Minimum wavelength
+    lambda_max : float
+        Maximum wavelength
     """
     nslices = 30
     a_slice = np.zeros(nslices * 2)
@@ -157,10 +191,10 @@ def find_corners_NIRSPEC(input, instrument_info, coord_system):
     # for NIRSPEC there are 30 regions
     log.info("Looping over slices to determine cube size")
 
-    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input, np.arange(nslices))
+    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input_data, np.arange(nslices))  # noqa: SLF001
 
     for i in range(nslices):
-        slice_wcs = nirspec._nrs_wcs_set_input_lite(input, wcsobj, i, [tr1, tr2[i], tr3[i]])
+        slice_wcs = nirspec._nrs_wcs_set_input_lite(input_data, wcsobj, i, [tr1, tr2[i], tr3[i]])  # noqa: SLF001
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
         if coord_system == "internal_cal":
             # coord1 = along slice
