@@ -1,30 +1,12 @@
 #!/usr/bin/env python
 
-"""
-Add velocity aberration correction information to the FITS files provided.
-
-Input via command line can be one or more FITS files.
-
-It assumes the following keywords are present in the file header:
-
-JWST_DX (km/sec)
-JWST_DY (km/sec)
-JWST_DZ (km/sec)
-RA_REF (deg)
-DEC_REF (deg)
-
-The keywords added are:
-
-VA_SCALE (dimensionless scale factor)
-
-It does not currently place the new keywords in any particular location
-in the header other than what is required by the standard.
-"""
+"""Add velocity aberration correction information to the FITS files provided."""
 
 import logging
 import sys
 import warnings
 import argparse
+from pathlib import Path
 
 from jwst.lib.set_velocity_aberration import add_dva
 
@@ -47,9 +29,25 @@ def parse_args(args):
     parser : object
         Parsed arguments
     """
+    description_text = """
+    Add velocity aberration correction information to FITS files.
+    Input via command line can be one or more FITS files.
+    It assumes the following keywords are present in the file header:
+    JWST_DX (km/sec),
+    JWST_DY (km/sec),
+    JWST_DZ (km/sec),
+    RA_REF (deg),
+    DEC_REF (deg).
+
+    The keywords added are:
+    VA_SCALE (dimensionless scale factor)
+
+    It does not currently place the new keywords in any particular location
+    in the header other than what is required by the standard.
+    """
     parser = argparse.ArgumentParser(
         prog="set_velocity_aberration",
-        description="Add velocity aberration correction information to FITS files.",
+        description=description_text,
     )
     parser.add_argument(
         "filename",
@@ -77,8 +75,6 @@ def main():
 
 def deprecated_name():
     """Raise warning if filename.* is no longer used, and provide correct one."""
-    from pathlib import Path
-
     filename = Path(__file__)
     warnings.warn(
         f"usage of `{filename.name}` is deprecated; use `{filename.stem}` instead", stacklevel=2

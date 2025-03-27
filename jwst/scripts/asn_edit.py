@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Parse command line, read, edit, write association file."""
+"""Edit an association file from the command line."""
 
 import argparse
 

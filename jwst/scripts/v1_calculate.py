@@ -29,7 +29,7 @@ REDUCE_FUNCS = list(REDUCE_FUNCS_MAPPING.keys())
 
 # Begin execution
 def main():
-    """Do calculation of V1."""
+    """Calculate V1, the telescope's boresight axis, the direction the telescope is pointing."""
     parser = argparse.ArgumentParser(description="Calculate V1 over a time period.")
 
     parser.add_argument(
@@ -64,7 +64,7 @@ def main():
         type=stp.Methods,
         choices=list(stp.Methods),
         default=stp.Methods.default,
-        help="Algorithmic method to use. Default: %(default)s",
+        help="Algorithm to use. Default: %(default)s",
     )
     parser.add_argument(
         "-v",

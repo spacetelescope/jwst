@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-"""Copy or Move data that is listed in an association."""
+"""Copy or move data that is listed in an association."""
 
 from jwst.associations import asn_gather
 

@@ -1,15 +1,6 @@
 #!/usr/bin/env python
 
-"""
-Pointing verification.
-
-Review contents of a set of given models for pointing information.
-Compare the calculated V1 and REFPOINT pointing with the proposed TARGET pointing.
-
-% pointing_summary exp1.fits
-
-% pointing_summary *.fits
-"""
+"""Pointing verification."""
 
 import argparse
 import logging
@@ -27,7 +18,12 @@ LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 def main():
     """Run pointing verification."""
     parser = argparse.ArgumentParser(
-        description="Summarize various pointing information in a table."
+        description="""Summarize various pointing information in a table. Compare
+                    the calculated V1 and REFPOINT pointing with the proposed TARGET pointing.
+                    E.g.
+                    $ pointing_summary exp1.fits
+                    $ pointing_summary *.fits
+                    """
     )
 
     parser.add_argument(

@@ -1,48 +1,19 @@
 #!/usr/bin/env python
 
 """
-Read in the output of extract2d and apply the WCS transforms to all pixels in a slit.
+Read in the output of extract_2d and apply the WCS transforms to all pixels in a slit.
 
-The extract2d file can be (FS and MOS) or assign_wcs (IFU).
+The extract_2d file can be (FS and MOS) or assign_wcs (IFU).
 
 For each slit it writes the results as a cube with four planes (wavelength, ra, dec, y_slit)
 in a separate fits extension.
 
 The file is saved with a suffix 'world_coordinates'.
 
-Requested by the NIRSPEC team.
-
-Build 7.1 testing.
+Requested by the NIRSPEC team for build 7.1 testing.
 """
 
-# Copyright (C) 2018 Association of Universities for Research in Astronomy (AURA)
-
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-
-#     1. Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-
-#     2. Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following
-#       disclaimer in the documentation and/or other materials provided
-#       with the distribution.
-
-#     3. The name of AURA and its representatives may not be used to
-#       endorse or promote products derived from this software without
-#       specific prior written permission.
-
-# THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
-# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-# OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-# TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-# DAMAGE.
+# Licensed under a 3-clause BSD style license - see LICENSE
 
 import argparse
 from pathlib import Path
@@ -97,7 +68,7 @@ def main(filenames, mode):
 
     ok = True
     outputs = build_output_files(filenames)
-    for input_file, output_file in zip(filenames, outputs, strict=False):
+    for input_file, output_file in zip(filenames, outputs, strict=True):
         if not Path(input_file).exists():
             warn_user(input_file, "is not found")
             ok = False
@@ -189,12 +160,12 @@ def build_output_files(filenames):
 
 def compute_world_coordinates(model):
     """
-    Compute wavelengths and space coordinates of an NRS FS or MOS obse after running extract_2d.
+    Compute wavelengths and space coordinates of an NRS FS or MOS observation after extract_2d.
 
     Parameters
     ----------
     model : ImageModel
-        An image with extracted slits, i.e. the output of extract2d.
+        An image with extracted slits, i.e. the output of extract_2d.
 
     Returns
     -------
@@ -345,7 +316,7 @@ def imaging_coords(model):
     Parameters
     ----------
     model : ImageModel
-        An image with extracted slits, i.e. the output of extract2d.
+        An image with extracted slits, i.e. the output of extract_2d.
 
     Returns
     -------

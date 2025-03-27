@@ -2,40 +2,13 @@
 
 """Apply adjustments to data model's WCS."""
 
-# Copyright (C) 2023 Association of Universities for Research in Astronomy (AURA)
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-#     1. Redistributions of source code must retain the above copyright
-#       notice, this list of conditions and the following disclaimer.
-#
-#     2. Redistributions in binary form must reproduce the above
-#       copyright notice, this list of conditions and the following
-#       disclaimer in the documentation and/or other materials provided
-#       with the distribution.
-#
-#     3. The name of AURA and its representatives may not be used to
-#       endorse or promote products derived from this software without
-#       specific prior written permission.
-#
-# THIS SOFTWARE IS PROVIDED BY AURA ``AS IS'' AND ANY EXPRESS OR IMPLIED
-# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
-# MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-# DISCLAIMED. IN NO EVENT SHALL AURA BE LIABLE FOR ANY DIRECT, INDIRECT,
-# INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
-# BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS
-# OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
-# ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR
-# TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE
-# USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH
-# DAMAGE.
-#
+# Licensed under a 3-clause BSD style license - see LICENSE
 
 import argparse
+import glob
 import logging
+import os
 import sys
-from pathlib import Path
 
 import jwst
 from jwst.tweakreg.utils import adjust_wcs
@@ -53,18 +26,16 @@ logger.addHandler(logging.NullHandler())
 
 def _replace_suffix(file, new_suffix):
     sep = "_"
-    path_object = Path(file)
-    directory, base = path_object.parent, path_object.name
-    ext = path_object.suffix
-
-    if sep in str(base):
-        name_parts = str(base).rpartition(sep)
-        root = "".join([name_parts[:-1], new_suffix])
+    directory, base = os.path.split(file)
+    root, ext = os.path.splitext(base)  # noqa: PTH122
+    if sep in root:
+        name_parts = root.rpartition(sep)
+        root = "".join(name_parts[:-1] + (new_suffix,))
     else:
-        root = "".join([str(base), sep, new_suffix])
-    base = Path("".join([root, ext]))
+        root = root + sep + new_suffix
+    base = root + ext
 
-    new_file_name = directory / base
+    new_file_name = os.path.join(directory, base)  # noqa: PTH118
 
     return new_file_name
 
@@ -102,7 +73,7 @@ def angle(arg):
 
     Returns
     -------
-    value : float or float and unit
+    value : float or astropy.whatever.Quantity
         Parsed value and units for the given angle.
     """
     args = arg.strip().split(" ")
@@ -115,32 +86,23 @@ def angle(arg):
 
 
 def main():
-    """
-    Standalone script to apply adjustments to an imaging JWST GWCS object.
-
-    Input files can be ``DataModel``s serialized to ASDF or ASDF-in-FITS files,
-    or they could be "simple" ASDF files storing just the GWCS model in the root
-    of the ASDF file under the key ``'wcs'``, i.e., ``asdf_file.tree['wcs']``.
-
-    Examples
-    --------
-    From command line::
-
-        % adjust_wcs [-h] (-u | --suffix SUFFIX | -f FILE) [--overwrite]
-                     [-r RA_DELTA [units]] [-d DEC_DELTA [units]]
-                     [-o ROLL_DELTA [units]] [-s SCALE_FACTOR]
-                     [-v] [input ...]
-
-        % adjust_wcs data_model_*_cal.fits -u -s 1.002
-
-        % adjust_wcs data_model_*_cal.fits --suffix wcsadj -s 1.002 -r 0.2 arcsec -o 0.0023 deg
-    """
+    """Apply adjustments to an imaging JWST GWCS object."""
     if len(sys.argv) <= 1:
         raise ValueError("Missing required arguments.")
 
     # Parse input parameters
     parser = argparse.ArgumentParser(
-        prog="adjust_wcs", description="Apply adjustments to data model's WCS"
+        prog="adjust_wcs",
+        description="""Apply adjustments to data model's WCS. Input files can
+        be DataModel's serialized to ASDF or ASDF-in-FITS files, or they could be "simple"
+        ASDF files storing just the GWCS model in the root of the ASDF file under the key
+        'wcs', i.e., asdf_file.tree['wcs'].
+
+        Examples from command line:
+
+        $ adjust_wcs data_model_*_cal.fits -u -s 1.002
+
+        $ adjust_wcs data_model_*_cal.fits --suffix wcsadj -s 1.002 -r 0.2 arcsec -o 0.0023 deg""",
     )
 
     parser.add_argument(
@@ -174,12 +136,12 @@ def main():
 
     # pre-process argv for units and negative floats:
     argv = sys.argv[1:]
-    argv_new = [Path(sys.argv[0]).name]
+    argv_new = [os.path.basename(sys.argv[0])]  # noqa: PTH119
     while argv:
         argv_new.append(argv.pop(0))
 
         # check whether next argument is a float:
-        if argv_new[-1] in _ANGLE_PARS and len(argv) >= 1 and _is_float(argv[0]):
+        if (argv_new[-1] in _ANGLE_PARS) and (len(argv) >= 1) and (_is_float(argv[0])):
             angle_value = argv.pop(0)
             # check whether next argument is a unit:
             if len(argv) >= 1 and _is_unit(argv[0]):
@@ -192,9 +154,8 @@ def main():
     options = parser.parse_args(argv_new)
 
     files = []
-    directory = Path.cwd()
     for f in options.arg0:
-        files.extend(directory.glob(f))
+        files.extend(glob.glob(f))  # noqa: PTH207
 
     if options.file and len(files) > 1:
         parser.error("argument -f/--file: not allowed with multiple input files")

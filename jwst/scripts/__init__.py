@@ -1,1 +1,1 @@
-"""Auxiliary scripts."""
+"""Auxiliary command-line scripts."""
