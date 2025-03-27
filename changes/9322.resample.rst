@@ -1,0 +1,5 @@
+Remove make_output_wcs function (deprecated since 1.18.0). Use ``resampled_wcs_from_models`` instead.
+
+Remove build_driz_weight function (deprecated since 1.18.0). Use ``stcal.resample.utils.build_driz_weight`` instead.
+
+Remove decode_context function (deprecated since 1.18.0). Use ``drizzle.utils.decode_context`` instead.
