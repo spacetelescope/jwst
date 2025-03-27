@@ -1,1 +1,0 @@
-Calculate slit scaling factors for open area to full slit pitch for NIRSpec MOS data and store in the slit and spectral datamodels as slit_xscale and slit_yscale.

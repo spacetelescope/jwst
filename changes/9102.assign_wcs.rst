@@ -1,1 +1,0 @@
-Fix crash in transform from MSA to detector coordinates for NIRSpec imaging WCS with filter=OPAQUE.

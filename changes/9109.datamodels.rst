@@ -1,1 +1,0 @@
-Removed the unused error array from 4D ramp models.

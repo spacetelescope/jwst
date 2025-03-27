@@ -4,7 +4,6 @@ from astropy import wcs as fitswcs
 from astropy.modeling import models as astmodels
 from gwcs import coordinate_frames as cf
 from gwcs.wcstools import wcs_from_fiducial
-from numpy.testing import assert_allclose, assert_array_equal
 import numpy as np
 import pytest
 

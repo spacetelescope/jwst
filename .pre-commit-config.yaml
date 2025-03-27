@@ -43,7 +43,6 @@ repos:
             jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
             jwst/dark_current/.* |
-            jwst/extract_2d/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/ipc/.* |
@@ -58,8 +57,6 @@ repos:
             jwst/spectral_leak/.* |
             jwst/straylight/.* |
             jwst/tests/.* |
-            jwst/tso_photometry/.* |
-            jwst/wfs_combine/.* |
             docs/.* |
             jwst/regtest/test_.* |
             .*/tests/test_.*

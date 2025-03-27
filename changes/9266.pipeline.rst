@@ -1,1 +1,0 @@
-Skip running photom and combine_1d in ``calwebb_spec3`` for incomplete spectral extractions in NIRISS SOSS mode.
