@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-from stdatamodels.jwst.datamodels import CubeModel, TsoPhotModel, GainModel
+from stdatamodels.jwst.datamodels import CubeModel, GainModel
+import numpy as np
 
 from ..stpipe import Step
 from ..lib.catalog_utils import replace_suffix_ext
@@ -9,30 +10,42 @@ __all__ = ["TSOPhotometryStep"]
 
 
 class TSOPhotometryStep(Step):
-    """Perform circular aperture photometry on imaging Time Series Observations (TSO)."""
+    """Perform circular aperture photometry on imaging Time Series
+    Observations (TSO).
+
+    Parameters
+    -----------
+    input : str or `CubeModel`
+        Filename for a FITS image or association table, or a `CubeModel`.
+
+    centroid_results : numpy.ndarray
+        The centroid results from the `TSOCentroidingStep`.
+
+    psfWidth_results : numpy.ndarray
+        The PSF width results from the `TSOCentroidingStep`.
+
+    psfFlux_results : numpy.ndarray
+        The PSF flux results from the `TSOCentroidingStep`.
+
+    Returns
+    -------
+    catalog : `~astropy.table.QTable`
+        Astropy QTable (Quantity Table) containing the source photometry.
+    """
 
     class_alias = "tso_photometry"
 
     spec = """
+        radius = float(default=5.0)  # radius of circular source aperture
+        radius_inner = float(default=16.0)  # inner radius of background annulus
+        radius_outer = float(default=36.0)  # outer radius of background annulus
+        moving = boolean(default=False)  # aperture moves with fitted centroids?
         save_catalog = boolean(default=False)  # save exposure-level catalog
     """  # noqa: E501
 
-    reference_file_types = ['tsophot', 'gain']
+    reference_file_types = ['gain']
 
-    def process(self, input_data):
-        """
-        Do the tso photometry processing.
-
-        Parameters
-        ----------
-        input_data : str or CubeModel
-            Filename for a FITS image, or a `CubeModel`.
-
-        Returns
-        -------
-        catalog : `~astropy.table.QTable`
-            Astropy QTable (Quantity Table) containing the source photometry.
-        """
+    def process(self, input_data, centroid_results, psfWidth_results, psfFlux_results):
         # Open the input as a CubeModel
         with CubeModel(input_data) as model:
             # Need the FITS WCS X/YREF_SCI values for setting the
@@ -46,9 +59,6 @@ class TSOPhotometryStep(Step):
             if model.meta.bunit_err is None:
                 raise ValueError("BUNIT for error array is missing.")
 
-            xcenter = model.meta.wcsinfo.siaf_xref_sci - 1  # 1-based origin
-            ycenter = model.meta.wcsinfo.siaf_yref_sci - 1  # 1-based origin
-
             # Get the tsophot reference file
             tsophot_filename = self.get_reference_file(model, "tsophot")
             self.log.debug(f"Reference file name = {tsophot_filename}")
@@ -61,23 +71,32 @@ class TSOPhotometryStep(Step):
             gain_filename = self.get_reference_file(model, 'gain')
             gain_model = GainModel(gain_filename)
 
-            # Retrieve aperture info from the reference file
-            pupil_name = "ANY"
-            if model.meta.instrument.pupil is not None:
-                pupil_name = model.meta.instrument.pupil
+            # Get the x/y center from the centroid results
+            # Meta values are 1-based, convert to 0-based
+            start = model.meta.exposure.integration_start - 1
+            end = model.meta.exposure.integration_end
+            xcenter = centroid_results[start:end, 0]
+            ycenter = centroid_results[start:end, 1]
+            xWidth = psfWidth_results[start:end, 0]
+            yWidth = psfWidth_results[start:end, 1]
+            psfFlux = psfFlux_results[start:end]
 
-            (radius, radius_inner, radius_outer) = get_ref_data(tsophot_filename, pupil=pupil_name)
-
-            self.log.debug(f"radius = {radius}")
-            self.log.debug(f"radius_inner = {radius_inner}")
-            self.log.debug(f"radius_outer = {radius_outer}")
-            self.log.debug(f"xcenter = {xcenter}")
-            self.log.debug(f"ycenter = {ycenter}")
+            if self.moving:
+                # Move the aperture along with the moving fitted centroids
+                # from the relevant integrations
+                x = xcenter
+                y = ycenter
+                # FINDME: The above code likely won't work if there are multiple exposures
+            else:
+                # Use the median of the fitted centroids from all integrations
+                x = np.ones(end-start)*np.median(centroid_results[:, 0])
+                y = np.ones(end-start)*np.median(centroid_results[:, 1])
 
             # Compute the aperture photometry
-            catalog = tso_aperture_photometry(model, xcenter, ycenter,
-                                              radius, radius_inner,
-                                              radius_outer, gain_model)
+            catalog = tso_aperture_photometry(model, x, y, self.radius,
+                                              self.radius_inner, self.radius_outer,
+                                              gain_model, xcenter, ycenter,
+                                              xWidth, yWidth, psfFlux, self.log)
 
             # Save the photometry in an output catalog
             if self.save_catalog:
@@ -94,29 +113,3 @@ class TSOPhotometryStep(Step):
                 self.log.info(f"Wrote TSO photometry catalog: {cat_filepath}")
 
         return catalog
-
-
-def get_ref_data(reffile, pupil="ANY"):
-    ref_model = TsoPhotModel(reffile)
-    radii = ref_model.radii
-    value = None
-    val_any_pupil = None
-    for item in radii:
-        if item.pupil == pupil.upper():
-            value = (item.radius, item.radius_inner, item.radius_outer)
-            break
-        elif item.pupil == "ANY" and val_any_pupil is None:
-            # Save this value as a fallback, in case we don't find a match
-            # to an actual pupil name.
-            val_any_pupil = (item.radius, item.radius_inner, item.radius_outer)
-
-    if value is not None:
-        (radius, radius_inner, radius_outer) = value
-    elif val_any_pupil is not None:
-        (radius, radius_inner, radius_outer) = val_any_pupil
-    else:
-        (radius, radius_inner, radius_outer) = (0.0, 0.0, 0.0)
-
-    ref_model.close()
-
-    return radius, radius_inner, radius_outer
