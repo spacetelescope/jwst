@@ -17,7 +17,8 @@ class CubeBlot:
     """Main module for blotting sky cube back to detector space."""
 
     def __init__(self, median_model, input_models):
-        """Class Blot holds the main variables for blotting sky cube to detector.
+        """
+        Initialize  main variables for blotting sky cube to detector.
 
         Information is pulled out of the median sky cube created by a previous
         run of cube_build in single mode and stored in the ClassBlot.These
@@ -27,16 +28,12 @@ class CubeBlot:
 
         Parameters
         ----------
-        median_model: ifucube model
+        median_model : IFUCubeModel
            The median input sky cube is created from a median stack of all the
            individual input_models mapped to the full IFU cube imprint on the
            sky.
-        input_models: data model
+        input_models : IFUImageModel
            The input models used to create the median sky cube.
-
-        Returns
-        -------
-        CubeBlot class initialized
         """
         # Pull out the needed information from the Median IFUCube
         self.median_skycube = median_model
@@ -131,7 +128,16 @@ class CubeBlot:
     # ***********************************************************************
 
     def blot_images(self):
-        """Call the instrument specific blotting code."""
+        """
+        Call the instrument specific blotting code.
+
+        Returns
+        -------
+        blotmodels : ModelContainer
+           Blottined IFU image model
+        self.input_list_number : list
+           List containing index of blot model in input_models
+        """
         if self.instrument == "MIRI":
             blotmodels = self.blot_images_miri()
         elif self.instrument == "NIRSPEC":
@@ -141,7 +147,8 @@ class CubeBlot:
     # ************************************************************************
 
     def blot_images_miri(self):
-        """Core blotting routine for MIRI.
+        """
+        Core blotting routine for MIRI.
 
         This is the main routine for blotting the MIRI median sky cube back to
         the detector space and creating a blotting image for each input model
@@ -154,6 +161,11 @@ class CubeBlot:
            the x, y detector values that fall within the roi region.
            The blotted flux  = the weighted flux, where the weight is based on
            distance between the center of the blotted pixel and the detector pixel.
+
+        Returns
+        -------
+        blot_models : ModelContainer
+            Container of blotted IFUImage models
         """
         blot_models = ModelContainer()
         instrument_info = instrument_defaults.InstrumentInfo()
@@ -225,7 +237,8 @@ class CubeBlot:
     # ************************************************************************
 
     def blot_images_nirspec(self):
-        """Core blotting routine for NIRSPEC.
+        """
+        Core blotting routine for NIRSPEC.
 
         This is the main routine for blotting the NIRSPEC median sky cube back to
         the detector space and creating a blotting image for each input model.
@@ -246,6 +259,10 @@ class CubeBlot:
            determines the overlap of the blotted x,y values with a regular grid setup
            in the detector plane which is the blotted image.
 
+        Returns
+        -------
+        blot_models : ModelContainer
+            Container of blotted IFUImage models
         """
         blot_models = ModelContainer()
 
@@ -267,12 +284,12 @@ class CubeBlot:
             log.info("Blotting 30 slices on NIRSPEC detector")
             roi_det = 1.0  # Just large enough that we don't get holes
 
-            wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(model, np.arange(nslices))  # noqa SLF001
+            wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(model, np.arange(nslices))  # noqa: SLF001
 
             for ii in range(nslices):
                 # for each slice pull out the blotted values that actually fall on the slice region
                 # use the bounding box of each slice to determine the slice limits
-                slice_wcs = nirspec._nrs_wcs_set_input_lite(  # noqa SLF001
+                slice_wcs = nirspec._nrs_wcs_set_input_lite(  # noqa: SLF001
                     model, wcsobj, ii, [tr1, tr2[ii], tr3[ii]]
                 )
                 slicer2world = slice_wcs.get_transform("slicer", "world")
