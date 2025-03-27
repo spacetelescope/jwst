@@ -169,8 +169,8 @@ def compute_world_coordinates(model):
 
     Returns
     -------
-    hdulist : fits object
-        The list of HDUs.
+    hdulist : fits.HDUList
+        The list of HDUs object.
     """
     hdulist = fits.HDUList()
     phdu = fits.PrimaryHDU()
@@ -262,12 +262,12 @@ def ifu_coords(model):
     Parameters
     ----------
     model : ImageModel
-        An image with extracted slits, i.e. the output of extract2d.
+        An image with extracted slits, i.e. the output of extract_2d.
 
     Returns
     -------
-    hdulist : fits object
-        Fits hdulist
+    hdulist : fits.HDUList
+        Fits HDU list object
     """
     ifu_slits = nirspec.nrs_ifu_wcs(model)
 
@@ -320,8 +320,8 @@ def imaging_coords(model):
 
     Returns
     -------
-    hdulist : fits object
-        Fits hdulist
+    hdulist : fits.HDUList
+        Fits HDU list object
     """
     hdulist = fits.HDUList()
     phdu = fits.PrimaryHDU()
@@ -364,7 +364,7 @@ if __name__ == "__main__":
     short_description = "Create NIRSPEC world coordinates file"
     long_description = """
 
-A tool to read in the output of extract2d (FS and MOS) or assign_wcs
+A tool to read in the output of extract_2d (FS and MOS) or assign_wcs
 (IFU) and apply the WCS transforms to all pixels in a slit. For each
 slit it writes the results as a cube with four planes (wavelength, ra,
 dec, y_slit) in a separate fits extension. The file is saved with a
