@@ -1,4 +1,4 @@
-"""This is the main ifu spectral cube building routine."""
+# This is the main ifu spectral cube building routine.
 
 import time
 from jwst.datamodels import ModelContainer
@@ -7,7 +7,6 @@ from . import cube_build
 from . import ifu_cube
 from . import data_types
 import asdf
-from asdf.exceptions import ValidationError
 from ..assign_wcs.util import update_s_region_keyword
 from ..stpipe import Step, record_step_status
 from pathlib import Path
@@ -17,10 +16,9 @@ __all__ = ["CubeBuildStep"]
 
 
 class CubeBuildStep(Step):
-    """CubeBuildStep: Creates a 3-D spectral cube
+    """
+    Creates a 3-D spectral cube.
 
-    Notes
-    -----
     This is the controlling routine for building IFU Spectral Cubes.
     It loads and sets the various input data and parameters need by
     the cube_build_step.
@@ -34,7 +32,6 @@ class CubeBuildStep(Step):
        3. Passes the input data to the function to map all their input data
        to the output array.
        4. Updates the output data model with correct meta data
-
     """
 
     class_alias = "cube_build"
@@ -72,13 +69,19 @@ class CubeBuildStep(Step):
     reference_file_types = ["cubepar"]
 
     # ________________________________________________________________________________
-    def process(self, input):
-        """This is the main routine for IFU spectral cube building.
+    def process(self, input_data):
+        """
+        Build an IFUCube from overlapping IFUImage data.
 
         Parameters
         ----------
-        input : list of objects or str
-           list of datamodels or string name of input fits file or association.
+        input_data : list of objects or str
+           List of datamodels or string of input fits filenames or association name.
+
+        Returns
+        -------
+        cube_container : ModelContainer
+           Container (list) of IFUCube models
         """
         self.log.info("Starting IFU Cube Building Step")
 
@@ -199,8 +202,8 @@ class CubeBuildStep(Step):
                 self.interpolation = "pointcloud"
 
         # read_user_input:
-        # see if options channel, band,grating filter are set on the command lines
-        # if they are then self.pars_input['output_type'] = 'user' and fill in  par_input with values
+        # if options  are channel, band,grating filter are set on the command lines
+        # then set self.pars_input['output_type'] = 'user' and fill in  par_input with values
         self.read_user_input()
         # ________________________________________________________________________________
         # DataTypes
@@ -217,7 +220,9 @@ class CubeBuildStep(Step):
         # base name. The cube_build software will attached the needed information:
         #  channel, sub-channel  grating or filter to filename
         # ________________________________________________________________________________
-        input_table = data_types.DataTypes(input, self.single, self.output_file, self.output_dir)
+        input_table = data_types.DataTypes(
+            input_data, self.single, self.output_file, self.output_dir
+        )
 
         self.input_models = input_table.input_models
         self.output_name_base = input_table.output_name
@@ -386,7 +391,8 @@ class CubeBuildStep(Step):
                 cube_container = thiscube.build_ifucube_single()
                 self.log.info("Number of Single IFUCube models returned %i ", len(cube_container))
 
-            # Else standard IFU cube building - the result returned from build_ifucube will be 1 IFU CUBR
+            # Else standard IFU cube building
+            # the result returned from build_ifucube will be 1 IFU CUBE
             else:
                 result, status = thiscube.build_ifucube()
 
@@ -424,15 +430,17 @@ class CubeBuildStep(Step):
     # ******************************************************************************
 
     def read_user_input(self):
-        """Read user input options for channel, subchannel, filter, or grating"""
+        """
+        Read user input options for channel, subchannel, filter, or grating.
+
         # Determine if any of the input parameters channel, band, filter or
-        # grating have been set.
+        # grating have been set by the user.
 
         # This routine updates the dictionary self.pars_input with any user
         # provided inputs. In particular it sets pars_input['channel'],
         # pars_input['sub_channel'], pars_input['grating'], and
         # pars_input['filter'] with user provided values.
-
+        """
         valid_channel = ["1", "2", "3", "4", "all"]
         valid_subchannel = [
             "short",
@@ -549,37 +557,41 @@ class CubeBuildStep(Step):
     # ________________________________________________________________________________
 
     def check_offset_file(self):
-        """Read in an optional ra and dec offset for each file.
+        """
+        Read in an optional ra and dec offset for each file.
 
-        Summary
-        ----------
         Check that is file is asdf file.
         Check the file has the correct format using an local schema file.
         The schema file, ifuoffset.schema.yaml, is located in the jwst/cube_build directory.
         For each file in the input  association check that there is a corresponding
         file in the offset file.
 
+        Returns
+        -------
+        offsets ; dictionary
+            Dictionary containing offset information.
         """
         # validate the offset file using the schema file
-        DATA_PATH = Path(__file__).parent
+        data_path = Path(__file__).parent
 
         try:
-            af = asdf.open(self.offset_file, custom_schema=DATA_PATH / "ifuoffset.schema.yaml")
-        except ValidationError:
-            schema_message = (
-                "Validation Error for offset file. Fix the offset file. \n"
-                + "The offset file needs to have the same number of elements "
-                + "in the three lists: filename, raoffset and decoffset.\n"
-                + "The units need to provided and only arcsec is allowed."
+            af = asdf.open(self.offset_file, custom_schema=data_path / "ifuoffset.schema.yaml")
+        except ValueError:
+            self.log.error(
+                "Validation Error for offset file. Fix the offset file. "
+                " The offset file needs to have the same number of elements "
+                " in the three lists: filename, raoffset and decoffset."
+                " The units need to provided and only arcsec is allowed."
             )
 
-            raise Exception(schema_message)
+            # raise Exception(schema_message)
 
         offset_filename = af["filename"]
         offset_ra = af["raoffset"]
         offset_dec = af["decoffset"]
         # Note:
-        # af['units'] is checked by the schema validation. It must be arcsec or a validation error occurs.
+        # af['units'] is checked by the schema validation.
+        # It must be arcsec or a validation error occurs.
 
         # check that all the file names in input_model are in the offset filename
         for model in self.input_models:
@@ -589,7 +601,8 @@ class CubeBuildStep(Step):
             else:
                 af.close()
                 raise ValueError(
-                    "Error in offset file. A file in the association is not found in offset list %s",
+                    "Error in offset file. A file in the association is not found in offset "
+                    " list %s",
                     file_check,
                 )
 
@@ -600,7 +613,8 @@ class CubeBuildStep(Step):
         if len_file != len_ra or len_ra != len_dec or len_file != len_dec:
             af.close()
             raise ValueError(
-                "The offset file does not have the same number of values for filename, raoffset, decoffset"
+                "The offset file does not have the same number of values for "
+                " filename, raoffset, decoffset"
             )
 
         offset_ra = offset_ra * units.arcsec

@@ -465,3 +465,4 @@ def test_calspec3_config_nirspec_multi(tmp_cwd, nirspec_medium_coverage):
 
     assert cube_pars['1']['par1'] == ['g140m', 'g235m']
     assert cube_pars['1']['par2'] == ['f100lp', 'f170lp']
+

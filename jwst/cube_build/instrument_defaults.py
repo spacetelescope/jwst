@@ -7,12 +7,13 @@ log.setLevel(logging.DEBUG)
 
 
 class InstrumentInfo:
-    def __init__(self):
-        """Dictionary of basic instrument parameters.
+    """Define the basic instruement parameters."""
 
-        These parameters are filled in from the cube reference file
-        and  MIRI resolution reference file
-        """
+    def __init__(self):
+        """Initialize basic instrument parameters."""
+        # These parameters are filled in from the cube reference file
+        # and  MIRI resolution reference file
+
         self.multich_wavelength = []
         self.multich_sroi = []
         self.multich_wroi = []
@@ -41,10 +42,12 @@ class InstrumentInfo:
         self.high_softrad = []
         self.high_scalerad = []
         # _______________________________________________________________________
-        # This is basic information on the MIRI channels
-        # information that will not change:
-        # number of slices, starting slice number,
-        # ending # slice number and default scales
+        # This is basic information on the MIRI channels.
+        # This information are parameters that will not change or default values that
+        # can be updated by the user through the cube_build spec parameters.
+        # Values that will not change: number of slices, starting slice number,
+        # ending # slice number.
+        # Default values hold the wavelength and spatial scales.
         self.Info = {}
         # _____________________________________________________________________
         # channel 1 parameters
@@ -522,7 +525,13 @@ class InstrumentInfo:
         self.Info["4"]["long-medium"]["msm_power"] = None
 
         # ####################################################################
-        # NIRSPEC Parameters
+        # This is basic information on the NIRSPec IFU data.
+        # This information are parameters that will not change or default values that
+        # can be updated by the user through the cube_build spec parameters.
+        # Values that will not change are the  number of slices.
+        # Default values hold the wavelength and spatial scales.
+        # Basic NIRSpec parameters that are fixed and will not change or are
+        # default values that can be
         self.Info["prism"] = {}
         self.Info["prism"]["clear"] = {}
         self.Info["prism"]["clear"]["nslices"] = 30
@@ -688,32 +697,33 @@ class InstrumentInfo:
         self.Info["g395h"]["opaque"]["wscale"] = 0.000665
         self.Info["g395h"]["opaque"]["ascale"] = 0.1
         self.Info["g395h"]["opaque"]["bscale"] = 0.1
-
-    # ******************************************************************
-
+        # ******************************************************************
 
     def set_multi_channel_table(self, wave, sroi, wroi, power, softrad):
-        """ Set modified shepard cube parameters for multiple channels.
+        """
+        Set msm modified shepherd cube parameters for multiple MRS channels.
 
         Cube parameters read in from the cubepars reference file.
-        These parameters vary with wavelength. This function fills in
-        the self.multich_* parameters
+        These parameters are for the weighting function, msm, and they
+        vary with wavelength. This function fills in
+        the self.multich_* parameters. This table is used when the IFU cubes
+        are built from multiple channels.
 
         Parameters
         ----------
         wave : numpy float32 array
             Wave length array of the cube pars reference table
         sroi : numpy float32 array
-            Spatial roi value to use for corresponding wavelength 
+            Spatial roi value to use for the corresponding wavelength value
         wroi : numpy float32 array
-            Wavelength roo values to use for corresponding wavelength
+            Wavelength roi values to use for the corresponding wavelength value
         power : numpy float32 array
-            Power of the modified shepard weighting function to use 
-            for corresponding wavelength
+            Power of the modified shepherd weighting function to use
+            for the corresponding wavelength value
         softrad : numpy float32 array
-            Modified shepard weighting function scale factor to use
-            for corresponding wavelength
-        """  
+            Modified shepherd weighting function scale factor to use
+            for the corresponding wavelength value
+        """
         self.multich_wavelength.append(wave)
         self.multich_sroi.append(sroi)
         self.multich_wroi.append(wroi)
@@ -721,29 +731,28 @@ class InstrumentInfo:
         self.multich_softrad.append(softrad)
         self.multich_scalerad.append(None)
 
-
     def set_multi_channel_emsm_table(self, wave, sroi, wroi, scalerad):
-        """ Set cube parameters for multiple channels for 
+        """
+        Set emsm modified shepherd cube parameters for multiple MRS channels.
 
         Cube parameters read in from the cubepars reference file.
-        These parameters vary with wavelength. This function fills in
-        the self.multich_* parameters
+        These parameters are for the weighting function, emsm, and they
+        vary with wavelength. This function fills in
+        the self.multich_* parameters. This table is used when the IFU cubes
+        are built from multiple channels.
 
         Parameters
         ----------
         wave : numpy float32 array
             Wave length array of the cube pars reference table
         sroi : numpy float32 array
-            Spatial roi value to use for corresponding wavelength 
+            Spatial roi value to use for the corresponding wavelength
         wroi : numpy float32 array
-            Wavelength roo values to use for corresponding wavelength
-        power : numpy float32 array
-            Power of the modified shepard weighting function to use 
-            for corresponding wavelength
-        softrad : numpy float32 array
-            Modified shepard weighting function scale factor to use
-            for corresponding wavelength
-        """        
+            Wavelength roi values to use for the corresponding wavelength
+        scalerad : numpy float32 array
+            Modified shepherd weighting function scale factor to use
+            for the corresponding wavelength
+        """
         self.multich_wavelength.append(wave)
         self.multich_sroi.append(sroi)
         self.multich_wroi.append(wroi)
@@ -752,6 +761,15 @@ class InstrumentInfo:
         self.multich_softrad.append(None)
 
     def set_multi_channel_driz_table(self, wave):
+        """
+        Set the drizzle related cube parameters for MIRI MRS channel data.
+
+        Parameters
+        ----------
+        wave : numpy float array
+            Wavelength array of the cube pars reference table. The table is used
+            when IFU cubes are built from multiple bands.
+        """
         self.multich_wavelength.append(wave)
         self.multich_sroi.append(None)
         self.multich_wroi.append(None)
@@ -760,6 +778,29 @@ class InstrumentInfo:
         self.multich_softrad.append(None)
 
     def set_prism_table(self, wave, sroi, wroi, power, softrad):
+        """
+        Set msm modified shepherd cube parameters for NIRSpec prism data.
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters are for the weighting function, msm, and they
+        vary with wavelength. This function fills in
+        the self.prism_* parameters.
+
+        Parameters
+        ----------
+        wave : numpy float32 array
+            Wave length array of the cube pars reference table
+        sroi : numpy float32 array
+            Spatial roi value to use for the corresponding wavelength
+        wroi : numpy float32 array
+            Wavelength roi values to use for the corresponding wavelength
+        power : numpy float32 array
+            Power of the modified shepherd weighting function to use
+            for the corresponding wavelength
+        softrad : numpy float32 array
+            Modified shepherd weighting function scale factor to use
+            for the corresponding wavelength
+        """
         self.prism_wavelength.append(wave)
         self.prism_sroi.append(sroi)
         self.prism_wroi.append(wroi)
@@ -768,6 +809,29 @@ class InstrumentInfo:
         self.prism_scalerad.append(None)
 
     def set_med_table(self, wave, sroi, wroi, power, softrad):
+        """
+        Set msm modified shepherd cube parameters for NIRSpec Medium resolution data.
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters are for the weighting function, msm, and they
+        vary with wavelength. This function fills in
+        the self.med_* parameters.
+
+        Parameters
+        ----------
+        wave : numpy float32 array
+            Wave length array of the cube pars reference table
+        sroi : numpy float32 array
+            Spatial roi value to use for the corresponding wavelength
+        wroi : numpy float32 array
+            Wavelength roi values to use for the corresponding wavelength
+        power : numpy float32 array
+            Power of the modified shepherd weighting function to use
+            for the corresponding wavelength value
+        softrad : numpy float32 array
+            Modified shepherd weighting function scale factor to use
+            for the corresponding wavelength value
+        """
         self.med_wavelength.append(wave)
         self.med_sroi.append(sroi)
         self.med_wroi.append(wroi)
@@ -776,6 +840,29 @@ class InstrumentInfo:
         self.med_scalerad.append(None)
 
     def set_high_table(self, wave, sroi, wroi, power, softrad):
+        """
+        Set msm modified shepherd cube parameters for NIRSpec high resolution data.
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters are for the weighting function, msm, and they
+        vary with wavelength. This function fills in
+        the self.high_* parameters.
+
+        Parameters
+        ----------
+        wave : numpy float32 array
+            Wave length array of the cube pars reference table
+        sroi : numpy float32 array
+            Spatial roi value to use for the corresponding wavelength value
+        wroi : numpy float32 array
+            Wavelength roi values to use for the corresponding wavelength value
+        power : numpy float32 array
+            Power of the modified shepherd weighting function to use
+            for the corresponding wavelength value
+        softrad : numpy float32 array
+            Modified shepherd weighting function scale factor to use
+            for the corresponding wavelength value
+        """
         self.high_wavelength.append(wave)
         self.high_sroi.append(sroi)
         self.high_wroi.append(wroi)
@@ -784,6 +871,27 @@ class InstrumentInfo:
         self.high_scalerad.append(None)
 
     def set_prism_emsm_table(self, wave, sroi, wroi, scalerad):
+        """
+        Set emsm modified shepherd cube parameters for NIRSpec prism data.
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters are for the weighting function, emsm, and they
+        vary with wavelength. This function fills in
+        the self.prism_* parameters. This table is used when building IFU
+        cubes from data from more than one grating/filter setting.
+
+        Parameters
+        ----------
+        wave : numpy float32 array
+            Wave length array of the cube pars reference table
+        sroi : numpy float32 array
+            Spatial roi value to use for the corresponding wavelength value
+        wroi : numpy float32 array
+            Wavelength roi values to use for the corresponding wavelength value
+        scalerad : numpy float32 array
+            Modified shepherd weighting function scale factor to use
+            for the corresponding wavelength value
+        """
         self.prism_wavelength.append(wave)
         self.prism_sroi.append(sroi)
         self.prism_wroi.append(wroi)
@@ -792,6 +900,26 @@ class InstrumentInfo:
         self.prism_softrad.append(None)
 
     def set_med_emsm_table(self, wave, sroi, wroi, scalerad):
+        """
+        Set emsm modified shepherd cube parameters for NIRSpec Medium resolution data.
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters are for the weighting function, emsm, and they
+        vary with wavelength. This function fills in
+        the self.med_* parameters
+
+        Parameters
+        ----------
+        wave : numpy float32 array
+            Wave length array of the cube pars reference table
+        sroi : numpy float32 array
+            Spatial roi value to use for the corresponding wavelength value
+        wroi : numpy float32 array
+            Wavelength roi values to use for the corresponding wavelength value
+        scalerad : numpy float32 array
+            Modified shepherd weighting function scale factor to use
+            for the corresponding wavelength value
+        """
         self.med_wavelength.append(wave)
         self.med_sroi.append(sroi)
         self.med_wroi.append(wroi)
@@ -800,6 +928,26 @@ class InstrumentInfo:
         self.med_softrad.append(None)
 
     def set_high_emsm_table(self, wave, sroi, wroi, scalerad):
+        """
+        Set emsm modified shepherd cube parameters for NIRSpec high resolution data.
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters are for the weighting function, emsm, and they
+        vary with wavelength. This function fills in
+        the self.high_* parameters
+
+        Parameters
+        ----------
+        wave : numpy float32 array
+            Wave length array of the cube pars reference table
+        sroi : numpy float32 array
+            Spatial roi value to use for the corresponding wavelength value
+        wroi : numpy float32 array
+            Wavelength roi values to use for the corresponding wavelength value
+        scalerad : numpy float32 array
+            Modified shepherd weighting function scale factor to use
+            for the corresponding wavelength value
+        """
         self.high_wavelength.append(wave)
         self.high_sroi.append(sroi)
         self.high_wroi.append(wroi)
@@ -808,6 +956,14 @@ class InstrumentInfo:
         self.high_power.append(None)
 
     def set_prism_driz_table(self, wave):
+        """
+        Set the drizzle related cube parameters for NIRSpec prism data.
+
+        Parameters
+        ----------
+        wave : numpy float array
+            Wavelength array of the cubepars reference table
+        """
         self.prism_wavelength.append(wave)
         self.prism_sroi.append(None)
         self.prism_wroi.append(None)
@@ -816,6 +972,14 @@ class InstrumentInfo:
         self.prism_softrad.append(None)
 
     def set_med_driz_table(self, wave):
+        """
+        Set the drizzle related cube parameters for NIRSpec  mdeium resolution data.
+
+        Parameters
+        ----------
+        wave : numpy float array
+            Wavelength array of the cubepars reference table
+        """
         self.med_wavelength.append(wave)
         self.med_sroi.append(None)
         self.med_wroi.append(None)
@@ -824,6 +988,14 @@ class InstrumentInfo:
         self.med_softrad.append(None)
 
     def set_high_driz_table(self, wave):
+        """
+        Set the drizzle related cube parameters for NIRSpec high resolution data.
+
+        Parameters
+        ----------
+        wave : numpy float array
+            Wavelength array of the cubepars reference table
+        """
         self.high_wavelength.append(wave)
         self.high_sroi.append(None)
         self.high_wroi.append(None)
@@ -831,11 +1003,34 @@ class InstrumentInfo:
         self.high_power.append(None)
         self.high_softrad.append(None)
 
-    def set_xslice_limits(self, x1, x2, parameter1):
-        self.Info[parameter1]["xstart"] = x1
-        self.Info[parameter1]["xend"] = x2
+    # def set_xslice_limits(self, x1, x2, parameter1):
+
+    #     self.Info[parameter1]["xstart"] = x1
+    #     self.Info[parameter1]["xend"] = x2
 
     def set_msm(self, parameter1, parameter2, sroi, wroi, power, softrad):
+        """
+        Set msm modified shepherd cube parameters.
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters are used for single band data and do not depend
+        on wavelength.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+        sroi : numpy float32 array
+            Spatial roi value
+        wroi : numpy float32 array
+            Wavelength roi
+        power : numpy float32 array
+            Power of the modified shepherd weighting function
+        softrad : numpy float32 array
+            Modified shepherd weighting function parameter
+        """
         self.Info[parameter1][parameter2]["sroi"] = sroi
         self.Info[parameter1][parameter2]["wroi"] = wroi
         self.Info[parameter1][parameter2]["msm_power"] = power
@@ -843,6 +1038,26 @@ class InstrumentInfo:
         self.Info[parameter1][parameter2]["scalerad"] = None
 
     def set_emsm(self, parameter1, parameter2, sroi, wroi, scalerad):
+        """
+        Set emsm modified shepherd cube parameters.
+
+        Cube parameters read in from the cubepars reference file.
+        These parameters are used for single band data and do not depend
+        on wavelength.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+        sroi : numpy float32 array
+            Spatial roi value
+        wroi : numpy float32 array
+            Wavelength roi
+        scalerad : numpy float32 array
+            Modified shepherd weighting function scale factor
+        """
         self.Info[parameter1][parameter2]["sroi"] = sroi
         self.Info[parameter1][parameter2]["wroi"] = wroi
         self.Info[parameter1][parameter2]["msm_power"] = None
@@ -850,6 +1065,18 @@ class InstrumentInfo:
         self.Info[parameter1][parameter2]["scalerad"] = scalerad
 
     def set_spatial_size(self, value, parameter1, parameter2=None):
+        """
+        Set spatial size of cube voxel.
+
+        Parameters
+        ----------
+        value : float
+            Spatial size of cube voxel
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            MIRI band. This parameter is only valid for MIRI data
+        """
         if parameter2 is None:
             self.Info[parameter1]["ascale"] = value
             self.Info[parameter1]["bscale"] = value
@@ -858,58 +1085,216 @@ class InstrumentInfo:
             self.Info[parameter1][parameter2]["bscale"] = value
 
     def set_spectral_step(self, value, parameter1, parameter2):
+        """
+        Set spectral size of cube voxel.
+
+        Parameters
+        ----------
+        value : float
+            Spectral size of cube voxel
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+        """
         self.Info[parameter1][parameter2]["wscale"] = value
 
     def set_wave_min(self, value, parameter1, parameter2):
+        """
+        Set minimum wavelength for IFU band.
+
+        Parameters
+        ----------
+        value : float
+            Minimum wavelength
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+        """
         self.Info[parameter1][parameter2]["wavemin"] = value
 
     def set_wave_max(self, value, parameter1, parameter2):
+        """
+        Set maximum wavelength for IFU band.
+
+        Parameters
+        ----------
+        value : float
+            Maximum wavelength
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+        """
         self.Info[parameter1][parameter2]["wavemax"] = value
 
-    def set_spatial_roi(self, value, parameter1, parameter2):
-        self.Info[parameter1][parameter2]["sroi"] = value
+    # def set_spatial_roi(self, value, parameter1, parameter2):
+    #    self.Info[parameter1][parameter2]["sroi"] = value
 
-    def set_wave_roi(self, value, parameter1, parameter2):
-        self.Info[parameter1][parameter2]["wroi"] = value
+    # def set_wave_roi(self, value, parameter1, parameter2):
+    #    self.Info[parameter1][parameter2]["wroi"] = value
 
-    def set_msm_power(self, value, parameter1, parameter2):
-        self.Info[parameter1][parameter2]["msm_power"] = value
+    # def set_msm_power(self, value, parameter1, parameter2):
+    #    self.Info[parameter1][parameter2]["msm_power"] = value
 
-    def set_soft_rad(self, value, parameter1, parameter2):
-        self.Info[parameter1][parameter2]["softrad"] = value
+    # def set_soft_rad(self, value, parameter1, parameter2):
+    #    self.Info[parameter1][parameter2]["softrad"] = value
 
-    def set_scale_rad(self, value, parameter1, parameter2):
-        self.Info[parameter1][parameter2]["scalerad"] = value
+    # def set_scale_rad(self, value, parameter1, parameter2):
+    #    self.Info[parameter1][parameter2]["scalerad"] = value
+
+    # Get functions
 
     def get_wave_roi(self, parameter1, parameter2):
+        """
+        Get spectral roi for data defined by given parameters.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+
+        Returns
+        -------
+        roiw : float
+            Spectral roi for parameters
+        """
         roiw = self.Info[parameter1][parameter2]["wroi"]
         return roiw
 
     def get_spatial_roi(self, parameter1, parameter2):
+        """
+        Get spatial roi for data defined by given parameters.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+
+        Returns
+        -------
+        rois : float
+            Spatial roi for parameters
+        """
         rois = self.Info[parameter1][parameter2]["sroi"]
         return rois
 
     def get_wave_min(self, parameter1, parameter2):
+        """
+        Get minimum for data defined by  given parameters.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+
+        Returns
+        -------
+        wavemin: float
+            Minimum wavelength of the data
+        """
         wavemin = self.Info[parameter1][parameter2]["wavemin"]
         return wavemin
 
     def get_wave_max(self, parameter1, parameter2):
+        """
+        Get maximum for data defined by  given parameters.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+
+        Returns
+        -------
+        wavemax: float
+            Maximum wavelength of the  data
+        """
         wavemax = self.Info[parameter1][parameter2]["wavemax"]
         return wavemax
 
     def get_msm_power(self, parameter1, parameter2):
+        """
+        Get modified shepherd msm_power value for data defined by  given parameters.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+
+        Returns
+        -------
+        weight_power : float
+            MSM Modified shepherd weighting parameter
+        """
         weight_power = self.Info[parameter1][parameter2]["msm_power"]
         return weight_power
 
     def get_soft_rad(self, parameter1, parameter2):
+        """
+        Get modified shepherd soft_rad value defined by given parameters.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+
+        Returns
+        -------
+        softrad : float
+            Modified shepherd weighting parameter for weight type = msm
+        """
         softrad = self.Info[parameter1][parameter2]["softrad"]
         return softrad
 
     def get_scale_rad(self, parameter1, parameter2):
+        """
+        Get modified shepherd scale_rad value define by given parameters.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+
+        Returns
+        -------
+        scale_rad : float
+            Modified shepherd scale_rad value
+        """
         scalerad = self.Info[parameter1][parameter2]["scalerad"]
         return scalerad
 
     def get_scale(self, parameter1, parameter2):
+        """
+        Get spatial and spectral scales for  for data defined by  given parameters.
+
+        Parameters
+        ----------
+        parameter1 : str
+            Grating for NIRSpec data/ channel for MIRI data
+        parameter2 : str
+            Filter for NIRSpec data/ band for MIRI data
+
+        Returns
+        -------
+        scale : (float, float, float)
+            Spatial scale, spatial scale, and spectral scale
+        """
         scale = (
             self.Info[parameter1][parameter2]["ascale"],
             self.Info[parameter1][parameter2]["bscale"],
@@ -917,7 +1302,15 @@ class InstrumentInfo:
         )
         return scale
 
-    def get_multichannel_table(self, weighting):
+    def get_multichannel_table(self):
+        """
+        Get the MRS multichannel table containing flux weighting parameters.
+
+        Returns
+        -------
+        table : dictionary
+            Dictionary of flux weighting values
+        """
         table = (
             self.multich_wavelength,
             self.multich_sroi,
@@ -929,6 +1322,14 @@ class InstrumentInfo:
         return table
 
     def get_prism_table(self):
+        """
+        Get the NIRSpec prism table containing flux weigthing parameters.
+
+        Returns
+        -------
+        table : dictionary
+            Dictionary of flux weighting values
+        """
         table = (
             self.prism_wavelength,
             self.prism_sroi,
@@ -940,6 +1341,14 @@ class InstrumentInfo:
         return table
 
     def get_med_table(self):
+        """
+        Get the NIRSpec medium resolution table containing flux weighting parameters.
+
+        Returns
+        -------
+        table : dictionary
+            Dictionary of flux weighting values
+        """
         table = (
             self.med_wavelength,
             self.med_sroi,
@@ -951,6 +1360,14 @@ class InstrumentInfo:
         return table
 
     def get_high_table(self):
+        """
+        Get the NIRSpec high resolution table containing flux weighting parameters.
+
+        Returns
+        -------
+        table : dictionary
+            Dictionary of flux weighting values
+        """
         table = (
             self.high_wavelength,
             self.high_sroi,
@@ -961,19 +1378,73 @@ class InstrumentInfo:
         )
         return table
 
-    def get_miri_slice_eendpts(self, parameter1):
+    def get_miri_slice_endpts(self, parameter1):
+        """
+        MIRI MRS function to return the starting and ending x pixel value of a channel.
+
+        Parameters
+        ----------
+        parameter1 : str
+            MRS Channel number
+
+        Returns
+        -------
+        slice_xstart : int
+            Starting x  pixel value slice
+        slice_end : int
+            Ending x  pixel value slice
+        """
         slice_xstart = self.Info[parameter1]["xstart"]
         slice_xend = self.Info[parameter1]["xend"]
         return slice_xstart, slice_xend
 
     def get_start_slice(self, parameter1):
+        """
+        MIRI MRS function to return the starting x pixel value of a channel.
+
+        Parameters
+        ----------
+        parameter1 : str
+            MRS Channel number
+
+        Returns
+        -------
+        sliceno : int
+           Starting x pixel value of channel
+        """
         sliceno = self.Info[parameter1]["start_slice"]
         return sliceno
 
     def get_end_slice(self, parameter1):
+        """
+        MIRI MRS function to return the ending x pixel values of a channel.
+
+        Parameters
+        ----------
+        parameter1 : str
+            MRS Channel number
+
+        Returns
+        -------
+        sliceno : int
+            Ending x pixel value of channel.
+        """
         sliceno = self.Info[parameter1]["end_slice"]
         return sliceno
 
     def get_nslice(self, parameter1):
+        """
+        MIRI MRS function to return number of slices on given channel.
+
+        Parameters
+        ----------
+        parameter1 : str
+            MRS Channel number
+
+        Returns
+        -------
+        numslice : int
+            Number of slices on channel
+        """
         numslice = self.Info[parameter1]["nslices"]
         return numslice

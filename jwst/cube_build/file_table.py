@@ -1,5 +1,3 @@
-"""Dictionary holding defaults for cube_build"""
-
 from stdatamodels.jwst import datamodels
 import logging
 
@@ -93,7 +91,7 @@ class FileTable:
 
     def set_file_table(self, input_models):
         """
-        Set up the MasterTable dictionary that hold the filenames for filter/grating or channel band config.
+        Set up the MasterTable dictionary.
 
         Fill in the MasterTable which holds the files that the cube will be constructed
         from. Since MIRI has 2 channels per image this MASTERTable dictionary helps to figure out
@@ -122,9 +120,11 @@ class FileTable:
             self.FileMap["filename"].append(filename)
 
             if not isinstance(model, datamodels.IFUImageModel):
-                raise NotIFUImageModel(f"Input data is not a IFUImageModel, instead it is {model}")
+                raise NotIFUImageModelError(
+                    f"Input data is not a IFUImageModel, instead it is {model}"
+                )
             if assign_wcs != "COMPLETE":
-                raise ErrorNoAssignWCS(
+                raise NoAssignWCSError(
                     "Assign WCS has not been run on file %s", model.meta.filename
                 )
             # _____________________________________________________________________
@@ -148,11 +148,13 @@ class FileTable:
         return instrument
 
 
-class ErrorNoAssignWCS(Exception):
+class NoAssignWCSError(Exception):
+    """Raise Exception if assign_wcs has not been run."""
+
     pass
 
 
-class NotIFUImageModel(Exception):
-    """Raise Exception if data is not of type IFUImageModel"""
+class NotIFUImageModelError(Exception):
+    """Raise Exception if data is not of type IFUImageModel."""
 
     pass
