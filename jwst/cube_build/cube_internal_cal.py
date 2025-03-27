@@ -1,6 +1,4 @@
-"""Routines for creating single band, single exposure IFU Cubes with
-the interpolation method = area , coord_system = internal_cal
-"""
+"""Routines for creating IFUCubes with interpolation method = area , coord_system = internal_cal."""
 
 import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
@@ -25,7 +23,8 @@ def match_det2cube(
     naxis1,
     naxis2,
 ):
-    """Match detector pixels to output plane in local IFU coordinate system
+    """
+    Match detector pixels to output plane in local IFU coordinate system.
 
     This routine assumes a 1-1 mapping in across slice to slice no.
     This routine assumes the output coordinate systems is local IFU plane.
@@ -38,21 +37,50 @@ def match_det2cube(
     Parameters
     ----------
     x : numpy.ndarray
-       x values of pixels in slice
+       Detector x pixel values in the slice
     y : numpy.ndarray
-       y values of pixels in slice
+       Detector y pixel values in the slice
     sliceno : int
-      slice number
-    input_model : datamodel
-      input slope model or file
+       Slice number
+    input_model : IFUImage model
+       Input calibrated model or file
     transform : transform
-      wcs transform to transform x,y to alpha,beta, lambda
-    spaxel : list
-      list of spaxels holding information on each cube pixel.
+       Wcs transform to transform x,y to alpha,beta, lambda
+    acoord : numpy array
+       Array of along slice valuee defining the along slice spatial dimension the  of IFU cube
+    zcoord : numpy array
+       Array of wavelength values defining the wavelength dimension of the IFU cube
+    crval_along : float
+       Along slixe reference value in the IFU cube
+    crval3 : float
+       Wavelength reference value in the IFU cube
+    cdelt_along : float
+       Along slice reference value in the IFU cube
+    cdelt3 : float
+       Wavelength sampling in the IFU cube
+    naxis1 : int
+       Size of axis 1 of the IFU cube
+    naxis2 : int
+       Size of axis 2 of the IFU cube
 
     Returns
     -------
-    spaxel filled in with needed information on overlapping detector pixels
+    result : Tuple
+       Results from running c code to determine internal coordinate system IFU Cubes
+       Values contained in result:
+        instrument_no: integer. NIRSpec = 1, MIRI = 0
+        naxis1 & naxis2: output axis of IFU cube
+        crval_along : reference value in along slice dimension
+        cdelt_along : sampling in along slice dimension
+        crval3 : reference value in wavelength dimension
+        cdelt3 : wavelength sampling
+        a1, a2, a3, a4: Array of corners of pixels holding along slice coordinates
+        lam1, lam2, lam3, lam4: Array of corners of pixels holding wavelength coordinates
+        acoord: array holding slice coordinates of the IFU internal cube
+        zcoord: array holding wavelength coordinates of the IFU internal cube
+        ss: array holding the slice number of each pixel
+        pixel_flux: array of pixel fluxes
+        pixel_err: array of pixel errors
     """
     x = _toindex(x)
     y = _toindex(y)

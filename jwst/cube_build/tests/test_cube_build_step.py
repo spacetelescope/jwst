@@ -12,8 +12,8 @@ from stdatamodels.jwst.datamodels import IFUImageModel
 
 from jwst import assign_wcs
 from jwst.cube_build import CubeBuildStep
-from jwst.cube_build.file_table import ErrorNoAssignWCS
-from jwst.cube_build.cube_build import ErrorNoChannels
+from jwst.cube_build.file_table import NoAssignWCSError
+from jwst.cube_build.cube_build import NoChannelsError
 from jwst.datamodels import ModelContainer
 
 
@@ -118,8 +118,8 @@ def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filen
     # the image needs to be a full image and this take too much time
     # in a unit test
 
-    # Test ErrorNoAssignWCS is raised
-    with pytest.raises(ErrorNoAssignWCS):
+    # Test NoAssignWCSError is raised
+    with pytest.raises(NoAssignWCSError):
         step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
         step.channel = '3'
@@ -133,7 +133,7 @@ def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filen
 
     try:
         step.run(step_input)
-    except ErrorNoAssignWCS:
+    except NoAssignWCSError:
         pass
 
     assert step.pars_input['channel'] == ['1']
@@ -146,7 +146,7 @@ def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filen
     # save file with modifications
     if as_filename:
         miri_image.save(step_input)
-    with pytest.raises(ErrorNoChannels):
+    with pytest.raises(NoChannelsError):
         step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
         step.channel = '3'
@@ -223,3 +223,37 @@ def test_call_cube_build_nirspec_multi(tmp_cwd, nirspec_data, tmp_path, as_filen
     model = result[0]
     assert model.meta.cal_step.cube_build == 'COMPLETE'
     assert model.meta.filename == 'test_nirspec_s3d.fits'
+
+    
+def test_user_options_mir():
+    step = CubeBuildStep()
+    step.channel = '1'
+    step.subchannel = 'short'
+
+    step.pars_input["channel"] = []
+    step.pars_input["subchannel"] = []
+    step.pars_input["filter"] = []
+    step.pars_input["grating"] = []
+    
+    step.read_user_input()
+    assert self.pars_input["channel"] == ["1"]
+    assert self.pars_input["subchannel"] == ["short"]
+    assert self.pars_input["output_type"] == "user"
+
+
+def test_user_options_nirpsec():
+    step = CubeBuildStep()
+    step.filter = 'clear'
+    step.grating = 'prism'
+
+    step.pars_input["channel"] = []
+    step.pars_input["subchannel"] = []
+    step.pars_input["filter"] = []
+    step.pars_input["grating"] = []
+    
+    step.read_user_input()
+    assert self.pars_input["filter"] == ["clean"]
+    assert self.pars_input["grating"] == ["prism"]
+    assert self.pars_input["output_type"] == "user"    
+
+    
