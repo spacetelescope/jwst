@@ -16,7 +16,6 @@ SCRIPTS = [
     'set_velocity_aberration',
     'set_velocity_aberration.py',
     'v1_calculate',
-    'verify_install_requires',
     'world_coords',
 ]
 
