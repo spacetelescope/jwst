@@ -177,7 +177,7 @@ class RampFitStep(Step):
     class_alias = "ramp_fit"
 
     spec = """
-        algorithm = option('OLS', 'OLS_C', 'LIKELY', default='OLS_C') # 'OLS' and 'OLS_C' use the same underlying algorithm, but OLS_C is implemented in C
+        algorithm = option('OLS_C', 'LIKELY', default='OLS_C')
         int_name = string(default='')
         save_opt = boolean(default=False) # Save optional output
         opt_name = string(default='')
@@ -294,7 +294,7 @@ class RampFitStep(Step):
                 suppress_one_group=self.suppress_one_group,
             )
 
-        # Save the OLS optional fit product, if it exists.
+        # Save the OLS_C optional fit product, if it exists.
         if opt_info is not None:
             opt_model = create_optional_results_model(result, opt_info)
             self.save_model(opt_model, "fitopt", output_file=self.opt_name)
