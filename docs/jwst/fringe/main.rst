@@ -6,9 +6,10 @@ Description
 
 The ``fringe`` step applies a fringe correction to MIRI MRS images.
 In particular, the SCI array from a fringe reference file is divided into the
-SCI and ERR arrays of the science data set. Only pixels that have valid (non-NaN)
+SCI and ERR arrays of the science data set. The variance arrays are divided by the square of the reference data.
+Only pixels that have valid (non-NaN)
 values in the SCI array of the reference file will be corrected.
-The DQ and variance arrays of the science exposure are not currently modified by
+The DQ of the science exposure is not currently modified by
 this step.
 
 The input to this step is in the form of an ImageModel data model. The fringe reference
