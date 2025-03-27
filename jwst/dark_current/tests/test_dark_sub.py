@@ -1,6 +1,7 @@
 """
 Unit tests for dark current correction
 """
+import warnings
 
 import pytest
 import numpy as np
@@ -115,7 +116,9 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
     dark.err[:, 10, 10] = np.arange(10, NGROUPS_DARK + 10)
 
     # Run the pipeline's averaging function
-    avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Mean of empty slice", category=RuntimeWarning)
+        avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
 
     # Group input groups into collections of frames which will be averaged
     total_frames = (nframes * ngroups) + (groupgap * (ngroups - 1))
