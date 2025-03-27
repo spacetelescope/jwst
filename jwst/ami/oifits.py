@@ -14,29 +14,33 @@ log.setLevel(logging.DEBUG)
 
 
 class RawOifits:
+    """
+    Store AMI data in the format required to write out to OIFITS files.
+
+    Takes fringefitter class, which contains nrm_list and instrument_data attributes,
+    all info needed to write oifits. Angular quantities of input are in radians from
+    fringe fitting; converted to degrees for saving. Populate the structure needed to
+    write out oifits files according to schema.
+    Produces averaged and multi-integration versions, with sigma-clipped stats over
+    integrations.
+
+    Notes
+    -----
+    Based on ObservablesFromText from ImPlaneIA, e.g.
+    https://github.com/anand0xff/ImPlaneIA/blob/master/nrm_analysis/misctools/implane2oifits.py#L32
+    """
+
     def __init__(self, fringefitter, method="mean"):
         """
-        Class to store AMI data in the format required to write out to OIFITS files.
-
-        Takes fringefitter class, which contains nrm_list and instrument_data attributes,
-        all info needed to write oifits. Angular quantities of input are in radians from 
-        fringe fitting; converted to degrees for saving. Populate the structure needed to 
-        write out oifits files according to schema.
-        Produces averaged and multi-integration versions, with sigma-clipped stats over
-        integrations.
+        Initialize the RawOifits object.
 
         Parameters
         ----------
-        fringefitter: FringeFitter object
+        fringefitter : FringeFitter object
             Object containing nrm_list attribute (list of nrm objects)
             and other info needed for OIFITS files
-        method: string
+        method : str
             Method to average observables: mean or median. Default mean.
-
-        Notes
-        -----
-        Based on ObservablesFromText from ImPlaneIA, e.g. 
-        https://github.com/anand0xff/ImPlaneIA/blob/master/nrm_analysis/misctools/implane2oifits.py#L32
         """
         self.fringe_fitter = fringefitter
         self.n_holes = 7
@@ -44,12 +48,17 @@ class RawOifits:
         self.nslices = len(self.fringe_fitter.nrm_list)  # n ints
         self.n_baselines = int(comb(self.n_holes, 2))  # 21
         self.n_closure_phases = int(comb(self.n_holes, 3))  # 35
-        self.n_closure_amplitudes = int(comb(self.n_holes, 4)) # also 35
+        self.n_closure_amplitudes = int(comb(self.n_holes, 4))  # also 35
 
         self.method = method
-        if self.method not in ["mean", "median", "multi"]:
-            log.warning('"method" for saving OIFITS file must be one of ["mean","median","multi"]. Defaulting to use mean!')
-            self.method = "mean" 
+        allowed_methods = ["mean", "median", "multi"]
+        if self.method not in allowed_methods:
+            msg = (
+                f"method for saving OIFITS file must be one of {allowed_methods}. "
+                "Defaulting to use mean!"
+            )
+            log.warning(msg)
+            self.method = "mean"
 
         self.ctrs_eqt = self.fringe_fitter.instrument_data.ctrs_eqt
         self.ctrs_inst = self.fringe_fitter.instrument_data.ctrs_inst
@@ -59,9 +68,7 @@ class RawOifits:
         self.qholes, self.quads = self._makequads_all()
 
     def make_obsarrays(self):
-        """
-        Make arrays of observables of the correct shape for saving to datamodels
-        """
+        """Make arrays of observables of the correct shape for saving to datamodels."""
         # empty arrays of observables, (nslices,nobservables) shape.
         self.fringe_phases = np.zeros((self.nslices, self.n_baselines))
         self.fringe_amplitudes = np.zeros((self.nslices, self.n_baselines))
@@ -79,12 +86,12 @@ class RawOifits:
             self.fringe_amplitudes[i, :] = nrmslc.fringeamp
             self.closure_phases[i, :] = nrmslc.redundant_cps  # CPs in radians
             self.t3_amplitudes[i, :] = nrmslc.t3_amplitudes
-            self.q4_phases[i, :] = nrmslc.q4_phases # quad phases in radians
+            self.q4_phases[i, :] = nrmslc.q4_phases  # quad phases in radians
             self.closure_amplitudes[i, :] = nrmslc.redundant_cas
-            self.pistons[i, :] = nrmslc.fringepistons # segment pistons in radians
+            self.pistons[i, :] = nrmslc.fringepistons  # segment pistons in radians
             self.solns[i, :] = nrmslc.soln
 
-        self.fringe_amplitudes_squared = self.fringe_amplitudes ** 2  # squared visibilities
+        self.fringe_amplitudes_squared = self.fringe_amplitudes**2  # squared visibilities
 
     def rotate_matrix(self, cov_mat, theta):
         """
@@ -92,29 +99,26 @@ class RawOifits:
 
         Parameters
         ----------
-        cov_mat: array
+        cov_mat : array
             The matrix to be rotated
-        theta: float
+        theta : float
             Angle by which to rotate the matrix (radians)
 
         Returns
         -------
-        cv_rotated: array
+        cv_rotated : array
             The rotated matrix
-
         """
         c, s = np.cos(theta), np.sin(theta)
-        r_mat = [[c, -s],
-                 [s, c]]
+        r_mat = [[c, -s], [s, c]]
         # coordinate rotation from real/imaginary to absolute value/phase (modulus/argument)
         return np.linalg.multi_dot([np.transpose(r_mat), cov_mat, r_mat])
-
 
     def average_observables(self, averfunc):
         """
         Average all the observables.
 
-        Calculate covariance matrices between fringe amplitudes/fringe phases, 
+        Calculate covariance matrices between fringe amplitudes/fringe phases,
         and between triple product amps/closure phases, and closure amplitudes/quad phases.
         Convert r, theta (modulus, phase) to x,y. Calculate cov(x,y). Rotate resulting
         2x2 matrix back to r, theta. Take sqrt of relevant covariance element to be error.
@@ -122,59 +126,58 @@ class RawOifits:
 
         Parameters
         ----------
-        averfunc: function
-            np.mean (default) or np.median
+        averfunc : function
+            Function for averaging, either np.mean (default) or np.median
 
         Returns
         -------
-        avg_sqv: array
+        avg_sqv : array
             Averaged squared visibilites
-        err_sqv: array
+        err_sqv : array
             Standard error of the mean of averaged squared visibilities
-        avg_fa: array
+        avg_fa : array
             Averaged fringe (visibility) amplitudes
-        err_fa: array
+        err_fa : array
             Standard error of the mean of averaged fringe (visibility) amplitudes
-        avg_fp: array
+        avg_fp : array
             Averaged fringe phases (rad)
-        err_fp: array
+        err_fp : array
             Standard error of the mean of averaged fringe phases (rad)
-        avg_cp: array
+        avg_cp : array
             Averaged closure phases (rad)
-        err_cp: array
+        err_cp : array
             Standard error of the mean of averaged closure phases (rad)
-        avg_t3amp: array
+        avg_t3amp : array
             Averaged triple amplitudes
-        err_t3amp: array
+        err_t3amp : array
             Standard error of the mean of averaged triple amplitudes
-        avg_ca: array
+        avg_ca : array
             Averaged closure amplitudes
-        err_ca: array
+        err_ca : array
             Standard error of the mean of averaged closure amplitudes
-        avg_q4phi: array
+        avg_q4phi : array
             Averaged quad phases
-        err_q4phi: array
+        err_q4phi : array
             Standard error of the mean of averaged quad phases
-        avg_pist: array
+        avg_pist : array
             Averaged segment pistons
-        err_pist: array
+        err_pist : array
             Standard error of the mean of averaged segment pistons
-
         """
         covmats_fringes, covmats_triples, covmats_quads = self.observable_covariances(averfunc)
 
-        if self.method == 'mean':
+        if self.method == "mean":
             avg_fa, _, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)
             avg_fp, _, std_fp = sigma_clipped_stats(self.fringe_phases, axis=0)
             avg_sqv, _, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             avg_pist, _, err_pist = sigma_clipped_stats(self.pistons, axis=0)
-        else:  # median
-            _, avg_fa, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)  # 21. std_fa is just for comparing to covariance
-            _, avg_fp, std_fp  = sigma_clipped_stats(self.fringe_phases, axis=0)  # 21
+        else:  # median. std_fa is just for comparing to covariance
+            _, avg_fa, std_fa = sigma_clipped_stats(self.fringe_amplitudes, axis=0)  # 21
+            _, avg_fp, std_fp = sigma_clipped_stats(self.fringe_phases, axis=0)  # 21
             _, avg_sqv, std_sqv = sigma_clipped_stats(self.fringe_amplitudes**2, axis=0)
             _, avg_pist, err_pist = sigma_clipped_stats(self.pistons, axis=0)
-        
-        err_pist = err_pist/np.sqrt(self.nslices) # standard error of the mean
+
+        err_pist = err_pist / np.sqrt(self.nslices)  # standard error of the mean
         err_fa, err_fp = self.err_from_covmat(covmats_fringes)
 
         # calculate squared visibility (fringe) amplitude uncertainties correctly
@@ -184,15 +187,29 @@ class RawOifits:
         avg_t3amp = leastsqnrm.t3_amplitudes(avg_fa, n=self.n_holes)
         avg_cp = leastsqnrm.redundant_cps(avg_fp, n=self.n_holes)
         err_t3amp, err_cp = self.err_from_covmat(covmats_triples)
-        
+
         avg_ca = leastsqnrm.closure_amplitudes(avg_fa, n=self.n_holes)
         avg_q4phi = leastsqnrm.q4_phases(avg_fp, n=self.n_holes)
         err_ca, err_q4phi = self.err_from_covmat(covmats_quads)
 
-        return (avg_sqv, err_sqv, avg_fa, err_fa, 
-                avg_fp, err_fp, avg_cp, err_cp, 
-                avg_t3amp, err_t3amp, avg_ca, err_ca, 
-                avg_q4phi, err_q4phi, avg_pist, err_pist)
+        return (
+            avg_sqv,
+            err_sqv,
+            avg_fa,
+            err_fa,
+            avg_fp,
+            err_fp,
+            avg_cp,
+            err_cp,
+            avg_t3amp,
+            err_t3amp,
+            avg_ca,
+            err_ca,
+            avg_q4phi,
+            err_q4phi,
+            avg_pist,
+            err_pist,
+        )
 
     def err_from_covmat(self, covmatlist):
         """
@@ -202,22 +219,22 @@ class RawOifits:
         divided by sqrt(N_ints), for use as observable errors (standard error of the mean).
         If using median, error calculation is questionable because this is NOT the standard
         error of the median.
-        
+
         Parameters
         ----------
-        covmatlist: array
-            array of covariance matrices for each baseline/triple/quad
+        covmatlist : array
+            Array of covariance matrices for each baseline/triple/quad
             shape e.g. (21,2,2) or (35,2,2)
 
         Returns
         -------
-        err_00: array
-            standard errors of the mean of the first observable. shape e.g. (21)
-        err_11: array
-            standard errors of the mean of the second observable. shape e.g. (21)
+        err_00 : array
+            Standard errors of the mean of the first observable. shape e.g. (21)
+        err_11 : array
+            Standard errors of the mean of the second observable. shape e.g. (21)
         """
-        err_00 = np.sqrt(np.array([covmat[0,0] for covmat in covmatlist]))/np.sqrt(self.nslices)
-        err_11 = np.sqrt(np.array([covmat[1,1] for covmat in covmatlist]))/np.sqrt(self.nslices)
+        err_00 = np.sqrt(np.array([covmat[0, 0] for covmat in covmatlist])) / np.sqrt(self.nslices)
+        err_11 = np.sqrt(np.array([covmat[1, 1] for covmat in covmatlist])) / np.sqrt(self.nslices)
 
         return err_00, err_11
 
@@ -226,96 +243,96 @@ class RawOifits:
         Calculate covariance matrices from each pair of observables.
 
         For each baseline/triple/quad, calculate covariance between each
-        fringe amplitude/phase quantity. 
+        fringe amplitude/phase quantity.
 
         Parameters
         ----------
-        averfunc: function
-            np.mean (default) or np.median
+        averfunc : function
+            Function for averaging, either np.mean (default) or np.median
 
         Returns
         -------
-        cov_mat_fringes: array
+        cov_mat_fringes : array
             Array of 21 covariance matrices for fringes (amplitudes, phases)
-        cov_mat_triples: array
+        cov_mat_triples : array
             Array of 35 covariance matrices for triples (t3 amplitudes, closure phases)
-        cov_mat_quads: array
+        cov_mat_quads : array
             Array of 35 covariance matrices for quads (closure amplitudes, quad phases)
-
         """
         # loop over 21 baselines
         cov_mat_fringes = []
         # These operate on all slices at once, not on already-averaged integrations
         for bl in np.arange(self.n_baselines):
-            fringeamps = self.fringe_amplitudes[:,bl]
-            fringephases = self.fringe_phases[:,bl]
+            fringeamps = self.fringe_amplitudes[:, bl]
+            fringephases = self.fringe_phases[:, bl]
             covmat = self.cov_r_theta(fringeamps, fringephases, averfunc)
             cov_mat_fringes.append(covmat)
         # loop over 35 triples
         cov_mat_triples = []
         for triple in np.arange(self.n_closure_phases):
-            tripamp = self.t3_amplitudes[:,triple]
-            triphase = self.closure_phases[:,triple]
+            tripamp = self.t3_amplitudes[:, triple]
+            triphase = self.closure_phases[:, triple]
             covmat = self.cov_r_theta(tripamp, triphase, averfunc)
             cov_mat_triples.append(covmat)
         # loop over 35 quads
         cov_mat_quads = []
         for quad in np.arange(self.n_closure_amplitudes):
-            quadamp = self.closure_amplitudes[:,quad]
-            quadphase = self.q4_phases[:,quad]
+            quadamp = self.closure_amplitudes[:, quad]
+            quadphase = self.q4_phases[:, quad]
             covmat = self.cov_r_theta(quadamp, quadphase, averfunc)
             cov_mat_quads.append(covmat)
 
         # covmats to be written to oifits. store in rawoifits object? TBD
         # lists of cov mats have shape e.g. (21, 2, 2) or (35, 2, 2)
 
-        return np.array(cov_mat_fringes), np.array(cov_mat_triples), np.array(cov_mat_quads)
-
+        return (
+            np.array(cov_mat_fringes),
+            np.array(cov_mat_triples),
+            np.array(cov_mat_quads),
+        )
 
     def cov_r_theta(self, rr, theta, averfunc):
         """
         Calculate covariance in polar coordinates.
 
-        Calculate covariance in x, y coordinates, then rotate covariance matrix 
+        Calculate covariance in x, y coordinates, then rotate covariance matrix
         by **average** phase (over integrations) to get matrix in (r,theta).
 
         Parameters
         ----------
-        rr: array
-            complex number modulus 
-        theta: array
-            complex number phase
-        averfunc: function
-            np.mean (default) or np.median
+        rr : array
+            Complex number modulus
+        theta : array
+            Complex number phase
+        averfunc : function
+            Function for averaging, either np.mean (default) or np.median
 
         Returns
         -------
-        cov_mat_r_theta: array (2,2)
+        cov_mat_r_theta : array (2,2)
             Covariance matrix in r, theta coordinates
-
         """
         xx = rr * np.cos(theta)
         yy = rr * np.sin(theta)
         cov_mat_xy = np.cov(xx, yy)
         return self.rotate_matrix(cov_mat_xy, averfunc(theta))
-        
 
     def make_oifits(self):
         """
-        Perform final manipulations of observable arrays, calculate uncertainties, and
-        populate AmiOIModel
+        Populate AmiOIModel.
+
+        Perform final manipulations of observable arrays, calculate uncertainties,
+        and populate AmiOIModel.
 
         Returns
         -------
-        m: AmiOIModel
+        m : AmiOIModel
             Fully populated datamodel
-
         """
         self.make_obsarrays()
         instrument_data = self.fringe_fitter.instrument_data
         observation_date = Time(
-            "%s-%s-%s"
-            % (instrument_data.year, instrument_data.month, instrument_data.day),
+            f"{instrument_data.year}-{instrument_data.month}-{instrument_data.day}",
             format="fits",
         )
 
@@ -332,8 +349,8 @@ class RawOifits:
         v2coord = self.tuv[:, 1, 0]
         u2coord = self.tuv[:, 1, 1]
 
-        flagVis = [False] * self.n_baselines
-        flagT3 = [False] * self.n_closure_phases
+        flag_vis = [False] * self.n_baselines
+        flag_t3 = [False] * self.n_closure_phases
 
         # Average observables (or don't), and get uncertainties
         # Unwrap phases
@@ -362,19 +379,46 @@ class RawOifits:
             self.pist = self.pistons.T
             self.e_pist = np.zeros(self.pist.shape)
 
-
         elif self.method == "mean":
-            (self.vis2, self.e_vis2, self.visamp, self.e_visamp, 
-            self.visphi, self.e_visphi, self.closure_phases, self.e_cp, 
-            self.t3amp, self.e_t3amp, self.camp, self.e_camp, 
-            self.q4phi, self.e_q4phi, self.pist, self.e_pist) =  self.average_observables(np.mean)
+            (
+                self.vis2,
+                self.e_vis2,
+                self.visamp,
+                self.e_visamp,
+                self.visphi,
+                self.e_visphi,
+                self.closure_phases,
+                self.e_cp,
+                self.t3amp,
+                self.e_t3amp,
+                self.camp,
+                self.e_camp,
+                self.q4phi,
+                self.e_q4phi,
+                self.pist,
+                self.e_pist,
+            ) = self.average_observables(np.mean)
 
         else:  # take the median
-            (self.vis2, self.e_vis2, self.visamp, self.e_visamp, 
-            self.visphi, self.e_visphi, self.closure_phases, self.e_cp, 
-            self.t3amp, self.e_t3amp, self.camp, self.e_camp, 
-            self.q4phi, self.e_q4phi, self.pist, self.e_pist) =  self.average_observables(np.median)
-        
+            (
+                self.vis2,
+                self.e_vis2,
+                self.visamp,
+                self.e_visamp,
+                self.visphi,
+                self.e_visphi,
+                self.closure_phases,
+                self.e_cp,
+                self.t3amp,
+                self.e_t3amp,
+                self.camp,
+                self.e_camp,
+                self.q4phi,
+                self.e_q4phi,
+                self.pist,
+                self.e_pist,
+            ) = self.average_observables(np.median)
+
         # Convert angular quantities from radians to degrees
         self.visphi = np.rad2deg(self.visphi)
         self.e_visphi = np.rad2deg(self.e_visphi)
@@ -387,7 +431,7 @@ class RawOifits:
 
         # prepare arrays for OI_ARRAY ext
         self.staxy = instrument_data.ctrs_inst
-        tel_name = ["A%i" % x for x in np.arange(self.n_holes) + 1]
+        tel_name = [f"A{x:d}" % x for x in np.arange(self.n_holes) + 1]
         sta_name = tel_name
         diameter = [0] * self.n_holes
 
@@ -401,7 +445,7 @@ class RawOifits:
 
         pscale = instrument_data.pscale_mas / 1000.0  # arcsec
         # Size of the image to extract NRM data
-        isz = self.fringe_fitter.scidata.shape[1]  
+        isz = self.fringe_fitter.scidata.shape[1]
         fov = [pscale * isz] * self.n_holes
         fovtype = ["RADIUS"] * self.n_holes
 
@@ -435,64 +479,64 @@ class RawOifits:
         oim.array["PIST_ERR"] = self.e_pist
 
         # oi_target extension data
-        oim.target['TARGET_ID'] = [1]
-        oim.target['TARGET'] = instrument_data.objname
-        oim.target['RAEP0'] = instrument_data.ra
-        oim.target['DECEP0'] = instrument_data.dec
-        oim.target['EQUINOX'] = [2000]
-        oim.target['RA_ERR'] = instrument_data.ra_uncertainty
-        oim.target['DEC_ERR'] = instrument_data.dec_uncertainty
-        oim.target['SYSVEL'] = [0]
-        oim.target['VELTYP'] = ['UNKNOWN']
-        oim.target['VELDEF'] = ['OPTICAL']
-        oim.target['PMRA'] = instrument_data.pmra
-        oim.target['PMDEC'] = instrument_data.pmdec
-        oim.target['PMRA_ERR'] = [0]
-        oim.target['PMDEC_ERR'] = [0]
-        oim.target['PARALLAX'] = [0]
-        oim.target['PARA_ERR'] = [0]
-        oim.target['SPECTYP'] = ['UNKNOWN']
+        oim.target["TARGET_ID"] = [1]
+        oim.target["TARGET"] = instrument_data.objname
+        oim.target["RAEP0"] = instrument_data.ra
+        oim.target["DECEP0"] = instrument_data.dec
+        oim.target["EQUINOX"] = [2000]
+        oim.target["RA_ERR"] = instrument_data.ra_uncertainty
+        oim.target["DEC_ERR"] = instrument_data.dec_uncertainty
+        oim.target["SYSVEL"] = [0]
+        oim.target["VELTYP"] = ["UNKNOWN"]
+        oim.target["VELDEF"] = ["OPTICAL"]
+        oim.target["PMRA"] = instrument_data.pmra
+        oim.target["PMDEC"] = instrument_data.pmdec
+        oim.target["PMRA_ERR"] = [0]
+        oim.target["PMDEC_ERR"] = [0]
+        oim.target["PARALLAX"] = [0]
+        oim.target["PARA_ERR"] = [0]
+        oim.target["SPECTYP"] = ["UNKNOWN"]
 
         # oi_vis extension data
-        oim.vis['TARGET_ID'] = 1
-        oim.vis['TIME'] = 0
-        oim.vis['MJD'] = observation_date.mjd
-        oim.vis['INT_TIME'] = instrument_data.itime
-        oim.vis['VISAMP'] = self.visamp
-        oim.vis['VISAMPERR'] = self.e_visamp
-        oim.vis['VISPHI'] = self.visphi
-        oim.vis['VISPHIERR'] = self.e_visphi
-        oim.vis['UCOORD'] = ucoord
-        oim.vis['VCOORD'] = vcoord
-        oim.vis['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
-        oim.vis['FLAG'] = flagVis
+        oim.vis["TARGET_ID"] = 1
+        oim.vis["TIME"] = 0
+        oim.vis["MJD"] = observation_date.mjd
+        oim.vis["INT_TIME"] = instrument_data.itime
+        oim.vis["VISAMP"] = self.visamp
+        oim.vis["VISAMPERR"] = self.e_visamp
+        oim.vis["VISPHI"] = self.visphi
+        oim.vis["VISPHIERR"] = self.e_visphi
+        oim.vis["UCOORD"] = ucoord
+        oim.vis["VCOORD"] = vcoord
+        oim.vis["STA_INDEX"] = self._format_staindex_v2(self.bholes)
+        oim.vis["FLAG"] = flag_vis
 
         # oi_vis2 extension data
-        oim.vis2['TARGET_ID'] = 1
-        oim.vis2['TIME'] = 0
-        oim.vis2['MJD'] = observation_date.mjd
-        oim.vis2['INT_TIME'] = instrument_data.itime
-        oim.vis2['VIS2DATA'] = self.vis2
-        oim.vis2['VIS2ERR'] = self.e_vis2
-        oim.vis2['UCOORD'] = ucoord
-        oim.vis2['VCOORD'] = vcoord
-        oim.vis2['STA_INDEX'] = self._format_STAINDEX_V2(self.bholes)
-        oim.vis2['FLAG'] = flagVis
+        oim.vis2["TARGET_ID"] = 1
+        oim.vis2["TIME"] = 0
+        oim.vis2["MJD"] = observation_date.mjd
+        oim.vis2["INT_TIME"] = instrument_data.itime
+        oim.vis2["VIS2DATA"] = self.vis2
+        oim.vis2["VIS2ERR"] = self.e_vis2
+        oim.vis2["UCOORD"] = ucoord
+        oim.vis2["VCOORD"] = vcoord
+        oim.vis2["STA_INDEX"] = self._format_staindex_v2(self.bholes)
+        oim.vis2["FLAG"] = flag_vis
 
         # oi_t3 extension data
-        oim.t3['TARGET_ID'] = 1
-        oim.t3['TIME'] = 0
-        oim.t3['MJD'] = observation_date.mjd
-        oim.t3['T3AMP'] = self.t3amp
-        oim.t3['T3AMPERR'] = self.e_t3amp
-        oim.t3['T3PHI'] = self.closure_phases
-        oim.t3['T3PHIERR'] = self.e_cp
-        oim.t3['U1COORD'] = u1coord
-        oim.t3['V1COORD'] = v1coord
-        oim.t3['U2COORD'] = u2coord
-        oim.t3['V2COORD'] = v2coord
-        oim.t3['STA_INDEX'] = self._format_STAINDEX_T3(self.tholes)
-        oim.t3['FLAG'] = flagT3
+        oim.t3["TARGET_ID"] = 1
+        oim.t3["TIME"] = 0
+        oim.t3["MJD"] = observation_date.mjd
+        oim.t3["T3AMP"] = self.t3amp
+        oim.t3["T3AMPERR"] = self.e_t3amp
+        oim.t3["T3PHI"] = self.closure_phases
+        oim.t3["T3PHIERR"] = self.e_cp
+        oim.t3["U1COORD"] = u1coord
+        oim.t3["V1COORD"] = v1coord
+        oim.t3["U2COORD"] = u2coord
+        oim.t3["V2COORD"] = v2coord
+        oim.t3["STA_INDEX"] = self._format_staindex_t3(self.tholes)
+        oim.t3["FLAG"] = flag_t3
 
         # oi_wavelength extension data
         oim.wavelength["EFF_WAVE"] = wl
@@ -502,13 +546,14 @@ class RawOifits:
 
     def init_oimodel_arrays(self, oimodel):
         """
-        Set dtypes and initialize shapes for AmiOiModel arrays,
-        depending on if averaged or multi-integration version.
+        Set dtypes and initialize shapes for AmiOiModel arrays.
+
+        Supports averaged or multi-integration versions of oimodel.
 
         Parameters
         ----------
-        oimodel: AmiOIModel object
-            empty model
+        oimodel : AmiOIModel object
+            Empty model
         """
         if self.method == "multi":
             # update dimensions of arrays for multi-integration oifits
@@ -605,11 +650,11 @@ class RawOifits:
 
     def _maketriples_all(self):
         """
-        Calculate all three-hole combinations, baselines
+        Calculate all three-hole combinations, baselines.
 
         Returns
         -------
-        tarray: integer array
+        tarray : int array
             Triple hole indices (0-indexed),
             float array of two uv vectors in all triangles
         """
@@ -621,23 +666,24 @@ class RawOifits:
                     if i < j and j < k:
                         tlist.append((i, j, k))
                         uvlist.append(
-                        (
-                            self.ctrs_eqt[i] - self.ctrs_eqt[j],
-                            self.ctrs_eqt[j] - self.ctrs_eqt[k],
+                            (
+                                self.ctrs_eqt[i] - self.ctrs_eqt[j],
+                                self.ctrs_eqt[j] - self.ctrs_eqt[k],
+                            )
                         )
-                    )
         tarray = np.array(tlist).astype(int)
         return tarray, np.array(uvlist)
 
     def _makebaselines(self):
         """
-        Calculate all hole pairs, baselines
+        Calculate all hole pairs, baselines.
 
         Returns
         -------
-        barray: list
+        barray : list
             Hole pairs indices, 0-indexed
-        float array of baselines
+        float array
+            Array of baselines
         """
         blist = []
         bllist = []
@@ -649,13 +695,15 @@ class RawOifits:
         return np.array(blist).astype(int), np.array(bllist)
 
     def _makequads_all(self):
-        """ 
-        Calculate all four-hole combinations (quads)
-        
+        """
+        Calculate all four-hole combinations (quads).
+
         Returns
         -------
-        qarray: int array of four-hole quads (0-based)
-        uvwlist: numpy array of u, v, w vectors for each quad
+        qarray : int array
+            Array of four-hole quads (0-based)
+        uvwlist : numpy array
+            Array of u, v, w vectors for each quad
         """
         qlist = []
         uvwlist = []
@@ -665,27 +713,30 @@ class RawOifits:
                     for q in range(self.n_holes):
                         if i < j and j < k and k < q:
                             qlist.append((i, j, k, q))
-                            uvwlist.append((self.ctrs_eqt[i] - self.ctrs_eqt[j],
-                                            self.ctrs_eqt[j] - self.ctrs_eqt[k],
-                                            self.ctrs_eqt[k] - self.ctrs_eqt[q]))
+                            uvwlist.append(
+                                (
+                                    self.ctrs_eqt[i] - self.ctrs_eqt[j],
+                                    self.ctrs_eqt[j] - self.ctrs_eqt[k],
+                                    self.ctrs_eqt[k] - self.ctrs_eqt[q],
+                                )
+                            )
         qarray = np.array(qlist).astype(int)
         return qarray, np.array(uvwlist)
 
-    def _format_STAINDEX_T3(self, tab):
+    def _format_staindex_t3(self, tab):
         """
-        Converts sta_index to save oifits T3 in the appropriate format
+        Convert sta_index to save oifits T3 in the appropriate format.
 
         Parameters
         ----------
-        tab: array
-            table of indices
+        tab : array
+            Table of indices
 
         Returns
         -------
-        sta_index: list
+        sta_index : list of int triples
             Hole triples indices
-        int array of triangles
-        """    
+        """
         sta_index = []
         for x in tab:
             ap1 = int(x[0])
@@ -698,27 +749,26 @@ class RawOifits:
             sta_index.append(line)
         return sta_index
 
-    def _format_STAINDEX_V2(self, tab):
+    def _format_staindex_v2(self, tab):
         """
-        Converts sta_index to save oifits V2 in the appropriate format
+        Convert sta_index to save oifits V2 in the appropriate format.
 
         Parameters
         ----------
-        tab: array
-            table of indices
+        tab : array
+            Table of indices
 
         Returns
         -------
-        sta_index: list
+        sta_index : list
             Hole baseline indices
-        int array of baselines
-        """    
+        """
         sta_index = []
         for x in tab:
             ap1 = int(x[0])
             ap2 = int(x[1])
             if np.min(tab) == 0:
-                line = np.array([ap1, ap2]) + 1 # RAC 2/2021
+                line = np.array([ap1, ap2]) + 1  # RAC 2/2021
             else:
                 line = np.array([ap1, ap2])
             sta_index.append(line)
@@ -726,28 +776,31 @@ class RawOifits:
 
 
 class CalibOifits:
+    """
+    Produce a final calibrated AmiOIModel.
+
+    Calibrate (normalize) an AMI observation by subtracting closure phases
+    of a reference star from those of a target and dividing visibility amplitudes
+    of the target by those of the reference star.
+    """
+
     def __init__(self, targoimodel, caloimodel):
         """
-        Produce a final calibrated AmiOIModel.
-
-        Calibrate (normalize) an AMI observation by subtracting closure phases
-        of a reference star from those of a target and dividing visibility amplitudes
-        of the target by those of the reference star.
+        Initialize the CalibOifits object.
 
         Parameters
         ----------
-        targoimodel: AmiOIModlel, target
-        caloimodel: AmiOIModlel, reference star (calibrator)
+        targoimodel : AmiOIModlel
+            The target
+        caloimodel : AmiOIModlel
+            The reference star (calibrator)
         """
         self.targoimodel = targoimodel
         self.caloimodel = caloimodel
         self.calib_oimodel = targoimodel.copy()
 
     def update_dtype(self):
-        """
-        Modify the dtype of OI array to include different pistons columns
-        for calibrated OIFITS files
-        """
+        """Modify OI array dtype to include different piston columns for calibrated OIFITS files."""
         nrows = 7
         modified_dtype = np.dtype(
             [
@@ -768,12 +821,11 @@ class CalibOifits:
 
     def calibrate(self):
         """
-        Apply the calibration (normalization) routine to calibrate the
-        target AmiOIModel by the calibrator (reference star) AmiOIModel
+        Calibrate the target AmiOIModel by the calibrator (reference star) AmiOIModel.
 
         Returns
         -------
-        calib_oimodel: AmiOIModel
+        calib_oimodel : AmiOIModel
             Calibrated AMI datamodel
         """
         cp_out = self.targoimodel.t3["T3PHI"] - self.caloimodel.t3["T3PHI"]

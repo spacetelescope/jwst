@@ -46,6 +46,7 @@ __all__ = [
     'ASN_SCHEMA',
     'AsnMixin_Lv2Image',
     'AsnMixin_Lv2Nod',
+    'AsnMixin_Lv2Imprint',
     'AsnMixin_Lv2Special',
     'AsnMixin_Lv2Spectral',
     'AsnMixin_Lv2WFSS',
@@ -558,7 +559,7 @@ class Utility():
 
         Notes
         -----
-        The current definition of candidates allows strictly lexigraphical
+        The current definition of candidates allows strictly alphabetical
         sorting:
         aXXXX > cXXXX > oXXX
 
@@ -694,7 +695,7 @@ class Constraint_Imprint_Special(Constraint):
         # If an association is not provided, the check for original
         # exposure type is ignored.
         if association is None:
-            def sources(item): 
+            def sources(item):
                 return 'not imprint'
         else:
             def sources(item):
@@ -965,6 +966,123 @@ class AsnMixin_Lv2Image:
         self.data['asn_type'] = 'image2'
 
 
+class AsnMixin_Lv2Imprint:
+    """Level 2 association handling for matching imprint images."""
+
+    def prune_imprints(self):
+        """
+        Prune extra imprint exposures from the association members.
+
+        First, check for imprints that match the background flag
+        for the "science" member.  Any included imprints that do
+        not match the background flag are left in the association
+        without further checks.
+
+        Among these imprints, check to see if any have target IDs that
+        match the science member. If not, use all imprints for further
+        matches.  If so, use only the matching ones for further checks;
+        remove the non-matching imprints.
+
+        If there are more imprints than science members remaining, and
+        if any of the remaining imprints match the science dither position
+        index, discard any imprints that do not match the dither position.
+        """
+        # Only one product for Lv2 associations
+        members = self['products'][0]['members']
+
+        # Check for science and imprint members
+        science = []
+        imprint_sci = []
+        imprint_bkg = []
+        science_is_background = False
+        science_targets = set()
+        for member in members:
+            try:
+                target = member.item['targetid']
+                bkgdtarg = member.item['bkgdtarg']
+            except KeyError:
+                # ignore any members with missing data -
+                # no pruning will happen in this case
+                continue
+
+            if member['exptype'] == 'science':
+                science.append(member)
+                science_targets.add(str(target))
+                if bkgdtarg == 't':
+                    science_is_background = True
+            elif member['exptype'] == 'imprint':
+                # Store imprints by background status
+                if bkgdtarg == 't':
+                    imprint_bkg.append(member)
+                else:
+                    imprint_sci.append(member)
+
+        # Only check the imprints that match the "science" members
+        if science_is_background:
+            imprints_to_check = imprint_bkg
+        else:
+            imprints_to_check = imprint_sci
+
+        # If there are multiple targets in the imprints to check,
+        # and if one of them matches the science data, keep only that one
+        imprints_matching_target = []
+        imprints_not_matching_target = []
+        for imprint_exp in imprints_to_check:
+            try:
+                target = imprint_exp.item['targetid']
+            except KeyError:
+                # Imprint does not match target if it is missing a target ID
+                imprints_not_matching_target.append(imprint_exp)
+                continue
+            if str(target) in science_targets:
+                imprints_matching_target.append(imprint_exp)
+            else:
+                imprints_not_matching_target.append(imprint_exp)
+        if len(imprints_matching_target) > 0:
+            imprints_to_check = imprints_matching_target
+            for imprint_exp in imprints_not_matching_target:
+                members.remove(imprint_exp)
+
+        # If 1 or more science and more imprints than science,
+        # discard any imprints that don't match the science dither index
+        if 1 <= len(science) < len(imprints_to_check):
+            imprint_to_keep = set()
+            for science_exp in science:
+                if 'dithptin' not in science_exp.item:
+                    continue
+                for imprint_exp in imprints_to_check:
+                    if 'dithptin' not in imprint_exp.item:
+                        continue
+                    if imprint_exp.item['dithptin'] == science_exp.item['dithptin']:
+                        imprint_to_keep.add(imprint_exp['expname'])
+
+            # if there were any matching imprints, remove the extras
+            if len(imprint_to_keep) > 0:
+                for imprint_exp in imprints_to_check:
+                    if imprint_exp['expname'] not in imprint_to_keep:
+                        members.remove(imprint_exp)
+
+    def finalize(self):
+        """
+        Finalize the association.
+
+        For some spectrographic modes, imprint images are taken alongside
+        the science data, the background data, or both.  If there are
+        extra imprints in the association, we should keep only the best
+        matches to the science data.
+
+        Returns
+        -------
+        associations: [association[, ...]] or None
+            List of fully-qualified associations that this association
+            represents.
+            `None` if a complete association cannot be produced.
+        """
+        if self.is_valid:
+            self.prune_imprints()
+        return super().finalize()
+
+
 class AsnMixin_Lv2Nod:
     """Associations that need to create nodding associations
 
@@ -1201,7 +1319,7 @@ class AsnMixin_Lv2Special:
 
 
 class AsnMixin_Lv2Spectral(DMSLevel2bBase):
-    """Level 2 Spectral association base"""
+    """Level 2 Spectral association base."""
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""

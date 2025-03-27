@@ -21,7 +21,7 @@ def test_rscd_baseline_set_groupdq():
     # size of integration
     ngroups = exposure['ngroups']
     nints  = exposure['nints']
-    
+
     xsize = 10
     ysize = 10
 
@@ -92,10 +92,10 @@ def test_rscd_baseline_too_few_groups():
     # size of integration
     ngroups = exposure['ngroups']
     nints  = exposure['nints']
-    
+
     xsize = 10
     ysize = 10
-    
+
     # create the data and groupdq arrays
     csize = (nints, ngroups, ysize, xsize)
     data = np.full(csize, 1.0, dtype=np.float32)
@@ -104,7 +104,7 @@ def test_rscd_baseline_too_few_groups():
     # create a JWST datamodel for MIRI data on a copy (the copy is created at the step script)
     dm_ramp = RampModel(data=data, groupdq=groupdq)
     dm_ramp.meta.exposure._instance.update(exposure)
-    
+
     # get the number of groups to flag
     nflag = 3
 
@@ -125,12 +125,12 @@ def test_rscd_baseline_too_few_groups():
 def test_rscd_tso():
     """
     The RSCD correction is generally skipped for TSO data, but some users
-    have been running it on TSO data. So this test was added. 
+    have been running it on TSO data. So this test was added.
     Test for TSO segmented data that the correct groups are flagged as 'DO_NOT_USE'
     for integration 2 and higher. Set up the segmented data so the segment
-    is for integration 25 to 50. A rscd correction should be applied to all 
-    the data.  
- 
+    is for integration 25 to 50. A rscd correction should be applied to all
+    the data.
+
     """
     exposure = {
         'integration_start' : 25,
@@ -138,14 +138,14 @@ def test_rscd_tso():
         'ngroups' : 8,
         'nints' : 50
         }
-        
+
     xsize = 10
     ysize = 10
     ngroups = exposure['ngroups']
     seg_nints = exposure['integration_end'] - exposure['integration_start'] + 1
     input_model = RampModel((seg_nints, exposure['ngroups'],
                                         ysize, xsize))
-    
+
     input_model.groupdq[:,:,:,:] = 0 # initize to 0 - all good
     input_model.meta.exposure._instance.update(exposure)
 

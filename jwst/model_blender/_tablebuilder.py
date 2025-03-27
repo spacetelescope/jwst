@@ -4,18 +4,31 @@ import numpy as np
 class _MissingValueType:
     pass
 
+
 _MISSING_VALUE = _MissingValueType()
 
 
 def _convert_dtype(value):
-    """Convert numarray column dtype into YAML-compatible format description"""
-    if 'U' in value:
+    """
+    Convert numarray column dtype into YAML-compatible format description.
+
+    Parameters
+    ----------
+    value : str, bool, or numpy.dtype
+        The datatype to convert.
+
+    Returns
+    -------
+    new_dtype : str or list
+        The converted datatype.
+    """
+    if "U" in value:
         # working with a string description
-        str_len = int(value[value.find('U') + 1:])
-        new_dtype = ['ascii', str_len]
-    elif value == 'bool':
+        str_len = int(value[value.find("U") + 1 :])
+        new_dtype = ["ascii", str_len]
+    elif value == "bool":
         # cast all bool to int8 to avoid issues on write
-        new_dtype = 'int8'
+        new_dtype = "int8"
     else:
         new_dtype = str(value)
 
@@ -32,21 +45,21 @@ def table_to_schema(table):
 
     Parameters
     ----------
-    table: ndarray
+    table : ndarray
         The structured array containing the data (and datatype).
 
     Returns
     -------
-    subschema: dict
-        stdatamodels for the "table" datatype.
+    subschema : dict
+        Stdatamodels for the "table" datatype.
     """
     return {
-        'title': 'Combined header table',
-        'fits_hdu': 'HDRTAB',
-        'datatype': [
+        "title": "Combined header table",
+        "fits_hdu": "HDRTAB",
+        "datatype": [
             {
-                'name': col_name,
-                'datatype': _convert_dtype(str(table.dtype[col_name])),
+                "name": col_name,
+                "datatype": _convert_dtype(str(table.dtype[col_name])),
             }
             for col_name in table.dtype.fields
         ],
@@ -66,13 +79,14 @@ class TableBuilder:
     rec.array([('foo.fits',)],
          dtype=[('FN', '<U8')])
     """
+
     def __init__(self, attr_to_column):
         """
         Create a new `TableBuilder`.
 
         Parameters
         ----------
-        attr_to_column: dict
+        attr_to_column : dict
             A one-to-one mapping of attribute names (as
             dotted paths like "meta.filename") to column
             names (strings).
@@ -94,7 +108,7 @@ class TableBuilder:
 
         Parameters
         ----------
-        header: dict
+        header : dict
             Often produced from ``Datamodel.to_flat_dict``.
         """
         row = {}
@@ -113,13 +127,13 @@ class TableBuilder:
 
         Returns
         -------
-        table: numpy.ndarray
+        table : numpy.ndarray
             Structured array containing fields with datatypes
         """
         arrays = []
         table_dtype = []
         for col, items in self.columns.items():
-            if all((i is _MISSING_VALUE for i in items)):
+            if all(i is _MISSING_VALUE for i in items):
                 continue
             arrays.append(np.array([np.nan if i is _MISSING_VALUE else i for i in items]))
             table_dtype.append((col, arrays[-1].dtype))

@@ -17,23 +17,24 @@ from jwst.associations.lib.dms_base import (
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level2_base import (
     ASN_SCHEMA, # noqa F401
-    AsnMixin_Lv2Image, 
-    AsnMixin_Lv2Spectral, 
-    AsnMixin_Lv2Nod, 
-    AsnMixin_Lv2Special, 
-    DMSLevel2bBase, 
-    DMSAttrConstraint, 
+    AsnMixin_Lv2Image,
+    AsnMixin_Lv2Spectral,
+    AsnMixin_Lv2Nod,
+    AsnMixin_Lv2Imprint,
+    AsnMixin_Lv2Special,
+    DMSLevel2bBase,
+    DMSAttrConstraint,
     Utility, # noqa F401
-    Constraint_Mode, 
-    Constraint_Base, 
-    Constraint_Background, 
-    Constraint_Single_Science, 
-    Constraint_Image_Science, 
-    Constraint_Image_Nonscience, 
-    Constraint_Special, 
-    Constraint_Spectral_Science, 
-    Constraint_Imprint, 
-    Constraint_Target, 
+    Constraint_Mode,
+    Constraint_Base,
+    Constraint_Background,
+    Constraint_Single_Science,
+    Constraint_Image_Science,
+    Constraint_Image_Nonscience,
+    Constraint_Special,
+    Constraint_Spectral_Science,
+    Constraint_Imprint,
+    Constraint_Target,
 )
 
 __all__ = [
@@ -293,6 +294,7 @@ class Asn_Lv2FGS(
 @RegistryMarker.rule
 class Asn_Lv2Spec(
         AsnMixin_Lv2Spectral,
+        AsnMixin_Lv2Imprint,
         DMSLevel2bBase
 ):
     """Level2b Science Spectral Association
@@ -318,7 +320,7 @@ class Asn_Lv2Spec(
             Constraint(
                 [
                     #  Allow either any background, or ensure imprint and science members
-                    #  match on mosaic tile number and dither pointing position.
+                    #  match on mosaic tile number
                     Constraint_Background(),
                     Constraint(
                         [
@@ -333,10 +335,6 @@ class Asn_Lv2Spec(
                                 name='mostilno',
                                 sources=['mostilno']
                             ),
-                            DMSAttrConstraint(
-                                name='dithptin',
-                                sources=['dithptin']
-                            )
                         ],
                         reduce=Constraint.all
                     ),
@@ -407,6 +405,7 @@ class Asn_Lv2SpecImprint(
 class Asn_Lv2SpecSpecial(
         AsnMixin_Lv2Special,
         AsnMixin_Lv2Spectral,
+        AsnMixin_Lv2Imprint,
         DMSLevel2bBase
 ):
     """Level2b Auxiliary Science Spectral Association
@@ -481,7 +480,7 @@ class Asn_Lv2SpecTSO(
                         DMSAttrConstraint(
                             name='pupil',
                             sources=['pupil'],
-                            value='clear',
+                            value='clear|gdhs0|gdhs60',
                         )],
                     )
                 ],
@@ -989,6 +988,7 @@ class Asn_Lv2NRSFSS(
 
 @RegistryMarker.rule
 class Asn_Lv2NRSIFUNod(
+        AsnMixin_Lv2Imprint,
         AsnMixin_Lv2Nod,
         AsnMixin_Lv2Spectral,
         DMSLevel2bBase
@@ -1151,10 +1151,17 @@ class Asn_Lv2WFSSParallel(
 
     @staticmethod
     def find_closest_direct(science, directs):
-        """Find the direct image that is closest to the science
+        """Find the direct image that is closest to the science.
 
-        For pure-parallel WFSS, there is only ever one direct image.
-        Simply return that.
+        For NIRCam pure parallel observations, there should
+        only be one long-wavelength direct image in a given
+        direct_image candidate. Find it by searching for 'long'
+        filenames. All [a|b]long filenames should belong to the
+        same level 3 product, which will be associated to the
+        grism image.
+
+        For NIRISS, only one direct image optical path should
+        be associated with a given grism image.
 
         Parameters
         ----------
@@ -1169,7 +1176,12 @@ class Asn_Lv2WFSSParallel(
         closest : dict
             The direct image that is the "closest"
         """
-        return directs[0]
+
+        long_directs = [d for d in directs if 'long' in d['expname']]
+        if len(long_directs) == 0:
+            long_directs.append(directs[0])  # If the search fails, just use the first.
+
+        return long_directs[0]
 
     def validate_candidates(self, member):
         """Stub to always return True

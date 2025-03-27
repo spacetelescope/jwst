@@ -12,7 +12,7 @@ a hierarchy involved - overrides set on a pipeline or step object will take prec
 over values in a parameter file. See :ref:`Parameter Precedence` for a full description of
 how a parameter gets its final value.
 
-If there is need to re-use a set of parameters often, parameters can be stored
+If there is need to reuse a set of parameters often, parameters can be stored
 in **parameter files**. See :ref:`parameter_files` for more information.
 
 To see what parameters are available for any given
@@ -39,8 +39,8 @@ Output Directory
 
 By default, all pipeline and step outputs will drop into the current
 working directory, i.e., the directory in which the process is
-running. To change this, use the ``output_dir`` parameter. See .. _python_output_directory:
-for instructions when running in Python, and .. _cli_output_directory: for instructions
+running. To change this, use the ``output_dir`` parameter. See :ref:`python_outputs`
+for instructions when running in Python, and :ref:`strun_outputs` for instructions
 using the command line interface.
 
 .. _intro_output_file:
@@ -57,12 +57,23 @@ individual steps, you have two options:
     This option will save the results of the step, using a filename
     created by the step.
 
-#.  Specify a file name using ``output_file <basename>``.
+#.  Specify a file name using ``output_file=<basename>``.
     This option will save the step results using the name specified.
 
-To do this using the Python pipeline interface, see .. _python_output_file:. To do
-this when using the command line interface, see .. _cli_output_file:.
+To do this using the Python pipeline interface, see :ref:`python_outputs`. To do
+this when using the command line interface, see :ref:`strun_outputs`.
 
+.. _intro_output_ext:
+
+Output Extension
+----------------
+
+Most output files for the JWST calibration pipeline are saved in FITS format by
+default, but it is possible to save an output product in ASDF format instead.
+To do so, specify ``output_ext='asdf'`` to any pipeline or step.
+
+
+.. _intro_override_reference_file:
 
 Override Reference File
 -----------------------
@@ -132,10 +143,5 @@ file from CRDS when running a pipeline:
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
           --steps.dark_current.override_dark='my_dark.fits'
 
-If there is need to re-use a set of parameters often, parameters can be stored
+If there is need to reuse a set of parameters often, parameters can be stored
 in **parameter files**. See :ref:`parameter_files` for more information.
-
-Pipeline/Step Parameters
-========================
-
-

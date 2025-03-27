@@ -3,7 +3,9 @@ import numpy as np
 
 from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
 
-from jwst.ramp_fitting.ramp_fit_step import RampFitStep
+from jwst.ramp_fitting.ramp_fit_step import RampFitStep, set_groupdq
+
+from jwst.lib.tests.test_reffile_utils import generate_test_refmodel_metadata
 
 DELIM = "-" * 80
 
@@ -15,6 +17,12 @@ JUMP = test_dq_flags["JUMP_DET"]
 SAT = test_dq_flags["SATURATED"]
 
 MAXIMUM_CORES = ['2', 'none', 'quarter', 'half', 'all']
+
+GROUP_SELECTION_PARAMETERS = [
+    (-10, None, "first group < 0, reset to 0"),
+    (3, 20, "Last group number >= #groups (20), reset to 19"),
+    (10, 6, "firstgroup (10) cannot be >= lastgroup (6)")
+]
 
 
 @pytest.fixture(scope="module")
@@ -30,6 +38,7 @@ def generate_miri_reffiles():
     gain_model.meta.subarray.ystart = 1
     gain_model.meta.subarray.xsize = xsize
     gain_model.meta.subarray.ysize = ysize
+    generate_test_refmodel_metadata(gain_model)
 
     inreadnoise = 5
     rnoise = np.ones(shape=(ysize, xsize), dtype=np.float64) * inreadnoise
@@ -39,6 +48,7 @@ def generate_miri_reffiles():
     readnoise_model.meta.subarray.ystart = 1
     readnoise_model.meta.subarray.xsize = xsize
     readnoise_model.meta.subarray.ysize = ysize
+    generate_test_refmodel_metadata(readnoise_model)
 
     return gain_model, readnoise_model
 
@@ -186,6 +196,8 @@ def test_subarray_5groups(tmp_path_factory):
 
     model1, gdq, rnModel, pixdq, err, gain = setup_subarray_inputs(
         ngroups=5, subxstart=10, subystart=20, subxsize=5, subysize=15, readnoise=50)
+    generate_test_refmodel_metadata(rnModel)
+    generate_test_refmodel_metadata(gain)
     gain.save(gainfile)
     rnModel.save(readnoisefile)
 
@@ -257,6 +269,33 @@ def test_int_times2(generate_miri_reffiles, setup_inputs):
     assert cube_model is not None
 
     assert len(cube_model.int_times) == nints
+
+
+def test_set_groups(generate_miri_reffiles, setup_inputs):
+    # Test results when using the firstgroup and lastgroup options
+    ngroups = 20
+    rampmodel, gdq, rnmodel, pixdq, err, gain = setup_inputs(ngroups=ngroups)
+    # Set up data array as group# squared
+    # This has the property that the slope=(firstgroup+lastgroup)
+    squares = np.array([k*k for k in range(ngroups)],dtype=np.float32)
+    rampmodel.data[0,:] = squares[:, np.newaxis, np.newaxis]
+    firstgroup = 3
+    lastgroup = 11
+    slopes, cubemodel = RampFitStep.call(rampmodel, override_gain=gain, override_readnoise=rnmodel,
+                                         firstgroup=firstgroup, lastgroup=lastgroup)
+    np.testing.assert_allclose(slopes.data, firstgroup+lastgroup, rtol=1e-7)
+
+
+@pytest.mark.parametrize("firstgroup, lastgroup, message", GROUP_SELECTION_PARAMETERS)
+def test_set_group_warnings(firstgroup, lastgroup, message, log_watcher):
+    # Test user warnings
+    ngroups = 20
+    groupdqflags = dqflags.group
+    groupdq = np.zeros((1, ngroups, 1024, 1024), dtype=np.uint16)
+
+    watcher = log_watcher("jwst.ramp_fitting.ramp_fit_step", message=message)
+    set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
+    watcher.assert_seen()
 
 
 def one_group_suppressed(nints, suppress, setup_inputs):

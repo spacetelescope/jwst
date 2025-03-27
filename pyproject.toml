@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.11,<3.14"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -13,18 +13,19 @@ classifiers = [
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
     "asdf>=3.3,<5",
     "astropy>=6.1",
-    "BayesicFitting>=3.0.1",
+    "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
-    "drizzle>=2.0.0",
-    "gwcs>=0.22.0,<0.23.0",
-    "numpy>=1.25,<2.0",
+    "drizzle>=2.0.1",
+    # "gwcs>=0.22.0,<0.23.0",
+    "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
+    "numpy>=1.25",
     "opencv-python-headless>=4.6.0.66",
     "photutils>=1.5.0",
     "poppy>=1.0.2",
@@ -33,13 +34,13 @@ dependencies = [
     "scikit-image>=0.20.0",
     "scipy>=1.14.1",
     "spherical-geometry>=1.2.22",
-    "stcal>=1.11.0,<1.12.0",
-    "stdatamodels>=2.2.0,<2.3.0",
+    "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
+    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     "stpipe>=0.8.0,<0.9.0",
     "stsci.imagestats>=1.6.3",
     "synphot>=1.2",
     "tweakwcs>=0.8.8",
-    "asdf-astropy>=0.5.0",
+    "asdf-astropy>=0.6.0",
     "wiimatch>=0.2.1",
     "packaging>20.0",
     "importlib-metadata>=4.11.4",
@@ -80,6 +81,7 @@ set_telescope_pointing = "jwst.scripts.set_telescope_pointing:main"
 "set_telescope_pointing.py" = "jwst.scripts.set_telescope_pointing:deprecated_name"
 set_velocity_aberration = "jwst.scripts.set_velocity_aberration:main"
 "set_velocity_aberration.py" = "jwst.scripts.set_velocity_aberration:deprecated_name"
+stfitsdiff = "jwst.scripts.stfitsdiff:main"
 v1_calculate = "jwst.scripts.v1_calculate:main"
 verify_install_requires = "jwst.scripts.verify_install_requires:main"
 world_coords = "jwst.scripts.world_coords:main"
@@ -97,7 +99,6 @@ docs = [
     "sphinx-astropy",
     "sphinx-automodapi",
     "sphinx-rtd-theme",
-    "tomli; python_version <\"3.11\"",
 ]
 sdp = [
     "jplephem>=2.9",
@@ -105,12 +106,15 @@ sdp = [
 ]
 test = [
     "ci-watson>=0.5.0",
-    "ruff",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
     "pytest-doctestplus>=0.10.0",
     "requests_mock>=1.0",
+]
+contrib = [
+    "pre-commit>=4.1.0",
+    "jwst[test, docs]",
 ]
 
 [build-system]
@@ -145,11 +149,6 @@ include = ["pytest_jwst*", "jwst*"]
     "*.yaml",
     "*.cat",
     "*.hdr",
-]
-"jwst.fits_generator" = [
-    "templates/*.inc",
-    "templates/*.txt",
-    "tests/okfile/*.prop",
 ]
 "jwst.lib" = [
     "tests/data/*.asdf",
@@ -213,7 +212,7 @@ addopts = [
 ]
 filterwarnings = [
     "error::ResourceWarning",
-    "error::stdatamodels.validate.ValidationWarning",
+    "error::stdatamodels.exceptions.ValidationWarning",
     "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
 ]
 
@@ -252,48 +251,29 @@ omit = [
 [tool.setuptools_scm]
 write_to = "jwst/_version.py"
 
-[tool.ruff]
-exclude = [
-    "jwst/extern",
-    "docs",
-    ".tox",
-    ".eggs",
-    "build",
-]
-line-length = 130
-
-lint.ignore = [
-    "E741", # ambiguous variable name (O/0, l/I, etc.)
-    "E722", # Do not use bare `except`
-    "ANN101", # Missing type annotation for self in method
-    "ANN102", # Missing type annotation for cls in classmethod
+[tool.numpydoc_validation]
+checks = [
+    "all",
+    "EX01", # No examples section found
+    "SA01", # See Also section not found
+    "ES01", # No extended summary found
+    "GL08", # Object does not have a docstring. Ruff catches these, and allows more granular ignores.
+    "PR01", # Parameters not documented. Already caught by ruff.
+    "PR09", # Parameter description should finish with a period
+    "RT02", # First line of return should contain only the type
+    "RT05", # Return value description should finish with a period
 ]
 
-[tool.ruff.lint.per-file-ignores]
-"jwst/**/__init__.py" = [
-    "E402", # module-level import not at top of file
-    "F401", # unused import
-    "F403", # import with *
-    "F405", # ambiguous import from *
-]
-"jwst/fits_generator/*" = [
-    "F821", # undefined name
-]
-"jwst/fits_generator/tests/*" = [
-    "F841", # unused variable
-]
-"jwst/associations/tests*" = [
-    "F841", # unused variable
-]
-"jwst/ramp_fitting/tests/*" = [
-    "E402", # module-level import not at top of file
-]
+[tool.codespell]
+skip = "*.fits, *.asdf, ./build, ./docs/_build, CHANGES.rst"
+ignore-words-list = "indx, delt, Shepard, tread, usig"
 
 [tool.mypy]
 warn_return_any = true
 warn_unused_configs = true
 disable_error_code = "import-untyped" # do not check imports
 exclude = ["build"]
+python_version = "3.11"
 
 [[tool.mypy.overrides]]
 # don't complain about the installed c parts of this library
@@ -343,11 +323,6 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "scripts"
 name = "Scripts"
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "fits_generator"
-name = "``fits_generator``"
 showcontent = true
 
 [[tool.towncrier.type]]

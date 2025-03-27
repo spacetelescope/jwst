@@ -77,12 +77,26 @@ def _set_custom_member_attr(example_asn_path, member_index, attr, value):
         json.dump(asn_data, f)
 
 
-def test_load_asn(example_library):
+def test_load_asn(example_library, example_asn_path):
     """
     Test that __len__ returns the number of models/members loaded
-    from the association (and does not require opening the library)
+    from the association (and does not require opening the library).
+
+    Test that the asn_dir and on_disk properties are set correctly.
     """
     assert len(example_library) == _N_MODELS
+
+    expected_asn_dir = str(example_asn_path.parent)
+    assert example_library.asn_dir == expected_asn_dir
+    assert example_library.on_disk == False
+
+    # test that asn_dir is not settable via public API
+    with pytest.raises(AttributeError):
+        example_library.asn_dir = "foo"
+    
+    # test that on_disk is not settable via public API
+    with pytest.raises(AttributeError):
+        example_library.on_disk = True
 
 
 @pytest.mark.parametrize("attr", ["group_names", "group_indices"])

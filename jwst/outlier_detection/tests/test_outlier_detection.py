@@ -11,35 +11,34 @@ from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
 from jwst.outlier_detection import OutlierDetectionStep
 from jwst.outlier_detection.utils import _flag_resampled_model_crs
-from jwst.outlier_detection.outlier_detection_step import (
-    IMAGE_MODES,
-    TSO_SPEC_MODES,
-    TSO_IMAGE_MODES,
-    CORON_IMAGE_MODES,
-)
 from jwst.resample.tests.test_resample_step import miri_rate_model
 from jwst.outlier_detection.utils import median_with_resampling, median_without_resampling
-from jwst.resample.resample import ResampleData
+from jwst.resample.resample import ResampleImage
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
 )
 
-# TSO types to test
-exptypes_tso = [(exptype, True) for exptype in TSO_SPEC_MODES + TSO_IMAGE_MODES]
-exptypes_tso.append(("MIR_IMAGE", True))
-# CORON types to test
-exptypes_coron = [(exptype, False) for exptype in CORON_IMAGE_MODES]
+EXPTYPE_TO_INSTRUMENT = {
+    "MIR": "MIRI",
+    "NRC": "NIRCAM",
+    "NIS": "NIRISS",
+    "NRS": "NIRSPEC",
+    "FGS": "FGS",
+}
+SHAPE = (21, 20)
+BACKGROUND = 1.5
+SIGMA = 0.02
+SIGNAL = 7.0
+SIGNAL_LOC = (7,7)
 
 
 @pytest.fixture
 def sci_blot_image_pair():
     """Provide a science and blotted ImageModel pair."""
-    shape = (20, 20)
-    sigma = 0.02
     background = 3
 
-    sci = datamodels.ImageModel(shape)
+    sci = datamodels.ImageModel(SHAPE)
 
     # Populate keywords
     sci.meta.exposure.exposure_time = 1
@@ -47,15 +46,15 @@ def sci_blot_image_pair():
     sci.meta.background.level = background
 
     rng = np.random.default_rng(720)
-    sci.data = rng.normal(loc=background, size=shape, scale=sigma)
-    sci.err = np.zeros(shape) + sigma
+    sci.data = rng.normal(loc=background, size=SHAPE, scale=SIGMA)
+    sci.err = np.zeros(SHAPE) + SIGMA
     sci.var_rnoise += 0
 
     # Add a source in the center
-    signal = 20 * sigma
+    signal = 20 * SIGMA
     sci.data[10, 10] += signal
     # update the noise for this source to include the photon/measurement noise
-    sci.err[10, 10] = np.sqrt(sigma ** 2 + signal)
+    sci.err[10, 10] = np.sqrt(SIGMA ** 2 + signal)
 
     # The blot image is just a smoothed version of the science image that has
     # its background subtracted
@@ -106,11 +105,25 @@ def test_flag_cr(sci_blot_image_pair):
     assert sci.dq[10, 10] == datamodels.dqflags.pixel["GOOD"]
 
 
-def make_sci1(shape):
-    """Needs to be a fixture because we want to change exposure.type
-    in the subsequent tests without rerunning AssignWCS"""
+def mock_data(rng):
+    """Make some mock data with a "real" source at 7,7"""
 
-    sci1 = datamodels.ImageModel(shape)
+    j, k = SIGNAL_LOC
+    data = rng.normal(loc=BACKGROUND, size=SHAPE, scale=SIGMA)
+    err = np.zeros(SHAPE) + SIGMA
+    data[j, k] += SIGNAL
+    # update the noise for this source to include the photon/measurement noise
+    err[j, k] = np.sqrt(SIGMA ** 2 + SIGNAL)
+    return data, err
+
+
+@pytest.fixture
+def scimodel_base():
+    """Common setup for all instruments and modes.
+    Instrument-specific keywords should be modified by individual tests
+    before AssignWCS is called.
+    """
+    sci1 = datamodels.ImageModel(SHAPE)
 
     # Populate keywords
     sci1.meta.instrument.name = "MIRI"
@@ -145,44 +158,87 @@ def make_sci1(shape):
     sci1.meta.wcsinfo.cunit2 = "deg"
     sci1.meta.background.subtracted = False
     sci1.meta.background.level = 1.5
-
-    sci1 = AssignWcsStep.call(sci1)
+    sci1.meta.target.ra = 0.0
+    sci1.meta.target.dec = 0.0
 
     sci1.meta.filename = "foo1_cal.fits"
 
     # add pixel areas
     sci1.meta.photometry.pixelarea_steradians = 1.0
     sci1.meta.photometry.pixelarea_arcsecsq = 1.0
+
+    # make some mock data with a "real" source at 7,7
+    rng = np.random.default_rng(720)
+    data, err = mock_data(rng)
+    sci1.data = data
+    sci1.err = err
+    sci1.var_rnoise = np.zeros(SHAPE) + 1.0
+
     return sci1
 
 
-# not a fixture - now has options
-def we_many_sci(
-    numsci=3, sigma=0.02, background=1.5, signal=7, exptype="MIR_IMAGE", tsovisit=False
-):
-    """Provide numsci science images with different noise but identical source
+@pytest.fixture
+def we_three_sci(scimodel_base):
+    """Provide 3 science images with different noise but identical source
     and same background level"""
-    shape = (21,20)
-    sci1 = make_sci1(shape)
-    sci1.meta.exposure.type = exptype
-    sci1.meta.visit.tsovisit = tsovisit
-
-    rng = np.random.default_rng(720)
-    sci1.data = rng.normal(loc=background, size=shape, scale=sigma)
-    sci1.err = np.zeros(shape) + sigma
-    sci1.data[7, 7] += signal
-    # update the noise for this source to include the photon/measurement noise
-    sci1.err[7, 7] = np.sqrt(sigma ** 2 + signal)
-    sci1.var_rnoise = np.zeros(shape) + 1.0
-
-
-    # Make copies with different noise
-    all_sci = [sci1]
-    for i in range(numsci - 1):
-        tsci = sci1.copy()
-        tsci.data = rng.normal(loc=background, size=shape, scale=sigma)
+    rng = np.random.default_rng(99)
+    all_sci = [scimodel_base]
+    for i in range(2):
+        tsci = scimodel_base.copy()
+        data, err = mock_data(rng)
         # Add a source in the center
-        tsci.data[7, 7] += signal
+        tsci.data = data
+        tsci.err = err
+        tsci.meta.filename = f"foo{i + 2}_cal.fits"
+        all_sci.append(tsci)
+    return all_sci
+
+
+def assign_wcs_to_models(models, exptype, tsovisit, detector="ANY"):
+    """Assign the same WCS to all models"""
+    for m in models:
+        m.meta.exposure.type = exptype
+        m.meta.instrument.name = EXPTYPE_TO_INSTRUMENT[exptype.split("_")[0]]
+        m.meta.instrument.detector = detector
+        m.meta.visit.tsovisit = tsovisit
+
+    # Only need to call AssignWCS once because all are identical
+    model = AssignWcsStep.call(models[0])
+    wcs = model.meta.wcs
+    wcsinfo = model.meta.wcsinfo
+
+    for m in models:
+        m.meta.wcs = wcs
+        m.meta.wcsinfo = wcsinfo
+    return models
+
+
+@pytest.fixture
+def mirimage_three_sci(we_three_sci):
+    """Provide 3 MIRI imaging science observations.
+
+    This is the default/base model set for the test suite, everything is default.
+    So just need to assign the WCS, identical for all.
+    This fixture is separated from we_three_sci so the latter
+    can be reused for other instruments and modes"""
+    return assign_wcs_to_models(we_three_sci, "MIR_IMAGE", False)
+
+
+@pytest.fixture
+def mirimage_50_sci(scimodel_base):
+    """Provide 50 MIRI TSO imaging science observations"""
+    # first call AssignWcsStep on the base model, all WCSs will be the same after copy
+    scimodel_base = AssignWcsStep.call(scimodel_base)
+    scimodel_base.meta.visit.tsovisit = True
+
+    rng = np.random.default_rng(99)
+    all_sci = [scimodel_base]
+    for i in range(49):
+        tsci = scimodel_base.copy()
+        data, err = mock_data(rng)
+        # Add a source in the center
+        tsci.data = data
+        tsci.err = err
         tsci.meta.filename = f"foo{i + 2}_cal.fits"
         all_sci.append(tsci)
 
@@ -205,17 +261,10 @@ def container_to_cube(container):
     return cube
 
 
-@pytest.fixture
-def we_three_sci():
-    """Provide 3 science images with different noise but identical source
-    and same background level"""
-    return we_many_sci(numsci=3)
-
-
 @pytest.mark.parametrize("do_resample", [True, False])
-def test_outlier_step_no_outliers(we_three_sci, do_resample, tmp_cwd):
+def test_outlier_step_no_outliers(mirimage_three_sci, do_resample, tmp_cwd):
     """Test whole step, no outliers"""
-    container = ModelContainer(list(we_three_sci))
+    container = ModelContainer(list(mirimage_three_sci))
     container[0].var_rnoise[10, 10] = 1E9
     pristine = ModelContainer([m.copy() for m in container])
     OutlierDetectionStep.call(container, in_memory=True, resample_data=do_resample)
@@ -226,9 +275,9 @@ def test_outlier_step_no_outliers(we_three_sci, do_resample, tmp_cwd):
         np.testing.assert_allclose(image.dq, uncorrected.dq)
 
 
-def test_outlier_step_base(we_three_sci, tmp_cwd):
+def test_outlier_step_weak_cr_imaging(mirimage_three_sci, tmp_cwd):
     """Test whole step with an outlier including saving intermediate and results files"""
-    container = ModelLibrary(list(we_three_sci))
+    container = ModelLibrary(mirimage_three_sci)
 
     # Drop a CR on the science array
     with container:
@@ -369,15 +418,15 @@ def test_outlier_step_spec(tmp_cwd, tmp_path, resample, save_intermediate):
 
 
 @pytest.fixture
-def three_sci_as_asn(we_three_sci, tmp_cwd):
+def three_sci_as_asn(mirimage_three_sci, tmp_cwd):
     """Create an association with the 3 science images"""
-    for model in we_three_sci:
+    for model in mirimage_three_sci:
         model.save(model.meta.filename)
-    filenames = [model.meta.filename for model in we_three_sci]
+    filenames = [model.meta.filename for model in mirimage_three_sci]
     # Drop a CR on the science array
     with datamodels.open(filenames[0]) as dm0:
         dm0.data[12, 12] += 1
-        dm0.write(dm0.meta.filename)
+        dm0.save(dm0.meta.filename)
 
     # Initialize inputs for the test based on filenames only
     # needs to be an asn for ModelLibrary to load it in on_disk mode
@@ -450,10 +499,9 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
     assert len(all_files) == len(input_files) + len(i2d_files) + len(median_files) + len(result_files) + len(blot_files)
 
 
-
-def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
+def test_outlier_step_square_source_no_outliers(mirimage_three_sci, tmp_cwd):
     """Test whole step with square source with sharp edges, no outliers"""
-    container = ModelLibrary(list(we_three_sci))
+    container = ModelLibrary(list(mirimage_three_sci))
 
     # put a square source in all three exposures
     with container:
@@ -487,63 +535,16 @@ def test_outlier_step_square_source_no_outliers(we_three_sci, tmp_cwd):
             result.shelve(corrected, modify=False)
 
 
-@pytest.mark.parametrize("exptype", IMAGE_MODES)
-def test_outlier_step_image_weak_cr_dither(exptype, tmp_cwd):
-    """Test whole step with an outlier for imaging modes"""
-    bkg = 1.5
-    sig = 0.02
-    container = ModelLibrary(
-        we_many_sci(background=bkg, sigma=sig, signal=7.0, exptype=exptype)
-    )
+def test_outlier_step_weak_cr_coron(we_three_sci, tmp_cwd):
+    """Test whole step with an outlier for an example coronagraphic mode"""
+
+    exptype="MIR_LYOT"
+    we_three_sci = assign_wcs_to_models(we_three_sci, exptype, False)
+    container = ModelContainer(we_three_sci)
 
     # Drop a weak CR on the science array
     # no noise so it should always be above the default threshold of 5
-    with container:
-        zeroth = container.borrow(0)
-        zeroth.data[12, 12] = bkg + sig * 10
-        container.shelve(zeroth)
-
-    # Save all the data into a separate array before passing into step
-    data_as_cube = []
-    with container:
-        for model in container:
-            data_as_cube.append(model.data.copy())
-            container.shelve(model, modify=False)
-
-    result = OutlierDetectionStep.call(container, in_memory=True)
-
-    with result:
-        for i, r in enumerate(result):
-            # Make sure nothing changed in SCI array except outliers are NaN
-            dnu = (r.dq & OUTLIER_DO_NOT_USE).astype(bool)
-            assert np.all(np.isnan(r.data[dnu]))
-            assert np.allclose(data_as_cube[i][~dnu], r.data[~dnu])
-
-            # Verify source is not flagged
-            assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
-            result.shelve(r, modify=False)
-
-    # Verify CR is flagged
-    with result:
-        example = result.borrow(0)
-        assert example.dq[12, 12] == OUTLIER_DO_NOT_USE
-        result.shelve(example, modify=False)
-
-
-@pytest.mark.parametrize("exptype, tsovisit", exptypes_coron)
-def test_outlier_step_image_weak_cr_coron(exptype, tsovisit, tmp_cwd):
-    """Test whole step with an outlier for coronagraphic modes"""
-    bkg = 1.5
-    sig = 0.02
-    container = ModelContainer(
-        we_many_sci(
-            background=bkg, sigma=sig, signal=7.0, exptype=exptype, tsovisit=tsovisit
-        )
-    )
-
-    # Drop a weak CR on the science array
-    # no noise so it should always be above the default threshold of 5
-    container[0].data[12, 12] = bkg + sig * 10
+    container[0].data[12, 12] = BACKGROUND + SIGMA * 10
 
     # coron3 will provide a CubeModel so convert the container to a cube
     cube = container_to_cube(container)
@@ -558,37 +559,32 @@ def test_outlier_step_image_weak_cr_coron(exptype, tsovisit, tmp_cwd):
         assert np.allclose(image.data[~dnu], result.data[i][~dnu])
 
     # Verify source is not flagged
-    assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
+    j, k = SIGNAL_LOC
+    assert np.all(result.dq[:, j, k] == datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
     assert result.dq[0, 12, 12] == OUTLIER_DO_NOT_USE
     assert np.isnan(result.data[0, 12, 12])
 
 
-@pytest.mark.parametrize("exptype, tsovisit", exptypes_tso)
 @pytest.mark.parametrize("rolling_window_width", [7, 0])
-def test_outlier_step_weak_cr_tso(exptype, tsovisit, rolling_window_width):
+def test_outlier_step_weak_cr_tso(mirimage_50_sci, rolling_window_width):
     '''Test outlier detection with rolling median on time-varying source
     This test fails if rolling_window_width is set to 0, i.e., take simple median
     '''
-    bkg = 1.5
-    sig = 0.02
-    numsci = 50
-    signal = 7.0
-    im = we_many_sci(
-        numsci=numsci, background=bkg, sigma=sig, signal=signal, exptype=exptype, tsovisit=tsovisit
-    )
+    im = ModelContainer(mirimage_50_sci)
 
     # Drop a weak CR on the science array
     cr_timestep = 5
-    im[cr_timestep].data[12, 12] = bkg + sig * 10
+    im[cr_timestep].data[12, 12] = BACKGROUND + SIGMA * 10
 
     # make time variability that has larger total amplitude than
     # the CR signal but deviations frame-by-frame are smaller
-    real_time_variability = signal * np.cos(np.linspace(0, np.pi, numsci))
+    j, k = SIGNAL_LOC
+    real_time_variability = SIGNAL * np.cos(np.linspace(0, np.pi, 50))
     for i, model in enumerate(im):
-        model.data[7, 7] += real_time_variability[i]
-        model.err[7, 7] = np.sqrt(sig ** 2 + model.data[7, 7])
+        model.data[j, k] += real_time_variability[i]
+        model.err[j, k] = np.sqrt(SIGMA ** 2 + model.data[j, k])
 
     cube = container_to_cube(im)
 
@@ -603,11 +599,11 @@ def test_outlier_step_weak_cr_tso(exptype, tsovisit, rolling_window_width):
 
     # Verify source is not flagged for rolling median
     if rolling_window_width == 7:
-        assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
+        assert np.all(result.dq[:, j, k] == datamodels.dqflags.pixel["GOOD"])
     # But this fails for simple median
     elif rolling_window_width == 0:
         with pytest.raises(AssertionError):
-            assert np.all(result.dq[:, 7, 7] == datamodels.dqflags.pixel["GOOD"])
+            assert np.all(result.dq[:, j, k] == datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
@@ -629,7 +625,7 @@ def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
 
     # 32-bit floats are 4 bytes each, min buffer size is one row of 20 pixels
     # arbitrarily use 5 times that
-    buffer_size = 4 * 20 * 5 
+    buffer_size = 4 * 20 * 5
     median_on_disk, _ = median_without_resampling(
         lib_on_disk,
         0.7,
@@ -658,10 +654,10 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
         lib,
         resamp,
         0.7)
-    
+
     assert isinstance(wcs, WCS)
     assert median.shape == (34,34)
-        
+
     resamp.single = False
     with pytest.raises(ValueError):
         # ensure failure if try to call when resamp.single is False
@@ -674,18 +670,18 @@ def test_drizzle_and_median_with_resample(three_sci_as_asn, tmp_cwd):
 
 def make_resamp(input_models):
     """All defaults are same as what is run by default by outlier detection"""
-    in_memory = not input_models._on_disk
-    resamp = ResampleData(
+    resamp = ResampleImage(
         input_models,
         output="",
-        single=True,
         blendheaders=False,
-        wht_type="ivm",
+        weight_type="ivm",
         pixfrac=1.0,
         kernel="square",
         fillval="INDEF",
         good_bits="~DO_NOT_USE",
-        in_memory=in_memory,
         asn_id="test",
+        enable_var=False,
+        enable_ctx=False,
+        compute_err="driz_err",
     )
     return resamp

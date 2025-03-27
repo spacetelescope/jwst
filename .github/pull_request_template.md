@@ -28,7 +28,6 @@ This PR addresses ...
 - ``changes/<PR#>.stpipe.rst``
 - ``changes/<PR#>.datamodels.rst``
 - ``changes/<PR#>.scripts.rst``
-- ``changes/<PR#>.fits_generator.rst``
 - ``changes/<PR#>.set_telescope_pointing.rst``
 - ``changes/<PR#>.pipeline.rst``
 

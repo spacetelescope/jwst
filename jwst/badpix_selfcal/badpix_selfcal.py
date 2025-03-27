@@ -8,13 +8,15 @@ from stcal.outlier_detection.utils import medfilt
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 
-def badpix_selfcal(minimg: np.ndarray,
-                   flagfrac_lower: float = 0.001,
-                   flagfrac_upper: float = 0.001,
-                   kernel_size: int = 15,
-                   dispaxis=None) -> tuple:
+def badpix_selfcal(
+    minimg: np.ndarray,
+    flagfrac_lower: float = 0.001,
+    flagfrac_upper: float = 0.001,
+    kernel_size: int = 15,
+    dispaxis=None,
+) -> np.ndarray:
     """
-    Flag residual artifacts as bad pixels in the DQ array of a JWST exposure
+    Flag residual artifacts as bad pixels in the DQ array of a JWST exposure.
 
     Parameters
     ----------
@@ -56,7 +58,9 @@ def badpix_selfcal(minimg: np.ndarray,
     minimg_hpf = minimg - smoothed
 
     # Flag outliers using percentile cutoff
-    flag_low, flag_high = np.nanpercentile(minimg_hpf, [flagfrac_lower * 100, (1 - flagfrac_upper) * 100])
+    flag_low, flag_high = np.nanpercentile(
+        minimg_hpf, [flagfrac_lower * 100, (1 - flagfrac_upper) * 100]
+    )
     bad = (minimg_hpf > flag_high) | (minimg_hpf < flag_low)
     flagged_indices = np.where(bad)
     return flagged_indices
@@ -64,7 +68,9 @@ def badpix_selfcal(minimg: np.ndarray,
 
 def apply_flags(input_model: IFUImageModel, flagged_indices: np.ndarray) -> IFUImageModel:
     """
-    Apply the flagged indices to the input model. Sets the flagged pixels to NaN
+    Apply the flagged indices to the input model.
+
+    Sets the flagged pixels to NaN
     and the DQ flag to DO_NOT_USE + OTHER_BAD_PIXEL
 
     Parameters
@@ -80,7 +86,6 @@ def apply_flags(input_model: IFUImageModel, flagged_indices: np.ndarray) -> IFUI
     output_model : IFUImageModel
         Flagged data model
     """
-
     input_model.dq[flagged_indices] |= pixel["DO_NOT_USE"] + pixel["OTHER_BAD_PIXEL"]
 
     input_model.data[flagged_indices] = np.nan

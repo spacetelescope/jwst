@@ -8,41 +8,37 @@ __all__ = ["AmiNormalizeStep"]
 
 
 class AmiNormalizeStep(Step):
-    """
-    AmiNormalizeStep: Normalize target LG results using reference LG results
-    """
+    """Normalize target LG results using reference LG results."""
 
     class_alias = "ami_normalize"
 
     spec = """
     suffix = string(default='aminorm-oi')
-    """
+    """  # noqa: E501
 
     def process(self, target, reference):
         """
-        Normalizes the LG results for a science target, using the LG results
-        for a reference target.
+        Normalize the LG results for science target, using the LG results for reference target.
 
         Parameters
         ----------
-        target: string or model
-            target input
+        target : str or model
+            Target input
 
-        reference: string or model
-            reference input
+        reference : str or model
+            Reference input
 
         Returns
         -------
-        result: AmiOIModel object
+        result : AmiOIModel object
             AMI data model that's been normalized
         """
-
         # Open the target and reference input models
         target_model = datamodels.AmiOIModel(target)
         reference_model = datamodels.AmiOIModel(reference)
 
         # Call the normalization routine
-        result = ami_normalize.normalize_LG(target_model, reference_model)
+        result = ami_normalize.normalize_lg(target_model, reference_model)
 
         result.meta.cal_step.ami_normalize = "COMPLETE"
 

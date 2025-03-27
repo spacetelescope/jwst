@@ -5,8 +5,8 @@ Computes the average RA and DEC of a moving
 target in all exposures in an association and adds a step to
 each of the WCS pipelines to allow aligning the exposures to the average
 location of the target.
-
 """
+
 import logging
 from copy import deepcopy
 import numpy as np
@@ -28,9 +28,21 @@ __all__ = ["assign_moving_target_wcs"]
 
 
 def assign_moving_target_wcs(input_models):
+    """
+    Adjust the WCS of a moving target exposure.
 
+    Parameters
+    ----------
+    input_models : `~jwst.datamodels.ModelLibrary`
+        A collection of data models.
+
+    Returns
+    -------
+    `~jwst.datamodels.ModelLibrary`
+        The modified data models.
+    """
     if not isinstance(input_models, ModelLibrary):
-        raise ValueError("Expected a ModelLibrary object")
+        raise TypeError(f"Expected a ModelLibrary object, not {type(input_models)}")
 
     # loop over only science exposures in the ModelLibrary
     ind = input_models.indices_for_exptype("science")
@@ -60,15 +72,23 @@ def assign_moving_target_wcs(input_models):
             model.meta.wcsinfo.mt_avdec = mt_avdec
             if isinstance(model, datamodels.MultiSlitModel):
                 for ind, slit in enumerate(model.slits):
-                    new_wcs = add_mt_frame(slit.meta.wcs,
-                                        mt_avra, mt_avdec,
-                                        slit.meta.wcsinfo.mt_ra, slit.meta.wcsinfo.mt_dec)
+                    new_wcs = add_mt_frame(
+                        slit.meta.wcs,
+                        mt_avra,
+                        mt_avdec,
+                        slit.meta.wcsinfo.mt_ra,
+                        slit.meta.wcsinfo.mt_dec,
+                    )
                     del model.slits[ind].meta.wcs
                     model.slits[ind].meta.wcs = new_wcs
             else:
-
-                new_wcs = add_mt_frame(model.meta.wcs, mt_avra, mt_avdec,
-                                    model.meta.wcsinfo.mt_ra, model.meta.wcsinfo.mt_dec)
+                new_wcs = add_mt_frame(
+                    model.meta.wcs,
+                    mt_avra,
+                    mt_avdec,
+                    model.meta.wcsinfo.mt_ra,
+                    model.meta.wcsinfo.mt_dec,
+                )
                 del model.meta.wcs
                 model.meta.wcs = new_wcs
             if model.meta.exposure.type.lower() in IMAGING_TYPES:
@@ -80,7 +100,8 @@ def assign_moving_target_wcs(input_models):
 
 
 def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
-    """ Add a "moving_target" frame to the WCS pipeline.
+    """
+    Add a "moving_target" frame to the WCS pipeline.
 
     Parameters
     ----------
@@ -98,10 +119,10 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
     new_wcs : `~gwcs.WCS`
         The WCS for the moving target observation.
     """
-    pipeline = wcs._pipeline[:-1]
+    pipeline = wcs.pipeline[:-1]
 
     mt = deepcopy(wcs.output_frame)
-    mt.name = 'moving_target'
+    mt.name = "moving_target"
 
     rdel = ra_average - mt_ra
     ddel = dec_average - mt_dec
@@ -111,10 +132,9 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
     elif isinstance(mt, cf.CompositeFrame):
         transform_to_mt = Shift(rdel) & Shift(ddel) & Identity(1)
     else:
-        raise ValueError("Unrecognized coordinate frame.")
+        raise TypeError(f"Unrecognized coordinate frame type {type(mt)}.")
 
-    pipeline.append((
-        wcs.output_frame, transform_to_mt))
+    pipeline.append((wcs.output_frame, transform_to_mt))
     pipeline.append((mt, None))
     new_wcs = WCS(pipeline)
     return new_wcs

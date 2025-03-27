@@ -113,16 +113,16 @@ def traverse_wfss_trace(filtername):
     grism_to_detector = wcsobj.get_transform('grism_detector', 'detector')
 
     # check the round trip, grism pixel 100,100, source at 110,110,order 1
-    xgrism, ygrism, xsource, ysource, orderin = (100, 100, 110, 110, 1)
-    x0, y0, lam, order = grism_to_detector(xgrism, ygrism, xsource, ysource, orderin)
+    xgrism, ygrism, xsource, ysource, order_in = (100, 100, 110, 110, 1)
+    x0, y0, lam, order = grism_to_detector(xgrism, ygrism, xsource, ysource, order_in)
     x, y, xdet, ydet, orderdet = detector_to_grism(x0, y0, lam, order)
 
     assert x0 == xsource
     assert y0 == ysource
-    assert order == orderin
+    assert order == order_in
     assert xdet == xsource
     assert ydet == ysource
-    assert orderdet == orderin
+    assert orderdet == order_in
 
 
 def test_traverse_wfss_grisms():
@@ -133,7 +133,7 @@ def test_traverse_wfss_grisms():
 
 # 1.585 is 10x the angular repeatability of the niriss pupil wheel
 def test_filter_rotation(theta=[-0.1, 0, 0.5, 1.585]):
-    """Make sure that the filter rotation is reversable."""
+    """Make sure that the filter rotation is reversible."""
     for f in niriss_grisms:
         wcsobj = create_wfss_wcs(f)
         g2d = wcsobj.get_transform('grism_detector', 'detector')

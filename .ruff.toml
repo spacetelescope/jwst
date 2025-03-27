@@ -1,0 +1,137 @@
+extend = "pyproject.toml"
+
+exclude = [
+    "jwst/extern",
+    "docs",
+    ".tox",
+    ".eggs",
+    "build",
+    "*.ipynb",
+    "**/tests/test_*.py",
+    "**/regtest/test_*.py",
+]
+line-length = 100
+
+target-version = "py311"
+
+[format]
+quote-style = "double"
+indent-style = "space"
+docstring-code-format = true
+exclude = [
+    "jwst/associations/**.py",
+    "jwst/background/**.py",
+    "jwst/coron/**.py",
+    "jwst/cube_build/**.py",
+    "jwst/cube_skymatch/**.py",
+    "jwst/dark_current/**.py",
+    "jwst/extract_2d/**.py",
+    "jwst/flatfield/**.py",
+    "jwst/fringe/**.py",
+    "jwst/ipc/**.py",
+    "jwst/lib/**.py",
+    "jwst/linearity/**.py",
+    "jwst/mrs_imatch/**.py",
+    "jwst/persistence/**.py",
+    "jwst/photom/**.py",
+    "jwst/rscd/**.py",
+    "jwst/saturation/**.py",
+    "jwst/scripts/**.py",
+    "jwst/spectral_leak/**.py",
+    "jwst/straylight/**.py",
+    "jwst/tso_photometry/**.py",
+    "jwst/wfs_combine/**.py",
+]
+
+[lint]
+select = [
+    "F",      # Pyflakes (part of default flake8)
+    "E",      # pycodestyle (part of default flake8)
+    "W",      # pycodestyle (part of default flake8)
+    "D",      # docstrings, see also numpydoc pre-commit action
+    "N",      # pep8-naming (naming conventions)
+    "A",      # flake8-builtins (prevent shadowing of builtins)
+    "ARG",    # flake8-unused-arguments (prevent unused arguments)
+    "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
+    "C4",     # flake8-comprehensions (best practices for comprehensions)
+    "G004",   # logging-f-string (https://github.com/python/cpython/issues/90358)
+    "ICN",    # flake8-import-conventions (enforce import conventions)
+    "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
+    "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
+    "LOG",    # flake8-logging
+    "NPY",    # numpy-specific rules
+    "PGH",    # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
+    "PTH",    # flake8-use-pathlib (enforce using Pathlib instead of os)
+    "S",      # flake8-bandit (security checks)
+    "SLF",    # flake8-self (prevent using private class members outside class)
+    "SLOT",   # flake8-slots (require __slots__ for immutable classes)
+    "T20",    # flake8-print (prevent print statements in code)
+    "TRY",    # tryceratops (best practices for try/except blocks)
+    "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
+    "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
+]
+ignore = [
+    "D100", # missing docstring in public module
+    "D105", # missing docstring in magic method
+    "E741", # ambiguous variable name (O/0, l/I, etc.)
+    "UP008", # use super() instead of super(class, self). no harm being explicit
+    "UP015", # unnecessary open(file, "r"). no harm being explicit
+    "UP038", # use | instead of tuple in isinstance check
+    "TRY003", # prevents custom exception messages not defined in exception itself.
+    "TRY400", # enforces log.exception instead of log.error in except clause.
+    "ISC001", # single line implicit string concatenation. formatter recommends ignoring this.
+]
+
+[lint.pydocstyle]
+convention = "numpy"
+
+[lint.flake8-annotations]
+ignore-fully-untyped = true  # Turn off annotation checking for fully untyped code
+
+[lint.per-file-ignores]
+"jwst/**/__init__.py" = [
+    "E402", # module-level import not at top of file
+    "F401", # unused import
+    "F403", # import with *
+    "F405", # ambiguous import from *
+]
+"**/tests/**.py" = [
+    "D104", # missing docstring in public package
+]
+"jwst/conftest.py" = [
+    "SLF", "ARG", "PTH",
+    "B003", # Assigning to os.environ does not clear the environment
+]
+"**/regtest/**.py" = [ # conftest, regtestdata, and sdp_pools_source
+    "SLF", "ARG", "PTH",
+    "A002", # builtin variable shadowing
+    "S101", # use of assert
+]
+"jwst/associations/tests*" = [
+    "F841", # unused variable
+]
+"jwst/associations/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/background/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/coron/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/cube_build/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/cube_skymatch/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/dark_current/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/extract_2d/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/flatfield/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/fringe/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/ipc/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/lib/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/linearity/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/mrs_imatch/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/persistence/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/photom/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/rscd/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/saturation/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/scripts/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/spectral_leak/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/straylight/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/tso_photometry/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"jwst/wfs_combine/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+"!jwst/engdblog/**.py" = [ # Package-wide logger formatting is https://jira.stsci.edu/browse/JP-3927
+    "G004", # logging-f-string
+]

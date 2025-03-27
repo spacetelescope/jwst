@@ -10,8 +10,6 @@ from jwst.msaflagopen.msaflag_open import (
     boundingbox_to_indices,
     create_slitlets,
     get_failed_open_shutters,
-    id_from_xy,
-    or_subarray_with_array,
     wcs_to_dq
 )
 from jwst.msaflagopen import MSAFlagOpenStep
@@ -77,42 +75,6 @@ def make_nirspec_mos_model():
     return im
 
 
-def test_or_subarray_with_array():
-    """test bitwise or with array and subarray."""
-
-    dq_array = np.ones((20, 20), dtype=int) * 1
-    dq_subarray = np.ones((10, 10), dtype=int) * 2
-
-    xmin, xmax = 5, 15
-    ymin, ymax = 5, 15
-
-    # Uses numpy.bitwise_or to compute the array
-    result = or_subarray_with_array(dq_array, dq_subarray, xmin, xmax, ymin, ymax)
-
-    # Use python built in bitwise or | to verify. Just overwrite the
-    # array since we wont be using it anymore in this test.
-    dq_array[ymin:ymax, xmin:xmax] = dq_array[ymin:ymax, xmin:xmax] | dq_subarray
-
-    assert_array_equal(result, dq_array)
-
-
-def test_id_from_xy():
-    """Test id from x y location of shutter"""
-
-    # First row of msaoper.json
-    data = {"Q": 1, "x": 1, "y": 1, "state": "closed", "TA state": "closed",
-            "Internal state": "normal", "Vignetted": "yes"}
-
-    shutters_per_row = 365
-
-    x = data['x']
-    y = data['y']
-
-    result = id_from_xy(x, y)
-
-    assert x + (y - 1) * shutters_per_row == result
-
-
 def test_get_failed_open_shutters():
     """test that failed open shutters are returned from reference file"""
 
@@ -142,18 +104,11 @@ def test_create_slitlets():
     dm.meta.observation.date = '2016-09-05'
     dm.meta.observation.time = '8:59:37'
     msa_oper = Step().get_reference_file(dm, 'msaoper')
-    result = create_slitlets(dm, msa_oper)
-
-    slit_fields = ('name', 'shutter_id', 'dither_position', 'xcen',
-                   'ycen', 'ymin', 'ymax', 'quadrant', 'source_id',
-                   'shutter_state', 'source_name', 'source_alias',
-                   'stellarity', 'source_xpos', 'source_ypos',
-                   'source_ra', 'source_dec')
+    result = create_slitlets(msa_oper)
 
     for slit in result:
-        # Test the returned data type and fields.
+        # Test the returned data type
         assert isinstance(slit, Slit)
-        assert slit._fields == slit_fields
 
 
 def test_wcs_to_dq():
@@ -192,3 +147,12 @@ def test_msaflagopen_step():
 
     nonzero = np.nonzero(result.dq)
     assert_array_equal(result.dq[nonzero], MSA_FAILED_OPEN)
+
+
+def test_no_ref_file():
+    im = ImageModel((10, 10))
+    im.meta.instrument.name = "NIRCAM"
+
+    # the step is skipped if there is no msaoper reference file
+    result = MSAFlagOpenStep.call(im)
+    assert result.meta.cal_step.msa_flagging == "SKIPPED"

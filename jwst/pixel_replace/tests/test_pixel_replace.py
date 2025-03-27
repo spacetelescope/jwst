@@ -1,12 +1,15 @@
+import os
 import numpy as np
 import pytest
 
 from stdatamodels.jwst import datamodels
+from jwst.datamodels import ModelContainer
 from stdatamodels.jwst.datamodels.dqflags import pixel as flags
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.pixel_replace.pixel_replace_step import PixelReplaceStep
+from glob import glob
 
 
 def cal_data(shape, bad_idx, dispaxis=1, model='slit'):
@@ -99,6 +102,7 @@ def nirspec_ifu():
     model.var_poisson = test_data.var_poisson
     model.var_rnoise = test_data.var_rnoise
     model.var_flat = test_data.var_flat
+
     test_data.close()
 
     return model, bad_idx
@@ -199,10 +203,9 @@ def test_pixel_replace_multislit(input_model_function, algorithm):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize('input_model_function',
-                         [nirspec_ifu])
+@pytest.mark.parametrize('input_model_function', [nirspec_ifu])
 @pytest.mark.parametrize('algorithm', ['fit_profile', 'mingrad'])
-def test_pixel_replace_nirspec_ifu(input_model_function, algorithm):
+def test_pixel_replace_nirspec_ifu(tmp_cwd, input_model_function, algorithm):
     """
     Test pixel replacement for NIRSpec IFU.
 
@@ -212,10 +215,16 @@ def test_pixel_replace_nirspec_ifu(input_model_function, algorithm):
     The test is otherwise the same as for other modes.
     """
     input_model, bad_idx = input_model_function()
+    input_model.meta.filename = 'jwst_nirspec_cal.fits'
 
     # for this simple case, the results from either algorithm should
     # be the same
-    result = PixelReplaceStep.call(input_model, skip=False, algorithm=algorithm)
+    result = PixelReplaceStep.call(input_model, skip=False,
+                                   algorithm=algorithm, save_results=True)
+
+    assert result.meta.filename == 'jwst_nirspec_pixelreplacestep.fits'
+    assert result.meta.cal_step.pixel_replace == 'COMPLETE'
+    assert os.path.isfile(result.meta.filename)
 
     for ext in ['data', 'err', 'var_poisson', 'var_rnoise', 'var_flat']:
         # non-science edges are uncorrected
@@ -235,6 +244,36 @@ def test_pixel_replace_nirspec_ifu(input_model_function, algorithm):
                   == flags['DO_NOT_USE'] + flags['NON_SCIENCE'])
     assert np.all(result.dq[..., 1, :]
                   == flags['DO_NOT_USE'] + flags['NON_SCIENCE'])
+
+    result.close()
+    input_model.close()
+
+
+@pytest.mark.parametrize('input_model_function', [nirspec_fs_slitmodel])
+def test_pixel_replace_container_names(tmp_cwd, input_model_function):
+    """Test pixel replace output names for input container."""
+    input_model, _ = input_model_function()
+    input_model.meta.filename = 'jwst_nirspec_1_cal.fits'
+    input_model2, _ = input_model_function()
+    input_model2.meta.filename = 'jwst_nirspec_2_cal.fits'
+    cfiles = [input_model, input_model2]
+    container = ModelContainer(cfiles)
+
+    expected_name = ['jwst_nirspec_1_pixelreplacestep.fits',
+                     'jwst_nirspec_2_pixelreplacestep.fits']
+
+    result = PixelReplaceStep.call(container, skip=False, save_results=True)
+    for i, model in enumerate(result):
+        assert model.meta.filename == expected_name[i]
+        assert model.meta.cal_step.pixel_replace == 'COMPLETE'
+
+    result_files = glob(os.path.join(tmp_cwd, '*pixelreplacestep.fits'))
+    for i, file in enumerate(sorted(result_files)):
+        basename = os.path.basename(file)
+        assert expected_name[i] == basename
+        with datamodels.open(file) as model:
+            assert model.meta.cal_step.pixel_replace == 'COMPLETE'
+            assert model.meta.filename == expected_name[i]
 
     result.close()
     input_model.close()

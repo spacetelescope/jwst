@@ -464,7 +464,7 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
 
 
 static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
-  PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo;
+  PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo; // codespell:ignore erro
   PyObject *rois_pixelo, *roiw_pixelo, *scalerad_pixelo, *zcdelt3o, *softrad_pixelo, *weight_pixelo;
 
   double cdelt1, cdelt2, roiw_ave;
@@ -489,7 +489,7 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
 
   if (!PyArg_ParseTuple(args, "iiiiiiiOOOOOOOOOOOOOOOddd:cube_wrapper",
 			&instrument, &flag_dq_plane, &weight_type,  &start_region, &end_region, &overlap_partial, &overlap_full,
-			&xco, &yco, &zco, &coord1o, &coord2o, &waveo,  &fluxo, &erro, &slicenoo,
+			&xco, &yco, &zco, &coord1o, &coord2o, &waveo,  &fluxo, &erro, &slicenoo, // codespell:ignore erro
 			&rois_pixelo, &roiw_pixelo, &scalerad_pixelo, &weight_pixelo, &softrad_pixelo, &zcdelt3o, &roiw_ave,
 			&cdelt1, &cdelt2)) {
     return NULL;
@@ -513,7 +513,7 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
       (!(coord2 = ensure_array(coord2o, &free_coord2))) ||
       (!(wave = ensure_array(waveo, &free_wave))) ||
       (!(flux = ensure_array(fluxo, &free_flux))) ||
-      (!(err = ensure_array(erro, &free_err))) ||
+      (!(err = ensure_array(erro, &free_err))) || // codespell:ignore erro
       (!(sliceno = ensure_array(slicenoo, &free_sliceno))) ||
       (!(rois_pixel = ensure_array(rois_pixelo, &free_rois_pixel))) ||
       (!(roiw_pixel = ensure_array(roiw_pixelo, &free_roiw_pixel))) ||

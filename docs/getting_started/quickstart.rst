@@ -31,9 +31,9 @@ To create a conda environment specifically for the latest stable release of
 
 ::
 
-	conda create --name jwst_latest python=3.11
+	conda create --name jwst_latest python=3.12
 
-This will create a new, (nearly) empty Python 3.11 environment in which you can
+This will create a new, (nearly) empty Python 3.12 environment in which you can
 install the `jwst` package.
 
 **2. Install jwst from PyPi**
@@ -57,18 +57,26 @@ the :ref:`installation` page.
 **3. Set environment variables for Calibration References Data System (CRDS)**
 
 CRDS is the system that manages the reference files needed to run the
-pipeline. Inside the STScI network, the pipeline works with default CRDS
-setup with no modifications. To run the pipeline outside the STScI
+pipeline. Inside the STScI network, CRDS must be configured to find the CRDS server
+by setting the environment variable:
+::
+
+	export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
+
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will obtain individual reference files within this context from a local shared disk.
+
+To run the pipeline outside the STScI
 network, CRDS must be configured by setting two environment variables:
 ::
 
 	export CRDS_PATH=$HOME/crds_cache
 	export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
-The `CRDS_PATH` is the directory on your filesystem that contains your local
-CRDS cache, where reference files are accessed by the pipeline. The
-`CRDS_SERVER_URL` variable specifies from which CRDS server reference files should
-be obtained. For more information, see :ref:`reference_files_crds`.
+This server will be used to determine the appropriate CRDS context for a given pipeline
+version, and the pipeline will automatically download individual
+reference files within this context to the local cache on your filesystem specified by `CRDS_PATH`.
+For more information, see :ref:`reference_files_crds`.
 
 **4. Running the Pipeline**
 

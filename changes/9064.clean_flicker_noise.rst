@@ -1,0 +1,1 @@
+Add optional flat handling for the ``clean_flicker_noise`` step to avoid fitting and removing flat structure.

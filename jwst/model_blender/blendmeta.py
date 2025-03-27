@@ -1,15 +1,17 @@
-"""blendmeta - Merge metadata from multiple models.
+"""
+Merge metadata from multiple models.
 
-    This module will create a new metadata instance and table from a
-    list of input datamodels or filenames.
+This module will create a new metadata instance and table from a
+list of input datamodels or filenames.
 """
 
 from .blender import ModelBlender
 
 
-__all__ = ['blendmodels']
+__all__ = ["blendmodels"]
 
 # Primary functional interface for the code
+
 
 def blendmodels(product, inputs, ignore=None):
     """
@@ -17,15 +19,15 @@ def blendmodels(product, inputs, ignore=None):
 
     Parameters
     ----------
-    product: JwstDataModel
+    product : JwstDataModel
         A datamodel that will have its metadata set
         to the blended metadata and have the metadata
         table assigned to the "hdrtab" attribute.
 
-    inputs: list of JwstDataModel
+    inputs : list of JwstDataModel
         Input datamodels with metadata to blend.
 
-    ignore: list of str, optional
+    ignore : list of str, optional
         A list of metadata attributes to ignore during blending.
         These attributes will not be set on the output/combined.
         These attributes must be strings containing the dotted

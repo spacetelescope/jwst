@@ -4,7 +4,8 @@ import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.clean_flicker_noise import CleanFlickerNoiseStep
-from .test_clean_flicker_noise import make_small_ramp_model
+from jwst.clean_flicker_noise.tests.test_clean_flicker_noise import (
+    make_small_ramp_model, make_nirspec_fs_model)
 
 
 @pytest.mark.parametrize('skip', [True, False])
@@ -80,3 +81,33 @@ def test_save_noise(tmp_path):
     input_model.close()
     cleaned.close()
     noise_model.close()
+
+
+def test_apply_flat(log_watcher):
+    input_model = make_small_ramp_model()
+
+    watcher = log_watcher("stpipe.CleanFlickerNoiseStep", message="Using FLAT")
+    cleaned = CleanFlickerNoiseStep.call(input_model, skip=False, apply_flat_field=True)
+    watcher.assert_seen()
+
+    # Flat file was used, but flat_field step was not applied
+    assert cleaned.meta.ref_file.flat.name is not None
+    assert cleaned.meta.cal_step.flat_field is None
+
+    input_model.close()
+    cleaned.close()
+
+
+def test_apply_flat_not_available(log_watcher):
+    input_model = make_nirspec_fs_model()
+
+    watcher = log_watcher("stpipe.CleanFlickerNoiseStep",
+                          message="Flat correction is not available")
+    cleaned = CleanFlickerNoiseStep.call(input_model, skip=False, apply_flat_field=True)
+    watcher.assert_seen()
+
+    # Flat file was not used but step proceeded
+    assert cleaned.meta.ref_file.flat.name == 'N/A'
+
+    input_model.close()
+    cleaned.close()

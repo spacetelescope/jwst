@@ -36,7 +36,7 @@ def run_tso1_pipeline(rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_detector1_pipeline(rtdata_module):
-    """Run calwebb_detector pipeline on a MIRI LRS slitless exposure for Segment 2 data. 
+    """Run calwebb_detector pipeline on a MIRI LRS slitless exposure for Segment 2 data.
        Focusing on the steps that depend on integration # and not covered by run_tso1_pipeline.
        Also test running RSC step"""
     rtdata = rtdata_module
@@ -46,9 +46,26 @@ def run_detector1_pipeline(rtdata_module):
         "calwebb_detector1",
         rtdata.input,
         "--steps.emicorr.save_results=True",
+        "--steps.emicorr.algorithm=sequential",
         "--steps.rscd.skip=False",
         "--steps.rscd.save_results=True",
         "--steps.dark_current.save_results=True",
+    ]
+    Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
+def run_detector1_pipeline_emicorr_joint(rtdata_module):
+    """Run detector1 with an alternate emicorr algorithm."""
+    rtdata = rtdata_module
+    rtdata.get_data(f"miri/lrs/{DATASET3_ID}_uncal.fits")
+
+    args = [
+        "calwebb_detector1",
+        rtdata.input,
+        f"--output_file={DATASET3_ID}_emijoint",
+        "--steps.emicorr.algorithm=joint",
+        "--steps.emicorr.save_results=True",
     ]
     Step.from_cmdline(args)
 
@@ -92,9 +109,7 @@ def run_tso3_pipeline(run_tso_spec2_pipeline, rtdata_module):
 @pytest.mark.parametrize("step_suffix", ['dq_init', 'saturation', 'lastframe', 'reset', 'linearity',
                                          'dark_current', 'ramp', 'rate', 'rateints'])
 def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_default_kwargs, step_suffix):
-    """
-    Regression test of tso1 pipeline performed on MIRI LRS slitless TSO data.
-    """
+    """Regression test of tso1 pipeline performed on MIRI LRS slitless TSO data."""
     rtdata = rtdata_module
     output_filename = f"{DATASET1_ID}_{step_suffix}.fits"
     rtdata.output = output_filename
@@ -111,7 +126,9 @@ def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_defau
 def test_miri_lrs_slitless_detector1(run_detector1_pipeline, rtdata_module,
                                           fitsdiff_default_kwargs, step_suffix):
     """
-    Regression test of  detector1 pipeline performed on MIRI LRS slitless TSO data.
+    Regression test of  detector1 pipeline.
+
+    Performed on MIRI LRS slitless TSO data.
     Testing segment 2 data for RSCD, emicorr and dark_current.
     """
     rtdata = rtdata_module
@@ -122,11 +139,27 @@ def test_miri_lrs_slitless_detector1(run_detector1_pipeline, rtdata_module,
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
-    
+
+
+@pytest.mark.bigdata
+@pytest.mark.parametrize("step_suffix", ['emicorr', 'rate', 'rateints'])
+def test_miri_lrs_slitless_detector1_emicorr_joint(
+        run_detector1_pipeline_emicorr_joint, rtdata_module,
+        fitsdiff_default_kwargs, step_suffix):
+    """Regression test of  detector1 pipeline with an alternate emicorr algorithm."""
+    rtdata = rtdata_module
+    output_filename = f"{DATASET3_ID}_emijoint_{step_suffix}.fits"
+    rtdata.output = output_filename
+
+    rtdata.get_truth(f"truth/test_miri_lrs_slitless_detector1_emicorr_joint/{output_filename}")
+
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["assign_wcs", "srctype", "flat_field",
-                                          "pixel_replace", "calints", "x1dints"])
+                                         "pixel_replace", "calints", "x1dints"])
 def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs,
                                      step_suffix):
     """Compare the output of a MIRI LRS slitless calwebb_tso-spec2 pipeline."""
