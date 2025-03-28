@@ -799,6 +799,10 @@ class Asn_Lv2WFSSNIS(
                 name='pupil',
                 sources=['pupil'],
             ),
+            DMSAttrConstraint(
+                name='subarray',
+                sources=['subarray'],
+            ),
             Constraint([
                 SimpleConstraint(
                     value='science',
