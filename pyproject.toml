@@ -82,7 +82,6 @@ set_velocity_aberration = "jwst.scripts.set_velocity_aberration:main"
 "set_velocity_aberration.py" = "jwst.scripts.set_velocity_aberration:deprecated_name"
 stfitsdiff = "jwst.scripts.stfitsdiff:main"
 v1_calculate = "jwst.scripts.v1_calculate:main"
-verify_install_requires = "jwst.scripts.verify_install_requires:main"
 world_coords = "jwst.scripts.world_coords:main"
 
 [project.entry-points."stpipe.steps"]

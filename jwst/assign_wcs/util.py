@@ -3,7 +3,6 @@
 import logging
 import functools
 import numpy as np
-import warnings
 
 from astropy.coordinates import SkyCoord
 from astropy.modeling import models as astmodels
@@ -30,7 +29,6 @@ _MAX_SIP_DEGREE = 6
 
 
 __all__ = [
-    "reproject",
     "velocity_correction",
     "MSAFileError",
     "NoDataOnDetectorError",
@@ -67,40 +65,6 @@ class NoDataOnDetectorError(StpipeExitException):
         # The first argument instructs stpipe CLI tools to exit with status
         # 64 when this exception is raised.
         super().__init__(64, message)
-
-
-def reproject(wcs1, wcs2):
-    """
-    Take in pixel coordinates in the first WCS and compute their location in the second one.
-
-    .. deprecated:: 1.17.2
-        :py:func:`reproject()` has been deprecated and will be removed
-        in a future release. Use :py:func:`stcal.alignment.util.reproject` instead.
-
-    Parameters
-    ----------
-    wcs1, wcs2 : `~gwcs.wcs.WCS`
-        WCS objects.
-
-    Returns
-    -------
-    _reproject : func
-        Function to compute the transformations.  It takes x, y
-        positions in ``wcs1`` and returns x, y positions in ``wcs2``.
-    """
-    warnings.warn(
-        "'reproject()' has been deprecated since 1.17.2 and "
-        "will be removed in a future release. "
-        "Use 'stcal.alignment.util.reproject()' instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    def _reproject(x, y):
-        sky = wcs1.forward_transform(x, y)
-        return wcs2.backward_transform(*sky)
-
-    return _reproject
 
 
 def compute_scale(
