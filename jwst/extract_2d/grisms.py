@@ -13,7 +13,7 @@ from gwcs.wcstools import grid_from_bounding_box
 from gwcs.utils import _toindex
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import WavelengthrangeModel, ImageModel
+from stdatamodels.jwst.datamodels import WavelengthrangeModel, ImageModel, SlitModel
 from stdatamodels.jwst.transforms.models import IdealToV2V3
 from astropy.modeling import CompoundModel
 
@@ -242,7 +242,7 @@ def extract_tso_object(
             var_flat = None
 
         # Finish populating the output model and meta data
-        if output_model.meta.model_type == "SlitModel":
+        if isinstance(output_model, SlitModel):
             output_model.data = ext_data
             output_model.err = ext_err
             output_model.dq = ext_dq

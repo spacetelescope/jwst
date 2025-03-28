@@ -29,7 +29,6 @@ from ..pixel_replace import pixel_replace_step
 __all__ = ["Spec3Pipeline"]
 
 # Group exposure types
-MULTISOURCE_MODELS = ["MultiSlitModel"]
 IFU_EXPTYPES = ["MIR_MRS", "NRS_IFU"]
 SLITLESS_TYPES = ["NIS_SOSS", "NIS_WFSS", "NRC_WFSS"]
 
@@ -127,7 +126,6 @@ class Spec3Pipeline(Pipeline):
         # some of this is here only for the purpose of creating fake
         # products until the individual tasks work and do it themselves
         exptype = input_models[0].meta.exposure.type
-        model_type = input_models[0].meta.model_type
         output_file = input_models.asn_table["products"][0]["name"]
         self.output_file = output_file
 
@@ -175,7 +173,7 @@ class Spec3Pipeline(Pipeline):
         # sources, each represented by a MultiExposureModel instead of
         # a single ModelContainer.
         sources = [source_models]
-        if model_type in MULTISOURCE_MODELS:
+        if isinstance(input_models[0], datamodels.MultiSlitModel):
             self.log.info("Convert from exposure-based to source-based data.")
             sources = [
                 (name, model) for name, model in multislit_to_container(source_models).items()

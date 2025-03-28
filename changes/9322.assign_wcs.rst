@@ -1,0 +1,1 @@
+Remove util.reproject function (deprecated since 1.18.0). Use ``stcal.alignment.util.reproject`` instead.

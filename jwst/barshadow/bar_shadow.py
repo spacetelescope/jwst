@@ -171,7 +171,9 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     wcol = (wavelength - w0) / wave_increment
 
     # Interpolate the bar shadow correction for non-Nan pixels
-    correction.data = ndimage.map_coordinates(shadow, [yrow, wcol], cval=np.nan, order=1)
+    correction.data = ndimage.map_coordinates(
+        shadow, [yrow, wcol], cval=np.nan, order=1, mode="nearest"
+    )
 
     return correction
 
