@@ -686,7 +686,6 @@ class ResampleSpec(ResampleImage):
                 # estimate the spatial sampling
                 fitter = LinearLSQFitter()
                 fit_model = Linear1D()
-
                 xstop = x_tan_array.shape[0] * pixel_scale_ratio
                 x_idx = np.linspace(0, xstop, x_tan_array.shape[0], endpoint=False)
                 ystop = y_tan_array.shape[0] * pixel_scale_ratio
@@ -694,6 +693,7 @@ class ResampleSpec(ResampleImage):
                 pix_to_xtan = fitter(fit_model, x_idx, x_tan_array)
                 pix_to_ytan = fitter(fit_model, y_idx, y_tan_array)
 
+            
             # append all ra and dec values to use later to find min and max
             # ra and dec
             ra_use = ra[~np.isnan(ra)].flatten()
@@ -799,6 +799,7 @@ class ResampleSpec(ResampleImage):
         )
         diff_y = np.abs(max_tan_y - min_tan_y)
         diff_x = np.abs(max_tan_x - min_tan_x)
+
         pix_to_tan_slope_y = np.abs(pix_to_ytan.slope)
         slope_sign_y = np.sign(pix_to_ytan.slope)
         pix_to_tan_slope_x = np.abs(pix_to_xtan.slope)
@@ -809,10 +810,11 @@ class ResampleSpec(ResampleImage):
         else:
             ny = int(np.ceil(diff_x / pix_to_tan_slope_x))
 
-        offset_y = (ny) / 2 * pix_to_tan_slope_y
-        offset_x = (ny) / 2 * pix_to_tan_slope_x
+        offset_y = 0.5 * (ny-1) * pix_to_tan_slope_y
+        offset_x = 0.5 * (ny-1) * pix_to_tan_slope_x
+
         pix_to_ytan.intercept = -slope_sign_y * offset_y
-        pix_to_xtan.intercept = -slope_sign_x * offset_x
+        pix_to_xtan.intercept = -slope_sign_x * offset_x 
 
         # define the output wcs
         transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
