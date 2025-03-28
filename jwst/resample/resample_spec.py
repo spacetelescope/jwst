@@ -693,7 +693,6 @@ class ResampleSpec(ResampleImage):
                 pix_to_xtan = fitter(fit_model, x_idx, x_tan_array)
                 pix_to_ytan = fitter(fit_model, y_idx, y_tan_array)
 
-            
             # append all ra and dec values to use later to find min and max
             # ra and dec
             ra_use = ra[~np.isnan(ra)].flatten()
@@ -779,7 +778,6 @@ class ResampleSpec(ResampleImage):
         ra_min = np.amin(all_ra)
         ra_max = np.amax(all_ra)
         ra_center_final = (ra_max + ra_min) / 2.0
-
         dec_min = np.amin(all_dec)
         dec_max = np.amax(all_dec)
         dec_center_final = (dec_max + dec_min) / 2.0
@@ -810,11 +808,11 @@ class ResampleSpec(ResampleImage):
         else:
             ny = int(np.ceil(diff_x / pix_to_tan_slope_x))
 
-        offset_y = 0.5 * (ny-1) * pix_to_tan_slope_y
-        offset_x = 0.5 * (ny-1) * pix_to_tan_slope_x
+        offset_y = 0.5 * (ny - 1) * pix_to_tan_slope_y
+        offset_x = 0.5 * (ny - 1) * pix_to_tan_slope_x
 
         pix_to_ytan.intercept = -slope_sign_y * offset_y
-        pix_to_xtan.intercept = -slope_sign_x * offset_x 
+        pix_to_xtan.intercept = -slope_sign_x * offset_x
 
         # define the output wcs
         transform = mapping | (pix_to_xtan & pix_to_ytan | undist2sky) & pix_to_wavelength
