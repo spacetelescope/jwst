@@ -1,0 +1,1 @@
+Removed ``verify_install_requires`` command. This was a test script that should not have been installed.
