@@ -1,1 +1,1 @@
-Restore __all__ definition that was removed in an earlier PR
+Restore ``__all__`` definition that was removed in an earlier PR
