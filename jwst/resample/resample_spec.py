@@ -686,7 +686,6 @@ class ResampleSpec(ResampleImage):
                 # estimate the spatial sampling
                 fitter = LinearLSQFitter()
                 fit_model = Linear1D()
-
                 xstop = x_tan_array.shape[0] * pixel_scale_ratio
                 x_idx = np.linspace(0, xstop, x_tan_array.shape[0], endpoint=False)
                 ystop = y_tan_array.shape[0] * pixel_scale_ratio
@@ -779,7 +778,6 @@ class ResampleSpec(ResampleImage):
         ra_min = np.amin(all_ra)
         ra_max = np.amax(all_ra)
         ra_center_final = (ra_max + ra_min) / 2.0
-
         dec_min = np.amin(all_dec)
         dec_max = np.amax(all_dec)
         dec_center_final = (dec_max + dec_min) / 2.0
@@ -799,6 +797,7 @@ class ResampleSpec(ResampleImage):
         )
         diff_y = np.abs(max_tan_y - min_tan_y)
         diff_x = np.abs(max_tan_x - min_tan_x)
+
         pix_to_tan_slope_y = np.abs(pix_to_ytan.slope)
         slope_sign_y = np.sign(pix_to_ytan.slope)
         pix_to_tan_slope_x = np.abs(pix_to_xtan.slope)
@@ -809,8 +808,9 @@ class ResampleSpec(ResampleImage):
         else:
             ny = int(np.ceil(diff_x / pix_to_tan_slope_x))
 
-        offset_y = (ny) / 2 * pix_to_tan_slope_y
-        offset_x = (ny) / 2 * pix_to_tan_slope_x
+        offset_y = 0.5 * (ny - 1) * pix_to_tan_slope_y
+        offset_x = 0.5 * (ny - 1) * pix_to_tan_slope_x
+
         pix_to_ytan.intercept = -slope_sign_y * offset_y
         pix_to_xtan.intercept = -slope_sign_x * offset_x
 
