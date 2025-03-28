@@ -10,6 +10,7 @@ from ..stpipe import Pipeline
 
 from ..outlier_detection import outlier_detection_step
 from ..tso_photometry import tso_photometry_step
+from ..tso_centroiding import tso_centroiding_step
 from ..extract_1d import extract_1d_step
 from ..white_light import white_light_step
 from ..photom import photom_step
@@ -27,6 +28,7 @@ class Tso3Pipeline(Pipeline):
     Included steps are:
 
         * outlier_detection
+        * tso_centroiding
         * tso_photometry
         * pixel_replace
         * extract_1d
@@ -42,6 +44,7 @@ class Tso3Pipeline(Pipeline):
     # Define alias to steps
     step_defs = {
         "outlier_detection": outlier_detection_step.OutlierDetectionStep,
+        "tso_centroiding": tso_centroiding_step.TSOCentroidingStep,
         "tso_photometry": tso_photometry_step.TSOPhotometryStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "extract_1d": extract_1d_step.Extract1dStep,
@@ -107,6 +110,23 @@ class Tso3Pipeline(Pipeline):
                 cube.meta.filename = original_filename
             input_models[i] = cube
 
+        # Create final centroiding results as a single output
+        # regardless of how many input members there may be
+        centroid_result_list = []
+        psfWidth_result_list = []
+        psfFlux_result_list = []
+        for cube in input_models:
+            # Compute the centroid and PSF width for all input images
+            results = self.tso_centroiding.run(cube)
+            centroid_result_list.append(results[0])
+            psfWidth_result_list.append(results[1])
+            psfFlux_result_list.append(results[2])
+
+        # Combine the centroiding results from all input images
+        centroid_results = np.vstack(centroid_result_list)
+        psfWidth_results = np.vstack(psfWidth_result_list)
+        psfFlux_results = np.concatenate(psfFlux_result_list)
+
         # Create final photometry results as a single output
         # regardless of how many input members there may be
         phot_result_list = []
@@ -118,7 +138,8 @@ class Tso3Pipeline(Pipeline):
 
             for cube in input_models:
                 # Extract Photometry from imaging data
-                phot_result_list.append(self.tso_photometry.run(cube))
+                phot_result_list.append(self.tso_photometry.run(
+                    cube, centroid_results, psfWidth_results, psfFlux_results))
 
         # Spectroscopy
         else:
