@@ -1,9 +1,13 @@
-#!/usr/bin/env python
+"""
+This test file is a bit different in that pytest should
+not be imported within this file. It is designed to check
+that all submodules are importable (without silently
+depending on pytest or it's dependencies) and is run
+in a separate tox environment where pytest is not installed.
+"""
 
 import importlib
 import pkgutil
-
-import pytest
 
 import jwst
 
@@ -21,9 +25,10 @@ def dependencies(package, exclude: list[str]):
 MODULES = dependencies(jwst, exclude=["test", "time"])
 
 
-@pytest.mark.parametrize(
-    "module_name",
-    MODULES,
-)
-def test_module_import(module_name):
-    importlib.import_module(module_name)
+def test_modules_import():
+    for module_name in MODULES:
+        importlib.import_module(module_name)
+
+
+if __name__ == "__main__":
+    test_modules_import()
