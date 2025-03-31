@@ -60,7 +60,7 @@ The FITS file structure is as follows.
 
 This FITS file structure is the result of serializing a `~jwst.datamodels.Level1bModel`, but
 can also be read into a `~jwst.datamodels.RampModel`, in which case zero-filled
-ERR, GROUPDQ, and PIXELDQ data arrays will be created and stored in the model, having array
+GROUPDQ and PIXELDQ data arrays will be created and stored in the model, having array
 dimensions based on the shape of the SCI array (see `~jwst.datamodels.RampModel`).
 
 .. _ramp:
@@ -72,7 +72,7 @@ they are stored internally in a `~jwst.datamodels.RampModel`.
 This type of data model is serialized to a ``ramp`` type FITS
 file on disk. The original detector pixel values (in the SCI extension) are converted
 from integer to floating-point data type. The same is true for the ZEROFRAME and REFOUT
-data extensions, if they are present. An ERR array and two types of data quality arrays are
+data extensions, if they are present. Two types of data quality arrays are
 also added to the product. The FITS file layout is as follows:
 
 +-----+------------+----------+-----------+-----------------------------------+
@@ -85,8 +85,6 @@ also added to the product. The FITS file layout is as follows:
 |  2  | PIXELDQ    | IMAGE    | uint32    | ncols x nrows                     |
 +-----+------------+----------+-----------+-----------------------------------+
 |  3  | GROUPDQ    | IMAGE    | uint8     | ncols x nrows x ngroups x nints   |
-+-----+------------+----------+-----------+-----------------------------------+
-|  4  | ERR        | IMAGE    | float32   | ncols x nrows x ngroups x nints   |
 +-----+------------+----------+-----------+-----------------------------------+
 |     | ZEROFRAME* | IMAGE    | float32   | ncols x nrows x nints             |
 +-----+------------+----------+-----------+-----------------------------------+
@@ -107,7 +105,6 @@ also added to the product. The FITS file layout is as follows:
    for a given pixel (e.g. a hot pixel is hot in all groups and integrations).
  - GROUPDQ: 4-D data array containing DQ flags that pertain to individual groups within individual
    integrations, such as the point at which a pixel becomes saturated within a given integration.
- - ERR: 4-D data array containing uncertainty estimates on a per-group and per-integration basis.
  - ZEROFRAME: 3-D data array containing the pixel values of the zero-frame for each
    integration in the exposure, where each plane of the cube corresponds to a given integration.
    Only appears if the zero-frame data were requested to be downlinked separately.
