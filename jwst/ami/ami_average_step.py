@@ -5,10 +5,6 @@ import warnings
 __all__ = ["AmiAverageStep"]
 
 
-# TODO: What is the history of this step? It's not used in the pipeline.
-# Was it superseded or does it remain useful?
-
-
 class AmiAverageStep(Step):
     """
     Average LG results for multiple NIRISS AMI mode exposures.

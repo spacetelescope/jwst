@@ -89,8 +89,10 @@ def test_find_centroid():
     """Tests of find_centroid and findslope functions."""
 
     arr = np.zeros((30, 30), dtype="f4")
-    arr[15, 15] = 1
-    assert_allclose(utils.find_centroid(arr), (0.5, 0.5))
+    arr[17, 15] = 1
+    htilt, vtilt = utils.find_centroid(arr)
+    assert_allclose(htilt, 2.5)
+    assert_allclose(vtilt, 0.5)
 
 
 def test_quadratic_extremum():
