@@ -74,7 +74,6 @@ class LgModel:
         self.pixel = pixscale  # det pix in rad (square)
         self.over = over
 
-        log.info(f"Using AMI mask geometry for {mask} from NRMModel.")
         self.mask = mask_definition_ami.NRMDefinition(
             nrm_model, maskname=mask, chooseholes=chooseholes
         )

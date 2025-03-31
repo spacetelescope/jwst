@@ -86,7 +86,8 @@ class FringeFitter:
         # list for nrm objects for each slc
         self.nrm_list = []
 
-        for slc in range(self.instrument_data.nwav):
+        for slc in range(self.instrument_data.nslices):
+            log.info(f"Fitting fringes for iteration {slc} of {self.instrument_data.nslices}")
             self.nrm_list.append(self.fit_fringes_single_integration(slc))
 
         # Now save final output model(s) of all slices, averaged slices to AmiOiModels
@@ -153,14 +154,10 @@ class FringeFitter:
         """
         Generate the best model to match a single slice.
 
-        TODO: Is it a bug that the LgModel is being initialized with the
-        zeroth wavelength every time?  When we iterate over this, it's an iteration over
-        wavelength.
-
         Parameters
         ----------
-        slc : numpy array
-            2D slice of data
+        slc : int
+            Index of the iteration to fit (0 to nslc-1).
 
         Returns
         -------
