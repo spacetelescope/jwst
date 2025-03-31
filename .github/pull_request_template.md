@@ -2,8 +2,8 @@
 for example JP-1234: <Fix a bug> -->
 Resolves [JP-nnnn](https://jira.stsci.edu/browse/JP-nnnn)
 
-<!-- If this PR closes a GitHub issue, reference it here by its number -->
-Only if there is no JIRA ticket mentioned above: Closes #
+<!-- If this PR closes a GitHub issue that is not attached to a Jira ticket, uncomment the line below, and reference it here by its number -->
+<!-- Closes # -->
 
 <!-- describe the changes comprising this PR here -->
 This PR addresses ...
