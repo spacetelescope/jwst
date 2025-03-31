@@ -23,6 +23,8 @@ import warnings
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+__all__ = ["RampFitStep"]
+
 
 def get_reference_file_subarrays(model, readnoise_model, gain_model):
     """
