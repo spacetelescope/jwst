@@ -1,10 +1,10 @@
-import pytest
+import warnings
 
+import asdf
+import numpy as np
+import pytest
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-import numpy as np
-import asdf
-
 from stdatamodels.jwst.datamodels import ImageModel
 from stcal.resample.utils import compute_mean_pixel_area
 
@@ -16,6 +16,7 @@ from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
 from jwst.resample.resample_utils import load_custom_wcs
+
 
 def _set_photom_kwd(im):
     xmin = im.meta.subarray.xstart - 1
@@ -95,6 +96,7 @@ def miri_rate_model():
         'type': 'MIR_LRS-SLITLESS',
         'zero_frame': False}
     return im
+
 
 @pytest.fixture
 def miri_rate():
@@ -395,7 +397,9 @@ def test_nirspec_wcs_roundtrip(nirspec_cal):
 
 
 def test_nirspec_lamp_wcs_roundtrip(nirspec_lamp):
-    im = ResampleSpecStep.call(nirspec_lamp)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        im = ResampleSpecStep.call(nirspec_lamp)
 
     for slit in im.slits:
         x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
@@ -503,10 +507,12 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
         assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
                            np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
     else:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
+            res1 = np.nanmean(result1.data, axis=1)
+            res2 = np.nanmean(result2.data, axis=1)
         # surface brightness conservation: mean values are the same
-        assert np.allclose(np.nanmean(result1.data, axis=1),
-                           np.nanmean(result2.data, axis=1), rtol=0.05,
-                           equal_nan=True)
+        assert np.allclose(res1, res2, rtol=0.05, equal_nan=True)
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
@@ -569,10 +575,12 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
         assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
                            np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
     else:
+        with warnings.catch_warnings():  # MJy/sr
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
+            res1 = np.nanmean(result1.data, axis=1)
+            res2 = np.nanmean(result2.data, axis=1)
         # surface brightness conservation: mean values are the same
-        assert np.allclose(np.nanmean(result1.data, axis=1),
-                           np.nanmean(result2.data, axis=1), rtol=0.05,
-                           equal_nan=True)
+        assert np.allclose(res1, res2, rtol=0.05, equal_nan=True)
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
@@ -1450,7 +1458,9 @@ def test_missing_nominal_area(miri_cal, tmp_path):
 
 
 def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
-    result = ResampleSpecStep.call(nirspec_lamp)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        result = ResampleSpecStep.call(nirspec_lamp)
 
     # output data should have the same wavelength size,
     # spatial size is close
@@ -1460,12 +1470,16 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
             == nirspec_lamp.slits[0].data.shape[1])
 
     # test pixel scale setting: will not work without sky-based WCS
-    result2 = ResampleSpecStep.call(nirspec_lamp, pixel_scale=0.5)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        result2 = ResampleSpecStep.call(nirspec_lamp, pixel_scale=0.5)
     assert np.allclose(result2.slits[0].data, result.slits[0].data, equal_nan=True)
     assert result2.meta.resample.pixel_scale_ratio == 1.0
 
     # setting pixel_scale_ratio is still allowed
-    result3 = ResampleSpecStep.call(nirspec_lamp, pixel_scale_ratio=0.5)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        result3 = ResampleSpecStep.call(nirspec_lamp, pixel_scale_ratio=0.5)
     assert result3.slits[0].data.shape[0] < result.slits[0].data.shape[0]
     assert result3.slits[0].data.shape[1] == result.slits[0].data.shape[1]
     assert result3.meta.resample.pixel_scale_ratio == 0.5
@@ -1474,7 +1488,9 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     # since output scale cannot be determined
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     asdf.AsdfFile({"wcs": result3.slits[0].meta.wcs}).write_to(refwcs)
-    result4 = ResampleSpecStep.call(nirspec_lamp, output_wcs=refwcs)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        result4 = ResampleSpecStep.call(nirspec_lamp, output_wcs=refwcs)
     assert result4.slits[0].data.shape == result3.slits[0].data.shape
     assert result4.meta.resample.pixel_scale_ratio == 1.0
 

@@ -1,9 +1,11 @@
+import os
+import warnings
+from glob import glob
+
 import pytest
 import numpy as np
+from numpy.testing import assert_allclose, assert_array_equal
 from scipy.ndimage import gaussian_filter
-from glob import glob
-import os
-
 from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
 
@@ -30,7 +32,7 @@ SHAPE = (21, 20)
 BACKGROUND = 1.5
 SIGMA = 0.02
 SIGNAL = 7.0
-SIGNAL_LOC = (7,7)
+SIGNAL_LOC = (7, 7)
 
 
 @pytest.fixture
@@ -68,7 +70,7 @@ def sci_blot_image_pair():
 def test_flag_cr(sci_blot_image_pair):
     """Test the flag_cr function.  Test logic, not the actual noise model."""
     sci, blot = sci_blot_image_pair
-    assert (sci.dq == 0).all()
+    assert_array_equal(sci.dq, 0)
 
     # Drop some CRs on the science array
     sci.data[3, 3] += 100
@@ -93,7 +95,7 @@ def test_flag_cr(sci_blot_image_pair):
     # except outliers are NaN
     dnu = (sci.dq & OUTLIER_DO_NOT_USE).astype(bool)
     assert np.all(np.isnan(sci.data[dnu]))
-    assert np.allclose(sci.data[~dnu], data_copy[~dnu])
+    assert_allclose(sci.data[~dnu], data_copy[~dnu])
 
     # Verify that both DQ flags are set in the DQ array for all outliers
     assert sci.dq[3, 3] == OUTLIER_DO_NOT_USE
@@ -221,14 +223,19 @@ def mirimage_three_sci(we_three_sci):
     So just need to assign the WCS, identical for all.
     This fixture is separated from we_three_sci so the latter
     can be reused for other instruments and modes"""
-    return assign_wcs_to_models(we_three_sci, "MIR_IMAGE", False)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning, message="Double sampling check FAILED")
+        result = assign_wcs_to_models(we_three_sci, "MIR_IMAGE", False)
+    return result
 
 
 @pytest.fixture
 def mirimage_50_sci(scimodel_base):
     """Provide 50 MIRI TSO imaging science observations"""
     # first call AssignWcsStep on the base model, all WCSs will be the same after copy
-    scimodel_base = AssignWcsStep.call(scimodel_base)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning, message="Double sampling check FAILED")
+        scimodel_base = AssignWcsStep.call(scimodel_base)
     scimodel_base.meta.visit.tsovisit = True
 
     rng = np.random.default_rng(99)
@@ -305,7 +312,7 @@ def test_outlier_step_weak_cr_imaging(mirimage_three_sci, tmp_cwd):
             # Make sure nothing changed in SCI array except outliers are NaN
             dnu = (r.dq & OUTLIER_DO_NOT_USE).astype(bool)
             assert np.all(np.isnan(r.data[dnu]))
-            assert np.allclose(data_as_cube[i][~dnu], r.data[~dnu])
+            assert_allclose(data_as_cube[i][~dnu], r.data[~dnu])
 
             # Verify source is not flagged
             assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
@@ -463,7 +470,7 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
             # Make sure nothing changed in SCI array except outliers are NaN
             dnu = (r.dq & OUTLIER_DO_NOT_USE).astype(bool)
             assert np.all(np.isnan(r.data[dnu]))
-            assert np.allclose(data_as_cube[i][~dnu], r.data[~dnu])
+            assert_allclose(data_as_cube[i][~dnu], r.data[~dnu])
 
             # Verify source is not flagged
             assert r.dq[7, 7] == datamodels.dqflags.pixel["GOOD"]
@@ -538,8 +545,9 @@ def test_outlier_step_square_source_no_outliers(mirimage_three_sci, tmp_cwd):
 def test_outlier_step_weak_cr_coron(we_three_sci, tmp_cwd):
     """Test whole step with an outlier for an example coronagraphic mode"""
 
-    exptype="MIR_LYOT"
-    we_three_sci = assign_wcs_to_models(we_three_sci, exptype, False)
+    exptype = "MIR_LYOT"
+    with pytest.warns(UserWarning, match="Double sampling check FAILED"):
+        we_three_sci = assign_wcs_to_models(we_three_sci, exptype, False)
     container = ModelContainer(we_three_sci)
 
     # Drop a weak CR on the science array
@@ -556,11 +564,11 @@ def test_outlier_step_weak_cr_coron(we_three_sci, tmp_cwd):
     for i, image in enumerate(container):
         dnu = (result.dq[i] & OUTLIER_DO_NOT_USE).astype(bool)
         assert np.all(np.isnan(result.data[i][dnu]))
-        assert np.allclose(image.data[~dnu], result.data[i][~dnu])
+        assert_allclose(image.data[~dnu], result.data[i][~dnu])
 
     # Verify source is not flagged
     j, k = SIGNAL_LOC
-    assert np.all(result.dq[:, j, k] == datamodels.dqflags.pixel["GOOD"])
+    assert_array_equal(result.dq[:, j, k], datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
     assert result.dq[0, 12, 12] == OUTLIER_DO_NOT_USE
@@ -595,15 +603,15 @@ def test_outlier_step_weak_cr_tso(mirimage_50_sci, rolling_window_width):
     for i, model in enumerate(im):
         dnu = (result.dq[i] & OUTLIER_DO_NOT_USE).astype(bool)
         assert np.all(np.isnan(result.data[i][dnu]))
-        assert np.allclose(model.data[~dnu], result.data[i][~dnu])
+        assert_allclose(model.data[~dnu], result.data[i][~dnu])
 
     # Verify source is not flagged for rolling median
     if rolling_window_width == 7:
-        assert np.all(result.dq[:, j, k] == datamodels.dqflags.pixel["GOOD"])
+        assert_array_equal(result.dq[:, j, k], datamodels.dqflags.pixel["GOOD"])
     # But this fails for simple median
     elif rolling_window_width == 0:
         with pytest.raises(AssertionError):
-            assert np.all(result.dq[:, j, k] == datamodels.dqflags.pixel["GOOD"])
+            assert_array_equal(result.dq[:, j, k], datamodels.dqflags.pixel["GOOD"])
 
     # Verify CR is flagged
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
