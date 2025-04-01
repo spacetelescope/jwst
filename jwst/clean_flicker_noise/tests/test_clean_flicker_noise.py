@@ -1,11 +1,12 @@
 import gwcs
 import numpy as np
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.tests.test_nirspec import (
     create_nirspec_ifu_file, create_nirspec_fs_file)
-from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model, get_file_path
+from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
 from jwst.clean_flicker_noise import clean_flicker_noise as cfn
 
 
@@ -94,8 +95,8 @@ def make_nirspec_ifu_model(shape=(2048, 2048)):
 
 def make_nirspec_mos_fs_model():
     mos_model = make_nirspec_mos_model()
-    mos_model.meta.instrument.msa_metadata_file = get_file_path(
-        'msa_fs_configuration.fits')
+    mos_model.meta.instrument.msa_metadata_file = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
     return mos_model
 
 
@@ -151,7 +152,8 @@ def test_postprocess_rate_nirspec(log_watcher):
     watcher.assert_seen()
 
     watcher.message = 'Flagging failed-open'
-    result = cfn.post_process_rate(result, msaflagopen=True)
+    with pytest.warns(RuntimeWarning, match="Invalid interval"):
+        result = cfn.post_process_rate(result, msaflagopen=True)
     assert np.sum(result.dq & datamodels.dqflags.pixel['MSA_FAILED_OPEN']) > 0
     watcher.assert_seen()
 
@@ -264,8 +266,7 @@ def test_clip_to_background_fit_fails(log_watcher):
     image = np.full(shape, np.nan)
     mask = np.full(shape, True)
     watcher.message = "Histogram failed"
-    with pytest.warns(RuntimeWarning):
-        cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
+    cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
     assert np.all(mask)
     watcher.assert_seen()
 
@@ -486,7 +487,10 @@ def test_fft_subarray_clean_error(monkeypatch, log_watcher):
     # Mask is all bad: error message, returns None
     mask = np.full(shape, False)
     watcher.message = "No good pixels"
-    cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1')
+    # RuntimeWarning: Mean of empty slice
+    # RuntimeWarning: invalid value encountered in scalar divide
+    with pytest.warns(RuntimeWarning):
+        cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1')
     assert cleaned_image is None
     watcher.assert_seen()
 

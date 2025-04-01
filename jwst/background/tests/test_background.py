@@ -1,7 +1,10 @@
 """
 Unit tests for background subtraction
 """
+import warnings
+
 import pytest
+from astropy.utils.exceptions import AstropyUserWarning
 from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
@@ -211,7 +214,9 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
     image = miri_rate_model(data_shape, value=image_value)
     background = miri_rate_model(background_shape, value=background_value)
 
-    result = BackgroundStep.call(image, [background])
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=AstropyUserWarning, message="Input data contains invalid values")
+        result = BackgroundStep.call(image, [background])
 
     assert_allclose(result.data[..., :background_shape[-2], :background_shape[-1]],
                     image_value - background_value)

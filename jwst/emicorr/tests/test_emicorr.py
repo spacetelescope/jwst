@@ -1,4 +1,5 @@
 """Unit tests for EMI correction."""
+import warnings
 
 import numpy as np
 import pytest
@@ -311,7 +312,8 @@ def test_emicorrstep_user_reffile(tmp_path, emicorr_model):
     emicorr_model.save(model_name)
 
     step = emicorr_step.EmiCorrStep()
-    result = step.call(input_model, skip=False, user_supplied_reffile=model_name)
+    with pytest.warns(np.RankWarning, match="Polyfit may be poorly conditioned"):
+        result = step.call(input_model, skip=False, user_supplied_reffile=model_name)
 
     # step completes but we expect no change for flat data
     assert np.all(input_model.data == result.data)
@@ -336,7 +338,9 @@ def test_apply_emicorr_noiseless(data_case, algorithm, emicorr_model, readpatt):
         "use_n_cycles": None,
         "algorithm": algorithm,
     }
-    outmdl = emicorr.apply_emicorr(input_model.copy(), emicorr_model, **pars)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=np.RankWarning, message="Polyfit may be poorly conditioned")
+        outmdl = emicorr.apply_emicorr(input_model.copy(), emicorr_model, **pars)
     assert isinstance(outmdl, RampModel)
 
     # flat or linear ramp data shows no correction
