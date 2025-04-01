@@ -1,3 +1,34 @@
+1.18.0rc2 (2025-04-01)
+======================
+
+barshadow (spec2 MOS)
+---------------------
+
+- Extrapolate barshadow corrections to cover wavelength gaps in reference
+  files. (`#9326 <https://github.com/spacetelescope/jwst/issues/9326>`_)
+
+
+ramp_fitting (detector1)
+------------------------
+
+- Restore ``__all__`` definition that was removed in an earlier PR (`#9338
+  <https://github.com/spacetelescope/jwst/issues/9338>`_)
+
+
+resample (image2, image3, coron3)
+---------------------------------
+
+- Fixed bug in the resample_spec step, affecting flux conservation for MIRI
+  LRS. (`#9337 <https://github.com/spacetelescope/jwst/issues/9337>`_)
+
+
+tweakreg (image3)
+-----------------
+
+- Update docs to clarify format of tweakreg catalogs (`#9301
+  <https://github.com/spacetelescope/jwst/issues/9301>`_)
+
+
 1.18.0 (2025-03-19)
 ===================
 
