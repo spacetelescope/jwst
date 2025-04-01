@@ -17,7 +17,7 @@ class TSOPhotometryStep(Step):
         save_catalog = boolean(default=False)  # save exposure-level catalog
     """  # noqa: E501
 
-    reference_file_types = ['tsophot', 'gain']
+    reference_file_types = ["tsophot", "gain"]
 
     def process(self, input_data):
         """
@@ -58,7 +58,7 @@ class TSOPhotometryStep(Step):
                 return None
 
             # Get the gain reference file
-            gain_filename = self.get_reference_file(model, 'gain')
+            gain_filename = self.get_reference_file(model, "gain")
             gain_model = GainModel(gain_filename)
 
             # Retrieve aperture info from the reference file
@@ -75,9 +75,9 @@ class TSOPhotometryStep(Step):
             self.log.debug(f"ycenter = {ycenter}")
 
             # Compute the aperture photometry
-            catalog = tso_aperture_photometry(model, xcenter, ycenter,
-                                              radius, radius_inner,
-                                              radius_outer, gain_model)
+            catalog = tso_aperture_photometry(
+                model, xcenter, ycenter, radius, radius_inner, radius_outer, gain_model
+            )
 
             # Save the photometry in an output catalog
             if self.save_catalog:

@@ -14,8 +14,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
-                            radius_outer, gain_model):
+def tso_aperture_photometry(
+    datamodel, xcenter, ycenter, radius, radius_inner, radius_outer, gain_model
+):
     """
     Create a photometric catalog for NIRCam/MIRI TSO imaging observations.
 
@@ -59,27 +60,27 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         phot_aper = CircularAperture((xcenter, ycenter), r=radius)
         bkg_aper = CircularAnnulus((xcenter, ycenter), r_in=radius_inner, r_out=radius_outer)
 
-    if datamodel.meta.bunit_data == 'MJy/sr':
+    if datamodel.meta.bunit_data == "MJy/sr":
         # Convert the input data and errors from MJy/sr to Jy
         factor = 1e6 * datamodel.meta.photometry.pixelarea_steradians
         datamodel.data *= factor
         datamodel.err *= factor
-        datamodel.meta.bunit_data = 'Jy'
-        datamodel.meta.bunit_err = 'Jy'
-    elif datamodel.meta.bunit_data == 'DN/s':
+        datamodel.meta.bunit_data = "Jy"
+        datamodel.meta.bunit_err = "Jy"
+    elif datamodel.meta.bunit_data == "DN/s":
         # Convert the input data and errors from DN/s to electrons
-        factor = datamodel.meta.exposure.integration_time*gain_model.data
+        factor = datamodel.meta.exposure.integration_time * gain_model.data
         datamodel.data *= factor
         datamodel.err *= factor
-        datamodel.meta.bunit_data = 'electron'
-        datamodel.meta.bunit_err = 'electron'
-    elif datamodel.meta.bunit_data == 'DN':
+        datamodel.meta.bunit_data = "electron"
+        datamodel.meta.bunit_err = "electron"
+    elif datamodel.meta.bunit_data == "DN":
         # Convert the input data and errors from DN to electrons
         factor = gain_model.data
         datamodel.data *= factor
         datamodel.err *= factor
-        datamodel.meta.bunit_data = 'electron'
-        datamodel.meta.bunit_err = 'electron'
+        datamodel.meta.bunit_data = "electron"
+        datamodel.meta.bunit_err = "electron"
     else:
         # Unexpected units - leave them as-is
         pass
