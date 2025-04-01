@@ -3,7 +3,7 @@ name: build
 on:
   release:
     types: [ released ]
-  #pull_request:
+  pull_request:
   workflow_dispatch:
 
 concurrency:
