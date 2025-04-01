@@ -187,16 +187,6 @@ class RampFitStep(Step):
         maximum_cores = string(default='1') # cores for multiprocessing. Can be an integer, 'half', 'quarter', or 'all'
     """  # noqa: E501
 
-    # Prior to 04/26/17, the following were also in the spec above:
-    #      algorithm = option('OLS', 'GLS', default='OLS') # 'OLS' or 'GLS'
-    #      weighting = option('unweighted', 'optimal', default='unweighted') \
-    #      # 'unweighted' or 'optimal'
-    # As of 04/26/17, the only allowed algorithm is 'ols', and the
-    #      only allowed weighting is 'optimal'.
-
-    # algorithm = 'ols'      # Only algorithm allowed for Build 7.1
-    # algorithm = 'gls'       # 032520
-
     weighting = "optimal"  # Only weighting allowed for Build 7.1
 
     reference_file_types = ["readnoise", "gain"]
@@ -260,8 +250,6 @@ class RampFitStep(Step):
             log.info(f"Using weighting = {self.weighting}")
 
             buffsize = ramp_fit.BUFSIZE
-            if self.algorithm == "GLS":
-                buffsize //= 10
 
             int_times = result.int_times
 
@@ -281,7 +269,7 @@ class RampFitStep(Step):
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
             # RampFitOutputModel.
-            image_info, integ_info, opt_info, gls_opt_model = ramp_fit.ramp_fit(
+            image_info, integ_info, opt_info = ramp_fit.ramp_fit(
                 result,
                 buffsize,
                 self.save_opt,
