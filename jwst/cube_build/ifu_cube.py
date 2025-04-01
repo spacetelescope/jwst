@@ -1680,7 +1680,7 @@ class IFUCubeData:
 
             final_b_max = final_b_min + (nslice) * self.cdelt2
             log.info(
-                "Changed the across slice scale dimension so we have 1-1 "
+                "Changed the across slice scale dimension so we have 1-1"
                 " mapping between b and slice #"
             )
             log.info(f"New across slice scale {self.cdelt2}")
@@ -1693,7 +1693,7 @@ class IFUCubeData:
             self.cdelt1 = (final_b_max - final_b_min) / nslice
             final_b_max = final_b_min + (nslice) * self.cdelt1
             log.info(
-                "Changed the across slice scale dimension so we have 1-1 "
+                "Changed the across slice scale dimension so we have 1-1"
                 " mapping between b and slice #"
             )
             log.info(f"New across slice Scale {self.cdelt1}")
