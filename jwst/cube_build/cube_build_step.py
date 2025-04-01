@@ -202,7 +202,7 @@ class CubeBuildStep(Step):
                 self.interpolation = "pointcloud"
 
         # read_user_input:
-        # if options  are channel, band,grating filter are set on the command lines
+        # if options channel, band, grating, or  filter are set on the command lines
         # then set self.pars_input['output_type'] = 'user' and fill in  par_input with values
         self.read_user_input()
         # ________________________________________________________________________________
