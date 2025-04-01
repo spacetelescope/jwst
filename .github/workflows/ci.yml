@@ -68,4 +68,13 @@ jobs:
       cache-path: /tmp/data/crds_cache
       cache-key: crds-${{ needs.crds_context.outputs.context }}
       envs: |
+        - linux: py311-oldestdeps-xdist-cov
+        - linux: py311-xdist
         - linux: py312-xdist
+        # `tox` does not currently respect `requires-python` versions when creating testing environments;
+        # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
+        - linux: py3-cov-xdist
+          coverage: codecov
+          pytest-results-summary: true
+        - macos: py3-xdist
+          pytest-results-summary: true

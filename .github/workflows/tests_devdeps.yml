@@ -7,9 +7,9 @@ on:
       - '*x'
     tags:
       - '*'
-#  pull_request:
-#    branches:
-#      - main
+  pull_request:
+    branches:
+      - main
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
