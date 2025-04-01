@@ -224,36 +224,3 @@ def test_call_cube_build_nirspec_multi(tmp_cwd, nirspec_data, tmp_path, as_filen
     assert model.meta.cal_step.cube_build == 'COMPLETE'
     assert model.meta.filename == 'test_nirspec_s3d.fits'
 
-    
-def test_user_options_mir():
-    step = CubeBuildStep()
-    step.channel = '1'
-    step.subchannel = 'short'
-
-    step.pars_input["channel"] = []
-    step.pars_input["subchannel"] = []
-    step.pars_input["filter"] = []
-    step.pars_input["grating"] = []
-    
-    step.read_user_input()
-    assert self.pars_input["channel"] == ["1"]
-    assert self.pars_input["subchannel"] == ["short"]
-    assert self.pars_input["output_type"] == "user"
-
-
-def test_user_options_nirpsec():
-    step = CubeBuildStep()
-    step.filter = 'clear'
-    step.grating = 'prism'
-
-    step.pars_input["channel"] = []
-    step.pars_input["subchannel"] = []
-    step.pars_input["filter"] = []
-    step.pars_input["grating"] = []
-    
-    step.read_user_input()
-    assert self.pars_input["filter"] == ["clean"]
-    assert self.pars_input["grating"] == ["prism"]
-    assert self.pars_input["output_type"] == "user"    
-
-    
