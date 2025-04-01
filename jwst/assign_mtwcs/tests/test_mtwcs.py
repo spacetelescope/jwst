@@ -1,16 +1,13 @@
-import os
-
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelLibrary
 from jwst.assign_mtwcs import AssignMTWcsStep
-from jwst.assign_mtwcs.tests import data
-
-data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 
 def test_mt_multislit():
-    file_path = os.path.join(data.__path__[0], 'test_mt_asn.json')
+    file_path = get_pkg_data_filename(
+        "data/test_mt_asn.json", package="jwst.assign_mtwcs.tests")
     with datamodels.open(file_path) as model:
         assert model[0].slits[0].meta.wcs.output_frame.name == 'world'
     step = AssignMTWcsStep()

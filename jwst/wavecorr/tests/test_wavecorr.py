@@ -2,6 +2,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcstools
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
@@ -46,7 +47,8 @@ def nrs_slit_model(nrs_fs_model):
 
 def test_wavecorr():
     hdul = create_nirspec_mos_file()
-    msa_meta = Path(jwst.__path__[0]) / "assign_wcs" / "tests" / "data" / "msa_configuration.fits"
+    msa_meta = Path(get_pkg_data_filename(
+        "data/msa_configuration.fits"), package="jwst.assign_wcs.tests")
     hdul[0].header["MSAMETFL"] = str(msa_meta)
     hdul[0].header["MSAMETID"] = 12
     im = datamodels.ImageModel(hdul)
@@ -198,7 +200,8 @@ def test_skipped():
 def test_mos_slit_status():
     """Test conditions that are skipped for mos slitlets."""
     hdul = create_nirspec_mos_file()
-    msa_meta = Path(jwst.__path__[0]) / "assign_wcs" / "tests" / "data" / "msa_configuration.fits"
+    msa_meta = Path(get_pkg_data_filename(
+        "data/msa_configuration.fits"), package="jwst.assign_wcs.tests")
     hdul[0].header["MSAMETFL"] = str(msa_meta)
     hdul[0].header["MSAMETID"] = 12
     im = datamodels.ImageModel(hdul)
