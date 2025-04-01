@@ -96,7 +96,7 @@ def miri_image():
     image = IFUImageModel((20, 20))
     image.data = np.random.random((20, 20))
     image.meta.instrument.name = 'MIRI'
-    image.meta.instrument.detector = 'MIRIFULONG'
+    image.meta.instrument.detector = 'MIRIFUSHORT'
     image.meta.exposure.type = 'MIR_MRS'
     image.meta.instrument.channel = '12'
     image.meta.instrument.band = 'SHORT'
@@ -126,7 +126,7 @@ def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filen
         step.run(step_input)
 
     # Test some defaults to step are setup correctly and
-    # is user specifies channel is set up correctly
+    # if user specifies channel it is set up correctly
     step = CubeBuildStep()
     step.override_cubepar = miri_cube_pars
     step.channel = '1'

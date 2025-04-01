@@ -296,6 +296,8 @@ class CubeData:
             # check if input filter or grating has been set
             if user_glen == 0 and user_flen != 0:
                 raise MissingParameterError("Filter specified, but Grating was not")
+            elif user_glen != 0 and user_flen == 0:
+                raise MissingParameterError("Grating specified, but Filter was not")
 
             for i in range(nbands):
                 nfiles = len(master_table.FileMap["NIRSPEC"][valid_gwa[i]][valid_fwa[i]])
