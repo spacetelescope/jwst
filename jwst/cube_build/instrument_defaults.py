@@ -1003,10 +1003,21 @@ class InstrumentInfo:
         self.high_power.append(None)
         self.high_softrad.append(None)
 
-    # def set_xslice_limits(self, x1, x2, parameter1):
+    def set_xslice_limits(self, x1, x2, parameter1):
+        """
+        Set the x limits of channels for MIRI.
 
-    #     self.Info[parameter1]["xstart"] = x1
-    #     self.Info[parameter1]["xend"] = x2
+        Parameters
+        ----------
+        x1 : int
+            X minimum pixel value of channel
+        x2 : int
+            X maximum pixel value of channel
+        parameter1 : str
+            Channel number
+        """
+        self.Info[parameter1]["xstart"] = x1
+        self.Info[parameter1]["xend"] = x2
 
     def set_msm(self, parameter1, parameter2, sroi, wroi, power, softrad):
         """
