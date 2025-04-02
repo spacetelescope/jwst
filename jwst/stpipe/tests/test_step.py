@@ -35,6 +35,7 @@ WHITELIGHTSTEP_CRDS_MIRI_PARS = {
 CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
 
 
+@pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.parametrize(
     'arg, env_set, expected_fn', [
         ('--disable-crds-steppars', None, lambda stream: CRDS_ERROR_STRING not in stream),

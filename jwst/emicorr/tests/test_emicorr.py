@@ -312,7 +312,9 @@ def test_emicorrstep_user_reffile(tmp_path, emicorr_model):
     emicorr_model.save(model_name)
 
     step = emicorr_step.EmiCorrStep()
-    with pytest.warns(Warning, match="Polyfit may be poorly conditioned"):
+    with warnings.catch_warnings():
+        # Warning emitted for numpy 1.26 but not numpy 2.2
+        warnings.filterwarnings("ignore", message="Polyfit may be poorly conditioned")
         result = step.call(input_model, skip=False, user_supplied_reffile=model_name)
 
     # step completes but we expect no change for flat data

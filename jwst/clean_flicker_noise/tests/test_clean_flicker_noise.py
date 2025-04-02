@@ -270,7 +270,9 @@ def test_clip_to_background_fit_fails(log_watcher):
     mask = np.full(shape, True)
     watcher.message = "Histogram failed"
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
+        # RuntimeWarning: Mean of empty slice
+        # RuntimeWarning: Degrees of freedom <= 0 for slice
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
     assert np.all(mask)
     watcher.assert_seen()
