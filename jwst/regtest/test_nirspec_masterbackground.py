@@ -1,12 +1,11 @@
+import warnings
+
 import pytest
-
-from astropy.io.fits.diff import FITSDiff
 import numpy as np
-
 import stdatamodels.jwst.datamodels as dm
+from astropy.io.fits.diff import FITSDiff
 
 from jwst.master_background import MasterBackgroundMosStep, MasterBackgroundStep
-
 from jwst.regtest import regtestdata as rt
 
 pytestmark = pytest.mark.bigdata
@@ -29,7 +28,10 @@ def run_spec2_mbkg(rtdata_module):
             '--steps.master_background_mos.save_background=true'
         ]
     }
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
@@ -53,7 +55,10 @@ def run_spec2_mbkg_user(rtdata_module):
             f'--output_file={user_bg}'
         ]
     }
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
