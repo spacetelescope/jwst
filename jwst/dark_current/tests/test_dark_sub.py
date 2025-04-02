@@ -117,7 +117,9 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
 
     # Run the pipeline's averaging function
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="Mean of empty slice", category=RuntimeWarning)
+        # RuntimeWarning: Mean of empty slice
+        # RuntimeWarning: invalid value encountered in divide
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
 
     # Group input groups into collections of frames which will be averaged
@@ -135,7 +137,11 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
     for newgp, gstart, gend in zip(range(ngroups), gstrt_ind, gend_ind):
 
         # Average the data frames
-        newframe = np.mean(dark.data[gstart:gend, 10, 10])
+        with warnings.catch_warnings():
+            # RuntimeWarning: Mean of empty slice
+            # RuntimeWarning: invalid value encountered in divide
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            newframe = np.mean(dark.data[gstart:gend, 10, 10])
         manual_avg[newgp] = newframe
 
         # ERR arrays will be quadratic sum of error values

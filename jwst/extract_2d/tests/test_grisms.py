@@ -190,7 +190,7 @@ def test_create_box_fits():
     The objects selected here should be contained on the image
     """
     source_catalog = get_pkg_data_filename(
-        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d..tests")
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests")
     hdul = create_hdul(exptype='NRC_WFSS', pupil='GRISMR', wcskeys=wcs_wfss_kw)
     im = ImageModel(hdul)
     # Add fake data to pass a shape to wfss_imaging_wcs

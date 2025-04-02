@@ -46,20 +46,17 @@ def segmentation_map(direct_image):
 
     # turn this into a jwst datamodel
     model = SegmentationMapModel(data=segm.data)
-    asdf_file = asdf.open(get_pkg_data_filename(
-        "data/segmentation_wcs.asdf", package="jwst.wfss_contam.tests"))
-    wcsobj = asdf_file.tree['wcs']
-    model.meta.wcs = wcsobj
+    with asdf.open(get_pkg_data_filename("data/segmentation_wcs.asdf", package="jwst.wfss_contam.tests")) as asdf_file:
+        wcsobj = asdf_file.tree['wcs']
+        model.meta.wcs = wcsobj
 
     return model
 
 
 @pytest.fixture(scope='module')
 def grism_wcs():
-    asdf_file = asdf.open(get_pkg_data_filename(
-        "data/grism_wcs.asdf", package="jwst.wfss_contam.tests"))
-    wcsobj = asdf_file.tree['wcs']
-    return wcsobj
+    with asdf.open(get_pkg_data_filename("data/grism_wcs.asdf", package="jwst.wfss_contam.tests")) as asdf_file:
+        return asdf_file.tree['wcs']
 
 
 def test_background_subtract(direct_image_with_gradient):
@@ -96,15 +93,15 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
     yoffset = 1000
 
     xs, ys, areas, lams_out, counts_1, source_id = dispersed_pixel(
-                    x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                    sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
-                    oversample_factor=1, extrapolate_sed=False, xoffset=xoffset,
-                    yoffset=yoffset)
+        x0, y0, width, height, lams, flxs, order, wmin, wmax,
+        sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
+        oversample_factor=1, extrapolate_sed=False, xoffset=xoffset,
+        yoffset=yoffset)
 
     xs, ys, areas, lams_out, counts_3, source_id = dispersed_pixel(
-                x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
-                oversample_factor=3, extrapolate_sed=False, xoffset=xoffset,
-                yoffset=yoffset)
+        x0, y0, width, height, lams, flxs, order, wmin, wmax,
+        sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
+        oversample_factor=3, extrapolate_sed=False, xoffset=xoffset,
+        yoffset=yoffset)
 
     assert_allclose(np.sum(counts_1), np.sum(counts_3), rtol=1/sens_waves.size)
