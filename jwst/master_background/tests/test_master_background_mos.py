@@ -108,7 +108,7 @@ def test_master_background_mos(nirspec_msa_extracted2d):
     # RuntimeWarning: invalid value encountered in divide (slit.data /= conversion)
     # RuntimeWarning: overflow encountered in multiply (photom var_flat)
     # RuntimeWarning: overflow encountered in square (flat_field var_flat)
-    with np.errstate(divide="ignore", over="ignore"):
+    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
         result = MasterBackgroundMosStep.call(model)
 
     # Check that the master_background_mos step was run

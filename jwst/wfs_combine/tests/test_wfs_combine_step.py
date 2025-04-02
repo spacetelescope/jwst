@@ -1,5 +1,6 @@
-import pytest
+import warnings
 
+import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import AssignWcsStep
@@ -53,7 +54,9 @@ def wfs_association(tmp_path_factory):
     asn.data["program"] = "00024"
     asn.data["asn_type"] = "wfs-image2"
     asn.sequence = 1
-    asn_json, serialized = asn.dump(format="json")
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning, message="Input association file contains path information")
+        asn_json, serialized = asn.dump(format="json")
     path_asn = tmp_path / asn_json
     with open(path_asn, "w") as f:
         f.write(serialized)
@@ -74,7 +77,9 @@ def test_step_pos_shift_no_refine_no_flip(wfs_association):
         im2 = AssignWcsStep.call(im2, sip_approx=False)
         im2.save(path2)
 
-    wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=False, psf_size=50,
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning, message="Input association file contains path information")
+        wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=False, psf_size=50,
                               blur_size=10, n_size=2)
     assert wfs[0].meta.wcsinfo.ra_ref == 22.02351763251896
 
@@ -92,7 +97,9 @@ def test_step_neg_shift_no_refine_no_flip(wfs_association):
         im2 = AssignWcsStep.call(im2, sip_approx=False)
         im2.save(path2)
 
-    wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=False, psf_size=50,
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning, message="Input association file contains path information")
+        wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=False, psf_size=50,
                               blur_size=10, n_size=2)
     assert wfs[0].meta.wcsinfo.ra_ref == 22.02351763251896
 
@@ -110,7 +117,9 @@ def test_step_neg_order_no_refine_with_flip(wfs_association):
         im2 = AssignWcsStep.call(im2, sip_approx=False)
         im2.save(path2)
 
-    wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=True, psf_size=50,
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning, message="Input association file contains path information")
+        wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=True, psf_size=50,
                               blur_size=10, n_size=2)
     assert wfs[0].meta.wcsinfo.ra_ref == 22.02351763251896 + delta_pixel * nircam_pixel_size
 
@@ -128,6 +137,8 @@ def test_step_pos_order_no_refine_with_flip(wfs_association):
         im2 = AssignWcsStep.call(im2, sip_approx=False)
         im2.save(path2)
 
-    wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=True, psf_size=50,
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=UserWarning, message="Input association file contains path information")
+        wfs = WfsCombineStep.call(path_asn, do_refine=False, flip_dithers=True, psf_size=50,
                               blur_size=10, n_size=2)
     assert wfs[0].meta.wcsinfo.ra_ref == 22.02351763251896

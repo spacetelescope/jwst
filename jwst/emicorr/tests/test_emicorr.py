@@ -312,7 +312,7 @@ def test_emicorrstep_user_reffile(tmp_path, emicorr_model):
     emicorr_model.save(model_name)
 
     step = emicorr_step.EmiCorrStep()
-    with pytest.warns(np.RankWarning, match="Polyfit may be poorly conditioned"):
+    with pytest.warns(Warning, match="Polyfit may be poorly conditioned"):
         result = step.call(input_model, skip=False, user_supplied_reffile=model_name)
 
     # step completes but we expect no change for flat data
@@ -339,7 +339,7 @@ def test_apply_emicorr_noiseless(data_case, algorithm, emicorr_model, readpatt):
         "algorithm": algorithm,
     }
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=np.RankWarning, message="Polyfit may be poorly conditioned")
+        warnings.filterwarnings("ignore", message="Polyfit may be poorly conditioned")
         outmdl = emicorr.apply_emicorr(input_model.copy(), emicorr_model, **pars)
     assert isinstance(outmdl, RampModel)
 
