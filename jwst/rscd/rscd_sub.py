@@ -55,7 +55,7 @@ def correction_skip_groups(output, group_skip):
     output : RampModel
         Science data to be flagged
 
-    group_skip : Int
+    group_skip : int
         Number of groups to skip at the beginning of the ramp
 
     Returns
