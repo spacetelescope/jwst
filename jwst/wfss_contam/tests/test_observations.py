@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 import numpy as np
 import asdf
@@ -46,17 +48,23 @@ def segmentation_map(direct_image):
 
     # turn this into a jwst datamodel
     model = SegmentationMapModel(data=segm.data)
-    with asdf.open(get_pkg_data_filename("data/segmentation_wcs.asdf", package="jwst.wfss_contam.tests")) as asdf_file:
-        wcsobj = asdf_file.tree['wcs']
-        model.meta.wcs = wcsobj
+    with warnings.catch_warnings():
+        # asdf.exceptions.AsdfPackageVersionWarning in oldestdeps job
+        warnings.filterwarnings("ignore", message="File .* was created with extension URI .* which is not currently installed")
+        with asdf.open(get_pkg_data_filename("data/segmentation_wcs.asdf", package="jwst.wfss_contam.tests")) as asdf_file:
+            wcsobj = asdf_file.tree['wcs']
+            model.meta.wcs = wcsobj
 
     return model
 
 
 @pytest.fixture(scope='module')
 def grism_wcs():
-    with asdf.open(get_pkg_data_filename("data/grism_wcs.asdf", package="jwst.wfss_contam.tests")) as asdf_file:
-        return asdf_file.tree['wcs']
+    with warnings.catch_warnings():
+        # asdf.exceptions.AsdfPackageVersionWarning in oldestdeps job
+        warnings.filterwarnings("ignore", message="File .* was created with extension URI .* which is not currently installed")
+        with asdf.open(get_pkg_data_filename("data/grism_wcs.asdf", package="jwst.wfss_contam.tests")) as asdf_file:
+            return asdf_file.tree['wcs']
 
 
 def test_background_subtract(direct_image_with_gradient):
