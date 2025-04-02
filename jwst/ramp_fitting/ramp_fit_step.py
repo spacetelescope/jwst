@@ -2,12 +2,9 @@
 import numpy as np
 
 from stcal.ramp_fitting import ramp_fit
-from stcal.ramp_fitting import utils
 
 from stcal.ramp_fitting.likely_fit import LIKELY_MIN_NGROUPS
 
-from stcal.ramp_fitting.utils import LARGE_VARIANCE
-from stcal.ramp_fitting.utils import LARGE_VARIANCE_THRESHOLD
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
@@ -18,7 +15,6 @@ from ..stpipe import Step
 from ..lib import reffile_utils
 
 import logging
-import warnings
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -261,10 +257,6 @@ class RampFitStep(Step):
 
             if firstgroup is not None or lastgroup is not None:
                 set_groupdq(firstgroup, lastgroup, ngroups, result.groupdq, groupdqflags)
-
-            # Before the ramp_fit() call, copy the input model ("_W" for weighting)
-            # for later reconstruction of the fitting array tuples.
-            input_model_w = result.copy()
 
             # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
             # ramp fitting arrays for the ImageModel, the CubeModel, and the
