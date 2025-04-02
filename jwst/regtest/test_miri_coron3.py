@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -14,7 +16,10 @@ def run_pipeline(rtdata_module):
     args = [
         "calwebb_coron3", rtdata.input,
     ]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: Mean of empty slice
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
     return rtdata
 

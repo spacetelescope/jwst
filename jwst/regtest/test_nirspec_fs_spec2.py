@@ -204,6 +204,7 @@ def test_nirspec_fs_rateints_spec2(rtdata_module):
     args = ["calwebb_spec2", rtdata.input]
 
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "overflow encountered in divide")
-        warnings.filterwarnings("ignore", "invalid value encountered in multiply")
+        # RuntimeWarning: overflow encountered in XXX
+        # RuntimeWarning: invalid value encountered in multiply
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         Step.from_cmdline(args)

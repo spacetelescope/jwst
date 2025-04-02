@@ -66,8 +66,11 @@ def test_masterbkg_rerun(rtdata):
     """Test to ensure sequential runs of the step are consistent"""
     with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
-        corrected = mbs.run(data)
-        corrected_again = mbs.run(data)
+        with warnings.catch_warnings():
+            # Example: RuntimeWarning: divide by zero encountered in divide
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            corrected = mbs.run(data)
+            corrected_again = mbs.run(data)
 
     bad_slits = []
     for idx, slits in enumerate(zip(corrected.slits, corrected_again.slits)):
@@ -81,7 +84,10 @@ def test_masterbkg_corrpars(rtdata):
     """Test for correction parameters"""
     with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
-        corrected = mbs.run(data)
+        with warnings.catch_warnings():
+            # Example: RuntimeWarning: divide by zero encountered in divide
+            warnings.filterwarnings("ignore", category=RuntimeWarning)
+            corrected = mbs.run(data)
 
         mbs.use_correction_pars = True
         corrected_corrpars = mbs.run(data)
