@@ -17,7 +17,7 @@ being processed.  This step supports:
    - See :ref:`outlier-detection-imaging` for algorithm details
 * **Slit-like Spectroscopic modes**: 'MIR_LRS-FIXEDSLIT', 'NRS_FIXEDSLIT', 'NRS_MSASPEC'
    - See :ref:`outlier-detection-spec` for algorithm details
-* **Time-Series-Observation (TSO) modes**: 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NIS_SOSS', 'NRS_BRIGHTOBJ', 'NRC_TSIMAGE'
+* **Time-Series-Observation (TSO) modes**: 'MIR_LRS-SLITLESS', 'NRC_TSGRISM', 'NIS_SOSS', 'NRS_BRIGHTOBJ', 'NRC_TSIMAGE', as well as TSOs obtained with the MIRI imager
    - See :ref:`outlier-detection-tso` for algorithm details
 * **IFU Spectroscopic modes**: 'MIR_MRS', 'NRS_IFU'
    - See :ref:`outlier-detection-ifu` for algorithm details
