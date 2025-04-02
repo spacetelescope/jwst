@@ -1,11 +1,13 @@
-from astropy.io.fits.diff import FITSDiff
+import os
+import warnings
+
 import pytest
 import numpy as np
-import os
+from astropy.io.fits.diff import FITSDiff
 from gwcs import wcstools
+from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from stdatamodels.jwst import datamodels
 
 
 @pytest.fixture(scope="module")
@@ -24,7 +26,10 @@ def run_pipeline(rtdata_module):
             "--steps.outlier_detection.save_intermediate_results=true",
             "--steps.resample_spec.save_results=true",
             "--steps.extract_1d.save_results=true"]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: Mean of empty slice
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata

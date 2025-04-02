@@ -1,7 +1,10 @@
 """Regression tests for MIRI MRS modes"""
 import os
+import warnings
+
 import pytest
 from astropy.io.fits.diff import FITSDiff
+
 from jwst.stpipe import Step
 
 # Define artifactory source and truth
@@ -25,7 +28,10 @@ def run_spec3_ifushort(rtdata_module):
         '--steps.extract_1d.save_results=true',
     ]
 
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: All-NaN slice encountered
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
     return rtdata
 
 
@@ -45,7 +51,10 @@ def run_spec3_ifulong(rtdata_module):
         '--steps.extract_1d.save_results=true',
     ]
 
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: All-NaN slice encountered
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
     return rtdata
 
 
@@ -67,7 +76,10 @@ def run_spec3_ifushort_emsm(rtdata_module):
         '--steps.extract_1d.save_results=true',
     ]
 
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: All-NaN slice encountered
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
     return rtdata
 
 
@@ -91,7 +103,10 @@ def run_spec3_ifushort_extract1d(rtdata_module):
         '--steps.extract_1d.save_results=true',
     ]
 
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: All-NaN slice encountered
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
     return rtdata
 
 

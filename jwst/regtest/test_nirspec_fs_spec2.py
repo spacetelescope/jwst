@@ -57,7 +57,10 @@ def run_pipeline(rtdata_module, request):
             "--steps.srctype.save_results=true",
             "--steps.flat_field.save_results=true",
             "--steps.pathloss.save_results=true"]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: overflow encountered in square
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
     return rtdata
 
@@ -76,7 +79,10 @@ def run_pipeline_pixel_replace(rtdata_module):
     args = ["calwebb_spec2", rtdata.input,
             "--steps.pixel_replace.save_results=true",
             "--steps.pixel_replace.skip=false"]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: overflow encountered in square
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
     return rtdata
 
