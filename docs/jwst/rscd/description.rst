@@ -20,7 +20,7 @@ There are a number of non-ideal detector and readout effects that produce reset 
 nonlinearities at the start of an integration, non-linear ramps with increasing signal,
 latent images, and drifts in the slopes.
 
-THE MIRI readout electronics use field effect transistors (FETs) in their opertation,
+The MIRI readout electronics use field effect transistors (FETs) in their operation,
 which have been shown to be the source of the ramp offsets, the nonlinearities at the start
 of an integration, and the overall changes in the slopes. The FET acts as a switch to allow
 charge to build up and to also initialize (clear) the charge.
