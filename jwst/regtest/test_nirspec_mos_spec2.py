@@ -2,6 +2,7 @@ import warnings
 
 import pytest
 from astropy.io.fits.diff import FITSDiff
+from astropy.utils.exceptions import AstropyUserWarning
 
 from jwst.stpipe import Step
 
@@ -34,6 +35,7 @@ def run_pipeline(rtdata_module):
     with warnings.catch_warnings():
         # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
         warnings.filterwarnings("ignore", category=RuntimeWarning)
+        warnings.filterwarnings("ignore", category=AstropyUserWarning, match="Input data contains invalid values")
         Step.from_cmdline(args)
 
     return rtdata

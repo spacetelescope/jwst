@@ -45,7 +45,10 @@ def run_spec3_pipeline(run_spec2_pipeline, rtdata_module):
 
     # Run the calwebb_spec3 pipeline on the association
     args = ["calwebb_spec3", rtdata.input]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: overflow encountered in cast
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
     return rtdata
 

@@ -3,8 +3,9 @@ from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
 import tracemalloc
-import numpy as np
+import warnings
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
@@ -125,7 +126,9 @@ def run_image2(run_detector1, rtdata_module):
             "--steps.assign_wcs.save_results=True",
             "--steps.flat_field.save_results=True"
             ]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Failed to achieve requested SIP approximation accuracy")
+        Step.from_cmdline(args)
 
     # Grab rest of _rate files for the asn and run image2 pipeline on each to
     # produce fresh _cal files for the image3 pipeline.  We won't check these
