@@ -31,7 +31,8 @@ VERTICAL = 2
 def do_correction(input_model,
                   flat=None, fflat=None, sflat=None, dflat=None, user_supplied_flat=None,
                   inverse=False):
-    """Flat-field a JWST data model using a flat-field model
+    """
+    Flat-field a JWST data model using a flat-field model.
 
     Parameters
     ----------
@@ -55,7 +56,7 @@ def do_correction(input_model,
         If supplied, all other reference flats and flat creation are
         ignored in favor of the specified flat.
 
-    inverse : boolean
+    inverse : bool
         Invert the math operations used to apply the flat field.
 
     Returns
@@ -98,17 +99,18 @@ def do_correction(input_model,
 #
 
 def do_flat_field(output_model, flat_model, inverse=False):
-    """Apply flat-fielding for non-NIRSpec modes, updating the output model.
+    """
+    Apply flat-fielding for non-NIRSpec modes, updating the output model.
 
     Parameters
     ----------
     output_model : JWST data model
-        flat-fielded input science data model, modified in-place
+        Flat-fielded input science data model, modified in-place.
 
     flat_model : JWST data model
-        data model containing flat-field
+        Data model containing flat-field.
 
-    inverse : boolean
+    inverse : bool
         Invert the math operations used to apply the flat field.
     """
     if output_model.meta.instrument.name == "NIRSPEC":
@@ -145,10 +147,9 @@ def do_flat_field(output_model, flat_model, inverse=False):
 
 
 def apply_flat_field(science, flat, inverse=False):
-    """Flat field the data and error arrays.
+    """
+    Flat field the data and error arrays.
 
-    Extended summary
-    ----------------
     The science data and error arrays will be divided by the flat field.
     The data quality array will be updated based on bad pixels in flat
     field arrays. Applies portion of flat field corresponding to science
@@ -157,12 +158,12 @@ def apply_flat_field(science, flat, inverse=False):
     Parameters
     ----------
     science : JWST data model
-        input science data model
+        Input science data model.
 
     flat : JWST data model
-        flat field data model
+        Flat field data model.
 
-    inverse : boolean
+    inverse : bool
         Invert the math operations used to apply the flat field.
     """
 
@@ -205,23 +206,25 @@ def apply_flat_field(science, flat, inverse=False):
 
     # Now let's apply the correction to science data and error arrays.  Rely
     # on array broadcasting to handle the cubes
+    flat_data_squared = flat_data * flat_data
     if not inverse:
         science.data /= flat_data
+        science.var_flat = (science.data / flat_data * flat_err) ** 2
     else:
         science.data *= flat_data
+        science.var_flat = (science.data * flat_data / flat_err) ** 2
 
     # Update the variances using BASELINE algorithm.  For guider data, it has
     # not gone through ramp fitting so there is no Poisson noise or readnoise
     if not isinstance(science, datamodels.GuiderCalModel):
-        flat_data_squared = flat_data ** 2
-        science.var_poisson /= flat_data_squared
-        science.var_rnoise /= flat_data_squared
-        science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
+        if not inverse:
+            science.var_poisson /= flat_data_squared
+            science.var_rnoise /= flat_data_squared
+        else:
+            science.var_poisson *= flat_data_squared
+            science.var_rnoise *= flat_data_squared
         science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
     else:
-        flat_data_squared = flat_data ** 2
-        science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
-
         # Set the output ERR to be the combined input ERR plus flatfield ERR, summed in quadrature
         science.err = np.sqrt(science.err**2 + science.var_flat)
 
@@ -239,10 +242,14 @@ def apply_flat_field(science, flat, inverse=False):
 
 def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model,
                           user_supplied_flat=None, inverse=False):
-    """Apply flat-fielding for NIRSpec data, updating in-place.
+    """
+    Apply flat-fielding for NIRSpec data, updating in-place.
 
-    Calls one of 3 functions depending on whether the data is 1) NIRSpec IFU,
-    2) NIRSpec BRIGHTOBJ or 3) NIRSpec MSA or Fixed-slit.
+    Calls one of 3 functions depending on whether the data is:
+
+    1. NIRSpec IFU,
+    2. NIRSpec BRIGHTOBJ, or
+    3. NIRSpec MSA or Fixed-slit.
 
     Parameters
     ----------
@@ -262,12 +269,12 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
         If provided, override all other calculated or reference-file-retrieved
         flat information and use this data.
 
-    inverse : boolean
+    inverse : bool
         Invert the math operations used to apply the flat field.
 
     Returns
     -------
-    ~jwst.datamodels.MultiSlitModel or ~jwst.datamodels.ImageModel
+    result : `~jwst.datamodels.MultiSlitModel` or `~jwst.datamodels.ImageModel`
         The interpolated flat field(s).
     """
 
@@ -318,7 +325,8 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
 
 def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
                    user_supplied_flat=None, inverse=False):
-    """Apply flat-fielding for NIRSpec fixed slit and MSA data, in-place
+    """
+    Apply flat-fielding for NIRSpec fixed slit and MSA data, in-place.
 
     Parameters
     ----------
@@ -341,12 +349,12 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         If provided, override all other calculated or reference-file-retrieved
         flat information and use this data.
 
-    inverse : boolean
+    inverse : bool
         Invert the math operations used to apply the flat field.
 
     Returns
     -------
-    interpolated_flats: `~jwst.datamodels.MultiSlitModel`
+    interpolated_flats : `~jwst.datamodels.MultiSlitModel`
         The interpolated flat field, one for each slit.
     """
 
@@ -419,17 +427,20 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
             flat_slits.append(slit_flat)
 
         # Now let's apply the correction to science data and error arrays.  Rely
-        # on array broadcasting to handle the cubes
+        # on array broadcasting to handle the cubes.
+        # Also update the variances using BASELINE algorithm.
+        flat_data_squared = slit_flat.data * slit_flat.data
         if not inverse:
             slit.data /= slit_flat.data
+            slit.var_poisson /= flat_data_squared
+            slit.var_rnoise /= flat_data_squared
+            slit.var_flat = (slit.data / slit_flat.data * slit_flat.err) ** 2
         else:
             slit.data *= slit_flat.data
-
-        # Update the variances using BASELINE algorithm
-        flat_data_squared = slit_flat.data ** 2
-        slit.var_poisson /= flat_data_squared
-        slit.var_rnoise /= flat_data_squared
-        slit.var_flat = (slit.data / slit_flat.data * slit_flat.err) ** 2
+            slit.var_poisson *= flat_data_squared
+            slit.var_rnoise *= flat_data_squared
+            slit.var_flat = (slit.data * slit_flat.data / slit_flat.err) ** 2
+            #np.place(slit.var_flat, np.isinf(slit.var_flat), np.nan)  # REMOVE?
         slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
 
         # Combine the science and flat DQ arrays
@@ -458,35 +469,36 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
 
 def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
                       user_supplied_flat=None, inverse=False):
-    """Apply flat-fielding for NIRSpec BRIGHTOBJ data, in-place
+    """
+    Apply flat-fielding for NIRSpec BRIGHTOBJ data, in-place.
 
     Parameters
     ----------
     output_model : JWST data model
         CubeModel, modified (flat fielded) plane by plane, in-place.
 
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    f_flat_model :` ~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the fore optics.
 
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the spectrograph.
 
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the detector.
 
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
 
-    user_supplied_flat : ~jwst.datamodels.ImageModel or None
+    user_supplied_flat : `~jwst.datamodels.ImageModel` or None
         A pre-computed flat to use directly. If supplied,
-        all other inputs are ignored
+        all other inputs are ignored.
 
-    inverse : boolean
+    inverse : bool
         Invert the math operations used to apply the flat field.
 
     Returns
     -------
-    ~jwst.datamodels.ImageModel
+    result : `~jwst.datamodels.ImageModel`
         The interpolated flat field.
     """
 
@@ -498,17 +510,19 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
             output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
         )
 
+    # Update the variances and uncertainty array using BASELINE algorithm
+    flat_data_squared = interpolated_flat.data * interpolated_flat.data
     if not inverse:
         output_model.data /= interpolated_flat.data
+        output_model.var_poisson /= flat_data_squared
+        output_model.var_rnoise /= flat_data_squared
+        output_model.var_flat = (output_model.data / interpolated_flat.data * interpolated_flat.err) ** 2
     else:
         output_model.data *= interpolated_flat.data
+        output_model.var_poisson *= flat_data_squared
+        output_model.var_rnoise *= flat_data_squared
+        output_model.var_flat = (output_model.data * interpolated_flat.data / interpolated_flat.err) ** 2
     output_model.dq |= interpolated_flat.dq
-
-    # Update the variances and uncertainty array using BASELINE algorithm
-    flat_data_squared = interpolated_flat.data ** 2
-    output_model.var_poisson /= flat_data_squared
-    output_model.var_rnoise /= flat_data_squared
-    output_model.var_flat = (output_model.data / interpolated_flat.data * interpolated_flat.err) ** 2
     output_model.err = np.sqrt(
         output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
     )
@@ -523,35 +537,36 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
 
 def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
                 user_supplied_flat=None, inverse=False):
-    """Apply flat-fielding for NIRSpec IFU data, in-place
+    """
+    Apply flat-fielding for NIRSpec IFU data, in-place.
 
     Parameters
     ----------
     output_model : JWST data model
         Science data model, modified (flat fielded) in-place.
 
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : `~jwst.datamodels.NirspecFlatModel`, `~jwst.datamodels.NirspecQuadFlatModel`, or None
         Flat field for the fore optics.
 
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the spectrograph.
 
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the detector.
 
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
 
-    user_supplied_flat : ~jwst.datamodels.ImageModel or None
+    user_supplied_flat : `~jwst.datamodels.ImageModel` or None
         A pre-computed flat to use directly. If supplied,
         all other inputs are ignored
 
-    inverse : boolean
+    inverse : bool
         Invert the math operations used to apply the flat field.
 
     Returns
     -------
-    ~jwst.datamodels.ImageModel
+    result : `~jwst.datamodels.ImageModel`
         The interpolated flat field.
     """
 
@@ -567,17 +582,19 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
         )
 
     if any_updated:
+        # Update the variances and uncertainty array using BASELINE algorithm
+        flat_data_squared = flat * flat
         if not inverse:
             output_model.data /= flat
+            output_model.var_poisson /= flat_data_squared
+            output_model.var_rnoise /= flat_data_squared
+            output_model.var_flat = (output_model.data / flat * flat_err) ** 2
         else:
             output_model.data *= flat
+            output_model.var_poisson *= flat_data_squared
+            output_model.var_rnoise *= flat_data_squared
+            output_model.var_flat = (output_model.data * flat / flat_err) ** 2
         output_model.dq |= flat_dq
-
-        # Update the variances and uncertainty array using BASELINE algorithm
-        flat_data_squared = flat ** 2
-        output_model.var_poisson /= flat_data_squared
-        output_model.var_rnoise /= flat_data_squared
-        output_model.var_flat = (output_model.data / flat * flat_err) ** 2
         output_model.err = np.sqrt(
             output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
         )
@@ -600,7 +617,8 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
 def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
                       xstart, xstop, ystart, ystop,
                       exposure_type, dispaxis, slit_name, slit_nt=None):
-    """Extract and combine flat field components for NIRSpec
+    """
+    Extract and combine flat field components for NIRSpec.
 
     Parameters
     ----------
@@ -608,13 +626,13 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
         Wavelength at each pixel of the 2-D slit array.  This array has
         shape (ystop - ystart, xstop - xstart).
 
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : `~jwst.datamodels.NirspecFlatModel`, `~jwst.datamodels.NirspecQuadFlatModel`, or None
         Flat field for the fore optics.
 
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the spectrograph.
 
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the detector.
 
     xstart, ystart : int
@@ -624,7 +642,7 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
     xstop, ystop : int
         End of the slice containing the data for the current slit.  The
         start and stop values are Python slice notation, i.e. the region
-        to be extracted is [ystart:ystop, xstart:xstop].
+        to be extracted is ``[ystart:ystop, xstart:xstop]``.
 
     exposure_type : str
         The exposure type refers to fixed_slit, IFU, or using the
@@ -691,14 +709,15 @@ def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
 
 def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
                      slit_name, slit_nt):
-    """Extract the flat for the fore optics part.
+    """
+    Extract the flat for the fore optics part.
 
     Parameters
     ----------
     wl : 2-D ndarray
         Wavelength at each pixel of the 2-D slit array.
 
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : `~jwst.datamodels.NirspecFlatModel`, `~jwst.datamodels.NirspecQuadFlatModel`, or None
         Flat field for the fore optics.
 
     exposure_type : str
@@ -810,14 +829,15 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
 def spectrograph_flat(wl, s_flat_model,
                       xstart, xstop, ystart, ystop,
                       exposure_type, dispaxis, slit_name):
-    """Extract the flat for the spectrograph part.
+    """
+    Extract the flat for the spectrograph part.
 
     Parameters
     ----------
     wl : 2-D ndarray
         Wavelength at each pixel of the 2-D slit array.
 
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the spectrograph.
 
     xstart, ystart : int
@@ -827,7 +847,7 @@ def spectrograph_flat(wl, s_flat_model,
     xstop, ystop : int
         End of the slice containing the data for the current slit.  The
         start and stop values are Python slice notation, i.e. the region
-        to be extracted is [ystart:ystop, xstart:xstop].
+        to be extracted is ``[ystart:ystop, xstart:xstop]``.
 
     exposure_type : str
         The exposure type refers to fixed_slit, IFU, or using the
@@ -918,14 +938,15 @@ def spectrograph_flat(wl, s_flat_model,
 def detector_flat(wl, d_flat_model,
                   xstart, xstop, ystart, ystop,
                   exposure_type, dispaxis, slit_name):
-    """Extract the flat for the detector part.
+    """
+    Extract the flat for the detector part.
 
     Parameters
     ----------
     wl : 2-D ndarray
         Wavelength at each pixel of the 2-D slit array.
 
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the detector.
 
     xstart, ystart : int
@@ -935,7 +956,7 @@ def detector_flat(wl, d_flat_model,
     xstop, ystop : int
         End of the slice containing the data for the current slit.  The
         start and stop values are Python slice notation, i.e. the region
-        to be extracted is [ystart:ystop, xstart:xstop].
+        to be extracted is ``[ystart:ystop, xstart:xstop]``.
 
     exposure_type : str
         The exposure type refers to fixed_slit, IFU, or using the
@@ -1015,7 +1036,8 @@ def detector_flat(wl, d_flat_model,
 
 
 def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
-    """Combine non-None DQ arrays via bitwise_or.
+    """
+    Combine non-None DQ arrays via bitwise_or.
 
     Parameters
     ----------
@@ -1072,17 +1094,16 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
 
 
 def read_image_wl(flat_model, quadrant=None):
-    """Read wavelengths for the image planes.
+    """
+    Read wavelengths for the image planes.
 
-    Extended summary
-    ----------------
     This function should only be called if the SCI array in `flat_model`
     is 3-D.  The purpose is to get the wavelength for each of the planes
     in the SCI array.
 
     Parameters
     ----------
-    flat_model : ~jwst.datamodels.NirspecFlatModel or ~jwst.datamodels.NirspecQuadFlatModel
+    flat_model : `~jwst.datamodels.NirspecFlatModel` or `~jwst.datamodels.NirspecQuadFlatModel`
         Flat field for the current component.
 
     quadrant : int (0, 1, 2, or 3)
@@ -1125,7 +1146,8 @@ def read_image_wl(flat_model, quadrant=None):
 
 
 def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
-    """Read the table (the "fast" variation).
+    """
+    Read the table (the "fast" variation).
 
     Parameters
     ----------
@@ -1272,7 +1294,8 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
 
 
 def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat_error, dispaxis):
-    """Multiply the image by the tabular values.
+    """
+    Multiply the image by the tabular values.
 
     Parameters
     ----------
@@ -1392,7 +1415,8 @@ def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat
 
 
 def clean_wl(wl, dispaxis):
-    """Replace zeros and/or NaNs in the wavelength array.
+    """
+    Replace zeros and/or NaNs in the wavelength array.
 
     Parameters
     ----------
@@ -1405,7 +1429,7 @@ def clean_wl(wl, dispaxis):
     Returns
     -------
     wl_c : 2-D array
-        A copy of `wl`, but with zero and negative values replaced with
+        A copy of ``wl``, but with zero and negative values replaced with
         an average wavelength.  For each column (row) in the dispersion
         direction, the average to find a replacement value is taken along
         the cross-dispersion direction.
@@ -1456,7 +1480,8 @@ def clean_wl(wl, dispaxis):
 
 
 def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
-    """Interpolate within the 3-D flat field image to get a 2-D flat.
+    """
+    Interpolate within the 3-D flat field image to get a 2-D flat.
 
     Parameters
     ----------
@@ -1483,15 +1508,15 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     Returns
     -------
     flat_2d : ndarray, 2-D, float32
-        The flat field, interpolated over wavelength, same shape as `wl`.
+        The flat field, interpolated over wavelength, same shape as ``wl``.
         Divide the 2-D extracted spectrum by this array to correct for
         flat-field variations.
 
     flat_dq : ndarray, 2-D, uint32
-        The data quality array corresponding to `flat_2d`.
+        The data quality array corresponding to ``flat_2d``.
 
     flat_err : ndarray, 2-D, float32
-        The error array corresponding to `flat_2d`.
+        The error array corresponding to ``flat_2d``.
     """
 
     if len(image_flat.shape) < 3:
@@ -1592,20 +1617,21 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
 
 def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
                          dispaxis):
-    """Create the interpolated flat for NIRSpec IFU
+    """
+    Create the interpolated flat for NIRSpec IFU.
 
     Parameters
     ----------
     output_model : JWST data model
         Science data model, modified (flat fielded) in-place.
 
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : `~jwst.datamodels.NirspecFlatModel`, `~jwst.datamodels.NirspecQuadFlatModel`, or None
         Flat field for the fore optics.
 
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the spectrograph.
 
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the detector.
 
     dispaxis : int
@@ -1734,20 +1760,21 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
 
 def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
                                dispaxis):
-    """Create the interpolated flat for NIRSpec IFU
+    """
+    Create the interpolated flat for NIRSpec IFU.
 
     Parameters
     ----------
     output_model : JWST data model
         Science data model, modified (flat fielded) in-place.
 
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : `~jwst.datamodels.NirspecFlatModel`, `~jwst.datamodels.NirspecQuadFlatModel`, or None
         Flat field for the fore optics.
 
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the spectrograph.
 
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the detector.
 
     dispaxis : int
@@ -1849,20 +1876,21 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
 def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
                           dispaxis, exposure_type, slit_nt, subarray,
                           use_wavecorr):
-    """Create the interpolated flat for NIRSpec slit data
+    """
+    Create the interpolated flat for NIRSpec slit data.
 
     Parameters
     ----------
     slit : SlitModel
-        A slit to process
+        A slit to process.
 
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : `~jwst.datamodels.NirspecFlatModel`, `~jwst.datamodels.NirspecQuadFlatModel`, or None
         Flat field for the fore optics.
 
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the spectrograph.
 
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
         Flat field for the detector.
 
     dispaxis : int
@@ -1876,16 +1904,16 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
         the indices of the current shutter in the Y and X directions.
 
     subarray : DataModel.meta.subarray
-        The subarray specification
+        The subarray specification.
 
-    use_wavecorr : boolean
+    use_wavecorr : bool
         Flag indicating whether or not to use the corrected wavelengths
         provided (upstream) by the wavecorr step.
 
     Returns
     -------
     flat : SlitModel or None
-        The calculated flat. If None, no flat field could be determined
+        The calculated flat. If None, no flat field could be determined.
     """
     # Create flat and flat dq arrays with default values
     flat_2d = np.ones_like(slit.data)

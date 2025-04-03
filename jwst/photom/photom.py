@@ -80,40 +80,33 @@ def find_row(fits_table, match_fields):
     return row[0]
 
 
-class DataSet():
+class DataSet:
     """
-    Input dataset to which the photom information will be applied
+    Input dataset to which the photom information will be applied.
+
+    Store vital params, such as
+    instrument, detector, filter, pupil, and exposure type.
 
     Parameters
     ----------
+    model : `~jwst.datamodels.JwstDataModel`
+        Input Data Model object.
 
+    inverse : bool
+        Invert the math operations used to apply the corrections.
+
+    source_type : str or None
+        Force processing using the specified source type.
+
+    mrs_time_correction : bool
+        Switch to apply/not apply the MRS time correction.
+
+    correction_pars : dict
+        Correction meta-data from a previous run.
     """
 
     def __init__(self, model, inverse=False, source_type=None, mrs_time_correction=False,
                  correction_pars=None):
-        """
-        Short Summary
-        -------------
-        Store vital params in DataSet object, such as
-        instrument, detector, filter, pupil, and exposure type.
-
-        Parameters
-        ----------
-        model : `~jwst.datamodels.JwstDataModel`
-            input Data Model object
-
-        inverse : boolean
-            Invert the math operations used to apply the corrections.
-
-        source_type : str or None
-            Force processing using the specified source type.
-
-        mrs_time_correction: bool
-            Switch to apply/not apply the mrs time correction
-
-        correction_pars : dict
-            Correction meta-data from a previous run.
-        """
         # Setup attributes necessary for calculation.
         if correction_pars:
             self.update(correction_pars['dataset'])
@@ -189,7 +182,8 @@ class DataSet():
 
     @property
     def attributes(self):
-        """Retrieve DataSet attributes
+        """
+        Retrieve DataSet attributes.
 
         Returns
         -------
@@ -206,20 +200,19 @@ class DataSet():
         return attributes
 
     def update(self, attributes):
-        """Set DataSet attributes
+        """
+        Set DataSet attributes.
 
         Parameters
         ----------
         attributes : dict
-            The attributes to be set on DataSet
+            The attributes to be set on DataSet.
         """
         for key, value in attributes.items():
             setattr(self, key, value)
 
     def calc_nirspec(self, ftab, area_fname):
         """
-        Extended Summary
-        -------------
         For the NIRSPEC instrument, reference file matching is based on
         FILTER and GRATING, as well as SLIT name for the fixed-slits mode.
         The routine will find the corresponding information in the reference
@@ -230,14 +223,10 @@ class DataSet():
         Parameters
         ----------
         ftab : `~jwst.datamodels.NrsFsPhotomModel` or `~jwst.datamodels.NrsMosPhotomModel`
-            NIRSpec photom reference file data model
+            NIRSpec photom reference file data model.
 
         area_fname : str
-            Pixel area map reference file name
-
-        Returns
-        -------
-
+            Pixel area map reference file name.
         """
 
         # Normal fixed-slit exposures get handled as a MultiSlitModel
@@ -351,15 +340,23 @@ class DataSet():
                 self.input.dq = np.bitwise_or(self.input.dq, dqmap)
 
                 # Multiply the science data and uncertainty arrays by the conversion factors
+                sens2d_squared = sens2d * sens2d
                 if not self.inverse:
                     self.input.data *= sens2d
+                    self.input.err *= sens2d
+                    self.input.var_poisson *= sens2d_squared
+                    self.input.var_rnoise *= sens2d_squared
                 else:
                     self.input.data /= sens2d
-                self.input.err *= sens2d
-                self.input.var_poisson *= sens2d**2
-                self.input.var_rnoise *= sens2d**2
+                    self.input.err /= sens2d
+                    self.input.var_poisson /= sens2d_squared
+                    self.input.var_rnoise /= sens2d_squared
+
                 if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                    self.input.var_flat *= sens2d**2
+                    if not self.inverse:
+                        self.input.var_flat *= sens2d_squared
+                    else:
+                        self.input.var_flat /= sens2d_squared
 
                 # Update BUNIT values for the science data and err
                 if not self.inverse:
@@ -377,8 +374,6 @@ class DataSet():
 
     def calc_niriss(self, ftab):
         """
-        Extended Summary
-        -------------
         For NIRISS matching is based on FILTER and PUPIL, as well as ORDER
         for spectroscopic modes.
         There may be multiple entries for a given FILTER+PUPIL combination,
@@ -393,13 +388,8 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.NisSossPhotomModel` or
-               `~jwst.datamodels.NisWfssPhotomModel` or
-               `~jwst.datamodels.NisImgPhotomModel`
-            NIRISS photom reference file data model
-
-        Returns
-        -------
+        ftab : `~jwst.datamodels.NisSossPhotomModel` or `~jwst.datamodels.NisWfssPhotomModel` or `~jwst.datamodels.NisImgPhotomModel`
+            NIRISS photom reference file data model.
         """
 
         # Handle MultiSlit models separately, which are used for NIRISS WFSS
@@ -457,9 +447,7 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.MirImgPhotomModel` or
-               `~jwst.datamodels.MirMrsPhotomModel` or
-               `~jwst.datamodels.MirLrsPhotomModel`
+        ftab : `~jwst.datamodels.MirImgPhotomModel` or `~jwst.datamodels.MirMrsPhotomModel` or `~jwst.datamodels.MirLrsPhotomModel`
             MIRI photom reference file data model.
 
         """
@@ -521,15 +509,26 @@ class DataSet():
 
             # Multiply the science data and uncertainty arrays by the 2D
             # sensitivity factors
+            sens2d_squared = sens2d * sens2d
             if not self.inverse:
                 self.input.data *= sens2d
+                self.input.err *= sens2d
+                self.input.var_poisson *= sens2d_squared
+                self.input.var_rnoise *= sens2d_squared
             else:
                 self.input.data /= sens2d
-            self.input.err *= sens2d
-            self.input.var_poisson *= sens2d**2
-            self.input.var_rnoise *= sens2d**2
+                self.input.err /= sens2d
+                self.input.var_poisson /= sens2d_squared
+                self.input.var_rnoise /= sens2d_squared
+
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                self.input.var_flat *= sens2d**2
+                process_var_flat = True
+                if not self.inverse:
+                    self.input.var_flat *= sens2d_squared
+                else:
+                    self.input.var_flat /= sens2d_squared
+            else:
+                process_var_flat = False
 
             # Update the science dq
             self.input.dq = np.bitwise_or(self.input.dq, ftab.dq)
@@ -554,7 +553,7 @@ class DataSet():
                 self.input.err /= correction
                 self.input.var_poisson *= inv_correction_sq
                 self.input.var_rnoise *= inv_correction_sq
-                if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
+                if process_var_flat:
                     self.input.var_flat *= inv_correction_sq
             else:
                 log.info("Not applying MRS IFU time dependent correction.")
@@ -578,8 +577,6 @@ class DataSet():
 
     def calc_nircam(self, ftab):
         """
-        Extended Summary
-        -------------
         For NIRCAM, matching is based on FILTER and PUPIL.
         The routine will find the corresponding information in the reference
         file, apply the conversion factors, and store the scalar conversion
@@ -590,12 +587,8 @@ class DataSet():
 
         Parameters
         ----------
-        ftab : `~jwst.datamodels.NrcImgPhotomModel` or
-               `~jwst.datamodels.NrcWfssPhotomModel`
-            NIRCam photom reference file data model
-
-        Returns
-        -------
+        ftab : `~jwst.datamodels.NrcImgPhotomModel` or `~jwst.datamodels.NrcWfssPhotomModel`
+            NIRCam photom reference file data model.
         """
         # Handle WFSS data separately from regular imaging
         if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS':
@@ -626,8 +619,6 @@ class DataSet():
 
     def calc_fgs(self, ftab):
         """
-        Extended Summary
-        -------------
         For FGS, there is no matching required, because the instrument does
         not contain any filters or pupil wheel elements. The only mode is CLEAR.
 
@@ -638,37 +629,34 @@ class DataSet():
         Parameters
         ----------
         ftab : `~jwst.datamodels.FgsImgPhotomModel`
-            FGS photom reference file data model
-
-        Returns
-        -------
+            FGS photom reference file data model.
         """
 
         # Read the first (and only) row in the reference file
         self.photom_io(ftab.phot_table[0])
 
     def calc_nrs_ifu_sens2d(self, area_data):
-        """Create the 2-D wavelength and pixel area arrays needed for
+        """
+        Create the 2-D wavelength and pixel area arrays needed for
         constructing a NIRSpec IFU sensitivity map.
 
         Parameters
         ----------
         area_data : 1-D ndarray
-            Array of pixel area values for the IFU slices
+            Array of pixel area values for the IFU slices.
 
         Returns
         -------
         wave2d : 2-D ndarray
-            Array of wavelengths per pixel
+            Array of wavelengths per pixel.
 
         area2d : 2-D ndarray
-            Array of pixel area values
+            Array of pixel area values.
 
         dqmap : 2-D ndarray
-            Array of DQ flags per pixel
+            Array of DQ flags per pixel.
         """
 
-        import numpy as np
         from .. assign_wcs import nirspec       # for NIRSpec IFU data
         import gwcs
 
@@ -732,22 +720,16 @@ class DataSet():
 
     def photom_io(self, tabdata, order=None):
         """
-        Short Summary
-        -------------
         Combine photometric scalar and wavelength-dependent conversion factors
         and apply to the science dataset.
 
         Parameters
         ----------
         tabdata : FITS record
-            Single row of data from reference table
+            Single row of data from reference table.
 
         order : int
-            Spectral order number
-
-        Returns
-        -------
-
+            Spectral order number.
         """
         # First get the scalar conversion factor.
         # For most modes, the scalar conversion factor in the photom reference
@@ -915,17 +897,28 @@ class DataSet():
         # Apply the conversion to the data and all uncertainty arrays
         if isinstance(self.input, datamodels.MultiSlitModel):
             slit = self.input.slits[self.slitnum]
+            conversion_squared = conversion * conversion
             if not self.inverse:
                 slit.data *= conversion
+                slit.err *= conversion
             else:
                 slit.data /= conversion
-            slit.err *= conversion
+                slit.err /= conversion
             if slit.var_poisson is not None and np.size(slit.var_poisson) > 0:
-                slit.var_poisson *= conversion**2
+                if not self.inverse:
+                    slit.var_poisson *= conversion_squared
+                else:
+                    slit.var_poisson /= conversion_squared
             if slit.var_rnoise is not None and np.size(slit.var_rnoise) > 0:
-                slit.var_rnoise *= conversion**2
+                if not self.inverse:
+                    slit.var_rnoise *= conversion_squared
+                else:
+                    slit.var_rnoise /= conversion_squared
             if slit.var_flat is not None and np.size(slit.var_flat) > 0:
-                slit.var_flat *= conversion**2
+                if not self.inverse:
+                    slit.var_flat *= conversion_squared
+                else:
+                    slit.var_flat /= conversion_squared
             if no_cal is not None:
                 slit.dq[..., no_cal] = np.bitwise_or(slit.dq[..., no_cal],
                                                      dqflags.pixel['DO_NOT_USE'])
@@ -933,17 +926,13 @@ class DataSet():
                 if unit_is_surface_brightness:
                     slit.meta.bunit_data = 'MJy/sr'
                     slit.meta.bunit_err = 'MJy/sr'
-                    # Setting top model to None so they will not be written to FITs File.
-                    # Information on the units should only come from the individual slits.
-                    self.input.meta.bunit_data = None
-                    self.input.meta.bunit_err = None
                 else:
                     slit.meta.bunit_data = 'MJy'
                     slit.meta.bunit_err = 'MJy'
-                    # Setting top model to None so they will not be written to FITs File.
-                    # Information on the units should only come from the individual slits.
-                    self.input.meta.bunit_data = None
-                    self.input.meta.bunit_err = None
+                # Setting top model to None so they will not be written to FITs File.
+                # Information on the units should only come from the individual slits.
+                self.input.meta.bunit_data = None
+                self.input.meta.bunit_err = None
             else:
                 self.input.meta.bunit_data = 'DN/s'
                 self.input.meta.bunit_err = 'DN/s'
@@ -978,17 +967,29 @@ class DataSet():
             spec.spec_table.columns['BKGD_VAR_FLAT'].unit = 'MJy^2'
 
         else:
+            conversion_squared = conversion * conversion
             if not self.inverse:
                 self.input.data *= conversion
+                self.input.err *= conversion
+
             else:
                 self.input.data /= conversion
-            self.input.err *= conversion
+                self.input.err /= conversion
             if self.input.var_poisson is not None and np.size(self.input.var_poisson) > 0:
-                self.input.var_poisson *= conversion**2
+                if not self.inverse:
+                    self.input.var_poisson *= conversion_squared
+                else:
+                    self.input.var_poisson /= conversion_squared
             if self.input.var_rnoise is not None and np.size(self.input.var_rnoise) > 0:
-                self.input.var_rnoise *= conversion**2
+                if not self.inverse:
+                    self.input.var_rnoise *= conversion_squared
+                else:
+                    self.input.var_rnoise /= conversion_squared
             if self.input.var_flat is not None and np.size(self.input.var_flat) > 0:
-                self.input.var_flat *= conversion**2
+                if not self.inverse:
+                    self.input.var_flat *= conversion_squared
+                else:
+                    self.input.var_flat /= conversion_squared
             if no_cal is not None:
                 self.input.dq[..., no_cal] = np.bitwise_or(self.input.dq[..., no_cal],
                                                            dqflags.pixel['DO_NOT_USE'])
@@ -1007,8 +1008,6 @@ class DataSet():
             # Make sure output model has consistent NaN and DO_NOT_USE values
             match_nans_and_flags(self.input)
 
-        return
-
     def create_2d_conversion(self, model, exptype, conversion, waves, relresps,
                              order, use_wavecorr=None, include_dispersion=False):
         """
@@ -1018,18 +1017,18 @@ class DataSet():
         Parameters
         ----------
         model : `~jwst.datamodels.JwstDataModel`
-            Input data model containing the necessary wavelength information
+            Input data model containing the necessary wavelength information.
         exptype : str
-            Exposure type of the input
+            Exposure type of the input.
         conversion : float
-            Initial scalar photometric conversion value
+            Initial scalar photometric conversion value.
         waves : float
             1D wavelength vector on which relative response values are
-            sampled
+            sampled.
         relresps : float
-            1D photometric response values, as a function of waves
+            1D photometric response values, as a function of waves.
         order : int
-            Spectral order number
+            Spectral order number.
         use_wavecorr : bool or None
             Flag indicating whether or not to use corrected wavelengths.
             Typically only used for NIRSpec fixed-slit data.
@@ -1040,9 +1039,9 @@ class DataSet():
         Returns
         -------
         conversion : float
-            2D array of computed photometric conversion values
+            2D array of computed photometric conversion values.
         no_cal : int
-            2D mask indicating where no conversion is available
+            2D mask indicating where no conversion is available.
         """
 
         # Get the 2D wavelength array corresponding to the input
@@ -1072,20 +1071,20 @@ class DataSet():
         return conversion, no_cal
 
     def get_dispersion_array(self, wavelength_array, dispaxis):
-        """Create an array of dispersion values from the wavelength array
+        """
+        Create an array of dispersion values from the wavelength array.
 
         Parameters
         ----------
         wavelength_array : float
-            2-d array of wavelength values, assumed to be in microns
-        dispaxis : integer
-            Direction along which light is dispersed: 1 = along rows, 2 = along columns
+            2-d array of wavelength values, assumed to be in microns.
+        dispaxis : int
+            Direction along which light is dispersed: 1 = along rows, 2 = along columns.
 
         Returns
         -------
         dispersion_array : float
-            2-d array of dispersion values, in microns/pixel
-
+            2-d array of dispersion values, in microns/pixel.
         """
         nrows, ncols = wavelength_array.shape
         dispersion_array = np.zeros(wavelength_array.shape)
@@ -1100,27 +1099,28 @@ class DataSet():
         return dispersion_array
 
     def create_1d_conversion(self, model, conversion, waves, relresps):
-        """Create a 1D array of photometric conversion values based on
+        """
+        Create a 1D array of photometric conversion values based on
         wavelength array of input spectrum and response as a function of wavelength.
 
         Parameters
         ----------
         model : `~jwst.datamodels.JwstDataModel`
-            Input data model containing the necessary wavelength information
+            Input data model containing the necessary wavelength information.
         conversion : float
-            Initial scalar photometric conversion value
+            Initial scalar photometric conversion value.
         waves : float
             1D wavelength vector on which relative response values are
-            sampled
+            sampled.
         relresps : float
-            1D photometric response values, as a function of waves
+            1D photometric response values, as a function of waves.
 
         Returns
         -------
         conversion : float
-            1D array of computed photometric conversion values
+            1D array of computed photometric conversion values.
         no_cal : int
-            1D mask indicating where no conversion is available
+            1D mask indicating where no conversion is available.
         """
 
         # Get the 2D wavelength array corresponding to the input
@@ -1158,15 +1158,13 @@ class DataSet():
 
     def pixarea_from_ftab(self, ftab):
         """
-        Short Summary
-        -------------
         Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
         primary header of the photom reference file.
 
         Parameters
         ----------
         ftab : `~jwst.datamodels.JwstDataModel`
-            A photom reference file data model
+            A photom reference file data model.
         """
         area_ster, area_a2 = None, None
         area_ster = ftab.meta.photometry.pixelarea_steradians
@@ -1182,8 +1180,6 @@ class DataSet():
 
     def save_area_info(self, ftab, area_fname):
         """
-        Short Summary
-        -------------
         Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
         primary header of the pixel area reference file or (for NIRSpec data)
         from the PIXAREA column in the selected row of the AREA table in the
@@ -1196,10 +1192,10 @@ class DataSet():
         Parameters
         ----------
         ftab : `~jwst.datamodels.JwstDataModel`
-            A photom reference file data model
+            A photom reference file data model.
 
         area_fname : str
-            Pixel area reference file name
+            Pixel area reference file name.
         """
 
         use_pixarea_rfile =  False
@@ -1270,8 +1266,6 @@ class DataSet():
 
     def save_area_nirspec(self, pix_area):
         """
-        Short Summary
-        -------------
         Read the pixel area value from the PIXAREA column in the selected row
         of the AREA table in the area reference file.
         Use that information to populate the pixel area keywords in the output
@@ -1280,7 +1274,7 @@ class DataSet():
         Parameters
         ----------
         pix_area : `~jwst.datamodels.JwstDataModel`
-            Pixel area reference file data model
+            Pixel area reference file data model.
         """
 
         exp_type = self.exptype
@@ -1361,8 +1355,6 @@ class DataSet():
 
     def apply_photom(self, photom_fname, area_fname):
         """
-        Short Summary
-        -------------
         Open the reference file, retrieve the conversion factors from the reference
         file that are appropriate to the instrument mode. This can consist of both
         a scalar factor and an array of wavelength-dependent factors. The combination
@@ -1374,46 +1366,42 @@ class DataSet():
         Parameters
         ----------
         photom_fname : str
-            photom reference file name
+            photom reference file name.
 
-        area_fname: str
-            pixel area map reference file name
+        area_fname : str
+            Pixel area map reference file name.
 
         Returns
         -------
         output_model : ~jwst.datamodels.JwstDataModel
-            output data model with the flux calibrations applied
-
+            Output data model with the flux calibrations applied.
         """
 
-        ftab = datamodels.open(photom_fname)
+        with datamodels.open(photom_fname) as ftab:
 
-        # Load the pixel area reference file, if it exists, and attach the
-        # reference data to the science model
-        # SOSS data are in a MultiSpecModel, which will not allow for
-        # saving the area info.
-        if self.exptype != 'NIS_SOSS':
-            self.save_area_info(ftab, area_fname)
+            # Load the pixel area reference file, if it exists, and attach the
+            # reference data to the science model
+            # SOSS data are in a MultiSpecModel, which will not allow for
+            # saving the area info.
+            if self.exptype != 'NIS_SOSS':
+                self.save_area_info(ftab, area_fname)
 
-        if self.instrument == 'NIRISS':
-            self.calc_niriss(ftab)
+            if self.instrument == 'NIRISS':
+                self.calc_niriss(ftab)
 
-        elif self.instrument == 'NIRSPEC':
-            self.calc_nirspec(ftab, area_fname)
+            elif self.instrument == 'NIRSPEC':
+                self.calc_nirspec(ftab, area_fname)
 
-        elif self.instrument == 'NIRCAM':
-            self.calc_nircam(ftab)
+            elif self.instrument == 'NIRCAM':
+                self.calc_nircam(ftab)
 
-        elif self.instrument == 'MIRI':
-            self.calc_miri(ftab)
+            elif self.instrument == 'MIRI':
+                self.calc_miri(ftab)
 
-        elif self.instrument == 'FGS':
-            self.calc_fgs(ftab)
+            elif self.instrument == 'FGS':
+                self.calc_fgs(ftab)
 
-        else:
-            raise RuntimeError('Instrument {} is not recognized'
-                               .format(self.instrument))
-
-        ftab.close()  # Close the photom reference table
+            else:
+                raise RuntimeError(f'Instrument {self.instrument} is not recognized')
 
         return self.input
