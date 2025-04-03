@@ -245,8 +245,6 @@ class RampFitStep(Step):
             log.info(f"Using algorithm = {self.algorithm}")
             log.info(f"Using weighting = {self.weighting}")
 
-            buffsize = ramp_fit.BUFSIZE
-
             int_times = result.int_times
 
             # Set the DO_NOT_USE bit in the groupdq values for groups before firstgroup
