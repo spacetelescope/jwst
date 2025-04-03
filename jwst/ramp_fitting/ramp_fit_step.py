@@ -263,7 +263,6 @@ class RampFitStep(Step):
             # RampFitOutputModel.
             image_info, integ_info, opt_info = ramp_fit.ramp_fit(
                 result,
-                buffsize,
                 self.save_opt,
                 readnoise_2d,
                 gain_2d,
