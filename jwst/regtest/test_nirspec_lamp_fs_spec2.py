@@ -1,7 +1,7 @@
 import os
+import warnings
 
 import pytest
-
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.lib.suffix import replace_suffix
@@ -24,7 +24,10 @@ def run_pipeline(rtdata_module):
             "--steps.assign_wcs.save_results=true",
             "--steps.extract_2d.save_results=true",
             "--steps.flat_field.save_results=true",]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: invalid value encountered in sqrt
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
     return rtdata
 

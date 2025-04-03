@@ -79,6 +79,7 @@ def run_spec3_ifushort_emsm(rtdata_module):
     with warnings.catch_warnings():
         # Example: RuntimeWarning: All-NaN slice encountered
         warnings.filterwarnings("ignore", category=RuntimeWarning)
+        warnings.filterwarnings("ignore", message="Sources were found, but none pass")
         Step.from_cmdline(args)
     return rtdata
 

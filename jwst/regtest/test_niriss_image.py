@@ -184,7 +184,9 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     for model in mc:
         assert model.meta.cal_step.tweakreg != 'SKIPPED'
 
-    result = TweakRegStep.call(mc)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="No sources were found")
+        result = TweakRegStep.call(mc)
     with result:
         for model in result:
             assert model.meta.cal_step.tweakreg == 'SKIPPED'
