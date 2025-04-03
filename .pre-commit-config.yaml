@@ -38,7 +38,6 @@ repos:
         exclude: |
           (?x)^(
             jwst/associations/.* |
-            jwst/background/.* |
             jwst/coron/.* |
             jwst/cube_build/.* |
             jwst/cube_skymatch/.* |
