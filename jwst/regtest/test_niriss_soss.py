@@ -5,6 +5,9 @@ from jwst.stpipe import Step
 from stdatamodels.jwst.datamodels import SossWaveGridModel
 import numpy as np
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
 def run_tso_spec2(rtdata_module):
@@ -43,7 +46,7 @@ def run_tso_spec3(rtdata_module, run_tso_spec2):
 
 
 @pytest.fixture(scope="module")
-def run_atoca_extras(rtdata_module):
+def run_atoca_extras(rtdata_module, request_tracker):
     """Run stage 2 pipeline on NIRISS SOSS data using enhanced modes via parameter settings."""
     rtdata = rtdata_module
 
@@ -56,10 +59,14 @@ def run_atoca_extras(rtdata_module):
             "--steps.extract_1d.soss_bad_pix=model",
             "--steps.extract_1d.soss_rtol=1.e-3",
             ]
-    Step.from_cmdline(args)
+    with request_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources(log_tracked_resources, run_atoca_extras):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["calints", "flat_field", "srctype", "x1dints"])
 def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
@@ -74,7 +81,6 @@ def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwarg
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_default_kwargs):
     """Regression test of tso-spec3 pipeline outlier_detection results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
@@ -88,7 +94,6 @@ def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_defau
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of tso-spec3 pipeline extract_1d results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
@@ -101,7 +106,6 @@ def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_defau
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_niriss_soss_stage3_whtlt(run_tso_spec3, rtdata_module, diff_astropy_tables):
     """Regression test of tso-spec3 pipeline white_light results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
@@ -113,7 +117,6 @@ def test_niriss_soss_stage3_whtlt(run_tso_spec3, rtdata_module, diff_astropy_tab
     assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["calints", "x1dints", "AtocaSpectra", "SossExtractModel"])
 def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kwargs, suffix):
     """Regression test of ATOCA enhanced algorithm performed on NIRISS SOSS data."""
@@ -144,7 +147,6 @@ def run_extract1d_null_order2(rtdata_module):
     Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
 def test_extract1d_null_order2(rtdata_module, run_extract1d_null_order2, fitsdiff_default_kwargs):
 
     rtdata = rtdata_module
@@ -186,7 +188,6 @@ def run_spec2_substrip96(rtdata_module):
     Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["calints", "x1dints"])
 def test_spec2_substrip96(rtdata_module, run_spec2_substrip96, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-spec2 pipeline performed on NIRISS SOSS data."""
