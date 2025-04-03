@@ -3,7 +3,7 @@
 # It also determines if the input data is a single science exposure, an association table, a
 # single datamodel or several data models stored in a ModelContainer.
 
-from pathlib import Path
+from pathlib import PurePath
 from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer
 import logging
@@ -87,7 +87,8 @@ class DataTypes:
 
         if output_file is not None:
             # basename, ext = os.path.splitext(os.path.basename(output_file))
-            basename = Path.name(output_file)
+            f = PurePath(output_file)
+            basename = f.name
             self.output_name = basename
 
         if output_dir is not None:
