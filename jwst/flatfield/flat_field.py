@@ -207,22 +207,21 @@ def apply_flat_field(science, flat, inverse=False):
     # Now let's apply the correction to science data and error arrays.  Rely
     # on array broadcasting to handle the cubes
     if not inverse:
-        science.data /= flat_data
+        flat_data_fac = 1 / flat_data
+        flat_data_sq_fac = 1 / (flat_data * flat_data)
     else:
-        science.data *= flat_data
+        flat_data_fac = flat_data
+        flat_data_sq_fac = flat_data * flat_data
+    science.data *= flat_data_fac
+    science.var_flat = (science.data ** 2) * flat_data_sq_fac * (flat_err ** 2)
 
     # Update the variances using BASELINE algorithm.  For guider data, it has
     # not gone through ramp fitting so there is no Poisson noise or readnoise
     if not isinstance(science, datamodels.GuiderCalModel):
-        flat_data_squared = flat_data ** 2
-        science.var_poisson /= flat_data_squared
-        science.var_rnoise /= flat_data_squared
-        science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
+        science.var_poisson *= flat_data_sq_fac
+        science.var_rnoise *= flat_data_sq_fac
         science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
     else:
-        flat_data_squared = flat_data ** 2
-        science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
-
         # Set the output ERR to be the combined input ERR plus flatfield ERR, summed in quadrature
         science.err = np.sqrt(science.err**2 + science.var_flat)
 
@@ -427,15 +426,17 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         # Now let's apply the correction to science data and error arrays.  Rely
         # on array broadcasting to handle the cubes
         if not inverse:
-            slit.data /= slit_flat.data
+            slit_flat_fac = 1 / slit_flat.data
+            slit_flat_sq_fac = 1 / (slit_flat.data * slit_flat.data)
         else:
-            slit.data *= slit_flat.data
+            slit_flat_fac = slit_flat.data
+            slit_flat_sq_fac = slit_flat.data * slit_flat.data
+        slit.data *= slit_flat_fac
 
         # Update the variances using BASELINE algorithm
-        flat_data_squared = slit_flat.data ** 2
-        slit.var_poisson /= flat_data_squared
-        slit.var_rnoise /= flat_data_squared
-        slit.var_flat = (slit.data / slit_flat.data * slit_flat.err) ** 2
+        slit.var_poisson *= slit_flat_sq_fac
+        slit.var_rnoise *= slit_flat_sq_fac
+        slit.var_flat = (slit.data * slit_flat_fac * slit_flat.err) ** 2
         slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
 
         # Combine the science and flat DQ arrays
@@ -506,16 +507,18 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
         )
 
     if not inverse:
-        output_model.data /= interpolated_flat.data
+        interp_flat_fac = 1 / interpolated_flat.data
+        interp_flat_sq_fac = 1 / (interpolated_flat.data * interpolated_flat.data)
     else:
-        output_model.data *= interpolated_flat.data
+        interp_flat_fac = interpolated_flat.data
+        interp_flat_sq_fac = interpolated_flat.data * interpolated_flat.data
+    output_model.data *= interp_flat_fac
     output_model.dq |= interpolated_flat.dq
 
     # Update the variances and uncertainty array using BASELINE algorithm
-    flat_data_squared = interpolated_flat.data ** 2
-    output_model.var_poisson /= flat_data_squared
-    output_model.var_rnoise /= flat_data_squared
-    output_model.var_flat = (output_model.data / interpolated_flat.data * interpolated_flat.err) ** 2
+    output_model.var_poisson *= interp_flat_sq_fac
+    output_model.var_rnoise *= interp_flat_sq_fac
+    output_model.var_flat = (output_model.data * interp_flat_fac * interpolated_flat.err) ** 2
     output_model.err = np.sqrt(
         output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
     )
@@ -576,16 +579,18 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
 
     if any_updated:
         if not inverse:
-            output_model.data /= flat
+            flat_fac = 1 / flat
+            flat_sq_fac = 1 / (flat * flat)
         else:
-            output_model.data *= flat
+            flat_fac = flat
+            flat_sq_fac = flat * flat
+        output_model.data *= flat_fac
         output_model.dq |= flat_dq
 
         # Update the variances and uncertainty array using BASELINE algorithm
-        flat_data_squared = flat ** 2
-        output_model.var_poisson /= flat_data_squared
-        output_model.var_rnoise /= flat_data_squared
-        output_model.var_flat = (output_model.data / flat * flat_err) ** 2
+        output_model.var_poisson *= flat_sq_fac
+        output_model.var_rnoise *= flat_sq_fac
+        output_model.var_flat = (output_model.data * flat_fac * flat_err) ** 2
         output_model.err = np.sqrt(
             output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
         )
