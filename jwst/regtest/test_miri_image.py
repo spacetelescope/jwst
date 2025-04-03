@@ -79,7 +79,7 @@ def run_detector1_multiprocess_jump(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1_with_average_dark_current(rtdata_module):
+def run_detector1_with_average_dark_current(rtdata_module, resource_tracker):
     """Run detector1 pipeline on MIRI imaging data, providing an
     estimate of the average dark current for inclusion in ramp_fitting
     poisson variance estimation."""
@@ -92,7 +92,8 @@ def run_detector1_with_average_dark_current(rtdata_module):
             "--steps.dark_current.save_results=True",
             "--steps.dark_current.average_dark_current=1.0",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
@@ -117,7 +118,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_image2(run_detector1, rtdata_module):
+def run_image2(run_detector1, rtdata_module, resource_tracker):
     """Run image2 pipeline on the _rate file, saving intermediate products"""
     rtdata = rtdata_module
     rtdata.input = 'jw01024001001_04101_00001_mirimage_rate.fits'
@@ -135,11 +136,12 @@ def run_image2(run_detector1, rtdata_module):
         "miri/image/jw01024001001_04101_00003_mirimage_rate.fits",
         "miri/image/jw01024001001_04101_00004_mirimage_rate.fits",
     ]
-    for rate_file in rate_files:
-        rtdata.get_data(rate_file)
-        args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
-                "--steps.resample.skip=True"]
-        Step.from_cmdline(args)
+    with resource_tracker.track():
+        for rate_file in rate_files:
+            rtdata.get_data(rate_file)
+            args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
+                    "--steps.resample.skip=True"]
+            Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
@@ -150,6 +152,14 @@ def run_image3(run_image2, rtdata_module):
     rtdata.get_data("miri/image/jw01024-o001_20220501t155404_image3_001_asn.json")
     args = ["jwst.pipeline.Image3Pipeline", rtdata.input]
     Step.from_cmdline(args)
+
+
+def test_log_tracked_resources_det1(log_tracked_resources, run_detector1_with_average_dark_current):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_image2(log_tracked_resources, run_image2):
+    log_tracked_resources()
 
 
 @pytest.mark.bigdata
