@@ -219,8 +219,8 @@ def test_mos_slit_status():
     # since no slits were corrected
     assert im_wave.meta.cal_step.wavecorr == "SKIPPED"
 
-    # check that the step is listed as skipped for extended mos sources
-    assert im_wave.slits[0].meta.cal_step.wavecorr == "SKIPPED"
+    # check that wavelength_corrected is False for extended mos sources
+    assert im_wave.slits[0].wavelength_corrected is False
 
     # test the mock msa source as a point source
     im_src.slits[0].source_type = "POINT"
@@ -229,8 +229,8 @@ def test_mos_slit_status():
     # check that the step is recorded as completed
     assert im_wave.meta.cal_step.wavecorr == "COMPLETE"
 
-    # check that the step is listed as complete for mos point sources
-    assert im_wave.slits[0].meta.cal_step.wavecorr == "COMPLETE"
+    # check that wavelength_corrected is True for mos point sources
+    assert im_wave.slits[0].wavelength_corrected is True
 
 
 def test_wavecorr_fs():
