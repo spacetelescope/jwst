@@ -15,9 +15,6 @@ from stdatamodels.jwst.datamodels import _defined_models as defined_models
 # Set logger to only print to screen
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-stream_handle = logging.StreamHandler()
-stream_handle.setLevel(logging.INFO)
-logger.addHandler(stream_handle)
 
 
 def get_docstrings(template, model_names, all_models=False):

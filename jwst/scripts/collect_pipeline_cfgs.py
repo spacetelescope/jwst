@@ -10,9 +10,6 @@ from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 # Set logger to only print to screen
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-stream_handle = logging.StreamHandler()
-stream_handle.setLevel(logging.INFO)
-logger.addHandler(stream_handle)
 
 
 def main():

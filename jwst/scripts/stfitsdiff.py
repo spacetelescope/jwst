@@ -12,9 +12,6 @@ from jwst.regtest.st_fitsdiff import STFITSDiff
 # Set logger to only print to screen
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-stream_handle = logging.StreamHandler()
-stream_handle.setLevel(logging.INFO)
-logger.addHandler(stream_handle)
 
 
 def main():

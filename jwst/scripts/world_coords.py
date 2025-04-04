@@ -14,7 +14,7 @@ The file is saved with a suffix 'world_coordinates'.
 # Licensed under a 3-clause BSD style license - see LICENSE
 
 import argparse
-from pathlib import Path
+import os
 import warnings
 import logging
 
@@ -31,23 +31,57 @@ from jwst.assign_wcs import nirspec
 # Set logger to only print to screen
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
-stream_handle = logging.StreamHandler()
-stream_handle.setLevel(logging.INFO)
-logger.addHandler(stream_handle)
 
 
-def main(filenames, mode):
+def main():
+    """Loop over the input files and apply the proper method to create the output file."""
+    short_description = "Create NIRSPEC world coordinates file"
+    long_description = """
+
+    A tool to read in the output of extract_2d (FS and MOS) or assign_wcs
+    (IFU) and apply the WCS transforms to all pixels in a slit. For each
+    slit it writes the results as a cube with four planes (wavelength, ra,
+    dec, y_slit) in a separate fits extension. The file is saved with a
+    suffix 'world_coordinates'.
+
+    This script can be run in one of three ways:
+
+    With a single input and output filename.
+
+    > world_coord input output
+
+    With one or more input filenames. The output names are generated from
+    the inputs.
+
+    > world_coord input_1 input_2 ... input_n
+
+    With an output directory name.
+
+    > world_coord input_1 input_2 ... output_directory
+
+    The output filename cannot be the name of an existing file. The output
+    directory must exist.
+
+    Optionally you can choose the exposure type with the -mode flag. This
+    flag can be abbreviated to -m. The -mode is only used if exposure type
+    is not found in the primary header. The mode is the exposure type
+    without the nrs_ prefix or any unique prefix of it.
     """
-    Loop over the input files and apply the proper method to create the output file.
 
-    Parameters
-    ----------
-    filenames : list of strings
-        A list of input and output file names
-    mode : str or None
-        The exposure mode to use if exposure type
-        is not in the image header
-    """
+    parser = argparse.ArgumentParser(
+        description=short_description,
+        epilog=long_description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument("filenames", help="Name of input and/or output files", nargs="*")
+
+    parser.add_argument("-m", "--mode", default=None, help="set exposure mode")
+
+    res = parser.parse_args()
+    filenames = res.filenames
+    mode = res.mode
+
     methods = {
         "nrs_ifu": ifu_coords,
         "nrs_fixedslit": compute_world_coordinates,
@@ -67,13 +101,15 @@ def main(filenames, mode):
     ok = True
     outputs = build_output_files(filenames)
     for input_file, output_file in zip(filenames, outputs, strict=True):
-        if not Path(input_file).exists():
+        if not os.path.exists(input_file):  # noqa: PTH110
             warn_user(input_file, "is not found")
             ok = False
             continue
 
         try:
             model = dmopen(input_file, pass_invalid_values=True)
+            if mode is None:
+                mode = model.meta.exposure.type
         except OSError:
             warn_user(input_file, "is not valid fits")
             ok = False
@@ -85,6 +121,7 @@ def main(filenames, mode):
         else:
             hdulist = method(model)
             hdulist.writeto(output_file, overwrite=True)
+            logging.info(f"File written: {output_file}")
             del hdulist
         model.close()
 
@@ -111,14 +148,14 @@ def build_output_files(filenames):
     """
     # Check to see if the last file is an output file
     output = filenames[-1]
-    if Path(output).exists() and not Path(output).is_dir():
+    if os.path.exists(output) and not os.path.isdir(output):  # noqa: PTH110, PTH112
         output = None
     else:
         filenames.pop()
 
     # Handle the case of a single input and output
     # Punt the other cases to the code below
-    if output is not None and not Path(output).is_dir():
+    if output is not None and not os.path.isdir(output):  # noqa: PTH112
         if len(filenames) == 1:
             return [output]
         else:
@@ -129,7 +166,7 @@ def build_output_files(filenames):
         outputs = []
 
     # Track if output file was a directory
-    if output is not None and Path(output).is_dir():
+    if output is not None and os.path.isdir(output):  # noqa: PTH112
         output_dir = output
     else:
         output_dir = None
@@ -137,10 +174,8 @@ def build_output_files(filenames):
     # Build an output filename for each input
     for filename in filenames:
         # Build output base and extensions
-        path_object = Path(filename)
-        dirname, base = path_object.parent, path_object.name
-        base = str(base)
-        ext = path_object.suffix
+        dirname, root = os.path.split(filename)
+        base, ext = os.path.splitext(root)  # noqa: PTH122
         if ext != ".fits":
             ext = ".fits"
         if not base.endswith("world_coordinates"):
@@ -151,7 +186,7 @@ def build_output_files(filenames):
             dirname = output_dir
 
         # Combine directory, base, and extension
-        outputs.append(dirname / Path("".join([base, ext])))
+        outputs.append(os.path.join(dirname, base + ext))  # noqa: PTH118
 
     return outputs
 
@@ -359,48 +394,4 @@ def warn_user(*argv):
 
 
 if __name__ == "__main__":
-    short_description = "Create NIRSPEC world coordinates file"
-    long_description = """
-
-A tool to read in the output of extract_2d (FS and MOS) or assign_wcs
-(IFU) and apply the WCS transforms to all pixels in a slit. For each
-slit it writes the results as a cube with four planes (wavelength, ra,
-dec, y_slit) in a separate fits extension. The file is saved with a
-suffix 'world_coordinates'.
-
-This script can be run in one of three ways:
-
-With a single input and output filename.
-
-> world_coord input output
-
-With one or more input filenames. The output names are generated from
-the inputs.
-
-> world_coord input_1 input_2 ... input_n
-
-With an output directory name.
-
-> world_coord input_1 input_2 ... output_directory
-
-The output filename cannot be the name of an existing file. The output
-directory must exist.
-
-Optionally you can choose the exposure type with the -mode flag. This
-flag can be abbreviated to -m. The -mode is only used if exposure type
-is not found in the primary header. The mode is the exposure type
-without the nrs_ prefix or any unique prefix of it.
-"""
-
-    parser = argparse.ArgumentParser(
-        description=short_description,
-        epilog=long_description,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-
-    parser.add_argument("-mode", help="set exposure mode")
-
-    parser.add_argument("filenames", help="Name of input and/or output files", nargs="*")
-
-    res = parser.parse_args()
-    main(res.filenames, res.mode)
+    main()
