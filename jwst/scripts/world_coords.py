@@ -9,8 +9,6 @@ For each slit it writes the results as a cube with four planes (wavelength, ra, 
 in a separate fits extension.
 
 The file is saved with a suffix 'world_coordinates'.
-
-Requested by the NIRSPEC team for build 7.1 testing.
 """
 
 # Licensed under a 3-clause BSD style license - see LICENSE
