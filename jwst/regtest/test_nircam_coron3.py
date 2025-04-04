@@ -9,7 +9,7 @@ pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(rtdata_module, request_tracker):
+def run_pipeline(rtdata_module, resource_tracker):
     """Run calwebb_coron3 on coronographic data."""
     rtdata = rtdata_module
     rtdata.get_asn("nircam/coron/jw01386-c1020_20220909t073458_coron3_002a_asn.json")
@@ -19,7 +19,7 @@ def run_pipeline(rtdata_module, request_tracker):
     with warnings.catch_warnings():
         # warning is explicitly raised by the pipeline
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="'var_rnoise' array not available")
-        with request_tracker.track():
+        with resource_tracker.track():
             Step.from_cmdline(args)
 
     return rtdata
