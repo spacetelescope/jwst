@@ -137,16 +137,16 @@ def test_nirspec_cubepars(tmp_cwd, nirspec_cube_pars):
 
     par1 = 'prism'
     par2 = 'clear'
-    ascale, bscale, wscale = instrument_info.GetScale(par1, par2)
+    ascale, bscale, wscale = instrument_info.get_scale(par1, par2)
     assert math.isclose(ascale, 0.1, abs_tol=0.00001)
     assert math.isclose(bscale, 0.1, abs_tol=0.00001)
     assert math.isclose(wscale, 0.005, abs_tol=0.00001)
 
-    roiw = instrument_info.GetWaveRoi(par1, par2)
-    rois = instrument_info.GetSpatialRoi(par1, par2)
-    power = instrument_info.GetMSMPower(par1, par2)
-    wavemin = instrument_info.GetWaveMin(par1, par2)
-    wavemax = instrument_info.GetWaveMax(par1, par2)
+    roiw = instrument_info.get_wave_roi(par1, par2)
+    rois = instrument_info.get_spatial_roi(par1, par2)
+    power = instrument_info.get_msm_power(par1, par2)
+    wavemin = instrument_info.get_wave_min(par1, par2)
+    wavemax = instrument_info.get_wave_max(par1, par2)
 
     assert math.isclose(roiw, 0.011, abs_tol=0.00001)
     assert math.isclose(rois, 0.201, abs_tol=0.00001)

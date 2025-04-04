@@ -245,10 +245,10 @@ def test_footprint_miri():
     this_channel = '3'
     coord_system = 'skyalign'
     instrument_info = instrument_defaults.InstrumentInfo()
-    instrument_info.SetXSliceLimits(0, 101, this_channel)
-    x1, x2 = instrument_info.GetMIRISliceEndPts(this_channel)
+    instrument_info.set_xslice_limits(0, 101, this_channel)
+    x1, x2 = instrument_info.get_miri_slice_endpts(this_channel)
 
-    corners = cube_build_wcs_util.find_corners_MIRI(input_model,
+    corners = cube_build_wcs_util.find_corners_miri(input_model,
                                                     this_channel,
                                                     instrument_info,
                                                     coord_system)
