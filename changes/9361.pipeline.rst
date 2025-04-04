@@ -1,0 +1,1 @@
+In calwebb_ami3, revert change to strictness of zip function linking science exposures to psf exposures, to allow successful processing of associations with differing numbers of science and psf members.

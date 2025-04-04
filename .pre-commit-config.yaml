@@ -51,7 +51,6 @@ repos:
             jwst/mrs_imatch/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
-            jwst/rscd/.* |
             jwst/saturation/.* |
             jwst/spectral_leak/.* |
             jwst/straylight/.* |

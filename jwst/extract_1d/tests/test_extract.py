@@ -462,6 +462,9 @@ def test_copy_keyword_info(mock_nirspec_fs_one_slit, mock_one_spec):
         "source_ra": 10.0,
         "source_dec": 10.0,
         "shutter_state": "x",
+        "wavelength_corrected": True,
+        "pathloss_correction_type": "POINT",
+        "barshadow_corrected": False
     }
     for key, value in expected.items():
         setattr(mock_nirspec_fs_one_slit, key, value)

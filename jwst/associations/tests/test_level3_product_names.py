@@ -32,6 +32,17 @@ LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX = (
     r'_(?P<instrument>.+?)'
 )
 
+LEVEL3_PRODUCT_NAME_NRS_FSS_REGEX = (
+    r'jw'
+    r'(?P<program>\d{5})'
+    r'-(?P<acid>[a-z]\d{3,4})'
+    r'_(?P<target>(?:t\d{3})'
+    r'_(?:\{source_id\}))'
+    r'(?:-(?P<epoch>epoch\d+))?'
+    r'_(?P<instrument>.+?)'
+    r'_(?P<opt_elem>.+)'
+)
+
 # Null values
 EMPTY = (None, '', 'NULL', 'Null', 'null', 'F', 'f', 'N', 'n')
 
@@ -114,35 +125,41 @@ def test_multiple_optelems(pool_file):
     asns = generate(pool, rules, finalize=False)
     for asn in asns:
         product_name = asn['products'][0]['name']
-        if asn['asn_rule'] != 'Asn_Lv3MIRMRS':
-            m = re.match(LEVEL3_PRODUCT_NAME_REGEX, product_name)
-            assert m is not None
+        if asn['asn_rule'] == 'Asn_Lv3MIRMRS':
+            continue
+        if asn['asn_rule'] == 'Asn_Lv3NRSFSS':
+            regex_to_match = LEVEL3_PRODUCT_NAME_NRS_FSS_REGEX
+        else:
+            regex_to_match = LEVEL3_PRODUCT_NAME_REGEX
 
-            # there should always be an opt_elem
-            values = ['-'.join(asn.constraints['opt_elem'].found_values)]
+        m = re.match(regex_to_match, product_name)
+        assert m is not None
 
-            # there may also be an opt_elem2, fixed slit or 2, or a subarray
-            for extra in ['opt_elem2', 'fxd_slit', 'fxd_slit2', 'subarray']:
+        # there should always be an opt_elem
+        values = ['-'.join(asn.constraints['opt_elem'].found_values)]
 
-                # special rules for fixed slit for NRS FS:
-                # it gets a format placeholder instead of the value
-                if asn['asn_rule'] == 'Asn_Lv3NRSFSS':
-                    if extra == 'fxd_slit':
-                        values.append('{slit_name}')
-                        continue
-                    elif extra == 'fxd_slit2':
-                        continue
+        # there may also be an opt_elem2, fixed slit or 2, or a subarray
+        for extra in ['opt_elem2', 'fxd_slit', 'fxd_slit2', 'subarray']:
 
-                try:
-                    value = '-'.join(asn.constraints[extra].found_values)
-                except KeyError:
-                    value = None
+            # special rules for fixed slit for NRS FS:
+            # it gets a format placeholder instead of the value
+            if asn['asn_rule'] == 'Asn_Lv3NRSFSS':
+                if extra == 'fxd_slit':
+                    values.append('{slit_name}')
+                    continue
+                elif extra == 'fxd_slit2':
+                    continue
 
-                # empty values and subarray = full are not recorded
-                if value not in EMPTY and value != 'full':
-                    values.append(value)
+            try:
+                value = '-'.join(asn.constraints[extra].found_values)
+            except KeyError:
+                value = None
 
-            assert m.groupdict()['opt_elem'] == '-'.join(values)
+            # empty values and subarray = full are not recorded
+            if value not in EMPTY and value != 'full':
+                values.append(value)
+
+        assert m.groupdict()['opt_elem'] == '-'.join(values)
 
 
 def test_tso3_names():
