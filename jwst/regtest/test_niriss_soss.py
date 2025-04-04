@@ -46,7 +46,7 @@ def run_tso_spec3(rtdata_module, run_tso_spec2):
 
 
 @pytest.fixture(scope="module")
-def run_atoca_extras(rtdata_module, request_tracker):
+def run_atoca_extras(rtdata_module, resource_tracker):
     """Run stage 2 pipeline on NIRISS SOSS data using enhanced modes via parameter settings."""
     rtdata = rtdata_module
 
@@ -59,7 +59,7 @@ def run_atoca_extras(rtdata_module, request_tracker):
             "--steps.extract_1d.soss_bad_pix=model",
             "--steps.extract_1d.soss_rtol=1.e-3",
             ]
-    with request_tracker.track():
+    with resource_tracker.track():
         Step.from_cmdline(args)
 
 
