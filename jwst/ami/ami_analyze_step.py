@@ -50,7 +50,6 @@ class AmiAnalyzeStep(Step):
         ----------
         model : data model
             The model to save
-
         *args, **kwargs : tuple, dict
             Arguments to pass to the stpipe Step.save_model method
 
