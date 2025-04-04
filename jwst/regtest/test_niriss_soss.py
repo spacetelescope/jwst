@@ -125,7 +125,7 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
+    assert diff.identical, diff.report() + f"\n\n{fitsdiff_default_kwargs}"
 
 
 @pytest.fixture(scope='module')
