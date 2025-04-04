@@ -42,7 +42,7 @@ def run_spec2(rtdata_module):
             ]
     with warnings.catch_warnings():
         # Example: RuntimeWarning: invalid value encountered in add
-        warnings.filterwarnins("ignore", category=RuntimeWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
         Step.from_cmdline(args)
 
 
