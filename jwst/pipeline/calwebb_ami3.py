@@ -102,7 +102,7 @@ class Ami3Pipeline(Pipeline):
         # Normalize all target results by matching psf results
         # assuming one ref star exposure per targ exposure
         if (len(psf_files) > 0) & (len(targ_files) > 0):
-            for targ, psf in zip(targ_lg, psf_lg, strict=True):
+            for targ, psf in zip(targ_lg, psf_lg, strict=False):
                 result = self.ami_normalize.run(targ, psf)
                 # Save the result
                 result.meta.asn.pool_name = asn["asn_pool"]
