@@ -104,7 +104,7 @@ sdp = [
     "pysiaf>=0.13.0",
 ]
 test = [
-    "ci-watson>=0.5.0",
+    "ci-watson @ git+https://github.com/spacetelescope/ci_watson.git@main",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",

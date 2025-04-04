@@ -9,6 +9,9 @@ from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
 def run_detector1(rtdata_module):
@@ -79,7 +82,7 @@ def run_detector1_multiprocess_jump(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1_with_average_dark_current(rtdata_module):
+def run_detector1_with_average_dark_current(rtdata_module, resource_tracker):
     """Run detector1 pipeline on MIRI imaging data, providing an
     estimate of the average dark current for inclusion in ramp_fitting
     poisson variance estimation."""
@@ -92,7 +95,8 @@ def run_detector1_with_average_dark_current(rtdata_module):
             "--steps.dark_current.save_results=True",
             "--steps.dark_current.average_dark_current=1.0",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
@@ -117,7 +121,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_image2(run_detector1, rtdata_module):
+def run_image2(run_detector1, rtdata_module, resource_tracker):
     """Run image2 pipeline on the _rate file, saving intermediate products"""
     rtdata = rtdata_module
     rtdata.input = 'jw01024001001_04101_00001_mirimage_rate.fits'
@@ -135,11 +139,12 @@ def run_image2(run_detector1, rtdata_module):
         "miri/image/jw01024001001_04101_00003_mirimage_rate.fits",
         "miri/image/jw01024001001_04101_00004_mirimage_rate.fits",
     ]
-    for rate_file in rate_files:
-        rtdata.get_data(rate_file)
-        args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
-                "--steps.resample.skip=True"]
-        Step.from_cmdline(args)
+    with resource_tracker.track():
+        for rate_file in rate_files:
+            rtdata.get_data(rate_file)
+            args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
+                    "--steps.resample.skip=True"]
+            Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
@@ -152,7 +157,14 @@ def run_image3(run_image2, rtdata_module):
     Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_det1(log_tracked_resources, run_detector1_with_average_dark_current):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_image2(log_tracked_resources, run_image2):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "firstframe", "lastframe", "reset",
                                     "linearity", "rscd", "dark_current", "ramp", "rate",
                                     "rateints"])
@@ -161,19 +173,16 @@ def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwa
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
 
 
-@pytest.mark.bigdata
 def test_miri_image_detector1_multiprocess_rate(run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
 
 
-@pytest.mark.bigdata
 def test_miri_image_detector1_multiprocess_jump(run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
 
 
-@pytest.mark.bigdata
 def test_detector1_mem_usage(rtdata_module):
     """Determine the memory usage for Detector 1"""
     rtdata = rtdata_module
@@ -206,7 +215,6 @@ def test_detector1_mem_usage(rtdata_module):
     assert peak_mem <= mem_benchmark, "Max memory used is greater than 11 GB"
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dark_current", "ramp", "rate",
                                     "rateints"])
 def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_dark_current,
@@ -228,7 +236,6 @@ def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_d
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix",
                          ["cfn_clean_flicker_noise", "mask",
                           "flicker_bkg", "flicker_noise",
@@ -251,14 +258,12 @@ def test_miri_image_detector1_with_clean_flicker_noise(
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["assign_wcs", "flat_field", "cal", "i2d"])
 def test_miri_image_image2(run_image2, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of image2 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["o001_crf"])
 def test_miri_image_image3(run_image3, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of image3 pipeline performed on MIRI imaging data."""
@@ -282,7 +287,6 @@ def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_miri_image3_i2d(run_image3, rtdata_module, fitsdiff_default_kwargs):
     rtdata = rtdata_module
     rtdata.input = "jw01024-o001_20220501t155404_image3_001_asn.json"
@@ -294,7 +298,6 @@ def test_miri_image3_i2d(run_image3, rtdata_module, fitsdiff_default_kwargs):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_miri_image3_catalog(run_image3, rtdata_module, diff_astropy_tables):
     rtdata = rtdata_module
     rtdata.input = "jw01024-o001_20220501t155404_image3_001_asn.json"
@@ -304,7 +307,6 @@ def test_miri_image3_catalog(run_image3, rtdata_module, diff_astropy_tables):
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-3, atol=1e-4)
 
 
-@pytest.mark.bigdata
 def test_miri_image_wcs(run_image2, rtdata_module, fitsdiff_default_kwargs):
     rtdata = rtdata_module
 
