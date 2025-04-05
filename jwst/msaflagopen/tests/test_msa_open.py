@@ -1,7 +1,7 @@
 import numpy as np
+import pytest
+from astropy.utils.data import get_pkg_data_filename
 from numpy.testing import assert_array_equal
-import os
-
 from stdatamodels.jwst.datamodels import ImageModel, dqflags
 from stdatamodels.jwst.transforms.models import Slit
 
@@ -13,17 +13,10 @@ from jwst.msaflagopen.msaflag_open import (
     wcs_to_dq
 )
 from jwst.msaflagopen import MSAFlagOpenStep
-from jwst.assign_wcs.tests import data
 from jwst.stpipe import Step
 
 
 MSA_FAILED_OPEN = dqflags.pixel["MSA_FAILED_OPEN"]
-
-
-def get_file_path(filename):
-    """Construct an absolute path."""
-    data_path = os.path.abspath(os.path.dirname(data.__file__))
-    return os.path.join(data_path, filename)
 
 
 def make_nirspec_mos_model():
@@ -70,7 +63,8 @@ def make_nirspec_mos_model():
         'start_time': 58119.8333,
         'type': 'NRS_MSASPEC',
         'zero_frame': False}
-    im.meta.instrument.msa_metadata_file = get_file_path('msa_configuration.fits')
+    im.meta.instrument.msa_metadata_file = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
     im.meta.dither.position_number = 1
     return im
 
@@ -143,7 +137,8 @@ def test_boundingbox_from_indices():
 def test_msaflagopen_step():
     im = make_nirspec_mos_model()
     im = AssignWcsStep.call(im)
-    result = MSAFlagOpenStep.call(im)
+    with pytest.warns(RuntimeWarning, match="Invalid interval"):
+        result = MSAFlagOpenStep.call(im)
 
     nonzero = np.nonzero(result.dq)
     assert_array_equal(result.dq[nonzero], MSA_FAILED_OPEN)

@@ -1,12 +1,10 @@
 """Test initializing steps using ASDF and CRDS"""
-from pathlib import Path
 import pytest
-
+from astropy.utils.data import get_pkg_data_filename
 from stpipe.config_parser import ValidationError
 from stpipe import Step
 
 from jwst.stpipe.tests.steps import MakeListStep, MakeListPipeline
-from jwst.stpipe.tests.util import t_path
 
 DEFAULT_PAR1 = 42.0
 DEFAULT_PAR2 = 'Yes, a string'
@@ -46,8 +44,9 @@ def test_asdf_roundtrip_pipeline(tmp_cwd):
 
 def test_asdf_from_call():
     """Test using an ASDF file from call"""
-    config_file = t_path(
-        Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
+    config_file = get_pkg_data_filename(
+        "steps/jwst_generic_pars-makeliststep_0001.asdf",
+        package="jwst.stpipe.tests"
     )
     results = MakeListStep.call(config_file=config_file)
 
@@ -56,8 +55,9 @@ def test_asdf_from_call():
 
 def test_from_command_line():
     """Test creating Step from command line using ASDF"""
-    config_file = t_path(
-        Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
+    config_file = get_pkg_data_filename(
+        "steps/jwst_generic_pars-makeliststep_0001.asdf",
+        package="jwst.stpipe.tests"
     )
     args = [config_file]
     step = Step.from_cmdline(args)
@@ -71,8 +71,9 @@ def test_from_command_line():
 
 def test_from_command_line_override():
     """Test creating Step from command line using ASDF"""
-    config_file = t_path(
-        Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
+    config_file = get_pkg_data_filename(
+        "steps/jwst_generic_pars-makeliststep_0001.asdf",
+        package="jwst.stpipe.tests"
     )
     args = [config_file, '--par1=0.']
     step = Step.from_cmdline(args)
@@ -99,8 +100,9 @@ def test_makeliststep_test():
 
 def test_step_from_asdf():
     """Test initializing step completely from config"""
-    config_file = t_path(
-        Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
+    config_file = get_pkg_data_filename(
+        "steps/jwst_generic_pars-makeliststep_0001.asdf",
+        package="jwst.stpipe.tests"
     )
     step = Step.from_config_file(config_file)
     assert isinstance(step, MakeListStep)
@@ -112,8 +114,9 @@ def test_step_from_asdf():
 
 def test_step_from_asdf_api_override():
     """Test initializing step completely from config"""
-    config_file = t_path(
-        Path('steps') / 'jwst_generic_pars-makeliststep_0001.asdf'
+    config_file = get_pkg_data_filename(
+        "steps/jwst_generic_pars-makeliststep_0001.asdf",
+        package="jwst.stpipe.tests"
     )
     results = MakeListStep.call(config_file=config_file, par1=0.)
     assert results == [0., DEFAULT_PAR2, False]
@@ -121,8 +124,8 @@ def test_step_from_asdf_api_override():
 
 def test_makeliststep_call_config_file():
     """Test override step asdf with .cfg"""
-    config_file = t_path(
-        Path('steps') / 'makelist.cfg'
+    config_file = get_pkg_data_filename(
+        "steps/makelist.cfg", package="jwst.stpipe.tests"
     )
     results = MakeListStep.call(config_file=config_file)
     assert results == [43.0, 'My hovercraft is full of eels.', False]
@@ -130,8 +133,8 @@ def test_makeliststep_call_config_file():
 
 def test_makeliststep_call_from_within_pipeline():
     """Test override step asdf with .cfg"""
-    config_file = t_path(
-        Path('steps') / 'makelist_pipeline.cfg'
+    config_file = get_pkg_data_filename(
+        "steps/makelist_pipeline.cfg", package="jwst.stpipe.tests"
     )
     results = MakeListPipeline.call(config_file=config_file)
     assert results == [43.0, 'My hovercraft is full of eels.', False]
@@ -140,8 +143,8 @@ def test_makeliststep_call_from_within_pipeline():
 def test_step_from_asdf_noname():
     """Test initializing step completely from config without a name specified"""
     root = 'jwst_generic_pars-makeliststep_0002'
-    config_file = t_path(
-        Path('steps') / (root + '.asdf')
+    config_file = get_pkg_data_filename(
+        f"steps/{root}.asdf", package="jwst.stpipe.tests"
     )
     step = Step.from_config_file(config_file)
     assert isinstance(step, MakeListStep)

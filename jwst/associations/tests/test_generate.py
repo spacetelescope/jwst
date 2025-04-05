@@ -1,6 +1,6 @@
 """Test basic generate operations"""
 
-from jwst.associations.tests.helpers import t_path
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations import (
     AssociationPool,
@@ -13,7 +13,7 @@ from jwst.associations import (
 def test_simple():
     """Test generate on simple registry"""
     registry = AssociationRegistry(
-        [t_path('data/rules_basic.py')],
+        [get_pkg_data_filename("data/rules_basic.py", package="jwst.associations.tests")],
         include_default=False
     )
     pool = AssociationPool()
@@ -26,8 +26,8 @@ def test_simple():
 
 def test_unserialize():
     """Test basic unserializing"""
-    asn_file = t_path(
-        'data/asn_mosaic.json'
+    asn_file = get_pkg_data_filename(
+        "data/asn_mosaic.json", package="jwst.associations.tests"
     )
     with open(asn_file, 'r') as asn_fp:
         asn = load_asn(asn_fp)

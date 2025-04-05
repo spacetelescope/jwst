@@ -293,7 +293,8 @@ def test_split_container(tmp_path):
     with Path(tmp_path / "tmp_asn.json").open("w") as f:
         json.dump(asn_table, f)
 
-    container = datamodels.open(tmp_path / "tmp_asn.json")
+    with pytest.warns(UserWarning, match="Input association file contains path information"):
+        container = datamodels.open(tmp_path / "tmp_asn.json")
 
     sci, bkg = split_container(container)
 

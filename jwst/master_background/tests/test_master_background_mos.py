@@ -105,7 +105,11 @@ def mk_multispec(model):
 def test_master_background_mos(nirspec_msa_extracted2d):
     model = nirspec_msa_extracted2d
 
-    result = MasterBackgroundMosStep.call(model)
+    # RuntimeWarning: invalid value encountered in divide (slit.data /= conversion)
+    # RuntimeWarning: overflow encountered in multiply (photom var_flat)
+    # RuntimeWarning: overflow encountered in square (flat_field var_flat)
+    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
+        result = MasterBackgroundMosStep.call(model)
 
     # Check that the master_background_mos step was run
     assert query_step_status(result, "master_background") == "COMPLETE"

@@ -1,11 +1,13 @@
 import os
+import warnings
+
 import pytest
 from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
-
-from jwst.stpipe import Step
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst import datamodels
+
+from jwst.stpipe import Step
 
 DATASET1_ID = "jw01536028001_03103_00001-seg001_mirimage"
 DATASET2_ID = "jw01536028001_03103_00001-seg002_mirimage"
@@ -86,7 +88,10 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module):
         "--steps.pixel_replace.save_results=true",
         "--steps.pixel_replace.skip=false"
     ]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        # Example: RuntimeWarning: invalid value encountered in multiply
+        warnings.filterwarnings("ignore", category=RuntimeWarning)
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
