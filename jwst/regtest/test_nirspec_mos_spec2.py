@@ -35,7 +35,7 @@ def run_pipeline(rtdata_module):
     with warnings.catch_warnings():
         # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
         warnings.filterwarnings("ignore", category=RuntimeWarning)
-        warnings.filterwarnings("ignore", category=AstropyUserWarning, match="Input data contains invalid values")
+        warnings.filterwarnings("ignore", category=AstropyUserWarning, message="Input data contains invalid values")
         Step.from_cmdline(args)
 
     return rtdata

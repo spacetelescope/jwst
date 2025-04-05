@@ -1,11 +1,11 @@
-import pytest
-from astropy.io.fits.diff import FITSDiff
-from numpy.testing import assert_allclose
-from gwcs.wcstools import grid_from_bounding_box
 import tracemalloc
 import warnings
 
 import numpy as np
+import pytest
+from astropy.io.fits.diff import FITSDiff
+from numpy.testing import assert_allclose
+from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
@@ -126,23 +126,24 @@ def run_image2(run_detector1, rtdata_module):
             "--steps.assign_wcs.save_results=True",
             "--steps.flat_field.save_results=True"
             ]
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="Failed to achieve requested SIP approximation accuracy")
-        Step.from_cmdline(args)
-
-    # Grab rest of _rate files for the asn and run image2 pipeline on each to
-    # produce fresh _cal files for the image3 pipeline.  We won't check these
-    # or look at intermediate products, and skip resample (don't need i2d image)
     rate_files = [
         "miri/image/jw01024001001_04101_00002_mirimage_rate.fits",
         "miri/image/jw01024001001_04101_00003_mirimage_rate.fits",
         "miri/image/jw01024001001_04101_00004_mirimage_rate.fits",
     ]
-    for rate_file in rate_files:
-        rtdata.get_data(rate_file)
-        args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
-                "--steps.resample.skip=True"]
+
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Failed to achieve requested SIP approximation accuracy")
         Step.from_cmdline(args)
+
+        # Grab rest of _rate files for the asn and run image2 pipeline on each to
+        # produce fresh _cal files for the image3 pipeline.  We won't check these
+        # or look at intermediate products, and skip resample (don't need i2d image)
+        for rate_file in rate_files:
+            rtdata.get_data(rate_file)
+            args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
+                    "--steps.resample.skip=True"]
+            Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
