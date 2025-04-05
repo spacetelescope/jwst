@@ -154,7 +154,7 @@ def run_image3(run_image2, rtdata_module):
     rtdata.get_data("miri/image/jw01024-o001_20220501t155404_image3_001_asn.json")
     args = ["jwst.pipeline.Image3Pipeline", rtdata.input]
     with warnings.catch_warnings():
-        warnings.catch_warnings("ignore", message="Failed to achieve requested SIP approximation accuracy")
+        warnings.filterwarnings("ignore", message="Failed to achieve requested SIP approximation accuracy")
         Step.from_cmdline(args)
 
 
