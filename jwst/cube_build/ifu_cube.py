@@ -176,7 +176,7 @@ class IFUCubeData:
         Usually the output name is defined by the association table. However in the case
         of cube_build several cubes can be created from a single call of cube_build. The
         user can override the type of data to combine to make a cube. It is left to cube_build
-        to determine with channels, bands, gratings or filters are used to make the IFUCube.
+        to determine which channels, bands, gratings or filters are used to make the IFUCube.
         The final name includes the channel/band (MIRI) or grating/filter (NIRSpec).
 
         Returns
@@ -261,13 +261,13 @@ class IFUCubeData:
         Parameters
         ----------
         corner_a : numpy array
-            Array of ra corners of the footprint of all input data
+            Array of ra corners of the footprint of all input data.
         corner_b : numpy array
-            Array of dec corners of the footprint of all input data
+            Array of dec corners of the footprint of all input data.
         lambda_min : float
-            Minimum wavelength value of the data
+            Minimum wavelength value of the data.
         lambda_max : float
-            Maximum wavelength value of the data
+            Maximum wavelength value of the data.
         """
         ra_min = np.min(corner_a)
         ra_max = np.max(corner_a)
@@ -406,20 +406,19 @@ class IFUCubeData:
         """
         Set up the size of the cube in the internal IFU plane.
 
-        This will be a single exposure cube - small FOV assume
-        rectangular coord system. The internal IFU Cube is in the slicer plane
-        and is defined by along slice and across slice coordinates.
+        This will be a single exposure cube. The internal IFU Cube is in the
+        slicer plane and is defined by along slice and across slice coordinates.
 
         Parameters
         ----------
         corner_a : numpy array
-            Array of along slice corners of the footprint of all input data
+            Array of along slice corners of the footprint of all input data.
         corner_b : numpy array
-            Array of across slice  corners of the footprint of all input data
+            Array of across slice  corners of the footprint of all input data.
         lambda_min : float
-            Minimum wavelength value of the data
+            Minimum wavelength value of the data.
         lambda_max : float
-            Maximum wavelength value of the data
+            Maximum wavelength value of the data.
         """
         self.a_min = np.min(corner_a)
         self.a_max = np.max(corner_a)
@@ -595,7 +594,7 @@ class IFUCubeData:
 
     def build_ifucube(self):
         """
-        Create the IFU cube.
+        Create an IFU cube.
 
         1. Loop over every band contained in the IFU cube and read in the data
         associated with the band
@@ -1196,9 +1195,8 @@ class IFUCubeData:
         """
         Determine the spatial and wavelength roi size if IFU covers more than 1 band of data.
 
-        If the IFU cube covers more than 1 band - then use the rules to
+        If the IFU cube covers more than 1 band, then use the rules to
         define the spatial and wavelength roi size to use for the cube
-        Current Rule: using the minimum
         """
         # initialize
         wave_roi = None
@@ -1467,7 +1465,7 @@ class IFUCubeData:
 
     def setup_ifucube_wcs(self):
         """
-        Determine the min and max coordinates of the spectral cube.
+        Set up the wcs of the IFU cube.
 
         Loop over every datamodel contained in the cube and find the WCS
         of the output cube that contains all the data.
@@ -1758,9 +1756,9 @@ class IFUCubeData:
         roiw_det: numpy.ndarray
            Spectral roi size associated with coord1,coord2
         weight_det : numpy.ndarray
-            Weighting parameter association with coord1,coord2
+            Weighting parameter associated with coord1,coord2
         softrad_det : numpy.ndarray
-            Weighting parameter association with coord1,coord2
+            Weighting parameter associated with coord1,coord2
         """
         # initialize alpha_det and beta_det to None. These are filled in
         # if the instrument is MIRI and the weighting is miripsf
@@ -1987,7 +1985,7 @@ class IFUCubeData:
 
     def map_miri_pixel_to_sky(self, input_model, this_par1, subtract_background, offsets):
         """
-        Loop over a file and map the detector pixels to the output cube.
+        Loop over a MIRI model and map the detector pixels to the output cube.
 
         The output frame is on the SKY (ra-dec)
         Return the coordinates of all the detector pixel in the output frame.
@@ -2150,7 +2148,7 @@ class IFUCubeData:
     # ______________________________________________________________________
     def map_nirspec_pixel_to_sky(self, input_model, offsets):
         """
-        Loop over a file and map the detector pixels to the output cube.
+        Loop over a NIRSpec model and map the detector pixels to the output cube.
 
         The output frame is on the SKY (ra-dec)
         Return the coordinates of all the detector pixel in the output frame.
@@ -2334,7 +2332,6 @@ class IFUCubeData:
 
         valid_data = np.where(flag_det == 1)
         y, x = valid_data
-
         wave = lam_det[valid_data]
         slice_no = slice_det[valid_data]
         dwave = dwave_det[valid_data]

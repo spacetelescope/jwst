@@ -17,7 +17,12 @@ extern double sh_find_overlap(const double xcenter, const double ycenter,
 // allocate the memory for the spaxel DQ array
 
 int mem_alloc_dq(int nelem, int **idqv) {
-    
+  /*
+    Allocate the memory of the spaxel DQ array.
+
+    nelem : Number of elements to allocate
+    idqv : pointer to memory allocated
+  */
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     if (!(*idqv = (int*)calloc(nelem, sizeof(int)))) {
@@ -223,7 +228,7 @@ int overlap_fov_with_spaxels(int overlap_partial, int overlap_full,
   /* find the amount of overlap of FOV  each spaxel
 
         Given the corners of the FOV  find the spaxels that
-        overlap with this FOV.  Set the intermediate spaxel  to
+        overlap with this FOV.  Set the intermediate spaxel to
         a value based on the overlap between the FOV for each exposure
         and the spaxel area. The values assigned are:
         a. overlap_partial
@@ -420,24 +425,27 @@ int overlap_slice_with_spaxels(int overlap_partial,
      This algorithm assumes the input data falls on a line in the IFU cube, which is
      the case for NIRSpec slices. The NIRSpec slice's endpoints are used to determine
      which IFU spaxels the slice falls on to set an initial dq flag.
-     
+     Bresenham's Line Algorithm to find points a line intersects with grid.
+     Given the endpoints of a line find the spaxels this line intersects.
+
      Parameters
      ----------
      overlap_partial: intermediate dq flag
-
+     cdelt1 : spatial sampling size for naxis1
+     cdelt2 : spatial sampling size for naxis2
+     naxis1 : size of axis 1
+     naxis2 : size of axis 2
+     xstart : x start of slice 
+     ystart : y start of slixe
+     xi_min : xi min of cube
+     eta_min : eta min of cube
+     xi_max : xi max of cube
+     eta_max : eta max of cube
      wavelength: the wavelength bin of the IFU cube working with
 
      Sets
      ----
      wave_slice_dq : array containing intermediate dq flag
-
-     Bresenham's Line Algorithm to find points a line intersects with grid.
-
-     Given the endpoints of a line find the spaxels this line intersects.
-
-     Returns
-     -------
-     wave_slice_dq filled in 
 
   */
  
@@ -508,12 +516,17 @@ int overlap_slice_with_spaxels(int overlap_partial,
 }
 
 //________________________________________________________________________________
-// Set the spaxel dq = 0. This is used when not determining the FOV on the sky for
-// setting the DQ plane. This is case for internalCal type cubes
-
 
 int set_dqplane_to_zero(int ncube, int **spaxel_dq){
 
+  /*
+    Set the spaxel dq = 0. This is used when not determining the FOV on the sky for
+    setting the DQ plane. This is case for internalCal type cubes
+
+    ncube : number of elements in cube
+    spaxel_dq : point to memory
+    
+  */
     int *idqv;  // int vector for spaxel
     if (mem_alloc_dq(ncube, &idqv)) return 1;
      *spaxel_dq = idqv;
@@ -521,7 +534,6 @@ int set_dqplane_to_zero(int ncube, int **spaxel_dq){
 }
 
 //________________________________________________________________________________
-// Main MIRI routine to set DQ plane
 
 int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_full,
 	    int nx, int ny, int nz,
@@ -532,6 +544,31 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 	    long ncube, long npt, 
 	    int **spaxel_dq) {
 
+  /*
+
+    Main MIRI routine to set DQ plane
+
+       Parameters
+     ----------
+     start_region : x pixel for start of channel
+     end_region  : x pixel for end of channel 
+     overlap_partial : intermediate dq flag
+     overlap_full : dq flag
+     nx, ny, nz : size of cube
+     cdelt1 : spatial sampling size for naxis1
+     cdelt2 : spatial sampling size for naxis2
+     roiw_ave : average region of interest for wavelength
+     xc , xy , zc : vectors of cube centers for naxis1, 2, 3
+     coord1, coord2 : xi, eta coordinates of the cube
+     wave : wavelength vector of the cube
+     sliceno : sliceno of pixel 
+     ncube : number of elements in cube
+     npt : number detector pixels mapping
+
+     Sets
+     ----
+     spaxel_dq : array containing dq flag
+  */
   int status, status_wave, w, nxy, i, istart, iend, in, ii;
   double xi_corner[4], eta_corner[4];
   
@@ -624,6 +661,11 @@ int dq_nirspec(int overlap_partial,
     Parameter
     ---------
     overlap_partial - intermediate DQ flag
+    nx, ny, nz : size of cube
+    cdelt1 : spatial sampling size for naxis1
+    cdelt2 : spatial sampling size for naxis2
+    roiw_ave : average region of interest for wavelength
+    xc , xy , zc : vectors of cube centers for naxis1, 2, 3
     coord1: xi coordinates of input data (~x coordinate in IFU space)
     coord2: eta coordinates of input data (~y coordinate in IFU space)
     wave: wavelength of input data

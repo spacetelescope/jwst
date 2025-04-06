@@ -17,10 +17,10 @@ __all__ = ["CubeBuildStep"]
 
 class CubeBuildStep(Step):
     """
-    Creates a 3-D spectral cube.
+    Creates a 3-D spectral cube from IFU data.
 
     This is the controlling routine for building IFU Spectral Cubes.
-    It loads and sets the various input data and parameters need by
+    It loads and sets the various input data and parameters needed by
     the cube_build_step.
 
     This routine does the following operations:
@@ -28,10 +28,10 @@ class CubeBuildStep(Step):
        1. Extracts the input parameters from the cubepars reference file and
        merges them with any user-provided values.
        2. Creates the output WCS from the input images and defines the mapping
-       between all the input arrays and the output array
+       between all the input arrays and the output array.
        3. Passes the input data to the function to map all their input data
        to the output array.
-       4. Updates the output data model with correct meta data
+       4. Updates the output data model with correct meta data.
     """
 
     class_alias = "cube_build"
@@ -433,13 +433,12 @@ class CubeBuildStep(Step):
         """
         Read user input options for channel, subchannel, filter, or grating.
 
-        # Determine if any of the input parameters channel, band, filter or
-        # grating have been set by the user.
-
-        # This routine updates the dictionary self.pars_input with any user
-        # provided inputs. In particular it sets pars_input['channel'],
-        # pars_input['sub_channel'], pars_input['grating'], and
-        # pars_input['filter'] with user provided values.
+        Determine if any of the input parameters channel, band, filter or
+        grating have been set by the user.
+        This routine updates the dictionary self.pars_input with any user
+        provided inputs. In particular it sets pars_input['channel'],
+        pars_input['sub_channel'], pars_input['grating'], and
+        pars_input['filter'] with user provided values.
         """
         valid_channel = ["1", "2", "3", "4", "all"]
         valid_subchannel = [
@@ -560,10 +559,9 @@ class CubeBuildStep(Step):
         """
         Read in an optional ra and dec offset for each file.
 
-        Check that is file is asdf file.
-        Check the file has the correct format using an local schema file.
-        The schema file, ifuoffset.schema.yaml, is located in the jwst/cube_build directory.
-        For each file in the input  association check that there is a corresponding
+        Check that the offset file is an asdf file.
+        Check that the file has the correct format using an local schema file.
+        For each file in the input association check that there is a corresponding
         file in the offset file.
 
         Returns
