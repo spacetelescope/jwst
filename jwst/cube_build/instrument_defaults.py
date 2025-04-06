@@ -1140,21 +1140,6 @@ class InstrumentInfo:
         """
         self.Info[parameter1][parameter2]["wavemax"] = value
 
-    # def set_spatial_roi(self, value, parameter1, parameter2):
-    #    self.Info[parameter1][parameter2]["sroi"] = value
-
-    # def set_wave_roi(self, value, parameter1, parameter2):
-    #    self.Info[parameter1][parameter2]["wroi"] = value
-
-    # def set_msm_power(self, value, parameter1, parameter2):
-    #    self.Info[parameter1][parameter2]["msm_power"] = value
-
-    # def set_soft_rad(self, value, parameter1, parameter2):
-    #    self.Info[parameter1][parameter2]["softrad"] = value
-
-    # def set_scale_rad(self, value, parameter1, parameter2):
-    #    self.Info[parameter1][parameter2]["scalerad"] = value
-
     # Get functions
 
     def get_wave_roi(self, parameter1, parameter2):
