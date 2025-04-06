@@ -2,7 +2,6 @@ import numpy as np
 import logging
 
 from jwst.datamodels import ModelContainer
-
 from ..assign_wcs import nirspec
 from gwcs import wcstools
 from jwst.assign_wcs.util import in_ifu_slice
@@ -64,13 +63,13 @@ class CubeBlot:
             self.median_skycube.meta.wcs.bounding_box, step=(1, 1, 1)
         )
 
-        # using wcs of ifu cube determine ra,dec,lambda
+        # using wcs of ifu cube determine ra, dec, lambda
         self.cube_ra, self.cube_dec, self.cube_wave = self.median_skycube.meta.wcs(
             xcube + 1, ycube + 1, zcube + 1
         )
 
         # pull out flux from the median sky cube that matches with
-        # cube_ra,dec,wave
+        # cube_ra, dec, wave
         self.cube_flux = self.median_skycube.data
 
         # remove all the nan values - just in case
@@ -152,8 +151,8 @@ class CubeBlot:
 
         This is the main routine for blotting the MIRI median sky cube back to
         the detector space and creating a blotting image for each input model
-        1. Loop over every data model to be blotted and find ra,dec,wavelength
-           for every pixel in a valid slice on the detector.
+        1. Loop over every data model to be blotted and find ra, dec and
+           wavelength for every pixel in a valid slice on the detector.
         2. Loop over every input model and using the inverse (backwards) transform
            convert the median sky cube values ra, dec, lambda to the blotted
            x, y detector value (x_cube, y_cube).

@@ -12,9 +12,9 @@ def radec2std(crval1, crval2, ra, dec, rot_angle=None):
     Parameters
     ----------
     crval1 : float
-      RA value of tangent point
+      Ra value of tangent point
     crval2 : float
-      DEC value of tangent point
+      Dec value of tangent point
     ra : numpy.ndarray or float
       A list (or single value) of ra points to convert
     dec : numpy.ndarray  or float
@@ -71,15 +71,15 @@ def std2radec(crval1, crval2, xi, eta):
 
     Compute the ra,dec values of  tangent plane rectangular coordinates using
     crval1, crval2(the tangent point). This routine takes the rectangular
-    plane and projects it to the spherical plane using crval1, crval2 as
+    plane and projects it onto the spherical plane using crval1, crval2 as
     the tangent plane.
 
     Parameters
     ----------
     crval1 : float
-      RA value of tangent point
+      Ra value of tangent point
     crval2 : float
-      DEC value of tangent point
+      Dec value of tangent point
     xi : float
       Xi rectangular coordinate of tangent plane projected ra,dec
     eta : float
