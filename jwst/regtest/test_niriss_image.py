@@ -2,6 +2,7 @@
     an uncal file. Results from all intermediate steps, including
     charge_migration, are saved for comparisons with truth files.
 """
+import os
 
 import pytest
 from astropy.io.fits.diff import FITSDiff
@@ -9,6 +10,8 @@ from astropy.io.fits.diff import FITSDiff
 from jwst import datamodels
 from jwst.stpipe import Step
 from jwst.tweakreg import TweakRegStep
+
+RELAX_TOL = os.environ.get("RELAX_TOL", "false") == "true"
 
 
 @pytest.fixture(scope="module")
@@ -237,7 +240,8 @@ def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir):
 
     # Set tolerances so the crf, rscd and rateints file comparisons work across
     # architectures
-    fitsdiff_default_kwargs["rtol"] = 1e-4
-    fitsdiff_default_kwargs["atol"] = 1e-4
+    if not RELAX_TOL:
+        fitsdiff_default_kwargs["rtol"] = 1e-4
+        fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

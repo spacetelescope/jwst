@@ -1,3 +1,4 @@
+import os
 from glob import glob
 
 import pytest
@@ -8,6 +9,8 @@ from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
+
+RELAX_TOL = os.environ.get("RELAX_TOL", "false") == "true"
 
 
 @pytest.fixture(scope="module")
@@ -280,7 +283,8 @@ def test_nircam_image_detector1_with_clean_flicker_noise(
     rtdata.get_truth(f"truth/test_nircam_image_clean_flicker_noise/{output}")
 
     # Set tolerances so the file comparisons work across architectures
-    fitsdiff_default_kwargs["rtol"] = 1e-4
-    fitsdiff_default_kwargs["atol"] = 1e-4
+    if not RELAX_TOL:
+        fitsdiff_default_kwargs["rtol"] = 1e-4
+        fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
