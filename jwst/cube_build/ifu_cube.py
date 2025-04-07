@@ -2378,7 +2378,38 @@ class IFUCubeData:
         weight_det,
         scalerad_det,
     ):
-        """Given a specific wavelength, find the closest value in the wavelength_table."""
+        """
+        Given a specific wavelength, find the closest value in the wavelength_table.
+
+        Parameters
+        ----------
+        iw : int
+            Index of wavelength array.
+        w : float
+            Wavelength array of data.
+        wavelength_table : numpy array
+            Wavelength array read from cubepars reference file.
+        rois_table : numpy array
+            Rois array read from cubepars reference file.
+        roiw_table : numpy array
+            Roiw array read from cubepars reference file.
+        softrad_table : numpy array
+            Softrad array read from cubepars reference file.
+        weight_power_table : numpy array
+            Weight power array read from cubepars reference file.
+        scalerad_table : numpy array
+            Scalerad array read from cubepars reference file.
+        rois_det : numpy array
+            Rois array of detector pixel for the associated wavelength of the pixel.
+        roiw_det : numpy array
+            Roiw array of detector pixel for the associated wavelength of the pixel.
+        softrad_det : numpy array
+            Softrad array of detector pixel for the associated wavelength of the pixel.
+        weight_det : numpy array
+            Weight array of detector pixel for the associated wavelength of the pixel.
+        scalerad_det : numpy array
+            Scalerad array of detector pixel for the associated wavelength of the pixel.
+        """
         ifound = (np.abs(wavelength_table - w)).argmin()
         rois_det[iw] = rois_table[ifound]
         roiw_det[iw] = roiw_table[ifound]
