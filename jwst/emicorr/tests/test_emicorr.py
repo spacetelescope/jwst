@@ -176,13 +176,9 @@ def module_log_watcher(monkeypatch):
 
 
 def test_emicorrstep_skip_default():
-    data = np.ones((1, 5, 20, 20))
-    input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
-
     step = emicorr_step.EmiCorrStep()
     # Default is that step is skipped
     assert step.skip == True
-    input_model.close()
 
 
 @pytest.mark.parametrize('skip', [True, False])
