@@ -8,7 +8,7 @@
 
 import numpy as np
 import logging
-
+from jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 from astropy.stats import sigma_clipped_stats as scs
 from astropy.convolution import convolve_fft, Gaussian2DKernel
@@ -230,7 +230,7 @@ def correct_xartifact(input_model, modelpars):
     return input_model
 
 def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0, shower_y_stddev=5.0,
-                  shower_low_reject=0.1, shower_high_reject=99.9):
+                  shower_low_reject=0.1, shower_high_reject=99.9, save_shower_model=False):
     """
     Corrects the MIRI MRS data for straylight produced by residual cosmic ray showers.
 
@@ -298,7 +298,44 @@ def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0,
     # Subtract the shower model from the original data
     input_model.data = input_model.data - shower_model
 
+    if save_shower_model:
+        output_shower_model = _make_intermediate_model(input_model, shower_model)
+    else:
+        output_shower_model = None
+
     # Delete our temporary working copy of the data
     del usedata
 
-    return input_model
+    return input_model, output_shower_model
+
+
+def _make_intermediate_model(input_model, intermediate_data):
+    """
+    Make a data model to contain intermediate outputs.
+
+    The output model type depends on the shape of the input
+    intermediate data.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.JwstDataModel`
+        The input data.
+    intermediate_data : array-like
+        The intermediate data to save.
+
+    Returns
+    -------
+    intermediate_model : ~jwst.datamodel.JwstDataModel`
+        A model containing only the intermediate data and top-level
+        metadata matching the input.
+    """
+    if intermediate_data.ndim == 4:
+        intermediate_model = datamodels.RampModel(data=intermediate_data)
+    elif intermediate_data.ndim == 3:
+        intermediate_model = datamodels.CubeModel(data=intermediate_data)
+    else:
+        intermediate_model = datamodels.ImageModel(data=intermediate_data)
+
+    # Copy metadata from input model
+    intermediate_model.update(input_model)
+    return intermediate_model
