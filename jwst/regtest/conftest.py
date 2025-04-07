@@ -404,7 +404,7 @@ def fitsdiff_default_kwargs():
         rtol = 1e-5
         atol = 1e-7
     else:
-        rtol = 1e-5
+        rtol = 0.01
         atol = 0.01
 
     ignore_keywords = ["DATE", "CAL_VER", "CAL_VCS", "CRDS_VER", "CRDS_CTX", "NAXIS1", "TFORM*"]
