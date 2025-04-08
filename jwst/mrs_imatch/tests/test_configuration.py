@@ -73,7 +73,7 @@ def test_imatch_background_subtracted(tmp_cwd, miri_dither_ch12):
         step.call(new_container, skip=False)
 
 
-def test_imatch_default_run(tmp_cwd, miri_dither_ch12):
+def test_imatch_default_run():
     """ Test mrs_imatch test is skipped by default """
 
     # test if default running results in skipping step
