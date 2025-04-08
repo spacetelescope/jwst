@@ -5,6 +5,7 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
+from jwst.regtest.regtestdata import RELAX_TOL
 from jwst.stpipe import Step
 
 
@@ -90,7 +91,20 @@ def test_nirspec_irs2_detector1_with_clean_flicker_noise(
     rtdata.get_truth(f"truth/test_nirspec_irs2_clean_flicker_noise/{output_filename}")
 
     # Set tolerances so comparisons work across architectures
-    fitsdiff_default_kwargs["rtol"] = 1e-4
-    fitsdiff_default_kwargs["atol"] = 1e-4
+    if RELAX_TOL and suffix in ("cfn_clean_flicker_noise", "cfn_ramp"):
+        # 12666 different pixels found (0.02% different).
+        # Maximum relative difference: 0.003790903137996793
+        # Maximum absolute difference: 0.004589080810546875
+        fitsdiff_default_kwargs["rtol"] = 0.004
+        fitsdiff_default_kwargs["atol"] = 0.005
+    elif RELAX_TOL and suffix == "flicker_noise":
+        # 33827 different pixels found (0.05% different).
+        # Maximum relative difference: 0.0023980815894901752
+        # Maximum absolute difference: 0.001953125
+        fitsdiff_default_kwargs["rtol"] = 0.003
+        fitsdiff_default_kwargs["atol"] = 0.002
+    else:
+        fitsdiff_default_kwargs["rtol"] = 1e-4
+        fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

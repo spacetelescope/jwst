@@ -1,6 +1,7 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
+from jwst.regtest.regtestdata import RELAX_TOL
 from jwst.stpipe import Step
 from stdatamodels.jwst.datamodels import SossWaveGridModel
 import numpy as np
@@ -124,6 +125,10 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    if RELAX_TOL and suffix == "AtocaSpectra":
+        # Each extension has different failures so using max from combo tol.
+        fitsdiff_default_kwargs["rtol"] = 0.01
+        fitsdiff_default_kwargs["atol"] = 0.1
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 

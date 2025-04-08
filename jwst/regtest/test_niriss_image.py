@@ -2,16 +2,13 @@
     an uncal file. Results from all intermediate steps, including
     charge_migration, are saved for comparisons with truth files.
 """
-import os
-
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
 from jwst import datamodels
+from jwst.regtest.regtestdata import RELAX_TOL
 from jwst.stpipe import Step
 from jwst.tweakreg import TweakRegStep
-
-RELAX_TOL = os.environ.get("RELAX_TOL", "false") == "true"
 
 
 @pytest.fixture(scope="module")
@@ -240,7 +237,25 @@ def _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir):
 
     # Set tolerances so the crf, rscd and rateints file comparisons work across
     # architectures
-    if not RELAX_TOL:
+    if RELAX_TOL and suffix in ("cfn_clean_flicker_noise", "cfn_ramp"):
+        # 16593 different pixels found (0.01% different).
+        # Maximum relative difference: 0.012781583704054356
+        # Maximum absolute difference: 0.009243011474609375
+        fitsdiff_default_kwargs["rtol"] = 0.02
+        fitsdiff_default_kwargs["atol"] = 0.01
+    elif RELAX_TOL and suffix == "flicker_noise":
+        # 20478 different pixels found (0.02% different).
+        # Maximum relative difference: 0.0015969735104590654
+        # Maximum absolute difference: 0.009243011474609375
+        fitsdiff_default_kwargs["rtol"] = 0.002
+        fitsdiff_default_kwargs["atol"] = 0.01
+    elif RELAX_TOL and suffix == "cfn_rateints":
+        # 550 different pixels found (0.00% different).
+        # Maximum relative difference: 0.004427026025950909
+        # Maximum absolute difference: 0.00010962039232254028
+        fitsdiff_default_kwargs["rtol"] = 0.005
+        fitsdiff_default_kwargs["atol"] = 0.0002
+    else:
         fitsdiff_default_kwargs["rtol"] = 1e-4
         fitsdiff_default_kwargs["atol"] = 1e-4
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

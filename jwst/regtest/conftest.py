@@ -1,22 +1,21 @@
+from datetime import datetime
 import copy
 import json
 import os
-from datetime import datetime
 from pathlib import Path
 
 import getpass
 import pytest
-from astropy.io.fits import conf
-from astropy.table import Table
 from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
+from astropy.table import Table
 from numpy.testing import assert_allclose, assert_equal
+from astropy.io.fits import conf
 
 from jwst.regtest.regtestdata import RegtestData
 from jwst.regtest.sdp_pools_source import SDPPoolsSource
 
 
 TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
-RELAX_TOL = os.environ.get("RELAX_TOL", "false") == "true"
 
 # Turn of FITS memmap for all regtests (affects FITSDiff)
 conf.use_memmap = False
@@ -400,20 +399,13 @@ def fitsdiff_default_kwargs():
     dict
         Keyword arguments to pass into FITSDiff.
     """
-    if not RELAX_TOL:
-        rtol = 1e-5
-        atol = 1e-7
-    else:
-        rtol = 0.01
-        atol = 0.01
-
     ignore_keywords = ["DATE", "CAL_VER", "CAL_VCS", "CRDS_VER", "CRDS_CTX", "NAXIS1", "TFORM*"]
     return {
         "ignore_hdus": ["ASDF"],
         "ignore_keywords": ignore_keywords,
         "ignore_fields": ignore_keywords,
-        "rtol": rtol,
-        "atol": atol,
+        "rtol": 1e-5,
+        "atol": 1e-7,
     }
 
 

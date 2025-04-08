@@ -1,4 +1,3 @@
-import os
 from glob import glob
 
 import pytest
@@ -8,9 +7,8 @@ from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 
+from jwst.regtest.regtestdata import RELAX_TOL
 from jwst.stpipe import Step
-
-RELAX_TOL = os.environ.get("RELAX_TOL", "false") == "true"
 
 
 @pytest.fixture(scope="module")
@@ -283,8 +281,33 @@ def test_nircam_image_detector1_with_clean_flicker_noise(
     rtdata.get_truth(f"truth/test_nircam_image_clean_flicker_noise/{output}")
 
     # Set tolerances so the file comparisons work across architectures
-    if not RELAX_TOL:
+    if RELAX_TOL and suffix in ("cfn_clean_flicker_noise", "cfn_ramp"):
+        # 1472 different pixels found (0.01% different).
+        # Maximum relative difference: 0.6280834674835205
+        # Maximum absolute difference: 0.0031576156616210938
+        fitsdiff_default_kwargs["rtol"] = 0.63
+        fitsdiff_default_kwargs["atol"] = 0.005
+    elif RELAX_TOL and suffix == "flicker_noise":
+        # 2048 different pixels found (0.01% different).
+        # Maximum relative difference: 0.003016822040081024
+        # Maximum absolute difference: 0.0031585693359375
+        fitsdiff_default_kwargs["rtol"] = 0.004
+        fitsdiff_default_kwargs["atol"] = 0.004
+    elif RELAX_TOL and suffix == "cfn_rate":
+        # 278 different pixels found (0.01% different).
+        # Maximum relative difference: 0.0014149226481094956
+        # Maximum absolute difference: 0.00014707446098327637
+        fitsdiff_default_kwargs["rtol"] = 0.002
+        fitsdiff_default_kwargs["atol"] = 0.0002
+    elif RELAX_TOL and suffix == "cfn_rateints":
+        # 1821 different pixels found (0.02% different).
+        # Maximum relative difference: 0.022895148023962975
+        # Maximum absolute difference: 0.00029408931732177734
+        fitsdiff_default_kwargs["rtol"] = 0.03
+        fitsdiff_default_kwargs["atol"] = 0.0003
+    else:
         fitsdiff_default_kwargs["rtol"] = 1e-4
         fitsdiff_default_kwargs["atol"] = 1e-4
+
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

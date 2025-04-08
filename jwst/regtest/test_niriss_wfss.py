@@ -2,6 +2,7 @@
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
+from jwst.regtest.regtestdata import RELAX_TOL
 from jwst.stpipe import Step
 
 
@@ -55,6 +56,36 @@ def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwar
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 
+    if RELAX_TOL and suffix == "bsub":
+        # 3394682 different pixels found (80.94% different).
+        # Maximum relative difference: 0.00017860707885120064
+        # Maximum absolute difference: 1.0728836059570312e-06
+        fitsdiff_default_kwargs["rtol"] = 2e-4
+        fitsdiff_default_kwargs["atol"] = 2e-6
+    elif RELAX_TOL and suffix in ("cal", "photom"):
+        # 13 different pixels found (0.02% different).
+        # Maximum relative difference: 2.5724053557496518e-05
+        # Maximum absolute difference: 0.01300048828125
+        fitsdiff_default_kwargs["rtol"] = 3e-5
+        fitsdiff_default_kwargs["atol"] = 0.02
+    elif RELAX_TOL and suffix == "esec":
+        # 418922 different pixels found (81.51% different).
+        # Maximum relative difference: 0.00017855942132882774
+        # Maximum absolute difference: 1.666136085987091e-06
+        fitsdiff_default_kwargs["rtol"] = 2e-4
+        fitsdiff_default_kwargs["atol"] = 2e-6
+    elif RELAX_TOL and suffix in ("extract_2d", "srctype"):
+        # 9565 different pixels found (12.02% different).
+        # Maximum relative difference: 5.518057514564134e-05
+        # Maximum absolute difference: 1.0654330253601074e-06
+        fitsdiff_default_kwargs["rtol"] = 6e-5
+        fitsdiff_default_kwargs["atol"] = 2e-6
+    elif RELAX_TOL and suffix == "flat_field":
+        # 3394723 different pixels found (80.94% different).
+        # Maximum relative difference: 0.0001786387147149071
+        # Maximum absolute difference: 1.0272487998008728e-06
+        fitsdiff_default_kwargs["rtol"] = 2e-4
+        fitsdiff_default_kwargs["atol"] = 2e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -84,6 +115,19 @@ def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fi
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 
     # Compare the results
-    fitsdiff_default_kwargs['atol'] = 1e-5
+    if RELAX_TOL and source_id == "s000000015" and suffix == "cal":
+        # 2804 different pixels found (10.60% different).
+        # Maximum relative difference: 4.917978003504686e-05
+        # Maximum absolute difference: 0.0076446533203125
+        fitsdiff_default_kwargs["rtol"] = 5e-5
+        fitsdiff_default_kwargs["atol"] = 0.008
+    elif RELAX_TOL and source_id == "s000000104" and suffix == "cal":
+        # 743 different pixels found (1.68% different).
+        # Maximum relative difference: 0.00018466946494299918
+        # Maximum absolute difference: 0.01251220703125
+        fitsdiff_default_kwargs["rtol"] = 2e-4
+        fitsdiff_default_kwargs["atol"] = 0.02
+    else:
+        fitsdiff_default_kwargs['atol'] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
