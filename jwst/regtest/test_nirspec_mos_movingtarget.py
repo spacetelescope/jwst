@@ -1,5 +1,3 @@
-import warnings
-
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -29,10 +27,9 @@ def run_spec2_pipeline(rtdata_module):
             "--steps.flat_field.save_results=true",
             "--steps.pathloss.save_results=true",
             "--steps.barshadow.save_results=true"]
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        Step.from_cmdline(args)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
+    Step.from_cmdline(args)
 
     return rtdata
 
@@ -45,10 +42,9 @@ def run_spec3_pipeline(run_spec2_pipeline, rtdata_module):
 
     # Run the calwebb_spec3 pipeline on the association
     args = ["calwebb_spec3", rtdata.input]
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: overflow encountered in cast
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        Step.from_cmdline(args)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: overflow encountered in cast
+    Step.from_cmdline(args)
 
     return rtdata
 

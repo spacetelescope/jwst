@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import pytest
 from astropy.io.fits.diff import FITSDiff
@@ -88,10 +87,9 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module):
         "--steps.pixel_replace.save_results=true",
         "--steps.pixel_replace.skip=false"
     ]
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: invalid value encountered in multiply
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        Step.from_cmdline(args)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: invalid value encountered in multiply
+    Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")

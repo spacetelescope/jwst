@@ -1,6 +1,4 @@
 """Regression tests for NIRSpec IFU"""
-import warnings
-
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -25,11 +23,9 @@ def run_spec3_multi_emsm(rtdata_module):
             '--steps.extract_1d.save_results=true',
         }
     }
-
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: All-NaN slice encountered
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: All-NaN slice encountered
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 

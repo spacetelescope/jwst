@@ -2,8 +2,6 @@
     an uncal file. Results from all intermediate steps, including
     charge_migration, are saved for comparisons with truth files.
 """
-import warnings
-
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -174,8 +172,7 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     ]
 
     # run the test from the command line:
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="No sources were found")
+    with pytest.warns(Warning, match="No sources were found"):
         result = Step.from_cmdline(args)
 
     # Check the status of the step is set correctly in the files.
@@ -184,8 +181,7 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     for model in mc:
         assert model.meta.cal_step.tweakreg != 'SKIPPED'
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="No sources were found")
+    with pytest.warns(Warning, match="No sources were found"):
         result = TweakRegStep.call(mc)
     with result:
         for model in result:

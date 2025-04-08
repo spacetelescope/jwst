@@ -1,6 +1,4 @@
 """Regression tests for MIRI MRS modes in calwebb_spec2"""
-import warnings
-
 import pytest
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
@@ -40,10 +38,9 @@ def run_spec2(rtdata_module):
             '--steps.cube_build.save_results=true',
             '--steps.extract_1d.save_results=true',
             ]
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: invalid value encountered in add
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        Step.from_cmdline(args)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: invalid value encountered in add
+    Step.from_cmdline(args)
 
 
 @pytest.fixture(scope='module')

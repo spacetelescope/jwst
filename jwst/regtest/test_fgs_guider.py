@@ -1,6 +1,4 @@
 """Regression tests for FGS Guidestar in ID and FINEGUIDE modes"""
-import warnings
-
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -26,10 +24,9 @@ def run_guider_pipelines(rtdata_module, request):
         '--steps.dq_init.save_results=true',
         '--steps.guider_cds.save_results=true',
     ]
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: divide by zero encountered in divide
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        Step.from_cmdline(args)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: divide by zero encountered in divide
+    Step.from_cmdline(args)
 
     return rtdata
 

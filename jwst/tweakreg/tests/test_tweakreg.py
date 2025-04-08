@@ -1,6 +1,6 @@
 import json
 import os
-import warnings
+from contextlib import nullcontext
 from copy import deepcopy
 
 import asdf
@@ -112,8 +112,12 @@ def test_is_wcs_correction_small(offset, is_good):
 
     correctors = [FakeCorrector(twcs, twk._wcs_to_skycoord(wcs))]
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=UserWarning, message="WCS has been tweaked by more than")  # is_good=False
+    if not is_good:
+        ctx = pytest.warns(UserWarning, match="WCS has been tweaked by more than")
+    else:
+        ctx = nullcontext()
+
+    with ctx:
         corr_result = twk._is_wcs_correction_small(correctors)
     assert corr_result is is_good
 

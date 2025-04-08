@@ -1,5 +1,3 @@
-import warnings
-
 import pytest
 from astropy.io.fits.diff import FITSDiff
 
@@ -28,10 +26,9 @@ def run_step_with_cal(rtdata_module):
         'ami_analyze',
         rtdata.input,
     ]
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: Degrees of freedom <= 0 for slice
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        Step.from_cmdline(args)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Degrees of freedom <= 0 for slice
+    Step.from_cmdline(args)
     return rtdata
 
 

@@ -1,5 +1,3 @@
-import warnings
-
 import pytest
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
@@ -28,10 +26,9 @@ def run_spec2_mbkg(rtdata_module):
             '--steps.master_background_mos.save_background=true'
         ]
     }
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
@@ -55,10 +52,9 @@ def run_spec2_mbkg_user(rtdata_module):
             f'--output_file={user_bg}'
         ]
     }
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
@@ -66,11 +62,10 @@ def test_masterbkg_rerun(rtdata):
     """Test to ensure sequential runs of the step are consistent"""
     with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
-        with warnings.catch_warnings():
-            # Example: RuntimeWarning: divide by zero encountered in divide
-            warnings.filterwarnings("ignore", category=RuntimeWarning)
-            corrected = mbs.run(data)
-            corrected_again = mbs.run(data)
+        # FIXME: Handle warnings properly. (corrected and corrected_again)
+        # Example: RuntimeWarning: divide by zero encountered in divide
+        corrected = mbs.run(data)
+        corrected_again = mbs.run(data)
 
     bad_slits = []
     for idx, slits in enumerate(zip(corrected.slits, corrected_again.slits)):
@@ -84,10 +79,9 @@ def test_masterbkg_corrpars(rtdata):
     """Test for correction parameters"""
     with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
-        with warnings.catch_warnings():
-            # Example: RuntimeWarning: divide by zero encountered in divide
-            warnings.filterwarnings("ignore", category=RuntimeWarning)
-            corrected = mbs.run(data)
+        # FIXME: Handle warnings properly.
+        # Example: RuntimeWarning: divide by zero encountered in divide
+        corrected = mbs.run(data)
 
         mbs.use_correction_pars = True
         corrected_corrpars = mbs.run(data)

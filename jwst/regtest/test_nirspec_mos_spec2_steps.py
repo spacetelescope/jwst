@@ -1,9 +1,7 @@
-import warnings
-
 import numpy as np
 import pytest
-from astropy.io.fits.diff import FITSDiff
 import stdatamodels.jwst.datamodels as dm
+from astropy.io.fits.diff import FITSDiff
 
 from jwst.barshadow import BarShadowStep
 from jwst.flatfield import FlatFieldStep
@@ -187,10 +185,9 @@ def test_photom_inverse(rtdata):
         corrected = pls.run(data)
 
         pls.inverse = True
-        with warnings.catch_warnings():
-            # Example: RuntimeWarning: overflow encountered in multiply
-            warnings.filterwarnings("ignore", category=RuntimeWarning)
-            corrected_inverse = pls.run(corrected)
+        # FIXME: Handle warnings properly.
+        # Example: RuntimeWarning: overflow encountered in multiply
+        corrected_inverse = pls.run(corrected)
 
         bad_slits = []
         for idx, slits in enumerate(zip(data.slits, corrected_inverse.slits)):

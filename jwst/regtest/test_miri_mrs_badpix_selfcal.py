@@ -1,5 +1,4 @@
 import os
-import warnings
 
 import pytest
 from astropy.io.fits.diff import FITSDiff
@@ -17,15 +16,14 @@ def run_pipeline_background(rtdata_module):
 
     rtdata = rtdata_module
     rtdata.get_asn("miri/mrs/jw01204-o021_20240127t024203_spec2_00010_asn.json")
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: invalid value encountered in add
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        Step.from_cmdline(['calwebb_spec2', rtdata.input,
-                           f"--steps.badpix_selfcal.output_file={OUTSTEM_BKG}",
-                           "--steps.badpix_selfcal.save_results=True",
-                           "--steps.badpix_selfcal.save_flagged_bkg=True",
-                           "--steps.badpix_selfcal.flagfrac_lower=0.0005",
-                           "--steps.badpix_selfcal.skip=False"])
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: invalid value encountered in add
+    Step.from_cmdline(['calwebb_spec2', rtdata.input,
+                       f"--steps.badpix_selfcal.output_file={OUTSTEM_BKG}",
+                       "--steps.badpix_selfcal.save_results=True",
+                       "--steps.badpix_selfcal.save_flagged_bkg=True",
+                       "--steps.badpix_selfcal.flagfrac_lower=0.0005",
+                       "--steps.badpix_selfcal.skip=False"])
     rtdata.output = f"{OUTSTEM_BKG}_badpix_selfcal.fits"
     return rtdata
 
@@ -36,14 +34,13 @@ def run_pipeline_selfcal(rtdata_module):
     '''
     rtdata = rtdata_module
     rtdata.get_asn("miri/mrs/jw01204-o021_20240127t024203_spec2_00010_selfcal_asn.json")
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: invalid value encountered in add
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        Step.from_cmdline(['calwebb_spec2', rtdata.input,
-                           f"--steps.badpix_selfcal.output_file={OUTSTEM_SELFCAL}",
-                           "--steps.badpix_selfcal.save_results=True",
-                           "--steps.badpix_selfcal.flagfrac_lower=0.0005",
-                           "--steps.badpix_selfcal.skip=False"])
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: invalid value encountered in add
+    Step.from_cmdline(['calwebb_spec2', rtdata.input,
+                       f"--steps.badpix_selfcal.output_file={OUTSTEM_SELFCAL}",
+                       "--steps.badpix_selfcal.save_results=True",
+                       "--steps.badpix_selfcal.flagfrac_lower=0.0005",
+                       "--steps.badpix_selfcal.skip=False"])
     rtdata.output = f"{OUTSTEM_SELFCAL}_badpix_selfcal.fits"
 
     return rtdata

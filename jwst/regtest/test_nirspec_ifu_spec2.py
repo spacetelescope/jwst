@@ -1,6 +1,4 @@
 """Regression tests for NIRSpec IFU"""
-import warnings
-
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -33,11 +31,9 @@ def run_spec2(rtdata_module):
             '--steps.pathloss.save_results=true',
         ]
     }
-
-    with warnings.catch_warnings():
-        # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
-        warnings.filterwarnings("ignore", category=RuntimeWarning)
-        rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
