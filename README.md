@@ -387,9 +387,7 @@ Need to parallelize your test runs over all available cores?
 
 Latest regression test results can be found here (STScI staff only):
 
-https://plwishmaster.stsci.edu:8081/job/RT/job/JWST/
-
-The test builds start at 6pm local Baltimore time Monday through Saturday on `jwcalibdev`.
+ihttps://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml?query=event%3Aschedule
 
 To run the regression tests on your local machine, get the test dependencies
 and set the environment variable TEST_BIGDATA to our Artifactory server
