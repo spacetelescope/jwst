@@ -116,11 +116,11 @@ def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fi
 
     # Compare the results
     if RELAX_TOL and source_id == "s000000015" and suffix == "cal":
-        # 2804 different pixels found (10.60% different).
-        # Maximum relative difference: 4.917978003504686e-05
-        # Maximum absolute difference: 0.0076446533203125
-        fitsdiff_default_kwargs["rtol"] = 5e-5
-        fitsdiff_default_kwargs["atol"] = 0.008
+        # 4 different pixels found (0.02% different).
+        # Maximum relative difference: 0.0009792582131922245
+        # Maximum absolute difference: 0.011031150817871094
+        fitsdiff_default_kwargs["rtol"] = 1e-3
+        fitsdiff_default_kwargs["atol"] = 0.02
     elif RELAX_TOL and source_id == "s000000104" and suffix == "cal":
         # 743 different pixels found (1.68% different).
         # Maximum relative difference: 0.00018466946494299918

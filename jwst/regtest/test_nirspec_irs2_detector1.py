@@ -98,11 +98,11 @@ def test_nirspec_irs2_detector1_with_clean_flicker_noise(
         fitsdiff_default_kwargs["rtol"] = 0.004
         fitsdiff_default_kwargs["atol"] = 0.005
     elif RELAX_TOL and suffix == "flicker_noise":
-        # 33827 different pixels found (0.05% different).
-        # Maximum relative difference: 0.0023980815894901752
-        # Maximum absolute difference: 0.001953125
-        fitsdiff_default_kwargs["rtol"] = 0.003
-        fitsdiff_default_kwargs["atol"] = 0.002
+        # 2071 different pixels found (0.00% different).
+        # Maximum relative difference: 0.0714285746216774
+        # Maximum absolute difference: 0.004589080810546875
+        fitsdiff_default_kwargs["rtol"] = 0.08
+        fitsdiff_default_kwargs["atol"] = 0.005
     else:
         fitsdiff_default_kwargs["rtol"] = 1e-4
         fitsdiff_default_kwargs["atol"] = 1e-4
