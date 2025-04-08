@@ -978,8 +978,9 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     total_weight = np.sum(weight1)
     output_mean_1 = np.nansum(data1 * weight1) / total_weight
     output_mean_2 = np.nansum(data2 * weight2) / total_weight
-    assert_allclose(input_mean * iscale2, output_mean_1)
-    assert_allclose(input_mean * iscale2, output_mean_2)
+    # rtol and atol values are from np.isclose default settings.
+    assert_allclose(input_mean * iscale2, output_mean_1, rtol=1e-5, atol=1e-8)
+    assert_allclose(input_mean * iscale2, output_mean_2, rtol=1e-5, atol=1e-8)
 
     im.close()
     result.close()
@@ -1041,7 +1042,8 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
     assert_allclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
 
     # check that output pixel area is set from input
-    assert_allclose(result.meta.photometry.pixelarea_steradians, pixel_area)
+    # rtol and atol values are from np.isclose default settings.
+    assert_allclose(result.meta.photometry.pixelarea_steradians, pixel_area, rtol=1e-5, atol=1e-8)
 
     im.close()
     result.close()
@@ -1224,7 +1226,8 @@ def test_custom_wcs_pscale_resample_miri(miri_cal, ratio):
     output_scale = compute_spectral_pixel_scale(result.meta.wcs, disp_axis=2)
 
     # test scales are close to scale specified, regardless of ratio
-    assert_allclose(output_scale, input_scale * 0.75)
+    # rtol and atol values are from np.allclose default settings.
+    assert_allclose(output_scale, input_scale * 0.75, rtol=1e-05, atol=1e-08)
 
     result.close()
 
@@ -1243,7 +1246,8 @@ def test_custom_wcs_pscale_resample_nirspec(nirspec_cal, ratio):
     output_scale = compute_spectral_pixel_scale(result.slits[0].meta.wcs, disp_axis=1)
 
     # test scales are close to scale specified, regardless of ratio
-    assert_allclose(output_scale, input_scale * 0.75)
+    # rtol and atol values are from np.allclose default settings.
+    assert_allclose(output_scale, input_scale * 0.75, rtol=1e-05, atol=1e-08)
 
     result.close()
 
