@@ -257,11 +257,18 @@ def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0,
     shower_high_reject : float, optional
         High percentile of pixels to reject
 
+    save_shower_model : bool
+        If set, a shower model is created and returned along with the cleaned input_model
+        array. If not, the `shower_model` returned is None
+
     Returns
     -------
     output : `~jwst.datamodels.IFUImageModel`
         Straylight-subtracted science data.
 
+    output_shower_model : `~jwst.datamodel.JwstDataModel` or None
+        A datamodel containing the shower model, if `save_shower_model`
+        is True.
     """
 
     log.info("Applying correction for residual cosmic ray showers.")
@@ -299,7 +306,7 @@ def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0,
     input_model.data = input_model.data - shower_model
 
     if save_shower_model:
-        output_shower_model = _make_intermediate_model(input_model, shower_model)
+        output_shower_model = _make_straylight_model(input_model, shower_model)
     else:
         output_shower_model = None
 
@@ -309,33 +316,25 @@ def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0,
     return input_model, output_shower_model
 
 
-def _make_intermediate_model(input_model, intermediate_data):
+def _make_straylight_model(input_model, shower_data):
     """
-    Make a data model to contain intermediate outputs.
-
-    The output model type depends on the shape of the input
-    intermediate data.
+    Make a data model to contain an optional output shower model.
 
     Parameters
     ----------
     input_model : `~jwst.datamodel.JwstDataModel`
         The input data.
-    intermediate_data : array-like
-        The intermediate data to save.
+    shower_data : numpy array
+        The intermediate shower model data to save.
 
     Returns
     -------
     intermediate_model : ~jwst.datamodel.JwstDataModel`
-        A model containing only the intermediate data and top-level
+        A model containing only the shower model data and top-level
         metadata matching the input.
     """
-    if intermediate_data.ndim == 4:
-        intermediate_model = datamodels.RampModel(data=intermediate_data)
-    elif intermediate_data.ndim == 3:
-        intermediate_model = datamodels.CubeModel(data=intermediate_data)
-    else:
-        intermediate_model = datamodels.ImageModel(data=intermediate_data)
+    shower_model = datamodels.ImageModel(data=shower_data)
 
     # Copy metadata from input model
-    intermediate_model.update(input_model)
-    return intermediate_model
+    shower_model.update(input_model, only="PRIMARY")
+    return shower_model
