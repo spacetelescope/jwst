@@ -225,6 +225,17 @@ class _ScalingFactorComputer:
         """
         Remove any var=0 values, which can happen for real data.
 
+        Parameters
+        ----------
+        sci : ndarray
+            The science data.
+
+        bkg : ndarray
+            The reference background model.
+
+        var : ndarray
+            Total variance (error squared) of the science data.
+
         Returns
         -------
         ndarray
@@ -248,6 +259,11 @@ class _ScalingFactorComputer:
 
         Note: meta.wcsinfo.dispersion_axis is 1-indexed coming out of assign_wcs, i.e., in [1,2].
 
+        Parameters
+        ----------
+        sci_sub : ndarray
+            Scaled down science data.
+
         Returns
         -------
         float
@@ -266,6 +282,17 @@ def _sufficient_background_pixels(dq_array, bkg_mask, min_pixels=100):
     the DO_NOT_USE flag to flip the DO_NOT_USE bit. Then count the number
     of pixels that AND with the DO_NOT_USE flag, i.e. initially did not have
     the DO_NOT_USE bit set.
+
+    Parameters
+    ----------
+    dq_array : ndarray
+        Subarray input DQ array
+
+    bkg_mask : ndarray
+        Boolean background mask
+
+    min_pixels : int, optional
+        Minimum number of pixels to use
 
     Returns
     -------

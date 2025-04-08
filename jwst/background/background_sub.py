@@ -22,6 +22,14 @@ class ImageSubsetArray:
     """
 
     def __init__(self, model):
+        """
+        Initialize the class.
+
+        Parameters
+        ----------
+        model : ImageModel
+            Input datamodel
+        """
         im = datamodels.open(model)
 
         # Make sure xstart/ystart/xsize/ysize exist in the model metadata
@@ -69,6 +77,11 @@ class ImageSubsetArray:
         """
         Find whether this subset and another overlap.
 
+        Parameters
+        ----------
+        other : ImageModel
+            Input model
+
         Returns
         -------
         bool
@@ -83,7 +96,12 @@ class ImageSubsetArray:
 
     def get_subset_array(self, other):
         """
-        Pull out the overlapping part of two arrays. Match err/DQ to science image pixels.
+        Pull out the overlapping SCI, ERR, and DQ data for two models.
+
+        Parameters
+        ----------
+        other : ImageModel
+            Input model
 
         Returns
         -------
@@ -164,11 +182,11 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
     bkg_list : list
         Filename list of background exposures
 
-    sigma : float, optional
+    sigma : float
         Number of standard deviations to use for both the lower
         and upper clipping limits.
 
-    maxiters : int or None, optional
+    maxiters : int or None
         Maximum number of sigma-clipping iterations to perform
 
     Returns

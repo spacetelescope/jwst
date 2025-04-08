@@ -15,7 +15,7 @@ def subtract(model1, model2):
     model1 : ImageModel or IFUImageModel
         Input data model on which subtraction will be performed
 
-    model2 : JWST data model
+    model2 : ImageModel or IFUImageModel
         Input data model that will be subtracted from the first model
 
     Returns
