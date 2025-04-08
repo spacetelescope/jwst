@@ -51,11 +51,12 @@ def run_atoca_extras(rtdata_module, resource_tracker):
     rtdata = rtdata_module
 
     # Run spec2 pipeline on the second _rateints file, using wavegrid generated from first segment.
-    rtdata.get_data("niriss/soss/seg001_wavegrid.fits")
-    rtdata.get_data("niriss/soss/atoca_extras_rateints.fits")
+    rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_wavegrid.fits")
+    rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg002_nis_short_rateints.fits")
     args = ["calwebb_spec2", rtdata.input,
+            "--output_file=atoca_extras",
             "--steps.extract_1d.soss_modelname=atoca_extras",
-            "--steps.extract_1d.soss_wave_grid_in=seg001_wavegrid.fits",
+            "--steps.extract_1d.soss_wave_grid_in=jw01091002001_03101_00001-seg001_wavegrid.fits",
             "--steps.extract_1d.soss_bad_pix=model",
             "--steps.extract_1d.soss_rtol=1.e-3",
             ]
