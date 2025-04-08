@@ -297,7 +297,6 @@ class TweakRegStep(Step):
         # absolute alignment to the reference catalog
         # can (and does) occur after alignment between groups
         if align_to_abs_refcat:
-            self.log.info(f"Aligning to absolute reference catalog: {self.abs_refcat}")
             with images:
                 ref_image = images.borrow(0)
                 try:
