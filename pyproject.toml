@@ -233,8 +233,13 @@ addopts = [
     "--report-crds-context",
     "--color=yes",
 ]
+# This is for regtests. All unhandled warnings become exceptions for
+# regular CI in tox.ini file.
 filterwarnings = [
-    "error"
+    "error::ResourceWarning",
+    "error::DeprecationWarning",
+    "error::stdatamodels.exceptions.ValidationWarning",
+    "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
 ]
 
 [tool.coverage.run]
