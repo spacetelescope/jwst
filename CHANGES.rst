@@ -1,7 +1,6 @@
 1.18.0 (2025-04-08)
 ===================
 
-
 General
 -------
 
@@ -328,13 +327,6 @@ straylight (spec2 IFU)
   measure and remove residual cosmic ray showers using information from the
   inter-slice pixels. (`#9126
   <https://github.com/spacetelescope/jwst/issues/9126>`_)
-
-
-tweakreg (image3)
------------------
-
-- Update docs to clarify format of tweakreg catalogs (`#9301
-  <https://github.com/spacetelescope/jwst/issues/9301>`_)
 
 
 wavecorr (spec2 MOS)
