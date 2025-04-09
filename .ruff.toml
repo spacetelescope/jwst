@@ -49,7 +49,6 @@ select = [
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
     "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
     "C4",     # flake8-comprehensions (best practices for comprehensions)
-    "G004",   # logging-f-string (https://github.com/python/cpython/issues/90358)
     "ICN",    # flake8-import-conventions (enforce import conventions)
     "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
     "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
@@ -122,6 +121,3 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 "jwst/scripts/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/spectral_leak/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/straylight/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"!jwst/engdblog/**.py" = [ # Package-wide logger formatting is https://jira.stsci.edu/browse/JP-3927
-    "G004", # logging-f-string
-]

@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import RampModel, EmiModel
 
+from jwst.pipeline import Detector1Pipeline
 from jwst.emicorr import emicorr, emicorr_step
 
 
@@ -175,15 +176,41 @@ def module_log_watcher(monkeypatch):
 
 
 def test_emicorrstep_skip_default():
+    step = emicorr_step.EmiCorrStep()
+    # Default is that step is skipped
+    assert step.skip == True
+
+
+@pytest.mark.parametrize('skip', [True, False])
+def test_run_in_pipeline(skip):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
-    step = emicorr_step.EmiCorrStep()
-    result = step.call(input_model)
+    pipeline_instance = Detector1Pipeline()
 
-    # expect no change because step is skipped by default
-    assert np.all(input_model.data == result.data)
-    assert result.meta.cal_step.emicorr == "SKIPPED"
+    assert pipeline_instance.steps['emicorr']['skip'] == True
+
+    # Run the pipeline, omitting steps that are incompatible with our datamodel
+    cleaned = pipeline_instance.call(input_model,
+                                     steps={'emicorr': {'skip': skip},
+                                            'dq_init': {'skip': True},
+                                            'saturation': {'skip': True},
+                                            'ipc': {'skip': True},
+                                            'reset': {'skip': True},
+                                            'linearity': {'skip': True},
+                                            'rscd': {'skip': True},
+                                            'dark_current': {'skip': True},
+                                            'jump': {'skip': True},
+                                            'ramp_fit': {'skip': True},
+                                           })
+
+    if skip:
+        assert cleaned.meta.cal_step.emicorr == 'SKIPPED'
+    else:
+        assert cleaned.meta.cal_step.emicorr == 'COMPLETE'
+    
+    input_model.close()
+    cleaned.close()
 
 
 def test_emicorrstep_skip_instrument(log_watcher):
