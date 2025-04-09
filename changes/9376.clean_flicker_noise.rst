@@ -1,0 +1,1 @@
+Use higher precision for sigma clipping statistics for better numerical consistency across build environments.
