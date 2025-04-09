@@ -99,10 +99,11 @@ class Ami3Pipeline(Pipeline):
             # Save the result for use as input to ami_average
             psf_lg.append(result1)
 
-        # Normalize all target results by matching psf results
-        # assuming one ref star exposure per targ exposure
+        # This zip operation matches science exposures to reference star exposures
+        # in a one-to-one fashion, truncating a list if it is longer than the
+        # other. This is not intended behavior and should be fixed by JP-3978.
         if (len(psf_files) > 0) & (len(targ_files) > 0):
-            for targ, psf in zip(targ_lg, psf_lg, strict=True):
+            for targ, psf in zip(targ_lg, psf_lg, strict=False):
                 result = self.ami_normalize.run(targ, psf)
                 # Save the result
                 result.meta.asn.pool_name = asn["asn_pool"]

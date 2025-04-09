@@ -3,9 +3,8 @@ Arguments
 The ramp fitting step has the following optional arguments that can be set by the user:
 
 * ``--algorithm``: A string to select the desired algorithm.  The available
-  values are "OLS" to select the python implementation of the Ordinary
-  Least Squares algorithm, "OLS_C" to select the C extension
-  implementation of OLS, and "LIKELY" to select a prototype maximum-likelihood based
+  values are "OLS_C" to select the C implementation of the Ordinary Least
+  Squares algorithm and "LIKELY" to select a prototype maximum-likelihood based
   approach.  The algorithm defaults to "OLS_C".
 
 * ``--save_opt``: A True/False value that specifies whether to write
