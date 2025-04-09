@@ -39,6 +39,11 @@ def is_nrs_lamp(datamodel):
     """
     Check if exposure type is nrs_lamp or nrs_autowave.
 
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
+
     Returns
     -------
     status : bool
@@ -52,6 +57,11 @@ def is_nrs_linelamp(datamodel):
     """
     Check if lamp state is lin or ref.
 
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
+
     Returns
     -------
     status : bool
@@ -64,6 +74,11 @@ def is_nrs_linelamp(datamodel):
 def is_nrs_flatlamp(datamodel):
     """
     Check if lamp state is flat.
+
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
 
     Returns
     -------
@@ -81,6 +96,11 @@ def is_nrs_slit_linelamp(datamodel):
     Specifically, check if lamp mode is msaspec, fixedslit, or brightobj
     when lamp state is lin or ref and exposure type is
     nrs_autowave or nrs_lamp.
+
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
 
     Returns
     -------
@@ -100,6 +120,11 @@ def is_nrs_ifu_linelamp(datamodel):
     """
     Check if lamp mode is ifu and lamp state is lin or ref.
 
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
+
     Returns
     -------
     status : bool
@@ -112,6 +137,11 @@ def is_nrs_ifu_linelamp(datamodel):
 def is_nrs_ifu_flatlamp(datamodel):
     """
     Check if lamp mode is ifu and lamp state is flat.
+
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
 
     Returns
     -------
@@ -126,6 +156,11 @@ def is_nrs_ifu_lamp(datamodel):
     """
     Check if lamp mode is ifu and exposure type is nrs_lamp or nrs_autowave.
 
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
+
     Returns
     -------
     status : bool
@@ -138,6 +173,11 @@ def is_nrs_ifu_lamp(datamodel):
 def is_nrs_msaspec_lamp(datamodel):
     """
     Check if lamp mode is msaspec and exposure type is nrs_lamp or nrs_autowave.
+
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
 
     Returns
     -------
@@ -152,6 +192,11 @@ def is_nrs_msaspec_linelamp(datamodel):
     """
     Check if lamp mode is msaspec and lamp state is lin or ref.
 
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
+
     Returns
     -------
     status : bool
@@ -164,6 +209,11 @@ def is_nrs_msaspec_linelamp(datamodel):
 def is_nrs_msaspec_flatlamp(datamodel):
     """
     Check if lamp mode is msaspec and lamp state is flat.
+
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
 
     Returns
     -------
@@ -178,6 +228,11 @@ def is_nrs_autoflat(datamodel):
     """
     Check of exposure type is nrs_autoflat.
 
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
+
     Returns
     -------
     status : bool
@@ -190,6 +245,11 @@ def is_nrs_autoflat(datamodel):
 def is_moving_target(datamodel):
     """
     Determine if a moving target exposure.
+
+    Parameters
+    ----------
+    datamodel : `~jwst.datamodels.JwstDataModel`
+        JWST data model.
 
     Returns
     -------

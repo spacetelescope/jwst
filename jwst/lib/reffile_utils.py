@@ -23,7 +23,7 @@ def is_subarray(input_model):
     Returns
     -------
     status : bool
-        `True` is the primary data array of the model is smaller than
+        `True` if the primary data array of the model is smaller than
         full-frame, `False` otherwise.
     """
     # Get the dimensions of the model's primary data array
@@ -233,7 +233,7 @@ def get_subarray_model(sci_model, ref_model):
     """
     # If science data is in multistripe readout, use
     # multistripe-specific subarray reconstruction.
-    if getattr(sci_model.meta.subarray, 'multistripe_reads1', None) is not None:
+    if getattr(sci_model.meta.subarray, "multistripe_reads1", None) is not None:
         return get_multistripe_subarray_model(sci_model, ref_model)
 
     # Get the science model subarray params
@@ -353,26 +353,41 @@ def get_multistripe_subarray_model(sci_model, ref_model):
         Subarray cutout reference file model.
     """
     if isinstance(ref_model, datamodels.MaskModel):
-        sub_model = stripe_read(sci_model, ref_model, ['dq'])
+        sub_model = stripe_read(sci_model, ref_model, ["dq"])
     elif isinstance(ref_model, datamodels.GainModel):
-        sub_model = stripe_read(sci_model, ref_model, ['data'])
+        sub_model = stripe_read(sci_model, ref_model, ["data"])
     elif isinstance(ref_model, datamodels.LinearityModel):
-        sub_model = stripe_read(sci_model, ref_model, ['coeffs', 'dq'])
+        sub_model = stripe_read(sci_model, ref_model, ["coeffs", "dq"])
     elif isinstance(ref_model, datamodels.ReadnoiseModel):
-        sub_model = stripe_read(sci_model, ref_model, ['data'])
+        sub_model = stripe_read(sci_model, ref_model, ["data"])
     elif isinstance(ref_model, datamodels.SaturationModel):
-        sub_model = stripe_read(sci_model, ref_model, ['data', 'dq'])
+        sub_model = stripe_read(sci_model, ref_model, ["data", "dq"])
     elif isinstance(ref_model, datamodels.SuperBiasModel):
-        sub_model = stripe_read(sci_model, ref_model, ['data', 'err', 'dq'])
+        sub_model = stripe_read(sci_model, ref_model, ["data", "err", "dq"])
     else:
-        log.warning('Unsupported reference file model type for'
-                    'multistripe subarray cutouts.')
+        log.warning("Unsupported reference file model type for multistripe subarray cutouts.")
         sub_model = None
 
     return sub_model
 
 
 def stripe_read(sci_model, ref_model, attribs):
+    """
+    Generate sub-model from science model multistripe params.
+
+    Parameters
+    ----------
+    sci_model, ref_model : DataModel
+        Science and reference models, respectively.
+
+    attribs : list of str
+        Attributes in the model to process.
+
+    Returns
+    -------
+    sub_model : DataModel
+        Generated sub-model.
+    """
     # Get the science model multistripe params
     nreads1 = sci_model.meta.subarray.multistripe_reads1
     nskips1 = sci_model.meta.subarray.multistripe_skips1
@@ -406,19 +421,20 @@ def stripe_read(sci_model, ref_model, attribs):
 
 
 def generate_stripe_array(
-        ref_array,
-        xsize_sci,
-        ysize_sci,
-        nreads1,
-        nreads2,
-        nskips1,
-        nskips2,
-        repeat_stripe,
-        interleave_reads1,
-        fastaxis,
-        slowaxis,
+    ref_array,
+    xsize_sci,
+    ysize_sci,
+    nreads1,
+    nreads2,
+    nskips1,
+    nskips2,
+    repeat_stripe,
+    interleave_reads1,
+    fastaxis,
+    slowaxis,
 ):
     """
+    Generate stripe array.
 
     Parameters
     ----------
@@ -449,7 +465,8 @@ def generate_stripe_array(
 
     Returns
     -------
-
+    stripe_out : ndarray
+        Generated stripe array.
     """
     # Transform science data to detector frame
     ref_array = science_detector_frame_transform(ref_array, fastaxis, slowaxis)
@@ -461,15 +478,17 @@ def generate_stripe_array(
     sub_lines = 0
 
     # Start at 0, make nreads1 row reads
-    stripe_out[..., sub_lines: sub_lines + nreads1, :] = \
-        ref_array[..., linecount: linecount + nreads1, :]
+    stripe_out[..., sub_lines : sub_lines + nreads1, :] = ref_array[
+        ..., linecount : linecount + nreads1, :
+    ]
     linecount += nreads1
     sub_lines += nreads1
     # Now skip nskips1
     linecount += nskips1
     # Nreads2
-    stripe_out[..., sub_lines: sub_lines + nreads2, :] = \
-        ref_array[..., linecount: linecount + nreads2, :]
+    stripe_out[..., sub_lines : sub_lines + nreads2, :] = ref_array[
+        ..., linecount : linecount + nreads2, :
+    ]
     linecount += nreads2
     sub_lines += nreads2
 
@@ -485,15 +504,18 @@ def generate_stripe_array(
     #     nreads1 + nskips1 + nreads2.
     interleave_skips = nskips1
     if nreads2 <= 0:
-        raise ValueError("Invalid value for multistripe_reads2 - "
-                         "cutout for reference file could not be "
-                         "generated!")
+        raise ValueError(
+            "Invalid value for multistripe_reads2 - "
+            "cutout for reference file could not be "
+            "generated!"
+        )
     while sub_lines < ysize_sci:
         # If repeat_stripe, add interleaved rows to output and increment sub_lines
         if repeat_stripe > 0:
             linecount = 0
-            stripe_out[..., sub_lines: sub_lines + nreads1, :] = \
-                ref_array[..., linecount: linecount + nreads1, :]
+            stripe_out[..., sub_lines : sub_lines + nreads1, :] = ref_array[
+                ..., linecount : linecount + nreads1, :
+            ]
             linecount += nreads1
             sub_lines += nreads1
             if interleave_reads1:
@@ -503,14 +525,17 @@ def generate_stripe_array(
                 linecount += nskips1
         else:
             linecount += nskips2
-        stripe_out[..., sub_lines: sub_lines + nreads2, :] = \
-            ref_array[..., linecount: linecount + nreads2, :]
+        stripe_out[..., sub_lines : sub_lines + nreads2, :] = ref_array[
+            ..., linecount : linecount + nreads2, :
+        ]
         linecount += nreads2
         sub_lines += nreads2
 
     if sub_lines != ysize_sci:
-        raise ValueError('Stripe readout resulted in mismatched reference array shape '
-                         'with respect to science array!')
+        raise ValueError(
+            "Stripe readout resulted in mismatched reference array shape "
+            "with respect to science array!"
+        )
 
     # Transform from detector frame back to science frame
     stripe_out = science_detector_frame_transform(stripe_out, fastaxis, slowaxis)
@@ -546,10 +571,10 @@ def science_detector_frame_transform(data, fastaxis, slowaxis):
     # If fastaxis is x-axis
     if np.abs(fastaxis) == 1:
         # Use sign of keywords to possibly reverse the ordering of the axes.
-        data = data[..., ::slowaxis//np.abs(slowaxis), ::fastaxis//np.abs(fastaxis)]
+        data = data[..., :: slowaxis // np.abs(slowaxis), :: fastaxis // np.abs(fastaxis)]
     # Else fastaxis is y-axis, also need to transpose array
     else:
-        data = data[..., ::fastaxis//np.abs(fastaxis), ::slowaxis//np.abs(slowaxis)]
+        data = data[..., :: fastaxis // np.abs(fastaxis), :: slowaxis // np.abs(slowaxis)]
         data = np.swapaxes(data, -2, -1)
     return data
 

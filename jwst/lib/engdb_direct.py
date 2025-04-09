@@ -131,11 +131,11 @@ class EngdbDirect(EngdbABC):
             result_format = self.default_format
 
         query = "".join([self.base_url, result_format, ENGDB_METADATA, mnemonic])
-        logger.debug(f'Query URL="{query}"')
+        logger.debug('Query URL="%s"', query)
 
         # Make our request
         response = self._session.get(query, timeout=self.timeout)
-        logger.debug(f'Response="{response}"')
+        logger.debug('Response="%s"', response)
         response.raise_for_status()
 
         # That's all folks
@@ -287,7 +287,7 @@ class EngdbDirect(EngdbABC):
                 endtime.iso,
             ]
         )
-        logger.debug(f'Query URL="{query}"')
+        logger.debug('Query URL="%s"', query)
 
         # Make our request
         response = self._session.get(query, timeout=self.timeout)

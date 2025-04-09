@@ -107,7 +107,7 @@ def match_nans_and_flags(input_model):
     """
     # Check for datamodel input or slit instance
     if not isinstance(input_model, JwstDataModel) and not isinstance(input_model, ObjectNode):
-        raise ValueError(f"Input {type(input_model)} is not a datamodel.")  # noqa: TRY004
+        raise TypeError(f"Input {type(input_model)} is not a datamodel.")
 
     # Build up the invalid data flags from each available data extension.
     is_invalid = None
@@ -123,8 +123,8 @@ def match_nans_and_flags(input_model):
         else:
             if data.shape != data_shape:
                 log.warning(
-                    f"Mismatched data shapes; skipping invalid data "
-                    f"updates for extension '{extension}'"
+                    "Mismatched data shapes; skipping invalid data updates for extension '%s'",
+                    extension,
                 )
                 continue
             is_invalid |= np.isnan(data)

@@ -126,7 +126,9 @@ def calc_deltas(exposures, extra_meta=None):
     for exposure in exposures:
         with dm.open(exposure) as model:
             delta = calc_pointing_deltas(model)
-            logger.info(f"{model}: delta v1={delta.delta_v1} delta refpoint={delta.delta_refpoint}")
+            logger.info(
+                "%s: delta v1=%s delta refpoint=%s", model, delta.delta_v1, delta.delta_refpoint
+            )
 
             targets.append(delta.target)
             v1s.append(delta.v1)

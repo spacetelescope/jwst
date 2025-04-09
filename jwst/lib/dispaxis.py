@@ -147,5 +147,5 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY", pupi
         if select in second_pass.keys():
             return second_pass[select]
         else:
-            log.warning("Error in get_dispersion_direction:  %s not in `second_pass`", str(select))
+            log.warning("Error in get_dispersion_direction:  %s not in `second_pass`", select)
             log.warning("Dispersion direction could not be determined.")

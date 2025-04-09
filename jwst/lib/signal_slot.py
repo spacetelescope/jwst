@@ -180,7 +180,7 @@ class Signal:
         single_shot : bool
             If True, only remove single shot slots.
         """
-        logger.debug(f"Signal {self.__class__.__name__}: Clearing slots")
+        logger.debug("Signal %s: Clearing slots", self.__class__.__name__)
         if not single_shot:
             self._slots.clear()
         else:
@@ -229,13 +229,13 @@ class Signals(dict):
         if key not in self:
             super(Signals, self).__setitem__(key, value)
         else:
-            logger.warning(f'Signals: signal "{key}" already exists.')
+            logger.warning('Signals: signal "%s" already exists.', key)
 
     def __getattr__(self, key):
         for signal in self:
             if signal.__name__ == key:
                 return self[signal]
-        raise KeyError(f"{key}")
+        raise KeyError(str(key))
 
     def add(self, signal_class, *args, **kwargs):
         """Add a signal class."""

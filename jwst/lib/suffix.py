@@ -227,6 +227,11 @@ def remove_suffix(name):
     """
     Remove the suffix if a known suffix is already in name.
 
+    Parameters
+    ----------
+    name : str
+        The name to remove the suffix from.
+
     Returns
     -------
     name, separator : str
@@ -331,7 +336,7 @@ def find_suffixes():
             try:
                 step = Step.from_config_file(path.join(config_path, config_file))
             except Exception as err:
-                logger.debug(f"Configuration {config_file} failed: {str(err)}")
+                logger.debug("Configuration %s failed: %s", config_file, str(err))
             else:
                 suffixes.add(step.name.lower())
                 if step.suffix is not None:
