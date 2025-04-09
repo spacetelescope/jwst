@@ -4,7 +4,6 @@ from collections import namedtuple
 import inspect
 import logging
 
-
 __all__ = ["Signal", "Signals", "SignalsNotAClass"]
 
 # Configure logging
@@ -48,10 +47,10 @@ class Signal:
 
         Parameters
         ----------
-        *args : (arg[, ...])
+        *args : tuple
             Positional arguments to pass to the slots.
 
-        **kwargs : {key: value[, ...]}
+        **kwargs : dict
             Keyword arguments to pass to the slots.
         """
         for _ in self.call(*args, **kwargs):
@@ -65,10 +64,10 @@ class Signal:
 
         Parameters
         ----------
-        *args : (arg[, ...])
+        *args : tuple
             Positional arguments to pass to the slots.
 
-        **kwargs : {key: value[, ...]}
+        **kwargs : dict
             Keyword arguments to pass to the slots.
 
         Returns
@@ -93,10 +92,10 @@ class Signal:
 
         Parameters
         ----------
-        *args : (arg[, ...])
+        *args : tuple
             Positional arguments to pass to the slots.
 
-        **kwargs : {key: value[, ...]}
+        **kwargs : dict
             Keyword arguments to pass to the slots.
 
         Returns
