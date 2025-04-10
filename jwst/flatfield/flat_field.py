@@ -440,7 +440,6 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
             slit.var_poisson *= flat_data_squared
             slit.var_rnoise *= flat_data_squared
             slit.var_flat = (slit.data * slit_flat.data / slit_flat.err) ** 2
-            #np.place(slit.var_flat, np.isinf(slit.var_flat), np.nan)  # REMOVE?
         slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
 
         # Combine the science and flat DQ arrays

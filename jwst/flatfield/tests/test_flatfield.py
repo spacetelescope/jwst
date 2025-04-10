@@ -2,7 +2,7 @@ import pytest
 import numpy as np
 from astropy.io import fits
 from astropy.table import Table
-
+from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import AssignWcsStep
@@ -109,12 +109,12 @@ def test_nirspec_flatfield_step_interface(exptype):
     FlatFieldStep.call(data)
 
 
-def create_nirspec_flats(shape, msa=False):
+def create_nirspec_flats(shape, msa=False, flat_data_value=1.0, flat_err_value=0.1):
     flats = []
     for flat_name in ['f', 's', 'd']:
         if flat_name == 'f':
-            f_data = np.full(shape[0], 1.0)
-            f_err = np.full(shape[0], 0.1)
+            f_data = np.full(shape[0], flat_data_value)
+            f_err = np.full(shape[0], flat_err_value)
         else:
             f_data = np.full(shape[0], 1.0)
             f_err = np.full(shape[0], np.nan)
@@ -169,14 +169,13 @@ def create_nirspec_flats(shape, msa=False):
                 hdu.header['EXTVER'] = quadrant + 1
                 fflat_hdul.append(hdu)
 
+            flat = datamodels.NirspecQuadFlatModel(fflat_hdul)
         else:
             fflat_hdul.append(fits.table_to_hdu(flat_table))
             fflat_hdul[-1].name = 'FAST_VARIATION'
 
-        if msa and flat_name == 'f':
-            flat = datamodels.NirspecQuadFlatModel(fflat_hdul)
-        else:
             flat = datamodels.NirspecFlatModel(fflat_hdul)
+
         fflat_hdul.close()
 
         flat.meta.instrument.name = 'NIRSPEC'
@@ -216,7 +215,7 @@ def test_nirspec_bots_flat():
 
     # null flat, so data is the same, other than nan edges
     nn = ~np.isnan(result.data)
-    assert np.allclose(result.data[nn], data.data[nn])
+    assert_allclose(result.data[nn], data.data[nn])
 
     # check that NaNs match in every extension they should
     for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
@@ -227,7 +226,7 @@ def test_nirspec_bots_flat():
     # error is propagated from non-empty fflat error
     # (no other additive contribution, scale from data is 1.0)
     assert result.var_flat.shape == shape
-    assert np.allclose(result.var_flat[nn], 0.1 ** 2)
+    assert_allclose(result.var_flat[nn], 0.1 ** 2)
     assert result.meta.cal_step.flat_field == 'COMPLETE'
 
     result.close()
@@ -252,9 +251,9 @@ def test_nirspec_fs_flat(srctype):
     data.slits.append(datamodels.SlitModel(shape))
     data.slits[0].data = np.full(shape, 1.0)
     data.slits[0].dq = np.full(shape, 0)
-    data.slits[0].err = np.full(shape, 0.0)
-    data.slits[0].var_poisson = np.full(shape, 0.0)
-    data.slits[0].var_rnoise = np.full(shape, 0.0)
+    data.slits[0].err = np.full(shape, 0.1)
+    data.slits[0].var_poisson = np.full(shape, 0.01)
+    data.slits[0].var_rnoise = np.full(shape, 0.01)
     data.slits[0].data = np.full(shape, 1.0)
     data.slits[0].wavelength = np.ones(shape[-2:])
     data.slits[0].wavelength[:] = np.linspace(1, 5, shape[-1], dtype=float)
@@ -265,13 +264,28 @@ def test_nirspec_fs_flat(srctype):
     data.slits[0].xsize = shape[1]
     data.slits[0].ysize = shape[0]
 
-    flats = create_nirspec_flats(w_shape)
+    orig_data = data.copy()
+    flat_val = 0.9
+    flat_err = 0.1
+    flats = create_nirspec_flats(w_shape, flat_data_value=flat_val, flat_err_value=flat_err)
     result = FlatFieldStep.call(data, override_fflat=flats[0], override_sflat=flats[1],
                                 override_dflat=flats[2], override_flat='N/A')
 
-    # null flat, so data is the same, other than nan edges
     nn = ~np.isnan(result.slits[0].data)
-    assert np.allclose(result.slits[0].data[nn], data.slits[0].data[nn])
+    assert_allclose(result.slits[0].data[nn], orig_data.slits[0].data[nn] / flat_val, rtol=1e-6)
+
+    # Recover original input before flatfield step.
+    rt_data = FlatFieldStep.call(
+        result, inverse=True, override_fflat=flats[0], override_sflat=flats[1],
+        override_dflat=flats[2], override_flat='N/A')
+    assert_allclose(rt_data.slits[0].data[nn], orig_data.slits[0].data[nn])
+    assert_allclose(rt_data.slits[0].var_poisson[nn], orig_data.slits[0].var_poisson[nn])
+    assert_allclose(rt_data.slits[0].var_rnoise[nn], orig_data.slits[0].var_rnoise[nn])
+    # varflat and err not same as original input due to how they are calculated.
+    rt_varflat = (rt_data.slits[0].data[nn] * flat_val / flat_err) ** 2  # orig_input has no var_flat
+    rt_err = np.sqrt(rt_data.slits[0].var_poisson[nn] + rt_data.slits[0].var_rnoise[nn] + rt_varflat)
+    assert_allclose(rt_data.slits[0].var_flat[nn], rt_varflat)
+    assert_allclose(rt_data.slits[0].err[nn], rt_err)
 
     # check that NaNs match in every extension they should
     for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
@@ -282,7 +296,10 @@ def test_nirspec_fs_flat(srctype):
     # error is propagated from non-empty fflat error
     # (no other additive contribution, scale from data is 1.0)
     assert result.slits[0].var_flat.shape == shape
-    assert np.allclose(result.slits[0].var_flat[nn], 0.1 ** 2)
+    assert_allclose(
+        result.slits[0].var_flat[nn],
+        ((1 / flat_val) / flat_val * flat_err) ** 2,
+        rtol=1e-6)
     assert result.meta.cal_step.flat_field == 'COMPLETE'
 
     result.close()
@@ -328,7 +345,7 @@ def test_nirspec_msa_flat():
 
     # null flat, so data is the same, other than nan edges
     nn = ~np.isnan(result.slits[0].data)
-    assert np.allclose(result.slits[0].data[nn], data.slits[0].data[nn])
+    assert_allclose(result.slits[0].data[nn], data.slits[0].data[nn])
 
     # check that NaNs match in every extension they should
     for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
@@ -339,7 +356,7 @@ def test_nirspec_msa_flat():
     # error is propagated from non-empty fflat error
     # (no other additive contribution, scale from data is 1.0)
     assert result.slits[0].var_flat.shape == shape
-    assert np.allclose(result.slits[0].var_flat[nn], 0.1 ** 2)
+    assert_allclose(result.slits[0].var_flat[nn], 0.1 ** 2)
     assert result.meta.cal_step.flat_field == 'COMPLETE'
 
     result.close()
@@ -372,7 +389,7 @@ def test_nirspec_ifu_flat():
 
     # null flat, so data is the same, other than nan edges
     nn = ~np.isnan(result.data)
-    assert np.allclose(result.data[nn], data.data[nn])
+    assert_allclose(result.data[nn], data.data[nn])
 
     # check that NaNs match in every extension they should
     for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
@@ -383,7 +400,7 @@ def test_nirspec_ifu_flat():
     # error is propagated from non-empty fflat error
     # (no other additive contribution, scale from data is 1.0)
     assert result.var_flat.shape == shape
-    assert np.allclose(result.var_flat[nn], 0.1 ** 2)
+    assert_allclose(result.var_flat[nn], 0.1 ** 2)
     assert result.meta.cal_step.flat_field == 'COMPLETE'
 
     result.close()
