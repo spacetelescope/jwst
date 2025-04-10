@@ -221,7 +221,7 @@ def is_nrs_msaspec_flatlamp(datamodel):
         `True` if it is.
     """
     lamp_mode = datamodel.meta.instrument.lamp_mode.lower()
-    return lamp_mode == "msaspec" and is_nrs_flatlamp()
+    return lamp_mode == "msaspec" and is_nrs_flatlamp(datamodel)
 
 
 def is_nrs_autoflat(datamodel):
