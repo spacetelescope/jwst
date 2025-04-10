@@ -8,9 +8,7 @@ __all__ = ["PersistenceStep"]
 
 
 class PersistenceStep(Step):
-    """
-    PersistenceStep: Correct a science image for persistence.
-    """
+    """PersistenceStep: Correct a science image for persistence."""
 
     class_alias = "persistence"
 
@@ -20,23 +18,31 @@ class PersistenceStep(Step):
         save_persistence = boolean(default=False) # Save subtracted persistence to an output file with suffix '_output_pers'
         save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
         modify_input = boolean(default=False)
-    """ # noqa: E501
+    """  # noqa: E501
 
     reference_file_types = ["trapdensity", "trappars", "persat"]
 
     def process(self, step_input):
+        """
+        Execute the persistence correction step.
 
+        Parameters
+        ----------
+        step_input : DataModel
+            Input datamodel to be corrected
+
+        Returns
+        -------
+        output_model : DataModel
+            The persistence corrected datamodel
+        """
         if self.input_trapsfilled is not None:
-            if (self.input_trapsfilled == "None" or
-                    len(self.input_trapsfilled) == 0):
+            if (self.input_trapsfilled == "None") or (len(self.input_trapsfilled) == 0):
                 self.input_trapsfilled = None
 
         with datamodels.RampModel(step_input) as input_model:
-
-            self.trap_density_filename = self.get_reference_file(input_model,
-                                                                 "trapdensity")
-            self.trappars_filename = self.get_reference_file(input_model,
-                                                             "trappars")
+            self.trap_density_filename = self.get_reference_file(input_model, "trapdensity")
+            self.trappars_filename = self.get_reference_file(input_model, "trappars")
             self.persat_filename = self.get_reference_file(input_model, "persat")
 
             # Is any reference file missing?
@@ -57,7 +63,7 @@ class PersistenceStep(Step):
                 else:
                     msg = "Missing reference file types: "
                     for name in missing_reftypes:
-                        msg += (" " + name)
+                        msg += (" " + name)  # fmt: skip
                 self.log.warning("%s", msg)
                 input_model.meta.cal_step.persistence = "SKIPPED"
                 return input_model
@@ -68,35 +74,35 @@ class PersistenceStep(Step):
             if self.input_trapsfilled is None:
                 traps_filled_model = None
             else:
-                traps_filled_model = datamodels.TrapsFilledModel(
-                    self.input_trapsfilled)
-            trap_density_model = datamodels.TrapDensityModel(
-                self.trap_density_filename)
+                traps_filled_model = datamodels.TrapsFilledModel(self.input_trapsfilled)
+            trap_density_model = datamodels.TrapDensityModel(self.trap_density_filename)
             trappars_model = datamodels.TrapParsModel(self.trappars_filename)
             persat_model = datamodels.PersistenceSatModel(self.persat_filename)
 
-            pers_a = persistence.DataSet(result, traps_filled_model,
-                                         self.flag_pers_cutoff,
-                                         self.save_persistence,
-                                         trap_density_model, trappars_model,
-                                         persat_model)
+            pers_a = persistence.DataSet(
+                result,
+                traps_filled_model,
+                self.flag_pers_cutoff,
+                self.save_persistence,
+                trap_density_model,
+                trappars_model,
+                persat_model,
+            )
             (result, traps_filled, output_pers, skipped) = pers_a.do_all()
             if skipped:
-                result.meta.cal_step.persistence = 'SKIPPED'
+                result.meta.cal_step.persistence = "SKIPPED"
             else:
-                result.meta.cal_step.persistence = 'COMPLETE'
+                result.meta.cal_step.persistence = "COMPLETE"
 
-            if traps_filled_model is not None:      # input traps_filled
+            if traps_filled_model is not None:  # input traps_filled
                 del traps_filled_model
-            if traps_filled is not None:            # output traps_filled
+            if traps_filled is not None:  # output traps_filled
                 # Save the traps_filled image with suffix 'trapsfilled'.
-                self.save_model(
-                    traps_filled, suffix='trapsfilled', force=self.save_trapsfilled
-                )
+                self.save_model("trapsfilled", force=self.save_trapsfilled)
                 del traps_filled
 
-            if output_pers is not None:             # output file of persistence
-                self.save_model(output_pers, suffix='output_pers')
+            if output_pers is not None:  # output file of persistence
+                self.save_model(output_pers, suffix="output_pers")
                 output_pers.close()
 
             # Cleanup
