@@ -71,8 +71,9 @@ def test_clean_showers():
 
     # Run the clean_showers routine and see if the values it reconstructed for the blob
     # look as expected for a small box of pixels underneath the slice mask
-    result = clean_showers(input_model, mockregions, shower_plane, shower_x_stddev, shower_y_stddev,
+    result, shower_model = clean_showers(input_model, mockregions, shower_plane, shower_x_stddev, shower_y_stddev,
                            shower_low_reject, shower_high_reject)
+    
     cutout = result.data[613:617,591:596]
     compare = np.array([[0.00018815, 0.00019507, 0.0002014 , 0.00020712, 0.00021221],
                         [0.00018846, 0.00019539, 0.00020173, 0.00020746, 0.00021256],
