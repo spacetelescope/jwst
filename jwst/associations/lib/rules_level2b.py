@@ -741,28 +741,31 @@ class Asn_Lv2WFSSNIS(
                     name="instrument",
                     sources=["instrume"],
                 ),
-            ], reduce=Constraint.any),
-            DMSAttrConstraint(
-                name='instrument',
-                sources=['instrume'],
-            ),
-            DMSAttrConstraint(
-                name='pupil',
-                sources=['pupil'],
-            ),
-            DMSAttrConstraint(
-                name='subarray',
-                sources=['subarray'],
-            ),
-            Constraint([
-                SimpleConstraint(
-                    value='science',
-                    test=lambda value, item: self.get_exposure_type(item) != value,
-                    force_unique=False,
-                    ),
-                Constraint_Single_Science(self.has_science, self.get_exposure_type),
-            ], reduce=Constraint.any)
-        ])
+                DMSAttrConstraint(
+                    name="instrument",
+                    sources=["instrume"],
+                ),
+                DMSAttrConstraint(
+                    name="pupil",
+                    sources=["pupil"],
+                ),
+                DMSAttrConstraint(
+                    name="subarray",
+                    sources=["subarray"],
+                ),
+                Constraint(
+                    [
+                        SimpleConstraint(
+                            value="science",
+                            test=lambda value, item: self.get_exposure_type(item) != value,
+                            force_unique=False,
+                        ),
+                        Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                    ],
+                    reduce=Constraint.any,
+                ),
+            ]
+        )
 
         super(Asn_Lv2WFSSNIS, self).__init__(*args, **kwargs)
 
