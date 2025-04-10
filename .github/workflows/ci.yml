@@ -10,7 +10,6 @@ on:
   pull_request:
     branches:
       - main
-      - '*x'
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
