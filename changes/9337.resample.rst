@@ -1,1 +1,0 @@
-Fixed bug in the resample_spec step, affecting flux conservation for MIRI LRS.
