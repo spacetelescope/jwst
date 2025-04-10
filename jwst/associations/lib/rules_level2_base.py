@@ -1019,7 +1019,8 @@ class AsnMixin_Lv2Nod:
         In addition, for NIRSpec fixed slit exposures taken with slit
         S1600A1 in a 5-point nod pattern, this returns True when the
         background candidate is in the next closest primary position
-        to the science.
+        to the science or if the target ID does not match between
+        science and background candidate.
 
         For any other data, this function returns False (no overlap).
         """

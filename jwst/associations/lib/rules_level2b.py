@@ -315,6 +315,7 @@ class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
                                     reduce=Constraint.any,
                                 ),
                                 DMSAttrConstraint(name="mostilno", sources=["mostilno"]),
+                                Constraint_Target(),
                             ],
                             reduce=Constraint.all,
                         ),
@@ -1094,10 +1095,17 @@ class Asn_Lv2WFSSParallel(
 
     @staticmethod
     def find_closest_direct(science, directs):
-        """Find the direct image that is closest to the science
+        """Find the direct image that is closest to the science.
 
-        For pure-parallel WFSS, there is only ever one direct image.
-        Simply return that.
+        For NIRCam pure parallel observations, there should
+        only be one long-wavelength direct image in a given
+        direct_image candidate. Find it by searching for 'long'
+        filenames. All [a|b]long filenames should belong to the
+        same level 3 product, which will be associated to the
+        grism image.
+
+        For NIRISS, only one direct image optical path should
+        be associated with a given grism image.
 
         Parameters
         ----------
@@ -1112,7 +1120,12 @@ class Asn_Lv2WFSSParallel(
         closest : dict
             The direct image that is the "closest"
         """
-        return directs[0]
+
+        long_directs = [d for d in directs if "long" in d["expname"]]
+        if len(long_directs) == 0:
+            long_directs.append(directs[0])  # If the search fails, just use the first.
+
+        return long_directs[0]
 
     def validate_candidates(self, member):
         """Stub to always return True
