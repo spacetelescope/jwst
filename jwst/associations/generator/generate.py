@@ -2,12 +2,7 @@ import logging
 from timeit import default_timer as timer
 
 from ..association import make_timestamp
-from ..lib.process_list import (
-    ListCategory,
-    ProcessList,
-    ProcessQueueSorted,
-    workover_filter
-)
+from ..lib.process_list import ListCategory, ProcessList, ProcessQueueSorted, workover_filter
 from ..pool import PoolRow
 from ...lib.progress import Bar
 
@@ -15,7 +10,7 @@ from ...lib.progress import Bar
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-__all__ = ['generate']
+__all__ = ["generate"]
 
 
 def generate(pool, rules, version_id=None, finalize=True):
@@ -51,31 +46,25 @@ def generate(pool, rules, version_id=None, finalize=True):
     associations = []
     if isinstance(version_id, bool):
         version_id = make_timestamp()
-    process_queue = ProcessQueueSorted([
-        ProcessList(
-            items=pool,
-            rules=[rule for _, rule in rules.items()]
-        )
-    ])
+    process_queue = ProcessQueueSorted(
+        [ProcessList(items=pool, rules=[rule for _, rule in rules.items()])]
+    )
 
-    logger.debug('Initial process queue: %s', process_queue)
+    logger.debug("Initial process queue: %s", process_queue)
     for process_list in process_queue:
-        logger.debug('** Working process list: %s', process_list)
+        logger.debug("** Working process list: %s", process_list)
         time_start = timer()
         total_mod_existing = 0
         total_new = 0
         total_reprocess = 0
-        with Bar('Processing items', log_level=logger.getEffectiveLevel(),
-                 max=len(process_list.items)) as bar:
+        with Bar(
+            "Processing items", log_level=logger.getEffectiveLevel(), max=len(process_list.items)
+        ) as bar:
             for item in process_list.items:
                 item = PoolRow(item)
 
                 existing_asns, new_asns, to_process = generate_from_item(
-                    item,
-                    version_id,
-                    associations,
-                    rules,
-                    process_list
+                    item, version_id, associations, rules, process_list
                 )
                 total_mod_existing += len(existing_asns)
                 total_new += len(new_asns)
@@ -93,32 +82,32 @@ def generate(pool, rules, version_id=None, finalize=True):
                 total_reprocess += len(to_process_modified)
                 bar.next()
 
-        logger.info('Seconds to process: %.2f', timer() - time_start)
-        logger.debug('Existing associations modified: %d New associations created: %d', total_mod_existing, total_new)
-        logger.debug('New process lists: %d', total_reprocess)
-        logger.debug('Updated process queue: %s', process_queue)
-        logger.debug('# associations: %d', len(associations))
-        logger.debug('Associations: %s', [type(_association) for _association in associations])
+        logger.info("Seconds to process: %.2f", timer() - time_start)
+        logger.debug(
+            "Existing associations modified: %d New associations created: %d",
+            total_mod_existing,
+            total_new,
+        )
+        logger.debug("New process lists: %d", total_reprocess)
+        logger.debug("Updated process queue: %s", process_queue)
+        logger.debug("# associations: %d", len(associations))
+        logger.debug("Associations: %s", [type(_association) for _association in associations])
 
     # Finalize found associations
-    logger.debug('# associations before finalization: %d', len(associations))
+    logger.debug("# associations before finalization: %d", len(associations))
     finalized_asns = associations
     if finalize:
-        logger.debug('Performing association finalization.')
+        logger.debug("Performing association finalization.")
         try:
-            finalized_asns = rules.callback.reduce('finalize', associations)
+            finalized_asns = rules.callback.reduce("finalize", associations)
         except KeyError as exception:
-            logger.debug('Finalization failed for reason: %s', exception)
+            logger.debug("Finalization failed for reason: %s", exception)
 
-    logger.info('Associations generated: %s', len(finalized_asns))
+    logger.info("Associations generated: %s", len(finalized_asns))
     return finalized_asns
 
-def generate_from_item(
-        item,
-        version_id,
-        associations,
-        rules,
-        process_list):
+
+def generate_from_item(item, version_id, associations, rules, process_list):
     """Either match or generate a new association
 
     Parameters
@@ -153,7 +142,6 @@ def generate_from_item(
         process_list : [ProcessList, ...]
             List of process events.
     """
-
     # Setup the rules allowed to be examined.
     if process_list.rules is None or len(process_list.rules) == 0:
         allowed_rules = list(rules.values())
@@ -164,28 +152,26 @@ def generate_from_item(
     existing_asns = []
     reprocess_list = []
     if process_list.work_over in (
-            ListCategory.BOTH,
-            ListCategory.EXISTING,
-            ListCategory.NONSCIENCE,
+        ListCategory.BOTH,
+        ListCategory.EXISTING,
+        ListCategory.NONSCIENCE,
     ):
-        associations = [
-            asn
-            for asn in associations
-            if type(asn) in allowed_rules
-        ]
-        existing_asns, reprocess_list = match_item(
-            item, associations
-        )
+        associations = [asn for asn in associations if type(asn) in allowed_rules]
+        existing_asns, reprocess_list = match_item(item, associations)
 
     # Now see if this item will create new associations.
     # By default, a item will not be allowed to create
     # an association based on rules of existing associations.
     reprocess = []
     new_asns = []
-    if process_list.work_over in (
+    if (
+        process_list.work_over
+        in (
             ListCategory.BOTH,
             ListCategory.RULES,
-    ) and rules is not None:
+        )
+        and rules is not None
+    ):
         ignore_asns = set([type(asn) for asn in existing_asns])
         new_asns, reprocess = rules.match(
             item,

@@ -1,47 +1,63 @@
-"""Association Definitions: DMS Level3 product associations
-"""
+"""Association Definitions: DMS Level3 product associations"""
+
 import logging
 
 from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (
-    Constraint_TargetAcq, Constraint_TSO,
-    nissoss_calibrated_filter, nrccoron_valid_detector,
-    nrsfss_valid_detector, nrsifu_valid_detector)
+    Constraint_TargetAcq,
+    Constraint_TSO,
+    nissoss_calibrated_filter,
+    nrccoron_valid_detector,
+    nrsfss_valid_detector,
+    nrsifu_valid_detector,
+)
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level3_base import (
-    ASN_SCHEMA, # noqa F401
-    AsnMixin_Science, AsnMixin_AuxData, AsnMixin_Coronagraphy, AsnMixin_Spectrum,
-    DMS_Level3_Base, DMSAttrConstraint,
-    Utility, # noqa F401
-    Constraint, SimpleConstraint, Constraint_Optical_Path, Constraint_Target, Constraint_Image, Constraint_MSA, Constraint_IFU
+    ASN_SCHEMA,  # noqa F401
+    AsnMixin_Science,
+    AsnMixin_AuxData,
+    AsnMixin_Coronagraphy,
+    AsnMixin_Spectrum,
+    DMS_Level3_Base,
+    DMSAttrConstraint,
+    Utility,  # noqa F401
+    Constraint,
+    SimpleConstraint,
+    Constraint_Optical_Path,
+    Constraint_Target,
+    Constraint_Image,
+    Constraint_MSA,
+    Constraint_IFU,
 )
 from jwst.associations.lib.rules_level3_base import (
-    dms_product_name_sources, dms_product_name_nrsfs_sources,
-    dms_product_name_noopt, dms_product_name_coronimage,
-    format_product
+    dms_product_name_sources,
+    dms_product_name_nrsfs_sources,
+    dms_product_name_noopt,
+    dms_product_name_coronimage,
+    format_product,
 )
 
 __all__ = [
-    'Asn_Lv3ACQ_Reprocess',
-    'Asn_Lv3AMI',
-    'Asn_Lv3Image',
-    'Asn_Lv3ImageMosaic',
-    'Asn_Lv3ImageBackground',
-    'Asn_Lv3MIRCoron',
-    'Asn_Lv3MIRMRS',
-    'Asn_Lv3MIRMRSBackground',
-    'Asn_Lv3NRCCoron',
-    'Asn_Lv3NRCCoronImage',
-    'Asn_Lv3NRSFSS',
-    'Asn_Lv3NRSIFU',
-    'Asn_Lv3NRSIFUBackground',
-    'Asn_Lv3SlitlessSpectral',
-    'Asn_Lv3SpecAux',
-    'Asn_Lv3SpectralSource',
-    'Asn_Lv3SpectralTarget',
-    'Asn_Lv3TSO',
-    'Asn_Lv3WFSCMB',
-    'Asn_Lv3WFSSNIS',
+    "Asn_Lv3ACQ_Reprocess",
+    "Asn_Lv3AMI",
+    "Asn_Lv3Image",
+    "Asn_Lv3ImageMosaic",
+    "Asn_Lv3ImageBackground",
+    "Asn_Lv3MIRCoron",
+    "Asn_Lv3MIRMRS",
+    "Asn_Lv3MIRMRSBackground",
+    "Asn_Lv3NRCCoron",
+    "Asn_Lv3NRCCoronImage",
+    "Asn_Lv3NRSFSS",
+    "Asn_Lv3NRSIFU",
+    "Asn_Lv3NRSIFUBackground",
+    "Asn_Lv3SlitlessSpectral",
+    "Asn_Lv3SpecAux",
+    "Asn_Lv3SpectralSource",
+    "Asn_Lv3SpectralTarget",
+    "Asn_Lv3TSO",
+    "Asn_Lv3WFSCMB",
+    "Asn_Lv3WFSSNIS",
 ]
 
 # Configure logging
@@ -67,19 +83,20 @@ class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_TargetAcq(),
-            SimpleConstraint(
-                name='force_fail',
-                test=lambda x, y: False,
-                value='anything but None',
-                reprocess_on_fail=True,
-                work_over=ListCategory.NONSCIENCE,
-                reprocess_rules=[]
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_TargetAcq(),
+                SimpleConstraint(
+                    name="force_fail",
+                    test=lambda x, y: False,
+                    value="anything but None",
+                    reprocess_on_fail=True,
+                    work_over=ListCategory.NONSCIENCE,
+                    reprocess_rules=[],
+                ),
+            ]
+        )
 
         super(Asn_Lv3ACQ_Reprocess, self).__init__(*args, **kwargs)
 
@@ -103,41 +120,36 @@ class Asn_Lv3AMI(AsnMixin_Science):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Optical_Path(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nis_ami'
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value=("nis_ami"),
                 ),
-            ),
-            DMSAttrConstraint(
-                name='target',
-                sources=['targetid'],
-                onlyif=lambda item: self.get_exposure_type(item) == 'science',
-                force_reprocess=ListCategory.EXISTING,
-                only_on_match=True,
-            ),
-        ])
+                DMSAttrConstraint(
+                    name="target",
+                    sources=["targetid"],
+                    onlyif=lambda item: self.get_exposure_type(item) == "science",
+                    force_reprocess=ListCategory.EXISTING,
+                    only_on_match=True,
+                ),
+            ]
+        )
 
         # PSF is required
-        self.validity.update({
-            'has_psf': {
-                'validated': False,
-                'check': lambda entry: entry['exptype'] == 'psf'
-            }
-        })
+        self.validity.update(
+            {"has_psf": {"validated": False, "check": lambda entry: entry["exptype"] == "psf"}}
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3AMI, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'ami3'
+        self.data["asn_type"] = "ami3"
         super(Asn_Lv3AMI, self)._init_hook(item)
 
 
@@ -153,37 +165,34 @@ class Asn_Lv3Image(AsnMixin_Science):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Optical_Path(),
-            Constraint_Target(association=self),
-            Constraint_Image(),
-            DMSAttrConstraint(
-                name='wfsvisit',
-                sources=['visitype'],
-                value='((?!wfsc).)*',
-                required=False
-            ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                    ),
-                    Constraint_TSO()
-                ],
-                reduce=Constraint.notany
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                Constraint_Target(association=self),
+                Constraint_Image(),
+                DMSAttrConstraint(
+                    name="wfsvisit", sources=["visitype"], value="((?!wfsc).)*", required=False
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="bkgdtarg",
+                            sources=["bkgdtarg"],
+                        ),
+                        Constraint_TSO(),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv3Image, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image3'
+        self.data["asn_type"] = "image3"
         super(Asn_Lv3Image, self)._init_hook(item)
 
 
@@ -199,35 +208,29 @@ class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Optical_Path(),
-            Constraint_Target(association=self),
-            Constraint_Image(),
-            DMSAttrConstraint(
-                name='wfsvisit',
-                sources=['visitype'],
-                value='((?!wfsc).)*',
-                required=False
-            ),
-            DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-            ),
-            Constraint(
-                [Constraint_TSO()],
-                reduce=Constraint.notany
-            )
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                Constraint_Target(association=self),
+                Constraint_Image(),
+                DMSAttrConstraint(
+                    name="wfsvisit", sources=["visitype"], value="((?!wfsc).)*", required=False
+                ),
+                DMSAttrConstraint(
+                    name="bkgdtarg",
+                    sources=["bkgdtarg"],
+                ),
+                Constraint([Constraint_TSO()], reduce=Constraint.notany),
+            ]
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv3ImageBackground, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image3'
+        self.data["asn_type"] = "image3"
         super(Asn_Lv3ImageBackground, self)._init_hook(item)
 
 
@@ -252,33 +255,34 @@ class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
         self.constraints = Constraint(
             [
                 Constraint_Optical_Path(),
                 DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value='mir_lyot|mir_4qpm',
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_lyot|mir_4qpm",
                 ),
                 DMSAttrConstraint(
-                    name='target',
-                    sources=['targetid'],
-                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    name="target",
+                    sources=["targetid"],
+                    onlyif=lambda item: self.get_exposure_type(item) == "science",
                     force_reprocess=ListCategory.EXISTING,
                     only_on_match=True,
                 ),
                 Constraint(
-                    [DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                        force_unique=False,
-                    )],
-                    reduce=Constraint.notany
+                    [
+                        DMSAttrConstraint(
+                            name="bkgdtarg",
+                            sources=["bkgdtarg"],
+                            force_unique=False,
+                        )
+                    ],
+                    reduce=Constraint.notany,
                 ),
             ],
-            name='asn_coron'
+            name="asn_coron",
         )
 
         # Check and continue initialization.
@@ -300,20 +304,22 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
 
     def __init__(self, *args, **kwargs):
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='mir_mrs',
-            ),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                ],
-                reduce=Constraint.notany
-            ),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Target(association=self),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_mrs",
+                ),
+                Constraint(
+                    [
+                        Constraint_TSO(),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3MIRMRS, self).__init__(*args, **kwargs)
@@ -338,25 +344,27 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
 
     def __init__(self, *args, **kwargs):
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='mir_mrs',
-            ),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                ],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-                value='T',
-            ),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Target(),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_mrs",
+                ),
+                Constraint(
+                    [
+                        Constraint_TSO(),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                DMSAttrConstraint(
+                    name="bkgdtarg",
+                    sources=["bkgdtarg"],
+                    value="T",
+                ),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3MIRMRSBackground, self).__init__(*args, **kwargs)
@@ -387,38 +395,39 @@ class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
         self.constraints = Constraint(
             [
                 Constraint_Optical_Path(),
                 DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value=('nrc_coron'),
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value=("nrc_coron"),
                 ),
                 DMSAttrConstraint(
-                    name='target',
-                    sources=['targetid'],
-                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    name="target",
+                    sources=["targetid"],
+                    onlyif=lambda item: self.get_exposure_type(item) == "science",
                     force_reprocess=ListCategory.EXISTING,
                     only_on_match=True,
                 ),
                 Constraint(
-                    [DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                        force_unique=False,
-                    )],
-                    reduce=Constraint.notany
+                    [
+                        DMSAttrConstraint(
+                            name="bkgdtarg",
+                            sources=["bkgdtarg"],
+                            force_unique=False,
+                        )
+                    ],
+                    reduce=Constraint.notany,
                 ),
                 SimpleConstraint(
                     value=True,
                     test=lambda value, item: nrccoron_valid_detector(item),
-                    force_unique=False
+                    force_unique=False,
                 ),
             ],
-            name='asn_coron'
+            name="asn_coron",
         )
 
         # Check and continue initialization.
@@ -438,45 +447,42 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
         self.constraints = Constraint(
             [
                 Constraint_Optical_Path(),
                 DMSAttrConstraint(
-                    name='exp_type',
-                    sources=['exp_type'],
-                    value=('nrc_coron'),
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value=("nrc_coron"),
                 ),
                 DMSAttrConstraint(
-                    name='target',
-                    sources=['targetid'],
-                    onlyif=lambda item: self.get_exposure_type(item) == 'science',
+                    name="target",
+                    sources=["targetid"],
+                    onlyif=lambda item: self.get_exposure_type(item) == "science",
                     force_reprocess=ListCategory.EXISTING,
                     only_on_match=True,
                 ),
                 Constraint(
-                    [DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                        force_unique=False,
-                    ),
-                    DMSAttrConstraint(
-                        name='is_psf',
-                        sources=['is_psf'],
-                        value = ('T')
-                    )],
-                    reduce=Constraint.notany
+                    [
+                        DMSAttrConstraint(
+                            name="bkgdtarg",
+                            sources=["bkgdtarg"],
+                            force_unique=False,
+                        ),
+                        DMSAttrConstraint(name="is_psf", sources=["is_psf"], value=("T")),
+                    ],
+                    reduce=Constraint.notany,
                 ),
                 DMSAttrConstraint(
-                    name='channel',
-                    sources=['channel'],
-                    value=('short'),
+                    name="channel",
+                    sources=["channel"],
+                    value=("short"),
                 ),
                 DMSAttrConstraint(
-                    name='subarray',
-                    sources=['subarray'],
-                    value=('full'),
+                    name="subarray",
+                    sources=["subarray"],
+                    value=("full"),
                 ),
             ],
         )
@@ -490,8 +496,7 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image3'
+        self.data["asn_type"] = "image3"
         super(Asn_Lv3NRCCoronImage, self)._init_hook(item)
 
     def is_item_coron(self, item):
@@ -518,31 +523,25 @@ class Asn_Lv3NRSFSS(AsnMixin_Spectrum):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint(
-                [Constraint_TSO()],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nrs_autoflat'
-                    '|nrs_autowave'
-                    '|nrs_fixedslit'
+        self.constraints = Constraint(
+            [
+                Constraint([Constraint_TSO()], reduce=Constraint.notany),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value=("nrs_autoflat|nrs_autowave|nrs_fixedslit"),
+                    force_unique=False,
                 ),
-                force_unique=False
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: nrsfss_valid_detector(item),
-                force_unique=False
-            ),
-            Constraint_Optical_Path(),
-            Constraint_Target(association=self),
-        ])
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: nrsfss_valid_detector(item),
+                    force_unique=False,
+                ),
+                Constraint_Optical_Path(),
+                Constraint_Target(association=self),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3NRSFSS, self).__init__(*args, **kwargs)
@@ -564,38 +563,33 @@ class Asn_Lv3NRSIFU(AsnMixin_Spectrum):
 
     def __init__(self, *args, **kwargs):
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nrs_autowave'
-                    '|nrs_ifu'
+        self.constraints = Constraint(
+            [
+                Constraint_Target(association=self),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value=("nrs_autowave|nrs_ifu"),
+                    force_unique=False,
                 ),
-                force_unique=False
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: nrsifu_valid_detector(item),
-                force_unique=False
-            ),
-            DMSAttrConstraint(
-                name='patttype',
-                sources=['patttype'],
-                required=True
-            ),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                ],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                    name='opt_elem',
-                    sources=['grating'],
-            )
-        ])
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: nrsifu_valid_detector(item),
+                    force_unique=False,
+                ),
+                DMSAttrConstraint(name="patttype", sources=["patttype"], required=True),
+                Constraint(
+                    [
+                        Constraint_TSO(),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                DMSAttrConstraint(
+                    name="opt_elem",
+                    sources=["grating"],
+                ),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3NRSIFU, self).__init__(*args, **kwargs)
@@ -603,45 +597,46 @@ class Asn_Lv3NRSIFU(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
-
     """Level 3 Spectral Association
 
     Characteristics:
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
     """
-    def __init__(self, *args, **kwargs):
 
+    def __init__(self, *args, **kwargs):
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                ],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-                value='T',
-            ),
-            DMSAttrConstraint(
-                name='allowed_bkgdtarg',
-                sources=['exp_type'],
-                value='nrs_ifu',
-            ),
-            SimpleConstraint(
-                value=True,
-                test=lambda value, item: nrsifu_valid_detector(item),
-                force_unique=False
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['grating'],
-                force_unique=True,
-            ),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Target(association=self),
+                Constraint(
+                    [
+                        Constraint_TSO(),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                DMSAttrConstraint(
+                    name="bkgdtarg",
+                    sources=["bkgdtarg"],
+                    value="T",
+                ),
+                DMSAttrConstraint(
+                    name="allowed_bkgdtarg",
+                    sources=["exp_type"],
+                    value="nrs_ifu",
+                ),
+                SimpleConstraint(
+                    value=True,
+                    test=lambda value, item: nrsifu_valid_detector(item),
+                    force_unique=False,
+                ),
+                DMSAttrConstraint(
+                    name="opt_elem",
+                    sources=["grating"],
+                    force_unique=True,
+                ),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3NRSIFUBackground, self).__init__(*args, **kwargs)
@@ -659,49 +654,38 @@ class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint(
-                [Constraint_TSO()],
-                reduce=Constraint.notany
-            ),
-            Constraint_Optical_Path(),
-            Constraint_Target(association=self),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'nis_soss'
+        self.constraints = Constraint(
+            [
+                Constraint([Constraint_TSO()], reduce=Constraint.notany),
+                Constraint_Optical_Path(),
+                Constraint_Target(association=self),
+                DMSAttrConstraint(
+                    name="exp_type", sources=["exp_type"], value=("nis_soss"), force_unique=False
                 ),
-                force_unique=False
-            ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='patttype_spectarg',
-                        sources=['patttype'],
-                    ),
-                ],
-                reduce=Constraint.notany
-            ),
-            # Constraint to prevent calibration data from level 3 processing
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='restricted_slitless',
-                        sources=['exp_type'],
-                        value = ('mir_lrs-slitless')
-                    ),
-                    DMSAttrConstraint(
-                        name='tso_obs',
-                        sources=['tso_visit'],
-                        value = ('T')
-                    ),
-                ],
-                reduce=Constraint.notany
-            )
-        ])
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="patttype_spectarg",
+                            sources=["patttype"],
+                        ),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                # Constraint to prevent calibration data from level 3 processing
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="restricted_slitless",
+                            sources=["exp_type"],
+                            value=("mir_lrs-slitless"),
+                        ),
+                        DMSAttrConstraint(name="tso_obs", sources=["tso_visit"], value=("T")),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3SlitlessSpectral, self).__init__(*args, **kwargs)
@@ -709,36 +693,37 @@ class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
 
 @RegistryMarker.rule
 class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
-
     """Level 3 Spectral Association
 
     Characteristics:
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
     """
-    def __init__(self, *args, **kwargs):
 
+    def __init__(self, *args, **kwargs):
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            Constraint(
-                [
-                    Constraint_TSO(),
-                ],
-                reduce=Constraint.notany
-            ),
-            DMSAttrConstraint(
-                name='bkgdtarg',
-                sources=['bkgdtarg'],
-                value='T',
-            ),
-            DMSAttrConstraint(
-                name='allowed_bkgdtarg',
-                sources=['exp_type'],
-                value='mir_lrs-fixedslit|nrs_fixedslit',
-            ),
-            Constraint_Optical_Path(),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Target(association=self),
+                Constraint(
+                    [
+                        Constraint_TSO(),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                DMSAttrConstraint(
+                    name="bkgdtarg",
+                    sources=["bkgdtarg"],
+                    value="T",
+                ),
+                DMSAttrConstraint(
+                    name="allowed_bkgdtarg",
+                    sources=["exp_type"],
+                    value="mir_lrs-fixedslit|nrs_fixedslit",
+                ),
+                Constraint_Optical_Path(),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3SpecAux, self).__init__(*args, **kwargs)
@@ -756,32 +741,26 @@ class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint(
-                [Constraint_TSO()],
-                reduce=Constraint.notany
-            ),
-            Constraint_Optical_Path(),
-            Constraint_Target(association=self),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='exp_type',
-                        sources=['exp_type'],
-                        value=(
-                            'nrc_wfss'
-                            '|nrs_autoflat'
-                            '|nrs_autowave'
+        self.constraints = Constraint(
+            [
+                Constraint([Constraint_TSO()], reduce=Constraint.notany),
+                Constraint_Optical_Path(),
+                Constraint_Target(association=self),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="exp_type",
+                            sources=["exp_type"],
+                            value=("nrc_wfss|nrs_autoflat|nrs_autowave"),
+                            force_unique=False,
                         ),
-                        force_unique=False
-                    ),
-                    Constraint_MSA()
-                ],
-                reduce=Constraint.any
-            )
-        ])
+                        Constraint_MSA(),
+                    ],
+                    reduce=Constraint.any,
+                ),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3SpectralSource, self).__init__(*args, **kwargs)
@@ -803,35 +782,30 @@ class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint(
-                [Constraint_TSO()],
-                reduce=Constraint.notany
-            ),
-            Constraint_Optical_Path(),
-            Constraint_Target(association=self),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value=(
-                    'mir_lrs-fixedslit'
-                    '|nis_soss'
+        self.constraints = Constraint(
+            [
+                Constraint([Constraint_TSO()], reduce=Constraint.notany),
+                Constraint_Optical_Path(),
+                Constraint_Target(association=self),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value=("mir_lrs-fixedslit|nis_soss"),
+                    force_unique=False,
                 ),
-                force_unique=False
-            ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='patttype_spectarg',
-                        sources=['patttype'],
-                        value='2-point-nod|4-point-nod|along-slit-nod',
-                    ),
-                ],
-                reduce=Constraint.any
-            )
-        ])
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="patttype_spectarg",
+                            sources=["patttype"],
+                            value="2-point-nod|4-point-nod|along-slit-nod",
+                        ),
+                    ],
+                    reduce=Constraint.any,
+                ),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3SpectralTarget, self).__init__(*args, **kwargs)
@@ -866,118 +840,112 @@ class Asn_Lv3TSO(AsnMixin_Science):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            Constraint_Optical_Path(),
-            Constraint_TSO(),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-            ),
-            # Don't allow IFU exposures in tso3
-            Constraint(
-                [
-                    Constraint_IFU(),
-                ],
-                reduce=Constraint.notany
-            ),
-            # Don't allow NIRCam engineering mode
-            # with PUPIL='CLEAR' in tso3
-            Constraint(
-                [
-                    Constraint([
-                        DMSAttrConstraint(
-                            name='restricted_grism',
-                            sources=['exp_type'],
-                            value='nrc_tsgrism'
+        self.constraints = Constraint(
+            [
+                Constraint_Target(association=self),
+                Constraint_Optical_Path(),
+                Constraint_TSO(),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                ),
+                # Don't allow IFU exposures in tso3
+                Constraint(
+                    [
+                        Constraint_IFU(),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                # Don't allow NIRCam engineering mode
+                # with PUPIL='CLEAR' in tso3
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="restricted_grism",
+                                    sources=["exp_type"],
+                                    value="nrc_tsgrism",
+                                ),
+                                DMSAttrConstraint(
+                                    name="grism_clear",
+                                    sources=["pupil"],
+                                    value="clear|gdhs0|gdhs60",
+                                ),
+                            ]
                         ),
-                        DMSAttrConstraint(
-                            name='grism_clear',
-                            sources=['pupil'],
-                            value='clear|gdhs0|gdhs60'
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="restricted_ts", sources=["exp_type"], value="nrc_tsgrism"
+                                ),
+                                DMSAttrConstraint(
+                                    name="module", sources=["detector"], value="nrcblong"
+                                ),
+                            ]
                         ),
-                    ]),
-                    Constraint([
-                        DMSAttrConstraint(
-                            name='restricted_ts',
-                            sources=['exp_type'],
-                            value='nrc_tsgrism'
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                # Don't allow NIRISS SOSS with NINTS=1 or uncalibrated filters
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="exp_type", sources=["exp_type"], value="nis_soss"
+                                ),
+                                DMSAttrConstraint(name="nints", sources=["nints"], value="1"),
+                            ]
                         ),
-                        DMSAttrConstraint(
-                            name='module',
-                            sources=['detector'],
-                            value='nrcblong'
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="exp_type", sources=["exp_type"], value="nis_soss"
+                                ),
+                                SimpleConstraint(
+                                    value=False,
+                                    test=lambda value, item: nissoss_calibrated_filter(item)
+                                    == value,
+                                    force_unique=False,
+                                ),
+                            ]
                         ),
-                    ]),
-                ],
-                reduce=Constraint.notany
-            ),
-            # Don't allow NIRISS SOSS with NINTS=1 or uncalibrated filters
-            Constraint(
-                [
-                    Constraint([
-                        DMSAttrConstraint(
-                            name='exp_type',
-                            sources=['exp_type'],
-                            value='nis_soss'
+                    ],
+                    reduce=Constraint.notany,
+                ),
+                # Don't allow NIRSpec invalid optical paths in TSO3
+                Constraint(
+                    [
+                        Constraint(
+                            [
+                                DMSAttrConstraint(
+                                    name="exp_type", sources=["exp_type"], value="nrs_brightobj"
+                                ),
+                                SimpleConstraint(
+                                    value=False,
+                                    test=lambda value, item: nrsfss_valid_detector(item) == value,
+                                    force_unique=False,
+                                ),
+                            ]
                         ),
-                        DMSAttrConstraint(
-                            name='nints',
-                            sources=['nints'],
-                            value='1'
-                        ),
-                    ]),
-                    Constraint([
-                        DMSAttrConstraint(
-                            name='exp_type',
-                            sources=['exp_type'],
-                            value='nis_soss'
-                        ),
-                        SimpleConstraint(
-                            value=False,
-                            test=lambda value, item: nissoss_calibrated_filter(item) == value,
-                            force_unique=False
-                        ),
-                    ]),
-                ],
-                reduce=Constraint.notany
-            ),
-            # Don't allow NIRSpec invalid optical paths in TSO3
-            Constraint(
-                [
-                    Constraint([
-                        DMSAttrConstraint(
-                            name='exp_type',
-                            sources=['exp_type'],
-                            value='nrs_brightobj'
-                        ),
-                        SimpleConstraint(
-                            value=False,
-                            test=lambda value, item: nrsfss_valid_detector(item) == value,
-                            force_unique=False
-                        ),
-                    ]),
-                ],
-                reduce=Constraint.notany
-            )
-        ])
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ]
+        )
 
         # Only valid if candidate type is 'observation'.
-        self.validity.update({
-            'is_type_observation': {
-                'validated': False,
-                'check': self._validate_candidates
-            }
-        })
+        self.validity.update(
+            {"is_type_observation": {"validated": False, "check": self._validate_candidates}}
+        )
 
         super(Asn_Lv3TSO, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'tso3'
+        self.data["asn_type"] = "tso3"
         super(Asn_Lv3TSO, self)._init_hook(item)
 
     def _validate_candidates(self, member):
@@ -993,9 +961,8 @@ class Asn_Lv3TSO(AsnMixin_Science):
         True if candidate type is observation.
         False otherwise.
         """
-
         # If a group candidate, reject.
-        if self.acid.type.lower() != 'observation':
+        if self.acid.type.lower() != "observation":
             return False
 
         return True
@@ -1016,59 +983,40 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Optical_Path(),
-            Constraint_Target(association=self),
-            Constraint_Image(),
-            DMSAttrConstraint(
-                name='patttype',
-                sources=['patttype'],
-                value='wfsc'
-            ),
-            DMSAttrConstraint(
-                name='detector',
-                sources=['detector']
-            ),
-            DMSAttrConstraint(
-                name='obs_id',
-                sources=['obs_id']
-            ),
-            DMSAttrConstraint(
-                name='act_id',
-                sources=['act_id']
-            ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='dms_note',
-                        sources=['dms_note'],
-                        value='wfsc_los_jitter'
-                    ),
-                ],
-                reduce=Constraint.notany,
-            ),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                Constraint_Target(association=self),
+                Constraint_Image(),
+                DMSAttrConstraint(name="patttype", sources=["patttype"], value="wfsc"),
+                DMSAttrConstraint(name="detector", sources=["detector"]),
+                DMSAttrConstraint(name="obs_id", sources=["obs_id"]),
+                DMSAttrConstraint(name="act_id", sources=["act_id"]),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="dms_note", sources=["dms_note"], value="wfsc_los_jitter"
+                        ),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ]
+        )
 
         # Only valid if two members exist and candidate is not a GROUP.
-        self.validity.update({
-            'has_pair': {
-                'validated': False,
-                'check': self._has_pair
-            },
-            'is_not_group': {
-                'validated': False,
-                'check': self._validate_candidates
+        self.validity.update(
+            {
+                "has_pair": {"validated": False, "check": self._has_pair},
+                "is_not_group": {"validated": False, "check": self._validate_candidates},
             }
-        })
+        )
 
         super(Asn_Lv3WFSCMB, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'wfs-image3'
+        self.data["asn_type"] = "wfs-image3"
         super(Asn_Lv3WFSCMB, self)._init_hook(item)
 
     @property
@@ -1078,15 +1026,15 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         Modification is to append the `expspcin` value
         after the calibration suffix.
         """
-        product_name_format = '{existing}-{detector}_{suffix}-{expspcin}'
+        product_name_format = "{existing}-{detector}_{suffix}-{expspcin}"
 
         existing = super().dms_product_name
 
         product_name = format_product(
             product_name_format,
             existing=existing,
-            detector=self.constraints['detector'].value,
-            expspcin=self.constraints['act_id'].value
+            detector=self.constraints["detector"].value,
+            expspcin=self.constraints["act_id"].value,
         )
 
         return product_name.lower()
@@ -1113,7 +1061,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         else:
             count = 1
 
-        return len(self.current_product['members']) == count
+        return len(self.current_product["members"]) == count
 
     def _validate_candidates(self, member):
         """Disallow GROUP candidates
@@ -1128,12 +1076,12 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         False if candidate is GROUP.
         True otherwise.
         """
-
         # If a group candidate, reject.
-        if self.acid.type.lower() == 'group':
+        if self.acid.type.lower() == "group":
             return False
 
         return True
+
 
 @RegistryMarker.rule
 class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
@@ -1146,26 +1094,27 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup for checking.
-        self.constraints = Constraint([
-            Constraint_Target(association=self),
-            DMSAttrConstraint(
-                name='exp_type',
-                sources=['exp_type'],
-                value='nis_wfss',
-            ),
-            DMSAttrConstraint(
-                name='opt_elem',
-                sources=['filter'],
-                value='gr150r|gr150c',
-                force_unique=True,
-            ),
-            DMSAttrConstraint(
-                name='opt_elem2',
-                sources=['pupil'],
-            ),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Target(association=self),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="nis_wfss",
+                ),
+                DMSAttrConstraint(
+                    name="opt_elem",
+                    sources=["filter"],
+                    value="gr150r|gr150c",
+                    force_unique=True,
+                ),
+                DMSAttrConstraint(
+                    name="opt_elem2",
+                    sources=["pupil"],
+                ),
+            ]
+        )
 
         # Check and continue initialization.
         super(Asn_Lv3WFSSNIS, self).__init__(*args, **kwargs)
@@ -1188,44 +1137,38 @@ class Asn_Lv3ImageMosaic(AsnMixin_Science):
     """
 
     def __init__(self, *args, **kwargs):
-
         # Setup constraints
-        self.constraints = Constraint([
-            Constraint_Optical_Path(),
-            Constraint_Image(),
-            DMSAttrConstraint(
-                name='wfsvisit',
-                sources=['visitype'],
-                value='((?!wfsc).)*',
-                required=False
-            ),
-            Constraint(
-                [
-                    DMSAttrConstraint(
-                        name='bkgdtarg',
-                        sources=['bkgdtarg'],
-                    ),
-                    Constraint_TSO()
-                ],
-                reduce=Constraint.notany
-            ),
-        ])
+        self.constraints = Constraint(
+            [
+                Constraint_Optical_Path(),
+                Constraint_Image(),
+                DMSAttrConstraint(
+                    name="wfsvisit", sources=["visitype"], value="((?!wfsc).)*", required=False
+                ),
+                Constraint(
+                    [
+                        DMSAttrConstraint(
+                            name="bkgdtarg",
+                            sources=["bkgdtarg"],
+                        ),
+                        Constraint_TSO(),
+                    ],
+                    reduce=Constraint.notany,
+                ),
+            ]
+        )
 
         # Only valid if candidate type is 'mosaic'.
-        self.validity.update({
-            'is_type_mosaic': {
-                'validated': False,
-                'check': self._validate_candidates
-            }
-        })
+        self.validity.update(
+            {"is_type_mosaic": {"validated": False, "check": self._validate_candidates}}
+        )
 
         # Now check and continue initialization.
         super(Asn_Lv3ImageMosaic, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
         """Post-check and pre-add initialization"""
-
-        self.data['asn_type'] = 'image3'
+        self.data["asn_type"] = "image3"
         super(Asn_Lv3ImageMosaic, self)._init_hook(item)
 
     def _validate_candidates(self, item):
@@ -1236,9 +1179,8 @@ class Asn_Lv3ImageMosaic(AsnMixin_Science):
         True if candidate type is mosaic.
         False otherwise.
         """
-
         # If a group candidate, reject.
-        if self.acid.type.lower() != 'mosaic':
+        if self.acid.type.lower() != "mosaic":
             return False
 
         return True

@@ -1,18 +1,17 @@
 """Association Candidate Identifier"""
+
 from ast import literal_eval
 import re
 
 from .counter import Counter
 
-__all__ = [
-    'ACID'
-]
+__all__ = ["ACID"]
 
 # Start of the discovered association ids.
 _DISCOVERED_ID_START = 3001
 
 
-class ACID():
+class ACID:
     """Association Candidate Identifier
 
     Parameters
@@ -41,6 +40,7 @@ class ACID():
         other PPS-defined candidates, and 'a3XXX' for
         'DISCOVERED' associations.
     """
+
     def __init__(self, input):
         try:
             self.id, self.type = literal_eval(input)
@@ -51,10 +51,10 @@ class ACID():
         return self.id
 
 
-class ACIDMixin():
+class ACIDMixin:
     """Enable ACID for rules"""
-    def __init__(self, *args, **kwargs):
 
+    def __init__(self, *args, **kwargs):
         # Initialize discovered association ID
         self.discovered_id = Counter(_DISCOVERED_ID_START)
 
@@ -63,12 +63,8 @@ class ACIDMixin():
     def acid_from_constraints(self):
         """Determine ACID from constraints"""
         for constraint in self.constraints:
-            if getattr(constraint, 'is_acid', False):
-                value = re.sub(
-                    '\\\\',
-                    '',
-                    '-'.join(constraint.found_values)
-                )
+            if getattr(constraint, "is_acid", False):
+                value = re.sub("\\\\", "", "-".join(constraint.found_values))
                 try:
                     acid = ACID(value)
                 except ValueError:
@@ -76,7 +72,7 @@ class ACIDMixin():
                 else:
                     break
         else:
-            id = 'a{:0>3}'.format(self.discovered_id.value)
-            acid = ACID((id, 'DISCOVERED'))
+            id = f"a{self.discovered_id.value:0>3}"
+            acid = ACID((id, "DISCOVERED"))
 
         return acid
