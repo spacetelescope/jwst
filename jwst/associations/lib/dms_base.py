@@ -1,119 +1,116 @@
 """Association attributes common to DMS-based Rules"""
+
 from jwst.associations.lib.counter import Counter
 
 from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
-from jwst.associations.lib.constraint import (Constraint, AttrConstraint, SimpleConstraint)
+from jwst.associations.lib.constraint import Constraint, AttrConstraint, SimpleConstraint
 from jwst.associations.lib.diff import MultiDiffError, compare_asns
 from jwst.associations.lib.utilities import getattr_from_list
 
 
-__all__ = ['Constraint_TargetAcq', 'Constraint_TSO', 'Constraint_WFSC', 'DMSBaseMixin']
+__all__ = ["Constraint_TargetAcq", "Constraint_TSO", "Constraint_WFSC", "DMSBaseMixin"]
 
 # Default product name
-PRODUCT_NAME_DEFAULT = 'undefined'
+PRODUCT_NAME_DEFAULT = "undefined"
 
 # DMS file name templates
-_ASN_NAME_TEMPLATE_STAMP = 'jw{program}-{acid}_{stamp}_{type}_{sequence:05d}_asn'
-_ASN_NAME_TEMPLATE = 'jw{program}-{acid}_{type}_{sequence:05d}_asn'
+_ASN_NAME_TEMPLATE_STAMP = "jw{program}-{acid}_{stamp}_{type}_{sequence:05d}_asn"
+_ASN_NAME_TEMPLATE = "jw{program}-{acid}_{type}_{sequence:05d}_asn"
 
 # Acquisition and Confirmation images
 ACQ_EXP_TYPES = (
-    'mir_tacq',
-    'mir_taconfirm',
-    'nis_taconfirm',
-    'nis_tacq',
-    'nrc_taconfirm',
-    'nrc_tacq',
-    'nrs_confirm',
-    'nrs_msata',
-    'nrs_taconfirm',
-    'nrs_tacq',
-    'nrs_taslit',
-    'nrs_verify',
-    'nrs_wata',
+    "mir_tacq",
+    "mir_taconfirm",
+    "nis_taconfirm",
+    "nis_tacq",
+    "nrc_taconfirm",
+    "nrc_tacq",
+    "nrs_confirm",
+    "nrs_msata",
+    "nrs_taconfirm",
+    "nrs_tacq",
+    "nrs_taslit",
+    "nrs_verify",
+    "nrs_wata",
 )
 
 # Exposure EXP_TYPE to Association EXPTYPE mapping
 EXPTYPE_MAP = {
-    'mir_darkall':       'dark',
-    'mir_darkimg':       'dark',
-    'mir_darkmrs':       'dark',
-    'mir_flatimage':     'flat',
-    'mir_flatmrs':       'flat',
-    'mir_flatimage-ext': 'flat',
-    'mir_flatmrs-ext':   'flat',
-    'mir_tacq':          'target_acquisition',
-    'mir_taconfirm':     'target_acquisition',
-    'nis_dark':          'dark',
-    'nis_focus':         'engineering',
-    'nis_lamp':          'engineering',
-    'nis_tacq':          'target_acquisition',
-    'nis_taconfirm':     'target_acquisition',
-    'nrc_dark':          'dark',
-    'nrc_flat':          'flat',
-    'nrc_focus':         'engineering',
-    'nrc_led':           'engineering',
-    'nrc_tacq':          'target_acquisition',
-    'nrc_taconfirm':     'target_acquisition',
-    'nrs_autoflat':      'autoflat',
-    'nrs_autowave':      'autowave',
-    'nrs_confirm':       'target_acquisition',
-    'nrs_dark':          'dark',
-    'nrs_focus':         'engineering',
-    'nrs_image':         'engineering',
-    'nrs_lamp':          'engineering',
-    'nrs_msata':         'target_acquisition',
-    'nrs_tacq':          'target_acquisition',
-    'nrs_taconfirm':     'target_acquisition',
-    'nrs_taslit':        'target_acquisition',
-    'nrs_wata':          'target_acquisition',
+    "mir_darkall": "dark",
+    "mir_darkimg": "dark",
+    "mir_darkmrs": "dark",
+    "mir_flatimage": "flat",
+    "mir_flatmrs": "flat",
+    "mir_flatimage-ext": "flat",
+    "mir_flatmrs-ext": "flat",
+    "mir_tacq": "target_acquisition",
+    "mir_taconfirm": "target_acquisition",
+    "nis_dark": "dark",
+    "nis_focus": "engineering",
+    "nis_lamp": "engineering",
+    "nis_tacq": "target_acquisition",
+    "nis_taconfirm": "target_acquisition",
+    "nrc_dark": "dark",
+    "nrc_flat": "flat",
+    "nrc_focus": "engineering",
+    "nrc_led": "engineering",
+    "nrc_tacq": "target_acquisition",
+    "nrc_taconfirm": "target_acquisition",
+    "nrs_autoflat": "autoflat",
+    "nrs_autowave": "autowave",
+    "nrs_confirm": "target_acquisition",
+    "nrs_dark": "dark",
+    "nrs_focus": "engineering",
+    "nrs_image": "engineering",
+    "nrs_lamp": "engineering",
+    "nrs_msata": "target_acquisition",
+    "nrs_tacq": "target_acquisition",
+    "nrs_taconfirm": "target_acquisition",
+    "nrs_taslit": "target_acquisition",
+    "nrs_wata": "target_acquisition",
 }
 
 # Coronographic exposures
-CORON_EXP_TYPES = [
-    'mir_4qpm',
-    'mir_lyot',
-    'nrc_coron'
-]
+CORON_EXP_TYPES = ["mir_4qpm", "mir_lyot", "nrc_coron"]
 
 # Exposures that get Level2b processing
 IMAGE2_SCIENCE_EXP_TYPES = [
-    'fgs_image',
-    'mir_4qpm',
-    'mir_image',
-    'mir_lyot',
-    'nis_ami',
-    'nis_image',
-    'nrc_coron',
-    'nrc_image',
-    'nrs_mimf',
-    'nrc_tsimage',
+    "fgs_image",
+    "mir_4qpm",
+    "mir_image",
+    "mir_lyot",
+    "nis_ami",
+    "nis_image",
+    "nrc_coron",
+    "nrc_image",
+    "nrs_mimf",
+    "nrc_tsimage",
 ]
 
 IMAGE2_NONSCIENCE_EXP_TYPES = [
-    'mir_coroncal',
-    'nis_focus',
-    'nrc_focus',
-    'nrs_focus',
-    'nrs_image',
+    "mir_coroncal",
+    "nis_focus",
+    "nrc_focus",
+    "nrs_focus",
+    "nrs_image",
 ]
 IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 
 SPEC2_SCIENCE_EXP_TYPES = [
-    'mir_lrs-fixedslit',
-    'mir_lrs-slitless',
-    'mir_mrs',
-    'nis_soss',
-    'nis_wfss',
-    'nrc_tsgrism',
-    'nrc_wfss',
-    'nrs_fixedslit',
-    'nrs_ifu',
-    'nrs_msaspec',
-    'nrs_brightobj',
+    "mir_lrs-fixedslit",
+    "mir_lrs-slitless",
+    "mir_mrs",
+    "nis_soss",
+    "nis_wfss",
+    "nrc_tsgrism",
+    "nrc_wfss",
+    "nrs_fixedslit",
+    "nrs_ifu",
+    "nrs_msaspec",
+    "nrs_brightobj",
 ]
 
 # Modifiers from the pool that define the primary use of
@@ -123,84 +120,80 @@ SPEC2_SCIENCE_EXP_TYPES = [
 # higher precedence. This depends on Python dicts ordering
 # by order of key addition.
 SPECIAL_EXPOSURE_MODIFIERS = {
-    'psf': ['is_psf'],
-    'imprint': ['is_imprt'],
-    'background': ['bkgdtarg'],
+    "psf": ["is_psf"],
+    "imprint": ["is_imprt"],
+    "background": ["bkgdtarg"],
 }
 
 # Exposures that are always TSO
-TSO_EXP_TYPES = [
-    'nrc_tsimage',
-    'nrc_tsgrism',
-    'nrs_brightobj'
-]
+TSO_EXP_TYPES = ["nrc_tsimage", "nrc_tsgrism", "nrs_brightobj"]
 
 # Define the valid optical paths vs detector for NIRSpec Fixed-slit Science
 # Tuples are (SLIT, GRATING, FILTER, DETECTOR)
 # All A-slits are represented by SLIT == 'a'.
 NRS_FSS_VALID_OPTICAL_PATHS = (
-    ('a', 'prism', 'clear',  'nrs1'),
-    ('a', 'g395h', 'f290lp', 'nrs1'),
-    ('a', 'g395h', 'f290lp', 'nrs2'),
-    ('a', 'g235h', 'f170lp', 'nrs1'),
-    ('a', 'g235h', 'f170lp', 'nrs2'),
-    ('a', 'g140h', 'f100lp', 'nrs1'),
-    ('a', 'g140h', 'f100lp', 'nrs2'),
-    ('a', 'g140h', 'f070lp', 'nrs1'),
-    ('a', 'g395m', 'f290lp', 'nrs1'),
-    ('a', 'g235m', 'f170lp', 'nrs1'),
-    ('a', 'g140m', 'f100lp', 'nrs1'),
-    ('a', 'g140m', 'f070lp', 'nrs1'),
-    ('s200b1', 'prism', 'clear',  'nrs2'),
-    ('s200b1', 'g395h', 'f290lp', 'nrs2'),
-    ('s200b1', 'g235h', 'f170lp', 'nrs2'),
-    ('s200b1', 'g140h', 'f100lp', 'nrs2'),
-    ('s200b1', 'g140h', 'f070lp', 'nrs1'),
-    ('s200b1', 'g140h', 'f070lp', 'nrs2'),
-    ('s200b1', 'g395m', 'f290lp', 'nrs2'),
-    ('s200b1', 'g235m', 'f170lp', 'nrs2'),
-    ('s200b1', 'g140m', 'f100lp', 'nrs2'),
-    ('s200b1', 'g140m', 'f070lp', 'nrs1'),
-    ('s200b1', 'g140m', 'f070lp', 'nrs2'),
+    ("a", "prism", "clear", "nrs1"),
+    ("a", "g395h", "f290lp", "nrs1"),
+    ("a", "g395h", "f290lp", "nrs2"),
+    ("a", "g235h", "f170lp", "nrs1"),
+    ("a", "g235h", "f170lp", "nrs2"),
+    ("a", "g140h", "f100lp", "nrs1"),
+    ("a", "g140h", "f100lp", "nrs2"),
+    ("a", "g140h", "f070lp", "nrs1"),
+    ("a", "g395m", "f290lp", "nrs1"),
+    ("a", "g235m", "f170lp", "nrs1"),
+    ("a", "g140m", "f100lp", "nrs1"),
+    ("a", "g140m", "f070lp", "nrs1"),
+    ("s200b1", "prism", "clear", "nrs2"),
+    ("s200b1", "g395h", "f290lp", "nrs2"),
+    ("s200b1", "g235h", "f170lp", "nrs2"),
+    ("s200b1", "g140h", "f100lp", "nrs2"),
+    ("s200b1", "g140h", "f070lp", "nrs1"),
+    ("s200b1", "g140h", "f070lp", "nrs2"),
+    ("s200b1", "g395m", "f290lp", "nrs2"),
+    ("s200b1", "g235m", "f170lp", "nrs2"),
+    ("s200b1", "g140m", "f100lp", "nrs2"),
+    ("s200b1", "g140m", "f070lp", "nrs1"),
+    ("s200b1", "g140m", "f070lp", "nrs2"),
 )
 
 NRS_FSS_VALID_LAMP_OPTICAL_PATHS = (
-    ('prism', 'line4', 'nrs1'),
-    ('prism', 'line4', 'nrs2'),
-    ('prism', 'flat5', 'nrs1'),
-    ('prism', 'flat5', 'nrs2'),
-    ('prism', 'test', 'nrs1'),
-    ('prism', 'test', 'nrs2'),
-    ('g395h', 'flat3', 'nrs1'),
-    ('g395h', 'flat3', 'nrs2'),
-    ('g395h', 'line3', 'nrs1'),
-    ('g395h', 'line3', 'nrs2'),
-    ('g235h', 'flat2', 'nrs1'),
-    ('g235h', 'flat2', 'nrs2'),
-    ('g235h', 'line2', 'nrs1'),
-    ('g235h', 'line2', 'nrs2'),
-    ('g140h', 'flat1', 'nrs1'),
-    ('g140h', 'flat1', 'nrs2'),
-    ('g140h', 'ref', 'nrs1'),
-    ('g140h', 'ref', 'nrs2'),
-    ('g140h', 'line1', 'nrs1'),
-    ('g140h', 'line1', 'nrs2'),
-    ('g140h', 'flat4', 'nrs1'),
-    ('g140h', 'flat4', 'nrs2'),
-    ('g395m', 'flat3', 'nrs1'),
-    ('g395m', 'flat3', 'nrs2'),
-    ('g395m', 'line3', 'nrs1'),
-    ('g395m', 'line3', 'nrs2'),
-    ('g235m', 'flat2', 'nrs1'),
-    ('g235m', 'flat2', 'nrs2'),
-    ('g235m', 'line2', 'nrs1'),
-    ('g235m', 'line2', 'nrs2'),
-    ('g140m', 'flat1', 'nrs1'),
-    ('g140m', 'flat1', 'nrs2'),
-    ('g140m', 'line1', 'nrs1'),
-    ('g140m', 'line1', 'nrs2'),
-    ('g140m', 'flat4', 'nrs1'),
-    ('g140m', 'flat4', 'nrs2'),
+    ("prism", "line4", "nrs1"),
+    ("prism", "line4", "nrs2"),
+    ("prism", "flat5", "nrs1"),
+    ("prism", "flat5", "nrs2"),
+    ("prism", "test", "nrs1"),
+    ("prism", "test", "nrs2"),
+    ("g395h", "flat3", "nrs1"),
+    ("g395h", "flat3", "nrs2"),
+    ("g395h", "line3", "nrs1"),
+    ("g395h", "line3", "nrs2"),
+    ("g235h", "flat2", "nrs1"),
+    ("g235h", "flat2", "nrs2"),
+    ("g235h", "line2", "nrs1"),
+    ("g235h", "line2", "nrs2"),
+    ("g140h", "flat1", "nrs1"),
+    ("g140h", "flat1", "nrs2"),
+    ("g140h", "ref", "nrs1"),
+    ("g140h", "ref", "nrs2"),
+    ("g140h", "line1", "nrs1"),
+    ("g140h", "line1", "nrs2"),
+    ("g140h", "flat4", "nrs1"),
+    ("g140h", "flat4", "nrs2"),
+    ("g395m", "flat3", "nrs1"),
+    ("g395m", "flat3", "nrs2"),
+    ("g395m", "line3", "nrs1"),
+    ("g395m", "line3", "nrs2"),
+    ("g235m", "flat2", "nrs1"),
+    ("g235m", "flat2", "nrs2"),
+    ("g235m", "line2", "nrs1"),
+    ("g235m", "line2", "nrs2"),
+    ("g140m", "flat1", "nrs1"),
+    ("g140m", "flat1", "nrs2"),
+    ("g140m", "line1", "nrs1"),
+    ("g140m", "line1", "nrs2"),
+    ("g140m", "flat4", "nrs1"),
+    ("g140m", "flat4", "nrs2"),
 )
 
 # Define the valid optical paths vs detector for NIRSpec IFU Science
@@ -208,41 +201,54 @@ NRS_FSS_VALID_LAMP_OPTICAL_PATHS = (
 # The only combinations that result in data on the NRS2 detector are
 # g140h/f100lp, g235h/f170lp, and g395h/f290lp.
 NRS_IFU_VALID_OPTICAL_PATHS = (
-    ('prism', 'clear',  'nrs1'),
-    ('g140m', 'f070lp', 'nrs1'),
-    ('g140m', 'f100lp', 'nrs1'),
-    ('g235m', 'f170lp', 'nrs1'),
-    ('g395m', 'f290lp', 'nrs1'),
-    ('g140h', 'f070lp', 'nrs1'),
-    ('g140h', 'f100lp', 'nrs1'),
-    ('g140h', 'f100lp', 'nrs2'),
-    ('g235h', 'f170lp', 'nrs1'),
-    ('g235h', 'f170lp', 'nrs2'),
-    ('g395h', 'f290lp', 'nrs1'),
-    ('g395h', 'f290lp', 'nrs2'),
+    ("prism", "clear", "nrs1"),
+    ("g140m", "f070lp", "nrs1"),
+    ("g140m", "f100lp", "nrs1"),
+    ("g235m", "f170lp", "nrs1"),
+    ("g395m", "f290lp", "nrs1"),
+    ("g140h", "f070lp", "nrs1"),
+    ("g140h", "f100lp", "nrs1"),
+    ("g140h", "f100lp", "nrs2"),
+    ("g235h", "f170lp", "nrs1"),
+    ("g235h", "f170lp", "nrs2"),
+    ("g395h", "f290lp", "nrs1"),
+    ("g395h", "f290lp", "nrs2"),
 )
 
 
 # Define the uncalibrated filters for NIRISS SOSS
 # Data taken with these filters should not be processed beyond
 # level 2a.
-NIS_SOSS_UNCALIBRATED_FILTERS = ('f277w',)
+NIS_SOSS_UNCALIBRATED_FILTERS = ("f277w",)
 
 
 # Key that uniquely identifies members.
-MEMBER_KEY = 'expname'
+MEMBER_KEY = "expname"
 
 # Non-specified values found in DMS Association Pools
-_EMPTY = (None, '', 'NULL', 'Null', 'null', '--', 'N', 'n',
-          'F', 'f', 'FALSE', 'false', 'False', 'N/A', 'n/a')
+_EMPTY = (
+    None,
+    "",
+    "NULL",
+    "Null",
+    "null",
+    "--",
+    "N",
+    "n",
+    "F",
+    "f",
+    "FALSE",
+    "false",
+    "False",
+    "N/A",
+    "n/a",
+)
 
 # Degraded status information
-_DEGRADED_STATUS_OK = (
-    'No known degraded exposures in association.'
-)
+_DEGRADED_STATUS_OK = "No known degraded exposures in association."
 _DEGRADED_STATUS_NOTOK = (
-    'One or more members have an error associated with them.'
-    '\nDetails can be found in the member.exposerr attribute.'
+    "One or more members have an error associated with them."
+    "\nDetails can be found in the member.exposerr attribute."
 )
 
 
@@ -264,10 +270,10 @@ class DMSBaseMixin(ACIDMixin):
         self._acid = None
         self._asn_name = None
         self.sequence = None
-        if 'degraded_status' not in self.data:
-            self.data['degraded_status'] = _DEGRADED_STATUS_OK
-        if 'program' not in self.data:
-            self.data['program'] = 'noprogram'
+        if "degraded_status" not in self.data:
+            self.data["degraded_status"] = _DEGRADED_STATUS_OK
+        if "program" not in self.data:
+            self.data["program"] = "noprogram"
 
     @classmethod
     def create(cls, item, version_id=None):
@@ -318,9 +324,9 @@ class DMSBaseMixin(ACIDMixin):
         if self._asn_name:
             return self._asn_name
 
-        program = self.data['program']
+        program = self.data["program"]
         version_id = self.version_id
-        asn_type = self.data['asn_type']
+        asn_type = self.data["asn_type"]
         sequence = self.sequence
 
         if version_id:
@@ -347,17 +353,13 @@ class DMSBaseMixin(ACIDMixin):
 
     @property
     def current_product(self):
-        return self.data['products'][-1]
+        return self.data["products"][-1]
 
     @property
     def from_items(self):
         """The list of items that contributed to the association."""
         try:
-            items = [
-                member.item
-                for product in self['products']
-                for member in product['members']
-            ]
+            items = [member.item for product in self["products"] for member in product["members"]]
         except KeyError:
             items = []
         return items
@@ -366,9 +368,7 @@ class DMSBaseMixin(ACIDMixin):
     def member_ids(self):
         """Set of all member ids in all products of this association"""
         member_ids = set(
-            member[MEMBER_KEY]
-            for product in self['products']
-            for member in product['members']
+            member[MEMBER_KEY] for product in self["products"] for member in product["members"]
         )
         return member_ids
 
@@ -387,7 +387,7 @@ class DMSBaseMixin(ACIDMixin):
         """Set validity dict"""
         self._validity = item
 
-    def get_exposure_type(self, item, default='science'):
+    def get_exposure_type(self, item, default="science"):
         """Determine the exposure type of a pool item
 
         Parameters
@@ -427,7 +427,7 @@ class DMSBaseMixin(ACIDMixin):
             The member to check for
         """
         try:
-            current_members = self.current_product['members']
+            current_members = self.current_product["members"]
         except KeyError:
             return False
 
@@ -469,16 +469,16 @@ class DMSBaseMixin(ACIDMixin):
         """
         # If not a science exposure, such as target acquisitions,
         # then other indicators do not apply.
-        if item['pntgtype'] != 'science':
+        if item["pntgtype"] != "science":
             return False
 
         # Target acquisitions are never AMI
-        if item['exp_type'] in ACQ_EXP_TYPES:
+        if item["exp_type"] in ACQ_EXP_TYPES:
             return False
 
         # Check for AMI exposure type
         try:
-            is_ami = self.item_getattr(item, ['exp_type'])[1] in ['nis_ami']
+            is_ami = self.item_getattr(item, ["exp_type"])[1] in ["nis_ami"]
         except KeyError:
             is_ami = False
 
@@ -505,26 +505,26 @@ class DMSBaseMixin(ACIDMixin):
         """
         # If not a science exposure, such as target acquisitions,
         # then other indicators do not apply.
-        if item['pntgtype'] != 'science':
+        if item["pntgtype"] != "science":
             return False
 
         # Target acquisitions are never Coron
-        if item['exp_type'] in ACQ_EXP_TYPES:
+        if item["exp_type"] in ACQ_EXP_TYPES:
             return False
 
         # Check for coronagraphic exposure type
         try:
-            is_coron = self.item_getattr(item, ['exp_type'])[1] in CORON_EXP_TYPES
+            is_coron = self.item_getattr(item, ["exp_type"])[1] in CORON_EXP_TYPES
         except KeyError:
             is_coron = False
             return is_coron
 
         # Now do a special check for NRC_CORON exposures using full-frame readout,
         # which include extra detectors that do *not* have an occulter in them
-        if item['exp_type'] == 'nrc_coron' and item['subarray'] == 'full':
-            if item['pupil'] == 'maskbar' and item['detector'] in ['nrca1', 'nrca2', 'nrca3']:
+        if item["exp_type"] == "nrc_coron" and item["subarray"] == "full":
+            if item["pupil"] == "maskbar" and item["detector"] in ["nrca1", "nrca2", "nrca3"]:
                 is_coron = False
-            if item['pupil'] == 'maskrnd' and item['detector'] in ['nrca1', 'nrca3', 'nrca4']:
+            if item["pupil"] == "maskrnd" and item["detector"] in ["nrca1", "nrca3", "nrca4"]:
                 is_coron = False
 
         return is_coron
@@ -552,11 +552,11 @@ class DMSBaseMixin(ACIDMixin):
         """
         # If not a science exposure, such as target acquisitions,
         # then other TSO indicators do not apply.
-        if item['pntgtype'] != 'science':
+        if item["pntgtype"] != "science":
             return False
 
         # Target acquisitions are never TSO
-        if item['exp_type'] in ACQ_EXP_TYPES:
+        if item["exp_type"] in ACQ_EXP_TYPES:
             return False
 
         # Setup exposure list
@@ -566,16 +566,16 @@ class DMSBaseMixin(ACIDMixin):
 
         # Go through all other TSO indicators.
         try:
-            is_tso = self.constraints['is_tso'].value == 't'
+            is_tso = self.constraints["is_tso"].value == "t"
         except (AttributeError, KeyError):
             # No such constraint is defined. Just continue on.
             is_tso = False
         try:
-            is_tso = is_tso or self.item_getattr(item, ['tsovisit'])[1] == 't'
+            is_tso = is_tso or self.item_getattr(item, ["tsovisit"])[1] == "t"
         except KeyError:
             pass
         try:
-            is_tso = is_tso or self.item_getattr(item, ['exp_type'])[1] in all_exp_types
+            is_tso = is_tso or self.item_getattr(item, ["exp_type"])[1] in all_exp_types
         except KeyError:
             pass
         return is_tso
@@ -606,14 +606,11 @@ class DMSBaseMixin(ACIDMixin):
 
     def new_product(self, product_name=PRODUCT_NAME_DEFAULT):
         """Start a new product"""
-        product = {
-            'name': product_name,
-            'members': []
-        }
+        product = {"name": product_name, "members": []}
         try:
-            self.data['products'].append(product)
+            self.data["products"].append(product)
         except (AttributeError, KeyError):
-            self.data['products'] = [product]
+            self.data["products"] = [product]
 
     def update_asn(self, item=None, member=None):
         """Update association meta information
@@ -638,23 +635,22 @@ class DMSBaseMixin(ACIDMixin):
 
     def update_degraded_status(self):
         """Update association degraded status"""
-
-        if self.data['degraded_status'] == _DEGRADED_STATUS_OK:
-            for product in self.data['products']:
-                for member in product['members']:
+        if self.data["degraded_status"] == _DEGRADED_STATUS_OK:
+            for product in self.data["products"]:
+                for member in product["members"]:
                     try:
-                        exposerr = member['exposerr']
+                        exposerr = member["exposerr"]
                     except KeyError:
                         continue
                     else:
                         if exposerr not in _EMPTY:
-                            self.data['degraded_status'] = _DEGRADED_STATUS_NOTOK
+                            self.data["degraded_status"] = _DEGRADED_STATUS_NOTOK
                             break
 
     def update_validity(self, entry):
         for test in self.validity.values():
-            if not test['validated']:
-                test['validated'] = test['check'](entry)
+            if not test["validated"]:
+                test["validated"] = test["check"](entry)
 
     @classmethod
     def reset_sequence(cls):
@@ -667,20 +663,15 @@ class DMSBaseMixin(ACIDMixin):
         if isinstance(asn, DMSBaseMixin):
             result = False
             try:
-                result = all(
-                    test['validated']
-                    for test in asn.validity.values()
-                )
+                result = all(test["validated"] for test in asn.validity.values())
             except (AttributeError, KeyError):
-                raise AssociationNotValidError('Validation failed')
+                raise AssociationNotValidError("Validation failed")
             if not result:
-                raise AssociationNotValidError(
-                    'Validation failed validity tests.'
-                )
+                raise AssociationNotValidError("Validation failed validity tests.")
 
         return True
 
-    def _get_exposure(self):
+    def get_exposure(self):
         """Get string representation of the exposure id
 
         Returns
@@ -689,19 +680,17 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the exposure & activity id.
         """
-        exposure = ''
+        exposure = ""
         try:
-            activity_id = format_list(
-                self.constraints['activity_id'].found_values
-            )
+            activity_id = format_list(self.constraints["activity_id"].found_values)
         except KeyError:
             pass
         else:
             if activity_id not in _EMPTY:
-                exposure = '{0:0>2s}'.format(activity_id)
+                exposure = f"{activity_id:0>2s}"
         return exposure
 
-    def _get_instrument(self):
+    def get_instrument(self):
         """Get string representation of the instrument
 
         Returns
@@ -710,10 +699,10 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the instrument
         """
-        instrument = format_list(self.constraints['instrument'].found_values)
+        instrument = format_list(self.constraints["instrument"].found_values)
         return instrument
 
-    def _get_opt_element(self):
+    def get_opt_element(self):
         """Get string representation of the optical elements.
         This includes only elements contained in the filter/pupil
         wheels of the instrument.
@@ -726,7 +715,7 @@ class DMSBaseMixin(ACIDMixin):
         """
         # Retrieve all the optical elements
         opt_elems = []
-        for opt_elem in ['opt_elem', 'opt_elem2']:
+        for opt_elem in ["opt_elem", "opt_elem2"]:
             try:
                 values = list(self.constraints[opt_elem].found_values)
             except KeyError:
@@ -740,13 +729,13 @@ class DMSBaseMixin(ACIDMixin):
         # Build the string. Sort the elements in order to
         # create data-independent results
         opt_elems.sort(key=str.lower)
-        opt_elem = '-'.join(opt_elems)
-        if opt_elem == '':
-            opt_elem = 'clear'
+        opt_elem = "-".join(opt_elems)
+        if opt_elem == "":
+            opt_elem = "clear"
 
         return opt_elem
 
-    def _get_slit_name(self):
+    def get_slit_name(self):
         """Get string representation of the slit name (NIRSpec fixed-slit only)
 
         Returns
@@ -757,7 +746,7 @@ class DMSBaseMixin(ACIDMixin):
         """
         # Retrieve all the slit names (sometimes there can be 2)
         slit_names = []
-        for fxd_slit in ['fxd_slit', 'fxd_slit2']:
+        for fxd_slit in ["fxd_slit", "fxd_slit2"]:
             try:
                 values = list(self.constraints[fxd_slit].found_values)
             except KeyError:
@@ -771,12 +760,12 @@ class DMSBaseMixin(ACIDMixin):
         # Build the string. Sort the elements in order to
         # create data-independent results
         slit_names.sort(key=str.lower)
-        slit_name = '-'.join(slit_names)
+        slit_name = "-".join(slit_names)
 
         # Slit name may be empty string
         return slit_name
 
-    def _get_subarray(self):
+    def get_subarray(self):
         """Get string representation of the subarray
 
         Returns
@@ -785,19 +774,19 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the subarray.
         """
-        result = ''
+        result = ""
         try:
-            subarray = format_list(self.constraints['subarray'].found_values)
+            subarray = format_list(self.constraints["subarray"].found_values)
         except KeyError:
             subarray = None
-        if subarray == 'full':
+        if subarray == "full":
             subarray = None
         if subarray is not None:
             result = subarray
 
         return result
 
-    def _get_target(self):
+    def get_target(self):
         """Get string representation of the target
 
         Returns
@@ -806,16 +795,16 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the target or source ID.
         """
-        attrs = self.constraints.get_all_attr('found_values', name='target')
+        attrs = self.constraints.get_all_attr("found_values", name="target")
         if attrs:
             value = attrs[0][1]
         else:
             value = []
         target_id = format_list(value)
-        target = 't{0:0>3s}'.format(str(target_id))
+        target = f"t{str(target_id):0>3s}"
         return target
 
-    def _get_grating(self):
+    def get_grating(self):
         """Get string representation of the grating in use
 
         Returns
@@ -824,8 +813,8 @@ class DMSBaseMixin(ACIDMixin):
             The Level3 Product name representation
             of the grating in use.
         """
-        grating_id = format_list(self.constraints['grating'].found_values)
-        grating = '{0:0>3s}'.format(str(grating_id))
+        grating_id = format_list(self.constraints["grating"].found_values)
+        grating = f"{str(grating_id):0>3s}"
         return grating
 
     def __eq__(self, other):
@@ -857,10 +846,10 @@ class DMSAttrConstraint(AttrConstraint):
 
     Forces definition of invalid values
     """
-    def __init__(self, **kwargs):
 
-        if kwargs.get('invalid_values', None) is None:
-            kwargs['invalid_values'] = _EMPTY
+    def __init__(self, **kwargs):
+        if kwargs.get("invalid_values", None) is None:
+            kwargs["invalid_values"] = _EMPTY
 
         super(DMSAttrConstraint, self).__init__(**kwargs)
 
@@ -874,6 +863,7 @@ class Constraint_TargetAcq(SimpleConstraint):
         If specified, use the `get_exposure_type` method
         of the association rather than the utility version.
     """
+
     def __init__(self, association=None):
         if association is None:
             _get_exposure_type = get_exposure_type
@@ -881,51 +871,45 @@ class Constraint_TargetAcq(SimpleConstraint):
             _get_exposure_type = association.get_exposure_type
 
         super(Constraint_TargetAcq, self).__init__(
-            name='target_acq',
-            value='target_acquisition',
-            sources=_get_exposure_type
+            name="target_acq", value="target_acquisition", sources=_get_exposure_type
         )
 
 
 class Constraint_TSO(Constraint):
     """Match on Time-Series Observations"""
+
     def __init__(self, *args, **kwargs):
         super(Constraint_TSO, self).__init__(
             [
-                DMSAttrConstraint(
-                    sources=['pntgtype'],
-                    value='science'
-                ),
+                DMSAttrConstraint(sources=["pntgtype"], value="science"),
                 Constraint(
                     [
                         DMSAttrConstraint(
-                            sources=['tsovisit'],
-                            value='t',
+                            sources=["tsovisit"],
+                            value="t",
                         ),
                         DMSAttrConstraint(
-                            sources=['exp_type'],
-                            value='|'.join(TSO_EXP_TYPES),
+                            sources=["exp_type"],
+                            value="|".join(TSO_EXP_TYPES),
                         ),
                     ],
-                    reduce=Constraint.any
-                )
+                    reduce=Constraint.any,
+                ),
             ],
-            name='is_tso'
+            name="is_tso",
         )
 
 
 class Constraint_WFSC(Constraint):
     """Match on Wave Front Sensing and Control Observations"""
+
     def __init__(self, *args, **kwargs):
         super(Constraint_WFSC, self).__init__(
             [
                 Constraint(
                     [
                         DMSAttrConstraint(
-                            name='wfsc',
-                            sources=['visitype'],
-                            value='.+wfsc.+',
-                            force_unique=True
+                            name="wfsc", sources=["visitype"], value=".+wfsc.+", force_unique=True
                         )
                     ]
                 )
@@ -938,10 +922,10 @@ class Constraint_WFSC(Constraint):
 # #########
 def format_list(alist):
     """Format a list according to DMS naming specs"""
-    return '-'.join(alist)
+    return "-".join(alist)
 
 
-def get_exposure_type(item, default='science', association=None):
+def get_exposure_type(item, default="science", association=None):
     """Determine the exposure type of a pool item
 
     Parameters
@@ -972,6 +956,7 @@ def get_exposure_type(item, default='science', association=None):
     LookupError
         When `default` is None and an exposure type cannot be determined
     """
+
     # Specify how attributes of the item are retrieved.
     def _item_attr(item, sources):
         """Get attribute value of an item
@@ -987,28 +972,28 @@ def get_exposure_type(item, default='science', association=None):
     # Retrieve pointing type. This decides the basic exposure type.
     # If the pointing is not science, we're done.
     try:
-        result = _item_attr(item, ['pntgtype'])
+        result = _item_attr(item, ["pntgtype"])
     except KeyError:
         pass
     else:
-        if result != 'science':
+        if result != "science":
             return result
 
     # We have a science exposure. Refine further.
     #
     # Base type off of exposure type.
     try:
-        exp_type = _item_attr(item, ['exp_type'])
+        exp_type = _item_attr(item, ["exp_type"])
     except KeyError:
-        raise LookupError('Exposure type cannot be determined')
+        raise LookupError("Exposure type cannot be determined")
 
     result = EXPTYPE_MAP.get(exp_type, default)
 
     if result is None:
-        raise LookupError('Cannot determine exposure type')
+        raise LookupError("Cannot determine exposure type")
 
     # If result is not science, we're done.
-    if result != 'science':
+    if result != "science":
         return result
 
     # For `science` data, compare against special modifiers
@@ -1051,40 +1036,36 @@ def item_getattr(item, attributes, association=None):
         invalid_values = _EMPTY
     else:
         invalid_values = association.INVALID_VALUES
-    return getattr_from_list(
-        item,
-        attributes,
-        invalid_values=invalid_values
-    )
+    return getattr_from_list(item, attributes, invalid_values=invalid_values)
 
 
 def nrsfss_valid_detector(item):
     """Check that a slit/grating/filter combo can appear on the detector"""
     try:
-        _, detector = item_getattr(item, ['detector'])
-        _, filter = item_getattr(item, ['filter'])
-        _, grating = item_getattr(item, ['grating'])
-        _, slit = item_getattr(item, ['fxd_slit'])
+        _, detector = item_getattr(item, ["detector"])
+        _, filter = item_getattr(item, ["filter"])
+        _, grating = item_getattr(item, ["grating"])
+        _, slit = item_getattr(item, ["fxd_slit"])
     except KeyError:
         return False
 
     # Reduce all A slits to just 'a'.
-    if slit != 's200b1':
-        slit = 'a'
+    if slit != "s200b1":
+        slit = "a"
 
     return (slit, grating, filter, detector) in NRS_FSS_VALID_OPTICAL_PATHS
 
 
 def nrsifu_valid_detector(item):
     """Check that a grating/filter combo can appear on the detector"""
-    _, exp_type = item_getattr(item, ['exp_type'])
-    if exp_type != 'nrs_ifu':
+    _, exp_type = item_getattr(item, ["exp_type"])
+    if exp_type != "nrs_ifu":
         return True
 
     try:
-        _, detector = item_getattr(item, ['detector'])
-        _, filter = item_getattr(item, ['filter'])
-        _, grating = item_getattr(item, ['grating'])
+        _, detector = item_getattr(item, ["detector"])
+        _, filter = item_getattr(item, ["filter"])
+        _, grating = item_getattr(item, ["grating"])
     except KeyError:
         return False
 
@@ -1094,44 +1075,44 @@ def nrsifu_valid_detector(item):
 def nrslamp_valid_detector(item):
     """Check that a grating/lamp combo can appear on the detector"""
     try:
-        _, detector = item_getattr(item, ['detector'])
-        _, grating = item_getattr(item, ['grating'])
-        _, opmode = item_getattr(item, ['opmode'])
+        _, detector = item_getattr(item, ["detector"])
+        _, grating = item_getattr(item, ["grating"])
+        _, opmode = item_getattr(item, ["opmode"])
     except KeyError:
         return False
 
-    if opmode in ['msaspec']:
+    if opmode in ["msaspec"]:
         # All settings can result in data on both detectors,
         # depending on which MSA shutters are open
         return True
 
-    elif opmode in ['ifu']:
+    elif opmode in ["ifu"]:
         # Need lamp value for IFU mode
         try:
-            _, lamp = item_getattr(item, ['lamp'])
+            _, lamp = item_getattr(item, ["lamp"])
         except KeyError:
             return False
 
         # Just a checklist of paths:
-        if grating in ['g395h', 'g235h']:
+        if grating in ["g395h", "g235h"]:
             # long-wave, high-res gratings result in data on both detectors
             return True
-        elif grating in ['g395m', 'g235m', 'g140m'] and detector == 'nrs1':
+        elif grating in ["g395m", "g235m", "g140m"] and detector == "nrs1":
             # all medium-res gratings result in data only on NRS1 detector
             return True
-        elif grating == 'prism' and detector == 'nrs1':
+        elif grating == "prism" and detector == "nrs1":
             # prism results in data only on NRS1 detector
             return True
-        elif grating == 'g140h':
+        elif grating == "g140h":
             # short-wave, high-res grating results in data on both detectors,
             # except when lamp FLAT4 is in use (no data on NRS2)
-            if not (detector == 'nrs2' and lamp == 'flat4'):
+            if not (detector == "nrs2" and lamp == "flat4"):
                 return True
 
-    elif opmode in ['fixedslit']:
+    elif opmode in ["fixedslit"]:
         # All slits illuminated by lamps, regardless of grating or subarray
         try:
-            _, lamp = item_getattr(item, ['lamp'])
+            _, lamp = item_getattr(item, ["lamp"])
         except KeyError:
             return False
 
@@ -1144,19 +1125,19 @@ def nrslamp_valid_detector(item):
 def nrccoron_valid_detector(item):
     """Check that a coronagraphic mask+detector combo is valid"""
     try:
-        _, detector = item_getattr(item, ['detector'])
-        _, subarray = item_getattr(item, ['subarray'])
-        _, pupil = item_getattr(item, ['pupil'])
+        _, detector = item_getattr(item, ["detector"])
+        _, subarray = item_getattr(item, ["subarray"])
+        _, pupil = item_getattr(item, ["pupil"])
     except KeyError:
         return False
 
     # Just a checklist of paths:
-    if subarray == 'full':
+    if subarray == "full":
         # maskbar has occulted target only in detector nrca4
-        if pupil == 'maskbar' and detector in ['nrca1', 'nrca2', 'nrca3']:
+        if pupil == "maskbar" and detector in ["nrca1", "nrca2", "nrca3"]:
             return False
         # maskrnd has occulted target only in detector nrca2
-        elif pupil == 'maskrnd' and detector in ['nrca1', 'nrca3', 'nrca4']:
+        elif pupil == "maskrnd" and detector in ["nrca1", "nrca3", "nrca4"]:
             return False
         else:
             return True
@@ -1166,12 +1147,12 @@ def nrccoron_valid_detector(item):
 
 def nissoss_calibrated_filter(item):
     """Check that a NIRISS filter is calibrated."""
-    _, exp_type = item_getattr(item, ['exp_type'])
-    if exp_type != 'nis_soss':
+    _, exp_type = item_getattr(item, ["exp_type"])
+    if exp_type != "nis_soss":
         return True
 
     try:
-        _, filter = item_getattr(item, ['filter'])
+        _, filter = item_getattr(item, ["filter"])
     except KeyError:
         return False
 

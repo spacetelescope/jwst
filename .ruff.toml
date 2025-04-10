@@ -19,7 +19,6 @@ quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
 exclude = [
-    "jwst/associations/**.py",
     "jwst/background/**.py",
     "jwst/coron/**.py",
     "jwst/cube_build/**.py",
@@ -100,6 +99,9 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "SLF", "ARG", "PTH",
     "A002", # builtin variable shadowing
     "S101", # use of assert
+]
+"jwst/associations/lib/*" = [
+    "N801", # Use CapWords class naming convention
 ]
 "jwst/associations/tests*" = [
     "F841", # unused variable

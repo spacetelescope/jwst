@@ -7,10 +7,11 @@ Lifted from the `glue-viz`_ project.
 
 .. _glue-viz: https://github.com/glue-viz/glue
 """
+
 from functools import wraps
 
 
-__all__ = ['memoize', 'singleton', 'memoize_attr_check']
+__all__ = ["memoize", "singleton", "memoize_attr_check"]
 
 
 def _make_key(args, kwargs):
@@ -23,7 +24,6 @@ def memoize(func):
 
     @wraps(func)
     def wrapper(*args, **kwargs):
-
         # Note that here we have two separate try...except statements, because
         # we want to make sure that we catch only TypeError on the first
         # statement, and both TypeError and KeyError on the second.
@@ -58,7 +58,7 @@ def clear_cache(func):
 
 
 def memoize_attr_check(attr):
-    """ Memoize a method call, cached both on arguments and given attribute
+    """Memoize a method call, cached both on arguments and given attribute
     of first argument (which is presumably self)
 
     Has the effect of re-calculating results if a specific attribute changes
@@ -83,7 +83,8 @@ def memoize_attr_check(attr):
 
 def singleton(cls):
     """Turn a class into a singleton, such that new objects
-    in this class share the same instance"""
+    in this class share the same instance
+    """
     instances = {}
 
     @wraps(cls)
@@ -91,4 +92,5 @@ def singleton(cls):
         if cls not in instances:
             instances[cls] = cls()
         return instances[cls]
+
     return getinstance
