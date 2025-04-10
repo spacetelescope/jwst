@@ -2962,12 +2962,8 @@ def gs_position_acq(mnemonics_to_read, mnemonics, exp_type="fgs_acq1"):  # noqa:
         )
 
     # Setup parameters depending on ACQ1 vs ACQ2
-    if exp_type == "fgs_acq1":
-        subarray = valid[FGS_ACQ_WINDOW_INDEX[exp_type]]
-        posg_slice = FGS_ACQ_SLICES[exp_type]
-    else:
-        subarray = valid[FGS_ACQ_WINDOW_INDEX[exp_type]]
-        posg_slice = FGS_ACQ_SLICES[exp_type]
+    subarray = valid[FGS_ACQ_WINDOW_INDEX[exp_type]]
+    posg_slice = FGS_ACQ_SLICES[exp_type]
 
     position = (
         np.average(valid["IFGS_ACQ_XPOSG"][posg_slice]),
