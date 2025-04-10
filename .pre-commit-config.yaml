@@ -52,7 +52,6 @@ repos:
             jwst/photom/.* |
             jwst/saturation/.* |
             jwst/scripts/.* |
-            jwst/spectral_leak/.* |
             jwst/straylight/.* |
             jwst/tests/.* |
             docs/.* |
