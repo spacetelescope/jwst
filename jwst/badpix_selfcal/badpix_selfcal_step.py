@@ -168,7 +168,7 @@ class BadpixSelfcalStep(Step):
         # apply the flags to the science data
         input_sci = badpix_selfcal.apply_flags(input_sci, bad_indices)
 
-        self.log.info(f"Number of new bad pixels flagged: {len(bad_indices[0])}")
+        self.log.info("Number of new bad pixels flagged: %s", len(bad_indices[0]))
         # apply the flags to the background data to be passed to background sub step
         if len(bkg_list) > 0:
             for i, background_model in enumerate(bkg_list):

@@ -41,7 +41,7 @@ class SourceCatalogStep(Step):
         for reffile_type in self.reference_file_types:
             try:
                 filepath = self.get_reference_file(model, reffile_type)
-                self.log.info(f"Using {reffile_type.upper()} reference file: {filepath}")
+                self.log.info("Using %s reference file: %s", reffile_type.upper(), filepath)
             except CrdsLookupError as err:
                 msg = f"{err} Source catalog will not be created."
                 self.log.warning(msg)
@@ -108,7 +108,7 @@ class SourceCatalogStep(Step):
                 cat_filepath = self.make_output_path(ext=".ecsv")
                 catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
                 model.meta.source_catalog = Path(cat_filepath).name
-                self.log.info(f"Wrote source catalog: {cat_filepath}")
+                self.log.info("Wrote source catalog: %s", cat_filepath)
 
                 segm_model = datamodels.SegmentationMapModel(segment_img.data)
                 segm_model.update(model, only="PRIMARY")
@@ -116,6 +116,6 @@ class SourceCatalogStep(Step):
                 segm_model.meta.wcsinfo = model.meta.wcsinfo
                 self.save_model(segm_model, suffix="segm")
                 model.meta.segmentation_map = segm_model.meta.filename
-                self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
+                self.log.info("Wrote segmentation map: %s", segm_model.meta.filename)
 
         return catalog

@@ -278,7 +278,7 @@ class AssociationRegistry(dict):
                 try:
                     self.add_rule(name, obj, global_constraints=global_constraints)
                 except TypeError:
-                    logger.debug(f'Could not add object {obj} as a rule due to TypeError')
+                    logger.debug('Could not add object %s as a rule due to TypeError', obj)
                 continue
 
             # Add callbacks

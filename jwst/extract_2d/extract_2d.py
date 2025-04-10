@@ -68,7 +68,7 @@ def extract2d(
     slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM"]
 
     exp_type = input_model.meta.exposure.type.upper()
-    log.info(f"EXP_TYPE is {exp_type}")
+    log.info("EXP_TYPE is %s", exp_type)
 
     if reference_files is None:
         reference_files = {}
@@ -76,7 +76,7 @@ def extract2d(
     if exp_type in nrs_modes:
         if input_model.meta.instrument.grating.lower() == "mirror":
             # Catch the case of EXP_TYPE=NRS_LAMP and grating=MIRROR
-            log.info(f"EXP_TYPE {exp_type} with grating=MIRROR not supported for extract 2D")
+            log.info("EXP_TYPE %s with grating=MIRROR not supported for extract 2D", exp_type)
             input_model.meta.cal_step.extract_2d = "SKIPPED"
             return input_model
         output_model = nrs_extract2d(input_model, slit_names=slit_names, source_ids=source_ids)
@@ -102,7 +102,7 @@ def extract2d(
             )
 
     else:
-        log.info(f"EXP_TYPE {exp_type} not supported for extract 2D")
+        log.info("EXP_TYPE %s not supported for extract 2D", exp_type)
         input_model.meta.cal_step.extract_2d = "SKIPPED"
         return input_model
 

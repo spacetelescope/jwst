@@ -57,7 +57,7 @@ def slice_info(slice_map, channel):
         np.where((slice_inventory >= 100 * channel) & (slice_inventory < 100 * (channel + 1)))
     ]
 
-    log.info(f"Number of slices in channel {slices_in_channel.shape[0]} ")
+    log.info("Number of slices in channel %s ", slices_in_channel.shape[0])
     slice_x_ranges = np.zeros((slices_in_channel.shape[0], 3), dtype=int)
     all_slice_masks = np.zeros((slices_in_channel.shape[0], slice_map.shape[0], slice_map.shape[1]))
     for n, s in enumerate(slices_in_channel):
@@ -80,13 +80,16 @@ def slice_info(slice_map, channel):
         )
 
         log.debug(
-            f"For slice {slice_x_ranges[n, 0]} x ranges of slices "
-            f"region {slice_x_ranges[n, 1]}, {slice_x_ranges[n, 2]}"
+            "For slice %s x ranges of slices region %s, %s",
+            slice_x_ranges[n, 0],
+            slice_x_ranges[n, 1],
+            slice_x_ranges[n, 2],
         )
 
     log.debug(
-        "Min and max x pixel values of all slices "
-        f"in channel {np.amin(slice_x_ranges[:, 1])} {np.amax(slice_x_ranges[:, 2])}"
+        "Min and max x pixel values of all slices in channel %s %s",
+        np.amin(slice_x_ranges[:, 1]),
+        np.amax(slice_x_ranges[:, 2]),
     )
 
     xrange_channel = np.zeros(2)
@@ -276,7 +279,7 @@ def find_lines(signal, max_amp):
             # find nearest troughs
 
             for xp in xpeaks:
-                log.debug(f"find_lines:  checking ind {xp}")
+                log.debug("find_lines:  checking ind %s", xp)
 
                 try:
                     x1 = l_x[np.argsort(np.abs(l_x - xp))[0]]
@@ -304,7 +307,7 @@ def find_lines(signal, max_amp):
                 except IndexError:
                     pass
 
-    log.debug(f"find_lines: Found {len(u_x)} peaks   {len(l_x)} troughs")
+    log.debug("find_lines: Found %s peaks   %s troughs", len(u_x), len(l_x))
     weights_factors[signal_check > max_amp * 2] = 0  # catch any remaining
     # weights_factors[signal_check > np.amax(max_amp)] = 0
 
@@ -351,14 +354,14 @@ def check_res_fringes(res_fringe_fit, max_amp):
             node_ind.append(k)
     node_ind.append(res_fringe_fit.shape[0] - 1)
     node_ind = np.asarray(node_ind)
-    log.debug(f"check_res_fringes: found {len(node_ind)} nodes")
+    log.debug("check_res_fringes: found %s nodes", len(node_ind))
 
     # find where res_fringes goes above max_amp
     runaway_rfc = np.argwhere((np.abs(lenv_fit) + np.abs(uenv_fit)) > (max_amp * 2))
 
     # check which signal env the blow ups are located in and set to 1, and set a flag array
     if len(runaway_rfc) > 0:
-        log.debug(f"check_res_fringes: {len(runaway_rfc)} data points exceed threshold")
+        log.debug("check_res_fringes: %s data points exceed threshold", len(runaway_rfc))
         log.debug("check_res_fringes: resetting fits to related beats")
         for i in runaway_rfc:
             # find where the index is compared to the nodes
@@ -430,14 +433,14 @@ def fit_1d_background_complex(flux, weights, wavenum, ffreq=None, channel=1):
 
     # define number of knots using fringe freq, want 1 knot per period
     if ffreq is not None:
-        log.debug(f"fit_1d_background_complex: knot positions for {ffreq} cm-1")
+        log.debug("fit_1d_background_complex: knot positions for %s cm-1", ffreq)
         nknots = int((np.amax(wavenum) - np.amin(wavenum)) / (ffreq))
 
     else:
-        log.debug(f"fit_1d_background_complex: using num_knots={NUM_KNOTS}")
+        log.debug("fit_1d_background_complex: using num_knots=%s", NUM_KNOTS)
         nknots = int((flux.shape[0] / 1024) * NUM_KNOTS)
 
-    log.debug(f"fit_1d_background_complex: number of knots = {nknots}")
+    log.debug("fit_1d_background_complex: number of knots = %s", nknots)
 
     # recale wavenums to around 1 for bayesicfitting
     factor = np.amin(wavenum)
@@ -445,11 +448,11 @@ def fit_1d_background_complex(flux, weights, wavenum, ffreq=None, channel=1):
 
     # get number of fringe periods in array
     nper = (np.amax(wavenum) - np.amin(wavenum)) // ffreq
-    log.debug(f"fit_1d_background_complex: column is {nper} fringe periods")
+    log.debug("fit_1d_background_complex: column is %s fringe periods", nper)
 
     # now reduce by the weighted pixel fraction to see how many can be fitted
     nper_cor = int(nper * weighted_pix_frac)
-    log.debug(f"fit_1d_background_complex: column has {nper_cor} weighted fringe periods")
+    log.debug("fit_1d_background_complex: column has %s weighted fringe periods", nper_cor)
 
     # require at least 5 sine periods to fit
     if nper < 5:
@@ -537,7 +540,7 @@ def fit_1d_fringes_bayes_evidence(
 
     # get scan res
     res = np.around((2 * dffreq) / pgram_res).astype(int)
-    log.debug(f"fit_1d_fringes_bayes: scan res = {res}")
+    log.debug("fit_1d_fringes_bayes: scan res = %s", res)
 
     factor = np.amin(wavenum)
     wavenum = wavenum.copy() / factor
@@ -563,10 +566,10 @@ def fit_1d_fringes_bayes_evidence(
     sftr = Fitter(wavenum, sdml)
     _ = sftr.fit(res_fringes, weights=weights)
     evidence1 = sftr.getEvidence(limits=[-3, 10], noiseLimits=[0.001, 10])
-    log.debug(f"fit_1d_fringes_bayes_evidence: Initial Evidence: {evidence1}")
+    log.debug("fit_1d_fringes_bayes_evidence: Initial Evidence: %s", evidence1)
 
     for f in np.arange(max_nfringes):
-        log.debug(f"Starting fringe {f + 1}")
+        log.debug("Starting fringe %s", f + 1)
 
         # get the scan arrays
         weights *= col_snr2
@@ -588,7 +591,7 @@ def fit_1d_fringes_bayes_evidence(
         keep_dict[keep_ind] = freqs
 
         log.debug(
-            f"fit_1d_fringes_bayes_evidence: creating multisine model of {nfringes + 1} freqs"
+            "fit_1d_fringes_bayes_evidence: creating multisine model of %s freqs", nfringes + 1
         )
         mdl = multi_sine(nfringes + 1)
 
@@ -636,22 +639,24 @@ def fit_1d_fringes_bayes_evidence(
                 evidence2 = -1e9
 
         log.debug(
-            f"fit_1d_fringes_bayes_evidence: nfringe={nfringes + 1} "
-            f"ev={evidence2} chi={fitter.chisq}"
+            "fit_1d_fringes_bayes_evidence: nfringe=%s ev=%s chi=%s",
+            nfringes + 1,
+            evidence2,
+            fitter.chisq,
         )
 
         bayes_factor = evidence2 - evidence1
-        log.debug(f"fit_1d_fringes_bayes_evidence: bayes factor={bayes_factor}")
+        log.debug("fit_1d_fringes_bayes_evidence: bayes factor=%s", bayes_factor)
         if bayes_factor > 1:
             # strong evidence threshold (log(bayes factor)>1, Kass and Raftery 1995)
             evidence1 = evidence2
             best_mdl = mdl.copy()
             fitted_frequencies.append(freqs)
             log.debug(
-                f"fit_1d_fringes_bayes_evidence: strong evidence for nfringes={nfringes + 1} "
+                "fit_1d_fringes_bayes_evidence: strong evidence for nfringes=%s ", nfringes + 1
             )
         else:
-            log.debug(f"fit_1d_fringes_bayes_evidence: no evidence for nfringes={nfringes + 1}")
+            log.debug("fit_1d_fringes_bayes_evidence: no evidence for nfringes=%s", nfringes + 1)
             break
 
         # subtract the fringes for this frequency
@@ -659,7 +664,7 @@ def fit_1d_fringes_bayes_evidence(
         res_fringes_proc = res_fringes.copy() - res_fringe_fit
         nfringes += 1
 
-    log.debug(f"fit_1d_fringes_bayes_evidence: optimal={nfringes} fringes")
+    log.debug("fit_1d_fringes_bayes_evidence: optimal=%s fringes", nfringes)
 
     # create outputs to return
     fitted_frequencies = (1 / np.asarray(fitted_frequencies)) * factor
@@ -692,7 +697,7 @@ def make_knots(flux, nknots=20, weights=None):
     knot_idx : ndarray
         The indices of the knots.
     """
-    log.debug(f"make_knots: creating {nknots} knots on flux array")
+    log.debug("make_knots: creating %s knots on flux array", nknots)
 
     # handle nans or infs that may exist
     flux = np.nan_to_num(flux, posinf=1e-08, neginf=1e-08)
@@ -819,14 +824,14 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, ffreq=None):
 
     # define number of knots using fringe freq, want 1 knot per period
     if ffreq is not None:
-        log.debug(f"fit_1d_background_complex: knot positions for {ffreq} cm-1")
+        log.debug("fit_1d_background_complex: knot positions for %s cm-1", ffreq)
         nknots = int((np.amax(wavenum) - np.amin(wavenum)) / (ffreq))
 
     else:
-        log.debug(f"fit_1d_background_complex: using num_knots={NUM_KNOTS}")
+        log.debug("fit_1d_background_complex: using num_knots=%s", NUM_KNOTS)
         nknots = int((flux.shape[0] / 1024) * NUM_KNOTS)
 
-    log.debug(f"fit_1d_background_complex: number of knots = {nknots}")
+    log.debug("fit_1d_background_complex: number of knots = %s", nknots)
 
     # recale wavenums to around 1 for bayesicfitting
     factor = np.amin(wavenum)
@@ -834,11 +839,11 @@ def fit_1d_background_complex_1d(flux, weights, wavenum, ffreq=None):
 
     # get number of fringe periods in array
     nper = (np.amax(wavenum) - np.amin(wavenum)) // ffreq
-    log.debug(f"fit_1d_background_complex: column is {nper} fringe periods")
+    log.debug("fit_1d_background_complex: column is %s fringe periods", nper)
 
     # now reduce by the weighted pixel fraction to see how many can be fitted
     nper_cor = int(nper * weighted_pix_frac)
-    log.debug(f"fit_1d_background_complex: column has {nper_cor} weighted fringe periods")
+    log.debug("fit_1d_background_complex: column has %s weighted fringe periods", nper_cor)
 
     # require at least 5 sine periods to fit
     if nper < 5:

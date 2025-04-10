@@ -41,8 +41,8 @@ def do_correction(input_model, ipc_model):
     sci_nframes = input_model.meta.exposure.nframes
     sci_groupgap = input_model.meta.exposure.groupgap
 
-    log.debug('IPC corr using nints=%d, ngroups=%d, nframes=%d, groupgap=%d' %
-              (sci_nints, sci_ngroups, sci_nframes, sci_groupgap))
+    log.debug('IPC corr using nints=%d, ngroups=%d, nframes=%d, groupgap=%d',
+              sci_nints, sci_ngroups, sci_nframes, sci_groupgap)
 
     # Apply the correction.
     output_model = ipc_correction(input_model, ipc_model)
@@ -89,14 +89,14 @@ def ipc_correction(output, ipc_model):
     # is a subarray.
     kernel = get_ipc_slice(output, ipc_model)
 
-    log.debug("substrt1 = %d, subsize1 = %d, substrt2 = %d, subsize2 = %d" %
-              (output.meta.subarray.xstart, output.meta.subarray.xsize,
-               output.meta.subarray.ystart, output.meta.subarray.ysize))
+    log.debug("substrt1 = %d, subsize1 = %d, substrt2 = %d, subsize2 = %d",
+              output.meta.subarray.xstart, output.meta.subarray.xsize,
+              output.meta.subarray.ystart, output.meta.subarray.ysize)
     log.debug('Number of reference pixels: bottom, top, left, right ='
-              ' %d, %d, %d, %d' %
-              (nref.bottom_rows, nref.top_rows,
-               nref.left_columns, nref.right_columns))
-    log.debug("Shape of ipc image = %s" % repr(ipc_model.data.shape))
+              ' %d, %d, %d, %d',
+              nref.bottom_rows, nref.top_rows,
+              nref.left_columns, nref.right_columns)
+    log.debug("Shape of ipc image = %s", repr(ipc_model.data.shape))
 
     # Loop over all integrations and groups in input science data.
     for i in range(output.data.shape[0]):                  # integrations

@@ -146,7 +146,7 @@ class ResidualFringeCorrection:
         self.transmission_level = int(self.transmission_level / 10)
 
         slice_map = (allregions.regions)[self.transmission_level - 1, :, :].copy()
-        log.info(f" Using {self.transmission_level} throughput threshold.")
+        log.info(" Using %s throughput threshold.", self.transmission_level)
 
         self.slice_map = slice_map
 
@@ -157,7 +157,7 @@ class ResidualFringeCorrection:
             self.channels = [1, 2]
         elif "long" in detector:
             self.channels = [3, 4]
-        log.info(f"Detector {detector} {self.channels} ")
+        log.info("Detector %s %s ", detector, self.channels)
 
         self.input_weights = self.calc_weights()
         self.weights_feat = self.input_weights.copy()
@@ -205,12 +205,12 @@ class ResidualFringeCorrection:
         wave_map = self._get_wave_map()
         for c in self.channels:
             num_corrected = 0
-            log.info(f"Processing channel {c}")
+            log.info("Processing channel %s", c)
             (slices_in_channel, xrange_channel, slice_x_ranges, all_slice_masks) = utils.slice_info(
                 slice_map, c
             )
 
-            log.debug(f" Slice Ranges {slice_x_ranges}")
+            log.debug(" Slice Ranges %s", slice_x_ranges)
 
             # if the user wants to ignore some values, use the wave_map
             # array to set the corresponding weight values to 0
@@ -221,8 +221,8 @@ class ResidualFringeCorrection:
                     self.input_weights[((wave_map > min_wave) & (wave_map < max_wave))] = 0
 
             for n, ss in enumerate(slices_in_channel):
-                log.info(f" Processing slice {ss} =================================")
-                log.debug(f" X ranges of slice {slice_x_ranges[n, 1]} {slice_x_ranges[n, 2]}")
+                log.info(" Processing slice %s =================================", ss)
+                log.debug(" X ranges of slice %s %s", slice_x_ranges[n, 1], slice_x_ranges[n, 2])
 
                 # use the mask to set all out-of-slice pixels to 0 in wmap and data
                 # set out-of-slice pixels to 0 in arrays
@@ -232,7 +232,7 @@ class ResidualFringeCorrection:
 
                 # get the freq_table info for this slice
                 this_row = np.where(self.freq_table["slice"] == float(ss))[0][0]
-                log.debug(f"Row in reference file for slice {this_row}")
+                log.debug("Row in reference file for slice %s", this_row)
 
                 slice_row = self.freq_table[(self.freq_table["slice"] == float(ss))]
                 ffreq = slice_row["ffreq"][0]
@@ -279,11 +279,13 @@ class ResidualFringeCorrection:
 
                     # Sometimes can return nan, inf for bad data so include this in check
                     if snr2 < min_snr[0]:
-                        log.debug(f"SNR too low; not fitting column {col}, {snr2}, {min_snr[0]}")
+                        log.debug(
+                            "SNR too low; not fitting column %s, %s, %s", col, snr2, min_snr[0]
+                        )
                         continue
 
-                    log.debug(f"Fitting column {col}")
-                    log.debug(f"SNR > {min_snr[0]} ")
+                    log.debug("Fitting column %s", col)
+                    log.debug("SNR > %s ", min_snr[0])
 
                     col_weight = ss_weight[:, col]
                     col_max_amp = np.interp(
@@ -382,7 +384,7 @@ class ResidualFringeCorrection:
                             if snr2 <= min_snr[fn]:
                                 continue
 
-                            log.debug(f"  Start ffreq = {ff}")
+                            log.debug("  Start ffreq = %s", ff)
                             log.debug("  Fit spectral baseline")
 
                             bg_fit, bgindx = utils.fit_1d_background_complex(
@@ -503,13 +505,13 @@ class ResidualFringeCorrection:
                         num_corrected = num_corrected + 1
 
                     except Exception as e:
-                        log.warning(f"  Skipping col={col} {ss}:")
-                        log.warning(f"  {str(e)}")
+                        log.warning("  Skipping col=%s %s:", col, ss)
+                        log.warning("  %s", e)
 
                 del ss_data, ss_wmap, ss_weight  # end of column
 
             del slice_x_ranges, all_slice_masks, slices_in_channel  # end of channel
-            log.info(f"Number of columns corrected for channel {num_corrected}")
+            log.info("Number of columns corrected for channel %s", num_corrected)
         log.info("Processing complete")
 
         # add units back to output data
@@ -524,7 +526,7 @@ class ResidualFringeCorrection:
             stat_table_name = self.make_output_path(
                 basepath=self.input_model.meta.filename, suffix="stat_table", ext=".ecsv"
             )
-            log.info(f"Saving intermediate stats table {stat_table_name}")
+            log.info("Saving intermediate stats table %s", stat_table_name)
             astropy_ascii.write(
                 stat_table, stat_table_name, format="ecsv", fast_writer=False, overwrite=True
             )
@@ -532,7 +534,7 @@ class ResidualFringeCorrection:
             out_table_name = self.make_output_path(
                 basepath=self.input_model.meta.filename, suffix="out_table", ext=".ecsv"
             )
-            log.info(f"Saving intermediate output table {out_table_name}")
+            log.info("Saving intermediate output table %s", out_table_name)
             astropy_ascii.write(
                 out_table, out_table_name, format="ecsv", fast_writer=False, overwrite=True
             )
@@ -540,7 +542,7 @@ class ResidualFringeCorrection:
             fit_results_name = self.make_output_path(
                 basepath=self.input_model.meta.filename, suffix="fit_results", ext=".fits"
             )
-            log.info(f"Saving intermediate fit results output {fit_results_name}")
+            log.info("Saving intermediate fit results output %s", fit_results_name)
 
             # Get a primary header from the input model
             hdul = fits_support.to_fits(self.input_model._instance, self.input_model._schema)  # noqa: SLF001

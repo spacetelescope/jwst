@@ -167,7 +167,7 @@ def correct_xartifact(input_model, modelpars):
 
     # Catch failure cases with a log warning
     if left == 'N/A' or right == 'N/A':
-        log.info("Warning: no parameters found for channel = " + str(channel) + " band = " + str(band))
+        log.info("Warning: no parameters found for channel = %s band = %s", channel, band)
 
     xvec = (np.arange(ncols)).astype(float)
     left_model = np.zeros_like(usedata)
@@ -219,7 +219,7 @@ def correct_xartifact(input_model, modelpars):
         pedestal[:, 0:4] = 0.0
 
         input_model.data = input_model.data - pedestal
-        log.info("Derived pedestal correction " + str(themed) + " DN/s")
+        log.info("Derived pedestal correction %s DN/s", themed)
     except Exception:
         log.info("Straylight pedestal correction failed.")
 

@@ -271,11 +271,11 @@ to supply custom catalogs.
         # grab all the files
         if self.asn_exptypes:
             infiles = []
-            logger.debug(f"Filtering datasets based on allowed exptypes {self.asn_exptypes}:")
+            logger.debug("Filtering datasets based on allowed exptypes %s:", self.asn_exptypes)
             for member in asn_data["products"][0]["members"]:
                 if any(re.match(member["exptype"], x, re.IGNORECASE) for x in self.asn_exptypes):
                     infiles.append(member)
-                    logger.debug("Files accepted for processing {}:".format(member["expname"]))
+                    logger.debug("Files accepted for processing %s:", member["expname"])
         else:
             infiles = list(asn_data["products"][0]["members"])
 

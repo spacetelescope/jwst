@@ -267,11 +267,11 @@ def main():
         except (ValueError, RuntimeError) as e:
             logger.warning("Failed to update 'meta.wcsinfo' with "
                            "FITS SIP approximation. Reported error is:")
-            logger.warning(f'"{e.args[0]}"')
+            logger.warning('"%s"', e.args[0])
 
         if options.update:
             data_model.save(fname, overwrite=True)
-            logger.info(f"Updated data model '{fname}'")
+            logger.info("Updated data model '%s'", fname)
         else:
             if options.file is None:
                 output_file = _replace_suffix(fname, options.suffix)
@@ -279,7 +279,7 @@ def main():
                 output_file = options.file
 
             data_model.save(output_file, overwrite=options.overwrite)
-            logger.info(f"Saved data model to '{output_file}'")
+            logger.info("Saved data model to '%s'", output_file)
 
 
 if __name__ == '__main__':

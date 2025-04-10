@@ -211,7 +211,7 @@ class ResampleSpecStep(Step):
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug(f"   {k}={v}")
+            self.log.debug("   %s=%s", k, v)
 
         kwargs["wcs_pars"] = wcs_pars
 
@@ -265,7 +265,7 @@ class ResampleSpecStep(Step):
             s_region_model1 = input_models[0].meta.wcsinfo.s_region
             s_region = find_miri_lrs_sregion(s_region_model1, result.meta.wcs)
             result.meta.wcsinfo.s_region = s_region
-            self.log.info(f"Updating S_REGION: {s_region}.")
+            self.log.info("Updating S_REGION: %s.", s_region)
         else:
             update_s_region_spectral(result)
         return result

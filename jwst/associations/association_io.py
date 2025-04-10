@@ -63,7 +63,7 @@ class json():
         try:
             asn = loader(serialized)
         except Exception as err:
-            logger.debug('Error unserializing: "{}"'.format(err))
+            logger.debug('Error unserializing: "%s"', err)
             raise AssociationNotValidError(
                 'Container is not JSON: "{}"'.format(serialized)
             )
@@ -127,7 +127,7 @@ class yaml():
         try:
             asn = yaml_lib.safe_load(serialized)
         except Exception as err:
-            logger.debug('Error unserializing: "{}"'.format(err))
+            logger.debug('Error unserializing: "%s"', err)
             raise AssociationNotValidError(
                 'Container is not YAML: "{}"'.format(serialized)
             )

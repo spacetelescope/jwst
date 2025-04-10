@@ -48,7 +48,7 @@ class PathLossStep(Step):
 
                 # Get the name of the pathloss reference file to use
                 self.pathloss_name = self.get_reference_file(input_model, "pathloss")
-                self.log.info(f"Using PATHLOSS reference file {self.pathloss_name}")
+                self.log.info("Using PATHLOSS reference file %s", self.pathloss_name)
 
                 # Check for a valid reference file
                 if self.pathloss_name == "N/A":

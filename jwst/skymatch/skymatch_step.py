@@ -249,8 +249,8 @@ class SkyMatchStep(Step):
 
         log.info(" ")
         log.info(
-            "Setting sky background of input images to user-provided values "
-            f"from `skylist` ({self.skylist})."
+            "Setting sky background of input images to user-provided values from `skylist` (%s).",
+            self.skylist,
         )
 
         # read the comma separated file and get just the stem of the filename
@@ -281,7 +281,7 @@ class SkyMatchStep(Step):
                     )
 
                 sky = float(sky[0])
-                log.debug(f"Setting sky background of image '{model.meta.filename}' to {sky}.")
+                log.debug("Setting sky background of image '%s' to %s.", model.meta.filename, sky)
 
                 model.meta.background.level = sky
                 model.meta.background.subtracted = self.subtract

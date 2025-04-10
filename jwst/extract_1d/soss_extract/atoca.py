@@ -644,7 +644,7 @@ class ExtractionEngine:
         # Estimate of the factor
         factor_guess = (n_pixels / reg_estimate) ** 0.5
 
-        log.info(f"First guess of tikhonov factor: {factor_guess}")
+        log.info("First guess of tikhonov factor: %s", factor_guess)
 
         return factor_guess
 
@@ -738,7 +738,7 @@ class ExtractionEngine:
 
         # Get the factor of the chosen mode
         best_fac = results[best_mode]
-        log.debug(f"Mode chosen to find regularization factor is {best_mode}")
+        log.debug("Mode chosen to find regularization factor is %s", best_mode)
 
         return best_fac
 

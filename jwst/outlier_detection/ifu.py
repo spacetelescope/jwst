@@ -82,7 +82,7 @@ def detect_outliers(
         input_models = ModelContainer(input_models)
 
     if len(input_models) < 2:
-        log.warning(f"Input only contains {len(input_models)} exposures")
+        log.warning("Input only contains %s exposures", len(input_models))
         log.warning("Outlier detection will be skipped")
         record_step_status(input_models, "outlier_detection", False)
         return input_models
@@ -99,14 +99,14 @@ def detect_outliers(
             "Increasing number by 1"
         )
         kern_size[0] = kern_size[0] + 1
-        log.info(f"New x kernel size is {kern_size[0]}: ")
+        log.info("New x kernel size is %s: ", kern_size[0])
     if kern_size[1] % 2 == 0:
         log.info(
             "Y kernel size is given as an even number. This value must be an odd number. "
             "Increasing number by 1"
         )
         kern_size[1] = kern_size[1] + 1
-        log.info(f"New y kernel size is {kern_size[1]}: ")
+        log.info("New y kernel size is %s: ", kern_size[1])
 
     (diffaxis, ny, nx) = _find_detector_parameters(input_models)
 
@@ -116,7 +116,7 @@ def detect_outliers(
         detector[i] = model.meta.instrument.detector.lower()
 
     exptype = input_models[0].meta.exposure.type
-    log.info(f"Performing IFU outlier_detection for exptype {exptype}")
+    log.info("Performing IFU outlier_detection for exptype %s", exptype)
     # How many unique values of detector?
     uq_det = np.unique(detector)
     ndet = len(uq_det)
@@ -236,7 +236,7 @@ def flag_outliers(
     minarr_norm = minarr / normarr
     # Percentile cut of the central region (cutting out weird detector edge effects)
     pctmin = np.nanpercentile(minarr_norm[4 : ny - 4, 4 : nx - 4], threshold_percent)
-    log.debug(f"Flag pixels with values above {threshold_percent} {pctmin}: ")
+    log.debug("Flag pixels with values above %s %s: ", threshold_percent, pctmin)
     # Flag everything above this percentile value. Using np.where here because we count
     # the number of pixels flagged using len(indx[0])
     indx = minarr_norm > pctmin
@@ -258,7 +258,7 @@ def flag_outliers(
             basepath=input_models.meta.asn_table.products[0].name,
             suffix=detector_name + "_outlier_output",
         )
-        log.info(f"Writing out intermediate outlier file {opt_model.meta.filename}")
+        log.info("Writing out intermediate outlier file %s", opt_model.meta.filename)
         opt_model.save(opt_model.meta.filename)
 
     del diffarr
@@ -287,8 +287,8 @@ def flag_outliers(
                 )
             )
             log.debug(
-                "Number of pixels DQ was not set to DO_NOT_USE "
-                f"and Sci array was Nan{len(check[0])} "
+                "Number of pixels DQ was not set to DO_NOT_USE and Sci array was Nan%s ",
+                len(check[0]),
             )
             # set all pixels with dq = DO_NOT_USE to have sci values of Nan
             bad = np.bitwise_and(dq, dqflags.pixel["DO_NOT_USE"]).astype(bool)
@@ -312,16 +312,19 @@ def flag_outliers(
                 dq[nanindx] = np.bitwise_or(dq[nanindx], dqflags.pixel["OUTLIER"])
                 log.info(
                     "Number of outlier pixels flagged main ifu outlier flagging: "
-                    f"{len(indx[0])} on detector {uq_det[idet]} "
+                    "%s on detector %s ",
+                    len(indx[0]),
+                    uq_det[idet],
                 )
                 log.info(
-                    "Number of outlier pixels flagged in second check: "
-                    f"{nadditional} on detector {uq_det[idet]} "
+                    "Number of outlier pixels flagged in second check: %s on detector %s ",
+                    nadditional,
+                    uq_det[idet],
                 )
 
             total_bad = num_above + nadditional
             percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
-            log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
+            log.info("Total #  pixels flagged as outliers: %s (%.2f%%)", total_bad, percent_cr)
 
             # Make sure all error and variance arrays also have matching
             # NaNs and DQ flags

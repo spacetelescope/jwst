@@ -1128,7 +1128,7 @@ def img_median_replace(img_model, box_size):
 
     # check to see if any of the pixels are bad
     if num_nan + num_dq_bad > 0:
-        log.info(f"Applying median filter for {num_nan} NaN and {num_dq_bad} DO_NOT_USE pixels")
+        log.info("Applying median filter for %s NaN and %s DO_NOT_USE pixels", num_nan, num_dq_bad)
         bad_locations = np.where(
             np.isnan(input_data) | np.equal(input_dq, dqflags.pixel["DO_NOT_USE"])
         )
@@ -1213,7 +1213,7 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     wl_filt, th_filt = bandpass._get_arrays(bandpass.waveset)  # noqa: SLF001
 
     if trim:
-        log.debug(f"Trimming bandpass to above {trim:.1e} throughput")
+        log.debug("Trimming bandpass to above %.1e throughput", trim)
         goodthru = np.where(np.asarray(th_filt) > trim)
         low_idx, high_idx = goodthru[0][0], goodthru[0][-1]
         wl_filt, th_filt = wl_filt[low_idx:high_idx], th_filt[low_idx:high_idx]
@@ -1229,11 +1229,12 @@ def combine_src_filt(bandpass, srcspec, trim=0.01, nlambda=19):
     effstims = []
 
     binfac = ptsin // nlambda
-    log.debug(f"Binning spectrum by {binfac:d} from {ptsin:d} points to {nlambda:d} points")
+    log.debug("Binning spectrum by %d from %d points to %d points", binfac, ptsin, nlambda)
     for wave in wavesteps:
         log.debug(
-            f"\t Integrating across band centered at {wave.to(u.micron):.2f} "
-            f"with width {deltawave.to(u.micron):.2f}"
+            "\t Integrating across band centered at %.2f with width %.2f",
+            wave.to(u.micron).value,
+            deltawave.to(u.micron).value,
         )
         box = (
             synphot.spectrum.SpectralElement(
@@ -1317,7 +1318,7 @@ def handle_bandpass(bandpass, throughput_model):
 
     else:
         # Default behavior: get the filter and source spectrum
-        log.info(f"Reading throughput model data for {throughput_model.meta.instrument.filter}.")
+        log.info("Reading throughput model data for %s.", throughput_model.meta.instrument.filter)
         filt_spec = get_filt_spec(throughput_model)
         log.info("Using flat spectrum model.")
         flat_spec = get_flat_spec()

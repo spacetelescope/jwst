@@ -246,7 +246,7 @@ def get_object_info(catalog_name=None):
         try:
             catalog = QTable.read(catalog_name, format="ascii.ecsv")
         except FileNotFoundError as e:
-            log.error(f"Could not find catalog file: {e}")
+            log.error("Could not find catalog file: %s", e)
             raise FileNotFoundError(f"Could not find catalog: {e}") from None
     elif isinstance(catalog_name, QTable):
         catalog = catalog_name
@@ -400,7 +400,7 @@ def create_grism_bbox(
     if mmag_extract is None:
         mmag_extract = 999.0  # extract all objects, regardless of magnitude
     else:
-        log.info(f"Extracting objects < abmag = {mmag_extract}")
+        log.info("Extracting objects < abmag = %s", mmag_extract)
     if not isinstance(mmag_extract, (int, float)):
         raise TypeError(f"Expected mmag_extract to be a number, got {mmag_extract}")
 
@@ -410,7 +410,7 @@ def create_grism_bbox(
         log.error(err_text)
         raise ValueError(err_text)
 
-    log.info(f"Getting objects from {input_model.meta.source_catalog}")
+    log.info("Getting objects from %s", input_model.meta.source_catalog)
 
     return _create_grism_bbox(
         input_model, mmag_extract, wfss_extract_half_height, wavelength_range, nbright
@@ -424,7 +424,7 @@ def _create_grism_bbox(
     wavelength_range=None,
     nbright=None,
 ):
-    log.debug(f"Extracting with wavelength_range {wavelength_range}")
+    log.debug("Extracting with wavelength_range %s", wavelength_range)
 
     # this contains the pure information from the catalog with no translations
     skyobject_list = get_object_info(input_model.meta.source_catalog)
@@ -577,12 +577,12 @@ def _create_grism_bbox(
 
             if not contained:
                 exclude = True
-                log.info(f"Excluding off-image object: {obj.label}, order {order}")
+                log.info("Excluding off-image object: %s, order %s", obj.label, order)
             elif contained >= 1:
                 outbox = pts[np.logical_not(inidx)]
                 if len(outbox) > 0:
                     ispartial = True
-                    log.info(f"Partial order on detector for obj: {obj.label} order: {order}")
+                    log.info("Partial order on detector for obj: %s order: %s", obj.label, order)
 
             if not exclude:
                 order_bounding[order] = ((ymin, ymax), (xmin, xmax))
@@ -625,7 +625,7 @@ def _create_grism_bbox(
         final_objects = [grism_objects[i] for i in indxs[:nbright]]
         del grism_objects
 
-    log.info(f"Total of {len(final_objects)} grism objects defined")
+    log.info("Total of %s grism objects defined", len(final_objects))
     if len(final_objects) == 0:
         log.warning("No grism objects saved; check catalog or step params")
 

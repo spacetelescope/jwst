@@ -51,7 +51,7 @@ class TSOPhotometryStep(Step):
 
             # Get the tsophot reference file
             tsophot_filename = self.get_reference_file(model, "tsophot")
-            self.log.debug(f"Reference file name = {tsophot_filename}")
+            self.log.debug("Reference file name = %s", tsophot_filename)
             if tsophot_filename == "N/A":
                 self.log.warning("No TSOPHOT reference file found;")
                 self.log.warning("the tso_photometry step will be skipped.")
@@ -64,11 +64,11 @@ class TSOPhotometryStep(Step):
 
             (radius, radius_inner, radius_outer) = get_ref_data(tsophot_filename, pupil=pupil_name)
 
-            self.log.debug(f"radius = {radius}")
-            self.log.debug(f"radius_inner = {radius_inner}")
-            self.log.debug(f"radius_outer = {radius_outer}")
-            self.log.debug(f"xcenter = {xcenter}")
-            self.log.debug(f"ycenter = {ycenter}")
+            self.log.debug("radius = %s", radius)
+            self.log.debug("radius_inner = %s", radius_inner)
+            self.log.debug("radius_outer = %s", radius_outer)
+            self.log.debug("xcenter = %s", xcenter)
+            self.log.debug("ycenter = %s", ycenter)
 
             # Compute the aperture photometry
             catalog = tso_aperture_photometry(
@@ -87,7 +87,7 @@ class TSOPhotometryStep(Step):
                     output_dir=output_dir,
                 )
                 catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
-                self.log.info(f"Wrote TSO photometry catalog: {cat_filepath}")
+                self.log.info("Wrote TSO photometry catalog: %s", cat_filepath)
 
         return catalog
 

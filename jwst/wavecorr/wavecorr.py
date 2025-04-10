@@ -33,7 +33,7 @@ def do_correction(input_model, wavecorr_file):
     # Check for valid exposure type
     exp_type = input_model.meta.exposure.type.upper()
     if exp_type not in wavecorr_supported_modes:
-        log.info(f"Skipping wavecorr correction for EXP_TYPE {exp_type}")
+        log.info("Skipping wavecorr correction for EXP_TYPE %s", exp_type)
         input_model.meta.cal_step.wavecorr = "SKIPPED"
         return input_model
 
@@ -52,7 +52,7 @@ def do_correction(input_model, wavecorr_file):
                     corrected = True
                     slit.wavelength_corrected = True
                 else:  # pragma: no cover
-                    log.warning(f"Corrections are not invertible for slit {slit.name}")
+                    log.warning("Corrections are not invertible for slit %s", slit.name)
                     log.warning("Skipping wavecorr correction")
                     slit.wavelength_corrected = False
             else:
@@ -82,7 +82,7 @@ def apply_zero_point_correction(slit, reffile):
     completed : bool
         A flag to report whether the zero-point correction was added or skipped.
     """
-    log.info(f"slit name {slit.name}")
+    log.info("slit name %s", slit.name)
     slit_wcs = slit.meta.wcs
 
     # Retrieve the source position and aperture name from metadata
@@ -155,11 +155,11 @@ def calculate_wavelength_correction_transform(
     with datamodels.WaveCorrModel(freference) as wavecorr:
         for ap in wavecorr.apertures:
             if ap.aperture_name == aperture_name:
-                log.info(f"Using wavelength zero-point correction for aperture {ap.aperture_name}")
+                log.info("Using wavelength zero-point correction for aperture %s", ap.aperture_name)
                 offset_model = ap.zero_point_offset.copy()
                 break
         else:
-            log.warning(f"No wavelength zero-point correction found for slit {aperture_name}")
+            log.warning("No wavelength zero-point correction found for slit %s", aperture_name)
             return None
 
     # Set lookup table to extrapolate at bounds to recover wavelengths
@@ -285,7 +285,7 @@ def _is_point_source(slit):
 
     if src_type is not None and src_type.upper() in ["POINT", "EXTENDED"]:
         # Use the supplied value
-        log.info(f"Detected a {src_type} source type in slit {slit.name}")
+        log.info("Detected a %s source type in slit %s", src_type, slit.name)
         if src_type.strip().upper() == "POINT":
             result = True
         else:

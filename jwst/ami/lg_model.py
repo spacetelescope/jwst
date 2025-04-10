@@ -269,8 +269,8 @@ class LgModel:
                 affine2d=self.affine2d,
             )
 
-            log.debug(f"Passed to model_array: psf_offset: {psf_offset}")
-            log.debug(f"Primary beam in the model created: {pb}")
+            log.debug("Passed to model_array: psf_offset: %s", psf_offset)
+            log.debug("Primary beam in the model created: %s", pb)
             self.model_beam += pb
             self.fringes += ff
 

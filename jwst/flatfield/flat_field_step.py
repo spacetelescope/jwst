@@ -72,7 +72,7 @@ class FlatFieldStep(Step):
         input_model = datamodels.open(input)
         exposure_type = input_model.meta.exposure.type.upper()
 
-        self.log.debug(f"Input is {str(input_model)} of exposure type {exposure_type}")
+        self.log.debug("Input is %s of exposure type %s", input_model, exposure_type)
 
         if input_model.meta.instrument.name.upper() == "NIRSPEC":
             if (exposure_type not in NRS_SPEC_MODES and
@@ -94,8 +94,8 @@ class FlatFieldStep(Step):
         # Retrieve reference files only if no user-supplied flat is specified
         if self.user_supplied_flat is not None:
             self.log.info(
-                f'User-supplied flat {self.user_supplied_flat} given.'
-                ' Ignoring all flat reference files and flat creation.'
+                'User-supplied flat %s given. Ignoring all flat reference files and flat creation.',
+                self.user_supplied_flat
             )
             reference_file_models = {
                 'user_supplied_flat': datamodels.open(self.user_supplied_flat)
@@ -107,7 +107,7 @@ class FlatFieldStep(Step):
             self._reference_files_used.append(('flat', flat_ref_file))
             self.log.info('Using flat field reference file: %s', flat_ref_file)
         elif self.use_correction_pars:
-            self.log.info(f'Using flat field from correction pars {self.correction_pars["flat"]}')
+            self.log.info('Using flat field from correction pars %s', self.correction_pars["flat"])
             reference_file_models = {
                 'user_supplied_flat': datamodels.open(self.correction_pars['flat'])
             }
@@ -137,7 +137,7 @@ class FlatFieldStep(Step):
 
         if self.save_interpolated_flat and flat_applied is not None:
             ff_path = self.save_model(flat_applied, suffix=self.flat_suffix, force=True)
-            self.log.info(f'Interpolated flat written to "{ff_path}".')
+            self.log.info('Interpolated flat written to "%s".', ff_path)
 
         if not self.correction_pars:
             self.correction_pars = {}

@@ -87,8 +87,9 @@ class MasterBackgroundStep(Step):
             ):
                 result = input_model.copy()
                 self.log.warning(
-                    f"Input {input_data} of type {type(input_data)} cannot be handled.  "
-                    f"Step skipped."
+                    "Input %s of type %s cannot be handled.  Step skipped.",
+                    input_data,
+                    type(input_data),
                 )
                 record_step_status(result, "master_background", success=False)
                 return result
@@ -173,12 +174,13 @@ class MasterBackgroundStep(Step):
                         self.median_kernel -= 1
                         self.log.info(
                             "Even median filter kernels are not supported."
-                            f" Rounding the median kernel size down to {self.median_kernel}."
+                            " Rounding the median kernel size down to %s.",
+                            self.median_kernel,
                         )
 
                     if self.median_kernel > 1:
                         self.log.info(
-                            f"Applying moving-median boxcar of width {self.median_kernel}."
+                            "Applying moving-median boxcar of width %s.", self.median_kernel
                         )
                         master_background.spec[0].spec_table["surf_bright"] = medfilt(
                             master_background.spec[0].spec_table["surf_bright"],
@@ -204,8 +206,10 @@ class MasterBackgroundStep(Step):
                     result = input_model.copy()
                     input_model.close()
                     self.log.warning(
-                        f"Input {input_data} of type {type(input_data)} cannot be "
-                        "handled without user-supplied background.  Step skipped."
+                        "Input %s of type %s cannot be handled without user-supplied background. "
+                        " Step skipped.",
+                        input_data,
+                        type(input_data),
                     )
                     record_step_status(result, "master_background", success=False)
                     return result

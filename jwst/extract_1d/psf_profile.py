@@ -377,11 +377,12 @@ def psf_profile(
     else:
         extra_shift = 0.0
 
-    log.info(f"Centering profile on spectrum at {location:.2f}, wavelength {middle_wl:.2f}")
+    log.info("Centering profile on spectrum at %.2f, wavelength %.2f", location, middle_wl)
     if nod_offset is not None:
         log.info(
-            f"Also modeling a negative trace at {location - nod_offset:.2f} "
-            f"(offset: {nod_offset:.2f})"
+            "Also modeling a negative trace at %.2f (offset: %.2f)",
+            location - nod_offset,
+            nod_offset,
         )
 
     # Make a spatial profile from the shifted PSF data

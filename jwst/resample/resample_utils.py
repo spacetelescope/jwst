@@ -114,14 +114,14 @@ def resampled_wcs_from_models(
             ref_wcs, fiducial=np.array([ref_wcsinfo["ra_ref"], ref_wcsinfo["dec_ref"]])
         )
         pixel_scale = pscale_in0 * pixel_scale_ratio
-        log.info(f"Pixel scale ratio (pscale_out/pscale_in): {pixel_scale_ratio}")
-        log.info(f"Computed output pixel scale: {3600 * pixel_scale} arcsec.")
+        log.info("Pixel scale ratio (pscale_out/pscale_in): %s", pixel_scale_ratio)
+        log.info("Computed output pixel scale: %s arcsec.", 3600 * pixel_scale)
     else:
         pscale_in0 = np.rad2deg(math.sqrt(compute_mean_pixel_area(ref_wcs, shape=shape)))
 
         pixel_scale_ratio = pixel_scale / pscale_in0
-        log.info(f"Output pixel scale: {3600 * pixel_scale} arcsec.")
-        log.info(f"Computed pixel scale ratio (pscale_out/pscale_in): {pixel_scale_ratio}.")
+        log.info("Output pixel scale: %s arcsec.", 3600 * pixel_scale)
+        log.info("Computed pixel scale ratio (pscale_out/pscale_in): %s.", pixel_scale_ratio)
 
     wcs = wcs_from_sregions(
         sregion_list,
@@ -293,7 +293,7 @@ def find_miri_lrs_sregion(sregion_model1, wcs):
     min_sep = np.min(sep)
     min_sep = min_sep * u.deg  # set the units to degrees
 
-    log.info(f"Estimated MIRI LRS slit width: {min_sep * 3600} arcsec.")
+    log.info("Estimated MIRI LRS slit width: %s arcsec.", min_sep * 3600)
     # now use the combined WCS to map all pixels to the slit center
     bbox = wcs.bounding_box
     grid = wcstools.grid_from_bounding_box(bbox)

@@ -130,7 +130,7 @@ class Main():
         logger.context.set('asn_candidate_ids', parsed.asn_candidate_ids)
 
         if pool is None:
-            logger.info('Reading pool {}'.format(parsed.pool))
+            logger.info('Reading pool %s', parsed.pool)
             pool = AssociationPool.read(
                 parsed.pool, delimiter=parsed.delimiter,
                 format=parsed.pool_format,

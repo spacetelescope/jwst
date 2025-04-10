@@ -74,7 +74,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             orig_s_region = output_model.meta.wcsinfo.s_region.strip()
             util.update_s_region_nrs_slit(output_model)
             if orig_s_region != output_model.meta.wcsinfo.s_region.strip():
-                log.info(f"extract_2d updated S_REGION to {output_model.meta.wcsinfo.s_region}")
+                log.info("extract_2d updated S_REGION to %s", output_model.meta.wcsinfo.s_region)
     else:
         output_model = datamodels.MultiSlitModel()
         output_model.update(input_model)
@@ -108,7 +108,7 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             if "world" in input_model.meta.wcs.available_frames:
                 util.update_s_region_nrs_slit(new_model)
                 if orig_s_region != new_model.meta.wcsinfo.s_region.strip():
-                    log.info(f"Updated S_REGION to {new_model.meta.wcsinfo.s_region}")
+                    log.info("Updated S_REGION to %s", new_model.meta.wcsinfo.s_region)
 
             # Copy BUNIT values to output slit
             new_model.meta.bunit_data = input_model.meta.bunit_data
@@ -146,7 +146,7 @@ def select_slits(open_slits, slit_names, source_ids):
             if this_slit in open_slit_names:
                 matched_slits.append(this_slit)
             else:
-                log.warn(f"Slit {this_slit} is not in the list of open slits.")
+                log.warning("Slit %s is not in the list of open slits.", this_slit)
         for sub in open_slits:
             if str(sub.name) in matched_slits:
                 selected_open_slits.append(sub)
@@ -156,17 +156,17 @@ def select_slits(open_slits, slit_names, source_ids):
             if this_id in open_slit_source_ids:
                 matched_sources.append(this_id)
             else:
-                log.warn(f"Source id {this_id} is not in the list of open slits.")
+                log.warning("Source id %s is not in the list of open slits.", this_id)
         for sub in open_slits:
             if str(sub.source_id) in matched_sources:
                 if sub not in selected_open_slits:
                     selected_open_slits.append(sub)
                 else:
-                    log.info(f"Source_id {sub.source_id} already selected (name {sub.name})")
+                    log.info("Source_id %s already selected (name %s)", sub.source_id, sub.name)
     if len(selected_open_slits) > 0:
         log.info("Slits selected:")
         for this_slit in selected_open_slits:
-            log.info(f"Name: {this_slit.name}, source_id: {this_slit.source_id}")
+            log.info("Name: %s, source_id: %s", this_slit.name, this_slit.source_id)
         return selected_open_slits
     else:
         log.info("All slits selected")
@@ -226,7 +226,7 @@ def set_slit_attributes(output_model, slit, xlo, xhi, ylo, yhi):
     output_model.slit_ymin = slit.ymin
     output_model.slit_ymax = slit.ymax
     output_model.shutter_id = int(slit.shutter_id)  # for use in wavecorr
-    log.debug(f"slit.ymin {slit.ymin}")
+    log.debug("slit.ymin %s", slit.ymin)
     if (
         output_model.meta.exposure.type.lower() in ["nrs_msaspec", "nrs_autoflat"]
         or output_model.meta.instrument.lamp_mode.upper == "MSASPEC"
@@ -299,9 +299,9 @@ def extract_slit(input_model, slit):
     """
     slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
     xlo, xhi, ylo, yhi = offset_wcs(slit_wcs)
-    log.info(f"Name of subarray extracted: {slit.name}")
-    log.info(f"Subarray x-extents are: {xlo} {xhi}")
-    log.info(f"Subarray y-extents are: {ylo} {yhi}")
+    log.info("Name of subarray extracted: %s", slit.name)
+    log.info("Subarray x-extents are: %s %s", xlo, xhi)
+    log.info("Subarray y-extents are: %s %s", ylo, yhi)
     ndim = len(input_model.data.shape)
     if ndim == 2:
         slit_slice = np.s_[ylo:yhi, xlo:xhi]
@@ -341,7 +341,7 @@ def extract_slit(input_model, slit):
         var_poisson=ext_var_poisson,
         int_times=int_times,
     )
-    log.debug(f"Input model type is {str(input_model)}")
+    log.debug("Input model type is %s", input_model)
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs
 
@@ -393,10 +393,10 @@ def get_source_xpos(slit):
     vparity = slit.meta.wcsinfo.vparity
 
     idl2v23 = trmodels.IdealToV2V3(v3idlyangle, v2ref, v3ref, vparity)
-    log.debug(f"wcsinfo: {v2ref}, {v3ref}, {v3idlyangle}, {vparity}")
+    log.debug("wcsinfo: %s, %s, %s, %s", v2ref, v3ref, v3idlyangle, vparity)
     # Compute the location in V2,V3 [in arcsec]
     xv, yv = idl2v23(xoffset, yoffset)
-    log.info(f"xoffset, yoffset, {xoffset}, {yoffset}")
+    log.info("xoffset, yoffset, %s, %s", xoffset, yoffset)
 
     # Position in the virtual slit
     wavelength = 2.0  # microns, but it doesn't make any difference here
@@ -406,7 +406,7 @@ def get_source_xpos(slit):
     # Update slit.source_xpos, slit.source_ypos
     slit.source_xpos = xpos_slit
     slit.source_ypos = ypos_slit
-    log.debug(f"Source X/Y position in V2V3: {xv}, {yv}")
-    log.info(f"Source X/Y position in the slit: {xpos_slit}, {ypos_slit}")
+    log.debug("Source X/Y position in V2V3: %s, %s", xv, yv)
+    log.info("Source X/Y position in the slit: %s, %s", xpos_slit, ypos_slit)
 
     return xpos_slit

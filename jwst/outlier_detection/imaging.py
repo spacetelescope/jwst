@@ -90,7 +90,7 @@ def detect_outliers(
         input_models = ModelLibrary(input_models, on_disk=not in_memory)
 
     if len(input_models) < 2:
-        log.warning(f"Input only contains {len(input_models)} exposures")
+        log.warning("Input only contains %s exposures", len(input_models))
         log.warning("Outlier detection will be skipped")
         record_step_status(input_models, "outlier_detection", False)
         return input_models

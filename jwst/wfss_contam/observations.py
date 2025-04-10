@@ -142,7 +142,7 @@ class Observation:
         else:
             self.xstart, self.xend, self.ystart, self.yend = boundaries
         self.dims = (self.yend - self.ystart + 1, self.xend - self.xstart + 1)
-        log.debug(f"Using simulated image size of {self.dims[1]} {self.dims[0]}")
+        log.debug("Using simulated image size of %s %s", self.dims[1], self.dims[0])
 
         # Allow for SED extrapolation
         self.extrapolate_sed = extrapolate_sed
@@ -163,7 +163,7 @@ class Observation:
             all_ids = np.array(list(set(np.ravel(self.seg))))
             all_ids = all_ids[all_ids > 0]
             self.source_ids = all_ids
-            log.info(f"Loading {len(all_ids)} sources from segmentation map")
+            log.info("Loading %s sources from segmentation map", len(all_ids))
             for source_id in all_ids:
                 ys, xs = np.nonzero(self.seg == source_id)
                 if len(xs) > 0 and len(ys) > 0:
@@ -172,7 +172,7 @@ class Observation:
 
         else:
             # Process only the given source ID
-            log.info(f"Loading source {self.source_id} from segmentation map")
+            log.info("Loading source %s from segmentation map", self.source_id)
             ys, xs = np.nonzero(self.seg == self.source_id)
             if len(xs) > 0 and len(ys) > 0:
                 self.xs = [xs]
@@ -182,7 +182,7 @@ class Observation:
         # Populate lists of direct image flux values for the sources.
         self.fluxes = {}
         for dir_image_name in self.dir_image_names:
-            log.info(f"Using direct image {dir_image_name}")
+            log.info("Using direct image %s", dir_image_name)
             with datamodels.open(dir_image_name) as model:
                 dimage = model.data
                 dimage = background_subtract(dimage)
@@ -286,11 +286,11 @@ class Observation:
         self.wmax = wmax
         self.sens_waves = sens_waves
         self.sens_resp = sens_resp
-        log.info(f"Dispersing source {sid}, order {self.order}")
+        log.info("Dispersing source %s, order %s", sid, self.order)
         pars = []  # initialize params for this object
 
         # Loop over all pixels in list for object "c"
-        log.debug(f"source contains {len(self.xs[c])} pixels")
+        log.debug("source contains %s pixels", len(self.xs[c]))
         for i in range(len(self.xs[c])):
             # Here "i" just indexes the pixel list for the object being processed
 
@@ -395,7 +395,7 @@ class Observation:
                 self.cached_object[c]["maxy"].append(maxy)
 
         time2 = time.time()
-        log.debug(f"Elapsed time {time2 - time1} sec")
+        log.debug("Elapsed time %s sec", time2 - time1)
 
         return this_object
 
@@ -483,6 +483,6 @@ class Observation:
             this_object[miny : maxy + 1, minx : maxx + 1] += a
 
         time2 = time.time()
-        log.debug(f"Elapsed time {time2 - time1} sec")
+        log.debug("Elapsed time %s sec", time2 - time1)
 
         return this_object

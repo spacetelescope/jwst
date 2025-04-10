@@ -101,11 +101,11 @@ if __name__ == '__main__':
     logger.setLevel(numeric_log_level)
 
     for fname in args.old_asns:
-        logger.info('Working {}'.format(fname))
+        logger.info('Working %s', fname)
         with open(fname) as fp:
             asn_v1 = json.load(fp)
         asn_v2 = lv2_v1_to_v2(asn_v1)
         asn_v2_fname = args.prefix + fname
-        logger.info('\tWriting to {}'.format(asn_v2_fname))
+        logger.info('\tWriting to %s', asn_v2_fname)
         with open(asn_v2_fname, 'w') as fp:
             json.dump(asn_v2, fp, indent=4, separators=(',', ': '))

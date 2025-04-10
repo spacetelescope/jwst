@@ -51,7 +51,7 @@ def do_correction(output_model, reset_model):
 
     # Replace NaN's in the reset with zeros(should not happen but just in case)
     reset_model.data[np.isnan(reset_model.data)] = 0.0
-    log.debug(f"Reset Sub using: nints = {sci_nints}, ngroups = {sci_ngroups}")
+    log.debug("Reset Sub using: nints = %s, ngroups = %s", sci_nints, sci_ngroups)
 
     # find out how many groups  we are correcting
     # the maximum number of groups to correct is reset_ngroups

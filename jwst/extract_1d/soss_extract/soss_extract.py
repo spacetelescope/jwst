@@ -277,7 +277,7 @@ def _get_native_grid_from_trace(ref_files, spectral_order):
         log.warning(msg)
     wave = wave[idx_valid]
     col = col[idx_valid]
-    log.debug(f"Wavelength range for order {spectral_order}: ({wave[[0, -1]]})")
+    log.debug("Wavelength range for order %s: (%s)", spectral_order, wave[[0, -1]])
 
     # Sort
     idx_sort = np.argsort(wave)
@@ -632,11 +632,13 @@ def _model_image(
 
     # Generate grid based on estimate if not given
     if wave_grid is None:
-        log.info(f"wave_grid not given: generating grid based on rtol={rtol}")
+        log.info("wave_grid not given: generating grid based on rtol=%s", rtol)
         wave_grid = _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os)
         log.debug(
-            f"wave_grid covering from {wave_grid.min()} to {wave_grid.max()}"
-            f" with {wave_grid.size} points"
+            "wave_grid covering from %s to %s with %s points",
+            wave_grid.min(),
+            wave_grid.max(),
+            wave_grid.size,
         )
     else:
         log.info("Using previously computed or user specified wavelength grid.")
@@ -684,7 +686,7 @@ def _model_image(
     else:
         save_tiktests = False
 
-    log.info(f"Using a Tikhonov factor of {tikfac}")
+    log.info("Using a Tikhonov factor of %s", tikfac)
 
     # Run the extract method of the Engine.
     f_k = engine(scidata_bkg, scierr, tikhonov=True, factor=tikfac)
@@ -692,7 +694,7 @@ def _model_image(
     # Compute the log-likelihood of the best fit.
     logl = engine.compute_likelihood(f_k, scidata_bkg, scierr)
 
-    log.info(f"Optimal solution has a log-likelihood of {logl}")
+    log.info("Optimal solution has a log-likelihood of %s", logl)
 
     # Create a new instance of the engine for evaluating the trace model.
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
@@ -700,7 +702,7 @@ def _model_image(
     tracemodels = {}
 
     for i_order, order in enumerate(order_list):
-        log.debug(f"Building the model image of {order}.")
+        log.debug("Building the model image of %s.", order)
 
         args = (engine, ref_file_args, f_k, i_order, global_mask, ref_files)
         tracemodel_ord, spec_ord = _build_tracemodel_order(*args)
@@ -811,7 +813,7 @@ def _compute_box_weights(ref_files, shape, width):
         # Order string-name is used more often than integer-name
         order = order_str[order_integer]
 
-        log.debug(f"Compute box weights for {order}.")
+        log.debug("Compute box weights for %s.", order)
 
         # Define the box aperture
         xtrace, ytrace, wavelengths[order] = _get_trace_1d(ref_files, order_integer)
@@ -863,7 +865,7 @@ def _decontaminate_image(scidata_bkg, tracemodels, subarray):
         decont = scidata_bkg
         for mod_order in mod_order_list:
             if mod_order != order:
-                log.debug(f"Decontaminating {order} from {mod_order} using model.")
+                log.debug("Decontaminating %s from %s using model.", order, mod_order)
                 is_valid = np.isfinite(tracemodels[mod_order])
                 decont = decont - np.where(is_valid, tracemodels[mod_order], 0.0)
 
@@ -1067,7 +1069,7 @@ def _extract_image(
 
     # Extract each order from order list
     for order in order_list:
-        log.debug(f"Extracting {order}.")
+        log.debug("Extracting %s.", order)
 
         # Define the box aperture
         box_w_ord = box_weights[order]
@@ -1084,7 +1086,7 @@ def _extract_image(
                 # Replace bad pixels
                 decont = np.where(scimask & is_modeled, tracemodels[order], decont)
 
-                log.debug(f"Bad pixels in {order} are replaced with trace model.")
+                log.debug("Bad pixels in %s are replaced with trace model.", order)
 
                 # Replace error estimate of the bad pixels
                 # using other valid pixels of similar value.
@@ -1108,13 +1110,13 @@ def _extract_image(
                 scimask_ord = scimask
                 scierr_ord = scierr
                 log.warning(
-                    f"Bad pixels in {order} will be masked instead of modeled: "
-                    "trace model unavailable."
+                    "Bad pixels in %s will be masked instead of modeled: trace model unavailable.",
+                    order,
                 )
         else:
             scimask_ord = scimask
             scierr_ord = scierr
-            log.info(f"Bad pixels in {order} will be masked.")
+            log.info("Bad pixels in %s will be masked.", order)
 
         # Perform the box extraction and save
         out = box_extract(decont, scierr_ord, scimask_ord, box_w_ord)
@@ -1179,7 +1181,7 @@ def run_extract1d(
     # Unpack wave_grid if wave_grid_in was specified.
     wave_grid_in = soss_kwargs["wave_grid_in"]
     if wave_grid_in is not None:
-        log.info(f"Loading wavelength grid from {wave_grid_in}.")
+        log.info("Loading wavelength grid from %s.", wave_grid_in)
         wave_grid = datamodels.SossWaveGridModel(wave_grid_in).wavegrid
         # Make sure it has the correct precision
         wave_grid = wave_grid.astype("float64")
@@ -1228,7 +1230,7 @@ def run_extract1d(
     elif isinstance(input_model, datamodels.CubeModel):
         cube_model = input_model
         nimages = len(cube_model.data)
-        log.info(f"Input is a CubeModel containing {nimages} integrations.")
+        log.info("Input is a CubeModel containing %s integrations.", nimages)
 
     else:
         msg = "Only ImageModel and CubeModel are implemented for the NIRISS SOSS extraction."
@@ -1237,7 +1239,7 @@ def run_extract1d(
 
     # Loop over images.
     for i in range(nimages):
-        log.info(f"Processing integration {i + 1} of {nimages}.")
+        log.info("Processing integration %s of %s.", i + 1, nimages)
 
         # Unpack the i-th image, set dtype to float64 and convert DQ to boolean mask.
         scidata = cube_model.data[i].astype("float64")
@@ -1393,7 +1395,7 @@ def run_extract1d(
 
     if soss_kwargs["wave_grid_out"] is not None:
         wave_grid_model = SossWaveGridModel(wavegrid=wave_grid)
-        log.info(f"Saving soss_wave_grid to {soss_kwargs['wave_grid_out']}")
+        log.info("Saving soss_wave_grid to %s", soss_kwargs["wave_grid_out"])
         wave_grid_model.save(path=soss_kwargs["wave_grid_out"])
         wave_grid_model.close()
 

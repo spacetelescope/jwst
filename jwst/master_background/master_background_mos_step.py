@@ -140,8 +140,8 @@ class MasterBackgroundMosStep(Pipeline):
 
             if self.user_background:
                 self.log.info(
-                    "Calculating master background from "
-                    f"user-supplied background {self.user_background}"
+                    "Calculating master background from user-supplied background %s",
+                    self.user_background,
                 )
                 user_background = datamodels.open(self.user_background)
                 master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
@@ -217,7 +217,7 @@ class MasterBackgroundMosStep(Pipeline):
         slits = []
         for slit in pre_calibrated.slits:
             if nirspec_utils.is_background_msa_slit(slit):
-                self.log.info(f"Using background slitlet {slit.source_name}")
+                self.log.info("Using background slitlet %s", slit.source_name)
                 slits.append(slit)
         if len(slits) == 0:
             self.log.warning("No background slitlets found; skipping master bkg correction")
@@ -303,7 +303,7 @@ class MasterBackgroundMosStep(Pipeline):
 
             # Create the 1D, fully calibrated master background.
             if user_background:
-                self.log.debug(f"User background provided {user_background}")
+                self.log.debug("User background provided %s", user_background)
                 master_background = user_background
                 bkg_x1d_spectra = None
             else:

@@ -89,7 +89,7 @@ def match(skycubes, subtract=False):
 
         # find largest overlap
         c1, c2, om = max_overlap_pair(skycubes)
-        log.info("Overlap measure: {}".format(om))
+        log.info("Overlap measure: %s", om)
 
         if c1 is None:
             if nsubspace == 0:
@@ -129,7 +129,7 @@ def match(skycubes, subtract=False):
         # find cubes that overlap with the mosaic & match them
         while len(skycubes) > 0:
             c, om = max_overlap_cube(mosaic, skycubes)
-            log.info("Overlap measure: {}".format(om))
+            log.info("Overlap measure: %s", om)
             if c is None:
                 # mosaic does not overlap with any of the remaining cubes
                 break
@@ -151,10 +151,10 @@ def match(skycubes, subtract=False):
     # log running time:
     runtime_end = datetime.now()
     log.info(" ")
-    log.info("***** {:s}.{:s}() ended on {}"
-             .format(__name__, function_name, runtime_end))
-    log.info("***** {:s}.{:s}() TOTAL RUN TIME: {}"
-             .format(__name__, function_name, runtime_end - runtime_begin))
+    log.info("***** %s.%s() ended on %s",
+             __name__, function_name, runtime_end)
+    log.info("***** %s.%s() TOTAL RUN TIME: %s",
+             __name__, function_name, runtime_end - runtime_begin)
     log.info(" ")
 
     return out_skycubes, nsubspace

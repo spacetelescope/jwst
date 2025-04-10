@@ -519,12 +519,11 @@ class Utility():
         """
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group('type') != '_uncal':
-            logger.warning((
-                'Item FILENAME="{}" is not a Level 1b name. '
-                'Cannot transform to Level 2a.'
-            ).format(
+            logger.warning(
+                'Item FILENAME="%s" is not a Level 1b name. '
+                'Cannot transform to Level 2a.',
                 level1b_name
-            ))
+            )
             return level1b_name
 
         suffix = 'rate'

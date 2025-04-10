@@ -182,9 +182,7 @@ class Association(MutableMapping):
         but the routine will return True.
         """
         if not hasattr(cls, 'schema_file'):
-            logger.warning(
-                'Cannot validate: {} has no schema. Presuming OK.'.format(cls)
-            )
+            logger.warning('Cannot validate: %s has no schema. Presuming OK.', cls)
             return True
 
         if isinstance(asn, cls):

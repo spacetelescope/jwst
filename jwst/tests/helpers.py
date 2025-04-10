@@ -88,7 +88,7 @@ class LogWatcher:
         """Watch the logs for a specific message."""
         if not args or not isinstance(args[0], str):
             return
-        if self.message in args[0]:
+        if self.message in args[0] % (*args[1:],):
             self.seen = True
 
     @property

@@ -335,8 +335,8 @@ def clip_to_background(
         center = median
     if verbose:
         log.debug("From initial sigma clip:")
-        log.debug(f"    center: {center:.5g}")
-        log.debug(f"    sigma: {sigma:.5g}")
+        log.debug("    center: %.5g", center)
+        log.debug("    sigma: %.5g", sigma)
 
     # If desired, use only the lower half of the data distribution
     if lower_half_only:
@@ -356,8 +356,8 @@ def clip_to_background(
             center = median
         if verbose:
             log.debug("From lower half distribution:")
-            log.debug(f"    center: {center:.5g}")
-            log.debug(f"    sigma: {sigma:.5g}")
+        log.debug("    center: %.5g", center)
+        log.debug("    sigma: %.5g", sigma)
     else:
         data_for_stats = image[mask]
 
@@ -391,8 +391,8 @@ def clip_to_background(
 
             if verbose:
                 log.debug("From histogram:")
-                log.debug(f"    mode estimate: {mode_estimate:.5g}")
-                log.debug(f"    range of values in histogram: {values[0]:.5g} to {values[-1]:.5g}")
+                log.debug("    mode estimate: %.5g", mode_estimate)
+                log.debug("    range of values in histogram: %.5g to %.5g", values[0], values[-1])
 
         if verbose:
             log.debug("Gaussian fit results:")
@@ -401,9 +401,9 @@ def clip_to_background(
                 log.debug("    (fit failed)")
         else:
             if verbose:
-                log.debug(f"    peak: {param_opt[0]:.5g}")
-                log.debug(f"    center: {param_opt[1]:.5g}")
-                log.debug(f"    sigma: {param_opt[2]:.5g}")
+                log.debug("    peak: %.5g", param_opt[0])
+                log.debug("    center: %.5g", param_opt[1])
+                log.debug("    sigma: %.5g", param_opt[2])
             center = param_opt[1]
             sigma = param_opt[2]
 
@@ -411,7 +411,7 @@ def clip_to_background(
     background_lower_limit = center - sigma_lower * sigma
     background_upper_limit = center + sigma_upper * sigma
     if verbose:
-        log.debug(f"Mask limits: {background_lower_limit:.5g} to {background_upper_limit:.5g}")
+        log.debug("Mask limits: %.5g to %.5g", background_lower_limit, background_upper_limit)
 
     # Clip bad values
     bad_values = image < background_lower_limit
@@ -598,7 +598,7 @@ def background_level(image, mask, background_method="median", background_box_siz
                 for i_size in image.shape:
                     divides_evenly = i_size % recommended == 0
                     background_box_size.append(int(recommended[divides_evenly][-1]))
-                log.debug(f"Using box size {background_box_size}")
+                log.debug("Using box size %s", background_box_size)
 
             box_division_remainder = (
                 image.shape[0] % background_box_size[0],
@@ -606,9 +606,9 @@ def background_level(image, mask, background_method="median", background_box_siz
             )
             if not np.allclose(box_division_remainder, 0):
                 log.warning(
-                    f"Background box size {background_box_size} "
-                    f"does not divide evenly into the image "
-                    f"shape {image.shape}."
+                    "Background box size %s does not divide evenly into the image shape %s.",
+                    background_box_size,
+                    image.shape,
                 )
 
             try:
@@ -802,7 +802,8 @@ def fft_clean_subarray(
         else:
             log.warning(
                 "Insufficient reference pixels for NSClean around "
-                f"row {i1}; no correction will be made here."
+                "row %s; no correction will be made here.",
+                i1,
             )
             models += [np.zeros(image[i1 : i1 + di].shape)]
 
@@ -1384,7 +1385,7 @@ def _clean_one_image(
             background_method=background_method,
             background_box_size=background_box_size,
         )
-        log.debug(f"Background level: {np.nanmedian(background):.5g}")
+        log.debug("Background level: %.5g", np.nanmedian(background))
         bkg_sub = image - background
 
         # Flag more signal in the background subtracted image,
@@ -1548,7 +1549,7 @@ def do_correction(
     subarray = input_model.meta.subarray.name.upper()
     exp_type = input_model.meta.exposure.type
     slowaxis = input_model.meta.subarray.slowaxis
-    log.info(f"Input exposure type is {exp_type}, detector={detector}")
+    log.info("Input exposure type is %s, detector=%s", exp_type, detector)
 
     # Check for a valid input that we can work on
     if not _check_input(exp_type, fit_method):
@@ -1578,7 +1579,7 @@ def do_correction(
         user_mask, image_model, mask_science_regions, n_sigma, fit_histogram, single_mask, save_mask
     )
 
-    log.info(f"Cleaning image {input_model.meta.filename}")
+    log.info("Cleaning image %s", input_model.meta.filename)
 
     # Check data shapes for 2D, 3D, or 4D inputs
     mismatch, ndim, nints, ngroups = _check_data_shapes(input_model, background_mask)
@@ -1598,9 +1599,9 @@ def do_correction(
 
     # Loop over integrations and groups (even if there's only 1)
     for i in range(nints):
-        log.debug(f"Working on integration {i + 1}")
+        log.debug("Working on integration %s", i + 1)
         for j in range(ngroups):
-            log.debug(f"Working on group {j + 1}")
+            log.debug("Working on group %s", j + 1)
 
             # Copy the scene mask, for further flagging
             if background_mask.ndim == 3:
@@ -1640,7 +1641,7 @@ def do_correction(
             if not success:
                 # Cleaning failed for internal reasons - probably the
                 # mask is not a good match to the data.
-                log.error(f"Cleaning failed for integration {i + 1}, group {j + 1}")
+                log.error("Cleaning failed for integration %s, group %s", i + 1, j + 1)
 
                 # Restore input data to make sure any partial changes
                 # are thrown away
@@ -1651,8 +1652,10 @@ def do_correction(
                 # Cleaning did not proceed because the image is bad:
                 # leave it as is but continue correcting the rest
                 log.warning(
-                    f"No usable data in integration {i + 1}, group {j + 1}. "
-                    f"Skipping correction for this image."
+                    "No usable data in integration %s, group %s. "
+                    "Skipping correction for this image.",
+                    i + 1,
+                    j + 1,
                 )
                 continue
 

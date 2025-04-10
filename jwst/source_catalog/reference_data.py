@@ -46,15 +46,15 @@ class ReferenceData:
         self.pupil = model.meta.instrument.pupil
         self.subarray = self.model.meta.subarray.name
 
-        log.info(f"Instrument: {self.instrument}")
+        log.info("Instrument: %s", self.instrument)
         if self.detector is not None:
-            log.info(f"Detector: {self.detector}")
+            log.info("Detector: %s", self.detector)
         if self.filtername is not None:
-            log.info(f"Filter: {self.filtername}")
+            log.info("Filter: %s", self.filtername)
         if self.pupil is not None:
-            log.info(f"Pupil: {self.pupil}")
+            log.info("Pupil: %s", self.pupil)
         if self.subarray is not None:
-            log.info(f"Subarray: {self.subarray}")
+            log.info("Subarray: %s", self.subarray)
 
     @staticmethod
     def _validate_aperture_ee(aperture_ee):
@@ -251,6 +251,6 @@ class ReferenceData:
             )
 
         abvega_offset = row["abvega_offset"][0]
-        log.info(f"AB to Vega magnitude offset {abvega_offset:.5f}")
+        log.info("AB to Vega magnitude offset %.5f", abvega_offset)
         abvegaoffset_model.close()
         return abvega_offset

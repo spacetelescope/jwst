@@ -53,7 +53,7 @@ class GroupScaleStep(Step):
             # is a power of 2. If it is, rescaling isn't needed.
             if frame_divisor is None:
                 if nframes & (nframes - 1) == 0:
-                    self.log.info(f"NFRAMES={nframes} is a power of 2; correction not needed")
+                    self.log.info("NFRAMES=%s is a power of 2; correction not needed", nframes)
                     self.log.info("Step will be skipped")
                     input_model.meta.cal_step.group_scale = "SKIPPED"
                     return input_model

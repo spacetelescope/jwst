@@ -26,7 +26,7 @@ def do_correction(output_model, gain_factor):
         Output datamodel with rescaled data.
     """
     # Apply the gain factor to the SCI and ERR arrays
-    log.info(f"Rescaling by {gain_factor}")
+    log.info("Rescaling by %s", gain_factor)
     output_model.data *= gain_factor
     output_model.err *= gain_factor
 

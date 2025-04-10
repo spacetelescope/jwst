@@ -216,15 +216,17 @@ class RampFitStep(Step):
             ngroups = input_model.data.shape[1]
             if self.algorithm.upper() == "LIKELY" and ngroups < LIKELY_MIN_NGROUPS:
                 log.info(
-                    f"When selecting the LIKELY ramp fitting algorithm the"
-                    f" ngroups needs to be a minimum of {LIKELY_MIN_NGROUPS},"
-                    f" but ngroups = {ngroups}.  Due to this, the ramp fitting algorithm"
-                    f" is being changed to OLS_C"
+                    "When selecting the LIKELY ramp fitting algorithm the"
+                    " ngroups needs to be a minimum of %s,"
+                    " but ngroups = %s.  Due to this, the ramp fitting algorithm"
+                    " is being changed to OLS_C",
+                    LIKELY_MIN_NGROUPS,
+                    ngroups,
                 )
                 self.algorithm = "OLS_C"
 
-            log.info(f"Using READNOISE reference file: {readnoise_filename}")
-            log.info(f"Using GAIN reference file: {gain_filename}")
+            log.info("Using READNOISE reference file: %s", readnoise_filename)
+            log.info("Using GAIN reference file: %s", gain_filename)
 
             with (
                 datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model,
@@ -242,8 +244,8 @@ class RampFitStep(Step):
                     result, readnoise_model, gain_model
                 )
 
-            log.info(f"Using algorithm = {self.algorithm}")
-            log.info(f"Using weighting = {self.weighting}")
+            log.info("Using algorithm = %s", self.algorithm)
+            log.info("Using weighting = %s", self.weighting)
 
             int_times = result.int_times
 
@@ -329,10 +331,10 @@ def set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags):
         firstgroup = 0
 
     if lastgroup >= ngroups:
-        log.warning(f"Last group number >= #groups ({ngroups}), reset to {ngroups - 1}")
+        log.warning("Last group number >= #groups (%s), reset to %s", ngroups, ngroups - 1)
 
     if firstgroup >= lastgroup:
-        log.warning(f"firstgroup ({firstgroup}) cannot be >= lastgroup ({lastgroup})")
+        log.warning("firstgroup (%s) cannot be >= lastgroup (%s)", firstgroup, lastgroup)
         log.warning("Group selectors ignored")
         firstgroup = 0
         lastgroup = ngroups - 1

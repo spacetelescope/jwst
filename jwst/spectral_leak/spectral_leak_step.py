@@ -54,8 +54,9 @@ class SpectralLeakStep(Step):
                     elif isinstance(x1d, datamodels.MRSMultiSpecModel):
                         self.log.debug(' Data is  MIRI MRS MRSMultiSpecModel data')
                     else:
-                        self.log.warning("Data sent to spectral_leak step is not an extracted spectrum. "
-                                         " It is  {}." .format(type(x1d)))
+                        self.log.warning(
+                            "Data sent to spectral_leak step is not an extracted spectrum.  It is  %s.", type(x1d)
+                        )
                         for r in result:
                             r.meta.cal_step.spectral_leak = 'SKIPPED'
                         return result
@@ -108,6 +109,6 @@ class SpectralLeakStep(Step):
                     return result
 
             else:
-                self.log.warning("Data sent to spectral_leak step is not a ModelContainer. It is  {}." .format(type(input_model)))
+                self.log.warning("Data sent to spectral_leak step is not a ModelContainer. It is  %s.", type(input_model))
                 self.log.warning("Step is skipped")
                 return input

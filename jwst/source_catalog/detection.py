@@ -86,7 +86,8 @@ class JWSTBackground:
                 log.info(
                     "Background could not be estimated in meshes. "
                     "Using the entire unmasked array for background "
-                    f"estimation: bkg_boxsize={self.data.shape}."
+                    "estimation: bkg_boxsize=%s.",
+                    self.data.shape,
                 )
 
         return bkg
@@ -253,5 +254,5 @@ class JWSTSourceFinder:
                     relabel=True,
                 )
 
-        log.info(f"Detected {segment_img.nlabels} sources")
+        log.info("Detected %s sources", segment_img.nlabels)
         return segment_img

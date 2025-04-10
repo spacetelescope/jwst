@@ -165,7 +165,7 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
                                    )
 
     # Subtract the average background from the member
-    log.info('Subtracting avg bkg from {}'.format(input_model.meta.filename))
+    log.info('Subtracting avg bkg from %s', input_model.meta.filename)
 
     result = subtract_images.subtract(input_model, bkg_model)
 
@@ -216,14 +216,14 @@ def average_background(input_model, bkg_list, sigma, maxiters):
 
     # Loop over the images to be used as background
     for i, bkg_file in enumerate(bkg_list):
-        log.info(f'Accumulate bkg from {bkg_file}')
+        log.info('Accumulate bkg from %s', bkg_file)
 
         bkg_array = ImageSubsetArray(bkg_file)
 
         if not bkg_array.overlaps(im_array):
             # We don't overlap, so put in a bunch of NaNs so sigma-clip
             # isn't affected and move on
-            log.debug(f'{bkg_file} does not overlap input image')
+            log.debug('%s does not overlap input image', bkg_file)
             cdata[i] = np.ones(image_shape) * np.nan
             cerr[i] = np.ones(image_shape) * np.nan
             continue
@@ -254,7 +254,7 @@ def average_background(input_model, bkg_list, sigma, maxiters):
             avg_bkg.dq = np.bitwise_or(avg_bkg.dq, accum_dq_arr)
 
     # Clip the background data
-    log.debug('clip with sigma={} maxiters={}'.format(sigma, maxiters))
+    log.debug('clip with sigma=%s maxiters=%s', sigma, maxiters)
     mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
 
     # Compute the mean of the non-clipped values

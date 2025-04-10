@@ -83,7 +83,7 @@ def get_center(exp_type, input_model, offsets=False):
         xcenter, ycenter = sky_to_det(
             input_model.meta.target.ra, input_model.meta.target.dec, ref_wave
         )
-        log.debug(f"LRS target location from RA/Dec = {xcenter, ycenter}")
+        log.debug("LRS target location from RA/Dec = (%s, %s)", xcenter, ycenter)
 
         # compute location relative to LRS aperture reference point
         xcenter -= imx
@@ -94,7 +94,7 @@ def get_center(exp_type, input_model, offsets=False):
             return xcenter, ycenter
 
     else:
-        log.warning(f"No method to get centering for exp_type {exp_type}")
+        log.warning("No method to get centering for exp_type %s", exp_type)
         log.warning("Using (0.0, 0.0)")
         return 0.0, 0.0
 
@@ -179,7 +179,7 @@ def get_aperture_from_model(input_model, match):
             if aperture.name == match:
                 return aperture
     else:
-        log.warning(f"Unable to get aperture from exp_type {input_model.meta.exposure.type}")
+        log.warning("Unable to get aperture from exp_type %s", input_model.meta.exposure.type)
 
     # If nothing matches, return None
     return None
@@ -313,7 +313,7 @@ def calculate_two_shutter_uniform_pathloss(pathloss_model):
     # This routine will run if the slit has exactly 2 shutters
     n_apertures = len(pathloss_model.apertures)
     if n_apertures != 2:
-        log.warning(f"Expected 2 apertures in pathloss reference file, found {n_apertures}")
+        log.warning("Expected 2 apertures in pathloss reference file, found %s", n_apertures)
         return (None, None)
     for aperture in pathloss_model.apertures:
         aperture_name = aperture.name.upper()
@@ -322,7 +322,9 @@ def calculate_two_shutter_uniform_pathloss(pathloss_model):
         elif aperture_name == "MOS1X3":
             aperture1x3 = aperture
         if aperture_name not in ["MOS1X1", "MOS1X3"]:
-            log.warning(f"Unexpected aperture name {aperture_name} (Expected 'MOS1X1' or 'MOS1X3')")
+            log.warning(
+                "Unexpected aperture name %s (Expected 'MOS1X1' or 'MOS1X3')", aperture_name
+            )
             return (None, None)
     pathloss1x1 = aperture1x1.uniform_data
     pathloss1x3 = aperture1x3.uniform_data
@@ -394,7 +396,7 @@ def do_correction(
             " One needs to be specified."
         )
     exp_type = input_model.meta.exposure.type
-    log.info(f"Input exposure type is {exp_type}")
+    log.info("Input exposure type is %s", exp_type)
     output_model = input_model.copy()
 
     if exp_type == "NRS_MSASPEC":
@@ -561,7 +563,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
     # Loop over all MOS slitlets
     corrections = datamodels.MultiSlitModel()
     for slit_number, slit in enumerate(data.slits):
-        log.info(f"Working on slit {slit_number}")
+        log.info("Working on slit %s", slit_number)
 
         if correction_pars:
             correction = correction_pars.slits[slit_number]
@@ -571,7 +573,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
 
         # Apply the correction
         if not correction:
-            log.warning(f"No correction provided for slit {slit_number}. Skipping")
+            log.warning("No correction provided for slit %s. Skipping", slit_number)
             continue
 
         if not inverse:
@@ -634,7 +636,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
     # Loop over all slits contained in the input
     corrections = datamodels.MultiSlitModel()
     for slit_number, slit in enumerate(data.slits):
-        log.info(f"Working on slit {slit.name}")
+        log.info("Working on slit %s", slit.name)
 
         if correction_pars:
             correction = correction_pars.slits[slit_number]
@@ -644,7 +646,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
 
         # Apply the correction
         if not correction:
-            log.warning(f"No correction provided for slit {slit_number}. Skipping")
+            log.warning("No correction provided for slit %s. Skipping", slit_number)
             continue
 
         if not inverse:
@@ -814,7 +816,7 @@ def do_correction_soss(data, pathloss):
     pupil_wheel_position = data.meta.instrument.pupil_position
     if pupil_wheel_position is None:
         log.warning(
-            f"Unable to get pupil wheel position from PWCPOS keyword for {data.meta.filename}"
+            "Unable to get pupil wheel position from PWCPOS keyword for %s", data.meta.filename
         )
         log.warning("Pathloss correction skipped")
         data.meta.cal_step.pathloss = "SKIPPED"
@@ -824,13 +826,13 @@ def do_correction_soss(data, pathloss):
     subarray = data.meta.subarray.name
     aperture = get_aperture_from_model(pathloss, subarray)
     if aperture is None:
-        log.warning(f"Unable to get Aperture from reference file for subarray {subarray}")
+        log.warning("Unable to get Aperture from reference file for subarray %s", subarray)
         log.warning("Pathloss correction skipped")
         data.meta.cal_step.pathloss = "SKIPPED"
         return
 
     else:
-        log.info(f"Aperture {aperture.name} selected from reference file")
+        log.info("Aperture %s selected from reference file", aperture.name)
 
     # Set up pathloss correction array
     pathloss_array = aperture.pointsource_data[0]
@@ -913,7 +915,9 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
         # Get the aperture from the reference file that matches the slit
         slitlength = len(slit.shutter_state)
         aperture = get_aperture_from_model(pathloss, slit.shutter_state)
-        log.info(f"Shutter state = {slit.shutter_state}, using {aperture.name} entry in ref file")
+        log.info(
+            "Shutter state = %s, using %s entry in ref file", slit.shutter_state, aperture.name
+        )
         two_shutters = False
         if slitlength == 2:
             two_shutters = True
@@ -988,9 +992,9 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
             else:
                 log.warning("Source is outside slit.")
         else:
-            log.warning(f"Cannot find matching pathloss model for slit with {slitlength} shutters")
+            log.warning("Cannot find matching pathloss model for slit with %s shutters", slitlength)
     else:
-        log.warning(f"Slit has data size = {size}")
+        log.warning("Slit has data size = %s", size)
 
     return correction
 
@@ -1028,7 +1032,7 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
     aperture = get_aperture_from_model(pathloss, slit.name)
 
     if aperture is not None:
-        log.info(f"Using aperture {aperture.name}")
+        log.info("Using aperture %s", aperture.name)
         (wavelength_pointsource, pathloss_pointsource_vector, is_inside_slit) = (
             calculate_pathloss_vector(
                 aperture.pointsource_data, aperture.pointsource_wcs, xcenter, ycenter
@@ -1087,10 +1091,10 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
 
         else:
             log.warning(
-                f"Source is outside slit. Skipping pathloss correction for slit {slit.name}"
+                "Source is outside slit. Skipping pathloss correction for slit %s", slit.name
             )
     else:
-        log.warning(f"Cannot find matching pathloss model for {slit.name}")
+        log.warning("Cannot find matching pathloss model for %s", slit.name)
         log.warning("Skipping pathloss correction for this slit")
 
     return correction
@@ -1221,7 +1225,7 @@ def _corrections_for_lrs(data, pathloss, user_slit_loc):
         )
 
     else:
-        log.info(f"Correction now using provided target center correction: {user_slit_loc}")
+        log.info("Correction now using provided target center correction: %s", user_slit_loc)
         # The slit is oriented with the long axis (the spatial
         # axis) horizontal, so the edges in the dispersion direction (the
         # narrow axis) would be negative down and positive up. Because the

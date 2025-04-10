@@ -96,15 +96,16 @@ class ImprintStep(Step):
         if match_model is not None:
             # Subtract the matching imprint image
             self.log.info(
-                f"Subtracting imprint image {match_model.meta.filename} "
-                f"from {input_model.meta.filename}"
+                "Subtracting imprint image %s from %s",
+                match_model.meta.filename,
+                input_model.meta.filename,
             )
             result = subtract_images.subtract(input_model, match_model)
 
             # Update the step status and close the imprint model
             result.meta.cal_step.imprint = "COMPLETE"
         else:
-            self.log.warning(f"No matching imprint image found for {input_model.meta.filename}")
+            self.log.warning("No matching imprint image found for %s", input_model.meta.filename)
             self.log.warning("Step will be skipped")
             result.meta.cal_step.imprint = "SKIPPED"
 

@@ -36,17 +36,18 @@ def create_background(wavelength, surf_bright):
     bad = False
     if len(wl_shape) > 1:
         bad = True
-        log.error(f"The wavelength array has shape {wl_shape}; expected a 1-D array")
+        log.error("The wavelength array has shape %s; expected a 1-D array", wl_shape)
     if len(sb_shape) > 1:
         bad = True
-        log.error(f"The background surf_bright array has shape {sb_shape}; expected a 1-D array")
+        log.error("The background surf_bright array has shape %s; expected a 1-D array", sb_shape)
     if bad:
         return None
 
     if wl_shape[0] != sb_shape[0]:
         log.error(
-            f"wavelength array has length {wl_shape[0]}, "
-            f"but background surf_bright array has length {sb_shape[0]}."
+            "wavelength array has length %s, but background surf_bright array has length %s.",
+            wl_shape[0],
+            sb_shape[0],
         )
         log.error("The arrays must be the same size.")
         return None

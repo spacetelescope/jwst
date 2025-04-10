@@ -102,10 +102,10 @@ def ifu_extract1d(
         source_type = source_type.upper()
     if source_type != "POINT" and source_type != "EXTENDED":
         default_source_type = "EXTENDED"
-        log.warning(f"Source type was '{source_type}'; setting to '{default_source_type}'.")
+        log.warning("Source type was '%s'; setting to '%s'.", source_type, default_source_type)
         source_type = default_source_type
     else:
-        log.info(f"Source type = {source_type}")
+        log.info("Source type = %s", source_type)
 
     if input_model.meta.instrument.name == "MIRI":
         output_model = datamodels.MRSMultiSpecModel()
@@ -138,7 +138,7 @@ def ifu_extract1d(
         if len(center_xy) == 2:
             extract_params["x_center"] = float(center_xy[0])
             extract_params["y_center"] = float(center_xy[1])
-            log.info(f"Using user-supplied x_center={center_xy[0]}, y_center={center_xy[1]}")
+            log.info("Using user-supplied x_center=%s, y_center=%s", center_xy[0], center_xy[1])
         else:
             log.warning("Incorrect number of values in center_xy; should be two.")
 
@@ -769,7 +769,8 @@ def extract_ifu(input_model, source_type, extract_params):
             else:
                 log.warning(
                     "Background annulus has no area, so background "
-                    f"subtraction will be turned off. {k}"
+                    "subtraction will be turned off. %s",
+                    k,
                 )
                 subtract_background_plane = False
 

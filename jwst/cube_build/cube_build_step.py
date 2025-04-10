@@ -103,32 +103,32 @@ class CubeBuildStep (Step):
             self.weighting = self.weighting.lower()
 
         if self.scalexy != 0.0:
-            self.log.info(f'Input Scale of axis 1 and 2 {self.scalexy}')
+            self.log.info('Input Scale of axis 1 and 2 %s', self.scalexy)
         if self.scalew != 0.0:
-            self.log.info(f'Input wavelength scale {self.scalew}')
+            self.log.info('Input wavelength scale %s', self.scalew)
 
         if self.wavemin is not None:
-            self.log.info(f'Setting minimum wavelength of spectral cube to: {self.wavemin}')
+            self.log.info('Setting minimum wavelength of spectral cube to: %s', self.wavemin)
         if self.wavemax is not None:
-            self.log.info(f'Setting maximum wavelength of spectral cube to: {self.wavemax}')
+            self.log.info('Setting maximum wavelength of spectral cube to: %s', self.wavemax)
 
         if self.rois != 0.0:
-            self.log.info(f'Input Spatial ROI size {self.rois}')
+            self.log.info('Input Spatial ROI size %s', self.rois)
         if self.roiw != 0.0:
-            self.log.info(f'Input Wave ROI size {self.roiw}')
+            self.log.info('Input Wave ROI size %s', self.roiw)
 
         # check that if self.nspax_x or self.nspax_y is provided they must be odd numbers
         if self.nspax_x is not None:
             if self.nspax_x % 2 == 0:
-                self.log.info(f'Input nspax_x must be an odd number {self.nspax_x}')
+                self.log.info('Input nspax_x must be an odd number %s', self.nspax_x)
                 self.nspax_x = self.nspax_x + 1
-                self.log.info(f'Updating nspa by 1. New value {self.nspax_x}')
+                self.log.info('Updating nspa by 1. New value %s', self.nspax_x)
 
         if self.nspax_y is not None:
             if self.nspax_y % 2 == 0:
-                self.log.info(f'Input nspax_y must be an odd number {self.nspax_y}')
+                self.log.info('Input nspax_y must be an odd number %s', self.nspax_y)
                 self.nspax_y = self.nspax_y + 1
-                self.log.info(f'Updating nspax_y by 1. New value {self.nspax_y}')
+                self.log.info('Updating nspax_y by 1. New value %s', self.nspax_y)
 
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)
@@ -157,12 +157,12 @@ class CubeBuildStep (Step):
         if self.weighting == 'drizzle':
             self.interpolation = 'drizzle'
 
-        self.log.info(f'Input interpolation: {self.interpolation}')
-        self.log.info(f'Coordinate system to use: {self.coord_system}')
+        self.log.info('Input interpolation: %s', self.interpolation)
+        self.log.info('Coordinate system to use: %s', self.coord_system)
         if self.interpolation == 'pointcloud':
-            self.log.info(f'Weighting method for point cloud: {self.weighting}')
+            self.log.info('Weighting method for point cloud: %s', self.weighting)
             if self.weight_power != 0:
-                self.log.info(f'Power weighting distance: {self.weight_power}')
+                self.log.info('Power weighting distance: %s', self.weight_power)
 
 # ________________________________________________________________________________
 # read input parameters - Channel, Band (Subchannel), Grating, Filter
@@ -236,7 +236,7 @@ class CubeBuildStep (Step):
             elif instrument == 'MIRI':
                 self.output_type = 'channel'
         self.pars_input['output_type'] = self.output_type
-        self.log.info(f'Setting output type to: {self.output_type}')
+        self.log.info('Setting output type to: %s', self.output_type)
 # ________________________________________________________________________________
 # If an offset file is provided do some basic checks on the file and its contents.
 # The offset list contains a matching list to the files in the association
@@ -336,7 +336,7 @@ class CubeBuildStep (Step):
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
         if not self.single:
-            self.log.info(f'Number of IFU cubes produced by this run = {num_cubes}')
+            self.log.info('Number of IFU cubes produced by this run = %s', num_cubes)
 
         # ModelContainer of ifucubes
         cube_container = ModelContainer()
@@ -421,7 +421,7 @@ class CubeBuildStep (Step):
             record_step_status(cube_container, "cube_build", success=True)
 
         t1 = time.time()
-        self.log.debug(f'Time to build all cubes {t1-t0}')
+        self.log.debug('Time to build all cubes %s', t1-t0)
 
         input_table.close()
         return cube_container

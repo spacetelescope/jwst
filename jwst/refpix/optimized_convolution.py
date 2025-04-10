@@ -34,7 +34,7 @@ def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
     """
     gamma, zeta = get_conv_kernel_coeffs(sirs_kernel_model, detector)
     if gamma is None or zeta is None:
-        log.info(f"Optimized convolution kernel coefficients NOT found for detector {detector}")
+        log.info("Optimized convolution kernel coefficients NOT found for detector %s", detector)
         return None
 
     kernels_left = []

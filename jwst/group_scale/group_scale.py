@@ -34,8 +34,8 @@ def do_correction(model):
         model.meta.cal_step.group_scale = "SKIPPED"
         return
 
-    log.info(f"NFRAMES={nframes}, FRMDIVSR={frame_divisor}")
-    log.info(f"Rescaling all groups by {frame_divisor}/{nframes}")
+    log.info("NFRAMES=%s, FRMDIVSR=%s", nframes, frame_divisor)
+    log.info("Rescaling all groups by %s/%s", frame_divisor, nframes)
 
     # Apply the rescaling to the entire data array
     scale = float(frame_divisor) / nframes

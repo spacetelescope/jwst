@@ -134,13 +134,14 @@ class ResampleSpec(ResampleImage):
                         output_pix_area = None
                     else:
                         log.debug(
-                            f"Setting output pixel area from the approximate "
-                            f"output spatial scale: {output_pscale}"
+                            "Setting output pixel area from the approximate "
+                            "output spatial scale: %s",
+                            output_pscale,
                         )
                         output_pix_area = output_pscale * nominal_area / input_pixscale0
 
             else:
-                log.debug(f"Using output pixel area: {pixel_area}")
+                log.debug("Using output pixel area: %s", pixel_area)
                 output_pix_area = pixel_area
 
             # Set the pixel scale ratio for scaling reasons
@@ -154,7 +155,7 @@ class ResampleSpec(ResampleImage):
                 output_wcs.array_shape = shape
         else:
             if pixel_scale is not None and nominal_area is not None:
-                log.info(f"Specified output pixel scale: {pixel_scale} arcsec.")
+                log.info("Specified output pixel scale: %s arcsec.", pixel_scale)
 
                 # Set the pscale ratio from the input pixel scale
                 # (pixel scale ratio is output / input)
@@ -163,7 +164,7 @@ class ResampleSpec(ResampleImage):
                         "Ignoring input pixel_scale_ratio in favor of explicit pixel_scale."
                     )
                 pixel_scale_ratio = input_pixscale0 / pixel_scale
-                log.info(f"Computed output pixel scale ratio: {pixel_scale_ratio:.5g}")
+                log.info("Computed output pixel scale ratio: %.5g", pixel_scale_ratio)
 
             # Define output WCS based on all inputs, including a reference WCS.
             # These functions internally use pixel_scale_ratio to accommodate
@@ -195,9 +196,9 @@ class ResampleSpec(ResampleImage):
         self._spec_output_pix_area = output_pix_area
 
         if pixel_scale is None:
-            log.info(f"Specified output pixel scale ratio: {pixel_scale_ratio}.")
+            log.info("Specified output pixel scale ratio: %s.", pixel_scale_ratio)
             pixel_scale = 3600.0 * compute_spectral_pixel_scale(output_wcs, disp_axis=disp_axis)
-            log.info(f"Computed output pixel scale: {pixel_scale:.5g} arcsec.")
+            log.info("Computed output pixel scale: %.5g arcsec.", pixel_scale)
 
         if output_wcs_dict is None:
             output_wcs_dict = {}
@@ -367,13 +368,13 @@ class ResampleSpec(ResampleImage):
         # (at the center of the slit in x)
         targ_ra, targ_dec, _ = s2w(0, wmean_s, wmean_l)
         sx, sy = s2d(0, wmean_s, wmean_l)
-        log.debug(f"Fiducial RA, Dec, wavelength: {targ_ra}, {targ_dec}, {wmean_l}")
-        log.debug(f"Index at fiducial center: x={sx}, y={sy}")
+        log.debug("Fiducial RA, Dec, wavelength: %s, %s, %s", targ_ra, targ_dec, wmean_l)
+        log.debug("Index at fiducial center: x=%s, y=%s", sx, sy)
 
         # Estimate spatial sampling from the reference model
         # at the center of the array
         lam_center_idx = int(np.mean(bbox, axis=1)[0])
-        log.debug(f"Center of dispersion axis: {lam_center_idx}")
+        log.debug("Center of dispersion axis: %s", lam_center_idx)
         grid_center = grid[0][:, lam_center_idx], grid[1][:, lam_center_idx]
         ra_ref, dec_ref, _ = np.array(refwcs(*grid_center))
 
@@ -400,7 +401,7 @@ class ResampleSpec(ResampleImage):
 
         # Check whether sampling is more along RA or along Dec
         swap_xy = abs(pix_to_xtan.slope) < abs(pix_to_ytan.slope)
-        log.debug(f"Swap xy: {swap_xy}")
+        log.debug("Swap xy: %s", swap_xy)
 
         # Get output wavelengths from all data
         ref_lam = _find_nirspec_output_sampling_wavelengths(all_wcs)

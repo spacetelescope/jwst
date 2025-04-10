@@ -219,21 +219,21 @@ class Extract1dStep(Step):
         else:
             extract_ref = "N/A"
         if extract_ref != "N/A":
-            self.log.info(f"Using EXTRACT1D reference file {extract_ref}")
+            self.log.info("Using EXTRACT1D reference file %s", extract_ref)
 
         if self.apply_apcorr:
             apcorr_ref = self.get_reference_file(model, "apcorr")
         else:
             apcorr_ref = "N/A"
         if apcorr_ref != "N/A":
-            self.log.info(f"Using APCORR file {apcorr_ref}")
+            self.log.info("Using APCORR file %s", apcorr_ref)
 
         try:
             psf_ref = self.get_reference_file(model, "psf")
         except crds.core.exceptions.CrdsLookupError:
             psf_ref = "N/A"
         if psf_ref != "N/A":
-            self.log.info(f"Using PSF reference file {psf_ref}")
+            self.log.info("Using PSF reference file %s", psf_ref)
 
         return extract_ref, apcorr_ref, psf_ref
 
@@ -258,7 +258,8 @@ class Extract1dStep(Step):
         else:
             self.log.error(
                 "The SOSS extraction is implemented for the CLEAR filter only. "
-                f"Requested filter is {model.meta.instrument.filter}."
+                "Requested filter is %s.",
+                model.meta.instrument.filter,
             )
             self.log.error("extract_1d will be skipped.")
             model.meta.cal_step.extract_1d = "SKIPPED"
@@ -279,8 +280,8 @@ class Extract1dStep(Step):
         else:
             self.log.error(
                 "The SOSS extraction is implemented for the SUBSTRIP256 "
-                "and SUBSTRIP96 subarrays only. Subarray is currently "
-                f"{model.meta.subarray.name}."
+                "and SUBSTRIP96 subarrays only. Subarray is currently %s.",
+                model.meta.subarray.name,
             )
             self.log.error("Extract1dStep will be skipped.")
             model.meta.cal_step.extract_1d = "SKIPPED"
@@ -395,7 +396,7 @@ class Extract1dStep(Step):
         source_type = model.meta.target.source_type
         if self.ifu_set_srctype is not None and exp_type == "MIR_MRS":
             source_type = self.ifu_set_srctype
-            self.log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
+            self.log.info("Overriding source type and setting it to %s", self.ifu_set_srctype)
 
         if exp_type == "MIR_MRS":
             band_cube = self._check_mrs_type(model)
@@ -449,7 +450,7 @@ class Extract1dStep(Step):
                 else:
                     complete_suffix = f"{slit}_{suffix}"
                 output_path = self.make_output_path(suffix=complete_suffix)
-                self.log.info(f"Saving {suffix} {output_path}")
+                self.log.info("Saving %s %s", suffix, output_path)
                 model.save(output_path)
         else:
             # Only one profile - just use the index and suffix 'profile'
@@ -458,7 +459,7 @@ class Extract1dStep(Step):
             else:
                 complete_suffix = suffix
             output_path = self.make_output_path(suffix=complete_suffix)
-            self.log.info(f"Saving {suffix} {output_path}")
+            self.log.info("Saving %s %s", suffix, output_path)
             intermediate_model.save(output_path)
         intermediate_model.close()
 
@@ -495,7 +496,7 @@ class Extract1dStep(Step):
             ),
         ):
             # Acceptable input type, just log it
-            self.log.debug(f"Input is a {str(input_model)}.")
+            self.log.debug("Input is a %s.", input_model)
         elif isinstance(input_model, datamodels.MultiSlitModel):
             # If input is multislit, with 3D calints, skip the step
             self.log.debug("Input is a MultiSlitModel")
@@ -504,7 +505,7 @@ class Extract1dStep(Step):
                 input_model.meta.cal_step.extract_1d = "SKIPPED"
                 return input_model
         else:
-            self.log.error(f"Input is a {str(input_model)}, ")
+            self.log.error("Input is a %s, ", input_model)
             self.log.error("which was not expected for extract_1d.")
             self.log.error("The extract_1d step will be skipped.")
             input_model.meta.cal_step.extract_1d = "SKIPPED"
@@ -517,7 +518,7 @@ class Extract1dStep(Step):
             input_model = [input_model]
         else:
             exp_type = input_model[0].meta.exposure.type
-        self.log.debug(f"Input for EXP_TYPE {exp_type} contains {len(input_model)} items")
+        self.log.debug("Input for EXP_TYPE %s contains %s items", exp_type, len(input_model))
 
         if len(input_model) > 1 and exp_type in extract.WFSS_EXPTYPES:
             # For WFSS level-3, the input is a single entry of a

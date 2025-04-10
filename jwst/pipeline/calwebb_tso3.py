@@ -191,7 +191,7 @@ class Tso3Pipeline(Pipeline):
             phot_results = vstack(phot_result_list)
             phot_results.meta["number_of_integrations"] = len(phot_results)
             phot_tab_name = self.make_output_path(suffix=phot_tab_suffix, ext="ecsv")
-            self.log.info(f"Writing Level 3 photometry catalog {phot_tab_name}")
+            self.log.info("Writing Level 3 photometry catalog %s", phot_tab_name)
             phot_results.write(phot_tab_name, format="ascii.ecsv", overwrite=True)
 
         # All done. Nothing to return, because all products have

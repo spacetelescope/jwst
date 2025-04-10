@@ -123,10 +123,10 @@ def apply_emicorr(
     # Check algorithm against input data shape
     ngroups = input_model.data.shape[1]
     if ngroups < 3:
-        log.warning(f"EMI correction cannot be performed for ngroups={ngroups}")
+        log.warning("EMI correction cannot be performed for ngroups=%s", ngroups)
         return None
     if ngroups < 10 and algorithm == "sequential":
-        log.warning(f"The 'sequential' algorithm is selected and ngroups={ngroups}.")
+        log.warning("The 'sequential' algorithm is selected and ngroups=%s.", ngroups)
         log.warning("The 'joint' algorithm is recommended for ngroups < 10.")
     if algorithm == "joint" and emicorr_model is None:
         log.warning(
@@ -146,11 +146,14 @@ def apply_emicorr(
         )
 
         log.info(
-            f"With configuration: Subarray={subarray}, Read_pattern={readpatt}, Detector={detector}"
+            "With configuration: Subarray=%s, Read_pattern=%s, Detector=%s",
+            subarray,
+            readpatt,
+            detector,
         )
         if freqs2correct is not None:
-            log.info(f"Will correct data for the following {len(freqs2correct)} frequencies: ")
-            log.info(f"   {freqs2correct}")
+            log.info("Will correct data for the following %s frequencies: ", len(freqs2correct))
+            log.info("   %s", freqs2correct)
 
             for freq_val in freqs2correct:
                 # Collect the frequency numbers and reference wave list
@@ -171,8 +174,8 @@ def apply_emicorr(
             freq_numbers = onthefly_corr_freq
             freqs2correct = [repr(freq) for freq in onthefly_corr_freq]
 
-            log.info(f"Will correct data for the following {len(freqs2correct)} frequencies: ")
-            log.info(f"   {freqs2correct}")
+            log.info("Will correct data for the following %s frequencies: ", len(freqs2correct))
+            log.info("   %s", freqs2correct)
 
     # No subarray or read pattern match found, print to log and skip correction
     if rowclocks is None or len(freq_numbers) == 0:
@@ -181,7 +184,7 @@ def apply_emicorr(
 
     # Run either the joint or sequential fitting algorithm
     # to fit and correct for EMI data
-    log.info(f"Running EMI fit with algorithm = '{algorithm}'.")
+    log.info("Running EMI fit with algorithm = '%s'.", algorithm)
     if algorithm == "joint":
         output_model = _run_joint_algorithm(
             input_model,
@@ -353,7 +356,7 @@ def _run_sequential_algorithm(
     for fi, frequency_name in enumerate(freqs2correct):
         frequency = freq_numbers[fi]
         log.info(
-            f"Correcting for frequency: {frequency} Hz  ({fi + 1} out of {len(freqs2correct)})"
+            "Correcting for frequency: %s Hz  (%s out of %s)", frequency, fi + 1, len(freqs2correct)
         )
 
         # Set up some variables
@@ -413,7 +416,7 @@ def _run_sequential_algorithm(
         log.info("Doing phase calculation per integration")
 
         for ninti in range(nints):
-            log.debug(f"  Working on integration: {ninti + 1}")
+            log.debug("  Working on integration: %s", ninti + 1)
             # Read in this integration
             data = input_model.data[ninti].copy()
 
@@ -505,7 +508,7 @@ def _run_sequential_algorithm(
             nbins = 500
 
         # bin the whole set
-        log.info(f"Calculating the phase amplitude for {nbins} bins")
+        log.info("Calculating the phase amplitude for %s bins", nbins)
         # Define the binned waveform amplitude (pa = phase amplitude)
         pa = np.arange(nbins, dtype=float)
         # keep track of n per bin to check for low n
@@ -720,7 +723,7 @@ def get_subarcase(emi_model, subarray, readpatt, detector):
     elif "FAST" in readpatt:
         readout_speed = "FAST"
     else:
-        log.warning(f"Read pattern {readpatt} does not include expected string FAST or SLOW")
+        log.warning("Read pattern %s does not include expected string FAST or SLOW", readpatt)
         return subname, rowclocks, frameclocks, frequencies
 
     # modify the subarray name for matching if needed,
@@ -741,7 +744,7 @@ def get_subarcase(emi_model, subarray, readpatt, detector):
             frequencies = getattr(rp_freqs, detector)
     except AttributeError:
         # match not found, will return None for all values
-        log.debug(f"Subarray {subname} not found")
+        log.debug("Subarray %s not found", subname)
         pass
 
     return subname, rowclocks, frameclocks, frequencies
@@ -843,7 +846,7 @@ def mk_reffile(freq_pa_dict, emicorr_ref_filename):
 
     if emicorr_ref_filename.endswith(".fits"):
         emicorr_ref_filename = emicorr_ref_filename.replace(".fits", ".asdf")
-    log.info(f"Writing on-the-fly reference file to: {emicorr_ref_filename}")
+    log.info("Writing on-the-fly reference file to: %s", emicorr_ref_filename)
     emicorr_model.save(emicorr_ref_filename)
     emicorr_model.close()
 

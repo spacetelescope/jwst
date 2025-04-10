@@ -247,7 +247,7 @@ class DataSet():
             # data for each of the fixed slits in the input
             for slit in self.input.slits:
 
-                log.info('Working on slit %s' % slit.name)
+                log.info('Working on slit %s', slit.name)
                 self.slitnum += 1
 
                 fields_to_match = {'filter': self.filter, 'grating': self.grating, 'slit': slit.name}
@@ -261,7 +261,7 @@ class DataSet():
 
             # Bright object always uses S1600A1 slit
             slit_name = 'S1600A1'
-            log.info('Working on slit %s' % slit_name)
+            log.info('Working on slit %s', slit_name)
             fields_to_match = {'filter': self.filter, 'grating': self.grating, 'slit': slit_name}
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
@@ -282,7 +282,7 @@ class DataSet():
                 # Loop over the MSA slits, applying the same photom
                 # ref data to all slits
                 for slit in self.input.slits:
-                    log.info('Working on slit %s' % slit.name)
+                    log.info('Working on slit %s', slit.name)
                     self.slitnum += 1
                     self.photom_io(ftab.phot_table[row])
 
@@ -305,7 +305,7 @@ class DataSet():
                     unit_is_surface_brightness = True
 
                 # Populate the photometry keywords
-                log.info(f'PHOTMJSR value: {conv_factor:.6g}')
+                log.info('PHOTMJSR value: %.6g', conv_factor)
                 self.input.meta.photometry.conversion_megajanskys = \
                     conv_factor
                 self.input.meta.photometry.conversion_microjanskys = \
@@ -414,7 +414,7 @@ class DataSet():
 
                 # Get the spectral order number for this slit
                 order = slit.meta.wcsinfo.spectral_order
-                log.info(f"Working on slit {slit.name}, order {order}")
+                log.info("Working on slit %s, order %s", slit.name, order)
 
                 fields_to_match = {'filter': self.filter, 'pupil': self.pupil, 'order': order}
                 row = find_row(ftab.phot_table, fields_to_match)
@@ -601,7 +601,7 @@ class DataSet():
         if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == 'NRC_WFSS':
             # Loop over the WFSS slits, applying the correct photom ref data
             for slit in self.input.slits:
-                log.info('Working on slit %s' % slit.name)
+                log.info('Working on slit %s', slit.name)
                 self.slitnum += 1
                 order = slit.meta.wcsinfo.spectral_order
                 # TODO: If it's reasonable to hardcode the list of orders for Nircam WFSS,
@@ -699,8 +699,8 @@ class DataSet():
                                                         step=(1, 1),
                                                         center=True)
 
-            log.debug("Slice %d: %g %g %g %g" %
-                      (k, x[0][0], x[-1][-1], y[0][0], y[-1][-1]))
+            log.debug("Slice %d: %g %g %g %g",
+                      k, x[0][0], x[-1][-1], y[0][0], y[-1][-1])
 
             # Get the world coords for all pixels in this slice
             coords = ifu_wcs(x, y)
@@ -799,7 +799,7 @@ class DataSet():
                     unit_is_surface_brightness = False
 
         # Store the conversion factor in the meta data
-        log.info(f'PHOTMJSR value: {conversion:.6g}')
+        log.info('PHOTMJSR value: %.6g', conversion)
         if isinstance(self.input, datamodels.MultiSlitModel):
             self.input.slits[self.slitnum].meta.photometry.conversion_megajanskys = \
                 conversion
@@ -1096,7 +1096,7 @@ class DataSet():
             for column in range(ncols):
                 dispersion_array[:, column] = np.gradient(wavelength_array[:, column])
         else:
-            log.warning(f"Can't process data with DISPAXIS={dispaxis}")
+            log.warning("Can't process data with DISPAXIS=%s", dispaxis)
         return dispersion_array
 
     def create_1d_conversion(self, model, conversion, waves, relresps):

@@ -132,7 +132,7 @@ class Spec2Pipeline(Pipeline):
         results = []
         failures = []
         for product in asn["products"]:
-            self.log.info("Processing product {}".format(product["name"]))
+            self.log.info("Processing product %s", product["name"])
             if self.output_file is None:
                 self.output_file = product["name"]
             if not hasattr(asn, "filename"):
@@ -199,9 +199,7 @@ class Spec2Pipeline(Pipeline):
         # one. We'll just get the first one found.
         science_member = members_by_type["science"]
         if len(science_member) != 1:
-            self.log.warning(
-                "Wrong number of science exposures found in {}".format(exp_product["name"])
-            )
+            self.log.warning("Wrong number of science exposures found in %s", exp_product["name"])
             self.log.warning("    Using only first one.")
         science_member = science_member[0]
 
@@ -226,11 +224,11 @@ class Spec2Pipeline(Pipeline):
             if exp_type in WFSS_TYPES:
                 try:
                     science.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
-                    self.log.info(f"Using sourcecat file {science.meta.source_catalog}")
+                    self.log.info("Using sourcecat file %s", science.meta.source_catalog)
                     science.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
-                    self.log.info(f"Using segmentation map {science.meta.segmentation_map}")
+                    self.log.info("Using segmentation map %s", science.meta.segmentation_map)
                     science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
-                    self.log.info(f"Using direct image {science.meta.direct_image}")
+                    self.log.info("Using direct image %s", science.meta.direct_image)
                 except IndexError:
                     if science.meta.source_catalog is None:
                         raise IndexError(
@@ -439,7 +437,7 @@ class Spec2Pipeline(Pipeline):
             x1d.close()
 
         # That's all folks
-        self.log.info("Finished processing product {}".format(exp_product["name"]))
+        self.log.info("Finished processing product %s", exp_product["name"])
 
         return calibrated
 
@@ -861,12 +859,12 @@ class Spec2Pipeline(Pipeline):
         save_x1d = self.extract_1d.save_results
         self.extract_1d.save_results = False
         if len(resamp_mos.slits) > 0:
-            self.log.info(f"Extracting {len(resamp_mos.slits)} MSA slitlets")
+            self.log.info("Extracting %s MSA slitlets", len(resamp_mos.slits))
             x1d = self.extract_1d.run(resamp_mos)
 
         # Extract the FS slits
         if len(resamp_fss.slits) > 0:
-            self.log.info(f"Extracting {len(resamp_fss.slits)} fixed slits")
+            self.log.info("Extracting %s fixed slits", len(resamp_fss.slits))
             resamp_fss.meta.exposure.type = "NRS_FIXEDSLIT"
             x1d_fss = self.extract_1d.run(resamp_fss)
             if x1d is None:

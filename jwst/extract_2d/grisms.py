@@ -90,7 +90,7 @@ def extract_tso_object(
     # cross-dispersion size of the data array
     if tsgrism_extract_height is None:
         tsgrism_extract_height = input_model.meta.subarray.ysize
-    log.info(f"Setting extraction height to {tsgrism_extract_height}")
+    log.info("Setting extraction height to %s", tsgrism_extract_height)
 
     # Get the disperser parameters that have the wave limits
     with WavelengthrangeModel(reference_files["wavelengthrange"]) as f:
@@ -125,7 +125,7 @@ def extract_tso_object(
         raise ValueError("XREF_SCI and YREF_SCI are required for TSO mode.")
 
     # Create the extracted output as a SlitModel
-    log.info(f"Extracting order: {available_orders}")
+    log.info("Extracting order: %s", available_orders)
     output_model = datamodels.SlitModel()
     output_model.update(input_model)
     subwcs = copy.deepcopy(input_model.meta.wcs)
@@ -212,12 +212,20 @@ def extract_tso_object(
         ymin = int(ymin)
         ymax = int(ymax)
 
-        log.info(f"WCS made explicit for order: {order}")
+        log.info("WCS made explicit for order: %s", order)
         log.info(
-            f"Spectral trace extents: (xmin: {xmin}, ymin: {ymin}), (xmax: {xmax}, ymax: {ymax})"
+            "Spectral trace extents: (xmin: %s, ymin: %s), (xmax: %s, ymax: %s)",
+            xmin,
+            ymin,
+            xmax,
+            ymax,
         )
         log.info(
-            f"Extraction limits: (xmin: {xmin_ext}, ymin: {ymin}), (xmax: {xmax_ext}, ymax: {ymax})"
+            "Extraction limits: (xmin: %s, ymin: %s), (xmax: %s, ymax: %s)",
+            xmin_ext,
+            ymin,
+            xmax_ext,
+            ymax,
         )
 
         # Cut out the subarray from the input data arrays
@@ -389,8 +397,8 @@ def extract_grism_objects(
                 nbright=nbright,
             )
             log.info(
-                f"Grism object list created from source catalog: \
-                {input_model.meta.source_catalog}"
+                "Grism object list created from source catalog: %s",
+                input_model.meta.source_catalog,
             )
 
     if not isinstance(grism_objects, list):
@@ -398,7 +406,7 @@ def extract_grism_objects(
     if len(grism_objects) == 0:
         raise ValueError("No grism objects created from source catalog")
 
-    log.info(f"Extracting {len(grism_objects)} grism objects")
+    log.info("Extracting %s grism objects", len(grism_objects))
     output_model = datamodels.MultiSlitModel()
     output_model.update(input_model)
 
@@ -432,7 +440,7 @@ def extract_grism_objects(
             # The bounding boxes here are also limited to the size of the detector
             # The check for boxes entirely off the detector is done in create_grism_bbox right now
             y, x = obj.order_bounding[order]
-            log.debug(f"YYY, {y}, {clamp(y[0], 0, input_model.meta.subarray.ysize)}")
+            log.debug("YYY, %s, %s", y, clamp(y[0], 0, input_model.meta.subarray.ysize))
 
             # limit the boxes to the detector
             ymin = clamp(y[0], 0, input_model.meta.subarray.ysize)
@@ -445,9 +453,13 @@ def extract_grism_objects(
             # row or column of the detector
             if ymax - ymin > 0 and xmax - xmin > 0:
                 subwcs = copy.deepcopy(inwcs)
-                log.info(f"Subarray extracted for obj: {obj.sid} order: {order}:")
+                log.info("Subarray extracted for obj: %s order: %s:", obj.sid, order)
                 log.info(
-                    f"Subarray extents are: (xmin:{xmin}, xmax:{xmax}), (ymin:{ymin}, ymax:{ymax})"
+                    "Subarray extents are: (xmin:%s, xmax:%s), (ymin:%s, ymax:%s)",
+                    xmin,
+                    xmax,
+                    ymin,
+                    ymax,
                 )
 
                 # only the first two numbers in the Mapping are used

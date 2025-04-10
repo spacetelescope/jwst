@@ -93,7 +93,7 @@ def create_pipeline(input_model, reference_files, slit_y_range):
             input_model, reference_files, slit_y_range=slit_y_range
         )
     if pipeline:
-        log.info(f"Created a NIRSPEC {exp_type} pipeline with references {reference_files}")
+        log.info("Created a NIRSPEC %s pipeline with references %s", exp_type, reference_files)
     return pipeline
 
 
@@ -377,7 +377,7 @@ def slits_wcs(input_model, reference_files, slit_y_range):
     if not open_slits_id:
         return None
     n_slits = len(open_slits_id)
-    log.info(f"Computing WCS for {n_slits} open slitlets")
+    log.info("Computing WCS for %s open slitlets", n_slits)
 
     msa_pipeline = slitlets_wcs(input_model, reference_files, open_slits_id)
 
@@ -417,7 +417,7 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     sporder, wrange = get_spectral_order_wrange(input_model, reference_files["wavelengthrange"])
     input_model.meta.wcsinfo.waverange_start = wrange[0]
     input_model.meta.wcsinfo.waverange_end = wrange[1]
-    log.info(f"SPORDER= {sporder}, wrange={wrange}")
+    log.info("SPORDER= %s, wrange=%s", sporder, wrange)
     input_model.meta.wcsinfo.spectral_order = sporder
 
     # DMS to SCA transform
@@ -553,8 +553,9 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
     if reference_files is not None and slits:
         slits = validate_open_slits(input_model, slits, reference_files)
         log.info(
-            f"Slits projected on detector {input_model.meta.instrument.detector}: "
-            f"{[sl.name for sl in slits]}"
+            "Slits projected on detector %s: %s",
+            input_model.meta.instrument.detector,
+            [sl.name for sl in slits],
         )
     if not slits:
         log_message = f"No open slits fall on detector {input_model.meta.instrument.detector}."
@@ -829,10 +830,11 @@ def get_open_msa_slits(
         for x in msa_conf.data
         if x["msa_metadata_id"] == msa_metadata_id and x["dither_point_index"] == dither_position
     ]
-    log.debug(f"msa_data with msa_metadata_id = {msa_metadata_id}   {msa_data}")
+    log.debug("msa_data with msa_metadata_id = %s    %s", msa_metadata_id, msa_data)
     log.info(
-        f"Retrieving open MSA slitlets for msa_metadata_id = {msa_metadata_id} "
-        f"and dither_index = {dither_position}"
+        "Retrieving open MSA slitlets for msa_metadata_id = %s and dither_index = %s",
+        msa_metadata_id,
+        dither_position,
     )
 
     # Sort the MSA rows by slitlet_id
@@ -909,7 +911,7 @@ def get_open_msa_slits(
                 source_xpos = np.nan_to_num(slitlet["estimated_source_in_shutter_x"], nan=0.5)
                 source_ypos = np.nan_to_num(slitlet["estimated_source_in_shutter_y"], nan=0.5)
 
-                log.info(f"Found fixed slit {slitlet_id} with source_id = {source_id}.")
+                log.info("Found fixed slit %s with source_id = %s.", slitlet_id, source_id)
 
                 # Get source info for this slitlet:
                 # note that slits with a real source assigned have source_id > 0,
@@ -930,7 +932,7 @@ def get_open_msa_slits(
                     source_dec = 0.0
 
             else:
-                log.warning(f"Fixed slit {slitlet_id} is not a primary source; skipping it.")
+                log.warning("Fixed slit %s is not a primary source; skipping it.", slitlet_id)
                 continue
 
         elif any(is_fs):
@@ -974,7 +976,7 @@ def get_open_msa_slits(
             stellarity = 0.0
             source_ra = 0.0
             source_dec = 0.0
-            log.info(f"Slitlet {slitlet_id} is background only; assigned source_id={source_id}")
+            log.info("Slitlet %s is background only; assigned source_id=%s", slitlet_id, source_id)
 
         # There is 1 main shutter: this is a slit containing either a real or virtual source
         elif n_main_shutter == 1:
@@ -1021,13 +1023,14 @@ def get_open_msa_slits(
                 source_ra = 0.0
                 source_dec = 0.0
                 log.warning(
-                    f"Could not retrieve source info from MSA file; "
-                    f"assigning virtual source_name={source_name}"
+                    "Could not retrieve source info from MSA file; assigning virtual "
+                    "source_name=%s",
+                    source_name,
                 )
 
             if source_id < 0:
                 log.info(
-                    f"Slitlet {slitlet_id} contains virtual source, with source_id={source_id}"
+                    "Slitlet %s contains virtual source, with source_id=%s", slitlet_id, source_id
                 )
 
         # More than 1 main shutter: Not allowed!
@@ -1081,7 +1084,7 @@ def get_open_msa_slits(
             scale_x,
             scale_y,
         )
-        log.debug(f"Appending slit: {slit_parameters}")
+        log.debug("Appending slit: %s", slit_parameters)
         slitlets.append(Slit(*slit_parameters))
 
     msa_file.close()
@@ -1164,8 +1167,10 @@ def get_spectral_order_wrange(input_model, wavelengthrange_file):
             order = wave_range_model.order[index]
             wrange = wave_range_model.wavelengthrange[index]
         log.info(
-            f"Combination {keyword} missing in wavelengthrange file, setting "
-            f"order to {order} and range to {wrange}."
+            "Combination %s missing in wavelengthrange file, setting order to %s and range to %s.",
+            keyword,
+            order,
+            wrange,
         )
     else:
         # Combination of filter_grating is found in wavelengthrange file.
@@ -1312,7 +1317,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
             velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
             lgreq = lgreq | velocity_corr
             log.info(
-                f"Applied Barycentric velocity correction : {velocity_corr[1].amplitude.value}"
+                "Applied Barycentric velocity correction : %s", velocity_corr[1].amplitude.value
             )
     # The wavelength units up to this point are
     # meters as required by the pipeline but the desired output wavelength units is microns.
@@ -1411,7 +1416,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
             velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
             lgreq = lgreq | velocity_corr
             log.info(
-                f"Applied Barycentric velocity correction : {velocity_corr[1].amplitude.value}"
+                "Applied Barycentric velocity correction : %s", velocity_corr[1].amplitude.value
             )
 
     # The wavelength units up to this point are
@@ -1430,7 +1435,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
     slits = []
     for quadrant in range(1, 6):
         slits_in_quadrant = [s for s in open_slits if s.quadrant == quadrant]
-        log.info(f"There are {len(slits_in_quadrant)} open slits in quadrant {quadrant}")
+        log.info("There are %s open slits in quadrant %s", len(slits_in_quadrant), quadrant)
         msa_quadrant = getattr(msa, f"Q{quadrant}")
 
         if any(slits_in_quadrant):
@@ -1840,18 +1845,18 @@ def correct_tilt(disperser, xtilt, ytilt):
 
     disp = disperser.copy()
     disperser.close()
-    log.info(f"gwa_ytilt is {ytilt} deg")
-    log.info(f"gwa_xtilt is {xtilt} deg")
+    log.info("gwa_ytilt is %s deg", ytilt)
+    log.info("gwa_xtilt is %s deg", xtilt)
 
     if xtilt is not None:
         theta_y_correction = _get_correction(disp.gwa_tiltx, xtilt)
-        log.info(f"theta_y correction: {theta_y_correction} deg")
+        log.info("theta_y correction: %s deg", theta_y_correction)
         disp["theta_y"] = disp.theta_y + theta_y_correction
     else:
         log.info("gwa_xtilt not applied")
     if ytilt is not None:
         theta_x_correction = _get_correction(disp.gwa_tilty, ytilt)
-        log.info(f"theta_x correction: {theta_x_correction} deg")
+        log.info("theta_x correction: %s deg", theta_x_correction)
         disp.theta_x = disp.theta_x + theta_x_correction
     else:
         log.info("gwa_ytilt not applied")
@@ -2379,8 +2384,9 @@ def validate_open_slits(input_model, open_slits, reference_files):
         valid = _is_valid_slit(bb)
         if not valid:
             log.info(
-                f"Removing slit {slit.name} from the list of open slits because the "
-                "WCS bounding_box is completely outside the detector."
+                "Removing slit %s from the list of open slits because the "
+                "WCS bounding_box is completely outside the detector.",
+                slit.name,
             )
             idx = np.nonzero([s.name == slit.name for s in open_slits])[0][0]
             open_slits.pop(idx)
