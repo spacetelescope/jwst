@@ -93,7 +93,7 @@ def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
         Absolute value of FT(image) in filter - the CV Vsq array
     """
     wls = create_wavelengths(filtername)
-    log.info(f"      {filtername}: {wls[0] / micron:.3f} to {wls[2] / micron:.3f} micron")
+    log.info("      %s: %.3f to %.3f micron", filtername, wls[0] / micron, wls[2] / micron)
     detimage = np.zeros((sqfov_npix, sqfov_npix), float)
     for wl in wls:
         psf = calcpsf(wl, sqfov_npix, pxsc_rad, pupil_mask)
@@ -180,10 +180,11 @@ def bad_pixels(data, median_size, median_tres):
     pxdq = pxdq.astype("int")
 
     log.info(
-        f"         Identified {np.sum(pxdq):.0f} bad pixels "
-        f"({100.0 * np.sum(pxdq) / np.prod(pxdq.shape):.2f}%)"
+        "         Identified %.0f bad pixels (%.2f%%)",
+        np.sum(pxdq),
+        100.0 * np.sum(pxdq) / np.prod(pxdq.shape),
     )
-    log.info(f"         {np.max(diff_data / np.median(diff_data)):.3f}")
+    log.info("         %.3f", np.max(diff_data / np.median(diff_data)))
 
     return pxdq
 
@@ -278,14 +279,14 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
     pxdq = np.where(dqmask, pxdq0, 0)
     nflagged_dnu = np.count_nonzero(pxdq)
-    log.info(f"{nflagged_dnu:d} pixels flagged DO_NOT_USE in cropped data")
+    log.info("%d pixels flagged DO_NOT_USE in cropped data", nflagged_dnu)
 
     # DNU, some other pixels are now NaNs in cal level products.
     # Replace them with 0, then
     # add DO_NOT_USE flags to positions in DQ array so they will be corrected.
     nanidxlist = np.argwhere(np.isnan(data))
     if len(nanidxlist) > 1:
-        log.info(f"Identified {len(nanidxlist):d} NaN pixels to correct")
+        log.info("Identified %d NaN pixels to correct", len(nanidxlist))
         for idx in nanidxlist:
             data[idx[0], idx[1], idx[2]] = 0
             pxdq0[idx[0], idx[1], idx[2]] += 1  # add DNU flag to each nan pixel
@@ -308,7 +309,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     # Compute field-of-view and Fourier sampling.
     fov = 2 * sh * pxsc / 1000.0  # arcsec
     fsam = filtwl_d[filt] / (fov / 3600.0 / 180.0 * np.pi)  # m/pix
-    log.info(f"      FOV = {fov:.1f} arcsec, Fourier sampling = {fsam:.3f} m/pix")
+    log.info("      FOV = %.1f arcsec, Fourier sampling = %.3f m/pix", fov, fsam)
 
     #
     cvis = calc_pupil_support(filt, 2 * sh, pxsc_rad, pupil_mask)
@@ -326,7 +327,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
     # Go through all frames.
     for j in range(imsz[0]):
-        log.info(f"         Frame {j + 1:.0f} of {imsz[0]:.0f}")
+        log.info("         Frame %.0f of %.0f", j + 1, imsz[0])
 
         # Now cut out the subframe.
         # no need to cut out sub-frame; data already cropped
@@ -362,8 +363,10 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
             # noise.
             pxdq_new = np.sum(temp[pxdq_cut < 0.5])
             log.info(
-                f"         Iteration {k + 1:.0f}: {pxdq_new:.0f} new bad pixels, "
-                f"sdev of norm noise = {np.std(fmas_data[pmas]):.3f}"
+                "         Iteration %.0f: %s.0f new bad pixels, sdev of norm noise = %.3f",
+                k + 1,
+                pxdq_new,
+                np.std(fmas_data[pmas]),
             )
 
             # If no new bad pixels were identified, terminate the

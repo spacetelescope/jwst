@@ -528,7 +528,7 @@ class ResampleImage(Resample):
 
         output_model_filename = ""
 
-        log.info(f"{len(indices)} exposures to drizzle together")
+        log.info("%s exposures to drizzle together", len(indices))
         first = True
         with self.input_models:
             for index in indices:
@@ -598,7 +598,7 @@ class ResampleImage(Resample):
                 if self.output_dir is not None:
                     output_name = str(Path(self.output_dir) / output_name)
                 output_model.save(output_name)
-                log.info(f"Saved model in {output_name}")
+                log.info("Saved model in %s", output_name)
                 output_models.append(output_name)
             else:
                 output_models.append(output_model)

@@ -56,7 +56,7 @@ class WavecorrStep(Step):
             # Check for valid exposure type
             exp_type = input_model.meta.exposure.type.upper()
             if exp_type not in wavecorr_supported_modes:
-                self.log.info(f"Skipping wavecorr correction for EXP_TYPE {exp_type}")
+                self.log.info("Skipping wavecorr correction for EXP_TYPE %s", exp_type)
                 input_model.meta.cal_step.wavecorr = "SKIPPED"
                 return input_model
 
@@ -82,7 +82,7 @@ class WavecorrStep(Step):
 
             # Get the reference file
             reffile = self.get_reference_file(input_model, "wavecorr")
-            self.log.info(f"Using WAVECORR reference file {reffile}")
+            self.log.info("Using WAVECORR reference file %s", reffile)
             if reffile == "N/A":
                 self.log.warning("No WAVECORR reference file found")
                 self.log.warning("Wavecorr step will be skipped")

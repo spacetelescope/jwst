@@ -129,7 +129,7 @@ def do_flat_field(output_model, flat_model, inverse=False):
 
         # Apply flat to each slit contained in the input
         for slit in output_model.slits:
-            log.debug('Applying flat to slit %s' % (slit.name))
+            log.debug('Applying flat to slit %s', slit.name)
             apply_flat_field(slit, flat_model, inverse=inverse)
             any_updated = True
 
@@ -412,7 +412,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
                     use_wavecorr=None
                 )
                 if slit_flat is None:
-                    log.debug(f'Slit {slit} flat field could not be determined.')
+                    log.debug('Slit %s flat field could not be determined.', slit)
                     continue
 
             # Append the SlitDataModel to the list of slits
@@ -491,7 +491,7 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
     """
 
     if user_supplied_flat is not None:
-        log.info(f'Pre-computed flat {user_supplied_flat} provided. Using the flat directly')
+        log.info('Pre-computed flat %s provided. Using the flat directly', user_supplied_flat)
         interpolated_flat = user_supplied_flat
     else:
         interpolated_flat = flat_for_nirspec_brightobj(
@@ -556,7 +556,7 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
     """
 
     if user_supplied_flat is not None:
-        log.info(f'Pre-computed flat {user_supplied_flat} provided. Using the flat directly')
+        log.info('Pre-computed flat %s provided. Using the flat directly', user_supplied_flat)
         flat = user_supplied_flat.data
         flat_dq = user_supplied_flat.dq
         flat_err = user_supplied_flat.err
@@ -1655,19 +1655,19 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
 
         if xstart < -0.5:
             truncated = True
-            log.info("xstart from WCS bounding_box was %g" % xstart)
+            log.info("xstart from WCS bounding_box was %g", xstart)
             xstart = 0.
         if ystart < -0.5:
             truncated = True
-            log.info("ystart from WCS bounding_box was %g" % ystart)
+            log.info("ystart from WCS bounding_box was %g", ystart)
             ystart = 0.
         if xstop > 2047.5:
             truncated = True
-            log.info("xstop from WCS bounding_box was %g" % xstop)
+            log.info("xstop from WCS bounding_box was %g", xstop)
             xstop = 2047.
         if ystop > 2047.5:
             truncated = True
-            log.info("ystop from WCS bounding_box was %g" % ystop)
+            log.info("ystop from WCS bounding_box was %g", ystop)
             ystop = 2047.
         if truncated:
             log.info("WCS bounding_box for stripe %d extended beyond image "
@@ -1712,8 +1712,8 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         if flat_dq.dtype == flat_dq_2d.dtype:
             flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
         else:
-            log.warning("flat_dq.dtype = {}  flat_dq_2d.dtype = {}"
-                        .format(flat_dq.dtype, flat_dq_2d.dtype))
+            log.warning("flat_dq.dtype = %s  flat_dq_2d.dtype = %s",
+                        flat_dq.dtype, flat_dq_2d.dtype)
             flat_dq[ystart:ystop, xstart:xstop] |= \
                 flat_dq_2d.astype(flat_dq.dtype).copy()
         flat_err[ystart:ystop, xstart:xstop][good_flag] = flat_err_2d[good_flag]
@@ -1928,8 +1928,8 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
     sum_nan_mask = nan_mask.sum(dtype=np.intp)
     sum_good_mask = good_mask.sum(dtype=np.intp)
     if sum_nan_mask > 0:
-        log.debug(f"Number of NaNs in sci wavelength array = {sum_nan_mask} "
-                  f"out of {sum_nan_mask + sum_good_mask}")
+        log.debug("Number of NaNs in sci wavelength array = %s out of %s",
+                  sum_nan_mask, sum_nan_mask + sum_good_mask)
         if sum_good_mask < 1:
             log.warning("(all are NaN)")
         # Replace NaNs with a relatively harmless but out-of-bounds value.

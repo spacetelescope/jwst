@@ -425,7 +425,7 @@ def _flag_resampled_model_crs(
         and input_model.meta.background.level is not None
     ):
         backg = input_model.meta.background.level
-        log.debug(f"Adding background level {backg} to blotted image")
+        log.debug("Adding background level %s to blotted image", backg)
 
     if blot_err is not None:
         err_to_use = blot_err
@@ -437,7 +437,7 @@ def _flag_resampled_model_crs(
 
     # update the dq flags in-place
     input_model.dq |= cr_mask * np.uint32(DO_NOT_USE | OUTLIER)
-    log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
+    log.info("%s pixels marked as outliers", np.count_nonzero(cr_mask))
 
     # Make sure all data, error, and variance arrays have
     # matching NaNs and DQ flags
@@ -534,4 +534,4 @@ def flag_model_crs(image, blot, snr, median_err=None):
     # matching NaNs and DQ flags
     match_nans_and_flags(image)
 
-    log.info(f"{np.count_nonzero(cr_mask)} pixels marked as outliers")
+    log.info("%s pixels marked as outliers", np.count_nonzero(cr_mask))

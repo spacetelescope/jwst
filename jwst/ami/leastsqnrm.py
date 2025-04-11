@@ -463,7 +463,7 @@ def weighted_operations(img, model, dqm=None):
     # we ignore data with unity or lower values - weight it not-at-all..
     weights = np.where(flatimg <= 1.0, 0.0, 1.0 / np.sqrt(variance))  # anand 2022 Jan
 
-    log.debug(f"{len(nanlist[0]):d} bad pixels skipped in weighted fringefitter")
+    log.debug("%d bad pixels skipped in weighted fringefitter", len(nanlist[0]))
 
     # A - but delete all pixels flagged by dq array
     flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1], np.shape(model)[2])
@@ -530,13 +530,11 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     flatimg = img.reshape(np.shape(img)[0] * np.shape(img)[1])
     flatdqm = dqm.reshape(np.shape(img)[0] * np.shape(img)[1])
     log.info("fringefitting.leastsqnrm.matrix_operations(): ")
-    log.info(f"\timg {img.shape:}")
-    log.info(f"\tdqm {dqm.shape:}")
-    log.info(
-        f"\tL x W = {img.shape[0]:d} x {img.shape[1]:d} = {img.shape[0] * img.shape[1]:d}",
-    )
-    log.info(f"\tflatimg {flatimg.shape:}")
-    log.info(f"\tflatdqm {flatdqm.shape:}")
+    log.info("\timg %s", img.shape)
+    log.info("\tdqm %s", dqm.shape)
+    log.info("\tL x W = %d x %d = %d", img.shape[0], img.shape[1], img.shape[0] * img.shape[1])
+    log.info("\tflatimg %s", flatimg.shape)
+    log.info("\tflatdqm %s", flatdqm.shape)
 
     log.info("")
     log.info("\ttype(dqm) %s", type(dqm))
@@ -545,13 +543,13 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     else:
         nanlist = (np.array(()),)  # shouldn't occur w/MAST JWST data
 
-    log.info(f"\ttype(nanlist) {type(nanlist):}, len={len(nanlist):}")
-    log.info(f"\tnumber of nanlist pixels: {len(nanlist[0]):d} items")
-    log.info(f"\t{len(nanlist[0]):d} DO_NOT_USE pixels found in data slice")
+    log.info("\ttype(nanlist) %s, len=%s", type(nanlist), len(nanlist))
+    log.info("\tnumber of nanlist pixels: %d items", len(nanlist[0]))
+    log.info("\t%d DO_NOT_USE pixels found in data slice", len(nanlist[0]))
 
     flatimg = np.delete(flatimg, nanlist)
 
-    log.info(f"\tflatimg {flatimg.shape:} after deleting {len(nanlist[0]):d}")
+    log.info("\tflatimg %s after deleting %d", flatdqm.shape, len(nanlist[0]))
 
     if flux is not None:
         flatimg = flux * flatimg / flatimg.sum()
@@ -559,9 +557,9 @@ def matrix_operations(img, model, flux=None, linfit=False, dqm=None):
     # A
     flatmodel_nan = model.reshape(np.shape(model)[0] * np.shape(model)[1], np.shape(model)[2])
     flatmodel = np.zeros((len(flatimg), np.shape(model)[2]))
-    log.info(f"\tflatmodel_nan {flatmodel_nan.shape:}")
-    log.info(f"\tflatmodel     {flatmodel.shape:}")
-    log.info(f"\tdifference    {flatmodel_nan.shape[0] - flatmodel.shape[0]:}")
+    log.info("\tflatmodel_nan %s", flatmodel_nan.shape)
+    log.info("\tflatmodel     %s", flatmodel.shape)
+    log.info("\tdifference    %s", flatmodel_nan.shape[0] - flatmodel.shape[0])
     log.info("flat model dimensions %s", np.shape(flatmodel))
     log.info("flat image dimensions %s", np.shape(flatimg))
 
@@ -702,7 +700,7 @@ def tan2visibilities(coeffs):
         delta[q] = np.arctan2(coeffs[2 * q + 2], coeffs[2 * q + 1])
         amp[q] = np.sqrt(coeffs[2 * q + 2] ** 2 + coeffs[2 * q + 1] ** 2)
 
-    log.debug(f"tan2visibilities: shape coeffs:{np.shape(coeffs)} shape delta:{np.shape(delta)}")
+    log.debug("tan2visibilities: shape coeffs:%s shape delta:%s", np.shape(coeffs), np.shape(delta))
 
     # returns fringe amplitude & phase
     return amp, delta

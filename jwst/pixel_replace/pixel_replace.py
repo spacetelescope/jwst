@@ -59,8 +59,8 @@ class PixelReplacement:
 
         except KeyError as err:
             log.critical(
-                f"Algorithm name {self.pars['algorithm']} provided does "
-                "not match an implemented algorithm!"
+                "Algorithm name %s provided does not match an implemented algorithm!",
+                self.pars["algorithm"],
             )
             raise KeyError from err
 
@@ -79,7 +79,7 @@ class PixelReplacement:
         ):
             self.output = self.algorithm(self.input)
             n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
-            log.info(f"Input model had {n_replaced} pixels replaced.")
+            log.info("Input model had %s pixels replaced.", n_replaced)
         elif isinstance(self.input, datamodels.IFUImageModel):
             # Attempt to run pixel replacement on each throw of the IFU slicer
             # individually.
@@ -130,14 +130,15 @@ class PixelReplacement:
 
                         n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
                         log.info(
-                            f"Input MRS frame had {n_replaced} pixels replaced "
-                            f"in IFU slice {i + 1}."
+                            "Input MRS frame had %s pixels replaced in IFU slice %s.",
+                            n_replaced,
+                            i + 1,
                         )
 
                         trace_model.close()
 
                 n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
-                log.info(f"Input MRS frame had {n_replaced} total pixels replaced.")
+                log.info("Input MRS frame had %s total pixels replaced.", n_replaced)
             else:
                 if self.pars["algorithm"] == "mingrad":
                     # mingrad method
@@ -186,14 +187,15 @@ class PixelReplacement:
 
                         n_replaced = np.count_nonzero(trace_model.dq & self.FLUX_ESTIMATED)
                         log.info(
-                            f"Input NRS_IFU frame had {n_replaced} pixels "
-                            f"replaced in IFU slice {i + 1}."
+                            "Input NRS_IFU frame had %s pixels replaced in IFU slice %s.",
+                            n_replaced,
+                            i + 1,
                         )
 
                         trace_model.close()
 
                 n_replaced = np.count_nonzero(self.output.dq & self.FLUX_ESTIMATED)
-                log.info(f"Input NRS_IFU frame had {n_replaced} total pixels replaced.")
+                log.info("Input NRS_IFU frame had %s total pixels replaced.", n_replaced)
 
         # MultiSlitModel inputs (WFSS, NRS_FIXEDSLIT, ?)
         elif isinstance(self.input, datamodels.MultiSlitModel):
@@ -203,7 +205,7 @@ class PixelReplacement:
                 slit_replaced = self.algorithm(slit_model)
 
                 n_replaced = np.count_nonzero(slit_replaced.dq & self.FLUX_ESTIMATED)
-                log.info(f"Slit {i} had {n_replaced} pixels replaced.")
+                log.info("Slit %s had %s pixels replaced.", i, n_replaced)
 
                 self.output.slits[i] = slit_replaced
 
@@ -222,7 +224,7 @@ class PixelReplacement:
                 img_model.update(self.input)
                 img_replaced = self.algorithm(img_model)
                 n_replaced = np.count_nonzero(img_replaced.dq & self.FLUX_ESTIMATED)
-                log.info(f"Input TSO integration {i} had {n_replaced} pixels replaced.")
+                log.info("Input TSO integration %s had %s pixels replaced.", i, n_replaced)
 
                 self.output.data[i] = img_replaced.data
                 self.output.dq[i] = img_replaced.dq
@@ -313,15 +315,15 @@ class PixelReplacement:
             n_bad = np.count_nonzero(dq_slice & self.DO_NOT_USE)
             n_nonscience = np.count_nonzero(dq_slice & self.NON_SCIENCE)
             if n_bad + n_nonscience == len(dq_slice):
-                log.debug(f"Slice {ind} contains no good pixels. Skipping replacement.")
+                log.debug("Slice %s contains no good pixels. Skipping replacement.", ind)
                 valid_profiles.discard(ind)
             elif n_bad == 0:
-                log.debug(f"Slice {ind} contains no bad pixels.")
+                log.debug("Slice %s contains no bad pixels.", ind)
             else:
-                log.debug(f"Slice {ind} contains {n_bad} bad pixels.")
+                log.debug("Slice %s contains %s bad pixels.", ind, n_bad)
                 profiles_to_replace.add(ind)
 
-        log.debug(f"Number of profiles with at least one bad pixel: {len(profiles_to_replace)}")
+        log.debug("Number of profiles with at least one bad pixel: %s", len(profiles_to_replace))
 
         for ind in profiles_to_replace:
             # Use sets for convenient finding of neighboring slices to use in profile creation
@@ -390,8 +392,9 @@ class PixelReplacement:
             replace_mask = np.where(~np.isnan(cleaned_current))[0]
             if len(replace_mask) == 0:
                 log.info(
-                    f"Profile in {self.LOG_SLICE[dispaxis - 1]} {ind} "
-                    f"has no valid values - skipping."
+                    "Profile in %s %s has no valid values - skipping.",
+                    self.LOG_SLICE[dispaxis - 1],
+                    ind,
                 )
                 continue
             min_median = median_profile[replace_mask]

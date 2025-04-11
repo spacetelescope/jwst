@@ -102,10 +102,12 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
                 update_s_region_imaging(output_model)
             except Exception as exc:
                 log.error(
-                    f"Unable to update S_REGION for type {output_model.meta.exposure.type}: {exc}"
+                    "Unable to update S_REGION for type %s: %s",
+                    output_model.meta.exposure.type,
+                    exc,
                 )
             else:
-                log.info(f"assign_wcs updated S_REGION to {output_model.meta.wcsinfo.s_region}")
+                log.info("assign_wcs updated S_REGION to %s", output_model.meta.wcsinfo.s_region)
             if output_model.meta.exposure.type.lower() == "mir_lrs-slitless":
                 output_model.wavelength = get_wavelengths(output_model)
         elif output_model.meta.exposure.type.lower() == "nrs_ifu":
@@ -117,15 +119,18 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
                 update_s_region_spectral(output_model)
             except Exception as exc:
                 log.info(
-                    f"Unable to update S_REGION for type {output_model.meta.exposure.type}: {exc}"
+                    "Unable to update S_REGION for type %s: %s",
+                    output_model.meta.exposure.type,
+                    exc,
                 )
 
     # Store position of dithered pointing location in metadata for later spectral extraction
     if output_model.meta.exposure.type.lower() == "mir_lrs-fixedslit":
         store_dithered_position(output_model)
         log.debug(
-            "Storing dithered pointing location information: "
-            f"{output_model.meta.dither.dithered_ra} {output_model.meta.dither.dithered_dec}"
+            "Storing dithered pointing location information: %s %s",
+            output_model.meta.dither.dithered_ra,
+            output_model.meta.dither.dithered_dec,
         )
     log.info("COMPLETED assign_wcs")
     return output_model

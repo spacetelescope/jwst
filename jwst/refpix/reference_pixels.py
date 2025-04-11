@@ -348,8 +348,9 @@ class Dataset:
                 # Log assignment as rows (in DMS plane)
                 # despite assigning columns (in detector plane)
                 log.info(
-                    f"Subarray {self.subarray} has no reference pixels: "
-                    f"assigning top and bottom four rows as reference pixels."
+                    "Subarray %s has no reference pixels: "
+                    "assigning top and bottom four rows as reference pixels.",
+                    self.subarray,
                 )
                 pixeldq[self.rowstart : self.rowstop, self.colstart : self.colstart + 4] = (
                     pixeldq[self.rowstart : self.rowstop, self.colstart : self.colstart + 4]
@@ -413,16 +414,16 @@ class Dataset:
                 log.info("NIR full frame data")
                 log.info("The following parameters are valid for this mode:")
                 if self.refpix_algorithm == "median":
-                    log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
-                    log.info(f"odd_even_columns = {self.odd_even_columns}")
-                    log.info(f"side_smoothing_length = {self.side_smoothing_length}")
-                    log.info(f"side_gain = {self.side_gain}")
+                    log.info("use_side_ref_pixels = %s", self.use_side_ref_pixels)
+                    log.info("odd_even_columns = %s", self.odd_even_columns)
+                    log.info("side_smoothing_length = %s", self.side_smoothing_length)
+                    log.info("side_gain = %s", self.side_gain)
                     log.info("The following parameter is not applicable and is ignored:")
-                    log.info(f"odd_even_rows = {self.odd_even_rows}")
+                    log.info("odd_even_rows = %s", self.odd_even_rows)
                 elif self.refpix_algorithm == "sirs":
-                    log.info(f"sigreject = {self.sigreject}")
-                    log.info(f"gaussmooth = {self.gaussmooth}")
-                    log.info(f"halfwidth = {self.halfwidth}")
+                    log.info("sigreject = %s", self.sigreject)
+                    log.info("gaussmooth = %s", self.gaussmooth)
+                    log.info("halfwidth = %s", self.halfwidth)
             else:
                 log.info("NIR subarray data")
                 # Transform the pixeldq array from DMS to detector coords
@@ -442,41 +443,41 @@ class Dataset:
                     else:
                         log.info("The following parameters are valid for this mode:")
                         if ngoodtopbottom > 0:
-                            log.info(f"odd_even_columns = {self.odd_even_columns}")
+                            log.info("odd_even_columns = %s", self.odd_even_columns)
                         if ngoodside > 0:
-                            log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
-                            log.info(f"side_smoothing_length = {self.side_smoothing_length}")
-                            log.info(f"side_gain = {self.side_gain}")
+                            log.info("use_side_ref_pixels = %s", self.use_side_ref_pixels)
+                            log.info("side_smoothing_length = %s", self.side_smoothing_length)
+                            log.info("side_gain = %s", self.side_gain)
                         log.info("The following parameters are not applicable and are ignored")
                         if ngoodtopbottom == 0:
-                            log.info(f"odd_even_columns = {self.odd_even_columns}")
+                            log.info("odd_even_columns = %s", self.odd_even_columns)
                         if ngoodside == 0:
-                            log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
-                            log.info(f"side_smoothing_length = {self.side_smoothing_length}")
-                            log.info(f"side_gain = {self.side_gain}")
-                        log.info(f"odd_even_rows = {self.odd_even_rows}")
+                            log.info("use_side_ref_pixels = %s", self.use_side_ref_pixels)
+                            log.info("side_smoothing_length = %s", self.side_smoothing_length)
+                            log.info("side_gain = %s", self.side_gain)
+                        log.info("odd_even_rows = %s", self.odd_even_rows)
                 else:
                     log.info("Single readout amplifier used")
                     if ngoodtopbottom == 0:
                         log.info("No valid reference pixels.  This step will have no effect.")
                     else:
                         log.info("The following parameter is valid for this mode:")
-                        log.info(f"odd_even_columns = {self.odd_even_columns}")
+                        log.info("odd_even_columns = %s", self.odd_even_columns)
                         log.info("The following parameters are not applicable and are ignored:")
-                        log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
-                        log.info(f"side_smoothing_length = {self.side_smoothing_length}")
-                        log.info(f"side_gain = {self.side_gain}")
-                        log.info(f"odd_even_rows = {self.odd_even_rows}")
+                        log.info("use_side_ref_pixels = %s", self.use_side_ref_pixels)
+                        log.info("side_smoothing_length = %s", self.side_smoothing_length)
+                        log.info("side_gain = %s", self.side_gain)
+                        log.info("odd_even_rows = %s", self.odd_even_rows)
         else:
             if not self.is_subarray:
                 log.info("MIRI full frame data")
                 log.info("The following parameter is valid for this mode:")
-                log.info(f"odd_even_rows = {self.odd_even_rows}")
+                log.info("odd_even_rows = %s", self.odd_even_rows)
                 log.info("The following parameters are not applicable and are ignored:")
-                log.info(f"use_side_ref_pixels = {self.use_side_ref_pixels}")
-                log.info(f"odd_even_columns = {self.odd_even_columns}")
-                log.info(f"side_smoothing_length = {self.side_smoothing_length}")
-                log.info(f"side_gain = {self.side_gain}")
+                log.info("use_side_ref_pixels = %s", self.use_side_ref_pixels)
+                log.info("odd_even_columns = %s", self.odd_even_columns)
+                log.info("side_smoothing_length = %s", self.side_smoothing_length)
+                log.info("side_gain = %s", self.side_gain)
             else:
                 log.info("MIRI subarray data")
                 log.info("refpix processing skipped for this mode")
@@ -517,19 +518,19 @@ class Dataset:
             ngood = len(
                 np.where((self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse))[0]
             )
-            log.debug(f"Edgeless subarray {self.subarray} has {ngood} reference pixels.")
+            log.debug("Edgeless subarray %s has %s reference pixels.", self.subarray, ngood)
         else:
             for edge in ["top", "bottom"]:
                 for amplifier in self.amplifiers:
                     rowstart, rowstop, colstart, colstop = self.reference_sections[amplifier][edge]
-                    log.debug(f"Ref sections for {edge} & {amplifier}:")
-                    log.debug(f" [{rowstart}:{rowstop}], [{colstart}:{colstop}]")
+                    log.debug("Ref sections for %s & %s:", edge, amplifier)
+                    log.debug(" [%s:%s], [%s:%s]", rowstart, rowstop, colstart, colstop)
                     good = np.where(
                         np.bitwise_and(self.pixeldq[rowstart:rowstop, colstart:colstop], donotuse)
                         != donotuse
                     )
                     ngood += len(good[0])
-                    log.debug(f"For {edge} & {amplifier}: {len(good[0])}")
+                    log.debug("For %s & %s: %s", edge, amplifier, len(good[0]))
         return ngood
 
 
@@ -623,12 +624,12 @@ class NIRDataset(Dataset):
         # Default n=16, r=4
         scipix_n = input_model.meta.exposure.nrs_normal
         if scipix_n is None:
-            log.warning(f"Keyword NRS_NORM not found; using default value {scipix_n_default}")
+            log.warning("Keyword NRS_NORM not found; using default value %s", scipix_n_default)
             scipix_n = scipix_n_default
 
         refpix_r = input_model.meta.exposure.nrs_reference
         if refpix_r is None:
-            log.warning(f"Keyword NRS_REF not found; using default value {refpix_r_default}")
+            log.warning("Keyword NRS_REF not found; using default value %s", refpix_r_default)
             refpix_r = refpix_r_default
 
         # If these are not set to standard values, the
@@ -2207,10 +2208,10 @@ class MIRIDataset(Dataset):
             odd = self.get_odd_refvalue(group, amplifier, left_or_right)
             even = self.get_even_refvalue(group, amplifier, left_or_right)
             if odd is None:
-                log.warning(f"Odd rows for amplifier {amplifier} have no good reference pixels")
+                log.warning("Odd rows for amplifier %s have no good reference pixels", amplifier)
                 self.bad_reference_pixels = True
             elif even is None:
-                log.warning(f"Even rows for amplifier {amplifier} have no good reference pixels")
+                log.warning("Even rows for amplifier %s have no good reference pixels", amplifier)
                 self.bad_reference_pixels = True
             return odd, even
         else:
@@ -2334,7 +2335,7 @@ class MIRIDataset(Dataset):
                 thisgroup = self.group
                 refvalues = self.get_refvalues(thisgroup)
                 if self.bad_reference_pixels:
-                    log.warning(f"Group {group} has no reference pixels")
+                    log.warning("Group %s has no reference pixels", group)
                     break
                 self.do_left_right_correction(thisgroup, refvalues)
                 self.restore_group(integration, group)

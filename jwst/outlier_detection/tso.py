@@ -149,7 +149,7 @@ def compute_rolling_median(
     sci = model.data
     weight = model.wht
     badmask = np.less(weight, weight_threshold)
-    log.debug(f"Percentage of pixels with low weight: {np.sum(badmask) / weight.size * 100}")
+    log.debug("Percentage of pixels with low weight: %s", np.sum(badmask) / weight.size * 100)
 
     # Fill resampled_sci array with nan's where mask values are True
     sci[badmask] = np.nan

@@ -46,10 +46,10 @@ class AnotherDummyStep(Step):
     reference_file_types = ["flat_field"]
 
     def process(self, a=0, b=0):  # noqa: D102
-        self.log.info(f"Found a: {a}, b: {b}")
-        self.log.info(f"par1: {self.par1}")
-        self.log.info(f"par2: {self.par2}")
-        self.log.info(f"par3: {self.par3}")
+        self.log.info("Found a: %s, b: %s", a, b)
+        self.log.info("par1: %s", self.par1)
+        self.log.info("par2: %s", self.par2)
+        self.log.info("par3: %s", self.par3)
 
         return a + b
 
@@ -112,8 +112,8 @@ class PostHookStep(Step):
     """
 
     def process(self, *args):  # noqa: D102
-        self.log.info(f'Received args: "{args}"')
-        self.log.info(f'Self.parent = "{self.parent}"')
+        self.log.info('Received args: "%s"', args)
+        self.log.info('Self.parent = "%s"', self.parent)
 
         args[0].post_hook_run = True
         self.parent.post_hook_run = True
@@ -126,8 +126,8 @@ class PostHookWithReturnStep(Step):
     """
 
     def process(self, *args):  # noqa: D102
-        self.log.info(f'Received args: "{args}"')
-        self.log.info(f'Self.parent = "{self.parent}"')
+        self.log.info('Received args: "%s"', args)
+        self.log.info('Self.parent = "%s"', self.parent)
 
         self.parent.post_hook_run = True
         return "PostHookWithReturnStep executed"
@@ -140,8 +140,8 @@ class PreHookStep(Step):
     """
 
     def process(self, *args):  # noqa: D102
-        self.log.info(f'Received args: "{args}"')
-        self.log.info(f'Self.parent = "{self.parent}"')
+        self.log.info('Received args: "%s"', args)
+        self.log.info('Self.parent = "%s"', self.parent)
 
         args[0].pre_hook_run = True
         self.parent.pre_hook_run = True

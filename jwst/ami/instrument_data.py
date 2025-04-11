@@ -212,13 +212,13 @@ class NIRISS:
             self.itime = effinttm
             if self.firstfew is not None:
                 if scidata.shape[0] > self.firstfew:
-                    log.info(f"Analyzing only the first {self.firstfew:d} integrations")
+                    log.info("Analyzing only the first %d integrations", self.firstfew)
                     scidata = scidata[: self.firstfew, :, :]
                     bpdata = bpdata[: self.firstfew, :, :]
                 else:
                     log.warning(
-                        f"Input firstfew={self.firstfew:d} is greater than "
-                        "the number of integrations"
+                        "Input firstfew=%d is greater than the number of integrations",
+                        self.firstfew,
                     )
                     log.warning("All integrations will be analyzed")
             self.nwav = scidata.shape[0]
@@ -249,7 +249,7 @@ class NIRISS:
         outliers2 = np.argwhere(mediandiff > nsigma * std_im)
 
         dqvalues = bpdata[outliers]
-        log.info(f"{len(dqvalues)} additional pixels >10-sig from median of stack found")
+        log.info("%s additional pixels >10-sig from median of stack found", len(dqvalues))
         # decompose DQ values to check if they are already flagged DNU
         count = 0
         for loc, dq_value in zip(outliers2, dqvalues, strict=False):
@@ -263,7 +263,7 @@ class NIRISS:
             if "DO_NOT_USE" not in bad_types:
                 bpdata[loc[0], loc[1], loc[2]] += 1
                 count += 1
-        log.info(f"{count} DO_NOT_USE flags added to DQ array for found outlier pixels")
+        log.info("%s DO_NOT_USE flags added to DQ array for found outlier pixels", count)
 
         # Roughly center scidata, bpdata around peak pixel position
         peakx, peaky, r = utils.min_distance_to_edge(med_im)
@@ -275,8 +275,11 @@ class NIRISS:
         ]
 
         log.info(
-            f"Cropping all integrations to {2 * r + 1:d}x{2 * r + 1:d} pixels "
-            f"around peak ({peakx + 4:d},{peaky:d})"
+            "Cropping all integrations to %dx%d pixels around peak (%d,%d)",
+            2 * r + 1,
+            2 * r + 1,
+            peakx + 4,
+            peaky,
         )  # +4 because of trimmed refpx
         # apply bp fix here
         if self.run_bpfix:
@@ -354,9 +357,9 @@ class NIRISS:
             if vpar == -1:
                 # rotate clockwise  <rotate coords clockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(-rot_ang))
-                log.info(f"Rotating mask hole centers clockwise by {rot_ang:.3f} degrees")
+                log.info("Rotating mask hole centers clockwise by %.3f degrees", rot_ang)
             else:
                 # counterclockwise  <rotate coords counterclockwise>
                 ctrs_rot = utils.rotate2dccw(mask_ctrs, np.deg2rad(rot_ang))
-                log.info(f"Rotating mask hole centers counterclockwise by {rot_ang:.3f} degrees")
+                log.info("Rotating mask hole centers counterclockwise by %.3f degrees", rot_ang)
             return ctrs_rot

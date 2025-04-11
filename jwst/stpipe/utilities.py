@@ -88,11 +88,11 @@ def load_local_pkg(fpath):
                 module = importlib.util.module_from_spec(spec)
                 spec.loader.exec_module(module)
             except Exception as err:
-                logger.debug(f'Cannot load module "{module_path}": {str(err)}')
+                logger.debug('Cannot load module "%s": %s', module_path, err)
             else:
                 yield module
     except Exception as err:
-        logger.debug(f'Cannot complete package loading: Exception occurred: "{str(err)}"')
+        logger.debug('Cannot complete package loading: Exception occurred: "%s"', err)
 
 
 def folder_traverse(folder_path, basename_regex=".+", path_exclude_regex="^$"):

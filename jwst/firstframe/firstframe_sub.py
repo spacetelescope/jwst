@@ -48,7 +48,7 @@ def do_correction(output, bright_use_group1=False):
             )
             output.groupdq[:, 0, :, :] = tvals
             log.info(
-                f"Number of bright pixels with first group not set to DO_NOT_USE, #{np.sum(svals)}"
+                "Number of bright pixels with first group not set to DO_NOT_USE, #%s", np.sum(svals)
             )
         else:
             output.groupdq[:, 0, :, :] = np.bitwise_or(

@@ -201,7 +201,7 @@ class DataSet():
 
         shape = self.output_obj.data.shape
         if len(shape) != 4:
-            log.warning(f"Don't understand shape {shape} of input data, skipping...")
+            log.warning("Don't understand shape %s of input data, skipping...", shape)
             skipped = True
             return self.output_obj, None, None, skipped
 

@@ -131,4 +131,4 @@ def _save_intermediate_output(model, suffix, make_output_path):
 
     output_path = make_output_path(input_path, suffix=suffix)
     model.save(output_path)
-    log.info(f"Saved {suffix} model in {output_path}")
+    log.info("Saved %s model in %s", suffix, output_path)

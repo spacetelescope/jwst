@@ -90,12 +90,12 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
     for product in dest_asn['products']:
         for member in product['members']:
             src_path = Path(member['expname'])
-            logger.info(f'*** Copying member {src_path.name}')
+            logger.info('*** Copying member %s', src_path.name)
             if str(src_path.parent).startswith('.'):
                 src_path = source_folder / src_path
             dest_path = dest_folder / src_path.name
             process_args = shellcmd_args + [str(src_path), str(dest_path)]
-            logger.debug(f'Shell command in use: {process_args}')
+            logger.debug('Shell command in use: %s', process_args)
             result = subprocess.run(process_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True)
             logger.debug(result.stdout.decode())
             logger.info('...done')
@@ -104,7 +104,7 @@ def asn_gather(association, destination=None, exp_types=None, exclude_types=None
     # Save new association.
     dest_path = dest_folder / source_asn_path.name
     _, serialized = dest_asn.dump()
-    logger.info(f'Copying the association file itself {dest_path}')
+    logger.info('Copying the association file itself %s', dest_path)
     with open(dest_path, 'w') as fh:
         fh.write(serialized)
 

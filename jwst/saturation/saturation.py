@@ -74,7 +74,7 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     # Enable use of read_pattern specific treatment if selected
     if use_readpatt:
         read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
-        log.info(f"Using read_pattern with nframes {nframes}")
+        log.info("Using read_pattern with nframes %s", nframes)
     else:
         read_pattern=None
 
@@ -137,7 +137,7 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
 
     if use_readpatt:
         read_pattern = [[x + 1 + groupstart * nframes for x in range(nframes)] for groupstart in range(ngroups)]
-        log.info(f"Using read_pattern with nframes {nframes}")
+        log.info("Using read_pattern with nframes %s", nframes)
     else:
         read_pattern=None
 
@@ -252,9 +252,9 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt):
     output_model.groupdq = groupdq
 
     n_sat = np.any(np.any(np.bitwise_and(groupdq, SATURATED), axis=0), axis=0).sum()
-    log.info(f'Detected {n_sat} saturated pixels')
+    log.info('Detected %s saturated pixels', n_sat)
     n_floor = np.any(np.any(np.bitwise_and(groupdq, AD_FLOOR), axis=0), axis=0).sum()
-    log.info(f'Detected {n_floor} A/D floor pixels')
+    log.info('Detected %s A/D floor pixels', n_floor)
 
     # Save the NO_SAT_CHECK flags in the output PIXELDQ array
     pixeldq_temp = x_irs2.from_irs2(output_model.pixeldq, irs2_mask,

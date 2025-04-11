@@ -336,7 +336,7 @@ def find_suffixes():
             try:
                 step = Step.from_config_file(path.join(config_path, config_file))
             except Exception as err:
-                logger.debug("Configuration %s failed: %s", config_file, str(err))
+                logger.debug("Configuration %s failed: %s", config_file, err)
             else:
                 suffixes.add(step.name.lower())
                 if step.suffix is not None:

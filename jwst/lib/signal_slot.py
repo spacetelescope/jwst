@@ -79,12 +79,7 @@ class Signal:
             try:
                 yield slot(*args, **kwargs)
             except Exception as exception:
-                logger.debug(
-                    "Signal %s: Slot %s raised %s",
-                    self.__class__.__name__,
-                    str(slot),
-                    str(exception),
-                )
+                logger.debug("Signal %s: Slot %s raised %s", type(self).__name__, slot, exception)
 
     def reduce(self, *args, **kwargs):
         """
@@ -179,7 +174,7 @@ class Signal:
         single_shot : bool
             If True, only remove single shot slots.
         """
-        logger.debug("Signal %s: Clearing slots", self.__class__.__name__)
+        logger.debug("Signal %s: Clearing slots", type(self).__name__)
         if not single_shot:
             self._slots.clear()
         else:

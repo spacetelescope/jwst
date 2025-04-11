@@ -241,7 +241,7 @@ class OutputSpectrumModel:
                 slit_name = f"{ninputs}, slit {in_spec.name}"
             else:
                 slit_name = ninputs
-            log.info(f"Accumulating data from input spectrum {slit_name}")
+            log.info("Accumulating data from input spectrum %s", slit_name)
             # Get the pixel numbers in the output corresponding to the
             # wavelengths of the current input spectrum.
             out_pixel = self.wcs.invert(
@@ -276,7 +276,7 @@ class OutputSpectrumModel:
         )
 
         if n_nan > 0:
-            log.warning(f"{int(n_nan)} output pixel numbers were NaN")
+            log.warning("%s output pixel numbers were NaN", int(n_nan))
 
         self.flux = flux
         self.flux_error = flux_error
@@ -294,7 +294,7 @@ class OutputSpectrumModel:
         n_good = len(index[0])
         if nelem > n_good:
             log.warning(
-                f"{int(nelem - n_good)} elements of output had no corresponding input data;"
+                "%s elements of output had no corresponding input data;", int(nelem - n_good)
             )
             log.warning("    these elements will be omitted.")
             self.wavelength = self.wavelength[index]
@@ -490,7 +490,7 @@ def count_input(input_spectra):
 
         # Check for degenerate spectrum. Skip with log.
         if len(input_wl) < 2:
-            log.warning(f"Spectrum {in_spec} is degenerate with length {len(input_wl)}")
+            log.warning("Spectrum %s is degenerate with length %s", in_spec, len(input_wl))
             log.warning("Skipping...")
             continue
 
@@ -503,7 +503,7 @@ def count_input(input_spectra):
             wl0 = input_wl[-1] - 0.5 * (input_wl[-2] - input_wl[-1])
             wl1 = input_wl[0] + 0.5 * (input_wl[0] - input_wl[1])
         else:
-            log.warning(f"Spectrum {in_spec} has a monotonic wavelength solution.")
+            log.warning("Spectrum %s has a monotonic wavelength solution.", in_spec)
             log.warning("Skipping...")
             continue
         temp = np.where(wl >= wl0, 1, 0)
@@ -666,7 +666,7 @@ def check_exptime(exptime_key):
         exptime_key = "unit_weight"
         log.info("Using weight = 1.")
     else:
-        log.warning(f"Don't understand exptime_key = '{exptime_key}'; using unit weight.")
+        log.warning("Don't understand exptime_key = '%s'; using unit weight.", exptime_key)
         log.info("The options for exptime_key are:")
         log.info("  integration_time, effinttm, exposure_time, effexptm, unit_weight, unit weight")
         exptime_key = "unit_weight"
@@ -694,7 +694,7 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     output_model : `~jwst.datamodels.JwstDataModel`
         A datamodels.CombinedSpecModel object.
     """
-    log.debug(f"Using exptime_key = {exptime_key}.")
+    log.debug("Using exptime_key = %s.", exptime_key)
 
     exptime_key = check_exptime(exptime_key)
 

@@ -174,7 +174,7 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
         List of associations
     """
     cid, ctype = cid_ctype
-    logger.info(f'Generating associations on candidate {cid_ctype}')
+    logger.info('Generating associations on candidate %s', cid_ctype)
 
     # Get the pool
     pool_cid = pool_from_candidate(pool, cid)
@@ -187,13 +187,13 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
         for i, row in enumerate(pool_cid):
             if 'background' in row['asn_candidate'] and row['bkgdtarg'] == 'f':
                 skip_rows.append(i)
-        logger.debug(f"Dropping {len(skip_rows)} exposures from pool - observation "
-                     f"candidate type does not allow association generation when a "
-                     f"background candidate is present.")
+        logger.debug("Dropping %s exposures from pool - observation "
+                     "candidate type does not allow association generation when a "
+                     "background candidate is present.", len(skip_rows))
         pool_cid.remove_rows(skip_rows)
 
     pool_cid['asn_candidate'] = [f"[('{cid}', '{ctype}')]"] * len(pool_cid)
-    logger.info(f'Length of pool for {cid}: {len(pool_cid)}')
+    logger.info('Length of pool for %s: %s', cid, len(pool_cid))
 
     # Create the rules with the simplified asn_candidate constraint
     asn_constraint = constrain_on_candidates([cid])

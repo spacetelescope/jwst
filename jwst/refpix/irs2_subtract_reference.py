@@ -88,7 +88,9 @@ def correct_model(
     nrows = len(irs2_model.irs2_table.field("alpha_0"))
     expected_nrows = 2 * 712 * 2048
     if nrows != expected_nrows:
-        log.error(f"Number of rows in reference file = {nrows}, but it should be {expected_nrows}.")
+        log.error(
+            "Number of rows in reference file = %s, but it should be %s.", nrows, expected_nrows
+        )
         output_model.meta.cal_step.refpix = "SKIPPED"
         return output_model
     alpha = np.ones((4, nrows // 2), dtype=np.complex64)
@@ -106,12 +108,12 @@ def correct_model(
 
     scipix_n = output_model.meta.exposure.nrs_normal
     if scipix_n is None:
-        log.warning(f"Keyword NRS_NORM not found; using default value {scipix_n_default}")
+        log.warning("Keyword NRS_NORM not found; using default value %s", scipix_n_default)
         scipix_n = scipix_n_default
 
     refpix_r = output_model.meta.exposure.nrs_reference
     if refpix_r is None:
-        log.warning(f"Keyword NRS_REF not found; using default value {refpix_r_default}")
+        log.warning("Keyword NRS_REF not found; using default value %s", refpix_r_default)
         refpix_r = refpix_r_default
 
     # Convert from sky (DMS) orientation to detector orientation.
@@ -123,7 +125,7 @@ def correct_model(
         data = np.swapaxes(data, 2, 3)[:, :, ::-1, ::-1]
         pixeldq = np.swapaxes(pixeldq, 0, 1)[::-1, ::-1]
     else:
-        log.warning(f"Detector {detector}; not changing orientation (sky vs detector)")
+        log.warning("Detector %s; not changing orientation (sky vs detector)", detector)
 
     n_int = data.shape[0]  # number of integrations in file
     ny = data.shape[-2]  # 2048
@@ -158,7 +160,7 @@ def correct_model(
 
     # Compute and apply the correction to one integration at a time
     for integ in range(n_int):
-        log.info(f"Working on integration {integ + 1} out of {n_int}")
+        log.info("Working on integration %s out of %s", integ + 1, n_int)
 
         # The input data have a length of 3200 for the last axis (X), while
         # the output data have an X axis with length 2048, the same as the
@@ -386,12 +388,16 @@ def clobber_ref(data, output, odd_even, mask, ref_flags, is_irs2, scipix_n=16, r
             odd_even_row = odd_even[row]
         bits = decode_mask(mask[row])
         log.debug(
-            f"output {output[row]}  odd_even {odd_even[row]}  mask {mask[row]} DQ bits {bits}"
+            "output %s  odd_even %s  mask %s DQ bits %s",
+            output[row],
+            odd_even[row],
+            mask[row],
+            bits,
         )
         new_bad_pix = []
         for k in bits:
             ref = offset + scipix_n // 2 + k * (scipix_n + refpix_r) + 2 * (odd_even_row - 1)
-            log.debug(f"bad interleaved reference at pixels {ref} {ref + 1}")
+            log.debug("bad interleaved reference at pixels %s %s", ref, ref + 1)
 
             # track new bad pixel if not already handled
             for bad_pix in (ref, ref + 1):
@@ -536,19 +542,22 @@ def replace_refpix(
 
     if v1 is not None and v2 is not None:
         log.debug(
-            f"   Pixel {bad_pix} replaced with value averaged from {nearest_low},{nearest_high}"
+            "   Pixel %s replaced with value averaged from %s,%s",
+            bad_pix,
+            nearest_low,
+            nearest_high,
         )
         replace_value = np.mean([v1, v2], axis=0)
     elif v1 is not None:
-        log.debug(f"   Pixel {bad_pix} replaced with value at {nearest_low}")
+        log.debug("   Pixel %s replaced with value at %s", bad_pix, nearest_low)
         replace_value = v1
     elif v2 is not None:
-        log.debug(f"   Pixel {bad_pix} replaced with value at {nearest_high}")
+        log.debug("   Pixel %s replaced with value at %s", bad_pix, nearest_high)
         replace_value = v2
     elif neighbor is not None:
-        log.debug(f"   Pixel {bad_pix} replaced with value at neighbor {neighbor}")
+        log.debug("   Pixel %s replaced with value at neighbor %s", bad_pix, neighbor)
     else:
-        log.debug(f"   Pixel {bad_pix} replaced with 0.0")
+        log.debug("   Pixel %s replaced with 0.0", bad_pix)
 
     if axis == -1:
         data[:, :, :, bad_pix] = replace_value
@@ -580,7 +589,7 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
     pixeldq = datamodel.pixeldq
     scipix_n = datamodel.meta.exposure.nrs_normal
     refpix_r = datamodel.meta.exposure.nrs_reference
-    log.debug(f"Using flagging threshold n_sigma = {n_sigma}")
+    log.debug("Using flagging threshold n_sigma = %s", n_sigma)
 
     # bad pixels will be replaced for all integrations and all groups
     nints, ngroups, ny, nx = np.shape(data)
@@ -643,9 +652,10 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
                 high_stds = (rp_stds - mean_of_stds) > (n_sigma * std_of_stds)
 
                 log.debug(
-                    f"High diffs={np.sum(high_diffs)}, "
-                    f"high means={np.sum(high_means)}, "
-                    f"high stds={np.sum(high_stds)}"
+                    "High diffs=%s, high means=%s, high stds=%s",
+                    np.sum(high_diffs),
+                    np.sum(high_means),
+                    np.sum(high_stds),
                 )
                 int_bad[ref_pix[high_diffs]] = True
                 int_bad[pair_pixel[high_diffs]] = True
@@ -655,9 +665,10 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
                 int_bad[pair_pixel[high_stds]] = True
 
                 log.debug(
-                    f"{np.sum(int_bad[offset : offset + amplifier])} "
-                    f"suspicious bad reference pixels in "
-                    f"amplifier {k}, integration {j}"
+                    "%s suspicious bad reference pixels in amplifier %s, integration %s",
+                    np.sum(int_bad[offset : offset + amplifier]),
+                    k,
+                    j,
                 )
                 mask_bad |= int_bad
 
@@ -671,9 +682,9 @@ def flag_bad_refpix(datamodel, n_sigma=3.0, flag_only=False, replace_only=False)
                 )
 
     if flag_only:
-        log.info(f"Total bad reference pixels flagged: {np.sum(mask_bad)}")
+        log.info("Total bad reference pixels flagged: %s", np.sum(mask_bad))
     else:
-        log.info(f"Total bad reference pixels replaced: {np.sum(mask_bad)}")
+        log.info("Total bad reference pixels replaced: %s", np.sum(mask_bad))
     if pixeldq is not None:
         pixeldq[mask_bad] |= dqflags.pixel["BAD_REF_PIXEL"] | dqflags.pixel["DO_NOT_USE"]
 
@@ -865,7 +876,7 @@ def subtract_reference(
     # the corrections are subtracted from each sector independently.
     shape_d = data0.shape
     for k in range(1, 5):
-        log.debug(f"processing sector {k}")
+        log.debug("processing sector %s", k)
 
         # At this point in the processing data0 has shape (5, ngroups, 2048, 712),
         # assuming normal IRS2 readout settings. r0k contains a subset of the

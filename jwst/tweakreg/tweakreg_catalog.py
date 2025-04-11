@@ -219,7 +219,7 @@ def make_tweakreg_catalog(
             warnings.simplefilter("ignore", AstropyUserWarning)
             threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
     except ValueError as e:
-        log.warning(f"Error determining sky background: {e.args[0]}")
+        log.warning("Error determining sky background: %s", e.args[0])
         # return an empty catalog
         catalog = Table(names=columns, dtype=(int, float, float, float))
         return catalog

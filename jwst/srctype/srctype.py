@@ -34,7 +34,7 @@ def set_source_type(input_model, source_type=None):
         log.error("EXP_TYPE value not found in input")
         raise RuntimeError("Step cannot be executed without an EXP_TYPE value")
     else:
-        log.info(f"Input EXP_TYPE is {exptype}")
+        log.info("Input EXP_TYPE is %s", exptype)
     # For exposure types that have a single source specification, get the
     # user-supplied source type from the selection they provided in the APT
     if exptype in [
@@ -63,7 +63,7 @@ def set_source_type(input_model, source_type=None):
         # SRCTYPE as both input and output (as before).
         try:
             user_type = input_model.meta.target.source_type_apt
-            log.info(f"Input SRCTYAPT = {user_type}")
+            log.info("Input SRCTYAPT = %s", user_type)
             if user_type is None:
                 log.warning("SRCTYAPT keyword not found in input; using SRCTYPE instead")
                 user_type = input_model.meta.target.source_type
@@ -89,29 +89,29 @@ def set_source_type(input_model, source_type=None):
             ]:
                 src_type = source_type
 
-            log.warning(f"Based on user-input, setting SRCTYPE = {src_type}")
+            log.warning("Based on user-input, setting SRCTYPE = %s", src_type)
             input_model.meta.target.source_type = src_type
 
         elif bkg_target:
             # If this image is flagged as a BACKGROUND target, set the
             # source type to EXTENDED regardless of any other settings
             src_type = "EXTENDED"
-            log.info(f"Exposure is a background target; setting SRCTYPE = {src_type}")
+            log.info("Exposure is a background target; setting SRCTYPE = %s", src_type)
 
         elif pipe_utils.is_tso(input_model):
             # Treat all TSO exposures as a point source
             src_type = "POINT"
-            log.info(f"Input is a TSO exposure; setting SRCTYPE = {src_type}")
+            log.info("Input is a TSO exposure; setting SRCTYPE = %s", src_type)
 
         elif user_type in ["POINT", "EXTENDED"]:
             # Use the value supplied by the user
             src_type = user_type
-            log.info(f"Using input source type = {src_type}")
+            log.info("Using input source type = %s", src_type)
 
         elif (patttype is not None) and (("NOD" in patttype) or ("POINT-SOURCE" in patttype)):
             # Set all nodded exposures to POINT source type
             src_type = "POINT"
-            log.info(f"Exposure is nodded; setting SRCTYPE = {src_type}")
+            log.info("Exposure is nodded; setting SRCTYPE = %s", src_type)
 
         else:
             # Set a default value based on the exposure type
@@ -120,7 +120,7 @@ def set_source_type(input_model, source_type=None):
             else:
                 src_type = "POINT"
 
-            log.info(f"Input source type is unknown; setting default SRCTYPE = {src_type}")
+            log.info("Input source type is unknown; setting default SRCTYPE = %s", src_type)
 
         # Set the source type in the global meta attribute
         input_model.meta.target.source_type = src_type
@@ -137,7 +137,7 @@ def set_source_type(input_model, source_type=None):
             # value, which for NRS_FIXEDSLIT is 'EXTENDED'.
             default_type = "EXTENDED"
             primary_slit = input_model.meta.instrument.fixed_slit
-            log.debug(f" primary_slit = {primary_slit}")
+            log.debug(" primary_slit = %s", primary_slit)
             for slit in input_model.slits:
                 if slit.name == primary_slit:
                     slit.source_type = src_type
@@ -147,7 +147,7 @@ def set_source_type(input_model, source_type=None):
                         slit.source_ypos = 0.0
                 else:
                     slit.source_type = default_type
-                log.debug(f" slit {slit.name} = {slit.source_type}")
+                log.debug(" slit %s = %s", slit.name, slit.source_type)
 
     # For NIRSpec MSA exposures, read the stellarity value for the
     # source in each extracted slit and set the point/extended value
@@ -168,7 +168,10 @@ def set_source_type(input_model, source_type=None):
                 slit.source_type = "EXTENDED"
 
             log.info(
-                f"source_id={slit.source_id}, stellarity={stellarity:.4f}, type={slit.source_type}"
+                "source_id=%s, stellarity=%.4f, type=%s",
+                slit.source_id,
+                stellarity,
+                slit.source_type,
             )
 
         # Remove the global target source type, so that it never mistakenly
@@ -178,7 +181,7 @@ def set_source_type(input_model, source_type=None):
     # Set all TSO exposures to POINT
     elif pipe_utils.is_tso(input_model):
         src_type = "POINT"
-        log.info(f"Input is a TSO exposure; setting default SRCTYPE = {src_type}")
+        log.info("Input is a TSO exposure; setting default SRCTYPE = %s", src_type)
         input_model.meta.target.source_type = src_type
 
     # For WFSS modes check slit values of is_extended to set SRCTYPE
@@ -188,13 +191,13 @@ def set_source_type(input_model, source_type=None):
                 slit.source_type = "EXTENDED"
             else:
                 slit.source_type = "POINT"
-            log.info(f"source_id={slit.source_id}, type={slit.source_type}")
+            log.info("source_id=%s, type=%s", slit.source_id, slit.source_type)
 
     # Unrecognized exposure type; set to UNKNOWN as default
     else:
-        log.warning(f"EXP_TYPE {exptype} not applicable to this operation")
+        log.warning("EXP_TYPE %s not applicable to this operation", exptype)
         src_type = "UNKNOWN"
-        log.warning(f"Setting SRCTYPE = {src_type}")
+        log.warning("Setting SRCTYPE = %s", src_type)
         input_model.meta.target.source_type = src_type
 
     # We're done

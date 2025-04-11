@@ -73,9 +73,9 @@ def correction_skip_groups(output, group_skip):
     if sci_int_start is None:
         sci_int_start = 1
 
-    log.debug(f"RSCD correction using: nints={sci_nints}, ngroups={sci_ngroups}")
-    log.debug(f"The first integration in the data is integration: {sci_int_start}")
-    log.info(f"Number of groups to skip for integrations 2 and higher: {group_skip}")
+    log.debug("RSCD correction using: nints=%s, ngroups=%s", sci_nints, sci_ngroups)
+    log.debug("The first integration in the data is integration: %s", sci_int_start)
+    log.info("Number of groups to skip for integrations 2 and higher: %s", group_skip)
 
     # If ngroups <= group_skip+3, skip the flagging
     # the +3 is to ensure there is a slope to be fit including the flagging for
@@ -100,7 +100,7 @@ def correction_skip_groups(output, group_skip):
     output.groupdq[int_start:, 0:group_skip, :, :] = np.bitwise_or(
         output.groupdq[int_start:, 0:group_skip, :, :], dqflags.group["DO_NOT_USE"]
     )
-    log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip} groups")
+    log.debug("RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first %s groups", group_skip)
     output.meta.cal_step.rscd = "COMPLETE"
 
     return output

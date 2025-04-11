@@ -149,8 +149,8 @@ def get_ref_arr(model, reference_model):
         try:
             ref_sub_model = reffile_utils.get_subarray_model(model, reference_model)
             log.info(
-                f"Extracting subarray from reference {reference_model.meta.model_type} "
-                f"to match science data."
+                "Extracting subarray from reference %s to match science data.",
+                reference_model.meta.model_type,
             )
             ref_arr = ref_sub_model.data
             ref_sub_model.close()
@@ -158,9 +158,10 @@ def get_ref_arr(model, reference_model):
             if "STACK" in model.meta.exposure.type:
                 if model.data.shape[-2:] != reference_model.data.shape:
                     log.debug(
-                        f"The {reference_model.meta.model_type} reference file array does not "
+                        "The %s reference file array does not "
                         "match the shape of stacked FGS data;"
-                        "applying the mean value to the data."
+                        "applying the mean value to the data.",
+                        reference_model.meta.model_type,
                     )
                     ref_arr = np.zeros(model.data.shape[-2:], dtype=np.float32) + np.mean(
                         reference_model.data

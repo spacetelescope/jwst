@@ -50,7 +50,7 @@ def create_pipeline(input_model, reference_files):
     pipeline : list
         The WCS pipeline, suitable for input into `gwcs.WCS`.
     """
-    log.debug(f"reference files used in NIRISS WCS pipeline: {reference_files}")
+    log.debug("reference files used in NIRISS WCS pipeline: %s", reference_files)
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
 
@@ -197,7 +197,7 @@ def niriss_soss(input_model, reference_files):
         wl1 = wl1 | velocity_corr
         wl2 = wl2 | velocity_corr
         wl2 = wl3 | velocity_corr
-        log.info(f"Applied Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
+        log.info("Applied Barycentric velocity correction: %s", velocity_corr[1].amplitude.value)
 
     # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
     # Consider changing it in modeling ?
@@ -329,7 +329,7 @@ def imaging_distortion(input_model, reference_files):
         if row is not None:
             col_offset = row.get("column_offset", "N/A")
             row_offset = row.get("row_offset", "N/A")
-            log.info(f"Offsets from filteroffset file are {col_offset}, {row_offset}")
+            log.info("Offsets from filteroffset file are %s, %s", col_offset, row_offset)
 
             if col_offset != "N/A" and row_offset != "N/A":
                 distortion = Shift(col_offset) & Shift(row_offset) | distortion
@@ -467,7 +467,7 @@ def wfss(input_model, reference_files):
         pass
     if velosys is not None:
         velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-        log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
+        log.info("Added Barycentric velocity correction: %s", velocity_corr[1].amplitude.value)
         det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
 
     # create the pipeline to construct a WCS object for the whole image
