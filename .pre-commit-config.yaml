@@ -46,7 +46,6 @@ repos:
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/ipc/.* |
-            jwst/linearity/.* |
             jwst/mrs_imatch/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
