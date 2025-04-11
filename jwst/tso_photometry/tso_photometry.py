@@ -14,24 +14,41 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, radius_outer):
+def tso_aperture_photometry(datamodel, x, y, radius, radius_inner,
+                            radius_outer, gain_model, xcenters, ycenters,
+                            xWidths, yWidths, psfFlux_results, log):
     """
-    Create a photometric catalog for NIRCam TSO imaging observations.
-
+    Create a photometric catalog for NIRCam/MIRI TSO imaging observations.
     Parameters
     ----------
     datamodel : `CubeModel`
-        The input `CubeModel` of a NIRCam TSO imaging observation.
+        The input `CubeModel` of NIRCam/MIRI TSO imaging observation.
 
-    xcenter, ycenter : float
-        The ``x`` and ``y`` center of the aperture.
+    x, y : np.ndarray
+        The ``x`` and ``y`` center of the aperture for each integration in the
+        datamodel.
 
     radius : float
-        The radius (in pixels) of the circular aperture.
+        The radius (in pixels) of the circular source aperture.
 
     radius_inner, radius_outer : float
         The inner and outer radii (in pixels) of the circular-annulus
         aperture, used for local background estimation.
+
+    gain_model : `GainModel`
+        The gain reference file model, used to convert from DN/s or DN to
+        electrons.
+
+    xcenters, ycenters : np.ndarray
+        The ``x`` and ``y`` center of the source for each integration in the
+        datamodel.
+
+    xWidths, yWidths : np.ndarray
+        The ``x`` and ``y`` PSF widths of the source for each integration in the
+        datamodel.
+
+    log : logging.Logger
+        A logging object used to record log messages.
 
     Returns
     -------
@@ -50,18 +67,30 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
     if datamodel.meta.instrument.pupil == "WLP8" and datamodel.meta.subarray.name == "SUB64P":
         sub64p_wlp8 = True
 
-    if not sub64p_wlp8:
-        phot_aper = CircularAperture((xcenter, ycenter), r=radius)
-        bkg_aper = CircularAnnulus((xcenter, ycenter), r_in=radius_inner, r_out=radius_outer)
-
-    # convert the input data and errors from MJy/sr to Jy
-    if datamodel.meta.bunit_data != "MJy/sr":
-        raise ValueError("data is expected to be in units of MJy/sr")
-    factor = 1.0e6 * datamodel.meta.photometry.pixelarea_steradians
-    datamodel.data *= factor
-    datamodel.err *= factor
-    datamodel.meta.bunit_data = "Jy"
-    datamodel.meta.bunit_err = "Jy"
+    if datamodel.meta.bunit_data == 'MJy/sr':
+        # Convert the input data and errors from MJy/sr to Jy
+        factor = 1e6 * datamodel.meta.photometry.pixelarea_steradians
+        datamodel.data *= factor
+        datamodel.err *= factor
+        datamodel.meta.bunit_data = 'Jy'
+        datamodel.meta.bunit_err = 'Jy'
+    elif datamodel.meta.bunit_data == 'DN/s':
+        # Convert the input data and errors from DN/s to electrons
+        factor = datamodel.meta.exposure.integration_time*gain_model.data
+        datamodel.data *= factor
+        datamodel.err *= factor
+        datamodel.meta.bunit_data = 'electron'
+        datamodel.meta.bunit_err = 'electron'
+    elif datamodel.meta.bunit_data == 'DN':
+        # Convert the input data and errors from DN to electrons
+        factor = gain_model.data
+        datamodel.data *= factor
+        datamodel.err *= factor
+        datamodel.meta.bunit_data = 'electron'
+        datamodel.meta.bunit_err = 'electron'
+    else:
+        # Unexpected units - leave them as-is
+        pass
 
     aperture_sum = []
     aperture_sum_err = []
@@ -69,6 +98,9 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
     annulus_sum_err = []
 
     nimg = datamodel.data.shape[0]
+
+    # Mask any pixels marked as DO_NOT_USE or that are NaN
+    mask = datamodel.dq % 2 == 1 | np.isnan(datamodel.data)
 
     if sub64p_wlp8:
         info = (
@@ -87,13 +119,20 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
             f"r_outer={radius_outer} pixels."
         )
         for i in np.arange(nimg):
-            aperstats = ApertureStats(
-                datamodel.data[i, :, :], phot_aper, error=datamodel.err[i, :, :]
-            )
+            phot_aper = CircularAperture((x[i], y[i]), r=radius)
+            bkg_aper = CircularAnnulus((x[i], y[i]),
+                                       r_in=radius_inner,
+                                       r_out=radius_outer)
 
-            annstats = ApertureStats(
-                datamodel.data[i, :, :], bkg_aper, error=datamodel.err[i, :, :]
-            )
+            aperstats = ApertureStats(datamodel.data[i, :, :],
+                                      phot_aper,
+                                      error=datamodel.err[i, :, :],
+                                      mask=mask[i, :, :])
+
+            annstats = ApertureStats(datamodel.data[i, :, :],
+                                      bkg_aper,
+                                      error=datamodel.err[i, :, :],
+                                      mask=mask[i, :, :])
 
             aperture_sum.append(aperstats.sum)
             aperture_sum_err.append(aperstats.sum_err)
@@ -107,19 +146,17 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
 
     # construct metadata for output table
     meta = OrderedDict()
-    meta["instrument"] = datamodel.meta.instrument.name
-    meta["detector"] = datamodel.meta.instrument.detector
-    meta["channel"] = datamodel.meta.instrument.channel
-    meta["subarray"] = datamodel.meta.subarray.name
-    meta["filter"] = datamodel.meta.instrument.filter
-    meta["pupil"] = datamodel.meta.instrument.pupil
-    meta["target_name"] = datamodel.meta.target.catalog_name
-    meta["xcenter"] = xcenter
-    meta["ycenter"] = ycenter
-    ra_icrs, dec_icrs = datamodel.meta.wcs(xcenter, ycenter)
-    meta["ra_icrs"] = ra_icrs
-    meta["dec_icrs"] = dec_icrs
-    meta["apertures"] = info
+    meta['instrument'] = datamodel.meta.instrument.name
+    meta['detector'] = datamodel.meta.instrument.detector
+    meta['channel'] = datamodel.meta.instrument.channel
+    meta['subarray'] = datamodel.meta.subarray.name
+    meta['filter'] = datamodel.meta.instrument.filter
+    meta['pupil'] = datamodel.meta.instrument.pupil
+    meta['target_name'] = datamodel.meta.target.catalog_name
+    ra_icrs, dec_icrs = datamodel.meta.wcs(x, y)
+    meta['ra_icrs'] = ra_icrs
+    meta['dec_icrs'] = dec_icrs
+    meta['apertures'] = info
 
     # initialize the output table
     tbl = QTable(meta=meta)
@@ -145,8 +182,8 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
 
         # Columns of integration numbers & times of integration from the
         # INT_TIMES table.
-        int_num = datamodel.int_times["integration_number"]
-        mid_utc = datamodel.int_times["int_mid_MJD_UTC"]
+        int_num = datamodel.int_times['integration_number']
+        mid_bjd = datamodel.int_times['int_mid_BJD_TDB']
         offset = int_start - int_num[0]  # both are one-indexed
         if offset < 0:
             log.warning(
@@ -154,29 +191,29 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
                 "outside the range in INT_TIMES table."
             )
             log.warning("Can't use INT_TIMES table.")
-            del int_num, mid_utc
+            del int_num, mid_bjd
             nrows = 0  # flag as bad
         else:
             log.debug("Times are from the INT_TIMES table")
-            time_arr = mid_utc[offset : offset + num_integ]
-            int_times = Time(time_arr, format="mjd", scale="utc")
+            time_arr = mid_bjd[offset: offset + num_integ]
+            int_times = Time(time_arr, format='mjd', scale='tdb')
 
     # compute integration time stamps on the fly
     if nrows == 0:
         log.debug("Times computed from EXPSTART and EFFINTTM")
         dt = datamodel.meta.exposure.integration_time
-        n_dt = (
-            datamodel.meta.exposure.integration_end - datamodel.meta.exposure.integration_start + 1
-        )
-        dt_arr = np.arange(1, 1 + n_dt) * dt - (dt / 2.0)
-        int_dt = TimeDelta(dt_arr, format="sec")
-        int_times = Time(datamodel.meta.exposure.start_time, format="mjd") + int_dt
+        n_dt = (datamodel.meta.exposure.integration_end -
+                datamodel.meta.exposure.integration_start + 1)
+        dt_arr = (np.arange(1, 1 + n_dt) * dt - (dt / 2.))
+        int_dt = TimeDelta(dt_arr, format='sec')
+        int_times = (Time(datamodel.meta.exposure.start_time, format='mjd', scale='tdb') +
+                     int_dt)
 
     # populate table columns
     unit = u.Unit(datamodel.meta.bunit_data)
-    tbl["MJD"] = int_times.mjd
-    tbl["aperture_sum"] = aperture_sum << unit
-    tbl["aperture_sum_err"] = aperture_sum_err << unit
+    tbl['BJD_TDB'] = int_times.mjd
+    tbl['aperture_sum'] = aperture_sum << unit
+    tbl['aperture_sum_err'] = aperture_sum_err << unit
 
     if not sub64p_wlp8:
         tbl["annulus_sum"] = annulus_sum << unit
@@ -211,5 +248,14 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
 
         tbl["net_aperture_sum"] = aperture_sum << unit
         tbl["net_aperture_sum_err"] = aperture_sum_err << unit
+
+    pixel_unit = u.Unit('pix')
+    tbl['aperture_x'] = x << pixel_unit
+    tbl['aperture_y'] = y << pixel_unit
+    tbl['centroid_x'] = xcenters << pixel_unit
+    tbl['centroid_y'] = ycenters << pixel_unit
+    tbl['psfWidth_x'] = xWidths << pixel_unit
+    tbl['psfWidth_y'] = yWidths << pixel_unit
+    tbl['psfFlux'] = psfFlux_results << unit
 
     return tbl
