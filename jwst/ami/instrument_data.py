@@ -22,9 +22,9 @@ class NIRISS:
         self,
         filt,
         nrm_model,
+        bandpass,
         chooseholes=None,
         affine2d=None,
-        bandpass=None,
         usebp=True,
         firstfew=None,
         run_bpfix=True,
@@ -36,35 +36,23 @@ class NIRISS:
         ----------
         filt : str
             Filter name
-
         nrm_model : NRMModel datamodel
             Datamodel containing mask geometry information
-
-        chooseholes : list
-            None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
-
-        affine2d : Affine2d object
-            Affine2d object
-
         bandpass : synphot spectrum or array
             None, synphot object or [(wt,wlen),(wt,wlen),...].
             Monochromatic would be e.g. [(1.0, 4.3e-6)]
             Explicit bandpass arg will replace *all* niriss filter-specific variables with
             the given bandpass, so you could simulate, for example,
             a 21cm psf through something called "F430M"!
-
+        chooseholes : list, optional
+            List of hole names to use, e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask,
+            If not specified, all the holes will be used.
+        affine2d : Affine2d object, optional
+            Affine2d object. If not specified, an ideal affine2d object will be used.
         usebp : bool
             If True, exclude pixels marked DO_NOT_USE from fringe fitting
-
         firstfew : int
             If not None, process only the first few integrations
-
-        chooseholes : str
-            If not None, fit only certain fringes e.g. ['B4','B5','B6','C2']
-
-        affine2d : Affine2D object
-            None or user-defined Affine2d object
-
         run_bpfix : bool
             Run Fourier bad pixel fix on cropped data
         """
@@ -76,9 +64,9 @@ class NIRISS:
         self.firstfew = firstfew
         self.nrm_model = nrm_model
 
-        self.lam_c, self.lam_w = utils.get_cw_beta(self.throughput)
+        self.lam_c, self.lam_w = utils.get_cw_beta(bandpass)
         self.wls = [
-            self.throughput,
+            bandpass,
         ]
         # Wavelength info for NIRISS bands F277W, F380M, F430M, or F480M
         self.wavextension = (
@@ -96,9 +84,7 @@ class NIRISS:
         self.instrument = "NIRISS"
         self.arrname = "jwst_ami"
         self.holeshape = "hex"
-        self.mask = NRMDefinition(
-            self.nrm_model, maskname=self.arrname, chooseholes=self.chooseholes
-        )
+        self.mask = NRMDefinition(self.nrm_model, maskname=self.arrname, chooseholes=chooseholes)
 
         # save affine deformation of pupil object or create a no-deformation object.
         # We apply this when sampling the PSF, not to the pupil geometry.
@@ -112,39 +98,6 @@ class NIRISS:
             )
         else:
             self.affine2d = affine2d
-
-        # finding centroid from phase slope only considered cv_phase data
-        # when cv_abs data exceeds this cvsupport_threshold.
-        # Absolute value of cv data normalized to unity maximum
-        # for the threshold application.
-        # Data reduction gurus: tweak the threshold value with experience...
-        # Gurus: tweak cvsupport with use...
-        self.cvsupport_threshold = {
-            "F277W": 0.02,
-            "F380M": 0.02,
-            "F430M": 0.02,
-            "F480M": 0.02,
-        }
-        self.threshold = self.cvsupport_threshold[filt]
-
-    def set_pscale(self, pscalex_deg=None, pscaley_deg=None):
-        """
-        Override pixel scale in header.
-
-        Parameters
-        ----------
-        pscalex_deg : float, degrees
-            Pixel scale in x-direction
-
-        pscaley_deg : float, degrees
-            Pixel scale in y-direction
-        """
-        if pscalex_deg is not None:
-            self.pscalex_deg = pscalex_deg
-        if pscaley_deg is not None:
-            self.pscaley_deg = pscaley_deg
-        self.pscale_mas = 0.5 * (pscalex_deg + pscaley_deg) * (60 * 60 * 1000)
-        self.pscale_rad = utils.mas2rad(self.pscale_mas)
 
     def read_data_model(self, input_model):
         """
@@ -306,17 +259,6 @@ class NIRISS:
             dqmask_ctrd = np.zeros_like(scidata_ctrd)
 
         return scidata_ctrd, dqmask_ctrd
-
-    def reset_nwav(self, nwav):
-        """
-        Reset self.nwav parameter.
-
-        Parameters
-        ----------
-        nwav : int
-            Length of axis3 for 3D input
-        """
-        self.nwav = nwav
 
     def mast2sky(self):
         """
