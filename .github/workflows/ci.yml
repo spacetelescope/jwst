@@ -4,13 +4,13 @@ on:
   push:
     branches:
       - main
-      - '*x'
+      - 'release/*.x'
     tags:
       - '*'
   pull_request:
     branches:
       - main
-      - '*x'
+      - 'release/*.x'
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
