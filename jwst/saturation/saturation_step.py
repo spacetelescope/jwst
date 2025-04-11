@@ -2,7 +2,7 @@
 from stdatamodels.jwst import datamodels
 
 from ..stpipe import Step
-from ..lib import pipe_utils
+from ..lib import pipe_utils, reffile_utils
 from . import saturation
 
 
@@ -21,7 +21,7 @@ class SaturationStep(Step):
         use_readpatt = boolean(default=True) # Use grouped read pattern information to assist with flagging
     """ # noqa: E501
 
-    reference_file_types = ['saturation']
+    reference_file_types = ['saturation', 'superbias']
 
     def process(self, step_input):
 
@@ -30,7 +30,9 @@ class SaturationStep(Step):
 
             # Get the name of the saturation reference file
             self.ref_name = self.get_reference_file(input_model, 'saturation')
+            self.bias_name = self.get_reference_file(input_model, 'superbias')
             self.log.info('Using SATURATION reference file %s', self.ref_name)
+            self.log.info('Using SUPERBIAS reference file %s', self.bias_name)
 
             # Check for a valid reference file
             if self.ref_name == 'N/A':
@@ -42,14 +44,29 @@ class SaturationStep(Step):
             # Open the reference file data model
             ref_model = datamodels.SaturationModel(self.ref_name)
 
+            # Open the superbias if one is available
+            bias_model = None
+            if self.bias_name != 'N/A':
+                bias_model = datamodels.SuperBiasModel(self.bias_name)
+                # Check for subarray mode and extract subarray from the
+                # bias reference data if necessary
+                if not reffile_utils.ref_matches_sci(input_model, bias_model):
+                    bias_model = reffile_utils.get_subarray_model(input_model, bias_model)
+
             # Work on a copy
             result = input_model.copy()
 
             # Do the saturation check
             if pipe_utils.is_irs2(result):
-                result = saturation.irs2_flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
+                result = saturation.irs2_flag_saturation(
+                    result,
+                    ref_model,
+                    self.n_pix_grow_sat,
+                    self.use_readpatt,
+                    bias_model=bias_model
+                )
             else:
-                result = saturation.flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt)
+                result = saturation.flag_saturation(result, ref_model, self.n_pix_grow_sat, self.use_readpatt, bias_model=bias_model)
             result.meta.cal_step.saturation = 'COMPLETE'
 
             # Cleanup

@@ -7,7 +7,7 @@ Unit tests for saturation flagging
 import pytest
 import numpy as np
 
-from stdatamodels.jwst.datamodels import RampModel, SaturationModel, dqflags
+from stdatamodels.jwst.datamodels import RampModel, SaturationModel, SuperBiasModel, dqflags
 
 from jwst.saturation import SaturationStep
 from jwst.saturation.saturation import flag_saturation, irs2_flag_saturation
@@ -44,7 +44,7 @@ def test_basic_saturation_flagging(setup_nrc_cube):
 
 
 def test_nirspec_irs2_saturation_flagging(setup_nrs_irs2_cube):
-    data, satmap = setup_nrs_irs2_cube()
+    data, satmap, _ = setup_nrs_irs2_cube()
 
     pixx, pixy = 1000, 1000
     data.data[0, 3, pixx, pixy] = 65000  # Signal exceeds saturation limit of 60000
@@ -61,7 +61,7 @@ def test_nirspec_irs2_readpatt(setup_nrs_irs2_cube):
     """
     Tests that the readpatt framework (saturation in grouped data) is working for IRS2 processing.
     """
-    data, satmap = setup_nrs_irs2_cube()
+    data, satmap, _ = setup_nrs_irs2_cube()
 
     pixx, pixy = 1000, 1000
     data.data[0, 0, pixx, pixy] = 500  # Low signal
@@ -72,6 +72,25 @@ def test_nirspec_irs2_readpatt(setup_nrs_irs2_cube):
 
     # Run saturation detection
     output = irs2_flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=True)
+
+    # Make sure that group 2 gets flagged
+    assert np.all(output.groupdq[0, 1, pixx, pixy] == dqflags.group['SATURATED'])
+    
+def test_nirspec_irs2_group2_sat_bias(setup_nrs_irs2_cube):
+    """
+    Test group 2 saturation check with bias in grouped IRS2 data.
+    """
+    data, satmap, bias = setup_nrs_irs2_cube()
+    
+    pixx, pixy = 1000, 1000
+    data.data[0, 0, pixx, pixy] = 18000  # 15000 bias + 1000 counts per frame
+    data.data[0, 1, pixx, pixy] = 31000  # 40000 count CR in frame 5 of group 2
+    data.data[0, 2, pixx, pixy] = 68000  # Signal exceeds saturation limit of 60000
+    data.data[0, 3, pixx, pixy] = 73000
+    data.data[0, 4, pixx, pixy] = 78000
+
+    # Run saturation detection
+    output = irs2_flag_saturation(data, satmap, n_pix_grow_sat=1, use_readpatt=True, bias_model=bias)
 
     # Make sure that group 2 gets flagged
     assert np.all(output.groupdq[0, 1, pixx, pixy] == dqflags.group['SATURATED'])
@@ -105,7 +124,7 @@ def test_irs2_zero_frame(setup_nrs_irs2_cube):
     This ensures ZEROFRAME data that is outside saturation and AD floor
     boundaries get zeroed out.
     """
-    ramp, sat = setup_nrs_irs2_cube()
+    ramp, sat, _ = setup_nrs_irs2_cube()
 
     # Setup ZEROFRAME
     nints, ngroups, nrows, ncols = ramp.data.shape
@@ -413,6 +432,27 @@ def test_full_step(setup_nrc_cube):
     # assert np.all(output.groupdq[0, :, 10, 10] != dqflags.group['SATURATED'])
 
 
+def test_full_step_irs2(setup_nrs_irs2_cube):
+    '''Test full run of the SaturationStep for IRS2 data.'''
+
+    # Create input data, saturation map, and bias
+    data, satmap, bias = setup_nrs_irs2_cube()
+    
+    pixx, pixy = 1000, 1000
+    data.data[0, 0, pixx, pixy] = 18000  # 15000 bias + 1000 counts per frame
+    data.data[0, 1, pixx, pixy] = 31000  # 40000 count CR in frame 5 of group 2
+    data.data[0, 2, pixx, pixy] = 68000  # Signal exceeds saturation limit of 60000
+    data.data[0, 3, pixx, pixy] = 73000
+    data.data[0, 4, pixx, pixy] = 78000
+    
+    # Run the pipeline
+    output = SaturationStep.call(data, override_superbias=bias)
+
+    # Check that correct pixel and group 2+ are flagged as saturated
+    assert dqflags.group['SATURATED'] == np.max(output.groupdq[0, :, pixx, pixy])
+    assert np.all(output.groupdq[0, 1:, pixx, pixy] == dqflags.pixel['SATURATED'])
+
+
 @pytest.fixture(scope='function')
 def setup_nrc_cube():
     ''' Set up fake NIRCam data to test.'''
@@ -520,8 +560,8 @@ def setup_nrs_irs2_cube():
         data_model.meta.subarray.ysize = 2048
         data_model.meta.exposure.nrs_normal = 16
         data_model.meta.exposure.nrs_reference = 4
-        data_model.meta.exposure.readpatt = 'NRSIRS2RAPID'
-        data_model.meta.exposure.nframes = 3
+        data_model.meta.exposure.readpatt = 'NRSIRS2'
+        data_model.meta.exposure.nframes = 5
         data_model.meta.exposure.ngroups = 5
 
         # create a saturation model for the saturation step
@@ -539,8 +579,26 @@ def setup_nrs_irs2_cube():
         saturation_model.meta.subarray.xsize = 2048
         saturation_model.meta.subarray.ystart = 1
         saturation_model.meta.subarray.ysize = 2048
+        
+        # create a bias model for group 2 saturation checking
+        bias_model = SuperBiasModel((3200, 2048))
+        bias_model.data = np.ones((3200, 2048)) * 15000  # bias for every pixel is 15000
+        bias_model.meta.description = 'Fake data.'
+        bias_model.meta.telescope = 'JWST'
+        bias_model.meta.reftype = 'SuperBiasModel'
+        bias_model.meta.useafter = '2015-10-01T00:00:00'
+        bias_model.meta.instrument.name = 'NIRSPEC'
+        bias_model.meta.instrument.detector = 'NRS1'
+        bias_model.meta.author = 'Clare'
+        bias_model.meta.pedigree = 'Dummy'
+        bias_model.meta.subarray.xstart = 1
+        bias_model.meta.subarray.xsize = 2048
+        bias_model.meta.subarray.ystart = 1
+        bias_model.meta.subarray.ysize = 2048
+        bias_model.meta.exposure.readpatt = 'NRSIRS2'
 
-        return data_model, saturation_model
+        
+        return data_model, saturation_model, bias_model
     return _cube
 
 @pytest.fixture(scope='function')
