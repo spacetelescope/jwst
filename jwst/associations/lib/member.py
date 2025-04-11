@@ -1,4 +1,5 @@
 """Association Member"""
+
 from collections import UserDict
 from copy import copy
 
@@ -21,6 +22,7 @@ class Member(UserDict):
     item: obj
         The original item that created this member.
     """
+
     def __init__(self, initialdata=None, item=None):
         self.item = None
 
@@ -40,10 +42,8 @@ class Member(UserDict):
         compare only those attributes. Otherwise, use the default
         comparison.
         """
-        hasexpkeys = all(k in data
-                         for k in ('expname', 'exptype')
-                         for data in (self, other))
+        hasexpkeys = all(k in data for k in ("expname", "exptype") for data in (self, other))
         if hasexpkeys:
-            return all(self[k] == other[k] for k in ('expname', 'exptype'))
+            return all(self[k] == other[k] for k in ("expname", "exptype"))
         else:
             return super().__eq__(other)

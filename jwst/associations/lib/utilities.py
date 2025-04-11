@@ -1,4 +1,5 @@
-"""General Utilities"""
+"""General Utilities."""
+
 from ast import literal_eval
 from functools import wraps
 import logging
@@ -13,7 +14,8 @@ logger.addHandler(logging.NullHandler())
 
 
 def constrain_on_candidates(candidates):
-    """Create a constraint based on a list of candidates
+    """
+    Create a constraint based on a list of candidates.
 
     Parameters
     ----------
@@ -22,16 +24,15 @@ def constrain_on_candidates(candidates):
         If None, then all candidates are matched.
     """
     from .dms_base import DMSAttrConstraint
+
     if candidates is not None and len(candidates):
-        c_list = '|'.join(candidates)
-        values = ''.join([
-            '.+(', c_list, ').+'
-        ])
+        c_list = "|".join(candidates)
+        values = "".join([".+(", c_list, ").+"])
     else:
         values = None
     constraint = DMSAttrConstraint(
-        name='asn_candidate',
-        sources=['asn_candidate'],
+        name="asn_candidate",
+        sources=["asn_candidate"],
         value=values,
         force_unique=True,
         is_acid=True,
@@ -42,7 +43,8 @@ def constrain_on_candidates(candidates):
 
 
 def evaluate(value):
-    """Evaluate a value
+    """
+    Evaluate a value.
 
     Parameters
     ----------
@@ -63,25 +65,23 @@ def evaluate(value):
 
 
 def filter_discovered_only(
-        associations,
-        discover_ruleset,
-        candidate_ruleset,
-        keep_candidates=True,
+    associations,
+    discover_ruleset,
+    candidate_ruleset,
+    keep_candidates=True,
 ):
-    """Return only those associations that have multiple candidates
+    """
+    Return only those associations that have multiple candidates.
 
     Parameters
     ----------
     associations : iterable
         The list of associations to check. The list
         is that returned by the `generate` function.
-
     discover_ruleset : str
         The name of the ruleset that has the discover rules
-
     candidate_ruleset : str
         The name of the ruleset that finds just candidates
-
     keep_candidates : bool
         Keep explicit candidate associations in the list.
 
@@ -100,10 +100,7 @@ def filter_discovered_only(
 
     # Split the associations along discovered/not discovered lines
     dups, valid = identify_dups(associations)
-    asn_by_ruleset = {
-        candidate_ruleset: [],
-        discover_ruleset: []
-    }
+    asn_by_ruleset = {candidate_ruleset: [], discover_ruleset: []}
     for asn in valid:
         asn_by_ruleset[asn.registry.name].append(asn)
     candidate_list = asn_by_ruleset[candidate_ruleset]
@@ -131,16 +128,15 @@ def filter_discovered_only(
 
 
 def getattr_from_list(adict, attributes, invalid_values=None):
-    """Retrieve value from dict using a list of attributes
+    """
+    Retrieve value from dict using a list of attributes.
 
     Parameters
     ----------
     adict : dict
         dict to retrieve from
-
     attributes : list
         List of attributes
-
     invalid_values : set
         A set of values that essentially mean the
         attribute does not exist.
@@ -172,20 +168,24 @@ def getattr_from_list(adict, attributes, invalid_values=None):
             else:
                 continue
     else:
-        raise KeyError('Object has no attributes in {}'.format(attributes))
+        raise KeyError(f"Object has no attributes in {attributes}")
 
 
 def return_on_exception(exceptions=(Exception,), default=None):
-    """Decorator to force functions raising exceptions to return a value
+    """
+    Force functions raising exceptions to return a value.
+
+    This function returns a decorator to accomplish the value return.
 
     Parameters
     ----------
-    exceptions: (Exception(,...))
+    exceptions : (Exception(,...))
         Tuple of exceptions to catch
 
-    default: obj
+    default : obj
         The value to return when a specified exception occurs
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -193,11 +193,15 @@ def return_on_exception(exceptions=(Exception,), default=None):
                 return func(*args, **kwargs)
             except exceptions as err:
                 logger.debug(
-                    'Caught exception %s in function %s, forcing return value of %s',
-                    err, func, default
+                    "Caught exception %s in function %s, forcing return value of %s",
+                    err,
+                    func,
+                    default,
                 )
                 return default
+
         return wrapper
+
     return decorator
 
 
@@ -216,7 +220,5 @@ def getattr_from_list_nofail(*args, **kwargs):
 
 
 def is_iterable(obj):
-    """General iterator check"""
-    return not isinstance(obj, str) and \
-        not isinstance(obj, tuple) and \
-        hasattr(obj, '__iter__')
+    """General iterator check."""
+    return not isinstance(obj, str) and not isinstance(obj, tuple) and hasattr(obj, "__iter__")
