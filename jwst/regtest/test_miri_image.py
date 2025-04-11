@@ -1,10 +1,11 @@
+import tracemalloc
+import warnings
+
+import numpy as np
 import pytest
 from astropy.io.fits.diff import FITSDiff
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
-import tracemalloc
-import numpy as np
-
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
@@ -129,22 +130,24 @@ def run_image2(run_detector1, rtdata_module, resource_tracker):
             "--steps.assign_wcs.save_results=True",
             "--steps.flat_field.save_results=True"
             ]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Failed to achieve requested SIP approximation accuracy")
+        Step.from_cmdline(args)
 
-    # Grab rest of _rate files for the asn and run image2 pipeline on each to
-    # produce fresh _cal files for the image3 pipeline.  We won't check these
-    # or look at intermediate products, and skip resample (don't need i2d image)
-    rate_files = [
-        "miri/image/jw01024001001_04101_00002_mirimage_rate.fits",
-        "miri/image/jw01024001001_04101_00003_mirimage_rate.fits",
-        "miri/image/jw01024001001_04101_00004_mirimage_rate.fits",
-    ]
-    with resource_tracker.track():
-        for rate_file in rate_files:
-            rtdata.get_data(rate_file)
-            args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
-                    "--steps.resample.skip=True"]
-            Step.from_cmdline(args)
+        # Grab rest of _rate files for the asn and run image2 pipeline on each to
+        # produce fresh _cal files for the image3 pipeline.  We won't check these
+        # or look at intermediate products, and skip resample (don't need i2d image)
+        rate_files = [
+            "miri/image/jw01024001001_04101_00002_mirimage_rate.fits",
+            "miri/image/jw01024001001_04101_00003_mirimage_rate.fits",
+            "miri/image/jw01024001001_04101_00004_mirimage_rate.fits",
+        ]
+        with resource_tracker.track():
+            for rate_file in rate_files:
+                rtdata.get_data(rate_file)
+                args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
+                        "--steps.resample.skip=True"]
+                Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
@@ -154,7 +157,9 @@ def run_image3(run_image2, rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data("miri/image/jw01024-o001_20220501t155404_image3_001_asn.json")
     args = ["jwst.pipeline.Image3Pipeline", rtdata.input]
-    Step.from_cmdline(args)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="Failed to achieve requested SIP approximation accuracy")
+        Step.from_cmdline(args)
 
 
 def test_log_tracked_resources_det1(log_tracked_resources, run_detector1_with_average_dark_current):

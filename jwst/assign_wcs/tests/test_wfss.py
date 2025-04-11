@@ -1,21 +1,14 @@
-import os.path
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
-
 from astropy.modeling.models import (Polynomial1D, Polynomial2D, Shift,
                                      Const1D, Mapping)
 from gwcs import wcs
 from gwcs.wcstools import grid_from_bounding_box
-
 from stdatamodels.jwst.datamodels import SlitModel
 from stdatamodels.jwst.transforms import models as transforms
 
 from jwst.extract_2d.grisms import compute_wfss_wavelength
-
-import pytest
-
-from jwst.assign_wcs.tests import data
-data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 
 def create_nircam_slit(model, x0, y0, order):
