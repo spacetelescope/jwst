@@ -97,6 +97,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
             # uses slits corners in V2, V3 that are read in from the
             # lrs specwcs reference file
             update_s_region_lrs(output_model, reference_files)
+            output_model.wavelength = get_wavelengths(output_model)
         elif output_model.meta.exposure.type.lower() in imaging_types:
             try:
                 update_s_region_imaging(output_model)
