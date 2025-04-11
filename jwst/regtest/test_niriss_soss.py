@@ -1,9 +1,11 @@
+import pathlib
+
+import numpy as np
 import pytest
 from astropy.io.fits.diff import FITSDiff
+from stdatamodels.jwst.datamodels import SossWaveGridModel
 
 from jwst.stpipe import Step
-from stdatamodels.jwst.datamodels import SossWaveGridModel
-import numpy as np
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata]
@@ -128,8 +130,13 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()
+    if suffix == "AtocaSpectra":
+        # Supplemental output from atoca may have system dependent diffs
+        # that can't be reasonably compared. Just check for existence.
+        assert pathlib.Path(rtdata.output).exists()
+    else:
+        diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+        assert diff.identical, diff.report()
 
 
 @pytest.fixture(scope='module')
