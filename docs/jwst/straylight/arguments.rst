@@ -6,6 +6,10 @@ The ``straylight`` step has the following optional arguments.
   A flag to indicate whether to remove straylight due to residual cosmic
   ray showers using pixels between the IFU slices.
 
+``--save_shower_model`` (boolean, default=False)
+  If set, the model of the residual cosmic ray shower artifacts will
+  be saved with the suffix,`shower_model`.
+
 ``--shower_plane`` (int, default=3)
   Identifies the throughput plane to use from the MRS regions reference
   files to identify between-slice pixels.  Lower values identify pixels
