@@ -476,7 +476,6 @@ class CubeData:
         return self.num_cubes, self.cube_pars
 
 
-
 class NoChannelsError(Exception):
     """Raises Exception if the user-selected channels are not in the data."""
 
