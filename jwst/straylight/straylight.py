@@ -322,18 +322,18 @@ def _make_straylight_model(input_model, shower_data):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodel.IFUImageModel`
         The input data.
-    shower_data : numpy array
+    shower_data : ndarray
         The intermediate shower model data to save.
 
     Returns
     -------
-    intermediate_model : ~jwst.datamodel.JwstDataModel`
+    intermediate_model : ~jwst.datamodel.IFUImageModel`
         A model containing only the shower model data and top-level
         metadata matching the input.
     """
-    shower_model = datamodels.ImageModel(data=shower_data)
+    shower_model = datamodels.IFUImageModel(data=shower_data)
 
     # Copy metadata from input model
     shower_model.update(input_model, only="PRIMARY")
