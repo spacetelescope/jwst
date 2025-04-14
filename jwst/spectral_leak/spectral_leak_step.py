@@ -34,7 +34,7 @@ class SpectralLeakStep(Step):
         Returns
         -------
         JWST DataModel
-            The corrected data model. This will be "input_model" if the step is skipped,
+            The corrected data model. This will be the input_model if the step is skipped,
             otherwise it will be a corrected 1D extracted spectrum that contains
             the MRS channel 3B range.
         """
