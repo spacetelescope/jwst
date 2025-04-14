@@ -13,11 +13,11 @@ log.setLevel(logging.DEBUG)
 
 
 class CubeBlot:
-    """Main module for blotting sky cube back to detector space."""
+    """Main module for blotting a sky cube back to detector space."""
 
     def __init__(self, median_model, input_models):
         """
-        Initialize  main variables for blotting sky cube to detector.
+        Initialize main variables for blotting a sky cube to detector space.
 
         Information is pulled out of the median sky cube created by a previous
         run of cube_build in single mode and stored in the ClassBlot.These
@@ -31,7 +31,7 @@ class CubeBlot:
            The median input sky cube is created from a median stack of all the
            individual input_models mapped to the full IFU cube imprint on the
            sky.
-        input_models : IFUImageModel
+        input_models : ModelContainer
            The input models used to create the median sky cube.
         """
         # Pull out the needed information from the Median IFUCube
@@ -133,8 +133,8 @@ class CubeBlot:
         Returns
         -------
         blotmodels : ModelContainer
-           Blottined IFU image model
-        self.input_list_number : list
+           Blotted IFU image models
+        input_list_number : list of int
            List containing index of blot model in input_models
         """
         if self.instrument == "MIRI":

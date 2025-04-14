@@ -12,14 +12,14 @@ def radec2std(crval1, crval2, ra, dec, rot_angle=None):
     Parameters
     ----------
     crval1 : float
-      Ra value of tangent point
+      RA value of tangent point
     crval2 : float
       Dec value of tangent point
     ra : numpy.ndarray or float
       A list (or single value) of ra points to convert
     dec : numpy.ndarray  or float
       A list (or single value) of ra points to convert
-    rot_angle : float
+    rot_angle : float or None, optional
       Rotation angle given in degrees
 
     Returns
@@ -77,7 +77,7 @@ def std2radec(crval1, crval2, xi, eta):
     Parameters
     ----------
     crval1 : float
-      Ra value of tangent point
+      RA value of tangent point
     crval2 : float
       Dec value of tangent point
     xi : float
@@ -145,7 +145,7 @@ def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
     Parameters
     ----------
     ra_ref : float
-       Ra of reference point given in arc seconds
+       RA of reference point given in arc seconds
     dec_ref : float
        Dec of reference point given in arc seconds
     roll_ref : float
@@ -168,7 +168,7 @@ def v2v32radec_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, v2, v3):
 
     Notes
     -----
-    it is assumed that the v2,v3 coordinates have the effects of dithering included
+    It is assumed that the v2,v3 coordinates have the effects of dithering included.
     """
     d2r = math.pi / 180.0
 
@@ -200,13 +200,13 @@ def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
 
     This routine is used for debugging purposes. It is not actually used
     in the cube_build step for routine IFU cube building.
-    The conversion from Ra,Dec to V2,V3 is handled more accurately by
+    The conversion from RA,Dec to V2,V3 is handled more accurately by
     the transforms provided by assign_wcs.
 
     Parameters
     ----------
     ra_ref : float
-       Ra of reference point given in degrees
+       RA of reference point given in degrees
     dec_ref : float
        Dec of reference point given in degrees
     roll_ref : float
@@ -216,7 +216,7 @@ def radec2v2v3_estimate(ra_ref, dec_ref, roll_ref, v2_ref, v3_ref, ra, dec):
     v3_ref : float
        V3 coordinate of reference point given in arc seconds
     ra : float
-       Ra coordinate given in degrees
+       RA coordinate given in degrees
     dec :  float
        Dec coordinate given in degrees
 

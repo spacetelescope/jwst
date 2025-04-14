@@ -45,7 +45,7 @@ def match_det2cube(
     input_model : IFUImage model
        Input calibrated model or file
     transform : transform
-       Wcs transform to transform x,y to alpha,beta, lambda
+       WCS transform to transform x,y to alpha,beta, lambda
     acoord : numpy array
        Array of along slice valuee defining the along slice spatial dimension the  of IFU cube
     zcoord : numpy array
@@ -65,7 +65,7 @@ def match_det2cube(
 
     Returns
     -------
-    result : Tuple
+    result : tuple
        Results from running c code to determine internal coordinate system IFU Cubes
        Values contained in result:
         instrument_no: integer. NIRSpec = 1, MIRI = 0

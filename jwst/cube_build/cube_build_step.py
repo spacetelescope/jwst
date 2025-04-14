@@ -1,5 +1,3 @@
-# This is the main ifu spectral cube building routine.
-
 import time
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
@@ -17,7 +15,7 @@ __all__ = ["CubeBuildStep"]
 
 class CubeBuildStep(Step):
     """
-    Creates a 3-D spectral cube from IFU data.
+    Create a 3-D spectral cube from IFU data.
 
     This is the controlling routine for building IFU Spectral Cubes.
     It loads and sets the various input data and parameters needed by
@@ -75,7 +73,7 @@ class CubeBuildStep(Step):
 
         Parameters
         ----------
-        input_data : list of objects or str
+        input_data : list of DataModel or str
            List of datamodels or string of input fits filenames or association name.
 
         Returns
@@ -600,8 +598,7 @@ class CubeBuildStep(Step):
                 af.close()
                 raise ValueError(
                     "Error in offset file. A file in the association is not found in offset "
-                    " list %s",
-                    file_check,
+                    " list {file_check}"
                 )
 
         # check that all the lists have the same length

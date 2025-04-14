@@ -137,7 +137,7 @@ class IFUCubeData:
     # **************************************************************
     def check_ifucube(self):
         """
-        Perform some quick checks that the type of cube to be produced conforms to rules.
+        Perform some quick checks that the type of cube to be produced conforms to the rules.
 
         Raises
         ------
@@ -573,7 +573,7 @@ class IFUCubeData:
             )
 
         if self.rot_angle is not None:
-            log.info("Rotation angle between Ra-Dec and Slicer-Plane %12.8f", self.rot_angle)
+            log.info("Rotation angle between RA-Dec and Slicer-Plane %12.8f", self.rot_angle)
 
         if self.instrument == "MIRI":
             # length of channel and subchannel are the same
@@ -2000,7 +2000,7 @@ class IFUCubeData:
         subtract_background : bool
            If TRUE then subtract the background found in the mrs_imatch step only
            needed for MIRI data
-        offsets : dictionary
+        offsets : dict
            Optional dictionary of ra and dec offsets to apply
 
         Returns
@@ -2025,7 +2025,7 @@ class IFUCubeData:
         if offsets is not None:
             raoffset, decoffset = self.find_ra_dec_offset(input_model.meta.filename)
             log.info(
-                "Ra and Dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
+                "RA and Dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
                 raoffset.value,
                 decoffset.value,
                 input_model.meta.filename,
@@ -2158,7 +2158,7 @@ class IFUCubeData:
         input_model : IFUImageModel
             Input IFU image model to combine
         offsets : numpy array of floats
-            Ra and Dec offsets to apply to each file
+            RA and Dec offsets to apply to each file
 
         Returns
         -------
@@ -2178,7 +2178,7 @@ class IFUCubeData:
         if offsets is not None:
             raoffset, decoffset = self.find_ra_dec_offset(input_model.meta.filename)
             log.info(
-                "Ra and Dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
+                "RA and Dec offset (arc seconds) applied to file :%8.6f, %8.6f,  %s",
                 raoffset.value,
                 decoffset.value,
                 input_model.meta.filename,
@@ -2816,7 +2816,7 @@ class IFUCubeData:
     # ********************************************************************************
     def find_ra_dec_offset(self, filename):
         """
-        For the given filename find the Ra and Dec offset to apply.
+        For the given filename find the RA and Dec offset to apply.
 
         Parameters
         ----------
