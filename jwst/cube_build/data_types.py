@@ -1,12 +1,7 @@
-# Class Data Type is used to read in the input data.
-
-# It also determines if the input data is a single science exposure, an association table, a
-# single datamodel or several data models stored in a ModelContainer.
-
-from pathlib import PurePath
 from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer
 import logging
+import Path
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -26,7 +21,7 @@ class DataTypes:
 
     def __init__(self, input_data, single, output_file, output_dir):
         """
-        Read in input data and determine what type of input data.
+        Assemble input data for processing.
 
         Open the input data using datamodels and determine if data is
         a single input model, an association, or a set of input models
@@ -36,7 +31,7 @@ class DataTypes:
 
         Parameters
         ----------
-        input_data : datamodel or  ModelContainer
+        input_data : str, IFUImageModel or ModelContainer
            Input data to cube_build either a filename, single model,
            association table, or a ModelContainer
         single : bool
@@ -59,7 +54,7 @@ class DataTypes:
 
         # open the input_data with datamodels
         # if input_data is filename or model when it is opened it is a model
-        # if input_data if an association name or ModelContainer then it is opened as a container
+        # if input_data is an association name or ModelContainer then it is opened as a container
 
         input_models = datamodels.open(input_data)
         # if input_data is a filename, we will need to close the opened file
@@ -87,7 +82,7 @@ class DataTypes:
 
         if output_file is not None:
             # basename, ext = os.path.splitext(os.path.basename(output_file))
-            f = PurePath(output_file)
+            f = Path(output_file).stem
             basename = f.name
             self.output_name = basename
 
@@ -101,7 +96,7 @@ class DataTypes:
     # _______________________________________________________________________________
     def build_product_name(self, filename):
         """
-        Determine the base of output name if an input data is a fits filename.
+        Determine the base of output name if an input data is a FITS filename.
 
         Parameters
         ----------

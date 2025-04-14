@@ -26,7 +26,7 @@ def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
        Input model (or file)
     this_channel : str
        Channel working with
-    instrument_info : dictionary
+    instrument_info : dict
        Dictionary holding x pixel min and max values for each channel
     coord_system : str
        Coordinate system of output cube: skyalign, ifualign, internal_cal
@@ -153,7 +153,7 @@ def find_corners_nirspec(input_data, coord_system):
 
     Parameters
     ----------
-    input_data : IFUImage model
+    input_data : IFUImageModel
        Input calibrated model (or file)
     coord_system : str
        Coordinate system of output cube: skyalign, ifualign, internal_cal

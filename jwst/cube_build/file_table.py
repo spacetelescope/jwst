@@ -102,12 +102,12 @@ class FileTable:
 
         Parameters
         ----------
-        input_models : IFU datamodel
+        input_models : IFUImageModel
            The input datamodels used the set up the class FileTable
 
         Returns
         -------
-        MasterTable : Dictionary
+        MasterTable : Dict
             Dictionary containing the filename/model for each channel/band or grating/filter
         """
         # ________________________________________________________________________________
@@ -124,9 +124,7 @@ class FileTable:
                     f"Input data is not a IFUImageModel, instead it is {model}"
                 )
             if assign_wcs != "COMPLETE":
-                raise NoAssignWCSError(
-                    "Assign WCS has not been run on file %s", model.meta.filename
-                )
+                raise NoAssignWCSError(f"Assign WCS has not been run on file{model.meta.filename}")
             # _____________________________________________________________________
             # MIRI instrument
             if instrument == "MIRI":
