@@ -1,7 +1,7 @@
 from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer
 import logging
-import Path
+from pathlib import Path
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -83,8 +83,7 @@ class DataTypes:
         if output_file is not None:
             # basename, ext = os.path.splitext(os.path.basename(output_file))
             f = Path(output_file).stem
-            basename = f.name
-            self.output_name = basename
+            self.output_name = f
 
         if output_dir is not None:
             self.output_name = output_dir + "/" + self.output_name
