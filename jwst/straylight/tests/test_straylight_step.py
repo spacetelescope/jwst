@@ -8,7 +8,6 @@ from jwst.straylight import StraylightStep
 import numpy as np
 import pytest
 
-
 @pytest.fixture(scope='module')
 def miri_mrs_short_tso():
     """Set up MIRI MRS SHORT TSO data"""
@@ -30,3 +29,27 @@ def test_call_straylight_mrsshort_tso(tmp_cwd, miri_mrs_short_tso):
     """Test step is skipped for MRS IFUSHORT TSO data"""
     result = StraylightStep.call(miri_mrs_short_tso)
     assert result.meta.cal_step.straylight == 'SKIPPED'
+
+
+def test_step_save_shower_model(tmp_path, miri_mrs_short_tso):
+    model = miri_mrs_short_tso
+    
+    StraylightStep.call(
+        model,
+        skip=False,
+        clean_showers=True,
+        save_results=True,
+        save_shower_model=True,
+        output_dir=str(tmp_path)
+    )
+
+    output_files = [
+        "test_miri_short_tso_straylight.fits",
+        "test_miri_short_tso_shower_model.fits"
+        ]
+
+    for output_file in output_files:
+        assert (tmp_path / output_file).exists()
+
+
+
