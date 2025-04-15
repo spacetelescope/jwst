@@ -7,7 +7,7 @@ __all__ = ["LinearityStep"]
 
 
 class LinearityStep(Step):
-    """Performs a correction for non-linear detector response, using the polynomial method."""
+    """Perform a correction for non-linear detector response, using the polynomial method."""
 
     class_alias = "linearity"
 
