@@ -247,7 +247,7 @@ class IFUCubeData:
                     newname = self.output_name_base + fg_name + "_single"
                 if self.coord_system == "internal_cal":
                     newname = self.output_name_base + fg_name + "_internal"
-        # ______________________________________________________________________________
+
         if self.output_type != "single":
             log.info(f"Output Name: {newname}")
         return newname
@@ -260,10 +260,10 @@ class IFUCubeData:
 
         Parameters
         ----------
-        corner_a : numpy array
-            Array of ra corners of the footprint of all input data.
-        corner_b : numpy array
-            Array of dec corners of the footprint of all input data.
+        corner_a : ndarray
+            Array of RA corners of the footprint of all input data.
+        corner_b : ndarray
+            Array of Dec corners of the footprint of all input data.
         lambda_min : float
             Minimum wavelength value of the data.
         lambda_max : float
@@ -411,10 +411,10 @@ class IFUCubeData:
 
         Parameters
         ----------
-        corner_a : numpy array
+        corner_a : ndarray
             Array of along slice corners of the footprint of all input data.
-        corner_b : numpy array
-            Array of across slice  corners of the footprint of all input data.
+        corner_b : ndarray
+            Array of across slice corners of the footprint of all input data.
         lambda_min : float
             Minimum wavelength value of the data.
         lambda_max : float
@@ -611,7 +611,6 @@ class IFUCubeData:
         to determine the overlap in the along slice-wavelength plane.
         4. find_spaxel_flux: find the final flux associated with each spaxel
         5. setup_final_ifucube_model
-        6. output_ifucube
 
         Returns
         -------
@@ -980,7 +979,7 @@ class IFUCubeData:
         Returns
         -------
         single_ifucube_container : IFUCubeModel
-           A single type ifu cube datamodel
+           A single type IFU cube datamodel
         """
         # loop over input models
         single_ifucube_container = ModelContainer()
@@ -1158,7 +1157,7 @@ class IFUCubeData:
 
     # **************************************************************************
     def determine_cube_parameters_internal(self):
-        """Determine the spatial and spectral ifu size for coord_system = internal_cal."""
+        """Determine the spatial and spectral IFU size for coord_system = internal_cal."""
         # ____________________________________________________________
         # internal_cal is for only 1 file and weighting= area
         # no msm or emsm  information is needed
@@ -1196,7 +1195,7 @@ class IFUCubeData:
         Determine the spatial and wavelength roi size if IFU covers more than 1 band of data.
 
         If the IFU cube covers more than 1 band, then use the rules to
-        define the spatial and wavelength roi size to use for the cube
+        define the spatial and wavelength roi size to use for the cube.
         """
         # initialize
         wave_roi = None
@@ -1465,7 +1464,7 @@ class IFUCubeData:
 
     def setup_ifucube_wcs(self):
         """
-        Set up the wcs of the IFU cube.
+        Set up the WCS of the IFU cube.
 
         Loop over every datamodel contained in the cube and find the WCS
         of the output cube that contains all the data.
@@ -1479,7 +1478,7 @@ class IFUCubeData:
         For NIRSPEC the units along/across slice dimension are meters
 
         If the coordinate system is skyalign/ifualign then the min and max of
-        ra(degrees), dec (degrees) and lambda (microns) is returned.
+        RA(degrees), dec (degrees) and lambda (microns) is returned.
         """
         # _____________________________________________________________________________
         self.cdelt1 = self.spatial_size
@@ -1741,23 +1740,23 @@ class IFUCubeData:
 
         Returns
         -------
-        coord1 : numpy.ndarray
+        coord1 : ndarray
            Coordinate for axis1 in output cube for mapped pixel
         coord2: numpy.ndarray
            Coordinate for axis2 in output cube for mapped pixel
-        wave: numpy.ndarray
+        wave: ndarray
            Wavelength associated with coord1,coord2
-        flux: numpy.ndarray
+        flux: ndarray
            Flux associated with coord1, coord2
-        err: numpy.ndarray
+        err: ndarray
            Err associated with coord1, coord2
         rois_det: float
            Spatial roi size to use
-        roiw_det: numpy.ndarray
+        roiw_det: ndarray
            Spectral roi size associated with coord1,coord2
-        weight_det : numpy.ndarray
+        weight_det : ndarray
             Weighting parameter associated with coord1,coord2
-        softrad_det : numpy.ndarray
+        softrad_det : ndarray
             Weighting parameter associated with coord1,coord2
         """
         # initialize alpha_det and beta_det to None. These are filled in
@@ -2387,27 +2386,27 @@ class IFUCubeData:
             Index of wavelength array.
         w : float
             Wavelength array of data.
-        wavelength_table : numpy array
+        wavelength_table : ndarray
             Wavelength array read from cubepars reference file.
-        rois_table : numpy array
+        rois_table : ndarray
             Rois array read from cubepars reference file.
-        roiw_table : numpy array
+        roiw_table : ndarray
             Roiw array read from cubepars reference file.
-        softrad_table : numpy array
+        softrad_table : ndarray
             Softrad array read from cubepars reference file.
-        weight_power_table : numpy array
+        weight_power_table : ndarray
             Weight power array read from cubepars reference file.
-        scalerad_table : numpy array
+        scalerad_table : ndarray
             Scalerad array read from cubepars reference file.
-        rois_det : numpy array
+        rois_det : ndarray
             Rois array of detector pixel for the associated wavelength of the pixel.
-        roiw_det : numpy array
+        roiw_det : ndarray
             Roiw array of detector pixel for the associated wavelength of the pixel.
-        softrad_det : numpy array
+        softrad_det : ndarray
             Softrad array of detector pixel for the associated wavelength of the pixel.
-        weight_det : numpy array
+        weight_det : ndarray
             Weight array of detector pixel for the associated wavelength of the pixel.
-        scalerad_det : numpy array
+        scalerad_det : ndarray
             Scalerad array of detector pixel for the associated wavelength of the pixel.
         """
         ifound = (np.abs(wavelength_table - w)).argmin()
@@ -2838,7 +2837,7 @@ class IFUCubeData:
     # ********************************************************************************
     def offset_coord(self, ra, dec, raoffset, decoffset):
         """
-        Given a ra,dec, ra offset and dec offset, use astropy SkyCoord to apply the offsets.
+        Given a RA, dec, RA offset and dec offset, use astropy SkyCoord to apply the offsets.
 
         Parameters
         ----------
