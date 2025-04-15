@@ -1,5 +1,4 @@
 import pytest
-
 from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
@@ -29,6 +28,8 @@ def run_pipeline(rtdata_module):
             "--steps.flat_field.save_interpolated_flat=true",
             "--steps.pathloss.save_results=true",
             "--steps.barshadow.save_results=true"]
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
     Step.from_cmdline(args)
 
     return rtdata

@@ -1,5 +1,6 @@
 import json
 import os
+from contextlib import nullcontext
 from copy import deepcopy
 
 import asdf
@@ -8,6 +9,7 @@ import pytest
 from astropy.wcs import WCS
 from astropy.modeling.models import Shift
 from astropy.table import Table
+from astropy.utils.data import get_pkg_data_filename
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import ImageModel
 
@@ -83,7 +85,8 @@ def test_is_wcs_correction_small(offset, is_good):
     Changes to the defaults for these parameters will likely require updating the
     values uses for parametrizing this test.
     """
-    path = os.path.join(os.path.dirname(__file__), "mosaic_long_i2d_gwcs.asdf")
+    path = get_pkg_data_filename(
+        "data/mosaic_long_i2d_gwcs.asdf", package="jwst.tweakreg.tests")
     with asdf.open(path) as af:
         wcs = af.tree["wcs"]
 
@@ -96,7 +99,7 @@ def test_is_wcs_correction_small(offset, is_good):
     step = tweakreg_step.TweakRegStep()
     # TODO: remove 'roundlo' once
     # https://github.com/astropy/photutils/issues/1977 is fixed
-    step.roundlo=-1.0e-12
+    step.roundlo = -1.0e-12
 
     class FakeCorrector:
         def __init__(self, wcs, original_skycoord):
@@ -109,7 +112,14 @@ def test_is_wcs_correction_small(offset, is_good):
 
     correctors = [FakeCorrector(twcs, twk._wcs_to_skycoord(wcs))]
 
-    assert twk._is_wcs_correction_small(correctors) == is_good
+    if not is_good:
+        ctx = pytest.warns(UserWarning, match="WCS has been tweaked by more than")
+    else:
+        ctx = nullcontext()
+
+    with ctx:
+        corr_result = twk._is_wcs_correction_small(correctors)
+    assert corr_result is is_good
 
 
 def test_expected_failure_bad_starfinder():
@@ -136,10 +146,8 @@ def test_write_catalog(dummy_source_catalog, tmp_cwd):
 
 @pytest.fixture()
 def example_wcs():
-    path = os.path.join(
-        os.path.dirname(__file__),
-        "data",
-        "nrcb1-wcs.asdf")
+    path = get_pkg_data_filename(
+        "data/nrcb1-wcs.asdf", package="jwst.tweakreg.tests")
     with asdf.open(path, lazy_load=False) as af:
         return af.tree["wcs"]
 

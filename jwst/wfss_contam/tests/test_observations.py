@@ -1,20 +1,19 @@
+import warnings
+
 import pytest
 import numpy as np
 import asdf
-import os
-
 from astropy.convolution import convolve
-from photutils.segmentation import make_2dgaussian_kernel
 from astropy.stats import sigma_clipped_stats
+from astropy.utils.data import get_pkg_data_filename
+from numpy.testing import assert_allclose
 from photutils.datasets import make_100gaussians_image
-from photutils.segmentation import SourceFinder
+from photutils.segmentation import make_2dgaussian_kernel, SourceFinder
 
 from jwst.wfss_contam.observations import background_subtract
 from jwst.wfss_contam.disperse import dispersed_pixel
-from jwst.wfss_contam.tests import data
 from jwst.datamodels import SegmentationMapModel, ImageModel  # type: ignore[attr-defined]
 
-data_path = os.path.split(os.path.abspath(data.__file__))[0]
 DIR_IMAGE = "direct_image.fits"
 
 
@@ -49,25 +48,30 @@ def segmentation_map(direct_image):
 
     # turn this into a jwst datamodel
     model = SegmentationMapModel(data=segm.data)
-    asdf_file = asdf.open(os.path.join(data_path, "segmentation_wcs.asdf"))
-    wcsobj = asdf_file.tree['wcs']
-    model.meta.wcs = wcsobj
+    with warnings.catch_warnings():
+        # asdf.exceptions.AsdfPackageVersionWarning in oldestdeps job
+        warnings.filterwarnings("ignore", message="File .* was created with extension URI .* which is not currently installed")
+        with asdf.open(get_pkg_data_filename("data/segmentation_wcs.asdf", package="jwst.wfss_contam.tests")) as asdf_file:
+            wcsobj = asdf_file.tree['wcs']
+            model.meta.wcs = wcsobj
 
     return model
 
 
 @pytest.fixture(scope='module')
 def grism_wcs():
-    asdf_file = asdf.open(os.path.join(data_path, "grism_wcs.asdf"))
-    wcsobj = asdf_file.tree['wcs']
-    return wcsobj
+    with warnings.catch_warnings():
+        # asdf.exceptions.AsdfPackageVersionWarning in oldestdeps job
+        warnings.filterwarnings("ignore", message="File .* was created with extension URI .* which is not currently installed")
+        with asdf.open(get_pkg_data_filename("data/grism_wcs.asdf", package="jwst.wfss_contam.tests")) as asdf_file:
+            return asdf_file.tree['wcs']
 
 
 def test_background_subtract(direct_image_with_gradient):
     data = direct_image_with_gradient.data
     subtracted_data = background_subtract(data)
     mean, median, stddev = sigma_clipped_stats(subtracted_data, sigma=3.0)
-    assert np.isclose(mean, 0.0, atol=0.2*stddev)
+    assert_allclose(mean, 0.0, atol=0.2*stddev)
 
 
 def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
@@ -96,17 +100,16 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
     xoffset = 2200
     yoffset = 1000
 
-
     xs, ys, areas, lams_out, counts_1, source_id = dispersed_pixel(
-                    x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                    sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
-                    oversample_factor=1, extrapolate_sed=False, xoffset=xoffset,
-                    yoffset=yoffset)
+        x0, y0, width, height, lams, flxs, order, wmin, wmax,
+        sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
+        oversample_factor=1, extrapolate_sed=False, xoffset=xoffset,
+        yoffset=yoffset)
 
     xs, ys, areas, lams_out, counts_3, source_id = dispersed_pixel(
-                x0, y0, width, height, lams, flxs, order, wmin, wmax,
-                sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
-                oversample_factor=3, extrapolate_sed=False, xoffset=xoffset,
-                yoffset=yoffset)
+        x0, y0, width, height, lams, flxs, order, wmin, wmax,
+        sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
+        oversample_factor=3, extrapolate_sed=False, xoffset=xoffset,
+        yoffset=yoffset)
 
-    assert np.isclose(np.sum(counts_1), np.sum(counts_3), rtol=1/sens_waves.size)
+    assert_allclose(np.sum(counts_1), np.sum(counts_3), rtol=1/sens_waves.size)

@@ -1,11 +1,12 @@
-from astropy.io.fits.diff import FITSDiff
-import pytest
-import numpy as np
 import os
+
+import pytest
+from astropy.io.fits.diff import FITSDiff
 from gwcs import wcstools
+from numpy.testing import assert_allclose
+from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from stdatamodels.jwst import datamodels
 
 
 @pytest.fixture(scope="module")
@@ -24,6 +25,8 @@ def run_pipeline(rtdata_module):
             "--steps.outlier_detection.save_intermediate_results=true",
             "--steps.resample_spec.save_results=true",
             "--steps.extract_1d.save_results=true"]
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Mean of empty slice
     Step.from_cmdline(args)
 
 
@@ -57,10 +60,9 @@ def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, 
     # Check output wavelength array against its own wcs
     if suffix == "s2d":
         tolerance = 1e-03
-        dmr = datamodels.open(rtdata.output)
-
-        w = dmr.meta.wcs
-        x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
-        _, _, wave = w(x, y)
-        wlr = dmr.wavelength
-        assert np.all(np.isclose(wave, wlr, atol=tolerance))
+        with datamodels.open(rtdata.output) as dmr:
+            w = dmr.meta.wcs
+            x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
+            _, _, wave = w(x, y)
+            wlr = dmr.wavelength
+            assert_allclose(wave, wlr, atol=tolerance)

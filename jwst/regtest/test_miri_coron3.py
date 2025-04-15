@@ -14,6 +14,8 @@ def run_pipeline(rtdata_module):
     args = [
         "calwebb_coron3", rtdata.input,
     ]
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Mean of empty slice
     Step.from_cmdline(args)
 
     return rtdata
