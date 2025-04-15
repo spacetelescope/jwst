@@ -18,6 +18,14 @@
 
 int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv) {
 
+  // Allocate the vectors to be of size nelem
+ 
+  // nelem : number of elements
+  // fluxv : flux vector
+  // weightv : weight vector
+  // varv : variance vector
+  // iflux : counter index vector
+  
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
@@ -64,7 +72,7 @@ void addpoint (double x, double y, double xnew[], double ynew[], int *nVertices2
   *nVertices2 = *nVertices2 + 1;
 }
 
-// support function for sh_find_overlap
+// support function for sh_find_overlap. Determine where a point is in relationship to polygon
 int insideWindow(int edge, double x, double y,
                  double left,double right, double top, double bottom){
         switch(edge)
@@ -81,7 +89,7 @@ int insideWindow(int edge, double x, double y,
         return 0;
 }
 
-// support function for sh_find_overlap
+// support function for sh_find_overlap. Is a point in the polygon
 int calcCondition(int edge, double x1, double y1, double x2, double y2,
                   double left, double right, double top, double bottom) {
   int stat1 = insideWindow(edge,x1,y1,left,right,top,bottom);
@@ -94,8 +102,8 @@ int calcCondition(int edge, double x1, double y1, double x2, double y2,
 
 }
 
-// support function for sh_find_overlap
-void solveIntersection(int edge ,double x1,double y1,double x2,double y2,
+// support function for sh_find_overlap. Find the intersection of polygon and regular grid
+void solveIntersection(int edge ,double x1,double y1,double x2,double y2
                        double *x,double *y,
                        double left, double right, double top, double bottom){
   float m = 0;
