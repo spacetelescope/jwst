@@ -16,7 +16,7 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
     Parameters
     ----------
     sp_leak_ref : str
-        Name of the spectral leak reference file defined by datamodels.MirMrsPtCorrModel
+        Name of the spectral leak reference file defined by datamodels.MirMrsPtCorrModel.
 
     ch1b : numpy array
         Input channel 1 B spectrum
@@ -40,11 +40,12 @@ def do_correction(sp_leak_ref, ch1b, ch3a):
 
     # Spectral leak vector
 
-    leak = np.interp(wave3a, 2 * wave1b, spec1b) * np.interp(wave3a, leak_wave, leak_percent)
     # Factor of 2 in 2*wavelb is  necessary because we're dealing with second order light.
     # Without this the interpolation simply uses the last point in the spectrum, which is close
     # enough to correct as won't be noticeable for BAND spectra, but for CH spectra can be
     # quite different.
+
+    leak = np.interp(wave3a, 2 * wave1b, spec1b) * np.interp(wave3a, leak_wave, leak_percent)
 
     # Correct the data
     spec3a_corr = spec3a - leak
