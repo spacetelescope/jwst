@@ -251,9 +251,9 @@ def test_nirspec_fs_flat(srctype):
     data.slits.append(datamodels.SlitModel(shape))
     data.slits[0].data = np.full(shape, 1.0)
     data.slits[0].dq = np.full(shape, 0)
-    data.slits[0].err = np.full(shape, 0.1)
     data.slits[0].var_poisson = np.full(shape, 0.01)
     data.slits[0].var_rnoise = np.full(shape, 0.01)
+    data.slits[0].err = np.sqrt(data.slits[0].var_poisson + data.slits[0].var_rnoise)
     data.slits[0].data = np.full(shape, 1.0)
     data.slits[0].wavelength = np.ones(shape[-2:])
     data.slits[0].wavelength[:] = np.linspace(1, 5, shape[-1], dtype=float)
@@ -282,9 +282,7 @@ def test_nirspec_fs_flat(srctype):
     assert_allclose(rt_data.slits[0].var_poisson[nn], orig_data.slits[0].var_poisson[nn])
     assert_allclose(rt_data.slits[0].var_rnoise[nn], orig_data.slits[0].var_rnoise[nn])
     assert_allclose(rt_data.slits[0].var_flat, 0)  # orig_input has no var_flat
-    # err not same as original input due to how it is calculated.
-    rt_err = np.sqrt(rt_data.slits[0].var_poisson[nn] + rt_data.slits[0].var_rnoise[nn])
-    assert_allclose(rt_data.slits[0].err[nn], rt_err)
+    assert_allclose(rt_data.slits[0].err[nn], orig_data.slits[0].err[nn])
 
     # check that NaNs match in every extension they should
     for ext in ['data', 'err', 'var_rnoise', 'var_poisson', 'var_flat']:
