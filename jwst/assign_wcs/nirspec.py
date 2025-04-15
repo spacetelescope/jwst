@@ -308,7 +308,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
         msa2oteip = ifu_msa_to_oteip(reference_files) & Identity(1)  # for slit
         # OTEIP to V2,V3 transform
         # This includes a wavelength unit conversion from meters to microns.
-        oteip2v23 = oteip_to_v23(reference_files, input_model) & Identity(1)  # slit
+        oteip2v23 = oteip_to_v23(reference_files)
 
         # Compute differential velocity aberration (DVA) correction:
         va_corr = pointing.dva_corr_model(
@@ -334,7 +334,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
         (slit_frame, slit2slicer),
         (slicer_frame, slicer2msa),
         (msa_frame, msa2oteip.rename("msa2oteip")),
-        (oteip, oteip2v23.rename("oteip2v23")),
+        (oteip, oteip2v23.rename("oteip2v23") & Identity(1)),
         (v2v3, va_corr),
         (v2v3vacorr, tel2sky),
         (world, None),
@@ -1749,9 +1749,8 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-0.55, slit_ymax
         pad_y = (max(0, y_range.min() - 1 - 2) - 0.5, min(2047, y_range.max() - 1 + 2) + 0.5)
 
         return pad_x, pad_y
-
-    x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
-    x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
+    x_range_low, y_range_low, _ = slit2detector(148, [0] * nsteps, [slit_ymin] * nsteps, lam_grid)
+    x_range_high, y_range_high, _ = slit2detector(148, [0] * nsteps, [slit_ymax] * nsteps, lam_grid)
     x_range = np.hstack((x_range_low, x_range_high))
     y_range = np.hstack((y_range_low, y_range_high))
 
@@ -1853,22 +1852,18 @@ def generate_compound_bbox(input_model, slits=None, selector_args=None, waveleng
     wavelength_range : list
 
     """
-    # def _get_y_range(slits):
-    #     slits_yrange = ()
-    #     slit = [s for s in open_slits if s.name == slit_name][0]
-    #     return slit.ymin, slit.ymax
-
+    if slits is None:
+        slits = nrs_wcs.get_transform('gwa', 'slit_frame').slits
     wcs_forward_transform = input_model.meta.wcs.forward_transform
-    bbox_dict = {}
     if wavelength_range is None:
         _, wavelength_range = spectral_order_wrange_from_model(input_model)
 
-    #transform = input_model.meta.wcs.get_transform('detector', 'slit_frame').inverse
+    bbox_dict = {}
+
     wcs_forward_transform.inputs = ('x', 'y', 'slit_name')
     transform = input_model.meta.wcs.get_transform('slit_frame', 'detector')
     is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == 'nrs_ifu'
     if is_nirspec_ifu:
-        # bb = compute_bounding_box(transform, wavelength_range)
         for slit in slits:
             bb = _compute_bounding_box(transform, slit, wavelength_range,
                                        slit_ymin=-.5, slit_ymax=.5)
@@ -1884,8 +1879,7 @@ def generate_compound_bbox(input_model, slits=None, selector_args=None, waveleng
     cbb = mbbox.CompoundBoundingBox.validate(wcs_forward_transform, bbox_dict,
                                              selector_args=[('slit_name', True)],
                                              order='F')
-    # TODO: Add "ignored" to ModelBoundingBox.bounding_box() so it returns a tuple suitable
-    # for gwcs.grid_from_bounding_box
+
     return cbb
 
 
@@ -2387,8 +2381,8 @@ def _nrs_wcs_set_input(input_model, slit_name):
             "slit_frame", "slicer", wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1)
         )
     else:
-        slit_wcs.set_transform('slit_frame', 'msa_frame',wcsobj.pipeline[3].transform & Identity(1))
-                               # wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
+        #slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[3].transform & Identity(1))
+        slit_wcs.set_transform('slit_frame', 'msa_frame', wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1))
     return slit_wcs
 
 
@@ -2513,7 +2507,6 @@ def validate_open_slits(input_model, open_slits, reference_files):
     for slit in slit2msa.slits:
         msa2det = slit2msa &Identity(1)| col2det
         bb = _compute_bounding_box(msa2det, slit.name, wrange, slit.ymin, slit.ymax)
-        print(bb)
         valid = _is_valid_slit(bb)
         if not valid:
             log.info(

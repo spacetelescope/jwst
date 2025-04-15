@@ -885,32 +885,12 @@ def compute_footprint_nrs_ifu(dmodel, mod):
     ra_total = []
     dec_total = []
     lam_total = []
+    # TODO: remove mod from the parameters, the wavelength range is recorded in the model
     _, wrange = mod.spectral_order_wrange_from_model(dmodel)
-    pipe = dmodel.meta.wcs.pipeline
 
-    # Get the GWA to slit_frame transform
-    g2s = pipe[2].transform
-
-    # Construct a list of the transforms between coordinate frames.
-    # Set a place holder ``Identity`` transform at index 2 and 3.
-    # Update them with slice specific transforms.
-    transforms = [pipe[0].transform]
-    transforms.append(pipe[1].transform[1:])
-    transforms.append(astmodels.Identity(1))
-    transforms.append(astmodels.Identity(1))
-    transforms.extend([step.transform for step in pipe[4:-1]])
-
-    for sl in range(30):
-        transforms[2] = g2s.get_model(sl)
-        # Create the full transform from ``slit_frame`` to ``detector``.
-        # It is used to compute the bounding box.
-        m = functools.reduce(lambda x, y: x | y, [tr.inverse for tr in transforms[:3][::-1]])
-        bbox = mod.compute_bounding_box(m, wrange)
-        # Add the remaining transforms - from ``sli_frame`` to ``world``
-        transforms[3] = pipe[3].transform.get_model(sl) & astmodels.Identity(1)
-        mforw = functools.reduce(lambda x, y: x | y, transforms)
-        x1, y1 = grid_from_bounding_box(bbox)
-        ra, dec, lam = mforw(x1, y1)
+    for slit in range(30):
+        x, y = grid_from_bounding_box(dmodel.meta.wcs.bounding_box[slit])
+        ra, dec, lam, _ = dmodel.meta.wcs(x, y, slit)
         ra_total.extend(np.ravel(ra))
         dec_total.extend(np.ravel(dec))
         lam_total.extend(np.ravel(lam))
