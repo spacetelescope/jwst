@@ -2,7 +2,7 @@
 Unit tests for straylight step configuration
 """
 
-from stdatamodels.jwst.datamodels import CubeModel
+from stdatamodels.jwst.datamodels import CubeModel, IFUImageModel
 
 from jwst.straylight import StraylightStep
 import numpy as np
@@ -28,8 +28,8 @@ def miri_mrs_short_tso():
 def miri_mrs_short():
     """Set up MIRI MRS SHORT data"""
 
-    image = CubeModel((50, 1024, 1032))
-    image.data = np.random.random((50, 1024, 1032))
+    image = IFUImageModel((1024, 1032))
+    image.data = np.random.random((1024, 1032))
     image.meta.instrument.name = 'MIRI'
     image.meta.instrument.detector = 'MIRIFUSHORT'
     image.meta.exposure.type = 'MIR_MRS'
