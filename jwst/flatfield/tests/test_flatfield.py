@@ -281,10 +281,9 @@ def test_nirspec_fs_flat(srctype):
     assert_allclose(rt_data.slits[0].data[nn], orig_data.slits[0].data[nn])
     assert_allclose(rt_data.slits[0].var_poisson[nn], orig_data.slits[0].var_poisson[nn])
     assert_allclose(rt_data.slits[0].var_rnoise[nn], orig_data.slits[0].var_rnoise[nn])
-    # varflat and err not same as original input due to how they are calculated.
-    rt_varflat = (rt_data.slits[0].data[nn] * flat_val / flat_err) ** 2  # orig_input has no var_flat
-    rt_err = np.sqrt(rt_data.slits[0].var_poisson[nn] + rt_data.slits[0].var_rnoise[nn] + rt_varflat)
-    assert_allclose(rt_data.slits[0].var_flat[nn], rt_varflat)
+    assert_allclose(rt_data.slits[0].var_flat, 0)  # orig_input has no var_flat
+    # err not same as original input due to how it is calculated.
+    rt_err = np.sqrt(rt_data.slits[0].var_poisson[nn] + rt_data.slits[0].var_rnoise[nn])
     assert_allclose(rt_data.slits[0].err[nn], rt_err)
 
     # check that NaNs match in every extension they should

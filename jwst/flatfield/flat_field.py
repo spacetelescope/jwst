@@ -212,7 +212,7 @@ def apply_flat_field(science, flat, inverse=False):
         science.var_flat = (science.data / flat_data * flat_err) ** 2
     else:
         science.data *= flat_data
-        science.var_flat = (science.data * flat_data / flat_err) ** 2
+        science.var_flat = None  # Does not exist before flatfield step
 
     # Update the variances using BASELINE algorithm.  For guider data, it has
     # not gone through ramp fitting so there is no Poisson noise or readnoise
@@ -220,11 +220,12 @@ def apply_flat_field(science, flat, inverse=False):
         if not inverse:
             science.var_poisson /= flat_data_squared
             science.var_rnoise /= flat_data_squared
+            science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
         else:
             science.var_poisson *= flat_data_squared
             science.var_rnoise *= flat_data_squared
-        science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
-    else:
+            science.err = np.sqrt(science.var_poisson + science.var_rnoise)
+    elif not inverse:
         # Set the output ERR to be the combined input ERR plus flatfield ERR, summed in quadrature
         science.err = np.sqrt(science.err**2 + science.var_flat)
 
@@ -435,12 +436,13 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
             slit.var_poisson /= flat_data_squared
             slit.var_rnoise /= flat_data_squared
             slit.var_flat = (slit.data / slit_flat.data * slit_flat.err) ** 2
+            slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
         else:
             slit.data *= slit_flat.data
             slit.var_poisson *= flat_data_squared
             slit.var_rnoise *= flat_data_squared
-            slit.var_flat = (slit.data * slit_flat.data / slit_flat.err) ** 2
-        slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
+            slit.var_flat = None  # Does not exist before flatfield step
+            slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise)
 
         # Combine the science and flat DQ arrays
         slit.dq |= slit_flat.dq
@@ -516,15 +518,18 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
         output_model.var_poisson /= flat_data_squared
         output_model.var_rnoise /= flat_data_squared
         output_model.var_flat = (output_model.data / interpolated_flat.data * interpolated_flat.err) ** 2
+        output_model.err = np.sqrt(
+            output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
+        )
     else:
         output_model.data *= interpolated_flat.data
         output_model.var_poisson *= flat_data_squared
         output_model.var_rnoise *= flat_data_squared
-        output_model.var_flat = (output_model.data * interpolated_flat.data / interpolated_flat.err) ** 2
+        output_model.var_flat = None  # Does not exist before flatfield step
+        output_model.err = np.sqrt(
+            output_model.var_poisson + output_model.var_rnoise
+        )
     output_model.dq |= interpolated_flat.dq
-    output_model.err = np.sqrt(
-        output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
-    )
 
     # Make sure all NaNs and flags match up in the output model
     pipe_utils.match_nans_and_flags(output_model)
@@ -588,15 +593,18 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
             output_model.var_poisson /= flat_data_squared
             output_model.var_rnoise /= flat_data_squared
             output_model.var_flat = (output_model.data / flat * flat_err) ** 2
+            output_model.err = np.sqrt(
+                output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
+            )
         else:
             output_model.data *= flat
             output_model.var_poisson *= flat_data_squared
             output_model.var_rnoise *= flat_data_squared
-            output_model.var_flat = (output_model.data * flat / flat_err) ** 2
+            output_model.var_flat = None  # Does not exist before flatfield step
+            output_model.err = np.sqrt(
+                output_model.var_poisson + output_model.var_rnoise
+            )
         output_model.dq |= flat_dq
-        output_model.err = np.sqrt(
-            output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
-        )
 
         # Make sure all NaNs and flags match up in the output model
         pipe_utils.match_nans_and_flags(output_model)
