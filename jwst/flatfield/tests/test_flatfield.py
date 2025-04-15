@@ -281,7 +281,7 @@ def test_nirspec_fs_flat(srctype):
     assert_allclose(rt_data.slits[0].data[nn], orig_data.slits[0].data[nn])
     assert_allclose(rt_data.slits[0].var_poisson[nn], orig_data.slits[0].var_poisson[nn])
     assert_allclose(rt_data.slits[0].var_rnoise[nn], orig_data.slits[0].var_rnoise[nn])
-    assert_allclose(rt_data.slits[0].var_flat, 0)  # orig_input has no var_flat
+    assert_allclose(rt_data.slits[0].var_flat[nn], 0)  # orig_input has no var_flat
     assert_allclose(rt_data.slits[0].err[nn], orig_data.slits[0].err[nn])
 
     # check that NaNs match in every extension they should

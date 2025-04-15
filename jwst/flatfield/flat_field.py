@@ -214,7 +214,7 @@ def apply_flat_field(science, flat, inverse=False):
         science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
     else:
         science.data *= flat_data
-        science.var_flat = None  # Does not exist before flatfield step
+        science.var_flat = np.zeros_like(science.data)  # Does not exist before flatfield step
 
     # Update the variances using BASELINE algorithm.  For guider data, it has
     # not gone through ramp fitting so there is no Poisson noise or readnoise
@@ -443,7 +443,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
             slit.data *= slit_flat.data
             slit.var_poisson *= flat_data_squared
             slit.var_rnoise *= flat_data_squared
-            slit.var_flat = None  # Does not exist before flatfield step
+            slit.var_flat = np.zeros_like(slit.data)  # Does not exist before flatfield step
             slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise)
 
         # Combine the science and flat DQ arrays
@@ -527,7 +527,7 @@ def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, di
         output_model.data *= interpolated_flat.data
         output_model.var_poisson *= flat_data_squared
         output_model.var_rnoise *= flat_data_squared
-        output_model.var_flat = None  # Does not exist before flatfield step
+        output_model.var_flat = np.zeros_like(output_model.data)  # Does not exist before flatfield step
         output_model.err = np.sqrt(
             output_model.var_poisson + output_model.var_rnoise
         )
@@ -602,7 +602,7 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
             output_model.data *= flat
             output_model.var_poisson *= flat_data_squared
             output_model.var_rnoise *= flat_data_squared
-            output_model.var_flat = None  # Does not exist before flatfield step
+            output_model.var_flat = np.zeros_like(output_model.data)  # Does not exist before flatfield step
             output_model.err = np.sqrt(
                 output_model.var_poisson + output_model.var_rnoise
             )
