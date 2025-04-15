@@ -16,15 +16,15 @@ def do_correction(output_model, lin_model):
 
     Parameters
     ----------
-    output_model : `~jwst.datamodel.RampModel`
+    output_model : `~jwst.datamodels.RampModel`
         Science data to be corrected.
 
-    lin_model : `~jwst.datamodel.LinearityModel`
+    lin_model : `~jwst.datamodels.LinearityModel`
         Linearity reference file model.
 
     Returns
     -------
-    output_model : `~jwst.datamodel.RampModel`
+    output_model : `~jwst.datamodels.RampModel`
         Linearity corrected science data.
     """
     # Create the output model as a copy of the input
