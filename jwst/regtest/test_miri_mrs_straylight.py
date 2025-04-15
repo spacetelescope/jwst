@@ -12,7 +12,7 @@ TRUTH_PATH = 'truth/test_miri_mrs_straylight'
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
-    ["straylightstep"],
+    ["straylightstep", "shower_model"],
 )
 def test_miri_mrs_straylight_clean_showers(rtdata, fitsdiff_default_kwargs,suffix):
     """Test running straylight with clean shower= True on an rate file."""
@@ -21,7 +21,8 @@ def test_miri_mrs_straylight_clean_showers(rtdata, fitsdiff_default_kwargs,suffi
     rtdata.get_data(INPUT_PATH + '/' + filename) 
 
     args = ['jwst.straylight.StraylightStep', rtdata.input,
-            '--clean_showers=True']
+            '--clean_showers=True',
+            '--save_shower_model=True']
     Step.from_cmdline(args)
 
     output = "jw01024001001_04101_00001_mirifulong_" + suffix + ".fits"
@@ -34,27 +35,3 @@ def test_miri_mrs_straylight_clean_showers(rtdata, fitsdiff_default_kwargs,suffi
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
-@pytest.mark.parametrize(
-    'suffix',
-    ["shower_model"],
-)    
-def test_miri_mrs_straylight_clean_showers_save(rtdata, fitsdiff_default_kwargs, suffix):
-    """Test running straylight with save_shower_model=true on an rate file."""
-
-    filename = "jw01024001001_04101_00001_mirifulong_rate.fits"
-    rtdata.get_data(INPUT_PATH + '/' + filename) 
-
-
-    args = ['jwst.straylight.StraylightStep', rtdata.input,
-            '--clean_showers=True',
-            '--save_shower_model=True']
-    Step.from_cmdline(args)
-    output = "jw01024001001_04101_00001_mirifulong_" + suffix +".fits"
-    rtdata.output = output
-    # Get the truth file
-    rtdata.get_truth(f"{TRUTH_PATH}/{output}")
-
-    # Compare the results for straylight output with clean_showers turned on.
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    assert diff.identical, diff.report()

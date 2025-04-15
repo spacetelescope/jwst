@@ -266,7 +266,7 @@ def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0,
     output : `~jwst.datamodels.IFUImageModel`
         Straylight-subtracted science data.
 
-    output_shower_model : `~jwst.datamodel.JwstDataModel` or None
+    output_shower_model : `~jwst.datamodel.IFUImageModel` or None
         A datamodel containing the shower model, if `save_shower_model`
         is True.
     """
@@ -329,7 +329,7 @@ def _make_straylight_model(input_model, shower_data):
 
     Returns
     -------
-    intermediate_model : ~jwst.datamodel.IFUImageModel`
+    intermediate_model : `~jwst.datamodel.IFUImageModel`
         A model containing only the shower model data and top-level
         metadata matching the input.
     """
