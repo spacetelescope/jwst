@@ -209,7 +209,9 @@ def apply_flat_field(science, flat, inverse=False):
     flat_data_squared = flat_data * flat_data
     if not inverse:
         science.data /= flat_data
-        science.var_flat = (science.data / flat_data * flat_err) ** 2
+        # NOTE: Re-arranging var_flat math will cause some NIRISS SOSS
+        # regression tests to fail with floating point differences.
+        science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
     else:
         science.data *= flat_data
         science.var_flat = None  # Does not exist before flatfield step
