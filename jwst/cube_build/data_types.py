@@ -26,7 +26,7 @@ class DataTypes:
         Open the input data using datamodels and determine if data is
         a single input model, an association, or a set of input models
         contained in a ModelContainer. The method populates the self.input_models
-        which is list of input models. An initial base name for the output file
+        which is list a of input models. An initial base name for the output file
         is constructed.
 
         Parameters
@@ -81,9 +81,7 @@ class DataTypes:
         # channel+subchannel (MIRI MRS) or grating+filter (NRS IFU) the output cube covers.
 
         if output_file is not None:
-            # basename, ext = os.path.splitext(os.path.basename(output_file))
-            f = Path(output_file).stem
-            self.output_name = f
+            self.output_name = Path(output_file).stem
 
         if output_dir is not None:
             self.output_name = output_dir + "/" + self.output_name

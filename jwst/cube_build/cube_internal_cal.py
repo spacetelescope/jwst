@@ -29,7 +29,7 @@ def match_det2cube(
     This routine assumes a 1-1 mapping in across slice to slice no.
     This routine assumes the output coordinate systems is local IFU plane.
     The user can not change scaling in across slice dimension
-    Map the corners of the x,y detector values to a cube defined by local IFU plane.
+    Map the corners of the x, y detector values to a cube defined by local IFU plane.
     In the along slice, lambda plane find the % area of the detector pixel
     which it overlaps with in the cube. For each spaxel record the detector
     pixels that overlap with it - store flux,  % overlap, beta_distance.
@@ -45,7 +45,7 @@ def match_det2cube(
     input_model : IFUImage model
        Input calibrated model or file
     transform : transform
-       WCS transform to transform x,y to alpha,beta, lambda
+       WCS transform to transform x, y to alpha, beta, lambda
     acoord : numpy array
        Array of along slice valuee defining the along slice spatial dimension the  of IFU cube
     zcoord : numpy array

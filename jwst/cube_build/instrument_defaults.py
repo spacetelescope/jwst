@@ -1304,7 +1304,7 @@ class InstrumentInfo:
 
         Returns
         -------
-        table : dictionary
+        table : dict
             Dictionary of flux weighting values
         """
         table = (
@@ -1319,11 +1319,11 @@ class InstrumentInfo:
 
     def get_prism_table(self):
         """
-        Get the NIRSpec prism table containing flux weigthing parameters.
+        Get the NIRSpec prism table containing flux weighting parameters.
 
         Returns
         -------
-        table : dictionary
+        table : dict
             Dictionary of flux weighting values
         """
         table = (
@@ -1342,7 +1342,7 @@ class InstrumentInfo:
 
         Returns
         -------
-        table : dictionary
+        table : dict
             Dictionary of flux weighting values
         """
         table = (
@@ -1361,7 +1361,7 @@ class InstrumentInfo:
 
         Returns
         -------
-        table : dictionary
+        table : dict
             Dictionary of flux weighting values
         """
         table = (

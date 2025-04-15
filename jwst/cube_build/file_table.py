@@ -107,7 +107,7 @@ class FileTable:
 
         Returns
         -------
-        MasterTable : Dict
+        MasterTable : dict
             Dictionary containing the filename/model for each channel/band or grating/filter
         """
         # ________________________________________________________________________________
