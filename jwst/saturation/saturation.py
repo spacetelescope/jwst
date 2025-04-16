@@ -44,7 +44,7 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, bias_
     use_readpatt : bool
         Use grouped read pattern information to assist with flagging
 
-    bias_model : `~jwst.datamodels.SuperBiasModel` or None
+    bias_model : `~jwst.datamodels.SuperBiasModel` or None, optional
         Superbias reference file data model.
 
     Returns
@@ -131,7 +131,7 @@ def irs2_flag_saturation(output_model,
     use_readpatt : bool
         Use grouped read pattern information to assist with flagging
 
-    bias_model : `~jwst.datamodels.SuperBiasModel` or None
+    bias_model : `~jwst.datamodels.SuperBiasModel` or None, optional
         Superbias reference file data model.
 
     Returns
