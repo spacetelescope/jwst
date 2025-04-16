@@ -37,7 +37,6 @@ def no_NaN(  # noqa: N802
     zap_nan : bool
         If True, replace NaNs in a copy of `input_model.data`.
         The default is False.
-
     zap_zero : bool
         If True, replace zeros in a copy of `input_model.data`.
         The default is False.
@@ -55,7 +54,7 @@ def no_NaN(  # noqa: N802
 
     if zap_zero:
         if mask is None:
-            mask = (input_model.data == 0.0)  # fmt: skip
+            mask = input_model.data == 0.0
         else:
             mask = np.logical_or(mask, (input_model.data == 0.0))
 
@@ -265,9 +264,9 @@ class DataSet:
             # Decays during the time covered by the reset (again, if any)
             # between integrations will be taken care of in the loop
             # over integrations.
-            to_start = (
-                self.output_obj.meta.exposure.start_time - self.traps_filled.meta.exposure.end_time
-            ) * 86400.0
+            mjd_start = self.output_obj.meta.exposure.start_time
+            mjd_end = self.traps_filled.meta.exposure.end_time
+            to_start = (mjd_start - mjd_end) * 86400.0
             log.debug("Decay time for previous traps-filled file = %g s", to_start)
             for k in range(nfamilies):
                 decay_param_k = self.get_decay_param(par, k)
@@ -310,9 +309,8 @@ class DataSet:
         # file are flagged as bad, set the corresponding data values to
         # zero, so the computed number of traps will also be zero.
         if hasattr(self.trap_density, "dq"):
-            mask = (
-                np.bitwise_and(self.trap_density.dq, dqflags.pixel["DO_NOT_USE"]) > 0
-            )  # fmt: skip
+            do_not_use_flag = np.bitwise_and(self.trap_density.dq, dqflags.pixel["DO_NOT_USE"])
+            mask = np.where(do_not_use_flag > 0)
             self.trap_density.data[mask] = 0.0
             del mask
 
@@ -375,7 +373,7 @@ class DataSet:
                 if self.save_persistence:
                     self.output_pers.data[integ, group, :, :] = persistence.copy()
                 if persistence.max() >= self.flag_pers_cutoff:
-                    mask = (persistence >= self.flag_pers_cutoff)  # fmt: skip
+                    mask = np.where(persistence >= self.flag_pers_cutoff)
                     self.output_obj.pixeldq[mask] |= dqflags.pixel["PERSISTENCE"]
 
             # Update traps_filled with the number of traps that captured
@@ -576,9 +574,8 @@ class DataSet:
             # This won't be accurate, because there's only one group.
             grp_slope = self.output_obj.data[integ, 0, :, :]
             if hasattr(self.persistencesat, "dq"):
-                mask = (
-                    np.bitwise_and(self.persistencesat.dq, dqflags.pixel["DO_NOT_USE"]) > 0
-                )  # fmt: skip
+                do_not_use = np.bitwise_and(self.persistencesat.dq, dqflags.pixel["DO_NOT_USE"])
+                mask = do_not_use > 0
                 if mask.sum() == 0:
                     mask = None
             else:

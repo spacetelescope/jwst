@@ -98,7 +98,7 @@ class PersistenceStep(Step):
                 del traps_filled_model
             if traps_filled is not None:  # output traps_filled
                 # Save the traps_filled image with suffix 'trapsfilled'.
-                self.save_model("trapsfilled", force=self.save_trapsfilled)
+                self.save_model(traps_filled, "trapsfilled", force=self.save_trapsfilled)
                 del traps_filled
 
             if output_pers is not None:  # output file of persistence
