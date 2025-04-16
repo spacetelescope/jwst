@@ -290,9 +290,9 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`SPECWCS <specwcs_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
-| :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`saturation <saturation_step>`                     |
+| :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`saturation <saturation_step>`                   |
 +                                                  +-------------------------------------------------------+
-|                                                  | :ref:`superbias <superbias_step>`                   |
+|                                                  | :ref:`superbias <superbias_step>`                     |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`TRAPDENSITY <trapdensity_reffile>`         | :ref:`persistence <persistence_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
