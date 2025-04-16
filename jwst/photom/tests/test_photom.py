@@ -2,9 +2,8 @@ import math
 
 import pytest
 import numpy as np
-
 from astropy import units as u
-
+from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, MultiSpecModel
 
@@ -1315,7 +1314,7 @@ def test_niriss_soss():
     compare = photmj * rel_resp
     # Compare the values at the center pixel.
     ratio = output[test_ind] / input[test_ind]
-    assert np.allclose(ratio, compare, rtol=1.e-7)
+    assert_allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_niriss_image():
@@ -1339,7 +1338,7 @@ def test_niriss_image():
     compare = photmjsr
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert np.allclose(ratio, compare, rtol=1.e-7)
+    assert_allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_expected_failure_niriss_cubemodel():
@@ -1436,7 +1435,7 @@ def test_miri_lrs():
     compare = photmjsr * rel_resp
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert np.allclose(ratio, compare, rtol=1.e-7)
+    assert_allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_miri_image():
@@ -1464,7 +1463,7 @@ def test_miri_image():
     compare = photmjsr + amplitude * np.exp(-(60000 - t0) / tau)  # Added for new PHOTOM step
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert np.allclose(ratio, compare, rtol=1.e-7)
+    assert_allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_nircam_image():
@@ -1488,7 +1487,7 @@ def test_nircam_image():
     compare = photmjsr
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert np.allclose(ratio, compare, rtol=1.e-7)
+    assert_allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_nircam_spec():
@@ -1529,7 +1528,7 @@ def test_nircam_spec():
         compare = photmjsr * rel_resp / disp
         # Compare the values at the center pixel.
         ratio = output[iy, ix] / input[iy, ix]
-        assert np.allclose(ratio, compare, rtol=1.e-7)
+        assert_allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_fgs():
@@ -1554,7 +1553,7 @@ def test_fgs():
     compare = photmjsr
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input[iy, ix]
-    assert np.allclose(ratio, compare, rtol=1.e-7)
+    assert_allclose(ratio, compare, rtol=1.e-7)
 
 
 def test_apply_photom_1():
@@ -1583,15 +1582,24 @@ def test_apply_photom_1():
     # (and other photom models) can take either an open model or the name of
     # a file as input.
     output_model = ds.apply_photom(ftab, area_ref)
-    assert (math.isclose(output_model.meta.photometry.pixelarea_steradians,
-                         area_ster, rel_tol=1.e-7))
-    assert (math.isclose(output_model.meta.photometry.pixelarea_arcsecsq,
-                         area_a2, rel_tol=1.e-7))
+    assert_allclose(output_model.meta.photometry.pixelarea_steradians,
+                    area_ster, rtol=1e-7)
+    assert_allclose(output_model.meta.photometry.pixelarea_arcsecsq,
+                    area_a2, rtol=1e-7)
 
     # check the x,y size of area array in output is the same size as the sci data
     sh_area = output_model.area.shape
     assert shape[-1] == sh_area[-1]
     assert shape[-2] == sh_area[-2]
+
+    # Recover original input before photom step.
+    ds2 = photom.DataSet(output_model, inverse=True)
+    rt_model = ds2.apply_photom(ftab, area_ref)
+    assert_allclose(rt_model.data, input_model.data)
+    assert_allclose(rt_model.err, input_model.err)
+    assert_allclose(rt_model.var_poisson, input_model.var_poisson)
+    assert_allclose(rt_model.var_rnoise, input_model.var_rnoise)
+    assert_allclose(rt_model.var_flat, input_model.var_flat)
 
 
 @pytest.mark.parametrize('srctype', ['POINT', 'EXTENDED'])
@@ -1652,6 +1660,16 @@ def test_apply_photom_2(srctype):
     nelem = ftab.phot_table['nelem'][rownum]
     wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
     relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
+
+    # Recover original input before photom step.
+    ds2 = photom.DataSet(output_model, inverse=True)
+    rt_model = ds2.apply_photom(ftab, area_ref)
+    for (k, slit) in enumerate(save_input.slits):
+        assert_allclose(rt_model.slits[k].data, slit.data, rtol=1e-4)
+        assert_allclose(rt_model.slits[k].err, slit.err)
+        assert_allclose(rt_model.slits[k].var_poisson, slit.var_poisson)
+        assert_allclose(rt_model.slits[k].var_rnoise, slit.var_rnoise)
+        assert_allclose(rt_model.slits[k].var_flat, slit.var_flat)
 
     result = []
     for (k, slit) in enumerate(save_input.slits):
