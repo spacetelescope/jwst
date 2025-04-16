@@ -1,7 +1,7 @@
 __all__ = [
-    'AssociationError',
-    'AssociationNotAConstraint',
-    'AssociationNotValidError',
+    "AssociationError",
+    "AssociationNotAConstraint",
+    "AssociationNotValidError",
 ]
 
 

@@ -1,4 +1,5 @@
-""" Utilities for product manipulation."""
+"""Utilities for product manipulation."""
+
 from collections import Counter
 import logging
 
@@ -27,7 +28,7 @@ def sort_by_candidate(asns):
 
     If this changes, a comparison function will need be implemented
     """
-    return sorted(asns, key=lambda asn: asn['asn_id'])
+    return sorted(asns, key=lambda asn: asn["asn_id"])
 
 
 def get_product_names(asns):
@@ -42,19 +43,10 @@ def get_product_names(asns):
     product_names, duplicates : set(str[, ...]), [str[,...]]
         2-tuple consisting of the set of product names and the list of duplicates.
     """
-    product_names = [
-        asn['products'][0]['name']
-        for asn in asns
-    ]
+    product_names = [asn["products"][0]["name"] for asn in asns]
 
-    dups = [
-        name
-        for name, count in Counter(product_names).items()
-        if count > 1
-    ]
+    dups = [name for name, count in Counter(product_names).items() if count > 1]
     if dups:
-        logger.debug(
-            'Duplicate product names: %s', dups
-        )
+        logger.debug("Duplicate product names: %s", dups)
 
     return set(product_names), dups

@@ -19,8 +19,8 @@ def test_read_assoc_defs():
     )
     assert len(rules) >= 2
     rule_names = helpers.get_rule_names(rules)
-    assert 'DMS_Level3_Base_Set1' not in rules
-    valid_rules = ['Asn_Dither_Set1', 'Asn_WFS_Set1']
+    assert 'DMSLevel3BaseSet1' not in rules
+    valid_rules = ['AsnDitherSet1', 'AsnWFSSet1']
     for rule in valid_rules:
         assert rule in rule_names
 
@@ -54,13 +54,13 @@ def test_multi_rules():
     rules = AssociationRegistry(rule_files, include_default=False)
     assert len(rules) == 4
     rule_names = helpers.get_rule_names(rules)
-    assert 'DMS_Level3_Base_Set1' not in rule_names
-    assert 'DMS_Level3_Base_Set2' not in rule_names
+    assert 'DMSLevel3BaseSet1' not in rule_names
+    assert 'DMSLevel3BaseSet2' not in rule_names
     valid_rules = [
-        'Asn_Dither_Set1',
-        'Asn_Dither_Set2',
-        'Asn_WFS_Set1',
-        'Asn_WFS_Set2'
+        'AsnDitherSet1',
+        'AsnDitherSet2',
+        'AsnWFSSet1',
+        'AsnWFSSet2'
     ]
 
     for rule in valid_rules:

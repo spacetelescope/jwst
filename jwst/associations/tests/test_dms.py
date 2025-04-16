@@ -46,7 +46,7 @@ def test_asn_name_override(dms_asns):
 def test_registry(dms_registry):
     """Test basic registry creation and usage"""
     assert len(dms_registry) == 1
-    assert 'Asn_DMS_Base' in dms_registry
+    assert 'AsnDMSBase' in dms_registry
 
 
 def test_asn(dms_asns):
