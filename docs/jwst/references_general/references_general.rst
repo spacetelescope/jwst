@@ -161,6 +161,8 @@ documentation on each reference file.
 | :ref:`rscd <rscd_step>`                               | :ref:`RSCD <rscd_reffile>`                       |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`saturation <saturation_step>`                   | :ref:`SATURATION <saturation_reffile>`           |
++                                                       +--------------------------------------------------+
+|                                                       | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`source_catalog <source_catalog_step>`           | :ref:`APCORR <apcorr_reffile>`                   |
 +                                                       +--------------------------------------------------+
@@ -288,7 +290,9 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`SPECWCS <specwcs_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
-| :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`superbias <superbias_step>`                     |
+| :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`saturation <saturation_step>`                     |
++                                                  +-------------------------------------------------------+
+|                                                  | :ref:`superbias <superbias_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`TRAPDENSITY <trapdensity_reffile>`         | :ref:`persistence <persistence_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
