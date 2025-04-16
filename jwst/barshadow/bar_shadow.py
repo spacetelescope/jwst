@@ -56,7 +56,7 @@ def do_correction(
     # -1 to 1 in their Y value WCS.
 
     exp_type = input_model.meta.exposure.type
-    log.debug(f"EXP_TYPE = {exp_type}")
+    log.debug("EXP_TYPE = %s", exp_type)
 
     # Create output as a copy of the input science data model
     output_model = input_model.copy()
@@ -65,7 +65,7 @@ def do_correction(
     corrections = datamodels.MultiSlitModel()
     for slit_idx, slitlet in enumerate(output_model.slits):
         slitlet_number = slitlet.slitlet_id
-        log.info(f"Working on slitlet {slitlet_number}")
+        log.info("Working on slitlet %s", slitlet_number)
 
         if correction_pars:
             correction = correction_pars.slits[slit_idx]
@@ -134,13 +134,15 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     # Correction only applies to extended/uniform sources
     correction = None
     if not has_uniform_source(slitlet, source_type):
-        log.info(f"Bar shadow correction skipped for slitlet {slitlet_number} (source not uniform)")
+        log.info(
+            "Bar shadow correction skipped for slitlet %s (source not uniform)", slitlet_number
+        )
         return correction
 
     # No correction for zero length slitlets
     shutter_status = slitlet.shutter_state
     if len(shutter_status) == 0:
-        log.info(f"Slitlet {slitlet_number} has zero length, correction skipped")
+        log.info("Slitlet %s has zero length, correction skipped", slitlet_number)
         return correction
 
     # Create the pieces that are put together to make the barshadow model
@@ -167,7 +169,7 @@ def _calc_correction(slitlet, barshadow_model, source_type):
     # so that the separation between the slit centers is 1,
     # i.e. slit height + interslit bar
     if slitlet.slit_yscale is None:
-        log.warning(f"Slit height scale factor not found. Using default value {SLITRATIO}.")
+        log.warning("Slit height scale factor not found. Using default value %s.", SLITRATIO)
         yslit = yslit / SLITRATIO
     else:
         yslit = yslit / slitlet.slit_yscale
@@ -413,5 +415,5 @@ def has_uniform_source(slitlet, force_type=None):
             return True
     else:
         # If there's no source type info, default to EXTENDED
-        log.info(f"SRCTYPE not set for slitlet {slitlet.slitlet_id}; assuming EXTENDED.")
+        log.info("SRCTYPE not set for slitlet %s; assuming EXTENDED.", slitlet.slitlet_id)
         return True

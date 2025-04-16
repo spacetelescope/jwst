@@ -141,7 +141,7 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
         int_start = datamodel.meta.exposure.integration_start
         if int_start is None:
             int_start = 1
-            log.warning(f"INTSTART not found; assuming a value of {int_start}")
+            log.warning("INTSTART not found; assuming a value of %s", int_start)
 
         # Columns of integration numbers & times of integration from the
         # INT_TIMES table.

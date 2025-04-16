@@ -105,7 +105,7 @@ class AssignWcsStep(Step):
             for reftype in self.reference_file_types:
                 reffile = self.get_reference_file(input_model, reftype)
                 reference_file_names[reftype] = reffile if reffile else ""
-            log.debug(f"reference files used in assign_wcs: {reference_file_names}")
+            log.debug("reference files used in assign_wcs: %s", reference_file_names)
 
             # Get the MSA metadata file if needed and add to reffiles
             if input_model.meta.exposure.type == "NRS_MSASPEC":
@@ -145,7 +145,7 @@ class AssignWcsStep(Step):
                     "Failed to update 'meta.wcsinfo' with FITS SIP "
                     "approximation. Reported error is:"
                 )
-                log.warning(f'"{e.args[0]}"')
+                log.warning('"%s"', e.args[0])
         else:  # WFSS modes
             try:
                 # A bounding_box is needed for the imaging WCS
@@ -170,6 +170,6 @@ class AssignWcsStep(Step):
                     "Failed to update 'meta.wcsinfo' with FITS SIP "
                     "approximation. Reported error is:"
                 )
-                log.warning(f'"{e.args[0]}"')
+                log.warning('"%s"', e.args[0])
 
         return result

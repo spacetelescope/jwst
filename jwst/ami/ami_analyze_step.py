@@ -86,8 +86,8 @@ class AmiAnalyzeStep(Step):
             wavemax = np.max(bandpass[:, 1])
             self.log.info("User-defined bandpass provided:")
             self.log.info("\tOVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES")
-            self.log.info(f"Using {bandpass.shape[0]} wavelengths for fit.")
-            self.log.info(f"Wavelength min: {wavemin:.3e} \t Wavelength max: {wavemax:.3e}")
+            self.log.info("Using %s wavelengths for fit.", bandpass.shape[0])
+            self.log.info("Wavelength min: %.3e \t Wavelength max: %.3e", wavemin, wavemax)
 
             # update attribute and return
             self.bandpass = bandpass
@@ -133,12 +133,12 @@ class AmiAnalyzeStep(Step):
                     yo=af["yo"],
                     rotradccw=af["rotradccw"],
                 )
-                self.log.info(f"Using affine transform from ASDF file {self.affine2d}")
+                self.log.info("Using affine transform from ASDF file %s", self.affine2d)
             # now self.affine2d updated from string to object
             self.affine2d = affine2d
 
         except FileNotFoundError:
-            self.log.info(f"File {self.affine2d} could not be found at the specified location.")
+            self.log.info("File %s could not be found at the specified location.", self.affine2d)
             self.log.info(msg_defaulting)
             affine2d = None
 
@@ -148,14 +148,14 @@ class AmiAnalyzeStep(Step):
                 "mx, my, sx, sy ,xo, yo, rotradccw. "
             )
             message2 = "See step documentation for info on creating a custom affine2d ASDF file."
-            self.log.info(message1 + message2)
+            self.log.info("%s %s", message1, message2)
             self.log.info(msg_defaulting)
             affine2d = None
 
         except (IndexError, TypeError, ValueError):
             message1 = f"Could not use affine2d from {self.affine2d}. "
             message2 = "See documentation for info on creating a custom bandpass ASDF file."
-            self.log.info(message1 + message2)
+            self.log.info("%s %s", message1, message2)
             self.log.info(msg_defaulting)
             affine2d = None
 
@@ -202,9 +202,9 @@ class AmiAnalyzeStep(Step):
         if str(affine2d).lower() == "none":
             affine2d = None
 
-        self.log.info(f"Oversampling factor = {oversample}")
-        self.log.info(f"Initial rotation guess = {rotate} deg")
-        self.log.info(f"Initial values to use for psf offset = {psf_offset}")
+        self.log.info("Oversampling factor = %s", oversample)
+        self.log.info("Initial rotation guess = %s deg", rotate)
+        self.log.info("Initial values to use for psf offset = %s", psf_offset)
 
         # Make sure oversample is odd
         if oversample % 2 == 0:
@@ -214,7 +214,7 @@ class AmiAnalyzeStep(Step):
         with datamodels.open(input_data) as input_model:
             # Get the name of the filter throughput reference file to use
             throughput_reffile = self.get_reference_file(input_model, "throughput")
-            self.log.info(f"Using filter throughput reference file {throughput_reffile}")
+            self.log.info("Using filter throughput reference file %s", throughput_reffile)
 
             # Check for a valid reference file or user-provided bandpass
             if (throughput_reffile == "N/A") & (bandpass is None):
@@ -242,7 +242,7 @@ class AmiAnalyzeStep(Step):
 
             # Get the name of the NRM reference file to use
             nrm_reffile = self.get_reference_file(input_model, "nrm")
-            self.log.info(f"Using NRM reference file {nrm_reffile}")
+            self.log.info("Using NRM reference file %s", nrm_reffile)
 
             with (
                 datamodels.ThroughputModel(throughput_reffile) as throughput_model,

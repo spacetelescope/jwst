@@ -54,7 +54,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
             ncpus = num_cores
         else:
             ncpus = 1
-        log.debug(f"Found {num_cores} cores; using {ncpus}")
+        log.debug("Found %s cores; using %s", num_cores, ncpus)
 
     # Initialize output model
     output_model = input_model.copy()
@@ -65,7 +65,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
     # Get the direct image from which the segmentation map was constructed
     direct_file = input_model.meta.direct_image
     image_names = [direct_file]
-    log.debug(f"Direct image names={image_names}")
+    log.debug("Direct image names=%s", image_names)
 
     # Get the grism WCS object and offsets from the first cutout in the input model.
     # This WCS is used to transform from direct image to grism frame for all sources
@@ -80,7 +80,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
     # array of order values in the Wavelengthrange ref file
     spec_orders = np.asarray(waverange.order)
     spec_orders = spec_orders[spec_orders != 0]  # ignore any order 0 entries
-    log.debug(f"Spectral orders defined = {spec_orders}")
+    log.debug("Spectral orders defined = %s", spec_orders)
 
     # Get the FILTER and PUPIL wheel positions, for use later
     filter_kwd = input_model.meta.instrument.filter
@@ -109,7 +109,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
         sens_waves[order], sens_response[order] = get_photom_data(
             photom, filter_kwd, pupil_kwd, order
         )
-    log.debug(f"wmin={wmin}, wmax={wmax}")
+    log.debug("wmin=%s, wmax=%s", wmin, wmax)
 
     # Initialize the simulated image object
     simul_all = None
@@ -125,7 +125,7 @@ def contam_corr(input_model, waverange, photom, max_cores):
 
     # Create simulated grism image for each order and sum them up
     for order in spec_orders:
-        log.info(f"Creating full simulated grism image for order {order}")
+        log.info("Creating full simulated grism image for order %s", order)
         obs.disperse_all(order, wmin[order], wmax[order], sens_waves[order], sens_response[order])
 
         # Accumulate result for this order into the combined image

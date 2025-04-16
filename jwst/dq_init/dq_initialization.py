@@ -107,7 +107,7 @@ def check_dimensions(input_model):
             if input_model.dq.shape == (0, 0):
                 input_model.dq = np.zeros(input_shape[-2:]).astype("uint32")
             else:
-                log.error(f"DQ array has the wrong shape: {input_model.dq.shape}")
+                log.error("DQ array has the wrong shape: %s", input_model.dq.shape)
 
     else:  # RampModel
         if input_model.pixeldq.shape != input_shape[-2:]:
@@ -117,12 +117,12 @@ def check_dimensions(input_model):
             if input_model.pixeldq.shape == (0, 0):
                 input_model.pixeldq = np.zeros(input_shape[-2:]).astype("uint32")
             else:
-                log.error(f"Pixeldq array has the wrong shape: {input_model.pixeldq.shape}")
+                log.error("Pixeldq array has the wrong shape: %s", input_model.pixeldq.shape)
 
         # Perform the same check for the input model groupdq array
         if input_model.groupdq.shape != input_shape:
             if input_model.groupdq.shape == (0, 0, 0, 0):
                 input_model.groupdq = np.zeros(input_shape).astype("uint8")
             else:
-                log.error(f"Groupdq array has wrong shape: {input_model.groupdq.shape}")
+                log.error("Groupdq array has wrong shape: %s", input_model.groupdq.shape)
     return

@@ -126,7 +126,7 @@ def apply_lg_plus(
             rotsearch_parameters[1],
         )
 
-        log.info(f"Initial values to use for rotation search: {rotsearch_d}")
+        log.info("Initial values to use for rotation search: %s", rotsearch_d)
         # affine2d object, can be overridden by user input affine.
         # do rotation search on uncropped median image (assuming rotation constant over exposure)
         # replace remaining NaNs in median image with median of surrounding 8 (non-NaN) pixels
@@ -134,8 +134,8 @@ def apply_lg_plus(
         meddata = np.median(data, axis=0)
         nan_locations = np.where(np.isnan(meddata))
         log.info(
-            f"Replacing {len(nan_locations[0])} NaNs "
-            "in median image with median of surrounding pixels"
+            "Replacing %s NaNs in median image with median of surrounding pixels",
+            len(nan_locations[0]),
         )
         box_size = 3
         hbox = int(box_size / 2)
@@ -160,17 +160,18 @@ def apply_lg_plus(
             holeshape,
         )
         log.info(
-            f"Found rotation: {affine2d.rotradccw:.4f} rad "
-            f"({np.rad2deg(affine2d.rotradccw):.4f} deg)"
+            "Found rotation: %.4f rad (%.4f deg)",
+            affine2d.rotradccw,
+            np.rad2deg(affine2d.rotradccw),
         )
         # the affine2d returned here has only rotation...
         # to use rotation and scaling/shear, do some matrix multiplication here??
 
     log.info("Using affine transform with parameters:")
-    log.info(f"\tmx={affine2d.mx:.6f}\tmy={affine2d.my:.6f}")
-    log.info(f"\tsx={affine2d.sx:.6f}\tsy={affine2d.sy:.6f}")
-    log.info(f"\txo={affine2d.xo:.6f}\tyo={affine2d.yo:.6f}")
-    log.info(f"\trotradccw={affine2d.rotradccw}")
+    log.info("\tmx=%.6f\tmy=%.6f", affine2d.mx, affine2d.my)
+    log.info("\tsx=%.6f\tsy=%.6f", affine2d.sx, affine2d.sy)
+    log.info("\txo=%.6f\tyo=%.6f", affine2d.xo, affine2d.yo)
+    log.info("\trotradccw=%s", affine2d.rotradccw)
 
     niriss = instrument_data.NIRISS(
         filt,

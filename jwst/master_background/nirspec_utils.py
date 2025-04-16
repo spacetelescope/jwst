@@ -114,11 +114,12 @@ def create_background_from_multispec(bkg_model, sigma_clip=3, median_kernel=1):
         median_kernel -= 1
         log.info(
             "Even median filter kernels are not supported."
-            f" Rounding the median kernel size down to {median_kernel}."
+            " Rounding the median kernel size down to %s.",
+            median_kernel,
         )
 
     if median_kernel > 1:
-        log.info(f"Applying moving-median boxcar of width {median_kernel}.")
+        log.info("Applying moving-median boxcar of width %s.", median_kernel)
         master_bkg.spec[0].spec_table["surf_bright"] = medfilt(
             master_bkg.spec[0].spec_table["surf_bright"], kernel_size=[median_kernel]
         )

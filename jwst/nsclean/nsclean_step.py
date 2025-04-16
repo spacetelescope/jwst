@@ -124,7 +124,7 @@ class NSCleanStep(Step):
             # Save the mask, if requested
             if self.save_mask and mask_model is not None:
                 mask_path = self.make_output_path(basepath=input_model.meta.filename, suffix="mask")
-                self.log.info(f"Saving mask file {mask_path}")
+                self.log.info("Saving mask file %s", mask_path)
                 mask_model.save(mask_path)
                 mask_model.close()
 
@@ -133,7 +133,7 @@ class NSCleanStep(Step):
                 bg_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_bkg"
                 )
-                self.log.info(f"Saving background file {bg_path}")
+                self.log.info("Saving background file %s", bg_path)
                 background_model.save(bg_path)
                 background_model.close()
 
@@ -142,7 +142,7 @@ class NSCleanStep(Step):
                 noise_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_noise"
                 )
-                self.log.info(f"Saving noise file {noise_path}")
+                self.log.info("Saving noise file %s", noise_path)
                 noise_model.save(noise_path)
                 noise_model.close()
 

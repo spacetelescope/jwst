@@ -91,7 +91,7 @@ def main():
         except ValueError:
             input_as_files = True
         else:
-            logger.info(f'Retrieving V1 over the time span {obsstart.isot} - {obsend.isot}')
+            logger.info('Retrieving V1 over the time span %s - %s', obsstart.isot, obsend.isot)
             input_as_files = False
             if args.pointing != 'all':
                 logger.warning("V1 pointings have been requested over a time range. "

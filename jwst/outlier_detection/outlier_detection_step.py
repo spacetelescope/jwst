@@ -75,7 +75,7 @@ class OutlierDetectionStep(Step):
         mode = self._guess_mode(input_data)
         if mode is None:
             return self._set_status(input_data, False)
-        self.log.info(f"Outlier Detection mode: {mode}")
+        self.log.info("Outlier Detection mode: %s", mode)
 
         # determine the asn_id (if not set by the pipeline)
         self._get_asn_id(input_data)
@@ -149,7 +149,7 @@ class OutlierDetectionStep(Step):
                 self.make_output_path,
             )
         else:
-            self.log.error(f"Outlier detection failed for unknown/unsupported mode: {mode}")
+            self.log.error("Outlier detection failed for unknown/unsupported mode: %s", mode)
             return self._set_status(input_data, False)
 
         return self._set_status(result_models, True)
@@ -188,7 +188,9 @@ class OutlierDetectionStep(Step):
         if exptype in IFU_SPEC_MODES:
             return "ifu"
 
-        self.log.error(f"Outlier detection failed for unknown/unsupported exposure type: {exptype}")
+        self.log.error(
+            "Outlier detection failed for unknown/unsupported exposure type: %s", exptype
+        )
         return None
 
     def _get_asn_id(self, input_models):
@@ -214,7 +216,7 @@ class OutlierDetectionStep(Step):
             _make_output_path = self.search_attr("_make_output_path", parent_first=True)
 
             self._make_output_path = partial(_make_output_path, asn_id=asn_id)
-        self.log.info(f"Outlier Detection asn_id: {asn_id}")
+        self.log.info("Outlier Detection asn_id: %s", asn_id)
         return
 
     def _set_status(self, input_models, status):

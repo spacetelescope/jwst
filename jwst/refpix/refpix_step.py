@@ -85,7 +85,7 @@ class RefPixStep(Step):
 
                 # Get the necessary refpix reference file for IRS2 correction
                 self.irs2_name = self.get_reference_file(result, "refpix")
-                self.log.info(f"Using refpix reference file: {self.irs2_name}")
+                self.log.info("Using refpix reference file: %s", self.irs2_name)
 
                 # Check for a valid reference file
                 if self.irs2_name == "N/A":
@@ -127,7 +127,7 @@ class RefPixStep(Step):
                                 "for side pixels.",
                             )
                         else:
-                            self.log.info(f"Using SIRS reference file: {sirs_ref_filename}")
+                            self.log.info("Using SIRS reference file: %s", sirs_ref_filename)
                             sirs_kernel_model = datamodels.SIRSKernelModel(sirs_ref_filename)
                             conv_kernel_params["sirs_kernel_model"] = sirs_kernel_model
                     elif input_model.meta.instrument.name == "MIRI":

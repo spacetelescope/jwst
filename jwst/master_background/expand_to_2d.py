@@ -186,7 +186,7 @@ def bkg_for_multislit(input_data, tab_wavelength, tab_background, allow_mos=Fals
     max_wave = np.amax(tab_wavelength)
 
     for k, slit in enumerate(input_data.slits):
-        log.info(f"Expanding background for slit {slit.name}")
+        log.info("Expanding background for slit %s", slit.name)
 
         wl_array = get_wavelengths(slit, input_data.meta.exposure.type)
         if wl_array is None:

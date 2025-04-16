@@ -47,14 +47,14 @@ class EmiCorrStep(Step):
             # Catch the cases to skip
             instrument = input_model.meta.instrument.name
             if instrument != "MIRI":
-                self.log.warning(f"EMI correction not implemented for instrument: {instrument}")
+                self.log.warning("EMI correction not implemented for instrument: %s", instrument)
                 input_model.meta.cal_step.emicorr = "SKIPPED"
                 return input_model
 
             readpatt = input_model.meta.exposure.readpatt
             allowed_readpatts = ["FAST", "FASTR1", "SLOW", "SLOWR1"]
             if readpatt.upper() not in allowed_readpatts:
-                self.log.warning(f"EMI correction not implemented for read pattern: {readpatt}")
+                self.log.warning("EMI correction not implemented for read pattern: %s", readpatt)
                 input_model.meta.cal_step.emicorr = "SKIPPED"
                 return input_model
 
@@ -87,11 +87,11 @@ class EmiCorrStep(Step):
                     result.meta.cal_step.emicorr = "SKIPPED"
                     return result
                 else:
-                    self.log.info(f"Using CRDS reference file: {emicorr_ref_filename}")
+                    self.log.info("Using CRDS reference file: %s", emicorr_ref_filename)
                     emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
 
             else:
-                self.log.info(f"Using user-supplied reference file: {self.user_supplied_reffile}")
+                self.log.info("Using user-supplied reference file: %s", self.user_supplied_reffile)
                 emicorr_model = datamodels.EmiModel(self.user_supplied_reffile)
 
             # Do the correction

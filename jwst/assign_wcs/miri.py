@@ -56,7 +56,7 @@ def create_pipeline(input_model, reference_files):
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
     if pipeline:
-        log.info(f"Created a MIRI {exp_type} pipeline with references {reference_files}")
+        log.info("Created a MIRI %s pipeline with references %s", exp_type, reference_files)
     return pipeline
 
 
@@ -396,7 +396,7 @@ def lrs_xytoabl(input_model, reference_files):
             velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
             wavemodel = wavemodel | velocity_corr
             log.info(
-                f"Applied Barycentric velocity correction : {velocity_corr[1].amplitude.value}"
+                "Applied Barycentric velocity correction : %s", velocity_corr[1].amplitude.value
             )
 
     # What is the effective slit X as a function of subarray x,y?
@@ -657,7 +657,7 @@ def detector_to_abl(input_model, reference_files):
             velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
             lambda_model = [m | velocity_corr for m in lambda_model]
             log.info(
-                f"Applied Barycentric velocity correction : {velocity_corr[1].amplitude.value}"
+                "Applied Barycentric velocity correction : %s", velocity_corr[1].amplitude.value
             )
 
     with RegionsModel(reference_files["regions"]) as f:

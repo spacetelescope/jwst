@@ -361,8 +361,8 @@ def get_extract_parameters(
                             if meta.exposure.type in SRCPOS_EXPTYPES:
                                 use_source_posn = True
                                 log.info(
-                                    f"Turning on source position correction "
-                                    f"for exp_type = {meta.exposure.type}"
+                                    "Turning on source position correction for exp_type = %s",
+                                    meta.exposure.type,
                                 )
                             else:
                                 use_source_posn = False
@@ -385,19 +385,21 @@ def get_extract_parameters(
                     sm_length = extract_params["smoothing_length"]
                     if sm_length != int(sm_length):
                         sm_length = int(np.round(sm_length))
-                        log.warning(f"Smoothing length must be an integer. Rounding to {sm_length}")
+                        log.warning(
+                            "Smoothing length must be an integer. Rounding to %s", sm_length
+                        )
                     if sm_length != 0:
                         if sm_length < 3:
                             log.warning(
-                                f"Smoothing length {sm_length} is not allowed. Setting it to 0."
+                                "Smoothing length %s is not allowed. Setting it to 0.", sm_length
                             )
                             sm_length = 0
                         elif sm_length % 2 == 0:
                             sm_length -= 1
                             log.warning(
                                 "Even smoothing lengths are not supported. "
-                                "Rounding the smoothing length down to "
-                                f"{sm_length}."
+                                "Rounding the smoothing length down to %s.",
+                                sm_length,
                             )
                     extract_params["smoothing_length"] = sm_length
 
@@ -418,8 +420,9 @@ def get_extract_parameters(
                         else:
                             extract_params["extraction_type"] = "box"
                         log.info(
-                            f"Using extraction type '{extract_params['extraction_type']}' "
-                            f"for use_source_posn = {extract_params['use_source_posn']}"
+                            "Using extraction type '%s' for use_source_posn = %s",
+                            extract_params["extraction_type"],
+                            extract_params["use_source_posn"],
                         )
                     else:
                         extract_params["extraction_type"] = extraction_type
@@ -445,7 +448,7 @@ def log_initial_parameters(extract_params):
     skip_keys = {"match", "trace"}
     for key, value in extract_params.items():
         if key not in skip_keys:
-            log.debug(f"  {key} = {value}")
+            log.debug("  %s = %s", key, value)
 
 
 def create_poly(coeff):
@@ -508,14 +511,20 @@ def populate_time_keywords(input_model, output_model):
 
     if n_output_spec != num_j * num_integ:  # sanity check
         log.warning(
-            f"populate_time_keywords:  Don't understand n_output_spec = {n_output_spec}, "
-            f"num_j = {num_j}, num_integ = {num_integ}"
+            "populate_time_keywords:  Don't understand n_output_spec = %s, "
+            "num_j = %s, num_integ = %s",
+            n_output_spec,
+            num_j,
+            num_integ,
         )
     else:
         log.debug(
-            f"Number of output spectra = {n_output_spec}; "
-            f"number of spectra for each integration = {num_j}; "
-            f"number of integrations = {num_integ}"
+            "Number of output spectra = %s; "
+            "number of spectra for each integration = %s; "
+            "number of integrations = %s",
+            n_output_spec,
+            num_j,
+            num_integ,
         )
 
     if int_start is None:
@@ -526,7 +535,7 @@ def populate_time_keywords(input_model, output_model):
     int_end = input_model.meta.exposure.integration_end
 
     if int_end is None:
-        log.warning(f"INTEND not found; assuming a value of {nints}.")
+        log.warning("INTEND not found; assuming a value of %s.", nints)
         int_end = nints
 
     int_end -= 1  # zero indexed
@@ -940,8 +949,11 @@ def box_profile(
                 mean_lower = np.mean(lower_limit_region)
                 mean_upper = np.mean(upper_limit_region)
                 log.info(
-                    f"Mean {label} start/stop from {coefficients}: "
-                    f"{mean_lower:.2f} -> {mean_upper:.2f} (inclusive)"
+                    "Mean %s start/stop from %s: %.2f -> %.2f (inclusive)",
+                    label,
+                    coefficients,
+                    mean_lower,
+                    mean_upper,
                 )
 
                 if lower_limit is None:
@@ -968,8 +980,10 @@ def box_profile(
         lower_limit = np.nanmean(lower_limit_region)
         upper_limit = np.nanmean(upper_limit_region)
         log.info(
-            f"Mean {label} start/stop from trace: "
-            f"{lower_limit:.2f} -> {upper_limit:.2f} (inclusive)"
+            "Mean %s start/stop from trace: %.2f -> %.2f (inclusive)",
+            label,
+            lower_limit,
+            upper_limit,
         )
 
     elif extract_params["extract_width"] is not None:
@@ -986,7 +1000,10 @@ def box_profile(
 
         _set_weight_from_limits(profile, dval, lower_limit, upper_limit)
         log.info(
-            f"{label.capitalize()} start/stop: {lower_limit:.2f} -> {upper_limit:.2f} (inclusive)"
+            "%s start/stop: %.2f -> %.2f (inclusive)",
+            label.capitalize(),
+            lower_limit,
+            upper_limit,
         )
 
     else:
@@ -1001,7 +1018,10 @@ def box_profile(
 
         _set_weight_from_limits(profile, dval, lower_limit, upper_limit)
         log.info(
-            f"{label.capitalize()} start/stop: {lower_limit:.2f} -> {upper_limit:.2f} (inclusive)"
+            "%s start/stop: %.2f -> %.2f (inclusive)",
+            label.capitalize(),
+            lower_limit,
+            upper_limit,
         )
 
     # Set weights to zero outside left and right limits
@@ -1193,8 +1213,10 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         middle_pix, middle_wl, location, trace = location_from_wcs(input_model, slit)
         if location is not None:
             log.info(
-                f"Computed source location is {location:.2f}, "
-                f"at pixel {middle_pix}, wavelength {middle_wl:.2f}"
+                "Computed source location is %.2f, at pixel %s, wavelength %.2f",
+                location,
+                middle_pix,
+                middle_wl,
             )
 
             # Nominal location from extract params + located middle
@@ -1208,7 +1230,9 @@ def define_aperture(input_model, slit, extract_params, exp_type):
             # Offset extract parameters by location - nominal
             offset = location - nominal_location
             log.info(
-                f"Nominal location is {nominal_location:.2f}, so offset is {offset:.2f} pixels"
+                "Nominal location is %.2f, so offset is %.2f pixels",
+                nominal_location,
+                offset,
             )
             shift_by_offset(offset, extract_params, update_trace=False)
     else:
@@ -1220,7 +1244,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     # Add an extra position offset if desired, from extract_params['position_offset']
     offset = extract_params.get("position_offset", 0.0)
     if offset != 0.0:
-        log.info(f"Applying additional cross-dispersion offset {offset:.2f} pixels")
+        log.info("Applying additional cross-dispersion offset %.2f pixels", offset)
         shift_by_offset(offset, extract_params, update_trace=True)
 
     # Make a spatial profile, including source shifts if necessary
@@ -1368,7 +1392,7 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
     """
     # Get the data and variance arrays
     if integration > -1:
-        log.debug(f"Extracting integration {integration + 1}")
+        log.debug("Extracting integration %s", integration + 1)
         data = data_model.data[integration]
         var_rnoise = data_model.var_rnoise[integration]
         var_poisson = data_model.var_poisson[integration]
@@ -1601,8 +1625,9 @@ def create_extraction(
         if kwargs.get("use_source_posn") is None:
             kwargs["use_source_posn"] = False
             log.info(
-                f"Setting use_source_posn to False for exposure type {exp_type}, "
-                f"source type {source_type}"
+                "Setting use_source_posn to False for exposure type %s, source type %s",
+                exp_type,
+                source_type,
             )
 
     if photom_has_been_run:
@@ -1621,7 +1646,7 @@ def create_extraction(
         log.critical("Missing extraction parameters.")
         raise ValueError("Missing extraction parameters.")
     elif extract_params["match"] == PARTIAL:
-        log.info(f"Spectral order {sp_order} not found, skipping ...")
+        log.info("Spectral order %s not found, skipping ...", sp_order)
         raise ContinueError()
 
     extract_params["dispaxis"] = data_model.meta.wcsinfo.dispersion_direction
@@ -1689,7 +1714,7 @@ def create_extraction(
     elif len(shape) == 2:
         integrations = [-1]
     else:
-        log.info(f"Beginning loop over {shape[0]} integrations ...")
+        log.info("Beginning loop over %s integrations ...", shape[0])
         integrations = range(shape[0])
         progress_msg_printed = False
 
@@ -1902,13 +1927,13 @@ def create_extraction(
                 else:
                     log.info("... 1 integration done")
             elif integ == input_model.data.shape[0] - 1:
-                log.info(f"All {input_model.data.shape[0]} integrations done")
+                log.info("All %s integrations done", input_model.data.shape[0])
                 progress_msg_printed = True
             else:
-                log.info(f"... {integ + 1} integrations done")
+                log.info("... %s integrations done", integ + 1)
 
     if not progress_msg_printed:
-        log.info(f"All {input_model.data.shape[0]} integrations done")
+        log.info("All %s integrations done", input_model.data.shape[0])
 
     return profile_model, scene_model, residual
 
@@ -2032,7 +2057,7 @@ def run_extract1d(
     # Check for non-null PSF reference file
     if psf_ref_name == "N/A":
         if extraction_type != "box":
-            log.warning(f"Optimal extraction is not available for EXP_TYPE {exp_type}")
+            log.warning("Optimal extraction is not available for EXP_TYPE %s", exp_type)
             log.warning("Defaulting to box extraction.")
             extraction_type = "box"
 
@@ -2078,14 +2103,14 @@ def run_extract1d(
             residual = ModelContainer()
 
         for slit in slits:  # Loop over the slits in the input model
-            log.info(f"Working on slit {slit.name}")
-            log.debug(f"Slit is of type {type(slit)}")
+            log.info("Working on slit %s", slit.name)
+            log.debug("Slit is of type %s", type(slit))
 
             slitname = slit.name
             use_source_posn = save_use_source_posn  # restore original value
 
             if np.size(slit.data) <= 0:
-                log.info(f"No data for slit {slit.name}, skipping ...")
+                log.info("No data for slit %s, skipping ...", slit.name)
                 continue
 
             sp_order = get_spectral_order(slit)
@@ -2161,7 +2186,7 @@ def run_extract1d(
         if sp_order == 0 and not prism_mode:
             log.info("Spectral order 0 is a direct image, skipping ...")
         else:
-            log.info(f"Processing spectral order {sp_order}")
+            log.info("Processing spectral order %s", sp_order)
             try:
                 profile_model, scene_model, residual = create_extraction(
                     input_model,

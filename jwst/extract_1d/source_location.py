@@ -200,7 +200,7 @@ def location_from_wcs(input_model, slit, make_trace=True):
         if ~np.isnan(location) and make_trace:
             trace = _miri_trace_from_wcs(shape, bb, wcs, dithra, dithdec)
     else:
-        log.warning(f"Source position cannot be found for EXP_TYPE {exp_type}")
+        log.warning("Source position cannot be found for EXP_TYPE %s", exp_type)
         return None, None, None, None
 
     if np.isnan(location):
@@ -212,7 +212,7 @@ def location_from_wcs(input_model, slit, make_trace=True):
     # location of the target spectrum.
     if location < lower or location > upper:
         log.warning(
-            f"WCS implies the target is at {location:.2f}, which is outside the bounding box,"
+            "WCS implies the target is at %.2f, which is outside the bounding box,", location
         )
         log.warning("so we can't get spectrum location using the WCS")
         return None, None, None, None

@@ -105,7 +105,7 @@ class DataSet:
         # Create and populate extensions for combined data
         data_c, dq_c, err_c, diff_c = self.create_combined(im_1_a, im_2_a)
 
-        log.info(f"Final x, y offset in pixels: {self.off_x} {self.off_y}")
+        log.info("Final x, y offset in pixels: %s %s", self.off_x, self.off_y)
 
         self.diff = diff_c
         # Create a new model using the combined arrays...
@@ -151,7 +151,7 @@ class DataSet:
            Aligned model for input image #2
         """
         self.off_x, self.off_y = self.get_wcs_offsets()
-        log.info(f"x,y offset in integer pixels from WCS: {self.off_x} {self.off_y}")
+        log.info("x,y offset in integer pixels from WCS: %s %s", self.off_x, self.off_y)
         if self.do_refine:
             # 1. Create smoothed image of input SCI data of image #1
             # 1a. create image to smooth by first setting bad DQ pixels equal

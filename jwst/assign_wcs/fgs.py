@@ -42,7 +42,7 @@ def create_pipeline(input_model, reference_files):
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
-    log.info(f"Creating a FGS {exp_type} pipeline with references {reference_files}")
+    log.info("Creating a FGS %s pipeline with references %s", exp_type, reference_files)
     return pipeline
 
 

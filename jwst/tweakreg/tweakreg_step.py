@@ -215,7 +215,7 @@ class TweakRegStep(Step):
                     image_model.meta.tweakreg_catalog = catdict[image_model.meta.filename]
                     # use user-supplied catalog:
                     self.log.info(
-                        f"Using user-provided input catalog '{image_model.meta.tweakreg_catalog}'"
+                        "Using user-provided input catalog '%s'", image_model.meta.tweakreg_catalog
                     )
                     catalog = Table.read(
                         image_model.meta.tweakreg_catalog,
@@ -245,9 +245,9 @@ class TweakRegStep(Step):
                 filename = image_model.meta.filename
                 nsources = len(catalog)
                 if nsources == 0:
-                    self.log.warning(f"No sources found in {filename}.")
+                    self.log.warning("No sources found in %s.", filename)
                 else:
-                    self.log.info(f"Detected {len(catalog)} sources in {filename}.")
+                    self.log.info("Detected %s sources in %s.", len(catalog), filename)
 
                 # save catalog (if requested)
                 if save_catalog:
@@ -264,7 +264,7 @@ class TweakRegStep(Step):
                 images.shelve(image_model, model_index)
 
         self.log.info("")
-        self.log.info(f"Number of image groups to be aligned: {n_groups}.")
+        self.log.info("Number of image groups to be aligned: %s.", n_groups)
 
         # wrapper to stcal tweakreg routines
         # step skip conditions should throw TweakregError from stcal
@@ -297,7 +297,7 @@ class TweakRegStep(Step):
         # absolute alignment to the reference catalog
         # can (and does) occur after alignment between groups
         if align_to_abs_refcat:
-            self.log.info(f"Aligning to absolute reference catalog: {self.abs_refcat}")
+            self.log.info("Aligning to absolute reference catalog: %s", self.abs_refcat)
             with images:
                 ref_image = images.borrow(0)
                 try:
@@ -400,7 +400,7 @@ class TweakRegStep(Step):
                                 "Failed to update 'meta.wcsinfo' with FITS SIP "
                                 "approximation. Reported error is:"
                             )
-                            self.log.warning(f'"{e.args[0]}"')
+                            self.log.warning('"%s"', e.args[0])
                 record_step_status(image_model, "tweakreg", success=True)
                 images.shelve(image_model)
         return images
@@ -434,7 +434,7 @@ class TweakRegStep(Step):
             catalog.write(catalog_filename, format=fmt, overwrite=True)
         else:
             catalog.write(Path(self.output_dir) / catalog_filename, format=fmt, overwrite=True)
-        self.log.info(f"Wrote source catalog: {catalog_filename}")
+        self.log.info("Wrote source catalog: %s", catalog_filename)
         return catalog_filename
 
     def _find_sources(self, image_model):

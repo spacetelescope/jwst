@@ -104,7 +104,9 @@ class JwstStep(Step):
                     result.crds_observatory
                 )
                 if self.parent is None:
-                    log.info(f"Results used CRDS context: {result.meta.ref_file.crds.context_used}")
+                    log.info(
+                        "Results used CRDS context: %s", result.meta.ref_file.crds.context_used
+                    )
 
             if self.class_alias:
                 if not hasattr(result, "cal_logs"):
@@ -146,7 +148,7 @@ class JwstStep(Step):
         """
         result = super().run(*args, **kwargs)
         if not self.parent:
-            log.info(f"Results used jwst version: {__version__}")
+            log.info("Results used jwst version: %s", __version__)
         return result
 
     @wraps(Step.__call__)
@@ -187,8 +189,8 @@ class JwstPipeline(Pipeline, JwstStep):
         """
         if isinstance(result, JwstDataModel):
             log.info(
-                "Results used CRDS context: "
-                f"{crds_client.get_context_used(result.crds_observatory)}"
+                "Results used CRDS context: %s",
+                crds_client.get_context_used(result.crds_observatory),
             )
 
             if self.class_alias:

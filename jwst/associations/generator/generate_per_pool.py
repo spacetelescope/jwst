@@ -99,9 +99,8 @@ def generate_per_pool(pool, rule_defs=None, candidate_ids=None, all_candidates=T
     # If doing discover, filter out all specified candidates
     if discover:
         logger.debug(
-            '# asns found before discover filtering={}'.format(
+            '# asns found before discover filtering=%s',
                 len(associations)
-            )
         )
         associations = filter_discovered_only(
             associations,

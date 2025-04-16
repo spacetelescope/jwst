@@ -63,7 +63,7 @@ class ResidualFringeStep(Step):
         ignore_regions["num"] = min_num
 
         if min_num > 0:
-            self.log.info(f"Ignoring {min_num} wavelength regions")
+            self.log.info("Ignoring %s wavelength regions", min_num)
 
         self.ignore_regions = ignore_regions
 
@@ -83,7 +83,7 @@ class ResidualFringeStep(Step):
 
         if exptype != "MIR_MRS":
             self.log.warning("Residual fringe correction is only for MIRI MRS data")
-            self.log.warning(f"Input is: {exptype}")
+            self.log.warning("Input is: %s", exptype)
             input_data.meta.cal_step.residual_fringe = "SKIPPED"
             return input_data
 
@@ -92,11 +92,11 @@ class ResidualFringeStep(Step):
         # 3. return from step
 
         self.residual_fringe_filename = self.get_reference_file(input_data, "fringefreq")
-        self.log.info(f"Using FRINGEFREQ reference file:{self.residual_fringe_filename}")
+        self.log.info("Using FRINGEFREQ reference file:%s", self.residual_fringe_filename)
 
         # set up regions reference file
         self.regions_filename = self.get_reference_file(input_data, "regions")
-        self.log.info(f"Using MRS regions reference file: {self.regions_filename}")
+        self.log.info("Using MRS regions reference file: %s", self.regions_filename)
 
         # Check for a valid reference files. If they are not found skip step
         if self.residual_fringe_filename == "N/A" or self.regions_filename == "N/A":

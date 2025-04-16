@@ -93,8 +93,8 @@ def subtract_wfss_bkg(
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
     result.meta.background.scaling_factor = factor
 
-    log.info(f"Average of scaled background image = {np.nanmean(subtract_this):.3e}")
-    log.info(f"Scaling factor = {factor:.5e}")
+    log.info("Average of scaled background image = %.3e", np.nanmean(subtract_this))
+    log.info("Scaling factor = %.5e", factor)
 
     bkg_ref.close()
 
@@ -196,7 +196,7 @@ class _ScalingFactorComputer:
             self._update_nans(sci, bkg, var, mask)
 
         if i >= self.maxiter:
-            log.info(f"Stopped at maxiter ({i}).")
+            log.info("Stopped at maxiter (%s).", i)
 
         self._iters_run_last_call = i
         return self.err_weighted_mean(sci, bkg, var), mask

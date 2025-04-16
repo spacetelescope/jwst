@@ -42,7 +42,7 @@ class ResetStep(Step):
 
             # Get the name of the reset reference file to use
             self.reset_name = self.get_reference_file(input_model, "reset")
-            self.log.info(f"Using RESET reference file {self.reset_name}")
+            self.log.info("Using RESET reference file %s", self.reset_name)
 
             # Check for a valid reference file
             if self.reset_name == "N/A":

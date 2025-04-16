@@ -168,7 +168,7 @@ def main():
     for filename in args.exposure:
         logger.info("")
         logger.info('------')
-        logger.info('Setting pointing for {}'.format(filename))
+        logger.info('Setting pointing for %s', filename)
 
         # Create path for saving the transforms.
         transform_path = None

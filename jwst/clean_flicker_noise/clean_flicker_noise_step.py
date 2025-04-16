@@ -116,13 +116,14 @@ class CleanFlickerNoiseStep(Step):
                 exp_type = input_model.meta.exposure.type
                 if flat_filename == "N/A":
                     self.log.warning(
-                        f"Flat correction is not available for "
-                        f"exposure type {exp_type} without a user-"
-                        f"supplied flat."
+                        "Flat correction is not available for "
+                        "exposure type %s without a user-"
+                        "supplied flat.",
+                        exp_type,
                     )
                     flat_filename = None
                 else:
-                    self.log.info(f"Using FLAT reference file: {flat_filename}")
+                    self.log.info("Using FLAT reference file: %s", flat_filename)
 
             result = clean_flicker_noise.do_correction(
                 input_model,
@@ -146,7 +147,7 @@ class CleanFlickerNoiseStep(Step):
             # Save the mask, if requested
             if self.save_mask and mask_model is not None:
                 mask_path = self.make_output_path(basepath=input_model.meta.filename, suffix="mask")
-                self.log.info(f"Saving mask file {mask_path}")
+                self.log.info("Saving mask file %s", mask_path)
                 mask_model.save(mask_path)
                 mask_model.close()
 
@@ -155,7 +156,7 @@ class CleanFlickerNoiseStep(Step):
                 bg_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_bkg"
                 )
-                self.log.info(f"Saving background file {bg_path}")
+                self.log.info("Saving background file %s", bg_path)
                 background_model.save(bg_path)
                 background_model.close()
 
@@ -164,7 +165,7 @@ class CleanFlickerNoiseStep(Step):
                 noise_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_noise"
                 )
-                self.log.info(f"Saving noise file {noise_path}")
+                self.log.info("Saving noise file %s", noise_path)
                 noise_model.save(noise_path)
                 noise_model.close()
 

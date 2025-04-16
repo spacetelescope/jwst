@@ -32,7 +32,7 @@ class PhotomStep(Step):
             self.log.error('Input can not be opened as a Model.')
 
         # Report the detected type of input model
-        self.log.debug(f"Input is {str(input_model)}")
+        self.log.debug("Input is %s", input_model)
         if not isinstance(
             input_model,
             datamodels.CubeModel
@@ -80,9 +80,8 @@ class PhotomStep(Step):
 
         except photom.DataModelTypeError:
             # should trip e.g. for NIRISS SOSS data in FULL subarray
-            self.log.error(f'Unexpected data model type {str(input_model)} for '
-                           f'{input_model.meta.instrument.name.upper()}. '
-                           'Photom will be skipped.')
+            self.log.error('Unexpected data model type %s for %s. Photom will be skipped.',
+                           input_model, input_model.meta.instrument.name.upper())
             result = input_model.copy()
             result.meta.cal_step.photom = 'SKIPPED'
             return result

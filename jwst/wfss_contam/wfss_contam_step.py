@@ -41,12 +41,12 @@ class WfssContamStep(Step):
 
             # Get the wavelengthrange ref file
             waverange_ref = self.get_reference_file(dm, "wavelengthrange")
-            self.log.info(f"Using WAVELENGTHRANGE reference file {waverange_ref}")
+            self.log.info("Using WAVELENGTHRANGE reference file %s", waverange_ref)
             waverange_model = datamodels.WavelengthrangeModel(waverange_ref)
 
             # Get the photom ref file
             photom_ref = self.get_reference_file(dm, "photom")
-            self.log.info(f"Using PHOTOM reference file {photom_ref}")
+            self.log.info("Using PHOTOM reference file %s", photom_ref)
             photom_model = datamodels.open(photom_ref)
 
             result, simul, contam = wfss_contam.contam_corr(
@@ -56,10 +56,10 @@ class WfssContamStep(Step):
             # Save intermediate results, if requested
             if self.save_simulated_image:
                 simul_path = self.save_model(simul, suffix="simul", force=True)
-                self.log.info(f'Full-frame simulated grism image saved to "{simul_path}"')
+                self.log.info('Full-frame simulated grism image saved to "%s"', simul_path)
             if self.save_contam_images:
                 contam_path = self.save_model(contam, suffix="contam", force=True)
-                self.log.info(f'Contamination estimates saved to "{contam_path}"')
+                self.log.info('Contamination estimates saved to "%s"', contam_path)
 
         # Return the corrected data
         return result

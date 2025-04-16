@@ -201,7 +201,7 @@ class Spec3Pipeline(Pipeline):
                     # name that separates source, background, and virtual slits
                     srcid = self._create_nrsmos_source_id(result)
                     self.output_file = format_product(output_file, source_id=srcid)
-                    self.log.debug(f"output_file = {self.output_file}")
+                    self.log.debug("output_file = %s", self.output_file)
 
                 else:
                     # All other types just use the source_id directly in the file name
@@ -366,13 +366,13 @@ class Spec3Pipeline(Pipeline):
         if "BKG" in source_name:
             # prepend "b" to the source_id number and format to 9 chars
             srcid = f"b{str(source_id):>09s}"
-            self.log.debug(f"Source {source_name} is a MOS background slitlet: ID={srcid}")
+            self.log.debug("Source %s is a MOS background slitlet: ID=%s", source_name, srcid)
 
         # MOS virtual sources have a negative source_id value
         elif source_id < 0:
             # prepend "v" to the source_id number and remove the leading negative sign
             srcid = f"v{str(source_id)[1:]:>09s}"
-            self.log.debug(f"Source {source_name} is a MOS virtual slitlet: ID={srcid}")
+            self.log.debug("Source %s is a MOS virtual slitlet: ID=%s", source_name, srcid)
 
         # Regular MOS sources
         else:

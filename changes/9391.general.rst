@@ -1,0 +1,1 @@
+Enable the Ruff flake8-logging-format (G) rules and fix all volations detected.

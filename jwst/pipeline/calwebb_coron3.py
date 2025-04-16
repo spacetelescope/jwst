@@ -235,7 +235,7 @@ class Coron3Pipeline(Pipeline):
 
             completed = "SKIPPED"
         if completed == "COMPLETE":
-            self.log.debug(f"Blending metadata for {result}")
+            self.log.debug("Blending metadata for %s", result)
             model_blender.finalize_model(result)
 
         try:
@@ -243,7 +243,7 @@ class Coron3Pipeline(Pipeline):
             result.meta.asn.table_name = Path(user_input).name
         except AttributeError:
             self.log.debug("Cannot set association information on final")
-            self.log.debug(f"result {result}")
+            self.log.debug("result %s", result)
 
         # Save the final result
         self.save_model(result, suffix=self.suffix)

@@ -72,7 +72,7 @@ class Image2Pipeline(Pipeline):
         # Process each exposure.
         results = []
         for product in asn["products"]:
-            self.log.info("Processing product {}".format(product["name"]))
+            self.log.info("Processing product %s", product["name"])
             if (self.save_results) & (self.output_file is None):
                 self.output_file = product["name"]
             if not hasattr(asn, "filename"):
@@ -129,9 +129,7 @@ class Image2Pipeline(Pipeline):
         # one. We'll just get the first one found.
         science = members_by_type["science"]
         if len(science) != 1:
-            self.log.warning(
-                "Wrong number of science files found in {}".format(exp_product["name"])
-            )
+            self.log.warning("Wrong number of science files found in %s", exp_product["name"])
             self.log.warning("    Using only first one.")
         science = science[0]
 
@@ -176,5 +174,5 @@ class Image2Pipeline(Pipeline):
             self.resample.run(input_data)
 
         # That's all folks
-        self.log.info("Finished processing product {}".format(exp_product["name"]))
+        self.log.info("Finished processing product %s", exp_product["name"])
         return input_data
