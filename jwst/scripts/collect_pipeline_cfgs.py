@@ -7,7 +7,6 @@ from pathlib import Path
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
 
-# Set logger to only print to screen
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
@@ -20,11 +19,11 @@ def main():
     $ collect_pipeline_cfgs .
     """
     if len(sys.argv) < 2:
-        logging.info("ERROR: missing argument (destination directory")
+        logging.error("ERROR: missing argument (destination directory")
         sys.exit(1)
 
     if len(sys.argv) > 2:
-        logging.info("ERROR: too many arguments")
+        logging.error("ERROR: too many arguments")
         sys.exit(1)
 
     dst = sys.argv[1]

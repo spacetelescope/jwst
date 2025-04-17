@@ -9,7 +9,6 @@ from argparse import ArgumentParser
 from jwst.regtest.st_fitsdiff import STFITSDiff
 
 
-# Set logger to only print to screen
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 

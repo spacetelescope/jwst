@@ -28,7 +28,6 @@ from stdatamodels.jwst.datamodels.util import open as dmopen
 from jwst.assign_wcs import nirspec
 
 
-# Set logger to only print to screen
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
