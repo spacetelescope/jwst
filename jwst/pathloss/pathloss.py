@@ -430,14 +430,6 @@ def do_correction(
             log.warning("Forcing of source type with NIS_SOSS is not implemented. Skipping")
             output_model.meta.cal_step.pathloss = "SKIPPED"
             corrections = None
-        elif inverse:
-            log.warning("Use of inversion with NIS_SOSS is not implemented. Skipping")
-            output_model.meta.cal_step.pathloss = "SKIPPED"
-            corrections = None
-        elif source_type is not None:
-            log.warning("Forcing of source type with NIS_SOSS is not implemented. Skipping")
-            output_model.meta.cal_step.pathloss = "SKIPPED"
-            corrections = None
         else:
             corrections = do_correction_soss(output_model, pathloss_model)
 
@@ -584,15 +576,21 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
 
         if not inverse:
             slit.data /= correction.data
+            slit.err /= correction.data
+            slit.var_poisson /= correction.data**2
+            slit.var_rnoise /= correction.data**2
+            if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+                slit.var_flat /= correction.data**2
         else:
             slit.data *= correction.data
-        slit.err /= correction.data
-        slit.var_poisson /= correction.data**2
-        slit.var_rnoise /= correction.data**2
-        if slit.var_flat is not None and np.size(slit.var_flat) > 0:
-            slit.var_flat /= correction.data**2
+            slit.err *= correction.data
+            slit.var_poisson *= correction.data**2
+            slit.var_rnoise *= correction.data**2
+            if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+                slit.var_flat *= correction.data**2
         slit.pathloss_point = correction.pathloss_point
         slit.pathloss_uniform = correction.pathloss_uniform
+        slit.pathloss_correction_type = correction.pathloss_correction_type
 
         # Make sure all NaNs and flags match up in the output slit model
         match_nans_and_flags(slit)
@@ -651,15 +649,22 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
 
         if not inverse:
             slit.data /= correction.data
+            slit.err /= correction.data
+            slit.var_poisson /= correction.data**2
+            slit.var_rnoise /= correction.data**2
+            if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+                slit.var_flat /= correction.data**2
         else:
             slit.data *= correction.data
-        slit.err /= correction.data
-        slit.var_poisson /= correction.data**2
-        slit.var_rnoise /= correction.data**2
-        if slit.var_flat is not None and np.size(slit.var_flat) > 0:
-            slit.var_flat /= correction.data**2
+            slit.err *= correction.data
+            slit.var_poisson *= correction.data**2
+            slit.var_rnoise *= correction.data**2
+            if slit.var_flat is not None and np.size(slit.var_flat) > 0:
+                slit.var_flat *= correction.data**2
+
         slit.pathloss_point = correction.pathloss_point
         slit.pathloss_uniform = correction.pathloss_uniform
+        slit.pathloss_correction_type = correction.pathloss_correction_type
 
         # Make sure all NaNs and flags match up in the output slit model
         match_nans_and_flags(slit)
@@ -705,15 +710,21 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
 
     if not inverse:
         data.data /= correction.data
+        data.err /= correction.data
+        data.var_poisson /= correction.data**2
+        data.var_rnoise /= correction.data**2
+        if data.var_flat is not None and np.size(data.var_flat) > 0:
+            data.var_flat /= correction.data**2
     else:
         data.data *= correction.data
-    data.err /= correction.data
-    data.var_poisson /= correction.data**2
-    data.var_rnoise /= correction.data**2
-    if data.var_flat is not None and np.size(data.var_flat) > 0:
-        data.var_flat /= correction.data**2
+        data.err *= correction.data
+        data.var_poisson *= correction.data**2
+        data.var_rnoise *= correction.data**2
+        if data.var_flat is not None and np.size(data.var_flat) > 0:
+            data.var_flat *= correction.data**2
     data.pathloss_point = correction.pathloss_point
     data.pathloss_uniform = correction.pathloss_uniform
+    data.pathloss_correction_type = correction.pathloss_correction_type
 
     # This might be useful to other steps
     data.wavelength = correction.wavelength
@@ -962,14 +973,18 @@ def _corrections_for_mos(slit, pathloss, exp_type, source_type=None):
                 # Use the appropriate correction for this slit
                 if is_pointsource(source_type or slit.source_type):
                     pathloss_2d = pathloss_2d_ps
+                    correction_type = "POINT"
                 else:
                     pathloss_2d = pathloss_2d_un
+                    correction_type = "UNIFORM"
 
                 # Save the corrections. The `data` portion is the correction used.
                 # The individual ones will be saved in the respective attributes.
                 correction = datamodels.SlitModel(data=pathloss_2d)
                 correction.pathloss_point = pathloss_2d_ps
                 correction.pathloss_uniform = pathloss_2d_un
+                correction.pathloss_correction_type = correction_type
+
             else:
                 log.warning("Source is outside slit.")
         else:
@@ -1046,7 +1061,7 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
                 )
 
                 pathloss_2d = pathloss_2d_ps
-
+                correction_type = "POINT"
             else:
                 wavelength_array = slit.wavelength
 
@@ -1061,12 +1076,14 @@ def _corrections_for_fixedslit(slit, pathloss, exp_type, source_type):
                 )
 
                 pathloss_2d = pathloss_2d_un
+                correction_type = "UNIFORM"
 
             # Save the corrections. The `data` portion is the correction used.
             # The individual ones will be saved in the respective attributes.
             correction = datamodels.SlitModel(data=pathloss_2d)
             correction.pathloss_point = pathloss_2d_ps
             correction.pathloss_uniform = pathloss_2d_un
+            correction.pathloss_correction_type = correction_type
 
         else:
             log.warning(
@@ -1150,8 +1167,10 @@ def _corrections_for_ifu(data, pathloss, source_type):
     # Use the appropriate correction for the source type
     if is_pointsource(source_type or data.meta.target.source_type):
         pathloss_2d = pathloss_2d_ps
+        correction_type = "POINT"
     else:
         pathloss_2d = pathloss_2d_un
+        correction_type = "UNIFORM"
 
     # Save the corrections. The `data` portion is the correction used.
     # The individual ones will be saved in the respective attributes.
@@ -1159,6 +1178,7 @@ def _corrections_for_ifu(data, pathloss, source_type):
     correction.pathloss_point = pathloss_2d_ps
     correction.pathloss_uniform = pathloss_2d_un
     correction.wavelength = wavelength_array
+    correction.pathloss_correction_type = correction_type
 
     return correction
 

@@ -1,4 +1,4 @@
-1.18.0 (2025-03-19)
+1.18.0 (2025-04-08)
 ===================
 
 General
@@ -131,6 +131,8 @@ barshadow (spec2 MOS)
   slit mode. Also correct the scale factors for error propagation when the
   correction is inverted. (`#9085
   <https://github.com/spacetelescope/jwst/issues/9085>`_)
+- Extrapolate barshadow corrections to cover wavelength gaps in reference
+  files. (`#9326 <https://github.com/spacetelescope/jwst/issues/9326>`_)
 
 
 clean_flicker_noise (detector1)
@@ -266,6 +268,8 @@ ramp_fitting (detector1)
   for groups
   outside the selected range.  Added a unit test and updated the docs. (`#9095
   <https://github.com/spacetelescope/jwst/issues/9095>`_)
+- Restore ``__all__`` definition that was removed in an earlier PR (`#9338
+  <https://github.com/spacetelescope/jwst/issues/9338>`_)
 
 
 refpix (detector1)
@@ -295,6 +299,8 @@ resample (image2, image3, coron3)
   <https://github.com/spacetelescope/jwst/issues/9186>`_)
 - Fix MIRI LRS s_region and WCS in resample_spec (`#9193
   <https://github.com/spacetelescope/jwst/issues/9193>`_)
+- Fixed bug in the resample_spec step, affecting flux conservation for MIRI
+  LRS. (`#9337 <https://github.com/spacetelescope/jwst/issues/9337>`_)
 
 
 residual_fringe (spec2 IFU)

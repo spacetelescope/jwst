@@ -9,6 +9,11 @@ The wavelength correction (``wavecorr``) step in the
 assignments for NIRSpec fixed-slit (FS) and MOS point sources that are
 known to be off center (in the dispersion direction) in their slit.
 
+Upon successful completion of the step, the status keyword "S_WAVCOR"
+in the primary header is set to "COMPLETE".  For each SCI extension, the "WAVECOR"
+keyword is set to True if the slit was wavelength corrected (it is a point
+source) or False if it was not corrected (it is not a point source).
+
 NIRSpec MOS
 -----------
 For NIRSpec MOS exposures (EXP_TYPE="NRS_MSASPEC"), wavelength
@@ -47,7 +52,4 @@ target coordinates and aperture reference point during the
 :ref:`extract_2d <extract_2d_step>` step. This estimated position (in the 
 dispersion direction) is used in the same manner as described above
 for MOS slitlets to update the slit WCS and compute corrected wavelengths
-for the primary slit only. 
-
-Upon successful completion of the step, the status keyword "S_WAVCOR"
-is set to "COMPLETE".
+for the primary slit only.

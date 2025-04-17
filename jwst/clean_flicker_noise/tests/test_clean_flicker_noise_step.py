@@ -3,6 +3,7 @@ import os
 import pytest
 from stdatamodels.jwst import datamodels
 
+from jwst.pipeline import Detector1Pipeline
 from jwst.clean_flicker_noise import CleanFlickerNoiseStep
 from jwst.clean_flicker_noise.tests.test_clean_flicker_noise import (
     make_small_ramp_model, make_nirspec_fs_model)
@@ -11,17 +12,38 @@ from jwst.clean_flicker_noise.tests.test_clean_flicker_noise import (
 @pytest.mark.parametrize('skip', [True, False])
 def test_output_type(skip):
     input_model = make_small_ramp_model()
-    cleaned = CleanFlickerNoiseStep.call(input_model, skip=skip)
+    step_instance = CleanFlickerNoiseStep()
+    # Default is that step is skipped
+    assert step_instance.skip == True
+    cleaned = step_instance.call(input_model, skip=skip)
 
     # output is a ramp model either way
     assert isinstance(cleaned, datamodels.RampModel)
 
-    # status may be SKIPPED or COMPLETE
+    input_model.close()
+    cleaned.close()
+
+
+@pytest.mark.parametrize('skip', [True, False])
+def test_run_in_pipeline(skip):
+    input_model = make_small_ramp_model()
+    pipeline_instance = Detector1Pipeline()
+
+    assert pipeline_instance.steps['clean_flicker_noise']['skip'] == True
+
+    # Run the pipeline, omitting steps that are incompatible with our datamodel
+    cleaned = pipeline_instance.call(input_model,
+                                     steps={'clean_flicker_noise': {'skip': skip},
+                                            'ipc': {'skip': True},
+                                            'reset': {'skip': True},
+                                            'dark_current': {'skip': True}
+                                           })
+
     if skip:
         assert cleaned.meta.cal_step.clean_flicker_noise == 'SKIPPED'
     else:
         assert cleaned.meta.cal_step.clean_flicker_noise == 'COMPLETE'
-
+    
     input_model.close()
     cleaned.close()
 

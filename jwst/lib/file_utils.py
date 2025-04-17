@@ -1,24 +1,26 @@
-"""File utility functions"""
-from contextlib import contextmanager
+"""File utility functions."""
+
 import os
+from contextlib import contextmanager
 from pathlib import Path
 
 
 @contextmanager
 def pushdir(directory):
-    """Temporarily change to specified directory
+    """
+    Temporarily change to specified directory.
 
     Parameters
     ----------
-    directory: File-like object
-        Directory to change to
+    directory : File-like object
+        Directory to change to.
 
     Returns
     -------
-    new_directory: Path
+    new_directory : Path
         The directory changed to.
     """
-    previous = os.getcwd()
+    previous = Path.cwd()
     try:
         os.chdir(directory)
         yield Path.cwd()

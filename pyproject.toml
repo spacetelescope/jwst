@@ -103,7 +103,7 @@ sdp = [
     "pysiaf>=0.13.0",
 ]
 test = [
-    "ci-watson>=0.5.0",
+    "ci-watson @ git+https://github.com/spacetelescope/ci_watson.git@main",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
@@ -148,15 +148,30 @@ include = ["pytest_jwst*", "jwst*"]
     "*.cat",
     "*.hdr",
 ]
-"jwst.lib" = [
-    "tests/data/*.asdf",
-    "tests/data/**/*.db",
-    "tests/data/**/*.xml",
-    "tests/data/*.ecsv",
-    "tests/data/*.fits",
+"jwst.lib.tests" = [
+    "data/*.asdf",
+    "data/**/*.db",
+    "data/**/*.xml",
+    "data/*.ecsv",
+    "data/*.fits",
 ]
-"jwst.associations" = [
-    "tests/data/*.py",
+"jwst.associations.tests" = [
+    "data/*.py",
+]
+"jwst.assign_mtwcs.tests" = [
+    "data/*.*"
+]
+"jwst.assign_wcs.tests" = [
+    "data/*.*"
+]
+"jwst.background.tests" = [
+    "data/*.*"
+]
+"jwst.datamodels.tests" = [
+    "data/*.*"
+]
+"jwst.extract_2d.tests" = [
+    "data/*.*"
 ]
 "jwst.lib.src" = [
     "*.c",
@@ -172,6 +187,15 @@ include = ["pytest_jwst*", "jwst*"]
 ]
 "jwst.stpipe.resources" = [
     "schemas/*.yaml",
+]
+"jwst.stpipe.tests" = [
+    "data/*.*"
+]
+"jwst.tweakreg.tests" = [
+    "data/*.*"
+]
+"jwst.wfss_contam.tests" = [
+    "data/*.*"
 ]
 
 [tool.build-sphinx]
@@ -208,6 +232,8 @@ addopts = [
     "--report-crds-context",
     "--color=yes",
 ]
+# This is for regtests. All unhandled warnings become exceptions for
+# regular CI in tox.ini file.
 filterwarnings = [
     "error::ResourceWarning",
     "error::DeprecationWarning",

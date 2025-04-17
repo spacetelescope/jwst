@@ -2,7 +2,6 @@
 Test functions for NIRSPEC WCS - all modes.
 """
 import functools
-import os.path
 import shutil
 from math import cos, sin
 
@@ -14,6 +13,7 @@ from astropy.io import fits
 from astropy.modeling import models as astmodels
 from astropy import table
 from astropy import wcs as astwcs
+from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcs, wcstools
 from numpy.testing import assert_allclose
 
@@ -21,12 +21,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
 from jwst.assign_wcs import nirspec, assign_wcs_step
-from jwst.assign_wcs.tests import data
 from jwst.assign_wcs.util import MSAFileError, in_ifu_slice
-
-
-data_path = os.path.split(os.path.abspath(data.__file__))[0]
-
 
 wcs_kw = {'wcsaxes': 2, 'ra_ref': 165, 'dec_ref': 54,
           'v2_ref': -8.3942412, 'v3_ref': -5.3123744, 'roll_ref': 37,
@@ -36,12 +31,10 @@ wcs_kw = {'wcsaxes': 2, 'ra_ref': 165, 'dec_ref': 54,
           'pc1_1': 1, 'pc1_2': 0, 'pc2_1': 0, 'pc2_2': 1
           }
 
-
 slit_fields_num = ["shutter_id", "dither_position", "xcen", "ycen",
                    "ymin", "ymax", "quadrant", "source_id",
                    "stellarity", "source_xpos", "source_ypos",
                    "slit_xscale", "slit_yscale"]
-
 
 slit_fields_str = ["name", "shutter_state", "source_name", "source_alias"]
 
@@ -51,13 +44,6 @@ def _compare_slits(s1, s2):
         assert_allclose(getattr(s1, f), getattr(s2, f))
     for f in slit_fields_str:
         assert getattr(s1, f) == getattr(s2, f)
-
-
-def get_file_path(filename):
-    """
-    Construct an absolute path.
-    """
-    return os.path.join(data_path, filename)
 
 
 def create_hdul(detector='NRS1'):
@@ -109,7 +95,8 @@ def create_nirspec_mos_file(grating='G235M', filt='F170LP'):
     image[0].header['grating'] = grating
     image[0].header['PATT_NUM'] = 1
 
-    msa_status_file = get_file_path('SPCB-GD-A.msa.fits.gz')
+    msa_status_file = get_pkg_data_filename(
+        "data/SPCB-GD-A.msa.fits.gz", package="jwst.assign_wcs.tests")
     image[0].header['MSAMETFL'] = msa_status_file
     return image
 
@@ -203,7 +190,7 @@ def test_nirspec_ifu_against_esa(wcs_ifu_grating):
     """
     Test Nirspec IFU mode using CV3 reference files.
     """
-    with fits.open(get_file_path('Trace_IFU_Slice_00_SMOS-MOD-G1M-17-5344175105_30192_JLAB88.fits')) as ref:
+    with fits.open(get_pkg_data_filename("data/Trace_IFU_Slice_00_SMOS-MOD-G1M-17-5344175105_30192_JLAB88.fits", package="jwst.assign_wcs.tests")) as ref:
         # Test NRS1
         pyw = astwcs.WCS(ref['SLITY1'].header)
         # Test evaluating the WCS (slice 0)
@@ -245,7 +232,7 @@ def test_nirspec_fs_esa():
     # Test evaluating the WCS
     w1 = nirspec.nrs_wcs_set_input(im, "S200A1")
 
-    ref = fits.open(get_file_path('Trace_SLIT_A_200_1_V84600010001P0000000002101_39547_JLAB88.fits'))
+    ref = fits.open(get_pkg_data_filename("data/Trace_SLIT_A_200_1_V84600010001P0000000002101_39547_JLAB88.fits", package="jwst.assign_wcs.tests"))
     pyw = astwcs.WCS(ref[1].header)
 
     # get positions within the slit and the corresponding lambda
@@ -314,7 +301,8 @@ def test_msa_configuration_normal():
     # Test 1: Reasonably normal as well
     prog_id = '1234'
     msa_meta_id = 12
-    msaconfl = get_file_path('msa_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
@@ -327,7 +315,8 @@ def test_msa_configuration_normal():
 def test_msa_configuration_slit_scales():
     prog_id = '1234'
     msa_meta_id = 12
-    msaconfl = get_file_path('msa_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
     dither_position = 1
 
     # mock slit scale for quadrant 4
@@ -346,7 +335,8 @@ def test_msa_configuration_no_background():
     # Test 2: Two main shutters, not allowed and should fail
     prog_id = '1234'
     msa_meta_id = 13
-    msaconfl = get_file_path('msa_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
     dither_position = 1
     with pytest.raises(MSAFileError):
         nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
@@ -361,7 +351,8 @@ def test_msa_configuration_all_background():
     # Test 3:  No non-background, not acceptable.
     prog_id = '1234'
     msa_meta_id = 14
-    msaconfl = get_file_path('msa_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
@@ -378,7 +369,8 @@ def test_msa_configuration_row_skipped():
     # Test 4: One row is skipped, should be acceptable.
     prog_id = '1234'
     msa_meta_id = 15
-    msaconfl = get_file_path('msa_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
@@ -395,7 +387,8 @@ def test_msa_configuration_multiple_returns():
     # Test 4: One row is skipped, should be acceptable.
     prog_id = '1234'
     msa_meta_id = 16
-    msaconfl = get_file_path('msa_configuration.fits')
+    msaconfl =  get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(prog_id, msaconfl, msa_meta_id, dither_position,
                                               slit_y_range=[-.5, .5])
@@ -415,7 +408,8 @@ def test_msa_fs_configuration():
     """
     prog_id = '1234'
     msa_meta_id = 12
-    msaconfl = get_file_path('msa_fs_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_fs_configuration.fits", package="jwst.assign_wcs.tests")
     dither_position = 1
     slitlet_info = nirspec.get_open_msa_slits(
         prog_id, msaconfl, msa_meta_id, dither_position, slit_y_range=[-.5, .5])
@@ -448,7 +442,8 @@ def test_msa_fs_configuration_unsupported(tmp_path):
     Test the get_open_msa_slits function with unsupported FS defined.
     """
     # modify an existing MSA file to add a bad row
-    msaconfl = get_file_path('msa_fs_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_fs_configuration.fits", package="jwst.assign_wcs.tests")
     bad_confl = str(tmp_path / 'bad_msa_fs_configuration.fits')
     shutil.copy(msaconfl, bad_confl)
 
@@ -472,7 +467,8 @@ def test_msa_missing_source(tmp_path):
     Test the get_open_msa_slits function with missing source information.
     """
     # modify an existing MSA file to remove source info
-    msaconfl = get_file_path('msa_fs_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_fs_configuration.fits", package="jwst.assign_wcs.tests")
     bad_confl = str(tmp_path / 'bad_msa_fs_configuration.fits')
     shutil.copy(msaconfl, bad_confl)
 
@@ -510,7 +506,8 @@ def test_msa_nan_source_posn(tmp_path):
     Test the get_open_msa_slits function with nan values for source position.
     """
     # modify an existing MSA file to remove source info
-    msaconfl = get_file_path('msa_fs_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_fs_configuration.fits", package="jwst.assign_wcs.tests")
     bad_confl = str(tmp_path / 'nan_msa_fs_configuration.fits')
     shutil.copy(msaconfl, bad_confl)
 
@@ -599,7 +596,8 @@ def test_open_slits():
     """
     image = create_nirspec_mos_file()
     model = datamodels.ImageModel(image)
-    msaconfl = get_file_path('msa_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
 
     model.meta.instrument.msa_metadata_file = msaconfl
     model.meta.instrument.msa_metadata_id = 12
@@ -614,7 +612,8 @@ def test_shutter_size_on_sky():
     """
     image = create_nirspec_mos_file()
     model = datamodels.ImageModel(image)
-    msaconfl = get_file_path('msa_configuration.fits')
+    msaconfl = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
 
     model.meta.instrument.msa_metadata_file = msaconfl
     model.meta.instrument.msa_metadata_id = 12
@@ -676,7 +675,8 @@ def test_functional_fs_msa(mode):
         im.meta.wcs = w
         slit_wcs = nirspec.nrs_wcs_set_input(im, 1)
 
-    ins_file = get_file_path(model_file)
+    ins_file = get_pkg_data_filename(
+        f"data/{model_file}", package="jwst.assign_wcs.tests")
     ins_tab = table.Table.read(ins_file, format='ascii')
 
     # Setup the test
@@ -791,7 +791,8 @@ def test_functional_ifu_grating(wcs_ifu_grating):
     im, refs = wcs_ifu_grating('G395H', 'F290LP', gwa_xtil=0.35986012, gwa_ytil=0.13448857)
 
     slit_wcs = nirspec.nrs_wcs_set_input(im, 0)  # use slice 0
-    ins_file = get_file_path(model_file)
+    ins_file = get_pkg_data_filename(
+        f"data/{model_file}", package="jwst.assign_wcs.tests")
     ins_tab = table.Table.read(ins_file, format='ascii')
     slitx = [0] * 5
     slity = [-.5, -.25, 0, .25, .5]
@@ -952,7 +953,8 @@ def test_functional_ifu_prism():
     w = wcs.WCS(pipeline)
     im.meta.wcs = w
     slit_wcs = nirspec.nrs_wcs_set_input(im, 0)  # use slice 0
-    ins_file = get_file_path(model_file)
+    ins_file = get_pkg_data_filename(
+        f"data/{model_file}", package="jwst.assign_wcs.tests")
     ins_tab = table.Table.read(ins_file, format='ascii')
     slitx = [0] * 5
     slity = [-.5, -.25, 0, .25, .5]

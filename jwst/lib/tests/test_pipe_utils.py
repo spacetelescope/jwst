@@ -163,7 +163,7 @@ def test_match_nans_and_flags_no_data(caplog):
 def test_match_nans_and_flags_not_a_model():
     # Make sure the function throws an error if input is not a model
     model = "not_a_model"
-    with pytest.raises(ValueError, match="not a datamodel"):
+    with pytest.raises(TypeError, match="not a datamodel"):
         pipe_utils.match_nans_and_flags(model)
 
     # empty JwstDataModel is okay

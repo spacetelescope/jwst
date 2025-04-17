@@ -46,12 +46,9 @@ repos:
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/ipc/.* |
-            jwst/lib/.* |
-            jwst/linearity/.* |
             jwst/mrs_imatch/.* |
             jwst/persistence/.* |
             jwst/photom/.* |
-            jwst/rscd/.* |
             jwst/saturation/.* |
             jwst/scripts/.* |
             jwst/spectral_leak/.* |

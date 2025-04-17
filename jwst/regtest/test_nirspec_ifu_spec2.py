@@ -31,7 +31,8 @@ def run_spec2(rtdata_module):
             '--steps.pathloss.save_results=true',
         ]
     }
-
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 

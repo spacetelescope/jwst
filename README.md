@@ -20,7 +20,7 @@
 > [!WARNING]
 > Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
 > this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
-> 
+>
 > Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 ## Installation
@@ -108,13 +108,13 @@ MacOS x86_64:
     conda activate JWSTDP-1.17.1-1-py312-macos-x86_64
 
 
-Starting with the jwst 1.16.1 release, we updated our release procedures to use 
-[stasis](https://github.com/spacetelescope/stasis). Each DMS delivery has its own installation instructions, 
+Starting with the jwst 1.16.1 release, we updated our release procedures to use
+[stasis](https://github.com/spacetelescope/stasis). Each DMS delivery has its own installation instructions,
 which may be found in the corresponding release documentation, e.g.:
 https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.16.1/delivery/README-py312-macos-x86_64.html
 The installation procedures may change from time to time, so consulting the
 documentation page for the specific version in question is the best way to get
-that version installed. You can find the list of available releases at the  
+that version installed. You can find the list of available releases at the
 [top-level stasis domain](https://ssb.stsci.edu/stasis/releases/jwst/).
 
 For releases prior to 1.16.1, please instead follow the directions below. The complete list of releases prior to 1.16.1
@@ -206,8 +206,8 @@ reference files within this context to the local cache specified by CRDS_PATH.
 ``<locally-accessable-path>`` can be any the user has permissions to use, such as `$HOME`.
 Expect to use upwards of 200GB of disk space to cache the latest couple of contexts.
 
-To use a specific CRDS context other than that 
-[automatically associated](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates) 
+To use a specific CRDS context other than that
+[automatically associated](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates)
 with a given pipeline version, set the ``CRDS_CONTEXT``
 environment variable:
 
@@ -226,7 +226,7 @@ To build the docs yourself, clone this repository and build the documentation wi
     make html
     make latexpdf
 
-For more user-focused documentation on the JWST calibration pipeline, see also the JDox pages at: 
+For more user-focused documentation on the JWST calibration pipeline, see also the JDox pages at:
 
 https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline
 
@@ -260,9 +260,9 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.18.0rc1           | B11.3     | TBD      | 1350         | 2025-03-19 | TBD         | First release candidate for B11.3             |
-| 1.17.1              | B11.2     | TBD      | 1321         | 2025-01-02 | 2025-03-05  | Second release candidate for B11.2            |
-| 1.17.0              | B11.2     | TBD      | 1321         | 2024-12-20 | TBD         | First release candidate for B11.2             |
+| 1.18.0              | B11.3     | 2025.2.0 | 1364         | 2025-04-01 | 2025-05-20  | Final release for B11.3                       |
+| 1.17.1              | B11.2     | 2025.1.0 | 1321         | 2025-01-02 | 2025-03-05  | Second release candidate for B11.2            |
+| 1.17.0              | B11.2     | 2025.1.0 | 1321         | 2024-12-20 | TBD         | First release candidate for B11.2             |
 | 1.16.1              | B11.1.1   | 2024.3.1 | 1303         | 2024-11-13 | 2024-12-06  | Final release candidate for B11.1             |
 | 1.16.0              | B11.1     | 2024.3.0 | 1298         | 2024-09-20 |             | First release candidate for B11.1             |
 | 1.15.1              | B11.0     | 2024.2.2 | 1293         | 2024-07-08 | 2024-09-12  | Final release candidate for B11.0             |
@@ -387,9 +387,7 @@ Need to parallelize your test runs over all available cores?
 
 Latest regression test results can be found here (STScI staff only):
 
-https://plwishmaster.stsci.edu:8081/job/RT/job/JWST/
-
-The test builds start at 6pm local Baltimore time Monday through Saturday on `jwcalibdev`.
+https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml?query=event%3Aschedule
 
 To run the regression tests on your local machine, get the test dependencies
 and set the environment variable TEST_BIGDATA to our Artifactory server
