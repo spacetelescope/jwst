@@ -50,44 +50,48 @@ overlap_partial : int
     a dq flag indicating that only a portion of the spaxel is overlapped by a mapped detector pixel
 overlap_full : int
     a dq flag indicating that the entire spaxel is overlapped by the mapped detector pixel
-xcoord : double array
+xcoord : ndarray of float
    size of naxis1. This array holds the center x axis values of the ifu cube
-ycoord : double array
+ycoord : ndarray of float
    size of naxis2. This array holds the center y axis values of the ifu cube
-zcoord : double array
+zcoord : ndarray of float
    size of naxis3. This array holds the center z axis /wavelength values of the ifu cube
-coord1 : double array
+coord1 : ndarray of float
    The tangent projected xi values of the center of detector pixel.
-coord2 : double array
+coord2 : ndarray of float
    The tangent projected wave values of the center of detector pixel..
-wave : double array
+wave : ndarray of float
    The wavelength corresponding to the center of the detector pixel.
-flux : double array
+flux : ndarray of float
    size: point cloud elements. Flux of each point cloud member
-err : double array
+err : ndarray of float
    size: point cloud elements. err of each point cloud member
 slice_no : int
    slice number of point cloud member to be in dq flagging
-xi1,  xi2, xi3, xi4 : double arrays
-   xi coordinates of the detector pixel corners  
-eta1, eta2, eta3, eta4 : double arrays
-   eta coordinates of the detector pixel corners 
-dwave : double array
+xi1, eta1 : ndarray of floats
+   xi, eta coordinates (tangent projection) of the detector pixel corner 1. 
+xi2, eta2 : ndarray of floats
+   xi, eta coordinates (tangent projection) of the detector pixel corner 2.  
+xi3, eta3 : ndarray of floats
+   xi, eta coordinates (tangent projection) of the detector pixel corner 3.  
+xi4, eta4 : ndarray of floats
+   xi, eta coordinates (tangent projection) of the detector pixel corner 4.  
+dwave : ndarray of float
    Delta wavelength ranges for pixel
-cdelt3_normal : double array
+cdelt3_normal : ndarray of float
    For linear wavelength range = 0
    For non-linear wavelength range = delta wavelength of neighboring wavelength planes
 cdelt1 : double
    Naxis 1 scale for cube
 cdelt2 : double
    Naxis 2 scale for cube
-cdelt3_mean: double array
+cdelt3_mean: ndarray of float
    Average of cdelt3_normal
 linear : bool
    Type of wavelength grid for IFU cube: linear or non-linear
-x_det : double array
+x_det : ndarray of float
    size: point cloud elements. X detector value of each point cloud member
-y_det : double array
+y_det : ndarray of float
    size: point cloud elements. Y detector value of each point cloud member
 debug_cube_index : int
    if > 0, value of cube index to print information on 
@@ -167,8 +171,11 @@ int match_driz(double *xc, double *yc, double *zc,
   // zc : IFU grid point values along the z-axis
   // wave : wavelength of pixels
   // flux : flux values of pixels
-  // xi1, xi2, xi3, xi4: xi coordinates of a pixel
-  // eta1, eta2, eta3, eta4: eta coordinates of a pixel
+  // err : err values of the pixels
+  // xi1, eta1 :  xi, eta coordinates of a corner 1 of a pixel
+  // xi2, eta2 :  xi, eta coordinates of a corner 2 of a pixel
+  // xi3, eta3 :  xi, eta coordinates of a corner 3 of a pixel
+  // xi4, eta4 :  xi, eta coordinates of a corner 4 of a pixel
   // dwave : delta wavelength of pixel
   // cdelt3:  wavelength sampling of IFU cube
   // x_det, y_det :x, y detector values
@@ -356,7 +363,9 @@ int match_driz(double *xc, double *yc, double *zc,
 }
 
 
-
+// This is a C structure that represents a NumPy array in the C API.
+// This ensures that all the numpy arrays passed to the C routines
+// follow C array rules. 
 PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     if (PyArray_CheckExact(obj) &&
         PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
@@ -373,7 +382,9 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
 }
 
 
-// Wrapper code that is called from python code and sets up interface with c code
+// Wrapper code that is called from python code and sets up interface with C code.
+// The variables are defined at the top this module under Python signature describing
+// cube_wrapper_driz
 
 static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo; // codespell:ignore erro
@@ -493,9 +504,8 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 
   }
 
-  //______________________________________________________________________
-  // if flag_dq_plane = 1, Set up the dq plane
-  //______________________________________________________________________
+  // if flag_dq_plane = 1, Set up the dq plane of the IFU cube. 
+  
   int status1 = 0;
 
   if(flag_dq_plane){
