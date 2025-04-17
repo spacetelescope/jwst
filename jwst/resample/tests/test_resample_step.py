@@ -1,10 +1,10 @@
-import pytest
+import warnings
 
+import asdf
+import numpy as np
+import pytest
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-import numpy as np
-import asdf
-
 from stdatamodels.jwst.datamodels import ImageModel
 from stcal.resample.utils import compute_mean_pixel_area
 
@@ -16,6 +16,7 @@ from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
 from jwst.resample.resample_utils import load_custom_wcs
+
 
 def _set_photom_kwd(im):
     xmin = im.meta.subarray.xstart - 1
@@ -95,6 +96,7 @@ def miri_rate_model():
         'type': 'MIR_LRS-SLITLESS',
         'zero_frame': False}
     return im
+
 
 @pytest.fixture
 def miri_rate():
@@ -395,7 +397,9 @@ def test_nirspec_wcs_roundtrip(nirspec_cal):
 
 
 def test_nirspec_lamp_wcs_roundtrip(nirspec_lamp):
-    im = ResampleSpecStep.call(nirspec_lamp)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        im = ResampleSpecStep.call(nirspec_lamp)
 
     for slit in im.slits:
         x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
@@ -430,7 +434,7 @@ def test_single_image_file_input(nircam_rate, tmp_cwd):
     result_from_file = ResampleStep.call('test_input.fits')
 
     # Check that the output is as expected
-    assert np.allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
+    assert_allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
 
     result_from_file.close()
     result_from_memory.close()
@@ -481,7 +485,7 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
 
     # pixel_scale and pixel_scale_ratio should be equivalent
     nn = np.isnan(result2.data) | np.isnan(result3.data)
-    assert np.allclose(result2.data[~nn], result3.data[~nn])
+    assert_allclose(result2.data[~nn], result3.data[~nn])
 
     # Check result2 for expected results
 
@@ -489,7 +493,7 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
     assert result1.data.shape[0] == result2.data.shape[0]
 
     # spatial dimension is scaled
-    assert np.isclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
+    assert_allclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
 
     # data is non-trivial
     assert np.nansum(result1.data) > 0.0
@@ -500,24 +504,26 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
         # flux density conservation: sum over pixels in each row
         # needs to be about the same, other than the edges
         # Check the maximum sums, to avoid edges.
-        assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
-                           np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
+        assert_allclose(np.max(np.nansum(result1.data, axis=1)),
+                        np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
     else:
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
+            res1 = np.nanmean(result1.data, axis=1)
+            res2 = np.nanmean(result2.data, axis=1)
         # surface brightness conservation: mean values are the same
-        assert np.allclose(np.nanmean(result1.data, axis=1),
-                           np.nanmean(result2.data, axis=1), rtol=0.05,
-                           equal_nan=True)
+        assert_allclose(res1, res2, rtol=0.05, equal_nan=True)
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
     area2 = result2.meta.photometry.pixelarea_steradians
     area3 = result2.meta.photometry.pixelarea_steradians
-    assert np.isclose(area1 / area2, ratio)
-    assert np.isclose(area1 / area3, ratio)
+    assert_allclose(area1 / area2, ratio)
+    assert_allclose(area1 / area3, ratio)
 
     assert result1.meta.resample.pixel_scale_ratio == 1.0
     assert result2.meta.resample.pixel_scale_ratio == ratio
-    assert np.isclose(result3.meta.resample.pixel_scale_ratio, ratio)
+    assert_allclose(result3.meta.resample.pixel_scale_ratio, ratio)
 
     result1.close()
     result2.close()
@@ -547,7 +553,7 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
 
     # pixel_scale and pixel_scale_ratio should be equivalent
     nn = np.isnan(result2.data) | np.isnan(result3.data)
-    assert np.allclose(result2.data[~nn], result3.data[~nn])
+    assert_allclose(result2.data[~nn], result3.data[~nn])
 
     # Check result2 for expected results
 
@@ -555,7 +561,7 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
     assert result1.data.shape[0] == result2.data.shape[0]
 
     # spatial dimension is scaled
-    assert np.isclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
+    assert_allclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
 
     # data is non-trivial
     assert np.nansum(result1.data) > 0.0
@@ -566,24 +572,26 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
         # flux density conservation: sum over pixels in each row
         # needs to be about the same, other than the edges
         # Check the maximum sums, to avoid edges.
-        assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
-                           np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
+        assert_allclose(np.max(np.nansum(result1.data, axis=1)),
+                        np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
     else:
+        with warnings.catch_warnings():  # MJy/sr
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
+            res1 = np.nanmean(result1.data, axis=1)
+            res2 = np.nanmean(result2.data, axis=1)
         # surface brightness conservation: mean values are the same
-        assert np.allclose(np.nanmean(result1.data, axis=1),
-                           np.nanmean(result2.data, axis=1), rtol=0.05,
-                           equal_nan=True)
+        assert_allclose(res1, res2, rtol=0.05, equal_nan=True)
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
     area2 = result2.meta.photometry.pixelarea_steradians
     area3 = result2.meta.photometry.pixelarea_steradians
-    assert np.isclose(area1 / area2, ratio)
-    assert np.isclose(area1 / area3, ratio)
+    assert_allclose(area1 / area2, ratio)
+    assert_allclose(area1 / area3, ratio)
 
     assert result1.meta.resample.pixel_scale_ratio == 1.0
     assert result2.meta.resample.pixel_scale_ratio == ratio
-    assert np.isclose(result3.meta.resample.pixel_scale_ratio, ratio)
+    assert_allclose(result3.meta.resample.pixel_scale_ratio, ratio)
 
     result1.close()
     result2.close()
@@ -608,7 +616,7 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
     for slit1, slit2, slit3 in zip(result1.slits, result2.slits, result3.slits):
         # pixel_scale and pixel_scale_ratio should be equivalent
         nn = np.isnan(slit2.data) | np.isnan(slit3.data)
-        assert np.allclose(slit2.data[~nn], slit3.data[~nn])
+        assert_allclose(slit2.data[~nn], slit3.data[~nn])
 
         # Check result2 for expected results
 
@@ -616,7 +624,7 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
         assert slit1.data.shape[1] == slit2.data.shape[1]
 
         # spatial dimension is scaled
-        assert np.isclose(slit1.data.shape[0], slit2.data.shape[0] / ratio, atol=1)
+        assert_allclose(slit1.data.shape[0], slit2.data.shape[0] / ratio, atol=1)
 
         # data is non-trivial
         assert np.nansum(slit1.data) > 0.0
@@ -627,24 +635,24 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
             # flux density conservation: sum over pixels in each column
             # needs to be about the same, other than edge effects.
             # Check the maximum sums, to avoid edges.
-            assert np.allclose(np.max(np.nansum(slit1.data, axis=0)),
-                               np.max(np.nansum(slit2.data, axis=0)), rtol=0.05)
+            assert_allclose(np.max(np.nansum(slit1.data, axis=0)),
+                            np.max(np.nansum(slit2.data, axis=0)), rtol=0.05)
         else:
             # surface brightness conservation: mean values are the same
-            assert np.allclose(np.nanmean(slit1.data, axis=0),
-                               np.nanmean(slit2.data, axis=0), rtol=0.05,
-                               equal_nan=True)
+            assert_allclose(np.nanmean(slit1.data, axis=0),
+                            np.nanmean(slit2.data, axis=0), rtol=0.05,
+                            equal_nan=True)
 
         # output area is updated either way
         area1 = slit1.meta.photometry.pixelarea_steradians
         area2 = slit2.meta.photometry.pixelarea_steradians
         area3 = slit3.meta.photometry.pixelarea_steradians
-        assert np.isclose(area1 / area2, ratio)
-        assert np.isclose(area1 / area3, ratio)
+        assert_allclose(area1 / area2, ratio)
+        assert_allclose(area1 / area3, ratio)
 
     assert result1.meta.resample.pixel_scale_ratio == 1.0
     assert result2.meta.resample.pixel_scale_ratio == ratio
-    assert np.isclose(result3.meta.resample.pixel_scale_ratio, ratio)
+    assert_allclose(result3.meta.resample.pixel_scale_ratio, ratio)
 
     result1.close()
     result2.close()
@@ -885,16 +893,16 @@ def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval,
     # test rotation
     pc = t['pc_rotation_matrix'].matrix.value
     orientation = np.rad2deg(np.arctan2(pc[0, 1], pc[1, 1]))
-    assert np.allclose(rotation, orientation)
+    assert_allclose(rotation, orientation)
 
     # test CRPIX
-    assert np.allclose(
+    assert_allclose(
         (-t['crpix1'].offset.value, -t['crpix2'].offset.value),
         crpix
     )
 
     # test CRVAL
-    assert np.allclose(t(*crpix), crval)
+    assert_allclose(t(*crpix), crval)
 
     # test output image shape
     assert result.data.shape == shape[::-1]
@@ -939,7 +947,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     assert not np.all(np.isnan(data1))
 
     if crpix is not None:
-        assert np.allclose(result.meta.wcs(*crpix), crval, rtol=1e-12, atol=0)
+        assert_allclose(result.meta.wcs(*crpix), crval, rtol=1e-12, atol=0)
 
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     asdf.AsdfFile({"wcs": result.meta.wcs, "array_shape": data1.shape}).write_to(refwcs)
@@ -960,7 +968,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     if match:
         # test output image shape
         assert data1.shape == data2.shape
-        assert np.allclose(data1, data2, equal_nan=True, rtol=1.0e-7, atol=1e-7)
+        assert_allclose(data1, data2, equal_nan=True, rtol=1.0e-7, atol=1e-7)
 
     # make sure pixel values are similar, accounting for scale factor
     # (assuming inputs are in surface brightness units)
@@ -970,8 +978,9 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     total_weight = np.sum(weight1)
     output_mean_1 = np.nansum(data1 * weight1) / total_weight
     output_mean_2 = np.nansum(data2 * weight2) / total_weight
-    assert np.isclose(input_mean * iscale2, output_mean_1)
-    assert np.isclose(input_mean * iscale2, output_mean_2)
+    # rtol and atol values are from np.isclose default settings.
+    assert_allclose(input_mean * iscale2, output_mean_1, rtol=1e-5, atol=1e-8)
+    assert_allclose(input_mean * iscale2, output_mean_2, rtol=1e-5, atol=1e-8)
 
     im.close()
     result.close()
@@ -1018,7 +1027,7 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
 
     # test output image shape
     assert data1.shape == data2.shape
-    assert np.allclose(data1, data2, equal_nan=True)
+    assert_allclose(data1, data2, equal_nan=True)
 
     # make sure pixel values are similar, accounting for scale factor
     # (assuming inputs are in surface brightness units)
@@ -1029,11 +1038,12 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
     input_mean = np.nanmean(im.data)
     output_mean_1 = np.nanmean(data1)
     output_mean_2 = np.nanmean(data2)
-    assert np.isclose(input_mean * iscale**2, output_mean_1, atol=1e-4)
-    assert np.isclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
+    assert_allclose(input_mean * iscale**2, output_mean_1, atol=1e-4)
+    assert_allclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
 
     # check that output pixel area is set from input
-    assert np.isclose(result.meta.photometry.pixelarea_steradians, pixel_area)
+    # rtol and atol values are from np.isclose default settings.
+    assert_allclose(result.meta.photometry.pixelarea_steradians, pixel_area, rtol=1e-5, atol=1e-8)
 
     im.close()
     result.close()
@@ -1071,7 +1081,7 @@ def test_custom_refwcs_resample_miri(miri_cal, tmp_path, ratio):
 
     # check output data against first pass
     assert data1.shape == data2.shape
-    assert np.allclose(data1, data2, equal_nan=True, rtol=1e-4)
+    assert_allclose(data1, data2, equal_nan=True, rtol=1e-4)
 
     # make sure flux is conserved: sum over spatial dimension
     # should be same in input and output
@@ -1079,8 +1089,8 @@ def test_custom_refwcs_resample_miri(miri_cal, tmp_path, ratio):
     input_sum = np.nanmean(np.nansum(im.data, axis=1))
     output_sum_1 = np.nanmean(np.nansum(data1, axis=1))
     output_sum_2 = np.nanmean(np.nansum(data2, axis=1))
-    assert np.allclose(input_sum, output_sum_1, rtol=0.005)
-    assert np.allclose(input_sum, output_sum_2, rtol=0.005)
+    assert_allclose(input_sum, output_sum_1, rtol=0.005)
+    assert_allclose(input_sum, output_sum_2, rtol=0.005)
 
     im.close()
     result.close()
@@ -1120,7 +1130,7 @@ def test_custom_refwcs_resample_nirspec(nirspec_cal, tmp_path, ratio):
 
     # check output data against first pass
     assert data1.shape == data2.shape
-    assert np.allclose(data1, data2, equal_nan=True, rtol=1e-4)
+    assert_allclose(data1, data2, equal_nan=True, rtol=1e-4)
 
     # make sure flux is conserved: sum over spatial dimension
     # should be same in input and output
@@ -1128,8 +1138,8 @@ def test_custom_refwcs_resample_nirspec(nirspec_cal, tmp_path, ratio):
     input_sum = np.nanmean(np.nansum(im.slits[0].data, axis=0))
     output_sum_1 = np.nanmean(np.nansum(data1, axis=0))
     output_sum_2 = np.nanmean(np.nansum(data2, axis=0))
-    assert np.allclose(input_sum, output_sum_1, rtol=0.005)
-    assert np.allclose(input_sum, output_sum_2, rtol=0.005)
+    assert_allclose(input_sum, output_sum_1, rtol=0.005)
+    assert_allclose(input_sum, output_sum_2, rtol=0.005)
 
     im.close()
     result.close()
@@ -1172,10 +1182,10 @@ def test_custom_refwcs_pixel_shape_nirspec(nirspec_cal, tmp_path):
 
     # check output data against first pass
     assert data1.shape == data2.shape
-    assert np.allclose(data1, data2, equal_nan=True, rtol=1e-4)
+    assert_allclose(data1, data2, equal_nan=True, rtol=1e-4)
 
     # check that output pixel area is set from output_wcs
-    assert np.isclose(result.slits[0].meta.photometry.pixelarea_steradians, pixel_area)
+    assert_allclose(result.slits[0].meta.photometry.pixelarea_steradians, pixel_area)
 
     im.close()
     result.close()
@@ -1196,7 +1206,7 @@ def test_custom_wcs_pscale_resample_imaging(nircam_rate, ratio):
     output_scale = compute_scale(wcs=result.meta.wcs, fiducial=crval)
 
     # test scales are close
-    assert np.allclose(output_scale, input_scale * 0.75)
+    assert_allclose(output_scale, input_scale * 0.75)
 
     im.close()
     result.close()
@@ -1216,7 +1226,8 @@ def test_custom_wcs_pscale_resample_miri(miri_cal, ratio):
     output_scale = compute_spectral_pixel_scale(result.meta.wcs, disp_axis=2)
 
     # test scales are close to scale specified, regardless of ratio
-    assert np.allclose(output_scale, input_scale * 0.75)
+    # rtol and atol values are from np.allclose default settings.
+    assert_allclose(output_scale, input_scale * 0.75, rtol=1e-05, atol=1e-08)
 
     result.close()
 
@@ -1235,7 +1246,8 @@ def test_custom_wcs_pscale_resample_nirspec(nirspec_cal, ratio):
     output_scale = compute_spectral_pixel_scale(result.slits[0].meta.wcs, disp_axis=1)
 
     # test scales are close to scale specified, regardless of ratio
-    assert np.allclose(output_scale, input_scale * 0.75)
+    # rtol and atol values are from np.allclose default settings.
+    assert_allclose(output_scale, input_scale * 0.75, rtol=1e-05, atol=1e-08)
 
     result.close()
 
@@ -1268,7 +1280,7 @@ def test_custom_wcs_input(tmp_path, nircam_rate, wcs_attr):
 
     # check that the loaded WCS has the correct values
     for attr in ['pixel_shape', 'array_shape']:
-        assert np.allclose(getattr(loaded_wcs["wcs"], attr), wcs_dict[attr])
+        assert_allclose(getattr(loaded_wcs["wcs"], attr), wcs_dict[attr])
 
 
 @pytest.mark.parametrize(
@@ -1301,17 +1313,17 @@ def test_custom_wcs_input_overrides(tmp_path, nircam_rate, override, value):
 
     for key in keys:
         if key == override:
-            assert np.allclose(getattr(loaded_wcs, key), value)
+            assert_allclose(getattr(loaded_wcs, key), value)
         elif key == 'pixel_shape':
             if override == 'array_shape':
-                assert np.allclose(getattr(loaded_wcs, key), value[::-1])
+                assert_allclose(getattr(loaded_wcs, key), value[::-1])
             else:
-                assert np.allclose(getattr(loaded_wcs, key), expected_pixel_shape)
+                assert_allclose(getattr(loaded_wcs, key), expected_pixel_shape)
         elif key == 'array_shape':
             if override == 'pixel_shape':
-                assert np.allclose(getattr(loaded_wcs, key), value[::-1])
+                assert_allclose(getattr(loaded_wcs, key), value[::-1])
             else:
-                assert np.allclose(getattr(loaded_wcs, key), expected_array_shape)
+                assert_allclose(getattr(loaded_wcs, key), expected_array_shape)
 
 
 def test_custom_wcs_input_error(tmp_path, nircam_rate):
@@ -1356,11 +1368,11 @@ def test_pixscale(nircam_rate):
 
     # check when both pixel_scale and pixel_scale_ratio are passed in
     res = ResampleStep.call(im, pixel_scale=0.04, pixel_scale_ratio=0.7)
-    assert np.allclose(res.meta.resample.pixel_scale_ratio, 0.04 / np.sqrt(pixarea))
+    assert_allclose(res.meta.resample.pixel_scale_ratio, 0.04 / np.sqrt(pixarea))
 
     # just pixel_scale
     res = ResampleStep.call(im, pixel_scale=0.04)
-    assert np.allclose(res.meta.resample.pixel_scale_ratio, 0.04 / np.sqrt(pixarea))
+    assert_allclose(res.meta.resample.pixel_scale_ratio, 0.04 / np.sqrt(pixarea))
 
     # just pixel_scale_ratio
     res = ResampleStep.call(im, pixel_scale_ratio=0.7)
@@ -1383,19 +1395,19 @@ def test_phot_keywords(nircam_rate):
     res = ResampleStep.call(im, pixel_scale=0.04)
     new_psr = res.meta.resample.pixel_scale_ratio
 
-    assert np.allclose(
+    assert_allclose(
         res.meta.resample.pixel_scale_ratio,
         0.04 / np.sqrt(orig_pix_area_arcsec),
         atol=0,
         rtol=1e-12
     )
-    assert np.allclose(
+    assert_allclose(
         res.meta.photometry.pixelarea_steradians,
         orig_pix_area_sr * new_psr**2,
         atol=0,
         rtol=1e-12
     )
-    assert np.allclose(
+    assert_allclose(
         res.meta.photometry.pixelarea_arcsecsq,
         orig_pix_area_arcsec * new_psr**2,
         atol=0,
@@ -1420,7 +1432,7 @@ def test_missing_nominal_area(miri_cal, tmp_path):
 
     # direct pixel scale setting is not supported
     result2 = ResampleSpecStep.call(miri_cal, pixel_scale=0.5)
-    assert np.allclose(result2.data, result.data, equal_nan=True)
+    assert_allclose(result2.data, result.data, equal_nan=True)
     assert result2.meta.resample.pixel_scale_ratio == 1.0
 
     # setting pixel_scale_ratio is still allowed,
@@ -1450,22 +1462,28 @@ def test_missing_nominal_area(miri_cal, tmp_path):
 
 
 def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
-    result = ResampleSpecStep.call(nirspec_lamp)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        result = ResampleSpecStep.call(nirspec_lamp)
 
     # output data should have the same wavelength size,
     # spatial size is close
-    assert np.isclose(result.slits[0].data.shape[0],
-                      nirspec_lamp.slits[0].data.shape[0], atol=5)
+    assert_allclose(result.slits[0].data.shape[0],
+                    nirspec_lamp.slits[0].data.shape[0], atol=5)
     assert (result.slits[0].data.shape[1]
             == nirspec_lamp.slits[0].data.shape[1])
 
     # test pixel scale setting: will not work without sky-based WCS
-    result2 = ResampleSpecStep.call(nirspec_lamp, pixel_scale=0.5)
-    assert np.allclose(result2.slits[0].data, result.slits[0].data, equal_nan=True)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        result2 = ResampleSpecStep.call(nirspec_lamp, pixel_scale=0.5)
+    assert_allclose(result2.slits[0].data, result.slits[0].data, equal_nan=True)
     assert result2.meta.resample.pixel_scale_ratio == 1.0
 
     # setting pixel_scale_ratio is still allowed
-    result3 = ResampleSpecStep.call(nirspec_lamp, pixel_scale_ratio=0.5)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        result3 = ResampleSpecStep.call(nirspec_lamp, pixel_scale_ratio=0.5)
     assert result3.slits[0].data.shape[0] < result.slits[0].data.shape[0]
     assert result3.slits[0].data.shape[1] == result.slits[0].data.shape[1]
     assert result3.meta.resample.pixel_scale_ratio == 0.5
@@ -1474,7 +1492,9 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     # since output scale cannot be determined
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     asdf.AsdfFile({"wcs": result3.slits[0].meta.wcs}).write_to(refwcs)
-    result4 = ResampleSpecStep.call(nirspec_lamp, output_wcs=refwcs)
+    # RuntimeWarning: invalid value encountered in sqrt
+    with np.errstate(invalid="ignore"):
+        result4 = ResampleSpecStep.call(nirspec_lamp, output_wcs=refwcs)
     assert result4.slits[0].data.shape == result3.slits[0].data.shape
     assert result4.meta.resample.pixel_scale_ratio == 1.0
 

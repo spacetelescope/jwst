@@ -1,13 +1,16 @@
 """Test suite for ensuring correct FGS pointing"""
-import logging
-from pathlib import Path
+from pathlib import Path  # Has to be imported before importorskip
+
 import pytest
 
 # Only run if `pysiaf` is installed.
 pytest.importorskip('pysiaf')
 
+import logging  # noqa: E402
+
+from astropy.utils.data import get_pkg_data_filenames  # noqa: E402
 from numpy import array                             # noqa: E402
-from numpy import allclose, isclose                 # noqa: E402
+from numpy.testing import assert_allclose           # noqa: E402
 
 from jwst.datamodels import Level1bModel            # type: ignore[attr-defined] # noqa: E402
 from jwst.lib import siafdb                         # noqa: E402
@@ -20,13 +23,9 @@ handler = logging.StreamHandler()
 handler.setLevel(logging.INFO)
 logger.addHandler(handler)
 
-# Get database paths.
-DATA_PATH = Path(stp.__file__).parent / 'tests' / 'data'
-SIAF_PATH = DATA_PATH / 'xml_data_siafxml' / 'SIAFXML'
-
 # All the FGS GUIDER examples. Generated from proposal JW01029
-FGS_ROOT_PATH = DATA_PATH / 'fgs_exposures'
-FGS_PATHS = list(FGS_ROOT_PATH.glob('*.fits'))
+FGS_PATHS = sorted(get_pkg_data_filenames(
+    "data/fgs_exposures", package="jwst.lib.tests", pattern="*.fits"))
 WCS_ATTRIBUTES = ['crpix1', 'crpix2', 'crval1', 'crval2', 'pc_matrix']
 
 FGS_TRUTHS = {
@@ -173,13 +172,12 @@ def test_wcs_calc_guiding(get_guider_wcs, attr):
     """Test the WCS calculation"""
     exp_type, detector, wcs = get_guider_wcs
 
-    assert allclose(wcs[attr], FGS_TRUTHS[f'{exp_type}-{detector}'][attr])
+    assert_allclose(wcs[attr], FGS_TRUTHS[f'{exp_type}-{detector}'][attr])
 
 
 def get_guider_wcs_id(path):
     """Generate ids for get_guider_wcs"""
-    id = path.stem
-    return id
+    return Path(path).stem
 
 
 @pytest.fixture(params=FGS_PATHS, ids=get_guider_wcs_id, scope='module')
@@ -200,7 +198,7 @@ def test_update_wcs(update_wcs, attr):
     model, expected = update_wcs
     wcsinfo = model.meta.wcsinfo.instance
 
-    assert isclose(wcsinfo[attr], expected[attr], atol=1e-15)
+    assert_allclose(wcsinfo[attr], expected[attr], atol=1e-15)
 
 
 # ---------

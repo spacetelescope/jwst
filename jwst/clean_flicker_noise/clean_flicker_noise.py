@@ -315,6 +315,9 @@ def clip_to_background(
         If set, DEBUG level messages are issued with details on the
         computed statistics.
     """
+    # Use float64 for stats computations
+    image = image.astype(np.float64)
+
     # Sigma limit for basic stats
     sigma_limit = 3.0
 

@@ -2,6 +2,7 @@
 Test for flat_field.clean_wl
 """
 import numpy as np
+from numpy.testing import assert_allclose
 
 from jwst.flatfield import flat_field
 
@@ -25,7 +26,7 @@ def test_clean_wl_1():
 
     # 1 means horizontal dispersion
     wl_hc = flat_field.clean_wl(wl_h, 1)
-    assert np.allclose(wl_hc, wl_h_clean, atol=0., rtol=1.e-6)
+    assert_allclose(wl_hc, wl_h_clean, atol=0., rtol=1.e-6)
 
 
 def test_clean_wl_2():
@@ -51,4 +52,4 @@ def test_clean_wl_2():
 
     # 2 means vertical dispersion
     wl_vc = flat_field.clean_wl(wl_v, 2)
-    assert np.allclose(wl_vc, wl_v_clean, atol=0., rtol=1.e-6)
+    assert_allclose(wl_vc, wl_v_clean, atol=0., rtol=1.e-6)

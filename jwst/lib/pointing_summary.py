@@ -1,4 +1,5 @@
-"""Pointing Summary
+"""
+Pointing Summary.
 
 Review contents of a set of given models for pointing information.
 Compare the calculated V1 and REFPOINT pointing with the proposed
@@ -8,52 +9,54 @@ Examples
 --------
 >>> from stdatamodels.jwst.datamodels import ImageModel
 >>> im = ImageModel()
->>> im.meta.target.ra       =  90.75541666666666
->>> im.meta.target.dec      = -66.56055555555554
->>> im.meta.pointing.ra_v1  =  91.08142004561715
+>>> im.meta.target.ra = 90.75541666666666
+>>> im.meta.target.dec = -66.56055555555554
+>>> im.meta.pointing.ra_v1 = 91.08142004561715
 >>> im.meta.pointing.dec_v1 = -66.60547868904696
->>> im.meta.wcsinfo.ra_ref  =  90.70377653291781
+>>> im.meta.wcsinfo.ra_ref = 90.70377653291781
 >>> im.meta.wcsinfo.dec_ref = -66.59540223936895
 >>> calc_pointing_deltas(im)
-    Delta(target=<SkyCoord (ICRS): (ra, dec) in deg
-        (90.75541667, -66.56055556)>, v1=<SkyCoord (ICRS): (ra, dec) in deg
-        (91.08142005, -66.60547869)>, refpoint=<SkyCoord (ICRS): (ra, dec) in deg
-        (90.70377653, -66.59540224)>, delta_v1=<Angle 0.13712727 deg>, delta_refpoint=<Angle 0.04044315 deg>)
+Delta(target=<SkyCoord (ICRS): (ra, dec) in deg
+    (90.75541667, -66.56055556)>, v1=<SkyCoord (ICRS): (ra, dec) in deg
+    (91.08142005, -66.60547869)>, refpoint=<SkyCoord (ICRS): (ra, dec) in deg
+    (90.70377653, -66.59540224)>, delta_v1=<Angle 0.13712727 deg>, delta_refpoint=<Angle 0.04044315 deg>)
 
 >>> t = calc_deltas([im])
 >>> print(t.columns)
-    <TableColumns names=('exposure','target','v1','refpoint','delta_v1','delta_refpoint')>
+<TableColumns names=('exposure','target','v1','refpoint','delta_v1','delta_refpoint')>
 >>> delta_v1 = t["delta_v1"][0]
 >>> "%.13f" % delta_v1
 '0.1371272716401'
 >>> delta_refpoint = t["delta_refpoint"][0]
 >>> "%.13f" % delta_refpoint
 '0.0404431476150'
-"""
-from collections import defaultdict, namedtuple
-import logging
+"""  # noqa: E501
 
+import logging
+from collections import defaultdict, namedtuple
+
+import astropy.units as u
+import stdatamodels.jwst.datamodels as dm
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
-import astropy.units as u
 
-import stdatamodels.jwst.datamodels as dm
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
-__all__ = ['Delta', 'calc_pointing_deltas', 'calc_deltas']
+__all__ = ["Delta", "calc_pointing_deltas", "calc_deltas"]
 
 # Basic delta structure
-Delta = namedtuple('Delta', 'target, v1, refpoint, delta_v1, delta_refpoint')
+Delta = namedtuple("Delta", "target, v1, refpoint, delta_v1, delta_refpoint")
 
 
 def calc_pointing_deltas(model):
-    """Calculate pointing deltas
+    """
+    Calculate pointing deltas.
 
     Parameters
     ----------
-    model : jwst.datamodels.JwstDataModel
+    model : `jwst.datamodels.JwstDataModel`
         The model to check pointing information in.
 
     Returns
@@ -62,11 +65,11 @@ def calc_pointing_deltas(model):
         A `namedtuple` with the following keys. If for some reason
         a value could not be determined, `None` is given.
 
-        - 'target':         `SkyCoord` of the target
-        - 'v1':             `SkyCoord` of V1
-        - 'refpoint':       `SkyCoord` of the reference point
-        - 'delta_v1':       Difference between V1 and proposed TARGET
-        - 'delta_refpoint': Difference between reference pixel pointing and TARGET
+        - 'target': `SkyCoord` of the target.
+        - 'v1': `SkyCoord` of V1.
+        - 'refpoint': `SkyCoord` of the reference point.
+        - 'delta_v1': Difference between V1 and proposed TARGET.
+        - 'delta_refpoint': Difference between reference pixel pointing and TARGET.
     """
     # Retrieve the info from the model
     target = SkyCoord(model.meta.target.ra * u.degree, model.meta.target.dec * u.degree)
@@ -85,7 +88,8 @@ def calc_pointing_deltas(model):
 
 
 def calc_deltas(exposures, extra_meta=None):
-    """Create table of pointing deltas
+    """
+    Create table of pointing deltas.
 
     Parameters
     ----------
@@ -93,36 +97,38 @@ def calc_deltas(exposures, extra_meta=None):
         List of file-like objects or `jwst.datamodels.JwstDataModel` to retrieve
         pointing information from.
 
-    extra_meta: [str[,...]] or None
+    extra_meta : [str[,...]] or None
         List of model meta attributes to add to the table.
 
     Returns
     -------
-    deltas : astropy.table.Table
+    deltas : `astropy.table.Table`
         Table of results with the following columns:
 
-        - exposure: The exposure the pointing information is from
-        - target:         `SkyCoord` of the proposed target
-        - v1:             `SkyCoord` of v1
-        - refpoint:       `SkyCoord` of the reference point
-        - delta_v1:       target - V1 separation
-        - delta_refpoint: target - refpoint separation
+        - exposure: The exposure the pointing information is from.
+        - target: `SkyCoord` of the proposed target.
+        - v1: `SkyCoord` of v1.
+        - refpoint: `SkyCoord` of the reference point.
+        - delta_v1: target - V1 separation.
+        - delta_refpoint: target - refpoint separation.
     """
     # Initialize structures
-    targets = list()
-    v1s = list()
-    refpoints = list()
-    delta_v1s = list()
-    delta_refpoints = list()
+    targets = []
+    v1s = []
+    refpoints = []
+    delta_v1s = []
+    delta_refpoints = []
     extra_meta_values = defaultdict(list)
 
-    extra_meta = extra_meta if extra_meta is not None else list()
+    extra_meta = extra_meta if extra_meta is not None else []
 
     # Calculate deltas for all input.
     for exposure in exposures:
         with dm.open(exposure) as model:
             delta = calc_pointing_deltas(model)
-            logger.info(f'{model}: delta v1={delta.delta_v1} delta refpoint={delta.delta_refpoint}')
+            logger.info(
+                "%s: delta v1=%s delta refpoint=%s", model, delta.delta_v1, delta.delta_refpoint
+            )
 
             targets.append(delta.target)
             v1s.append(delta.v1)
@@ -135,12 +141,12 @@ def calc_deltas(exposures, extra_meta=None):
 
     # Places results into a Table.
     deltas_dict = {
-        'exposure': exposures,
-        'target': targets,
-        'v1': v1s,
-        'refpoint': refpoints,
-        'delta_v1': delta_v1s,
-        'delta_refpoint': delta_refpoints,
+        "exposure": exposures,
+        "target": targets,
+        "v1": v1s,
+        "refpoint": refpoints,
+        "delta_v1": delta_v1s,
+        "delta_refpoint": delta_refpoints,
     }
     deltas_dict.update(extra_meta_values)
     deltas = Table(deltas_dict)

@@ -27,7 +27,8 @@ def run_spec2(rtdata_module):
             '--steps.photom.save_results=true',
             '--steps.photom.mrs_time_correction=true',
             ]
-
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: invalid value encountered in add
     Step.from_cmdline(args)
 
 

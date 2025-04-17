@@ -1,6 +1,8 @@
-import pytest
 import os
 import shutil
+
+import pytest
+
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 from jwst.stpipe import Step
 from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
@@ -13,6 +15,7 @@ OUTPUT_FILE = "custom_name.fits"
 OUTPUT_FILE_ASN = "custom_name_asn.fits" #cannot reuse because everything runs in same cwd
 LOGFILE = "run_asn.log"
 LOGCFG = "test_logs.cfg"
+
 
 @pytest.fixture(scope='module')
 def make_dummy_rate_file(tmp_cwd_module):
@@ -120,6 +123,7 @@ def test_output_file_rename(run_spec2_pipeline):
         assert os.path.exists(f'{custom_stem}_{extension}.fits')
 
 
+@pytest.mark.filterwarnings("ignore::ResourceWarning")
 def test_output_file_norename_asn(run_spec2_pipeline_asn):
     '''
     Ensure output_file parameter is ignored, with warning,

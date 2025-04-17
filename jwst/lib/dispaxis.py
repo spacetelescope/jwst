@@ -4,9 +4,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
-                             pupil="ANY"):
-    """Get the dispersion direction.
+def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY", pupil="ANY"):
+    """
+    Get the dispersion direction.
 
     Parameters
     ----------
@@ -24,13 +24,13 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
 
     Returns
     -------
-    int or None : The dispersion direction
+    select : int or None
+        The dispersion direction:
 
--    None  the dispersion direction is not meaningful or not defined
--       1  the dispersion direction is horizontal ("sky" coordinates)
--       2  the dispersion direction is vertical ("sky" coordinates)
+        * `None`: The dispersion direction is not meaningful or not defined.
+        * 1: The dispersion direction is horizontal ("sky" coordinates).
+        * 2: The dispersion direction is vertical ("sky" coordinates).
     """
-
     exposure_type = exposure_type.upper()
     if grating is not None:
         grating = grating.upper()
@@ -123,7 +123,7 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
         "NRS_WATA": None,
         # Misc
         "N/A": None,
-        "ANY": None
+        "ANY": None,
     }
 
     if exposure_type not in by_exp_type.keys():
@@ -133,14 +133,11 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
     second_pass = {
         ("NIS_WFSS", "ANY", "GR150R", "ANY"): 2,
         ("NIS_WFSS", "ANY", "GR150C", "ANY"): 1,
-
         ("NRC_GRISM", "ANY", "ANY", "GRISMR"): 1,
         ("NRC_GRISM", "ANY", "ANY", "GRISMC"): 2,
-
         ("NRC_TSGRISM", "ANY", "ANY", "GRISMR"): 1,
-
         ("NRC_WFSS", "ANY", "ANY", "GRISMR"): 1,
-        ("NRC_WFSS", "ANY", "ANY", "GRISMC"): 2
+        ("NRC_WFSS", "ANY", "ANY", "GRISMC"): 2,
     }
 
     select = by_exp_type[exposure_type]
@@ -150,7 +147,5 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY",
         if select in second_pass.keys():
             return second_pass[select]
         else:
-            log.warning("Error in get_dispersion_direction:  {} not in "
-                        "`second_pass`".format(select))
+            log.warning("Error in get_dispersion_direction:  %s not in `second_pass`", select)
             log.warning("Dispersion direction could not be determined.")
-            return None
