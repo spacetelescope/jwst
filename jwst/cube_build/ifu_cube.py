@@ -65,7 +65,7 @@ class IFUCubeData:
         Dictionary containing information on the basic instrument parameters.
     master_table : dict
         Dictionary of containing the files covering each band.
-    pars_cube : dict
+    **pars_cube : dict
         Dictionary of parameters controlling how the cube is built.
     """
 

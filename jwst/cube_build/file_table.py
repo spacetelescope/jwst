@@ -91,12 +91,12 @@ class FileTable:
 
     def set_file_table(self, input_models):
         """
-        Set up the MasterTable dictionary.
+        Set up the master_table dictionary.
 
-        Fill in the MasterTable which holds the files that the cube will be constructed
+        Fill in the master_table which holds the files that the cube will be constructed
         from. Since MIRI has 2 channels per image this MASTERTable dictionary helps to figure out
         which data needs to be use.
-        The MasterTable for MIRI is broken down by channel and subchannel.
+        The master_table for MIRI is broken down by channel and subchannel.
         For each channel/subchannel combination - a file is listed that covers those options
         For NIRSPEC the table contains the grating and filter for each file.
 
@@ -107,11 +107,11 @@ class FileTable:
 
         Returns
         -------
-        MasterTable : dict
+        master_table : dict
             Dictionary containing the filename/model for each channel/band or grating/filter
         """
         # ________________________________________________________________________________
-        # Loop over input list of files and assign fill in the MasterTable with filename
+        # Loop over input list of files and assign fill in the master_table with filename
         # for the correct (channel-subchannel) or (grating-subchannel)
         for model in input_models:
             instrument = model.meta.instrument.name.upper()

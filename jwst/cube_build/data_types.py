@@ -7,7 +7,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-# ******************************************************************************
 class DataTypes:
     """Class to handle reading input data to cube_build."""
 
@@ -26,7 +25,7 @@ class DataTypes:
         Open the input data using datamodels and determine if data is
         a single input model, an association, or a set of input models
         contained in a ModelContainer. The method populates the self.input_models
-        which is list a of input models. An initial base name for the output file
+        which is a list of input models. An initial base name for the output file
         is constructed.
 
         Parameters

@@ -103,8 +103,8 @@ int calcCondition(int edge, double x1, double y1, double x2, double y2,
 }
 
 // support function for sh_find_overlap. Find the intersection of polygon and regular grid
-void solveIntersection(int edge ,double x1,double y1,double x2,double y2
-                       double *x,double *y,
+void solveIntersection(int edge, double x1, double y1, double x2, double y2,
+                       double *x, double *y,
                        double left, double right, double top, double bottom){
   float m = 0;
   if(x2 != x1) m = ((double)(y2-y1)/(double)(x2-x1));

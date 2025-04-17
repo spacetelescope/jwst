@@ -1,8 +1,7 @@
 /*
-An IFU spectral cube is building using the overlap between the detector pixels mapped
-to the spectral grid and the 3 D grid. This method is similar to 2D drizzle type
-mapping techniques. This is the top level c routine that interfaces with the python wrapper
-code: cube_wrapper_driz.
+An IFU spectral cube is built using the overlap between the detector pixels mapped
+to the 3-D spectral grid. This method is similar to 2D drizzle type mapping techniques. 
+This is the top level c routine that interfaces with the python wrapper.
 
 
 Main function for Python: cube_wrapper_driz
@@ -11,9 +10,9 @@ Python signature:  result = cube_wrapper_driz(
                             instrument,
                             flag_dq_plane,
                             start_region, end_region,
-                            self.overlap_partial,
-                            self.overlap_full,
-                            self.xcoord, self.ycoord, self.zcoord,
+                            overlap_partial,
+                            overlap_full,
+                            xcoord, ycoord, zcoord,
                             coord1, coord2,
                             wave,
                             flux,
@@ -56,7 +55,13 @@ xcoord : double array
 ycoord : double array
    size of naxis2. This array holds the center y axis values of the ifu cube
 zcoord : double array
-   size of naxis3. This array holds the center x axis values of the ifu cube
+   size of naxis3. This array holds the center z axis /wavelength values of the ifu cube
+coord1 : double array
+   The tangent projected xi values of the center of detector pixel.
+coord2 : double array
+   The tangent projected wave values of the center of detector pixel..
+wave : double array
+   The wavelength corresponding to the center of the detector pixel.
 flux : double array
    size: point cloud elements. Flux of each point cloud member
 err : double array
