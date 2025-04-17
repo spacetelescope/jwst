@@ -26,6 +26,8 @@ def run_step_with_cal(rtdata_module):
         'ami_analyze',
         rtdata.input,
     ]
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Degrees of freedom <= 0 for slice
     Step.from_cmdline(args)
     return rtdata
 

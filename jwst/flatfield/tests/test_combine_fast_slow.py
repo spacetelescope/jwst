@@ -5,6 +5,7 @@ import numpy as np
 import pytest
 from scipy.integrate import quad
 from astropy.modeling import polynomial
+from numpy.testing import assert_allclose, assert_array_equal
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.flatfield.flat_field import combine_fast_slow
@@ -79,25 +80,25 @@ def test_combine_fast_slow(flat_err_1, flat_err_2):
     assert new_err.shape == wl.shape
 
     # Column 5 is the expected value
-    assert np.allclose(value[:, 5], correct_value, rtol=1.e-8, atol=1.e-8)
-    assert np.all(new_dq[:, 5] == 0)
-    assert np.allclose(new_err[:, 5], err_result, rtol=1.e-8, atol=1.e-8)
+    assert_allclose(value[:, 5], correct_value, rtol=1.e-8, atol=1.e-8)
+    assert_array_equal(new_dq[:, 5], 0)
+    assert_allclose(new_err[:, 5], err_result, rtol=1.e-8, atol=1.e-8)
 
     # Columns 0-2 are bad (negative wavelengths, not marked in DQ)
-    assert np.all(value[:, :3] == 1)
-    assert np.all(new_dq[:, :3] == 0)
+    assert_array_equal(value[:, :3], 1)
+    assert_array_equal(new_dq[:, :3], 0)
     if flat_err is None or np.isnan(flat_err_2):
-        assert np.all(new_err[:, :3] == 0)
+        assert_array_equal(new_err[:, :3], 0)
     else:
-        assert np.allclose(new_err[:, :3], flat_err[:, :3], equal_nan=True)
+        assert_allclose(new_err[:, :3], flat_err[:, :3], equal_nan=True)
 
     # Columns 3, 4, 6-9 are not covered by the tabular data
     # (missing values, marked in DQ)
     bad_value = dqflags.pixel['NO_FLAT_FIELD'] | dqflags.pixel['DO_NOT_USE']
-    assert np.all(value[:, (3, 4, 6, 7, 8, 9)] == 1)
-    assert np.all(new_dq[:, (3, 4, 6, 7, 8, 9)] == bad_value)
+    assert_array_equal(value[:, (3, 4, 6, 7, 8, 9)], 1)
+    assert_array_equal(new_dq[:, (3, 4, 6, 7, 8, 9)], bad_value)
     if flat_err is None or np.isnan(flat_err_2):
-        assert np.all(new_err[:, (3, 4, 6, 7, 8, 9)] == 0)
+        assert_array_equal(new_err[:, (3, 4, 6, 7, 8, 9)], 0)
     else:
-        assert np.allclose(new_err[:, (3, 4, 6, 7, 8, 9)],
-                           flat_err[:, (3, 4, 6, 7, 8, 9)])
+        assert_allclose(new_err[:, (3, 4, 6, 7, 8, 9)],
+                        flat_err[:, (3, 4, 6, 7, 8, 9)])

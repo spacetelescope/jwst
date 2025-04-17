@@ -11,7 +11,22 @@ log.setLevel(logging.DEBUG)
 
 
 def do_correction(output_model, lin_model):
+    """
+    Apply the linearity correction to the data.
 
+    Parameters
+    ----------
+    output_model : `~jwst.datamodels.RampModel`
+        Science data to be corrected.
+
+    lin_model : `~jwst.datamodels.LinearityModel`
+        Linearity reference file model.
+
+    Returns
+    -------
+    output_model : `~jwst.datamodels.RampModel`
+        Linearity corrected science data.
+    """
     # Create the output model as a copy of the input
     zframe = None
     if output_model.meta.exposure.zero_frame:
@@ -36,8 +51,8 @@ def do_correction(output_model, lin_model):
 
     # Call linearity correction function in stcal
     new_data, new_pdq, new_zframe = linearity_correction(
-        output_model.data, gdq, pdq, lin_coeffs, lin_dq, dqflags.pixel,
-        zframe=zframe)
+        output_model.data, gdq, pdq, lin_coeffs, lin_dq, dqflags.pixel, zframe=zframe
+    )
 
     output_model.data = new_data
     output_model.pixeldq = new_pdq

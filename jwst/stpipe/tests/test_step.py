@@ -1,36 +1,28 @@
 import logging
 import os
-from os.path import (
-    abspath,
-    dirname,
-    join,
-)
+from os.path import abspath
 
+import asdf
 import pytest
-
 from astropy.extern.configobj.configobj import ConfigObj
+from astropy.utils.data import get_pkg_data_filename
+from crds.core.exceptions import CrdsLookupError
 from stpipe import crds_client
 from stpipe import cmdline
 from stpipe.config import StepConfig
 from stpipe.config_parser import ValidationError
-
 from stdatamodels.jwst import datamodels
 
 from jwst import __version__ as jwst_version
 from jwst.white_light import WhiteLightStep
-from jwst.stpipe import Step
 from jwst.tests.helpers import LogWatcher
 
+from jwst.stpipe import Step
 from jwst.stpipe.tests.steps import (
     EmptyPipeline, MakeListPipeline, MakeListStep,
     ProperPipeline, AnotherDummyStep
 )
-from jwst.stpipe.tests.util import t_path
 from jwst.stpipe.tests.steps import OptionalRefTypeStep, SavePipeline
-
-import asdf
-from crds.core.exceptions import CrdsLookupError
-
 
 WHITELIGHTSTEP_CRDS_MIRI_PARS = {
     'max_wavelength': 12.0,
@@ -43,13 +35,7 @@ WHITELIGHTSTEP_CRDS_MIRI_PARS = {
 CRDS_ERROR_STRING = 'PARS-WITHDEFAULTSSTEP: No parameters found'
 
 
-@pytest.fixture(scope='module')
-def data_path():
-    """Provide a test data model"""
-    data_path = t_path(join('data', 'miri_data.fits'))
-    return data_path
-
-
+@pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.parametrize(
     'arg, env_set, expected_fn', [
         ('--disable-crds-steppars', None, lambda stream: CRDS_ERROR_STRING not in stream),
@@ -59,8 +45,11 @@ def data_path():
         ('--verbose', 't', lambda stream: CRDS_ERROR_STRING not in stream),
     ]
 )
-def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected_fn):
+def test_disable_crds_steppars_cmdline(capsys, arg, env_set, expected_fn):
     """Test setting of disable_crds_steppars"""
+    data_path = get_pkg_data_filename(
+        "data/miri_data.fits", package="jwst.stpipe.tests")
+
     if env_set:
         os.environ['STPIPE_DISABLE_CRDS_STEPPARS'] = env_set
 
@@ -77,14 +66,16 @@ def test_disable_crds_steppars_cmdline(capsys, data_path, arg, env_set, expected
 
 def test_parameters_from_crds():
     """Test retrieval of parameters from CRDS"""
-    with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
+    with datamodels.open(get_pkg_data_filename(
+            "data/miri_data.fits", package="jwst.stpipe.tests")) as data:
         pars = WhiteLightStep.get_config_from_reference(data)
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
 def test_parameters_from_crds_fail():
     """Test retrieval of parameters from CRDS"""
-    with datamodels.open(t_path(join('data', 'miri_data.fits'))) as data:
+    with datamodels.open(get_pkg_data_filename(
+            "data/miri_data.fits", package="jwst.stpipe.tests")) as data:
         data.meta.instrument.name = 'NIRSPEC'
         pars = WhiteLightStep.get_config_from_reference(data)
     assert not len(pars)
@@ -99,15 +90,17 @@ def test_parameters_from_crds_fail():
 )
 def test_reftype(cfg_file, expected_reftype):
     """Test that reftype is produced as expected"""
-    step = Step.from_config_file(t_path(join('steps', cfg_file)))
+    step = Step.from_config_file(get_pkg_data_filename(
+        f"steps/{cfg_file}", package="jwst.stpipe.tests"))
     assert step.__class__.get_config_reftype() == expected_reftype
     assert step.get_config_reftype() == expected_reftype
 
 
 def test_saving_pars(tmp_path):
     """Save the step parameters from the commandline"""
-    cfg_path = t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))
-    saved_path = os.path.join(tmp_path, 'savepars.asdf')
+    cfg_path = get_pkg_data_filename(
+        "steps/jwst_generic_pars-makeliststep_0002.asdf", package="jwst.stpipe.tests")
+    saved_path = str(tmp_path / 'savepars.asdf')
     Step.from_cmdline([
         cfg_path,
         '--save-parameters',
@@ -115,7 +108,7 @@ def test_saving_pars(tmp_path):
     ])
     assert os.path.exists(saved_path)
 
-    with asdf.open(t_path(join('steps', 'jwst_generic_pars-makeliststep_0002.asdf'))) as af:
+    with asdf.open(get_pkg_data_filename("steps/jwst_generic_pars-makeliststep_0002.asdf", package="jwst.stpipe.tests")) as af:
         original_config = StepConfig.from_asdf(af)
         original_config.parameters["par3"] = False
 
@@ -291,7 +284,8 @@ def test_getpars(step_obj, full_spec, expected):
 
 def test_hook():
     """Test the running of hooks"""
-    step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hook.cfg')
+    step_fn = get_pkg_data_filename(
+        "steps/stepwithmodel_hook.cfg", package="jwst.stpipe.tests")
     step = Step.from_config_file(step_fn)
 
     model = datamodels.ImageModel()
@@ -305,7 +299,8 @@ def test_hook():
 
 def test_hook_with_return():
     """Test the running of hooks"""
-    step_fn = join(dirname(__file__), 'steps', 'stepwithmodel_hookreturn.cfg')
+    step_fn = get_pkg_data_filename(
+        "steps/stepwithmodel_hookreturn.cfg", package="jwst.stpipe.tests")
     step = Step.from_config_file(step_fn)
 
     model = datamodels.ImageModel()
@@ -317,7 +312,8 @@ def test_hook_with_return():
 
 
 def test_step():
-    step_fn = join(dirname(__file__), 'steps', 'some_other_step.cfg')
+    step_fn = get_pkg_data_filename(
+        "steps/some_other_step.cfg", package="jwst.stpipe.tests")
     step = Step.from_config_file(step_fn)
 
     assert isinstance(step, AnotherDummyStep)
@@ -346,7 +342,8 @@ def test_step_from_python_simple():
 
 
 def test_step_from_python_simple2():
-    step_fn = join(dirname(__file__), 'steps', 'some_other_step.cfg')
+    step_fn = get_pkg_data_filename(
+        "steps/some_other_step.cfg", package="jwst.stpipe.tests")
 
     result = AnotherDummyStep.call(1, 2, config_file=step_fn)
 
@@ -355,7 +352,8 @@ def test_step_from_python_simple2():
 
 def test_step_from_commandline():
     args = [
-        abspath(join(dirname(__file__), 'steps', 'some_other_step.cfg')),
+        abspath(get_pkg_data_filename(
+            "steps/some_other_step.cfg", package="jwst.stpipe.tests")),
         '--par1=58', '--par2=hij klm'
     ]
 
@@ -401,7 +399,8 @@ def test_step_from_commandline_class_alias(mock_stpipe_entry_points):
 
 def test_step_from_commandline_config_class_alias(mock_stpipe_entry_points):
     args = [
-        abspath(join(dirname(__file__), 'steps', 'dummy_with_alias.cfg')),
+        abspath(get_pkg_data_filename(
+            "steps/dummy_with_alias.cfg", package="jwst.stpipe.tests")),
         '--par1=58', '--par2=hij klm'
     ]
 
@@ -513,7 +512,7 @@ def test_step_from_commandline_par_precedence(command_line_pars, command_line_co
     class_name = "jwst.stpipe.tests.steps.WithDefaultsStep"
     config_name = "WithDefaultsStep"
     reference_type = f"pars-{config_name.lower()}"
-    input_path = join(dirname(__file__), "data", "science.fits")
+    input_path = get_pkg_data_filename("data/science.fits", package="jwst.stpipe.tests")
 
     if command_line_config_pars:
         command_line_config_path = tmp_path / "with_defaults_step.cfg"
@@ -557,7 +556,8 @@ def test_step_from_commandline_par_precedence(command_line_pars, command_line_co
 
 
 def test_step_with_local_class():
-    step_fn = join(dirname(__file__), 'steps', 'local_class.cfg')
+    step_fn = get_pkg_data_filename(
+        "steps/local_class.cfg", package="jwst.stpipe.tests")
     step = Step.from_config_file(step_fn)
 
     step.run(datamodels.ImageModel((2, 2)))
@@ -569,13 +569,15 @@ def test_extra_parameter():
 
 
 def test_crds_override():
+    ff_name = get_pkg_data_filename(
+        "data/flat.fits", package="jwst.stpipe.tests")
     step = AnotherDummyStep(
         "SomeOtherStepOriginal",
         par1=42.0, par2="abc def",
-        override_flat_field=join(dirname(__file__), 'data', 'flat.fits'))
+        override_flat_field=ff_name)
 
     fd = step.get_reference_file(datamodels.open(), 'flat_field')
-    assert fd == join(dirname(__file__), 'data', 'flat.fits')
+    assert fd == ff_name
 
 
 def test_omit_ref_file():
@@ -604,8 +606,10 @@ def test_call_with_config(caplog, tmp_cwd):
     In particular, from JP-1482, there was a case where a substep parameter
     was not being overridden. Test for that case.
     """
-    cfg = t_path(join('data', 'proper_pipeline.asdf'))
-    model = t_path(join('data', 'flat.fits'))
+    cfg = get_pkg_data_filename(
+        "data/proper_pipeline.asdf", package="jwst.stpipe.tests")
+    model = get_pkg_data_filename(
+        "data/flat.fits", package="jwst.stpipe.tests")
 
     ProperPipeline.call(model, config_file=cfg)
 
