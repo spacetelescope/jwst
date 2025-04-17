@@ -1,8 +1,8 @@
 """
 Test for flat_field.interpolate_flat
 """
-
 import numpy as np
+from numpy.testing import assert_allclose
 
 from jwst.flatfield.flat_field import interpolate_flat
 
@@ -22,9 +22,9 @@ def test_interpolate_flat_1():
 
     # Since image_flat is 2-D, the inputs will be returned unchanged.
     output = interpolate_flat(image_flat, image_dq, image_err, image_wl, wl)
-    assert np.allclose(output[0], image_flat, atol=1.0e-6)
-    assert np.allclose(output[1], image_dq, atol=0)
-    assert np.allclose(output[2], image_err, atol=1.0e-6)
+    assert_allclose(output[0], image_flat, atol=1e-6)
+    assert_allclose(output[1], image_dq, atol=0)
+    assert_allclose(output[2], image_err, atol=1e-6)
 
 
 def test_interpolate_flat_2():
@@ -35,9 +35,9 @@ def test_interpolate_flat_2():
     # 2-D
     image_dq = np.arange(nx * ny, dtype=np.int32).reshape(ny, nx)
     output = interpolate_flat(image_flat, image_dq, image_err, image_wl, wl)
-    assert np.allclose(output[0], image_flat[0, :, :], atol=1.0e-6)
-    assert np.allclose(output[1], image_dq, atol=0)
-    assert np.allclose(output[2], image_err[0, :, :], atol=1.0e-6)
+    assert_allclose(output[0], image_flat[0, :, :], atol=1e-6)
+    assert_allclose(output[1], image_dq, atol=0)
+    assert_allclose(output[2][0, :, :], image_err[0, :, :], atol=1e-6)
 
 
 def test_interpolate_flat_3():
@@ -48,9 +48,9 @@ def test_interpolate_flat_3():
     # 2-D, but reshaped to 3-D
     image_dq = np.arange(nx * ny, dtype=np.int32).reshape(1, ny, nx)
     output = interpolate_flat(image_flat, image_dq, image_err, image_wl, wl)
-    assert np.allclose(output[0], image_flat[0, :, :], atol=1.0e-6)
-    assert np.allclose(output[1], image_dq[0, :, :], atol=0)
-    assert np.allclose(output[2], image_err[0, :, :], atol=1.0e-6)
+    assert_allclose(output[0], image_flat[0, :, :], atol=1e-6)
+    assert_allclose(output[1], image_dq[0, :, :], atol=0)
+    assert_allclose(output[2], image_err[0, :, :], atol=1e-6)
 
 
 def test_interpolate_flat_4():
@@ -95,6 +95,6 @@ def test_interpolate_flat_4():
         dtype=np.float32,
     )
 
-    assert np.allclose(output[0], expected_value_0, atol=1.0e-6)
-    assert np.allclose(output[1], expected_value_1, atol=0)
-    assert np.allclose(output[2], expected_value_2, atol=1.0e-6)
+    assert_allclose(output[0], expected_value_0, atol=1e-6)
+    assert_allclose(output[1], expected_value_1, atol=0)
+    assert_allclose(output[2], expected_value_2, atol=1e-6)
