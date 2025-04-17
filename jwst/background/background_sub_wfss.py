@@ -243,7 +243,7 @@ class _ScalingFactorComputer:
         """
         mask = var == 0
         self._update_nans(sci, bkg, var, mask)
-        return np.nansum(sci*bkg/var, dtype='f8') / np.nansum(bkg*bkg/var, dtype='f8')
+        return np.nansum(sci * bkg / var, dtype="f8") / np.nansum(bkg * bkg / var, dtype="f8")
 
     def _update_nans(self, sci, bkg, var, mask):
         sci[mask] = np.nan
@@ -271,7 +271,7 @@ class _ScalingFactorComputer:
         """
         collapsing_axis = int(self.dispersion_axis - 1)
         sci_sub_profile = np.nanmedian(sci_sub, axis=collapsing_axis)
-        return np.sqrt(np.nanmean(sci_sub_profile**2, dtype='f8'))
+        return np.sqrt(np.nanmean(sci_sub_profile**2, dtype="f8"))
 
 
 def _sufficient_background_pixels(dq_array, bkg_mask, min_pixels=100):
