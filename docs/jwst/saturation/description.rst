@@ -38,15 +38,17 @@ If the "use_readpatt" keyword is set, this step will use information about the
 read pattern to find pixels that saturated in the middle of grouped data.  This
 can be particularly important for flagging data that saturated during
 the second group but did not trigger the normal saturation threshold due to the
-grouped data averaging.  The criteria to trigger second group saturation in a 
-pixel are:
+grouped data averaging.  To trigger second group saturation in a pixel all three
+of the following criteria must be met:
 
 #. The count rate estimated from the first group is not expected to saturate by
-the third group (as estimated by the difference between the first group counts
-and the superbias if available), which may occur for bright sources.
+   the third group (as estimated by the difference between the first group counts
+   and the superbias if available), which may occur for bright sources.
 
-#. The difference in counts between the first and second group are sufficiently
-large that it could be the result of saturation in one of the averaged frames.
+#. The difference in counts between the first and second group is larger than the
+   remaining counts needed to saturate divided by the number of frames in the 
+   second group, i.e., the expected frame-averaged counts of a saturating signal 
+   that occurs in the last frame of the group.
 
 #. The third group is saturated.
 
