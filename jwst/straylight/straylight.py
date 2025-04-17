@@ -8,7 +8,7 @@
 
 import numpy as np
 import logging
-
+from jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 from astropy.stats import sigma_clipped_stats as scs
 from astropy.convolution import convolve_fft, Gaussian2DKernel
@@ -230,7 +230,7 @@ def correct_xartifact(input_model, modelpars):
     return input_model
 
 def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0, shower_y_stddev=5.0,
-                  shower_low_reject=0.1, shower_high_reject=99.9):
+                  shower_low_reject=0.1, shower_high_reject=99.9, save_shower_model=False):
     """
     Corrects the MIRI MRS data for straylight produced by residual cosmic ray showers.
 
@@ -257,11 +257,18 @@ def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0,
     shower_high_reject : float, optional
         High percentile of pixels to reject
 
+    save_shower_model : bool
+        If set, a shower model is created and returned along with the cleaned input_model
+        array. If not, the `shower_model` returned is None
+
     Returns
     -------
     output : `~jwst.datamodels.IFUImageModel`
         Straylight-subtracted science data.
 
+    output_shower_model : `~jwst.datamodels.IFUImageModel` or None
+        A datamodel containing the shower model, if `save_shower_model`
+        is True.
     """
 
     log.info("Applying correction for residual cosmic ray showers.")
@@ -298,7 +305,36 @@ def clean_showers(input_model, allregions, shower_plane=3, shower_x_stddev=18.0,
     # Subtract the shower model from the original data
     input_model.data = input_model.data - shower_model
 
+    if save_shower_model:
+        output_shower_model = _make_straylight_model(input_model, shower_model)
+    else:
+        output_shower_model = None
+
     # Delete our temporary working copy of the data
     del usedata
 
-    return input_model
+    return input_model, output_shower_model
+
+
+def _make_straylight_model(input_model, shower_data):
+    """
+    Make a data model to contain an optional output shower model.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.IFUImageModel`
+        The input data.
+    shower_data : ndarray
+        The intermediate shower model data to save.
+
+    Returns
+    -------
+    intermediate_model : `~jwst.datamodels.IFUImageModel`
+        A model containing only the shower model data and top-level
+        metadata matching the input.
+    """
+    shower_model = datamodels.IFUImageModel(data=shower_data)
+
+    # Copy metadata from input model
+    shower_model.update(input_model, only="PRIMARY")
+    return shower_model
