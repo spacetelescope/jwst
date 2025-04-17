@@ -1,11 +1,10 @@
 import os
-import pytest
 import warnings
 
-from astropy.io.fits.diff import FITSDiff
 import numpy as np
-
+import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.io.fits.diff import FITSDiff
 
 from jwst.lib.suffix import replace_suffix
 from jwst.pathloss import PathLossStep
@@ -57,6 +56,8 @@ def run_pipeline(rtdata_module, request):
             "--steps.srctype.save_results=true",
             "--steps.flat_field.save_results=true",
             "--steps.pathloss.save_results=true"]
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: overflow encountered in square
     Step.from_cmdline(args)
 
     return rtdata
@@ -76,6 +77,8 @@ def run_pipeline_pixel_replace(rtdata_module):
     args = ["calwebb_spec2", rtdata.input,
             "--steps.pixel_replace.save_results=true",
             "--steps.pixel_replace.skip=false"]
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: overflow encountered in square
     Step.from_cmdline(args)
 
     return rtdata
@@ -197,7 +200,8 @@ def test_nirspec_fs_rateints_spec2(rtdata_module):
     # Run the spec2 pipeline on a (3D) _rateints file
     args = ["calwebb_spec2", rtdata.input]
 
+    # FIXME: Handle warnings properly.
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "overflow encountered in divide")
-        warnings.filterwarnings("ignore", "invalid value encountered in multiply")
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in")
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in")
         Step.from_cmdline(args)

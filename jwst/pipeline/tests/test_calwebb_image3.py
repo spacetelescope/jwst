@@ -64,6 +64,7 @@ def make_dummy_association(make_dummy_cal_file):
     os.system(f"asn_from_list -o {INPUT_ASN} --product-name {OUTPUT_PRODUCT} -r DMS_Level3_Base {INPUT_FILE} {INPUT_FILE_2}")
 
 
+@pytest.mark.filterwarnings("ignore::ResourceWarning")  # in_memory=False
 @pytest.mark.parametrize("in_memory", [True, False])
 def test_run_image3_pipeline(make_dummy_association, in_memory):
     '''
@@ -87,6 +88,7 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
     _is_run_complete(LOGFILE)
 
 
+@pytest.mark.filterwarnings("ignore::ResourceWarning")
 def test_run_image3_single_file(make_dummy_cal_file):
 
     with open(LOGCFG, 'w') as f:

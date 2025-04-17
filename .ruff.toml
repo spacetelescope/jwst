@@ -28,8 +28,6 @@ exclude = [
     "jwst/flatfield/**.py",
     "jwst/fringe/**.py",
     "jwst/ipc/**.py",
-    "jwst/lib/**.py",
-    "jwst/linearity/**.py",
     "jwst/mrs_imatch/**.py",
     "jwst/persistence/**.py",
     "jwst/photom/**.py",
@@ -104,6 +102,18 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 "jwst/associations/tests*" = [
     "F841", # unused variable
 ]
+"jwst/lib/catalog_utils.py" = [
+    "PTH100", # `os.path.abspath()` should be replaced by `Path.resolve()`
+    "PTH111", # `os.path.expanduser()` should be replaced by `Path.expanduser()`
+    "PTH118", # `os.path.join()` should be replaced by `Path` with `/` operator
+    "PTH122", # `os.path.splitext()` should be replaced by `Path.suffix`, `Path.stem`, and `Path.parent`
+]
+"jwst/lib/engdb_lib.py" = [
+    "B027", # XXX is an empty method in an abstract base class, but has no abstract decorator
+]
+"jwst/lib/suffix.py" = [
+    "PTH118", # `os.path.join()` should be replaced by `Path` with `/` operator
+]
 "jwst/associations/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/background/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/coron/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
@@ -113,8 +123,6 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 "jwst/flatfield/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/fringe/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/ipc/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/lib/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/linearity/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/mrs_imatch/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/persistence/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/photom/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]

@@ -1,13 +1,10 @@
 """Regression tests for MIRI MRS modes in calwebb_spec2"""
 import pytest
-
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-
 from jwst.regtest import regtestdata as rt
 
 # Define artifactory source and truth file paths
@@ -41,7 +38,8 @@ def run_spec2(rtdata_module):
             '--steps.cube_build.save_results=true',
             '--steps.extract_1d.save_results=true',
             ]
-
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: invalid value encountered in add
     Step.from_cmdline(args)
 
 
