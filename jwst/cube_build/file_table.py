@@ -124,7 +124,7 @@ class FileTable:
                     f"Input data is not a IFUImageModel, instead it is {model}"
                 )
             if assign_wcs != "COMPLETE":
-                raise NoAssignWCSError(f"Assign WCS has not been run on file{model.meta.filename}")
+                raise NoAssignWCSError(f"Assign WCS has not been run on file {model.meta.filename}")
             # _____________________________________________________________________
             # MIRI instrument
             if instrument == "MIRI":
