@@ -598,7 +598,7 @@ class CubeBuildStep(Step):
                 af.close()
                 raise ValueError(
                     "Error in offset file. A file in the association is not found in offset "
-                    " list {file_check}"
+                    f" list {file_check}"
                 )
 
         # check that all the lists have the same length
