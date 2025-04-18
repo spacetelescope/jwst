@@ -25,7 +25,7 @@ example output
 Parameters
 ----------
 instrument: int
-    0 = MIRI, 1 = NIRSPEC. Used for set the dq plane
+   0 = MIRI, 1 = NIRSPEC. Used for set the dq plane
 naxis1 : int
    axis 1 of IFU cube
 nasix2 : int
