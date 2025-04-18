@@ -49,7 +49,6 @@ repos:
             jwst/persistence/.* |
             jwst/photom/.* |
             jwst/saturation/.* |
-            jwst/spectral_leak/.* |
             jwst/straylight/.* |
             jwst/tests/.* |
             docs/.* |
