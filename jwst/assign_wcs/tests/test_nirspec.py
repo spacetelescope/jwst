@@ -623,7 +623,7 @@ def test_shutter_size_on_sky():
     pipe = nirspec.create_pipeline(model, refs, slit_y_range=(-.5, .5))
     w = wcs.WCS(pipe)
     model.meta.wcs = w
-    slit = w.get_transform('slit_frame', 'msa_frame').slits[0]
+    slit = w.get_transform('gwa', 'slit_frame').slits[0]
     wslit = nirspec.nrs_wcs_set_input(model, slit.name)
     virtual_corners_x = [-.5, -.5, .5, .5, -.5]
     virtual_corners_y = [-.5, .5, .5, -.5, -.5]
@@ -779,6 +779,9 @@ def wcs_ifu_grating():
         pipeline = nirspec.create_pipeline(im, refs, slit_y_range=[-0.5, 0.5])
         w = wcs.WCS(pipeline)
         im.meta.wcs = w
+
+        slits = list(range(30))
+        im.meta.wcs.bounding_box = nirspec.generate_compound_bbox(im, slits)
         return im, refs
     return _create_image_model
 
@@ -1124,24 +1127,16 @@ def test_ifu_bbox():
     refs = create_reference_files(im)
 
     pipe = nirspec.create_pipeline(im, refs, slit_y_range=[-.5, .5])
-    w = wcs.WCS(pipe)
-    im.meta.wcs = w
+    im.meta.wcs = wcs.WCS(pipe)
 
-    _, wrange = nirspec.spectral_order_wrange_from_model(im)
-    pipe = im.meta.wcs.pipeline
-
-    g2s = pipe[2].transform
-    transforms = [pipe[0].transform]
-    transforms.append(pipe[1].transform[1:])
-    transforms.append(astmodels.Identity(1))
-    transforms.append(astmodels.Identity(1))
-    transforms.extend([step.transform for step in pipe[4:-1]])
+    im.meta.wcs.bounding_box = nirspec.generate_compound_bbox(im, refine=False)
 
     for sl in range(30):
-        transforms[2] = g2s.get_model(sl)
-        m = functools.reduce(lambda x, y: x | y, [tr.inverse for tr in transforms[:3][::-1]])
-        bbox_sl = nirspec.compute_bounding_box(m, wrange)
-        assert_allclose(bbox[sl], bbox_sl)
+        bbox_sl = im.meta.wcs.bounding_box[sl]
+        bbox_tuple = [tuple(bbox_sl[name]) for name in bbox_sl.named_intervals]
+        assert_allclose(bbox[sl], bbox_tuple)
+
+    return
 
 
 @pytest.fixture
@@ -1152,9 +1147,8 @@ def ifu_world_coord(wcs_ifu_grating):
     lam_all = []
     im, refs = wcs_ifu_grating(grating="G140H", filter="F100LP")
     for sl in range(30):
-        slice_wcs = nirspec.nrs_wcs_set_input(im, sl)
-        x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-        r, d, lam = slice_wcs(x, y)
+        x, y = wcstools.grid_from_bounding_box(im.meta.wcs.bounding_box[sl])
+        r, d, lam, _ = im.meta.wcs(x, y, sl)
         ra_all.append(r)
         dec_all.append(d)
         lam_all.append(lam)
