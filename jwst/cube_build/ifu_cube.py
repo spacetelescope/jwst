@@ -30,44 +30,9 @@ log.setLevel(logging.DEBUG)
 
 
 class IFUCubeData:
-    """
-    Combine IFU data onto a regular grid.
+    """Combine IFU data onto a regular grid."""
 
-    Parameters
-    ----------
-    pipeline : int
-        Integer that indicates which pipeline is being run. Pipeline = 2 for
-        calwebb_spec and pipeline = 3 for calwebb_spec3.
-    input_models : ModelContainer
-        Container of IFUIMageModels
-    output_name_base : str
-       String defining the name of the output product. Unlike other steps,
-       cube_build determines the name of the output file because the bands
-       of the data are determined after reading in the data. In addition,
-       the name of the output also depend if calwebb_spec2 or calwebb_spec3
-       is being run and if the user has selected particular band to use.
-    output_type : str
-       The type of cube to created. The possibilities are 'band','channel',
-       'grating','multi'. The default for calwebb_spec2 is to create 'multi'
-        band cubes. In the case of MIRI, the "multi' band cubes from
-        calwebb_spec2 contain the two channels from single calibration fits file.
-        The default type of cube for calwebb_spec3 is 'band'. These cubes will
-        contain a single band of data.
-    instrument : str
-        Instrument name, either "MIRI" or "NIRSpec"
-    list_par1 : list
-        For MIRI the list contains the channels used to build the IFU, while
-        for NIRSpec the list contains the gratinging used.
-    list_par2 : list
-        For MIRI the list contains the sub-channels uses to build the IFU, while
-        for NIRSpec the list contains the filters used.
-    instrument_info : dict
-        Dictionary containing information on the basic instrument parameters.
-    master_table : dict
-        Dictionary of containing the files covering each band.
-    **pars_cube : dict
-        Dictionary of parameters controlling how the cube is built.
-    """
+
 
     def __init__(
         self,
@@ -82,7 +47,43 @@ class IFUCubeData:
         master_table,
         **pars_cube,
     ):
-        """Initialize the IFUCube."""
+        """
+        Initialize the IFUCube.
+        Parameters
+        ----------
+        pipeline : int
+            Integer that indicates which pipeline is being run. Pipeline = 2 for
+            calwebb_spec and pipeline = 3 for calwebb_spec3.
+        input_models : ModelContainer
+            Container of IFUIMageModels
+        output_name_base : str
+            String defining the name of the output product. Unlike other steps,
+            cube_build determines the name of the output file because the bands
+            of the data are determined after reading in the data. In addition,
+            the name of the output also depend if calwebb_spec2 or calwebb_spec3
+            is being run and if the user has selected particular band to use.
+        output_type : str
+            The type of cube to created. The possibilities are 'band','channel',
+            'grating','multi'. The default for calwebb_spec2 is to create 'multi'
+            band cubes. In the case of MIRI, the "multi' band cubes from
+            calwebb_spec2 contain the two channels from single calibration fits file.
+            The default type of cube for calwebb_spec3 is 'band'. These cubes will
+            contain a single band of data.
+        instrument : str
+            Instrument name, either "MIRI" or "NIRSpec"
+        list_par1 : list
+            For MIRI the list contains the channels used to build the IFU, while
+            for NIRSpec the list contains the gratinging used.
+        list_par2 : list
+            For MIRI the list contains the sub-channels uses to build the IFU, while
+            for NIRSpec the list contains the filters used.
+        instrument_info : dict
+            Dictionary containing information on the basic instrument parameters.
+        master_table : dict
+            Dictionary of containing the files covering each band.
+        **pars_cube : dict
+            Dictionary of parameters controlling how the cube is built.
+        """
         self.input_models_this_cube = []  # list of files use to make cube working on
 
         self.pipeline = pipeline
