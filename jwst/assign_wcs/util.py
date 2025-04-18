@@ -1,7 +1,6 @@
 """Utility functions for assign_wcs."""
 
 import logging
-import functools
 import numpy as np
 
 from astropy.coordinates import SkyCoord
