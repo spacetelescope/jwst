@@ -32,8 +32,6 @@ log.setLevel(logging.DEBUG)
 class IFUCubeData:
     """Combine IFU data onto a regular grid."""
 
-
-
     def __init__(
         self,
         pipeline,
@@ -49,6 +47,7 @@ class IFUCubeData:
     ):
         """
         Initialize the IFUCube.
+
         Parameters
         ----------
         pipeline : int
