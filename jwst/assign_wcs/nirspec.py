@@ -593,7 +593,20 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
 
     # Bright object (TSO) exposure in S1600A1 fixed slit
     elif exp_type == "nrs_brightobj":
-        slits = [Slit("S1600A1", 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5, 1)]
+        slits = [
+            Slit(
+                "S1600A1",
+                3,
+                0,
+                0,
+                0,
+                slit_y_range[0],
+                slit_y_range[1],
+                5,
+                1,
+                slit_id=nrs_fs_slit_number("S1600A1"),
+            )
+        ]
 
     # Lamp exposure using fixed slits
     elif exp_type in ["nrs_lamp", "nrs_autowave"]:
@@ -650,7 +663,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
     #
     # Slit(Name, ShutterID, DitherPos, Xcen, Ycen, Ymin, Ymax, Quad, SourceID)
     s2a1 = Slit(
-        nrs_fs_slit_number("S200A1"),
+        "S200A1",
         0,
         0,
         0,
@@ -659,9 +672,10 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S200A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 1,
+        slit_id=nrs_fs_slit_number("S200A1"),
     )
     s2a2 = Slit(
-        nrs_fs_slit_number("S200A2"),
+        "S200A2",
         1,
         0,
         0,
@@ -670,9 +684,10 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S200A2" else 10 * FIXED_SLIT_NUMS[primary_slit] + 2,
+        slit_id=nrs_fs_slit_number("S200A2"),
     )
     s4a1 = Slit(
-        nrs_fs_slit_number("S400A1"),
+        "S400A1",
         2,
         0,
         0,
@@ -681,9 +696,10 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S400A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 3,
+        slit_id=nrs_fs_slit_number("S400A1"),
     )
     s16a1 = Slit(
-        nrs_fs_slit_number("S1600A1"),
+        "S1600A1",
         3,
         0,
         0,
@@ -692,9 +708,10 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S1600A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 4,
+        slit_id=nrs_fs_slit_number("S1600A1"),
     )
     s2b1 = Slit(
-        nrs_fs_slit_number("S200B1"),
+        "S200B1",
         4,
         0,
         0,
@@ -703,6 +720,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S200B1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 5,
+        slit_id=nrs_fs_slit_number("S200B1"),
     )
 
     # Decide which slits need to be added to this exposure
@@ -940,6 +958,7 @@ def get_open_msa_slits(
         #    quadrant, xcen, ycen, ymin, ymax
 
         # First, check for a fixed slit
+        slit_id_number = None
         if all(is_fs) and len(slitlet_rows) == 1:
             # One fixed slit open for the source
             slitlet = slitlet_rows[0]
@@ -948,6 +967,9 @@ def get_open_msa_slits(
             shutter_id = FIXED_SLIT_NUMS[slitlet_id] - 1
             xcen = ycen = 0
             quadrant = 5
+
+            # Get a slit ID number for WCS propagation purposes
+            slit_id_number = nrs_fs_slit_number(slitlet_id)
 
             # No additional margin for fixed slit bounding boxes
             ymin = ylow
@@ -961,9 +983,6 @@ def get_open_msa_slits(
                 source_ypos = np.nan_to_num(slitlet["estimated_source_in_shutter_y"], nan=0.5)
 
                 log.info(f"Found fixed slit {slitlet_id} with source_id = {source_id}.")
-
-                # Now set string slitlet_id to a number for WCS propagation purposes
-                slitlet_id = nrs_fs_slit_number(slitlet_id)
 
                 # Get source info for this slitlet:
                 # note that slits with a real source assigned have source_id > 0,
@@ -1112,6 +1131,11 @@ def get_open_msa_slits(
         # fallback values if not available
         scale_x, scale_y = slit_scales.get(quadrant, MSA_SLIT_SCALES)
 
+        # Set the slit ID number for WCS propagation purposes to the slit name
+        # if not already set
+        if slit_id_number is None:
+            slit_id_number = slitlet_id
+
         # Create the output list of tuples that contain the required
         # data for further computations
         slit_parameters = (
@@ -1134,6 +1158,7 @@ def get_open_msa_slits(
             source_dec,
             scale_x,
             scale_y,
+            slit_id_number,
         )
         log.debug(f"Appending slit: {[str(s) for s in slit_parameters]}")
         slitlets.append(Slit(*slit_parameters))
@@ -1907,13 +1932,13 @@ def generate_compound_bbox(input_model, slits=None, wavelength_range=None, refin
         for slit in slits:
             bb = compute_bounding_box(
                 transform,
-                slit.name,
+                slit.slit_id,
                 wavelength_range,
                 slit_ymin=slit.ymin,
                 slit_ymax=slit.ymax,
                 refine=refine,
             )
-            bbox_dict[slit.name] = bb
+            bbox_dict[slit.slit_id] = bb
 
     cbb = mbbox.CompoundBoundingBox.validate(
         wcs_forward_transform, bbox_dict, selector_args=[("name", True)], order="F"
@@ -2662,7 +2687,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
 
     for slit in slit2msa.slits:
         msa2det = slit2msa & Identity(1) | col2det
-        bb = compute_bounding_box(msa2det, slit.name, wrange, slit.ymin, slit.ymax)
+        bb = compute_bounding_box(msa2det, slit.slit_id, wrange, slit.ymin, slit.ymax)
         valid = _is_valid_slit(bb)
         if not valid:
             log.info(
