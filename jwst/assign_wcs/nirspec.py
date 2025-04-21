@@ -5,6 +5,7 @@ Calls create_pipeline() which redirects based on EXP_TYPE.
 """
 
 import logging
+import warnings
 
 import gwcs
 import numpy as np
@@ -649,7 +650,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
     #
     # Slit(Name, ShutterID, DitherPos, Xcen, Ycen, Ymin, Ymax, Quad, SourceID)
     s2a1 = Slit(
-        FIXED_SLIT_NUMS["S200A1"],
+        nrs_fs_slit_number("S200A1"),
         0,
         0,
         0,
@@ -660,7 +661,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         1 if primary_slit == "S200A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 1,
     )
     s2a2 = Slit(
-        FIXED_SLIT_NUMS["S200A2"],
+        nrs_fs_slit_number("S200A2"),
         1,
         0,
         0,
@@ -671,7 +672,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         1 if primary_slit == "S200A2" else 10 * FIXED_SLIT_NUMS[primary_slit] + 2,
     )
     s4a1 = Slit(
-        FIXED_SLIT_NUMS["S400A1"],
+        nrs_fs_slit_number("S400A1"),
         2,
         0,
         0,
@@ -682,7 +683,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         1 if primary_slit == "S400A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 3,
     )
     s16a1 = Slit(
-        FIXED_SLIT_NUMS["S1600A1"],
+        nrs_fs_slit_number("S1600A1"),
         3,
         0,
         0,
@@ -693,7 +694,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         1 if primary_slit == "S1600A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 4,
     )
     s2b1 = Slit(
-        FIXED_SLIT_NUMS["S200B1"],
+        nrs_fs_slit_number("S200B1"),
         4,
         0,
         0,
@@ -960,6 +961,9 @@ def get_open_msa_slits(
                 source_ypos = np.nan_to_num(slitlet["estimated_source_in_shutter_y"], nan=0.5)
 
                 log.info(f"Found fixed slit {slitlet_id} with source_id = {source_id}.")
+
+                # Now set string slitlet_id to a number for WCS propagation purposes
+                slitlet_id = nrs_fs_slit_number(slitlet_id)
 
                 # Get source info for this slitlet:
                 # note that slits with a real source assigned have source_id > 0,
@@ -1778,6 +1782,9 @@ def compute_bounding_box(
     transform : `astropy.modeling.core.Model`
         The transform from detector to slit.
         `nrs_wcs_set_input` uses "detector to slit", validate_open_slits uses "slit to detector".
+    slit_name : int, str, or None
+        Slit name for which to compute the bounding box.  If None, it is assumed
+        the input WCS has already been fixed to a particular slit.
     wavelength_range : tuple
         The wavelength range for the combination of grating and filter.
     slit_ymin : float, optional
@@ -1821,14 +1828,18 @@ def compute_bounding_box(
 
     # Convert FS slit names to numbers
     if isinstance(slit_name, str):
-        slit_name = FIXED_SLIT_NUMS.get(slit_name, 0)
+        slit_name = nrs_fs_slit_number(slit_name)
 
-    x_range_low, y_range_low, _ = slit2detector(
-        slit_name, [0] * nsteps, [slit_ymin] * nsteps, lam_grid
-    )
-    x_range_high, y_range_high, _ = slit2detector(
-        slit_name, [0] * nsteps, [slit_ymax] * nsteps, lam_grid
-    )
+    if slit_name is None:
+        x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
+        x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
+    else:
+        x_range_low, y_range_low, _ = slit2detector(
+            slit_name, [0] * nsteps, [slit_ymin] * nsteps, lam_grid
+        )
+        x_range_high, y_range_high, _ = slit2detector(
+            slit_name, [0] * nsteps, [slit_ymax] * nsteps, lam_grid
+        )
     x_range = np.hstack((x_range_low, x_range_high))
     y_range = np.hstack((y_range_low, y_range_high))
 
@@ -1838,7 +1849,10 @@ def compute_bounding_box(
     # Run inverse model to narrow range
     if refine and detector2slit is not None and check_range(*bbox[0]) and check_range(*bbox[1]):
         x, y = grid_from_bounding_box(bbox)
-        _, _, _, lam = detector2slit(x, y, slit_name)
+        if slit_name is None:
+            _, _, lam = detector2slit(x, y)
+        else:
+            _, _, _, lam = detector2slit(x, y, slit_name)
         valid = np.isfinite(lam)
         if np.any(valid):
             y_range = y[np.isfinite(lam)]
@@ -2370,7 +2384,7 @@ def _nrs_wcs_set_input_lite(
     return slit_wcs
 
 
-def _nrs_wcs_set_input(input_model, slit_name):
+def _nrs_wcs_set_input_legacy(input_model, slit_name):
     """
     Return a WCS object for a specific slit, slice or shutter.
 
@@ -2388,10 +2402,16 @@ def _nrs_wcs_set_input(input_model, slit_name):
     wcsobj : `~gwcs.wcs.WCS`
         WCS object for this slit.
     """
+    warnings.warn(
+        "This function is intended for use with an old-style NIRSpec WCS pipeline. "
+        "It will be removed in a future build.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
     wcsobj = input_model.meta.wcs
 
     slit_wcs = copy.deepcopy(wcsobj)
-    # slit_wcs.set_transform('sca', 'gwa', wcsobj.pipeline[1].transform[1:])
+    slit_wcs.set_transform("sca", "gwa", wcsobj.pipeline[1].transform[1:])
     g2s = slit_wcs.pipeline[2].transform
     slit_wcs.set_transform("gwa", "slit_frame", g2s.get_model(slit_name))
 
@@ -2412,11 +2432,15 @@ def _nrs_wcs_set_input(input_model, slit_name):
     return slit_wcs
 
 
-def nrs_wcs_set_input_current(
+def nrs_wcs_set_input_legacy(
     input_model, slit_name, wavelength_range=None, slit_y_low=None, slit_y_high=None
 ):
     """
     Return a WCS object for a specific slit, slice or shutter.
+
+    This function is intended to work with old-style NIRSpec WCS implementations,
+    to support reading in WCS data from existing datamodels.  For new datamodels,
+    produced after v1.18.0, use `nrs_wcs_set_input`.
 
     Parameters
     ----------
@@ -2434,6 +2458,12 @@ def nrs_wcs_set_input_current(
     wcsobj : `~gwcs.wcs.WCS`
         WCS object for this slit.
     """
+    warnings.warn(
+        "This function is intended for use with an old-style NIRSpec WCS pipeline. "
+        "It will be removed in a future build.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     def _get_y_range(input_model):
         # get the open slits from the model
@@ -2446,18 +2476,18 @@ def nrs_wcs_set_input_current(
     if wavelength_range is None:
         _, wavelength_range = spectral_order_wrange_from_model(input_model)
 
-    slit_wcs = _nrs_wcs_set_input(input_model, slit_name)
+    slit_wcs = _nrs_wcs_set_input_legacy(input_model, slit_name)
     transform = slit_wcs.get_transform("detector", "slit_frame")
     is_nirspec_ifu = (
         is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == "nrs_ifu"
     )
     if is_nirspec_ifu:
-        bb = compute_bounding_box(transform, wavelength_range)
+        bb = compute_bounding_box(transform, None, wavelength_range)
     else:
         if slit_y_low is None or slit_y_high is None:
             slit_y_low, slit_y_high = _get_y_range(input_model)
         bb = compute_bounding_box(
-            transform, wavelength_range, slit_ymin=slit_y_low, slit_ymax=slit_y_high
+            transform, None, wavelength_range, slit_ymin=slit_y_low, slit_ymax=slit_y_high
         )
 
     slit_wcs.bounding_box = bb
@@ -2501,6 +2531,19 @@ def _fix_slit_name(transform, slit_name):
     return new_transform
 
 
+def nrs_fs_slit_number(slit_name):
+    slit_number = -100 + -1 * FIXED_SLIT_NUMS.get(slit_name, 0)
+    return slit_number
+
+
+def nrs_fs_slit_name(slit_number):
+    slit_number = -1 * slit_number - 100
+    for key, value in FIXED_SLIT_NUMS.items():
+        if value == slit_number:
+            return key
+    return "NONE"
+
+
 def nrs_wcs_set_input(input_model, slit_name):
     """
     Make a WCS object for a specific slit, slice, or shutter.
@@ -2527,7 +2570,7 @@ def nrs_wcs_set_input(input_model, slit_name):
 
     # Convert FS slit names to numbers
     if isinstance(slit_name, str):
-        slit_name = FIXED_SLIT_NUMS.get(slit_name, 0)
+        slit_name = nrs_fs_slit_number(slit_name)
 
     # Fix the slit name input for all transforms
     new_pipeline = []
