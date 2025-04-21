@@ -1,4 +1,12 @@
-// This is a library of routine to set the DQ plane of the IFU cube
+// This is a library of routines to set the DQ plane of the IFU cube.
+// This is done separately with different routines for MIRI and NIRSpec.
+// The dq plan is a flag on that indicates if the pixel is partial or fully
+// overlapped by a detector pixel. If no overlap is found, the DQ value is 0.
+// A DQ value could indicate a "hole" in the ifu cube. Often these "holes" occur
+// because the spatial size of the IFU cube has been set too small. In general,
+// detector pixels flagged as bad pixels, and therefore not mapped to the IFU cube,
+// will not produce 'holes' in the IFUcube because of dithered observations will
+// fill this type of gap in the coverage. 
 
 #include <stdlib.h>
 #include <math.h>
@@ -20,8 +28,18 @@ int mem_alloc_dq(int nelem, int **idqv) {
   /*
     Allocate the memory of the spaxel DQ array.
 
-    nelem : Number of elements to allocate
-    idqv : pointer to memory allocated
+    Parameters
+    ---------
+    nelem : int
+        Number of elements to allocate
+    idqv : pointer
+        Pointer to memory allocated, set by this routine.
+
+    Returns
+    -------
+    status : int
+        1 = error
+        0 = success
   */
     const char *msg = "Couldn't allocate memory for output arrays.";
 
@@ -34,8 +52,6 @@ int mem_alloc_dq(int nelem, int **idqv) {
 }
 
 
-//________________________________________________________________________________
-// Routine for MIRI DQ plane assignment
 
 int corner_wave_plane_miri(int w, int start_region, int end_region,
 			   double roiw_ave,
@@ -45,26 +61,46 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
 			   long ncube, long npt,
 			   double *corner1, double *corner2, double *corner3, double *corner4) {
   /* 
-     For wavelength plane determine the corners (in xi,eta) of the FOV for MIRI
-     Use the 2 extreme slices set by start_region and end_region to define the FOV of the wavelength plane FOV
-     Using the min and max coordinates for the extent of the slice on the sky for these two slice - set the
+
+     Determine the MIRI DQ plane of IFU cubes. 
+ 
+     For each wavelength plane determine the corners (in xi,eta) of the FOV.
+     Use the 2 extreme slices set by start_region and end_region to define the FOV of the wavelength plane.
+     Using the min and max coordinates for the extent of the slice on the sky for these two slice,  set the
      corners of the FOV. 
 
-     w : wavelength plane
-     start_region : starting slice # for channel (slice # in nirspec) 
-     end_region : ending slice # for channel     (slice # in nirspec)
-     roiw_ave : average roiw for all wavelengths
-     zc : array of wavelengths
-     coord1 : point cloud xi values
-     coord2 : point cloud eta values
-     wave : point cloud wavelength values
-     sliceno : point cloud slice no
-     ncube : number of cube values
-     npt: number of point cloud elements
-     corner1 : xi, eta of corner 1
-     corner2 : xi, eta of corner 2
-     corner3 : xi, eta of corner 3
-     corner4 : xi, eta of corner 4
+     Parameters
+     ----------
+     w : int 
+         Wavelength plane
+     start_region : int
+         Starting slice # for channel (slice # in nirspec) 
+     end_region : int
+         Ending slice # for channel     (slice # in nirspec)
+     roiw_ave : double
+         Average roiw for all wavelengths
+     zc : ndarray
+         Array of wavelength
+     coord1 : ndarray 
+         Detector xi values for the center of the pixel
+     coord2 : ndarray 
+         Detector eta values for the center of the pixel 
+     wave : ndarray
+         Wavelength values for the center of pixel 
+     sliceno : ndarray
+         Slice no of the pixels
+     ncube: long
+         Number of cube elements
+     npt: int
+         Number of detector pxiels 
+     corner1 : ndarray
+         xi, eta of corner 1
+     corner2 : ndarray
+         xi, eta of corner 2
+     corner3 : ndarray
+         xi, eta of corner 3
+     corner4 : ndarray
+         xi, eta of corner 4
    */
 
   int slice, c1_use;
@@ -215,8 +251,6 @@ int corner_wave_plane_miri(int w, int start_region, int end_region,
   }
 }
 
-//________________________________________________________________________________
-// MIRI DQ routine. Find the overlap of the FOV for the wavelength slice in IFU cube
 
 int overlap_fov_with_spaxels(int overlap_partial, int overlap_full,
                              double cdelt1, double cdelt2,
@@ -225,7 +259,7 @@ int overlap_fov_with_spaxels(int overlap_partial, int overlap_full,
                              double xi_corner[], double eta_corner[],
 			     int wave_slice_dq[]) {
 
-  /* find the amount of overlap of FOV  each spaxel
+  /* MIRI routine to find the overlap of the FOV for a wavelength slice in the IFU cube.
 
         Given the corners of the FOV  find the spaxels that
         overlap with this FOV.  Set the intermediate spaxel to
@@ -239,24 +273,30 @@ int overlap_fov_with_spaxels(int overlap_partial, int overlap_full,
         Parameters
         ----------
 	overlap_partial : int
+           DQ flag indicating there is a partial overlap of the cube spaxel for this
+	   wavelength slice
 	overlap_full : int
+           DQ flag indicated there is full overlap of the cube spaxel for this 
+	   wavelength slice. 
 	cdelt1 : double
-          IFU cube naxis 1 spatial scale
+           IFU cube naxis 1 spatial scale
 	cdelt2 : double
-          IFU cube naxis 1 spatial scale
+           IFU cube naxis 1 spatial scale
 	naxis1 : int 
-          IFU cube naxis 1 size
+           IFU cube naxis 1 size
 	naxis2 : int
-          IFU cube naxis 1 size
+           IFU cube naxis 1 size
 	xcenters : double array
-          IFU naxis 1 array of xi values
+           IFU naxis 1 array of xi values
 	ycenters : double array
-          IFU naxis 2 array of eta values 
-        xi_corner: xi coordinates of the 4 corners of the FOV on the wavelength plane
-        eta_corner: eta coordinates of the 4 corners of the FOV on the wavelength plane
+           IFU naxis 2 array of eta values 
+        xi_corner: ndarray
+           xi coordinates of the 4 corners of the FOV on the wavelength plane
+        eta_corner: ndarray
+           eta coordinates of the 4 corners of the FOV on the wavelength plane
 
         Sets
-        -------
+        ----
         wave_slice_dq: array containing intermediate dq flag
 
   */
@@ -312,8 +352,6 @@ int overlap_fov_with_spaxels(int overlap_partial, int overlap_full,
   return 0 ;
 }
 
-//________________________________________________________________________________
-// Routine to setting NIRSpec dq plane for each wavelength plane
 
 long match_wave_plane_nirspec(double wave_plane,
 			      double roiw_ave,
@@ -326,21 +364,42 @@ long match_wave_plane_nirspec(double wave_plane,
 			      double *c1_max, double *c2_max,
 			      int *match_slice){
 
-  /* 
-     NIRSpec dq plane is set by mapping each slice to IFU wavelength plane 
+  /* Determine the NIRSpec dqplane for each wavelength plane of an IFU cube. 
+
+     NIRSpec dq plane is set by mapping each slice to the IFU wavelength plane. 
      This routine maps each slice to sky and finds the min and max coordinates on the sky
      of the slice. 
 
-     wave_plane : wavelength of current  plane
-     slicevalue : slice # 1 to 30 
-     roiw_ave : average roiw for all wavelengths
-     coord1, coord2: tangent project coordinate of pt cloud
-     wave : point cloud wavelength values
-     sliceno: slice value of point cloud.
-     npt: number of point cloud elements
+     Parameters:
+     ----------
+     wave_plane : double
+         Wavelength of current  plane
+     roiw_ave : double
+         Average roiw for all wavelengths
 
-     return:
-     c1_min, c2_min, c1_max, c2_max, match_slice
+     coord1 : ndarray 
+         Detector xi values for the center of the pixel
+     coord2 : ndarray 
+         Detector eta values for the center of the pixel 
+     wave : ndarray
+         Wavelength values for the center of pixel 
+     sliceno : ndarray
+         Slice no of the pixels
+     npt: int
+         Number of detector pxiels 
+
+     Sets:
+     c1_min, c2_min, c1_max, c2_max : array of size 30
+        C1_min and c1_max are the min and max xi coordinates of a slice.
+        C2_min and c2_max are the min and max eta coordinates of a slice.
+     
+     match_slice :
+        Integer flag that marks slices that the min and max coordinates have been determined. 
+
+     Returns
+     -------
+     ii : long
+        Number of pixels with DQ set. 
    */
 
   long ipt =0;
@@ -409,8 +468,7 @@ long match_wave_plane_nirspec(double wave_plane,
 
 }
 
-//________________________________________________________________________________
-// NIRSpec  Find the overlap of the slices  for the wavelength slice with sky
+
 int overlap_slice_with_spaxels(int overlap_partial,
 			       double cdelt1, double cdelt2,
 			       int naxis1, int naxis2,
@@ -420,10 +478,10 @@ int overlap_slice_with_spaxels(int overlap_partial,
 			       int wave_slice_dq[]) {
 
   /* 
-     Set the initial dq plane indicating if the input data falls on a spaxel
+     Set the NIRSpec initial dq plane indicating if the input data falls on a spaxel.
 
      This algorithm assumes the input data falls on a line in the IFU cube, which is
-     the case for NIRSpec slices. The NIRSpec slice's endpoints are used to determine
+     the case for NIRSpec slices. The NIRSpec slice endpoints are used to determine
      which IFU spaxels the slice falls on to set an initial dq flag.
      Bresenham's Line Algorithm to find points a line intersects with grid.
      Given the endpoints of a line find the spaxels this line intersects.
@@ -446,6 +504,8 @@ int overlap_slice_with_spaxels(int overlap_partial,
      Sets
      ----
      wave_slice_dq : array containing intermediate dq flag
+
+     Returns : 0
 
   */
  
@@ -521,11 +581,18 @@ int set_dqplane_to_zero(int ncube, int **spaxel_dq){
 
   /*
     Set the spaxel dq = 0. This is used when not determining the FOV on the sky for
-    setting the DQ plane. This is case for internalCal type cubes
+    setting the DQ plane. This is case for internal cal type cubes.
 
-    ncube : number of elements in cube
-    spaxel_dq : point to memory
+    Parameters
+    ----------
+    ncube : nint
+       Number of elements in cube
+    spaxel_dq : pointer
+       Pointer to memory
     
+    Returns :
+      0 success
+      1 failure
   */
     int *idqv;  // int vector for spaxel
     if (mem_alloc_dq(ncube, &idqv)) return 1;
@@ -546,9 +613,9 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 
   /*
 
-    Main MIRI routine to set DQ plane
+    Main MIRI routine to set DQ plane.
 
-       Parameters
+     Parameters
      ----------
      start_region : x pixel for start of channel
      end_region  : x pixel for end of channel 
@@ -568,6 +635,11 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
      Sets
      ----
      spaxel_dq : array containing dq flag
+
+     Returns
+     -------
+     0 : success
+     1 : failure
   */
   int status, status_wave, w, nxy, i, istart, iend, in, ii;
   double xi_corner[4], eta_corner[4];
@@ -636,9 +708,7 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
   return 0;
 }
 
-//________________________________________________________________________________
-//Main NIRSpec routine to set up dq plane
- 
+
 int dq_nirspec(int overlap_partial,
 	       int nx, int ny, int nz,
 	       double cdelt1, double cdelt2, double roiw_ave,
@@ -649,7 +719,7 @@ int dq_nirspec(int overlap_partial,
 	       int **spaxel_dq) {
 
   /*
-    Set an initial DQ flag for the NIRSPEC IFU cube based on FOV of input data.
+    Set an  DQ flag for the NIRSPEC IFU cube based on FOV of input data.
 
     Map the FOV of each NIRSpec slice  to the DQ plane and set an initial DQ
     flagging. For  NIRSpec the 30 different slices map to different FOV on the
@@ -670,9 +740,20 @@ int dq_nirspec(int overlap_partial,
     coord2: eta coordinates of input data (~y coordinate in IFU space)
     wave: wavelength of input data
     roiw_ave: average spectral roi used to determine which wavelength bins
-    the input values would be mapped to
+        the input values would be mapped to
     slice_no: integer slice value of input data (used in MIRI case to find
-    the points of the edge slices.)
+        the points of the edge slices.)
+
+    Sets
+    ----
+    spaxel_dq : ndarray
+        Spaxel dq plane of IFU cube. 
+
+    Return
+    ------
+    status : int
+       1 = error
+       0 = success
   */
   
   int w, islice, status, status_wave, nxy, j;

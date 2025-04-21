@@ -383,8 +383,7 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
 
 
 // Wrapper code that is called from python code and sets up interface with C code.
-// The variables are defined at the top this module under Python signature describing
-// cube_wrapper_driz
+// cube_wrapper_driz.
 
 static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo; // codespell:ignore erro
