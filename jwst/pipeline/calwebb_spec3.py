@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
 from pathlib import Path
+import numpy as np
 
 from stdatamodels.jwst import datamodels
 
@@ -31,6 +32,7 @@ __all__ = ["Spec3Pipeline"]
 # Group exposure types
 IFU_EXPTYPES = ["MIR_MRS", "NRS_IFU"]
 SLITLESS_TYPES = ["NIS_SOSS", "NIS_WFSS", "NRC_WFSS"]
+WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
 
 
 class Spec3Pipeline(Pipeline):
@@ -180,6 +182,8 @@ class Spec3Pipeline(Pipeline):
             ]
 
         # Process each source
+        wfss_x1d = []
+        wfss_comb = []
         for source in sources:
             # If each source is a SourceModelContainer,
             # the output name needs to be updated based on the source ID,
@@ -211,7 +215,7 @@ class Spec3Pipeline(Pipeline):
                 result = source
 
             # The MultiExposureModel is a required output.
-            if isinstance(result, SourceModelContainer):
+            if isinstance(result, SourceModelContainer) and (exptype not in WFSS_TYPES):
                 self.save_model(result, "cal")
 
             # Call the skymatch step for MIRI MRS data
@@ -275,6 +279,21 @@ class Spec3Pipeline(Pipeline):
                         self.photom.save_results = self.save_results
                         self.photom.suffix = "x1d"
                         result = self.photom.run(result)
+
+                elif exptype in WFSS_TYPES:
+                    # for WFSS modes, do not save the extract_1d results one file per source
+                    # instead compile the results over the for loop to be put into a single file
+                    self.extract_1d.save_results = False
+                    result = self.extract_1d.run(result)
+                    wfss_x1d.append(result)
+                    # Check whether extraction was completed
+                    extraction_complete = (
+                        result is not None and result.meta.cal_step.extract_1d == "COMPLETE"
+                    )
+                    if extraction_complete:
+                        # Combine the results for all sources
+                        wfss_comb.append(self.combine_1d.run(result))
+                    extraction_complete = False  # reset to avoid re-run below
                 else:
                     result = self.extract_1d.run(result)
 
@@ -308,6 +327,13 @@ class Spec3Pipeline(Pipeline):
                 result = self.combine_1d.run(result)
             else:
                 self.log.warning("Resampling was not completed. Skipping extract_1d.")
+
+        # Save the final output product for WFSS modes
+        if exptype in WFSS_TYPES:
+            self.log.info("Saving the final x1d product into a single file.")
+            _save_wfss_x1d(wfss_x1d)
+            self.log.info("Saving the final c1d product into a single file.")
+            _save_wfss_c1d(wfss_comb)
 
         input_models.close()
 
@@ -380,3 +406,132 @@ class Spec3Pipeline(Pipeline):
             srcid = f"s{str(source_id):>09s}"
 
         return srcid
+
+
+def _save_wfss_x1d(results_list):
+    """
+    Combine all sources into a single table and save to a file.
+
+    The output x1d product will have one extension per exposure.
+    Each extension will contain a single table with one row per source.
+    The table size is set by the maximum number of data points for any
+    source in the exposure; the other sources will be end-padded with NaNs
+    so their shape equals the maximum.
+
+    Parameters
+    ----------
+    results_list : list[MultiSlitModel]
+        List of MultiSlitModel objects to be combined into a single x1d file.
+    """
+    # first loop over both source and exposure to figure out final n_rows, n_exposures
+    n_rows_by_exposure = []
+    exposure_filenames = []
+    for model in results_list:
+        for spec in model.spec:
+            fname = spec.meta.filename
+            # if this is the first time this exposure has been encountered,
+            # create a new table for it
+            if fname not in exposure_filenames:
+                exposure_filenames.append(fname)
+                n_rows_by_exposure.append(spec.spec_table.shape[0])
+            else:
+                # if this exposure has already been encountered,
+                # check if the table size is larger than the previous one
+                idx = exposure_filenames.index(fname)
+                if spec.spec_table.shape[0] > n_rows_by_exposure[idx]:
+                    n_rows_by_exposure[idx] = spec.spec_table.shape[0]
+
+    # The column names should be the same for all exposures and sources
+    n_sources = len(results_list)
+    example_model = results_list[0]
+    colnames = example_model.spec[0].spec_table.names
+
+    # loop over exposures to make tables for each exposure
+    fltdata_by_exposure = []
+    for i in range(len(exposure_filenames)):
+        n_rows = n_rows_by_exposure[i]
+        # Figure out the dtype of the table based on the max number of rows
+        fltdtype = []
+        # fltdtype = [('OBJECT', '>i8'), ('NELEMENTS', '>i8')]
+        for vector in colnames:
+            fltdtype.append((vector, ">f8", n_rows))
+
+        fltdata_by_exposure.append(np.empty(n_sources, dtype=fltdtype))
+
+    # Now loop through the models and populate the tables
+    for j, model in enumerate(results_list):
+        for spec in model.spec:
+            # ensure data goes to table corresponding to correct exposure based on filename
+            fname = spec.meta.filename
+            exposure_idx = exposure_filenames.index(fname)
+            fltdata = fltdata_by_exposure[exposure_idx]
+            n_rows = n_rows_by_exposure[exposure_idx]
+
+            # Get the data from the current model
+            data = spec.spec_table
+            # fltdata[j]['NELEMENTS'] = data.shape[0]
+            # fltdata[j]['OBJECT'] = model.spec[i].source_id
+
+            # Copy the data into the new table
+            for col in colnames:
+                padded_data = np.full(n_rows, np.nan)
+                padded_data[: data.shape[0]] = data[col]
+                fltdata[j][col] = padded_data
+
+    # Finally, create a new MultiSpecModel to hold the combined data
+    # with one SpecModel per exposure
+    output_x1d = datamodels.MultiSpecModel()
+    for i, fname in enumerate(exposure_filenames):
+        # Create a new extension for each exposure
+        ext = datamodels.SpecModel()
+        ext.meta.filename = fname
+        ext.spec_table = fltdata_by_exposure[i]
+        ext.meta.filename = fname
+        output_x1d.spec.append(ext)
+
+    # Save the combined results to a file
+    output_x1d.update(example_model)
+    output_x1d.save("flat_x1d.fits")
+
+
+def _save_wfss_c1d(results_list):
+    """
+    Compile exposure-averaged sources into a single table and save to a file.
+
+    The output c1d product will have just one science extension.
+
+    Parameters
+    ----------
+    results_list : list[MultiSlitModel]
+        List of MultiSlitModel objects to be combined into a single c1d file.
+    """
+    # determine shape of output table
+    # each input model should have just one spec table
+    n_sources = len(results_list)
+    n_rows = max(len(model.spec[0].spec_table) for model in results_list)
+
+    # figure out column names and dtypes
+    example_model = results_list[0]
+    fltdtype = []
+    colnames = example_model.spec[0].spec_table.names
+    for vector in colnames:
+        fltdtype.append((vector, ">f8", n_rows))
+
+    # create empty table
+    fltdata = np.empty(n_sources, dtype=fltdtype)
+    # loop over sources to populate the table
+    for j, model in enumerate(results_list):
+        # Get the data from the current model
+        data = model.spec[0].spec_table
+        # Copy the data into the new table
+        for col in colnames:
+            padded_data = np.full(n_rows, np.nan)
+            padded_data[: data.shape[0]] = data[col]
+            fltdata[j][col] = padded_data
+
+    # Create a new SpecModel to hold the combined data
+    # with one SpecModel per exposure
+    output_c1d = datamodels.CombinedSpecModel()
+    output_c1d.spec_table = fltdata
+    output_c1d.update(example_model)
+    output_c1d.save("flat_c1d.fits")
