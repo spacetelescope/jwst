@@ -562,7 +562,7 @@ def test_slit_projection_on_detector():
 
     open_slits = nirspec.get_open_slits(im, refs)
     assert len(open_slits) == 1
-    assert open_slits[0].name == "S200B1"
+    assert open_slits[0].name == nirspec.nrs_fs_slit_number("S200B1")
 
     hdul[0].header['DETECTOR'] = 'NRS1'
     im = datamodels.ImageModel(hdul)
@@ -570,10 +570,10 @@ def test_slit_projection_on_detector():
     open_slits = nirspec.get_open_slits(im, refs)
     assert len(open_slits) == 4
     names = [s.name for s in open_slits]
-    assert "S200A1" in names
-    assert "S200A2" in names
-    assert "S400A1" in names
-    assert "S1600A1" in names
+    assert nirspec.nrs_fs_slit_number("S200A1") in names
+    assert nirspec.nrs_fs_slit_number("S200A2") in names
+    assert nirspec.nrs_fs_slit_number("S400A1") in names
+    assert nirspec.nrs_fs_slit_number("S1600A1") in names
 
 
 def test_missing_msa_file():
