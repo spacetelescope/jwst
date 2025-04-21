@@ -423,7 +423,7 @@ def test_msa_fs_configuration():
     # FS primary: S200A1, shutter id 0, quadrant 5
     ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x', '95065_3', '3',
                              1.0, -0.161, -0.229, 53.139904, -27.805002,
-                             *nirspec.MSA_SLIT_SCALES)
+                             *nirspec.MSA_SLIT_SCALES, nirspec.nrs_fs_slit_number("S200A1"))
     _compare_slits(slitlet_info[1], ref_slit)
 
     # The remaining fixed slits may be in the MSA file but not primary:
@@ -497,7 +497,8 @@ def test_msa_missing_source(tmp_path):
     ref_slit = trmodels.Slit('S200A1', 0, 1, 0, 0, -0.5, 0.5, 5, 3, 'x',
                              '1234_VRTS200A1', 'VRTS200A1', 0.0,
                              -0.161, -0.229, 0.0, 0.0,
-                             *nirspec.MSA_SLIT_SCALES)
+                             *nirspec.MSA_SLIT_SCALES,
+                             nirspec.nrs_fs_slit_number("S200A1"))
     _compare_slits(slitlet_info[1], ref_slit)
 
 
@@ -532,7 +533,8 @@ def test_msa_nan_source_posn(tmp_path):
                              source_xpos=0.0, source_ypos=-0.2290000021457672,
                              source_ra=53.139904, source_dec=-27.805002,
                              slit_xscale=nirspec.MSA_SLIT_SCALES[0],
-                             slit_yscale=nirspec.MSA_SLIT_SCALES[1])
+                             slit_yscale=nirspec.MSA_SLIT_SCALES[1],
+                             slit_id=nirspec.nrs_fs_slit_number("S200A1"))
     _compare_slits(slitlet_info[1], ref_slit)
 
 
@@ -562,7 +564,7 @@ def test_slit_projection_on_detector():
 
     open_slits = nirspec.get_open_slits(im, refs)
     assert len(open_slits) == 1
-    assert open_slits[0].name == nirspec.nrs_fs_slit_number("S200B1")
+    assert open_slits[0].name == "S200B1"
 
     hdul[0].header['DETECTOR'] = 'NRS1'
     im = datamodels.ImageModel(hdul)
@@ -570,10 +572,10 @@ def test_slit_projection_on_detector():
     open_slits = nirspec.get_open_slits(im, refs)
     assert len(open_slits) == 4
     names = [s.name for s in open_slits]
-    assert nirspec.nrs_fs_slit_number("S200A1") in names
-    assert nirspec.nrs_fs_slit_number("S200A2") in names
-    assert nirspec.nrs_fs_slit_number("S400A1") in names
-    assert nirspec.nrs_fs_slit_number("S1600A1") in names
+    assert "S200A1" in names
+    assert "S200A2" in names
+    assert "S400A1" in names
+    assert "S1600A1" in names
 
 
 def test_missing_msa_file():
