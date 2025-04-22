@@ -115,7 +115,8 @@ def run_photom(rtdata):
         'args': ['--save_results=True', ]
     }
 
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    with pytest.warns(DeprecationWarning):
+        rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 

@@ -37,6 +37,7 @@ from stdatamodels.jwst.transforms.models import (
     Rotation3DToGWA,
     DirCos2Unitless,
     Slit2Msa,
+    Slit2MsaLegacy,
     AngleFromGratingEquation,
     WavelengthFromGratingEquation,
     Gwa2Slit,
@@ -2458,6 +2459,13 @@ def nrs_wcs_set_input(input_model, slit_name):
     """
     # Get the full WCS object
     full_wcs = input_model.meta.wcs
+
+    # Check for an old-style WCS that needs different handling
+    for step in full_wcs.pipeline:
+        if isinstance(step.transform, Slit2MsaLegacy):
+            # There is a legacy slit2msa transform somewhere in the pipeline.
+            # Use the old deepcopy-and-replace method.
+            return nrs_wcs_set_input_legacy(input_model, slit_name)
 
     # Convert FS slit names to numbers
     if str(slit_name).upper() in FIXED_SLIT_NUMS.keys():
