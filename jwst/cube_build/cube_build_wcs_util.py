@@ -191,10 +191,8 @@ def find_corners_nirspec(input_data, coord_system):
     # for NIRSPEC there are 30 regions
     log.info("Looping over slices to determine cube size")
 
-    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input_data, np.arange(nslices))  # noqa: SLF001
-
     for i in range(nslices):
-        slice_wcs = nirspec._nrs_wcs_set_input_lite(input_data, wcsobj, i, [tr1, tr2[i], tr3[i]])  # noqa: SLF001
+        slice_wcs = nirspec.nrs_wcs_set_input(input, i)
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box, step=(1, 1), center=True)
         if coord_system == "internal_cal":
             # coord1 = along slice

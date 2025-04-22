@@ -1137,16 +1137,8 @@ def _corrections_for_ifu(data, pathloss, source_type):
     wavelength_array = np.zeros(data.shape, dtype=np.float32)
     wavelength_array.fill(np.nan)
 
-    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(data, NIRSPEC_IFU_SLICES)  # noqa: SLF001
-
     for this_slice in NIRSPEC_IFU_SLICES:
-        slice_wcs = nirspec._nrs_wcs_set_input_lite(  # noqa: SLF001
-            data,
-            wcsobj,
-            this_slice,
-            [tr1, tr2[this_slice], tr3[this_slice]],
-        )
-
+        slice_wcs = nirspec.nrs_wcs_set_input(data, this_slice)
         x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
         ra, dec, wavelength = slice_wcs(x, y)
         valid = ~np.isnan(wavelength)
