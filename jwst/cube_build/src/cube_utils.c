@@ -1,9 +1,8 @@
 /* This library contains c functions to support building IFU cubes.
 Many of these routines are used in the Sutherland-Hodgman algorithm. This
 algorithm finds the clipped polygon that falls inside the cube spaxel.
-This is used to find a clipped polygon, which is the polygon of overlap
-between the detector pixel and cube spaxel. We are only dealing with the
-spatial dimensions in this routine. 
+A clipped polygon is the overlapping polygon of the detector pixel and
+a spaxel.  We are only dealing with the spatial dimensions in this routine. 
 */
 
 

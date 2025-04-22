@@ -1,6 +1,6 @@
 // This is a library of routines to set the DQ plane of the IFU cube.
 // This is done separately with different routines for MIRI and NIRSpec.
-// The dq plan is a flag on that indicates if the pixel is partial or fully
+// The dq plane is a flag on that indicates if the pixel is partial or fully
 // overlapped by a detector pixel. If no overlap is found, the DQ value is 0.
 // A DQ value could indicate a "hole" in the ifu cube. Often these "holes" occur
 // because the spatial size of the IFU cube has been set too small. In general,
@@ -20,9 +20,6 @@ extern double sh_find_overlap(const double xcenter, const double ycenter,
 			      const double xlength, const double ylength,
 			      double xPixelCorner[], double yPixelCorner[]);
 
-
-//________________________________________________________________________________
-// allocate the memory for the spaxel DQ array
 
 int mem_alloc_dq(int nelem, int **idqv) {
   /*
@@ -267,7 +264,7 @@ int overlap_fov_with_spaxels(int overlap_partial, int overlap_full,
         and the spaxel area. The values assigned are:
         a. overlap_partial
         b  overlap_full
-        bit_wise combination of these values is allowed to account for
+        Bit_wise combination of these values is allowed to account for
         dithered FOVs.
 
         Parameters
@@ -298,6 +295,10 @@ int overlap_fov_with_spaxels(int overlap_partial, int overlap_full,
         Sets
         ----
         wave_slice_dq: array containing intermediate dq flag
+
+	Returns
+        -------
+	0 = success
 
   */
 
@@ -749,8 +750,8 @@ int dq_nirspec(int overlap_partial,
     spaxel_dq : ndarray
         Spaxel dq plane of IFU cube. 
 
-    Return
-    ------
+    Returns
+    ------_
     status : int
        1 = error
        0 = success
