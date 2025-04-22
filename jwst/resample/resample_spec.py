@@ -590,7 +590,7 @@ class ResampleSpec(ResampleImage):
         input_models : list
             List of data models, one for each input image
         pixel_scale_ratio : float
-            The ratio of the output pixel scale to the input pixel scale
+            The ratio of the input pixel scale to the output pixel scale.
 
         Returns
         -------
@@ -858,7 +858,7 @@ class ResampleSpec(ResampleImage):
         input_models : list
             List of data models, one for each input image
         pixel_scale_ratio : float
-            The ratio of the output pixel scale to the input pixel scale
+            The ratio of the input pixel scale to the output pixel scale.
 
         Returns
         -------
