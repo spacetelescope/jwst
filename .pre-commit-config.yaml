@@ -49,7 +49,6 @@ repos:
             jwst/photom/.* |
             jwst/saturation/.* |
             jwst/scripts/.* |
-            jwst/straylight/.* |
             jwst/tests/.* |
             docs/.* |
             jwst/regtest/test_.* |
