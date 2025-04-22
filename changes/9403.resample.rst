@@ -1,0 +1,1 @@
+Updated documentation to reflect correct definition of ``pixel_scale_ratio`` for *imaging* data: ratio of output to input pixel scales.
