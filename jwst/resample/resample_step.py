@@ -40,7 +40,7 @@ class ResampleStep(Step):
         crpix = float_list(min=2, max=2, default=None)  # 0-based image coordinates of the reference pixel
         crval = float_list(min=2, max=2, default=None)  # world coordinates of the reference pixel
         rotation = float(default=None)  # Output image Y-axis PA relative to North
-        pixel_scale_ratio = float(default=1.0)  # Ratio of input to output pixel scale
+        pixel_scale_ratio = float(default=1.0)  # Ratio of output to input pixel scale.
         pixel_scale = float(default=None)  # Absolute pixel scale in arcsec
         output_wcs = string(default='')  # Custom output WCS
         single = boolean(default=False)  # Resample each input to its own output grid
