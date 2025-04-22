@@ -2277,7 +2277,7 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None, slit_y_range=None):
     return tab
 
 
-def _nrs_wcs_set_slit_input_legacy(input_model, slit_name):
+def _nrs_wcs_set_input_legacy(input_model, slit_name):
     """
     Return a WCS object for a specific slit, slice or shutter.
 
