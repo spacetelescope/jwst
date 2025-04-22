@@ -162,8 +162,9 @@ def test_nirspec_ifu_mbkg_user(rtdata, fitsdiff_default_kwargs):
     # Get input data
     rtdata.get_data("nirspec/ifu/jw01252001001_03101_00001_nrs1_cal.fits")
 
-    MasterBackgroundStep.call(rtdata.input, user_background=user_background,
-                              save_results=True, suffix='mbsub')
+    with pytest.warns(DeprecationWarning):
+        MasterBackgroundStep.call(rtdata.input, user_background=user_background,
+                                  save_results=True, suffix='mbsub')
 
     output = "jw01252001001_03101_00001_nrs1_mbsub.fits"
     rtdata.output = output

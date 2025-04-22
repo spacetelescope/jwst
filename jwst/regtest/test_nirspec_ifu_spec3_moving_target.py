@@ -19,7 +19,8 @@ def run_pipeline(rtdata_module):
     args = ["calwebb_spec3", rtdata.input]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: overflow encountered in multiply
-    Step.from_cmdline(args)
+    with pytest.warns(DeprecationWarning):
+        Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata

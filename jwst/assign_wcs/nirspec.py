@@ -2307,7 +2307,9 @@ def _nrs_wcs_set_input_legacy(input_model, slit_name):
         )
     else:
         slit_wcs.set_transform(
-            "slit_frame", "msa_frame", wcsobj.pipeline[3].transform & Identity(1)
+            "slit_frame",
+            "msa_frame",
+            wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1),
         )
     return slit_wcs
 
