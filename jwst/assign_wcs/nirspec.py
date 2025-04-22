@@ -132,15 +132,13 @@ def imaging(input_model, reference_files):
     disperser = get_disperser(input_model, reference_files["disperser"])
 
     # DMS to SCA transform
-    dms2detector = dms_to_sca(input_model)
-    dms2detector = _fix_slit_name(dms2detector, 0)
+    dms2detector = dms_to_sca(input_model)[:-1]
     dms2detector.name = "dms2sca"
     dms2detector.inputs = ("x", "y")
     dms2detector.outputs = ("x", "y")
 
     # DETECTOR to GWA transform
-    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
-    det2gwa = _fix_slit_name(det2gwa, 0)
+    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)[:-2]
     det2gwa.name = "det2gwa"
     det2gwa.inputs = ("x", "y")
     det2gwa.outputs = ("angle1", "angle2", "angle3")
