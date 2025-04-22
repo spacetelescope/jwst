@@ -27,8 +27,8 @@ class SaturationStep(Step):
 
         Parameters
         ----------
-        step_input : DataModel
-            Input datamodel to the step.
+        step_input : DataModel or str
+            Input datamodel or string name of the fits file.
 
         Returns
         -------

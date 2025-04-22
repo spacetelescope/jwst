@@ -35,18 +35,20 @@ def _get_irs2_parameters(input_model, n=None, r=None):
 
     Parameters
     ----------
-    input_model : DataModel
-        This model is most likely a RampModel object
+    input_model : DataModel or numpy.ndarray
+        Usually it is a RampModel but it can be an ndarray.
+        If it is an ndarray parameters will be assigned
+        default values, unless specified explicitly.
         This is used for getting the width of the reference output and
         the values of NRS_NORM and NRS_REF.
 
     n : int or None
-        Default is None.
-        If not None, overrides the default.
+        The number of "normal" (as opposed to reference) pixels read
+        out before jumping to the reference pixel region.
 
     r : int or None
-        Default is None.
-        If not None, overrides the default.
+        The number of reference pixels read out before jumping back to
+        the normal pixel region.
 
     Returns
     -------
@@ -95,12 +97,12 @@ def normal_shape(input_model, n=None, r=None, detector=None):
         This is used to get the shape of the input data.
 
     n : int or None
-        Default is None.
-        If not None, overrides the default.
+        The number of "normal" (as opposed to reference) pixels read
+        out before jumping to the reference pixel region.
 
     r : int or None
-        Default is None.
-        If not None overrides the default.
+        The number of reference pixels read out before jumping back to
+        the normal pixel region.
 
     detector : str
        Detector of data. Valid values are None, NRS1, or NRS2. Other detector
@@ -153,12 +155,12 @@ def make_mask(input_model, n=None, r=None):
         the X image axis.
 
     n : int or None
-        Default is None.
-        If not None, overrides the default.
+        The number of "normal" (as opposed to reference) pixels read
+        out before jumping to the reference pixel region.
 
     r : int or None
-        Default is None.
-        If not None, overrides the default.
+        The number of reference pixels read out before jumping back to
+        the normal pixel region.
 
     Returns
     -------

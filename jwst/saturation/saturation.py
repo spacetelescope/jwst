@@ -1,5 +1,3 @@
-#  Module for 2d saturation
-#
 import logging
 import numpy as np
 from scipy.ndimage import binary_dilation
