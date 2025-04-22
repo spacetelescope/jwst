@@ -1288,7 +1288,7 @@ def ifuslit_to_slicer(slits, reference_files):
 
     # Identity is for passing the computed wavelength
     mapping = Mapping((0, 1, 3, 2))
-    mapping.inverse = Mapping((3, 0, 1, 2))
+    mapping.inverse = Mapping((0, 1, 3, 2))
     slit2slicer = s2m & Identity(1) | mapping
     slit2slicer.inputs = ("name", "x_slit", "y_slit", "lam")
     slit2slicer.outputs = ("x_slice", "y_slice", "lam", "name")
@@ -1364,7 +1364,7 @@ def slit_to_msa(open_slits, msafile):
     s2m = Slit2Msa(slits, models)
     # Identity is for passing the computed wavelength and slit name
     mapping = Mapping((0, 1, 3, 2))
-    mapping.inverse = Mapping((3, 0, 1, 2))
+    mapping.inverse = Mapping((0, 1, 3, 2))
     transform = s2m & Identity(1) | mapping
     transform.inputs = ("name", "x_slit", "y_slit", "lam")
     transform.outputs = ("x_msa", "y_msa", "lam", "name")
@@ -2380,12 +2380,21 @@ def _fix_slit_name(transform, slit_name):
     fixed = {"name": slit_name}
     if transform is not None and "name" in transform.inputs:
         # fix name on input, drop it on output
-        name_idx = transform.outputs.index("name")
-        output_order = tuple([i for i in range(transform.n_outputs) if i != name_idx])
-        mapping = Mapping(output_order, n_inputs=transform.n_outputs)
+        output_names = []
+        output_order = []
+        name_idx = None
+        for i, output_name in enumerate(transform.outputs):
+            if output_name == "name":
+                name_idx = i
+            else:
+                output_names.append(output_name)
+                output_order.append(i)
+        mapping = Mapping(tuple(output_order), n_inputs=transform.n_outputs)
         mapping.inverse = Identity(len(output_order))
 
         new_transform = fix_inputs(transform, fixed) | mapping
+        new_transform.name = transform.name
+        new_transform.outputs = output_names
 
         # same for inverse transform, except that "name" is usually not explicitly specified
         if transform.has_inverse():
