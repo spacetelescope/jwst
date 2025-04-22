@@ -25,7 +25,8 @@ def run_spec3_multi_emsm(rtdata_module):
     }
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: All-NaN slice encountered
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    with pytest.warns(DeprecationWarning):
+        rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
