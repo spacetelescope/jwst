@@ -1868,7 +1868,8 @@ def create_extraction(
 
         copy_keyword_info(data_model, slitname, spec)
 
-        spec.meta.filename = data_model.meta.filename
+        if hasattr(data_model.meta, "filename"):
+            spec.meta.filename = data_model.meta.filename
 
         if apcorr is not None:
             if hasattr(apcorr, "tabulated_correction"):

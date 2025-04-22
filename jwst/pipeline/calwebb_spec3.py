@@ -281,9 +281,11 @@ class Spec3Pipeline(Pipeline):
                         result = self.photom.run(result)
 
                 elif exptype in WFSS_TYPES:
-                    # for WFSS modes, do not save the extract_1d results one file per source
+                    # for WFSS modes, do not save the results with one file per source
                     # instead compile the results over the for loop to be put into a single file
+                    # at the end.
                     self.extract_1d.save_results = False
+                    self.combine_1d.save_results = False
                     result = self.extract_1d.run(result)
                     wfss_x1d.append(result)
                     # Check whether extraction was completed
