@@ -605,7 +605,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
                 slit_y_range[1],
                 5,
                 1,
-                slit_id=nrs_fs_slit_number("S1600A1"),
+                slit_id=nrs_fs_slit_id("S1600A1"),
             )
         ]
 
@@ -673,7 +673,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S200A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 1,
-        slit_id=nrs_fs_slit_number("S200A1"),
+        slit_id=nrs_fs_slit_id("S200A1"),
     )
     s2a2 = Slit(
         "S200A2",
@@ -685,7 +685,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S200A2" else 10 * FIXED_SLIT_NUMS[primary_slit] + 2,
-        slit_id=nrs_fs_slit_number("S200A2"),
+        slit_id=nrs_fs_slit_id("S200A2"),
     )
     s4a1 = Slit(
         "S400A1",
@@ -697,7 +697,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S400A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 3,
-        slit_id=nrs_fs_slit_number("S400A1"),
+        slit_id=nrs_fs_slit_id("S400A1"),
     )
     s16a1 = Slit(
         "S1600A1",
@@ -709,7 +709,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S1600A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 4,
-        slit_id=nrs_fs_slit_number("S1600A1"),
+        slit_id=nrs_fs_slit_id("S1600A1"),
     )
     s2b1 = Slit(
         "S200B1",
@@ -721,7 +721,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S200B1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 5,
-        slit_id=nrs_fs_slit_number("S200B1"),
+        slit_id=nrs_fs_slit_id("S200B1"),
     )
 
     # Decide which slits need to be added to this exposure
@@ -970,7 +970,7 @@ def get_open_msa_slits(
             quadrant = 5
 
             # Get a slit ID number for WCS propagation purposes
-            slit_id_number = nrs_fs_slit_number(slitlet_id)
+            slit_id_number = nrs_fs_slit_id(slitlet_id)
 
             # No additional margin for fixed slit bounding boxes
             ymin = ylow
@@ -1854,7 +1854,7 @@ def compute_bounding_box(
 
     # Convert FS slit names to numbers
     if isinstance(slit_name, str):
-        slit_name = nrs_fs_slit_number(slit_name)
+        slit_name = nrs_fs_slit_id(slit_name)
 
     if slit_name is None:
         x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
@@ -2294,12 +2294,6 @@ def _nrs_wcs_set_input_legacy(input_model, slit_name):
     wcsobj : `~gwcs.wcs.WCS`
         WCS object for this slit.
     """
-    warnings.warn(
-        "This function is intended for use with an old-style NIRSpec WCS pipeline. "
-        "It will be removed in a future build.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
     wcsobj = input_model.meta.wcs
 
     slit_wcs = copy.deepcopy(wcsobj)
@@ -2314,12 +2308,8 @@ def _nrs_wcs_set_input_legacy(input_model, slit_name):
             "slit_frame", "slicer", wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1)
         )
     else:
-        # slit_wcs.set_transform('slit_frame', 'msa_frame',
-        #                        wcsobj.pipeline[3].transform & Identity(1))
         slit_wcs.set_transform(
-            "slit_frame",
-            "msa_frame",
-            wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1),
+            "slit_frame", "msa_frame", wcsobj.pipeline[3].transform & Identity(1)
         )
     return slit_wcs
 
@@ -2423,13 +2413,13 @@ def _fix_slit_name(transform, slit_name):
     return new_transform
 
 
-def nrs_fs_slit_number(slit_name):
+def nrs_fs_slit_id(slit_name):
     slit_number = -100 + -1 * FIXED_SLIT_NUMS.get(slit_name, 0)
     return slit_number
 
 
-def nrs_fs_slit_name(slit_number):
-    slit_number = -1 * slit_number - 100
+def nrs_fs_slit_name(slit_id):
+    slit_number = -1 * slit_id - 100
     for key, value in FIXED_SLIT_NUMS.items():
         if value == slit_number:
             return key
@@ -2469,7 +2459,7 @@ def nrs_wcs_set_input(input_model, slit_name):
 
     # Convert FS slit names to numbers
     if str(slit_name).upper() in FIXED_SLIT_NUMS.keys():
-        slit_id = nrs_fs_slit_number(str(slit_name).upper())
+        slit_id = nrs_fs_slit_id(str(slit_name).upper())
     else:
         slit_id = slit_name
 
