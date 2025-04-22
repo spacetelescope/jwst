@@ -177,7 +177,6 @@ def test_postprocess_rate_miri(log_watcher):
     result.close()
 
 
-@pytest.mark.slow
 def test_mask_ifu_slices():
     rate_model = make_nirspec_ifu_model()
 
