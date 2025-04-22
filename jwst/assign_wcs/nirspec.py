@@ -554,7 +554,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
         slits = validate_open_slits(input_model, slits, reference_files)
         log.info(
             f"Slits projected on detector {input_model.meta.instrument.detector}: "
-            f"{[sl.name for sl in slits]}"
+            f"{[str(sl.name) for sl in slits]}"
         )
     if not slits:
         log_message = f"No open slits fall on detector {input_model.meta.instrument.detector}."
