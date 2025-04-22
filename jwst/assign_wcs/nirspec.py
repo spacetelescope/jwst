@@ -2275,140 +2275,6 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None, slit_y_range=None):
     return tab
 
 
-def _get_transforms(input_model, slitnames, return_slits=False):
-    """
-    Return a WCS object with necessary transforms for all slits.
-
-    This function enables the JWST pipeline to avoid excessive deep
-    copying of WCS objects in later steps. It is used internally in
-    the pipeline only and should not be used if any of the WCSs is
-    modified.
-
-    Parameters
-    ----------
-    input_model : JwstDataModel
-        A data model with a WCS object for the all open slitlets in an observation.
-    slitnames : list of int or str
-        Slit.name of all open slits.
-    return_slits : bool, optional
-        Return the open slits
-
-    Returns
-    -------
-    wcsobj : `~gwcs.wcs.WCS`
-        WCS object deep copied from input_model.meta.wcs
-    sca2gwa : `~astropy.modeling.core.Model`
-        Transform from ``sca`` to ``gwa``
-    gwa2slit : list of `~astropy.modeling.core.Model`
-        Transform from ``gwa`` to ``slit`` for each input slit
-    slit2slicer : list of `~astropy.modeling.core.Model`
-        Transform from ``slit_frame`` to ``slicer`` for each input slit
-    open_slits : list of `~stdatamodels.jwst.transforms.models.Slit`
-        Open slits from wcs.get_transform('gwa', 'slit_frame').slits
-        Only returned if return_slits is True
-    """
-    wcs = copy.deepcopy(input_model.meta.wcs)
-
-    sca2gwa = copy.deepcopy(wcs.pipeline[1].transform[1:])
-    wcs.set_transform("sca", "gwa", sca2gwa)
-
-    gwa2slit = [
-        copy.deepcopy(wcs.pipeline[2].transform.get_model(slit_name)) for slit_name in slitnames
-    ]
-
-    slit2slicer = [
-        copy.deepcopy(wcs.pipeline[3].transform.get_model(slit_name)) for slit_name in slitnames
-    ]
-
-    if return_slits:
-        g2s = wcs.get_transform("gwa", "slit_frame")
-        open_slits = g2s.slits
-        return wcs, sca2gwa, gwa2slit, slit2slicer, copy.deepcopy(open_slits)
-    else:
-        return wcs, sca2gwa, gwa2slit, slit2slicer
-
-
-def _nrs_wcs_set_input_lite(
-    input_model,
-    input_wcs,
-    slit_name,
-    transforms,
-    wavelength_range=None,
-    open_slits=None,
-    slit_y_low=None,
-    slit_y_high=None,
-):
-    """
-    Return a WCS object for a specific slit, slice or shutter.
-
-    The lite version of the routine is distinguished from the legacy
-    routine because it does not make a deep copy of the input WCS object.
-
-    Parameters
-    ----------
-    input_model : JwstDataModel
-        A WCS object for the all open slitlets in an observation.
-    input_wcs : `~gwcs.wcs.WCS`
-        A WCS object for the all open slitlets in an observation.  This
-        will be modified and returned.
-    slit_name : int or str
-        Slit.name of an open slit.
-    transforms : list of `~astropy.modeling.core.Model`
-        Model transforms output from ``_get_transforms``
-    wavelength_range : list
-        Wavelength range for the combination of filter and grating.  Optional.
-    open_slits : list of slits
-        List of open slits.  Optional.
-    slit_y_low, slit_y_high : float
-        The lower and upper bounds of the slit.  Optional.
-
-    Returns
-    -------
-    wcsobj : `~gwcs.wcs.WCS`
-        WCS object for this slit.
-    """
-
-    def _get_y_range(open_slits):
-        if open_slits is None:
-            log_message = "nrs_wcs_set_input_lite must be called with open_slits if not in ifu mode"
-            log.critical(log_message)
-            raise RuntimeError(log_message)
-        # Need the open slits to get the slit ymin,ymax
-        slit = [s for s in open_slits if s.name == slit_name][0]
-        return slit.ymin, slit.ymax
-
-    if wavelength_range is None:
-        _, wavelength_range = spectral_order_wrange_from_model(input_model)
-
-    slit_wcs = copy.copy(input_wcs)
-
-    slit_wcs.set_transform("sca", "gwa", transforms[0])
-    slit_wcs.set_transform("gwa", "slit_frame", transforms[1])
-
-    is_nirspec_ifu = (
-        is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == "nrs_ifu"
-    )
-
-    if is_nirspec_ifu:
-        slit_wcs.set_transform("slit_frame", "slicer", transforms[2] & Identity(1))
-    else:
-        slit_wcs.set_transform("slit_frame", "msa_frame", transforms[2] & Identity(1))
-
-    transform = slit_wcs.get_transform("detector", "slit_frame")
-
-    if is_nirspec_ifu:
-        bb = compute_bounding_box(transform, wavelength_range)
-    else:
-        if slit_y_low is None or slit_y_high is None:
-            slit_y_low, slit_y_high = _get_y_range(open_slits)
-        bb = compute_bounding_box(
-            transform, wavelength_range, slit_ymin=slit_y_low, slit_ymax=slit_y_high
-        )
-
-    slit_wcs.bounding_box = bb
-    return slit_wcs
-
-
 def _nrs_wcs_set_input_legacy(input_model, slit_name):
     """
     Return a WCS object for a specific slit, slice or shutter.
@@ -2594,13 +2460,20 @@ def nrs_wcs_set_input(input_model, slit_name):
     full_wcs = input_model.meta.wcs
 
     # Convert FS slit names to numbers
-    if isinstance(slit_name, str):
-        slit_name = nrs_fs_slit_number(slit_name)
+    if str(slit_name).upper() in FIXED_SLIT_NUMS.keys():
+        slit_id = nrs_fs_slit_number(str(slit_name).upper())
+    else:
+        slit_id = slit_name
+
+    # Check slit ID to make sure it's present in the slits
+    slit_ids = full_wcs.get_transform("gwa", "slit_frame").slit_ids
+    if slit_id not in slit_ids:
+        raise ValueError(f"Input slit name {slit_name} is not present in the input model.")
 
     # Fix the slit name input for all transforms
     new_pipeline = []
     for step in full_wcs.pipeline:
-        new_transform = _fix_slit_name(step.transform, slit_name)
+        new_transform = _fix_slit_name(step.transform, slit_id)
         new_pipeline.append((step.frame, new_transform))
 
     # Make a new WCS with the fixed slit name input
@@ -2609,7 +2482,7 @@ def nrs_wcs_set_input(input_model, slit_name):
 
     # Add the bounding box
     if full_wcs.bounding_box is not None:
-        slit_wcs.bounding_box = full_wcs.bounding_box[slit_name]
+        slit_wcs.bounding_box = full_wcs.bounding_box[slit_id]
     return slit_wcs
 
 
@@ -2735,11 +2608,10 @@ def nrs_ifu_wcs(input_model):
     wcs_list : list
         A list of WCSs for all IFU slits.
     """
-    _, wrange = spectral_order_wrange_from_model(input_model)
     wcs_list = []
     # loop over all IFU slits
     for i in range(30):
-        wcs_list.append(nrs_wcs_set_input(input_model, i, wrange))
+        wcs_list.append(nrs_wcs_set_input(input_model, i))
     return wcs_list
 
 

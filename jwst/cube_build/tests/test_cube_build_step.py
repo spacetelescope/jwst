@@ -178,6 +178,7 @@ def nirspec_data():
         refs[reftype] = step.get_reference_file(image, reftype)
     pipe = assign_wcs.nirspec.create_pipeline(image, refs, slit_y_range=[-.5, .5])
     image.meta.wcs = WCS(pipe)
+    image.meta.wcs.bounding_box = assign_wcs.nirspec.generate_compound_bbox(image)
     return image
 
 
