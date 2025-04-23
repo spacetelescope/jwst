@@ -80,7 +80,14 @@ class Main:
 
     @property
     def orphaned(self):
-        """The pool of exposures that do not belong to any association."""
+        """
+        The pool of exposures that do not belong to any association.
+
+        Returns
+        -------
+        pool : `jwst.associations.pool.AssociationPool`
+            The pool of orphaned exposures.
+        """
         not_in_asn = np.ones((len(self.pool),), dtype=bool)
         for asn in self.associations:
             try:

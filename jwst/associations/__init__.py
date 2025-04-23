@@ -12,7 +12,14 @@ from jwst import __version__
 
 # Utility
 def libpath():
-    """Return the full path to the module library."""
+    """
+    Return the full path to the module library.
+
+    Returns
+    -------
+    Path
+        Path to the module library.
+    """
     from pathlib import Path
 
     return Path(__file__).parent / "lib"

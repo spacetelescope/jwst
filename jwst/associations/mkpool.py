@@ -37,7 +37,8 @@ def mkpool(
     pntgtype=NON_HEADER_COLS["pntgtype"],
     **kwargs,
 ):
-    """Create an association pool from a list of FITS files.
+    """
+    Create an association pool from a list of FITS files.
 
     Normally, association pools and the associations generated from those pools
     are created by the automatic ground system process. Users should download
@@ -94,7 +95,7 @@ def mkpool(
     pntgtype : 'science', 'target_acquisition'
         General exposure type.
 
-    kwargs : dict
+    **kwargs : dict
         Other keyword arguments to pass to the
         `astropy.io.fits.getheader` call.
 
@@ -102,7 +103,6 @@ def mkpool(
     -------
     pool : `jwst.associations.AssociationPool`
         The association pool.
-
     """
     params = set()
     for datum in data:
@@ -172,7 +172,9 @@ def from_cmdline(args=None):
     args : [str[,...]]
         List of arguments to parse.
 
-    Returns : dict
+    Returns
+    -------
+    dict
         Dict of the arguments and their values.
     """
     import argparse
@@ -225,16 +227,22 @@ def from_cmdline(args=None):
 
 
 def getheader(datum, **kwargs):
-    """Get header from the data item.
+    """
+    Get header from the data item.
 
     Parameters
     ----------
     datum : str or HDUList or HDU
         Source of the header information.
 
-    kwargs : dict
+    **kwargs : dict
         Keyword arguments passed to `astropy.io.fits.getheader`.
         Relevant ones are `ext`, `extname`, or `extver`
+
+    Returns
+    -------
+    astropy.io.fits.header.Header
+        The header from the data item.
     """
     # Parse out HDU key
     try:

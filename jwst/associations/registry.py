@@ -299,7 +299,14 @@ class RegistryMarker:
 
         @property
         def schema(self):
-            """Point schema to asnreg_schema."""
+            """
+            Point schema to asnreg_schema.
+
+            Returns
+            -------
+            pathlib.PosixPath
+                The path to the AssociationRegistry schema.
+            """
             return self.asnreg_schema
 
     @staticmethod
@@ -369,9 +376,6 @@ class RegistryMarker:
         ----------
         event : str
             Event this is a callback for.
-        obj : func
-            Function, or any callable, to be called
-            when the corresponding event is triggered.
 
         Returns
         -------

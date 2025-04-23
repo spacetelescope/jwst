@@ -25,7 +25,14 @@ class PoolParams(
     def __new__(
         cls, path="", n_asns=0, n_orphaned=0, candidates=None, valid_suffixes=None, kwargs=None
     ):
-        """Generate new PoolParams from parameters."""
+        """
+        Generate new PoolParams from parameters.
+
+        Returns
+        -------
+        PoolParams
+            The new PoolParams object.
+        """
         if not kwargs:
             kwargs = {}
         if candidates is None:
@@ -129,13 +136,12 @@ def combine_pools(pools, **pool_kwargs):
 
     Parameters
     ----------
-    pools: str, astropy.table.Table, [str|Table, ...]
+    pools : str, astropy.table.Table, [str|Table, ...]
         The pools to combine. Either a singleton is
         passed or and iterable can be passed.
         The entries themselves can be either a file path
         or an astropy.table.Table-like object.
-
-    pool_kwargs: dict
+    **pool_kwargs : dict
         Other keyword arguments to pass to AssociationPool.read.
 
     Returns
@@ -171,7 +177,23 @@ def combine_pools(pools, **pool_kwargs):
 
 
 def parse_value(v, global_env=None, local_env=None):
-    """Evaluate if indicated."""
+    """
+    Evaluate if indicated.
+
+    Parameters
+    ----------
+    v : str
+        The string to be parsed.
+    global_env : dict
+        The classes defined in the globals environment.
+    local_env : dict
+        The classes defined in the locals environment.
+
+    Returns
+    -------
+    str
+        The parsed string value.
+    """
     if global_env is None:
         global_env = globals()
     if local_env is None:
@@ -194,11 +216,11 @@ def fmt_cand(candidate_list):
 
     Parameters
     ----------
-    candidate_list: iterator
+    candidate_list : iterator
         An iterator with each element a 2-tuple of:
-            cid: int
+            cid : int
                 Candidate ID
-            ctype: str
+            ctype : str
                 Candidate type
 
     Returns
@@ -226,12 +248,36 @@ def fmt_cand(candidate_list):
 
 
 def fmt_fname(expnum):
-    """Format the filename."""
+    """
+    Format the filename.
+
+    Parameters
+    ----------
+    expnum : int
+        Exposure number.
+
+    Returns
+    -------
+    str
+        The formatted filename.
+    """
     return f"jw_{expnum:0>5d}_uncal.fits"
 
 
 def generate_params(request):
-    """Generate param for pytest.fixtures."""
+    """
+    Generate param for pytest.fixtures.
+
+    Parameters
+    ----------
+    request : _pytest.fixtures.SubRequest
+        The fixture request.
+
+    Returns
+    -------
+    str
+        The request parameter value.
+    """
     return request.param
 
 
@@ -257,7 +303,8 @@ def generate_pool_paths(request):
 
 
 def get_rule_names(rules):
-    """Return rule names found in a registry.
+    """
+    Return rule names found in a registry.
 
     Parameters
     ----------
@@ -273,17 +320,43 @@ def get_rule_names(rules):
 
 
 def level3_rule_path():
-    """Return the path to the level 3 rules."""
+    """
+    Return the path to the level 3 rules.
+
+    Returns
+    -------
+    str
+        The string path to the level 3 rules.
+    """
     return t_path("../lib/rules_level3.py")
 
 
 def level2_rule_path():
-    """Return the path to the level 2 rules."""
+    """
+    Return the path to the level 2 rules.
+
+    Returns
+    -------
+    str
+        The string path to the level 2 rules.
+    """
     return t_path("../lib/rules_level2b.py")
 
 
 def registry_level3_only(global_constraints=None):
-    """Get registry with only Level3 rules."""
+    """
+    Get registry with only Level3 rules.
+
+    Parameters
+    ----------
+    global_constraints : Constraint or list[Constraint, ...], optional
+        The constraints to provide the output registry.
+
+    Returns
+    -------
+    AssociationRegistry
+        The AssociationRegistry built from level 3 rules.
+    """
     return AssociationRegistry(
         definition_files=[level3_rule_path()],
         include_default=False,
@@ -292,7 +365,19 @@ def registry_level3_only(global_constraints=None):
 
 
 def registry_level2_only(global_constraints=None):
-    """Get registry with only Level2 rules."""
+    """
+    Get registry with only Level2 rules.
+
+    Parameters
+    ----------
+    global_constraints : Constraint or list[Constraint, ...], optional
+        The constraints to provide the output registry.
+
+    Returns
+    -------
+    AssociationRegistry
+        The AssociationRegistry built from level 2 rules.
+    """
     return AssociationRegistry(
         definition_files=[level2_rule_path()],
         include_default=False,

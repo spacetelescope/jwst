@@ -1,6 +1,4 @@
-"""
-Define the I/O methods for Level 3 associations
-"""
+"""Define the I/O methods for Level 3 associations."""
 
 import json as json_lib
 import logging
@@ -20,7 +18,7 @@ __all__: list = []
 
 # Define JSON encoder to convert `Member` to `dict`
 class AssociationEncoder(json_lib.JSONEncoder):
-    """Encode to handle Associations"""
+    """Encode to handle Associations."""
 
     def default(self, obj):
         # Convert Member to a simple dict
@@ -29,16 +27,17 @@ class AssociationEncoder(json_lib.JSONEncoder):
 
 
 @Association.ioregistry
-class json:
-    """Load and store associations as JSON"""
+class json:  # noqa: N801
+    """Load and store associations as JSON."""
 
     @staticmethod
-    def load(cls, serialized):
-        """Unserialize an association from JSON
+    def load(_cls, serialized):
+        """
+        Unserialize an association from JSON.
 
         Parameters
         ----------
-        cls : class
+        _cls : class
             The class from which further information will be gathered
             and possibly instantiated.
 
@@ -65,13 +64,14 @@ class json:
             asn = loader(serialized)
         except Exception as err:
             logger.debug(f'Error unserializing: "{err}"')
-            raise AssociationNotValidError(f'Container is not JSON: "{serialized}"')
+            raise AssociationNotValidError(f"Container is not JSON: '{serialized}'") from err
 
         return asn
 
     @staticmethod
     def dump(asn):
-        """Create JSON representation.
+        """
+        Create JSON representation.
 
         Parameters
         ----------
@@ -95,16 +95,17 @@ class json:
 
 
 @Association.ioregistry
-class yaml:
-    """Load and store associations as YAML"""
+class yaml:  # noqa: N801
+    """Load and store associations as YAML."""
 
     @staticmethod
-    def load(cls, serialized):
-        """Unserialize an association from YAML
+    def load(_cls, serialized):
+        """
+        Unserialize an association from YAML.
 
         Parameters
         ----------
-        cls : class
+        _cls : class
             The class from which further information will be gathered
             and possibly instantiated.
 
@@ -129,18 +130,18 @@ class yaml:
             asn = yaml_lib.safe_load(serialized)
         except Exception as err:
             logger.debug(f'Error unserializing: "{err}"')
-            raise AssociationNotValidError(f'Container is not YAML: "{serialized}"')
+            raise AssociationNotValidError(f"Container is not YAML: '{serialized}'") from err
         return asn
 
     @staticmethod
     def dump(asn):
-        """Create YAML representation.
+        """
+        Create YAML representation.
 
         Parameters
         ----------
         asn : Association
             The association to serialize
-
 
         Returns
         -------
@@ -157,7 +158,21 @@ class yaml:
 
 # Register YAML representers
 def np_str_representer(dumper, data):
-    """Convert numpy.str_ into standard YAML string"""
+    """
+    Convert numpy.str_ into standard YAML string.
+
+    Parameters
+    ----------
+    dumper : class
+        File specification class that has a `represent_dict` method.
+    data : str
+        The numpy string to be converted to a YAML string.
+
+    Returns
+    -------
+    str
+        The YAML string.
+    """
     return dumper.represent_scalar("tag:yaml.org,2002:str", str(data))
 
 
@@ -165,7 +180,21 @@ yaml_lib.add_representer(np.str_, np_str_representer)
 
 
 def member_representer(dumper, member):
-    """Convert a Member to its basic dict representation"""
+    """
+    Convert a Member to its basic dict representation.
+
+    Parameters
+    ----------
+    dumper : class
+        File specification class that has a `represent_dict` method.
+    member : Member
+        The Member object to be converted to a dict.
+
+    Returns
+    -------
+    dict
+        The dict representation of the member.
+    """
     return dumper.represent_dict(member.data)
 
 

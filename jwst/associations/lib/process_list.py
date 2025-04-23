@@ -1,4 +1,5 @@
-"""Reprocessing Lists and Queues
+"""
+Reprocessing Lists and Queues.
 
 This modules defines what process lists are and queues of process lists.
 
@@ -28,7 +29,7 @@ __all__ = ["ListCategory", "ProcessList", "ProcessItem", "ProcessQueue", "Proces
 
 
 class ListCategory(Enum):
-    """The work_over categories for ProcessLists"""
+    """The work_over categories for ProcessLists."""
 
     RULES = 0  # Operate over rules only
     BOTH = 1  # Operate over both rules and existing associations
@@ -38,7 +39,8 @@ class ListCategory(Enum):
 
 
 class ProcessItem:
-    """Items to be processed
+    """
+    Items to be processed.
 
     Create hashable objects from a list of arbitrary objects.
 
@@ -54,7 +56,8 @@ class ProcessItem:
 
     @classmethod
     def to_process_items(cls, iterable):
-        """Iterable to convert a list to ProcessItem's
+        """
+        Convert a list to ProcessItems.
 
         Parameters
         ----------
@@ -63,8 +66,8 @@ class ProcessItem:
 
         Returns
         -------
-        An iterable where the object has been
-        converted to a `ProcessItem`
+        iterable
+            An iterable where the object has been converted to a `ProcessItem`.
         """
         for obj in iterable:
             yield cls(obj)
@@ -85,7 +88,8 @@ class ProcessItem:
 
 
 class ProcessList:
-    """A Process list
+    """
+    A Process list.
 
     Parameters
     ----------
@@ -133,11 +137,19 @@ class ProcessList:
 
     @property
     def hash(self):
-        """Create a unique hash"""
+        """
+        Create a unique hash.
+
+        Returns
+        -------
+        Tuple(Rule, ...), int, bool
+            Tuple of: tuple of rule objects, integer and bool. Used as a unique hash.
+        """
         return (tuple(self.rules), self.work_over, self.only_on_match)
 
     def update(self, process_list, full=False):
-        """Update with information from ProcessList
+        """
+        Update with information from ProcessList.
 
         Attributes from `process_list` are added to self's attributes. If `not
         full`, the attributes `rules`, 'work_over`, and `only_on_match` are not
@@ -163,12 +175,15 @@ class ProcessList:
             self.only_on_match = process_list.only_on_match
 
     def __str__(self):
-        result = f"{self.__class__.__name__}(n_items: {len(self.items)}, { ({str_attr: getattr(self, str_attr) for str_attr in self._str_attrs}) })"
+        result = (
+            f"{self.__class__.__name__}(n_items: {len(self.items)}, "
+            f"{ ({str_attr: getattr(self, str_attr) for str_attr in self._str_attrs}) })"
+        )
         return result
 
 
 class ProcessQueue(deque):
-    """Make a deque iterable and mutable"""
+    """Make a deque iterable and mutable."""
 
     def __iter__(self):
         while True:
@@ -179,7 +194,8 @@ class ProcessQueue(deque):
 
 
 class ProcessListQueue:
-    """First-In-First-Out queue of ProcessLists
+    """
+    First-In-First-Out queue of ProcessLists.
 
     ProcessLists can be added either individually using `append` method, or
     a list of ProcessLists can be added through object initialization or
@@ -209,11 +225,10 @@ class ProcessListQueue:
     The FIFO operations depends on the fact that, inherently,
     `dict` preserves order in which key/value pairs are added to the
     dictionary.
-
     """
 
     def __init__(self, init=None):
-        self._queue = dict()
+        self._queue = {}
         if init is not None:
             self.extend(init)
 
@@ -226,18 +241,24 @@ class ProcessListQueue:
             self._queue[plhash].update(process_list)
 
     def extend(self, iterable):
-        """Add lists of ProcessLists if not already in the queue"""
+        """Add lists of ProcessLists if not already in the queue."""
         for process_list in iterable:
             self.append(process_list)
 
     def items(self):
-        """Return list generator of all items"""
+        """Return list generator of all items."""
         for plhash in self._queue:
-            for item in self._queue[plhash].items:
-                yield item
+            yield from self._queue[plhash].items
 
     def popleft(self):
-        """Pop the first-in object"""
+        """
+        Pop the first-in object.
+
+        Returns
+        -------
+        [ProcessList, ...]
+            The queue of ProcessList objects with the first one popped.
+        """
         plhash = next(iter(self._queue))
         process_list = self._queue[plhash]
         del self._queue[plhash]
@@ -259,7 +280,8 @@ class ProcessListQueue:
 
 
 class ProcessQueueSorted:
-    """Sort ProcessItem based on work_over
+    """
+    Sort ProcessItem based on work_over.
 
     Create a generator that implements a First-In-First-Out (FIFO) queue, with the one
     modification that the queues are handled in order of their `work_over` priority.
@@ -280,7 +302,6 @@ class ProcessQueueSorted:
     ----------
     init : [ProcessList[,...]]
         List of `ProcessList` to start the queue with.
-
     """
 
     def __init__(self, init=None):
@@ -290,12 +311,12 @@ class ProcessQueueSorted:
             self.extend(init)
 
     def extend(self, process_lists):
-        """Add the list of process items to their appropriate queues"""
+        """Add the list of process items to their appropriate queues."""
         for process_list in process_lists:
             self.queues[process_list.work_over].append(process_list)
 
     def __iter__(self):
-        """Return the queues in order"""
+        """Return the queues in order."""
         while len(self) > 0:
             for category in ListCategory:
                 for process_list in self.queues[category]:
@@ -316,7 +337,8 @@ class ProcessQueueSorted:
 
 
 def workover_filter(process_list, work_over):
-    """Determine and modify workover of input process list
+    """
+    Determine and modify workover of input process list.
 
     Parameters
     ----------

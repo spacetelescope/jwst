@@ -8,7 +8,8 @@ logger.addHandler(logging.NullHandler())
 
 
 def sort_by_candidate(asns):
-    """Sort associations by candidate
+    """
+    Sort associations by candidate.
 
     Parameters
     ----------
@@ -32,11 +33,13 @@ def sort_by_candidate(asns):
 
 
 def get_product_names(asns):
-    """Return product names from associations and flag duplicates
+    """
+    Return product names from associations and flag duplicates.
 
     Parameters
     ----------
     asns : [`Association`[, ...]]
+        List of associations with product entries.
 
     Returns
     -------

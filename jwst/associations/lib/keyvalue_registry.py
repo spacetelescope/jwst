@@ -1,4 +1,4 @@
-"""Key/Value Registry"""
+"""Key/Value Registry."""
 
 from collections import UserDict
 
@@ -6,13 +6,14 @@ from collections import UserDict
 __all__ = [
     "KeyValueRegistry",
     "KeyValueRegistryError",
-    "KeyValueRegistryNoKeyFound",
+    "KeyValueRegistryNoKeyFoundError",
     "KeyValueRegistryNotSingleItemError",
 ]
 
 
 class KeyValueRegistry(UserDict):
-    """Provide a dict-like registry
+    """
+    Provide a dict-like registry.
 
     Differences from just a `dict`:
         - Can be given single item or a 2-tuple.
@@ -50,14 +51,25 @@ class KeyValueRegistry(UserDict):
             self.update({None: default_dict[self.default]})
 
     def update(self, item):
-        """Add item to registry"""
+        """Add item to registry."""
         item_dict = make_dict(item)
         super(KeyValueRegistry, self).update(item_dict)
 
     def __call__(self, item):
-        """Add item by calling instance
+        """
+        Add item by calling instance.
 
         This allows an instance to be used as a decorator.
+
+        Parameters
+        ----------
+        item : object or (str, object) or dict
+            Item used for decoration.
+
+        Returns
+        -------
+        item : object or (str, object) or dict
+            The item used to update self.
         """
         self.update(item)
         return item
@@ -67,6 +79,8 @@ class KeyValueRegistry(UserDict):
 # Errors
 # ******
 class KeyValueRegistryError(Exception):
+    """Exception class for key value in registry."""
+
     def __init__(self, *args):
         if len(args) == 0:
             args = (self.msg,)
@@ -74,10 +88,14 @@ class KeyValueRegistryError(Exception):
 
 
 class KeyValueRegistryNotSingleItemError(KeyValueRegistryError):
+    """Exception class for when passed item is a list and not a single item."""
+
     msg = "Item cannot be a list"
 
 
-class KeyValueRegistryNoKeyFound(KeyValueRegistryError):
+class KeyValueRegistryNoKeyFoundError(KeyValueRegistryError):
+    """Exception class for no key in registry."""
+
     msg = "Cannot deduce key from given value"
 
 
@@ -85,7 +103,8 @@ class KeyValueRegistryNoKeyFound(KeyValueRegistryError):
 # Utilities
 # *********
 def make_dict(item):
-    """Create a dict from an item
+    """
+    Create a dict from an item.
 
     Parameters
     ----------
@@ -93,6 +112,11 @@ def make_dict(item):
         If dict, just return dict.
         If 2-tuple, return dict with the key/value pair
         If just object, use `__name__` as key
+
+    Returns
+    -------
+    dict
+        The dictionary created from the item.
     """
     try:
         item_dict = dict(item)
@@ -102,8 +126,8 @@ def make_dict(item):
         except (TypeError, ValueError):
             try:
                 key = item.__name__
-            except (AttributeError, SyntaxError):
-                raise KeyValueRegistryNoKeyFound
+            except (AttributeError, SyntaxError) as err:
+                raise KeyValueRegistryNoKeyFoundError from err
             else:
                 value = item
 

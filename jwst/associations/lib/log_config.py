@@ -1,4 +1,4 @@
-"""Configure Association Logging"""
+"""Configure Association Logging."""
 
 import sys
 import logging
@@ -12,7 +12,7 @@ DMS_DEFAULT_FORMAT = "%(asctime)s %(levelname)s pid=%(process)d src=%(name)s.%(f
 
 
 class ContextFilter:
-    """Set Association Generator logging context"""
+    """Set Association Generator logging context."""
 
     def __init__(self):
         self.context = {}
@@ -21,7 +21,7 @@ class ContextFilter:
         return self
 
     def filter(self, record):
-        record._context = self.context
+        record._context = self.context  # noqa: SLF001
         return True
 
     def set(self, key, value):
@@ -29,23 +29,23 @@ class ContextFilter:
 
 
 class LogLevelFilter:
-    """Filter on a specific level"""
+    """Filter on a specific level."""
 
     def __init__(self, level):
         self.__level = level
 
-    def filter(self, logRecord):
-        return logRecord.levelno == self.__level
+    def filter(self, logrecord):
+        return logrecord.levelno == self.__level
 
 
 class DMSFormatter(logging.Formatter):
-    """DMS-specific formatting"""
+    """DMS-specific formatting."""
 
     def format(self, record):
         log_parts = []
         log_parts.append(super(DMSFormatter, self).format(record))
-        for key in record._context:
-            log_parts.append(f"{key}={record._context[key]}")
+        for key in record._context:  # noqa: SLF001
+            log_parts.append(f"{key}={record._context[key]}")  # noqa: SLF001
         log_parts.append(f'msg="{record.getMessage()}"')
         log_line = " ".join(log_parts)
         return log_line
@@ -127,7 +127,8 @@ DMS_config = {
 
 
 def log_config(name=None, user_name=None, logger_config=None, config=None, merge=True):
-    """Setup logging with defaults
+    """
+    Set up logging with defaults.
 
     logging.dictConfig is used with optional default
     configuration dict.
@@ -149,14 +150,14 @@ def log_config(name=None, user_name=None, logger_config=None, config=None, merge
     config : dict
         User-specified logging configuration as specified by
 
-    merge : boolean
+    merge : bool
         Merge the user-specified config in with `base_config`.
         If `False`, just use the user-specified config.
 
-
     Returns
     -------
-    The `logging.Logger` instance
+    Logger
+        The `logging.Logger` instance.
 
     Notes
     -----

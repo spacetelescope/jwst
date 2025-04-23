@@ -1,4 +1,5 @@
-"""Association Definitions: DMS-specific.
+"""
+Association Definitions: DMS-specific.
 
 Notes
 -----

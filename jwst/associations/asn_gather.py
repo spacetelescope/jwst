@@ -21,7 +21,8 @@ def asn_gather(
     source_folder=None,
     shellcmd="rsync -urv --no-perms --chmod=ugo=rwX",
 ):
-    """Copy members of an association from one location to another
+    """
+    Copy members of an association from one location to another.
 
     The association is copied into the destination, re-written such that the member
     list points to the new location of the members.
@@ -99,7 +100,7 @@ def asn_gather(
             dest_path = dest_folder / src_path.name
             process_args = shellcmd_args + [str(src_path), str(dest_path)]
             logger.debug(f"Shell command in use: {process_args}")
-            result = subprocess.run(
+            result = subprocess.run(  # noqa: S603
                 process_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, check=True
             )
             logger.debug(result.stdout.decode())
@@ -110,7 +111,7 @@ def asn_gather(
     dest_path = dest_folder / source_asn_path.name
     _, serialized = dest_asn.dump()
     logger.info(f"Copying the association file itself {dest_path}")
-    with open(dest_path, "w") as fh:
+    with Path.open(dest_path, "w") as fh:
         fh.write(serialized)
 
     # That's all folks
@@ -118,14 +119,17 @@ def asn_gather(
 
 
 def from_cmdline(args=None):
-    """Collect asn_gather arguments from the commandline
+    """
+    Collect asn_gather arguments from the commandline.
 
     Parameters
     ----------
     args : [str[,...]]
         List of arguments to parse
 
-    Returns : dict
+    Returns
+    -------
+    dict
         Dict of the arguments and their values.
     """
     import argparse
@@ -138,7 +142,8 @@ def from_cmdline(args=None):
         "-s",
         "--source",
         dest="source_folder",
-        help="Folder where the members currently reside. Default is the folder where the association resides.",
+        help="Folder where the members currently reside. "
+        "Default is the folder where the association resides.",
     )
     parser.add_argument(
         "-t",

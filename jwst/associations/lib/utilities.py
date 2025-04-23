@@ -22,6 +22,11 @@ def constrain_on_candidates(candidates):
     candidates : (str, ...) or None
         List of candidate id's.
         If None, then all candidates are matched.
+
+    Returns
+    -------
+    DMSAttrConstraint
+        The constraint built off the candidate list.
     """
     from .dms_base import DMSAttrConstraint
 
@@ -134,9 +139,9 @@ def getattr_from_list(adict, attributes, invalid_values=None):
     Parameters
     ----------
     adict : dict
-        dict to retrieve from
+        Cict to retrieve from.
     attributes : list
-        List of attributes
+        List of attributes.
     invalid_values : set
         A set of values that essentially mean the
         attribute does not exist.
@@ -180,10 +185,15 @@ def return_on_exception(exceptions=(Exception,), default=None):
     Parameters
     ----------
     exceptions : (Exception(,...))
-        Tuple of exceptions to catch
+        Tuple of exceptions to catch.
 
     default : obj
-        The value to return when a specified exception occurs
+        The value to return when a specified exception occurs.
+
+    Returns
+    -------
+    decorator
+        The decorator to wrap functions that will return on certain exceptions.
     """
 
     def decorator(func):
@@ -207,18 +217,43 @@ def return_on_exception(exceptions=(Exception,), default=None):
 
 @return_on_exception(exceptions=(KeyError,), default=None)
 def getattr_from_list_nofail(*args, **kwargs):
-    """Call getattr_from_list without allows exceptions.
+    """
+    Call getattr_from_list without allowing exceptions.
 
     If the specified exceptions are caught, return `default`
     instead.
 
     Parameters
     ----------
-    See `getattr_from_list`
+    *args, **kwargs : dicts
+        Arguments passed to getattr_from_list.
+
+    Returns
+    -------
+    (attribute, value)
+        Returns the value and the attribute from
+        which the value was taken.
+
+    Raises
+    ------
+    KeyError
+        None of the attributes are found in the dict.
     """
     return getattr_from_list(*args, **kwargs)
 
 
 def is_iterable(obj):
-    """General iterator check."""
+    """
+    General iterator check.
+
+    Parameters
+    ----------
+    obj : object
+        The object to be checked for defined `__iter__` method.
+
+    Returns
+    -------
+    bool
+        True if iterable, false otherwise.
+    """
     return not isinstance(obj, str) and not isinstance(obj, tuple) and hasattr(obj, "__iter__")

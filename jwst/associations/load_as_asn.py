@@ -24,11 +24,6 @@ class LoadAsAssociation(dict):
     """
     Read in or create an association.
 
-    Parameters
-    ----------
-    asn : dict or Association
-        An already existing association
-
     Notes
     -----
     This class is normally not instantiated.
@@ -53,13 +48,13 @@ class LoadAsAssociation(dict):
         Parameters
         ----------
         obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
-            The obj to return as an association
+            The obj to return as an association.
 
         registry : AssociationRegistry
-            The registry to use to load an association file with
+            The registry to use to load an association file with.
 
         rule : Association
-            The rule to use if an association needs to be created
+            The rule to use if an association needs to be created.
 
         product_name_func : func
             A function, when given the argument of `obj`, or
@@ -67,16 +62,16 @@ class LoadAsAssociation(dict):
             a string that will be used as the product name in
             the association.
 
+        Returns
+        -------
+        association : Association
+            An association created using given obj.
+
         Notes
         -----
         Along with the attributes belonging to a Level2 association, the
         filename is added here, if such a file was passed in. Otherwise
         a default value is given.
-
-        Returns
-        -------
-        association : Association
-            An association created using given obj
         """
         try:
             with Path.open(obj) as fp:
@@ -105,21 +100,21 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         Parameters
         ----------
         obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
-            The obj to return as an association
+            The obj to return as an association.
 
         basename : str
             If specified, use as the basename, with an index appended.
+
+        Returns
+        -------
+        association : DMSLevel2bBase
+            An association created using given obj.
 
         Notes
         -----
         Along with the attributes belonging to a Level2 association, the
         filename is added here, if such a file was passed in. Otherwise
         a default value is given.
-
-        Returns
-        -------
-        association : DMSLevel2bBase
-            An association created using given obj
         """
         product_name_func = cls.model_product_name
         if basename is not None:
@@ -153,7 +148,8 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
     @staticmethod
     def model_product_name(model, _idx):
-        """Product a model product name based on the model.
+        """
+        Produce a model product name based on the model.
 
         Parameters
         ----------

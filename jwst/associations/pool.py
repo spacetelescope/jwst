@@ -68,16 +68,10 @@ class AssociationPool(Table):
 
         Parameters
         ----------
-        output : str, file-like
-            The output file or file-like object.
-        delimiter : str
-            The string to use to delineate columns.
-            Default is '|'.
-        fmt : str
-            The fmt the file should be written in.
-            Default is 'ascii'.
-        *args, **kwargs : obj
-            Other parameters that ``astropy.io.ascii.write`` can accept.
+        *args : dict
+            Dictionary of arguments that ``astropy.io.ascii.write`` can accept.
+        **kwargs : dict
+            Dictionary of keywords that ``astropy.io.ascii.write`` can accept.
         """
         delimiter = kwargs.pop("delimiter", DEFAULT_DELIMITER)
         fmt = kwargs.pop("fmt", None)
@@ -114,7 +108,19 @@ def _convert_to_str():
     func, type_ = convert_numpy(str)
 
     def convert_func(vals):
-        """Lowercase the conversion."""
+        """
+        Lowercase the conversion.
+
+        Parameters
+        ----------
+        vals : [str, ...]
+            The list of strings to lowercase.
+
+        Returns
+        -------
+        [str, ...]
+            The lowercase strings.
+        """
         results = func(vals)
         results = [result.lower() for result in results]
         return results

@@ -1,4 +1,4 @@
-"""Association Definitions: DMS Level2b product associations"""
+"""Association Definitions: DMS Level2b product associations."""
 
 import logging
 
@@ -16,7 +16,7 @@ from jwst.associations.lib.dms_base import (
 )
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level2_base import (
-    ASN_SCHEMA,  # noqa F401
+    ASN_SCHEMA,  # noqa: F401
     AsnMixin_Lv2Image,
     AsnMixin_Lv2Spectral,
     AsnMixin_Lv2Nod,
@@ -24,7 +24,7 @@ from jwst.associations.lib.rules_level2_base import (
     AsnMixin_Lv2Special,
     DMSLevel2bBase,
     DMSAttrConstraint,
-    Utility,  # noqa F401
+    Utility,  # noqa: F401
     Constraint_Mode,
     Constraint_Base,
     Constraint_Background,
@@ -70,7 +70,8 @@ logger.addHandler(logging.NullHandler())
 # --------------------------------
 @RegistryMarker.rule
 class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
-    """Create normal rate products for some coronographic data
+    """
+    Create normal rate products for some coronographic data.
 
     Characteristics;
         - Association type: ``image2``
@@ -113,18 +114,25 @@ class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
         # Now check and continue initialization.
         super().__init__(*args, **kwargs)
 
-    def is_item_coron(self, item):
-        """Override to always return false
+    def is_item_coron(self, _item):
+        """
+        Override to always return false.
 
         The override will force `make_member` to create a "rate"
         product instead of a "rateints" product.
+
+        Returns
+        -------
+        bool
+            False.
         """
         return False
 
 
 @RegistryMarker.rule
 class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
-    """Level2b Non-TSO Science Image Association
+    """
+    Level2b Non-TSO Science Image Association.
 
     Characteristics:
         - Association type: ``image2``
@@ -164,7 +172,8 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
 
 @RegistryMarker.rule
 class Asn_Lv2ImageNonScience(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bBase):
-    """Level2b Non-science Image Association
+    """
+    Level2b Non-science Image Association.
 
     Characteristics:
         - Association type: ``image2``
@@ -189,7 +198,8 @@ class Asn_Lv2ImageNonScience(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bB
 
 @RegistryMarker.rule
 class Asn_Lv2ImageSpecial(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bBase):
-    """Level2b Auxiliary Science Image Association
+    """
+    Level2b Auxiliary Science Image Association.
 
     Characteristics:
         - Association type: ``image2``
@@ -217,7 +227,8 @@ class Asn_Lv2ImageSpecial(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bBase
 
 @RegistryMarker.rule
 class Asn_Lv2ImageTSO(AsnMixin_Lv2Image, DMSLevel2bBase):
-    """Level2b Time Series Science Image Association
+    """
+    Level2b Time Series Science Image Association.
 
     Characteristics:
         - Association type: ``tso-image2``
@@ -242,14 +253,15 @@ class Asn_Lv2ImageTSO(AsnMixin_Lv2Image, DMSLevel2bBase):
         super(Asn_Lv2ImageTSO, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
+        """Post-check and pre-add initialization."""
         super(Asn_Lv2ImageTSO, self)._init_hook(item)
         self.data["asn_type"] = "tso-image2"
 
 
 @RegistryMarker.rule
 class Asn_Lv2FGS(AsnMixin_Lv2Image, DMSLevel2bBase):
-    """Level2b FGS Association
+    """
+    Level2b FGS Association.
 
     Characteristics:
         - Association type: ``image2``
@@ -278,7 +290,8 @@ class Asn_Lv2FGS(AsnMixin_Lv2Image, DMSLevel2bBase):
 
 @RegistryMarker.rule
 class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
-    """Level2b Science Spectral Association
+    """
+    Level2b Science Spectral Association.
 
     Characteristics:
         - Association type: ``spec2``
@@ -335,7 +348,7 @@ class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
                 ),
                 SimpleConstraint(
                     value=True,
-                    test=lambda value, item: nrsifu_valid_detector(item),
+                    test=lambda _value, item: nrsifu_valid_detector(item),
                     force_unique=False,
                 ),
             ]
@@ -347,7 +360,8 @@ class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
 
 @RegistryMarker.rule
 class Asn_Lv2SpecImprint(AsnMixin_Lv2Special, AsnMixin_Lv2Spectral, DMSLevel2bBase):
-    """Level2b Treat Imprint/Leakcal as science
+    """
+    Level2b Treat Imprint/Leakcal as science.
 
     Characteristics:
         - Association type: ``spec2``
@@ -366,7 +380,7 @@ class Asn_Lv2SpecImprint(AsnMixin_Lv2Special, AsnMixin_Lv2Spectral, DMSLevel2bBa
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
                 SimpleConstraint(
                     value=True,
-                    test=lambda value, item: nrsifu_valid_detector(item),
+                    test=lambda _value, item: nrsifu_valid_detector(item),
                     force_unique=False,
                 ),
                 DMSAttrConstraint(name="imprint", sources=["is_imprt"]),
@@ -381,7 +395,8 @@ class Asn_Lv2SpecImprint(AsnMixin_Lv2Special, AsnMixin_Lv2Spectral, DMSLevel2bBa
 class Asn_Lv2SpecSpecial(
     AsnMixin_Lv2Special, AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase
 ):
-    """Level2b Auxiliary Science Spectral Association
+    """
+    Level2b Auxiliary Science Spectral Association.
 
     Characteristics:
         - Association type: ``spec2``
@@ -400,7 +415,7 @@ class Asn_Lv2SpecSpecial(
                 Constraint_Special(),  # background and ref_psf exposures
                 SimpleConstraint(
                     value=True,
-                    test=lambda value, item: nrsifu_valid_detector(item),
+                    test=lambda _value, item: nrsifu_valid_detector(item),
                     force_unique=False,
                 ),
                 Constraint(
@@ -419,7 +434,8 @@ class Asn_Lv2SpecSpecial(
 
 @RegistryMarker.rule
 class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
-    """Level2b Time Series Science Spectral Association
+    """
+    Level2b Time Series Science Spectral Association.
 
     Characteristics:
         - Association type: ``tso-spec2``
@@ -501,14 +517,15 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
         super(Asn_Lv2SpecTSO, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
+        """Post-check and pre-add initialization."""
         super(Asn_Lv2SpecTSO, self)._init_hook(item)
         self.data["asn_type"] = "tso-spec2"
 
 
 @RegistryMarker.rule
 class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
-    """Level2b MIRI LRS Fixed Slit background nods Association
+    """
+    Level2b MIRI LRS Fixed Slit background nods Association.
 
     Characteristics:
         - Association type: ``spec2``
@@ -532,7 +549,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
                 ),
                 SimpleConstraint(
                     value=True,
-                    test=lambda value, item: self.acid.type != "background",
+                    test=lambda _value, _item: self.acid.type != "background",
                     force_unique=False,
                 ),
                 Constraint(
@@ -563,8 +580,8 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
                                 SimpleConstraint(
                                     name="force_match",
                                     value=None,
-                                    sources=lambda item: False,
-                                    test=lambda constraint, obj: True,
+                                    sources=lambda _item: False,
+                                    test=lambda _constraint, _obj: True,
                                     force_unique=True,
                                 ),
                             ]
@@ -579,11 +596,24 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
         super(Asn_Lv2MIRLRSFixedSlitNod, self).__init__(*args, **kwargs)
 
     def get_exposure_type(self, item, default="science"):
-        """Modify exposure type depending on dither pointing index
+        """
+        Modify exposure type depending on dither pointing index.
 
         Behaves as the superclass method. However, if the constraint
         `is_current_patt_num` is True, mark the exposure type as
         `background`.
+
+        Parameters
+        ----------
+        item : member
+            The item to pull exposure type from.
+        default : str
+            The default value if no exposure type is present, defaults to "science".
+
+        Returns
+        -------
+        str
+            The exposure type of the item.
         """
         exp_type = super(Asn_Lv2MIRLRSFixedSlitNod, self).get_exposure_type(item, default)
         if exp_type == "science" and self.constraints["is_current_patt_num"].matched:
@@ -594,7 +624,8 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
 @RegistryMarker.rule
 class Asn_Lv2NRSLAMPImage(AsnMixin_Lv2Image, AsnMixin_Lv2Special, DMSLevel2bBase):
-    """Level2b NIRSpec image Lamp Calibrations Association
+    """
+    Level2b NIRSpec image Lamp Calibrations Association.
 
     Characteristics:
         - Association type: ``image2``
@@ -620,7 +651,8 @@ class Asn_Lv2NRSLAMPImage(AsnMixin_Lv2Image, AsnMixin_Lv2Special, DMSLevel2bBase
 
 @RegistryMarker.rule
 class Asn_Lv2NRSLAMPSpectral(AsnMixin_Lv2Special, DMSLevel2bBase):
-    """Level2b NIRSpec spectral Lamp Calibrations Association
+    """
+    Level2b NIRSpec spectral Lamp Calibrations Association.
 
     Characteristics:
         - Association type: ``nrslamp-spec2``
@@ -642,7 +674,7 @@ class Asn_Lv2NRSLAMPSpectral(AsnMixin_Lv2Special, DMSLevel2bBase):
                 DMSAttrConstraint(name="opt_elem", sources=["filter"], value="opaque"),
                 SimpleConstraint(
                     value=True,
-                    test=lambda value, item: nrslamp_valid_detector(item),
+                    test=lambda _value, item: nrslamp_valid_detector(item),
                     force_unique=False,
                 ),
                 Constraint(
@@ -696,7 +728,7 @@ class Asn_Lv2NRSLAMPSpectral(AsnMixin_Lv2Special, DMSLevel2bBase):
         super(Asn_Lv2NRSLAMPSpectral, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
+        """Post-check and pre-add initialization."""
         super(Asn_Lv2NRSLAMPSpectral, self)._init_hook(item)
         self.data["asn_type"] = "nrslamp-spec2"
 
@@ -706,7 +738,8 @@ class Asn_Lv2WFSSNIS(
     AsnMixin_Lv2WFSS,
     AsnMixin_Lv2Spectral,
 ):
-    """Level2b WFSS/GRISM Association
+    """
+    Level2b WFSS/GRISM Association.
 
     Characteristics:
         - Association type: ``spec2``
@@ -776,7 +809,8 @@ class Asn_Lv2WFSSNRC(
     AsnMixin_Lv2WFSS,
     AsnMixin_Lv2Spectral,
 ):
-    """Level2b WFSS/GRISM Association
+    """
+    Level2b WFSS/GRISM Association.
 
     Characteristics:
         - Association type: ``spec2``
@@ -835,7 +869,8 @@ class Asn_Lv2WFSSNRC(
 
 @RegistryMarker.rule
 class Asn_Lv2NRSMSA(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
-    """Level2b NIRSpec MSA Association
+    """
+    Level2b NIRSpec MSA Association.
 
     Characteristics:
         - Association type: ``spec2``
@@ -872,7 +907,8 @@ class Asn_Lv2NRSMSA(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
 @RegistryMarker.rule
 class Asn_Lv2NRSFSS(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
-    """Level2b NIRSpec Fixed-slit Association
+    """
+    Level2b NIRSpec Fixed-slit Association.
 
     Notes
     -----
@@ -897,7 +933,7 @@ class Asn_Lv2NRSFSS(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
                 DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="nrs_fixedslit"),
                 SimpleConstraint(
                     value=True,
-                    test=lambda value, item: nrsfss_valid_detector(item),
+                    test=lambda _value, item: nrsfss_valid_detector(item),
                     force_unique=False,
                 ),
                 Constraint(
@@ -940,7 +976,8 @@ class Asn_Lv2NRSFSS(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
 @RegistryMarker.rule
 class Asn_Lv2NRSIFUNod(AsnMixin_Lv2Imprint, AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
-    """Level2b NIRSpec IFU Association
+    """
+    Level2b NIRSpec IFU Association.
 
     Characteristics:
         - Association type: ``spec2``
@@ -960,7 +997,7 @@ class Asn_Lv2NRSIFUNod(AsnMixin_Lv2Imprint, AsnMixin_Lv2Nod, AsnMixin_Lv2Spectra
                 DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="nrs_ifu"),
                 SimpleConstraint(
                     value=True,
-                    test=lambda value, item: nrsifu_valid_detector(item),
+                    test=lambda _value, item: nrsifu_valid_detector(item),
                     force_unique=False,
                 ),
                 DMSAttrConstraint(
@@ -982,7 +1019,8 @@ class Asn_Lv2NRSIFUNod(AsnMixin_Lv2Imprint, AsnMixin_Lv2Nod, AsnMixin_Lv2Spectra
 
 @RegistryMarker.rule
 class Asn_Lv2WFSC(DMSLevel2bBase):
-    """Level2b Wavefront Sensing & Control Association
+    """
+    Level2b Wavefront Sensing & Control Association.
 
     Characteristics:
         - Association type: ``wfs-image2``
@@ -1017,7 +1055,7 @@ class Asn_Lv2WFSC(DMSLevel2bBase):
         super(Asn_Lv2WFSC, self).__init__(*args, **kwargs)
 
     def _init_hook(self, item):
-        """Post-check and pre-add initialization"""
+        """Post-check and pre-add initialization."""
         super(Asn_Lv2WFSC, self)._init_hook(item)
         self.data["asn_type"] = "wfs-image2"
 
@@ -1027,7 +1065,8 @@ class Asn_Lv2WFSSParallel(
     AsnMixin_Lv2WFSS,
     AsnMixin_Lv2Spectral,
 ):
-    """Level 2b WFSS/GRISM associations for WFSS taken in pure-parallel mode
+    """
+    Level 2b WFSS/GRISM associations for WFSS taken in pure-parallel mode.
 
     Characteristics:
         - Association type: ``spec2``
@@ -1036,15 +1075,15 @@ class Asn_Lv2WFSSParallel(
         - Single Science exposure
         - Require a source catalog from processing of the corresponding direct imagery.
 
-    WFSS is executed different when taken as part of a pure-parallel proposal than when WFSS
-    is done as the primary. The differences are as follows. When primary, all components, the direct
-    image and the two GRISM exposures, are all executed within the same observation. When in parallel,
-    each component is taken as a separate observation.
-    These are always in associations of type DIRECT_IMAGE.
+    WFSS is executed different when taken as part of a pure-parallel proposal than
+    when WFSS is done as the primary. The differences are as follows. When primary,
+    all components, the direct image and the two GRISM exposures, are all executed
+    within the same observation. When in parallel, each component is taken as a separate
+    observation. These are always in associations of type DIRECT_IMAGE.
 
-    Another difference is that there is no ``targetid`` assigned to the parallel exposures. However, since
-    WFSS parallels are very specific, there is not need to constrain on target. A default value is used
-    for the Level 3 product naming.
+    Another difference is that there is no ``targetid`` assigned to the parallel
+    exposures. However, since WFSS parallels are very specific, there is not need to
+    constrain on target. A default value is used for the Level 3 product naming.
     """
 
     def __init__(self, *args, **kwargs):
@@ -1094,8 +1133,9 @@ class Asn_Lv2WFSSParallel(
         super(Asn_Lv2WFSSParallel, self).__init__(*args, **kwargs)
 
     @staticmethod
-    def find_closest_direct(science, directs):
-        """Find the direct image that is closest to the science.
+    def find_closest_direct(_science, directs):
+        """
+        Find the direct image that is closest to the science.
 
         For NIRCam pure parallel observations, there should
         only be one long-wavelength direct image in a given
@@ -1109,36 +1149,37 @@ class Asn_Lv2WFSSParallel(
 
         Parameters
         ----------
-        science : dict
-            The science member to compare against
+        _science : dict
+            The science member to compare against; unused.
 
         directs : [dict[,...]]
-            The available direct members
+            The available direct members.
 
         Returns
         -------
         closest : dict
             The direct image that is the "closest"
         """
-
         long_directs = [d for d in directs if "long" in d["expname"]]
         if len(long_directs) == 0:
             long_directs.append(directs[0])  # If the search fails, just use the first.
 
         return long_directs[0]
 
-    def validate_candidates(self, member):
-        """Stub to always return True
+    def validate_candidates(self, _member):
+        """
+        Stub to always return True.
 
         For this association, stub this to always return True
 
         Parameters
         ----------
-        member : Member
-            Member being added. Ignored.
+        _member : member
+            Member being added; ignored.
 
         Returns
         -------
-        True
+        bool
+            True.
         """
         return True

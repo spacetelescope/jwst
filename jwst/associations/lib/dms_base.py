@@ -1,4 +1,4 @@
-"""Association attributes common to DMS-based Rules"""
+"""Association attributes common to DMS-based Rules."""
 
 from jwst.associations.lib.counter import Counter
 
@@ -253,7 +253,8 @@ _DEGRADED_STATUS_NOTOK = (
 
 
 class DMSBaseMixin(ACIDMixin):
-    """Association attributes common to DMS-based Rules
+    """
+    Association attributes common to DMS-based Rules.
 
     Attributes
     ----------
@@ -262,14 +263,14 @@ class DMSBaseMixin(ACIDMixin):
     """
 
     # Associations of the same type are sequenced.
-    _sequence = Counter(start=1)
+    sequence = Counter(start=1)
 
     def __init__(self, *args, **kwargs):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
 
         self._acid = None
         self._asn_name = None
-        self.sequence = None
+        self.current_sequence = None
         if "degraded_status" not in self.data:
             self.data["degraded_status"] = _DEGRADED_STATUS_OK
         if "program" not in self.data:
@@ -277,7 +278,8 @@ class DMSBaseMixin(ACIDMixin):
 
     @classmethod
     def create(cls, item, version_id=None):
-        """Create association if item belongs
+        """
+        Create association if item belongs.
 
         Parameters
         ----------
@@ -300,12 +302,19 @@ class DMSBaseMixin(ACIDMixin):
         asn, reprocess = super(DMSBaseMixin, cls).create(item, version_id)
         if not asn:
             return None, reprocess
-        asn.sequence = next(asn._sequence)
+        asn.current_sequence = next(asn.sequence)
         return asn, reprocess
 
     @property
     def acid(self):
-        """Association ID"""
+        """
+        Association candidate ID.
+
+        Returns
+        -------
+        str
+            The association candidate ID.
+        """
         acid = self._acid
         if self._acid is None:
             acid = self.acid_from_constraints()
@@ -313,13 +322,19 @@ class DMSBaseMixin(ACIDMixin):
 
     @property
     def asn_name(self):
-        """The association name
+        """
+        The association name.
 
         The name that identifies this association. When dumped,
         will form the basis for the suggested file name.
 
         Typically, it is generated based on the current state of
         the association, but can be overridden.
+
+        Returns
+        -------
+        str
+            The association name in lowercase.
         """
         if self._asn_name:
             return self._asn_name
@@ -327,7 +342,7 @@ class DMSBaseMixin(ACIDMixin):
         program = self.data["program"]
         version_id = self.version_id
         asn_type = self.data["asn_type"]
-        sequence = self.sequence
+        sequence = self.current_sequence
 
         if version_id:
             name = _ASN_NAME_TEMPLATE_STAMP.format(
@@ -348,16 +363,31 @@ class DMSBaseMixin(ACIDMixin):
 
     @asn_name.setter
     def asn_name(self, name):
-        """Override calculated association name"""
+        """Override calculated association name."""
         self._asn_name = name
 
     @property
     def current_product(self):
+        """
+        Return last entry in products list.
+
+        Returns
+        -------
+        dict
+            Last entry in products list.
+        """
         return self.data["products"][-1]
 
     @property
     def from_items(self):
-        """The list of items that contributed to the association."""
+        """
+        The list of items that contributed to the association.
+
+        Returns
+        -------
+        list
+            List of items contributing to association.
+        """
         try:
             items = [member.item for product in self["products"] for member in product["members"]]
         except KeyError:
@@ -366,15 +396,27 @@ class DMSBaseMixin(ACIDMixin):
 
     @property
     def member_ids(self):
-        """Set of all member ids in all products of this association"""
-        member_ids = set(
-            member[MEMBER_KEY] for product in self["products"] for member in product["members"]
-        )
+        """
+        Set of all member ids in all products of this association.
+
+        Returns
+        -------
+        set
+            Set of member ids.
+        """
+        member_ids = {member[MEMBER_KEY] for member in self["product"]["members"]}
         return member_ids
 
     @property
     def validity(self):
-        """Keeper of the validity tests"""
+        """
+        Keeper of the validity tests.
+
+        Returns
+        -------
+        dict
+            Dictionary of validity tests.
+        """
         try:
             validity = self._validity
         except AttributeError:
@@ -384,11 +426,12 @@ class DMSBaseMixin(ACIDMixin):
 
     @validity.setter
     def validity(self, item):
-        """Set validity dict"""
+        """Set validity dict."""
         self._validity = item
 
     def get_exposure_type(self, item, default="science"):
-        """Determine the exposure type of a pool item
+        """
+        Determine the exposure type of a pool item.
 
         Parameters
         ----------
@@ -419,12 +462,18 @@ class DMSBaseMixin(ACIDMixin):
         return get_exposure_type(item, default=default, association=self)
 
     def is_member(self, new_member):
-        """Check if member is already a member
+        """
+        Check if member is already a member of product members list.
 
         Parameters
         ----------
         new_member : Member
             The member to check for
+
+        Returns
+        -------
+        bool
+            True if member is already in current product members list.
         """
         try:
             current_members = self.current_product["members"]
@@ -437,7 +486,8 @@ class DMSBaseMixin(ACIDMixin):
         return False
 
     def is_item_member(self, item):
-        """Check if item is already a member of this association
+        """
+        Check if item is a member of this association.
 
         Parameters
         ----------
@@ -446,15 +496,15 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        is_item_member : bool
+        bool
             True if item is a member.
         """
         return item in self.from_items
 
     def is_item_ami(self, item):
-        """Is the given item AMI (NIRISS Aperture Masking Interferometry)
-
+        """
         Determine whether the specific item represents AMI data or not.
+
         This simply includes items with EXP_TYPE='NIS_AMI'.
 
         Parameters
@@ -464,7 +514,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        is_item_ami : bool
+        bool
             Item represents an AMI exposure.
         """
         # If not a science exposure, such as target acquisitions,
@@ -485,13 +535,12 @@ class DMSBaseMixin(ACIDMixin):
         return is_ami
 
     def is_item_coron(self, item):
-        """Is the given item Coronagraphic
+        """
+        Determine whether the specific item is coronagraphic data.
 
-        Determine whether the specific item represents
-        true Coronagraphic data or not. This will include all items
-        in CORON_EXP_TYPES (both NIRCam and MIRI), **except** for
-        NIRCam short-wave detectors included in a coronagraphic exposure
-        but do not have an occulter in their field-of-view.
+        This will include all items in CORON_EXP_TYPES (both NIRCam and MIRI),
+        **except** for NIRCam short-wave detectors included in a
+        coronagraphic exposure but do not have an occulter in their field-of-view.
 
         Parameters
         ----------
@@ -500,7 +549,7 @@ class DMSBaseMixin(ACIDMixin):
 
         Returns
         -------
-        is_item_coron : bool
+        bool
             Item represents a true Coron exposure.
         """
         # If not a science exposure, such as target acquisitions,
@@ -530,24 +579,23 @@ class DMSBaseMixin(ACIDMixin):
         return is_coron
 
     def is_item_tso(self, item, other_exp_types=None):
-        """Is the given item TSO
+        """
+        Determine whether given item is TSO.
 
-        Determine whether the specific item represents
-        TSO data or not. This is used to determine the
-        naming of files, i.e. "rate" vs "rateints" and
-        "cal" vs "calints".
+        This is used to determine the naming of files,
+        i.e. "rate" vs "rateints" and "cal" vs "calints".
 
         Parameters
         ----------
         item : dict
             The item to check for.
 
-        other_exp_types: [str[,...]] or None
+        other_exp_types : [str[,...]] or None
             List of other exposure types to consider TSO-like.
 
         Returns
         -------
-        is_item_tso : bool
+        bool
             Item represents a TSO exposure.
         """
         # If not a science exposure, such as target acquisitions,
@@ -581,15 +629,16 @@ class DMSBaseMixin(ACIDMixin):
         return is_tso
 
     def item_getattr(self, item, attributes):
-        """Return value from any of a list of attributes
+        """
+        Return value from any of a list of attributes.
 
         Parameters
         ----------
         item : dict
-            item to retrieve from
+            Item to retrieve from.
 
         attributes : list
-            List of attributes
+            List of attributes.
 
         Returns
         -------
@@ -605,15 +654,16 @@ class DMSBaseMixin(ACIDMixin):
         return item_getattr(item, attributes, self)
 
     def new_product(self, product_name=PRODUCT_NAME_DEFAULT):
-        """Start a new product"""
+        """Start a new product."""
         product = {"name": product_name, "members": []}
         try:
             self.data["products"].append(product)
         except (AttributeError, KeyError):
             self.data["products"] = [product]
 
-    def update_asn(self, item=None, member=None):
-        """Update association meta information
+    def update_asn(self, item=None, member=None):  # noqa: ARG002
+        """
+        Update association meta information.
 
         Parameters
         ----------
@@ -634,7 +684,7 @@ class DMSBaseMixin(ACIDMixin):
         self.update_degraded_status()
 
     def update_degraded_status(self):
-        """Update association degraded status"""
+        """Update association degraded status."""
         if self.data["degraded_status"] == _DEGRADED_STATUS_OK:
             for product in self.data["products"]:
                 for member in product["members"]:
@@ -648,16 +698,31 @@ class DMSBaseMixin(ACIDMixin):
                             break
 
     def update_validity(self, entry):
+        """Update validity checks for validity tests that aren't validated."""
         for test in self.validity.values():
             if not test["validated"]:
                 test["validated"] = test["check"](entry)
 
     @classmethod
     def reset_sequence(cls):
-        cls._sequence = Counter(start=1)
+        """Reset sequence counter to one."""
+        cls.sequence = Counter(start=1)
 
     @classmethod
     def validate(cls, asn):
+        """
+        Validate candidate against all asn validity tests.
+
+        Parameters
+        ----------
+        asn : ~jwst.association.Association
+            The asn candidate to validate.
+
+        Returns
+        -------
+        bool
+            True if candidate is valid.
+        """
         super(DMSBaseMixin, cls).validate(asn)
 
         if isinstance(asn, DMSBaseMixin):
@@ -665,14 +730,15 @@ class DMSBaseMixin(ACIDMixin):
             try:
                 result = all(test["validated"] for test in asn.validity.values())
             except (AttributeError, KeyError):
-                raise AssociationNotValidError("Validation failed")
+                raise AssociationNotValidError("Validation failed") from None
             if not result:
                 raise AssociationNotValidError("Validation failed validity tests.")
 
         return True
 
     def get_exposure(self):
-        """Get string representation of the exposure id
+        """
+        Get string representation of the exposure id.
 
         Returns
         -------
@@ -691,7 +757,8 @@ class DMSBaseMixin(ACIDMixin):
         return exposure
 
     def get_instrument(self):
-        """Get string representation of the instrument
+        """
+        Get string representation of the instrument.
 
         Returns
         -------
@@ -703,7 +770,9 @@ class DMSBaseMixin(ACIDMixin):
         return instrument
 
     def get_opt_element(self):
-        """Get string representation of the optical elements.
+        """
+        Get string representation of the optical elements.
+
         This includes only elements contained in the filter/pupil
         wheels of the instrument.
 
@@ -736,7 +805,8 @@ class DMSBaseMixin(ACIDMixin):
         return opt_elem
 
     def get_slit_name(self):
-        """Get string representation of the slit name (NIRSpec fixed-slit only)
+        """
+        Get string representation of the slit name (NIRSpec fixed-slit only).
 
         Returns
         -------
@@ -766,7 +836,8 @@ class DMSBaseMixin(ACIDMixin):
         return slit_name
 
     def get_subarray(self):
-        """Get string representation of the subarray
+        """
+        Get string representation of the subarray.
 
         Returns
         -------
@@ -787,7 +858,8 @@ class DMSBaseMixin(ACIDMixin):
         return result
 
     def get_target(self):
-        """Get string representation of the target
+        """
+        Get string representation of the target.
 
         Returns
         -------
@@ -805,7 +877,8 @@ class DMSBaseMixin(ACIDMixin):
         return target
 
     def get_grating(self):
-        """Get string representation of the grating in use
+        """
+        Get string representation of the grating in use.
 
         Returns
         -------
@@ -818,7 +891,19 @@ class DMSBaseMixin(ACIDMixin):
         return grating
 
     def __eq__(self, other):
-        """Compare equality of two associations"""
+        """
+        Compare equality of two associations.
+
+        Parameters
+        ----------
+        other : ~jwst.association.Association
+            The other association to compare against.
+
+        Returns
+        -------
+        bool
+            True if other association is equal to self.
+        """
         result = NotImplemented
         if isinstance(other, DMSBaseMixin):
             try:
@@ -831,7 +916,19 @@ class DMSBaseMixin(ACIDMixin):
         return result
 
     def __ne__(self, other):
-        """Compare inequality of two associations"""
+        """
+        Compare inequality of two associations.
+
+        Parameters
+        ----------
+        other : ~jwst.association.Association
+            The other association to compare against.
+
+        Returns
+        -------
+        bool
+            True if other association is not equal to self.
+        """
         if isinstance(other, DMSBaseMixin):
             return not self.__eq__(other)
 
@@ -842,7 +939,8 @@ class DMSBaseMixin(ACIDMixin):
 # Basic constraints
 # -----------------
 class DMSAttrConstraint(AttrConstraint):
-    """DMS-focused attribute constraint
+    """
+    DMS-focused attribute constraint.
 
     Forces definition of invalid values
     """
@@ -855,11 +953,12 @@ class DMSAttrConstraint(AttrConstraint):
 
 
 class Constraint_TargetAcq(SimpleConstraint):
-    """Select on target acquisition exposures
+    """
+    Select on target acquisition exposures.
 
     Parameters
     ----------
-    association:  ~jwst.associations.Association
+    association : ~jwst.associations.Association
         If specified, use the `get_exposure_type` method
         of the association rather than the utility version.
     """
@@ -876,9 +975,9 @@ class Constraint_TargetAcq(SimpleConstraint):
 
 
 class Constraint_TSO(Constraint):
-    """Match on Time-Series Observations"""
+    """Match on Time-Series Observations."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
         super(Constraint_TSO, self).__init__(
             [
                 DMSAttrConstraint(sources=["pntgtype"], value="science"),
@@ -901,9 +1000,9 @@ class Constraint_TSO(Constraint):
 
 
 class Constraint_WFSC(Constraint):
-    """Match on Wave Front Sensing and Control Observations"""
+    """Match on Wave Front Sensing and Control Observations."""
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, **kwargs):  # noqa: ARG002
         super(Constraint_WFSC, self).__init__(
             [
                 Constraint(
@@ -921,29 +1020,40 @@ class Constraint_WFSC(Constraint):
 # Utilities
 # #########
 def format_list(alist):
-    """Format a list according to DMS naming specs"""
+    """
+    Format a list according to DMS naming specs.
+
+    Parameters
+    ----------
+    alist : list
+        The list of strings.
+
+    Returns
+    -------
+    str
+        A formatted string generated from the list of strings provided.
+    """
     return "-".join(alist)
 
 
 def get_exposure_type(item, default="science", association=None):
-    """Determine the exposure type of a pool item
+    """
+    Determine the exposure type of a pool item.
 
     Parameters
     ----------
     item : dict
         The pool entry to determine the exposure type of
-
     default : str or None
         The default exposure type.
         If None, routine will raise LookupError
-
-
+    association : Association
+        Association, if provided.
 
     Returns
     -------
     exposure_type : str
         Exposure type. Can be one of
-
         - 'science': Item contains science data
         - 'target_acquisition': Item contains target acquisition data.
         - 'autoflat': NIRSpec AUTOFLAT
@@ -959,9 +1069,22 @@ def get_exposure_type(item, default="science", association=None):
 
     # Specify how attributes of the item are retrieved.
     def _item_attr(item, sources):
-        """Get attribute value of an item
+        """
+        Get attribute value of an item.
 
-        This simplifies the call to `item_getattr`
+        This simplifies the call to `item_getattr`.
+
+        Parameters
+        ----------
+        item : object or dict
+            The item with attributes.
+        sources : str or [str, ...]
+            The attributes to get values for.
+
+        Returns
+        -------
+        value
+            The attribute value of the item.
         """
         source, value = item_getattr(item, sources, association=association)
         return value
@@ -985,7 +1108,7 @@ def get_exposure_type(item, default="science", association=None):
     try:
         exp_type = _item_attr(item, ["exp_type"])
     except KeyError:
-        raise LookupError("Exposure type cannot be determined")
+        raise LookupError("Exposure type cannot be determined") from None
 
     result = EXPTYPE_MAP.get(exp_type, default)
 
@@ -1011,15 +1134,16 @@ def get_exposure_type(item, default="science", association=None):
 
 
 def item_getattr(item, attributes, association=None):
-    """Return value from any of a list of attributes
+    """
+    Return value from any of a list of attributes.
 
     Parameters
     ----------
     item : dict
-        item to retrieve from
+        Item to retrieve from.
 
     attributes : list
-        List of attributes
+        List of attributes.
 
     Returns
     -------
@@ -1040,10 +1164,17 @@ def item_getattr(item, attributes, association=None):
 
 
 def nrsfss_valid_detector(item):
-    """Check that a slit/grating/filter combo can appear on the detector"""
+    """
+    Check that a slit/grating/filter combo can appear on the detector.
+
+    Returns
+    -------
+    bool
+        True if the slit+grating+filter combination can generate data on the detector.
+    """
     try:
         _, detector = item_getattr(item, ["detector"])
-        _, filter = item_getattr(item, ["filter"])
+        _, nrs_filter = item_getattr(item, ["filter"])
         _, grating = item_getattr(item, ["grating"])
         _, slit = item_getattr(item, ["fxd_slit"])
     except KeyError:
@@ -1053,27 +1184,41 @@ def nrsfss_valid_detector(item):
     if slit != "s200b1":
         slit = "a"
 
-    return (slit, grating, filter, detector) in NRS_FSS_VALID_OPTICAL_PATHS
+    return (slit, grating, nrs_filter, detector) in NRS_FSS_VALID_OPTICAL_PATHS
 
 
 def nrsifu_valid_detector(item):
-    """Check that a grating/filter combo can appear on the detector"""
+    """
+    Check that a grating/filter combo can appear on the detector.
+
+    Returns
+    -------
+    bool
+        True if the grating+filter combination can generate data on the detector.
+    """
     _, exp_type = item_getattr(item, ["exp_type"])
     if exp_type != "nrs_ifu":
         return True
 
     try:
         _, detector = item_getattr(item, ["detector"])
-        _, filter = item_getattr(item, ["filter"])
+        _, nrs_filter = item_getattr(item, ["filter"])
         _, grating = item_getattr(item, ["grating"])
     except KeyError:
         return False
 
-    return (grating, filter, detector) in NRS_IFU_VALID_OPTICAL_PATHS
+    return (grating, nrs_filter, detector) in NRS_IFU_VALID_OPTICAL_PATHS
 
 
 def nrslamp_valid_detector(item):
-    """Check that a grating/lamp combo can appear on the detector"""
+    """
+    Check that a grating/lamp combo can appear on the detector.
+
+    Returns
+    -------
+    bool
+        True if the grating+lamp combination can generate data on the detector.
+    """
     try:
         _, detector = item_getattr(item, ["detector"])
         _, grating = item_getattr(item, ["grating"])
@@ -1123,7 +1268,14 @@ def nrslamp_valid_detector(item):
 
 
 def nrccoron_valid_detector(item):
-    """Check that a coronagraphic mask+detector combo is valid"""
+    """
+    Check that a coronagraphic mask+detector combo is valid.
+
+    Returns
+    -------
+    bool
+        True if the mask+detector combination should be calibrated.
+    """
     try:
         _, detector = item_getattr(item, ["detector"])
         _, subarray = item_getattr(item, ["subarray"])
@@ -1146,14 +1298,21 @@ def nrccoron_valid_detector(item):
 
 
 def nissoss_calibrated_filter(item):
-    """Check that a NIRISS filter is calibrated."""
+    """
+    Check that a NIRISS filter is calibrated.
+
+    Returns
+    -------
+    bool
+        True if filter is to be calibrated.
+    """
     _, exp_type = item_getattr(item, ["exp_type"])
     if exp_type != "nis_soss":
         return True
 
     try:
-        _, filter = item_getattr(item, ["filter"])
+        _, nis_filter = item_getattr(item, ["filter"])
     except KeyError:
         return False
 
-    return filter not in NIS_SOSS_UNCALIBRATED_FILTERS
+    return nis_filter not in NIS_SOSS_UNCALIBRATED_FILTERS

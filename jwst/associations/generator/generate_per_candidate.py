@@ -24,7 +24,8 @@ def generate_per_candidate(
     ignore_default=False,
     dms_enabled=False,
 ):
-    """Generate associations in the pool according to the rules.
+    """
+    Generate associations in the pool according to the rules.
 
     Parameters
     ----------
@@ -151,7 +152,8 @@ def generate_per_candidate(
 def generate_on_candidate(
     cid_ctype, pool, rule_defs, version_id=None, ignore_default=False, dms_enabled=False
 ):
-    """Generate associations based on a candidate ID
+    """
+    Generate associations based on a candidate ID.
 
     Parameters
     ----------
@@ -221,7 +223,8 @@ def generate_on_candidate(
 
 
 def ids_by_ctype(pool):
-    """Groups candidate ids by the candidate type
+    """
+    Group candidate ids by the candidate type.
 
     Parameters
     ----------
@@ -241,8 +244,8 @@ def ids_by_ctype(pool):
             ids_by_ctype["unknown"].append(str(candidates))
             continue
         try:
-            for id, ctype in candidates:
-                ids_by_ctype[ctype].append(id)
+            for cand_id, ctype in candidates:
+                ids_by_ctype[ctype].append(cand_id)
         except ValueError:
             logger.debug("Cannot parse asn_candidate field: %s", candidates)
 
@@ -253,7 +256,8 @@ def ids_by_ctype(pool):
 
 
 def pool_from_candidate(pool, candidate):
-    """Create a pool containing only the candidate
+    """
+    Create a pool containing only the candidate.
 
     Parameters
     ----------

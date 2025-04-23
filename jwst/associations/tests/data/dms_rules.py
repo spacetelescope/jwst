@@ -17,14 +17,33 @@ class AsnDMSBase(DMSBaseMixin, Association):
         self.data["members"] = []
 
     def make_member(self, item):
-        """Return item; dummy method."""
+        """
+        Return item; placeholder method.
+
+        Parameters
+        ----------
+        item : Member
+            Member.
+
+        Returns
+        -------
+        Member
+            The item provided - this is a placeholder method.
+        """
         return item
 
     def _add(self, item):
         self.data["members"].append(item)
 
     def finalize(self):
-        """Perform finalization steps."""
+        """
+        Perform finalization steps.
+
+        Returns
+        -------
+        list(self)
+            Return self in a list.
+        """
         return [self]
 
 

@@ -14,7 +14,8 @@ __all__ = ["generate"]
 
 
 def generate(pool, rules, version_id=None, finalize=True):
-    """Generate associations in the pool according to the rules.
+    """
+    Generate associations in the pool according to the rules.
 
     Parameters
     ----------
@@ -108,7 +109,8 @@ def generate(pool, rules, version_id=None, finalize=True):
 
 
 def generate_from_item(item, version_id, associations, rules, process_list):
-    """Either match or generate a new association
+    """
+    Either match or generate a new association.
 
     Parameters
     ----------
@@ -133,14 +135,15 @@ def generate_from_item(item, version_id, associations, rules, process_list):
 
     Returns
     -------
-    (associations, process_list): 3-tuple where
-        existing_asns : [association,...]
-            List of existing associations item belongs to.
-            Empty if none match
-        new_asns : [association,...]
-            List of new associations item creates. Empty if none match
-        process_list : [ProcessList, ...]
-            List of process events.
+    Tuple
+        A 3-tuple containing:
+            existing_asns : [association,...]
+                List of existing associations item belongs to.
+                Empty if none match
+            new_asns : [association,...]
+                List of new associations item creates. Empty if none match
+            process_list : [ProcessList, ...]
+                List of process events.
     """
     # Setup the rules allowed to be examined.
     if process_list.rules is None or len(process_list.rules) == 0:
@@ -172,7 +175,7 @@ def generate_from_item(item, version_id, associations, rules, process_list):
         )
         and rules is not None
     ):
-        ignore_asns = set([type(asn) for asn in existing_asns])
+        ignore_asns = {type(asn) for asn in existing_asns}
         new_asns, reprocess = rules.match(
             item,
             version_id=version_id,
@@ -185,7 +188,8 @@ def generate_from_item(item, version_id, associations, rules, process_list):
 
 
 def match_item(item, associations):
-    """Match item to a list of associations
+    """
+    Match item to a list of associations.
 
     Parameters
     ----------
@@ -199,11 +203,12 @@ def match_item(item, associations):
 
     Returns
     -------
-    (associations, process_list): 2-tuple where
-        associations : [association,...]
-            List of associations item belongs to. Empty if none match
-        process_list : [ProcessList, ...]
-            List of process events.
+    (associations, process_list) : 2-tuple
+        A tuple containing:
+            associations : [association,...]
+                List of associations item belongs to. Empty if none match
+            process_list : [ProcessList, ...]
+                List of process events.
     """
     item_associations = []
     process_list = []

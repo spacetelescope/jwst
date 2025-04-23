@@ -1,7 +1,8 @@
-import os
-import json
+"""Association edit operations."""
+
 import warnings
 import os.path as op
+from pathlib import Path
 
 from ..lib import suffix
 from . import Association, AssociationNotValidError
@@ -11,6 +12,8 @@ from . import Association, AssociationNotValidError
 
 
 class AsnFileWarning(Warning):
+    """Generic association file warning."""
+
     pass
 
 
@@ -34,7 +37,7 @@ def add(asn, filenames, exptype):
     """
     for filename in filenames:
         path = _path(filename)
-        expname = op.basename(path)
+        expname = Path(path).name
         member = {"expname": expname, "exptype": exptype}
 
         for product in asn["products"]:
@@ -57,16 +60,16 @@ def reader(association_file):
     object
         The association object.
     """
-    association_path = _path(association_file)
+    association_path = str(_path(association_file))
     asn_format = association_path.split(".")[-1]
     if asn_format != "json":
         raise OSError("This is not an association file: " + association_file)
     try:
-        with open(association_path) as fd:
+        with Path.open(association_path) as fd:
             serialized = fd.read()
             asn = Association.load(serialized, format=asn_format)
-    except AssociationNotValidError:
-        raise OSError("Cannot read association file: " + association_file)
+    except AssociationNotValidError as err:
+        raise OSError("Cannot read association file: " + association_file) from err
     return asn
 
 
@@ -102,42 +105,9 @@ def remove(asn, filenames, ignore):
 
     if len(not_found) > 0:
         errmsg = "Filenames not found: " + ",".join(not_found)
-        warnings.warn(errmsg, AsnFileWarning)
+        warnings.warn(errmsg, AsnFileWarning, stacklevel=1)
 
     return asn
-
-
-def writer(asn, output_file):
-    """
-    Write the association out to disk.
-
-    Parameters
-    ----------
-    asn : object
-        An association object
-    output_file : str
-        The filename of the association
-    """
-    asn_format = output_file.split(".")[-1]
-    if asn_format != "json":
-        raise ValueError("Only json format supported for output: " + output_file)
-
-    serialized = json.dumps(asn, indent=4, separators=(",", ": "))
-
-    in_place = op.exists(output_file)
-    if in_place:
-        temp_file = _rename(output_file)
-
-    try:
-        fd = open(output_file, "w")
-        fd.write(serialized)
-        fd.close()
-    except ValueError as err:
-        if in_place:
-            os.rename(temp_file, output_file)
-        raise err
-    if in_place:
-        os.remove(temp_file)
 
 
 # -----------------------------------------------------------------------
@@ -156,8 +126,8 @@ def _lookup(asn, filename, ignore_suffix=False):
     """
     found = []
     path = _path(filename)
-    basename = op.basename(path)
-    (root, _) = op.splitext(basename)
+    basename = path.name
+    root = Path(basename).stem
     if ignore_suffix:
         search_key, _ = suffix.remove_suffix(root)
     else:
@@ -168,7 +138,7 @@ def _lookup(asn, filename, ignore_suffix=False):
             expname = member.get("expname")
             if expname:
                 if ignore_suffix:
-                    (root, _) = op.splitext(expname)
+                    root = Path(expname).stem
                     match_key, _ = suffix.remove_suffix(root)
                 else:
                     match_key = expname
@@ -188,22 +158,4 @@ def _path(filename):
         Full path including any username and environment
         variables included.
     """
-    return op.abspath(op.expanduser(op.expandvars(filename)))
-
-
-def _rename(output_file):
-    """
-    Rename output file to prevent overwriting.
-
-    Returns
-    -------
-    str
-        Renamed filename string.
-    """
-    trial = 0
-    while 1:
-        trial += 1
-        temp_file = "%s.sv%02d" % (output_file, trial)
-        if not op.exists(temp_file):
-            os.rename(output_file, temp_file)
-            return temp_file
+    return Path(op.expandvars(filename)).expanduser().resolve()

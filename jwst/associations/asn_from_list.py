@@ -2,6 +2,7 @@
 
 import argparse
 import sys
+from pathlib import Path
 
 from . import AssociationRegistry
 from .lib.rules_level3_base import DMS_Level3_Base
@@ -35,14 +36,12 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
     It is presumed the user knows what they are doing.
     """
     asn = rule()
-    asn._add_items(items, **kwargs)
+    asn._add_items(items, **kwargs)  # noqa: SLF001
     return asn
 
 
 class Main:
-    """
-    Command-line interface for asn_from_list.
-    """
+    """Command-line interface for asn_from_list."""
 
     def __init__(self, args=None):
         """
@@ -162,7 +161,7 @@ class Main:
     def save(self):
         """Save association."""
         parsed = self.parsed
-        with open(parsed.output_file, "w") as outfile:
+        with Path.open(parsed.output_file, "w") as outfile:
             name, serialized = self.asn.dump(format=parsed.format)
             outfile.write(serialized)
 

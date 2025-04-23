@@ -1,25 +1,26 @@
-"""Association Member"""
+"""Association Member."""
 
 from collections import UserDict
 from copy import copy
 
 
 class Member(UserDict):
-    """Member of an association
+    """
+    Member of an association.
 
     Parameters
     ----------
-    initialdata: Dict-like or Member
+    initialdata : Dict-like or Member
         Initialization data. Any type of initialization that
         `collections.UserDict` allows or `Member` itself.
 
-    item: obj
+    item : object
         The item to initialize with. This will override
         any `Member.item` given in `initialdata`.
 
     Attributes
     ----------
-    item: obj
+    item : object
         The original item that created this member.
     """
 
@@ -36,11 +37,22 @@ class Member(UserDict):
             self.item = copy(item)
 
     def __eq__(self, other):
-        """Compare members
+        """
+        Compare members.
 
         If both Members have attributes `expname` and `exptype`,
         compare only those attributes. Otherwise, use the default
         comparison.
+
+        Parameters
+        ----------
+        other : object
+            The comparison object.
+
+        Returns
+        -------
+        bool
+            True if deemed equal/equivalent.
         """
         hasexpkeys = all(k in data for k in ("expname", "exptype") for data in (self, other))
         if hasexpkeys:

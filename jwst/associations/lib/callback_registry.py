@@ -1,4 +1,4 @@
-"""Callback registry"""
+"""Callback registry."""
 
 from jwst.lib.signal_slot import Signal
 
@@ -6,13 +6,13 @@ __all__ = ["CallbackRegistry"]
 
 
 class CallbackRegistry:
-    """Callback registry"""
+    """Callback registry."""
 
     def __init__(self):
-        self.registry = dict()
+        self.registry = {}
 
     def add(self, event, callback):
-        """Add a callback to an event"""
+        """Add a callback to an event."""
         try:
             signal = self.registry[event]
         except KeyError:
@@ -21,19 +21,19 @@ class CallbackRegistry:
         self.registry[event] = signal
 
     def reduce(self, event, *args):
-        """Perform a reduction on the event args
+        """
+        Perform a reduction on the event args.
 
         Parameters
         ----------
-        args : [arg[,...]]
+        *args : [arg[,...]]
             The args to filter
 
         Returns
         -------
-        The reduced results.
-        If no results can be determined,
-        such as if no callbacks were registered,
-        `None` is returned.
+        list, dict or None
+            The reduced results; if no results can be determined,
+            such as if no callbacks were registered, `None` is returned.
 
         Notes
         -----
@@ -45,18 +45,23 @@ class CallbackRegistry:
         There is no guarantee on order which the registered
         callbacks are made. Currently, the callbacks are in a list.
         Hence, the callbacks will be called in the order registered.
-
         """
         result = self.registry[event].reduce(*args)
         return result
 
     def add_decorator(self, event):
-        """Add callbacks by decoration
+        """
+        Add callbacks by decoration.
 
         Parameters
         ----------
         event : str
             The name of event to attach the object to.
+
+        Returns
+        -------
+        decorator
+            The decorator attached to the provided event name.
         """
 
         def decorator(func):

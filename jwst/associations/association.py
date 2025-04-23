@@ -4,14 +4,15 @@ import json
 import jsonschema
 import logging
 import re
-import os
 import warnings
+from os import path as os_path
+from pathlib import Path
 
 from jwst import __version__
 from .exceptions import AssociationNotValidError
 from .lib.constraint import Constraint, meets_conditions
 from stpipe.format_template import FormatTemplate
-from .lib.ioregistry import IORegistry
+from .lib.keyvalue_registry import KeyValueRegistry
 
 __all__ = ["Association"]
 
@@ -25,18 +26,14 @@ _TIMESTAMP_TEMPLATE = "%Y%m%dt%H%M%S"
 
 
 class Association(MutableMapping):
-    """Association Base Class
+    """
+    Association Base Class.
 
     Parameters
     ----------
     version_id : str or None
         Version ID to use in the name of this association.
         If None, nothing is added.
-
-    Raises
-    ------
-    AssociationError
-        If an item doesn't match.
 
     Attributes
     ----------
@@ -55,6 +52,11 @@ class Association(MutableMapping):
     schema_file : str
         The name of the output schema that an association
         must adhere to.
+
+    Raises
+    ------
+    AssociationError
+        If an item doesn't match.
     """
 
     registry = None
@@ -79,14 +81,14 @@ class Association(MutableMapping):
     attribute is not specified.
     """
 
-    ioregistry: IORegistry = IORegistry()
+    ioregistry: KeyValueRegistry = KeyValueRegistry()
     """The association IO registry"""
 
     def __init__(
         self,
         version_id=None,
     ):
-        self.data = dict()
+        self.data = {}
         self.run_init_hook = True
         self.meta = {}
 
@@ -113,7 +115,8 @@ class Association(MutableMapping):
 
     @classmethod
     def create(cls, item, version_id=None):
-        """Create association if item belongs
+        """
+        Create association if item belongs.
 
         Parameters
         ----------
@@ -140,21 +143,44 @@ class Association(MutableMapping):
 
     @property
     def asn_name(self):
-        """Suggest filename for the association"""
+        """
+        Suggest filename for the association.
+
+        Returns
+        -------
+        str
+            Default asn name of 'unnamed_association'.
+        """
         return "unnamed_association"
 
     @classmethod
     def rule_name(cls):
+        """
+        Return rule name.
+
+        Returns
+        -------
+        str
+            The name of the rule class.
+        """
         return cls.__name__
 
     @property
     def asn_rule(self):
-        """Name of the rule"""
+        """
+        Name of the rule.
+
+        Returns
+        -------
+        str
+            The asn rule name.
+        """
         return self.rule_name()
 
     @classmethod
     def validate(cls, asn):
-        """Validate an association against this rule
+        """
+        Validate an association against this rule.
 
         Parameters
         ----------
@@ -186,7 +212,7 @@ class Association(MutableMapping):
         else:
             asn_data = asn
 
-        with open(cls.schema_file, "r") as schema_file:
+        with Path.open(cls.schema_file, "r") as schema_file:
             asn_schema = json.load(schema_file)
 
         try:
@@ -200,24 +226,25 @@ class Association(MutableMapping):
         for product in asn_data["products"]:
             members = product["members"]
             for member in members:
-                fpath, fname = os.path.split(member["expname"])
+                fpath, fname = os_path.split(member["expname"])
                 if len(fpath) > 0:
                     err_str = "Input association file contains path information;"
                     err_str += " note that this can complicate usage and/or sharing"
                     err_str += " of such files."
                     logger.debug(err_str)
-                    warnings.warn(err_str, UserWarning)
+                    warnings.warn(err_str, UserWarning, stacklevel=1)
         return True
 
     def dump(self, fmt=None, **kwargs):
-        """Serialize the association
+        """
+        Serialize the association.
 
         Parameters
         ----------
         fmt : str
             The format to use to dump the association into.
 
-        kwargs : dict
+        **kwargs : dict
             List of arguments to pass to the registered
             routines for the current association type.
 
@@ -245,7 +272,8 @@ class Association(MutableMapping):
 
     @classmethod
     def load(cls, serialized, fmt=None, validate=True, **kwargs):
-        """Marshall a previously serialized association
+        """
+        Marshall a previously serialized association.
 
         Parameters
         ----------
@@ -258,7 +286,7 @@ class Association(MutableMapping):
         validate : bool
             Validate against the class' defined schema, if any.
 
-        kwargs : dict
+        **kwargs : dict
             Other arguments to pass to the `load` method
 
         Returns
@@ -303,7 +331,14 @@ class Association(MutableMapping):
 
     @property
     def is_valid(self):
-        """Check if association is valid"""
+        """
+        Check if association is valid.
+
+        Returns
+        -------
+        bool
+            True if association is valid.
+        """
         try:
             self.__class__.validate(self)
         except AssociationNotValidError:
@@ -311,7 +346,8 @@ class Association(MutableMapping):
         return True
 
     def add(self, item, check_constraints=True):
-        """Add the item to the association
+        """
+        Add the item to the association.
 
         Parameters
         ----------
@@ -355,8 +391,8 @@ class Association(MutableMapping):
         return match, reprocess
 
     def check_and_set_constraints(self, item):
-        """Check whether the given dictionaries match parameters for
-        for this association
+        """
+        Check whether the given dictionaries match parameters for this association.
 
         Parameters
         ----------
@@ -370,7 +406,6 @@ class Association(MutableMapping):
             2-tuple consisting of:
                 - bool : Did constraint match?
                 - [ProcessItem[, ...]]: List of items to process again.
-
         """
         self.constraints.preserve()
         match, reprocess = self.constraints.check_and_set(item)
@@ -385,16 +420,14 @@ class Association(MutableMapping):
 
         return match, reprocess
 
-    def match_constraint(self, item, constraint, conditions):
-        """Generic constraint checking
+    def match_constraint(self, item, conditions):
+        """
+        Match against constraints.
 
         Parameters
         ----------
         item : dict
             The item to retrieve the values from
-
-        constraint : str
-            The name of the constraint
 
         conditions : dict
             The conditions structure
@@ -424,7 +457,8 @@ class Association(MutableMapping):
         return True, reprocess
 
     def finalize(self):
-        """Finalize association
+        """
+        Finalize association.
 
         Finalize or close-off this association. Perform validations,
         modifications, etc. to ensure that the association is
@@ -436,7 +470,6 @@ class Association(MutableMapping):
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
-
         """
         if self.is_valid:
             return [self]
@@ -444,7 +477,8 @@ class Association(MutableMapping):
             return None
 
     def is_item_member(self, item):
-        """Check if item is already a member of this association
+        """
+        Check if item is already a member of this association.
 
         Parameters
         ----------
@@ -465,13 +499,14 @@ class Association(MutableMapping):
         pass
 
     def _add(self, item):
-        """Add a item, association-specific"""
+        """Add a item, association-specific."""
         raise NotImplementedError(
             "Association._add must be implemented by a specific association rule."
         )
 
-    def _add_items(self, items, **kwargs):
-        """Force adding items to the association
+    def _add_items(self, items, **kwargs):  # noqa: ARG002
+        """
+        Force adding items to the association.
 
         Parameters
         ----------
@@ -511,12 +546,36 @@ class Association(MutableMapping):
         return key
 
     def keys(self):
+        """
+        Provide keys of data dictionary.
+
+        Returns
+        -------
+        dict_keys
+            The keys of the data dictionary.
+        """
         return self.data.keys()
 
     def items(self):
+        """
+        Provide items of data dictionary.
+
+        Returns
+        -------
+        dict_items
+            The items of the data dictionary.
+        """
         return self.data.items()
 
     def values(self):
+        """
+        Provide values of data dictionary.
+
+        Returns
+        -------
+        dict_values
+            The values of the data dictionary.
+        """
         return self.data.values()
 
 
@@ -524,7 +583,18 @@ class Association(MutableMapping):
 # Utilities
 # #########
 def finalize(asns):
-    """Finalize associations by calling their `finalize_hook` method
+    """
+    Finalize associations by calling their `finalize_hook` method.
+
+    Parameters
+    ----------
+    asns : list[Association, ...]
+        The list of associations to be finalized.
+
+    Returns
+    -------
+    list[Association, ...]
+        The finalized list of associations.
 
     Notes
     -----
@@ -537,9 +607,7 @@ def finalize(asns):
 
        RegistryMarker.callback("finalize")(generic_finalize)
     """
-    finalized_asns = list(
-        filter(lambda asn: asn is not None, map(lambda asn: asn.finalize(), asns))
-    )
+    finalized_asns = list(filter(lambda asn: asn is not None, [asn.finalize() for asn in asns]))
     return finalized_asns
 
 

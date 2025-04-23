@@ -27,7 +27,8 @@ def generate_per_pool(
     merge=False,
     ignore_default=False,
 ):
-    """Generate associations on a specified pool
+    """
+    Generate associations on a specified pool.
 
     Association candidates are filtered based on global constraints added to the rules.
 
