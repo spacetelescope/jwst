@@ -829,7 +829,7 @@ def get_open_msa_slits(
         for x in msa_conf.data
         if x["msa_metadata_id"] == msa_metadata_id and x["dither_point_index"] == dither_position
     ]
-    log.debug(f"msa_data with msa_metadata_id = {msa_metadata_id}   {msa_data}")
+    log.debug(f"msa_data with msa_metadata_id = {msa_metadata_id}   {[str(s) for s in msa_data]}")
     log.info(
         f"Retrieving open MSA slitlets for msa_metadata_id = {msa_metadata_id} "
         f"and dither_index = {dither_position}"
@@ -1081,7 +1081,7 @@ def get_open_msa_slits(
             scale_x,
             scale_y,
         )
-        log.debug(f"Appending slit: {slit_parameters}")
+        log.debug(f"Appending slit: {[str(s) for s in slit_parameters]}")
         slitlets.append(Slit(*slit_parameters))
 
     msa_file.close()
