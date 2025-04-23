@@ -189,8 +189,9 @@ def test_nirspec_ifu_mbkg_nod(rtdata, fitsdiff_default_kwargs, output_file):
     # Get input data
     rtdata.get_asn("nirspec/ifu/jw01252-o001_spec3_00003_asn_with_bg.json")
 
-    MasterBackgroundStep.call(rtdata.input, save_background=True, save_results=True,
-                              suffix='mbsub')
+    with pytest.warns(DeprecationWarning):
+        MasterBackgroundStep.call(rtdata.input, save_background=True, save_results=True,
+                                  suffix='mbsub')
 
     rtdata.output = output_file
 
