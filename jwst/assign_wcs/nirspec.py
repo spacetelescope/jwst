@@ -2341,7 +2341,8 @@ def nrs_wcs_set_input_legacy(
         WCS object for this slit.
     """
     warnings.warn(
-        "This function is intended for use with an old-style NIRSpec WCS pipeline. "
+        "The nrs_wcs_set_input_legacy function is intended for use with an "
+        "old-style NIRSpec WCS pipeline. "
         "It will be removed in a future build.",
         DeprecationWarning,
         stacklevel=2,

@@ -1,14 +1,14 @@
 """Regression tests for NIRSpec IFU"""
-import pytest
+import warnings
 
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 import numpy as np
-
+import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.flatfield import FlatFieldStep
 from jwst.flatfield.flat_field import nirspec_ifu
 from jwst.pathloss import PathLossStep
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 # Define artifactory source and truth
 INPUT_PATH = 'nirspec/ifu'
@@ -20,7 +20,9 @@ def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test using predefined interpolated flat"""
     basename = 'jw01251004001_03107_00001_nrs1'
     output_file = f'{basename}_flat_from_user_model.fits'
-    with pytest.raises(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         with dm.open(rtdata.get_data(f'nirspec/ifu/{basename}_assign_wcs.fits')) as data:
             with dm.open(rtdata.get_data(
                     f'nirspec/ifu/{basename}_interpolatedflat.fits')) as user_supplied_flat:
@@ -46,7 +48,9 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     user_supplied_flat = rtdata.get_data(f'nirspec/ifu/{basename}_interpolatedflat.fits')
 
     # Call the step with a user flat
-    with pytest.raises(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         data_flat_fielded = FlatFieldStep.call(
             data, user_supplied_flat=user_supplied_flat, save_results=False)
 
@@ -63,7 +67,9 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    with pytest.raises(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_assign_wcs.fits')) as data:
             flatted = FlatFieldStep.call(data)
             unflatted = FlatFieldStep.call(flatted, inverse=True)
@@ -86,7 +92,9 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    with pytest.raises(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
             pls = PathLossStep()
             corrected = pls.run(data)
@@ -101,7 +109,9 @@ def test_pathloss_corrpars(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using correction_pars"""
-    with pytest.raises(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
             pls = PathLossStep()
             corrected = pls.run(data)
@@ -117,7 +127,9 @@ def test_pathloss_inverse(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    with pytest.raises(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
             pls = PathLossStep()
             pls.source_type = 'extended'
