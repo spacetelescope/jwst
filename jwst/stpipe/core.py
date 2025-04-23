@@ -3,12 +3,15 @@
 from functools import wraps
 import logging
 import warnings
+from pathlib import Path
+from collections.abc import Sequence
 
-from stdatamodels.jwst.datamodels import JwstDataModel
+from stdatamodels.jwst.datamodels import JwstDataModel, read_metadata
 from stdatamodels.jwst import datamodels
 from stpipe import crds_client, Step, Pipeline
 
 from jwst import __version_commit__, __version__
+from jwst.datamodels import ModelLibrary
 from ._cal_logs import _LOG_FORMATTER
 from ..lib.suffix import remove_suffix
 
@@ -29,6 +32,60 @@ class JwstStep(Step):
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
         return datamodels.open(init, **kwargs)
+
+    @classmethod
+    def _get_crds_parameters(cls, dataset):
+        """
+        Get CRDS parameters for the given dataset.
+
+        If the input dataset is a filename, achieve this by lazy-loading its metadata.
+
+        Parameters
+        ----------
+        dataset : str
+            The name of the dataset.
+
+        Returns
+        -------
+        dict
+            A dictionary of CRDS parameters.
+        str
+            The name of the observatory.
+        """
+        crds_observatory = "jwst"
+
+        if isinstance(dataset, dict):
+            # This is hit if get_crds_parameters is receiving its own output
+            return dataset, crds_observatory
+
+        if isinstance(dataset, ModelLibrary) or (
+            isinstance(dataset, JwstDataModel) and not isinstance(dataset, Sequence)
+        ):
+            # Already open: use the model's method to get CRDS parameters
+            return (
+                dataset.get_crds_parameters(),
+                crds_observatory,
+            )
+
+        if isinstance(dataset, str):
+            dataset = Path(dataset)
+
+        # for associations, only open the first science member
+        # for now just handle these as before: open the model
+        # later, might be good to find a way to lazy-load the first asn member instead
+        if isinstance(dataset, Path) and dataset.suffix.lower() == ".json":
+            open_kwargs = {"asn_n_members": 1, "asn_exptypes": ["science"]}
+            with cls._datamodels_open(dataset, **open_kwargs) as model:
+                # ModelContainer is a Sequence, use the first model
+                if isinstance(model, Sequence):
+                    model = model[0]
+
+                return (model.get_crds_parameters(), crds_observatory)
+
+        # for all other cases, use lazy-load
+        if isinstance(dataset, Path):
+            return (read_metadata(dataset, flatten=True), crds_observatory)
+        raise TypeError(f"Cannot get CRDS parameters for {dataset} of type {type(dataset)}")
 
     def load_as_level2_asn(self, obj):
         """
