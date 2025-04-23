@@ -1,4 +1,5 @@
-import numpy as np
+import warnings
+
 import pytest
 from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
@@ -23,7 +24,9 @@ def test_nirspec_fixedslit_wcs(rtdata, input_file):
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    with pytest.warns(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
             # Check the 4 science slits
             for slit in ['S200A1', 'S200A2', 'S400A1', 'S1600A1']:
@@ -50,7 +53,9 @@ def test_nirspec_mos_wcs(rtdata, input_file, msa_file):
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    with pytest.warns(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
             # Get validated open slits from WCS transform
             slit2msa = im_truth.meta.wcs.get_transform('slit_frame', 'msa_frame')
@@ -80,7 +85,9 @@ def test_nirspec_ifu_wcs(rtdata, input_file):
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    with pytest.warns(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
             # Test all the IFU slices
             for k in range(30):

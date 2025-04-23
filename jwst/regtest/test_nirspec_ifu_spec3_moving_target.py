@@ -1,3 +1,5 @@
+import warnings
+
 import pytest
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
@@ -19,7 +21,9 @@ def run_pipeline(rtdata_module):
     args = ["calwebb_spec3", rtdata.input]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: overflow encountered in multiply
-    with pytest.warns(DeprecationWarning):
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
+        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         Step.from_cmdline(args)
 
 
