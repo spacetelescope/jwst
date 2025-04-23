@@ -16,7 +16,7 @@ image.
     `turbo`, `lanczos2`, and `lanczos3`.
 
 ``--pixel_scale_ratio`` (float, default=1.0)
-    Ratio of input to output pixel scale.
+    Ratio of output pixel scale to input pixel scale.
     For imaging data, a value of 0.5 means the output
     image would have 4 pixels sampling each input pixel.
     Ignored when ``pixel_scale`` or ``output_wcs`` are provided.
