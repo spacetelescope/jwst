@@ -328,7 +328,6 @@ class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
                                     reduce=Constraint.any,
                                 ),
                                 DMSAttrConstraint(name="mostilno", sources=["mostilno"]),
-                                Constraint_Target(),
                             ],
                             reduce=Constraint.all,
                         ),
