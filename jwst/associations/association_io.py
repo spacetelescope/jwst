@@ -16,12 +16,24 @@ logger.addHandler(logging.NullHandler())
 __all__: list = []
 
 
-# Define JSON encoder to convert `Member` to `dict`
 class AssociationEncoder(json_lib.JSONEncoder):
-    """Encode to handle Associations."""
+    """JSON encoder to handle Associations and convert `Member` to dict."""
 
     def default(self, obj):
-        # Convert Member to a simple dict
+        """
+        Convert Member to a simple dict.
+
+        Parameters
+        ----------
+        obj : object
+            The object - if a Member object, return its data attribute.
+
+        Returns
+        -------
+        dict or None
+            Return the Member data dictionary attribute, or
+            None if obj is not a Member instance.
+        """
         if isinstance(obj, Member):
             return obj.data
 

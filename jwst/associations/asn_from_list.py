@@ -79,7 +79,7 @@ class Main:
 
         Returns
         -------
-        object
+        ~jwst.associations.association.Association
             The association created from the list.
         """
         association = cls(args=args)

@@ -7,9 +7,6 @@ from pathlib import Path
 from ..lib import suffix
 from . import Association, AssociationNotValidError
 
-# -----------------------------------------------------------------------
-# Externally callable functions
-
 
 class AsnFileWarning(Warning):
     """Generic association file warning."""
@@ -57,15 +54,15 @@ def reader(association_file):
 
     Returns
     -------
-    object
+    ~jwst.associations.association.Association
         The association object.
     """
-    association_path = str(_path(association_file))
-    asn_format = association_path.split(".")[-1]
+    association_path = _path(association_file)
+    asn_format = association_path.suffix[1:]
     if asn_format != "json":
         raise OSError("This is not an association file: " + association_file)
     try:
-        with Path.open(association_path) as fd:
+        with association_path.open() as fd:
             serialized = fd.read()
             asn = Association.load(serialized, format=asn_format)
     except AssociationNotValidError as err:
@@ -88,7 +85,7 @@ def remove(asn, filenames, ignore):
 
     Returns
     -------
-    object
+    ~jwst.associations.association.Association
         The modified association object.
     """
     not_found = []
@@ -110,13 +107,16 @@ def remove(asn, filenames, ignore):
     return asn
 
 
-# -----------------------------------------------------------------------
-# Internal functions
-
-
 def _lookup(asn, filename, ignore_suffix=False):
     """
-    Look up the locations a file is found in an association.
+    Look up the locations where a file is found in an association.
+
+    Parameters
+    ----------
+    asn : ~jwst.associations.association.Association
+        The input association object.
+    filename : str or Path
+        The filename to find in the association.
 
     Returns
     -------
@@ -151,6 +151,11 @@ def _lookup(asn, filename, ignore_suffix=False):
 def _path(filename):
     """
     Command line filename processing.
+
+    Parameters
+    ----------
+    filename : str or Path
+        The filename.
 
     Returns
     -------

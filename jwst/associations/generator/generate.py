@@ -135,7 +135,7 @@ def generate_from_item(item, version_id, associations, rules, process_list):
 
     Returns
     -------
-    Tuple
+    tuple
         A 3-tuple containing:
             existing_asns : [association,...]
                 List of existing associations item belongs to.

@@ -273,7 +273,7 @@ class Association(MutableMapping):
     @classmethod
     def load(cls, serialized, fmt=None, validate=True, **kwargs):
         """
-        Marshall a previously serialized association.
+        Marshal a previously serialized association.
 
         Parameters
         ----------
@@ -524,9 +524,7 @@ class Association(MutableMapping):
         except KeyError:
             self["members"] = items
 
-    # #################################################
     # Methods required for implementing MutableMapping
-    # #################################################
     def __getitem__(self, key):
         return self.data[self.__keytransform__(key)]
 
@@ -579,9 +577,7 @@ class Association(MutableMapping):
         return self.data.values()
 
 
-# #########
 # Utilities
-# #########
 def finalize(asns):
     """
     Finalize associations by calling their `finalize_hook` method.

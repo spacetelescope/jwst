@@ -27,20 +27,6 @@ class AssociationRegistry(dict):
     """
     The available associations.
 
-    Parameters
-    ----------
-    definition_files : [str,]
-        The files to find the association definitions in.
-    include_default : bool
-        True to include the default definitions.
-    global_constraints : Constraint
-        Constraints to be added to each rule.
-    name : str
-        An identifying string, used to prefix rule names.
-    include_bases : bool
-        If True, include base classes not considered
-        rules.
-
     Notes
     -----
     The general workflow is as follows:
@@ -68,6 +54,23 @@ class AssociationRegistry(dict):
         name=None,
         include_bases=False,
     ):
+        """
+        Initialize a new registry.
+
+        Parameters
+        ----------
+        definition_files : [str,] or None
+            The files to find the association definitions in.
+        include_default : bool
+            True to include the default definitions.
+        global_constraints : Constraint or None
+            Constraints to be added to each rule.
+        name : str or None
+            An identifying string, used to prefix rule names.
+        include_bases : bool
+            If True, include base classes not considered
+            rules.
+        """
         super().__init__()
 
         # Generate a UUID for this instance. Used to modify rule

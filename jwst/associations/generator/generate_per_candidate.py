@@ -199,8 +199,8 @@ def generate_on_candidate(
                 skip_rows.append(i)
         logger.debug(
             f"Dropping {len(skip_rows)} exposures from pool - observation "
-            f"candidate type does not allow association generation when a "
-            f"background candidate is present."
+            "candidate type does not allow association generation when a "
+            "background candidate is present."
         )
         pool_cid.remove_rows(skip_rows)
 

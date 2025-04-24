@@ -120,7 +120,7 @@ def asn_gather(
 
 def from_cmdline(args=None):
     """
-    Collect asn_gather arguments from the commandline.
+    Collect asn_gather arguments from the command line.
 
     Parameters
     ----------

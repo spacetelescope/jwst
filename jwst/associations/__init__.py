@@ -1,7 +1,7 @@
 """
 Association generator and rule definitions.
 
-The association generator takes a list of items, an Association Pool, and
+The association generator takes a list of items and an Association Pool, and it
 creates sub-lists of those items depending on each item's attributes. The
 association rules define how the sub-lists are created.
 """
