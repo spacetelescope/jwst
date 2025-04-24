@@ -21,6 +21,7 @@ class StraylightStep (Step):
         shower_y_stddev = float(default=5) # Y standard deviation for shower model
         shower_low_reject = float(default=0.1) # Low percentile of pixels to reject
         shower_high_reject = float(default=99.9) # High percentile of pixels to reject
+        save_shower_model = boolean(default=False) # Save the shower model
     """  # noqa: E501
 
     reference_file_types = ['mrsxartcorr', 'regions']
@@ -56,9 +57,19 @@ class StraylightStep (Step):
                     self.regions_name = self.get_reference_file(input_model, 'regions')
                     with datamodels.RegionsModel(self.regions_name) as f:
                         allregions = f.regions
-                        result = straylight.clean_showers(result, allregions, self.shower_plane,
-                                                          self.shower_x_stddev, self.shower_y_stddev,
-                                                          self.shower_low_reject, self.shower_high_reject)
+                        result, output_shower_model = straylight.clean_showers(result, allregions,
+                                                                               self.shower_plane,
+                                                                               self.shower_x_stddev,
+                                                                               self.shower_y_stddev,
+                                                                               self.shower_low_reject,
+                                                                               self.shower_high_reject,
+                                                                               self.save_shower_model)
+                        if self.save_shower_model and output_shower_model:
+                            shower_path = self.make_output_path(basepath=input_model.meta.filename,
+                                                              suffix="shower_model")
+                            self.log.info(f"Saving shower model file {shower_path}")
+                            output_shower_model.save(shower_path)
+                            output_shower_model.close()
 
                 result.meta.cal_step.straylight = 'COMPLETE'
 
@@ -68,6 +79,7 @@ class StraylightStep (Step):
                                      input_model)
                 self.log.warning('Straylight step will be skipped')
                 result.meta.cal_step.straylight = 'SKIPPED'
+
 
         return result
 
