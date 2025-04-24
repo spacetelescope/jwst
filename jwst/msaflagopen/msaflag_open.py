@@ -1,16 +1,22 @@
 """Flag pixels affected by open MSA shutters in NIRSpec exposures."""
 
 import json
-import numpy as np
 import logging
+import warnings
 from pathlib import Path
 
+import numpy as np
 from gwcs.wcs import WCS
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import Slit
 
-from ..assign_wcs.nirspec import slitlets_wcs, _nrs_wcs_set_input_lite, _get_transforms
+from jwst.assign_wcs.nirspec import (
+    slitlets_wcs,
+    _nrs_wcs_set_input_lite,
+    _get_transforms,
+    log as nirspec_log,
+)
+from jwst.lib.basic_utils import LoggingContext
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -43,9 +49,12 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
     """
     # Create a list of failed open slitlets from the msaoper reference file
     failed_slitlets = create_slitlets(shutter_refname)
+    log.info("%d failed open shutters", len(failed_slitlets))
 
     # Flag the stuck open shutters
-    output_model = flag(input_model, failed_slitlets, wcs_refnames)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="Invalid interval")
+        output_model = flag(input_model, failed_slitlets, wcs_refnames)
     output_model.meta.cal_step.msa_flagging = "COMPLETE"
 
     return output_model
@@ -79,7 +88,8 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
         Science data with DQ flags modified.
     """
     # Use the machinery in assign_wcs to create a WCS object for the bad shutters
-    pipeline = slitlets_wcs(input_datamodel, wcs_refnames, failed_slitlets)
+    with LoggingContext(nirspec_log, level=logging.WARNING):
+        pipeline = slitlets_wcs(input_datamodel, wcs_refnames, failed_slitlets)
     wcs = WCS(pipeline)
 
     # Create output as a copy of the input science data model so we can overwrite
