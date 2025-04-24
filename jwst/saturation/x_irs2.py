@@ -37,7 +37,7 @@ def _get_irs2_parameters(input_model, n=None, r=None):
     ----------
     input_model : DataModel or numpy.ndarray
         Usually it is a RampModel but it can be an ndarray.
-        If it is an ndarray parameters will be assigned
+        If it is an ndarray, parameters will be assigned
         default values, unless specified explicitly.
         This is used for getting the width of the reference output and
         the values of NRS_NORM and NRS_REF.
