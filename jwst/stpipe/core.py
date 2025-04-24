@@ -54,10 +54,6 @@ class JwstStep(Step):
         """
         crds_observatory = "jwst"
 
-        if isinstance(dataset, dict):
-            # This is hit if get_crds_parameters is receiving its own output
-            return dataset, crds_observatory
-
         if isinstance(dataset, ModelLibrary) or (
             isinstance(dataset, JwstDataModel) and not isinstance(dataset, Sequence)
         ):
