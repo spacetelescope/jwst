@@ -2416,8 +2416,6 @@ def _fix_slit_name(transform, slit_name):
 
             new_inv_transform = fix_inputs(transform.inverse, fix_inverse) | mapping
             new_transform.inverse = new_inv_transform
-        else:
-            new_transform.inverse = transform.inverse
     else:
         new_transform = transform
     return new_transform
