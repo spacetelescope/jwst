@@ -453,8 +453,7 @@ def _save_wfss_x1d(results_list):
     for i in range(len(exposure_filenames)):
         n_rows = n_rows_by_exposure[i]
         # Figure out the dtype of the table based on the max number of rows
-        fltdtype = []
-        # fltdtype = [('OBJECT', '>i8'), ('NELEMENTS', '>i8')]
+        fltdtype = [("SOURCE_ID", ">i8"), ("NELEMENTS", ">i8")]
         for vector in colnames:
             fltdtype.append((vector, ">f8", n_rows))
 
@@ -471,8 +470,8 @@ def _save_wfss_x1d(results_list):
 
             # Get the data from the current model
             data = spec.spec_table
-            # fltdata[j]['NELEMENTS'] = data.shape[0]
-            # fltdata[j]['OBJECT'] = model.spec[i].source_id
+            fltdata[j]["NELEMENTS"] = data.shape[0]
+            fltdata[j]["SOURCE_ID"] = spec.source_id
 
             # Copy the data into the new table
             for col in colnames:
@@ -482,14 +481,13 @@ def _save_wfss_x1d(results_list):
 
     # Finally, create a new MultiSpecModel to hold the combined data
     # with one SpecModel per exposure
-    output_x1d = datamodels.MultiSpecModel()
+    output_x1d = datamodels.WFSSMultiExposureSpecModel()
     for i, fname in enumerate(exposure_filenames):
         # Create a new extension for each exposure
-        ext = datamodels.SpecModel()
+        spec_table = fltdata_by_exposure[i]
+        ext = datamodels.WFSSMultiSpecModel(spec_table)
         ext.meta.filename = fname
-        ext.spec_table = fltdata_by_exposure[i]
-        ext.meta.filename = fname
-        output_x1d.spec.append(ext)
+        output_x1d.exposures.append(ext)
 
     # Save the combined results to a file
     output_x1d.update(example_model)
