@@ -27,9 +27,11 @@ class Main:
     ----------
     args : [str, ...], or None
         The command line arguments. Can be one of
-            - `None`: `sys.argv` is then used.
-            - `[str, ...]`: A list of strings which create the command line
-            with the similar structure as `sys.argv`
+
+        - `None`: `sys.argv` is then used.
+        - `[str, ...]`: A list of strings which create the command line
+        with the similar structure as `sys.argv`
+
     pool : None or AssociationPool
         If `None`, a pool file must be specified in the `args`.
         Otherwise, an `AssociationPool`
@@ -396,9 +398,10 @@ def main(args=None, pool=None):
     ----------
     args : [str, ...], or None
         The command line arguments. Can be one of
-            - `None`: `sys.argv` is then used.
-            - `[str, ...]`: A list of strings which create the command line
-            with the similar structure as `sys.argv`
+
+        - `None`: `sys.argv` is then used.
+        - `[str, ...]`: A list of strings which create the command line
+        with the similar structure as `sys.argv`
 
     pool : None or AssociationPool
         If `None`, a pool file must be specified in the `args`.

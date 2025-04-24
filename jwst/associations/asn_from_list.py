@@ -176,8 +176,9 @@ def main(args=None):
     ----------
     args : list or None
         The command line arguments. Can be one of
-            - `None`: `sys.argv` is then used.
-            - `[str, ...]`: A list of strings which create the command line
-              with the similar structure as `sys.argv`
+
+        - `None`: `sys.argv` is then used.
+        - `[str, ...]`: A list of strings which create the command line
+          with the similar structure as `sys.argv`
     """
     Main.cli(args=args)
