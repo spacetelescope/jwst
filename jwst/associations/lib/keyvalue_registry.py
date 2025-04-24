@@ -75,9 +75,7 @@ class KeyValueRegistry(UserDict):
         return item
 
 
-# ******
 # Errors
-# ******
 class KeyValueRegistryError(Exception):
     """Exception class for key value in registry."""
 
@@ -99,9 +97,7 @@ class KeyValueRegistryNoKeyFoundError(KeyValueRegistryError):
     msg = "Cannot deduce key from given value"
 
 
-# *********
 # Utilities
-# *********
 def make_dict(item):
     """
     Create a dict from an item.

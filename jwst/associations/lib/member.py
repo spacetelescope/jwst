@@ -1,4 +1,4 @@
-"""Association Member."""
+"""Association Member definition - store exposure metadata as dict-like objects."""
 
 from collections import UserDict
 from copy import copy

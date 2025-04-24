@@ -15,17 +15,6 @@ class Counter:
         self.value += self.step
         return self.value
 
-    def next(self):
-        """
-        Return next value.
-
-        Returns
-        -------
-        int
-            The next value.
-        """
-        return self.__next__()
-
     def set(self, value):
         """
         Set new value for counter.

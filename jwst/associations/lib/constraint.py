@@ -1,4 +1,4 @@
-"""Constraints."""
+"""Constraints - use these to define the rules governing association candidate types."""
 
 import abc
 import collections
@@ -61,8 +61,8 @@ class SimpleConstraintABC(abc.ABC):
 
         Returns
         -------
-        object
-            New instance of parent class.
+        ~jwst.associations.lib.constraint.SimpleConstraintABC
+            New instance of class.
         """
         obj = super().__new__(cls)
         obj._ca_history = collections.deque()  # noqa: SLF001
@@ -121,7 +121,7 @@ class SimpleConstraintABC(abc.ABC):
         return self.matched, []
 
     @property
-    def dup_names(self):  #  -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]
+    def dup_names(self):
         """
         Return dictionary of constraints with duplicate names.
 
@@ -238,49 +238,6 @@ class SimpleConstraint(SimpleConstraintABC):
     """
     A basic constraint.
 
-    Parameters
-    ----------
-    init : dict
-        Dictionary where the key:value pairs define
-        the following parameters.
-
-    sources : func(item) or None
-        Function taking `item` as argument used to
-        retrieve a value to check against.
-        If None, the item itself is used as the value.
-
-    force_unique : bool
-        If the constraint is satisfied, reset `value`
-        to the value of the source.
-
-    test : function
-        The test function for the constraint.
-        Takes two arguments:
-
-            - constraint
-            - object to compare against.
-
-        Returns a boolean.
-        Default is `SimpleConstraint.eq`
-
-    reprocess_on_match : bool
-        Reprocess the item if the constraint is satisfied.
-
-    reprocess_on_fail : bool
-        Reprocess the item if the constraint is not satisfied.
-
-    work_over : ListCategory.[BOTH, EXISTING, RULES]
-        The condition on which this constraint should operate.
-
-    reprocess_rules : [rule[,..]] or None
-        List of rules to be applied to.
-        If None, calling function will determine the ruleset.
-        If empty, [], all rules will be used.
-
-    Attributes
-    ----------
-    All `Parameters` are also `Attributes`
-
     Examples
     --------
     Create a constraint where the attribute `attr` of an object
@@ -336,6 +293,48 @@ class SimpleConstraint(SimpleConstraintABC):
         reprocess_rules=None,
         **kwargs,
     ):
+        """
+        Initialize a new SimpleConstraint.
+
+        Parameters
+        ----------
+        init : dict
+            Dictionary where the key:value pairs define
+            the following parameters.
+
+        sources : func(item) or None
+            Function taking `item` as argument used to
+            retrieve a value to check against.
+            If None, the item itself is used as the value.
+
+        force_unique : bool
+            If the constraint is satisfied, reset `value`
+            to the value of the source.
+
+        test : function
+            The test function for the constraint.
+            Takes two arguments:
+
+                - constraint
+                - object to compare against.
+
+            Returns a boolean.
+            Default is `SimpleConstraint.eq`
+
+        reprocess_on_match : bool
+            Reprocess the item if the constraint is satisfied.
+
+        reprocess_on_fail : bool
+            Reprocess the item if the constraint is not satisfied.
+
+        work_over : ListCategory.[BOTH, EXISTING, RULES]
+            The condition on which this constraint should operate.
+
+        reprocess_rules : [rule[,..]] or None
+            List of rules to be applied to.
+            If None, calling function will determine the ruleset.
+            If empty, [], all rules will be used.
+        """
         # Defined attributes
         self.sources = sources
         self.force_unique = force_unique
@@ -415,32 +414,6 @@ class AttrConstraint(SimpleConstraintABC):
     """
     Test attribute of an item.
 
-    Parameters
-    ----------
-    sources : [str[,...]]
-        List of attributes to query
-    evaluate : bool
-        Evaluate the item's value before checking condition.
-    force_reprocess : ListCategory.state or False
-        Add item back onto the reprocess list using
-        the specified `~jwst.associations.ProcessList` work over state.
-    force_unique : bool
-        If the initial value is `None` or a list of possible values,
-        the constraint will be modified to be the value first matched.
-    invalid_values : [str[,...]]
-        List of values that are invalid in an item.
-        Will cause a non-match.
-    only_on_match : bool
-        If `force_reprocess`, only do the reprocess
-        if the entire constraint is satisfied.
-    onlyif : function
-        Boolean function that takes `item` as argument.
-        If True, the rest of the condition is checked. Otherwise
-        return as a matched condition
-    required : bool
-        One of the sources must exist. Otherwise,
-        return as a matched constraint.
-
     Attributes
     ----------
     found_values : set(str[,...])
@@ -466,6 +439,35 @@ class AttrConstraint(SimpleConstraintABC):
         required=True,
         **kwargs,
     ):
+        """
+        Initialize a new AttrConstraint.
+
+        Parameters
+        ----------
+        sources : [str[,...]]
+            List of attributes to query
+        evaluate : bool
+            Evaluate the item's value before checking condition.
+        force_reprocess : ListCategory.state or False
+            Add item back onto the reprocess list using
+            the specified `~jwst.associations.ProcessList` work over state.
+        force_unique : bool
+            If the initial value is `None` or a list of possible values,
+            the constraint will be modified to be the value first matched.
+        invalid_values : [str[,...]]
+            List of values that are invalid in an item.
+            Will cause a non-match.
+        only_on_match : bool
+            If `force_reprocess`, only do the reprocess
+            if the entire constraint is satisfied.
+        onlyif : function
+            Boolean function that takes `item` as argument.
+            If True, the rest of the condition is checked. Otherwise
+            return as a matched condition
+        required : bool
+            One of the sources must exist. Otherwise,
+            return as a matched constraint.
+        """
         # Attributes
         self.sources = sources
         self.evaluate = evaluate
@@ -605,37 +607,6 @@ class Constraint:
     """
     Constraint that is made up of SimpleConstraints.
 
-    Parameters
-    ----------
-    init : object or [object[,...]]
-        A single object or list of objects where the
-        objects are as follows.
-        - SimpleConstraint or subclass
-        - Constraint
-
-    reduce : function
-        A reduction function with signature `x(iterable)`
-        where `iterable` is the `components` list. Returns
-        boolean indicating state of the components.
-        Default value is `Constraint.all`
-
-    name : str or None
-        Optional name for constraint.
-
-    reprocess_on_match : bool
-        Reprocess the item if the constraint is satisfied.
-
-    reprocess_on_fail : bool
-        Reprocess the item if the constraint is not satisfied.
-
-    work_over : ListCategory.[BOTH, EXISTING, RULES]
-        The condition on which this constraint should operate.
-
-    reprocess_rules : [rule[,..]] or None
-        List of rules to be applied to.
-        If None, calling function will determine the ruleset.
-        If empty, [], all rules will be used.
-
     Attributes
     ----------
     constraints : [Constraint[,...]]
@@ -681,6 +652,40 @@ class Constraint:
         work_over=ListCategory.BOTH,
         reprocess_rules=None,
     ):
+        """
+        Initialize a new Constraint.
+
+        Parameters
+        ----------
+        init : object or [object[,...]]
+            A single object or list of objects where the
+            objects are as follows.
+            - SimpleConstraint or subclass
+            - Constraint
+
+        reduce : function
+            A reduction function with signature `x(iterable)`
+            where `iterable` is the `components` list. Returns
+            boolean indicating state of the components.
+            Default value is `Constraint.all`
+
+        name : str or None
+            Optional name for constraint.
+
+        reprocess_on_match : bool
+            Reprocess the item if the constraint is satisfied.
+
+        reprocess_on_fail : bool
+            Reprocess the item if the constraint is not satisfied.
+
+        work_over : ListCategory.[BOTH, EXISTING, RULES]
+            The condition on which this constraint should operate.
+
+        reprocess_rules : [rule[,..]] or None
+            List of rules to be applied to.
+            If None, calling function will determine the ruleset.
+            If empty, [], all rules will be used.
+        """
         self.constraints = []
 
         # Initialize from named parameters
@@ -719,7 +724,7 @@ class Constraint:
             self.reduce = self.all
 
     @property
-    def dup_names(self):  # -> dict[str, list[typing.Union[SimpleConstraint, Constraint]]]:
+    def dup_names(self):
         """
         Return dictionary of constraints with duplicate names.
 
@@ -733,10 +738,10 @@ class Constraint:
             and all the constraints that define that name.
         """
         attrs = self.get_all_attr("name")
-        constraints, names = zip(*attrs, strict=False)
+        constraints, names = zip(*attrs, strict=True)
         dups = [name for name, count in collections.Counter(names).items() if count > 1]
         result = collections.defaultdict(list)
-        for name, constraint in zip(names, constraints, strict=False):
+        for name, constraint in zip(names, constraints, strict=True):
             if name in dups:
                 result[name].append(constraint)
 
@@ -1034,9 +1039,7 @@ class Constraint:
         return result
 
 
-# ---------
 # Utilities
-# ---------
 def meets_conditions(value, conditions):
     """
     Check whether value meets any of the provided conditions.

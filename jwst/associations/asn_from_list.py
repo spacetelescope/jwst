@@ -161,7 +161,7 @@ class Main:
     def save(self):
         """Save association."""
         parsed = self.parsed
-        with Path.open(parsed.output_file, "w") as outfile:
+        with Path(parsed.output_file).open("w") as outfile:
             name, serialized = self.asn.dump(format=parsed.format)
             outfile.write(serialized)
 
