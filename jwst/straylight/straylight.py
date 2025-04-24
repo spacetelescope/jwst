@@ -1,10 +1,4 @@
-# Module for  applying straylight correction.
-#
-# The routine correct_xartifact applies a cross-artifact correction to MRS
-# science slope images.  After computing this correction based on reference
-# model parameters applied to the observed detector image it will be subtracted
-# from the detector image.  This effectively removes unpleasant 'detector'
-# PSF effects that are non-local on the sky.
+"""Module for  applying straylight correction."""
 
 import numpy as np
 import logging
@@ -18,10 +12,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-# C version of the fitting code
 def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
     """
-    C code version determining the cross-artifact model to subtract.
+    C version wrapper for determining the cross-artifact model to subtract.
 
     Parameters
     ----------
@@ -34,11 +27,11 @@ def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_
     imax : int
         Ending column to fit
     lor_fwhm : ndarray
-        Parameter of Lorenztian for each detector row.
-    lor_amp : ndarrya
+        FWHM of the Lorenztian for each detector row.
+    lor_amp : ndarray
         Amplitude of the Lorenztian for each detector row.
     g_fwhm : ndarray
-        Width of the guassians for each detector row.
+        Width of the gaussians for each detector row.
     g_dx : ndarray
         Linear offset of the gaussians for each detector row
         1x for inner gaussian pair, 2x for outer gaussian pair.
@@ -74,7 +67,6 @@ def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_
     return model
 
 
-# Python version of the fitting code
 def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):
     """
     Python code version determining of the cross-artifact model to subtract.
@@ -90,11 +82,11 @@ def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx,
     imax : int
         Ending column to fit
     lor_fwhm : ndarray
-        Parameter of Lorenztian for each detector row.
-    lor_amp : ndarrya
+        FWHM of the Lorenztian for each detector row.
+    lor_amp : ndarray
         Amplitude of the Lorenztian for each detector row.
     g_fwhm : ndarray
-        Width of the guassians for each detector row.
+        Width of the gaussians for each detector row.
     g_dx : ndarray
         Linear offset of the gaussians for each detector row
         1x for inner gaussian pair, 2x for outer gaussian pair.
@@ -162,6 +154,11 @@ def makemodel_composite(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx,
 def correct_xartifact(input_model, modelpars):
     """
     Correct the MIRI MRS data for 'straylight' produced by the cross-artifact.
+
+    This routine  applies a cross-artifact correction to MRS science slope images.
+    The correction, based on reference model parameters, is subtracted from the
+    observed detector image. This effectively removes unpleasant 'detector'
+    PSF effects that are non-local on the sky.
 
     Parameters
     ----------
