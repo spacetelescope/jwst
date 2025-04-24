@@ -580,10 +580,10 @@ class CubeBuildStep(Step):
                 " The units need to provided and only arcsec is allowed."
             )
 
-            #raise ValueError(
+            # raise ValueError(
             #    "Offset file is not correct. Offset file needs to have three lists: "
             #    "filename, raoffset and decoffset all of the same length."
-            #)
+            # )
 
         offset_filename = af["filename"]
         offset_ra = af["raoffset"]
