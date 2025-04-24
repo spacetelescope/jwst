@@ -16,9 +16,9 @@ def radec2std(crval1, crval2, ra, dec, rot_angle=None):
     crval2 : float
       Dec value of tangent point
     ra : numpy.ndarray or float
-      A list (or single value) of ra points to convert
+      A list (or single value) of RA points to convert
     dec : numpy.ndarray  or float
-      A list (or single value) of ra points to convert
+      A list (or single value) of Dec points to convert
     rot_angle : float or None, optional
       Rotation angle given in degrees
 

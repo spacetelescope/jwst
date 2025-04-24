@@ -10,11 +10,11 @@ log.setLevel(logging.DEBUG)
 
 
 class CubeData:
-    """Class CubeData holds top level information on the ifucube."""
+    """Hold top level information on the ifucube."""
 
     def __init__(self, input_models, par_filename, **pars):
         """
-        Initialize the high level of information of the ifu cube.
+        Initialize high level of information for the ifu cube.
 
         The class CubeData holds information on what type of cube is being
         created and how the cube is to be constructed. This information includes:
@@ -54,7 +54,7 @@ class CubeData:
 
     def setup(self):
         """
-        Set up IFU Cube. Determine band coverage and read in reference files.
+        Set up IFU Cube, determine band coverage, and read in reference files.
 
         Read in the input_models and fill in the dictionary, master_table, that
         stores the data  for each channel/subchannel or grating/filter.
@@ -90,10 +90,10 @@ class CubeData:
 
         # Determine which channels/subchannels or filter/grating will be covered by the
         # spectral cube.
-        # fills in band_channel, band_subchannel, band_grating, band_filer
+        # fills in band_channel, band_subchannel, band_grating, band_filter
         self.determine_band_coverage(master_table)
 
-        # instrument_defaults is an  dictionary class that holds default parameters for
+        # instrument_defaults is a dictionary class that holds default parameters for
         # each band for the different instruments
         instrument_info = instrument_defaults.InstrumentInfo()
 

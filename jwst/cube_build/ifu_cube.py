@@ -903,38 +903,8 @@ class IFUCubeData:
                     if self.instrument == "NIRSPEC":
                         nslices = 30
 
-                        slicemap = [
-                            15,
-                            14,
-                            16,
-                            13,
-                            17,
-                            12,
-                            18,
-                            11,
-                            19,
-                            10,
-                            20,
-                            9,
-                            21,
-                            8,
-                            22,
-                            7,
-                            23,
-                            6,
-                            24,
-                            5,
-                            25,
-                            4,
-                            26,
-                            3,
-                            27,
-                            2,
-                            28,
-                            1,
-                            29,
-                            0,
-                        ]
+                        slicemap = [15, 14, 16, 13, 17, 12, 18, 11, 19, 10, 20, 9, 21, 8, 22, 7,
+                                    23, 6, 24, 5, 25, 4, 26, 3, 27, 2, 28, 1, 29, 0]  # fmt:skip
 
                         wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(  # noqa: SLF001
                             input_model, np.arange(nslices)

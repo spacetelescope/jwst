@@ -36,9 +36,9 @@ def match_det2cube(
 
     Parameters
     ----------
-    x : numpy.ndarray
+    x : ndarray
        Detector x pixel values in the slice
-    y : numpy.ndarray
+    y : ndarray
        Detector y pixel values in the slice
     sliceno : int
        Slice number
@@ -46,9 +46,9 @@ def match_det2cube(
        Input calibrated model or file
     transform : transform
        WCS transform to transform x, y to alpha, beta, lambda
-    acoord : numpy array
+    acoord : ndarray
        Array of along slice valuee defining the along slice spatial dimension the  of IFU cube
-    zcoord : numpy array
+    zcoord : ndarray
        Array of wavelength values defining the wavelength dimension of the IFU cube
     crval_along : float
        Along slixe reference value in the IFU cube

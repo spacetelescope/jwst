@@ -6,7 +6,7 @@ contains the coordinates for the pixel center, the flux, error and variance of t
 The IFU cube is represented by a 3-D regular grid. This module finds the point cloud members contained
 in a region centered on the center of the cube spaxel. The size of the spaxel in spatial
 coordinates is cdetl1 and cdelt2, while the wavelength size is zcdelt3.
-This module uses the modified Shephard weighting method (emsm if weight_type =0 or msm if weight_type =1)
+This module uses the modified Shepard weighting method (emsm if weight_type =0 or msm if weight_type =1)
 to determine how to  weight each point cloud member in the spaxel.
 
 Main function for Python: cube_wrapper

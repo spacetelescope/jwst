@@ -564,7 +564,7 @@ class CubeBuildStep(Step):
 
         Returns
         -------
-        offsets ; dictionary
+        offsets : dict
             Dictionary containing offset information.
         """
         # validate the offset file using the schema file
@@ -580,7 +580,10 @@ class CubeBuildStep(Step):
                 " The units need to provided and only arcsec is allowed."
             )
 
-            # raise Exception(schema_message)
+            #raise ValueError(
+            #    "Offset file is not correct. Offset file needs to have three lists: "
+            #    "filename, raoffset and decoffset all of the same length."
+            #)
 
         offset_filename = af["filename"]
         offset_ra = af["raoffset"]

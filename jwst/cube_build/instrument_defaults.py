@@ -974,7 +974,7 @@ class InstrumentInfo:
 
     def set_med_driz_table(self, wave):
         """
-        Set the drizzle related cube parameters for NIRSpec  mdeium resolution data.
+        Set the drizzle related cube parameters for NIRSpec  medium resolution data.
 
         Parameters
         ----------

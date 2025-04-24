@@ -111,7 +111,7 @@ class FileTable:
             Dictionary containing the filename/model for each channel/band or grating/filter
         """
         # ________________________________________________________________________________
-        # Loop over input list of files and assign fill in the master_table with filename
+        # Loop over input list of files and fill in the master_table with filename
         # for the correct (channel-subchannel) or (grating-subchannel)
         for model in input_models:
             instrument = model.meta.instrument.name.upper()

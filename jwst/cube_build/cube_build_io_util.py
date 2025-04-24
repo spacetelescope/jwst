@@ -43,7 +43,7 @@ def read_cubepars(
     all_filter : list
         All the filters contained in the input data
     instrument_info : dictionary
-        Holds the defaults spatial scales, spectral scales, roi size,
+        Holds the default spatial scales, spectral scales, roi size,
         weighting parameters, and min and max wavelengths for each
         for each band
     """

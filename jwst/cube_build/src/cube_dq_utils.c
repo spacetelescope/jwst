@@ -1,11 +1,11 @@
 // This is a library of routines to set the DQ plane of the IFU cube.
 // This is done separately with different routines for MIRI and NIRSpec.
-// The dq plane is a flag on that indicates if the pixel is partial or fully
+// The dq plane contains a flag on that indicates if the pixel is partial or fully
 // overlapped by a detector pixel. If no overlap is found, the DQ value is 0.
 // A DQ value could indicate a "hole" in the ifu cube. Often these "holes" occur
 // because the spatial size of the IFU cube has been set too small. In general,
 // detector pixels flagged as bad pixels, and therefore not mapped to the IFU cube,
-// will not produce 'holes' in the IFUcube because of dithered observations will
+// will not produce 'holes' in the IFUcube because dithered observations will
 // fill this type of gap in the coverage. 
 
 #include <stdlib.h>
@@ -264,7 +264,7 @@ int overlap_fov_with_spaxels(int overlap_partial, int overlap_full,
         and the spaxel area. The values assigned are:
         a. overlap_partial
         b  overlap_full
-        Bit_wise combination of these values is allowed to account for
+        Bitwise combination of these values is allowed to account for
         dithered FOVs.
 
         Parameters
@@ -365,7 +365,7 @@ long match_wave_plane_nirspec(double wave_plane,
 			      double *c1_max, double *c2_max,
 			      int *match_slice){
 
-  /* Determine the NIRSpec dqplane for each wavelength plane of an IFU cube. 
+  /* Determine the NIRSpec DQ plane for each wavelength plane of an IFU cube. 
 
      NIRSpec dq plane is set by mapping each slice to the IFU wavelength plane. 
      This routine maps each slice to sky and finds the min and max coordinates on the sky
@@ -484,8 +484,7 @@ int overlap_slice_with_spaxels(int overlap_partial,
      This algorithm assumes the input data falls on a line in the IFU cube, which is
      the case for NIRSpec slices. The NIRSpec slice endpoints are used to determine
      which IFU spaxels the slice falls on to set an initial dq flag.
-     Bresenham's Line Algorithm to find points a line intersects with grid.
-     Given the endpoints of a line find the spaxels this line intersects.
+     The  Bresenham's Line Algorithm is used to find the spaxels that intersects with a line.
 
      Parameters
      ----------
@@ -506,7 +505,9 @@ int overlap_slice_with_spaxels(int overlap_partial,
      ----
      wave_slice_dq : array containing intermediate dq flag
 
-     Returns : 0
+     Returns
+     -------
+     0
 
   */
  
@@ -581,7 +582,9 @@ int overlap_slice_with_spaxels(int overlap_partial,
 int set_dqplane_to_zero(int ncube, int **spaxel_dq){
 
   /*
-    Set the spaxel dq = 0. This is used when not determining the FOV on the sky for
+    Set the spaxel dq = 0.
+
+    This is used when not determining the FOV on the sky for
     setting the DQ plane. This is case for internal cal type cubes.
 
     Parameters
@@ -591,7 +594,8 @@ int set_dqplane_to_zero(int ncube, int **spaxel_dq){
     spaxel_dq : pointer
        Pointer to memory
     
-    Returns :
+    Returns
+    -------
       0 success
       1 failure
   */
@@ -720,7 +724,7 @@ int dq_nirspec(int overlap_partial,
 	       int **spaxel_dq) {
 
   /*
-    Set an  DQ flag for the NIRSPEC IFU cube based on FOV of input data.
+    Set a DQ flag for the NIRSPEC IFU cube based on FOV of input data.
 
     Map the FOV of each NIRSpec slice  to the DQ plane and set an initial DQ
     flagging. For  NIRSpec the 30 different slices map to different FOV on the
@@ -751,7 +755,7 @@ int dq_nirspec(int overlap_partial,
         Spaxel dq plane of IFU cube. 
 
     Returns
-    ------_
+    -------
     status : int
        1 = error
        0 = success
