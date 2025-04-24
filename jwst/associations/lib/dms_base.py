@@ -262,7 +262,8 @@ class DMSBaseMixin(ACIDMixin):
         The sequence number of the current association
     """
 
-    sequence = Counter(start=1)  # Associations of the same type are sequenced.
+    # Associations of the same type are sequenced.
+    sequence = Counter(start=1)
 
     def __init__(self, *args, **kwargs):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
