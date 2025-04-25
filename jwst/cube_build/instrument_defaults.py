@@ -719,7 +719,7 @@ class InstrumentInfo:
         wroi : numpy float32 array
             Wavelength roi values to use for the corresponding wavelength value
         power : numpy float32 array
-            Power of the modified shepherd weighting function to use
+            Power of the modified Shepard weighting function to use
             for the corresponding wavelength value
         softrad : numpy float32 array
             Modified Shepard weighting function scale factor to use
@@ -858,7 +858,7 @@ class InstrumentInfo:
         wroi : numpy float32 array
             Wavelength roi values to use for the corresponding wavelength value
         power : numpy float32 array
-            Power of the modified shepherd weighting function to use
+            Power of the modified Shepard weighting function to use
             for the corresponding wavelength value
         softrad : numpy float32 array
             Modified Shepard weighting function scale factor to use
@@ -1022,7 +1022,7 @@ class InstrumentInfo:
 
     def set_msm(self, parameter1, parameter2, sroi, wroi, power, softrad):
         """
-        Set msm modified shepherd cube parameters.
+        Set msm modified Shepard cube parameters.
 
         Cube parameters read in from the cubepars reference file.
         These parameters are used for single band data and do not depend
@@ -1039,7 +1039,7 @@ class InstrumentInfo:
         wroi : numpy float32 array
             Wavelength roi
         power : numpy float32 array
-            Power of the modified shepherd weighting function
+            Power of the modified Shepard weighting function
         softrad : numpy float32 array
             Modified Shepard weighting function parameter
         """
@@ -1051,7 +1051,7 @@ class InstrumentInfo:
 
     def set_emsm(self, parameter1, parameter2, sroi, wroi, scalerad):
         """
-        Set emsm modified shepherd cube parameters.
+        Set emsm modified Shepard cube parameters.
 
         Cube parameters read in from the cubepars reference file.
         These parameters are used for single band data and do not depend
