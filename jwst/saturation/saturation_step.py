@@ -1,6 +1,5 @@
 #! /usr/bin/env python
 from stdatamodels.jwst import datamodels
-
 from ..stpipe import Step
 from ..lib import pipe_utils, reffile_utils
 from . import saturation

@@ -3,11 +3,10 @@ import numpy as np
 from scipy.ndimage import binary_dilation
 
 from stdatamodels.jwst.datamodels import dqflags
+from stcal.saturation.saturation import flag_saturated_pixels
 
 from ..lib import reffile_utils
 from . import x_irs2
-
-from stcal.saturation.saturation import flag_saturated_pixels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

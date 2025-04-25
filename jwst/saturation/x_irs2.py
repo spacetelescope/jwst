@@ -1,7 +1,6 @@
 from collections import namedtuple
 
 import numpy as np
-
 from ..lib import pipe_utils
 
 """ This is the interface:
