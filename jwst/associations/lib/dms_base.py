@@ -255,8 +255,7 @@ _DEGRADED_STATUS_NOTOK = (
 class DMSBaseMixin(ACIDMixin):
     """Association attributes common to DMS-based Rules."""
 
-    # Associations of the same type are sequenced.
-    sequence = Counter(start=1)
+    sequence = Counter(start=1)  # Associations of the same type are sequenced.
 
     def __init__(self, *args, **kwargs):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)
