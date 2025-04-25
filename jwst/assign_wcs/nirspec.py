@@ -1824,11 +1824,13 @@ def compute_bounding_box(
     bbox : tuple
         The bounding box of the projection of the slit on the detector.
     """
-    # If transform has inverse then it must be detector to slit
     if transform.has_inverse():
+        # If the input transform has an inverse, then the transform
+        # must be detector to slit and the inverse is slit to detector.
         detector2slit = transform
         slit2detector = detector2slit.inverse
     else:
+        # If no inverse is available, the provided transform is slit to detector.
         detector2slit = None
         slit2detector = transform
 
