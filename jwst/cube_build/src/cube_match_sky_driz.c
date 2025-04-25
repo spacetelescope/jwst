@@ -1,23 +1,39 @@
 /*
-The detector pixels are represented by a 'point cloud' on the sky. The IFU cube is
-represented by a 3-D regular grid. This module finds the point cloud members contained
-in a region centered on the center of the cube spaxel. The size of the spaxel is spatial
-coordinates is cdetl1 and cdelt2, while the wavelength size is cdelt3.
+An IFU spectral cube is built using the overlap between the detector pixels mapped
+to the 3-D spectral grid. This method is similar to 2D drizzle type mapping techniques. 
+This is the top level c routine that interfaces with the python wrapper.
 
 
 Main function for Python: cube_wrapper_driz
 
-Python signature: result = cube_wrapper_driz(instrument, flag_dq_plane,  start_region, end_region,
-                                        overlap_partial, overlap_full,
-                                        xcoord, ycoord, zcoord,
-                                        coord1, coord2, wave, flux, err, slice_no,
-                                        rois_pixel, roiw_pixel, scalerad_pixel
-					weight_pixel, softrad_pixel,cdelt3_normal,
-                                        roiw_ave, cdelt1, cdelt2, x_det, y_det, debug_cube_index)
-provide more details
+Python signature:  result = cube_wrapper_driz(
+                            instrument,
+                            flag_dq_plane,
+                            start_region, end_region,
+                            overlap_partial,
+                            overlap_full,
+                            xcoord, ycoord, zcoord,
+                            coord1, coord2,
+                            wave,
+                            flux,
+                            err,
+                            slice_no,
+                            xi1, eta1,
+                            xi2, eta2,
+                            xi3, eta3,
+                            xi4, eta4,
+                            dwave,
+                            cdelt3_normal,
+                            cdelt1,
+                            cdelt2,
+                            cdelt3_mean,
+                            linear,
+                            x_det,
+                            y_det,
+                            debug_cube_index
+                        )
 
 The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux, spaxel_dq)
-example output
 
 Parameters
 ----------
@@ -26,7 +42,6 @@ instrument : int
 flag_dq_plane : int
    0 do set the DQ plane based on FOV, but set all values =0
    1 set the DQ plane based on the FOV
-
 start_region : int
     starting slice number for detector region used in dq flagging
 end_region: int
@@ -35,33 +50,48 @@ overlap_partial : int
     a dq flag indicating that only a portion of the spaxel is overlapped by a mapped detector pixel
 overlap_full : int
     a dq flag indicating that the entire spaxel is overlapped by the mapped detector pixel
-xcoord : double array
+xcoord : ndarray of float
    size of naxis1. This array holds the center x axis values of the ifu cube
-ycoord : double array
+ycoord : ndarray of float
    size of naxis2. This array holds the center y axis values of the ifu cube
-zcoord : double array
-   size of naxis3. This array holds the center x axis values of the ifu cube
-flux : double array
+zcoord : ndarray of float
+   size of naxis3. This array holds the center z axis /wavelength values of the ifu cube
+coord1 : ndarray of float
+   The tangent projected xi values of the center of detector pixel.
+coord2 : ndarray of float
+   The tangent projected wave values of the center of detector pixel..
+wave : ndarray of float
+   The wavelength corresponding to the center of the detector pixel.
+flux : ndarray of float
    size: point cloud elements. Flux of each point cloud member
-err : double array
+err : ndarray of float
    size: point cloud elements. err of each point cloud member
-slice_no: int
+slice_no : int
    slice number of point cloud member to be in dq flagging
-coord1 : double array
-   size: point cloud elements. Naxis 1 coordinate of point cloud member (xi)
-coord2 : double array
-   size: point cloud elements. Naxis 2 coordinate of point cloud member (eta)
-wave : double array
-   size: point cloud elements. Wavelength of each point cloud member
-cdelt3: double array
-   size: point cloud elements. Spectral scale to use at wavelength of point cloud member
+xi1, eta1 : ndarray of floats
+   xi, eta coordinates (tangent projection) of the detector pixel corner 1. 
+xi2, eta2 : ndarray of floats
+   xi, eta coordinates (tangent projection) of the detector pixel corner 2.  
+xi3, eta3 : ndarray of floats
+   xi, eta coordinates (tangent projection) of the detector pixel corner 3.  
+xi4, eta4 : ndarray of floats
+   xi, eta coordinates (tangent projection) of the detector pixel corner 4.  
+dwave : ndarray of float
+   Delta wavelength ranges for pixel
+cdelt3_normal : ndarray of float
+   For linear wavelength range = 0
+   For non-linear wavelength range = delta wavelength of neighboring wavelength planes
 cdelt1 : double
    Naxis 1 scale for cube
 cdelt2 : double
    Naxis 2 scale for cube
-x_det : double array
+cdelt3_mean: ndarray of float
+   Average of cdelt3_normal
+linear : bool
+   Type of wavelength grid for IFU cube: linear or non-linear
+x_det : ndarray of float
    size: point cloud elements. X detector value of each point cloud member
-y_det : double array
+y_det : ndarray of float
    size: point cloud elements. Y detector value of each point cloud member
 debug_cube_index : int
    if > 0, value of cube index to print information on 
@@ -122,9 +152,7 @@ extern double sh_find_overlap(double xcenter, double ycenter,
 
 // extern double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]);
 
-
-// return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
-
+// C routine that  does that does the drizzling
 int match_driz(double *xc, double *yc, double *zc,
 	       double *wave,
 	       double *flux, double *err,
@@ -138,6 +166,31 @@ int match_driz(double *xc, double *yc, double *zc,
 	       double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
 	       double **spaxel_iflux) {
 
+  // xc : IFU grid point values along x-axis
+  // yc : IFU grid point values along y-axis
+  // zc : IFU grid point values along the z-axis
+  // wave : wavelength of pixels
+  // flux : flux values of pixels
+  // err : err values of the pixels
+  // xi1, eta1 :  xi, eta coordinates of a corner 1 of a pixel
+  // xi2, eta2 :  xi, eta coordinates of a corner 2 of a pixel
+  // xi3, eta3 :  xi, eta coordinates of a corner 3 of a pixel
+  // xi4, eta4 :  xi, eta coordinates of a corner 4 of a pixel
+  // dwave : delta wavelength of pixel
+  // cdelt3:  wavelength sampling of IFU cube
+  // x_det, y_det :x, y detector values
+  // cdelt1 : spatial size along x-axis
+  // cdelt2 : spatial size along y-axis
+  // nx, ny, nwave : size of IFU cube in x,y,z dimensions
+  // ncube : total numober cube elements
+  // npt : number of detector pixels
+  // linear: If T then, the IFU cube has a linear wavelength grid.
+  //         If F then, the IFU cube has a non-linear wavelength grid.
+  // debug_cube_index: cube index of voxel to report information on
+  // spaxel_flux : return value of weighted combined flux
+  // spaxel_weight : return value of combined weights
+  // spaxel_var : return value of weighted combined variance
+  // spaxel_iflux :return value of weighted combined iweighting map
 
   double *fluxv=NULL, *weightv=NULL, *varv=NULL, *ifluxv=NULL;  // vector for spaxel
 
@@ -310,7 +363,9 @@ int match_driz(double *xc, double *yc, double *zc,
 }
 
 
-
+// This is a C structure that represents a NumPy array in the C API.
+// This ensures that all the numpy arrays passed to the C routines
+// follow C array rules. 
 PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     if (PyArray_CheckExact(obj) &&
         PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
@@ -326,6 +381,9 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     }
 }
 
+
+// Wrapper code that is called from python code and sets up interface with C code.
+// cube_wrapper_driz.
 
 static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
   PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo; // codespell:ignore erro
@@ -445,9 +503,8 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 
   }
 
-  //______________________________________________________________________
-  // if flag_dq_plane = 1, Set up the dq plane
-  //______________________________________________________________________
+  // if flag_dq_plane = 1, Set up the dq plane of the IFU cube. 
+  
   int status1 = 0;
 
   if(flag_dq_plane){
