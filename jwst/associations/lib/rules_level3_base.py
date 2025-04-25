@@ -867,9 +867,7 @@ class Constraint_Target(Constraint):
         super(Constraint_Target, self).__init__(constraints, reduce=Constraint.any)
 
 
-# -----------
 # Base Mixins
-# -----------
 class AsnMixin_AuxData:
     """Process special and non-science exposures as science."""
 

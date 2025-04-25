@@ -1,4 +1,9 @@
-"""Association Registry."""
+"""
+Association Registry and Markers.
+
+The Registry object holds a set of rules used to generate association
+candidates from a list of PoolRow entries.
+"""
 
 import importlib.util
 from inspect import getmembers, isclass, isfunction, ismethod, ismodule
@@ -25,7 +30,7 @@ _ASN_RULE = "association_rules.py"
 
 class AssociationRegistry(dict):
     """
-    The available associations.
+    The available association rules to match against.
 
     Notes
     -----
@@ -197,7 +202,7 @@ class AssociationRegistry(dict):
         fmt : str or None
             The format to force. If None, try all available.
         validate : bool
-            Validate against the class' defined schema, if any.
+            Validate against the class's defined schema, if any.
         first : bool
             A serialization potentially matches many rules.
             Only return the first successful load.
@@ -445,7 +450,7 @@ class RegistryMarker:
         Returns
         -------
         bool
-            Whether or not the object has been market.
+            Whether or not the object has been marked.
         """
         return hasattr(obj, "asnreg_marked")
 

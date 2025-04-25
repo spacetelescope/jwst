@@ -21,7 +21,7 @@ def load_asn(
         A serialization potentially matches many rules.
         Only return the first successful load.
     validate : bool
-        Validate against the class' defined schema, if any.
+        Validate against the class's defined schema, if any.
     registry : AssociationRegistry or None
         The `AssociationRegistry` to use.
         If None, no registry is used.

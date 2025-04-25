@@ -139,7 +139,7 @@ def getattr_from_list(adict, attributes, invalid_values=None):
     Parameters
     ----------
     adict : dict
-        Cict to retrieve from.
+        Dictionary to retrieve from.
     attributes : list
         List of attributes.
     invalid_values : set

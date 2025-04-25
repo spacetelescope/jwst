@@ -8,16 +8,6 @@ class Member(UserDict):
     """
     Member of an association.
 
-    Parameters
-    ----------
-    initialdata : Dict-like or Member
-        Initialization data. Any type of initialization that
-        `collections.UserDict` allows or `Member` itself.
-
-    item : object
-        The item to initialize with. This will override
-        any `Member.item` given in `initialdata`.
-
     Attributes
     ----------
     item : object
@@ -25,6 +15,20 @@ class Member(UserDict):
     """
 
     def __init__(self, initialdata=None, item=None):
+        """
+        Initialize a Member.
+
+        Parameters
+        ----------
+        initialdata : Dict-like or Member
+            Initialization data. Any type of initialization that
+            `collections.UserDict` allows or `Member` itself.
+
+        item : object
+            The item to initialize with. This will override
+            any `Member.item` given in `initialdata`. Most common
+            object type is a ~jwst.associations.pool.PoolRow instance.
+        """
         self.item = None
 
         if isinstance(initialdata, Member):

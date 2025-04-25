@@ -1074,14 +1074,14 @@ class Asn_Lv2WFSSParallel(
         - Single Science exposure
         - Require a source catalog from processing of the corresponding direct imagery.
 
-    WFSS is executed different when taken as part of a pure-parallel proposal than
+    WFSS is executed differently when taken as part of a pure-parallel proposal than
     when WFSS is done as the primary. The differences are as follows. When primary,
-    all components, the direct image and the two GRISM exposures, are all executed
+    all components, the direct image and the two GRISM exposures, are executed
     within the same observation. When in parallel, each component is taken as a separate
     observation. These are always in associations of type DIRECT_IMAGE.
 
     Another difference is that there is no ``targetid`` assigned to the parallel
-    exposures. However, since WFSS parallels are very specific, there is not need to
+    exposures. However, since WFSS parallels are very specific, there is no need to
     constrain on target. A default value is used for the Level 3 product naming.
     """
 

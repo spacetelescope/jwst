@@ -58,10 +58,10 @@ class BasePoolRule:
     def test_rules_exist(self):
         """Test that level 3 registry rules are valid."""
         rules = registry_level3_only()
-        assert len(rules) >= len(self.valid_rules)  # noqa: S101
+        assert len(rules) >= len(self.valid_rules)
         rule_names = get_rule_names(rules)
         for rule in self.valid_rules:
-            assert rule in rule_names  # noqa: S101
+            assert rule in rule_names
 
     def test_run_generate(self):
         """Test association generation for list of pools."""
@@ -69,21 +69,21 @@ class BasePoolRule:
         for ppars in self.pools:
             pool = combine_pools(ppars.path, **ppars.kwargs)
             asns = generate(pool, rules)
-            assert len(asns) == ppars.n_asns, (  # noqa: S101
+            assert len(asns) == ppars.n_asns, (
                 ppars.path + f": n_asns not expected {len(asns)} {ppars.n_asns}"
             )
             for asn, candidates in zip(asns, ppars.candidates, strict=False):
-                assert set(asn.candidates) == set(candidates)  # noqa: S101
+                assert set(asn.candidates) == set(candidates)
             file_regex = re.compile(r".+_(?P<suffix>.+)\..+")
             for asn in asns:
                 for product in asn["products"]:
                     for member in product["members"]:
                         if member["exptype"] == "science":
                             match = file_regex.match(member["expname"])
-                            assert match is not None, (  # noqa: S101
+                            assert match is not None, (
                                 ppars.path + ": No suffix match for {}".format(member["expname"])
                             )
-                            assert match.groupdict()["suffix"] in ppars.valid_suffixes, (  # noqa: S101
+                            assert match.groupdict()["suffix"] in ppars.valid_suffixes, (
                                 ppars.path
                                 + ": Suffix {} not valid".format(match.groupdict()["suffix"])
                             )

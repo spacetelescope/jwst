@@ -437,7 +437,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
 @RegistryMarker.utility
 class Utility:
-    """Utility functions that understand DMS Level 3 associations."""
+    """Utility functions that understand DMS Level 2 associations."""
 
     @staticmethod
     @RegistryMarker.callback("finalize")
@@ -520,7 +520,7 @@ class Utility:
         match = re.match(_LEVEL1B_REGEX, level1b_name)
         if match is None or match.group("type") != "_uncal":
             logger.warning(
-                f'Item FILENAME="{level1b_name}" is not a Level 1b name. '
+                f"Item FILENAME='{level1b_name}' is not a Level 1b name. "
                 "Cannot transform to Level 2a."
             )
             return level1b_name
@@ -615,9 +615,7 @@ class Utility:
         return merged_asns
 
 
-# -----------------
 # Basic constraints
-# -----------------
 class Constraint_Base(Constraint):
     """Select on program and instrument."""
 
@@ -674,7 +672,7 @@ class Constraint_Imprint(Constraint):
 
 
 class Constraint_Imprint_Special(Constraint):
-    """Select on imprint exposures."""
+    """Select on imprint exposures with mosaic tile number."""
 
     def __init__(self, association=None):
         # If an association is not provided, the check for original

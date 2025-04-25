@@ -18,12 +18,10 @@ def _gen_dict_extract(key, var):
             if k == key:
                 yield v
             if isinstance(v, dict):
-                for result in _gen_dict_extract(key, v):
-                    yield result
+                yield from _gen_dict_extract(key, v)
             elif isinstance(v, list):
                 for d in v:
-                    for result in _gen_dict_extract(key, d):
-                        yield result
+                    yield from _gen_dict_extract(key, d)
 
 
 def test_update_key_value_default():

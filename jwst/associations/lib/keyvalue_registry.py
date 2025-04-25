@@ -102,6 +102,9 @@ def make_dict(item):
     """
     Create a dict from an item.
 
+    Items may be a dict, a 2-tuple or an object. Objects are most
+    often a file format class from ~jwst.associations.association_io - `json` or `yaml`.
+
     Parameters
     ----------
     item : object or (name, object) or dict

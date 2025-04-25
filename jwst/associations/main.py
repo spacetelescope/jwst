@@ -378,7 +378,7 @@ class Main:
     def __str__(self):
         result = []
         result.append(
-            f"There where {len(self.associations):d} associations "
+            f"There were {len(self.associations):d} associations "
             f"and {len(self.orphaned):d} orphaned items found.\n"
             "Associations found are:"
         )

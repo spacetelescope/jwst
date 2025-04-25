@@ -74,7 +74,7 @@ class LoadAsAssociation(dict):
         a default value is given.
         """
         try:
-            with Path.open(obj) as fp:
+            with Path(obj).open() as fp:
                 pure_asn = load_asn(fp, registry=registry)
         except Exception:
             if not isinstance(obj, list):

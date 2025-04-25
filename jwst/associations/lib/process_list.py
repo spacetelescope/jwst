@@ -88,34 +88,7 @@ class ProcessItem:
 
 
 class ProcessList:
-    """
-    A Process list.
-
-    Parameters
-    ----------
-    items : [item[, ...]]
-        The list of items to process
-
-    rules : [Association[, ...]]
-        List of rules to process the items against.
-
-    work_over : int
-        What the reprocessing should work on:
-        - `ProcessList.RULES`:      Only on the rules to create new associations
-        - `ProcessList.EXISTING`:   Only existing associations
-        - `ProcessList.BOTH`:       Compare to both existing and rules
-        - `ProcessList.NONSCIENCE`: Only on non-science items
-
-    only_on_match : bool
-        Only use this object if the overall condition
-        is True.
-
-    trigger_constraints : [Constraint[,...]]
-        The constraints that created the ProcessList
-
-    trigger_rules : [Association[,...]]
-        The association rules that created the ProcessList
-    """
+    """A Process list."""
 
     _str_attrs = ("rules", "work_over", "only_on_match", "trigger_constraints", "trigger_rules")
 
@@ -128,6 +101,34 @@ class ProcessList:
         trigger_constraints=None,
         trigger_rules=None,
     ):
+        """
+        Initialize a ProcessList.
+
+        Parameters
+        ----------
+        items : [item[, ...]]
+            The list of items to process
+
+        rules : [Association[, ...]]
+            List of rules to process the items against.
+
+        work_over : int
+            What the reprocessing should work on:
+            - `ProcessList.RULES`:      Only on the rules to create new associations
+            - `ProcessList.EXISTING`:   Only existing associations
+            - `ProcessList.BOTH`:       Compare to both existing and rules
+            - `ProcessList.NONSCIENCE`: Only on non-science items
+
+        only_on_match : bool
+            Only use this object if the overall condition
+            is True.
+
+        trigger_constraints : [Constraint[,...]]
+            The constraints that created the ProcessList
+
+        trigger_rules : [Association[,...]]
+            The association rules that created the ProcessList
+        """
         self.items = items
         self.rules = rules
         self.work_over = work_over
@@ -215,11 +216,6 @@ class ProcessListQueue:
     A final feature of ProcessListQueue is that it is mutable: New items can
     be added to the queue while items are being popped from the queue.
 
-    Parameters
-    ----------
-    init : [ProcessList[,...]] or None
-        List of ProcessLists to put on the queue.
-
     Notes
     -----
     The FIFO operations depends on the fact that, inherently,
@@ -228,6 +224,14 @@ class ProcessListQueue:
     """
 
     def __init__(self, init=None):
+        """
+        Initialize a ProcessListQueue.
+
+        Parameters
+        ----------
+        init : [ProcessList[,...]] or None
+            List of ProcessLists to put on the queue.
+        """
         self._queue = {}
         if init is not None:
             self.extend(init)
@@ -297,14 +301,17 @@ class ProcessQueueSorted:
     ListCategory.RULES is added during iteration, the next list returned will
     be the RULES one, because the RULES lists have priority over EXISTING
     lists, regardless of when the list was added.
-
-    Parameters
-    ----------
-    init : [ProcessList[,...]]
-        List of `ProcessList` to start the queue with.
     """
 
     def __init__(self, init=None):
+        """
+        Initialize a ProcessQueueSorted.
+
+        Parameters
+        ----------
+        init : [ProcessList[,...]]
+            List of `ProcessList` to start the queue with.
+        """
         self.queues = {list_category: ProcessListQueue() for list_category in ListCategory}
 
         if init is not None:

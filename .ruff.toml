@@ -87,6 +87,7 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 ]
 "**/tests/**.py" = [
     "D104", # missing docstring in public package
+    "S101", # use of assert
 ]
 "jwst/conftest.py" = [
     "SLF", "ARG", "PTH",
