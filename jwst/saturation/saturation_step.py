@@ -32,7 +32,7 @@ class SaturationStep(Step):
         Returns
         -------
         result : DataModel
-            Result of setting the saturation flags to saturated pixels to the data model.
+            Output datamodel with saturation flags set for saturated pixels.
         """
         # Open the input data model
         with datamodels.open(step_input) as input_model:

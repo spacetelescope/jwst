@@ -36,7 +36,7 @@ def _get_irs2_parameters(input_model, n=None, r=None):
     ----------
     input_model : DataModel or numpy.ndarray
         Model from which we retrieve the width of the reference
-        output and the values of NRS_NORM and NRS_REF. It the input_model
+        output and the values of NRS_NORM and NRS_REF. If the input_model
         is a ndarray the parameters will be assigned default values.
 
     n : int or None
