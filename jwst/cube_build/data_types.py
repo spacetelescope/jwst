@@ -1,51 +1,39 @@
-""" Class Data Type is used to read in the input data. It also determines
-if the input data is a single science exposure, an association table, a
-single datamodel or several data models stored in a ModelContainer.
-"""
-import os
-
 from stdatamodels.jwst import datamodels
-
 from jwst.datamodels import ModelContainer
-
 import logging
+from pathlib import Path
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-# ******************************************************************************
-class DataTypes():
+class DataTypes:
+    """Class to handle reading input data to cube_build."""
 
-    """ Class to handle reading input data to cube_build.
-    """
+    template = {
+        "asn_rule": "",
+        "target": "",
+        "asn_pool": "",
+        "asn_type": "",
+        "products": [{"name": "", "members": [{"exptype": "", "expname": ""}]}],
+    }
 
-    template = {"asn_rule": "",
-                "target": "",
-                "asn_pool": "",
-                "asn_type": "",
-                "products": [
-                    {"name": "",
-                     "members": [
-                         {"exptype": "",
-                          "expname": ""}
-                     ]
-                     }
-                ]
-                }
-
-    def __init__(self, input, single, output_file, output_dir):
-        """ Read in input data and determine what type of input data.
+    def __init__(self, input_data, single, output_file, output_dir):
+        """
+        Assemble input data for processing.
 
         Open the input data using datamodels and determine if data is
         a single input model, an association, or a set of input models
-        contained in a ModelContainer.
+        contained in a ModelContainer. The method populates the self.input_models
+        which is a list of input models. An initial base name for the output file
+        is constructed.
 
         Parameters
         ----------
-        input : datamodel or  ModelContainer
+        input_data : str, IFUImageModel or ModelContainer
            Input data to cube_build either a filename, single model,
            association table, or a ModelContainer
-        single : boolean
+        single : bool
            If True then creating single mode IFUCubes for outlier detection
            or mrs_matching. If false then creating standard IFUcubes
         output_file : str
@@ -53,67 +41,58 @@ class DataTypes():
         output_dir : str
            Optional user provided output directory name
 
-        Notes
-        -----
-        The method populates the self.input_models which is list of input models.
-        An initial base name for the output file is constructed.
-
         Raises
         ------
-        NotIFUImageModel
+        NotIFUImageModelError
            IFU data was not the input data
         TypeError
            Input data was not of correct form
-
         """
-
         self.input_models = []
         self.output_name = None
 
-        # open the input with datamodels
-        # if input is filename or model when it is opened it is a model
-        # if input if an association name or ModelContainer then it is opened as a container
+        # open the input_data with datamodels
+        # if input_data is filename or model when it is opened it is a model
+        # if input_data is an association name or ModelContainer then it is opened as a container
 
-        input_models = datamodels.open(input)
-        # if input is a filename, we will need to close the opened file
+        input_models = datamodels.open(input_data)
+        # if input_data is a filename, we will need to close the opened file
         self._opened = [input_models]
 
         if isinstance(input_models, datamodels.IFUImageModel):
             # It's a single image that's been passed in as a model
-            # input is a model
+            # input_data is a model
             filename = input_models.meta.filename
             self.input_models.append(input_models)
             self.output_name = self.build_product_name(filename)
 
         elif isinstance(input_models, ModelContainer):
-            self.output_name = 'Temp'
+            self.output_name = "Temp"
             self.input_models = input_models
             if not single:  # find the name of the output file from the association
                 self.output_name = input_models.asn_table["products"][0]["name"]
         else:
             # close files opened above
             self.close()
-            raise TypeError("Failed to process file type {}".format(type(input_models)))
+            raise TypeError(f"Failed to process file type {type(input_models)}")
         # If the user has set the output name, strip off *.fits.
         # Suffixes will be added to this name later, to designate the
         # channel+subchannel (MIRI MRS) or grating+filter (NRS IFU) the output cube covers.
 
         if output_file is not None:
-            basename, ext = os.path.splitext(os.path.basename(output_file))
-            self.output_name = basename
+            self.output_name = Path(output_file).stem
 
         if output_dir is not None:
-            self.output_name = output_dir + '/' + self.output_name
+            self.output_name = output_dir + "/" + self.output_name
 
     def close(self):
-        """
-        Close any files opened by this instance
-        """
+        """Close any files opened by this instance."""
         [f.close() for f in self._opened]
 
-# _______________________________________________________________________________
+    # _______________________________________________________________________________
     def build_product_name(self, filename):
-        """ Determine the base of output name if an input data is a fits filename.
+        """
+        Determine the base of output name if an input data is a FITS filename.
 
         Parameters
         ----------
@@ -126,10 +105,9 @@ class DataTypes():
         single_product : str
           Output base filename.
         """
-
-        indx = filename.rfind('.fits')
-        indx_try = filename.rfind('_rate.fits')
-        indx_try2 = filename.rfind('_cal.fits')
+        indx = filename.rfind(".fits")
+        indx_try = filename.rfind("_rate.fits")
+        indx_try2 = filename.rfind("_cal.fits")
 
         if indx_try > 0:
             single_product = filename[:indx_try]
@@ -139,10 +117,11 @@ class DataTypes():
             single_product = filename[:indx]
         return single_product
 
+
 # _______________________________________________________________________________
 
 
-class NotIFUImageModel(Exception):
-    """ Raise Exception if data is not of type IFUImageModel
-    """
+class NotIFUImageModelError(Exception):
+    """Raise Exception if data is not of type IFUImageModel."""
+
     pass
