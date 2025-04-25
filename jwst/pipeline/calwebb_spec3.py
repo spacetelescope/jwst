@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import warnings
 from collections import defaultdict
 from pathlib import Path
 import numpy as np
@@ -31,7 +32,6 @@ from ..pixel_replace import pixel_replace_step
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["Spec3Pipeline"]
 
@@ -636,12 +636,18 @@ def _populate_table(output_table, input_spec, n_rows, vector_columns, meta_colum
     for col, _ in vector_columns:
         padded_data = np.full(n_rows, np.nan)
         padded_data[: input_table.shape[0]] = input_table[col]
-        output_table[col] = padded_data
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=RuntimeWarning, message="invalid value encountered in cast"
+            )
+            output_table[col] = padded_data
 
     # Copy the metadata into the new table
     # wfss_spectable metadata columns must have identical names to specmeta columns
     problems = []
     for col, _ in meta_columns:
+        if col == "NELEMENTS":
+            continue
         spec_meta = getattr(input_spec, col.lower(), None)
         if spec_meta is None:
             problems.append(col.lower())
