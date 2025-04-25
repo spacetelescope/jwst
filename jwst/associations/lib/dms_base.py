@@ -253,14 +253,7 @@ _DEGRADED_STATUS_NOTOK = (
 
 
 class DMSBaseMixin(ACIDMixin):
-    """
-    Association attributes common to DMS-based Rules.
-
-    Attributes
-    ----------
-    sequence : int
-        The sequence number of the current association
-    """
+    """Association attributes common to DMS-based Rules."""
 
     # Associations of the same type are sequenced.
     sequence = Counter(start=1)
