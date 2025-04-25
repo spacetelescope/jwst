@@ -1,9 +1,12 @@
 /*
-The detector pixels are represented by a 'point cloud' on the sky. The IFU cube is
-represented by a 3-D regular grid. This module finds the point cloud members contained
-in a region centered on the center of the cube spaxel. The size of the spaxel is spatial
+If the weighting method for IFU cube building is set to 'msm' or 'emsm' this c method
+is used. 
+The detector pixels are represented by a 'point cloud' on the sky. Each point cloud member
+contains the coordinates for the pixel center, the flux, error and variance of that pixel.
+The IFU cube is represented by a 3-D regular grid. This module finds the point cloud members contained
+in a region centered on the center of the cube spaxel. The size of the spaxel in spatial
 coordinates is cdetl1 and cdelt2, while the wavelength size is zcdelt3.
-This module uses the modified shephard weighting method (emsm if weight_type =0 or msm if weight_type =1)
+This module uses the modified Shepard weighting method (emsm if weight_type =0 or msm if weight_type =1)
 to determine how to  weight each point cloud member in the spaxel.
 
 Main function for Python: cube_wrapper
@@ -31,39 +34,39 @@ weight_type : int
    0: use emsm weighting
    1: use msm weighting
 start_region : int
-    starting slice number for detector region used in dq flagging
+    Starting slice number for detector region used in dq flagging
 end_region: int
-    ending slice number for detector region used in dq flagging
+    Ending slice number for detector region used in dq flagging
 overlap_partial : int
-    a dq flag indicating that only a portion of the spaxel is overlapped by a mapped detector pixel
+    A dq flag indicating that only a portion of the spaxel is overlapped by a mapped detector pixel
 overlap_full : int
-    a dq flag indicating that the entire spaxel is overlapped by the mapped detector pixel
+    A dq flag indicating that the entire spaxel is overlapped by the mapped detector pixel
 xcoord : double array
-   size of naxis1. This array holds the center x axis values of the ifu cube
+  This array holds the center x axis values of the ifu cube. It has a size of naxis1.
 ycoord : double array
-   size of naxis2. This array holds the center y axis values of the ifu cube
+   This array holds the center y axis values of the ifu cube. It has a size of naxis2.
 zcoord : double array
-   size of naxis3. This array holds the center x axis values of the ifu cube
+   This array holds the center x axis values of the ifu cube. It has a size of naxis3.
 flux : double array
-   size: point cloud elements. Flux of each point cloud member
+   Flux of each point cloud member.
 err : double array
-   size: point cloud elements. err of each point cloud member
+   Error of each point cloud member
 slice_no: int
-   slice number of point cloud member to be in dq flagging
+   Slice number of point cloud member to be in dq flagging
 coord1 : double array
-   size: point cloud elements. Naxis 1 coordinate of point cloud member (xi)
+   Naxis 1 coordinate of point cloud member (xi).
 coord2 : double array
-   size: point cloud elements. Naxis 2 coordinate of point cloud member (eta)
+   Naxis 2 coordinate of point cloud member (eta).
 wave : double array
-   size: point cloud elements. Wavelength of each point cloud member
+   Wavelength of each point cloud member.
 rois_pixel : double array
-   size: point cloud elements. Roi in spatial dimension to use for point cloud member
+   Roi in spatial dimension to use for point cloud member.
 roiw_pixel : double array
-   size: point cloud elements. Roi in wavelength dimension to use point cloud member
+   Roi in wavelength dimension to use point cloud member.
 scalerad_pixel : double array
-   size: point cloud elements. MSM weight parameter to use for point cloud member
+   MSM weight parameter to use for point cloud member
 zcdelt3: double array
-   size: point cloud elements. Spectral scale to use at wavelength of point cloud member
+   Spectral scale to use at wavelength of point cloud member
 roiw_ave : double
    Average roiw for all the wavelength planes. Used in dq flagging
 cdelt1 : double
@@ -72,17 +75,17 @@ cdelt2 : double
    Naxis 2 scale for cube
 
 
-Returns
--------
-spaxel_flux : numpy.ndarray
+Sets
+----
+spaxel_flux : ndarray
   IFU spaxel cflux
-spaxel_weight : numpy.ndarray
+spaxel_weight : ndarray
   IFU spaxel weight
-spaxel_iflux : numpy.ndarray
+spaxel_iflux : ndarray
   IFU spaxel weight map (number of overlaps)
-spaxel_var : numpy.ndarray
+spaxel_var : ndarray
   IFU spaxel error
-spaxel_dq : numpy.ndarray
+spaxel_dq : ndarray
   IFU spaxel dq
 */
 
@@ -123,9 +126,11 @@ extern int dq_nirspec(int overlap_partial,
 extern int set_dqplane_to_zero(int ncube, int **spaxel_dq);
 
 // Match point cloud to sky and determine the weighting to assign to each point cloud  member
-// to matched spaxel based on ROI - weighting type - emsm
+// to matched spaxel based on ROI - weighting type is emsm.
 
-// return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
+// sets values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
+
+// returns : 0 success, 1 failure
 
 int match_point_emsm(double *xc, double *yc, double *zc,
 		     double *coord1, double *coord2, double *wave,
@@ -283,8 +288,9 @@ int match_point_emsm(double *xc, double *yc, double *zc,
 
 
 // Match point cloud to sky and determine the weighting to assign to each point cloud  member
-// to matched spaxel based on ROI - weighting type - msm
-//return values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
+// to matched spaxel based on ROI - weighting type = msm.
+// set values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux.
+// returns: 0 = success, 1 = failure. 
 
 int match_point_msm(double *xc, double *yc, double *zc,
 		    double *coord1, double *coord2, double *wave,
@@ -462,7 +468,7 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     }
 }
 
-
+// Wrapper code that is called from python code and sets up interface with C code.
 static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
   PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo, *slicenoo; // codespell:ignore erro
   PyObject *rois_pixelo, *roiw_pixelo, *scalerad_pixelo, *zcdelt3o, *softrad_pixelo, *weight_pixelo;

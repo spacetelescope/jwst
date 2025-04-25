@@ -1,6 +1,5 @@
-""" Routines for creating single band, single exposure IFU Cubes with
-the interpolation method = area , coord_system = internal_cal
-"""
+"""Routines for creating IFUCubes with interpolation method = area , coord_system = internal_cal."""
+
 import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 from stdatamodels.jwst.transforms.models import _toindex
@@ -8,51 +7,88 @@ from stdatamodels.jwst.transforms.models import _toindex
 from .cube_match_internal import cube_wrapper_internal  # c extension
 
 
-def match_det2cube(instrument,
-                   x, y, sliceno,
-                   input_model,
-                   transform,
-                   acoord, zcoord,
-                   crval_along, crval3,
-                   cdelt_along, cdelt3,
-                   naxis1, naxis2):
-    """ Match detector pixels to output plane in local IFU coordinate system
+def match_det2cube(
+    instrument,
+    x,
+    y,
+    sliceno,
+    input_model,
+    transform,
+    acoord,
+    zcoord,
+    crval_along,
+    crval3,
+    cdelt_along,
+    cdelt3,
+    naxis1,
+    naxis2,
+):
+    """
+    Match detector pixels to output plane in local IFU coordinate system.
 
     This routine assumes a 1-1 mapping in across slice to slice no.
     This routine assumes the output coordinate systems is local IFU plane.
     The user can not change scaling in across slice dimension
-    Map the corners of the x,y detector values to a cube defined by local IFU plane.
+    Map the corners of the x, y detector values to a cube defined by local IFU plane.
     In the along slice, lambda plane find the % area of the detector pixel
     which it overlaps with in the cube. For each spaxel record the detector
     pixels that overlap with it - store flux,  % overlap, beta_distance.
 
     Parameters
     ----------
-    x : numpy.ndarray
-       x values of pixels in slice
-    y : numpy.ndarray
-       y values of pixels in slice
+    x : ndarray
+       Detector x pixel values in the slice
+    y : ndarray
+       Detector y pixel values in the slice
     sliceno : int
-      slice number
-    input_model : datamodel
-      input slope model or file
+       Slice number
+    input_model : IFUImage model
+       Input calibrated model or file
     transform : transform
-      wcs transform to transform x,y to alpha,beta, lambda
-    spaxel : list
-      list of spaxels holding information on each cube pixel.
+       WCS transform to transform x, y to alpha, beta, lambda
+    acoord : ndarray
+       Array of along slice valuee defining the along slice spatial dimension the  of IFU cube
+    zcoord : ndarray
+       Array of wavelength values defining the wavelength dimension of the IFU cube
+    crval_along : float
+       Along slixe reference value in the IFU cube
+    crval3 : float
+       Wavelength reference value in the IFU cube
+    cdelt_along : float
+       Along slice reference value in the IFU cube
+    cdelt3 : float
+       Wavelength sampling in the IFU cube
+    naxis1 : int
+       Size of axis 1 of the IFU cube
+    naxis2 : int
+       Size of axis 2 of the IFU cube
 
     Returns
     -------
-    spaxel filled in with needed information on overlapping detector pixels
+    result : tuple
+       Results from running c code to determine internal coordinate system IFU Cubes
+       Values contained in result:
+        instrument_no: integer. NIRSpec = 1, MIRI = 0
+        naxis1 & naxis2: output axis of IFU cube
+        crval_along : reference value in along slice dimension
+        cdelt_along : sampling in along slice dimension
+        crval3 : reference value in wavelength dimension
+        cdelt3 : wavelength sampling
+        a1, a2, a3, a4: Array of corners of pixels holding along slice coordinates
+        lam1, lam2, lam3, lam4: Array of corners of pixels holding wavelength coordinates
+        acoord: array holding slice coordinates of the IFU internal cube
+        zcoord: array holding wavelength coordinates of the IFU internal cube
+        ss: array holding the slice number of each pixel
+        pixel_flux: array of pixel fluxes
+        pixel_err: array of pixel errors
     """
-
     x = _toindex(x)
     y = _toindex(y)
     pixel_dq = input_model.dq[y, x]
 
-    all_flags = (dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NON_SCIENCE'])
+    all_flags = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NON_SCIENCE"]
     # find the location of all the values to reject in cube building
-    good_data = np.where((np.bitwise_and(pixel_dq, all_flags) == 0))
+    good_data = np.where(np.bitwise_and(pixel_dq, all_flags) == 0)
 
     # good data holds the location of pixels we want to map to cube
     x = x[good_data]
@@ -67,7 +103,7 @@ def match_det2cube(instrument,
     xx_left = x
     xx_right = x + 1
     # along slice dimension is second coordinate returned from transform
-    if instrument == 'NIRSPEC':
+    if instrument == "NIRSPEC":
         b1, a1, lam1 = transform(xx_left, yy_bot)
         b2, a2, lam2 = transform(xx_right, yy_bot)
         b3, a3, lam3 = transform(xx_right, yy_top)
@@ -81,7 +117,7 @@ def match_det2cube(instrument,
             lam3 = lam3 * 1.0e6
             lam4 = lam4 * 1.0e6
 
-    if instrument == 'MIRI':
+    if instrument == "MIRI":
         a1, b1, lam1 = transform(xx_left, yy_bot)
         a2, b2, lam2 = transform(xx_right, yy_bot)
         a3, b3, lam3 = transform(xx_right, yy_top)
@@ -116,16 +152,33 @@ def match_det2cube(instrument,
     pixel_err = input_model.err[y, x]
 
     # 1-1 mapping in across slice direction (x for NIRSPEC, y for MIRI)
-    if instrument == 'NIRSPEC':
+    if instrument == "NIRSPEC":
         ss = sliceno
         instrument_no = 1
-    if instrument == 'MIRI':
+    if instrument == "MIRI":
         ss = sliceno
         instrument_no = 0
-    result = cube_wrapper_internal(instrument_no, naxis1, naxis2,
-                                   crval_along, cdelt_along, crval3, cdelt3,
-                                   a1, a2, a3, a4, lam1, lam2, lam3, lam4,
-                                   acoord, zcoord, ss,
-                                   pixel_flux, pixel_err)
+    result = cube_wrapper_internal(
+        instrument_no,
+        naxis1,
+        naxis2,
+        crval_along,
+        cdelt_along,
+        crval3,
+        cdelt3,
+        a1,
+        a2,
+        a3,
+        a4,
+        lam1,
+        lam2,
+        lam3,
+        lam4,
+        acoord,
+        zcoord,
+        ss,
+        pixel_flux,
+        pixel_err,
+    )
 
     return result
