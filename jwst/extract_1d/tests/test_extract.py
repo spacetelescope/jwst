@@ -1490,8 +1490,7 @@ def test_create_extraction_missing_wavelengths(create_extraction_inputs, log_wat
     model.wavelength = np.full_like(model.data, np.nan)
     watcher = log_watcher("jwst.extract_1d.extract", message="Spectrum is empty; no valid data")
     with pytest.raises(ex.ContinueError):
-        with pytest.warns(RuntimeWarning, match="All-NaN"):
-            ex.create_extraction(*create_extraction_inputs)
+        ex.create_extraction(*create_extraction_inputs)
     watcher.assert_seen()
 
 

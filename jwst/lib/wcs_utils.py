@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 
 
@@ -36,12 +38,18 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
         got_wavelength = True  # may be reset below
     else:
         wl_array = None
-    if (
-        wl_array is None
-        or len(wl_array) == 0
-        or np.nanmin(wl_array) == 0.0
-        and np.nanmax(wl_array) == 0.0
-    ):
+
+    # Check for a present but empty wavelength array
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message="All-NaN slice", category=RuntimeWarning)
+        empty_wl = (
+            wl_array is None
+            or len(wl_array) == 0
+            or np.nanmin(wl_array) == 0.0
+            and np.nanmax(wl_array) == 0.0
+        )
+
+    if empty_wl:
         got_wavelength = False
         wl_array = None
 
