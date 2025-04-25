@@ -1,4 +1,10 @@
-"""Callback registry."""
+"""
+Callback registry.
+
+This registry stores events which may be triggered on
+an AssociationRegistry given some signal; for instance,
+finalization of associations.
+"""
 
 from jwst.lib.signal_slot import Signal
 
