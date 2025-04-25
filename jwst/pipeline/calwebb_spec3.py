@@ -4,6 +4,7 @@ from pathlib import Path
 import numpy as np
 
 from stdatamodels.jwst import datamodels
+from asdf.tags.core.ndarray import asdf_datatype_to_numpy_dtype
 
 from jwst.datamodels import SourceModelContainer
 from jwst.stpipe import query_step_status
@@ -26,6 +27,11 @@ from ..combine_1d import combine_1d_step
 from ..photom import photom_step
 from ..spectral_leak import spectral_leak_step
 from ..pixel_replace import pixel_replace_step
+
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 __all__ = ["Spec3Pipeline"]
 
@@ -443,19 +449,31 @@ def _save_wfss_x1d(results_list):
                 if spec.spec_table.shape[0] > n_rows_by_exposure[idx]:
                     n_rows_by_exposure[idx] = spec.spec_table.shape[0]
 
-    # The column names should be the same for all exposures and sources
+    # Set up output table column names and dtypes
+    # Use SpecModel.spectable to determine the vector-like columns
+    # The additional metadata columns are all those that are defined in WFSSMultiSpecModel
+    # but not in SpecModel
     n_sources = len(results_list)
     example_model = results_list[0]
-    colnames = example_model.spec[0].spec_table.names
+    vector_colnames = example_model.spec[0].spec_table.names
+    output_schema = datamodels.WFSSMultiSpecModel().schema["properties"]["spec_table"]["datatype"]
+    all_colnames = np.array([col["name"] for col in output_schema])
+    all_dtypes = np.array([asdf_datatype_to_numpy_dtype(col["datatype"]) for col in output_schema])
+    is_meta = ~np.array([col in vector_colnames for col in all_colnames])
+    meta_colnames = all_colnames[is_meta]
+    meta_dtypes = all_dtypes[is_meta]
 
     # loop over exposures to make tables for each exposure
     fltdata_by_exposure = []
     for i in range(len(exposure_filenames)):
+        # add the vector columns to the table. dtype depends on the number of rows
         n_rows = n_rows_by_exposure[i]
-        # Figure out the dtype of the table based on the max number of rows
-        fltdtype = [("SOURCE_ID", ">i8"), ("NELEMENTS", ">i8")]
-        for vector in colnames:
+        fltdtype = []
+        for vector in vector_colnames:
             fltdtype.append((vector, ">f8", n_rows))
+        # add the metadata columns to the table
+        for col, dtype in zip(meta_colnames, meta_dtypes, strict=True):
+            fltdtype.append((col, dtype))
 
         fltdata_by_exposure.append(np.empty(n_sources, dtype=fltdtype))
 
@@ -470,14 +488,27 @@ def _save_wfss_x1d(results_list):
 
             # Get the data from the current model
             data = spec.spec_table
+            # special handling for NELEMENTS because not defined in specmeta schema
             fltdata[j]["NELEMENTS"] = data.shape[0]
-            fltdata[j]["SOURCE_ID"] = spec.source_id
 
             # Copy the data into the new table
-            for col in colnames:
+            for col in vector_colnames:
                 padded_data = np.full(n_rows, np.nan)
                 padded_data[: data.shape[0]] = data[col]
                 fltdata[j][col] = padded_data
+
+            # Copy the metadata into the new table
+            # wfss_spectable metadata columns have identical names to specmeta columns
+            problems = []
+            for col in meta_colnames:
+                spec_meta = getattr(spec, col.lower(), None)
+                if spec_meta is None:
+                    problems.append(col.lower())
+                else:
+                    fltdata[j][col] = spec_meta
+
+            if len(problems) > 0:
+                log.warning(f"Metadata could not be determined from spec: {problems}")
 
     # Finally, create a new MultiSpecModel to hold the combined data
     # with one SpecModel per exposure
