@@ -7,7 +7,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.cube_build import cube_build
 from jwst.cube_build import file_table
-
+from jwst.cube_build.cube_build import NoFiltersError
 
 wcsinfo = {
     'dec_ref': -0.00244536159612126,
@@ -208,7 +208,7 @@ def test_calspec2_config(tmp_cwd, miri_ifushort_short):
     pars_input['subchannel'] = []
     pars_input['filter'] = []
     pars_input['grating'] = []
-    weighting = 'msm'
+    weighting = 'drizzle'
     output_type = 'multi'  # calspec 2 setup. Only 1 cube create from 2 channels
     single = False
     par_filename = 'None'
@@ -255,7 +255,7 @@ def test_calspec3_config_miri(tmp_cwd, miri_full_coverage):
     pars_input['subchannel'] = []
     pars_input['filter'] = []
     pars_input['grating'] = []
-    weighting = 'msm'
+    weighting = 'drizzle'
     output_type = 'band'
     single = False
     par_filename = 'None'
@@ -321,14 +321,14 @@ def test_calspec3_config_miri(tmp_cwd, miri_full_coverage):
 
 
 def test_calspec3_config_miri_multi(tmp_cwd, miri_full_coverage):
-    """ Test CalSpec3 MIRI configuration default band cubes"""
+    """ Test CalSpec3 MIRI configuration default output type = multi"""
 
     pars_input = {}
     pars_input['channel'] = []
     pars_input['subchannel'] = []
     pars_input['filter'] = []
     pars_input['grating'] = []
-    weighting = 'msm'
+    weighting = 'drizzle'
     output_type = 'multi'
     single = False
     par_filename = 'None'
@@ -356,6 +356,7 @@ def test_calspec3_config_miri_multi(tmp_cwd, miri_full_coverage):
     cubeinfo.instrument = this_instrument
     cubeinfo.determine_band_coverage(master_table)
     num_cubes, cube_pars = cubeinfo.number_cubes()
+    
     assert num_cubes == 1
     assert cubeinfo.all_channel == ['1', '1', '1', '2', '2', '2',
                                     '3', '3', '3', '4', '4', '4']
@@ -374,6 +375,52 @@ def test_calspec3_config_miri_multi(tmp_cwd, miri_full_coverage):
                                       'short', 'medium', 'long']
 
 
+def test_calspec3_config_miri_multi_ch1(tmp_cwd, miri_full_coverage):
+    """ Test CalSpec3 MIRI configuration output = band channel = 1"""
+
+    pars_input = {}
+    pars_input['channel'] = []
+    pars_input['subchannel'] = []
+    pars_input['filter'] = []
+    pars_input['grating'] = []
+    weighting = 'drizzle'
+    output_type = 'multi'
+    channel = '1'
+    single = False
+    par_filename = 'None'
+
+    pars = {
+        'channel': pars_input['channel'],
+        'subchannel': pars_input['subchannel'],
+        'grating': pars_input['grating'],
+        'filter': pars_input['filter'],
+        'weighting': weighting,
+        'single': single,
+        'channel': channel,
+        'output_type': output_type}
+
+    cubeinfo = cube_build.CubeData(
+        miri_full_coverage,
+        par_filename,
+        **pars)
+
+    master_table = file_table.FileTable()
+    this_instrument = master_table.set_file_table(
+        cubeinfo.input_models)
+
+    assert this_instrument == 'MIRI'
+
+    cubeinfo.instrument = this_instrument
+    cubeinfo.determine_band_coverage(master_table)
+    num_cubes, cube_pars = cubeinfo.number_cubes()
+    assert num_cubes == 1
+    assert cubeinfo.all_channel == ['1', '1', '1']
+    assert cubeinfo.all_subchannel == ['short', 'medium', 'long']
+
+    assert cube_pars['1']['par1'] == ['1', '1', '1']
+    assert cube_pars['1']['par2'] == ['short', 'medium', 'long']
+    
+
 def test_calspec3_config_nirspec(tmp_cwd, nirspec_medium_coverage):
     """ Test CalSpec3 configuration for NIRSpec - default band cubes"""
 
@@ -382,7 +429,7 @@ def test_calspec3_config_nirspec(tmp_cwd, nirspec_medium_coverage):
     pars_input['subchannel'] = []
     pars_input['filter'] = []
     pars_input['grating'] = []
-    weighting = 'msm'
+    weighting = 'drizzle'
     output_type = 'band'
     single = False
     par_filename = 'None'
@@ -465,3 +512,96 @@ def test_calspec3_config_nirspec_multi(tmp_cwd, nirspec_medium_coverage):
 
     assert cube_pars['1']['par1'] == ['g140m', 'g235m']
     assert cube_pars['1']['par2'] == ['f100lp', 'f170lp']
+
+    
+def test_calspec3_config_nirspec_grating(tmp_cwd, nirspec_medium_coverage):
+    """ Test CalSpec3 configuration for NIRSpec - select grating"""
+
+    pars_input = {}
+    pars_input['channel'] = []
+    pars_input['subchannel'] = []
+    pars_input['filter'] = []
+    pars_input['grating'] = []
+    weighting = 'drizzle'
+    grating = 'g140m'
+    filter = 'f100lp'
+    output_type = 'multi'
+    single = False
+    par_filename = 'None'
+
+    pars = {
+        'channel': pars_input['channel'],
+        'subchannel': pars_input['subchannel'],
+        'grating': pars_input['grating'],
+        'filter': pars_input['filter'],
+        'weighting': weighting,
+        'grating': grating,
+        'filter': filter, 
+        'single': single,
+        'output_type': output_type}
+
+    cubeinfo = cube_build.CubeData(
+        nirspec_medium_coverage,
+        par_filename,
+        **pars)
+
+    master_table = file_table.FileTable()
+    this_instrument = master_table.set_file_table(
+        cubeinfo.input_models)
+
+    assert this_instrument == 'NIRSPEC'
+
+    cubeinfo.instrument = this_instrument
+    cubeinfo.determine_band_coverage(master_table)
+    num_cubes, cube_pars = cubeinfo.number_cubes()
+
+    assert num_cubes == 1
+    assert cubeinfo.all_grating == ['g140m']
+    assert cubeinfo.all_filter == ['f100lp']
+
+    assert cube_pars['1']['par1'] == ['g140m']
+    assert cube_pars['1']['par2'] == ['f100lp']
+
+
+
+def test_calspec3_config_nirspec_no_grating(tmp_cwd, nirspec_medium_coverage):
+    """ Test CalSpec3 configuration for NIRSpec - select grating incorrect"""
+
+    pars_input = {}
+    pars_input['channel'] = []
+    pars_input['subchannel'] = []
+    pars_input['filter'] = []
+    pars_input['grating'] = []
+    weighting = 'drizzle'
+    grating = 'g140h'
+    filter = 'f100lp'
+    output_type = 'multi'
+    single = False
+    par_filename = 'None'
+
+    pars = {
+        'channel': pars_input['channel'],
+        'subchannel': pars_input['subchannel'],
+        'grating': pars_input['grating'],
+        'filter': pars_input['filter'],
+        'weighting': weighting,
+        'grating': grating,
+        'filter': filter, 
+        'single': single,
+        'output_type': output_type}
+
+
+    cubeinfo = cube_build.CubeData(
+            nirspec_medium_coverage,
+            par_filename,
+            **pars)
+
+    master_table = file_table.FileTable()
+    this_instrument = master_table.set_file_table(
+        cubeinfo.input_models)
+
+    assert this_instrument == 'NIRSPEC'
+    cubeinfo.instrument = this_instrument
+    with pytest.raises(NoFiltersError):
+        cubeinfo.determine_band_coverage(master_table)
+
