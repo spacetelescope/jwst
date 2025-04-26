@@ -1,4 +1,10 @@
-// This library contains c functions to support building IFU cubes
+/* This library contains c functions to support building IFU cubes.
+Many of these routines are used in the Sutherland-Hodgman algorithm. This
+algorithm finds the clipped polygon that falls inside the cube spaxel.
+A clipped polygon is the overlapping polygon of the detector pixel and
+a spaxel.  We are only dealing with the spatial dimensions in this routine. 
+*/
+
 
 #include <stdlib.h>
 #include <math.h>
@@ -12,12 +18,23 @@
 #define CP_TOP 3
 
 
-//_______________________________________________________________________
-// Allocate the memory to for the spaxel arrays in the cube
-//_______________________________________________________________________
-
 int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv) {
 
+  /*
+    Allocate memory for the spaxel output vectors to be of size nelem.
+ 
+   nelem : int
+       Number of elements to allocate memory
+   fluxv : double ndarray
+      Flux vector
+   weightv : double ndarray
+      Weight vector
+   varv : double ndarray
+      Variance vector
+   iflux : double ndarray
+      Counter index vector
+  */ 
+  
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
@@ -57,16 +74,49 @@ int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv
     return 1;
 }
 
-// support function for sh_find_overlap
 void addpoint (double x, double y, double xnew[], double ynew[], int *nVertices2){
+
+  /*
+    A support function for the sh_find_overlap (Sutherland-Hodgman algorithm).
+    Adds a new x and y point to the vertices describing the clipped polygon.  
+
+    x : double
+        X coordinate to add to clipped polygon that falls inside the cube spaxel
+    y : double
+        Y coordinate to add to clipped polygon that falls inside the cube spaxel
+    xnew : double array
+        Array containing the x vertices of clipped polygon
+    ynew : double array
+        Array containing the y vertices of clipped polygon
+  */
   xnew[*nVertices2] = x;
   ynew[*nVertices2] = y;
   *nVertices2 = *nVertices2 + 1;
 }
 
-// support function for sh_find_overlap
+
 int insideWindow(int edge, double x, double y,
                  double left,double right, double top, double bottom){
+  /*
+    Support function for sh_find_overlap. Determine where a point is in relationship to 
+    the clipped polygon.
+
+    edge : int
+       Integer value which defines which edge of the polygon we are working with. 
+       0 = left, 1 = right, 2 = top, 3 = bottom.
+    x : double
+       X coordinate that is being tested if it falls inside the polygon.
+    y : double
+       Y coordinate that is being tested if it falls inside the polygon. 
+    left : double
+       Value defining the left side of the clipped polygon
+    right : double
+       Value defining the right side of the clipped polygon
+    top : double
+       Value defining the top edge of the clipped polygon
+    bottom : double
+       Value defining the bottom edge of the clipped polygon
+  */
         switch(edge)
         {
         case CP_LEFT:
@@ -81,9 +131,36 @@ int insideWindow(int edge, double x, double y,
         return 0;
 }
 
-// support function for sh_find_overlap
+
 int calcCondition(int edge, double x1, double y1, double x2, double y2,
                   double left, double right, double top, double bottom) {
+
+  /* A support function for sh_find_overlap. Is a point in the polygon ?
+     
+     Calls the insideWindow routine to determine if x1,y1 from pixel j and/or
+     x2,y2 from pixel j+1 is inside the clipped polygon. Based on this information
+     the vertices of the clipped polygon are updated. 
+     
+     edge : int
+       Integer value which defines which edge of the polygon we are working with. 
+       0 = left, 1 = right, 2 = top, 3 = bottom.
+     x1 : double
+       X value of a pixel[j]
+     y1 : double
+       Y value of a pixel[j]
+     x2 : double
+       X value of a pixel[j+1]
+     y2 : double
+       Y value of a pixel[j+1]
+    left : double
+       Value defining the left side of the clipped polygon
+    right : double
+       Value defining the right side of the clipped polygon
+    top : double
+       Value defining the top edge of the clipped polygon
+    bottom : double
+       Value defining the bottom edge of the clipped polygon
+   */
   int stat1 = insideWindow(edge,x1,y1,left,right,top,bottom);
   int stat2 = insideWindow(edge,x2,y2,left,right,top,bottom);
   if(!stat1 && stat2)   return 1;
@@ -94,10 +171,40 @@ int calcCondition(int edge, double x1, double y1, double x2, double y2,
 
 }
 
-// support function for sh_find_overlap
-void solveIntersection(int edge ,double x1,double y1,double x2,double y2,
-                       double *x,double *y,
+
+void solveIntersection(int edge, double x1, double y1, double x2, double y2,
+                       double *x, double *y,
                        double left, double right, double top, double bottom){
+
+  /*
+    A support function for sh_find_overlap. Find the intersection of a polygon and 
+    a cube spaxel. The cube spaxel is defined on an evenly spaced regular grid.
+
+     edge : int
+       Integer value that defines which edge of the polygon we are working with. 
+       0 = left, 1 = right, 2 = top, 3 = bottom.
+     x1 : double
+       X value of a pixel[j]
+     y1 : double
+       Y value of a pixel[j]
+     x2 : double
+       X value of a pixel[j+1]
+     y2 : double
+       Y value of a pixel[j+1]
+     x : double
+       The return x value of the x vertice of the clipped polygon 
+     y : double
+       The return y value of the x vertice of the clipped polygon 
+    left : double
+       Value defining the left side of the clipped polygon
+    right : double
+       Value defining the right side of the clipped polygon
+    top : double
+       Value defining the top edge of the clipped polygon
+    bottom : double
+       Value defining the bottom edge of the clipped polygon
+
+   */
   float m = 0;
   if(x2 != x1) m = ((double)(y2-y1)/(double)(x2-x1));
   switch(edge)
@@ -128,7 +235,7 @@ void solveIntersection(int edge ,double x1,double y1,double x2,double y2,
 }
 
 double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]){
-  /* Find the area of an quadrilateral
+  /* Find the area of an quadrilateral between clipped polygon and cube spaxel.
 
     Parameters
     ----------
@@ -136,14 +243,15 @@ double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner
        Minimum X value
     MinY : float
        Minimum Y value
-    Xcorners : numpy.ndarray
-       x corner values (use first 4 corners)
-    YCorners : numpy.ndarray
-       y corner values (use first 4 corners)
+    Xcorners : ndarray
+       X corner values of a cube spaxel
+    YCorners : ndarray
+       Y corner values of a cube spaxe
 
     Returns
     -------
-    Area
+    Area : double
+       Area of the overlap
   */
 
   double PX[5];
@@ -171,9 +279,23 @@ double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner
 }
 
 
-// find the area of a closed polygon
+// 
 double find_area_poly(int nVertices,double xPixel[],double yPixel[]){
 
+  /*
+    Find the area of a closed clipped polygon.
+    
+    nVertices : int
+       Number vertices of the clipped polygon.
+    xPixel : ndarray
+       X vertices of the clipped polygon
+    yPixel : ndarray
+       Y vertices of the clipped polygon
+
+    Returns
+    areaPoly : double
+       Area of the clipped closed polygon
+   */
   double area = 0;
   int i;
   double areaPoly = 0.0;
@@ -199,9 +321,26 @@ double sh_find_overlap(const double xcenter, const double ycenter,
 		      const double xlength, const double ylength,
 		      double xPixelCorner[],double yPixelCorner[])
 {
-  // Sutherland_hedgeman Polygon Clipping Algorithm to solve the overlap region
-  // between a 2-D detector mapped to IFU space with cube spaxel
+  /*Sutherland-Hodgman Polygon Clipping Algorithm to solve the overlap region
+   between a 2-D detector mapped and the spatial plane of the IFU spaxel.
 
+  xcenter : double
+      X center of the cube spaxel
+  ycenter : double
+      Y center of the cube spaxel
+  xlength : double
+      X length of the cube spaxel
+  ylength : double
+      Y length of the cube spaxel
+  xPixelCorner : ndarray
+      X corners of the polygon that is the formed by overlap between detector pixel and cube spaxel
+  yPixelCorner : ndarray
+      Y corners of the polygon that is the formed by overlap between detector pixel and cube spaxel
+    
+  Returns:
+  areaClipped : double
+      Area over the overlap clipped polygon
+  */
   int i,j,k;
   int nVertices2 = 0;
   int condition;
