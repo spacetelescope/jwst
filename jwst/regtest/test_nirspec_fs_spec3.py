@@ -1,7 +1,7 @@
 import os
 
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from gwcs import wcstools
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
