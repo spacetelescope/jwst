@@ -1,11 +1,8 @@
 #!/usr/bin/env python
-import warnings
 from collections import defaultdict
 from pathlib import Path
-import numpy as np
 
 import stdatamodels.jwst.datamodels as dm
-from asdf.tags.core.ndarray import asdf_datatype_to_numpy_dtype
 
 from jwst.datamodels import SourceModelContainer
 from jwst.stpipe import query_step_status
@@ -15,6 +12,11 @@ from ..exp_to_source import multislit_to_container
 from ..master_background.master_background_step import split_container
 from ..stpipe import Pipeline
 from ..lib.exposure_types import is_moving_target
+from jwst.lib.pipe_utils import (
+    determine_vector_and_meta_columns,
+    make_empty_recarray,
+    populate_recarray,
+)
 
 # step imports
 from ..assign_mtwcs import assign_mtwcs_step
@@ -454,7 +456,7 @@ def _save_wfss_x1d(results_list):
     # The additional metadata columns are all those that are defined in WFSSMultiSpecModel
     # but not in SpecModel
     n_sources = len(results_list)
-    vector_columns, meta_columns = _determine_columns(
+    vector_columns, meta_columns = determine_vector_and_meta_columns(
         dm.SpecModel().schema, dm.WFSSMultiSpecModel().schema
     )
 
@@ -462,7 +464,7 @@ def _save_wfss_x1d(results_list):
     fltdata_by_exposure = []
     for i in range(len(exposure_filenames)):
         n_rows = n_rows_by_exposure[i]
-        flt_empty = _make_empty_table(n_rows, n_sources, vector_columns, meta_columns)
+        flt_empty = make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns)
         fltdata_by_exposure.append(flt_empty)
 
     # Now loop through the models and populate the tables
@@ -476,7 +478,12 @@ def _save_wfss_x1d(results_list):
             n_rows = n_rows_by_exposure[exposure_idx]
 
             # populate the table with data from the input spectrum
-            _populate_table(fltdata[j], spec, n_rows, vector_columns, meta_columns)
+            populate_recarray(
+                fltdata[j], spec, n_rows, vector_columns, meta_columns, ignore_columns=["NELEMENTS"]
+            )
+
+            # special handling for NELEMENTS because not defined in specmeta schema
+            fltdata[j]["NELEMENTS"] = spec.spec_table.shape[0]
 
     # Finally, create a new MultiExposureModel to hold the combined data
     # with one MultiSpecModel table per exposure
@@ -484,13 +491,14 @@ def _save_wfss_x1d(results_list):
     for i, fname in enumerate(exposure_filenames):
         # Create a new extension for each exposure
         spec_table = fltdata_by_exposure[i]
+        spec_table.sort(order="SOURCE_ID")
         ext = dm.WFSSMultiSpecModel(spec_table)
         ext.meta.filename = fname
         output_x1d.exposures.append(ext)
 
     # Save the combined results to a file using first input model for metadata
     example_model = results_list[0]
-    output_x1d.update(example_model)
+    output_x1d.update(example_model, only="PRIMARY")
     output_x1d.save("flat_x1d.fits")
 
 
@@ -511,148 +519,29 @@ def _save_wfss_c1d(results_list):
     n_rows = max(len(model.spec[0].spec_table) for model in results_list)
 
     # figure out column names and dtypes
-    vector_columns, meta_columns = _determine_columns(
+    vector_columns, meta_columns = determine_vector_and_meta_columns(
         dm.CombinedSpecModel().schema, dm.WFSSMultiCombinedSpecModel().schema
     )
 
     # create empty table
-    fltdata = _make_empty_table(n_rows, n_sources, vector_columns, meta_columns)
+    fltdata = make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns)
 
     # loop over sources to populate the table with data from the input spectrum
     for j, model in enumerate(results_list):
-        _populate_table(fltdata[j], model.spec[0], n_rows, vector_columns, meta_columns)
+        populate_recarray(
+            fltdata[j],
+            model.spec[0],
+            n_rows,
+            vector_columns,
+            meta_columns,
+            ignore_columns=["NELEMENTS"],
+        )
 
     # Create a new SpecModel to hold the combined data
     # with one SpecModel per exposure
     output_c1d = dm.WFSSMultiCombinedSpecModel()
+    fltdata.sort(order=["SOURCE_ID"])
     output_c1d.spec_table = fltdata
     example_model = results_list[0]
     output_c1d.update(example_model)
     output_c1d.save("flat_c1d.fits")
-
-
-def _determine_columns(input_schema, output_schema):
-    """
-    Figure out which columns are vector-like and which are metadata.
-
-    The vector-like columns are the ones defined in the input schema,
-    which is expected to be either SpecModel or CombinedSpecModel.
-    The metadata columns are the ones defined only in the output schema,
-    which is expected to be WFSSMultiSpecModel or WFSSMultiCombinedSpecModel.
-
-    Parameters
-    ----------
-    input_schema : dict
-        The schema of the input models.
-    output_schema : dict
-        The schema of the output model.
-
-    Returns
-    -------
-    vector_columns : list[tuple]
-        List of tuples containing the vector-like column names and their dtypes.
-    meta_columns : list[tuple]
-        List of tuples containing the metadata column names and their dtypes.
-    """
-    in_cols = input_schema["properties"]["spec_table"]["datatype"]
-    out_cols = output_schema["properties"]["spec_table"]["datatype"]
-
-    # Extract just names and dtypes, convert to numpy dtypes
-    vector_colnames = np.array([col["name"] for col in in_cols])
-    vector_dtypes = np.array([asdf_datatype_to_numpy_dtype(col["datatype"]) for col in in_cols])
-    all_colnames = np.array([col["name"] for col in out_cols])
-    all_dtypes = np.array([asdf_datatype_to_numpy_dtype(col["datatype"]) for col in out_cols])
-
-    # Determine which columns are metadata
-    is_meta = ~np.array([col in vector_colnames for col in all_colnames])
-    meta_colnames = all_colnames[is_meta]
-    meta_dtypes = all_dtypes[is_meta]
-
-    # Construct the vector and meta column tuples
-    vector_cols = list(zip(vector_colnames, vector_dtypes, strict=True))
-    meta_cols = list(zip(meta_colnames, meta_dtypes, strict=True))
-
-    return vector_cols, meta_cols
-
-
-def _make_empty_table(n_rows, n_sources, vector_columns, meta_columns):
-    """
-    Create an empty output table with the specified number of rows.
-
-    Parameters
-    ----------
-    n_rows : int
-        The number of rows in the output table; this is the maximum number of
-        data points for any source in the exposure.
-    n_sources : int
-        The number of spectra in the output table.
-    vector_columns : list[tuple]
-        List of tuples containing the vector-like column names and their dtypes.
-    meta_columns : list[tuple]
-        List of tuples containing the metadata column names and their dtypes.
-
-    Returns
-    -------
-    output_table : `~numpy.recarray`
-        The empty output table with the specified shape and dtypes.
-    """
-    fltdtype = []
-    for col, dtype in vector_columns:
-        fltdtype.append((col, dtype, n_rows))
-    for col, dtype in meta_columns:
-        fltdtype.append((col, dtype))
-    return np.empty(n_sources, dtype=fltdtype)
-
-
-def _populate_table(output_table, input_spec, n_rows, vector_columns, meta_columns):
-    """
-    Populate the output table in-place with data from the input spectrum.
-
-    The output table is padded with NaNs to match the maximum number of
-    data points for any source in the exposure.
-    The metadata columns are copied from the input spectrum assuming
-    they have the same names as in the output table.
-
-    Parameters
-    ----------
-    output_table : `~numpy.recarray`
-        The output table to be populated with the spectral data.
-    input_spec : `~jwst.datamodels.SpecModel` or `~jwst.datamodels.CombinedSpecModel`
-        The input data model containing the spectral data.
-    n_rows : int
-        The number of rows in the output table; this is the maximum number of
-        data points for any source in the exposure.
-    vector_columns : list[tuple]
-        List of tuples containing the vector-like column names and their dtypes.
-    meta_columns : list[tuple]
-        List of tuples containing the metadata column names and their dtypes.
-    """
-    input_table = input_spec.spec_table
-
-    # special handling for NELEMENTS because not defined in specmeta schema
-    output_table["NELEMENTS"] = input_table.shape[0]
-
-    # Copy the data into the new table with NaN padding
-    for col, _ in vector_columns:
-        padded_data = np.full(n_rows, np.nan)
-        padded_data[: input_table.shape[0]] = input_table[col]
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=RuntimeWarning, message="invalid value encountered in cast"
-            )
-            output_table[col] = padded_data
-
-    # Copy the metadata into the new table
-    # wfss_spectable metadata columns must have identical names to specmeta columns
-    problems = []
-    for col, _ in meta_columns:
-        if col == "NELEMENTS":
-            continue
-        spec_meta = getattr(input_spec, col.lower(), None)
-        if spec_meta is None:
-            problems.append(col.lower())
-        else:
-            output_table[col] = spec_meta
-
-    if len(problems) > 0:
-        log.warning(f"Metadata could not be determined from spec: {problems}")
