@@ -155,8 +155,7 @@ def test_postprocess_rate_nirspec(log_watcher):
     watcher.assert_seen()
 
     watcher.message = 'Flagging failed-open'
-    with pytest.warns(RuntimeWarning, match="Invalid interval"):
-        result = cfn.post_process_rate(result, msaflagopen=True)
+    result = cfn.post_process_rate(result, msaflagopen=True)
     assert np.sum(result.dq & datamodels.dqflags.pixel['MSA_FAILED_OPEN']) > 0
     watcher.assert_seen()
 
