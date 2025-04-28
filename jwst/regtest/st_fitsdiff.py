@@ -1336,6 +1336,9 @@ class STTableDataDiff(TableDataDiff):
                 # Calculate the absolute and relative differences
                 diffs = np.abs(arra - arrb)
                 abs_diffs = diffs[diffs > +self.atol].size
+                abs_max, rel_max = 0.0, 0.0
+                if abs_diffs > 0:
+                    abs_max = np.max(diffs)
                 nan_idx = np.isnan(arra) | np.isnan(arrb)
                 anonan = arra[~nan_idx]
                 bnonan = arrb[~nan_idx]
@@ -1343,14 +1346,18 @@ class STTableDataDiff(TableDataDiff):
                 nozeros = (values != 0.0) & (bnonan != 0.0)
                 rel_values = values[nozeros] / np.abs(bnonan[nozeros])
                 rel_diffs = rel_values[rel_values > self.rtol].size
+                if rel_diffs > 0:
+                    rel_max = np.max(rel_values)
 
                 # Find the total differences per column
                 if abs_diffs > 0 or rel_diffs > 0:
                     self.total_diff_per_col[col.name] = {
                         "abs_diffs": abs_diffs,
+                        "abs_max": abs_max,
                         "abs_mean": np.mean(diffs),
                         "abs_std": np.std(diffs),
                         "rel_diffs": rel_diffs,
+                        "rel_max": rel_max,
                         "rel_mean": np.mean(rel_values),
                         "rel_std": np.std(rel_values),
                     }
