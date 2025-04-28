@@ -368,8 +368,7 @@ class CubeData:
 
                 num_cubes = 1
                 cube_pars["1"] = {}
-                cube_pars["1"]["par1"] = {}
-                cube_pars["1"]["par2"] = {}
+
                 cube_pars["1"]["par1"] = self.all_channel
                 cube_pars["1"]["par2"] = self.all_subchannel
 
