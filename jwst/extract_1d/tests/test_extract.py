@@ -315,31 +315,32 @@ def test_create_poly_empty():
     assert ex.create_poly(coeff) is None
 
 
-def test_populate_time_keywords(mock_nirspec_bots, mock_10_spec):
-    ex.populate_time_keywords(mock_nirspec_bots, mock_10_spec)
+def test_populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec):
+    ex.populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec)
 
     # time keywords now added to output spectra
-    for i, spec in enumerate(mock_10_spec.spec):
-        assert spec.int_num == i + 1
-        assert spec.start_time_mjd == mock_nirspec_bots.int_times["int_start_MJD_UTC"][i]
-        assert spec.end_tdb == mock_nirspec_bots.int_times["int_end_BJD_TDB"][i]
+    for i, spec in enumerate(mock_10_multi_int_spec.spec[0].spec_table):
+        assert spec["INT_NUM"] == i + 1
+        assert spec["START_TIME_MJD"] == mock_nirspec_bots.int_times["int_start_MJD_UTC"][i]
+        assert spec["END_TDB"] == mock_nirspec_bots.int_times["int_end_BJD_TDB"][i]
 
 
-def test_populate_time_keywords_no_table(mock_nirspec_fs_one_slit, mock_one_spec):
+def test_populate_time_keywords_no_table(mock_nirspec_fs_one_slit, mock_one_spec, log_watcher):
+    watcher = log_watcher("jwst.extract_1d.extract", message="no INT_TIMES table")
     ex.populate_time_keywords(mock_nirspec_fs_one_slit, mock_one_spec)
 
-    # only int_num is added to spec
-    assert mock_one_spec.spec[0].int_num == 1
+    # No int_times table: warns and spectrum is unchanged
+    watcher.assert_seen()
+    assert "INT_NUM" not in mock_one_spec.spec[0].spec_table.columns.names
 
 
-def test_populate_time_keywords_multislit(mock_nirspec_mos, mock_10_spec):
+def test_populate_time_keywords_multislit(mock_nirspec_mos, mock_10_multi_int_spec):
     mock_nirspec_mos.meta.exposure.nints = 10
-    ex.populate_time_keywords(mock_nirspec_mos, mock_10_spec)
+    ex.populate_time_keywords(mock_nirspec_mos, mock_10_multi_int_spec)
 
     # no int_times - only int_num is added to spec
-    # It is set to 1 for all spectra - no integrations in multislit data.
-    assert mock_10_spec.spec[0].int_num == 1
-    assert mock_10_spec.spec[9].int_num == 1
+    # It is set to the integration number for all spectra - no integrations in multislit data.
+    assert np.all(mock_10_multi_int_spec.spec[0].spec_table["INT_NUM"] == np.arange(10) + 1)
 
 
 def test_populate_time_keywords_multislit_table(
@@ -353,7 +354,7 @@ def test_populate_time_keywords_multislit_table(
     watcher.assert_seen()
 
     # int_times present but not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
 def test_populate_time_keywords_averaged(
@@ -367,7 +368,7 @@ def test_populate_time_keywords_averaged(
     watcher.assert_seen()
 
     # int_times not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
 def test_populate_time_keywords_mismatched_table(mock_nirspec_bots, mock_10_spec, log_watcher):
@@ -378,7 +379,7 @@ def test_populate_time_keywords_mismatched_table(mock_nirspec_bots, mock_10_spec
     watcher.assert_seen()
 
     # int_times not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
 def test_populate_time_keywords_missing_ints(mock_nirspec_bots, mock_10_spec, log_watcher):
@@ -388,7 +389,7 @@ def test_populate_time_keywords_missing_ints(mock_nirspec_bots, mock_10_spec, lo
     watcher.assert_seen()
 
     # int_times not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
 def test_populate_time_keywords_ifu_table(
@@ -402,12 +403,12 @@ def test_populate_time_keywords_ifu_table(
     watcher.assert_seen()
 
     # int_times present but not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
-def test_populate_time_keywords_mismatched_spec(mock_nirspec_bots, mock_one_spec, log_watcher):
+def test_populate_time_keywords_mismatched_spec(mock_nirspec_bots, mock_2_multi_int_spec, log_watcher):
     watcher = log_watcher("jwst.extract_1d.extract", message="Don't understand n_output_spec")
-    ex.populate_time_keywords(mock_nirspec_bots, mock_one_spec)
+    ex.populate_time_keywords(mock_nirspec_bots, mock_2_multi_int_spec)
     watcher.assert_seen()
 
 
@@ -1672,7 +1673,7 @@ def test_run_extract1d_save_cube_scene(mock_nirspec_bots):
     output_model, profile_model, scene_model, residual = ex.run_extract1d(
         model, save_profile=True, save_scene_model=True, save_residual_image=True
     )
-    assert isinstance(output_model, dm.MultiSpecModel)
+    assert isinstance(output_model, dm.TSOMultiSpecModel)
     assert isinstance(profile_model, dm.ImageModel)
     assert isinstance(scene_model, dm.CubeModel)
     assert isinstance(residual, dm.CubeModel)
@@ -1692,8 +1693,9 @@ def test_run_extract1d_tso(mock_nirspec_bots):
     output_model, _, _, _ = ex.run_extract1d(model)
 
     # time and integration keywords are populated
-    for i, spec in enumerate(output_model.spec):
-        assert spec.int_num == i + 1
+    for i, spec in enumerate(output_model.spec[0].spec_table):
+        assert spec["int_num"] == i + 1
+        assert np.isclose(spec["start_time_mjd"], 59729.04367729)
 
     output_model.close()
 
