@@ -8,7 +8,6 @@ authors = [
 classifiers = [
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Astronomy",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
@@ -46,6 +45,7 @@ dependencies = [
     "importlib-metadata>=4.11.4",
     "jsonschema>=4.8",
 ]
+license-files = ["LICENSE"]
 dynamic = [
     "version",
 ]
@@ -53,10 +53,6 @@ dynamic = [
 [project.readme]
 file = "README.md"
 content-type = "text/markdown"
-
-[project.license]
-file = "LICENSE"
-content-type = "text/plain"
 
 [project.urls]
 Homepage = "https://github.com/spacetelescope/jwst"
