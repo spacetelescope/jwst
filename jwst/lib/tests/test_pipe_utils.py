@@ -1,4 +1,5 @@
 """Test utilities"""
+import logging
 import copy
 import pytest
 
@@ -10,6 +11,7 @@ from stdatamodels.properties import ObjectNode
 from jwst.lib import pipe_utils
 from jwst.associations.lib import dms_base
 from jwst.lib.pipe_utils import is_tso
+from jwst.tests.helpers import LogWatcher
 
 all_exp_types = dms_base.IMAGE2_NONSCIENCE_EXP_TYPES + \
     dms_base.IMAGE2_SCIENCE_EXP_TYPES + \
@@ -268,22 +270,39 @@ def test_make_empty_recarray():
         assert recarray[name].dtype == dtype
 
 
-@pytest.fixture
-def empty_recarray():
+@pytest.fixture(params=[False, True])
+def empty_recarray(request):
+    """
+    Make an empty output table.
+
+    The parameter `request.param` is used to determine whether to
+    add a metadata column to the output table that is NOT in SpecModel
+    in order to test the warning logging for problem columns.
+    """
     n_rows = 10
     n_sources = 5
     vector_columns = [('FLUX', np.float32), ('WAVELENGTH', np.float64)]
     meta_columns = [('NAME', "S20"), ('SOURCE_ID', np.int32)]
+    if request.param:
+        # Add a column that is not in the input model
+        meta_columns.append(('EXTRA_COLUMN', np.float32))
     return pipe_utils.make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns)
 
 
-@pytest.mark.parametrize("ignore_columns", [["SOURCE_ID"], ["FLUX"], []])
-def test_populate_recarray(empty_recarray, ignore_columns):
-    n_rows = 10
-    n_sources = 5
-    vector_columns = [('FLUX', np.float32), ('WAVELENGTH', np.float64)]
-    meta_columns = [('NAME', "S20"), ('SOURCE_ID', np.int32)]
+@pytest.mark.parametrize("ignore_columns", [["SOURCE_ID"], ["FLUX"], None])
+def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
+
+    # make a log watcher
+    watcher = LogWatcher("Metadata could not be determined from input spec_table")
+    monkeypatch.setattr(logging.getLogger("jwst.lib.pipe_utils"), "warning", watcher)
+
+    # First re-construct vector and meta columns from the input recarray
     output_table = copy.deepcopy(empty_recarray)
+    all_columns = output_table.dtype.names
+    all_datatypes = [output_table[name].dtype for name in all_columns]
+    vector_columns = [(name, dtype) for name, dtype in zip(all_columns[:2], all_datatypes[:2])]
+    meta_columns = [(name, dtype) for name, dtype in zip(all_columns[2:], all_datatypes[2:])]
+    (n_sources, n_rows) = output_table["FLUX"].shape
 
     for i in range(n_sources):
         input_spec = datamodels.SpecModel()
@@ -306,6 +325,9 @@ def test_populate_recarray(empty_recarray, ignore_columns):
             meta_columns,
             ignore_columns=ignore_columns
         )
+
+    if ignore_columns is None:
+        ignore_columns = []
         
     # Check that the output table has been populated correctly
     for i in range(n_sources):
@@ -317,11 +339,14 @@ def test_populate_recarray(empty_recarray, ignore_columns):
                 assert np.array_equal(output_table[name][i], expected, equal_nan=True)
             else:
                 # These should all be zero because that's the initial value from the schema
-                assert np.allclose(output_table[name][i], 0.0, equal_nan=False, atol=1e-10)
-                pass
+                assert np.allclose(output_table[name][i], 0.0, equal_nan=False, atol=1e-10, rtol=0)
         assert output_table["NAME"][i] == np.bytes_(f"Source {i}")
         if "SOURCE_ID" not in ignore_columns:
             assert output_table["SOURCE_ID"][i] == i
         else:
             # If SOURCE_ID is ignored, it should be set to 0 because that's the schema default value
             assert output_table["SOURCE_ID"][i] == 0
+
+    # Check for "problems" warning message
+    if "EXTRA_COLUMN" in all_columns and "EXTRA_COLUMN" not in ignore_columns:
+        watcher.assert_seen()

@@ -204,7 +204,7 @@ def determine_vector_and_meta_columns(input_datatype, output_datatype):
     return vector_cols, meta_cols
 
 
-def make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns):
+def make_empty_recarray(n_rows, n_spec, vector_columns, meta_columns):
     """
     Create an empty output table with the specified number of rows.
 
@@ -212,8 +212,8 @@ def make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns):
     ----------
     n_rows : int
         The number of rows in the output table; this is the maximum number of
-        data points for any source in the exposure.
-    n_sources : int
+        data points for any spectrum in the exposure.
+    n_spec : int
         The number of spectra in the output table.
     vector_columns : list[tuple]
         List of tuples containing the vector-like column names and their dtypes.
@@ -230,7 +230,7 @@ def make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns):
         fltdtype.append((col, dtype, n_rows))
     for col, dtype in meta_columns:
         fltdtype.append((col, dtype))
-    return np.empty(n_sources, dtype=fltdtype)
+    return np.empty(n_spec, dtype=fltdtype)
 
 
 def populate_recarray(
@@ -240,7 +240,7 @@ def populate_recarray(
     Populate the output table in-place with data from the input spectrum.
 
     The output table is padded with NaNs to match the maximum number of
-    data points for any source in the exposure.
+    data points for any spectrum in the exposure.
     The metadata columns are copied from the input spectrum assuming
     they have the same names as in the output table.
 
@@ -252,7 +252,7 @@ def populate_recarray(
         The input data model containing the spectral data.
     n_rows : int
         The number of rows in the output table; this is the maximum number of
-        data points for any source in the exposure.
+        data points for any spectrum in the exposure.
     vector_columns : list[tuple]
         List of tuples containing the vector-like column names and their dtypes.
     meta_columns : list[tuple]
@@ -280,7 +280,7 @@ def populate_recarray(
             output_table[col] = padded_data
 
     # Copy the metadata into the new table
-    # wfss_spectable metadata columns must have identical names to specmeta columns
+    # Metadata columns must have identical names to spec_meta columns
     problems = []
     for col, _ in meta_columns:
         if col in ignore_columns:
