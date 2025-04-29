@@ -57,7 +57,7 @@ def determine_vector_and_meta_columns(input_datatype, output_datatype):
     return vector_cols, meta_cols
 
 
-def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=None):
+def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=0):
     """
     Create an empty output table with the specified number of rows.
 
@@ -74,11 +74,12 @@ def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=None):
         List of booleans indicating whether each column is vector-like.
         If `True`, the column will be a 1D array of length `n_rows`.
         Otherwise, the column will be a scalar.
-    defaults : list, optional
+    defaults : list, int, or float, optional
         List of default values for each column. If a column is vector-like,
         the default value will be repeated to fill the array.
         If a column is scalar, the default value will be used directly.
-        If None, the array will be empty.
+        If `int` or `float`, the same value will be used for all columns;
+        string-type columns will be filled with the string representation of the value.
 
     Returns
     -------
@@ -94,7 +95,8 @@ def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=None):
             fltdtype.append((col, dtype))
 
     arr = np.empty(n_spec, dtype=fltdtype)
-    if defaults is None:
+    if isinstance(defaults, (int, float)):
+        arr[...] = defaults
         return arr
 
     # fill the array with the default values

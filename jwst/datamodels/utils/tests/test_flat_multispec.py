@@ -4,7 +4,7 @@ import copy
 import numpy as np
 
 import stdatamodels.jwst.datamodels as dm
-from jwst.datamodels.flat_multispec import (determine_vector_and_meta_columns, make_empty_recarray, populate_recarray)
+from jwst.datamodels.utils.flat_multispec import (determine_vector_and_meta_columns, make_empty_recarray, populate_recarray)
 from jwst.tests.helpers import LogWatcher
 
 
@@ -38,16 +38,16 @@ def test_determine_vector_and_meta_columns():
         assert (np.issubdtype(dtype, np.number) or np.issubdtype(dtype, np.bytes_))
 
 
-@pytest.mark.parametrize("defaults", [None, [np.nan, 1.0, "foo"]])
+@pytest.mark.parametrize("defaults", [3, 2.0, [np.nan, 1.0, "foo", 10]])
 def test_make_empty_recarray(defaults):
     n_rows = 10
     n_sources = 5
     vector_columns = [('FLUX', np.float32), ('WAVELENGTH', np.float64)]
-    meta_columns = [('NAME', np.str_)]
+    meta_columns = [('NAME', "S20"), ('SOURCE_ID', np.int32)]
     columns = vector_columns + meta_columns
     is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
     
-    recarray = make_empty_recarray(n_rows, n_sources, columns, is_vector)
+    recarray = make_empty_recarray(n_rows, n_sources, columns, is_vector, defaults=defaults)
     
     # Check the shapes
     assert recarray.shape == (n_sources,)
@@ -59,19 +59,18 @@ def test_make_empty_recarray(defaults):
     for name, dtype in vector_columns + meta_columns:
         assert recarray[name].dtype == dtype
     
-    # If no defaults, array should be empty (size zero)
-    if defaults is None:
-        assert recarray[name].size == 0
-    # Otherwise, check the values are equal to defaults
-    else:
-        for i, (name, dtype) in enumerate(columns):
+
+    for i, (name, dtype) in enumerate(columns):
+        if isinstance(defaults, list):
             default = defaults[i]
-            if isinstance(default, str):
-                # allclose has trouble with string comparisons
-                for elem in dm.table[name]:
-                    assert elem.decode("utf-8") == default
-            else:
-                assert np.allclose(recarray[name], default, equal_nan=True)
+        else:
+            default = defaults
+        if np.issubdtype(dtype, np.bytes_):
+            # allclose has trouble with string comparisons
+            for elem in recarray[name]:
+                assert elem.decode("utf-8") == str(default)
+        else:
+            assert np.allclose(recarray[name], default, equal_nan=True)
 
 
 @pytest.fixture(params=[False, True])
@@ -101,7 +100,7 @@ def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
 
     # make a log watcher
     watcher = LogWatcher("Metadata could not be determined from input spec_table")
-    monkeypatch.setattr(logging.getLogger("jwst.lib.pipe_utils"), "warning", watcher)
+    monkeypatch.setattr(logging.getLogger("jwst.datamodels.utils.flat_multispec"), "warning", watcher)
 
     # First re-construct vector and meta columns from the input recarray
     output_table = copy.deepcopy(empty_recarray)
