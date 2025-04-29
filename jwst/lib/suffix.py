@@ -15,11 +15,11 @@ Hence, to update ``KNOW_SUFFIXES``, update both ``SUFFIXES_TO_ADD`` and
 ``find_suffixes``.
 """
 
-from importlib import import_module
 import itertools
 import logging
-from os import listdir, path
 import re
+from importlib import import_module
+from pathlib import Path
 
 __all__ = ["remove_suffix"]
 
@@ -319,7 +319,7 @@ def find_suffixes():
     from jwst.stpipe.utilities import all_steps
 
     jwst = import_module("jwst")
-    jwst_fpath = path.split(jwst.__file__)[0]
+    jwst_fpath = Path(jwst.__file__).parent
 
     # First traverse the code base and find all
     # `Step` classes. The default suffix is the
@@ -329,11 +329,11 @@ def find_suffixes():
     # Instantiate Steps/Pipelines from their configuration files.
     # Different names and suffixes can be defined in this way.
     # Note: Based on the `collect_pipeline_cfgs` script
-    config_path = path.join(jwst_fpath, "pipeline")
-    for config_file in listdir(config_path):
-        if config_file.endswith(".cfg"):
+    config_path = jwst_fpath / "pipeline"
+    for config_file in config_path.iterdir():
+        if config_file.suffix == ".cfg":
             try:
-                step = Step.from_config_file(path.join(config_path, config_file))
+                step = Step.from_config_file(config_path / config_file)
             except Exception as err:
                 logger.debug("Configuration %s failed: %s", config_file, str(err))
             else:
