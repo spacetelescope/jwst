@@ -333,7 +333,7 @@ def find_suffixes():
     for config_file in config_path.iterdir():
         if config_file.suffix == ".cfg":
             try:
-                step = Step.from_config_file(config_path / config_file)
+                step = Step.from_config_file(str(config_path / config_file))
             except Exception as err:
                 logger.debug("Configuration %s failed: %s", config_file, str(err))
             else:
