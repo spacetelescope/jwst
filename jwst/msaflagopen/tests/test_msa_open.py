@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 from astropy.utils.data import get_pkg_data_filename
 from numpy.testing import assert_array_equal
 from stdatamodels.jwst.datamodels import ImageModel, dqflags
@@ -137,8 +136,7 @@ def test_boundingbox_from_indices():
 def test_msaflagopen_step():
     im = make_nirspec_mos_model()
     im = AssignWcsStep.call(im)
-    with pytest.warns(RuntimeWarning, match="Invalid interval"):
-        result = MSAFlagOpenStep.call(im)
+    result = MSAFlagOpenStep.call(im)
 
     nonzero = np.nonzero(result.dq)
     assert_array_equal(result.dq[nonzero], MSA_FAILED_OPEN)
