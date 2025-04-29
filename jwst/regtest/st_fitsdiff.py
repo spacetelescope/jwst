@@ -656,7 +656,7 @@ class STHDUDiff(HDUDiff):
                 self._writeln(tline)
 
             # Show percentage differences
-            self._writeln("\nPercentages of difference above tolerance")
+            self._writeln("\nPercentages of difference above (tolerance + threshold) ")
             for tline in self.percentages.pformat():
                 self._writeln(tline)
 
