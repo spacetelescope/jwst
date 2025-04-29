@@ -17,6 +17,7 @@ from stdatamodels.jwst.datamodels.apcorr import (
 )
 
 from jwst.datamodels import ModelContainer
+from jwst.datamodels.utils import flat_multispec
 from jwst.lib import pipe_utils
 from jwst.lib.wcs_utils import get_wavelengths
 from jwst.extract_1d import extract1d, spec_wcs
@@ -497,16 +498,19 @@ def populate_time_keywords(input_model, output_model):
         num_integ = 1
 
     # This assumes that the spec attribute of output_model has already been created,
-    # and spectra have been appended.
-    n_output_spec = len(output_model.spec)
+    # and spectra have been appended to the spec_table
+    n_output_spec = 0
+    for spec in output_model.spec:
+        n_output_spec += len(spec.spec_table)
 
     # num_j is the number of spectra per integration, e.g. the number
     # of fixed-slit spectra, MSA spectra, or different
     # spectral orders; num_integ is the number of integrations.
     # The total number of output spectra is n_output_spec = num_integ * num_j
-    num_j = n_output_spec // num_integ
+    num_j = len(output_model.spec)
 
-    if n_output_spec != num_j * num_integ:  # sanity check
+    # check that the number of spectra present matches expectations
+    if n_output_spec != num_j * num_integ:
         log.warning(
             f"populate_time_keywords:  Don't understand n_output_spec = {n_output_spec}, "
             f"num_j = {num_j}, num_integ = {num_integ}"
@@ -546,10 +550,9 @@ def populate_time_keywords(input_model, output_model):
             "There is no INT_TIMES table in the input file - "
             "Making best guess on integration numbers."
         )
-        for j in range(num_j):  # for each spectrum or order
-            for k in range(num_integ):  # for each integration
-                # set int_num to (k+1) - 1-indexed integration
-                output_model.spec[(j * num_integ) + k].int_num = k + 1
+
+        # No update needed: the integration index is stored when
+        # the spectrum is created.
         return
 
     # If we have a single plane (e.g. ImageModel or MultiSlitModel),
@@ -614,21 +617,18 @@ def populate_time_keywords(input_model, output_model):
 
     log.debug("TSO data, so copying times from the INT_TIMES table.")
 
-    n = 0  # Counter for spectra in output_model.
-
-    for k in range(num_integ):  # for each spectrum or order
-        for _j in range(num_j):  # for each integration
+    for j in range(num_j):  # for each slit or order (EXTRACT1D extension)
+        spec = output_model.spec[j]
+        spec.time_scale = "UTC"
+        for k in range(len(spec.spec_table)):  # for each integration (table row)
             row = k + offset
-            spec = output_model.spec[n]  # n is incremented below
-            spec.int_num = int_num[row]
-            spec.time_scale = "UTC"
-            spec.start_time_mjd = start_time_mjd[row]
-            spec.mid_time_mjd = mid_time_mjd[row]
-            spec.end_time_mjd = end_time_mjd[row]
-            spec.start_tdb = start_tdb[row]
-            spec.mid_tdb = mid_tdb[row]
-            spec.end_tdb = end_tdb[row]
-            n += 1
+            spec.spec_table["INT_NUM"][k] = int_num[row]
+            spec.spec_table["START_TIME_MJD"][k] = start_time_mjd[row]
+            spec.spec_table["MID_TIME_MJD"][k] = mid_time_mjd[row]
+            spec.spec_table["END_TIME_MJD"][k] = end_time_mjd[row]
+            spec.spec_table["START_TDB"][k] = start_tdb[row]
+            spec.spec_table["MID_TDB"][k] = mid_tdb[row]
+            spec.spec_table["END_TDB"][k] = end_tdb[row]
 
 
 def get_spectral_order(slit):
@@ -1443,6 +1443,91 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
     return first_result
 
 
+def _make_tso_specmodel(spec_list, segment=None):
+    """
+    Make a TSOSpecModel from a list of SpecModel.
+
+    Parameters
+    ----------
+    spec_list : list of SpecModel
+       Individual spectra for each integration.
+    segment : int or None, optional
+       The segment number for the input model.
+
+    Returns
+    -------
+    TSOSpecModel
+        A model containing all spectra in a flat table with vector
+        columns for spectral data.
+    """
+    # Make a blank model
+    tso_spec = datamodels.TSOSpecModel()
+
+    # Compare input and output schema to get vector columns and meta columns
+    input_schema = datamodels.SpecModel().schema
+    in_cols = input_schema["properties"]["spec_table"]["datatype"]
+    out_cols = tso_spec.schema["properties"]["spec_table"]["datatype"]
+    all_cols, is_vector = flat_multispec.determine_vector_and_meta_columns(in_cols, out_cols)
+
+    # Make an empty table to populate
+    n_elements = [spec.spec_table["WAVELENGTH"].size for spec in spec_list]
+    n_rows = np.max(n_elements)
+    n_spectra = len(spec_list)
+    defaults = tso_spec.schema["properties"]["spec_table"]["default"]
+    spec_table = flat_multispec.make_empty_recarray(
+        n_rows, n_spectra, all_cols, is_vector, defaults=defaults
+    )
+
+    # Populate the table from the input spectra
+    time_keys = [
+        "START_TIME_MJD",
+        "MID_TIME_MJD",
+        "END_TIME_MJD",
+        "START_TDB",
+        "MID_TDB",
+        "END_TDB",
+    ]
+    ignore_columns = ["NELEMENTS", "SEGMENT", "INT_NUM"] + time_keys
+    for i in range(n_spectra):
+        input_spec = spec_list[i]
+        this_output = spec_table[i]
+
+        flat_multispec.populate_recarray(
+            this_output,
+            input_spec,
+            n_rows,
+            all_cols,
+            is_vector,
+            ignore_columns=ignore_columns,
+        )
+
+        # Update the special metadata columns
+        this_output["NELEMENTS"] = n_elements[i]
+        if segment is not None:
+            this_output["SEGMENT"] = segment
+        else:
+            this_output["SEGMENT"] = 1
+
+        # Set a default value for time keys - they'll be updated later if possible
+        this_output["INT_NUM"] = i + 1
+        for key in time_keys:
+            this_output[key] = np.nan
+
+    # Update the model with the new spec_table
+    tso_spec.spec_table = spec_table
+
+    # Add some units to the new columns
+    flat_multispec.copy_column_units(spec_list[0], tso_spec)
+    for column_name in time_keys:
+        tso_spec.spec_table.columns[column_name].unit = "d"
+
+    # Copy metadata from the first input_spec
+    tso_spec.update(spec_list[0])
+    tso_spec.meta.wcs = spec_list[0].meta.wcs
+
+    return tso_spec
+
+
 def create_extraction(
     input_model,
     slit,
@@ -1714,6 +1799,7 @@ def create_extraction(
         residual = None
 
     # Extract each integration
+    spec_list = []
     for integ in integrations:
         (
             sum_flux,
@@ -1890,7 +1976,7 @@ def create_extraction(
                     log.debug("Computing aperture correction.")
                     apcorr.apply(spec.spec_table)
 
-        output_model.spec.append(spec)
+        spec_list.append(spec)
 
         if log_increment > 0 and (integ + 1) % log_increment == 0:
             if integ == -1:
@@ -1910,7 +1996,46 @@ def create_extraction(
     if not progress_msg_printed:
         log.info(f"All {input_model.data.shape[0]} integrations done")
 
+    if len(spec_list) > 1:
+        # For multi-int data, assemble a single TSOSpecModel from the list of spectra
+        tso_spec = _make_tso_specmodel(spec_list, segment=input_model.meta.exposure.segment_number)
+
+        # Add to the output model
+        output_model.spec.append(tso_spec)
+    else:
+        # Nothing further needed, just append the only spectrum
+        # created to the output model
+        output_model.spec.append(spec_list[0])
+
     return profile_model, scene_model, residual
+
+
+def _make_output_model(data_model, meta_source):
+    """
+    Set up an output model matching the input.
+
+    Parameters
+    ----------
+    data_model : DataModel
+        A data model containing a "data" attribute.
+    meta_source : DataModel
+        A data model containing top-level metadata to copy to the output.
+
+    Returns
+    -------
+    MultiSpecModel or TSOMultiSpecModel
+        If the input data is multi-integration, a TSOMultiSpecModel is
+        returned.  Otherwise, a MultiSpecModel is returned.
+    """
+    multi_int = (data_model.data.ndim == 3) and (data_model.data.shape[0] > 1)
+    if multi_int:
+        output_model = datamodels.TSOMultiSpecModel()
+    else:
+        output_model = datamodels.MultiSpecModel()
+    if hasattr(meta_source, "int_times"):
+        output_model.int_times = meta_source.int_times.copy()
+    output_model.update(meta_source, only="PRIMARY")
+    return output_model
 
 
 def run_extract1d(
@@ -1999,7 +2124,7 @@ def run_extract1d(
 
     Returns
     -------
-    output_model : MultiSpecModel
+    output_model : MultiSpecModel or TSOMultiSpecModel
         A new data model containing the extracted spectra.
     profile_model : ModelContainer, ImageModel, or None
         If `save_profile` is True, the return value is an ImageModel containing
@@ -2044,12 +2169,6 @@ def run_extract1d(
         else:
             apcorr_ref_model = read_apcorr_ref(apcorr_ref_name, exp_type)
 
-    # Set up the output model
-    output_model = datamodels.MultiSpecModel()
-    if hasattr(meta_source, "int_times"):
-        output_model.int_times = meta_source.int_times.copy()
-    output_model.update(meta_source, only="PRIMARY")
-
     # This will be relevant if we're asked to extract a spectrum
     # and the spectral order is zero.
     # That's only OK if the disperser is a prism.
@@ -2076,6 +2195,9 @@ def run_extract1d(
             scene_model = ModelContainer()
         if save_residual_image:
             residual = ModelContainer()
+
+        # Set up the output model
+        output_model = _make_output_model(slits[0], meta_source)
 
         for slit in slits:  # Loop over the slits in the input model
             log.info(f"Working on slit {slit.name}")
@@ -2157,11 +2279,15 @@ def run_extract1d(
             log.error("The input file is not supported for this step.")
             raise TypeError("Can't extract a spectrum from this file.")
 
+        # Set up the output model
+        output_model = _make_output_model(input_model, meta_source)
+
         sp_order = get_spectral_order(input_model)
         if sp_order == 0 and not prism_mode:
             log.info("Spectral order 0 is a direct image, skipping ...")
         else:
             log.info(f"Processing spectral order {sp_order}")
+
             try:
                 profile_model, scene_model, residual = create_extraction(
                     input_model,
@@ -2191,7 +2317,7 @@ def run_extract1d(
                 pass
 
     # Copy the integration time information from the INT_TIMES table to keywords in the output file.
-    if pipe_utils.is_tso(input_model):
+    if pipe_utils.is_tso(input_model) and isinstance(output_model, datamodels.TSOMultiSpecModel):
         populate_time_keywords(input_model, output_model)
     else:
         log.debug("Not copying from the INT_TIMES table because this is not a TSO exposure.")

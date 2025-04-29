@@ -6,6 +6,7 @@ from astropy.table import Table
 
 from jwst.assign_wcs.util import wcs_bbox_from_shape
 from jwst.exp_to_source import multislit_to_container
+from jwst.extract_1d import extract as ex
 
 
 @pytest.fixture()
@@ -262,6 +263,7 @@ def mock_nirspec_bots(simple_wcs):
     model.meta.exposure.type = "NRS_BRIGHTOBJ"
     model.meta.subarray.name = "SUB2048"
     model.meta.exposure.nints = 10
+    model.meta.exposure.segment_number = 2
     model.meta.visit.tsovisit = True
 
     model.name = "S1600A1"
@@ -656,6 +658,52 @@ def mock_10_spec():
     for i in range(10):
         spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
         model.spec.append(spec_model)
+
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def mock_10_multi_int_spec():
+    """
+    Mock 10 simple spectra in a TSOMultiSpecModel.
+
+    Yields
+    ------
+    TSOMultiSpecModel
+        The mock model.
+    """
+    spec_list = []
+    for i in range(10):
+        spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
+        spec_list.append(spec_model)
+
+    tso_spec = ex._make_tso_specmodel(spec_list)  # noqa: SLF001
+    model = dm.TSOMultiSpecModel()
+    model.spec.append(tso_spec)
+
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def mock_2_multi_int_spec():
+    """
+    Mock 10 simple spectra in a TSOMultiSpecModel.
+
+    Yields
+    ------
+    TSOMultiSpecModel
+        The mock model.
+    """
+    spec_list = []
+    for i in range(2):
+        spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
+        spec_list.append(spec_model)
+
+    tso_spec = ex._make_tso_specmodel(spec_list)  # noqa: SLF001
+    model = dm.TSOMultiSpecModel()
+    model.spec.append(tso_spec)
 
     yield model
     model.close()
