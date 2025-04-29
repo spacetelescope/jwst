@@ -313,7 +313,7 @@ def test_populate_recarray(empty_recarray, ignore_columns):
                 assert np.array_equal(output_table[name][i], expected, equal_nan=True)
             else:
                 # These should all be zero because that's the initial value from the schema
-                assert np.allclose(output_table[name][i], 0.0, equal_nan=False)
+                assert np.allclose(output_table[name][i], 0.0, equal_nan=False, atol=1e-10)
                 pass
         assert output_table["NAME"][i] == np.bytes_(f"Source {i}")
         if "SOURCE_ID" not in ignore_columns:

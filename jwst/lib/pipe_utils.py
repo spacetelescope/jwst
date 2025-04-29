@@ -268,8 +268,6 @@ def populate_recarray(
     # Copy the data into the new table with NaN padding
     for col, _ in vector_columns:
         if col in ignore_columns:
-            # print(f"Skipping column: {col}")
-            # print(output_table[col])
             continue
         padded_data = np.full(n_rows, np.nan)
         padded_data[: input_table.shape[0]] = input_table[col]
