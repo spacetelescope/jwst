@@ -204,7 +204,7 @@ def determine_vector_and_meta_columns(input_datatype, output_datatype):
     return vector_cols, meta_cols
 
 
-def make_empty_recarray(n_rows, n_spec, vector_columns, meta_columns):
+def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=None):
     """
     Create an empty output table with the specified number of rows.
 
@@ -215,22 +215,42 @@ def make_empty_recarray(n_rows, n_spec, vector_columns, meta_columns):
         data points for any spectrum in the exposure.
     n_spec : int
         The number of spectra in the output table.
-    vector_columns : list[tuple]
-        List of tuples containing the vector-like column names and their dtypes.
-    meta_columns : list[tuple]
-        List of tuples containing the metadata column names and their dtypes.
+    columns : list[tuple]
+        List of tuples containing the column names and their dtypes.
+    is_vector : list[bool]
+        List of booleans indicating whether each column is vector-like.
+        If `True`, the column will be a 1D array of length `n_rows`.
+        Otherwise, the column will be a scalar.
+    defaults : list, optional
+        List of default values for each column. If a column is vector-like,
+        the default value will be repeated to fill the array.
+        If a column is scalar, the default value will be used directly.
+        If None, the array will be empty.
 
     Returns
     -------
     output_table : `~numpy.recarray`
         The empty output table with the specified shape and dtypes.
     """
+    # build the data type
     fltdtype = []
-    for col, dtype in vector_columns:
-        fltdtype.append((col, dtype, n_rows))
-    for col, dtype in meta_columns:
-        fltdtype.append((col, dtype))
-    return np.empty(n_spec, dtype=fltdtype)
+    for i, (col, dtype) in enumerate(columns):
+        if is_vector[i]:
+            fltdtype.append((col, dtype, n_rows))
+        else:
+            fltdtype.append((col, dtype))
+
+    arr = np.empty(n_spec, dtype=fltdtype)
+    if defaults is None:
+        return arr
+
+    # fill the array with the default values
+    for i, (col, dtype) in enumerate(columns):
+        if is_vector[i]:
+            arr[col] = np.full((n_spec, n_rows), defaults[i], dtype=dtype)
+        else:
+            arr[col] = np.full(n_spec, defaults[i], dtype=dtype)
+    return arr
 
 
 def populate_recarray(

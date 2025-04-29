@@ -251,13 +251,16 @@ def test_determine_vector_and_meta_columns():
         assert (np.issubdtype(dtype, np.number) or np.issubdtype(dtype, np.bytes_))
 
 
-def test_make_empty_recarray():
+@pytest.mark.parametrize("defaults", [None, [np.nan, 1.0, "foo"]])
+def test_make_empty_recarray(defaults):
     n_rows = 10
     n_sources = 5
     vector_columns = [('FLUX', np.float32), ('WAVELENGTH', np.float64)]
     meta_columns = [('NAME', np.str_)]
+    columns = vector_columns + meta_columns
+    is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
     
-    recarray = pipe_utils.make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns)
+    recarray = pipe_utils.make_empty_recarray(n_rows, n_sources, columns, is_vector)
     
     # Check the shapes
     assert recarray.shape == (n_sources,)
@@ -268,6 +271,20 @@ def test_make_empty_recarray():
     # Check the data types of the columns
     for name, dtype in vector_columns + meta_columns:
         assert recarray[name].dtype == dtype
+    
+    # If no defaults, array should be empty (size zero)
+    if defaults is None:
+        assert recarray[name].size == 0
+    # Otherwise, check the values are equal to defaults
+    else:
+        for i, (name, dtype) in enumerate(columns):
+            default = defaults[i]
+            if isinstance(default, str):
+                # allclose has trouble with string comparisons
+                for elem in dm.table[name]:
+                    assert elem.decode("utf-8") == default
+            else:
+                assert np.allclose(recarray[name], default, equal_nan=True)
 
 
 @pytest.fixture(params=[False, True])
@@ -286,7 +303,10 @@ def empty_recarray(request):
     if request.param:
         # Add a column that is not in the input model
         meta_columns.append(('EXTRA_COLUMN', np.float32))
-    return pipe_utils.make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns)
+    columns = vector_columns + meta_columns
+    is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
+    defaults = [0,]*len(columns)
+    return pipe_utils.make_empty_recarray(n_rows, n_sources, columns, is_vector, defaults)
 
 
 @pytest.mark.parametrize("ignore_columns", [["SOURCE_ID"], ["FLUX"], None])
@@ -338,13 +358,13 @@ def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
                 expected[:n_rows-i] = 1.0
                 assert np.array_equal(output_table[name][i], expected, equal_nan=True)
             else:
-                # These should all be zero because that's the initial value from the schema
-                assert np.allclose(output_table[name][i], 0.0, equal_nan=False, atol=1e-10, rtol=0)
+                # These should all be set to default
+                assert np.allclose(output_table[name][i], 0.0, equal_nan=False)
         assert output_table["NAME"][i] == np.bytes_(f"Source {i}")
         if "SOURCE_ID" not in ignore_columns:
             assert output_table["SOURCE_ID"][i] == i
         else:
-            # If SOURCE_ID is ignored, it should be set to 0 because that's the schema default value
+            # If ignored, it should be set to default
             assert output_table["SOURCE_ID"][i] == 0
 
     # Check for "problems" warning message
