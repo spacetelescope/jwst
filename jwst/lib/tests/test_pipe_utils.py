@@ -221,22 +221,26 @@ def test_match_nans_and_flags_shape_mismatch():
 
 def test_determine_vector_and_meta_columns():
 
-    input_schema = datamodels.SpecModel().schema
-    output_schema = datamodels.WFSSMultiSpecModel().schema
+    input_schema = datamodels.MRSSpecModel().schema
+    in_cols = input_schema["properties"]["spec_table"]["datatype"]
+    out_cols = in_cols.copy()
+    out_cols.append({"name": "SOURCE_ID", "datatype": "int32"})
+    out_cols.append({"name": "NAME", "datatype": ["ascii", 20]})
 
     vector_columns, meta_columns = pipe_utils.determine_vector_and_meta_columns(
-        input_schema, output_schema
+        in_cols, out_cols
     )
 
     # Check that the names ended up in the right place
-    input_names = [s["name"] for s in output_schema["properties"]["spec_table"]["datatype"]]
-    output_names = [s["name"] for s in output_schema["properties"]["spec_table"]["datatype"]]
+    input_names = [s["name"] for s in in_cols]
+    output_names = [s["name"] for s in out_cols]
     vector_names = [s[0].upper() for s in vector_columns]
     meta_names = [s[0].upper() for s in meta_columns]
 
     assert np.all(np.isin(vector_names, input_names))
     assert set(vector_names + meta_names) == set(output_names)
     assert set(vector_names).isdisjoint(set(meta_names))
+    assert meta_names == ["SOURCE_ID", "NAME"]
     
     # test that the datatypes are all numpy types
     for _name, dtype in vector_columns:

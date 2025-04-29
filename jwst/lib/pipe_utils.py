@@ -157,22 +157,23 @@ def match_nans_and_flags(input_model):
         input_model.dq[is_invalid] |= dqflags.pixel["DO_NOT_USE"]
 
 
-def determine_vector_and_meta_columns(input_schema, output_schema):
+def determine_vector_and_meta_columns(input_datatype, output_datatype):
     """
     Figure out which columns are vector-like and which are metadata.
 
     The vector-like columns are the ones defined in the input schema,
-    which is expected to be either SpecModel or CombinedSpecModel.
-    The metadata columns are the ones defined only in the output schema,
-    which is expected to be WFSSMultiSpecModel or WFSSMultiCombinedSpecModel.
-    The input and output schemas must both have a "spec_table" property.
+    and the metadata columns are the ones defined only in the output schema.
+    The input and output datatypes are typically read from the schema as e.g.
+    datatype = schema["properties"]["spec_table"]["datatype"].
 
     Parameters
     ----------
-    input_schema : dict
-        The schema of the input models.
-    output_schema : dict
-        The schema of the output model.
+    input_datatype : list[dict]
+        The datatype of the input model as read from the schema.
+        Each inner dict should have at least the keys "name" and "datatype".
+    output_datatype : list[dict]
+        The datatype of the output model as read from the schema.
+        Each inner dict should have at least the keys "name" and "datatype".
 
     Returns
     -------
@@ -181,14 +182,15 @@ def determine_vector_and_meta_columns(input_schema, output_schema):
     meta_columns : list[tuple]
         List of tuples containing the metadata column names and their dtypes.
     """
-    in_cols = input_schema["properties"]["spec_table"]["datatype"]
-    out_cols = output_schema["properties"]["spec_table"]["datatype"]
-
     # Extract just names and dtypes, convert to numpy dtypes
-    vector_colnames = np.array([col["name"] for col in in_cols])
-    vector_dtypes = np.array([asdf_datatype_to_numpy_dtype(col["datatype"]) for col in in_cols])
-    all_colnames = np.array([col["name"] for col in out_cols])
-    all_dtypes = np.array([asdf_datatype_to_numpy_dtype(col["datatype"]) for col in out_cols])
+    vector_colnames = np.array([col["name"] for col in input_datatype])
+    vector_dtypes = np.array(
+        [asdf_datatype_to_numpy_dtype(col["datatype"]) for col in input_datatype]
+    )
+    all_colnames = np.array([col["name"] for col in output_datatype])
+    all_dtypes = np.array(
+        [asdf_datatype_to_numpy_dtype(col["datatype"]) for col in output_datatype]
+    )
 
     # Determine which columns are metadata
     is_meta = ~np.array([col in vector_colnames for col in all_colnames])
