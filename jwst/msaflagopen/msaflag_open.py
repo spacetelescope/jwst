@@ -12,7 +12,7 @@ from stdatamodels.jwst.transforms.models import Slit
 
 from jwst.assign_wcs.nirspec import (
     generate_compound_bbox,
-    nrs_wcs_set_input, 
+    nrs_wcs_set_input,
     slitlets_wcs,
     log as nirspec_log,
 )

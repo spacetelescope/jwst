@@ -117,7 +117,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
             if output_model.meta.exposure.type.lower() == "mir_lrs-slitless":
                 output_model.wavelength = get_wavelengths(output_model)
         elif output_model.meta.exposure.type.lower() == "nrs_ifu":
-            update_s_region_nrs_ifu(output_model, mod)
+            update_s_region_nrs_ifu(output_model)
         elif output_model.meta.exposure.type.lower() == "mir_mrs":
             update_s_region_mrs(output_model)
         else:
