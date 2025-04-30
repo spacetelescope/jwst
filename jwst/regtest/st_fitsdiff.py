@@ -512,16 +512,16 @@ class STHDUDiff(HDUDiff):
             report_zeros_nan = Table()
             report_zeros_nan["Quantity"] = ["zeros", "nan", "no-nan", "mean_value"]
             report_zeros_nan["a"] = [
+                a[a == 0.0].size,
                 a[np.isnan(a)].size,
                 a[~np.isnan(a)].size,
-                a[a == 0.0].size,
-                f"{np.mean(anonan):1.4g}",
+                f"{np.mean(anonan):.4g}",
             ]
             report_zeros_nan["b"] = [
+                b[b == 0.0].size,
                 b[np.isnan(b)].size,
                 b[~np.isnan(b)].size,
-                b[b == 0.0].size,
-                f"{np.mean(bnonan):1.4g}",
+                f"{np.mean(bnonan):.4g}",
             ]
             # Match nans for all arrays and remove them for logical comparison
             percentages, stats = Table(), Table()
@@ -565,14 +565,14 @@ class STHDUDiff(HDUDiff):
             for threshold in thresholds:
                 n = values[values > threshold + self.atol].size
                 percent_abs = (n / n_total) * 100
-                percent_abs_list.append(f"{percent_abs:1.4g}")
+                percent_abs_list.append(f"{percent_abs:.4g}")
             percentages["abs_diff%"] = percent_abs_list
             if relative_values.size > 0:
                 percent_rel_list = []
                 for threshold in thresholds:
                     n = relative_values[relative_values > threshold + self.rtol].size
                     percent_rel = (n / n_total) * 100
-                    percent_rel_list.append(f"{percent_rel:1.4g}")
+                    percent_rel_list.append(f"{percent_rel:.4g}")
                 percentages["rel_diff%"] = percent_rel_list
             return report_zeros_nan, percentages, stats
 
@@ -1038,7 +1038,7 @@ class STImageDataDiff(ImageDataDiff):
             if self.diff_total > self.numdiffs:
                 self._writeln(" ...")
             self._writeln(
-                f" {self.diff_total} different pixels found ({self.diff_ratio:1.4g}% different)."
+                f" {self.diff_total} different pixels found ({self.diff_ratio:.4g}% different)."
             )
             self._writeln(f" Maximum relative difference: {max_relative}")
             self._writeln(f" Maximum absolute difference: {max_absolute}")
@@ -1128,7 +1128,7 @@ class STRawDataDiff(STImageDataDiff):
 
             self._writeln(" ...")
             self._writeln(
-                f" {self.diff_total} different bytes found ({self.diff_ratio:1.4g}% different)."
+                f" {self.diff_total} different bytes found ({self.diff_ratio:.4g}% different)."
             )
 
 
@@ -1210,8 +1210,28 @@ class STTableDataDiff(TableDataDiff):
             ),
         )
         self.report_zeros_nan = Table(
-            names=("col_name", "zeros_a", "zeros_b", "nan_a", "nan_b", "no-nan_a", "no-nan_b"),
-            dtype=("str", "int32", "int32", "int32", "int32", "int32", "int32"),
+            names=(
+                "col_name",
+                "zeros_a",
+                "zeros_b",
+                "nan_a",
+                "nan_b",
+                "no-nan_a",
+                "no-nan_b",
+                "mean_a",
+                "mean_b",
+            ),
+            dtype=(
+                "str",
+                "int32",
+                "int32",
+                "int32",
+                "int32",
+                "int32",
+                "int32",
+                "float64",
+                "float64",
+            ),
         )
 
         super().__init__(
@@ -1390,6 +1410,8 @@ class STTableDataDiff(TableDataDiff):
                             arrb[np.isnan(arrb)].size,
                             arra[~np.isnan(arra)].size,
                             arrb[~np.isnan(arrb)].size,
+                            np.mean(anonan),
+                            np.mean(bnonan),
                         )
                     )
 
@@ -1490,24 +1512,23 @@ class STTableDataDiff(TableDataDiff):
 
             self._writeln(
                 f" {self.diff_total} different table data element(s) are "
-                f"{self.diff_ratio:1.4g}% different."
+                f"{self.diff_ratio:.4g}% different."
             )
 
         else:
             # Lines added by STScI to report ad hoc table differences
 
-            if not self.diff_total:
-                return
-
             self._writeln(
                 f"Found {self.diff_total} different table data element(s). "
                 "Reporting percentages above respective tolerances: "
-                f"\n    - absolute .... {self.diff_ratio:1.4g}%"
-                f"\n    - relative .... {self.diff_ratio_rel:1.4g}%"
+                f"\n    - absolute .... {self.diff_ratio:.4g}%"
+                f"\n    - relative .... {self.diff_ratio_rel:.4g}%"
             )
 
             # Print differences in zeros and nans per column
             self._writeln("\nNumber of values in a and b")
+            self.report_zeros_nan["mean_a"].format = ".4g"
+            self.report_zeros_nan["mean_b"].format = ".4g"
             tlines = self.report_zeros_nan.pformat()
             for tline in tlines:
                 self._writeln(tline)
@@ -1517,7 +1538,7 @@ class STTableDataDiff(TableDataDiff):
             # make sure the format is acceptable
             for colname in self.report_table.columns:
                 if colname != "col_name":
-                    self.report_table[colname].format = "1.4g"
+                    self.report_table[colname].format = ".4g"
             tlines = self.report_table.pformat()
             for tline in tlines:
                 self._writeln(tline)
