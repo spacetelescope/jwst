@@ -1370,18 +1370,17 @@ class STTableDataDiff(TableDataDiff):
                 #   it is not important where they come from
 
                 # Calculate the absolute and relative differences
-                diffs = np.abs(arra - arrb)
-                abs_diffs = diffs[diffs > +self.atol].size
                 nan_idx = np.isnan(arra) | np.isnan(arrb)
                 anonan = arra[~nan_idx]
                 bnonan = arrb[~nan_idx]
-                values = np.abs(anonan - bnonan)
-                nozeros = (values != 0.0) & (bnonan != 0.0)
-                rel_values = values[nozeros] / np.abs(bnonan[nozeros])
+                diffs = np.abs(anonan - bnonan)
+                abs_diffs = diffs[diffs > self.atol].size
+                nozeros = (diffs != 0.0) & (bnonan != 0.0)
+                rel_values = diffs[nozeros] / np.abs(bnonan[nozeros])
                 rel_diffs = rel_values[rel_values > self.rtol].size
 
-                # Find the total differences per column
                 if abs_diffs > 0 or rel_diffs > 0:
+                    # Report the total number of zeros, nans, and no-nan values
                     self.report_zeros_nan.add_row(
                         (
                             col.name,
@@ -1394,6 +1393,7 @@ class STTableDataDiff(TableDataDiff):
                         )
                     )
 
+                    # Report the differences per column
                     self.report_table.add_row(
                         (
                             col.name,
