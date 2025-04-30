@@ -368,8 +368,6 @@ class CubeData:
 
                 num_cubes = 1
                 cube_pars["1"] = {}
-                cube_pars["1"]["par1"] = {}
-                cube_pars["1"]["par2"] = {}
                 cube_pars["1"]["par1"] = self.all_channel
                 cube_pars["1"]["par2"] = self.all_subchannel
 
@@ -381,8 +379,6 @@ class CubeData:
                     num_cubes = num_cubes + 1
                     cube_no = str(num_cubes)
                     cube_pars[cube_no] = {}
-                    cube_pars[cube_no]["pars1"] = {}
-                    cube_pars[cube_no]["pars2"] = {}
                     this_channel = []
                     this_subchannel = []
                     this_channel.append(band_channel[i])
@@ -400,8 +396,6 @@ class CubeData:
                     num_cubes = num_cubes + 1
                     cube_no = str(num_cubes)
                     cube_pars[cube_no] = {}
-                    cube_pars[cube_no]["pars1"] = {}
-                    cube_pars[cube_no]["pars2"] = {}
                     this_channel = []
                     this_subchannel = []
                     for k, j in enumerate(band_channel):
@@ -435,8 +429,6 @@ class CubeData:
 
                 num_cubes = 1
                 cube_pars["1"] = {}
-                cube_pars["1"]["par1"] = {}
-                cube_pars["1"]["par2"] = {}
                 cube_pars["1"]["par1"] = self.all_grating
                 cube_pars["1"]["par2"] = self.all_filter
 
@@ -447,8 +439,6 @@ class CubeData:
                     num_cubes = num_cubes + 1
                     cube_no = str(num_cubes)
                     cube_pars[cube_no] = {}
-                    cube_pars[cube_no]["pars1"] = {}
-                    cube_pars[cube_no]["pars2"] = {}
                     this_grating = []
                     this_filter = []
                     this_grating.append(band_grating[i])
@@ -463,8 +453,6 @@ class CubeData:
                     num_cubes = num_cubes + 1
                     cube_no = str(num_cubes)
                     cube_pars[cube_no] = {}
-                    cube_pars[cube_no]["pars1"] = {}
-                    cube_pars[cube_no]["pars2"] = {}
                     this_grating = []
                     this_filter = band_subchannel
                     this_grating.append(i)
