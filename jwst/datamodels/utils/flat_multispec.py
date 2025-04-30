@@ -163,3 +163,26 @@ def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, igno
 
     if len(problems) > 0:
         log.warning(f"Metadata could not be determined from input spec_table: {problems}")
+
+
+def copy_column_units(input_model, output_model):
+    """
+    Copy units from input columns to output columns.
+
+    Spectral tables in both input and output models must be
+    in FITS record format. The output model is updated in place.
+
+    Parameters
+    ----------
+    input_model : SpecModel
+        Input spectral model containing vector columns in the
+        ``spec_table`` attribute.
+    output_model : DataModel
+        Output spectral model containing a mix of vector columns
+        and metadata columns in the ``spec_table`` attribute.
+    """
+    input_columns = input_model.spec_table.columns
+    output_columns = output_model.spec_table.columns
+    for col_name in input_columns.names:
+        if col_name in output_columns.names:
+            output_columns[col_name].unit = input_columns[col_name].unit
