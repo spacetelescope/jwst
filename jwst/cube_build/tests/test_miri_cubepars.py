@@ -109,18 +109,18 @@ def test_miri_use_cubepars(tmp_cwd, miri_cube_pars):
     par1 = '1'
     par2 = 'medium'
 
-    ascale, bscale, wscale = instrument_info.GetScale(par1, par2)
+    ascale, bscale, wscale = instrument_info.get_scale(par1, par2)
 
     # check that the values are read in correctly
     assert math.isclose(ascale, 0.13, abs_tol=0.00001)
     assert math.isclose(bscale, 0.13, abs_tol=0.00001)
     assert math.isclose(wscale, 0.001, abs_tol=0.00001)
 
-    roiw = instrument_info.GetWaveRoi(par1, par2)
-    rois = instrument_info.GetSpatialRoi(par1, par2)
-    power = instrument_info.GetMSMPower(par1, par2)
-    wavemin = instrument_info.GetWaveMin(par1, par2)
-    wavemax = instrument_info.GetWaveMax(par1, par2)
+    roiw = instrument_info.get_wave_roi(par1, par2)
+    rois = instrument_info.get_spatial_roi(par1, par2)
+    power = instrument_info.get_msm_power(par1, par2)
+    wavemin = instrument_info.get_wave_min(par1, par2)
+    wavemax = instrument_info.get_wave_max(par1, par2)
 
     assert math.isclose(roiw, 0.001, abs_tol=0.00001)
     assert math.isclose(rois, 0.1, abs_tol=0.00001)
@@ -208,17 +208,17 @@ def test_miri_cubepars_user_defaults(tmp_cwd, miri_cube_pars):
 
     # first check that it reads in correct values for this band
     # from the reference file
-    ascale, bscale, wscale = instrument_info.GetScale(par1, par2)
+    ascale, bscale, wscale = instrument_info.get_scale(par1, par2)
 
     assert math.isclose(ascale, 0.35, abs_tol=0.00001)
     assert math.isclose(bscale, 0.35, abs_tol=0.00001)
     assert math.isclose(wscale, 0.006, abs_tol=0.00001)
 
-    roiw = instrument_info.GetWaveRoi(par1, par2)
-    rois = instrument_info.GetSpatialRoi(par1, par2)
-    power = instrument_info.GetMSMPower(par1, par2)
-    wavemin = instrument_info.GetWaveMin(par1, par2)
-    wavemax = instrument_info.GetWaveMax(par1, par2)
+    roiw = instrument_info.get_wave_roi(par1, par2)
+    rois = instrument_info.get_spatial_roi(par1, par2)
+    power = instrument_info.get_msm_power(par1, par2)
+    wavemin = instrument_info.get_wave_min(par1, par2)
+    wavemax = instrument_info.get_wave_max(par1, par2)
 
     assert math.isclose(roiw, 0.006, abs_tol=0.00001)
     assert math.isclose(rois, 0.4, abs_tol=0.00001)
@@ -371,17 +371,17 @@ def test_miri_cubepars_multiple_bands(tmp_cwd, miri_cube_pars):
 
     # first check that it reads in correct values for this band
     # from the reference file
-    ascale, bscale, wscale = instrument_info.GetScale(par1, par2)
+    ascale, bscale, wscale = instrument_info.get_scale(par1, par2)
 
     assert math.isclose(ascale, 0.2, abs_tol=0.00001)
     assert math.isclose(bscale, 0.2, abs_tol=0.00001)
     assert math.isclose(wscale, 0.003, abs_tol=0.00001)
 
-    roiw = instrument_info.GetWaveRoi(par1, par2)
-    rois = instrument_info.GetSpatialRoi(par1, par2)
-    power = instrument_info.GetMSMPower(par1, par2)
-    wavemin = instrument_info.GetWaveMin(par1, par2)
-    wavemax = instrument_info.GetWaveMax(par1, par2)
+    roiw = instrument_info.get_wave_roi(par1, par2)
+    rois = instrument_info.get_spatial_roi(par1, par2)
+    power = instrument_info.get_msm_power(par1, par2)
+    wavemin = instrument_info.get_wave_min(par1, par2)
+    wavemax = instrument_info.get_wave_max(par1, par2)
 
     assert math.isclose(roiw, 0.003, abs_tol=0.00001)
     assert math.isclose(rois, 0.2, abs_tol=0.00001)

@@ -12,8 +12,8 @@ from stdatamodels.jwst.datamodels import IFUImageModel
 
 from jwst import assign_wcs
 from jwst.cube_build import CubeBuildStep
-from jwst.cube_build.file_table import ErrorNoAssignWCS
-from jwst.cube_build.cube_build import ErrorNoChannels
+from jwst.cube_build.file_table import NoAssignWCSError
+from jwst.cube_build.cube_build import NoChannelsError
 from jwst.datamodels import ModelContainer
 
 
@@ -96,7 +96,7 @@ def miri_image():
     image = IFUImageModel((20, 20))
     image.data = np.random.random((20, 20))
     image.meta.instrument.name = 'MIRI'
-    image.meta.instrument.detector = 'MIRIFULONG'
+    image.meta.instrument.detector = 'MIRIFUSHORT'
     image.meta.exposure.type = 'MIR_MRS'
     image.meta.instrument.channel = '12'
     image.meta.instrument.band = 'SHORT'
@@ -118,22 +118,22 @@ def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filen
     # the image needs to be a full image and this take too much time
     # in a unit test
 
-    # Test ErrorNoAssignWCS is raised
-    with pytest.raises(ErrorNoAssignWCS):
+    # Test NoAssignWCSError is raised
+    with pytest.raises(NoAssignWCSError):
         step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
         step.channel = '3'
         step.run(step_input)
 
     # Test some defaults to step are setup correctly and
-    # is user specifies channel is set up correctly
+    # if user specifies channel it is set up correctly
     step = CubeBuildStep()
     step.override_cubepar = miri_cube_pars
     step.channel = '1'
 
     try:
         step.run(step_input)
-    except ErrorNoAssignWCS:
+    except NoAssignWCSError:
         pass
 
     assert step.pars_input['channel'] == ['1']
@@ -146,7 +146,7 @@ def test_call_cube_build(tmp_cwd, miri_cube_pars, miri_image, tmp_path, as_filen
     # save file with modifications
     if as_filename:
         miri_image.save(step_input)
-    with pytest.raises(ErrorNoChannels):
+    with pytest.raises(NoChannelsError):
         step = CubeBuildStep()
         step.override_cubepar = miri_cube_pars
         step.channel = '3'
@@ -223,3 +223,4 @@ def test_call_cube_build_nirspec_multi(tmp_cwd, nirspec_data, tmp_path, as_filen
     model = result[0]
     assert model.meta.cal_step.cube_build == 'COMPLETE'
     assert model.meta.filename == 'test_nirspec_s3d.fits'
+

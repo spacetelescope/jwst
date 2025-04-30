@@ -85,7 +85,7 @@ def compute_scale(
     disp_axis : int
         Dispersion axis integer. Assumes the same convention as `wcsinfo.dispersion_direction`
     pscale_ratio : int
-        Ratio of input to output pixel scale
+        Ratio of output pixel scale to input pixel scale.
 
     Returns
     -------

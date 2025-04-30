@@ -554,7 +554,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
         slits = validate_open_slits(input_model, slits, reference_files)
         log.info(
             f"Slits projected on detector {input_model.meta.instrument.detector}: "
-            f"{[sl.name for sl in slits]}"
+            f"{[str(sl.name) for sl in slits]}"
         )
     if not slits:
         log_message = f"No open slits fall on detector {input_model.meta.instrument.detector}."
@@ -829,7 +829,6 @@ def get_open_msa_slits(
         for x in msa_conf.data
         if x["msa_metadata_id"] == msa_metadata_id and x["dither_point_index"] == dither_position
     ]
-    log.debug(f"msa_data with msa_metadata_id = {msa_metadata_id}   {msa_data}")
     log.info(
         f"Retrieving open MSA slitlets for msa_metadata_id = {msa_metadata_id} "
         f"and dither_index = {dither_position}"
@@ -1081,7 +1080,7 @@ def get_open_msa_slits(
             scale_x,
             scale_y,
         )
-        log.debug(f"Appending slit: {slit_parameters}")
+        log.debug(f"Appending slit: {[str(s) for s in slit_parameters]}")
         slitlets.append(Slit(*slit_parameters))
 
     msa_file.close()
