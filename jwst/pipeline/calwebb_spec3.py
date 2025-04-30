@@ -436,29 +436,33 @@ def _save_wfss_x1d(results_list, filename):
     filename : str
         Name of the output x1d file.
     """
-    # first loop over both source and exposure to figure out final n_rows, n_exposures
+    # first loop over both source and exposure to figure out final n_rows, n_exposures, n_sources
     n_rows_by_exposure = []
-    exposure_filenames = []
-    for model in results_list:
-        for spec in model.spec:
+    exposure_counter = {}
+    for model in results_list:  # loop over sources
+        for spec in model.spec:  # loop over exposures
             fname = spec.meta.filename
             # if this is the first time this exposure has been encountered,
-            # create a new table for it
-            if fname not in exposure_filenames:
-                exposure_filenames.append(fname)
-                n_rows_by_exposure.append(spec.spec_table.shape[0])
+            # create a new dictionary entry for it
+            if fname not in exposure_counter.keys():
+                n_rows = spec.spec_table.shape[0]
+                exposure_counter[fname] = {"n_rows": n_rows, "n_sources": 1}
             else:
+                exposure_counter[fname]["n_sources"] += 1
                 # if this exposure has already been encountered,
-                # check if the table size is larger than the previous one
-                idx = exposure_filenames.index(fname)
-                if spec.spec_table.shape[0] > n_rows_by_exposure[idx]:
-                    n_rows_by_exposure[idx] = spec.spec_table.shape[0]
+                # check if number of rows is larger than the previous one
+                exposure_counter[fname]["n_rows"] = max(
+                    exposure_counter[fname]["n_rows"], spec.spec_table.shape[0]
+                )
+
+    exposure_filenames = list(exposure_counter.keys())
+    n_rows_by_exposure = [exposure_counter[fname]["n_rows"] for fname in exposure_filenames]
+    n_sources_by_exposure = [exposure_counter[fname]["n_sources"] for fname in exposure_filenames]
 
     # Set up output table column names and dtypes
     # Use SpecModel.spectable to determine the vector-like columns
     # The additional metadata columns are all those that are defined in WFSSMultiSpecModel
     # but not in SpecModel
-    n_sources = len(results_list)
     input_datatype = dm.SpecModel().schema["properties"]["spec_table"]["datatype"]
     output_datatype = dm.WFSSMultiSpecModel().schema["properties"]["spec_table"]["datatype"]
     all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
@@ -467,11 +471,14 @@ def _save_wfss_x1d(results_list, filename):
     fltdata_by_exposure = []
     for i in range(len(exposure_filenames)):
         n_rows = n_rows_by_exposure[i]
+        n_sources = n_sources_by_exposure[i]
         flt_empty = make_empty_recarray(n_rows, n_sources, all_columns, is_vector)
         fltdata_by_exposure.append(flt_empty)
 
     # Now loop through the models and populate the tables
-    for j, model in enumerate(results_list):
+    # Need to index each exposure separately because they may have a different number of sources
+    loop_index_by_exposure = [0] * len(exposure_filenames)
+    for model in results_list:
         # inner loop over exposures
         for spec in model.spec:
             # ensure data goes to table corresponding to correct exposure based on filename
@@ -479,6 +486,8 @@ def _save_wfss_x1d(results_list, filename):
             exposure_idx = exposure_filenames.index(fname)
             fltdata = fltdata_by_exposure[exposure_idx]
             n_rows = n_rows_by_exposure[exposure_idx]
+            j = loop_index_by_exposure[exposure_idx]
+            loop_index_by_exposure[exposure_idx] += 1
 
             # populate the table with data from the input spectrum
             populate_recarray(

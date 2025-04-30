@@ -5,7 +5,7 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.pipeline.calwebb_spec3 import _save_wfss_x1d, _save_wfss_c1d
 
 
-def test_save_wfss(tmp_cwd):
+def test_save_wfss_x1d(tmp_cwd):
     """Test flat file format saving of WFSS data."""
 
     # set up a list of MultiSlitModel objects that look like outputs from extract_1d
@@ -39,17 +39,16 @@ def test_save_wfss(tmp_cwd):
 
     # re-open as FITS and check the data
     hdul = fits.open("test_x1d.fits")
-    print(hdul.info())
     assert len(hdul) == n_exposures + 2  # one primary HDU, one for each source, one ASDF extension
     for j in range(n_exposures):
         bintable = hdul[j + 1].data
         if j == 2:
             # Source 1 not observed in this exposure
-            print(bintable["WAVELENGTH"])
+            # Ensure the table is therefore one row shorter
             assert bintable.shape == (n_sources - 1,)
         else:
             assert bintable.shape == (n_sources,)
-        # print(bintable.dtype)
+    hdul.close()
 
 
     #_save_wfss_c1d(results_list, "test_c1d.fits")
