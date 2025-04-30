@@ -16,13 +16,16 @@ def test_determine_vector_and_meta_columns():
     out_cols.append({"name": "SOURCE_ID", "datatype": "int32"})
     out_cols.append({"name": "NAME", "datatype": ["ascii", 20]})
 
-    vector_columns, meta_columns = determine_vector_and_meta_columns(
+    all_columns, is_vector = determine_vector_and_meta_columns(
         in_cols, out_cols
     )
 
     # Check that the names ended up in the right place
     input_names = [s["name"] for s in in_cols]
     output_names = [s["name"] for s in out_cols]
+    all_names = [s[0] for s in all_columns]
+    vector_columns = all_columns[is_vector]
+    meta_columns = all_columns[~is_vector]
     vector_names = [s[0].upper() for s in vector_columns]
     meta_names = [s[0].upper() for s in meta_columns]
 
@@ -104,10 +107,14 @@ def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
 
     # First re-construct vector and meta columns from the input recarray
     output_table = copy.deepcopy(empty_recarray)
-    all_columns = output_table.dtype.names
-    all_datatypes = [output_table[name].dtype for name in all_columns]
-    vector_columns = [(name, dtype) for name, dtype in zip(all_columns[:2], all_datatypes[:2])]
-    meta_columns = [(name, dtype) for name, dtype in zip(all_columns[2:], all_datatypes[2:])]
+    all_names = output_table.dtype.names
+    all_datatypes = [output_table[name].dtype for name in all_names]
+    all_columns = [(name, dtype) for name, dtype in zip(all_names, all_datatypes)]
+    all_columns = np.array(all_columns)
+    vector_columns = [(name, dtype) for name, dtype in zip(all_names[:2], all_datatypes[:2])]
+    meta_columns = [(name, dtype) for name, dtype in zip(all_names[2:], all_datatypes[2:])]
+    is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
+    is_vector = np.array(is_vector, dtype=bool)
     (n_sources, n_rows) = output_table["FLUX"].shape
 
     for i in range(n_sources):
@@ -127,8 +134,8 @@ def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
             this_output,
             input_spec,
             n_rows,
-            vector_columns,
-            meta_columns,
+            all_columns,
+            is_vector,
             ignore_columns=ignore_columns
         )
 
