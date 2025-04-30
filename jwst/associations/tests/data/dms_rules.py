@@ -1,4 +1,4 @@
-# To avoid relative imports and mimic actual usage
+"""Avoid relative imports and mimic actual usage."""  # noqa: INP001
 
 from jwst.associations import Association
 from jwst.associations.association import finalize as general_asn_finalize

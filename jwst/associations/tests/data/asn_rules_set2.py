@@ -1,9 +1,3 @@
-"""
-Association Definitions: DMS-specific.
-
-Notes
------
-These associations are specifically defined for use in DMS.
-"""
+"""Association Definitions: DMS-specific."""  # noqa: INP001
 
 from jwst.associations.tests.data.rules_level3_set2 import *  # noqa: F403

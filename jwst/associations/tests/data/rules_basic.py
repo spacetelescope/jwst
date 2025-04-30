@@ -1,4 +1,4 @@
-"""Basic association rules."""
+"""Basic association rules."""  # noqa: INP001
 
 from jwst.associations import Association
 from jwst.associations.registry import RegistryMarker

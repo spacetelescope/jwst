@@ -1,4 +1,4 @@
-"""Association Definitions: DMS Level3 product associations."""
+"""Association Definitions: DMS Level3 product associations."""  # noqa: INP001
 
 from jwst.associations import Association
 from jwst.associations.registry import RegistryMarker
