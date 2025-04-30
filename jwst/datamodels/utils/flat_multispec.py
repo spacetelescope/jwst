@@ -64,7 +64,7 @@ def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=0):
     columns : np.ndarray[tuple]
         Array of tuples containing the column names and their dtypes.
     is_vector : np.ndarray[bool]
-        List of booleans indicating whether each column is vector-like.
+        Array of booleans indicating whether each column is vector-like.
         If `True`, the column will be a 1D array of length `n_rows`.
         Otherwise, the column will be a scalar.
     defaults : list, np.ndarray, int, or float, optional
