@@ -14,7 +14,8 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, radius_outer):
+def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
+                            radius_outer, gain_model):
     """
     Create a photometric catalog for NIRCam TSO imaging observations.
 
@@ -32,6 +33,10 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
     radius_inner, radius_outer : float
         The inner and outer radii (in pixels) of the circular-annulus
         aperture, used for local background estimation.
+
+    gain_model : `GainModel`
+        The gain reference file model, used to convert from DN/s or DN to
+        electrons.
 
     Returns
     -------
@@ -54,14 +59,30 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner, r
         phot_aper = CircularAperture((xcenter, ycenter), r=radius)
         bkg_aper = CircularAnnulus((xcenter, ycenter), r_in=radius_inner, r_out=radius_outer)
 
-    # convert the input data and errors from MJy/sr to Jy
-    if datamodel.meta.bunit_data != "MJy/sr":
-        raise ValueError("data is expected to be in units of MJy/sr")
-    factor = 1.0e6 * datamodel.meta.photometry.pixelarea_steradians
-    datamodel.data *= factor
-    datamodel.err *= factor
-    datamodel.meta.bunit_data = "Jy"
-    datamodel.meta.bunit_err = "Jy"
+    if datamodel.meta.bunit_data == 'MJy/sr':
+        # Convert the input data and errors from MJy/sr to Jy
+        factor = 1e6 * datamodel.meta.photometry.pixelarea_steradians
+        datamodel.data *= factor
+        datamodel.err *= factor
+        datamodel.meta.bunit_data = 'Jy'
+        datamodel.meta.bunit_err = 'Jy'
+    elif datamodel.meta.bunit_data == 'DN/s':
+        # Convert the input data and errors from DN/s to electrons
+        factor = datamodel.meta.exposure.integration_time*gain_model.data
+        datamodel.data *= factor
+        datamodel.err *= factor
+        datamodel.meta.bunit_data = 'electron'
+        datamodel.meta.bunit_err = 'electron'
+    elif datamodel.meta.bunit_data == 'DN':
+        # Convert the input data and errors from DN to electrons
+        factor = gain_model.data
+        datamodel.data *= factor
+        datamodel.err *= factor
+        datamodel.meta.bunit_data = 'electron'
+        datamodel.meta.bunit_err = 'electron'
+    else:
+        # Unexpected units - leave them as-is
+        pass
 
     aperture_sum = []
     aperture_sum_err = []
