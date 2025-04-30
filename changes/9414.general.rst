@@ -1,0 +1,1 @@
+Implementing STFITSDiff for our regression tests instead of FITSDiff to improve reports.
