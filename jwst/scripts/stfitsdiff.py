@@ -3,9 +3,14 @@
 """Allow command stfitsdiff be used from terminal."""
 
 import ast
+import logging
 from argparse import ArgumentParser
 
 from jwst.regtest.st_fitsdiff import STFITSDiff
+
+
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def _is_number(s):
@@ -26,6 +31,7 @@ def _check_arglist(arg_list, list_values):
 
 
 def main():
+    """Find the differences between the files and report."""
     # Parse command line arguments.
     parser = ArgumentParser(
         description="Get the differences between two fits files and report,",
@@ -85,9 +91,10 @@ def main():
         default=10,
         type=int,
         help="""The number of pixel/table values to output when reporting HDU data differences.
-                             Though the count of differences is the same either way, this allows controlling
-                             the number of different values that are kept in memory or output. If a negative
-                             value is given, then numdiffs is treated as unlimited.""",
+                             Though the count of differences is the same either way, this allows
+                             controlling the number of different values that are kept in memory
+                             or output. If a negative value is given, then numdiffs is treated
+                             as unlimited.""",
     )
 
     parser.add_argument(
@@ -147,12 +154,13 @@ def main():
         help="""Provide a different relative and absolute tolerance for the given extensions
                              (use no spaces and double quotes encasing the whole dictionary), e.g.
                              --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2}}}"
-                             It does not matter if the keys in the dictionary are upper or lower case.
-                             The key for only providing main header tolerances is 'primary'.
+                             It does not matter if the keys in the dictionary are upper or lower
+                             case. The key for only providing main header tolerances is 'primary'.
                              The key 'headers' can be used to provide a special tolerance for all
                              extension headers in the HDU list.
-                             The key 'default' is optional, i.e. if it is not provided then the default
-                             values will be used, otherwise the default value will be the one in the dictionary.""",
+                             The key 'default' is optional, i.e. if it is not provided then the
+                             default values will be used, otherwise the default value will be the
+                             one in the dictionary.""",
     )
 
     # Get the arguments
@@ -198,24 +206,26 @@ def main():
                                                                     stfitsdiff_default_kwargs["ignore_fields"])
 
     # If provided, make sure the extension_tolerances is a dictionary and not a string
-    err_msg = """Dictionary format error. Use no spaces and double quotes encasing the whole dictionary, e.g.
-                  --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2},'err':{'rtol':1e-1,'atol':1e-2}}" """
+    err_msg = """
+    Dictionary format error. Use no spaces and double quotes encasing the whole dictionary, e.g.
+    --extension_tolerances="{'sci':{'rtol':1e-3,'atol':1e-2},'err':{'rtol':1e-1,'atol':1e-2}}"
+    """
     if args.extension_tolerances is not None:
         try:
             stfitsdiff_default_kwargs["extension_tolerances"] = ast.literal_eval(
                 args.extension_tolerances
             )
         except (NameError, TypeError, ValueError, SyntaxError):
-            print(err_msg)
+            logging.error(err_msg)
             exit()
 
     # Find the differences
-    print("\n STScI Custom FITSDiff")
+    logging.info("\n STScI Custom FITSDiff")
     try:
         diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
-        print(diff.report())
+        logging.info(diff.report())
     except (NameError, TypeError, ValueError, SyntaxError):
-        print(err_msg)
+        logging.error(err_msg)
 
 
 if __name__ == "__main__":
