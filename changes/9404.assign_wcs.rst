@@ -1,0 +1,1 @@
+Rework the NIRSpec WCS to propagate the slit name through all transforms for all modes.
