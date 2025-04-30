@@ -466,13 +466,16 @@ def _save_wfss_x1d(results_list, filename):
     input_datatype = dm.SpecModel().schema["properties"]["spec_table"]["datatype"]
     output_datatype = dm.WFSSMultiSpecModel().schema["properties"]["spec_table"]["datatype"]
     all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
+    defaults = dm.WFSSMultiSpecModel().schema["properties"]["spec_table"]["default"]
 
     # loop over exposures to make tables for each exposure
     fltdata_by_exposure = []
     for i in range(len(exposure_filenames)):
         n_rows = n_rows_by_exposure[i]
         n_sources = n_sources_by_exposure[i]
-        flt_empty = make_empty_recarray(n_rows, n_sources, all_columns, is_vector)
+        flt_empty = make_empty_recarray(
+            n_rows, n_sources, all_columns, is_vector, defaults=defaults
+        )
         fltdata_by_exposure.append(flt_empty)
 
     # Now loop through the models and populate the tables
@@ -539,9 +542,10 @@ def _save_wfss_c1d(results_list, filename):
     input_datatype = dm.CombinedSpecModel().schema["properties"]["spec_table"]["datatype"]
     output_datatype = dm.WFSSMultiCombinedSpecModel().schema["properties"]["spec_table"]["datatype"]
     all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
+    defaults = dm.WFSSMultiCombinedSpecModel().schema["properties"]["spec_table"]["default"]
 
     # create empty table
-    fltdata = make_empty_recarray(n_rows, n_sources, all_columns, is_vector)
+    fltdata = make_empty_recarray(n_rows, n_sources, all_columns, is_vector, defaults=defaults)
 
     # loop over sources to populate the table with data from the input spectrum
     for j, model in enumerate(results_list):
@@ -553,6 +557,8 @@ def _save_wfss_c1d(results_list, filename):
             is_vector,
             ignore_columns=["NELEMENTS"],
         )
+        # special handling for NELEMENTS because not defined in specmeta schema
+        fltdata[j]["NELEMENTS"] = model.spec[0].spec_table.shape[0]
 
     # Create a new SpecModel to hold the combined data
     # with one SpecModel per exposure
