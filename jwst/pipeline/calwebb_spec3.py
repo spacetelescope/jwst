@@ -12,7 +12,7 @@ from ..exp_to_source import multislit_to_container
 from ..master_background.master_background_step import split_container
 from ..stpipe import Pipeline
 from ..lib.exposure_types import is_moving_target
-from jwst.lib.pipe_utils import (
+from jwst.datamodels.utils.flat_multispec import (
     determine_vector_and_meta_columns,
     make_empty_recarray,
     populate_recarray,
@@ -341,9 +341,9 @@ class Spec3Pipeline(Pipeline):
         # Save the final output product for WFSS modes
         if exptype in WFSS_TYPES:
             self.log.info("Saving the final x1d product into a single file.")
-            _save_wfss_x1d(wfss_x1d)
+            _save_wfss_x1d(wfss_x1d, "flat_x1d.fits")
             self.log.info("Saving the final c1d product into a single file.")
-            _save_wfss_c1d(wfss_comb)
+            _save_wfss_c1d(wfss_comb, "flat_c1d.fits")
 
         input_models.close()
 
@@ -418,7 +418,7 @@ class Spec3Pipeline(Pipeline):
         return srcid
 
 
-def _save_wfss_x1d(results_list):
+def _save_wfss_x1d(results_list, filename):
     """
     Combine all sources into a single table and save to a file.
 
@@ -432,6 +432,8 @@ def _save_wfss_x1d(results_list):
     ----------
     results_list : list[MultiSlitModel]
         List of MultiSlitModel objects to be combined into a single x1d file.
+    filename : str
+        Name of the output x1d file.
     """
     # first loop over both source and exposure to figure out final n_rows, n_exposures
     n_rows_by_exposure = []
@@ -456,15 +458,19 @@ def _save_wfss_x1d(results_list):
     # The additional metadata columns are all those that are defined in WFSSMultiSpecModel
     # but not in SpecModel
     n_sources = len(results_list)
+    input_datatype = dm.SpecModel().schema["properties"]["spec_table"]["datatype"]
+    output_datatype = dm.WFSSMultiSpecModel().schema["properties"]["spec_table"]["datatype"]
     vector_columns, meta_columns = determine_vector_and_meta_columns(
-        dm.SpecModel().schema, dm.WFSSMultiSpecModel().schema
+        input_datatype, output_datatype
     )
+    all_columns = vector_columns + meta_columns
+    is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
 
     # loop over exposures to make tables for each exposure
     fltdata_by_exposure = []
     for i in range(len(exposure_filenames)):
         n_rows = n_rows_by_exposure[i]
-        flt_empty = make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns)
+        flt_empty = make_empty_recarray(n_rows, n_sources, all_columns, is_vector)
         fltdata_by_exposure.append(flt_empty)
 
     # Now loop through the models and populate the tables
@@ -499,10 +505,10 @@ def _save_wfss_x1d(results_list):
     # Save the combined results to a file using first input model for metadata
     example_model = results_list[0]
     output_x1d.update(example_model, only="PRIMARY")
-    output_x1d.save("flat_x1d.fits")
+    output_x1d.save(filename)
 
 
-def _save_wfss_c1d(results_list):
+def _save_wfss_c1d(results_list, filename):
     """
     Compile exposure-averaged sources into a single table and save to a file.
 
@@ -512,6 +518,8 @@ def _save_wfss_c1d(results_list):
     ----------
     results_list : list[MultiSlitModel]
         List of MultiSlitModel objects to be combined into a single c1d file.
+    filename : str
+        Name of the output c1d file.
     """
     # determine shape of output table
     # each input model should have just one spec table
@@ -519,12 +527,16 @@ def _save_wfss_c1d(results_list):
     n_rows = max(len(model.spec[0].spec_table) for model in results_list)
 
     # figure out column names and dtypes
+    input_datatype = dm.CombinedSpecModel().schema["properties"]["spec_table"]["datatype"]
+    output_datatype = dm.WFSSMultiCombinedSpecModel().schema["properties"]["spec_table"]["datatype"]
     vector_columns, meta_columns = determine_vector_and_meta_columns(
-        dm.CombinedSpecModel().schema, dm.WFSSMultiCombinedSpecModel().schema
+        input_datatype, output_datatype
     )
+    all_columns = vector_columns + meta_columns
+    is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
 
     # create empty table
-    fltdata = make_empty_recarray(n_rows, n_sources, vector_columns, meta_columns)
+    fltdata = make_empty_recarray(n_rows, n_sources, all_columns, is_vector)
 
     # loop over sources to populate the table with data from the input spectrum
     for j, model in enumerate(results_list):
@@ -544,4 +556,4 @@ def _save_wfss_c1d(results_list):
     output_c1d.spec_table = fltdata
     example_model = results_list[0]
     output_c1d.update(example_model)
-    output_c1d.save("flat_c1d.fits")
+    output_c1d.save(filename)
