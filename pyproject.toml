@@ -235,6 +235,7 @@ filterwarnings = [
     "error::ResourceWarning",
     "error::DeprecationWarning",
     "error::stdatamodels.exceptions.ValidationWarning",
+    "error:Invalid interval",
     "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
 ]
 
