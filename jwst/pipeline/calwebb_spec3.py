@@ -519,6 +519,8 @@ def _save_wfss_x1d(results_list, filename):
         # ext.meta.observation.exposure_number = exposure_number
 
         output_x1d.exposures.append(ext)
+        output_x1d.exposures[-1].filename = fname
+        output_x1d.exposures[-1].exposure_number = int(exposure_number)
 
     # Save the combined results to a file using first input model for metadata
     example_model = results_list[0]
