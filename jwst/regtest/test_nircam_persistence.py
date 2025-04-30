@@ -43,6 +43,7 @@ def run_persistence_step(rtdata_module):
     return rtdata
 
 
+@pytest.mark.bigdata
 def test_persistence_step(run_persistence_step, fitsdiff_default_kwargs):
     """Test the output from the persistence step."""
     rtdata = run_persistence_step
