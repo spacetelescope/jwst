@@ -1369,7 +1369,7 @@ class AsnMixin_Lv2WFSS:
         """
         Modify exposure type depending on dither pointing index.
 
-        If an imaging exposure as been found, treat is as a direct image.
+        If an imaging exposure has been found, treat it as a direct image.
 
         Parameters
         ----------

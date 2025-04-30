@@ -365,7 +365,7 @@ class Main:
                 logger.warning("Cannot serialize association %s", asn)
                 logger.warning("Reason:", exc_info=exception)
                 continue
-            with Path.open(self.parsed.path / Path(fname), "w") as f:
+            with Path(self.parsed.path / Path(fname)).open("w") as f:
                 f.write(serialized)
 
         if self.parsed.save_orphans:

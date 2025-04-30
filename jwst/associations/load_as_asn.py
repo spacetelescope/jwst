@@ -187,7 +187,8 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         -----
         If the index is less than or equal to 1, no appending is done.
         """
-        basename, extension = Path(basename).name.split(".")
+        basename = Path(basename).stem
+
         if idx > 1:
             basename = basename + "_" + str(idx)
         return basename

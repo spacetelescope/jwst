@@ -111,7 +111,7 @@ def asn_gather(
     dest_path = dest_folder / source_asn_path.name
     _, serialized = dest_asn.dump()
     logger.info(f"Copying the association file itself {dest_path}")
-    with Path.open(dest_path, "w") as fh:
+    with Path(dest_path).open("w") as fh:
         fh.write(serialized)
 
     # That's all folks

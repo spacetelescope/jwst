@@ -5,7 +5,6 @@ import jsonschema
 import logging
 import re
 import warnings
-from os import path as os_path
 from pathlib import Path
 
 from jwst import __version__
@@ -28,12 +27,6 @@ _TIMESTAMP_TEMPLATE = "%Y%m%dt%H%M%S"
 class Association(MutableMapping):
     """
     Association Base Class.
-
-    Parameters
-    ----------
-    version_id : str or None
-        Version ID to use in the name of this association.
-        If None, nothing is added.
 
     Attributes
     ----------
@@ -84,10 +77,16 @@ class Association(MutableMapping):
     ioregistry: KeyValueRegistry = KeyValueRegistry()
     """The association IO registry"""
 
-    def __init__(
-        self,
-        version_id=None,
-    ):
+    def __init__(self, version_id=None):
+        """
+        Initialize an Association.
+
+        Parameters
+        ----------
+        version_id : str or None
+            Version ID to use in the name of this association.
+            If None, nothing is added.
+        """
         self.data = {}
         self.run_init_hook = True
         self.meta = {}
@@ -212,7 +211,7 @@ class Association(MutableMapping):
         else:
             asn_data = asn
 
-        with Path.open(cls.schema_file, "r") as schema_file:
+        with Path(cls.schema_file).open("r") as schema_file:
             asn_schema = json.load(schema_file)
 
         try:
@@ -226,8 +225,8 @@ class Association(MutableMapping):
         for product in asn_data["products"]:
             members = product["members"]
             for member in members:
-                fpath, fname = os_path.split(member["expname"])
-                if len(fpath) > 0:
+                fpath = Path(member["expname"]).parent
+                if fpath != Path():
                     err_str = "Input association file contains path information;"
                     err_str += " note that this can complicate usage and/or sharing"
                     err_str += " of such files."
@@ -499,7 +498,7 @@ class Association(MutableMapping):
         pass
 
     def _add(self, item):
-        """Add a item, association-specific."""
+        """Add an item, association-specific."""
         raise NotImplementedError(
             "Association._add must be implemented by a specific association rule."
         )

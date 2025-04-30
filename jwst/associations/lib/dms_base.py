@@ -256,6 +256,7 @@ class DMSBaseMixin(ACIDMixin):
     """Association attributes common to DMS-based Rules."""
 
     sequence = Counter(start=1)  # Associations of the same type are sequenced.
+    """The sequence number of the current association."""
 
     def __init__(self, *args, **kwargs):
         super(DMSBaseMixin, self).__init__(*args, **kwargs)

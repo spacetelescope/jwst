@@ -4,6 +4,8 @@ from collections import defaultdict
 import logging
 from os.path import split
 import re
+from jwst.lib.suffix import remove_suffix
+from pathlib import Path
 
 from jwst.associations import Association, ListCategory, libpath
 from jwst.associations.registry import RegistryMarker
@@ -51,8 +53,6 @@ __all__ = [
     "SimpleConstraint",
     "Utility",
 ]
-from jwst.lib.suffix import remove_suffix
-from pathlib import Path
 
 # Configure logging
 logger = logging.getLogger(__name__)

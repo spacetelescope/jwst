@@ -143,7 +143,7 @@ def compare_asn_files(left_paths, right_paths):
     # Read in all the associations, separating out the products into separate associations.
     left_asns = []
     for path in left_paths:
-        with Path.open(path, "r") as fh:
+        with Path(path).open("r") as fh:
             asn = load_asn(fh)
         single_product_asns = separate_products(asn)
 
@@ -152,7 +152,7 @@ def compare_asn_files(left_paths, right_paths):
 
     right_asns = []
     for path in right_paths:
-        with Path.open(path, "r") as fh:
+        with Path(path).open("r") as fh:
             asn = load_asn(fh)
         single_product_asns = separate_products(asn)
 

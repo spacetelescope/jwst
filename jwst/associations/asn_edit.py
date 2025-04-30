@@ -79,7 +79,7 @@ def remove(asn, filenames, ignore):
     asn : object
         An association object.
     filenames : list of str
-        The filenames to be removed the association.
+        The filenames to be removed from the association.
     ignore : bool
         Ignore the filename suffix when matching filenames if True.
 
@@ -127,7 +127,7 @@ def _lookup(asn, filename, ignore_suffix=False):
     found = []
     path = _path(filename)
     basename = path.name
-    root = Path(basename).stem
+    root = path.stem
     if ignore_suffix:
         search_key, _ = suffix.remove_suffix(root)
     else:
