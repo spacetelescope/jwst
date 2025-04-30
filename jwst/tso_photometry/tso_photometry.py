@@ -14,8 +14,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
-                            radius_outer, gain_model):
+def tso_aperture_photometry(
+    datamodel, xcenter, ycenter, radius, radius_inner, radius_outer, gain_2d
+):
     """
     Create a photometric catalog for NIRCam TSO imaging observations.
 
@@ -34,9 +35,8 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         The inner and outer radii (in pixels) of the circular-annulus
         aperture, used for local background estimation.
 
-    gain_model : `GainModel`
-        The gain reference file model, used to convert from DN/s or DN to
-        electrons.
+    gain_2d : numpy
+        The gain for all pixels.
 
     Returns
     -------
@@ -68,14 +68,14 @@ def tso_aperture_photometry(datamodel, xcenter, ycenter, radius, radius_inner,
         datamodel.meta.bunit_err = 'Jy'
     elif datamodel.meta.bunit_data == 'DN/s':
         # Convert the input data and errors from DN/s to electrons
-        factor = datamodel.meta.exposure.integration_time*gain_model.data
+        factor = datamodel.meta.exposure.integration_time * gain_2d
         datamodel.data *= factor
         datamodel.err *= factor
         datamodel.meta.bunit_data = 'electron'
         datamodel.meta.bunit_err = 'electron'
     elif datamodel.meta.bunit_data == 'DN':
         # Convert the input data and errors from DN to electrons
-        factor = gain_model.data
+        factor = gain_2d
         datamodel.data *= factor
         datamodel.err *= factor
         datamodel.meta.bunit_data = 'electron'
