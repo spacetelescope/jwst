@@ -58,8 +58,14 @@ class TSOPhotometryStep(Step):
                 return None
 
             # Get the gain reference file
-            gain_filename = self.get_reference_file(model, 'gain')
-            gain_model = GainModel(gain_filename)
+            gain_filename = self.get_reference_file(model, "gain")
+            gain_m = GainModel(gain_filename)
+            # Get the relevant 2D gain values from the model
+            if reffile_utils.ref_matches_sci(input_data, gain_m):
+                gain_2d = gain_m.data
+            else:
+                self.log.info("Extracting gain subarray to match science data")
+                gain_2d = reffile_utils.get_subarray_model(input_data, gain_m).data
 
             # Retrieve aperture info from the reference file
             pupil_name = "ANY"
@@ -75,9 +81,9 @@ class TSOPhotometryStep(Step):
             self.log.debug(f"ycenter = {ycenter}")
 
             # Compute the aperture photometry
-            catalog = tso_aperture_photometry(model, xcenter, ycenter,
-                                              radius, radius_inner,
-                                              radius_outer, gain_model)
+            catalog = tso_aperture_photometry(
+                model, xcenter, ycenter, radius, radius_inner, radius_outer, gain_2d
+            )
 
             # Save the photometry in an output catalog
             if self.save_catalog:
