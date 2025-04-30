@@ -765,7 +765,7 @@ def compute_footprint_spectral(model):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.IFUImageModel`
+    model : DataModel
         The output of assign_wcs.
 
     Returns
@@ -856,23 +856,14 @@ def update_s_region_keyword(model, footprint):
         model.meta.wcsinfo.s_region = s_region
 
 
-def compute_footprint_nrs_ifu(dmodel, mod):
+def compute_footprint_nrs_ifu(dmodel):
     """
     Determine NIRSPEC IFU footprint using the instrument model.
-
-    For efficiency this function uses the transforms directly,
-    instead of the WCS object. The common transforms in the WCS
-    model chain are referenced and reused; only the slice specific
-    transforms are computed.
-
-    If the transforms change this function should be revised.
 
     Parameters
     ----------
     dmodel : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
-    mod : module
-        The imported ``nirspec`` module.
 
     Returns
     -------
@@ -884,8 +875,6 @@ def compute_footprint_nrs_ifu(dmodel, mod):
     ra_total = []
     dec_total = []
     lam_total = []
-    # TODO: remove mod from the parameters, the wavelength range is recorded in the model
-    _, wrange = mod.spectral_order_wrange_from_model(dmodel)
 
     for slit in range(30):
         x, y = grid_from_bounding_box(dmodel.meta.wcs.bounding_box[slit])
@@ -893,6 +882,7 @@ def compute_footprint_nrs_ifu(dmodel, mod):
         ra_total.extend(np.ravel(ra))
         dec_total.extend(np.ravel(dec))
         lam_total.extend(np.ravel(lam))
+
     # the wrapped ra values are forced to be on one side of ra-border
     # the wrapped ra are used to determine the correct  min and max ra
     ra_total = wrap_ra(ra_total)
@@ -912,7 +902,7 @@ def compute_footprint_nrs_ifu(dmodel, mod):
     return footprint, (lam_min, lam_max)
 
 
-def update_s_region_nrs_ifu(output_model, mod):
+def update_s_region_nrs_ifu(output_model):
     """
     Update S_REGION for NRS_IFU observations using calculated footprint.
 
@@ -920,10 +910,8 @@ def update_s_region_nrs_ifu(output_model, mod):
     ----------
     output_model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
-    mod : module
-        The imported ``nirspec`` module.
     """
-    footprint, spectral_region = compute_footprint_nrs_ifu(output_model, mod)
+    footprint, spectral_region = compute_footprint_nrs_ifu(output_model)
     update_s_region_keyword(output_model, footprint)
     output_model.meta.wcsinfo.spectral_region = spectral_region
 
