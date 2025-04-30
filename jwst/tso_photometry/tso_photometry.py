@@ -71,17 +71,14 @@ def tso_aperture_photometry(
         factor = datamodel.meta.exposure.integration_time * gain_2d
         datamodel.data *= factor
         datamodel.err *= factor
-        datamodel.meta.bunit_data = 'electron'
-        datamodel.meta.bunit_err = 'electron'
-    elif datamodel.meta.bunit_data == 'DN':
-        # Convert the input data and errors from DN to electrons
-        factor = gain_2d
-        datamodel.data *= factor
-        datamodel.err *= factor
-        datamodel.meta.bunit_data = 'electron'
-        datamodel.meta.bunit_err = 'electron'
+        datamodel.meta.bunit_data = "electron"
+        datamodel.meta.bunit_err = "electron"
     else:
         # Unexpected units - leave them as-is
+        log.warning(
+            f"Unexpected data units: {datamodel.meta.bunit_data}. "
+            "Photometry will be produced using the input units."
+        )
         pass
 
     aperture_sum = []
