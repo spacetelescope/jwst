@@ -4,19 +4,19 @@ Tools to create the WCS pipeline NIRSPEC modes.
 Calls create_pipeline() which redirects based on EXP_TYPE.
 """
 
+import copy
 import logging
 import warnings
 
 import gwcs
 import numpy as np
-import copy
 
+from astropy import coordinates as coord
+from astropy import units as u
+from astropy.io import fits
+from astropy.modeling import bounding_box as mbbox
 from astropy.modeling import fix_inputs, models
 from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
-from astropy.modeling import bounding_box as mbbox
-from astropy import units as u
-from astropy import coordinates as coord
-from astropy.io import fits
 from gwcs import coordinate_frames as cf
 from gwcs.wcstools import grid_from_bounding_box
 
@@ -48,9 +48,9 @@ from stdatamodels.jwst.transforms.models import (
     RefractionIndexFromPrism,
 )
 
+from jwst.lib.exposure_types import is_nrs_ifu_lamp
 from .util import MSAFileError, NoDataOnDetectorError, not_implemented_mode, velocity_correction
 from . import pointing
-from ..lib.exposure_types import is_nrs_ifu_lamp
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -66,6 +66,9 @@ __all__ = [
     "ifu",
     "slits_wcs",
     "get_open_slits",
+    "generate_compound_bbox",
+    "nrs_fs_slit_id",
+    "nrs_fs_slit_name",
     "nrs_wcs_set_input",
     "nrs_ifu_wcs",
     "get_spectral_order_wrange",
@@ -1312,8 +1315,6 @@ def slicer_to_msa(reference_files):
         ifufore = f.model
     slicer2fore_mapping = Mapping((0, 1, 2, 2, 3))
     slicer2fore_mapping.inverse = Identity(4)
-    # ifufore2fore_mapping = Identity(2)
-    # ifufore2fore_mapping.inverse = Mapping((0, 1, 2, 2,3))
     ifu_fore_transform = slicer2fore_mapping | ifufore & Identity(2)
     ifu_fore_transform.inputs = ("x_slice", "y_slice", "lam", "name")
     ifu_fore_transform.outputs = ("x_msa", "y_msa", "lam", "name")
@@ -1790,7 +1791,7 @@ def mask_slit(ymin=-0.55, ymax=0.55):
 
 
 def compute_bounding_box(
-    transform, slit_name, wavelength_range=None, slit_ymin=-0.55, slit_ymax=0.55, refine=True
+    transform, slit_name, wavelength_range, slit_ymin=-0.55, slit_ymax=0.55, refine=True
 ):
     """
     Compute the bounding box of the projection of a slit/slice on the detector.
@@ -1900,7 +1901,7 @@ def generate_compound_bbox(input_model, slits=None, wavelength_range=None, refin
         from the "gwa" to "slit_frame" transform.
     wavelength_range : list or tuple or None, optional
         Wavelength range for the combination of filter and grating.
-        If not specified, the range is calculated in
+        If not specified, the range is calculated by calling
         `spectral_order_wrange_from_model`.
     refine : bool, optional
         If True, the initial bounding box will be refined to limit it to
@@ -1910,7 +1911,7 @@ def generate_compound_bbox(input_model, slits=None, wavelength_range=None, refin
     -------
     bounding_box : `~astropy.modeling.bounding_box.CompoundBoundingBox`
         Compound bounding box.  Access bounding boxes for individual
-        slits with dictionary-like access, keyed on the slit name.
+        slits with dictionary-like access, keyed on the slit ID.
     """
     if slits is None:
         slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slits
@@ -2276,7 +2277,7 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None, slit_y_range=None):
     return tab
 
 
-def _nrs_wcs_set_input_legacy(input_model, slit_name):
+def _nrs_wcs_set_slit_input_legacy(input_model, slit_name):
     """
     Return a WCS object for a specific slit, slice or shutter.
 
@@ -2361,7 +2362,7 @@ def nrs_wcs_set_input_legacy(
     if wavelength_range is None:
         _, wavelength_range = spectral_order_wrange_from_model(input_model)
 
-    slit_wcs = _nrs_wcs_set_input_legacy(input_model, slit_name)
+    slit_wcs = _nrs_wcs_set_slit_input_legacy(input_model, slit_name)
     transform = slit_wcs.get_transform("detector", "slit_frame")
     is_nirspec_ifu = (
         is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == "nrs_ifu"
@@ -2380,56 +2381,127 @@ def nrs_wcs_set_input_legacy(
 
 
 def _fix_slit_name(transform, slit_name):
+    """
+    Create a new WCS transform by fixing the slit input to a specific value.
+
+    If the inputs for the transform contain "name", then that input is
+    fixed to the provided value.  The output value called "name" is also
+    dropped from the output for the transform.
+
+    For the inverse transform, if present, the same operations are performed, except
+    that the inputs and outputs are not generally explicitly named.  The "name"
+    input and output are assumed to be present, to be either the first or last
+    input/output, and to match the ordering in the forward transform.  That is,
+    if "name" is the first input and the last output in the forward transform,
+    it is assumed to be the last input and the first output in the inverse
+    transform.
+
+    If "name" is not present in the input transform or if the transform is
+    None, then the transform is simply returned unmodified.
+
+    Parameters
+    ----------
+    transform : `astropy.modeling.core.Model` or None
+        The transform to fix.
+    slit_name : int or float
+        The slit name to fix to.
+
+    Returns
+    -------
+    new_transform : `astropy.modeling.core.Model`
+        A new transform fixed to the input slit.  The "name" input is not
+        required for the new transform, and it is not provided on output.
+    """
+    # Check if anything needs to be done for this transform
+    if transform is None or "name" not in transform.inputs:
+        return transform
+
+    # Name is present: fix it on input
     fixed = {"name": slit_name}
-    if transform is not None and "name" in transform.inputs:
-        # fix name on input, drop it on output
-        output_names = []
-        output_order = []
-        name_idx = None
-        for i, output_name in enumerate(transform.outputs):
-            if output_name == "name":
-                name_idx = i
-            else:
-                output_names.append(output_name)
-                output_order.append(i)
-        mapping = Mapping(tuple(output_order), n_inputs=transform.n_outputs)
+
+    # Get a mapping to drop the name on output as well
+    output_names = []
+    output_order = []
+    name_idx = None
+    for i, output_name in enumerate(transform.outputs):
+        if output_name == "name":
+            name_idx = i
+        else:
+            output_names.append(output_name)
+            output_order.append(i)
+    mapping = Mapping(tuple(output_order), n_inputs=transform.n_outputs)
+    mapping.inverse = Identity(len(output_order))
+
+    # New forward transform with fixed input and mapping
+    new_transform = fix_inputs(transform, fixed) | mapping
+    new_transform.name = transform.name
+    new_transform.outputs = output_names
+
+    # Do the same for the inverse transform, except that "name" is usually
+    # not explicitly specified
+    if transform.has_inverse():
+        # get "name" equivalent in inverse input and outputs - it's either first or last
+        n_output = transform.inverse.n_outputs
+        if name_idx == 0:
+            input_name = transform.inverse.inputs[0]
+        else:
+            input_name = transform.inverse.inputs[-1]
+        output_name_idx = transform.inputs.index("name")
+        if output_name_idx != 0:
+            output_name_idx = n_output - 1
+
+        # Fix for the input
+        fix_inverse = {input_name: slit_name}
+
+        # Mapping for the output
+        output_order = tuple([i for i in range(n_output) if i != output_name_idx])
+        mapping = Mapping(output_order, n_inputs=n_output)
         mapping.inverse = Identity(len(output_order))
 
-        new_transform = fix_inputs(transform, fixed) | mapping
-        new_transform.name = transform.name
-        new_transform.outputs = output_names
+        # Make and assign the new inverse transform
+        new_inv_transform = fix_inputs(transform.inverse, fix_inverse) | mapping
+        new_transform.inverse = new_inv_transform
 
-        # same for inverse transform, except that "name" is usually not explicitly specified
-        if transform.has_inverse():
-            # get "name" equivalent in inverse input and outputs - it's either first or last
-            n_output = transform.inverse.n_outputs
-            if name_idx == 0:
-                input_name = transform.inverse.inputs[0]
-            else:
-                input_name = transform.inverse.inputs[-1]
-            output_name_idx = transform.inputs.index("name")
-            if output_name_idx != 0:
-                output_name_idx = n_output - 1
-            fix_inverse = {input_name: slit_name}
-
-            output_order = tuple([i for i in range(n_output) if i != output_name_idx])
-            mapping = Mapping(output_order, n_inputs=n_output)
-            mapping.inverse = Identity(len(output_order))
-
-            new_inv_transform = fix_inputs(transform.inverse, fix_inverse) | mapping
-            new_transform.inverse = new_inv_transform
-    else:
-        new_transform = transform
     return new_transform
 
 
 def nrs_fs_slit_id(slit_name):
+    """
+    Get the slit ID corresponding to a fixed slit name.
+
+    Parameters
+    ----------
+    slit_name : str
+        The name of the slit to identify.
+
+    Returns
+    -------
+    int
+        The standard ID for the slit.  Returns -100 if the slit name was not recognized.
+    """
     slit_number = -100 + -1 * FIXED_SLIT_NUMS.get(slit_name, 0)
     return slit_number
 
 
 def nrs_fs_slit_name(slit_id):
-    slit_number = -1 * slit_id - 100
+    """
+    Get the slit name corresponding to a fixed slit ID.
+
+    Parameters
+    ----------
+    slit_id : int, float, or str
+        The slit ID.  Expected values are integers from -100 to -105.
+
+    Returns
+    -------
+    str
+        The name of the slit corresponding to the slit ID.  If the slit ID was not
+        recognized, "NONE" is returned.
+    """
+    try:
+        slit_number = -1 * int(slit_id) - 100
+    except ValueError:
+        return "NONE"
     for key, value in FIXED_SLIT_NUMS.items():
         if value == slit_number:
             return key
@@ -2438,7 +2510,10 @@ def nrs_fs_slit_name(slit_id):
 
 def nrs_wcs_set_input(input_model, slit_name):
     """
-    Make a WCS object for a specific slit, slice, or shutter.
+    Make a WCS object for a specific slit or slice.
+
+    Transforms in the new WCS do not require slit IDs on input
+    and do not report slit IDs in the output.
 
     If there is a compound bounding box set for the input model,
     a bounding box will be set for the slit WCS.  Otherwise,
@@ -2609,7 +2684,7 @@ def nrs_ifu_wcs(input_model):
     Parameters
     ----------
     input_model : JwstDataModel
-        The data model. Must have been through the assign_wcs step.
+        The data model. Must have passed through the assign_wcs step.
 
     Returns
     -------

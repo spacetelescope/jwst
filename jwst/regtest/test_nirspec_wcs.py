@@ -31,7 +31,7 @@ def test_nirspec_fixedslit_wcs(rtdata, input_file):
             # Check the 4 science slits
             for slit in ['S200A1', 'S200A2', 'S400A1', 'S1600A1']:
                 wcs = nirspec.nrs_wcs_set_input(im, slit)
-                wcs_truth = nirspec.nrs_wcs_set_input_legacy(im_truth, slit)
+                wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slit)
 
                 assert_wcs_grid_allclose(wcs, wcs_truth)
 
@@ -64,7 +64,7 @@ def test_nirspec_mos_wcs(rtdata, input_file, msa_file):
 
             for name in names:
                 wcs = nirspec.nrs_wcs_set_input(im, name)
-                wcs_truth = nirspec.nrs_wcs_set_input_legacy(im_truth, name)
+                wcs_truth = nirspec.nrs_wcs_set_input(im_truth, name)
 
                 assert_wcs_grid_allclose(wcs, wcs_truth)
 
@@ -92,7 +92,7 @@ def test_nirspec_ifu_wcs(rtdata, input_file):
             # Test all the IFU slices
             for k in range(30):
                 wcs = nirspec.nrs_wcs_set_input(im, k)
-                wcs_truth = nirspec.nrs_wcs_set_input_legacy(im_truth, k)
+                wcs_truth = nirspec.nrs_wcs_set_input(im_truth, k)
                 assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
