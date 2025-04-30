@@ -28,12 +28,18 @@ def test_save_wfss_x1d(tmp_cwd):
             spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
             recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
             spec.meta.filename = exposure_filenames[j]
+            spec.meta.observation.exposure_number = str(j + 1)
             spec.source_id = n_sources - i # reverse the order to test sorting
             spec.name = str(spec.source_id)
             spec_table = np.recarray((n_rows,), dtype=recarray_dtype)
             spec_table["WAVELENGTH"] = [1.0, 2.0, 3.0]
             spec_table["FLUX"] = [1.0, 2.0, 3.0]
             spec.spec_table = spec_table
+            
+            # add slit_xstart and slit_ystart
+            spec.slit_xstart = 99.0
+            spec.slit_ystart = 99.0
+
             multi.spec.append(spec)
         results_list.append(multi)
     
@@ -58,6 +64,10 @@ def test_save_wfss_x1d(tmp_cwd):
         assert np.all(np.diff(source_ids) >= 0)
         # Ensure names match the source_ids
         assert np.all([name == str(source_id) for name, source_id in zip(names, source_ids)])
+
+        # Ensure slit xstart and ystart were propagated into the output
+        assert np.all(bintable["SLIT_XSTART"] == 99.0)
+        assert np.all(bintable["SLIT_YSTART"] == 99.0)
 
     hdul.close()
 
