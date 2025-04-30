@@ -13,6 +13,7 @@ from ..master_background.master_background_step import split_container
 from ..stpipe import Pipeline
 from ..lib.exposure_types import is_moving_target
 from jwst.datamodels.utils.flat_multispec import (
+    copy_column_units,
     determine_vector_and_meta_columns,
     make_empty_recarray,
     populate_recarray,
@@ -460,11 +461,7 @@ def _save_wfss_x1d(results_list, filename):
     n_sources = len(results_list)
     input_datatype = dm.SpecModel().schema["properties"]["spec_table"]["datatype"]
     output_datatype = dm.WFSSMultiSpecModel().schema["properties"]["spec_table"]["datatype"]
-    vector_columns, meta_columns = determine_vector_and_meta_columns(
-        input_datatype, output_datatype
-    )
-    all_columns = vector_columns + meta_columns
-    is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
+    all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
 
     # loop over exposures to make tables for each exposure
     fltdata_by_exposure = []
@@ -485,7 +482,7 @@ def _save_wfss_x1d(results_list, filename):
 
             # populate the table with data from the input spectrum
             populate_recarray(
-                fltdata[j], spec, n_rows, vector_columns, meta_columns, ignore_columns=["NELEMENTS"]
+                fltdata[j], spec, n_rows, all_columns, is_vector, ignore_columns=["NELEMENTS"]
             )
 
             # special handling for NELEMENTS because not defined in specmeta schema
@@ -499,6 +496,9 @@ def _save_wfss_x1d(results_list, filename):
         spec_table = fltdata_by_exposure[i]
         spec_table.sort(order="SOURCE_ID")
         ext = dm.WFSSMultiSpecModel(spec_table)
+
+        # copy units from any of the SpecModels (they should all be the same)
+        copy_column_units(spec, ext)
         ext.meta.filename = fname
         output_x1d.exposures.append(ext)
 
@@ -529,11 +529,7 @@ def _save_wfss_c1d(results_list, filename):
     # figure out column names and dtypes
     input_datatype = dm.CombinedSpecModel().schema["properties"]["spec_table"]["datatype"]
     output_datatype = dm.WFSSMultiCombinedSpecModel().schema["properties"]["spec_table"]["datatype"]
-    vector_columns, meta_columns = determine_vector_and_meta_columns(
-        input_datatype, output_datatype
-    )
-    all_columns = vector_columns + meta_columns
-    is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
+    all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
 
     # create empty table
     fltdata = make_empty_recarray(n_rows, n_sources, all_columns, is_vector)
@@ -544,8 +540,8 @@ def _save_wfss_c1d(results_list, filename):
             fltdata[j],
             model.spec[0],
             n_rows,
-            vector_columns,
-            meta_columns,
+            all_columns,
+            is_vector,
             ignore_columns=["NELEMENTS"],
         )
 
@@ -556,4 +552,8 @@ def _save_wfss_c1d(results_list, filename):
     output_c1d.spec_table = fltdata
     example_model = results_list[0]
     output_c1d.update(example_model)
+
+    # copy units from any of the SpecModels (they should all be the same)
+    copy_column_units(model.spec[0], output_c1d)
+
     output_c1d.save(filename)

@@ -30,31 +30,24 @@ def determine_vector_and_meta_columns(input_datatype, output_datatype):
 
     Returns
     -------
-    vector_columns : list[tuple]
-        List of tuples containing the vector-like column names and their dtypes.
-    meta_columns : list[tuple]
-        List of tuples containing the metadata column names and their dtypes.
+    columns : np.ndarray[tuple]
+        Array of tuples containing the column names and their dtypes.
+    is_vector : np.ndarray[bool]
+        Array of booleans indicating whether each column is vector-like,
+        same length as `columns`.
     """
     # Extract just names and dtypes, convert to numpy dtypes
     vector_colnames = np.array([col["name"] for col in input_datatype])
-    vector_dtypes = np.array(
-        [asdf_datatype_to_numpy_dtype(col["datatype"]) for col in input_datatype]
-    )
     all_colnames = np.array([col["name"] for col in output_datatype])
     all_dtypes = np.array(
         [asdf_datatype_to_numpy_dtype(col["datatype"]) for col in output_datatype]
     )
+    all_cols = np.array(list(zip(all_colnames, all_dtypes, strict=True)))
 
     # Determine which columns are metadata
-    is_meta = ~np.array([col in vector_colnames for col in all_colnames])
-    meta_colnames = all_colnames[is_meta]
-    meta_dtypes = all_dtypes[is_meta]
+    is_vector = np.array([col in vector_colnames for col in all_colnames])
 
-    # Construct the vector and meta column tuples
-    vector_cols = list(zip(vector_colnames, vector_dtypes, strict=True))
-    meta_cols = list(zip(meta_colnames, meta_dtypes, strict=True))
-
-    return vector_cols, meta_cols
+    return all_cols, is_vector
 
 
 def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=0):
@@ -68,13 +61,13 @@ def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=0):
         data points for any spectrum in the exposure.
     n_spec : int
         The number of spectra in the output table.
-    columns : list[tuple]
-        List of tuples containing the column names and their dtypes.
-    is_vector : list[bool]
-        List of booleans indicating whether each column is vector-like.
+    columns : np.ndarray[tuple]
+        Array of tuples containing the column names and their dtypes.
+    is_vector : np.ndarray[bool]
+        Array of booleans indicating whether each column is vector-like.
         If `True`, the column will be a 1D array of length `n_rows`.
         Otherwise, the column will be a scalar.
-    defaults : list, int, or float, optional
+    defaults : list, np.ndarray, int, or float, optional
         List of default values for each column. If a column is vector-like,
         the default value will be repeated to fill the array.
         If a column is scalar, the default value will be used directly.
@@ -108,9 +101,7 @@ def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=0):
     return arr
 
 
-def populate_recarray(
-    output_table, input_spec, n_rows, vector_columns, meta_columns, ignore_columns=None
-):
+def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, ignore_columns=None):
     """
     Populate the output table in-place with data from the input spectrum.
 
@@ -128,10 +119,10 @@ def populate_recarray(
     n_rows : int
         The number of rows in the output table; this is the maximum number of
         data points for any spectrum in the exposure.
-    vector_columns : list[tuple]
-        List of tuples containing the vector-like column names and their dtypes.
-    meta_columns : list[tuple]
-        List of tuples containing the metadata column names and their dtypes.
+    columns : np.ndarray[tuple]
+        Array of tuples containing the column names and their dtypes.
+    is_vector : np.ndarray[bool]
+        Array of booleans indicating whether each column is vector-like,
     ignore_columns : list[str], optional
         List of column names to ignore when copying data or metadata from the input
         spectrum to the output table. This is useful for columns that are not
@@ -141,6 +132,9 @@ def populate_recarray(
     if ignore_columns is None:
         ignore_columns = []
     input_table = input_spec.spec_table
+
+    vector_columns = columns[is_vector]
+    meta_columns = columns[~is_vector]
 
     # Copy the data into the new table with NaN padding
     for col, _ in vector_columns:
@@ -169,3 +163,26 @@ def populate_recarray(
 
     if len(problems) > 0:
         log.warning(f"Metadata could not be determined from input spec_table: {problems}")
+
+
+def copy_column_units(input_model, output_model):
+    """
+    Copy units from input columns to output columns.
+
+    Spectral tables in both input and output models must be
+    in FITS record format. The output model is updated in place.
+
+    Parameters
+    ----------
+    input_model : SpecModel
+        Input spectral model containing vector columns in the
+        ``spec_table`` attribute.
+    output_model : DataModel
+        Output spectral model containing a mix of vector columns
+        and metadata columns in the ``spec_table`` attribute.
+    """
+    input_columns = input_model.spec_table.columns
+    output_columns = output_model.spec_table.columns
+    for col_name in input_columns.names:
+        if col_name in output_columns.names:
+            output_columns[col_name].unit = input_columns[col_name].unit
