@@ -14,11 +14,12 @@ logger.setLevel(logging.INFO)
 
 
 def _is_number(s):
+    is_number = True
     try:
         int(s)
-        return True
     except ValueError:
-        return False
+        is_number = False
+    return is_number
 
 
 def _check_arglist(arg_list, list_values):
@@ -202,8 +203,9 @@ def main():
     stfitsdiff_default_kwargs["ignore_comments"] = ignore_comments
 
     if args.ignore_fields is not None:
-        stfitsdiff_default_kwargs["ignore_fields"] = _check_arglist(args.ignore_fields,
-                                                                    stfitsdiff_default_kwargs["ignore_fields"])
+        stfitsdiff_default_kwargs["ignore_fields"] = _check_arglist(
+            args.ignore_fields, stfitsdiff_default_kwargs["ignore_fields"]
+        )
 
     # If provided, make sure the extension_tolerances is a dictionary and not a string
     err_msg = """
