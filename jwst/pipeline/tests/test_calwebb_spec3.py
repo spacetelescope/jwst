@@ -5,6 +5,8 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.pipeline.calwebb_spec3 import _save_wfss_x1d, _save_wfss_c1d
 
 
+# TODO: decrease amount of code duplication in these two tests
+
 def test_save_wfss_x1d(tmp_cwd):
     """Test flat file format saving of WFSS x1d data."""
 
@@ -26,7 +28,8 @@ def test_save_wfss_x1d(tmp_cwd):
             spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
             recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
             spec.meta.filename = exposure_filenames[j]
-            spec.source_id = i
+            spec.source_id = n_sources - i # reverse the order to test sorting
+            spec.name = str(spec.source_id)
             spec_table = np.recarray((n_rows,), dtype=recarray_dtype)
             spec_table["WAVELENGTH"] = [1.0, 2.0, 3.0]
             spec_table["FLUX"] = [1.0, 2.0, 3.0]
@@ -48,6 +51,14 @@ def test_save_wfss_x1d(tmp_cwd):
             assert bintable.shape == (n_sources - 1,)
         else:
             assert bintable.shape == (n_sources,)
+        
+        # Ensure the source_ids are sorted
+        source_ids = bintable["SOURCE_ID"]
+        names = bintable["NAME"]
+        assert np.all(np.diff(source_ids) >= 0)
+        # Ensure names match the source_ids
+        assert np.all([name == str(source_id) for name, source_id in zip(names, source_ids)])
+
     hdul.close()
 
 
@@ -65,7 +76,7 @@ def test_save_wfss_c1d(tmp_cwd):
         spec = dm.CombinedSpecModel()
         spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
         recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
-        spec.source_id = i
+        spec.source_id = n_sources - i # reverse the order to test sorting
         spec_table = np.recarray((n_rows,), dtype=recarray_dtype)
         spec_table["WAVELENGTH"] = [1.0, 2.0, 3.0]
         spec_table["FLUX"] = [1.0, 2.0, 3.0]
@@ -81,4 +92,9 @@ def test_save_wfss_c1d(tmp_cwd):
     assert len(hdul) == 3  # one primary HDU, one BinTableHDU, one ASDF extension
     bintable = hdul[1].data
     assert bintable.shape == (n_sources,)
+
+    # Ensure the source_ids are sorted
+    source_ids = bintable["SOURCE_ID"]
+    assert np.all(np.diff(source_ids) >= 0)
+
     hdul.close()
