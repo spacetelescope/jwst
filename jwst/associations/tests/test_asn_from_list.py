@@ -58,10 +58,10 @@ def test_file_ext():
     name, serialized = asn.dump()
     #check that extension with format = 'json'  returns json
     assert name.endswith('json')
-    name, serialized = asn.dump(format='json')
+    name, serialized = asn.dump(fmt='json')
     assert name.endswith('json')
     #check that extension with format = 'yaml'  returns yaml
-    name, serialized = asn.dump(format='yaml')
+    name, serialized = asn.dump(fmt='yaml')
     assert name.endswith('yaml')
 
 
@@ -194,10 +194,10 @@ def test_cmdline_fails():
 
 
 @pytest.mark.parametrize(
-    "format",
+    "fmt",
     ['json', 'yaml']
 )
-def test_cmdline_success(format, tmp_path):
+def test_cmdline_success(fmt, tmp_path):
     """Create Level3 associations in different formats"""
     path = tmp_path / 'test_asn.json'
     product_name = 'test_product'
@@ -205,12 +205,12 @@ def test_cmdline_success(format, tmp_path):
     args = [
         '-o', str(path),
         '--product-name', product_name,
-        '--format', format
+        '--format', fmt
     ]
     args = args + inlist
     Main.cli(args)
     with open(path, 'r') as fp:
-        asn = load_asn(fp, format=format)
+        asn = load_asn(fp, fmt=fmt)
     assert len(asn['products']) == 1
     assert asn['products'][0]['name'] == product_name
     members = asn['products'][0]['members']
