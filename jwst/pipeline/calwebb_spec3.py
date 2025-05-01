@@ -337,12 +337,15 @@ class Spec3Pipeline(Pipeline):
             else:
                 self.log.warning("Resampling was not completed. Skipping extract_1d.")
 
-        # Save the final output product for WFSS modes
+        # Save the final output products for WFSS modes
         if exptype in WFSS_TYPES:
-            self.log.info("Saving the final x1d product into a single file.")
-            _save_wfss_x1d(wfss_x1d, "flat_x1d.fits")
-            self.log.info("Saving the final c1d product into a single file.")
-            _save_wfss_c1d(wfss_comb, "flat_c1d.fits")
+            outstem = output_file.replace("_{source_id}", "")
+            x1d_filename = outstem + "_x1d.fits"
+            c1d_filename = outstem + "_c1d.fits"
+            self.log.info(f"Saving the final x1d product as {x1d_filename}.")
+            _save_wfss_x1d(wfss_x1d, x1d_filename)
+            self.log.info(f"Saving the final c1d product as {c1d_filename}.")
+            _save_wfss_c1d(wfss_comb, c1d_filename)
 
         input_models.close()
 
@@ -417,7 +420,7 @@ class Spec3Pipeline(Pipeline):
         return srcid
 
 
-def _save_wfss_x1d(results_list, filename):
+def _save_wfss_x1d(results_list, output_filename):
     """
     Combine all sources into a single table and save to a file.
 
@@ -431,7 +434,7 @@ def _save_wfss_x1d(results_list, filename):
     ----------
     results_list : list[MultiSlitModel]
         List of MultiSlitModel objects to be combined into a single x1d file.
-    filename : str
+    output_filename : str
         Name of the output x1d file.
     """
     # first loop over both source and exposure to figure out final n_rows, n_exposures, n_sources
@@ -525,10 +528,10 @@ def _save_wfss_x1d(results_list, filename):
     # Save the combined results to a file using first input model for metadata
     example_model = results_list[0]
     output_x1d.update(example_model, only="PRIMARY")
-    output_x1d.save(filename)
+    output_x1d.save(output_filename)
 
 
-def _save_wfss_c1d(results_list, filename):
+def _save_wfss_c1d(results_list, output_filename):
     """
     Compile exposure-averaged sources into a single table and save to a file.
 
@@ -538,7 +541,7 @@ def _save_wfss_c1d(results_list, filename):
     ----------
     results_list : list[MultiSlitModel]
         List of MultiSlitModel objects to be combined into a single c1d file.
-    filename : str
+    output_filename : str
         Name of the output c1d file.
     """
     # determine shape of output table
@@ -579,4 +582,4 @@ def _save_wfss_c1d(results_list, filename):
     # copy units from any of the SpecModels (they should all be the same)
     copy_column_units(model.spec[0], output_c1d)
 
-    output_c1d.save(filename)
+    output_c1d.save(output_filename)
