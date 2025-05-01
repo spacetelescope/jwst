@@ -15,7 +15,7 @@ from astropy import table
 from astropy import wcs as astwcs
 from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcs, wcstools
-from numpy.testing import assert_allclose
+from numpy.testing import assert_allclose, assert_array_equal
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
@@ -1138,8 +1138,6 @@ def test_ifu_bbox():
         bbox_tuple = [tuple(bbox_sl[name]) for name in bbox_sl.named_intervals]
         assert_allclose(bbox[sl], bbox_tuple)
 
-    return
-
 
 @pytest.fixture
 def ifu_world_coord(wcs_ifu_grating):
@@ -1182,7 +1180,7 @@ def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
 
 @pytest.mark.parametrize("mode", ["IFU", "MOS", "FS"])
 def test_nrs_wcs_by_slit(mode):
-    pixel_tol = 1e-7
+    pixel_tol = 0.02
     if mode == "IFU":
         hdul = create_nirspec_ifu_file("F290LP", "G140M")
         im = datamodels.IFUImageModel(hdul)
@@ -1217,18 +1215,18 @@ def test_nrs_wcs_by_slit(mode):
 
         # Check roundtrip
         inv_x, inv_y, inv_slit = datamodel.meta.wcs.backward_transform(ra, dec, lam, slit_id)
-        assert np.allclose(inv_x[~is_nan], x[~is_nan], atol=pixel_tol)
-        assert np.allclose(inv_y[~is_nan], y[~is_nan], atol=pixel_tol)
-        # assert np.allclose(inv_slit, slit)
+        assert_allclose(inv_x[~is_nan], x[~is_nan], atol=pixel_tol)
+        assert_allclose(inv_y[~is_nan], y[~is_nan], atol=pixel_tol)
+        # assert_allclose(inv_slit, slit)
 
         # Set a slit-specific wcs: it should give the same answer
         slit_wcs = nirspec.nrs_wcs_set_input(datamodel, slit_id)
         ra2, dec2, lam2 = slit_wcs(x, y)
         is_nan_2 = np.isnan(ra2) | np.isnan(dec2) | np.isnan(lam2)
-        assert np.all(is_nan == is_nan_2)
-        assert np.allclose(ra[~is_nan], ra2[~is_nan])
-        assert np.allclose(dec[~is_nan], dec2[~is_nan])
-        assert np.allclose(lam[~is_nan], lam2[~is_nan])
+        assert_array_equal(is_nan, is_nan_2)
+        assert_allclose(ra[~is_nan], ra2[~is_nan])
+        assert_allclose(dec[~is_nan], dec2[~is_nan])
+        assert_allclose(lam[~is_nan], lam2[~is_nan])
 
 
 def test_nrs_fs_slit_id():
