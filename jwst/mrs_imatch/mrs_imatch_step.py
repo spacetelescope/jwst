@@ -59,8 +59,6 @@ class MRSIMatchStep(Step):
                                      "combinations of channels.".format(c))
                 single_ch[c] = chm[ch]
 
-        # At this moment running 'cube_skymatch' on images whose
-        # background has been previously subtracted is not supported.
         # Raise an exception if background was subtracted:
         for m2d in chm.values():
             self._check_background(m2d)
@@ -102,8 +100,8 @@ class MRSIMatchStep(Step):
         return images
 
     def _check_background(self, models):
-        # see if 'cube_skymatch' step was previously run and raise
-        # an exception as 'cube_skymatch' cannot be run twice on the
+        # see if the step was previously run and raise
+        # an exception as 'mrs_imatch' cannot be run twice on the
         # same data:
         for m in models:
             if m.meta.background.subtracted is None:
@@ -114,7 +112,7 @@ class MRSIMatchStep(Step):
                                      "(None).")
 
             elif m.meta.background.subtracted:
-                raise ValueError("'cube_skymatch' step cannot be run on "
+                raise ValueError("'mrs_imatch' step cannot be run on "
                                  "data whose background has been previously "
                                  "subtracted.")
 
