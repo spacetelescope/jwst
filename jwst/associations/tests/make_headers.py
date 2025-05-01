@@ -25,7 +25,7 @@ def actual_path(path):
     Path
         The fully qualified path.
     """
-    return Path.abspath(ospath.expandvars(Path.expanduser(path)))
+    return Path(ospath.expandvars(path)).expanduser().resolve()
 
 
 def get_headers(files, outpath):
@@ -40,7 +40,7 @@ def get_headers(files, outpath):
         The output path to place the header-only files
     """
     for path in files:
-        name = Path.name(path)
+        name = Path(path).name
         hdul = fits.open(path)
         nhdu = fits.PrimaryHDU(header=hdul[0].header)
         nhdul = fits.HDUList([nhdu])
