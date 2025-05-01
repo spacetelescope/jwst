@@ -1,49 +1,39 @@
-"""Load an Association from a file or object"""
+"""Load an Association from a file or object."""
+
 from inspect import isclass
 
-from . import (
-    Association,
-    AssociationRegistry
-)
+from . import Association, AssociationRegistry
 
 
 def load_asn(
-        serialized,
-        format=None,
-        first=True,
-        validate=True,
-        registry=AssociationRegistry,
-        **kwargs
+    serialized, fmt=None, first=True, validate=True, registry=AssociationRegistry, **kwargs
 ):
-    """Load an Association from a file or object
+    """
+    Load an Association from a file or object.
 
     Parameters
     ----------
     serialized : object
         The serialized form of the association.
-
-    format : str or None
+    fmt : str or None
         The format to force. If None, try all available.
-
-    validate : bool
-        Validate against the class' defined schema, if any.
-
     first : bool
         A serialization potentially matches many rules.
         Only return the first successful load.
-
+    validate : bool
+        Validate against the class's defined schema, if any.
     registry : AssociationRegistry or None
         The `AssociationRegistry` to use.
         If None, no registry is used.
         Can be passed just a registry class instead of instance.
-
-    kwargs : dict
+    **kwargs : dict
         Other arguments to pass to the `load` methods defined
-        in the `Association.IORegistry`
+        in the `Association.KeyValueRegistry`
 
     Returns
     -------
-    The Association object
+    Association object
+        The loaded association.
 
     Raises
     ------
@@ -61,14 +51,8 @@ def load_asn(
     method is used.
     """
     if registry is None:
-        return Association.load(serialized, format=format, validate=validate)
+        return Association.load(serialized, fmt=fmt, validate=validate)
 
     if isclass(registry):
         registry = registry()
-    return registry.load(
-        serialized,
-        format=format,
-        first=first,
-        validate=validate,
-        **kwargs
-    )
+    return registry.load(serialized, fmt=fmt, first=first, validate=validate, **kwargs)

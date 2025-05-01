@@ -1,4 +1,4 @@
-""""Diff and compare associations"""
+"""Diff and compare associations."""
 
 from collections import Counter, UserList, defaultdict
 from copy import copy
@@ -14,18 +14,20 @@ logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 __all__ = [
-    'compare_asn_files',
-    'compare_asn_lists',
-    'compare_asns',
-    'compare_membership',
-    'compare_product_membership',
+    "compare_asn_files",
+    "compare_asn_lists",
+    "compare_asns",
+    "compare_membership",
+    "compare_product_membership",
 ]
+
 
 # #########################
 # Define the types of diffs
 # #########################
 class DiffError(AssertionError):
-    """Base Class for difference errors
+    """
+    Base Class for difference errors.
 
     Attributes
     ----------
@@ -35,86 +37,100 @@ class DiffError(AssertionError):
     asns : [Association[,...]]
         List of associations that generated the exception
     """
+
     def __init__(self, *args, asns=None, **kwargs):
         super().__init__(*args, **kwargs)
         if asns is None:
-            asns = list()
+            asns = []
         self.asns = asns
 
 
 class CandidateLevelError(DiffError):
-    """Candidate level mismatch"""
+    """Candidate level mismatch."""
 
 
 class DuplicateMembersError(DiffError):
-    """Duplicate members within a product"""
+    """Duplicate members within a product."""
 
 
 class DuplicateProductError(DiffError):
-    """Duplicate products found"""
+    """Duplicate products found."""
 
 
 class DifferentProductSetsError(DiffError):
-    """Different product sets between groups of associations"""
+    """Different product sets between groups of associations."""
 
 
-class MemberLengthDifference(DiffError):
-    """Difference in number of members between associations"""
+class MemberLengthDifferenceError(DiffError):
+    """Difference in number of members between associations."""
 
 
 class MemberMismatchError(DiffError):
-    """Membership does not match"""
+    """Membership does not match."""
 
 
 class SubsetError(DiffError):
-    """One product is a subset of another"""
+    """One product is a subset of another."""
 
 
 class TypeMismatchError(DiffError):
-    """Association type mismatch"""
+    """Association type mismatch."""
 
 
 class UnaccountedMembersError(DiffError):
-    """Members not present in other"""
+    """Members not present in other."""
 
 
 class MultiDiffError(UserList, DiffError):
-    """List of diff errors"""
+    """List of diff errors."""
+
     def __init__(self, *args, **kwargs):
         super(MultiDiffError, self).__init__(*args, **kwargs)
 
     @property
     def asns(self):
-        """Return the list of affected associations for all contained errors"""
-        asns = list()
+        """
+        Return the list of affected associations for all contained errors.
+
+        Returns
+        -------
+        list
+            The list of associations.
+        """
+        asns = []
         for err in self:
             asns.extend(err.asns)
         return asns
 
     @property
     def err_types(self):
-        """Return list of error types"""
+        """
+        Return list of error types.
+
+        Returns
+        -------
+        list
+            The list of error types.
+        """
         err_types = [type(err) for err in self]
         return err_types
 
     def __str__(self):
-        message = ['Following diffs found:\n']
+        message = ["Following diffs found:\n"]
         for diff in self:
-            message.extend([
-                '\n****\n', str(diff), '\n'
-            ])
-        return ''.join(message)
+            message.extend(["\n****\n", str(diff), "\n"])
+        return "".join(message)
 
 
 def compare_asn_files(left_paths, right_paths):
-    """Compare association files
+    """
+    Compare association files.
 
     Parameters
     ----------
-    left_paths: [Path or str[, ...]]
+    left_paths : [Path or str[, ...]]
         Set of association files
-
-    right_paths: [Path or str[, ...]]
+    right_paths : [Path or str[, ...]]
         Set of association files to compare against
 
     Raises
@@ -127,7 +143,7 @@ def compare_asn_files(left_paths, right_paths):
     # Read in all the associations, separating out the products into separate associations.
     left_asns = []
     for path in left_paths:
-        with open(path, 'r') as fh:
+        with Path(path).open("r") as fh:
             asn = load_asn(fh)
         single_product_asns = separate_products(asn)
 
@@ -136,7 +152,7 @@ def compare_asn_files(left_paths, right_paths):
 
     right_asns = []
     for path in right_paths:
-        with open(path, 'r') as fh:
+        with Path(path).open("r") as fh:
             asn = load_asn(fh)
         single_product_asns = separate_products(asn)
 
@@ -148,7 +164,8 @@ def compare_asn_files(left_paths, right_paths):
 
 
 def compare_asn_lists(left_asns, right_asns):
-    """Compare to lists of associations
+    """
+    Compare to lists of associations.
 
     Both association lists must contain associations that only have
     single products. Use `separate_products` prior to calling this
@@ -156,11 +173,10 @@ def compare_asn_lists(left_asns, right_asns):
 
     Parameters
     ----------
-    left_asns: [`Association`[, ...]]
-        Group of associations
-
-    right_asns: [`Association`[, ...]]
-        Group of associations to compare
+    left_asns : [`Association`[, ...]]
+        Group of associations.
+    right_asns : [`Association`[, ...]]
+        Group of associations to compare.
 
     Raises
     ------
@@ -176,32 +192,31 @@ def compare_asn_lists(left_asns, right_asns):
     right_product_names, right_duplicates = get_product_names(right_asns)
     if left_duplicates:
         try:
-            check_duplicate_products(left_asns, product_names=left_product_names, dup_names=left_duplicates)
+            check_duplicate_products(
+                left_asns, product_names=left_product_names, dup_names=left_duplicates
+            )
         except MultiDiffError as dup_errors:
             diffs.extend(dup_errors)
     if right_duplicates:
         try:
-            check_duplicate_products(right_asns, product_names=right_product_names, dup_names=right_duplicates)
+            check_duplicate_products(
+                right_asns, product_names=right_product_names, dup_names=right_duplicates
+            )
         except MultiDiffError as dup_errors:
             diffs.extend(dup_errors)
 
     # Ensure that the product name lists are the same.
     name_diff = left_product_names ^ right_product_names
     if name_diff:
-        diffs.append(DifferentProductSetsError(
-            'Left and right associations do not share a common set of products: {}'
-            ''.format(name_diff)
-        ))
+        diffs.append(
+            DifferentProductSetsError(
+                f"Left and right associations do not share a common set of products: {name_diff}"
+            )
+        )
 
     # Compare like product associations
-    left_asns_by_product = {
-        asn['products'][0]['name']: asn
-        for asn in left_asns
-    }
-    right_asns_by_product = {
-        asn['products'][0]['name']: asn
-        for asn in right_asns
-    }
+    left_asns_by_product = {asn["products"][0]["name"]: asn for asn in left_asns}
+    right_asns_by_product = {asn["products"][0]["name"]: asn for asn in right_asns}
     for product_name in left_product_names:
         try:
             compare_asns(left_asns_by_product[product_name], right_asns_by_product[product_name])
@@ -216,13 +231,14 @@ def compare_asn_lists(left_asns, right_asns):
 
 
 def compare_asns(left, right):
-    """Compare two associations
+    """
+    Compare two associations.
 
     This comparison will include metadata such as
     `asn_type` and membership
 
     Parameters
-    ---------
+    ----------
     left, right : dict
         Two, individual, associations to compare
 
@@ -235,13 +251,14 @@ def compare_asns(left, right):
 
 
 def _compare_asns(left, right):
-    """Compare two associations
+    """
+    Compare two associations.
 
     This comparison will include metadata such as
     `asn_type` and membership
 
     Parameters
-    ---------
+    ----------
     left, right : dict
         Two, individual, associations to compare
 
@@ -251,11 +268,10 @@ def _compare_asns(left, right):
         If there are differences. The message will contain
         all the differences.
 
-    Note
-    ----
+    Notes
+    -----
     This comparison is dependent on the associations being JWST-like associations.
     The attributes that are compared are as follows:
-
         - key `asn_type`
         - key `products`. Specifically the following are compared:
             - Length of the list
@@ -269,17 +285,20 @@ def _compare_asns(left, right):
     diffs = MultiDiffError()
 
     # Assert that the same result type is the same.
-    if left['asn_type'] != right['asn_type']:
-        diffs.append(TypeMismatchError(
-            'Type mismatch {} != {}'.format(left['asn_type'], right['asn_type'])
-        ))
+    if left["asn_type"] != right["asn_type"]:
+        diffs.append(
+            TypeMismatchError("Type mismatch {} != {}".format(left["asn_type"], right["asn_type"]))
+        )
 
     # Assert that the level of association candidate is the same.
     # Cannot guarantee value, but that the 'a'/'c'/'o' levels are similar.
-    if left['asn_id'][0] != right['asn_id'][0]:
-        diffs.append(CandidateLevelError(
-            f"Candidate level mismatch left '{left['asn_id'][0]}' != right '{right['asn_id'][0]}'"
-        ))
+    if left["asn_id"][0] != right["asn_id"][0]:
+        diffs.append(
+            CandidateLevelError(
+                f"Candidate level mismatch left '{left['asn_id'][0]}' != "
+                f"right '{right['asn_id'][0]}'"
+            )
+        )
 
     # Membership
     try:
@@ -292,10 +311,11 @@ def _compare_asns(left, right):
 
 
 def compare_membership(left, right):
-    """Compare two associations' membership
+    """
+    Compare two associations' membership.
 
     Parameters
-    ---------
+    ----------
     left, right : dict
         Two, individual, associations to compare
 
@@ -306,19 +326,20 @@ def compare_membership(left, right):
         all the differences.
     """
     diffs = MultiDiffError()
-    products_left = left['products']
-    products_right = copy(right['products'])
+    products_left = left["products"]
+    products_right = copy(right["products"])
 
     if len(products_left) != len(products_right):
-        diffs.append(DifferentProductSetsError(
-            '# products differ: {left_len} != {right_len}'
-            ''.format(left_len=len(products_left), right_len=len(products_right))
-        ))
+        diffs.append(
+            DifferentProductSetsError(
+                f"# products differ: {len(products_left)} != {len(products_right)}"
+            )
+        )
 
-    for left_idx, left_product in enumerate(products_left):
-        left_product_name = components(left_product['name'])
-        for right_idx, right_product in enumerate(products_right):
-            if components(right_product['name']) != left_product_name:
+    for _left_idx, left_product in enumerate(products_left):
+        left_product_name = components(left_product["name"])
+        for _right_idx, right_product in enumerate(products_right):
+            if components(right_product["name"]) != left_product_name:
                 continue
             try:
                 compare_product_membership(left_product, right_product, strict_expname=False)
@@ -327,24 +348,18 @@ def compare_membership(left, right):
             products_right.remove(right_product)
             break
         else:
-            diffs.append(DifferentProductSetsError(
-                'Left has {n_products} left over'
-                ''.format(n_products=len(products_left))
-            ))
-
+            diffs.append(DifferentProductSetsError(f"Left has {len(products_left)} left over"))
 
     if len(products_right) != 0:
-        diffs.append(DifferentProductSetsError(
-            'Right has {n_products} left over'
-            ''.format(n_products=len(products_right))
-        ))
+        diffs.append(DifferentProductSetsError(f"Right has {len(products_right)} left over"))
 
     if diffs:
         raise diffs
 
 
 def compare_product_membership(left, right, strict_expname=True):
-    """Compare membership between products
+    """
+    Compare membership between products.
 
     If the membership is exactly the same, or other special conditions,
     no error is raised.
@@ -354,7 +369,7 @@ def compare_product_membership(left, right, strict_expname=True):
     - DuplicateMemberError
       A member exists multiple times in the member list.
 
-    - MemberLengthDifference
+    - MemberLengthDifferenceError
       Number of members in the two products differ.
 
     - MemberMismatchError
@@ -367,7 +382,7 @@ def compare_product_membership(left, right, strict_expname=True):
       Members exist in one association that do not exist in the other.
 
     Parameters
-    ---------
+    ----------
     left, right : dict
         Two, individual, association products to compare. Note that
         these are not associations, just products from associations.
@@ -389,6 +404,7 @@ def compare_product_membership(left, right, strict_expname=True):
 
     # Determine how to compare expnames
     if strict_expname:
+
         def munge_expname(expname):
             return expname
     else:
@@ -404,29 +420,41 @@ def compare_product_membership(left, right, strict_expname=True):
     except DuplicateMembersError as dup_member_error:
         diffs.append(dup_member_error)
 
-    if len(right['members']) != len(left['members']):
-        diffs.append(MemberLengthDifference(
-            'Product Member length differs:'
-            ' Left Product {left_product_name} len {left_len} !=  '
-            ' Right Product {right_product_name} len {right_len}'
-            ''.format(left_product_name=left['name'], left_len=len(left['members']),
-                      right_product_name=right['name'], right_len=len(right['members']))
-        ))
+    if len(right["members"]) != len(left["members"]):
+        diffs.append(
+            MemberLengthDifferenceError(
+                "Product Member length differs:"
+                " Left Product {left_product_name} len {left_len} !=  "
+                " Right Product {right_product_name} len {right_len}"
+                "".format(
+                    left_product_name=left["name"],
+                    left_len=len(left["members"]),
+                    right_product_name=right["name"],
+                    right_len=len(right["members"]),
+                )
+            )
+        )
 
-    members_right = copy(right['members'])
+    members_right = copy(right["members"])
     left_unaccounted_members = []
-    for left_member in left['members']:
+    for left_member in left["members"]:
         for right_member in members_right:
-            if munge_expname(left_member['expname']) != munge_expname(right_member['expname']):
+            if munge_expname(left_member["expname"]) != munge_expname(right_member["expname"]):
                 continue
 
-            if left_member['exptype'] != right_member['exptype']:
-                diffs.append(MemberMismatchError(
-                    'Left {left_expname}:{left_exptype}'
-                    ' != Right {right_expname}:{right_exptype}'
-                    ''.format(left_expname=left_member['expname'], left_exptype=left_member['exptype'],
-                              right_expname=right_member['expname'], right_exptype=right_member['exptype'])
-                ))
+            if left_member["exptype"] != right_member["exptype"]:
+                diffs.append(
+                    MemberMismatchError(
+                        "Left {left_expname}:{left_exptype}"
+                        " != Right {right_expname}:{right_exptype}"
+                        "".format(
+                            left_expname=left_member["expname"],
+                            left_exptype=left_member["exptype"],
+                            right_expname=right_member["expname"],
+                            right_exptype=right_member["exptype"],
+                        )
+                    )
+                )
 
             members_right.remove(right_member)
             break
@@ -434,27 +462,39 @@ def compare_product_membership(left, right, strict_expname=True):
             left_unaccounted_members.append(left_member)
 
     if len(left_unaccounted_members):
-        diffs.append(UnaccountedMembersError(
-            f'Left has {len(left_unaccounted_members)} unaccounted members. Members are {left_unaccounted_members}'
-        ))
+        diffs.append(
+            UnaccountedMembersError(
+                f"Left has {len(left_unaccounted_members)} unaccounted members. "
+                f"Members are {left_unaccounted_members}"
+            )
+        )
 
     if len(members_right) != 0:
-        diffs.append(UnaccountedMembersError(
-            f'Right has {len(members_right)} unaccounted members. Members are {members_right}'
-        ))
+        diffs.append(
+            UnaccountedMembersError(
+                f"Right has {len(members_right)} unaccounted members. Members are {members_right}"
+            )
+        )
 
     # Check if one is a subset of the other.
     err_types = diffs.err_types
-    is_subset = (len(diffs) == 2) and (MemberLengthDifference in err_types) and (UnaccountedMembersError in err_types)
+    is_subset = (
+        (len(diffs) == 2)
+        and (MemberLengthDifferenceError in err_types)
+        and (UnaccountedMembersError in err_types)
+    )
     if is_subset:
-        diffs = MultiDiffError([SubsetError(f'Products are subsets: {left["name"]} {right["name"]}')])
+        diffs = MultiDiffError(
+            [SubsetError(f"Products are subsets: {left['name']} {right['name']}")]
+        )
 
     if diffs:
         raise diffs
 
 
 def check_duplicate_members(product):
-    """Check for duplicate members in an association product
+    """
+    Check for duplicate members in an association product.
 
     The check is based solely on `expname`.
 
@@ -470,20 +510,19 @@ def check_duplicate_members(product):
     """
     seen = set()
     dups = []
-    for expname in [member['expname'] for member in product['members']]:
+    for expname in [member["expname"] for member in product["members"]]:
         if expname in seen:
             dups.append(expname)
         else:
             seen.add(expname)
 
     if dups:
-        raise DuplicateMembersError(
-            f'Product {product["name"]} has duplicate members {dups}'
-        )
+        raise DuplicateMembersError(f"Product {product['name']} has duplicate members {dups}")
 
 
 def check_duplicate_products(asns, product_names=None, dup_names=None):
-    """Check for duplicate products in a list of associations
+    """
+    Check for duplicate products in a list of associations.
 
     Duplicate products are defined as any products that share the same name.
     The errors flagged are listed below. If no `MultiDiffError` is raised,
@@ -533,7 +572,7 @@ def check_duplicate_products(asns, product_names=None, dup_names=None):
     ordered_asns = sort_by_candidate(asns)
     asn_by_product = defaultdict(list)
     for asn in ordered_asns:
-        asn_by_product[asn['products'][0]['name']].append(asn)
+        asn_by_product[asn["products"][0]["name"]].append(asn)
 
     diffs = MultiDiffError()
     for product in dup_names:
@@ -541,22 +580,25 @@ def check_duplicate_products(asns, product_names=None, dup_names=None):
         current_asn = dup_asns.pop()
         for asn in dup_asns:
             try:
-                compare_product_membership(current_asn['products'][0], asn['products'][0])
+                compare_product_membership(current_asn["products"][0], asn["products"][0])
             except MultiDiffError as compare_diffs:
                 # Re-check membership, but allow products that different only in the suffix
                 # of the members. If there are no differences, then the products are not duplicates.
                 try:
-                    compare_product_membership(current_asn['products'][0], asn['products'][0], strict_expname=False)
+                    compare_product_membership(
+                        current_asn["products"][0], asn["products"][0], strict_expname=False
+                    )
                 except MultiDiffError:
                     # Not interested if the second compare generates diffs.
                     # The initial diffs will be more informative.
                     diffs.extend(compare_diffs)
             else:
                 # Associations are exactly the same. Pure duplicate.
-                diffs.append(DuplicateProductError(
-                    f'Associations share product name {product}',
-                    asns=[current_asn, asn]
-                ))
+                diffs.append(
+                    DuplicateProductError(
+                        f"Associations share product name {product}", asns=[current_asn, asn]
+                    )
+                )
     if diffs:
         raise diffs
 
@@ -565,12 +607,25 @@ def check_duplicate_products(asns, product_names=None, dup_names=None):
 # Utilities
 # #########
 def components(s):
-    """split string into its components"""
-    return set(re.split('[_-]', s))
+    """
+    Split string into its components.
+
+    Parameters
+    ----------
+    s : str
+        The input string.
+
+    Returns
+    -------
+    set(str)
+        The string components set.
+    """
+    return set(re.split("[_-]", s))
 
 
 def exposure_name(path):
-    """Extract the exposure name from a Stage 2 file name
+    """
+    Extract the exposure name from a Stage 2 file name.
 
     Parameters
     ----------
@@ -588,51 +643,45 @@ def exposure_name(path):
 
 
 def get_product_names(asns):
-    """Return product names from associations and flag duplicates
+    """
+    Return product names from associations and flag duplicates.
 
     Parameters
     ----------
-    asns: [`Association`[, ...]]
+    asns : [`Association`[, ...]]
+        List of associations.
 
     Returns
     -------
-    product_names, duplicates: set(str[, ...]), [str[,...]]
+    product_names, duplicates : set(str[, ...]), [str[,...]]
         2-tuple consisting of the set of product names and the list of duplicates.
     """
-    product_names = [
-        asn['products'][0]['name']
-        for asn in asns
-    ]
+    product_names = [asn["products"][0]["name"] for asn in asns]
 
-    dups = [
-        name
-        for name, count in Counter(product_names).items()
-        if count > 1
-    ]
+    dups = [name for name, count in Counter(product_names).items() if count > 1]
     if dups:
-        logger.debug(
-            'Duplicate product names: %s', dups
-        )
+        logger.debug("Duplicate product names: %s", dups)
 
     return set(product_names), dups
 
 
 def separate_products(asn):
-    """Separate products into individual associations
+    """
+    Separate products into individual associations.
 
     Parameters
     ----------
-    asn: `Association`
+    asn : `Association`
         The association to split
 
     Returns
     -------
-    separated: [`Association`[, ...]]
+    separated : [`Association`[, ...]]
         The list of separated associations
     """
     separated = []
-    for product in asn['products']:
+    for product in asn["products"]:
         new_asn = copy(asn)
-        new_asn['products'] = [product]
+        new_asn["products"] = [product]
         separated.append(new_asn)
     return separated

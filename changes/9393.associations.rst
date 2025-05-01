@@ -1,0 +1,1 @@
+Update associations module for code style and docstrings; remove some unused functions and files.
