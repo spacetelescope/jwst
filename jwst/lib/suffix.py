@@ -208,7 +208,6 @@ _calculated_suffixes = {
     "ipcstep",
     "dark_current",
     "dqinitstep",
-    "cubeskymatchstep",
     "cubebuildstep",
     "darkcurrentstep",
     "persistence",
