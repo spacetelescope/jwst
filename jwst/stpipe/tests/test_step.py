@@ -64,11 +64,29 @@ def test_disable_crds_steppars_cmdline(capsys, arg, env_set, expected_fn):
     assert expected_fn(captured.err)
 
 
-def test_parameters_from_crds():
+def test_parameters_from_crds_open_model():
     """Test retrieval of parameters from CRDS"""
     with datamodels.open(get_pkg_data_filename(
             "data/miri_data.fits", package="jwst.stpipe.tests")) as data:
         pars = WhiteLightStep.get_config_from_reference(data)
+    assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
+
+
+def test_parameters_from_crds_filename(monkeypatch):
+    """
+    Test retrieval of parameters from CRDS from filename.
+    
+    Ensures datamodels.open() is not called.
+    Similar tests of read_metadata() in jwst ensure that the input file's `data`
+    attribute is never read either.
+    """
+    def throw_error(self):
+        raise Exception()  # noqa: TRY002
+
+    monkeypatch.setattr(datamodels, "open", throw_error)
+    fname = get_pkg_data_filename("data/miri_data.fits", package="jwst.stpipe.tests")
+    pars = WhiteLightStep.get_config_from_reference(fname)
+
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
