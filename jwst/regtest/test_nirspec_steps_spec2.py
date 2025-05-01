@@ -30,12 +30,12 @@ def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
                 # Call the flat field function directly with a user flat
                 nirspec_ifu(data, None, None, None, None, user_supplied_flat=user_supplied_flat)
 
-                rtdata.output = output_file
-                data.save(rtdata.output)
+    rtdata.output = output_file
+    data.save(rtdata.output)
 
-        rtdata.get_truth(TRUTH_PATH + '/' + output_file)
-        diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-        assert diff.identical, diff.report()
+    rtdata.get_truth(TRUTH_PATH + '/' + output_file)
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
 
 
 @pytest.mark.bigdata
@@ -54,13 +54,13 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
         data_flat_fielded = FlatFieldStep.call(
             data, user_supplied_flat=user_supplied_flat, save_results=False)
 
-        rtdata.output = output_file
-        data_flat_fielded.save(rtdata.output)
-        del data_flat_fielded
+    rtdata.output = output_file
+    data_flat_fielded.save(rtdata.output)
+    del data_flat_fielded
 
-        rtdata.get_truth(TRUTH_PATH + '/' + output_file)
-        diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-        assert diff.identical, diff.report()
+    rtdata.get_truth(TRUTH_PATH + '/' + output_file)
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
 
 
 @pytest.mark.slow
@@ -74,18 +74,18 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
             flatted = FlatFieldStep.call(data)
             unflatted = FlatFieldStep.call(flatted, inverse=True)
 
-        # flat fielding may set some new NaN values - ignore these in test
-        is_nan = np.isnan(unflatted.data)
-        assert np.allclose(data.data[~is_nan], unflatted.data[~is_nan]), 'Inversion failed'
+    # flat fielding may set some new NaN values - ignore these in test
+    is_nan = np.isnan(unflatted.data)
+    assert np.allclose(data.data[~is_nan], unflatted.data[~is_nan]), 'Inversion failed'
 
-        # make sure NaNs are only at do_not_use pixels
-        assert np.all(unflatted.dq[is_nan] & dm.dqflags.pixel['DO_NOT_USE'])
+    # make sure NaNs are only at do_not_use pixels
+    assert np.all(unflatted.dq[is_nan] & dm.dqflags.pixel['DO_NOT_USE'])
 
-        # make sure NaNs at science pixels are also NaN in error and var arrays
-        assert np.all(np.isnan(unflatted.err[is_nan]))
-        assert np.all(np.isnan(unflatted.var_poisson[is_nan]))
-        assert np.all(np.isnan(unflatted.var_rnoise[is_nan]))
-        assert np.all(np.isnan(unflatted.var_flat[is_nan]))
+    # make sure NaNs at science pixels are also NaN in error and var arrays
+    assert np.all(np.isnan(unflatted.err[is_nan]))
+    assert np.all(np.isnan(unflatted.var_poisson[is_nan]))
+    assert np.all(np.isnan(unflatted.var_rnoise[is_nan]))
+    assert np.all(np.isnan(unflatted.var_flat[is_nan]))
 
 
 @pytest.mark.slow
@@ -102,7 +102,7 @@ def test_pathloss_corrpars(rtdata):
             pls.use_correction_pars = True
             corrected_corrpars = pls.run(data)
 
-        assert np.allclose(corrected.data, corrected_corrpars.data, equal_nan=True)
+    assert np.allclose(corrected.data, corrected_corrpars.data, equal_nan=True)
 
 
 @pytest.mark.slow
@@ -120,7 +120,7 @@ def test_pathloss_inverse(rtdata):
             corrected_inverse = pls.run(corrected)
             non_nan = ~np.isnan(corrected_inverse.data)
 
-        assert np.allclose(corrected.data[non_nan], corrected_inverse.data[non_nan])
+    assert np.allclose(corrected.data[non_nan], corrected_inverse.data[non_nan])
 
 
 @pytest.mark.slow
@@ -135,6 +135,6 @@ def test_pathloss_source_type(rtdata):
             pls.source_type = 'extended'
             pls.run(data)
 
-        assert np.allclose(pls.correction_pars.data,
-                           pls.correction_pars.pathloss_uniform,
-                           equal_nan=True)
+    assert np.allclose(pls.correction_pars.data,
+                       pls.correction_pars.pathloss_uniform,
+                       equal_nan=True)
