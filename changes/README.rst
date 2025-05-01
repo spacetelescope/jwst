@@ -90,7 +90,6 @@ Other
 
 - ``<PR#>.wfs_combine.rst``
 - ``<PR#>.white_light.rst``
-- ``<PR#>.cube_skymatch.rst``
 - ``<PR#>.engdb_tools.rst``
 - ``<PR#>.guider_cds.rst``
 
