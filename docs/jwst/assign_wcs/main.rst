@@ -12,7 +12,7 @@ It associates a WCS object with each science exposure. The WCS object transforms
 positions in the detector frame to positions in a world coordinate frame - ICRS and wavelength.
 In general there may be intermediate coordinate frames depending on the instrument.
 The WCS is saved in the ASDF extension of the FITS file. It can be accessed as an attribute of
-the meta object when the FITS file is opened as a data model.
+the meta object when the FITS file is opened as a data model (``model.meta.wcs``).
 
 The forward direction of the transforms is from detector to world coordinates
 and the input pixel coordinates are 0-indexed.
@@ -28,20 +28,20 @@ intermediate coordinate frames. The basic WCS keywords are used to create
 the transform from frame ``v2v3`` to frame ``world``. All of this information is used to
 create and populate the WCS object for the exposure.
 
-For image display with software like DS9 that relies on specific WCS information, a SIP-based
-approximation to the WCS is fit. The results are FITS keywords stored in
+For display of imaging data with software like DS9 that relies on specific WCS information,
+a SIP-based approximation to the WCS is fit. The results are FITS keywords stored in
 ``model.meta.wcsinfo``. This is not an exact fit, but is accurate to ~0.01 pixel by default,
-and is sufficient for display purposes. This step, which occurs for imaging modes, is
-performed by default, but can be switched off, and parameters controlling the SIP fit can
+and is sufficient for display purposes. This step is performed by default for imaging modes,
+but can be switched off, and parameters controlling the SIP fit can
 also be adjusted.  Note that if these parameters are changed, the equivalent parameters
 for the ``tweakreg`` step should be adjusted to match.
 
-The ``assign_wcs`` step can accept either a ``rate`` product, which is the result of averaging
-over all integrations in an exposure, or a ``rateints`` product, which is a 3D cube of
+The ``assign_wcs`` step can accept as input either a ``rate`` product, which is the result of
+averaging over all integrations in an exposure, or a ``rateints`` product, which is a 3D cube of
 per-integration images.
 
-The ``assign_wcs`` step is based on `gwcs <https://gwcs.readthedocs.io/en/latest/>`__ and
-uses `asdf <http://asdf.readthedocs.io/en/latest/>`__.
+The ``assign_wcs`` WCS implementation is based on `gwcs <https://gwcs.readthedocs.io/en/latest/>`__ and
+uses `asdf <http://asdf.readthedocs.io/en/latest/>`__ to define and store reference files and transforms.
 
 .. Note:: In addition to CRDS reference files, applying ``assign_wcs`` to NIRSpec MOS
    exposures depends critically on an MSA metadata file to provide information
@@ -103,20 +103,45 @@ source pixel location, as entered, along with the order that was specified:
   >>> print(x, y, x0, y0, order)
       (1539.5898464615102, 11.6539963919, 365.523884327, 11.6539963919, 2)
 
+Similarly, for all NIRSpec spectroscopic modes, the assigned WCS needs to
+know the slit or slice ID in order to return valid coordinates.  For example,
+to retrieve world coordinates for a pixel in slice 12 of an IFU observation:
 
-The WCS provides access to intermediate coordinate frames
-and transforms between any two frames in the WCS pipeline in the forward or
-backward directions. For example, for a NIRSpec fixed slits exposure,
-which has been through the extract_2d step:
+.. doctest-skip::
+
+  >>> from stdatamodels.jwst.datamodels import IFUImageModel
+  >>> exp = IFUImageModel('nirspec_ifu_assign_wcs.fits')
+  >>> ra, dec, lam, slit_id = exp.meta.wcs(804, 522, 12)
+  >>> print(ra, dec, lam, slit_id)
+      (321.15970971929175, -16.549348214686127, 3.235814824179365, 12.0)
+
+For NIRSpec modes that are processed through the :ref:`extract_2d <extract_2d_step>`
+step (MOS, FS, BOTS), a new WCS is assigned to each extracted slit that fixes the slit
+ID to a specific value, so it is no longer required on input and not reported on output.
+For example, for a NIRSpec fixed slits exposure, which has been processed through the
+extract_2d step:
 
 .. doctest-skip::
 
   >>> exp = datamodels.MultiSlitModel('nrs1_fixed_assign_wcs_extract_2d.fits')
+  >>> ra, dec, lam = exp.slits[0].meta.wcs(56, 15)
+  >>> print(ra, dec, lam)
+      (46.25382856669748 46.279084130418504 0.9024513743123106)
+
+The WCS also provides access to intermediate coordinate frames
+and transforms between any two frames in the WCS pipeline in the forward or
+backward directions. For this same fixed slit exposure:
+
+.. doctest-skip::
+
   >>> exp.slits[0].meta.wcs.available_frames
-      ['detector', 'sca', 'bgwa', 'slit_frame', 'msa_frame', 'ote', 'v2v3', 'world']
+      ['detector', 'sca', 'gwa', 'slit_frame', 'msa_frame', 'oteip', 'v2v3', 'v2v3vacorr', 'world']
+  >>> detector2msa = exp.slits[0].meta.wcs.get_transform('detector', 'msa_frame')
+  >>> detector2msa(56, 15)
+      (0.02697267383337021, -0.0025054994862709653, 9.024513743123106e-07)
   >>> msa2detector = exp.slits[0].meta.wcs.get_transform('msa_frame', 'detector')
-  >>> msa2detector(0, 0, 2*10**-6)
-      (5042.064255529629, 1119.8937888372516)
+  >>> msa2detector(0.027, -0.0025, 9.02e-07)
+      (55.28220392304502, 14.868098132739078)
 
 WCS of slitless grism exposures
 -------------------------------
