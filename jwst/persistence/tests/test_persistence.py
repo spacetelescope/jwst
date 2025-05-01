@@ -54,6 +54,7 @@ def create_sci_model():
         dm.meta.exposure.nresets_at_start = 0
         dm.meta.exposure.nresets_between_ints = 1
         dm.meta.instrument.detector = "NRCA1"
+        dm.meta.exposure.start_time = 59672.47338658912
         return dm
 
     return _dm
@@ -75,6 +76,7 @@ def create_traps_filled_model():
         tf_dm = datamodels.TrapsFilledModel(data=tfdata)
         tf_dm.meta.subarray.xstart = 1
         tf_dm.meta.subarray.ystart = 1
+        tf_dm.meta.exposure.end_time = 59672.47462927084
         return tf_dm
 
     return _dm
@@ -216,3 +218,51 @@ def test_get_group_info(create_sci_model):
     assert ds.nframes == 1
     assert ds.groupgap == 1
     assert ds.nresets == 1
+
+
+def create_persistencesat_model():
+    scidata = np.ones((2048, 2048), dtype=np.float32)
+    scidata = scidata[:] * 40.0
+    persat_model = datamodels.PersistenceSatModel(data=scidata)
+    persat_model.meta.subarray.xstart = 1
+    persat_model.meta.subarray.ystart = 1
+    return persat_model
+
+
+def test_do_all(create_sci_model, create_traps_filled_model, create_trap_density_model):
+    """
+    Test the do_all method.
+
+    Needs a Dataset object with:
+        .output_obj.data.shape (which must have len 4, like a RampModel)
+        .output_obj.meta.exposure.group_time
+        .trap_density.data.shape
+        .traps_filled (will create one if None)
+        .trap_density
+        .persistencesat
+        .output_obj.meta.exposure.start_time
+        .output_obj.meta.exposure.end_time
+        .traps_filled.data
+        .save_persistence
+    """
+    input_model = create_sci_model(3, 12, 512, 512, 257, 769)
+    traps_filled_model = create_traps_filled_model(2048, 2048)
+    trappars_model = create_trappars_model()
+    trap_density_model = create_trap_density_model(2048, 2048)
+    persistencesat_model = create_persistencesat_model()
+    ds = persistence.DataSet(
+        input_model,
+        traps_filled_model,
+        40.0,
+        False,
+        trap_density_model,
+        trappars_model,
+        persistencesat_model,
+    )
+    # Check that the do_all method runs to completion
+    output_model, output_trapsfilled_model, output_persistence, skipped = ds.do_all()
+    # Check a couple of the pixel values returned by the method
+    assert np.allclose(output_model.data[0, -1, 100, 100], -2.0079181, rtol=1.0e-7, atol=1.0e-7)
+    assert np.allclose(
+        output_trapsfilled_model.data[0, 100, 100], 0.0010368865, rtol=1.0e-7, atol=1.0e-7
+    )
