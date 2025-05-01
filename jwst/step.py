@@ -14,7 +14,6 @@ from .coron.align_refs_step import AlignRefsStep
 from .coron.klip_step import KlipStep
 from .coron.hlsp_step import HlspStep
 from .cube_build.cube_build_step import CubeBuildStep
-from .cube_skymatch.cube_skymatch_step import CubeSkyMatchStep
 from .dark_current.dark_current_step import DarkCurrentStep
 from .dq_init.dq_init_step import DQInitStep
 from .emicorr.emicorr_step import EmiCorrStep
@@ -79,7 +78,6 @@ __all__ = [
     "HlspStep",
     "CleanFlickerNoiseStep",
     "CubeBuildStep",
-    "CubeSkyMatchStep",
     "DarkCurrentStep",
     "DQInitStep",
     "EmiCorrStep",

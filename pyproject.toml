@@ -416,11 +416,6 @@ name = 'cube_build (spec2 IFU, spec3)'
 showcontent = true
 
 [[tool.towncrier.type]]
-directory = "cube_skymatch"
-name = 'cube_skymatch'
-showcontent = true
-
-[[tool.towncrier.type]]
 directory = "dark_current"
 name = 'dark_current (detector1 NIR)'
 showcontent = true
