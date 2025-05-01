@@ -5,20 +5,30 @@ from .generate import generate
 from ..lib.utilities import constrain_on_candidates, filter_discovered_only
 from ..registry import AssociationRegistry
 
-__all__ = ['generate_per_pool']
+__all__ = ["generate_per_pool"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
 # Ruleset names
-DISCOVER_RULESET = 'discover'
-CANDIDATE_RULESET = 'candidate'
+DISCOVER_RULESET = "discover"
+CANDIDATE_RULESET = "candidate"
 
 
-def generate_per_pool(pool, rule_defs=None, candidate_ids=None, all_candidates=True, discover=False,
-                      version_id=None, finalize=True, merge=False, ignore_default=False):
-    """Generate associations on a specified pool
+def generate_per_pool(
+    pool,
+    rule_defs=None,
+    candidate_ids=None,
+    all_candidates=True,
+    discover=False,
+    version_id=None,
+    finalize=True,
+    merge=False,
+    ignore_default=False,
+):
+    """
+    Generate associations on a specified pool.
 
     Association candidates are filtered based on global constraints added to the rules.
 
@@ -64,32 +74,26 @@ def generate_per_pool(pool, rule_defs=None, candidate_ids=None, all_candidates=T
     Refer to the :ref:`Association Generator <design-generator>`
     documentation for a full description.
     """
-    logger.info('Generating based on the per-pool algorithm')
+    logger.info("Generating based on the per-pool algorithm")
 
     # Setup the rule registry
     global_constraints = None
     if discover or all_candidates:
-        global_constraints = constrain_on_candidates(
-            None
-        )
+        global_constraints = constrain_on_candidates(None)
     elif candidate_ids is not None:
-        global_constraints = constrain_on_candidates(
-            candidate_ids
-        )
+        global_constraints = constrain_on_candidates(candidate_ids)
 
     rules = AssociationRegistry(
         rule_defs,
         include_default=not ignore_default,
         global_constraints=global_constraints,
-        name=CANDIDATE_RULESET
+        name=CANDIDATE_RULESET,
     )
 
     if discover:
         rules.update(
             AssociationRegistry(
-                rule_defs,
-                include_default=not ignore_default,
-                name=DISCOVER_RULESET
+                rule_defs, include_default=not ignore_default, name=DISCOVER_RULESET
             )
         )
 
@@ -98,11 +102,7 @@ def generate_per_pool(pool, rule_defs=None, candidate_ids=None, all_candidates=T
 
     # If doing discover, filter out all specified candidates
     if discover:
-        logger.debug(
-            '# asns found before discover filtering={}'.format(
-                len(associations)
-            )
-        )
+        logger.debug(f"# asns found before discover filtering={len(associations)}")
         associations = filter_discovered_only(
             associations,
             DISCOVER_RULESET,

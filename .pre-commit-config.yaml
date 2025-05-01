@@ -37,9 +37,7 @@ repos:
       - id: numpydoc-validation
         exclude: |
           (?x)^(
-            jwst/associations/.* |
             jwst/coron/.* |
-            jwst/cube_skymatch/.* |
             jwst/dark_current/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
