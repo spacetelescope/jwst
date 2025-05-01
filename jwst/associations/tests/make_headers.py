@@ -25,7 +25,7 @@ def actual_path(path):
     Path
         The fully qualified path.
     """
-    return Path(ospath.expandvars(Path(path).expanduser())).resolve()
+    return Path(ospath.expandvars(path)).expanduser().resolve()
 
 
 def get_headers(files, outpath):
