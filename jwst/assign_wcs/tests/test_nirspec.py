@@ -1178,3 +1178,93 @@ def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
 
     r, d, _ = slice_wcs(x, y)
     assert r[~np.isnan(r)].size == xinv.size
+
+
+@pytest.mark.parametrize("mode", ["IFU", "MOS", "FS"])
+def test_nrs_wcs_by_slit(mode):
+    pixel_tol = 1e-7
+    if mode == "IFU":
+        hdul = create_nirspec_ifu_file("F290LP", "G140M")
+        im = datamodels.IFUImageModel(hdul)
+
+        # Round trip is currently up to ~half pixel off for IFU
+        pixel_tol = 0.5
+
+    elif mode == "MOS":
+        hdul = create_nirspec_mos_file()
+        im = datamodels.ImageModel(hdul)
+        msaconfl = get_pkg_data_filename(
+            "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
+        im.meta.instrument.msa_metadata_file = msaconfl
+        im.meta.instrument.msa_metadata_id = 12
+    else:
+        hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
+        im = datamodels.ImageModel(hdul)
+
+    datamodel = assign_wcs_step.AssignWcsStep.call(im)
+    slit_ids = datamodel.meta.wcs.get_transform('gwa', 'slit_frame').slit_ids
+    for slit_id in slit_ids:
+        x, y = wcstools.grid_from_bounding_box(datamodel.meta.wcs.bounding_box[slit_id])
+        ra, dec, lam, slit = datamodel.meta.wcs(x, y, slit_id)
+        is_nan = np.isnan(ra) | np.isnan(dec) | np.isnan(lam)
+
+        # Make sure the return values are nontrivial
+        assert np.any(~is_nan)
+
+        # Currently the returned slit value is sometimes NaN when called in this manner
+        # This test ought to work, but may need a gwcs bug fix.
+        # assert int(slit) == slit_id
+
+        # Check roundtrip
+        inv_x, inv_y, inv_slit = datamodel.meta.wcs.backward_transform(ra, dec, lam, slit_id)
+        assert np.allclose(inv_x[~is_nan], x[~is_nan], atol=pixel_tol)
+        assert np.allclose(inv_y[~is_nan], y[~is_nan], atol=pixel_tol)
+        # assert np.allclose(inv_slit, slit)
+
+        # Set a slit-specific wcs: it should give the same answer
+        slit_wcs = nirspec.nrs_wcs_set_input(datamodel, slit_id)
+        ra2, dec2, lam2 = slit_wcs(x, y)
+        is_nan_2 = np.isnan(ra2) | np.isnan(dec2) | np.isnan(lam2)
+        assert np.all(is_nan == is_nan_2)
+        assert np.allclose(ra[~is_nan], ra2[~is_nan])
+        assert np.allclose(dec[~is_nan], dec2[~is_nan])
+        assert np.allclose(lam[~is_nan], lam2[~is_nan])
+
+
+def test_nrs_fs_slit_id():
+    slits = ["NONE", "S200A1", "S200A2", "S400A1", "S1600A1", "S200B1"]
+    expected = [-100, -101, -102, -103, -104, -105]
+
+    # Check slit ids
+    slit_ids = [nirspec.nrs_fs_slit_id(s) for s in slits]
+    assert slit_ids == expected
+
+    # Check inverse
+    slit_names = [nirspec.nrs_fs_slit_name(s) for s in slit_ids]
+    assert slit_names == slits
+
+
+@pytest.mark.parametrize('bad_value', ["BAD", 1, None])
+def test_nrs_fs_slit_id_unexpected(bad_value):
+    # Check that bad input returns NONE slit (ID -100)
+    assert nirspec.nrs_fs_slit_id(bad_value) == -100
+    assert nirspec.nrs_fs_slit_name(bad_value) == "NONE"
+
+
+def test_slit_bounding_box(wcs_ifu_grating):
+    # Check that a bounding box can be generated for a slit-specific wcs
+    im, _ = wcs_ifu_grating("G140H", "F100LP")
+    _, wavelength_range = nirspec.spectral_order_wrange_from_model(im)
+    for i in range(30):
+        # Slit bounding box from compound bounding box
+        bb = im.meta.wcs.bounding_box[i]
+        bbox_tuple = [tuple(bb[name]) for name in bb.named_intervals]
+
+        # Make a slit-specific wcs
+        slit_wcs = nirspec.nrs_wcs_set_input(im, i)
+        transform = slit_wcs.get_transform("detector", "slit_frame")
+
+        # Make a bounding box for this WCS - it should be the same
+        # as the initially computed one.
+        new_bb = nirspec.compute_bounding_box(transform, None, wavelength_range)
+        assert_allclose(new_bb, bbox_tuple)
