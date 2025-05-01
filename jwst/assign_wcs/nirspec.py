@@ -1807,7 +1807,7 @@ def compute_bounding_box(
     transform : `astropy.modeling.core.Model`
         The transform from detector to slit.
         `nrs_wcs_set_input` uses "detector to slit", validate_open_slits uses "slit to detector".
-    slit_name : int, str, or None
+    slit_name : int, str, None
         Slit name for which to compute the bounding box.  If None, it is assumed
         the input WCS has already been fixed to a particular slit.
     wavelength_range : tuple
@@ -2500,7 +2500,7 @@ def nrs_fs_slit_name(slit_id):
     """
     try:
         slit_number = -1 * int(slit_id) - 100
-    except ValueError:
+    except (ValueError, TypeError):
         return "NONE"
     for key, value in FIXED_SLIT_NUMS.items():
         if value == slit_number:
