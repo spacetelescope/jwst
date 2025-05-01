@@ -84,7 +84,7 @@ corresponding world coordinates. Using MIRI LRS fixed slit as an example:
   >>> exp = ImageModel('miri_fixedslit_assign_wcs.fits')
   >>> ra, dec, lam = exp.meta.wcs(x, y)
   >>> print(ra, dec, lam)
-      (329.97260532549336, 372.0242999250267, 5.4176100046836675)
+  (329.97260532549336, 372.0242999250267, 5.4176100046836675)
 
 The WFSS modes for NIRCam and NIRISS have a slightly different calling structure.
 In addition to the (x, y) coordinates, they need to know other information about the
@@ -99,9 +99,9 @@ source pixel location, as entered, along with the order that was specified:
   >>> exp = ImageModel('nircam_wfss_assign_wcs.fits')
   >>> x, y, x0, y0, order = exp.meta.wcs(x0, y0, wavelength, order)
   >>> print(x0, y0, wavelength, order)
-      (365.523884327, 11.6539963919, 2.557881113, 2)
+  (365.523884327, 11.6539963919, 2.557881113, 2)
   >>> print(x, y, x0, y0, order)
-      (1539.5898464615102, 11.6539963919, 365.523884327, 11.6539963919, 2)
+  (1539.5898464615102, 11.6539963919, 365.523884327, 11.6539963919, 2)
 
 Similarly, for all NIRSpec spectroscopic modes, the assigned WCS needs to
 know the slit or slice ID in order to return valid coordinates.  For example,
@@ -113,7 +113,7 @@ to retrieve world coordinates for a pixel in slice 12 of an IFU observation:
   >>> exp = IFUImageModel('nirspec_ifu_assign_wcs.fits')
   >>> ra, dec, lam, slit_id = exp.meta.wcs(804, 522, 12)
   >>> print(ra, dec, lam, slit_id)
-      (321.15970971929175, -16.549348214686127, 3.235814824179365, 12.0)
+  (321.15970971929175, -16.549348214686127, 3.235814824179365, 12.0)
 
 For NIRSpec modes that are processed through the :ref:`extract_2d <extract_2d_step>`
 step (MOS, FS, BOTS), a new WCS is assigned to each extracted slit that fixes the slit
@@ -126,7 +126,7 @@ extract_2d step:
   >>> exp = datamodels.MultiSlitModel('nrs1_fixed_assign_wcs_extract_2d.fits')
   >>> ra, dec, lam = exp.slits[0].meta.wcs(56, 15)
   >>> print(ra, dec, lam)
-      (46.25382856669748 46.279084130418504 0.9024513743123106)
+  (46.25382856669748 46.279084130418504 0.9024513743123106)
 
 The WCS also provides access to intermediate coordinate frames
 and transforms between any two frames in the WCS pipeline in the forward or
@@ -135,13 +135,13 @@ backward directions. For this same fixed slit exposure:
 .. doctest-skip::
 
   >>> exp.slits[0].meta.wcs.available_frames
-      ['detector', 'sca', 'gwa', 'slit_frame', 'msa_frame', 'oteip', 'v2v3', 'v2v3vacorr', 'world']
+  ['detector', 'sca', 'gwa', 'slit_frame', 'msa_frame', 'oteip', 'v2v3', 'v2v3vacorr', 'world']
   >>> detector2msa = exp.slits[0].meta.wcs.get_transform('detector', 'msa_frame')
   >>> detector2msa(56, 15)
-      (0.02697267383337021, -0.0025054994862709653, 9.024513743123106e-07)
+  (0.02697267383337021, -0.0025054994862709653, 9.024513743123106e-07)
   >>> msa2detector = exp.slits[0].meta.wcs.get_transform('msa_frame', 'detector')
   >>> msa2detector(0.027, -0.0025, 9.02e-07)
-      (55.28220392304502, 14.868098132739078)
+  (55.28220392304502, 14.868098132739078)
 
 WCS of slitless grism exposures
 -------------------------------
