@@ -1,5 +1,10 @@
 /*
 
+This module was used in outlier detection for IFU data.
+It has been replaced by a different technique. The code was left  in the jwst pipeline repo for in case
+future enhancements are found to make this a useful tool for flagging outliers. 
+
+
 Main function for Python: blot_wrapper
 
 Python signature:
@@ -7,7 +12,9 @@ Python signature:
                                   xcenter, ycenter,
                                   x_cube, y_cube, flux_cube)
 
-This module is used in outlier detection. Each file is mapped to the sky to create a single type
+
+
+Each file is mapped to the sky to create a single type
 IFU cube. Using the set of single IFUs a median IFU is determined. This median image is then
 mapped (blotted) back to the detector plane. This routine determines the overlap between
 the median blotted back image and the detector plane.
