@@ -1,120 +1,92 @@
-import os
-import json
+"""Association edit operations."""
+
 import warnings
 import os.path as op
+from pathlib import Path
 
 from ..lib import suffix
 from . import Association, AssociationNotValidError
 
-#-----------------------------------------------------------------------
-# Externally callable functions
 
 class AsnFileWarning(Warning):
+    """Generic association file warning."""
+
     pass
+
 
 def add(asn, filenames, exptype):
     """
-    Add new filenames to association
+    Add new filenames to association.
 
     Parameters
     ----------
     asn : object
-        An association object
-
+        An association object.
     filenames : list of str
-        The filenames to be added to the association
-
+        The filenames to be added to the association.
     exptype : str
-        The exposure type of the filenames to be added
-
+        The exposure type of the filenames to be added.
 
     Returns
     -------
-    The modified association object
-
-
-    Raises
-    ------
-    ValueError
-        If a filename to be added was not found in the filesystem
-
-
-     """
+    object
+        The modified association object.
+    """
     for filename in filenames:
         path = _path(filename)
-        expname = op.basename(path)
-        member = {'expname': expname, 'exptype': exptype}
+        expname = Path(path).name
+        member = {"expname": expname, "exptype": exptype}
 
-        for product in asn['products']:
-            product['members'].append(member)
+        for product in asn["products"]:
+            product["members"].append(member)
 
     return asn
 
 
 def reader(association_file):
     """
-    Read the association file or die trying
+    Read the association file.
 
     Parameters
     ----------
     association_file : str
-        An association filename
-
+        An association filename.
 
     Returns
     -------
-    The association object
-
-
-    Raises
-    ------
-    IOError
-        An error occurred when reading the association file
-
-
+    ~jwst.associations.association.Association
+        The association object.
     """
     association_path = _path(association_file)
-    asn_format = association_path.split('.')[-1]
-    if asn_format != 'json':
-        raise IOError("This is not an association file: " +
-                       association_file)
+    asn_format = association_path.suffix[1:]
+    if asn_format != "json":
+        raise OSError("This is not an association file: " + association_file)
     try:
-        with open(association_path) as fd:
+        with association_path.open() as fd:
             serialized = fd.read()
             asn = Association.load(serialized, format=asn_format)
-    except AssociationNotValidError:
-        raise IOError("Cannot read association file: " +
-                       association_file)
+    except AssociationNotValidError as err:
+        raise OSError("Cannot read association file: " + association_file) from err
     return asn
 
 
 def remove(asn, filenames, ignore):
     """
-    Remove the named files from the association
+    Remove the named files from the association.
 
     Parameters
     ----------
     asn : object
-        An association object
-
+        An association object.
     filenames : list of str
-        The filenames to be removed the association
-
+        The filenames to be removed from the association.
     ignore : bool
-        Ignore the filename suffix when matching filenames?
-
+        Ignore the filename suffix when matching filenames if True.
 
     Returns
     -------
-    The modified association object
-
-
-    Raises
-    ------
-    ValueError
-        If a filename to be removed was not found in the association
-
-
+    ~jwst.associations.association.Association
+        The modified association object.
     """
     not_found = []
     for filename in filenames:
@@ -124,83 +96,49 @@ def remove(asn, filenames, ignore):
             not_found.append(filename)
         else:
             for i, j in found[::-1]:
-                del asn['products'][i]['members'][j]
-                if len(asn['products'][i]['members']) == 0:
-                    del asn['products'][i]
-
+                del asn["products"][i]["members"][j]
+                if len(asn["products"][i]["members"]) == 0:
+                    del asn["products"][i]
 
     if len(not_found) > 0:
-        errmsg = "Filenames not found: " + ','.join(not_found)
-        warnings.warn(errmsg, AsnFileWarning)
+        errmsg = "Filenames not found: " + ",".join(not_found)
+        warnings.warn(errmsg, AsnFileWarning, stacklevel=1)
 
     return asn
 
 
-def writer(asn, output_file):
+def _lookup(asn, filename, ignore_suffix=False):
     """
-    Write the association out to disk
+    Look up the locations where a file is found in an association.
 
     Parameters
     ----------
-    asn : object
-        An association object
+    asn : ~jwst.associations.association.Association
+        The input association object.
+    filename : str or Path
+        The filename to find in the association.
 
-    output_file : str
-        The filename of the association
-
-    Raises
-    ------
-    ValueError
-        The output filename was not a json file
-
-
+    Returns
+    -------
+    list
+        The list of product-member tuple values where the
+        provided filename is present in the association.
     """
-
-    asn_format = output_file.split('.')[-1]
-    if asn_format != 'json':
-        raise ValueError('Only json format supported for output: ' +
-                         output_file)
-
-    serialized = json.dumps(asn, indent=4, separators=(',', ': '))
-
-    in_place = op.exists(output_file)
-    if in_place:
-        temp_file = _rename(output_file)
-
-    try:
-        fd = open(output_file, 'w')
-        fd.write(serialized)
-        fd.close()
-    except:
-        if in_place:
-            os.rename(temp_file, output_file)
-        raise
-    if in_place:
-        os.remove(temp_file)
-
-#-----------------------------------------------------------------------
-# Internal functions
-
-def _lookup(asn, filename, ignore_suffix=False):
-    """
-    Look up the locations a file is found in an association
-    """
-
     found = []
     path = _path(filename)
-    basename = op.basename(path)
-    (root, _) = op.splitext(basename)
+    basename = path.name
+    root = path.stem
     if ignore_suffix:
         search_key, _ = suffix.remove_suffix(root)
     else:
         search_key = basename
 
-    for i, product in enumerate(asn['products']):
-        for j, member in  enumerate(product['members']):
-            expname = member.get('expname')
+    for i, product in enumerate(asn["products"]):
+        for j, member in enumerate(product["members"]):
+            expname = member.get("expname")
             if expname:
                 if ignore_suffix:
-                    (root, _) = op.splitext(expname)
+                    root = Path(expname).stem
                     match_key, _ = suffix.remove_suffix(root)
                 else:
                     match_key = expname
@@ -212,23 +150,17 @@ def _lookup(asn, filename, ignore_suffix=False):
 
 def _path(filename):
     """
-    Command line filename processing
+    Command line filename processing.
+
+    Parameters
+    ----------
+    filename : str or Path
+        The filename.
+
+    Returns
+    -------
+    str
+        Full path including any username and environment
+        variables included.
     """
-
-    return op.abspath(op.expanduser(op.expandvars(filename)))
-
-
-def _rename(output_file):
-    """
-    Rename output file to prevent overwriting
-    """
-
-    trial = 0
-    while 1:
-        trial += 1
-        temp_file = "%s.sv%02d" % (output_file, trial)
-        if not op.exists(temp_file):
-            os.rename(output_file, temp_file)
-            return temp_file
-
-
+    return Path(op.expandvars(filename)).expanduser().resolve()
