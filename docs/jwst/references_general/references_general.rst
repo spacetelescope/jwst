@@ -410,9 +410,10 @@ EXP_TYPE  MIR_MRS             Exposure type.
                               NIRISS allowed values: NIS_IMAGE, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS, NIS_SOSS, NIS_AMI,
                               NIS_FOCUS, NIS_DARK, NIS_LAMP
 
-                              NIRSpec allowed values: NRS_TASLIT, NRS_TACQ, NRS_TACONFIRM, NRS_CONFIRM, NRS_FIXEDSLIT,
-                              NRS_AUTOWAVE, NRS_IFU, NRS_MSASPEC, NRS_AUTOFLAT, NRS_IMAGE, NRS_FOCUS, NRS_DARK, NRS_LAMP,
-                              NRS_BOTA, NRS_BRIGHTOBJ, NRS_MIMF
+                              NIRSpec allowed values: NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK,
+                              NRS_FIXEDSLIT, NRS_FOCUS, NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF,
+                              NRS_MSASPEC, NRS_MSATA, NRS_TACONFIRM, NRS_TACQ, NRS_TASLIT,
+                              NRS_VERIFY, NRS_WATA
 DETECTOR  MIRIFULONG          Allowed values:
                               GUIDER1, GUIDER2
 
