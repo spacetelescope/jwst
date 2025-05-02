@@ -57,6 +57,7 @@ def white_light(input_model, min_wave=None, max_wave=None):
         mid_time = getattr(spec, "mid_time_mjd", None)
         if mid_time is None:
             problems += 1
+            mid_times[i] = np.nan
             continue
         else:
             mid_times[i] = mid_time
@@ -75,8 +76,12 @@ def white_light(input_model, min_wave=None, max_wave=None):
             "These spectra will be ignored in the output table."
         )
 
-    # Set up output table
+    # Set up output table, removing problems
     tbl = _make_empty_output_table(input_model)
+    good = ~np.isnan(mid_times)
+    mid_times = mid_times[good]
+    fluxsums = fluxsums[good]
+    order_list = order_list[good]
     unique_mid_times = np.unique(mid_times)
     mjd_times = Time(unique_mid_times, format="mjd", scale="utc")
     tbl["MJD"] = mjd_times.mjd
@@ -86,7 +91,7 @@ def white_light(input_model, min_wave=None, max_wave=None):
     # is not observed at a given time.
     for order in sporders:
         is_this_order = order_list == order
-        time_is_in_this_order = np.isin(mid_times[is_this_order], unique_mid_times)
+        time_is_in_this_order = np.isin(unique_mid_times, mid_times[is_this_order])
 
         # NaN-pad fluxes for times not represented in this order
         fluxes = np.full(len(unique_mid_times), np.nan)

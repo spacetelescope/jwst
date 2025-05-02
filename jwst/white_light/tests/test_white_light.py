@@ -2,9 +2,11 @@ from stdatamodels.jwst import datamodels
 
 from jwst.white_light.white_light import white_light
 
-from astropy.time import Time, TimeDelta
+from astropy.time import Time
 import numpy as np
 import pytest
+import logging
+from jwst.tests.helpers import LogWatcher
 
 
 @pytest.fixture(scope="module")
@@ -54,23 +56,39 @@ def make_datamodel():
 
     spec_model = datamodels.SpecModel(spec_table=otab)
     spec_model.spectral_order = 1
-    model.spec.append(spec_model)
+    n_spec = 5
+    [model.spec.append(spec_model.copy()) for _ in range(n_spec)]
 
-    integrations = [(1, 58627.53891071, 58627.53896565, 58627.5390206, 0., 0., 0.),
-                    (2, 58627.5390206, 58627.53907555, 58627.5391305, 0., 0., 0.),
-                    (3, 58627.5391305, 58627.53918544, 58627.53924039, 0., 0., 0.)]
+    times = np.linspace(0, 1, n_spec+1)
+    start_times = times[:-1]
+    end_times = times[1:]
+    mid_times = (start_times + end_times) / 2.0
+    integrations = []
+    for i in range(n_spec):
+        integrations.append((i+1, start_times[i], mid_times[i], end_times[i], 0.0, 0.0, 0.0))
 
-    integration_table = np.array(integrations, dtype=[("integration_number", "i4"),
-                                                      ("int_start_MJD_UTC", "f8"),
-                                                      ("int_mid_MJD_UTC", "f8"),
-                                                      ("int_end_MJD_UTC", "f8"),
-                                                      ("int_start_BJD_TDB", "f8"),
-                                                      ("int_mid_BJD_TDB", "f8"),
-                                                      ("int_end_BJD_TDB", "f8")])
-    model.int_times = integration_table
+    integration_table = np.array(
+        integrations,
+        dtype=[
+            ("integration_number", "i4"),
+            ("int_start_MJD_UTC", "f8"),
+            ("int_mid_MJD_UTC", "f8"),
+            ("int_end_MJD_UTC", "f8"),
+            ("int_start_BJD_TDB", "f8"),
+            ("int_mid_BJD_TDB", "f8"),
+            ("int_end_BJD_TDB", "f8"),
+        ]
+    )
 
     # also populate spec_meta with the same integration times
     for i, spec in enumerate(model.spec):
+        # skip one integration to test warning raise
+        if i == 2:
+            continue
+        # change one spectral order to test spectral ordering
+        if i == 3:
+            spec.spectral_order = 2
+        
         spec.int_num = integration_table["integration_number"][i]
         spec.start_time_mjd = integration_table["int_start_MJD_UTC"][i]
         spec.end_time_mjd = integration_table["int_end_MJD_UTC"][i]
@@ -82,24 +100,25 @@ def make_datamodel():
     return model
 
 
-def test_white_light(make_datamodel):
+def test_white_light(make_datamodel, monkeypatch):
+    """Test white light step"""
     data = make_datamodel
+
+    watcher = LogWatcher("There were 1 spectra with no mid time")
+    monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
     result = white_light(data)
+    watcher.assert_seen()
 
-    int_start = data.meta.exposure.integration_start
+    n_spec = len(data.spec)
+    times = np.linspace(0, 1, n_spec+1)
+    start_times = times[:-1]
+    end_times = times[1:]
+    mid_times = (start_times + end_times) / 2.0
+    mid_times = mid_times[mid_times != 0.5]  # remove the mid time for the skipped integration
 
-    # We know there is only one table, so set we are hardcoding.
-    ntables = 1
-    int_num = data.int_times["integration_number"]
-    mid_utc = data.int_times["int_mid_MJD_UTC"]
 
-    offset = int_start - int_num[0]
-    time_arr = np.zeros(ntables, dtype=np.float64)
-    time_arr[0: 1] = mid_utc[offset: offset + ntables]
-    int_times = Time(time_arr, format="mjd", scale="utc")
-
-    # Sum the fluxes
-    fluxsums = data.spec[0].spec_table["FLUX"].sum()
-
-    assert result["MJD"] == int_times.mjd
-    assert result["whitelight_flux_order_1"] == fluxsums
+    np.testing.assert_allclose(result["MJD"], mid_times)
+    assert result["whitelight_flux_order_1"].shape == (len(mid_times),)
+    assert result["whitelight_flux_order_2"].shape == (len(mid_times),)
+    assert np.sum(np.isnan(result["whitelight_flux_order_1"])) == 1
+    assert np.sum(~np.isnan(result["whitelight_flux_order_2"])) == 1
