@@ -53,7 +53,7 @@ def make_datamodel():
     )
 
     spec_model = datamodels.SpecModel(spec_table=otab)
-
+    spec_model.spectral_order = 1
     model.spec.append(spec_model)
 
     integrations = [(1, 58627.53891071, 58627.53896565, 58627.5390206, 0., 0., 0.),
@@ -69,10 +69,20 @@ def make_datamodel():
                                                       ("int_end_BJD_TDB", "f8")])
     model.int_times = integration_table
 
+    # also populate spec_meta with the same integration times
+    for i, spec in enumerate(model.spec):
+        spec.int_num = integration_table["integration_number"][i]
+        spec.start_time_mjd = integration_table["int_start_MJD_UTC"][i]
+        spec.end_time_mjd = integration_table["int_end_MJD_UTC"][i]
+        spec.mid_time_mjd = integration_table["int_mid_MJD_UTC"][i]
+        spec.start_tdb = integration_table["int_start_BJD_TDB"][i]
+        spec.end_tdb = integration_table["int_end_BJD_TDB"][i]
+        spec.mid_tdb = integration_table["int_mid_BJD_TDB"][i]
+
     return model
 
 
-def test_white_light_with_int_tables(make_datamodel):
+def test_white_light(make_datamodel):
     data = make_datamodel
     result = white_light(data)
 
@@ -92,32 +102,4 @@ def test_white_light_with_int_tables(make_datamodel):
     fluxsums = data.spec[0].spec_table["FLUX"].sum()
 
     assert result["MJD"] == int_times.mjd
-    assert result["whitelight_flux"] == fluxsums
-
-
-def test_white_light_with_expstart(make_datamodel):
-    data = make_datamodel
-
-    # Make the integration_end larger than the number of
-    # integration. This forces the algorithm to use EXPSTART
-    # and TGROUP
-    data.meta.exposure.integration_end = 4
-
-    result = white_light(data)
-
-    dt_arr = np.zeros(1, dtype=np.float64)
-    dt = (data.meta.exposure.group_time *
-          (data.meta.exposure.ngroups + 1))
-
-    # We know there is only one table, so set we are hardcoding.
-    ntables_current = 1
-    dt_arr[0: 1] = np.arange(1, 1 + ntables_current) * dt - (dt / 2.)
-    int_dt = TimeDelta(dt_arr, format="sec")
-
-    int_times = (Time(data.meta.exposure.start_time, format="mjd")
-                 + int_dt)
-    # Sum the fluxes
-    fluxsums = data.spec[0].spec_table["FLUX"].sum()
-
-    assert result["MJD"][0] == int_times.mjd[0]
-    assert result["whitelight_flux"] == fluxsums
+    assert result["whitelight_flux_order_1"] == fluxsums

@@ -5,7 +5,7 @@ import logging
 import numpy as np
 from collections import OrderedDict
 from astropy.table import QTable
-from astropy.time import Time, TimeDelta
+from astropy.time import Time
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -31,57 +31,85 @@ def white_light(input_model, min_wave=None, max_wave=None):
     tbl : astropy.table.table.QTable
         Table containing the integrated flux as a function of time.
     """
-    ntables = len(input_model.spec)
-    fluxsums = []
+    if min_wave is None:
+        min_wave = -1.0
+    if max_wave is None:
+        max_wave = 1.0e10
 
     # The input should contain one row per integration for each spectral
     # order.  NIRISS SOSS data can contain up to three orders.
-    norders = 0  # number of different spectral orders
-    sporders = []  # list of spectral order numbers
-    ntables_order = []  # number of tables for each spectral order
-    prev_spectral_order = -999
-    for i in range(ntables):
-        # The following assumes that all rows for a given spectral order
-        # are contiguous.
-        spectral_order = input_model.spec[i].spectral_order
-        if spectral_order is None:
-            norders = 1
-            sporders = [0]
-            ntables_order = [ntables]
-            break
-        if spectral_order != prev_spectral_order:
+    n_spec = len(input_model.spec)
+    sporders = []  # list of spectral orders available
+    order_list = np.empty((n_spec,))  # order for each spectrum, length nspectra
+    mid_times = np.empty((n_spec,))
+    fluxsums = np.empty((n_spec,))
+
+    # Loop over the spectra in the input model and find mid times and fluxes
+    problems = 0
+    for i, spec in enumerate(input_model.spec):
+        # Figure out the spectral order for this spectrum
+        spectral_order = getattr(spec, "spectral_order", None)
+        if spectral_order not in sporders:
             sporders.append(spectral_order)
-            prev_spectral_order = spectral_order
-            ntables_order.append(1)
-            norders = len(sporders)
+        order_list[i] = spectral_order
+
+        # Figure out mid times for this spectrum
+        mid_time = getattr(spec, "mid_time_mjd", None)
+        if mid_time is None:
+            problems += 1
+            continue
         else:
-            ntables_order[norders - 1] += 1
+            mid_times[i] = mid_time
 
-    log.debug(
-        "norders = %d, sporders = %s, ntables_order = %s",
-        norders,
-        str(sporders),
-        str(ntables_order),
-    )
-
-    # Create a wavelength mask, using cutoffs if specified, then
-    # compute the flux sum for each integration in the input.
-    low_cutoff = -1.0
-    high_cutoff = 1.0e10
-    if min_wave is not None:
-        low_cutoff = min_wave
-    if max_wave is not None:
-        high_cutoff = max_wave
-
-    for i in range(ntables):
+        # Create a wavelength mask, using cutoffs if specified, then
+        # compute the flux sum for each integration in the input.
         wave_mask = np.where(
-            (input_model.spec[i].spec_table["WAVELENGTH"] >= low_cutoff)
-            & (input_model.spec[i].spec_table["WAVELENGTH"] <= high_cutoff)
+            (spec.spec_table["WAVELENGTH"] >= min_wave)
+            & (spec.spec_table["WAVELENGTH"] <= max_wave)
         )[0]
+        fluxsums[i] = np.nansum(spec.spec_table["FLUX"][wave_mask])
 
-        fluxsums.append(np.nansum(input_model.spec[i].spec_table["FLUX"][wave_mask]))
+    if problems > 0:
+        log.warning(
+            f"There were {problems} spectra with no mid time ({100.0 * problems / n_spec}). "
+            "These spectra will be ignored in the output table."
+        )
 
-    # Populate metadata for the output table
+    # Set up output table
+    tbl = _make_empty_output_table(input_model)
+    unique_mid_times = np.unique(mid_times)
+    mjd_times = Time(unique_mid_times, format="mjd", scale="utc")
+    tbl["MJD"] = mjd_times.mjd
+
+    # Loop over the spectral orders and make separate table columns
+    # for fluxes in each order, ensuring times are aligned even if one order
+    # is not observed at a given time.
+    for order in sporders:
+        is_this_order = order_list == order
+        time_is_in_this_order = np.isin(mid_times[is_this_order], unique_mid_times)
+
+        # NaN-pad fluxes for times not represented in this order
+        fluxes = np.full(len(unique_mid_times), np.nan)
+        fluxes[time_is_in_this_order] = fluxsums[is_this_order]
+        tbl[f"whitelight_flux_order_{order}"] = fluxes
+
+    return tbl
+
+
+def _make_empty_output_table(input_model):
+    """
+    Create an empty output table with the same metadata as the input model.
+
+    Parameters
+    ----------
+    input_model : MultiSpecModel
+        Datamodel containing the multi-integration data
+
+    Returns
+    -------
+    astropy.table.table.QTable
+        Empty table with the same metadata as the input model.
+    """
     tbl_meta = OrderedDict()
     tbl_meta["instrument"] = input_model.meta.instrument.name
     tbl_meta["detector"] = input_model.meta.instrument.detector
@@ -90,71 +118,4 @@ def white_light(input_model, min_wave=None, max_wave=None):
     tbl_meta["filter"] = input_model.meta.instrument.filter
     tbl_meta["pupil"] = input_model.meta.instrument.pupil
     tbl_meta["target_name"] = input_model.meta.target.catalog_name
-
-    # Create the output table
-    tbl = QTable(meta=tbl_meta)
-
-    if hasattr(input_model, "int_times") and input_model.int_times is not None:
-        nrows = len(input_model.int_times)
-    else:
-        nrows = 0
-    if nrows == 0:
-        log.warning("There is no INT_TIMES table in the input file.")
-
-    if nrows > 0:
-        int_start = input_model.meta.exposure.integration_start  # one indexed
-        if int_start is None:
-            int_start = 1
-            log.warning("INTSTART not found; assuming a value of %d", int_start)
-        int_end = input_model.meta.exposure.integration_end  # one indexed
-        if int_end is None:
-            # Number of tables for the first (possibly only) spectral order.
-            int_end = ntables_order[0]
-            log.warning("INTEND not found; assuming a value of %d", int_end)
-
-        # Columns of integration numbers & times of integration from the
-        # INT_TIMES table.
-        int_num = input_model.int_times["integration_number"]  # one indexed
-        mid_utc = input_model.int_times["int_mid_MJD_UTC"]
-        offset = int_start - int_num[0]
-        if offset < 0 or int_end > int_num[-1]:
-            log.warning(
-                "Range of integration numbers in science data extends "
-                "outside the range in INT_TIMES table."
-            )
-            log.warning("Can't use INT_TIMES table.")
-            del int_num, mid_utc
-            nrows = 0  # flag as bad
-        else:
-            log.debug("Times are from the INT_TIMES table.")
-            time_arr = np.zeros(ntables, dtype=np.float64)
-            j0 = 0
-            for k in range(norders):
-                ntables_current = ntables_order[k]
-                j1 = j0 + ntables_current
-                time_arr[j0:j1] = mid_utc[offset : offset + ntables_current]
-                j0 += ntables_current
-
-            int_times = Time(time_arr, format="mjd", scale="utc")
-
-    if nrows == 0:
-        log.debug("Times were computed from EXPSTART and TGROUP.")
-        # Compute the delta time of each integration
-        dt_arr = np.zeros(ntables, dtype=np.float64)
-        dt = input_model.meta.exposure.group_time * (input_model.meta.exposure.ngroups + 1)
-        j0 = 0
-        for k in range(norders):
-            ntables_current = ntables_order[k]
-            j1 = j0 + ntables_current
-            dt_arr[j0:j1] = np.arange(1, 1 + ntables_current) * dt - (dt / 2.0)
-            j0 += ntables_current
-        int_dt = TimeDelta(dt_arr, format="sec")
-
-        # Compute the absolute time at the mid-point of each integration
-        int_times = Time(input_model.meta.exposure.start_time, format="mjd") + int_dt
-
-    # Store the times and flux sums in the table
-    tbl["MJD"] = int_times.mjd
-    tbl["whitelight_flux"] = fluxsums
-
-    return tbl
+    return QTable(meta=tbl_meta)
