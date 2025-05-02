@@ -1443,7 +1443,7 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
     return first_result
 
 
-def _make_tso_specmodel(spec_list, segment=None):
+def make_tso_specmodel(spec_list, segment=None):
     """
     Make a TSOSpecModel from a list of SpecModel.
 
@@ -1523,7 +1523,8 @@ def _make_tso_specmodel(spec_list, segment=None):
 
     # Copy metadata from the first input_spec
     tso_spec.update(spec_list[0])
-    tso_spec.meta.wcs = spec_list[0].meta.wcs
+    if hasattr(spec_list[0].meta, "wcs"):
+        tso_spec.meta.wcs = spec_list[0].meta.wcs
 
     return tso_spec
 
@@ -1998,7 +1999,7 @@ def create_extraction(
 
     if len(spec_list) > 1:
         # For multi-int data, assemble a single TSOSpecModel from the list of spectra
-        tso_spec = _make_tso_specmodel(spec_list, segment=input_model.meta.exposure.segment_number)
+        tso_spec = make_tso_specmodel(spec_list, segment=input_model.meta.exposure.segment_number)
 
         # Add to the output model
         output_model.spec.append(tso_spec)
