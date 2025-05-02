@@ -9,10 +9,10 @@ __all__ = ["KlipStep"]
 
 
 class KlipStep(Step):
-
     """
-    KlipStep: Performs KLIP processing on a science target coronagraphic
-    exposure. The input science exposure is assumed to be a fully calibrated
+    Performs KLIP processing on a science target coronagraphic exposure.
+
+    The input science exposure is assumed to be a fully calibrated
     level-2b image. The processing is performed using a set of reference PSF
     images observed in the same coronagraphic mode.
     """
@@ -21,15 +21,28 @@ class KlipStep(Step):
 
     spec = """
         truncate = integer(default=50,min=0) # The number of KL transform rows to keep
-    """ # noqa: E501
+    """  # noqa: E501
 
     def process(self, target, psfrefs):
+        """
+        Execute the KlipStep calibration step.
 
+        Parameters
+        ----------
+        target : str
+            Science target exposure
+        psfrefs : str
+            PSF Reference exposures
+
+        Returns
+        -------
+        psf_sub : DataModel
+            Science target DataModel with the PSF subtracted
+        """
         with datamodels.open(target) as target_model:
-
             # Retrieve the parameter values
             truncate = self.truncate
-            self.log.info('KL transform truncation = %d', truncate)
+            self.log.info("KL transform truncation = %d", truncate)
 
             # Get the PSF reference images
             refs_model = datamodels.open(psfrefs)
@@ -38,7 +51,7 @@ class KlipStep(Step):
             psf_sub, psf_fit = klip.klip(target_model, refs_model, truncate)
 
         # Update the step completion status
-        psf_sub.meta.cal_step.klip = 'COMPLETE'
+        psf_sub.meta.cal_step.klip = "COMPLETE"
 
         # return psf_sub, psf_fit
         return psf_sub
