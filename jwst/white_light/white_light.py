@@ -96,7 +96,11 @@ def white_light(input_model, min_wave=None, max_wave=None):
         # NaN-pad fluxes for times not represented in this order
         fluxes = np.full(len(unique_mid_times), np.nan)
         fluxes[time_is_in_this_order] = fluxsums[is_this_order]
-        tbl[f"whitelight_flux_order_{order}"] = fluxes
+        if len(sporders) > 1:
+            colname = f"whitelight_flux_order_{order}"
+        else:
+            colname = "whitelight_flux"
+        tbl[colname] = fluxes
 
     return tbl
 
