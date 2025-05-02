@@ -34,7 +34,7 @@ where:
     DMS specifies this as a  timestamp. Note:
     When used outside the workflow, this field is user-specifiable.
   * ``ATYPE``: The type of association. See
-    :ref:`asn-jwst-association-types`
+    :ref:`asn-jwst-association-types`.
   * ``MMMMM``: A counter for each type of association created.
 
 .. _asn-jwst-association-types:
@@ -47,8 +47,8 @@ product. The type of science product is indicated by the ``ATYPE`` field
 in the association file name (see :ref:`asn-jwst-naming`), and in the ``asn_type`` meta
 keyword of the association itself (see :ref:`asn-level3-meta-keywords`).
 
-The pipeline uses this type as the key to indicate which Level 2 or
-Level 3 pipeline module to use to process this association.
+The pipeline uses this type as the key to indicate which Stage 2 or
+Stage 3 pipeline module to use to process this association.
 
 The current association types are:
 
@@ -68,7 +68,7 @@ The current association types are:
 Field Guide to File Names
 =========================
 
-The high-level distinctions between stage 2, stage 3, exposure-centric, and
+The high-level distinctions between Stage 2, Stage 3, exposure-centric, and
 target-centric files can be determined by the following file patterns. These
 patterns are not intended to fully define all the specific types of files there
 are. However, these are the main classifications, from which the documentation
@@ -83,7 +83,7 @@ The following regexes differentiate between exposure-centric and target-centric 
 
 - Files containing exposure-centric data
 
-  The following regex matches files names produced by either Stage 2 or 3
+  The following regex matches files names produced by either Stage 2 or Stage 3
   calibration and containing exposure-centric data::
 
     jw[0-9]{11}_[0-9]{5}_[0-9]{5}_.+\.fits

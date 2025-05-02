@@ -1,8 +1,8 @@
 .. _associations:
 
-=============
+============
 Associations
-=============
+============
 
 .. toctree::
    :maxdepth: 2
