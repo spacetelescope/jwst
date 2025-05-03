@@ -2,6 +2,7 @@
 
 import numpy as np
 import logging
+import warnings
 
 from copy import deepcopy
 from .matrix_dft import matrix_dft
@@ -363,7 +364,11 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
             # and normalize the high spatial frequency part of the image
             # by it, then identify residual bad pixels.
             mfil_data = median_filter(data_cut, size=median_size)
-            nois = np.sqrt(mfil_data / gain + rdns**2)
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", category=RuntimeWarning, message="Invalid value encountered in divide"
+                )
+                nois = np.sqrt(mfil_data / gain + rdns**2)
             fmas_data /= nois
             temp = bad_pixels(fmas_data, median_size=median_size, median_tres=median_tres)
 

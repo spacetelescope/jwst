@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import numpy as np
 import numpy.linalg as linalg
@@ -124,8 +125,6 @@ def matrix_operations(img, model, linfit=False, dqm=None):
     In 2-D, data x = inv(At.A).(At.b).
 
     TODO: replace linearfit with scipy fitting.
-    TODO: Instead of above, can the linfit option be removed entirely? it's never set
-    to True in the pipeline.
 
     Parameters
     ----------
@@ -210,23 +209,14 @@ def matrix_operations(img, model, linfit=False, dqm=None):
     log.info("flat img * transpose dimensions %s", np.shape(inverse))
 
     if linfit:
-        # dependent variables
-        M = np.asmatrix(flatimg)  # noqa: N806
-
         # photon noise
         noise = np.sqrt(np.abs(flatimg))
 
         # this sets the weights of pixels fulfilling condition to zero
         weights = np.where(np.abs(flatimg) <= 1.0, 0.0, 1.0 / (noise**2))
 
-        # uniform weight
-        wy = weights
-        S = np.asmatrix(np.diag(wy))  # noqa: N806
-        # matrix of independent variables
-        C = np.asmatrix(flatmodeltransp)  # noqa: N806
-
-        # initialize object
-        result = LinearFit(M, S, C)
+        # initialize object with uniform weights
+        result = LinearFit(flatimg, np.diag(weights), flatmodeltransp)
 
         # do the fit
         result.fit()
@@ -545,12 +535,12 @@ class LinearFit:
 
     Attributes
     ----------
-    dependent_variable : np.matrix (1xN)
+    dependent_variable : np.ndarray (1xN)
         Dependent_variables of the linear equation system (N equations, M unknown coefficients)
-    inverse_covariance_matrix : np.matrix (NxN)
+    inverse_covariance_matrix : np.ndarray (NxN)
         Inverse covariance matrix corresponding to the dependent_variable.
         i.e. data weights proportional to 1/sigma**2 where sigma=uncertainty
-    independent_variable : np.matrix (MxN)
+    independent_variable : np.ndarray (MxN)
         The independent_variables that are multiplied by the unknown coefficients
 
     Calculated Attributes
@@ -559,13 +549,13 @@ class LinearFit:
         Coefficients of the solution
     p_formal_uncertainty : np.ndarray
         Formal uncertainty of the coefficients
-    p_formal_covariance_matrix : np.matrix
+    p_formal_covariance_matrix : np.ndarray
         Formal covariance matrix of the coefficients (not rescaled)
     p_normalised_uncertainty : np.ndarray
         Normalised uncertainty (chi2 = 1) of the coefficients
-    p_normalised_covariance_matrix : np.matrix
+    p_normalised_covariance_matrix : np.ndarray
         Normalised covariance matrix of the coefficients (rescaled to yield chi2=1)
-    p_correlation_matrix : np.matrix
+    p_correlation_matrix : np.ndarray
         Coefficient correlation matrix
     fit : np.ndarray
         Values of the best-fit model
@@ -589,16 +579,16 @@ class LinearFit:
         # number of degrees of freedom
         self.n_freedom = self.n_measurement - self.n_param
 
-        a_ij = (self.X_ij) * self.inverse_covariance_matrix
-        alpha_kj = a_ij * (self.X_ij.T)
-        beta_k = a_ij * self.y_i.T
+        a_ij = (self.X_ij) @ self.inverse_covariance_matrix
+        alpha_kj = a_ij @ (self.X_ij.T)
+        beta_k = a_ij @ self.y_i.T
 
         a_j = np.linalg.solve(alpha_kj, beta_k)
 
         yfit_i = (self.X_ij.T * a_j).T
-        chi2 = ((yfit_i - self.y_i) * self.inverse_covariance_matrix) * (yfit_i - self.y_i).T
+        chi2 = ((yfit_i - self.y_i) @ self.inverse_covariance_matrix) @ (yfit_i - self.y_i).T
         c_jk = np.linalg.inv(alpha_kj)
-        var_aj = np.asmatrix(np.diag(c_jk))
+        var_aj = np.diag(c_jk)
 
         # the variance on the fitted coefficients are the diagonal terms
         # of the coefficient covariance matrix
@@ -607,7 +597,11 @@ class LinearFit:
         # divided by the expected chi2.
         # That means the normalised variances take into account the residual dispersion in the data
         normalized_variance_aj = var_aj.T * chi2 / self.n_freedom
-        stdev_aj = np.sqrt(normalized_variance_aj)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=RuntimeWarning, message="invalid value encountered in sqrt"
+            )
+            stdev_aj = np.sqrt(normalized_variance_aj)
 
         # coefficients of the solution
         self.p = np.array(a_j).flatten()
@@ -636,7 +630,7 @@ class LinearFit:
         #     compute correlation Matrix
         tmp_v = 1.0 / self.p_formal_uncertainty
         tmp = np.vstack((tmp_v, np.tile(np.zeros(len(tmp_v)), (len(tmp_v) - 1, 1))))
-        m = np.asmatrix(tmp.T)
+        m = tmp.T
         err_matrix = m.dot(m.T)
         correlation_matrix = np.multiply(err_matrix, self.p_formal_covariance_matrix.T)
         self.p_correlation_matrix = correlation_matrix
