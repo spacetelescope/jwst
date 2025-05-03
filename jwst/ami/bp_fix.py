@@ -366,7 +366,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
             mfil_data = median_filter(data_cut, size=median_size)
             with warnings.catch_warnings():
                 warnings.filterwarnings(
-                    "ignore", category=RuntimeWarning, message="Invalid value encountered in divide"
+                    "ignore", category=RuntimeWarning, message="invalid value encountered"
                 )
                 nois = np.sqrt(mfil_data / gain + rdns**2)
             fmas_data /= nois
