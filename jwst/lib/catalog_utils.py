@@ -1,8 +1,8 @@
 """Utilities for naming source catalogs."""
 
 import re
-from os.path import split, splitext, join, abspath, expanduser
 from collections import namedtuple
+from pathlib import Path
 
 
 def replace_suffix_ext(filename, old_suffix_list, new_suffix, output_ext="ecsv", output_dir=None):
@@ -57,15 +57,14 @@ def replace_suffix_ext(filename, old_suffix_list, new_suffix, output_ext="ecsv",
     >>> replace_suffix_ext("jw12345_nrca_i2d.fits", ["i2d"], "cat", output_dir="/jwst/my_catalogs")
     '/jwst/my_catalogs/jw12345_nrca_cat.ecsv'
     """
-    path, filename = split(filename)
-    name, ext = splitext(filename)
+    name = Path(filename).stem
     remove_suffix = "^(.+?)(_(" + "|".join(old_suffix_list) + "))?$"
     match = re.match(remove_suffix, name)
     name = match.group(1)
 
     output_path = f"{name}_{new_suffix}.{output_ext}"
     if output_dir is not None:
-        output_path = abspath(expanduser(join(output_dir, output_path)))
+        output_path = str((Path(output_dir) / output_path).expanduser().absolute())
 
     return output_path
 

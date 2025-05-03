@@ -19,9 +19,7 @@ quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
 exclude = [
-    "jwst/associations/**.py",
     "jwst/coron/**.py",
-    "jwst/cube_skymatch/**.py",
     "jwst/dark_current/**.py",
     "jwst/flatfield/**.py",
     "jwst/fringe/**.py",
@@ -29,7 +27,6 @@ exclude = [
     "jwst/mrs_imatch/**.py",
     "jwst/persistence/**.py",
     "jwst/photom/**.py",
-    "jwst/scripts/**.py",
 ]
 
 [lint]
@@ -85,6 +82,7 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 ]
 "**/tests/**.py" = [
     "D104", # missing docstring in public package
+    "S101", # use of assert
 ]
 "jwst/conftest.py" = [
     "SLF", "ARG", "PTH",
@@ -95,24 +93,13 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "A002", # builtin variable shadowing
     "S101", # use of assert
 ]
+"jwst/associations/lib/*" = [
+    "N801", # Use CapWords class naming convention
+]
 "jwst/associations/tests*" = [
     "F841", # unused variable
 ]
-"jwst/lib/catalog_utils.py" = [
-    "PTH100", # `os.path.abspath()` should be replaced by `Path.resolve()`
-    "PTH111", # `os.path.expanduser()` should be replaced by `Path.expanduser()`
-    "PTH118", # `os.path.join()` should be replaced by `Path` with `/` operator
-    "PTH122", # `os.path.splitext()` should be replaced by `Path.suffix`, `Path.stem`, and `Path.parent`
-]
-"jwst/lib/engdb_lib.py" = [
-    "B027", # XXX is an empty method in an abstract base class, but has no abstract decorator
-]
-"jwst/lib/suffix.py" = [
-    "PTH118", # `os.path.join()` should be replaced by `Path` with `/` operator
-]
-"jwst/associations/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/coron/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/cube_skymatch/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/dark_current/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/flatfield/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/fringe/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
@@ -120,4 +107,3 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 "jwst/mrs_imatch/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/persistence/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/photom/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/scripts/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]

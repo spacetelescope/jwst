@@ -1,4 +1,4 @@
-"""Global configuration parameters"""
+"""Global configuration parameters."""
 
 # Debug mode
 #    In conjunction with logging, this mode changes the behavior
