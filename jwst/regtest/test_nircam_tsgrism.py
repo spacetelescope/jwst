@@ -1,8 +1,7 @@
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
-from astropy.table import Table, setdiff
 
 from jwst.lib.set_telescope_pointing import add_wcs
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 # Mark all tests in this module
@@ -103,17 +102,13 @@ def test_nircam_tsgrism_stage3_x1dints(run_tso3_pipeline, fitsdiff_default_kwarg
     assert diff.identical, diff.report()
 
 
-def test_nircam_tsgrism_stage3_whtlt(run_tso3_pipeline):
+def test_nircam_tsgrism_stage3_whtlt(run_tso3_pipeline, diff_astropy_tables):
     rtdata = run_tso3_pipeline
     rtdata.input = "jw01366-o002_20230107t004627_tso3_00001_asn.json"
     rtdata.output = "jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_whtlt.ecsv"
     rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_whtlt.ecsv")
 
-    table = Table.read(rtdata.output)
-    table_truth = Table.read(rtdata.truth)
-
-    # setdiff returns a table of length zero if there is no difference
-    assert len(setdiff(table, table_truth)) == 0
+    assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
 
 def test_nircam_setpointing_tsgrism(rtdata, fitsdiff_default_kwargs):
