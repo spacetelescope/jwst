@@ -1,39 +1,28 @@
-"""Treat various objects as Associations"""
+"""Treat various objects as Associations."""
 
 from functools import partial
-from os import path as os_path
+from pathlib import Path
 
-from jwst.associations import (
-    Association,
-    AssociationRegistry,
-    libpath
-)
+from jwst.associations import Association, AssociationRegistry
+from jwst.associations import libpath
 
 from jwst.associations.load_asn import load_asn
 from ..associations.asn_from_list import asn_from_list
 from ..associations.lib.rules_level2_base import DMSLevel2bBase
 
 __all__ = [
-    'LoadAsAssociation',
-    'LoadAsLevel2Asn',
+    "LoadAsAssociation",
+    "LoadAsLevel2Asn",
 ]
 
 
-DEFAULT_NAME = 'singleton'
-DEFAULT_ASN_META = {
-    'program': DEFAULT_NAME,
-    'target': DEFAULT_NAME,
-    'asn_pool': DEFAULT_NAME
-}
+DEFAULT_NAME = "singleton"
+DEFAULT_ASN_META = {"program": DEFAULT_NAME, "target": DEFAULT_NAME, "asn_pool": DEFAULT_NAME}
 
 
 class LoadAsAssociation(dict):
-    """Read in or create an association
-
-    Parameters
-    ----------
-    asn : dict or Association
-        An already existing association
+    """
+    Read in or create an association.
 
     Notes
     -----
@@ -45,23 +34,27 @@ class LoadAsAssociation(dict):
     """
 
     @classmethod
-    def load(cls, obj,
-             meta=DEFAULT_ASN_META,
-             registry=AssociationRegistry,
-             rule=Association,
-             product_name_func=None):
-        """ Load object and return an association of it
+    def load(
+        cls,
+        obj,
+        meta=DEFAULT_ASN_META,
+        registry=AssociationRegistry,
+        rule=Association,
+        product_name_func=None,
+    ):
+        """
+        Load object and return an association of it.
 
         Parameters
         ----------
         obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
-            The obj to return as an association
+            The obj to return as an association.
 
         registry : AssociationRegistry
-            The registry to use to load an association file with
+            The registry to use to load an association file with.
 
         rule : Association
-            The rule to use if an association needs to be created
+            The rule to use if an association needs to be created.
 
         product_name_func : func
             A function, when given the argument of `obj`, or
@@ -69,32 +62,24 @@ class LoadAsAssociation(dict):
             a string that will be used as the product name in
             the association.
 
-        Attributes
-        ----------
-        Along with the attributes belonging to an association, the
-        following are added:
-
-        filename : str
-            The name of the association file, if such a file
-            where passed in. Otherwise a default value is given.
-
         Returns
         -------
         association : Association
-            An association created using given obj
+            An association created using given obj.
+
+        Notes
+        -----
+        Along with the attributes belonging to a Level2 association, the
+        filename is added here, if such a file was passed in. Otherwise
+        a default value is given.
         """
         try:
-            with open(obj) as fp:
+            with Path(obj).open() as fp:
                 pure_asn = load_asn(fp, registry=registry)
         except Exception:
             if not isinstance(obj, list):
                 obj = [obj]
-            asn = asn_from_list(
-                obj,
-                rule=rule,
-                meta=DEFAULT_ASN_META,
-                product_name_func=product_name_func
-            )
+            asn = asn_from_list(obj, rule=rule, meta=meta, product_name_func=product_name_func)
             asn.filename = DEFAULT_NAME
         else:
             asn = rule()
@@ -105,34 +90,31 @@ class LoadAsAssociation(dict):
 
 
 class LoadAsLevel2Asn(LoadAsAssociation):
-    """Read in or create a Level2 association
-    """
+    """Read in or create a Level2 association."""
 
     @classmethod
     def load(cls, obj, basename=None):
-        """ Open object and return a Level2 association of it
+        """
+        Open object and return a Level2 association of it.
 
         Parameters
         ----------
         obj : Association, str, Datamodel, [str[,...]], [Datamodel[,...]]
-            The obj to return as an association
+            The obj to return as an association.
 
         basename : str
             If specified, use as the basename, with an index appended.
 
-        Attributes
-        ----------
-        Along with the attributes belonging to a Level2 association, the
-        following are added:
-
-        filename : str
-            The name of the association file, if such a file
-            where passed in. Otherwise a default value is given.
-
         Returns
         -------
         association : DMSLevel2bBase
-            An association created using given obj
+            An association created using given obj.
+
+        Notes
+        -----
+        Along with the attributes belonging to a Level2 association, the
+        filename is added here, if such a file was passed in. Otherwise
+        a default value is given.
         """
         product_name_func = cls.model_product_name
         if basename is not None:
@@ -140,55 +122,59 @@ class LoadAsLevel2Asn(LoadAsAssociation):
 
         # if the input string is a FITS file create an asn and return
         if isinstance(obj, str):
-            file_name, file_ext = os_path.splitext(obj)
+            file_name = Path(obj).name
+            file_ext = Path(obj).suffix
 
-            if file_ext == '.fits':
-                items = [(obj, 'science')]
-                asn = asn_from_list(items, product_name=file_name,
-                                    rule=DMSLevel2bBase, with_exptype=True,
-                                    meta={"asn_pool":"singleton"})
+            if file_ext == ".fits":
+                items = [(obj, "science")]
+                asn = asn_from_list(
+                    items,
+                    product_name=file_name,
+                    rule=DMSLevel2bBase,
+                    with_exptype=True,
+                    meta={"asn_pool": "singleton"},
+                )
                 return asn
 
         asn = super(LoadAsLevel2Asn, cls).load(
             obj,
             registry=AssociationRegistry(
-                definition_files=[libpath('rules_level2b.py')],
-                include_default=False
+                definition_files=[libpath() / "rules_level2b.py"], include_default=False
             ),
             rule=DMSLevel2bBase,
-            product_name_func=product_name_func
+            product_name_func=product_name_func,
         )
         return asn
 
     @staticmethod
-    def model_product_name(model, *args, **kwargs):
-        """Product a model product name based on the model.
+    def model_product_name(model, _idx):
+        """
+        Produce a model product name based on the model.
 
         Parameters
         ----------
         model : DataModel
             The model to get the name from
+        _idx : int
+            The parent method is sometimes passed an index,
+            which this method ignores.
 
         Returns
         -------
         product_name : str
             The basename of filename from the model
         """
-        product_name, ext = os_path.splitext(model.meta.filename)
-        return product_name
+        return Path(model.meta.filename).stem
 
     @staticmethod
-    def name_with_index(basename, obj, idx, *args, **kwargs):
-        """Produce a name with the basename and index appended
+    def name_with_index(basename, idx):
+        """
+        Produce a name with the basename and index appended.
 
         Parameters
         ----------
         basename : str
             The base of the file name
-
-        obj : object
-            The object being added to the association _(unused)_
-
         idx : int
             The current index of the added item.
 
@@ -201,7 +187,8 @@ class LoadAsLevel2Asn(LoadAsAssociation):
         -----
         If the index is less than or equal to 1, no appending is done.
         """
-        basename, extension = os_path.splitext(os_path.basename(basename))
+        basename = Path(basename).stem
+
         if idx > 1:
-            basename = basename + '_' + str(idx)
+            basename = basename + "_" + str(idx)
         return basename

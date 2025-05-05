@@ -81,11 +81,6 @@ cube_build:
     - any-glob-to-any-file:
       - 'jwst/cube_build/**'
 
-cube_skymatch:
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'jwst/cube_skymatch/**'
-
 dark_current:
   - changed-files:
     - any-glob-to-any-file:

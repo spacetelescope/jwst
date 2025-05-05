@@ -1,4 +1,4 @@
-# To avoid relative imports and mimic actual usage
+"""Avoid relative imports and mimic actual usage."""  # noqa: INP001
 
 from jwst.associations import Association
 from jwst.associations.association import finalize as general_asn_finalize
@@ -8,41 +8,61 @@ from jwst.associations.lib.dms_base import DMSBaseMixin
 
 
 @RegistryMarker.rule
-class Asn_DMS_Base(DMSBaseMixin, Association):
-    """Basic DMS rule"""
+class AsnDMSBase(DMSBaseMixin, Association):
+    """Basic DMS rule."""
 
     def __init__(self, version_id=None):
         self.constraints = ConstraintTrue()
-        super(Asn_DMS_Base, self).__init__(version_id=version_id)
-        self.data['members'] = list()
+        super(AsnDMSBase, self).__init__(version_id=version_id)
+        self.data["members"] = []
 
     def make_member(self, item):
+        """
+        Return item; placeholder method.
+
+        Parameters
+        ----------
+        item : Member
+            Member.
+
+        Returns
+        -------
+        Member
+            The item provided - this is a placeholder method.
+        """
         return item
 
     def _add(self, item):
-        self.data['members'].append(item)
+        self.data["members"].append(item)
 
     def finalize(self):
-        """Perform finalization steps"""
+        """
+        Perform finalization steps.
+
+        Returns
+        -------
+        list(self)
+            Return self in a list.
+        """
         return [self]
 
 
 # Use the generic finalization
-RegistryMarker.callback('finalize')(general_asn_finalize)
+RegistryMarker.callback("finalize")(general_asn_finalize)
 
 
 class Utility:
-    """Should not be part of the utilities"""
+    """Utility class that should not be part of the base utilities."""
 
     @staticmethod
     def not_valid_function():
-        """Should not be part of the utilities"""
+        """Mark as not valid, a function that should not be part of the utilities."""
 
 
 @RegistryMarker.utility
 class ValidUtility:
-    """Yea, valid!"""
+    """Yes, valid."""
 
     @staticmethod
     def valid_function():
-        "yes, i'm good"
+        """Yes, I'm good."""

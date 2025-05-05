@@ -24,7 +24,6 @@ class AmiNormalizeStep(Step):
         ----------
         target : str or model
             Target input
-
         reference : str or model
             Reference input
 

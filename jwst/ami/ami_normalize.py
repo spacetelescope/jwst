@@ -18,7 +18,6 @@ def normalize_lg(target_model, reference_model):
     ----------
     target_model : AmiOIModel data model
         The target data to be normalized
-
     reference_model : AmiOIModel data model
         The reference data
 
