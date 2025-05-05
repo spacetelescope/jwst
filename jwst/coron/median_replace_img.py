@@ -14,10 +14,10 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     Parameters
     ----------
-    input_array : ndarray
+    input_array : numpy.ndarray
         Input array to filter
 
-    input_dq_array : ndarray
+    input_dq_array : numpy.ndarray
         Input data quality array
 
     bsize : scalar
@@ -68,7 +68,7 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
     Parameters
     ----------
-    img_model : image model
+    img_model : DataModel
         The input image model
 
     box_size : scalar
@@ -80,7 +80,7 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
     Returns
     -------
-    img_model : image model
+    img_model : DataModel
         The updated image model with the bad pixels replaced
     """
     n_ints, _, _ = img_model.data.shape
@@ -128,7 +128,7 @@ def separate_non_science_pixels(img_dq, bad_locations):
 
     Parameters
     ----------
-    img_dq : ndarray
+    img_dq : numpy.ndarray
         Input data quality array
     bad_locations : tuple
         2xN (row, col) tuple of flagged pixel indices
