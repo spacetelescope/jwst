@@ -9,10 +9,10 @@ General Workflow for Generating Association Products
 
 See :ref:`asn-associations-and-jwst` for an overview of how JWST uses
 associations. This document describes how associations are used by the
-ground processing system to execute the stage 2 and stage 3 pipelines.
+ground processing system to execute the Stage 2 and Stage 3 pipelines.
 
 Up to the initial calibration step :ref:`calwebb_detector1 <calwebb_detector1>`,
-the science exposures are treated individually. However, starting at the stage 2
+the science exposures are treated individually. However, starting at the Stage 2
 calibration step, exposures may need other exposures in order to be further
 processed. Instead of creating a single monolithic pipeline, the workflow uses
 the associations to determine what pipeline should be executed and when to
@@ -29,7 +29,7 @@ data through the system.
 .. figure:: graphics/workflow-generic.png
    :scale: 75%
 
-   General workflow through stage 2 and stage 3 processing
+   General workflow through Stage 2 and Stage 3 processing
 
 The figure represents the following workflow:
 
@@ -39,7 +39,7 @@ The figure represents the following workflow:
   countrate format.
 - In parallel with :ref:`calwebb_detector1 <calwebb_detector1>`, the Pool Maker collects the list
   of downloaded exposures and places them in the Association Pool.
-- When enough exposures have been download to complete an Association
+- When enough exposures have been downloaded to complete an Association
   Candidate, such as an Observation Candidate, the Pool Maker calls
   the Association Generator, :ref:`asn_generate <asn-generate>`, to create the set of
   associations based on that Candidate.
@@ -53,7 +53,7 @@ The figure represents the following workflow:
 Wide Field Slitless Spectroscopy
 ================================
 
-In most cases, the data will flow from stage 2 to stage 3, completing
+In most cases, the data will flow from Stage 2 to Stage 3, completing
 calibration. However, more complicated situations can be handled by
 the same wait-then-execute process. One particular case is for the
 Wide Field Slitless Spectrometry (WFSS) modes. The specific flow is
@@ -67,13 +67,13 @@ show in the figure below:
 For WFSS data, at least two observations are made, one consisting of a
 direct image of the field-of-view (FOV), and a second where the FOV is
 dispersed using a grism. The direct image is first processed through
-stage 3. At the stage 3 stage, a source catalog of objects found in
+Stage 3. At the Stage 3 stage, a source catalog of objects found in
 the image, and a segmentation map, used to record the minimum bounding
 box sizes for each object, are generated. The source catalog is then used
-as input to the stage 2 processing of the spectral data. This extra
+as input to the Stage 2 processing of the spectral data. This extra
 link between the two major stages is represented by the ``Segment &
-Catalog`` file set, shown in red in the diagram. The stage 2 association
+Catalog`` file set, shown in red in the diagram. The Stage 2 association
 ``grism_spec2_asn`` not only lists the needed countrate exposures, but
-also the catalog file produced by the stage 3 image
+also the catalog file produced by the Stage 3 image
 processing. Hence, the workflow knows to wait for this file before
 continuing the spectral processing.

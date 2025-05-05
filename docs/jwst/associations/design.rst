@@ -1,6 +1,5 @@
 .. _design:
 
-
 Association Design
 ==================
 
@@ -12,8 +11,8 @@ Association Design
    Association Generator Overview
 
 As introduced in the :ref:`asn-overview`, the figure above shows all the
-major players used in generating associations. Since this section will
-be describing the code design, the figure below is the overview but
+major players used in generating associations.
+Meanwhile, the figure below is the overview but
 using the class names involved.
 
 .. _figure-class-overview:
