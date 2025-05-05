@@ -5,8 +5,9 @@ import numpy as np
 from astropy import units as u
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import SpecModel, MultiSpecModel
+from stdatamodels.jwst.datamodels import SpecModel, TSOMultiSpecModel
 
+from jwst.extract_1d.extract import make_tso_specmodel
 from jwst.photom import photom
 from jwst.lib.dispaxis import get_dispersion_direction
 
@@ -92,7 +93,8 @@ def mk_wavelength(shape, min_wl, max_wl, dispaxis=1):
 
 
 def mk_soss_spec(settings, speclen):
-    """Create a 2-D array of wavelengths, linearly spaced in one axis.
+    """
+    Create a TSO spec model for calibrating.
 
     Parameters
     ----------
@@ -106,11 +108,11 @@ def mk_soss_spec(settings, speclen):
 
     Returns
     -------
-    model : MultiSpecModel
+    model : TSOMultiSpecModel
         The simulated output of extract_1d to be calibrated; this is
         the SOSS-specific ordering to be tested.
     """
-    model = MultiSpecModel()
+    spec_list = []
     for i, inspec in enumerate(settings):
         # Make number of columns equal to length of SpecModel's spec_table dtype, then assign
         # dtype to each column. Use to initialize SpecModel for entry into output MultiSpecModel
@@ -118,11 +120,15 @@ def mk_soss_spec(settings, speclen):
                                    [np.ones(speclen[i]) for _ in range(len(SpecModel().spec_table.dtype) - 1)]))),
                         dtype=SpecModel().spec_table.dtype)
         specmodel = datamodels.SpecModel(spec_table=otab)
-        model.meta.instrument.filter = inspec['filter']
-        model.meta.instrument.pupil = inspec['pupil']
         specmodel.spectral_order = inspec['order']
-        model.spec.append(specmodel)
+        spec_list.append(specmodel)
 
+    tso_spec_model = make_tso_specmodel(spec_list)
+
+    model = TSOMultiSpecModel()
+    model.meta.instrument.filter = inspec['filter']
+    model.meta.instrument.pupil = inspec['pupil']
+    model.spec.append(tso_spec_model)
     return model
 
 
@@ -1090,7 +1096,7 @@ def test_nirspec_fs():
     for (k, slit) in enumerate(save_input.slits):
         slitname = slit.name
         srctype = slit.source_type
-        input = slit.data                       # this is from save_input
+        input_data = slit.data                       # this is from save_input
         output = ds.input.slits[k].data         # ds.input is the output
         rownum = find_row_in_ftab(save_input, ftab, ['filter', 'grating'],
                                   slitname, order=None)
@@ -1098,7 +1104,7 @@ def test_nirspec_fs():
         nelem = ftab.phot_table['nelem'][rownum]
         wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
         relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
-        shape = input.shape
+        shape = input_data.shape
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
@@ -1109,7 +1115,7 @@ def test_nirspec_fs():
             compare /= slit.meta.photometry.pixelarea_steradians
 
         # Compare the values at the center pixel.
-        ratio = output[iy, ix] / input[iy, ix]
+        ratio = output[iy, ix] / input_data[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
         # Check error array and variance arrays.  This doesn't need to be
@@ -1161,7 +1167,7 @@ def test_nirspec_bright():
 
     slitname = 'S1600A1'                        # for brightobj mode
 
-    input = save_input.data
+    input_data = save_input.data
     output = ds.input.data
     rownum = find_row_in_ftab(save_input, ftab, ['filter', 'grating'],
                               slitname, order=None)
@@ -1176,7 +1182,7 @@ def test_nirspec_bright():
                          left=np.nan, right=np.nan)
 
     compare = photmj * rel_resp
-    ratio = output[:, iy, ix] / input[:, iy, ix]
+    ratio = output[:, iy, ix] / input_data[:, iy, ix]
     result = []
     result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
@@ -1226,10 +1232,10 @@ def test_nirspec_msa():
 
     result = []
     for (k, slit) in enumerate(save_input.slits):
-        input = slit.data                       # this is from save_input
+        input_data = slit.data                       # this is from save_input
         output = ds.input.slits[k].data         # ds.input is the output
 
-        shape = input.shape
+        shape = input_data.shape
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
@@ -1237,7 +1243,7 @@ def test_nirspec_msa():
                              left=np.nan, right=np.nan)
         compare = photmj * rel_resp
 
-        ratio = output[iy, ix] / input[iy, ix]
+        ratio = output[iy, ix] / input_data[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
     assert np.all(result)
@@ -1265,7 +1271,7 @@ def test_niriss_wfss():
 
     result = []
     for (k, slit) in enumerate(save_input.slits):
-        input = slit.data                       # this is from save_input
+        input_data = slit.data                       # this is from save_input
         output = ds.input.slits[k].data         # ds.input is the output
         sp_order = slit.meta.wcsinfo.spectral_order
         rownum = find_row_in_ftab(save_input, ftab, ['filter', 'pupil'],
@@ -1274,7 +1280,7 @@ def test_niriss_wfss():
         nelem = ftab.phot_table['nelem'][rownum]
         wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
         relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
-        shape = input.shape
+        shape = input_data.shape
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
@@ -1282,7 +1288,7 @@ def test_niriss_wfss():
                              left=np.nan, right=np.nan)
         compare = photmjsr * rel_resp
         # Compare the values at the center pixel.
-        ratio = output[iy, ix] / input[iy, ix]
+        ratio = output[iy, ix] / input_data[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
     assert np.all(result)
@@ -1298,8 +1304,8 @@ def test_niriss_soss():
     ftab = create_photom_niriss_soss(min_r=8.0, max_r=9.0)
     ds.calc_niriss(ftab)
 
-    input = save_input.spec[0].spec_table['FLUX']
-    output = ds.input.spec[0].spec_table['FLUX']                      # ds.input is the output
+    input_flux = save_input.spec[0].spec_table['FLUX']
+    output_flux = ds.input.spec[0].spec_table['FLUX']                      # ds.input is the output
     sp_order = 1                                # to agree with photom.py
     rownum = find_row_in_ftab(save_input, ftab, ['filter', 'pupil'],
                               slitname=None, order=sp_order)
@@ -1307,13 +1313,14 @@ def test_niriss_soss():
     nelem = ftab.phot_table['nelem'][rownum]
     wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
     relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
-    test_ind = len(input) // 2
+    test_ind = (0, input_flux.shape[1] // 2)
     wl = input_model.spec[0].spec_table['WAVELENGTH'][test_ind]
     rel_resp = np.interp(wl, wavelength, relresponse,
                          left=np.nan, right=np.nan)
     compare = photmj * rel_resp
+
     # Compare the values at the center pixel.
-    ratio = output[test_ind] / input[test_ind]
+    ratio = output_flux[test_ind] / input_flux[test_ind]
     assert_allclose(ratio, compare, rtol=1.e-7)
 
 
@@ -1327,17 +1334,17 @@ def test_niriss_image():
     ftab = create_photom_niriss_image(min_r=8.0, max_r=9.0)
     ds.calc_niriss(ftab)
 
-    input = save_input.data
+    input_data = save_input.data
     output = ds.input.data                      # ds.input is the output
     rownum = find_row_in_ftab(save_input, ftab, ['filter', 'pupil'],
                               slitname=None)
     photmjsr = ftab.phot_table['photmjsr'][rownum]
-    shape = input.shape
+    shape = input_data.shape
     ix = shape[1] // 2
     iy = shape[0] // 2
     compare = photmjsr
     # Compare the values at the center pixel.
-    ratio = output[iy, ix] / input[iy, ix]
+    ratio = output[iy, ix] / input_data[iy, ix]
     assert_allclose(ratio, compare, rtol=1.e-7)
 
 
@@ -1386,7 +1393,7 @@ def test_miri_mrs():
                                   pixel_area=pixel_area, photmjsr=photmjsr)
     ds.calc_miri(ftab)
 
-    input = save_input.data
+    input_data = save_input.data
     output = ds.input.data                      # ds.input is the output
     ix = shape[1] // 2
     iy = shape[0] // 2
@@ -1401,7 +1408,7 @@ def test_miri_mrs():
                                rel_tol=1.e-12))
     # Check the data values.
     compare = value
-    ratio = output[iy, ix] / input[iy, ix]
+    ratio = output[iy, ix] / input_data[iy, ix]
     result.append(math.isclose(ratio, compare, rel_tol=1.e-7))
     assert np.all(result)
 
@@ -1417,7 +1424,7 @@ def test_miri_lrs():
                                   min_r=8.0, max_r=9.0)
     ds.calc_miri(ftab)
 
-    input = save_input.data
+    input_data = save_input.data
     output = ds.input.data                      # ds.input is the output
     # Actual row selection can also require a match with SUBARRAY.
     rownum = find_row_in_ftab(save_input, ftab, ['filter'],
@@ -1434,7 +1441,7 @@ def test_miri_lrs():
                          left=np.nan, right=np.nan)
     compare = photmjsr * rel_resp
     # Compare the values at the center pixel.
-    ratio = output[iy, ix] / input[iy, ix]
+    ratio = output[iy, ix] / input_data[iy, ix]
     assert_allclose(ratio, compare, rtol=1.e-7)
 
 
@@ -1449,7 +1456,7 @@ def test_miri_image():
                                     min_r=8.0, max_r=9.0)
     ds.calc_miri(ftab)
 
-    input = save_input.data
+    input_data = save_input.data
     output = ds.input.data                      # ds.input is the output
     rownum = find_row_in_ftab(save_input, ftab, ['filter'],
                               slitname=None, order=None)
@@ -1457,12 +1464,12 @@ def test_miri_image():
     amplitude = ftab.timecoeff['amplitude'][rownum]
     tau = ftab.timecoeff['tau'][rownum]
     t0 = ftab.timecoeff['t0'][rownum]
-    shape = input.shape
+    shape = input_data.shape
     ix = shape[1] // 2
     iy = shape[0] // 2
     compare = photmjsr + amplitude * np.exp(-(60000 - t0) / tau)  # Added for new PHOTOM step
     # Compare the values at the center pixel.
-    ratio = output[iy, ix] / input[iy, ix]
+    ratio = output[iy, ix] / input_data[iy, ix]
     assert_allclose(ratio, compare, rtol=1.e-7)
 
 
@@ -1476,17 +1483,17 @@ def test_nircam_image():
     ftab = create_photom_nircam_image(min_r=8.0, max_r=9.0)
     ds.calc_nircam(ftab)
 
-    input = save_input.data
+    input_data = save_input.data
     output = ds.input.data                      # ds.input is the output
     rownum = find_row_in_ftab(save_input, ftab, ['filter', 'pupil'],
                               slitname=None, order=None)
     photmjsr = ftab.phot_table['photmjsr'][rownum]
-    shape = input.shape
+    shape = input_data.shape
     ix = shape[1] // 2
     iy = shape[0] // 2
     compare = photmjsr
     # Compare the values at the center pixel.
-    ratio = output[iy, ix] / input[iy, ix]
+    ratio = output[iy, ix] / input_data[iy, ix]
     assert_allclose(ratio, compare, rtol=1.e-7)
 
 
@@ -1503,18 +1510,18 @@ def test_nircam_spec():
 
     for (k, slit) in enumerate(save_input.slits):
 
-        input = slit.data
+        input_data = slit.data
         output = ds.input.slits[k].data         # ds.input is the output
         rownum = find_row_in_ftab(save_input, ftab, ['filter', 'pupil'],
                                   slitname=None, order=None)
         photmjsr = ftab.phot_table['photmjsr'][rownum]
-        shape = input.shape
+        shape = input_data.shape
         ix = shape[1] // 2
         iy = shape[0] // 2
         nelem = ftab.phot_table['nelem'][rownum]
         wavelength = ftab.phot_table['wavelength'][rownum][0:nelem]
         relresponse = ftab.phot_table['relresponse'][rownum][0:nelem]
-        shape = input.shape
+        shape = input_data.shape
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
@@ -1527,7 +1534,7 @@ def test_nircam_spec():
                              left=np.nan, right=np.nan)
         compare = photmjsr * rel_resp / disp
         # Compare the values at the center pixel.
-        ratio = output[iy, ix] / input[iy, ix]
+        ratio = output[iy, ix] / input_data[iy, ix]
         assert_allclose(ratio, compare, rtol=1.e-7)
 
 
@@ -1541,18 +1548,18 @@ def test_fgs():
     ftab = create_photom_fgs_image(value)
     ds.calc_fgs(ftab)
 
-    input = save_input.data
+    input_data = save_input.data
     output = ds.input.data                      # ds.input is the output
     # The FGS reference file has only one row, and there is no selection
     # criterion.
     rownum = 0
     photmjsr = ftab.phot_table['photmjsr'][rownum]
-    shape = input.shape
+    shape = input_data.shape
     ix = shape[1] // 2
     iy = shape[0] // 2
     compare = photmjsr
     # Compare the values at the center pixel.
-    ratio = output[iy, ix] / input[iy, ix]
+    ratio = output[iy, ix] / input_data[iy, ix]
     assert_allclose(ratio, compare, rtol=1.e-7)
 
 
@@ -1673,10 +1680,10 @@ def test_apply_photom_2(srctype):
 
     result = []
     for (k, slit) in enumerate(save_input.slits):
-        input = slit.data                       # this is from save_input
+        input_data = slit.data                       # this is from save_input
         output = output_model.slits[k].data
 
-        shape = input.shape
+        shape = input_data.shape
         ix = shape[1] // 2
         iy = shape[0] // 2
         wl = slit.wavelength[iy, ix]
@@ -1686,7 +1693,7 @@ def test_apply_photom_2(srctype):
             rel_resp /= output_model.slits[k].meta.photometry.pixelarea_steradians
         compare = photmj * rel_resp
 
-        ratio = output[iy, ix] / input[iy, ix]
+        ratio = output[iy, ix] / input_data[iy, ix]
         result.append(np.allclose(ratio, compare, rtol=1.e-7))
 
     assert np.all(result)
