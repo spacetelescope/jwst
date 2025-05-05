@@ -128,7 +128,7 @@ class Tso3Pipeline(Pipeline):
             # Working with spectroscopic TSO data;
             # define output for x1d (level 3) products
 
-            x1d_result = datamodels.MultiSpecModel()
+            x1d_result = datamodels.TSOMultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
             x1d_result.int_times = FITS_rec.from_columns(
                 input_models[0].int_times.columns, nrows=input_models[0].meta.exposure.nints
