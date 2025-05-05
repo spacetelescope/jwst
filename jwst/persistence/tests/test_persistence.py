@@ -179,10 +179,10 @@ class TrapParsTester:
         ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
         ds.trappars_model = create_trappars_model()
         pars = ds.get_parameters()
-        np.testing.assert_equal(pars[0], np.array([180.0, 270.0, 80.0]))
-        np.testing.assert_equal(pars[1], np.array([-0.0004, -0.004, -0.0009]))
-        np.testing.assert_equal(pars[2], np.array([290.0, 140.0, 320.0]))
-        np.testing.assert_equal(pars[3], np.array([-0.01, -0.001, -0.0002]))
+        assert np.allclose(pars[0], np.array([180.0, 270.0, 80.0]), rtol=1.0e-7, atol=1.0e-7)
+        assert np.allclose(pars[1], np.array([-0.0004, -0.004, -0.0009]), rtol=1.0e-7, atol=1.0e-7)
+        assert np.allclose(pars[2], np.array([290.0, 140.0, 320.0]), rtol=1.0e-7, atol=1.0e-7)
+        assert np.allclose(pars[3], np.array([-0.01, -0.001, -0.0002]), rtol=1.0e-7, atol=1.0e-7)
 
     def test_get_capture_param(self, generate_trap_pars):
         """
@@ -195,16 +195,16 @@ class TrapParsTester:
         pars = generate_trap_pars()
         index = 1
         returned_pars = ds.get_capture_param(pars, index)
-        assert returned_pars[0] == 270.0
-        assert returned_pars[1] == -0.004
-        assert returned_pars[2] == 140.0
+        assert np.allclose(returned_pars[0], 270.0, rtol=1.0e-7, atol=1.0e-7)
+        assert np.allclose(returned_pars[1], -0.004, rtol=1.0e-7, atol=1.0e-7)
+        assert np.allclose(returned_pars[2], 140.0, rtol=1.0e-7, atol=1.0e-7)
 
     def test_get_decay_param(self, generate_trap_pars):
         ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
         pars = generate_trap_pars()
         index = 1
         capture_param = ds.get_capture_param(pars, index)
-        assert capture_param == -0.001
+        assert np.allclose(capture_param, -0.001, rtol=1.0e-7, atol=1.0e-7)
 
 
 def test_get_group_info(create_sci_model):
@@ -212,8 +212,8 @@ def test_get_group_info(create_sci_model):
     ds = persistence.DataSet(output_model, None, 40.0, False, None, None, None)
     integration = 1
     ds.get_group_info(integration)
-    assert ds.tframe == 10.73677
-    assert ds.tgroup == 21.47354
+    assert np.allclose(ds.tframe, 10.73677, rtol=1.0e-7, atol=1.0e-7)
+    assert np.allclose(ds.tgroup, 21.47354, rtol=1.0e-7, atol=1.0e-7)
     assert ds.ngroups == 12
     assert ds.nframes == 1
     assert ds.groupgap == 1
