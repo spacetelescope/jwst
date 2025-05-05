@@ -5,8 +5,9 @@ import numpy as np
 from astropy import units as u
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import SpecModel, MultiSpecModel
+from stdatamodels.jwst.datamodels import SpecModel, TSOMultiSpecModel
 
+from jwst.extract_1d.extract import make_tso_specmodel
 from jwst.photom import photom
 from jwst.lib.dispaxis import get_dispersion_direction
 
@@ -94,7 +95,7 @@ def mk_wavelength(shape, min_wl, max_wl, dispaxis=1):
 
 def mk_soss_spec(settings, speclen):
     """
-    Create a 2-D array of wavelengths, linearly spaced in one axis.
+    Create a TSO spec model for calibrating.
 
     Parameters
     ----------
@@ -108,11 +109,11 @@ def mk_soss_spec(settings, speclen):
 
     Returns
     -------
-    model : MultiSpecModel
+    model : TSOMultiSpecModel
         The simulated output of extract_1d to be calibrated; this is
         the SOSS-specific ordering to be tested.
     """
-    model = MultiSpecModel()
+    spec_list = []
     for i, inspec in enumerate(settings):
         # Make number of columns equal to length of SpecModel's spec_table dtype, then assign
         # dtype to each column. Use to initialize SpecModel for entry into output MultiSpecModel
@@ -125,18 +126,21 @@ def mk_soss_spec(settings, speclen):
                             np.ones(speclen[i])
                             for _ in range(len(SpecModel().spec_table.dtype) - 1)
                         ]
-                    ),
-                    strict=True,
+                    )
                 )
             ),
             dtype=SpecModel().spec_table.dtype,
         )
         specmodel = datamodels.SpecModel(spec_table=otab)
-        model.meta.instrument.filter = inspec["filter"]
-        model.meta.instrument.pupil = inspec["pupil"]
         specmodel.spectral_order = inspec["order"]
-        model.spec.append(specmodel)
+        spec_list.append(specmodel)
 
+    tso_spec_model = make_tso_specmodel(spec_list)
+
+    model = TSOMultiSpecModel()
+    model.meta.instrument.filter = inspec["filter"]
+    model.meta.instrument.pupil = inspec["pupil"]
+    model.spec.append(tso_spec_model)
     return model
 
 
