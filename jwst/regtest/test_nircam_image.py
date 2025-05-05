@@ -9,6 +9,9 @@ from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
 def run_detector1pipeline(rtdata_module):
