@@ -1,8 +1,4 @@
-"""
-Python implementation of the KLIP algorithm.
-
-Based on the Mathematica script from Remi Soummer.
-"""
+"""Python implementation of the KLIP algorithm."""
 
 import numpy as np
 
@@ -98,18 +94,18 @@ def karhunen_loeve_transform(m, normalize=False):
 
     Parameters
     ----------
-    m : numpy ndarray
+    m : numpy.ndarray
         The array of flattened, background subtracted reference arrays
     normalize : bool, default=False
         Normalize the returned transform?
 
     Returns
     -------
-    klvect : numpy ndarray
+    klvect : numpy.ndarray
         The Karhunen-Loeve Transform of the input arrays
-    eigval : numpy ndarray
+    eigval : numpy.ndarray
         Array of eigenvalues
-    eigvect : numpy ndarray
+    eigvect : numpy.ndarray
         Matrix of eigenvectors
     """
     eigval, eigvect = np.linalg.eigh(np.cov(m))

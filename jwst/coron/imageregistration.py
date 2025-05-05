@@ -17,25 +17,25 @@ def align_fourier_lsq(reference, target, mask=None):
 
     Parameters
     ----------
-        reference : numpy.ndarray
-            A 2D (``NxK``) image to be aligned to
+    reference : numpy.ndarray
+        A 2D (``NxK``) image to be aligned to
 
-        target : numpy.ndarray
-            A 2D (``NxK``) image to align to reference
+    target : numpy.ndarray
+        A 2D (``NxK``) image to align to reference
 
-        mask : numpy.ndarray, None
-            A 2D (``NxK``) image indicating pixels to ignore when
-            performing the minimization. The masks acts as
-            a weighting function in performing the fit.
+    mask : numpy.ndarray, None
+        A 2D (``NxK``) image indicating pixels to ignore when
+        performing the minimization. The masks acts as
+        a weighting function in performing the fit.
 
     Returns
     -------
-        results : numpy.ndarray
-            A 1D vector containing (`xshift`, `yshift`, `beta`) values from
-            LSQ optimization, where `xshift` and `yshift` are the misalignment
-            of target from reference and `beta` is the fraction by which the
-            target intensity must be reduced to match the intensity
-            of the reference.
+    results : numpy.ndarray
+        A 1D vector containing (`xshift`, `yshift`, `beta`) values from
+        LSQ optimization, where `xshift` and `yshift` are the misalignment
+        of target from reference and `beta` is the fraction by which the
+        target intensity must be reduced to match the intensity
+        of the reference.
     """
     init_pars = [0.0, 0.0, 1.0]
     results, _ = optimize.leastsq(
@@ -54,17 +54,17 @@ def shift_subtract(params, reference, target, mask=None):
 
     Parameters
     ----------
-        params : tuple
-            Tuple of xshift, yshift, beta
+    params : tuple
+        Tuple of xshift, yshift, beta
 
-        reference : numpy.ndarray
-            See align_fourier_lsq
+    reference : numpy.ndarray
+        See align_fourier_lsq
 
-        target : numpy.ndarray
-            See align_fourier_lsq
+    target : numpy.ndarray
+        See align_fourier_lsq
 
-        mask : numpy.ndarray, None
-            See align_fourier_lsq
+    mask : numpy.ndarray, None
+        See align_fourier_lsq
 
     Returns
     -------
@@ -89,17 +89,17 @@ def fourier_imshift(image, shift):
 
     Parameters
     ----------
-        image : numpy.ndarray
-            A 2D (``NxK``) or 3D (``LxNxK``) image.
+    image : numpy.ndarray
+        A 2D (``NxK``) or 3D (``LxNxK``) image.
 
-        shift : numpy.ndarray
-            A 1D or 2D array of shape ``Lx2`` containing pixel values by which
-            to shift image slices in the X and Y directions.
+    shift : numpy.ndarray
+        A 1D or 2D array of shape ``Lx2`` containing pixel values by which
+        to shift image slices in the X and Y directions.
 
     Returns
     -------
-        offset : numpy.ndarray
-            Shifted image
+    offset : numpy.ndarray
+        Shifted image
     """
     ndim = len(image.shape)
 
