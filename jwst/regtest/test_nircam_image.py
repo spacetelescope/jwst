@@ -32,7 +32,7 @@ def run_detector1pipeline(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1pipeline_with_sirs(rtdata_module):
+def run_detector1pipeline_with_sirs(rtdata_module, resource_tracker):
     """Run calwebb_detector1 on NIRCam imaging long data using SIRS.
 
     SIRS is the convolution kernel algorithm - Simple Improved Reference Subtraction.
@@ -46,7 +46,8 @@ def run_detector1pipeline_with_sirs(rtdata_module):
             "--steps.refpix.refpix_algorithm=sirs",
             "--steps.refpix.save_results=True",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +70,7 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_image2pipeline(run_detector1pipeline, rtdata_module):
+def run_image2pipeline(run_detector1pipeline, rtdata_module, resource_tracker):
     """Run calwebb_image2 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.input = "jw01538046001_03105_00001_nrcalong_rate.fits"
@@ -77,11 +78,12 @@ def run_image2pipeline(run_detector1pipeline, rtdata_module):
             "--steps.assign_wcs.save_results=True",
             "--steps.flat_field.save_results=True",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
-def run_image3pipeline(run_image2pipeline, rtdata_module):
+def run_image3pipeline(run_image2pipeline, rtdata_module, resource_tracker):
     """Run calwebb_image3 on NIRCam imaging long data"""
     rtdata = rtdata_module
     # Grab rest of _rate files for the asn and run image2 pipeline on each to
@@ -105,7 +107,20 @@ def run_image3pipeline(run_image2pipeline, rtdata_module):
             "--steps.tweakreg.save_results=True",
             "--steps.source_catalog.snr_threshold=20",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
+
+
+def test_log_tracked_resources_detector1(log_tracked_resources, run_detector1pipeline_with_sirs):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_image2(log_tracked_resources, run_image2pipeline):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_image3(log_tracked_resources, run_image3pipeline):
+    log_tracked_resources()
 
 
 @pytest.mark.bigdata
