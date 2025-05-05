@@ -190,7 +190,7 @@ class STFITSDiff(FITSDiff):
             self.filenameb = f"<{self.b.__class__.__name__} object at {id(self.b):#x}>"
 
         # The following lines are STScI's additions:
-        # 1. Get a list of additional HDUs to ignore, when ignore_hdus contain wildards
+        # 1. Get a list of additional HDUs to ignore, when ignore_hdus contain wildcards
         #    (only in this case will self.ignore_hdu_patterns be populated).
         additional_hdus_to_ignore = []
         if self.ignore_hdu_patterns:
@@ -1413,7 +1413,8 @@ class STTableDataDiff(TableDataDiff):
                 rel_values = diffs[nozeros] / np.abs(bnonan[nozeros])
                 rel_diffs = rel_values[rel_values > self.rtol].size
 
-                if abs_diffs > 0 or rel_diffs > 0:
+                sum_diffs = np.any(diffs > (self.atol + self.rtol * np.abs(bnonan)))
+                if sum_diffs:
                     # Report the total number of zeros, nans, and no-nan values
                     self.report_zeros_nan.add_row(
                         (
@@ -1444,8 +1445,8 @@ class STTableDataDiff(TableDataDiff):
                         )
                     )
 
-                self.diff_total += abs_diffs
-                self.rel_diffs += rel_diffs
+                    self.diff_total += abs_diffs
+                    self.rel_diffs += rel_diffs
 
         # Calculate the absolute difference
         total_values = len(self.a) * len(self.a.dtype.fields)
