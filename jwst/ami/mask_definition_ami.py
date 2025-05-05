@@ -1,5 +1,4 @@
 import numpy as np
-import math
 
 from .utils import rotate2dccw
 
@@ -31,7 +30,6 @@ class NRMDefinition:
         self.hdia = nrm_model.flat_to_flat
         self.active_D = nrm_model.diameter
         self.OD = nrm_model.pupil_circumscribed
-        self.ctrs = []
 
         self.read_nrm_model(nrm_model, chooseholes=chooseholes)
 
@@ -43,8 +41,9 @@ class NRMDefinition:
         ----------
         nrm_model : NRMModel
             Datamodel containing NRM reference file data
-        chooseholes : list
-            None, or e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
+        chooseholes : list, optional
+            List of hole names, e.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask.
+            If None, use all the holes in the real seven-hole mask.
 
         Returns
         -------
@@ -65,21 +64,15 @@ class NRMDefinition:
             ]
         )
 
-        holedict = {}  # as_built names, C2 open, C5 closed, but as designed coordinates
+        # as_built names, C2 open, C5 closed, but as designed coordinates
         # Assemble holes by actual open segment names (as_built).  Either the full mask or the
         # subset-of-holes mask will be V2-reversed after the as_designed centers are defined
         # Debug orientations with b4,c6,[c2]
-        allholes = ("b4", "c2", "b5", "b2", "c1", "b6", "c6")
-
-        for hole, coords in zip(allholes, ctrs_asdesigned, strict=False):
-            holedict[hole] = coords
-
         if chooseholes:  # holes B4 B5 C6 asbuilt for orientation testing
-            holelist = []
-            for h in allholes:
-                if h in chooseholes:
-                    holelist.append(holedict[h])
-            ctrs_asdesigned = np.array(holelist)
+            chooseholes = np.array([s.upper() for s in chooseholes])
+            allholes = np.array(["B4", "C2", "B5", "B2", "C1", "B6", "C6"])
+            indices = np.array([np.where(allholes == s)[0][0] for s in chooseholes])
+            ctrs_asdesigned = ctrs_asdesigned[indices]
 
         ctrs_asbuilt = ctrs_asdesigned.copy()
 
@@ -95,18 +88,3 @@ class NRMDefinition:
 
         # create 'live' hole centers in an ideal, orthogonal undistorted xy pupil space,
         self.ctrs = ctrs_asbuilt
-
-    def showmask(self):
-        """
-        Calculate the diameter of the smallest centered circle (D) enclosing the live mask area.
-
-        Returns
-        -------
-        float
-            Diameter of the smallest centered circle
-        """
-        radii = []
-        for ctr in self.ctrs:
-            radii.append(math.sqrt(ctr[0] * ctr[0] + ctr[1] * ctr[1]))
-
-        return 2.0 * (max(radii) + 0.5 * self.hdia)
