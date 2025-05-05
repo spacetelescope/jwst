@@ -2,9 +2,10 @@
 
 import logging
 import warnings
+from copy import deepcopy
+
 import numpy as np
 from asdf.tags.core.ndarray import asdf_datatype_to_numpy_dtype
-
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
@@ -230,10 +231,10 @@ def expand_flat_spec(input_model):
         A set of simple spectra, one per extension.
     """
     output_model = datamodels.MultiSpecModel()
-    for spec in input_model.spec:
-        n_spectra = len(spec.spec_table)
+    for old_spec in input_model.spec:
+        n_spectra = len(old_spec.spec_table)
         for i in range(n_spectra):
-            spec_row = spec.spec_table[i]
+            spec_row = old_spec.spec_table[i]
             n_elements = int(spec_row["NELEMENTS"])
             new_spec = datamodels.SpecModel()
             data_type = new_spec.schema["properties"]["spec_table"]["datatype"]
@@ -247,12 +248,21 @@ def expand_flat_spec(input_model):
             new_spec.spec_table = spec_table
 
             # Update spectral metadata
-            if hasattr(spec.meta, "wcs"):
-                new_spec.meta.wcs = spec.meta.wcs
-            copy_spec_meta(spec, new_spec)
-            copy_column_units(spec, new_spec)
+            if hasattr(old_spec.meta, "wcs"):
+                new_spec.meta.wcs = deepcopy(old_spec.meta.wcs)
+            copy_spec_meta(old_spec, new_spec)
+            copy_column_units(old_spec, new_spec)
+
+            # Add an int_num from the table
+            new_spec.int_num = spec_row["INT_NUM"]
+
             output_model.spec.append(new_spec)
 
     # Update meta
     output_model.update(input_model, only="PRIMARY")
+
+    # Copy int_times if present
+    if hasattr(input_model, "int_times"):
+        output_model.int_times = input_model.int_times.copy()
+
     return output_model
