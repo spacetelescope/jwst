@@ -8,7 +8,7 @@ pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(rtdata_module):
+def run_pipeline(rtdata_module, resource_tracker):
     """Run calwebb_coron3 on MIRI 4QPM coronographic data."""
     rtdata = rtdata_module
     rtdata.get_asn("miri/coron/jw01386-c1002_20230109t015044_coron3_00001_asn.json")
@@ -19,7 +19,8 @@ def run_pipeline(rtdata_module):
     ]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: Mean of empty slice
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     return rtdata
 

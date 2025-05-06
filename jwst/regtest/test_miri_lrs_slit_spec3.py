@@ -78,7 +78,7 @@ def run_pipeline(rtdata_module, request, resource_tracker):
         args.append(f"--steps.resample_spec.output_file={output_file}")
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
-    with resource_tracker.track() if request.param == "user_wcs+shape" else nullcontext():
+    with resource_tracker.track():
         Step.from_cmdline(args)
 
 
