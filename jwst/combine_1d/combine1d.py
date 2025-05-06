@@ -675,6 +675,31 @@ def check_exptime(exptime_key):
 
 
 def _read_input_spectra(input_model, exptime_key, input_spectra):
+    """
+    Read input spectra from a datamodel.
+
+    Parameters
+    ----------
+    input_model : MultiSpecModel, TSOMultiSpecModel, MRSSpecModel
+        A datamodel with a ``spec`` attribute, containing spectra.
+        If TSOMultiSpecModel, integrations in the spectral table rows
+        are expanded into separate spectra.
+    exptime_key : str
+        Exposure time key to use for weighting.
+    input_spectra : dict
+        Dictionary to hold input spectra, keyed by spectral order.
+        Updated in place.
+
+    Returns
+    -------
+    input_spectra : dict
+        The updated dictionary, holding all spectra in the input model.
+
+    Raises
+    ------
+    TypeError
+        If the input datamodel does not have a ``spec`` attribute.
+    """
     if not hasattr(input_model, "spec"):
         raise TypeError(f"Invalid input datamodel: {type(input_model)}")
     if isinstance(input_model, datamodels.TSOMultiSpecModel):
@@ -696,8 +721,10 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     Parameters
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
-        The input spectra.  This will likely be a ModelContainer object.
-
+        The input spectra.  This will likely be a ModelContainer object,
+        but may also be a multi-spectra model, such as MultiSpecModel or
+        TSOSpecModel.  Input spectra may have different spectral orders
+        or wavelengths but should all share the same target.
     exptime_key : str
         A string identifying which keyword to use to get the exposure time,
         which is used as a weight when combining spectra.  The value should
@@ -706,8 +733,8 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
 
     Returns
     -------
-    output_model : `~jwst.datamodels.JwstDataModel`
-        A datamodels.CombinedSpecModel object.
+    output_model : `~jwst.datamodels.MultiCombinedSpecModel`
+        A combined spectra datamodel.
     """
     log.debug(f"Using exptime_key = {exptime_key}.")
 

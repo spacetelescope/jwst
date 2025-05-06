@@ -86,6 +86,7 @@ def tso_multi_spec():
         # Add some metadata
         spec.source_id = i + 1
         spec.name = f"test {i + 1}"
+        spec.meta.wcs = ['test']
 
         tso_multi.spec.append(spec)
     return tso_multi
@@ -265,5 +266,11 @@ def test_expand_flat_spec(tso_multi_spec):
         input_spec_num = i // n_int + 1
         assert spec.source_id == input_spec_num
         assert spec.name == f"test {input_spec_num}"
+
+        # WCS object is present and is a deep copy of the input
+        assert spec.meta.wcs[0] == 'test'
+        spec.meta.wcs[0] = 'copy'
+        assert spec.meta.wcs[0] == 'copy'
+        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs[0] == 'test'
 
         assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)

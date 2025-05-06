@@ -475,13 +475,13 @@ def create_poly(coeff):
 
 def populate_time_keywords(input_model, output_model):
     """
-    Copy the integration times keywords to header keywords.
+    Copy the integration time keywords to header keywords.
 
     Parameters
     ----------
-    input_model : JWSTDataModel
+    input_model : TSOMultiSpecModel
         The input science model.
-    output_model : JWSTDataModel
+    output_model : TSOMultiSpecModel
         The output science model.  This may be modified in-place.
     """
     nints = input_model.meta.exposure.nints
@@ -489,12 +489,13 @@ def populate_time_keywords(input_model, output_model):
 
     if hasattr(input_model, "data"):
         shape = input_model.data.shape
-
         if len(shape) == 2:
             num_integ = 1
-        else:  # len(shape) == 3
+        else:
+            # len(shape) == 3
             num_integ = shape[0]
-    else:  # e.g. MultiSlit data
+    else:
+        # e.g. MultiSlit data
         num_integ = 1
 
     # This assumes that the spec attribute of output_model has already been created,
@@ -503,7 +504,7 @@ def populate_time_keywords(input_model, output_model):
     for spec in output_model.spec:
         n_output_spec += len(spec.spec_table)
 
-    # num_j is the number of spectra per integration, e.g. the number
+    # num_j is the number of spectral tables, e.g. the number
     # of fixed-slit spectra, MSA spectra, or different
     # spectral orders; num_integ is the number of integrations.
     # The total number of output spectra is n_output_spec = num_integ * num_j
@@ -551,8 +552,9 @@ def populate_time_keywords(input_model, output_model):
             "Making best guess on integration numbers."
         )
 
-        # No update needed: the integration index is stored when
-        # the spectrum is created.
+        # Set a simple integration index
+        for spec in output_model.spec:
+            spec.spec_table["INT_NUM"] = np.arange(1, len(spec.spec_table) + 1)
         return
 
     # If we have a single plane (e.g. ImageModel or MultiSlitModel),
@@ -1620,7 +1622,7 @@ def create_extraction(
     save_residual_image : bool, optional
         If True, the residual image (from input minus scene model) will be returned
         as an ImageModel or CubeModel.  If False, the return value is None.
-    **kwargs : dict, optional
+    **kwargs
         Additional options to pass to `get_extract_parameters`.
 
     Returns

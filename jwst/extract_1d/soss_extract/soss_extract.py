@@ -1207,6 +1207,8 @@ def run_extract1d(
     output_model.update(input_model)  # Copy meta data from input to output.
 
     # Initialize output spectra returned by ATOCA
+    # NOTE: these diagnostic spectra are formatted as a simple MultiSpecModel,
+    # with integrations in separate spectral extensions.
     output_atoca = datamodels.MultiSpecModel()
     output_atoca.update(input_model)
 

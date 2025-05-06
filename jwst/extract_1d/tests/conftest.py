@@ -678,7 +678,7 @@ def mock_10_multi_int_spec():
         spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
         spec_list.append(spec_model)
 
-    tso_spec = ex.make_tso_specmodel(spec_list)  # noqa: SLF001
+    tso_spec = ex.make_tso_specmodel(spec_list)
     model = dm.TSOMultiSpecModel()
     model.spec.append(tso_spec)
 
@@ -701,7 +701,7 @@ def mock_2_multi_int_spec():
         spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
         spec_list.append(spec_model)
 
-    tso_spec = ex.make_tso_specmodel(spec_list)  # noqa: SLF001
+    tso_spec = ex.make_tso_specmodel(spec_list)
     model = dm.TSOMultiSpecModel()
     model.spec.append(tso_spec)
 
