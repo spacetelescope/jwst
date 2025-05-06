@@ -59,14 +59,14 @@ def tso_aperture_photometry(
         phot_aper = CircularAperture((xcenter, ycenter), r=radius)
         bkg_aper = CircularAnnulus((xcenter, ycenter), r_in=radius_inner, r_out=radius_outer)
 
-    if datamodel.meta.bunit_data == 'MJy/sr':
+    if datamodel.meta.bunit_data == "MJy/sr":
         # Convert the input data and errors from MJy/sr to Jy
         factor = 1e6 * datamodel.meta.photometry.pixelarea_steradians
         datamodel.data *= factor
         datamodel.err *= factor
-        datamodel.meta.bunit_data = 'Jy'
-        datamodel.meta.bunit_err = 'Jy'
-    elif datamodel.meta.bunit_data == 'DN/s':
+        datamodel.meta.bunit_data = "Jy"
+        datamodel.meta.bunit_err = "Jy"
+    elif datamodel.meta.bunit_data == "DN/s":
         # Convert the input data and errors from DN/s to electrons
         factor = datamodel.meta.exposure.integration_time * gain_2d
         datamodel.data *= factor
