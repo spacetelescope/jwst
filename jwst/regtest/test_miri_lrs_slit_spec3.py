@@ -2,7 +2,7 @@
     This takes an association and generates the level 3 products."""
 import pytest
 import numpy as np
-from contextlib import nullcontext
+
 
 from gwcs import wcstools
 import asdf
