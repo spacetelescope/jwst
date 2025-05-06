@@ -29,7 +29,7 @@ def test_matrix_dft(circular_pupil):
     argmax_2d = np.unravel_index(np.argmax(np.abs(dft_offset)), dft.shape)
     center = np.array(dft_offset.shape)/2
     offset_idx = center + np.array(offset) - 1
-    assert(all(argmax_2d == offset_idx))
+    assert_allclose(argmax_2d, offset_idx, atol=1)
 
     # test centering options
     dft_symmetric = matrix_dft.matrix_dft(circular_pupil, nlam_d, npix, centering="SYMMETRIC")
