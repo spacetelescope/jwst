@@ -63,7 +63,7 @@ class PersistenceStep(Step):
                 else:
                     msg = "Missing reference file types: "
                     for name in missing_reftypes:
-                        msg += (" " + name)  # fmt: skip
+                        msg += " " + name
                 self.log.warning("%s", msg)
                 input_model.meta.cal_step.persistence = "SKIPPED"
                 return input_model

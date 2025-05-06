@@ -9,22 +9,23 @@ from jwst import datamodels
 from jwst.persistence import persistence
 
 
-def test_no_NaN():
+def test_no_nan():
+    """Test the no_nan function."""
     input_model = datamodels.RampModel()
     input_model.data = 2.0 * np.ones((5, 10, 10, 10))
     # Datamodel with no nans or zeros should be unchanged
-    result = persistence.no_NaN(input_model, 1.0, zap_nan=True, zap_zero=True)
+    result = persistence.no_nan(input_model, 1.0, zap_nan=True, zap_zero=True)
     np.testing.assert_equal(result.data, input_model.data)
 
     input_model.data[0] = np.nan
     input_model.data[1] = 0.0
     # Test replacing both NaNs and zeros
-    result = persistence.no_NaN(input_model, 12.0, zap_nan=True, zap_zero=True)
+    result = persistence.no_nan(input_model, 12.0, zap_nan=True, zap_zero=True)
     np.testing.assert_equal(result.data[0], 12.0)
     np.testing.assert_equal(result.data[1], 12.0)
     np.testing.assert_equal(result.data[2:], 2.0)
     # Test replacing only NaNs
-    result = persistence.no_NaN(input_model, 11.0, zap_nan=True)
+    result = persistence.no_nan(input_model, 11.0, zap_nan=True)
     np.testing.assert_equal(result.data[0], 11.0)
     np.testing.assert_equal(result.data[1], 0.0)
     np.testing.assert_equal(result.data[2:], 2.0)
@@ -134,6 +135,14 @@ def test_get_slice(create_sci_model, create_traps_filled_model):
 
 
 def test_ref_matches_sci(create_traps_filled_model):
+    """
+    Test the ref_matches_sci method.
+
+    Parameters
+    ----------
+    create_traps_filled_model : pytest fixture
+        Fixture that returns a TrapsFilledModel DataModel for testing
+    """
     # Create empty DataSet
     ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
     tf = create_traps_filled_model(2048, 2048)
@@ -142,7 +151,7 @@ def test_ref_matches_sci(create_traps_filled_model):
         (slice(256, 768, None), slice(1024, 1536, None)),
     ]
     expected_results = [True, False]
-    for this_slice, expected in zip(test_slices, expected_results):
+    for this_slice, expected in zip(test_slices, expected_results, strict=True):
         assert ds.ref_matches_sci(tf, this_slice) == expected
 
 
@@ -163,6 +172,14 @@ def test_get_subarray(create_trap_density_model):
 
 @pytest.fixture(scope="class")
 def generate_trap_pars():
+    """
+    Fixture to create arrays of trappar parameters.
+
+    Returns
+    -------
+    pars : tuple of 4 numpy.ndarrays
+        The tuple of parameter arrays
+    """
     par0 = np.array([180.0, 270.0, 80.0])
     par1 = np.array([-0.0004, -0.004, -0.0009])
     par2 = np.array([290.0, 140.0, 320.0])
@@ -175,6 +192,7 @@ class TrapParsTester:
     """Class to handle testing trap pars."""
 
     def test_get_parameters(self):
+        """Test the get_parameters method."""
         # Create empty DataSet
         ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
         ds.trappars_model = create_trappars_model()
@@ -188,8 +206,10 @@ class TrapParsTester:
         """
         Test the get_capture_param method.
 
-        Input data is a tuple of 4 float arrays of length 3
-        But still need to create an empty dataset
+        Parameters
+        ----------
+        generate_trap_pars : pytest fixture
+            Fixture that returns a TrapPars DataModel for testing
         """
         ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
         pars = generate_trap_pars()
@@ -200,6 +220,14 @@ class TrapParsTester:
         assert np.allclose(returned_pars[2], 140.0, rtol=1.0e-7, atol=1.0e-7)
 
     def test_get_decay_param(self, generate_trap_pars):
+        """
+        Test the get_decay_param method.
+
+        Parameters
+        ----------
+        generate_trap_pars : pytest fixture
+            Fixture that returns a TrapPars DataModel for testing
+        """
         ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
         pars = generate_trap_pars()
         index = 1
@@ -208,6 +236,14 @@ class TrapParsTester:
 
 
 def test_get_group_info(create_sci_model):
+    """
+    Test the get_group_info method.
+
+    Parameters
+    ----------
+    create_sci_model : pytest fixture
+        Fixture that returns a science DataModel for testing
+    """
     output_model = create_sci_model(3, 12, 512, 512, 257, 769)
     ds = persistence.DataSet(output_model, None, 40.0, False, None, None, None)
     integration = 1
@@ -221,6 +257,14 @@ def test_get_group_info(create_sci_model):
 
 
 def create_persistencesat_model():
+    """
+    Create a PersistencesatModel for testing.
+
+    Returns
+    -------
+    persat_model : DataModel
+        The minimal PersistencesatModel for testing
+    """
     scidata = np.ones((2048, 2048), dtype=np.float32)
     scidata = scidata[:] * 40.0
     persat_model = datamodels.PersistenceSatModel(data=scidata)
@@ -233,17 +277,14 @@ def test_do_all(create_sci_model, create_traps_filled_model, create_trap_density
     """
     Test the do_all method.
 
-    Needs a Dataset object with:
-        .output_obj.data.shape (which must have len 4, like a RampModel)
-        .output_obj.meta.exposure.group_time
-        .trap_density.data.shape
-        .traps_filled (will create one if None)
-        .trap_density
-        .persistencesat
-        .output_obj.meta.exposure.start_time
-        .output_obj.meta.exposure.end_time
-        .traps_filled.data
-        .save_persistence
+    Parameters
+    ----------
+    create_sci_model : pytest fixture
+        Fixture that returns a science DataModel for testing
+    create_traps_filled_model : pytest fixture
+        Fixture that returns a TrapsFilledModel DataModel for testing
+    create_trap_density_model : pytest fixture
+        Fixture that returns a TrapDensityModel DataModel for testing
     """
     input_model = create_sci_model(3, 12, 512, 512, 257, 769)
     traps_filled_model = create_traps_filled_model(2048, 2048)

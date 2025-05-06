@@ -17,7 +17,7 @@ from traps, compared with photon-generated charges.
 """
 
 
-def no_NaN(  # noqa: N802
+def no_nan(
     input_model,
     fill_value,
     zap_nan=False,
@@ -231,7 +231,7 @@ class DataSet:
         # rely on that because there might not be an input traps_filled file.
         (det_ny, det_nx) = self.trap_density.data.shape
 
-        is_subarray = (shape[-2] != det_ny or shape[-1] != det_nx)  # fmt: skip
+        is_subarray = (shape[-2] != det_ny) or (shape[-1] != det_nx)
         if is_subarray:
             log.debug("The input is a subarray.")
         else:
@@ -248,10 +248,10 @@ class DataSet:
             self.traps_filled.meta.subarray.ysize = det_ny
         else:
             have_traps_filled = True
-            self.traps_filled = no_NaN(self.traps_filled, 0.0, zap_nan=True)
+            self.traps_filled = no_nan(self.traps_filled, 0.0, zap_nan=True)
 
-        self.trap_density = no_NaN(self.trap_density, 0.0, zap_nan=True)
-        self.persistencesat = no_NaN(self.persistencesat, 1.0e7, zap_nan=True)
+        self.trap_density = no_nan(self.trap_density, 0.0, zap_nan=True)
+        self.persistencesat = no_nan(self.persistencesat, 1.0e7, zap_nan=True)
 
         if have_traps_filled:  # was there an actual traps_filled file?
             # Decrease traps_filled by the number of traps that decayed
@@ -610,9 +610,7 @@ class DataSet:
 
         # This assumes that the saturation step has already been run.
         # n_sat is a 2-D array of the number of saturated groups per pixel.
-        s_mask = (
-            np.bitwise_and(gdq[1:, :, :], gdqflags["SATURATED"]) > 0
-        )  # fmt: skip
+        s_mask = np.bitwise_and(gdq[1:, :, :], gdqflags["SATURATED"]) > 0
         diff[s_mask] = huge_diff
         sat = s_mask.astype(np.int32)
         n_sat = sat.sum(axis=0)
@@ -641,9 +639,7 @@ class DataSet:
         # slope will have units (DN / persistence_saturation_limit) / second,
         # where persistence_saturation_limit is in units of DN.
         if hasattr(self.persistencesat, "dq"):
-            mask = (
-                np.bitwise_and(self.persistencesat.dq, dqflags.pixel["DO_NOT_USE"]) > 0
-            )  # fmt: skip
+            mask = np.bitwise_and(self.persistencesat.dq, dqflags.pixel["DO_NOT_USE"]) > 0
             if mask.sum() == 0:
                 mask = None
         else:
@@ -794,11 +790,9 @@ class DataSet:
         totaltime = ngroups * t_group + nresets * t_frame
 
         # Find pixels exceeding the persistence saturation limit (full well).
-        pflag = (data > self.persistencesat.data)  # fmt: skip
+        pflag = data > self.persistencesat.data
         if hasattr(self.persistencesat, "dq"):
-            mask = (
-                np.bitwise_and(self.persistencesat.dq, dqflags.pixel["DO_NOT_USE"]) > 0
-            )  # fmt: skip
+            mask = np.bitwise_and(self.persistencesat.dq, dqflags.pixel["DO_NOT_USE"]) > 0
             mshape = mask.shape
             mask = mask.reshape((1,) + mshape)
             m3 = np.repeat(mask, ngroups, 0)
@@ -815,7 +809,7 @@ class DataSet:
         ramp_traps_filled = self.predict_ramp_capture(capture_param_k, trap_density, slope, dt)
 
         filled = ramp_traps_filled.copy()
-        mask = (sat_count > 0)  # fmt: skip
+        mask = sat_count > 0
         any_saturated = np.any(mask)
         if any_saturated:
             # Traps that were filled due to the saturated portion of the ramp.
@@ -943,7 +937,7 @@ class DataSet:
 
         # For each pixel that had no ramp before saturation, fill all the
         # instantaneous traps; otherwise, they were filled during the ramp.
-        flag = (sat_count == ngroups)  # fmt: skip
+        flag = sat_count == ngroups
         incoming_filled_traps[flag] = trap_density[flag] * par2
 
         # Find out how many exponential traps have already been filled.
