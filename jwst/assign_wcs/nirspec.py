@@ -216,7 +216,7 @@ def imaging(input_model, reference_files):
     tel2sky = pointing.v23tosky(input_model)
     tel2sky.name = "v2v3_to_sky"
     tel2sky.inputs = ("v2", "v3")
-    tel2sky.outputs = ("lon", "lat")
+    tel2sky.outputs = ("ra", "dec")
 
     imaging_pipeline = [
         (det, dms2detector),
@@ -364,7 +364,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     tel2sky = pointing.v23tosky(input_model) & Identity(2)
     tel2sky.name = "v2v3_to_sky"
     tel2sky.inputs = ("v2", "v3", "lam", "name")
-    tel2sky.outputs = ("lon", "lat", "lam", "name")
+    tel2sky.outputs = ("ra", "dec", "lam", "name")
 
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     #
@@ -529,7 +529,7 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     tel2sky = pointing.v23tosky(input_model) & Identity(2)
     tel2sky.name = "v2v3_to_sky"
     tel2sky.inputs = ("v2", "v3", "lam", "name")
-    tel2sky.outputs = ("lon", "lat", "lam", "name")
+    tel2sky.outputs = ("ra", "dec", "lam", "name")
 
     msa_pipeline = [
         (det, dms2detector),
