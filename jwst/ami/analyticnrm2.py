@@ -313,7 +313,7 @@ def model_array(
 
     # calculate primary beam envelope (non-negative real)
     if shape == "circ":
-        asf_pb = asf(pitch, fov, oversample, d, lam, psf_offset, affine2d)
+        asf_pb = asf(pitch, fov, oversample, d, lam, affine2d)
     elif shape == "hex":
         asf_pb = asf_hex(pitch, fov, oversample, d, lam, psf_offset, affine2d)
     else:
@@ -509,10 +509,10 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d, shap
     # Now deal with primary beam shapes...
     if shape == "circ":
         asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
-        asf_2d = asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d) * asf_fringe
+        asf_2d = asf(detpixel, fov, oversample, d, lam, affine2d) * asf_fringe
 
     elif shape == "circonly":
-        asf_2d = asf(detpixel, fov, oversample, d, lam, psf_offset, affine2d)
+        asf_2d = asf(detpixel, fov, oversample, d, lam, affine2d)
 
     elif shape == "hex":
         asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
