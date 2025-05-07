@@ -11,6 +11,25 @@ from jwst.regtest.st_fitsdiff import STFITSDiff
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+logging.basicConfig(level=logging.INFO, format="", datefmt="")
+
+
+def _is_number(s):
+    is_number = True
+    try:
+        int(s)
+    except ValueError:
+        is_number = False
+    return is_number
+
+
+def _check_arglist(arg_list, list_values):
+    if arg_list is not None:
+        if "," in arg_list:
+            list_values.extend(arg_list.split(sep=","))
+        else:
+            list_values.append(arg_list)
+    return list_values
 
 
 def main():
@@ -30,21 +49,20 @@ def main():
     # Optional arguments (with corresponding default values)
 
     parser.add_argument(
+        "-ih",
         "--ignore_hdus",
         dest="ignore_hdus",
         action="store",
-        default=["ASDF"],
+        default=None,
         help="HDU names to ignore when comparing two FITS files.",
     )
-
-    ignore_keywords = ["DATE", "CAL_VER", "CAL_VCS", "CRDS_VER", "CRDS_CTX", "NAXIS1", "TFORM*"]
 
     parser.add_argument(
         "-ik",
         "--ignore_keywords",
         dest="ignore_keywords",
         action="store",
-        default=ignore_keywords,
+        default=None,
         help="Header keywords to ignore when comparing two headers.",
     )
 
@@ -53,7 +71,7 @@ def main():
         "--ignore_comments",
         dest="ignore_comments",
         action="store",
-        default=ignore_keywords,
+        default=None,
         help="A list of header keywords whose comments should be ignored in the comparison.",
     )
 
@@ -62,7 +80,7 @@ def main():
         "--ignore_fields",
         dest="ignore_fields",
         action="store",
-        default=[],
+        default=None,
         help="""The (case-insensitive) names of any table columns to ignore, if any table data
                              is to be compared.""",
     )
@@ -152,11 +170,12 @@ def main():
     args = parser.parse_args()
     file_a = args.file_a
     file_b = args.file_b
+
     stfitsdiff_default_kwargs = {
-        "ignore_hdus": args.ignore_hdus,
-        "ignore_keywords": args.ignore_keywords,
-        "ignore_comments": args.ignore_comments,
-        "ignore_fields": args.ignore_fields,
+        "ignore_hdus": [],
+        "ignore_keywords": [],
+        "ignore_comments": [],
+        "ignore_fields": [],
         "numdiffs": args.numdiffs,
         "rtol": args.rtol,
         "atol": args.atol,
@@ -164,6 +183,30 @@ def main():
         "ignore_blank_cards": args.ignore_blank_cards,
         "report_pixel_loc_diffs": args.report_pixel_loc_diffs,
     }
+
+    ignore_hdus = ["ASDF"]
+    if args.ignore_hdus is not None:
+        ignore_hdus = _check_arglist(args.ignore_hdus, ignore_hdus)
+        # Check if there are any number extensions in ignore_hdus
+        for exti, ext in enumerate(ignore_hdus):
+            if _is_number(ext):
+                ignore_hdus[exti] = int(ext)
+    stfitsdiff_default_kwargs["ignore_hdus"] = ignore_hdus
+
+    ignore_keywords = ["DATE", "CAL_VER", "CAL_VCS", "CRDS_VER", "CRDS_CTX", "NAXIS1", "TFORM*"]
+    if args.ignore_keywords is not None:
+        ignore_keywords = _check_arglist(args.ignore_keywords, ignore_keywords)
+    stfitsdiff_default_kwargs["ignore_keywords"] = ignore_keywords
+
+    ignore_comments = ["DATE", "CAL_VER", "CAL_VCS", "CRDS_VER", "CRDS_CTX", "NAXIS1", "TFORM*"]
+    if args.ignore_comments is not None:
+        ignore_comments = _check_arglist(args.ignore_comments, ignore_comments)
+    stfitsdiff_default_kwargs["ignore_comments"] = ignore_comments
+
+    if args.ignore_fields is not None:
+        stfitsdiff_default_kwargs["ignore_fields"] = _check_arglist(
+            args.ignore_fields, stfitsdiff_default_kwargs["ignore_fields"]
+        )
 
     # If provided, make sure the extension_tolerances is a dictionary and not a string
     err_msg = """
@@ -180,7 +223,7 @@ def main():
             exit()
 
     # Find the differences
-    logging.info("\n STScI Custom FITSDiff")
+    logging.info("\n* STScI Custom FITSDiff")
     try:
         diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
         logging.info(diff.report())
