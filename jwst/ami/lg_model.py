@@ -79,7 +79,7 @@ class LgModel:
         )
         self.ctrs = self.mask.ctrs
         self.d = self.mask.hdia
-        self.D = self.mask.active_D
+        self.active_D = self.mask.active_D
 
         self.N = len(self.ctrs)
         self.fmt = "%10.4e"
