@@ -28,8 +28,8 @@ class PersistenceStep(Step):
 
         Parameters
         ----------
-        step_input : DataModel
-            Input datamodel to be corrected
+        step_input : DataModel or str
+            Input datamodel or file to be corrected
 
         Returns
         -------
