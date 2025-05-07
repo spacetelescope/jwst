@@ -90,7 +90,7 @@ def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwarg
 
 
 def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_default_kwargs):
-    """Regression test of tso-spec3 pipeline outlier_detection results performed on NIRISS SOSS data."""
+    """Regression test of tso3pipeline outlier_detection results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
 
     output = "jw01091002001_03101_00001-seg001_nis_short_o002_crfints.fits"

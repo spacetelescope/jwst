@@ -37,7 +37,6 @@ def test_log_tracked_resources_tsimg(log_tracked_resources, run_pipelines):
     log_tracked_resources()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["calints", "o006_crfints"])
 def test_nircam_tsimg_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-image2 pipeline performed on NIRCam TSIMG data."""
@@ -52,7 +51,6 @@ def test_nircam_tsimg_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_nircam_tsimage_stage3_phot(run_pipelines, diff_astropy_tables):
     rtdata = run_pipelines
     rtdata.input = "jw01068-o006_20240401t151322_tso3_00002_asn.json"
@@ -62,7 +60,6 @@ def test_nircam_tsimage_stage3_phot(run_pipelines, diff_astropy_tables):
     assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
 
-@pytest.mark.bigdata
 def test_nircam_setpointing_tsimg(rtdata, fitsdiff_default_kwargs):
     """
     Regression test of the set_telescope_pointing script on a level-1b

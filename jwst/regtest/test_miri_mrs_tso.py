@@ -40,7 +40,6 @@ def test_log_tracked_resources_spec2(log_tracked_resources, run_spec2):
     log_tracked_resources()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix', ['assign_wcs', 'calints', 'flat_field', 'fringe', 'photom', 'srctype'])
 def test_spec2(rtdata_module, run_spec2, fitsdiff_default_kwargs, suffix):

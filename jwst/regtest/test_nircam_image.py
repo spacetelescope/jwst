@@ -126,7 +126,6 @@ def test_log_tracked_resources_image3(log_tracked_resources, run_image3pipeline)
     log_tracked_resources()
 
 
-@pytest.mark.bigdata
 def test_nircam_image_sirs(run_detector1pipeline_with_sirs, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
     rtdata = rtdata_module
@@ -142,7 +141,6 @@ def test_nircam_image_sirs(run_detector1pipeline_with_sirs, rtdata_module, fitsd
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
                                     "refpix", "linearity",
                                     "dark_current", "jump", "rate",
@@ -164,7 +162,6 @@ def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_defau
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
     """Test that WCS object works as expected"""
     rtdata = rtdata_module
@@ -183,7 +180,6 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
         assert_allclose(dec, dec_truth)
 
 
-@pytest.mark.bigdata
 def test_nircam_image_stage3_tweakreg(run_image3pipeline):
     """Test that tweakreg doesn't attach a catalog and that it updates the wcs"""
     files = glob("*tweakreg.fits")
@@ -199,7 +195,6 @@ def test_nircam_image_stage3_tweakreg(run_image3pipeline):
                 assert "v2v3corr" in model.meta.wcs.available_frames
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["i2d"])
 def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test that resampled i2d looks good for NIRCam imaging"""
@@ -217,7 +212,6 @@ def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_astropy_tables):
     rtdata = rtdata_module
     rtdata.input = "jw01538-o046_20230331t102920_image3_00009_asn.json"
@@ -228,7 +222,6 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4, atol=1e-5)
 
 
-@pytest.mark.bigdata
 def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
     """Test that segmentation map looks good for NIRCam imaging"""
     rtdata = rtdata_module
@@ -241,7 +234,6 @@ def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_de
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
     """Test optional frame-averaged darks output from DarkCurrentStep"""
     rtdata.get_data("nircam/image/jw01205015001_03101_00001_nrcb1_ramp.fits")
@@ -259,7 +251,6 @@ def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_imaging_distortion(rtdata, fitsdiff_default_kwargs):
     """Verify that the distortion correction round trips."""
     rtdata.get_data("nircam/image/jw01538046002_02103_00002_nrca1_cal.fits")
@@ -281,7 +272,6 @@ def test_imaging_distortion(rtdata, fitsdiff_default_kwargs):
     assert_allclose(decout, dec)
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix",
                          ["cfn_clean_flicker_noise", "mask",
                           "flicker_bkg", "flicker_noise",

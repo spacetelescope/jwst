@@ -40,10 +40,10 @@ def run_spec2(rtdata_module, resource_tracker):
         rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
+
 @pytest.mark.slow
 def test_log_tracked_resources_spec2(log_tracked_resources, run_spec2):
     log_tracked_resources()
-
 
 
 @pytest.mark.slow

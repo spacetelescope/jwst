@@ -155,7 +155,6 @@ def test_miri_lrs_slitless_detector1(run_detector1_pipeline, rtdata_module,
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ['emicorr', 'rate', 'rateints'])
 def test_miri_lrs_slitless_detector1_emicorr_joint(
         run_detector1_pipeline_emicorr_joint, rtdata_module,
