@@ -69,7 +69,7 @@ def create_traps_filled_model():
     Returns
     -------
     trapsfilled_model : TrapsFilledModel DataModel
-        Sample TrapsFilledModel datamodel for testing
+        Sample TrapsFilledModel for testing
     """
 
     def _dm(nrows, ncols):
@@ -91,7 +91,7 @@ def create_trap_density_model():
     Returns
     -------
     trapdensity_model : TrapDensityModel DataModel
-        Sample TrapDensityModel datamodel for testing
+        Sample TrapDensityModel for testing
     """
 
     def _dm(nrows, ncols):
@@ -111,7 +111,7 @@ def create_trappars_model():
     Returns
     -------
     trappars_model : TrapParsModel DataModel
-        Sample TrapParsModel datamodel for testing
+        Sample TrapParsModel for testing
     """
     capture0 = fits.Column(name="capture0", array=np.array([180.0, 270.0, 80.0]), format="D")
     capture1 = fits.Column(name="capture1", array=np.array([-0.0004, -0.004, -0.0009]), format="D")
@@ -141,7 +141,7 @@ def test_ref_matches_sci(create_traps_filled_model):
     Parameters
     ----------
     create_traps_filled_model : pytest fixture
-        Fixture that returns a TrapsFilledModel DataModel for testing
+        Fixture that returns a TrapsFilledModel for testing
     """
     # Create empty DataSet
     ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
@@ -209,7 +209,7 @@ class TrapParsTester:
         Parameters
         ----------
         generate_trap_pars : pytest fixture
-            Fixture that returns a TrapPars DataModel for testing
+            Fixture that returns trappars parameter arrays for testing
         """
         ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
         pars = generate_trap_pars()
@@ -226,7 +226,7 @@ class TrapParsTester:
         Parameters
         ----------
         generate_trap_pars : pytest fixture
-            Fixture that returns a TrapPars DataModel for testing
+            Fixture that returns TrapPars parameter arrays for testing
         """
         ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
         pars = generate_trap_pars()
@@ -282,9 +282,9 @@ def test_do_all(create_sci_model, create_traps_filled_model, create_trap_density
     create_sci_model : pytest fixture
         Fixture that returns a science DataModel for testing
     create_traps_filled_model : pytest fixture
-        Fixture that returns a TrapsFilledModel DataModel for testing
+        Fixture that returns a TrapsFilledModel for testing
     create_trap_density_model : pytest fixture
-        Fixture that returns a TrapDensityModel DataModel for testing
+        Fixture that returns a TrapDensityModel for testing
     """
     input_model = create_sci_model(3, 12, 512, 512, 257, 769)
     traps_filled_model = create_traps_filled_model(2048, 2048)
