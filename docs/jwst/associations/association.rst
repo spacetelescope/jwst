@@ -6,11 +6,11 @@ Associations and Rules
 Terminology
 -----------
 
-As :ref:`has been described <asn-what-are-associations>`, an ``Association``
-is a Python dict or list that is a list of things that belong together
+As has been described in :ref:`asn-what-are-associations`, an ``Association``
+is a Python :py:obj:`dict` or :py:obj:`list` that is a group of things that belong together
 and are created by association rules. However, as will be described,
 the association rules are Python classes which inherit from the
-``Association`` class.
+:class:`~jwst.associations.association.Association` class.
 
 Associations created from these rule classes, referred to as just
 ``rules``, have the type of the class they are created from and have all
@@ -68,8 +68,8 @@ functionality, for example how to save the association and how to
 decide membership, it is suggested that an intermediate set of classes
 be created from which the rule classes inherit. The set of rule
 classes which share the same base parent classes are referred to as a
-*rule set*. The JWST :ref:`Level 2<asn-level2-techspecs>` and
-:ref:`Level 3<asn-level3-techspecs>` are examples of such rule sets.
+*rule set*. The JWST :ref:`Stage 2 <asn-level2-techspecs>` and
+:ref:`Stage 3 <asn-level3-techspecs>` are examples of such rule sets.
 The below figure demonstrates the relationships between the base
 ``Association``, the defining ruleset classes, and the rule classes
 themselves.

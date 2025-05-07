@@ -13,8 +13,8 @@
 
 import datetime
 import importlib
-import sys
 import os
+import sys
 from pathlib import Path
 
 import tomllib
@@ -67,41 +67,22 @@ sys.path.insert(0, os.path.abspath('exts/'))
 # -- General configuration ------------------------------------------------
 with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_file:
     metadata = tomllib.load(metadata_file)['project']
-# If your documentation needs a minimal Sphinx version, state it here.
-# needs_sphinx = '1.3'
 
 on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
-
-def check_sphinx_version(expected_version):
-    sphinx_version = Version(sphinx.__version__)
-    expected_version = Version(expected_version)
-    if sphinx_version < expected_version:
-        raise RuntimeError(
-            "At least Sphinx version {0} is required to build this "
-            "documentation.  Found {1}.".format(
-                expected_version, sphinx_version))
-
 
 # Configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
     'numpy': ('https://numpy.org/devdocs', None),
-    'scipy': ('http://scipy.github.io/devdocs', None),
-    'matplotlib': ('http://matplotlib.org/', None),
+    'scipy': ('https://scipy.github.io/devdocs', None),
+    'matplotlib': ('https://matplotlib.org/', None),
+    'astropy': ('https://docs.astropy.org/en/stable/', None),
     'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
     'stdatamodels': ('https://stdatamodels.readthedocs.io/en/latest/', None),
     'stcal': ('https://stcal.readthedocs.io/en/latest/', None),
     'drizzle': ('https://drizzlepac.readthedocs.io/en/latest/', None),
     'tweakwcs': ('https://tweakwcs.readthedocs.io/en/latest/', None),
 }
-
-if sys.version_info[0] == 2:
-    intersphinx_mapping['python'] = ('http://docs.python.org/2/', None)
-    intersphinx_mapping['pythonloc'] = (
-        'http://docs.python.org/',
-        os.path.abspath(os.path.join(os.path.dirname(__file__),
-                                     'local/python2_local_links.inv')))
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
@@ -125,17 +106,11 @@ extensions = [
     'sphinx_automodapi.automodsumm',
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
+    'sphinx.ext.imgmath',
 ]
-
 
 if on_rtd:
     extensions.append('sphinx.ext.mathjax')
-
-elif Version(sphinx.__version__) < Version('1.4'):
-    extensions.append('sphinx.ext.pngmath')
-else:
-    extensions.append('sphinx.ext.imgmath')
-
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']
@@ -150,7 +125,7 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # A list of warning types to suppress arbitrary warning messages. We mean to
-# override directives in astropy_helpers.sphinx.ext.autodoc_enhancements,
+# override directives in sphinx.ext.autodoc_enhancements,
 # thus need to ignore those warning. This can be removed once the patch gets
 # released in upstream Sphinx (https://github.com/sphinx-doc/sphinx/pull/1843).
 # Suppress the warnings requires Sphinx v1.4.2

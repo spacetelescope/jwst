@@ -1,7 +1,7 @@
 .. _level3-asn-rules:
 
-Stage3 Associations: Rules
-==========================
+Stage 3 Associations: Rules
+===========================
 
 .. _level3-asn-data-grouping:
 
@@ -15,7 +15,7 @@ follows:
 
   The entirety of a science observing proposal is contained within a
   ``program``. All observations, regardless of instruments, pertaining
-  to a proposal are identified by the program id.
+  to a proposal are identified by the program ID.
 
 - observation
 
@@ -24,7 +24,7 @@ follows:
   instrument. An observation does not necessarily contain all the
   exposures required for a specific observation mode. Also, exposures
   within an observation can be taken with different optical
-  configurations of the same instrument
+  configurations of the same instrument.
 
 - visit
 
@@ -51,7 +51,7 @@ follows:
 
 - exposure
 
-  The basic unit of science data. Starting at stage 1, an exposure
+  The basic unit of science data. Starting at Stage 1, an exposure
   contains a single integrations of a single detector from a single
   instrument for a single *snap*. Note that a single integration
   actually is a number of readouts of the detector during the integration.
@@ -61,25 +61,22 @@ follows:
 Rules
 -----
 
-All rules have as their base class :class:`DMS_Level3_Base
-<jwst.associations.lib.rules_level3_base.DMS_Level3_Base>` This class
+All rules have as their base class ``DMS_Level3_Base``. This class
 defines the association structure, enforces the DMS naming
-conventions, and defines the basic validity checks on the Level3
+conventions, and defines the basic validity checks on the Stage 3
 associations.
 
 Along with the base class, a number of mixin classes are defined.
 These mixins define some basic constraints that are found in a number
-of rules. An example is the :class:`AsnMixin_Base
-<jwst.associations.lib.rules_level3_base.AsnMixin_Base>`, which
+of rules. An example is the ``AsnMixin_Base``, which
 provides the constraints that ensure that the program identification
 and instrument are the same in each association.
 
-The rules themselves are subclasses of :class:`AsnMixin_Base
-<jwst.associations.lib.rules_level3_base.AsnMixin_Base>` and whatever
+The rules themselves are subclasses of ``AsnMixin_Base`` and whatever
 other mixin classes are necessary to build the rule. Conforming to the
 :ref:`class-naming` scheme, all the final
-Level3 association rules begin with ``Asn_``. An example is the
-:class:`Asn_Image <jwst.associations.lib.rules_level3.Asn_Image>` rule.
+Stage 3 association rules begin with ``Asn_``. An example is the
+:class:`~jwst.associations.lib.rules_level3.Asn_Lv3Image` rule.
 
 The following figure shows the above relationships. Note that this
 diagram is not meant to be a complete listing.
@@ -87,4 +84,4 @@ diagram is not meant to be a complete listing.
 .. figure:: graphics/level3_rule_inheritance.png
    :scale: 50%
 
-   Level3 Rule Class Inheritance
+   Stage 3 Rule Class Inheritance
