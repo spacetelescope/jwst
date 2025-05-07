@@ -7,9 +7,12 @@ from jwst.regtest import regtestdata as rt
 INPUT_PATH = 'nirspec/ifu'
 TRUTH_PATH = 'truth/test_nirspec_ifu'
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope='module')
-def run_spec2(rtdata_module):
+def run_spec2(rtdata_module, resource_tracker):
     """Run the Spec2Pipeline on a spec2 ASN containing a single exposure"""
     rtdata = rtdata_module
 
@@ -33,12 +36,17 @@ def run_spec2(rtdata_module):
     }
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    with resource_tracker.track():
+        rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
+
+@pytest.mark.slow
+def test_log_tracked_resources_spec2(log_tracked_resources, run_spec2):
+    log_tracked_resources()
+
 
 
 @pytest.mark.slow
-@pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix',
     ['assign_wcs', 'cal', 'flat_field', 'msa_flagging',
@@ -69,7 +77,6 @@ def run_photom(rtdata):
     return rtdata
 
 
-@pytest.mark.bigdata
 def test_photom(run_photom, fitsdiff_default_kwargs):
     """Test the photom step on an NRS IFU exposure with a point source"""
     rt.is_like_truth(run_photom, fitsdiff_default_kwargs, 'photomstep',
@@ -95,7 +102,6 @@ def run_extract1d(rtdata):
     return rtdata
 
 
-@pytest.mark.bigdata
 def test_extract1d(run_extract1d, fitsdiff_default_kwargs):
     """Test the extract_1d step on an NRS IFU cube with a point source"""
     rt.is_like_truth(run_extract1d, fitsdiff_default_kwargs, 'extract1dstep',

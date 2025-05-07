@@ -7,6 +7,9 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
 def run_detector1pipeline(rtdata_module):
@@ -32,7 +35,7 @@ def run_detector1pipeline(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1_with_clean_flicker_noise(rtdata_module):
+def run_detector1_with_clean_flicker_noise(rtdata_module, resource_tracker):
     """Run detector1 pipeline on NIRSpec IRS2 data with noise cleaning."""
     rtdata_module.get_data("nirspec/irs2/jw01335004001_03101_00002_nrs2_uncal.fits")
 
@@ -49,10 +52,14 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
             "--steps.clean_flicker_noise.save_background=True",
             "--steps.clean_flicker_noise.save_noise=True",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_det1(log_tracked_resources, run_detector1_with_clean_flicker_noise):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ['group_scale', 'dq_init', 'saturation', 'superbias',
                                     'refpix', 'linearity', 'dark_current', 'jump',
                                     '0_ramp_fit', 'gain_scale',
@@ -75,7 +82,6 @@ def test_nirspec_irs2_detector1(run_detector1pipeline, rtdata_module,
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["cfn_clean_flicker_noise", "mask",
                                     "flicker_bkg", "flicker_noise",
                                     "cfn_ramp", "cfn_rate", "cfn_rateints"])

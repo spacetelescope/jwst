@@ -8,9 +8,12 @@ from jwst.stpipe import Step
 INPUT_PATH = 'miri/mrs'
 TRUTH_PATH = 'truth/test_miri_mrs_tso'
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope='module')
-def run_spec2(rtdata_module):
+def run_spec2(rtdata_module, resource_tracker):
     """Run the Spec2Pipeline on a single exposure"""
     rtdata = rtdata_module
 
@@ -29,7 +32,12 @@ def run_spec2(rtdata_module):
             ]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: invalid value encountered in add
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
+
+
+def test_log_tracked_resources_spec2(log_tracked_resources, run_spec2):
+    log_tracked_resources()
 
 
 @pytest.mark.bigdata

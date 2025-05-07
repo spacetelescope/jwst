@@ -3,9 +3,12 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
-def run_pipeline(rtdata_module):
+def run_pipeline(rtdata_module, resource_tracker):
     """Run the calwebb_spec2 pipeline on a single NIRSpec MOS/FS exposure."""
 
     rtdata = rtdata_module
@@ -30,12 +33,16 @@ def run_pipeline(rtdata_module):
             "--steps.barshadow.save_results=true"]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     return rtdata
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec2(log_tracked_resources, run_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", [
     "assign_wcs", "msa_flagging", "extract_2d", "srctype",
     "master_background_mos", "wavecorr", "flat_field", "interpolatedflat",
