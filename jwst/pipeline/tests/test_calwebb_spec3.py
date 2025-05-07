@@ -1,11 +1,17 @@
-import pytest
+"""
+Test flat output file format saving of WFSS x1d and c1d data.
+
+This serves primarily as a 'smoke test' to ensure that the
+save routines are working. Detailed examination of the
+output files is left to the regtests.
+"""
+
 import numpy as np
+from numpy.testing import assert_allclose
 from astropy.io import fits
 import stdatamodels.jwst.datamodels as dm
 from jwst.pipeline.calwebb_spec3 import _save_wfss_x1d, _save_wfss_c1d
 
-
-# TODO: decrease amount of code duplication in these two tests
 
 def test_save_wfss_x1d(tmp_cwd):
     """Test flat file format saving of WFSS x1d data."""
@@ -58,12 +64,11 @@ def test_save_wfss_x1d(tmp_cwd):
         else:
             assert bintable.shape == (n_sources,)
         
+        # ensure the source_id is the first column in the table
+        assert_allclose(bintable["SOURCE_ID"], bintable.field(0))
         # Ensure the source_ids are sorted
         source_ids = bintable["SOURCE_ID"]
-        names = bintable["NAME"]
         assert np.all(np.diff(source_ids) >= 0)
-        # Ensure names match the source_ids
-        assert np.all([name == str(source_id) for name, source_id in zip(names, source_ids)])
 
         # Ensure slit xstart and ystart were propagated into the output
         assert np.all(bintable["SLIT_XSTART"] == 99.0)
@@ -103,6 +108,8 @@ def test_save_wfss_c1d(tmp_cwd):
     bintable = hdul[1].data
     assert bintable.shape == (n_sources,)
 
+    # ensure the source_id is the first column in the table
+    assert_allclose(bintable["SOURCE_ID"], bintable.field(0))
     # Ensure the source_ids are sorted
     source_ids = bintable["SOURCE_ID"]
     assert np.all(np.diff(source_ids) >= 0)
