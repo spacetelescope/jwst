@@ -719,6 +719,11 @@ def copy_keyword_info(slit, slitname, spec):
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
 
+    # TODO: for a random 2 out of hundreds of slits, the name is NIS_WFSS instead of
+    # a string representation of the source_id.
+    # TODO: under what conditions does this happen? when find out, write a separate ticket
+    # print("slitname, spec.name in copy_keyword_info", slitname, spec.name)
+
     # Copy over some attributes if present, even if they are None
     copy_attributes = [
         "slitlet_id",
@@ -1867,6 +1872,12 @@ def create_extraction(
             spec.extraction_ystop = right_limit + 1
 
         copy_keyword_info(data_model, slitname, spec)
+
+        if (exp_type in WFSS_EXPTYPES) and data_model.meta.hasattr("filename"):
+            spec.meta.filename = data_model.meta.filename
+            spec.meta.observation.exposure_number = data_model.meta.observation.exposure_number
+            spec.slit_xstart = data_model.xstart
+            spec.slit_ystart = data_model.ystart
 
         if apcorr is not None:
             if hasattr(apcorr, "tabulated_correction"):
