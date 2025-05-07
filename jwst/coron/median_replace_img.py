@@ -68,8 +68,8 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
     Parameters
     ----------
-    img_model : DataModel
-        The input image model
+    img_model : CubeModel
+        The input image Cube model
 
     box_size : scalar
         Box size for the median filter
@@ -80,7 +80,7 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
     Returns
     -------
-    img_model : DataModel
+    img_model : CubeModel
         The updated image model with the bad pixels replaced
     """
     n_ints, _, _ = img_model.data.shape

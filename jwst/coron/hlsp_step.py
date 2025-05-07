@@ -8,12 +8,7 @@ __all__ = ["HlspStep"]
 
 
 class HlspStep(Step):
-    """
-    Make High-Level Science Products (HLSP's).
-
-    Works on the results of coronagraphic exposure that's had KLIP processing
-    applied to it.
-    """
+    """Make High-Level Science Products (HLSP's) after KLIP processing has been applied."""
 
     class_alias = "hlsp"
 
@@ -23,7 +18,7 @@ class HlspStep(Step):
     """  # noqa: E501
 
     def process(self, target):
-        """Execute the HlspStep calibration step."""
+        """Execute the HLSP calibration step."""
         width = self.annuli_width
 
         # Open the input target image model

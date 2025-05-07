@@ -132,7 +132,7 @@ def align_array(reference, target, mask=None, return_aligned=True):
     Compute shifts and realign target image to reference.
 
     Shifts are computed between target image (or image "slices") and the reference
-    image and input images are realigned to the target.
+    image and input target images are realigned to the reference image.
 
     Parameters
     ----------
@@ -147,15 +147,18 @@ def align_array(reference, target, mask=None, return_aligned=True):
         A 2D (``NxK``) image indicating pixels to ignore when performing the
         minimization. The masks acts as a weighting function in performing
         the fit.
+    return_aligned : bool, default=True
+        Boolean that indicates whether the aligned image is returned
 
     Returns
     -------
-    aligned, shifts : tuple
-        A tuple containing the aligned image (2D or 3D image of the same shape
-        as input target image) and a 1D vector of three elements in the case
-        of 2D input `target` image of (xshift, yshift, beta) values from
-        LSQ optimization (see :py:func:`align_fourier_lsq` for details) for each
-        slice in the `target` array.
+    aligned : numpy.ndarray
+        The aligned image (2D or 3D image of the same shape as input target image).  This
+        is only returned if the input keyword `returned_aligned` is True.
+    shifts : numpy.ndarray
+        1D vector of three elements in the case of 2D input `target` image of
+        (xshift, yshift, beta) values from LSQ optimization (see :py:func:`align_fourier_lsq`
+        for details) for each slice in the `target` array.
     """
     if len(target.shape) == 2:
         shifts = align_fourier_lsq(reference, target, mask=mask)
@@ -184,10 +187,7 @@ def align_array(reference, target, mask=None, return_aligned=True):
 
 def align_models(reference, target, mask):
     """
-    Compute shifts and realigns target image to reference.
-
-    Shifts computed between target image (or image "slices") and the reference
-    image and target images realigned to the reference.
+    Align target image to reference by calculating and applying shifts.
 
     Parameters
     ----------

@@ -23,7 +23,7 @@ def make_cube(input_models):
 
     Returns
     -------
-    output_model : DataModel
+    output_model : CubeModel
         CubeModel of stacked PSF images
     """
     # Get the number of input images

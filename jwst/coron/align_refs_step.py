@@ -25,14 +25,14 @@ class AlignRefsStep(Step):
 
     def process(self, target, psf):
         """
-        Execute the AlignRefsStep calibration step.
+        Execute the AlignRefs calibration step.
 
         Parameters
         ----------
-        target : str
-            Name of target exposure
-        psf : str
-            Input PSF images
+        target : str or DataModel
+            CubeModel or file containing science target data
+        psf : str or DataModel
+            CubeModel or file containing PSF image stack
 
         Returns
         -------

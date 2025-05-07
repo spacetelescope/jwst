@@ -25,19 +25,19 @@ class KlipStep(Step):
 
     def process(self, target, psfrefs):
         """
-        Execute the KlipStep calibration step.
+        Execute the KLIP calibration step.
 
         Parameters
         ----------
-        target : str
-            Science target exposure
-        psfrefs : str
-            PSF Reference exposures
+        target : str or CubeModel
+            CubeModel or file containing science target exposure
+        psfrefs : str or QuadModel
+            QuadModel or file containing PSF Reference exposures
 
         Returns
         -------
-        psf_sub : DataModel
-            Science target DataModel with the PSF subtracted
+        psf_sub : CubeModel
+            Science target CubeModel with the PSF subtracted
         """
         with datamodels.open(target) as target_model:
             # Retrieve the parameter values
