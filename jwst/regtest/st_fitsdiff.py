@@ -1408,6 +1408,11 @@ class STTableDataDiff(TableDataDiff):
                 # Calculate the absolute and relative differences
                 try:
                     nan_idx = np.isnan(arra) | np.isnan(arrb)
+                    can_nan = True
+                except TypeError:
+                    can_nan = False
+
+                if can_nan:
                     anonan = arra[~nan_idx]
                     bnonan = arrb[~nan_idx]
                     diffs = np.abs(anonan - bnonan)
@@ -1451,7 +1456,8 @@ class STTableDataDiff(TableDataDiff):
 
                         self.diff_total += abs_diffs
                         self.rel_diffs += rel_diffs
-                except TypeError:
+
+                else:
                     diffs = arra[arra != arrb].size
                     if diffs > 0:
                         # Report the differences per column
