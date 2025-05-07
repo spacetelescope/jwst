@@ -56,6 +56,7 @@ class EngdbABC(abc.ABC):
         pass
 
     @property
+    @abc.abstractmethod
     def starttime(self):
         """The start time of the search."""
         pass

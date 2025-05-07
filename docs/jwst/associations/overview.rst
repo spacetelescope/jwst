@@ -61,9 +61,9 @@ transformation from exposure-based data to source-based, high(er)
 signal-to-noise data.
 
 In short, Stage 2 and Stage 3 associations are created running the
-:ref:`asn-generate` task on an :py:class:`~jwst.associations.AssociationPool`
-using the default :ref:`Level2<asn-level2-techspecs>` and :ref:`Level
-3<asn-level3-techspecs>` association rules to produce Stage 2 and Stage 3
+:ref:`asn-generate` task on an :class:`~jwst.associations.AssociationPool`
+using the default :ref:`Stage 2 <asn-level2-techspecs>` and :ref:`Stage
+3 <asn-level3-techspecs>` association rules to produce respective
 associations. When retrieving the data from the archive, users will find the
 list of associated data in JSON files that are submitted together with the
 requested Stage 2 or Stage 3 data.
@@ -72,10 +72,10 @@ Association Pools
 -----------------
 
 The information about what data will be associated is constructed with the
-information derived from the Astronomer Proposal Tool and the rules on how data
+information derived from the Astronomer Proposal Tool (APT) and the rules on how data
 should be associated that are defined by the instrument teams. All the
 information from a single proposal is captured in a single file known as the
-:ref:`Association Pool<design-pool>`.
+:ref:`Association Pool <design-pool>`.
 
 .. _asn-usage:
 
@@ -98,7 +98,7 @@ If, however, the user *does* need to run the generator, the :ref:`Association Ge
 Once an association is in-hand, one can pass it as input to a pipeline
 routine. For example::
 
-  % strun calwebb_image3  jw12345-o001_20210311t170002_image3_001_asn.json
+  % strun calwebb_image3 jw12345-o001_20210311t170002_image3_001_asn.json
 
 Programmatically, to read in an Association, one uses the
 :py:func:`~jwst.associations.load_asn` function:
@@ -111,8 +111,8 @@ Programmatically, to read in an Association, one uses the
        asn = load_asn(fp)
 
 What exactly is returned depends on what the association is. However,
-for all Stage 2 and Stage 3 associations, a Python ``dict`` is returned,
-whose structure matches that of the JSON or YAML file. Continuing
+for all Stage 2 and Stage 3 associations, a Python :py:obj:`dict` is returned
+and its structure matches that of the JSON or YAML file. Continuing
 from the above example, the following shows how to access the first
 exposure file name of a Stage 3 associations:
 
@@ -125,7 +125,7 @@ Since most JWST data are some form of a
 an association can be opened with
 :ref:`datamodels.open<stdatamodels:datamodels-open>`
 which returns a
-:py:class:`~jwst.datamodels.ModelContainer`. All members of the association that can
+``ModelContainer``. All members of the association that can
 be represented as a ``DataModel``, will be available in the ``ModelContainer``
 as their respective DataModels.
 
