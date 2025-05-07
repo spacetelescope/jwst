@@ -8,11 +8,7 @@ __all__ = ["StackRefsStep"]
 
 
 class StackRefsStep(Step):
-    """
-    Stack multiple PSF reference exposures into a single CubeModel.
-
-    Result used by subsequent coronagraphic steps.
-    """
+    """Stack multiple PSF reference exposures into a single CubeModel."""
 
     class_alias = "stack_refs"
 
@@ -21,16 +17,16 @@ class StackRefsStep(Step):
 
     def process(self, input_files):
         """
-        Execute the StackRefsStep calibration step.
+        Execute the StackRefs calibration step.
 
         Parameters
         ----------
-        input_files : str
-            Input science exposures
+        input_files : str or CubeModel
+            CubeModel or file containing input science exposures
 
         Returns
         -------
-        output_model : DataModel
+        output_model : CubeModel
             PSF reference exposures stacked into a CubeModel
         """
         # Open the inputs

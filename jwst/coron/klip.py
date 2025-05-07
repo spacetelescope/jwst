@@ -27,9 +27,9 @@ def klip(target_model, refs_model, truncate):
 
     Returns
     -------
-    output_target : DataModel
+    output_target : CubeModel
         Science target datamodel with PSF subtracted
-    output_psf : DataModel
+    output_psf : CubeModel
         DataModel of PSF fitted to target image
     """
     # Initialize the output models as copies of the input target model
@@ -97,7 +97,7 @@ def karhunen_loeve_transform(m, normalize=False):
     m : numpy.ndarray
         The array of flattened, background subtracted reference arrays
     normalize : bool, default=False
-        Normalize the returned transform?
+        If True, normalize the returned transform
 
     Returns
     -------
