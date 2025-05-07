@@ -72,8 +72,8 @@ def white_light(input_model, min_wave=None, max_wave=None):
 
     if problems > 0:
         log.warning(
-            f"There were {problems} spectra with no mid time ({100.0 * problems / n_spec}). "
-            "These spectra will be ignored in the output table."
+            f"There were {problems} spectra with no mid time (%d percent of spectra). "
+            "These spectra will be ignored in the output table." % (100.0 * problems / n_spec)
         )
 
     # Set up output table, removing problems

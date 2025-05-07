@@ -2,8 +2,8 @@ from stdatamodels.jwst import datamodels
 
 from jwst.white_light.white_light import white_light
 
-from astropy.time import Time
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
 import logging
 from jwst.tests.helpers import LogWatcher
@@ -21,25 +21,26 @@ def make_datamodel():
     model.meta.exposure.integration_end = 2
 
     # Make data arrays
-    flux = np.random.rand(200) * 1e-9
-    wavelength = np.arange(11, 13, step=0.01)
-    f_var_poisson = np.random.rand(200)
-    f_var_rnoise = np.random.rand(200)
-    f_var_flat = np.random.rand(200)
+    n_points = 20
+    flux = np.arange(1, n_points + 1, dtype=np.float32)
+    wavelength = np.linspace(11, 13, n_points, dtype=np.float32)
+    f_var_poisson = np.random.rand(n_points)
+    f_var_rnoise = np.random.rand(n_points)
+    f_var_flat = np.random.rand(n_points)
     error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
 
-    surf_bright = np.zeros(200)
-    sb_error = np.zeros(200)
+    surf_bright = np.zeros(n_points)
+    sb_error = np.zeros(n_points)
     sb_var_poisson = sb_error.copy()
     sb_var_rnoise = sb_error.copy()
     sb_var_flat = sb_error.copy()
-    dq = np.ones(200)
-    background = np.zeros(200)
-    berror = np.zeros(200)
+    dq = np.ones(n_points)
+    background = np.zeros(n_points)
+    berror = np.zeros(n_points)
     b_var_poisson = sb_error.copy()
     b_var_rnoise = sb_error.copy()
     b_var_flat = sb_error.copy()
-    npixels = np.zeros(200)
+    npixels = np.zeros(n_points)
 
     spec_dtype = datamodels.SpecModel().spec_table.dtype  # This data type is used for creating an output table.
 
@@ -104,7 +105,7 @@ def test_white_light(make_datamodel, monkeypatch):
     """Test white light step"""
     data = make_datamodel
 
-    watcher = LogWatcher("There were 1 spectra with no mid time")
+    watcher = LogWatcher("There were 1 spectra with no mid time (20")
     monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
     result = white_light(data)
     watcher.assert_seen()
@@ -122,3 +123,15 @@ def test_white_light(make_datamodel, monkeypatch):
     assert result["whitelight_flux_order_2"].shape == (len(mid_times),)
     assert np.sum(np.isnan(result["whitelight_flux_order_1"])) == 1
     assert np.sum(~np.isnan(result["whitelight_flux_order_2"])) == 1
+
+    # check fluxes are summed appropriately
+    expected_flux_per_spec = np.sum(np.arange(1, 21, dtype=np.float32))
+    expected_flux = np.array([expected_flux_per_spec,]*len(mid_times))
+    expected_flux_order_1 = expected_flux.copy()
+    expected_flux_order_1[-2] = np.nan  # the second-to-last was order 2
+    expected_flux_order_2 = expected_flux.copy()
+    expected_flux_order_2[:-2] = np.nan
+    expected_flux_order_2[-1] = np.nan  
+
+    assert_allclose(result["whitelight_flux_order_1"], expected_flux_order_1, equal_nan=True)
+    assert_allclose(result["whitelight_flux_order_2"], expected_flux_order_2, equal_nan=True)
