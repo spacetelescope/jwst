@@ -1,9 +1,11 @@
 import io
 
 import asdf
+import warnings
 from pathlib import Path
 from astropy.io import fits
 from stdatamodels.jwst.datamodels.util import open as datamodels_open
+from stdatamodels.jwst.datamodels import read_metadata
 from stpipe.library import AbstractModelLibrary, NoGroupID
 
 from jwst.associations import AssociationNotValidError, load_asn
@@ -211,6 +213,43 @@ class ModelLibrary(AbstractModelLibrary):
 
         if "asn_pool" in self.asn.keys():  # do not clobber existing values
             model.meta.asn.pool_name = self.asn["asn_pool"]
+
+    def get_crds_parameters(self):
+        """
+        Override base method so lazy-loading of metadata can be used to get CRDS parameters.
+
+        Get the "crds_parameters" from either:
+            - the first "science" member (based on exptype)
+            - the first model (if no "science" member is found)
+
+        If no "science" members are found in the library a ``UserWarning``
+        will be issued.
+
+        Returns
+        -------
+        crds_parameters : dict
+            The result of ``get_crds_parameters`` called on the selected
+            model.
+        """
+        with self:
+            science_index = None
+            for i, member in enumerate(self._members):
+                if member["exptype"].lower() == "science":
+                    science_index = i
+                    break
+            if science_index is None:
+                warnings.warn(
+                    "get_crds_parameters failed to find any science members. "
+                    "The first model was used to determine the parameters",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                science_index = 0
+
+            # Retrieve the filename
+            filename = Path(self._asn_dir) / member["expname"]
+            parameters = read_metadata(filename, flatten=True)
+        return parameters
 
 
 def _attrs_to_group_id(

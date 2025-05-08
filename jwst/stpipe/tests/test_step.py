@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from os.path import abspath
@@ -16,6 +17,7 @@ from stdatamodels.jwst import datamodels
 from jwst import __version__ as jwst_version
 from jwst.white_light import WhiteLightStep
 from jwst.tests.helpers import LogWatcher
+from jwst.datamodels import ModelLibrary, ModelContainer
 
 from jwst.stpipe import Step
 from jwst.stpipe.tests.steps import (
@@ -74,24 +76,90 @@ def test_parameters_from_crds_open_model():
 
 def test_parameters_from_crds_filename(monkeypatch):
     """
-    Test retrieval of parameters from CRDS from filename.
+    Test retrieval of parameters from CRDS from single-model filename.
     
     Ensures datamodels.open() is not called.
-    Similar tests of read_metadata() in jwst ensure that the input file's `data`
+    Similar tests of read_metadata() in stdatamodels ensure that the input file's `data`
     attribute is never read either.
     """
     def throw_error(self):
         raise Exception()  # noqa: TRY002
-
     monkeypatch.setattr(datamodels, "open", throw_error)
-    fname = get_pkg_data_filename("data/miri_data.fits", package="jwst.stpipe.tests")
-    pars = WhiteLightStep.get_config_from_reference(fname)
 
+    fname = get_pkg_data_filename("data/miri_data.fits", package="jwst.stpipe.tests")
+    print("fname", fname)
+    pars = WhiteLightStep.get_config_from_reference(fname)
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
-def test_parameters_from_crds_fail():
-    """Test retrieval of parameters from CRDS"""
+@pytest.fixture
+def single_member_asn(tmp_path):
+    """Create a single-member association file"""
+    miri_fname = get_pkg_data_filename("data/miri_data.fits", package="jwst.stpipe.tests")
+    asn_dict = {
+        'asn_type': 'image',
+        'asn_pool': 'pool',
+        'products': [
+            {
+                'name': 'miri_data',
+                'members': [
+                    {'expname': miri_fname, 'exptype': 'science'},
+                ]
+            }
+        ]
+    }
+    asn_file = tmp_path / 'miri_data_asn.json'
+    with open(asn_file, 'w') as f:
+        f.write(json.dumps(asn_dict))
+    return asn_file
+
+
+@pytest.mark.parametrize("is_open", [True, False])
+def test_parameters_from_crds_association(single_member_asn, is_open, monkeypatch):
+    """
+    Test retrieval of parameters from CRDS from an association or library.
+
+    If is_open is True, the association is first opened as a library then passed to
+    get_config_from_reference.
+    Otherwise, the asn file is passed directly to get_config_from_reference.
+    """
+    def throw_error(self):
+        raise Exception()  # noqa: TRY002
+    monkeypatch.setattr(datamodels, "open", throw_error)
+
+    if is_open:
+        data = ModelLibrary(single_member_asn)
+    else:
+        data = single_member_asn
+
+    pars = WhiteLightStep.get_config_from_reference(data)
+    assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
+
+
+@pytest.mark.parametrize("is_list", [True, False])
+def test_parameters_from_crds_listlike(is_list, single_member_asn):
+    """Test retrieval of parameters from CRDS from a list of open models or ModelContainer"""
+    data = ModelContainer(single_member_asn)
+    if is_list:
+        data = data._models
+    pars = WhiteLightStep.get_config_from_reference(data)
+    assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
+
+
+def test_parameters_from_crds_empty_list():
+    """Test failure when attempting retrieval of CRDS parameters from an empty list"""
+    pars = WhiteLightStep.get_config_from_reference(ModelContainer())
+    assert not len(pars)
+
+
+def test_parameters_from_crds_bad_type():
+    """Test failure when attempting retrieval of CRDS parameters from an invalid type"""
+    pars = WhiteLightStep.get_config_from_reference(42)
+    assert not len(pars)
+
+
+def test_parameters_from_crds_bad_meta():
+    """Test failure when attempting retrieval of parameters from CRDS with invalid metadata"""
     with datamodels.open(get_pkg_data_filename(
             "data/miri_data.fits", package="jwst.stpipe.tests")) as data:
         data.meta.instrument.name = 'NIRSPEC'
