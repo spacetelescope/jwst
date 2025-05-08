@@ -499,7 +499,7 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d, shap
     affine2d : Affine2d object
         The affine2d object
     shape : str
-        Shape of hole; possible values are 'circ', 'circonly', 'hex', and 'hexonly'
+        Shape of hole; possible values are 'circ', 'circonly', 'hex', 'hexonly', 'fringeonly'
 
     Returns
     -------
@@ -521,9 +521,13 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d, shap
     elif shape == "hexonly":
         asf_2d = asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d)
 
+    elif shape == "fringeonly":
+        asf_2d = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
+
     else:
         raise ValueError(
-            f"pupil shape {shape} not supported - choices: 'circ', 'circonly', 'hex', and 'hexonly'"
+            f"pupil shape {shape} not supported - choices: "
+            "'circ', 'circonly', 'hex', 'hexonly', and 'fringeonly'"
         )
 
     return (asf_2d * asf_2d.conj()).real
