@@ -35,7 +35,7 @@ def run_tso_spec2(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_tso_spec3(rtdata_module, run_tso_spec2):
+def run_tso_spec3(rtdata_module, run_tso_spec2, resource_tracker):
     """Run stage 3 pipeline on NIRISS SOSS data."""
     rtdata = rtdata_module
     # Get the level3 association json file (though not its members) and run
@@ -44,7 +44,8 @@ def run_tso_spec3(rtdata_module, run_tso_spec2):
     args = ["calwebb_tso3", rtdata.input,
             "--steps.extract_1d.soss_rtol=1.e-3",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
@@ -66,7 +67,11 @@ def run_atoca_extras(rtdata_module, resource_tracker):
         Step.from_cmdline(args)
 
 
-def test_log_tracked_resources(log_tracked_resources, run_atoca_extras):
+def test_log_tracked_resources_spec2(log_tracked_resources, run_atoca_extras):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_spec3(log_tracked_resources, run_tso_spec3):
     log_tracked_resources()
 
 
@@ -85,7 +90,7 @@ def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwarg
 
 
 def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_default_kwargs):
-    """Regression test of tso-spec3 pipeline outlier_detection results performed on NIRISS SOSS data."""
+    """Regression test of tso3pipeline outlier_detection results performed on NIRISS SOSS data."""
     rtdata = rtdata_module
 
     output = "jw01091002001_03101_00001-seg001_nis_short_o002_crfints.fits"

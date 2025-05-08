@@ -9,9 +9,12 @@ from jwst.flatfield import FlatFieldStep
 from jwst.lib.suffix import replace_suffix
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
-def run_tso_spec2_pipeline(rtdata_module, request):
+def run_tso_spec2_pipeline(rtdata_module, resource_tracker):
     """Run the calwebb_spec2 pipeline performed on NIRSpec
         fixed-slit data that uses the NRS_BRIGHTOBJ mode (S1600A1 slit)
     """
@@ -34,12 +37,16 @@ def run_tso_spec2_pipeline(rtdata_module, request):
             "--steps.photom.save_results=True"]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: overflow encountered in square
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     return rtdata
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec2(log_tracked_resources, run_tso_spec2_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ['assign_wcs', 'extract_2d', 'wavecorr',
                                     'flat_field', 'photom', 'calints', 'x1dints',
                                     'interpolatedflat'])
@@ -61,7 +68,6 @@ def test_nirspec_brightobj_spec2(run_tso_spec2_pipeline, fitsdiff_default_kwargs
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
     basename = 'jw02420001001_04101_00001-first100_nrs1'
@@ -82,7 +88,6 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
     basename = 'jw02420001001_04101_00001-first100_nrs1'

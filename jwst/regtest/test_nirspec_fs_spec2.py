@@ -31,9 +31,12 @@ asn_memberdict = {
 }
 # ids = ["fullframe", "S400A1-subarray", "ALLSLITS-subarray"]
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module", params=file_roots)  # ids=ids)
-def run_pipeline(rtdata_module, request):
+def run_pipeline(rtdata_module, request, resource_tracker):
     """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures.
        We currently test the following types of inputs:
          1) Full-frame exposure (all slits will be extracted)
@@ -58,7 +61,8 @@ def run_pipeline(rtdata_module, request):
             "--steps.pathloss.save_results=true"]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: overflow encountered in square
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     return rtdata
 
@@ -84,7 +88,10 @@ def run_pipeline_pixel_replace(rtdata_module):
     return rtdata
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec2(log_tracked_resources, run_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", [
     "assign_wcs", "nsclean", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
     "cal", "s2d", "x1d"])
@@ -106,7 +113,6 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',
     ['jw013090_prtest_04102_00004_nrs2_pixel_replace.fits',
@@ -130,7 +136,6 @@ def test_nirspec_fs_spec2_pixel_replace(run_pipeline_pixel_replace, fitsdiff_def
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
     basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
@@ -149,7 +154,6 @@ def test_pathloss_corrpars(rtdata):
     assert not bad_slits, f'correction_pars failed for slits {bad_slits}'
 
 
-@pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using inversion"""
     basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
@@ -170,7 +174,6 @@ def test_pathloss_inverse(rtdata):
     assert not bad_slits, f'Inversion failed for slits {bad_slits}'
 
 
-@pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
     basename = 'jw02072002001_05101_00001_nrs1_flatfieldstep'
@@ -187,7 +190,6 @@ def test_pathloss_source_type(rtdata):
     assert not bad_slits, f'Force to uniform failed for slits {bad_slits}'
 
 
-@pytest.mark.bigdata
 def test_nirspec_fs_rateints_spec2(rtdata_module):
     """Run the calwebb_spec2 pipeline on a NIRSpec Fixed-Slit _rateints exposure.
        This is a test that the pipeline completes when processing this

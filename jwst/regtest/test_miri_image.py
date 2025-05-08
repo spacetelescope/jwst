@@ -131,7 +131,9 @@ def run_image2(run_detector1, rtdata_module, resource_tracker):
             "--steps.flat_field.save_results=True"
             ]
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="Failed to achieve requested SIP approximation accuracy")
+        warnings.filterwarnings(
+            "ignore", message="Failed to achieve requested SIP approximation accuracy"
+        )
         Step.from_cmdline(args)
 
         # Grab rest of _rate files for the asn and run image2 pipeline on each to
@@ -151,15 +153,17 @@ def run_image2(run_detector1, rtdata_module, resource_tracker):
 
 
 @pytest.fixture(scope="module")
-def run_image3(run_image2, rtdata_module):
+def run_image3(run_image2, rtdata_module, resource_tracker):
     """Get the level3 association json file (though not its members) and run
     image3 pipeline on all _cal files listed in association"""
     rtdata = rtdata_module
     rtdata.get_data("miri/image/jw01024-o001_20220501t155404_image3_001_asn.json")
     args = ["jwst.pipeline.Image3Pipeline", rtdata.input]
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", message="Failed to achieve requested SIP approximation accuracy")
-        Step.from_cmdline(args)
+        warnings.filterwarnings("ignore",
+                                message="Failed to achieve requested SIP approximation accuracy")
+        with resource_tracker.track():
+            Step.from_cmdline(args)
 
 
 def test_log_tracked_resources_det1(log_tracked_resources, run_detector1_with_average_dark_current):
@@ -167,6 +171,10 @@ def test_log_tracked_resources_det1(log_tracked_resources, run_detector1_with_av
 
 
 def test_log_tracked_resources_image2(log_tracked_resources, run_image2):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_image3(log_tracked_resources, run_image3):
     log_tracked_resources()
 
 
@@ -186,38 +194,6 @@ def test_miri_image_detector1_multiprocess_rate(run_detector1_multiprocess_rate,
 def test_miri_image_detector1_multiprocess_jump(run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
-
-
-def test_detector1_mem_usage(rtdata_module):
-    """Determine the memory usage for Detector 1"""
-    rtdata = rtdata_module
-    rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
-    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input]
-
-    # starting the monitoring
-    tracemalloc.start()
-
-    # run Detector1
-    Step.from_cmdline(args)
-
-    # displaying the memory
-    current_mem, peak_mem = tracemalloc.get_traced_memory()
-    # convert bytes to GB
-    peak_mem *= 1e-9
-    peak_mem = np.round(peak_mem, decimals=1)
-
-    # stopping the monitoring
-    tracemalloc.stop()
-
-    # set comparison values in GB
-    mem_threshold = 16.0  # average user's available memory
-    mem_benchmark = 11.0   # benchmark run with build 1.15.1 + 1 additional GB
-
-    # test that max memory is less than threshold
-    assert peak_mem < mem_threshold, "Max memory used is greater than 16 GB!"
-
-    # test that max memory is less or equal to benchmark
-    assert peak_mem <= mem_benchmark, "Max memory used is greater than 11 GB"
 
 
 @pytest.mark.parametrize("suffix", ["dark_current", "ramp", "rate",
