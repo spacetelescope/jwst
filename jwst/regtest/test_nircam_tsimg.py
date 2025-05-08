@@ -4,9 +4,12 @@ from astropy.io.fits.diff import FITSDiff
 from jwst.lib.set_telescope_pointing import add_wcs
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
-def run_pipelines(rtdata_module):
+def run_pipelines(rtdata_module, resource_tracker):
     """Run stage 2 and 3 pipelines on NIRCam TSO image data."""
 
     rtdata = rtdata_module
@@ -24,12 +27,16 @@ def run_pipelines(rtdata_module):
     # the tso3 pipeline on all _calints files listed in association
     rtdata.get_data("nircam/tsimg/jw01068-o006_20240401t151322_tso3_00002_asn.json")
     args = ["calwebb_tso3", rtdata.input]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     return rtdata
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_tsimg(log_tracked_resources, run_pipelines):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["calints", "o006_crfints"])
 def test_nircam_tsimg_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-image2 pipeline performed on NIRCam TSIMG data."""
@@ -44,7 +51,6 @@ def test_nircam_tsimg_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_nircam_tsimage_stage3_phot(run_pipelines, diff_astropy_tables):
     rtdata = run_pipelines
     rtdata.input = "jw01068-o006_20240401t151322_tso3_00002_asn.json"
@@ -54,7 +60,6 @@ def test_nircam_tsimage_stage3_phot(run_pipelines, diff_astropy_tables):
     assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
 
-@pytest.mark.bigdata
 def test_nircam_setpointing_tsimg(rtdata, fitsdiff_default_kwargs):
     """
     Regression test of the set_telescope_pointing script on a level-1b
