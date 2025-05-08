@@ -111,8 +111,14 @@ def make_datamodel():
 
     # set blank times for one integration in order 1 to test warning raise
     model.spec[0].spec_table["INT_NUM"][2] = 0
-    time_keys = ["START_TIME_MJD", "END_TIME_MJD", "MID_TIME_MJD",
-                "START_TDB", "END_TDB", "MID_TDB"]
+    time_keys = [
+        "MJD-BEG",
+        "MJD-AVG",
+        "MJD-END",
+        "TDB-BEG",
+        "TDB-MID",
+        "TDB-END",
+    ]
     for key in time_keys:
         model.spec[0].spec_table[key][2] = np.nan
 
