@@ -41,8 +41,8 @@ def white_light(input_model, min_wave=None, max_wave=None):
     # Each row in the table is an integration.
     sporders = []  # list of spectral orders available
     order_list = []
-    mid_times = None
-    flux_sums = None
+    mid_times = []
+    flux_sums = []
 
     # Loop over the spectra in the input model and find mid times and fluxes
     for spec in input_model.spec:
@@ -56,7 +56,7 @@ def white_light(input_model, min_wave=None, max_wave=None):
         # Get mid times for all integrations in this order
         mid_time = spec.spec_table["MJD-AVG"]
         good = ~np.isnan(mid_time)
-        if mid_times is None:
+        if len(mid_times) == 0:
             mid_times = mid_time
         else:
             mid_times = np.hstack([mid_times, mid_time])
@@ -68,7 +68,7 @@ def white_light(input_model, min_wave=None, max_wave=None):
         masked_flux = spec.spec_table["FLUX"].copy()
         masked_flux[~wave_mask] = np.nan
         flux_sum = np.nansum(masked_flux, axis=1)
-        if flux_sums is None:
+        if len(flux_sums) == 0:
             flux_sums = flux_sum
         else:
             flux_sums = np.hstack([flux_sums, flux_sum])
