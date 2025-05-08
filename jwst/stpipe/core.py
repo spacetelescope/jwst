@@ -75,7 +75,7 @@ class JwstStep(Step):
 
         # for associations, open as ModelLibrary, which supports lazy-loading
         if dataset.suffix.lower() == ".json":
-            model = ModelLibrary(dataset)
+            model = ModelLibrary(dataset, asn_exptypes=["science"])
             return (model.get_crds_parameters(), crds_observatory)
 
         # for all other cases, use read_metadata directly to lazy-load
