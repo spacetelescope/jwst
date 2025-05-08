@@ -1,8 +1,9 @@
 #!/usr/bin/env python
-from stdatamodels.jwst.datamodels import CubeModel, TsoPhotModel
+from stdatamodels.jwst.datamodels import CubeModel, TsoPhotModel, GainModel
 
 from ..stpipe import Step
 from ..lib.catalog_utils import replace_suffix_ext
+from ..lib import reffile_utils
 from .tso_photometry import tso_aperture_photometry
 
 __all__ = ["TSOPhotometryStep"]
@@ -17,7 +18,7 @@ class TSOPhotometryStep(Step):
         save_catalog = boolean(default=False)  # save exposure-level catalog
     """  # noqa: E501
 
-    reference_file_types = ["tsophot"]
+    reference_file_types = ["tsophot", "gain"]
 
     def process(self, input_data):
         """
@@ -57,6 +58,16 @@ class TSOPhotometryStep(Step):
                 self.log.warning("the tso_photometry step will be skipped.")
                 return None
 
+            # Get the gain reference file
+            gain_filename = self.get_reference_file(model, "gain")
+            gain_m = GainModel(gain_filename)
+            # Get the relevant 2D gain values from the model
+            if reffile_utils.ref_matches_sci(model, gain_m):
+                gain_2d = gain_m.data
+            else:
+                self.log.info("Extracting gain subarray to match science data")
+                gain_2d = reffile_utils.get_subarray_model(model, gain_m).data
+
             # Retrieve aperture info from the reference file
             pupil_name = "ANY"
             if model.meta.instrument.pupil is not None:
@@ -72,7 +83,7 @@ class TSOPhotometryStep(Step):
 
             # Compute the aperture photometry
             catalog = tso_aperture_photometry(
-                model, xcenter, ycenter, radius, radius_inner, radius_outer
+                model, xcenter, ycenter, radius, radius_inner, radius_outer, gain_2d
             )
 
             # Save the photometry in an output catalog
