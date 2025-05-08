@@ -69,7 +69,7 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
     Parameters
     ----------
     img_model : CubeModel
-        The input image Cube model
+        The input model
 
     box_size : scalar
         Box size for the median filter
