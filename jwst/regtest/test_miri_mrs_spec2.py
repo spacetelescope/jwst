@@ -12,7 +12,7 @@ INPUT_PATH = 'miri/mrs'
 TRUTH_PATH = 'truth/test_miri_mrs'
 
 # Mark all tests in this module
-pytestmark = [pytest.mark.bigdata, pytest.mark.slow]
+pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope='module')

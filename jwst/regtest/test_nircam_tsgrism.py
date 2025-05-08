@@ -10,24 +10,33 @@ pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope="module")
-def run_pipelines(rtdata_module, resource_tracker):
-    """Run stage 2-3 tso pipelines on NIRCAM TSO grism data."""
+def run_spec2_pipeline(rtdata_module, resource_tracker):
+    """Run stage 2 pipeline on NIRCAM TSO grism data."""
     rtdata = rtdata_module
 
+    # Run spec2 pipeline on the _rateints file, saving intermediate products
+    rtdata.get_data("nircam/tsgrism/jw01366002001_04103_00001-seg001_nrcalong_rateints.fits")
+    args = ["calwebb_spec2", rtdata.input,
+            "--steps.flat_field.save_results=True",
+            "--steps.extract_2d.save_results=True",
+            "--steps.srctype.save_results=True"
+            ]
     with resource_tracker.track():
-        # Run tso-spec2 pipeline on the _rateints file, saving intermediate products
-        rtdata.get_data("nircam/tsgrism/jw01366002001_04103_00001-seg001_nrcalong_rateints.fits")
-        args = ["calwebb_spec2", rtdata.input,
-                "--steps.flat_field.save_results=True",
-                "--steps.extract_2d.save_results=True",
-                "--steps.srctype.save_results=True"
-                ]
         Step.from_cmdline(args)
 
-        # Get the level3 association json file (though not its members) and run
-        # the tso3 pipeline on all _calints files listed in association
-        rtdata.get_data("nircam/tsgrism/jw01366-o002_20230107t004627_tso3_00001_asn.json")
-        args = ["calwebb_tso3", rtdata.input]
+    return rtdata
+
+
+@pytest.fixture(scope="module")
+def run_tso3_pipeline(rtdata_module, run_spec2_pipeline, resource_tracker):
+    """Run stage 3 pipeline on NIRCAM TSO grism data."""
+    rtdata = rtdata_module
+
+    # Get the level3 association json file (though not its members) and run
+    # the tso3 pipeline on all _calints files listed in association
+    rtdata.get_data("nircam/tsgrism/jw01366-o002_20230107t004627_tso3_00001_asn.json")
+    args = ["calwebb_tso3", rtdata.input]
+    with resource_tracker.track():
         Step.from_cmdline(args)
 
     return rtdata
@@ -45,7 +54,11 @@ def run_pipeline_offsetSR(request, rtdata_module):
     return rtdata
 
 
-def test_log_tracked_resources_pipelines(log_tracked_resources, run_pipelines):
+def test_log_tracked_resources_spec2(log_tracked_resources, run_spec2_pipeline):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_tso3(log_tracked_resources, run_tso3_pipeline):
     log_tracked_resources()
 
 
@@ -67,9 +80,9 @@ def test_nircam_tsgrism_stage2_offsetSR(run_pipeline_offsetSR, fitsdiff_default_
 
 @pytest.mark.parametrize("suffix", ["calints", "extract_2d", "flat_field",
                                     "o002_crfints", "srctype", "x1dints"])
-def test_nircam_tsgrism_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
+def test_nircam_tsgrism_stage2(run_spec2_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-spec2 pipeline performed on NIRCam TSO grism data."""
-    rtdata = run_pipelines
+    rtdata = run_spec2_pipeline
     rtdata.input = "jw01366002001_04103_00001-seg001_nrcalong_rateints.fits"
     output = "jw01366002001_04103_00001-seg001_nrcalong_" + suffix + ".fits"
     rtdata.output = output
@@ -80,8 +93,8 @@ def test_nircam_tsgrism_stage2(run_pipelines, fitsdiff_default_kwargs, suffix):
     assert diff.identical, diff.report()
 
 
-def test_nircam_tsgrism_stage3_x1dints(run_pipelines, fitsdiff_default_kwargs):
-    rtdata = run_pipelines
+def test_nircam_tsgrism_stage3_x1dints(run_tso3_pipeline, fitsdiff_default_kwargs):
+    rtdata = run_tso3_pipeline
     rtdata.input = "jw01366-o002_20230107t004627_tso3_00001_asn.json"
     rtdata.output = "jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_x1dints.fits"
     rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_x1dints.fits")
@@ -90,8 +103,8 @@ def test_nircam_tsgrism_stage3_x1dints(run_pipelines, fitsdiff_default_kwargs):
     assert diff.identical, diff.report()
 
 
-def test_nircam_tsgrism_stage3_whtlt(run_pipelines):
-    rtdata = run_pipelines
+def test_nircam_tsgrism_stage3_whtlt(run_tso3_pipeline):
+    rtdata = run_tso3_pipeline
     rtdata.input = "jw01366-o002_20230107t004627_tso3_00001_asn.json"
     rtdata.output = "jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_whtlt.ecsv"
     rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_whtlt.ecsv")
