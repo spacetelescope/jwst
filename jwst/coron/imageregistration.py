@@ -58,13 +58,13 @@ def shift_subtract(params, reference, target, mask=None):
         Tuple of xshift, yshift, beta
 
     reference : numpy.ndarray
-        See align_fourier_lsq
+        See :py:func:`align_fourier_lsq`
 
     target : numpy.ndarray
-        See align_fourier_lsq
+        See :py:func:`align_fourier_lsq`
 
     mask : numpy.ndarray, None
-        See align_fourier_lsq
+        See :py:func:`align_fourier_lsq`
 
     Returns
     -------
