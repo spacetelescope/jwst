@@ -54,7 +54,7 @@ def white_light(input_model, min_wave=None, max_wave=None):
         order_list.extend([spectral_order] * n_spec)
 
         # Get mid times for all integrations in this order
-        mid_time = spec.spec_table["MID_TIME_MJD"]
+        mid_time = spec.spec_table["MJD-AVG"]
         good = ~np.isnan(mid_time)
         if mid_times is None:
             mid_times = mid_time

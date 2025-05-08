@@ -323,8 +323,8 @@ def test_populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec):
     # time keywords now added to output spectra
     for i, spec in enumerate(mock_10_multi_int_spec.spec[0].spec_table):
         assert spec["INT_NUM"] == i + 1
-        assert spec["START_TIME_MJD"] == mock_nirspec_bots.int_times["int_start_MJD_UTC"][i]
-        assert spec["END_TDB"] == mock_nirspec_bots.int_times["int_end_BJD_TDB"][i]
+        assert spec["MJD-BEG"] == mock_nirspec_bots.int_times["int_start_MJD_UTC"][i]
+        assert spec["TDB-END"] == mock_nirspec_bots.int_times["int_end_BJD_TDB"][i]
 
 
 def test_populate_time_keywords_no_table(mock_nirspec_fs_one_slit, mock_10_multi_int_spec, log_watcher):
@@ -1698,7 +1698,7 @@ def test_run_extract1d_tso(mock_nirspec_bots):
     # time and integration keywords are populated
     for i, spec in enumerate(output_model.spec[0].spec_table):
         assert spec["int_num"] == i + 1
-        assert_allclose(spec["start_time_mjd"], 59729.04367729)
+        assert_allclose(spec["MJD-BEG"], 59729.04367729)
 
     output_model.close()
 

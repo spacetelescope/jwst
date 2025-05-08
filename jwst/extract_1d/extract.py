@@ -625,12 +625,12 @@ def populate_time_keywords(input_model, output_model):
         for k in range(len(spec.spec_table)):  # for each integration (table row)
             row = k + offset
             spec.spec_table["INT_NUM"][k] = int_num[row]
-            spec.spec_table["START_TIME_MJD"][k] = start_time_mjd[row]
-            spec.spec_table["MID_TIME_MJD"][k] = mid_time_mjd[row]
-            spec.spec_table["END_TIME_MJD"][k] = end_time_mjd[row]
-            spec.spec_table["START_TDB"][k] = start_tdb[row]
-            spec.spec_table["MID_TDB"][k] = mid_tdb[row]
-            spec.spec_table["END_TDB"][k] = end_tdb[row]
+            spec.spec_table["MJD-BEG"][k] = start_time_mjd[row]
+            spec.spec_table["MJD-AVG"][k] = mid_time_mjd[row]
+            spec.spec_table["MJD-END"][k] = end_time_mjd[row]
+            spec.spec_table["TDB-BEG"][k] = start_tdb[row]
+            spec.spec_table["TDB-MID"][k] = mid_tdb[row]
+            spec.spec_table["TDB-END"][k] = end_tdb[row]
 
 
 def get_spectral_order(slit):
@@ -1482,12 +1482,12 @@ def make_tso_specmodel(spec_list, segment=None):
 
     # Populate the table from the input spectra
     time_keys = [
-        "START_TIME_MJD",
-        "MID_TIME_MJD",
-        "END_TIME_MJD",
-        "START_TDB",
-        "MID_TDB",
-        "END_TDB",
+        "MJD-BEG",
+        "MJD-AVG",
+        "MJD-END",
+        "TDB-BEG",
+        "TDB-MID",
+        "TDB-END",
     ]
     ignore_columns = ["NELEMENTS", "SEGMENT", "INT_NUM"] + time_keys
     for i in range(n_spectra):
