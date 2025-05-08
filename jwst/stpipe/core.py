@@ -54,13 +54,14 @@ class JwstStep(Step):
         crds_observatory = "jwst"
 
         # list or container: just set to zeroth model
+        # this is what stpipe does internally for ModelContainer already
         if isinstance(dataset, (list, tuple, ModelContainer)):
             if len(dataset) == 0:
                 raise ValueError(f"Input dataset {dataset} is empty")
             dataset = dataset[0]
 
         # Already open: use the model's method to get CRDS parameters
-        if isinstance(dataset, ModelLibrary) or isinstance(dataset, JwstDataModel):
+        if isinstance(dataset, (ModelLibrary, JwstDataModel)):
             return (
                 dataset.get_crds_parameters(),
                 crds_observatory,

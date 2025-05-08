@@ -127,9 +127,14 @@ def test_parameters_from_crds_listlike(is_list):
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
-def test_parameters_from_crds_empty_list():
-    """Test failure when attempting retrieval of CRDS parameters from an empty list"""
-    pars = WhiteLightStep.get_config_from_reference(ModelContainer())
+@pytest.mark.parametrize("is_list", [True, False])
+def test_parameters_from_crds_empty_listlike(is_list):
+    """Test failure when attempting retrieval of CRDS parameters from an empty list or container"""
+    if is_list:
+        data = []
+    else:
+        data = ModelContainer()
+    pars = WhiteLightStep.get_config_from_reference(data)
     assert not len(pars)
 
 
