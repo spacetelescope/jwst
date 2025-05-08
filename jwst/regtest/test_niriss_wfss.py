@@ -4,9 +4,12 @@ from astropy.io.fits.diff import FITSDiff
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope='module')
-def run_nis_wfss_spec2(rtdata_module):
+def run_nis_wfss_spec2(rtdata_module, resource_tracker):
     """Run the calwebb_spec2 pipeline on NIRISS WFSS exposures"""
     rtdata = rtdata_module
 
@@ -31,7 +34,8 @@ def run_nis_wfss_spec2(rtdata_module):
             '--steps.extract_1d.save_results=true',
             '--save_wfss_esec=true',
             '--steps.extract_2d.wfss_nbright=10']
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     # Run the remaining exposures without doing comparisons, just so that
     # fresh results are available for level-3 processing
@@ -42,7 +46,28 @@ def run_nis_wfss_spec2(rtdata_module):
         Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+@pytest.fixture(scope='module')
+def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module, resource_tracker):
+    """Run the calwebb_spec3 pipeline"""
+    rtdata = rtdata_module
+
+    # Get the level3 association file and run the spec3 pipeline on it.
+    # We don't need to retrieve any of the cal members of the association,
+    # because they were all just created by the preceding spec2 test.
+    rtdata.get_data("niriss/wfss/jw01324-o001_20220629t171902_spec3_003_asn.json")
+    args = ["calwebb_spec3", rtdata.input]
+    with resource_tracker.track():
+        Step.from_cmdline(args)
+
+
+def test_log_tracked_resources_spec2(log_tracked_resources, run_nis_wfss_spec2):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_spec3(log_tracked_resources, run_nis_wfss_spec3):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize(
     'suffix',
     ['assign_wcs', 'bsub', 'cal', 'esec', 'extract_2d', 'flat_field', 'photom', 'srctype', 'x1d']
@@ -59,20 +84,6 @@ def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwar
     assert diff.identical, diff.report()
 
 
-@pytest.fixture(scope='module')
-def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module):
-    """Run the calwebb_spec3 pipeline"""
-    rtdata = rtdata_module
-
-    # Get the level3 association file and run the spec3 pipeline on it.
-    # We don't need to retrieve any of the cal members of the association,
-    # because they were all just created by the preceding spec2 test.
-    rtdata.get_data("niriss/wfss/jw01324-o001_20220629t171902_spec3_003_asn.json")
-    args = ["calwebb_spec3", rtdata.input]
-    Step.from_cmdline(args)
-
-
-@pytest.mark.bigdata
 @pytest.mark.parametrize('suffix', ['cal', 'x1d', 'c1d'])
 @pytest.mark.parametrize('source_id', ['s000000015', 's000000104'])
 def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fitsdiff_default_kwargs):
