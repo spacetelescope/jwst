@@ -92,34 +92,12 @@ def test_parameters_from_crds_filename(monkeypatch):
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
-@pytest.fixture
-def single_member_asn(tmp_path):
-    """Create a single-member association file"""
-    miri_fname = get_pkg_data_filename("data/miri_data.fits", package="jwst.stpipe.tests")
-    asn_dict = {
-        'asn_type': 'image',
-        'asn_pool': 'pool',
-        'products': [
-            {
-                'name': 'miri_data',
-                'members': [
-                    {'expname': miri_fname, 'exptype': 'science'},
-                ]
-            }
-        ]
-    }
-    asn_file = tmp_path / 'miri_data_asn.json'
-    with open(asn_file, 'w') as f:
-        f.write(json.dumps(asn_dict))
-    return asn_file
-
-
-@pytest.mark.parametrize("is_open", [True, False])
-def test_parameters_from_crds_association(single_member_asn, is_open, monkeypatch):
+@pytest.mark.parametrize("is_library", [True, False])
+def test_parameters_from_crds_association(is_library, monkeypatch):
     """
     Test retrieval of parameters from CRDS from an association or library.
 
-    If is_open is True, the association is first opened as a library then passed to
+    If is_library is True, the association is first opened as a library then passed to
     get_config_from_reference.
     Otherwise, the asn file is passed directly to get_config_from_reference.
     """
@@ -127,7 +105,9 @@ def test_parameters_from_crds_association(single_member_asn, is_open, monkeypatc
         raise Exception()  # noqa: TRY002
     monkeypatch.setattr(datamodels, "open", throw_error)
 
-    if is_open:
+    single_member_asn = get_pkg_data_filename("data/single_member_miri_asn.json", package="jwst.stpipe.tests")
+
+    if is_library:
         data = ModelLibrary(single_member_asn)
     else:
         data = single_member_asn
@@ -137,8 +117,9 @@ def test_parameters_from_crds_association(single_member_asn, is_open, monkeypatc
 
 
 @pytest.mark.parametrize("is_list", [True, False])
-def test_parameters_from_crds_listlike(is_list, single_member_asn):
+def test_parameters_from_crds_listlike(is_list):
     """Test retrieval of parameters from CRDS from a list of open models or ModelContainer"""
+    single_member_asn = get_pkg_data_filename("data/single_member_miri_asn.json", package="jwst.stpipe.tests")
     data = ModelContainer(single_member_asn)
     if is_list:
         data = data._models
