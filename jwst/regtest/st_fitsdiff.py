@@ -1406,13 +1406,11 @@ class STTableDataDiff(TableDataDiff):
                 #   it is not important where they come from
 
                 # Calculate the absolute and relative differences
-                try:
+                get_stats = False
+                if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
+                    arrb.dtype, np.floating
+                ):
                     nan_idx = np.isnan(arra) | np.isnan(arrb)
-                    can_nan = True
-                except TypeError:
-                    can_nan = False
-
-                if can_nan:
                     anonan = arra[~nan_idx]
                     bnonan = arrb[~nan_idx]
                     diffs = np.abs(anonan - bnonan)
@@ -1420,7 +1418,34 @@ class STTableDataDiff(TableDataDiff):
                     nozeros = (diffs != 0.0) & (bnonan != 0.0)
                     rel_values = diffs[nozeros] / np.abs(bnonan[nozeros])
                     rel_diffs = rel_values[rel_values > self.rtol].size
+                    get_stats = True
 
+                elif "P" in col.format or "Q" in col.format:
+                    diffs = []
+                    rel_values = []
+                    zeros_idx = []
+                    nan_idx = []
+                    for idx in range(len(arra)):
+                        if arra[idx] == 0 or arrb[idx] == 0:
+                            zeros_idx.append(idx)
+                        elif np.isnan(arra[idx]) or np.isnan(arrb[idx]):
+                            nan_idx.append(idx)
+                        else:
+                            df = np.abs(arra[idx] - arrb[idx])
+                            if not df <= self.atol:
+                                diffs.append(df)
+                            dfr = df / np.abs(arrb[idx])
+                            if not dfr <= self.rtol:
+                                rel_values.append(dfr)
+                    get_stats = True
+                    diffs = np.array(diffs)
+                    abs_diffs = diffs.size
+                    rel_values = np.array(rel_values)
+                    rel_diffs = rel_values.size
+                    anonan = arra[~np.array(nan_idx)]
+                    bnonan = arrb[~np.array(nan_idx)]
+
+                if get_stats:
                     sum_diffs = np.any(diffs > (self.atol + self.rtol * np.abs(bnonan)))
                     if sum_diffs:
                         # Report the total number of zeros, nans, and no-nan values
@@ -1442,7 +1467,7 @@ class STTableDataDiff(TableDataDiff):
                         self.report_table.add_row(
                             (
                                 col.name,
-                                str(arra.dtype),
+                                str(arra.dtype).replace(">", ""),
                                 abs_diffs,
                                 np.max(diffs),
                                 np.mean(diffs),
@@ -1464,7 +1489,7 @@ class STTableDataDiff(TableDataDiff):
                         self.report_table.add_row(
                             (
                                 col.name,
-                                str(arra.dtype),
+                                str(arra.dtype).replace(">", ""),
                                 diffs,
                                 0,
                                 0,
