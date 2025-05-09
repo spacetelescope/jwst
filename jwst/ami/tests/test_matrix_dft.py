@@ -23,13 +23,14 @@ def test_matrix_dft(circular_pupil):
     assert fraction_close > 0.99
 
     # test nonzero offset
-    offset = (10, -7)
+    offset = (10.9, -7.1)
     dft_offset = matrix_dft.matrix_dft(circular_pupil, nlam_d, npix, centering="ADJUSTABLE", offset=offset)
+
     # ensure max value of dft is at the offset from center of array
     argmax_2d = np.unravel_index(np.argmax(np.abs(dft_offset)), dft.shape)
     center = np.array(dft_offset.shape)/2
-    offset_idx = center + np.array(offset) - 1
-    assert_allclose(argmax_2d, offset_idx, atol=1)
+    offset_idx = center + np.floor(np.array(offset))
+    assert_allclose(argmax_2d, offset_idx)
 
     # test centering options
     dft_symmetric = matrix_dft.matrix_dft(circular_pupil, nlam_d, npix, centering="SYMMETRIC")
