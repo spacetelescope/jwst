@@ -283,14 +283,10 @@ class CubeBlot:
             log.info("Blotting 30 slices on NIRSPEC detector")
             roi_det = 1.0  # Just large enough that we don't get holes
 
-            wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(model, np.arange(nslices))  # noqa: SLF001
-
             for ii in range(nslices):
                 # for each slice pull out the blotted values that actually fall on the slice region
                 # use the bounding box of each slice to determine the slice limits
-                slice_wcs = nirspec._nrs_wcs_set_input_lite(  # noqa: SLF001
-                    model, wcsobj, ii, [tr1, tr2[ii], tr3[ii]]
-                )
+                slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
                 slicer2world = slice_wcs.get_transform("slicer", "world")
                 detector2slicer = slice_wcs.get_transform("detector", "slicer")
 

@@ -169,14 +169,11 @@ def mask_ifu_slices(input_model, mask):
     # Initialize global DQ map to all zero (OK to use)
     dqmap = np.zeros_like(input_model.dq)
 
-    # Note: 30 in the line below is hardcoded in nirspec.nrs.ifu_wcs, which
-    # the line below replaces.
-    wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(input_model, np.arange(30))  # noqa: SLF001
+    # Get the wcs objects for all IFU slices
+    list_of_wcs = nirspec.nrs_ifu_wcs(input_model)
 
     # Loop over the IFU slices, finding the valid region for each
-    for k in range(len(tr2)):
-        ifu_wcs = nirspec._nrs_wcs_set_input_lite(input_model, wcsobj, k, [tr1, tr2[k], tr3[k]])  # noqa: SLF001
-
+    for ifu_wcs in list_of_wcs:
         # Construct array indexes for pixels in this slice
         x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box, step=(1, 1), center=True)
 
@@ -225,23 +222,14 @@ def mask_slits(input_model, mask):
     """
     log.info("Finding slit/slitlet pixels")
 
-    # Get the slit-to-msa frame transform from the WCS object
-    slit2msa = input_model.meta.wcs.get_transform("slit_frame", "msa_frame")
+    # Get the slits from the WCS object
+    slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slits
 
     # Loop over the slits, marking all the pixels within each bounding
     # box as False (do not use) in the mask.
     # Note that for 3D masks (TSO mode), all planes will be set to the same value.
-
-    slits = [s.name for s in slit2msa.slits]
-    wcsobj, tr1, tr2, tr3, open_slits = nirspec._get_transforms(  # noqa: SLF001
-        input_model, slits, return_slits=True
-    )
-
-    for k in range(len(tr2)):
-        slit_wcs = nirspec._nrs_wcs_set_input_lite(  # noqa: SLF001
-            input_model, wcsobj, slits[k], [tr1, tr2[k], tr3[k]], open_slits=open_slits
-        )
-
+    for slit in slits:
+        slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
         xlo, xhi = _toindex(slit_wcs.bounding_box[0])
         ylo, yhi = _toindex(slit_wcs.bounding_box[1])
         mask[..., ylo:yhi, xlo:xhi] = False
@@ -502,10 +490,10 @@ def create_mask(
             # check for any slits defined in the fixed slit quadrant:
             # if there is nothing there of interest, mask the whole FS region
             try:
-                slit2msa = input_model.meta.wcs.get_transform("slit_frame", "msa_frame")
-                is_fs = [s.quadrant == 5 for s in slit2msa.slits]
+                slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slits
+                is_fs = [s.quadrant == 5 for s in slits]
             except (AttributeError, ValueError, TypeError):
-                log.warning("Slit to MSA transform not found.")
+                log.warning("Open slits not found in input WCS.")
                 is_fs = [False]
             if not any(is_fs):
                 log.info("Masking the fixed slit region for MOS data.")

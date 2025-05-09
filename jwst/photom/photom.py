@@ -672,15 +672,10 @@ class DataSet:
         dqmap = np.zeros_like(self.input.dq) + dqflags.pixel['NON_SCIENCE']
 
         # Get the list of wcs's for the IFU slices
-        # Note: 30 in the line below is hardcoded in nirspec.nrs.ifu_wcs, which
-        # the line below replaces.
-        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(self.input, np.arange(30))
+        list_of_wcs = nirspec.nrs_ifu_wcs(self.input)
 
         # Loop over the slices
-        for k in range(len(tr2)):
-
-            ifu_wcs = nirspec._nrs_wcs_set_input_lite(self.input, wcsobj, k,
-                                                     [tr1, tr2[k], tr3[k]])
+        for (k, ifu_wcs) in enumerate(list_of_wcs):
 
             # Construct array indexes for pixels in this slice
             x, y = gwcs.wcstools.grid_from_bounding_box(ifu_wcs.bounding_box,

@@ -361,12 +361,12 @@ def test_nirspec_msa_flat():
         flat.close()
 
 
-@pytest.mark.slow
 def test_nirspec_ifu_flat():
-    """Test that the interface works for NIRSpec IFU data.
+    """
+    Test that the interface works for NIRSpec IFU data.
 
     Larger data and more WCS operations required for testing make
-    this test take more than a minute, so marking this test 'slow'.
+    this test a little longer than the others.
     """
     shape = (2048, 2048)
     w_shape = (10, 2048, 2048)
