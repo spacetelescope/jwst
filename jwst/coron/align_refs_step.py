@@ -37,7 +37,8 @@ class AlignRefsStep(Step):
         Returns
         -------
         result : CubeModel
-            CubeModel produced by the AlignRefs calibration step
+            CubeModel containing stack of PSF reference images shifted to the
+            first science target image
         """
         # Open the input science target model
         with datamodels.open(target) as target_model:
