@@ -1,5 +1,6 @@
 """Sum the flux over all wavelengths in each integration as a function of time for the target."""
 
+import itertools
 import logging
 
 import numpy as np
@@ -36,10 +37,13 @@ def white_light(input_model, min_wave=None, max_wave=None):
         max_wave = 1.0e10
 
     # The input should contain one spectrum for each spectral
-    # order.  NIRISS SOSS data can contain up to three orders.
+    # order or detector.  NIRISS SOSS data can contain up to three orders;
+    # NIRSpec BOTS can contain up to two detectors.
     # Each row in the table is an integration.
     sporders = []  # list of spectral orders available
+    detectors = []  # list of detectors available
     order_list = []
+    detector_list = []
     mid_times = []
     mid_tdbs = []
     flux_sums = []
@@ -50,8 +54,15 @@ def white_light(input_model, min_wave=None, max_wave=None):
 
         # Figure out the spectral order for this spectrum
         spectral_order = getattr(spec, "spectral_order", None)
-        sporders.append(spectral_order)
+        if spectral_order not in sporders:
+            sporders.append(spectral_order)
         order_list.extend([spectral_order] * n_spec)
+
+        # Do the same for the detector
+        detector = getattr(spec, "detector", None)
+        if detector not in detectors:
+            detectors.append(detector)
+        detector_list.extend([detector] * n_spec)
 
         # Get mid times for all integrations in this order
         mid_time = spec.spec_table["MJD-AVG"]
@@ -94,20 +105,27 @@ def white_light(input_model, min_wave=None, max_wave=None):
     tbl["int_mid_MJD_UTC"] = unique_mid_times
     tbl["int_mid_BJD_TDB"] = bjd_times
 
+    flux_sums = flux_sums[good]
+    order_list = np.array(order_list)[good]
+    detector_list = np.array(detector_list)[good]
+
     # Loop over the spectral orders and make separate table columns
     # for fluxes in each order, ensuring times are aligned even if one order
     # is not observed at a given time.
-    for order in sporders:
-        is_this_order = order_list == order
-        time_is_in_this_order = np.isin(unique_mid_times, mid_times[is_this_order])
+    columns = list(itertools.product(sporders, detectors))
+    for order, detector in columns:
+        is_this_column = (order_list == order) & (detector_list == detector)
+        time_is_in_this_column = np.isin(unique_mid_times, mid_times[is_this_column])
 
-        # NaN-pad fluxes for times not represented in this order
+        # NaN-pad fluxes for times not represented in this column
         fluxes = np.full(len(unique_mid_times), np.nan)
-        fluxes[time_is_in_this_order] = flux_sums[is_this_order]
+        fluxes[time_is_in_this_column] = flux_sums[is_this_column]
+
+        colname = "whitelight_flux"
         if len(sporders) > 1:
-            colname = f"whitelight_flux_order_{order}"
-        else:
-            colname = "whitelight_flux"
+            colname += f"_order_{order}"
+        if len(detectors) > 1:
+            colname += f"_detector_{detector}"
         tbl[colname] = fluxes
 
     return tbl
@@ -129,7 +147,6 @@ def _make_empty_output_table(input_model):
     """
     tbl_meta = OrderedDict()
     tbl_meta["instrument"] = input_model.meta.instrument.name
-    tbl_meta["detector"] = input_model.meta.instrument.detector
     tbl_meta["exp_type"] = input_model.meta.exposure.type
     tbl_meta["subarray"] = input_model.meta.subarray.name
     tbl_meta["filter"] = input_model.meta.instrument.filter
