@@ -232,24 +232,40 @@ class ModelLibrary(AbstractModelLibrary):
             model.
         """
         with self:
-            science_index = None
+            idx = None
             for i, member in enumerate(self._members):
                 if member["exptype"].lower() == "science":
-                    science_index = i
+                    idx = i
                     break
-            if science_index is None:
+            if idx is None:
                 warnings.warn(
                     "get_crds_parameters failed to find any science members. "
                     "The first model was used to determine the parameters",
                     UserWarning,
                     stacklevel=2,
                 )
-                science_index = 0
+                idx = 0
 
-            # Retrieve the filename
-            filename = Path(self._asn_dir) / member["expname"]
-            parameters = read_metadata(filename, flatten=True)
-        return parameters
+            # find model in _loaded_models, temp_filenames, or asn_dir
+            if self._on_disk:
+                if idx in self._temp_filenames:
+                    # if model has been modified, find its temp filename
+                    filename = self._temp_filenames[idx]
+                else:
+                    # otherwise, find the filename in the asn_dir
+                    member = self._members[idx]
+                    filename = Path(self._asn_dir) / member["expname"]
+            else:
+                if idx in self._loaded_models:
+                    # if this model is in memory, retrieve parameters from it directly
+                    model = self._loaded_models[idx]
+                    return model.get_crds_parameters()
+                else:
+                    # otherwise, find the filename in the asn_dir
+                    member = self._members[idx]
+                    filename = Path(self._asn_dir) / member["expname"]
+
+        return read_metadata(filename, flatten=True)
 
 
 def _attrs_to_group_id(

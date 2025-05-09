@@ -92,14 +92,17 @@ def test_parameters_from_crds_filename(monkeypatch):
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
-@pytest.mark.parametrize("is_library", [True, False])
-def test_parameters_from_crds_association(is_library, monkeypatch):
+@pytest.mark.parametrize("on_disk_status", [None, True, False])
+def test_parameters_from_crds_association(on_disk_status, monkeypatch):
     """
     Test retrieval of parameters from CRDS from an association or library.
 
-    If is_library is True, the association is first opened as a library then passed to
-    get_config_from_reference.
+    If on_disk_status is not None, the association is first opened as a library
+    then passed to get_config_from_reference with on_disk set to on_disk_status.
     Otherwise, the asn file is passed directly to get_config_from_reference.
+
+    The datamodel should never be opened in any of the three cases, even if
+    on_disk=False, because the model has not yet been borrowed from the library.
     """
     def throw_error(self):
         raise Exception()  # noqa: TRY002
@@ -107,10 +110,10 @@ def test_parameters_from_crds_association(is_library, monkeypatch):
 
     single_member_asn = get_pkg_data_filename("data/single_member_miri_asn.json", package="jwst.stpipe.tests")
 
-    if is_library:
-        data = ModelLibrary(single_member_asn)
-    else:
+    if on_disk_status is None:
         data = single_member_asn
+    else:
+        data = ModelLibrary(single_member_asn, on_disk=on_disk_status)
 
     pars = WhiteLightStep.get_config_from_reference(data)
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
