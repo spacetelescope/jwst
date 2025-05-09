@@ -1,0 +1,3 @@
+Improve memory usage of AmiAnalyzeStep: for test dataset with 400 integrations
+and default parameter settings, the memory usage is reduced from 12 GB to 0.5 GB.
+(Note the scaling is not necessarily linear with the number of integrations.)
