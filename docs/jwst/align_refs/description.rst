@@ -75,15 +75,14 @@ contains the collection of all PSF images to be used, in the form of a 3D image 
 Outputs
 -------
 
-4D aligned PSF images
+3D aligned PSF images
 ^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.QuadModel`
+:Data model: `~jwst.datamodels.CubeModel`
 :File suffix: _psfalign
 
-The output is a 4D data model, where the 3rd axis has length equal to the total number of
-reference PSF images in the input PSF stack and the 4th axis has length equal to the number
-of integrations in the input science target product (ncols x nrows x npsfs x nints).
-Image[n,m] in the 4D data is the n :sup:`th` PSF image aligned to the m :sup:`th` science
+The output is a CubeModel, where the 3rd axis has length equal to the total number of
+reference PSF images in the input PSF stack (ncols x nrows x npsfs).
+Each Image[n] in the 3D data is the n :sup:`th` PSF image aligned to the first science
 target integration. The file name is exposure-based, using the input science target exposure
 name as the root, with the addition of the association candidate ID and the "_psfalign"
 product type suffix, e.g. "jw8607342001_02102_00001_nrcb3_a3001_psfalign.fits."
