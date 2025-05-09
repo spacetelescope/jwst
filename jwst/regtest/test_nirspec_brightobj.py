@@ -3,7 +3,7 @@ import os
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.flatfield import FlatFieldStep
 from jwst.lib.suffix import replace_suffix
