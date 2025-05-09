@@ -29,15 +29,15 @@ class AlignRefsStep(Step):
 
         Parameters
         ----------
-        target : str or DataModel
+        target : str or CubeModel
             CubeModel or file containing science target data
-        psf : str or DataModel
+        psf : str or CubeModel
             CubeModel or file containing PSF image stack
 
         Returns
         -------
-        result : DataModel
-            DataModel produced by the AlignRefsStep calibration step
+        result : QuadModel
+            QuadModel produced by the AlignRefs calibration step
         """
         # Open the input science target model
         with datamodels.open(target) as target_model:

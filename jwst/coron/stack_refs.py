@@ -18,8 +18,8 @@ def make_cube(input_models):
 
     Parameters
     ----------
-    input_models : list
-        List of input DataModels
+    input_models : list or ModelContainer
+        List or ModelContainer containing input DataModels
 
     Returns
     -------

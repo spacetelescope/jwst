@@ -21,8 +21,8 @@ class StackRefsStep(Step):
 
         Parameters
         ----------
-        input_files : str or CubeModel
-            CubeModel or file containing input science exposures
+        input_files : ModelContainer
+            ModelContainer containing input science exposures
 
         Returns
         -------

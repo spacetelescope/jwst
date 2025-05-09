@@ -14,12 +14,11 @@ def klip(target_model, refs_model, truncate):
 
     Parameters
     ----------
-    target_model : CubeModel (NINTS x NROWS x NCOLS)
-        The input images of the target. Multiple integrations within
-        a single exposure are stacked along the first (NINTS) axis of
-        the data arrays.
-    refs_model : CubeModel (NINTS_PSF x NROWS x NCOLS)
-        The input 3D stack of reference images. The first
+    target_model : CubeModel
+        The input images of the target (NINTS x NROWS x NCOLS). Multiple integrations
+        within a single exposure are stacked along the first (NINTS) axis of the data arrays.
+    refs_model : CubeModel
+        The input 3D stack of reference images (NINTS_PSF x NROWS x NCOLS). The first
         (NINTS_PSF) axis is the stack of aligned PSF integrations for that
         target image.
     truncate : int
@@ -28,9 +27,9 @@ def klip(target_model, refs_model, truncate):
     Returns
     -------
     output_target : CubeModel
-        Science target datamodel with PSF subtracted
+        Science target Cubemodel with PSF subtracted
     output_psf : CubeModel
-        DataModel of PSF fitted to target image
+        CubeModel of PSF fitted to target image
     """
     # Initialize the output models as copies of the input target model
     output_target = target_model.copy()
@@ -96,7 +95,7 @@ def karhunen_loeve_transform(m, normalize=False):
     ----------
     m : numpy.ndarray
         The array of flattened, background subtracted reference arrays
-    normalize : bool, default=False
+    normalize : bool
         If True, normalize the returned transform
 
     Returns
