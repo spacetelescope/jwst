@@ -31,8 +31,8 @@ class KlipStep(Step):
         ----------
         target : str or CubeModel
             CubeModel or file containing science target exposure
-        psfrefs : str or QuadModel
-            QuadModel or file containing PSF Reference exposures
+        psfrefs : str or CubeModel
+            CubeModel or file containing PSF Reference exposures
 
         Returns
         -------

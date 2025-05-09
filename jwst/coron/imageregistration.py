@@ -147,7 +147,7 @@ def align_array(reference, target, mask=None, return_aligned=True):
         A 2D (``NxK``) image indicating pixels to ignore when performing the
         minimization. The masks acts as a weighting function in performing
         the fit.
-    return_aligned : bool, default=True
+    return_aligned : bool
         Boolean that indicates whether the aligned image is returned
 
     Returns
@@ -204,8 +204,8 @@ def align_models(reference, target, mask):
 
     Returns
     -------
-    output_model : QuadModel
-        A QuadModel containing aligned copies of the input ``target``
+    output_model : CubeModel
+        A CubeModel containing aligned copies of the input ``target``
         cubes aligned to each slice in the input ``reference`` cube.
     """
     # Create output CubeModel of required dimensions. Since all science integrations

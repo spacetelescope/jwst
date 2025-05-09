@@ -19,13 +19,13 @@ def snr_image(target_model):
 
     Parameters
     ----------
-    target_model : DataModel
-        Science target DataModel
+    target_model : ImageModel
+        Science target ImageModel
 
     Returns
     -------
-    output_model : DataModel
-        DataModel with signal-to_noise data attribute
+    output_model : ImageModel
+        ImageModel with signal-to_noise data attribute
     """
     # Initialize the output model as a copy of the input model
     output_model = target_model.copy()
@@ -50,14 +50,14 @@ def contrast_curve(target_model, width):
 
     Parameters
     ----------
-    target_model : DataModel
-        The science target DataModel
+    target_model : ImageModel
+        The science target ImageModel
     width : float
         Width of the annuli, in pixels
 
     Returns
     -------
-    output_model : DataModel
+    output_model : ContrastModel
         ContrastModel with a table of radius and standard deviation of non-masked pixels
     """
     # Get the target array size and center
