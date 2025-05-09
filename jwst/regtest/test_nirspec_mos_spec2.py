@@ -1,12 +1,15 @@
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from astropy.utils.exceptions import AstropyUserWarning
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
-def run_pipeline(rtdata_module):
+def run_pipeline(rtdata_module, resource_tracker):
     """Run the calwebb_spec2 pipeline on a single NIRSpec MOS exposure."""
 
     rtdata = rtdata_module
@@ -33,12 +36,16 @@ def run_pipeline(rtdata_module):
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
     with pytest.warns(AstropyUserWarning, match="Input data contains invalid values"):
-        Step.from_cmdline(args)
+        with resource_tracker.track():
+            Step.from_cmdline(args)
 
     return rtdata
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources(log_tracked_resources, run_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", [
     "assign_wcs", "msa_flagging", "nsclean", "bsub", "extract_2d", "wavecorr", "flat_field",
     "srctype", "pathloss", "barshadow", "cal", "s2d", "x1d"])

@@ -11,6 +11,9 @@ from jwst.regtest import regtestdata as rt
 INPUT_PATH = 'miri/mrs'
 TRUTH_PATH = 'truth/test_miri_mrs'
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope='module')
 def run_spec2(rtdata_module):
@@ -44,7 +47,7 @@ def run_spec2(rtdata_module):
 
 
 @pytest.fixture(scope='module')
-def run_spec2_with_residual_fringe(rtdata_module):
+def run_spec2_with_residual_fringe(rtdata_module, resource_tracker):
     """Run the Spec2Pipeline on a single exposure"""
     rtdata = rtdata_module
 
@@ -58,11 +61,14 @@ def run_spec2_with_residual_fringe(rtdata_module):
             '--steps.residual_fringe.save_results=true',
             ]
 
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.slow
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec2(log_tracked_resources, run_spec2_with_residual_fringe):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize(
     'suffix',
     ['assign_wcs', 'cal', 'flat_field', 'fringe', 'photom', 's3d', 'srctype', 'straylight', 'x1d']
@@ -74,8 +80,6 @@ def test_miri_mrs_spec2(run_spec2, fitsdiff_default_kwargs, suffix, rtdata_modul
     rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path=TRUTH_PATH)
 
 
-@pytest.mark.slow
-@pytest.mark.bigdata
 def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs, rtdata_module):
 
     rtdata = rtdata_module
@@ -101,8 +105,6 @@ def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs, rtdata_module):
         assert_allclose(ytest, ytruth)
 
 
-@pytest.mark.slow
-@pytest.mark.bigdata
 @pytest.mark.parametrize('suffix', ['residual_fringe', 'rf_s3d', 'rf_x1d', 'rf_cal'])
 def test_miri_mrs_spec2_with_rf(run_spec2_with_residual_fringe,
                                 fitsdiff_default_kwargs, suffix, rtdata_module):
