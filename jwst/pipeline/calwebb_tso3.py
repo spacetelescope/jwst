@@ -163,9 +163,9 @@ class Tso3Pipeline(Pipeline):
 
                 x1d_result.spec.extend(result.spec)
 
-                # perform white-light photometry on 1d extracted data
-                self.log.info("Performing white-light photometry ...")
-                phot_result_list.append(self.white_light.run(result))
+            # perform white-light photometry on all 1d extracted data
+            self.log.info("Performing white-light photometry ...")
+            phot_result_list.append(self.white_light.run(x1d_result))
 
             # Update some metadata from the association
             x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
