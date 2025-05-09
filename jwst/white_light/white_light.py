@@ -36,7 +36,7 @@ def white_light(input_model, min_wave=None, max_wave=None):
     if max_wave is None:
         max_wave = 1.0e10
 
-    # The input should contain one spectrum for each spectral
+    # The input should contain separate spectra for each spectral
     # order or detector.  NIRISS SOSS data can contain up to three orders;
     # NIRSpec BOTS can contain up to two detectors.
     # Each row in the table is an integration.
