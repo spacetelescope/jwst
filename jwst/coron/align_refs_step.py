@@ -36,8 +36,8 @@ class AlignRefsStep(Step):
 
         Returns
         -------
-        result : QuadModel
-            QuadModel produced by the AlignRefs calibration step
+        result : CubeModel
+            CubeModel produced by the AlignRefs calibration step
         """
         # Open the input science target model
         with datamodels.open(target) as target_model:
