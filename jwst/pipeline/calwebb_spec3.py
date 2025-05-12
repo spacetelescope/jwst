@@ -301,7 +301,11 @@ class Spec3Pipeline(Pipeline):
                     )
                     if extraction_complete:
                         # Combine the results for all sources
-                        wfss_comb.append(self.combine_1d.run(result))
+                        comb = self.combine_1d.run(result)
+                        # add metadata that only WFSS wants
+                        comb.spec[0].source_ra = getattr(result.spec[0], "source_ra", None)
+                        comb.spec[0].source_dec = getattr(result.spec[0], "source_dec", None)
+                        wfss_comb.append(comb)
                     extraction_complete = False  # reset to avoid re-run below
                 else:
                     result = self.extract_1d.run(result)
@@ -495,6 +499,14 @@ def _save_wfss_x1d(results_list, output_filename):
             n_rows = n_rows_by_exposure[exposure_idx]
             j = loop_index_by_exposure[exposure_idx]
             loop_index_by_exposure[exposure_idx] += 1
+
+            # rename some spec metadata to clarify where they came from
+            # at the request of the WFSS teams
+            name_roots = ["XSTART", "YSTART", "XSTOP", "YSTOP"]
+            new_names = ["EXTRACT1D_" + name for name in name_roots]
+            old_names = ["EXTRACTION_" + name for name in name_roots]
+            for old_name, new_name in zip(old_names, new_names, strict=True):
+                setattr(spec, new_name.lower(), getattr(spec, old_name.lower(), None))
 
             # populate the table with data from the input spectrum
             populate_recarray(

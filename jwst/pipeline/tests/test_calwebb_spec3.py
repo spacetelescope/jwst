@@ -43,8 +43,8 @@ def test_save_wfss_x1d(tmp_cwd):
             spec.spec_table = spec_table
             
             # add slit_xstart and slit_ystart
-            spec.slit_xstart = 99.0
-            spec.slit_ystart = 99.0
+            spec.extract2d_xstart = 99.0
+            spec.extract2d_ystart = 99.0
 
             multi.spec.append(spec)
         results_list.append(multi)
@@ -71,8 +71,8 @@ def test_save_wfss_x1d(tmp_cwd):
         assert np.all(np.diff(source_ids) >= 0)
 
         # Ensure slit xstart and ystart were propagated into the output
-        assert np.all(bintable["SLIT_XSTART"] == 99.0)
-        assert np.all(bintable["SLIT_YSTART"] == 99.0)
+        assert np.all(bintable["EXTRACT2D_XSTART"] == 99.0)
+        assert np.all(bintable["EXTRACT2D_YSTART"] == 99.0)
 
     hdul.close()
 
