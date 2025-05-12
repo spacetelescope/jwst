@@ -1,3 +1,4 @@
+import json
 import logging
 import os
 from os.path import abspath
@@ -16,6 +17,7 @@ from stdatamodels.jwst import datamodels
 from jwst import __version__ as jwst_version
 from jwst.white_light import WhiteLightStep
 from jwst.tests.helpers import LogWatcher
+from jwst.datamodels import ModelLibrary, ModelContainer
 
 from jwst.stpipe import Step
 from jwst.stpipe.tests.steps import (
@@ -64,7 +66,7 @@ def test_disable_crds_steppars_cmdline(capsys, arg, env_set, expected_fn):
     assert expected_fn(captured.err)
 
 
-def test_parameters_from_crds():
+def test_parameters_from_crds_open_model():
     """Test retrieval of parameters from CRDS"""
     with datamodels.open(get_pkg_data_filename(
             "data/miri_data.fits", package="jwst.stpipe.tests")) as data:
@@ -72,8 +74,81 @@ def test_parameters_from_crds():
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
-def test_parameters_from_crds_fail():
-    """Test retrieval of parameters from CRDS"""
+def test_parameters_from_crds_filename(monkeypatch):
+    """
+    Test retrieval of parameters from CRDS from single-model filename.
+    
+    Ensures datamodels.open() is not called.
+    Similar tests of read_metadata() in stdatamodels ensure that the input file's `data`
+    attribute is never read either.
+    """
+    def throw_error(self):
+        raise Exception()  # noqa: TRY002
+    monkeypatch.setattr(datamodels, "open", throw_error)
+
+    fname = get_pkg_data_filename("data/miri_data.fits", package="jwst.stpipe.tests")
+    print("fname", fname)
+    pars = WhiteLightStep.get_config_from_reference(fname)
+    assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
+
+
+@pytest.mark.parametrize("on_disk_status", [None, True, False])
+def test_parameters_from_crds_association(on_disk_status, monkeypatch):
+    """
+    Test retrieval of parameters from CRDS from an association or library.
+
+    If on_disk_status is not None, the association is first opened as a library
+    then passed to get_config_from_reference with on_disk set to on_disk_status.
+    Otherwise, the asn file is passed directly to get_config_from_reference.
+
+    The datamodel should never be opened in any of the three cases, even if
+    on_disk=False, because the model has not yet been borrowed from the library.
+    """
+    def throw_error(self):
+        raise Exception()  # noqa: TRY002
+    monkeypatch.setattr(datamodels, "open", throw_error)
+
+    single_member_asn = get_pkg_data_filename("data/single_member_miri_asn.json", package="jwst.stpipe.tests")
+
+    if on_disk_status is None:
+        data = single_member_asn
+    else:
+        data = ModelLibrary(single_member_asn, on_disk=on_disk_status)
+
+    pars = WhiteLightStep.get_config_from_reference(data)
+    assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
+
+
+@pytest.mark.parametrize("is_list", [True, False])
+def test_parameters_from_crds_listlike(is_list):
+    """Test retrieval of parameters from CRDS from a list of open models or ModelContainer"""
+    single_member_asn = get_pkg_data_filename("data/single_member_miri_asn.json", package="jwst.stpipe.tests")
+    data = ModelContainer(single_member_asn)
+    if is_list:
+        data = data._models
+    pars = WhiteLightStep.get_config_from_reference(data)
+    assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
+
+
+@pytest.mark.parametrize("is_list", [True, False])
+def test_parameters_from_crds_empty_listlike(is_list):
+    """Test failure when attempting retrieval of CRDS parameters from an empty list or container"""
+    if is_list:
+        data = []
+    else:
+        data = ModelContainer()
+    pars = WhiteLightStep.get_config_from_reference(data)
+    assert not len(pars)
+
+
+def test_parameters_from_crds_bad_type():
+    """Test failure when attempting retrieval of CRDS parameters from an invalid type"""
+    pars = WhiteLightStep.get_config_from_reference(42)
+    assert not len(pars)
+
+
+def test_parameters_from_crds_bad_meta():
+    """Test failure when attempting retrieval of parameters from CRDS with invalid metadata"""
     with datamodels.open(get_pkg_data_filename(
             "data/miri_data.fits", package="jwst.stpipe.tests")) as data:
         data.meta.instrument.name = 'NIRSPEC'
