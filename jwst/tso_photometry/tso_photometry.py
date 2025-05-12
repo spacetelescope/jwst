@@ -18,12 +18,12 @@ def tso_aperture_photometry(
     datamodel, xcenter, ycenter, radius, radius_inner, radius_outer, gain_2d
 ):
     """
-    Create a photometric catalog for NIRCam TSO imaging observations.
+    Create a photometric catalog for TSO imaging observations.
 
     Parameters
     ----------
     datamodel : `CubeModel`
-        The input `CubeModel` of a NIRCam TSO imaging observation.
+        The input `CubeModel` of a TSO imaging observation.
 
     xcenter, ycenter : float
         The ``x`` and ``y`` center of the aperture.
