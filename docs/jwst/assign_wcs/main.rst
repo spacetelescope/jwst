@@ -103,19 +103,19 @@ source pixel location, as entered, along with the order that was specified:
   >>> print(x, y, x0, y0, order)
   (1539.5898464615102, 11.6539963919, 365.523884327, 11.6539963919, 2)
 
-Similarly, for all NIRSpec spectroscopic modes, the assigned WCS needs to
-know the slit or slice ID in order to return valid coordinates.  For example,
-to retrieve world coordinates for a pixel in slice 12 of an IFU observation:
+Similarly, for all slit-like NIRSpec spectroscopic modes (MOS, FS, BOTS),
+the assigned WCS needs to know the slit ID in order to return valid coordinates.
+For example, to retrieve world coordinates for a pixel in slit 12 of a MOS observation
+at pixel (x, y) = (804, 522):
 
 .. doctest-skip::
 
-  >>> from stdatamodels.jwst.datamodels import IFUImageModel
-  >>> exp = IFUImageModel('nirspec_ifu_assign_wcs.fits')
+  >>> from stdatamodels.jwst.datamodels import ImageModel
+  >>> exp = ImageModel('nirspec_mos_assign_wcs.fits')
   >>> ra, dec, lam, slit_id = exp.meta.wcs(804, 522, 12)
   >>> print(ra, dec, lam, slit_id)
   (321.15970971929175, -16.549348214686127, 3.235814824179365, 12.0)
 
-For IFU observations, the slit ID is the index of the slice; values range from 0 to 29.
 For MOS observations, the slit ID is the name of the slit, as specified by the
 "slitlet_id" field in the :ref:`MSA metadata file<msa_metadata>`.
 For fixed slit observations, the slit ID is a fixed integer for each slit as shown in the table below.
@@ -137,11 +137,12 @@ These values can also be retrieved by slit name using the :func:`jwst.assign_wcs
    * - S200B1
      - -105
 
-For NIRSpec modes that are processed through the :ref:`extract_2d <extract_2d_step>`
-step (MOS, FS, BOTS), a new WCS is assigned to each extracted slit that fixes the slit
+For these modes, when they are processed through the :ref:`extract_2d <extract_2d_step>`
+step, a new WCS is assigned to each extracted slit that fixes the slit
 ID to a specific value, so it is no longer required on input and not reported on output.
 For example, for a NIRSpec fixed slits exposure, which has been processed through the
-extract_2d step:
+extract_2d step, coordinates for the first slit image at (x, y) = (56, 15) can be calculated
+with:
 
 .. doctest-skip::
 
@@ -164,6 +165,44 @@ backward directions. For this same fixed slit exposure:
   >>> msa2detector = exp.slits[0].meta.wcs.get_transform('msa_frame', 'detector')
   >>> msa2detector(0.027, -0.0025, 9.02e-07)
   (55.28220392304502, 14.868098132739078)
+
+WCS of NIRSpec IFU exposures
+----------------------------
+
+For NIRSpec IFU data, the assigned WCS may be either a slit-based WCS which uses slice
+numbers (zero-indexed) to identify the "slits" containing valid coordinates, or it may be a
+coordinate-based WCS that does not require the slice ID to perform coordinate transformations
+for any pixel in the IFU image. The coordinate-based WCS is the default choice; if the slit-based
+WCS is needed for diagnostic purposes, it can be produced by specifying ``nrs_ifu_slit_wcs = True``
+in the parameters for the ``assign_wcs`` step.
+
+With the coordinate-based WCS, it is possible to
+retrieve coordinates for the entire image at once, for example:
+
+.. doctest-skip::
+
+  >>> import numpy as np
+  >>> from stdatamodels.jwst.datamodels import IFUImageModel
+  >>> exp = datamodels.IFUImageModel('nirspec_ifu_assign_wcs.fits')
+  >>> y, x = np.mgrid[:exp.data.shape[0], :exp.data.shape[1]]
+  >>> ra, dec, lam = exp.meta.wcs(x, y)
+
+Coordinates for pixels outside of slice regions will be NaN.
+
+For reference, the slice ID assigned to each pixel is available in an image
+attached to the model at the end of the ``assign_wcs`` step, in the ``regions``
+attribute (saved in the FITS extension REGIONS).  This image can be used to calculate
+coordinates for a particular IFU slice, as needed.  For example, using the same model
+and (x, y) grid as above, to get the coordinates for slice 1:
+
+.. doctest-skip::
+
+  >>> slice_idx = 1
+  >>> in_slice = (exp.regions == slice_idx)
+  >>> slice_ra, slice_dec, slice_lam = exp.meta.wcs(x[in_slice], y[in_slice])
+
+Slice IDs in the regions image are one-indexed, with values between 1 and 30.
+Zero indicates a pixel outside any valid slice region.
 
 WCS of slitless grism exposures
 -------------------------------
