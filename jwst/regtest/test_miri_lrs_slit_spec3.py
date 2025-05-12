@@ -2,20 +2,24 @@
     This takes an association and generates the level 3 products."""
 import pytest
 import numpy as np
-from gwcs import wcstools
 
+
+from gwcs import wcstools
 import asdf
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.stpipe import Step
 from jwst import datamodels
+
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(
     scope="module",
     params=["default_wcs", "user_wcs", "user_wcs+shape", "user_wcs+shape1"]
 )
-def run_pipeline(rtdata_module, request):
+def run_pipeline(rtdata_module, request, resource_tracker):
     """
     Run the calwebb_spec3 pipeline on an ASN of nodded MIRI LRS
     fixed-slit exposures using different options for the WCS and output
@@ -74,10 +78,14 @@ def run_pipeline(rtdata_module, request):
         args.append(f"--steps.resample_spec.output_file={output_file}")
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec3(log_tracked_resources, run_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["s2d", "x1d"])
 def test_miri_lrs_slit_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec3 pipeline on MIRI
