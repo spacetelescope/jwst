@@ -206,7 +206,7 @@ def align_models(reference, target, mask):
     -------
     output_model : CubeModel
         A CubeModel containing aligned copies of the input ``target``
-        cubes aligned to each slice in the input ``reference`` cube.
+        cubes aligned to the first slice in the input ``reference`` cube.
     """
     # Create output CubeModel of required dimensions. Since all science integrations
     # are assumed to have the same shift, the output is just a shifted copy of the

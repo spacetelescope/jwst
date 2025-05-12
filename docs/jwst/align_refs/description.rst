@@ -80,8 +80,8 @@ Outputs
 :Data model: `~jwst.datamodels.CubeModel`
 :File suffix: _psfalign
 
-The output is a CubeModel, where the 3rd axis has length equal to the total number of
-reference PSF images in the input PSF stack (ncols x nrows x npsfs).
+The output is a CubeModel, where the 0th axis has length equal to the total number of
+integrations (nints x ncols x nrows).
 Each Image[n] in the 3D data is the n :sup:`th` PSF image aligned to the first science
 target integration. The file name is exposure-based, using the input science target exposure
 name as the root, with the addition of the association candidate ID and the "_psfalign"
