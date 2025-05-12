@@ -265,7 +265,9 @@ class ModelLibrary(AbstractModelLibrary):
                     member = self._members[idx]
                     filename = Path(self._asn_dir) / member["expname"]
 
-        return read_metadata(filename, flatten=True)
+            meta = read_metadata(filename, flatten=True)
+
+        return meta
 
 
 def _attrs_to_group_id(
