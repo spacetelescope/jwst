@@ -80,7 +80,7 @@ def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwar
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 
-    diff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
 
@@ -96,5 +96,5 @@ def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fi
 
     # Compare the results
     fitsdiff_default_kwargs['atol'] = 1e-5
-    diff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
