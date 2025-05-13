@@ -172,7 +172,7 @@ to supply custom catalogs.
             self.asn_file_path = init.asn_file_path
         elif is_association(init):
             self.from_asn(init)
-        elif isinstance(init, str):
+        elif isinstance(init, (str, Path)):
             init_from_asn = self.read_asn(init)
             self.asn_file_path = init
             self.from_asn(init_from_asn)

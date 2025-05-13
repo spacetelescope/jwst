@@ -55,12 +55,12 @@ def example_asn_path(tmp_path):
 
 
 @pytest.fixture
-def example_library(example_asn_path):
+def example_library(request, example_asn_path):
     """
     Fixture that builds off of `example_asn_path` and returns a
     library created from the association with default options
     """
-    return ModelLibrary(example_asn_path)
+    return ModelLibrary(example_asn_path, on_disk=request.param)
 
 
 def _set_custom_member_attr(example_asn_path, member_index, attr, value):
@@ -77,7 +77,8 @@ def _set_custom_member_attr(example_asn_path, member_index, attr, value):
         json.dump(asn_data, f)
 
 
-def test_load_asn(example_library, example_asn_path):
+@pytest.mark.parametrize("example_library", [False, ], indirect=True)
+def test_load_asn(request, example_library, example_asn_path):
     """
     Test that __len__ returns the number of models/members loaded
     from the association (and does not require opening the library).
@@ -148,6 +149,7 @@ def test_group_id_override(example_asn_path, asn_group_id, meta_group_id, expect
         library.shelve(model, 0, modify=False)
 
 
+@pytest.mark.parametrize("example_library", [True, False], indirect=True)
 def test_asn_attributes_assignment(example_library):
 
     expected_table_name = "jwnoprogram-a3001"
@@ -161,3 +163,27 @@ def test_asn_attributes_assignment(example_library):
             assert model.meta.asn.table_name.startswith(expected_table_name)
             assert model.meta.asn.pool_name == _POOL_NAME
             example_library.shelve(model, i, modify=False)
+
+
+@pytest.mark.parametrize("modify", [True, False])
+@pytest.mark.parametrize("example_library", [True, False], indirect=True)
+def test_get_crds_parameters(example_library, modify):
+    """
+    Test the JWST override to get_crds_parameters.
+    
+    Ensure that parameters are up-to-date with the models in the library
+    if those models have been borrowed before.
+    """
+    if modify:
+        with example_library:
+            for i in range(_N_MODELS):
+                model = example_library.borrow(i)
+                model.meta.instrument.name = "MIRI"
+                example_library.shelve(model, i, modify=True)
+    params = example_library.get_crds_parameters()
+    assert isinstance(params, dict)
+
+    instrument_name = params["meta.instrument.name"]
+    channel = params["meta.instrument.channel"]
+    assert channel == "SHORT"
+    assert instrument_name == "MIRI" if modify else "NIRCAM"

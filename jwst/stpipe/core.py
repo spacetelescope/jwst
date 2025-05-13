@@ -3,12 +3,14 @@
 from functools import wraps
 import logging
 import warnings
+from pathlib import Path
 
-from stdatamodels.jwst.datamodels import JwstDataModel
+from stdatamodels.jwst.datamodels import JwstDataModel, read_metadata
 from stdatamodels.jwst import datamodels
 from stpipe import crds_client, Step, Pipeline
 
 from jwst import __version_commit__, __version__
+from jwst.datamodels import ModelLibrary, ModelContainer
 from ._cal_logs import _LOG_FORMATTER
 from ..lib.suffix import remove_suffix
 
@@ -29,6 +31,55 @@ class JwstStep(Step):
     @classmethod
     def _datamodels_open(cls, init, **kwargs):
         return datamodels.open(init, **kwargs)
+
+    @classmethod
+    def _get_crds_parameters(cls, dataset):
+        """
+        Get CRDS parameters for the given dataset.
+
+        If the input dataset is a filename, achieve this by lazy-loading its metadata.
+
+        Parameters
+        ----------
+        dataset : str
+            The name of the dataset.
+
+        Returns
+        -------
+        dict
+            A dictionary of CRDS parameters.
+        str
+            The name of the observatory.
+        """
+        crds_observatory = "jwst"
+
+        # list or container: just set to zeroth model
+        # this is what stpipe does internally for ModelContainer already
+        if isinstance(dataset, (list, tuple, ModelContainer)):
+            if len(dataset) == 0:
+                raise ValueError(f"Input dataset {dataset} is empty")
+            dataset = dataset[0]
+
+        # Already open: use the model's method to get CRDS parameters
+        if isinstance(dataset, (ModelLibrary, JwstDataModel)):
+            return (
+                dataset.get_crds_parameters(),
+                crds_observatory,
+            )
+
+        # If we get here, we had better have a filename
+        if isinstance(dataset, str):
+            dataset = Path(dataset)
+        if not isinstance(dataset, Path):
+            raise TypeError(f"Cannot get CRDS parameters for {dataset} of type {type(dataset)}")
+
+        # for associations, open as ModelLibrary, which supports lazy-loading
+        if dataset.suffix.lower() == ".json":
+            model = ModelLibrary(dataset, asn_n_members=1, asn_exptypes=["science"])
+            return (model.get_crds_parameters(), crds_observatory)
+
+        # for all other cases, use read_metadata directly to lazy-load
+        return (read_metadata(dataset, flatten=True), crds_observatory)
 
     def load_as_level2_asn(self, obj):
         """
