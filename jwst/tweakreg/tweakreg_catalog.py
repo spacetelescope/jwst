@@ -182,6 +182,8 @@ def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
 
     finder = SourceFinder(**finder_dict)
     segment_map = finder(data, threshold, mask=mask)
+    if segment_map is None:
+        raise NoCatalogError("No sources found in the image.")
     sources = SourceCatalog(data, segment_map, mask=mask, **catalog_dict).to_table(
         columns=SOURCECAT_COLUMNS
     )

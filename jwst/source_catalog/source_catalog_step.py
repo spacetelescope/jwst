@@ -15,7 +15,7 @@ from stdatamodels.jwst import datamodels
 from .reference_data import ReferenceData
 from .source_catalog import JWSTSourceCatalog
 from ..stpipe import Step
-from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
+from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog, NoCatalogError
 
 
 __all__ = ["SourceCatalogStep"]
@@ -98,14 +98,19 @@ class SourceCatalogStep(Step):
                 "error": model.err,
                 "wcs": model.meta.wcs,
             }
-            catalog = make_tweakreg_catalog(
-                model,
-                self.snr_threshold,
-                bkg_boxsize=self.bkg_boxsize,
-                coverage_mask=coverage_mask,
-                starfinder_name="segmentation",
-                starfinder_kwargs=starfinder_kwargs,
-            )
+            try:
+                catalog = make_tweakreg_catalog(
+                    model,
+                    self.snr_threshold,
+                    bkg_boxsize=self.bkg_boxsize,
+                    coverage_mask=coverage_mask,
+                    starfinder_name="segmentation",
+                    starfinder_kwargs=starfinder_kwargs,
+                )
+            except NoCatalogError as err:
+                msg = f"{err} Source catalog will not be created."
+                self.log.warning(msg)
+                return None
 
             JWSTSourceCatalog.convert_to_jy(model)
             ci_star_thresholds = (self.ci1_star_threshold, self.ci2_star_threshold)
