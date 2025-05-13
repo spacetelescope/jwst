@@ -2,18 +2,128 @@ import logging
 import inspect
 import warnings
 
-from astropy.table import Table
 from astropy.utils.exceptions import AstropyUserWarning
+from astropy.utils import lazyproperty
+from astropy.stats import SigmaClip
+
 import numpy as np
 from photutils.detection import DAOStarFinder, IRAFStarFinder
 from photutils.segmentation import SourceFinder, SourceCatalog
+from photutils.background import Background2D, MedianBackground
 
 from stdatamodels.jwst.datamodels import dqflags, ImageModel
 
-from ..source_catalog.detection import JWSTBackground
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+__all__ = ["make_tweakreg_catalog"]
+
+
+class NoCatalogError(Exception):
+    """Exception raised when background not determined or no sources are found in the image."""
+
+    pass
+
+
+class JWSTBackground:
+    """Class to estimate a 2D background and background RMS noise in an image."""
+
+    def __init__(self, data, box_size=100, coverage_mask=None):
+        """
+        Initialize the class.
+
+        Parameters
+        ----------
+        data : `~numpy.ndarray`
+            The input 2D image for which to estimate the background.
+
+        box_size : int or array_like (int)
+            The box size along each axis.  If ``box_size`` is a scalar then
+            a square box of size ``box_size`` will be used.  If ``box_size``
+            has two elements, they should be in ``(ny, nx)`` order.
+
+        coverage_mask : array_like (bool), optional
+            A boolean mask, with the same shape as ``data``, where a `True`
+            value indicates the corresponding element of ``data`` is masked.
+            Masked data are excluded from calculations. ``coverage_mask``
+            should be `True` where there is no coverage (i.e., no data) for
+            a given pixel (e.g., blank areas in a mosaic image). It should
+            not be used for bad pixels.
+        """
+        self.data = data
+        self.box_size = np.asarray(box_size).astype(int)  # must be integer
+        self.coverage_mask = coverage_mask
+
+    @lazyproperty
+    def _background2d(self):
+        """
+        Estimate the 2D background and background RMS noise in an image.
+
+        Returns
+        -------
+        background : `photutils.background.Background2D`
+            A Background2D object containing the 2D background and
+            background RMS noise estimates.
+        """
+        sigma_clip = SigmaClip(sigma=3.0)
+        bkg_estimator = MedianBackground()
+        filter_size = (3, 3)
+
+        # All data have NaNs.  Suppress warnings about them.
+        with warnings.catch_warnings():
+            warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
+            try:
+                bkg = Background2D(
+                    self.data,
+                    self.box_size,
+                    filter_size=filter_size,
+                    coverage_mask=self.coverage_mask,
+                    sigma_clip=sigma_clip,
+                    bkg_estimator=bkg_estimator,
+                )
+            except ValueError:
+                # use the entire unmasked array
+                bkg = Background2D(
+                    self.data,
+                    self.data.shape,
+                    filter_size=filter_size,
+                    coverage_mask=self.coverage_mask,
+                    sigma_clip=sigma_clip,
+                    bkg_estimator=bkg_estimator,
+                    exclude_percentile=100.0,
+                )
+                log.info(
+                    "Background could not be estimated in meshes. "
+                    "Using the entire unmasked array for background "
+                    f"estimation: bkg_boxsize={self.data.shape}."
+                )
+
+        return bkg
+
+    @lazyproperty
+    def background(self):
+        """
+        Compute the 2-D background if it has not been computed yet, then return it.
+
+        Returns
+        -------
+        background : `~numpy.ndarray`
+            The 2D background image.
+        """
+        return self._background2d.background
+
+    @lazyproperty
+    def background_rms(self):
+        """
+        Compute the 2-D background RMS image if it has not been computed yet, then return it.
+
+        Returns
+        -------
+        background_rms : `~numpy.ndarray`
+            The 2D background RMS image.
+        """
+        return self._background2d.background_rms
 
 
 def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
@@ -156,7 +266,12 @@ def _dao_starfinder_wrapper(data, threshold, mask=None, **kwargs):
 
 
 def make_tweakreg_catalog(
-    model, snr_threshold, bkg_boxsize=400, starfinder_name="iraf", starfinder_kwargs=None
+    model,
+    snr_threshold,
+    bkg_boxsize=400,
+    coverage_mask=None,
+    starfinder_name="iraf",
+    starfinder_kwargs=None,
 ):
     """
     Create a catalog of point-line sources to be used for image alignment in tweakreg.
@@ -171,6 +286,10 @@ def make_tweakreg_catalog(
         which to consider a pixel as possibly being part of a source.
     bkg_boxsize : float, optional
         The background mesh box size in pixels.
+    coverage_mask : array_like (bool), optional
+        A boolean mask with the same shape as ``model.data``, where a `True`
+        value indicates the corresponding element of ``model.data`` is masked.
+        Masked pixels will not be included in any source.
     starfinder_name : str, optional
         The `photutils` star finder to use.  Options are 'dao', 'iraf', or 'segmentation'.
         - 'dao': `photutils.detection.DAOStarFinder`
@@ -207,11 +326,11 @@ def make_tweakreg_catalog(
         raise ValueError(f"Unknown starfinder type: {starfinder_name}")
 
     # Mask the non-imaging area, e.g. reference pixels and MIRI non-science area
-    coverage_mask = (
-        (dqflags.pixel["NON_SCIENCE"] + dqflags.pixel["DO_NOT_USE"]) & model.dq
-    ).astype(bool)
+    if coverage_mask is None:
+        coverage_mask = (
+            (dqflags.pixel["NON_SCIENCE"] + dqflags.pixel["DO_NOT_USE"]) & model.dq
+        ).astype(bool)
 
-    columns = ["id", "xcentroid", "ycentroid", "flux"]
     try:
         bkg = JWSTBackground(model.data, box_size=bkg_boxsize, coverage_mask=coverage_mask)
         with warnings.catch_warnings():
@@ -219,18 +338,11 @@ def make_tweakreg_catalog(
             warnings.simplefilter("ignore", AstropyUserWarning)
             threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
     except ValueError as e:
-        log.warning(f"Error determining sky background: {e.args[0]}")
-        # return an empty catalog
-        catalog = Table(names=columns, dtype=(int, float, float, float))
-        return catalog
+        raise NoCatalogError(f"Error determining sky background: {e.args[0]}") from None
 
     threshold = np.median(threshold_img)  # DAOStarFinder requires float
     sources = starfinder(model.data, threshold, mask=coverage_mask, **starfinder_kwargs)
+    if not sources:
+        raise NoCatalogError("No sources found in the image.")
 
-    if sources:
-        catalog = sources[columns]
-    else:
-        # return an empty table
-        catalog = Table(names=columns, dtype=(int, float, float, float))
-
-    return catalog
+    return sources

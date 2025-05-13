@@ -18,7 +18,7 @@ from jwst.datamodels import ModelLibrary
 
 # LOCAL
 from ..stpipe import Step
-from .tweakreg_catalog import make_tweakreg_catalog
+from .tweakreg_catalog import make_tweakreg_catalog, NoCatalogError
 
 
 def _oxford_or_str_join(str_list):
@@ -460,13 +460,20 @@ class TweakRegStep(Step):
             "kron_params": self.kron_params,
         }
 
-        return make_tweakreg_catalog(
-            image_model,
-            self.snr_threshold,
-            starfinder_name=self.starfinder,
-            bkg_boxsize=self.bkg_boxsize,
-            starfinder_kwargs=starfinder_kwargs,
-        )
+        columns = ["id", "xcentroid", "ycentroid", "flux"]
+        try:
+            catalog = make_tweakreg_catalog(
+                image_model,
+                self.snr_threshold,
+                starfinder_name=self.starfinder,
+                bkg_boxsize=self.bkg_boxsize,
+                starfinder_kwargs=starfinder_kwargs,
+            )
+            catalog = catalog[columns]
+        except NoCatalogError as e:
+            self.log.warning(str(e))
+            catalog = Table(names=columns, dtype=(int, float, float, float))
+        return catalog
 
 
 def _parse_catfile(catfile):
