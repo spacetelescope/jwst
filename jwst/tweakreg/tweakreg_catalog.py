@@ -135,7 +135,7 @@ class JWSTBackground:
         return self._background2d.background_rms
 
 
-def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
+def _sourcefinder_wrapper(data, threshold_img, mask=None, **kwargs):
     """
     Make input and output of SourceFinder consistent with IRAFStarFinder and DAOStarFinder.
 
@@ -146,8 +146,8 @@ def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
     ----------
     data : array_like
         The 2D array of the image.
-    threshold : float
-        The absolute image value above which to select sources.
+    threshold_img : np.ndarray
+        The per-pixel absolute image value above which to select sources.
     mask : array_like (bool), optional
         The image mask
     **kwargs : dict
@@ -169,6 +169,11 @@ def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
     }
     kwargs = {**default_kwargs, **kwargs}
 
+    if "convolved_data" in kwargs:
+        conv_data = kwargs["convolved_data"]
+    else:
+        conv_data = data
+
     # handle passing kwargs into SourceFinder and SourceCatalog
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
@@ -181,7 +186,7 @@ def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
         catalog_dict["kron_params"] = (2.5, 1.4, 0.0)
 
     finder = SourceFinder(**finder_dict)
-    segment_map = finder(data, threshold, mask=mask)
+    segment_map = finder(conv_data, threshold_img, mask=mask)
     if segment_map is None:
         raise NoCatalogError("No sources found in the image.")
     sources = SourceCatalog(data, segment_map, mask=mask, **catalog_dict).to_table(
@@ -193,7 +198,7 @@ def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
     return sources
 
 
-def _iraf_starfinder_wrapper(data, threshold, mask=None, **kwargs):
+def _iraf_starfinder_wrapper(data, threshold_img, mask=None, **kwargs):
     """
     Make input and output of IRAFStarFinder consistent with SourceFinder and DAOStarFinder.
 
@@ -201,8 +206,8 @@ def _iraf_starfinder_wrapper(data, threshold, mask=None, **kwargs):
     ----------
     data : array_like
         The 2D array of the image.
-    threshold : float
-        The absolute image value above which to select sources.
+    threshold_img : np.ndarray
+        The per-pixel absolute image value above which to select sources.
     mask : array_like (bool), optional
         The image mask
     **kwargs : dict
@@ -226,13 +231,14 @@ def _iraf_starfinder_wrapper(data, threshold, mask=None, **kwargs):
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
     fwhm = finder_dict.pop("fwhm")
 
+    threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = IRAFStarFinder(threshold, fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
 
     return sources
 
 
-def _dao_starfinder_wrapper(data, threshold, mask=None, **kwargs):
+def _dao_starfinder_wrapper(data, threshold_img, mask=None, **kwargs):
     """
     Make input and output of DAOStarFinder consistent with SourceFinder and IRAFStarFinder.
 
@@ -240,8 +246,8 @@ def _dao_starfinder_wrapper(data, threshold, mask=None, **kwargs):
     ----------
     data : array_like
         The 2D array of the image.
-    threshold : float
-        The absolute image value above which to select sources.
+    threshold_img : np.ndarray
+        The per-pixel absolute image value above which to select sources.
     mask : array_like (bool), optional
         The image mask
     **kwargs : dict
@@ -271,7 +277,9 @@ def _dao_starfinder_wrapper(data, threshold, mask=None, **kwargs):
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(DAOStarFinder).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
+
     fwhm = finder_dict.pop("fwhm")
+    threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = DAOStarFinder(threshold, fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
 
@@ -353,8 +361,7 @@ def make_tweakreg_catalog(
     except ValueError as e:
         raise NoCatalogError(f"Error determining sky background: {e.args[0]}") from None
 
-    threshold = np.median(threshold_img)  # DAOStarFinder requires float
-    sources = starfinder(model.data, threshold, mask=coverage_mask, **starfinder_kwargs)
+    sources = starfinder(model.data, threshold_img, mask=coverage_mask, **starfinder_kwargs)
     if not sources:
         raise NoCatalogError("No sources found in the image.")
 
