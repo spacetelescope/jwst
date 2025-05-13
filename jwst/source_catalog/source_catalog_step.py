@@ -1,16 +1,22 @@
 """Module for the source catalog step."""
 
+import warnings
 from pathlib import Path
 
 from crds.core.exceptions import CrdsLookupError
 import numpy as np
 
+from astropy.convolution import Gaussian2DKernel, convolve
+from astropy.stats import gaussian_fwhm_to_sigma
+from astropy.utils.exceptions import AstropyUserWarning
+
 from stdatamodels.jwst import datamodels
 
-from .detection import convolve_data, JWSTBackground, JWSTSourceFinder
 from .reference_data import ReferenceData
 from .source_catalog import JWSTSourceCatalog
 from ..stpipe import Step
+from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
+
 
 __all__ = ["SourceCatalogStep"]
 
@@ -78,21 +84,33 @@ class SourceCatalogStep(Step):
                 return None
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
-            bkg = JWSTBackground(model.data, box_size=self.bkg_boxsize, coverage_mask=coverage_mask)
-            model.data -= bkg.background
+            convolved_data = _convolve_data(model.data, self.kernel_fwhm, mask=coverage_mask)
 
-            threshold = self.snr_threshold * bkg.background_rms
-            finder = JWSTSourceFinder(threshold, self.npixels, deblend=self.deblend)
-
-            convolved_data = convolve_data(model.data, self.kernel_fwhm, mask=coverage_mask)
-            segment_img = finder(convolved_data, mask=coverage_mask)
-            if segment_img is None:
-                return None
+            starfinder_kwargs = {
+                "npixels": self.npixels,
+                "deblend": self.deblend,
+                "connectivity": 8,
+                "nlevels": 32,
+                "contrast": 0.001,
+                "mode": "exponential",
+                "relabel": True,
+                "convolved_data": convolved_data,
+                "error": model.err,
+                "wcs": model.meta.wcs,
+            }
+            catalog = make_tweakreg_catalog(
+                model,
+                self.snr_threshold,
+                bkg_boxsize=self.bkg_boxsize,
+                coverage_mask=coverage_mask,
+                starfinder_name="segmentation",
+                starfinder_kwargs=starfinder_kwargs,
+            )
 
             ci_star_thresholds = (self.ci1_star_threshold, self.ci2_star_threshold)
             catobj = JWSTSourceCatalog(
                 model,
-                segment_img,
+                catalog,
                 convolved_data,
                 self.kernel_fwhm,
                 aperture_params,
@@ -101,21 +119,47 @@ class SourceCatalogStep(Step):
             )
             catalog = catobj.catalog
 
-            # add back background to data so input model is unchanged
-            model.data += bkg.background
-
             if self.save_results:
                 cat_filepath = self.make_output_path(ext=".ecsv")
                 catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
                 model.meta.source_catalog = Path(cat_filepath).name
                 self.log.info(f"Wrote source catalog: {cat_filepath}")
 
-                segm_model = datamodels.SegmentationMapModel(segment_img.data)
-                segm_model.update(model, only="PRIMARY")
-                segm_model.meta.wcs = model.meta.wcs
-                segm_model.meta.wcsinfo = model.meta.wcsinfo
-                self.save_model(segm_model, suffix="segm")
-                model.meta.segmentation_map = segm_model.meta.filename
-                self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
+                # segm_model = datamodels.SegmentationMapModel(segment_img.data)
+                # segm_model.update(model, only="PRIMARY")
+                # segm_model.meta.wcs = model.meta.wcs
+                # segm_model.meta.wcsinfo = model.meta.wcsinfo
+                # self.save_model(segm_model, suffix="segm")
+                # model.meta.segmentation_map = segm_model.meta.filename
+                # self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
 
         return catalog
+
+
+def _convolve_data(data, kernel_fwhm, mask=None):
+    """
+    Convolve the data with a Gaussian2D kernel.
+
+    Parameters
+    ----------
+    data : `~numpy.ndarray`
+        The 2D array to convolve.
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
+    mask : array_like, bool, optional
+        A boolean mask with the same shape as ``data``, where a `True`
+        value indicates the corresponding element of ``data`` is masked.
+
+    Returns
+    -------
+    convolved_data : `~numpy.ndarray`
+        The convolved 2D array.
+    """
+    sigma = kernel_fwhm * gaussian_fwhm_to_sigma
+    kernel = Gaussian2DKernel(sigma)
+    kernel.normalize(mode="integral")
+
+    # All data have NaNs.  Suppress warnings about them.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
+        return convolve(data, kernel, mask=mask, normalize_kernel=True)
