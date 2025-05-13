@@ -107,11 +107,11 @@ class SourceCatalogStep(Step):
                 starfinder_kwargs=starfinder_kwargs,
             )
 
+            JWSTSourceCatalog.convert_to_jy(model)
             ci_star_thresholds = (self.ci1_star_threshold, self.ci2_star_threshold)
             catobj = JWSTSourceCatalog(
                 model,
                 catalog,
-                convolved_data,
                 self.kernel_fwhm,
                 aperture_params,
                 abvega_offset,

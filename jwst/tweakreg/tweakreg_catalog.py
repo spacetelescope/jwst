@@ -9,6 +9,7 @@ from astropy.stats import SigmaClip
 import numpy as np
 from photutils.detection import DAOStarFinder, IRAFStarFinder
 from photutils.segmentation import SourceFinder, SourceCatalog
+from photutils.segmentation.catalog import DEFAULT_COLUMNS
 from photutils.background import Background2D, MedianBackground
 
 from stdatamodels.jwst.datamodels import dqflags, ImageModel
@@ -18,6 +19,14 @@ log.setLevel(logging.DEBUG)
 
 
 __all__ = ["make_tweakreg_catalog"]
+
+SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
+    "ellipticity",
+    "sky_bbox_ll",
+    "sky_bbox_ul",
+    "sky_bbox_lr",
+    "sky_bbox_ur",
+]
 
 
 class NoCatalogError(Exception):
@@ -173,7 +182,9 @@ def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
 
     finder = SourceFinder(**finder_dict)
     segment_map = finder(data, threshold, mask=mask)
-    sources = SourceCatalog(data, segment_map, mask=mask, **catalog_dict).to_table()
+    sources = SourceCatalog(data, segment_map, mask=mask, **catalog_dict).to_table(
+        columns=SOURCECAT_COLUMNS
+    )
     sources.rename_column("label", "id")
     sources.rename_column("segment_flux", "flux")
 
