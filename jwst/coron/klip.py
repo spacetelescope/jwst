@@ -1,43 +1,42 @@
-"""
-    Python implementation of the KLIP algorithm based on the
-    Mathematica script from Remi Soummer.
-
-:Authors: Mihai Cara
-
-"""
+"""Python implementation of the KLIP algorithm."""
 
 import numpy as np
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
 def klip(target_model, refs_model, truncate):
     """
+    Apply KLIP algorithm to science data.
+
     Parameters
     ----------
-    target_model : CubeModel (NINTS x NROWS x NCOLS)
-        The input images of the target. Multiple integrations within
-        a single exposure are stacked along the first (NINTS) axis of
-        the data arrays.
-
-    refs_model : CubeModel (NINTS_PSF x NROWS x NCOLS)
-        The input 3D stack of reference images. The first
+    target_model : CubeModel
+        The input images of the target (NINTS x NROWS x NCOLS). Multiple integrations
+        within a single exposure are stacked along the first (NINTS) axis of the data arrays.
+    refs_model : CubeModel
+        The input 3D stack of reference images (NINTS_PSF x NROWS x NCOLS). The first
         (NINTS_PSF) axis is the stack of aligned PSF integrations for that
         target image.
-
     truncate : int
         Indicates how many rows to keep in the Karhunen-Loeve transform.
-    """
 
+    Returns
+    -------
+    output_target : CubeModel
+        Science target Cubemodel with PSF subtracted
+    output_psf : CubeModel
+        CubeModel of PSF fitted to target image
+    """
     # Initialize the output models as copies of the input target model
     output_target = target_model.copy()
     output_psf = target_model.copy()
 
     # Loop over the target integrations
     for i in range(target_model.data.shape[0]):
-
         # Load the target data array and flatten it from 2-D to 1-D
         target = target_model.data[i].astype(np.float64)
         tshape = target.shape
@@ -54,7 +53,7 @@ def klip(target_model, refs_model, truncate):
             refs[k] -= np.mean(refs[k], dtype=np.float64)
 
         # Compute Karhunen-Loeve transform of ref images and normalize vectors
-        klvect, eigval, eigvect = KarhunenLoeveTransform(refs, normalize=True)
+        klvect, eigval, eigvect = karhunen_loeve_transform(refs, normalize=True)
 
         # Truncate the Karhunen-Loeve vectors
         klvect = klvect[:truncate]
@@ -88,11 +87,25 @@ def klip(target_model, refs_model, truncate):
     return output_target, output_psf
 
 
-def KarhunenLoeveTransform(m, normalize=False):
+def karhunen_loeve_transform(m, normalize=False):
     """
-    Returns Karhunen-Loeve Transform of the input, eigenvalues, and
-    a matrix of eigenvectors.
+    Calculate Karhunen-Loeve Transform of the input.
 
+    Parameters
+    ----------
+    m : numpy.ndarray
+        The array of flattened, background subtracted reference arrays
+    normalize : bool
+        If True, normalize the returned transform
+
+    Returns
+    -------
+    klvect : numpy.ndarray
+        The Karhunen-Loeve Transform of the input arrays
+    eigval : numpy.ndarray
+        Array of eigenvalues
+    eigvect : numpy.ndarray
+        Matrix of eigenvectors
     """
     eigval, eigvect = np.linalg.eigh(np.cov(m))
 
