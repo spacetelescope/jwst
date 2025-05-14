@@ -65,10 +65,6 @@ class BackgroundStep(Step):
                 bkg_list = input_bkg_list
             else:
                 bkg_list = self.bkg_list
-            if bkg_list is None:
-                self.log.warning("* No background list provided * Skipping step.")
-                input_model.meta.cal_step.back_sub = "SKIPPED"
-                return input_model
 
         if input_model.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
             # Get the reference file names
@@ -97,6 +93,13 @@ class BackgroundStep(Step):
                 result.meta.cal_step.back_sub = "COMPLETE"
 
         else:
+            # Make sure that the background list is not empty for this case,
+            # or report and skip the step
+            if bkg_list is None:
+                self.log.warning("* No background list provided * Skipping step.")
+                input_model.meta.cal_step.back_sub = "SKIPPED"
+                return input_model
+
             # check if input data is NRS_IFU
             tolerance = 1.0e-8
             do_sub = True
@@ -128,7 +131,7 @@ class BackgroundStep(Step):
                     self.log.info(f"Combined background written to {comb_bkg_path}.")
 
             else:
-                result = input_model
+                result = input_model.copy()
                 result.meta.cal_step.back_sub = "SKIPPED"
                 self.log.warning("Skipping background subtraction")
                 self.log.warning(
