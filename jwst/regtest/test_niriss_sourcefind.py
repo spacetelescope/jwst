@@ -1,49 +1,35 @@
 import pytest
-import numpy as np
+from astropy.io import ascii
+from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 from jwst.tweakreg import tweakreg_catalog
 
 
 @pytest.mark.bigdata
-def test_tweakreg_catalog_starfinder_overlap(rtdata):
+@pytest.mark.parametrize("starfinder", ["iraf", "segmentation"], )
+def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
     '''
-    Test that the IRAF and segmentation star finders find overlapping stars
-    within a given tolerance for xcentroid and ycentroid.
+    Test that the IRAF and segmentation star finders give expected results for undersampled NIRISS data
+    It is well known that DAOStarFinder gives bad results so is not included in this test
     '''
 
     stem = "jw01088003001_01101_00005"
     rtdata.get_data(f"niriss/imaging/{stem}_nis_cal.fits")
     model = datamodels.ImageModel(rtdata.input)
+    catalog = tweakreg_catalog.make_tweakreg_catalog(
+        model, 2.5, 10.0, starfinder_name=starfinder, starfinder_kwargs={
+            'brightest': None,
+            'sharphi': 3.0,
+            'minsep_fwhm': 2.5,
+            'sigma_radius': 2.5,
+        })
+    output_name = f"{stem}_{starfinder}_cat.ecsv"
+    catalog.write(output_name, format='ascii.ecsv')
+    rtdata.output = output_name
+    rtdata.get_truth(f"truth/test_niriss_sourcefind/{stem}_{starfinder}_cat.ecsv")
+    catalog_truth = ascii.read(rtdata.truth)
 
-    # Generate catalogs for both starfinder techniques
-    catalogs = {}
-    for starfinder in ["iraf", "segmentation"]:
-        catalogs[starfinder] = tweakreg_catalog.make_tweakreg_catalog(
-            model, 2.5, kernel_fwhm=2.5, bkg_boxsize=400.0, starfinder_name=starfinder, starfinder_kwargs={
-                'brightest': None,
-                'sharphi': 3.0,
-                'minsep_fwhm': 2.5,
-                'sigma_radius': 2.5,
-            })
-
-    # Compare the two catalogs
-    iraf_x = np.array(catalogs["iraf"]["xcentroid"])
-    iraf_y = np.array(catalogs["iraf"]["ycentroid"])
-    seg_x = np.array(catalogs["segmentation"]["xcentroid"])
-    seg_y = np.array(catalogs["segmentation"]["ycentroid"])
-
-
-    tolerance = 0.5  # pixel tolerance for matching centroids
-    matches = 0
-
-    # Compute pairwise differences. dx, dy, and distances have shape (n_iraf, n_segmentation)
-    dx = iraf_x[:, None] - seg_x[None, :]
-    dy = iraf_y[:, None] - seg_y[None, :]
-
-    # Calculate distances and find matches within the tolerance
-    distances = np.sqrt(dx**2 + dy**2)
-    matches = np.sum(np.any(distances <= tolerance, axis=1))
-
-    # With these parameters, IRAF finds ~4300 stars and segmentation finds ~5300 stars
-    assert matches > 4000
+    # rtol is larger than default because of numerical differences on Linux vs MacOS
+    assert_allclose(catalog['xcentroid'], catalog_truth['xcentroid'], rtol=1e-3)
+    assert_allclose(catalog['ycentroid'], catalog_truth['ycentroid'], rtol=1e-3)
