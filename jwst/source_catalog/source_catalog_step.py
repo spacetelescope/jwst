@@ -1,14 +1,9 @@
 """Module for the source catalog step."""
 
-import warnings
 from pathlib import Path
 
 from crds.core.exceptions import CrdsLookupError
 import numpy as np
-
-from astropy.convolution import Gaussian2DKernel, convolve
-from astropy.stats import gaussian_fwhm_to_sigma
-from astropy.utils.exceptions import AstropyUserWarning
 
 from stdatamodels.jwst import datamodels
 
@@ -84,7 +79,6 @@ class SourceCatalogStep(Step):
                 return None
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
-            convolved_data = _convolve_data(model.data, self.kernel_fwhm, mask=coverage_mask)
 
             starfinder_kwargs = {
                 "npixels": self.npixels,
@@ -94,7 +88,6 @@ class SourceCatalogStep(Step):
                 "contrast": 0.001,
                 "mode": "exponential",
                 "relabel": True,
-                "convolved_data": convolved_data,
                 "error": model.err,
                 "wcs": model.meta.wcs,
             }
@@ -102,6 +95,7 @@ class SourceCatalogStep(Step):
                 catalog = make_tweakreg_catalog(
                     model,
                     self.snr_threshold,
+                    self.kernel_fwhm,
                     bkg_boxsize=self.bkg_boxsize,
                     coverage_mask=coverage_mask,
                     starfinder_name="segmentation",
@@ -139,32 +133,3 @@ class SourceCatalogStep(Step):
                 # self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
 
         return catalog
-
-
-def _convolve_data(data, kernel_fwhm, mask=None):
-    """
-    Convolve the data with a Gaussian2D kernel.
-
-    Parameters
-    ----------
-    data : `~numpy.ndarray`
-        The 2D array to convolve.
-    kernel_fwhm : float
-        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-    mask : array_like, bool, optional
-        A boolean mask with the same shape as ``data``, where a `True`
-        value indicates the corresponding element of ``data`` is masked.
-
-    Returns
-    -------
-    convolved_data : `~numpy.ndarray`
-        The convolved 2D array.
-    """
-    sigma = kernel_fwhm * gaussian_fwhm_to_sigma
-    kernel = Gaussian2DKernel(sigma)
-    kernel.normalize(mode="integral")
-
-    # All data have NaNs.  Suppress warnings about them.
-    with warnings.catch_warnings():
-        warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
-        return convolve(data, kernel, mask=mask, normalize_kernel=True)

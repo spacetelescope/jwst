@@ -55,9 +55,9 @@ class TweakRegStep(Step):
         # general starfinder options
         snr_threshold = float(default=10.0) # SNR threshold above the bkg for star finder
         bkg_boxsize = integer(default=400) # The background mesh box size in pixels.
+        kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
 
         # kwargs for DAOStarFinder and IRAFStarFinder, only used if starfinder is 'dao' or 'iraf'
-        kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         minsep_fwhm = float(default=0.0) # Minimum separation between detected objects in FWHM
         sigma_radius = float(default=1.5) # Truncation radius of the Gaussian kernel, units of sigma
         sharplo = float(default=0.5) # The lower bound on sharpness for object detection.
@@ -440,7 +440,6 @@ class TweakRegStep(Step):
     def _find_sources(self, image_model):
         # source finding
         starfinder_kwargs = {
-            "fwhm": self.kernel_fwhm,
             "sigma_radius": self.sigma_radius,
             "minsep_fwhm": self.minsep_fwhm,
             "sharplo": self.sharplo,
@@ -465,6 +464,7 @@ class TweakRegStep(Step):
             catalog = make_tweakreg_catalog(
                 image_model,
                 self.snr_threshold,
+                self.kernel_fwhm,
                 starfinder_name=self.starfinder,
                 bkg_boxsize=self.bkg_boxsize,
                 starfinder_kwargs=starfinder_kwargs,
