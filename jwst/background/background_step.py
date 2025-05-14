@@ -21,6 +21,7 @@ class BackgroundStep(Step):
     class_alias = "background"
 
     spec = """
+        bkg_list = list(default=None)  # List of background files
         save_combined_background = boolean(default=False)  # Save combined background image
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
@@ -28,7 +29,6 @@ class BackgroundStep(Step):
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
         wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
         wfss_outlier_percent = float(default=1)  # WFSS outlier percentile to reject per iteration
-        bkg_list = list(default=None)  # List of background files
     """  # noqa: E501
 
     # These reference files are only used for WFSS/GRISM data.
@@ -54,7 +54,8 @@ class BackgroundStep(Step):
         result : ImageModel or IFUImageModel
             The background-subtracted target data model
         """
-        # If the input is an asn get all the info, otherwise assume input is a fits file
+        # If the input is an asn get all the info, otherwise assume input is
+        # a fits file or datamodel
         if isinstance(step_input, str) and ".fits" not in step_input:
             input_model, members_by_type = asn_get_data(step_input)
             bkg_list = members_by_type["background"]
@@ -66,7 +67,7 @@ class BackgroundStep(Step):
                 bkg_list = self.bkg_list
             if bkg_list is None:
                 self.log.warning("* No background list provided * Skipping step.")
-                input_model.meta.cal_step.background = "SKIPPED"
+                input_model.meta.cal_step.back_sub = "SKIPPED"
                 return input_model
 
         if input_model.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
@@ -91,9 +92,9 @@ class BackgroundStep(Step):
             )
             if result is None:
                 result = input_model
-                result.meta.cal_step.background = "SKIPPED"
+                result.meta.cal_step.back_sub = "SKIPPED"
             else:
-                result.meta.cal_step.background = "COMPLETE"
+                result.meta.cal_step.back_sub = "COMPLETE"
 
         else:
             # check if input data is NRS_IFU
@@ -121,14 +122,14 @@ class BackgroundStep(Step):
             # Do the background subtraction
             if do_sub:
                 bkg_model, result = background_sub(input_model, bkg_list, self.sigma, self.maxiters)
-                result.meta.cal_step.background = "COMPLETE"
+                result.meta.cal_step.back_sub = "COMPLETE"
                 if self.save_combined_background:
                     comb_bkg_path = self.save_model(bkg_model, suffix=self.bkg_suffix, force=True)
                     self.log.info(f"Combined background written to {comb_bkg_path}.")
 
             else:
-                result = input_model.copy()
-                result.meta.cal_step.background = "SKIPPED"
+                result = input_model
+                result.meta.cal_step.back_sub = "SKIPPED"
                 self.log.warning("Skipping background subtraction")
                 self.log.warning(
                     "GWA_XTIL and GWA_YTIL source values are not the same as bkg values"

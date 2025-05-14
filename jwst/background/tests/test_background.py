@@ -215,7 +215,8 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
     background = miri_rate_model(background_shape, value=background_value)
 
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=AstropyUserWarning, message="Input data contains invalid values")
+        warnings.filterwarnings("ignore", category=AstropyUserWarning,
+                                message="Input data contains invalid values")
         result = BackgroundStep.call(image, [background])
 
     assert_allclose(result.data[..., :background_shape[-2], :background_shape[-1]],
