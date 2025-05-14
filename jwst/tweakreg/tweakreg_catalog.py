@@ -19,6 +19,9 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["make_tweakreg_catalog"]
+
+
 def _convolve_data(data, kernel_fwhm, mask=None):
     """
     Convolve the data with a Gaussian2D kernel.
