@@ -1,0 +1,15 @@
+{
+    "asn_type": "image",
+    "asn_pool": "pool.csv",
+    "products": [
+        {
+            "name": "miri_test_asn",
+            "members": [
+                {
+                    "expname": "miri_data.fits",
+                    "exptype": "science"
+                }
+            ]
+        }
+    ]
+}

@@ -36,7 +36,7 @@ The ``klip`` step has one optional argument:
 Inputs
 ------
 The ``klip`` step takes two inputs: a science target exposure in the form of a 3D data
-cube and a 4D aligned PSF image ("_psfalign") product.
+cube and a 3D aligned PSF image ("_psfalign") product.
 
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
@@ -48,12 +48,12 @@ This should be a "_calints" product created by the :ref:`calwebb_image2 <calwebb
 pipeline. Normally one of the science target exposures specified in the ASN file used
 as input to the :ref:`calwebb_coron3 <calwebb_coron3>` pipeline.
 
-4D aligned PSF images
+3D aligned PSF images
 ^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.QuadModel`
+:Data model: `~jwst.datamodels.CubeModel`
 :File suffix: _psfalign
 
-A 4D collection of PSF images that have been aligned to each of the per-integration images
+A collection of PSF images that have been aligned to the first of the images
 contained in the science target "_calints" product, created by the
 :ref:`align_refs <align_refs_step>` step.
 
