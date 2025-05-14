@@ -5,7 +5,6 @@ import logging
 import numpy as np
 from collections import OrderedDict
 from astropy.table import QTable
-from astropy.time import Time
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -42,6 +41,7 @@ def white_light(input_model, min_wave=None, max_wave=None):
     sporders = []  # list of spectral orders available
     order_list = np.empty((n_spec,))  # order for each spectrum, length nspectra
     mid_times = np.empty((n_spec,))
+    mid_tdbs = np.empty((n_spec,))
     fluxsums = np.empty((n_spec,))
 
     # Loop over the spectra in the input model and find mid times and fluxes
@@ -55,12 +55,15 @@ def white_light(input_model, min_wave=None, max_wave=None):
 
         # Figure out mid times for this spectrum
         mid_time = getattr(spec, "mid_time_mjd", None)
-        if mid_time is None:
+        mid_tdb = getattr(spec, "mid_tdb", None)
+        if (mid_time is None) and (mid_tdb is None):
             problems += 1
             mid_times[i] = np.nan
+            mid_tdbs[i] = np.nan
             continue
         else:
             mid_times[i] = mid_time
+            mid_tdbs[i] = mid_tdb
 
         # Create a wavelength mask, using cutoffs if specified, then
         # compute the flux sum for each integration in the input.
@@ -80,11 +83,13 @@ def white_light(input_model, min_wave=None, max_wave=None):
     tbl = _make_empty_output_table(input_model)
     good = ~np.isnan(mid_times)
     mid_times = mid_times[good]
+    mid_tdbs = mid_tdbs[good]
     fluxsums = fluxsums[good]
     order_list = order_list[good]
-    unique_mid_times = np.unique(mid_times)
-    mjd_times = Time(unique_mid_times, format="mjd", scale="utc")
-    tbl["MJD"] = mjd_times.mjd
+    unique_mid_times, unq_indices = np.unique(mid_times, return_index=True)
+    bjd_times = mid_tdbs[unq_indices]
+    tbl["int_mid_MJD_UTC"] = unique_mid_times
+    tbl["int_mid_BJD_TDB"] = bjd_times
 
     # Loop over the spectral orders and make separate table columns
     # for fluxes in each order, ensuring times are aligned even if one order
