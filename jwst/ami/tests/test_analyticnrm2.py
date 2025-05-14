@@ -66,12 +66,9 @@ def test_analyticnrm2_psf(setup_sf, holeshape):
     computed_psf = analyticnrm2.psf(
         pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj, shape=holeshape
     )
-
-    import matplotlib.pyplot as plt
-    plt.imshow(computed_psf, cmap="gray")
-    plt.colorbar()
-    plt.title(f"PSF for {holeshape} shape")
-    plt.show()
+    # basic checks of type and shape
+    assert isinstance(computed_psf, np.ndarray)
+    assert computed_psf.shape == (fov * oversample, fov * oversample)
 
     # ensure PSF offset is applied
     assert np.argmax(computed_psf) == 28

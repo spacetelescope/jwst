@@ -350,7 +350,7 @@ def model_array(
     return primary_beam, ffmodel
 
 
-def asf(detpixel, fov, oversample, d, lam):
+def asf(detpixel, fov, oversample, d, lam, psf_offset):
     """
     Calculate the Amplitude Spread Function for a circular aperture.
 
@@ -368,6 +368,8 @@ def asf(detpixel, fov, oversample, d, lam):
         Hole diameter
     lam : float
         Wavelength
+    psf_offset : 2D float array
+        Offset from image center in detector pixels
 
     Returns
     -------
@@ -376,6 +378,7 @@ def asf(detpixel, fov, oversample, d, lam):
         a circular aperture
     """
     pitch = detpixel / float(oversample)
+    im_ctr = image_center(fov, oversample, psf_offset)
 
     return np.fromfunction(
         jinc,
@@ -383,6 +386,8 @@ def asf(detpixel, fov, oversample, d, lam):
         d=d,
         lam=lam,
         pitch=pitch,
+        offx=im_ctr[0],
+        offy=im_ctr[1],
     )
 
 
@@ -473,7 +478,7 @@ def asf_hex(detpixel, fov, oversample, d, lam, psf_offset, affine2d):
 
 def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d, shape="circ"):
     """
-    Calculate the PSF for the requested shape.
+    Calculate the PSF for the requested aperture shape.
 
     Parameters
     ----------
@@ -503,13 +508,12 @@ def psf(detpixel, fov, oversample, ctrs, d, lam, phi, psf_offset, affine2d, shap
     PSF : 2D float array
         The point-spread function
     """
-    # Now deal with primary beam shapes...
     if shape == "circ":
         asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
-        asf_2d = asf(detpixel, fov, oversample, d, lam) * asf_fringe
+        asf_2d = asf(detpixel, fov, oversample, d, lam, psf_offset) * asf_fringe
 
     elif shape == "circonly":
-        asf_2d = asf(detpixel, fov, oversample, d, lam)
+        asf_2d = asf(detpixel, fov, oversample, d, lam, psf_offset)
 
     elif shape == "hex":
         asf_fringe = asffringe(detpixel, fov, oversample, ctrs, lam, phi, psf_offset, affine2d)
