@@ -52,8 +52,6 @@ def run_pipeline(rtdata_module, request, resource_tracker):
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = ["calwebb_spec2", rtdata.input,
             "--steps.assign_wcs.save_results=true",
-            "--steps.nsclean.skip=False",
-            "--steps.nsclean.save_results=true",
             "--steps.extract_2d.save_results=true",
             "--steps.wavecorr.save_results=true",
             "--steps.srctype.save_results=true",
@@ -63,6 +61,28 @@ def run_pipeline(rtdata_module, request, resource_tracker):
     # Example: RuntimeWarning: overflow encountered in square
     with resource_tracker.track():
         Step.from_cmdline(args)
+
+    return rtdata
+
+
+@pytest.fixture(scope="module")
+def run_pipeline_nsclean(rtdata_module):
+    """Run the calwebb_spec2 pipeline on NIRSpec Fixed-Slit exposures with nsclean."""
+
+    rtdata = rtdata_module
+
+    filename = "jw01245-o002_20230107t223023_spec2_00001_asn.json"
+    rtdata.get_asn('nirspec/fs/' + filename)
+
+    # Run the calwebb_spec2 pipeline with nsclean
+    args = ["calwebb_spec2", rtdata.input,
+            "--output_file=jw01245002001_04102_00002_nrs1_nsc",
+            "--steps.nsclean.skip=False",
+            "--steps.nsclean.save_results=true"]
+
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: overflow encountered in square
+    Step.from_cmdline(args)
 
     return rtdata
 
@@ -93,7 +113,7 @@ def test_log_tracked_resources_spec2(log_tracked_resources, run_pipeline):
 
 
 @pytest.mark.parametrize("suffix", [
-    "assign_wcs", "nsclean", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
+    "assign_wcs", "extract_2d", "wavecorr", "flat_field", "pathloss", "srctype",
     "cal", "s2d", "x1d"])
 def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
@@ -103,6 +123,24 @@ def test_nirspec_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     rtdata = run_pipeline
     output = replace_suffix(
         os.path.splitext(asn_memberdict[os.path.basename(rtdata.input)][0])[0], suffix) + '.fits'
+    rtdata.output = output
+
+    # Get the truth files
+    rtdata.get_truth(os.path.join("truth/test_nirspec_fs_spec2", output))
+
+    # Compare the results
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.parametrize("suffix", ["nsclean", "cal", "s2d", "x1d"])
+def test_nirspec_fs_nsclean(run_pipeline_nsclean, fitsdiff_default_kwargs, suffix):
+    """Regression test of the calwebb_spec2 pipeline with nsclean."""
+
+    # Run the pipeline and retrieve outputs
+    rtdata = run_pipeline_nsclean
+    basename = "jw01245002001_04102_00002_nrs1_nsc"
+    output = f"{basename}_{suffix}.fits"
     rtdata.output = output
 
     # Get the truth files
