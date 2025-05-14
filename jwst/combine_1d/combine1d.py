@@ -723,7 +723,7 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     input_model : `~jwst.datamodels.JwstDataModel`
         The input spectra.  This will likely be a ModelContainer object,
         but may also be a multi-spectra model, such as MultiSpecModel or
-        TSOSpecModel.  Input spectra may have different spectral orders
+        TSOMultiSpecModel.  Input spectra may have different spectral orders
         or wavelengths but should all share the same target.
     exptime_key : str
         A string identifying which keyword to use to get the exposure time,
