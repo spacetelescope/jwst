@@ -3,6 +3,7 @@
 # updated May 2013 to include hexagonal envelope
 
 import logging
+import warnings
 import numpy as np
 import scipy.special
 from . import leastsqnrm
@@ -36,7 +37,13 @@ def jinc(x, y, d, lam, pitch, offx=0.0, offy=0.0):
         2d jinc at the given coordinates, with NaNs replaced by pi/4.
     """
     r = (d / lam) * pitch * np.sqrt((x - offx) ** 2 + (y - offy) ** 2)
-    return leastsqnrm.replacenan(scipy.special.jv(1, np.pi * r) / (2.0 * r))
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=RuntimeWarning, message="invalid value encountered in divide"
+        )
+        # Ignore divide by zero and invalid value warnings
+        jinc_2d = leastsqnrm.replacenan(scipy.special.jv(1, np.pi * r) / (2.0 * r))
+    return jinc_2d
 
 
 def ffc(kx, ky, ko, baseline, lam, pitch, affine2d):
