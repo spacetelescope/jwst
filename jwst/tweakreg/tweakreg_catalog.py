@@ -4,6 +4,9 @@ import warnings
 
 from astropy.table import Table
 from astropy.utils.exceptions import AstropyUserWarning
+from astropy.stats import gaussian_fwhm_to_sigma
+from astropy.convolution import Gaussian2DKernel, convolve
+
 import numpy as np
 from photutils.detection import DAOStarFinder, IRAFStarFinder
 from photutils.segmentation import SourceFinder, SourceCatalog
@@ -16,7 +19,36 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
+def _convolve_data(data, kernel_fwhm, mask=None):
+    """
+    Convolve the data with a Gaussian2D kernel.
+
+    Parameters
+    ----------
+    data : `~numpy.ndarray`
+        The 2D array to convolve.
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
+    mask : array_like, bool, optional
+        A boolean mask with the same shape as ``data``, where a `True`
+        value indicates the corresponding element of ``data`` is masked.
+
+    Returns
+    -------
+    convolved_data : `~numpy.ndarray`
+        The convolved 2D array.
+    """
+    sigma = kernel_fwhm * gaussian_fwhm_to_sigma
+    kernel = Gaussian2DKernel(sigma)
+    kernel.normalize(mode="integral")
+
+    # All data have NaNs.  Suppress warnings about them.
+    with warnings.catch_warnings():
+        warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
+        return convolve(data, kernel, mask=mask, normalize_kernel=True)
+
+
+def _sourcefinder_wrapper(data, threshold, kernel_fwhm, mask=None, **kwargs):
     """
     Make input and output of SourceFinder consistent with IRAFStarFinder and DAOStarFinder.
 
@@ -29,6 +61,8 @@ def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
         The 2D array of the image.
     threshold : float
         The absolute image value above which to select sources.
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
     mask : array_like (bool), optional
         The image mask
     **kwargs : dict
@@ -50,6 +84,12 @@ def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
     }
     kwargs = {**default_kwargs, **kwargs}
 
+    # convolve the data with a Gaussian kernel
+    if kernel_fwhm > 0:
+        conv_data = _convolve_data(data, kernel_fwhm, mask=mask)
+    else:
+        conv_data = data
+
     # handle passing kwargs into SourceFinder and SourceCatalog
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
@@ -62,15 +102,21 @@ def _sourcefinder_wrapper(data, threshold, mask=None, **kwargs):
         catalog_dict["kron_params"] = (2.5, 1.4, 0.0)
 
     finder = SourceFinder(**finder_dict)
-    segment_map = finder(data, threshold, mask=mask)
-    sources = SourceCatalog(data, segment_map, mask=mask, **catalog_dict).to_table()
+    segment_map = finder(conv_data, threshold, mask=mask)
+    sources = SourceCatalog(
+        data,
+        segment_map,
+        mask=mask,
+        convolved_data=conv_data,
+        **catalog_dict,
+    ).to_table()
     sources.rename_column("label", "id")
     sources.rename_column("segment_flux", "flux")
 
     return sources
 
 
-def _iraf_starfinder_wrapper(data, threshold, mask=None, **kwargs):
+def _iraf_starfinder_wrapper(data, threshold, kernel_fwhm, mask=None, **kwargs):
     """
     Make input and output of IRAFStarFinder consistent with SourceFinder and DAOStarFinder.
 
@@ -80,6 +126,8 @@ def _iraf_starfinder_wrapper(data, threshold, mask=None, **kwargs):
         The 2D array of the image.
     threshold : float
         The absolute image value above which to select sources.
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
     mask : array_like (bool), optional
         The image mask
     **kwargs : dict
@@ -90,26 +138,18 @@ def _iraf_starfinder_wrapper(data, threshold, mask=None, **kwargs):
     sources : `~astropy.table.QTable`
         A table containing the found sources.
     """
-    # defaults are not necessary to repeat here when running full pipeline step
-    # but direct call to make_tweakreg_catalog will fail without 'fwhm' specified
-    default_kwargs = {
-        "fwhm": 2.5,
-    }
-    kwargs = {**default_kwargs, **kwargs}
-
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(IRAFStarFinder).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
-    fwhm = finder_dict.pop("fwhm")
 
-    starfind = IRAFStarFinder(threshold, fwhm, **finder_dict)
+    starfind = IRAFStarFinder(threshold, kernel_fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
 
     return sources
 
 
-def _dao_starfinder_wrapper(data, threshold, mask=None, **kwargs):
+def _dao_starfinder_wrapper(data, threshold, kernel_fwhm, mask=None, **kwargs):
     """
     Make input and output of DAOStarFinder consistent with SourceFinder and IRAFStarFinder.
 
@@ -119,6 +159,8 @@ def _dao_starfinder_wrapper(data, threshold, mask=None, **kwargs):
         The 2D array of the image.
     threshold : float
         The absolute image value above which to select sources.
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
     mask : array_like (bool), optional
         The image mask
     **kwargs : dict
@@ -129,13 +171,6 @@ def _dao_starfinder_wrapper(data, threshold, mask=None, **kwargs):
     sources : `~astropy.table.QTable`
         A table containing the found sources.
     """
-    # defaults are not necessary to repeat here when running full pipeline step
-    # but direct call to make_tweakreg_catalog will fail without 'fwhm' specified
-    default_kwargs = {
-        "fwhm": 2.5,
-    }
-    kwargs = {**default_kwargs, **kwargs}
-
     # for consistency with IRAFStarFinder, allow minsep_fwhm to be passed in
     # and convert to pixels in the same way that IRAFStarFinder does
     # see IRAFStarFinder readthedocs page and also
@@ -148,15 +183,20 @@ def _dao_starfinder_wrapper(data, threshold, mask=None, **kwargs):
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(DAOStarFinder).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
-    fwhm = finder_dict.pop("fwhm")
-    starfind = DAOStarFinder(threshold, fwhm, **finder_dict)
+
+    starfind = DAOStarFinder(threshold, kernel_fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
 
     return sources
 
 
 def make_tweakreg_catalog(
-    model, snr_threshold, bkg_boxsize=400, starfinder_name="iraf", starfinder_kwargs=None
+    model,
+    snr_threshold,
+    kernel_fwhm,
+    bkg_boxsize=400,
+    starfinder_name="iraf",
+    starfinder_kwargs=None,
 ):
     """
     Create a catalog of point-line sources to be used for image alignment in tweakreg.
@@ -169,6 +209,8 @@ def make_tweakreg_catalog(
     snr_threshold : float
         The signal-to-noise ratio per pixel above the ``background`` for
         which to consider a pixel as possibly being part of a source.
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel
     bkg_boxsize : float, optional
         The background mesh box size in pixels.
     starfinder_name : str, optional
@@ -225,7 +267,9 @@ def make_tweakreg_catalog(
         return catalog
 
     threshold = np.median(threshold_img)  # DAOStarFinder requires float
-    sources = starfinder(model.data, threshold, mask=coverage_mask, **starfinder_kwargs)
+    sources = starfinder(
+        model.data, threshold, kernel_fwhm, mask=coverage_mask, **starfinder_kwargs
+    )
 
     if sources:
         catalog = sources[columns]
