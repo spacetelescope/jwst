@@ -136,13 +136,9 @@ def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
         The instrument name.
     """
     if instrument == "MIRI":
-        out_dark_model = datamodels.DarkMIRIModel(
-            data=dark_data.data, dq=dark_data.groupdq, err=dark_data.err
-        )
+        out_dark_model = datamodels.DarkMIRIModel(data=dark_data.data, dq=dark_data.groupdq)
     else:
-        out_dark_model = datamodels.DarkModel(
-            data=dark_data.data, dq=dark_data.groupdq, err=dark_data.err
-        )
+        out_dark_model = datamodels.DarkModel(data=dark_data.data, dq=dark_data.groupdq)
     out_dark_model.update(dark_model)
 
     out_dark_model.meta.exposure.nframes = dark_data.exp_nframes

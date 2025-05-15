@@ -30,13 +30,8 @@ If the science exposure used NFRAMES>1 or GROUPGAP>0, the dark
 reference file data are reconstructed on-the-fly by the step to match the frame
 averaging and groupgap settings of the science exposure. The reconstructed dark
 data are created by averaging NFRAMES adjacent dark frames and skipping
-GROUPGAP intervening frames.
-
-The frame-averaged dark is constructed using the following scheme:
-
-#. SCI arrays are computed as the mean of the original dark SCI arrays
-#. ERR arrays are computed as the uncertainty in the mean, using
-   :math:`\frac{\sqrt {\sum \mathrm{ERR}^2}}{nframes}`
+GROUPGAP intervening frames; the frame-averaged dark data is constructed by
+computing the mean of the original dark SCI array across NFRAMES.
 
 The dark reference data are not integration-dependent for most instruments,
 hence the same group-by-group dark current data are subtracted from every
@@ -61,9 +56,11 @@ Any pixel values in the dark reference data that are set to NaN will have their
 values reset to zero before being subtracted from the science data, which
 will effectively skip the dark subtraction operation for those pixels.
 
-**Note**: If the input science exposure contains more groups than the available
-dark reference file, no dark subtraction will be applied and the input data
-will be returned unchanged.
+If the input science exposure contains more groups than the available
+dark reference file, the dark reference file will be extrapolated to match the
+number of groups present in the science exposure. This extrapolation generates
+new frames using the difference of the last two frames provided in the dark
+reference file.
 
 Subarrays
 ---------

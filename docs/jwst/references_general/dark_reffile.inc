@@ -31,7 +31,6 @@ the Near-IR instruments are as follows (see `~jwst.datamodels.DarkModel`):
 EXTNAME  NAXIS  Dimensions               Data type
 =======  =====  =======================  =========
 SCI      3      ncols x nrows x ngroups  float
-ERR      3      ncols x nrows x ngroups  float
 DQ       2      ncols x nrows            integer
 DQ_DEF   2      TFIELDS = 4              N/A
 =======  =====  =======================  =========
@@ -51,7 +50,6 @@ The format of the MIRI DARK reference files is as follows
 EXTNAME  NAXIS  Dimensions                       Data type
 =======  =====  ===============================  =========
 SCI      4      ncols x nrows x ngroups x nints  float
-ERR      4      ncols x nrows x ngroups x nints  float
 DQ       4      ncols x nrows x 1 x nints        integer
 DQ_DEF   2      TFIELDS = 4                      N/A
 =======  =====  ===============================  =========
