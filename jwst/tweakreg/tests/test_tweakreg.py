@@ -126,7 +126,7 @@ def test_expected_failure_bad_starfinder():
 
     model = ImageModel()
     with pytest.raises(ValueError):
-        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, bkg_boxsize=400, starfinder_name='bad_value')
+        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, 2.5, bkg_boxsize=400, starfinder_name='bad_value')
 
 
 def test_write_catalog(dummy_source_catalog, tmp_cwd):
