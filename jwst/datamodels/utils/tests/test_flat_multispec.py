@@ -6,7 +6,7 @@ import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from jwst.datamodels.utils.flat_multispec import (
     copy_column_units,
-    copy_spec_meta,
+    copy_spec_metadata,
     determine_vector_and_meta_columns,
     expand_flat_spec,
     make_empty_recarray,
@@ -87,6 +87,7 @@ def tso_multi_spec():
         spec.source_id = i + 1
         spec.name = f"test {i + 1}"
         spec.meta.wcs = ['test']
+        spec.spec_table["INT_NUM"] = i + 1
 
         tso_multi.spec.append(spec)
     return tso_multi
@@ -236,12 +237,12 @@ def test_copy_column_units(input_spec, output_spec):
     assert output_spec.spec_table.columns.units == expected
 
 
-def test_copy_spec_meta(input_spec, output_spec):
+def test_copy_spec_metadata(input_spec, output_spec):
     # Before copying, source_id and name are blank or default
     assert output_spec.name is None
     assert output_spec.source_id == 0
 
-    copy_spec_meta(input_spec, output_spec)
+    copy_spec_metadata(input_spec, output_spec)
 
     # After copying, metadata is filled in
     assert output_spec.name == 'test_slit'
@@ -266,6 +267,7 @@ def test_expand_flat_spec(tso_multi_spec):
         input_spec_num = i // n_int + 1
         assert spec.source_id == input_spec_num
         assert spec.name == f"test {input_spec_num}"
+        assert spec.int_num == input_spec_num
 
         # WCS object is present and is a deep copy of the input
         assert spec.meta.wcs[0] == 'test'
