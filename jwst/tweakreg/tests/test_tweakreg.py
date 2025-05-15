@@ -171,10 +171,12 @@ def example_input(example_wcs):
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
     ys = rng.choice(50, n_sources, replace=False) * 8 + 10
     for y, x in zip(ys, xs):
-        m0.data[y-1:y+2, x-1:x+2] = [
-            [0.1, 0.6, 0.1],
-            [0.6, 0.8, 0.6],
-            [0.1, 0.6, 0.1],
+        m0.data[y-2:y+3, x-2:x+3] = [
+            [0.1, 0.1, 0.2, 0.1, 0.1],
+            [0.1, 0.4, 0.6, 0.4, 0.1],
+            [0.1, 0.6, 0.8, 0.6, 0.1],
+            [0.1, 0.4, 0.6, 0.4, 0.1],
+            [0.1, 0.1, 0.2, 0.1, 0.1],
         ]
 
     m1 = m0.copy()
