@@ -37,7 +37,6 @@ repos:
       - id: numpydoc-validation
         exclude: |
           (?x)^(
-            jwst/dark_current/.* |
             jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/ipc/.* |
