@@ -224,10 +224,10 @@ The ``tweakreg`` step has the following optional arguments:
 * ``snr_threshold``: A `float` value indicating SNR threshold above the
   background. Required for all star finders. (Default=10.0)
 
-**Additional source finding parameters for DAO and IRAF:**
-
 * ``kernel_fwhm``: A `float` value indicating the Gaussian kernel FWHM in
   pixels. (Default=2.5)
+
+**Additional source finding parameters for DAO and IRAF:**
 
 * ``minsep_fwhm``: A `float` value indicating the minimum separation between
   detected objects in units of number of FWHMs. (Default=0.0)
