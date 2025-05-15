@@ -11,6 +11,7 @@ from astropy.wcs import WCS
 from astropy.modeling.models import Shift
 from astropy.table import Table
 from astropy.utils.data import get_pkg_data_filename
+from photutils.utils import NoDetectionsWarning
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import ImageModel
 
@@ -473,3 +474,28 @@ def test_make_tweakreg_catalog(example_input):
     for j in range(2):
         assert_allclose(x[j], x[j+1], atol=0.01)
         assert_allclose(y[j], y[j+1], atol=0.01)
+
+
+def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input):
+    """Test that the catalog creation fails gracefully when no sources are found."""
+    # run the step on an input that is completely blank
+    example_input[0].data[:] = 0.0
+    with pytest.warns(NoDetectionsWarning, match="No sources were found"):
+        # run the step on the example input modified above
+        cat = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5,)
+
+    assert len(cat) == 0
+    assert type(cat) == Table
+
+
+def test_make_tweakreg_catalog_graceful_fail_bad_background(example_input, log_watcher):
+    """Test that the catalog creation fails gracefully when the background cannot be determined."""
+    watcher = log_watcher("jwst.tweakreg.tweakreg_catalog",
+                          message="Error determining sky background", level="warning")
+    
+    example_input[0].dq[:] = 1
+    cat = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5)
+
+    watcher.assert_seen()
+    assert len(cat) == 0
+    assert type(cat) == Table
