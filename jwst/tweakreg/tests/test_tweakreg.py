@@ -5,6 +5,7 @@ from copy import deepcopy
 
 import asdf
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
 from astropy.wcs import WCS
 from astropy.modeling.models import Shift
@@ -27,7 +28,7 @@ REFCAT = "GAIADR3"
 
 
 @pytest.fixture
-def dummy_source_catalog():
+def mock_source_catalog():
 
     columns = ['id', 'xcentroid', 'ycentroid', 'flux']
     catalog = Table(names=columns, dtype=(int, float, float, float))
@@ -37,17 +38,17 @@ def dummy_source_catalog():
 
 
 @pytest.mark.parametrize("inplace", [True, False])
-def test_rename_catalog_columns(dummy_source_catalog, inplace):
+def test_rename_catalog_columns(mock_source_catalog, inplace):
     """
     Test that a catalog with 'xcentroid' and 'ycentroid' columns
     passed to _renamed_catalog_columns successfully renames those columns
     to 'x' and 'y' (and does so "inplace" modifying the input catalog)
     """
-    renamed_catalog = tweakreg_step._rename_catalog_columns(dummy_source_catalog)
+    renamed_catalog = tweakreg_step._rename_catalog_columns(mock_source_catalog)
 
     # if testing inplace, check the input catalog
     if inplace:
-        catalog = dummy_source_catalog
+        catalog = mock_source_catalog
     else:
         catalog = renamed_catalog
 
@@ -58,7 +59,7 @@ def test_rename_catalog_columns(dummy_source_catalog, inplace):
 
 
 @pytest.mark.parametrize("missing", ["x", "y", "xcentroid", "ycentroid"])
-def test_rename_catalog_columns_invalid(dummy_source_catalog, missing):
+def test_rename_catalog_columns_invalid(mock_source_catalog, missing):
     """
     Test that passing a catalog that is missing either "x" or "y"
     (or "xcentroid" and "ycentroid" which is renamed to "x" or "y")
@@ -66,11 +67,11 @@ def test_rename_catalog_columns_invalid(dummy_source_catalog, missing):
     """
     # if the column we want to remove is not in the table, first run
     # rename to rename columns this should add the column we want to remove
-    if missing not in dummy_source_catalog.colnames:
-        tweakreg_step._rename_catalog_columns(dummy_source_catalog)
-    dummy_source_catalog.remove_column(missing)
+    if missing not in mock_source_catalog.colnames:
+        tweakreg_step._rename_catalog_columns(mock_source_catalog)
+    mock_source_catalog.remove_column(missing)
     with pytest.raises(ValueError, match="catalogs must contain"):
-        tweakreg_step._rename_catalog_columns(dummy_source_catalog)
+        tweakreg_step._rename_catalog_columns(mock_source_catalog)
 
 
 @pytest.mark.parametrize("offset, is_good", [(1 / 3600, True), (11 / 3600, False)])
@@ -129,7 +130,7 @@ def test_expected_failure_bad_starfinder():
         tweakreg_catalog.make_tweakreg_catalog(model, 5.0, 2.5, bkg_boxsize=400, starfinder_name='bad_value')
 
 
-def test_write_catalog(dummy_source_catalog, tmp_cwd):
+def test_write_catalog(mock_source_catalog, tmp_cwd):
     '''
     Covers an issue where catalog write did not respect self.output_dir
     '''
@@ -139,7 +140,7 @@ def test_write_catalog(dummy_source_catalog, tmp_cwd):
     os.mkdir(OUTDIR)
     step.output_dir = OUTDIR
     expected_outfile = os.path.join(OUTDIR, 'catalog.ecsv')
-    step._write_catalog(dummy_source_catalog, 'catalog.ecsv')
+    step._write_catalog(mock_source_catalog, 'catalog.ecsv')
 
     assert os.path.exists(expected_outfile)
 
@@ -446,3 +447,27 @@ def test_sip_approx(example_input, with_shift):
 
     assert np.allclose(fitswcs_res.ra.deg, gwcs_ra)
     assert np.allclose(fitswcs_res.dec.deg, gwcs_dec)
+
+
+def test_make_tweakreg_catalog(example_input):
+    """
+    Simple test for the three starfinder options.
+
+    With default parameters, they should all find the N_EXAMPLE_SOURCES very bright sources
+    in the image.
+    """
+    # run the step on the example input modified above
+    x,y = [], []
+    for finder_name in ["iraf", "dao", "segmentation"]:
+        cat = tweakreg_catalog.make_tweakreg_catalog(
+            example_input[0], 10.0, 2.5, starfinder_name=finder_name,
+        )
+        x.append(np.sort(np.array(cat["xcentroid"])))
+        y.append(np.sort(np.array(cat["ycentroid"])))
+        # check all sources were found
+        assert len(cat) == N_EXAMPLE_SOURCES
+
+    # check the locations are the same to within a small fraction of a pixel
+    for j in range(2):
+        assert_allclose(x[j], x[j+1], atol=0.01)
+        assert_allclose(y[j], y[j+1], atol=0.01)
