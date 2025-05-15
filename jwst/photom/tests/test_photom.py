@@ -144,7 +144,7 @@ def create_input(
     instrument, detector, exptype, filter_used=None, pupil=None, grating=None, band=None
 ):
     """
-    Create dummy data (an open model) of the appropriate type.
+    Create placeholder data (an open model) of the appropriate type.
 
     Parameters
     ----------
@@ -1635,11 +1635,13 @@ def test_fgs():
 
 
 def test_apply_photom_1():
-    """Test the apply_photom method of the DataSet class in photom.py, #1."""
-    # apply_photom() calls calc_niriss, etc., depending on EXP_TYPE.  We've
-    # already tested each of these above.  The unique test in this function
-    # is checking that the pixel area keywords are populated correctly.
+    """
+    Test the apply_photom method of the DataSet class in photom.py, #1.
 
+    The apply_photom() method calls calc_niriss, etc., depending on EXP_TYPE.
+    We've already tested each of these above.  The unique test in this function
+    is checking that the pixel area keywords are populated correctly.
+    """
     input_model = create_input("NIRCAM", "NRCA3", "NRC_IMAGE", filter_used="F150W", pupil="CLEAR")
     ds = photom.DataSet(input_model)
     ftab = create_photom_nircam_image()

@@ -24,11 +24,11 @@ def expfunc_bounded(x, a, b, c, x0):
     x : float
         Modified Julian Day (EXPMID) of the observation
     a : float numpy.ndarray
-        Model parameter for time dependence
+        Amplitude model parameter
     b : float numpy.ndarray
-        Model parameter for time dependence
+        Model parameter related to timescale of decay.  Timescale is (100/b) days
     c : float numpy.ndarray
-        Model parameter for time dependence
+        Asymptote model parameter - flux approaches this at very large time
     x0 : int
         Reference day from which the time dependence
         coefficients were derived.
@@ -68,7 +68,7 @@ def get_correction_function(side, timecoeff, mid_time):
 
     Returns
     -------
-    func : function
+    function
         Time-wavelength dependent photom loss correction
     """
     binwave = timecoeff[side]["binwave"]

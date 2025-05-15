@@ -64,7 +64,7 @@ def find_row(fits_table, match_fields):
     Warning
         When a field name is not in the table.
     MatchFitsTableRowError
-        When more than one rows match.
+        When more than one row matches.
     """
 
     def _normalize_strings(field):
@@ -120,7 +120,7 @@ class DataSet:
         mrs_time_correction=False,
         correction_pars=None,
     ):
-        # Setup attributes necessary for calculation.
+        # Set up attributes necessary for calculation.
         if correction_pars:
             self.update(correction_pars["dataset"])
         else:
@@ -509,9 +509,10 @@ class DataSet:
                 self.photom_io(fftab.phot_table[0])
             except AttributeError:
                 # No time-dependent correction is applied
-                firstpart = " Skipping MIRI imager time correction."
-                secondpart = " Extension not found in the reference file."
-                log.info(firstpart + secondpart)
+                log.info(
+                    " Skipping MIRI imager time correction."
+                    " Extension not found in the reference file."
+                )
                 self.photom_io(ftab.phot_table[row])
 
         # MRS detectors
@@ -555,12 +556,12 @@ class DataSet:
                 ftab.getarray_noinit("timecoeff_ch1")
             except AttributeError:
                 # Old style ref file; skip the correction
-                firstpart = "Skipping MRS MIRI time correction."
-                secondpart = "Extensions not found in the reference file."
-                log.info(f"{firstpart}  {secondpart}")
+                log.info(
+                    "Skipping MRS MIRI time correction.  "
+                    "Extensions not found in the reference file."
+                )
                 self.mrs_time_correction = False
 
-            # if np.any(ftab.timecoeff_ch1["binwave"]) and self.mrs_time_correction:
             if self.mrs_time_correction:
                 log.info("Applying MRS IFU time dependent correction.")
                 mid_time = self.input.meta.exposure.mid_time
@@ -1201,7 +1202,7 @@ class DataSet:
 
     def pixarea_from_ftab(self, ftab):
         """
-        Get pixels area in steradians and arsec^2 from phptom reference file.
+        Get pixel area in steradians and arsec^2 from photom reference file.
 
         Read the pixel area values in the PIXAR_A2 and PIXAR_SR keys from the
         primary header of the photom reference file.

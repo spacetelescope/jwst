@@ -4,8 +4,6 @@ import numpy as np
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-# Routine to find a time-dependent correction to the PHOTOM value.
-
 
 def time_corr_photom(param, t):
     """
