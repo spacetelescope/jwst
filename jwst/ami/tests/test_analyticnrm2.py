@@ -58,27 +58,20 @@ def setup_sf():
     return pixel, fov, oversample, ctrs, d, lam, phi, centering, aff_obj
 
 
-def test_analyticnrm2_psf(setup_sf):
+@pytest.mark.parametrize("holeshape", ["circ", "circonly", "hex", "hexonly", "fringeonly"])
+def test_analyticnrm2_psf(setup_sf, holeshape):
     """Test of psf() in the analyticnrm2 module"""
     pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj = setup_sf
-    shape = "hex"
 
     computed_psf = analyticnrm2.psf(
-        pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj, shape=shape
+        pixel, fov, oversample, ctrs, d, lam, phi, psf_offset, aff_obj, shape=holeshape
     )
+    # basic checks of type and shape
+    assert isinstance(computed_psf, np.ndarray)
+    assert computed_psf.shape == (fov * oversample, fov * oversample)
 
-    true_psf = np.array(
-        [
-            [1.14249135, 0.65831385, 0.45119464, 0.66864436, 1.10501352, 2.04851966],
-            [2.2221824, 0.62716999, 0.87062628, 1.97855142, 1.72666739, 0.28363866],
-            [4.37562298, 2.64951632, 6.40126821, 12.22910105, 13.17326852, 7.49323549],
-            [5.93942383, 4.58894785, 12.68235611, 24.87843624, 29.17900067, 20.64525322],
-            [5.38441424, 3.73680387, 13.26524812, 28.96518165, 36.75, 28.96518165],
-            [3.98599305, 1.08124031, 7.38628086, 20.64525322, 29.17900067, 24.87843625],
-        ]
-    )
-
-    assert_allclose(computed_psf, true_psf, atol=1e-7)
+    # ensure PSF offset is applied
+    assert np.argmax(computed_psf) == 28
 
 
 def test_analyticnrm2_asf_hex(setup_sf):

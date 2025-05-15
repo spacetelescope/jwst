@@ -1,10 +1,4 @@
-"""
-    Create High-Level Science Products for a KLIP-processed coronagraphic
-    exposure.
-
-:Authors: Howard Bushouse
-
-"""
+"""Create High-Level Science Products for a KLIP-processed coronagraphic exposure."""
 
 import numpy as np
 import math
@@ -12,16 +6,27 @@ import math
 from stdatamodels.jwst import datamodels
 
 import logging
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
 def snr_image(target_model):
     """
-    Compute the signal-to-noise ratio map for a KLIP-processed image. The SNR
-    image is computed as the ratio of the input image DATA and ERR arrays.
-    """
+    Compute the signal-to-noise ratio map for a KLIP-processed image.
 
+    The SNR image is computed as the ratio of the input image DATA and ERR arrays.
+
+    Parameters
+    ----------
+    target_model : ImageModel
+        Science target ImageModel
+
+    Returns
+    -------
+    output_model : ImageModel
+        ImageModel with signal-to_noise data attribute
+    """
     # Initialize the output model as a copy of the input model
     output_model = target_model.copy()
 
@@ -35,14 +40,26 @@ def snr_image(target_model):
 def contrast_curve(target_model, width):
     """
     Compute "contrast curve" data for a PSF-subtracted image.
+
     What's computed is the 1-sigma noise in a series of concentric annuli
     centered at the geometric center of the image. The width of the annuli
     is set by the input argument "width". A mask array is used iteratively to
     exclude all pixels outside of each annulus when the standard deviation
     is computed. Annuli are defined to the nearest pixel. No partial-pixel
     computations are performed.
-    """
 
+    Parameters
+    ----------
+    target_model : ImageModel
+        The science target ImageModel
+    width : float
+        Width of the annuli, in pixels
+
+    Returns
+    -------
+    output_model : ContrastModel
+        ContrastModel with a table of radius and standard deviation of non-masked pixels
+    """
     # Get the target array size and center
     nrows = target_model.data.shape[0]
     ncols = target_model.data.shape[1]
@@ -70,9 +87,8 @@ def contrast_curve(target_model, width):
         # within the limits of the current annulus
         for r in range(nrows):
             for c in range(ncols):
-
                 # Compute the distance of this pixel from the image center
-                d = math.sqrt((r - crow)**2 + (c - ccol)**2)
+                d = math.sqrt((r - crow) ** 2 + (c - ccol) ** 2)
 
                 # If this pixel is within the current annulus,
                 # reset its mask value to 1
@@ -81,7 +97,7 @@ def contrast_curve(target_model, width):
 
         # Compute the standard deviation of all unmasked pixels
         std = np.nanstd(mask * target_model.data)
-        log.debug(' rmin=%d, rmax=%d, rmid=%g, sigma=%g', rmin, rmax, rmid, std)
+        log.debug(" rmin=%d, rmax=%d, rmid=%g, sigma=%g", rmin, rmax, rmid, std)
 
         # Append the radius and standard deviation values for this annulus
         # to the output lists
@@ -93,7 +109,7 @@ def contrast_curve(target_model, width):
     sigmas = np.asarray(sigma)
 
     # Create the output contrast curve data model
-    output_model = datamodels.ContrastModel(contrast_table=list(zip(radii, sigmas)))
+    output_model = datamodels.ContrastModel(contrast_table=list(zip(radii, sigmas, strict=True)))
     output_model.update(target_model)
 
     return output_model

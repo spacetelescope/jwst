@@ -1,9 +1,11 @@
 import io
 
 import asdf
+import warnings
 from pathlib import Path
 from astropy.io import fits
 from stdatamodels.jwst.datamodels.util import open as datamodels_open
+from stdatamodels.jwst.datamodels import read_metadata
 from stpipe.library import AbstractModelLibrary, NoGroupID
 
 from jwst.associations import AssociationNotValidError, load_asn
@@ -211,6 +213,61 @@ class ModelLibrary(AbstractModelLibrary):
 
         if "asn_pool" in self.asn.keys():  # do not clobber existing values
             model.meta.asn.pool_name = self.asn["asn_pool"]
+
+    def get_crds_parameters(self):
+        """
+        Override base method so lazy-loading of metadata can be used to get CRDS parameters.
+
+        Get the "crds_parameters" from either:
+            - the first "science" member (based on exptype)
+            - the first model (if no "science" member is found)
+
+        If no "science" members are found in the library a ``UserWarning``
+        will be issued.
+
+        Returns
+        -------
+        crds_parameters : dict
+            The result of ``get_crds_parameters`` called on the selected
+            model.
+        """
+        with self:
+            idx = None
+            for i, member in enumerate(self._members):
+                if member["exptype"].lower() == "science":
+                    idx = i
+                    break
+            if idx is None:
+                warnings.warn(
+                    "get_crds_parameters failed to find any science members. "
+                    "The first model was used to determine the parameters",
+                    UserWarning,
+                    stacklevel=2,
+                )
+                idx = 0
+
+            # find model in _loaded_models, temp_filenames, or asn_dir
+            if self._on_disk:
+                if idx in self._temp_filenames:
+                    # if model has been modified, find its temp filename
+                    filename = self._temp_filenames[idx]
+                else:
+                    # otherwise, find the filename in the asn_dir
+                    member = self._members[idx]
+                    filename = Path(self._asn_dir) / member["expname"]
+            else:
+                if idx in self._loaded_models:
+                    # if this model is in memory, retrieve parameters from it directly
+                    model = self._loaded_models[idx]
+                    return model.get_crds_parameters()
+                else:
+                    # otherwise, find the filename in the asn_dir
+                    member = self._members[idx]
+                    filename = Path(self._asn_dir) / member["expname"]
+
+            meta = read_metadata(filename, flatten=True)
+
+        return meta
 
 
 def _attrs_to_group_id(

@@ -2,16 +2,19 @@
 import os
 
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.stpipe import Step
 
 # Define artifactory source and truth
 TRUTH_PATH = 'truth/test_miri_mrs'
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata, pytest.mark.slow]
+
 
 @pytest.fixture(scope='module')
-def run_spec3_ifushort(rtdata_module):
+def run_spec3_ifushort(rtdata_module, resource_tracker):
     """Run the Spec3Pipeline on association with 2 bands on IFUSHORT"""
 
     # Test has bands medium and long for IFUSHORT
@@ -28,12 +31,13 @@ def run_spec3_ifushort(rtdata_module):
     ]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: All-NaN slice encountered
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
     return rtdata
 
 
 @pytest.fixture(scope='module')
-def run_spec3_ifulong(rtdata_module):
+def run_spec3_ifulong(rtdata_module, resource_tracker):
     """Run the Spec3Pipeline dithered flight data """
 
     # Test has bands medium and long for IFULONG
@@ -49,7 +53,8 @@ def run_spec3_ifulong(rtdata_module):
     ]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: All-NaN slice encountered
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
     return rtdata
 
 
@@ -102,8 +107,14 @@ def run_spec3_ifushort_extract1d(rtdata_module):
     return rtdata
 
 
-@pytest.mark.slow
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec3short(log_tracked_resources, run_spec3_ifushort):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_spec3long(log_tracked_resources, run_spec3_ifulong):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize(
     'output',
     [
@@ -128,8 +139,6 @@ def test_spec3_ifulong(run_spec3_ifulong, fitsdiff_default_kwargs, output):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.slow
-@pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',
     [
@@ -155,8 +164,6 @@ def test_spec3_ifushort(run_spec3_ifushort, fitsdiff_default_kwargs, output):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.slow
-@pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',
     [
@@ -182,8 +189,6 @@ def test_spec3_ifushort_emsm(run_spec3_ifushort_emsm, fitsdiff_default_kwargs, o
     assert diff.identical, diff.report()
 
 
-@pytest.mark.slow
-@pytest.mark.bigdata
 @pytest.mark.parametrize(
     'output',
     [

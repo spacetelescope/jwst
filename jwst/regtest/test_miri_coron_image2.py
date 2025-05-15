@@ -6,8 +6,11 @@ from jwst.regtest import regtestdata as rt
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 @pytest.fixture(scope='module')
-def run_image2(rtdata_module):
+def run_image2(rtdata_module, resource_tracker):
     """Run the calwebb_image2 pipeline"""
 
     rtdata = rtdata_module
@@ -18,12 +21,16 @@ def run_image2(rtdata_module):
             "--steps.bkg_subtract.save_combined_background=true",
             "--steps.assign_wcs.save_results=true",
             "--steps.flat_field.save_results=true"]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     return rtdata
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_image2(log_tracked_resources, run_image2):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["bsubints", "combinedbackground", "assign_wcs", "flat_field", "calints"])
 def test_miri_coron_image2(run_image2, fitsdiff_default_kwargs, suffix):
     """Regression test for image2 processing of MIRI coronagraphic data with background exposures"""

@@ -9,7 +9,7 @@ import shutil
 import sys
 
 import asdf
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from ci_watson.artifactory_helpers import (
     check_url,
     get_bigdata_root,

@@ -3,9 +3,12 @@ import pytest
 
 from jwst.regtest import regtestdata as rt
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata, pytest.mark.slow]
+
 
 @pytest.fixture(scope='module')
-def run_spec3_multi(rtdata_module):
+def run_spec3_multi(rtdata_module, resource_tracker):
     """Run Spec3Pipeline"""
     rtdata = rtdata_module
 
@@ -23,12 +26,15 @@ def run_spec3_multi(rtdata_module):
     }
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: All-NaN slice encountered
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    with resource_tracker.track():
+        rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 
-@pytest.mark.slow
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec3(log_tracked_resources, run_spec3_multi):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize(
     'output',
     [

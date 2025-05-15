@@ -1,16 +1,19 @@
 import os
 
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from gwcs import wcstools
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
-def run_pipeline(rtdata_module):
+def run_pipeline(rtdata_module, resource_tracker):
     """
     Run the calwebb_spec3 pipeline on NIRSpec Fixed-Slit exposures.
     """
@@ -27,10 +30,14 @@ def run_pipeline(rtdata_module):
             "--steps.extract_1d.save_results=true"]
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: Mean of empty slice
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec3(log_tracked_resources, run_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d", "median"])
 @pytest.mark.parametrize("source_id,slit_name", [("s000000001","s200a2"), ("s000000021","s200a1"),
     ("s000000023","s400a1"), ("s000000024","s1600a1"), ("s000000025","s200b1")])

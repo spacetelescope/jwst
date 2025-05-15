@@ -3,9 +3,12 @@ import pytest
 
 from jwst.regtest import regtestdata as rt
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope='module')
-def run_wfss_contam(rtdata_module):
+def run_wfss_contam(rtdata_module, resource_tracker):
     """Run the wfss_contam step"""
     rtdata = rtdata_module
 
@@ -24,11 +27,17 @@ def run_wfss_contam(rtdata_module):
             '--skip=False',
         ]
     }
-    rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    with resource_tracker.track():
+        rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
-@pytest.mark.skip(reason='Test too slow until stdatamodels PR#165 merged')
-@pytest.mark.bigdata
+
+@pytest.mark.skip(reason='Test too slow until contam is updated')
+def test_log_tracked_resources_tsimg(log_tracked_resources, run_wfss_contam):
+    log_tracked_resources()
+
+
+@pytest.mark.skip(reason='Test too slow until contam is updated')
 @pytest.mark.parametrize(
     'suffix',
     ['simul', 'contam', 'wfsscontamstep']

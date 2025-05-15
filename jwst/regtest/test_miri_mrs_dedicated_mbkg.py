@@ -1,6 +1,6 @@
 import os
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.master_background import MasterBackgroundStep
 

@@ -17,10 +17,12 @@ class RawOifits:
     """
     Store AMI data in the format required to write out to OIFITS files.
 
-    Takes fringefitter class, which contains nrm_list and instrument_data attributes,
-    all info needed to write oifits. Angular quantities of input are in radians from
-    fringe fitting; converted to degrees for saving. Populate the structure needed to
-    write out oifits files according to schema.
+    Builds the structure needed to write out oifits files according to the schema.
+    Populates the structure with the observables from the fringe fitter.
+    For data arrays, the observables are populated slice-by-slice to enable
+    fitting with FringeFitter and storage as OiFits to take place in the same loop.
+    Angular quantities, initially in radians from fringe fitting,
+    are converted to degrees for saving.
     Produces averaged and multi-integration versions, with sigma-clipped stats over
     integrations.
 
@@ -30,22 +32,22 @@ class RawOifits:
     https://github.com/anand0xff/ImPlaneIA/blob/master/nrm_analysis/misctools/implane2oifits.py#L32
     """
 
-    def __init__(self, fringefitter, method="mean"):
+    def __init__(self, instrument_data, method="mean"):
         """
         Initialize the RawOifits object.
 
         Parameters
         ----------
-        fringefitter : FringeFitter object
-            Object containing nrm_list attribute (list of nrm objects)
-            and other info needed for OIFITS files
+        instrument_data : jwst.ami.instrument_data.NIRISS object
+            Information on the mask geometry (namely # holes), instrument,
+            wavelength obs mode.
         method : str
             Method to average observables: mean or median. Default mean.
         """
-        self.fringe_fitter = fringefitter
         self.n_holes = 7
+        self.instrument_data = instrument_data
 
-        self.nslices = len(self.fringe_fitter.nrm_list)  # n ints
+        self.nslices = self.instrument_data.nslices  # n ints
         self.n_baselines = int(comb(self.n_holes, 2))  # 21
         self.n_closure_phases = int(comb(self.n_holes, 3))  # 35
         self.n_closure_amplitudes = int(comb(self.n_holes, 4))  # also 35
@@ -60,15 +62,15 @@ class RawOifits:
             log.warning(msg)
             self.method = "mean"
 
-        self.ctrs_eqt = self.fringe_fitter.instrument_data.ctrs_eqt
-        self.ctrs_inst = self.fringe_fitter.instrument_data.ctrs_inst
+        self.ctrs_eqt = self.instrument_data.ctrs_eqt
+        self.ctrs_inst = self.instrument_data.ctrs_inst
 
         self.bholes, self.bls = self._makebaselines()
         self.tholes, self.tuv = self._maketriples_all()
         self.qholes, self.quads = self._makequads_all()
 
-    def make_obsarrays(self):
-        """Make arrays of observables of the correct shape for saving to datamodels."""
+    def initialize_obsarrays(self):
+        """Initialize arrays of observables to empty arrays."""
         # empty arrays of observables, (nslices,nobservables) shape.
         self.fringe_phases = np.zeros((self.nslices, self.n_baselines))
         self.fringe_amplitudes = np.zeros((self.nslices, self.n_baselines))
@@ -77,21 +79,30 @@ class RawOifits:
         self.q4_phases = np.zeros((self.nslices, self.n_closure_amplitudes))
         self.closure_amplitudes = np.zeros((self.nslices, self.n_closure_amplitudes))
         self.pistons = np.zeros((self.nslices, self.n_holes))
-        # model parameters
         self.solns = np.zeros((self.nslices, 44))
+        self.fringe_amplitudes_squared = np.zeros((self.nslices, self.n_baselines))
 
+    def populate_obsarray(self, i, nrmslc):
+        """
+        Populate arrays of observables with fringe fitter results.
+
+        Parameters
+        ----------
+        i : int
+            Index of the integration
+        nrmslc : object
+            Object containing the results of the fringe fitting for this integration
+        """
         # populate with each integration's observables
-        for i, nrmslc in enumerate(self.fringe_fitter.nrm_list):
-            self.fringe_phases[i, :] = nrmslc.fringephase  # FPs in radians
-            self.fringe_amplitudes[i, :] = nrmslc.fringeamp
-            self.closure_phases[i, :] = nrmslc.redundant_cps  # CPs in radians
-            self.t3_amplitudes[i, :] = nrmslc.t3_amplitudes
-            self.q4_phases[i, :] = nrmslc.q4_phases  # quad phases in radians
-            self.closure_amplitudes[i, :] = nrmslc.redundant_cas
-            self.pistons[i, :] = nrmslc.fringepistons  # segment pistons in radians
-            self.solns[i, :] = nrmslc.soln
-
-        self.fringe_amplitudes_squared = self.fringe_amplitudes**2  # squared visibilities
+        self.fringe_phases[i, :] = nrmslc.fringephase  # FPs in radians
+        self.fringe_amplitudes[i, :] = nrmslc.fringeamp
+        self.closure_phases[i, :] = nrmslc.redundant_cps  # CPs in radians
+        self.t3_amplitudes[i, :] = nrmslc.t3_amplitudes
+        self.q4_phases[i, :] = nrmslc.q4_phases  # quad phases in radians
+        self.closure_amplitudes[i, :] = nrmslc.redundant_cas
+        self.pistons[i, :] = nrmslc.fringepistons  # segment pistons in radians
+        self.solns[i, :] = nrmslc.soln
+        self.fringe_amplitudes_squared[i, :] = nrmslc.fringeamp**2  # squared visibilities
 
     def rotate_matrix(self, cov_mat, theta):
         """
@@ -329,8 +340,7 @@ class RawOifits:
         m : AmiOIModel
             Fully populated datamodel
         """
-        self.make_obsarrays()
-        instrument_data = self.fringe_fitter.instrument_data
+        instrument_data = self.instrument_data
         observation_date = Time(
             f"{instrument_data.year}-{instrument_data.month}-{instrument_data.day}",
             format="fits",
@@ -445,7 +455,7 @@ class RawOifits:
 
         pscale = instrument_data.pscale_mas / 1000.0  # arcsec
         # Size of the image to extract NRM data
-        isz = self.fringe_fitter.scidata.shape[1]
+        isz = self.instrument_data.isz
         fov = [pscale * isz] * self.n_holes
         fovtype = ["RADIUS"] * self.n_holes
 

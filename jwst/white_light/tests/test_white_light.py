@@ -66,7 +66,15 @@ def make_datamodel():
     mid_times = (start_times + end_times) / 2.0
     integrations = []
     for i in range(n_spec):
-        integrations.append((i+1, start_times[i], mid_times[i], end_times[i], 0.0, 0.0, 0.0))
+        integrations.append((
+            i+1,
+            start_times[i],
+            mid_times[i],
+            end_times[i],
+            start_times[i] + 3.0,
+            mid_times[i] + 3.0,
+            end_times[i] + 3.0,
+        ))
 
     integration_table = np.array(
         integrations,
@@ -94,9 +102,12 @@ def make_datamodel():
         spec.start_time_mjd = integration_table["int_start_MJD_UTC"][i]
         spec.end_time_mjd = integration_table["int_end_MJD_UTC"][i]
         spec.mid_time_mjd = integration_table["int_mid_MJD_UTC"][i]
-        spec.start_tdb = integration_table["int_start_BJD_TDB"][i]
-        spec.end_tdb = integration_table["int_end_BJD_TDB"][i]
-        spec.mid_tdb = integration_table["int_mid_BJD_TDB"][i]
+
+        # remove one mid_tdb to check that code still completes and sets it to NaN
+        if i != 0:
+            spec.start_tdb = integration_table["int_start_BJD_TDB"][i]
+            spec.end_tdb = integration_table["int_end_BJD_TDB"][i]
+            spec.mid_tdb = integration_table["int_mid_BJD_TDB"][i]
 
     return model
 
@@ -117,8 +128,11 @@ def test_white_light(make_datamodel, monkeypatch):
     mid_times = (start_times + end_times) / 2.0
     mid_times = mid_times[mid_times != 0.5]  # remove the mid time for the skipped integration
 
+    expected_tdb = mid_times + 3.0
+    expected_tdb[0] = np.nan  # spec did not have mid_tdb for first integration
 
-    np.testing.assert_allclose(result["MJD"], mid_times)
+    np.testing.assert_allclose(result["int_mid_MJD_UTC"], mid_times)
+    np.testing.assert_allclose(result["int_mid_BJD_TDB"], expected_tdb, equal_nan=True)
     assert result["whitelight_flux_order_1"].shape == (len(mid_times),)
     assert result["whitelight_flux_order_2"].shape == (len(mid_times),)
     assert np.sum(np.isnan(result["whitelight_flux_order_1"])) == 1

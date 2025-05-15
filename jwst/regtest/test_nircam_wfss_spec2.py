@@ -1,12 +1,15 @@
 import pytest
 
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
-def run_pipeline(rtdata_module):
+def run_pipeline(rtdata_module, resource_tracker):
     """Run the calwebb_spec2 pipeline on a single NIRSpec WFSS exposure."""
 
     rtdata = rtdata_module
@@ -27,12 +30,16 @@ def run_pipeline(rtdata_module):
             "--steps.extract_2d.wfss_nbright=20",
             "--steps.srctype.save_results=true",
             "--steps.flat_field.save_results=true"]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
     return rtdata
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec2(log_tracked_resources, run_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", [
     "assign_wcs", "bsub", "extract_2d", "flat_field", "srctype",
     "cal", "x1d"])

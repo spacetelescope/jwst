@@ -4,14 +4,13 @@
 
 import ast
 import logging
+import sys
 from argparse import ArgumentParser
 
 from jwst.regtest.st_fitsdiff import STFITSDiff
 
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logging.basicConfig(level=logging.INFO, format="", datefmt="")
+logging.basicConfig(level=logging.INFO, format="", datefmt="", stream=sys.stdout)
 
 
 def _is_number(s):
