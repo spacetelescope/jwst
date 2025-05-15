@@ -137,11 +137,11 @@ def save_dark_data_as_dark_model(dark_data, dark_model, instrument):
     """
     if instrument == "MIRI":
         out_dark_model = datamodels.DarkMIRIModel(
-            data=dark_data.data, dq=dark_data.groupdq, err=dark_data.err
+            data=dark_data.data, dq=dark_data.groupdq
         )
     else:
         out_dark_model = datamodels.DarkModel(
-            data=dark_data.data, dq=dark_data.groupdq, err=dark_data.err
+            data=dark_data.data, dq=dark_data.groupdq
         )
     out_dark_model.update(dark_model)
 
