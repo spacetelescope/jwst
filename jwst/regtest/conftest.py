@@ -1,19 +1,16 @@
-from datetime import datetime
 import copy
+import getpass
 import json
 import os
-from pathlib import Path
+from datetime import datetime
 
-import getpass
 import pytest
-from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
 from astropy.table import Table
-from numpy.testing import assert_allclose, assert_equal
 from astropy.io.fits import conf
+from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
+from numpy.testing import assert_allclose, assert_equal
 
 from jwst.regtest.regtestdata import RegtestData
-from jwst.regtest.sdp_pools_source import SDPPoolsSource
-
 
 TODAYS_DATE = datetime.now().strftime("%Y-%m-%d")
 
@@ -171,11 +168,7 @@ def generate_artifactory_json(request, artifactory_repos):
     upload_schema_pattern = []
     okify_schema_pattern = []
 
-    rtdata = (
-        postmortem(request, "rtdata")
-        or postmortem(request, "rtdata_module")
-        or postmortem(request, "sdpdata_module")
-    )
+    rtdata = postmortem(request, "rtdata") or postmortem(request, "rtdata_module")
     if rtdata:
         try:
             # The tmp_cwd fixture sets tmp_path
@@ -343,52 +336,6 @@ def rtdata_module(artifactory_repos, envopt, request, tmp_cwd_module):
     return _rtdata_fixture_implementation(artifactory_repos, envopt, request)
 
 
-def _sdpdata_fixture_implementation(artifactory_repos, envopt, request):
-    """
-    Provide the SDPPoolsSource class, a subclass of RegtestData for association pool handling.
-
-    Parameters
-    ----------
-    artifactory_repos : tuple(str, str)
-        Tuple of the Artifactory inputs_root and results_root.
-    envopt : str
-        The Artifactory environment, e.g, "dev".
-    request : pytest.FixtureRequest
-        The pytest fixture request object.
-
-    Returns
-    -------
-    `jwst.regtest.sdp_pools_source.SDPPoolsSource`
-        SDPPoolsSource class instance.
-    """
-    inputs_root, results_root = artifactory_repos
-    return SDPPoolsSource(env=envopt, inputs_root=inputs_root, results_root=results_root)
-
-
-@pytest.fixture(scope="module")
-def sdpdata_module(artifactory_repos, envopt, request, tmp_cwd_module):
-    """
-    Provide access to association pools and truth files via a module-scoped fixture.
-
-    Parameters
-    ----------
-    artifactory_repos : tuple(str, str)
-        Tuple of the Artifactory inputs_root and results_root.
-    envopt : str
-        The Artifactory environment, e.g, "dev".
-    request : pytest.FixtureRequest
-        The pytest fixture request object.
-    tmp_cwd_module : pytest fixture
-        Pytest fixture that creates a module-scoped temporary working directory.
-
-    Returns
-    -------
-    `jwst.regtest.sdp_pools_source.SDPPoolsSource`
-        RemoteResource class instance.
-    """
-    return _sdpdata_fixture_implementation(artifactory_repos, envopt, request)
-
-
 @pytest.fixture
 def fitsdiff_default_kwargs():
     """
@@ -481,77 +428,3 @@ def diff_astropy_tables():
         return True
 
     return _diff_astropy_tables
-
-
-def pytest_addoption(parser):
-    """Add option to specify a single pool name."""
-    parser.addoption(
-        "--sdp-pool",
-        metavar="sdp_pool",
-        default=None,
-        help="SDP test pool to run. Specify the name only, not extension or path",
-    )
-    parser.addoption(
-        "--standard-pool",
-        metavar="standard_pool",
-        default=None,
-        help="Standard test pool to run. Specify the name only, not extension or path",
-    )
-
-
-@pytest.fixture
-def sdp_pool(request):  # numpydoc ignore=RT01
-    """Retrieve a specific SDP pool to test."""
-    return request.config.getoption("--sdp-pool")
-
-
-@pytest.fixture
-def standard_pool(request):  # numpydoc ignore=RT01
-    """Retrieve a specific standard pool to test."""
-    return request.config.getoption("--standard-pool")
-
-
-def pytest_generate_tests(metafunc):
-    """Prefetch and parametrize a set of test pools."""
-    if "pool_path" in metafunc.fixturenames:
-        pool_path_fixture(metafunc)
-
-
-def pool_path_fixture(metafunc):
-    """
-    Define the pool_path fixture.
-
-    This is needed to build a list during test collection for the test
-    `jwst.regtest.test_associations_sdp_pools.test_against_standard`
-
-    Parameters
-    ----------
-    metafunc : pytest.Metafunc
-        The pytest test generation inspection object.
-    """
-    # If doing "big data" regressions has not been requested,
-    # do not invoke any tests.
-    if not metafunc.config.getoption("bigdata"):
-        skip = pytest.skip('For "pool_path" fixtures, option "--bigdata" was not specified.')
-        metafunc.parametrize("pool_path", skip)
-        return
-
-    try:
-        inputs_root = metafunc.config.getini("inputs_root")[0]
-        results_root = metafunc.config.getini("results_root")[0]
-        env = metafunc.config.getoption("env")
-    except IndexError:
-        inputs_root = "jwst-pipeline"
-        results_root = "jwst-pipeline-results"
-        env = "dev"
-
-    pools = SDPPoolsSource(env=env, inputs_root=inputs_root, results_root=results_root)
-
-    try:
-        pool_paths = pools.pool_paths
-    except Exception:
-        pool_paths = []
-
-    ids = [Path(pool_path).stem for pool_path in pool_paths]
-
-    metafunc.parametrize("pool_path", pool_paths, ids=ids)
