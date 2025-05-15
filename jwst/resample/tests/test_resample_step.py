@@ -1,12 +1,16 @@
-import warnings
-
 import asdf
 import numpy as np
 import pytest
+import warnings
+from copy import deepcopy
+
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-from stdatamodels.jwst.datamodels import ImageModel
-from stcal.resample.utils import compute_mean_pixel_area
+import numpy as np
+import asdf
+
+from stdatamodels.jwst.datamodels import ImageModel, dqflags
+from stcal.resample.utils import compute_mean_pixel_area, build_driz_weight
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
@@ -14,6 +18,8 @@ from jwst.assign_wcs.util import compute_scale
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
+from jwst.resample.resample import input_jwst_model_to_dict
+from jwst.resample.resample_step import GOOD_BITS
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
 from jwst.resample.resample_utils import load_custom_wcs
 
@@ -505,14 +511,21 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
         # needs to be about the same, other than the edges
         # Check the maximum sums, to avoid edges.
         assert_allclose(np.max(np.nansum(result1.data, axis=1)),
-                        np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
+                        np.max(np.nansum(result2.data, axis=1)), rtol=0.05)
     else:
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
-            res1 = np.nanmean(result1.data, axis=1)
-            res2 = np.nanmean(result2.data, axis=1)
-        # surface brightness conservation: mean values are the same
-        assert_allclose(res1, res2, rtol=0.05, equal_nan=True)
+        # surface brightness conservation: weighted total values are the same
+        assert np.allclose(
+            np.nansum(result1.data * result1.wht),
+            np.nansum(result2.data * result2.wht),
+            rtol=5.0e-3,
+            equal_nan=True
+        )
+        assert np.allclose(
+            np.nansum(result1.data * result1.wht, axis=1),
+            np.nansum(result2.data * result2.wht, axis=1),
+            rtol=5.0e-3,
+            equal_nan=True
+        )
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
@@ -572,15 +585,29 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
         # flux density conservation: sum over pixels in each row
         # needs to be about the same, other than the edges
         # Check the maximum sums, to avoid edges.
-        assert_allclose(np.max(np.nansum(result1.data, axis=1)),
-                        np.max(np.nansum(result1.data, axis=1)), rtol=0.05)
+        assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
+                           np.max(np.nansum(result2.data, axis=1)), rtol=0.05)
     else:
-        with warnings.catch_warnings():  # MJy/sr
-            warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
-            res1 = np.nanmean(result1.data, axis=1)
-            res2 = np.nanmean(result2.data, axis=1)
-        # surface brightness conservation: mean values are the same
-        assert_allclose(res1, res2, rtol=0.05, equal_nan=True)
+        # surface brightness conservation: weighted total values are the same
+        assert np.allclose(
+            np.sum(result1.data * result1.wht),
+            np.sum(result2.data * result2.wht),
+            rtol=1.0e-5,
+            equal_nan=True
+        )
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore",
+                category=RuntimeWarning,
+                message="All-NaN slice encountered"
+            )
+            assert np.allclose(
+                np.nanmedian(result1.data, axis=1),
+                np.nanmedian(result2.data, axis=1),
+                rtol=1.0e-5,
+                equal_nan=True
+            )
 
     # output area is updated either way
     area1 = result1.meta.photometry.pixelarea_steradians
@@ -638,10 +665,13 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
             assert_allclose(np.max(np.nansum(slit1.data, axis=0)),
                             np.max(np.nansum(slit2.data, axis=0)), rtol=0.05)
         else:
-            # surface brightness conservation: mean values are the same
-            assert_allclose(np.nanmean(slit1.data, axis=0),
-                            np.nanmean(slit2.data, axis=0), rtol=0.05,
-                            equal_nan=True)
+            # surface brightness conservation: weighted total values are the same
+            assert np.allclose(
+                np.nansum(slit1.data * slit1.wht, axis=0),
+                np.nansum(slit2.data * slit2.wht, axis=0),
+                rtol=1.0e-5,
+                equal_nan=True
+            )
 
         # output area is updated either way
         area1 = slit1.meta.photometry.pixelarea_steradians
@@ -986,31 +1016,57 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match,
     result.close()
 
 
-def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
+@pytest.mark.parametrize(
+    'weight_type', ["ivm", "exptime"]
+)
+def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
 
     # make some data with a WCS and some random values
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     rng = np.random.default_rng(seed=77)
-    im.data[:, :] = rng.random(im.data.shape)
+    im.data[:, :] = 0.0
+    im.data[5:-5, 5:-5] = rng.random(tuple(i - 10 for i in im.data.shape))
+    im.dq[:, :] = 1
+    im.dq[5:-5, 5:-5] = 0
+
+    data0 = deepcopy(im.data)
 
     crpix = (600, 550)
     crval = (22.04019, 11.98262)
     rotation = 15
     ratio = 0.7
 
+    im.meta.group_id = "1"
+    im_dict = input_jwst_model_to_dict(
+        im,
+        weight_type=weight_type,
+        enable_var=True,
+        compute_err=True
+    )
+
+    in_weight = build_driz_weight(
+        im_dict,
+        weight_type=weight_type,
+        good_bits=GOOD_BITS,
+        flag_name_map=dqflags.pixel
+    )
+
     # first pass - create a reference output WCS:
+    assert np.all(np.isfinite(im.data))
     result = ResampleStep.call(
         im,
         output_shape=(1205, 1100),
         crpix=crpix,
         crval=crval,
         rotation=rotation,
-        pixel_scale_ratio=ratio
+        pixel_scale_ratio=ratio,
+        weight_type=weight_type,
     )
+    # TODO: next assert would fail. Why does resample step modify input data???
+    # assert np.all(np.isfinite(im.data))
 
-    # make sure results are nontrivial
     data1 = result.data
-    assert not np.all(np.isnan(data1))
+    wht1 = result.wht
 
     # remove the bounding box so shape is set from pixel_shape
     # and also set a top-level pixel area
@@ -1019,10 +1075,10 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
     result.meta.wcs.bounding_box = None
     asdf.AsdfFile({"wcs": result.meta.wcs,
                    "pixel_area": pixel_area}).write_to(refwcs)
-
-    result = ResampleStep.call(im, output_wcs=refwcs)
+    result = ResampleStep.call(im, output_wcs=refwcs, weight_type=weight_type)
 
     data2 = result.data
+    wht2 = result.wht
     assert not np.all(np.isnan(data2))
 
     # test output image shape
@@ -1031,15 +1087,16 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path):
 
     # make sure pixel values are similar, accounting for scale factor
     # (assuming inputs are in surface brightness units)
-    iscale = np.sqrt(
-        im.meta.photometry.pixelarea_steradians
-        / compute_mean_pixel_area(im.meta.wcs, shape=im.data.shape)
+    assert np.isclose(
+        np.sum(data0 * in_weight) / np.sum(in_weight),
+        np.nansum(data1 * wht1) / np.sum(wht1),
+        atol=1e-4
     )
-    input_mean = np.nanmean(im.data)
-    output_mean_1 = np.nanmean(data1)
-    output_mean_2 = np.nanmean(data2)
-    assert_allclose(input_mean * iscale**2, output_mean_1, atol=1e-4)
-    assert_allclose(input_mean * iscale**2, output_mean_2, atol=1e-4)
+    assert np.isclose(
+        np.sum(data0 * in_weight),
+        np.nansum(data2 * wht2),
+        atol=1e-4
+    )
 
     # check that output pixel area is set from input
     # rtol and atol values are from np.isclose default settings.
