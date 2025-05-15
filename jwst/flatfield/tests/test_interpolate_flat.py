@@ -1,6 +1,7 @@
 """
 Test for flat_field.interpolate_flat
 """
+
 import numpy as np
 from numpy.testing import assert_allclose
 
@@ -15,7 +16,6 @@ wl = np.arange(nx * ny, dtype=np.float32).reshape(ny, nx) - 5.0
 
 
 def test_interpolate_flat_1():
-
     image_flat = np.arange(nx * ny, dtype=np.float32).reshape(ny, nx) - 5.0
     image_err = np.arange(nx * ny, dtype=np.float32).reshape(ny, nx) - 7.0
     image_dq = np.arange(nx * ny, dtype=np.int32).reshape(ny, nx)
@@ -28,7 +28,6 @@ def test_interpolate_flat_1():
 
 
 def test_interpolate_flat_2():
-
     # 2-D, but reshaped to 3-D
     image_flat = np.arange(nx * ny, dtype=np.float32).reshape(1, ny, nx) - 5.0
     image_err = np.arange(nx * ny, dtype=np.float32).reshape(1, ny, nx) - 7.0
@@ -41,7 +40,6 @@ def test_interpolate_flat_2():
 
 
 def test_interpolate_flat_3():
-
     # 2-D, but reshaped to 3-D
     image_flat = np.arange(nx * ny, dtype=np.float32).reshape(1, ny, nx) - 5.0
     image_err = np.arange(nx * ny, dtype=np.float32).reshape(1, ny, nx) - 7.0
@@ -54,7 +52,6 @@ def test_interpolate_flat_3():
 
 
 def test_interpolate_flat_4():
-
     # 3-D
     image_flat = np.arange(nx * ny * nz, dtype=np.float32).reshape(nz, ny, nx) - 5.0
     image_err = np.arange(nx * ny * nz, dtype=np.float32).reshape(nz, ny, nx) - 7.0
