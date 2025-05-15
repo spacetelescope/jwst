@@ -103,11 +103,10 @@ class FlatFieldStep(Step):
             and exposure_type not in EXTRACT_2D_IS_OK
         ):
             self.log.warning(
-                "The extract_2d step has been run, but for "
-                "%s data it should not have been run, so ...",
+                "The extract_2d step should not have been run for %s data; "
+                "flat-fielding will be skipped.",
                 exposure_type,
             )
-            self.log.warning("flat fielding will be skipped.")
             return self.skip_step(input_model)
 
         # Retrieve reference files only if no user-supplied flat is specified
