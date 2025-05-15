@@ -56,9 +56,11 @@ Any pixel values in the dark reference data that are set to NaN will have their
 values reset to zero before being subtracted from the science data, which
 will effectively skip the dark subtraction operation for those pixels.
 
-**Note**: If the input science exposure contains more groups than the available
-dark reference file, no dark subtraction will be applied and the input data
-will be returned unchanged.
+If the input science exposure contains more groups than the available
+dark reference file, the dark reference file will be extrapolated to match the
+number of groups present in the science exposure. This extrapolation generates
+new frames using the difference of the last two frames provided in the dark
+reference file.
 
 Subarrays
 ---------
