@@ -23,7 +23,6 @@ exclude = [
     "jwst/fringe/**.py",
     "jwst/ipc/**.py",
     "jwst/mrs_imatch/**.py",
-    "jwst/photom/**.py",
 ]
 
 [lint]
@@ -100,4 +99,3 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 "jwst/fringe/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/ipc/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/mrs_imatch/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/photom/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
