@@ -320,7 +320,7 @@ def test_create_poly_empty():
 def test_populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec):
     ex.populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec)
 
-    # time keywords now added to output spectra
+    # ensure time keywords were added to output table
     for i, spec in enumerate(mock_10_multi_int_spec.spec[0].spec_table):
         assert spec["INT_NUM"] == i + 1
         assert spec["MJD-BEG"] == mock_nirspec_bots.int_times["int_start_MJD_UTC"][i]

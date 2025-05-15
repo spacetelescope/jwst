@@ -625,6 +625,31 @@ def make_spec_model(name="slit1", value=1.0):
     return spec_model
 
 
+def make_tso_spec_model(n_spectra=10):
+    """
+    Make a multi-integration, multi-spec model.
+
+    Parameters
+    ----------
+    n_spectra : int, optional
+        The number of integrations to generate spectra for.
+
+    Returns
+    -------
+    TSOMultiSpecModel
+        The composite spectral model.
+    """
+    spec_list = []
+    for i in range(n_spectra):
+        spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
+        spec_list.append(spec_model)
+
+    tso_spec = ex.make_tso_specmodel(spec_list)
+    model = dm.TSOMultiSpecModel()
+    model.spec.append(tso_spec)
+    return model
+
+
 @pytest.fixture()
 def mock_one_spec():
     """
@@ -673,15 +698,7 @@ def mock_10_multi_int_spec():
     TSOMultiSpecModel
         The mock model.
     """
-    spec_list = []
-    for i in range(10):
-        spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
-        spec_list.append(spec_model)
-
-    tso_spec = ex.make_tso_specmodel(spec_list)
-    model = dm.TSOMultiSpecModel()
-    model.spec.append(tso_spec)
-
+    model = make_tso_spec_model(n_spectra=10)
     yield model
     model.close()
 
@@ -689,22 +706,17 @@ def mock_10_multi_int_spec():
 @pytest.fixture()
 def mock_2_multi_int_spec():
     """
-    Mock 10 simple spectra in a TSOMultiSpecModel.
+    Mock 2 simple spectra in a TSOMultiSpecModel.
+
+    Used for generating spectra that do not match the int_times
+    table in a 10-integration input.
 
     Yields
     ------
     TSOMultiSpecModel
         The mock model.
     """
-    spec_list = []
-    for i in range(2):
-        spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
-        spec_list.append(spec_model)
-
-    tso_spec = ex.make_tso_specmodel(spec_list)
-    model = dm.TSOMultiSpecModel()
-    model.spec.append(tso_spec)
-
+    model = make_tso_spec_model(n_spectra=2)
     yield model
     model.close()
 

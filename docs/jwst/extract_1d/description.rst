@@ -110,9 +110,10 @@ For time series observations (TSO) with spectra extracted from multiple integrat
 the output is a ``TSOMultiSpecModel``.  The spectral tables for this model contain
 the same columns as the ``MultiSpecModel``, but each row in the table contains the full
 spectrum for a single integration.  The spectral columns are 2D: each row is a 1D
-vector containing all data points for the spectrum.  In addition, the spectra for this model
-have extra columns to contain the segment number and integration identifying the spectrum
-in each row, as well as the time tags for the integration.  These columns are 1D:
+vector containing all data points for the spectrum.  In addition, the spectral tables
+for this model have extra 1D columns to contain the metadata for the spectrum in each row.
+These metadata fields include the segment number, integration number, and various time tags
+as follows:
 SEGMENT, INT_NUM, START_TIME_MJD, MID_TIME_MJD, END_TIME_MJD, START_TDB, MID_TDB, and END_TDB.
 
 For example, to access the slit name, integration number, wavelength, and flux from

@@ -47,9 +47,9 @@ class Combine1dStep(Step):
         ----------
         input_data : str, ModelContainer, MultiSpecModel, TSOMultiSpecModel, MRSMultiSpecModel
             Input is expected to be an association file name, ModelContainer,
-            or multi-spectra model containing multiple spectra to be combined.
+            or multi-spectrum model containing multiple spectra to be combined.
             Individual members of the association or container are expected
-            to be multi-spectra model instances.
+            to be multi-spectrum model instances.
 
         Returns
         -------
