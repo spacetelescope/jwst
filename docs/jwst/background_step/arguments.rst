@@ -47,6 +47,5 @@ control the sigma clipping, and are passed as arguments to the astropy
   Defaults to 1, i.e., keep the middle 98 percent of the data each iteration.
 
 ``--bkg_list``
-  Provides a list of background files to combine and use for subtraction. If only
-  one file is provided, a comma must be added at the end, e.g.
-  ``--bkg_lis=file1.fits,``
+  Provides a list of background files to combine and use for subtraction. It can
+  have one or more files separated by a comma with no spaces.

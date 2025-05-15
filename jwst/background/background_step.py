@@ -21,7 +21,7 @@ class BackgroundStep(Step):
     class_alias = "background"
 
     spec = """
-        bkg_list = list(default=None)  # List of background files
+        bkg_list = force_list(default=None)  # List of background files
         save_combined_background = boolean(default=False)  # Save combined background image
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
