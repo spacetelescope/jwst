@@ -1,8 +1,10 @@
 import json
+
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import polynomial
+from numpy.testing import assert_allclose, assert_equal
 
 from jwst.datamodels import ModelContainer
 from jwst.extract_1d import extract as ex
@@ -315,31 +317,33 @@ def test_create_poly_empty():
     assert ex.create_poly(coeff) is None
 
 
-def test_populate_time_keywords(mock_nirspec_bots, mock_10_spec):
-    ex.populate_time_keywords(mock_nirspec_bots, mock_10_spec)
+def test_populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec):
+    ex.populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec)
 
-    # time keywords now added to output spectra
-    for i, spec in enumerate(mock_10_spec.spec):
-        assert spec.int_num == i + 1
-        assert spec.start_time_mjd == mock_nirspec_bots.int_times["int_start_MJD_UTC"][i]
-        assert spec.end_tdb == mock_nirspec_bots.int_times["int_end_BJD_TDB"][i]
-
-
-def test_populate_time_keywords_no_table(mock_nirspec_fs_one_slit, mock_one_spec):
-    ex.populate_time_keywords(mock_nirspec_fs_one_slit, mock_one_spec)
-
-    # only int_num is added to spec
-    assert mock_one_spec.spec[0].int_num == 1
+    # ensure time keywords were added to output table
+    for i, spec in enumerate(mock_10_multi_int_spec.spec[0].spec_table):
+        assert spec["INT_NUM"] == i + 1
+        assert spec["MJD-BEG"] == mock_nirspec_bots.int_times["int_start_MJD_UTC"][i]
+        assert spec["TDB-END"] == mock_nirspec_bots.int_times["int_end_BJD_TDB"][i]
 
 
-def test_populate_time_keywords_multislit(mock_nirspec_mos, mock_10_spec):
+def test_populate_time_keywords_no_table(mock_nirspec_fs_one_slit, mock_10_multi_int_spec, log_watcher):
+    watcher = log_watcher("jwst.extract_1d.extract", message="no INT_TIMES table")
+    ex.populate_time_keywords(mock_nirspec_fs_one_slit, mock_10_multi_int_spec)
+
+    # No int_times table: warns and integration is set to simple index
+    watcher.assert_seen()
+    for spec in mock_10_multi_int_spec.spec:
+        assert_equal(spec.spec_table["INT_NUM"], np.arange(1, 11))
+
+
+def test_populate_time_keywords_multislit(mock_nirspec_mos, mock_10_multi_int_spec):
     mock_nirspec_mos.meta.exposure.nints = 10
-    ex.populate_time_keywords(mock_nirspec_mos, mock_10_spec)
+    ex.populate_time_keywords(mock_nirspec_mos, mock_10_multi_int_spec)
 
     # no int_times - only int_num is added to spec
-    # It is set to 1 for all spectra - no integrations in multislit data.
-    assert mock_10_spec.spec[0].int_num == 1
-    assert mock_10_spec.spec[9].int_num == 1
+    # It is set to the integration number for all spectra - no integrations in multislit data.
+    assert_equal(mock_10_multi_int_spec.spec[0].spec_table["INT_NUM"], np.arange(1, 11))
 
 
 def test_populate_time_keywords_multislit_table(
@@ -353,7 +357,7 @@ def test_populate_time_keywords_multislit_table(
     watcher.assert_seen()
 
     # int_times present but not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
 def test_populate_time_keywords_averaged(
@@ -367,7 +371,7 @@ def test_populate_time_keywords_averaged(
     watcher.assert_seen()
 
     # int_times not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
 def test_populate_time_keywords_mismatched_table(mock_nirspec_bots, mock_10_spec, log_watcher):
@@ -378,7 +382,7 @@ def test_populate_time_keywords_mismatched_table(mock_nirspec_bots, mock_10_spec
     watcher.assert_seen()
 
     # int_times not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
 def test_populate_time_keywords_missing_ints(mock_nirspec_bots, mock_10_spec, log_watcher):
@@ -388,7 +392,7 @@ def test_populate_time_keywords_missing_ints(mock_nirspec_bots, mock_10_spec, lo
     watcher.assert_seen()
 
     # int_times not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
 def test_populate_time_keywords_ifu_table(
@@ -402,12 +406,12 @@ def test_populate_time_keywords_ifu_table(
     watcher.assert_seen()
 
     # int_times present but not used - no update
-    assert mock_10_spec.spec[0].int_num is None
+    assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
-def test_populate_time_keywords_mismatched_spec(mock_nirspec_bots, mock_one_spec, log_watcher):
+def test_populate_time_keywords_mismatched_spec(mock_nirspec_bots, mock_2_multi_int_spec, log_watcher):
     watcher = log_watcher("jwst.extract_1d.extract", message="Don't understand n_output_spec")
-    ex.populate_time_keywords(mock_nirspec_bots, mock_one_spec)
+    ex.populate_time_keywords(mock_nirspec_bots, mock_2_multi_int_spec)
     watcher.assert_seen()
 
 
@@ -492,7 +496,7 @@ def test_set_weights_from_limits_whole_array(lower, upper, partial):
     yidx, _ = np.mgrid[: shape[0], : shape[1]]
 
     ex._set_weight_from_limits(profile, yidx, lower, upper, allow_partial=partial)
-    assert np.all(profile == 1.0)
+    assert_equal(profile, 1.0)
 
 
 @pytest.mark.parametrize(
@@ -509,7 +513,7 @@ def test_set_weights_from_limits_whole_pixel(lower, upper):
     yidx, _ = np.mgrid[: shape[0], : shape[1]]
 
     ex._set_weight_from_limits(profile, yidx, lower, upper, allow_partial=False)
-    assert np.all(profile[10:13] == 1.0)
+    assert_equal(profile[10:13], 1.0)
 
 
 @pytest.mark.parametrize(
@@ -525,9 +529,9 @@ def test_set_weights_from_limits_partial_pixel(lower, upper):
     yidx, _ = np.mgrid[: shape[0], : shape[1]]
 
     ex._set_weight_from_limits(profile, yidx, lower, upper, allow_partial=True)
-    assert np.allclose(profile[10:13], 1.0)
-    assert np.allclose(profile[9], 10 - lower)
-    assert np.allclose(profile[13], upper - 12)
+    assert_allclose(profile[10:13], 1.0)
+    assert_allclose(profile[9], 10 - lower)
+    assert_allclose(profile[13], upper - 12)
 
 
 def test_set_weights_from_limits_overlap():
@@ -537,21 +541,21 @@ def test_set_weights_from_limits_overlap():
 
     # Set an aperture with partial pixel edges
     ex._set_weight_from_limits(profile, yidx, 9.5, 10.5, allow_partial=True)
-    assert np.allclose(profile[9], 0.5)
-    assert np.allclose(profile[11], 0.5)
-    assert np.allclose(profile[12], 0.0)
+    assert_allclose(profile[9], 0.5)
+    assert_allclose(profile[11], 0.5)
+    assert_allclose(profile[12], 0.0)
 
     # Set an overlapping region in the same profile
     ex._set_weight_from_limits(profile, yidx, 9.8, 11.5, allow_partial=True)
 
     # Higher weight from previous profile remains
-    assert np.allclose(profile[9], 0.5)
+    assert_allclose(profile[9], 0.5)
 
     # Previous partial pixel is now fully included
-    assert np.allclose(profile[11], 1.0)
+    assert_allclose(profile[11], 1.0)
 
     # New partial weight set on upper limit
-    assert np.allclose(profile[12], 0.5)
+    assert_allclose(profile[12], 0.5)
 
 
 def test_box_profile_horizontal(extract_defaults):
@@ -573,13 +577,13 @@ def test_box_profile_horizontal(extract_defaults):
     profile = ex.box_profile(shape, extract_defaults, wl_array)
 
     # ystart/stop sets partial weights, xstart/stop sets whole pixels only
-    assert np.all(profile[2:3, 3:8] == 0.5)
-    assert np.all(profile[7:8, 3:8] == 0.5)
-    assert np.all(profile[3:7, 3:8] == 1.0)
-    assert np.all(profile[:2] == 0.0)
-    assert np.all(profile[8:] == 0.0)
-    assert np.all(profile[:, :2] == 0.0)
-    assert np.all(profile[:, 8:] == 0.0)
+    assert_equal(profile[2:3, 3:8], 0.5)
+    assert_equal(profile[7:8, 3:8], 0.5)
+    assert_equal(profile[3:7, 3:8], 1.0)
+    assert_equal(profile[:2], 0.0)
+    assert_equal(profile[8:], 0.0)
+    assert_equal(profile[:, :2], 0.0)
+    assert_equal(profile[:, 8:], 0.0)
 
 
 def test_box_profile_vertical(extract_defaults):
@@ -601,14 +605,14 @@ def test_box_profile_vertical(extract_defaults):
     profile = ex.box_profile(shape, extract_defaults, wl_array)
 
     # xstart/stop sets partial weights, ystart/stop sets whole pixels only
-    assert np.all(profile[3:8, 2:3] == 0.5)
-    assert np.all(profile[3:8, 7:8] == 0.5)
-    assert np.all(profile[3:8, 3:7] == 1.0)
+    assert_equal(profile[3:8, 2:3], 0.5)
+    assert_equal(profile[3:8, 7:8], 0.5)
+    assert_equal(profile[3:8, 3:7], 1.0)
 
-    assert np.all(profile[:2] == 0.0)
-    assert np.all(profile[8:] == 0.0)
-    assert np.all(profile[:, :2] == 0.0)
-    assert np.all(profile[:, 8:] == 0.0)
+    assert_equal(profile[:2], 0.0)
+    assert_equal(profile[8:], 0.0)
+    assert_equal(profile[:, :2], 0.0)
+    assert_equal(profile[:, 8:], 0.0)
 
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
@@ -631,9 +635,9 @@ def test_box_profile_bkg_coeff(extract_defaults, dispaxis):
     if dispaxis == 2:
         profile = profile.T
 
-    assert np.all(profile[:3] == 1.0)
-    assert np.all(profile[7:] == 1.0)
-    assert np.all(profile[3:7] == 0.0)
+    assert_equal(profile[:3], 1.0)
+    assert_equal(profile[7:], 1.0)
+    assert_equal(profile[3:7], 0.0)
     assert lower == 0.0
     assert upper == 9.0
 
@@ -656,9 +660,9 @@ def test_box_profile_bkg_coeff_median(extract_defaults):
 
     # partial pixels are not allowed for fit type median - the profile is
     # set for whole pixels only
-    assert np.all(profile[:3] == 1.0)
-    assert np.all(profile[7:] == 1.0)
-    assert np.all(profile[3:7] == 0.0)
+    assert_equal(profile[:3], 1.0)
+    assert_equal(profile[7:], 1.0)
+    assert_equal(profile[3:7], 0.0)
     assert lower == 0.0
     assert upper == 9.0
 
@@ -685,11 +689,11 @@ def test_box_profile_bkg_coeff_poly(extract_defaults, swap_order):
     )
 
     # partial pixels are allowed for fit type poly
-    assert np.all(profile[:3] == 1.0)
-    assert np.all(profile[7:] == 1.0)
-    assert np.all(profile[3] == 0.5)
-    assert np.all(profile[6] == 0.5)
-    assert np.all(profile[4:6] == 0.0)
+    assert_equal(profile[:3], 1.0)
+    assert_equal(profile[7:], 1.0)
+    assert_equal(profile[3], 0.5)
+    assert_equal(profile[6], 0.5)
+    assert_equal(profile[4:6], 0.0)
     assert lower == 0.0
     assert upper == 9.0
 
@@ -712,9 +716,9 @@ def test_box_profile_src_coeff_constant(extract_defaults, independent_var):
     profile, lower, upper = ex.box_profile(
         shape, extract_defaults, wl_array, coefficients="src_coeff", return_limits=True
     )
-    assert np.all(profile[3:7] == 1.0)
-    assert np.all(profile[:3] == 0.0)
-    assert np.all(profile[7:] == 0.0)
+    assert_equal(profile[3:7], 1.0)
+    assert_equal(profile[:3], 0.0)
+    assert_equal(profile[7:], 0.0)
     assert lower == 3.0
     assert upper == 6.0
 
@@ -757,11 +761,11 @@ def test_box_profile_src_coeff_linear(extract_defaults, independent_var):
     profile, lower, upper = ex.box_profile(
         shape, extract_defaults, wl_array, coefficients="src_coeff", return_limits=True
     )
-    assert np.allclose(profile, expected)
+    assert_allclose(profile, expected, atol=1e-7)
 
     # upper and lower limits are averages
-    assert np.isclose(lower, 4.5)
-    assert np.isclose(upper, 7.5)
+    assert_allclose(lower, 4.5)
+    assert_allclose(upper, 7.5)
 
 
 def test_box_profile_mismatched_coeff(extract_defaults):
@@ -805,11 +809,11 @@ def test_box_profile_from_width(extract_defaults, dispaxis):
         profile = profile.T
 
     # Aperture is centered at pixel 4, to start at 1.5, end at 6.5
-    assert np.all(profile[2:7] == 1.0)
-    assert np.all(profile[1] == 0.5)
-    assert np.all(profile[7] == 0.5)
-    assert np.all(profile[0] == 0.0)
-    assert np.all(profile[8:] == 0.0)
+    assert_equal(profile[2:7], 1.0)
+    assert_equal(profile[1], 0.5)
+    assert_equal(profile[7], 0.5)
+    assert_equal(profile[0], 0.0)
+    assert_equal(profile[8:], 0.0)
 
 
 @pytest.mark.parametrize("dispaxis", [1, 2])
@@ -845,11 +849,11 @@ def test_box_profile_from_trace(extract_defaults, dispaxis):
         [0, 0, 0, 0, 0, 0, 1, 1, 1, 1],
     ]
 
-    assert np.allclose(profile, expected)
+    assert_allclose(profile, expected)
 
     # upper and lower limits are averages
-    assert np.isclose(lower, 4.5)
-    assert np.isclose(upper, 7.5)
+    assert_allclose(lower, 4.5)
+    assert_allclose(upper, 7.5)
 
 
 @pytest.mark.parametrize("middle", [None, 7])
@@ -889,7 +893,7 @@ def test_aperture_center_variable_weight_by_slit(middle, dispaxis):
     slit_center, spec_center = ex.aperture_center(profile, dispaxis=dispaxis, middle_pix=middle)
     assert slit_center == 2.0
     if middle is None:
-        assert np.isclose(spec_center, 6.3333333)
+        assert_allclose(spec_center, 6.3333333)
     else:
         assert spec_center == middle
 
@@ -903,10 +907,10 @@ def test_aperture_center_variable_weight_by_spec(middle, dispaxis):
         profile = profile.T
     slit_center, spec_center = ex.aperture_center(profile, dispaxis=dispaxis, middle_pix=middle)
     if middle is None:
-        assert np.isclose(slit_center, 6.3333333)
-        assert np.isclose(spec_center, 2.0)
+        assert_allclose(slit_center, 6.3333333)
+        assert_allclose(spec_center, 2.0)
     else:
-        assert np.isclose(slit_center, 4.5)
+        assert_allclose(slit_center, 4.5)
         assert spec_center == middle
 
 
@@ -966,7 +970,7 @@ def test_shift_by_offset_trace(extract_defaults):
     extract_params["trace"] = np.arange(10, dtype=float)
 
     ex.shift_by_offset(offset, extract_params, update_trace=True)
-    assert np.all(extract_params["trace"] == np.arange(10) + offset)
+    assert_equal(extract_params["trace"], np.arange(10) + offset)
 
 
 def test_shift_by_offset_trace_no_update(extract_defaults):
@@ -978,7 +982,7 @@ def test_shift_by_offset_trace_no_update(extract_defaults):
     extract_params["trace"] = np.arange(10, dtype=float)
 
     ex.shift_by_offset(offset, extract_params, update_trace=False)
-    assert np.all(extract_params["trace"] == np.arange(10))
+    assert_equal(extract_params["trace"], np.arange(10))
 
 
 @pytest.mark.parametrize("is_slit", [True, False])
@@ -992,13 +996,13 @@ def test_define_aperture_nirspec(mock_nirspec_fs_one_slit, extract_defaults, is_
     exptype = "NRS_FIXEDSLIT"
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
     ra, dec, wavelength, profile, bg_profile, nod_profile, limits = result
-    assert np.isclose(ra, 45.05)
-    assert np.isclose(dec, 45.1)
+    assert_allclose(ra, 45.05)
+    assert_allclose(dec, 45.1)
     assert wavelength.shape == (model.data.shape[1],)
     assert profile.shape == model.data.shape
 
     # Default profile is the full array
-    assert np.all(profile == 1.0)
+    assert_equal(profile, 1.0)
     assert limits == (0, model.data.shape[0] - 1, 0, model.data.shape[1] - 1)
 
     # Default bg profile is None
@@ -1016,13 +1020,13 @@ def test_define_aperture_miri(mock_miri_lrs_fs, extract_defaults, is_slit):
     exptype = "MIR_LRS-FIXEDSLIT"
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
     ra, dec, wavelength, profile, bg_profile, nod_profile, limits = result
-    assert np.isclose(ra, 45.05)
-    assert np.isclose(dec, 45.1)
+    assert_allclose(ra, 45.05)
+    assert_allclose(dec, 45.1)
     assert wavelength.shape == (model.data.shape[1],)
     assert profile.shape == model.data.shape
 
     # Default profile is the full array
-    assert np.all(profile == 1.0)
+    assert_equal(profile, 1.0)
     assert limits == (0, model.data.shape[0] - 1, 0, model.data.shape[1] - 1)
 
     # Default bg profile is None
@@ -1043,8 +1047,8 @@ def test_define_aperture_with_bg(mock_nirspec_fs_one_slit, extract_defaults):
 
     # Bg profile has 1s in the first 3 rows
     assert bg_profile.shape == model.data.shape
-    assert np.all(bg_profile[:3] == 1.0)
-    assert np.all(bg_profile[3:] == 0.0)
+    assert_equal(bg_profile[:3], 1.0)
+    assert_equal(bg_profile[3:], 0.0)
 
 
 def test_define_aperture_empty_aperture(mock_nirspec_fs_one_slit, extract_defaults):
@@ -1060,7 +1064,7 @@ def test_define_aperture_empty_aperture(mock_nirspec_fs_one_slit, extract_defaul
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
     _, _, _, profile, _, _, limits = result
 
-    assert np.all(profile == 0.0)
+    assert_equal(profile, 0.0)
     assert limits == (2000, 3000, None, None)
 
 
@@ -1107,9 +1111,9 @@ def test_define_aperture_use_source(monkeypatch, mock_nirspec_fs_one_slit, extra
     result = ex.define_aperture(model, slit, extract_defaults, exptype)
     _, _, _, profile, _, _, limits = result
 
-    assert np.all(profile[:7] == 0.0)
-    assert np.all(profile[7:13] == 1.0)
-    assert np.all(profile[13:] == 0.0)
+    assert_equal(profile[:7], 0.0)
+    assert_equal(profile[7:13], 1.0)
+    assert_equal(profile[13:], 0.0)
 
 
 def test_define_aperture_extra_offset(mock_nirspec_fs_one_slit, extract_defaults):
@@ -1125,8 +1129,8 @@ def test_define_aperture_extra_offset(mock_nirspec_fs_one_slit, extract_defaults
     assert profile.shape == model.data.shape
 
     # Default profile is shifted 2 pixels up
-    assert np.all(profile[:2] == 0.0)
-    assert np.all(profile[2:] == 1.0)
+    assert_equal(profile[:2], 0.0)
+    assert_equal(profile[2:], 1.0)
     assert limits == (2, model.data.shape[0] + 1, 0, model.data.shape[1] - 1)
 
 
@@ -1148,17 +1152,17 @@ def test_define_aperture_optimal(mock_miri_lrs_fs, extract_defaults, psf_referen
     assert nod_profile is None
 
     # profile is normalized along cross-dispersion
-    assert np.allclose(np.sum(profile, axis=1), 1.0)
+    assert_allclose(np.sum(profile, axis=1), 1.0)
 
     # trace is centered on 1.0, near the edge of the slit,
     # and the psf data has the same size as the array (50x50),
     # so only half the psf is included
     npix = 26
-    assert np.all(np.sum(profile != 0, axis=1) == npix)
+    assert_equal(np.sum(profile != 0, axis=1), npix)
 
     # psf is uniform when in range, 0 otherwise
-    assert np.allclose(profile[:, :npix], 1 / npix)
-    assert np.allclose(profile[:, npix:], 0.0)
+    assert_allclose(profile[:, :npix], 1 / npix)
+    assert_allclose(profile[:, npix:], 0.0)
 
 
 def test_define_aperture_optimal_with_nod(
@@ -1193,23 +1197,23 @@ def test_define_aperture_optimal_with_nod(
 
     # profiles are normalized along cross-dispersion,
     # nod profile is negative
-    assert np.allclose(np.sum(profile, axis=1), 1.0)
-    assert np.allclose(np.sum(nod_profile, axis=1), -1.0)
+    assert_allclose(np.sum(profile, axis=1), 1.0)
+    assert_allclose(np.sum(nod_profile, axis=1), -1.0)
 
     # positive trace is centered on 1.0, negative trace on
     # 48.0, array size is 50.
     npix = 26
-    assert np.all(np.sum(profile != 0, axis=1) == npix)
-    assert np.all(np.sum(nod_profile != 0, axis=1) == npix)
+    assert_equal(np.sum(profile != 0, axis=1), npix)
+    assert_equal(np.sum(nod_profile != 0, axis=1), npix)
 
     # psf is uniform when in range, 0 otherwise
-    assert np.allclose(profile[:, :npix], 1 / npix)
-    assert np.allclose(profile[:, npix:], 0.0)
+    assert_allclose(profile[:, :npix], 1 / npix)
+    assert_allclose(profile[:, npix:], 0.0)
 
     # nod profile is the same, but negative, and at the other
     # end of the array
-    assert np.allclose(nod_profile[:, -npix:], -1 / npix)
-    assert np.allclose(nod_profile[:, :-npix], 0.0)
+    assert_allclose(nod_profile[:, -npix:], -1 / npix)
+    assert_allclose(nod_profile[:, :-npix], 0.0)
 
 
 def test_extract_one_slit_horizontal(
@@ -1236,19 +1240,19 @@ def test_extract_one_slit_horizontal(
     # is exactly modeled with a box profile
     scene_model = result[-2]
     assert scene_model.shape == mock_nirspec_fs_one_slit.data.shape
-    assert np.allclose(np.abs(mock_nirspec_fs_one_slit.data - scene_model), 0)
+    assert_allclose(np.abs(mock_nirspec_fs_one_slit.data - scene_model), 0, atol=1e-7)
 
     residual = result[-1]
     assert residual.shape == mock_nirspec_fs_one_slit.data.shape
-    assert np.allclose(np.abs(residual), 0)
+    assert_allclose(np.abs(residual), 0, atol=1e-7)
 
     # flux should be 1.0 * npixels
     flux = result[0]
     npixels = result[-3]
-    assert np.allclose(flux, npixels)
+    assert_allclose(flux, npixels)
 
     # npixels is sum of profile
-    assert np.all(npixels == np.sum(simple_profile, axis=0))
+    assert_equal(npixels, np.sum(simple_profile, axis=0))
 
 
 def test_extract_one_slit_vertical(
@@ -1277,19 +1281,19 @@ def test_extract_one_slit_vertical(
     # is exactly modeled with a box profile
     scene_model = result[-2]
     assert scene_model.shape == model.data.shape
-    assert np.allclose(np.abs(model.data - scene_model), 0)
+    assert_allclose(np.abs(model.data - scene_model), 0, atol=1e-7)
 
     residual = result[-1]
     assert residual.shape == model.data.shape
-    assert np.allclose(np.abs(residual), 0)
+    assert_allclose(np.abs(residual), 0, atol=1e-7)
 
     # flux should be 1.0 * npixels
     flux = result[0]
     npixels = result[-3]
-    assert np.allclose(flux, npixels)
+    assert_allclose(flux, npixels)
 
     # npixels is sum of profile
-    assert np.all(npixels == np.sum(profile, axis=1))
+    assert_equal(npixels, np.sum(profile, axis=1))
 
 
 def test_extract_one_slit_vertical_no_bg(mock_miri_lrs_fs, extract_defaults, simple_profile):
@@ -1310,7 +1314,7 @@ def test_extract_one_slit_vertical_no_bg(mock_miri_lrs_fs, extract_defaults, sim
         assert data.shape == (model.data.shape[0],)
 
     # npixels is the sum of the profile
-    assert np.allclose(result[8], np.sum(simple_profile, axis=0))
+    assert_allclose(result[8], np.sum(simple_profile, axis=0))
 
     # scene model and residual has 2D shape
     assert result[-2].shape == model.data.shape
@@ -1338,7 +1342,7 @@ def test_extract_one_slit_multi_int(
         assert data.shape == (model.data.shape[2],)
 
     # npixels is the sum of the profile
-    assert np.allclose(result[8], np.sum(simple_profile, axis=0))
+    assert_allclose(result[8], np.sum(simple_profile, axis=0))
 
     # scene model and residual has 2D shape
     assert result[-2].shape == model.data.shape[-2:]
@@ -1391,7 +1395,7 @@ def test_extract_one_slit_optimal_horizontal(
         assert data.shape == (model.data.shape[0],)
 
     # npixels is the sum of the pixels in the positive profile
-    assert np.allclose(result[8], np.sum(nod_profile > 0, axis=0))
+    assert_allclose(result[8], np.sum(nod_profile > 0, axis=0))
 
     # scene model and residual has 2D shape
     assert result[-1].shape == model.data.shape
@@ -1422,7 +1426,7 @@ def test_extract_one_slit_optimal_vertical(
         assert data.shape == (model.data.shape[0],)
 
     # npixels is the sum of the pixels in the positive profile
-    assert np.allclose(result[8], np.sum(nod_profile > 0, axis=1))
+    assert_allclose(result[8], np.sum(nod_profile > 0, axis=1))
 
     # scene model and residual has 2D shape
     assert result[-2].shape == model.data.shape
@@ -1672,7 +1676,7 @@ def test_run_extract1d_save_cube_scene(mock_nirspec_bots):
     output_model, profile_model, scene_model, residual = ex.run_extract1d(
         model, save_profile=True, save_scene_model=True, save_residual_image=True
     )
-    assert isinstance(output_model, dm.MultiSpecModel)
+    assert isinstance(output_model, dm.TSOMultiSpecModel)
     assert isinstance(profile_model, dm.ImageModel)
     assert isinstance(scene_model, dm.CubeModel)
     assert isinstance(residual, dm.CubeModel)
@@ -1692,8 +1696,9 @@ def test_run_extract1d_tso(mock_nirspec_bots):
     output_model, _, _, _ = ex.run_extract1d(model)
 
     # time and integration keywords are populated
-    for i, spec in enumerate(output_model.spec):
-        assert spec.int_num == i + 1
+    for i, spec in enumerate(output_model.spec[0].spec_table):
+        assert spec["int_num"] == i + 1
+        assert_allclose(spec["MJD-BEG"], 59729.04367729)
 
     output_model.close()
 

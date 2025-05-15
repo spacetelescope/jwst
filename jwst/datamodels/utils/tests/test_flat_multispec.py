@@ -6,7 +6,9 @@ import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from jwst.datamodels.utils.flat_multispec import (
     copy_column_units,
+    copy_spec_metadata,
     determine_vector_and_meta_columns,
+    expand_flat_spec,
     make_empty_recarray,
     populate_recarray,
 )
@@ -37,8 +39,11 @@ def empty_recarray(request):
 
 @pytest.fixture()
 def input_spec():
+    """Make an input SpecModel with some metadata and column units."""
     spec = dm.SpecModel()
     spec.spec_table = np.zeros((10,), dtype=spec.spec_table.dtype)
+    spec.name = "test_slit"
+    spec.source_id = 1
 
     # Set some units
     for column in spec.spec_table.columns:
@@ -48,9 +53,44 @@ def input_spec():
 
 @pytest.fixture()
 def output_spec():
+    """Make an output MRSSpecModel with only a bare spec_table."""
     spec = dm.MRSSpecModel()
     spec.spec_table = np.zeros((5,), dtype=spec.spec_table.dtype)
     return spec
+
+
+@pytest.fixture()
+def tso_multi_spec():
+    """Make a populated TSOMultiSpecModel with default spectral values and some metadata."""
+    tso_spec = dm.TSOSpecModel()
+    input_schema = dm.SpecModel().schema
+    in_cols = input_schema["properties"]["spec_table"]["datatype"]
+    out_cols = tso_spec.schema["properties"]["spec_table"]["datatype"]
+    all_cols, is_vector = determine_vector_and_meta_columns(in_cols, out_cols)
+
+    # Make an empty table to populate
+    n_rows = 10
+    n_spectra = 5
+    defaults = tso_spec.schema["properties"]["spec_table"]["default"]
+    spec_table = make_empty_recarray(n_rows, n_spectra, all_cols, is_vector, defaults=defaults)
+    spec_table["NELEMENTS"] = 10
+    tso_spec.spec_table = spec_table
+    for column in tso_spec.spec_table.columns:
+        column.unit = 's'
+
+    # Add spectra to a multispec model
+    tso_multi = dm.TSOMultiSpecModel()
+    for i in range(3):
+        spec = tso_spec.copy()
+
+        # Add some metadata
+        spec.source_id = i + 1
+        spec.name = f"test {i + 1}"
+        spec.meta.wcs = ['test']
+        spec.spec_table["INT_NUM"] = i + 1
+
+        tso_multi.spec.append(spec)
+    return tso_multi
 
 
 def test_determine_vector_and_meta_columns():
@@ -67,7 +107,6 @@ def test_determine_vector_and_meta_columns():
     # Check that the names ended up in the right place
     input_names = [s["name"] for s in in_cols]
     output_names = [s["name"] for s in out_cols]
-    all_names = [s[0] for s in all_columns]
     vector_columns = all_columns[is_vector]
     meta_columns = all_columns[~is_vector]
     vector_names = [s[0].upper() for s in vector_columns]
@@ -196,3 +235,44 @@ def test_copy_column_units(input_spec, output_spec):
     # otherwise matched.
     expected[: len(input_spec.spec_table.columns)] = input_spec.spec_table.columns.units
     assert output_spec.spec_table.columns.units == expected
+
+
+def test_copy_spec_metadata(input_spec, output_spec):
+    # Before copying, source_id and name are blank or default
+    assert output_spec.name is None
+    assert output_spec.source_id == 0
+
+    copy_spec_metadata(input_spec, output_spec)
+
+    # After copying, metadata is filled in
+    assert output_spec.name == 'test_slit'
+    assert output_spec.source_id == 1
+
+
+def test_expand_flat_spec(tso_multi_spec):
+    expanded_spec = expand_flat_spec(tso_multi_spec)
+    assert isinstance(expanded_spec, dm.MultiSpecModel)
+
+    # expected output has extensions for each spec * each int
+    n_spec = 3
+    n_int = 5
+    assert len(expanded_spec.spec) == n_spec * n_int
+
+    # each spectrum has rows corresponding to input n_elements,
+    # with metadata copied from the input
+    n_elements = 10
+    for i, spec in enumerate(expanded_spec.spec):
+        assert len(spec.spec_table) == n_elements
+
+        input_spec_num = i // n_int + 1
+        assert spec.source_id == input_spec_num
+        assert spec.name == f"test {input_spec_num}"
+        assert spec.int_num == input_spec_num
+
+        # WCS object is present and is a deep copy of the input
+        assert spec.meta.wcs[0] == 'test'
+        spec.meta.wcs[0] = 'copy'
+        assert spec.meta.wcs[0] == 'copy'
+        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs[0] == 'test'
+
+        assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)
