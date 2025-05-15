@@ -45,3 +45,8 @@ control the sigma clipping, and are passed as arguments to the astropy
   Sets the percentile of outliers in the data to reject on both the low and high end
   per iteration during determination of the reference background scaling factor
   Defaults to 1, i.e., keep the middle 98 percent of the data each iteration.
+
+``--bkg_list``
+  Provides a list of background files to combine and use for subtraction. If only
+  one file is provided, a comma must be added at the end, e.g.
+  ``--bkg_lis=file1.fits,``

@@ -6,8 +6,9 @@ Description
 
 The background subtraction step performs
 image-from-image subtraction in order to accomplish subtraction of background
-signal. The step takes as input one target exposure, to which the
-subtraction will be applied, and a list of one or more background exposures.
+signal. The step takes as input an association file or one target exposure,
+to which the subtraction will be applied, and a list of one or more
+background exposures. 
 Two different approaches to background image subtraction are used, depending
 on the observing mode. Imaging and most spectroscopic modes use one method,
 while a special method is used for Wide-Field Slitless Spectroscopy (WFSS).
