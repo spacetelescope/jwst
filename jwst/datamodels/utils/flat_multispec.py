@@ -190,9 +190,12 @@ def copy_column_units(input_model, output_model):
             output_columns[col_name].unit = input_columns[col_name].unit
 
 
-def copy_spec_meta(input_model, output_model):
+def copy_spec_metadata(input_model, output_model):
     """
     Copy spectral metadata from the input to the output spectrum.
+
+    Values to be copied are any attributes of the input model,
+    other than "meta" or "spec_table", e.g. "source_id", "name", etc.
 
     Parameters
     ----------
@@ -250,11 +253,14 @@ def expand_flat_spec(input_model):
             # Update spectral metadata
             if hasattr(old_spec.meta, "wcs"):
                 new_spec.meta.wcs = deepcopy(old_spec.meta.wcs)
-            copy_spec_meta(old_spec, new_spec)
+            copy_spec_metadata(old_spec, new_spec)
             copy_column_units(old_spec, new_spec)
 
-            # Add an int_num from the table
-            new_spec.int_num = spec_row["INT_NUM"]
+            # Add an int_num from the table, if present
+            try:
+                new_spec.int_num = spec_row["INT_NUM"]
+            except KeyError:
+                pass
 
             output_model.spec.append(new_spec)
 
