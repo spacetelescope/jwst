@@ -221,7 +221,7 @@ class Spec3Pipeline(Pipeline):
             else:
                 result = source
 
-            # The MultiExposureModel is a required output.
+            # The MultiExposureModel is a required output, except for WFSS modes.
             if isinstance(result, SourceModelContainer) and (exptype not in WFSS_TYPES):
                 self.save_model(result, "cal")
 
@@ -344,12 +344,14 @@ class Spec3Pipeline(Pipeline):
         # Save the final output products for WFSS modes
         if exptype in WFSS_TYPES:
             outstem = output_file.replace("_{source_id}", "")
-            x1d_filename = outstem + "_x1d.fits"
-            c1d_filename = outstem + "_c1d.fits"
-            self.log.info(f"Saving the final x1d product as {x1d_filename}.")
-            _save_wfss_x1d(wfss_x1d, x1d_filename)
-            self.log.info(f"Saving the final c1d product as {c1d_filename}.")
-            _save_wfss_c1d(wfss_comb, c1d_filename)
+            if self.extract_1d.save_results:
+                x1d_filename = outstem + "_x1d.fits"
+                self.log.info(f"Saving the final x1d product as {x1d_filename}.")
+                _save_wfss_x1d(wfss_x1d, x1d_filename)
+            if self.combine_1d.save_results:
+                c1d_filename = outstem + "_c1d.fits"
+                self.log.info(f"Saving the final c1d product as {c1d_filename}.")
+                _save_wfss_c1d(wfss_comb, c1d_filename)
 
         input_models.close()
 
@@ -497,7 +499,7 @@ def _save_wfss_x1d(results_list, output_filename):
             exposure_idx = exposure_numbers.index(exp_num)
             fltdata = fltdata_by_exposure[exposure_idx]
             n_rows = n_rows_by_exposure[exposure_idx]
-            j = loop_index_by_exposure[exposure_idx]
+            spec_idx = loop_index_by_exposure[exposure_idx]
             loop_index_by_exposure[exposure_idx] += 1
 
             # rename some spec metadata to clarify where they came from
@@ -510,15 +512,21 @@ def _save_wfss_x1d(results_list, output_filename):
 
             # populate the table with data from the input spectrum
             populate_recarray(
-                fltdata[j], spec, n_rows, all_columns, is_vector, ignore_columns=["NELEMENTS"]
+                fltdata[spec_idx],
+                spec,
+                n_rows,
+                all_columns,
+                is_vector,
+                ignore_columns=["NELEMENTS"],
             )
 
             # special handling for NELEMENTS because not defined in specmeta schema
-            fltdata[j]["NELEMENTS"] = spec.spec_table.shape[0]
+            fltdata[spec_idx]["NELEMENTS"] = spec.spec_table.shape[0]
 
     # Finally, create a new MultiExposureModel to hold the combined data
     # with one MultiSpecModel table per exposure
     output_x1d = dm.WFSSMultiExposureSpecModel()
+    example_spec = results_list[0].spec[0]
     for i, exposure_number in enumerate(exposure_numbers):
         # Create a new extension for each exposure
         spec_table = fltdata_by_exposure[i]
@@ -526,7 +534,7 @@ def _save_wfss_x1d(results_list, output_filename):
         ext = dm.WFSSMultiSpecModel(spec_table)
 
         # copy units from any of the SpecModels (they should all be the same)
-        copy_column_units(spec, ext)
+        copy_column_units(example_spec, ext)
 
         # copy metadata
         fname = exposure_counter[exposure_number]["filename"]
@@ -547,7 +555,8 @@ def _save_wfss_c1d(results_list, output_filename):
     """
     Compile exposure-averaged sources into a single table and save to a file.
 
-    The output c1d product will have just one science extension.
+    The output c1d product will contain a single spec_table,
+    which will end up in extension index 1 of the FITS file.
 
     Parameters
     ----------
