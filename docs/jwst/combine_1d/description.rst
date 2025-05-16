@@ -53,9 +53,43 @@ of which contains one input file name, identified by key "expname".
 
 Output
 ======
-The output will be in CombinedSpecModel format, with a table extension
+For most modes, the output will be in CombinedSpecModel format, with a table extension
 having the name COMBINE1D.  This extension will have eight columns, giving
 the wavelength, flux, error estimate for the flux, surface brightness,
 error estimate for the surface brightness, the combined data quality flags,
 the sum of the weights that were used when combining the input spectra,
 and the number of input spectra that contributed to each output pixel.
+
+For WFSS modes, which may have hundreds or thousands of spectra from different sources,
+the output will be in WFSSMultiCombinedSpecModel format.
+This model differs from the other MultiCombinedSpecModel classes in that
+it is designed to hold all the spectra in a WFSS observation in a single
+"flat" table format. Therefore, it does not have the `spec` attribute
+that is present in the other MultiCombinedSpecModel classes. Instead, it has
+a `spec_table` attribute that contains the spectral data and metadata
+for all sources in the observation.
+
+The spectral table for this model contains the same columns as the ``CombinedSpecModel``, but
+each row in the table contains the combined spectrum for a single source. The spectral columns
+are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
+spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
+These metadata fields include:
+SOURCE_ID, NELEMENTS, SOURCE_TYPE, SOURCE_RA, SOURCE_DEC, SPECTRAL_ORDER.
+
+Note that the vector columns have the same length for all the sources in the table, meaning that
+the number of columns in the table is set by the spectrum with the most data points.
+The other spectra are NaN-padded to match the longest spectrum,
+and the number of data points for each spectrum is recorded in the NELEMENTS column.
+
+For example, to access the wavelength and flux for a specific source ID (say, 1200) and
+in a WFSSMultiCombinedSpecModel:
+
+.. doctest-skip::
+
+  >>> from stdatamodels.jwst import datamodels
+  >>> model = datamodels.open('multi_wfss_c1d.fits')
+  >>> tab = model.spec_table
+  >>> id_want = 1200
+  >>> row_want = tab[tab["SOURCE_ID"] == id_want][0]
+  >>> nelem = row_want["NELEMENTS"]
+  >>> wave, flux = row_want["WAVELENGTH"][:nelem], row_want["FLUX"][:nelem]
