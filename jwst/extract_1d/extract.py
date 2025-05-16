@@ -1868,6 +1868,12 @@ def create_extraction(
 
         copy_keyword_info(data_model, slitname, spec)
 
+        if (exp_type in WFSS_EXPTYPES) and data_model.meta.hasattr("filename"):
+            spec.meta.filename = data_model.meta.filename
+            spec.meta.observation.exposure_number = data_model.meta.observation.exposure_number
+            spec.extract2d_xstart = data_model.xstart
+            spec.extract2d_ystart = data_model.ystart
+
         if apcorr is not None:
             if hasattr(apcorr, "tabulated_correction"):
                 if apcorr.tabulated_correction is not None:

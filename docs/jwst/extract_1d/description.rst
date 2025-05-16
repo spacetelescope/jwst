@@ -72,16 +72,100 @@ for point sources observed with NIRSpec and NIRISS SOSS, units of flux density
 
 Output
 ------
-The output will be in ``MultiSpecModel`` format. For each input slit there will
-be an output table extension with the name EXTRACT1D.  This extension will
-have columns WAVELENGTH, FLUX, FLUX_ERROR, FLUX_VAR_POISSON, FLUX_VAR_RNOISE,
+
+Data structure
+^^^^^^^^^^^^^^
+
+The output for most modes will be in ``MultiSpecModel`` format. This datamodel collects
+multiple spectra in a list, stored in the ``spec`` attribute.  The data for each spectrum
+is stored in a table under the ``spec_table`` attribute for the spectrum.  The models stored
+in the ``spec`` attribute also store related metadata, such as the slit name (``name``) or the
+source ID (``source_id``).
+
+In the output file, the spectral data is stored as a  table extension with the name EXTRACT1D.
+This extension will have columns WAVELENGTH, FLUX, FLUX_ERROR, FLUX_VAR_POISSON, FLUX_VAR_RNOISE,
 FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
-BKGD_VAR_FLAT and NPIXELS. In the case of MIRI MRS data there are three additional
+BKGD_VAR_FLAT and NPIXELS.  All column data for these spectral tables is 1D: each row
+in the table is a data point in the spectrum.
+
+For example, to access the slit name, wavelength, and flux from each spectrum in a model:
+
+.. doctest-skip::
+
+  >>> from stdatamodels.jwst import datamodels
+  >>> multi_spec = datamodels.open('multi_spec_x1d.fits')
+  >>> for spectrum in multi_spec.spec:
+  >>>     slit_name = spectrum.name
+  >>>     wave = spectrum.spec_table["WAVELENGTH"]
+  >>>     flux = spectrum.spec_table["FLUX"]
+
+
+In the case of MIRI MRS data, the output is a ``MRSMultiSpecModel``. This model has the
+same structure as a ``MultiSpecModel``, except that there are three additional
 columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
 
-Some metadata for the slit will be written to the header for
+For time series observations (TSO) with spectra extracted from multiple integrations,
+the output is a ``TSOMultiSpecModel``.  The spectral tables for this model contain
+the same columns as the ``MultiSpecModel``, but each row in the table contains the full
+spectrum for a single integration.  The spectral columns are 2D: each row is a 1D
+vector containing all data points for the spectrum.  In addition, the spectral tables
+for this model have extra 1D columns to contain the metadata for the spectrum in each row.
+These metadata fields include the segment number, integration number, and various time tags
+as follows:
+SEGMENT, INT_NUM, START_TIME_MJD, MID_TIME_MJD, END_TIME_MJD, START_TDB, MID_TDB, and END_TDB.
+
+For example, to access the slit name, integration number, wavelength, and flux from
+each spectrum in a TSO model:
+
+.. doctest-skip::
+
+  >>> from stdatamodels.jwst import datamodels
+  >>> multi_int_spec = datamodels.open('multi_spec_x1dints.fits')
+  >>> for spectrum in multi_int_spec.spec:
+  >>>     slit_name = spectrum.name
+  >>>     integrations = spectrum.spec_table["INT_NUM"]
+  >>>     for i, int_num in enumerate(integrations):
+  >>>         wave = spectrum.spec_table["WAVELENGTH"][i]
+  >>>         flux = spectrum.spec_table["FLUX"][i]
+
+
+For NIRCam and NIRISS WFSS data, hundreds to thousands of spectra from different sources
+may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
+The data in this model is stored in the ``exposures`` attribute, such that one spectral table
+is created for each exposure in the input data, and each extension of the output FITS file represents
+one exposure.
+The spectral tables for this model contain the same columns as the ``MultiSpecModel``, but
+each row in the table contains the full spectrum for a single source and order. The spectral columns
+are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
+spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
+These metadata fields include:
+SOURCE_ID, NELEMENTS, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC, EXTRACT2D_XSTART,
+EXTRACT2D_YSTART, EXTRACT1D_XSTART, EXTRACT1D_YSTART, EXTRACT1D_XSTOP, EXTRACT1D_YSTOP, SPECTRAL_ORDER.
+
+Note that the vector columns have the same length for all the sources in the table, meaning that
+the number of columns in the table is set by the spectrum with the most data points.
+The other spectra are NaN-padded to match the longest spectrum,
+and the number of data points for each spectrum is recorded in the NELEMENTS column.
+
+For example, to access the wavelength and flux for a specific source ID (say, 1200) and
+integration (the first) in a WFSSMultiSpecModel:
+
+.. doctest-skip::
+
+  >>> from stdatamodels.jwst import datamodels
+  >>> model = datamodels.open('multi_wfss_x1d.fits')
+  >>> first_table = model.exposures[0].spec_table
+  >>> id_want = 1200
+  >>> row_want = first_table[first_table["SOURCE_ID"] == id_want][0]
+  >>> nelem = row_want["NELEMENTS"]
+  >>> wave, flux = row_want["WAVELENGTH"][:nelem], row_want["FLUX"][:nelem]
+
+Data sources
+^^^^^^^^^^^^
+
+For all modes, some metadata for the slit and source will be written to the header for
 the table extension, mostly copied from the input SCI extension headers.
 
 For slit-like modes, the extraction region is
@@ -448,8 +532,11 @@ the data must be given. The steps to run this correction outside the pipeline ar
 
 where `flux` is the extracted spectral data, and the data are from channel 4 for this example.
 
+
 Extraction for NIRISS SOSS Data
 -------------------------------
 For NIRISS SOSS data, the two spectral orders overlap slightly, so a specialized extraction
-algorithm known as ATOCA (Algorithm to Treat Order ContAmination) is used...
-Link paper 
+algorithm known as ATOCA (Algorithm to Treat Order ContAmination) is used.  For more information,
+see Darveau-Bernier, A., et al. 2022, PASP, 134, 094502,
+`ATOCA: an Algorithm to Treat Order Contamination.
+Application to the NIRISS SOSS Mode <https://iopscience.iop.org/article/10.1088/1538-3873/ac8a77/pdf>`__.
