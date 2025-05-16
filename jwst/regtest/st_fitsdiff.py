@@ -1617,10 +1617,6 @@ class STTableDataDiff(TableDataDiff):
                 for colname in self.report_zeros_nan.columns:
                     if "max" in colname or "mean" in colname or "min" in colname:
                         self.report_zeros_nan[colname].format = ".4g"
-                # self.report_zeros_nan["max_a"].format = ".4g"
-                # self.report_zeros_nan["max_b"].format = ".4g"
-                # self.report_zeros_nan["mean_a"].format = ".4g"
-                # self.report_zeros_nan["mean_b"].format = ".4g"
                 tlines = self.report_zeros_nan.pformat()
                 for tline in tlines:
                     self._writeln(tline)
