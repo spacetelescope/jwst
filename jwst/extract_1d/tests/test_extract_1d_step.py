@@ -348,8 +348,6 @@ def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
     assert os.path.isfile(output_path)
 
     with dm.open(output_path) as model:
-        pass
         # check that the output file name is not overridden
-        #print(model)
-        # print(len(model.exposures))
-        # print(model.exposures[0].spec_table)
+        assert isinstance(model, dm.MultiSpecModel)
+        assert len(model.spec) == 3

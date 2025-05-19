@@ -603,6 +603,16 @@ class Extract1dStep(Step):
             # only override for WFSS, and only if the input was a spec2-type model
             # (not a container, which is the default input for spec3)
             self.save_model = self.save_model_wfss_spec2
+        if (
+            (self._input_filename is None)
+            and (not isinstance(result, ModelContainer))
+            and (result is not None)
+            and (self.output_file is None)
+        ):
+            # Fix output file naming for WFSS multislitmodels that were originally generated
+            # from SourceModelContainer
+            self.output_file = result.meta.filename
+
         return result
 
     def save_model_wfss_spec2(self, result, *args, **kwargs):  # noqa: ARG002
