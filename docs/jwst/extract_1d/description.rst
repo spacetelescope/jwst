@@ -106,30 +106,6 @@ same structure as a ``MultiSpecModel``, except that there are three additional
 columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
 
-For time series observations (TSO) with spectra extracted from multiple integrations,
-the output is a ``TSOMultiSpecModel``.  The spectral tables for this model contain
-the same columns as the ``MultiSpecModel``, but each row in the table contains the full
-spectrum for a single integration.  The spectral columns are 2D: each row is a 1D
-vector containing all data points for the spectrum.  In addition, the spectral tables
-for this model have extra 1D columns to contain the metadata for the spectrum in each row.
-These metadata fields include the segment number, integration number, and various time tags
-as follows:
-SEGMENT, INT_NUM, START_TIME_MJD, MID_TIME_MJD, END_TIME_MJD, START_TDB, MID_TDB, and END_TDB.
-
-For example, to access the slit name, integration number, wavelength, and flux from
-each spectrum in a TSO model:
-
-.. doctest-skip::
-
-  >>> from stdatamodels.jwst import datamodels
-  >>> multi_int_spec = datamodels.open('multi_spec_x1dints.fits')
-  >>> for spectrum in multi_int_spec.spec:
-  >>>     slit_name = spectrum.name
-  >>>     integrations = spectrum.spec_table["INT_NUM"]
-  >>>     for i, int_num in enumerate(integrations):
-  >>>         wave = spectrum.spec_table["WAVELENGTH"][i]
-  >>>         flux = spectrum.spec_table["FLUX"][i]
-
 
 For NIRCam and NIRISS WFSS data, hundreds to thousands of spectra from different sources
 may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
