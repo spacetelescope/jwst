@@ -282,6 +282,7 @@ class Spec3Pipeline(Pipeline):
                         self.photom.save_results = self.save_results
                         self.photom.suffix = "x1d"
                         result = self.photom.run(result)
+                        result = self.combine_1d.run(result)
 
                 elif exptype in WFSS_TYPES:
                     # for WFSS modes, do not save the results with one file per source
@@ -302,7 +303,6 @@ class Spec3Pipeline(Pipeline):
                         comb.spec[0].source_ra = getattr(result.spec[0], "source_ra", None)
                         comb.spec[0].source_dec = getattr(result.spec[0], "source_dec", None)
                         wfss_comb.append(comb)
-                    extraction_complete = False  # reset to avoid re-run below
                 else:
                     result = self.extract_1d.run(result)
 
@@ -310,9 +310,8 @@ class Spec3Pipeline(Pipeline):
                     extraction_complete = (
                         result is not None and result.meta.cal_step.extract_1d == "COMPLETE"
                     )
-
-                if extraction_complete:
-                    result = self.combine_1d.run(result)
+                    if extraction_complete:
+                        result = self.combine_1d.run(result)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
                 # If 2D data were resampled and combined, just do a 1D extraction
