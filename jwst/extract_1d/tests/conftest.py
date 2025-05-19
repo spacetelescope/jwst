@@ -451,9 +451,11 @@ def mock_miri_ifu(simple_wcs_ifu):
 
 
 @pytest.fixture()
-def mock_niriss_wfss_l3(mock_nirspec_fs_one_slit):
+def mock_niriss_wfss_l2(mock_nirspec_fs_one_slit):
     """
-    Mock 3 slits in NIRISS WFSS mode, level 3 style.
+    Mock 3 slits in NIRISS WFSS mode, level 2 style.
+
+    The slits correspond to a single exposure, with one slit per extracted source.
 
     Yields
     ------
@@ -465,6 +467,7 @@ def mock_niriss_wfss_l3(mock_nirspec_fs_one_slit):
     model.meta.instrument.detector = "NIS"
     model.meta.observation.date = "2023-07-22"
     model.meta.observation.time = "06:24:45.569"
+    model.meta.observation.exposure_number = "5"
     model.meta.exposure.type = "NIS_WFSS"
 
     nslit = 3
@@ -474,8 +477,28 @@ def mock_niriss_wfss_l3(mock_nirspec_fs_one_slit):
         slit.meta.exposure.type = "NIS_WFSS"
         model.slits.append(slit)
 
-    container = multislit_to_container([model])["0"]
+    yield model
+    model.close()
 
+
+@pytest.fixture()
+def mock_niriss_wfss_l3(mock_niriss_wfss_l2):
+    """
+    Mock 3 slits in NIRISS WFSS mode, level 3 style.
+
+    Here the container has one MultiSlitModel per source, and each model has one
+    slit per exposure.
+
+    Yields
+    ------
+    SourceModelContainer
+        The mock model.
+    """
+    model = mock_niriss_wfss_l2.copy()
+    for i, slit in enumerate(model.slits):
+        slit.meta.observation.exposure_number = str(i + 1)
+        slit.meta.filename = "test_s2d.fits"
+    container = multislit_to_container([model])["0"]
     yield container
     container.close()
 

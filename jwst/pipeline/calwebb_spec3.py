@@ -26,7 +26,8 @@ from ..photom import photom_step
 from ..spectral_leak import spectral_leak_step
 from ..pixel_replace import pixel_replace_step
 
-from ._fileio import save_wfss_x1d, save_wfss_c1d
+from jwst.extract_1d._fileio import save_wfss_x1d
+from jwst.combine_1d._fileio import save_wfss_c1d
 
 import logging
 

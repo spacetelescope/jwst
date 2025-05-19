@@ -3,6 +3,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
 from jwst.stpipe import Step
+from jwst.extract_1d._fileio import save_wfss_x1d, reorder_wfss
 from jwst.extract_1d import extract
 from jwst.extract_1d.soss_extract import soss_extract
 from jwst.extract_1d.ifu import ifu_extract1d
@@ -598,4 +599,22 @@ class Extract1dStep(Step):
             if len(result) == 1:
                 result = result[0]
 
+        if isinstance(input_data, datamodels.MultiSlitModel) and exp_type in extract.WFSS_EXPTYPES:
+            # only override for WFSS, and only if the input was a spec2-type model
+            # (not a container, which is the default input for spec3)
+            self.save_model = self.save_model_wfss_spec2
         return result
+
+    def save_model_wfss_spec2(self, result, *args, **kwargs):  # noqa: ARG002
+        """
+        Override save_results method to handle WFSS flat-format x1d saving.
+
+        Parameters
+        ----------
+        result : MultiSpecModel
+            The output model.
+        """
+        fname = self.make_output_path(suffix="x1d")
+        self.log.info(f"Saving x1d {fname}")
+        result = reorder_wfss(result)
+        save_wfss_x1d(result, fname)
