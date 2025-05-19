@@ -599,10 +599,6 @@ class Extract1dStep(Step):
             if len(result) == 1:
                 result = result[0]
 
-        if isinstance(input_data, datamodels.MultiSlitModel) and exp_type in extract.WFSS_EXPTYPES:
-            # only override for WFSS, and only if the input was a spec2-type model
-            # (not a container, which is the default input for spec3)
-            self.save_model = self.save_model_wfss_spec2
         if (
             (self._input_filename is None)
             and (not isinstance(result, ModelContainer))
@@ -611,20 +607,34 @@ class Extract1dStep(Step):
         ):
             # Fix output file naming for WFSS multislitmodels that were originally generated
             # from SourceModelContainer
-            self.output_file = result.meta.filename
+            self._input_filename = result.meta.filename
 
         return result
 
-    def save_model_wfss_spec2(self, result, *args, **kwargs):  # noqa: ARG002
+    def save_model(self, result, *args, **kwargs):  # noqa: ARG002
         """
-        Override save_results method to handle WFSS flat-format x1d saving.
+        Override save_model method to handle WFSS flat-format x1d saving.
 
         Parameters
         ----------
         result : MultiSpecModel
             The output model.
         """
-        fname = self.make_output_path(suffix="x1d")
-        self.log.info(f"Saving x1d {fname}")
-        result = reorder_wfss(result)
-        save_wfss_x1d(result, fname)
+        if not self.save_results:
+            return None
+
+        # Determine the exposure type
+        if isinstance(result, ModelContainer):
+            exp_type = result[0].meta.exposure.type
+        else:
+            exp_type = result.meta.exposure.type
+
+        if exp_type in extract.WFSS_EXPTYPES:
+            # For WFSS, save the x1d product in the flat format
+            fname = self.make_output_path(basepath=self.output_file, suffix="x1d")
+            self.log.info(f"Saving x1d {fname}")
+            result = reorder_wfss(result)
+            save_wfss_x1d(result, fname)
+        else:
+            # Call the default save_model method
+            super().save_model(result, *args, **kwargs)

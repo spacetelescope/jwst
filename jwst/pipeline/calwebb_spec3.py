@@ -340,11 +340,11 @@ class Spec3Pipeline(Pipeline):
         # Save the final output products for WFSS modes
         if exptype in WFSS_TYPES:
             outstem = output_file.replace("_{source_id}", "")
-            if self.extract_1d.save_results:
+            if self.save_results:
                 x1d_filename = outstem + "_x1d.fits"
                 self.log.info(f"Saving the final x1d product as {x1d_filename}.")
                 save_wfss_x1d(wfss_x1d, x1d_filename)
-            if self.combine_1d.save_results:
+            if self.save_results:
                 c1d_filename = outstem + "_c1d.fits"
                 self.log.info(f"Saving the final c1d product as {c1d_filename}.")
                 save_wfss_c1d(wfss_comb, c1d_filename)

@@ -309,7 +309,7 @@ def test_save_output_multiple_multislit(tmp_path, mock_nirspec_mos):
 
 
 def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
-    """Test output save override for WFSS level 2 data."""
+    """Test output save override for WFSS level 2 data when step called standalone."""
     mock_niriss_wfss_l2.meta.filename = "test_s2d.fits"
     result = Extract1dStep.call(
         mock_niriss_wfss_l2,
@@ -331,7 +331,7 @@ def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
 
 
 def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
-    """Test save was NOT overridden for WFSS level 3 data, was saved in the default way instead."""
+    """Test output save override for WFSS level 2 data when step called standalone."""
     # mock_niriss_wfss_l3[0].meta.filename = "test_s2d.fits"
     result = Extract1dStep.call(
         mock_niriss_wfss_l3,
@@ -348,6 +348,4 @@ def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
     assert os.path.isfile(output_path)
 
     with dm.open(output_path) as model:
-        # check that the output file name is not overridden
-        assert isinstance(model, dm.MultiSpecModel)
-        assert len(model.spec) == 3
+        assert isinstance(model, dm.WFSSMultiExposureSpecModel)

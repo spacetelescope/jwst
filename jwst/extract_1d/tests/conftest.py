@@ -495,9 +495,9 @@ def mock_niriss_wfss_l3(mock_niriss_wfss_l2):
         The mock model.
     """
     model = mock_niriss_wfss_l2.copy()
-    for i, slit in enumerate(model.slits):
-        slit.meta.observation.exposure_number = str(i + 1)
+    for slit in model.slits:
         slit.meta.filename = "test_s2d.fits"
+
     container = multislit_to_container([model])["0"]
     yield container
     container.close()
