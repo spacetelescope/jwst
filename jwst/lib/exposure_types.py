@@ -17,6 +17,7 @@ IMAGING_TYPES = set(
 )
 
 SPEC_TYPES = SPEC2_SCIENCE_EXP_TYPES
+SPEC_TYPES.append("mir_wfss")
 
 # FGS guide star exposures
 FGS_GUIDE_EXP_TYPES = [

@@ -107,6 +107,8 @@ class AssignWcsStep(Step):
                 reffile = self.get_reference_file(input_model, reftype)
                 reference_file_names[reftype] = reffile if reffile else ""
             log.debug(f"reference files used in assign_wcs: {reference_file_names}")
+            print(f"reference files used in assign_wcs: {reference_file_names}")
+            
 
             # Get the MSA metadata file if needed and add to reffiles
             if input_model.meta.exposure.type == "NRS_MSASPEC":

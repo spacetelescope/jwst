@@ -41,6 +41,7 @@ class Extract2dStep(Step):
             The resulting DataModel of the extract_2d step
         """
         reference_file_names = {}
+
         if input_model.meta.exposure.type in extract_2d.slitless_modes:
             # The wavelengthrange file is used only by the WFSS modes.
             # If retrieved by a Nirspec mode, it would override the name of
