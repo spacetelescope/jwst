@@ -13,7 +13,7 @@ def reorder_wfss_spec2_x1d(input_model):
     """
     Make spec2 x1d product look like spec3 x1d product so save_wfss_x1d can be used.
 
-    spec2pipeline is called on a single science exposure at a time,
+    The spec2pipeline is called on a single science exposure at a time,
     and the extracted spectra from the extract_1d step are saved in a MultiSpecModel
     with the .spec attribute containing a list of spectra for each source.
     This is opposite to the spec3 pipeline, which returns a list of MultiSpecModels

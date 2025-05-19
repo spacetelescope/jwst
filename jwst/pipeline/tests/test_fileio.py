@@ -10,7 +10,42 @@ import numpy as np
 from numpy.testing import assert_allclose
 from astropy.io import fits
 import stdatamodels.jwst.datamodels as dm
-from jwst.pipeline._fileio import save_wfss_x1d, save_wfss_c1d
+from jwst.pipeline._fileio import save_wfss_x1d, save_wfss_c1d, reorder_wfss_spec2_x1d
+
+
+def test_reorder_wfss_spec2_x1d():
+    """Test reordering of spec2 x1d data to match spec3 x1d data."""
+
+    # Set up a MultiSpecModel object that looks like outputs from extract_1d
+    n_sources = 5
+    n_exposures = 1
+    n_rows = 3
+
+    multi = dm.MultiSpecModel()
+    for i in range(n_sources):
+        # create a new SpecModel for each exposure
+        spec = dm.SpecModel()
+        spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
+        recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
+        spec.meta.filename = f"exposure_{i}.fits"
+        spec.meta.observation.exposure_number = str(i + 1)
+        spec.source_id = n_sources - i # reverse the order to test sorting
+        spec.name = str(spec.source_id)
+        spec_table = np.recarray((n_rows,), dtype=recarray_dtype)
+        spec_table["WAVELENGTH"] = [1.0, 2.0, 3.0]
+        spec_table["FLUX"] = [1.0, 2.0, 3.0]
+        spec.spec_table = spec_table
+        multi.spec.append(spec)
+
+    # Reorder the model
+    results_list = reorder_wfss_spec2_x1d(multi)
+
+    # Check the output
+    assert len(results_list) == n_sources
+    for i, result in enumerate(results_list):
+        assert isinstance(result, dm.MultiSpecModel)
+        assert len(result.spec) == 1
+        assert result.spec[0].source_id == n_sources - i
 
 
 def test_save_wfss_x1d(tmp_cwd):
@@ -29,7 +64,7 @@ def test_save_wfss_x1d(tmp_cwd):
             # remove a single exposure, source pair to ensure filename matching works right
             if i == 1 and j == 2:
                 continue
-            # create a new SlitModel for each exposure
+            # create a new SpecModel for each exposure
             spec = dm.SpecModel()
             spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
             recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
