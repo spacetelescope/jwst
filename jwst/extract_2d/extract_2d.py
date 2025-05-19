@@ -70,12 +70,12 @@ def extract2d(
         "NRS_AUTOFLAT",
         "NRS_AUTOWAVE",
     ]
-    slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM", 'MIR_WFSS']
+    slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM", "MIR_WFSS"]
 
     exp_type = input_model.meta.exposure.type.upper()
     log.info(f"EXP_TYPE is {exp_type}")
 
-    print('Reference files for wavelengthrange', reference_files)
+    print("Reference files for wavelengthrange", reference_files)
     if reference_files is None:
         reference_files = {}
 
@@ -98,7 +98,7 @@ def extract2d(
             )
 
         elif exp_type == "MIR_WFSS":
-            print('extract 2d WFSS')
+            print("extract 2d WFSS")
             output_model = extract_grism_objects(
                 input_model,
                 grism_objects=grism_objects,
