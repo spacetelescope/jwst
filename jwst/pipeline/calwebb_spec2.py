@@ -9,6 +9,7 @@ from jwst.stpipe import query_step_status
 from ..assign_wcs.util import NoDataOnDetectorError
 from ..lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
 from ..stpipe import Pipeline
+from ._fileio import save_wfss_x1d, reorder_wfss_spec2_x1d
 
 # step imports
 from ..assign_wcs import assign_wcs_step
@@ -430,6 +431,16 @@ class Spec2Pipeline(Pipeline):
                 x1d = self._extract_nirspec_msa_slits(resampled)
             else:
                 x1d = resampled.copy()
+        elif exp_type in WFSS_TYPES:
+            x1d = resampled.copy()
+            # override results save in order to use custom flat file format for save
+            self.extract_1d.save_results = False
+            x1d = self.extract_1d.run(x1d)
+            # print(x1d.info(max_rows=1000))
+            if self.save_results:
+                outfile = self.output_file + "_x1d.fits"
+                results_list = reorder_wfss_spec2_x1d(x1d)
+                save_wfss_x1d(results_list, outfile)
         else:
             x1d = resampled.copy()
             x1d = self.extract_1d.run(x1d)

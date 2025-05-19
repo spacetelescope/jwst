@@ -10,7 +10,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 from astropy.io import fits
 import stdatamodels.jwst.datamodels as dm
-from jwst.pipeline.calwebb_spec3 import _save_wfss_x1d, _save_wfss_c1d
+from jwst.pipeline._fileio import save_wfss_x1d, save_wfss_c1d
 
 
 def test_save_wfss_x1d(tmp_cwd):
@@ -50,7 +50,7 @@ def test_save_wfss_x1d(tmp_cwd):
         results_list.append(multi)
     
     # save
-    _save_wfss_x1d(results_list, "test_x1d.fits")
+    save_wfss_x1d(results_list, "test_x1d.fits")
 
     # re-open as FITS and check the data
     hdul = fits.open("test_x1d.fits")
@@ -100,7 +100,7 @@ def test_save_wfss_c1d(tmp_cwd):
         results_list.append(multi)
 
     # Save
-    _save_wfss_c1d(results_list, "test_c1d.fits")
+    save_wfss_c1d(results_list, "test_c1d.fits")
 
     # Re-open as FITS and check the data
     hdul = fits.open("test_c1d.fits")

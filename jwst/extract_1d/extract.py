@@ -1868,9 +1868,17 @@ def create_extraction(
 
         copy_keyword_info(data_model, slitname, spec)
 
-        if (exp_type in WFSS_EXPTYPES) and data_model.meta.hasattr("filename"):
-            spec.meta.filename = data_model.meta.filename
-            spec.meta.observation.exposure_number = data_model.meta.observation.exposure_number
+        if exp_type in WFSS_EXPTYPES:
+            if hasattr(data_model.meta, "filename"):
+                # calwebb_spec3 case: no separate slit input to function
+                spec.meta.filename = data_model.meta.filename
+                spec.meta.observation.exposure_number = data_model.meta.observation.exposure_number
+            else:
+                # calwebb_spec2 case: data_model is a slit so need to get this meta from input_model
+                # In this case, exposure_number is expected to be the same for all slits
+                # because spec list corresponds to different sources in the same exposure
+                spec.meta.filename = getattr(input_model.meta, "filename", None)
+                spec.meta.observation.exposure_number = input_model.meta.observation.exposure_number
             spec.extract2d_xstart = data_model.xstart
             spec.extract2d_ystart = data_model.ystart
 
