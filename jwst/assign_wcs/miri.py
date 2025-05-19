@@ -312,7 +312,7 @@ def lrs_xytoabl(input_model, reference_files):
     elif input_model.meta.exposure.type.lower() == "mir_lrs-slitless":
         zero_point = refmodel.meta.x_ref_slitless - 1, refmodel.meta.y_ref_slitless - 1
         # Transform to slitless subarray from full array
-        zero_point = subarray2full.inverse(zero_point[0], zero_point[1])        
+        zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
 
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
@@ -496,7 +496,7 @@ def lrs_abltov2v3l(input_model, reference_files):
         zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1
 
     elif input_model.meta.exposure.type.lower() == "mir_wfss":
-        zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1        
+        zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1
     elif input_model.meta.exposure.type.lower() == "mir_lrs-slitless":
         zero_point = refmodel.meta.x_ref_slitless - 1, refmodel.meta.y_ref_slitless - 1
         # Transform to slitless subarray from full array
