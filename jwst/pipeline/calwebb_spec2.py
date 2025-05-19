@@ -47,7 +47,7 @@ WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 GRISM_TYPES = ["NRC_TSGRISM"] + WFSS_TYPES
 EXP_TYPES_USING_REFBKGDS = WFSS_TYPES + ["NIS_SOSS"]
 
-
+WFSS_TYPES = WFSS_TYPES + ["MIR_WFSS"]
 class Spec2Pipeline(Pipeline):
     """
     Process JWST spectroscopic exposures from Level 2a to 2b.
@@ -342,6 +342,9 @@ class Spec2Pipeline(Pipeline):
             calibrated = self._process_grism(calibrated)
         elif exp_type == "NRS_MSASPEC":
             calibrated = self._process_nirspec_msa_slits(calibrated)
+        elif exp_type == "MIR_WFSS":
+            print('Calling process_miri_wfss')
+            calibrated = self._process_miri_wfss(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
         elif exp_type == "NIS_SOSS":
@@ -645,6 +648,74 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss.run(calibrated)
         calibrated = self.barshadow.run(calibrated)
         calibrated = self.wfss_contam.run(calibrated)
+        calibrated = self.photom.run(calibrated)
+        return calibrated
+
+    
+    def _process_miri_wfss(self, data):
+        """
+        Calibrate MIRI WFSS  data.
+
+        Determine the order of the steps
+
+        Parameters
+        ----------
+        data : JWSTDataModel
+            The input science data model.
+
+        Returns
+        -------
+        JWSTDataModel
+            The calibrated data model.
+        """
+        # Apply flat-field correction
+        calibrated = self.flat_field.run(data)
+
+        # Create and save a WFSS e-/sec image, if requested
+        if self.save_wfss_esec:
+            self.log.info("Creating WFSS e-/sec product")
+
+            # Find and load the gain reference file that we need
+            gain_filename = self.get_reference_file(calibrated, "gain")
+            self.log.info("Using GAIN reference file %s", gain_filename)
+            with datamodels.GainModel(gain_filename) as gain_model:
+                # Always use the full-frame version of the gain ref file,
+                # even the science data are taken with a subarray
+                gain_image = gain_model.data
+
+                # Compute the simple mean of the gain image, excluding reference pixels.
+                # The gain ref file doesn't have a DQ array that can be used to
+                # mask bad values, so manually exclude NaN's and gain <= 0.
+                gain_image[gain_image <= 0.0] = np.nan
+                mean_gain = np.nanmean(gain_image[4:-4, 4:-4])
+                self.log.info("mean gain = %s", mean_gain)
+
+                # Apply gain to the intermediate WFSS image
+                wfss_esec = calibrated.copy()
+                mean_gain_sqr = mean_gain**2
+                wfss_esec.data *= mean_gain
+                wfss_esec.var_poisson *= mean_gain_sqr
+                wfss_esec.var_rnoise *= mean_gain_sqr
+                wfss_esec.var_flat *= mean_gain_sqr
+                wfss_esec.err = np.sqrt(
+                    wfss_esec.var_poisson + wfss_esec.var_rnoise + wfss_esec.var_flat
+                )
+
+                # Save the WFSS e-/sec image
+                self.save_model(wfss_esec, suffix="esec", force=True)
+                del wfss_esec
+
+        # Continue with remaining calibration steps, using the original
+        # DN/sec image
+        print('*** run extracted_2d')
+        calibrated = self.extract_2d.run(calibrated)
+        print('*** src type')
+        calibrated = self.srctype.run(calibrated)
+        #calibrated = self.straylight.run(calibrated)
+        #calibrated = self.fringe.run(calibrated)
+        calibrated = self.pathloss.run(calibrated)
+        calibrated = self.barshadow.run(calibrated)
+        #calibrated = self.wfss_contam.run(calibrated)
         calibrated = self.photom.run(calibrated)
         return calibrated
 
