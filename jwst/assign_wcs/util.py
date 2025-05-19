@@ -373,8 +373,10 @@ def create_grism_bbox(
         filter_name = input_model.meta.instrument.filter
     elif instr_name == "NIRISS":
         filter_name = input_model.meta.instrument.pupil
+    elif instr_name == "MIRI":
+        filter_name = input_model.meta.instrument.filter
     else:
-        raise ValueError("create_grism_object works with NIRCAM and NIRISS WFSS exposures only.")
+        raise ValueError("create_grism_object works with NIRCAM, NIRISS WFSS or MIRI WFSS exposures only.")
 
     if reference_files is None:
         # Get the list of extract_orders and lmin, lmax from wavelength_range.
@@ -444,9 +446,16 @@ def _create_grism_bbox(
         # save the image frame center of the object
         # takes in ra, dec, wavelength, order but wave and order
         # don't get used until the detector->grism_detector transform
-        xcenter, ycenter, _, _ = sky_to_detector(
-            obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value, 1, 1
-        )
+        if input_model.meta.exposure.type.upper() == 'MIR_WFSS':
+            print(' input ra dec', obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value)
+            xcenter, ycenter= sky_to_detector(
+                obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value, 1
+            )
+            print('return x, y', xcenter,ycenter)
+        else:
+            xcenter, ycenter, _, _ = sky_to_detector(
+                obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value, 1, 1
+            )
 
         order_bounding = {}
         waverange = {}
@@ -476,8 +485,13 @@ def _create_grism_bbox(
                     obj.sky_bbox_ur.dec.value,
                 ]
             )
-            x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order] * 4)
-            x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order] * 4)
+            if input_model.meta.exposure.type.upper() == 'MIR_WFSS':
+                x1, y1 = sky_to_grism(ra, dec, [lmin] * 4)
+                x2, y2 = sky_to_grism(ra, dec, [lmax] * 4)
+                print('x1,y1,x2,y2',x1,y1,x2,y2)
+            else:
+                x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order] * 4)
+                x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order] * 4)
 
             xstack = np.hstack([x1, x2])
             ystack = np.hstack([y1, y2])
@@ -500,15 +514,22 @@ def _create_grism_bbox(
             ymin = np.nanmin(ystack)
             ymax = np.nanmax(ystack)
 
+            print('wfss height, dispersion direction',wfss_extract_half_height, input_model.meta.wcsinfo.dispersion_direction)
+            input_model.meta.wcsinfo.dispersion_direction = 2
+            
             if wfss_extract_half_height is not None and not obj.is_extended:
                 if input_model.meta.wcsinfo.dispersion_direction == 2:
                     ra_center, dec_center = (
                         obj.sky_centroid.ra.value,
                         obj.sky_centroid.dec.value,
                     )
-                    center, _, _, _, _ = sky_to_grism(
-                        ra_center, dec_center, (lmin + lmax) / 2, order
-                    )
+                    if input_model.meta.exposure.type.upper() == 'MIR_WFSS':
+                        center, _ = sky_to_grism(
+                            ra_center, dec_center, (lmin + lmax) / 2)
+                    else:
+                        center, _, _, _, _ = sky_to_grism(
+                                ra_center, dec_center, (lmin + lmax) / 2, order
+                        )
                     xmin = center - wfss_extract_half_height
                     xmax = center + wfss_extract_half_height
                 elif input_model.meta.wcsinfo.dispersion_direction == 1:

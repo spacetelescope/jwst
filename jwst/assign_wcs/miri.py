@@ -304,10 +304,15 @@ def lrs_xytoabl(input_model, reference_files):
     refmodel = MiriLRSSpecwcsModel(reference_files["specwcs"])
     if input_model.meta.exposure.type.lower() == "mir_lrs-fixedslit":
         zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1
+
+    # until we have a reference file for mir_wfss - force it to work like slitless
+    elif input_model.meta.exposure.type.lower() == "mir_wfss":
+        zero_point = refmodel.meta.x_ref_slitless - 1, refmodel.meta.y_ref_slitless - 1
+
     elif input_model.meta.exposure.type.lower() == "mir_lrs-slitless":
         zero_point = refmodel.meta.x_ref_slitless - 1, refmodel.meta.y_ref_slitless - 1
         # Transform to slitless subarray from full array
-        zero_point = subarray2full.inverse(zero_point[0], zero_point[1])
+        zero_point = subarray2full.inverse(zero_point[0], zero_point[1])        
 
     # Figure out the typical along-slice pixel scale at the center of the slit
     v2_cen, v3_cen = subarray_dist(zero_point[0], zero_point[1])
@@ -329,6 +334,13 @@ def lrs_xytoabl(input_model, reference_files):
     # If in fixed slit mode, define the bounding box using the corner locations provided in
     # the CDP reference file.
     if input_model.meta.exposure.type.lower() == "mir_lrs-fixedslit":
+        bb_sub = (
+            (np.floor(x0.min() + zero_point[0]) - 0.5, np.ceil(x1.max() + zero_point[0]) + 0.5),
+            (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5),
+        )
+
+    # temporary set up
+    if input_model.meta.exposure.type.lower() == "mir_wfss":
         bb_sub = (
             (np.floor(x0.min() + zero_point[0]) - 0.5, np.ceil(x1.max() + zero_point[0]) + 0.5),
             (np.floor(y2.min() + zero_point[1]) - 0.5, np.ceil(y0.max() + zero_point[1]) + 0.5),
@@ -482,6 +494,9 @@ def lrs_abltov2v3l(input_model, reference_files):
     refmodel = MiriLRSSpecwcsModel(reference_files["specwcs"])
     if input_model.meta.exposure.type.lower() == "mir_lrs-fixedslit":
         zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1
+
+    elif input_model.meta.exposure.type.lower() == "mir_wfss":
+        zero_point = refmodel.meta.x_ref - 1, refmodel.meta.y_ref - 1        
     elif input_model.meta.exposure.type.lower() == "mir_lrs-slitless":
         zero_point = refmodel.meta.x_ref_slitless - 1, refmodel.meta.y_ref_slitless - 1
         # Transform to slitless subarray from full array
@@ -781,6 +796,7 @@ exp_type2transform = {
     "mir_coroncal": imaging,
     "mir_lrs-fixedslit": lrs,
     "mir_lrs-slitless": lrs,
+    "mir_wfss": lrs,
     "mir_mrs": ifu,
     "mir_flatmrs": not_implemented_mode,
     "mir_flatimage": not_implemented_mode,
