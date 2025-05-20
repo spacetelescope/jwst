@@ -115,6 +115,28 @@ to retrieve world coordinates for a pixel in slice 12 of an IFU observation:
   >>> print(ra, dec, lam, slit_id)
   (321.15970971929175, -16.549348214686127, 3.235814824179365, 12.0)
 
+For IFU observations, the slit ID is the index of the slice; values range from 0 to 29.
+For MOS observations, the slit ID is the name of the slit, as specified by the
+"slitlet_id" field in the :ref:`MSA metadata file<msa_metadata>`.
+For fixed slit observations, the slit ID is a fixed integer for each slit as shown in the table below.
+These values can also be retrieved by slit name using the :func:`jwst.assign_wcs.nrs_fs_slit_id` function.
+
+.. list-table:: NIRSpec Fixed Slit IDs
+   :header-rows: 1
+
+   * - Slit Name
+     - Slit ID
+   * - S200A1
+     - -101
+   * - S200A2
+     - -102
+   * - S400A1
+     - -103
+   * - S1600A1
+     - -104
+   * - S200B1
+     - -105
+
 For NIRSpec modes that are processed through the :ref:`extract_2d <extract_2d_step>`
 step (MOS, FS, BOTS), a new WCS is assigned to each extracted slit that fixes the slit
 ID to a specific value, so it is no longer required on input and not reported on output.
