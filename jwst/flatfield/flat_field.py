@@ -1634,7 +1634,7 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         else:
             log.error("This mode %s requires WCS information.", exposure_type)
             raise RuntimeError("The assign_wcs step has not been run.") from None
-    for (k, ifu_wcs) in enumerate(list_of_wcs):
+    for k, ifu_wcs in enumerate(list_of_wcs):
         # example:  bounding_box = ((1600.5, 2048.5),   # X
         #                           (1886.5, 1925.5))   # Y
         truncated = False
