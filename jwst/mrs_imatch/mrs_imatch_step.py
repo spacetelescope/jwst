@@ -1,4 +1,4 @@
-"""JWST pipeline step for image intensity matching for MIRI images."""
+"""JWST pipeline step for image intensity matching of MIRI images."""
 
 import numpy as np
 from astropy.stats import sigma_clipped_stats as sigclip
@@ -11,7 +11,13 @@ __all__ = ["MRSIMatchStep", "apply_background_2d"]
 
 
 class MRSIMatchStep(Step):
-    """Subtract or equalize sky background in MIRI MRS science images."""
+    """
+    Subtract or equalize sky background in MIRI MRS science images.
+
+    .. warning::
+
+        This step is deprecated and may be removed in a future release.
+    """
 
     class_alias = "mrs_imatch"
 
@@ -30,13 +36,13 @@ class MRSIMatchStep(Step):
 
         Parameters
         ----------
-        images : file path or list of DataModels
+        images : file path or list of ImageModels
             If a file path, initialize from an association table.
-            If a list, can be a list of DataModels of any type
+            If a list, has to be a list of ImageModels.
 
         Returns
         -------
-        images : file path or list of DataModels
+        images : file path or list of ImageModels
             Input images.
         """
         # Provide warning to user this code is deprecated
@@ -413,7 +419,7 @@ def _find_channel_bkg_index(model2d, channel):
     Parameters
     ----------
     model2d : DataModel
-        2D data model.
+        Any data model with ``meta.background.polynomial_info``.
 
     channel : int or str
         MIRI channel.
