@@ -93,23 +93,6 @@ class DataSet:
 
     Store vital params, such as
     instrument, detector, filter, pupil, and exposure type.
-
-    Parameters
-    ----------
-    model : `~jwst.datamodels.JwstDataModel`
-        Input Data Model object.
-
-    inverse : bool
-        Invert the math operations used to apply the corrections.
-
-    source_type : str or None
-        Force processing using the specified source type.
-
-    mrs_time_correction : bool
-        Switch to apply/not apply the MRS time correction.
-
-    correction_pars : dict
-        Correction meta-data from a previous run.
     """
 
     def __init__(
@@ -120,6 +103,22 @@ class DataSet:
         mrs_time_correction=False,
         correction_pars=None,
     ):
+        """
+        Instantiate a DataSet object.
+
+        Parameters
+        ----------
+        model : `~jwst.datamodels.JwstDataModel`
+            Input Data Model object.
+        inverse : bool
+            Invert the math operations used to apply the corrections.
+        source_type : str or None
+            Force processing using the specified source type.
+        mrs_time_correction : bool
+            Switch to apply/not apply the MRS time correction.
+        correction_pars : dict
+            Correction meta-data from a previous run.
+        """
         # Set up attributes necessary for calculation.
         if correction_pars:
             self.update(correction_pars["dataset"])
