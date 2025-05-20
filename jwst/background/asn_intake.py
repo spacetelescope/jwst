@@ -2,7 +2,6 @@
 from pathlib import Path
 from collections import defaultdict
 import logging
-import json
 
 from stdatamodels.jwst import datamodels
 
@@ -13,14 +12,17 @@ log.setLevel(logging.DEBUG)
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 
 
-def asn_get_data(step_input):
+def asn_get_data(asn, model_with_wcs=None):
     """
     Check if the input is an asn file and get the targets and catalog.
 
     Parameters
     ----------
-    step_input : ImageModel or IFUImageModel or asn file
+    asn : str, asn file
         Input target data
+
+    model_with_wcs : str, optional
+        Name of the file that has been processed through the assign_wcs step.
 
     Returns
     -------
@@ -29,16 +31,10 @@ def asn_get_data(step_input):
     bkg_list : list
         File name list of background exposures
     """
-    try:
-        with Path(step_input).open("r") as asn_data:
-            asn = json.load(asn_data)
-    except UnicodeDecodeError:
-        return
-
     members_by_type = defaultdict(list)
 
     if len(asn["products"]) > 1:
-        log.warning("Multiple products in input association. Output file name will be ignored.")
+        log.warning("Multiple products in input association.")
 
     # Get the grism image and the catalog, direct image, and segmentation map
     for exp_product in asn["products"]:
@@ -58,6 +54,8 @@ def asn_get_data(step_input):
         log.info("Working on input %s ...", science_member)
 
         # Open the datamodel and update it with the relevant info for the background step
+        if model_with_wcs is not None:
+            science_member = model_with_wcs
         with datamodels.open(science_member) as sci:
             exp_type = sci.meta.exposure.type
             if exp_type in WFSS_TYPES:

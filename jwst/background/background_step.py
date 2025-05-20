@@ -47,7 +47,9 @@ class BackgroundStep(Step):
             Input target data model to which background subtraction is applied or asn file
 
         input_bkg_list : list, optional
-            File name list of background exposures
+            File name list of background exposures. If an association file is provided as
+            input, this parameter can be used to provide the name of the file that has
+            been processed through the assign_wcs step.
 
         Returns
         -------
@@ -57,7 +59,14 @@ class BackgroundStep(Step):
         # If the input is an asn get all the info, otherwise assume input is
         # a fits file or datamodel
         if isinstance(step_input, str) and ".fits" not in step_input:
-            input_model, members_by_type = asn_get_data(step_input)
+            asn = self.load_as_level2_asn(step_input)
+            # The input_bkg_list variable can be used to provide the name of the
+            # file processed through the assign_wcs step
+            if input_bkg_list is not None:
+                model_with_wcs = input_bkg_list
+            else:
+                model_with_wcs = None
+            input_model, members_by_type = asn_get_data(asn, model_with_wcs=model_with_wcs)
             bkg_list = members_by_type["background"]
         else:
             input_model = datamodels.open(step_input)
