@@ -32,7 +32,7 @@ def parfunc(x):
     return x[0]
 
 
-def _assoc_sdp_against_standard(rtdata, resource_tracker, pool_args):
+def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     pool, args = pool_args
     proposal, version_id = pool_regex.match(pool).group(
         "proposal", "versionid")
@@ -40,7 +40,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, pool_args):
     input_csv = rtdata.get_data(f"associations/sdp/pools/{pool}.csv")
     rtdata.output = os.curdir   # This test is jailed and parametrized
     # Create the associations
-    with resource_tracker.track():
+    with resource_tracker.track(log=request):
         asn_generate.cli(args + ["-p", rtdata.output,
                                  "--version-id", version_id,
                                  input_csv])
@@ -114,8 +114,8 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, pool_args):
     ("jw97013_20171108T044023_pool", []),
     ("jw98005_20171108T041409_pool", []),
 ], ids=parfunc)
-def test_sdp(_jail, rtdata, resource_tracker, pool_args):
-    _assoc_sdp_against_standard(rtdata, resource_tracker, pool_args)
+def test_sdp(_jail, rtdata, resource_tracker, request, pool_args):
+    _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
 @pytest.mark.parametrize("pool_args", [
@@ -135,8 +135,8 @@ def test_sdp(_jail, rtdata, resource_tracker, pool_args):
     ("jw94015_20171108T041516_pool", []),
 ], ids=parfunc)
 @pytest.mark.slow
-def test_slow(_jail, rtdata, resource_tracker, pool_args):
-    _assoc_sdp_against_standard(rtdata, resource_tracker, pool_args)
+def test_slow(_jail, rtdata, resource_tracker, request, pool_args):
+    _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
 @pytest.mark.parametrize("pool_args", [
@@ -144,15 +144,15 @@ def test_slow(_jail, rtdata, resource_tracker, pool_args):
     ("jw80600_20171108T041522_pool", []),  # PR 3450
     ("jw98010_20171108T062332_pool", []),  # PR 3450
 ], ids=parfunc)
-def test_fail(_jail, rtdata, resource_tracker, pool_args):
+def test_fail(_jail, rtdata, resource_tracker, request, pool_args):
     with pytest.raises(MultiDiffError):
-        _assoc_sdp_against_standard(rtdata, resource_tracker, pool_args)
+        _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
 @pytest.mark.parametrize("pool_args", [
     ("jw01288_c1005_mostilno12_pool", ["-i", "o003", "c1001", "c1005"]),  # JP-3230
 ], ids=parfunc)
 @pytest.mark.slow
-def test_fslow(_jail, rtdata, resource_tracker, pool_args):
+def test_fslow(_jail, rtdata, resource_tracker, request, pool_args):
     with pytest.raises(MultiDiffError):
-        _assoc_sdp_against_standard(rtdata, resource_tracker, pool_args)
+        _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
