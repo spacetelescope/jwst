@@ -2413,7 +2413,30 @@ def _fix_slit_name(transform, slit_name):
         required for the new transform, and it is not provided on output.
     """
     # Check if anything needs to be done for this transform
-    if transform is None or "name" not in transform.inputs:
+    if transform is None:
+        return None
+
+    # Directly pick out the slit-specific model to avoid
+    # copying all transforms if possible
+    if transform.name == "gwa2slit":
+        new_transform = transform.get_model(slit_name)
+        new_transform.name = transform.name
+
+        # "name" was the first input and first output; it is now dropped.
+        new_transform.inputs = transform.inputs[1:]
+        new_transform.outputs = transform.outputs[1:]
+        return new_transform
+    if transform.name == "slit2msa" or transform.name == "slit2slicer":
+        new_transform = transform[0].get_model(slit_name) & Identity(1)
+        new_transform.name = transform.name
+
+        # "name" was the first input and last output; it is now dropped.
+        new_transform.inputs = transform.inputs[1:]
+        new_transform.outputs = transform.outputs[:-1]
+        return new_transform
+
+    # Fix the "name" input for any other transform if possible
+    if "name" not in transform.inputs:
         return transform
 
     # Name is present: fix it on input
