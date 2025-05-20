@@ -1,6 +1,5 @@
 """Sum the flux over all wavelengths in each integration as a function of time for the target."""
 
-import itertools
 import logging
 
 import numpy as np
@@ -19,10 +18,8 @@ def white_light(input_model, min_wave=None, max_wave=None):
     ----------
     input_model : TSOMultiSpecModel
         Datamodel containing the multi-integration data.
-
     min_wave : float, optional
         Default wavelength minimum for integration.
-
     max_wave : float, optional
         Default wavelength maximum for integration.
 
@@ -100,33 +97,57 @@ def white_light(input_model, min_wave=None, max_wave=None):
     good = ~np.isnan(mid_times)
     mid_times = mid_times[good]
     mid_tdbs = mid_tdbs[good]
-    unique_mid_times, unq_indices = np.unique(mid_times, return_index=True)
-    bjd_times = mid_tdbs[unq_indices]
-    tbl["int_mid_MJD_UTC"] = unique_mid_times
-    tbl["int_mid_BJD_TDB"] = bjd_times
 
     flux_sums = flux_sums[good]
     order_list = np.array(order_list)[good]
     detector_list = np.array(detector_list)[good]
 
-    # Loop over the spectral orders and make separate table columns
-    # for fluxes in each order, ensuring times are aligned even if one order
-    # is not observed at a given time.
-    columns = list(itertools.product(sporders, detectors))
-    for order, detector in columns:
-        is_this_column = (order_list == order) & (detector_list == detector)
-        time_is_in_this_column = np.isin(unique_mid_times, mid_times[is_this_column])
+    # Get time stamps for each detector - they generally have different values.
+    max_rows = 0
+    mjd_utc = {}
+    bjd_tdb = {}
+    for detector in detectors:
+        is_this_detector = detector_list == detector
+        mjd_det = mid_times[is_this_detector]
+        unique_mid_times, unq_indices = np.unique(mjd_det, return_index=True)
+        mjd_utc[detector] = unique_mid_times
+        bjd_tdb[detector] = mid_tdbs[is_this_detector][unq_indices]
+        if unique_mid_times.size > max_rows:
+            max_rows = unique_mid_times.size
 
-        # NaN-pad fluxes for times not represented in this column
-        fluxes = np.full(len(unique_mid_times), np.nan)
-        fluxes[time_is_in_this_column] = flux_sums[is_this_column]
+    # Loop over the detectors and spectral orders and make separate table columns
+    # for times in each detector and fluxes in each order
+    for detector in detectors:
+        # Add the time column, with NaN-padding just in case the detector
+        # timestamps do not quite align
+        detector_rows = mjd_utc[detector].size
+        mjd = np.full(max_rows, np.nan)
+        mjd[:detector_rows] = mjd_utc[detector]
+        bjd = np.full(max_rows, np.nan)
+        bjd[:detector_rows] = bjd_tdb[detector]
 
-        colname = "whitelight_flux"
-        if len(sporders) > 1:
-            colname += f"_order_{order}"
-        if len(detectors) > 1:
-            colname += f"_detector_{detector}"
-        tbl[colname] = fluxes
+        if len(detectors) > 1 or str(detector).upper() in ["NRS1", "NRS2"]:
+            # add the detector to the column name if there are more than 1,
+            # or the detectors are for NIRSpec
+            detector_name = f"_{detector}"
+        else:
+            detector_name = ""
+        tbl[f"MJD_UTC{detector_name}"] = mjd
+        tbl[f"BJD_TDB{detector_name}"] = bjd
+
+        for order in sporders:
+            is_this_column = (order_list == order) & (detector_list == detector)
+            time_is_in_this_column = np.isin(mjd, mid_times[is_this_column])
+
+            # NaN-pad columns for times not represented in this column
+            fluxes = np.full(max_rows, np.nan)
+            fluxes[time_is_in_this_column] = flux_sums[is_this_column]
+
+            colname = "whitelight_flux"
+            if len(sporders) > 1:
+                # add the spectral order to the column name if there are more than 1
+                colname += f"_order_{order}"
+            tbl[f"{colname}{detector_name}"] = fluxes
 
     return tbl
 
