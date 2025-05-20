@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, SourceModelContainer
 from jwst.extract_1d.extract_1d_step import Extract1dStep
 from jwst.extract_1d.soss_extract import soss_extract
 
@@ -331,8 +331,8 @@ def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
 
 
 def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
-    """Test output save override for WFSS level 2 data when step called standalone."""
-    # mock_niriss_wfss_l3[0].meta.filename = "test_s2d.fits"
+    """Test output for WFSS level 3 data when step called standalone."""
+    assert isinstance(mock_niriss_wfss_l3, SourceModelContainer)
     result = Extract1dStep.call(
         mock_niriss_wfss_l3,
         save_results=True,
@@ -341,11 +341,11 @@ def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
     )
     result.close()
 
-
-    fname = "test_x1d.fits"
+    fname = f"test0_x1d.fits"
     output_path = str(tmp_path / fname)
 
     assert os.path.isfile(output_path)
 
     with dm.open(output_path) as model:
         assert isinstance(model, dm.WFSSMultiExposureSpecModel)
+        assert len(model.exposures) == 1

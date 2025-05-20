@@ -465,6 +465,7 @@ def mock_niriss_wfss_l2(mock_nirspec_fs_one_slit):
     model = dm.MultiSlitModel()
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.detector = "NIS"
+    model.meta.instrument.filter = "GR150R"
     model.meta.observation.date = "2023-07-22"
     model.meta.observation.time = "06:24:45.569"
     model.meta.observation.exposure_number = "5"
@@ -495,12 +496,14 @@ def mock_niriss_wfss_l3(mock_niriss_wfss_l2):
         The mock model.
     """
     model = mock_niriss_wfss_l2.copy()
-    for slit in model.slits:
-        slit.meta.filename = "test_s2d.fits"
-
-    container = multislit_to_container([model])["0"]
-    yield container
-    container.close()
+    for i, slit in enumerate(model.slits):
+        slit.meta.filename = f"test{i}_s2d.fits"
+    container_dict = multislit_to_container([model])
+    sources = list(container_dict.values())
+    yield sources[0]
+    for source in sources:
+        source.close()
+    model.close()
 
 
 @pytest.fixture()
