@@ -149,8 +149,8 @@ def test_white_light(make_datamodel, monkeypatch):
     mid_times[2] = 0.51
     expected_tdb = mid_times + 3.0
 
-    np.testing.assert_allclose(result["int_mid_MJD_UTC"], mid_times)
-    np.testing.assert_allclose(result["int_mid_BJD_TDB"], expected_tdb, equal_nan=True)
+    np.testing.assert_allclose(result["MJD_UTC"], mid_times)
+    np.testing.assert_allclose(result["BJD_TDB"], expected_tdb, equal_nan=True)
     assert result["whitelight_flux_order_1"].shape == (len(mid_times),)
     assert result["whitelight_flux_order_2"].shape == (len(mid_times),)
     assert np.sum(np.isnan(result["whitelight_flux_order_1"])) == 1
@@ -164,3 +164,48 @@ def test_white_light(make_datamodel, monkeypatch):
 
     assert_allclose(result["whitelight_flux_order_1"], expected_flux_order_1, equal_nan=True)
     assert_allclose(result["whitelight_flux_order_2"], expected_flux_order_2, equal_nan=True)
+
+
+def test_white_light_multi_detector(make_datamodel):
+    """Test white light step"""
+    # Set the detectors in the two spec tables to different values
+    data = make_datamodel.copy()
+    data.spec[0].detector = "NRS1"
+    data.spec[1].detector = "NRS2"
+
+    result = white_light(data)
+
+    # Expected values for mid times: [0.1, 0.3, 0.5, 0.7, 0.9]
+    nspec = 5
+
+    # for NRS1, remove the 0.5 mid time for the skipped integration
+    # and add a NaN at the end for padding
+    expected_nrs1 = np.array([0.1, 0.3, 0.7, 0.9, np.nan])
+    np.testing.assert_allclose(result["MJD_UTC_NRS1"], expected_nrs1, equal_nan=True)
+    np.testing.assert_allclose(result["BJD_TDB_NRS1"], expected_nrs1 + 3.0, equal_nan=True)
+
+    # for NRS2, adjust the 0.5 mid time to 0.51; all others are present
+    expected_nrs2 = np.array([0.1, 0.3, 0.51, 0.7, 0.9])
+    np.testing.assert_allclose(result["MJD_UTC_NRS2"], expected_nrs2)
+    np.testing.assert_allclose(result["BJD_TDB_NRS2"], expected_nrs2 + 3.0)
+
+    # Check for the right shape and NaN placement
+    assert result["whitelight_flux_order_1_NRS1"].shape == (nspec,)
+    assert result["whitelight_flux_order_2_NRS1"].shape == (nspec,)
+    assert np.sum(np.isnan(result["whitelight_flux_order_1_NRS1"])) == 1
+    assert np.sum(np.isnan(result["whitelight_flux_order_2_NRS1"])) == nspec
+
+    assert result["whitelight_flux_order_1_NRS2"].shape == (nspec,)
+    assert result["whitelight_flux_order_2_NRS2"].shape == (nspec,)
+    assert np.sum(np.isnan(result["whitelight_flux_order_1_NRS2"])) == nspec
+    assert np.sum(np.isnan(result["whitelight_flux_order_2_NRS2"])) == 0
+
+    # check fluxes are summed appropriately
+    expected_flux_per_spec = np.sum(np.arange(1, 21, dtype=np.float32))
+    expected_flux = np.array([expected_flux_per_spec,] * nspec)
+    expected_flux_order_1 = expected_flux.copy()
+    expected_flux_order_1[-1] = np.nan  # the last entry is empty
+    expected_flux_order_2 = expected_flux.copy()
+
+    assert_allclose(result["whitelight_flux_order_1_NRS1"], expected_flux_order_1, equal_nan=True)
+    assert_allclose(result["whitelight_flux_order_2_NRS2"], expected_flux_order_2, equal_nan=True)
