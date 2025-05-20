@@ -3,7 +3,6 @@
 #
 
 import logging
-
 import numpy as np
 
 log = logging.getLogger(__name__)
@@ -16,15 +15,15 @@ def do_correction(input_model, fringe_model):
 
     Parameters
     ----------
-    input_model : jwst.datamodel.IFUImageModel
+    input_model : jwst.datamodels.IFUImageModel
         Input science data model to be fringe-corrected.
 
-    fringe_model : jwst.datamodel.fringe
+    fringe_model : jwst.datamodels.FringeModel
         Data model containing fringe.
 
     Returns
     -------
-    output_model : jwst.datamodel.IFUImageModel
+    output_model : jwst.datamodels.IFUImageModel
         Fringe-corrected science data model.
     """
     output_model = apply_fringe(input_model, fringe_model)
@@ -44,10 +43,10 @@ def apply_fringe(input_model, fringe):
 
     Parameters
     ----------
-    input_model : jwst.datamodel.IFUImageModel
+    input_model : jwst.datamodels.IFUImageModel
         Input science data model to be fringe-corrected.
 
-    fringe : jwst.datamodel.fringe
+    fringe : jwst.datamodels.FringeModel
         Fringe reference file image model.
 
     Returns
