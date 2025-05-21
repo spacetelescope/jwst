@@ -1396,27 +1396,29 @@ def test_niriss_wfss():
 
 
 def test_niriss_soss():
-    """Test the calc_niriss method of the DataSet class, SOSS data."""
+    """Test calc_niriss, SOSS data"""
+
     input_model = create_input("NIRISS", "NIS", "NIS_SOSS", filter_used="CLEAR", pupil="GR700XD")
     save_input = input_model.copy()
     ds = photom.DataSet(input_model)
     ftab = create_photom_niriss_soss(min_r=8.0, max_r=9.0)
     ds.calc_niriss(ftab)
 
-    input_data = save_input.spec[0].spec_table["FLUX"]
-    output = ds.input.spec[0].spec_table["FLUX"]  # ds.input is the output
+    input_flux = save_input.spec[0].spec_table["FLUX"]
+    output_flux = ds.input.spec[0].spec_table["FLUX"]  # ds.input is the output
     sp_order = 1  # to agree with photom.py
     rownum = find_row_in_ftab(save_input, ftab, ["filter", "pupil"], slitname=None, order=sp_order)
     photmj = ftab.phot_table["photmj"][rownum]
     nelem = ftab.phot_table["nelem"][rownum]
     wavelength = ftab.phot_table["wavelength"][rownum][0:nelem]
     relresponse = ftab.phot_table["relresponse"][rownum][0:nelem]
-    test_ind = len(input_data) // 2
+    test_ind = (0, input_flux.shape[1] // 2)
     wl = input_model.spec[0].spec_table["WAVELENGTH"][test_ind]
     rel_resp = np.interp(wl, wavelength, relresponse, left=np.nan, right=np.nan)
     compare = photmj * rel_resp
+
     # Compare the values at the center pixel.
-    ratio = output[test_ind] / input_data[test_ind]
+    ratio = output_flux[test_ind] / input_flux[test_ind]
     assert_allclose(ratio, compare, rtol=1.0e-7)
 
 
