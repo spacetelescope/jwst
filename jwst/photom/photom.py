@@ -1165,7 +1165,7 @@ class DataSet:
         """
         # Get the 2D wavelength array corresponding to the input
         # image pixel values
-        wl_array = model.spec_table['WAVELENGTH'][integ_row]
+        wl_array = model.spec_table["WAVELENGTH"][integ_row]
 
         flip_wl = False
         if np.nanargmax(wl_array) - np.nanargmin(wl_array) < 0:
