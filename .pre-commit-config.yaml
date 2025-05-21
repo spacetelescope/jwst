@@ -38,8 +38,6 @@ repos:
         exclude: |
           (?x)^(
             jwst/ipc/.* |
-            jwst/mrs_imatch/.* |
-            jwst/photom/.* |
             jwst/tests/.* |
             docs/.* |
             jwst/regtest/test_.* |
