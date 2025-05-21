@@ -24,16 +24,13 @@ def test_nirspec_fixedslit_wcs(rtdata, input_file):
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
-            # Check the 4 science slits
-            for slit in ['S200A1', 'S200A2', 'S400A1', 'S1600A1']:
-                wcs = nirspec.nrs_wcs_set_input(im, slit)
-                wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slit)
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        # Check the 4 science slits
+        for slit in ['S200A1', 'S200A2', 'S400A1', 'S1600A1']:
+            wcs = nirspec.nrs_wcs_set_input(im, slit)
+            wcs_truth = nirspec.nrs_wcs_set_input(im_truth, slit)
 
-                assert_wcs_grid_allclose(wcs, wcs_truth)
+            assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
 @pytest.mark.bigdata
@@ -53,20 +50,17 @@ def test_nirspec_mos_wcs(rtdata, input_file, msa_file):
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
-            # Get validated open slits from WCS transform
-            transform = im_truth.meta.wcs.get_transform('gwa', 'slit_frame')
-            open_slits = transform.slits[:]
-            names = [slit.name for slit in open_slits]
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        # Get validated open slits from WCS transform
+        transform = im_truth.meta.wcs.get_transform('gwa', 'slit_frame')
+        open_slits = transform.slits[:]
+        names = [slit.name for slit in open_slits]
 
-            for name in names:
-                wcs = nirspec.nrs_wcs_set_input(im, name)
-                wcs_truth = nirspec.nrs_wcs_set_input(im_truth, name)
+        for name in names:
+            wcs = nirspec.nrs_wcs_set_input(im, name)
+            wcs_truth = nirspec.nrs_wcs_set_input(im_truth, name)
 
-                assert_wcs_grid_allclose(wcs, wcs_truth)
+            assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
 @pytest.mark.bigdata
@@ -85,15 +79,12 @@ def test_nirspec_ifu_wcs(rtdata, input_file):
 
     rtdata.get_truth(f"truth/test_nirspec_wcs/{output}")
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
-            # Test all the IFU slices
-            for k in range(30):
-                wcs = nirspec.nrs_wcs_set_input(im, k)
-                wcs_truth = nirspec.nrs_wcs_set_input(im_truth, k)
-                assert_wcs_grid_allclose(wcs, wcs_truth)
+    with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
+        # Test all the IFU slices
+        for k in range(30):
+            wcs = nirspec.nrs_wcs_set_input(im, k)
+            wcs_truth = nirspec.nrs_wcs_set_input(im_truth, k)
+            assert_wcs_grid_allclose(wcs, wcs_truth)
 
 
 def assert_wcs_grid_allclose(wcs, wcs_truth):
