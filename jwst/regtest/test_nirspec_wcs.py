@@ -58,8 +58,8 @@ def test_nirspec_mos_wcs(rtdata, input_file, msa_file):
         warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
         with datamodels.open(rtdata.output) as im, datamodels.open(rtdata.truth) as im_truth:
             # Get validated open slits from WCS transform
-            slit2msa = im_truth.meta.wcs.get_transform('slit_frame', 'msa_frame')
-            open_slits = slit2msa.slits[:]
+            transform = im_truth.meta.wcs.get_transform('gwa', 'slit_frame')
+            open_slits = transform.slits[:]
             names = [slit.name for slit in open_slits]
 
             for name in names:
