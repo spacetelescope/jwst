@@ -1881,6 +1881,12 @@ def create_extraction(
                 spec.meta.observation.exposure_number = input_model.meta.observation.exposure_number
             spec.extract2d_xstart = data_model.xstart
             spec.extract2d_ystart = data_model.ystart
+            if data_model.xstart is None or data_model.ystart is None:
+                spec.extract2d_xstop = None
+                spec.extract2d_ystop = None
+            else:
+                spec.extract2d_xstop = data_model.xstart + data_model.xsize - 1
+                spec.extract2d_ystop = data_model.ystart + data_model.ysize - 1
 
         if apcorr is not None:
             if hasattr(apcorr, "tabulated_correction"):
@@ -2213,6 +2219,7 @@ def run_extract1d(
             del output_model.int_times
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
+    output_model.meta.observation.exposure_number = None  # can be different for each slit
 
     if apcorr_ref_model is not None:
         apcorr_ref_model.close()

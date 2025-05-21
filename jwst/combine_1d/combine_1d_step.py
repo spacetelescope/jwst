@@ -1,4 +1,5 @@
 from stdatamodels.jwst import datamodels
+from jwst.datamodels.utils.wfss_multispec import wfss_multiexposure_to_multispec
 
 from ..stpipe import Step
 from . import combine1d
@@ -57,6 +58,15 @@ class Combine1dStep(Step):
             A single combined 1D spectrum.
         """
         with datamodels.open(input_data) as input_model:
+            if isinstance(input_model, datamodels.WFSSMultiExposureSpecModel):
+                input_list = wfss_multiexposure_to_multispec(input_model)
+                if len(input_list) == 1:
+                    input_model = input_list[0]
+                else:
+                    raise NotImplementedError(
+                        "Running combine_1d on WFSSMultiExposureSpecModel with multiple spectra "
+                        "is not yet supported. This will be fixed in the near future."
+                    )
             try:
                 result = combine1d.combine_1d_spectra(
                     input_model, self.exptime_key, sigma_clip=self.sigma_clip

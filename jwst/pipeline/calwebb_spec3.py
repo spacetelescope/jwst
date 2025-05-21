@@ -26,8 +26,7 @@ from ..photom import photom_step
 from ..spectral_leak import spectral_leak_step
 from ..pixel_replace import pixel_replace_step
 
-from jwst.extract_1d._fileio import save_wfss_x1d
-from jwst.combine_1d._fileio import save_wfss_c1d
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure, make_wfss_multicombined
 
 import logging
 
@@ -285,7 +284,7 @@ class Spec3Pipeline(Pipeline):
                         result = self.photom.run(result)
                         result = self.combine_1d.run(result)
 
-                elif exptype in WFSS_TYPES:
+                else:
                     # for WFSS modes, do not save the results with one file per source
                     # instead compile the results over the for loop to be put into a single file
                     # at the end.
@@ -301,18 +300,9 @@ class Spec3Pipeline(Pipeline):
                         # Combine the results for all sources
                         comb = self.combine_1d.run(result)
                         # add metadata that only WFSS wants
-                        comb.spec[0].source_ra = getattr(result.spec[0], "source_ra", None)
-                        comb.spec[0].source_dec = getattr(result.spec[0], "source_dec", None)
+                        comb.spec[0].source_ra = result.exposures[0].spec_table["SOURCE_RA"][0]
+                        comb.spec[0].source_dec = result.exposures[0].spec_table["SOURCE_DEC"][0]
                         wfss_comb.append(comb)
-                else:
-                    result = self.extract_1d.run(result)
-
-                    # Check whether extraction was completed
-                    extraction_complete = (
-                        result is not None and result.meta.cal_step.extract_1d == "COMPLETE"
-                    )
-                    if extraction_complete:
-                        result = self.combine_1d.run(result)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
                 # If 2D data were resampled and combined, just do a 1D extraction
@@ -341,13 +331,15 @@ class Spec3Pipeline(Pipeline):
         if exptype in WFSS_TYPES:
             outstem = output_file.replace("_{source_id}", "")
             if self.save_results:
+                x1d_output = make_wfss_multiexposure(wfss_x1d)
                 x1d_filename = outstem + "_x1d.fits"
                 self.log.info(f"Saving the final x1d product as {x1d_filename}.")
-                save_wfss_x1d(wfss_x1d, x1d_filename)
+                x1d_output.save(x1d_filename)
             if self.save_results:
+                c1d_output = make_wfss_multicombined(wfss_comb)
                 c1d_filename = outstem + "_c1d.fits"
                 self.log.info(f"Saving the final c1d product as {c1d_filename}.")
-                save_wfss_c1d(wfss_comb, c1d_filename)
+                c1d_output.save(c1d_filename)
 
         input_models.close()
 

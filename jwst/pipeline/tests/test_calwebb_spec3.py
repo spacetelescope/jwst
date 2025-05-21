@@ -1,12 +1,13 @@
 import pytest
 import os
-from pathlib import Path
+import numpy as np
 
 import stdatamodels.jwst.datamodels as dm
 import jwst
 from jwst.datamodels import SourceModelContainer
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
+from jwst.datamodels.utils.tests.test_wfss_multispec import wfss_multiexposure, wfss_spec3_multispec, example_spec
 from jwst.stpipe import Step
-from jwst.combine_1d._fileio import save_wfss_c1d
 from jwst.extract_1d.tests.conftest import mock_niriss_wfss_l2, mock_nirspec_fs_one_slit, simple_wcs
 
 
@@ -28,7 +29,7 @@ def spec3_wfss_asn(mock_niriss_wfss_l2, tmp_cwd):
 
 
 @pytest.fixture
-def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
+def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
     """
     Run the spec3 pipeline on a WFSS association.
     
@@ -41,17 +42,14 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
         """
         Mock the Extract1dStep process() method.
         
-        Ensure it receives the right input type for a WFSS association.
+        Ensure it receives the right input type for a WFSS association,
+        and outputs the correct type.
         """
         if not isinstance(input_model, SourceModelContainer):
             raise TypeError("Input to extract_1d is not a SourceModelContainer")
-        output_model = dm.MultiSpecModel()
-        spec = dm.SpecModel()
-        spec.source_ra = 0.0
-        spec.source_dec = 0.0
-        output_model.spec.append(spec)
-        output_model.meta.cal_step.extract_1d = "COMPLETE"
-        return output_model
+        
+        return wfss_multiexposure
+
     monkeypatch.setattr("jwst.extract_1d.Extract1dStep.process", mock_extract1d)
 
 
@@ -61,8 +59,8 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
         
         Ensure it receives the right input type for a WFSS association.
         """
-        if not isinstance(input_model, dm.MultiSpecModel):
-            raise TypeError("Input to extract_1d is not a SourceModelContainer")
+        if not isinstance(input_model, dm.WFSSMultiExposureSpecModel):
+            raise TypeError("Input to combine_1d is not a WFSSMultiExposureSpecModel")
         output_model = dm.MultiCombinedSpecModel()
         spec = dm.SpecModel()
         output_model.spec.append(spec)
@@ -71,20 +69,35 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch):
     monkeypatch.setattr("jwst.combine_1d.Combine1dStep.process", mock_combine1d)
 
 
-    def mock_save_wfss(input_model, filename):
+    def mock_wfss_multiexposure(input_model):
         """
-        Bypass saving the files.
+        Bypass reorganizing the output list.
         
         Ensure the input type is correct, which is equivalent to ensuring the result of
         the pipeline has the correct type.
         """
         if not isinstance(input_model, list):
-            raise TypeError("Input to save_wfss is not a list")
-        if not all(isinstance(model, (dm.MultiSpecModel, dm.MultiCombinedSpecModel)) for model in input_model):
-            raise TypeError("Input to save_wfss is not a list of MultiSpecModel")
-        Path(filename).write_text("Mocked save_wfss output")
-    monkeypatch.setattr(jwst.pipeline.calwebb_spec3, "save_wfss_x1d", mock_save_wfss)
-    monkeypatch.setattr(jwst.pipeline.calwebb_spec3, "save_wfss_c1d", mock_save_wfss)
+            raise TypeError("Input to make_wfss_multiexposure is not a list")
+        if not all(isinstance(m, dm.WFSSMultiExposureSpecModel) for m in input_model):
+            raise TypeError("Input to make_wfss_multiexposure is not a list of WFSSMultiExposureSpecModel")
+        output_model = dm.WFSSMultiExposureSpecModel()
+        return output_model
+    monkeypatch.setattr(jwst.pipeline.calwebb_spec3, "make_wfss_multiexposure", mock_wfss_multiexposure)
+
+    def mock_wfss_multicombined(input_model):
+        """
+        Bypass reorganizing the output list.
+        
+        Ensure the input type is correct, which is equivalent to ensuring the result of
+        the pipeline has the correct type.
+        """
+        if not isinstance(input_model, list):
+            raise TypeError("Input to make_wfss_multicombined is not a list")
+        if not all(isinstance(m, dm.MultiCombinedSpecModel) for m in input_model):
+            raise TypeError("Input to make_wfss_multicombined is not a list of MultiSpecModel")
+        output_model = dm.WFSSMultiCombinedSpecModel()
+        return output_model
+    monkeypatch.setattr(jwst.pipeline.calwebb_spec3, "make_wfss_multicombined", mock_wfss_multicombined)
 
     args = ["calwebb_spec3", INPUT_ASN,]
     Step.from_cmdline(args)

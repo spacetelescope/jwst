@@ -134,20 +134,21 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
     result = Extract1dStep.call(mock_niriss_wfss_l3)
 
     # output is a single spectral model (not a container)
-    assert isinstance(result, dm.MultiSpecModel)
+    assert isinstance(result, dm.WFSSMultiExposureSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
-    for i, spec in enumerate(result.spec):
-        assert spec.name == str(i + 1)
+    for i, exp in enumerate(result.exposures):
+
+        tab = exp.spec_table[0]
 
         # output wavelength is the same as input
         _, _, expected_wave = simple_wcs(np.arange(50), np.arange(50))
-        assert np.allclose(spec.spec_table["WAVELENGTH"], expected_wave)
+        assert np.allclose(tab["WAVELENGTH"], expected_wave)
 
         # output flux and errors are non-zero, exact values will depend
         # on extraction parameters
-        assert np.all(spec.spec_table["FLUX"] > 0)
-        assert np.all(spec.spec_table["FLUX_ERROR"] > 0)
+        assert np.all(tab["FLUX"] > 0)
+        assert np.all(tab["FLUX_ERROR"] > 0)
 
     result.close()
 

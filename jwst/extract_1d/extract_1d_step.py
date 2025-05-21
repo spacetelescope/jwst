@@ -2,8 +2,8 @@ import crds
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.stpipe import Step
-from jwst.extract_1d._fileio import save_wfss_x1d, reorder_wfss
 from jwst.extract_1d import extract
 from jwst.extract_1d.soss_extract import soss_extract
 from jwst.extract_1d.ifu import ifu_extract1d
@@ -609,32 +609,9 @@ class Extract1dStep(Step):
             # from SourceModelContainer
             self._input_filename = result.meta.filename
 
-        return result
-
-    def save_model(self, result, *args, **kwargs):  # noqa: ARG002
-        """
-        Override save_model method to handle WFSS flat-format x1d saving.
-
-        Parameters
-        ----------
-        result : MultiSpecModel
-            The output model.
-        """
-        if not self.save_results:
-            return None
-
-        # Determine the exposure type
-        if isinstance(result, ModelContainer):
-            exp_type = result[0].meta.exposure.type
-        else:
-            exp_type = result.meta.exposure.type
-
+        # For WFSS, reorder the x1d product to save it in the flat format
         if exp_type in extract.WFSS_EXPTYPES:
-            # For WFSS, save the x1d product in the flat format
-            fname = self.make_output_path(basepath=self.output_file, suffix="x1d")
-            self.log.info(f"Saving x1d {fname}")
-            result = reorder_wfss(result)
-            save_wfss_x1d(result, fname)
-        else:
-            # Call the default save_model method
-            super().save_model(result, *args, **kwargs)
+            result = make_wfss_multiexposure(result)
+            result.meta.cal_step.extract_1d = "COMPLETE"
+
+        return result
