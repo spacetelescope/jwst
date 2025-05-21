@@ -39,8 +39,6 @@ repos:
           (?x)^(
             jwst/fringe/.* |
             jwst/ipc/.* |
-            jwst/mrs_imatch/.* |
-            jwst/photom/.* |
             jwst/tests/.* |
             docs/.* |
             jwst/regtest/test_.* |

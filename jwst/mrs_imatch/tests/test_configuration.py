@@ -1,16 +1,15 @@
 """
-Unit test for mrs_imatch testing setting up configuration
+Unit test for mrs_imatch testing setting up configuration.
 """
-
+import numpy as np
 import pytest
-
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
-from jwst.mrs_imatch.mrs_imatch_step import MRSIMatchStep
-from jwst.mrs_imatch.mrs_imatch_step import _get_2d_pixgrid
-from jwst.mrs_imatch.mrs_imatch_step import _find_channel_bkg_index
-import numpy as np
+from jwst.mrs_imatch.mrs_imatch_step import (
+    MRSIMatchStep,
+    _get_2d_pixgrid,
+    _find_channel_bkg_index)
 
 mirifushort_short = {
     'detector': 'MIRIFUSHORT',
@@ -29,7 +28,7 @@ mirifulong_long = {
 
 @pytest.fixture(scope='function')
 def miri_dither_ch12():
-    """ Generate 4 dithered channel 12 data  """
+    """Generate 4 dithered channel 12 data."""
 
     input_model1 = datamodels.IFUImageModel((20, 20))
     input_model1.meta.instrument._instance.update(mirifushort_short)
@@ -58,7 +57,7 @@ def miri_dither_ch12():
 
 
 def test_imatch_background_subtracted(tmp_cwd, miri_dither_ch12):
-    """ Test if data is already background subtracted - raise error"""
+    """Test if data is already background subtracted - raise error."""
 
     all_models = ModelContainer(miri_dither_ch12)
     # modify the data set background subtracted
@@ -78,7 +77,7 @@ def test_imatch_default_run():
 
     # test if default running results in skipping step
     step = MRSIMatchStep()
-    assert step.skip == True
+    assert step.skip
 
 
 def test_imatch_background_reset(tmp_cwd, miri_dither_ch12):
@@ -111,8 +110,7 @@ def test_imatch_background_reset(tmp_cwd, miri_dither_ch12):
 
     for i in range(len(new_container)):
         m = new_container[i]
-        test = len(m.meta.background.polynomial_info)
-        assert test == 0
+        assert len(m.meta.background.polynomial_info) == 0
 
 
 def test_find_channel_index(tmp_cwd, miri_dither_ch12):
@@ -135,8 +133,7 @@ def test_find_channel_index(tmp_cwd, miri_dither_ch12):
         }
     )
 
-    index = _find_channel_bkg_index(input_model12, '1')
-    assert index == 0
+    assert _find_channel_bkg_index(input_model12, '1') == 0
 
     # channel 2  background only has 1 background polynomial
     input_model12 = datamodels.IFUImageModel((20, 20))
@@ -155,8 +152,7 @@ def test_find_channel_index(tmp_cwd, miri_dither_ch12):
         }
     )
 
-    index = _find_channel_bkg_index(input_model12, '2')
-    assert index == 0
+    assert _find_channel_bkg_index(input_model12, '2') == 0
 
     # add background polynomial for channel 1 and test index
     degree = (1, 1, 1,)
@@ -173,8 +169,7 @@ def test_find_channel_index(tmp_cwd, miri_dither_ch12):
         }
     )
 
-    index = _find_channel_bkg_index(input_model12, '1')
-    assert index == 1
+    assert _find_channel_bkg_index(input_model12, '1') == 1
 
     # set up a new models only channel 3
     # channel 3
@@ -194,8 +189,7 @@ def test_find_channel_index(tmp_cwd, miri_dither_ch12):
         }
     )
 
-    index = _find_channel_bkg_index(input_model34, '3')
-    assert index == 0
+    assert _find_channel_bkg_index(input_model34, '3') == 0
 
     # set up a new model only have channel 4
     # channel 4
@@ -215,8 +209,7 @@ def test_find_channel_index(tmp_cwd, miri_dither_ch12):
         }
     )
 
-    index = _find_channel_bkg_index(input_model34, '4')
-    assert index == 0
+    assert _find_channel_bkg_index(input_model34, '4') == 0
 
     # set up a new model with both channel 3 and 4 background polynomials
     # channel 3 & 4
@@ -246,72 +239,23 @@ def test_find_channel_index(tmp_cwd, miri_dither_ch12):
         }
     )
 
-    index = _find_channel_bkg_index(input_model34, '4')
-    assert index == 0
-
-    index = _find_channel_bkg_index(input_model34, '3')
-    assert index == 1
+    assert _find_channel_bkg_index(input_model34, '4') == 0
+    assert _find_channel_bkg_index(input_model34, '3') == 1
 
 
-def test_get_2d_pixgrid():
-    """ Test if x,y grid for channel is formed correctly  """
-
-    # test if channel 1 then left side of detector
+@pytest.mark.parametrize("channel", ["1", "2", "3", "4"])
+def test_get_2d_pixgrid(channel):
+    """Test if x,y grid for channel is formed correctly."""
+    # channels 1 and 4: left side of detector
     # test shape of x (1/2 detector) and min,max (0,511) + 4 reference pixels
-    input_model12 = datamodels.IFUImageModel((20, 20))
-    input_model12.meta.instrument._instance.update(mirifushort_short)
-    x, y = _get_2d_pixgrid(input_model12, '1')
-
-    xsize0 = x.shape[0]
-    xsize1 = x.shape[1]
-    assert xsize0 == 1024
-    assert xsize1 == 512
-    xmin = np.amin(x)
-    xmax = np.amax(x)
-    assert xmin == 4
-    assert xmax == 515
-
-    # test if channel 2 then right side of detector
+    #
+    # channels 2 and 3; right side of detector
     # test shape of x (1/2 detector) and min,max 516, 1027 (no reference pixels)
-    input_model12 = datamodels.IFUImageModel((20, 20))
-    input_model12.meta.instrument._instance.update(mirifushort_short)
-    x, y = _get_2d_pixgrid(input_model12, '2')
-
-    xsize0 = x.shape[0]
-    xsize1 = x.shape[1]
-    assert xsize0 == 1024
-    assert xsize1 == 512
-    xmin = np.amin(x)
-    xmax = np.amax(x)
-    assert xmin == 516
-    assert xmax == 1027
-
-    # test if channel 3 then right side of detector
-    # test shape of x (1/2 detector) and min,max 516, 1027 (no reference pixels)
-    input_model34 = datamodels.IFUImageModel((20, 20))
-    input_model34.meta.instrument._instance.update(mirifulong_long)
-    x, y = _get_2d_pixgrid(input_model34, '3')
-
-    xsize0 = x.shape[0]
-    xsize1 = x.shape[1]
-    assert xsize0 == 1024
-    assert xsize1 == 512
-    xmin = np.amin(x)
-    xmax = np.amax(x)
-    assert xmin == 516
-    assert xmax == 1027
-
-    # test if channel 4 then left side of detector
-    # test shape of x (1/2 detector) and min,max 4, 515 (includes reference pixels)
-    input_model34 = datamodels.IFUImageModel((20, 20))
-    input_model34.meta.instrument._instance.update(mirifulong_long)
-    x, y = _get_2d_pixgrid(input_model34, '4')
-
-    xsize0 = x.shape[0]
-    xsize1 = x.shape[1]
-    assert xsize0 == 1024
-    assert xsize1 == 512
-    xmin = np.amin(x)
-    xmax = np.amax(x)
-    assert xmin == 4
-    assert xmax == 515
+    x, y = _get_2d_pixgrid(channel)
+    assert x.shape == (1024, 512)
+    if channel in ("1", "4"):
+        assert np.amin(x) == 4
+        assert np.amax(x) == 515
+    else:
+        assert np.amin(x) == 516
+        assert np.amax(x) == 1027
