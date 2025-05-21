@@ -37,10 +37,8 @@ repos:
       - id: numpydoc-validation
         exclude: |
           (?x)^(
-            jwst/flatfield/.* |
             jwst/fringe/.* |
             jwst/ipc/.* |
-            jwst/mrs_imatch/.* |
             jwst/tests/.* |
             docs/.* |
             jwst/regtest/test_.* |
