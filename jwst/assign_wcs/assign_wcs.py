@@ -76,6 +76,8 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
     wcs = WCS(pipeline)
     output_model.meta.wcs = wcs
     output_model.meta.cal_step.assign_wcs = "COMPLETE"
+    if output_model.meta.exposure.type.lower() == "nis_soss":
+        output_model.meta.wcs.bounding_box = mod.niriss_bounding_box(output_model)
     exclude_types = [
         "nrc_wfss",
         "nrc_tsgrism",
