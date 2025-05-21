@@ -1455,7 +1455,7 @@ class STTableDataDiff(TableDataDiff):
 
                 if get_stats:
                     sum_diffs = np.any(diffs > (self.atol + self.rtol * np.abs(bnonan)))
-                    if sum_diffs:
+                    if sum_diffs and len(rel_values) > 0:
                         # Report the total number of zeros, nans, and no-nan values
                         self.report_zeros_nan.add_row(
                             (
@@ -1475,7 +1475,6 @@ class STTableDataDiff(TableDataDiff):
                             )
                         )
 
-                        # Report the differences per column
                         self.report_table.add_row(
                             (
                                 col.name,
