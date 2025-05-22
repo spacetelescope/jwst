@@ -183,13 +183,11 @@ def wfss_multiexposure_to_multispec(input_model):
     # first extract all spectra as SpecModels in a flat list
     spec_list = []
     source_ids = []
-    # exposure_numbers = []
     exposure_times = []
     integration_times = []
     for exp in input_model.exposures:
         this_exp_list = expand_table(exp)
         source_ids.extend([spec.source_id for spec in this_exp_list])
-        # exposure_numbers.extend([spec.meta.observation.exposure_number for spec in this_exp_list])
         exposure_times.extend([exp.meta.exposure.exposure_time for _ in this_exp_list])
         integration_times.extend([exp.meta.exposure.integration_time for _ in this_exp_list])
         spec_list.extend(this_exp_list)
@@ -202,7 +200,8 @@ def wfss_multiexposure_to_multispec(input_model):
     output_list = []
     for source_id in unique_source_ids:
         multispec = dm.MultiSpecModel()
-        # TODO: currently there is no infrastructure for handling per-exposure weights
+        # BUG: currently there is no infrastructure for handling per-exposure weights
+        # This is also a problem on main
         multispec.meta.exposure.exposure_time = exposure_times[0]
         multispec.meta.exposure.integration_time = integration_times[0]
         spec_this_id = spec_list[source_ids == source_id]
@@ -221,7 +220,7 @@ def make_wfss_multicombined(results_list):
 
     Parameters
     ----------
-    results_list : list[MultiSlitModel]
+    results_list : list[MultiCombinedSpecModel]
         List of MultiSlitModel objects to be combined into a single c1d file.
 
     Returns

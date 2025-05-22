@@ -12,10 +12,13 @@ N_ROWS = 3
 
 @pytest.fixture
 def example_spec():
+
+    def mock_wcs(*args, **kwargs):
+        return 0.0, 0.0, 0.0
     spec = dm.SpecModel()
     spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
     recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
-    spec.meta.wcs = "mock_wcs"
+    spec.meta.wcs = mock_wcs
     spec_table = np.recarray((N_ROWS,), dtype=recarray_dtype)
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)
@@ -73,6 +76,8 @@ def wfss_spec3_multispec(example_spec):
     Each of the spectra is from the SAME source, but DIFFERENT exposures.
     """
     multi = dm.MultiSpecModel()
+    multi.meta.exposure.exposure_time = 7.0
+    multi.meta.exposure.integration_time = 7.0
     for j in range(N_EXPOSURES):
         # create a new SpecModel for each exposure
         spec = example_spec.copy()
