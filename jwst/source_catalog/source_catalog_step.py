@@ -7,10 +7,11 @@ import numpy as np
 
 from stdatamodels.jwst import datamodels
 
-from .detection import convolve_data, JWSTBackground, JWSTSourceFinder
 from .reference_data import ReferenceData
 from .source_catalog import JWSTSourceCatalog
 from ..stpipe import Step
+from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog, NoCatalogError
+
 
 __all__ = ["SourceCatalogStep"]
 
@@ -78,22 +79,38 @@ class SourceCatalogStep(Step):
                 return None
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
-            bkg = JWSTBackground(model.data, box_size=self.bkg_boxsize, coverage_mask=coverage_mask)
-            model.data -= bkg.background
 
-            threshold = self.snr_threshold * bkg.background_rms
-            finder = JWSTSourceFinder(threshold, self.npixels, deblend=self.deblend)
-
-            convolved_data = convolve_data(model.data, self.kernel_fwhm, mask=coverage_mask)
-            segment_img = finder(convolved_data, mask=coverage_mask)
-            if segment_img is None:
+            starfinder_kwargs = {
+                "npixels": self.npixels,
+                "deblend": self.deblend,
+                "connectivity": 8,
+                "nlevels": 32,
+                "contrast": 0.001,
+                "mode": "exponential",
+                "relabel": True,
+                "error": model.err,
+                "wcs": model.meta.wcs,
+            }
+            try:
+                catalog = make_tweakreg_catalog(
+                    model,
+                    self.snr_threshold,
+                    self.kernel_fwhm,
+                    bkg_boxsize=self.bkg_boxsize,
+                    coverage_mask=coverage_mask,
+                    starfinder_name="segmentation",
+                    starfinder_kwargs=starfinder_kwargs,
+                )
+            except NoCatalogError as err:
+                msg = f"{err} Source catalog will not be created."
+                self.log.warning(msg)
                 return None
 
+            JWSTSourceCatalog.convert_to_jy(model)
             ci_star_thresholds = (self.ci1_star_threshold, self.ci2_star_threshold)
             catobj = JWSTSourceCatalog(
                 model,
-                segment_img,
-                convolved_data,
+                catalog,
                 self.kernel_fwhm,
                 aperture_params,
                 abvega_offset,
@@ -101,21 +118,18 @@ class SourceCatalogStep(Step):
             )
             catalog = catobj.catalog
 
-            # add back background to data so input model is unchanged
-            model.data += bkg.background
-
             if self.save_results:
                 cat_filepath = self.make_output_path(ext=".ecsv")
                 catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
                 model.meta.source_catalog = Path(cat_filepath).name
                 self.log.info(f"Wrote source catalog: {cat_filepath}")
 
-                segm_model = datamodels.SegmentationMapModel(segment_img.data)
-                segm_model.update(model, only="PRIMARY")
-                segm_model.meta.wcs = model.meta.wcs
-                segm_model.meta.wcsinfo = model.meta.wcsinfo
-                self.save_model(segm_model, suffix="segm")
-                model.meta.segmentation_map = segm_model.meta.filename
-                self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
+                # segm_model = datamodels.SegmentationMapModel(segment_img.data)
+                # segm_model.update(model, only="PRIMARY")
+                # segm_model.meta.wcs = model.meta.wcs
+                # segm_model.meta.wcsinfo = model.meta.wcsinfo
+                # self.save_model(segm_model, suffix="segm")
+                # model.meta.segmentation_map = segm_model.meta.filename
+                # self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
 
         return catalog
