@@ -20,7 +20,6 @@ from jwst.cube_build.cube_match_sky_driz import cube_wrapper_driz  # c extension
 from jwst.cube_build.cube_match_sky_pointcloud import cube_wrapper  # c extension
 from jwst.datamodels import ModelContainer
 from jwst.model_blender import blendmeta
-from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
 
 log = logging.getLogger(__name__)
 
@@ -671,8 +670,6 @@ class IFUCubeData:
                 f"Printing debug information for cube spaxel:  {spaxel_x} {spaxel_y} {spaxel_z}"
             )
 
-        subtract_background = True
-
         # loop over every file that covers this channel/subchannel (MIRI) or
         # Grating/filter(NIRSPEC)
         # and map the detector pixels to the cube spaxel
@@ -694,9 +691,7 @@ class IFUCubeData:
                 log.debug(f"Working on Band defined by: {this_par1} {this_par2}")
 
                 if self.interpolation in ["pointcloud", "drizzle"]:
-                    pixelresult = self.map_detector_to_outputframe(
-                        this_par1, subtract_background, input_model
-                    )
+                    pixelresult = self.map_detector_to_outputframe(this_par1, input_model)
 
                     (
                         coord1,
@@ -990,11 +985,7 @@ class IFUCubeData:
                 self.spaxel_dq = np.zeros(total_num, dtype=np.uint32)
                 self.spaxel_var = np.zeros(total_num, dtype=np.float64)
 
-                subtract_background = False
-
-                pixelresult = self.map_detector_to_outputframe(
-                    this_par1, subtract_background, input_model
-                )
+                pixelresult = self.map_detector_to_outputframe(this_par1, input_model)
 
                 (
                     coord1,
@@ -1688,7 +1679,7 @@ class IFUCubeData:
         self.print_cube_geometry()
 
     # ________________________________________________________________________________
-    def map_detector_to_outputframe(self, this_par1, subtract_background, input_model):
+    def map_detector_to_outputframe(self, this_par1, input_model):
         """
         Loop over a file and map the detector pixels to the output cube.
 
@@ -1705,9 +1696,6 @@ class IFUCubeData:
         this_par1 : str
            For MIRI this is the channel number (1,2,3 or 4). For NIRSPEC this is the grating name.
            only need for MIRI to distinguish which channel on the detector we have
-        subtract_background : bool
-           If TRUE then subtract the background found in the mrs_imatch step. Only
-           needed for MIRI data
         input_model : IFUImageModel
            Input IFU image model to combine
 
@@ -1759,9 +1747,7 @@ class IFUCubeData:
         offsets = self.offsets
 
         if self.instrument == "MIRI":
-            sky_result = self.map_miri_pixel_to_sky(
-                input_model, this_par1, subtract_background, offsets
-            )
+            sky_result = self.map_miri_pixel_to_sky(input_model, this_par1, offsets)
             (x, y, ra, dec, wave_all, slice_no_all, dwave_all, corner_coord_all) = sky_result
 
         elif self.instrument == "NIRSPEC":
@@ -1953,7 +1939,7 @@ class IFUCubeData:
         )
 
     # ______________________________________________________________________
-    def map_miri_pixel_to_sky(self, input_model, this_par1, subtract_background, offsets):
+    def map_miri_pixel_to_sky(self, input_model, this_par1, offsets):
         """
         Loop over a MIRI model and map the detector pixels to the output cube.
 
@@ -1967,9 +1953,6 @@ class IFUCubeData:
         this_par1 : str
            For MIRI this is the channel # for NIRSPEC this is the grating name
            only need for MIRI to distinguish which channel on the detector we have
-        subtract_background : bool
-           If TRUE then subtract the background found in the mrs_imatch step only
-           needed for MIRI data
         offsets : dict
            Optional dictionary of ra and dec offsets to apply
 
@@ -2000,21 +1983,6 @@ class IFUCubeData:
                 decoffset.value,
                 input_model.meta.filename,
             )
-
-        # check if background sky matching as been done in mrs_imatch step
-        # If it has not been subtracted and the background has not been
-        # subtracted - subtract it.
-        num_ch_bgk = len(input_model.meta.background.polynomial_info)
-        if (
-            num_ch_bgk > 0
-            and subtract_background
-            and input_model.meta.background.subtracted is False
-        ):
-            for ich_num in range(num_ch_bgk):
-                poly = input_model.meta.background.polynomial_info[ich_num]
-                poly_ch = poly.channel
-                if poly_ch == this_par1:
-                    apply_background_2d(input_model, poly_ch, subtract=True)
 
         # find the slice number of each pixel and fill in slice_det
         ysize, xsize = input_model.data.shape

@@ -1,0 +1,1 @@
+Deprecated ``mrs_imatch`` module and its corresponding ``MRSIMatchStep`` step are removed.
