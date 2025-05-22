@@ -628,7 +628,12 @@ class DataSet:
                 return
             self.photom_io(ftab.phot_table[row])
         else:
+            # check for subarray in the phot_table: older files do not have it
             fields_to_match = {"filter": self.filter, "pupil": self.pupil}
+            if "subarray" in ftab.phot_table.columns.names:
+                log.info("Matching to subarray: %s", self.subarray)
+                fields_to_match["subarray"] = self.subarray
+
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
