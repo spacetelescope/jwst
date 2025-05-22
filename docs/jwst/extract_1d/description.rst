@@ -475,22 +475,13 @@ wavelength grid before the 1D spectra for each order are extracted.
 
 There are a number of keyword arguments accessible to the user to customize the ``extract_1d`` for SOSS data.
 * `soss_atoca` toggles the ATOCA algorithm and uses a simple box extraction if False.
-* `soss_threshold` is the threshold value above which a pixel will be included when modeling the SOSS trace in ATOCA.
-  Default is 0.01.
-* `soss_n_os` is the oversampling factor of the underlying wavelength grid when modeling the SOSS trace in ATOCA.
-  Default is 2.
-* `soss_wave_grid_in` is the filename or SossWaveGrid containing the wavelength grid used by ATOCA to model each pixel
-  valid pixel of the detector. If not given, the grid is determined based on an estimate of the flux (`soss_estimate`),
-  the relative tolerance (`soss_rtol`) required on each pixel model and the maximum grid size (`soss_max_grid_size`).
+* `soss_threshold` is the threshold value above which a pixel will be included when modeling the SOSS trace in ATOCA. Default is 0.01.
+* `soss_n_os` is the oversampling factor of the underlying wavelength grid when modeling the SOSS trace in ATOCA. Default is 2.
+* `soss_wave_grid_in` is the filename or SossWaveGrid containing the wavelength grid used by ATOCA to model each pixel valid pixel of the detector. If not given, the grid is determined based on an estimate of the flux (`soss_estimate`), the relative tolerance (`soss_rtol`) required on each pixel model and the maximum grid size (`soss_max_grid_size`).
 * `soss_estimate` is the filename or SpecModel of the estimate of the target flux.
-* `soss_rtol` is the relative tolerance needed on a pixel model. It is used to determine the sampling of the
-  `soss_wave_grid` when not directly given.
-* `soss_max_grid_size` is the maximum grid size allowed when `soss_wave_grid` is not provided to make sure the
-  computation time or the memory used stays reasonable.
-* `soss_tikfac` is the regularization factor used for extraction in ATOCA. If left to the default value of None,
-  ATOCA will find an optimized value.
-* `soss_width` is the aperture width used to extract the SOSS spectrum from the decontaminated trace in ATOCA. Default
-  is 40.
+* `soss_rtol` is the relative tolerance needed on a pixel model. It is used to determine the sampling of the `soss_wave_grid` when not directly given.
+* `soss_max_grid_size` is the maximum grid size allowed when `soss_wave_grid` is not provided to make sure the computation time or the memory used stays reasonable.
+* `soss_tikfac` is the regularization factor used for extraction in ATOCA. If left to the default value of None, ATOCA will find an optimized value.
+* `soss_width` is the aperture width used to extract the SOSS spectrum from the decontaminated trace in ATOCA. Default is 40.
 * `soss_bad_pix` is the method used to handle bad pixels, either "model" or "masking". Default method is "model".
 * `soss_modelname` is the filename for optional model output of ATOCA traces and pixel weights.
-
