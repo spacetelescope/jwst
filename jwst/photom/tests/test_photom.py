@@ -141,7 +141,14 @@ def mk_soss_spec(settings, speclen):
 
 
 def create_input(
-    instrument, detector, exptype, filter_used=None, pupil=None, grating=None, band=None
+    instrument,
+    detector,
+    exptype,
+    filter_used=None,
+    pupil=None,
+    grating=None,
+    band=None,
+    subarray=None,
 ):
     """
     Create placeholder data (an open model) of the appropriate type.
@@ -162,20 +169,24 @@ def create_input(
         "NRC_WFSS",
         "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT", "NRS_IFU", "NRS_MSASPEC".
 
-    filter_used : str or None
+    filter_used : str or None, optional
         Name of the element in the filter wheel.  For NIRISS WFSS, this
         is used to determine the dispersion direction.
 
-    pupil : str or None
+    pupil : str or None, optional
         Name of the element in the pupil wheel.  For NIRCam WFSS, this
         is used to determine the dispersion direction.
 
-    grating : str or None
+    grating : str or None, optional
         Name of the element in the grating wheel.  This is only used for
         populating a keyword.
 
-    band : str or None
+    band : str or None, optional
         Band (MIRI only).  This is only used for populating a keyword.
+
+    subarray : str or None, optional
+        Subarray name. This is only used for populating a keyword, if not
+        set to None.
 
     Returns
     -------
@@ -309,6 +320,7 @@ def create_input(
             input_model.meta.target.source_type = "POINT"
             input_model.meta.photometry.pixelarea_arcsecsq = 0.0025
             input_model.meta.photometry.pixelarea_steradians = 0.0025 * A2_TO_SR
+            input_model.meta.subarray.name = "FULL"
     elif instrument == "MIRI":
         if exptype == "MIR_MRS":
             (data, dq, err, var_p, var_r, var_f) = mk_data((128, 256))
@@ -384,6 +396,8 @@ def create_input(
         input_model.meta.instrument.grating = grating
     if band is not None:
         input_model.meta.instrument.band = band
+    if subarray is not None:
+        input_model.meta.subarray.name = subarray
 
     return input_model
 
@@ -947,6 +961,40 @@ def create_photom_nircam_image():
     )
     reftab = np.array(
         list(zip(filter_list, pupil, photmjsr, uncertainty, strict=True)), dtype=dtype
+    )
+
+    ftab = datamodels.NrcImgPhotomModel(phot_table=reftab)
+
+    return ftab
+
+
+def create_photom_nircam_image_with_subarray():
+    """
+    Create a photom table for NIRCam image.
+
+    Returns
+    -------
+    ftab : `~jwst.datamodels.JwstDataModel`
+        An open data model for a NIRCam image photom reference file.
+    """
+    filter_list = ["F150W", "F150W"]
+    pupil = ["CLEAR", "CLEAR"]
+    subarray = ["FULL", "SUB640"]
+
+    photmjsr = [3.1, 3.2]
+    uncertainty = [0.0, 0.0]
+
+    dtype = np.dtype(
+        [
+            ("filter", "S12"),
+            ("pupil", "S12"),
+            ("subarray", "S12"),
+            ("photmjsr", "<f4"),
+            ("uncertainty", "<f4"),
+        ]
+    )
+    reftab = np.array(
+        list(zip(filter_list, pupil, subarray, photmjsr, uncertainty, strict=True)), dtype=dtype
     )
 
     ftab = datamodels.NrcImgPhotomModel(phot_table=reftab)
@@ -1571,6 +1619,56 @@ def test_nircam_image():
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input_data[iy, ix]
     assert_allclose(ratio, compare, rtol=1.0e-7)
+
+
+@pytest.mark.parametrize("subarray,rownum", [("FULL", 0), ("SUB640", 1)])
+def test_nircam_image_subarray(subarray, rownum):
+    """Test the calc_nircam method of the DataSet class, image data, matching subarrays."""
+    input_model = create_input(
+        "NIRCAM", "NRCA3", "NRC_IMAGE", filter_used="F150W", pupil="CLEAR", subarray=subarray
+    )
+    save_input = input_model.copy()
+    ds = photom.DataSet(input_model)
+    ftab = create_photom_nircam_image_with_subarray()
+    ds.calc_nircam(ftab)
+
+    input_data = save_input.data
+    output = ds.input.data  # ds.input is the output
+
+    # Expected row number is 0 for FULL, 1 for SUB640
+    photmjsr = ftab.phot_table["photmjsr"][rownum]
+    shape = input_data.shape
+    ix = shape[1] // 2
+    iy = shape[0] // 2
+    compare = photmjsr
+    # Compare the values at the center pixel.
+    ratio = output[iy, ix] / input_data[iy, ix]
+    assert_allclose(ratio, compare, rtol=1.0e-7)
+
+
+def test_nircam_image_subarray_no_match(log_watcher):
+    """Test the calc_nircam method, image data with no match in the photom file."""
+    input_model = create_input(
+        "NIRCAM", "NRCA3", "NRC_IMAGE", filter_used="F150W", pupil="CLEAR", subarray="SUB320"
+    )
+    save_input = input_model.copy()
+    ds = photom.DataSet(input_model)
+    ftab = create_photom_nircam_image_with_subarray()
+
+    # Watch for warning in log
+    watcher = log_watcher(
+        "jwst.photom.photom",
+        message="Expected to find one matching row in table, found 0",
+        level="warning",
+    )
+    ds.calc_nircam(ftab)
+    watcher.assert_seen()
+
+    input_data = save_input.data
+    output = ds.input.data
+
+    # No modification to data is expected
+    assert_allclose(output, input_data)
 
 
 def test_nircam_spec():
