@@ -6,7 +6,7 @@ calwebb_spec3: Stage 3 Spectroscopic Processing
 :Class: `jwst.pipeline.Spec3Pipeline`
 :Alias: calwebb_spec3
 
-Stage 3 processing for spectroscopic observations is intended for combining the 
+Stage 3 processing for spectroscopic observations is intended for combining the
 calibrated data from multiple exposures (e.g. a dither/nod pattern) into a single
 combined 2D or 3D spectral product and a combined 1D spectrum.
 Before being combined, the exposures may receive additional corrections for the
@@ -27,8 +27,6 @@ processed using the :ref:`calwebb_tso3 <calwebb_tso3>` pipeline.
 | :ref:`master_background <master_background_step>`\ :sup:`2` | |c| |     | |c| | |c| | |c| |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
 | :ref:`exp_to_source <exp_to_source>`                        | |c| | |c| |     |     |     |      | |c|  |  |c|   |
-+-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
-| :ref:`mrs_imatch <mrs_imatch_step>`                         |     |     |     |     | |c| |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
 | :ref:`outlier_detection <outlier_detection_step>`           | |c| | |c| | |c| | |c| | |c| |      |      |        |
 +-------------------------------------------------------------+-----+-----+-----+-----+-----+------+------+--------+
