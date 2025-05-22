@@ -176,11 +176,6 @@ master_background:
     - any-glob-to-any-file:
       - 'jwst/master_background/**'
 
-mrs_imatch:
-  - changed-files:
-    - any-glob-to-any-file:
-      - 'jwst/mrs_imatch/**'
-
 msa_flagging:
   - changed-files:
     - any-glob-to-any-file:
