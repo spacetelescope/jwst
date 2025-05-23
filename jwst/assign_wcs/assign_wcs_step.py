@@ -53,6 +53,7 @@ class AssignWcsStep(Step):
         sip_npoints = integer(default=12)  #  number of points for SIP
         slit_y_low = float(default=-.55)  # The lower edge of a slit (NIRSpec only).
         slit_y_high = float(default=.55)  # The upper edge of a slit (NIRSpec only).
+        nrs_ifu_slit_wcs = boolean(default=False)  # For NIRSpec IFU, create a full slit-based WCS instead of a top-level coordinate-based WCS. Used for diagnostic purposes only.
     """  # noqa: E501
 
     reference_file_types = [
@@ -118,7 +119,12 @@ class AssignWcsStep(Step):
                     log.error(message)
                     raise MSAFileError(message)
             slit_y_range = [self.slit_y_low, self.slit_y_high]
-            result = load_wcs(input_model, reference_file_names, slit_y_range)
+            result = load_wcs(
+                input_model,
+                reference_file_names,
+                slit_y_range,
+                nrs_ifu_slit_wcs=self.nrs_ifu_slit_wcs,
+            )
 
         if not (
             result.meta.exposure.type.lower() in (IMAGING_TYPES.union(WFSS_TYPES))
