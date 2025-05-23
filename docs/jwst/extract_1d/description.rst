@@ -450,7 +450,7 @@ where `flux` is the extracted spectral data, and the data are from channel 4 for
 
 Extraction for NIRISS SOSS Data
 -------------------------------
-For NIRISS SOSS data, spectral orders 1 and 2 overlap slightly at longer wavelengths so a specialized extraction
+For NIRISS SOSS data, spectral orders 1 and 2 overlap slightly at longer wavelengths, so a specialized extraction
 algorithm known as ATOCA (Algorithm to Treat Order ContAmination, Darveau-Bernier et al., 2022) is made available in
 the ``extract_1d`` step. This routine constructs a linear model of each pixel on the detector and treats the underlying
 incident spectrum as a free variable to simultaneously extract the cross-contaminated spectra, which are accurate to
