@@ -7,7 +7,7 @@ from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, TSOMultiSpecModel
 
-from jwst.extract_1d.extract import make_tso_specmodel
+from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.photom import photom
 from jwst.lib.dispaxis import get_dispersion_direction
 

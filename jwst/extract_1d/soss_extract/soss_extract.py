@@ -7,7 +7,8 @@ from scipy.interpolate import UnivariateSpline, CubicSpline
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags, SossWaveGridModel
 
-from jwst.extract_1d.extract import populate_time_keywords, make_tso_specmodel
+from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
+from jwst.extract_1d.extract import populate_time_keywords
 from jwst.lib import pipe_utils
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 
