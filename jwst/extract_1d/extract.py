@@ -1868,6 +1868,26 @@ def create_extraction(
 
         copy_keyword_info(data_model, slitname, spec)
 
+        if exp_type in WFSS_EXPTYPES:
+            if hasattr(data_model.meta, "filename"):
+                # calwebb_spec3 case: no separate slit input to function
+                spec.meta.filename = data_model.meta.filename
+                spec.meta.observation.exposure_number = data_model.meta.observation.exposure_number
+            else:
+                # calwebb_spec2 case: data_model is a slit so need to get this meta from input_model
+                # In this case, exposure_number is expected to be the same for all slits
+                # because spec list corresponds to different sources in the same exposure
+                spec.meta.filename = getattr(input_model.meta, "filename", None)
+                spec.meta.observation.exposure_number = input_model.meta.observation.exposure_number
+            spec.extract2d_xstart = data_model.xstart
+            spec.extract2d_ystart = data_model.ystart
+            if data_model.xstart is None or data_model.ystart is None:
+                spec.extract2d_xstop = None
+                spec.extract2d_ystop = None
+            else:
+                spec.extract2d_xstop = data_model.xstart + data_model.xsize - 1
+                spec.extract2d_ystop = data_model.ystart + data_model.ysize - 1
+
         if apcorr is not None:
             if hasattr(apcorr, "tabulated_correction"):
                 if apcorr.tabulated_correction is not None:
@@ -2199,6 +2219,7 @@ def run_extract1d(
             del output_model.int_times
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
+    output_model.meta.observation.exposure_number = None  # can be different for each slit
 
     if apcorr_ref_model is not None:
         apcorr_ref_model.close()

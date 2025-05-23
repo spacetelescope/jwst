@@ -5,6 +5,7 @@ import numpy as np
 
 import stdatamodels.jwst.datamodels as dm
 from jwst.datamodels.utils.flat_multispec import (
+    set_schema_units,
     copy_column_units,
     determine_vector_and_meta_columns,
     make_empty_recarray,
@@ -196,3 +197,22 @@ def test_copy_column_units(input_spec, output_spec):
     # otherwise matched.
     expected[: len(input_spec.spec_table.columns)] = input_spec.spec_table.columns.units
     assert output_spec.spec_table.columns.units == expected
+
+
+def test_set_schema_units():
+    model = dm.WFSSMultiSpecModel((10,))
+    model.spec_table = model.spec_table.copy()
+    set_schema_units(model)
+
+    # get expected units from the schema
+    data_type = model.schema["properties"]["spec_table"]["datatype"]
+    # check that the units are set correctly
+    for i in range(len(model.spec_table.columns)):
+        if "unit" in data_type[i]:
+            atleast_one = True
+            assert model.spec_table.columns[i].unit == data_type[i]["unit"]
+        else:
+            assert model.spec_table.columns[i].unit is None
+
+    # ensure that the test was not empty
+    assert atleast_one

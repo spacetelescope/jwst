@@ -2,6 +2,7 @@ import crds
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 from jwst.stpipe import Step
 from jwst.extract_1d import extract
 from jwst.extract_1d.soss_extract import soss_extract
@@ -597,5 +598,20 @@ class Extract1dStep(Step):
             # If only one result, return the model instead of the container
             if len(result) == 1:
                 result = result[0]
+
+        if (
+            (self._input_filename is None)
+            and (not isinstance(result, ModelContainer))
+            and (result is not None)
+            and (self.output_file is None)
+        ):
+            # Fix output file naming for WFSS multislitmodels that were originally generated
+            # from SourceModelContainer
+            self._input_filename = result.meta.filename
+
+        # For WFSS, reorder the x1d product to save it in the flat format
+        if exp_type in extract.WFSS_EXPTYPES:
+            result = make_wfss_multiexposure(result)
+            result.meta.cal_step.extract_1d = "COMPLETE"
 
         return result
