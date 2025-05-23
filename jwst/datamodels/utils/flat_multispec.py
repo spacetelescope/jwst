@@ -171,6 +171,26 @@ def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, igno
         log.warning(f"Metadata could not be determined from input spec_table: {problems}")
 
 
+def set_schema_units(model):
+    """
+    Give all columns in the model the units defined in the model schema.
+
+    This gets around a bug/bad behavior in stdatamodels that units are not
+    automatically assigned to the spec_table.
+
+    Model is modified in place.
+
+    Parameters
+    ----------
+    model : DataModel
+        Any model containing a spec_table attribute.
+    """
+    data_type = model.schema["properties"]["spec_table"]["datatype"]
+    for col in data_type:
+        if "unit" in col:
+            model.spec_table.columns[col["name"]].unit = col["unit"]
+
+
 def copy_column_units(input_model, output_model):
     """
     Copy units from input columns to output columns.

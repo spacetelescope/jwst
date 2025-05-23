@@ -3,6 +3,7 @@
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from jwst.datamodels.utils.flat_multispec import (
+    set_schema_units,
     copy_column_units,
     determine_vector_and_meta_columns,
     make_empty_recarray,
@@ -148,7 +149,9 @@ def make_wfss_multiexposure(input_list):
         spec_table.sort(order="SOURCE_ID")
         ext = dm.WFSSMultiSpecModel(spec_table)
 
-        # copy units from any of the SpecModels (they should all be the same)
+        # Set default units from the model schema
+        set_schema_units(ext)
+        # copy units from the example specmodel, overriding the schema defaults where applicable
         copy_column_units(example_spec, ext)
 
         # copy metadata
@@ -263,6 +266,7 @@ def make_wfss_multicombined(results_list):
     example_model = results_list[0]
     output_c1d.update(example_model)
 
+    set_schema_units(output_c1d)
     # copy units from any of the SpecModels (they should all be the same)
     copy_column_units(model.spec[0], output_c1d)
 

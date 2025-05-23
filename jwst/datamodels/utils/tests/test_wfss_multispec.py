@@ -23,6 +23,7 @@ def example_spec():
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)
     spec.spec_table = spec_table
+    spec.spec_table.columns["wavelength"].unit = "um"
     return spec
 
 def _add_multispec_meta(spec):
@@ -115,8 +116,18 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     # check the required metadata attributes
     assert not hasattr(output_model.meta, "wcs")
     for i, exposure in enumerate(output_model.exposures):
-        assert exposure.meta.wcs == "mock_wcs"
+        assert hasattr(exposure.meta, "wcs")
         assert exposure.exposure_number == str(i + 1)
+    
+    # check that units are present
+    # test one vector-like column, which should come from the input specmodels
+    # and one meta column, which should be copied from the schema by set_schema_units
+    to_check = ["WAVELENGTH", "SOURCE_RA"]
+    expected_units = ["um", "degrees"]
+    for exposure in output_model.exposures:
+        for col in to_check:
+            assert col in exposure.spec_table.columns.names
+            assert exposure.spec_table.columns[col].unit == expected_units[to_check.index(col)]
 
 
 @pytest.fixture
@@ -193,7 +204,7 @@ def test_wfss_multi_from_wfss_multi(wfss_multiexposure):
     # test that the data has all the appropriate data and metadata
     for i, exposure in enumerate(output_model.exposures):
         assert exposure.exposure_number == str(i + 1)
-        assert exposure.meta.wcs == "mock_wcs"
+        assert hasattr(exposure.meta, "wcs")
         assert exposure.spec_table.shape == (N_SOURCES*2,)
     
 
@@ -214,6 +225,7 @@ def multi_combined():
     spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
     spec_table["FLUX"] = np.ones(N_ROWS)
     spec.spec_table = spec_table
+    spec.spec_table.columns["wavelength"].unit = "um"
     multi.spec.append(spec)
     return multi
 
@@ -240,3 +252,10 @@ def test_make_wfss_combined(comb1d_list):
     output_model = make_wfss_multicombined(comb1d_list)
     assert isinstance(output_model, dm.WFSSMultiCombinedSpecModel)
     assert output_model.spec_table.shape == (N_SOURCES,)
+
+    # test units
+    to_check = ["WAVELENGTH", "SOURCE_RA"]
+    expected_units = ["um", "degrees"]
+    for col in to_check:
+        assert col in output_model.spec_table.columns.names
+        assert output_model.spec_table.columns[col].unit == expected_units[to_check.index(col)]
