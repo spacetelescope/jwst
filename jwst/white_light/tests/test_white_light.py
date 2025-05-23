@@ -5,8 +5,9 @@ from numpy.testing import assert_allclose
 import pytest
 from stdatamodels.jwst import datamodels
 
+from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
+from jwst.extract_1d.extract import populate_time_keywords
 from jwst.tests.helpers import LogWatcher
-from jwst.extract_1d.extract import make_tso_specmodel, populate_time_keywords
 from jwst.white_light.white_light import white_light
 
 
