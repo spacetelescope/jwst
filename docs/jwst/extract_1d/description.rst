@@ -73,6 +73,8 @@ for point sources observed with NIRSpec and NIRISS SOSS, units of flux density
 Output
 ------
 
+Output data for this step are in the form of :ref:`x1d`.
+
 Data structure
 ^^^^^^^^^^^^^^
 
