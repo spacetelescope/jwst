@@ -468,7 +468,7 @@ used to fit the pixel model to the observations, weighted by the uncertainty. Ho
 of equations is highly degenerate, a Tikhonov regularization (Tikhonov 1963) is performed. The goal here is to find the
 smoothest solution for the flux that fits the observations within the measured uncertainties.
 
-The resulting spectral trace solutions are actually at a higher resolution than the observed data since an oversampled
+The resulting spectral trace solutions are at a higher resolution than the observed data since an oversampled
 wavelength grid is used by the ATOCA algorithm for decontamination. These results are then reconvolved onto the native
 wavelength grid before the 1D spectra for each order are extracted.
 
