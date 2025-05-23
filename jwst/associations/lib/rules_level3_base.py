@@ -615,6 +615,47 @@ def dms_product_name_sources(asn):
     return product_name.lower()
 
 
+def dms_product_name_wfss(asn):
+    """
+    Produce source-based product names.
+
+    Parameters
+    ----------
+    asn : Association
+        The association for which the product
+        name is to be created.
+
+    Returns
+    -------
+    str
+        The product name.
+    """
+    instrument = asn.get_instrument()
+
+    opt_elem = asn.get_opt_element()
+
+    slit_name = asn.get_slit_name()
+    if slit_name:
+        slit_name = "-" + slit_name
+
+    subarray = asn.get_subarray()
+    if subarray:
+        subarray = "-" + subarray
+
+    product_name_format = "jw{program}-{acid}_{instrument}_{opt_elem}{slit_name}{subarray}"
+    product_name = format_product(
+        product_name_format,
+        program=asn.data["program"],
+        acid=asn.acid.id,
+        instrument=instrument,
+        opt_elem=opt_elem,
+        slit_name=slit_name,
+        subarray=subarray,
+    )
+
+    return product_name.lower()
+
+
 def dms_product_name_nrsfs_sources(asn):
     """
     Produce source-based product names for NIRSpec fixed-slit observations.
