@@ -617,7 +617,11 @@ def dms_product_name_sources(asn):
 
 def dms_product_name_wfss(asn):
     """
-    Produce source-based product names.
+    Produce source-based product names for WFSS observations.
+
+    For this mode, the x1d products contain all sources
+    in the same product, and so the source_id is not
+    included in the product name.
 
     Parameters
     ----------
