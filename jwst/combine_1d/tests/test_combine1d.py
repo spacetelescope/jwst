@@ -217,3 +217,5 @@ def test_wfss_multi_input(wfss_multiexposure):
     assert np.allclose(result.spec_table["SOURCE_RA"], 0.0)
     assert np.allclose(result.spec_table["SOURCE_DEC"], 0.0)
     assert np.all(result.spec_table["SOURCE_TYPE"] == "POINT")
+
+    assert result.dispersion_direction == 3

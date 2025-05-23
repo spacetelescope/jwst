@@ -260,31 +260,24 @@ def expand_table(spec):
     new_spec_list = []
     n_spectra = len(spec.spec_table)
     for i in range(n_spectra):
+        # initialize a new SpecModel
         spec_row = spec.spec_table[i]
         n_elements = int(spec_row["NELEMENTS"])
         new_spec = datamodels.SpecModel()
         data_type = new_spec.schema["properties"]["spec_table"]["datatype"]
         columns_to_copy = np.array([col["name"] for col in data_type])
 
+        # Copy over the vector columns from input spec_table to output spec_table
         spec_table = np.empty(n_elements, dtype=new_spec.spec_table.dtype)
         for col_name in columns_to_copy:
             spec_table[col_name] = spec_row[col_name][:n_elements]
-
-        # Assign the spec_table to the model
         new_spec.spec_table = spec_table
 
-        # Update spectral metadata
-        if hasattr(spec.meta, "wcs"):
-            new_spec.meta.wcs = deepcopy(spec.meta.wcs)
-        new_spec.meta.observation.exposure_number = getattr(spec, "exposure_number", "")
-        new_spec.meta.filename = getattr(spec, "filename", "")
-        copy_spec_metadata(spec, new_spec)
-        copy_column_units(spec, new_spec)
-
-        # Add int_num or source_id from the table, if present
+        # Copy over the metadata columns from input spec_table to the spectrum's metadata
         meta_columns = all_columns[~np.isin(all_columns, columns_to_copy)].tolist()
         meta_columns.remove("NELEMENTS")
-        # need to return to the old names for extract1d extent
+        # For WFSSMultiSpecModel, some of the metadata columns are renamed.
+        # Need to return them to their original names here.
         for meta_key in meta_columns:
             try:
                 if meta_key in NEW_NAMES:
@@ -294,6 +287,14 @@ def expand_table(spec):
                 setattr(new_spec, spec_attr, spec_row[meta_key])
             except KeyError:
                 pass
+
+        # Copy over relevant metadata from the input model to the output model
+        if hasattr(spec.meta, "wcs"):
+            new_spec.meta.wcs = deepcopy(spec.meta.wcs)
+        new_spec.meta.observation.exposure_number = getattr(spec, "exposure_number", "")
+        new_spec.meta.filename = getattr(spec, "filename", "")
+        copy_spec_metadata(spec, new_spec)
+        copy_column_units(spec, new_spec)
 
         new_spec_list.append(new_spec)
 

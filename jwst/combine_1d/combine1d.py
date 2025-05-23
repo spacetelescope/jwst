@@ -14,7 +14,13 @@ log.setLevel(logging.DEBUG)
 
 
 # attributes that we want to copy unmodified from input to output spectra
-SPECMETA_ATTRIBUTES = ["source_id", "source_type", "source_ra", "source_dec"]
+SPECMETA_ATTRIBUTES = [
+    "source_id",
+    "dispersion_direction",
+    "source_type",
+    "source_ra",
+    "source_dec",
+]
 
 
 class InputSpectrumModel:

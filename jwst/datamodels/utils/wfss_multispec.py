@@ -5,6 +5,7 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.datamodels.utils.flat_multispec import (
     set_schema_units,
     copy_column_units,
+    copy_spec_metadata,
     determine_vector_and_meta_columns,
     make_empty_recarray,
     populate_recarray,
@@ -53,6 +54,7 @@ def make_wfss_multiexposure(input_list):
     # first loop over both source and exposure to figure out final n_rows, n_exposures, n_sources
     n_rows_by_exposure = []
     exposure_counter = {}
+    all_source_ids = []
     # for calwebb_spec3 the outer loop is over sources and the inner loop is over exposures
     # for calwebb_spec2 it is the opposite, but outer loop (exposures) should have just one element
     for model in results_list:
@@ -70,24 +72,27 @@ def make_wfss_multiexposure(input_list):
                 wcs = spec.meta.wcs
                 exposure_counter[exp_number] = {
                     "n_rows": n_rows,
-                    "n_sources": 1,
                     "filename": fname,
                     "wcs": wcs,
                     "exposure_time": model.meta.exposure.exposure_time,  # need for combine_1d
                     "integration_time": model.meta.exposure.integration_time,  # need for combine_1d
                 }
             else:
-                exposure_counter[exp_number]["n_sources"] += 1
+                # exposure_counter[exp_number]["n_sources"] += 1
                 # if this exposure has already been encountered,
                 # check if number of rows is larger than the previous one
                 exposure_counter[exp_number]["n_rows"] = max(
                     exposure_counter[exp_number]["n_rows"], spec.spec_table.shape[0]
                 )
 
+            all_source_ids.append(spec.source_id)
+
+    all_source_ids = np.sort(np.unique(all_source_ids))
+    n_sources = len(all_source_ids)
+
     exposure_numbers = list(exposure_counter.keys())
     n_exposures = len(exposure_numbers)
     n_rows_by_exposure = [exposure_counter[n]["n_rows"] for n in exposure_numbers]
-    n_sources_by_exposure = [exposure_counter[n]["n_sources"] for n in exposure_numbers]
 
     # Set up output table column names and dtypes
     # Use SpecModel.spectable to determine the vector-like columns
@@ -98,28 +103,30 @@ def make_wfss_multiexposure(input_list):
     all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
     defaults = dm.WFSSMultiSpecModel().schema["properties"]["spec_table"]["default"]
 
-    # loop over exposures to make tables for each exposure
+    # loop over exposures to make empty tables for each exposure, which are initially populated
+    # with the schema defaults (NaNs for float columns).
+    # All tables should have the same source_id column for ease of indexing,
+    # even if some sources are not present in some exposures.
     fltdata_by_exposure = []
     for i in range(n_exposures):
         n_rows = n_rows_by_exposure[i]
-        n_sources = n_sources_by_exposure[i]
         flt_empty = make_empty_recarray(
             n_rows, n_sources, all_columns, is_vector, defaults=defaults
         )
+        flt_empty["SOURCE_ID"] = all_source_ids
         fltdata_by_exposure.append(flt_empty)
 
     # Now loop through the models and populate the tables
-    # Need to index each exposure separately because they may have a different number of sources
-    loop_index_by_exposure = [0] * n_exposures
     for model in results_list:
         for spec in model.spec:
-            # ensure data goes to table corresponding to correct exposure based on filename
+            # ensure data goes to correct exposure table based on exposure_number attribute
             exp_num = spec.meta.observation.exposure_number
             exposure_idx = exposure_numbers.index(exp_num)
             fltdata = fltdata_by_exposure[exposure_idx]
             n_rows = n_rows_by_exposure[exposure_idx]
-            spec_idx = loop_index_by_exposure[exposure_idx]
-            loop_index_by_exposure[exposure_idx] += 1
+
+            # ensure data goes to the correct source
+            spec_idx = np.where(fltdata["SOURCE_ID"] == spec.source_id)[0][0]
 
             # populate the table with data from the input spectrum
             populate_recarray(
@@ -128,7 +135,7 @@ def make_wfss_multiexposure(input_list):
                 n_rows,
                 all_columns,
                 is_vector,
-                ignore_columns=["NELEMENTS"] + NEW_NAMES,
+                ignore_columns=["SOURCE_ID", "NELEMENTS"] + NEW_NAMES,
             )
 
             # special handling for NELEMENTS because not defined in specmeta schema
@@ -146,7 +153,6 @@ def make_wfss_multiexposure(input_list):
     for i, exposure_number in enumerate(exposure_numbers):
         # Create a new extension for each exposure
         spec_table = fltdata_by_exposure[i]
-        spec_table.sort(order="SOURCE_ID")
         ext = dm.WFSSMultiSpecModel(spec_table)
 
         # Set default units from the model schema
@@ -158,14 +164,14 @@ def make_wfss_multiexposure(input_list):
         ext.filename = exposure_counter[exposure_number]["filename"]
         ext.meta.wcs = exposure_counter[exposure_number]["wcs"]
         ext.exposure_number = exposure_number
+        ext.dispersion_direction = example_spec.dispersion_direction
         ext.meta.exposure.exposure_time = exposure_counter[exposure_number]["exposure_time"]
         ext.meta.exposure.integration_time = exposure_counter[exposure_number]["integration_time"]
 
         output_x1d.exposures.append(ext)
 
     # Save the combined results to a file using first input model for metadata
-    example_model = results_list[0]
-    output_x1d.update(example_model, only="PRIMARY")
+    output_x1d.update(input_list[0], only="PRIMARY")
     return output_x1d
 
 
@@ -263,11 +269,11 @@ def make_wfss_multicombined(results_list):
     output_c1d = dm.WFSSMultiCombinedSpecModel()
     fltdata.sort(order=["SOURCE_ID"])
     output_c1d.spec_table = fltdata
-    example_model = results_list[0]
-    output_c1d.update(example_model)
 
     set_schema_units(output_c1d)
     # copy units from any of the SpecModels (they should all be the same)
     copy_column_units(model.spec[0], output_c1d)
+    copy_spec_metadata(model.spec[0], output_c1d)
 
+    output_c1d.update(results_list[0], only="PRIMARY")
     return output_c1d

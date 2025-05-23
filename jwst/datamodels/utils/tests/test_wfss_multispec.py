@@ -85,6 +85,7 @@ def wfss_spec3_multispec(example_spec):
         spec.meta.filename = f"exposure_{j}.fits"
         spec.meta.observation.exposure_number = str(j + 1)
         spec.source_id = 999 # all sources are the same
+        spec.dispersion_direction = 3
         spec.name = str(spec.source_id)
         _add_multispec_meta(spec)
         multi.spec.append(spec)
@@ -149,6 +150,7 @@ def test_wfss_flat_to_multispec(wfss_multiexposure):
     assert isinstance(wfss_multiexposure, dm.WFSSMultiExposureSpecModel)
     assert len(wfss_multiexposure.exposures) == N_EXPOSURES
     assert wfss_multiexposure.exposures[0].spec_table.shape == (N_SOURCES,)
+    assert wfss_multiexposure.exposures[0].dispersion_direction == 3
 
     # convert back to a list of MultiSpecModel objects
     multispec_list = wfss_multiexposure_to_multispec(wfss_multiexposure)
@@ -160,13 +162,17 @@ def test_wfss_flat_to_multispec(wfss_multiexposure):
         assert len(multispec.spec) == N_EXPOSURES
         for j, spec in enumerate(multispec.spec):
             assert spec.source_id == i + 1 # they will now be sorted
-            assert spec.meta.filename == f"exposure_{j}.fits"
-            assert spec.meta.observation.exposure_number == str(j + 1)
+
             # check that the data is the same as the original
             assert_allclose(spec.spec_table["WAVELENGTH"], np.linspace(1.0, 10.0, N_ROWS))
             assert_allclose(spec.spec_table["FLUX"], np.ones(N_ROWS))
 
-            # test that the metadata is the same
+            # check meta that were explicitly input to spec
+            assert spec.meta.filename == f"exposure_{j}.fits"
+            assert spec.meta.observation.exposure_number == str(j + 1)
+            assert spec.dispersion_direction == 3
+
+            # test that the rest of the metadata exist and are default values
             assert spec.source_type == "POINT"
             for name in ["source_ra", "source_dec", "extract2d_xstart", "extract2d_ystart",
                          "extract2d_xstop", "extract2d_ystop", "extraction_xstart",
@@ -226,6 +232,7 @@ def multi_combined():
     spec_table["FLUX"] = np.ones(N_ROWS)
     spec.spec_table = spec_table
     spec.spec_table.columns["wavelength"].unit = "um"
+    spec.dispersion_direction = 3
     multi.spec.append(spec)
     return multi
 
@@ -259,3 +266,6 @@ def test_make_wfss_combined(comb1d_list):
     for col in to_check:
         assert col in output_model.spec_table.columns.names
         assert output_model.spec_table.columns[col].unit == expected_units[to_check.index(col)]
+    
+    # check metadata
+    assert output_model.dispersion_direction == 3
