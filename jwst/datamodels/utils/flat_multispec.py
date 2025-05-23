@@ -2,9 +2,11 @@
 
 import logging
 import warnings
+from copy import deepcopy
+
 import numpy as np
 from asdf.tags.core.ndarray import asdf_datatype_to_numpy_dtype
-
+from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -186,3 +188,87 @@ def copy_column_units(input_model, output_model):
     for col_name in input_columns.names:
         if col_name in output_columns.names:
             output_columns[col_name].unit = input_columns[col_name].unit
+
+
+def copy_spec_metadata(input_model, output_model):
+    """
+    Copy spectral metadata from the input to the output spectrum.
+
+    Values to be copied are any attributes of the input model,
+    other than "meta" or "spec_table", e.g. "source_id", "name", etc.
+
+    Parameters
+    ----------
+    input_model : DataModel or ObjectNode
+        A spectral model, such as SpecModel or TSOSpecModel. If read
+        in from a list of spectra, as in MultiSpecModel, the input model may be
+        an ObjectNode rather than a full DataModel.
+    output_model : DataModel
+        A spectral model, such as SpecModel or TSOSpecModel. Updated in place
+        with metadata from the input model.  The output model must be a full
+        DataModel, not an ObjectNode.
+    """
+    copy_attributes = []
+    for prop in output_model.schema["properties"]:
+        if prop not in ["meta", "spec_table"]:
+            copy_attributes.append(prop)
+    for key in copy_attributes:
+        if hasattr(input_model, key) and getattr(input_model, key) is not None:
+            setattr(output_model, key, getattr(input_model, key))
+
+
+def expand_flat_spec(input_model):
+    """
+    Create simple spectra from a flat spectral table.
+
+    Parameters
+    ----------
+    input_model : TSOMultiSpecModel
+        Spectral model containing spectra with a mix of vector columns
+        and metadata columns in the ``spec_table`` attribute.
+        Metadata columns will be dropped.
+
+    Returns
+    -------
+    MultiSpecModel
+        A set of simple spectra, one per extension.
+    """
+    output_model = datamodels.MultiSpecModel()
+    for old_spec in input_model.spec:
+        n_spectra = len(old_spec.spec_table)
+        for i in range(n_spectra):
+            spec_row = old_spec.spec_table[i]
+            n_elements = int(spec_row["NELEMENTS"])
+            new_spec = datamodels.SpecModel()
+            data_type = new_spec.schema["properties"]["spec_table"]["datatype"]
+            columns_to_copy = np.array([col["name"] for col in data_type])
+
+            spec_table = np.empty(n_elements, dtype=new_spec.spec_table.dtype)
+            for col_name in columns_to_copy:
+                spec_table[col_name] = spec_row[col_name][:n_elements]
+
+            # Assign the spec_table to the model
+            new_spec.spec_table = spec_table
+
+            # Update spectral metadata
+            if hasattr(old_spec.meta, "wcs"):
+                new_spec.meta.wcs = deepcopy(old_spec.meta.wcs)
+            copy_spec_metadata(old_spec, new_spec)
+            copy_column_units(old_spec, new_spec)
+
+            # Add an int_num from the table, if present
+            try:
+                new_spec.int_num = spec_row["INT_NUM"]
+            except KeyError:
+                pass
+
+            output_model.spec.append(new_spec)
+
+    # Update meta
+    output_model.update(input_model, only="PRIMARY")
+
+    # Copy int_times if present
+    if hasattr(input_model, "int_times"):
+        output_model.int_times = input_model.int_times.copy()
+
+    return output_model

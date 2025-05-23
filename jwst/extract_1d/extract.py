@@ -17,6 +17,7 @@ from stdatamodels.jwst.datamodels.apcorr import (
 )
 
 from jwst.datamodels import ModelContainer
+from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.lib import pipe_utils
 from jwst.lib.wcs_utils import get_wavelengths
 from jwst.extract_1d import extract1d, spec_wcs
@@ -182,9 +183,9 @@ def get_extract_parameters(
     Parameters
     ----------
     ref_dict : dict or None
-        For an extract1d reference file in JSON format, `ref_dict` will be
+        For an extract1d reference file in JSON format, ``ref_dict`` will be
         the entire contents of the file.  If there is no extract1d reference
-        file, `ref_dict` will be None.
+        file, ``ref_dict`` will be None.
     input_model : JWSTDataModel
         This can be either the input science file or one SlitModel out of
         a list of slits.
@@ -197,62 +198,62 @@ def get_extract_parameters(
         current slit, from input_model.meta.
     smoothing_length : int or None, optional
         Width of a boxcar function for smoothing the background regions.
-        If None, the smoothing length will be retrieved from `ref_dict`, or
+        If None, the smoothing length will be retrieved from ``ref_dict``, or
         it will be set to 0 (no background smoothing) if this key is
-        not found in `ref_dict`.
-        If `smoothing_length` is not None, that means that the user
+        not found in ``ref_dict``.
+        If ``smoothing_length`` is not None, that means that the user
         explicitly specified the value, so that value will be used.
         This argument is only used if background regions have been
         specified.
     bkg_fit : str or None, optional
         The type of fit to apply to background values in each
         column (or row, if the dispersion is vertical). The default
-        `poly` results in a polynomial fit of order `bkg_order`. Other
-        options are `mean` and `median`. If `mean` or `median` is selected,
-        `bkg_order` is ignored.
+        'poly' results in a polynomial fit of order ``bkg_order``. Other
+        options are 'mean' and 'median'. If 'mean' or 'median' is selected,
+        ``bkg_order`` is ignored.
     bkg_order : int or None, optional
         Polynomial order for fitting to each column (or row, if the
         dispersion is vertical) of background.  If None, the polynomial
-        order will be gotten from `ref_dict`, or it will be set to 0 if
-        not found in `ref_dict`.
+        order will be retrieved from ``ref_dict``, or it will be set to 0 if
+        not found in ``ref_dict``.
         A value of 0 means that a simple average of the background
         regions, column by column (or row by row), will be used.
-        If `bkg_order` is not None, that means that the user explicitly
+        If ``bkg_order`` is not None, that means that the user explicitly
         specified the value, so that value will be used.
         This argument must be positive or zero, and it is only used if
         background regions have been specified.
     subtract_background : bool or None, optional
         If False, all background parameters will be ignored.
     use_source_posn : bool or None, optional
-        If True, the target and background positions specified in `ref_dict`
+        If True, the target and background positions specified in ``ref_dict``
         (or a default target position) will be shifted to account for
         the actual source location in the data.
         If None, a default value will be set, based on the exposure type.
     position_offset : float or None, optional
         Pixel offset to apply to the nominal source location.
-        If None, the value specified in `ref_dict` will be used or it
+        If None, the value specified in ``ref_dict`` will be used or it
         will default to 0.
     model_nod_pair : bool, optional
-        If True, and if `extraction_type` is 'optimal', then a negative
+        If True, and if ``extraction_type`` is 'optimal', then a negative
         trace from nod subtraction will be modeled alongside the positive
         source, if possible.
     optimize_psf_location : bool
-        If True, and if `extraction_type` is 'optimal', then the source
+        If True, and if ``extraction_type`` is 'optimal', then the source
         location will be optimized, via iterative comparisons of the scene
         model with the input data.
     extraction_type : str, optional
         Extraction type ('box' or 'optimal').  Optimal extraction is
-        only available if `psf_ref_name` is not 'N/A'.  If set to None,
-        optimal extraction will be used if `use_source_posn` is True.
+        only available if ``psf_ref_name`` is not 'N/A'.  If set to None,
+        optimal extraction will be used if ``use_source_posn`` is True.
     psf_ref_name : str, optional
         The name of the PSF reference file, or "N/A".
 
     Returns
     -------
     extract_params : dict
-        Information copied from `ref_dict`.  The items will be selected
-        based on `slitname` and `sp_order`.  Default values will be
-        assigned if `ref_dict` is None.
+        Information copied from ``ref_dict``.  The items will be selected
+        based on ``slitname`` and ``sp_order``.  Default values will be
+        assigned if ``ref_dict`` is None.
     """
     extract_params = {"match": NO_MATCH}  # initial value
     if ref_dict is None:
@@ -461,7 +462,7 @@ def create_poly(coeff):
     Returns
     -------
     `astropy.modeling.polynomial.Polynomial1D` or None
-        None is returned if `coeff` is empty.
+        None is returned if ``coeff`` is empty.
     """
     n = len(coeff)
     if n < 1:
@@ -474,13 +475,13 @@ def create_poly(coeff):
 
 def populate_time_keywords(input_model, output_model):
     """
-    Copy the integration times keywords to header keywords.
+    Copy the integration time keywords to header keywords.
 
     Parameters
     ----------
-    input_model : JWSTDataModel
+    input_model : TSOMultiSpecModel
         The input science model.
-    output_model : JWSTDataModel
+    output_model : TSOMultiSpecModel
         The output science model.  This may be modified in-place.
     """
     nints = input_model.meta.exposure.nints
@@ -488,25 +489,29 @@ def populate_time_keywords(input_model, output_model):
 
     if hasattr(input_model, "data"):
         shape = input_model.data.shape
-
         if len(shape) == 2:
             num_integ = 1
-        else:  # len(shape) == 3
+        else:
+            # len(shape) == 3
             num_integ = shape[0]
-    else:  # e.g. MultiSlit data
+    else:
+        # e.g. MultiSlit data
         num_integ = 1
 
     # This assumes that the spec attribute of output_model has already been created,
-    # and spectra have been appended.
-    n_output_spec = len(output_model.spec)
+    # and spectra have been appended to the spec_table
+    n_output_spec = 0
+    for spec in output_model.spec:
+        n_output_spec += len(spec.spec_table)
 
-    # num_j is the number of spectra per integration, e.g. the number
+    # num_j is the number of spectral tables, e.g. the number
     # of fixed-slit spectra, MSA spectra, or different
     # spectral orders; num_integ is the number of integrations.
     # The total number of output spectra is n_output_spec = num_integ * num_j
-    num_j = n_output_spec // num_integ
+    num_j = len(output_model.spec)
 
-    if n_output_spec != num_j * num_integ:  # sanity check
+    # check that the number of spectra present matches expectations
+    if n_output_spec != num_j * num_integ:
         log.warning(
             f"populate_time_keywords:  Don't understand n_output_spec = {n_output_spec}, "
             f"num_j = {num_j}, num_integ = {num_integ}"
@@ -546,10 +551,10 @@ def populate_time_keywords(input_model, output_model):
             "There is no INT_TIMES table in the input file - "
             "Making best guess on integration numbers."
         )
-        for j in range(num_j):  # for each spectrum or order
-            for k in range(num_integ):  # for each integration
-                # set int_num to (k+1) - 1-indexed integration
-                output_model.spec[(j * num_integ) + k].int_num = k + 1
+
+        # Set a simple integration index
+        for spec in output_model.spec:
+            spec.spec_table["INT_NUM"] = np.arange(1, len(spec.spec_table) + 1)
         return
 
     # If we have a single plane (e.g. ImageModel or MultiSlitModel),
@@ -614,21 +619,18 @@ def populate_time_keywords(input_model, output_model):
 
     log.debug("TSO data, so copying times from the INT_TIMES table.")
 
-    n = 0  # Counter for spectra in output_model.
-
-    for k in range(num_integ):  # for each spectrum or order
-        for _j in range(num_j):  # for each integration
+    for j in range(num_j):  # for each slit or order (EXTRACT1D extension)
+        spec = output_model.spec[j]
+        spec.time_scale = "UTC"
+        for k in range(len(spec.spec_table)):  # for each integration (table row)
             row = k + offset
-            spec = output_model.spec[n]  # n is incremented below
-            spec.int_num = int_num[row]
-            spec.time_scale = "UTC"
-            spec.start_time_mjd = start_time_mjd[row]
-            spec.mid_time_mjd = mid_time_mjd[row]
-            spec.end_time_mjd = end_time_mjd[row]
-            spec.start_tdb = start_tdb[row]
-            spec.mid_tdb = mid_tdb[row]
-            spec.end_tdb = end_tdb[row]
-            n += 1
+            spec.spec_table["INT_NUM"][k] = int_num[row]
+            spec.spec_table["MJD-BEG"][k] = start_time_mjd[row]
+            spec.spec_table["MJD-AVG"][k] = mid_time_mjd[row]
+            spec.spec_table["MJD-END"][k] = end_time_mjd[row]
+            spec.spec_table["TDB-BEG"][k] = start_tdb[row]
+            spec.spec_table["TDB-MID"][k] = mid_tdb[row]
+            spec.spec_table["TDB-END"][k] = end_tdb[row]
 
 
 def get_spectral_order(slit):
@@ -643,8 +645,8 @@ def get_spectral_order(slit):
     Returns
     -------
     int
-        Spectral order number for `slit`.  If no information about spectral
-        order is available in `wcsinfo`, a default value of 1 will be
+        Spectral order number for ``slit``.  If no information about spectral
+        order is available in ``wcsinfo``, a default value of 1 will be
         returned.
     """
     sp_order = slit.meta.wcsinfo.spectral_order
@@ -710,7 +712,7 @@ def copy_keyword_info(slit, slitname, spec):
     Parameters
     ----------
     slit : A SlitModel object
-        Metadata will be copied from the input `slit` to output `spec`.
+        Metadata will be copied from the input ``slit`` to output ``spec``.
     slitname : str or None
         The name of the slit.
     spec : One element of MultiSpecModel.spec
@@ -768,13 +770,13 @@ def _set_weight_from_limits(profile, idx, lower_limit, upper_limit, allow_partia
         The spatial profile to update.
     idx : ndarray of int
         Index values for the profile array, corresponding to the cross-dispersion
-        axis. Dimensions must match `profile` shape.
+        axis. Dimensions must match ``profile`` shape.
     lower_limit : float or ndarray of float
         Lower limit for the aperture. If not a single value, dimensions must
-        match `profile` shape.
+        match ``profile`` shape.
     upper_limit : float or ndarray of float
         Upper limit for the aperture. If not a single value, dimensions must
-        match `profile` shape.
+        match ``profile`` shape.
     allow_partial : bool, optional
         If True, partial pixel weights are set where the pixel index intersects
         the limit values.  If False, only whole integer weights are set.
@@ -818,7 +820,7 @@ def box_profile(
     set to 0.0.
 
     Upper and lower limits for the aperture are determined from the
-    `extract_params`, in this priority order:
+    ``extract_params``, in this priority order:
 
        1. src_coeff upper and lower limits (or bkg_coeff, for a background profile)
        2. trace +/- extraction width / 2
@@ -840,10 +842,10 @@ def box_profile(
     extract_params : dict
         Extraction parameters, as returned from `get_extract_parameters`.
     wl_array : ndarray
-        Array of wavelength values, matching `shape`, for each pixel in
+        Array of wavelength values, matching ``shape``, for each pixel in
         the array.
     coefficients : {'src_coeff', 'bkg_coeff'}, optional
-        The polynomial coefficients to look for in the `extract_params`
+        The polynomial coefficients to look for in the ``extract_params``
         dictionary. If 'bkg_coeff', the output aperture contains background
         regions; otherwise, it contains target source regions.
     label : str, optional
@@ -861,10 +863,10 @@ def box_profile(
     profile : ndarray of float
         Aperture weights to use in box extraction from a spectral image.
     lower_limit : float, optional
-        Average lower limit for the aperture. Returned only if `return_limits`
+        Average lower limit for the aperture. Returned only if ``return_limits``
         is set.
     upper_limit : float, optional
-        Average upper limit for the aperture. Returned only if `return_limits`
+        Average upper limit for the aperture. Returned only if ``return_limits``
         is set.
     """
     # Get pixel index values for the array
@@ -1024,12 +1026,12 @@ def aperture_center(profile, dispaxis=1, middle_pix=None):
     The center is determined from a weighted average of the pixel
     coordinates, where the weights are set by the profile image.
 
-    If `middle_pix` is specified, it is expected to be the
+    If ``middle_pix`` is specified, it is expected to be the
     dispersion element at which the cross-dispersion center
     should be determined.  In this case, the profile must contain
     some non-zero elements at that dispersion coordinate.
 
-    If `dispaxis` is 1 (the default), the return values are in (y,x)
+    If ``dispaxis`` is 1 (the default), the return values are in (y,x)
     order. Otherwise, the return values are in (x,y) order.
 
     Parameters
@@ -1042,7 +1044,7 @@ def aperture_center(profile, dispaxis=1, middle_pix=None):
     middle_pix : int or None
         Index value for the center of the slit along the
         dispersion axis.  If specified, it is returned as
-        `spec_center`.
+        ``spec_center``.
 
     Returns
     -------
@@ -1090,7 +1092,7 @@ def shift_by_offset(offset, extract_params, update_trace=True):
     Shift the nominal extraction parameters by a pixel offset.
 
     Start, stop, and polynomial coefficient values for source and
-    background are updated in place in the `extract_params` dictionary.
+    background are updated in place in the ``extract_params`` dictionary.
     The source trace value, if present, is also updated if desired.
 
     Parameters
@@ -1101,7 +1103,7 @@ def shift_by_offset(offset, extract_params, update_trace=True):
         Extraction parameters to update, as created by
         `get_extraction_parameters`.
     update_trace : bool
-        If True, the trace in `extract_params['trace']` is also updated
+        If True, the trace in ``extract_params['trace']`` is also updated
         if present.
     """
     # Shift polynomial coefficients
@@ -1135,9 +1137,9 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         The input science model containing metadata information.
     slit : DataModel or None
         One slit from a MultiSlitModel (or similar), or None.
-        The spectral image and WCS information will be retrieved from `slit`
-        unless `slit` is None. In that case, they will be retrieved
-        from `input_model`.
+        The spectral image and WCS information will be retrieved from ``slit``
+        unless ``slit`` is None. In that case, they will be retrieved
+        from ``input_model``.
     extract_params : dict
         Extraction parameters, as created by `get_extraction_parameters`.
     exp_type : str
@@ -1161,16 +1163,16 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         are between 0.0 (pixel not included in the extraction aperture)
         and 1.0 (pixel fully included in the aperture).
     bg_profile : ndarray of float or None
-        If background regions are specified in `extract_params['bkg_coeff']`,
-        and `extract_params['subtract_background']` is True, then
-        `bg_profile` is a 2D image containing pixel weights for background
-        regions, to be fit during extraction.  Otherwise, `bg_profile` is
+        If background regions are specified in ``extract_params['bkg_coeff']``,
+        and ``extract_params['subtract_background']`` is True, then
+        ``bg_profile`` is a 2D image containing pixel weights for background
+        regions, to be fit during extraction.  Otherwise, ``bg_profile`` is
         None.
     nod_profile : ndarray of float or None
         For optimal extraction, if nod subtraction was performed, a
         second spatial profile is generated, modeling the negative source
-        in the slit. This second spatial profile is returned in `nod_profile`
-        if generated.  Otherwise, `nod_profile` is None.
+        in the slit. This second spatial profile is returned in ``nod_profile``
+        if generated.  Otherwise, ``nod_profile`` is None.
     limits : tuple of float
         Index limit values for the aperture, returned as (lower_limit, upper_limit,
         left_limit, right_limit).  Upper/lower limits are along the
@@ -1302,8 +1304,8 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         or CubeModel.
     integration : int
         For the case that data_model is a SlitModel or a CubeModel,
-        `integration` is the integration number.  If the integration number is
-        not relevant (i.e. the data array is 2-D), `integration` should be -1.
+        ``integration`` is the integration number.  If the integration number is
+        not relevant (i.e. the data array is 2-D), ``integration`` should be -1.
     profile : ndarray of float
         Spatial profile indicating the aperture location. Must be a
         2D image matching the input, with floating point values between 0
@@ -1316,9 +1318,9 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
     nod_profile : ndarray of float or None
         For optimal extraction, if nod subtraction was performed, a
         second spatial profile is generated, modeling the negative source
-        in the slit. This second spatial profile may be passed in `nod_profile`
-        for simultaneous fitting with the primary source in `profile`.
-        Otherwise, `nod_profile` should be None.
+        in the slit. This second spatial profile may be passed in ``nod_profile``
+        for simultaneous fitting with the primary source in ``profile``.
+        Otherwise, ``nod_profile`` should be None.
     extract_params : dict
         Parameters read from the extract1d reference file, as returned by
         `get_extract_parameters`.
@@ -1331,8 +1333,8 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         of the numbers of pixels), for each pixel.
         The data values are usually in units of surface brightness,
         so this value isn't the flux, it's an intermediate value.
-        Multiply `sum_flux` by the solid angle of a pixel to get the flux for a
-        point source (column "flux").  Divide `sum_flux` by `npixels` (to
+        Multiply ``sum_flux`` by the solid angle of a pixel to get the flux for a
+        point source (column "flux").  Divide ``sum_flux`` by ``npixels`` (to
         compute the average) to get the array for the "surf_bright"
         (surface brightness) output column.
     f_var_rnoise : ndarray, 1-D
@@ -1346,7 +1348,7 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         sum_flux array.
     background : ndarray, 1-D
         The background count rate that was subtracted from the sum of
-        the source data values to get `sum_flux`.
+        the source data values to get ``sum_flux``.
     b_var_rnoise : ndarray, 1-D
         The extracted read noise variance values to go along with the
         background array.
@@ -1357,7 +1359,7 @@ def extract_one_slit(data_model, integration, profile, bg_profile, nod_profile, 
         The extracted flat field variance values to go along with the
         background array.
     npixels : ndarray, 1-D, float64
-        The number of pixels that were added together to get `sum_flux`,
+        The number of pixels that were added together to get ``sum_flux``,
         including any fractional pixels included via non-integer weights
         in the input profile.
     scene_model : ndarray, 2-D, float64
@@ -1461,25 +1463,25 @@ def create_extraction(
     """
     Extract spectra from an input model and append to an output model.
 
-    Input data, specified in the `slit` or `input_model`, should contain data
+    Input data, specified in the ``slit`` or ``input_model``, should contain data
     with consistent wavelengths, target positions, and spectral image cutouts,
     suitable for extraction with a shared aperture.  Extraction parameters
     are determined collectively, then multiple integrations, if present,
     are each extracted separately.
 
-    The output model must be a `MultiSpecModel`, created before calling this
-    function, and passed as `output_model`.  It is updated in place, with
-    new spectral tables appended as they are created.
+    The output model must be a `MultiSpecModel` or `TSOMultiSpecModel`,
+    created before calling this function, and passed as ``output_model``.
+    It is updated in place, with new spectral tables appended as they are created.
 
     The process is:
 
-       1. Retrieve extraction parameters from `extract_ref_dict` and
+       1. Retrieve extraction parameters from ``extract_ref_dict`` and
           set defaults for any missing values as needed.
        2. Define an extraction aperture from the input parameters, as
           well as the nominal RA, Dec, and 1D wavelength arrays for
           the output spectrum.
        3. Set up an aperture correction to apply to each spectrum,
-          if `apcorr_ref_model` is not None.
+          if ``apcorr_ref_model`` is not None.
        4. Loop over integrations to extract all spectra.
 
     For each integration, the extraction process is:
@@ -1496,20 +1498,19 @@ def create_extraction(
           and store it in a `SpecModel`.
        7. Apply the aperture correction to the spectral table, if
           available.
-       8. Append the new SpecModel to the `MultiSpecModel` provided
-          in `output_model`.
+       8. Append the new SpecModel to the output_model.
 
     Parameters
     ----------
     input_model : DataModel
         Top-level datamodel containing metadata for the input data.
-        If slit is not specified, `input_model` must also contain the
-        spectral image(s) to extract, in the `data` attribute.
+        If slit is not specified, ``input_model`` must also contain the
+        spectral image(s) to extract, in the data attribute.
     slit : SlitModel or None
         One slit from an input MultiSlitModel or similar. If not None,
-        `slit `must contain the spectral image(s) to extract, in the `data`
+        ``slit`` must contain the spectral image(s) to extract, in the data
         attribute, along with appropriate WCS metadata.
-    output_model : MultiSpecModel
+    output_model : MultiSpecModel, TSOMultiSpecModel
         The output model to append spectral tables to.
     extract_ref_dict : dict or None
         Extraction parameters read in from the extract_1d reference file,
@@ -1525,7 +1526,7 @@ def create_extraction(
         APCORR reference file data.
     log_increment : int, optional
         If greater than 0 and the input data are multi-integration, a message
-        will be written to the log every `log_increment` integrations.
+        will be written to the log every ``log_increment`` integrations.
     save_profile : bool, optional
         If True, the spatial profile created for the aperture will be returned
         as an ImageModel.  If False, the return value is None.
@@ -1535,21 +1536,21 @@ def create_extraction(
     save_residual_image : bool, optional
         If True, the residual image (from input minus scene model) will be returned
         as an ImageModel or CubeModel.  If False, the return value is None.
-    **kwargs : dict, optional
+    **kwargs
         Additional options to pass to `get_extract_parameters`.
 
     Returns
     -------
     profile_model : ImageModel or None
-        If `save_profile` is True, the return value is an ImageModel containing
+        If ``save_profile`` is True, the return value is an ImageModel containing
         the spatial profile with aperture weights, used in extracting all
         integrations.
     scene_model : ImageModel, CubeModel, or None
-        If `save_scene_model` is True, the return value is an ImageModel or CubeModel
+        If ``save_scene_model`` is True, the return value is an ImageModel or CubeModel
         matching the input data, containing the flux model generated during
         extraction.
     residual : ImageModel, CubeModel, or None
-        If `save_residual_image` is True, the return value is an ImageModel or CubeModel
+        If ``save_residual_image`` is True, the return value is an ImageModel or CubeModel
         matching the input data, containing the residual image.
     """
     if slit is None:
@@ -1714,6 +1715,7 @@ def create_extraction(
         residual = None
 
     # Extract each integration
+    spec_list = []
     for integ in integrations:
         (
             sum_flux,
@@ -1852,6 +1854,7 @@ def create_extraction(
         spec.slit_dec = dec
         spec.spectral_order = sp_order
         spec.dispersion_direction = extract_params["dispaxis"]
+        spec.detector = input_model.meta.instrument.detector
 
         # Record aperture limits as x/y start/stop values
         lower_limit, upper_limit, left_limit, right_limit = limits
@@ -1890,7 +1893,7 @@ def create_extraction(
                     log.debug("Computing aperture correction.")
                     apcorr.apply(spec.spec_table)
 
-        output_model.spec.append(spec)
+        spec_list.append(spec)
 
         if log_increment > 0 and (integ + 1) % log_increment == 0:
             if integ == -1:
@@ -1910,7 +1913,46 @@ def create_extraction(
     if not progress_msg_printed:
         log.info(f"All {input_model.data.shape[0]} integrations done")
 
+    if len(spec_list) > 1:
+        # For multi-int data, assemble a single TSOSpecModel from the list of spectra
+        tso_spec = make_tso_specmodel(spec_list, segment=input_model.meta.exposure.segment_number)
+
+        # Add to the output model
+        output_model.spec.append(tso_spec)
+    else:
+        # Nothing further needed, just append the only spectrum
+        # created to the output model
+        output_model.spec.append(spec_list[0])
+
     return profile_model, scene_model, residual
+
+
+def _make_output_model(data_model, meta_source):
+    """
+    Set up an output model matching the input.
+
+    Parameters
+    ----------
+    data_model : DataModel
+        A data model containing a "data" attribute.
+    meta_source : DataModel
+        A data model containing top-level metadata to copy to the output.
+
+    Returns
+    -------
+    MultiSpecModel or TSOMultiSpecModel
+        If the input data is multi-integration, a TSOMultiSpecModel is
+        returned.  Otherwise, a MultiSpecModel is returned.
+    """
+    multi_int = (data_model.data.ndim == 3) and (data_model.data.shape[0] > 1)
+    if multi_int:
+        output_model = datamodels.TSOMultiSpecModel()
+    else:
+        output_model = datamodels.MultiSpecModel()
+    if hasattr(meta_source, "int_times"):
+        output_model.int_times = meta_source.int_times.copy()
+    output_model.update(meta_source, only="PRIMARY")
+    return output_model
 
 
 def run_extract1d(
@@ -1947,7 +1989,7 @@ def run_extract1d(
         The name of the PSF reference file, or "N/A".
     extraction_type : str
         Extraction type ('box' or 'optimal').  Optimal extraction is
-        only available if `psf_ref_name` is not "N/A".
+        only available if ``psf_ref_name`` is not "N/A".
     smoothing_length : int or None
         Width of a boxcar function for smoothing the background regions.
     bkg_fit : str or None
@@ -1956,12 +1998,12 @@ def run_extract1d(
         'mean', 'median', 'poly', or None.
     bkg_order : int or None
         Polynomial order for fitting to each column (or row, if the
-        dispersion is vertical) of background. Only used if `bkg_fit`
-        is `poly`.  Allowed values are >= 0.
+        dispersion is vertical) of background. Only used if ``bkg_fit``
+        is 'poly'.  Allowed values are >= 0.
     log_increment : int
-        If `log_increment` is greater than 0 and the input data are
+        If ``log_increment`` is greater than 0 and the input data are
         multi-integration, a message will be written to the log every
-        `log_increment` integrations.
+        ``log_increment`` integrations.
     subtract_background : bool or None
         User supplied flag indicating whether the background should be
         subtracted.
@@ -1976,13 +2018,13 @@ def run_extract1d(
         Number of pixels to shift the nominal source position in the
         cross-dispersion direction.
     model_nod_pair : bool
-        If True, and if `extraction_type` is 'optimal', then a negative trace
+        If True, and if ``extraction_type`` is 'optimal', then a negative trace
         from nod subtraction is modeled alongside the positive source during
         extraction.  Even if set to True, this will be attempted only if the
         input data has been background subtracted and the dither pattern
         indicates that only 2 nods were used.
     optimize_psf_location : bool
-        If True, and if `extraction_type` is 'optimal', then the source
+        If True, and if ``extraction_type`` is 'optimal', then the source
         location will be optimized, via iterative comparisons of the scene
         model with the input data.
     save_profile : bool
@@ -1999,19 +2041,19 @@ def run_extract1d(
 
     Returns
     -------
-    output_model : MultiSpecModel
+    output_model : MultiSpecModel or TSOMultiSpecModel
         A new data model containing the extracted spectra.
     profile_model : ModelContainer, ImageModel, or None
-        If `save_profile` is True, the return value is an ImageModel containing
+        If ``save_profile`` is True, the return value is an ImageModel containing
         the spatial profile with aperture weights, used in extracting a single
         slit, or else a container of ImageModels, one for each slit extracted.
         Otherwise, the return value is None.
     scene_model : ModelContainer, ImageModel, CubeModel, or None
-        If `save_scene_model` is True, the return value is an ImageModel or CubeModel
+        If ``save_scene_model`` is True, the return value is an ImageModel or CubeModel
         matching the input data, containing a model of the flux as defined by the
         aperture, created during extraction. Otherwise, the return value is None.
     residual : ModelContainer, ImageModel, CubeModel, or None
-        If `save_residual_image` is True, the return value is an ImageModel or CubeModel
+        If ``save_residual_image`` is True, the return value is an ImageModel or CubeModel
         matching the input data, containing the residual image (from the input minus
         the scene model). Otherwise, the return value is None.
     """
@@ -2044,12 +2086,6 @@ def run_extract1d(
         else:
             apcorr_ref_model = read_apcorr_ref(apcorr_ref_name, exp_type)
 
-    # Set up the output model
-    output_model = datamodels.MultiSpecModel()
-    if hasattr(meta_source, "int_times"):
-        output_model.int_times = meta_source.int_times.copy()
-    output_model.update(meta_source, only="PRIMARY")
-
     # This will be relevant if we're asked to extract a spectrum
     # and the spectral order is zero.
     # That's only OK if the disperser is a prism.
@@ -2076,6 +2112,9 @@ def run_extract1d(
             scene_model = ModelContainer()
         if save_residual_image:
             residual = ModelContainer()
+
+        # Set up the output model
+        output_model = _make_output_model(slits[0], meta_source)
 
         for slit in slits:  # Loop over the slits in the input model
             log.info(f"Working on slit {slit.name}")
@@ -2157,11 +2196,15 @@ def run_extract1d(
             log.error("The input file is not supported for this step.")
             raise TypeError("Can't extract a spectrum from this file.")
 
+        # Set up the output model
+        output_model = _make_output_model(input_model, meta_source)
+
         sp_order = get_spectral_order(input_model)
         if sp_order == 0 and not prism_mode:
             log.info("Spectral order 0 is a direct image, skipping ...")
         else:
             log.info(f"Processing spectral order {sp_order}")
+
             try:
                 profile_model, scene_model, residual = create_extraction(
                     input_model,
@@ -2192,7 +2235,10 @@ def run_extract1d(
 
     # Copy the integration time information from the INT_TIMES table to keywords in the output file.
     if pipe_utils.is_tso(input_model):
-        populate_time_keywords(input_model, output_model)
+        # int_times extension can stay for all TSO observations, but time
+        # keywords are only populated for multi-int spectra
+        if isinstance(output_model, datamodels.TSOMultiSpecModel):
+            populate_time_keywords(input_model, output_model)
     else:
         log.debug("Not copying from the INT_TIMES table because this is not a TSO exposure.")
         if hasattr(output_model, "int_times"):
