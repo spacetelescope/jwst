@@ -2219,7 +2219,8 @@ def run_extract1d(
             del output_model.int_times
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
-    output_model.meta.observation.exposure_number = None  # can be different for each slit
+    if exp_type in WFSS_EXPTYPES:
+        output_model.meta.observation.exposure_number = None  # different for each slit
 
     if apcorr_ref_model is not None:
         apcorr_ref_model.close()
