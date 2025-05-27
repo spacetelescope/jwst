@@ -294,7 +294,7 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     # see IRAFStarFinder readthedocs page and also
     # https://github.com/astropy/photutils/issues/1561
     if "minsep_fwhm" in kwargs:
-        min_sep_pix = max(2, int(kwargs["minsep_fwhm"] * kwargs["fwhm"] + 0.5))
+        min_sep_pix = max(2, int(kwargs["minsep_fwhm"] * kernel_fwhm + 0.5))
         kwargs["min_separation"] = min_sep_pix
 
     # note that this suppresses TypeError: unexpected keyword arguments

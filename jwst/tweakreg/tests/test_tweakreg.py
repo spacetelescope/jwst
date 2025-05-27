@@ -164,19 +164,18 @@ def example_input(example_wcs):
     m0.meta.observation.date = "2024-07-10T00:00:00.0"
 
     # and a few 'sources'
+    point_source = np.ones((7,7)) * 0.1
+    point_source[1:6, 1:6] = 0.3
+    point_source[2:5, 2:5] = 0.5
+    point_source[3, 3] = 1.0 
+
     m0.data[:] = BKG_LEVEL
     n_sources = N_EXAMPLE_SOURCES  # a few more than default minobj
     rng = np.random.default_rng(26)
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
     ys = rng.choice(50, n_sources, replace=False) * 8 + 10
     for y, x in zip(ys, xs):
-        m0.data[y-2:y+3, x-2:x+3] = [
-            [0.0, 0.05, 0.1, 0.05, 0.0],
-            [0.05, 0.1, 0.6, 0.1, 0.05],
-            [0.1, 0.6, 0.8, 0.6, 0.1],
-            [0.05, 0.1, 0.6, 0.1, 0.05],
-            [0.0, 0.05, 0.1, 0.05, 0.0],
-        ]
+        m0.data[y-2:y+3, x-2:x+3] = point_source
 
     m1 = m0.copy()
     # give each a unique filename

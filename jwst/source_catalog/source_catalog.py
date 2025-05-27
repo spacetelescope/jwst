@@ -95,8 +95,6 @@ class JWSTSourceCatalog:
         self.n_aper = len(self.aperture_ee)
         self.wcs = self.model.meta.wcs
         self.column_desc = {}
-        # self._xpeak = None
-        # self._ypeak = None
         self.meta = {}
 
     @staticmethod
@@ -229,8 +227,6 @@ class JWSTSourceCatalog:
 
         The values are set as dynamic attributes.
         """
-        # self._xpeak = self.segm_cat.maxval_xindex
-        # self._ypeak = self.segm_cat.maxval_yindex
         self.meta.update(self.segm_cat.meta)
 
         # rename some columns in the output catalog
@@ -243,10 +239,13 @@ class JWSTSourceCatalog:
         for column in self.segment_colnames:
             # define the property name
             prop_name = prop_names.get(column, column)
-            try:
+            if prop_name in self.segm_cat.colnames:
                 value = self.segm_cat[prop_name]
-            except KeyError:
-                value = getattr(self, prop_name)
+            else:
+                try:
+                    value = getattr(self, prop_name, np.nan)
+                except TypeError:
+                    value = np.nan
             setattr(self, column, value)
 
     @lazyproperty

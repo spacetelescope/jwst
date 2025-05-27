@@ -158,3 +158,30 @@ def test_input_model_reset(nircam_model):
     assert_allclose(original_err, nircam_model.err, 5.e-7)
     assert (nircam_model.meta.bunit_data == 'MJy/sr')
     assert (nircam_model.meta.bunit_err == 'MJy/sr')
+
+
+@pytest.mark.parametrize("finder", ["segmentation", "iraf", "dao"])
+def test_source_catalog_point_sources(finder, nircam_model):
+    """Test the three source finding algorithms with point sources."""
+    data = np.random.default_rng(seed=123).normal(0, 0.5, size=(101, 101))
+
+    # make a point source with some size that looks a bit like a psf, no need to be realistic
+    point_source = np.ones((7,7))
+    point_source[1:6, 1:6] = 3.0
+    point_source[2:5, 2:5] = 5.0
+    point_source[3, 3] = 10.0 
+
+    data[30:37, 30:37] = point_source
+    data[70:77, 70:77] = point_source
+
+    nircam_model.data = data
+
+    nircam_model.err = np.abs(data) / 10.0
+    nircam_model.wht = np.ones(data.shape)
+
+    step = SourceCatalogStep(snr_threshold=8.0, npixels=5,
+                             bkg_boxsize=50, kernel_fwhm=2.0,
+                             starfinder=finder, save_results=False)
+    cat = step.run(nircam_model)
+
+    assert len(cat) == 2, f"Expected 3 sources, found {len(cat)} with {finder} finder."
