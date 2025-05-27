@@ -19,9 +19,10 @@ def test_residual_fringe_cal(rtdata, fitsdiff_default_kwargs):
         '--save_results=true',
         '--skip=False'
     ]
-    # FIXME: Handle warnings properly.
+    # NOTE: this step includes broad exception handling.
     # If pytest turns RuntimeWarning into RuntimeError in filterwarnings,
-    # it triggers exception logic in the step, causing FITSDiff failures.
+    # new warnings will trigger exception logic in the step, causing FITSDiff
+    # failures.
     Step.from_cmdline(args)
 
     output = input_file.replace('cal', 'residual_fringe')

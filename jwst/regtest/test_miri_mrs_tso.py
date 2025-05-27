@@ -30,8 +30,6 @@ def run_spec2(rtdata_module, resource_tracker):
             '--steps.photom.save_results=true',
             '--steps.photom.mrs_time_correction=true',
             ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: invalid value encountered in add
     with resource_tracker.track():
         Step.from_cmdline(args)
 

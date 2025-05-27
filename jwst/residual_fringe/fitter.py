@@ -58,9 +58,9 @@ def spline_fitter(x, y, weights, knots, degree, reject_outliers=False, domain=10
             warnings.simplefilter("ignore", RuntimeWarning)
             scale = np.sqrt(chi / deg_of_freedom)
 
-        # Calculate new weights
-        resid = (y - spline(x)) / (scale * domain)
-        new_w = (np.where(resid**2 <= 1, 1 - resid**2, 0.0)) ** 2 * weights
+            # Calculate new weights
+            resid = (y - spline(x)) / (scale * domain)
+            new_w = (np.where(resid**2 <= 1, 1 - resid**2, 0.0)) ** 2 * weights
 
         # Fit new model and find chi
         spline = _lsq_spline(x, y, new_w, knots, degree)

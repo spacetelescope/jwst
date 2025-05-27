@@ -17,8 +17,6 @@ def run_pipeline(rtdata_module, resource_tracker):
     args = [
         "calwebb_coron3", rtdata.input,
     ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: Mean of empty slice
     with resource_tracker.track():
         Step.from_cmdline(args)
 

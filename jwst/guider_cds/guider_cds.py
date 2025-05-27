@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import logging
 
@@ -96,7 +98,13 @@ def guider_cds(model, gain_model, readnoise_model):
     if exp_type[:6] == "FGS_ID":
         new_model.data[0, :, :] = np.minimum(diff_int1, diff_int0) / grp_time
         var_rn[0, :, :] = 2 * (readnoise_arr / grp_time) ** 2
-        var_pn[0, :, :] = np.minimum(diff_int1, diff_int0) / (gain_arr * grp_time)
+
+        # May be zeros in gain array - var will be NaN in these pixels.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+            warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+            var_pn[0, :, :] = np.minimum(diff_int1, diff_int0) / (gain_arr * grp_time)
+
     else:  # FINEGUIDE, ACQ1, ACQ2, or TRACK
         new_model.data = slope_int_cube / grp_time
 

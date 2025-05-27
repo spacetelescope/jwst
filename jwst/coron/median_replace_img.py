@@ -1,6 +1,8 @@
 """Replace bad pixels in the input images with the median of the surrounding pixels."""
 
 import logging
+import warnings
+
 import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -52,7 +54,10 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
 
     # Calculate the median value using only good pixels
     filtered_array = data_array[np.bitwise_and(dq_array, bad_bitvalue) == 0]
-    median_value = np.median(filtered_array)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "Mean of empty slice", RuntimeWarning)
+        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+        median_value = np.median(filtered_array)
 
     if np.isnan(median_value):
         # If the median fails return 0

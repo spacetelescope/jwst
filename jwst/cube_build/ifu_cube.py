@@ -1,5 +1,7 @@
 """Work horse routines used for building ifu spectra cubes."""
 
+import warnings
+
 import numpy as np
 import logging
 import math
@@ -2040,7 +2042,9 @@ class IFUCubeData:
         x = np.reshape(x, x.size)
 
         # if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
-        ra, dec, wave = input_model.meta.wcs(x, y)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+            ra, dec, wave = input_model.meta.wcs(x, y)
 
         # offset the central pixel
         if offsets is not None:

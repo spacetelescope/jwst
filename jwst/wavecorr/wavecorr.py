@@ -82,7 +82,6 @@ def apply_zero_point_correction(slit, reffile):
     completed : bool
         A flag to report whether the zero-point correction was added or skipped.
     """
-    log.info(f"slit name {slit.name}")
     slit_wcs = slit.meta.wcs
 
     # Retrieve the source position and aperture name from metadata

@@ -16,8 +16,6 @@ def run_pipeline_background(rtdata_module):
 
     rtdata = rtdata_module
     rtdata.get_asn("miri/mrs/jw01204-o021_20240127t024203_spec2_00010_asn.json")
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: invalid value encountered in add
     Step.from_cmdline(['calwebb_spec2', rtdata.input,
                        f"--steps.badpix_selfcal.output_file={OUTSTEM_BKG}",
                        "--steps.badpix_selfcal.save_results=True",
@@ -34,8 +32,6 @@ def run_pipeline_selfcal(rtdata_module):
     '''
     rtdata = rtdata_module
     rtdata.get_asn("miri/mrs/jw01204-o021_20240127t024203_spec2_00010_selfcal_asn.json")
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: invalid value encountered in add
     Step.from_cmdline(['calwebb_spec2', rtdata.input,
                        f"--steps.badpix_selfcal.output_file={OUTSTEM_SELFCAL}",
                        "--steps.badpix_selfcal.save_results=True",

@@ -36,8 +36,6 @@ def run_spec2(rtdata_module, resource_tracker):
         ]
     }
 
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: overflow encountered in multiply
     with resource_tracker.track():
         rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
