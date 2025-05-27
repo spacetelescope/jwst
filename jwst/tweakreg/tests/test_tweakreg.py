@@ -446,3 +446,17 @@ def test_sip_approx(example_input, with_shift):
 
     assert np.allclose(fitswcs_res.ra.deg, gwcs_ra)
     assert np.allclose(fitswcs_res.dec.deg, gwcs_dec)
+
+
+def test_sourcefinders(example_input):
+    """Test that the three source finder options give the same results for high SNR sources."""
+    
+    model = example_input[0]
+    thresh = 10.0 # SNR threshold above the bkg for star finder
+    fwhm = 2.5 # Gaussian kernel FWHM in pixels
+    iraf = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name='iraf')
+    dao = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name='dao')
+    segm = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name='segmentation')
+
+    # check that the catalogs have the same number of sources
+    assert len(iraf) == len(dao) == len(segm) == N_EXAMPLE_SOURCES
