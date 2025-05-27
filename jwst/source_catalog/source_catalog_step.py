@@ -7,9 +7,9 @@ import numpy as np
 
 from stdatamodels.jwst import datamodels
 
-from .reference_data import ReferenceData
-from .source_catalog import JWSTSourceCatalog
-from ..stpipe import Step
+from jwst.source_catalog.reference_data import ReferenceData
+from jwst.source_catalog.source_catalog import JWSTSourceCatalog
+from jwst.stpipe import Step
 from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog, NoCatalogError
 
 
@@ -22,17 +22,40 @@ class SourceCatalogStep(Step):
     class_alias = "source_catalog"
 
     spec = """
-        bkg_boxsize = integer(default=1000)   # background mesh box size in pixels
-        kernel_fwhm = float(default=2.0)      # Gaussian kernel FWHM in pixels
-        snr_threshold = float(default=3.0)    # SNR threshold above the bkg
-        npixels = integer(default=25)         # min number of pixels in source
-        deblend = boolean(default=False)      # deblend sources?
+
         aperture_ee1 = integer(default=30)    # aperture encircled energy 1
         aperture_ee2 = integer(default=50)    # aperture encircled energy 2
         aperture_ee3 = integer(default=70)    # aperture encircled energy 3
         ci1_star_threshold = float(default=2.0)  # CI 1 star threshold
         ci2_star_threshold = float(default=1.8)  # CI 2 star threshold
         suffix = string(default='cat')        # Default suffix for output files
+        starfinder = option('dao', 'iraf', 'segmentation', default='segmentation') # Star finder to use.
+
+        # general starfinder options
+        snr_threshold = float(default=3.0) # SNR threshold above the bkg for star finder
+        bkg_boxsize = integer(default=1000) # The background mesh box size in pixels.
+        kernel_fwhm = float(default=2.0) # Gaussian kernel FWHM in pixels
+
+        # kwargs for DAOStarFinder and IRAFStarFinder, only used if starfinder is 'dao' or 'iraf'
+        minsep_fwhm = float(default=0.0) # Minimum separation between detected objects in FWHM
+        sigma_radius = float(default=1.5) # Truncation radius of the Gaussian kernel, units of sigma
+        sharplo = float(default=0.5) # The lower bound on sharpness for object detection.
+        sharphi = float(default=2.0) # The upper bound on sharpness for object detection.
+        roundlo = float(default=0.0) # The lower bound on roundness for object detection.
+        roundhi = float(default=0.2) # The upper bound on roundness for object detection.
+        brightest = integer(default=200) # Keep top ``brightest`` objects
+        peakmax = float(default=None) # Filter out objects with pixel values >= ``peakmax``
+
+        # kwargs for SourceCatalog and SourceFinder, only used if starfinder is 'segmentation'
+        npixels = integer(default=25) # Minimum number of connected pixels
+        connectivity = option(4, 8, default=8) # The connectivity defining the neighborhood of a pixel
+        nlevels = integer(default=32) # Number of multi-thresholding levels for deblending
+        contrast = float(default=0.001) # Fraction of total source flux an object must have to be deblended
+        multithresh_mode = option('exponential', 'linear', 'sinh', default='exponential') # Multi-thresholding mode
+        localbkg_width = integer(default=0) # Width of rectangular annulus used to compute local background around each source
+        apermask_method = option('correct', 'mask', 'none', default='correct') # How to handle neighboring sources
+        kron_params = float_list(min=2, max=3, default=None) # Parameters defining Kron aperture
+        deblend = boolean(default=False) # deblend sources?
     """  # noqa: E501
 
     reference_file_types = ["apcorr", "abvegaoffset"]
@@ -81,15 +104,26 @@ class SourceCatalogStep(Step):
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
 
             starfinder_kwargs = {
+                "sigma_radius": self.sigma_radius,
+                "minsep_fwhm": self.minsep_fwhm,
+                "sharplo": self.sharplo,
+                "sharphi": self.sharphi,
+                "roundlo": self.roundlo,
+                "roundhi": self.roundhi,
+                "peakmax": self.peakmax,
+                "brightest": self.brightest,
                 "npixels": self.npixels,
+                "connectivity": int(self.connectivity),  # option returns a string, so cast to int
+                "nlevels": self.nlevels,
+                "contrast": self.contrast,
+                "mode": self.multithresh_mode,
+                "localbkg_width": self.localbkg_width,
+                "apermask_method": self.apermask_method,
+                "kron_params": self.kron_params,
                 "deblend": self.deblend,
-                "connectivity": 8,
-                "nlevels": 32,
-                "contrast": 0.001,
-                "mode": "exponential",
-                "relabel": True,
                 "error": model.err,
                 "wcs": model.meta.wcs,
+                "relabel": True,
             }
             try:
                 catalog = make_tweakreg_catalog(
@@ -98,7 +132,7 @@ class SourceCatalogStep(Step):
                     self.kernel_fwhm,
                     bkg_boxsize=self.bkg_boxsize,
                     coverage_mask=coverage_mask,
-                    starfinder_name="segmentation",
+                    starfinder_name=self.starfinder,
                     starfinder_kwargs=starfinder_kwargs,
                 )
             except NoCatalogError as err:

@@ -73,6 +73,7 @@ class TweakRegStep(Step):
         localbkg_width = integer(default=0) # Width of rectangular annulus used to compute local background around each source
         apermask_method = option('correct', 'mask', 'none', default='correct') # How to handle neighboring sources
         kron_params = float_list(min=2, max=3, default=None) # Parameters defining Kron aperture
+        deblend = boolean(default=True) # deblend sources?
 
         # align wcs options
         enforce_user_order = boolean(default=False) # Align images in user specified order?
@@ -454,6 +455,7 @@ class TweakRegStep(Step):
             "localbkg_width": self.localbkg_width,
             "apermask_method": self.apermask_method,
             "kron_params": self.kron_params,
+            "deblend": self.deblend,
         }
 
         columns = ["id", "xcentroid", "ycentroid", "flux"]
