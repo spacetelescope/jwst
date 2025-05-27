@@ -77,9 +77,9 @@ These metadata fields include:
 SOURCE_ID, NELEMENTS, SOURCE_TYPE, SOURCE_RA, SOURCE_DEC, SPECTRAL_ORDER.
 
 Note that the vector columns have the same length for all the sources in the table, meaning that
-the number of columns in the table is set by the spectrum with the most data points.
+the number of elements in the table rows is set by the spectrum with the most data points.
 The other spectra are NaN-padded to match the longest spectrum,
-and the number of data points for each spectrum is recorded in the NELEMENTS column.
+and the number of valid data points for each spectrum is recorded in the NELEMENTS column.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200) and
 in a WFSSMultiCombinedSpecModel:

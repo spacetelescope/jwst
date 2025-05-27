@@ -17,23 +17,23 @@ from jwst.datamodels.utils.flat_multispec import (
 
 def make_wfss_multiexposure(input_list):
     """
-    Combine all sources into a single table and save to a file.
+    Compile a list of extracted sources into a single binary table.
 
-    The output x1d product will have one extension per exposure.
-    Each extension will contain a single table with one row per source.
-    The table size is set by the maximum number of data points for any
-    source in the exposure; the other sources will be end-padded with NaNs
-    so their shape equals the maximum.
+    The output model will contain one binary table per exposure,
+    with each table containing all sources extracted from that exposure
+    (one row per source). The number of elements in each table row
+    will be the same across all exposures, with NaNs used to pad
+    shorter rows to match the longest row in the exposure.
 
     Parameters
     ----------
     input_list : MultiSpecModel or list[MultiSpecModel]
-        List of MultiSpecModel objects to be combined into a single x1d file.
+        List of MultiSpecModel objects to be combined.
 
     Returns
     -------
     output_x1d : WFSSMultiExposureSpecModel
-        The combined x1d product for WFSS modes.
+        The extract_1d product for WFSS modes.
     """
     if isinstance(input_list, dm.JwstDataModel):
         # if input is a single MultiSpecModel, convert to list
@@ -222,15 +222,15 @@ def wfss_multiexposure_to_multispec(input_model):
 
 def make_wfss_multicombined(results_list):
     """
-    Compile exposure-averaged sources into a single table and save to a file.
+    Compile a list of exposure-averaged extracted sources into a single binary table.
 
-    The output c1d product will contain a single spec_table,
-    which will end up in extension index 1 of the FITS file.
+    The output model will contain a single spec_table,
+    which will end up in extension index 1 of the FITS file on save.
 
     Parameters
     ----------
     results_list : list[MultiCombinedSpecModel]
-        List of MultiSlitModel objects to be combined into a single c1d file.
+        List of MultiSlitModel objects to be combined.
 
     Returns
     -------

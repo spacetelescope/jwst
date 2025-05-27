@@ -121,9 +121,9 @@ SOURCE_ID, NELEMENTS, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_D
 EXTRACT2D_YSTART, EXTRACT1D_XSTART, EXTRACT1D_YSTART, EXTRACT1D_XSTOP, EXTRACT1D_YSTOP, SPECTRAL_ORDER.
 
 Note that the vector columns have the same length for all the sources in the table, meaning that
-the number of columns in the table is set by the spectrum with the most data points.
+the number of elements in the table rows is set by the spectrum with the most data points.
 The other spectra are NaN-padded to match the longest spectrum,
-and the number of data points for each spectrum is recorded in the NELEMENTS column.
+and the number of valid data points for each spectrum is recorded in the NELEMENTS column.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200) and
 integration (the first) in a WFSSMultiSpecModel:
@@ -512,7 +512,5 @@ where `flux` is the extracted spectral data, and the data are from channel 4 for
 Extraction for NIRISS SOSS Data
 -------------------------------
 For NIRISS SOSS data, the two spectral orders overlap slightly, so a specialized extraction
-algorithm known as ATOCA (Algorithm to Treat Order ContAmination) is used.  For more information,
-see Darveau-Bernier, A., et al. 2022, PASP, 134, 094502,
-`ATOCA: an Algorithm to Treat Order Contamination.
-Application to the NIRISS SOSS Mode <https://iopscience.iop.org/article/10.1088/1538-3873/ac8a77/pdf>`__.
+algorithm known as ATOCA (Algorithm to Treat Order ContAmination) is used...
+Link paper 
