@@ -1234,6 +1234,10 @@ class STTableDataDiff(TableDataDiff):
                 "nan_b",
                 "no-nan_a",
                 "no-nan_b",
+                "max_a",
+                "max_b",
+                "min_a",
+                "min_b",
                 "mean_a",
                 "mean_b",
             ),
@@ -1245,6 +1249,10 @@ class STTableDataDiff(TableDataDiff):
                 "int32",
                 "int32",
                 "int32",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
                 "float64",
                 "float64",
             ),
@@ -1447,7 +1455,7 @@ class STTableDataDiff(TableDataDiff):
 
                 if get_stats:
                     sum_diffs = np.any(diffs > (self.atol + self.rtol * np.abs(bnonan)))
-                    if sum_diffs:
+                    if sum_diffs and len(rel_values) > 0:
                         # Report the total number of zeros, nans, and no-nan values
                         self.report_zeros_nan.add_row(
                             (
@@ -1458,12 +1466,15 @@ class STTableDataDiff(TableDataDiff):
                                 arrb[np.isnan(arrb)].size,
                                 arra[~np.isnan(arra)].size,
                                 arrb[~np.isnan(arrb)].size,
+                                np.max(anonan),
+                                np.max(bnonan),
+                                np.min(anonan),
+                                np.min(bnonan),
                                 np.mean(anonan),
                                 np.mean(bnonan),
                             )
                         )
 
-                        # Report the differences per column
                         self.report_table.add_row(
                             (
                                 col.name,
@@ -1602,8 +1613,9 @@ class STTableDataDiff(TableDataDiff):
 
                 # Print differences in zeros and nans per column
                 self._writeln("\nValues in a and b")
-                self.report_zeros_nan["mean_a"].format = ".4g"
-                self.report_zeros_nan["mean_b"].format = ".4g"
+                for colname in self.report_zeros_nan.columns:
+                    if "max" in colname or "mean" in colname or "min" in colname:
+                        self.report_zeros_nan[colname].format = ".4g"
                 tlines = self.report_zeros_nan.pformat()
                 for tline in tlines:
                     self._writeln(tline)
