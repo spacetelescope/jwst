@@ -2,10 +2,11 @@ import pytest
 import numpy as np
 from numpy.testing import assert_allclose
 from photutils.datasets import make_gwcs
+from photutils.utils.exceptions import NoDetectionsWarning
 
 from stdatamodels.jwst.datamodels import ImageModel
 
-from ..source_catalog_step import SourceCatalogStep
+from jwst.source_catalog.source_catalog_step import SourceCatalogStep
 
 
 @pytest.fixture
@@ -106,19 +107,26 @@ def nircam_model_without_apcorr():
     return model
 
 
-@pytest.mark.parametrize('npixels, nsources', ((5, 2), (1000, 1), (5000, 0)))
+@pytest.mark.parametrize('npixels, nsources', ((5, 2), (1000, 1), ))
 def test_source_catalog(nircam_model, npixels, nsources):
 
     step = SourceCatalogStep(snr_threshold=0.5, npixels=npixels,
                              bkg_boxsize=50, kernel_fwhm=2.0,
                              save_results=False)
     cat = step.run(nircam_model)
-    if cat is None:
-        assert nsources == 0
-    else:
-        assert len(cat) == nsources
-        min_snr = np.min(cat['isophotal_flux'] / cat['isophotal_flux_err'])
-        assert min_snr >= 100
+    assert len(cat) == nsources
+    min_snr = np.min(cat['isophotal_flux'] / cat['isophotal_flux_err'])
+    assert min_snr >= 100
+
+
+def test_source_catalog_no_sources(nircam_model):
+    npixels = 5000
+    step = SourceCatalogStep(snr_threshold=0.5, npixels=npixels,
+                            bkg_boxsize=50, kernel_fwhm=2.0,
+                            save_results=False)
+    with pytest.warns(NoDetectionsWarning):
+        cat = step.run(nircam_model)
+    assert cat is None
 
 
 def test_model_without_apcorr_data(nircam_model_without_apcorr):
