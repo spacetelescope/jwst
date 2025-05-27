@@ -38,6 +38,34 @@ def mk_data_array(shape, value, background, xcenter, ycenter, radius):
     return data
 
 
+def get_gain_2d(datamodel):
+    """Get the 2D gain values from the gain reference file
+
+    Parameters
+    ----------
+    datamodel : `CubeModel`
+        The input data model for which the gain reference file is needed.
+
+    Returns
+    -------
+    gain_2d : ndarray
+        The 2D gain values from the gain reference file.
+    """
+    # Get the gain reference file
+    gain_filename = TSOPhotometryStep().get_reference_file(datamodel, "gain")
+    gain_m = datamodels.GainModel(gain_filename)
+
+    # Get the relevant 2D gain values from the model
+    if reffile_utils.ref_matches_sci(datamodel, gain_m):
+        gain_2d = gain_m.data
+    else:
+        # If the reference file does not match the science data, extract
+        # the subarray model that matches the science data.
+        gain_2d = reffile_utils.get_subarray_model(datamodel, gain_m).data
+
+    return gain_2d
+
+
 def dummy_wcs(x, y):
     """Placeholder WCS"""
 
@@ -143,13 +171,7 @@ def test_tso_phot_1():
     set_meta(datamodel, sub64p=False)
 
     # Get the gain reference file
-    gain_filename = TSOPhotometryStep().get_reference_file(datamodel, "gain")
-    gain_m = datamodels.GainModel(gain_filename)
-    # Get the relevant 2D gain values from the model
-    if reffile_utils.ref_matches_sci(datamodel, gain_m):
-        gain_2d = gain_m.data
-    else:
-        gain_2d = reffile_utils.get_subarray_model(datamodel, gain_m).data
+    gain_2d = get_gain_2d(datamodel)
 
     # Use a larger radius than was used for creating the data.
     catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
@@ -196,13 +218,7 @@ def test_tso_phot_2():
     set_meta(datamodel, sub64p=True)
 
     # Get the gain reference file
-    gain_filename = TSOPhotometryStep().get_reference_file(datamodel, "gain")
-    gain_m = datamodels.GainModel(gain_filename)
-    # Get the relevant 2D gain values from the model
-    if reffile_utils.ref_matches_sci(datamodel, gain_m):
-        gain_2d = gain_m.data
-    else:
-        gain_2d = reffile_utils.get_subarray_model(datamodel, gain_m).data
+    gain_2d = get_gain_2d(datamodel)
 
     catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
                                       radius, radius_inner,
@@ -235,13 +251,7 @@ def test_tso_phot_3():
     set_meta(datamodel, sub64p=False)
 
     # Get the gain reference file
-    gain_filename = TSOPhotometryStep().get_reference_file(datamodel, "gain")
-    gain_m = datamodels.GainModel(gain_filename)
-    # Get the relevant 2D gain values from the model
-    if reffile_utils.ref_matches_sci(datamodel, gain_m):
-        gain_2d = gain_m.data
-    else:
-        gain_2d = reffile_utils.get_subarray_model(datamodel, gain_m).data
+    gain_2d = get_gain_2d(datamodel)
 
     int_times = include_int_times(datamodel)
 
@@ -268,13 +278,7 @@ def test_tso_phot_4():
     set_meta(datamodel, sub64p=False)
 
     # Get the gain reference file
-    gain_filename = TSOPhotometryStep().get_reference_file(datamodel, "gain")
-    gain_m = datamodels.GainModel(gain_filename)
-    # Get the relevant 2D gain values from the model
-    if reffile_utils.ref_matches_sci(datamodel, gain_m):
-        gain_2d = gain_m.data
-    else:
-        gain_2d = reffile_utils.get_subarray_model(datamodel, gain_m).data
+    gain_2d = get_gain_2d(datamodel)
 
     int_times = include_int_times(datamodel)
     # Modify the column of integration numbers so that they extend outside
@@ -312,13 +316,7 @@ def test_tso_phot_5():
     datamodel.meta.bunit_err = 'DN/s'
 
     # Get the gain reference file
-    gain_filename = TSOPhotometryStep().get_reference_file(datamodel, "gain")
-    gain_m = datamodels.GainModel(gain_filename)
-    # Get the relevant 2D gain values from the model
-    if reffile_utils.ref_matches_sci(datamodel, gain_m):
-        gain_2d = gain_m.data
-    else:
-        gain_2d = reffile_utils.get_subarray_model(datamodel, gain_m).data
+    gain_2d = get_gain_2d(datamodel)
 
     catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
                                       radius, radius_inner,

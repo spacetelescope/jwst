@@ -35,7 +35,7 @@ def tso_aperture_photometry(
         The inner and outer radii (in pixels) of the circular-annulus
         aperture, used for local background estimation.
 
-    gain_2d : numpy
+    gain_2d : ndarray
         The gain for all pixels.
 
     Returns
@@ -79,7 +79,6 @@ def tso_aperture_photometry(
             f"Unexpected data units: {datamodel.meta.bunit_data}. "
             "Photometry will be produced using the input units."
         )
-        pass
 
     aperture_sum = []
     aperture_sum_err = []
