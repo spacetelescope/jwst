@@ -63,10 +63,13 @@ class BackgroundStep(Step):
         else:
             input_model = datamodels.open(step_input)
             if input_bkg_list is not None:
-                if "," in input_bkg_list:
-                    bkg_list = input_bkg_list.split(sep=",")
+                if isinstance(input_bkg_list, str):
+                    if "," in input_bkg_list:
+                        bkg_list = input_bkg_list.split(sep=",")
+                    else:
+                        bkg_list = [input_bkg_list]
                 else:
-                    bkg_list = [input_bkg_list]
+                    bkg_list = input_bkg_list
             else:
                 bkg_list = self.bkg_list
 
