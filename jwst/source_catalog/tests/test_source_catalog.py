@@ -184,4 +184,4 @@ def test_source_catalog_point_sources(finder, nircam_model):
                              starfinder=finder, save_results=False)
     cat = step.run(nircam_model)
 
-    assert len(cat) == 2, f"Expected 3 sources, found {len(cat)} with {finder} finder."
+    assert len(cat) == 2, f"Expected 2 sources, found {len(cat)} with {finder} finder."

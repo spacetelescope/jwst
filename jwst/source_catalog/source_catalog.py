@@ -150,14 +150,18 @@ class JWSTSourceCatalog:
         # ignore RunTimeWarning if flux or flux_err contains NaNs
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-
             abmag = -2.5 * np.log10(flux.value) + 8.9
-            abmag_err = 2.5 * np.log10(1.0 + (flux_err.value / flux.value))
+        if (flux_err is None) or np.all(np.isnan(flux_err)):
+            abmag_err = np.zeros_like(abmag) * np.nan
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                abmag_err = 2.5 * np.log10(1.0 + (flux_err.value / flux.value))
 
-            # handle negative fluxes
-            idx = flux.value < 0
-            abmag[idx] = np.nan
-            abmag_err[idx] = np.nan
+        # handle negative fluxes
+        idx = flux.value < 0
+        abmag[idx] = np.nan
+        abmag_err[idx] = np.nan
 
         return abmag, abmag_err
 
@@ -242,10 +246,7 @@ class JWSTSourceCatalog:
             if prop_name in self.segm_cat.colnames:
                 value = self.segm_cat[prop_name]
             else:
-                try:
-                    value = getattr(self, prop_name, np.nan)
-                except TypeError:
-                    value = np.nan
+                value = getattr(self, prop_name, np.nan)
             setattr(self, column, value)
 
     @lazyproperty
@@ -290,6 +291,22 @@ class JWSTSourceCatalog:
             either the xcentroid or the ycentroid is not finite.
         """
         return ~np.isfinite(self.xypos).all(axis=1)
+
+    @lazyproperty
+    def sky_centroid(self):
+        """
+        Compute the sky coordinate of the source centroid.
+
+        The output coordinate frame is the same as the input ``wcs``.
+
+        Returns
+        -------
+        `~astropy.coordinates.SkyCoord` or `None`
+            The sky coordinate of the source centroid, or `None` if the WCS is not set.
+        """
+        if self.wcs is None:
+            return np.array([None] * self.n_sources)
+        return self.wcs.pixel_to_world(self.xcentroid, self.ycentroid)
 
     @lazyproperty
     def _isophotal_abmag(self):

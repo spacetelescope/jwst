@@ -165,6 +165,28 @@ def _convolve_data(data, kernel_fwhm, mask=None):
         return convolve(data, kernel, mask=mask, normalize_kernel=True)
 
 
+def _rename_columns(sources):
+    """
+    Rename catalog columns to be consistent between the three star finders.
+
+    Table is modified in place.
+
+    Parameters
+    ----------
+    sources : `~astropy.table.QTable`
+        The source catalog table for which to rename columns.
+    """
+    rename_map = {
+        "pa": "orientation",  # for iraf and dao star finder compatibility with source_catalog step
+        "npix": "area",  # for iraf and dao star finder compatibility with source_catalog step
+        "segment_flux": "flux",  # for sourcefinder compatibility with tweakreg step
+        "label": "id",  # for sourcefinder compatibility with tweakreg step
+    }
+    for old_col, new_col in rename_map.items():
+        if old_col in sources.colnames:
+            sources.rename_column(old_col, new_col)
+
+
 def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs):
     """
     Make input and output of SourceFinder consistent with IRAFStarFinder and DAOStarFinder.
@@ -229,9 +251,7 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     ).to_table(columns=SOURCECAT_COLUMNS)
 
     # rename columns to match DAOStarFinder and IRAFStarFinder
-    sources.rename_column("label", "id")
-    sources.rename_column("segment_flux", "flux")
-
+    _rename_columns(sources)
     return sources
 
 
@@ -264,7 +284,9 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = IRAFStarFinder(threshold, kernel_fwhm, **finder_dict)
-    return starfind(data, mask=mask)
+    sources = starfind(data, mask=mask)
+    _rename_columns(sources)
+    return sources
 
 
 def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs):
@@ -304,7 +326,9 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = DAOStarFinder(threshold, kernel_fwhm, **finder_dict)
-    return starfind(data, mask=mask)
+    sources = starfind(data, mask=mask)
+    _rename_columns(sources)
+    return sources
 
 
 def make_tweakreg_catalog(
