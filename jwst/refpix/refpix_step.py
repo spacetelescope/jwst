@@ -120,11 +120,10 @@ class RefPixStep(Step):
                         sirs_ref_filename = self.get_reference_file(result, "sirskernel")
                         if sirs_ref_filename == "N/A":
                             self.log.warning(
-                                "No reference file found for", "the optimized convolution kernel."
+                                "No reference file found for the optimized convolution kernel."
                             )
                             self.log.warning(
-                                "REFPIX step will use the running median algorithm",
-                                "for side pixels.",
+                                "REFPIX step will use the running median algorithm for side pixels."
                             )
                         else:
                             self.log.info(f"Using SIRS reference file: {sirs_ref_filename}")
@@ -132,13 +131,13 @@ class RefPixStep(Step):
                             conv_kernel_params["sirs_kernel_model"] = sirs_kernel_model
                     elif input_model.meta.instrument.name == "MIRI":
                         self.log.info(
-                            "Simple Improved Reference Subtraction (SIRS)",
-                            "not applied for MIRI data.",
+                            "Simple Improved Reference Subtraction (SIRS) "
+                            "not applied for MIRI data."
                         )
                     elif "FULL" not in input_model.meta.subarray.name:
                         self.log.info(
-                            "Simple Improved Reference Subtraction (SIRS)",
-                            "not applied for subarray data.",
+                            "Simple Improved Reference Subtraction (SIRS) "
+                            "not applied for subarray data."
                         )
 
                 status = reference_pixels.correct_model(
