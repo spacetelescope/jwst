@@ -175,7 +175,7 @@ def example_input(example_wcs):
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
     ys = rng.choice(50, n_sources, replace=False) * 8 + 10
     for y, x in zip(ys, xs):
-        m0.data[y-2:y+3, x-2:x+3] = point_source
+        m0.data[y-3:y+4, x-3:x+4] = point_source
 
     m1 = m0.copy()
     # give each a unique filename
