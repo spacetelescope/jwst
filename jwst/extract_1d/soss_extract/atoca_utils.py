@@ -752,7 +752,7 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
     [1] 'Romberg's method' https://en.wikipedia.org/wiki/Romberg%27s_method
     """
     # Init some flags
-    max_size_reached = grid.size >= max_grid_size
+    max_size_reached = grid.size > max_grid_size
     if max_size_reached:
         raise ValueError("max_grid_size is too small for the input grid.")
 
