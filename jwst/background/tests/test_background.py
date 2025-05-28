@@ -10,6 +10,7 @@ from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 from jwst.background import BackgroundStep
+from jwst.stpipe import Step
 
 
 @pytest.fixture(scope='module')
@@ -244,3 +245,22 @@ def test_asn_input():
     assert result.meta.cal_step.back_sub == 'COMPLETE'
     del result
     del bgs
+
+
+def test_bg_file_list():
+    test_dir = Path(__file__).parent
+    data_dir = Path(test_dir) / "data"
+    rate_file = str(data_dir / "jw01000005001_test_mirimage_rate.fits")
+    bg_file = str(data_dir / "jw01000005001_testbg_mirimage.fits")
+    result1 = BackgroundStep.call(rate_file, bg_file)
+    result2 = BackgroundStep.call(rate_file, bkg_list=bg_file)
+
+    bg_subtracted = str(data_dir / "jw010000-test_spec2_00001_asn_backgroundstep.fits")
+    bgs = datamodels.open(bg_subtracted)
+
+    assert_allclose(result1.data, bgs.data)
+    assert_allclose(result2.data, bgs.data)
+    assert result1.meta.cal_step.back_sub == 'COMPLETE'
+    assert result2.meta.cal_step.back_sub == 'COMPLETE'
+    del result1
+    del result2
