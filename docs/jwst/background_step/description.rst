@@ -8,11 +8,7 @@ The background subtraction step performs
 image-from-image subtraction in order to accomplish subtraction of background
 signal. The step takes as input a Spec2 association file or one target exposure,
 to which the subtraction will be applied, and a list of one or more
-background exposures. If an association file is provided, the background step
-assumes that the assign_wcs step has been run on the science file when applicable;
-alternatively, the association file can be accompanied by the name of the
-file that has been processed through the assign_wcs step, e.g.
-``strun background jw0000_asn.json jw0000_assignwcsstep.fits``
+background exposures.
 
 Two different approaches to background image subtraction are used, depending
 on the observing mode. Imaging and most spectroscopic modes use one method,

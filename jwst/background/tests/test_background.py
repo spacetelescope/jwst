@@ -2,6 +2,7 @@
 Unit tests for background subtraction
 """
 import warnings
+from pathlib import Path
 
 import pytest
 from astropy.utils.exceptions import AstropyUserWarning
@@ -228,3 +229,17 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
 
     image.close()
     background.close()
+
+
+def test_asn_input():
+    test_dir = Path(__file__).parent
+    data_dir = Path(test_dir) / "data"
+    asn_file = data_dir / "jw010000-test_spec2_00001_asn.json"
+    result = BackgroundStep.call(asn_file)
+
+    bg_subtracted = data_dir / "jw010000-test_spec2_00001_asn_backgroundstep.fits"
+    bgs = datamodels.open(bg_subtracted)
+
+    assert result.data == bgs.data
+    del result
+    del bgs

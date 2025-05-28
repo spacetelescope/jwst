@@ -12,7 +12,7 @@ log.setLevel(logging.DEBUG)
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 
 
-def asn_get_data(asn, model_with_wcs=None):
+def asn_get_data(asn):
     """
     Check if the input is an asn file and get the targets and catalog.
 
@@ -20,9 +20,6 @@ def asn_get_data(asn, model_with_wcs=None):
     ----------
     asn : str, asn file
         Input target data
-
-    model_with_wcs : str, optional
-        Name of the file that has been processed through the assign_wcs step.
 
     Returns
     -------
@@ -54,8 +51,6 @@ def asn_get_data(asn, model_with_wcs=None):
         log.info("Working on input %s ...", science_member)
 
         # Open the datamodel and update it with the relevant info for the background step
-        if model_with_wcs is not None:
-            science_member = model_with_wcs
         with datamodels.open(science_member) as sci:
             exp_type = sci.meta.exposure.type
             if exp_type in WFSS_TYPES:
