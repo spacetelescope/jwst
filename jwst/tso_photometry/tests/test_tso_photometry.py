@@ -2,8 +2,11 @@ import math
 
 import numpy as np
 import pytest
+import astropy.units as u
 
 from stdatamodels.jwst import datamodels
+from jwst.lib import reffile_utils
+from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
 from jwst.tso_photometry.tso_photometry import tso_aperture_photometry
 
 shape = (7, 100, 150)
@@ -35,6 +38,34 @@ def mk_data_array(shape, value, background, xcenter, ycenter, radius):
     return data
 
 
+def get_gain_2d(datamodel):
+    """Get the 2D gain values from the gain reference file
+
+    Parameters
+    ----------
+    datamodel : `CubeModel`
+        The input data model for which the gain reference file is needed.
+
+    Returns
+    -------
+    gain_2d : ndarray
+        The 2D gain values from the gain reference file.
+    """
+    # Get the gain reference file
+    gain_filename = TSOPhotometryStep().get_reference_file(datamodel, "gain")
+    gain_m = datamodels.GainModel(gain_filename)
+
+    # Get the relevant 2D gain values from the model
+    if reffile_utils.ref_matches_sci(datamodel, gain_m):
+        gain_2d = gain_m.data
+    else:
+        # If the reference file does not match the science data, extract
+        # the subarray model that matches the science data.
+        gain_2d = reffile_utils.get_subarray_model(datamodel, gain_m).data
+
+    return gain_2d
+
+
 def dummy_wcs(x, y):
     """Placeholder WCS"""
 
@@ -60,6 +91,8 @@ def set_meta(datamodel, sub64p=False):
     datamodel.meta.exposure.nints = datamodel.data.shape[0]
     datamodel.meta.exposure.integration_time = 10.7
     datamodel.meta.exposure.start_time = 58704.62847
+    datamodel.meta.observation.date = '2019-08-09'
+    datamodel.meta.observation.time = '15:04:59.808'
 
     datamodel.meta.exposure.integration_start = 5
     datamodel.meta.exposure.integration_end = (
@@ -73,9 +106,17 @@ def set_meta(datamodel, sub64p=False):
     if sub64p:
         datamodel.meta.instrument.pupil = 'WLP8'
         datamodel.meta.subarray.name = 'SUB64P'
+        datamodel.meta.subarray.xstart = 1
+        datamodel.meta.subarray.xsize = datamodel.data.shape[2]
+        datamodel.meta.subarray.ystart = 1
+        datamodel.meta.subarray.ysize = datamodel.data.shape[1]
     else:
         datamodel.meta.instrument.pupil = 'CLEAR'
         datamodel.meta.subarray.name = 'FULL'
+        datamodel.meta.subarray.xstart = 1
+        datamodel.meta.subarray.xsize = datamodel.data.shape[2]
+        datamodel.meta.subarray.ystart = 1
+        datamodel.meta.subarray.ysize = datamodel.data.shape[1]
 
     datamodel.meta.bunit_data = 'MJy/sr'
     datamodel.meta.bunit_err = 'MJy/sr'
@@ -129,10 +170,13 @@ def test_tso_phot_1():
     datamodel = datamodels.CubeModel(data)
     set_meta(datamodel, sub64p=False)
 
+    # Get the gain reference file
+    gain_2d = get_gain_2d(datamodel)
+
     # Use a larger radius than was used for creating the data.
     catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
                                       radius + 1., radius_inner,
-                                      radius_outer)
+                                      radius_outer, gain_2d)
 
     assert catalog.meta['instrument'] == datamodel.meta.instrument.name
     assert catalog.meta['filter'] == datamodel.meta.instrument.filter
@@ -173,9 +217,12 @@ def test_tso_phot_2():
     datamodel = datamodels.CubeModel(data)
     set_meta(datamodel, sub64p=True)
 
+    # Get the gain reference file
+    gain_2d = get_gain_2d(datamodel)
+
     catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
                                       radius, radius_inner,
-                                      radius_outer)
+                                      radius_outer, gain_2d)
 
     assert catalog.meta['instrument'] == datamodel.meta.instrument.name
     assert catalog.meta['filter'] == datamodel.meta.instrument.filter
@@ -203,11 +250,14 @@ def test_tso_phot_3():
     datamodel = datamodels.CubeModel(data)
     set_meta(datamodel, sub64p=False)
 
+    # Get the gain reference file
+    gain_2d = get_gain_2d(datamodel)
+
     int_times = include_int_times(datamodel)
 
     catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
                                       radius + 1., radius_inner,
-                                      radius_outer)
+                                      radius_outer, gain_2d)
 
     offset = datamodel.meta.exposure.integration_start - 1
     slc = slice(offset, offset + shape[0])
@@ -227,6 +277,9 @@ def test_tso_phot_4():
     datamodel = datamodels.CubeModel(data)
     set_meta(datamodel, sub64p=False)
 
+    # Get the gain reference file
+    gain_2d = get_gain_2d(datamodel)
+
     int_times = include_int_times(datamodel)
     # Modify the column of integration numbers so that they extend outside
     # the range of integration numbers in the science data.  This shouldn't
@@ -236,28 +289,44 @@ def test_tso_phot_4():
 
     catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
                                       radius + 1., radius_inner,
-                                      radius_outer)
+                                      radius_outer, gain_2d)
 
     int_times = np.array([58704.62853, 58704.628655, 58704.62878,
                           58704.62890, 58704.6290, 58704.6291511,
                           58704.629275])
     assert np.allclose(catalog['MJD'], int_times, rtol=1.e-8)
 
-
 def test_tso_phot_5():
 
-    global shape, xcenter, ycenter
+    # pupil = 'WLP8' and subarray = 'SUB64P'
+
+    shape = (7, 64, 64)
+    xcenter = 31.
+    ycenter = 31.
 
     value = 17.
     background = 0.8
-    radius = 5.
-    radius_inner = 8.
-    radius_outer = 11.
+    radius = 50.
+    radius_inner = None
+    radius_outer = None
     data = mk_data_array(shape, value, background, xcenter, ycenter, radius)
     datamodel = datamodels.CubeModel(data)
-    set_meta(datamodel, sub64p=False)
-    datamodel.meta.bunit_data = 'MJy'  # unexpected data unit
+    set_meta(datamodel, sub64p=True)
+    datamodel.meta.bunit_data = 'DN/s'
+    datamodel.meta.bunit_err = 'DN/s'
 
-    with pytest.raises(ValueError):
-        tso_aperture_photometry(datamodel, xcenter, ycenter, radius + 1., radius_inner,
-                                radius_outer)
+    # Get the gain reference file
+    gain_2d = get_gain_2d(datamodel)
+
+    catalog = tso_aperture_photometry(datamodel, xcenter, ycenter,
+                                      radius, radius_inner,
+                                      radius_outer, gain_2d)
+
+    assert catalog.meta['instrument'] == datamodel.meta.instrument.name
+    assert catalog.meta['filter'] == datamodel.meta.instrument.filter
+    assert catalog.meta['subarray'] == datamodel.meta.subarray.name
+    assert catalog.meta['pupil'] == datamodel.meta.instrument.pupil
+    assert math.isclose(catalog.meta['xcenter'], xcenter, abs_tol=0.01)
+    assert math.isclose(catalog.meta['ycenter'], ycenter, abs_tol=0.01)
+
+    assert catalog['aperture_sum'][0].unit == u.Unit('electron')
