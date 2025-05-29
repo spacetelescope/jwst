@@ -72,7 +72,7 @@ def test_nirspec_ifu_wcs(rtdata, input_file):
     """Test NIRSpec IFU wcs"""
     rtdata.get_data(f"nirspec/ifu/{input_file}")
 
-    AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs', nrs_ifu_slit_wcs=True)
+    AssignWcsStep.call(input_file, save_results=True, suffix='assign_wcs', nrs_ifu_slice_wcs=True)
 
     output = input_file.replace('rate', 'assign_wcs')
     rtdata.output = output

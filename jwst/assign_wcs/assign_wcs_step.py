@@ -53,7 +53,7 @@ class AssignWcsStep(Step):
         sip_npoints = integer(default=12)  #  number of points for SIP
         slit_y_low = float(default=-.55)  # The lower edge of a slit (NIRSpec only).
         slit_y_high = float(default=.55)  # The upper edge of a slit (NIRSpec only).
-        nrs_ifu_slit_wcs = boolean(default=False)  # For NIRSpec IFU, create a full slit-based WCS instead of a top-level coordinate-based WCS. Used for diagnostic purposes only.
+        nrs_ifu_slice_wcs = boolean(default=False)  # For NIRSpec IFU, create a full slice-based WCS instead of a top-level coordinate-based WCS. Used for diagnostic purposes only.
     """  # noqa: E501
 
     reference_file_types = [
@@ -123,7 +123,7 @@ class AssignWcsStep(Step):
                 input_model,
                 reference_file_names,
                 slit_y_range,
-                nrs_ifu_slit_wcs=self.nrs_ifu_slit_wcs,
+                nrs_ifu_slice_wcs=self.nrs_ifu_slice_wcs,
             )
 
         if not (
