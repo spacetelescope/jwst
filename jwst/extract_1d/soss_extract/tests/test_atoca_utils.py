@@ -467,7 +467,7 @@ def test_get_c_matrix(kernels_unity, webb_kernels, wave_grid):
     assert matrix.dtype == np.float64
 
     # ensure normalized
-    assert matrix.sum() == matrix.shape[0]
+    assert np.isclose(matrix.sum(), matrix.shape[0])
 
     # test where input kernel is a 2-D array instead of callable
     i_bounds = [0, len(wave_grid)]
