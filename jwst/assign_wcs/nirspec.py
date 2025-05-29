@@ -2779,17 +2779,21 @@ def apply_slicemap(input_model, replace_wcs=True):
         bb = full_wcs.bounding_box[slit_id]
 
         # Construct array indices for pixels in this slice
-        x, y = grid_from_bounding_box(bb, step=(1, 1), center=True)
+        x, y = grid_from_bounding_box(bb)
         x_int = x.astype(int)
         y_int = y.astype(int)
 
+        # Get valid wavelengths for the slice
+        _, _, lam, _ = full_wcs(x_int, y_int, slit_id)
+        valid = np.isfinite(lam)
+
+        # Restrict the slice to valid pixels
+        x_int = x_int[valid]
+        y_int = y_int[valid]
+
         # Set the pixel map to the slice value, one-indexed
         # (zero means no transform available)
-        regions[y_int, x_int] += slit_id + 1
-
-        # Set any overlap regions in the y-direction to zero
-        already_set = y_int[np.any(regions[y_int, x_int] != (slit_id + 1), axis=1)]
-        regions[already_set, :] = 0
+        regions[y_int, x_int] = slit_id + 1
 
         # Fix the input for det to slicer transforms by pulling out
         # the specific models needed.
