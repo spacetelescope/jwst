@@ -52,11 +52,12 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
             "Input model does not have a WCS object; assign_wcs should be run before extract_2d."
         )
 
-    slit2msa = input_model.meta.wcs.get_transform("slit_frame", "msa_frame")
-    # This is a kludge but will work for now.
-    # This model keeps open_slits as an attribute.
-    open_slits = slit2msa.slits[:]
+    # Get all open slits from the WCS transforms
+    open_slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slits
+
+    # Select the slits to process
     open_slits = select_slits(open_slits, slit_names, source_ids)
+
     # NIRSpec BRIGHTOBJ (S1600A1 TSO) mode
     if exp_type == "NRS_BRIGHTOBJ":
         # the output model is a single SlitModel
