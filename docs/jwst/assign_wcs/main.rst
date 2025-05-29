@@ -169,11 +169,11 @@ backward directions. For this same fixed slit exposure:
 WCS of NIRSpec IFU exposures
 ----------------------------
 
-For NIRSpec IFU data, the assigned WCS may be either a slit-based WCS which uses slice
+For NIRSpec IFU data, the assigned WCS may be either a slice-based WCS which uses slice
 numbers (zero-indexed) to identify the "slits" containing valid coordinates, or it may be a
 coordinate-based WCS that does not require the slice ID to perform coordinate transformations
-for any pixel in the IFU image. The coordinate-based WCS is the default choice; if the slit-based
-WCS is needed for diagnostic purposes, it can be produced by specifying ``nrs_ifu_slit_wcs = True``
+for any pixel in the IFU image. The coordinate-based WCS is the default choice; if the slice-based
+WCS is needed for diagnostic purposes, it can be produced by specifying ``nrs_ifu_slice_wcs = True``
 in the parameters for the ``assign_wcs`` step.
 
 With the coordinate-based WCS, it is possible to
