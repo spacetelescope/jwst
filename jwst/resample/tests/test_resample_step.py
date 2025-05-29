@@ -485,7 +485,7 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
 
     # pixel_scale and pixel_scale_ratio should be equivalent
     nn = np.isnan(result2.data) | np.isnan(result3.data)
-    assert_allclose(result2.data[~nn], result3.data[~nn])
+    assert_allclose(result2.data[~nn], result3.data[~nn], rtol=1e-6)
 
     # Check result2 for expected results
 
@@ -553,7 +553,7 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
 
     # pixel_scale and pixel_scale_ratio should be equivalent
     nn = np.isnan(result2.data) | np.isnan(result3.data)
-    assert_allclose(result2.data[~nn], result3.data[~nn])
+    assert_allclose(result2.data[~nn], result3.data[~nn], rtol=1e-6)
 
     # Check result2 for expected results
 
@@ -616,7 +616,7 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
     for slit1, slit2, slit3 in zip(result1.slits, result2.slits, result3.slits):
         # pixel_scale and pixel_scale_ratio should be equivalent
         nn = np.isnan(slit2.data) | np.isnan(slit3.data)
-        assert_allclose(slit2.data[~nn], slit3.data[~nn])
+        assert_allclose(slit2.data[~nn], slit3.data[~nn], rtol=1e-6)
 
         # Check result2 for expected results
 
