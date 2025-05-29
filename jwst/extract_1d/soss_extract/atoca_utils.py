@@ -848,7 +848,7 @@ class WebbKernel:
             Center (~max throughput) of the kernel is at the center of the 2nd axis.
         wave_trace : array[float]
             1-D trace of the detector central wavelengths for the given order.
-            Since WebbPSF returns kernels in the pixel space, this is used to
+            Since kernels are originally defined in the pixel space, this is used to
             convert to wavelength space.
         n_pix : int
             Number of detector pixels spanned by the kernel. Second axis of kernels
