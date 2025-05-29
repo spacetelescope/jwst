@@ -74,3 +74,10 @@ a low-pass filter. The numerical value is expected to be a float.
 The ``halfwidth`` argument is the half-width of convolution kernel to build. The
 numerical value is expected to be an integer.
 
+*  ``--irs2_mean_subtraction``
+
+The ``irs2_mean_subtraction`` argument is a boolean to apply or skip a mean offset
+subtraction before IRS2 correction.  Mean values are computed across reference pixels
+sorted by amplifier and detector column parity.  Setting this option to True may help reduce
+alternating column noise in some exposures.
+
