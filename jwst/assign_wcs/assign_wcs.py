@@ -19,7 +19,7 @@ log.setLevel(logging.DEBUG)
 __all__ = ["load_wcs"]
 
 
-def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_slit_wcs=False):
+def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_slice_wcs=False):
     """
     Create a gWCS object and store it in ``Model.meta``.
 
@@ -31,11 +31,11 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
         Mapping between reftype (keys) and reference file name (vals).
     nrs_slit_y_range : list
         The slit y-range for a NIRSpec slit. The center is (0, 0).
-    nrs_ifu_slit_wcs : bool
-        If True and the exposure type is NIRSpec IFU, then a full slit-based
-        WCS that propagates slit names is produced.  This is intended primarily for
+    nrs_ifu_slice_wcs : bool
+        If True and the exposure type is NIRSpec IFU, then a full slice-based
+        WCS that propagates slice IDs is produced.  This is intended primarily for
         diagnostic purposes.  If False and the exposure type is NIRSpec IFU,
-        a slice map in internally applied to produce a fully coordinate-based
+        a slice map is internally applied to produce a fully coordinate-based
         WCS pipeline that does not require slice IDs on input.
 
     Returns
@@ -126,7 +126,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
 
             # Attach a slice map in the regions attribute.
             # Optionally, use it to further revise the output WCS pipeline.
-            mod.apply_slicemap(output_model, replace_wcs=(not nrs_ifu_slit_wcs))
+            mod.apply_slicemap(output_model, replace_wcs=(not nrs_ifu_slice_wcs))
         elif output_model.meta.exposure.type.lower() == "mir_mrs":
             update_s_region_mrs(output_model)
         else:
