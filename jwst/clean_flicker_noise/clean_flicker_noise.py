@@ -316,6 +316,7 @@ def clip_to_background(
     # Initial iterative sigma clip
     with warnings.catch_warnings():
         warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message=".* slice")
         mean, median, sigma = sigma_clipped_stats(image, mask=~mask, sigma=sigma_limit)
     if fit_histogram:
         center = mean

@@ -29,8 +29,6 @@ def run_spec3_ifushort(rtdata_module, resource_tracker):
         '--steps.cube_build.save_results=true',
         '--steps.extract_1d.save_results=true',
     ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: All-NaN slice encountered
     with resource_tracker.track():
         Step.from_cmdline(args)
     return rtdata
@@ -51,8 +49,6 @@ def run_spec3_ifulong(rtdata_module, resource_tracker):
         '--steps.cube_build.save_results=true',
         '--steps.extract_1d.save_results=true',
     ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: All-NaN slice encountered
     with resource_tracker.track():
         Step.from_cmdline(args)
     return rtdata
@@ -75,8 +71,6 @@ def run_spec3_ifushort_emsm(rtdata_module):
         '--steps.cube_build.output_file="miri_mrs_emsm"',
         '--steps.extract_1d.save_results=true',
     ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: All-NaN slice encountered
     with pytest.warns(Warning, match="Sources were found, but none pass"):
         Step.from_cmdline(args)
     return rtdata
@@ -101,8 +95,6 @@ def run_spec3_ifushort_extract1d(rtdata_module):
         '--steps.extract_1d.ifu_rfcorr=true',
         '--steps.extract_1d.save_results=true',
     ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: All-NaN slice encountered
     Step.from_cmdline(args)
     return rtdata
 

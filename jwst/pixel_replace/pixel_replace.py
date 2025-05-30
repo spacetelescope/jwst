@@ -442,27 +442,32 @@ class PixelReplacement:
             )
             model_replaced.err[current_condition][range(*profile_cut)] = replaced_err
 
-            current_var = model.var_poisson[current_condition][range(*profile_cut)]
-            replaced_var = np.where(
-                replace_condition,
-                (norm_errors["var_poisson"] * norm_scale * scale) ** 2,
-                current_var,
-            )
-            model_replaced.var_poisson[current_condition][range(*profile_cut)] = replaced_var
+            # Some values in NIRSpec variances may overflow in the squares - ignore the warning.
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
+                current_var = model.var_poisson[current_condition][range(*profile_cut)]
+                replaced_var = np.where(
+                    replace_condition,
+                    (norm_errors["var_poisson"] * norm_scale * scale) ** 2,
+                    current_var,
+                )
+                model_replaced.var_poisson[current_condition][range(*profile_cut)] = replaced_var
 
-            current_var = model.var_rnoise[current_condition][range(*profile_cut)]
-            replaced_var = np.where(
-                replace_condition,
-                (norm_errors["var_rnoise"] * norm_scale * scale) ** 2,
-                current_var,
-            )
-            model_replaced.var_rnoise[current_condition][range(*profile_cut)] = replaced_var
+                current_var = model.var_rnoise[current_condition][range(*profile_cut)]
+                replaced_var = np.where(
+                    replace_condition,
+                    (norm_errors["var_rnoise"] * norm_scale * scale) ** 2,
+                    current_var,
+                )
+                model_replaced.var_rnoise[current_condition][range(*profile_cut)] = replaced_var
 
-            current_var = model.var_flat[current_condition][range(*profile_cut)]
-            replaced_var = np.where(
-                replace_condition, (norm_errors["var_flat"] * norm_scale * scale) ** 2, current_var
-            )
-            model_replaced.var_flat[current_condition][range(*profile_cut)] = replaced_var
+                current_var = model.var_flat[current_condition][range(*profile_cut)]
+                replaced_var = np.where(
+                    replace_condition,
+                    (norm_errors["var_flat"] * norm_scale * scale) ** 2,
+                    current_var,
+                )
+                model_replaced.var_flat[current_condition][range(*profile_cut)] = replaced_var
 
         return model_replaced
 

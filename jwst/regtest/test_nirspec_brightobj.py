@@ -35,8 +35,6 @@ def run_tso_spec2_pipeline(rtdata_module, resource_tracker):
             "--steps.flat_field.save_results=True",
             "--steps.flat_field.save_interpolated_flat=True",
             "--steps.photom.save_results=True"]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: overflow encountered in square
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -119,8 +117,6 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     data = rtdata.get_data(f'nirspec/tso/{basename}_wavecorr.fits')
     user_supplied_flat = rtdata.get_data(f'nirspec/tso/{basename}_user_flat.fits')
 
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: overflow encountered in square
     data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat,
                                            save_results=False)
     rtdata.output = output_file
@@ -134,8 +130,6 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
     basename = 'jw02420001001_04101_00001-first100_nrs1'
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: overflow encountered in square
     with dm.open(rtdata.get_data(f'nirspec/tso/{basename}_wavecorr.fits')) as data:
         flatted = FlatFieldStep.call(data)
         unflatted = FlatFieldStep.call(flatted, inverse=True)

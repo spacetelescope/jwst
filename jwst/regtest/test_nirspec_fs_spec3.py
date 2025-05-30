@@ -28,8 +28,6 @@ def run_pipeline(rtdata_module, resource_tracker):
             "--steps.outlier_detection.save_intermediate_results=true",
             "--steps.resample_spec.save_results=true",
             "--steps.extract_1d.save_results=true"]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: Mean of empty slice
     with resource_tracker.track():
         Step.from_cmdline(args)
 

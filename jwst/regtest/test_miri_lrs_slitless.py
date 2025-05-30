@@ -90,8 +90,6 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module, resource_tracker):
         "--steps.pixel_replace.save_results=true",
         "--steps.pixel_replace.skip=false"
     ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: invalid value encountered in multiply
     with resource_tracker.track():
         Step.from_cmdline(args)
 

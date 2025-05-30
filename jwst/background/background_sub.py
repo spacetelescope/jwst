@@ -299,7 +299,11 @@ def average_background(input_model, bkg_list, sigma, maxiters):
 
     # Clip the background data
     log.debug(f"clip with sigma={sigma} maxiters={maxiters}")
-    mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=AstropyUserWarning, message=".*automatically clipped.*"
+        )
+        mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
 
     # Compute the mean of the non-clipped values
     avg_bkg.data = mdata.mean(axis=0).data

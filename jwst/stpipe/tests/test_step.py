@@ -92,6 +92,7 @@ def test_parameters_from_crds_filename(monkeypatch):
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
+@pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.parametrize("on_disk_status", [None, True, False])
 def test_parameters_from_crds_association(on_disk_status, monkeypatch):
     """
