@@ -41,7 +41,7 @@ def artifactory_repos(pytestconfig):
     # see: https://github.com/pytest-dev/pytest/pull/11594
     # using "not inputs_root" will handle both cases
     if not inputs_root:
-        inputs_root = "jwst-pipeline"
+        inputs_root = "scratch-lim"
     else:
         inputs_root = inputs_root[0]
 
