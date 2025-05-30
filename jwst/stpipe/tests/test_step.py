@@ -77,7 +77,7 @@ def test_parameters_from_crds_open_model():
 def test_parameters_from_crds_filename(monkeypatch):
     """
     Test retrieval of parameters from CRDS from single-model filename.
-    
+
     Ensures datamodels.open() is not called.
     Similar tests of read_metadata() in stdatamodels ensure that the input file's `data`
     attribute is never read either.
@@ -110,10 +110,10 @@ def test_parameters_from_crds_association(on_disk_status, monkeypatch):
 
     single_member_asn = get_pkg_data_filename("data/single_member_miri_asn.json", package="jwst.stpipe.tests")
 
-    if on_disk_status is None:
-        data = single_member_asn
-    else:
-        data = ModelLibrary(single_member_asn, on_disk=on_disk_status)
+    data = single_member_asn
+    if on_disk_status is not None:
+        with ModelLibrary(single_member_asn, on_disk=on_disk_status) as model_library:
+            data = model_library
 
     pars = WhiteLightStep.get_config_from_reference(data)
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
