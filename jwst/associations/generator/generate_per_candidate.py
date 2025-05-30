@@ -157,7 +157,7 @@ def generate_per_candidate(
         except AttributeError:
             pass
 
-    if dms_enabled:
+    if dms_enabled and candidate_ids is not None:
         # We now must remove the asns that were used to duplicate-check the input candidates.
         finalized_asns = [
             asn
