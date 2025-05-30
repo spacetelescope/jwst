@@ -26,10 +26,7 @@ def run_spec3_multi_pixel_replace(rtdata_module):
     }
     # FIXME: Handle warnings properly.
     # Example: RuntimeWarning: All-NaN slice encountered
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        rtdata = rt.run_step_from_dict(rtdata, **step_params)
+    rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
 

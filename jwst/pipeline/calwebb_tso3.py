@@ -128,7 +128,7 @@ class Tso3Pipeline(Pipeline):
             # Working with spectroscopic TSO data;
             # define output for x1d (level 3) products
 
-            x1d_result = datamodels.MultiSpecModel()
+            x1d_result = datamodels.TSOMultiSpecModel()
             x1d_result.update(input_models[0], only="PRIMARY")
             x1d_result.int_times = FITS_rec.from_columns(
                 input_models[0].int_times.columns, nrows=input_models[0].meta.exposure.nints
@@ -163,9 +163,9 @@ class Tso3Pipeline(Pipeline):
 
                 x1d_result.spec.extend(result.spec)
 
-                # perform white-light photometry on 1d extracted data
-                self.log.info("Performing white-light photometry ...")
-                phot_result_list.append(self.white_light.run(result))
+            # perform white-light photometry on all 1d extracted data
+            self.log.info("Performing white-light photometry ...")
+            phot_result_list.append(self.white_light.run(x1d_result))
 
             # Update some metadata from the association
             x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
