@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 from pathlib import Path
 from collections import defaultdict
 import logging
