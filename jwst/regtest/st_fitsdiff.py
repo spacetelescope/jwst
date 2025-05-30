@@ -803,7 +803,7 @@ class STHeaderDiff(HeaderDiff):
 
             # The following lines are identical to the original HeaderDiff code
 
-            if diff_values(a, b, rtol=self.rtol, atol=self.atol):
+            if diff_values(a[0], b[0], rtol=self.rtol, atol=self.atol):
                 self.diff_keyword_values[keyword].append((a, b))
             else:
                 # If there are duplicate keywords we need to be able to
