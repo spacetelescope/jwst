@@ -227,7 +227,6 @@ def copy_spec_metadata(input_model, output_model):
         A spectral model, such as SpecModel or TSOSpecModel. If read
         in from a list of spectra, as in MultiSpecModel, the input model may be
         an ObjectNode rather than a full DataModel.
-
     output_model : DataModel
         A spectral model, such as SpecModel or TSOSpecModel. Updated in place
         with metadata from the input model.  The output model must be a full

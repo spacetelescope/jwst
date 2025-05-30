@@ -1,14 +1,14 @@
 """Regression tests for NIRSpec IFU"""
-import pytest
+import warnings
 
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 import numpy as np
-
+import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.flatfield import FlatFieldStep
 from jwst.flatfield.flat_field import nirspec_ifu
 from jwst.pathloss import PathLossStep
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 # Define artifactory source and truth
 INPUT_PATH = 'nirspec/ifu'
@@ -27,8 +27,8 @@ def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
             # Call the flat field function directly with a user flat
             nirspec_ifu(data, None, None, None, None, user_supplied_flat=user_supplied_flat)
 
-            rtdata.output = output_file
-            data.save(rtdata.output)
+    rtdata.output = output_file
+    data.save(rtdata.output)
 
     rtdata.get_truth(TRUTH_PATH + '/' + output_file)
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -45,8 +45,9 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     user_supplied_flat = rtdata.get_data(f'nirspec/ifu/{basename}_interpolatedflat.fits')
 
     # Call the step with a user flat
-    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat,
-                                           save_results=False)
+    data_flat_fielded = FlatFieldStep.call(
+        data, user_supplied_flat=user_supplied_flat, save_results=False)
+
     rtdata.output = output_file
     data_flat_fielded.save(rtdata.output)
     del data_flat_fielded

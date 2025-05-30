@@ -1,0 +1,1 @@
+Fix crashes in the SOSS ATOCA algorithm when adaptive refinement reaches max grid size

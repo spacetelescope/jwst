@@ -75,6 +75,13 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
     output_model = input_model.copy()
     wcs = WCS(pipeline)
     output_model.meta.wcs = wcs
+    if (
+        instrument.lower() == "nirspec"
+        and output_model.meta.exposure.type.lower() not in IMAGING_TYPES
+    ):
+        slits = output_model.meta.wcs.get_transform("gwa", "slit_frame").slits
+        cbbox = mod.generate_compound_bbox(output_model, slits)
+        output_model.meta.wcs.bounding_box = cbbox
     output_model.meta.cal_step.assign_wcs = "COMPLETE"
     exclude_types = [
         "nrc_wfss",
@@ -110,7 +117,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
             if output_model.meta.exposure.type.lower() == "mir_lrs-slitless":
                 output_model.wavelength = get_wavelengths(output_model)
         elif output_model.meta.exposure.type.lower() == "nrs_ifu":
-            update_s_region_nrs_ifu(output_model, mod)
+            update_s_region_nrs_ifu(output_model)
         elif output_model.meta.exposure.type.lower() == "mir_mrs":
             update_s_region_mrs(output_model)
         else:
