@@ -2,6 +2,7 @@
 Unit tests for background subtraction
 """
 import warnings
+from pathlib import Path
 
 import pytest
 from astropy.utils.exceptions import AstropyUserWarning
@@ -9,6 +10,7 @@ from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 from jwst.background import BackgroundStep
+from jwst.stpipe import Step
 
 
 @pytest.fixture(scope='module')
@@ -215,7 +217,8 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
     background = miri_rate_model(background_shape, value=background_value)
 
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=AstropyUserWarning, message="Input data contains invalid values")
+        warnings.filterwarnings("ignore", category=AstropyUserWarning,
+                                message="Input data contains invalid values")
         result = BackgroundStep.call(image, [background])
 
     assert_allclose(result.data[..., :background_shape[-2], :background_shape[-1]],
@@ -227,3 +230,37 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
 
     image.close()
     background.close()
+
+
+def test_asn_input():
+    test_dir = Path(__file__).parent
+    data_dir = Path(test_dir) / "data"
+    asn_file = str(data_dir / "jw010000-test_spec2_00001_asn.json")
+    result = BackgroundStep.call(asn_file)
+
+    bg_subtracted = str(data_dir / "jw010000-test_spec2_00001_asn_backgroundstep.fits")
+    bgs = datamodels.open(bg_subtracted)
+
+    assert_allclose(result.data, bgs.data)
+    assert result.meta.cal_step.back_sub == 'COMPLETE'
+    del result
+    del bgs
+
+
+def test_bg_file_list():
+    test_dir = Path(__file__).parent
+    data_dir = Path(test_dir) / "data"
+    rate_file = str(data_dir / "jw01000005001_test_mirimage_rate.fits")
+    bg_file = str(data_dir / "jw01000005001_testbg_mirimage.fits")
+    result1 = BackgroundStep.call(rate_file, bg_file)
+    result2 = BackgroundStep.call(rate_file, bkg_list=bg_file)
+
+    bg_subtracted = str(data_dir / "jw010000-test_spec2_00001_asn_backgroundstep.fits")
+    bgs = datamodels.open(bg_subtracted)
+
+    assert_allclose(result1.data, bgs.data)
+    assert_allclose(result2.data, bgs.data)
+    assert result1.meta.cal_step.back_sub == 'COMPLETE'
+    assert result2.meta.cal_step.back_sub == 'COMPLETE'
+    del result1
+    del result2

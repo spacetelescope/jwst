@@ -8,14 +8,15 @@ from jwst.stpipe import Step
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
 from jwst.background.background_sub_wfss import (subtract_wfss_bkg,
-                                            _mask_from_source_cat,
-                                            _sufficient_background_pixels,
-                                            _ScalingFactorComputer)
+                                                 _mask_from_source_cat,
+                                                 _sufficient_background_pixels,
+                                                 _ScalingFactorComputer)
 
 BKG_SCALING = 0.123
 DETECTOR_SHAPE = (2048, 2048)
 INITIAL_NAN_FRACTION = 1e-4
 INITIAL_OUTLIER_FRACTION = 1e-3
+
 
 @pytest.fixture(scope="module")
 def known_bkg():
@@ -117,7 +118,7 @@ def make_wfss_datamodel(data_path, mock_data):
 
     image.data = mock_data[0]
     image.err = mock_data[1]
-    image.original_data_mean = mock_data[2] #just add this here for convenience
+    image.original_data_mean = mock_data[2]  # just add this here for convenience
     image.dq = np.isnan(image.data)
 
     image.meta.source_catalog = str(data_path / "test_cat.ecsv")
@@ -183,8 +184,8 @@ def shared_tests(sci, mask, original_data_mean):
     # the noise in the data. There's probably a first-principles way to determine the tolerance,
     # but this is ok for the purposes of this test.
     # ignore the outliers here too
-    sci[sci>50] = np.nan
-    tol = 0.01*np.nanstd(sci)
+    sci[sci > 50] = np.nan
+    tol = 0.01 * np.nanstd(sci)
     assert np.isclose(np.nanmean(sci), original_data_mean, atol=tol)
 
 

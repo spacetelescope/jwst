@@ -1,0 +1,23 @@
+{
+    "asn_type": "spec2",
+    "asn_rule": "Asn_Lv2Image",
+    "program": "01000",
+    "asn_pool": "jw010000_pool.csv",
+    "products": [
+        {
+            "name": "jw01000005001_test_mirimage",
+            "members": [
+                {
+                    "expname": "jw01000005001_test_mirimage_rate.fits",
+                    "exptype": "science",
+                    "exposerr": "null"
+                },
+                {
+                    "expname": "jw01000005001_testbg_mirimage.fits",
+                    "exptype": "background",
+                    "exposerr": "null"
+                }
+            ]
+        }
+    ]
+}
