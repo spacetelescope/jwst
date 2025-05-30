@@ -34,6 +34,7 @@ from jwst.associations.lib.rules_level3_base import (
     dms_product_name_nrsfs_sources,
     dms_product_name_noopt,
     dms_product_name_coronimage,
+    dms_product_name_wfss,
     format_product,
 )
 
@@ -1207,7 +1208,7 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
         str
             Product name using source id.
         """
-        return dms_product_name_sources(self)
+        return dms_product_name_wfss(self)
 
 
 @RegistryMarker.rule

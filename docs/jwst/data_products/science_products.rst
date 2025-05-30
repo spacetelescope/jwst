@@ -507,7 +507,7 @@ in binary table extensions of FITS files. The overall layout of the FITS file is
  - ADSF: The data model meta data.
 
 Multiple "EXTRACT1D" extensions can be present if there is data for more than one source,
-segment, or spectral order. For ``x1dints`` products, there is one "EXTRACT1D"
+segment, spectral order, or exposure. For ``x1dints`` products, there is one "EXTRACT1D"
 extension that holds spectra for all integrations in the exposure.
 
 For ``x1d`` products, the table is constructed using a simple 2-D layout,
@@ -560,6 +560,17 @@ columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 These contain the FLUX, SURF_BRIGHT, and BACKGROUND data, with additional
 corrections for residual fringing (see :ref:`MIRI-MRS-1D-residual-fringe`
 for more information).
+
+For NIRCam and NIRISS WFSS ``x1d`` products, each row in the table holds the full
+spectrum for a single source, such that all extracted sources are present in the 
+same binary table. The spectral data columns listed above are each 2-D: each row is a 1-D
+vector containing all data points for the spectrum in that integration.
+The table also reports several pieces of source-specific metadata; these fields are:
+SOURCE_ID, NELEMENTS, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC, EXTRACT2D_XSTART,
+EXTRACT2D_YSTART, EXTRACT1D_XSTART, EXTRACT1D_YSTART, EXTRACT1D_XSTOP, EXTRACT1D_YSTOP, SPECTRAL_ORDER.
+Each extension in the hdulist represents a different exposure,
+with the extension metadata indicating the exposure number and input filename for 
+the corresponding exposure.  See the extract_1d step documentation for more details.
 
 For ``x1dints`` products, each row in the table holds the full spectrum for a single
 integration.  The spectral data columns listed above are each 2-D: each row is a 1-D
