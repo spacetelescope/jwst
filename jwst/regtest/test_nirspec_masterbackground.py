@@ -164,11 +164,8 @@ def test_nirspec_ifu_mbkg_user(rtdata, fitsdiff_default_kwargs):
     # Get input data
     rtdata.get_data("nirspec/ifu/jw01252001001_03101_00001_nrs1_cal.fits")
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        MasterBackgroundStep.call(rtdata.input, user_background=user_background,
-                                  save_results=True, suffix='mbsub')
+    MasterBackgroundStep.call(rtdata.input, user_background=user_background,
+                              save_results=True, suffix='mbsub')
 
     output = "jw01252001001_03101_00001_nrs1_mbsub.fits"
     rtdata.output = output
@@ -193,11 +190,8 @@ def test_nirspec_ifu_mbkg_nod(rtdata, fitsdiff_default_kwargs, output_file):
     # Get input data
     rtdata.get_asn("nirspec/ifu/jw01252-o001_spec3_00003_asn_with_bg.json")
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        MasterBackgroundStep.call(rtdata.input, save_background=True, save_results=True,
-                                  suffix='mbsub')
+    MasterBackgroundStep.call(rtdata.input, save_background=True, save_results=True,
+                              suffix='mbsub')
 
     rtdata.output = output_file
 

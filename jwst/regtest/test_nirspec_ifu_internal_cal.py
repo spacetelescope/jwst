@@ -19,10 +19,7 @@ def test_cube_build_nirspec_internal_cal(rtdata, fitsdiff_default_kwargs):
         '--save_results=true',
         '--coord_system=internal_cal'
     ]
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        Step.from_cmdline(args)
+    Step.from_cmdline(args)
 
     output = input_file.replace('cal', 'g395h-f290lp_internal_s3d')
     rtdata.output = output

@@ -20,15 +20,12 @@ def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test using predefined interpolated flat"""
     basename = 'jw01251004001_03107_00001_nrs1'
     output_file = f'{basename}_flat_from_user_model.fits'
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        with dm.open(rtdata.get_data(f'nirspec/ifu/{basename}_assign_wcs.fits')) as data:
-            with dm.open(rtdata.get_data(
-                    f'nirspec/ifu/{basename}_interpolatedflat.fits')) as user_supplied_flat:
+    with dm.open(rtdata.get_data(f'nirspec/ifu/{basename}_assign_wcs.fits')) as data:
+        with dm.open(rtdata.get_data(
+                f'nirspec/ifu/{basename}_interpolatedflat.fits')) as user_supplied_flat:
 
-                # Call the flat field function directly with a user flat
-                nirspec_ifu(data, None, None, None, None, user_supplied_flat=user_supplied_flat)
+            # Call the flat field function directly with a user flat
+            nirspec_ifu(data, None, None, None, None, user_supplied_flat=user_supplied_flat)
 
     rtdata.output = output_file
     data.save(rtdata.output)
@@ -48,11 +45,8 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     user_supplied_flat = rtdata.get_data(f'nirspec/ifu/{basename}_interpolatedflat.fits')
 
     # Call the step with a user flat
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        data_flat_fielded = FlatFieldStep.call(
-            data, user_supplied_flat=user_supplied_flat, save_results=False)
+    data_flat_fielded = FlatFieldStep.call(
+        data, user_supplied_flat=user_supplied_flat, save_results=False)
 
     rtdata.output = output_file
     data_flat_fielded.save(rtdata.output)
@@ -67,12 +61,9 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_assign_wcs.fits')) as data:
-            flatted = FlatFieldStep.call(data)
-            unflatted = FlatFieldStep.call(flatted, inverse=True)
+    with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_assign_wcs.fits')) as data:
+        flatted = FlatFieldStep.call(data)
+        unflatted = FlatFieldStep.call(flatted, inverse=True)
 
     # flat fielding may set some new NaN values - ignore these in test
     is_nan = np.isnan(unflatted.data)
@@ -92,15 +83,12 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
-            pls = PathLossStep()
-            corrected = pls.run(data)
+    with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
+        pls = PathLossStep()
+        corrected = pls.run(data)
 
-            pls.use_correction_pars = True
-            corrected_corrpars = pls.run(data)
+        pls.use_correction_pars = True
+        corrected_corrpars = pls.run(data)
 
     assert np.allclose(corrected.data, corrected_corrpars.data, equal_nan=True)
 
@@ -109,16 +97,13 @@ def test_pathloss_corrpars(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using correction_pars"""
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
-            pls = PathLossStep()
-            corrected = pls.run(data)
+    with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
+        pls = PathLossStep()
+        corrected = pls.run(data)
 
-            pls.inverse = True
-            corrected_inverse = pls.run(corrected)
-            non_nan = ~np.isnan(corrected_inverse.data)
+        pls.inverse = True
+        corrected_inverse = pls.run(corrected)
+        non_nan = ~np.isnan(corrected_inverse.data)
 
     assert np.allclose(corrected.data[non_nan], corrected_inverse.data[non_nan])
 
@@ -127,13 +112,10 @@ def test_pathloss_inverse(rtdata):
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*Slit2Msa.*")
-        warnings.filterwarnings("ignore", category=DeprecationWarning, message=".*NIRSpec WCS.*")
-        with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
-            pls = PathLossStep()
-            pls.source_type = 'extended'
-            pls.run(data)
+    with dm.open(rtdata.get_data('nirspec/ifu/jw01251004001_03107_00001_nrs1_flat_field.fits')) as data:
+        pls = PathLossStep()
+        pls.source_type = 'extended'
+        pls.run(data)
 
     assert np.allclose(pls.correction_pars.data,
                        pls.correction_pars.pathloss_uniform,
