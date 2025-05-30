@@ -33,7 +33,7 @@ class RegtestData:
     def __init__(
         self,
         env="dev",
-        inputs_root="jwst-pipeline",
+        inputs_root="scratch-lim",
         results_root="jwst-pipeline-results",
         docopy=True,
         input=None,
