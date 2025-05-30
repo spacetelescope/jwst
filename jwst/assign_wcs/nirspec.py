@@ -2801,8 +2801,9 @@ def apply_slicemap(input_model, replace_wcs=True):
         slit2slicer_by_slice = _fix_slit_name(slit2slicer, slit_id)
         new_transform = dms2sca | sca2gwa | gwa2slit_by_slice | slit2slicer_by_slice
 
-        # Bind the bounding box to the transform
-        bind_bounding_box(new_transform, bb, order="F")
+        # Bind a bounding box to the transform, including only the valid data
+        new_bb = ((x_int.min() - 0.5, x_int.max() + 0.5), (y_int.min() - 0.5, y_int.max() + 0.5))
+        bind_bounding_box(new_transform, new_bb, order="F")
 
         # Keep it for later
         transforms[slit_id + 1] = new_transform
