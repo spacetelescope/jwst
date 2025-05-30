@@ -43,6 +43,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     with resource_tracker.track(log=request):
         asn_generate.cli(args + ["-p", rtdata.output,
                                  "--version-id", version_id,
+                                 "--DMS",
                                  input_csv])
     out_paths = sorted(glob("*.json"))
 
