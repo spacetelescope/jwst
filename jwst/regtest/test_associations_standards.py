@@ -137,6 +137,7 @@ def test_against_standard(rtdata, standard_pars, slow):
         args = standard_pars.main_args + [
             '-p', str(output_path),
             '--version-id', version_id,
+            '--DMS',
         ]
         pool = combine_pools([
             t_path(Path('data') / (standard_pars.pool_root + '.csv'))
