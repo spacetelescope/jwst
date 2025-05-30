@@ -12,8 +12,33 @@ segment.
 
 Source Detection
 ----------------
-Sources are detected using `image segmentation
-<https://en.wikipedia.org/wiki/Image_segmentation>`_, which is a
+
+
+Source Detection
+----------------
+Stars are detected in the input image with one of the following source
+detection algorithms: ``photutils.detection.DAOStarFinder`` (default),
+``photutils.detection.IRAFStarFinder``, or ``photutils.segmentation.SourceFinder``
+in conjunction with ``photutils.segmentation.SourceCatalog``.
+
+DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
+(`Stetson 1987, PASP 99, 191
+<http://adsabs.harvard.edu/abs/1987PASP...99..191S>`_).  It searches
+images for local density maxima that have a peak amplitude greater
+than a specified threshold (the threshold is applied to a convolved
+image) and have a size and shape similar to a defined 2D Gaussian
+kernel.  DAOFind also provides an estimate of the object's
+roundness and sharpness, whose lower and upper bounds can be
+specified.
+
+IRAFStarFinder is a Python implementation of the IRAF star finding algorithm,
+which also calculates the objects' centroids, roundness, and sharpness.
+However, IRAFStarFinder uses image moments
+instead of 1-D Gaussian fits to projected light distributions like
+DAOStarFinder.
+
+SourceFinder, the default option, implements an `image segmentation
+<https://en.wikipedia.org/wiki/Image_segmentation>`_ algorithm, which is a
 process of assigning a label to every pixel in an image such that
 pixels with the same label are part of the same source.  The
 segmentation procedure used is from `Photutils source extraction
@@ -24,9 +49,6 @@ threshold level is usually defined at some multiple of the background
 standard deviation above the background.  The image can also be
 filtered before thresholding to smooth the noise and maximize the
 detectability of objects with a shape similar to the filter kernel.
-
-Source Deblending
------------------
 Overlapping sources are detected as single sources.  Separating those
 sources requires a deblending procedure, such as a multi-thresholding
 technique used by `SExtractor
@@ -39,17 +61,26 @@ multi-thresholding and `watershed segmentation
 order to deblend sources, they must be separated enough such that
 there is a saddle between them.
 
+.. warning::
+    It has been shown (`STScI Technical Report JWST-STScI-008116, SM-12
+    <https://www.stsci.edu/~goudfroo/NIRISSdoc/Centroid_Accuracies_Precisions_NIRISS_v2.pdf>`_)
+    that for undersampled PSFs, e.g. for short-wavelength NIRISS
+    imaging data, ``DAOStarFinder`` gives bad results no matter the input parameters
+    due to its use of 1-D Gaussian fits.
+    ``IRAFStarFinder`` or ``SourceFinder`` should be used instead.
+
+.. _DAOFIND: http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?daofind
+
+
 Source Photometry and Properties
 --------------------------------
-After detecting sources using image segmentation, we can measure their
+After detecting sources, we can measure their
 photometry, centroids, and morphological properties.  The aperture
 photometry is measured in three apertures, based on the input
 encircled energy values.  The total aperture-corrected flux and
 magnitudes are also calculated, based on the largest aperture.  Both
 AB and Vega magnitudes are calculated.
 
-The isophotal photometry is based on `photutils segmentation
-<https://photutils.readthedocs.org/en/latest/segmentation.html>`_.
 The properties that are currently calculated for each source include
 source centroids (both in pixel and sky coordinates), isophotal fluxes
 (and errors), AB and Vega magnitudes (and errors), isophotal area,

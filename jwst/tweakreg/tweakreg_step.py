@@ -12,13 +12,10 @@ from tweakwcs.correctors import JWSTWCSCorrector
 
 import stcal.tweakreg.tweakreg as twk
 
-from jwst.stpipe import record_step_status
 from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 from jwst.datamodels import ModelLibrary
-
-# LOCAL
-from ..stpipe import Step
-from .tweakreg_catalog import make_tweakreg_catalog
+from jwst.stpipe import Step, record_step_status
+from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog, NoCatalogError
 
 
 def _oxford_or_str_join(str_list):
@@ -55,9 +52,9 @@ class TweakRegStep(Step):
         # general starfinder options
         snr_threshold = float(default=10.0) # SNR threshold above the bkg for star finder
         bkg_boxsize = integer(default=400) # The background mesh box size in pixels.
+        kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
 
         # kwargs for DAOStarFinder and IRAFStarFinder, only used if starfinder is 'dao' or 'iraf'
-        kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
         minsep_fwhm = float(default=0.0) # Minimum separation between detected objects in FWHM
         sigma_radius = float(default=1.5) # Truncation radius of the Gaussian kernel, units of sigma
         sharplo = float(default=0.5) # The lower bound on sharpness for object detection.
@@ -76,6 +73,7 @@ class TweakRegStep(Step):
         localbkg_width = integer(default=0) # Width of rectangular annulus used to compute local background around each source
         apermask_method = option('correct', 'mask', 'none', default='correct') # How to handle neighboring sources
         kron_params = float_list(min=2, max=3, default=None) # Parameters defining Kron aperture
+        deblend = boolean(default=True) # deblend sources?
 
         # align wcs options
         enforce_user_order = boolean(default=False) # Align images in user specified order?
@@ -440,7 +438,6 @@ class TweakRegStep(Step):
     def _find_sources(self, image_model):
         # source finding
         starfinder_kwargs = {
-            "fwhm": self.kernel_fwhm,
             "sigma_radius": self.sigma_radius,
             "minsep_fwhm": self.minsep_fwhm,
             "sharplo": self.sharplo,
@@ -458,15 +455,24 @@ class TweakRegStep(Step):
             "localbkg_width": self.localbkg_width,
             "apermask_method": self.apermask_method,
             "kron_params": self.kron_params,
+            "deblend": self.deblend,
         }
 
-        return make_tweakreg_catalog(
-            image_model,
-            self.snr_threshold,
-            starfinder_name=self.starfinder,
-            bkg_boxsize=self.bkg_boxsize,
-            starfinder_kwargs=starfinder_kwargs,
-        )
+        columns = ["id", "xcentroid", "ycentroid", "flux"]
+        try:
+            catalog = make_tweakreg_catalog(
+                image_model,
+                self.snr_threshold,
+                self.kernel_fwhm,
+                starfinder_name=self.starfinder,
+                bkg_boxsize=self.bkg_boxsize,
+                starfinder_kwargs=starfinder_kwargs,
+            )
+            catalog = catalog[columns]
+        except NoCatalogError as e:
+            self.log.warning(str(e))
+            catalog = Table(names=columns, dtype=(int, float, float, float))
+        return catalog
 
 
 def _parse_catfile(catfile):

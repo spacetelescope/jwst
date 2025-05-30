@@ -126,7 +126,7 @@ def test_expected_failure_bad_starfinder():
 
     model = ImageModel()
     with pytest.raises(ValueError):
-        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, bkg_boxsize=400, starfinder_name='bad_value')
+        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, 2.5, bkg_boxsize=400, starfinder_name='bad_value')
 
 
 def test_write_catalog(dummy_source_catalog, tmp_cwd):
@@ -164,17 +164,18 @@ def example_input(example_wcs):
     m0.meta.observation.date = "2024-07-10T00:00:00.0"
 
     # and a few 'sources'
+    point_source = np.ones((7,7)) * 0.1
+    point_source[1:6, 1:6] = 0.3
+    point_source[2:5, 2:5] = 0.5
+    point_source[3, 3] = 1.0 
+
     m0.data[:] = BKG_LEVEL
     n_sources = N_EXAMPLE_SOURCES  # a few more than default minobj
     rng = np.random.default_rng(26)
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
     ys = rng.choice(50, n_sources, replace=False) * 8 + 10
     for y, x in zip(ys, xs):
-        m0.data[y-1:y+2, x-1:x+2] = [
-            [0.1, 0.6, 0.1],
-            [0.6, 0.8, 0.6],
-            [0.1, 0.6, 0.1],
-        ]
+        m0.data[y-3:y+4, x-3:x+4] = point_source
 
     m1 = m0.copy()
     # give each a unique filename
@@ -446,3 +447,17 @@ def test_sip_approx(example_input, with_shift):
 
     assert np.allclose(fitswcs_res.ra.deg, gwcs_ra)
     assert np.allclose(fitswcs_res.dec.deg, gwcs_dec)
+
+
+def test_sourcefinders(example_input):
+    """Test that the three source finder options give the same results for high SNR sources."""
+    
+    model = example_input[0]
+    thresh = 10.0 # SNR threshold above the bkg for star finder
+    fwhm = 2.5 # Gaussian kernel FWHM in pixels
+    iraf = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name='iraf')
+    dao = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name='dao')
+    segm = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name='segmentation')
+
+    # check that the catalogs have the same number of sources
+    assert len(iraf) == len(dao) == len(segm) == N_EXAMPLE_SOURCES
