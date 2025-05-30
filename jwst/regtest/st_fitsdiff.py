@@ -794,25 +794,22 @@ class STHeaderDiff(HeaderDiff):
             if counta != countb:
                 self.diff_duplicate_keywords[keyword] = (counta, countb)
 
-            # The following lines include STScI's changes:
-            # - Make sure that the keyword in 'a' exists in 'b', or continue
-
             # Compare keywords' values and comments
-            for a in valuesa[keyword]:
-                if a not in valuesb[keyword]:
-                    continue
-                bidx = valuesb[keyword].index(a)
-                b = valuesb[keyword][bidx]
 
-                # The following lines are identical to the original HeaderDiff code
+            # The following lines include STScI's changes:
+            # - Compare only common keywords
+            a = valuesa[keyword]
+            b = valuesb[keyword]
 
-                if diff_values(a, b, rtol=self.rtol, atol=self.atol):
-                    self.diff_keyword_values[keyword].append((a, b))
-                else:
-                    # If there are duplicate keywords we need to be able to
-                    # index each duplicate; if the values of a duplicate
-                    # are identical use None here
-                    self.diff_keyword_values[keyword].append(None)
+            # The following lines are identical to the original HeaderDiff code
+
+            if diff_values(a, b, rtol=self.rtol, atol=self.atol):
+                self.diff_keyword_values[keyword].append((a, b))
+            else:
+                # If there are duplicate keywords we need to be able to
+                # index each duplicate; if the values of a duplicate
+                # are identical use None here
+                self.diff_keyword_values[keyword].append(None)
 
             if not any(self.diff_keyword_values[keyword]):
                 # No differences found; delete the array of Nones
@@ -830,20 +827,16 @@ class STHeaderDiff(HeaderDiff):
                     continue
 
             # The following lines include STScI's changes:
-            # - Make sure that the comment in 'a' exists in 'b', or continue
+            # - Compare comments of common keywords
+            a = commentsa[keyword]
+            b = commentsb[keyword]
 
-            for a in commentsa[keyword]:
-                if a not in commentsb[keyword]:
-                    continue
-                bidx = commentsb[keyword].index(a)
-                b = commentsb[keyword][bidx]
+            # The following lines are identical to the original HeaderDiff code
 
-                # The following lines are identical to the original HeaderDiff code
-
-                if diff_values(a, b):
-                    self.diff_keyword_comments[keyword].append((a, b))
-                else:
-                    self.diff_keyword_comments[keyword].append(None)
+            if diff_values(a, b):
+                self.diff_keyword_comments[keyword].append((a, b))
+            else:
+                self.diff_keyword_comments[keyword].append(None)
 
             if not any(self.diff_keyword_comments[keyword]):
                 del self.diff_keyword_comments[keyword]
