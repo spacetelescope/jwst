@@ -5,8 +5,9 @@ import numpy as np
 from astropy import units as u
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import SpecModel, MultiSpecModel
+from stdatamodels.jwst.datamodels import SpecModel, TSOMultiSpecModel
 
+from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.photom import photom
 from jwst.lib.dispaxis import get_dispersion_direction
 
@@ -94,7 +95,7 @@ def mk_wavelength(shape, min_wl, max_wl, dispaxis=1):
 
 def mk_soss_spec(settings, speclen):
     """
-    Create a 2-D array of wavelengths, linearly spaced in one axis.
+    Create a TSO spec model for calibrating.
 
     Parameters
     ----------
@@ -108,11 +109,11 @@ def mk_soss_spec(settings, speclen):
 
     Returns
     -------
-    model : MultiSpecModel
+    model : TSOMultiSpecModel
         The simulated output of extract_1d to be calibrated; this is
         the SOSS-specific ordering to be tested.
     """
-    model = MultiSpecModel()
+    spec_list = []
     for i, inspec in enumerate(settings):
         # Make number of columns equal to length of SpecModel's spec_table dtype, then assign
         # dtype to each column. Use to initialize SpecModel for entry into output MultiSpecModel
@@ -125,18 +126,21 @@ def mk_soss_spec(settings, speclen):
                             np.ones(speclen[i])
                             for _ in range(len(SpecModel().spec_table.dtype) - 1)
                         ]
-                    ),
-                    strict=True,
+                    )
                 )
             ),
             dtype=SpecModel().spec_table.dtype,
         )
         specmodel = datamodels.SpecModel(spec_table=otab)
-        model.meta.instrument.filter = inspec["filter"]
-        model.meta.instrument.pupil = inspec["pupil"]
         specmodel.spectral_order = inspec["order"]
-        model.spec.append(specmodel)
+        spec_list.append(specmodel)
 
+    tso_spec_model = make_tso_specmodel(spec_list)
+
+    model = TSOMultiSpecModel()
+    model.meta.instrument.filter = inspec["filter"]
+    model.meta.instrument.pupil = inspec["pupil"]
+    model.spec.append(tso_spec_model)
     return model
 
 
@@ -1440,27 +1444,29 @@ def test_niriss_wfss():
 
 
 def test_niriss_soss():
-    """Test the calc_niriss method of the DataSet class, SOSS data."""
+    """Test calc_niriss, SOSS data"""
+
     input_model = create_input("NIRISS", "NIS", "NIS_SOSS", filter_used="CLEAR", pupil="GR700XD")
     save_input = input_model.copy()
     ds = photom.DataSet(input_model)
     ftab = create_photom_niriss_soss(min_r=8.0, max_r=9.0)
     ds.calc_niriss(ftab)
 
-    input_data = save_input.spec[0].spec_table["FLUX"]
-    output = ds.input.spec[0].spec_table["FLUX"]  # ds.input is the output
+    input_flux = save_input.spec[0].spec_table["FLUX"]
+    output_flux = ds.input.spec[0].spec_table["FLUX"]  # ds.input is the output
     sp_order = 1  # to agree with photom.py
     rownum = find_row_in_ftab(save_input, ftab, ["filter", "pupil"], slitname=None, order=sp_order)
     photmj = ftab.phot_table["photmj"][rownum]
     nelem = ftab.phot_table["nelem"][rownum]
     wavelength = ftab.phot_table["wavelength"][rownum][0:nelem]
     relresponse = ftab.phot_table["relresponse"][rownum][0:nelem]
-    test_ind = len(input_data) // 2
+    test_ind = (0, input_flux.shape[1] // 2)
     wl = input_model.spec[0].spec_table["WAVELENGTH"][test_ind]
     rel_resp = np.interp(wl, wavelength, relresponse, left=np.nan, right=np.nan)
     compare = photmj * rel_resp
+
     # Compare the values at the center pixel.
-    ratio = output[test_ind] / input_data[test_ind]
+    ratio = output_flux[test_ind] / input_flux[test_ind]
     assert_allclose(ratio, compare, rtol=1.0e-7)
 
 
