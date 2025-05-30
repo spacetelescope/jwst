@@ -1,8 +1,7 @@
 import os
 
 import pytest
-
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.lib.suffix import replace_suffix
 from jwst.stpipe import Step
@@ -24,6 +23,8 @@ def run_pipeline(rtdata_module):
             "--steps.assign_wcs.save_results=true",
             "--steps.msa_flagging.save_results=true",
             "--steps.flat_field.save_results=true"]
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
     Step.from_cmdline(args)
 
     return rtdata

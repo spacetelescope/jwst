@@ -1,5 +1,7 @@
-from astropy.io.fits.diff import FITSDiff
+import warnings
+
 import pytest
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.stpipe import Step
 
@@ -17,6 +19,8 @@ def run_pipeline(rtdata_module):
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
     args = ["calwebb_spec3", rtdata.input]
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: overflow encountered in multiply
     Step.from_cmdline(args)
 
 

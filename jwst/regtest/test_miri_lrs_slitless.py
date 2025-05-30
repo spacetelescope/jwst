@@ -1,11 +1,12 @@
 import os
-import pytest
-from astropy.io.fits.diff import FITSDiff
-from numpy.testing import assert_allclose
 
-from jwst.stpipe import Step
+import pytest
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst import datamodels
+
+from jwst.stpipe import Step
 
 DATASET1_ID = "jw01536028001_03103_00001-seg001_mirimage"
 DATASET2_ID = "jw01536028001_03103_00001-seg002_mirimage"
@@ -13,6 +14,9 @@ DATASET3_ID = "jw01281001001_04103_00001-seg002_trim_mirimage"
 ASN3_FILENAME = "jw01536-o028_20221202t215749_tso3_00001_asn.json"
 PRODUCT_NAME = "jw01536-o028_t008_miri_p750l-slitlessprism"
 ASN_ID = "o028"
+
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope="module")
@@ -71,7 +75,7 @@ def run_detector1_pipeline_emicorr_joint(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module):
+def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module, resource_tracker):
     """Run the calwebb_tso-spec2 pipeline on a MIRI LRS slitless exposure."""
     rtdata = rtdata_module
 
@@ -86,11 +90,14 @@ def run_tso_spec2_pipeline(run_tso1_pipeline, rtdata_module):
         "--steps.pixel_replace.save_results=true",
         "--steps.pixel_replace.skip=false"
     ]
-    Step.from_cmdline(args)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: invalid value encountered in multiply
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
-def run_tso3_pipeline(run_tso_spec2_pipeline, rtdata_module):
+def run_tso3_pipeline(run_tso_spec2_pipeline, rtdata_module, resource_tracker):
     """Run the calwebb_tso3 pipeline on the output of run_spec2_pipeline."""
     rtdata = rtdata_module
     rtdata.get_data(f"miri/lrs/{DATASET2_ID}_calints.fits")
@@ -102,10 +109,18 @@ def run_tso3_pipeline(run_tso_spec2_pipeline, rtdata_module):
         "--steps.outlier_detection.save_results=true",
         "--steps.outlier_detection.save_intermediate_results=true"
     ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec2(log_tracked_resources, run_tso_spec2_pipeline):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_spec3(log_tracked_resources, run_tso3_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("step_suffix", ['dq_init', 'saturation', 'lastframe', 'reset', 'linearity',
                                          'dark_current', 'ramp', 'rate', 'rateints'])
 def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_default_kwargs, step_suffix):
@@ -120,7 +135,6 @@ def test_miri_lrs_slitless_tso1(run_tso1_pipeline, rtdata_module, fitsdiff_defau
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ['rscd', 'emicorr',
                                          'dark_current', 'ramp', 'rate', 'rateints'])
 def test_miri_lrs_slitless_detector1(run_detector1_pipeline, rtdata_module,
@@ -141,7 +155,6 @@ def test_miri_lrs_slitless_detector1(run_detector1_pipeline, rtdata_module,
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ['emicorr', 'rate', 'rateints'])
 def test_miri_lrs_slitless_detector1_emicorr_joint(
         run_detector1_pipeline_emicorr_joint, rtdata_module,
@@ -157,7 +170,6 @@ def test_miri_lrs_slitless_detector1_emicorr_joint(
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["assign_wcs", "srctype", "flat_field",
                                          "pixel_replace", "calints", "x1dints"])
 def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fitsdiff_default_kwargs,
@@ -173,7 +185,6 @@ def test_miri_lrs_slitless_tso_spec2(run_tso_spec2_pipeline, rtdata_module, fits
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("step_suffix", ["outlier_detection", "crfints"])
 def test_miri_lrs_slitless_tso3(run_tso3_pipeline, rtdata_module,
                                 fitsdiff_default_kwargs, step_suffix):
@@ -191,7 +202,6 @@ def test_miri_lrs_slitless_tso3(run_tso3_pipeline, rtdata_module,
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_miri_lrs_slitless_tso3_x1dints(run_tso3_pipeline, rtdata_module,
                                         fitsdiff_default_kwargs):
     """Compare the output of a MIRI LRS slitless calwebb_tso3 pipeline."""
@@ -205,7 +215,6 @@ def test_miri_lrs_slitless_tso3_x1dints(run_tso3_pipeline, rtdata_module,
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline,
                                       rtdata_module, diff_astropy_tables):
     """Compare the whitelight output of a MIRI LRS slitless calwebb_tso3 pipeline."""
@@ -218,7 +227,6 @@ def test_miri_lrs_slitless_tso3_whtlt(run_tso3_pipeline,
     assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
 
-@pytest.mark.bigdata
 def test_miri_lrs_slitless_wcs(run_tso_spec2_pipeline, fitsdiff_default_kwargs,
                                rtdata_module):
     """Compare the assign_wcs output of a MIRI LRS slitless calwebb_tso3 pipeline."""

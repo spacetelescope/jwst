@@ -752,7 +752,7 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
     [1] 'Romberg's method' https://en.wikipedia.org/wiki/Romberg%27s_method
     """
     # Init some flags
-    max_size_reached = grid.size >= max_grid_size
+    max_size_reached = grid.size > max_grid_size
     if max_size_reached:
         raise ValueError("max_grid_size is too small for the input grid.")
 
@@ -848,7 +848,7 @@ class WebbKernel:
             Center (~max throughput) of the kernel is at the center of the 2nd axis.
         wave_trace : array[float]
             1-D trace of the detector central wavelengths for the given order.
-            Since WebbPSF returns kernels in the pixel space, this is used to
+            Since kernels are originally defined in the pixel space, this is used to
             convert to wavelength space.
         n_pix : int
             Number of detector pixels spanned by the kernel. Second axis of kernels

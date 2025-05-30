@@ -8,8 +8,7 @@ from jwst.coron import klip
 
 
 def test_fourier_imshift():
-    """ Test of fourier_imshift() in imageregistration.py """
-
+    """Test of fourier_imshift() in imageregistration.py."""
     image = np.zeros((5, 5), dtype=np.float64)
     image[1:4, 1:4] += 1.0
     image[2, 2] += 2.0
@@ -29,8 +28,7 @@ def test_fourier_imshift():
 
 
 def test_shift_subtract():
-    """ Test of shift_subtract() in imageregistration.py """
-
+    """Test of shift_subtract() in imageregistration.py."""
     target = np.arange((15), dtype=np.float64).reshape((3, 5))
     reference = target + 0.1
     reference[1, 0] -= 0.2
@@ -65,9 +63,8 @@ def test_shift_subtract():
     npt.assert_allclose(result, truth, atol=1e-6)
 
 
-def test_align_fourierLSQ():
-    """ Test of align_fourierLSQ() in imageregistration.py """
-
+def test_align_fourier_lsq():
+    """Test of align_fourier_lsq() in imageregistration.py."""
     target = np.arange((15), dtype=np.float64).reshape((3, 5))
     reference = target + 0.1
     reference[1, 0] -= 0.2
@@ -76,15 +73,14 @@ def test_align_fourierLSQ():
     mask[1, 1] = 0
     mask[1, 2] = 0
 
-    shifts = imageregistration.align_fourierLSQ(reference, target, mask)
+    shifts = imageregistration.align_fourier_lsq(reference, target, mask)
     truth = np.array([-0.0899215, -0.01831958, 0.96733475])
 
     npt.assert_allclose(shifts, truth, atol=1e-6)
 
 
 def test_align_array():
-    """ Test of align_array() in imageregistration.py """
-
+    """Test of align_array() in imageregistration.py."""
     temp = np.arange((15), dtype=np.float64).reshape((3, 5))
     targ = np.zeros((3, 3, 5), dtype=np.float64)
     targ[:] = temp
@@ -146,8 +142,7 @@ def test_align_array():
 
 
 def test_align_models():
-    """ Test of align_models() in imageregistration.py """
-
+    """Test of align_models() in imageregistration.py."""
     temp = np.arange((15), dtype=np.float32).reshape((3, 5))
     targ = np.zeros((3, 3, 5), dtype=np.float32)
     targ[:] = temp
@@ -180,15 +175,14 @@ def test_align_models():
     results_sub = am_results.data[:2, 2, :3]
 
     truth_results_sub = np.array(
-            [[10.0, 11.7, 12.0], [10.0, 11.2, 10.2]],
+        [[10.0, 11.7, 12.0], [10.0, 11.2, 10.2]],
     )
 
     npt.assert_allclose(results_sub, truth_results_sub, rtol=1e-2)
 
 
-def test_KLT():
-    """ Test of KarhunenLoeveTransform() in klip.py """
-
+def test_klt():
+    """Test of karhunen_loeve_transform() in klip.py."""
     temp = np.arange((15), dtype=np.float32).reshape((3, 5))
     refs = np.zeros((3, 3, 5))
     refs[:] = temp
@@ -213,7 +207,7 @@ def test_KLT():
     for k in range(nrefs):
         refs[k] -= np.mean(refs[k], dtype=np.float64)
 
-    klvect, eigval, eigvect = klip.KarhunenLoeveTransform(refs, normalize=True)
+    klvect, eigval, eigvect = klip.karhunen_loeve_transform(refs, normalize=True)
 
     truth_klvect = np.array(
         [
@@ -287,8 +281,7 @@ def test_KLT():
 
 
 def test_klip():
-    """ Test of klip() in klip.py """
-
+    """Test klip() in klip.py."""
     target_model_data = np.array(
         [
             [
@@ -308,23 +301,23 @@ def test_klip():
     target_model = datamodels.CubeModel(data=target_model_data)
 
     refs_model_data = np.array(
+        [
             [
-                [
-                    [0.8174741, 0.74938107, 0.73527235, 1.3193785],
-                    [1.0032778, 0.8247719, 0.78944355, 0.99227476],
-                    [1.4609907, 1.1605016, 0.9564753, 0.9186427],
-                ],
-                [
-                    [0.86789674, 0.7998908, 0.8557136, 1.2926395],
-                    [0.97756547, 0.7788742, 0.75892323, 0.9819151],
-                    [1.495664, 1.1455023, 1.002115, 0.92159164],
-                ],
-                [
-                    [0.84426856, 0.7719569, 0.8088021, 1.2781427],
-                    [0.98734635, 0.8125992, 0.77424014, 0.9934157],
-                    [1.419994, 1.1546139, 0.961317, 0.95088667],
-                ],
+                [0.8174741, 0.74938107, 0.73527235, 1.3193785],
+                [1.0032778, 0.8247719, 0.78944355, 0.99227476],
+                [1.4609907, 1.1605016, 0.9564753, 0.9186427],
             ],
+            [
+                [0.86789674, 0.7998908, 0.8557136, 1.2926395],
+                [0.97756547, 0.7788742, 0.75892323, 0.9819151],
+                [1.495664, 1.1455023, 1.002115, 0.92159164],
+            ],
+            [
+                [0.84426856, 0.7719569, 0.8088021, 1.2781427],
+                [0.98734635, 0.8125992, 0.77424014, 0.9934157],
+                [1.419994, 1.1546139, 0.961317, 0.95088667],
+            ],
+        ],
         dtype=np.float32,
     )
 

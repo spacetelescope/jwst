@@ -1,6 +1,6 @@
 """Test CubeBuildStep on MIRI MRS"""
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 

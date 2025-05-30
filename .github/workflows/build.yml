@@ -11,15 +11,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
-    if: github.event_name == 'release'
-    name: check that `requirements-sdp.txt` is populated
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
-      - run: grep -v '^ *#' requirements-sdp.txt
   build:
-    needs: [ check ]
     if: always() && (needs.check.result == 'success' || needs.check.result == 'skipped')
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@8c0fde6f7e926df6ed7057255d29afa9c1ad5320  # v1.16.0
     with:

@@ -5,7 +5,6 @@ from numpy.testing import assert_array_equal
 import os
 import platform
 import pytest
-import random
 import time
 
 from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel, dqflags

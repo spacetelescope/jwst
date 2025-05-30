@@ -72,16 +72,69 @@ for point sources observed with NIRSpec and NIRISS SOSS, units of flux density
 
 Output
 ------
-The output will be in ``MultiSpecModel`` format. For each input slit there will
-be an output table extension with the name EXTRACT1D.  This extension will
-have columns WAVELENGTH, FLUX, FLUX_ERROR, FLUX_VAR_POISSON, FLUX_VAR_RNOISE,
+
+Output data for this step are in the form of :ref:`x1d`.
+
+Data structure
+^^^^^^^^^^^^^^
+
+The output for most modes will be in ``MultiSpecModel`` format. This datamodel collects
+multiple spectra in a list, stored in the ``spec`` attribute.  The data for each spectrum
+is stored in a table under the ``spec_table`` attribute for the spectrum.  The spectral models
+in the ``spec`` attribute also hold related metadata, such as the slit name (``name``) or the
+source ID (``source_id``).
+
+In the output file, the spectral data is stored as a table extension with the name EXTRACT1D.
+This extension will have columns WAVELENGTH, FLUX, FLUX_ERROR, FLUX_VAR_POISSON, FLUX_VAR_RNOISE,
 FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
-BKGD_VAR_FLAT and NPIXELS. In the case of MIRI MRS data there are three additional
+BKGD_VAR_FLAT and NPIXELS.
+
+For example, to access the slit name, wavelength, and flux from each spectrum in a model:
+
+.. doctest-skip::
+
+  >>> from stdatamodels.jwst import datamodels
+  >>> multi_spec = datamodels.open('multi_spec_x1d.fits')
+  >>> for spectrum in multi_spec.spec:
+  >>>     slit_name = spectrum.name
+  >>>     wave = spectrum.spec_table["WAVELENGTH"]
+  >>>     flux = spectrum.spec_table["FLUX"]
+
+
+In the case of MIRI MRS data, the output is a ``MRSMultiSpecModel``. This model has the
+same structure as a ``MultiSpecModel``, except that there are three additional
 columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
 
-Some metadata for the slit will be written to the header for
+For time series observations (TSO) with spectra extracted from multiple integrations,
+the output is a ``TSOMultiSpecModel``.  The spectral tables for this model have
+the same columns as the ``MultiSpecModel``, but each row in the table contains the full
+spectrum for a single integration.  The spectral columns are 2D: each row is a 1D
+vector containing all data points for the spectrum in that integration.  The spectral tables
+for this model have extra 1D columns to contain the metadata for the spectrum in each row.
+These metadata fields include the segment number, integration number, and various time tags,
+as follows:
+SEGMENT, INT_NUM, START_TIME_MJD, MID_TIME_MJD, END_TIME_MJD, START_TDB, MID_TDB, and END_TDB.
+
+For example, to access the slit name, integration number, wavelength, and flux from
+each spectrum in a TSO model:
+
+.. doctest-skip::
+
+  >>> from stdatamodels.jwst import datamodels
+  >>> multi_int_spec = datamodels.open('multi_spec_x1dints.fits')
+  >>> for spectrum in multi_int_spec.spec:
+  >>>     slit_name = spectrum.name
+  >>>     integrations = spectrum.spec_table["INT_NUM"]
+  >>>     for i, int_num in enumerate(integrations):
+  >>>         wave = spectrum.spec_table["WAVELENGTH"][i]
+  >>>         flux = spectrum.spec_table["FLUX"][i]
+
+Data sources
+^^^^^^^^^^^^
+
+For all modes, some metadata for the slit and source will be written to the header for
 the table extension, mostly copied from the input SCI extension headers.
 
 For slit-like modes, the extraction region is
@@ -450,6 +503,25 @@ where `flux` is the extracted spectral data, and the data are from channel 4 for
 
 Extraction for NIRISS SOSS Data
 -------------------------------
-For NIRISS SOSS data, the two spectral orders overlap slightly, so a specialized extraction
-algorithm known as ATOCA (Algorithm to Treat Order ContAmination) is used...
-Link paper 
+For NIRISS SOSS data, spectral orders 1 and 2 overlap slightly at longer wavelengths, so a specialized extraction
+algorithm known as `ATOCA (Algorithm to Treat Order ContAmination, Darveau-Bernier et al., 2022) <https://iopscience.iop.org/article/10.1088/1538-3873/ac8a77/pdf>`__ is used. This routine
+constructs a linear model of each pixel on the detector and treats the underlying incident spectrum as a free variable
+to simultaneously extract the cross-contaminated spectra. Using this method, the extracted spectra are accurate to
+within 10ppm over the full spectral range when validated against simulations.
+
+The algorithm uses a wavelength solution, a spectral throughput, a spectral resolution, and a spatial throughput for
+both orders to determine the flux contribution from each order falling on a given pixel. Most of these references are
+determined by analysis of on-sky data and supplied to the algorithm via the `pastasoss` and `spec_profile` reference
+files. The exception is the `spec_kernel` reference file which supplies the convolution kernels used in the extraction,
+determined from monochromatic PSFs generated by STPSF. The `pastasoss` reference file predicts the trace centroids,
+taking into account the small rotations of the trace introduced by the slight visit-to-visit offsets of the GR700XD
+grism in the optical path.
+
+Having constructed a model of the intensity at each pixel using the reference file inputs, a chi-square minimization is
+used to fit the pixel model to the observations, weighted by the uncertainty. However, since a solution to this system
+of equations is highly degenerate, a Tikhonov regularization (Tikhonov 1963) is performed. The goal here is to find the
+smoothest solution for the flux that fits the observations within the measured uncertainties.
+
+The resulting spectral trace solutions are at a higher resolution than the observed data since an oversampled
+wavelength grid is used by the ATOCA algorithm for decontamination. These results are then reconvolved onto the native
+wavelength grid before the 1D spectra for each order are extracted.

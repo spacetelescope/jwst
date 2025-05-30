@@ -1,12 +1,9 @@
 """
 Test the utility functions
 """
-
-import os
-
 from astropy.modeling.models import Shift, Identity
 from astropy.table import QTable
-
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
 from jwst.lib.catalog_utils import SkyObject
@@ -15,17 +12,6 @@ from jwst.assign_wcs.util import (
     get_object_info, wcs_bbox_from_shape, subarray_transform,
     bounding_box_from_subarray, transform_bbox_from_shape
 )
-
-from jwst.assign_wcs.tests import data
-
-data_path = os.path.split(os.path.abspath(data.__file__))[0]
-
-
-def get_file_path(filename):
-    """
-    Construct an absolute path.
-    """
-    return os.path.join(data_path, filename)
 
 
 def test_transform_bbox_from_shape_2d():
@@ -61,7 +47,8 @@ def read_catalog(catalogname):
 
 
 def test_create_grism_objects():
-    source_catalog = get_file_path('step_SourceCatalogStep_cat.ecsv')
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.assign_wcs.tests")
 
     # create from test ascii file
     grism_objects = read_catalog(source_catalog)

@@ -2,13 +2,15 @@
     an uncal file. Results from all intermediate steps, including
     charge_migration, are saved for comparisons with truth files.
 """
-
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst import datamodels
 from jwst.stpipe import Step
 from jwst.tweakreg import TweakRegStep
+
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope="module")
@@ -31,7 +33,6 @@ def run_detector1(rtdata_module):
             "--steps.charge_migration.save_results=True",
             "--steps.jump.save_results=True"
             ]
-
 
     Step.from_cmdline(args)
 
@@ -62,7 +63,7 @@ def run_detector1_multiprocess_rate(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1_multiprocess_rate_save_opt(rtdata_module):
+def run_detector1_multiprocess_rate_save_opt(rtdata_module, resource_tracker):
     """Run calwebb_detector1 pipeline on NIRISS imaging data."""
     rtdata = rtdata_module
 
@@ -84,8 +85,8 @@ def run_detector1_multiprocess_rate_save_opt(rtdata_module):
             "--steps.ramp_fit.save_opt=True",
             "--steps.ramp_fit.opt_name=jw01094001002_02107_00001_nis.fits",
             ]
-
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
@@ -115,7 +116,7 @@ def run_detector1_multiprocess_jump(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1_with_clean_flicker_noise(rtdata_module):
+def run_detector1_with_clean_flicker_noise(rtdata_module, resource_tracker):
     """Run detector1 pipeline on NIRISS imaging data with noise cleaning."""
     rtdata_module.get_data("niriss/imaging/jw01094001002_02107_00001_nis_uncal.fits")
 
@@ -131,10 +132,24 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
             "--steps.clean_flicker_noise.save_background=True",
             "--steps.clean_flicker_noise.save_noise=True",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_det1_mp(
+        log_tracked_resources,
+        run_detector1_multiprocess_rate_save_opt
+):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_det1_cfn(
+        log_tracked_resources,
+        run_detector1_with_clean_flicker_noise
+):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
                                     "refpix", "linearity", "dark_current",
                                     "charge_migration", "jump", "rate", "rateints"])
@@ -146,7 +161,6 @@ def test_niriss_image_detector1(run_detector1, rtdata_module, fitsdiff_default_k
 
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["cfn_clean_flicker_noise", "mask",
                                     "flicker_bkg", "flicker_noise",
                                     "cfn_ramp", "cfn_rate", "cfn_rateints"])
@@ -158,7 +172,6 @@ def test_niriss_image_detector1_with_clean_flicker_noise(
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir)
 
 
-@pytest.mark.bigdata
 def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     """Make sure tweakreg is skipped when sources are not found.
     """
@@ -174,7 +187,8 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     ]
 
     # run the test from the command line:
-    result = Step.from_cmdline(args)
+    with pytest.warns(Warning, match="No sources were found"):
+        result = Step.from_cmdline(args)
 
     # Check the status of the step is set correctly in the files.
     mc = datamodels.ModelContainer(rtdata.input)
@@ -182,14 +196,14 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     for model in mc:
         assert model.meta.cal_step.tweakreg != 'SKIPPED'
 
-    result = TweakRegStep.call(mc)
+    with pytest.warns(Warning, match="No sources were found"):
+        result = TweakRegStep.call(mc)
     with result:
         for model in result:
             assert model.meta.cal_step.tweakreg == 'SKIPPED'
             result.shelve(model, modify=False)
 
 
-@pytest.mark.bigdata
 def test_niriss_image_detector1_multiprocess_rate(
         run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs):
     """
@@ -201,7 +215,6 @@ def test_niriss_image_detector1_multiprocess_rate(
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate", truth_dir)
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["rate", "fitopt"])
 def test_niriss_image_detector1_multiprocess_rate_save_opt(
         run_detector1_multiprocess_rate_save_opt, rtdata_module, fitsdiff_default_kwargs, suffix):
@@ -214,7 +227,6 @@ def test_niriss_image_detector1_multiprocess_rate_save_opt(
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir)
 
 
-@pytest.mark.bigdata
 def test_niriss_image_detector1_multiprocess_jump(
         run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
     """

@@ -1,9 +1,7 @@
 """Utility functions for assign_wcs."""
 
 import logging
-import functools
 import numpy as np
-import warnings
 
 from astropy.coordinates import SkyCoord
 from astropy.modeling import models as astmodels
@@ -30,7 +28,6 @@ _MAX_SIP_DEGREE = 6
 
 
 __all__ = [
-    "reproject",
     "velocity_correction",
     "MSAFileError",
     "NoDataOnDetectorError",
@@ -69,40 +66,6 @@ class NoDataOnDetectorError(StpipeExitException):
         super().__init__(64, message)
 
 
-def reproject(wcs1, wcs2):
-    """
-    Take in pixel coordinates in the first WCS and compute their location in the second one.
-
-    .. deprecated:: 1.17.2
-        :py:func:`reproject()` has been deprecated and will be removed
-        in a future release. Use :py:func:`stcal.alignment.util.reproject` instead.
-
-    Parameters
-    ----------
-    wcs1, wcs2 : `~gwcs.wcs.WCS`
-        WCS objects.
-
-    Returns
-    -------
-    _reproject : func
-        Function to compute the transformations.  It takes x, y
-        positions in ``wcs1`` and returns x, y positions in ``wcs2``.
-    """
-    warnings.warn(
-        "'reproject()' has been deprecated since 1.17.2 and "
-        "will be removed in a future release. "
-        "Use 'stcal.alignment.util.reproject()' instead.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    def _reproject(x, y):
-        sky = wcs1.forward_transform(x, y)
-        return wcs2.backward_transform(*sky)
-
-    return _reproject
-
-
 def compute_scale(
     wcs: WCS,
     fiducial: tuple | np.ndarray,
@@ -121,7 +84,7 @@ def compute_scale(
     disp_axis : int
         Dispersion axis integer. Assumes the same convention as `wcsinfo.dispersion_direction`
     pscale_ratio : int
-        Ratio of input to output pixel scale
+        Ratio of output pixel scale to input pixel scale.
 
     Returns
     -------
@@ -802,7 +765,7 @@ def compute_footprint_spectral(model):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.IFUImageModel`
+    model : DataModel
         The output of assign_wcs.
 
     Returns
@@ -893,23 +856,14 @@ def update_s_region_keyword(model, footprint):
         model.meta.wcsinfo.s_region = s_region
 
 
-def compute_footprint_nrs_ifu(dmodel, mod):
+def compute_footprint_nrs_ifu(dmodel):
     """
     Determine NIRSPEC IFU footprint using the instrument model.
-
-    For efficiency this function uses the transforms directly,
-    instead of the WCS object. The common transforms in the WCS
-    model chain are referenced and reused; only the slice specific
-    transforms are computed.
-
-    If the transforms change this function should be revised.
 
     Parameters
     ----------
     dmodel : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
-    mod : module
-        The imported ``nirspec`` module.
 
     Returns
     -------
@@ -921,35 +875,14 @@ def compute_footprint_nrs_ifu(dmodel, mod):
     ra_total = []
     dec_total = []
     lam_total = []
-    _, wrange = mod.spectral_order_wrange_from_model(dmodel)
-    pipe = dmodel.meta.wcs.pipeline
 
-    # Get the GWA to slit_frame transform
-    g2s = pipe[2].transform
-
-    # Construct a list of the transforms between coordinate frames.
-    # Set a place holder ``Identity`` transform at index 2 and 3.
-    # Update them with slice specific transforms.
-    transforms = [pipe[0].transform]
-    transforms.append(pipe[1].transform[1:])
-    transforms.append(astmodels.Identity(1))
-    transforms.append(astmodels.Identity(1))
-    transforms.extend([step.transform for step in pipe[4:-1]])
-
-    for sl in range(30):
-        transforms[2] = g2s.get_model(sl)
-        # Create the full transform from ``slit_frame`` to ``detector``.
-        # It is used to compute the bounding box.
-        m = functools.reduce(lambda x, y: x | y, [tr.inverse for tr in transforms[:3][::-1]])
-        bbox = mod.compute_bounding_box(m, wrange)
-        # Add the remaining transforms - from ``sli_frame`` to ``world``
-        transforms[3] = pipe[3].transform.get_model(sl) & astmodels.Identity(1)
-        mforw = functools.reduce(lambda x, y: x | y, transforms)
-        x1, y1 = grid_from_bounding_box(bbox)
-        ra, dec, lam = mforw(x1, y1)
+    for slit in range(30):
+        x, y = grid_from_bounding_box(dmodel.meta.wcs.bounding_box[slit])
+        ra, dec, lam, _ = dmodel.meta.wcs(x, y, slit)
         ra_total.extend(np.ravel(ra))
         dec_total.extend(np.ravel(dec))
         lam_total.extend(np.ravel(lam))
+
     # the wrapped ra values are forced to be on one side of ra-border
     # the wrapped ra are used to determine the correct  min and max ra
     ra_total = wrap_ra(ra_total)
@@ -969,7 +902,7 @@ def compute_footprint_nrs_ifu(dmodel, mod):
     return footprint, (lam_min, lam_max)
 
 
-def update_s_region_nrs_ifu(output_model, mod):
+def update_s_region_nrs_ifu(output_model):
     """
     Update S_REGION for NRS_IFU observations using calculated footprint.
 
@@ -977,10 +910,8 @@ def update_s_region_nrs_ifu(output_model, mod):
     ----------
     output_model : `~jwst.datamodels.IFUImageModel`
         The output of assign_wcs.
-    mod : module
-        The imported ``nirspec`` module.
     """
-    footprint, spectral_region = compute_footprint_nrs_ifu(output_model, mod)
+    footprint, spectral_region = compute_footprint_nrs_ifu(output_model)
     update_s_region_keyword(output_model, footprint)
     output_model.meta.wcsinfo.spectral_region = spectral_region
 

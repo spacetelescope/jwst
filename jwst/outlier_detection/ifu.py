@@ -287,8 +287,8 @@ def flag_outliers(
                 )
             )
             log.debug(
-                "Number of pixels DQ was not set to DO_NOT_USE "
-                f"and Sci array was Nan{len(check[0])} "
+                "Number of pixels for which DQ was not set to DO_NOT_USE "
+                f"and SCI array was NaN: {len(check[0])} "
             )
             # set all pixels with dq = DO_NOT_USE to have sci values of Nan
             bad = np.bitwise_and(dq, dqflags.pixel["DO_NOT_USE"]).astype(bool)

@@ -1,0 +1,1 @@
+Remove mention and use of dark error array; document extrapolation of darks when science array has more frames than the dark.

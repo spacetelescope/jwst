@@ -2,13 +2,13 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcstools
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models
 from stpipe.crds_client import reference_uri_to_cache_path
 
-import jwst
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_mos_file, create_nirspec_fs_file
 from jwst.extract_2d import Extract2dStep
@@ -46,8 +46,9 @@ def nrs_slit_model(nrs_fs_model):
 
 def test_wavecorr():
     hdul = create_nirspec_mos_file()
-    msa_meta = Path(jwst.__path__[0]) / "assign_wcs" / "tests" / "data" / "msa_configuration.fits"
-    hdul[0].header["MSAMETFL"] = str(msa_meta)
+    msa_meta = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
+    hdul[0].header["MSAMETFL"] = msa_meta
     hdul[0].header["MSAMETID"] = 12
     im = datamodels.ImageModel(hdul)
     im_wcs = AssignWcsStep.call(im)
@@ -198,8 +199,9 @@ def test_skipped():
 def test_mos_slit_status():
     """Test conditions that are skipped for mos slitlets."""
     hdul = create_nirspec_mos_file()
-    msa_meta = Path(jwst.__path__[0]) / "assign_wcs" / "tests" / "data" / "msa_configuration.fits"
-    hdul[0].header["MSAMETFL"] = str(msa_meta)
+    msa_meta = get_pkg_data_filename(
+        "data/msa_configuration.fits", package="jwst.assign_wcs.tests")
+    hdul[0].header["MSAMETFL"] = msa_meta
     hdul[0].header["MSAMETID"] = 12
     im = datamodels.ImageModel(hdul)
     im_wcs = AssignWcsStep.call(im)
@@ -219,8 +221,8 @@ def test_mos_slit_status():
     # since no slits were corrected
     assert im_wave.meta.cal_step.wavecorr == "SKIPPED"
 
-    # check that the step is listed as skipped for extended mos sources
-    assert im_wave.slits[0].meta.cal_step.wavecorr == "SKIPPED"
+    # check that wavelength_corrected is False for extended mos sources
+    assert im_wave.slits[0].wavelength_corrected is False
 
     # test the mock msa source as a point source
     im_src.slits[0].source_type = "POINT"
@@ -229,8 +231,8 @@ def test_mos_slit_status():
     # check that the step is recorded as completed
     assert im_wave.meta.cal_step.wavecorr == "COMPLETE"
 
-    # check that the step is listed as complete for mos point sources
-    assert im_wave.slits[0].meta.cal_step.wavecorr == "COMPLETE"
+    # check that wavelength_corrected is True for mos point sources
+    assert im_wave.slits[0].wavelength_corrected is True
 
 
 def test_wavecorr_fs():

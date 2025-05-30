@@ -1,15 +1,19 @@
-from astropy.io.fits.diff import FITSDiff
-import pytest
-import numpy as np
 import os
+
+import pytest
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from gwcs import wcstools
+from numpy.testing import assert_allclose
+from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from stdatamodels.jwst import datamodels
+
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope="module")
-def run_pipeline(rtdata_module):
+def run_pipeline(rtdata_module, resource_tracker):
     """
     Run the calwebb_spec3 pipeline on NIRSpec Fixed-Slit exposures.
     """
@@ -24,10 +28,16 @@ def run_pipeline(rtdata_module):
             "--steps.outlier_detection.save_intermediate_results=true",
             "--steps.resample_spec.save_results=true",
             "--steps.extract_1d.save_results=true"]
-    Step.from_cmdline(args)
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Mean of empty slice
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_spec3(log_tracked_resources, run_pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d", "median"])
 @pytest.mark.parametrize("source_id,slit_name", [("s000000001","s200a2"), ("s000000021","s200a1"),
     ("s000000023","s400a1"), ("s000000024","s1600a1"), ("s000000025","s200b1")])
@@ -57,10 +67,9 @@ def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, 
     # Check output wavelength array against its own wcs
     if suffix == "s2d":
         tolerance = 1e-03
-        dmr = datamodels.open(rtdata.output)
-
-        w = dmr.meta.wcs
-        x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
-        _, _, wave = w(x, y)
-        wlr = dmr.wavelength
-        assert np.all(np.isclose(wave, wlr, atol=tolerance))
+        with datamodels.open(rtdata.output) as dmr:
+            w = dmr.meta.wcs
+            x, y = wcstools.grid_from_bounding_box(w.bounding_box, step=(1, 1), center=True)
+            _, _, wave = w(x, y)
+            wlr = dmr.wavelength
+            assert_allclose(wave, wlr, atol=tolerance)

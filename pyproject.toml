@@ -8,7 +8,6 @@ authors = [
 classifiers = [
     "Intended Audience :: Science/Research",
     "Topic :: Scientific/Engineering :: Astronomy",
-    "License :: OSI Approved :: BSD License",
     "Operating System :: MacOS :: MacOS X",
     "Operating System :: POSIX",
     "Programming Language :: Python :: 3",
@@ -18,9 +17,9 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "asdf>=3.3,<5",
+    "asdf>=4.0,<5",
     "astropy>=6.1",
-    "BayesicFitting>=3.0.1",
+    "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
     "drizzle>=2.0.1",
     # "gwcs>=0.22.0,<0.23.0",
@@ -28,24 +27,24 @@ dependencies = [
     "numpy>=1.25",
     "opencv-python-headless>=4.6.0.66",
     "photutils>=1.5.0",
-    "poppy>=1.0.2",
     "pyparsing>=2.2.1",
-    "requests>=2.22",
+    "requests>=2.31",
     "scikit-image>=0.20.0",
     "scipy>=1.14.1",
-    "spherical-geometry>=1.2.22",
+    "spherical-geometry>=1.3",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
-    "stpipe>=0.8.0,<0.9.0",
+    "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
     "stsci.imagestats>=1.6.3",
-    "synphot>=1.2",
+    "synphot>=1.3",
     "tweakwcs>=0.8.8",
     "asdf-astropy>=0.6.0",
-    "wiimatch>=0.2.1",
+    "wiimatch>=0.3.2",
     "packaging>20.0",
     "importlib-metadata>=4.11.4",
     "jsonschema>=4.8",
 ]
+license-files = ["LICENSE"]
 dynamic = [
     "version",
 ]
@@ -53,10 +52,6 @@ dynamic = [
 [project.readme]
 file = "README.md"
 content-type = "text/markdown"
-
-[project.license]
-file = "LICENSE"
-content-type = "text/plain"
 
 [project.urls]
 Homepage = "https://github.com/spacetelescope/jwst"
@@ -72,8 +67,6 @@ asn_gather = "jwst.scripts.asn_gather:main"
 asn_generate = "jwst.associations.main:main"
 asn_make_pool = "jwst.scripts.asn_make_pool:main"
 collect_pipeline_cfgs = "jwst.scripts.collect_pipeline_cfgs:main"
-create_data = "jwst.scripts.create_data:main"
-csvconvert = "jwst.csv_tools.csvconvert:CSVConvertScript"
 exp_to_source = "jwst.exp_to_source.main:Main"
 pointing_summary = "jwst.scripts.pointing_summary:main"
 schemadoc = "jwst.scripts.schemadoc:main"
@@ -83,7 +76,6 @@ set_velocity_aberration = "jwst.scripts.set_velocity_aberration:main"
 "set_velocity_aberration.py" = "jwst.scripts.set_velocity_aberration:deprecated_name"
 stfitsdiff = "jwst.scripts.stfitsdiff:main"
 v1_calculate = "jwst.scripts.v1_calculate:main"
-verify_install_requires = "jwst.scripts.verify_install_requires:main"
 world_coords = "jwst.scripts.world_coords:main"
 
 [project.entry-points."stpipe.steps"]
@@ -105,7 +97,7 @@ sdp = [
     "pysiaf>=0.13.0",
 ]
 test = [
-    "ci-watson>=0.5.0",
+    "ci-watson @ git+https://github.com/spacetelescope/ci_watson.git@main",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
@@ -150,15 +142,30 @@ include = ["pytest_jwst*", "jwst*"]
     "*.cat",
     "*.hdr",
 ]
-"jwst.lib" = [
-    "tests/data/*.asdf",
-    "tests/data/**/*.db",
-    "tests/data/**/*.xml",
-    "tests/data/*.ecsv",
-    "tests/data/*.fits",
+"jwst.lib.tests" = [
+    "data/*.asdf",
+    "data/**/*.db",
+    "data/**/*.xml",
+    "data/*.ecsv",
+    "data/*.fits",
 ]
-"jwst.associations" = [
-    "tests/data/*.py",
+"jwst.associations.tests" = [
+    "data/*.py",
+]
+"jwst.assign_mtwcs.tests" = [
+    "data/*.*"
+]
+"jwst.assign_wcs.tests" = [
+    "data/*.*"
+]
+"jwst.background.tests" = [
+    "data/*.*"
+]
+"jwst.datamodels.tests" = [
+    "data/*.*"
+]
+"jwst.extract_2d.tests" = [
+    "data/*.*"
 ]
 "jwst.lib.src" = [
     "*.c",
@@ -174,6 +181,15 @@ include = ["pytest_jwst*", "jwst*"]
 ]
 "jwst.stpipe.resources" = [
     "schemas/*.yaml",
+]
+"jwst.stpipe.tests" = [
+    "data/*.*"
+]
+"jwst.tweakreg.tests" = [
+    "data/*.*"
+]
+"jwst.wfss_contam.tests" = [
+    "data/*.*"
 ]
 
 [tool.build-sphinx]
@@ -210,9 +226,14 @@ addopts = [
     "--report-crds-context",
     "--color=yes",
 ]
+xfail_strict = true
+# This is for regtests. All unhandled warnings become exceptions for
+# regular CI in tox.ini file.
 filterwarnings = [
     "error::ResourceWarning",
+    "error::DeprecationWarning",
     "error::stdatamodels.exceptions.ValidationWarning",
+    "error:Invalid interval",
     "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
 ]
 
@@ -392,11 +413,6 @@ showcontent = true
 [[tool.towncrier.type]]
 directory = "cube_build"
 name = 'cube_build (spec2 IFU, spec3)'
-showcontent = true
-
-[[tool.towncrier.type]]
-directory = "cube_skymatch"
-name = 'cube_skymatch'
 showcontent = true
 
 [[tool.towncrier.type]]

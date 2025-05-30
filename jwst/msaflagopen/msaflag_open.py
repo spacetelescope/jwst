@@ -1,16 +1,22 @@
 """Flag pixels affected by open MSA shutters in NIRSpec exposures."""
 
 import json
-import numpy as np
 import logging
+import warnings
 from pathlib import Path
 
+import numpy as np
 from gwcs.wcs import WCS
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import Slit
 
-from ..assign_wcs.nirspec import slitlets_wcs, _nrs_wcs_set_input_lite, _get_transforms
+from jwst.assign_wcs.nirspec import (
+    generate_compound_bbox,
+    nrs_wcs_set_input,
+    slitlets_wcs,
+    log as nirspec_log,
+)
+from jwst.lib.basic_utils import LoggingContext
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -43,9 +49,12 @@ def do_correction(input_model, shutter_refname, wcs_refnames):
     """
     # Create a list of failed open slitlets from the msaoper reference file
     failed_slitlets = create_slitlets(shutter_refname)
+    log.info("%d failed open shutters", len(failed_slitlets))
 
     # Flag the stuck open shutters
-    output_model = flag(input_model, failed_slitlets, wcs_refnames)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="Invalid interval")
+        output_model = flag(input_model, failed_slitlets, wcs_refnames)
     output_model.meta.cal_step.msa_flagging = "COMPLETE"
 
     return output_model
@@ -79,7 +88,8 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
         Science data with DQ flags modified.
     """
     # Use the machinery in assign_wcs to create a WCS object for the bad shutters
-    pipeline = slitlets_wcs(input_datamodel, wcs_refnames, failed_slitlets)
+    with LoggingContext(nirspec_log, level=logging.WARNING):
+        pipeline = slitlets_wcs(input_datamodel, wcs_refnames, failed_slitlets)
     wcs = WCS(pipeline)
 
     # Create output as a copy of the input science data model so we can overwrite
@@ -90,16 +100,12 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     temporary_copy = input_datamodel.copy()
     temporary_copy.meta.wcs = wcs
     temporary_copy.meta.exposure.type = "NRS_MSASPEC"
-
-    s = [slitlet.name for slitlet in failed_slitlets]
-    wcsobj, tr1, tr2, tr3, open_slits = _get_transforms(temporary_copy, s, return_slits=True)
+    temporary_copy.meta.wcs.bounding_box = generate_compound_bbox(temporary_copy, failed_slitlets)
 
     dq_array = input_datamodel.dq
-    for k in range(len(s)):
+    for slitlet in failed_slitlets:
         # Pick the WCS for this slitlet from the WCS of the exposure
-        thiswcs = _nrs_wcs_set_input_lite(
-            temporary_copy, wcsobj, s[k], [tr1, tr2[k], tr3[k]], open_slits=open_slits
-        )
+        thiswcs = nrs_wcs_set_input(temporary_copy, slitlet.name)
 
         # Convert the bounding box for this slitlet to a set of indices to use as a slice
         xmin, xmax, ymin, ymax = boundingbox_to_indices(temporary_copy, thiswcs.bounding_box)
@@ -242,17 +248,6 @@ def create_slitlets(shutter_refname):
         y = shutter["y"]
         shutter_id = x + (y - 1) * SHUTTERS_PER_ROW
         slitlets.append(
-            Slit(
-                str(counter),
-                shutter_id,
-                0,
-                x,
-                y,
-                -0.5,
-                0.5,
-                shutter["Q"],
-                0,
-                "x",
-            )
+            Slit(counter, shutter_id, 0, x, y, -0.5, 0.5, shutter["Q"], 0, "x", slit_id=counter)
         )
     return slitlets

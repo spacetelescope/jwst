@@ -19,29 +19,7 @@ quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
 exclude = [
-    "jwst/associations/**.py",
-    "jwst/background/**.py",
-    "jwst/coron/**.py",
-    "jwst/cube_build/**.py",
-    "jwst/cube_skymatch/**.py",
-    "jwst/dark_current/**.py",
-    "jwst/extract_2d/**.py",
-    "jwst/flatfield/**.py",
-    "jwst/fringe/**.py",
     "jwst/ipc/**.py",
-    "jwst/lib/**.py",
-    "jwst/linearity/**.py",
-    "jwst/mrs_imatch/**.py",
-    "jwst/persistence/**.py",
-    "jwst/photom/**.py",
-    "jwst/residual_fringe/**.py",
-    "jwst/rscd/**.py",
-    "jwst/saturation/**.py",
-    "jwst/scripts/**.py",
-    "jwst/spectral_leak/**.py",
-    "jwst/straylight/**.py",
-    "jwst/tso_photometry/**.py",
-    "jwst/wfs_combine/**.py",
 ]
 
 [lint]
@@ -55,7 +33,6 @@ select = [
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
     "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
     "C4",     # flake8-comprehensions (best practices for comprehensions)
-    "G004",   # logging-f-string (https://github.com/python/cpython/issues/90358)
     "ICN",    # flake8-import-conventions (enforce import conventions)
     "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
     "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
@@ -98,6 +75,7 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 ]
 "**/tests/**.py" = [
     "D104", # missing docstring in public package
+    "S101", # use of assert
 ]
 "jwst/conftest.py" = [
     "SLF", "ARG", "PTH",
@@ -108,32 +86,10 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "A002", # builtin variable shadowing
     "S101", # use of assert
 ]
+"jwst/associations/lib/*" = [
+    "N801", # Use CapWords class naming convention
+]
 "jwst/associations/tests*" = [
     "F841", # unused variable
 ]
-"jwst/associations/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/background/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/coron/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/cube_build/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/cube_skymatch/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/dark_current/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/extract_2d/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/flatfield/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/fringe/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
 "jwst/ipc/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/lib/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/linearity/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/mrs_imatch/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/persistence/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/photom/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/residual_fringe/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/rscd/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/saturation/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/scripts/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/spectral_leak/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/straylight/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/tso_photometry/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"jwst/wfs_combine/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
-"!jwst/engdblog/**.py" = [ # Package-wide logger formatting is https://jira.stsci.edu/browse/JP-3927
-    "G004", # logging-f-string
-]

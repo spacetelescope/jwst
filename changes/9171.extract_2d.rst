@@ -1,2 +1,0 @@
-Add ability to select multiple slit names or source ids in extract_2d
-

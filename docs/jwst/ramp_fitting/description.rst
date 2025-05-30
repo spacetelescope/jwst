@@ -6,7 +6,7 @@ Description
 
 This step determines the mean count rate, in units of counts per second, for
 each pixel by performing a linear fit to the "up the ramp" data in the input file.
-All fitting is done using the "ordinary least squares" (OLS) method.
+All fitting is done using the "ordinary least squares" (OLS_C) method.
 The fit is performed independently for each pixel. Bad values flagged via
 DQ flags are rejected from the fits.
 

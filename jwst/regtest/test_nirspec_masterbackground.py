@@ -1,12 +1,11 @@
+import warnings
+
 import pytest
-
-from astropy.io.fits.diff import FITSDiff
 import numpy as np
-
 import stdatamodels.jwst.datamodels as dm
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.master_background import MasterBackgroundMosStep, MasterBackgroundStep
-
 from jwst.regtest import regtestdata as rt
 
 pytestmark = pytest.mark.bigdata
@@ -29,6 +28,8 @@ def run_spec2_mbkg(rtdata_module):
             '--steps.master_background_mos.save_background=true'
         ]
     }
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
@@ -53,6 +54,8 @@ def run_spec2_mbkg_user(rtdata_module):
             f'--output_file={user_bg}'
         ]
     }
+    # FIXME: Handle warnings properly.
+    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 
@@ -61,6 +64,8 @@ def test_masterbkg_rerun(rtdata):
     """Test to ensure sequential runs of the step are consistent"""
     with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
+        # FIXME: Handle warnings properly. (corrected and corrected_again)
+        # Example: RuntimeWarning: divide by zero encountered in divide
         corrected = mbs.run(data)
         corrected_again = mbs.run(data)
 
@@ -76,6 +81,8 @@ def test_masterbkg_corrpars(rtdata):
     """Test for correction parameters"""
     with dm.open(rtdata.get_data('nirspec/mos/jw01448011001_02101_00001_nrs2_srctype.fits')) as data:
         mbs = MasterBackgroundMosStep()
+        # FIXME: Handle warnings properly.
+        # Example: RuntimeWarning: divide by zero encountered in divide
         corrected = mbs.run(data)
 
         mbs.use_correction_pars = True

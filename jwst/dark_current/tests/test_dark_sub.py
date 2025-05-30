@@ -1,6 +1,7 @@
 """
 Unit tests for dark current correction
 """
+import warnings
 
 import pytest
 import numpy as np
@@ -112,10 +113,12 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
 
     # Add ramp values to dark model data array
     dark.data[:, 10, 10] = np.arange(0, NGROUPS_DARK)
-    dark.err[:, 10, 10] = np.arange(10, NGROUPS_DARK + 10)
 
     # Run the pipeline's averaging function
-    avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
+    with np.errstate(divide="ignore", invalid="ignore"), warnings.catch_warnings():
+        # These warnings only appear for certain deps combo.
+        warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
+        avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
 
     # Group input groups into collections of frames which will be averaged
     total_frames = (nframes * ngroups) + (groupgap * (ngroups - 1))
@@ -126,68 +129,24 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
 
     # Prepare arrays to hold results of averaging
     manual_avg = np.zeros((ngroups), dtype=np.float32)
-    manual_errs = np.zeros((ngroups), dtype=np.float32)
 
     # Manually average the input data to compare with pipeline output
     for newgp, gstart, gend in zip(range(ngroups), gstrt_ind, gend_ind):
 
         # Average the data frames
-        newframe = np.mean(dark.data[gstart:gend, 10, 10])
+        with np.errstate(divide="ignore", invalid="ignore"), warnings.catch_warnings():
+            # These warnings only appear for certain deps combo.
+            warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
+            newframe = np.mean(dark.data[gstart:gend, 10, 10])
         manual_avg[newgp] = newframe
-
-        # ERR arrays will be quadratic sum of error values
-        manual_errs[newgp] = np.sqrt(np.sum(dark.err[gstart:gend, 10, 10]**2)) / (gend - gstart)
 
     # Check that pipeline output matches manual averaging results
     assert_allclose(manual_avg, avg_dark.data[:, 10, 10], rtol=1e-5)
-    assert_allclose(manual_errs, avg_dark.err[:, 10, 10], rtol=1e-5)
 
     # Check that meta data was properly updated
     assert avg_dark.exp_nframes == nframes
     assert avg_dark.exp_ngroups == ngroups
     assert avg_dark.exp_groupgap == groupgap
-
-
-# Refac done
-def test_more_sci_frames(make_rampmodel, make_darkmodel):
-    '''Check that data is unchanged if there are more frames in the science
-    data is than in the dark reference file and verify that when the dark is not applied,
-    the data is correctly flagged as such'''
-
-    # size of integration
-    nints = 1
-    ngroups = 7
-    xsize = 200
-    ysize = 200
-
-    # create raw input data for step
-    dm_ramp = make_rampmodel(nints, ngroups, ysize, xsize)
-    dm_ramp.meta.exposure.nframes = 1
-    dm_ramp.meta.exposure.groupgap = 0
-
-    # populate data array of science cube
-    for i in range(0, ngroups - 1):
-        dm_ramp.data[0, i] = i
-
-    refgroups = 5
-    # create dark reference file model with fewer frames than science data
-    dark = make_darkmodel(refgroups, ysize, xsize)
-
-    # populate data array of reference file
-    for i in range(0, refgroups - 1):
-        dark.data[0, i] = i * 0.1
-
-    # apply correction
-    out_data, avg_data = darkcorr(dm_ramp, dark)
-
-    # test that the science data are not changed; input file = output file
-    np.testing.assert_array_equal(dm_ramp.data, out_data.data)
-
-    # get dark correction status from header
-    # darkstatus = outfile.meta.cal_step.dark_sub
-    darkstatus = out_data.cal_step
-
-    assert darkstatus == 'SKIPPED'
 
 
 # Refac done

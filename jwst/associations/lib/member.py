@@ -1,27 +1,34 @@
-"""Association Member"""
+"""Association Member definition - store exposure metadata as dict-like objects."""
+
 from collections import UserDict
 from copy import copy
 
 
 class Member(UserDict):
-    """Member of an association
-
-    Parameters
-    ----------
-    initialdata: Dict-like or Member
-        Initialization data. Any type of initialization that
-        `collections.UserDict` allows or `Member` itself.
-
-    item: obj
-        The item to initialize with. This will override
-        any `Member.item` given in `initialdata`.
+    """
+    Member of an association.
 
     Attributes
     ----------
-    item: obj
+    item : object
         The original item that created this member.
     """
+
     def __init__(self, initialdata=None, item=None):
+        """
+        Initialize a Member.
+
+        Parameters
+        ----------
+        initialdata : Dict-like or Member
+            Initialization data. Any type of initialization that
+            `collections.UserDict` allows or `Member` itself.
+
+        item : object
+            The item to initialize with. This will override
+            any `Member.item` given in `initialdata`. Most common
+            object type is a ~jwst.associations.pool.PoolRow instance.
+        """
         self.item = None
 
         if isinstance(initialdata, Member):
@@ -34,16 +41,25 @@ class Member(UserDict):
             self.item = copy(item)
 
     def __eq__(self, other):
-        """Compare members
+        """
+        Compare members.
 
         If both Members have attributes `expname` and `exptype`,
         compare only those attributes. Otherwise, use the default
         comparison.
+
+        Parameters
+        ----------
+        other : object
+            The comparison object.
+
+        Returns
+        -------
+        bool
+            True if deemed equal/equivalent.
         """
-        hasexpkeys = all(k in data
-                         for k in ('expname', 'exptype')
-                         for data in (self, other))
+        hasexpkeys = all(k in data for k in ("expname", "exptype") for data in (self, other))
         if hasexpkeys:
-            return all(self[k] == other[k] for k in ('expname', 'exptype'))
+            return all(self[k] == other[k] for k in ("expname", "exptype"))
         else:
             return super().__eq__(other)

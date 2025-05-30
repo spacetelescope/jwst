@@ -6,7 +6,7 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
-
+from jwst.datamodels.utils.flat_multispec import expand_flat_spec
 from jwst.extract_1d.spec_wcs import create_spectral_wcs
 
 log = logging.getLogger(__name__)
@@ -674,6 +674,46 @@ def check_exptime(exptime_key):
     return exptime_key
 
 
+def _read_input_spectra(input_model, exptime_key, input_spectra):
+    """
+    Read input spectra from a datamodel.
+
+    Parameters
+    ----------
+    input_model : MultiSpecModel, TSOMultiSpecModel, MRSSpecModel
+        A datamodel with a ``spec`` attribute, containing spectra.
+        If TSOMultiSpecModel, integrations in the spectral table rows
+        are expanded into separate spectra.
+    exptime_key : str
+        Exposure time key to use for weighting.
+    input_spectra : dict
+        Dictionary to hold input spectra, keyed by spectral order.
+        Updated in place.
+
+    Returns
+    -------
+    input_spectra : dict
+        The updated dictionary, holding all spectra in the input model.
+
+    Raises
+    ------
+    TypeError
+        If the input datamodel does not have a ``spec`` attribute.
+    """
+    if not hasattr(input_model, "spec"):
+        raise TypeError(f"Invalid input datamodel: {type(input_model)}")
+    if isinstance(input_model, datamodels.TSOMultiSpecModel):
+        spectra = expand_flat_spec(input_model).spec
+    else:
+        spectra = input_model.spec
+    for in_spec in spectra:
+        spectral_order = in_spec.spectral_order
+        if spectral_order not in input_spectra:
+            input_spectra[spectral_order] = []
+        input_spectra[spectral_order].append(InputSpectrumModel(input_model, in_spec, exptime_key))
+    return input_spectra
+
+
 def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     """
     Combine the input spectra.
@@ -681,8 +721,10 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     Parameters
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
-        The input spectra.  This will likely be a ModelContainer object.
-
+        The input spectra.  This will likely be a ModelContainer object,
+        but may also be a multi-spectrum model, such as MultiSpecModel or
+        TSOMultiSpecModel.  Input spectra may have different spectral orders
+        or wavelengths but should all share the same target.
     exptime_key : str
         A string identifying which keyword to use to get the exposure time,
         which is used as a weight when combining spectra.  The value should
@@ -691,8 +733,8 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
 
     Returns
     -------
-    output_model : `~jwst.datamodels.JwstDataModel`
-        A datamodels.CombinedSpecModel object.
+    output_model : `~jwst.datamodels.MultiCombinedSpecModel`
+        A combined spectra datamodel.
     """
     log.debug(f"Using exptime_key = {exptime_key}.")
 
@@ -702,23 +744,9 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     output_spectra = {}
     if isinstance(input_model, ModelContainer):
         for ms in input_model:
-            if not hasattr(ms, "spec"):
-                raise TypeError(f"Invalid input datamodel: {type(ms)}")
-            for in_spec in ms.spec:
-                spectral_order = in_spec.spectral_order
-                if spectral_order not in input_spectra:
-                    input_spectra[spectral_order] = []
-                input_spectra[spectral_order].append(InputSpectrumModel(ms, in_spec, exptime_key))
+            _read_input_spectra(ms, exptime_key, input_spectra)
     else:
-        if not hasattr(input_model, "spec"):
-            raise TypeError(f"Invalid input datamodel: {type(input_model)}")
-        for in_spec in input_model.spec:
-            spectral_order = in_spec.spectral_order
-            if spectral_order not in input_spectra:
-                input_spectra[spectral_order] = []
-            input_spectra[spectral_order].append(
-                InputSpectrumModel(input_model, in_spec, exptime_key)
-            )
+        _read_input_spectra(input_model, exptime_key, input_spectra)
 
     for order in input_spectra:
         output_spectra[order] = OutputSpectrumModel()

@@ -52,6 +52,7 @@ def test_extract_nirspec_mos_multi_slit(mock_nirspec_mos, simple_wcs):
 
 def test_extract_nirspec_bots(mock_nirspec_bots, simple_wcs):
     result = Extract1dStep.call(mock_nirspec_bots, apply_apcorr=False, use_source_posn=False)
+    assert isinstance(result, dm.TSOMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
     assert result.spec[0].name == "S1600A1"
 
@@ -87,6 +88,7 @@ def test_extract_miri_ifu(mock_miri_ifu, simple_wcs_ifu, ifu_set_srctype):
     # Source type defaults to extended, results should be the
     # same with and without override
     result = Extract1dStep.call(mock_miri_ifu, ifu_covar_scale=1.0, ifu_set_srctype=ifu_set_srctype)
+    assert isinstance(result, dm.MRSMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
     # output wavelength is the same as input
