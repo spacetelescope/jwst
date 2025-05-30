@@ -84,7 +84,7 @@ class LgModel:
         self.N = len(self.ctrs)
         self.fmt = "%10.4e"
 
-        # get closest in time OPD from WebbPSF?
+        # get closest in time OPD from STPSF?
 
         if (phi is None) or (phi == "perfect"):  # meters of OPD at central wavelength
             self.phi = np.zeros(self.N)  # backwards compatibility
