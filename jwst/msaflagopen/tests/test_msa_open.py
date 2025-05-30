@@ -149,3 +149,14 @@ def test_no_ref_file():
     # the step is skipped if there is no msaoper reference file
     result = MSAFlagOpenStep.call(im)
     assert result.meta.cal_step.msa_flagging == "SKIPPED"
+
+
+def test_custom_ref_file():
+    im = make_nirspec_mos_model()
+    wavelength_range = get_pkg_data_filename(
+        "data/waverange.asdf", package="jwst.assign_wcs.tests")
+    im = AssignWcsStep.call(im, override_wavelengthrange=wavelength_range)
+    result = MSAFlagOpenStep.call(im)
+
+    nonzero = np.nonzero(result.dq)
+    assert_array_equal(result.dq[nonzero], MSA_FAILED_OPEN)
