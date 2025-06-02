@@ -59,6 +59,7 @@ __all__ = [
     "Asn_Lv3TSO",
     "Asn_Lv3WFSCMB",
     "Asn_Lv3WFSSNIS",
+    "Asn_Lv3WFSSNRC",
 ]
 
 # Configure logging
@@ -810,7 +811,7 @@ class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
                         DMSAttrConstraint(
                             name="exp_type",
                             sources=["exp_type"],
-                            value=("nrc_wfss|nrs_autoflat|nrs_autowave"),
+                            value=("nrs_autoflat|nrs_autowave"),
                             force_unique=False,
                         ),
                         Constraint_MSA(),
@@ -1162,9 +1163,52 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
 
 
 @RegistryMarker.rule
+class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
+    """
+    Level 3 NIRCam WFSS/Grism Association.
+
+    Characteristics:
+        - Association type: ``spec3``
+        - Pipeline: ``calwebb_spec3``
+        - Multi-object
+        - Non-TSO
+    """
+
+    def __init__(self, *args, **kwargs):
+        # Setup for checking.
+        self.constraints = Constraint(
+            [
+                Constraint([Constraint_TSO()], reduce=Constraint.notany),
+                Constraint_Optical_Path(),
+                Constraint_Target(association=self),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="nrc_wfss",
+                ),
+            ]
+        )
+
+        # Check and continue initialization.
+        super().__init__(*args, **kwargs)
+
+    @property
+    def dms_product_name(self):
+        """
+        Return source-based product name.
+
+        Returns
+        -------
+        str
+            The product name using source id.
+        """
+        return dms_product_name_wfss(self)
+
+
+@RegistryMarker.rule
 class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
     """
-    Level 3 WFSS/Grism Association.
+    Level 3 NIRISS WFSS/Grism Association.
 
     Characteristics:
         - Association type: ``spec3``

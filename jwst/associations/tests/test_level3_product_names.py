@@ -109,8 +109,10 @@ def test_level3_names(pool_file, global_constraints):
     )
     pool = combine_pools(pool_file)
     asns = generate(pool, rules)
+    print(asns)
     for asn in asns:
         product_name = asn['products'][0]['name']
+        # print(asn['asn_rule'], product_name)
         if asn['asn_rule'] == 'Asn_Lv3MIRMRS':
             m = re.match(LEVEL3_PRODUCT_NAME_NO_OPTELEM_REGEX, product_name)
         else:
