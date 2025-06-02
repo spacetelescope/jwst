@@ -212,6 +212,7 @@ def wfss_multiexposure_to_multispec(input_model):
         multispec.meta.exposure.integration_time = integration_times[0]
         spec_this_id = spec_list[source_ids == source_id]
         multispec.spec.extend(spec_this_id)
+        multispec.update(input_model, only="PRIMARY")
         output_list.append(multispec)
 
     return output_list
