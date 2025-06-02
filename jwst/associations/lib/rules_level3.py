@@ -1178,13 +1178,19 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
         # Setup for checking.
         self.constraints = Constraint(
             [
-                Constraint([Constraint_TSO()], reduce=Constraint.notany),
-                Constraint_Optical_Path(),
+                # Constraint([Constraint_TSO()], reduce=Constraint.notany),
+                # Constraint_Optical_Path(),
                 Constraint_Target(association=self),
                 DMSAttrConstraint(
                     name="exp_type",
                     sources=["exp_type"],
                     value="nrc_wfss",
+                ),
+                DMSAttrConstraint(
+                    name="opt_elem",
+                    sources=["filter"],
+                    value="GRISMR|GRISMC",
+                    force_unique=True,
                 ),
             ]
         )
