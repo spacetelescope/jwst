@@ -18,7 +18,6 @@ from ..assign_mtwcs import assign_mtwcs_step
 from ..cube_build import cube_build_step
 from ..extract_1d import extract_1d_step
 from ..master_background import master_background_step
-from ..mrs_imatch import mrs_imatch_step
 from ..outlier_detection import outlier_detection_step
 from ..resample import resample_spec_step
 from ..combine_1d import combine_1d_step
@@ -40,7 +39,6 @@ class Spec3Pipeline(Pipeline):
     Included steps are:
     assign moving target wcs (assign_mtwcs)
     master background subtraction (master_background)
-    MIRI MRS background matching (mrs_imatch)
     outlier detection (outlier_detection)
     2-D spectroscopic resampling (resample_spec)
     3-D spectroscopic resampling (cube_build)
@@ -58,7 +56,6 @@ class Spec3Pipeline(Pipeline):
     step_defs = {
         "assign_mtwcs": assign_mtwcs_step.AssignMTWcsStep,
         "master_background": master_background_step.MasterBackgroundStep,
-        "mrs_imatch": mrs_imatch_step.MRSIMatchStep,
         "outlier_detection": outlier_detection_step.OutlierDetectionStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "resample_spec": resample_spec_step.ResampleSpecStep,
@@ -84,7 +81,6 @@ class Spec3Pipeline(Pipeline):
 
         # Setup sub-step defaults
         self.master_background.suffix = "mbsub"
-        self.mrs_imatch.suffix = "mrs_imatch"
         self.outlier_detection.suffix = "crf"
         self.outlier_detection.save_results = self.save_results
         self.resample_spec.suffix = "s2d"
@@ -213,10 +209,6 @@ class Spec3Pipeline(Pipeline):
             # The MultiExposureModel is a required output.
             if isinstance(result, SourceModelContainer):
                 self.save_model(result, "cal")
-
-            # Call the skymatch step for MIRI MRS data
-            if exptype in ["MIR_MRS"]:
-                result = self.mrs_imatch.run(result)
 
             # Call outlier detection and pixel replacement
             resample_complete = None
