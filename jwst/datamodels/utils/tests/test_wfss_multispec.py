@@ -60,7 +60,7 @@ def wfss_spec2_multispec(example_spec):
         # create a new SpecModel for each source
         spec = example_spec.copy()
         spec.meta.filename = f"exposure_1.fits" # all sources in the same exposure
-        spec.meta.observation.exposure_number = "1" # all sources in the same exposure
+        spec.meta.group_id = "1" # all sources in the same exposure
         spec.source_id = N_SOURCES - i # reverse the order to test sorting
         spec.name = str(spec.source_id)
         _add_multispec_meta(spec)
@@ -83,7 +83,7 @@ def wfss_spec3_multispec(example_spec):
         # create a new SpecModel for each exposure
         spec = example_spec.copy()
         spec.meta.filename = f"exposure_{j}.fits"
-        spec.meta.observation.exposure_number = str(j + 1)
+        spec.meta.group_id = str(j + 1)
         spec.source_id = 999 # all sources are the same
         spec.dispersion_direction = 3
         spec.name = str(spec.source_id)
@@ -118,7 +118,7 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     assert not hasattr(output_model.meta, "wcs")
     for i, exposure in enumerate(output_model.exposures):
         assert hasattr(exposure.meta, "wcs")
-        assert exposure.exposure_number == str(i + 1)
+        assert exposure.group_id == str(i + 1)
     
     # check that units are present
     # test one vector-like column, which should come from the input specmodels
@@ -169,7 +169,7 @@ def test_wfss_flat_to_multispec(wfss_multiexposure):
 
             # check meta that were explicitly input to spec
             assert spec.meta.filename == f"exposure_{j}.fits"
-            assert spec.meta.observation.exposure_number == str(j + 1)
+            assert spec.meta.group_id == str(j + 1)
             assert spec.dispersion_direction == 3
 
             # test that the rest of the metadata exist and are default values
@@ -209,7 +209,7 @@ def test_wfss_multi_from_wfss_multi(wfss_multiexposure):
 
     # test that the data has all the appropriate data and metadata
     for i, exposure in enumerate(output_model.exposures):
-        assert exposure.exposure_number == str(i + 1)
+        assert exposure.group_id == str(i + 1)
         assert hasattr(exposure.meta, "wcs")
         assert exposure.spec_table.shape == (N_SOURCES*2,)
     

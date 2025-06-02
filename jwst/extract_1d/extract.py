@@ -1875,13 +1875,13 @@ def create_extraction(
             if hasattr(data_model.meta, "filename"):
                 # calwebb_spec3 case: no separate slit input to function
                 spec.meta.filename = data_model.meta.filename
-                spec.meta.observation.exposure_number = data_model.meta.observation.exposure_number
+                spec.meta.group_id = _make_group_id(data_model)
             else:
                 # calwebb_spec2 case: data_model is a slit so need to get this meta from input_model
-                # In this case, exposure_number is expected to be the same for all slits
+                # In this case, group_id is expected to be the same for all slits
                 # because spec list corresponds to different sources in the same exposure
                 spec.meta.filename = getattr(input_model.meta, "filename", None)
-                spec.meta.observation.exposure_number = input_model.meta.observation.exposure_number
+                spec.meta.group_id = _make_group_id(input_model)
             spec.extract2d_xstart = data_model.xstart
             spec.extract2d_ystart = data_model.ystart
             if data_model.xstart is None or data_model.ystart is None:
@@ -1945,6 +1945,21 @@ def create_extraction(
         output_model.spec.append(spec_list[0])
 
     return profile_model, scene_model, residual
+
+
+def _make_group_id(model):
+    program_number = model.meta.observation.program_number
+    observation_number = model.meta.observation.observation_number
+    visit_number = model.meta.observation.visit_number
+    visit_group = model.meta.observation.visit_group
+    sequence_id = model.meta.observation.sequence_id
+    activity_id = model.meta.observation.activity_id
+    exposure_number = model.meta.exposure.number
+    return (
+        f"jw{program_number}{observation_number}{visit_number}"
+        f"_{visit_group}{sequence_id}{activity_id}"
+        f"_{exposure_number}"
+    )
 
 
 def _make_output_model(data_model, meta_source):
@@ -2265,8 +2280,6 @@ def run_extract1d(
             del output_model.int_times
 
     output_model.meta.wcs = None  # See output_model.spec[i].meta.wcs instead.
-    if exp_type in WFSS_EXPTYPES:
-        output_model.meta.observation.exposure_number = None  # different for each slit
 
     if apcorr_ref_model is not None:
         apcorr_ref_model.close()

@@ -23,7 +23,7 @@ def spec3_wfss_asn(mock_niriss_wfss_l2, tmp_cwd):
         slit.meta.wcs = None # mock WCS coming in from fixture is not serializable
     model.save(INPUT_WFSS)
     model2 = model.copy()
-    model2.meta.observation.exposure_number = "8"
+    model2.meta.group_id = "8"
     model2.save(INPUT_WFSS_2)
     os.system(f"asn_from_list -o {INPUT_ASN} --product-name test {INPUT_WFSS} {INPUT_WFSS_2}")
 

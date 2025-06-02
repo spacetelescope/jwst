@@ -60,10 +60,7 @@ def make_wfss_multiexposure(input_list):
     for model in results_list:
         for spec in model.spec:
             fname = getattr(spec.meta, "filename", None)
-            if hasattr(spec.meta, "observation"):
-                exp_number = getattr(spec.meta.observation, "exposure_number", None)
-            else:
-                exp_number = None
+            exp_number = getattr(spec.meta, "group_id", None)
 
             # if this is the first time this exposure has been encountered,
             # create a new dictionary entry for it
@@ -120,7 +117,7 @@ def make_wfss_multiexposure(input_list):
     for model in results_list:
         for spec in model.spec:
             # ensure data goes to correct exposure table based on exposure_number attribute
-            exp_num = spec.meta.observation.exposure_number
+            exp_num = spec.meta.group_id
             exposure_idx = exposure_numbers.index(exp_num)
             fltdata = fltdata_by_exposure[exposure_idx]
             n_rows = n_rows_by_exposure[exposure_idx]
@@ -163,7 +160,7 @@ def make_wfss_multiexposure(input_list):
         # copy metadata
         ext.filename = exposure_counter[exposure_number]["filename"]
         ext.meta.wcs = exposure_counter[exposure_number]["wcs"]
-        ext.exposure_number = exposure_number
+        ext.group_id = exposure_number
         ext.dispersion_direction = example_spec.dispersion_direction
         ext.meta.exposure.exposure_time = exposure_counter[exposure_number]["exposure_time"]
         ext.meta.exposure.integration_time = exposure_counter[exposure_number]["integration_time"]

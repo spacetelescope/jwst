@@ -290,7 +290,7 @@ def expand_table(spec):
         # Copy over relevant metadata from the input model to the output model
         if hasattr(spec.meta, "wcs"):
             new_spec.meta.wcs = deepcopy(spec.meta.wcs)
-        new_spec.meta.observation.exposure_number = getattr(spec, "exposure_number", "")
+        new_spec.meta.group_id = getattr(spec, "group_id", "")
         new_spec.meta.filename = getattr(spec, "filename", "")
         copy_spec_metadata(spec, new_spec)
         copy_column_units(spec, new_spec)

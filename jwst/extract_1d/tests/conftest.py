@@ -470,7 +470,13 @@ def mock_niriss_wfss_l2(mock_nirspec_fs_one_slit):
     model.meta.instrument.filter = "GR150R"
     model.meta.observation.date = "2023-07-22"
     model.meta.observation.time = "06:24:45.569"
-    model.meta.observation.exposure_number = "5"
+    model.meta.observation.program_number = "1"
+    model.meta.observation.observation_number = "1"
+    model.meta.observation.visit_number = "1"
+    model.meta.observation.visit_group = "1"
+    model.meta.observation.sequence_id = "1"
+    model.meta.observation.activity_id = "1"
+    model.meta.exposure.number = "5"
     model.meta.exposure.type = "NIS_WFSS"
 
     nslit = 3
