@@ -1954,7 +1954,7 @@ def _make_group_id(model):
     visit_group = model.meta.observation.visit_group
     sequence_id = model.meta.observation.sequence_id
     activity_id = model.meta.observation.activity_id
-    exposure_number = model.meta.exposure.number
+    exposure_number = model.meta.observation.exposure_number
     return (
         f"jw{program_number}{observation_number}{visit_number}"
         f"_{visit_group}{sequence_id}{activity_id}"
