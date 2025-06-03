@@ -1178,8 +1178,6 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
         # Setup for checking.
         self.constraints = Constraint(
             [
-                # Constraint([Constraint_TSO()], reduce=Constraint.notany),
-                # Constraint_Optical_Path(),
                 Constraint_Target(association=self),
                 DMSAttrConstraint(
                     name="exp_type",
@@ -1201,12 +1199,12 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
     @property
     def dms_product_name(self):
         """
-        Return source-based product name.
+        Return product name.
 
         Returns
         -------
         str
-            The product name using source id.
+            The product name.
         """
         return dms_product_name_wfss(self)
 
@@ -1251,12 +1249,12 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
     @property
     def dms_product_name(self):
         """
-        Provide product name by source.
+        Provide product name.
 
         Returns
         -------
         str
-            Product name using source id.
+            Product name.
         """
         return dms_product_name_wfss(self)
 

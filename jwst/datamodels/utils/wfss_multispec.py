@@ -52,7 +52,6 @@ def make_wfss_multiexposure(input_list):
             )
 
     # first loop over both source and exposure to figure out final n_rows, n_exposures, n_sources
-    n_rows_by_exposure = []
     exposure_counter = {}
     all_source_ids = []
     # for calwebb_spec3 the outer loop is over sources and the inner loop is over exposures
@@ -75,7 +74,6 @@ def make_wfss_multiexposure(input_list):
                     "integration_time": model.meta.exposure.integration_time,  # need for combine_1d
                 }
             else:
-                # exposure_counter[exp_number]["n_sources"] += 1
                 # if this exposure has already been encountered,
                 # check if number of rows is larger than the previous one
                 exposure_counter[exp_number]["n_rows"] = max(
@@ -116,7 +114,7 @@ def make_wfss_multiexposure(input_list):
     # Now loop through the models and populate the tables
     for model in results_list:
         for spec in model.spec:
-            # ensure data goes to correct exposure table based on exposure_number attribute
+            # ensure data goes to correct exposure table based on group_id attribute
             exp_num = spec.meta.group_id
             exposure_idx = exposure_numbers.index(exp_num)
             fltdata = fltdata_by_exposure[exposure_idx]
@@ -143,12 +141,11 @@ def make_wfss_multiexposure(input_list):
             for old_name, new_name in zip(OLD_NAMES, NEW_NAMES, strict=True):
                 fltdata[spec_idx][new_name] = getattr(spec, old_name.lower(), None)
 
-    # Finally, create a new MultiExposureModel to hold the combined data
-    # with one MultiSpecModel table per exposure
+    # Finally, create a new WFSSMultiExposureSpecModel to hold the combined data
+    # with one WFSSMultiSpecModel table per exposure
     output_x1d = dm.WFSSMultiExposureSpecModel()
     example_spec = results_list[0].spec[0]
     for i, exposure_number in enumerate(exposure_numbers):
-        # Create a new extension for each exposure
         spec_table = fltdata_by_exposure[i]
         ext = dm.WFSSMultiSpecModel(spec_table)
 
@@ -167,7 +164,6 @@ def make_wfss_multiexposure(input_list):
 
         output_x1d.exposures.append(ext)
 
-    # Save the combined results to a file using first input model for metadata
     output_x1d.update(input_list[0], only="PRIMARY")
     return output_x1d
 
@@ -228,15 +224,14 @@ def make_wfss_multicombined(results_list):
     Parameters
     ----------
     results_list : list[MultiCombinedSpecModel]
-        List of MultiSlitModel objects to be combined.
+        List of MultiSpecModel objects to be combined.
 
     Returns
     -------
     output_c1d : WFSSMultiCombinedSpecModel
         The combined c1d product for WFSS modes.
     """
-    # determine shape of output table
-    # each input model should have just one spec table
+    # determine shape of output table. Each input model should have just one spec table
     n_sources = len(results_list)
     n_rows = max(len(model.spec[0].spec_table) for model in results_list)
 
@@ -262,12 +257,12 @@ def make_wfss_multicombined(results_list):
         # special handling for NELEMENTS because not defined in specmeta schema
         fltdata[j]["NELEMENTS"] = model.spec[0].spec_table.shape[0]
 
-    # Create a new SpecModel to hold the combined data
-    # with one SpecModel per exposure
+    # Create a new model to hold the combined data table
     output_c1d = dm.WFSSMultiCombinedSpecModel()
     fltdata.sort(order=["SOURCE_ID"])
     output_c1d.spec_table = fltdata
 
+    # Set default units from the model schema
     set_schema_units(output_c1d)
     # copy units from any of the SpecModels (they should all be the same)
     copy_column_units(model.spec[0], output_c1d)

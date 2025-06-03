@@ -61,6 +61,8 @@ class InputSpectrumModel:
         Right ascension of the source.
     source_dec : float
         Declination of the source.
+    dispersion_direction : str
+        Dispersion direction for the spectrum.
     flux_unit : str
         Unit for the flux values.
     sb_unit : str
