@@ -12,9 +12,6 @@ import numpy as np
 __all__ = ["BackgroundStep"]
 
 
-WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
-
-
 class BackgroundStep(Step):
     """Subtract background exposures from target exposures."""
 
@@ -54,29 +51,28 @@ class BackgroundStep(Step):
         result : ImageModel or IFUImageModel
             The background-subtracted target data model
         """
-        # If the input is an asn get all the info, otherwise assume input is
-        # a fits file or datamodel
-        if isinstance(step_input, str) and ".fits" not in step_input:
-            asn = self.load_as_level2_asn(step_input)
-            input_model, members_by_type = asn_get_data(asn)
-            bkg_list = members_by_type["background"]
-        else:
-            input_model = datamodels.open(step_input)
-            if input_bkg_list is not None:
-                if isinstance(input_bkg_list, str):
-                    if "," in input_bkg_list:
-                        bkg_list = input_bkg_list.split(sep=",")
-                    else:
-                        bkg_list = [input_bkg_list]
-                else:
-                    bkg_list = input_bkg_list
-            else:
-                bkg_list = self.bkg_list
+        asn = self.load_as_level2_asn(step_input)
+        input_model, members_by_type = asn_get_data(asn)
+        result = input_model.copy()
 
-        if input_model.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
+        # Get the background files to be subtracted
+        if len(members_by_type["background"]) >= 1:
+            bkg_list = members_by_type["background"]
+        elif input_bkg_list is not None:
+            if isinstance(input_bkg_list, str):
+                if "," in input_bkg_list:
+                    bkg_list = input_bkg_list.split(sep=",")
+                else:
+                    bkg_list = [input_bkg_list]
+            else:
+                bkg_list = input_bkg_list
+        else:
+            bkg_list = self.bkg_list
+
+        if result.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
             # Get the reference file names
-            bkg_name = self.get_reference_file(input_model, "wfssbkg")
-            wlrange_name = self.get_reference_file(input_model, "wavelengthrange")
+            bkg_name = self.get_reference_file(result, "wfssbkg")
+            wlrange_name = self.get_reference_file(result, "wavelengthrange")
             self.log.info("Using WFSSBKG reference file %s", bkg_name)
             self.log.info("Using WavelengthRange reference file %s", wlrange_name)
 
@@ -87,14 +83,14 @@ class BackgroundStep(Step):
                 "delta_rms_thresh": self.wfss_rms_stop / 100,
             }
             result = subtract_wfss_bkg(
-                input_model,
+                result,
                 bkg_name,
                 wlrange_name,
                 self.wfss_mmag_extract,
                 rescaler_kwargs=rescaler_kwargs,
             )
             if result is None:
-                result = input_model
+                result = input_model.copy()
                 result.meta.cal_step.back_sub = "SKIPPED"
             else:
                 result.meta.cal_step.back_sub = "COMPLETE"
@@ -102,19 +98,22 @@ class BackgroundStep(Step):
         else:
             # Make sure that the background list is not empty for this case,
             # or report and skip the step
-            if bkg_list is None:
+            if bkg_list is None or len(bkg_list) == 0:
                 self.log.warning("* No background list provided * Skipping step.")
-                input_model.meta.cal_step.back_sub = "SKIPPED"
-                return input_model
+                result.meta.cal_step.back_sub = "SKIPPED"
+                return result
+
+            # Make sure to catch a trailing comma and ignore it
+            bkg_list = [bg for bg in bkg_list if bg]
 
             # check if input data is NRS_IFU
             tolerance = 1.0e-8
             do_sub = True
-            if input_model.meta.instrument.name in ["NIRSPEC"]:
+            if result.meta.instrument.name in ["NIRSPEC"]:
                 # check if GWA_XTIL & GWA_YTIL values of source
                 # background are the same. If not skip step
-                input_xtilt = input_model.meta.instrument.gwa_xtilt
-                input_ytilt = input_model.meta.instrument.gwa_ytilt
+                input_xtilt = result.meta.instrument.gwa_xtilt
+                input_ytilt = result.meta.instrument.gwa_ytilt
                 for bkg_file in bkg_list:
                     with datamodels.open(bkg_file) as bkg_model:
                         bkg_xtilt = bkg_model.meta.instrument.gwa_xtilt
@@ -131,21 +130,18 @@ class BackgroundStep(Step):
                             break
             # Do the background subtraction
             if do_sub:
-                bkg_model, result = background_sub(input_model, bkg_list, self.sigma, self.maxiters)
+                bkg_model, result = background_sub(result, bkg_list, self.sigma, self.maxiters)
                 result.meta.cal_step.back_sub = "COMPLETE"
                 if self.save_combined_background:
                     comb_bkg_path = self.save_model(bkg_model, suffix=self.bkg_suffix, force=True)
                     self.log.info(f"Combined background written to {comb_bkg_path}.")
 
             else:
-                result = input_model.copy()
                 result.meta.cal_step.back_sub = "SKIPPED"
                 self.log.warning("Skipping background subtraction")
                 self.log.warning(
                     "GWA_XTIL and GWA_YTIL source values are not the same as bkg values"
                 )
 
-        # Cleanup
-        del input_model
-
+        input_model.close()
         return result

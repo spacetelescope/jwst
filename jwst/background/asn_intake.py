@@ -46,6 +46,7 @@ def asn_get_data(asn):
                 "Wrong number of science exposures found in {}".format(exp_product["name"])  # noqa: E501
             )
             log.warning("    Using only first one.")
+
         science_member = science_member[0]
         log.info("Working on input %s ...", science_member)
 
