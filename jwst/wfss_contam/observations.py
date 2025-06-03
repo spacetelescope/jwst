@@ -172,7 +172,6 @@ class Observation:
         self.source_ids = _select_ids(source_id, all_ids)
         self.filter = filter_name
         self.sed_file = sed_file  # should always be NONE for baseline pipeline (use flat SED)
-        self.cache = False
         self.renormalize = renormalize
         self.max_cpu = max_cpu
         self.xoffset = offsets[0]
@@ -261,7 +260,6 @@ class Observation:
         wmax,
         sens_waves,
         sens_resp,
-        cache=False,
     ):
         """
         Compute dispersed pixel values for all sources identified in the segmentation map.
@@ -279,28 +277,12 @@ class Observation:
         sens_resp : float array
             Response (flux calibration) array from photom reference file
         """
-        if cache:
-            log.debug("Object caching ON")
-            self.cache = True
-            self.cached_object = {}
-
         # Initialize the simulated dispersed image
         self.simulated_image = np.zeros(self.dims, float)
 
         # Loop over all source ID's from segmentation map
         pool_args = []
         for i in range(len(self.source_ids)):
-            if self.cache:
-                self.cached_object[i] = {}
-                self.cached_object[i]["x"] = []
-                self.cached_object[i]["y"] = []
-                self.cached_object[i]["f"] = []
-                self.cached_object[i]["w"] = []
-                self.cached_object[i]["minx"] = []
-                self.cached_object[i]["maxx"] = []
-                self.cached_object[i]["miny"] = []
-                self.cached_object[i]["maxy"] = []
-
             disperse_chunk_args = [
                 i,
                 order,
@@ -471,16 +453,6 @@ class Observation:
             this_object[miny : maxy + 1, minx : maxx + 1] += a
             bounds.append([minx, maxx, miny, maxy])
 
-            if self.cache:
-                self.cached_object[c]["x"].append(x)
-                self.cached_object[c]["y"].append(y)
-                self.cached_object[c]["f"].append(f)
-                self.cached_object[c]["w"].append(w)
-                self.cached_object[c]["minx"].append(minx)
-                self.cached_object[c]["maxx"].append(maxx)
-                self.cached_object[c]["miny"].append(miny)
-                self.cached_object[c]["maxy"].append(maxy)
-
         time2 = time.time()
         log.debug(f"Elapsed time {time2 - time1} sec")
         # figure out global bounds of object
@@ -535,68 +507,3 @@ class Observation:
         slit.data = chunk_data[thisobj_miny : thisobj_maxy + 1, thisobj_minx : thisobj_maxx + 1]
 
         return slit
-
-
-# class ObservationFromCache:
-#     '''
-#     this isn't how it should work. If we're going to use a cache, we should
-#     be checking if a pixel is in the cache before dispersing it. Then load it if it's there,
-#     otherwise calculate it. The functions below need to be refactored.
-#     '''
-
-#     def __init__(self, cache, dims):
-#         self.cache = cache
-#         self.dims = dims
-#         self.simulated_image = np.zeros(self.dims, float)
-#         self.cached_object = {}
-
-#     def disperse_all_from_cache(self, trans=None):
-#         if not self.cache:
-#             return
-
-#         self.simulated_image = np.zeros(self.dims, float)
-
-#         for i in range(len(self.source_ids)):
-#             this_object = self.disperse_chunk_from_cache(i, trans=trans)
-
-#         return this_object
-
-#     def disperse_chunk_from_cache(self, c, trans=None):
-#         """Method that handles the dispersion. To be called after create_pixel_list()"""
-
-#         if not self.cache:
-#             return
-
-#         time1 = time.time()
-
-#         # Initialize blank image for this object
-#         this_object = np.zeros(self.dims, float)
-
-#         if trans is not None:
-#             log.debug("Applying a transmission function...")
-
-#         for i in range(len(self.cached_object[c]['x'])):
-#             x = self.cached_object[c]['x'][i]
-#             y = self.cached_object[c]['y'][i]
-#             f = self.cached_object[c]['f'][i] * 1.
-#             w = self.cached_object[c]['w'][i]
-
-#             if trans is not None:
-#                 f *= trans(w)
-
-#             minx = self.cached_object[c]['minx'][i]
-#             maxx = self.cached_object[c]['maxx'][i]
-#             miny = self.cached_object[c]['miny'][i]
-#             maxy = self.cached_object[c]['maxy'][i]
-
-#             a = sparse.coo_matrix((f, (y - miny, x - minx)),
-#                                   shape=(maxy - miny + 1, maxx - minx + 1)).toarray()
-
-#             # Accumulate the results into the simulated images
-#             self.simulated_image[miny:maxy + 1, minx:maxx + 1] += a
-#             this_object[miny:maxy + 1, minx:maxx + 1] += a
-
-#         time2 = time.time()
-#         log.debug(f"Elapsed time {time2-time1} sec")
-
-#         return this_object

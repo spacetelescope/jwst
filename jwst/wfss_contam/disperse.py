@@ -80,7 +80,6 @@ def determine_wl_spacing(
     dlam : float
         The wavelength spacing to use for the dispersed pixels
     """
-    #
     if len(lams) > 1:
         input_dlam = np.median(lams[1:] - lams[:-1])
         if input_dlam < dw:
