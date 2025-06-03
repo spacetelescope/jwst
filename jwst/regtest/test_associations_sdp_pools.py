@@ -39,7 +39,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
 
     input_csv = rtdata.get_data(f"associations/sdp/pools/{pool}.csv")
     rtdata.output = os.curdir   # This test is jailed and parametrized
-    rtdata.okify_op = "folder_copy"  # failures as folder replacements
+    rtdata.okify_op = "sdp_pool_copy"  # failures as folder content replacements
     # Create the associations
     with resource_tracker.track(log=request):
         asn_generate.cli(args + ["-p", rtdata.output,

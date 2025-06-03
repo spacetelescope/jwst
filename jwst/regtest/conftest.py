@@ -214,6 +214,10 @@ def generate_artifactory_json(request, artifactory_repos):
                 output = rtdata.output + "/"
                 target = rtdata.remote_results_path + os.path.basename(rtdata.output) + "/"
                 upload_schema = generate_upload_schema(output, target, schema=upload_schema)
+            elif rtdata.okify_op == "sdp_pool_copy":
+                output = f"'{rtdata.output}/*'"
+                target = rtdata.remote_results_path + os.path.basename(rtdata.output) + "/"
+                upload_schema = generate_upload_schema(output, target, schema=upload_schema)
             else:
                 raise RuntimeError(f"Unknown artifactory operation: {rtdata.okify_op}")
 
