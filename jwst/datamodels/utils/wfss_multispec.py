@@ -49,7 +49,8 @@ def make_wfss_multiexposure(input_list):
                 "or a list of these models."
             )
 
-    # first loop over both source and exposure to figure out final n_rows, n_exposures, n_sources
+    # first loop over source and exposure to figure out
+    # final n_rows, n_exposures, n_sources
     exposure_counter = {}
     all_source_ids = []
     # for calwebb_spec3 the outer loop is over sources and the inner loop is over exposures
@@ -70,6 +71,7 @@ def make_wfss_multiexposure(input_list):
                     "wcs": wcs,
                     "exposure_time": model.meta.exposure.exposure_time,  # need for combine_1d
                     "integration_time": model.meta.exposure.integration_time,  # need for combine_1d
+                    "spectral_order": spec.spectral_order,
                 }
             else:
                 # if this exposure has already been encountered,
@@ -152,6 +154,7 @@ def make_wfss_multiexposure(input_list):
         ext.meta.wcs = exposure_counter[exposure_number]["wcs"]
         ext.group_id = exposure_number
         ext.dispersion_direction = example_spec.dispersion_direction
+        ext.spectral_order = exposure_counter[exposure_number]["spectral_order"]
         ext.meta.exposure.exposure_time = exposure_counter[exposure_number]["exposure_time"]
         ext.meta.exposure.integration_time = exposure_counter[exposure_number]["integration_time"]
 
@@ -224,42 +227,70 @@ def make_wfss_multicombined(results_list):
     output_c1d : WFSSMultiCombinedSpecModel
         The combined c1d product for WFSS modes.
     """
-    # determine shape of output table. Each input model should have just one spec table
+    # determine shape of output table.
+    # Each input model should have one spec table per spectral order
     n_sources = len(results_list)
-    n_rows = max(len(model.spec[0].spec_table) for model in results_list)
 
     # figure out column names and dtypes
     input_datatype = dm.CombinedSpecModel().schema["properties"]["spec_table"]["datatype"]
-    output_datatype = dm.WFSSMultiCombinedSpecModel().schema["properties"]["spec_table"]["datatype"]
+    output_schema = dm.WFSSMultiCombinedSpecModel().schema
+    output_table_schema = output_schema["properties"]["spec"]["items"]["properties"]["spec_table"]
+    output_datatype = output_table_schema["datatype"]
     all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
-    defaults = dm.WFSSMultiCombinedSpecModel().schema["properties"]["spec_table"]["default"]
+    defaults = output_table_schema["default"]
 
-    # create empty table
-    fltdata = make_empty_recarray(n_rows, n_sources, all_columns, is_vector, defaults=defaults)
+    # first loop over models and spec to figure out orders present, and number of rows per order
+    order_rows = {}
+    for model in results_list:
+        for spec in model.spec:
+            order = spec.spectral_order
+            if order not in order_rows:
+                order_rows[order] = spec.spec_table.shape[0]
+            else:
+                order_rows[order] = max(order_rows[order], spec.spec_table.shape[0])
 
-    # loop over sources to populate the table with data from the input spectrum
+    order_data = {}
     for j, model in enumerate(results_list):
-        populate_recarray(
-            fltdata[j],
-            model.spec[0],
-            n_rows,
-            all_columns,
-            is_vector,
-            ignore_columns=["N_ALONGDISP"],
-        )
-        # special handling for N_ALONGDISP because not defined in specmeta schema
-        fltdata[j]["N_ALONGDISP"] = model.spec[0].spec_table.shape[0]
+        for spec in model.spec:
+            # ensure data goes to the correct order
+            order = spec.spectral_order
+            n_rows = order_rows[order]
+            if order not in order_data:
+                order_data[order] = make_empty_recarray(
+                    n_rows, n_sources, all_columns, is_vector, defaults=defaults
+                )
+            fltdata = order_data[order]
+
+            # populate the table with data from the input spectrum
+            populate_recarray(
+                fltdata[j],
+                spec,
+                n_rows,
+                all_columns,
+                is_vector,
+                ignore_columns=["N_ALONGDISP"],
+            )
+            # special handling for N_ALONGDISP because not defined in specmeta schema
+            fltdata[j]["N_ALONGDISP"] = spec.spec_table.shape[0]
 
     # Create a new model to hold the combined data table
     output_c1d = dm.WFSSMultiCombinedSpecModel()
-    fltdata.sort(order=["SOURCE_ID"])
-    output_c1d.spec_table = fltdata
 
-    # Set default units from the model schema
-    set_schema_units(output_c1d)
-    # copy units from any of the SpecModels (they should all be the same)
-    copy_column_units(model.spec[0], output_c1d)
-    copy_spec_metadata(model.spec[0], output_c1d)
+    example_spec = results_list[0].spec[0]
+    for order in order_data.keys():
+        spec = dm.WFSSCombinedSpecModel()
+        fltdata = order_data[order]
+        fltdata.sort(order=["SOURCE_ID"])
+        spec.spec_table = fltdata
+
+        # Set default units from the model schema
+        set_schema_units(spec)
+        # copy units from any of the SpecModels (they should all be the same)
+        copy_column_units(example_spec, spec)
+        copy_spec_metadata(example_spec, spec)
+        spec.spectral_order = order
+
+        output_c1d.spec.append(spec)
 
     output_c1d.update(results_list[0], only="PRIMARY")
     return output_c1d

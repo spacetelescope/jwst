@@ -131,6 +131,25 @@ def test_make_wfss_multiexposure(input_model_maker, request):
             assert exposure.spec_table.columns[col].unit == expected_units[to_check.index(col)]
 
 
+def test_orders_are_separated(wfss_spec3_multispec):
+    """Ensure that if there are multiple spectral orders, they end up in separate extensions."""
+
+    multi_list = [wfss_spec3_multispec.copy() for _ in range(2)]
+    # two input MultiSpecModel objects with the same source_id but different spectral orders
+    for i, multi in enumerate(multi_list):
+        for spec in multi.spec:
+            spec.spectral_order = i + 1
+            spec.meta.group_id = spec.meta.group_id + str(i)  # make group_id unique for each order
+
+    output_model = make_wfss_multiexposure(multi_list)
+    assert isinstance(output_model, dm.WFSSMultiExposureSpecModel)
+    assert len(output_model.exposures) == 8  # 4 different exposures, 2 spectral orders each
+
+    # ensure spectral order is in the metadata
+    for i, exposure in enumerate(output_model.exposures):
+        assert exposure.spectral_order == (i // 4) + 1  # first 4 are order 1, next 4 are order 2
+
+
 @pytest.fixture
 def wfss_multiexposure(wfss_spec3_multispec):
     """Make a MultiExposureSpecModel object with N_EXPOSURES exposures and N_SOURCES sources."""
@@ -213,12 +232,11 @@ def test_wfss_multi_from_wfss_multi(wfss_multiexposure):
 @pytest.fixture
 def multi_combined():
     """
-    Make a MultiCombinedSpecModel object with N_SOURCES sources and N_ROWS rows.
+    Make a MultiCombinedSpecModel object with N_SOURCES sources, N_ROWS rows, and 2 orders.
     
     This looks like the output of combine_1d.
     """
     multi = dm.MultiCombinedSpecModel()
-    # Only one spec per model in this case
     spec = dm.CombinedSpecModel()
     _add_multispec_meta(spec)
     spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
@@ -229,7 +247,12 @@ def multi_combined():
     spec.spec_table = spec_table
     spec.spec_table.columns["wavelength"].unit = "um"
     spec.dispersion_direction = 3
+
+    spec.spectral_order = 1
+    spec2 = spec.copy()
+    spec2.spectral_order = 2
     multi.spec.append(spec)
+    multi.spec.append(spec2)
     return multi
 
 
@@ -254,14 +277,18 @@ def test_make_wfss_combined(comb1d_list):
     """Test restructuring of a list of combine_1d output models into a WFSSMultiCombinedSpecModel."""
     output_model = make_wfss_multicombined(comb1d_list)
     assert isinstance(output_model, dm.WFSSMultiCombinedSpecModel)
-    assert output_model.spec_table.shape == (N_SOURCES,)
+    assert len(output_model.spec) == 2  # 2 spectral orders
 
-    # test units
-    to_check = ["WAVELENGTH", "SOURCE_RA"]
-    expected_units = ["um", "degrees"]
-    for col in to_check:
-        assert col in output_model.spec_table.columns.names
-        assert output_model.spec_table.columns[col].unit == expected_units[to_check.index(col)]
-    
-    # check metadata
-    assert output_model.dispersion_direction == 3
+    for i, spec in enumerate(output_model.spec):
+        assert spec.spec_table.shape == (N_SOURCES,)
+
+        # test units
+        to_check = ["WAVELENGTH", "SOURCE_RA"]
+        expected_units = ["um", "degrees"]
+        for col in to_check:
+            assert col in spec.spec_table.columns.names
+            assert spec.spec_table.columns[col].unit == expected_units[to_check.index(col)]
+        
+        # check metadata
+        assert spec.dispersion_direction == 3
+        assert spec.spectral_order == i + 1 

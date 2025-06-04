@@ -1872,16 +1872,19 @@ def create_extraction(
         copy_keyword_info(data_model, slitname, spec)
 
         if exp_type in WFSS_EXPTYPES:
+            spectral_order = data_model.meta.wcsinfo.spectral_order
             if hasattr(data_model.meta, "filename"):
                 # calwebb_spec3 case: no separate slit input to function
                 spec.meta.filename = data_model.meta.filename
-                spec.meta.group_id = _make_group_id(data_model)
+                spec.meta.group_id = _make_group_id(data_model, spectral_order)
             else:
                 # calwebb_spec2 case: data_model is a slit so need to get this meta from input_model
                 # In this case, group_id is expected to be the same for all slits
                 # because spec list corresponds to different sources in the same exposure
+                # The exception is spectral_order so we get that from data_model and it
+                # is handled separately
                 spec.meta.filename = getattr(input_model.meta, "filename", None)
-                spec.meta.group_id = _make_group_id(input_model)
+                spec.meta.group_id = _make_group_id(input_model, spectral_order)
             spec.extract2d_xstart = data_model.xstart
             spec.extract2d_ystart = data_model.ystart
             if data_model.xstart is None or data_model.ystart is None:
@@ -1947,7 +1950,7 @@ def create_extraction(
     return profile_model, scene_model, residual
 
 
-def _make_group_id(model):
+def _make_group_id(model, spectral_order):
     program_number = model.meta.observation.program_number
     observation_number = model.meta.observation.observation_number
     visit_number = model.meta.observation.visit_number
@@ -1958,7 +1961,7 @@ def _make_group_id(model):
     return (
         f"jw{program_number}{observation_number}{visit_number}"
         f"_{visit_group}{sequence_id}{activity_id}"
-        f"_{exposure_number}"
+        f"_{exposure_number}_{spectral_order}"
     )
 
 

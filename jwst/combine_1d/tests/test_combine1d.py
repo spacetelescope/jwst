@@ -209,13 +209,14 @@ def test_wfss_multi_input(wfss_multiexposure):
     """Smoke test to ensure combine_1d works with WFSSMultiExposureSpecModel"""
     result = Combine1dStep.call(wfss_multiexposure)
     assert isinstance(result, datamodels.WFSSMultiCombinedSpecModel)
-    assert result.spec_table.shape == (N_SOURCES,)
+    tab = result.spec[0].spec_table
+    assert tab.shape == (N_SOURCES,)
     assert result.meta.cal_step.combine_1d == "COMPLETE"
-    assert np.allclose(result.spec_table["FLUX"], 1.0)
+    assert np.allclose(tab["FLUX"], 1.0)
     
     # check that metadata was passed through correctly
-    assert np.allclose(result.spec_table["SOURCE_RA"], 0.0)
-    assert np.allclose(result.spec_table["SOURCE_DEC"], 0.0)
-    assert np.all(result.spec_table["SOURCE_TYPE"] == "POINT")
+    assert np.allclose(tab["SOURCE_RA"], 0.0)
+    assert np.allclose(tab["SOURCE_DEC"], 0.0)
+    assert np.all(tab["SOURCE_TYPE"] == "POINT")
 
-    assert result.dispersion_direction == 3
+    assert result.spec[0].dispersion_direction == 3
