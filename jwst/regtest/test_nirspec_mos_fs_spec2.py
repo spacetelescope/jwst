@@ -31,8 +31,6 @@ def run_pipeline(rtdata_module, resource_tracker):
             "--steps.flat_field.save_interpolated_flat=true",
             "--steps.pathloss.save_results=true",
             "--steps.barshadow.save_results=true"]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
     with resource_tracker.track():
         Step.from_cmdline(args)
 
