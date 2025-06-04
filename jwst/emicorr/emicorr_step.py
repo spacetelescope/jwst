@@ -14,7 +14,7 @@ class EmiCorrStep(Step):
     class_alias = "emicorr"
 
     spec = """
-        algorithm = option('sequential', 'joint', default='sequential')  # EMI fitting algorithm
+        algorithm = option('sequential', 'joint', default='joint')  # EMI fitting algorithm
         nints_to_phase = integer(default=None)  # Number of integrations to phase
         nbins = integer(default=None)  # Number of bins in one phased wave
         scale_reference = boolean(default=True)  # If True, the reference wavelength will be scaled to the data's phase amplitude
