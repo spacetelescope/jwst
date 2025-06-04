@@ -175,12 +175,8 @@ def test_wfss_flat_to_multispec(wfss_multiexposure):
             # test that the rest of the metadata exist and are default values
             assert spec.source_type == "POINT"
             for name in ["source_ra", "source_dec", "extract2d_xstart", "extract2d_ystart",
-                         "extract2d_xstop", "extract2d_ystop", "extraction_xstart",
-                         "extraction_ystart", "extraction_xstop", "extraction_ystop"]:
+                         "extract2d_xstop", "extract2d_ystop"]:
                 assert getattr(spec, name) == 0.0
-            # ensure renamed attributes got changed back and are no longer present
-            for name in ["extract1d_xstart", "extract1d_ystart", "extract1d_xstop", "extract1d_ystop"]:
-                assert not hasattr(spec, name)
 
 
 def test_wfss_multi_from_wfss_multi(wfss_multiexposure):

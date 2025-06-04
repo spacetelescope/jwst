@@ -11,10 +11,6 @@ from stdatamodels.jwst import datamodels
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-_NAME_ROOTS = ["XSTART", "YSTART", "XSTOP", "YSTOP"]
-NEW_NAMES = ["EXTRACT1D_" + name for name in _NAME_ROOTS]
-OLD_NAMES = ["EXTRACTION_" + name for name in _NAME_ROOTS]
-
 
 def determine_vector_and_meta_columns(input_datatype, output_datatype):
     """
@@ -241,6 +237,26 @@ def copy_spec_metadata(input_model, output_model):
             setattr(output_model, key, getattr(input_model, key))
 
 
+def _determine_nelements_key(spec_table):
+    """
+    Determine the key for the number of elements in a spectrum.
+
+    Parameters
+    ----------
+    spec_table : `~numpy.recarray`
+        The spectral table containing the spectra.
+
+    Returns
+    -------
+    str
+        The key for the number of elements in a spectrum.
+    """
+    for key in ["NELEMENTS", "N_ALONGDISP"]:
+        if key in spec_table.dtype.names:
+            return key
+    raise ValueError("No NELEMENTS or N_ALONGDISP key found in spec_table.")
+
+
 def expand_table(spec):
     """
     Expand a table of spectra into a list of SpecModel objects.
@@ -258,10 +274,11 @@ def expand_table(spec):
     all_columns = np.array([str(x) for x in spec.spec_table.dtype.names])
     new_spec_list = []
     n_spectra = len(spec.spec_table)
+    nelem_key = _determine_nelements_key(spec.spec_table)
     for i in range(n_spectra):
         # initialize a new SpecModel
         spec_row = spec.spec_table[i]
-        n_elements = int(spec_row["NELEMENTS"])
+        n_elements = int(spec_row[nelem_key])
         new_spec = datamodels.SpecModel()
         data_type = new_spec.schema["properties"]["spec_table"]["datatype"]
         columns_to_copy = np.array([col["name"] for col in data_type])
@@ -274,16 +291,10 @@ def expand_table(spec):
 
         # Copy over the metadata columns from input spec_table to the spectrum's metadata
         meta_columns = all_columns[~np.isin(all_columns, columns_to_copy)].tolist()
-        meta_columns.remove("NELEMENTS")
-        # For WFSSMultiSpecModel, some of the metadata columns are renamed.
-        # Need to return them to their original names here.
+        meta_columns.remove(nelem_key)
         for meta_key in meta_columns:
             try:
-                if meta_key in NEW_NAMES:
-                    spec_attr = OLD_NAMES[NEW_NAMES.index(meta_key)].lower()
-                else:
-                    spec_attr = meta_key.lower()
-                setattr(new_spec, spec_attr, spec_row[meta_key])
+                setattr(new_spec, meta_key.lower(), spec_row[meta_key])
             except KeyError:
                 pass
 

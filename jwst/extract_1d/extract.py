@@ -1888,8 +1888,8 @@ def create_extraction(
                 spec.extract2d_xstop = None
                 spec.extract2d_ystop = None
             else:
-                spec.extract2d_xstop = data_model.xstart + data_model.xsize - 1
-                spec.extract2d_ystop = data_model.ystart + data_model.ysize - 1
+                spec.extract2d_xstop = data_model.xstart + data_model.xsize
+                spec.extract2d_ystop = data_model.ystart + data_model.ysize
 
         if apcorr is not None:
             if hasattr(apcorr, "tabulated_correction"):

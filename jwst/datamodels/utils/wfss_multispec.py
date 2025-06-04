@@ -10,8 +10,6 @@ from jwst.datamodels.utils.flat_multispec import (
     make_empty_recarray,
     populate_recarray,
     expand_table,
-    NEW_NAMES,
-    OLD_NAMES,
 )
 
 
@@ -130,16 +128,11 @@ def make_wfss_multiexposure(input_list):
                 n_rows,
                 all_columns,
                 is_vector,
-                ignore_columns=["SOURCE_ID", "NELEMENTS"] + NEW_NAMES,
+                ignore_columns=["SOURCE_ID", "N_ALONGDISP"],
             )
 
-            # special handling for NELEMENTS because not defined in specmeta schema
-            fltdata[spec_idx]["NELEMENTS"] = spec.spec_table.shape[0]
-
-            # special handling for the names that we want renamed
-            # at the request of the WFSS teams
-            for old_name, new_name in zip(OLD_NAMES, NEW_NAMES, strict=True):
-                fltdata[spec_idx][new_name] = getattr(spec, old_name.lower(), None)
+            # special handling for N_ALONGDISP because not defined in specmeta schema
+            fltdata[spec_idx]["N_ALONGDISP"] = spec.spec_table.shape[0]
 
     # Finally, create a new WFSSMultiExposureSpecModel to hold the combined data
     # with one WFSSMultiSpecModel table per exposure
@@ -252,10 +245,10 @@ def make_wfss_multicombined(results_list):
             n_rows,
             all_columns,
             is_vector,
-            ignore_columns=["NELEMENTS"],
+            ignore_columns=["N_ALONGDISP"],
         )
-        # special handling for NELEMENTS because not defined in specmeta schema
-        fltdata[j]["NELEMENTS"] = model.spec[0].spec_table.shape[0]
+        # special handling for N_ALONGDISP because not defined in specmeta schema
+        fltdata[j]["N_ALONGDISP"] = model.spec[0].spec_table.shape[0]
 
     # Create a new model to hold the combined data table
     output_c1d = dm.WFSSMultiCombinedSpecModel()

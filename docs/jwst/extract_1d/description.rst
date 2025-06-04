@@ -118,13 +118,14 @@ each row in the table contains the full spectrum for a single source and order. 
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
 These metadata fields include:
-SOURCE_ID, NELEMENTS, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC, EXTRACT2D_XSTART,
-EXTRACT2D_YSTART, EXTRACT1D_XSTART, EXTRACT1D_YSTART, EXTRACT1D_XSTOP, EXTRACT1D_YSTOP, SPECTRAL_ORDER.
+SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC, 
+EXTRACT2D_XSTART, EXTRACT2D_YSTART, SPECTRAL_ORDER.
 
 Note that the vector columns have the same length for all the sources in the table, meaning that
 the number of elements in the table rows is set by the spectrum with the most data points.
 The other spectra are NaN-padded to match the longest spectrum,
-and the number of valid data points for each spectrum is recorded in the NELEMENTS column.
+and the number of valid data points for each spectrum is recorded
+in the N_ALONGDISP column.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200) and
 integration (the first) in a WFSSMultiSpecModel:
@@ -136,7 +137,7 @@ integration (the first) in a WFSSMultiSpecModel:
   >>> first_table = model.exposures[0].spec_table
   >>> id_want = 1200
   >>> row_want = first_table[first_table["SOURCE_ID"] == id_want][0]
-  >>> nelem = row_want["NELEMENTS"]
+  >>> nelem = row_want["N_ALONGDISP"]
   >>> wave, flux = row_want["WAVELENGTH"][:nelem], row_want["FLUX"][:nelem]
 
 
