@@ -646,7 +646,7 @@ def dms_product_name_wfss(asn):
     if subarray:
         subarray = "-" + subarray
 
-    product_name_format = "jw{program}-{acid}_{instrument}_{opt_elem}{slit_name}{subarray}"
+    product_name_format = "jw{program}-{acid}_t0000_{instrument}_{opt_elem}{slit_name}{subarray}"
     product_name = format_product(
         product_name_format,
         program=asn.data["program"],
