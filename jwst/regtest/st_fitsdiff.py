@@ -580,7 +580,11 @@ class STHDUDiff(HDUDiff):
         elif self.a.is_image and self.b.is_image:
             self.diff_data = STImageDataDiff.fromdiff(self, self.a.data, self.b.data)
             if self.diff_data.diff_total > 0:
-                self.nans, self.percentages, self.stats = get_quick_report(self.a.data, self.b.data)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    self.nans, self.percentages, self.stats = get_quick_report(
+                        self.a.data, self.b.data
+                    )
             # Clean up references to (possibly) memmapped arrays, so they can
             # be closed by .close()
             self.diff_data.a = None
@@ -597,7 +601,11 @@ class STHDUDiff(HDUDiff):
             # recognized image or table types
             self.diff_data = STRawDataDiff.fromdiff(self, self.a.data, self.b.data)
             if self.diff_data.diff_total > 0:
-                self.nans, self.percentages, self.stats = get_quick_report(self.a.data, self.b.data)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    self.nans, self.percentages, self.stats = get_quick_report(
+                        self.a.data, self.b.data
+                    )
             # Clean up references to (possibly) memmapped arrays, so they can
             # be closed by .close()
             self.diff_data.a = None
@@ -773,14 +781,13 @@ class STImageDataDiff(ImageDataDiff):
                 if shapea == 4:
                     for nint in range(shapea[0]):
                         for ngrp in range(shapea[1]):
-                            with warnings.catch_warnings(record=True):
-                                warnings.simplefilter("always", RuntimeWarning)
+                            with warnings.catch_warnings():
+                                warnings.simplefilter("ignore", RuntimeWarning)
                                 # Code that might generate a RuntimeWarning
                                 # this data set is weird, do nothing and report
                                 diff_total = np.abs(a[nint, ngrp, ...] - b[nint, ngrp, ...]) > (
                                     atol + rtol * np.abs(b[nint, ngrp, ...])
                                 )
-                                pass
                             if a[diff_total].size != 0:
                                 data_within_tol = False
                                 break
@@ -788,8 +795,8 @@ class STImageDataDiff(ImageDataDiff):
                             break
                 elif shapea == 3:
                     for ngrp in range(shapea[0]):
-                        with warnings.catch_warnings(record=True):
-                            warnings.simplefilter("always", RuntimeWarning)
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", RuntimeWarning)
                             # Code that might generate a RuntimeWarning
                             # this data set is weird, do nothing and report
                             diff_total = np.abs(a[ngrp, ...] - b[ngrp, ...]) > (
@@ -800,8 +807,8 @@ class STImageDataDiff(ImageDataDiff):
                             data_within_tol = False
                             break
                 else:
-                    with warnings.catch_warnings(record=True):
-                        warnings.simplefilter("always", RuntimeWarning)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
                         # Code that might generate a RuntimeWarning
                         # this data set is weird, do nothing and report
                         diff_total = np.abs(a - b) > (atol + rtol * np.abs(b))
@@ -1234,7 +1241,9 @@ class STTableDataDiff(TableDataDiff):
                     nan_idx = np.isnan(arra) | np.isnan(arrb)
                     anonan = arra[~nan_idx]
                     bnonan = arrb[~nan_idx]
-                    diffs = np.abs(anonan - bnonan)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        diffs = np.abs(anonan - bnonan)
                     abs_diffs = diffs[diffs > self.atol].size
                     nozeros = (diffs != 0.0) & (bnonan != 0.0)
                     rel_values = diffs[nozeros] / np.abs(bnonan[nozeros])
