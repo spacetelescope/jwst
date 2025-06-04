@@ -72,7 +72,7 @@ def subtract_wfss_bkg(
     # i.e. in regions we can use as background.
     if got_catalog:
         bkg_mask = _mask_from_source_cat(input_model, wl_range_name, mmag_extract)
-        if not _sufficient_background_pixels(input_model.dq, bkg_mask, bkg_ref.data.copy):
+        if not _sufficient_background_pixels(input_model.dq, bkg_mask, bkg_ref.data):
             log.warning("Not enough background pixels to work with.")
             log.warning("Step will be SKIPPED.")
             return None
@@ -274,7 +274,7 @@ class _ScalingFactorComputer:
         return np.sqrt(np.nanmean(sci_sub_profile**2, dtype="f8"))
 
 
-def _sufficient_background_pixels(dq_array, bkg_mask, bkg, min_pixels=100):
+def _sufficient_background_pixels(dq_array, bkg_mask, bkg, min_pixfrac=0.05):
     """
     Count number of good pixels for background use.
 
@@ -294,8 +294,9 @@ def _sufficient_background_pixels(dq_array, bkg_mask, bkg, min_pixels=100):
     bkg : ndarray
         Background data array
 
-    min_pixels : int, optional
-        Minimum number of pixels to use
+    min_pixfrac : float, optional
+        Minimum fraction of good pixels required for background use.
+        Default is 0.05 (5%).
 
     Returns
     -------
@@ -304,10 +305,9 @@ def _sufficient_background_pixels(dq_array, bkg_mask, bkg, min_pixels=100):
     """
     good_bkg = bkg != 0
     good_mask = np.logical_and(bkg_mask, good_bkg)
-    return (
-        np.count_nonzero((dq_array[good_mask] ^ pixel["DO_NOT_USE"]) & pixel["DO_NOT_USE"])
-        > min_pixels
-    )
+    n_good = np.count_nonzero((dq_array[good_mask] ^ pixel["DO_NOT_USE"]) & pixel["DO_NOT_USE"])
+    min_pixels = int(min_pixfrac * dq_array.size)
+    return n_good > min_pixels
 
 
 def _mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
