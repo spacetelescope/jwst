@@ -64,8 +64,8 @@ For WFSS modes, which may have hundreds or thousands of spectra from different s
 the output will be in WFSSMultiCombinedSpecModel format.
 This model differs from the other MultiCombinedSpecModel classes in that
 it is designed to hold all the spectra in a WFSS observation in a single
-"flat" table format. Therefore, it does not have the `spec` attribute
-that is present in the other MultiCombinedSpecModel classes. Instead, it has
+"flat" table format. Therefore, there is only one spectrum per spectral order
+in the `spec` list, and each object in the `spec` list has
 a `spec_table` attribute that contains the spectral data and metadata
 for all sources in the observation.
 
@@ -74,22 +74,23 @@ each row in the table contains the combined spectrum for a single source. The sp
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
 These metadata fields include:
-SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_RA, SOURCE_DEC, SPECTRAL_ORDER.
+SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_RA, SOURCE_DEC.
 
 Note that the vector columns have the same length for all the sources in the table, meaning that
 the number of elements in the table rows is set by the spectrum with the most data points.
 The other spectra are NaN-padded to match the longest spectrum,
 and the number of valid data points for each spectrum is recorded in the N_ALONGDISP column.
 
-For example, to access the wavelength and flux for a specific source ID (say, 1200) and
+For example, to access the wavelength and flux for a specific source ID (say, 1200)
 in a WFSSMultiCombinedSpecModel:
 
 .. doctest-skip::
 
   >>> from stdatamodels.jwst import datamodels
   >>> model = datamodels.open('multi_wfss_c1d.fits')
-  >>> tab = model.spec_table
-  >>> id_want = 1200
-  >>> row_want = tab[tab["SOURCE_ID"] == id_want][0]
+  >>> spec_this_order = model.spec[0]
+  >>> print(spec.spectral_order) # returns e.g. '1'
+  >>> tab = spec.spec_table
+  >>> row_want = tab[tab["SOURCE_ID"] == 1200][0]
   >>> nelem = row_want["N_ALONGDISP"]
   >>> wave, flux = row_want["WAVELENGTH"][:nelem], row_want["FLUX"][:nelem]

@@ -568,9 +568,10 @@ vector containing all data points for the spectrum in that integration.
 The table also reports several pieces of source-specific metadata; these fields are:
 SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC, 
 EXTRACT2D_XSTART, EXTRACT2D_YSTART, SPECTRAL_ORDER.
-Each extension in the hdulist represents a different exposure,
-with the extension metadata indicating the exposure number and input filename for 
-the corresponding exposure.  See the extract_1d step documentation for more details.
+Each extension in the hdulist represents a different exposure and/or spectral order,
+with the extension metadata indicating the exposure number, spectral order, and
+input filename for the corresponding exposure.
+See the extract_1d step documentation for more details.
 
 For ``x1dints`` products, each row in the table holds the full spectrum for a single
 integration.  The spectral data columns listed above are each 2-D: each row is a 1-D

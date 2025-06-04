@@ -111,15 +111,15 @@ For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-f
 For NIRCam and NIRISS WFSS data, hundreds to thousands of spectra from different sources
 may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
 The data in this model is stored in the ``exposures`` attribute, such that one spectral table
-is created for each exposure in the input data, and each extension of the output FITS file represents
-one exposure.
+is created for each exposure for each spectral order in the input data.
+Each extension of the output FITS file thus represents one exposure/spectral order combination.
 The spectral tables for this model contain the same columns as the ``MultiSpecModel``, but
 each row in the table contains the full spectrum for a single source and order. The spectral columns
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
 These metadata fields include:
 SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC, 
-EXTRACT2D_XSTART, EXTRACT2D_YSTART, SPECTRAL_ORDER.
+EXTRACT2D_XSTART, EXTRACT2D_YSTART.
 
 Note that the vector columns have the same length for all the sources in the table, meaning that
 the number of elements in the table rows is set by the spectrum with the most data points.
