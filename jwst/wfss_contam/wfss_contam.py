@@ -280,8 +280,7 @@ def contam_corr(
     # Get the segmentation map, direct image for this grism exposure
     seg_model = datamodels.open(input_model.meta.segmentation_map)
     direct_file = input_model.meta.direct_image
-    image_names = [direct_file]
-    log.debug(f"Direct image names={image_names}")
+    log.debug(f"Direct image ={direct_file}")
 
     # Get the grism WCS object and offsets from the first cutout in the input model.
     # This WCS is used to transform from direct image to grism frame for all sources
@@ -323,7 +322,7 @@ def contam_corr(
         selected_ids = None
 
     obs = Observation(
-        image_names,
+        direct_file,
         seg_model,
         grism_wcs,
         filter_name,
@@ -350,7 +349,7 @@ def contam_corr(
 
         # Create simulated grism image for each order and sum them up
         log.info(f"Creating full simulated grism image for order {order}")
-        obs.disperse_all(order, wmin, wmax, sens_waves, sens_response)
+        obs.disperse_one_order(order, wmin, wmax, sens_waves, sens_response)
         if simul_all is None:
             simul_all = obs.simulated_image
         else:

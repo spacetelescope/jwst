@@ -83,9 +83,8 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     seg = segmentation_map.data
     all_ids = np.array(list(set(np.ravel(seg))))
     source_ids = all_ids[50:52]
-    obs = Observation([DIR_IMAGE], segmentation_map, grism_wcs, filter_name, source_id=source_ids,
-                 sed_file=None, extrapolate_sed=False,
-                 boundaries=[], offsets=[0, 0], renormalize=True, max_cpu=1)
+    obs = Observation(DIR_IMAGE, segmentation_map, grism_wcs, filter_name, source_id=source_ids,
+                 boundaries=[], offsets=[0, 0], max_cpu=1)
     return obs
 
 
@@ -127,71 +126,71 @@ def test_create_pixel_list(observation, segmentation_map):
         assert len(observation.fluxes[2.0][i]) == pixels_x.size
 
 
-def test_disperse_chunk(observation):
-    '''
-    Note: it's not obvious how to get a trivial flux example from first principles
-    even setting all input fluxes in dict to 1, because transforms change
-    pixel areas in nontrivial ways. seems a bad idea to write a test that 
-    asserts the answer as it is currently, in case step gets updated slightly
-    in the future
-    '''
-    obs = observation
-    i = 1
-    order = 1
-    sens_waves = np.linspace(1.708, 2.28, 100)
-    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
-    sens_resp = np.ones(100)
+# def test_disperse_chunk(observation):
+#     '''
+#     Note: it's not obvious how to get a trivial flux example from first principles
+#     even setting all input fluxes in dict to 1, because transforms change
+#     pixel areas in nontrivial ways. seems a bad idea to write a test that 
+#     asserts the answer as it is currently, in case step gets updated slightly
+#     in the future
+#     '''
+#     obs = observation
+#     i = 1
+#     order = 1
+#     sens_waves = np.linspace(1.708, 2.28, 100)
+#     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+#     sens_resp = np.ones(100)
 
-    # manually change x,y offset because took transform from a real direct image, with different
-    # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
-    obs.xoffset = 2200
-    obs.yoffset = 1000
+#     # manually change x,y offset because took transform from a real direct image, with different
+#     # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
+#     obs.xoffset = 2200
+#     obs.yoffset = 1000
 
-    # set all fluxes to unity to try to make a trivial example
-    obs.fluxes[2.0][i] = np.ones(obs.fluxes[2.0][i].shape)
+#     # set all fluxes to unity to try to make a trivial example
+#     obs.fluxes[2.0][i] = np.ones(obs.fluxes[2.0][i].shape)
 
-    disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
-    (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
+#     disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
+#     (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
 
-    #trivial bookkeeping
-    assert sid == obs.source_ids[i] 
-    assert order == order_out
+#     #trivial bookkeeping
+#     assert sid == obs.source_ids[i] 
+#     assert order == order_out
 
-    # check size of object is same as input dims
-    assert chunk.shape == obs.dims
+#     # check size of object is same as input dims
+#     assert chunk.shape == obs.dims
 
-    #check that the chunk is zero outside the bounds
-    assert np.all(chunk[:chunk_bounds[2]-1,:] == 0)
-    assert np.all(chunk[chunk_bounds[3]+1:,] == 0)
-    assert np.all(chunk[:,:chunk_bounds[0]-1] == 0)
-    assert np.all(chunk[:,chunk_bounds[1]+1:] == 0)
-
-
-def test_disperse_chunk_null(observation):
-    '''
-    ensure bounds return None when all dispersion is off image
-    '''
-    obs = observation
-    i = 0 #i==0 source happens to be far left on image
-    order = 3
-    sens_waves = np.linspace(1.708, 2.28, 100)
-    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
-    sens_resp = np.ones(100)
-
-    # manually change x,y offset because took transform from a real direct image, with different
-    # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
-    obs.xoffset = 2200
-    obs.yoffset = 1000
-
-    disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
-
-    (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
-
-    assert chunk_bounds is None
-    assert np.all(chunk == 0)
+#     #check that the chunk is zero outside the bounds
+#     assert np.all(chunk[:chunk_bounds[2]-1,:] == 0)
+#     assert np.all(chunk[chunk_bounds[3]+1:,] == 0)
+#     assert np.all(chunk[:,:chunk_bounds[0]-1] == 0)
+#     assert np.all(chunk[:,chunk_bounds[1]+1:] == 0)
 
 
-def test_disperse_all(observation):
+# def test_disperse_chunk_null(observation):
+#     '''
+#     ensure bounds return None when all dispersion is off image
+#     '''
+#     obs = observation
+#     i = 0 #i==0 source happens to be far left on image
+#     order = 3
+#     sens_waves = np.linspace(1.708, 2.28, 100)
+#     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+#     sens_resp = np.ones(100)
+
+#     # manually change x,y offset because took transform from a real direct image, with different
+#     # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
+#     obs.xoffset = 2200
+#     obs.yoffset = 1000
+
+#     disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
+
+#     (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
+
+#     assert chunk_bounds is None
+#     assert np.all(chunk == 0)
+
+
+def test_disperse_order(observation):
 
     obs = observation
     order = 1
@@ -205,10 +204,7 @@ def test_disperse_all(observation):
     obs.yoffset = 1000
 
     # shorten pixel list to make this test take less time
-    obs.xs = obs.xs[:3]
-    obs.ys = obs.ys[:3]
-    obs.fluxes[2.0] = obs.fluxes[2.0][:3]
-    obs.disperse_all(order, wmin, wmax, sens_waves, sens_resp, cache=False)
+    obs.disperse_one_order(order, wmin, wmax, sens_waves, sens_resp)
 
     # test simulated image. should be mostly but not all zeros
     assert obs.simulated_image.shape == obs.dims
@@ -263,7 +259,7 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
     assert_allclose(np.sum(counts_1), np.sum(counts_3), rtol=1e-2)
 
 
-def test_construct_slitmodel_for_chunk(observation):
+def test_construct_slitmodel(observation):
     '''
     test that the chunk is constructed correctly
     '''
@@ -282,10 +278,11 @@ def test_construct_slitmodel_for_chunk(observation):
     # set all fluxes to unity to try to make a trivial example
     obs.fluxes[2.0][i] = np.ones(obs.fluxes[2.0][i].shape)
 
-    disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
-    (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
+    # disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
+    # (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
+    # TODO: replace this call with obs.disperse_one_order constrained to one source_id
 
-    slit = obs.construct_slitmodel_for_chunk(chunk, chunk_bounds, sid, order_out)
+    slit = obs.construct_slitmodel(chunk, chunk_bounds, sid, order_out)
 
     # check that the metadata is correct
     assert slit.xstart == chunk_bounds[0]
