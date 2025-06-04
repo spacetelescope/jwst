@@ -239,6 +239,8 @@ filterwarnings = [
 
 [tool.coverage.run]
 omit = [
+    "config.py",
+    "config-3.py",
     "jwst/conftest.py",
     "jwst/setup.py",
     "jwst/tests/test*",
