@@ -57,8 +57,6 @@ def run_pipeline(rtdata_module, request, resource_tracker):
             "--steps.srctype.save_results=true",
             "--steps.flat_field.save_results=true",
             "--steps.pathloss.save_results=true"]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: overflow encountered in square
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -79,9 +77,6 @@ def run_pipeline_nsclean(rtdata_module):
             "--output_file=jw01245002001_04102_00002_nrs1_nsc",
             "--steps.nsclean.skip=False",
             "--steps.nsclean.save_results=true"]
-
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: overflow encountered in square
     Step.from_cmdline(args)
 
     return rtdata
@@ -101,8 +96,6 @@ def run_pipeline_pixel_replace(rtdata_module):
     args = ["calwebb_spec2", rtdata.input,
             "--steps.pixel_replace.save_results=true",
             "--steps.pixel_replace.skip=false"]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: overflow encountered in square
     Step.from_cmdline(args)
 
     return rtdata
@@ -239,9 +232,4 @@ def test_nirspec_fs_rateints_spec2(rtdata_module):
 
     # Run the spec2 pipeline on a (3D) _rateints file
     args = ["calwebb_spec2", rtdata.input]
-
-    # FIXME: Handle warnings properly.
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message="overflow encountered in")
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message="invalid value encountered in")
-        Step.from_cmdline(args)
+    Step.from_cmdline(args)

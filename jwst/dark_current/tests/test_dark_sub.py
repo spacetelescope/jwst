@@ -115,10 +115,7 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
     dark.data[:, 10, 10] = np.arange(0, NGROUPS_DARK)
 
     # Run the pipeline's averaging function
-    with np.errstate(divide="ignore", invalid="ignore"), warnings.catch_warnings():
-        # These warnings only appear for certain deps combo.
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
-        avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
+    avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
 
     # Group input groups into collections of frames which will be averaged
     total_frames = (nframes * ngroups) + (groupgap * (ngroups - 1))

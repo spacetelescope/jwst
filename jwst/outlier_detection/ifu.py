@@ -28,6 +28,7 @@ This routine performs the following operations::
 """
 
 import logging
+import warnings
 
 import numpy as np
 
@@ -222,12 +223,16 @@ def flag_outliers(
             comb = np.zeros([2, ny, nx])
             comb[0, :, :] = np.abs(leftdiff)
             comb[1, :, :] = np.abs(rightdiff)
-            combdiff = np.nanmin(comb, axis=0)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
+                combdiff = np.nanmin(comb, axis=0)
             diffarr[j, :, :] = combdiff
             j = j + 1
 
     # minarr final minimum combined differences, size: ny X nx
-    minarr = np.nanmin(diffarr, axis=0)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
+        minarr = np.nanmin(diffarr, axis=0)
 
     # Normalise the differences to a local median image to deal with ultra-bright sources
     normarr = medfilt(minarr, kern_size)

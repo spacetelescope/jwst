@@ -1,6 +1,7 @@
 """Utility functions for assign_wcs."""
 
 import logging
+import warnings
 import numpy as np
 
 from astropy.coordinates import SkyCoord
@@ -96,7 +97,9 @@ def compute_scale(
     if spectral and disp_axis is None:
         raise ValueError("If input WCS is spectral, a disp_axis must be given")
 
-    crpix = np.array(wcs.invert(*fiducial, with_bounding_box=False))
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+        crpix = np.array(wcs.invert(*fiducial, with_bounding_box=False))
 
     delta = np.zeros_like(crpix)
     spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == "SPATIAL")[0]
@@ -781,7 +784,9 @@ def compute_footprint_spectral(model):
         bbox = wcs_bbox_from_shape(model.data.shape)
 
     x, y = grid_from_bounding_box(bbox)
-    ra, dec, lam = swcs(x, y)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+        ra, dec, lam = swcs(x, y)
 
     # the wrapped ra values are forced to be on one side of ra-border
     # the wrapped ra are used to determine the correct  min and max ra

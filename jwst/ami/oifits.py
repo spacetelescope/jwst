@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import warnings
 
 import numpy as np
 from scipy.special import comb
@@ -325,7 +326,13 @@ class RawOifits:
         """
         xx = rr * np.cos(theta)
         yy = rr * np.sin(theta)
-        cov_mat_xy = np.cov(xx, yy)
+
+        # np.cov returns NaN if there are too few input values - ignore the warnings.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "Degrees of freedom <= 0", RuntimeWarning)
+            warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+            warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+            cov_mat_xy = np.cov(xx, yy)
         return self.rotate_matrix(cov_mat_xy, averfunc(theta))
 
     def make_oifits(self):
