@@ -2,7 +2,7 @@ Step Arguments
 ==============
 The ``emicorr`` step has the following step-specific arguments.
 
-``--algorithm`` (string, default='sequential')
+``--algorithm`` (string, default='joint')
     Algorithm for fitting EMI noise in ramps.  If 'sequential', ramps are fit
     and then EMI noise is fit to the residuals.  If 'joint', ramps and noise
     are fit simultaneously.  The sequential algorithm can be used without
