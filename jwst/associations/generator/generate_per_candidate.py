@@ -85,7 +85,8 @@ def generate_per_candidate(
         bkg_cids = ids_by_ctype(pool[row_mask]).get("background", None)
         if bkg_cids is not None:
             for key in bkg_cids:
-                candidate_ids.append(key)
+                if key not in candidate_ids:
+                    candidate_ids.append(key)
 
     # Get the candidates
     cids_by_type = ids_by_ctype(pool)
