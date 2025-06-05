@@ -17,14 +17,6 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-# def _disperse_multiprocess(pars, max_cpu):
-#     ctx = mp.get_context("spawn")
-#     with ctx.Pool(max_cpu) as mypool:
-#         all_res = mypool.starmap(dispersed_pixel, pars)
-
-#     return all_res
-
-
 def background_subtract(
     data,
     box_size=None,
@@ -277,18 +269,18 @@ class Observation:
 
         # Compute lists of x/y positions in the grism image for
         # the set of desired wavelengths:
-        # x/y in image frame of grism image is the same for all wavelengths,
-
+        # x/y in image frame of grism image is the same for all wavelengths
         x0_sky = np.repeat(x0_sky[np.newaxis, :], n_lam, axis=0)
         y0_sky = np.repeat(y0_sky[np.newaxis, :], n_lam, axis=0)
         source_ids = np.repeat(self.source_ids_per_pixel[np.newaxis, :], n_lam, axis=0)
+        fluxes = np.repeat(self.fluxes[np.newaxis, :], n_lam, axis=0)
         x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, order)
 
         # Convert to x/y in grism frame.
         # lambdas needs same shape as x0_xy to be indexed by np.take below
         lambdas = np.repeat(lambdas[:, np.newaxis], x0_xy.shape[1], axis=1)
         x0s, y0s = imgxy_to_grismxy(x0_xy + self.xoffset, y0_xy + self.yoffset, lambdas, order)
-        # x0s, y0s have shape (n_lam, n_pixels)
+        # x0s, y0s now have shape (n_lam, n_pixels)
 
         # Compute arrays of dispersed pixel locations and areas
         padding = 1
@@ -303,6 +295,7 @@ class Observation:
             x0s, y0s, padding, naxis[0], naxis[1], width, height
         )
         lams = np.take(lambdas, index)
+        fluxes = np.take(fluxes, index)
 
         # compute 1D sensitivity array corresponding to list of wavelengths
         # TODO: what wavelength unit does this expect?
@@ -314,8 +307,8 @@ class Observation:
         # countrate (DN/s).
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-            flxs = lams * areas / (sens * self.oversample_factor)
-        flxs[no_cal] = 0.0  # set to zero where no flux cal info available
+            counts = fluxes * lams * areas / (sens * self.oversample_factor)
+        counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
         # keep track of source IDs for each dispersed pixel
         dispersed_source_ids = np.take(source_ids, index)
@@ -325,7 +318,7 @@ class Observation:
             this_sid_idx = dispersed_source_ids == this_sid
             this_xs = xs[this_sid_idx]
             this_ys = ys[this_sid_idx]
-            this_flxs = flxs[this_sid_idx]
+            this_flxs = counts[this_sid_idx]
             if len(this_xs) == 0:
                 continue
 
