@@ -118,12 +118,19 @@ class ResampleStep(Step):
             result = resamp.resample_many_to_many(in_memory=self.in_memory)
 
         else:
+            if self.enable_var:
+                # If variance is enabled, we compute the error from the variance
+                compute_err = "from_var"
+            else:
+                # compute_err = "from_var" causes enable_var to be ignored, so must set it to the
+                # other option even though variance is not computed at all.
+                compute_err = "driz_err"
             resamp = resample.ResampleImage(
                 input_models,
                 output=output,
                 enable_ctx=self.enable_ctx,
                 enable_var=self.enable_var,
-                compute_err="from_var",
+                compute_err=compute_err,
                 **kwargs,
             )
             result = resamp.resample_many_to_one()
