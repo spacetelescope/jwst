@@ -1,5 +1,6 @@
 import logging
 import functools
+import warnings
 
 import numpy as np
 from astropy import units as u
@@ -1452,13 +1453,22 @@ class DataSet:
                 self.calc_niriss(ftab)
 
             elif self.instrument == "NIRSPEC":
-                self.calc_nirspec(ftab, area_fname)
+                # Some NIRSpec flat variance values can overflow when multiplied by the
+                # flux conversion factor.  Photom values for some regions are also set to zero.
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
+                    warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+                    warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+                    self.calc_nirspec(ftab, area_fname)
 
             elif self.instrument == "NIRCAM":
                 self.calc_nircam(ftab)
 
             elif self.instrument == "MIRI":
-                self.calc_miri(ftab)
+                # MIRI data may have NaNs in data or error arrays
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+                    self.calc_miri(ftab)
 
             elif self.instrument == "FGS":
                 self.calc_fgs(ftab)

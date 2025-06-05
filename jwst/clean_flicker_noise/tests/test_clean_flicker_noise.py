@@ -267,12 +267,8 @@ def test_clip_to_background_fit_fails(log_watcher):
     image = np.full(shape, np.nan)
     mask = np.full(shape, True)
     watcher.message = "Histogram failed"
-    with warnings.catch_warnings():
-        # These warnings only appear for certain deps combo.
-        # RuntimeWarning: Mean of empty slice
-        # RuntimeWarning: Degrees of freedom <= 0 for slice
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message=".* slice")
-        cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
+
+    cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
     assert np.all(mask)
     watcher.assert_seen()
 

@@ -24,8 +24,6 @@ def run_guider_pipelines(rtdata_module, request):
         '--steps.dq_init.save_results=true',
         '--steps.guider_cds.save_results=true',
     ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: divide by zero encountered in divide
     Step.from_cmdline(args)
 
     return rtdata

@@ -23,8 +23,6 @@ def run_pipeline(rtdata_module):
             "--steps.assign_wcs.save_results=true",
             "--steps.extract_2d.save_results=true",
             "--steps.flat_field.save_results=true",]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: invalid value encountered in sqrt
     Step.from_cmdline(args)
 
     return rtdata
