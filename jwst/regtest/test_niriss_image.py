@@ -32,7 +32,7 @@ def run_detector1(rtdata_module):
             "--steps.charge_migration.skip=False",
             "--steps.charge_migration.save_results=True",
             "--steps.jump.save_results=True",
-            "--steps.ramp_fit.algorithm=OLS_C",  # currently default
+            "--steps.ramp_fit.algorithm=OLS_C",
             ]
 
     Step.from_cmdline(args)
@@ -57,7 +57,7 @@ def run_detector1_multiprocess_rate(rtdata_module):
             "--steps.charge_migration.skip=False",
             "--steps.charge_migration.save_results=True",
             "--steps.jump.save_results=True",
-            "--steps.ramp_fit.algorithm=OLS_C",  # currently default
+            "--steps.ramp_fit.algorithm=OLS_C",
             "--steps.ramp_fit.maximum_cores=2",  # Multiprocessing
             ]
 
@@ -83,7 +83,7 @@ def run_detector1_multiprocess_rate_save_opt(rtdata_module, resource_tracker):
             "--steps.charge_migration.skip=False",
             "--steps.charge_migration.save_results=True",
             "--steps.jump.save_results=True",
-            "--steps.ramp_fit.algorithm=OLS_C",  # currently default
+            "--steps.ramp_fit.algorithm=OLS_C",
             "--steps.ramp_fit.maximum_cores=2",  # Multiprocessing
             "--steps.ramp_fit.save_opt=True",
             "--steps.ramp_fit.opt_name=jw01094001002_02107_00001_nis.fits",
