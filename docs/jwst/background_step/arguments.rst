@@ -48,4 +48,6 @@ control the sigma clipping, and are passed as arguments to the astropy
 
 ``--bkg_list``
   Provides a list of background files to combine and use for subtraction. It can
-  have one or more files separated by a comma with no spaces.
+  have one or more files separated by a comma with no spaces. This argument will
+  be ignored for WFSS or if an association file is provided as input for the
+  step.

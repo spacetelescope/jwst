@@ -4,12 +4,10 @@ Unit tests for background subtraction
 import json
 
 import pytest
-from astropy.utils.exceptions import AstropyUserWarning
 from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 from jwst.background import BackgroundStep
-from jwst.stpipe import Step
 
 
 @pytest.fixture(scope='module')
@@ -42,6 +40,55 @@ def background(tmp_path_factory):
         image.save(filename)
 
     return filename
+
+
+@pytest.fixture(scope='module')
+def mk_asn(tmp_path_factory):
+    data = {
+            "asn_type": "spec2",
+            "asn_rule": "Asn_Lv2Image",
+            "program": "01000",
+            "asn_pool": "jw010000_pool.csv",
+            "products": [
+                {
+                    "name": "jw01000005001_test_mirimage",
+                    "members": [
+                        {
+                            "expname": "jw01000005001_test_mirimage_rate.fits",
+                            "exptype": "science",
+                            "exposerr": "null"
+                        },
+                        {
+                            "expname": "jw01000005001_testbg_mirimage.fits",
+                            "exptype": "background",
+                            "exposerr": "null"
+                        }
+                    ]
+                }
+            ]
+        }
+
+    tmp_path = tmp_path_factory.mktemp('asn_input')
+    asn_name = str(tmp_path / "jw010000-test_spec2_00001_asn.json")
+    with open(asn_name, 'w') as asn:
+        json.dump(data, asn)
+
+    # Create the files for the asn
+    ratefile = str(tmp_path / "jw01000005001_test_mirimage_rate.fits")
+    bgfile = str(tmp_path / "jw01000005001_testbg_mirimage.fits")
+    bgsubfile = str(tmp_path / "jw010000-test_spec2_00001_asn_backgroundstep.fits")
+    image_value = 10.0
+    background_value = 1.0
+    image = miri_rate_model((100, 100), value=image_value)
+    image.save(ratefile)
+    background = miri_rate_model((100, 100), value=background_value)
+    background.save(bgfile)
+    image.data = image.data - background.data
+    image.save(bgsubfile)
+    image.close()
+    background.close()
+
+    return asn_name, ratefile, bgfile, bgsubfile
 
 
 @pytest.fixture(scope='function')
@@ -228,54 +275,11 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
     background.close()
 
 
-def mk_asn(tmp_path):
-    data = {
-            "asn_type": "spec2",
-            "asn_rule": "Asn_Lv2Image",
-            "program": "01000",
-            "asn_pool": "jw010000_pool.csv",
-            "products": [
-                {
-                    "name": "jw01000005001_test_mirimage",
-                    "members": [
-                        {
-                            "expname": "jw01000005001_test_mirimage_rate.fits",
-                            "exptype": "science",
-                            "exposerr": "null"
-                        },
-                        {
-                            "expname": "jw01000005001_testbg_mirimage.fits",
-                            "exptype": "background",
-                            "exposerr": "null"
-                        }
-                    ]
-                }
-            ]
-        }
-
-    asn_name = str(tmp_path / "jw010000-test_spec2_00001_asn.json")
-    with open(asn_name, 'w') as asn:
-        json.dump(data, asn)
-
-    # Create the files for the asn
-    image_value = 10.0
-    background_value = 1.0
-    image = miri_rate_model((100, 100), value=image_value)
-    image.save(str(tmp_path / "jw01000005001_test_mirimage_rate.fits"))
-    background = miri_rate_model((100, 100), value=background_value)
-    background.save(str(tmp_path / "jw01000005001_testbg_mirimage.fits"))
-    image.data = image.data - background.data
-    image.save(str(tmp_path / "jw010000-test_spec2_00001_asn_backgroundstep.fits"))
-    image.close()
-    background.close()
-
-
-def test_asn_input(tmp_path):
-    mk_asn(tmp_path)
-    asn_file = str(tmp_path / "jw010000-test_spec2_00001_asn.json")
+def test_asn_input(mk_asn):
+    asn_file = mk_asn[0]
     result = BackgroundStep.call(asn_file)
 
-    bg_subtracted = str(tmp_path / "jw010000-test_spec2_00001_asn_backgroundstep.fits")
+    bg_subtracted = mk_asn[3]
     bgs = datamodels.open(bg_subtracted)
 
     assert_allclose(result.data, bgs.data)
@@ -285,21 +289,28 @@ def test_asn_input(tmp_path):
     bgs.close()
 
 
-def test_bg_file_list(tmp_path):
-    mk_asn(tmp_path)
-    rate_file = str(tmp_path / "jw01000005001_test_mirimage_rate.fits")
-    bg_file = str(tmp_path / "jw01000005001_testbg_mirimage.fits")
+def test_bg_file_list(mk_asn):
+    rate_file = mk_asn[1]
+    bg_file = mk_asn[2]
     result1 = BackgroundStep.call(rate_file, bg_file)
     result2 = BackgroundStep.call(rate_file, bkg_list=bg_file)
+    result3 = BackgroundStep.call(rate_file, bkg_list=[bg_file, bg_file])
+    result4 = BackgroundStep.call(rate_file, bkg_list=[])
+    result5 = BackgroundStep.call(rate_file)
 
-    bg_subtracted = str(tmp_path / "jw010000-test_spec2_00001_asn_backgroundstep.fits")
+    bg_subtracted = mk_asn[3]
     bgs = datamodels.open(bg_subtracted)
 
     assert_allclose(result1.data, bgs.data)
     assert_allclose(result2.data, bgs.data)
+    assert_allclose(result3.data, bgs.data)
     assert result1.meta.cal_step.back_sub == 'COMPLETE'
     assert result2.meta.cal_step.back_sub == 'COMPLETE'
+    assert result3.meta.cal_step.back_sub == 'COMPLETE'
+    assert result4.meta.cal_step.back_sub == 'SKIPPED'
+    assert result5.meta.cal_step.back_sub == 'SKIPPED'
 
     result1.close()
     result2.close()
+    result3.close()
 

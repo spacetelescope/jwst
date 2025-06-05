@@ -15,10 +15,10 @@ __all__ = ["BackgroundStep"]
 class BackgroundStep(Step):
     """Subtract background exposures from target exposures."""
 
-    class_alias = "background"
+    class_alias = "back_sub"
 
     spec = """
-        bkg_list = force_list(default=None)  # List of background files
+        bkg_list = force_list(default=None)  # List of background files. Ignored for WFSS or if asn is provided
         save_combined_background = boolean(default=False)  # Save combined background image
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
@@ -55,20 +55,6 @@ class BackgroundStep(Step):
         input_model, members_by_type = asn_get_data(asn)
         result = input_model.copy()
 
-        # Get the background files to be subtracted
-        if len(members_by_type["background"]) >= 1:
-            bkg_list = members_by_type["background"]
-        elif input_bkg_list is not None:
-            if isinstance(input_bkg_list, str):
-                if "," in input_bkg_list:
-                    bkg_list = input_bkg_list.split(sep=",")
-                else:
-                    bkg_list = [input_bkg_list]
-            else:
-                bkg_list = input_bkg_list
-        else:
-            bkg_list = self.bkg_list
-
         if result.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
             # Get the reference file names
             bkg_name = self.get_reference_file(result, "wfssbkg")
@@ -96,6 +82,20 @@ class BackgroundStep(Step):
                 result.meta.cal_step.back_sub = "COMPLETE"
 
         else:
+            # Get the background files to be subtracted
+            if len(members_by_type["background"]) >= 1:
+                bkg_list = members_by_type["background"]
+            elif input_bkg_list is not None:
+                if isinstance(input_bkg_list, str):
+                    if "," in input_bkg_list:
+                        bkg_list = input_bkg_list.split(sep=",")
+                    else:
+                        bkg_list = [input_bkg_list]
+                else:
+                    bkg_list = input_bkg_list
+            else:
+                bkg_list = self.bkg_list
+
             # Make sure that the background list is not empty for this case,
             # or report and skip the step
             if bkg_list is None or len(bkg_list) == 0:

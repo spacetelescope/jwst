@@ -1,4 +1,8 @@
+import os
+
 import pytest
+import shutil
+import json
 import numpy as np
 from pathlib import Path
 
@@ -383,3 +387,76 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
 
     with pytest.raises(ValueError):
         rescaler = _ScalingFactorComputer(dispersion_axis=None, delta_rms_thresh=1)
+
+
+@pytest.fixture()
+def mock_asn_and_data(tmp_path_factory, data_path, make_nis_wfss_datamodel):
+    # Create temp dir and copy the catalog in there
+    tmp_path = tmp_path_factory.mktemp('asn_input')
+    shutil.copy(str(data_path / "test_cat.ecsv"), str(tmp_path / "test_cat.ecsv"))
+    # Save the datmodel into a rate file but remove the catalog to make sure it is
+    # added back in by the asn_intake module
+    make_nis_wfss_datamodel.meta.source_catalog = None
+    ratefile = tmp_path / "jw01000001001_test_00001_nis_rate.fits"
+    make_nis_wfss_datamodel.save(str(ratefile))
+    # Pretend this is also the direct image, save with a diff name
+    i2dfile = tmp_path / "jw01000-o001_t001_niriss_i2d.fits"
+    make_nis_wfss_datamodel.save(str(i2dfile))
+    # Pretend this is also the segment, save with a diff name
+    segmfile = tmp_path / "jw01000-o001_t001_niriss_segm.fits"
+    make_nis_wfss_datamodel.save(str(segmfile))
+
+    data = {
+            "asn_type": "spec2",
+            "asn_rule": "Asn_Lv2WFSS",
+            "program": "01000",
+            "asn_pool": "jw010000_pool.csv",
+            "products": [
+                {
+                    "name": "jw01000001001_test_00001_nis",
+                    "members": [
+                        {
+                            "expname": "jw01000001001_test_00001_nis_rate.fits",
+                            "exptype": "science",
+                            "exposerr": "null"
+                        },
+                        {
+                            "expname": "jw01000-o001_t001_niriss_i2d.fits",
+                            "exptype": "direct_image"
+                        },
+                        {
+                            "expname": "test_cat.ecsv",
+                            "exptype": "sourcecat"
+                        },
+                        {
+                            "expname": "jw01000-o001_t001_niriss_segm.fits",
+                            "exptype": "segmap"
+                        }
+                    ]
+                }
+            ]
+        }
+
+    asn_name = str(tmp_path / "jw010000-wfss_test_spec2_00001_asn.json")
+    with open(asn_name, 'w') as asn:
+        json.dump(data, asn)
+
+    return [asn_name, ratefile, i2dfile, segmfile]
+
+
+def test_wfss_asn_input(mock_asn_and_data):
+    # get the file name of asn and other file objects
+    asn_name, ratefile = mock_asn_and_data[0], mock_asn_and_data[1]
+    i2dfile, segmfile = mock_asn_and_data[2], mock_asn_and_data[3]
+    # change the working directory into the temp so it can find all files
+    cwd = os.getcwd()
+    os.chdir(ratefile.parents[0])
+    result = BackgroundStep.call(asn_name)
+    # return to previous working dir
+    os.chdir(cwd)
+
+    assert result.meta.source_catalog == "test_cat.ecsv"
+    assert result.meta.direct_image == i2dfile.name
+    assert result.meta.segmentation_map == segmfile.name
+    assert result.meta.cal_step.back_sub == "COMPLETE"
+
