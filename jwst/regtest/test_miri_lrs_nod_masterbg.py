@@ -55,7 +55,10 @@ def test_miri_lrs_nod_bg(run_pipeline_with_master_bg, fitsdiff_default_kwargs,
     # Get the truth file
     rtdata.get_truth(os.path.join("truth/test_miri_lrs_nod_masterbg", output_file))
 
+
     # Compare the results
+    # Ignore the custom extract1d file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_EXTR1D')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -72,6 +75,8 @@ def test_miri_lrs_nod_masterbg1d(run_pipeline_with_master_bg, fitsdiff_default_k
     rtdata.get_truth(os.path.join("truth/test_miri_lrs_nod_masterbg", output_file))
 
     # Compare the results
+    # Ignore the custom extract1d file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_EXTR1D')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 

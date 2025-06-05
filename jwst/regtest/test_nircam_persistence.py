@@ -52,5 +52,9 @@ def test_persistence_step(run_persistence_step, fitsdiff_default_kwargs):
     rtdata.get_truth(
         "truth/test_nircam_persistence/jw01076101001_02101_00002_nrca1_persistencestep.fits"
     )
+
+    # Ignore the custom trap density file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_TRPDEN')
+    
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
