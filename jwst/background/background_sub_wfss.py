@@ -75,6 +75,7 @@ def subtract_wfss_bkg(
         if not _sufficient_background_pixels(input_model.dq, bkg_mask, bkg_ref.data):
             log.warning("Not enough background pixels to work with.")
             log.warning("Step will be SKIPPED.")
+            bkg_ref.close()
             return None
     else:
         bkg_mask = np.ones(input_model.data.shape, dtype=bool)
@@ -91,6 +92,15 @@ def subtract_wfss_bkg(
         var = input_model.err.copy() ** 2
         bkg = bkg_ref.data.copy()
         factor, _ = rescaler(sci, bkg, var, mask=~bkg_mask)
+
+    # check for bad value of factor
+    if not np.isfinite(factor):
+        log.warning(
+            "Could not determine a finite scaling factor between reference background and data."
+            " Step will be SKIPPED."
+        )
+        bkg_ref.close()
+        return None
 
     # extract the derived factor and apply it to the unmasked, non-outlier-rejected data
     subtract_this = factor * bkg_ref.data
