@@ -31,7 +31,8 @@ def run_detector1(rtdata_module):
             "--steps.dark_current.save_results=True",
             "--steps.charge_migration.skip=False",
             "--steps.charge_migration.save_results=True",
-            "--steps.jump.save_results=True"
+            "--steps.jump.save_results=True",
+            "--steps.ramp_fit.algorithm=OLS_C",
             ]
 
     Step.from_cmdline(args)
@@ -56,7 +57,8 @@ def run_detector1_multiprocess_rate(rtdata_module):
             "--steps.charge_migration.skip=False",
             "--steps.charge_migration.save_results=True",
             "--steps.jump.save_results=True",
-            "--steps.ramp_fit.maximum_cores=2", # Multiprocessing
+            "--steps.ramp_fit.algorithm=OLS_C",
+            "--steps.ramp_fit.maximum_cores=2",  # Multiprocessing
             ]
 
     Step.from_cmdline(args)
@@ -81,7 +83,8 @@ def run_detector1_multiprocess_rate_save_opt(rtdata_module, resource_tracker):
             "--steps.charge_migration.skip=False",
             "--steps.charge_migration.save_results=True",
             "--steps.jump.save_results=True",
-            "--steps.ramp_fit.maximum_cores=2", # Multiprocessing
+            "--steps.ramp_fit.algorithm=OLS_C",
+            "--steps.ramp_fit.maximum_cores=2",  # Multiprocessing
             "--steps.ramp_fit.save_opt=True",
             "--steps.ramp_fit.opt_name=jw01094001002_02107_00001_nis.fits",
             ]
@@ -136,6 +139,21 @@ def run_detector1_with_clean_flicker_noise(rtdata_module, resource_tracker):
         Step.from_cmdline(args)
 
 
+@pytest.fixture(scope="module")
+def run_detector1_with_likelihood_fitting(rtdata_module, resource_tracker):
+    """Run detector1 pipeline on NIRISS imaging data with noise cleaning."""
+    rtdata_module.get_data("niriss/imaging/jw01094001002_02107_00001_nis_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files.
+    # Run ramp fitting with the likelihood algorithm.
+    args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
+            "--output_file=jw01094001002_02107_00001_nis_likely",
+            "--steps.ramp_fit.algorithm=LIKELY",
+            ]
+    with resource_tracker.track():
+        Step.from_cmdline(args)
+
+
 def test_log_tracked_resources_det1_mp(
         log_tracked_resources,
         run_detector1_multiprocess_rate_save_opt
@@ -146,6 +164,13 @@ def test_log_tracked_resources_det1_mp(
 def test_log_tracked_resources_det1_cfn(
         log_tracked_resources,
         run_detector1_with_clean_flicker_noise
+):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_det1_likely(
+        log_tracked_resources,
+        run_detector1_with_likelihood_fitting
 ):
     log_tracked_resources()
 
@@ -169,6 +194,15 @@ def test_niriss_image_detector1_with_clean_flicker_noise(
     """Regression test of detector1 pipeline performed on NIRISS imaging data.
     """
     truth_dir = 'test_niriss_image_clean_flicker_noise'
+    _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir)
+
+
+@pytest.mark.parametrize("suffix", ["likely_rate", "likely_rateints"])
+def test_niriss_image_detector1_with_likelihood(
+        run_detector1_with_likelihood_fitting, rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Regression test of detector1 pipeline performed on NIRISS imaging data.
+    """
+    truth_dir = 'test_niriss_image_likelihood'
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir)
 
 
