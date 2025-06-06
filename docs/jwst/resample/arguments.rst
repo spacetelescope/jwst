@@ -121,5 +121,6 @@ image.
   mosaics.
 
 ``--enable_var`` (boolean, default=True)
-  Specifies whether or not to compute and store the variance arrays in the datamodel.
+  Specifies whether or not to compute and store the variance arrays, namely
+  `var`, `err`, `var_flat`, `var_rnoise`, and `var_poisson`, in the output model.
   Setting this to ``False`` helps reduce memory usage for very large mosaics.
