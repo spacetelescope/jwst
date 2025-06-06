@@ -46,6 +46,8 @@ class ResampleStep(Step):
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
         in_memory = boolean(default=True)  # Keep images in memory
+        enable_ctx = boolean(default=True)  # Compute and report the context array
+        enable_var = boolean(default=True)  # Compute and report the variance array
     """  # noqa: E501
 
     reference_file_types: list = []
@@ -116,8 +118,19 @@ class ResampleStep(Step):
             result = resamp.resample_many_to_many(in_memory=self.in_memory)
 
         else:
+            if self.enable_var:
+                # If variance is enabled, we compute the error from the variance
+                compute_err = "from_var"
+            else:
+                # otherwise do not compute the error arrays at all
+                compute_err = None
             resamp = resample.ResampleImage(
-                input_models, output=output, enable_var=True, compute_err="from_var", **kwargs
+                input_models,
+                output=output,
+                enable_ctx=self.enable_ctx,
+                enable_var=self.enable_var,
+                compute_err=compute_err,
+                **kwargs,
             )
             result = resamp.resample_many_to_one()
 
