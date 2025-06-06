@@ -571,7 +571,7 @@ EXTRACT2D_XSTART, EXTRACT2D_YSTART, SPECTRAL_ORDER.
 Each extension in the hdulist represents a different exposure and/or spectral order,
 with the extension metadata indicating the exposure number, spectral order, and
 input filename for the corresponding exposure.
-See the extract_1d step documentation for more details.
+See the :ref:`extract_1d <extract_1d_step>` step documentation for more details.
 
 For ``x1dints`` products, each row in the table holds the full spectrum for a single
 integration.  The spectral data columns listed above are each 2-D: each row is a 1-D

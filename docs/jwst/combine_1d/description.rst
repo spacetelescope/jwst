@@ -64,7 +64,7 @@ For WFSS modes, which may have hundreds or thousands of spectra from different s
 the output will be in WFSSMultiCombinedSpecModel format.
 This model differs from the other MultiCombinedSpecModel classes in that
 it is designed to hold all the spectra in a WFSS observation in a single
-"flat" table format. Therefore, there is only one spectrum per spectral order
+"flat" table format. Therefore, there is only one item per spectral order
 in the `spec` list, and each object in the `spec` list has
 a `spec_table` attribute that contains the spectral data and metadata
 for all sources in the observation.
