@@ -121,6 +121,7 @@ class Observation:
         boundaries=None,
         offsets=None,
         max_cpu=1,
+        max_pixels_per_chunk=1e5,
         oversample_factor=2,
     ):
         """
@@ -146,6 +147,10 @@ class Observation:
             Offset values for x and y axes
         max_cpu : int, optional, default 1
             Max number of cpu's to use when multiprocessing
+        max_pixels_per_chunk : int, optional, default 1e5
+            Maximum number of pixels per chunk when dispersing sources
+        oversample_factor : int, optional, default 2
+            Factor by which to oversample the wavelength grid
         """
         if boundaries is None:
             boundaries = []
@@ -155,11 +160,13 @@ class Observation:
         self.seg_wcs = segmap_model.meta.wcs
         self.grism_wcs = grism_wcs
         self.seg = segmap_model.data
-        all_ids = np.array(list(set(np.ravel(self.seg))))
+        all_ids = list(set(np.ravel(self.seg)))
+        all_ids.remove(0)  # Remove the background ID
         self.source_ids = _select_ids(source_id, all_ids)
         self.filter = filter_name
         self.pivlam = float(self.filter[1:4]) / 100.0
         self.max_cpu = max_cpu
+        self.max_pixels_per_chunk = max_pixels_per_chunk
         self.oversample_factor = oversample_factor
         self.xoffset = offsets[0]
         self.yoffset = offsets[1]
@@ -236,6 +243,14 @@ class Observation:
 
         for sid in self.source_ids:
             n_pixels = np.sum(self.seg == sid)
+            if n_pixels > max_pixels:
+                log.warning(
+                    f"Source {sid} has {n_pixels} pixels, which exceeds the maximum number "
+                    f"of pixels per chunk ({max_pixels}). Skipping this source. "
+                    "Consider increasing max_pixels, and/or check to ensure the segmentation map "
+                    "looks reasonable for that source."
+                )
+                continue
             if current_size + n_pixels > max_pixels:
                 chunks.append(current_chunk)
                 current_chunk = []
@@ -297,7 +312,9 @@ class Observation:
         """
         # generate lists of input parameters for the disperse function
         # for each chunk of sources
-        disperse_args = self.chunk_sources(order, wmin, wmax, sens_waves, sens_response)
+        disperse_args = self.chunk_sources(
+            order, wmin, wmax, sens_waves, sens_response, max_pixels=self.max_pixels_per_chunk
+        )
         t0 = time.time()
         if self.max_cpu > 1:
             # Use multiprocessing to disperse the sources
