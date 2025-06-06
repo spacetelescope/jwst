@@ -360,6 +360,6 @@ def _construct_slitmodel(
     slit.ystart = thisobj_miny
     slit.ysize = thisobj_maxy - thisobj_miny + 1
     slit.meta.wcsinfo.spectral_order = order
-    slit.data = img[thisobj_miny : thisobj_maxy + 1, thisobj_minx : thisobj_maxx + 1]
+    slit.data = img
 
     return slit

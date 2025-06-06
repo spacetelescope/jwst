@@ -278,7 +278,8 @@ def contam_corr(
     seg_model = datamodels.open(input_model.meta.segmentation_map)
     direct_file = input_model.meta.direct_image
     log.debug(f"Direct image ={direct_file}")
-    direct_image = datamodels.open(direct_file).data
+    with datamodels.open(direct_file) as direct_model:
+        direct_image = direct_model.data
 
     # Get the grism WCS object and offsets from the first cutout in the input model.
     # This WCS is used to transform from direct image to grism frame for all sources
@@ -347,8 +348,8 @@ def contam_corr(
     simul_model = datamodels.ImageModel(data=obs.simulated_image)
     simul_model.update(input_model, only="PRIMARY")
 
-    simul_slit_sids = [slit.source_id for slit in obs.simulated_slits]
-    simul_slit_orders = [slit.meta.wcsinfo.spectral_order for slit in obs.simulated_slits]
+    simul_slit_sids = [slit.source_id for slit in obs.simulated_slits.slits]
+    simul_slit_orders = [slit.meta.wcsinfo.spectral_order for slit in obs.simulated_slits.slits]
 
     # Initialize output multislitmodel
     output_model = datamodels.MultiSlitModel()
@@ -356,10 +357,6 @@ def contam_corr(
     output_model.slits.extend(good_slits)
 
     # Loop over all slits/sources to subtract contaminating spectra
-    # TODO: right now the contam_model and output_model are all hitting SlitOverlapError
-    # in order 1 and returning all-zero slits
-    # I think this is due to SlitOverlapError
-    # check if _construct_slitmodel is getting the bounds correct
     log.info("Creating contamination image for each individual source")
     contam_model = datamodels.MultiSlitModel()
     contam_model.update(input_model)
@@ -384,8 +381,6 @@ def contam_corr(
 
     output_model.update(input_model, only="PRIMARY")
     output_model.meta.cal_step.wfss_contam = "COMPLETE"
-
     seg_model.close()
-    direct_image.close()
 
     return output_model, simul_model, contam_model, obs.simulated_slits
