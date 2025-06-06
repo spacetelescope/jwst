@@ -5,6 +5,7 @@ from ..stpipe import Step
 from .background_sub import background_sub
 from .background_sub_wfss import subtract_wfss_bkg
 from .asn_intake import asn_get_data
+from jwst.background.background_sub_soss import subtract_soss_bkg
 
 import numpy as np
 
@@ -17,11 +18,15 @@ class BackgroundStep(Step):
 
     class_alias = "background"
 
+    # soss_bkg_percentile = float_list(min=2, max=2, defaultvalue=[25.0, 50.0])  # Bkgd %iles to use
+
     spec = """
         bkg_list = force_list(default=None)  # List of background files. Ignored for WFSS or if asn is provided
         save_combined_background = boolean(default=False)  # Save combined background image
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
+        soss_source_percentile = float(default=35.0) # Threshold flux %ile to mask out source pixels
+        soss_bkg_percentile = float_list(min=2, max=2, default=None) # Bkgd %iles to use
         wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
         wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
@@ -29,7 +34,7 @@ class BackgroundStep(Step):
     """  # noqa: E501
 
     # These reference files are only used for WFSS/GRISM data.
-    reference_file_types = ["wfssbkg", "wavelengthrange"]
+    reference_file_types = ["bkg", "wfssbkg", "wavelengthrange"]
 
     # Define a suffix for optional saved output of the combined background
     bkg_suffix = "combinedbackground"
@@ -77,6 +82,25 @@ class BackgroundStep(Step):
             )
             if result is None:
                 result = input_model.copy()
+                result.meta.cal_step.back_sub = "SKIPPED"
+            else:
+                result.meta.cal_step.back_sub = "COMPLETE"
+
+        elif input_model.meta.exposure.type == "NIS_SOSS":
+            # Fetch the background reference filename
+            bkg_name = self.get_reference_file(input_model, "bkg")
+            self.log.info("Using BKG reference file %s", bkg_name)
+
+            if self.soss_bkg_percentile is None:
+                soss_bkg_percentile = [25.0, 50.0]
+            else:
+                soss_bkg_percentile = self.soss_bkg_percentile
+
+            result = subtract_soss_bkg(
+                input_model, bkg_name, self.soss_source_percentile, soss_bkg_percentile
+            )
+            if result is None:
+                result = input_model
                 result.meta.cal_step.back_sub = "SKIPPED"
             else:
                 result.meta.cal_step.back_sub = "COMPLETE"
