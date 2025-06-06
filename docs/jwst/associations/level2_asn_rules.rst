@@ -1,10 +1,10 @@
-.. asn-level2-rules:
+.. _asn-level2-rules:
 
 Stage 2 Associations: Rules
 ===========================
 
 The following table describes exactly which exposures will go
-through any type of stage 2 processing, such as Spec2Pipeline or
+through any type of Stage 2 processing, such as Spec2Pipeline or
 Image2Pipeline.
 
 .. list-table:: Exposure Modes for Stage 2 Processing
@@ -352,6 +352,6 @@ produce the necessary associations.
 History
 -------
 
-The original content of this page is from `github issue #1188`_.
+The original content of this page is from `GitHub issue #1188`_.
 
-.. _github issue #1188: https://github.com/spacetelescope/jwst/issues/1188
+.. _GitHub issue #1188: https://github.com/spacetelescope/jwst/issues/1188

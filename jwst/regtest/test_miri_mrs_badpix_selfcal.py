@@ -1,11 +1,13 @@
-import pytest
-from astropy.io.fits.diff import FITSDiff
-from jwst.stpipe import Step
 import os
 
+import pytest
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+
+from jwst.stpipe import Step
 
 OUTSTEM_BKG = "result_bkgasn"
 OUTSTEM_SELFCAL = "result_selfcalasn"
+
 
 @pytest.fixture(scope="module")
 def run_pipeline_background(rtdata_module):

@@ -161,6 +161,8 @@ documentation on each reference file.
 | :ref:`rscd <rscd_step>`                               | :ref:`RSCD <rscd_reffile>`                       |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`saturation <saturation_step>`                   | :ref:`SATURATION <saturation_reffile>`           |
++                                                       +--------------------------------------------------+
+|                                                       | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`source_catalog <source_catalog_step>`           | :ref:`APCORR <apcorr_reffile>`                   |
 +                                                       +--------------------------------------------------+
@@ -175,6 +177,8 @@ documentation on each reference file.
 | :ref:`superbias <superbias_step>`                     | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`tso_photometry <tso_photometry_step>`           | :ref:`TSOPHOT <tsophot_reffile>`                 |
++                                                       +--------------------------------------------------+
+|                                                       | :ref:`GAIN <gain_reffile>`                       |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`wavecorr <wavecorr_step>`                       | :ref:`WAVECORR <wavecorr_reffile>`               |
 +-------------------------------------------------------+--------------------------------------------------+
@@ -231,6 +235,8 @@ documentation on each reference file.
 |                                                  | :ref:`jump <jump_step>`                               |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`ramp_fitting <ramp_fitting_step>`               |
++                                                  +-------------------------------------------------------+
+|                                                  | :ref:`tso_photometry <tso_photometry_step>`           |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`IFUFORE <ifufore_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
@@ -288,7 +294,9 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`SPECWCS <specwcs_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
-| :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`superbias <superbias_step>`                     |
+| :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`saturation <saturation_step>`                   |
++                                                  +-------------------------------------------------------+
+|                                                  | :ref:`superbias <superbias_step>`                     |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`TRAPDENSITY <trapdensity_reffile>`         | :ref:`persistence <persistence_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
@@ -406,9 +414,10 @@ EXP_TYPE  MIR_MRS             Exposure type.
                               NIRISS allowed values: NIS_IMAGE, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS, NIS_SOSS, NIS_AMI,
                               NIS_FOCUS, NIS_DARK, NIS_LAMP
 
-                              NIRSpec allowed values: NRS_TASLIT, NRS_TACQ, NRS_TACONFIRM, NRS_CONFIRM, NRS_FIXEDSLIT,
-                              NRS_AUTOWAVE, NRS_IFU, NRS_MSASPEC, NRS_AUTOFLAT, NRS_IMAGE, NRS_FOCUS, NRS_DARK, NRS_LAMP,
-                              NRS_BOTA, NRS_BRIGHTOBJ, NRS_MIMF
+                              NIRSpec allowed values: NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK,
+                              NRS_FIXEDSLIT, NRS_FOCUS, NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF,
+                              NRS_MSASPEC, NRS_MSATA, NRS_TACONFIRM, NRS_TACQ, NRS_TASLIT,
+                              NRS_VERIFY, NRS_WATA
 DETECTOR  MIRIFULONG          Allowed values:
                               GUIDER1, GUIDER2
 

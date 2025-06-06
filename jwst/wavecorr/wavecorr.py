@@ -50,13 +50,13 @@ def do_correction(input_model, wavecorr_file):
                 completed = apply_zero_point_correction(slit, wavecorr_file)
                 if completed:
                     corrected = True
-                    slit.meta.cal_step.wavecorr = "COMPLETE"
+                    slit.wavelength_corrected = True
                 else:  # pragma: no cover
                     log.warning(f"Corrections are not invertible for slit {slit.name}")
                     log.warning("Skipping wavecorr correction")
-                    slit.meta.cal_step.wavecorr = "SKIPPED"
+                    slit.wavelength_corrected = False
             else:
-                slit.meta.cal_step.wavecorr = "SKIPPED"
+                slit.wavelength_corrected = False
 
     if corrected:
         output_model.meta.cal_step.wavecorr = "COMPLETE"
@@ -82,7 +82,6 @@ def apply_zero_point_correction(slit, reffile):
     completed : bool
         A flag to report whether the zero-point correction was added or skipped.
     """
-    log.info(f"slit name {slit.name}")
     slit_wcs = slit.meta.wcs
 
     # Retrieve the source position and aperture name from metadata

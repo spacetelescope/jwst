@@ -294,15 +294,27 @@ def test_sufficient_background_pixels():
     model.dq[:, :4] = refpix_flags
     model.dq[:, -4:] = refpix_flags
 
+    bkg = np.ones((2048, 2048), dtype=float)
+
     bkg_mask = np.ones((2048, 2048), dtype=bool)
-    # With full array minux refpix available for bkg, should be sufficient
-    assert _sufficient_background_pixels(model.dq, bkg_mask)
+    # With full array minus refpix available for bkg, should be sufficient
+    assert _sufficient_background_pixels(model.dq, bkg_mask, bkg)
 
     bkg_mask[4: -4, :] = 0
     bkg_mask[:, 4: -4] = 0
     # Now mask out entire array, mocking full source coverage of detector -
     # no pixels should be available for bkg
-    assert not _sufficient_background_pixels(model.dq, bkg_mask)
+    assert not _sufficient_background_pixels(model.dq, bkg_mask, bkg)
+
+
+def test_sufficient_background_pixels_nonoverlapping():
+    """Valid pixels in bkg, and valid pixels in bkg_mask, but these do not overlap."""
+    dq = np.zeros((2048, 2048), dtype=int)
+    bkg_mask = np.zeros((2048, 2048), dtype=bool)
+    bkg = np.zeros((2048, 2048), dtype=float)
+    bkg_mask[:1024, :1024] = 1
+    bkg[1024:, 1024:] = 1.0
+    assert not _sufficient_background_pixels(dq, bkg_mask, bkg)
 
 
 def test_weighted_mean(make_wfss_datamodel, bkg_file):

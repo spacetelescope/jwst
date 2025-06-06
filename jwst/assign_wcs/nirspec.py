@@ -4,15 +4,19 @@ Tools to create the WCS pipeline NIRSPEC modes.
 Calls create_pipeline() which redirects based on EXP_TYPE.
 """
 
-import logging
-import numpy as np
 import copy
+import logging
+import warnings
 
-from astropy.modeling import models
-from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
-from astropy import units as u
+import gwcs
+import numpy as np
+
 from astropy import coordinates as coord
+from astropy import units as u
 from astropy.io import fits
+from astropy.modeling import bounding_box as mbbox
+from astropy.modeling import fix_inputs, models
+from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
 from gwcs import coordinate_frames as cf
 from gwcs.wcstools import grid_from_bounding_box
 
@@ -33,6 +37,7 @@ from stdatamodels.jwst.transforms.models import (
     Rotation3DToGWA,
     DirCos2Unitless,
     Slit2Msa,
+    Slit2MsaLegacy,
     AngleFromGratingEquation,
     WavelengthFromGratingEquation,
     Gwa2Slit,
@@ -43,9 +48,9 @@ from stdatamodels.jwst.transforms.models import (
     RefractionIndexFromPrism,
 )
 
+from jwst.lib.exposure_types import is_nrs_ifu_lamp
 from .util import MSAFileError, NoDataOnDetectorError, not_implemented_mode, velocity_correction
 from . import pointing
-from ..lib.exposure_types import is_nrs_ifu_lamp
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -61,6 +66,9 @@ __all__ = [
     "ifu",
     "slits_wcs",
     "get_open_slits",
+    "generate_compound_bbox",
+    "nrs_fs_slit_id",
+    "nrs_fs_slit_name",
     "nrs_wcs_set_input",
     "nrs_ifu_wcs",
     "get_spectral_order_wrange",
@@ -127,10 +135,16 @@ def imaging(input_model, reference_files):
     disperser = get_disperser(input_model, reference_files["disperser"])
 
     # DMS to SCA transform
-    dms2detector = dms_to_sca(input_model)
+    dms2detector = dms_to_sca(input_model)[:-1]
+    dms2detector.name = "dms2sca"
+    dms2detector.inputs = ("x", "y")
+    dms2detector.outputs = ("x", "y")
 
     # DETECTOR to GWA transform
-    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)[:-2]
+    det2gwa.name = "det2gwa"
+    det2gwa.inputs = ("x", "y")
+    det2gwa.outputs = ("angle1", "angle2", "angle3")
 
     gwa_through = Const1D(-1) * Identity(1) & Const1D(-1) * Identity(1) & Identity(1)
 
@@ -158,6 +172,9 @@ def imaging(input_model, reference_files):
 
     gwa2msa = gwa_through | rotation | dircos2unitless | col | lam_model
     gwa2msa.inverse = col.inverse | dircos2unitless.inverse | rotation.inverse | gwa_through
+    gwa2msa.name = "gwa2msa"
+    gwa2msa.inputs = ("angle1", "angle2", "angle3")
+    gwa2msa.outputs = ("x_msa", "y_msa", "lam")
 
     # Create coordinate frames in the NIRSPEC WCS pipeline
     # "detector", "gwa", "msa", "oteip", "v2v3", "v2v3vacorr", "world"
@@ -174,10 +191,16 @@ def imaging(input_model, reference_files):
     minv = msa2ote.inverse
     del minv.inverse
     msa2oteip.inverse = map1 | minv | Mapping((0, 1), n_inputs=3)
+    msa2oteip.name = "msa2oteip"
+    msa2oteip.inputs = ("x_msa", "y_msa", "lam")
+    msa2oteip.outputs = ("x_ote", "y_ote")
 
     # OTEIP to V2,V3 transform
     with OTEModel(reference_files["ote"]) as f:
         oteip2v23 = f.model
+    oteip2v23.name = "oteip2v23"
+    oteip2v23.inputs = ("x_ote", "y_ote")
+    oteip2v23.outputs = ("v2", "v3")
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
@@ -185,9 +208,15 @@ def imaging(input_model, reference_files):
         v2_ref=input_model.meta.wcsinfo.v2_ref,
         v3_ref=input_model.meta.wcsinfo.v3_ref,
     )
+    va_corr.name = "va_corr"
+    va_corr.inputs = ("v2", "v3")
+    va_corr.outputs = ("v2", "v3")
 
     # V2, V3 to world (RA, DEC) transform
     tel2sky = pointing.v23tosky(input_model)
+    tel2sky.name = "v2v3_to_sky"
+    tel2sky.inputs = ("v2", "v3")
+    tel2sky.outputs = ("ra", "dec")
 
     imaging_pipeline = [
         (det, dms2detector),
@@ -269,19 +298,23 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
 
     # DMS to SCA transform
     dms2detector = dms_to_sca(input_model)
+    dms2detector.name = "dms2sca"
+
     # DETECTOR to GWA transform
-    det2gwa = Identity(2) & detector_to_gwa(
-        reference_files, input_model.meta.instrument.detector, disperser
-    )
+    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
+    det2gwa.name = "det2gwa"
 
     # GWA to SLIT
     gwa2slit = gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
+    gwa2slit.name = "gwa2slit"
 
     # SLIT to MSA transform
     slit2slicer = ifuslit_to_slicer(slits, reference_files)
+    slit2slicer.name = "slit2slicer"
 
     # SLICER to MSA Entrance
     slicer2msa = slicer_to_msa(reference_files)
+    slicer2msa.name = "slicer2msa"
 
     det, sca, gwa, slit_frame, slicer_frame, msa_frame, oteip, v2v3, v2v3vacorr, world = (
         create_frames()
@@ -292,12 +325,12 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     is_lamp_exposure = exp_type in ["NRS_LAMP", "NRS_AUTOWAVE", "NRS_AUTOFLAT"]
 
     if input_model.meta.instrument.filter == "OPAQUE" or is_lamp_exposure:
-        # If filter is "OPAQUE" or if internal lamp exposure
+        # If filter is "OPAQUE" or if internal lamp exposure,
         # the NIRSPEC WCS pipeline stops at the MSA.
         pipeline = [
             (det, dms2detector),
-            (sca, det2gwa.rename("detector2gwa")),
-            (gwa, gwa2slit.rename("gwa2slit")),
+            (sca, det2gwa),
+            (gwa, gwa2slit),
             (slit_frame, slit2slicer),
             (slicer_frame, slicer2msa),
             (msa_frame, None),
@@ -305,20 +338,33 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
         return pipeline
 
     # MSA to OTEIP transform
-    msa2oteip = ifu_msa_to_oteip(reference_files)
+    msa2oteip = ifu_msa_to_oteip(reference_files) & Identity(1)  # for slit
+    msa2oteip.name = "msa2oteip"
+    msa2oteip.inputs = ("x_msa", "y_msa", "lam", "name")
+    msa2oteip.outputs = ("x_ote", "y_ote", "lam", "name")
+
     # OTEIP to V2,V3 transform
     # This includes a wavelength unit conversion from meters to microns.
-    oteip2v23 = oteip_to_v23(reference_files)
+    oteip2v23 = oteip_to_v23(reference_files) & Identity(1)
+    oteip2v23.name = "oteip2v23"
+    oteip2v23.inputs = ("x_ote", "y_ote", "lam", "name")
+    oteip2v23.outputs = ("v2", "v3", "lam", "name")
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
         v3_ref=input_model.meta.wcsinfo.v3_ref,
-    ) & Identity(1)
+    ) & Identity(2)
+    va_corr.name = "va_corr"
+    va_corr.inputs = ("v2", "v3", "lam", "name")
+    va_corr.outputs = ("v2", "v3", "lam", "name")
 
     # V2, V3 to sky
-    tel2sky = pointing.v23tosky(input_model) & Identity(1)
+    tel2sky = pointing.v23tosky(input_model) & Identity(2)
+    tel2sky.name = "v2v3_to_sky"
+    tel2sky.inputs = ("v2", "v3", "lam", "name")
+    tel2sky.outputs = ("ra", "dec", "lam", "name")
 
     # Create coordinate frames in the NIRSPEC WCS pipeline"
     #
@@ -329,12 +375,12 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
 
     pipeline = [
         (det, dms2detector),
-        (sca, det2gwa.rename("detector2gwa")),
-        (gwa, gwa2slit.rename("gwa2slit")),
+        (sca, det2gwa),
+        (gwa, gwa2slit),
         (slit_frame, slit2slicer),
         (slicer_frame, slicer2msa),
-        (msa_frame, msa2oteip.rename("msa2oteip")),
-        (oteip, oteip2v23.rename("oteip2v23")),
+        (msa_frame, msa2oteip),
+        (oteip, oteip2v23),
         (v2v3, va_corr),
         (v2v3vacorr, tel2sky),
         (world, None),
@@ -423,10 +469,9 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     # DMS to SCA transform
     dms2detector = dms_to_sca(input_model)
     dms2detector.name = "dms2sca"
+
     # DETECTOR to GWA transform
-    det2gwa = Identity(2) & detector_to_gwa(
-        reference_files, input_model.meta.instrument.detector, disperser
-    )
+    det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
     det2gwa.name = "det2gwa"
 
     # GWA to SLIT
@@ -458,24 +503,33 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
         return msa_pipeline
 
     # MSA to OTEIP transform
-    msa2oteip = msa_to_oteip(reference_files)
+    msa2oteip = msa_to_oteip(reference_files) & Identity(1)
     msa2oteip.name = "msa2oteip"
+    msa2oteip.inputs = ("x_msa", "y_msa", "lam", "name")
+    msa2oteip.outputs = ("x_ote", "y_ote", "lam", "name")
 
     # OTEIP to V2,V3 transform
     # This includes a wavelength unit conversion from meters to microns.
-    oteip2v23 = oteip_to_v23(reference_files)
+    oteip2v23 = oteip_to_v23(reference_files) & Identity(1)
     oteip2v23.name = "oteip2v23"
+    oteip2v23.inputs = ("x_ote", "y_ote", "lam", "name")
+    oteip2v23.outputs = ("v2", "v3", "lam", "name")
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
         v3_ref=input_model.meta.wcsinfo.v3_ref,
-    ) & Identity(1)
+    ) & Identity(2)
+    va_corr.name = "va_corr"
+    va_corr.inputs = ("v2", "v3", "lam", "name")
+    va_corr.outputs = ("v2", "v3", "lam", "name")
 
     # V2, V3 to sky
-    tel2sky = pointing.v23tosky(input_model) & Identity(1)
+    tel2sky = pointing.v23tosky(input_model) & Identity(2)
     tel2sky.name = "v2v3_to_sky"
+    tel2sky.inputs = ("v2", "v3", "lam", "name")
+    tel2sky.outputs = ("ra", "dec", "lam", "name")
 
     msa_pipeline = [
         (det, dms2detector),
@@ -541,7 +595,20 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
 
     # Bright object (TSO) exposure in S1600A1 fixed slit
     elif exp_type == "nrs_brightobj":
-        slits = [Slit("S1600A1", 3, 0, 0, 0, slit_y_range[0], slit_y_range[1], 5, 1)]
+        slits = [
+            Slit(
+                "S1600A1",
+                3,
+                0,
+                0,
+                0,
+                slit_y_range[0],
+                slit_y_range[1],
+                5,
+                1,
+                slit_id=nrs_fs_slit_id("S1600A1"),
+            )
+        ]
 
     # Lamp exposure using fixed slits
     elif exp_type in ["nrs_lamp", "nrs_autowave"]:
@@ -554,7 +621,7 @@ def get_open_slits(input_model, reference_files=None, slit_y_range=(-0.55, 0.55)
         slits = validate_open_slits(input_model, slits, reference_files)
         log.info(
             f"Slits projected on detector {input_model.meta.instrument.detector}: "
-            f"{[sl.name for sl in slits]}"
+            f"{[str(sl.name) for sl in slits]}"
         )
     if not slits:
         log_message = f"No open slits fall on detector {input_model.meta.instrument.detector}."
@@ -607,6 +674,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S200A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 1,
+        slit_id=nrs_fs_slit_id("S200A1"),
     )
     s2a2 = Slit(
         "S200A2",
@@ -618,6 +686,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S200A2" else 10 * FIXED_SLIT_NUMS[primary_slit] + 2,
+        slit_id=nrs_fs_slit_id("S200A2"),
     )
     s4a1 = Slit(
         "S400A1",
@@ -629,6 +698,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S400A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 3,
+        slit_id=nrs_fs_slit_id("S400A1"),
     )
     s16a1 = Slit(
         "S1600A1",
@@ -640,6 +710,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S1600A1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 4,
+        slit_id=nrs_fs_slit_id("S1600A1"),
     )
     s2b1 = Slit(
         "S200B1",
@@ -651,6 +722,7 @@ def get_open_fixed_slits(input_model, slit_y_range=(-0.55, 0.55)):
         yhigh,
         5,
         1 if primary_slit == "S200B1" else 10 * FIXED_SLIT_NUMS[primary_slit] + 5,
+        slit_id=nrs_fs_slit_id("S200B1"),
     )
 
     # Decide which slits need to be added to this exposure
@@ -829,7 +901,6 @@ def get_open_msa_slits(
         for x in msa_conf.data
         if x["msa_metadata_id"] == msa_metadata_id and x["dither_point_index"] == dither_position
     ]
-    log.debug(f"msa_data with msa_metadata_id = {msa_metadata_id}   {msa_data}")
     log.info(
         f"Retrieving open MSA slitlets for msa_metadata_id = {msa_metadata_id} "
         f"and dither_index = {dither_position}"
@@ -889,6 +960,7 @@ def get_open_msa_slits(
         #    quadrant, xcen, ycen, ymin, ymax
 
         # First, check for a fixed slit
+        slit_id_number = None
         if all(is_fs) and len(slitlet_rows) == 1:
             # One fixed slit open for the source
             slitlet = slitlet_rows[0]
@@ -897,6 +969,9 @@ def get_open_msa_slits(
             shutter_id = FIXED_SLIT_NUMS[slitlet_id] - 1
             xcen = ycen = 0
             quadrant = 5
+
+            # Get a slit ID number for WCS propagation purposes
+            slit_id_number = nrs_fs_slit_id(slitlet_id)
 
             # No additional margin for fixed slit bounding boxes
             ymin = ylow
@@ -1058,6 +1133,11 @@ def get_open_msa_slits(
         # fallback values if not available
         scale_x, scale_y = slit_scales.get(quadrant, MSA_SLIT_SCALES)
 
+        # Set the slit ID number for WCS propagation purposes to the slit name
+        # if not already set
+        if slit_id_number is None:
+            slit_id_number = slitlet_id
+
         # Create the output list of tuples that contain the required
         # data for further computations
         slit_parameters = (
@@ -1080,8 +1160,9 @@ def get_open_msa_slits(
             source_dec,
             scale_x,
             scale_y,
+            slit_id_number,
         )
-        log.debug(f"Appending slit: {slit_parameters}")
+        log.debug(f"Appending slit: {[str(s) for s in slit_parameters]}")
         slitlets.append(Slit(*slit_parameters))
 
     msa_file.close()
@@ -1204,8 +1285,15 @@ def ifuslit_to_slicer(slits, reference_files):
         msa_transform = slicer_model
         models.append(msa_transform)
     ifuslicer.close()
+    s2m = Slit2Msa(slits, models)
 
-    return Slit2Msa(slits, models)
+    # Identity is for passing the computed wavelength
+    mapping = Mapping((0, 1, 3, 2))
+    mapping.inverse = Mapping((0, 1, 3, 2))
+    slit2slicer = s2m & Identity(1) | mapping
+    slit2slicer.inputs = ("name", "x_slit", "y_slit", "lam")
+    slit2slicer.outputs = ("x_slice", "y_slice", "lam", "name")
+    return slit2slicer
 
 
 def slicer_to_msa(reference_files):
@@ -1225,11 +1313,11 @@ def slicer_to_msa(reference_files):
     """
     with IFUFOREModel(reference_files["ifufore"]) as f:
         ifufore = f.model
-    slicer2fore_mapping = Mapping((0, 1, 2, 2))
-    slicer2fore_mapping.inverse = Identity(3)
-    ifufore2fore_mapping = Identity(1)
-    ifufore2fore_mapping.inverse = Mapping((0, 1, 2, 2))
-    ifu_fore_transform = slicer2fore_mapping | ifufore & Identity(1)
+    slicer2fore_mapping = Mapping((0, 1, 2, 2, 3))
+    slicer2fore_mapping.inverse = Identity(4)
+    ifu_fore_transform = slicer2fore_mapping | ifufore & Identity(2)
+    ifu_fore_transform.inputs = ("x_slice", "y_slice", "lam", "name")
+    ifu_fore_transform.outputs = ("x_msa", "y_msa", "lam", "name")
     return ifu_fore_transform
 
 
@@ -1272,7 +1360,15 @@ def slit_to_msa(open_slits, msafile):
                 models.append(msa_transform)
                 slits.append(slit)
     msa.close()
-    return Slit2Msa(slits, models)
+    s2m = Slit2Msa(slits, models)
+    # Identity is for passing the computed wavelength and slit name
+    mapping = Mapping((0, 1, 3, 2))
+    mapping.inverse = Mapping((0, 1, 3, 2))
+    transform = s2m & Identity(1) | mapping
+    transform.inputs = ("name", "x_slit", "y_slit", "lam")
+    transform.outputs = ("x_msa", "y_msa", "lam", "name")
+
+    return transform
 
 
 def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range):
@@ -1614,7 +1710,11 @@ def detector_to_gwa(reference_files, detector, disperser):
     model = models.Shift(1) & models.Shift(1) | \
             models.Shift(-1) & models.Shift(-1) | fpa | camera | u2dircos | rotation
     """
-    model = fpa | camera | u2dircos | rotation
+    mapping = Mapping((3, 0, 1, 2))
+    mapping.inverse = Mapping((1, 2, 3, 0))
+    model = (fpa | camera | u2dircos | rotation) & Identity(1) | mapping
+    model.inputs = ("x", "y", "name")
+    model.outputs = ("name", "angle1", "angle2", "angle3")
     return model
 
 
@@ -1649,7 +1749,13 @@ def dms_to_sca(input_model):
         model = models.Shift(-2047) & models.Shift(-2047) | models.Scale(-1) & models.Scale(-1)
     elif detector == "NRS1":
         model = models.Identity(2)
-    return subarray2full | model
+
+    # x, y slit_name
+    transform = (subarray2full | model) & Identity(1)
+    transform.inputs = ("x", "y", "name")
+    transform.outputs = ("x", "y", "name")
+
+    return transform
 
 
 def mask_slit(ymin=-0.55, ymax=0.55):
@@ -1684,7 +1790,9 @@ def mask_slit(ymin=-0.55, ymax=0.55):
     return model
 
 
-def compute_bounding_box(transform, wavelength_range, slit_ymin=-0.55, slit_ymax=0.55):
+def compute_bounding_box(
+    transform, slit_name, wavelength_range, slit_ymin=-0.55, slit_ymax=0.55, refine=True
+):
     """
     Compute the bounding box of the projection of a slit/slice on the detector.
 
@@ -1697,25 +1805,35 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-0.55, slit_ymax
     Parameters
     ----------
     transform : `astropy.modeling.core.Model`
-        The transform from slit to detector, or detector to slit.
+        The transform from detector to slit.
         `nrs_wcs_set_input` uses "detector to slit", validate_open_slits uses "slit to detector".
+    slit_name : int, str, None
+        Slit name for which to compute the bounding box.  If None, it is assumed
+        the input WCS has already been fixed to a particular slit.
     wavelength_range : tuple
         The wavelength range for the combination of grating and filter.
-    slit_ymin, slit_ymax : float
-        The lower and upper bounds of the slit.
+    slit_ymin : float, optional
+        Minimum value for the slit y edge.
+    slit_ymax : float, optional
+        Maximum value for the slit y edge.
+    refine : bool, optional
+        If True, the initial bounding box will be refined to limit it to
+        ranges with valid wavelengths if possible.
 
     Returns
     -------
     bbox : tuple
         The bounding box of the projection of the slit on the detector.
     """
-    # If transform has inverse then it must be slit to detector
     if transform.has_inverse():
-        slit2detector = transform.inverse
+        # If the input transform has an inverse, then the transform
+        # must be detector to slit and the inverse is slit to detector.
         detector2slit = transform
+        slit2detector = detector2slit.inverse
     else:
-        slit2detector = transform
+        # If no inverse is available, the provided transform is slit to detector.
         detector2slit = None
+        slit2detector = transform
 
     lam_min, lam_max = wavelength_range
     step = 1e-10
@@ -1735,8 +1853,20 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-0.55, slit_ymax
 
         return pad_x, pad_y
 
-    x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
-    x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
+    # Convert FS slit names to numbers
+    if isinstance(slit_name, str):
+        slit_name = nrs_fs_slit_id(slit_name)
+
+    if slit_name is None:
+        x_range_low, y_range_low = slit2detector([0] * nsteps, [slit_ymin] * nsteps, lam_grid)
+        x_range_high, y_range_high = slit2detector([0] * nsteps, [slit_ymax] * nsteps, lam_grid)
+    else:
+        x_range_low, y_range_low, _ = slit2detector(
+            slit_name, [0] * nsteps, [slit_ymin] * nsteps, lam_grid
+        )
+        x_range_high, y_range_high, _ = slit2detector(
+            slit_name, [0] * nsteps, [slit_ymax] * nsteps, lam_grid
+        )
     x_range = np.hstack((x_range_low, x_range_high))
     y_range = np.hstack((y_range_low, y_range_high))
 
@@ -1744,14 +1874,79 @@ def compute_bounding_box(transform, wavelength_range, slit_ymin=-0.55, slit_ymax
     bbox = bbox_from_range(x_range, y_range)
 
     # Run inverse model to narrow range
-    if detector2slit is not None and check_range(*bbox[0]) and check_range(*bbox[1]):
+    if refine and detector2slit is not None and check_range(*bbox[0]) and check_range(*bbox[1]):
         x, y = grid_from_bounding_box(bbox)
-        _, _, lam = detector2slit(x, y)
-        y_range = y[np.isfinite(lam)]
-
-        bbox = bbox_from_range(x_range, y_range)
+        if slit_name is None:
+            _, _, lam = detector2slit(x, y)
+        else:
+            _, _, _, lam = detector2slit(x, y, slit_name)
+        valid = np.isfinite(lam)
+        if np.any(valid):
+            y_range = y[np.isfinite(lam)]
+            bbox = bbox_from_range(x_range, y_range)
 
     return bbox
+
+
+def generate_compound_bbox(input_model, slits=None, wavelength_range=None, refine=True):
+    """
+    Generate a compound bounding box for multislit data.
+
+    Parameters
+    ----------
+    input_model : DataModel
+        Input model with WCS set in meta.wcs.
+    slits : list or None, optional
+        A list of Slit objects.  If not specified, open slits are retrieved
+        from the "gwa" to "slit_frame" transform.
+    wavelength_range : list or tuple or None, optional
+        Wavelength range for the combination of filter and grating.
+        If not specified, the range is calculated by calling
+        `spectral_order_wrange_from_model`.
+    refine : bool, optional
+        If True, the initial bounding box will be refined to limit it to
+        ranges with valid wavelengths if possible.
+
+    Returns
+    -------
+    bounding_box : `~astropy.modeling.bounding_box.CompoundBoundingBox`
+        Compound bounding box.  Access bounding boxes for individual
+        slits with dictionary-like access, keyed on the slit ID.
+    """
+    if slits is None:
+        slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slits
+    wcs_forward_transform = input_model.meta.wcs.forward_transform
+    if wavelength_range is None:
+        _, wavelength_range = spectral_order_wrange_from_model(input_model)
+
+    bbox_dict = {}
+
+    wcs_forward_transform.inputs = ("x", "y", "name")
+    transform = input_model.meta.wcs.get_transform("detector", "slit_frame")
+    is_nirspec_ifu = (
+        is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == "nrs_ifu"
+    )
+    if is_nirspec_ifu:
+        for slit in slits:
+            bb = compute_bounding_box(transform, slit, wavelength_range, refine=refine)
+            bbox_dict[slit] = bb
+    else:
+        for slit in slits:
+            bb = compute_bounding_box(
+                transform,
+                slit.slit_id,
+                wavelength_range,
+                slit_ymin=slit.ymin,
+                slit_ymax=slit.ymax,
+                refine=refine,
+            )
+            bbox_dict[slit.slit_id] = bb
+
+    cbb = mbbox.CompoundBoundingBox.validate(
+        wcs_forward_transform, bbox_dict, selector_args=[("name", True)], order="F"
+    )
+
+    return cbb
 
 
 def collimator_to_gwa(reference_files, disperser):
@@ -2082,141 +2277,7 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None, slit_y_range=None):
     return tab
 
 
-def _get_transforms(input_model, slitnames, return_slits=False):
-    """
-    Return a WCS object with necessary transforms for all slits.
-
-    This function enables the JWST pipeline to avoid excessive deep
-    copying of WCS objects in later steps. It is used internally in
-    the pipeline only and should not be used if any of the WCSs is
-    modified.
-
-    Parameters
-    ----------
-    input_model : JwstDataModel
-        A data model with a WCS object for the all open slitlets in an observation.
-    slitnames : list of int or str
-        Slit.name of all open slits.
-    return_slits : bool, optional
-        Return the open slits
-
-    Returns
-    -------
-    wcsobj : `~gwcs.wcs.WCS`
-        WCS object deep copied from input_model.meta.wcs
-    sca2gwa : `~astropy.modeling.core.Model`
-        Transform from ``sca`` to ``gwa``
-    gwa2slit : list of `~astropy.modeling.core.Model`
-        Transform from ``gwa`` to ``slit`` for each input slit
-    slit2slicer : list of `~astropy.modeling.core.Model`
-        Transform from ``slit_frame`` to ``slicer`` for each input slit
-    open_slits : list of `~stdatamodels.jwst.transforms.models.Slit`
-        Open slits from wcs.get_transform('gwa', 'slit_frame').slits
-        Only returned if return_slits is True
-    """
-    wcs = copy.deepcopy(input_model.meta.wcs)
-
-    sca2gwa = copy.deepcopy(wcs.pipeline[1].transform[1:])
-    wcs.set_transform("sca", "gwa", sca2gwa)
-
-    gwa2slit = [
-        copy.deepcopy(wcs.pipeline[2].transform.get_model(slit_name)) for slit_name in slitnames
-    ]
-
-    slit2slicer = [
-        copy.deepcopy(wcs.pipeline[3].transform.get_model(slit_name)) for slit_name in slitnames
-    ]
-
-    if return_slits:
-        g2s = wcs.get_transform("gwa", "slit_frame")
-        open_slits = g2s.slits
-        return wcs, sca2gwa, gwa2slit, slit2slicer, copy.deepcopy(open_slits)
-    else:
-        return wcs, sca2gwa, gwa2slit, slit2slicer
-
-
-def _nrs_wcs_set_input_lite(
-    input_model,
-    input_wcs,
-    slit_name,
-    transforms,
-    wavelength_range=None,
-    open_slits=None,
-    slit_y_low=None,
-    slit_y_high=None,
-):
-    """
-    Return a WCS object for a specific slit, slice or shutter.
-
-    The lite version of the routine is distinguished from the legacy
-    routine because it does not make a deep copy of the input WCS object.
-
-    Parameters
-    ----------
-    input_model : JwstDataModel
-        A WCS object for the all open slitlets in an observation.
-    input_wcs : `~gwcs.wcs.WCS`
-        A WCS object for the all open slitlets in an observation.  This
-        will be modified and returned.
-    slit_name : int or str
-        Slit.name of an open slit.
-    transforms : list of `~astropy.modeling.core.Model`
-        Model transforms output from ``_get_transforms``
-    wavelength_range : list
-        Wavelength range for the combination of filter and grating.  Optional.
-    open_slits : list of slits
-        List of open slits.  Optional.
-    slit_y_low, slit_y_high : float
-        The lower and upper bounds of the slit.  Optional.
-
-    Returns
-    -------
-    wcsobj : `~gwcs.wcs.WCS`
-        WCS object for this slit.
-    """
-
-    def _get_y_range(open_slits):
-        if open_slits is None:
-            log_message = "nrs_wcs_set_input_lite must be called with open_slits if not in ifu mode"
-            log.critical(log_message)
-            raise RuntimeError(log_message)
-        # Need the open slits to get the slit ymin,ymax
-        slit = [s for s in open_slits if s.name == slit_name][0]
-        return slit.ymin, slit.ymax
-
-    if wavelength_range is None:
-        _, wavelength_range = spectral_order_wrange_from_model(input_model)
-
-    slit_wcs = copy.copy(input_wcs)
-
-    slit_wcs.set_transform("sca", "gwa", transforms[0])
-    slit_wcs.set_transform("gwa", "slit_frame", transforms[1])
-
-    is_nirspec_ifu = (
-        is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == "nrs_ifu"
-    )
-
-    if is_nirspec_ifu:
-        slit_wcs.set_transform("slit_frame", "slicer", transforms[2] & Identity(1))
-    else:
-        slit_wcs.set_transform("slit_frame", "msa_frame", transforms[2] & Identity(1))
-
-    transform = slit_wcs.get_transform("detector", "slit_frame")
-
-    if is_nirspec_ifu:
-        bb = compute_bounding_box(transform, wavelength_range)
-    else:
-        if slit_y_low is None or slit_y_high is None:
-            slit_y_low, slit_y_high = _get_y_range(open_slits)
-        bb = compute_bounding_box(
-            transform, wavelength_range, slit_ymin=slit_y_low, slit_ymax=slit_y_high
-        )
-
-    slit_wcs.bounding_box = bb
-    return slit_wcs
-
-
-def _nrs_wcs_set_input(input_model, slit_name):
+def _nrs_wcs_set_slit_input_legacy(input_model, slit_name):
     """
     Return a WCS object for a specific slit, slice or shutter.
 
@@ -2256,11 +2317,15 @@ def _nrs_wcs_set_input(input_model, slit_name):
     return slit_wcs
 
 
-def nrs_wcs_set_input(
+def nrs_wcs_set_input_legacy(
     input_model, slit_name, wavelength_range=None, slit_y_low=None, slit_y_high=None
 ):
     """
     Return a WCS object for a specific slit, slice or shutter.
+
+    This function is intended to work with old-style NIRSpec WCS implementations,
+    to support reading in WCS data from existing datamodels.  For new datamodels,
+    produced after v1.18.0, use `nrs_wcs_set_input`.
 
     Parameters
     ----------
@@ -2278,6 +2343,13 @@ def nrs_wcs_set_input(
     wcsobj : `~gwcs.wcs.WCS`
         WCS object for this slit.
     """
+    warnings.warn(
+        "The nrs_wcs_set_input_legacy function is intended for use with an "
+        "old-style NIRSpec WCS pipeline. "
+        "It will be removed in a future build.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     def _get_y_range(input_model):
         # get the open slits from the model
@@ -2290,21 +2362,233 @@ def nrs_wcs_set_input(
     if wavelength_range is None:
         _, wavelength_range = spectral_order_wrange_from_model(input_model)
 
-    slit_wcs = _nrs_wcs_set_input(input_model, slit_name)
+    slit_wcs = _nrs_wcs_set_slit_input_legacy(input_model, slit_name)
     transform = slit_wcs.get_transform("detector", "slit_frame")
     is_nirspec_ifu = (
         is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == "nrs_ifu"
     )
     if is_nirspec_ifu:
-        bb = compute_bounding_box(transform, wavelength_range)
+        bb = compute_bounding_box(transform, None, wavelength_range)
     else:
         if slit_y_low is None or slit_y_high is None:
             slit_y_low, slit_y_high = _get_y_range(input_model)
         bb = compute_bounding_box(
-            transform, wavelength_range, slit_ymin=slit_y_low, slit_ymax=slit_y_high
+            transform, None, wavelength_range, slit_ymin=slit_y_low, slit_ymax=slit_y_high
         )
 
     slit_wcs.bounding_box = bb
+    return slit_wcs
+
+
+def _fix_slit_name(transform, slit_name):
+    """
+    Create a new WCS transform by fixing the slit input to a specific value.
+
+    If the inputs for the transform contain "name", then that input is
+    fixed to the provided value.  The output value called "name" is also
+    dropped from the output for the transform.
+
+    For the inverse transform, if present, the same operations are performed, except
+    that the inputs and outputs are not generally explicitly named.  The "name"
+    input and output are assumed to be present, to be either the first or last
+    input/output, and to match the ordering in the forward transform.  That is,
+    if "name" is the first input and the last output in the forward transform,
+    it is assumed to be the last input and the first output in the inverse
+    transform.
+
+    If "name" is not present in the input transform or if the transform is
+    None, then the transform is simply returned unmodified.
+
+    Parameters
+    ----------
+    transform : `astropy.modeling.core.Model` or None
+        The transform to fix.
+    slit_name : int or float
+        The slit name to fix to.
+
+    Returns
+    -------
+    new_transform : `astropy.modeling.core.Model`
+        A new transform fixed to the input slit.  The "name" input is not
+        required for the new transform, and it is not provided on output.
+    """
+    # Check if anything needs to be done for this transform
+    if transform is None:
+        return None
+
+    # Directly pick out the slit-specific model to avoid
+    # copying all transforms if possible
+    if transform.name == "gwa2slit":
+        new_transform = transform.get_model(slit_name)
+        new_transform.name = transform.name
+
+        # "name" was the first input and first output; it is now dropped.
+        new_transform.inputs = transform.inputs[1:]
+        new_transform.outputs = transform.outputs[1:]
+        return new_transform
+    if transform.name == "slit2msa" or transform.name == "slit2slicer":
+        new_transform = transform[0].get_model(slit_name) & Identity(1)
+        new_transform.name = transform.name
+
+        # "name" was the first input and last output; it is now dropped.
+        new_transform.inputs = transform.inputs[1:]
+        new_transform.outputs = transform.outputs[:-1]
+        return new_transform
+
+    # Fix the "name" input for any other transform if possible
+    if "name" not in transform.inputs:
+        return transform
+
+    # Name is present: fix it on input
+    fixed = {"name": slit_name}
+
+    # Get a mapping to drop the name on output as well
+    output_names = []
+    output_order = []
+    name_idx = None
+    for i, output_name in enumerate(transform.outputs):
+        if output_name == "name":
+            name_idx = i
+        else:
+            output_names.append(output_name)
+            output_order.append(i)
+    mapping = Mapping(tuple(output_order), n_inputs=transform.n_outputs)
+    mapping.inverse = Identity(len(output_order))
+
+    # New forward transform with fixed input and mapping
+    new_transform = fix_inputs(transform, fixed) | mapping
+    new_transform.name = transform.name
+    new_transform.outputs = output_names
+
+    # Do the same for the inverse transform, except that "name" is usually
+    # not explicitly specified
+    if transform.has_inverse():
+        # get "name" equivalent in inverse input and outputs - it's either first or last
+        n_output = transform.inverse.n_outputs
+        if name_idx == 0:
+            input_name = transform.inverse.inputs[0]
+        else:
+            input_name = transform.inverse.inputs[-1]
+        output_name_idx = transform.inputs.index("name")
+        if output_name_idx != 0:
+            output_name_idx = n_output - 1
+
+        # Fix for the input
+        fix_inverse = {input_name: slit_name}
+
+        # Mapping for the output
+        output_order = tuple([i for i in range(n_output) if i != output_name_idx])
+        mapping = Mapping(output_order, n_inputs=n_output)
+        mapping.inverse = Identity(len(output_order))
+
+        # Make and assign the new inverse transform
+        new_inv_transform = fix_inputs(transform.inverse, fix_inverse) | mapping
+        new_transform.inverse = new_inv_transform
+
+    return new_transform
+
+
+def nrs_fs_slit_id(slit_name):
+    """
+    Get the slit ID corresponding to a fixed slit name.
+
+    Parameters
+    ----------
+    slit_name : str
+        The name of the slit to identify.
+
+    Returns
+    -------
+    int
+        The standard ID for the slit.  Returns -100 if the slit name was not recognized.
+    """
+    slit_number = -100 + -1 * FIXED_SLIT_NUMS.get(slit_name, 0)
+    return slit_number
+
+
+def nrs_fs_slit_name(slit_id):
+    """
+    Get the slit name corresponding to a fixed slit ID.
+
+    Parameters
+    ----------
+    slit_id : int, float, or str
+        The slit ID.  Expected values are integers from -100 to -105.
+
+    Returns
+    -------
+    str
+        The name of the slit corresponding to the slit ID.  If the slit ID was not
+        recognized, "NONE" is returned.
+    """
+    try:
+        slit_number = -1 * int(slit_id) - 100
+    except (ValueError, TypeError):
+        return "NONE"
+    for key, value in FIXED_SLIT_NUMS.items():
+        if value == slit_number:
+            return key
+    return "NONE"
+
+
+def nrs_wcs_set_input(input_model, slit_name):
+    """
+    Make a WCS object for a specific slit or slice.
+
+    Transforms in the new WCS do not require slit IDs on input
+    and do not report slit IDs in the output.
+
+    If there is a compound bounding box set for the input model,
+    a bounding box will be set for the slit WCS.  Otherwise,
+    the bounding box will be None.
+
+    Parameters
+    ----------
+    input_model : JwstDataModel
+        A datamodel that contains a WCS object for the all open slitlets in
+        an observation.
+    slit_name : int or str
+        Slit.name of an open slit.
+
+    Returns
+    -------
+    wcsobj : `~gwcs.wcs.WCS`
+        WCS object for this slit.
+    """
+    # Get the full WCS object
+    full_wcs = input_model.meta.wcs
+
+    # Check for an old-style WCS that needs different handling
+    for step in full_wcs.pipeline:
+        if isinstance(step.transform, Slit2MsaLegacy):
+            # There is a legacy slit2msa transform somewhere in the pipeline.
+            # Use the old deepcopy-and-replace method.
+            return nrs_wcs_set_input_legacy(input_model, slit_name)
+
+    # Convert FS slit names to numbers
+    if str(slit_name).upper() in FIXED_SLIT_NUMS.keys():
+        slit_id = nrs_fs_slit_id(str(slit_name).upper())
+    else:
+        slit_id = slit_name
+
+    # Check slit ID to make sure it's present in the slits
+    slit_ids = full_wcs.get_transform("gwa", "slit_frame").slit_ids
+    if slit_id not in slit_ids:
+        raise ValueError(f"Input slit name {slit_name} is not present in the input model.")
+
+    # Fix the slit name input for all transforms
+    new_pipeline = []
+    for step in full_wcs.pipeline:
+        new_transform = _fix_slit_name(step.transform, slit_id)
+        new_pipeline.append((step.frame, new_transform))
+
+    # Make a new WCS with the fixed slit name input
+    # Output values from transform will not include the slit name.
+    slit_wcs = gwcs.WCS(new_pipeline)
+
+    # Add the bounding box
+    if full_wcs.bounding_box is not None:
+        slit_wcs.bounding_box = full_wcs.bounding_box[slit_id]
     return slit_wcs
 
 
@@ -2347,7 +2631,7 @@ def validate_open_slits(input_model, open_slits, reference_files):
         else:
             return True
 
-    det2dms = dms_to_sca(input_model).inverse
+    det2dms = dms_to_sca(input_model).inverse[:-1]
     # read models from reference file
     disperser = DisperserModel(reference_files["disperser"])
     disperser = correct_tilt(
@@ -2361,21 +2645,28 @@ def validate_open_slits(input_model, open_slits, reference_files):
     input_model.meta.wcsinfo.spectral_order = order
     agreq = angle_from_disperser(disperser, input_model)
     # GWA to detector
+    # model = (fpa | camera | u2dircos | rotation) & Identity(1) | Mapping((3, 0, 1, 2))
     det2gwa = detector_to_gwa(reference_files, input_model.meta.instrument.detector, disperser)
-    gwa2det = det2gwa.inverse
+    gwa2det = det2gwa[:-2].inverse
     # collimator to GWA
     collimator2gwa = collimator_to_gwa(reference_files, disperser)
 
-    col2det = collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq | gwa2det | det2dms
+    # col2det = (Mapping((0, 1, 3)) | collimator2gwa & Identity(1) | Mapping((3, 0, 1, 2)) | agreq |
+    #            gwa2det | det2dms)
+    col2det = (
+        Mapping((0, 1, 3, 2))
+        | collimator2gwa & Identity(2)
+        | Mapping((3, 0, 1, 2, 4))
+        | agreq & Identity(1)
+        | gwa2det & Identity(1)
+        | det2dms & Identity(1)
+    )
 
-    slit2msa = slit_to_msa(open_slits, reference_files["msa"])
+    slit2msa = slit_to_msa(open_slits, reference_files["msa"])[0]
 
     for slit in slit2msa.slits:
-        msa_transform = slit2msa.get_model(slit.name)
-        msa2det = msa_transform & Identity(1) | col2det
-
-        bb = compute_bounding_box(msa2det, wrange, slit.ymin, slit.ymax)
-
+        msa2det = slit2msa & Identity(1) | col2det
+        bb = compute_bounding_box(msa2det, slit.slit_id, wrange, slit.ymin, slit.ymax)
         valid = _is_valid_slit(bb)
         if not valid:
             log.info(
@@ -2416,18 +2707,17 @@ def nrs_ifu_wcs(input_model):
     Parameters
     ----------
     input_model : JwstDataModel
-        The data model. Must have been through the assign_wcs step.
+        The data model. Must have passed through the assign_wcs step.
 
     Returns
     -------
     wcs_list : list
         A list of WCSs for all IFU slits.
     """
-    _, wrange = spectral_order_wrange_from_model(input_model)
     wcs_list = []
     # loop over all IFU slits
     for i in range(30):
-        wcs_list.append(nrs_wcs_set_input(input_model, i, wrange))
+        wcs_list.append(nrs_wcs_set_input(input_model, i))
     return wcs_list
 
 

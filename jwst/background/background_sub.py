@@ -16,28 +16,39 @@ log.setLevel(logging.DEBUG)
 
 class ImageSubsetArray:
     """
-    This class is intended to keep track of where different images
-    may relate to each other when using e.g. subarray observations
+    Keep track of where different images relate to each other.
+
+    This includes using e.g. subarray observations.
     """
 
     def __init__(self, model):
+        """
+        Initialize the class.
 
+        Parameters
+        ----------
+        model : ImageModel
+            Input datamodel
+        """
         im = datamodels.open(model)
 
         # Make sure xstart/ystart/xsize/ysize exist in the model metadata
-        if (im.meta.subarray.xstart is None or im.meta.subarray.ystart is None or
-                im.meta.subarray.xsize is None or im.meta.subarray.ysize is None):
-
+        if (
+            im.meta.subarray.xstart is None
+            or im.meta.subarray.ystart is None
+            or im.meta.subarray.xsize is None
+            or im.meta.subarray.ysize is None
+        ):
             # If the ref file is full-frame, set the missing params to
             # default values
-            if im.meta.instrument.name.upper() == 'MIRI':
+            if im.meta.instrument.name.upper() == "MIRI":
                 if im.data.shape[-1] == 1032 and im.data.shape[-2] == 1024:
                     im.meta.subarray.xstart = 1
                     im.meta.subarray.ystart = 1
                     im.meta.subarray.xsize = 1032
                     im.meta.subarray.ysize = 1024
                 else:
-                    raise ValueError('xstart or ystart metadata values not found in model')
+                    raise ValueError("xstart or ystart metadata values not found in model")
             else:
                 if im.data.shape[-1] == 2048 and im.data.shape[-2] == 2048:
                     im.meta.subarray.xstart = 1
@@ -45,7 +56,7 @@ class ImageSubsetArray:
                     im.meta.subarray.xsize = 2048
                     im.meta.subarray.ysize = 2048
                 else:
-                    raise ValueError('xstart or ystart metadata values not found in model')
+                    raise ValueError("xstart or ystart metadata values not found in model")
 
         # Account for the fact these things are 1-indexed
         self.jmin = im.meta.subarray.ystart - 1
@@ -63,20 +74,46 @@ class ImageSubsetArray:
         im.close()
 
     def overlaps(self, other):
-        """Find whether this subset and another overlap"""
+        """
+        Find whether this subset and another overlap.
+
+        Parameters
+        ----------
+        other : ImageModel
+            Input model
+
+        Returns
+        -------
+        bool
+            Return the boolean opposite of the condition met
+        """
         return not (
-                self.imax <= other.imin
-                or other.imax <= self.imin
-                or self.jmax <= other.jmin
-                or other.jmax <= self.jmin
+            self.imax <= other.imin
+            or other.imax <= self.imin
+            or self.jmax <= other.jmin
+            or other.jmax <= self.jmin
         )
 
     def get_subset_array(self, other):
         """
-        Pull out the overlapping part of two arrays, and put data/err/DQ
-        to match the science image pixels
-        """
+        Pull out the overlapping SCI, ERR, and DQ data for two models.
 
+        Parameters
+        ----------
+        other : ImageModel
+            Input model
+
+        Returns
+        -------
+        data_overlap : ndarray
+            Data overlap of the science arrays
+
+        err_overlap : ndarray
+            Overlap of the error arrays
+
+        dq_overlap : ndarray
+            Overlap of the DQ arrays
+        """
         imin = max(self.imin, other.imin)
         imax = min(self.imax, other.imax)
         jmin = max(self.jmin, other.jmin)
@@ -102,14 +139,16 @@ class ImageSubsetArray:
         dq_overlap = np.zeros(data_shape, dtype=np.uint32)
 
         if self.im_dim == 2:
-            idx = (slice(jmin - other.jmin, jmax - other.jmin),
-                   slice(imin - other.imin, imax - other.imin),
-                   )
+            idx = (
+                slice(jmin - other.jmin, jmax - other.jmin),
+                slice(imin - other.imin, imax - other.imin),
+            )
         else:
-            idx = (slice(None, None),
-                   slice(jmin - other.jmin, jmax - other.jmin),
-                   slice(imin - other.imin, imax - other.imin),
-                   )
+            idx = (
+                slice(None, None),
+                slice(jmin - other.jmin, jmax - other.jmin),
+                slice(imin - other.imin, imax - other.imin),
+            )
 
         # Pull the values from the background obs
         data_cutout = other.data[idx]
@@ -117,55 +156,58 @@ class ImageSubsetArray:
         dq_cutout = other.dq[idx]
 
         # Put them into the right place in the original image array shape
-        data_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(data_cutout)
-        err_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(err_cutout)
-        dq_overlap[..., :data_cutout.shape[-2], :data_cutout.shape[-1]] = copy.deepcopy(dq_cutout)
+        data_overlap[..., : data_cutout.shape[-2], : data_cutout.shape[-1]] = copy.deepcopy(
+            data_cutout
+        )
+        err_overlap[..., : data_cutout.shape[-2], : data_cutout.shape[-1]] = copy.deepcopy(
+            err_cutout
+        )
+        dq_overlap[..., : data_cutout.shape[-2], : data_cutout.shape[-1]] = copy.deepcopy(dq_cutout)
 
         return data_overlap, err_overlap, dq_overlap
 
 
 def background_sub(input_model, bkg_list, sigma, maxiters):
     """
-    Short Summary
-    -------------
-    Subtract the background signal from a JWST exposure by subtracting
-    the average of one or more background exposures from it.
+    Subtract background signal from an exposure.
+
+    This will be done by subtracting the average of one or more
+    background exposures from it.
 
     Parameters
     ----------
-    input_model : JWST data model
-        input target exposure data model
+    input_model : ImageModel
+        Input target exposure data model
 
-    bkg_list : filename list
-        list of background exposure file names
+    bkg_list : list
+        Filename list of background exposures
 
-    sigma : float, optional
+    sigma : float
         Number of standard deviations to use for both the lower
         and upper clipping limits.
 
-    maxiters : int or None, optional
+    maxiters : int or None
         Maximum number of sigma-clipping iterations to perform
 
     Returns
     -------
-    bkg_model : JWST data model
-        background data model
+    bkg_model : ImageModel
+        Background data model
 
-    result : JWST data model
-        background-subtracted target data model
-
+    result : ImageModel
+        Background-subtracted target data model
     """
-
     # Compute the average of the background images associated with
     # the target exposure
-    bkg_model = average_background(input_model,
-                                   bkg_list,
-                                   sigma,
-                                   maxiters,
-                                   )
+    bkg_model = average_background(
+        input_model,
+        bkg_list,
+        sigma,
+        maxiters,
+    )
 
     # Subtract the average background from the member
-    log.info('Subtracting avg bkg from {}'.format(input_model.meta.filename))
+    log.info(f"Subtracting avg bkg from {input_model.meta.filename}")
 
     result = subtract_images.subtract(input_model, bkg_model)
 
@@ -176,16 +218,17 @@ def background_sub(input_model, bkg_list, sigma, maxiters):
 def average_background(input_model, bkg_list, sigma, maxiters):
     """
     Average multiple background exposures into a combined data model.
+
     Processes backgrounds from various DataModel types, including those
     having 2D (rate) or 3D (rateints) backgrounds.
 
-    Parameters:
-    -----------
-    input_model : JWST data model
-        input target exposure data model
+    Parameters
+    ----------
+    input_model : ImageModel
+        Input target exposure data model
 
-    bkg_list : filename list
-        List of background exposure file names
+    bkg_list : list
+        File name list of background exposures
 
     sigma : float, optional
         Number of standard deviations to use for both the lower
@@ -194,12 +237,11 @@ def average_background(input_model, bkg_list, sigma, maxiters):
     maxiters : int or None, optional
         Maximum number of sigma-clipping iterations to perform
 
-    Returns:
-    --------
-    avg_bkg : data model
+    Returns
+    -------
+    avg_bkg : ImageModel
         The averaged background exposure
     """
-
     # Determine the dimensionality of the input file
     bkg_dim = len(input_model.data.shape)
     image_shape = input_model.data.shape[-2:]
@@ -208,7 +250,7 @@ def average_background(input_model, bkg_list, sigma, maxiters):
 
     avg_bkg = datamodels.ImageModel(image_shape)
     num_bkg = len(bkg_list)
-    cdata = np.zeros(((num_bkg,) + image_shape))
+    cdata = np.zeros((num_bkg,) + image_shape)
     cerr = cdata.copy()
 
     if bkg_dim == 3:
@@ -216,14 +258,14 @@ def average_background(input_model, bkg_list, sigma, maxiters):
 
     # Loop over the images to be used as background
     for i, bkg_file in enumerate(bkg_list):
-        log.info(f'Accumulate bkg from {bkg_file}')
+        log.info(f"Accumulate bkg from {bkg_file}")
 
         bkg_array = ImageSubsetArray(bkg_file)
 
         if not bkg_array.overlaps(im_array):
             # We don't overlap, so put in a bunch of NaNs so sigma-clip
             # isn't affected and move on
-            log.debug(f'{bkg_file} does not overlap input image')
+            log.debug(f"{bkg_file} does not overlap input image")
             cdata[i] = np.ones(image_shape) * np.nan
             cerr[i] = np.ones(image_shape) * np.nan
             continue
@@ -240,7 +282,9 @@ def average_background(input_model, bkg_list, sigma, maxiters):
             # Sigma clip the bkg model's data and err along the integration axis
             with warnings.catch_warnings():
                 # clipping NaNs and infs is the expected behavior
-                warnings.filterwarnings("ignore", category=AstropyUserWarning, message=".*automatically clipped.*")
+                warnings.filterwarnings(
+                    "ignore", category=AstropyUserWarning, message=".*automatically clipped.*"
+                )
                 sc_bkg_data = sigma_clip(bkg_data, sigma=sigma, maxiters=maxiters, axis=0)
                 sc_bkg_err = sigma_clip(bkg_err * bkg_err, sigma=sigma, maxiters=maxiters, axis=0)
 
@@ -254,8 +298,12 @@ def average_background(input_model, bkg_list, sigma, maxiters):
             avg_bkg.dq = np.bitwise_or(avg_bkg.dq, accum_dq_arr)
 
     # Clip the background data
-    log.debug('clip with sigma={} maxiters={}'.format(sigma, maxiters))
-    mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
+    log.debug(f"clip with sigma={sigma} maxiters={maxiters}")
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=AstropyUserWarning, message=".*automatically clipped.*"
+        )
+        mdata = sigma_clip(cdata, sigma=sigma, maxiters=maxiters, axis=0)
 
     # Compute the mean of the non-clipped values
     avg_bkg.data = mdata.mean(axis=0).data

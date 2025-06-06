@@ -1,7 +1,10 @@
 """
 Unit tests for background subtraction
 """
+import warnings
+
 import pytest
+from astropy.utils.exceptions import AstropyUserWarning
 from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels

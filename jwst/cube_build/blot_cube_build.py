@@ -1,23 +1,23 @@
-""" Main module for blotting sky cube back to detector space
-"""
 import numpy as np
 import logging
 
 from jwst.datamodels import ModelContainer
-
 from ..assign_wcs import nirspec
 from gwcs import wcstools
 from jwst.assign_wcs.util import in_ifu_slice
 from . import instrument_defaults
 from .blot_median import blot_wrapper  # c extension
+
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-class CubeBlot():
+class CubeBlot:
+    """Main module for blotting a sky cube back to detector space."""
 
     def __init__(self, median_model, input_models):
-        """Class Blot holds the main variables for blotting sky cube to detector
+        """
+        Initialize main variables for blotting a sky cube to detector space.
 
         Information is pulled out of the median sky cube created by a previous
         run of cube_build in single mode and stored in the ClassBlot.These
@@ -26,19 +26,14 @@ class CubeBlot():
         data (instrument, channel, band, grating or filter).
 
         Parameters
-        ---------
-        median_model: ifucube model
+        ----------
+        median_model : IFUCubeModel
            The median input sky cube is created from a median stack of all the
            individual input_models mapped to the full IFU cube imprint on the
            sky.
-        input_models: data model
+        input_models : ModelContainer
            The input models used to create the median sky cube.
-
-        Returns
-        -------
-        CubeBlot class initialized
         """
-
         # Pull out the needed information from the Median IFUCube
         self.median_skycube = median_model
         self.instrument = median_model.meta.instrument.name
@@ -51,13 +46,13 @@ class CubeBlot():
         self.par_median_select1 = None
         self.par_median_select2 = None
 
-        if self.instrument == 'MIRI':
+        if self.instrument == "MIRI":
             self.channel = median_model.meta.instrument.channel
             self.subchannel = median_model.meta.instrument.band.lower()
             self.par_median_select1 = self.channel
             self.par_median_select2 = self.subchannel
 
-        elif self.instrument == 'NIRSPEC':
+        elif self.instrument == "NIRSPEC":
             self.grating = median_model.meta.instrument.grating
             self.filter = median_model.meta.instrument.filter
             self.par_median_select1 = self.grating
@@ -65,15 +60,16 @@ class CubeBlot():
         # set up x,y,z of Median Cube
         # Median cube should have linear wavelength
         xcube, ycube, zcube = wcstools.grid_from_bounding_box(
-            self.median_skycube.meta.wcs.bounding_box,
-            step=(1, 1, 1))
+            self.median_skycube.meta.wcs.bounding_box, step=(1, 1, 1)
+        )
 
-        # using wcs of ifu cube determine ra,dec,lambda
-        self.cube_ra, self.cube_dec, self.cube_wave = \
-            self.median_skycube.meta.wcs(xcube + 1, ycube + 1, zcube + 1)
+        # using wcs of ifu cube determine ra, dec, lambda
+        self.cube_ra, self.cube_dec, self.cube_wave = self.median_skycube.meta.wcs(
+            xcube + 1, ycube + 1, zcube + 1
+        )
 
         # pull out flux from the median sky cube that matches with
-        # cube_ra,dec,wave
+        # cube_ra, dec, wave
         self.cube_flux = self.median_skycube.data
 
         # remove all the nan values - just in case
@@ -93,11 +89,11 @@ class CubeBlot():
         self.input_list_number = []
 
         for icount, model in enumerate(input_models):
-            if self.instrument == 'MIRI':
+            if self.instrument == "MIRI":
                 par1 = model.meta.instrument.channel
                 par2 = model.meta.instrument.band.lower()
                 found2 = par2.find(self.par_median_select2)
-            if self.instrument == 'NIRSPEC':
+            if self.instrument == "NIRSPEC":
                 par1 = model.meta.instrument.grating
                 par2 = model.meta.instrument.grating
                 found2 = 1
@@ -106,43 +102,57 @@ class CubeBlot():
             if found1 > -1 and found2 > -1:
                 self.input_models.append(model)
                 self.input_list_number.append(icount)
+
     # **********************************************************************
 
     def blot_info(self):
-        """ Prints the basic parameters of the blot image and median sky cube
-        """
-        log.info('Information on Blotting')
-        log.info('Working with instrument %s', self.instrument)
-        log.info('Shape of sky cube %f %f %f',
-                 self.median_skycube.data.shape[2],
-                 self.median_skycube.data.shape[1],
-                 self.median_skycube.data.shape[0])
+        """Print the basic parameters of the blot image and median sky cube."""
+        log.info("Information on Blotting")
+        log.info("Working with instrument %s", self.instrument)
+        log.info(
+            "Shape of sky cube %f %f %f",
+            self.median_skycube.data.shape[2],
+            self.median_skycube.data.shape[1],
+            self.median_skycube.data.shape[0],
+        )
 
-        if self.instrument == 'MIRI':
-            log.info('Channel %s', self.channel)
-            log.info('Sub-channel %s', self.subchannel)
+        if self.instrument == "MIRI":
+            log.info("Channel %s", self.channel)
+            log.info("Sub-channel %s", self.subchannel)
 
-        elif self.instrument == 'NIRSPEC':
-            log.info('Grating %s', self.grating)
-            log.info('Filter %s', self.filter)
+        elif self.instrument == "NIRSPEC":
+            log.info("Grating %s", self.grating)
+            log.info("Filter %s", self.filter)
 
     # ***********************************************************************
 
     def blot_images(self):
-        if self.instrument == 'MIRI':
+        """
+        Call the instrument specific blotting code.
+
+        Returns
+        -------
+        blotmodels : ModelContainer
+           Blotted IFU image models
+        input_list_number : list of int
+           List containing index of blot model in input_models
+        """
+        if self.instrument == "MIRI":
             blotmodels = self.blot_images_miri()
-        elif self.instrument == 'NIRSPEC':
+        elif self.instrument == "NIRSPEC":
             blotmodels = self.blot_images_nirspec()
         return blotmodels, self.input_list_number
+
     # ************************************************************************
 
     def blot_images_miri(self):
-        """ Core blotting routine for MIRI
+        """
+        Core blotting routine for MIRI.
 
         This is the main routine for blotting the MIRI median sky cube back to
         the detector space and creating a blotting image for each input model
-        1. Loop over every data model to be blotted and find ra,dec,wavelength
-           for every pixel in a valid slice on the detector.
+        1. Loop over every data model to be blotted and find ra, dec and
+           wavelength for every pixel in a valid slice on the detector.
         2. Loop over every input model and using the inverse (backwards) transform
            convert the median sky cube values ra, dec, lambda to the blotted
            x, y detector value (x_cube, y_cube).
@@ -150,6 +160,11 @@ class CubeBlot():
            the x, y detector values that fall within the roi region.
            The blotted flux  = the weighted flux, where the weight is based on
            distance between the center of the blotted pixel and the detector pixel.
+
+        Returns
+        -------
+        blot_models : ModelContainer
+            Container of blotted IFUImage models
         """
         blot_models = ModelContainer()
         instrument_info = instrument_defaults.InstrumentInfo()
@@ -169,8 +184,7 @@ class CubeBlot():
             ydet, xdet = np.mgrid[:ysize, :xsize]
             ydet = ydet.flatten()
             xdet = xdet.flatten()
-            self.ycenter_grid, self.xcenter_grid = np.mgrid[0:ysize,
-                                                            0:xsize]
+            self.ycenter_grid, self.xcenter_grid = np.mgrid[0:ysize, 0:xsize]
 
             xsize2 = xend - xstart + 1
             xcenter = np.arange(xsize2) + xstart
@@ -180,23 +194,23 @@ class CubeBlot():
             xdet = xdet[valid_channel]
             ydet = ydet[valid_channel]
             # cube spaxel ra,dec values --> x, y on detector
-            x_cube, y_cube = model.meta.wcs.backward_transform(self.cube_ra,
-                                                               self.cube_dec,
-                                                               self.cube_wave)
+            x_cube, y_cube = model.meta.wcs.backward_transform(
+                self.cube_ra, self.cube_dec, self.cube_wave
+            )
             x_cube = np.ndarray.flatten(x_cube)
             y_cube = np.ndarray.flatten(y_cube)
             flux_cube = np.ndarray.flatten(self.cube_flux)
 
             valid = ~np.isnan(y_cube)
             valid_channel = np.logical_and(x_cube >= xstart, x_cube <= xend)
-            valid_flux = (flux_cube != 0)
+            valid_flux = flux_cube != 0
 
             fuse = np.where(valid & valid_channel & valid_flux)
             x_cube = x_cube[fuse]
             y_cube = y_cube[fuse]
             flux_cube = flux_cube[fuse]
 
-            log.info('Blotting back to %s', model.meta.filename)
+            log.info("Blotting back to %s", model.meta.filename)
             # ______________________________________________________________________________
             # blot_wrapper is a c extension that finds:
             # the overlapping median cube spaxels with the detector pixels
@@ -207,9 +221,9 @@ class CubeBlot():
             roi_det = 1.0  # Just large enough that we don't get holes
 
             # set up c wrapper for blotting
-            result = blot_wrapper(roi_det, xsize, ysize, xstart, xsize2,
-                                  xcenter, ycenter,
-                                  x_cube, y_cube, flux_cube)
+            result = blot_wrapper(
+                roi_det, xsize, ysize, xstart, xsize2, xcenter, ycenter, x_cube, y_cube, flux_cube
+            )
             blot_flux, blot_weight = result
             igood = np.where(blot_weight > 0)
             blot_flux[igood] = blot_flux[igood] / blot_weight[igood]
@@ -222,7 +236,8 @@ class CubeBlot():
     # ************************************************************************
 
     def blot_images_nirspec(self):
-        """ Core blotting routine for NIRSPEC
+        """
+        Core blotting routine for NIRSPEC.
 
         This is the main routine for blotting the NIRSPEC median sky cube back to
         the detector space and creating a blotting image for each input model.
@@ -243,6 +258,10 @@ class CubeBlot():
            determines the overlap of the blotted x,y values with a regular grid setup
            in the detector plane which is the blotted image.
 
+        Returns
+        -------
+        blot_models : ModelContainer
+            Container of blotted IFUImage models
         """
         blot_models = ModelContainer()
 
@@ -261,18 +280,15 @@ class CubeBlot():
 
             # for NIRSPEC wcs information accessed separately for each slice
             nslices = 30
-            log.info('Blotting 30 slices on NIRSPEC detector')
+            log.info("Blotting 30 slices on NIRSPEC detector")
             roi_det = 1.0  # Just large enough that we don't get holes
-
-            wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(model, np.arange(nslices))
 
             for ii in range(nslices):
                 # for each slice pull out the blotted values that actually fall on the slice region
                 # use the bounding box of each slice to determine the slice limits
-                slice_wcs = nirspec._nrs_wcs_set_input_lite(model, wcsobj, ii,
-                                                           [tr1, tr2[ii], tr3[ii]])
-                slicer2world = slice_wcs.get_transform('slicer','world')
-                detector2slicer = slice_wcs.get_transform('detector','slicer')
+                slice_wcs = nirspec.nrs_wcs_set_input(model, ii)
+                slicer2world = slice_wcs.get_transform("slicer", "world")
+                detector2slicer = slice_wcs.get_transform("detector", "slicer")
 
                 # find some rough limits on ra,dec, lambda using the x,y -> ra,dec,lambda
                 x, y = wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
@@ -297,7 +313,7 @@ class CubeBlot():
                 use1 = np.logical_and(self.cube_ra >= ramin, self.cube_ra <= ramax)
                 use2 = np.logical_and(self.cube_dec >= decmin, self.cube_dec <= decmax)
                 use3 = np.logical_and(self.cube_wave >= lam_min, self.cube_wave <= lam_max)
-                use = np.logical_and(np.logical_and(use1, use2),use3)
+                use = np.logical_and(np.logical_and(use1, use2), use3)
 
                 ra_use = self.cube_ra[use]
                 dec_use = self.cube_dec[use]
@@ -305,10 +321,11 @@ class CubeBlot():
                 flux_use = self.cube_flux[use]
 
                 # get the indices of elements on the slice
-                onslice_ind = in_ifu_slice(slice_wcs,ra_use,dec_use,wave_use)
+                onslice_ind = in_ifu_slice(slice_wcs, ra_use, dec_use, wave_use)
                 slx, sly, sllam = slicer2world.inverse(ra_use, dec_use, wave_use)
-                xslice,yslice = detector2slicer.inverse(slx[onslice_ind], sly[onslice_ind],
-                                                        sllam[onslice_ind])
+                xslice, yslice = detector2slicer.inverse(
+                    slx[onslice_ind], sly[onslice_ind], sllam[onslice_ind]
+                )
                 # pull out region for slice
                 fluxslice = flux_use[onslice_ind]
 
@@ -317,7 +334,7 @@ class CubeBlot():
                 xlimit, ylimit = slice_wcs.bounding_box
                 xuse = np.logical_and(xslice >= xlimit[0], xslice <= xlimit[1])
                 yuse = np.logical_and(yslice >= ylimit[0], yslice <= ylimit[1])
-                use = np.logical_and(xuse,yuse)
+                use = np.logical_and(xuse, yuse)
                 xuse = xslice[use]
                 yuse = yslice[use]
                 flux_use = fluxslice[use]
@@ -336,9 +353,18 @@ class CubeBlot():
             xstart = 0
             xsize2 = blot_xsize
 
-            result = blot_wrapper(roi_det, blot_xsize, blot_ysize, xstart, xsize2,
-                                  xcenter, ycenter,
-                                  x_total, y_total, flux_total)
+            result = blot_wrapper(
+                roi_det,
+                blot_xsize,
+                blot_ysize,
+                xstart,
+                xsize2,
+                xcenter,
+                ycenter,
+                x_total,
+                y_total,
+                flux_total,
+            )
             blot_flux_slice, blot_weight_slice = result
             blot_flux = blot_flux + blot_flux_slice
             blot_weight = blot_weight + blot_weight_slice

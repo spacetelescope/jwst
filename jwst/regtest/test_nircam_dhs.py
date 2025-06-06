@@ -1,11 +1,14 @@
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.stpipe import Step
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope="module")
-def run_detector1pipeline(rtdata_module):
+def run_detector1pipeline(rtdata_module, resource_tracker):
     """Run calwebb_detector1 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.get_data("nircam/dhs/sub164stripe4_dhs_mock_dark.fits")
@@ -23,10 +26,14 @@ def run_detector1pipeline(rtdata_module):
             "--steps.jump.save_results=True",
             "--steps.jump.rejection_threshold=50.0",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_det1(log_tracked_resources, run_detector1pipeline):
+    log_tracked_resources()
+
+
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
                                     "refpix", "linearity",
                                     "dark_current", "jump", "rate", "rateints"])
@@ -38,5 +45,7 @@ def test_nircam_dhs_detector1(run_detector1pipeline, rtdata_module, fitsdiff_def
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_dhs/{output}")
 
+    # Ignore the custom dark because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_DARK')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

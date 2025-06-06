@@ -1,12 +1,11 @@
+import warnings
+
 import pytest
-
-from astropy.io.fits.diff import FITSDiff
 import numpy as np
-
 import stdatamodels.jwst.datamodels as dm
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.master_background import MasterBackgroundMosStep, MasterBackgroundStep
-
 from jwst.regtest import regtestdata as rt
 
 pytestmark = pytest.mark.bigdata

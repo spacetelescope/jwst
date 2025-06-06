@@ -1,26 +1,31 @@
-#
-#  Module for applying flat fielding
-#
+"""Module for applying flat field corrections."""
 
 import logging
 import math
+import warnings
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from ..lib import pipe_utils, reffile_utils, wcs_utils
-from ..assign_wcs import nirspec
+from jwst.lib import pipe_utils, reffile_utils, wcs_utils
+from jwst.assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-MICRONS_100 = 1.e-4  # 100 microns, in meters
+MICRONS_100 = 1.0e-4  # 100 microns, in meters
 
-# This is for NIRSpec.
+# NIRSpec exposure type categories
 FIXED_SLIT_TYPES = ["NRS_LAMP", "NRS_AUTOWAVE", "NRS_BRIGHTOBJ", "NRS_FIXEDSLIT"]
-NIRSPEC_SPECTRAL_EXPOSURES = ['NRS_AUTOWAVE', 'NRS_BRIGHTOBJ', 'NRS_FIXEDSLIT', 'NRS_IFU', 'NRS_LAMP', 'NRS_MSASPEC']
+NIRSPEC_SPECTRAL_EXPOSURES = [
+    "NRS_AUTOWAVE",
+    "NRS_BRIGHTOBJ",
+    "NRS_FIXEDSLIT",
+    "NRS_IFU",
+    "NRS_LAMP",
+    "NRS_MSASPEC",
+]
 
 # Dispersion direction, predominantly horizontal or vertical.  These values
 # are to be compared with keyword DISPAXIS from the input header.
@@ -28,63 +33,68 @@ HORIZONTAL = 1
 VERTICAL = 2
 
 
-def do_correction(input_model,
-                  flat=None, fflat=None, sflat=None, dflat=None, user_supplied_flat=None,
-                  inverse=False):
-    """Flat-field a JWST data model using a flat-field model
+def do_correction(
+    input_model,
+    flat=None,
+    fflat=None,
+    sflat=None,
+    dflat=None,
+    user_supplied_flat=None,
+    inverse=False,
+):
+    """
+    Flat-field a JWST data model using a flat-field model.
 
     Parameters
     ----------
-    input_model : JWST data model
+    input_model : DataModel
         Input science data model to be flat-fielded.
-
-    flat : JWST data model, or None
+    flat : DataModel or None, optional
         Data model containing flat-field for all instruments other than
         NIRSpec spectrographic data.
-
-    fflat : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    fflat : NirspecFlatModel, NirspecQuadFlatModel, or None, optional
         Flat field for the fore optics.  Used only for NIRSpec data.
-
-    sflat : ~jwst.datamodels.NirspecFlatModel or None
+    sflat : NirspecFlatModel or None, optional
         Flat field for the spectrograph.  Used only for NIRSpec data.
-
-    dflat : ~jwst.datamodels.NirspecFlatModel or None
+    dflat : NirspecFlatModel or None, optional
         Flat field for the detector.  Used only for NIRSpec data.
-
-    user_supplied_flat : ~jwst.datamodels.JwstDataModel
+    user_supplied_flat : DataModel or None, optional
         If supplied, all other reference flats and flat creation are
         ignored in favor of the specified flat.
-
-    inverse : boolean
+    inverse : bool, optional
         Invert the math operations used to apply the flat field.
 
     Returns
     -------
-    output_model : data model
+    output_model : DataModel
         The data model for the flat-fielded science data.
-
-    flat_applied : ~jwst.datamodels.MultiSlitModel, ~jwst.datamodels.ImageModel
+    flat_applied : MultiSlitModel, ImageModel
         Data model containing the interpolated flat fields (NIRSpec data only), or
         just the input flat.
     """
-
     # Initialize the output model as a copy of the input
     output_model = input_model.copy()
 
     # NIRSpec spectrographic data are processed differently from other
     # types of data (including NIRSpec imaging).  The test on flat is
     # needed because NIRSpec imaging data are processed by do_flat_field().
-    if ((input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES) and
-            (input_model.meta.instrument.lamp_mode != 'IMAGE')):
-        flat_applied = do_nirspec_flat_field(output_model, fflat, sflat, dflat,
-                                             user_supplied_flat=user_supplied_flat,
-                                             inverse=inverse)
+    if (input_model.meta.exposure.type in NIRSPEC_SPECTRAL_EXPOSURES) and (
+        input_model.meta.instrument.lamp_mode != "IMAGE"
+    ):
+        flat_applied = do_nirspec_flat_field(
+            output_model,
+            fflat,
+            sflat,
+            dflat,
+            user_supplied_flat=user_supplied_flat,
+            inverse=inverse,
+        )
     else:
         if user_supplied_flat is not None:
             flat = user_supplied_flat
         if flat is None:
             log.warning("No flat found or supplied; step will be skipped.")
-            output_model.meta.cal_step.flat_field = 'SKIPPED'
+            output_model.meta.cal_step.flat_field = "SKIPPED"
             flat_applied = None
         else:
             do_flat_field(output_model, flat, inverse=inverse)
@@ -93,22 +103,21 @@ def do_correction(input_model,
     return output_model, flat_applied
 
 
-#
-# These functions are for non-NIRSpec flat fielding, or for NIRSpec imaging.
-#
-
 def do_flat_field(output_model, flat_model, inverse=False):
-    """Apply flat-fielding for non-NIRSpec modes, updating the output model.
+    """
+    Apply image-based flat-fielding, updating the output model.
+
+    This method uses a simple flat field image to correct the input.
+    It is used for all exposure types except NIRSpec spectroscopic
+    modes, which require a composite flat field.
 
     Parameters
     ----------
-    output_model : JWST data model
-        flat-fielded input science data model, modified in-place
-
-    flat_model : JWST data model
-        data model containing flat-field
-
-    inverse : boolean
+    output_model : DataModel
+        Flat-fielded input science data model, modified in-place.
+    flat_model : DataModel
+        Data model containing flat-field.
+    inverse : bool, optional
         Invert the math operations used to apply the flat field.
     """
     if output_model.meta.instrument.name == "NIRSPEC":
@@ -119,53 +128,48 @@ def do_flat_field(output_model, flat_model, inverse=False):
     any_updated = False  # will set True if any flats applied
 
     # Check to see if flat data array is smaller than science data
-    if ((output_model.data.shape[-1] > flat_model.data.shape[-1]) or
-            (output_model.data.shape[-2] > flat_model.data.shape[-2])):
-        log.warning('Reference data array is smaller than science data')
-        log.warning('Step will be skipped')
-
-    # Apply flat to MultiSlits
+    if (output_model.data.shape[-1] > flat_model.data.shape[-1]) or (
+        output_model.data.shape[-2] > flat_model.data.shape[-2]
+    ):
+        log.warning("Reference data array is smaller than science data")
+        log.warning("Step will be skipped")
     elif isinstance(output_model, datamodels.MultiSlitModel):
-
         # Apply flat to each slit contained in the input
         for slit in output_model.slits:
-            log.debug('Applying flat to slit %s' % (slit.name))
+            log.debug("Applying flat to slit %s", slit.name)
             apply_flat_field(slit, flat_model, inverse=inverse)
             any_updated = True
-
-    # Apply flat to all other models
     else:
+        # Apply flat to all other models
         apply_flat_field(output_model, flat_model, inverse=inverse)
         any_updated = True
 
     if any_updated:
-        output_model.meta.cal_step.flat_field = 'COMPLETE'
+        output_model.meta.cal_step.flat_field = "COMPLETE"
     else:
-        output_model.meta.cal_step.flat_field = 'SKIPPED'
+        output_model.meta.cal_step.flat_field = "SKIPPED"
 
 
 def apply_flat_field(science, flat, inverse=False):
-    """Flat field the data and error arrays.
+    """
+    Flat field the data and update error and variance arrays.
 
-    Extended summary
-    ----------------
-    The science data and error arrays will be divided by the flat field.
-    The data quality array will be updated based on bad pixels in flat
-    field arrays. Applies portion of flat field corresponding to science
+    The science data is divided by the flat field.
+    The data quality array is updated based on bad pixels in flat
+    field arrays. Error and variance arrays are propagated appropriately.
+
+    Applies the portion of the flat field corresponding to the science
     image subarray.
 
     Parameters
     ----------
-    science : JWST data model
-        input science data model
-
-    flat : JWST data model
-        flat field data model
-
-    inverse : boolean
+    science : DataModel
+        Input science data model.
+    flat : DataModel
+        Flat field data model.
+    inverse : bool, optional
         Invert the math operations used to apply the flat field.
     """
-
     # Extract subarray from reference data, if necessary
     if reffile_utils.ref_matches_sci(science, flat):
         flat_data = flat.data
@@ -181,23 +185,23 @@ def apply_flat_field(science, flat, inverse=False):
 
     # Find pixels in the flat that have a value of NaN and set
     # DQ = DO_NOT_USE + NO_FLAT_FIELD
-    bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
+    bad_flag = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NO_FLAT_FIELD"]
 
     flat_nan = np.isnan(flat_data)
     flat_dq[flat_nan] = np.bitwise_or(flat_dq[flat_nan], bad_flag)
 
     # Find pixels in the flat that have a value of zero, and set
     # DQ = DO_NOT_USE + NO_FLAT_FIELD
-    flat_zero = np.where(flat_data == 0.)
+    flat_zero = np.where(flat_data == 0.0)
     flat_dq[flat_zero] = np.bitwise_or(flat_dq[flat_zero], bad_flag)
 
     # Find pixels in the flat that have the DQ bit for NO_FLAT_FIELD set
     # Set the DO_NOT_USE flag for such pixels
-    flat_noflat = np.where(np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD']))
-    flat_dq[flat_noflat] = np.bitwise_or(flat_dq[flat_noflat], dqflags.pixel['DO_NOT_USE'])
+    flat_noflat = np.where(np.bitwise_and(flat_dq, dqflags.pixel["NO_FLAT_FIELD"]))
+    flat_dq[flat_noflat] = np.bitwise_or(flat_dq[flat_noflat], dqflags.pixel["DO_NOT_USE"])
 
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
-    flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
+    flat_bad = np.bitwise_and(flat_dq, dqflags.pixel["DO_NOT_USE"])
 
     # Reset the flat value of all bad pixels to 1.0, so that no
     # correction is made
@@ -205,23 +209,29 @@ def apply_flat_field(science, flat, inverse=False):
 
     # Now let's apply the correction to science data and error arrays.  Rely
     # on array broadcasting to handle the cubes
+    flat_data_squared = flat_data * flat_data
     if not inverse:
         science.data /= flat_data
+        # NOTE: Re-arranging var_flat math will cause some NIRISS SOSS
+        # regression tests to fail with floating point differences.
+        science.var_flat = science.data**2 / flat_data_squared * flat_err**2
     else:
         science.data *= flat_data
+        # Var_flat does not exist before flatfield step - set it to zero.
+        science.var_flat = np.zeros_like(science.data)
 
     # Update the variances using BASELINE algorithm.  For guider data, it has
     # not gone through ramp fitting so there is no Poisson noise or readnoise
     if not isinstance(science, datamodels.GuiderCalModel):
-        flat_data_squared = flat_data ** 2
-        science.var_poisson /= flat_data_squared
-        science.var_rnoise /= flat_data_squared
-        science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
-        science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
-    else:
-        flat_data_squared = flat_data ** 2
-        science.var_flat = science.data ** 2 / flat_data_squared * flat_err ** 2
-
+        if not inverse:
+            science.var_poisson /= flat_data_squared
+            science.var_rnoise /= flat_data_squared
+            science.err = np.sqrt(science.var_poisson + science.var_rnoise + science.var_flat)
+        else:
+            science.var_poisson *= flat_data_squared
+            science.var_rnoise *= flat_data_squared
+            science.err = np.sqrt(science.var_poisson + science.var_rnoise)
+    elif not inverse:
         # Set the output ERR to be the combined input ERR plus flatfield ERR, summed in quadrature
         science.err = np.sqrt(science.err**2 + science.var_flat)
 
@@ -232,45 +242,39 @@ def apply_flat_field(science, flat, inverse=False):
     pipe_utils.match_nans_and_flags(science)
 
 
-#
-# The following functions are for NIRSpec spectrographic data.
-#
+def do_nirspec_flat_field(
+    output_model, f_flat_model, s_flat_model, d_flat_model, user_supplied_flat=None, inverse=False
+):
+    """
+    Apply flat-fielding for NIRSpec spectroscopic data, updating in-place.
 
+    Calls one of 3 functions depending on whether the data is:
 
-def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model,
-                          user_supplied_flat=None, inverse=False):
-    """Apply flat-fielding for NIRSpec data, updating in-place.
-
-    Calls one of 3 functions depending on whether the data is 1) NIRSpec IFU,
-    2) NIRSpec BRIGHTOBJ or 3) NIRSpec MSA or Fixed-slit.
+    1. NIRSpec IFU,
+    2. NIRSpec BRIGHTOBJ, or
+    3. NIRSpec MSA or Fixed Slit.
 
     Parameters
     ----------
-    output_model : JWST data model
+    output_model : DataModel
         Science data model, modified (flat fielded) in-place.
-
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : NirspecFlatModel, NirspecQuadFlatModel, or None
         Flat field for the fore optics.
-
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : NirspecFlatModel or None
         Flat field for the spectrograph.
-
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : NirspecFlatModel or None
         Flat field for the detector.
-
-    user_supplied_flat : ~jwst.datamodels.JwstDataModel or None
+    user_supplied_flat : DataModel or None, optional
         If provided, override all other calculated or reference-file-retrieved
         flat information and use this data.
-
-    inverse : boolean
+    inverse : bool, optional
         Invert the math operations used to apply the flat field.
 
     Returns
     -------
-    ~jwst.datamodels.MultiSlitModel or ~jwst.datamodels.ImageModel
+    result : MultiSlitModel or ImageModel
         The interpolated flat field(s).
     """
-
     log.debug("Flat field correction for NIRSpec spectrographic data.")
 
     exposure_type = output_model.meta.exposure.type
@@ -287,69 +291,89 @@ def do_nirspec_flat_field(output_model, f_flat_model, s_flat_model, d_flat_model
 
     if exposure_type == "NRS_BRIGHTOBJ":
         if not isinstance(output_model, datamodels.SlitModel):
-            log.error("NIRSpec BRIGHTOBJ data is not a SlitModel; "
-                      "don't know how to process it.")
-            raise RuntimeError("Input is {}; expected SlitModel"
-                               .format(type(output_model)))
-        return nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
-                                 user_supplied_flat=user_supplied_flat, inverse=inverse)
+            log.error("NIRSpec BRIGHTOBJ data is not a SlitModel; don't know how to process it.")
+            raise TypeError(f"Input is {type(output_model)}; expected SlitModel")
+        return nirspec_brightobj(
+            output_model,
+            f_flat_model,
+            s_flat_model,
+            d_flat_model,
+            dispaxis,
+            user_supplied_flat=user_supplied_flat,
+            inverse=inverse,
+        )
 
     # We expect NIRSpec IFU data to be an IFUImageModel, but it's conceivable
     # that the slices have been copied out into a MultiSlitModel, so
     # check for that case.
     if not hasattr(output_model, "slits"):
         if exposure_type == "NRS_IFU" or (
-                exposure_type in ["NRS_AUTOWAVE", "NRS_LAMP"] and output_model.meta.instrument.lamp_mode == 'IFU'):
+            exposure_type in ["NRS_AUTOWAVE", "NRS_LAMP"]
+            and output_model.meta.instrument.lamp_mode == "IFU"
+        ):
             if not isinstance(output_model, datamodels.IFUImageModel):
-                log.error("NIRSpec IFU data is not an IFUImageModel; "
-                          "don't know how to process it.")
-                raise RuntimeError("Input is {}; expected IFUImageModel"
-                                   .format(type(output_model)))
-            return nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
-                               user_supplied_flat=user_supplied_flat, inverse=inverse)
+                log.error("NIRSpec IFU data is not an IFUImageModel; don't know how to process it.")
+                raise TypeError(f"Input is {type(output_model)}; expected IFUImageModel")
+            return nirspec_ifu(
+                output_model,
+                f_flat_model,
+                s_flat_model,
+                d_flat_model,
+                dispaxis,
+                user_supplied_flat=user_supplied_flat,
+                inverse=inverse,
+            )
         else:
-            raise RuntimeError(f'No flat field algorithm exists for handling data {output_model}')
+            raise TypeError(f"No flat field algorithm exists for handling data {output_model}")
 
     # For datamodels with slits, MSA and Fixed slit modes:
     else:
-        return nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
-                              user_supplied_flat=user_supplied_flat, inverse=inverse)
+        return nirspec_fs_msa(
+            output_model,
+            f_flat_model,
+            s_flat_model,
+            d_flat_model,
+            dispaxis,
+            user_supplied_flat=user_supplied_flat,
+            inverse=inverse,
+        )
 
 
-def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
-                   user_supplied_flat=None, inverse=False):
-    """Apply flat-fielding for NIRSpec fixed slit and MSA data, in-place
+def nirspec_fs_msa(
+    output_model,
+    f_flat_model,
+    s_flat_model,
+    d_flat_model,
+    dispaxis,
+    user_supplied_flat=None,
+    inverse=False,
+):
+    """
+    Apply flat-fielding for NIRSpec fixed slit and MSA data, in-place.
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.MultiSlitModel`
+    output_model : MultiSlitModel
         MultiSlitModel, modified (flat fielded) slit-by-slit, in-place.
-
-    f_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
+    f_flat_model : NirspecFlatModel or None
         Flat field for the fore optics.
-
-    s_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
+    s_flat_model : NirspecFlatModel or None
         Flat field for the spectrograph.
-
-    d_flat_model : `~jwst.datamodels.NirspecFlatModel` or None
+    d_flat_model : NirspecFlatModel or None
         Flat field for the detector.
-
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
-
-    user_supplied_flat : ~jwst.datamodels.JwstDataModel or None
+    user_supplied_flat : DataModel or None, optional
         If provided, override all other calculated or reference-file-retrieved
         flat information and use this data.
-
-    inverse : boolean
+    inverse : bool, optional
         Invert the math operations used to apply the flat field.
 
     Returns
     -------
-    interpolated_flats: `~jwst.datamodels.MultiSlitModel`
+    interpolated_flats : MultiSlitModel
         The interpolated flat field, one for each slit.
     """
-
     exposure_type = output_model.meta.exposure.type
 
     # Create a list to hold the list of slits.  This will eventually be used
@@ -357,7 +381,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
     # postpone validation until the end, which is faster.
     flat_slits = []
 
-    # A flag to make sure at least one slit was flatfielded, so we can set
+    # A flag to make sure at least one slit was flat fielded, so we can set
     # "COMPLETE", otherwise we set "SKIP"
     any_updated = False
 
@@ -371,9 +395,7 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         if user_supplied_flat is not None:
             slit_flat = user_supplied_flat.slits[slit_idx]
         else:
-            if (exposure_type == "NRS_FIXEDSLIT"
-                    and slit.source_type.upper() == "POINT"):
-
+            if exposure_type == "NRS_FIXEDSLIT" and slit.source_type.upper() == "POINT":
                 # For fixed-slit exposures, if this contains a point source,
                 # compute the flat-field corrections for both uniform
                 # (without wavecorr) and point
@@ -383,9 +405,15 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
                 # First compute a flat appropriate for a uniform source,
                 # which means NOT using corrected wavelengths
                 slit_flat = flat_for_nirspec_slit(
-                    slit, f_flat_model, s_flat_model, d_flat_model,
-                    dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
-                    use_wavecorr=False
+                    slit,
+                    f_flat_model,
+                    s_flat_model,
+                    d_flat_model,
+                    dispaxis,
+                    exposure_type,
+                    slit_nt,
+                    output_model.meta.subarray,
+                    use_wavecorr=False,
                 )
 
                 # Store the result for uniform source
@@ -394,9 +422,15 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
                 # Now compute a flat appropriate for a point source,
                 # which means using corrected wavelengths
                 slit_flat = flat_for_nirspec_slit(
-                    slit, f_flat_model, s_flat_model, d_flat_model,
-                    dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
-                    use_wavecorr=True
+                    slit,
+                    f_flat_model,
+                    s_flat_model,
+                    d_flat_model,
+                    dispaxis,
+                    exposure_type,
+                    slit_nt,
+                    output_model.meta.subarray,
+                    use_wavecorr=True,
                 )
 
                 # Store the result for point source; this will be
@@ -407,30 +441,40 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
                 # Build the flat for this slit the normal way, without any
                 # specification for whether we want to use corrected wavelengths
                 slit_flat = flat_for_nirspec_slit(
-                    slit, f_flat_model, s_flat_model, d_flat_model,
-                    dispaxis, exposure_type, slit_nt, output_model.meta.subarray,
-                    use_wavecorr=None
+                    slit,
+                    f_flat_model,
+                    s_flat_model,
+                    d_flat_model,
+                    dispaxis,
+                    exposure_type,
+                    slit_nt,
+                    output_model.meta.subarray,
+                    use_wavecorr=None,
                 )
-                if slit_flat is None:
-                    log.debug(f'Slit {slit} flat field could not be determined.')
-                    continue
 
             # Append the SlitDataModel to the list of slits
             flat_slits.append(slit_flat)
 
         # Now let's apply the correction to science data and error arrays.  Rely
-        # on array broadcasting to handle the cubes
+        # on array broadcasting to handle the cubes.
+        # Also update the variances using BASELINE algorithm.
+        flat_data_squared = slit_flat.data * slit_flat.data
         if not inverse:
             slit.data /= slit_flat.data
+            slit.var_poisson /= flat_data_squared
+            slit.var_rnoise /= flat_data_squared
+            # NIRSpec flats have very small values: some variance values may overflow
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "overflow encountered in square", RuntimeWarning)
+                slit.var_flat = (slit.data / slit_flat.data * slit_flat.err) ** 2
+            slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
         else:
             slit.data *= slit_flat.data
-
-        # Update the variances using BASELINE algorithm
-        flat_data_squared = slit_flat.data ** 2
-        slit.var_poisson /= flat_data_squared
-        slit.var_rnoise /= flat_data_squared
-        slit.var_flat = (slit.data / slit_flat.data * slit_flat.err) ** 2
-        slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
+            slit.var_poisson *= flat_data_squared
+            slit.var_rnoise *= flat_data_squared
+            # Var_flat does not exist before flatfield step - set it to zero.
+            slit.var_flat = np.zeros_like(slit.data)
+            slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise)
 
         # Combine the science and flat DQ arrays
         slit.dq |= slit_flat.dq
@@ -441,9 +485,9 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
         any_updated = True
 
     if any_updated:
-        output_model.meta.cal_step.flat_field = 'COMPLETE'
+        output_model.meta.cal_step.flat_field = "COMPLETE"
     else:
-        output_model.meta.cal_step.flat_field = 'SKIPPED'
+        output_model.meta.cal_step.flat_field = "SKIPPED"
 
     # Create an output model for the interpolated flat fields.
     if user_supplied_flat:
@@ -456,107 +500,118 @@ def nirspec_fs_msa(output_model, f_flat_model, s_flat_model, d_flat_model, dispa
     return interpolated_flat
 
 
-def nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
-                      user_supplied_flat=None, inverse=False):
-    """Apply flat-fielding for NIRSpec BRIGHTOBJ data, in-place
+def nirspec_brightobj(
+    output_model,
+    f_flat_model,
+    s_flat_model,
+    d_flat_model,
+    dispaxis,
+    user_supplied_flat=None,
+    inverse=False,
+):
+    """
+    Apply flat-fielding for NIRSpec BRIGHTOBJ data, in-place.
 
     Parameters
     ----------
-    output_model : JWST data model
+    output_model : DataModel
         CubeModel, modified (flat fielded) plane by plane, in-place.
-
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    f_flat_model : NirspecFlatModel or None
         Flat field for the fore optics.
-
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : NirspecFlatModel or None
         Flat field for the spectrograph.
-
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : NirspecFlatModel or None
         Flat field for the detector.
-
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
-
-    user_supplied_flat : ~jwst.datamodels.ImageModel or None
+    user_supplied_flat : ImageModel or None, optional
         A pre-computed flat to use directly. If supplied,
-        all other inputs are ignored
-
-    inverse : boolean
+        all other inputs are ignored.
+    inverse : bool, optional
         Invert the math operations used to apply the flat field.
 
     Returns
     -------
-    ~jwst.datamodels.ImageModel
+    result : ImageModel
         The interpolated flat field.
     """
-
     if user_supplied_flat is not None:
-        log.info(f'Pre-computed flat {user_supplied_flat} provided. Using the flat directly')
+        log.info(f"Pre-computed flat {user_supplied_flat} provided. Using the flat directly")
         interpolated_flat = user_supplied_flat
     else:
         interpolated_flat = flat_for_nirspec_brightobj(
             output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
         )
 
+    # Update the variances and uncertainty array using BASELINE algorithm
+    flat_data_squared = interpolated_flat.data * interpolated_flat.data
     if not inverse:
         output_model.data /= interpolated_flat.data
+        output_model.var_poisson /= flat_data_squared
+        output_model.var_rnoise /= flat_data_squared
+        # NIRSpec flats have very small values: some variance values may overflow
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "overflow encountered in square", RuntimeWarning)
+            output_model.var_flat = (
+                output_model.data / interpolated_flat.data * interpolated_flat.err
+            ) ** 2
+        output_model.err = np.sqrt(
+            output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
+        )
     else:
         output_model.data *= interpolated_flat.data
+        output_model.var_poisson *= flat_data_squared
+        output_model.var_rnoise *= flat_data_squared
+        # Var_flat does not exist before flatfield step - set it to zero.
+        output_model.var_flat = np.zeros_like(output_model.data)
+        output_model.err = np.sqrt(output_model.var_poisson + output_model.var_rnoise)
     output_model.dq |= interpolated_flat.dq
-
-    # Update the variances and uncertainty array using BASELINE algorithm
-    flat_data_squared = interpolated_flat.data ** 2
-    output_model.var_poisson /= flat_data_squared
-    output_model.var_rnoise /= flat_data_squared
-    output_model.var_flat = (output_model.data / interpolated_flat.data * interpolated_flat.err) ** 2
-    output_model.err = np.sqrt(
-        output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
-    )
 
     # Make sure all NaNs and flags match up in the output model
     pipe_utils.match_nans_and_flags(output_model)
 
-    output_model.meta.cal_step.flat_field = 'COMPLETE'
+    output_model.meta.cal_step.flat_field = "COMPLETE"
 
     return interpolated_flat
 
 
-def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis,
-                user_supplied_flat=None, inverse=False):
-    """Apply flat-fielding for NIRSpec IFU data, in-place
+def nirspec_ifu(
+    output_model,
+    f_flat_model,
+    s_flat_model,
+    d_flat_model,
+    dispaxis,
+    user_supplied_flat=None,
+    inverse=False,
+):
+    """
+    Apply flat-fielding for NIRSpec IFU data, in-place.
 
     Parameters
     ----------
-    output_model : JWST data model
+    output_model : DataModel
         Science data model, modified (flat fielded) in-place.
-
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : NirspecFlatModel, NirspecQuadFlatModel, or None
         Flat field for the fore optics.
-
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : NirspecFlatModel or None
         Flat field for the spectrograph.
-
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : NirspecFlatModel or None
         Flat field for the detector.
-
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
-
-    user_supplied_flat : ~jwst.datamodels.ImageModel or None
+    user_supplied_flat : ImageModel or None, optional
         A pre-computed flat to use directly. If supplied,
         all other inputs are ignored
-
-    inverse : boolean
+    inverse : bool, optional
         Invert the math operations used to apply the flat field.
 
     Returns
     -------
-    ~jwst.datamodels.ImageModel
+    result : ImageModel
         The interpolated flat field.
     """
-
     if user_supplied_flat is not None:
-        log.info(f'Pre-computed flat {user_supplied_flat} provided. Using the flat directly')
+        log.info(f"Pre-computed flat {user_supplied_flat} provided. Using the flat directly")
         flat = user_supplied_flat.data
         flat_dq = user_supplied_flat.dq
         flat_err = user_supplied_flat.err
@@ -567,165 +622,160 @@ def nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis
         )
 
     if any_updated:
+        # Update the variances and uncertainty array using BASELINE algorithm
+        flat_data_squared = flat * flat
         if not inverse:
             output_model.data /= flat
+            output_model.var_poisson /= flat_data_squared
+            output_model.var_rnoise /= flat_data_squared
+            # NIRSpec flats have very small values: some variance values may overflow
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "overflow encountered in square", RuntimeWarning)
+                output_model.var_flat = (output_model.data / flat * flat_err) ** 2
+            output_model.err = np.sqrt(
+                output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
+            )
         else:
             output_model.data *= flat
+            output_model.var_poisson *= flat_data_squared
+            output_model.var_rnoise *= flat_data_squared
+            # Var_flat does not exist before flatfield step - set it to zero.
+            output_model.var_flat = np.zeros_like(output_model.data)
+            output_model.err = np.sqrt(output_model.var_poisson + output_model.var_rnoise)
         output_model.dq |= flat_dq
-
-        # Update the variances and uncertainty array using BASELINE algorithm
-        flat_data_squared = flat ** 2
-        output_model.var_poisson /= flat_data_squared
-        output_model.var_rnoise /= flat_data_squared
-        output_model.var_flat = (output_model.data / flat * flat_err) ** 2
-        output_model.err = np.sqrt(
-            output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
-        )
 
         # Make sure all NaNs and flags match up in the output model
         pipe_utils.match_nans_and_flags(output_model)
 
-        output_model.meta.cal_step.flat_field = 'COMPLETE'
+        output_model.meta.cal_step.flat_field = "COMPLETE"
 
         # Create an output model for the interpolated flat fields.
         interpolated_flats = datamodels.ImageModel(data=flat, dq=flat_dq, err=flat_err)
         interpolated_flats.update(output_model, only="PRIMARY")
     else:
-        output_model.meta.cal_step.flat_field = 'SKIPPED'
+        output_model.meta.cal_step.flat_field = "SKIPPED"
         interpolated_flats = None
 
     return interpolated_flats
 
 
-def create_flat_field(wl, f_flat_model, s_flat_model, d_flat_model,
-                      xstart, xstop, ystart, ystop,
-                      exposure_type, dispaxis, slit_name, slit_nt=None):
-    """Extract and combine flat field components for NIRSpec
+def create_flat_field(
+    wl,
+    f_flat_model,
+    s_flat_model,
+    d_flat_model,
+    xstart,
+    xstop,
+    ystart,
+    ystop,
+    exposure_type,
+    dispaxis,
+    slit_name,
+    slit_nt=None,
+):
+    """
+    Extract and combine flat field components for NIRSpec.
 
     Parameters
     ----------
-    wl : 2-D ndarray
+    wl : ndarray
         Wavelength at each pixel of the 2-D slit array.  This array has
         shape (ystop - ystart, xstop - xstart).
-
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : NirspecFlatModel, NirspecQuadFlatModel, or None
         Flat field for the fore optics.
-
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : NirspecFlatModel or None
         Flat field for the spectrograph.
-
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : NirspecFlatModel or None
         Flat field for the detector.
-
-    xstart, ystart : int
-        Starting pixel numbers (zero indexed) for the slice containing
-        the data for the current slit.
-
-    xstop, ystop : int
-        End of the slice containing the data for the current slit.  The
-        start and stop values are Python slice notation, i.e. the region
-        to be extracted is [ystart:ystop, xstart:xstop].
-
+    xstart, xstop, ystart, ystop : int
+        Starting and end pixel numbers (zero indexed) for the slice containing
+        the data for the current slit. The start and stop values are Python
+        slice notation, i.e. the region to be extracted is
+        ``[ystart:ystop, xstart:xstop]``.
     exposure_type : str
-        The exposure type refers to fixed_slit, IFU, or using the
-        micro-shutter array.
-
+        Exposure type for the input.
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
-
-    slit_name : str
+    slit_name : str or None
         The name of the slit currently being processed.
-
-    slit_nt : namedtuple or None
+    slit_nt : namedtuple or None, optional
         For MSA data only, info about the current slit.
 
     Returns
     -------
-    flat_2d : ndarray, 2-D, float
-        The flat field, interpolated over wavelength, same shape as `wl`.
+    flat_2d : ndarray of float
+        The flat field, interpolated over wavelength, same shape as ``wl``.
         Divide the 2-D extracted spectrum by this array to correct for
         flat-field variations.
-
-    flat_dq : ndarray, 2-D, uint32
+    flat_dq : ndarray of uint32
         The data quality array corresponding to flat_2d.
-
-    flat_err : ndarray, 2-D, float
+    flat_err : ndarray of float
         The error array corresponding to flat_2d.
     """
-
     f_flat, f_flat_dq, f_flat_err = fore_optics_flat(
-        wl, f_flat_model, exposure_type, dispaxis,
-        slit_name, slit_nt)
+        wl, f_flat_model, exposure_type, dispaxis, slit_name, slit_nt
+    )
 
     s_flat, s_flat_dq, s_flat_err = spectrograph_flat(
-        wl, s_flat_model, xstart, xstop, ystart, ystop,
-        exposure_type, dispaxis, slit_name)
+        wl, s_flat_model, xstart, xstop, ystart, ystop, exposure_type, dispaxis, slit_name
+    )
 
     d_flat, d_flat_dq, d_flat_err = detector_flat(
-        wl, d_flat_model, xstart, xstop, ystart, ystop,
-        exposure_type, dispaxis, slit_name)
+        wl, d_flat_model, xstart, xstop, ystart, ystop, exposure_type, dispaxis, slit_name
+    )
 
     flat_2d = f_flat * s_flat * d_flat
-    flat_dq = combine_dq(f_flat_dq, s_flat_dq, d_flat_dq,
-                         default_shape=flat_2d.shape)
+    flat_dq = combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape=flat_2d.shape)
 
     # Combine the uncertainty arrays, excluding the ones that are None
     # Divide error by flat before squaring to avoid overflow
     sum_var = np.zeros_like(flat_2d)
     if f_flat_err is not None:
-        np.place(f_flat, f_flat == 0, 1.)
+        np.place(f_flat, f_flat == 0, 1.0)
         sum_var += (f_flat_err / f_flat) ** 2
     if s_flat_err is not None:
-        np.place(s_flat, s_flat == 0, 1.)
+        np.place(s_flat, s_flat == 0, 1.0)
         sum_var += (s_flat_err / s_flat) ** 2
     if d_flat_err is not None:
-        np.place(d_flat, d_flat == 0, 1.)
+        np.place(d_flat, d_flat == 0, 1.0)
         sum_var += (d_flat_err / d_flat) ** 2
     flat_err = flat_2d * np.sqrt(sum_var)
 
-    mask = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
-    flat_2d[np.where(mask)] = 1.
+    mask = np.bitwise_and(flat_dq, dqflags.pixel["DO_NOT_USE"])
+    flat_2d[np.where(mask)] = 1.0
 
     return flat_2d, flat_dq, flat_err
 
 
-def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
-                     slit_name, slit_nt):
-    """Extract the flat for the fore optics part.
+def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis, slit_name, slit_nt):
+    """
+    Extract the flat for the fore optics part.
 
     Parameters
     ----------
-    wl : 2-D ndarray
+    wl : ndarray
         Wavelength at each pixel of the 2-D slit array.
-
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : NirspecFlatModel, NirspecQuadFlatModel, or None
         Flat field for the fore optics.
-
     exposure_type : str
         The exposure type refers to fixed_slit, IFU, or MSA.
-
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
-
-    slit_name : str
+    slit_name : str or None
         The name of the slit currently being processed.
-
     slit_nt : namedtuple or None
         For MOS data (only), this is used to get the quadrant number and
         the indices of the current shutter in the Y and X directions.
 
     Returns
     -------
-    f_flat : ndarray, 2d, float32
+    f_flat : ndarray of float32
         The computed flat field for the fore optics.
-
-    f_flat_dq : ndarray, 2d, uint32, or None
+    f_flat_dq : ndarray of uint32
         The associated data quality array.
-
-    f_flat_err : ndarray, 2d, float32, or None
+    f_flat_err : ndarray of float32 or None
         The associated error array.
     """
-
     if f_flat_model is None:
         f_flat = np.ones(wl.shape, dtype=np.float32)
         f_flat_dq = None
@@ -737,8 +787,9 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
     else:
         quadrant = slit_nt.quadrant - 1  # convert to zero indexed
 
-    (tab_wl, tab_flat, tab_flat_err) = read_flat_table(f_flat_model, exposure_type,
-                                                       slit_name, quadrant)
+    (tab_wl, tab_flat, tab_flat_err) = read_flat_table(
+        f_flat_model, exposure_type, slit_name, quadrant
+    )
     if tab_wl.max() < MICRONS_100:
         log.warning("Wavelengths in f_flat table appear to be in meters")
 
@@ -746,7 +797,7 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
     # it's a 1-D array, not 2-D.  This array will be applied by incorporating
     # it into tab_flat.  So even for the MSA, there will not be any 2-D
     # image flat, so set the variable to 1.
-    flat_2d = 1.
+    flat_2d = 1.0
 
     f_flat_dq = None
     f_flat_err = None
@@ -779,27 +830,28 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
         #       xp:  array of independent-variable values (must be increasing)
         #       fp:  array of data values
         #       left, right:  values to return for out-of-bounds x
-        tab_flat *= np.interp(tab_wl, image_wl, one_d_flat, 1., 1.)
-        f_flat_err = np.interp(wl, image_wl, one_d_err, 0., 0.)
+        tab_flat *= np.interp(tab_wl, image_wl, one_d_flat, 1.0, 1.0)
+        f_flat_err = np.interp(wl, image_wl, one_d_err, 0.0, 0.0)
 
     # Combine 2D and 1D components with error propagation.
-    # The shape of the output array is obtained from `wl`.
+    # The shape of the output array is obtained from wl.
     f_flat, f_flat_dq, f_flat_err = combine_fast_slow(
-        wl, flat_2d, f_flat_dq, f_flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis)
+        wl, flat_2d, f_flat_dq, f_flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis
+    )
 
     # Find pixels in the flat that have a value of NaN and add to
     # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
-    bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
+    bad_flag = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NO_FLAT_FIELD"]
     flat_nan = np.isnan(f_flat)
     f_flat_dq[flat_nan] = np.bitwise_or(f_flat_dq[flat_nan], bad_flag)
 
     # Find pixels in the flat that have a value of zero, and add to
     # DQ mask,  DO_NOT_USE + NO_FLAT_FIELD
-    flat_zero = np.where(f_flat == 0.)
+    flat_zero = np.where(f_flat == 0.0)
     f_flat_dq[flat_zero] = np.bitwise_or(f_flat_dq[flat_zero], bad_flag)
 
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
-    flat_bad = np.bitwise_and(f_flat_dq, dqflags.pixel['DO_NOT_USE'])
+    flat_bad = np.bitwise_and(f_flat_dq, dqflags.pixel["DO_NOT_USE"])
 
     # Reset the flat value of all bad pixels to 1.0, so that no
     # correction is made
@@ -807,50 +859,39 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis,
     return f_flat, f_flat_dq, f_flat_err
 
 
-def spectrograph_flat(wl, s_flat_model,
-                      xstart, xstop, ystart, ystop,
-                      exposure_type, dispaxis, slit_name):
-    """Extract the flat for the spectrograph part.
+def spectrograph_flat(
+    wl, s_flat_model, xstart, xstop, ystart, ystop, exposure_type, dispaxis, slit_name
+):
+    """
+    Extract the flat for the spectrograph part.
 
     Parameters
     ----------
-    wl : 2-D ndarray
+    wl : ndarray
         Wavelength at each pixel of the 2-D slit array.
-
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : NirspecFlatModel or None
         Flat field for the spectrograph.
-
-    xstart, ystart : int
-        Starting pixel numbers (zero indexed) for the slice containing
-        the data for the current slit.
-
-    xstop, ystop : int
-        End of the slice containing the data for the current slit.  The
-        start and stop values are Python slice notation, i.e. the region
-        to be extracted is [ystart:ystop, xstart:xstop].
-
+    xstart, xstop, ystart, ystop : int
+        Starting and end pixel numbers (zero indexed) for the slice containing
+        the data for the current slit. The start and stop values are Python
+        slice notation, i.e. the region to be extracted is ``[ystart:ystop, xstart:xstop]``.
     exposure_type : str
         The exposure type refers to fixed_slit, IFU, or using the
         micro-shutter array.
-
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
-
-    slit_name : str
+    slit_name : str or None
         The name of the slit currently being processed.
 
     Returns
     -------
-    s_flat : ndarray, 2d, float32
+    s_flat : ndarray of float32
         The computed flat field for the spectrograph.
-
-    s_flat_dq : ndarray, 2d, uint32, or None
+    s_flat_dq : ndarray of uint32 or None
         The associated data quality array.
-
-    s_flat_err : ndarray, 2d, float32, or None
+    s_flat_err : ndarray of float32 or None
         The associated error array.
     """
-
     if s_flat_model is None:
         s_flat = np.ones(wl.shape, dtype=np.float32)
         s_flat_dq = None
@@ -860,10 +901,11 @@ def spectrograph_flat(wl, s_flat_model,
     quadrant = None
 
     if xstart >= xstop or ystart >= ystop:
-        return 1., None
+        return 1.0, None
 
-    (tab_wl, tab_flat, tab_flat_err) = read_flat_table(s_flat_model, exposure_type,
-                                         slit_name, quadrant)
+    (tab_wl, tab_flat, tab_flat_err) = read_flat_table(
+        s_flat_model, exposure_type, slit_name, quadrant
+    )
     if tab_wl.max() < MICRONS_100:
         log.warning("Wavelengths in s_flat table appear to be in meters")
 
@@ -882,8 +924,9 @@ def spectrograph_flat(wl, s_flat_model,
 
         if image_wl.max() < MICRONS_100:
             log.warning("Wavelengths in s_flat image appear to be in meters")
-        flat_2d, s_flat_dq, s_flat_err = interpolate_flat(image_flat, image_dq,
-                                                          image_err, image_wl, wl)
+        flat_2d, s_flat_dq, s_flat_err = interpolate_flat(
+            image_flat, image_dq, image_err, image_wl, wl
+        )
     else:
         flat_2d = full_array_flat[ystart:ystop, xstart:xstop]
         s_flat_dq = full_array_dq[ystart:ystop, xstart:xstop]
@@ -891,18 +934,18 @@ def spectrograph_flat(wl, s_flat_model,
 
     # Find pixels in the flat that have a value of NaN and add to
     # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
-    bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
+    bad_flag = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NO_FLAT_FIELD"]
 
     flat_nan = np.isnan(flat_2d)
     s_flat_dq[flat_nan] = np.bitwise_or(s_flat_dq[flat_nan], bad_flag)
 
     # Find pixels in the flat have have a value of zero, and add to
     # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
-    flat_zero = np.where(flat_2d == 0.)
+    flat_zero = np.where(flat_2d == 0.0)
     s_flat_dq[flat_zero] = np.bitwise_or(s_flat_dq[flat_zero], bad_flag)
 
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
-    flat_bad = np.bitwise_and(s_flat_dq, dqflags.pixel['DO_NOT_USE'])
+    flat_bad = np.bitwise_and(s_flat_dq, dqflags.pixel["DO_NOT_USE"])
 
     # Reset the flat value of all bad pixels to 1.0, so that no
     # correction is made
@@ -910,55 +953,45 @@ def spectrograph_flat(wl, s_flat_model,
 
     # Combine 2D and 1D components with error propagation
     s_flat, s_flat_dq, s_flat_err = combine_fast_slow(
-        wl, flat_2d, s_flat_dq, s_flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis)
+        wl, flat_2d, s_flat_dq, s_flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis
+    )
 
     return s_flat, s_flat_dq, s_flat_err
 
 
-def detector_flat(wl, d_flat_model,
-                  xstart, xstop, ystart, ystop,
-                  exposure_type, dispaxis, slit_name):
-    """Extract the flat for the detector part.
+def detector_flat(
+    wl, d_flat_model, xstart, xstop, ystart, ystop, exposure_type, dispaxis, slit_name
+):
+    """
+    Extract the flat for the detector part.
 
     Parameters
     ----------
-    wl : 2-D ndarray
+    wl : ndarray
         Wavelength at each pixel of the 2-D slit array.
-
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : NirspecFlatModel or None
         Flat field for the detector.
-
-    xstart, ystart : int
-        Starting pixel numbers (zero indexed) for the slice containing
-        the data for the current slit.
-
-    xstop, ystop : int
-        End of the slice containing the data for the current slit.  The
-        start and stop values are Python slice notation, i.e. the region
-        to be extracted is [ystart:ystop, xstart:xstop].
-
+    xstart, xstop, ystart, ystop : int
+        Starting and end pixel numbers (zero indexed) for the slice containing
+        the data for the current slit. The start and stop values are Python
+        slice notation, i.e. the region to be extracted is ``[ystart:ystop, xstart:xstop]``.
     exposure_type : str
         The exposure type refers to fixed_slit, IFU, or using the
         micro-shutter array.
-
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
-
-    slit_name : str
+    slit_name : str or None
         The name of the slit currently being processed.
 
     Returns
     -------
-    d_flat : ndarray, 2d, float32
+    d_flat : ndarray of float32
         The computed flat field for the detector.
-
-    d_flat_dq : ndarray, 2d, uint32, or None
+    d_flat_dq : ndarray of uint32, or None
         The associated data quality array.
-
-    d_flat_err : ndarray, 2d, float32, or None
+    d_flat_err : ndarray of float32, or None
         The associated error array.
     """
-
     if d_flat_model is None:
         d_flat = np.ones(wl.shape, dtype=np.float32)
         d_flat_dq = None
@@ -968,10 +1001,11 @@ def detector_flat(wl, d_flat_model,
     quadrant = None
 
     if xstart >= xstop or ystart >= ystop:
-        return 1., None
+        return 1.0, None
 
-    (tab_wl, tab_flat, tab_flat_err) = read_flat_table(d_flat_model, exposure_type,
-                                         slit_name, quadrant)
+    (tab_wl, tab_flat, tab_flat_err) = read_flat_table(
+        d_flat_model, exposure_type, slit_name, quadrant
+    )
     if tab_wl.max() < MICRONS_100:
         log.warning("Wavelengths in d_flat table appear to be in meters.")
 
@@ -986,23 +1020,22 @@ def detector_flat(wl, d_flat_model,
     if image_wl.max() < MICRONS_100:
         log.warning("Wavelengths in d_flat image appear to be in meters.")
 
-    flat_2d, d_flat_dq, d_flat_err = interpolate_flat(image_flat, image_dq,
-                                                      image_err, image_wl, wl)
+    flat_2d, d_flat_dq, d_flat_err = interpolate_flat(image_flat, image_dq, image_err, image_wl, wl)
 
     # Find pixels in the flat that have a value of NaN and add to
     # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
-    bad_flag = dqflags.pixel['DO_NOT_USE'] + dqflags.pixel['NO_FLAT_FIELD']
+    bad_flag = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NO_FLAT_FIELD"]
 
     flat_nan = np.isnan(flat_2d)
     d_flat_dq[flat_nan] = np.bitwise_or(d_flat_dq[flat_nan], bad_flag)
 
     # Find pixels in the flat have have a value of zero, and add to
     # DQ mask, DO_NOT_USE + NO_FLAT_FIELD
-    flat_zero = np.where(flat_2d == 0.)
+    flat_zero = np.where(flat_2d == 0.0)
     d_flat_dq[flat_zero] = np.bitwise_or(d_flat_dq[flat_zero], bad_flag)
 
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
-    flat_bad = np.bitwise_and(d_flat_dq, dqflags.pixel['DO_NOT_USE'])
+    flat_bad = np.bitwise_and(d_flat_dq, dqflags.pixel["DO_NOT_USE"])
 
     # Reset the flat value of all bad pixels to 1.0, so that no
     # correction is made
@@ -1010,36 +1043,35 @@ def detector_flat(wl, d_flat_model,
 
     # Combine 2D and 1D components with error propagation
     d_flat, d_flat_dq, d_flat_err = combine_fast_slow(
-        wl, flat_2d, d_flat_dq, d_flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis)
+        wl, flat_2d, d_flat_dq, d_flat_err, tab_wl, tab_flat, tab_flat_err, dispaxis
+    )
     return d_flat, d_flat_dq, d_flat_err
 
 
 def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
-    """Combine non-None DQ arrays via bitwise_or.
+    """
+    Combine non-None DQ arrays via bitwise_or.
 
     Parameters
     ----------
-    f_flat_dq : ndarray
+    f_flat_dq : ndarray or None
         The DQ array for the fore optics component.
-
-    s_flat_dq : ndarray
+    s_flat_dq : ndarray or None
         The DQ array for the spectrograph component.
-
-    d_flat_dq : ndarray
+    d_flat_dq : ndarray or None
         The DQ array for the detector component.
-
     default_shape : tuple
         If all three of the DQ arrays (see above) are None, use this shape
         to create a DQ array filled with zero.
 
     Returns
     -------
-    flat_dq : ndarray, 2-D, uint32
-        The DQ array resulting from combining the input DQ arrays via
+    flat_dq : ndarray of uint32
+        The 2D DQ array resulting from combining the input DQ arrays via
         bitwise OR.
     """
-    BADFLAT = dqflags.pixel['NO_FLAT_FIELD'] | dqflags.pixel['DO_NOT_USE']
-    BADFLAT = BADFLAT | dqflags.pixel['UNRELIABLE_FLAT']
+    badflat = dqflags.pixel["NO_FLAT_FIELD"] | dqflags.pixel["DO_NOT_USE"]
+    badflat = badflat | dqflags.pixel["UNRELIABLE_FLAT"]
 
     dq_list = []
     if f_flat_dq is not None:
@@ -1054,47 +1086,44 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
     # dq array with all BADFLAT bits set
     flat_dq = np.zeros(default_shape, dtype=np.uint32)
     if n_dq == 0:
-        flat_dq = np.bitwise_or(flat_dq, BADFLAT)
+        flat_dq = np.bitwise_or(flat_dq, badflat)
     else:
         for dq_component in dq_list:
             flat_dq = np.bitwise_or(flat_dq, dq_component)
 
     # Flag DO_NOT_USE where some or all of the flats had NO_FLAT_FIELD set
-    do_not_use_loc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['NO_FLAT_FIELD']))
-    flat_dq[do_not_use_loc] = np.bitwise_or(flat_dq[do_not_use_loc], dqflags.pixel['DO_NOT_USE'])
+    do_not_use_loc = np.where(np.bitwise_and(flat_dq, dqflags.pixel["NO_FLAT_FIELD"]))
+    flat_dq[do_not_use_loc] = np.bitwise_or(flat_dq[do_not_use_loc], dqflags.pixel["DO_NOT_USE"])
 
     # Flag DO_NOT_USE, NO_FLAT_FIELD and UNRELIABLE_FLAT where some or all the
     # flats had DO_NOT_USE set
-    iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE']))
-    flat_dq[iloc] = np.bitwise_or(flat_dq[iloc], BADFLAT)
+    iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel["DO_NOT_USE"]))
+    flat_dq[iloc] = np.bitwise_or(flat_dq[iloc], badflat)
 
     return flat_dq
 
 
 def read_image_wl(flat_model, quadrant=None):
-    """Read wavelengths for the image planes.
+    """
+    Read wavelengths for the image planes.
 
-    Extended summary
-    ----------------
-    This function should only be called if the SCI array in `flat_model`
+    This function should only be called if the SCI array in ``flat_model``
     is 3-D.  The purpose is to get the wavelength for each of the planes
     in the SCI array.
 
     Parameters
     ----------
-    flat_model : ~jwst.datamodels.NirspecFlatModel or ~jwst.datamodels.NirspecQuadFlatModel
+    flat_model : NirspecFlatModel or NirspecQuadFlatModel
         Flat field for the current component.
-
-    quadrant : int (0, 1, 2, or 3)
+    quadrant : {0, 1, 2, 3} or None, optional
         The quadrant of the micro-shutter array.  This is only needed for
         fore-optics for MSA (MOS) data.
 
     Returns
     -------
-    wavelength : ndarray, 1-D
-        An array of wavelengths, one for each plane of the SCI array.
+    wavelength : ndarray
+        A 1D array of wavelengths, one for each plane of the SCI array.
     """
-
     if quadrant is not None:  # NRS_MSASPEC
         wavelength = flat_model.quadrants[quadrant].wavelength["wavelength"]
     else:
@@ -1105,11 +1134,13 @@ def read_image_wl(flat_model, quadrant=None):
         try:
             wl = wavelength.reshape((n,))
         except ValueError:
-            log.error("Image wavelength array has shape %s; "
-                      "don't know how to interpret that.",
-                      str(wavelength.shape))
-            raise ValueError("Expected either a scalar column or just one row.")
+            log.error(
+                "Image wavelength array has shape %s; don't know how to interpret that.",
+                str(wavelength.shape),
+            )
+            raise ValueError("Expected either a scalar column or just one row.") from None
         wavelength = wl
+
     # The assumption here is that any NaN or non-positive wavelengths will
     # only be at the end of the array.  If there are embedded NaNs or zero
     # or negative wavelengths, the following will result in the wavelengths
@@ -1118,48 +1149,43 @@ def read_image_wl(flat_model, quadrant=None):
     # return the flat-field data.
     filter1 = np.logical_not(np.isnan(wavelength))  # skip NaNs
     wavelength = wavelength[filter1]
-    filter2 = (wavelength > 0.)
+    filter2 = wavelength > 0.0
     wavelength = wavelength[filter2]
 
     return wavelength
 
 
 def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
-    """Read the table (the "fast" variation).
+    """
+    Read the table (the "fast" variation).
 
     Parameters
     ----------
     flat_model : NIRSpec flat-field object
         This contains the flat field table from which we will read the
         "fast" variation flat-field data.
-
     exposure_type : str
         The exposure type refers to fixed_slit, IFU, or using the
         micro-shutter array.  In this function we just need to check for
         fixed-slit types.
-
-    slit_name : str
+    slit_name : str or None, optional
         The name of the slit.  This is only needed for fixed-slit data, in
         which case it is used for selecting the relevant row of the table.
-
-    quadrant : int (0, 1, 2, or 3)
+    quadrant : {0, 1, 2, 3} or None, optional
         The quadrant of the micro-shutter array.  This is only needed for
         fore-optics for MSA (MOS) data.
 
     Returns
     -------
-    tab_wl : ndarray, 1-D, float
-        The column of wavelengths read from the fast-variation table.
-
-    tab_flat : ndarray, 1-D, float
-        The column of flat_field values read from the fast-variation table.
-        `tab_wl` and `tab_flat` should be the same length.
-
-    tab_flat_err : ndarray, 1-D
-        The column of flat_field error values read from the fast-variation
+    tab_wl : ndarray of float
+        The 1D column of wavelengths read from the fast-variation table.
+    tab_flat : ndarray of float
+        The 1D column of flat_field values read from the fast-variation table.
+        ``tab_wl`` and ``tab_flat`` should be the same length.
+    tab_flat_err : ndarray of float
+        The 1D column of flat_field error values read from the fast-variation
         table.
     """
-
     if quadrant is not None:  # NRS_MSASPEC
         data = flat_model.quadrants[quadrant].flat_table
     else:
@@ -1193,8 +1219,7 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
                 break
         if row is None:
             log.error("Slit name %s not found in flat field table", slit_name)
-            raise ValueError("{} not found in SLIT_NAME column (nor was 'ANY')"
-                             .format(slit_name))
+            raise ValueError(f"{slit_name} not found in SLIT_NAME column (nor was 'ANY')")
 
     nelem = None  # initial value
     if row is not None:
@@ -1222,9 +1247,12 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
                 nelem = nelem_col[0]  # arbitrary choice of row
     if nelem is not None:
         if len(tab_wl) < nelem:
-            log.error("The fast_variation array size %d in "
-                      "the data model is too small, and table data were "
-                      "truncated.", len(tab_wl))
+            log.error(
+                "The fast_variation array size %d in "
+                "the data model is too small, and table data were "
+                "truncated.",
+                len(tab_wl),
+            )
             nelem = len(tab_wl)  # truncated!
         else:
             tab_wl = tab_wl[:nelem]
@@ -1233,101 +1261,96 @@ def read_flat_table(flat_model, exposure_type, slit_name=None, quadrant=None):
     else:
         nelem = len(tab_wl)
 
-    # Trailing dummy rows should have been taken care of via nelem above,
+    # Trailing placeholder rows should have been taken care of via nelem above,
     # but only if an nelem column was present and was set correctly.
     filter1 = np.logical_not(np.isnan(tab_wl))  # skip NaNs
     filter2 = np.logical_not(np.isnan(tab_flat))
-    filter = np.logical_and(filter1, filter2)
-    n1 = filter.sum(dtype=np.intp)
+    filter_rows = np.logical_and(filter1, filter2)
+    n1 = filter_rows.sum(dtype=np.intp)
     if n1 != nelem:
-        log.debug("The table wavelength or flat-field data array contained "
-                  "%d NaNs; these have been skipped.", nelem - n1)
-        tab_wl = tab_wl[filter]
-        tab_flat = tab_flat[filter]
-        tab_flat_err = tab_flat_err[filter]
-    del filter1, filter2, filter
+        log.debug(
+            "The table wavelength or flat-field data array contained "
+            "%d NaNs; these have been skipped.",
+            nelem - n1,
+        )
+        tab_wl = tab_wl[filter_rows]
+        tab_flat = tab_flat[filter_rows]
+        tab_flat_err = tab_flat_err[filter_rows]
+    del filter1, filter2, filter_rows
     # Skip zero or negative wavelengths, and skip zero flat-field values.
-    filter1 = (tab_wl > 0.)
-    filter2 = (tab_flat != 0.)
-    filter = np.logical_and(filter1, filter2)
-    n2 = filter.sum(dtype=np.intp)
+    filter1 = tab_wl > 0.0
+    filter2 = tab_flat != 0.0
+    filter_rows = np.logical_and(filter1, filter2)
+    n2 = filter_rows.sum(dtype=np.intp)
     if n2 != n1:
-        log.debug("The table wavelength or flat-field data array contained "
-                  "%d zero or negative values; these have been skipped.",
-                  n1 - n2)
-        tab_wl = tab_wl[filter]
-        tab_flat = tab_flat[filter]
-        tab_flat_err = tab_flat_err[filter]
-    del filter1, filter2, filter
+        log.debug(
+            "The table wavelength or flat-field data array contained "
+            "%d zero or negative values; these have been skipped.",
+            n1 - n2,
+        )
+        tab_wl = tab_wl[filter_rows]
+        tab_flat = tab_flat[filter_rows]
+        tab_flat_err = tab_flat_err[filter_rows]
+    del filter1, filter2, filter_rows
 
     # Check that the wavelengths are increasing.  This is a requirement
     # for using np.interp (see combine_fast_slow).
     if len(tab_wl) > 1:
         diff = tab_wl[1:] - tab_wl[0:-1]
-        if np.any(diff <= 0.):
-            log.warning("Wavelengths in the fast-variation table "
-                        "must be strictly increasing.")
+        if np.any(diff <= 0.0):
+            log.warning("Wavelengths in the fast-variation table must be strictly increasing.")
 
     return tab_wl, tab_flat, tab_flat_err
 
 
 def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat_error, dispaxis):
-    """Multiply the image by the tabular values.
+    """
+    Multiply the image by the tabular values.
 
     Parameters
     ----------
-    wl : 2-D ndarray
+    wl : ndarray
         Wavelength at each pixel of the 2-D slit array.
-
-    flat_2d : 2-D ndarray or a scalar (float)
+    flat_2d : ndarray or float
         The flat field derived from the image part of the reference file,
-        or a scalar (e.g. 1) if there is no image part in the current
+        or a scalar (e.g. 1.0) if there is no image part in the current
         reference file.
-
     flat_dq : ndarray or None
-        If not None, the data quality array corresponding to `flat_2d`.
+        If not None, the data quality array corresponding to ``flat_2d``.
         A copy of this will be updated with flags which may be set based
         on the fast-variation component, and the updated array will be
         returned.
-
     flat_err : ndarray or None
-        If not None, the error array corresponding to `flat_2d`.
+        If not None, the error array corresponding to ``flat_2d``.
         A copy of this will be updated with errors added in quadrature from
         the fast-variation component, and the updated array will be
         returned.
-
-    tab_wl : ndarray, 1-D
-        Wavelengths corresponding to `tab_flat`.
-
-    tab_flat : ndarray, 1-D
-        The flat field from the table part of the reference file.  This
+    tab_wl : ndarray
+        1D wavelengths corresponding to ``tab_flat``.
+    tab_flat : ndarray
+        The 1D flat field from the table part of the reference file.  This
         is the "fast" variation of the flat, i.e. fast with respect to
         wavelength.
-
-    tab_flat_err : ndarray, 1-D
-        The flat field error from the table part of the reference file.
-
+    tab_flat_error : ndarray
+        The 1D flat field error from the table part of the reference file.
     dispaxis : int
         1 is horizontal, 2 is vertical.
 
     Returns
     -------
-    flat_2d * values : ndarray, 2-D, float32
-        The product of `flat_2d` and the values in `tab_flat` interpolated
-        to the wavelengths of the science image, i.e. `wl`.
-
-    combined_dq : ndarray, 2-D, uint32
-        The updated data quality array corresponding to `flat_2d`.  If a
+    combined_flat : ndarray of float32
+        The 2D product of ``flat_2d`` and the values in ``tab_flat`` interpolated
+        to the wavelengths of the science image, i.e. ``wl``.
+    combined_dq : ndarray of uint32
+        The updated data quality array corresponding to ``flat_2d``.  If a
         pixel wavelength is less than or equal to zero, or if it's not
-        within the range of `tab_wl`, NO_FLAT_FIELD will be used to flag
+        within the range of ``tab_wl``, NO_FLAT_FIELD will be used to flag
         this condition, and the fast-variation flat field value at that
         pixel will be set to 1.
-
-    flat_error : ndarray, 2-D, float32
-        The `tab_flat_err` values interpolated to the wavelengths of the
-        science image, i.e. `wl`. Missing values are set to 0.
+    flat_error : ndarray of float32
+        The ``tab_flat_err`` values interpolated to the 2D wavelengths of the
+        science image, i.e. ``wl``. Missing values are set to 0.
     """
-
     wl_c = clean_wl(wl, dispaxis)
     dwl = np.zeros_like(wl_c)
 
@@ -1354,16 +1377,15 @@ def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat
     # Abscissas and weights for 3-point Gaussian integration, but taking
     # the width of the interval to be 1, so the result will be the average
     # over the interval.
-    d = math.sqrt(0.6) / 2.
-    dx = np.array([-d, 0., d])
-    wgt = np.array([5., 8., 5.]) / 18.
+    d = math.sqrt(0.6) / 2.0
+    dx = np.array([-d, 0.0, d])
+    wgt = np.array([5.0, 8.0, 5.0]) / 18.0
 
     # Interpolate tabular data over the range of wavelengths,
     # weight, and sum at each of 3 specified points
-    for offset, weight in zip(dx, wgt):
+    for offset, weight in zip(dx, wgt, strict=True):
         wavelengths = wl_c + dwl * offset
-        values += weight * np.interp(wavelengths, tab_wl, tab_flat,
-                                     left=np.nan, right=np.nan)
+        values += weight * np.interp(wavelengths, tab_wl, tab_flat, left=np.nan, right=np.nan)
 
     # Interpolate error values from reference file using a simple
     # linear interpolation as these don't have the required precision
@@ -1371,7 +1393,7 @@ def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat
     error_value = np.interp(wl_c, tab_wl, tab_flat_error, left=np.nan, right=np.nan)
 
     # Handle bad wavelength values in un-cleaned wavelength array
-    bad = (wl <= 0)
+    bad = wl <= 0
     values[bad] = 1.0
     error_value[bad] = 0.0
 
@@ -1379,8 +1401,8 @@ def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat
     missing = np.isnan(values)
     values[missing] = 1.0
     error_value[missing] = 0.0
-    combined_dq[missing] |= dqflags.pixel['NO_FLAT_FIELD']
-    combined_dq[missing] |= dqflags.pixel['DO_NOT_USE']
+    combined_dq[missing] |= dqflags.pixel["NO_FLAT_FIELD"]
+    combined_dq[missing] |= dqflags.pixel["DO_NOT_USE"]
 
     # Add new 1D errors and input 2D errors in quadrature,
     # treating NaNs as zeros
@@ -1392,27 +1414,26 @@ def combine_fast_slow(wl, flat_2d, flat_dq, flat_err, tab_wl, tab_flat, tab_flat
 
 
 def clean_wl(wl, dispaxis):
-    """Replace zeros and/or NaNs in the wavelength array.
+    """
+    Replace zeros and/or NaNs in the wavelength array.
 
     Parameters
     ----------
-    wl : 2-D ndarray
+    wl : ndarray
         Wavelength at each pixel of the 2-D slit array.
-
     dispaxis : int
         1 is horizontal, 2 is vertical.
 
     Returns
     -------
-    wl_c : 2-D array
-        A copy of `wl`, but with zero and negative values replaced with
+    wl_c : ndarray
+        A copy of ``wl``, but with zero and negative values replaced with
         an average wavelength.  For each column (row) in the dispersion
         direction, the average to find a replacement value is taken along
         the cross-dispersion direction.
     """
-
     wl_c = wl.copy()  # so we can replace zeros
-    wl_c[wl_c <= 0.] = np.nan
+    wl_c[wl_c <= 0.0] = np.nan
     shape = wl_c.shape
 
     if dispaxis == HORIZONTAL:
@@ -1456,44 +1477,38 @@ def clean_wl(wl, dispaxis):
 
 
 def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
-    """Interpolate within the 3-D flat field image to get a 2-D flat.
+    """
+    Interpolate within the 3-D flat field image to get a 2-D flat.
 
     Parameters
     ----------
-    image_flat : ndarray, 3-D
-        This is slice [:, ystart:ystop, xstart:xstop] of the flat field
-        reference image.  This slice covers the spatial extent of the
-        extracted 2-D spectrum and includes all of the wavelength axis
+    image_flat : ndarray
+        3D array, corresponding to slice [:, ystart:ystop, xstart:xstop] of
+        the flat field reference image.  This slice covers the spatial extent
+        of the extracted 2-D spectrum and includes all of the wavelength axis
         (the first axis) of the reference image.
-
-    image_dq : ndarray, 2-D or 3-D
-        This is slice [..., ystart:ystop, xstart:xstop] of the data quality
-        array for the flat field reference image.
-
-    image_err : ndarray, 2-D or 3-D
-        This is slice [..., ystart:ystop, xstart:xstop] of the data quality
-        array for the flat field reference image.
-
-    image_wl : ndarray, 1-D
-        The wavelength for each plane of the flat field reference image.
-
-    wl : ndarray, 2-D
-        The wavelength at each pixel of the 2-D extracted science spectrum.
+    image_dq : ndarray
+        2D or 3D array corresponding to slice [..., ystart:ystop, xstart:xstop]
+        of the data quality array for the flat field reference image.
+    image_err : ndarray
+        2D or 3D array corresponding to slice [..., ystart:ystop, xstart:xstop]
+        of the error array for the flat field reference image.
+    image_wl : ndarray
+        The 1D wavelength for each plane of the flat field reference image.
+    wl : ndarray
+        The wavelength at each pixel of the 2D extracted science spectrum.
 
     Returns
     -------
-    flat_2d : ndarray, 2-D, float32
-        The flat field, interpolated over wavelength, same shape as `wl`.
-        Divide the 2-D extracted spectrum by this array to correct for
+    flat_2d : ndarray of float32
+        The flat field, interpolated over wavelength, same shape as ``wl``.
+        Divide the 2D extracted spectrum by this array to correct for
         flat-field variations.
-
-    flat_dq : ndarray, 2-D, uint32
-        The data quality array corresponding to `flat_2d`.
-
-    flat_err : ndarray, 2-D, float32
-        The error array corresponding to `flat_2d`.
+    flat_dq : ndarray of uint32
+        The data quality array corresponding to ``flat_2d``.
+    flat_err : ndarray of float32
+        The error array corresponding to ``flat_2d``.
     """
-
     if len(image_flat.shape) < 3:
         return image_flat, image_dq, image_err
 
@@ -1503,9 +1518,11 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
             # dq and err arrays are the same size, so treat them the same
             return image_flat.reshape((ysize, xsize)), image_dq, image_err
         else:
-            return (image_flat.reshape((ysize, xsize)),
-                    image_dq.reshape((ysize, xsize)),
-                    image_err.reshape((ysize, xsize)))
+            return (
+                image_flat.reshape((ysize, xsize)),
+                image_dq.reshape((ysize, xsize)),
+                image_err.reshape((ysize, xsize)),
+            )
 
     grid = np.indices((ysize, xsize), dtype=np.intp)
     ixpixel = grid[1]
@@ -1529,8 +1546,7 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
 
     # Look for the correct interval for linear interpolation.
     for k_test in range(nz - 1):
-        test1 = np.logical_and(wl >= image_wl[k_test],
-                               wl < image_wl[k_test + 1])
+        test1 = np.logical_and(wl >= image_wl[k_test], wl < image_wl[k_test + 1])
 
         # If an element of k is not -1, it has already been assigned, and
         # I don't want to clobber it.
@@ -1542,8 +1558,8 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     # Use linear interpolation within the 3-D flat field to get a 2-D
     # flat field.
     denom = image_wl[k + 1] - image_wl[k]
-    zero_denom = (denom == 0.)
-    denom = np.where(zero_denom, 1., denom)
+    zero_denom = denom == 0.0
+    denom = np.where(zero_denom, 1.0, denom)
 
     # linear interpolation equation
     # p is the linear interpolation wavelength scaling factor
@@ -1551,25 +1567,24 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     # flat = flat[k] - flat[k]*p + flat[k+1]*p
     # flat = (1-p)*flat[k] + p*flat[k+1]
 
-    p = np.where(zero_denom, 0., (wl - image_wl[k]) / denom)
-    q = 1. - p
-    flat_2d = q * image_flat[k, iypixel, ixpixel] + \
-        p * image_flat[k + 1, iypixel, ixpixel]
+    p = np.where(zero_denom, 0.0, (wl - image_wl[k]) / denom)
+    q = 1.0 - p
+    flat_2d = q * image_flat[k, iypixel, ixpixel] + p * image_flat[k + 1, iypixel, ixpixel]
     if len(image_err.shape) == 2:
         flat_err = image_err.copy()
     else:
-        flat_err = q * image_err[k, iypixel, ixpixel] + \
-            p * image_err[k + 1, iypixel, ixpixel]
+        flat_err = q * image_err[k, iypixel, ixpixel] + p * image_err[k + 1, iypixel, ixpixel]
 
     if len(image_dq.shape) == 2:
         flat_dq = image_dq.copy()
     else:
-        flat_dq = np.where(p == 0.,
-                           image_dq[k, iypixel, ixpixel],
-                           np.bitwise_or(image_dq[k, iypixel, ixpixel],
-                                         image_dq[k + 1, iypixel, ixpixel]))
+        flat_dq = np.where(
+            p == 0.0,
+            image_dq[k, iypixel, ixpixel],
+            np.bitwise_or(image_dq[k, iypixel, ixpixel], image_dq[k + 1, iypixel, ixpixel]),
+        )
 
-        flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
+        flat_bad = np.bitwise_and(flat_dq, dqflags.pixel["DO_NOT_USE"])
         # Reset the flat value of all bad pixels to 1.0, so that no
         # correction is made
         flat_2d[np.where(flat_bad)] = 1.0
@@ -1577,45 +1592,42 @@ def interpolate_flat(image_flat, image_dq, image_err, image_wl, wl):
     # If the wavelength at a pixel is outside the range of wavelengths
     # for the reference image, flag the pixel as bad.  Note that this will
     # also result in the computed flat field being set to 1.
-    mask = (wl < image_wl[0])
-    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['DO_NOT_USE'])
-    mask = (wl > image_wl[-1])
-    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel['DO_NOT_USE'])
+    mask = wl < image_wl[0]
+    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel["DO_NOT_USE"])
+    mask = wl > image_wl[-1]
+    flat_dq[mask] = np.bitwise_or(flat_dq[mask], dqflags.pixel["DO_NOT_USE"])
 
     # If a pixel is flagged as bad, applying flat_2d should not make any
     # change to the science data.
-    flat_bad = np.bitwise_and(flat_dq, dqflags.pixel['DO_NOT_USE'])
+    flat_bad = np.bitwise_and(flat_dq, dqflags.pixel["DO_NOT_USE"])
     flat_2d[np.where(flat_bad)] = 1.0
 
     return flat_2d.astype(image_flat.dtype), flat_dq, flat_err
 
 
-def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
-                         dispaxis):
-    """Create the interpolated flat for NIRSpec IFU
+def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis):
+    """
+    Create the interpolated flat for NIRSpec IFU.
 
     Parameters
     ----------
-    output_model : JWST data model
+    output_model : DataModel
         Science data model, modified (flat fielded) in-place.
-
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : NirspecFlatModel, NirspecQuadFlatModel, or None
         Flat field for the fore optics.
-
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : NirspecFlatModel or None
         Flat field for the spectrograph.
-
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : NirspecFlatModel or None
         Flat field for the detector.
-
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
 
     Returns
     -------
-    flat, flat_dq, flat_err, any_updated : numpy.array, numpy.array, numpy.array, bool
-        4-tuple of the interpolated flat correction and whether any slice of the IFU
-        is actually affected.
+    flat, flat_dq, flat_err : ndarray
+        The interpolated flat correction and associated DQ and error.
+    any_updated : bool
+        True if any slice of the IFU has been corrected.
     """
     any_updated = False
     exposure_type = output_model.meta.exposure.type
@@ -1624,19 +1636,15 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
     flat_err = np.zeros_like(output_model.data) * np.nan
 
     try:
-        # Note: the 30 is hardcoded in nirspec.nrs_ifu_wcs, which the line
-        # below replaced.
-        wcsobj, tr1, tr2, tr3 = nirspec._get_transforms(output_model, np.arange(30))
+        list_of_wcs = nirspec.nrs_ifu_wcs(output_model)
     except (KeyError, AttributeError):
-        if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
+        if output_model.meta.cal_step.assign_wcs == "COMPLETE":
             log.error("The input file does not appear to have WCS info.")
-            raise RuntimeError("Problem accessing WCS information.")
+            raise RuntimeError("Problem accessing WCS information.") from None
         else:
             log.error("This mode %s requires WCS information.", exposure_type)
-            raise RuntimeError("The assign_wcs step has not been run.")
-    for k in range(len(tr2)):
-        ifu_wcs = nirspec._nrs_wcs_set_input_lite(output_model, wcsobj, k,
-                                                 [tr1, tr2[k], tr3[k]])
+            raise RuntimeError("The assign_wcs step has not been run.") from None
+    for k, ifu_wcs in enumerate(list_of_wcs):
         # example:  bounding_box = ((1600.5, 2048.5),   # X
         #                           (1886.5, 1925.5))   # Y
         truncated = False
@@ -1648,32 +1656,34 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
             log.debug("Using ifu_wcs.bounding_box.")
         except AttributeError:
             log.info("ifu_wcs.bounding_box not found; using domain instead.")
-            xstart = ifu_wcs.domain[0]['lower']
-            xstop = ifu_wcs.domain[0]['upper']
-            ystart = ifu_wcs.domain[1]['lower']
-            ystop = ifu_wcs.domain[1]['upper']
+            xstart = ifu_wcs.domain[0]["lower"]
+            xstop = ifu_wcs.domain[0]["upper"]
+            ystart = ifu_wcs.domain[1]["lower"]
+            ystop = ifu_wcs.domain[1]["upper"]
 
         if xstart < -0.5:
             truncated = True
-            log.info("xstart from WCS bounding_box was %g" % xstart)
-            xstart = 0.
+            log.info("xstart from WCS bounding_box was %g", xstart)
+            xstart = 0.0
         if ystart < -0.5:
             truncated = True
-            log.info("ystart from WCS bounding_box was %g" % ystart)
-            ystart = 0.
+            log.info("ystart from WCS bounding_box was %g", ystart)
+            ystart = 0.0
         if xstop > 2047.5:
             truncated = True
-            log.info("xstop from WCS bounding_box was %g" % xstop)
-            xstop = 2047.
+            log.info("xstop from WCS bounding_box was %g", xstop)
+            xstop = 2047.0
         if ystop > 2047.5:
             truncated = True
-            log.info("ystop from WCS bounding_box was %g" % ystop)
-            ystop = 2047.
+            log.info("ystop from WCS bounding_box was %g", ystop)
+            ystop = 2047.0
         if truncated:
-            log.info("WCS bounding_box for stripe %d extended beyond image "
-                     "edges, has been truncated to ...", k)
-            log.info('  xstart=%g, xstop=%g, ystart=%g, ystop=%g',
-                     xstart, xstop, ystart, ystop)
+            log.info(
+                "WCS bounding_box for stripe %d extended beyond image "
+                "edges, has been truncated to ...",
+                k,
+            )
+            log.info("  xstart=%g, xstop=%g, ystart=%g, ystop=%g", xstart, xstop, ystart, ystop)
 
         # Convert these to integers, and add one to the upper limits,
         # because we want to use these as slice limits.
@@ -1694,76 +1704,76 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
         if wl[good_flag].max() < MICRONS_100:
             log.warning("Wavelengths in WCS table appear to be in meters")
         # Set NaNs to a relatively harmless value, but don't modify nan_flag.
-        wl[nan_flag] = 0.
+        wl[nan_flag] = 0.0
 
         flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
-            wl, f_flat_model, s_flat_model, d_flat_model,
-            xstart, xstop, ystart, ystop,
-            exposure_type, dispaxis, None, None)
-        flat_2d[nan_flag] = 1.
-        mask = (flat_2d <= 0.)
+            wl,
+            f_flat_model,
+            s_flat_model,
+            d_flat_model,
+            xstart,
+            xstop,
+            ystart,
+            ystop,
+            exposure_type,
+            dispaxis,
+            None,
+            None,
+        )
+        flat_2d[nan_flag] = 1.0
+        mask = flat_2d <= 0.0
         nbad = mask.sum(dtype=np.intp)
         if nbad > 0:
             log.debug("%d flat-field values <= 0", nbad)
-            flat_2d[mask] = 1.
+            flat_2d[mask] = 1.0
         del mask
 
         flat[ystart:ystop, xstart:xstop][good_flag] = flat_2d[good_flag]
         if flat_dq.dtype == flat_dq_2d.dtype:
             flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
         else:
-            log.warning("flat_dq.dtype = {}  flat_dq_2d.dtype = {}"
-                        .format(flat_dq.dtype, flat_dq_2d.dtype))
-            flat_dq[ystart:ystop, xstart:xstop] |= \
-                flat_dq_2d.astype(flat_dq.dtype).copy()
+            log.warning(f"flat_dq.dtype = {flat_dq.dtype}  flat_dq_2d.dtype = {flat_dq_2d.dtype}")
+            flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.astype(flat_dq.dtype).copy()
         flat_err[ystart:ystop, xstart:xstop][good_flag] = flat_err_2d[good_flag]
         del nan_flag, good_flag
 
         any_updated = True
 
     # Ensure consistency between NaN-valued pixels and the DO_NOT_USE flag
-    indx = np.where((flat_dq & dqflags.pixel['DO_NOT_USE']) != 0)
+    indx = np.where((flat_dq & dqflags.pixel["DO_NOT_USE"]) != 0)
     flat[indx] = np.nan
     flat_err[indx] = np.nan
-    indx = np.where(~ np.isfinite(flat))
-    flat_dq[indx] = flat_dq[indx] | dqflags.pixel['DO_NOT_USE']
+    indx = np.where(~np.isfinite(flat))
+    flat_dq[indx] = flat_dq[indx] | dqflags.pixel["DO_NOT_USE"]
 
-    # That's all folks
     return flat, flat_dq, flat_err, any_updated
 
 
-def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model,
-                               dispaxis):
-    """Create the interpolated flat for NIRSpec IFU
+def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_model, dispaxis):
+    """
+    Create the interpolated flat for NIRSpec IFU.
 
     Parameters
     ----------
-    output_model : JWST data model
+    output_model : DataModel
         Science data model, modified (flat fielded) in-place.
-
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+    f_flat_model : NirspecFlatModel, NirspecQuadFlatModel, or None
         Flat field for the fore optics.
-
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : NirspecFlatModel or None
         Flat field for the spectrograph.
-
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : NirspecFlatModel or None
         Flat field for the detector.
-
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
 
     Returns
     -------
-    flat, flat_dq, flat_err, any_updated : numpy.array, numpy.array, numpy.array, bool
-        4-tuple of the interpolated flat correction and whether any slice of the IFU
-        is actually affected.
+    flat : ImageModel
+        The interpolated flat correction.
     """
-
     exposure_type = output_model.meta.exposure.type
 
-    got_wcs = (hasattr(output_model.meta, "wcs") and
-               output_model.meta.wcs is not None)
+    got_wcs = hasattr(output_model.meta, "wcs") and output_model.meta.wcs is not None
 
     # Create an output model for the interpolated flat fields.
     interpolated_flats = datamodels.ImageModel()
@@ -1773,7 +1783,7 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
 
     slit_name = output_model.name
 
-    # The input may be either 2-D or 3-D; save `shape` for use later.
+    # The input may be either 2-D or 3-D; save shape for use later.
     shape = output_model.data.shape
     ysize, xsize = shape[-2:]
     # pixels with respect to the original image
@@ -1787,12 +1797,13 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
     try:
         wl = output_model.wavelength.copy()  # a 2-D array
     except AttributeError:
+        wl = []
         got_wl_attribute = False
     if not got_wl_attribute or len(wl) == 0:
         got_wl_attribute = False
 
     # There must be either a wavelength array or a meta.wcs.
-    if not got_wl_attribute or np.nanmin(wl) == 0. and np.nanmax(wl) == 0.:
+    if not got_wl_attribute or np.nanmin(wl) == 0.0 and np.nanmax(wl) == 0.0:
         log.warning("The wavelength array has not been populated,")
         if got_wcs:
             log.warning("so using wcs instead of the wavelength array.")
@@ -1801,12 +1812,12 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
             del ra, dec, grid
         else:
             log.warning("and there is no 'wcs' attribute,")
-            if output_model.meta.cal_step.assign_wcs == 'COMPLETE':
+            if output_model.meta.cal_step.assign_wcs == "COMPLETE":
                 log.warning("assign_wcs has been run, however.")
             else:
                 log.warning("likely because assign_wcs has not been run.")
             log.error("Skipping flat_field.")
-            output_model.meta.cal_step.flat_field = 'SKIPPED'
+            output_model.meta.cal_step.flat_field = "SKIPPED"
             return None
     else:
         log.debug("Wavelengths are from the wavelength array.")
@@ -1816,24 +1827,37 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
     sum_nan_mask = nan_mask.sum(dtype=np.intp)
     sum_good_mask = good_mask.sum(dtype=np.intp)
     if sum_nan_mask > 0:
-        log.debug("Number of NaNs in wavelength array = %d out of %d",
-                  sum_nan_mask, sum_nan_mask + sum_good_mask)
+        log.debug(
+            "Number of NaNs in wavelength array = %d out of %d",
+            sum_nan_mask,
+            sum_nan_mask + sum_good_mask,
+        )
         if sum_good_mask < 1:
             log.warning("(all are NaN)")
         # Replace NaNs with a relatively harmless but out-of-bounds value.
-        wl[nan_mask] = 0.
+        wl[nan_mask] = 0.0
 
     # Combine the three flat fields.  The same flat will be applied to
     # each plane (integration) in the cube.
     flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
-        wl, f_flat_model, s_flat_model, d_flat_model,
-        xstart, xstop, ystart, ystop,
-        exposure_type, dispaxis, slit_name, None)
-    mask = (flat_2d <= 0.)
+        wl,
+        f_flat_model,
+        s_flat_model,
+        d_flat_model,
+        xstart,
+        xstop,
+        ystart,
+        ystop,
+        exposure_type,
+        dispaxis,
+        slit_name,
+        None,
+    )
+    mask = flat_2d <= 0.0
     nbad = mask.sum(dtype=np.intp)
     if nbad > 0:
         log.debug("%d flat-field values <= 0", nbad)
-        flat_2d[mask] = 1.
+        flat_2d[mask] = 1.0
     del mask
 
     flat_dq_2d = flat_dq_2d.astype(output_model.dq.dtype)
@@ -1846,46 +1870,47 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
     return interpolated_flats
 
 
-def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
-                          dispaxis, exposure_type, slit_nt, subarray,
-                          use_wavecorr):
-    """Create the interpolated flat for NIRSpec slit data
+def flat_for_nirspec_slit(
+    slit,
+    f_flat_model,
+    s_flat_model,
+    d_flat_model,
+    dispaxis,
+    exposure_type,
+    slit_nt,
+    subarray,
+    use_wavecorr,
+):
+    """
+    Create the interpolated flat for NIRSpec slit data.
 
     Parameters
     ----------
     slit : SlitModel
-        A slit to process
-
-    f_flat_model : ~jwst.datamodels.NirspecFlatModel, ~jwst.datamodels.NirspecQuadFlatModel, or None
+        A slit to process.
+    f_flat_model : NirspecFlatModel, NirspecQuadFlatModel, None
         Flat field for the fore optics.
-
-    s_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    s_flat_model : NirspecFlatModel or None
         Flat field for the spectrograph.
-
-    d_flat_model : ~jwst.datamodels.NirspecFlatModel or None
+    d_flat_model : NirspecFlatModel or None
         Flat field for the detector.
-
     dispaxis : int
         1 means horizontal dispersion, 2 means vertical dispersion.
-
     exposure_type : str
         The exposure type
-
     slit_nt : namedtuple or None
         For MOS data (only), this is used to get the quadrant number and
         the indices of the current shutter in the Y and X directions.
-
     subarray : DataModel.meta.subarray
-        The subarray specification
-
-    use_wavecorr : boolean
+        The subarray specification.
+    use_wavecorr : bool or None
         Flag indicating whether or not to use the corrected wavelengths
         provided (upstream) by the wavecorr step.
 
     Returns
     -------
-    flat : SlitModel or None
-        The calculated flat. If None, no flat field could be determined
+    flat : SlitModel
+        The calculated flat.
     """
     # Create flat and flat dq arrays with default values
     flat_2d = np.ones_like(slit.data)
@@ -1905,22 +1930,18 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
     # If the wavelength attribute exists and is populated, use it
     # in preference to the wavelengths returned by the wcs function.
 
-    return_dummy = False
     wl = wcs_utils.get_wavelengths(slit, use_wavecorr=use_wavecorr)
     if wl is None:
-        return_dummy = True
+        # Create and return a placeholder flat as a placeholder, if necessary
+        placeholder_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d, err=flat_err_2d)
+        placeholder_flat.name = slit.name
+        placeholder_flat.xstart = slit.xstart
+        placeholder_flat.xsize = slit.xsize
+        placeholder_flat.ystart = slit.ystart
+        placeholder_flat.ysize = slit.ysize
+        placeholder_flat.wavelength = np.zeros_like(slit.data)
 
-    # Create and return a dummy flat as a placeholder, if necessary
-    if return_dummy:
-        dummy_flat = datamodels.SlitModel(data=flat_2d, dq=flat_dq_2d, err=flat_err_2d)
-        dummy_flat.name = slit.name
-        dummy_flat.xstart = slit.xstart
-        dummy_flat.xsize = slit.xsize
-        dummy_flat.ystart = slit.ystart
-        dummy_flat.ysize = slit.ysize
-        dummy_flat.wavelength = np.zeros_like(slit.data)
-
-        return dummy_flat
+        return placeholder_flat
 
     # We've got everything we need for the rest of processing
     nan_mask = np.isnan(wl)
@@ -1928,28 +1949,40 @@ def flat_for_nirspec_slit(slit, f_flat_model, s_flat_model, d_flat_model,
     sum_nan_mask = nan_mask.sum(dtype=np.intp)
     sum_good_mask = good_mask.sum(dtype=np.intp)
     if sum_nan_mask > 0:
-        log.debug(f"Number of NaNs in sci wavelength array = {sum_nan_mask} "
-                  f"out of {sum_nan_mask + sum_good_mask}")
+        log.debug(
+            f"Number of NaNs in sci wavelength array = {sum_nan_mask} "
+            f"out of {sum_nan_mask + sum_good_mask}"
+        )
         if sum_good_mask < 1:
             log.warning("(all are NaN)")
         # Replace NaNs with a relatively harmless but out-of-bounds value.
-        wl[nan_mask] = 0.
+        wl[nan_mask] = 0.0
     max_wavelength = np.nanmax(wl)
-    if max_wavelength > 0. and max_wavelength < MICRONS_100:
+    if 0.0 < max_wavelength < MICRONS_100:
         log.warning("Wavelengths in science data appear to be in meters.")
 
     # Combine the three flat fields for the current subarray.
-    flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(wl,
-                                                         f_flat_model, s_flat_model, d_flat_model,
-                                                         xstart, xstop, ystart, ystop,
-                                                         exposure_type, dispaxis, slit.name, slit_nt)
+    flat_2d, flat_dq_2d, flat_err_2d = create_flat_field(
+        wl,
+        f_flat_model,
+        s_flat_model,
+        d_flat_model,
+        xstart,
+        xstop,
+        ystart,
+        ystop,
+        exposure_type,
+        dispaxis,
+        slit.name,
+        slit_nt,
+    )
 
     # Mask bad flatfield values
-    mask = (flat_2d <= 0.)
+    mask = flat_2d <= 0.0
     nbad = mask.sum(dtype=np.intp)
     if nbad > 0:
         log.debug("%d flat-field values <= 0", nbad)
-        flat_2d[mask] = 1.
+        flat_2d[mask] = 1.0
     del mask
 
     # Put the computed flat, flat_dq and flat_err into a datamodel

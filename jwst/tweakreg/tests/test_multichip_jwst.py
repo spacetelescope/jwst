@@ -1,5 +1,3 @@
-import os.path
-
 import numpy as np
 from astropy.io import fits
 from astropy import table
@@ -11,6 +9,7 @@ from astropy.modeling.models import (
 )
 from astropy import units as u
 from astropy import coordinates as coord
+from astropy.utils.data import get_pkg_data_filename
 
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.imalign import align_wcs
@@ -23,13 +22,9 @@ from jwst.tweakreg import tweakreg_step
 import gwcs
 from gwcs import coordinate_frames as cf
 from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
-from jwst.tweakreg.tests import data
 
 _REF_RMSE_RA = 3e-9
 _REF_RMSE_DEC = 3e-10
-
-
-data_path = os.path.split(os.path.abspath(data.__file__))[0]
 
 
 def _make_gwcs_wcs(fits_hdr):
@@ -131,7 +126,8 @@ def _make_gwcs_wcs(fits_hdr):
 
 
 def _make_reference_gwcs_wcs(fits_hdr):
-    hdr = fits.Header.fromfile(os.path.join(data_path, fits_hdr))
+    hdr = fits.Header.fromfile(get_pkg_data_filename(
+        f"data/{fits_hdr}", package="jwst.tweakreg.tests"))
     fw = fitswcs.WCS(hdr)
 
     unit_conv = Scale(1.0 / 3600.0, name='arcsec_to_deg_1D')
@@ -225,9 +221,11 @@ def test_multichip_jwst_alignment(monkeypatch):
     monkeypatch.setattr(tweakreg_step.twk, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
-    w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
+    w1 = _make_gwcs_wcs(get_pkg_data_filename(
+        "data/wfc3_uvis1.hdr", package="jwst.tweakreg.tests"))
     imcat1 = JWSTWCSCorrector(w1, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
-    data_file = os.path.join(data_path, 'wfc3_uvis1.ecsv')
+    data_file = get_pkg_data_filename(
+        "data/wfc3_uvis1.ecsv", package="jwst.tweakreg.tests")
     imcat1.meta['catalog'] = table.Table.read(
         data_file,
         format='ascii.ecsv',
@@ -239,10 +237,11 @@ def test_multichip_jwst_alignment(monkeypatch):
     imcat1.meta['group_id'] = 1
     imcat1.meta['name'] = 'ext1'
 
-    w2 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis2.hdr'))
+    w2 = _make_gwcs_wcs(get_pkg_data_filename(
+        "data/wfc3_uvis2.hdr", package="jwst.tweakreg.tests"))
     imcat2 = JWSTWCSCorrector(w2, {'v2_ref': 0, 'v3_ref': 0, 'roll_ref': 0})
     imcat2.meta['catalog'] = table.Table.read(
-        os.path.join(data_path, 'wfc3_uvis2.ecsv'),
+        get_pkg_data_filename("data/wfc3_uvis2.ecsv", package="jwst.tweakreg.tests"),
         format='ascii.ecsv',
         delimiter=' ',
         names=['x', 'y']
@@ -253,7 +252,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     imcat2.meta['name'] = 'ext4'
 
     refcat = table.Table.read(
-        os.path.join(data_path, 'ref.ecsv'),
+        get_pkg_data_filename("data/ref.ecsv", package="jwst.tweakreg.tests"),
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
@@ -297,8 +296,8 @@ def test_multichip_alignment_step_rel(monkeypatch):
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
     # image 1
-    w1 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
-
+    w1 = _make_gwcs_wcs(get_pkg_data_filename(
+        "data/wfc3_uvis1.hdr", package="jwst.tweakreg.tests"))
     m1 = ImageModel(np.zeros((100, 100)))
     m1.meta.filename = 'ext1'
     m1.meta.observation.observation_number = '1'
@@ -315,7 +314,7 @@ def test_multichip_alignment_step_rel(monkeypatch):
     m1.meta.wcs = w1
 
     imcat1 = table.Table.read(
-        os.path.join(data_path, 'wfc3_uvis1.ecsv'),
+        get_pkg_data_filename("data/wfc3_uvis1.ecsv", package="jwst.tweakreg.tests"),
         format='ascii.ecsv',
         delimiter=' ',
         names=['x', 'y']
@@ -325,7 +324,8 @@ def test_multichip_alignment_step_rel(monkeypatch):
     m1.tweakreg_catalog = imcat1
 
     # image 2
-    w2 = _make_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis2.hdr'))
+    w2 = _make_gwcs_wcs(get_pkg_data_filename(
+        "data/wfc3_uvis2.hdr", package="jwst.tweakreg.tests"))
 
     m2 = ImageModel(np.zeros((100, 100)))
     m2.meta.filename = 'ext4'
@@ -344,7 +344,7 @@ def test_multichip_alignment_step_rel(monkeypatch):
     m2.meta.wcs = w2
 
     imcat2 = table.Table.read(
-        os.path.join(data_path, 'wfc3_uvis2.ecsv'),
+        get_pkg_data_filename("data/wfc3_uvis2.ecsv", package="jwst.tweakreg.tests"),
         format='ascii.ecsv',
         delimiter=' ',
         names=['x', 'y']
@@ -354,7 +354,7 @@ def test_multichip_alignment_step_rel(monkeypatch):
     m2.tweakreg_catalog = imcat2
 
     # refcat
-    wr = _make_reference_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
+    wr = _make_reference_gwcs_wcs("wfc3_uvis1.hdr")
 
     mr = ImageModel(np.zeros((100, 100)))
     mr.meta.filename = 'refcat'
@@ -372,11 +372,11 @@ def test_multichip_alignment_step_rel(monkeypatch):
     mr.meta.wcs = wr
 
     refcat = table.Table.read(
-        os.path.join(data_path, 'ref.ecsv'),
+        get_pkg_data_filename("data/ref.ecsv", package="jwst.tweakreg.tests"),
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )
-    x, y = wr.invert(refcat['RA'].value, refcat['DEC'].value,  with_bounding_box=False)
+    x, y = wr.invert(refcat['RA'].value, refcat['DEC'].value, with_bounding_box=False)
     refcat['x'] = x
     refcat['y'] = y
     mr.tweakreg_catalog = refcat
@@ -433,10 +433,11 @@ def test_multichip_alignment_step_abs(monkeypatch):
     monkeypatch.setattr(tweakreg_step.twk, 'align_wcs', _align_wcs)
     monkeypatch.setattr(tweakreg_step, 'make_tweakreg_catalog', _make_tweakreg_catalog)
 
-    refcat_path = os.path.join(data_path, 'ref.ecsv')
+    refcat_path = get_pkg_data_filename(
+        "data/ref.ecsv", package="jwst.tweakreg.tests")
 
     # refcat
-    wr = _make_reference_gwcs_wcs(os.path.join(data_path, 'wfc3_uvis1.hdr'))
+    wr = _make_reference_gwcs_wcs("wfc3_uvis1.hdr")
 
     mr = ImageModel(np.zeros((100, 100)))
     mr.meta.filename = 'refcat'
@@ -455,7 +456,7 @@ def test_multichip_alignment_step_abs(monkeypatch):
     mr.meta.wcs = wr
 
     refcat = table.Table.read(
-        os.path.join(data_path, 'ref.ecsv'),
+        refcat_path,
         format='ascii.ecsv', delimiter=' ',
         names=['RA', 'DEC']
     )

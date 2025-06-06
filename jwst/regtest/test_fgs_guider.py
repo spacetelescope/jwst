@@ -4,7 +4,6 @@ import pytest
 from jwst.regtest import regtestdata as rt
 from jwst.stpipe import Step
 
-
 EXP_TYPES = ['fgs_acq1', 'fgs_fineguide', 'fgs_id-image', 'fgs_id-stack']
 FILE_ROOTS = ['jw01029001001_gs-acq1_2022142180746',
               'jw01029001001_gs-fg_2022142181502',

@@ -1,5 +1,5 @@
 /*
-This module forms the IFU cube in the "detector plane". This method of creating cubes is
+This module creates the IFU cube in the "slicer plane". This method of creating cubes is
 for an engineering mode. The detector pixels are mapped to the along slice coordinate
 and wavelength. The slice number represents the across slice coordinate. The pixels from
 each slice are assumed to not overlap on the output plane with pixels from other slices. This
@@ -25,50 +25,54 @@ example output
 Parameters
 ----------
 instrument: int
-    0 = MIRI, 1 = NIRSPEC. Used for set the dq plane
+   0 = MIRI, 1 = NIRSPEC. Used for set the dq plane
 naxis1 : int
-   axis 1 of IFU cube
-nasix2 : int
-  axis 2 of IFU cube
+   Size of axis 1 of the IFU cube.
+naxis2 : int
+  Size of axis 2 of the IFU cube.
 crval_along : double
-  along slice reference value in IFU cube
+  Along slice reference value in IFU cube
 cdelt_along : double
-  along slice sampling in IFU cube
+  Along slice sampling size in IFU cube
 crval3 : double
    wavelength reference value in IFU cube
 cdetl3 : double
-   wavelength sampling in IFU cube
+   wavelength sampling size in IFU cube
 a1, a2, a3, a4: double array
-    array of corners of pixels holding along slice coordinates
+    Array of corners of pixels holding along slice coordinates.
     a1 holds corner 1
     a2 holds corner 2
     a3 holds corner 3
     a4 holds corner 4
 lam1, lam2, lam3, lam4: double array
-    array of corners of pixels holding wavelength coordinates
+    Array of corners of pixels holding wavelength coordinates.
     lam1 holds corner 1
     lam2 holds corner 2
     lam3 holds corner 3
     lam4 holds corner 4
 acoord : double array
-   Array holds along slice coordinates in IFU cube
+   Array holding along slice coordinates in the IFU cube.
 zcoord : double array
-   Array holds the wavelength coordinates in the IFU cube
+   Array holding the wavelength coordinates in the IFU cube.
 ss : double array
-   Array holds the slice number
+   Array holding the slice number.
 pixel_flux : double array
-  Array that holds detector pixel flux
+  Array that holding detector pixel flux.
 pixel_error : double array
-  Array that holds detector pixel flux error
+  Array that holding detector pixel flux error.
 
 Returns
 -------
-
-spaxel_flux : array
-spaxel_weight : array
-spaxel_iflux : array
-spaxel_var : array
-spaxel_dq : array
+spaxel_flux : double array
+   Combined flux from overlapping detector pixels.
+spaxel_weight : double array
+   Combined weighting used from overlapping detector pixels.
+spaxel_iflux : double array
+   Combined counter from overlapping detector pixels.
+spaxel_var : double array
+   Combined variance from overlapping detector pixels.
+spaxel_dq : double array
+   Spaxel dq flux indicating if spaxel is overlapped with any detector pixels
 
 */
 
@@ -96,10 +100,6 @@ extern double find_area_quad(double MinX, double MinY, double Xcorner[], double 
 extern int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv,  double **ifluxv);
 
 
-//_______________________________________________________________________
-//  based on a 2-D drizzling type of algorithm find the contribution of
-// each detector flux to the IFU cube
-//_______________________________________________________________________
 
 int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt, int ncube, int na,
 			double crval_along, double cdelt_along, double crval3, double cdelt3,
@@ -108,6 +108,14 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 			double *acoord, double *zcoord, int ss,
 			double *pixel_flux, double *pixel_err,
 			double **spaxel_flux, double **spaxel_weight, double **spaxel_var,double **spaxel_iflux){
+
+  /* Find the overlap between the detector pixels and spaxels of the IFU cube when the IFU cube is of internal cal type. 
+
+     The overlap is based on a 2-D drizzling type of algorithm  which finds the contribution of
+     each detector flux to the IFU cube spaxel
+
+     A description of each variable is given at the top of this c routine. 
+  */
 
   double *fluxv=NULL, *weightv=NULL, *varv=NULL, *ifluxv=NULL;  // vectors for spaxel
   double along_corner[4], wave_corner[4], along_min, wave_min, along_max, wave_max, Area, MinW, MaxW, zcenter, acenter, area_overlap,
@@ -204,7 +212,8 @@ int match_detector_cube(int instrument, int naxis1, int naxis2, int nz, int npt,
 
 
 // C extension SETUP
-
+// This ensures that all the numpy arrays passed to the C routines
+// follow C array rules. 
 PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     if (PyArray_CheckExact(obj) &&
         PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
@@ -220,6 +229,8 @@ PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
     }
 }
 
+
+// Wrapper code that is called from python code and sets up interface with C code.
 
 static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args) {
 

@@ -1,13 +1,16 @@
 from glob import glob
 
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
+
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
 
 
 @pytest.fixture(scope="module")
@@ -32,8 +35,8 @@ def run_detector1pipeline(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_detector1pipeline_with_sirs(rtdata_module):
-    """Run calwebb_detector1 on NIRCam imaging long data using SIRS.
+def run_detector1pipeline_with_sirs(rtdata_module, resource_tracker):
+    """Run calwebb_detector1 on NIRCam imaging data using SIRS.
 
     SIRS is the convolution kernel algorithm - Simple Improved Reference Subtraction.
     """
@@ -46,7 +49,8 @@ def run_detector1pipeline_with_sirs(rtdata_module):
             "--steps.refpix.refpix_algorithm=sirs",
             "--steps.refpix.save_results=True",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
@@ -69,7 +73,27 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 
 
 @pytest.fixture(scope="module")
-def run_image2pipeline(run_detector1pipeline, rtdata_module):
+def run_detector1_with_likelihood(rtdata_module, resource_tracker):
+    """
+    Run calwebb_detector1 on NIRCam imaging data using likelihood ramp fitting.
+
+    Input data has a separate zero frame attached.
+    """
+    rtdata = rtdata_module
+    rtdata.get_data("nircam/image/jw01345001001_10201_00001_nrca3_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files
+    args = ["calwebb_detector1", rtdata.input,
+            "--output_file=jw01345001001_10201_00001_nrca3_likely",
+            "--steps.ramp_fit.algorithm=LIKELY",
+            ]
+    with resource_tracker.track():
+        Step.from_cmdline(args)
+
+
+
+@pytest.fixture(scope="module")
+def run_image2pipeline(run_detector1pipeline, rtdata_module, resource_tracker):
     """Run calwebb_image2 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.input = "jw01538046001_03105_00001_nrcalong_rate.fits"
@@ -77,11 +101,12 @@ def run_image2pipeline(run_detector1pipeline, rtdata_module):
             "--steps.assign_wcs.save_results=True",
             "--steps.flat_field.save_results=True",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
 @pytest.fixture(scope="module")
-def run_image3pipeline(run_image2pipeline, rtdata_module):
+def run_image3pipeline(run_image2pipeline, rtdata_module, resource_tracker):
     """Run calwebb_image3 on NIRCam imaging long data"""
     rtdata = rtdata_module
     # Grab rest of _rate files for the asn and run image2 pipeline on each to
@@ -105,10 +130,22 @@ def run_image3pipeline(run_image2pipeline, rtdata_module):
             "--steps.tweakreg.save_results=True",
             "--steps.source_catalog.snr_threshold=20",
             ]
-    Step.from_cmdline(args)
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
 
-@pytest.mark.bigdata
+def test_log_tracked_resources_detector1(log_tracked_resources, run_detector1pipeline_with_sirs):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_image2(log_tracked_resources, run_image2pipeline):
+    log_tracked_resources()
+
+
+def test_log_tracked_resources_image3(log_tracked_resources, run_image3pipeline):
+    log_tracked_resources()
+
+
 def test_nircam_image_sirs(run_detector1pipeline_with_sirs, rtdata_module, fitsdiff_default_kwargs):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
     rtdata = rtdata_module
@@ -124,7 +161,6 @@ def test_nircam_image_sirs(run_detector1pipeline_with_sirs, rtdata_module, fitsd
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
                                     "refpix", "linearity",
                                     "dark_current", "jump", "rate",
@@ -146,7 +182,6 @@ def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_defau
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
     """Test that WCS object works as expected"""
     rtdata = rtdata_module
@@ -165,7 +200,6 @@ def test_nircam_image_stage2_wcs(run_image2pipeline, rtdata_module):
         assert_allclose(dec, dec_truth)
 
 
-@pytest.mark.bigdata
 def test_nircam_image_stage3_tweakreg(run_image3pipeline):
     """Test that tweakreg doesn't attach a catalog and that it updates the wcs"""
     files = glob("*tweakreg.fits")
@@ -181,7 +215,6 @@ def test_nircam_image_stage3_tweakreg(run_image3pipeline):
                 assert "v2v3corr" in model.meta.wcs.available_frames
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["i2d"])
 def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Test that resampled i2d looks good for NIRCam imaging"""
@@ -199,7 +232,6 @@ def test_nircam_image_stage3(run_image3pipeline, rtdata_module, fitsdiff_default
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_astropy_tables):
     rtdata = rtdata_module
     rtdata.input = "jw01538-o046_20230331t102920_image3_00009_asn.json"
@@ -210,7 +242,6 @@ def test_nircam_image_stage3_catalog(run_image3pipeline, rtdata_module, diff_ast
     assert diff_astropy_tables(rtdata.output, rtdata.truth, rtol=1e-4, atol=1e-5)
 
 
-@pytest.mark.bigdata
 def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_default_kwargs):
     """Test that segmentation map looks good for NIRCam imaging"""
     rtdata = rtdata_module
@@ -223,7 +254,6 @@ def test_nircam_image_stage3_segm(run_image3pipeline, rtdata_module, fitsdiff_de
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
     """Test optional frame-averaged darks output from DarkCurrentStep"""
     rtdata.get_data("nircam/image/jw01205015001_03101_00001_nrcb1_ramp.fits")
@@ -241,7 +271,6 @@ def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.bigdata
 def test_imaging_distortion(rtdata, fitsdiff_default_kwargs):
     """Verify that the distortion correction round trips."""
     rtdata.get_data("nircam/image/jw01538046002_02103_00002_nrca1_cal.fits")
@@ -263,7 +292,6 @@ def test_imaging_distortion(rtdata, fitsdiff_default_kwargs):
     assert_allclose(decout, dec)
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize("suffix",
                          ["cfn_clean_flicker_noise", "mask",
                           "flicker_bkg", "flicker_noise",
@@ -278,6 +306,26 @@ def test_nircam_image_detector1_with_clean_flicker_noise(
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_nircam_image_clean_flicker_noise/{output}")
+
+    # Set tolerances so the file comparisons work across architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.parametrize("suffix",
+                         ["likely_rate", "likely_rateints"])
+def test_nircam_image_detector1_with_likelihood(
+        run_detector1_with_likelihood,
+        rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Test detector1 pipeline for NIRCam imaging data with likelihood fitting."""
+    rtdata = rtdata_module
+    rtdata.input = "jw01345001001_10201_00001_nrca3_uncal.fits"
+    output = f"jw01345001001_10201_00001_nrca3_{suffix}.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_nircam_image_likelihood/{output}")
 
     # Set tolerances so the file comparisons work across architectures
     fitsdiff_default_kwargs["rtol"] = 1e-4

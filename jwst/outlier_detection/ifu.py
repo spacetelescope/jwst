@@ -28,6 +28,7 @@ This routine performs the following operations::
 """
 
 import logging
+import warnings
 
 import numpy as np
 
@@ -222,12 +223,16 @@ def flag_outliers(
             comb = np.zeros([2, ny, nx])
             comb[0, :, :] = np.abs(leftdiff)
             comb[1, :, :] = np.abs(rightdiff)
-            combdiff = np.nanmin(comb, axis=0)
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
+                combdiff = np.nanmin(comb, axis=0)
             diffarr[j, :, :] = combdiff
             j = j + 1
 
     # minarr final minimum combined differences, size: ny X nx
-    minarr = np.nanmin(diffarr, axis=0)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "All-NaN", RuntimeWarning)
+        minarr = np.nanmin(diffarr, axis=0)
 
     # Normalise the differences to a local median image to deal with ultra-bright sources
     normarr = medfilt(minarr, kern_size)
@@ -287,8 +292,8 @@ def flag_outliers(
                 )
             )
             log.debug(
-                "Number of pixels DQ was not set to DO_NOT_USE "
-                f"and Sci array was Nan{len(check[0])} "
+                "Number of pixels for which DQ was not set to DO_NOT_USE "
+                f"and SCI array was NaN: {len(check[0])} "
             )
             # set all pixels with dq = DO_NOT_USE to have sci values of Nan
             bad = np.bitwise_and(dq, dqflags.pixel["DO_NOT_USE"]).astype(bool)

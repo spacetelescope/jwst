@@ -1,12 +1,9 @@
 """Test DMSBaseMixin features"""
 import inspect
-from os import path
-import pytest
 import re
 
-from jwst.associations.tests.helpers import (
-    t_path
-)
+import pytest
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations import AssociationRegistry
 
@@ -14,7 +11,8 @@ from jwst.associations import AssociationRegistry
 @pytest.fixture(scope='module')
 def dms_registry():
     """Create the registry"""
-    dms_test_rules_path = t_path(path.join('data', 'dms_rules.py'))
+    dms_test_rules_path = get_pkg_data_filename(
+        "data/dms_rules.py", package="jwst.associations.tests")
     dms_registry = AssociationRegistry(
         [dms_test_rules_path], include_default=False
     )
@@ -48,7 +46,7 @@ def test_asn_name_override(dms_asns):
 def test_registry(dms_registry):
     """Test basic registry creation and usage"""
     assert len(dms_registry) == 1
-    assert 'Asn_DMS_Base' in dms_registry
+    assert 'AsnDMSBase' in dms_registry
 
 
 def test_asn(dms_asns):
@@ -69,7 +67,8 @@ def test_finalize(dms_registry, dms_asns):
 
 def test_include_bases():
     """Test for included bases"""
-    dms_test_rules_path = t_path(path.join('data', 'dms_rules.py'))
+    dms_test_rules_path = get_pkg_data_filename(
+        "data/dms_rules.py", package="jwst.associations.tests")
     dms_registry = AssociationRegistry(
         [dms_test_rules_path], include_default=False, include_bases=True
     )

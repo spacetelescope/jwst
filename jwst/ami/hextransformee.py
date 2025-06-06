@@ -2,7 +2,7 @@
 import numpy as np
 
 
-def gfunction(xi, eta, **kwargs):
+def gfunction(xi, eta, c, pixel, d, lam, affine2d, minus=False):
     """
     Fourier transform a half-hexagon.
 
@@ -13,46 +13,35 @@ def gfunction(xi, eta, **kwargs):
     ----------
     xi : 2D float array
         Hexagon's coordinate center at center of symmetry, along flat edge
-
     eta : 2D float array
         Hexagon's coordinate center at center of symmetry, normal to xi
-
-    **kwargs : dict
-        Keyword arguments
-        c (optional, via **kwargs): tuple(float, float)
-            coordinates of center
-
-        pixel (optional, via **kwargs): float
-            pixel scale
-
-        d (optional, via **kwargs): float
-            flat-to-flat distance across hexagon
-
-        lam (optional, via **kwargs): float
-            wavelength
-
-        minus: (optional, via **kwargs) boolean
-            if set, use flipped sign of xi in calculation
+    c : tuple(float, float), required
+        Coordinates of center
+    pixel : float, required
+        Pixel scale
+    d : float, required
+        Flat-to-flat distance across hexagon
+    lam : float, required
+        Wavelength
+    affine2d : Affine2d object, required
+        Distortion object
+    minus : bool, required
+        If True, use flipped sign of xi in calculation
 
     Returns
     -------
-    g*affine2d.distortphase(xi,eta): 2D complex array
+    2D complex array
         Fourier transform of one half of a hexagon.
     """
-    c = kwargs["c"]
-    pixel = kwargs["pixel"]
-    d = kwargs["d"]
-    lam = kwargs["lam"]
     xi = (d / lam) * pixel * (xi - c[0])
     eta = (d / lam) * pixel * (eta - c[1])
-    affine2d = kwargs["affine2d"]
 
     i = 1j
     pi = np.pi
 
     xip, etap = affine2d.distort_f_args(xi, eta)
 
-    if kwargs["minus"] is True:
+    if minus:
         xip = -1 * xip
 
     g = (
@@ -69,29 +58,25 @@ def gfunction(xi, eta, **kwargs):
     return g * affine2d.distortphase(xi, eta)
 
 
-def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
+def hextransform(s, d, lam, pitch, affine2d, c=None):
     """
     Calculate the complex array analytical transform of a (distorted if necessary) hexagon.
 
     Parameters
     ----------
-    s : (int,int) tuple
-        Size of hexagonal primary beam
-
-    c : (float,float) tuple
-        Location of center of hexagonal primary beam
-
-    d : float
-        Flat-to-flat distance across hexagon
-
-    lam : float
-        Vavelength
-
-    pitch : float
+    s : (int,int) tuple, required
+        Size of output hexagonal beam in pixels
+    d : float, required
+        Flat-to-flat distance across hexagon in meters
+    lam : float, required
+        Wavelength of the observation in meters
+    pitch : float, required
         Sampling pitch in radians in image plane
-
     affine2d : Affine2d object
         Distortion object
+    c : (float,float) tuple, optional
+        Location of center of hexagonal primary beam in pixels.
+        If None, the center is assumed to be at the center of the array.
 
     Returns
     -------
@@ -99,11 +84,10 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
         Complex array analytical transform of a hexagon
     """
     if c is None:
-        c = (float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5)
+        c = [float(s[0]) / 2.0 - 0.5, float(s[1]) / 2.0 - 0.5]
 
     # deal with central pixel singularity:
-    c_adjust = c
-
+    c_adjust = [None, None]
     eps_offset = 1.0e-8
 
     # The fractional part of the offsets:
@@ -112,9 +96,12 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
     # Are they very small (i.e. 'almost exactly' centered on 0)?
     if abs(d0) < 0.5 * eps_offset:  # might have the singular central pixel here
         c_adjust[0] = c[0] + eps_offset
-
+    else:
+        c_adjust[0] = c[0]
     if abs(d1) < 0.5 * eps_offset:  # might have the singular central pixel here
         c_adjust[1] = c[1] + eps_offset
+    else:
+        c_adjust[1] = c[1]
 
     hex_complex = np.fromfunction(
         gfunction,
@@ -135,6 +122,8 @@ def hextransform(s=None, c=None, d=None, lam=None, pitch=None, affine2d=None):
         affine2d=affine2d,
         minus=True,
     )
+
+    # The center pixel is singular, so we replace it with the known value of sqrt(3)/2
     hex_complex[int(c[0]), int(c[1])] = np.sqrt(3) / 2.0
 
     return hex_complex

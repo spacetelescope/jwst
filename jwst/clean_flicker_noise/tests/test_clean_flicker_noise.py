@@ -1,11 +1,15 @@
+import warnings
+
 import gwcs
 import numpy as np
 import pytest
+from astropy.utils.data import get_pkg_data_filename
+from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.tests.test_nirspec import (
     create_nirspec_ifu_file, create_nirspec_fs_file)
-from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model, get_file_path
+from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
 from jwst.clean_flicker_noise import clean_flicker_noise as cfn
 
 
@@ -94,8 +98,8 @@ def make_nirspec_ifu_model(shape=(2048, 2048)):
 
 def make_nirspec_mos_fs_model():
     mos_model = make_nirspec_mos_model()
-    mos_model.meta.instrument.msa_metadata_file = get_file_path(
-        'msa_fs_configuration.fits')
+    mos_model.meta.instrument.msa_metadata_file = get_pkg_data_filename(
+        "data/msa_fs_configuration.fits", package="jwst.assign_wcs.tests")
     return mos_model
 
 
@@ -173,7 +177,6 @@ def test_postprocess_rate_miri(log_watcher):
     result.close()
 
 
-@pytest.mark.slow
 def test_mask_ifu_slices():
     rate_model = make_nirspec_ifu_model()
 
@@ -205,7 +208,7 @@ def test_mask_slits(exptype, blocked):
     cfn.mask_slits(rate_model, mask)
 
     # Check that the fraction of the array blocked is as expected
-    assert np.allclose(np.sum(mask) / mask.size, 1 - blocked, atol=0.001)
+    assert_allclose(np.sum(mask) / mask.size, 1 - blocked, atol=0.001)
 
     rate_model.close()
 
@@ -264,8 +267,8 @@ def test_clip_to_background_fit_fails(log_watcher):
     image = np.full(shape, np.nan)
     mask = np.full(shape, True)
     watcher.message = "Histogram failed"
-    with pytest.warns(RuntimeWarning):
-        cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
+
+    cfn.clip_to_background(image, mask, fit_histogram=True, verbose=True)
     assert np.all(mask)
     watcher.assert_seen()
 
@@ -486,7 +489,10 @@ def test_fft_subarray_clean_error(monkeypatch, log_watcher):
     # Mask is all bad: error message, returns None
     mask = np.full(shape, False)
     watcher.message = "No good pixels"
-    cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1')
+    # RuntimeWarning: Mean of empty slice
+    # RuntimeWarning: invalid value encountered in scalar divide
+    with pytest.warns(RuntimeWarning):
+        cleaned_image = cfn.fft_clean_subarray(image.copy(), mask, 'NRS1')
     assert cleaned_image is None
     watcher.assert_seen()
 

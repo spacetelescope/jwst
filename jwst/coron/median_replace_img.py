@@ -1,7 +1,8 @@
-"""Replace bad pixels in the input images with the median of the surrounding pixels.
-"""
+"""Replace bad pixels in the input images with the median of the surrounding pixels."""
 
 import logging
+import warnings
+
 import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -10,14 +11,15 @@ log.setLevel(logging.DEBUG)
 
 
 def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
-    """Calculates the median value of good pixels in a cutout of the input array.
+    """
+    Calculate the median value of good pixels in a cutout of the input array.
 
     Parameters
     ----------
-    input_array : ndarray
+    input_array : numpy.ndarray
         Input array to filter
 
-    input_dq_array : ndarray
+    input_dq_array : numpy.ndarray
         Input data quality array
 
     bsize : scalar
@@ -28,49 +30,51 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
         will treat all pixels as good.
 
     xc : scalar
-        x position of the data extraction
+        X position of the data extraction
 
     yc : scalar
-        y position of the data extraction
+        Y position of the data extraction
 
     Returns
     -------
     median_value : float
         The calculated median value
     """
-
     # Set the half box size
     hbox = int(bsize / 2)
 
     # Extract the region of interest for the data
     try:
-        data_array = input_array[xc - hbox:xc + hbox + 1, yc - hbox: yc + hbox + 1]
-        dq_array = input_dq_array[xc - hbox:xc + hbox + 1, yc - hbox: yc + hbox + 1]
+        data_array = input_array[xc - hbox : xc + hbox + 1, yc - hbox : yc + hbox + 1]
+        dq_array = input_dq_array[xc - hbox : xc + hbox + 1, yc - hbox : yc + hbox + 1]
     except IndexError:
         # If the box is outside the data return 0
-        log.warning('Box for median filter is outside the data.')
-        return 0.
+        log.warning("Box for median filter is outside the data.")
+        return 0.0
 
     # Calculate the median value using only good pixels
     filtered_array = data_array[np.bitwise_and(dq_array, bad_bitvalue) == 0]
-    median_value = np.median(filtered_array)
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "Mean of empty slice", RuntimeWarning)
+        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+        median_value = np.median(filtered_array)
 
     if np.isnan(median_value):
         # If the median fails return 0
-        log.debug('Median filter returned NaN; setting value to 0.')
-        median_value = 0.
+        log.debug("Median filter returned NaN; setting value to 0.")
+        median_value = 0.0
 
     return median_value
 
 
 def median_replace_img(img_model, box_size, bad_bitvalue):
-    """Routine to replace any bad pixels with the median value of the surrounding
-    pixels.
+    """
+    Replace any bad pixels with the median value of the surrounding pixels.
 
     Parameters
     ----------
-    img_model : image model
-        The input image model
+    img_model : CubeModel
+        The input model
 
     box_size : scalar
         Box size for the median filter
@@ -81,10 +85,9 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
     Returns
     -------
-    img_model : image model
+    img_model : CubeModel
         The updated image model with the bad pixels replaced
     """
-
     n_ints, _, _ = img_model.data.shape
     for nimage in range(n_ints):
         img_int = img_model.data[nimage]
@@ -97,7 +100,7 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
         # If it's MIRI coronagraphy, only use the bad locations that are in the
         # science aperture (i.e. not flagged as NON_SCIENCE). Set the others to 0
         # directly to avoid thousands of logging warnings.
-        if img_model.meta.instrument.name == 'MIRI':
+        if img_model.meta.instrument.name == "MIRI":
             bad_locations, non_science = separate_non_science_pixels(img_dq, bad_locations)
             # skip the median filter for non-science pixels
             img_int[non_science[0], non_science[1]] = 0
@@ -108,8 +111,9 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
             # consistent with their usage here so it's all OK
             x_box_pos = bad_locations[0][i_pos]
             y_box_pos = bad_locations[1][i_pos]
-            median_fill = median_fill_value(img_int, img_dq, box_size,
-                                            bad_bitvalue, x_box_pos, y_box_pos)
+            median_fill = median_fill_value(
+                img_int, img_dq, box_size, bad_bitvalue, x_box_pos, y_box_pos
+            )
             img_int[x_box_pos, y_box_pos] = median_fill
 
         img_model.data[nimage] = img_int
@@ -119,6 +123,8 @@ def median_replace_img(img_model, box_size, bad_bitvalue):
 
 def separate_non_science_pixels(img_dq, bad_locations):
     """
+    Generate masks for science pixels and non-science pixels.
+
     For the median filter, we don't care about the NON_SCIENCE pixels, but they
     produce a ton of warnings that clog up the alignment algorithm and make it
     run really slowly. In this function, we take all the bad pixels and pull out
@@ -127,13 +133,13 @@ def separate_non_science_pixels(img_dq, bad_locations):
 
     Parameters
     ----------
-    img_dq : ndarray
-        input data quality array
+    img_dq : numpy.ndarray
+        Input data quality array
     bad_locations : tuple
         2xN (row, col) tuple of flagged pixel indices
 
     Returns
-    ------
+    -------
     science_pixels : tuple
         2xN tuple of (row, col) flagged science pixels
     non_science_pixels : tuple
@@ -144,12 +150,12 @@ def separate_non_science_pixels(img_dq, bad_locations):
         # return True if pixel is for science, False if flagged NON_SCIENCE
         val = img_dq[pix[0], pix[1]]
         # check for the NON_SCIENCE flag
-        flagged = np.bitwise_and(val, dqflags.pixel['NON_SCIENCE'])
+        flagged = np.bitwise_and(val, dqflags.pixel["NON_SCIENCE"])
         # if `flagged` is 0, it's a science pixel so return True.
         science_pixel = ~flagged.any()
         return science_pixel
 
-    indexer = np.array(list(map(is_science, list(zip(*bad_locations)))))
+    indexer = np.array(list(map(is_science, list(zip(*bad_locations, strict=True)))))
     bad_locations = np.array(bad_locations)
     science_pixels = tuple(bad_locations[:, indexer])
     non_science_pixels = tuple(bad_locations[:, ~indexer])

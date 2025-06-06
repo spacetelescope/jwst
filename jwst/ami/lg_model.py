@@ -19,7 +19,7 @@ mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
 class LgModel:
     """
-    A class for conveniently dealing with an "NRM object.
+    A class for conveniently dealing with an NRM object.
 
     This should be able to take an NRMDefinition object for mask geometry.
     Defines mask geometry and detector-scale parameters.
@@ -35,90 +35,61 @@ class LgModel:
     def __init__(
         self,
         nrm_model,
-        mask=None,
+        pixscale,
+        bandpass,
+        mask="jwst_ami",
         holeshape="hex",
-        pixscale=None,
         over=1,
-        pixweight=None,
         phi=None,
         chooseholes=None,
         affine2d=None,
-        **kwargs,
     ):
         """
         Set attributes of LgModel class.
 
         Parameters
         ----------
-        nrm_model : NRMModel datamodel
+        nrm_model : NRMModel (or NRMDefinition object? test.)
             Datamodel containing mask geometry information
-
-        mask : str
-            Keyword for built-in values
-
-        holeshape : str
-           Shape of apertures, default="hex"
-
         pixscale : float
            Initial estimate of pixel scale in radians
-
+        bandpass : np.ndarray[float]
+            Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
+        mask : str
+            Keyword for built-in values
+        holeshape : str
+           Shape of apertures, default="hex"
         over : int
            Oversampling factor
-
-        pixweight : 2D float array, default None
-            Weighting array
-
         phi : float 1D array
             Distance of fringe from hole center in units of waves
-
         chooseholes : list of strings, default None
             E.g. ['B2', 'B4', 'B5', 'B6'] for a four-hole mask
             If None, use the real seven-hole mask.
-
         affine2d : Affine2d object
             Affine2d object
-
-        **kwargs : dict
-            Keyword arguments
-            debug: boolean
-                if set, print debug
         """
-        if "debug" in kwargs:
-            self.debug = kwargs["debug"]
-        else:
-            self.debug = False
-
+        self.bandpass = bandpass
         self.holeshape = holeshape
         self.pixel = pixscale  # det pix in rad (square)
         self.over = over
-        self.pixweight = pixweight
 
-        # get these from mask_definition_ami instead
-        if mask is None:
-            log.info("Using JWST AMI mask geometry from LgModel")
-            mask = mask_definition_ami.NRMDefinition(
-                nrm_model, maskname="jwst_ami", chooseholes=chooseholes
-            )
-        elif isinstance(mask, str):
-            mask = mask_definition_ami.NRMDefinition(
-                nrm_model, maskname=mask, chooseholes=chooseholes
-            )  # retain ability to possibly  use other named masks, for now
-        self.ctrs = mask.ctrs
-        self.d = mask.hdia
-        self.D = mask.active_D
+        self.mask = mask_definition_ami.NRMDefinition(
+            nrm_model, maskname=mask, chooseholes=chooseholes
+        )
+        self.ctrs = self.mask.ctrs
+        self.d = self.mask.hdia
+        self.D = self.mask.active_D
 
         self.N = len(self.ctrs)
         self.fmt = "%10.4e"
 
-        # get closest in time OPD from WebbPSF?
+        # get closest in time OPD from STPSF?
 
-        if phi:  # meters of OPD at central wavelength
-            if phi == "perfect":
-                self.phi = np.zeros(self.N)  # backwards compatibility
-            else:
-                self.phi = phi
+        if (phi is None) or (phi == "perfect"):  # meters of OPD at central wavelength
+            self.phi = np.zeros(self.N)  # backwards compatibility
         else:
-            self.phi = np.zeros(self.N)
+            self.phi = phi
 
         self.chooseholes = chooseholes
 
@@ -135,7 +106,7 @@ class LgModel:
         else:
             self.affine2d = affine2d
 
-    def simulate(self, fov=None, bandpass=None, over=None, psf_offset=(0, 0)):
+    def simulate(self, fov, psf_offset=(0, 0)):
         """
         Simulate a detector-scale psf.
 
@@ -146,38 +117,27 @@ class LgModel:
 
         Parameters
         ----------
-        fov : int, default=None
+        fov : int
             Number of detector pixels on a side
-
-        bandpass : 2D float array, default=None
-            Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
-
-        over : int
-            Oversampling factor
-
         psf_offset : detector pixels
             Center offset from center of array
 
         Returns
         -------
         Object's 'psf' : float 2D array
-            Simulated psf
+            Simulated psf of shape (fov, fov).
         """
         # First set up conditions for choosing various parameters
-        self.bandpass = bandpass
 
-        if over is None:
-            over = 1  # ?  Always comes in as integer.
-
-        self.psf_over = np.zeros((over * fov, over * fov))
+        self.psf_over = np.zeros((self.over * fov, self.over * fov))
         nspec = 0
         # accumulate polychromatic oversampled psf in the object
 
-        for w, l in bandpass:  # w: wavelength's weight, l: lambda (wavelength)
+        for w, l in self.bandpass:  # w: wavelength's weight, l: lambda (wavelength)
             self.psf_over += w * analyticnrm2.psf(
                 self.pixel,  # det pixel, rad
                 fov,  # in detpix number
-                over,
+                self.over,
                 self.ctrs,
                 self.d,
                 l,
@@ -190,11 +150,11 @@ class LgModel:
             nspec += 1
 
         # store the detector pixel scale psf in the object
-        self.psf = utils.rebin(self.psf_over, (over, over))
+        self.psf = utils.rebin(self.psf_over, (self.over, self.over))
 
         return self.psf
 
-    def make_model(self, fov=None, bandpass=None, over=1, psf_offset=(0, 0), pixscale=None):
+    def make_model(self, fov, psf_offset=(0, 0)):
         """
         Generate the fringe model.
 
@@ -203,45 +163,21 @@ class LgModel:
         [(weight1, wavl1), (weight2, wavl2),...].  The model is
         a collection of fringe intensities, where nholes = 7 means the model
         has a @D slice for each of 21 cosines, 21 sines, a DC-like, and a flux
-        slice for a toal of 44 2D slices.
+        slice for a total of 44 2D slices.
 
         Parameters
         ----------
-        fov : int, default=None
+        fov : int
             Number of detector pixels on a side
-
-        bandpass : 2D float array, default=None
-            Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
-
-        over : int
-           Cversampling factor
-
         psf_offset : detector pixels
             Center offset from center of array
 
-        pixscale : float, default=None
-            Pixel scale
-
         Returns
         -------
-        Object's 'model': fringe model
-            Generated fringe model
+        model : np.ndarray[float]
+            Generated fringe model, shape (fov, fov, N * (N - 1) + 2)
         """
-        if fov:
-            self.fov = fov
-
-        self.over = over
-
-        if hasattr(self, "pixscale_measured"):
-            if self.pixscale_measured is not None:
-                self.modelpix = self.pixscale_measured
-
-        if pixscale is None:
-            self.modelpix = self.pixel
-        else:
-            self.modelpix = pixscale
-
-        self.modelctrs = self.ctrs
+        self.fov = fov
 
         # The model shape is (fov) x (fov) x (# solution coefficients)
         # the coefficient refers to the terms in the analytic equation
@@ -254,14 +190,14 @@ class LgModel:
             (self.N * (self.N - 1) + 1, self.over * self.fov, self.over * self.fov)
         )
 
-        for w, l in bandpass:  # w: weight, l: lambda (wavelength)
+        for w, l in self.bandpass:  # w: weight, l: lambda (wavelength)
             # model_array returns the envelope and fringe model as a list of
             #   oversampled fov x fov slices
             pb, ff = analyticnrm2.model_array(
-                self.modelctrs,
+                self.ctrs,
                 l,
                 self.over,
-                self.modelpix,
+                self.pixel,
                 self.fov,
                 self.d,
                 shape=self.holeshape,
@@ -275,14 +211,12 @@ class LgModel:
             self.fringes += ff
 
             # this routine multiplies the envelope by each fringe "image"
-            self.model_over = leastsqnrm.multiplyenv(pb, ff)
+            model_over = leastsqnrm.multiplyenv(pb, ff)
 
-            model_binned = np.zeros((self.fov, self.fov, self.model_over.shape[2]))
+            model_binned = np.zeros((self.fov, self.fov, model_over.shape[2]))
             # loop over slices "sl" in the model
-            for sl in range(self.model_over.shape[2]):
-                model_binned[:, :, sl] = utils.rebin(
-                    self.model_over[:, :, sl], (self.over, self.over)
-                )
+            for sl in range(model_over.shape[2]):
+                model_binned[:, :, sl] = utils.rebin(model_over[:, :, sl], (self.over, self.over))
 
             self.model += w * model_binned
 
@@ -291,9 +225,7 @@ class LgModel:
     def fit_image(
         self,
         image,
-        reference=None,
-        model_in=None,
-        savepsfs=False,
+        model_in,
         dqm=None,
         weighted=False,
     ):
@@ -308,60 +240,27 @@ class LgModel:
         reference image (a cropped deNaNed version of the data) to run
         correlations. It is recommended that the symmetric part of the data be
         used to avoid piston confusion in scaling.
+        TODO: change name of self.singvals or self.linfit_results to be the same, for consistency.
+        This would be easier if matrix_operations and weighted_operations both did their fitting
+        with scipy
 
         Parameters
         ----------
         image : 2D float array
             Input image
-
-        reference : 2D float array
-            Input reference image
-
-        model_in : 2D array
-            Optional model image
-
-        savepsfs : bool
-            Save the psfs for writing to file (currently unused)
-
+        model_in : 2D float array
+            Model image
         dqm : 2D array
             Bad pixel mask of same dimensions as image
-
         weighted : bool
             Use weighted operations in the least squares routine
         """
-        self.model_in = model_in
         self.weighted = weighted
-        self.saveval = savepsfs
+        self.fittingmodel = model_in
+        if dqm is None:
+            dqm = np.zeros(image.shape, dtype="bool")
 
-        if model_in is None:  # No model provided
-            # Perform a set of automatic routines
-            # A Cleaned up version of your image to enable Fourier fitting for
-            # centering crosscorrelation with FindCentering() and
-            # magnification and rotation via improve_scaling().
-
-            if reference is None:
-                self.reference = image
-                if np.isnan(image.any()):
-                    raise ValueError(
-                        "Must have non-NaN image to "
-                        "crosscorrelate for scale. Reference "
-                        "image should also be centered."
-                    )
-            else:
-                self.reference = reference
-
-            self.pixscale_measured = self.pixel
-            self.fov = image.shape[0]
-            self.fittingmodel = self.make_model(
-                self.fov,
-                bandpass=self.bandpass,
-                over=self.over,
-                psf_offset=self.bestcenter,
-                pixscale=self.pixel,
-            )
-        else:
-            self.fittingmodel = model_in
-        if self.weighted is False:
+        if not weighted:
             self.soln, self.residual, self.cond, self.linfit_result = leastsqnrm.matrix_operations(
                 image, self.fittingmodel, dqm=dqm
             )
@@ -393,115 +292,6 @@ class LgModel:
         for ind, coeff in enumerate(self.soln):
             self.modelpsf += self.flux * coeff * self.fittingmodel[:, :, ind]
 
-        return None
-
-    def improve_scaling(self, img):
-        """
-        Determine the scale and rotation that best fits the data.
-
-        Correlations
-        are calculated in the image plane, in anticipation of data with many
-        bad pixels.
-
-        Parameters
-        ----------
-        img : 2D float array
-            Input image
-
-        Returns
-        -------
-        self.pixscale_factor: float
-            Improved estimate of pixel scale in radians
-
-        self.rot_measured : float
-            Value of mag at the extreme value of rotation from quadratic fit
-
-        self.gof : float
-            Goodness of fit
-        """
-        if not hasattr(self, "bandpass"):
-            raise ValueError("This obj has no specified bandpass/wavelength")
-
-        reffov = img.shape[0]
-        scal_corrlist = np.zeros((len(self.scallist), reffov, reffov))
-        pixscl_corrlist = scal_corrlist.copy()
-        scal_corr = np.zeros(len(self.scallist))
-        self.pixscl_corr = scal_corr.copy()
-
-        # User can specify a reference set of phases (m) at an earlier point so
-        #  that all PSFs are simulated with those phase pistons (e.g. measured
-        #  from data at an earlier iteration
-        if not hasattr(self, "refphi"):
-            self.refphi = np.zeros(len(self.ctrs))
-        else:
-            pass
-
-        self.pixscales = np.zeros(len(self.scallist))
-        for q, scal in enumerate(self.scallist):
-            self.test_pixscale = self.pixel * scal
-            self.pixscales[q] = self.test_pixscale
-            psf = self.simulate(
-                bandpass=self.bandpass,
-                pixel=self.test_pixscale,
-            )
-            pixscl_corrlist[q, :, :] = run_data_correlate(img, psf)
-            self.pixscl_corr[q] = np.max(pixscl_corrlist[q])
-            if True in np.isnan(self.pixscl_corr):
-                raise ValueError("Correlation produced NaNs, check your work!")
-
-        self.pixscale_optimal, scal_maxy = utils.findmax(mag=self.pixscales, vals=self.pixscl_corr)
-        self.pixscale_factor = self.pixscale_optimal / self.pixel
-
-        radlist = self.rotlist_rad
-        corrlist = np.zeros((len(radlist), reffov, reffov))
-        self.corrs = np.zeros(len(radlist))
-
-        self.rots = radlist
-        for q in range(len(radlist)):
-            psf = self.simulate(
-                bandpass=self.bandpass,
-                fov=reffov,
-            )
-
-            corrlist[q, :, :] = run_data_correlate(psf, img)
-            self.corrs[q] = np.max(corrlist[q])
-
-        self.rot_measured, maxy = utils.findmax(mag=self.rots, vals=self.corrs)
-        self.refpsf = self.simulate(
-            bandpass=self.bandpass,
-            pixel=self.pixscale_factor * self.pixel,
-            fov=reffov,
-        )
-
-        try:
-            self.gof = goodness_of_fit(img, self.refpsf)
-        except Exception:
-            self.gof = False
-
-        return self.pixscale_factor, self.rot_measured, self.gof
-
-    def set_pistons(self, phi_m):
-        """
-        Set piston's phi in meters of OPD at center wavelength LG++.
-
-        Parameters
-        ----------
-        phi_m : float
-            Piston angle
-        """
-        self.phi = phi_m
-
-    def set_pixelscale(self, pixel_rad):
-        """
-        Set the detector pixel scale.
-
-        Parameters
-        ----------
-        pixel_rad : float
-            Detector pixel scale
-        """
-        self.pixel = pixel_rad
-
 
 def goodness_of_fit(data, bestfit, disk_r=8):
     """
@@ -511,16 +301,14 @@ def goodness_of_fit(data, bestfit, disk_r=8):
     ----------
     data : 2D float array
         Input image
-
     bestfit : 2D float array
         Fit to input image
-
     disk_r : int
         Radius of disk
 
     Returns
     -------
-    gof : float
+    float
         Goodness of fit
     """
     mask = (
@@ -533,9 +321,7 @@ def goodness_of_fit(data, bestfit, disk_r=8):
 
     masked_data = np.ma.masked_invalid(mask * data)
 
-    gof = abs(difference).sum() / abs(masked_data).sum()
-
-    return gof
+    return abs(difference).sum() / abs(masked_data).sum()
 
 
 def run_data_correlate(data, model):
@@ -546,18 +332,15 @@ def run_data_correlate(data, model):
     ----------
     data : 2D float array
         Reference image
-
     model : 2D float array
         Simulated psf
 
     Returns
     -------
-    cor: 2D float array
+    2D float array
         Correlation between data and model
     """
     sci = data
     log.debug("shape sci: %s", np.shape(sci))
 
-    cor = utils.rcrosscorrelate(sci, model)
-
-    return cor
+    return utils.rcrosscorrelate(sci, model)

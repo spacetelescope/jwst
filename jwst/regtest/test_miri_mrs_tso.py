@@ -1,6 +1,6 @@
 """Regression test for MIRI MRS TSO mode"""
 import pytest
-from astropy.io.fits.diff import FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.stpipe import Step
 
@@ -8,9 +8,12 @@ from jwst.stpipe import Step
 INPUT_PATH = 'miri/mrs'
 TRUTH_PATH = 'truth/test_miri_mrs_tso'
 
+# Mark all tests in this module
+pytestmark = [pytest.mark.bigdata]
+
 
 @pytest.fixture(scope='module')
-def run_spec2(rtdata_module):
+def run_spec2(rtdata_module, resource_tracker):
     """Run the Spec2Pipeline on a single exposure"""
     rtdata = rtdata_module
 
@@ -27,11 +30,14 @@ def run_spec2(rtdata_module):
             '--steps.photom.save_results=true',
             '--steps.photom.mrs_time_correction=true',
             ]
+    with resource_tracker.track():
+        Step.from_cmdline(args)
 
-    Step.from_cmdline(args)
+
+def test_log_tracked_resources_spec2(log_tracked_resources, run_spec2):
+    log_tracked_resources()
 
 
-@pytest.mark.bigdata
 @pytest.mark.parametrize(
     'suffix', ['assign_wcs', 'calints', 'flat_field', 'fringe', 'photom', 'srctype'])
 def test_spec2(rtdata_module, run_spec2, fitsdiff_default_kwargs, suffix):

@@ -1,7 +1,10 @@
-
-import pytest
-from jwst.extract_1d.soss_extract import atoca_utils as au
 import numpy as np
+import pytest
+import logging
+from scipy.integrate import trapezoid
+
+from jwst.tests.helpers import LogWatcher
+from jwst.extract_1d.soss_extract import atoca_utils as au
 
 
 def test_arange_2d():
@@ -252,7 +255,7 @@ def test_adapt_grid(max_iter, rtol):
     grid_diff = grid[1:] - grid[:-1]
     assert np.min(grid_diff) >= input_grid_diff/(2**max_iter)
 
-    numerical_integral = np.trapz(xsinx(grid), grid)
+    numerical_integral = trapezoid(xsinx(grid), grid)
 
     # ensure this converges for at least one of our test cases
     if max_iter == 10 and rtol == 1e-3:
@@ -314,10 +317,36 @@ def test_make_combined_adaptive_grid():
     combined_grid = au.make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
                                 max_iter=10, rtol=rtol, max_total_size=100)
 
-    numerical_integral = np.trapz(xsinx(combined_grid), combined_grid)
+    numerical_integral = trapezoid(xsinx(combined_grid), combined_grid)
 
     assert np.unique(combined_grid).size == combined_grid.size
     assert np.isclose(numerical_integral, np.pi, rtol=rtol)
+
+
+def test_make_combined_adaptive_grid_maxsize(monkeypatch):
+    """
+    Test that max_total_size is respected.
+    
+    It's a bit more complicated than just max_total_size is the size of the output,
+    because the code allows the combined grid to add on grid2 at its native resolution
+    if grid0 fails to converge and reaches the max_total_size.
+    """
+    # make a log watcher
+    watcher = LogWatcher("Precision cannot be guaranteed: max grid size")
+    monkeypatch.setattr(
+        logging.getLogger("jwst.extract_1d.soss_extract.atoca_utils"), "warning", watcher
+    )
+
+    grid_range = (0, np.pi)
+    grid0 = np.linspace(0, np.pi/2, 6) # kept entirely.
+    grid2 = np.linspace(np.pi/2+0.001, np.pi, 11) # kept from pi/2 to pi
+    max_grid_size = 100
+    all_grids = [grid0, grid2]
+    all_estimate = [xsinx, xsinx]
+    combined_grid = au.make_combined_adaptive_grid(all_grids, all_estimate, grid_range,
+                                max_iter=10, rtol=1e-4, max_total_size=max_grid_size)
+    assert combined_grid.size == max_grid_size + grid2.size
+    watcher.assert_seen()
 
 
 def test_throughput_soss():
@@ -438,7 +467,7 @@ def test_get_c_matrix(kernels_unity, webb_kernels, wave_grid):
     assert matrix.dtype == np.float64
 
     # ensure normalized
-    assert matrix.sum() == matrix.shape[0]
+    assert np.isclose(matrix.sum(), matrix.shape[0])
 
     # test where input kernel is a 2-D array instead of callable
     i_bounds = [0, len(wave_grid)]

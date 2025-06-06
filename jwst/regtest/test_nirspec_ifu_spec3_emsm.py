@@ -1,4 +1,6 @@
 """Regression tests for NIRSpec IFU"""
+import warnings
+
 import pytest
 
 from jwst.regtest import regtestdata as rt
@@ -23,7 +25,6 @@ def run_spec3_multi_emsm(rtdata_module):
             '--steps.extract_1d.save_results=true',
         }
     }
-
     rtdata = rt.run_step_from_dict(rtdata, **step_params)
     return rtdata
 

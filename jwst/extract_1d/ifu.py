@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import numpy as np
 from astropy import stats
@@ -253,9 +254,9 @@ def ifu_extract1d(
     # non-differentiated errors, clear it again here so that only the total
     # errors pass out into the 1d spectra files.
     if not hasattr(input_model, "var_poisson"):
-        f_var_poisson *= 0
-        sb_var_poisson *= 0
-        b_var_poisson *= 0
+        f_var_poisson[:] = 0
+        sb_var_poisson[:] = 0
+        b_var_poisson[:] = 0
 
     # Deal with covariance in the IFU cube by multiplying 1d spectra errors by a scaling factor
     if extract_params["ifu_covar_scale"] != 1.0:
@@ -373,6 +374,7 @@ def ifu_extract1d(
 
     if slitname is not None and slitname != "ANY":
         spec.name = slitname
+    spec.detector = input_model.meta.instrument.detector
 
     spec.source_type = source_type
     spec.extraction_x = x_center
@@ -526,7 +528,10 @@ def extract_ifu(input_model, source_type, extract_params):
         log.info(
             "Input model does not break out variance information. Passing only generalized errors."
         )
-        var_poisson = input_model.err * input_model.err
+        # NIRSpec variances sometimes overflow
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
+            var_poisson = input_model.err * input_model.err
         var_rnoise = np.zeros_like(input_model.data)
         var_flat = np.zeros_like(input_model.data)
     weightmap = input_model.weightmap

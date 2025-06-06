@@ -1,17 +1,17 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """STScI edits to astropy FitsDiff."""
 
+import warnings
 import fnmatch
 import operator
 import textwrap
 from itertools import islice
 
 from astropy import __version__
+from astropy.table import Table
 from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
 
-from astropy.io.fits.card import BLANK_CARD
 
-from astropy.io.fits.hdu.hdulist import HDUList
 from astropy.io.fits.hdu.table import _TableLikeHDU
 
 import numpy as np
@@ -28,7 +28,7 @@ from astropy.io.fits.diff import (
 __all__ = [
     "STFITSDiff",
     "STHDUDiff",
-    "STHeaderDiff",
+    "HeaderDiff",
     "STImageDataDiff",
     "STRawDataDiff",
     "STTableDataDiff",
@@ -131,6 +131,7 @@ class STFITSDiff(FITSDiff):
         self.diff_extnames = ()
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
         self.header_tolerances = {}
+        self.original_hdu_order = []
         self.expected_extension_tolerances = {}
         if extension_tolerances is not None:
             # Make sure the given dict keys are all upper case
@@ -148,6 +149,15 @@ class STFITSDiff(FITSDiff):
             # Make sure the other extensions get a default relative and absolute tolerance
             if "DEFAULT" not in [str(key).upper() for key in extension_tolerances]:
                 self.expected_extension_tolerances["DEFAULT"] = {"rtol": rtol, "atol": atol}
+        # Check if there are any numbers in the HDUs to ignore, and put them in a separate list
+        self.ignore_number_hdus = []
+        if ignore_hdus is not None:
+            for key in ignore_hdus:
+                if isinstance(key, int):
+                    self.ignore_number_hdus.append(key)
+            # Only keep extension names, remove the numbers
+            for key in self.ignore_number_hdus:
+                ignore_hdus.remove(key)
 
         super().__init__(
             a,
@@ -178,17 +188,17 @@ class STFITSDiff(FITSDiff):
         if not self.filenameb:
             self.filenameb = f"<{self.b.__class__.__name__} object at {id(self.b):#x}>"
 
-        if self.ignore_hdus:
-            self.a = HDUList([h for h in self.a if h.name not in self.ignore_hdus])
-            self.b = HDUList([h for h in self.b if h.name not in self.ignore_hdus])
+        # The following lines are STScI's additions:
+        # 1. Get a list of additional HDUs to ignore, when ignore_hdus contain wildcards
+        #    (only in this case will self.ignore_hdu_patterns be populated).
+        additional_hdus_to_ignore = []
         if self.ignore_hdu_patterns:
             a_names = [hdu.name for hdu in self.a]
             b_names = [hdu.name for hdu in self.b]
             for pattern in self.ignore_hdu_patterns:
                 a_ignored = fnmatch.filter(a_names, pattern)
-                self.a = HDUList([h for h in self.a if h.name not in a_ignored])
                 b_ignored = fnmatch.filter(b_names, pattern)
-                self.b = HDUList([h for h in self.b if h.name not in b_ignored])
+                additional_hdus_to_ignore = set.intersection(set(a_ignored), set(b_ignored))
 
         # The following lines are STScI's additions:
         # 1. Make sure that the files to be compared contain the same extensions
@@ -233,9 +243,17 @@ class STFITSDiff(FITSDiff):
                         else:
                             self.rtol = self.expected_extension_tolerances["DEFAULT"]["rtol"]
                             self.atol = self.expected_extension_tolerances["DEFAULT"]["atol"]
-                    hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
-                    if not hdu_diff.identical:
-                        self.diff_hdus.append((idxa, hdu_diff, extname, extver))
+
+                    # Only do a comparison if the HDU is not in any list to be ignored
+                    if (
+                        extname not in self.ignore_hdus
+                        and idxa not in self.ignore_number_hdus
+                        and extname not in additional_hdus_to_ignore
+                    ):
+                        hdu_diff = STHDUDiff.fromdiff(self, self.a[idxa], self.b[idxb])
+                        if not hdu_diff.identical:
+                            self.diff_hdus.append((idxa, hdu_diff, extname, extver))
+                            self.original_hdu_order.append(idxa)
 
     def _report(self):
         # The following lines are identical to the original FITSDiff code
@@ -297,23 +315,24 @@ class STFITSDiff(FITSDiff):
             return
 
         self._fileobj.write("\n")
-        for idx, hdu_diff, extname, extver in self.diff_hdus:
+        for ix, orig_idx in enumerate(self.original_hdu_order):
+            idx, hdu_diff, extname, extver = self.diff_hdus[ix]
             if not self.expected_extension_tolerances:
                 if idx == 0:
                     self._fileobj.write("\n")
                     self._writeln("Primary HDU:")
                 else:
-                    self._fileobj.write("\n")
+                    self._fileobj.write("\n\n")
                     if extname:
-                        self._writeln(f"Extension HDU {idx} ({extname}, {extver}):")
+                        self._writeln(f"Extension HDU {orig_idx} ({extname}, {extver}):")
                     else:
-                        self._writeln(f"Extension HDU {idx}:")
+                        self._writeln(f"Extension HDU {orig_idx}:")
             else:
-                self._fileobj.write("\n")
-                self._writeln(f"Extension HDU {idx} ({extname}, {extver}):")
-                if idx in self.expected_extension_tolerances:
-                    rtol = self.expected_extension_tolerances[idx]["rtol"]
-                    atol = self.expected_extension_tolerances[idx]["atol"]
+                self._fileobj.write("\n\n")
+                self._writeln(f"Extension HDU {orig_idx} ({extname}, {extver}):")
+                if ix in self.expected_extension_tolerances:
+                    rtol = self.expected_extension_tolerances[ix]["rtol"]
+                    atol = self.expected_extension_tolerances[ix]["atol"]
                 elif extname in self.expected_extension_tolerances:
                     rtol = self.expected_extension_tolerances[extname]["rtol"]
                     atol = self.expected_extension_tolerances[extname]["atol"]
@@ -410,6 +429,7 @@ class STHDUDiff(HDUDiff):
         self.header_tolerances = header_tolerances
         self.nans, self.percentages, self.stats = None, None, None
         self.diff_dimensions = ()
+
         super().__init__(
             a,
             b,
@@ -463,88 +483,93 @@ class STHDUDiff(HDUDiff):
             self.rtol, self.atol = self.header_tolerances["rtol"], self.header_tolerances["atol"]
 
         # Get the header differences
-        self.diff_headers = STHeaderDiff.fromdiff(self, self.a.header.copy(), self.b.header.copy())
+        self.diff_headers = HeaderDiff.fromdiff(self, self.a.header.copy(), self.b.header.copy())
         # Reset the object tolerances
         if self.header_tolerances:
             self.rtol, self.atol = rtol, atol
 
         def get_quick_report(a, b):
             # Get the number of NaN in each array and other info
-            nans_zero_info = [
-                a[np.isnan(a)].size,
-                b[np.isnan(b)].size,
-                a[~np.isnan(a)].size,
-                b[~np.isnan(b)].size,
+            nan_idx = np.isnan(a) | np.isnan(b)
+            anonan = a[~nan_idx]
+            bnonan = b[~nan_idx]
+            report_zeros_nan = Table()
+            report_zeros_nan["Quantity"] = [
+                "zeros",
+                "nan",
+                "no-nan",
+                "min_value",
+                "max_value",
+                "mean_value",
+            ]
+            report_zeros_nan["a"] = [
                 a[a == 0.0].size,
+                a[np.isnan(a)].size,
+                a[~np.isnan(a)].size,
+                f"{np.min(anonan):.4g}",
+                f"{np.max(anonan):.4g}",
+                f"{np.mean(anonan):.4g}",
+            ]
+            report_zeros_nan["b"] = [
                 b[b == 0.0].size,
+                b[np.isnan(b)].size,
+                b[~np.isnan(b)].size,
+                f"{np.min(bnonan):.4g}",
+                f"{np.max(bnonan):.4g}",
+                f"{np.mean(bnonan):.4g}",
             ]
             # Match nans for all arrays and remove them for logical comparison
-            percentages, stats = {}, {}
+            percentages, stats = Table(), Table()
             shapea = a.shape
             shapeb = b.shape
             if shapea != shapeb:
                 percentages["array_shapes_are_different"] = ""
                 stats["no_stats_available"] = ""
-                return nans_zero_info, percentages, stats
-            nan_idx = np.isnan(a) | np.isnan(b)
-            anonan = a[~nan_idx]
-            bnonan = b[~nan_idx]
+                return report_zeros_nan, percentages, stats
             values = np.abs(anonan - bnonan)
             # Nothing to report if all values are 0 and the number of nans is the same
-            if (values == 0.0).all() and nans_zero_info[2] == nans_zero_info[3]:
+            if (values == 0.0).all() and a[np.isnan(a)].size == b[np.isnan(b)].size:
                 return None, None, None
-            # Calculate stats
-            stats["mean_value_in_a"] = np.mean(anonan)
-            stats["mean_value_in_b"] = np.mean(bnonan)
+            # Calculate stats for absolute and relative differences
             # Catch the all NaNs case
             if values.size == 0:
                 percentages["NaN"] = 100
                 stats["no_stats_available"] = ""
-                return nans_zero_info, percentages, stats
-            stats["max_abs_diff"] = np.max(values)
-            stats["min_abs_diff"] = np.min(values)
-            stats["mean_abs_diff"] = np.mean(values)
-            stats["std_dev_abs_diff"] = np.std(values)
+                return report_zeros_nan, percentages, stats
+            stats["Quantity"] = ["max", "min", "mean", "std_dev"]
+            stats["abs_diff"] = [np.max(values), np.min(values), np.mean(values), np.std(values)]
+            stats["abs_diff"].format = "1.4g"
             nozeros = (values != 0.0) & (bnonan != 0.0)
             relative_values = values[nozeros] / np.abs(bnonan[nozeros])
             # Catch an empty sequence
             if relative_values.size == 0:
                 stats["no_rel_stats_available"] = np.nan
             else:
-                stats["max_rel_diff"] = np.max(relative_values)
-                if 0.0 in values:
-                    stats["min_rel_diff"] = 0.0
-                else:
-                    stats["min_rel_diff"] = np.min(relative_values)
-                stats["mean_rel_diff"] = np.mean(relative_values)
-                stats["std_dev_rel_diff"] = np.std(relative_values)
+                stats["rel_diff"] = [
+                    np.max(relative_values),
+                    np.min(relative_values),
+                    np.mean(relative_values),
+                    np.std(relative_values),
+                ]
+                stats["rel_diff"].format = "1.4g"
             # Calculate difference percentages
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
+            percentages["threshold"] = thresholds
             n_total = values.size
             percent_abs_list = []
             for threshold in thresholds:
                 n = values[values > threshold + self.atol].size
                 percent_abs = (n / n_total) * 100
-                percent_abs_round = np.round(percent_abs, decimals=6)
-                if percent_abs_round != 0.0:
-                    percent_abs_list.append(percent_abs_round)
-                else:
-                    percent_abs_list.append(percent_abs)
-            if np.nan not in percent_abs_list:
-                # Only include the percentage for 0.0
-                percentages["0.0_abs"] = percent_abs_round
+                percent_abs_list.append(f"{percent_abs:.4g}")
+            percentages["abs_diff%"] = percent_abs_list
             if relative_values.size > 0:
                 percent_rel_list = []
                 for threshold in thresholds:
                     n = relative_values[relative_values > threshold + self.rtol].size
                     percent_rel = (n / n_total) * 100
-                    percent_rel_round = np.round(percent_rel, decimals=6)
-                    if percent_rel_round != 0.0:
-                        percentages[str(threshold) + "_rel"] = percent_rel_round
-                    else:
-                        percentages[str(threshold) + "_rel"] = percent_rel
-                    percent_rel_list.append(percent_rel)
-            return nans_zero_info, percentages, stats
+                    percent_rel_list.append(f"{percent_rel:.4g}")
+                percentages["rel_diff%"] = percent_rel_list
+            return report_zeros_nan, percentages, stats
 
         # Code below contains mixed original HDUDiff lines as well as STScI's
         # to include the new classes and the stats reporting changes.
@@ -555,7 +580,11 @@ class STHDUDiff(HDUDiff):
         elif self.a.is_image and self.b.is_image:
             self.diff_data = STImageDataDiff.fromdiff(self, self.a.data, self.b.data)
             if self.diff_data.diff_total > 0:
-                self.nans, self.percentages, self.stats = get_quick_report(self.a.data, self.b.data)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    self.nans, self.percentages, self.stats = get_quick_report(
+                        self.a.data, self.b.data
+                    )
             # Clean up references to (possibly) memmapped arrays, so they can
             # be closed by .close()
             self.diff_data.a = None
@@ -572,7 +601,11 @@ class STHDUDiff(HDUDiff):
             # recognized image or table types
             self.diff_data = STRawDataDiff.fromdiff(self, self.a.data, self.b.data)
             if self.diff_data.diff_total > 0:
-                self.nans, self.percentages, self.stats = get_quick_report(self.a.data, self.b.data)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    self.nans, self.percentages, self.stats = get_quick_report(
+                        self.a.data, self.b.data
+                    )
             # Clean up references to (possibly) memmapped arrays, so they can
             # be closed by .close()
             self.diff_data.a = None
@@ -615,215 +648,26 @@ class STHDUDiff(HDUDiff):
             self._writeln(f"  b: {dimsb}")
 
         def report_data_diff():
-            if len(self.nans) > 0:
-                self._writeln(" NaN in arrays:")
-                self._writeln(f"  a: {self.nans[0]}")
-                self._writeln(f"  b: {self.nans[1]}")
-                self._writeln(" No NaN values in arrays:")
-                self._writeln(f"  a: {self.nans[2]}")
-                self._writeln(f"  b: {self.nans[3]}")
-                self._writeln(" Zeros in arrays:")
-                self._writeln(f"  a: {self.nans[4]}")
-                self._writeln(f"  b: {self.nans[5]}")
-            # Calculate difference percentages
-            self._writeln(" Difference of a from b:")
-            for key, val in self.percentages.items():
-                self._writeln(f"  {key:>10} ..... {val:<5}%")
-            self._writeln(" Stats:")
-            for key, val in self.stats.items():
-                self._writeln(f"  {key} = {val}")
+            # Show differences in zeros and nans between a and b
+            self._writeln("Values in a and b")
+            for tline in self.nans.pformat():
+                self._writeln(tline)
+
+            # Show the difference (a-b) stats
+            self._writeln("\nDifference stats: abs(a - b) ")
+            for tline in self.stats.pformat():
+                self._writeln(tline)
+
+            # Show percentage differences
+            self._writeln("\nPercentages of difference above (tolerance + threshold) ")
+            for tline in self.percentages.pformat():
+                self._writeln(tline)
 
         if self.diff_data is not None and not self.diff_data.identical:
             self._fileobj.write("\n")
             if [self.nans, self.percentages, self.stats] != [None, None, None]:
                 report_data_diff()
             self.diff_data.report(self._fileobj, indent=self._indent + 1)
-
-
-class STHeaderDiff(HeaderDiff):
-    """
-    HeaderDiff class from astropy with the STScI ad hoc changes for STScI regression test reports.
-
-    STScI changes include making sure that the keyword and comments in 'a' exist in 'b' (regardless
-    of order), otherwise continue without error.
-
-    Full documentation of the base class is provided at:
-    https://docs.astropy.org/en/stable/io/fits/api/diff.html
-    """
-
-    def __init__(
-        self,
-        a,
-        b,
-        ignore_keywords=None,
-        ignore_comments=None,
-        rtol=0.0,
-        atol=0.0,
-        ignore_blanks=True,
-        ignore_blank_cards=True,
-    ):
-        """
-        For full documentation on variables, see original astropy code.
-
-        Parameters
-        ----------
-        a : `~astropy.io.fits.Header` or str or bytes
-            A header.
-
-        b : `~astropy.io.fits.Header` or str or bytes
-            A header to compare to the first header.
-
-        ignore_keywords : sequence, optional
-            Header keywords to ignore when comparing two headers.
-
-        ignore_comments : sequence, optional
-            List of header keywords whose comments should be ignored.
-
-        rtol : float, optional
-            Relative difference to allow when comparing two float values.
-
-        atol : float, optional
-            Allowed absolute difference when comparing two float values.
-
-        ignore_blanks : bool, optional
-            Ignore extra whitespace at the end of string values either in
-            headers or data. Extra leading whitespace is not ignored.
-
-        ignore_blank_cards : bool, optional
-            Ignore all cards that are blank, i.e. they only contain whitespace.
-        """
-        super().__init__(
-            a,
-            b,
-            ignore_keywords=set_variable_to_empty_list(ignore_keywords),
-            ignore_comments=set_variable_to_empty_list(ignore_comments),
-            rtol=rtol,
-            atol=atol,
-            ignore_blanks=ignore_blanks,
-            ignore_blank_cards=ignore_blank_cards,
-        )
-
-    def _diff(self):
-        # The following lines are identical to the original HeaderDiff code
-
-        if self.ignore_blank_cards:
-            cardsa = [c for c in self.a.cards if str(c) != BLANK_CARD]
-            cardsb = [c for c in self.b.cards if str(c) != BLANK_CARD]
-        else:
-            cardsa = list(self.a.cards)
-            cardsb = list(self.b.cards)
-
-        # Build dictionaries of keyword values and comments
-        def get_header_values_comments(cards):
-            values = {}
-            comments = {}
-            for card in cards:
-                value = card.value
-                if self.ignore_blanks and isinstance(value, str):
-                    value = value.rstrip()
-                values.setdefault(card.keyword, []).append(value)
-                comments.setdefault(card.keyword, []).append(card.comment)
-            return values, comments
-
-        valuesa, commentsa = get_header_values_comments(cardsa)
-        valuesb, commentsb = get_header_values_comments(cardsb)
-
-        keywordsa = set(valuesa)
-        keywordsb = set(valuesb)
-
-        self.common_keywords = sorted(keywordsa.intersection(keywordsb))
-        if len(cardsa) != len(cardsb):
-            self.diff_keyword_count = (len(cardsa), len(cardsb))
-
-        # Any other diff attributes should exclude ignored keywords
-        keywordsa = keywordsa.difference(self.ignore_keywords)
-        keywordsb = keywordsb.difference(self.ignore_keywords)
-        if self.ignore_keyword_patterns:
-            for pattern in self.ignore_keyword_patterns:
-                keywordsa = keywordsa.difference(fnmatch.filter(keywordsa, pattern))
-                keywordsb = keywordsb.difference(fnmatch.filter(keywordsb, pattern))
-
-        if "*" in self.ignore_keywords:
-            # Any other differences between keywords are to be ignored
-            return
-
-        left_only_keywords = sorted(keywordsa.difference(keywordsb))
-        right_only_keywords = sorted(keywordsb.difference(keywordsa))
-
-        if left_only_keywords or right_only_keywords:
-            self.diff_keywords = (left_only_keywords, right_only_keywords)
-
-        # Compare count of each common keyword
-        for keyword in self.common_keywords:
-            if keyword in self.ignore_keywords:
-                continue
-            if self.ignore_keyword_patterns:
-                skip = False
-                for pattern in self.ignore_keyword_patterns:
-                    if fnmatch.fnmatch(keyword, pattern):
-                        skip = True
-                        break
-                if skip:
-                    continue
-
-            counta = len(valuesa[keyword])
-            countb = len(valuesb[keyword])
-            if counta != countb:
-                self.diff_duplicate_keywords[keyword] = (counta, countb)
-
-            # The following lines include STScI's changes:
-            # - Make sure that the keyword in 'a' exists in 'b', or continue
-
-            # Compare keywords' values and comments
-            for a in valuesa[keyword]:
-                if a not in valuesb[keyword]:
-                    continue
-                bidx = valuesb[keyword].index(a)
-                b = valuesb[keyword][bidx]
-
-                # The following lines are identical to the original HeaderDiff code
-
-                if diff_values(a, b, rtol=self.rtol, atol=self.atol):
-                    self.diff_keyword_values[keyword].append((a, b))
-                else:
-                    # If there are duplicate keywords we need to be able to
-                    # index each duplicate; if the values of a duplicate
-                    # are identical use None here
-                    self.diff_keyword_values[keyword].append(None)
-
-            if not any(self.diff_keyword_values[keyword]):
-                # No differences found; delete the array of Nones
-                del self.diff_keyword_values[keyword]
-
-            if "*" in self.ignore_comments or keyword in self.ignore_comments:
-                continue
-            if self.ignore_comment_patterns:
-                skip = False
-                for pattern in self.ignore_comment_patterns:
-                    if fnmatch.fnmatch(keyword, pattern):
-                        skip = True
-                        break
-                if skip:
-                    continue
-
-            # The following lines include STScI's changes:
-            # - Make sure that the comment in 'a' exists in 'b', or continue
-
-            for a in commentsa[keyword]:
-                if a not in commentsb[keyword]:
-                    continue
-                bidx = commentsb[keyword].index(a)
-                b = commentsb[keyword][bidx]
-
-                # The following lines are identical to the original HeaderDiff code
-
-                if diff_values(a, b):
-                    self.diff_keyword_comments[keyword].append((a, b))
-                else:
-                    self.diff_keyword_comments[keyword].append(None)
-
-            if not any(self.diff_keyword_comments[keyword]):
-                del self.diff_keyword_comments[keyword]
 
 
 class STImageDataDiff(ImageDataDiff):
@@ -923,21 +767,27 @@ class STImageDataDiff(ImageDataDiff):
             # Make sure to separate nans in comparison
             data_within_tol = True
 
+            # Only check the nans if the array shapes are the same
             nansa, nansb = np.isnan(self.a), np.isnan(self.b)
-            a, b = self.a[~nansa], self.b[~nansb]
-            # Only check the nans if the array values are the same
-            if nansa.shape != nansb.shape or a.shape != b.shape:
-                # Don't care about the actual numbers or locations, just set to something high
+            nonana, nonanb = self.a[~nansa], self.b[~nansb]
+            if nansa.shape != nansb.shape or nonana.shape != nonanb.shape:
+                # No need to continue, there are differences. Go to stats calculation.
                 data_within_tol = False
-            elif a.shape == b.shape:
-                # Check if data is within the tolerances (the non-nan data
-                # arrays are the same shape)
+            else:
+                # Check if data is within the tolerances (the non-nan data are the same shape)
+                # but make sure that the nans are removed at the same place for both arrays
+                nan_idx = np.isnan(self.a) | np.isnan(self.b)
+                a, b = self.a[~nan_idx], self.b[~nan_idx]
                 if shapea == 4:
                     for nint in range(shapea[0]):
                         for ngrp in range(shapea[1]):
-                            diff_total = np.abs(a[nint, ngrp, ...] - b[nint, ngrp, ...]) > (
-                                atol + rtol * np.abs(b[nint, ngrp, ...])
-                            )
+                            with warnings.catch_warnings():
+                                warnings.simplefilter("ignore", RuntimeWarning)
+                                # Code that might generate a RuntimeWarning
+                                # this data set is weird, do nothing and report
+                                diff_total = np.abs(a[nint, ngrp, ...] - b[nint, ngrp, ...]) > (
+                                    atol + rtol * np.abs(b[nint, ngrp, ...])
+                                )
                             if a[diff_total].size != 0:
                                 data_within_tol = False
                                 break
@@ -945,14 +795,25 @@ class STImageDataDiff(ImageDataDiff):
                             break
                 elif shapea == 3:
                     for ngrp in range(shapea[0]):
-                        diff_total = np.abs(a[ngrp, ...] - b[ngrp, ...]) > (
-                            atol + rtol * np.abs(b[ngrp, ...])
-                        )
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", RuntimeWarning)
+                            # Code that might generate a RuntimeWarning
+                            # this data set is weird, do nothing and report
+                            diff_total = np.abs(a[ngrp, ...] - b[ngrp, ...]) > (
+                                atol + rtol * np.abs(b[ngrp, ...])
+                            )
+                            pass
                         if a[diff_total].size != 0:
                             data_within_tol = False
                             break
                 else:
-                    diff_total = np.abs(a - b) > (atol + rtol * np.abs(b))
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        # Code that might generate a RuntimeWarning
+                        # this data set is weird, do nothing and report
+                        diff_total = np.abs(a - b) > (atol + rtol * np.abs(b))
+                        pass
+
                     if a[diff_total].size != 0:
                         data_within_tol = False
 
@@ -1011,7 +872,7 @@ class STImageDataDiff(ImageDataDiff):
             if self.diff_total > self.numdiffs:
                 self._writeln(" ...")
             self._writeln(
-                f" {self.diff_total} different pixels found ({self.diff_ratio:.2%} different)."
+                f" {self.diff_total} different pixels found ({self.diff_ratio:.4g}% different)."
             )
             self._writeln(f" Maximum relative difference: {max_relative}")
             self._writeln(f" Maximum absolute difference: {max_absolute}")
@@ -1101,7 +962,7 @@ class STRawDataDiff(STImageDataDiff):
 
             self._writeln(" ...")
             self._writeln(
-                f" {self.diff_total} different bytes found ({self.diff_ratio:.2%} different)."
+                f" {self.diff_total} different bytes found ({self.diff_ratio:.4g}% different)."
             )
 
 
@@ -1157,7 +1018,65 @@ class STTableDataDiff(TableDataDiff):
             differences are found but instead of pixels is column locations.
         """
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
-        self.total_diff_per_col = {}
+        self.rel_diffs = 0
+        self.report_table = Table(
+            names=(
+                "col_name",
+                "dtype",
+                "abs_diffs",
+                "abs_max",
+                "abs_mean",
+                "abs_std",
+                "rel_diffs",
+                "rel_max",
+                "rel_mean",
+                "rel_std",
+            ),
+            dtype=(
+                "str",
+                "str",
+                "int32",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+            ),
+        )
+        self.report_zeros_nan = Table(
+            names=(
+                "col_name",
+                "zeros_a",
+                "zeros_b",
+                "nan_a",
+                "nan_b",
+                "no-nan_a",
+                "no-nan_b",
+                "max_a",
+                "max_b",
+                "min_a",
+                "min_b",
+                "mean_a",
+                "mean_b",
+            ),
+            dtype=(
+                "str",
+                "int32",
+                "int32",
+                "int32",
+                "int32",
+                "int32",
+                "int32",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+                "float64",
+            ),
+        )
 
         super().__init__(
             a,
@@ -1268,57 +1187,163 @@ class STTableDataDiff(TableDataDiff):
             arra = self.a[col.name]
             arrb = self.b[col.name]
 
-            if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(arrb.dtype, np.floating):
-                diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
-            elif "P" in col.format or "Q" in col.format:
-                diffs = (
-                    [
-                        idx
-                        for idx in range(len(arra))
-                        if not np.allclose(arra[idx], arrb[idx], rtol=self.rtol, atol=self.atol)
-                    ],
-                )
+            if self.report_pixel_loc_diffs:
+                # The following lines are identical to the original TableDataDiff code
+
+                if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
+                    arrb.dtype, np.floating
+                ):
+                    diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
+                elif "P" in col.format or "Q" in col.format:
+                    diffs = (
+                        [
+                            idx
+                            for idx in range(len(arra))
+                            if not np.allclose(arra[idx], arrb[idx], rtol=self.rtol, atol=self.atol)
+                        ],
+                    )
+                else:
+                    diffs = np.where(arra != arrb)
+
+                self.diff_total += len(set(diffs[0]))
+
+                if self.numdiffs >= 0:
+                    if len(self.diff_values) >= self.numdiffs:
+                        # Don't save any more diff values
+                        continue
+
+                    # Add no more diff'd values than this
+                    max_diffs = self.numdiffs - len(self.diff_values)
+                else:
+                    max_diffs = len(diffs[0])
+
+                last_seen_idx = None
+                for idx in islice(diffs[0], 0, max_diffs):
+                    if idx == last_seen_idx:
+                        # Skip duplicate indices, which my occur when the column
+                        # data contains multi-dimensional values; we're only
+                        # interested in storing row-by-row differences
+                        continue
+                    last_seen_idx = idx
+                    self.diff_values.append(((col.name, idx), (arra[idx], arrb[idx])))
+
             else:
-                diffs = np.where(arra != arrb)
+                # The following lines include STScI's changes:
+                # - Calculate the absolute and relative differences separately for ad hoc report
+                # - If report_pixel_loc_diffs is False, just get the total differences,
+                #   it is not important where they come from
 
-            self.diff_total += len(set(diffs[0]))
+                # Calculate the absolute and relative differences
+                get_stats = False
+                if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
+                    arrb.dtype, np.floating
+                ):
+                    nan_idx = np.isnan(arra) | np.isnan(arrb)
+                    anonan = arra[~nan_idx]
+                    bnonan = arrb[~nan_idx]
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        diffs = np.abs(anonan - bnonan)
+                    abs_diffs = diffs[diffs > self.atol].size
+                    nozeros = (diffs != 0.0) & (bnonan != 0.0)
+                    rel_values = diffs[nozeros] / np.abs(bnonan[nozeros])
+                    rel_diffs = rel_values[rel_values > self.rtol].size
+                    get_stats = True
 
-            # The following lines include STScI's changes:
-            # - If report_pixel_loc_diffs is False, just get the total differences,
-            #   it is not important where they come from
+                elif "P" in col.format or "Q" in col.format:
+                    diffs = []
+                    rel_values = []
+                    zeros_idx = []
+                    nan_idx = []
+                    for idx in range(len(arra)):
+                        if arra[idx] == 0 or arrb[idx] == 0:
+                            zeros_idx.append(idx)
+                        elif np.isnan(arra[idx]) or np.isnan(arrb[idx]):
+                            nan_idx.append(idx)
+                        else:
+                            df = np.abs(arra[idx] - arrb[idx])
+                            if not df <= self.atol:
+                                diffs.append(df)
+                            dfr = df / np.abs(arrb[idx])
+                            if not dfr <= self.rtol:
+                                rel_values.append(dfr)
+                    get_stats = True
+                    diffs = np.array(diffs)
+                    abs_diffs = diffs.size
+                    rel_values = np.array(rel_values)
+                    rel_diffs = rel_values.size
+                    anonan = arra[~np.array(nan_idx)]
+                    bnonan = arrb[~np.array(nan_idx)]
 
-            # Find the total differences per column
-            if not self.report_pixel_loc_diffs:
-                if len(set(diffs[0])) > 0:
-                    if col.name not in self.total_diff_per_col:
-                        self.total_diff_per_col[col.name] = len(set(diffs[0]))
-                    else:
-                        self.total_diff_per_col[col.name] += len(set(diffs[0]))
+                if get_stats:
+                    sum_diffs = np.any(diffs > (self.atol + self.rtol * np.abs(bnonan)))
+                    if sum_diffs and len(rel_values) > 0:
+                        # Report the total number of zeros, nans, and no-nan values
+                        self.report_zeros_nan.add_row(
+                            (
+                                col.name,
+                                arra[arra == 0.0].size,
+                                arrb[arrb == 0.0].size,
+                                arra[np.isnan(arra)].size,
+                                arrb[np.isnan(arrb)].size,
+                                arra[~np.isnan(arra)].size,
+                                arrb[~np.isnan(arrb)].size,
+                                np.max(anonan),
+                                np.max(bnonan),
+                                np.min(anonan),
+                                np.min(bnonan),
+                                np.mean(anonan),
+                                np.mean(bnonan),
+                            )
+                        )
 
-            # The following lines are identical to the original TableDataDiff code
+                        self.report_table.add_row(
+                            (
+                                col.name,
+                                str(arra.dtype).replace(">", ""),
+                                abs_diffs,
+                                np.max(diffs),
+                                np.mean(diffs),
+                                np.std(diffs),
+                                rel_diffs,
+                                np.max(rel_values),
+                                np.mean(rel_values),
+                                np.std(rel_values),
+                            )
+                        )
 
-            if self.numdiffs >= 0:
-                if len(self.diff_values) >= self.numdiffs:
-                    # Don't save any more diff values
-                    continue
+                        self.diff_total += abs_diffs
+                        self.rel_diffs += rel_diffs
 
-                # Add no more diff'd values than this
-                max_diffs = self.numdiffs - len(self.diff_values)
-            else:
-                max_diffs = len(diffs[0])
+                else:
+                    diffs = arra[arra != arrb].size
+                    if diffs > 0:
+                        # Report the differences per column
+                        self.report_table.add_row(
+                            (
+                                col.name,
+                                str(arra.dtype).replace(">", ""),
+                                diffs,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                            )
+                        )
+                        self.diff_total += diffs
+                        self.rel_diffs = np.nan
 
-            last_seen_idx = None
-            for idx in islice(diffs[0], 0, max_diffs):
-                if idx == last_seen_idx:
-                    # Skip duplicate indices, which my occur when the column
-                    # data contains multi-dimensional values; we're only
-                    # interested in storing row-by-row differences
-                    continue
-                last_seen_idx = idx
-                self.diff_values.append(((col.name, idx), (arra[idx], arrb[idx])))
-
+        # Calculate the absolute difference
         total_values = len(self.a) * len(self.a.dtype.fields)
-        self.diff_ratio = float(self.diff_total) / float(total_values)
+        if self.report_pixel_loc_diffs:
+            self.diff_ratio = float(self.diff_total) / float(total_values)
+        else:
+            # Calculate the absolute and relative difference percentages
+            self.diff_ratio = (float(self.diff_total) / float(total_values)) * 100
+            self.diff_ratio_rel = (float(self.rel_diffs) / float(total_values)) * 100
 
     def _report(self):
         # The following lines are identical to the original TableDataDiff code
@@ -1359,12 +1384,13 @@ class STTableDataDiff(TableDataDiff):
             self._writeln(" No further data comparison performed.")
             return
 
-        if not self.diff_values:
+        if not self.diff_total:
             return
 
         # The following lines include STScI's changes:
         # - Only report the locations of the differences if report_pixel_loc_diffs is True,
-        #   otherwise report the column and the total number of differences
+        #   otherwise report the column and the total number of differences and the
+        #   percentage absolute and relative differences.
 
         if self.report_pixel_loc_diffs:
             # Finally, let's go through and report column data differences:
@@ -1387,13 +1413,42 @@ class STTableDataDiff(TableDataDiff):
             if self.diff_total > self.numdiffs:
                 self._writeln(" ...")
 
-        else:
-            for colname in self.total_diff_per_col:
-                self._writeln(
-                    f" Column {colname} data differs on {self.total_diff_per_col[colname]} values"
-                )
+            self._writeln(
+                f" {self.diff_total} different table data element(s) are "
+                f"{self.diff_ratio:.4g}% different."
+            )
 
-        self._writeln(
-            f" {self.diff_total} different table data element(s) found "
-            f"({self.diff_ratio:.2%} different)."
-        )
+        else:
+            # Lines added by STScI to report ad hoc table differences
+
+            self._writeln(
+                f"Found {self.diff_total} different table data element(s). "
+                "Reporting percentages above respective tolerances: "
+                f"\n    - absolute .... {self.diff_ratio:.4g}%"
+            )
+            if np.isnan(self.diff_ratio_rel):
+                self._writeln(
+                    "\n * Unable to calculate relative differences and stats due to data types"
+                )
+            else:
+                self._writeln(f"    - relative .... {self.diff_ratio_rel:.4g}%")
+
+                # Print differences in zeros and nans per column
+                self._writeln("\nValues in a and b")
+                for colname in self.report_zeros_nan.columns:
+                    if "max" in colname or "mean" in colname or "min" in colname:
+                        self.report_zeros_nan[colname].format = ".4g"
+                tlines = self.report_zeros_nan.pformat()
+                for tline in tlines:
+                    self._writeln(tline)
+
+            # Print the difference (a-b) stats
+            self._writeln("\nDifference stats: abs(a - b) ")
+            # make sure the format is acceptable
+            for colname in self.report_table.columns:
+                if colname in ["col_name", "dtype"]:
+                    continue
+                self.report_table[colname].format = ".4g"
+            tlines = self.report_table.pformat()
+            for tline in tlines:
+                self._writeln(tline)

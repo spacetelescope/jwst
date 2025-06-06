@@ -2,9 +2,10 @@
 
 import numpy as np
 import logging
+import warnings
 
 from copy import deepcopy
-from poppy import matrixDFT
+from .matrix_dft import matrix_dft
 from scipy.ndimage import median_filter
 
 from stdatamodels.jwst.datamodels import dqflags
@@ -77,13 +78,10 @@ def calc_pupil_support(filtername, sqfov_npix, pxsc_rad, pupil_mask):
     ----------
     filtername : str
         AMI filter name
-
     sqfov_npix : float
         Square field of view in number of pixels
-
     pxsc_rad : float
         Detector pixel scale in rad/px
-
     pupil_mask : array
         Pupil mask model (NRM)
 
@@ -116,8 +114,12 @@ def transform_image(image):
     np.array
         Absolute value of FT(image)
     """
-    ft = matrixDFT.MatrixFourierTransform()
-    ftimage = ft.perform(image, image.shape[0], image.shape[0])  # fake the no-loss fft w/ dft
+    ftimage = matrix_dft(
+        image,
+        image.shape[0],
+        image.shape[0],
+        centering="ADJUSTABLE",
+    )
 
     return np.abs(ftimage)
 
@@ -130,13 +132,10 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
     ----------
     wl : float
         Wavelength (meters)
-
     fovnpix : float
         Square field of view in number of pixels
-
     pxsc_rad : float
         Detector pixel scale in rad/px
-
     pupil_mask : array
         Pupil mask model (NRM)
 
@@ -147,10 +146,14 @@ def calcpsf(wl, fovnpix, pxsc_rad, pupil_mask):
     """
     reselt = wl / PUPLDIAM  # radian
     nlam_d = fovnpix * pxsc_rad / reselt  # Soummer nlamD FOV in reselts
-    # instantiate an mft object:
-    ft = matrixDFT.MatrixFourierTransform()
 
-    image_field = ft.perform(pupil_mask, nlam_d, fovnpix)
+    image_field = matrix_dft(
+        pupil_mask,
+        nlam_d,
+        fovnpix,
+        centering="ADJUSTABLE",
+    )
+
     image_intensity = (image_field * image_field.conj()).real
 
     return image_intensity
@@ -171,13 +174,13 @@ def bad_pixels(data, median_size, median_tres):
 
     Returns
     -------
-    pxdq : int array
+    pxdq : np.ndarray[int]
         Bad pixel mask identified by median filtering
     """
     mfil_data = median_filter(data, size=median_size)
     diff_data = np.abs(data - mfil_data)
     pxdq = diff_data > median_tres * np.median(diff_data)
-    pxdq = pxdq.astype("int")
+    pxdq = pxdq.astype("bool")
 
     log.info(
         f"         Identified {np.sum(pxdq):.0f} bad pixels "
@@ -269,7 +272,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     -------
     data : numpy array
         Corrected data
-    pxdq : numpy array
+    pxdq : np.ndarray[int]
         Mask of bad pixels, updated if new ones were found
     """
     dq_dnu = pxdq0 & DO_NOT_USE == DO_NOT_USE
@@ -300,7 +303,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     # These values were determined empirically for NIRISS/AMI and need to be
     # tweaked for any other instrument.
     median_size = 3  # pix
-    median_tres = 50.0  # JK: changed from 28 to 20 in order to capture all bad pixels
+    median_tres = 50.0
 
     pupil_mask = nrm_model.nrm
     imsz = data.shape
@@ -328,12 +331,20 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     for j in range(imsz[0]):
         log.info(f"         Frame {j + 1:.0f} of {imsz[0]:.0f}")
 
-        # Now cut out the subframe.
-        # no need to cut out sub-frame; data already cropped
-        # odd/even size issues?
-        data_cut = deepcopy(data[j, :-1, :-1])
+        # Handle odd/even size issues by cropping out the -1th pixel in odd data
+        xshape = data.shape[1]
+        yshape = data.shape[2]
+        if xshape % 2 == 0:
+            idx_x = xshape
+        elif data.shape[1] % 2 == 1:
+            idx_x = xshape - 1
+        if yshape % 2 == 0:
+            idx_y = yshape
+        elif yshape % 2 == 1:
+            idx_y = yshape - 1
+        data_cut = deepcopy(data[j, :idx_x, :idx_y])
         data_orig = deepcopy(data_cut)
-        pxdq_cut = deepcopy(pxdq[j, :-1, :-1])
+        pxdq_cut = deepcopy(pxdq[j, :idx_x, :idx_y])
         pxdq_cut = pxdq_cut > 0.5
         # Correct the bad pixels. This is an iterative process. After each
         # iteration, we check whether new (residual) bad pixels are
@@ -353,7 +364,11 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
             # and normalize the high spatial frequency part of the image
             # by it, then identify residual bad pixels.
             mfil_data = median_filter(data_cut, size=median_size)
-            nois = np.sqrt(mfil_data / gain + rdns**2)
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "ignore", category=RuntimeWarning, message="invalid value encountered"
+                )
+                nois = np.sqrt(mfil_data / gain + rdns**2)
             fmas_data /= nois
             temp = bad_pixels(fmas_data, median_size=median_size, median_tres=median_tres)
 
@@ -368,15 +383,15 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
 
             # If no new bad pixels were identified, terminate the
             # iteration.
-            if pxdq_new == 0.0:
+            if pxdq_new == 0:
                 break
 
             # If new bad pixels were identified, add them to the bad pixel
             # map.
-            pxdq_cut = ((pxdq_cut > 0.5) | (temp > 0.5)).astype("int")
+            pxdq_cut = ((pxdq_cut > 0.5) | (temp > 0.5)).astype("bool")
 
         # Put the modified frames back into the data cube.
-        data[j, :-1, :-1] = fourier_corr(data_orig, pxdq_cut, fmas)
-        pxdq[j, :-1, :-1] = pxdq_cut
+        data[j, :idx_x, :idx_y] = fourier_corr(data_orig, pxdq_cut, fmas)
+        pxdq[j, :idx_x, :idx_y] = pxdq_cut
 
     return data, pxdq

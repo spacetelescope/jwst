@@ -5,6 +5,7 @@ from astropy.io import fits
 from astropy.table import Table
 
 from jwst.assign_wcs.util import wcs_bbox_from_shape
+from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.exp_to_source import multislit_to_container
 
 
@@ -262,6 +263,7 @@ def mock_nirspec_bots(simple_wcs):
     model.meta.exposure.type = "NRS_BRIGHTOBJ"
     model.meta.subarray.name = "SUB2048"
     model.meta.exposure.nints = 10
+    model.meta.exposure.segment_number = 2
     model.meta.visit.tsovisit = True
 
     model.name = "S1600A1"
@@ -623,6 +625,31 @@ def make_spec_model(name="slit1", value=1.0):
     return spec_model
 
 
+def make_tso_spec_model(n_spectra=10):
+    """
+    Make a multi-integration, multi-spec model.
+
+    Parameters
+    ----------
+    n_spectra : int, optional
+        The number of integrations to generate spectra for.
+
+    Returns
+    -------
+    TSOMultiSpecModel
+        The composite spectral model.
+    """
+    spec_list = []
+    for i in range(n_spectra):
+        spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
+        spec_list.append(spec_model)
+
+    tso_spec = make_tso_specmodel(spec_list)
+    model = dm.TSOMultiSpecModel()
+    model.spec.append(tso_spec)
+    return model
+
+
 @pytest.fixture()
 def mock_one_spec():
     """
@@ -657,6 +684,39 @@ def mock_10_spec():
         spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
         model.spec.append(spec_model)
 
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def mock_10_multi_int_spec():
+    """
+    Mock 10 simple spectra in a TSOMultiSpecModel.
+
+    Yields
+    ------
+    TSOMultiSpecModel
+        The mock model.
+    """
+    model = make_tso_spec_model(n_spectra=10)
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def mock_2_multi_int_spec():
+    """
+    Mock 2 simple spectra in a TSOMultiSpecModel.
+
+    Used for generating spectra that do not match the int_times
+    table in a 10-integration input.
+
+    Yields
+    ------
+    TSOMultiSpecModel
+        The mock model.
+    """
+    model = make_tso_spec_model(n_spectra=2)
     yield model
     model.close()
 

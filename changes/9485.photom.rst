@@ -1,0 +1,1 @@
+Allow NIRCam imaging to match calibration values by subarray, if the photom reference file contains subarray information.

@@ -1,0 +1,1 @@
+Populate the wavelength array for MIRI LRS fixed slit data, for consistency with the MIRI LRS slitless mode.

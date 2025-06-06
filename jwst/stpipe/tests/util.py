@@ -101,21 +101,3 @@ def match_log(log, expected):
                 fd.write("]\n")
 
             raise ValueError(f"Logs do not match.\nExpected:\n   '{b}'\nGot:\n   '{msg}'\n")
-
-
-def t_path(partial_path):
-    """
-    Construct the full path for test files.
-
-    Parameters
-    ----------
-    partial_path : str
-        The partial path to the file.
-
-    Returns
-    -------
-    str
-        The full path to the file.
-    """
-    test_dir = Path(__file__).parent
-    return str(test_dir / partial_path)

@@ -1,8 +1,7 @@
 import numpy as np
 import pytest
-from astropy.io.fits.diff import FITSDiff
-
 import stdatamodels.jwst.datamodels as dm
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.barshadow import BarShadowStep
 from jwst.flatfield import FlatFieldStep
