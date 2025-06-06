@@ -109,7 +109,7 @@ For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-f
 
 
 For NIRCam and NIRISS WFSS data, hundreds to thousands of spectra from different sources
-may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
+may be extracted. For those modes, the output is a ``WFSSMultiExposureSpecModel``.
 The data in this model is stored in the ``exposures`` attribute, such that one spectral table
 is created for each exposure for each spectral order in the input data.
 Each extension of the output FITS file thus represents one exposure/spectral order combination.
@@ -128,7 +128,7 @@ and the number of valid data points for each spectrum is recorded
 in the N_ALONGDISP column.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200) and
-integration (the first) in a WFSSMultiSpecModel:
+integration (the first) in a WFSSMultiExposureSpecModel:
 
 .. doctest-skip::
 

@@ -94,9 +94,9 @@ def make_wfss_multiexposure(input_list):
     # The additional metadata columns are all those that are defined in WFSSMultiSpecModel
     # but not in SpecModel
     input_datatype = dm.SpecModel().schema["properties"]["spec_table"]["datatype"]
-    output_datatype = dm.WFSSMultiSpecModel().schema["properties"]["spec_table"]["datatype"]
+    output_datatype = dm.WFSSSpecModel().schema["properties"]["spec_table"]["datatype"]
     all_columns, is_vector = determine_vector_and_meta_columns(input_datatype, output_datatype)
-    defaults = dm.WFSSMultiSpecModel().schema["properties"]["spec_table"]["default"]
+    defaults = dm.WFSSSpecModel().schema["properties"]["spec_table"]["default"]
 
     # loop over exposures to make empty tables for each exposure, which are initially populated
     # with the schema defaults (NaNs for float columns).
@@ -142,7 +142,7 @@ def make_wfss_multiexposure(input_list):
     example_spec = results_list[0].spec[0]
     for i, exposure_number in enumerate(exposure_numbers):
         spec_table = fltdata_by_exposure[i]
-        ext = dm.WFSSMultiSpecModel(spec_table)
+        ext = dm.WFSSSpecModel(spec_table)
 
         # Set default units from the model schema
         set_schema_units(ext)

@@ -74,7 +74,7 @@ def tso_multi_spec():
     n_spectra = 5
     defaults = tso_spec.schema["properties"]["spec_table"]["default"]
     spec_table = make_empty_recarray(n_rows, n_spectra, all_cols, is_vector, defaults=defaults)
-    spec_table["NELEMENTS"] = 10
+    spec_table["N_ALONGDISP"] = 10
     tso_spec.spec_table = spec_table
     for column in tso_spec.spec_table.columns:
         column.unit = 's'
@@ -239,7 +239,7 @@ def test_copy_column_units(input_spec, output_spec):
 
 
 def test_set_schema_units():
-    model = dm.WFSSMultiSpecModel((10,))
+    model = dm.WFSSSpecModel((10,))
     model.spec_table = model.spec_table.copy()
     set_schema_units(model)
 

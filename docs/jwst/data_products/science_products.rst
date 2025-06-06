@@ -621,7 +621,7 @@ the spectrum in each row.  The structure of the "EXTRACT1D" table extension for
 +-------------------+-----------+------------------------+---------------+-----------+
 | NPIXELS           | float64   | Number of pixels       | N/A           |    2D     |
 +-------------------+-----------+------------------------+---------------+-----------+
-| NELEMENTS         | int32     | Nbr. spectral elements | N/A           |    1D     |
+| N_ALONGDISP       | int32     | Nbr. spectral elements | N/A           |    1D     |
 +-------------------+-----------+------------------------+---------------+-----------+
 | SEGMENT           | int32     | Segment number         | N/A           |    1D     |
 +-------------------+-----------+------------------------+---------------+-----------+

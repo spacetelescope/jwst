@@ -237,33 +237,13 @@ def copy_spec_metadata(input_model, output_model):
             setattr(output_model, key, getattr(input_model, key))
 
 
-def _determine_nelements_key(spec_table):
-    """
-    Determine the key for the number of elements in a spectrum.
-
-    Parameters
-    ----------
-    spec_table : `~numpy.recarray`
-        The spectral table containing the spectra.
-
-    Returns
-    -------
-    str
-        The key for the number of elements in a spectrum.
-    """
-    for key in ["NELEMENTS", "N_ALONGDISP"]:
-        if key in spec_table.dtype.names:
-            return key
-    raise ValueError("No NELEMENTS or N_ALONGDISP key found in spec_table.")
-
-
 def expand_table(spec):
     """
     Expand a table of spectra into a list of SpecModel objects.
 
     Parameters
     ----------
-    spec : WFSSMultiSpecModel, TSOMultiSpecModel, ObjectNode
+    spec : WFSSSpecModel, TSOMultiSpecModel, ObjectNode
         Any model containing a spec_table to expand into multiple spectra
 
     Returns
@@ -274,11 +254,10 @@ def expand_table(spec):
     all_columns = np.array([str(x) for x in spec.spec_table.dtype.names])
     new_spec_list = []
     n_spectra = len(spec.spec_table)
-    nelem_key = _determine_nelements_key(spec.spec_table)
     for i in range(n_spectra):
         # initialize a new SpecModel
         spec_row = spec.spec_table[i]
-        n_elements = int(spec_row[nelem_key])
+        n_elements = int(spec_row["N_ALONGDISP"])
         new_spec = datamodels.SpecModel()
         data_type = new_spec.schema["properties"]["spec_table"]["datatype"]
         columns_to_copy = np.array([col["name"] for col in data_type])
@@ -291,7 +270,7 @@ def expand_table(spec):
 
         # Copy over the metadata columns from input spec_table to the spectrum's metadata
         meta_columns = all_columns[~np.isin(all_columns, columns_to_copy)].tolist()
-        meta_columns.remove(nelem_key)
+        meta_columns.remove("N_ALONGDISP")
         for meta_key in meta_columns:
             try:
                 setattr(new_spec, meta_key.lower(), spec_row[meta_key])
