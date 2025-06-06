@@ -37,7 +37,7 @@ LEVEL3_PRODUCT_NAME_NRS_FSS_REGEX = (
     r'(?P<program>\d{5})'
     r'-(?P<acid>[a-z]\d{3,4})'
     r'_(?P<target>(?:t\d{3})'
-    r'_(?:\{source_id\}))'
+    r'-(?:\{source_id\}))'
     r'(?:-(?P<epoch>epoch\d+))?'
     r'_(?P<instrument>.+?)'
     r'_(?P<opt_elem>.+)'
