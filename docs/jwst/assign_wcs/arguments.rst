@@ -56,3 +56,11 @@ the behavior of the processing.
   in the :ref:`extract_2d <extract_2d_step>` step, and/or may expand the slits
   into regions that cannot be flat fielded in the :ref:`flat_field <flatfield_step>`
   step.  These parameters should be used with caution.
+
+``--nrs_ifu_slice_wcs`` (boolean, default=False)
+
+  If True and the exposure type is NIRSpec IFU, then a full slice-based
+  WCS that propagates slice IDs is produced.  This is intended primarily for
+  diagnostic purposes.  If False and the exposure type is NIRSpec IFU,
+  a slice map is internally applied to produce a fully coordinate-based
+  WCS pipeline that does not require slice IDs on input.
