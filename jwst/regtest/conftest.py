@@ -191,7 +191,8 @@ def generate_artifactory_json(request, artifactory_repos):
             # Generate an OKify JSON file
             if rtdata.okify_op == "sdp_pool_copy":
                 pattern = (
-                    os.path.join(rtdata.remote_results_path, os.path.basename(rtdata.output)) + "/*"
+                    os.path.join(rtdata.remote_results_path, os.path.basename(rtdata.output))
+                    + "/jw*.json"
                 )
             else:
                 pattern = os.path.join(rtdata.remote_results_path, os.path.basename(rtdata.output))
