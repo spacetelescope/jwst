@@ -80,7 +80,7 @@ def test_miri_mrs_spec2(run_spec2, fitsdiff_default_kwargs, suffix, rtdata_modul
 
 # MIRI WCS computations sometimes raise runtime warnings for invalid
 # values.  Ignore the warnings for this test.
-@pytest.mark.filterwarnings("ignore: invalid value")
+@pytest.mark.filterwarnings("ignore:invalid value:RuntimeWarning")
 def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs, rtdata_module):
 
     rtdata = rtdata_module
