@@ -121,7 +121,7 @@ Source-based calibrated data
 :Data model: `~jwst.datamodels.MultiExposureModel`
 :File suffix: _cal
 
-For NIRSpec fixed-slit, NIRSpec MOS, and NIRCam and NIRISS WFSS, which have a defined
+For NIRSpec fixed-slit and NIRSpec MOS, which have a defined
 set of slits or sources, the data from the input calibrated exposures is reorganized
 by the :ref:`exp_to_source <exp_to_source>` step so that all of the instances of data
 for a particular source/slit are contained in a
@@ -131,6 +131,11 @@ intermediate files, one per source/slit. The root names of the source-based file
 contain the source ID as an identifier and use the same "_cal" suffix as the input
 calibrated exposure files. An example source-based file name is
 "jw00042-o001_s00000002_niriss_gr150r_f150w_cal.fits", where "s00000002" is the source id.
+
+NIRCam and NIRISS WFSS observations also have a defined set of sources, and those data
+still go through `exp_to_source`, but the reorganized data products are not saved
+as intermediate files because there may be hundreds or thousands of sources
+in a single exposure.
 
 The reorganized sets of data are sent to subsequent steps to process and combine
 all the data for one source at a time.
@@ -185,6 +190,13 @@ cutout images, resulting in multiple 1-D spectra per source in a "_x1d" product.
 Those spectra are combined using the subsequent
 :ref:`combine_1d <combine_1d_step>` step (see below).
 
+For NIRCam and NIRISS WFSS, the output ``_x1d`` product
+holds the spectra from all the sources in a single product. The data model is
+`~jwst.datamodels.WFSSMultiSpecModel`, and has one extension per
+exposure per spectral order, with each extension containing a binary table of all the spectra
+(and associated metadata) for all sources extracted from that exposure and spectral order.
+See :ref:`extract_1d <extract_1d_step>` for more details.
+
 1D combined spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
@@ -193,4 +205,13 @@ Those spectra are combined using the subsequent
 
 For NIRCam and NIRISS WFSS, as well as NIRISS SOSS data, the
 :ref:`combine_1d <combine_1d_step>` combines the multiple 1-D spectra for a
-given source into a final spectrum, which is saved as a "_c1d" product.
+given source into a final spectrum, which is saved in a "_c1d" product.
+
+For NIRCam and NIRISS WFSS, the output ``_c1d`` product holds the spectra
+from all the sources in a single product. The data model is
+`~jwst.datamodels.WFSSMultiCombinedSpecModel`, and has a single
+binary table per spectral order containing the exposure-combined spectra for all sources
+extracted from that exposure. The data type is similar to that of the
+``_x1d`` product, but with just one data extension per extracted spectral order
+(because the exposures have been combined) and with a more limited set
+of data and metadata columns.

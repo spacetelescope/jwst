@@ -13,6 +13,16 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+# attributes that we want to copy unmodified from input to output spectra
+SPECMETA_ATTRIBUTES = [
+    "source_id",
+    "dispersion_direction",
+    "source_type",
+    "source_ra",
+    "source_dec",
+]
+
+
 class InputSpectrumModel:
     """
     Model an input spectrum.
@@ -47,6 +57,12 @@ class InputSpectrumModel:
         Source ID for the spectrum.
     source_type : str
         Source type for the spectrum.
+    source_ra : float
+        Right ascension of the source.
+    source_dec : float
+        Declination of the source.
+    dispersion_direction : str
+        Dispersion direction for the spectrum.
     flux_unit : str
         Unit for the flux values.
     sb_unit : str
@@ -84,8 +100,8 @@ class InputSpectrumModel:
         self.right_ascension = np.zeros_like(self.wavelength)
         self.declination = np.zeros_like(self.wavelength)
         self.name = spec.name
-        self.source_id = spec.source_id
-        self.source_type = spec.source_type
+        for attr in SPECMETA_ATTRIBUTES:
+            setattr(self, attr, getattr(spec, attr))
         self.flux_unit = spec.spec_table.columns["flux"].unit
         self.sb_unit = spec.spec_table.columns["surf_bright"].unit
 
@@ -104,7 +120,11 @@ class InputSpectrumModel:
         except AttributeError:
             self.right_ascension[:] = ms.meta.target.ra
             self.declination[:] = ms.meta.target.dec
-            log.warning("There is no WCS in the input.")
+            # This exception is hit for NIRISS and NIRCam WFSS data,
+            # for which it doesn't matter anyway, since the RA and Dec are not used
+            # in any meaningful way to combine the spectra. A future refactor should
+            # make it so the WCS is not expected in the input spectra for those modes.
+            log.debug("There is no WCS in the input. Getting RA, Dec from target metadata.")
 
     def close(self):
         """Set data attributes to null values."""
@@ -758,8 +778,8 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     for order in output_spectra:
         output_order = output_spectra[order].create_output_data()
         output_order.spectral_order = order
-        output_order.source_id = input_spectra[order][0].source_id
-        output_order.source_type = input_spectra[order][0].source_type
+        for attr in SPECMETA_ATTRIBUTES:
+            setattr(output_order, attr, getattr(input_spectra[order][0], attr))
         output_model.spec.append(output_order)
 
     # Copy one of the input headers to output.

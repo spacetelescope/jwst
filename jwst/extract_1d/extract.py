@@ -1871,6 +1871,29 @@ def create_extraction(
 
         copy_keyword_info(data_model, slitname, spec)
 
+        if exp_type in WFSS_EXPTYPES:
+            spectral_order = data_model.meta.wcsinfo.spectral_order
+            if hasattr(data_model.meta, "filename"):
+                # calwebb_spec3 case: no separate slit input to function
+                spec.meta.filename = data_model.meta.filename
+                spec.meta.group_id = _make_group_id(data_model, spectral_order)
+            else:
+                # calwebb_spec2 case: data_model is a slit so need to get this meta from input_model
+                # In this case, group_id is expected to be the same for all slits
+                # because spec list corresponds to different sources in the same exposure
+                # The exception is spectral_order so we get that from data_model and it
+                # is handled separately
+                spec.meta.filename = getattr(input_model.meta, "filename", None)
+                spec.meta.group_id = _make_group_id(input_model, spectral_order)
+            spec.extract2d_xstart = data_model.xstart
+            spec.extract2d_ystart = data_model.ystart
+            if data_model.xstart is None or data_model.ystart is None:
+                spec.extract2d_xstop = None
+                spec.extract2d_ystop = None
+            else:
+                spec.extract2d_xstop = data_model.xstart + data_model.xsize
+                spec.extract2d_ystop = data_model.ystart + data_model.ysize
+
         if apcorr is not None:
             if hasattr(apcorr, "tabulated_correction"):
                 if apcorr.tabulated_correction is not None:
@@ -1925,6 +1948,36 @@ def create_extraction(
         output_model.spec.append(spec_list[0])
 
     return profile_model, scene_model, residual
+
+
+def _make_group_id(model, spectral_order):
+    """
+    Generate a unique ID for an exposure group, including the spectral order.
+
+    Parameters
+    ----------
+    model : DataModel
+        The input data model.
+    spectral_order : int
+        The spectral order for the exposure.
+
+    Returns
+    -------
+    str
+        The group ID.
+    """
+    program_number = model.meta.observation.program_number
+    observation_number = model.meta.observation.observation_number
+    visit_number = model.meta.observation.visit_number
+    visit_group = model.meta.observation.visit_group
+    sequence_id = model.meta.observation.sequence_id
+    activity_id = model.meta.observation.activity_id
+    exposure_number = model.meta.observation.exposure_number
+    return (
+        f"jw{program_number}{observation_number}{visit_number}"
+        f"_{visit_group}{sequence_id}{activity_id}"
+        f"_{exposure_number}_{spectral_order}"
+    )
 
 
 def _make_output_model(data_model, meta_source):

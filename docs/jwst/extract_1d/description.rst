@@ -107,6 +107,42 @@ same structure as a ``MultiSpecModel``, except that there are three additional
 columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
 
+
+For NIRCam and NIRISS WFSS data, hundreds to thousands of spectra from different sources
+may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
+The data in this model is stored in the ``spec`` attribute, such that one spectral table
+is created for each exposure for each spectral order in the input data.
+Each extension of the output FITS file thus represents one exposure/spectral order combination.
+The extension metadata contains a unique exposure ID (FITS keyword EXPGRPID) for each extension,
+which combines exposure grouping metadata, the exposure number, and the spectral order.
+The spectral tables for this model contain the same columns as the ``MultiSpecModel``, but
+each row in the table contains the full spectrum for a single source and order. The spectral columns
+are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
+spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
+These metadata fields include:
+SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC, 
+EXTRACT2D_XSTART, EXTRACT2D_YSTART.
+
+Note that the vector columns have the same length for all the sources in the table, meaning that
+the number of elements in the table rows is set by the spectrum with the most data points.
+The other spectra are NaN-padded to match the longest spectrum,
+and the number of valid data points for each spectrum is recorded
+in the N_ALONGDISP column.
+
+For example, to access the wavelength and flux for a specific source ID (say, 1200) and
+integration (the first) in a WFSSMultiSpecModel:
+
+.. doctest-skip::
+
+  >>> from stdatamodels.jwst import datamodels
+  >>> model = datamodels.open('multi_wfss_x1d.fits')
+  >>> first_table = model.spec[0].spec_table
+  >>> id_want = 1200
+  >>> row_want = first_table[first_table["SOURCE_ID"] == id_want][0]
+  >>> nelem = row_want["N_ALONGDISP"]
+  >>> wave, flux = row_want["WAVELENGTH"][:nelem], row_want["FLUX"][:nelem]
+
+
 For time series observations (TSO) with spectra extracted from multiple integrations,
 the output is a ``TSOMultiSpecModel``.  The spectral tables for this model have
 the same columns as the ``MultiSpecModel``, but each row in the table contains the full
@@ -130,6 +166,7 @@ each spectrum in a TSO model:
   >>>     for i, int_num in enumerate(integrations):
   >>>         wave = spectrum.spec_table["WAVELENGTH"][i]
   >>>         flux = spectrum.spec_table["FLUX"][i]
+
 
 Data sources
 ^^^^^^^^^^^^
@@ -500,6 +537,7 @@ the data must be given. The steps to run this correction outside the pipeline ar
   flux_cor = rf1d(flux, wave, channel=4)
 
 where `flux` is the extracted spectral data, and the data are from channel 4 for this example.
+
 
 Extraction for NIRISS SOSS Data
 -------------------------------
