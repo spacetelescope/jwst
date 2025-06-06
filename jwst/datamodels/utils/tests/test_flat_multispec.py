@@ -289,4 +289,9 @@ def test_expand_flat_spec(tso_multi_spec):
         assert spec.name == f"test {input_spec_num}"
         assert spec.int_num == input_spec_num
 
+        assert spec.meta.wcs[0] == 'test'
+        spec.meta.wcs[0] = 'copy'
+        assert spec.meta.wcs[0] == 'copy'
+        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs[0] == 'test'
+
         assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)

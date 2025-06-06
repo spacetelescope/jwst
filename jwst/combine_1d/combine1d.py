@@ -120,7 +120,11 @@ class InputSpectrumModel:
         except AttributeError:
             self.right_ascension[:] = ms.meta.target.ra
             self.declination[:] = ms.meta.target.dec
-            log.warning("There is no WCS in the input.")
+            # This exception is hit for NIRISS and NIRCam WFSS data,
+            # for which it doesn't matter anyway, since the RA and Dec are not used
+            # in any meaningful way to combine the spectra. A future refactor should
+            # make it so the WCS is not expected in the input spectra for those modes.
+            log.debug("There is no WCS in the input. Getting RA, Dec from target metadata.")
 
     def close(self):
         """Set data attributes to null values."""

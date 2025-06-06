@@ -147,6 +147,7 @@ def test_orders_are_separated(wfss_spec3_multispec):
     # ensure spectral order is in the metadata
     for i, exposure in enumerate(output_model.exposures):
         assert exposure.spectral_order == (i // 4) + 1  # first 4 are order 1, next 4 are order 2
+        assert exposure.group_id == str(i%4 + 1) + str(exposure.spectral_order - 1)
 
 
 @pytest.fixture
