@@ -62,7 +62,6 @@ def background_subtract(
         bkg_estimator=bkg_estimator,
         exclude_percentile=exclude_percentile,
     )
-
     return data - bkg.background
 
 
@@ -100,7 +99,16 @@ def _select_ids(source_id, all_ids):
 
 
 class Observation:
-    """Define an observation leading to a single grism image."""
+    """
+    Define an observation leading to a single grism image.
+
+    The Observation class is responsible for calling the various WCS transforms that convert
+    a direct image and a segmentation image into a simulation of the grism image, making
+    assumptions about the spectral properties of the direct image sources.
+    When the disperse_order method is called one or more times, two products are created:
+    the simulated dispersed image (simulated_image attribute) and
+    the simulated MultiSlitModel (simulated_slits attribute).
+    """
 
     def __init__(
         self,
@@ -117,9 +125,6 @@ class Observation:
     ):
         """
         Initialize all data and metadata for a given observation.
-
-        Creates lists of
-        direct image pixel values for selected objects.
 
         Parameters
         ----------
@@ -149,7 +154,6 @@ class Observation:
         # Load all the info for this grism mode
         self.seg_wcs = segmap_model.meta.wcs
         self.grism_wcs = grism_wcs
-        self.dir_image_name = direct_image
         self.seg = segmap_model.data
         all_ids = np.array(list(set(np.ravel(self.seg))))
         self.source_ids = _select_ids(source_id, all_ids)
@@ -160,10 +164,8 @@ class Observation:
         self.xoffset = offsets[0]
         self.yoffset = offsets[1]
 
-        # make the direct image
-        with datamodels.open(self.dir_image_name) as model:
-            dimage = model.data
-            self.dimage = background_subtract(dimage)
+        # ensure the direct image has background subtracted
+        self.dimage = background_subtract(direct_image)
 
         # Set the limits of the dispersed image to be simulated
         if len(boundaries) == 0:
@@ -183,13 +185,11 @@ class Observation:
         if self.extrapolate_sed:
             log.warning("SED Extrapolation turned on.")
 
-        # Create pixel lists for sources labeled in segmentation map
+        # Create lists of pixels labeled in segmentation map
         self._create_pixel_list()
 
-        # Initialize the list of slits
-        self.simul_slits = datamodels.MultiSlitModel()
-        self.simul_slits_order = []
-        self.simul_slits_sid = []
+        # Initialize the output MultiSlitModel
+        self.simulated_slits = datamodels.MultiSlitModel()
 
         # Initialize the simulated dispersed image
         self.simulated_image = np.zeros(self.dims, float)
@@ -221,12 +221,14 @@ class Observation:
         Parameters
         ----------
         max_pixels : int, optional
-            Maximum number of pixels per chunk. Default is 1e6.
+            Maximum number of pixels per chunk.
 
         Returns
         -------
-        chunks : list
-            List of lists of source IDs
+        disperse_args : list[list]
+            Outer list has length number of groups, and each inner list contains
+            the arguments to disperse() for that group
+            in the format that multiprocessing starmap expects.
         """
         chunks = []
         current_chunk = []
@@ -278,6 +280,8 @@ class Observation:
         """
         Disperse the sources for a given spectral order, with multiprocessing.
 
+        The simulated_slits and simulated_image attributes are updated in place.
+
         Parameters
         ----------
         order : int
@@ -319,9 +323,7 @@ class Observation:
                 img = results[sid]["image"]
                 slit = _construct_slitmodel(img, bounds, sid, order)
                 self.simulated_image[bounds[2] : bounds[3] + 1, bounds[0] : bounds[1] + 1] += img
-                self.simul_slits.slits.append(slit)
-                self.simul_slits_order.append(order)
-                self.simul_slits_sid.append(sid)
+                self.simulated_slits.slits.append(slit)
 
 
 def _construct_slitmodel(
@@ -331,18 +333,18 @@ def _construct_slitmodel(
     order,
 ):
     """
-    Turn output image from a chunk into a slit model.
+    Turn an output image from a single source/order into a SlitModel.
 
     Parameters
     ----------
     img : np.ndarray
-        Dispersed model of segmentation map source
+        Dispersed model image of segmentation map source
     bounds : list
-        The bounds of the object
+        The bounds of the object in relation to the full-frame image.
     sid : int
         The source ID
     order : int
-        The spectral order number
+        The spectral order
 
     Returns
     -------

@@ -274,13 +274,11 @@ def contam_corr(
     num_cores = multiprocessing.cpu_count()
     ncpus = determine_multiprocessing_ncores(max_cores, num_cores)
 
-    # Initialize output model
-    output_model = input_model.copy()
-
-    # Get the segmentation map, direct image for this grism exposure
+    # Get the segmentation map and direct image for this grism exposure
     seg_model = datamodels.open(input_model.meta.segmentation_map)
     direct_file = input_model.meta.direct_image
     log.debug(f"Direct image ={direct_file}")
+    direct_image = datamodels.open(direct_file).data
 
     # Get the grism WCS object and offsets from the first cutout in the input model.
     # This WCS is used to transform from direct image to grism frame for all sources
@@ -321,8 +319,9 @@ def contam_corr(
     else:
         selected_ids = None
 
+    # set up observation object to disperse
     obs = Observation(
-        direct_file,
+        direct_image,
         seg_model,
         grism_wcs,
         filter_name,
@@ -332,13 +331,6 @@ def contam_corr(
         source_id=selected_ids,
     )
 
-    # Initialize output multislitmodel
-    good_slits = [slit for slit in output_model.slits if slit.source_id in obs.source_ids]
-    output_model = datamodels.MultiSlitModel()
-    output_model.update(input_model)
-    output_model.slits.extend(good_slits)
-
-    simul_all = None
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
         wavelength_range = waverange.get_wfss_wavelength_range(filter_name, [order])
@@ -347,32 +339,36 @@ def contam_corr(
         log.debug(f"wmin={wmin}, wmax={wmax} for order {order}")
         sens_waves, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
 
-        # Create simulated grism image for each order and sum them up
+        # Compute the dispersion for all sources in this order
         log.info(f"Creating full simulated grism image for order {order}")
         obs.disperse_order(order, wmin, wmax, sens_waves, sens_response)
-        if simul_all is None:
-            simul_all = obs.simulated_image
-        else:
-            simul_all += obs.simulated_image
 
-    # Make the full-frame simulated grism image
-    simul_model = datamodels.ImageModel(data=simul_all)
+    # Initialize the full-frame simulated grism image
+    simul_model = datamodels.ImageModel(data=obs.simulated_image)
     simul_model.update(input_model, only="PRIMARY")
 
-    simul_slit_sids = np.array(obs.simul_slits_sid)
-    simul_slit_orders = np.array(obs.simul_slits_order)
+    simul_slit_sids = [slit.source_id for slit in obs.simulated_slits]
+    simul_slit_orders = [slit.meta.wcsinfo.spectral_order for slit in obs.simulated_slits]
+
+    # Initialize output multislitmodel
+    output_model = datamodels.MultiSlitModel()
+    good_slits = [slit for slit in input_model.slits if slit.source_id in obs.source_ids]
+    output_model.slits.extend(good_slits)
 
     # Loop over all slits/sources to subtract contaminating spectra
+    # TODO: right now the contam_model and output_model are all hitting SlitOverlapError
+    # in order 1 and returning all-zero slits
+    # I think this is due to SlitOverlapError
+    # check if _construct_slitmodel is getting the bounds correct
     log.info("Creating contamination image for each individual source")
     contam_model = datamodels.MultiSlitModel()
     contam_model.update(input_model)
-    slits = []
     for slit in output_model.slits:
         try:
             good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
-            this_simul = obs.simul_slits.slits[good_idx]
+            this_simul = obs.simulated_slits.slits[good_idx]
             slit, this_simul = match_backplane_prefer_first(slit, this_simul)
-            simul_all_cut = _cut_frame_to_match_slit(simul_all, slit)
+            simul_all_cut = _cut_frame_to_match_slit(obs.simulated_image, slit)
             contam_cut = simul_all_cut - this_simul.data
 
         except (UnmatchedSlitIDError, SlitOverlapError) as e:
@@ -381,14 +377,15 @@ def contam_corr(
 
         contam_slit = copy.copy(slit)
         contam_slit.data = contam_cut
-        slits.append(contam_slit)
+        contam_model.slits.append(contam_slit)
 
         # Subtract the contamination from the source slit
         slit.data -= contam_cut
 
-    # Save the contamination estimates for all slits
-    contam_model.slits.extend(slits)
-
+    output_model.update(input_model, only="PRIMARY")
     output_model.meta.cal_step.wfss_contam = "COMPLETE"
 
-    return output_model, simul_model, contam_model, obs.simul_slits
+    seg_model.close()
+    direct_image.close()
+
+    return output_model, simul_model, contam_model, obs.simulated_slits

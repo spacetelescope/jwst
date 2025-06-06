@@ -32,22 +32,22 @@ def disperse(
     yoffset=0,
 ):
     """
-    Compute dispersed pixel values for sources identified in the segmentation map.
+    Compute the dispersed image pixel values from the direct image.
 
     Parameters
     ----------
-    xs : float array
-        X coordinates of pixels in the segmentation map
-    ys : float array
-        Y coordinates of pixels in the segmentation map
-    fluxes : float array
-        Fluxes of sources in the segmentation map
+    xs : np.ndarray
+        Flat array of X coordinates of pixels in the direct image
+    ys : np.ndarray
+        Flat array of Y coordinates of pixels in the direct image
+    fluxes : np.ndarray
+        Fluxes of the pixels in the direct image corresponding to xs, ys
     source_ids_per_pixel : int array
-        Source IDs corresponding to each pixel in the segmentation map
+        Source IDs of the input pixels in the segmentation map
     order : int
-        Spectral order number to process
+        Spectral order number
     pivlam : float
-        Pivot wavelength for the spectral order
+        Pivot wavelength for that spectral order
     wmin : float
         Minimum wavelength for dispersed spectra
     wmax : float
@@ -63,11 +63,11 @@ def disperse(
     naxis : tuple
         Dimensions of the grism image (naxis[0], naxis[1])
     oversample_factor : int, optional
-        Factor by which to oversample the wavelength grid (default is 2)
+        Factor by which to oversample the wavelength grid
     xoffset : float, optional
-        X offset to apply to the dispersed pixel positions (default is 0)
+        X offset to apply to the dispersed pixel positions
     yoffset : float, optional
-        Y offset to apply to the dispersed pixel positions (default is 0)
+        Y offset to apply to the dispersed pixel positions
 
     Returns
     -------
@@ -75,28 +75,26 @@ def disperse(
         Dictionary containing dispersed images and bounds for each source ID
         in the specified spectral order.
     """
+    n_input_sources = np.unique(source_ids_per_pixel).size
     log.debug(
-        f"{mp.current_process()} dispersing {np.unique(source_ids_per_pixel).size} "
-        f"sources in order {order}"
+        f"{mp.current_process()} dispersing {n_input_sources} "
+        f"sources in order {order} with total number of pixels: {len(xs)}"
     )
-    log.debug(f"total number of pixels: {len(xs)}")
     width = 1.0
     height = 1.0
     x0 = xs + 0.5 * width
     y0 = ys + 0.5 * height
 
-    # Compute the WCS transforms
-    # Setup the transforms we need from the input WCS objects
+    # Set up the transforms we need from the input WCS objects
     sky_to_imgxy = grism_wcs.get_transform("world", "detector")
     imgxy_to_grismxy = grism_wcs.get_transform("detector", "grism_detector")
 
     # Get x/y positions in the grism image corresponding to wmin and wmax:
     # Start with RA/Dec of the input pixel position in segmentation map,
     x0_sky, y0_sky = seg_wcs(x0, y0)
-    # then convert to x/y in the direct image frame corresponding
-    # to the grism image,
+    # then convert to x/y in the direct image frame  to the grism image,
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
-    # then finally convert to x/y in the grism image frame
+    # then convert to x/y in the grism image frame
     xwmin, ywmin = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmin, order)
     xwmax, ywmax = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmax, order)
     dxw = xwmax - xwmin
@@ -105,7 +103,7 @@ def disperse(
     # Create list of wavelengths on which to compute dispersed pixels
     lams = np.array([pivlam] * len(fluxes))
     dw = np.abs((wmax - wmin) / (dyw - dxw))
-    dlam = np.median(dw / oversample_factor)  # TODO: validate that just taking median is ok
+    dlam = np.median(dw / oversample_factor)  # TODO: is just taking median here ok?
     lambdas = np.arange(wmin, wmax + dlam, dlam)
     n_lam = len(lambdas)
 
@@ -119,25 +117,22 @@ def disperse(
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, order)
 
     # Convert to x/y in grism frame.
-    # lambdas needs same shape as x0_xy to be indexed by np.take below
     lambdas = np.repeat(lambdas[:, np.newaxis], x0_xy.shape[1], axis=1)
     x0s, y0s = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, lambdas, order)
     # x0s, y0s now have shape (n_lam, n_pixels)
 
-    # Compute arrays of dispersed pixel locations and areas
-    padding = 1
     # If none of the dispersed pixel indexes are within the image frame,
     # return a null result without wasting time doing other computations
     if x0s.min() >= naxis[0] or x0s.max() < 0 or y0s.min() >= naxis[1] or y0s.max() < 0:
-        # log.info(f"No dispersed pixels within image frame for order {order}.")
         return
 
+    # Compute arrays of dispersed pixel locations and areas
+    padding = 1
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     lams = np.take(lambdas, index)
     fluxes = np.take(fluxes, index)
 
     # compute 1D sensitivity array corresponding to list of wavelengths
-    # TODO: what wavelength unit does this expect?
     sens, no_cal = create_1d_sens(lams, sens_waves, sens_resp)
 
     # Compute countrates for dispersed pixels. Note that dispersed pixel
@@ -152,7 +147,7 @@ def disperse(
     # keep track of source IDs for each dispersed pixel
     dispersed_source_ids = np.take(source_ids_per_pixel, index)
 
-    # Build the dispersed image and make a slit model for each source
+    # Collect the outputs source-by-source
     outputs_by_source = {}
     source_ids = np.unique(dispersed_source_ids)
     for this_sid in source_ids:
@@ -168,14 +163,33 @@ def disperse(
             "bounds": bounds,
             "image": img,
         }
+
     log.debug(
         f"{mp.current_process()} finished order {order} with {len(outputs_by_source)} "
-        "sources in the output frame"
+        f"sources that overlap with the output frame "
+        f"(out of {n_input_sources} input sources)"
     )
     return outputs_by_source
 
 
 def _build_dispersed_image_of_source(x, y, flux):
+    """
+    Convert a flattened list of pixels to a 2-D grism image of that source.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        X coordinates of pixels in the grism image
+    y : np.ndarray
+        Y coordinates of pixels in the grism image
+    flux : np.ndarray
+        Fluxes of pixels in the grism image
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
     minx = int(min(x))
     maxx = int(max(x))
     miny = int(min(y))
