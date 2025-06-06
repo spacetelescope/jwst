@@ -15,7 +15,7 @@ __all__ = ["BackgroundStep"]
 class BackgroundStep(Step):
     """Subtract background exposures from target exposures."""
 
-    class_alias = "back_sub"
+    class_alias = "background"
 
     spec = """
         bkg_list = force_list(default=None)  # List of background files. Ignored for WFSS or if asn is provided
