@@ -47,6 +47,7 @@ NRS_SLIT_TYPES = [
 ]
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 GRISM_TYPES = ["NRC_TSGRISM"] + WFSS_TYPES
+EXP_TYPES_USING_REFBKGDS = WFSS_TYPES + ["NIS_SOSS"]
 
 
 class Spec2Pipeline(Pipeline):
@@ -489,8 +490,8 @@ class Spec2Pipeline(Pipeline):
 
         # Check for image-to-image background subtraction can be done.
         if not self.bkg_subtract.skip:
-            if exp_type in WFSS_TYPES or len(members_by_type["background"]) > 0:
-                if exp_type in WFSS_TYPES:
+            if exp_type in EXP_TYPES_USING_REFBKGDS or len(members_by_type["background"]) > 0:
+                if exp_type in EXP_TYPES_USING_REFBKGDS:
                     members_by_type["background"] = []  # will be overwritten by the step
 
                 # Setup for saving
