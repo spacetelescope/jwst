@@ -1,5 +1,6 @@
 import collections
 import logging
+import numpy as np
 from timeit import default_timer as timer
 
 from .generate import generate
@@ -64,6 +65,19 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
     """
     logger.info('Generating based on the per-candidate algorithm.')
 
+    # If DMS flag is present, add all c-type ids associated with input ids to generation
+    if dms_enabled and candidate_ids is not None:
+        # Generate a selection mask to find all cids associated with DMS-provided ids
+        row_mask = np.zeros((len(pool),), dtype=bool)
+        for cid in candidate_ids:
+            row_mask |= [cid in x for x in pool["asn_candidate"]]
+        input_candidate_ids = list(candidate_ids)
+        bkg_cids = ids_by_ctype(pool[row_mask]).get("background", None)
+        if bkg_cids is not None:
+            for key in bkg_cids:
+                if key not in candidate_ids:
+                    candidate_ids.append(key)
+
     # Get the candidates
     cids_by_type = ids_by_ctype(pool)
     if candidate_ids is None:
@@ -91,7 +105,6 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
             rule_defs,
             version_id=version_id,
             ignore_default=ignore_default,
-            dms_enabled=dms_enabled
         )
 
         # Add to the list
@@ -137,13 +150,21 @@ def generate_per_candidate(pool, rule_defs, candidate_ids=None, all_candidates=T
         except AttributeError:
             pass
 
-    logger.info('Total associations generated: %s', len(finalized_asns))
+    if dms_enabled and candidate_ids is not None:
+        # We now must remove the asns that were used to duplicate-check the input candidates.
+        finalized_asns = [
+            asn
+            for asn in finalized_asns
+            if any(cid in asn["asn_id"] for cid in input_candidate_ids)
+        ]
+
+    logger.info("Total associations generated: %s", len(finalized_asns))
     return finalized_asns
 
 
-def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_default=False,
-                          dms_enabled=False):
-    """Generate associations based on a candidate ID
+def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_default=False):
+    """
+    Generate associations based on a candidate ID.
 
     Parameters
     ----------
@@ -165,9 +186,6 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
     ignore_default : bool
         Ignore the default rules. Use only the user-specified ones.
 
-    dms_enabled : bool
-        Flag for DMS processing, true if command-line argument '--DMS' was used.
-
     Returns
     -------
     associations : [Association[,...]]
@@ -179,21 +197,8 @@ def generate_on_candidate(cid_ctype, pool, rule_defs, version_id=None, ignore_de
     # Get the pool
     pool_cid = pool_from_candidate(pool, cid)
 
-    # DMS processing excludes generation of o-type candidates for science exposures
-    # with linked backgrounds, i.e. without the background member present, as it
-    # would be for c-type background association candidates.
-    if dms_enabled and 'observation' in ctype:
-        skip_rows = []
-        for i, row in enumerate(pool_cid):
-            if 'background' in row['asn_candidate'] and row['bkgdtarg'] == 'f':
-                skip_rows.append(i)
-        logger.debug(f"Dropping {len(skip_rows)} exposures from pool - observation "
-                     f"candidate type does not allow association generation when a "
-                     f"background candidate is present.")
-        pool_cid.remove_rows(skip_rows)
-
-    pool_cid['asn_candidate'] = [f"[('{cid}', '{ctype}')]"] * len(pool_cid)
-    logger.info(f'Length of pool for {cid}: {len(pool_cid)}')
+    pool_cid["asn_candidate"] = [f"[('{cid}', '{ctype}')]"] * len(pool_cid)
+    logger.info(f"Length of pool for {cid}: {len(pool_cid)}")
 
     # Create the rules with the simplified asn_candidate constraint
     asn_constraint = constrain_on_candidates([cid])
