@@ -349,7 +349,7 @@ def contam_corr(
 
         # Create simulated grism image for each order and sum them up
         log.info(f"Creating full simulated grism image for order {order}")
-        obs.disperse_one_order(order, wmin, wmax, sens_waves, sens_response)
+        obs.disperse_order(order, wmin, wmax, sens_waves, sens_response)
         if simul_all is None:
             simul_all = obs.simulated_image
         else:

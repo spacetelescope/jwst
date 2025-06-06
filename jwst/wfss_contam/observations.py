@@ -1,17 +1,15 @@
+import time
 import numpy as np
-
-from scipy import sparse
+import multiprocessing as mp
 
 from stdatamodels.jwst import datamodels
 
-from jwst.lib.winclip import get_clipped_pixels
-from .sens1d import create_1d_sens
-
 import logging
-import warnings
 
 from photutils.background import Background2D, MedianBackground
 from astropy.stats import SigmaClip
+
+from jwst.wfss_contam.disperse import disperse
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -178,6 +176,7 @@ class Observation:
             self.xstart, self.xend, self.ystart, self.yend = boundaries
         self.dims = (self.yend - self.ystart + 1, self.xend - self.xstart + 1)
         log.debug(f"Using simulated image size of ({self.dims[1]}, {self.dims[0]}).")
+        self.naxis = self.dims[::-1]
 
         # Allow for SED extrapolation
         self.extrapolate_sed = extrapolate_sed
@@ -191,6 +190,9 @@ class Observation:
         self.simul_slits = datamodels.MultiSlitModel()
         self.simul_slits_order = []
         self.simul_slits_sid = []
+
+        # Initialize the simulated dispersed image
+        self.simulated_image = np.zeros(self.dims, float)
 
     def _create_pixel_list(self):
         """Create flat lists of pixels to be dispersed, grouped per object ID."""
@@ -209,174 +211,153 @@ class Observation:
         self.fluxes = np.array(self.fluxes)
         self.source_ids_per_pixel = np.array(self.source_ids_per_pixel)
 
-    def disperse_one_order(
-        self,
-        order,
-        wmin,
-        wmax,
-        sens_waves,
-        sens_resp,
-    ):
+    def chunk_sources(self, order, wmin, wmax, sens_waves, sens_response, max_pixels=1e5):
         """
-        Compute dispersed pixel values for all sources identified in the segmentation map.
+        Chunk the sources into groups of max_pixels.
+
+        TODO: catch error if max_pixels is smaller than the number of pixels in a single source.
+        In this case probably just set max_pixels to the number of pixels in the largest source.
+
+        Parameters
+        ----------
+        max_pixels : int, optional
+            Maximum number of pixels per chunk. Default is 1e6.
+
+        Returns
+        -------
+        chunks : list
+            List of lists of source IDs
+        """
+        chunks = []
+        current_chunk = []
+        current_size = 0
+
+        for sid in self.source_ids:
+            n_pixels = np.sum(self.seg == sid)
+            if current_size + n_pixels > max_pixels:
+                chunks.append(current_chunk)
+                current_chunk = []
+                current_size = 0
+            current_chunk.append(sid)
+            current_size += n_pixels
+
+        if current_chunk:
+            chunks.append(current_chunk)
+
+        disperse_args = []
+        for source_ids in chunks:
+            isin = np.isin(self.source_ids_per_pixel, source_ids)
+            source_ids_per_pixel = self.source_ids_per_pixel[isin]
+            xs = self.xs[isin]
+            ys = self.ys[isin]
+            fluxes = self.fluxes[isin]
+            disperse_args.append(
+                [
+                    xs,
+                    ys,
+                    fluxes,
+                    source_ids_per_pixel,
+                    order,
+                    self.pivlam,
+                    wmin,
+                    wmax,
+                    sens_waves,
+                    sens_response,
+                    self.seg_wcs,
+                    self.grism_wcs,
+                    self.naxis,
+                    self.oversample_factor,
+                    self.xoffset,
+                    self.yoffset,
+                ]
+            )
+
+        return disperse_args
+
+    def disperse_order(self, order, wmin, wmax, sens_waves, sens_response):
+        """
+        Disperse the sources for a given spectral order, with multiprocessing.
 
         Parameters
         ----------
         order : int
-            Spectral order number to process
+            Spectral order to process
         wmin : float
             Minimum wavelength for dispersed spectra
         wmax : float
             Maximum wavelength for dispersed spectra
-        sens_waves : float array
+        sens_waves : np.ndarray
             Wavelength array from photom reference file
-        sens_resp : float array
+        sens_response : np.ndarray
             Response (flux calibration) array from photom reference file
         """
-        # Initialize the simulated dispersed image
-        self.simulated_image = np.zeros(self.dims, float)
+        # generate lists of input parameters for the disperse function
+        # for each chunk of sources
+        disperse_args = self.chunk_sources(order, wmin, wmax, sens_waves, sens_response)
+        t0 = time.time()
+        if self.max_cpu > 1:
+            # Use multiprocessing to disperse the sources
+            log.info(
+                f"Using {self.max_cpu} CPU cores for multiprocessing "
+                f"{len(self.source_ids)} sources in {len(disperse_args)} chunks."
+            )
+            ctx = mp.get_context("spawn")
+            with ctx.Pool(self.max_cpu) as mypool:
+                all_res = mypool.starmap(disperse, disperse_args)
+        else:
+            all_res = [disperse(*args) for args in disperse_args]
+        t1 = time.time()
+        log.info(f"Wall clock time for disperse_chunk order {order}: {(t1 - t0):.1f} sec")
 
-        width = 1.0
-        height = 1.0
-        x0 = self.xs + 0.5 * width
-        y0 = self.ys + 0.5 * height
-
-        # Compute the WCS transforms
-        # Setup the transforms we need from the input WCS objects
-        sky_to_imgxy = self.grism_wcs.get_transform("world", "detector")
-        imgxy_to_grismxy = self.grism_wcs.get_transform("detector", "grism_detector")
-
-        # Get x/y positions in the grism image corresponding to wmin and wmax:
-        # Start with RA/Dec of the input pixel position in segmentation map,
-        x0_sky, y0_sky = self.seg_wcs(x0, y0)
-        # then convert to x/y in the direct image frame corresponding
-        # to the grism image,
-        x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
-        # then finally convert to x/y in the grism image frame
-        xwmin, ywmin = imgxy_to_grismxy(x0_xy + self.xoffset, y0_xy + self.yoffset, wmin, order)
-        xwmax, ywmax = imgxy_to_grismxy(x0_xy + self.xoffset, y0_xy + self.yoffset, wmax, order)
-        dxw = xwmax - xwmin
-        dyw = ywmax - ywmin
-
-        # Create list of wavelengths on which to compute dispersed pixels
-        lams = np.array([self.pivlam] * len(self.fluxes))
-        dw = np.abs((wmax - wmin) / (dyw - dxw))
-        dlam = np.median(
-            dw / self.oversample_factor
-        )  # TODO: validate that just taking median is ok
-        lambdas = np.arange(wmin, wmax + dlam, dlam)
-        n_lam = len(lambdas)
-
-        # Compute lists of x/y positions in the grism image for
-        # the set of desired wavelengths:
-        # x/y in image frame of grism image is the same for all wavelengths
-        x0_sky = np.repeat(x0_sky[np.newaxis, :], n_lam, axis=0)
-        y0_sky = np.repeat(y0_sky[np.newaxis, :], n_lam, axis=0)
-        source_ids = np.repeat(self.source_ids_per_pixel[np.newaxis, :], n_lam, axis=0)
-        fluxes = np.repeat(self.fluxes[np.newaxis, :], n_lam, axis=0)
-        x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, order)
-
-        # Convert to x/y in grism frame.
-        # lambdas needs same shape as x0_xy to be indexed by np.take below
-        lambdas = np.repeat(lambdas[:, np.newaxis], x0_xy.shape[1], axis=1)
-        x0s, y0s = imgxy_to_grismxy(x0_xy + self.xoffset, y0_xy + self.yoffset, lambdas, order)
-        # x0s, y0s now have shape (n_lam, n_pixels)
-
-        # Compute arrays of dispersed pixel locations and areas
-        padding = 1
-        naxis = self.dims[::-1]
-        # If none of the dispersed pixel indexes are within the image frame,
-        # return a null result without wasting time doing other computations
-        if x0s.min() >= naxis[0] or x0s.max() < 0 or y0s.min() >= naxis[1] or y0s.max() < 0:
-            log.info(f"No dispersed pixels within image frame for order {order}.")
-            return
-
-        xs, ys, areas, index = get_clipped_pixels(
-            x0s, y0s, padding, naxis[0], naxis[1], width, height
-        )
-        lams = np.take(lambdas, index)
-        fluxes = np.take(fluxes, index)
-
-        # compute 1D sensitivity array corresponding to list of wavelengths
-        # TODO: what wavelength unit does this expect?
-        sens, no_cal = create_1d_sens(lams, sens_waves, sens_resp)
-
-        # Compute countrates for dispersed pixels. Note that dispersed pixel
-        # values are naturally in units of physical fluxes, so we divide out
-        # the sensitivity (flux calibration) values to convert to units of
-        # countrate (DN/s).
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-            counts = fluxes * lams * areas / (sens * self.oversample_factor)
-        counts[no_cal] = 0.0  # set to zero where no flux cal info available
-
-        # keep track of source IDs for each dispersed pixel
-        dispersed_source_ids = np.take(source_ids, index)
-
-        # Build the dispersed image and make a slit model for each source
-        for this_sid in self.source_ids:
-            this_sid_idx = dispersed_source_ids == this_sid
-            this_xs = xs[this_sid_idx]
-            this_ys = ys[this_sid_idx]
-            this_flxs = counts[this_sid_idx]
-            if len(this_xs) == 0:
+        # Combine the results from all chunks
+        for results in all_res:
+            if results is None:
+                # None of the sources in this chunk for this order had pixels on the detector
                 continue
+            for sid in results:
+                bounds = results[sid]["bounds"]
+                img = results[sid]["image"]
+                slit = _construct_slitmodel(img, bounds, sid, order)
+                self.simulated_image[bounds[2] : bounds[3] + 1, bounds[0] : bounds[1] + 1] += img
+                self.simul_slits.slits.append(slit)
+                self.simul_slits_order.append(order)
+                self.simul_slits_sid.append(sid)
 
-            img, bounds = self._build_dispersed_image_of_source(this_xs, this_ys, this_flxs)
-            self.simulated_image[bounds[2] : bounds[3] + 1, bounds[0] : bounds[1] + 1] += img
 
-            slit = self.construct_slitmodel(img, bounds, this_sid, order)
-            self.simul_slits.slits.append(slit)
-            self.simul_slits_order.append(order)
-            self.simul_slits_sid.append(this_sid)
+def _construct_slitmodel(
+    img,
+    bounds,
+    sid,
+    order,
+):
+    """
+    Turn output image from a chunk into a slit model.
 
-    @staticmethod
-    def _build_dispersed_image_of_source(x, y, flux):
-        minx = int(min(x))
-        maxx = int(max(x))
-        miny = int(min(y))
-        maxy = int(max(y))
-        a = sparse.coo_matrix(
-            (flux, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)
-        ).toarray()
-        bounds = [minx, maxx, miny, maxy]
-        return a, bounds
+    Parameters
+    ----------
+    img : np.ndarray
+        Dispersed model of segmentation map source
+    bounds : list
+        The bounds of the object
+    sid : int
+        The source ID
+    order : int
+        The spectral order number
 
-    @staticmethod
-    def construct_slitmodel(
-        chunk_data,
-        bounds,
-        sid,
-        order,
-    ):
-        """
-        Turn output image from a chunk into a slit model.
+    Returns
+    -------
+    slit : `jwst.datamodels.SlitModel`
+        Slit model containing the dispersed pixel values
+    """
+    [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy] = bounds
+    slit = datamodels.SlitModel()
+    slit.source_id = sid
+    slit.name = f"source_{sid}"
+    slit.xstart = thisobj_minx
+    slit.xsize = thisobj_maxx - thisobj_minx + 1
+    slit.ystart = thisobj_miny
+    slit.ysize = thisobj_maxy - thisobj_miny + 1
+    slit.meta.wcsinfo.spectral_order = order
+    slit.data = img[thisobj_miny : thisobj_maxy + 1, thisobj_minx : thisobj_maxx + 1]
 
-        Parameters
-        ----------
-        chunk_data : np.ndarray
-            Dispersed model of segmentation map source
-        bounds : list
-            The bounds of the object
-        sid : int
-            The source ID
-        order : int
-            The spectral order number
-
-        Returns
-        -------
-        slit : `jwst.datamodels.SlitModel`
-            Slit model containing the dispersed pixel values
-        """
-        [thisobj_minx, thisobj_maxx, thisobj_miny, thisobj_maxy] = bounds
-        slit = datamodels.SlitModel()
-        slit.source_id = sid
-        slit.name = f"source_{sid}"
-        slit.xstart = thisobj_minx
-        slit.xsize = thisobj_maxx - thisobj_minx + 1
-        slit.ystart = thisobj_miny
-        slit.ysize = thisobj_maxy - thisobj_miny + 1
-        slit.meta.wcsinfo.spectral_order = order
-        slit.data = chunk_data[thisobj_miny : thisobj_maxy + 1, thisobj_minx : thisobj_maxx + 1]
-
-        return slit
+    return slit

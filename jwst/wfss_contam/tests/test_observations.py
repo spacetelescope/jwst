@@ -11,16 +11,11 @@ from photutils.datasets import make_100gaussians_image
 from photutils.segmentation import make_2dgaussian_kernel, SourceFinder
 
 from jwst.wfss_contam.observations import background_subtract, _select_ids, Observation
-from jwst.wfss_contam.disperse import dispersed_pixel
 from jwst.wfss_contam.tests import data
 from stdatamodels.jwst.datamodels import SegmentationMapModel, ImageModel, MultiSlitModel
 
 DIR_IMAGE = "direct_image.fits"
 
-#@pytest.fixture(scope='module')
-#def create_source_catalog():
-#    '''Mock source catalog'''
-#    pass
 
 @pytest.fixture(scope='module')
 def direct_image():
@@ -124,70 +119,6 @@ def test_create_pixel_list(observation, segmentation_map):
         assert np.all(np.isin(observation.xs[i], pixels_x))
         assert np.all(np.isin(observation.ys[i], pixels_y))
         assert len(observation.fluxes[2.0][i]) == pixels_x.size
-
-
-# def test_disperse_chunk(observation):
-#     '''
-#     Note: it's not obvious how to get a trivial flux example from first principles
-#     even setting all input fluxes in dict to 1, because transforms change
-#     pixel areas in nontrivial ways. seems a bad idea to write a test that 
-#     asserts the answer as it is currently, in case step gets updated slightly
-#     in the future
-#     '''
-#     obs = observation
-#     i = 1
-#     order = 1
-#     sens_waves = np.linspace(1.708, 2.28, 100)
-#     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
-#     sens_resp = np.ones(100)
-
-#     # manually change x,y offset because took transform from a real direct image, with different
-#     # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
-#     obs.xoffset = 2200
-#     obs.yoffset = 1000
-
-#     # set all fluxes to unity to try to make a trivial example
-#     obs.fluxes[2.0][i] = np.ones(obs.fluxes[2.0][i].shape)
-
-#     disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
-#     (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
-
-#     #trivial bookkeeping
-#     assert sid == obs.source_ids[i] 
-#     assert order == order_out
-
-#     # check size of object is same as input dims
-#     assert chunk.shape == obs.dims
-
-#     #check that the chunk is zero outside the bounds
-#     assert np.all(chunk[:chunk_bounds[2]-1,:] == 0)
-#     assert np.all(chunk[chunk_bounds[3]+1:,] == 0)
-#     assert np.all(chunk[:,:chunk_bounds[0]-1] == 0)
-#     assert np.all(chunk[:,chunk_bounds[1]+1:] == 0)
-
-
-# def test_disperse_chunk_null(observation):
-#     '''
-#     ensure bounds return None when all dispersion is off image
-#     '''
-#     obs = observation
-#     i = 0 #i==0 source happens to be far left on image
-#     order = 3
-#     sens_waves = np.linspace(1.708, 2.28, 100)
-#     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
-#     sens_resp = np.ones(100)
-
-#     # manually change x,y offset because took transform from a real direct image, with different
-#     # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
-#     obs.xoffset = 2200
-#     obs.yoffset = 1000
-
-#     disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
-
-#     (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
-
-#     assert chunk_bounds is None
-#     assert np.all(chunk == 0)
 
 
 def test_disperse_order(observation):
