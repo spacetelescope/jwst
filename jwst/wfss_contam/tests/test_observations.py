@@ -10,9 +10,9 @@ from numpy.testing import assert_allclose
 from photutils.datasets import make_100gaussians_image
 from photutils.segmentation import make_2dgaussian_kernel, SourceFinder
 
-from jwst.wfss_contam.observations import background_subtract
-from jwst.wfss_contam.disperse import dispersed_pixel
-from jwst.datamodels import SegmentationMapModel, ImageModel  # type: ignore[attr-defined]
+from jwst.wfss_contam.observations import background_subtract, _select_ids, Observation
+from jwst.wfss_contam.tests import data
+from stdatamodels.jwst.datamodels import SegmentationMapModel, ImageModel, MultiSlitModel
 
 DIR_IMAGE = "direct_image.fits"
 
@@ -67,11 +67,86 @@ def grism_wcs():
             return asdf_file.tree['wcs']
 
 
+@pytest.fixture(scope='module')
+def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
+    '''
+    set up observation object with mock data.
+    direct_image_with_gradient still needs to be run to produce the file,
+    even though it is not called directly
+    '''
+    filter_name = "F200W"
+    seg = segmentation_map.data
+    all_ids = np.array(list(set(np.ravel(seg))))
+    source_ids = all_ids[50:52]
+    obs = Observation(DIR_IMAGE, segmentation_map, grism_wcs, filter_name, source_id=source_ids,
+                 boundaries=[], offsets=[0, 0], max_cpu=1)
+    return obs
+
+
+@pytest.mark.parametrize("source_id, expected", [(None, [1,2,3]), (2, [2]), (np.array([1,3]), [1,3])])
+def test_select_ids(source_id, expected):
+    all_ids = [1, 2, 3]
+    assert _select_ids(source_id, all_ids) == expected
+    assert isinstance(_select_ids(source_id, all_ids), list)
+
+
+def test_select_ids_expected_raises():
+    with pytest.raises(ValueError):
+        _select_ids("all", [1, 2, 3])
+
+
 def test_background_subtract(direct_image_with_gradient):
+
     data = direct_image_with_gradient.data
     subtracted_data = background_subtract(data)
     mean, median, stddev = sigma_clipped_stats(subtracted_data, sigma=3.0)
     assert_allclose(mean, 0.0, atol=0.2*stddev)
+
+
+def test_create_pixel_list(observation, segmentation_map):
+    '''
+    create_pixel_list is called on initialization
+    compare the pixel lists to values determined directly
+    from segmentation map
+
+    Note: still need test coverage for flux dictionary
+    '''
+    seg = segmentation_map.data
+    all_ids = np.array(list(set(np.ravel(seg))))
+    source_ids = all_ids[50:52]
+    for i, source_id in enumerate(source_ids):
+        pixels_y, pixels_x = np.where(seg == source_id)
+        assert np.all(np.isin(observation.xs[i], pixels_x))
+        assert np.all(np.isin(observation.ys[i], pixels_y))
+        assert len(observation.fluxes[2.0][i]) == pixels_x.size
+
+
+def test_disperse_order(observation):
+
+    obs = observation
+    order = 1
+    sens_waves = np.linspace(1.708, 2.28, 100)
+    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+    sens_resp = np.ones(100)
+
+    # manually change x,y offset because took transform from a real direct image, with different
+    # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
+    obs.xoffset = 2200
+    obs.yoffset = 1000
+
+    # shorten pixel list to make this test take less time
+    obs.disperse_one_order(order, wmin, wmax, sens_waves, sens_resp)
+
+    # test simulated image. should be mostly but not all zeros
+    assert obs.simulated_image.shape == obs.dims
+    assert not np.allclose(obs.simulated_image, 0.0)
+    assert np.median(obs.simulated_image) == 0.0
+
+    # test simulated slits and their associated metadata
+    # only the second of the two obs ids is in the simulated image
+    assert obs.simul_slits_order == [order,]*1
+    assert obs.simul_slits_sid == obs.source_ids[-1:]
+    assert type(obs.simul_slits) == MultiSlitModel
 
 
 def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
@@ -101,15 +176,50 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
     yoffset = 1000
 
     xs, ys, areas, lams_out, counts_1, source_id = dispersed_pixel(
-        x0, y0, width, height, lams, flxs, order, wmin, wmax,
-        sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
-        oversample_factor=1, extrapolate_sed=False, xoffset=xoffset,
-        yoffset=yoffset)
-
+                    x0, y0, width, height, lams, flxs, order, wmin, wmax,
+                    sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
+                    oversample_factor=1, extrapolate_sed=False, xoffset=xoffset,
+                    yoffset=yoffset)
+    
     xs, ys, areas, lams_out, counts_3, source_id = dispersed_pixel(
         x0, y0, width, height, lams, flxs, order, wmin, wmax,
         sens_waves, sens_resp, seg_wcs, grism_wcs, source_id, naxis,
         oversample_factor=3, extrapolate_sed=False, xoffset=xoffset,
         yoffset=yoffset)
 
-    assert_allclose(np.sum(counts_1), np.sum(counts_3), rtol=1/sens_waves.size)
+    assert_allclose(np.sum(counts_1), np.sum(counts_3), rtol=1e-2)
+
+
+def test_construct_slitmodel(observation):
+    '''
+    test that the chunk is constructed correctly
+    '''
+    obs = observation
+    i = 1
+    order = 1
+    sens_waves = np.linspace(1.708, 2.28, 100)
+    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+    sens_resp = np.ones(100)
+
+    # manually change x,y offset because took transform from a real direct image, with different
+    # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
+    obs.xoffset = 2200
+    obs.yoffset = 1000
+
+    # set all fluxes to unity to try to make a trivial example
+    obs.fluxes[2.0][i] = np.ones(obs.fluxes[2.0][i].shape)
+
+    # disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
+    # (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
+    # TODO: replace this call with obs.disperse_one_order constrained to one source_id
+
+    slit = obs.construct_slitmodel(chunk, chunk_bounds, sid, order_out)
+
+    # check that the metadata is correct
+    assert slit.xstart == chunk_bounds[0]
+    assert slit.xsize == chunk_bounds[1] - chunk_bounds[0] + 1
+    assert slit.ystart == chunk_bounds[2]
+    assert slit.ysize == chunk_bounds[3] - chunk_bounds[2] + 1
+    assert slit.source_id == sid
+    assert slit.meta.wcsinfo.spectral_order == order_out
+    assert np.allclose(slit.data, chunk[chunk_bounds[2]:chunk_bounds[3]+1, chunk_bounds[0]:chunk_bounds[1]+1])

@@ -1,171 +1,136 @@
 import numpy as np
 import warnings
+import multiprocessing as mp
 
-from scipy.interpolate import interp1d
+from scipy import sparse
 
-from ..lib.winclip import get_clipped_pixels
-from .sens1d import create_1d_sens
+from jwst.lib.winclip import get_clipped_pixels
+from jwst.wfss_contam.sens1d import create_1d_sens
+
+import logging
+
+log = logging.getLogger(__name__)
+log.setLevel(logging.DEBUG)
 
 
-def dispersed_pixel(
-    x0,
-    y0,
-    width,
-    height,
-    lams,
-    flxs,
+def disperse(
+    xs,
+    ys,
+    fluxes,
+    source_ids_per_pixel,
     order,
+    pivlam,
     wmin,
     wmax,
     sens_waves,
     sens_resp,
     seg_wcs,
     grism_wcs,
-    source_id,
     naxis,
     oversample_factor=2,
-    extrapolate_sed=False,
     xoffset=0,
     yoffset=0,
 ):
     """
-    Transform pixels from direct image to dispersed frame using the grism image WCS object.
+    Compute the dispersed image pixel values from the direct image.
 
     Parameters
     ----------
-    x0 : float array
-        Array of x-coordinates of the centers of the pixels. One value for each
-        direct image, so if only 1 direct image is in use, this is a single value.
-    y0 : float array
-        Array of y-coordinates of the centers of the pixels. One value for each
-        direct image, so if only 1 direct image is in use, this is a single value.
-    width : float
-        Width of the pixels to be dispersed.
-    height : float
-        Height of the pixels to be dispersed.
-    lams : float array
-        Array of wavelengths corresponding to the fluxes (flxs) for each pixel.
-        One wavelength per direct image, so can be a single value.
-    flxs : float array
-        Array of fluxes (flam) for the pixels contained in x0, y0. If a single
-        direct image is in use, this will be a single value.
+    xs : np.ndarray
+        Flat array of X coordinates of pixels in the direct image
+    ys : np.ndarray
+        Flat array of Y coordinates of pixels in the direct image
+    fluxes : np.ndarray
+        Fluxes of the pixels in the direct image corresponding to xs, ys
+    source_ids_per_pixel : int array
+        Source IDs of the input pixels in the segmentation map
     order : int
-        The spectral order to disperse.
+        Spectral order number
+    pivlam : float
+        Pivot wavelength for that spectral order
     wmin : float
-        Min wavelength to be dispersed.
+        Minimum wavelength for dispersed spectra
     wmax : float
-        Max wavelength to be dispersed.
+        Maximum wavelength for dispersed spectra
     sens_waves : float array
-        Array of wavelengths corresponding to flux calibration (sens_resp) values.
+        Wavelength array from photom reference file
     sens_resp : float array
-        Flux calibration values as a function of wavelength.
+        Response (flux calibration) array from photom reference file
     seg_wcs : WCS object
-        The WCS object of the segmentation map.
+        WCS object for the segmentation map
     grism_wcs : WCS object
-        The WCS object of the grism image.
-    source_id : int
-        The source ID of the source being processed. Returned in the output unmodified;
-        used only for bookkeeping. TODO this is not implemented properly right now and
-        should probably just be removed.
+        WCS object for the grism image
     naxis : tuple
-        Dimensions (shape) of grism image into which pixels are dispersed.
-    oversample_factor : int
-        The amount of oversampling required above that of the input spectra or natural dispersion,
-        whichever is smaller. Default=2.
-    extrapolate_sed : bool
-        Whether to allow for the SED of the object to be extrapolated when
-        it does not fully cover the needed wavelength range. Default if False.
-    xoffset : int
-        Pixel offset to apply when computing the dispersion (accounts for offset
-        from source cutout to full frame)
-    yoffset : int
-        Pixel offset to apply when computing the dispersion (accounts for offset
-        from source cutout to full frame)
+        Dimensions of the grism image (naxis[0], naxis[1])
+    oversample_factor : int, optional
+        Factor by which to oversample the wavelength grid
+    xoffset : float, optional
+        X offset to apply to the dispersed pixel positions
+    yoffset : float, optional
+        Y offset to apply to the dispersed pixel positions
 
     Returns
     -------
-    xs : array
-        1D array of dispersed pixel x-coordinates
-    ys : array
-        1D array of dispersed pixel y-coordinates
-    areas : array
-        1D array of the areas of the incident pixel that,
-        when dispersed, falls on each dispersed pixel
-    lams : array
-        1D array of the wavelengths of each dispersed pixel
-    counts : array
-        1D array of counts for each dispersed pixel
+    outputs_by_source : dict
+        Dictionary containing dispersed images and bounds for each source ID
+        in the specified spectral order.
     """
-    # Setup the transforms we need from the input WCS objects
+    n_input_sources = np.unique(source_ids_per_pixel).size
+    log.debug(
+        f"{mp.current_process()} dispersing {n_input_sources} "
+        f"sources in order {order} with total number of pixels: {len(xs)}"
+    )
+    width = 1.0
+    height = 1.0
+    x0 = xs + 0.5 * width
+    y0 = ys + 0.5 * height
+
+    # Set up the transforms we need from the input WCS objects
     sky_to_imgxy = grism_wcs.get_transform("world", "detector")
     imgxy_to_grismxy = grism_wcs.get_transform("detector", "grism_detector")
 
-    # Setup function for retrieving flux values at each dispersed wavelength
-    if len(lams) > 1:
-        # If we have direct image flux values from more than one filter (lambda),
-        # we have the option to extrapolate the fluxes outside the
-        # wavelength range of the direct images
-        if extrapolate_sed is False:
-            flux = interp1d(lams, flxs, fill_value=0.0, bounds_error=False)
-        else:
-            flux = interp1d(lams, flxs, fill_value="extrapolate", bounds_error=False)
-    else:
-        # If we only have flux from one lambda, just use that
-        # single flux value at all wavelengths
-        def flux(_x):
-            return flxs[0]
-
     # Get x/y positions in the grism image corresponding to wmin and wmax:
     # Start with RA/Dec of the input pixel position in segmentation map,
-    # then convert to x/y in the direct image frame corresponding
-    # to the grism image,
-    # then finally convert to x/y in the grism image frame
     x0_sky, y0_sky = seg_wcs(x0, y0)
+    # then convert to x/y in the direct image frame  to the grism image,
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
+    # then convert to x/y in the grism image frame
     xwmin, ywmin = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmin, order)
     xwmax, ywmax = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmax, order)
     dxw = xwmax - xwmin
     dyw = ywmax - ywmin
 
-    # Compute the delta-wave per pixel
-    dw = np.abs((wmax - wmin) / (dyw - dxw))
-
-    # Use a natural wavelength scale or the wavelength scale of the input SED/spectrum,
-    # whichever is smaller, divided by oversampling requested
-    if len(lams) > 1:
-        input_dlam = np.median(lams[1:] - lams[:-1])
-        if input_dlam < dw:
-            dlam = input_dlam / oversample_factor
-    else:
-        # this value gets used when we only have 1 direct image wavelength
-        dlam = dw / oversample_factor
-
     # Create list of wavelengths on which to compute dispersed pixels
+    lams = np.array([pivlam] * len(fluxes))
+    dw = np.abs((wmax - wmin) / (dyw - dxw))
+    dlam = np.median(dw / oversample_factor)  # TODO: is just taking median here ok?
     lambdas = np.arange(wmin, wmax + dlam, dlam)
     n_lam = len(lambdas)
 
     # Compute lists of x/y positions in the grism image for
     # the set of desired wavelengths:
-    # As above, first get RA/Dec of segmentation map pixel positions,
-    # then convert to x/y in image frame of grism image,
-    # then convert to x/y in grism frame.
-    x0_sky, y0_sky = seg_wcs([x0] * n_lam, [y0] * n_lam)
-    x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, [order] * n_lam)
-    x0s, y0s = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, lambdas, [order] * n_lam)
+    # x/y in image frame of grism image is the same for all wavelengths
+    x0_sky = np.repeat(x0_sky[np.newaxis, :], n_lam, axis=0)
+    y0_sky = np.repeat(y0_sky[np.newaxis, :], n_lam, axis=0)
+    source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], n_lam, axis=0)
+    fluxes = np.repeat(fluxes[np.newaxis, :], n_lam, axis=0)
+    x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, order)
+
+    # Convert to x/y in grism frame.
+    lambdas = np.repeat(lambdas[:, np.newaxis], x0_xy.shape[1], axis=1)
+    x0s, y0s = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, lambdas, order)
+    # x0s, y0s now have shape (n_lam, n_pixels)
 
     # If none of the dispersed pixel indexes are within the image frame,
     # return a null result without wasting time doing other computations
     if x0s.min() >= naxis[0] or x0s.max() < 0 or y0s.min() >= naxis[1] or y0s.max() < 0:
-        return None
+        return
 
     # Compute arrays of dispersed pixel locations and areas
     padding = 1
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     lams = np.take(lambdas, index)
-
-    # If results give no dispersed pixels, return null result
-    if xs.size <= 1:
-        return None
+    fluxes = np.take(fluxes, index)
 
     # compute 1D sensitivity array corresponding to list of wavelengths
     sens, no_cal = create_1d_sens(lams, sens_waves, sens_resp)
@@ -176,7 +141,61 @@ def dispersed_pixel(
     # countrate (DN/s).
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-        counts = flux(lams) * areas / (sens * oversample_factor)
+        counts = fluxes * lams * areas / (sens * oversample_factor)
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
-    return xs, ys, areas, lams, counts, source_id
+    # keep track of source IDs for each dispersed pixel
+    dispersed_source_ids = np.take(source_ids_per_pixel, index)
+
+    # Collect the outputs source-by-source
+    outputs_by_source = {}
+    source_ids = np.unique(dispersed_source_ids)
+    for this_sid in source_ids:
+        this_sid_idx = dispersed_source_ids == this_sid
+        this_xs = xs[this_sid_idx]
+        this_ys = ys[this_sid_idx]
+        this_flxs = counts[this_sid_idx]
+        if len(this_xs) == 0:
+            continue
+
+        img, bounds = _build_dispersed_image_of_source(this_xs, this_ys, this_flxs)
+        outputs_by_source[this_sid] = {
+            "bounds": bounds,
+            "image": img,
+        }
+
+    log.debug(
+        f"{mp.current_process()} finished order {order} with {len(outputs_by_source)} "
+        f"sources that overlap with the output frame "
+        f"(out of {n_input_sources} input sources)"
+    )
+    return outputs_by_source
+
+
+def _build_dispersed_image_of_source(x, y, flux):
+    """
+    Convert a flattened list of pixels to a 2-D grism image of that source.
+
+    Parameters
+    ----------
+    x : np.ndarray
+        X coordinates of pixels in the grism image
+    y : np.ndarray
+        Y coordinates of pixels in the grism image
+    flux : np.ndarray
+        Fluxes of pixels in the grism image
+
+    Returns
+    -------
+    _type_
+        _description_
+    """
+    minx = int(min(x))
+    maxx = int(max(x))
+    miny = int(min(y))
+    maxy = int(max(y))
+    a = sparse.coo_matrix(
+        (flux, (y - miny, x - minx)), shape=(maxy - miny + 1, maxx - minx + 1)
+    ).toarray()
+    bounds = [minx, maxx, miny, maxy]
+    return a, bounds
