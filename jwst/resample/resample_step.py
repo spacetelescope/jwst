@@ -122,9 +122,8 @@ class ResampleStep(Step):
                 # If variance is enabled, we compute the error from the variance
                 compute_err = "from_var"
             else:
-                # compute_err = "from_var" causes enable_var to be ignored, so must set it to the
-                # other option even though variance is not computed at all.
-                compute_err = "driz_err"
+                # compute_err = "from_var" causes enable_var to be ignored
+                compute_err = None
             resamp = resample.ResampleImage(
                 input_models,
                 output=output,
