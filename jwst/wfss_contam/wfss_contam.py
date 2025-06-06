@@ -359,7 +359,9 @@ def contam_corr(
     # Loop over all slits/sources to subtract contaminating spectra
     log.info("Creating contamination image for each individual source")
     contam_model = datamodels.MultiSlitModel()
-    contam_model.update(input_model)
+    contam_model.update(input_model, only="PRIMARY")
+    simul_slits = datamodels.MultiSlitModel()
+    simul_slits.update(input_model, only="PRIMARY")
     for slit in output_model.slits:
         try:
             good_idx = _find_matching_simul_slit(slit, simul_slit_sids, simul_slit_orders)
@@ -375,6 +377,9 @@ def contam_corr(
         contam_slit = copy.copy(slit)
         contam_slit.data = contam_cut
         contam_model.slits.append(contam_slit)
+        simul_slit = copy.copy(slit)
+        simul_slit.data = this_simul.data
+        simul_slits.slits.append(simul_slit)
 
         # Subtract the contamination from the source slit
         slit.data -= contam_cut
@@ -383,4 +388,4 @@ def contam_corr(
     output_model.meta.cal_step.wfss_contam = "COMPLETE"
     seg_model.close()
 
-    return output_model, simul_model, contam_model, obs.simulated_slits
+    return output_model, simul_model, contam_model, simul_slits
