@@ -64,11 +64,9 @@ def make_wfss_multiexposure(input_list):
             # create a new dictionary entry for it
             if exp_number not in exposure_counter.keys():
                 n_rows = spec.spec_table.shape[0]
-                wcs = spec.meta.wcs
                 exposure_counter[exp_number] = {
                     "n_rows": n_rows,
                     "filename": fname,
-                    "wcs": wcs,
                     "exposure_time": model.meta.exposure.exposure_time,  # need for combine_1d
                     "integration_time": model.meta.exposure.integration_time,  # need for combine_1d
                     "spectral_order": spec.spectral_order,
@@ -151,12 +149,11 @@ def make_wfss_multiexposure(input_list):
 
         # copy metadata
         ext.filename = exposure_counter[exposure_number]["filename"]
-        ext.meta.wcs = exposure_counter[exposure_number]["wcs"]
         ext.group_id = exposure_number
         ext.dispersion_direction = example_spec.dispersion_direction
         ext.spectral_order = exposure_counter[exposure_number]["spectral_order"]
-        ext.meta.exposure.exposure_time = exposure_counter[exposure_number]["exposure_time"]
-        ext.meta.exposure.integration_time = exposure_counter[exposure_number]["integration_time"]
+        ext.exposure_time = exposure_counter[exposure_number]["exposure_time"]
+        ext.integration_time = exposure_counter[exposure_number]["integration_time"]
 
         output_x1d.exposures.append(ext)
 
@@ -186,8 +183,8 @@ def wfss_multiexposure_to_multispec(input_model):
     for exp in input_model.exposures:
         this_exp_list = expand_table(exp)
         source_ids.extend([spec.source_id for spec in this_exp_list])
-        exposure_times.extend([exp.meta.exposure.exposure_time for _ in this_exp_list])
-        integration_times.extend([exp.meta.exposure.integration_time for _ in this_exp_list])
+        exposure_times.extend([exp.exposure_time for _ in this_exp_list])
+        integration_times.extend([exp.integration_time for _ in this_exp_list])
         spec_list.extend(this_exp_list)
 
     # organize by unique source id such that there is one MultiSpecModel per source

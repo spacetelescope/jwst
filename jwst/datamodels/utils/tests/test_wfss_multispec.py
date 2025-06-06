@@ -117,7 +117,6 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     # check the required metadata attributes
     assert not hasattr(output_model.meta, "wcs")
     for i, exposure in enumerate(output_model.exposures):
-        assert hasattr(exposure.meta, "wcs")
         assert exposure.group_id == str(i + 1)
     
     # check that units are present
@@ -225,7 +224,6 @@ def test_wfss_multi_from_wfss_multi(wfss_multiexposure):
     # test that the data has all the appropriate data and metadata
     for i, exposure in enumerate(output_model.exposures):
         assert exposure.group_id == str(i + 1)
-        assert hasattr(exposure.meta, "wcs")
         assert exposure.spec_table.shape == (N_SOURCES*2,)
     
 

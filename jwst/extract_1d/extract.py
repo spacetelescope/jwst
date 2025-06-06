@@ -1951,6 +1951,21 @@ def create_extraction(
 
 
 def _make_group_id(model, spectral_order):
+    """
+    Generate a unique ID for an exposure group, including the spectral order.
+
+    Parameters
+    ----------
+    model : DataModel
+        The input data model.
+    spectral_order : int
+        The spectral order for the exposure.
+
+    Returns
+    -------
+    str
+        The group ID.
+    """
     program_number = model.meta.observation.program_number
     observation_number = model.meta.observation.observation_number
     visit_number = model.meta.observation.visit_number
