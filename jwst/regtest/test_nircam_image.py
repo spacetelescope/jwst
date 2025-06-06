@@ -36,7 +36,7 @@ def run_detector1pipeline(rtdata_module):
 
 @pytest.fixture(scope="module")
 def run_detector1pipeline_with_sirs(rtdata_module, resource_tracker):
-    """Run calwebb_detector1 on NIRCam imaging long data using SIRS.
+    """Run calwebb_detector1 on NIRCam imaging data using SIRS.
 
     SIRS is the convolution kernel algorithm - Simple Improved Reference Subtraction.
     """
@@ -70,6 +70,26 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
             "--steps.clean_flicker_noise.save_noise=True",
             ]
     Step.from_cmdline(args)
+
+
+@pytest.fixture(scope="module")
+def run_detector1_with_likelihood(rtdata_module, resource_tracker):
+    """
+    Run calwebb_detector1 on NIRCam imaging data using likelihood ramp fitting.
+
+    Input data has a separate zero frame attached.
+    """
+    rtdata = rtdata_module
+    rtdata.get_data("nircam/image/jw01345001001_10201_00001_nrca3_uncal.fits")
+
+    # Run detector1 pipeline only on one of the _uncal files
+    args = ["calwebb_detector1", rtdata.input,
+            "--output_file=jw01345001001_10201_00001_nrca3_likely",
+            "--steps.ramp_fit.algorithm=LIKELY",
+            ]
+    with resource_tracker.track():
+        Step.from_cmdline(args)
+
 
 
 @pytest.fixture(scope="module")
@@ -286,6 +306,26 @@ def test_nircam_image_detector1_with_clean_flicker_noise(
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_nircam_image_clean_flicker_noise/{output}")
+
+    # Set tolerances so the file comparisons work across architectures
+    fitsdiff_default_kwargs["rtol"] = 1e-4
+    fitsdiff_default_kwargs["atol"] = 1e-4
+    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
+    assert diff.identical, diff.report()
+
+
+@pytest.mark.parametrize("suffix",
+                         ["likely_rate", "likely_rateints"])
+def test_nircam_image_detector1_with_likelihood(
+        run_detector1_with_likelihood,
+        rtdata_module, fitsdiff_default_kwargs, suffix):
+    """Test detector1 pipeline for NIRCam imaging data with likelihood fitting."""
+    rtdata = rtdata_module
+    rtdata.input = "jw01345001001_10201_00001_nrca3_uncal.fits"
+    output = f"jw01345001001_10201_00001_nrca3_{suffix}.fits"
+    rtdata.output = output
+
+    rtdata.get_truth(f"truth/test_nircam_image_likelihood/{output}")
 
     # Set tolerances so the file comparisons work across architectures
     fitsdiff_default_kwargs["rtol"] = 1e-4
