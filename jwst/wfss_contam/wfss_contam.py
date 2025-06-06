@@ -6,7 +6,6 @@ import numpy as np
 
 from stdatamodels.jwst import datamodels
 from astropy.table import Table
-import copy
 
 from .observations import Observation
 from .sens1d import get_photom_data
@@ -374,12 +373,10 @@ def contam_corr(
             log.warning(e)
             contam_cut = np.zeros_like(slit.data)
 
-        contam_slit = copy.copy(slit)
+        contam_slit = datamodels.SlitModel()
         contam_slit.data = contam_cut
         contam_model.slits.append(contam_slit)
-        simul_slit = copy.copy(slit)
-        simul_slit.data = this_simul.data
-        simul_slits.slits.append(simul_slit)
+        simul_slits.slits.append(this_simul)
 
         # Subtract the contamination from the source slit
         slit.data -= contam_cut
