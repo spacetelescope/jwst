@@ -30,7 +30,7 @@ def make_wfss_multiexposure(input_list):
 
     Returns
     -------
-    output_x1d : WFSSMultiExposureSpecModel
+    output_x1d : WFSSMultiSpecModel
         The extract_1d product for WFSS modes.
     """
     if isinstance(input_list, dm.JwstDataModel):
@@ -39,14 +39,13 @@ def make_wfss_multiexposure(input_list):
 
     results_list = []
     for model in input_list:
-        if isinstance(model, dm.WFSSMultiExposureSpecModel):
+        if isinstance(model, dm.WFSSMultiSpecModel):
             results_list.extend(wfss_multiexposure_to_multispec(model))
         elif isinstance(model, dm.MultiSpecModel):
             results_list.append(model)
         else:
             raise TypeError(
-                "Input must be MultiSpecModel or WFSSMultiExposureSpecModel, "
-                "or a list of these models."
+                "Input must be MultiSpecModel or WFSSMultiSpecModel, or a list of these models."
             )
 
     # first loop over source and exposure to figure out
@@ -134,9 +133,9 @@ def make_wfss_multiexposure(input_list):
             # special handling for N_ALONGDISP because not defined in specmeta schema
             fltdata[spec_idx]["N_ALONGDISP"] = spec.spec_table.shape[0]
 
-    # Finally, create a new WFSSMultiExposureSpecModel to hold the combined data
+    # Finally, create a new WFSSMultiSpecModel to hold the combined data
     # with one WFSSMultiSpecModel table per exposure
-    output_x1d = dm.WFSSMultiExposureSpecModel()
+    output_x1d = dm.WFSSMultiSpecModel()
     example_spec = results_list[0].spec[0]
     for i, exposure_number in enumerate(exposure_numbers):
         spec_table = fltdata_by_exposure[i]
@@ -155,7 +154,7 @@ def make_wfss_multiexposure(input_list):
         ext.exposure_time = exposure_counter[exposure_number]["exposure_time"]
         ext.integration_time = exposure_counter[exposure_number]["integration_time"]
 
-        output_x1d.exposures.append(ext)
+        output_x1d.spec.append(ext)
 
     output_x1d.update(input_list[0], only="PRIMARY")
     return output_x1d
@@ -163,11 +162,11 @@ def make_wfss_multiexposure(input_list):
 
 def wfss_multiexposure_to_multispec(input_model):
     """
-    Transform a WFSSMultiExposureSpecModel into a list of MultiSpecModel objects.
+    Transform a WFSSMultiSpecModel into a list of MultiSpecModel objects.
 
     Parameters
     ----------
-    input_model : WFSSMultiExposureSpecModel
+    input_model : WFSSMultiSpecModel
         Input model to be reorganized.
 
     Returns
@@ -180,7 +179,7 @@ def wfss_multiexposure_to_multispec(input_model):
     source_ids = []
     exposure_times = []
     integration_times = []
-    for exp in input_model.exposures:
+    for exp in input_model.spec:
         this_exp_list = expand_table(exp)
         source_ids.extend([spec.source_id for spec in this_exp_list])
         exposure_times.extend([exp.exposure_time for _ in this_exp_list])

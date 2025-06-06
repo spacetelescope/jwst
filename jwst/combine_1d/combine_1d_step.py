@@ -61,7 +61,7 @@ class Combine1dStep(Step):
             A single combined 1D spectrum.
         """
         with datamodels.open(input_data) as input_model:
-            if isinstance(input_model, datamodels.WFSSMultiExposureSpecModel):
+            if isinstance(input_model, datamodels.WFSSMultiSpecModel):
                 input_list = wfss_multiexposure_to_multispec(input_model)
                 if len(input_list) == 1:
                     input_model = input_list[0]

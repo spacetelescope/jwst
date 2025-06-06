@@ -106,17 +106,17 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     input_model = request.getfixturevalue(input_model_maker)
     output_model = make_wfss_multiexposure(input_model)
 
-    assert isinstance(output_model, dm.WFSSMultiExposureSpecModel)
+    assert isinstance(output_model, dm.WFSSMultiSpecModel)
     if input_model_maker == "wfss_spec2_multispec":
-        assert len(output_model.exposures) == 1
-        assert output_model.exposures[0].spec_table.shape == (N_SOURCES,)
+        assert len(output_model.spec) == 1
+        assert output_model.spec[0].spec_table.shape == (N_SOURCES,)
     elif input_model_maker == "wfss_spec3_multispec":
-        assert len(output_model.exposures) == 4
-        assert output_model.exposures[0].spec_table.shape == (1,)
+        assert len(output_model.spec) == 4
+        assert output_model.spec[0].spec_table.shape == (1,)
     
     # check the required metadata attributes
     assert not hasattr(output_model.meta, "wcs")
-    for i, exposure in enumerate(output_model.exposures):
+    for i, exposure in enumerate(output_model.spec):
         assert exposure.group_id == str(i + 1)
     
     # check that units are present
@@ -124,7 +124,7 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     # and one meta column, which should be copied from the schema by set_schema_units
     to_check = ["WAVELENGTH", "SOURCE_RA"]
     expected_units = ["um", "degrees"]
-    for exposure in output_model.exposures:
+    for exposure in output_model.spec:
         for col in to_check:
             assert col in exposure.spec_table.columns.names
             assert exposure.spec_table.columns[col].unit == expected_units[to_check.index(col)]
@@ -141,11 +141,11 @@ def test_orders_are_separated(wfss_spec3_multispec):
             spec.meta.group_id = spec.meta.group_id + str(i)  # make group_id unique for each order
 
     output_model = make_wfss_multiexposure(multi_list)
-    assert isinstance(output_model, dm.WFSSMultiExposureSpecModel)
-    assert len(output_model.exposures) == 8  # 4 different exposures, 2 spectral orders each
+    assert isinstance(output_model, dm.WFSSMultiSpecModel)
+    assert len(output_model.spec) == 8  # 4 different exposures, 2 spectral orders each
 
     # ensure spectral order is in the metadata
-    for i, exposure in enumerate(output_model.exposures):
+    for i, exposure in enumerate(output_model.spec):
         assert exposure.spectral_order == (i // 4) + 1  # first 4 are order 1, next 4 are order 2
         assert exposure.group_id == str(i%4 + 1) + str(exposure.spectral_order - 1)
 
@@ -164,12 +164,12 @@ def wfss_multiexposure(wfss_spec3_multispec):
 
 
 def test_wfss_flat_to_multispec(wfss_multiexposure):
-    """Test conversion of a WFSSMultiExposureSpecModel back to a list of MultiSpecModel objects."""
+    """Test conversion of a WFSSMultiSpecModel back to a list of MultiSpecModel objects."""
     # first test that the fixture is giving a model with the correct dimensions
-    assert isinstance(wfss_multiexposure, dm.WFSSMultiExposureSpecModel)
-    assert len(wfss_multiexposure.exposures) == N_EXPOSURES
-    assert wfss_multiexposure.exposures[0].spec_table.shape == (N_SOURCES,)
-    assert wfss_multiexposure.exposures[0].dispersion_direction == 3
+    assert isinstance(wfss_multiexposure, dm.WFSSMultiSpecModel)
+    assert len(wfss_multiexposure.spec) == N_EXPOSURES
+    assert wfss_multiexposure.spec[0].spec_table.shape == (N_SOURCES,)
+    assert wfss_multiexposure.spec[0].dispersion_direction == 3
 
     # convert back to a list of MultiSpecModel objects
     multispec_list = wfss_multiexposure_to_multispec(wfss_multiexposure)
@@ -200,30 +200,30 @@ def test_wfss_flat_to_multispec(wfss_multiexposure):
 
 def test_wfss_multi_from_wfss_multi(wfss_multiexposure):
     """
-    Test that a WFSSMultiExposureSpecModel can be made from a list of WFSSMultiExposureSpecModel objects.
+    Test that a WFSSMultiSpecModel can be made from a list of WFSSMultiSpecModel objects.
 
     This situation is encountered when running the Spec3Pipeline,
     looping over extract_1d multiple times and compiling the results as a list.
     """
-    # make a list of WFSSMultiExposureSpecModel objects
+    # make a list of WFSSMultiSpecModel objects
     # and give them different sources
     inputs_list = []
     for i in range(2):
         this_source = wfss_multiexposure.copy()
-        for exp in this_source.exposures:
+        for exp in this_source.spec:
             exp.spec_table["SOURCE_ID"] = exp.spec_table["SOURCE_ID"] + N_SOURCES * i
         inputs_list.append(this_source)
 
-    # combine the list into a single WFSSMultiExposureSpecModel
+    # combine the list into a single WFSSMultiSpecModel
     output_model = make_wfss_multiexposure(inputs_list)
 
     # check that the output model has the correct dimensions
-    assert isinstance(output_model, dm.WFSSMultiExposureSpecModel)
-    assert len(output_model.exposures) == N_EXPOSURES
-    assert output_model.exposures[0].spec_table.shape == (N_SOURCES*2,)
+    assert isinstance(output_model, dm.WFSSMultiSpecModel)
+    assert len(output_model.spec) == N_EXPOSURES
+    assert output_model.spec[0].spec_table.shape == (N_SOURCES*2,)
 
     # test that the data has all the appropriate data and metadata
-    for i, exposure in enumerate(output_model.exposures):
+    for i, exposure in enumerate(output_model.spec):
         assert exposure.group_id == str(i + 1)
         assert exposure.spec_table.shape == (N_SOURCES*2,)
     

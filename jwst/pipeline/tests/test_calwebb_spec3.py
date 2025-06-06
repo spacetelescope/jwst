@@ -59,8 +59,8 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
         
         Ensure it receives the right input type for a WFSS association.
         """
-        if not isinstance(input_model, dm.WFSSMultiExposureSpecModel):
-            raise TypeError("Input to combine_1d is not a WFSSMultiExposureSpecModel")
+        if not isinstance(input_model, dm.WFSSMultiSpecModel):
+            raise TypeError("Input to combine_1d is not a WFSSMultiSpecModel")
         output_model = dm.MultiCombinedSpecModel()
         spec = dm.SpecModel()
         output_model.spec.append(spec)
@@ -78,9 +78,9 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
         """
         if not isinstance(input_model, list):
             raise TypeError("Input to make_wfss_multiexposure is not a list")
-        if not all(isinstance(m, dm.WFSSMultiExposureSpecModel) for m in input_model):
-            raise TypeError("Input to make_wfss_multiexposure is not a list of WFSSMultiExposureSpecModel")
-        output_model = dm.WFSSMultiExposureSpecModel()
+        if not all(isinstance(m, dm.WFSSMultiSpecModel) for m in input_model):
+            raise TypeError("Input to make_wfss_multiexposure is not a list of WFSSMultiSpecModel")
+        output_model = dm.WFSSMultiSpecModel()
         return output_model
     monkeypatch.setattr(jwst.pipeline.calwebb_spec3, "make_wfss_multiexposure", mock_wfss_multiexposure)
 

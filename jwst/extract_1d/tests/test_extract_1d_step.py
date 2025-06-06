@@ -136,10 +136,10 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
     result = Extract1dStep.call(mock_niriss_wfss_l3)
 
     # output is a single spectral model (not a container)
-    assert isinstance(result, dm.WFSSMultiExposureSpecModel)
+    assert isinstance(result, dm.WFSSMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
-    for i, exp in enumerate(result.exposures):
+    for i, exp in enumerate(result.spec):
 
         tab = exp.spec_table[0]
 
@@ -329,8 +329,8 @@ def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
 
     with dm.open(output_path) as model:
         # check that the output file name is not overridden
-        assert isinstance(model, dm.WFSSMultiExposureSpecModel)
-        assert len(model.exposures) == 1
+        assert isinstance(model, dm.WFSSMultiSpecModel)
+        assert len(model.spec) == 1
 
 
 def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
@@ -350,5 +350,5 @@ def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
     assert os.path.isfile(output_path)
 
     with dm.open(output_path) as model:
-        assert isinstance(model, dm.WFSSMultiExposureSpecModel)
-        assert len(model.exposures) == 1
+        assert isinstance(model, dm.WFSSMultiSpecModel)
+        assert len(model.spec) == 1

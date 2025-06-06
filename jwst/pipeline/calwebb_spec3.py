@@ -300,8 +300,8 @@ class Spec3Pipeline(Pipeline):
                         # Combine the results for all sources
                         comb = self.combine_1d.run(result)
                         # add metadata that only WFSS wants
-                        comb.spec[0].source_ra = result.exposures[0].spec_table["SOURCE_RA"][0]
-                        comb.spec[0].source_dec = result.exposures[0].spec_table["SOURCE_DEC"][0]
+                        comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
+                        comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
                         wfss_comb.append(comb)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":

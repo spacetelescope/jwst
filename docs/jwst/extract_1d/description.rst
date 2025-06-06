@@ -109,10 +109,12 @@ For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-f
 
 
 For NIRCam and NIRISS WFSS data, hundreds to thousands of spectra from different sources
-may be extracted. For those modes, the output is a ``WFSSMultiExposureSpecModel``.
-The data in this model is stored in the ``exposures`` attribute, such that one spectral table
+may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
+The data in this model is stored in the ``spec`` attribute, such that one spectral table
 is created for each exposure for each spectral order in the input data.
 Each extension of the output FITS file thus represents one exposure/spectral order combination.
+The extension metadata contains a unique exposure ID (FITS keyword EXPGRPID) for each extension,
+which combines exposure grouping metadata, the exposure number, and the spectral order.
 The spectral tables for this model contain the same columns as the ``MultiSpecModel``, but
 each row in the table contains the full spectrum for a single source and order. The spectral columns
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
@@ -128,13 +130,13 @@ and the number of valid data points for each spectrum is recorded
 in the N_ALONGDISP column.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200) and
-integration (the first) in a WFSSMultiExposureSpecModel:
+integration (the first) in a WFSSMultiSpecModel:
 
 .. doctest-skip::
 
   >>> from stdatamodels.jwst import datamodels
   >>> model = datamodels.open('multi_wfss_x1d.fits')
-  >>> first_table = model.exposures[0].spec_table
+  >>> first_table = model.spec[0].spec_table
   >>> id_want = 1200
   >>> row_want = first_table[first_table["SOURCE_ID"] == id_want][0]
   >>> nelem = row_want["N_ALONGDISP"]
