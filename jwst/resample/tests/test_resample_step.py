@@ -871,7 +871,9 @@ def test_resample_variance_context_disable(nircam_rate, enable_ctx, enable_var):
         assert_allclose(result.var_rnoise[5:-5, 5:-5].mean(), var_rnoise / n_images, atol=1e-7)
         assert_allclose(result.var_poisson[5:-5, 5:-5].mean(), var_poisson / n_images, atol=1e-7)
     else:
+        assert not result.hasattr("err")
         assert not result.hasattr("var")
+        assert not result.hasattr("var_flat")
         assert not result.hasattr("var_rnoise")
         assert not result.hasattr("var_poisson")
     if enable_ctx:
