@@ -57,6 +57,15 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     compare_asn_files(out_paths, truth_paths)
 
 
+# NOTE: These are inflight equivalent approximate replacements for
+#       test_associations_standards.py test module.
+@pytest.mark.parametrize("pool_args", [
+    ("jw05204_20250308t202944_pool", []),  # pool_002_image_miri
+], ids=parfunc)
+def test_std(_jail, rtdata, resource_tracker, request, pool_args):
+    _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
+
+
 @pytest.mark.parametrize("pool_args", [
     ("jw00217_20200921t181631_pool", []),
     ("jw00217_nrsfss_pool", []),
