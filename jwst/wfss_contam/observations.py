@@ -222,9 +222,6 @@ class Observation:
         """
         Chunk the sources into groups of max_pixels.
 
-        TODO: catch error if max_pixels is smaller than the number of pixels in a single source.
-        In this case probably just set max_pixels to the number of pixels in the largest source.
-
         Parameters
         ----------
         max_pixels : int, optional
