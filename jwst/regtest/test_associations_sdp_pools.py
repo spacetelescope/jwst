@@ -39,6 +39,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
 
     input_csv = rtdata.get_data(f"associations/sdp/pools/{pool}.csv")
     rtdata.output = os.curdir   # This test is jailed and parametrized
+    rtdata.okify_op = "sdp_pool_copy"  # failures as folder content replacements
     # Create the associations
     with resource_tracker.track(log=request):
         asn_generate.cli(args + ["-p", rtdata.output,
@@ -47,16 +48,24 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     out_paths = sorted(glob("*.json"))
 
     # Compare to the truth associations.
-    truth_pool_path = f"associations/sdp/truth/{pool}"
+    truth_pool_path = f"truth/test_associations_sdp_pools/{pool}/"
     rtdata.truth_remote = truth_pool_path
     truth_paths = sorted([rtdata.get_truth(p) for p in
                           rtdata.data_glob(truth_pool_path, glob="*.json")])
+    if truth_paths == []:  # truth dir does not exist
+        rtdata.truth_remote = f"{rtdata._inputs_root}/{rtdata.env}/{truth_pool_path}"
     compare_asn_files(out_paths, truth_paths)
 
 
 @pytest.mark.parametrize("pool_args", [
+    ("jw00217_nrsfss_pool", []),  # Debug okify
+], ids=parfunc)
+def test_ugh(_jail, rtdata, resource_tracker, request, pool_args):
+    _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
+
+
+@pytest.mark.parametrize("pool_args", [
     ("jw00217_20200921t181631_pool", []),
-    ("jw00217_nrsfss_pool", []),
     ("jw00620_20210113t123511_pool", []),
     ("jw00620_20210527t123049_pool", []),
     ("jw00623_20200918t091537_o055_pool", []),

@@ -215,7 +215,7 @@ norecursedirs = [
     "venv",
 ]
 junit_family = "xunit2"
-inputs_root = "jwst-pipeline"
+inputs_root = "scratch-lim"
 results_root = "jwst-pipeline-results"
 text_file_format = "rst"
 doctest_plus = "enabled"
