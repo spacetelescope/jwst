@@ -25,7 +25,7 @@ def artifactory_repos(pytestconfig):
 
     Parameters
     ----------
-    pytestconfig : _pytest.config.Config
+    pytestconfig : pytest.config.Config
         Pytest configuration object.
 
     Returns
