@@ -96,15 +96,16 @@ class BackgroundStep(Step):
             else:
                 bkg_list = self.bkg_list
 
+            # Make sure to catch a trailing comma and ignore it
+            if bkg_list is not None:
+                bkg_list = [bg for bg in bkg_list if bg]
+
             # Make sure that the background list is not empty for this case,
             # or report and skip the step
             if bkg_list is None or len(bkg_list) == 0:
                 self.log.warning("* No background list provided * Skipping step.")
                 result.meta.cal_step.back_sub = "SKIPPED"
                 return result
-
-            # Make sure to catch a trailing comma and ignore it
-            bkg_list = [bg for bg in bkg_list if bg]
 
             # check if input data is NRS_IFU
             tolerance = 1.0e-8
