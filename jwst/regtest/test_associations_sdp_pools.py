@@ -39,6 +39,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
 
     input_csv = rtdata.get_data(f"associations/sdp/pools/{pool}.csv")
     rtdata.output = os.curdir   # This test is jailed and parametrized
+    rtdata.okify_op = "sdp_pool_copy"  # failures as folder content replacements
     # Create the associations
     with resource_tracker.track(log=request):
         asn_generate.cli(args + ["-p", rtdata.output,
@@ -51,6 +52,8 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     rtdata.truth_remote = truth_pool_path
     truth_paths = sorted([rtdata.get_truth(p) for p in
                           rtdata.data_glob(truth_pool_path, glob="*.json")])
+    if truth_paths == []:  # truth dir does not exist
+        rtdata.truth_remote = f"{rtdata._inputs_root}/{rtdata.env}/{truth_pool_path}"
     compare_asn_files(out_paths, truth_paths)
 
 
