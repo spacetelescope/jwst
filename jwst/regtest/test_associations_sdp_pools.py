@@ -47,7 +47,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     out_paths = sorted(glob("*.json"))
 
     # Compare to the truth associations.
-    truth_pool_path = f"truth/test_associations_sdp_pools/{pool}"
+    truth_pool_path = f"truth/test_associations_sdp_pools/{pool}/"
     rtdata.truth_remote = truth_pool_path
     truth_paths = sorted([rtdata.get_truth(p) for p in
                           rtdata.data_glob(truth_pool_path, glob="*.json")])
