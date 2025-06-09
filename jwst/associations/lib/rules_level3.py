@@ -1184,12 +1184,6 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
                     sources=["exp_type"],
                     value="nrc_wfss",
                 ),
-                DMSAttrConstraint(
-                    name="opt_elem",
-                    sources=["filter"],
-                    value="GRISMR|GRISMC",
-                    force_unique=True,
-                ),
             ]
         )
 
