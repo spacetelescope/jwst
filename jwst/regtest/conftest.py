@@ -25,7 +25,7 @@ def artifactory_repos(pytestconfig):
 
     Parameters
     ----------
-    pytestconfig : _pytest.config.Config
+    pytestconfig : pytest.config.Config
         Pytest configuration object.
 
     Returns
@@ -189,7 +189,13 @@ def generate_artifactory_json(request, artifactory_repos):
             rtdata.to_asdf(path_asdf)
 
             # Generate an OKify JSON file
-            pattern = os.path.join(rtdata.remote_results_path, os.path.basename(rtdata.output))
+            if rtdata.okify_op == "sdp_pool_copy":
+                pattern = (
+                    os.path.join(rtdata.remote_results_path, os.path.basename(rtdata.output))
+                    + "/jw*.json"
+                )
+            else:
+                pattern = os.path.join(rtdata.remote_results_path, os.path.basename(rtdata.output))
             okify_schema_pattern.append(pattern)
             okify_schema = generate_upload_schema(
                 okify_schema_pattern, f"{os.path.dirname(rtdata.truth_remote)}/"
@@ -210,7 +216,7 @@ def generate_artifactory_json(request, artifactory_repos):
                 upload_schema = generate_upload_schema(
                     rtdata.output, rtdata.remote_results_path, schema=upload_schema
                 )
-            elif rtdata.okify_op == "folder_copy":
+            elif rtdata.okify_op in ("folder_copy", "sdp_pool_copy"):
                 output = rtdata.output + "/"
                 target = rtdata.remote_results_path + os.path.basename(rtdata.output) + "/"
                 upload_schema = generate_upload_schema(output, target, schema=upload_schema)
