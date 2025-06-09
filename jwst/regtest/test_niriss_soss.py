@@ -17,8 +17,11 @@ def run_tso_spec2(rtdata_module):
     rtdata = rtdata_module
 
     # Run tso-spec2 pipeline on the first _rateints file, saving intermediate products
+    rtdata.get_data("niriss/soss/jwst_niriss_soss_bkg_sub256.fits")
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_nis_short_rateints.fits")
     args = ["calwebb_spec2", rtdata.input,
+            "--steps.bkg_subtract.skip=False",
+            "--steps.bkg_subtract.override_bkg=jwst_niriss_soss_bkg_sub256.fits",
             "--steps.flat_field.save_results=True",
             "--steps.srctype.save_results=True",
             "--steps.extract_1d.soss_atoca=False",
