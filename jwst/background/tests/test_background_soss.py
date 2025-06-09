@@ -22,7 +22,8 @@ INITIAL_OUTLIER_FRACTION = 1e-3
 @pytest.fixture(scope="module")
 def generate_background_template():
     template = np.ones(DETECTOR_SHAPE)
-    template[:, 710:] = 2.
+    template[:, 710] = 1.6
+    template[:, 711:] = 2.0
     return template
 
 
