@@ -20,7 +20,7 @@ for an overview of all the methods and to which observing modes they're
 applicable.
 
 Imaging and Non-WFSS, Non-SOSS Spectroscopic Modes
-----------------------------------------
+--------------------------------------------------
 If more than one background exposure is provided, they will be averaged
 together before being subtracted from the target exposure. Iterative sigma
 clipping is applied during the averaging process, to reject sources or other
