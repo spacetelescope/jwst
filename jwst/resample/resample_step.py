@@ -47,7 +47,7 @@ class ResampleStep(Step):
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
         in_memory = boolean(default=True)  # Keep images in memory
         enable_ctx = boolean(default=True)  # Compute and report the context array
-        enable_err = boolean(default=True)  # Compute and report the error arrays
+        enable_err = boolean(default=True)  # Compute and report the err array
         report_var = boolean(default=True)  # Report the variance array
     """  # noqa: E501
 

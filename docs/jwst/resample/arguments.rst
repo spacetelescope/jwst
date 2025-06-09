@@ -123,13 +123,13 @@ image.
 ``--enable_err`` (boolean, default=True)
   Specifies whether or not to compute and store the error array in the output model.
   Setting this to ``False`` helps reduce memory usage and output file size for very
-  large mosaics, but the  `var`, `err`, `var_flat`, `var_rnoise`, and `var_poisson`
+  large mosaics, but the  `err`, `var_flat`, `var_rnoise`, and `var_poisson`
   arrays will not be computed or reported.
   If set to ``False``, the `enable_var` flag is ignored.
 
-``--enable_var`` (boolean, default=True)
+``--report_var`` (boolean, default=True)
   Specifies whether or not to store the variance arrays, namely
-  `var`, `var_flat`, `var_rnoise`, and `var_poisson`, in the output model.
+  `var_flat`, `var_rnoise`, and `var_poisson`, in the output model.
   Setting this to ``False`` helps reduce output file size for very large mosaics,
-  but note that the variance is still computed internally if ``enable_err`` is ``True``
-  because it is needed to compute the error array.
+  but note that the variances are still computed internally if ``enable_err`` is ``True``
+  because they are needed to compute the error array.
