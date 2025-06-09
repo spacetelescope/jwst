@@ -1170,8 +1170,7 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
     Characteristics:
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
-        - Multi-object
-        - Non-TSO
+        - Gather all grism exposures
     """
 
     def __init__(self, *args, **kwargs):
