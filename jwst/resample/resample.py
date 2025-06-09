@@ -415,7 +415,7 @@ class ResampleImage(Resample):
             model.con = info_dict["con"]
         if self._compute_err:
             model.err = info_dict["err"]
-        if self._report_var:
+        if self._enable_var and self._report_var:
             model.var_rnoise = info_dict["var_rnoise"]
             model.var_flat = info_dict["var_flat"]
             model.var_poisson = info_dict["var_poisson"]
