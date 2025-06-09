@@ -18,8 +18,6 @@ class BackgroundStep(Step):
 
     class_alias = "background"
 
-    # soss_bkg_percentile = float_list(min=2, max=2, defaultvalue=[25.0, 50.0])  # Bkgd %iles to use
-
     spec = """
         bkg_list = force_list(default=None)  # List of background files. Ignored for WFSS or if asn is provided
         save_combined_background = boolean(default=False)  # Save combined background image
