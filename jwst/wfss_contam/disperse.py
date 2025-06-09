@@ -112,6 +112,7 @@ def _disperse_onto_grism(
     y0_sky = np.repeat(y0_sky[np.newaxis, :], len(lambdas), axis=0)
 
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, lambdas, order)
+    del x0_sky, y0_sky
 
     # Convert to x/y in grism frame.
     lambdas = np.repeat(lambdas[:, np.newaxis], x0_xy.shape[1], axis=1)
