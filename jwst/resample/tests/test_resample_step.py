@@ -846,10 +846,9 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
 
 @pytest.mark.parametrize("enable_ctx", [True, False])
 @pytest.mark.parametrize("enable_var", [True, False])
-def test_resample_variance_context_disable(nircam_rate, enable_ctx, enable_var):
-    """Test that resampled variance and error arrays are computed properly
-    with context manager enabled or not, and variance enabled or not.
-    """
+@pytest.mark.parametrize("enable_err", [True, False])
+def test_resample_variance_context_disable(nircam_rate, enable_ctx, enable_var, enable_err):
+    """Test that con, var, and err arrays respect their control flags."""
     n_images = 3
     err = 0.02429
     var_rnoise = 0.00034
@@ -863,13 +862,25 @@ def test_resample_variance_context_disable(nircam_rate, enable_ctx, enable_var):
 
     c = ModelLibrary([im.copy() for _ in range(n_images)])
 
-    result = ResampleStep.call(c, enable_ctx=enable_ctx, enable_var=enable_var, blendheaders=False)
+    result = ResampleStep.call(
+        c,
+        enable_ctx=enable_ctx,
+        enable_var=enable_var,
+        enable_err=enable_err,
+        blendheaders=False,
+    )
 
-    if enable_var:
+    if enable_var and enable_err:
     # Verify that the combined uncertainty goes as 1 / sqrt(N)
         assert_allclose(result.err[5:-5, 5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
         assert_allclose(result.var_rnoise[5:-5, 5:-5].mean(), var_rnoise / n_images, atol=1e-7)
         assert_allclose(result.var_poisson[5:-5, 5:-5].mean(), var_poisson / n_images, atol=1e-7)
+    elif enable_err and not enable_var:
+        assert result.hasattr("err")
+        assert not result.hasattr("var")
+        assert not result.hasattr("var_flat")
+        assert not result.hasattr("var_rnoise")
+        assert not result.hasattr("var_poisson")
     else:
         assert not result.hasattr("err")
         assert not result.hasattr("var")

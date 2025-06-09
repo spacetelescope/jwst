@@ -47,7 +47,8 @@ class ResampleStep(Step):
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
         in_memory = boolean(default=True)  # Keep images in memory
         enable_ctx = boolean(default=True)  # Compute and report the context array
-        enable_var = boolean(default=True)  # Compute and report the variance array
+        enable_err = boolean(default=True)  # Compute and report the error arrays
+        enable_var = boolean(default=True)  # Report the variance array
     """  # noqa: E501
 
     reference_file_types: list = []
@@ -118,11 +119,12 @@ class ResampleStep(Step):
             result = resamp.resample_many_to_many(in_memory=self.in_memory)
 
         else:
-            if self.enable_var:
+            if self.enable_err:
                 # If variance is enabled, we compute the error from the variance
                 compute_err = "from_var"
             else:
                 # otherwise do not compute the error arrays at all
+                self.enable_var = False
                 compute_err = None
             resamp = resample.ResampleImage(
                 input_models,
