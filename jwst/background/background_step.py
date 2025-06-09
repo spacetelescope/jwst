@@ -26,7 +26,7 @@ class BackgroundStep(Step):
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
         soss_source_percentile = float(default=35.0) # Threshold flux %ile to mask out source pixels
-        soss_bkg_percentile = float_list(min=2, max=2, default=None) # Bkgd %iles to use
+        soss_bkg_percentile = float_list(min=2, max=2, default=None) # Bkgd %iles to use; default is [25.0, 50.0]
         wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
         wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
