@@ -17,9 +17,9 @@ POOL_PATH = 'pool_018_all_exptypes.csv'
 
 @pytest.mark.parametrize(
     'case', [
-        (None, 60),  # Don't re-run, just compare to the generator fixture results
+        (None, 61),  # Don't re-run, just compare to the generator fixture results
         (['-i', 'o001'], 2),
-        (['-i', 'o001', 'o002'], 2),
+        (['-i', 'o001', 'o002'], 3),
         (['-i', 'c1001'], 1),
         (['-i', 'o001', 'c1001'], 3),
         (['-i', 'c1001', 'c1002'], 2),
