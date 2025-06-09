@@ -48,7 +48,7 @@ class ResampleStep(Step):
         in_memory = boolean(default=True)  # Keep images in memory
         enable_ctx = boolean(default=True)  # Compute and report the context array
         enable_err = boolean(default=True)  # Compute and report the error arrays
-        enable_var = boolean(default=True)  # Report the variance array
+        report_var = boolean(default=True)  # Report the variance array
     """  # noqa: E501
 
     reference_file_types: list = []
@@ -122,15 +122,19 @@ class ResampleStep(Step):
             if self.enable_err:
                 # If variance is enabled, we compute the error from the variance
                 compute_err = "from_var"
+                enable_var = True
+                report_var = self.report_var
             else:
                 # otherwise do not compute the error arrays at all
-                self.enable_var = False
+                enable_var = False
                 compute_err = None
+                report_var = False
             resamp = resample.ResampleImage(
                 input_models,
                 output=output,
                 enable_ctx=self.enable_ctx,
-                enable_var=self.enable_var,
+                enable_var=enable_var,
+                report_var=report_var,
                 compute_err=compute_err,
                 **kwargs,
             )
