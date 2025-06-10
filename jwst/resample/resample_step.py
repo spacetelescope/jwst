@@ -120,7 +120,7 @@ class ResampleStep(Step):
 
         else:
             if self.enable_err:
-                # If variance is enabled, we compute the error from the variance
+                # If error is enabled, we compute the error from the variance
                 compute_err = "from_var"
                 enable_var = True
                 report_var = self.report_var
