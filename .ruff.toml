@@ -7,8 +7,8 @@ exclude = [
     ".eggs",
     "build",
     "*.ipynb",
-    "**/tests/test_*.py",
-    "**/regtest/test_*.py",
+#    "**/tests/test_*.py",
+#    "**/regtest/test_*.py",
 ]
 line-length = 100
 
@@ -73,10 +73,10 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "F403", # import with *
     "F405", # ambiguous import from *
 ]
-"**/tests/**.py" = [
-    "D104", # missing docstring in public package
-    "S101", # use of assert
-]
+#"**/tests/**.py" = [
+#    "D104", # missing docstring in public package
+#    "S101", # use of assert
+#]
 "jwst/conftest.py" = [
     "SLF", "ARG", "PTH",
     "B003", # Assigning to os.environ does not clear the environment
@@ -93,3 +93,7 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "F841", # unused variable
 ]
 "jwst/ipc/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
+
+"**/tests/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501", "D104", "S101", "TID252"]
+
+#"**/regtests/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501", "A002", "S101", "TID252"]
