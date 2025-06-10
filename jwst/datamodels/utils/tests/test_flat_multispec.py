@@ -5,6 +5,7 @@ import numpy as np
 
 import stdatamodels.jwst.datamodels as dm
 from jwst.datamodels.utils.flat_multispec import (
+    set_schema_units,
     copy_column_units,
     copy_spec_metadata,
     determine_vector_and_meta_columns,
@@ -73,7 +74,7 @@ def tso_multi_spec():
     n_spectra = 5
     defaults = tso_spec.schema["properties"]["spec_table"]["default"]
     spec_table = make_empty_recarray(n_rows, n_spectra, all_cols, is_vector, defaults=defaults)
-    spec_table["NELEMENTS"] = 10
+    spec_table["N_ALONGDISP"] = 10
     tso_spec.spec_table = spec_table
     for column in tso_spec.spec_table.columns:
         column.unit = 's'
@@ -237,6 +238,25 @@ def test_copy_column_units(input_spec, output_spec):
     assert output_spec.spec_table.columns.units == expected
 
 
+def test_set_schema_units():
+    model = dm.WFSSSpecModel((10,))
+    model.spec_table = model.spec_table.copy()
+    set_schema_units(model)
+
+    # get expected units from the schema
+    data_type = model.schema["properties"]["spec_table"]["datatype"]
+    # check that the units are set correctly
+    for i in range(len(model.spec_table.columns)):
+        if "unit" in data_type[i]:
+            atleast_one = True
+            assert model.spec_table.columns[i].unit == data_type[i]["unit"]
+        else:
+            assert model.spec_table.columns[i].unit is None
+
+    # ensure that the test was not empty
+    assert atleast_one
+
+
 def test_copy_spec_metadata(input_spec, output_spec):
     # Before copying, source_id and name are blank or default
     assert output_spec.name is None
@@ -269,7 +289,6 @@ def test_expand_flat_spec(tso_multi_spec):
         assert spec.name == f"test {input_spec_num}"
         assert spec.int_num == input_spec_num
 
-        # WCS object is present and is a deep copy of the input
         assert spec.meta.wcs[0] == 'test'
         spec.meta.wcs[0] = 'copy'
         assert spec.meta.wcs[0] == 'copy'
