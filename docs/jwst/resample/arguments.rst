@@ -125,7 +125,7 @@ image.
   Setting this to ``False`` helps reduce memory usage and output file size for very
   large mosaics, but the  `err`, `var_flat`, `var_rnoise`, and `var_poisson`
   arrays will not be computed or reported.
-  If set to ``False``, the `enable_var` flag is ignored.
+  If set to ``False``, the `report_var` flag is ignored.
 
 ``--report_var`` (boolean, default=True)
   Specifies whether or not to store the variance arrays, namely
