@@ -3,6 +3,7 @@ import warnings
 import asdf
 import numpy as np
 import pytest
+from astropy.io import fits
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 from stdatamodels.jwst.datamodels import ImageModel
@@ -847,7 +848,7 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
 @pytest.mark.parametrize("enable_ctx", [True, False])
 @pytest.mark.parametrize("report_var", [True, False])
 @pytest.mark.parametrize("enable_err", [True, False])
-def test_resample_variance_context_disable(nircam_rate, enable_ctx, report_var, enable_err):
+def test_resample_variance_context_disable(nircam_rate, enable_ctx, report_var, enable_err, tmp_cwd):
     """Test that con, var, and err arrays respect their control flags."""
     n_images = 3
     err = 0.02429
@@ -859,6 +860,8 @@ def test_resample_variance_context_disable(nircam_rate, enable_ctx, report_var, 
     im.var_poisson += var_poisson
     im.err += err
     im.meta.filename = "foo.fits"
+    # Adding bunit_err covers a bug where the ERR extension was being created just to hold that
+    im.meta.bunit_err = "MJy/sr"
 
     c = ModelLibrary([im.copy() for _ in range(n_images)])
 
@@ -897,7 +900,15 @@ def test_resample_variance_context_disable(nircam_rate, enable_ctx, report_var, 
         assert not result.hasattr("con")
 
     im.close()
+
+    result.save("tmp.fits")
     result.close()
+
+    # Cover a bug where the ERR extension was being created even when enable_err=False
+    # just to hold the bunit_err keyword.
+    with fits.open("tmp.fits") as hdul:
+        if not enable_err:
+            assert 'ERR' not in hdul
 
 
 @pytest.mark.parametrize("shape", [(0, ), (10, 1)])
