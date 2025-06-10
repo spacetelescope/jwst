@@ -169,7 +169,7 @@ def subtract_soss_bkg(
         template = np.repeat(template[np.newaxis, :, :], data.shape[-3], axis=0)
 
         # Initialize some quantities that we'll check for each template
-        scales = np.array([0.0, 0.0])
+        scales = np.array([np.nan, np.nan])
         rmse = np.array([np.inf, np.inf])
 
         # upper and lower range of ratios then find median

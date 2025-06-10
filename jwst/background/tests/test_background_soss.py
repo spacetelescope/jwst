@@ -116,6 +116,7 @@ def test_subtract_soss_bkg(
         generate_background_template
     )))
 
+    # Test image-based correction.
     result = subtract_soss_bkg(
         generate_soss_image,
         template_model,
@@ -124,6 +125,7 @@ def test_subtract_soss_bkg(
     )
     assert type(result) == type(generate_soss_image)
 
+    # Test cube-based correction.
     result = subtract_soss_bkg(
         generate_soss_cube,
         template_model,
@@ -137,10 +139,10 @@ def test_subtract_soss_bkg(
     mock_model.meta.instrument.pupil = 'GR700XD'
     mock_model.meta.exposure.type = 'NIS_SOSS'
 
+    # Test step-level call along with substrip96-shaped data.
     result = BackgroundStep.call(
         mock_model,
-        bkg_list=[],
         override_bkg=template_model,
     )
 
-    assert type(result) == type(generate_soss_cube)
+    assert type(result) == type(generate_soss_cube_substrip96)
