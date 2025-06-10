@@ -689,7 +689,7 @@ def dms_product_name_nrsfs_sources(asn):
         subarray = "-" + subarray
 
     product_name_format = (
-        "jw{program}-{acid}_{target}_{source_id}_{instrument}_{opt_elem}-{slit_name}{subarray}"
+        "jw{program}-{acid}_{target}-{source_id}_{instrument}_{opt_elem}-{slit_name}{subarray}"
     )
     product_name = format_product(
         product_name_format,
