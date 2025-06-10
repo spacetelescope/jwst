@@ -1,3 +1,32 @@
+1.18.1 (2025-06-10)
+===================
+
+Associations
+------------
+
+- Revert #9098 and instead use duplication checking to weed out level 2
+  observation-type associations that have duplicate product IDs with their
+  background candidate association counterparts. (`#9501
+  <https://github.com/spacetelescope/jwst/issues/9501>`_)
+
+
+Pipeline
+--------
+
+- In calwebb_ami3, revert change to strictness of zip function linking science
+  exposures to psf exposures, to allow successful processing of associations
+  with differing numbers of science and psf members. (`#9361
+  <https://github.com/spacetelescope/jwst/issues/9361>`_)
+
+
+background (image2, spec2)
+--------------------------
+
+- Fix a bug where highly-masked input data for wfss modes were raising errors
+  instead of skipping (`#9507
+  <https://github.com/spacetelescope/jwst/issues/9507>`_)
+
+
 1.18.0 (2025-04-08)
 ===================
 
