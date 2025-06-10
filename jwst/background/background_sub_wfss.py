@@ -66,9 +66,10 @@ def subtract_wfss_bkg(
     # i.e. in regions we can use as background.
     if got_catalog:
         bkg_mask = _mask_from_source_cat(input_model, wl_range_name, mmag_extract)
-        if not _sufficient_background_pixels(input_model.dq, bkg_mask):
+        if not _sufficient_background_pixels(input_model.dq, bkg_mask, bkg_ref.data):
             log.warning("Not enough background pixels to work with.")
             log.warning("Step will be SKIPPED.")
+            bkg_ref.close()
             return None
     else:
         bkg_mask = np.ones(input_model.data.shape, dtype=bool)
@@ -85,6 +86,15 @@ def subtract_wfss_bkg(
         var = input_model.err.copy()**2
         bkg = bkg_ref.data.copy()
         factor, _ = rescaler(sci, bkg, var, mask=~bkg_mask)
+
+    # check for bad value of factor
+    if not np.isfinite(factor):
+        log.warning(
+            "Could not determine a finite scaling factor between reference background and data."
+            " Step will be SKIPPED."
+        )
+        bkg_ref.close()
+        return None
 
     # extract the derived factor and apply it to the unmasked, non-outlier-rejected data
     subtract_this = factor * bkg_ref.data
@@ -226,18 +236,40 @@ class _ScalingFactorComputer:
         return np.sqrt(np.nanmean(sci_sub_profile**2))
 
 
-def _sufficient_background_pixels(dq_array, bkg_mask, min_pixels=100):
-    """Count number of good pixels for background use.
+def _sufficient_background_pixels(dq_array, bkg_mask, bkg, min_pixfrac=0.05):
+    """
+    Count number of good pixels for background use.
 
     Check DQ flags of pixels selected for bkg use - XOR the DQ values with
     the DO_NOT_USE flag to flip the DO_NOT_USE bit. Then count the number
     of pixels that AND with the DO_NOT_USE flag, i.e. initially did not have
     the DO_NOT_USE bit set.
+
+    Parameters
+    ----------
+    dq_array : ndarray
+        Subarray input DQ array
+
+    bkg_mask : ndarray
+        Boolean background mask. True where background is GOOD.
+
+    bkg : ndarray
+        Background data array
+
+    min_pixfrac : float, optional
+        Minimum fraction of good pixels required for background use.
+        Default is 0.05 (5%).
+
+    Returns
+    -------
+    int or array of int
+        The number of good pixels for background use.
     """
-    return np.count_nonzero((dq_array[bkg_mask]
-                            ^ pixel['DO_NOT_USE'])
-                            & pixel['DO_NOT_USE']
-                            ) > min_pixels
+    good_bkg = bkg != 0
+    good_mask = np.logical_and(bkg_mask, good_bkg)
+    n_good = np.count_nonzero((dq_array[good_mask] ^ pixel["DO_NOT_USE"]) & pixel["DO_NOT_USE"])
+    min_pixels = int(min_pixfrac * dq_array.size)
+    return n_good > min_pixels
 
 
 def _mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
