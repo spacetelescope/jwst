@@ -66,6 +66,16 @@ def test_std(_jail, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
+# NOTE: These are inflight equivalent approximate replacements for
+#       test_associations_standards.py test module (slow).
+@pytest.mark.parametrize("pool_args", [
+    ("jw01467_20250316t025827_pool", []),  # pool_004_wfs
+], ids=parfunc)
+@pytest.mark.slow
+def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
+    _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
+
+
 @pytest.mark.parametrize("pool_args", [
     ("jw00217_20200921t181631_pool", []),
     ("jw00217_nrsfss_pool", []),
