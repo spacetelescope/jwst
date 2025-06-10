@@ -260,6 +260,7 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
+| 1.18.1              | B11.3.1   | 2025.2.0 | 1364         | 2025-06-10 | 2025-06-10  | Patch release for B11.3.1                     |
 | 1.18.0              | B11.3     | 2025.2.0 | 1364         | 2025-04-01 | 2025-05-20  | Final release for B11.3                       |
 | 1.18.0rc2           | B11.3     | 2025.2.0 | 1350         | 2025-04-01 | 2025-05-20  | Second release candidate for B11.3            |
 | 1.18.0rc1           | B11.3     | 2025.2.0 | 1350         | 2025-03-19 | 2025-05-20  | First release candidate for B11.3             |
