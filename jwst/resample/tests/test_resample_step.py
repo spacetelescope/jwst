@@ -3,6 +3,7 @@ import warnings
 import asdf
 import numpy as np
 import pytest
+from astropy.io import fits
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 from stdatamodels.jwst.datamodels import ImageModel
@@ -842,6 +843,72 @@ def test_resample_variance(nircam_rate, n_images, weight_type):
 
     im.close()
     result.close()
+
+
+@pytest.mark.parametrize("enable_ctx", [True, False])
+@pytest.mark.parametrize("report_var", [True, False])
+@pytest.mark.parametrize("enable_err", [True, False])
+def test_resample_variance_context_disable(nircam_rate, enable_ctx, report_var, enable_err, tmp_cwd):
+    """Test that con, var, and err arrays respect their control flags."""
+    n_images = 3
+    err = 0.02429
+    var_rnoise = 0.00034
+    var_poisson = 0.00025
+    im = AssignWcsStep.call(nircam_rate)
+    _set_photom_kwd(im)
+    im.var_rnoise += var_rnoise
+    im.var_poisson += var_poisson
+    im.err += err
+    im.meta.filename = "foo.fits"
+    # Adding bunit_err covers a bug where the ERR extension was being created just to hold that
+    im.meta.bunit_err = "MJy/sr"
+
+    c = ModelLibrary([im.copy() for _ in range(n_images)])
+
+    result = ResampleStep.call(
+        c,
+        enable_ctx=enable_ctx,
+        report_var=report_var,
+        enable_err=enable_err,
+        blendheaders=False,
+    )
+
+    if report_var and enable_err:
+    # Verify that the combined uncertainty goes as 1 / sqrt(N)
+        assert_allclose(result.err[5:-5, 5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
+        assert_allclose(result.var_rnoise[5:-5, 5:-5].mean(), var_rnoise / n_images, atol=1e-7)
+        assert_allclose(result.var_poisson[5:-5, 5:-5].mean(), var_poisson / n_images, atol=1e-7)
+    elif enable_err and not report_var:
+        assert result.hasattr("err")
+        assert_allclose(result.err[5:-5, 5:-5].mean(), err / np.sqrt(n_images), atol=1e-5)
+        assert not result.hasattr("var_flat")
+        assert not result.hasattr("var_rnoise")
+        assert not result.hasattr("var_poisson")
+    else:
+        assert not result.hasattr("err")
+        assert not result.hasattr("var_flat")
+        assert not result.hasattr("var_rnoise")
+        assert not result.hasattr("var_poisson")
+    if enable_ctx:
+        assert result.con.shape == (1, 210, 210)
+        bitmap = [1,1,1] # 3 images, all contributing.
+        expected_con = int(''.join(map(str, bitmap)), 2)
+        isin = result.con == expected_con
+        # The majority of the image should have all 3 images contributing
+        assert np.sum(isin)/isin.size > 0.95
+    else:
+        assert not result.hasattr("con")
+
+    im.close()
+
+    result.save("tmp.fits")
+    result.close()
+
+    # Cover a bug where the ERR extension was being created even when enable_err=False
+    # just to hold the bunit_err keyword.
+    with fits.open("tmp.fits") as hdul:
+        if not enable_err:
+            assert 'ERR' not in hdul
 
 
 @pytest.mark.parametrize("shape", [(0, ), (10, 1)])
