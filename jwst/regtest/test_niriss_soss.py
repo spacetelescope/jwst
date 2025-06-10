@@ -88,6 +88,8 @@ def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwarg
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    # Ignore the custom bkg reference file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_BKG')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -101,6 +103,8 @@ def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_defau
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    # Ignore the custom bkg reference file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_BKG')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -113,6 +117,8 @@ def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_defau
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    # Ignore the custom bkg reference file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_BKG')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 

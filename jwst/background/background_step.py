@@ -23,15 +23,15 @@ class BackgroundStep(Step):
         save_combined_background = boolean(default=False)  # Save combined background image
         sigma = float(default=3.0)  # Clipping threshold
         maxiters = integer(default=None)  # Number of clipping iterations
-        soss_source_percentile = float(default=35.0) # Threshold flux %ile to mask out source pixels
-        soss_bkg_percentile = float_list(min=2, max=2, default=None) # Bkgd %iles to use; default is [25.0, 50.0]
+        soss_source_percentile = float(default=35.0) # Threshold flux percentile to mask out source pixels
+        soss_bkg_percentile = float_list(min=2, max=2, default=None) # Background percentiles to use; default is [25.0, 50.0]
         wfss_mmag_extract = float(default=None)  # WFSS minimum abmag to extract
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
         wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
         wfss_outlier_percent = float(default=1)  # WFSS outlier percentile to reject per iteration
     """  # noqa: E501
 
-    # These reference files are only used for WFSS/GRISM data.
+    # These reference files are only used for WFSS/GRISM or SOSS data.
     reference_file_types = ["bkg", "wfssbkg", "wavelengthrange"]
 
     # Define a suffix for optional saved output of the combined background

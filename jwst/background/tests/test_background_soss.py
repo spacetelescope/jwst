@@ -1,16 +1,15 @@
 import pytest
 import numpy as np
-from pathlib import Path
 
-from stdatamodels.jwst.datamodels.dqflags import pixel
+
 from stdatamodels.jwst import datamodels
-from jwst.stpipe import Step
-from jwst.assign_wcs import AssignWcsStep
+from jwst.background import BackgroundStep
 from jwst.background.background_sub_soss import (
     find_discontinuity,
     generate_background_masks,
     subtract_soss_bkg,
-    BACKGROUND_MASK_CUTOFF
+    BACKGROUND_MASK_CUTOFF,
+    SUBSTRIP96_ROWSTART
 )
 
 DETECTOR_SHAPE = (256, 2048)
@@ -79,6 +78,15 @@ def generate_soss_cube(mock_data):
     return cube
 
 
+@pytest.fixture(scope="module")
+def generate_soss_cube_substrip96(mock_data):
+    cube = datamodels.CubeModel()
+    cube.data = np.array([mock_data[0][SUBSTRIP96_ROWSTART: SUBSTRIP96_ROWSTART + 96, :]] * 10)
+    cube.err = np.array([mock_data[1][SUBSTRIP96_ROWSTART: SUBSTRIP96_ROWSTART + 96, :]] * 10)
+    cube.dq = np.isnan(cube.data)
+    return cube
+
+
 def test_discontinuity_finder(generate_background_template):
     disc = find_discontinuity(generate_background_template)
     # Shape consistency
@@ -97,7 +105,12 @@ def test_generate_background_masks(generate_background_template, n_repeats):
     assert right.shape == (n_repeats, *DETECTOR_SHAPE)
 
 
-def test_subtract_soss_bkg(generate_background_template, generate_soss_image, generate_soss_cube):
+def test_subtract_soss_bkg(
+        generate_background_template,
+        generate_soss_image,
+        generate_soss_cube,
+        generate_soss_cube_substrip96
+):
     template_model = datamodels.SossBkgModel(data=np.stack((
         generate_background_template,
         generate_background_template
@@ -117,4 +130,17 @@ def test_subtract_soss_bkg(generate_background_template, generate_soss_image, ge
         35.,
         [25.0, 50.0]
     )
+    assert type(result) == type(generate_soss_cube)
+
+    mock_model = generate_soss_cube_substrip96
+    mock_model.meta.instrument.filter = 'CLEAR'
+    mock_model.meta.instrument.pupil = 'GR700XD'
+    mock_model.meta.exposure.type = 'NIS_SOSS'
+
+    result = BackgroundStep.call(
+        mock_model,
+        bkg_list=[],
+        override_bkg=template_model,
+    )
+
     assert type(result) == type(generate_soss_cube)

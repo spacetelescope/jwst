@@ -23,11 +23,11 @@ control the sigma clipping, and are passed as arguments to the astropy
   Defaults to ``False``.
 
 ``--soss_source_percentile``
-  The threshold flux percentile, above which is deemed to be source or contaminated.
+  The threshold flux percentile, above which values are deemed to be source or contaminated.
   Pixels with flux below this percentile will be added to the background mask. The
   default value is 35.0.
 
-``soss_bkg_percentile``
+``--soss_bkg_percentile``
   This pair of percentile values describes the range of flux percentiles in the
   background mask to use for reference template scaling. The default is [25.0, 50.0].
 

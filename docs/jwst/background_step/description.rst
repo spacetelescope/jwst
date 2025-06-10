@@ -125,8 +125,9 @@ First, a mask is derived to determine which regions of the input science data ar
 relatively uncontaminated, using a cutoff on flux percentile to mask out bright
 regions of the integration. Then the mask is split into two components, one for
 either side of a discontinuity in the SOSS background levels, a result of
-instrumental effects. The mask on the right side of the detector is then truncated
+instrumental effects. The mask on the right side of the detector is truncated
 at column 950; pixels right of this column were found to lower the fitting accuracy
-regardless of flux cutoff. The algorithm then performs a best-fit analysis, scaling
-each template in the background reference file to the data. The best-fit template
+regardless of flux cutoff. The step then performs a best-fit analysis by scaling
+each template in the background reference file to the data and finding the minimum
+residual RMS error in the fitted background pixels. The best-fit template
 is used to calculate and subtract the background for the entire science array.

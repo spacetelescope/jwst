@@ -16,7 +16,6 @@ BACKGROUND_MASK_CUTOFF = 950  # Drop all pixels with col > cutoff for template m
 SUBSTRIP96_ROWSTART = 10  # Determine where to place SUBSTRIP96 slice wrt. SUBSTRIP256 array.
 
 
-# Find background discontinuity
 def find_discontinuity(image):
     """
     Determine the location of a discontinuity in the background levels.
@@ -140,7 +139,7 @@ def subtract_soss_bkg(
         bkg_refmodel.data = bkg_refmodel.data[:, SUBSTRIP96_ROWSTART : SUBSTRIP96_ROWSTART + 96, :]
     elif bkg_refmodel.shape[-2] != input_model.data.shape[-2]:
         log.warning(
-            "Background reference file shape does not match SOSS subarray."
+            "Background reference file shape does not match SOSS subarray. "
             "Skipping subtraction of reference background."
         )
         return None
@@ -158,7 +157,7 @@ def subtract_soss_bkg(
         data = input_model.data
 
     # Initialize best-fit RMSE to large number
-    best_rmse = 1.0e29
+    best_rmse = np.inf
     best_fit_template_idx = -1
     best_scales = np.array([np.nan, np.nan])
 
@@ -171,7 +170,7 @@ def subtract_soss_bkg(
 
         # Initialize some quantities that we'll check for each template
         scales = np.array([0.0, 0.0])
-        rmse = np.array([1.0e29, 1.0e29])
+        rmse = np.array([np.inf, np.inf])
 
         # upper and lower range of ratios then find median
         for i, mask in enumerate(masks):
@@ -191,7 +190,7 @@ def subtract_soss_bkg(
             best_scales = scales
 
     if best_fit_template_idx < 0:
-        log.warning("Template matching failed for background subtraction.Skipping bkg_subtract.")
+        log.warning("Template matching failed for background subtraction. Skipping bkg_subtract.")
         return None
 
     # With template determined, regenerate masks for separate scaling
