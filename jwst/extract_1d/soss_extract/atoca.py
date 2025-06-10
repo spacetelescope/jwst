@@ -17,7 +17,6 @@ from . import atoca_utils
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class MaskOverlapError(Exception):

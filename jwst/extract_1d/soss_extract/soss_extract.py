@@ -27,7 +27,6 @@ from .pastasoss import get_soss_wavemaps, XTRACE_ORD1_LEN, XTRACE_ORD2_LEN
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 ORDER2_SHORT_CUTOFF = 0.58
 

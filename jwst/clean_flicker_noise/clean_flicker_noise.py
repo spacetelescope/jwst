@@ -21,7 +21,6 @@ from jwst.ramp_fitting import RampFitStep
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Fixed slit region to mask, for NIRSpec MOS and IFU data
 # Values are y start and stop indices, for the edges of the

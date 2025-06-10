@@ -8,7 +8,6 @@ from . import mask_definition_ami
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
-log.setLevel(logging.DEBUG)
 
 
 m = 1.0

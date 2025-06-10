@@ -17,7 +17,6 @@ from jwst.lib import reffile_utils
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["RampFitStep"]
 

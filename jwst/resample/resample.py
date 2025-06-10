@@ -22,7 +22,6 @@ from jwst.assign_wcs import util as assign_wcs_util
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = [
@@ -41,7 +40,6 @@ _SUPPORTED_CUSTOM_WCS_PARS = [
 ]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class ResampleImage(Resample):

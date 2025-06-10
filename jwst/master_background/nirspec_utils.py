@@ -5,7 +5,6 @@ from scipy.signal import medfilt
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def apply_master_background(source_model, bkg_model, inverse=False):

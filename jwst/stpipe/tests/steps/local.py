@@ -2,7 +2,6 @@ from jwst.stpipe import Step
 import logging
 
 log = logging.getLogger("FOO")
-log.setLevel(logging.DEBUG)
 
 
 class DummyStep(Step):

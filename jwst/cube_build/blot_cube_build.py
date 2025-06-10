@@ -9,7 +9,6 @@ from . import instrument_defaults
 from .blot_median import blot_wrapper  # c extension
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class CubeBlot:

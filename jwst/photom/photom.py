@@ -15,7 +15,6 @@ from . import miri_mrs
 from . import miri_imager
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 

@@ -14,7 +14,6 @@ from jwst.lib.wcs_utils import get_wavelengths
 from .miri import store_dithered_position
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["load_wcs"]
 

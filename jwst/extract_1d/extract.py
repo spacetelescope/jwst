@@ -39,8 +39,8 @@ __all__ = [
 ]
 
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+log = logging.getLogger("stpipe.jwst.extract_1d")
+
 
 WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM"]
 """Exposure types to be regarded as wide-field slitless spectroscopy."""

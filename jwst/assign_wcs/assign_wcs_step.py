@@ -11,7 +11,6 @@ from .niriss import imaging as niriss_imaging
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["AssignWcsStep"]
 

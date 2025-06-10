@@ -14,7 +14,6 @@ from .utils import (
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["detect_outliers"]

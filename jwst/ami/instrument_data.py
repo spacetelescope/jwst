@@ -9,7 +9,6 @@ import copy
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]

@@ -18,7 +18,6 @@ from scipy.interpolate import make_interp_spline
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def arange_2d(starts, stops):

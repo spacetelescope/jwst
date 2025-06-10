@@ -9,7 +9,6 @@ from astropy.modeling.mappings import Identity
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, wavecorr_file):

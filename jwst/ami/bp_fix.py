@@ -11,7 +11,6 @@ from scipy.ndimage import median_filter
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 logging.captureWarnings(True)
 
 micron = 1.0e-6

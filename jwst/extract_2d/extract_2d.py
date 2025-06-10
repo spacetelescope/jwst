@@ -8,7 +8,6 @@ from .nirspec import nrs_extract2d
 from .grisms import extract_grism_objects, extract_tso_object
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["extract2d"]

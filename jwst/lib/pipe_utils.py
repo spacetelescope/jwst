@@ -10,7 +10,6 @@ from jwst.associations.lib.dms_base import TSO_EXP_TYPES
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def is_tso(model):

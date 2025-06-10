@@ -6,7 +6,6 @@ import logging
 import numpy as np
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, fringe_model):

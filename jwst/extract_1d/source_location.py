@@ -15,7 +15,6 @@ VERTICAL = 2
 """Vertical dispersion axis."""
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def middle_from_wcs(wcs, bounding_box, dispaxis):

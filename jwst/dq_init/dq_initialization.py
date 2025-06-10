@@ -8,7 +8,6 @@ from jwst.lib import reffile_utils
 from jwst.datamodels import dqflags  # type: ignore[attr-defined]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 # FGS guide star mode exposure types

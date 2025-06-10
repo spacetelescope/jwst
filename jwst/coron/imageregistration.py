@@ -8,7 +8,6 @@ from stdatamodels.jwst.datamodels import CubeModel
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def align_fourier_lsq(reference, target, mask=None):

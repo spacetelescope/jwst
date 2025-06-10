@@ -12,7 +12,6 @@ from jwst.lib import pipe_utils, reffile_utils, wcs_utils
 from jwst.assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 MICRONS_100 = 1.0e-4  # 100 microns, in meters
 

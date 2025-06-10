@@ -40,7 +40,6 @@ from stdatamodels.jwst.datamodels import dqflags
 from stcal.outlier_detection.utils import medfilt
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["detect_outliers"]
 

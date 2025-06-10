@@ -10,7 +10,6 @@ from jwst.assign_wcs.util import create_grism_bbox
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def subtract_wfss_bkg(

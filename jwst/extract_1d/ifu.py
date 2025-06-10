@@ -25,7 +25,6 @@ from jwst.residual_fringe import utils as rfutils
 __all__ = ["ifu_extract1d"]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # This is intended to be larger than any possible distance (in pixels)
 # between the target and any point in the image; used by locn_from_wcs().

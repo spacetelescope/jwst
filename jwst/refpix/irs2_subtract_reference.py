@@ -7,7 +7,6 @@ from scipy.ndimage import convolve1d
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def correct_model(

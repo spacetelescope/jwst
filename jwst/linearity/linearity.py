@@ -7,7 +7,6 @@ import logging
 from stcal.linearity.linearity import linearity_correction
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(output_model, lin_model):

@@ -9,7 +9,6 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 SCALEFACTOR = 2.0
 """This factor is to account for the difference in gain for charges freed

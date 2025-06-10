@@ -20,7 +20,6 @@ from . import _fileio
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]

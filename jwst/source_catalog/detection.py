@@ -13,7 +13,6 @@ from photutils.utils.exceptions import NoDetectionsWarning
 from photutils.segmentation import detect_sources, deblend_sources
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class JWSTBackground:

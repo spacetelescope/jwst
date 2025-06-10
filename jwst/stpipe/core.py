@@ -15,7 +15,6 @@ from jwst.lib.suffix import remove_suffix
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class JwstStep(Step):

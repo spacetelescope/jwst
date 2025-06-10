@@ -4,7 +4,6 @@ import logging
 from pathlib import Path
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class DataTypes:

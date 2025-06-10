@@ -1,3 +1,5 @@
+import logging
+
 import crds
 from stdatamodels.jwst import datamodels
 
@@ -9,6 +11,8 @@ from jwst.extract_1d.soss_extract import soss_extract
 from jwst.extract_1d.ifu import ifu_extract1d
 
 __all__ = ["Extract1dStep"]
+
+log = logging.getLogger("stpipe.jwst.extract_1d")
 
 
 class Extract1dStep(Step):
@@ -220,21 +224,21 @@ class Extract1dStep(Step):
         else:
             extract_ref = "N/A"
         if extract_ref != "N/A":
-            self.log.info(f"Using EXTRACT1D reference file {extract_ref}")
+            log.info(f"Using EXTRACT1D reference file {extract_ref}")
 
         if self.apply_apcorr:
             apcorr_ref = self.get_reference_file(model, "apcorr")
         else:
             apcorr_ref = "N/A"
         if apcorr_ref != "N/A":
-            self.log.info(f"Using APCORR file {apcorr_ref}")
+            log.info(f"Using APCORR file {apcorr_ref}")
 
         try:
             psf_ref = self.get_reference_file(model, "psf")
         except crds.core.exceptions.CrdsLookupError:
             psf_ref = "N/A"
         if psf_ref != "N/A":
-            self.log.info(f"Using PSF reference file {psf_ref}")
+            log.info(f"Using PSF reference file {psf_ref}")
 
         return extract_ref, apcorr_ref, psf_ref
 
@@ -254,36 +258,36 @@ class Extract1dStep(Step):
         """
         # Set the filter configuration
         if model.meta.instrument.filter == "CLEAR":
-            self.log.info("Exposure is through the GR700XD + CLEAR (science).")
+            log.info("Exposure is through the GR700XD + CLEAR (science).")
             soss_filter = "CLEAR"
         else:
-            self.log.error(
+            log.error(
                 "The SOSS extraction is implemented for the CLEAR filter only. "
                 f"Requested filter is {model.meta.instrument.filter}."
             )
-            self.log.error("extract_1d will be skipped.")
+            log.error("extract_1d will be skipped.")
             model.meta.cal_step.extract_1d = "SKIPPED"
             return model
 
         # Set the subarray mode being processed
         if model.meta.subarray.name == "SUBSTRIP256":
-            self.log.info("Exposure is in the SUBSTRIP256 subarray.")
-            self.log.info("Traces 1 and 2 will be modelled and decontaminated before extraction.")
+            log.info("Exposure is in the SUBSTRIP256 subarray.")
+            log.info("Traces 1 and 2 will be modelled and decontaminated before extraction.")
             subarray = "SUBSTRIP256"
         elif model.meta.subarray.name == "SUBSTRIP96":
-            self.log.info("Exposure is in the SUBSTRIP96 subarray.")
-            self.log.info(
+            log.info("Exposure is in the SUBSTRIP96 subarray.")
+            log.info(
                 "Traces of orders 1 and 2 will be modelled but only order 1 "
                 "will be decontaminated before extraction."
             )
             subarray = "SUBSTRIP96"
         else:
-            self.log.error(
+            log.error(
                 "The SOSS extraction is implemented for the SUBSTRIP256 "
                 "and SUBSTRIP96 subarrays only. Subarray is currently "
                 f"{model.meta.subarray.name}."
             )
-            self.log.error("Extract1dStep will be skipped.")
+            log.error("Extract1dStep will be skipped.")
             model.meta.cal_step.extract_1d = "SKIPPED"
             return model
 
@@ -396,7 +400,7 @@ class Extract1dStep(Step):
         source_type = model.meta.target.source_type
         if self.ifu_set_srctype is not None and exp_type == "MIR_MRS":
             source_type = self.ifu_set_srctype
-            self.log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
+            log.info(f"Overriding source type and setting it to {self.ifu_set_srctype}")
 
         if exp_type == "MIR_MRS":
             band_cube = self._check_mrs_type(model)
@@ -405,11 +409,11 @@ class Extract1dStep(Step):
                     "Turning off residual fringe correction for MIRI MRS data "
                     "because the input is not a single IFU band"
                 )
-                self.log.info(message)
+                log.info(message)
                 self.ifu_rfcorr = False
         else:
             self.ifu_rfcorr = False
-            self.log.info(
+            log.info(
                 "Turning off residual fringe correction because it only works on MIRI MRS data"
             )
 
@@ -450,7 +454,7 @@ class Extract1dStep(Step):
                 else:
                     complete_suffix = f"{slit}_{suffix}"
                 output_path = self.make_output_path(suffix=complete_suffix)
-                self.log.info(f"Saving {suffix} {output_path}")
+                log.info(f"Saving {suffix} {output_path}")
                 model.save(output_path)
         else:
             # Only one profile - just use the index and suffix 'profile'
@@ -459,7 +463,7 @@ class Extract1dStep(Step):
             else:
                 complete_suffix = suffix
             output_path = self.make_output_path(suffix=complete_suffix)
-            self.log.info(f"Saving {suffix} {output_path}")
+            log.info(f"Saving {suffix} {output_path}")
             intermediate_model.save(output_path)
         intermediate_model.close()
 
@@ -496,18 +500,18 @@ class Extract1dStep(Step):
             ),
         ):
             # Acceptable input type, just log it
-            self.log.debug(f"Input is a {str(input_model)}.")
+            log.debug(f"Input is a {str(input_model)}.")
         elif isinstance(input_model, datamodels.MultiSlitModel):
             # If input is multislit, with 3D calints, skip the step
-            self.log.debug("Input is a MultiSlitModel")
+            log.debug("Input is a MultiSlitModel")
             if len((input_model[0]).shape) == 3:
-                self.log.warning("3D input is unsupported; step will be skipped")
+                log.warning("3D input is unsupported; step will be skipped")
                 input_model.meta.cal_step.extract_1d = "SKIPPED"
                 return input_model
         else:
-            self.log.error(f"Input is a {str(input_model)}, ")
-            self.log.error("which was not expected for extract_1d.")
-            self.log.error("The extract_1d step will be skipped.")
+            log.error(f"Input is a {str(input_model)}, ")
+            log.error("which was not expected for extract_1d.")
+            log.error("The extract_1d step will be skipped.")
             input_model.meta.cal_step.extract_1d = "SKIPPED"
             return input_model
 
@@ -518,7 +522,7 @@ class Extract1dStep(Step):
             input_model = [input_model]
         else:
             exp_type = input_model[0].meta.exposure.type
-        self.log.debug(f"Input for EXP_TYPE {exp_type} contains {len(input_model)} items")
+        log.debug(f"Input for EXP_TYPE {exp_type} contains {len(input_model)} items")
 
         if len(input_model) > 1 and exp_type in extract.WFSS_EXPTYPES:
             # For WFSS level-3, the input is a single entry of a
@@ -529,7 +533,7 @@ class Extract1dStep(Step):
 
         if exp_type == "NIS_SOSS":
             # Data is NIRISS SOSS observation, use its own extraction routines
-            self.log.info(
+            log.info(
                 "Input is a NIRISS SOSS observation, the specialized SOSS "
                 "extraction (ATOCA) will be used."
             )

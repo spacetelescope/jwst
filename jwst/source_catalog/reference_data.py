@@ -9,7 +9,6 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, ABVegaOffsetModel
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class ReferenceData:

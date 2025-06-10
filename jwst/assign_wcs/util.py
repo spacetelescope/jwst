@@ -22,7 +22,6 @@ from jwst.lib.catalog_utils import SkyObject
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 _MAX_SIP_DEGREE = 6

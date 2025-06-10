@@ -14,7 +14,6 @@ from photutils.background import Background2D, MedianBackground
 from astropy.stats import SigmaClip
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def background_subtract(

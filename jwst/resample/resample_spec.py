@@ -28,7 +28,6 @@ from jwst.resample.resample import ResampleImage
 from jwst.datamodels import ModelLibrary
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["ResampleSpec"]
