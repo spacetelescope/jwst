@@ -41,8 +41,6 @@ def run_spec2(rtdata_module):
             '--steps.cube_build.save_results=true',
             '--steps.extract_1d.save_results=true',
             ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: invalid value encountered in add
     Step.from_cmdline(args)
 
 
@@ -80,6 +78,9 @@ def test_miri_mrs_spec2(run_spec2, fitsdiff_default_kwargs, suffix, rtdata_modul
     rt.is_like_truth(rtdata, fitsdiff_default_kwargs, suffix, truth_path=TRUTH_PATH)
 
 
+# MIRI WCS computations sometimes raise runtime warnings for invalid
+# values.  Ignore the warnings for this test.
+@pytest.mark.filterwarnings("ignore:invalid value:RuntimeWarning")
 def test_miri_mrs_wcs(run_spec2, fitsdiff_default_kwargs, rtdata_module):
 
     rtdata = rtdata_module

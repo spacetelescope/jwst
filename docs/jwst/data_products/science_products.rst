@@ -503,18 +503,21 @@ in binary table extensions of FITS files. The overall layout of the FITS file is
 |  2  | ASDF        | BINTABLE | N/A       | variable      |
 +-----+-------------+----------+-----------+---------------+
 
- - EXTRACT1D: A 2-D table containing the extracted spectral data.
+ - EXTRACT1D: A table containing the extracted spectral data.
  - ADSF: The data model meta data.
 
-Multiple "EXTRACT1D" extensions can be present if there is data for more than one source or
-if the file is an ``x1dints`` product. For ``x1dints`` products, there is one "EXTRACT1D"
-extension for each integration in the exposure.
+Multiple "EXTRACT1D" extensions can be present if there is data for more than one source,
+segment, or spectral order. For ``x1dints`` products, there is one "EXTRACT1D"
+extension that holds spectra for all integrations in the exposure.
 
-The structure of the "EXTRACT1D" table extension is as follows:
+For ``x1d`` products, the table is constructed using a simple 2-D layout,
+using one row per extracted spectral element in the dispersion direction of the data
+(i.e. one row per wavelength bin). The structure of the "EXTRACT1D" table extension
+is as follows:
 
 +-------------------+-----------+--------------------+---------------+
 | Column Name       | Data Type | Contents           | Units         |
-+===================+===========+===================+================+
++===================+===========+====================+===============+
 | WAVELENGTH        | float64   | Wavelength values  | :math:`\mu` m |
 +-------------------+-----------+--------------------+---------------+
 | FLUX              | float64   | Flux values        | Jy            |
@@ -552,8 +555,78 @@ The structure of the "EXTRACT1D" table extension is as follows:
 | NPIXELS           | float64   | Number of pixels   | N/A           |
 +-------------------+-----------+--------------------+---------------+
 
-The table is constructed using a simple 2-D layout, using one row per extracted spectral
-element in the dispersion direction of the data (i.e. one row per wavelength bin).
+For MIRI MRS ``x1d`` products, there are three additional
+columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
+These contain the FLUX, SURF_BRIGHT, and BACKGROUND data, with additional
+corrections for residual fringing (see :ref:`MIRI-MRS-1D-residual-fringe`
+for more information).
+
+For ``x1dints`` products, each row in the table holds the full spectrum for a single
+integration.  The spectral data columns listed above are each 2-D: each row is a 1-D
+vector containing all data points for the spectrum in that integration.
+The spectral tables for this model have extra 1D columns to contain the metadata for
+the spectrum in each row.  The structure of the "EXTRACT1D" table extension for
+``x1dints`` products is as follows:
+
++-------------------+-----------+------------------------+---------------+-----------+
+| Column Name       | Data Type | Contents               | Units         | Dimension |
++===================+===========+========================+===============+===========+
+| INT_NUM           | int32     | Integration number     | N/A           |    1D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| WAVELENGTH        | float64   | Wavelength values      | :math:`\mu` m |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| FLUX              | float64   | Flux values            | Jy            |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| FLUX_ERROR        | float64   | Error values           | Jy            |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| FLUX_VAR_POISSON  | float64   | Error values           | Jy^2          |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| FLUX_VAR_RNOISE   | float64   | Error values           | Jy^2          |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| FLUX_VAR_FLAT     | float64   | Error values           | Jy^2          |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| SURF_BRIGHT       | float64   | Surface Brightness     | MJy/sr        |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| SB_ERROR          | float64   | Surf. Brt. errors      | MJy/sr        |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| SB_VAR_POISSON    | float64   | Surf. Brt. errors      | (MJy/sr)^2    |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| SB_VAR_RNOISE     | float64   | Surf. Brt. errors      | (MJy/sr)^2    |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| SB_VAR_FLAT       | float64   | Surf. Brt. errors      | (MJy/sr)^2    |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| DQ                | uint32    | DQ flags               | N/A           |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| BACKGROUND        | float64   | Background signal      | MJy/sr        |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| BKGD_ERROR        | float64   | Background error       | MJy/sr        |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| BKGD_VAR_POISSON  | float64   | Background error       | (MJy/sr)^2    |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| BKGD_VAR_RNOISE   | float64   | Background error       | (MJy/sr)^2    |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| BKGD_VAR_FLAT     | float64   | Background error       | (MJy/sr)^2    |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| NPIXELS           | float64   | Number of pixels       | N/A           |    2D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| NELEMENTS         | int32     | Nbr. spectral elements | N/A           |    1D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| SEGMENT           | int32     | Segment number         | N/A           |    1D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| MJD-BEG           | float64   | Start time (MJD UTC)   | d             |    1D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| MJD-AVG           | float64   | Mid time (MJD UTC)     | d             |    1D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| MJD-END           | float64   | End time (MJD UTC)     | d             |    1D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| TDB-BEG           | float64   | Start time (BJD TDB)   | d             |    1D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| TDB-MID           | float64   | Mid time (BJD TDB)     | d             |    1D     |
++-------------------+-----------+------------------------+---------------+-----------+
+| TDB-END           | float64   | End time (BJD TDB)     | d             |    1D     |
++-------------------+-----------+------------------------+---------------+-----------+
+
+
 Note that for point sources observed with NIRSpec or NIRISS SOSS mode, it is not
 possible to express the extracted spectrum as surface brightness and hence the
 SURF_BRIGHT and SB_ERROR columns will be set to zero. NPIXELS gives the (fractional)

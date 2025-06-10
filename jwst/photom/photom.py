@@ -1,5 +1,6 @@
 import logging
 import functools
+import warnings
 
 import numpy as np
 from astropy import units as u
@@ -155,6 +156,7 @@ class DataSet:
         # Initialize other non-correction pars attributes.
         self.slitnum = -1
         self.specnum = -1
+        self.integ_row = -1
         self.inverse = inverse
         self.source_type = None
         self.mrs_time_correction = mrs_time_correction
@@ -439,7 +441,10 @@ class DataSet:
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     return
-                self.photom_io(ftab.phot_table[row], self.order)
+                # Correct each integration
+                for integ_row in range(len(spec.spec_table)):
+                    self.integ_row = integ_row
+                    self.photom_io(ftab.phot_table[row], self.order)
         else:
             fields_to_match = {"filter": self.filter, "pupil": self.pupil}
             row = find_row(ftab.phot_table, fields_to_match)
@@ -628,7 +633,12 @@ class DataSet:
                 return
             self.photom_io(ftab.phot_table[row])
         else:
+            # check for subarray in the phot_table: older files do not have it
             fields_to_match = {"filter": self.filter, "pupil": self.pupil}
+            if "subarray" in ftab.phot_table.columns.names:
+                log.info("Matching to subarray: %s", self.subarray)
+                fields_to_match["subarray"] = self.subarray
+
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
@@ -772,8 +782,8 @@ class DataSet:
                 else:
                     conversion_uniform = conversion / slit.meta.photometry.pixelarea_steradians
                     unit_is_surface_brightness = False
-            elif isinstance(self.input, datamodels.MultiSpecModel):
-                # MultiSpecModel output from extract1d should not require this area conversion?
+            elif isinstance(self.input, datamodels.TSOMultiSpecModel):
+                # output from extract1d should not require this area conversion
                 unit_is_surface_brightness = False
             else:
                 if self.source_type is None or self.source_type != "POINT":
@@ -796,8 +806,8 @@ class DataSet:
             self.input.slits[self.slitnum].meta.photometry.conversion_microjanskys = (
                 conversion * MJSR_TO_UJA2
             )
-        elif isinstance(self.input, datamodels.MultiSpecModel):
-            # No place in MultiSpecModel schema to store photometry info
+        elif isinstance(self.input, datamodels.TSOMultiSpecModel):
+            # No place in the schema to store photometry info
             pass
         else:
             self.input.meta.photometry.conversion_megajanskys = conversion
@@ -889,11 +899,11 @@ class DataSet:
                         slit, self.exptype, conversion, waves, relresps, order
                     )
 
-            elif isinstance(self.input, datamodels.MultiSpecModel):
+            elif isinstance(self.input, datamodels.TSOMultiSpecModel):
                 # This input does not require a 2d conversion, but a 1d interpolation on the
                 # input wavelength vector to find the relresponse.
                 conversion, no_cal = self.create_1d_conversion(
-                    self.input.spec[self.specnum], conversion, waves, relresps
+                    self.input.spec[self.specnum], conversion, waves, relresps, self.integ_row
                 )
             else:
                 # NRC_TSGRISM data produces a SpecModel, which is handled here
@@ -960,21 +970,21 @@ class DataSet:
             # Make sure output model has consistent NaN and DO_NOT_USE values
             match_nans_and_flags(slit)
 
-        elif isinstance(self.input, datamodels.MultiSpecModel):
+        elif isinstance(self.input, datamodels.TSOMultiSpecModel):
             # Does this block need to address SB columns as well, or will
             # they (presumably) never be populated for SOSS?
             # It appears flux_error is the only error column populated?
             spec = self.input.spec[self.specnum]
-            spec.spec_table.FLUX *= conversion
-            spec.spec_table.FLUX_ERROR *= conversion
-            spec.spec_table.FLUX_VAR_POISSON *= conversion**2.0
-            spec.spec_table.FLUX_VAR_RNOISE *= conversion**2.0
-            spec.spec_table.FLUX_VAR_FLAT *= conversion**2.0
-            spec.spec_table.BACKGROUND *= conversion
-            spec.spec_table.BKGD_ERROR *= conversion
-            spec.spec_table.BKGD_VAR_POISSON *= conversion**2.0
-            spec.spec_table.BKGD_VAR_RNOISE *= conversion**2.0
-            spec.spec_table.BKGD_VAR_FLAT *= conversion**2.0
+            spec.spec_table.FLUX[self.integ_row] *= conversion
+            spec.spec_table.FLUX_ERROR[self.integ_row] *= conversion
+            spec.spec_table.FLUX_VAR_POISSON[self.integ_row] *= conversion**2.0
+            spec.spec_table.FLUX_VAR_RNOISE[self.integ_row] *= conversion**2.0
+            spec.spec_table.FLUX_VAR_FLAT[self.integ_row] *= conversion**2.0
+            spec.spec_table.BACKGROUND[self.integ_row] *= conversion
+            spec.spec_table.BKGD_ERROR[self.integ_row] *= conversion
+            spec.spec_table.BKGD_VAR_POISSON[self.integ_row] *= conversion**2.0
+            spec.spec_table.BKGD_VAR_RNOISE[self.integ_row] *= conversion**2.0
+            spec.spec_table.BKGD_VAR_FLAT[self.integ_row] *= conversion**2.0
             spec.spec_table.columns["FLUX"].unit = "MJy"
             spec.spec_table.columns["FLUX_ERROR"].unit = "MJy"
             spec.spec_table.columns["FLUX_VAR_POISSON"].unit = "MJy^2"
@@ -1131,7 +1141,7 @@ class DataSet:
             log.warning(f"Can't process data with DISPAXIS={dispaxis}")
         return dispersion_array
 
-    def create_1d_conversion(self, model, conversion, waves, relresps):
+    def create_1d_conversion(self, model, conversion, waves, relresps, integ_row):
         """
         Resample the photometric conversion array.
 
@@ -1149,6 +1159,8 @@ class DataSet:
             sampled.
         relresps : float numpy.ndarray
             1D photometric response values, as a function of waves.
+        integ_row : int
+            Table row number for the spectrum for the current integration.
 
         Returns
         -------
@@ -1159,7 +1171,7 @@ class DataSet:
         """
         # Get the 2D wavelength array corresponding to the input
         # image pixel values
-        wl_array = model.spec_table["WAVELENGTH"]
+        wl_array = model.spec_table["WAVELENGTH"][integ_row]
 
         flip_wl = False
         if np.nanargmax(wl_array) - np.nanargmin(wl_array) < 0:
@@ -1432,7 +1444,7 @@ class DataSet:
         with datamodels.open(photom_fname) as ftab:
             # Load the pixel area reference file, if it exists, and attach the
             # reference data to the science model
-            # SOSS data are in a MultiSpecModel, which will not allow for
+            # SOSS data are in a TSOMultiSpecModel, which will not allow for
             # saving the area info.
             if self.exptype != "NIS_SOSS":
                 self.save_area_info(ftab, area_fname)
@@ -1441,13 +1453,22 @@ class DataSet:
                 self.calc_niriss(ftab)
 
             elif self.instrument == "NIRSPEC":
-                self.calc_nirspec(ftab, area_fname)
+                # Some NIRSpec flat variance values can overflow when multiplied by the
+                # flux conversion factor.  Photom values for some regions are also set to zero.
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
+                    warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+                    warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+                    self.calc_nirspec(ftab, area_fname)
 
             elif self.instrument == "NIRCAM":
                 self.calc_nircam(ftab)
 
             elif self.instrument == "MIRI":
-                self.calc_miri(ftab)
+                # MIRI data may have NaNs in data or error arrays
+                with warnings.catch_warnings():
+                    warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+                    self.calc_miri(ftab)
 
             elif self.instrument == "FGS":
                 self.calc_fgs(ftab)

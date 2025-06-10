@@ -1,0 +1,1 @@
+Revert #9098 and instead use duplication checking to weed out level 2 observation-type associations that have duplicate product IDs with their background candidate association counterparts.

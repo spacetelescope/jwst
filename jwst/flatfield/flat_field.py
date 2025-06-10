@@ -2,6 +2,7 @@
 
 import logging
 import math
+import warnings
 
 import numpy as np
 from stdatamodels.jwst import datamodels
@@ -462,7 +463,10 @@ def nirspec_fs_msa(
             slit.data /= slit_flat.data
             slit.var_poisson /= flat_data_squared
             slit.var_rnoise /= flat_data_squared
-            slit.var_flat = (slit.data / slit_flat.data * slit_flat.err) ** 2
+            # NIRSpec flats have very small values: some variance values may overflow
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "overflow encountered in square", RuntimeWarning)
+                slit.var_flat = (slit.data / slit_flat.data * slit_flat.err) ** 2
             slit.err = np.sqrt(slit.var_poisson + slit.var_rnoise + slit.var_flat)
         else:
             slit.data *= slit_flat.data
@@ -545,9 +549,12 @@ def nirspec_brightobj(
         output_model.data /= interpolated_flat.data
         output_model.var_poisson /= flat_data_squared
         output_model.var_rnoise /= flat_data_squared
-        output_model.var_flat = (
-            output_model.data / interpolated_flat.data * interpolated_flat.err
-        ) ** 2
+        # NIRSpec flats have very small values: some variance values may overflow
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "overflow encountered in square", RuntimeWarning)
+            output_model.var_flat = (
+                output_model.data / interpolated_flat.data * interpolated_flat.err
+            ) ** 2
         output_model.err = np.sqrt(
             output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
         )
@@ -621,7 +628,10 @@ def nirspec_ifu(
             output_model.data /= flat
             output_model.var_poisson /= flat_data_squared
             output_model.var_rnoise /= flat_data_squared
-            output_model.var_flat = (output_model.data / flat * flat_err) ** 2
+            # NIRSpec flats have very small values: some variance values may overflow
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", "overflow encountered in square", RuntimeWarning)
+                output_model.var_flat = (output_model.data / flat * flat_err) ** 2
             output_model.err = np.sqrt(
                 output_model.var_poisson + output_model.var_rnoise + output_model.var_flat
             )
@@ -1720,10 +1730,12 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
 
         flat[ystart:ystop, xstart:xstop][good_flag] = flat_2d[good_flag]
         if flat_dq.dtype == flat_dq_2d.dtype:
-            flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
+            flat_dq[ystart:ystop, xstart:xstop][good_flag] |= flat_dq_2d[good_flag]
         else:
             log.warning(f"flat_dq.dtype = {flat_dq.dtype}  flat_dq_2d.dtype = {flat_dq_2d.dtype}")
-            flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.astype(flat_dq.dtype).copy()
+            flat_dq[ystart:ystop, xstart:xstop][good_flag] |= flat_dq_2d[good_flag].astype(
+                flat_dq.dtype
+            )
         flat_err[ystart:ystop, xstart:xstop][good_flag] = flat_err_2d[good_flag]
         del nan_flag, good_flag
 

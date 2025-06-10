@@ -1,10 +1,9 @@
 """
 Unit tests for background subtraction
 """
-import warnings
+import json
 
 import pytest
-from astropy.utils.exceptions import AstropyUserWarning
 from numpy.testing import assert_allclose
 
 from stdatamodels.jwst import datamodels
@@ -41,6 +40,55 @@ def background(tmp_path_factory):
         image.save(filename)
 
     return filename
+
+
+@pytest.fixture(scope='module')
+def mk_asn(tmp_path_factory):
+    data = {
+            "asn_type": "spec2",
+            "asn_rule": "Asn_Lv2Image",
+            "program": "01000",
+            "asn_pool": "jw010000_pool.csv",
+            "products": [
+                {
+                    "name": "jw01000005001_test_mirimage",
+                    "members": [
+                        {
+                            "expname": "jw01000005001_test_mirimage_rate.fits",
+                            "exptype": "science",
+                            "exposerr": "null"
+                        },
+                        {
+                            "expname": "jw01000005001_testbg_mirimage.fits",
+                            "exptype": "background",
+                            "exposerr": "null"
+                        }
+                    ]
+                }
+            ]
+        }
+
+    tmp_path = tmp_path_factory.mktemp('asn_input')
+    asn_name = str(tmp_path / "jw010000-test_spec2_00001_asn.json")
+    with open(asn_name, 'w') as asn:
+        json.dump(data, asn)
+
+    # Create the files for the asn
+    ratefile = str(tmp_path / "jw01000005001_test_mirimage_rate.fits")
+    bgfile = str(tmp_path / "jw01000005001_testbg_mirimage.fits")
+    bgsubfile = str(tmp_path / "jw010000-test_spec2_00001_asn_backgroundstep.fits")
+    image_value = 10.0
+    background_value = 1.0
+    image = miri_rate_model((100, 100), value=image_value)
+    image.save(ratefile)
+    background = miri_rate_model((100, 100), value=background_value)
+    background.save(bgfile)
+    image.data = image.data - background.data
+    image.save(bgsubfile)
+    image.close()
+    background.close()
+
+    return asn_name, ratefile, bgfile, bgsubfile
 
 
 @pytest.fixture(scope='function')
@@ -214,9 +262,7 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
     image = miri_rate_model(data_shape, value=image_value)
     background = miri_rate_model(background_shape, value=background_value)
 
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", category=AstropyUserWarning, message="Input data contains invalid values")
-        result = BackgroundStep.call(image, [background])
+    result = BackgroundStep.call(image, [background])
 
     assert_allclose(result.data[..., :background_shape[-2], :background_shape[-1]],
                     image_value - background_value)
@@ -227,3 +273,44 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
 
     image.close()
     background.close()
+
+
+def test_asn_input(mk_asn):
+    asn_file = mk_asn[0]
+    result = BackgroundStep.call(asn_file)
+
+    bg_subtracted = mk_asn[3]
+    bgs = datamodels.open(bg_subtracted)
+
+    assert_allclose(result.data, bgs.data)
+    assert result.meta.cal_step.back_sub == 'COMPLETE'
+
+    result.close()
+    bgs.close()
+
+
+def test_bg_file_list(mk_asn):
+    rate_file = mk_asn[1]
+    bg_file = mk_asn[2]
+    result1 = BackgroundStep.call(rate_file, bg_file)
+    result2 = BackgroundStep.call(rate_file, bkg_list=bg_file)
+    result3 = BackgroundStep.call(rate_file, bkg_list=[bg_file, bg_file])
+    result4 = BackgroundStep.call(rate_file, bkg_list=[])
+    result5 = BackgroundStep.call(rate_file)
+
+    bg_subtracted = mk_asn[3]
+    bgs = datamodels.open(bg_subtracted)
+
+    assert_allclose(result1.data, bgs.data)
+    assert_allclose(result2.data, bgs.data)
+    assert_allclose(result3.data, bgs.data)
+    assert result1.meta.cal_step.back_sub == 'COMPLETE'
+    assert result2.meta.cal_step.back_sub == 'COMPLETE'
+    assert result3.meta.cal_step.back_sub == 'COMPLETE'
+    assert result4.meta.cal_step.back_sub == 'SKIPPED'
+    assert result5.meta.cal_step.back_sub == 'SKIPPED'
+
+    result1.close()
+    result2.close()
+    result3.close()
+

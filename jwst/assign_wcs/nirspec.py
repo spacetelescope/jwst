@@ -10,14 +10,14 @@ import warnings
 
 import gwcs
 import numpy as np
-
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.io import fits
 from astropy.modeling import bounding_box as mbbox
-from astropy.modeling import fix_inputs, models
+from astropy.modeling import fix_inputs, models, bind_bounding_box
 from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
 from gwcs import coordinate_frames as cf
+from gwcs import selector
 from gwcs.wcstools import grid_from_bounding_box
 
 from stdatamodels.jwst.datamodels import (
@@ -234,7 +234,7 @@ def imaging(input_model, reference_files):
 
 def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     """
-    Create the WCS pipeline for Nirspec IFU data.
+    Create the WCS pipeline for NIRSpec IFU data.
 
     The coordinate frames are:
     "detector" : the science frame
@@ -1639,7 +1639,7 @@ def wavelength_from_disperser(disperser, input_model):
         )
         return lgreq
 
-    lam = np.arange(0.5, 6.005, 0.005) * 1e-6
+    lam = np.arange(0.3, 8.005, 0.005) * 1e-6
     system_temperature = input_model.meta.instrument.gwa_tilt
     if system_temperature is None:
         message = "Missing reference temperature (keyword GWA_TILT)."
@@ -2572,14 +2572,25 @@ def nrs_wcs_set_input(input_model, slit_name):
         slit_id = slit_name
 
     # Check slit ID to make sure it's present in the slits
-    slit_ids = full_wcs.get_transform("gwa", "slit_frame").slit_ids
+    if "gwa" in full_wcs.available_frames:
+        ifu_wcs = False
+        slit_ids = full_wcs.get_transform("gwa", "slit_frame").slit_ids
+    else:
+        # assume it's a coordinate-based IFU WCS
+        ifu_wcs = True
+        slit_ids = list(range(30))
     if slit_id not in slit_ids:
         raise ValueError(f"Input slit name {slit_name} is not present in the input model.")
 
     # Fix the slit name input for all transforms
     new_pipeline = []
-    for step in full_wcs.pipeline:
+    for i, step in enumerate(full_wcs.pipeline):
         new_transform = _fix_slit_name(step.transform, slit_id)
+        if ifu_wcs and i == 0:
+            # No name to fix, so the new_transform is the same as the old
+            # transform.  For the first transform in the pipeline, deepcopy
+            # it so a slice-specific bounding box can be attached.
+            new_transform = copy.deepcopy(new_transform)
         new_pipeline.append((step.frame, new_transform))
 
     # Make a new WCS with the fixed slit name input
@@ -2587,8 +2598,16 @@ def nrs_wcs_set_input(input_model, slit_name):
     slit_wcs = gwcs.WCS(new_pipeline)
 
     # Add the bounding box
-    if full_wcs.bounding_box is not None:
+    if hasattr(full_wcs.pipeline[1].transform, "selector"):
+        # For coordinate-based IFU WCS, get the bounding box from the
+        # selector that holds the slice map
+        det2slicer_selector = full_wcs.pipeline[1].transform.selector
+        slit_wcs.bounding_box = det2slicer_selector[slit_id + 1].bounding_box
+    elif full_wcs.bounding_box is not None:
+        # For all other modern WCS, get the bounding box from the
+        # compound bounding box in the full WCS
         slit_wcs.bounding_box = full_wcs.bounding_box[slit_id]
+
     return slit_wcs
 
 
@@ -2719,6 +2738,126 @@ def nrs_ifu_wcs(input_model):
     for i in range(30):
         wcs_list.append(nrs_wcs_set_input(input_model, i))
     return wcs_list
+
+
+def apply_slicemap(input_model, replace_wcs=True):
+    """
+    Create a pixel-to-slice map and apply it to the WCS.
+
+    By default, the WCS is updated in place in the input model and
+    a pixel map is attached in the ``regions`` attribute.  To just
+    attach a pixel map, set ``replace_wcs`` to False.
+
+    Parameters
+    ----------
+    input_model : IFUImageModel
+        Input NIRSpec IFU model to be updated.
+    replace_wcs : bool
+        If False, ``input_model.meta.wcs`` is not modified.
+    """
+    full_wcs = input_model.meta.wcs
+
+    # Fix the slit name input for initial transforms - the value is not relevant.
+    dms2sca = _fix_slit_name(full_wcs.get_transform("detector", "sca"), 0)
+    sca2gwa = _fix_slit_name(full_wcs.get_transform("sca", "gwa"), 0)
+
+    # Get the slit-based transforms for slit_frame and slicer, to index into.
+    gwa2slit = full_wcs.get_transform("gwa", "slit_frame")
+    slit2slicer = full_wcs.get_transform("slit_frame", "slicer")
+
+    # Assume the full detector shape for the regions map and the
+    # expected number of IFU slices
+    image_shape = (2048, 2048)
+    nslice = 30
+    regions = np.zeros(image_shape, dtype=np.int32)
+
+    # For each IFU slice, get the bounding box and det2slicer transform
+    # and make a pixel to slice map
+    transforms = {}
+    slice_by_x = {}
+    for slit_id in range(nslice):
+        bb = full_wcs.bounding_box[slit_id]
+
+        # Construct array indices for pixels in this slice
+        x, y = grid_from_bounding_box(bb)
+        x_int = x.astype(int)
+        y_int = y.astype(int)
+
+        # Get valid wavelengths for the slice
+        _, _, lam, _ = full_wcs(x_int, y_int, slit_id)
+        valid = np.isfinite(lam)
+
+        # Restrict the slice to valid pixels
+        x_int = x_int[valid]
+        y_int = y_int[valid]
+
+        # Set the pixel map to the slice value, one-indexed
+        # (zero means no transform available)
+        regions[y_int, x_int] = slit_id + 1
+
+        # Fix the input for det to slicer transforms by pulling out
+        # the specific models needed.
+        gwa2slit_by_slice = _fix_slit_name(gwa2slit, slit_id)
+        slit2slicer_by_slice = _fix_slit_name(slit2slicer, slit_id)
+        new_transform = dms2sca | sca2gwa | gwa2slit_by_slice | slit2slicer_by_slice
+
+        # Bind a bounding box to the transform, including only the valid data
+        new_bb = ((x_int.min() - 0.5, x_int.max() + 0.5), (y_int.min() - 0.5, y_int.max() + 0.5))
+        bind_bounding_box(new_transform, new_bb, order="F")
+
+        # Keep it for later
+        transforms[slit_id + 1] = new_transform
+
+        # Inverse based on slicer x value (detector y in science orientation)
+        x_value = np.round(np.nanmean(new_transform(x, y)[0]), 5)
+        slice_by_x[x_value] = Mapping((0,), n_inputs=3) | Const1D(slit_id + 1)
+
+    # Attach the slice map to the model
+    input_model.regions = regions
+    if not replace_wcs:
+        # Nothing more to do
+        return
+
+    # Slice name mapper for detector pixels
+    label_mapper = selector.LabelMapperArray(regions)
+    inv_mapper = selector.LabelMapperDict(
+        inputs=("x_slice", "y_slice", "lam"),
+        mapper=slice_by_x,
+        inputs_mapping=Mapping((0,), n_inputs=3),
+        atol=1e-4,
+    )
+    label_mapper.inverse = inv_mapper
+
+    # detector to slicer transform, via a slice label mapper
+    det2slicer = selector.RegionsSelector(
+        ("x", "y"),
+        ("x_slice", "y_slice", "lam"),
+        label_mapper=label_mapper,
+        selector=transforms,
+        name="det2slicer",
+    )
+    det2slicer.inputs = ("x", "y")
+    det2slicer.outputs = ("x_slice", "y_slice", "lam")
+
+    # Make a do-nothing transform to allow a top-level bounding box to be set
+    # without a deep copy of the det2slicer transform
+    input2det = Identity(2)
+    input2det.name = "coord2det"
+    input2det.inputs = ("x", "y")
+    input2det.outputs = ("x", "y")
+
+    # Fix the slit name input for all further transforms - the value is not relevant.
+    slicer_idx = full_wcs.available_frames.index("slicer")
+    new_pipeline = [("coordinates", input2det), (full_wcs.pipeline[0].frame, det2slicer)]
+    for step in full_wcs.pipeline[slicer_idx:]:
+        new_transform = _fix_slit_name(step.transform, 0)
+        new_pipeline.append((step.frame, new_transform))
+
+    # Make a new WCS with the slice mapper
+    new_wcs = gwcs.WCS(new_pipeline)
+
+    # Attach the new WCS to the model
+    input_model.meta.wcs = new_wcs
 
 
 def _create_ifupost_transform(ifupost_slice):

@@ -41,5 +41,7 @@ def test_nirspec_bots_custom_extraction(run_extract, fitsdiff_default_kwargs):
     rtdata.get_truth(os.path.join("truth/test_nirspec_bots_extract1d", output))
 
     # Compare the results
+    # Ignore the custom extract1d file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_EXTR1D')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
