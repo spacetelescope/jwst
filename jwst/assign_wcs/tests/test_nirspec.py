@@ -1199,7 +1199,7 @@ def test_nrs_wcs_by_slit(mode):
         hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
         im = datamodels.ImageModel(hdul)
 
-    datamodel = assign_wcs_step.AssignWcsStep.call(im)
+    datamodel = assign_wcs_step.AssignWcsStep.call(im, nrs_ifu_slice_wcs=True)
     slit_ids = datamodel.meta.wcs.get_transform('gwa', 'slit_frame').slit_ids
     for slit_id in slit_ids:
         x, y = wcstools.grid_from_bounding_box(datamodel.meta.wcs.bounding_box[slit_id])
