@@ -97,7 +97,11 @@ def test_discontinuity_finder(generate_background_template):
 
 @pytest.mark.parametrize("n_repeats", [1, 10])
 def test_generate_background_masks(generate_background_template, n_repeats):
-    left, right = generate_background_masks(generate_background_template, n_repeats)
+    left, right = generate_background_masks(
+        generate_background_template,
+        n_repeats,
+        for_fitting=True
+    )
     # Test cutoff
     assert np.sum(right[BACKGROUND_MASK_CUTOFF:]) == 0.0
     # Check behavior across integrations

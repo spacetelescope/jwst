@@ -49,7 +49,7 @@ def find_discontinuity(image):
     return np.column_stack([x_discontinuity, np.arange(len(image))])
 
 
-def generate_background_masks(background, n_repeats):
+def generate_background_masks(background, n_repeats, for_fitting):
     """
     Generate background masks for the two distinct background regions.
 
@@ -69,6 +69,11 @@ def generate_background_masks(background, n_repeats):
     n_repeats : int
         The number of integrations in the science data, used to
         broadcast the mask into a 3-D array.
+    for_fitting : bool
+        If true, the right_mask will be truncated to only use pixels
+        left of the BACKGROUND_MASK_CUTOFF value, by default column 950.
+        If false, every pixel will belong to either left_mask or
+        right_mask.
 
     Returns
     -------
@@ -84,8 +89,9 @@ def generate_background_masks(background, n_repeats):
     mask_right = xx >= discontinuity[:, 0].reshape(-1, 1)
     mask_left = ~mask_right
 
-    # Remove background pixels rightward of cutoff from mask
-    mask_right[xx > BACKGROUND_MASK_CUTOFF] = False
+    # Remove background pixels rightward of cutoff from mask for template-fitting purposes
+    if for_fitting:
+        mask_right[xx > BACKGROUND_MASK_CUTOFF] = False
 
     # Broadcast mask shape to match data integrations
     mask_left = np.repeat(mask_left[np.newaxis, :, :], n_repeats, axis=0)
@@ -164,7 +170,7 @@ def subtract_soss_bkg(
     # Iterate over template backgrounds in reference file to find best-fit template
     for t_idx, template in enumerate(bkg_refmodel.data):
         # Generate masks for template matching
-        masks = generate_background_masks(template, data.shape[-3])
+        masks = generate_background_masks(template, data.shape[-3], for_fitting=True)
 
         template = np.repeat(template[np.newaxis, :, :], data.shape[-3], axis=0)
 
@@ -194,7 +200,9 @@ def subtract_soss_bkg(
         return None
 
     # With template determined, regenerate masks for separate scaling
-    masks = generate_background_masks(bkg_refmodel.data[best_fit_template_idx], data.shape[-3])
+    masks = generate_background_masks(
+        bkg_refmodel.data[best_fit_template_idx], data.shape[-3], for_fitting=False
+    )
 
     # Special behavior for ImageModels
     if len(input_model.data.shape) < 3:
