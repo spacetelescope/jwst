@@ -84,13 +84,12 @@ def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwar
     assert diff.identical, diff.report()
 
 
-@pytest.mark.parametrize('suffix', ['cal', 'x1d', 'c1d'])
-@pytest.mark.parametrize('source_id', ['s000000015', 's000000104'])
-def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, source_id, fitsdiff_default_kwargs):
+@pytest.mark.parametrize('suffix', ['x1d', 'c1d'])
+def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, fitsdiff_default_kwargs):
     """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data"""
     rtdata = rtdata_module
     rtdata.input = "jw01324-o001_20220629t171902_spec3_003_asn.json"
-    output = "jw01324-o001_" + source_id + "_niriss_f115w-gr150c-gr150r_" + suffix + ".fits"
+    output = "jw01324-o001_t0000_niriss_f115w-gr150c-gr150r_" + suffix + ".fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 
