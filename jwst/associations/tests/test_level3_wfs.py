@@ -1,24 +1,18 @@
 """test_level3_dithers: Test of WFS rules."""
 
-from jwst.associations.tests import helpers
+from astropy.utils.data import get_pkg_data_filename
 
+from jwst.associations.tests import helpers
 from jwst.associations import generate
 from jwst.associations.lib.utilities import constrain_on_candidates
-
-# Generate Level3 associations
-all_candidates = constrain_on_candidates(None)
-rules = helpers.registry_level3_only(global_constraints=all_candidates)
-pool = helpers.combine_pools(
-    helpers.t_path('data/pool_004_wfs.csv')
-)
-level3_asns = generate(pool, rules)
 
 
 class TestLevel3WFS(helpers.BasePoolRule):
 
     pools = [
         helpers.PoolParams(
-            path=helpers.t_path('data/pool_004_wfs.csv'),
+            path=get_pkg_data_filename(
+                "data/pool_004_wfs.csv", package="jwst.associations.tests"),
             n_asns=42,
             n_orphaned=0
         ),
@@ -31,7 +25,13 @@ class TestLevel3WFS(helpers.BasePoolRule):
 
 def test_wfs_duplicate_product_names():
     """Test for duplicate product names"""
-    global level3_asns
+
+    # Generate Level3 associations
+    rules = helpers.registry_level3_only(
+        global_constraints=constrain_on_candidates(None))
+    pool = helpers.combine_pools(get_pkg_data_filename(
+        "data/pool_004_wfs.csv", package="jwst.associations.tests"))
+    level3_asns = generate(pool, rules)
 
     name_list = [
         product['name']

@@ -1,12 +1,12 @@
 """Test basic usage of Level2 associations"""
 import re
 
+from astropy.utils.data import get_pkg_data_filename
+
 from jwst.associations.tests.helpers import (
     combine_pools,
     registry_level2_only,
-    t_path
 )
-
 from jwst.associations import (
     generate,
     load_asn,
@@ -17,17 +17,11 @@ REGEX_LEVEL2A = r'(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)'
 
 
 def from_level2_schema():
-    with open(t_path('data/asn_level2.json')) as asn_file:
+    with open(get_pkg_data_filename(
+        "data/asn_level2.json", package="jwst.associations.tests")
+    ) as asn_file:
         asn = load_asn(asn_file)
     return [asn]
-
-
-def generate_from_pool(pool_path):
-    """Generate associations from pools"""
-    rules = registry_level2_only()
-    pool = combine_pools(t_path(pool_path))
-    asns = generate(pool, rules)
-    return asns
 
 
 def cmd_from_pool(pool_path, args):
@@ -45,7 +39,8 @@ def cmd_from_pool(pool_path, args):
         '--dry-run',
         '-D',
         '-r',
-        t_path('../lib/rules_level2b.py'),
+        get_pkg_data_filename(
+            "lib/rules_level2b.py", package="jwst.associations"),
         '--ignore-default'
     ]
     full_args.extend(args)
@@ -54,8 +49,10 @@ def cmd_from_pool(pool_path, args):
 
 
 def test_level2_productname():
-    asns = generate_from_pool('data/pool_002_image_miri.csv')
-    for asn in asns:
+    rules = registry_level2_only()
+    pool = combine_pools(get_pkg_data_filename(
+        "data/pool_002_image_miri.csv", package="jwst.associations.tests"))
+    for asn in generate(pool, rules):
         for product in asn['products']:
             science = [
                 member

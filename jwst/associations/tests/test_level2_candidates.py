@@ -1,12 +1,11 @@
 """Test Level2 candidate operation"""
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations.tests.helpers import (
     level2_rule_path,
-    mkstemp_pool_file,
-    t_path,
+    combine_pools,
 )
-
 from jwst.associations.main import Main
 
 
@@ -40,14 +39,21 @@ from jwst.associations.main import Main
         ),
     ]
 )
-def test_candidate_observation(partial_args, n_asns):
-    with mkstemp_pool_file(t_path('data/pool_001_candidates.csv')) as pool_path:
-        cmd_args = [
-            pool_path,
-            '--dry-run',
-            '-r', level2_rule_path(),
-            '--ignore-default',
-        ]
-        cmd_args.extend(partial_args)
-        generated = Main.cli(cmd_args)
-        assert len(generated.associations) == n_asns
+def test_candidate_observation(partial_args, n_asns, tmp_path):
+    pool_path = str(tmp_path / "pool.csv")
+    pool = combine_pools(
+        get_pkg_data_filename(
+            "data/pool_001_candidates.csv",
+            package="jwst.associations.tests"
+        )
+    )
+    pool.write(pool_path, format="ascii", delimiter="|")
+    cmd_args = [
+        pool_path,
+        '--dry-run',
+        '-r', level2_rule_path(),
+        '--ignore-default',
+    ]
+    cmd_args.extend(partial_args)
+    generated = Main.cli(cmd_args)
+    assert len(generated.associations) == n_asns

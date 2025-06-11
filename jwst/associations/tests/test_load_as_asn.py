@@ -2,12 +2,10 @@
 
 import pytest
 
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.associations.tests import helpers
-from jwst.associations.load_as_asn import (
-    LoadAsLevel2Asn
-)
+from jwst.associations.load_as_asn import LoadAsLevel2Asn
 
 DEFAULT_NAME = 'singleton'
 
@@ -39,7 +37,8 @@ def test_lv2_datamodel():
 
 
 def test_lv2_asn():
-    asn_file = helpers.t_path('data/asn_level2.json')
+    asn_file = get_pkg_data_filename(
+        "data/asn_level2.json", package="jwst.associations.tests")
     asn = LoadAsLevel2Asn.load(asn_file)
     assert asn.filename == asn_file
     assert len(asn['products']) == 6
