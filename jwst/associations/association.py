@@ -17,8 +17,7 @@ __all__ = ["Association"]
 
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 
 # Timestamp template
 _TIMESTAMP_TEMPLATE = "%Y%m%dt%H%M%S"

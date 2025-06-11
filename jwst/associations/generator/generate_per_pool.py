@@ -8,8 +8,7 @@ from jwst.associations.registry import AssociationRegistry
 __all__ = ["generate_per_pool"]
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 
 # Ruleset names
 DISCOVER_RULESET = "discover"

@@ -10,8 +10,7 @@ from . import AssociationPool
 __all__ = ["mkpool"]
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 # Header keywords to ignore

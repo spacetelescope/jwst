@@ -3,8 +3,7 @@
 from collections import Counter
 import logging
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 
 
 def sort_by_candidate(asns):

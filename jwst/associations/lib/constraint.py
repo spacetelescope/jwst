@@ -19,8 +19,7 @@ __all__ = [
 ]
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 
 
 class SimpleConstraintABC(abc.ABC):

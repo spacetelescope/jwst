@@ -8,8 +8,7 @@ __all__ = ["asn_gather"]
 
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 

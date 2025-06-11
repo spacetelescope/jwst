@@ -55,8 +55,7 @@ __all__ = [
 ]
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = RegistryMarker.schema(libpath() / "asn_schema_jw_level3.json")

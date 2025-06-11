@@ -9,8 +9,7 @@ from numpy.ma import masked
 from jwst.associations import config
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 
 
 def constrain_on_candidates(candidates):

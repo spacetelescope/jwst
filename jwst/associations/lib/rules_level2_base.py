@@ -33,8 +33,7 @@ from jwst.associations.registry import RegistryMarker
 from jwst.lib.suffix import remove_suffix
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 
 __all__ = [
     "_EMPTY",

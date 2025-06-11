@@ -126,7 +126,7 @@ DMS_config = {
 }
 
 
-def log_config(name=None, user_name=None, logger_config=None, config=None, merge=True):
+def log_config(name=None, logger_config=None, config=None, merge=True):
     """
     Set up logging with defaults.
 
@@ -138,10 +138,6 @@ def log_config(name=None, user_name=None, logger_config=None, config=None, merge
     name : str
         The name of the logger to instantiate.
         If None, the root logger will be modified.
-
-    user_name : str
-        User-understandable name. If not specified, it will be the same
-        as `name`.
 
     logger_config : dict
         The dict to use to setup the logger. This is used
@@ -198,8 +194,6 @@ def log_config(name=None, user_name=None, logger_config=None, config=None, merge
     """
     global context
 
-    if user_name is None:
-        user_name = "root" if name is None else name
     if logger_config is None:
         logger_config = {}
     if config is None:

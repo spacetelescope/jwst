@@ -9,8 +9,7 @@ from jwst.associations import config
 
 __all__ = ["prune"]
 
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 
 # Duplicate association counter
 # Used in function `prune_remove`

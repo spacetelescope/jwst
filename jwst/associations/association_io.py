@@ -10,8 +10,7 @@ from .exceptions import AssociationNotValidError
 from .lib.member import Member
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.associations")
 
 __all__: list = []
 
