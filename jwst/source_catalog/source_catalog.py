@@ -23,7 +23,7 @@ from jwst import __version__ as jwst_version
 
 from ._wcs_helpers import pixel_scale_angle_at_skycoord
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.source_catalog")
 
 
 class JWSTSourceCatalog:

@@ -4,7 +4,7 @@ import numpy as np
 from . import lg_model
 from . import utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.ami")
 
 
 def create_afflist_rot(rotdegs):

@@ -7,8 +7,7 @@ import logging
 __all__ = ["Signal", "Signals", "SignalsNotAClass"]
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.lib")
 
 Slot = namedtuple("Slot", ["func", "single_shot"])
 """Slot data structure."""

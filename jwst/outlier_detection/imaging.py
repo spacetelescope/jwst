@@ -13,7 +13,7 @@ from .utils import (
     median_with_resampling,
 )
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.outlier_detection")
 
 
 __all__ = ["detect_outliers"]

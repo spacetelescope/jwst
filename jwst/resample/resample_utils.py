@@ -23,7 +23,7 @@ from stcal.resample.utils import build_mask as _stcal_build_mask
 
 __all__ = ["build_mask", "resampled_wcs_from_models"]
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.resample")
 
 
 def resampled_wcs_from_models(

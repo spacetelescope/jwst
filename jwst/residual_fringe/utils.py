@@ -15,7 +15,7 @@ from BayesicFitting import Fitter
 from jwst.residual_fringe.fitter import spline_fitter
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.residual_fringe")
 log.setLevel(logging.INFO)
 
 # Number of knots for bkg model if no other info provided

@@ -26,7 +26,7 @@ def test_nirspec_missing_msa_fail(rtdata, fitsdiff_default_kwargs, monkeypatch):
     # (probably stpipe or the association generator) and causes caplog
     # to sometimes miss the message
     watcher = LogWatcher("Missing MSA meta (MSAMETFL) file")
-    monkeypatch.setattr(logging.getLogger("jwst.assign_wcs.nirspec"), "error", watcher)
+    monkeypatch.setattr(logging.getLogger("stpipe.jwst.assign_wcs"), "error", watcher)
 
     with pytest.raises(Exception):
         Step.from_cmdline(args)
@@ -52,7 +52,7 @@ def test_nirspec_missing_msa_nofail(rtdata, fitsdiff_default_kwargs, monkeypatch
     # (probably stpipe or the association generator) and causes caplog
     # to sometimes miss the message
     watcher = LogWatcher("Missing MSA meta (MSAMETFL) file")
-    monkeypatch.setattr(logging.getLogger("jwst.assign_wcs.nirspec"), "error", watcher)
+    monkeypatch.setattr(logging.getLogger("stpipe.jwst.assign_wcs"), "error", watcher)
 
     Step.from_cmdline(args)
 

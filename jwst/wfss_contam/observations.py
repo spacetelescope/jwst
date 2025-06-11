@@ -13,7 +13,7 @@ import logging
 from photutils.background import Background2D, MedianBackground
 from astropy.stats import SigmaClip
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.wfss_contam")
 
 
 def background_subtract(

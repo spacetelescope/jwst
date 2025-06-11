@@ -12,7 +12,7 @@ from photutils.background import Background2D, MedianBackground
 from photutils.utils.exceptions import NoDetectionsWarning
 from photutils.segmentation import detect_sources, deblend_sources
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.source_catalog")
 
 
 class JWSTBackground:

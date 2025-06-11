@@ -6,7 +6,7 @@ from jwst.stpipe import Step
 
 from . import charge_migration
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.charge_migration")
 
 __all__ = ["ChargeMigrationStep"]
 

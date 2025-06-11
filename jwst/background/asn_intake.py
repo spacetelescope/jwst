@@ -4,7 +4,7 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.background")
 
 
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]

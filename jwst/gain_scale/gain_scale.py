@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.gain_scale")
 
 
 def do_correction(output_model, gain_factor):

@@ -3,7 +3,7 @@ from jwst.datamodels import ModelContainer
 import logging
 from pathlib import Path
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.cube_build")
 
 
 class DataTypes:

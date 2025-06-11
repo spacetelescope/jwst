@@ -10,8 +10,7 @@ from scipy.ndimage import median_filter
 
 from stdatamodels.jwst.datamodels import dqflags
 
-log = logging.getLogger(__name__)
-logging.captureWarnings(True)
+log = logging.getLogger("stpipe.jwst.ami")
 
 micron = 1.0e-6
 filts = ["F277W", "F380M", "F430M", "F480M", "F356W", "F444W"]

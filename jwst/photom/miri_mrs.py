@@ -3,7 +3,7 @@ import numpy as np
 from scipy.interpolate import RegularGridInterpolator
 from gwcs.wcstools import grid_from_bounding_box
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.photom")
 
 # Set of routines to find a  correction for a time-wavelength
 # photometric response that is particularly significant at long wavelengths.

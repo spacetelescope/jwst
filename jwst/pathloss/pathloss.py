@@ -13,7 +13,7 @@ from jwst.lib.wcs_utils import get_wavelengths
 from jwst.lib.pipe_utils import match_nans_and_flags
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.pathloss")
 
 
 # There are 30 slices in the NIRSpec IFU, numbered from 0 to 29

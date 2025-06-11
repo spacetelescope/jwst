@@ -11,8 +11,7 @@ from pathlib import Path
 from jwst.lib.set_velocity_aberration import add_dva
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.scripts")
 
 
 def parse_args(args):

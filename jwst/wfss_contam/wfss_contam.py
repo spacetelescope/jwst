@@ -9,7 +9,7 @@ from stdatamodels.jwst import datamodels
 from .observations import Observation
 from .sens1d import get_photom_data
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.wfss_contam")
 
 
 def contam_corr(input_model, waverange, photom, max_cores):

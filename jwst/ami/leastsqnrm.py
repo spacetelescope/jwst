@@ -6,8 +6,7 @@ import numpy.linalg as linalg
 from scipy.special import comb
 
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+log = logging.getLogger("stpipe.jwst.ami")
 
 
 def replacenan(array):

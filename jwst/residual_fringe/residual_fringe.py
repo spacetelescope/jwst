@@ -13,7 +13,7 @@ from stdatamodels.jwst import datamodels
 from jwst.stpipe import Step
 from jwst.residual_fringe import utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.residual_fringe")
 
 # Noise factor for DER_SNR spectroscopic signal-to-noise calculation
 # (see Stoehr, ADASS 2008: https://archive.stsci.edu/vodocs/der_snr.pdf)

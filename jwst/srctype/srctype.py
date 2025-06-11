@@ -3,7 +3,7 @@ from stdatamodels.jwst import datamodels
 import logging
 from jwst.lib import pipe_utils
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.srctype")
 
 
 def set_source_type(input_model, source_type=None):

@@ -8,7 +8,7 @@ import numpy as np
 from asdf.tags.core.ndarray import asdf_datatype_to_numpy_dtype
 from stdatamodels.jwst import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.datamodels")
 
 
 def determine_vector_and_meta_columns(input_datatype, output_datatype):

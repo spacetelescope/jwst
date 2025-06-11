@@ -12,7 +12,7 @@ from jwst.datamodels import ModelContainer
 from jwst.assign_wcs import nirspec  # For NIRSpec IFU data
 from jwst.lib.wcs_utils import get_wavelengths
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.master_background")
 
 WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM", "NRC_TSGRISM"]
 

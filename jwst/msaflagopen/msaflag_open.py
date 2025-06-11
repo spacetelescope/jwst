@@ -18,7 +18,7 @@ from jwst.assign_wcs.nirspec import (
 )
 from jwst.lib.basic_utils import LoggingContext
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.msaflagopen")
 
 
 FAILEDOPENFLAG = datamodels.dqflags.pixel["MSA_FAILED_OPEN"]

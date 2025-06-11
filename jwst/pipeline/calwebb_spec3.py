@@ -30,7 +30,7 @@ from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure, make_w
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.pipeline")
 
 __all__ = ["Spec3Pipeline"]
 

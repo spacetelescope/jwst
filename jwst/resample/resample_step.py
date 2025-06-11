@@ -9,7 +9,7 @@ from jwst.resample.resample_utils import load_custom_wcs
 from . import resample
 from jwst.stpipe import Step
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.resample")
 
 __all__ = ["ResampleStep"]
 

@@ -2,7 +2,7 @@ import numpy as np
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.background")
 
 
 def subtract(model1, model2):

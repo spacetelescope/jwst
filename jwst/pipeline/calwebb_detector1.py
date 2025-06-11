@@ -29,7 +29,7 @@ from jwst.gain_scale import gain_scale_step
 __all__ = ["Detector1Pipeline"]
 
 # Define logging
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.pipeline")
 
 
 class Detector1Pipeline(Pipeline):

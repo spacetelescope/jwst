@@ -10,7 +10,7 @@ from photutils.aperture import CircularAperture, CircularAnnulus, ApertureStats
 
 from stdatamodels.jwst.datamodels import CubeModel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.tso_photometry")
 
 
 def tso_aperture_photometry(

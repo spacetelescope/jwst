@@ -6,7 +6,7 @@ import warnings
 import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.coron")
 
 
 def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):

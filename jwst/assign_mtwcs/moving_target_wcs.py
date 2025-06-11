@@ -21,7 +21,7 @@ from jwst.stpipe.utilities import record_step_status
 from jwst.assign_wcs.util import update_s_region_imaging
 from jwst.lib.exposure_types import IMAGING_TYPES
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.assign_mtwcs")
 
 __all__ = ["assign_moving_target_wcs"]
 

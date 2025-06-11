@@ -9,7 +9,7 @@ import numpy as np
 from jwst.lib import pipe_utils
 from . import x_irs2
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.ipc")
 
 NumRefPixels = namedtuple("NumRefPixels",
                           ["bottom_rows", "top_rows",

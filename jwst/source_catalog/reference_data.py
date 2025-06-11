@@ -8,7 +8,7 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, ABVegaOffsetModel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.source_catalog")
 
 
 class ReferenceData:

@@ -7,7 +7,7 @@ from stdatamodels.jwst import datamodels
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.coron")
 
 
 def snr_image(target_model):

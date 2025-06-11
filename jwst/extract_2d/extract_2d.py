@@ -7,7 +7,7 @@ import logging
 from .nirspec import nrs_extract2d
 from .grisms import extract_grism_objects, extract_tso_object
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.extract_2d")
 
 
 __all__ = ["extract2d"]

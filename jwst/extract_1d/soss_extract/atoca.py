@@ -16,7 +16,7 @@ from . import atoca_utils
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.extract_1d")
 
 
 class MaskOverlapError(Exception):

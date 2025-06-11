@@ -11,8 +11,7 @@ from requests.adapters import HTTPAdapter, Retry
 from .engdb_lib import EngDB_Value, EngdbABC, FORCE_STATUSES, RETRIES, TIMEOUT
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.lib")
 
 # #############################################
 # Where is the engineering service? Its HERE!!!

@@ -22,8 +22,7 @@ API_URI = "api/v0.1/Download/file"
 SERVICE_URI = "mast:jwstedb/"
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.lib")
 
 
 class EngdbMast(EngdbABC):

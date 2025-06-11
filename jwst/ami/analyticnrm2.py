@@ -10,8 +10,7 @@ from . import leastsqnrm
 from . import utils
 from . import hextransformee
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+log = logging.getLogger("stpipe.jwst.ami")
 
 
 def jinc(x, y, d, lam, pitch, offx=0.0, offy=0.0):

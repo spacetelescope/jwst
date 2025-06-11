@@ -127,9 +127,7 @@ def test_make_rate(log_watcher):
     shape = (3, 5, 10, 10)
     ramp_model = make_small_ramp_model(shape)
 
-    watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise", message="Creating draft rate file"
-    )
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Creating draft rate file")
     result = cfn.make_rate(ramp_model, return_cube=True)
     assert isinstance(result, datamodels.CubeModel)
     assert result.data.shape == (shape[0], shape[2], shape[3])
@@ -150,7 +148,7 @@ def test_make_rate(log_watcher):
 def test_postprocess_rate_nirspec(log_watcher):
     rate_model = make_nirspec_mos_model()
 
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="Assigning a WCS")
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Assigning a WCS")
     result = cfn.post_process_rate(rate_model, assign_wcs=True)
     assert isinstance(result.meta.wcs, gwcs.WCS)
     assert np.sum(result.dq & datamodels.dqflags.pixel["MSA_FAILED_OPEN"]) == 0
@@ -169,9 +167,7 @@ def test_postprocess_rate_miri(log_watcher):
     rate_model = make_small_rate_model()
     assert np.sum(rate_model.dq & datamodels.dqflags.pixel["DO_NOT_USE"]) == 0
 
-    watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise", message="Retrieving flat DQ"
-    )
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Retrieving flat DQ")
     result = cfn.post_process_rate(rate_model, flat_dq=True)
     watcher.assert_seen()
     assert np.sum(result.dq & datamodels.dqflags.pixel["DO_NOT_USE"]) > 0
@@ -231,7 +227,7 @@ def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
     image[1, 1] += -1
 
     # Center found is close to zero, printed when verbose=True
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="center: 0.000")
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="center: 0.000")
     cfn.clip_to_background(
         image, mask, fit_histogram=fit_histogram, lower_half_only=lower_half_only, verbose=True
     )
@@ -264,7 +260,7 @@ def test_clip_to_background(log_watcher, fit_histogram, lower_half_only):
 
 def test_clip_to_background_fit_fails(log_watcher):
     shape = (10, 10)
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise")
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise")
 
     # histogram failure: all data NaN
     image = np.full(shape, np.nan)
@@ -385,7 +381,7 @@ def test_create_mask_from_rateints():
 
 
 def test_background_level(log_watcher):
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise")
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise")
 
     shape = (100, 100)
     image = np.full(shape, 1.0)
@@ -480,16 +476,14 @@ def test_fft_clean_error(monkeypatch, log_watcher):
     mask = np.full(shape, True)
     image = np.full(shape, 1.0)
 
-    watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise", message="Error cleaning image"
-    )
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Error cleaning image")
     cleaned_image = cfn.fft_clean_full_frame(image.copy(), mask, "NRS1")
     assert cleaned_image is None
     watcher.assert_seen()
 
 
 def test_fft_subarray_clean_error(monkeypatch, log_watcher):
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise")
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise")
 
     shape = (10, 10)
     image = np.full(shape, 1.0)
@@ -657,7 +651,7 @@ def test_do_correction_unsupported(log_watcher):
     ramp_model = make_small_ramp_model()
     ramp_model.meta.exposure.type = "MIR_MRS"
 
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="not supported")
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="not supported")
     cleaned, _, _, _, status = cfn.do_correction(ramp_model)
     assert cleaned is ramp_model
     assert status == "SKIPPED"
@@ -672,8 +666,7 @@ def test_do_correction_no_fit_by_channel(log_watcher):
     # fit_by_channel is only used for NIR data -
     # log a warning, but step still completes
     watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise",
-        message="can only be used for full-frame NIR",
+        "stpipe.jwst.clean_flicker_noise", message="can only be used for full-frame NIR"
     )
     cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_by_channel=True)
     assert status == "COMPLETE"
@@ -690,8 +683,7 @@ def test_do_correction_fft_not_allowed(log_watcher, exptype):
 
     # not allowed for MIRI, NIRCAM, NIRISS
     watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise",
-        message=f"cannot be applied to exp_type {exptype}",
+        "stpipe.jwst.clean_flicker_noise", message=f"cannot be applied to exp_type {exptype}"
     )
     cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_method="fft")
     assert cleaned is ramp_model
@@ -757,9 +749,7 @@ def test_do_correction_user_mask_mismatch(tmp_path, input_type, log_watcher):
     mask_model.save(user_mask)
     mask_model.close()
 
-    watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise", message="Mask does not match"
-    )
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Mask does not match")
     cleaned, output_mask, _, _, status = cfn.do_correction(
         model, user_mask=user_mask, save_mask=True
     )
@@ -782,9 +772,7 @@ def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
     mask_model.save(user_mask)
     mask_model.close()
 
-    watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise", message="Mask does not match"
-    )
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Mask does not match")
     cleaned, output_mask, _, _, status = cfn.do_correction(
         model, user_mask=user_mask, save_mask=True
     )
@@ -848,7 +836,7 @@ def test_do_correction_clean_fails(monkeypatch, log_watcher):
     monkeypatch.setattr(cfn, "fft_clean_subarray", lambda *args, **kwargs: None)
 
     # Call again
-    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="Cleaning failed")
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Cleaning failed")
     cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_method="fft")
 
     # Error message issued, status is skipped,
@@ -912,9 +900,7 @@ def test_do_correction_with_flat_unity(tmp_path, input_type, log_watcher):
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
 
-    watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise", message="Dividing by flat"
-    )
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Dividing by flat")
     cleaned, _, _, _, status = cfn.do_correction(
         model, flat_filename=flat_file, background_method=None
     )
@@ -951,9 +937,7 @@ def test_do_correction_with_flat_structure(tmp_path, log_watcher, input_type, ap
     # multiply the data by the flat to mock real structure
     model.data *= flat.data
 
-    watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise", message="Dividing by flat"
-    )
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Dividing by flat")
     cleaned, _, _, _, status = cfn.do_correction(model, flat_filename=flat_file)
     assert status == "COMPLETE"
 
@@ -986,9 +970,7 @@ def test_do_correction_with_flat_subarray(tmp_path, log_watcher):
     # multiply the data by the flat to mock real structure
     model.data *= flat.data[:20, :20]
 
-    watcher = log_watcher(
-        "jwst.clean_flicker_noise.clean_flicker_noise", message="Extracting matching subarray"
-    )
+    watcher = log_watcher("stpipe.jwst.clean_flicker_noise", message="Extracting matching subarray")
     cleaned, _, _, _, status = cfn.do_correction(model, flat_filename=flat_file)
     assert status == "COMPLETE"
     watcher.assert_seen()

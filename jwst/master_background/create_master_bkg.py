@@ -4,7 +4,7 @@ import numpy as np
 
 from stdatamodels.jwst import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.master_background")
 
 
 def create_background(wavelength, surf_bright):

@@ -27,7 +27,7 @@ from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
 from .cube_match_sky_pointcloud import cube_wrapper  # c extension
 from .cube_match_sky_driz import cube_wrapper_driz  # c extension
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.cube_build")
 
 
 class IFUCubeData:

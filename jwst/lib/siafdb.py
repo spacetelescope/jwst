@@ -16,8 +16,7 @@ from pathlib import Path
 from .basic_utils import LoggingContext
 
 # Setup logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.lib")
 
 # Map instrument three character mnemonic to full name
 INSTRUMENT_MAP = {"fgs": "fgs", "mir": "miri", "nis": "niriss", "nrc": "nircam", "nrs": "nirspec"}

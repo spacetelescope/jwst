@@ -14,7 +14,7 @@ HORIZONTAL = 1
 VERTICAL = 2
 """Vertical dispersion axis."""
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.extract_1d")
 
 
 def middle_from_wcs(wcs, bounding_box, dispaxis):

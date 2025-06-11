@@ -13,7 +13,7 @@ from jwst.lib.dispaxis import get_dispersion_direction
 from jwst.lib.wcs_utils import get_wavelengths
 from .miri import store_dithered_position
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.assign_wcs")
 
 __all__ = ["load_wcs"]
 

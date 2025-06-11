@@ -5,7 +5,7 @@ from stdatamodels.jwst import datamodels
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.coron")
 
 
 def make_cube(input_models):

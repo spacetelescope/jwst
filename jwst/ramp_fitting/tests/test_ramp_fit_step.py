@@ -347,7 +347,7 @@ def test_set_group_warnings(firstgroup, lastgroup, message, log_watcher):
     groupdqflags = dqflags.group
     groupdq = np.zeros((1, ngroups, 1024, 1024), dtype=np.uint16)
 
-    watcher = log_watcher("jwst.ramp_fitting.ramp_fit_step", message=message)
+    watcher = log_watcher("stpipe.jwst.ramp_fitting", message=message)
     set_groupdq(firstgroup, lastgroup, ngroups, groupdq, groupdqflags)
     watcher.assert_seen()
 

@@ -7,7 +7,7 @@ from stdatamodels.jwst.datamodels import CubeModel
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.coron")
 
 
 def align_fourier_lsq(reference, target, mask=None):

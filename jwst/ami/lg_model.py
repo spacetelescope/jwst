@@ -6,9 +6,7 @@ from . import analyticnrm2
 from . import utils
 from . import mask_definition_ami
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-
+log = logging.getLogger("stpipe.jwst.ami")
 
 m = 1.0
 mm = 1.0e-3 * m

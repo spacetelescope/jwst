@@ -6,7 +6,7 @@ import logging
 
 from stdatamodels.jwst.datamodels import dqflags
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.firstframe")
 
 
 def do_correction(output, bright_use_group1=False):

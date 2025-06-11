@@ -4,7 +4,7 @@ import numpy as np
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.coron")
 
 
 def klip(target_model, refs_model, truncate):

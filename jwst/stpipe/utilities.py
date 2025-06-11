@@ -12,8 +12,7 @@ from importlib import import_module
 from jwst import datamodels
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.stpipe")
 
 # Step classes that are not user-api steps
 NON_STEPS = [

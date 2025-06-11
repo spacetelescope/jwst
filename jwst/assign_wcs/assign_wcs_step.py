@@ -10,7 +10,7 @@ from .nircam import imaging as nircam_imaging
 from .niriss import imaging as niriss_imaging
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.assign_wcs")
 
 __all__ = ["AssignWcsStep"]
 

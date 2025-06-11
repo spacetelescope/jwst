@@ -6,7 +6,7 @@ import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.charge_migration")
 
 GOOD = dqflags.group["GOOD"]
 DNU = dqflags.group["DO_NOT_USE"]

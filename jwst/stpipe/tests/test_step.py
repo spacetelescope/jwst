@@ -761,7 +761,7 @@ def test_finalize_logging(monkeypatch):
     pipeline = EmptyPipeline()
     model = datamodels.ImageModel()
     watcher = LogWatcher(f"Results used jwst version: {jwst_version}")
-    monkeypatch.setattr(logging.getLogger("jwst.stpipe.core"), "info", watcher)
+    monkeypatch.setattr(logging.getLogger("stpipe.jwst.stpipe"), "info", watcher)
     pipeline.run(model)
     assert watcher.seen
 

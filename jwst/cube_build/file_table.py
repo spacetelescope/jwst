@@ -1,7 +1,7 @@
 from stdatamodels.jwst import datamodels
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.cube_build")
 
 
 class FileTable:

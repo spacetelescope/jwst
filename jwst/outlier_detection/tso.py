@@ -9,7 +9,7 @@ from ._fileio import save_median
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.outlier_detection")
 
 
 __all__ = ["detect_outliers"]

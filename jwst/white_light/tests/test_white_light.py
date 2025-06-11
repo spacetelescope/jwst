@@ -152,7 +152,7 @@ def test_white_light(make_datamodel, monkeypatch):
     data = make_datamodel
 
     watcher = LogWatcher("There were 1 spectra in order 1 with no mid time (20")
-    monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
+    monkeypatch.setattr(logging.getLogger("stpipe.jwst.white_light"), "warning", watcher)
     result = white_light(data)
     watcher.assert_seen()
 

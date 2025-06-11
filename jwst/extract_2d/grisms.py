@@ -19,7 +19,7 @@ from astropy.modeling import CompoundModel
 
 from jwst.assign_wcs import util
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.extract_2d")
 
 
 def extract_tso_object(

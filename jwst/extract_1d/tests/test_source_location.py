@@ -115,9 +115,7 @@ def test_location_from_wcs_missing_data(mock_miri_lrs_fs, log_watcher):
     model = mock_miri_lrs_fs
     model.meta.wcs.backward_transform = None
     watcher = log_watcher(
-        "jwst.extract_1d.source_location",
-        message="Dithered pointing location not found",
-        level="warning",
+        "stpipe.jwst.extract_1d", message="Dithered pointing location not found", level="warning"
     )
 
     # model is missing WCS information - None values are returned
@@ -129,7 +127,7 @@ def test_location_from_wcs_missing_data(mock_miri_lrs_fs, log_watcher):
 def test_location_from_wcs_wrong_exptype(mock_niriss_soss, log_watcher):
     # model is not a handled exposure type
     watcher = log_watcher(
-        "jwst.extract_1d.source_location",
+        "stpipe.jwst.extract_1d",
         message="Source position cannot be found for EXP_TYPE",
         level="warning",
     )
@@ -152,9 +150,7 @@ def test_location_from_wcs_bad_location(monkeypatch, mock_nirspec_fs_one_slit, l
 
     # WCS transform returns NaN for the location
     watcher = log_watcher(
-        "jwst.extract_1d.source_location",
-        message="Source position could not be determined",
-        level="warning",
+        "stpipe.jwst.extract_1d", message="Source position could not be determined", level="warning"
     )
     result = sl.location_from_wcs(model, None)
     assert result == (None, None, None, None)
@@ -183,7 +179,7 @@ def test_location_from_wcs_location_out_of_range(
 
     # WCS transform a value outside the bounding box
     watcher = log_watcher(
-        "jwst.extract_1d.source_location", message="outside the bounding box", level="warning"
+        "stpipe.jwst.extract_1d", message="outside the bounding box", level="warning"
     )
     result = sl.location_from_wcs(model, None)
     assert result == (None, None, None, None)

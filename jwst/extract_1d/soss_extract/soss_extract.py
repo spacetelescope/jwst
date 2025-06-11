@@ -26,7 +26,7 @@ from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_d
 from .pastasoss import get_soss_wavemaps, XTRACE_ORD1_LEN, XTRACE_ORD2_LEN
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.extract_1d")
 
 ORDER2_SHORT_CUTOFF = 0.58
 

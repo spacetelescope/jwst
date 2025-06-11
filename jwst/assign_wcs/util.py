@@ -21,7 +21,7 @@ from stdatamodels.jwst.transforms.models import GrismObject
 from jwst.lib.catalog_utils import SkyObject
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.assign_wcs")
 
 
 _MAX_SIP_DEGREE = 6

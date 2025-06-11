@@ -23,8 +23,7 @@ EMPTY_ASN_TABLE = {
 }
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.datamodels")
 
 
 class ModelContainer(Sequence):

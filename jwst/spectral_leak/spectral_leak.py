@@ -2,7 +2,7 @@ import numpy as np
 import logging
 from stdatamodels.jwst import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.spectral_leak")
 
 
 def do_correction(sp_leak_ref, ch1b, ch3a):

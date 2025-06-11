@@ -9,7 +9,7 @@ from stdatamodels.jwst.datamodels import dqflags, JwstDataModel
 from jwst.associations.lib.dms_base import TSO_EXP_TYPES
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.lib")
 
 
 def is_tso(model):

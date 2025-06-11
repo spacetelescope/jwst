@@ -7,7 +7,7 @@ from stdatamodels.jwst import datamodels
 from jwst.lib import reffile_utils
 from jwst.datamodels import dqflags  # type: ignore[attr-defined]
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.dq_init")
 
 
 # FGS guide star mode exposure types

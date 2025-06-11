@@ -242,7 +242,7 @@ def test_get_extract_parameters_extraction_type_none(
 ):
     input_model = mock_nirspec_fs_one_slit
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="Using extraction type")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Using extraction type")
     params = ex.get_extract_parameters(
         extract1d_ref_dict,
         input_model,
@@ -270,7 +270,7 @@ def test_get_extract_parameters_no_psf(
 ):
     input_model = mock_nirspec_fs_one_slit
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="Setting extraction type to 'box'")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Setting extraction type to 'box'")
     params = ex.get_extract_parameters(
         extract1d_ref_dict,
         input_model,
@@ -292,7 +292,7 @@ def test_get_extract_parameters_no_psf(
 
 
 def test_log_params(extract_defaults, log_watcher):
-    watcher = log_watcher("jwst.extract_1d.extract", message="Extraction parameters")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Extraction parameters")
 
     # Defaults don't have dispaxis assigned yet - parameters are not logged
     ex.log_initial_parameters(extract_defaults)
@@ -330,7 +330,7 @@ def test_populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec):
 def test_populate_time_keywords_no_table(
     mock_nirspec_fs_one_slit, mock_10_multi_int_spec, log_watcher
 ):
-    watcher = log_watcher("jwst.extract_1d.extract", message="no INT_TIMES table")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="no INT_TIMES table")
     ex.populate_time_keywords(mock_nirspec_fs_one_slit, mock_10_multi_int_spec)
 
     # No int_times table: warns and integration is set to simple index
@@ -354,7 +354,7 @@ def test_populate_time_keywords_multislit_table(
     mock_nirspec_mos.meta.exposure.nints = 10
     mock_nirspec_mos.int_times = mock_nirspec_bots.int_times
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="Not using INT_TIMES table")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Not using INT_TIMES table")
     ex.populate_time_keywords(mock_nirspec_mos, mock_10_spec)
     watcher.assert_seen()
 
@@ -368,7 +368,7 @@ def test_populate_time_keywords_averaged(
     mock_nirspec_fs_one_slit.meta.exposure.nints = 10
     mock_nirspec_fs_one_slit.int_times = mock_nirspec_bots.int_times
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="Not using INT_TIMES table")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Not using INT_TIMES table")
     ex.populate_time_keywords(mock_nirspec_fs_one_slit, mock_10_spec)
     watcher.assert_seen()
 
@@ -379,7 +379,7 @@ def test_populate_time_keywords_averaged(
 def test_populate_time_keywords_mismatched_table(mock_nirspec_bots, mock_10_spec, log_watcher):
     # mock 20 integrations - table has 10
     mock_nirspec_bots.data = np.vstack([mock_nirspec_bots.data, mock_nirspec_bots.data])
-    watcher = log_watcher("jwst.extract_1d.extract", message="Not using INT_TIMES table")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Not using INT_TIMES table")
     ex.populate_time_keywords(mock_nirspec_bots, mock_10_spec)
     watcher.assert_seen()
 
@@ -389,7 +389,7 @@ def test_populate_time_keywords_mismatched_table(mock_nirspec_bots, mock_10_spec
 
 def test_populate_time_keywords_missing_ints(mock_nirspec_bots, mock_10_spec, log_watcher):
     mock_nirspec_bots.meta.exposure.integration_start = 20
-    watcher = log_watcher("jwst.extract_1d.extract", message="does not include rows")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="does not include rows")
     ex.populate_time_keywords(mock_nirspec_bots, mock_10_spec)
     watcher.assert_seen()
 
@@ -403,7 +403,7 @@ def test_populate_time_keywords_ifu_table(
     mock_miri_ifu.meta.exposure.nints = 10
     mock_miri_ifu.int_times = mock_nirspec_bots.int_times
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="ignored for IFU")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="ignored for IFU")
     ex.populate_time_keywords(mock_miri_ifu, mock_10_spec)
     watcher.assert_seen()
 
@@ -414,7 +414,7 @@ def test_populate_time_keywords_ifu_table(
 def test_populate_time_keywords_mismatched_spec(
     mock_nirspec_bots, mock_2_multi_int_spec, log_watcher
 ):
-    watcher = log_watcher("jwst.extract_1d.extract", message="Don't understand n_output_spec")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Don't understand n_output_spec")
     ex.populate_time_keywords(mock_nirspec_bots, mock_2_multi_int_spec)
     watcher.assert_seen()
 
@@ -1331,7 +1331,7 @@ def test_extract_one_slit_multi_int(
     model = mock_nirspec_bots
     extract_defaults["dispaxis"] = 1
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="Extracting integration 2")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Extracting integration 2")
     result = ex.extract_one_slit(model, 1, simple_profile, None, None, extract_defaults)
     watcher.assert_seen()
 
@@ -1478,7 +1478,7 @@ def test_create_extraction_partial_match(create_extraction_inputs, log_watcher):
     # match a slit that has a mismatched spectral order specified
     create_extraction_inputs[4] = "slit7"
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="Spectral order 1 not found")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Spectral order 1 not found")
     with pytest.raises(ex.ContinueError):
         ex.create_extraction(*create_extraction_inputs)
     watcher.assert_seen()
@@ -1487,7 +1487,7 @@ def test_create_extraction_partial_match(create_extraction_inputs, log_watcher):
 def test_create_extraction_missing_dispaxis(create_extraction_inputs, log_watcher):
     create_extraction_inputs[0].meta.wcsinfo.dispersion_direction = None
     watcher = log_watcher(
-        "jwst.extract_1d.extract", message="dispersion direction information is missing"
+        "stpipe.jwst.extract_1d", message="dispersion direction information is missing"
     )
     with pytest.raises(ex.ContinueError):
         ex.create_extraction(*create_extraction_inputs)
@@ -1497,7 +1497,7 @@ def test_create_extraction_missing_dispaxis(create_extraction_inputs, log_watche
 def test_create_extraction_missing_wavelengths(create_extraction_inputs, log_watcher):
     model = create_extraction_inputs[0]
     model.wavelength = np.full_like(model.data, np.nan)
-    watcher = log_watcher("jwst.extract_1d.extract", message="Spectrum is empty; no valid data")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Spectrum is empty; no valid data")
     with pytest.raises(ex.ContinueError):
         ex.create_extraction(*create_extraction_inputs)
     watcher.assert_seen()
@@ -1511,7 +1511,7 @@ def test_create_extraction_nrs_apcorr(
     model.meta.cal_step.photom = "COMPLETE"
     create_extraction_inputs[0] = model
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="Tabulating aperture correction")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Tabulating aperture correction")
     ex.create_extraction(
         *create_extraction_inputs, apcorr_ref_model=nirspec_fs_apcorr, use_source_posn=False
     )
@@ -1525,7 +1525,7 @@ def test_create_extraction_one_int(create_extraction_inputs, mock_nirspec_bots, 
     create_extraction_inputs[0] = model
     create_extraction_inputs[4] = "S1600A1"
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="1 integration done")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="1 integration done")
     ex.create_extraction(*create_extraction_inputs, log_increment=1)
     output_model = create_extraction_inputs[2]
     assert len(output_model.spec) == 1
@@ -1537,7 +1537,7 @@ def test_create_extraction_log_increment(create_extraction_inputs, mock_nirspec_
     create_extraction_inputs[4] = "S1600A1"
 
     # all integrations are logged
-    watcher = log_watcher("jwst.extract_1d.extract", message="... 9 integrations done")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="... 9 integrations done")
     ex.create_extraction(*create_extraction_inputs, log_increment=1)
     watcher.assert_seen()
 
@@ -1562,7 +1562,7 @@ def test_create_extraction_use_source(
 
     monkeypatch.setattr(ex, "location_from_wcs", mock_source_location)
 
-    watcher = log_watcher("jwst.extract_1d.extract")
+    watcher = log_watcher("stpipe.jwst.extract_1d")
     if source_type != "POINT" and use_source is None:
         # If not specified, source position should be used only if POINT
         watcher.message = "Setting use_source_posn to False"
@@ -1596,7 +1596,7 @@ def test_create_extraction_use_trace(
         return 24, 7.74, 25, np.full(model.data.shape[-1], 25)
 
     monkeypatch.setattr(ex, "location_from_wcs", mock_source_location)
-    watcher = log_watcher("jwst.extract_1d.extract")
+    watcher = log_watcher("stpipe.jwst.extract_1d")
     if extract_width is not None:
         # If explicitly set to True, or unspecified + source type is POINT,
         # source position is used
@@ -1746,7 +1746,7 @@ def test_run_extract1d_apcorr(mock_miri_lrs_fs, miri_lrs_apcorr_file, log_watche
     model = mock_miri_lrs_fs
     model.meta.target.source_type = "POINT"
 
-    watcher = log_watcher("jwst.extract_1d.extract", message="Creating aperture correction")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Creating aperture correction")
     output_model, _, _, _ = ex.run_extract1d(model, apcorr_ref_name=miri_lrs_apcorr_file)
     watcher.assert_seen()
 
@@ -1762,7 +1762,7 @@ def test_run_extract1d_apcorr_optimal(
     # Aperture correction that is otherwise valid is nonetheless
     # turned off for optimal extraction
     watcher = log_watcher(
-        "jwst.extract_1d.extract", message="Turning off aperture correction for optimal extraction"
+        "stpipe.jwst.extract_1d", message="Turning off aperture correction for optimal extraction"
     )
     output_model, _, _, _ = ex.run_extract1d(
         model,
@@ -1780,7 +1780,7 @@ def test_run_extract1d_optimal_no_psf(mock_miri_lrs_fs, log_watcher):
     model.meta.target.source_type = "POINT"
 
     # Optimal extraction is turned off if there is no psf file provided
-    watcher = log_watcher("jwst.extract_1d.extract", message="Optimal extraction is not available")
+    watcher = log_watcher("stpipe.jwst.extract_1d", message="Optimal extraction is not available")
     output_model, _, _, _ = ex.run_extract1d(model, extraction_type="optimal")
     watcher.assert_seen()
 

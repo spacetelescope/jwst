@@ -163,9 +163,7 @@ def test_make_empty_recarray(defaults):
 def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
     # make a log watcher
     watcher = LogWatcher("Metadata could not be determined from input spec_table")
-    monkeypatch.setattr(
-        logging.getLogger("jwst.datamodels.utils.flat_multispec"), "warning", watcher
-    )
+    monkeypatch.setattr(logging.getLogger("stpipe.jwst.datamodels"), "warning", watcher)
 
     # First re-construct vector and meta columns from the input recarray
     output_table = copy.deepcopy(empty_recarray)

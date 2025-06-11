@@ -28,7 +28,7 @@ from .util import (
 from . import pointing
 from jwst.lib.reffile_utils import find_row
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.assign_wcs")
 
 __all__ = ["create_pipeline", "imaging", "niriss_soss", "niriss_soss_set_input", "wfss"]
 

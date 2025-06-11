@@ -13,8 +13,7 @@ import logging
 __all__ = ["Bar"]
 
 # Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
+logger = logging.getLogger("stpipe.jwst.lib")
 
 
 class _BarStub:

@@ -6,7 +6,7 @@ from . import oifits
 
 from stdatamodels.jwst import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.ami")
 
 
 class FringeFitter:

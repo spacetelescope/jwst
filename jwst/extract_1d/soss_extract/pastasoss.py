@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from scipy.interpolate import interp1d
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.extract_1d")
 
 SOSS_XDIM = 2048
 SOSS_YDIM = 300

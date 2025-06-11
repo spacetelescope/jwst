@@ -7,7 +7,7 @@ from jwst.stpipe.utilities import record_step_status
 from jwst.stpipe import Step
 from .moving_target_wcs import assign_moving_target_wcs
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.assign_mtwcs")
 
 __all__ = ["AssignMTWcsStep"]
 

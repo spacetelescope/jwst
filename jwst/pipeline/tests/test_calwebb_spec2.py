@@ -1,3 +1,4 @@
+import logging
 import os
 import shutil
 
@@ -8,19 +9,19 @@ from jwst.stpipe import Step
 from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 
 
-INPUT_FILE = "dummy_rate.fits"
-INPUT_FILE_2 = "dummy2_rate.fits"
-INPUT_ASN = "dummy_asn.json"
+INPUT_FILE = "mock_rate.fits"
+INPUT_FILE_2 = "mock2_rate.fits"
+INPUT_ASN = "mock_asn.json"
 OUTPUT_FILE = "custom_name.fits"
 OUTPUT_FILE_ASN = "custom_name_asn.fits"  # cannot reuse because everything runs in same cwd
 LOGFILE = "run_asn.log"
-LOGCFG = "test_logs.cfg"
 
 
 @pytest.fixture(scope="module")
-def make_dummy_rate_file(tmp_cwd_module):
+def make_mock_rate_file(tmp_cwd_module):
     """
-    Make and save a dummy rate file in the temporary working directory
+    Make and save a mock rate file in the temporary working directory.
+
     Partially copied from test_background.py
     """
     image = IFUImageModel((2048, 2048))
@@ -54,13 +55,13 @@ def make_dummy_rate_file(tmp_cwd_module):
 
 
 @pytest.fixture(scope="module")
-def make_dummy_association(make_dummy_rate_file):
+def make_mock_association(make_mock_rate_file):
     shutil.copy(INPUT_FILE, INPUT_FILE_2)
     os.system(f"asn_from_list -o {INPUT_ASN} -r DMSLevel2bBase {INPUT_FILE} {INPUT_FILE_2}")
 
 
 @pytest.fixture(scope="module", params=[OUTPUT_FILE])
-def run_spec2_pipeline(make_dummy_rate_file, request):
+def run_spec2_pipeline(make_mock_rate_file, request):
     """
     Run pipeline, saving one intermediate step
     and skipping most of the rest for runtime
@@ -84,22 +85,19 @@ def run_spec2_pipeline(make_dummy_rate_file, request):
 
 
 @pytest.fixture(scope="module", params=[OUTPUT_FILE_ASN])
-def run_spec2_pipeline_asn(make_dummy_association, request):
+def run_spec2_pipeline_asn(make_mock_association, request):
     """
     Two-product association passed in. This should trigger a warning
     and the output_file parameter should be ignored.
     """
     # save warnings to logfile so can be checked later
-    logcfg_content = f"[*] \n \
-        level = INFO \n \
-        handler = file:{LOGFILE}"
-    with open(LOGCFG, "w") as f:
-        f.write(logcfg_content)
+    log = logging.getLogger("stpipe")
+    handler = logging.FileHandler(LOGFILE)
+    log.addHandler(handler)
 
     args = [
         "calwebb_spec2",
         INPUT_ASN,
-        f"--logcfg={LOGCFG}",
         "--steps.badpix_selfcal.skip=true",
         "--steps.msa_flagging.skip=true",
         "--steps.nsclean.skip=true",
@@ -113,6 +111,8 @@ def run_spec2_pipeline_asn(make_dummy_association, request):
     ]
 
     Step.from_cmdline(args)
+
+    log.removeHandler(handler)
 
 
 def test_output_file_rename(run_spec2_pipeline):

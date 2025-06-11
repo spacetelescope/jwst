@@ -8,7 +8,7 @@ from stdatamodels.jwst.datamodels import dqflags
 import copy
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.ami")
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]

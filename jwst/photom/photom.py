@@ -14,7 +14,7 @@ from jwst.lib.dispaxis import get_dispersion_direction
 from . import miri_mrs
 from . import miri_imager
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.photom")
 
 PHOT_TOL = 0.001  # relative tolerance between PIXAR_* keys
 

@@ -5,7 +5,7 @@
 
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.group_scale")
 
 
 def do_correction(model):

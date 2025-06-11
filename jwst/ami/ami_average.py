@@ -5,7 +5,7 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.ami")
 
 
 def average_lg(lg_products):

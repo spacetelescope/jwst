@@ -10,7 +10,7 @@ import logging
 from stdatamodels.jwst import datamodels
 from . import leastsqnrm
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.ami")
 
 
 class RawOifits:

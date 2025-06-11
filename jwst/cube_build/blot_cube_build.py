@@ -8,7 +8,7 @@ from jwst.assign_wcs.util import in_ifu_slice
 from . import instrument_defaults
 from .blot_median import blot_wrapper  # c extension
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.cube_build")
 
 
 class CubeBlot:

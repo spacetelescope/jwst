@@ -11,7 +11,7 @@ from jwst.ami import ami_normalize_step
 __all__ = ["Ami3Pipeline"]
 
 # Define logging
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.pipeline")
 
 
 class Ami3Pipeline(Pipeline):

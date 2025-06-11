@@ -192,7 +192,7 @@ def test_rf_step_long(
 
     # Synthetic input data is reasonable for MIRIFUSHORT, but is expected
     # to fail with a warning when treated as MIRIFULONG.
-    watcher = log_watcher("jwst.residual_fringe.residual_fringe", message="Skipping col")
+    watcher = log_watcher("stpipe.jwst.residual_fringe", message="Skipping col")
     result = ResidualFringeStep.call(model, skip=False)
     watcher.assert_seen()
 
@@ -264,7 +264,7 @@ def test_rf_step_low_snr(
     # set all the data to a very small value so SNR is too low to fit
     model.data[:] = 1e-6
 
-    watcher = log_watcher("jwst.residual_fringe.residual_fringe", message="SNR too low")
+    watcher = log_watcher("stpipe.jwst.residual_fringe", message="SNR too low")
     result = ResidualFringeStep.call(model, skip=False)
     watcher.assert_seen()
 

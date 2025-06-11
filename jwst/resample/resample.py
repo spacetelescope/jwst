@@ -21,7 +21,7 @@ from jwst.resample import resample_utils
 from jwst.assign_wcs import util as assign_wcs_util
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.resample")
 
 
 __all__ = [
@@ -39,7 +39,7 @@ _SUPPORTED_CUSTOM_WCS_PARS = [
     "rotation",
 ]
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.resample")
 
 
 class ResampleImage(Resample):

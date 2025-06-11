@@ -53,7 +53,7 @@ from jwst.lib import pipe_utils, reffile_utils
 from .irs2_subtract_reference import make_irs2_mask
 from .optimized_convolution import make_kernels, apply_conv_kernel
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.refpix")
 
 #
 # NIR Reference section dictionaries are zero indexed and specify the values
@@ -1246,7 +1246,6 @@ class NIRDataset(Dataset):
                 #
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration, group)
-        log.setLevel(logging.INFO)
         return
 
     def do_subarray_corrections(self):
@@ -1308,7 +1307,6 @@ class NIRDataset(Dataset):
                     thisgroup -= refpixvalue
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration, group)
-        log.setLevel(logging.INFO)
         return
 
     def get_multistripe_refvalues(self, group):
@@ -1415,8 +1413,6 @@ class NIRDataset(Dataset):
                 self.group = thisgroup
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration_num, group_num)
-
-        log.setLevel(logging.INFO)
 
         return
 
@@ -2337,7 +2333,6 @@ class MIRIDataset(Dataset):
                     break
                 self.do_left_right_correction(thisgroup, refvalues)
                 self.restore_group(integration, group)
-        log.setLevel(logging.INFO)
         log.info("Adding initial read back in")
 
         for i in range(self.nints):

@@ -14,7 +14,7 @@ from ._cal_logs import _LOG_FORMATTER
 from jwst.lib.suffix import remove_suffix
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.stpipe")
 
 
 class JwstStep(Step):

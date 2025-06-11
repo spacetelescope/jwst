@@ -9,7 +9,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.wfs_combine")
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 

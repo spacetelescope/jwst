@@ -8,8 +8,7 @@ from astropy import units as u
 
 import synphot
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+log = logging.getLogger("stpipe.jwst.ami")
 
 
 class Affine2d:

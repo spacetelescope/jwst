@@ -17,7 +17,7 @@ from scipy.optimize import minimize_scalar, brentq
 from scipy.interpolate import make_interp_spline
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.extract_1d")
 
 
 def arange_2d(starts, stops):

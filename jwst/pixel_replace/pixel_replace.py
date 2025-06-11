@@ -7,7 +7,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import nirspec
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.pixel_replace")
 
 
 class PixelReplacement:

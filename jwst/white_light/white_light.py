@@ -6,7 +6,7 @@ import numpy as np
 from collections import OrderedDict
 from astropy.table import QTable
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.white_light")
 
 
 def white_light(input_model, min_wave=None, max_wave=None):

@@ -6,8 +6,7 @@
 import logging
 from . import oifits
 
-log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
+log = logging.getLogger("stpipe.jwst.ami")
 
 
 def normalize_lg(target_model, reference_model):

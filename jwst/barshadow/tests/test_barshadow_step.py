@@ -89,7 +89,7 @@ def test_barshadow_step_zero_length(nirspec_mos_model, log_watcher):
     model.slits[0].shutter_state = ""
 
     watcher = log_watcher(
-        "jwst.barshadow.bar_shadow", message="has zero length, correction skipped", level="info"
+        "stpipe.jwst.barshadow", message="has zero length, correction skipped", level="info"
     )
     result = BarShadowStep.call(model)
     watcher.assert_seen()
@@ -109,7 +109,7 @@ def test_barshadow_step_not_uniform(nirspec_mos_model, log_watcher):
     for slit in model.slits:
         slit.source_type = "POINT"
 
-    watcher = log_watcher("jwst.barshadow.bar_shadow", message="source not uniform")
+    watcher = log_watcher("stpipe.jwst.barshadow", message="source not uniform")
     result = BarShadowStep.call(model)
     watcher.assert_seen()
 
@@ -179,7 +179,7 @@ def test_barshadow_step_missing_scale(nirspec_mos_model, log_watcher):
     model = nirspec_mos_model.copy()
     model.slits[0].slit_yscale = None
 
-    watcher = log_watcher("jwst.barshadow.bar_shadow", message="Using default value")
+    watcher = log_watcher("stpipe.jwst.barshadow", message="Using default value")
     result = BarShadowStep.call(model)
     watcher.assert_seen()
 

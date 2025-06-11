@@ -9,7 +9,7 @@ from jwst.extract_1d.source_location import middle_from_wcs, nod_pair_location, 
 
 __all__ = ["psf_profile"]
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.extract_1d")
 
 HORIZONTAL = 1
 VERTICAL = 2

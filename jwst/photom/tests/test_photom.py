@@ -1663,7 +1663,7 @@ def test_nircam_image_subarray_no_match(log_watcher):
 
     # Watch for warning in log
     watcher = log_watcher(
-        "jwst.photom.photom",
+        "stpipe.jwst.photom",
         message="Expected to find one matching row in table, found 0",
         level="warning",
     )

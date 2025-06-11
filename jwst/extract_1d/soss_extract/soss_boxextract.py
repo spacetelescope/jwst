@@ -1,7 +1,7 @@
 import numpy as np
 import logging
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.extract_1d")
 
 
 def get_box_weights(centroid, n_pix, shape, cols):
