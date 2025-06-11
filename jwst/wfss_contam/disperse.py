@@ -59,9 +59,12 @@ def _determine_native_wl_spacing(
     # Get x/y positions in the grism image corresponding to wmin and wmax:
     # Convert to x/y in the direct image frame
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
-    # then convert to x/y in the grism image frame
-    xwmin, ywmin = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmin, order)
-    xwmax, ywmax = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmax, order)
+    # then convert to x/y in the grism image frame. For NIRCam imgxy_to_grismxy MUST
+    # have wmin, wmax as arrays with same shape as x0_xy, y0_xy.
+    wmin_vec = wmin * np.ones_like(x0_xy)
+    wmax_vec = wmax * np.ones_like(x0_xy)
+    xwmin, ywmin = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmin_vec, order)
+    xwmax, ywmax = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmax_vec, order)
     dxw = xwmax - xwmin
     dyw = ywmax - ywmin
 
