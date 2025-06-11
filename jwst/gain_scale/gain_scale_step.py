@@ -1,8 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step
 from . import gain_scale
 
 __all__ = ["GainScaleStep"]
+
+log = logging.getLogger("stpipe.jwst.gain_scale")
 
 
 class GainScaleStep(Step):
@@ -44,8 +49,8 @@ class GainScaleStep(Step):
 
                 # Try to read the GAINFACT keyword value
                 if gain_model.meta.exposure.gain_factor is None:
-                    self.log.info("GAINFACT not found in gain reference file")
-                    self.log.info("Step will be skipped")
+                    log.info("GAINFACT not found in gain reference file")
+                    log.info("Step will be skipped")
                     input_model.meta.cal_step.gain_scale = "SKIPPED"
                     del gain_model
                     return input_model

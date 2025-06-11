@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step
 from . import group_scale
 
-
 __all__ = ["GroupScaleStep"]
+
+log = logging.getLogger("stpipe.jwst.group_scale")
 
 
 class GroupScaleStep(Step):
@@ -44,8 +48,8 @@ class GroupScaleStep(Step):
             # If we didn't find NFRAMES, we don't have enough info
             # to continue. Skip the step.
             if nframes is None:
-                self.log.warning("NFRAMES value not found")
-                self.log.warning("Step will be skipped")
+                log.warning("NFRAMES value not found")
+                log.warning("Step will be skipped")
                 input_model.meta.cal_step.group_scale = "SKIPPED"
                 return input_model
 
@@ -53,16 +57,16 @@ class GroupScaleStep(Step):
             # is a power of 2. If it is, rescaling isn't needed.
             if frame_divisor is None:
                 if nframes & (nframes - 1) == 0:
-                    self.log.info(f"NFRAMES={nframes} is a power of 2; correction not needed")
-                    self.log.info("Step will be skipped")
+                    log.info(f"NFRAMES={nframes} is a power of 2; correction not needed")
+                    log.info("Step will be skipped")
                     input_model.meta.cal_step.group_scale = "SKIPPED"
                     return input_model
 
             # Compare NFRAMES and FRMDIVSR. If they're equal,
             # rescaling isn't needed.
             elif nframes == frame_divisor:
-                self.log.info("NFRAMES and FRMDIVSR are equal; correction not needed")
-                self.log.info("Step will be skipped")
+                log.info("NFRAMES and FRMDIVSR are equal; correction not needed")
+                log.info("Step will be skipped")
                 input_model.meta.cal_step.group_scale = "SKIPPED"
                 return input_model
 

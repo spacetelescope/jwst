@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from jwst.datamodels import ModelContainer
@@ -6,6 +7,8 @@ from jwst.stpipe import Step
 from . import wfs_combine
 
 __all__ = ["WfsCombineStep"]
+
+log = logging.getLogger("stpipe.jwst.wfs_combine")
 
 
 class WfsCombineStep(Step):
@@ -48,8 +51,8 @@ class WfsCombineStep(Step):
         # Load the input ASN table
         asn_table = self.load_as_level3_asn(input_table)
 
-        self.log.info("Using input table: %s", input_table)
-        self.log.info("The number of pairs of input files: %g", len(asn_table["products"]))
+        log.info("Using input table: %s", input_table)
+        log.info("The number of pairs of input files: %g", len(asn_table["products"]))
 
         output_container = ModelContainer()
 

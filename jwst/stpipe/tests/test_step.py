@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from os.path import abspath
@@ -66,7 +65,10 @@ def test_disable_crds_steppars_cmdline(capsys, arg, env_set, expected_fn):
         os.environ.pop("STPIPE_DISABLE_CRDS_STEPPARS", None)
 
     captured = capsys.readouterr()
-    assert expected_fn(captured.err)
+    try:
+        assert expected_fn(captured.err)
+    except AssertionError:
+        assert expected_fn(captured.out)
 
 
 def test_parameters_from_crds_open_model():

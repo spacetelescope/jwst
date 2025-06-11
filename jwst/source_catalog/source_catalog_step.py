@@ -1,5 +1,6 @@
 """Module for the source catalog step."""
 
+import logging
 from pathlib import Path
 
 from crds.core.exceptions import CrdsLookupError
@@ -13,6 +14,8 @@ from .source_catalog import JWSTSourceCatalog
 from jwst.stpipe import Step
 
 __all__ = ["SourceCatalogStep"]
+
+log = logging.getLogger("stpipe.jwst.source_catalog")
 
 
 class SourceCatalogStep(Step):
@@ -41,10 +44,10 @@ class SourceCatalogStep(Step):
         for reffile_type in self.reference_file_types:
             try:
                 filepath = self.get_reference_file(model, reffile_type)
-                self.log.info(f"Using {reffile_type.upper()} reference file: {filepath}")
+                log.info(f"Using {reffile_type.upper()} reference file: {filepath}")
             except CrdsLookupError as err:
                 msg = f"{err} Source catalog will not be created."
-                self.log.warning(msg)
+                log.warning(msg)
                 return None
 
             filepaths.append(filepath)
@@ -74,7 +77,7 @@ class SourceCatalogStep(Step):
                 abvega_offset = refdata.abvega_offset
             except RuntimeError as err:
                 msg = f"{err} Source catalog will not be created."
-                self.log.warning(msg)
+                log.warning(msg)
                 return None
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
@@ -108,7 +111,7 @@ class SourceCatalogStep(Step):
                 cat_filepath = self.make_output_path(ext=".ecsv")
                 catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
                 model.meta.source_catalog = Path(cat_filepath).name
-                self.log.info(f"Wrote source catalog: {cat_filepath}")
+                log.info(f"Wrote source catalog: {cat_filepath}")
 
                 segm_model = datamodels.SegmentationMapModel(segment_img.data)
                 segm_model.update(model, only="PRIMARY")
@@ -116,6 +119,6 @@ class SourceCatalogStep(Step):
                 segm_model.meta.wcsinfo = model.meta.wcsinfo
                 self.save_model(segm_model, suffix="segm")
                 model.meta.segmentation_map = segm_model.meta.filename
-                self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
+                log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
 
         return catalog

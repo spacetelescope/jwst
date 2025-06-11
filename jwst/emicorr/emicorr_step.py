@@ -1,11 +1,12 @@
-#! /usr/bin/env python
+import logging
 
 from stdatamodels.jwst import datamodels
 from jwst.stpipe import Step
 from jwst.emicorr import emicorr
 
-
 __all__ = ["EmiCorrStep"]
+
+log = logging.getLogger("stpipe.jwst.emicorr")
 
 
 class EmiCorrStep(Step):
@@ -47,14 +48,14 @@ class EmiCorrStep(Step):
             # Catch the cases to skip
             instrument = input_model.meta.instrument.name
             if instrument != "MIRI":
-                self.log.warning(f"EMI correction not implemented for instrument: {instrument}")
+                log.warning(f"EMI correction not implemented for instrument: {instrument}")
                 input_model.meta.cal_step.emicorr = "SKIPPED"
                 return input_model
 
             readpatt = input_model.meta.exposure.readpatt
             allowed_readpatts = ["FAST", "FASTR1", "SLOW", "SLOWR1"]
             if readpatt.upper() not in allowed_readpatts:
-                self.log.warning(f"EMI correction not implemented for read pattern: {readpatt}")
+                log.warning(f"EMI correction not implemented for read pattern: {readpatt}")
                 input_model.meta.cal_step.emicorr = "SKIPPED"
                 return input_model
 
@@ -76,22 +77,22 @@ class EmiCorrStep(Step):
             save_onthefly_reffile, emicorr_ref_filename, emicorr_model = None, None, None
             if self.onthefly_corr_freq is not None:
                 emicorr_ref_filename = None
-                self.log.info("Correcting with reference file created on-the-fly.")
+                log.info("Correcting with reference file created on-the-fly.")
 
             elif self.user_supplied_reffile is None:
                 emicorr_ref_filename = self.get_reference_file(result, "emicorr")
                 # Skip the step if no reference file is found
                 if emicorr_ref_filename == "N/A":
-                    self.log.warning("No reference file found.")
-                    self.log.warning("EMICORR step will be skipped")
+                    log.warning("No reference file found.")
+                    log.warning("EMICORR step will be skipped")
                     result.meta.cal_step.emicorr = "SKIPPED"
                     return result
                 else:
-                    self.log.info(f"Using CRDS reference file: {emicorr_ref_filename}")
+                    log.info(f"Using CRDS reference file: {emicorr_ref_filename}")
                     emicorr_model = datamodels.EmiModel(emicorr_ref_filename)
 
             else:
-                self.log.info(f"Using user-supplied reference file: {self.user_supplied_reffile}")
+                log.info(f"Using user-supplied reference file: {self.user_supplied_reffile}")
                 emicorr_model = datamodels.EmiModel(self.user_supplied_reffile)
 
             # Do the correction
@@ -105,7 +106,7 @@ class EmiCorrStep(Step):
                 result, emicorr_model, save_onthefly_reffile=save_onthefly_reffile, **pars
             )
             if emicorr_output is None:
-                self.log.warning("Step skipped")
+                log.warning("Step skipped")
                 result.meta.cal_step.emicorr = "SKIPPED"
                 return result
             else:

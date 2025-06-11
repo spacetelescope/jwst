@@ -1,5 +1,6 @@
-from stdatamodels.jwst import datamodels
+import logging
 
+from stdatamodels.jwst import datamodels
 from stpipe.crds_client import reference_uri_to_cache_path
 
 from jwst.stpipe import Step
@@ -7,6 +8,8 @@ from jwst.assign_wcs import AssignWcsStep
 from jwst.msaflagopen import msaflag_open
 
 __all__ = ["MSAFlagOpenStep"]
+
+log = logging.getLogger("stpipe.jwst.msaflagopen")
 
 
 class MSAFlagOpenStep(Step):
@@ -36,12 +39,12 @@ class MSAFlagOpenStep(Step):
         # Open the input data model
         with datamodels.open(input_data) as input_model:
             self.reference_name = self.get_reference_file(input_model, "msaoper")
-            self.log.info("Using reference file %s", self.reference_name)
+            log.info("Using reference file %s", self.reference_name)
 
             # Check for a valid reference file
             if self.reference_name == "N/A":
-                self.log.warning("No reference file found")
-                self.log.warning("Step will be skipped")
+                log.warning("No reference file found")
+                log.warning("Step will be skipped")
                 result = input_model.copy()
                 result.meta.cal_step.msa_flagging = "SKIPPED"
                 return result

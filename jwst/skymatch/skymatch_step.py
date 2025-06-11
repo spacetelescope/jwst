@@ -25,7 +25,7 @@ from pathlib import Path
 
 from jwst.stpipe import Step
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.skymatch")
 
 
 __all__ = ["SkyMatchStep"]

@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 from . import bias_sub
 
 __all__ = ["SuperBiasStep"]
+
+log = logging.getLogger("stpipe.jwst.superbias")
 
 
 class SuperBiasStep(Step):
@@ -34,12 +38,12 @@ class SuperBiasStep(Step):
         with datamodels.open(step_input) as input_model:
             # Get the name of the superbias reference file to use
             self.bias_name = self.get_reference_file(input_model, "superbias")
-            self.log.info("Using SUPERBIAS reference file %s", self.bias_name)
+            log.info("Using SUPERBIAS reference file %s", self.bias_name)
 
             # Check for a valid reference file
             if self.bias_name == "N/A":
-                self.log.warning("No SUPERBIAS reference file found")
-                self.log.warning("Superbias step will be skipped")
+                log.warning("No SUPERBIAS reference file found")
+                log.warning("Superbias step will be skipped")
                 input_model.meta.cal_step.superbias = "SKIPPED"
                 return input_model
 

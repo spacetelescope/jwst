@@ -1,5 +1,6 @@
-import numpy as np
 import logging
+
+import numpy as np
 
 log = logging.getLogger("stpipe.jwst.gain_scale")
 

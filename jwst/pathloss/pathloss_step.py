@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 from . import pathloss
 
 __all__ = ["PathLossStep"]
+
+log = logging.getLogger("stpipe.jwst.pathloss")
 
 
 class PathLossStep(Step):
@@ -48,12 +52,12 @@ class PathLossStep(Step):
 
                 # Get the name of the pathloss reference file to use
                 self.pathloss_name = self.get_reference_file(input_model, "pathloss")
-                self.log.info(f"Using PATHLOSS reference file {self.pathloss_name}")
+                log.info(f"Using PATHLOSS reference file {self.pathloss_name}")
 
                 # Check for a valid reference file
                 if self.pathloss_name == "N/A":
-                    self.log.warning("No PATHLOSS reference file found")
-                    self.log.warning("Pathloss step will be skipped")
+                    log.warning("No PATHLOSS reference file found")
+                    log.warning("Pathloss step will be skipped")
                     result = input_model.copy()
                     result.meta.cal_step.pathloss = "SKIPPED"
                     return result

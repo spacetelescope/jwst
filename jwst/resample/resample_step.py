@@ -9,10 +9,9 @@ from jwst.resample.resample_utils import load_custom_wcs
 from . import resample
 from jwst.stpipe import Step
 
-log = logging.getLogger("stpipe.jwst.resample")
-
 __all__ = ["ResampleStep"]
 
+log = logging.getLogger("stpipe.jwst.resample")
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
@@ -216,6 +215,6 @@ class ResampleStep(Step):
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug(f"   {k}={v}")
+            log.debug(f"   {k}={v}")
 
         return kwargs

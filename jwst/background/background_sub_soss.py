@@ -7,7 +7,7 @@ import warnings
 
 from stdatamodels.jwst import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.background")
 
 # These parameters were hard-coded in the algorithm derived by NIRISS - future updates
 # could consider exposing them as step-level parameters.

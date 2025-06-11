@@ -1,22 +1,19 @@
-from os.path import dirname, join, abspath
+import logging
 import sys
+from os.path import dirname, join, abspath
 
 import numpy as np
 import pytest
-
 from stpipe import crds_client
-
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step, Pipeline
-
 from jwst.stpipe.tests.steps import PipeWithReference, StepWithReference
+
+log = logging.getLogger("stpipe.jwst.stpipe")
 
 
 def library_function():
-    import logging
-
-    log = logging.getLogger("stpipe.jwst.stpipe")
     log.info("This is a library function log")
 
 
@@ -33,8 +30,8 @@ class FlatField(Step):
     # Load the spec from a file
 
     def process(self, science, flat):
-        self.log.info("Removing flat field")
-        self.log.info("Threshold: {0}".format(self.threshold))
+        log.info("Removing flat field")
+        log.info("Threshold: {0}".format(self.threshold))
         library_function()
 
         output = datamodels.ImageModel(data=science.data - flat.data)

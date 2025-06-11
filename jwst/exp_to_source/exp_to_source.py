@@ -11,7 +11,7 @@ from jwst.datamodels import SourceModelContainer
 
 __all__ = ["exp_to_source", "multislit_to_container"]
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.exp_to_source")
 
 
 def exp_to_source(inputs):

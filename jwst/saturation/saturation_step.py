@@ -1,11 +1,14 @@
-#! /usr/bin/env python
+import logging
+
 from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step
 from jwst.lib import pipe_utils, reffile_utils
 from . import saturation
 
-
 __all__ = ["SaturationStep"]
+
+log = logging.getLogger("stpipe.jwst.saturation")
 
 
 class SaturationStep(Step):
@@ -39,13 +42,13 @@ class SaturationStep(Step):
             # Get the name of the saturation reference file
             self.ref_name = self.get_reference_file(input_model, "saturation")
             self.bias_name = self.get_reference_file(input_model, "superbias")
-            self.log.info("Using SATURATION reference file %s", self.ref_name)
-            self.log.info("Using SUPERBIAS reference file %s", self.bias_name)
+            log.info("Using SATURATION reference file %s", self.ref_name)
+            log.info("Using SUPERBIAS reference file %s", self.bias_name)
 
             # Check for a valid reference file
             if self.ref_name == "N/A":
-                self.log.warning("No SATURATION reference file found")
-                self.log.warning("Saturation step will be skipped")
+                log.warning("No SATURATION reference file found")
+                log.warning("Saturation step will be skipped")
                 input_model.meta.cal_step.saturation = "SKIPPED"
                 return input_model
 

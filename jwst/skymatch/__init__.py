@@ -6,6 +6,6 @@ from .skymatch_step import SkyMatchStep
 __author__ = "Mihai Cara"
 
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.skymatch")
 
 __all__ = ["SkyMatchStep"]

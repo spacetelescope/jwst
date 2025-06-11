@@ -1,9 +1,8 @@
-#
-#  Module for the lastframe correction for MIRI science data sets
-#
-import numpy as np
+"""Module for the lastframe correction for MIRI science data sets."""
+
 import logging
 
+import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger("stpipe.jwst.lastframe")

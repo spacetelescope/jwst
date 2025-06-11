@@ -1,10 +1,12 @@
-#! /usr/bin/env python
+import logging
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 from . import straylight
 
 __all__ = ["StraylightStep"]
+
+log = logging.getLogger("stpipe.jwst.straylight")
 
 
 class StraylightStep(Step):
@@ -48,12 +50,12 @@ class StraylightStep(Step):
                 self.straylight_name = self.get_reference_file(input_model, "mrsxartcorr")
 
                 if self.straylight_name == "N/A":
-                    self.log.warning("No MRSXARTCORR reference file found")
-                    self.log.warning("Straylight step will be skipped")
+                    log.warning("No MRSXARTCORR reference file found")
+                    log.warning("Straylight step will be skipped")
                     result.meta.cal_step.straylight = "SKIPPED"
                     return result
 
-                self.log.info("Using mrsxartcorr reference file %s", self.straylight_name)
+                log.info("Using mrsxartcorr reference file %s", self.straylight_name)
 
                 modelpars = datamodels.MirMrsXArtCorrModel(self.straylight_name)
 
@@ -81,7 +83,7 @@ class StraylightStep(Step):
                             shower_path = self.make_output_path(
                                 basepath=input_model.meta.filename, suffix="shower_model"
                             )
-                            self.log.info(f"Saving shower model file {shower_path}")
+                            log.info(f"Saving shower model file {shower_path}")
                             output_shower_model.save(shower_path)
                             output_shower_model.close()
 
@@ -92,10 +94,8 @@ class StraylightStep(Step):
                     isinstance(input_model, (datamodels.ImageModel, datamodels.IFUImageModel))
                     is False
                 ):
-                    self.log.warning(
-                        "Straylight correction not defined for datatype %s", input_model
-                    )
-                self.log.warning("Straylight step will be skipped")
+                    log.warning("Straylight correction not defined for datatype %s", input_model)
+                log.warning("Straylight step will be skipped")
                 result.meta.cal_step.straylight = "SKIPPED"
 
         return result

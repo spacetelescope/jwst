@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+import logging
+
 from stdatamodels.jwst.datamodels import CubeModel, TsoPhotModel, GainModel
 
 from jwst.stpipe import Step
@@ -7,6 +8,8 @@ from jwst.lib import reffile_utils
 from .tso_photometry import tso_aperture_photometry
 
 __all__ = ["TSOPhotometryStep"]
+
+log = logging.getLogger("stpipe.jwst.tso_photometry")
 
 
 class TSOPhotometryStep(Step):
@@ -52,10 +55,10 @@ class TSOPhotometryStep(Step):
 
             # Get the tsophot reference file
             tsophot_filename = self.get_reference_file(model, "tsophot")
-            self.log.debug(f"Reference file name = {tsophot_filename}")
+            log.debug(f"Reference file name = {tsophot_filename}")
             if tsophot_filename == "N/A":
-                self.log.warning("No TSOPHOT reference file found;")
-                self.log.warning("the tso_photometry step will be skipped.")
+                log.warning("No TSOPHOT reference file found;")
+                log.warning("the tso_photometry step will be skipped.")
                 return None
 
             # Get the gain reference file
@@ -65,7 +68,7 @@ class TSOPhotometryStep(Step):
             if reffile_utils.ref_matches_sci(model, gain_m):
                 gain_2d = gain_m.data
             else:
-                self.log.info("Extracting gain subarray to match science data")
+                log.info("Extracting gain subarray to match science data")
                 gain_2d = reffile_utils.get_subarray_model(model, gain_m).data
 
             # Retrieve aperture info from the reference file
@@ -75,11 +78,11 @@ class TSOPhotometryStep(Step):
 
             (radius, radius_inner, radius_outer) = get_ref_data(tsophot_filename, pupil=pupil_name)
 
-            self.log.debug(f"radius = {radius}")
-            self.log.debug(f"radius_inner = {radius_inner}")
-            self.log.debug(f"radius_outer = {radius_outer}")
-            self.log.debug(f"xcenter = {xcenter}")
-            self.log.debug(f"ycenter = {ycenter}")
+            log.debug(f"radius = {radius}")
+            log.debug(f"radius_inner = {radius_inner}")
+            log.debug(f"radius_outer = {radius_outer}")
+            log.debug(f"xcenter = {xcenter}")
+            log.debug(f"ycenter = {ycenter}")
 
             # Compute the aperture photometry
             catalog = tso_aperture_photometry(
@@ -98,7 +101,7 @@ class TSOPhotometryStep(Step):
                     output_dir=output_dir,
                 )
                 catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
-                self.log.info(f"Wrote TSO photometry catalog: {cat_filepath}")
+                log.info(f"Wrote TSO photometry catalog: {cat_filepath}")
 
         return catalog
 

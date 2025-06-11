@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 from . import rscd_sub
 
 __all__ = ["RscdStep"]
+
+log = logging.getLogger("stpipe.jwst.rscd")
 
 
 class RscdStep(Step):
@@ -48,19 +52,19 @@ class RscdStep(Step):
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
             if not detector.startswith("MIR"):
-                self.log.warning("RSCD correction is only for MIRI data")
-                self.log.warning("RSCD step will be skipped")
+                log.warning("RSCD correction is only for MIRI data")
+                log.warning("RSCD step will be skipped")
                 input_model.meta.cal_step.rscd = "SKIPPED"
                 return input_model
 
             # Get the name of the rscd reference file to use
             self.rscd_name = self.get_reference_file(input_model, "rscd")
-            self.log.info("Using RSCD reference file %s", self.rscd_name)
+            log.info("Using RSCD reference file %s", self.rscd_name)
 
             # Check for a valid reference file
             if self.rscd_name == "N/A":
-                self.log.warning("No RSCD reference file found")
-                self.log.warning("RSCD step will be skipped")
+                log.warning("No RSCD reference file found")
+                log.warning("RSCD step will be skipped")
                 input_model.meta.cal_step.rscd = "SKIPPED"
                 return input_model
 

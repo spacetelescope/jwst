@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -13,6 +14,8 @@ from jwst.combine_1d.combine1d import combine_1d_spectra
 from .expand_to_2d import expand_to_2d
 
 __all__ = ["MasterBackgroundStep"]
+
+log = logging.getLogger("stpipe.jwst.master_background")
 
 
 class MasterBackgroundStep(Step):
@@ -86,7 +89,7 @@ class MasterBackgroundStep(Step):
                 ),
             ):
                 result = input_model.copy()
-                self.log.warning(
+                log.warning(
                     f"Input {input_data} of type {type(input_data)} cannot be handled.  "
                     f"Step skipped."
                 )
@@ -135,7 +138,7 @@ class MasterBackgroundStep(Step):
                             "No background data found in input container, "
                             "and no user-supplied background provided.  Skipping step."
                         )
-                        self.log.warning(msg)
+                        log.warning(msg)
                         result = input_model.copy()
                         record_step_status(result, "master_background", success=False)
                         return result
@@ -158,7 +161,7 @@ class MasterBackgroundStep(Step):
                             this_is_ifu_extended = True
 
                         if model.meta.observation.bkgdtarg is False or this_is_ifu_extended:
-                            self.log.debug("Copying BACKGROUND column to SURF_BRIGHT")
+                            log.debug("Copying BACKGROUND column to SURF_BRIGHT")
                             copy_background_to_surf_bright(model)
 
                     master_background = combine_1d_spectra(
@@ -171,15 +174,13 @@ class MasterBackgroundStep(Step):
                     # Round down even kernel sizes because only odd kernel sizes are supported.
                     if self.median_kernel % 2 == 0:
                         self.median_kernel -= 1
-                        self.log.info(
+                        log.info(
                             "Even median filter kernels are not supported."
                             f" Rounding the median kernel size down to {self.median_kernel}."
                         )
 
                     if self.median_kernel > 1:
-                        self.log.info(
-                            f"Applying moving-median boxcar of width {self.median_kernel}."
-                        )
+                        log.info(f"Applying moving-median boxcar of width {self.median_kernel}.")
                         master_background.spec[0].spec_table["surf_bright"] = medfilt(
                             master_background.spec[0].spec_table["surf_bright"],
                             kernel_size=[self.median_kernel],
@@ -203,7 +204,7 @@ class MasterBackgroundStep(Step):
                 else:
                     result = input_model.copy()
                     input_model.close()
-                    self.log.warning(
+                    log.warning(
                         f"Input {input_data} of type {type(input_data)} cannot be "
                         "handled without user-supplied background.  Step skipped."
                     )
@@ -255,21 +256,21 @@ class MasterBackgroundStep(Step):
                         isub += 1
 
                 if not do_sub and isub == len(input_model):
-                    self.log.info(
+                    log.info(
                         "Not subtracting master background, background was subtracted in calspec2"
                     )
-                    self.log.info(
+                    log.info(
                         "To force the master background to be subtracted from this data, "
                         "run again and set force_subtract = True."
                     )
 
                 if not do_sub and isub != len(input_model):
-                    self.log.warning("Not subtracting master background.")
-                    self.log.warning(
+                    log.warning("Not subtracting master background.")
+                    log.warning(
                         "Input data contains a mixture of data with and without "
                         "background subtraction done in calspec2."
                     )
-                    self.log.warning(
+                    log.warning(
                         "To force the master background to be subtracted from this data, "
                         "run again and set force_subtract = True."
                     )
@@ -280,10 +281,10 @@ class MasterBackgroundStep(Step):
                     or input_model.meta.cal_step.master_background == "COMPLETE"
                 ):
                     do_sub = False
-                    self.log.info(
+                    log.info(
                         "Not subtracting master background, background was subtracted in calspec2"
                     )
-                    self.log.info(
+                    log.info(
                         "To force the master background to be subtracted from this data, "
                         "run again and set force_subtract = True."
                     )

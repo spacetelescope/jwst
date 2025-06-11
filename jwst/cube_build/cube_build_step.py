@@ -1,16 +1,21 @@
+import logging
 import time
+from pathlib import Path
+
+import asdf
+from astropy import units
+
+from jwst.assign_wcs.util import update_s_region_keyword
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.stpipe import Step, record_step_status
 from . import cube_build
 from . import ifu_cube
 from . import data_types
-import asdf
-from jwst.assign_wcs.util import update_s_region_keyword
-from jwst.stpipe import Step, record_step_status
-from pathlib import Path
-from astropy import units
 
 __all__ = ["CubeBuildStep"]
+
+log = logging.getLogger("stpipe.jwst.cube_build")
 
 
 class CubeBuildStep(Step):
@@ -81,7 +86,7 @@ class CubeBuildStep(Step):
         cube_container : ModelContainer
            Container (list) of IFUCube models
         """
-        self.log.info("Starting IFU Cube Building Step")
+        log.info("Starting IFU Cube Building Step")
 
         t0 = time.time()
         # ________________________________________________________________________________
@@ -103,32 +108,32 @@ class CubeBuildStep(Step):
             self.weighting = self.weighting.lower()
 
         if self.scalexy != 0.0:
-            self.log.info(f"Input Scale of axis 1 and 2 {self.scalexy}")
+            log.info(f"Input Scale of axis 1 and 2 {self.scalexy}")
         if self.scalew != 0.0:
-            self.log.info(f"Input wavelength scale {self.scalew}")
+            log.info(f"Input wavelength scale {self.scalew}")
 
         if self.wavemin is not None:
-            self.log.info(f"Setting minimum wavelength of spectral cube to: {self.wavemin}")
+            log.info(f"Setting minimum wavelength of spectral cube to: {self.wavemin}")
         if self.wavemax is not None:
-            self.log.info(f"Setting maximum wavelength of spectral cube to: {self.wavemax}")
+            log.info(f"Setting maximum wavelength of spectral cube to: {self.wavemax}")
 
         if self.rois != 0.0:
-            self.log.info(f"Input Spatial ROI size {self.rois}")
+            log.info(f"Input Spatial ROI size {self.rois}")
         if self.roiw != 0.0:
-            self.log.info(f"Input Wave ROI size {self.roiw}")
+            log.info(f"Input Wave ROI size {self.roiw}")
 
         # check that if self.nspax_x or self.nspax_y is provided they must be odd numbers
         if self.nspax_x is not None:
             if self.nspax_x % 2 == 0:
-                self.log.info(f"Input nspax_x must be an odd number {self.nspax_x}")
+                log.info(f"Input nspax_x must be an odd number {self.nspax_x}")
                 self.nspax_x = self.nspax_x + 1
-                self.log.info(f"Updating nspa by 1. New value {self.nspax_x}")
+                log.info(f"Updating nspa by 1. New value {self.nspax_x}")
 
         if self.nspax_y is not None:
             if self.nspax_y % 2 == 0:
-                self.log.info(f"Input nspax_y must be an odd number {self.nspax_y}")
+                log.info(f"Input nspax_y must be an odd number {self.nspax_y}")
                 self.nspax_y = self.nspax_y + 1
-                self.log.info(f"Updating nspax_y by 1. New value {self.nspax_y}")
+                log.info(f"Updating nspax_y by 1. New value {self.nspax_y}")
 
         # valid coord_system:
         # 1. skyalign (ra dec) (aka world)
@@ -157,12 +162,12 @@ class CubeBuildStep(Step):
         if self.weighting == "drizzle":
             self.interpolation = "drizzle"
 
-        self.log.info(f"Input interpolation: {self.interpolation}")
-        self.log.info(f"Coordinate system to use: {self.coord_system}")
+        log.info(f"Input interpolation: {self.interpolation}")
+        log.info(f"Coordinate system to use: {self.coord_system}")
         if self.interpolation == "pointcloud":
-            self.log.info(f"Weighting method for point cloud: {self.weighting}")
+            log.info(f"Weighting method for point cloud: {self.weighting}")
             if self.weight_power != 0:
-                self.log.info(f"Power weighting distance: {self.weight_power}")
+                log.info(f"Power weighting distance: {self.weight_power}")
 
         # ________________________________________________________________________________
         # read input parameters - Channel, Band (Subchannel), Grating, Filter
@@ -183,7 +188,7 @@ class CubeBuildStep(Step):
 
         if self.single:
             self.pars_input["output_type"] = "single"
-            self.log.info("Cube Type: Single cubes")
+            log.info("Cube Type: Single cubes")
             self.pars_input["coord_system"] = "skyalign"
 
             # Don't allow anything but drizzle, msm, or emsm weightings
@@ -236,7 +241,7 @@ class CubeBuildStep(Step):
             elif instrument == "MIRI":
                 self.output_type = "channel"
         self.pars_input["output_type"] = self.output_type
-        self.log.info(f"Setting output type to: {self.output_type}")
+        log.info(f"Setting output type to: {self.output_type}")
         # ________________________________________________________________________________
         # If an offset file is provided do some basic checks on the file and its contents.
         # The offset list contains a matching list to the files in the association
@@ -255,7 +260,7 @@ class CubeBuildStep(Step):
         par_filename = self.get_reference_file(self.input_models[0], "cubepar")
         # Check for a valid reference file
         if par_filename == "N/A":
-            self.log.warning("No default cube parameters reference file found")
+            log.warning("No default cube parameters reference file found")
             input_table.close()
             return
         # ________________________________________________________________________________
@@ -317,8 +322,8 @@ class CubeBuildStep(Step):
         master_table = result["master_table"]
 
         if instrument == "MIRI" and self.coord_system == "internal_cal":
-            self.log.warning("The output coordinate system of internal_cal is not valid for MIRI")
-            self.log.warning("use output_coord = ifualign instead")
+            log.warning("The output coordinate system of internal_cal is not valid for MIRI")
+            log.warning("use output_coord = ifualign instead")
             input_table.close()
             return
         filenames = master_table.FileMap["filename"]
@@ -335,7 +340,7 @@ class CubeBuildStep(Step):
 
         num_cubes, cube_pars = cubeinfo.number_cubes()
         if not self.single:
-            self.log.info(f"Number of IFU cubes produced by this run = {num_cubes}")
+            log.info(f"Number of IFU cubes produced by this run = {num_cubes}")
 
         # ModelContainer of ifucubes
         cube_container = ModelContainer()
@@ -387,7 +392,7 @@ class CubeBuildStep(Step):
             if self.single:
                 self.output_file = None
                 cube_container = thiscube.build_ifucube_single()
-                self.log.info("Number of Single IFUCube models returned %i ", len(cube_container))
+                log.info("Number of Single IFUCube models returned %i ", len(cube_container))
 
             # Else standard IFU cube building
             # the result returned from build_ifucube will be 1 IFU CUBE
@@ -420,7 +425,7 @@ class CubeBuildStep(Step):
             record_step_status(cube_container, "cube_build", success=True)
 
         t1 = time.time()
-        self.log.debug(f"Time to build all cubes {t1 - t0}")
+        log.debug(f"Time to build all cubes {t1 - t0}")
 
         input_table.close()
         return cube_container
@@ -573,7 +578,7 @@ class CubeBuildStep(Step):
         try:
             af = asdf.open(self.offset_file, custom_schema=data_path / "ifuoffset.schema.yaml")
         except ValueError:
-            self.log.error(
+            log.error(
                 "Validation Error for offset file. Fix the offset file. "
                 " The offset file needs to have the same number of elements "
                 " in the three lists: filename, raoffset and decoffset."

@@ -1,6 +1,4 @@
-#
-#  Module for applying fringe correction
-#
+"""Module for applying fringe correction."""
 
 import logging
 import numpy as np

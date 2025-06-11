@@ -1,3 +1,5 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 from jwst.datamodels.utils.wfss_multispec import (
     wfss_multiexposure_to_multispec,
@@ -9,6 +11,8 @@ from . import combine1d
 
 
 __all__ = ["Combine1dStep"]
+
+log = logging.getLogger("stpipe.jwst.combine_1d")
 
 
 class Combine1dStep(Step):
@@ -80,7 +84,7 @@ class Combine1dStep(Step):
                     input_model, self.exptime_key, sigma_clip=self.sigma_clip
                 )
             except TypeError:
-                self.log.error("Invalid input model for combine_1d; skipping.")
+                log.error("Invalid input model for combine_1d; skipping.")
                 result = input_model.copy()
                 result.meta.cal_step.combine_1d = "SKIPPED"
 

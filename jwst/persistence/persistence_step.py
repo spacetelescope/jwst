@@ -1,10 +1,13 @@
-#! /usr/bin/env python
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 from . import persistence
 
 __all__ = ["PersistenceStep"]
+
+log = logging.getLogger("stpipe.jwst.persistence")
 
 
 class PersistenceStep(Step):
@@ -64,7 +67,7 @@ class PersistenceStep(Step):
                     msg = "Missing reference file types: "
                     for name in missing_reftypes:
                         msg += " " + name
-                self.log.warning("%s", msg)
+                log.warning("%s", msg)
                 input_model.meta.cal_step.persistence = "SKIPPED"
                 return input_model
 

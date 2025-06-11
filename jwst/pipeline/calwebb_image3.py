@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Sequence
 from stdatamodels.jwst import datamodels
 
@@ -14,6 +15,8 @@ from jwst.outlier_detection import outlier_detection_step
 from jwst.source_catalog import source_catalog_step
 
 __all__ = ["Image3Pipeline"]
+
+log = logging.getLogger("stpipe.jwst.pipeline")
 
 
 class Image3Pipeline(Pipeline):
@@ -54,7 +57,7 @@ class Image3Pipeline(Pipeline):
         input_data : Level3 Association, or `~jwst.datamodels.ModelLibrary`
             The exposures to process
         """
-        self.log.info("Starting calwebb_image3 ...")
+        log.info("Starting calwebb_image3 ...")
 
         # Configure settings for saving results files
         self.outlier_detection.suffix = "crf"
@@ -91,7 +94,7 @@ class Image3Pipeline(Pipeline):
             input_models = self.outlier_detection.run(input_models)
 
         elif self.skymatch.skymethod == "match":
-            self.log.warning(
+            log.warning(
                 "Turning 'skymatch' step off for a single input image when 'skymethod' is 'match'"
             )
 

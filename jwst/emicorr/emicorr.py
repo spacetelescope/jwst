@@ -7,7 +7,7 @@ from scipy import interpolate
 from astropy.stats import sigma_clipped_stats as scs
 from stdatamodels.jwst import datamodels
 
-log = logging.getLogger(__name__)
+log = logging.getLogger("stpipe.jwst.emicorr")
 
 subarray_clocks = {
     "SLITLESSPRISM": {"rowclocks": 28, "frameclocks": 15904},
