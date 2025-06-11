@@ -22,6 +22,15 @@ control the sigma clipping, and are passed as arguments to the astropy
   Saves the combined background image used for background subtraction.
   Defaults to ``False``.
 
+``--soss_source_percentile``
+  The threshold flux percentile, above which values are deemed to be source or contaminated.
+  Pixels with flux below this percentile will be added to the background mask. The
+  default value is 35.0.
+
+``--soss_bkg_percentile``
+  This pair of percentile values describes the range of flux percentiles in the
+  background mask to use for reference template scaling. The default is [25.0, 50.0].
+
 ``--wfss_mmag_extract``
   Only applies to Wide Field Slitless Spectroscopy (WFSS) exposures.
   Sets the minimum (faintest) magnitude limit to use when selecting sources
