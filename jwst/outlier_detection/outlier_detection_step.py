@@ -37,8 +37,8 @@ class OutlierDetectionStep(Step):
 
     spec = """
         weight_type = option('ivm','exptime',default='ivm')
-        pixfrac = float(default=1.0)
-        kernel = string(default='square') # drizzle kernel
+        pixfrac = float(min=0.0, max=1.0, default=1.0)  # Pixel shrinkage factor
+        kernel = option('square','gaussian','point','turbo','lanczos2','lanczos3',default='square')  # Flux distribution kernel
         fillval = string(default='NAN')
         maskpt = float(default=0.7)
         snr = string(default='5.0 4.0')
