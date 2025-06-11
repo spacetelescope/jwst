@@ -64,7 +64,7 @@ You can also install a specific version:
 
     conda create -n <env_name> python=3.12
     conda activate <env_name>
-    pip install jwst==1.16.1
+    pip install jwst==1.18.1
 
 ### Installing the development version from Github
 
@@ -94,18 +94,18 @@ used for Linux and Mac OS systems.
 
 Linux:
 
-    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-linux-x86_64.yml
-    conda activate JWSTDP-1.17.1-1-py312-linux-x86_64
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.18.1/delivery/latest-py312-linux-x86_64.yml
+    conda activate JWSTDP-1.18.1-1-py312-linux-x86_64
 
 MacOS arm64:
 
-    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-arm64.yml
-    conda activate JWSTDP-1.17.1-1-py312-macos-arm64
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.18.1/delivery/latest-py312-macos-arm64.yml
+    conda activate JWSTDP-1.18.1-1-py312-macos-arm64
 
 MacOS x86_64:
 
-    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.17.1/delivery/latest-py312-macos-x86_64.yml
-    conda activate JWSTDP-1.17.1-1-py312-macos-x86_64
+    conda env create --file https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.18.1/delivery/latest-py312-macos-x86_64.yml
+    conda activate JWSTDP-1.18.1-1-py312-macos-x86_64
 
 
 Starting with the jwst 1.16.1 release, we updated our release procedures to use
@@ -260,8 +260,9 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.18.0              | B11.3     | 2025.2.0 | 1364         | 2025-04-01 | 2025-05-20  | Final release for B11.3                       |
-| 1.17.1              | B11.2     | 2025.1.0 | 1321         | 2025-01-02 | 2025-03-05  | Second release candidate for B11.2            |
+| 1.18.1              | B11.3.1   | 2025.2.0 | 1364         | 2025-06-10 |             | Second release for B11.3                       |
+| 1.18.0              | B11.3     | 2025.2.0 | 1364         | 2025-04-01 | 2025-05-20  | First release for B11.3                       |
+| 1.17.1              | B11.2     | 2025.1.0 | 1321         | 2025-01-02 | 2025-03-05  | Final release candidate for B11.2            |
 | 1.17.0              | B11.2     | 2025.1.0 | 1321         | 2024-12-20 | TBD         | First release candidate for B11.2             |
 | 1.16.1              | B11.1.1   | 2024.3.1 | 1303         | 2024-11-13 | 2024-12-06  | Final release candidate for B11.1             |
 | 1.16.0              | B11.1     | 2024.3.0 | 1298         | 2024-09-20 |             | First release candidate for B11.1             |
