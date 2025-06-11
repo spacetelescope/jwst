@@ -62,7 +62,6 @@ class MakePars():
 
 
 standards = [
-    MakePars('pool_005_spec_niriss'),
     MakePars('pool_006_spec_nirspec'),
     MakePars('pool_007_spec_miri'),
     MakePars('pool_009_spec_miri_lv2bkg'),

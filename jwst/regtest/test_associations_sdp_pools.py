@@ -61,6 +61,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
 #       test_associations_standards.py test module.
 @pytest.mark.parametrize("pool_args", [
     ("jw05204_20250308t202944_pool", []),  # pool_002_image_miri
+    ("jw02113_20250308t170530_pool", []),  # pool_005_spec_niriss
 ], ids=parfunc)
 def test_std(_jail, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
