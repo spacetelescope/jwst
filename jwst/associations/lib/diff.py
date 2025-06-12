@@ -8,7 +8,7 @@ import re
 
 from .product_utils import sort_by_candidate
 from jwst.associations.load_asn import load_asn
-from jwst.associations.lib.suffix import remove_suffix
+from jwst.lib.suffix import remove_suffix
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
