@@ -1,7 +1,7 @@
 import logging
 from timeit import default_timer as timer
 
-from jwst.associations import make_timestamp
+from jwst.associations.association import make_timestamp
 from jwst.associations.lib.process_list import ListCategory, ProcessList, ProcessQueueSorted
 from jwst.associations.lib.process_list import workover_filter
 from jwst.associations.pool import PoolRow
