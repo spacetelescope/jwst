@@ -70,7 +70,6 @@ def _get_irs2_parameters(input_model, n=None, r=None):
             The number of reference pixels read out before jumping back to
             the normal pixel region.
     """
-
     try:
         # Try to get keyword values
         n_norm = input_model.meta.exposure.nrs_normal
@@ -123,7 +122,6 @@ def normal_shape(input_model, n=None, r=None, detector=None):
     tuple of int
         The shape of the input science data array.
     """
-
     if isinstance(input_model, np.ndarray):
         shape = input_model.shape
     else:
@@ -141,8 +139,7 @@ def normal_shape(input_model, n=None, r=None, detector=None):
     elif detector == "NRS1" or detector == "NRS2":
         irs2_nx = shape[-2]
     else:
-        raise RuntimeError("Detector %s is not supported for IRS2 data" %
-                           detector)
+        raise RuntimeError(f"Detector {detector} is not supported for IRS2 data")
 
     k = (irs2_nx - param.refout) // (param.n + param.r)
     n_output = (irs2_nx - param.refout) - k * param.r
@@ -181,7 +178,6 @@ def make_mask(input_model, n=None, r=None):
         Boolean index mask with length equal to the last axis of
         the science data shape.
     """
-
     param = _get_irs2_parameters(input_model, n=n, r=r)
     refout = param.refout
     n_norm = param.n
@@ -254,7 +250,6 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
     ndarray
         The normal pixel data (i.e. without embedded reference pixels).
     """
-
     if detector is None:
         # Select columns.
         norm_data = irs2_data[..., irs2_mask]
@@ -266,8 +261,7 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
         temp_mask = irs2_mask[::-1]
         norm_data = irs2_data[..., temp_mask, :]
     else:
-        raise RuntimeError("Detector %s is not supported for IRS2 data" %
-                           detector)
+        raise RuntimeError(f"Detector {detector} is not supported for IRS2 data")
 
     return norm_data
 
@@ -298,7 +292,6 @@ def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
         For IRS2 data in detector orientation, `detector` should be None
         (the default), and the mask will be applied to the columns.
     """
-
     if detector is None:
         # Mask specifies columns.
         irs2_data[..., irs2_mask] = norm_data.copy()
@@ -311,5 +304,5 @@ def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
         temp_mask = irs2_mask[::-1]
         irs2_data[..., temp_mask, :] = norm_data.copy()
     else:
-        raise RuntimeError("Detector %s is not supported for IRS2 data" %
-                           detector)
+        raise RuntimeError(f"Detector {detector} is not supported for IRS2 data")
+

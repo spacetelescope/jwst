@@ -18,7 +18,7 @@ NumRefPixels = namedtuple("NumRefPixels",
 
 
 def do_correction(input_model, ipc_model):
-    """Execute all tasks for IPC correction
+    """Execute all tasks for IPC correction.
 
     Parameters
     ----------
@@ -34,15 +34,16 @@ def do_correction(input_model, ipc_model):
     output_model : data model object
         IPC-corrected science data.
     """
-
     # Save some data params for easy use later
     sci_nints = input_model.data.shape[0]
     sci_ngroups = input_model.data.shape[1]
     sci_nframes = input_model.meta.exposure.nframes
     sci_groupgap = input_model.meta.exposure.groupgap
 
-    log.debug('IPC corr using nints=%d, ngroups=%d, nframes=%d, groupgap=%d' %
-              (sci_nints, sci_ngroups, sci_nframes, sci_groupgap))
+    log.debug(
+        f"IPC corr using nints={sci_nints}, ngroups={sci_ngroups},",
+        f"nframes={sci_nframes}, groupgap={sci_groupgap}"
+    )
 
     # Apply the correction.
     output_model = ipc_correction(input_model, ipc_model)
@@ -67,7 +68,6 @@ def ipc_correction(output, ipc_model):
     output : data model object
         IPC-corrected science data.
     """
-
     log.debug("ipc_correction: nints=%d, ngroups=%d, size=%d,%d",
               output.meta.exposure.nints,
               output.meta.exposure.ngroups,
@@ -89,14 +89,15 @@ def ipc_correction(output, ipc_model):
     # is a subarray.
     kernel = get_ipc_slice(output, ipc_model)
 
-    log.debug("substrt1 = %d, subsize1 = %d, substrt2 = %d, subsize2 = %d" %
-              (output.meta.subarray.xstart, output.meta.subarray.xsize,
-               output.meta.subarray.ystart, output.meta.subarray.ysize))
-    log.debug('Number of reference pixels: bottom, top, left, right ='
-              ' %d, %d, %d, %d' %
-              (nref.bottom_rows, nref.top_rows,
-               nref.left_columns, nref.right_columns))
-    log.debug("Shape of ipc image = %s" % repr(ipc_model.data.shape))
+    log.debug(
+        f"substrt1 = {output.meta.subarray.xstart}, subsize1 = {output.meta.subarray.xsize},",
+        f"substrt2 = {output.meta.subarray.ystart}, subsize2 = {output.meta.subarray.ysize}"
+    )
+    log.debug(
+        'Number of reference pixels: bottom, top, left, right ='
+        f'{nref.bottom_rows}, {nref.top_rows}, {nref.left_columns}, {nref.right_columns}'
+    )
+    log.debug(f"Shape of ipc image = {repr(ipc_model.data.shape)}")
 
     # Loop over all integrations and groups in input science data.
     for i in range(output.data.shape[0]):                  # integrations
@@ -136,7 +137,6 @@ def get_num_ref_pixels(input_model):
         right_columns : int
             The number of reference columns at the right edge.
     """
-
     xstart = input_model.meta.subarray.xstart - 1       # zero indexed
     xsize = input_model.meta.subarray.xsize
     if input_model.meta.instrument.name == 'MIRI':
@@ -173,7 +173,6 @@ def get_ipc_slice(input_model, ipc_model):
         the science data array is a subarray, `kernel` will be a slice of
         the reference image; otherwise, this will be the full image.
     """
-
     if len(ipc_model.data.shape) == 2:
         return ipc_model.data
 
@@ -217,7 +216,6 @@ def ipc_convolve(output_data, kernel, nref):
         right_columns : int
             The number of reference columns at the right edge.
     """
-
     bottom_rows = nref.bottom_rows
     top_rows = nref.top_rows
     left_columns = nref.left_columns
@@ -244,9 +242,9 @@ def ipc_convolve(output_data, kernel, nref):
     l_b = kshape[1] // 2
     r_b = kshape[1] - l_b - 1
     tny = ny + b_b + t_b
-    yoff = bottom_rows                      # offset in output_data
+    yoff = bottom_rows  # offset in output_data
     tnx = nx + l_b + r_b
-    xoff = left_columns                     # offset in output_data
+    xoff = left_columns  # offset in output_data
 
     # Note that when we accumulate sums to output_data below, we will
     # always use the same slice:  output_data[yoff:yoff+ny, xoff:xoff+nx].
@@ -255,11 +253,10 @@ def ipc_convolve(output_data, kernel, nref):
     # to this temporary array, then make subsequent changes in-place to
     # output_data.
     temp = np.zeros((tny, tnx), dtype=output_data.dtype)
-    temp[b_b:b_b + ny, l_b:l_b + nx] = \
-        output_data[yoff:yoff + ny, xoff:xoff + nx].copy()
+    temp[b_b : b_b + ny, l_b : l_b + nx] = output_data[yoff : yoff + ny, xoff : xoff + nx].copy()
 
     # After setting this slice to zero, we'll incrementally add to it.
-    output_data[yoff:yoff + ny, xoff:xoff + nx] = 0.
+    output_data[yoff : yoff + ny, xoff : xoff + nx] = 0.0
 
     if len(kshape) == 2:
         # 2-D IPC kernel.  Loop over pixels of the deconvolution kernel.
@@ -270,26 +267,26 @@ def ipc_convolve(output_data, kernel, nref):
             jstart = kshape[0] - j - 1
             for i in range(kshape[1]):
                 if i == middle_i and j == middle_j:
-                    continue                # the middle pixel is done last
+                    continue  # the middle pixel is done last
                 part = kernel[j, i] * temp
                 istart = kshape[1] - i - 1
-                output_data[yoff:yoff + ny, xoff:xoff + nx] += \
-                    part[jstart:jstart + ny, istart:istart + nx]
+                part_section = part[jstart : jstart + ny, istart : istart + nx]
+                output_data[yoff : yoff + ny, xoff : xoff + nx] += part_section
+
         # The middle pixel of the IPC kernel is expected to be the largest,
         # so add that last.
         part = kernel[middle_j, middle_i] * temp
-        output_data[yoff:yoff + ny, xoff:xoff + nx] += \
-            part[middle_j:middle_j + ny, middle_i:middle_i + nx]
+        part_section = part[middle_j : middle_j + ny, middle_i : middle_i + nx]
+        output_data[yoff : yoff + ny, xoff : xoff + nx] += part_section
 
     else:
         # 4-D IPC kernel.  Extract a subset of the kernel:  all of the
         # first two axes, but only the portion of the last two axes
         # corresponding to the science data (i.e. possibly a subarray,
         # and certainly excluding reference pixels).
-        k_temp = np.zeros((kshape[0], kshape[1], tny, tnx),
-                          dtype=kernel.dtype)
-        k_temp[:, :, b_b:b_b + ny, l_b:l_b + nx] = \
-            kernel[:, :, yoff:yoff + ny, xoff:xoff + nx]
+        k_temp = np.zeros((kshape[0], kshape[1], tny, tnx), dtype=kernel.dtype)
+        kernel_section = kernel[:, :, yoff : yoff + ny, xoff : xoff + nx]
+        k_temp[:, :, b_b : b_b + ny, l_b : l_b + nx] = kernel_section
 
         # In this section, `part` has shape (ny, nx), which is smaller
         # than `temp`.
@@ -299,17 +296,21 @@ def ipc_convolve(output_data, kernel, nref):
             jstart = kshape[0] - j - 1
             for i in range(kshape[1]):
                 if i == middle_i and j == middle_j:
-                    continue                # the middle pixel is done last
+                    continue  # the middle pixel is done last
                 istart = kshape[1] - i - 1
                 # The slice of k_temp includes different pixels for the
                 # first or second axes within each loop, but the same slice
                 # for the last two axes.
                 # The slice of temp (a copy of the science data) includes
                 # a different offset for each loop.
-                part = k_temp[j, i, b_b:b_b + ny, l_b:l_b + nx] * \
-                    temp[jstart:jstart + ny, istart:istart + nx]
-                output_data[yoff:yoff + ny, xoff:xoff + nx] += part
+                part = (
+                    k_temp[j, i, b_b : b_b + ny, l_b : l_b + nx]
+                    * temp[jstart : jstart + ny, istart : istart + nx]
+                )
+                output_data[yoff : yoff + ny, xoff : xoff + nx] += part
         # Add the product for the middle pixel last.
-        part = k_temp[middle_j, middle_i, b_b:b_b + ny, l_b:l_b + nx] * \
-            temp[middle_j:middle_j + ny, middle_i:middle_i + nx]
-        output_data[yoff:yoff + ny, xoff:xoff + nx] += part
+        part = (
+            k_temp[middle_j, middle_i, b_b : b_b + ny, l_b : l_b + nx]
+            * temp[middle_j : middle_j + ny, middle_i : middle_i + nx]
+        )
+        output_data[yoff : yoff + ny, xoff : xoff + nx] += part
