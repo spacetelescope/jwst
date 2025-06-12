@@ -13,13 +13,13 @@ from jwst.superbias.bias_sub import do_correction
 
 
 def test_basic_superbias_subtraction(setup_full_cube):
-    '''Check basic superbias subtraction.'''
+    """Check basic superbias subtraction."""
 
     # Create inputs, data, and superbiases
     ngroups = 5
     nrows = 2048
     ncols = 2048
-    blevel = 2000.
+    blevel = 2000.0
 
     data, bias = setup_full_cube(ngroups, nrows, ncols)
 
@@ -36,19 +36,19 @@ def test_basic_superbias_subtraction(setup_full_cube):
 
 
 def test_subarray_correction(setup_subarray_cube):
-    '''Check that the proper subarray is extracted from the full frame
-       reference file during subtraction.'''
+    """Check that the proper subarray is extracted from the full frame
+    reference file during subtraction."""
 
     # Create inputs, subarray SUB320A335R data, and superbiases
     ngroups = 5
     nrows = 320
     ncols = 320
-    blevel = 2000.
+    blevel = 2000.0
     xstart = 486
     ystart = 1508
 
     data, bias = setup_subarray_cube(xstart, ystart, ngroups, nrows, ncols)
-    manualbias = bias.data[ystart - 1:ystart - 1 + nrows, xstart - 1:xstart - 1 + ncols]
+    manualbias = bias.data[ystart - 1 : ystart - 1 + nrows, xstart - 1 : xstart - 1 + ncols]
 
     # Add signal values and bias values
     data.data[:] = blevel
@@ -64,8 +64,8 @@ def test_subarray_correction(setup_subarray_cube):
 
 
 def test_dq_propagation(setup_full_cube):
-    '''Check that the PIXELDQ array of the science exposure is correctly
-       combined with the reference file DQ array.'''
+    """Check that the PIXELDQ array of the science exposure is correctly
+    combined with the reference file DQ array."""
 
     # Create inputs, data, and superbiases
     ngroups = 5
@@ -88,14 +88,14 @@ def test_dq_propagation(setup_full_cube):
 
 
 def test_nans_in_superbias(setup_full_cube):
-    '''Check that no superbias subtraction is done for pixels that have a
-       value of NaN in the reference file.'''
+    """Check that no superbias subtraction is done for pixels that have a
+    value of NaN in the reference file."""
 
     # Create inputs, data, and superbiases
     ngroups = 5
     nrows = 2048
     ncols = 2048
-    blevel = 2000.
+    blevel = 2000.0
 
     data, bias = setup_full_cube(ngroups, nrows, ncols)
 
@@ -116,7 +116,7 @@ def test_nans_in_superbias(setup_full_cube):
 
 
 def test_full_step(setup_full_cube):
-    '''Test full run of the SuperBiasStep.'''
+    """Test full run of the SuperBiasStep."""
 
     # Create inputs, data, and superbiases
     ngroups = 5
@@ -137,12 +137,11 @@ def test_full_step(setup_full_cube):
 
 
 def test_zeroframe(setup_full_cube):
-    """
-    """
-    darr1 = [11800., 11793., 11823., 11789., 11857.]
-    darr2 = [11800., 11793., 11823., 11789., 11857.]
-    darr3 = [10579., 10594., 10620., 10583., 10621.]
-    zarr = [0., 10500., 10579.]
+    """ """
+    darr1 = [11800.0, 11793.0, 11823.0, 11789.0, 11857.0]
+    darr2 = [11800.0, 11793.0, 11823.0, 11789.0, 11857.0]
+    darr3 = [10579.0, 10594.0, 10620.0, 10583.0, 10621.0]
+    zarr = [0.0, 10500.0, 10579.0]
 
     ngroups, nrows, ncols = len(darr1), 1, len(zarr)
     ramp, bias = setup_full_cube(ngroups, nrows, ncols)
@@ -162,7 +161,7 @@ def test_zeroframe(setup_full_cube):
 
     ramp.zeroframe[0, 0, :] = np.array(zarr)
 
-    bval = 5000.
+    bval = 5000.0
     bias.data[:, :] = bval
 
     ramp.meta.exposure.zero_frame = True
@@ -172,12 +171,11 @@ def test_zeroframe(setup_full_cube):
     np.testing.assert_equal(check, output.zeroframe[0, 0, :])
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def setup_full_cube():
-    ''' Set up fake NIRCam FULL data to test.'''
+    """Set up fake NIRCam FULL data to test."""
 
     def _cube(ngroups, nrows, ncols):
-
         nints = 1
 
         # create a JWST datamodel for NIRCam FULL data
@@ -187,10 +185,10 @@ def setup_full_cube():
         data_model.meta.subarray.xsize = ncols
         data_model.meta.subarray.ysize = nrows
         data_model.meta.exposure.ngroups = ngroups
-        data_model.meta.instrument.name = 'NIRCAM'
-        data_model.meta.instrument.detector = 'NRCA1'
-        data_model.meta.observation.date = '2017-10-01'
-        data_model.meta.observation.time = '00:00:00'
+        data_model.meta.instrument.name = "NIRCAM"
+        data_model.meta.instrument.detector = "NRCA1"
+        data_model.meta.observation.date = "2017-10-01"
+        data_model.meta.observation.time = "00:00:00"
 
         # create a superbias model for the superbias step
         bias_model = SuperBiasModel((2048, 2048))
@@ -198,39 +196,38 @@ def setup_full_cube():
         bias_model.meta.subarray.ystart = 1
         bias_model.meta.subarray.xsize = 2048
         bias_model.meta.subarray.ysize = 2048
-        bias_model.meta.instrument.name = 'NIRCAM'
-        bias_model.meta.description = 'Fake data.'
-        bias_model.meta.telescope = 'JWST'
-        bias_model.meta.reftype = 'SuperBiasModel'
-        bias_model.meta.author = 'Alicia'
-        bias_model.meta.pedigree = 'Dummy'
-        bias_model.meta.useafter = '2015-10-01T00:00:00'
+        bias_model.meta.instrument.name = "NIRCAM"
+        bias_model.meta.description = "Fake data."
+        bias_model.meta.telescope = "JWST"
+        bias_model.meta.reftype = "SuperBiasModel"
+        bias_model.meta.author = "Alicia"
+        bias_model.meta.pedigree = "Dummy"
+        bias_model.meta.useafter = "2015-10-01T00:00:00"
 
         return data_model, bias_model
 
     return _cube
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def setup_subarray_cube():
-    ''' Set up fake NIRCam subarray data to test.'''
+    """Set up fake NIRCam subarray data to test."""
 
     def _cube(xstart, ystart, ngroups, nrows, ncols):
-
         nints = 1
 
         # create a JWST datamodel for NIRCam SUB320A335R data
         data_model = RampModel((nints, ngroups, nrows, ncols))
-        data_model.meta.subarray.name = 'SUB320A335R'
+        data_model.meta.subarray.name = "SUB320A335R"
         data_model.meta.subarray.xstart = xstart
         data_model.meta.subarray.ystart = ystart
         data_model.meta.subarray.xsize = ncols
         data_model.meta.subarray.ysize = nrows
         data_model.meta.exposure.ngroups = ngroups
-        data_model.meta.instrument.name = 'NIRCAM'
-        data_model.meta.instrument.detector = 'NRCALONG'
-        data_model.meta.observation.date = '2019-10-14'
-        data_model.meta.observation.time = '16:44:12.000'
+        data_model.meta.instrument.name = "NIRCAM"
+        data_model.meta.instrument.detector = "NRCALONG"
+        data_model.meta.observation.date = "2019-10-14"
+        data_model.meta.observation.time = "16:44:12.000"
 
         # create a superbias model for the superbias step
         bias_model = SuperBiasModel((2048, 2048))
@@ -238,13 +235,13 @@ def setup_subarray_cube():
         bias_model.meta.subarray.ystart = 1
         bias_model.meta.subarray.xsize = 2048
         bias_model.meta.subarray.ysize = 2048
-        bias_model.meta.instrument.name = 'NIRCAM'
-        bias_model.meta.description = 'Fake data.'
-        bias_model.meta.telescope = 'JWST'
-        bias_model.meta.reftype = 'SuperBiasModel'
-        bias_model.meta.author = 'Alicia'
-        bias_model.meta.pedigree = 'Dummy'
-        bias_model.meta.useafter = '2015-10-01T00:00:00'
+        bias_model.meta.instrument.name = "NIRCAM"
+        bias_model.meta.description = "Fake data."
+        bias_model.meta.telescope = "JWST"
+        bias_model.meta.reftype = "SuperBiasModel"
+        bias_model.meta.author = "Alicia"
+        bias_model.meta.pedigree = "Dummy"
+        bias_model.meta.useafter = "2015-10-01T00:00:00"
 
         return data_model, bias_model
 

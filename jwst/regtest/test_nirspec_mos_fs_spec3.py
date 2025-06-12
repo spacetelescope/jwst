@@ -26,9 +26,18 @@ def test_log_tracked_resources_spec3(log_tracked_resources, run_pipeline):
 
 
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d"])
-@pytest.mark.parametrize("source_id", ["b000000003", "b000000004", "b000000048",
-                                       "b000000052", "s000001354", "s000012105",
-                                       "s000034946"])
+@pytest.mark.parametrize(
+    "source_id",
+    [
+        "b000000003",
+        "b000000004",
+        "b000000048",
+        "b000000052",
+        "s000001354",
+        "s000012105",
+        "s000034946",
+    ],
+)
 def test_nirspec_mos_fs_spec3(run_pipeline, suffix, source_id, fitsdiff_default_kwargs):
     """Check results of calwebb_spec3"""
     rtdata = run_pipeline

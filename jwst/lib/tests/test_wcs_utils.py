@@ -14,7 +14,6 @@ from jwst.assign_wcs import util
 
 
 def create_model():
-
     det = cf.Frame2D(name="detector", axes_order=(0, 1))
 
     sky = cf.CelestialFrame(name="sky", axes_order=(0, 1), reference_frame=coord.ICRS())
@@ -60,7 +59,6 @@ def create_mock_wl():
 
 
 def test_get_wavelengths():
-
     # create a mock SlitModel
     model = create_model()
 
@@ -84,7 +82,6 @@ def test_get_wavelengths():
 
 
 def test_get_wavelengths_soss():
-
     # create a mock SlitModel
     model = create_model()
 
@@ -110,7 +107,6 @@ def test_get_wavelengths_soss():
 
 
 def test_get_wavelength_wavecorr():
-
     # create a mock SlitModel
     model = create_model()
 

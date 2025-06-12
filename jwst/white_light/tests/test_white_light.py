@@ -52,12 +52,27 @@ def make_datamodel():
     otab = np.array(
         list(
             zip(
-                wavelength, flux, error, f_var_poisson, f_var_rnoise, f_var_flat,
-                surf_bright, sb_error, sb_var_poisson, sb_var_rnoise, sb_var_flat,
-                dq, background, berror, b_var_poisson, b_var_rnoise, b_var_flat,
-                npixels
+                wavelength,
+                flux,
+                error,
+                f_var_poisson,
+                f_var_rnoise,
+                f_var_flat,
+                surf_bright,
+                sb_error,
+                sb_var_poisson,
+                sb_var_rnoise,
+                sb_var_flat,
+                dq,
+                background,
+                berror,
+                b_var_poisson,
+                b_var_rnoise,
+                b_var_flat,
+                npixels,
             ),
-        ), dtype=spec_dtype
+        ),
+        dtype=spec_dtype,
     )
 
     spec_model = datamodels.SpecModel(spec_table=otab)
@@ -75,15 +90,17 @@ def make_datamodel():
     mid_times = (start_times + end_times) / 2.0
     integrations = []
     for i in range(n_spec):
-        integrations.append((
-            i+1,
-            start_times[i],
-            mid_times[i],
-            end_times[i],
-            start_times[i] + 3.0,
-            mid_times[i] + 3.0,
-            end_times[i] + 3.0,
-        ))
+        integrations.append(
+            (
+                i + 1,
+                start_times[i],
+                mid_times[i],
+                end_times[i],
+                start_times[i] + 3.0,
+                mid_times[i] + 3.0,
+                end_times[i] + 3.0,
+            )
+        )
 
     integration_table = np.array(
         integrations,
@@ -95,7 +112,7 @@ def make_datamodel():
             ("int_start_BJD_TDB", "f8"),
             ("int_mid_BJD_TDB", "f8"),
             ("int_end_BJD_TDB", "f8"),
-        ]
+        ],
     )
 
     # make the tso spec models: one per order
@@ -125,7 +142,7 @@ def make_datamodel():
 
     # set one time to a different value for order 2 to test table integration
     for key in time_keys:
-        model.spec[1].spec_table[key][2] += .01
+        model.spec[1].spec_table[key][2] += 0.01
 
     return model
 
@@ -140,7 +157,7 @@ def test_white_light(make_datamodel, monkeypatch):
     watcher.assert_seen()
 
     n_spec = len(data.spec[0].spec_table)
-    times = np.linspace(0, 1, n_spec+1)
+    times = np.linspace(0, 1, n_spec + 1)
     start_times = times[:-1]
     end_times = times[1:]
     mid_times = (start_times + end_times) / 2.0
@@ -158,7 +175,12 @@ def test_white_light(make_datamodel, monkeypatch):
 
     # check fluxes are summed appropriately
     expected_flux_per_spec = np.sum(np.arange(1, 21, dtype=np.float32))
-    expected_flux = np.array([expected_flux_per_spec,]*len(mid_times))
+    expected_flux = np.array(
+        [
+            expected_flux_per_spec,
+        ]
+        * len(mid_times)
+    )
     expected_flux_order_1 = expected_flux.copy()
     expected_flux_order_1[-3] = np.nan  # the third was order 2 only
     expected_flux_order_2 = expected_flux.copy()
@@ -203,7 +225,12 @@ def test_white_light_multi_detector(make_datamodel):
 
     # check fluxes are summed appropriately
     expected_flux_per_spec = np.sum(np.arange(1, 21, dtype=np.float32))
-    expected_flux = np.array([expected_flux_per_spec,] * nspec)
+    expected_flux = np.array(
+        [
+            expected_flux_per_spec,
+        ]
+        * nspec
+    )
     expected_flux_order_1 = expected_flux.copy()
     expected_flux_order_1[-1] = np.nan  # the last entry is empty
     expected_flux_order_2 = expected_flux.copy()

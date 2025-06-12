@@ -32,7 +32,7 @@ def create_models():
 
     # Construct a MaskModel on the fly for use as override.
     ref_data = MaskModel(dq=dq, dq_def=dq_def)
-    ref_data.meta.instrument.name = 'MIRI'
+    ref_data.meta.instrument.name = "MIRI"
     ref_data.meta.subarray.xstart = 1
     ref_data.meta.subarray.xsize = xsize
     ref_data.meta.subarray.ystart = 1
@@ -48,12 +48,14 @@ def make_maskmodel(ysize, xsize):
     # how do we define a dq_def extension?
     mask = MaskModel()
 
-    dqdef = [(0, 1, 'DO_NOT_USE', 'Bad Pixel do not use'),
-             (1, 2, 'DEAD', 'Dead Pixel'),
-             (2, 4, 'HOT', 'Hot pixel'),
-             (3, 8, 'UNRELIABLE_SLOPE', 'Large slope variance'),
-             (4, 16, 'RC', 'RC pixel'),
-             (5, 32, 'REFERENCE_PIXEL', 'Reference Pixel')]
+    dqdef = [
+        (0, 1, "DO_NOT_USE", "Bad Pixel do not use"),
+        (1, 2, "DEAD", "Dead Pixel"),
+        (2, 4, "HOT", "Hot pixel"),
+        (3, 8, "UNRELIABLE_SLOPE", "Large slope variance"),
+        (4, 16, "RC", "RC pixel"),
+        (5, 32, "REFERENCE_PIXEL", "Reference Pixel"),
+    ]
 
     dq_def = np.array((dqdef), dtype=mask.dq_def.dtype)
 
@@ -89,9 +91,10 @@ def test_valid_model_override():
     step = DQInitStep(override_mask=ref_data)
 
     # Verify get_reference_file() returns an override model.
-    fetched_reference = step.get_reference_file(dm_ramp, 'mask')
-    assert isinstance(fetched_reference, MaskModel), \
+    fetched_reference = step.get_reference_file(dm_ramp, "mask")
+    assert isinstance(fetched_reference, MaskModel), (
         "get_reference_file() should return a model for this override."
+    )
 
     # Verify no exceptions occur during DQ processing.
     step.process(dm_ramp)
@@ -104,4 +107,4 @@ def test_string_override():
 
     # Verify stpipe treats string as filename and attempts to open
     with pytest.raises(FileNotFoundError):
-        step.get_reference_file(dm_ramp, 'mask')
+        step.get_reference_file(dm_ramp, "mask")

@@ -35,10 +35,9 @@ def _get_test_pts(model, npts=5):
 
 @pytest.fixture
 def nircam_rate():
-    wcs_file = get_pkg_data_filename(
-        "data/nrcb1-wcs.asdf", package="jwst.tweakreg.tests")
+    wcs_file = get_pkg_data_filename("data/nrcb1-wcs.asdf", package="jwst.tweakreg.tests")
     with asdf.open(wcs_file) as af:
-        wcs = deepcopy(af['wcs'])
+        wcs = deepcopy(af["wcs"])
 
     xsize = 204
     ysize = 204
@@ -48,117 +47,105 @@ def nircam_rate():
 
     wcsinfo = _wcsinfo_from_wcs_transform(wcs)
     im.meta.wcsinfo = {
-        'ctype1': 'RA---TAN',
-        'ctype2': 'DEC--TAN',
-        'v2_ref': wcsinfo['v2_ref'],
-        'v3_ref': wcsinfo['v3_ref'],
-        'roll_ref': wcsinfo['roll_ref'],
-        'ra_ref': wcsinfo['ra_ref'],
-        'dec_ref': wcsinfo['dec_ref'],
-        'v3yangle': -0.07385127,
-        'vparity': -1,
-        'wcsaxes': 2
+        "ctype1": "RA---TAN",
+        "ctype2": "DEC--TAN",
+        "v2_ref": wcsinfo["v2_ref"],
+        "v3_ref": wcsinfo["v3_ref"],
+        "roll_ref": wcsinfo["roll_ref"],
+        "ra_ref": wcsinfo["ra_ref"],
+        "dec_ref": wcsinfo["dec_ref"],
+        "v3yangle": -0.07385127,
+        "vparity": -1,
+        "wcsaxes": 2,
     }
 
     im.meta.wcs = wcs
 
     im.meta.instrument = {
-        'channel': 'LONG',
-        'detector': 'NRCALONG',
-        'filter': 'F444W',
-        'lamp_mode': 'NONE',
-        'module': 'A',
-        'name': 'NIRCAM',
-        'pupil': 'CLEAR'
+        "channel": "LONG",
+        "detector": "NRCALONG",
+        "filter": "F444W",
+        "lamp_mode": "NONE",
+        "module": "A",
+        "name": "NIRCAM",
+        "pupil": "CLEAR",
     }
     im.meta.subarray = {
-        'fastaxis': -1,
-        'name': 'FULL',
-        'slowaxis': 2,
-        'xsize': xsize,
-        'xstart': 1,
-        'ysize': ysize,
-        'ystart': 1
+        "fastaxis": -1,
+        "name": "FULL",
+        "slowaxis": 2,
+        "xsize": xsize,
+        "xstart": 1,
+        "ysize": ysize,
+        "ystart": 1,
     }
 
     im.meta.observation = {
-        'activity_id': '01',
-        'date': '2021-10-25',
-        'exposure_number': '00001',
-        'obs_id': 'V42424001001P0000000001101',
-        'observation_label': 'nircam_ptsrc_only',
-        'observation_number': '001',
-        'program_number': '42424',
-        'sequence_id': '1',
-        'time': '16:58:27.258',
-        'visit_group': '01',
-        'visit_id': '42424001001',
-        'visit_number': '001'
+        "activity_id": "01",
+        "date": "2021-10-25",
+        "exposure_number": "00001",
+        "obs_id": "V42424001001P0000000001101",
+        "observation_label": "nircam_ptsrc_only",
+        "observation_number": "001",
+        "program_number": "42424",
+        "sequence_id": "1",
+        "time": "16:58:27.258",
+        "visit_group": "01",
+        "visit_id": "42424001001",
+        "visit_number": "001",
     }
 
     im.meta.exposure = {
-        'duration': 161.05155,
-        'end_time': 59512.70899968495,
-        'exposure_time': 150.31478,
-        'frame_time': 10.73677,
-        'group_time': 21.47354,
-        'groupgap': 1,
-        'integration_time': 150.31478,
-        'mid_time': 59512.70812980775,
-        'nframes': 1,
-        'ngroups': 7,
-        'nints': 1,
-        'nresets_at_start': 1,
-        'nresets_between_ints': 1,
-        'readpatt': 'BRIGHT1',
-        'sample_time': 10,
-        'start_time': 59512.70725993055,
-        'type': 'NRC_IMAGE'
+        "duration": 161.05155,
+        "end_time": 59512.70899968495,
+        "exposure_time": 150.31478,
+        "frame_time": 10.73677,
+        "group_time": 21.47354,
+        "groupgap": 1,
+        "integration_time": 150.31478,
+        "mid_time": 59512.70812980775,
+        "nframes": 1,
+        "ngroups": 7,
+        "nints": 1,
+        "nresets_at_start": 1,
+        "nresets_between_ints": 1,
+        "readpatt": "BRIGHT1",
+        "sample_time": 10,
+        "start_time": 59512.70725993055,
+        "type": "NRC_IMAGE",
     }
 
     im.meta.photometry = {
-        'pixelarea_steradians': 1e-13,
-        'pixelarea_arcsecsq': 4e-3,
+        "pixelarea_steradians": 1e-13,
+        "pixelarea_arcsecsq": 4e-3,
     }
 
     return im
 
 
 def test_adjust_wcs():
-    wcs_file = get_pkg_data_filename(
-        "data/nrcb1-wcs.asdf", package="jwst.tweakreg.tests")
+    wcs_file = get_pkg_data_filename("data/nrcb1-wcs.asdf", package="jwst.tweakreg.tests")
     with asdf.open(wcs_file) as af:
-        w0 = deepcopy(af['wcs'])
+        w0 = deepcopy(af["wcs"])
 
     crval20, crval10 = w0.pipeline[-2].transform.angles_3.value.tolist()[-2:]
     crval10 = -crval10
 
     crpix10, crpix20 = w0.numerical_inverse(crval10, crval20)
 
-    wa = adjust_wcs(
-        w0,
-        delta_ra=0.0135,
-        delta_dec=0.0208,
-        delta_roll=25.7,
-        scale_factor=1.003
-    )
+    wa = adjust_wcs(w0, delta_ra=0.0135, delta_dec=0.0208, delta_roll=25.7, scale_factor=1.003)
 
     crval1a, crval2a = wa(crpix10, crpix20)
 
-    assert_allclose(
-        [crval1a - crval10, crval2a - crval20],
-        [0.0135, 0.0208],
-        rtol=0,
-        atol=1e-13
-    )
+    assert_allclose([crval1a - crval10, crval2a - crval20], [0.0135, 0.0208], rtol=0, atol=1e-13)
 
     offset_ra10, offset_dec10 = w0(crpix10, crpix20 + 10)
     offset_ra1a, offset_dec1a = wa(crpix10, crpix20 + 10)
 
-    ca0 = SkyCoord(crval1a * u.deg, crval2a * u.deg, frame='icrs')
-    ca1 = SkyCoord(offset_ra1a * u.deg, offset_dec1a * u.deg, frame='icrs')
-    c0 = SkyCoord(crval10 * u.deg, crval20 * u.deg, frame='icrs')
-    c01 = SkyCoord(offset_ra10 * u.deg, offset_dec10 * u.deg, frame='icrs')
+    ca0 = SkyCoord(crval1a * u.deg, crval2a * u.deg, frame="icrs")
+    ca1 = SkyCoord(offset_ra1a * u.deg, offset_dec1a * u.deg, frame="icrs")
+    c0 = SkyCoord(crval10 * u.deg, crval20 * u.deg, frame="icrs")
+    c01 = SkyCoord(offset_ra10 * u.deg, offset_dec10 * u.deg, frame="icrs")
 
     sep0 = c0.separation(c01).degree
     sepa = ca0.separation(ca1).degree
@@ -168,10 +155,7 @@ def test_adjust_wcs():
 
     # test roll:
     assert_allclose(
-        ca1.position_angle(ca0).degree - c01.position_angle(c0).degree,
-        25.7,
-        rtol=1.0e-5,
-        atol=0.0
+        ca1.position_angle(ca0).degree - c01.position_angle(c0).degree, 25.7, rtol=1.0e-5, atol=0.0
     )
 
 
@@ -190,8 +174,8 @@ def test_transfer_wcs_correction(nircam_rate, tmp_path, input_type):
 
     if input_type == "file":
         # write to files:
-        model_file1 = str(tmp_path / 'model1.fits')
-        model_file2 = str(tmp_path / 'model2.fits')
+        model_file1 = str(tmp_path / "model1.fits")
+        model_file2 = str(tmp_path / "model2.fits")
 
         m1.save(model_file1)
         m2.save(model_file2)
@@ -216,11 +200,8 @@ def test_transfer_wcs_correction(nircam_rate, tmp_path, input_type):
     x, y = _get_test_pts(m1, 5)
 
     assert_allclose(
-        np.linalg.norm(
-            np.subtract(m2.meta.wcs(x, y), m1.meta.wcs(x, y)),
-            axis=0
-        ),
+        np.linalg.norm(np.subtract(m2.meta.wcs(x, y), m1.meta.wcs(x, y)), axis=0),
         0,
         rtol=0,
-        atol=5e-11
+        atol=5e-11,
     )

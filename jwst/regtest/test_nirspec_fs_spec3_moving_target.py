@@ -15,20 +15,24 @@ def run_pipeline(rtdata_module):
     rtdata = rtdata_module
 
     # Get the ASN file and input exposures
-    rtdata.get_asn('nirspec/fs/jw01245-o002_20240701t053319_spec3_00001_asn.json')
+    rtdata.get_asn("nirspec/fs/jw01245-o002_20240701t053319_spec3_00001_asn.json")
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
-    args = ["calwebb_spec3", rtdata.input,
-            "--steps.outlier_detection.save_results=true",
-            "--steps.resample_spec.save_results=true",
-            "--steps.extract_1d.save_results=true"]
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        "--steps.outlier_detection.save_results=true",
+        "--steps.resample_spec.save_results=true",
+        "--steps.extract_1d.save_results=true",
+    ]
     Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d"])
 def test_nirspec_fs_spec3_moving_target(
-        run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
+    run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Test spec3 pipeline on a NIRSpec FS moving target."""
     rtdata = rtdata_module
 

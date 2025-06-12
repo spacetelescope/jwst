@@ -8,7 +8,6 @@ from jwst.extract_1d.soss_extract.soss_syscor import (
 
 
 def test_soss_background(imagemodel, detector_mask, mask_trace_profile):
-
     data, err = imagemodel
     bkg_mask = ~mask_trace_profile[0] | ~mask_trace_profile[1] | detector_mask
 
@@ -28,22 +27,20 @@ def test_soss_background(imagemodel, detector_mask, mask_trace_profile):
 
 
 def test_make_background_mask():
-
     rng = np.random.default_rng(seed=42)
     for sub in [96, 256, 2048]:
-
         shape = (sub, 2048)
-        width = int(sub/4)
+        width = int(sub / 4)
         data = rng.normal(0.0, 1.0, shape)
 
         mask = make_background_mask(data, width)
 
         if sub == 96:
-            expected_bad_frac = 1/4
+            expected_bad_frac = 1 / 4
         else:
-            expected_bad_frac = 1/2
+            expected_bad_frac = 1 / 2
 
-        bad_frac = np.sum(mask)/mask.size
+        bad_frac = np.sum(mask) / mask.size
         # test that bad fraction is computed properly for all modes
         assert np.isclose(bad_frac, expected_bad_frac)
 

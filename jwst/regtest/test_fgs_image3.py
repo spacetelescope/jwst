@@ -7,14 +7,14 @@ from jwst.stpipe import Step
 @pytest.fixture(scope="module")
 def run_fgs_image3(rtdata_module):
     rtdata = rtdata_module
-    rtdata.get_asn('fgs/image3/jw01029-o001_20240716t172128_image3_00001_asn.json')
+    rtdata.get_asn("fgs/image3/jw01029-o001_20240716t172128_image3_00001_asn.json")
 
     args = ["calwebb_image3", rtdata.input]
     Step.from_cmdline(args)
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", ['i2d', 'segm'])
+@pytest.mark.parametrize("suffix", ["i2d", "segm"])
 def test_fgs_image3(run_fgs_image3, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test for FGS data in the image3 pipeline"""
     rtdata = rtdata_module

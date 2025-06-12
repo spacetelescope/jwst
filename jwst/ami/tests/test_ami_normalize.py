@@ -1,4 +1,5 @@
 """Unit tests for ami_normalize module and step."""
+
 import pytest
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
@@ -13,6 +14,7 @@ REF_AMP = 2
 RAW_PHI = np.pi / 2
 REF_PHI = -np.pi / 4
 ERR = 0.1
+
 
 @pytest.fixture
 def oi_data(example_model, bandpass):
@@ -34,7 +36,7 @@ def oi_data(example_model, bandpass):
     flag_t3 = [False] * n_closure_phases
 
     isz = example_model.data.shape[1]
-    pscale = PXSC_MAS / 1000.0 # arcsec
+    pscale = PXSC_MAS / 1000.0  # arcsec
     lam_c, lam_w = get_cw_beta(bandpass)
 
     # oi_header data
@@ -65,12 +67,14 @@ def oi_data(example_model, bandpass):
     oim.array["STA_NAME"] = [f"A{x:d}" for x in sta_index]
     oim.array["STA_INDEX"] = sta_index
     oim.array["DIAMETER"] = [0] * n_holes
-    oim.array["STAXYZ"] = [[0,0,0],] * n_holes
+    oim.array["STAXYZ"] = [
+        [0, 0, 0],
+    ] * n_holes
     oim.array["FOV"] = [pscale * isz] * n_holes
     oim.array["FOVTYPE"] = ["RADIUS"] * n_holes
     # oim.array["CTRS_EQT"] = instrument_data.ctrs_eqt
     oim.array["PISTONS"] = pistons
-    oim.array["PIST_ERR"] = pistons*ERR
+    oim.array["PIST_ERR"] = pistons * ERR
 
     # oi_target extension data
     oim.target["TARGET_ID"] = [1]
@@ -98,12 +102,12 @@ def oi_data(example_model, bandpass):
     # oim.vis["MJD"] = 0
     # oim.vis["INT_TIME"] = 0
     oim.vis["VISAMP"] = visamp
-    oim.vis["VISAMPERR"] = visamp*ERR
+    oim.vis["VISAMPERR"] = visamp * ERR
     oim.vis["VISPHI"] = visphi
-    oim.vis["VISPHIERR"] = visphi*ERR
+    oim.vis["VISPHIERR"] = visphi * ERR
     # oim.vis["UCOORD"] = ucoord
     # oim.vis["VCOORD"] = vcoord
-    #oim.vis["STA_INDEX"] = sta_index
+    # oim.vis["STA_INDEX"] = sta_index
     oim.vis["FLAG"] = flag_vis
 
     # oi_vis2 extension data
@@ -123,11 +127,11 @@ def oi_data(example_model, bandpass):
     oim.t3 = np.zeros(n_closure_phases, dtype=oim.t3.dtype)
     oim.t3["TARGET_ID"] = 1
     oim.t3["TIME"] = 0
-   # oim.t3["MJD"] = observation_date.mjd
+    # oim.t3["MJD"] = observation_date.mjd
     oim.t3["T3AMP"] = t3amp
-    oim.t3["T3AMPERR"] = t3amp*ERR
+    oim.t3["T3AMPERR"] = t3amp * ERR
     oim.t3["T3PHI"] = t3phi
-    oim.t3["T3PHIERR"] = t3phi*ERR
+    oim.t3["T3PHIERR"] = t3phi * ERR
     # oim.t3["U1COORD"] = u1coord
     # oim.t3["V1COORD"] = v1coord
     # oim.t3["U2COORD"] = u2coord
@@ -137,14 +141,13 @@ def oi_data(example_model, bandpass):
 
     # oi_wavelength extension data
     oim.wavelength["EFF_WAVE"] = lam_c
-    oim.wavelength["EFF_BAND"] = lam_c*lam_w
+    oim.wavelength["EFF_BAND"] = lam_c * lam_w
 
     return oim
 
 
 @pytest.fixture
 def ref_data(oi_data):
-
     ref_data = oi_data.copy()
     ref_data.vis["VISAMP"] = np.zeros_like(oi_data.vis["VISAMP"]) + REF_AMP
     ref_data.vis["VISPHI"] = np.zeros_like(oi_data.vis["VISPHI"]) + REF_PHI
@@ -158,7 +161,7 @@ def ref_data(oi_data):
 def test_ami_normalize(oi_data, ref_data):
     """
     Test the AmiNormalizeStep.
-    
+
     This test provides coverage for AmiNormalizeStep, ami_normalize.py,
     and the CalibOiFits class inside oifits.py, because internally it
     initializes a CalibOiFits class and then calls its calibrate() method.
@@ -169,6 +172,6 @@ def test_ami_normalize(oi_data, ref_data):
     assert isinstance(result, dm.AmiOIModel)
     assert np.allclose(result.vis["VISAMP"], RAW_AMP / REF_AMP)
     assert np.allclose(result.vis["VISPHI"], RAW_PHI)
-    assert np.allclose(result.vis2["VIS2DATA"], (RAW_AMP / REF_AMP)**2)
+    assert np.allclose(result.vis2["VIS2DATA"], (RAW_AMP / REF_AMP) ** 2)
     assert np.allclose(result.t3["T3AMP"], RAW_AMP)
     assert np.allclose(result.t3["T3PHI"], RAW_PHI - REF_PHI)

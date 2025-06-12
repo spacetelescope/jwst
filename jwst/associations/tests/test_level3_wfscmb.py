@@ -79,10 +79,7 @@ def test_level3_wfscmb_jitter_suppression(tmp_path):
     """
     pool_path = str(tmp_path / "pool.csv")
     pool = combine_pools(
-        get_pkg_data_filename(
-            "data/pool_033_wfs_jitter.csv",
-            package="jwst.associations.tests"
-        )
+        get_pkg_data_filename("data/pool_033_wfs_jitter.csv", package="jwst.associations.tests")
     )
     pool.write(pool_path, format="ascii", delimiter="|")
     cmd_args = [pool_path, f"--path={tmp_path}"]

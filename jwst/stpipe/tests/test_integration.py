@@ -32,16 +32,18 @@ def _get_subclass_names(class_, ignore=None, ignore_tests=True):
     for subclass in class_.__subclasses__():
         if subclass.__name__ in ignore:
             continue
-        if ignore_tests and (subclass.__module__ == 'local' or 'tests' in subclass.__module__.split('.')):
+        if ignore_tests and (
+            subclass.__module__ == "local" or "tests" in subclass.__module__.split(".")
+        ):
             continue
         yield subclass.__name__
         yield from _get_subclass_names(subclass, ignore, ignore_tests)
 
 
 def test_all_steps_in_step_all():
-    step_names = set(_get_subclass_names(Step, set(['JwstPipeline'])))
+    step_names = set(_get_subclass_names(Step, set(["JwstPipeline"])))
     # MasterBackgroundMosStep is a pipeline that is treated like a step
-    step_names.add('MasterBackgroundMosStep')
+    step_names.add("MasterBackgroundMosStep")
     # also ignore any 'non-steps'
     step_names -= set(NON_STEPS)
     assert set(jwst.step.__all__) == step_names
@@ -50,5 +52,5 @@ def test_all_steps_in_step_all():
 def test_all_pipelines_in_pipeline_all():
     pipeline_names = set(_get_subclass_names(Pipeline))
     # MasterBackgroundMosStep is a pipeline that is treated like a step
-    pipeline_names.remove('MasterBackgroundMosStep')
+    pipeline_names.remove("MasterBackgroundMosStep")
     assert set(jwst.pipeline.__all__) == pipeline_names

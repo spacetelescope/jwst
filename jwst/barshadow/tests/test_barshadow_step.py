@@ -27,7 +27,7 @@ def create_nirspec_mos_model():
     im_ex2d = Extract2dStep.call(im_wcs)
 
     # add error/variance arrays
-    im_ex2d.slits[0].name = '0'
+    im_ex2d.slits[0].name = "0"
     im_ex2d.slits[0].err = im_ex2d.slits[0].data * 0.1
     im_ex2d.slits[0].var_rnoise = im_ex2d.slits[0].data * 0.01
     im_ex2d.slits[0].var_poisson = im_ex2d.slits[0].data * 0.01
@@ -66,12 +66,8 @@ def test_barshadow_step(nirspec_mos_model):
 
         # data should have been divided by barshadow
         nnan = ~np.isnan(slit.data)
-        assert np.allclose(
-            slit.data[nnan] * shadow[nnan], model.slits[0].data[nnan]
-        )
-        assert np.allclose(
-            slit.err[nnan] * shadow[nnan], model.slits[0].err[nnan]
-        )
+        assert np.allclose(slit.data[nnan] * shadow[nnan], model.slits[0].data[nnan])
+        assert np.allclose(slit.err[nnan] * shadow[nnan], model.slits[0].err[nnan])
         assert np.allclose(
             slit.var_rnoise[nnan] * shadow[nnan] ** 2,
             model.slits[0].var_rnoise[nnan],
@@ -92,8 +88,9 @@ def test_barshadow_step_zero_length(nirspec_mos_model, log_watcher):
     model = nirspec_mos_model.copy()
     model.slits[0].shutter_state = ""
 
-    watcher = log_watcher("jwst.barshadow.bar_shadow",
-                          message="has zero length, correction skipped", level="info")
+    watcher = log_watcher(
+        "jwst.barshadow.bar_shadow", message="has zero length, correction skipped", level="info"
+    )
     result = BarShadowStep.call(model)
     watcher.assert_seen()
 
@@ -126,9 +123,7 @@ def test_barshadow_step_not_uniform(nirspec_mos_model, log_watcher):
 
 def test_barshadow_no_reffile(monkeypatch, nirspec_mos_model):
     model = nirspec_mos_model.copy()
-    monkeypatch.setattr(
-        BarShadowStep, "get_reference_file", lambda *args, **kwargs: "N/A"
-    )
+    monkeypatch.setattr(BarShadowStep, "get_reference_file", lambda *args, **kwargs: "N/A")
 
     result = BarShadowStep.call(model)
 
@@ -199,7 +194,5 @@ def test_barshadow_step_missing_scale(nirspec_mos_model, log_watcher):
 
     # data should have been divided by barshadow
     nnan = ~np.isnan(result.slits[0].data)
-    assert np.allclose(
-        result.slits[0].data[nnan] * shadow[nnan], model.slits[0].data[nnan]
-    )
+    assert np.allclose(result.slits[0].data[nnan] * shadow[nnan], model.slits[0].data[nnan])
     result.close()

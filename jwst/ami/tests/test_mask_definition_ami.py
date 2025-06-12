@@ -20,8 +20,8 @@ def ctrs_asdesigned(nrm_model):
         ]
     )
 
-def test_NRMDefinition(nrm_model, ctrs_asdesigned):
 
+def test_NRMDefinition(nrm_model, ctrs_asdesigned):
     nrm = NRMDefinition(nrm_model)
 
     # test copy over of attributes
@@ -40,7 +40,7 @@ def test_NRMDefinition(nrm_model, ctrs_asdesigned):
 
 def test_NRMDefinition_chooseholes(nrm_model, ctrs_asdesigned):
     # test the options for chooseholes
-    chooseholes = ["B2", "B4", "B5", "B6"] # indices [3, 0, 2, 5]
+    chooseholes = ["B2", "B4", "B5", "B6"]  # indices [3, 0, 2, 5]
     nrm = NRMDefinition(nrm_model, chooseholes=chooseholes)
     assert nrm.ctrs.shape == (4, 2)
     assert np.allclose(nrm.ctrs, -np.fliplr(ctrs_asdesigned)[[3, 0, 2, 5]])

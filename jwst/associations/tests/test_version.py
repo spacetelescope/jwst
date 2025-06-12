@@ -7,6 +7,6 @@ from jwst import __version__
 def test_asn_version():
     """Test version in association is package version"""
 
-    asn = asn_from_list(['a', 'b', 'c'], product_name='aproduct')
+    asn = asn_from_list(["a", "b", "c"], product_name="aproduct")
 
-    assert asn['code_version'] == __version__
+    assert asn["code_version"] == __version__

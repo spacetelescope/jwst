@@ -6,10 +6,12 @@ from jwst.stpipe import Step
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
-    'exposure',
-    ['jw04482014001_02102_00001_mirifulong',
-     'jw04482014001_02102_00001_mirifushort',
-     'jw04482014001_02102_00001_mirimage']
+    "exposure",
+    [
+        "jw04482014001_02102_00001_mirifulong",
+        "jw04482014001_02102_00001_mirifushort",
+        "jw04482014001_02102_00001_mirimage",
+    ],
 )
 def test_miri_dark_pipeline(exposure, rtdata, fitsdiff_default_kwargs):
     """Test the DarkPipeline on MIRI dark exposures"""
@@ -26,10 +28,7 @@ def test_miri_dark_pipeline(exposure, rtdata, fitsdiff_default_kwargs):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize(
-    'exposure',
-    ['jw01033005001_04103_00001-seg003_mirimage']
-)
+@pytest.mark.parametrize("exposure", ["jw01033005001_04103_00001-seg003_mirimage"])
 def test_miri_segmented_dark(exposure, rtdata, fitsdiff_default_kwargs):
     """Test the dark_current step on MIRI segmented exposures"""
     rtdata.get_data(f"miri/image/{exposure}_linearity.fits")

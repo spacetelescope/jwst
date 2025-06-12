@@ -10,7 +10,6 @@ from .conftest import PXSC_RAD, PXSC_MAS
 
 @pytest.mark.parametrize("filt", bp_fix.filts)
 def test_create_wavelengths(filt):
-
     wl_ctr, wl_left, wl_right = bp_fix.create_wavelengths(filt)
 
     expected_ctr = bp_fix.filtwl_d[filt]
@@ -24,7 +23,7 @@ def test_create_wavelengths(filt):
 def test_calc_psf(example_model, circular_pupil):
     """
     Tests for calc_psf and calc_pupil_support.
-    
+
     These have very similar inputs and outputs so are tested together.
     """
 
@@ -53,7 +52,7 @@ def test_calc_psf(example_model, circular_pupil):
 def test_fourier_corr(example_model):
     """
     Test bad_pixels and fourier_corr functions.
-    
+
     Example model has a bad pixel at (0, 20, 20).
     """
 
@@ -81,13 +80,13 @@ def test_fourier_corr(example_model):
 def test_fix_bad_pixels(example_model, nrm_model_circular):
     """
     Test fix_bad_pixels function.
-    
+
     Example model has a bad pixel at (0, 20, 20).
     """
     data = example_model.data.copy()
     nrm_model = nrm_model_circular
     pxdq0 = np.zeros_like(data, dtype=np.bool_)
-    filt = example_model.meta.instrument.filter  
+    filt = example_model.meta.instrument.filter
 
     data_out, pxdq_out = bp_fix.fix_bad_pixels(data, pxdq0, filt, PXSC_MAS, nrm_model)
 
@@ -97,7 +96,7 @@ def test_fix_bad_pixels(example_model, nrm_model_circular):
     assert np.sum(pxdq_out) == 1
     assert data_out.dtype == np.float32
     assert pxdq_out.dtype == np.int64
-    
+
     # replace bad pixel in both arrays with a placeholder so can assert the rest did not change
     data[0, 20, 20] = 0
     data_out[0, 20, 20] = 0
@@ -106,15 +105,15 @@ def test_fix_bad_pixels(example_model, nrm_model_circular):
 
 def test_fix_bad_pixels_even_size(example_model, nrm_model_circular):
     """Test coverage for bug where even-sized arrays were failing."""
-    
+
     data = example_model.data.copy()
     nrm_model = nrm_model_circular
     pxdq0 = np.zeros_like(data, dtype=np.bool_)
     filt = example_model.meta.instrument.filter
 
     # Make the data even-sized
-    data = data[:, :data.shape[1] - 1, :data.shape[2] - 1]
-    pxdq0 = pxdq0[:, :pxdq0.shape[1] - 1, :pxdq0.shape[2] - 1]
+    data = data[:, : data.shape[1] - 1, : data.shape[2] - 1]
+    pxdq0 = pxdq0[:, : pxdq0.shape[1] - 1, : pxdq0.shape[2] - 1]
 
     data_out, pxdq_out = bp_fix.fix_bad_pixels(data, pxdq0, filt, PXSC_MAS, nrm_model)
 

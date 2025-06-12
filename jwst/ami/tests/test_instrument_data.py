@@ -23,7 +23,7 @@ def test_niriss(
 ):
     """Test initialize NIRISS class with all available options."""
 
-    filt = example_model.meta.instrument.filter 
+    filt = example_model.meta.instrument.filter
     niriss = instrument_data.NIRISS(
         filt,
         nrm_model_circular,
@@ -77,15 +77,15 @@ def test_niriss(
 
     # test bad pixels are fixed if run_bpfix is True
     if run_bpfix:
-        assert np.max(scidata_ctrd) < 50 # bad pixel is fixed
+        assert np.max(scidata_ctrd) < 50  # bad pixel is fixed
     else:
-        assert np.max(scidata_ctrd) == 100 # bad pixel retains original value of 100
+        assert np.max(scidata_ctrd) == 100  # bad pixel retains original value of 100
 
     # test bad pixels are added to dq mask if usebp is True
     if run_bpfix and usebp:
-        assert np.sum(dqmask_ctrd) == 1 # single bad pixel
+        assert np.sum(dqmask_ctrd) == 1  # single bad pixel
     else:
-        assert np.sum(dqmask_ctrd) == 0 # no masking
+        assert np.sum(dqmask_ctrd) == 0  # no masking
 
     # check attributes are set by read_data_model
     # no more checks here for now, because this is likely to get refactored

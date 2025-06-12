@@ -7,13 +7,11 @@ from jwst.master_background import MasterBackgroundStep
 
 @pytest.fixture(scope="module")
 def run_pipeline(rtdata_module):
-
     rtdata = rtdata_module
 
     rtdata.get_asn("miri/mrs/jw01031-c1004_20241028t205539_spec3_subset_asn.json")
 
-    MasterBackgroundStep.call(rtdata.input, save_results=True, suffix='mbsub',
-                              save_background=True)
+    MasterBackgroundStep.call(rtdata.input, save_results=True, suffix="mbsub", save_background=True)
 
     return rtdata
 
