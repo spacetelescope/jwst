@@ -1,9 +1,8 @@
 """
 Test the engdblog step
 """
-import os
 import pytest
-from tempfile import TemporaryDirectory
+
 from jwst.lib import engdb_mast
 from jwst.engdblog import EngDBLogStep
 
@@ -48,15 +47,14 @@ def test_novalues(caplog, engdb):
     assert '{} has no entries in time range'.format(mnemonic) in caplog.text
 
 
-def test_all(caplog, engdb):
+def test_all(caplog, engdb, tmp_path):
     mnemonic = 'INRSI_GWA_Y_TILT_AVGED'
     cfg_file_name = 'engdblogstep.cfg'
-    with TemporaryDirectory() as cfg_dir:
-        cfg_path = os.path.join(cfg_dir, cfg_file_name)
-        with open(cfg_path, 'w') as cfg:
-            cfg.write('verbosity = "all"\n')
-        result = EngDBLogStep.call([mnemonic], config_file=cfg_path)
-        assert len(result[mnemonic]) > 1
+    cfg_path = str(tmp_path / cfg_file_name)
+    with open(cfg_path, 'w') as cfg:
+        cfg.write('verbosity = "all"\n')
+    result = EngDBLogStep.call([mnemonic], config_file=cfg_path)
+    assert len(result[mnemonic]) > 1
 
 
 def test_multi_mnemonics(caplog, engdb):
