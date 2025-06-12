@@ -24,6 +24,9 @@ from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_sca
 from jwst.resample.resample_utils import load_custom_wcs
 
 
+_FLT32_EPS = np.finfo(np.float32).eps
+
+
 def _set_photom_kwd(im):
     xmin = im.meta.subarray.xstart - 1
     xmax = xmin + im.meta.subarray.xsize
@@ -566,8 +569,12 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
     result3 = ResampleSpecStep.call([im1, im2], pixel_scale=pscale)
 
     # pixel_scale and pixel_scale_ratio should be equivalent
-    nn = np.isnan(result2.data) | np.isnan(result3.data)
-    assert_allclose(result2.data[~nn], result3.data[~nn], rtol=1e-6)
+    nn = ~(np.isnan(result2.data) | np.isnan(result3.data))
+    assert_allclose(
+        result2.data[nn],
+        result3.data[nn],
+        rtol=2.0 * _FLT32_EPS
+    )
 
     # Check result2 for expected results
 
@@ -575,7 +582,12 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
     assert result1.data.shape[0] == result2.data.shape[0]
 
     # spatial dimension is scaled
-    assert_allclose(result1.data.shape[1], result2.data.shape[1] / ratio, atol=1)
+    assert_allclose(
+        result1.data.shape[1],
+        result2.data.shape[1] / ratio,
+        rtol=0,
+        atol=1
+    )
 
     # data is non-trivial
     assert np.nansum(result1.data) > 0.0
@@ -1069,16 +1081,13 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match, tmp_p
 
     # make sure pixel values are similar, accounting for scale factor
     # (assuming inputs are in surface brightness units)
-    iscale2 = im.meta.photometry.pixelarea_steradians / compute_mean_pixel_area(
-        im.meta.wcs, shape=im.data.shape
-    )
     input_mean = np.nanmean(im.data)
     total_weight = np.sum(weight1)
     output_mean_1 = np.nansum(data1 * weight1) / total_weight
     output_mean_2 = np.nansum(data2 * weight2) / total_weight
     # rtol and atol values are from np.isclose default settings.
-    assert_allclose(input_mean * iscale2, output_mean_1, rtol=1e-5, atol=1e-8)
-    assert_allclose(input_mean * iscale2, output_mean_2, rtol=1e-5, atol=1e-8)
+    assert_allclose(input_mean, output_mean_1, rtol=1e-5, atol=1e-8)
+    assert_allclose(input_mean, output_mean_2, rtol=1e-5, atol=1e-8)
 
     im.close()
     result.close()
