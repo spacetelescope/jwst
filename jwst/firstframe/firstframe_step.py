@@ -1,4 +1,4 @@
-from ..stpipe import Step
+from jwst.stpipe import Step
 from . import firstframe_sub
 from stdatamodels.jwst import datamodels
 

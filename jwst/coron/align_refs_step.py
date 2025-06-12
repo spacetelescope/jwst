@@ -4,7 +4,7 @@ from astropy.nddata.bitmask import interpret_bit_flags
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 from . import imageregistration
 from .median_replace_img import median_replace_img
 

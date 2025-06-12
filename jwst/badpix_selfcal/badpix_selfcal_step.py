@@ -1,5 +1,5 @@
 import warnings
-from ..stpipe import Step
+from jwst.stpipe import Step
 from . import badpix_selfcal
 import numpy as np
 from jwst import datamodels as dm

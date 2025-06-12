@@ -17,7 +17,7 @@ from stdatamodels.jwst.datamodels import WavelengthrangeModel, ImageModel, SlitM
 from stdatamodels.jwst.transforms.models import IdealToV2V3
 from astropy.modeling import CompoundModel
 
-from ..assign_wcs import util
+from jwst.assign_wcs import util
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

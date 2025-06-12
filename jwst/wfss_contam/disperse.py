@@ -3,7 +3,7 @@ import warnings
 
 from scipy.interpolate import interp1d
 
-from ..lib.winclip import get_clipped_pixels
+from jwst.lib.winclip import get_clipped_pixels
 from .sens1d import create_1d_sens
 
 

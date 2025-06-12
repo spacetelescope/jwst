@@ -4,7 +4,7 @@ import numpy as np
 
 from stdatamodels.jwst import datamodels
 
-from ..lib import reffile_utils
+from jwst.lib import reffile_utils
 from jwst.datamodels import dqflags  # type: ignore[attr-defined]
 
 log = logging.getLogger(__name__)

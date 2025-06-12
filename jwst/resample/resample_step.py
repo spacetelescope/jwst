@@ -7,7 +7,7 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample_utils import load_custom_wcs
 
 from . import resample
-from ..stpipe import Step
+from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

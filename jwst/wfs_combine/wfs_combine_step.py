@@ -2,7 +2,7 @@ from pathlib import Path
 
 from jwst.datamodels import ModelContainer
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 from . import wfs_combine
 
 __all__ = ["WfsCombineStep"]

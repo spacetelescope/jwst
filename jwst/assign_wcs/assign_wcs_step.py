@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from ..lib.exposure_types import IMAGING_TYPES
+from jwst.stpipe import Step
+from jwst.lib.exposure_types import IMAGING_TYPES
 import logging
 from .assign_wcs import load_wcs
 from .util import MSAFileError, wfss_imaging_wcs, wcs_bbox_from_shape, update_fits_wcsinfo

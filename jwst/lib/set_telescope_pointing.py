@@ -76,10 +76,10 @@ from stdatamodels.jwst import datamodels
 from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
 from .set_velocity_aberration import compute_va_effects_vector
 from .siafdb import SIAF, SiafDb
-from ..assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
-from ..assign_wcs.pointing import v23tosky
-from ..lib.engdb_tools import ENGDB_Service
-from ..lib.pipe_utils import is_tso
+from jwst.assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
+from jwst.assign_wcs.pointing import v23tosky
+from jwst.lib.engdb_tools import ENGDB_Service
+from jwst.lib.pipe_utils import is_tso
 
 __all__ = [
     "Methods",

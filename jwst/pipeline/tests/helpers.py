@@ -7,9 +7,9 @@ import tempfile
 
 # Import from the common helpers module
 # simply to make available from this module.
-from ...tests.helpers import abspath  # noqa: F401
+from jwst.tests.helpers import abspath  # noqa: F401
 
-from ...associations import load_asn
+from jwst.associations import load_asn
 
 SCRIPT_PATH = Path(__file__).parent
 SCRIPT_DATA_PATH = SCRIPT_PATH / "data"

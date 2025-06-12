@@ -3,7 +3,7 @@ import abc
 from scipy.interpolate import RectBivariateSpline, interp1d
 from stdatamodels.jwst.datamodels import MultiSlitModel
 
-from ..assign_wcs.util import compute_scale
+from jwst.assign_wcs.util import compute_scale
 import numpy as np
 
 

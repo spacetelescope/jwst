@@ -17,7 +17,7 @@ from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 from jwst.datamodels import ModelLibrary
 
 # LOCAL
-from ..stpipe import Step
+from jwst.stpipe import Step
 from .tweakreg_catalog import make_tweakreg_catalog
 
 
