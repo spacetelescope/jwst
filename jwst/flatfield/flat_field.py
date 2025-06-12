@@ -1731,10 +1731,12 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
 
         flat[ystart:ystop, xstart:xstop][good_flag] = flat_2d[good_flag]
         if flat_dq.dtype == flat_dq_2d.dtype:
-            flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.copy()
+            flat_dq[ystart:ystop, xstart:xstop][good_flag] |= flat_dq_2d[good_flag]
         else:
             log.warning(f"flat_dq.dtype = {flat_dq.dtype}  flat_dq_2d.dtype = {flat_dq_2d.dtype}")
-            flat_dq[ystart:ystop, xstart:xstop] |= flat_dq_2d.astype(flat_dq.dtype).copy()
+            flat_dq[ystart:ystop, xstart:xstop][good_flag] |= flat_dq_2d[good_flag].astype(
+                flat_dq.dtype
+            )
         flat_err[ystart:ystop, xstart:xstop][good_flag] = flat_err_2d[good_flag]
         del nan_flag, good_flag
 

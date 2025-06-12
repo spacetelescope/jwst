@@ -1,0 +1,1 @@
+Implement background subtraction for NIRISS SOSS data, fitting reference background templates to background regions of the science data.

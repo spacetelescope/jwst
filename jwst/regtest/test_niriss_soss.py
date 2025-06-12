@@ -17,8 +17,11 @@ def run_tso_spec2(rtdata_module):
     rtdata = rtdata_module
 
     # Run tso-spec2 pipeline on the first _rateints file, saving intermediate products
+    rtdata.get_data("niriss/soss/jwst_niriss_soss_bkg_sub256.fits")
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_nis_short_rateints.fits")
     args = ["calwebb_spec2", rtdata.input,
+            "--steps.bkg_subtract.skip=False",
+            "--steps.bkg_subtract.override_bkg=jwst_niriss_soss_bkg_sub256.fits",
             "--steps.flat_field.save_results=True",
             "--steps.srctype.save_results=True",
             "--steps.extract_1d.soss_atoca=False",
@@ -85,6 +88,8 @@ def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwarg
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    # Ignore the custom bkg reference file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_BKG')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -98,6 +103,8 @@ def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_defau
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    # Ignore the custom bkg reference file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_BKG')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -110,6 +117,8 @@ def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_defau
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    # Ignore the custom bkg reference file because it contains a full path.
+    fitsdiff_default_kwargs['ignore_keywords'].append('R_BKG')
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
