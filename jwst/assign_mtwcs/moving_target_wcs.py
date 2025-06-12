@@ -46,19 +46,23 @@ def assign_moving_target_wcs(input_models):
 
     # loop over only science exposures in the ModelLibrary
     ind = input_models.indices_for_exptype("science")
-    mt_ra = np.empty(len(ind))
-    mt_dec = np.empty(len(ind))
+    mt_ra = np.full(len(ind), None)
+    mt_dec = np.full(len(ind), None)
     with input_models:
         for i in ind:
             model = input_models.borrow(i)
-            mt_ra[i] = model.meta.wcsinfo.mt_ra
-            mt_dec[i] = model.meta.wcsinfo.mt_dec
+            if _is_valid_radec(model.meta.wcsinfo.mt_ra):
+                mt_ra[i] = model.meta.wcsinfo.mt_ra
+            if _is_valid_radec(model.meta.wcsinfo.mt_dec):
+                mt_dec[i] = model.meta.wcsinfo.mt_dec
             input_models.shelve(model, i, modify=False)
 
     # Compute the mean MT RA/Dec over all exposures
     if None in mt_ra or None in mt_dec:
-        log.warning("One or more MT RA/Dec values missing in input images")
-        log.warning("Step will be skipped, resulting in target misalignment")
+        log.warning(
+            "One or more MT RA/Dec values missing in input images.\n"
+            "Step will be skipped, resulting in target misalignment."
+        )
         record_step_status(input_models, "assign_mtwcs", False)
         return input_models
 
@@ -138,3 +142,22 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
     pipeline.append((mt, None))
     new_wcs = WCS(pipeline)
     return new_wcs
+
+
+def _is_valid_radec(ra_or_dec):
+    """
+    Check if given RA or Dec is valid.
+
+    Parameters
+    ----------
+    ra_or_dec : obj
+        RA or Dec value to check.
+
+    Returns
+    -------
+    status : bool
+        `True` if valid or `False` if not.
+    """
+    if ra_or_dec is None:
+        return False
+    return np.isfinite(ra_or_dec)
