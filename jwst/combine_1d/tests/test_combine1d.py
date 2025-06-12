@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from jwst import datamodels
+
 from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi, N_SOURCES
 from jwst.combine_1d import Combine1dStep
 from jwst.combine_1d.combine1d import InputSpectrumModel, check_exptime
@@ -194,7 +195,8 @@ def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
                 var,
                 var,
                 var,
-                npixels, strict=False,
+                npixels,
+                strict=False,
             ),
         ),
         dtype=spec_dtype,
@@ -204,10 +206,13 @@ def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
 
     return spec_model
 
+<<<<<<< HEAD
 
 @pytest.fixture
 def wfss_multiexposure():
     return wfss_multi()
+=======
+>>>>>>> 8ce223c7c (update tests)
 
 def test_wfss_multi_input(wfss_multiexposure):
     """Smoke test to ensure combine_1d works with WFSSMultiSpecModel"""
@@ -217,7 +222,7 @@ def test_wfss_multi_input(wfss_multiexposure):
     assert tab.shape == (N_SOURCES,)
     assert result.meta.cal_step.combine_1d == "COMPLETE"
     assert np.allclose(tab["FLUX"], 1.0)
-    
+
     # check that metadata was passed through correctly
     assert np.allclose(tab["SOURCE_RA"], 0.0)
     assert np.allclose(tab["SOURCE_DEC"], 0.0)

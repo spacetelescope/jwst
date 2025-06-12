@@ -7,13 +7,11 @@ import numpy as np
 
 from stdatamodels.jwst.datamodels import RampModel, ResetModel, dqflags
 
-from jwst.reset.reset_sub import (
-    do_correction as resetcorr
-)
+from jwst.reset.reset_sub import do_correction as resetcorr
 
 
 def test_correction(make_rampmodel, make_resetmodel):
-    '''Check that data is unchanged for science data for groups > number of groups of reset '''
+    """Check that data is unchanged for science data for groups > number of groups of reset"""
 
     # size of integration
     nints = 1
@@ -53,7 +51,7 @@ def test_correction(make_rampmodel, make_resetmodel):
 
 
 def test_nan(make_rampmodel, make_resetmodel):
-    '''Verify that when a reset  has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly'''
+    """Verify that when a reset  has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly"""
 
     # size of integration
     nints = 1
@@ -88,7 +86,7 @@ def test_nan(make_rampmodel, make_resetmodel):
 
 
 def test_dq_combine(make_rampmodel, make_resetmodel):
-    '''Verify that the DQ array of the reset is correctly combined with the PIXELDQ array of the science data.'''
+    """Verify that the DQ array of the reset is correctly combined with the PIXELDQ array of the science data."""
 
     # size of integration
     nints = 1
@@ -107,10 +105,10 @@ def test_dq_combine(make_rampmodel, make_resetmodel):
     refgroups = 12
     reset = make_resetmodel(nints, refgroups, ysize, xsize)
 
-    jump_det = dqflags.pixel['JUMP_DET']
-    saturated = dqflags.pixel['SATURATED']
-    do_not_use = dqflags.pixel['DO_NOT_USE']
-    nonlinear = dqflags.pixel['NONLINEAR']
+    jump_det = dqflags.pixel["JUMP_DET"]
+    saturated = dqflags.pixel["SATURATED"]
+    do_not_use = dqflags.pixel["DO_NOT_USE"]
+    nonlinear = dqflags.pixel["NONLINEAR"]
 
     # populate dq flags of sci pixeldq and reference dq
     dm_ramp.pixeldq[50, 50] = jump_det
@@ -130,7 +128,7 @@ def test_dq_combine(make_rampmodel, make_resetmodel):
 
 
 def test_2_int(make_rampmodel, make_resetmodel):
-    '''Verify the reset correction is done by integration for MIRI observations'''
+    """Verify the reset correction is done by integration for MIRI observations"""
 
     # size of integration
     nints = 2
@@ -167,9 +165,10 @@ def test_2_int(make_rampmodel, make_resetmodel):
     np.testing.assert_array_equal(outfile.data[1], diff_int2)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def make_rampmodel():
-    '''Make MIRI Ramp model for testing'''
+    """Make MIRI Ramp model for testing"""
+
     def _ramp(nints, ngroups, ysize, xsize):
         # create the data and groupdq arrays
         csize = (nints, ngroups, ysize, xsize)
@@ -178,25 +177,26 @@ def make_rampmodel():
         # create a JWST datamodel for MIRI data
         dm_ramp = RampModel(data=data)
 
-        dm_ramp.meta.instrument.name = 'MIRI'
-        dm_ramp.meta.observation.date = '2018-01-01'
-        dm_ramp.meta.observation.time = '00:00:00'
+        dm_ramp.meta.instrument.name = "MIRI"
+        dm_ramp.meta.observation.date = "2018-01-01"
+        dm_ramp.meta.observation.time = "00:00:00"
         dm_ramp.meta.subarray.xstart = 1
         dm_ramp.meta.subarray.xsize = xsize
         dm_ramp.meta.subarray.ystart = 1
         dm_ramp.meta.subarray.ysize = ysize
         dm_ramp.meta.exposure.nints = nints
         dm_ramp.meta.exposure.ngroups = ngroups
-        dm_ramp.meta.description = 'Fake data.'
+        dm_ramp.meta.description = "Fake data."
 
         return dm_ramp
 
     return _ramp
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def make_resetmodel():
-    '''Make MIRI Reset model for testing'''
+    """Make MIRI Reset model for testing"""
+
     def _reset(nints, ngroups, ysize, xsize):
         # create the data and groupdq arrays
         nints = 2
@@ -207,14 +207,14 @@ def make_resetmodel():
         reset = ResetModel(data=data)
         reset.meta.exposure.nints = nints
         reset.meta.exposure.ngroups = ngroups
-        reset.meta.instrument.name = 'MIRI'
-        reset.meta.date = '2018-01-01'
-        reset.meta.time = '00:00:00'
-        reset.meta.description = 'Fake data.'
-        reset.meta.reftype = 'ResetModel'
-        reset.meta.author = 'Jane Morrison'
-        reset.meta.pedigree = 'Dummy'
-        reset.meta.useafter = '2015-10-01T00:00:00'
+        reset.meta.instrument.name = "MIRI"
+        reset.meta.date = "2018-01-01"
+        reset.meta.time = "00:00:00"
+        reset.meta.description = "Fake data."
+        reset.meta.reftype = "ResetModel"
+        reset.meta.author = "Jane Morrison"
+        reset.meta.pedigree = "Dummy"
+        reset.meta.useafter = "2015-10-01T00:00:00"
         return reset
 
     return _reset

@@ -1,19 +1,16 @@
 import pytest
 import numpy as np
 
-from stdatamodels.jwst.datamodels import (MultiExposureModel, MultiSlitModel)
+from stdatamodels.jwst.datamodels import MultiExposureModel, MultiSlitModel
 
 from jwst.exp_to_source.tests import helpers
 from jwst.datamodels import ModelContainer
 from jwst.exp_to_source import exp_to_source, multislit_to_container
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def run_exp_to_source():
-    inputs = [
-        MultiSlitModel(f)
-        for f in helpers.INPUT_FILES
-    ]
+    inputs = [MultiSlitModel(f) for f in helpers.INPUT_FILES]
     outputs = exp_to_source(inputs)
     yield inputs, outputs
     for model in inputs:
@@ -37,7 +34,7 @@ def test_model_roundtrip(tmp_path, run_exp_to_source):
     inputs, outputs = run_exp_to_source
     files = []
     for output in outputs:
-        file_path = tmp_path / (output + '.fits')
+        file_path = tmp_path / (output + ".fits")
         outputs[output].save(file_path)
         files.append(file_path)
     for file_path in files:
@@ -90,9 +87,9 @@ def test_slit_exptype():
     for model in container:
         for slit in model.slits:
             if slit.source_id == 1:
-                slit.meta.exposure = {'type': 'NRS_MSASPEC'}
+                slit.meta.exposure = {"type": "NRS_MSASPEC"}
             else:
-                slit.meta.exposure = {'type': 'NRS_FIXEDSLIT'}
+                slit.meta.exposure = {"type": "NRS_FIXEDSLIT"}
 
     # Make the source-based containers
     outputs = multislit_to_container(container)
@@ -105,9 +102,9 @@ def test_slit_exptype():
             exposure = outputs[str(slit.source_id)][i]
             assert exposure.meta.exposure.type == slit.meta.exposure.type
             if slit.source_id == 1:
-                assert exposure.meta.exposure.type == 'NRS_MSASPEC'
+                assert exposure.meta.exposure.type == "NRS_MSASPEC"
             else:
-                assert exposure.meta.exposure.type == 'NRS_FIXEDSLIT'
+                assert exposure.meta.exposure.type == "NRS_FIXEDSLIT"
 
     # Closeout
     container.close()
