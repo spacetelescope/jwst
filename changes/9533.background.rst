@@ -1,1 +1,1 @@
-changing background alias to bkg_subtract to fix conflicting aliases for the step. The new alias is the one currently used for running the step or changing parameters.
+Change background alias to "bkg_subtract" to fix conflicting aliases for the step. The new alias is the one currently used for running the step or changing parameters from the stage2 pipelines.
