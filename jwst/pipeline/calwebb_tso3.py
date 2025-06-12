@@ -6,15 +6,15 @@ from astropy.table import vstack
 from stdatamodels.jwst import datamodels
 
 
-from ..stpipe import Pipeline
+from jwst.stpipe import Pipeline
 
-from ..outlier_detection import outlier_detection_step
-from ..tso_photometry import tso_photometry_step
-from ..extract_1d import extract_1d_step
-from ..white_light import white_light_step
-from ..photom import photom_step
-from ..pixel_replace import pixel_replace_step
-from ..lib.pipe_utils import is_tso
+from jwst.outlier_detection import outlier_detection_step
+from jwst.tso_photometry import tso_photometry_step
+from jwst.extract_1d import extract_1d_step
+from jwst.white_light import white_light_step
+from jwst.photom import photom_step
+from jwst.pixel_replace import pixel_replace_step
+from jwst.lib.pipe_utils import is_tso
 from astropy.io.fits import FITS_rec
 
 __all__ = ["Tso3Pipeline"]

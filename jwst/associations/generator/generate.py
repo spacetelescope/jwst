@@ -1,10 +1,11 @@
 import logging
 from timeit import default_timer as timer
 
-from ..association import make_timestamp
-from ..lib.process_list import ListCategory, ProcessList, ProcessQueueSorted, workover_filter
-from ..pool import PoolRow
-from ...lib.progress import Bar
+from jwst.associations import make_timestamp
+from jwst.associations.lib.process_list import ListCategory, ProcessList, ProcessQueueSorted
+from jwst.associations.lib.process_list import workover_filter
+from jwst.associations.pool import PoolRow
+from jwst.associations.lib.progress import Bar
 
 # Configure logging
 logger = logging.getLogger(__name__)

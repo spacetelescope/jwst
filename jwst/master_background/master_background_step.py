@@ -8,8 +8,8 @@ from scipy.signal import medfilt
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import record_step_status
 
-from ..stpipe import Step
-from ..combine_1d.combine1d import combine_1d_spectra
+from jwst.stpipe import Step
+from jwst.combine_1d.combine1d import combine_1d_spectra
 from .expand_to_2d import expand_to_2d
 
 __all__ = ["MasterBackgroundStep"]

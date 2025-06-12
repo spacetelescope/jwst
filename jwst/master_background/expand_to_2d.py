@@ -9,8 +9,8 @@ from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.datamodels import ModelContainer
 
-from ..assign_wcs import nirspec  # For NIRSpec IFU data
-from ..lib.wcs_utils import get_wavelengths
+from jwst.assign_wcs import nirspec  # For NIRSpec IFU data
+from jwst.lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

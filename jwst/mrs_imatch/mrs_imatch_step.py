@@ -270,7 +270,7 @@ def _get_2d_pixgrid(channel):
 
 
 def _match_models(models, channel, degree, center=None, center_cs="image"):
-    from ..cube_build import CubeBuildStep
+    from jwst.cube_build import CubeBuildStep
 
     # create a list of cubes:
     cbs = CubeBuildStep()
