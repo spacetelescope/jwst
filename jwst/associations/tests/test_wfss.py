@@ -1,9 +1,9 @@
 """Test for various WFSS modes"""
-from os import path
+
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations import AssociationPool
 from jwst.associations.main import Main
-from jwst.associations.tests.helpers import t_path
 
 REQUIRED_ASN_TYPES = set(['image2', 'spec2', 'image3', 'spec3'])
 
@@ -12,7 +12,9 @@ def test_niriss_wfss():
     """Test association properties for NIRISS WFSS"""
 
     pool = AssociationPool.read(
-        t_path(path.join('data', 'jw87800_20180412T163456_pool.csv'))
+        get_pkg_data_filename(
+            "data/jw87800_20180412T163456_pool.csv",
+            package="jwst.associations.tests")
     )
     cmd_args = [
         '--dry-run',

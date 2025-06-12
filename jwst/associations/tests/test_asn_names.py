@@ -1,9 +1,9 @@
-import os
 import pytest
 import re
 
-from jwst.associations.tests import helpers
+from astropy.utils.data import get_pkg_data_filename
 
+from jwst.associations.tests import helpers
 from jwst.associations import generate
 from jwst.associations import load_asn
 from jwst.associations.lib.utilities import constrain_on_candidates
@@ -37,16 +37,11 @@ LEVEL3_ASN_WITH_VERSION = (
 
 all_candidates = constrain_on_candidates(None)
 
-pool_params = pytest.fixture(
-    scope='module',
-    params=[
-        'data/pool_020_00009_image_miri.csv'
-    ]
-)(helpers.generate_params)
 
-
-def test_level3_asn_names(pool_params):
-    pool_path = helpers.t_path(pool_params)
+def test_level3_asn_names():
+    pool_path = get_pkg_data_filename(
+        "data/pool_020_00009_image_miri.csv",
+        package="jwst.associations.tests")
     pool = helpers.combine_pools(pool_path)
     rules = helpers.registry_level3_only()
     asns = generate(pool, rules)
@@ -63,8 +58,10 @@ def test_level3_asn_names(pool_params):
         assert m is not None
 
 
-def test_level3_asn_names_with_version(pool_params):
-    pool_path = helpers.t_path(pool_params)
+def test_level3_asn_names_with_version():
+    pool_path = get_pkg_data_filename(
+        "data/pool_020_00009_image_miri.csv",
+        package="jwst.associations.tests")
     pool = helpers.combine_pools(pool_path)
     rules = helpers.registry_level3_only()
     asns = generate(pool, rules, version_id=True)
@@ -75,8 +72,10 @@ def test_level3_asn_names_with_version(pool_params):
         assert m is not None
 
 
-def test_level2_asn_names(pool_params):
-    pool_path = helpers.t_path(pool_params)
+def test_level2_asn_names():
+    pool_path = get_pkg_data_filename(
+        "data/pool_020_00009_image_miri.csv",
+        package="jwst.associations.tests")
     pool = helpers.combine_pools(pool_path)
     rules = helpers.registry_level2_only(global_constraints=all_candidates)
     asns = generate(pool, rules)
@@ -93,8 +92,10 @@ def test_level2_asn_names(pool_params):
         assert m is not None
 
 
-def test_level2_asn_names_with_version(pool_params):
-    pool_path = helpers.t_path(pool_params)
+def test_level2_asn_names_with_version():
+    pool_path = get_pkg_data_filename(
+        "data/pool_020_00009_image_miri.csv",
+        package="jwst.associations.tests")
     pool = helpers.combine_pools(pool_path)
     rules = helpers.registry_level2_only(global_constraints=all_candidates)
     asns = generate(pool, rules, version_id=True)
@@ -110,8 +111,8 @@ def test_bad_expnames():
     Ensure warning gets raised during load_asn when the association file
     contains path data in the expname.
     """
-    bad_asn = "./data/asn_level2_bad_path.json"
-    fname = os.path.abspath(os.path.join(os.path.dirname(__file__), bad_asn))
+    fname = get_pkg_data_filename(
+        "data/asn_level2_bad_path.json", package="jwst.associations.tests")
     with open(fname) as fd:
         with pytest.warns(UserWarning):
-            asn = load_asn(fd)
+            load_asn(fd)

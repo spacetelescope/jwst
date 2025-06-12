@@ -3,9 +3,7 @@ Test suite for set_telescope_pointing
 """
 import logging
 import numpy as np
-import os
 from pathlib import Path
-from tempfile import TemporaryDirectory
 import warnings
 
 import pytest
@@ -710,7 +708,7 @@ def data_file_strict(tmp_path):
 
 
 @pytest.fixture
-def data_file_nosiaf():
+def data_file_nosiaf(tmp_path):
     model = datamodels.Level1bModel()
     model.meta.exposure.start_time = STARTTIME.mjd
     model.meta.exposure.end_time = ENDTIME.mjd
@@ -719,11 +717,10 @@ def data_file_nosiaf():
     model.meta.aperture.name = "UNKNOWN"
     model.meta.observation.date = '2017-01-01'
 
-    with TemporaryDirectory() as path:
-        file_path = os.path.join(path, 'fits_nosiaf.fits')
-        model.save(file_path)
-        model.close()
-        yield file_path
+    file_path = tmp_path / 'fits_nosiaf.fits'
+    model.save(file_path)
+    model.close()
+    yield file_path
 
 
 @pytest.fixture
