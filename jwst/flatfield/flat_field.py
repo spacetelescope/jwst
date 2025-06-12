@@ -32,8 +32,9 @@ NIRSPEC_SPECTRAL_EXPOSURES = [
 HORIZONTAL = 1
 VERTICAL = 2
 
-BADFLAT = dqflags.pixel["NO_FLAT_FIELD"] | dqflags.pixel["DO_NOT_USE"]
-BADFLAT = BADFLAT | dqflags.pixel["UNRELIABLE_FLAT"]
+BADFLAT = (
+    dqflags.pixel["NO_FLAT_FIELD"] | dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["UNRELIABLE_FLAT"]
+)
 
 
 def do_correction(
