@@ -10,7 +10,7 @@ N_SOURCES = 5
 N_EXPOSURES = 4
 N_ROWS = 3
 
-@pytest.fixture
+
 def example_spec():
 
     def mock_wcs(*args, **kwargs):
@@ -48,17 +48,17 @@ def _add_multispec_meta(spec):
     spec.extraction_ystop = 0.0
 
 
-@pytest.fixture
-def wfss_spec2_multispec(example_spec):
+def wfss_spec2_multi():
     """
     Set up a MultiSpecModel object that looks like outputs from extract_1d during calwebb_spec2.
     
     Each of the spectra is from the SAME exposure, but DIFFERENT sources.
     """
+    spec0 = example_spec()
     multi = dm.MultiSpecModel()
     for i in range(N_SOURCES):
         # create a new SpecModel for each source
-        spec = example_spec.copy()
+        spec = spec0.copy()
         spec.meta.filename = f"exposure_1.fits" # all sources in the same exposure
         spec.meta.group_id = "1" # all sources in the same exposure
         spec.source_id = N_SOURCES - i # reverse the order to test sorting
@@ -69,19 +69,19 @@ def wfss_spec2_multispec(example_spec):
     return multi
 
 
-@pytest.fixture
-def wfss_spec3_multispec(example_spec):
+def wfss_spec3_multi():
     """
     Set up a MultiSpecModel object that looks like outputs from extract_1d during calwebb_spec3.
     
     Each of the spectra is from the SAME source, but DIFFERENT exposures.
     """
+    spec0 = example_spec()
     multi = dm.MultiSpecModel()
     multi.meta.exposure.exposure_time = 7.0
     multi.meta.exposure.integration_time = 7.0
     for j in range(N_EXPOSURES):
         # create a new SpecModel for each exposure
-        spec = example_spec.copy()
+        spec = spec0.copy()
         spec.meta.filename = f"exposure_{j}.fits"
         spec.meta.group_id = str(j + 1)
         spec.source_id = 999 # all sources are the same
@@ -91,6 +91,32 @@ def wfss_spec3_multispec(example_spec):
         multi.spec.append(spec)
 
     return multi
+
+
+def wfss_multi():
+    """Make a MultiExposureSpecModel object with N_EXPOSURES exposures and N_SOURCES sources."""
+    inputs_list = []
+    source0 = wfss_spec3_multi()
+    for i in range(N_SOURCES):
+        this_source = source0.copy()
+        for spec in this_source.spec:
+            spec.source_id = N_SOURCES - i
+        inputs_list.append(this_source)
+    output_model = make_wfss_multiexposure(inputs_list)
+    return output_model
+
+
+@pytest.fixture
+def wfss_spec2_multispec():
+    return wfss_spec2_multi()
+
+@pytest.fixture
+def wfss_spec3_multispec():
+    return wfss_spec3_multi()
+
+@pytest.fixture
+def wfss_multiexposure():
+    return wfss_multi()
 
 
 @pytest.mark.parametrize("input_model_maker", ["wfss_spec2_multispec", "wfss_spec3_multispec"])
@@ -148,19 +174,6 @@ def test_orders_are_separated(wfss_spec3_multispec):
     for i, exposure in enumerate(output_model.spec):
         assert exposure.spectral_order == (i // 4) + 1  # first 4 are order 1, next 4 are order 2
         assert exposure.group_id == str(i%4 + 1) + str(exposure.spectral_order - 1)
-
-
-@pytest.fixture
-def wfss_multiexposure(wfss_spec3_multispec):
-    """Make a MultiExposureSpecModel object with N_EXPOSURES exposures and N_SOURCES sources."""
-    inputs_list = []
-    for i in range(N_SOURCES):
-        this_source = wfss_spec3_multispec.copy()
-        for spec in this_source.spec:
-            spec.source_id = N_SOURCES - i
-        inputs_list.append(this_source)
-    output_model = make_wfss_multiexposure(inputs_list)
-    return output_model
 
 
 def test_wfss_flat_to_multispec(wfss_multiexposure):
@@ -228,8 +241,7 @@ def test_wfss_multi_from_wfss_multi(wfss_multiexposure):
         assert exposure.spec_table.shape == (N_SOURCES*2,)
     
 
-@pytest.fixture
-def multi_combined():
+def wfss_comb():
     """
     Make a MultiCombinedSpecModel object with N_SOURCES sources, N_ROWS rows, and 2 orders.
     
@@ -253,6 +265,11 @@ def multi_combined():
     multi.spec.append(spec)
     multi.spec.append(spec2)
     return multi
+
+
+@pytest.fixture
+def multi_combined():
+    return wfss_comb()
 
 
 @pytest.fixture
