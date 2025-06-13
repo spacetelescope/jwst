@@ -453,9 +453,11 @@ def mock_miri_ifu(simple_wcs_ifu):
 
 
 @pytest.fixture()
-def mock_niriss_wfss_l3(mock_nirspec_fs_one_slit):
+def mock_niriss_wfss_l2(mock_nirspec_fs_one_slit):
     """
-    Mock 3 slits in NIRISS WFSS mode, level 3 style.
+    Mock 3 slits in NIRISS WFSS mode, level 2 style.
+
+    The slits correspond to a single exposure, with one slit per extracted source.
 
     Yields
     ------
@@ -465,8 +467,16 @@ def mock_niriss_wfss_l3(mock_nirspec_fs_one_slit):
     model = dm.MultiSlitModel()
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.detector = "NIS"
+    model.meta.instrument.filter = "GR150R"
     model.meta.observation.date = "2023-07-22"
     model.meta.observation.time = "06:24:45.569"
+    model.meta.observation.program_number = "1"
+    model.meta.observation.observation_number = "1"
+    model.meta.observation.visit_number = "1"
+    model.meta.observation.visit_group = "1"
+    model.meta.observation.sequence_id = "1"
+    model.meta.observation.activity_id = "1"
+    model.meta.exposure.number = "5"
     model.meta.exposure.type = "NIS_WFSS"
 
     nslit = 3
@@ -476,10 +486,32 @@ def mock_niriss_wfss_l3(mock_nirspec_fs_one_slit):
         slit.meta.exposure.type = "NIS_WFSS"
         model.slits.append(slit)
 
-    container = multislit_to_container([model])["0"]
+    yield model
+    model.close()
 
-    yield container
-    container.close()
+
+@pytest.fixture()
+def mock_niriss_wfss_l3(mock_niriss_wfss_l2):
+    """
+    Mock 3 slits in NIRISS WFSS mode, level 3 style.
+
+    Here the container has one MultiSlitModel per source, and each model has one
+    slit per exposure.
+
+    Yields
+    ------
+    SourceModelContainer
+        The mock model.
+    """
+    model = mock_niriss_wfss_l2.copy()
+    for i, slit in enumerate(model.slits):
+        slit.meta.filename = f"test{i}_s2d.fits"
+    container_dict = multislit_to_container([model])
+    sources = list(container_dict.values())
+    yield sources[0]
+    for source in sources:
+        source.close()
+    model.close()
 
 
 @pytest.fixture()

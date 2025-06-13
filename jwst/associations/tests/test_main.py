@@ -1,25 +1,25 @@
 """test_associations: Test of general Association functionality."""
-import os
 import re
 import subprocess
 
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations.tests.helpers import combine_pools, t_path
-
+from jwst.associations.tests.helpers import combine_pools
 from jwst.associations import AssociationPool
 from jwst.associations.main import Main
 
 
 # Basic pool
-POOL_PATH = 'pool_018_all_exptypes.csv'
+POOL_PATH = get_pkg_data_filename(
+    "data/pool_018_all_exptypes.csv", package="jwst.associations.tests")
 
 
 @pytest.mark.parametrize(
     'case', [
-        (None, 61),  # Don't re-run, just compare to the generator fixture results
+        (None, 60),  # Don't re-run, just compare to the generator fixture results
         (['-i', 'o001'], 2),
-        (['-i', 'o001', 'o002'], 3),
+        (['-i', 'o001', 'o002'], 2),
         (['-i', 'c1001'], 1),
         (['-i', 'o001', 'c1001'], 3),
         (['-i', 'c1001', 'c1002'], 2),
@@ -40,7 +40,7 @@ def test_asn_candidates(pool, all_candidates, case):
 
 @pytest.mark.parametrize(
     'args, expected', [
-        ([t_path(os.path.join('data', POOL_PATH))], 0),
+        ([POOL_PATH], 0),
         (['nosuchpool.csv'], 1),
     ]
 )
@@ -108,14 +108,10 @@ def test_toomanyoptions(args):
 @pytest.fixture(scope='module')
 def pool():
     """Retrieve pool path"""
-    pool_path = t_path(os.path.join('data', POOL_PATH))
-    pool = combine_pools(pool_path)
-
-    return pool
+    return combine_pools(POOL_PATH)
 
 
 @pytest.fixture(scope='module')
 def all_candidates(pool):
     """"Retrieve the all exposure pool"""
-    all_candidates = Main.cli(['--dry-run', '--all-candidates'], pool=pool)
-    return all_candidates
+    return Main.cli(['--dry-run', '--all-candidates'], pool=pool)

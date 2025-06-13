@@ -63,6 +63,7 @@ class ResampleImage(Resample):
         output=None,
         enable_ctx=True,
         enable_var=True,
+        report_var=True,
         compute_err=None,
         asn_id=None,
     ):
@@ -251,6 +252,12 @@ class ResampleImage(Resample):
         enable_var : bool, optional
             Indicates whether to resample variance arrays.
 
+        report_var : bool, optional
+            Indicates whether to report variance arrays in the output model.
+            In order to get an error array when compute_err=from_var, enable_var
+            must be True, but sometimes it's useful not to save var_rnoise,
+            var_flat, and var_poisson arrays to decrease output file size.
+
         compute_err : {"from_var", "driz_err"}, None, optional
             - ``"from_var"``: compute output model's error array from
               all (Poisson, flat, readout) resampled variance arrays.
@@ -273,6 +280,7 @@ class ResampleImage(Resample):
         """
         self.input_models = input_models
         self.output_jwst_model = None
+        self._report_var = report_var
 
         self.output_dir = None
         self.output_filename = output
@@ -407,7 +415,11 @@ class ResampleImage(Resample):
             model.con = info_dict["con"]
         if self._compute_err:
             model.err = info_dict["err"]
-        if self._enable_var:
+        elif model.meta.hasattr("bunit_err"):
+            # bunit_err metadata is mapped to the err extension, so it must be removed
+            # in order to fully remove the err extension.
+            del model.meta.bunit_err
+        if self._enable_var and self._report_var:
             model.var_rnoise = info_dict["var_rnoise"]
             model.var_flat = info_dict["var_flat"]
             model.var_poisson = info_dict["var_poisson"]
