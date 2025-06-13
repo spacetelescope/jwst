@@ -1,8 +1,8 @@
-import pytest
 import os
-import numpy as np
 
+import pytest
 import stdatamodels.jwst.datamodels as dm
+
 import jwst
 from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi

@@ -4,8 +4,9 @@ import shutil
 
 import pytest
 
-from jwst.stpipe import Step
 from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
+from jwst.pipeline import Image2Pipeline
+from jwst.stpipe import Step
 
 
 INPUT_FILE = "mock_rate.fits"
@@ -83,23 +84,21 @@ def run_image2_pipeline_asn(make_mock_association, request):
     Two-product association passed in. This should trigger a warning
     and the output_file parameter should be ignored.
     """
+    steps = {
+        "flat_field": {"skip": True},
+        "photom": {"skip": True},
+        "resample": {"skip": True},
+    }
+
     # save warnings to logfile so can be checked later
     log = logging.getLogger("stpipe")
     handler = logging.FileHandler(LOGFILE)
     log.addHandler(handler)
-
-    args = [
-        "calwebb_image2",
-        INPUT_ASN,
-        "--steps.flat_field.skip=true",
-        "--steps.photom.skip=true",
-        "--steps.resample.skip=true",
-        f"--output_file={request.param}",
-    ]
-
-    Step.from_cmdline(args)
-
-    log.removeHandler(handler)
+    try:
+        Image2Pipeline.call(INPUT_ASN, steps=steps, output_file=request.param)
+    finally:
+        log.removeHandler(handler)
+        handler.close()
 
 
 def test_output_file_rename_file(run_image2_pipeline_file):

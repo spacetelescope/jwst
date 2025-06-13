@@ -3,10 +3,10 @@ import os
 import shutil
 
 import pytest
-from jwst.stpipe import Step
+
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
-
+from jwst.pipeline import Image3Pipeline
 
 INPUT_FILE = "mock_cal.fits"
 INPUT_FILE_2 = "mock2_cal.fits"
@@ -69,27 +69,24 @@ def make_mock_association(make_mock_cal_file):
 @pytest.mark.parametrize("in_memory", [True, False])
 def test_run_image3_pipeline(make_mock_association, in_memory):
     """Two-product association passed in, run pipeline, skipping most steps."""
+    steps = {
+        "tweakreg": {"skip": True},
+        "skymatch": {"skip": True},
+        "outlier_detection": {"skip": True},
+        "resample": {"skip": True},
+        "source_catalog": {"skip": True},
+    }
+
     # save warnings to logfile so can be checked later
     log = logging.getLogger("stpipe")
     handler = logging.FileHandler(LOGFILE)
     log.addHandler(handler)
-
-    args = [
-        "calwebb_image3",
-        INPUT_ASN,
-        "--steps.tweakreg.skip=true",
-        "--steps.skymatch.skip=true",
-        "--steps.outlier_detection.skip=true",
-        "--steps.resample.skip=true",
-        "--steps.source_catalog.skip=true",
-        f"--in_memory={str(in_memory)}",
-    ]
-
-    Step.from_cmdline(args)
-
+    try:
+        Image3Pipeline.call(INPUT_ASN, steps=steps, in_memory=str(in_memory))
+    finally:
+        log.removeHandler(handler)
+        handler.close()
     _is_run_complete(LOGFILE)
-
-    log.removeHandler(handler)
 
 
 @pytest.mark.filterwarnings("ignore::ResourceWarning")
@@ -98,16 +95,24 @@ def test_run_image3_single_file(make_mock_cal_file):
     handler = logging.FileHandler(LOGFILE)
     log.addHandler(handler)
 
-    args = [
-        "calwebb_image3",
-        INPUT_FILE,
-        "--steps.tweakreg.skip=true",
-        "--steps.skymatch.skip=true",
-        "--steps.outlier_detection.skip=true",
-        "--steps.resample.skip=true",
-        "--steps.source_catalog.skip=true",
-    ]
-    Step.from_cmdline(args)
+    steps = {
+        "tweakreg": {"skip": True},
+        "skymatch": {"skip": True},
+        "outlier_detection": {"skip": True},
+        "resample": {"skip": True},
+        "source_catalog": {"skip": True},
+    }
+
+    # save warnings to logfile so can be checked later
+    log = logging.getLogger("stpipe")
+    handler = logging.FileHandler(LOGFILE)
+    log.addHandler(handler)
+    try:
+        Image3Pipeline.call(INPUT_FILE, steps=steps)
+    finally:
+        log.removeHandler(handler)
+        handler.close()
+
     _is_run_complete(LOGFILE)
 
 

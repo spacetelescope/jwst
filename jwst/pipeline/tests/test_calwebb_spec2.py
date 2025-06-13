@@ -8,7 +8,6 @@ from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 from jwst.stpipe import Step
 from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 
-
 INPUT_FILE = "mock_rate.fits"
 INPUT_FILE_2 = "mock2_rate.fits"
 INPUT_ASN = "mock_asn.json"
@@ -90,29 +89,27 @@ def run_spec2_pipeline_asn(make_mock_association, request):
     Two-product association passed in. This should trigger a warning
     and the output_file parameter should be ignored.
     """
+    steps = {
+        "badpix_selfcal": {"skip": True},
+        "msa_flagging": {"skip": True},
+        "nsclean": {"skip": True},
+        "flat_field": {"skip": True},
+        "pathloss": {"skip": True},
+        "photom": {"skip": True},
+        "pixel_replace": {"skip": True},
+        "cube_build": {"save_results": True},
+        "extract_1d": {"skip": True},
+    }
+
     # save warnings to logfile so can be checked later
     log = logging.getLogger("stpipe")
     handler = logging.FileHandler(LOGFILE)
     log.addHandler(handler)
-
-    args = [
-        "calwebb_spec2",
-        INPUT_ASN,
-        "--steps.badpix_selfcal.skip=true",
-        "--steps.msa_flagging.skip=true",
-        "--steps.nsclean.skip=true",
-        "--steps.flat_field.skip=true",
-        "--steps.pathloss.skip=true",
-        "--steps.photom.skip=true",
-        "--steps.pixel_replace.skip=true",
-        "--steps.cube_build.save_results=true",
-        "--steps.extract_1d.skip=true",
-        f"--output_file={request.param}",
-    ]
-
-    Step.from_cmdline(args)
-
-    log.removeHandler(handler)
+    try:
+        Spec2Pipeline.call(INPUT_ASN, steps=steps, output_file=request.param)
+    finally:
+        log.removeHandler(handler)
+        handler.close()
 
 
 def test_output_file_rename(run_spec2_pipeline):

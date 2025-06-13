@@ -20,10 +20,6 @@ from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
 from jwst.assign_wcs import util as assign_wcs_util
 
-
-log = logging.getLogger("stpipe.jwst.resample")
-
-
 __all__ = [
     "input_jwst_model_to_dict",
     "is_imaging_wcs",

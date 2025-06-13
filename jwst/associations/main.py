@@ -15,8 +15,7 @@ from jwst.associations.lib.log_config import log_config, DMS_config
 
 __all__ = ["Main", "main"]
 
-# Configure logging
-logger = log_config(name="stpipe.jwst.associations")
+logger = logging.getLogger("stpipe.jwst.associations")
 
 
 class Main:
