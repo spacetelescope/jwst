@@ -6,28 +6,37 @@ from jwst.wfss_contam.wfss_contam import (
     UnmatchedSlitIDError,
     determine_multiprocessing_ncores,
     _cut_frame_to_match_slit,
-    _find_matching_simul_slit
+    _find_matching_simul_slit,
 )
 from stdatamodels.jwst.datamodels import SlitModel
 import numpy as np
 
 
-@pytest.mark.parametrize("max_cores, num_cores, expected", 
-                         [("none", 4, 1), 
-                          ("quarter", 4, 1), 
-                          ("half", 4, 2), 
-                          ("all", 4, 4), 
-                          ("none", 1, 1),
-                          (None, 1, 1,),
-                          (3, 5, 3),
-                          (100, 5, 5)])
+@pytest.mark.parametrize(
+    "max_cores, num_cores, expected",
+    [
+        ("none", 4, 1),
+        ("quarter", 4, 1),
+        ("half", 4, 2),
+        ("all", 4, 4),
+        ("none", 1, 1),
+        (
+            None,
+            1,
+            1,
+        ),
+        (3, 5, 3),
+        (100, 5, 5),
+    ],
+)
 def test_determine_multiprocessing_ncores(max_cores, num_cores, expected):
-    assert determine_multiprocessing_ncores(max_cores, num_cores) == expected  
+    assert determine_multiprocessing_ncores(max_cores, num_cores) == expected
 
 
 @pytest.fixture(scope="module")
 def contam():
-    return np.ones((10, 10))*0.1
+    return np.ones((10, 10)) * 0.1
+
 
 @pytest.fixture(scope="module")
 def slit0():
@@ -43,7 +52,7 @@ def slit0():
 
 @pytest.fixture(scope="module")
 def slit1():
-    slit = SlitModel(data=np.ones((4, 4))*0.5)
+    slit = SlitModel(data=np.ones((4, 4)) * 0.5)
     slit.xstart = 3
     slit.ystart = 2
     slit.xsize = 4
@@ -53,7 +62,7 @@ def slit1():
 
 @pytest.fixture(scope="module")
 def slit2():
-    slit = SlitModel(data=np.ones((3, 5))*0.1)
+    slit = SlitModel(data=np.ones((3, 5)) * 0.1)
     slit.xstart = 300
     slit.ystart = 200
     slit.xsize = 5
@@ -73,7 +82,7 @@ def test_find_matching_simul_slit_no_match(slit0):
     orders = [1, 2, 2]
     with pytest.raises(UnmatchedSlitIDError):
         _find_matching_simul_slit(slit0, sids, orders)
-    
+
 
 def test_cut_frame_to_match_slit(slit0, contam):
     cut_contam = _cut_frame_to_match_slit(contam, slit0)
@@ -102,7 +111,6 @@ def test_common_slit_encompass(slit0, slit1):
 
 
 def test_common_slit_prefer(slit0, slit1):
-
     slit0_final, slit1_final = match_backplane_prefer_first(slit0.copy(), slit1.copy())
     assert slit0_final.xstart == slit0.xstart
     assert slit0_final.ystart == slit0.ystart
@@ -120,6 +128,5 @@ def test_common_slit_prefer(slit0, slit1):
 
 
 def test_common_slit_prefer_expected_raise(slit0, slit2):
-
     with pytest.raises(SlitOverlapError):
         match_backplane_prefer_first(slit0.copy(), slit2.copy())
