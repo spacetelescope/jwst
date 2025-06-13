@@ -59,10 +59,8 @@ def assign_moving_target_wcs(input_models):
 
     # Compute the mean MT RA/Dec over all exposures
     if None in mt_ra or None in mt_dec:
-        log.warning(
-            "One or more MT RA/Dec values missing in input images.\n"
-            "Step will be skipped, resulting in target misalignment."
-        )
+        log.warning("One or more MT RA/Dec values missing in input images.")
+        log.warning("Step will be skipped, resulting in target misalignment.")
         record_step_status(input_models, "assign_mtwcs", False)
         return input_models
 
