@@ -5,11 +5,13 @@ from copy import deepcopy
 
 import asdf
 import numpy as np
+from numpy.testing import assert_allclose
 import pytest
 from astropy.wcs import WCS
 from astropy.modeling.models import Shift
 from astropy.table import Table
 from astropy.utils.data import get_pkg_data_filename
+from photutils.utils import NoDetectionsWarning
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import ImageModel
 
@@ -27,7 +29,7 @@ REFCAT = "GAIADR3"
 
 
 @pytest.fixture
-def dummy_source_catalog():
+def mock_source_catalog():
 
     columns = ['id', 'xcentroid', 'ycentroid', 'flux']
     catalog = Table(names=columns, dtype=(int, float, float, float))
@@ -37,17 +39,17 @@ def dummy_source_catalog():
 
 
 @pytest.mark.parametrize("inplace", [True, False])
-def test_rename_catalog_columns(dummy_source_catalog, inplace):
+def test_rename_catalog_columns(mock_source_catalog, inplace):
     """
     Test that a catalog with 'xcentroid' and 'ycentroid' columns
     passed to _renamed_catalog_columns successfully renames those columns
     to 'x' and 'y' (and does so "inplace" modifying the input catalog)
     """
-    renamed_catalog = tweakreg_step._rename_catalog_columns(dummy_source_catalog)
+    renamed_catalog = tweakreg_step._rename_catalog_columns(mock_source_catalog)
 
     # if testing inplace, check the input catalog
     if inplace:
-        catalog = dummy_source_catalog
+        catalog = mock_source_catalog
     else:
         catalog = renamed_catalog
 
@@ -58,7 +60,7 @@ def test_rename_catalog_columns(dummy_source_catalog, inplace):
 
 
 @pytest.mark.parametrize("missing", ["x", "y", "xcentroid", "ycentroid"])
-def test_rename_catalog_columns_invalid(dummy_source_catalog, missing):
+def test_rename_catalog_columns_invalid(mock_source_catalog, missing):
     """
     Test that passing a catalog that is missing either "x" or "y"
     (or "xcentroid" and "ycentroid" which is renamed to "x" or "y")
@@ -66,11 +68,11 @@ def test_rename_catalog_columns_invalid(dummy_source_catalog, missing):
     """
     # if the column we want to remove is not in the table, first run
     # rename to rename columns this should add the column we want to remove
-    if missing not in dummy_source_catalog.colnames:
-        tweakreg_step._rename_catalog_columns(dummy_source_catalog)
-    dummy_source_catalog.remove_column(missing)
+    if missing not in mock_source_catalog.colnames:
+        tweakreg_step._rename_catalog_columns(mock_source_catalog)
+    mock_source_catalog.remove_column(missing)
     with pytest.raises(ValueError, match="catalogs must contain"):
-        tweakreg_step._rename_catalog_columns(dummy_source_catalog)
+        tweakreg_step._rename_catalog_columns(mock_source_catalog)
 
 
 @pytest.mark.parametrize("offset, is_good", [(1 / 3600, True), (11 / 3600, False)])
@@ -126,10 +128,10 @@ def test_expected_failure_bad_starfinder():
 
     model = ImageModel()
     with pytest.raises(ValueError):
-        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, bkg_boxsize=400, starfinder_name='bad_value')
+        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, 2.5, bkg_boxsize=400, starfinder_name='bad_value')
 
 
-def test_write_catalog(dummy_source_catalog, tmp_cwd):
+def test_write_catalog(mock_source_catalog, tmp_cwd):
     '''
     Covers an issue where catalog write did not respect self.output_dir
     '''
@@ -139,7 +141,7 @@ def test_write_catalog(dummy_source_catalog, tmp_cwd):
     os.mkdir(OUTDIR)
     step.output_dir = OUTDIR
     expected_outfile = os.path.join(OUTDIR, 'catalog.ecsv')
-    step._write_catalog(dummy_source_catalog, 'catalog.ecsv')
+    step._write_catalog(mock_source_catalog, 'catalog.ecsv')
 
     assert os.path.exists(expected_outfile)
 
@@ -170,10 +172,12 @@ def example_input(example_wcs):
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
     ys = rng.choice(50, n_sources, replace=False) * 8 + 10
     for y, x in zip(ys, xs):
-        m0.data[y-1:y+2, x-1:x+2] = [
-            [0.1, 0.6, 0.1],
-            [0.6, 0.8, 0.6],
-            [0.1, 0.6, 0.1],
+        m0.data[y-2:y+3, x-2:x+3] = [
+            [0.1, 0.1, 0.2, 0.1, 0.1],
+            [0.1, 0.4, 0.6, 0.4, 0.1],
+            [0.1, 0.6, 0.8, 0.6, 0.1],
+            [0.1, 0.4, 0.6, 0.4, 0.1],
+            [0.1, 0.1, 0.2, 0.1, 0.1],
         ]
 
     m1 = m0.copy()
@@ -446,3 +450,52 @@ def test_sip_approx(example_input, with_shift):
 
     assert np.allclose(fitswcs_res.ra.deg, gwcs_ra)
     assert np.allclose(fitswcs_res.dec.deg, gwcs_dec)
+
+
+def test_make_tweakreg_catalog(example_input):
+    """
+    Simple test for the three starfinder options.
+
+    With default parameters, they should all find the N_EXAMPLE_SOURCES very bright sources
+    in the image.
+    """
+    # run the step on the example input modified above
+    x,y = [], []
+    for finder_name in ["iraf", "dao", "segmentation"]:
+        cat = tweakreg_catalog.make_tweakreg_catalog(
+            example_input[0], 10.0, 2.5, starfinder_name=finder_name,
+        )
+        x.append(np.sort(np.array(cat["xcentroid"])))
+        y.append(np.sort(np.array(cat["ycentroid"])))
+        # check all sources were found
+        assert len(cat) == N_EXAMPLE_SOURCES
+
+    # check the locations are the same to within a small fraction of a pixel
+    for j in range(2):
+        assert_allclose(x[j], x[j+1], atol=0.01)
+        assert_allclose(y[j], y[j+1], atol=0.01)
+
+
+def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input):
+    """Test that the catalog creation fails gracefully when no sources are found."""
+    # run the step on an input that is completely blank
+    example_input[0].data[:] = 0.0
+    with pytest.warns(NoDetectionsWarning, match="No sources were found"):
+        # run the step on the example input modified above
+        cat = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5,)
+
+    assert len(cat) == 0
+    assert type(cat) == Table
+
+
+def test_make_tweakreg_catalog_graceful_fail_bad_background(example_input, log_watcher):
+    """Test that the catalog creation fails gracefully when the background cannot be determined."""
+    watcher = log_watcher("jwst.tweakreg.tweakreg_catalog",
+                          message="Error determining sky background", level="warning")
+    
+    example_input[0].dq[:] = 1
+    cat = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5)
+
+    watcher.assert_seen()
+    assert len(cat) == 0
+    assert type(cat) == Table
