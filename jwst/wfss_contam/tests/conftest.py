@@ -5,6 +5,7 @@ import numpy as np
 from astropy.utils.data import get_pkg_data_filename
 from astropy.convolution import convolve
 from astropy.stats import sigma_clipped_stats
+from astropy.table import Table
 from photutils.datasets import make_100gaussians_image
 from photutils.segmentation import make_2dgaussian_kernel, SourceFinder
 
@@ -63,7 +64,7 @@ def segmentation_map(direct_image):
     SegmentationMapModel
         The segmentation map as a JwstDataModel.
     """
-    mean, median, stddev = sigma_clipped_stats(direct_image, sigma=3.0)
+    _mean, median, stddev = sigma_clipped_stats(direct_image, sigma=3.0)
     threshold = median + 3 * stddev
     finder = SourceFinder(npixels=10)
     segm = finder(direct_image, threshold)
@@ -83,6 +84,29 @@ def segmentation_map(direct_image):
             model.meta.wcs = wcsobj
 
     return model
+
+
+@pytest.fixture(scope="module")
+def source_catalog(segmentation_map):
+    """
+    Create a mock source catalog from the segmentation map.
+
+    Returns
+    -------
+    astropy.table.Table
+        The source catalog with mock data.
+    """
+    source_ids = np.unique(segmentation_map.data)
+    source_ids = source_ids[source_ids > 0]  # suppress background
+
+    rng = np.random.default_rng(42)
+    data = {
+        "source_id": source_ids,
+        "xcentroid": rng.uniform(0, segmentation_map.data.shape[1], len(source_ids)),
+        "ycentroid": rng.uniform(0, segmentation_map.data.shape[0], len(source_ids)),
+        "flux": rng.uniform(100, 1000, len(source_ids)),
+    }
+    return Table(data)
 
 
 @pytest.fixture(scope="module")

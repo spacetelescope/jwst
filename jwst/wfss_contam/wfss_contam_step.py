@@ -19,7 +19,7 @@ class WfssContamStep(Step):
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none')
         skip = boolean(default=True)
         brightest_n = integer(default=None)
-        wl_oversample = integer(default=None) # oversampling factor for wavelength grid
+        wl_oversample = integer(default=2) # oversampling factor for wavelength grid
         max_pixels_per_chunk = integer(default=50000) # max number of pixels to disperse at once
     """  # noqa: E501
 

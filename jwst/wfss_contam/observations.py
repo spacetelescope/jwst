@@ -264,7 +264,6 @@ class Observation:
                     fluxes,
                     source_ids_per_pixel,
                     order,
-                    # self.pivlam,
                     wmin,
                     wmax,
                     sens_waves,

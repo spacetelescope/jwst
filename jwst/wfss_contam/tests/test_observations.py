@@ -1,13 +1,16 @@
 import pytest
+import logging
 import numpy as np
 from numpy.testing import assert_allclose
 from astropy.stats import sigma_clipped_stats
 
-from jwst.wfss_contam.observations import background_subtract, _select_ids, Observation
 import stdatamodels.jwst.datamodels as dm
+from jwst.tests.helpers import LogWatcher
+
+from jwst.wfss_contam.observations import background_subtract, _select_ids, Observation
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     """
     set up observation object with mock data.
@@ -17,7 +20,7 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     filter_name = "F200W"
     seg = segmentation_map.data
     all_ids = np.array(list(set(np.ravel(seg))))
-    source_ids = all_ids[50:52]
+    source_ids = all_ids[50:60]
     obs = Observation(
         direct_image_with_gradient.data,
         segmentation_map,
@@ -26,6 +29,22 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
         source_id=source_ids,
     )
     return obs
+
+
+# @pytest.fixture
+# def obs_with_tiny_chunks(direct_image_with_gradient, segmentation_map, grism_wcs):
+#     filter_name = "F200W"
+#     seg = segmentation_map.data
+#     all_ids = np.array(list(set(np.ravel(seg))))
+#     obs = Observation(
+#         direct_image_with_gradient.data,
+#         segmentation_map,
+#         grism_wcs,
+#         filter_name,
+#         source_id=all_ids,
+#         max_pixels_per_chunk=50,
+#     )
+#     return obs
 
 
 @pytest.mark.parametrize(
@@ -49,6 +68,34 @@ def test_background_subtract(direct_image_with_gradient):
     assert_allclose(mean, 0.0, atol=0.2 * stddev)
 
 
+def test_chunk_sources(observation, monkeypatch):
+
+    order = 1
+    sens_waves = np.linspace(1.708, 2.28, 100)
+    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+    sens_response = np.ones(100)
+    ids, n_pix_per_sources = np.unique_counts(observation.source_ids_per_pixel)
+    max_pixels = np.max(n_pix_per_sources)-1 # to trigger the warning
+    bad_id = ids[n_pix_per_sources > max_pixels][0]
+
+    # ensure warning is emitted for source that is too large
+    watcher = LogWatcher(f"Source {bad_id} has {np.max(n_pix_per_sources)} pixels, which exceeds the maximum")
+    monkeypatch.setattr(logging.getLogger("jwst.wfss_contam.observations"), "warning", watcher)
+    disperse_args = observation.chunk_sources(
+        order,
+        wmin,
+        wmax,
+        sens_waves,
+        sens_response,
+        max_pixels=max_pixels,
+    )
+    watcher.assert_seen()
+
+    # one of the sources was too large and skipped, so this is one less
+    # than the length of the outputs in test_disperse_order
+    assert len(disperse_args) == 7
+
+
 def test_disperse_order(observation):
     obs = observation
     order = 1
@@ -70,9 +117,9 @@ def test_disperse_order(observation):
     assert np.median(obs.simulated_image) == 0.0
 
     # test simulated slits and their associated metadata
-    # only the second of the two obs ids is in the simulated image
+    # obs ID 50 is not in the simulated image
     assert type(obs.simulated_slits) == dm.MultiSlitModel
-    assert len(obs.simulated_slits.slits) == 1
+    assert len(obs.simulated_slits.slits) == 8
     slit = obs.simulated_slits.slits[0]
     # check metadata
     assert slit.name == "source_51"

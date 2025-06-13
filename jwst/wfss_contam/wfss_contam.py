@@ -376,6 +376,7 @@ def contam_corr(
             slit, this_simul = match_backplane_prefer_first(slit, this_simul)
             simul_all_cut = _cut_frame_to_match_slit(obs.simulated_image, slit)
             contam_cut = simul_all_cut - this_simul.data
+            simul_slits.slits.append(this_simul)
 
         except (UnmatchedSlitIDError, SlitOverlapError) as e:
             log.warning(e)
@@ -384,7 +385,6 @@ def contam_corr(
         contam_slit = datamodels.SlitModel()
         contam_slit.data = contam_cut
         contam_model.slits.append(contam_slit)
-        simul_slits.slits.append(this_simul)
 
         # Subtract the contamination from the source slit
         slit.data -= contam_cut
