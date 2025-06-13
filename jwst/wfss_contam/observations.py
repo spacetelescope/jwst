@@ -121,7 +121,7 @@ class Observation:
         boundaries=None,
         offsets=None,
         max_cpu=1,
-        max_pixels_per_chunk=1e4,
+        max_pixels_per_chunk=1e5,
         oversample_factor=2,
     ):
         """
