@@ -30,9 +30,9 @@ def _determine_native_wl_spacing(
 
     Parameters
     ----------
-    x0_sky : np.ndarray
+    x0_sky : float or np.ndarray
         RA of the input pixel position in segmentation map
-    y0_sky : _type_
+    y0_sky : float or np.ndarray
         Dec of the input pixel position in segmentation map
     sky_to_imgxy : astropy model
         Transform from sky to image coordinates
@@ -55,6 +55,13 @@ def _determine_native_wl_spacing(
     -------
     lambdas : np.ndarray
         Wavelengths at which to compute dispersed pixel values
+
+    Notes
+    -----
+    It was found that the native wavelength spacing varies by a few percent or less
+    across the detector for both NIRCam and NIRISS. This function has the capability to
+    take in many x0, y0 at once and take the median to get the wavelengths,
+    but typically it's okay to just put in any x0, y0 pair.
     """
     # Get x/y positions in the grism image corresponding to wmin and wmax:
     # Convert to x/y in the direct image frame
@@ -67,12 +74,8 @@ def _determine_native_wl_spacing(
 
     # Create list of wavelengths on which to compute dispersed pixels
     dw = np.abs((wmax - wmin) / (dyw - dxw))
-    # TODO: is just taking median here ok? on the one hand, the values are very similar
-    # on the other hand, what is the point of computing these dw values wavelength-by-wavelength
-    # if we just take the median?
     dlam = np.median(dw / oversample_factor)
     lambdas = np.arange(wmin, wmax + dlam, dlam)
-
     return lambdas
 
 
@@ -268,9 +271,10 @@ def disperse(
     # Find RA/Dec of the input pixel position in segmentation map
     x0_sky, y0_sky = seg_wcs(x0, y0)
 
+    # native spacing does not change much over the detector, so just put in one x0, y0
     lambdas = _determine_native_wl_spacing(
-        x0_sky,
-        y0_sky,
+        x0_sky[0],
+        y0_sky[0],
         sky_to_imgxy,
         imgxy_to_grismxy,
         order,
