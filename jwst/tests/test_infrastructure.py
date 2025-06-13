@@ -7,10 +7,7 @@ import pytest
 
 from ci_watson.artifactory_helpers import get_bigdata_root
 
-from jwst.regtest.regtestdata import (
-    _data_glob_local,
-    _data_glob_url
-)
+from jwst.regtest.regtestdata import _data_glob_local, _data_glob_url
 from jwst.tests.helpers import word_precision_check
 
 
@@ -29,12 +26,7 @@ def test_word_precision_check():
 
 
 @pytest.mark.parametrize(
-    'glob_filter, nfiles',
-    [
-        ('*', 3),
-        ('*.txt', 3),
-        ('*.fits', 0)
-    ], ids=['all', 'txt', 'fits']
+    "glob_filter, nfiles", [("*", 3), ("*.txt", 3), ("*.fits", 0)], ids=["all", "txt", "fits"]
 )
 def test_data_glob_local(glob_filter, nfiles, tmp_cwd):
     """Test working of local globbing
@@ -47,25 +39,18 @@ def test_data_glob_local(glob_filter, nfiles, tmp_cwd):
     nfiles: int
         The number of files expected to find.
     """
-    path = Path('datadir')
+    path = Path("datadir")
     path.mkdir()
     for idx in range(3):
-        with open(path / ('afile' + str(idx) + '.txt'), 'w') as fh:
-            fh.write(f'I am file {idx}')
+        with open(path / ("afile" + str(idx) + ".txt"), "w") as fh:
+            fh.write(f"I am file {idx}")
 
     files = _data_glob_local(path, glob_filter)
     assert len(files) == nfiles
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize(
-    'glob_filter, nfiles',
-    [
-        ('*', 1),
-        ('*.txt', 0),
-        ('*.fits', 1)
-    ]
-)
+@pytest.mark.parametrize("glob_filter, nfiles", [("*", 1), ("*.txt", 0), ("*.fits", 1)])
 def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
     """Test globbing over a URL
 
@@ -77,9 +62,9 @@ def test_data_glob_url(glob_filter, nfiles, pytestconfig, request):
     nfiles: int
         The number of files expected to find.
     """
-    inputs_root = pytestconfig.getini('inputs_root')[0]
-    env = request.config.getoption('env')
-    path = os.path.join(inputs_root, env, 'infrastructure/test_data_glob')
+    inputs_root = pytestconfig.getini("inputs_root")[0]
+    env = request.config.getoption("env")
+    path = os.path.join(inputs_root, env, "infrastructure/test_data_glob")
 
     files = _data_glob_url(path, glob_filter, root=get_bigdata_root())
     assert len(files) == nfiles

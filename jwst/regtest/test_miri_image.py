@@ -21,18 +21,20 @@ def run_detector1(rtdata_module):
     rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
-            "--save_calibrated_ramp=True",
-            "--steps.dq_init.save_results=True",
-            "--steps.saturation.save_results=True",
-            "--steps.firstframe.save_results=True",
-            "--steps.lastframe.save_results=True",
-            "--steps.reset.save_results=True",
-            "--steps.linearity.save_results=True",
-            "--steps.rscd.save_results=True",
-            "--steps.dark_current.save_results=True",
-            "--steps.refpix.save_results=True",
-            ]
+    args = [
+        "jwst.pipeline.Detector1Pipeline",
+        rtdata.input,
+        "--save_calibrated_ramp=True",
+        "--steps.dq_init.save_results=True",
+        "--steps.saturation.save_results=True",
+        "--steps.firstframe.save_results=True",
+        "--steps.lastframe.save_results=True",
+        "--steps.reset.save_results=True",
+        "--steps.linearity.save_results=True",
+        "--steps.rscd.save_results=True",
+        "--steps.dark_current.save_results=True",
+        "--steps.refpix.save_results=True",
+    ]
     Step.from_cmdline(args)
 
 
@@ -43,19 +45,21 @@ def run_detector1_multiprocess_rate(rtdata_module):
     rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
-            "--save_calibrated_ramp=True",
-            "--steps.dq_init.save_results=True",
-            "--steps.saturation.save_results=True",
-            "--steps.firstframe.save_results=True",
-            "--steps.lastframe.save_results=True",
-            "--steps.reset.save_results=True",
-            "--steps.linearity.save_results=True",
-            "--steps.rscd.save_results=True",
-            "--steps.dark_current.save_results=True",
-            "--steps.refpix.save_results=True",
-            "--steps.ramp_fit.maximum_cores=2", # Multiprocessing
-            ]
+    args = [
+        "jwst.pipeline.Detector1Pipeline",
+        rtdata.input,
+        "--save_calibrated_ramp=True",
+        "--steps.dq_init.save_results=True",
+        "--steps.saturation.save_results=True",
+        "--steps.firstframe.save_results=True",
+        "--steps.lastframe.save_results=True",
+        "--steps.reset.save_results=True",
+        "--steps.linearity.save_results=True",
+        "--steps.rscd.save_results=True",
+        "--steps.dark_current.save_results=True",
+        "--steps.refpix.save_results=True",
+        "--steps.ramp_fit.maximum_cores=2",  # Multiprocessing
+    ]
     Step.from_cmdline(args)
 
 
@@ -66,19 +70,21 @@ def run_detector1_multiprocess_jump(rtdata_module):
     rtdata.get_data("miri/image/jw01024001001_04101_00001_mirimage_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
-            "--save_calibrated_ramp=True",
-            "--steps.dq_init.save_results=True",
-            "--steps.saturation.save_results=True",
-            "--steps.firstframe.save_results=True",
-            "--steps.lastframe.save_results=True",
-            "--steps.reset.save_results=True",
-            "--steps.linearity.save_results=True",
-            "--steps.rscd.save_results=True",
-            "--steps.dark_current.save_results=True",
-            "--steps.refpix.save_results=True",
-            "--steps.jump.maximum_cores=2", # Multiprocessing
-            ]
+    args = [
+        "jwst.pipeline.Detector1Pipeline",
+        rtdata.input,
+        "--save_calibrated_ramp=True",
+        "--steps.dq_init.save_results=True",
+        "--steps.saturation.save_results=True",
+        "--steps.firstframe.save_results=True",
+        "--steps.lastframe.save_results=True",
+        "--steps.reset.save_results=True",
+        "--steps.linearity.save_results=True",
+        "--steps.rscd.save_results=True",
+        "--steps.dark_current.save_results=True",
+        "--steps.refpix.save_results=True",
+        "--steps.jump.maximum_cores=2",  # Multiprocessing
+    ]
     Step.from_cmdline(args)
 
 
@@ -91,11 +97,13 @@ def run_detector1_with_average_dark_current(rtdata_module, resource_tracker):
     rtdata.get_data("miri/image/jw01024002001_02101_00001_mirimage_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["jwst.pipeline.Detector1Pipeline", rtdata.input,
-            "--save_calibrated_ramp=True",
-            "--steps.dark_current.save_results=True",
-            "--steps.dark_current.average_dark_current=1.0",
-            ]
+    args = [
+        "jwst.pipeline.Detector1Pipeline",
+        rtdata.input,
+        "--save_calibrated_ramp=True",
+        "--steps.dark_current.save_results=True",
+        "--steps.dark_current.average_dark_current=1.0",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -108,16 +116,18 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
     # Run detector1 pipeline only on one of the _uncal files.
     # Run optional clean_flicker_noise step,
     # saving extra outputs and masking to science regions
-    args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
-            "--output_file=jw01024002001_02101_00001_mirimage_cfn",
-            "--save_calibrated_ramp=True",
-            "--steps.clean_flicker_noise.skip=False",
-            "--steps.clean_flicker_noise.mask_science_regions=True",
-            "--steps.clean_flicker_noise.save_results=True",
-            "--steps.clean_flicker_noise.save_mask=True",
-            "--steps.clean_flicker_noise.save_background=True",
-            "--steps.clean_flicker_noise.save_noise=True",
-            ]
+    args = [
+        "jwst.pipeline.Detector1Pipeline",
+        rtdata_module.input,
+        "--output_file=jw01024002001_02101_00001_mirimage_cfn",
+        "--save_calibrated_ramp=True",
+        "--steps.clean_flicker_noise.skip=False",
+        "--steps.clean_flicker_noise.mask_science_regions=True",
+        "--steps.clean_flicker_noise.save_results=True",
+        "--steps.clean_flicker_noise.save_mask=True",
+        "--steps.clean_flicker_noise.save_background=True",
+        "--steps.clean_flicker_noise.save_noise=True",
+    ]
     Step.from_cmdline(args)
 
 
@@ -125,11 +135,13 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 def run_image2(run_detector1, rtdata_module, resource_tracker):
     """Run image2 pipeline on the _rate file, saving intermediate products"""
     rtdata = rtdata_module
-    rtdata.input = 'jw01024001001_04101_00001_mirimage_rate.fits'
-    args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
-            "--steps.assign_wcs.save_results=True",
-            "--steps.flat_field.save_results=True"
-            ]
+    rtdata.input = "jw01024001001_04101_00001_mirimage_rate.fits"
+    args = [
+        "jwst.pipeline.Image2Pipeline",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=True",
+        "--steps.flat_field.save_results=True",
+    ]
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", message="Failed to achieve requested SIP approximation accuracy"
@@ -147,8 +159,7 @@ def run_image2(run_detector1, rtdata_module, resource_tracker):
         with resource_tracker.track():
             for rate_file in rate_files:
                 rtdata.get_data(rate_file)
-                args = ["jwst.pipeline.Image2Pipeline", rtdata.input,
-                        "--steps.resample.skip=True"]
+                args = ["jwst.pipeline.Image2Pipeline", rtdata.input, "--steps.resample.skip=True"]
                 Step.from_cmdline(args)
 
 
@@ -160,8 +171,9 @@ def run_image3(run_image2, rtdata_module, resource_tracker):
     rtdata.get_data("miri/image/jw01024-o001_20220501t155404_image3_001_asn.json")
     args = ["jwst.pipeline.Image3Pipeline", rtdata.input]
     with warnings.catch_warnings():
-        warnings.filterwarnings("ignore",
-                                message="Failed to achieve requested SIP approximation accuracy")
+        warnings.filterwarnings(
+            "ignore", message="Failed to achieve requested SIP approximation accuracy"
+        )
         with resource_tracker.track():
             Step.from_cmdline(args)
 
@@ -178,28 +190,45 @@ def test_log_tracked_resources_image3(log_tracked_resources, run_image3):
     log_tracked_resources()
 
 
-@pytest.mark.parametrize("suffix", ["dq_init", "saturation", "firstframe", "lastframe", "reset",
-                                    "linearity", "rscd", "dark_current", "ramp", "rate",
-                                    "rateints"])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "dq_init",
+        "saturation",
+        "firstframe",
+        "lastframe",
+        "reset",
+        "linearity",
+        "rscd",
+        "dark_current",
+        "ramp",
+        "rate",
+        "rateints",
+    ],
+)
 def test_miri_image_detector1(run_detector1, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix)
 
 
-def test_miri_image_detector1_multiprocess_rate(run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs):
+def test_miri_image_detector1_multiprocess_rate(
+    run_detector1_multiprocess_rate, rtdata_module, fitsdiff_default_kwargs
+):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
 
 
-def test_miri_image_detector1_multiprocess_jump(run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs):
+def test_miri_image_detector1_multiprocess_jump(
+    run_detector1_multiprocess_jump, rtdata_module, fitsdiff_default_kwargs
+):
     """Regression test of detector1 pipeline performed on MIRI imaging data."""
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, "rate")
 
 
-@pytest.mark.parametrize("suffix", ["dark_current", "ramp", "rate",
-                                    "rateints"])
-def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_dark_current,
-                                                    rtdata_module, fitsdiff_default_kwargs, suffix):
+@pytest.mark.parametrize("suffix", ["dark_current", "ramp", "rate", "rateints"])
+def test_miri_image_detector1_with_avg_dark_current(
+    run_detector1_with_average_dark_current, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Regression test of detector1 pipeline performed on MIRI imaging data with a specified
     average dark current."""
     rtdata = rtdata_module
@@ -217,13 +246,21 @@ def test_miri_image_detector1_with_avg_dark_current(run_detector1_with_average_d
     assert diff.identical, diff.report()
 
 
-@pytest.mark.parametrize("suffix",
-                         ["cfn_clean_flicker_noise", "mask",
-                          "flicker_bkg", "flicker_noise",
-                          "cfn_ramp", "cfn_rate", "cfn_rateints"])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "cfn_clean_flicker_noise",
+        "mask",
+        "flicker_bkg",
+        "flicker_noise",
+        "cfn_ramp",
+        "cfn_rate",
+        "cfn_rateints",
+    ],
+)
 def test_miri_image_detector1_with_clean_flicker_noise(
-        run_detector1_with_clean_flicker_noise,
-        rtdata_module, fitsdiff_default_kwargs, suffix):
+    run_detector1_with_clean_flicker_noise, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Test detector1 pipeline for MIRI imaging data with noise cleaning."""
     rtdata = rtdata_module
     rtdata.input = "jw01024002001_02101_00001_mirimage_uncal.fits"

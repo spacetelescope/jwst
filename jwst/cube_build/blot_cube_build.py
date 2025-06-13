@@ -2,7 +2,7 @@ import numpy as np
 import logging
 
 from jwst.datamodels import ModelContainer
-from ..assign_wcs import nirspec
+from jwst.assign_wcs import nirspec
 from gwcs import wcstools
 from jwst.assign_wcs.util import in_ifu_slice
 from . import instrument_defaults

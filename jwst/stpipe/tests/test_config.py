@@ -57,7 +57,9 @@ def test_step_config_to_asdf(config):
     assert asdf_file["steps"] == [s.to_asdf().tree for s in config.steps]
     assert asdf_file["meta"]["author"] == "<SPECIFY>"
     current_time = datetime.now(timezone.utc).replace(tzinfo=None)
-    assert (current_time - datetime.fromisoformat(asdf_file["meta"]["date"])) < timedelta(seconds=10)
+    assert (current_time - datetime.fromisoformat(asdf_file["meta"]["date"])) < timedelta(
+        seconds=10
+    )
     assert asdf_file["meta"]["description"] == "Parameters for calibration step some.PipelineClass"
     assert asdf_file["meta"]["instrument"]["name"] == "<SPECIFY>"
     assert asdf_file["meta"]["origin"] == "<SPECIFY>"
@@ -110,7 +112,10 @@ def test_step_config_from_legacy_asdf(config):
 
     parameters["steps"] = steps
 
-    asdf_file = asdf.AsdfFile({"parameters": parameters}, custom_schema="http://stsci.edu/schemas/stpipe/step_config-0.1.0")
+    asdf_file = asdf.AsdfFile(
+        {"parameters": parameters},
+        custom_schema="http://stsci.edu/schemas/stpipe/step_config-0.1.0",
+    )
 
     # We lose the step class names so the configs won't be equal:
     legacy_config = StepConfig.from_asdf(asdf_file)

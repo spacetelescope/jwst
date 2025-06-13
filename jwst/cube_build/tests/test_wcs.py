@@ -25,7 +25,7 @@ slice_gap[:, 80:] = 4
 
 
 def dummy_wcs(x, y):
-    """ Simple WCS for testing """
+    """Simple WCS for testing"""
 
     global xcenter, ycenter, shape, slice_gap
 
@@ -71,7 +71,7 @@ def dummy_wcs(x, y):
 
 
 def test_coord_trans1():
-    """ Test finding xi,eta and cos 90, ra 45 """
+    """Test finding xi,eta and cos 90, ra 45"""
 
     crval1 = 45.0
     crval2 = 90.0
@@ -89,7 +89,7 @@ def test_coord_trans1():
 
 
 def test_coord_trans2():
-    """ Test finding ci,eta and cos 45, ra 45 """
+    """Test finding ci,eta and cos 45, ra 45"""
     crval1 = 45.0
     crval2 = 45.0
     diff_ra = 5.0  # in arc seconds
@@ -106,7 +106,7 @@ def test_coord_trans2():
 
 
 def test_coord_trans3():
-    """ Test going from ra,dec -> xi,eta -> ra,dec """
+    """Test going from ra,dec -> xi,eta -> ra,dec"""
 
     crval1 = 27.89
     crval2 = 56.08
@@ -125,7 +125,7 @@ def test_coord_trans3():
 
 
 def test_wrap_ra():
-    """ Test function wrap_ra but all ra on same side of 0/360 border """
+    """Test function wrap_ra but all ra on same side of 0/360 border"""
 
     # test 1  wrap ra should do nothing
     ra = np.zeros(5, dtype=float)
@@ -159,7 +159,7 @@ def test_wrap_ra():
 
 
 def test_setup_wcs():
-    """ setting size of IFU given input min,max and cdelts """
+    """setting size of IFU given input min,max and cdelts"""
     ra1 = 98.83006930071556
     dec1 = -66.8274397956464
     ra2 = 98.8334511693978
@@ -184,18 +184,19 @@ def test_setup_wcs():
     corner_b.append(dec4)
 
     pars_cube = {
-        'scalexy': 0.0,
-        'scalew': 0.0,
-        'interpolation': 'pointcloud',
-        'weighting': 'emsm',
-        'weight_power': 2,
-        'coord_system': 'skyalign',
-        'rois': 0.0,
-        'roiw': 0.0,
-        'wavemin': lambda_min,
-        'wavemax': lambda_max,
-        'skip_dqflagging': False,
-        'debug_spaxel': '0 0 0'}
+        "scalexy": 0.0,
+        "scalew": 0.0,
+        "interpolation": "pointcloud",
+        "weighting": "emsm",
+        "weight_power": 2,
+        "coord_system": "skyalign",
+        "rois": 0.0,
+        "roiw": 0.0,
+        "wavemin": lambda_min,
+        "wavemax": lambda_max,
+        "skip_dqflagging": False,
+        "debug_spaxel": "0 0 0",
+    }
 
     pipeline = 3
     input_model = None
@@ -216,7 +217,8 @@ def test_setup_wcs():
         list_par2,
         instrument_info,
         master_table,
-        **pars_cube)
+        **pars_cube,
+    )
 
     thiscube.cdelt1 = 0.13
     thiscube.cdelt2 = 0.13
@@ -230,31 +232,28 @@ def test_setup_wcs():
 
 
 def test_footprint_miri():
-
     global shape
 
     input_model = datamodels.IFUImageModel()
-    input_model.meta.instrument.name = 'MIRI'
-    input_model.meta.instrument.detector = 'MIRIFULONG'
-    input_model.meta.instrument.channel = '34'
-    input_model.meta.instrument.band = 'SHORT'
+    input_model.meta.instrument.name = "MIRI"
+    input_model.meta.instrument.detector = "MIRIFULONG"
+    input_model.meta.instrument.channel = "34"
+    input_model.meta.instrument.band = "SHORT"
 
     input_model.data = np.zeros(shape)
     input_model.meta.wcs = dummy_wcs
 
-    this_channel = '3'
-    coord_system = 'skyalign'
+    this_channel = "3"
+    coord_system = "skyalign"
     instrument_info = instrument_defaults.InstrumentInfo()
     instrument_info.set_xslice_limits(0, 101, this_channel)
     x1, x2 = instrument_info.get_miri_slice_endpts(this_channel)
 
-    corners = cube_build_wcs_util.find_corners_miri(input_model,
-                                                    this_channel,
-                                                    instrument_info,
-                                                    coord_system)
+    corners = cube_build_wcs_util.find_corners_miri(
+        input_model, this_channel, instrument_info, coord_system
+    )
 
-    (ra_min, b1, ra_max, b2, a1, dec_min, a2, dec_max,
-     lambda_min, lambda_max) = corners
+    (ra_min, b1, ra_max, b2, a1, dec_min, a2, dec_max, lambda_min, lambda_max) = corners
     assert ra_min == 40.6
     assert ra_max == 50.1
     assert dec_min == 45.1

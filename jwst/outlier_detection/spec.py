@@ -3,7 +3,7 @@
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.utilities import record_step_status
 
-from ..resample import resample_spec
+from jwst.resample import resample_spec
 from .utils import (
     flag_crs_in_models,
     flag_crs_in_models_with_resampling,

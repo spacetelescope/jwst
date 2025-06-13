@@ -20,14 +20,17 @@ def run_pipeline(rtdata_module, resource_tracker):
     rtdata = rtdata_module
 
     # Get the ASN file and input exposures
-    rtdata.get_asn('nirspec/fs/jw01309-o022_spec3_regtest_asn.json')
+    rtdata.get_asn("nirspec/fs/jw01309-o022_spec3_regtest_asn.json")
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
-    args = ["calwebb_spec3", rtdata.input,
-            "--steps.outlier_detection.save_results=true",
-            "--steps.outlier_detection.save_intermediate_results=true",
-            "--steps.resample_spec.save_results=true",
-            "--steps.extract_1d.save_results=true"]
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        "--steps.outlier_detection.save_results=true",
+        "--steps.outlier_detection.save_intermediate_results=true",
+        "--steps.resample_spec.save_results=true",
+        "--steps.extract_1d.save_results=true",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -37,9 +40,19 @@ def test_log_tracked_resources_spec3(log_tracked_resources, run_pipeline):
 
 
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d", "median"])
-@pytest.mark.parametrize("source_id,slit_name", [("s000000001","s200a2"), ("s000000021","s200a1"),
-    ("s000000023","s400a1"), ("s000000024","s1600a1"), ("s000000025","s200b1")])
-def test_nirspec_fs_spec3(run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix, source_id, slit_name):
+@pytest.mark.parametrize(
+    "source_id,slit_name",
+    [
+        ("s000000001", "s200a2"),
+        ("s000000021", "s200a1"),
+        ("s000000023", "s400a1"),
+        ("s000000024", "s1600a1"),
+        ("s000000025", "s200b1"),
+    ],
+)
+def test_nirspec_fs_spec3(
+    run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix, source_id, slit_name
+):
     """Test spec3 pipeline on a set of NIRSpec FS exposures."""
     rtdata = rtdata_module
 

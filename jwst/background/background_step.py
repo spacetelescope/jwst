@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 from .background_sub import background_sub
 from .background_sub_wfss import subtract_wfss_bkg
 from .asn_intake import asn_get_data

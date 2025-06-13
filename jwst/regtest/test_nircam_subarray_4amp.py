@@ -25,10 +25,14 @@ def run_pipeline(rtdata_module):
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("output", [
-    'jw02459005001_03103_00001-seg001_nrca3_rate.fits',
-    'jw02459005001_03103_00001-seg001_nrca3_rateints.fits'],
-    ids=['rate', 'rateints'])
+@pytest.mark.parametrize(
+    "output",
+    [
+        "jw02459005001_03103_00001-seg001_nrca3_rate.fits",
+        "jw02459005001_03103_00001-seg001_nrca3_rateints.fits",
+    ],
+    ids=["rate", "rateints"],
+)
 def test_nircam_detector1_subarray(run_pipeline, fitsdiff_default_kwargs, output):
     """
     Regression test of calwebb_detector1 pipeline performed on NIRSpec data.

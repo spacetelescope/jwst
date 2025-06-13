@@ -20,16 +20,19 @@ def run_pipeline(rtdata_module, resource_tracker):
     rtdata.get_data("nircam/wfss/jw01076-o101_20220403t120233_spec2_002_asn.json")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.assign_wcs.save_results=true",
-            "--steps.bkg_subtract.skip=False",
-            "--steps.bkg_subtract.wfss_mmag_extract=20.0",
-            "--steps.bkg_subtract.save_results=true",
-            "--steps.extract_2d.save_results=true",
-            "--steps.extract_2d.wfss_mmag_extract=19.0",
-            "--steps.extract_2d.wfss_nbright=20",
-            "--steps.srctype.save_results=true",
-            "--steps.flat_field.save_results=true"]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=true",
+        "--steps.bkg_subtract.skip=False",
+        "--steps.bkg_subtract.wfss_mmag_extract=20.0",
+        "--steps.bkg_subtract.save_results=true",
+        "--steps.extract_2d.save_results=true",
+        "--steps.extract_2d.wfss_mmag_extract=19.0",
+        "--steps.extract_2d.wfss_nbright=20",
+        "--steps.srctype.save_results=true",
+        "--steps.flat_field.save_results=true",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -40,12 +43,12 @@ def test_log_tracked_resources_spec2(log_tracked_resources, run_pipeline):
     log_tracked_resources()
 
 
-@pytest.mark.parametrize("suffix", [
-    "assign_wcs", "bsub", "extract_2d", "flat_field", "srctype",
-    "cal", "x1d"])
+@pytest.mark.parametrize(
+    "suffix", ["assign_wcs", "bsub", "extract_2d", "flat_field", "srctype", "cal", "x1d"]
+)
 def test_nircam_wfss_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline on a
-       NIRCam WFSS exposure."""
+    NIRCam WFSS exposure."""
 
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline

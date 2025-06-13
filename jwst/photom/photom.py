@@ -8,9 +8,9 @@ from astropy import units as u
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from ..lib.pipe_utils import match_nans_and_flags
-from ..lib.wcs_utils import get_wavelengths
-from ..lib.dispaxis import get_dispersion_direction
+from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.lib.wcs_utils import get_wavelengths
+from jwst.lib.dispaxis import get_dispersion_direction
 from . import miri_mrs
 from . import miri_imager
 
@@ -683,7 +683,7 @@ class DataSet:
         dqmap : 2-D numpy.ndarray
             Array of DQ flags per pixel.
         """
-        from ..assign_wcs import nirspec  # for NIRSpec IFU data
+        from jwst.assign_wcs import nirspec  # for NIRSpec IFU data
         import gwcs
 
         microns_100 = 1.0e-4  # 100 microns, in meters

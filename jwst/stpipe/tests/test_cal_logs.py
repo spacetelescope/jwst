@@ -29,7 +29,8 @@ def test_cal_logs_pipeline():
 
 
 @pytest.mark.parametrize(
-    "msg, is_empty", [
+    "msg, is_empty",
+    [
         ("2025-02-21T19:16:07.219", False),  # our timestamp
         (_FAKE_HOSTNAME, True),
         (_FAKE_USER, True),
@@ -38,7 +39,7 @@ def test_cal_logs_pipeline():
         ("123.42.26", False),
         ("2001:db8::ff00:42:8329", True),
         ("2001:db8:4006:812::200e", True),
-    ]
+    ],
 )
 def test_scrub(msg, is_empty):
     target = "" if is_empty else msg

@@ -23,7 +23,7 @@ from .util import (
     transform_bbox_from_shape,
     bounding_box_from_subarray,
 )
-from ..lib.reffile_utils import find_row
+from jwst.lib.reffile_utils import find_row
 
 
 log = logging.getLogger(__name__)

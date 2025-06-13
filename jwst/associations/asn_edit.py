@@ -4,7 +4,7 @@ import warnings
 import os.path as op
 from pathlib import Path
 
-from ..lib import suffix
+from jwst.lib import suffix
 from . import Association, AssociationNotValidError
 
 

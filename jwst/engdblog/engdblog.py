@@ -1,6 +1,6 @@
-from ..lib.engdb_tools import ENGDB_Service
-from ..lib.engdb_mast import EngdbMast
-from ..stpipe import Step
+from jwst.lib.engdb_tools import ENGDB_Service
+from jwst.lib.engdb_mast import EngdbMast
+from jwst.stpipe import Step
 
 
 class EngDBLogStep(Step):

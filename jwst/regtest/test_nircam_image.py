@@ -20,17 +20,19 @@ def run_detector1pipeline(rtdata_module):
     rtdata.get_data("nircam/image/jw01538046001_03105_00001_nrcalong_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["calwebb_detector1", rtdata.input,
-            "--steps.dq_init.save_results=True",
-            "--steps.saturation.save_results=True",
-            "--steps.superbias.save_results=True",
-            "--steps.refpix.save_results=True",
-            "--steps.refpix.refpix_algorithm=median",
-            "--steps.linearity.save_results=True",
-            "--steps.dark_current.save_results=True",
-            "--steps.jump.save_results=True",
-            "--steps.jump.rejection_threshold=50.0",
-            ]
+    args = [
+        "calwebb_detector1",
+        rtdata.input,
+        "--steps.dq_init.save_results=True",
+        "--steps.saturation.save_results=True",
+        "--steps.superbias.save_results=True",
+        "--steps.refpix.save_results=True",
+        "--steps.refpix.refpix_algorithm=median",
+        "--steps.linearity.save_results=True",
+        "--steps.dark_current.save_results=True",
+        "--steps.jump.save_results=True",
+        "--steps.jump.rejection_threshold=50.0",
+    ]
     Step.from_cmdline(args)
 
 
@@ -44,11 +46,13 @@ def run_detector1pipeline_with_sirs(rtdata_module, resource_tracker):
     rtdata.get_data("nircam/image/jw01345001001_10201_00001_nrca3_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["calwebb_detector1", rtdata.input,
-            "--output_file=jw01345001001_10201_00001_nrca3_sirs",
-            "--steps.refpix.refpix_algorithm=sirs",
-            "--steps.refpix.save_results=True",
-            ]
+    args = [
+        "calwebb_detector1",
+        rtdata.input,
+        "--output_file=jw01345001001_10201_00001_nrca3_sirs",
+        "--steps.refpix.refpix_algorithm=sirs",
+        "--steps.refpix.save_results=True",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -60,15 +64,17 @@ def run_detector1_with_clean_flicker_noise(rtdata_module):
 
     # Run detector1 pipeline only on one of the _uncal files.
     # Run optional clean_flicker_noise step, saving extra outputs
-    args = ["jwst.pipeline.Detector1Pipeline", rtdata_module.input,
-            "--output_file=jw01538046001_03105_00001_nrcalong_cfn",
-            "--save_calibrated_ramp=True",
-            "--steps.clean_flicker_noise.skip=False",
-            "--steps.clean_flicker_noise.save_results=True",
-            "--steps.clean_flicker_noise.save_mask=True",
-            "--steps.clean_flicker_noise.save_background=True",
-            "--steps.clean_flicker_noise.save_noise=True",
-            ]
+    args = [
+        "jwst.pipeline.Detector1Pipeline",
+        rtdata_module.input,
+        "--output_file=jw01538046001_03105_00001_nrcalong_cfn",
+        "--save_calibrated_ramp=True",
+        "--steps.clean_flicker_noise.skip=False",
+        "--steps.clean_flicker_noise.save_results=True",
+        "--steps.clean_flicker_noise.save_mask=True",
+        "--steps.clean_flicker_noise.save_background=True",
+        "--steps.clean_flicker_noise.save_noise=True",
+    ]
     Step.from_cmdline(args)
 
 
@@ -83,13 +89,14 @@ def run_detector1_with_likelihood(rtdata_module, resource_tracker):
     rtdata.get_data("nircam/image/jw01345001001_10201_00001_nrca3_uncal.fits")
 
     # Run detector1 pipeline only on one of the _uncal files
-    args = ["calwebb_detector1", rtdata.input,
-            "--output_file=jw01345001001_10201_00001_nrca3_likely",
-            "--steps.ramp_fit.algorithm=LIKELY",
-            ]
+    args = [
+        "calwebb_detector1",
+        rtdata.input,
+        "--output_file=jw01345001001_10201_00001_nrca3_likely",
+        "--steps.ramp_fit.algorithm=LIKELY",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
-
 
 
 @pytest.fixture(scope="module")
@@ -97,10 +104,12 @@ def run_image2pipeline(run_detector1pipeline, rtdata_module, resource_tracker):
     """Run calwebb_image2 on NIRCam imaging long data"""
     rtdata = rtdata_module
     rtdata.input = "jw01538046001_03105_00001_nrcalong_rate.fits"
-    args = ["calwebb_image2", rtdata.input,
-            "--steps.assign_wcs.save_results=True",
-            "--steps.flat_field.save_results=True",
-            ]
+    args = [
+        "calwebb_image2",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=True",
+        "--steps.flat_field.save_results=True",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -126,10 +135,12 @@ def run_image3pipeline(run_image2pipeline, rtdata_module, resource_tracker):
     # Get the level3 association json file (though not its members) and run
     # image3 pipeline on all _cal files listed in association
     rtdata.get_data("nircam/image/jw01538-o046_20230331t102920_image3_00009_asn.json")
-    args = ["calwebb_image3", rtdata.input,
-            "--steps.tweakreg.save_results=True",
-            "--steps.source_catalog.snr_threshold=20",
-            ]
+    args = [
+        "calwebb_image3",
+        rtdata.input,
+        "--steps.tweakreg.save_results=True",
+        "--steps.source_catalog.snr_threshold=20",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -152,7 +163,9 @@ def test_nircam_image_sirs(run_detector1pipeline_with_sirs, rtdata_module, fitsd
     rtdata.input = "jw01345001001_10201_00001_nrca3_uncal.fits"
     output = "jw01345001001_10201_00001_nrca3_sirs_refpix.fits"
     rtdata.output = output
-    rtdata.get_truth("truth/test_nircam_image_stages/jw01345001001_10201_00001_nrca3_sirs_refpix.fits")
+    rtdata.get_truth(
+        "truth/test_nircam_image_stages/jw01345001001_10201_00001_nrca3_sirs_refpix.fits"
+    )
 
     fitsdiff_default_kwargs["rtol"] = 5e-5
     fitsdiff_default_kwargs["atol"] = 1e-4
@@ -161,10 +174,22 @@ def test_nircam_image_sirs(run_detector1pipeline_with_sirs, rtdata_module, fitsd
     assert diff.identical, diff.report()
 
 
-@pytest.mark.parametrize("suffix", ["dq_init", "saturation", "superbias",
-                                    "refpix", "linearity",
-                                    "dark_current", "jump", "rate",
-                                    "flat_field", "cal", "i2d"])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "dq_init",
+        "saturation",
+        "superbias",
+        "refpix",
+        "linearity",
+        "dark_current",
+        "jump",
+        "rate",
+        "flat_field",
+        "cal",
+        "i2d",
+    ],
+)
 def test_nircam_image_stages12(run_image2pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
     rtdata = rtdata_module
@@ -258,10 +283,12 @@ def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
     """Test optional frame-averaged darks output from DarkCurrentStep"""
     rtdata.get_data("nircam/image/jw01205015001_03101_00001_nrcb1_ramp.fits")
 
-    dark_file = 'jw01205015001_03101_00001_nrcb1_frame_averaged_dark.fits'
-    args = ["jwst.dark_current.DarkCurrentStep", rtdata.input,
-            f"--dark_output={dark_file}",
-            ]
+    dark_file = "jw01205015001_03101_00001_nrcb1_frame_averaged_dark.fits"
+    args = [
+        "jwst.dark_current.DarkCurrentStep",
+        rtdata.input,
+        f"--dark_output={dark_file}",
+    ]
     Step.from_cmdline(args)
     rtdata.output = dark_file
 
@@ -274,10 +301,10 @@ def test_nircam_frame_averaged_darks(rtdata, fitsdiff_default_kwargs):
 def test_imaging_distortion(rtdata, fitsdiff_default_kwargs):
     """Verify that the distortion correction round trips."""
     rtdata.get_data("nircam/image/jw01538046002_02103_00002_nrca1_cal.fits")
-    model = datamodels.open('jw01538046002_02103_00002_nrca1_cal.fits')
+    model = datamodels.open("jw01538046002_02103_00002_nrca1_cal.fits")
     wcsobj = model.meta.wcs
-    sky_to_detector = wcsobj.get_transform('world', 'detector')
-    detector_to_sky = wcsobj.get_transform('detector', 'world')
+    sky_to_detector = wcsobj.get_transform("world", "detector")
+    detector_to_sky = wcsobj.get_transform("detector", "world")
 
     # we'll use the crpix as the simplest reference point
     ra = model.meta.wcsinfo.crval1
@@ -292,13 +319,21 @@ def test_imaging_distortion(rtdata, fitsdiff_default_kwargs):
     assert_allclose(decout, dec)
 
 
-@pytest.mark.parametrize("suffix",
-                         ["cfn_clean_flicker_noise", "mask",
-                          "flicker_bkg", "flicker_noise",
-                          "cfn_ramp", "cfn_rate", "cfn_rateints"])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "cfn_clean_flicker_noise",
+        "mask",
+        "flicker_bkg",
+        "flicker_noise",
+        "cfn_ramp",
+        "cfn_rate",
+        "cfn_rateints",
+    ],
+)
 def test_nircam_image_detector1_with_clean_flicker_noise(
-        run_detector1_with_clean_flicker_noise,
-        rtdata_module, fitsdiff_default_kwargs, suffix):
+    run_detector1_with_clean_flicker_noise, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Test detector1 pipeline for NIRCam imaging data with noise cleaning."""
     rtdata = rtdata_module
     rtdata.input = "jw01538046001_03105_00001_nrcalong_uncal.fits"
@@ -314,11 +349,10 @@ def test_nircam_image_detector1_with_clean_flicker_noise(
     assert diff.identical, diff.report()
 
 
-@pytest.mark.parametrize("suffix",
-                         ["likely_rate", "likely_rateints"])
+@pytest.mark.parametrize("suffix", ["likely_rate", "likely_rateints"])
 def test_nircam_image_detector1_with_likelihood(
-        run_detector1_with_likelihood,
-        rtdata_module, fitsdiff_default_kwargs, suffix):
+    run_detector1_with_likelihood, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Test detector1 pipeline for NIRCam imaging data with likelihood fitting."""
     rtdata = rtdata_module
     rtdata.input = "jw01345001001_10201_00001_nrca3_uncal.fits"

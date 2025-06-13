@@ -6,7 +6,7 @@ from collections import namedtuple
 import logging
 import numpy as np
 
-from ..lib import pipe_utils
+from jwst.lib import pipe_utils
 from . import x_irs2
 
 log = logging.getLogger(__name__)

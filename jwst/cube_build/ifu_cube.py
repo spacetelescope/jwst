@@ -15,15 +15,15 @@ from stdatamodels.jwst.transforms.models import _toindex
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
-from ..model_blender import blendmeta
-from ..assign_wcs import pointing
+from jwst.model_blender import blendmeta
+from jwst.assign_wcs import pointing
 from jwst.datamodels import ModelContainer
-from ..assign_wcs import nirspec
-from ..assign_wcs.util import wrap_ra
+from jwst.assign_wcs import nirspec
+from jwst.assign_wcs.util import wrap_ra
 from . import cube_build_wcs_util
 from . import cube_internal_cal
 from . import coord
-from ..mrs_imatch.mrs_imatch_step import apply_background_2d
+from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
 from .cube_match_sky_pointcloud import cube_wrapper  # c extension
 from .cube_match_sky_driz import cube_wrapper_driz  # c extension
 

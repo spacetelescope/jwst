@@ -12,8 +12,7 @@ MEMORY = 100  # 100 bytes
 def test_open_association():
     """Test for opening an association"""
 
-    asn_file = get_pkg_data_filename(
-        "data/association.json", package="jwst.datamodels.tests")
+    asn_file = get_pkg_data_filename("data/association.json", package="jwst.datamodels.tests")
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "model_type not found")
         with datamodels.open(asn_file) as c:
@@ -24,8 +23,7 @@ def test_open_association():
 
 
 def test_container_open_asn_with_sourcecat():
-    path = get_pkg_data_filename(
-        "data/association_w_cat.json", package="jwst.datamodels.tests")
+    path = get_pkg_data_filename("data/association_w_cat.json", package="jwst.datamodels.tests")
     with datamodels.open(path, asn_exptypes="science") as c:
         for model in c:
             assert model.meta.asn.table_name == "association_w_cat.json"

@@ -99,9 +99,7 @@ def test_add_next_shutter():
     first_row += 1
     last_row = first_row + 500
 
-    assert np.allclose(
-        shadow[first_row:last_row, :], shadow_element[1:, :], atol=1.0e-10
-    )
+    assert np.allclose(shadow[first_row:last_row, :], shadow_element[1:, :], atol=1.0e-10)
 
     assert np.allclose(shadow[last_row:, :], dummy_value, atol=1.0e-10)
 
@@ -129,9 +127,7 @@ def test_add_last_half_shutter():
     first_row += 1
     last_row = first_row + 500
 
-    assert np.allclose(
-        shadow[first_row:last_row, :], shadow_element[1:, :], atol=1.0e-10
-    )
+    assert np.allclose(shadow[first_row:last_row, :], shadow_element[1:, :], atol=1.0e-10)
 
 
 def test_interpolate():
@@ -159,21 +155,18 @@ def test_interpolate():
     rows = rows.reshape(5, 7)
     columns = columns.reshape(5, 7)
 
-    correction = ndimage.map_coordinates(
-        shadow, [rows, columns], cval=np.nan, order=1
-    )
+    correction = ndimage.map_coordinates(shadow, [rows, columns], cval=np.nan, order=1)
 
-    compare = np.array([[0., 0.09993018, 0.19986036, 0.29979054,
-                         0.39972072, 0.24989818, 0.10007564],
-                        [0.20000582, 0.29993599, 0.39986617, 0.25004363,
-                         0.10022110, 0.20015128, 0.30008147],
-                        [0.40001165, 0.25018910, 0.10036656, 0.20029673,
-                         0.30022691, 0.40015709, 0.50008730],
-                        [0.60001744, 0.69994762, 0.79987779, 0.89980797,
-                         0.50023272, 0.10065747, 0.20058765],
-                        [0.30051783, 0.40044801, 0.50087771, 0.60130741,
-                         0.70123758, 0.80116777, 0.90109789]])
-    assert np.allclose(correction, compare, atol=1.e-6)
+    compare = np.array(
+        [
+            [0.0, 0.09993018, 0.19986036, 0.29979054, 0.39972072, 0.24989818, 0.10007564],
+            [0.20000582, 0.29993599, 0.39986617, 0.25004363, 0.10022110, 0.20015128, 0.30008147],
+            [0.40001165, 0.25018910, 0.10036656, 0.20029673, 0.30022691, 0.40015709, 0.50008730],
+            [0.60001744, 0.69994762, 0.79987779, 0.89980797, 0.50023272, 0.10065747, 0.20058765],
+            [0.30051783, 0.40044801, 0.50087771, 0.60130741, 0.70123758, 0.80116777, 0.90109789],
+        ]
+    )
+    assert np.allclose(correction, compare, atol=1.0e-6)
 
 
 def test_has_uniform_source():

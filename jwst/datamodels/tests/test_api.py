@@ -15,10 +15,22 @@ STDM_ALL = sorted(model for model in stdm.__all__ if model not in DEPRECATED_MOD
 JWST_ALL = sorted(list(set(jwstdm.__all__) - set(jwstdm._jwst_models)))
 
 
-STDM_MODULES = sorted([mdl.name for mdl in pkgutil.iter_modules(stdm.__path__)
-                       if not mdl.ispkg and mdl.name not in stdm._private_modules and mdl.name not in DEPRECATED_MODULES])
-JWST_MODULES = sorted([mdl.name for mdl in pkgutil.iter_modules(jwstdm.__path__)
-                       if not mdl.ispkg and mdl.name not in jwstdm._jwst_modules])
+STDM_MODULES = sorted(
+    [
+        mdl.name
+        for mdl in pkgutil.iter_modules(stdm.__path__)
+        if not mdl.ispkg
+        and mdl.name not in stdm._private_modules
+        and mdl.name not in DEPRECATED_MODULES
+    ]
+)
+JWST_MODULES = sorted(
+    [
+        mdl.name
+        for mdl in pkgutil.iter_modules(jwstdm.__path__)
+        if not mdl.ispkg and mdl.name not in jwstdm._jwst_modules
+    ]
+)
 
 
 def assert_has_same_import(module_a, module_b, import_):

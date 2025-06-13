@@ -1,11 +1,11 @@
 #! /usr/bin/env python
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 import time
 
 import numpy as np
 
-from ..lib import reffile_utils
+from jwst.lib import reffile_utils
 
 from stcal.jump.jump_class import JumpData
 from stcal.jump.jump import detect_jumps_data

@@ -2,7 +2,7 @@
 from stdatamodels.jwst import datamodels
 
 from . import hlsp
-from ..stpipe import Step
+from jwst.stpipe import Step
 
 __all__ = ["HlspStep"]
 

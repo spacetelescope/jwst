@@ -3,12 +3,12 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Pipeline
+from jwst.stpipe import Pipeline
 
 # step imports
-from ..dq_init import dq_init_step
-from ..flatfield import flat_field_step
-from ..guider_cds import guider_cds_step
+from jwst.dq_init import dq_init_step
+from jwst.flatfield import flat_field_step
+from jwst.guider_cds import guider_cds_step
 
 __all__ = ["GuiderPipeline"]
 

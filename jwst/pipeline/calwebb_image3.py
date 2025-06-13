@@ -3,15 +3,15 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelLibrary
 
-from ..stpipe import Pipeline
-from ..lib.exposure_types import is_moving_target
+from jwst.stpipe import Pipeline
+from jwst.lib.exposure_types import is_moving_target
 
-from ..assign_mtwcs import assign_mtwcs_step
-from ..tweakreg import tweakreg_step
-from ..skymatch import skymatch_step
-from ..resample import resample_step
-from ..outlier_detection import outlier_detection_step
-from ..source_catalog import source_catalog_step
+from jwst.assign_mtwcs import assign_mtwcs_step
+from jwst.tweakreg import tweakreg_step
+from jwst.skymatch import skymatch_step
+from jwst.resample import resample_step
+from jwst.outlier_detection import outlier_detection_step
+from jwst.source_catalog import source_catalog_step
 
 __all__ = ["Image3Pipeline"]
 

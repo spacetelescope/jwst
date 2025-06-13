@@ -3,28 +3,28 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Pipeline
+from jwst.stpipe import Pipeline
 
 # step imports
-from ..group_scale import group_scale_step
-from ..dq_init import dq_init_step
-from ..emicorr import emicorr_step
-from ..saturation import saturation_step
-from ..ipc import ipc_step
-from ..superbias import superbias_step
-from ..refpix import refpix_step
-from ..rscd import rscd_step
-from ..firstframe import firstframe_step
-from ..lastframe import lastframe_step
-from ..linearity import linearity_step
-from ..dark_current import dark_current_step
-from ..reset import reset_step
-from ..persistence import persistence_step
-from ..charge_migration import charge_migration_step
-from ..jump import jump_step
-from ..clean_flicker_noise import clean_flicker_noise_step
-from ..ramp_fitting import ramp_fit_step
-from ..gain_scale import gain_scale_step
+from jwst.group_scale import group_scale_step
+from jwst.dq_init import dq_init_step
+from jwst.emicorr import emicorr_step
+from jwst.saturation import saturation_step
+from jwst.ipc import ipc_step
+from jwst.superbias import superbias_step
+from jwst.refpix import refpix_step
+from jwst.rscd import rscd_step
+from jwst.firstframe import firstframe_step
+from jwst.lastframe import lastframe_step
+from jwst.linearity import linearity_step
+from jwst.dark_current import dark_current_step
+from jwst.reset import reset_step
+from jwst.persistence import persistence_step
+from jwst.charge_migration import charge_migration_step
+from jwst.jump import jump_step
+from jwst.clean_flicker_noise import clean_flicker_noise_step
+from jwst.ramp_fitting import ramp_fit_step
+from jwst.gain_scale import gain_scale_step
 
 __all__ = ["Detector1Pipeline"]
 

@@ -1,12 +1,17 @@
 """Test SpectralLeakStep on MIRI MRS"""
+
 import pytest
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
+
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
-    'output',
-    ['test_spectral_leak_asn_0_spectralleakstep.fits', 'test_spectral_leak_asn_1_spectralleakstep.fits']
+    "output",
+    [
+        "test_spectral_leak_asn_0_spectralleakstep.fits",
+        "test_spectral_leak_asn_1_spectralleakstep.fits",
+    ],
 )
 def test_miri_spectral_leak(output, rtdata, fitsdiff_default_kwargs):
     """Run cube_build on single file using coord system = ifu_align"""
@@ -35,8 +40,11 @@ def test_miri_spectral_leak(output, rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.bigdata
 @pytest.mark.parametrize(
-    'output',
-    ['test_spectral_leak_rf_corrected_asn_0_spectralleakstep.fits', 'test_spectral_leak_rf_corrected_asn_1_spectralleakstep.fits']
+    "output",
+    [
+        "test_spectral_leak_rf_corrected_asn_0_spectralleakstep.fits",
+        "test_spectral_leak_rf_corrected_asn_1_spectralleakstep.fits",
+    ],
 )
 def test_miri_spectral_leak_rf(output, rtdata, fitsdiff_default_kwargs):
     """Run cube_build on single file using coord system = ifu_align"""

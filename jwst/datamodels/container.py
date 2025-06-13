@@ -247,7 +247,7 @@ to supply custom catalogs.
             An association dictionary
         """
         # Prevent circular import:
-        from ..associations import AssociationNotValidError, load_asn
+        from jwst.associations import AssociationNotValidError, load_asn
 
         filepath = Path(op.expandvars(filepath)).expanduser().resolve()
         try:

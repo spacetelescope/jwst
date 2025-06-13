@@ -16,17 +16,19 @@ def test_hextransform(example_model, ctr_offset):
     shape = example_model.data.shape[1:]
     # make the center a bit off of data array center for testing
     if ctr_offset is not None:
-        ctr_in = [shape[0]//2 + ctr_offset[0], shape[1]//2 + ctr_offset[1]]
+        ctr_in = [shape[0] // 2 + ctr_offset[0], shape[1] // 2 + ctr_offset[1]]
         ctr_out = ctr_in
     else:
         ctr_in = None
-        ctr_out = [shape[0]//2, shape[1]//2]
+        ctr_out = [shape[0] // 2, shape[1] // 2]
 
     lam = filtwl_d[example_model.meta.instrument.filter]
     affine2d = Affine2d(rotradccw=0.4)
 
-    hex_complex = hextransformee.hextransform(s=shape, c=ctr_in, d=0.8, lam=lam, pitch=PXSC_RAD, affine2d=affine2d)
-    
+    hex_complex = hextransformee.hextransform(
+        s=shape, c=ctr_in, d=0.8, lam=lam, pitch=PXSC_RAD, affine2d=affine2d
+    )
+
     # test shape and dtype
     assert hex_complex.dtype == np.complex128
     assert hex_complex.shape == shape
