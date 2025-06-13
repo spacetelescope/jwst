@@ -10,7 +10,7 @@ from numpy.testing import assert_allclose
 from photutils.datasets import make_100gaussians_image
 from photutils.segmentation import make_2dgaussian_kernel, SourceFinder
 
-from jwst.wfss_contam.observations import background_subtract, _select_ids, Observation
+from jwst.wfss_contam.observations import background_subtract, _select_ids, Observation, _construct_slitmodel
 from jwst.wfss_contam.disperse import disperse
 from stdatamodels.jwst.datamodels import SegmentationMapModel, ImageModel, MultiSlitModel
 
@@ -201,38 +201,3 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
     # different oversampling gives different effects at the ends
     # unsure if this is a bug or not, but the middle should definitely be the same
     assert_allclose(output_images[0][2:-2,:], output_images[1][2:-2], rtol=1e-5)
-
-
-def test_construct_slitmodel(observation):
-    '''
-    test that the chunk is constructed correctly
-    '''
-    obs = observation
-    i = 1
-    order = 1
-    sens_waves = np.linspace(1.708, 2.28, 100)
-    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
-    sens_resp = np.ones(100)
-
-    # manually change x,y offset because took transform from a real direct image, with different
-    # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
-    obs.xoffset = 2200
-    obs.yoffset = 1000
-
-    # set all fluxes to unity to try to make a trivial example
-    obs.fluxes[2.0][i] = np.ones(obs.fluxes[2.0][i].shape)
-
-    # disperse_chunk_args = [i, order, wmin, wmax, sens_waves, sens_resp]
-    # (chunk, chunk_bounds, sid, order_out) = obs.disperse_chunk(*disperse_chunk_args)
-    # TODO: replace this call with obs.disperse_one_order constrained to one source_id
-
-    slit = obs.construct_slitmodel(chunk, chunk_bounds, sid, order_out)
-
-    # check that the metadata is correct
-    assert slit.xstart == chunk_bounds[0]
-    assert slit.xsize == chunk_bounds[1] - chunk_bounds[0] + 1
-    assert slit.ystart == chunk_bounds[2]
-    assert slit.ysize == chunk_bounds[3] - chunk_bounds[2] + 1
-    assert slit.source_id == sid
-    assert slit.meta.wcsinfo.spectral_order == order_out
-    assert np.allclose(slit.data, chunk[chunk_bounds[2]:chunk_bounds[3]+1, chunk_bounds[0]:chunk_bounds[1]+1])

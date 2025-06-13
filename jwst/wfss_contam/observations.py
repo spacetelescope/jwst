@@ -117,7 +117,6 @@ class Observation:
         grism_wcs,
         filter_name,
         source_id=None,
-        extrapolate_sed=False,
         boundaries=None,
         offsets=None,
         max_cpu=1,
@@ -139,8 +138,6 @@ class Observation:
             Filter name
         source_id : int, optional, default 0
             ID of source to process. If 0, all sources processed.
-        extrapolate_sed : bool, optional, default False
-            Flag indicating whether to extrapolate wavelength range of SED
         boundaries : list, optional, default []
             Start/Stop coordinates of the FOV within the larger seed image.
         offsets : list, optional, default [0,0]
@@ -186,11 +183,6 @@ class Observation:
         self.dims = (self.yend - self.ystart + 1, self.xend - self.xstart + 1)
         log.debug(f"Using simulated image size of ({self.dims[1]}, {self.dims[0]}).")
         self.naxis = self.dims[::-1]
-
-        # Allow for SED extrapolation
-        self.extrapolate_sed = extrapolate_sed
-        if self.extrapolate_sed:
-            log.warning("SED Extrapolation turned on.")
 
         # Create lists of pixels labeled in segmentation map
         self._create_pixel_list()
