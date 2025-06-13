@@ -1,8 +1,8 @@
 """test_associations: Test of general Association functionality."""
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations.tests import helpers
-
 from jwst.associations import (
     Association,
     AssociationError,
@@ -14,7 +14,8 @@ from jwst.associations.lib.dms_base import DMSAttrConstraint
 # Basic Association object
 def test_read_assoc_defs():
     rules = AssociationRegistry(
-        [helpers.t_path('data/asn_rules_set1.py')],
+        [get_pkg_data_filename(
+            "data/asn_rules_set1.py", package="jwst.associations.tests")],
         include_default=False
     )
     assert len(rules) >= 2
@@ -43,13 +44,15 @@ def test_registry_backref():
 
 def test_nodefs():
     with pytest.raises(AssociationError):
-        rules = AssociationRegistry(include_default=False)
+        AssociationRegistry(include_default=False)
 
 
 def test_multi_rules():
     rule_files = [
-        helpers.t_path('data/asn_rules_set1.py'),
-        helpers.t_path('data/asn_rules_set2.py')
+        get_pkg_data_filename(
+            "data/asn_rules_set1.py", package="jwst.associations.tests"),
+        get_pkg_data_filename(
+            "data/asn_rules_set2.py", package="jwst.associations.tests")
     ]
     rules = AssociationRegistry(rule_files, include_default=False)
     assert len(rules) == 4
@@ -81,7 +84,9 @@ def test_base_instantiation():
                 value='V99009001001P0000000002101',
                 sources=['obs_id']
             ),
-            helpers.t_path('data/pool_018_all_exptypes.csv'),
+            get_pkg_data_filename(
+                "data/pool_018_all_exptypes.csv",
+                package="jwst.associations.tests"),
             1,
         ),
         (
@@ -90,7 +95,9 @@ def test_base_instantiation():
                 value='junk',
                 sources=['obs_id']
             ),
-            helpers.t_path('data/pool_001_candidates.csv'),
+            get_pkg_data_filename(
+                "data/pool_001_candidates.csv",
+                package="jwst.associations.tests"),
             0,
         ),
         (
@@ -102,7 +109,9 @@ def test_base_instantiation():
                 is_acid=True,
                 evaluate=True,
             ),
-            helpers.t_path('data/pool_001_candidates.csv'),
+            get_pkg_data_filename(
+                "data/pool_001_candidates.csv",
+                package="jwst.associations.tests"),
             22,
         ),
         (
@@ -114,7 +123,9 @@ def test_base_instantiation():
                 is_acid=True,
                 evaluate=True,
             ),
-            helpers.t_path('data/pool_001_candidates.csv'),
+            get_pkg_data_filename(
+                "data/pool_001_candidates.csv",
+                package="jwst.associations.tests"),
             24,
         ),
     ]

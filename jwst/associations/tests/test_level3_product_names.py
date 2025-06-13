@@ -2,13 +2,12 @@
 import re
 
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations.tests.helpers import (
     combine_pools,
     registry_level3_only,
-    t_path,
 )
-
 from jwst.associations import generate
 from jwst.associations.lib.dms_base import DMSAttrConstraint
 
@@ -49,7 +48,8 @@ EMPTY = (None, '', 'NULL', 'Null', 'null', 'F', 'f', 'N', 'n')
 
 @pytest.fixture(scope='module')
 def pool_file():
-    return t_path('data/pool_018_all_exptypes.csv')
+    return get_pkg_data_filename(
+        "data/pool_018_all_exptypes.csv", package="jwst.associations.tests")
 
 
 @pytest.fixture(scope='module')
@@ -67,9 +67,9 @@ def global_constraints():
 
 def test_level3_productname_components_discovered():
     rules = registry_level3_only()
-    pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
-    asns = generate(pool, rules)
-    asn = asns[0]
+    pool = combine_pools(get_pkg_data_filename(
+        "data/pool_002_image_miri.csv", package="jwst.associations.tests"))
+    asn = generate(pool, rules)[0]
     match = re.match(LEVEL3_PRODUCT_NAME_REGEX, asn['products'][0]['name'])
     assert match is not None
     matches = match.groupdict()
@@ -90,9 +90,9 @@ def test_level3_productname_components_acid():
         evaluate=True,
     )
     rules = registry_level3_only(global_constraints=global_constraints)
-    pool = combine_pools(t_path('data/pool_002_image_miri.csv'))
-    asns = generate(pool, rules)
-    asn = asns[0]
+    pool = combine_pools(get_pkg_data_filename(
+        "data/pool_002_image_miri.csv", package="jwst.associations.tests"))
+    asn = generate(pool, rules)[0]
     match = re.match(LEVEL3_PRODUCT_NAME_REGEX, asn['products'][0]['name'])
     assert match is not None
     matches = match.groupdict()
@@ -164,7 +164,8 @@ def test_multiple_optelems(pool_file):
 
 def test_tso3_names():
     rules = registry_level3_only()
-    tso_pool = t_path('data/pool_021_tso.csv')
+    tso_pool = get_pkg_data_filename(
+        "data/pool_021_tso.csv", package="jwst.associations.tests")
     pool = combine_pools(tso_pool)
     asns = generate(pool, rules, finalize=False)
     for asn in asns:
