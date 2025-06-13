@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from jwst import datamodels
-from jwst.datamodels.utils.tests.test_wfss_multispec import wfss_multiexposure, wfss_spec3_multispec, example_spec, N_SOURCES
+from jwst.datamodels.utils.tests.test_wfss_multispec import wfss_multi, N_SOURCES
 from jwst.combine_1d import Combine1dStep
 from jwst.combine_1d.combine1d import InputSpectrumModel, check_exptime
 
@@ -203,7 +203,11 @@ def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
     spec_model = datamodels.SpecModel(spec_table=otab)
 
     return spec_model
-        
+
+
+@pytest.fixture
+def wfss_multiexposure():
+    return wfss_multi()
 
 def test_wfss_multi_input(wfss_multiexposure):
     """Smoke test to ensure combine_1d works with WFSSMultiSpecModel"""
