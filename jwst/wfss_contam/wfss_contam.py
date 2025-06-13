@@ -235,6 +235,8 @@ def contam_corr(
     photom,
     max_cores,
     brightest_n,
+    max_pixels_per_chunk=5e4,
+    oversample_factor=2,
 ):
     """
     Correct contamination in WFSS spectral cutouts.
@@ -260,6 +262,10 @@ def contam_corr(
         file if not None. Note runtime scales non-linearly with this number
         because brightest (and therefore typically largest) sources are
         simulated first.
+    max_pixels_per_chunk : int, optional
+        Maximum number of pixels to disperse simultaneously.
+    oversample_factor : int, optional
+        Wavelength oversampling factor.
 
     Returns
     -------
@@ -329,6 +335,8 @@ def contam_corr(
         offsets=[xoffset, yoffset],
         max_cpu=ncpus,
         source_id=selected_ids,
+        max_pixels_per_chunk=max_pixels_per_chunk,
+        oversample_factor=oversample_factor,
     )
 
     for order in spec_orders:

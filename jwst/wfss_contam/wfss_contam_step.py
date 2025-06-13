@@ -19,6 +19,8 @@ class WfssContamStep(Step):
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none')
         skip = boolean(default=True)
         brightest_n = integer(default=None)
+        wl_oversample = integer(default=None) # oversampling factor for wavelength grid
+        max_pixels_per_chunk = integer(default=50000) # max number of pixels to disperse at once
     """  # noqa: E501
 
     reference_file_types = ["photom", "wavelengthrange"]
@@ -49,7 +51,13 @@ class WfssContamStep(Step):
             photom_model = datamodels.open(photom_ref)
 
             result, simul, contam, simul_slits = wfss_contam.contam_corr(
-                dm, waverange_model, photom_model, self.maximum_cores, brightest_n=self.brightest_n
+                dm,
+                waverange_model,
+                photom_model,
+                self.maximum_cores,
+                brightest_n=self.brightest_n,
+                oversample_factor=self.wl_oversample,
+                max_pixels_per_chunk=self.max_pixels_per_chunk,
             )
 
             # Save intermediate results, if requested
