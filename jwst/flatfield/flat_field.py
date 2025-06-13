@@ -32,6 +32,10 @@ NIRSPEC_SPECTRAL_EXPOSURES = [
 HORIZONTAL = 1
 VERTICAL = 2
 
+BADFLAT = (
+    dqflags.pixel["NO_FLAT_FIELD"] | dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["UNRELIABLE_FLAT"]
+)
+
 
 def do_correction(
     input_model,
@@ -853,9 +857,10 @@ def fore_optics_flat(wl, f_flat_model, exposure_type, dispaxis, slit_name, slit_
     # Find all pixels in the flat that have a DQ value of DO_NOT_USE
     flat_bad = np.bitwise_and(f_flat_dq, dqflags.pixel["DO_NOT_USE"])
 
-    # Reset the flat value of all bad pixels to 1.0, so that no
-    # correction is made
-    f_flat[np.where(flat_bad)] = 1.0
+    # Set the flat value of all bad pixels to nan.  F-flats provide
+    # flux calibration scaling, so there is no safe default value for bad
+    # pixels.
+    f_flat[np.where(flat_bad)] = np.nan
     return f_flat, f_flat_dq, f_flat_err
 
 
@@ -1070,9 +1075,6 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
         The 2D DQ array resulting from combining the input DQ arrays via
         bitwise OR.
     """
-    badflat = dqflags.pixel["NO_FLAT_FIELD"] | dqflags.pixel["DO_NOT_USE"]
-    badflat = badflat | dqflags.pixel["UNRELIABLE_FLAT"]
-
     dq_list = []
     if f_flat_dq is not None:
         dq_list.append(f_flat_dq)
@@ -1086,7 +1088,7 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
     # dq array with all BADFLAT bits set
     flat_dq = np.zeros(default_shape, dtype=np.uint32)
     if n_dq == 0:
-        flat_dq = np.bitwise_or(flat_dq, badflat)
+        flat_dq = np.bitwise_or(flat_dq, BADFLAT)
     else:
         for dq_component in dq_list:
             flat_dq = np.bitwise_or(flat_dq, dq_component)
@@ -1098,7 +1100,7 @@ def combine_dq(f_flat_dq, s_flat_dq, d_flat_dq, default_shape):
     # Flag DO_NOT_USE, NO_FLAT_FIELD and UNRELIABLE_FLAT where some or all the
     # flats had DO_NOT_USE set
     iloc = np.where(np.bitwise_and(flat_dq, dqflags.pixel["DO_NOT_USE"]))
-    flat_dq[iloc] = np.bitwise_or(flat_dq[iloc], badflat)
+    flat_dq[iloc] = np.bitwise_or(flat_dq[iloc], BADFLAT)
 
     return flat_dq
 
@@ -1720,12 +1722,12 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
             None,
             None,
         )
-        flat_2d[nan_flag] = 1.0
         mask = flat_2d <= 0.0
         nbad = mask.sum(dtype=np.intp)
         if nbad > 0:
             log.debug("%d flat-field values <= 0", nbad)
-            flat_2d[mask] = 1.0
+            flat_2d[mask] = np.nan
+            flat_dq_2d[mask] = np.bitwise_or(flat_dq_2d[mask], BADFLAT)
         del mask
 
         flat[ystart:ystop, xstart:xstop][good_flag] = flat_2d[good_flag]
@@ -1859,7 +1861,8 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
     nbad = mask.sum(dtype=np.intp)
     if nbad > 0:
         log.debug("%d flat-field values <= 0", nbad)
-        flat_2d[mask] = 1.0
+        flat_2d[mask] = np.nan
+        flat_dq_2d[mask] = np.bitwise_or(flat_dq_2d[mask], BADFLAT)
     del mask
 
     flat_dq_2d = flat_dq_2d.astype(output_model.dq.dtype)
@@ -1984,7 +1987,8 @@ def flat_for_nirspec_slit(
     nbad = mask.sum(dtype=np.intp)
     if nbad > 0:
         log.debug("%d flat-field values <= 0", nbad)
-        flat_2d[mask] = 1.0
+        flat_2d[mask] = np.nan
+        flat_dq_2d[mask] = np.bitwise_or(flat_dq_2d[mask], BADFLAT)
     del mask
 
     # Put the computed flat, flat_dq and flat_err into a datamodel

@@ -1,13 +1,13 @@
 """
 Test mkpool
 """
-from glob import glob
 import os
+from glob import glob
+
 import pytest
-
 from astropy.io import fits
+from astropy.utils.data import get_pkg_data_path
 
-from jwst.associations.tests import helpers
 from jwst.associations import AssociationPool
 from jwst.associations.mkpool import from_cmdline, mkpool, NON_HEADER_COLS
 
@@ -90,9 +90,9 @@ def test_nonheader_cols_cmdline(mkpool_cmdline):
     'data/exposures',
 ])
 def exposures(request):
-    exposure_path = helpers.t_path(request.param)
-    exposures = glob(os.path.join(exposure_path, '*.fits'))
-    return exposures
+    exposure_path = get_pkg_data_path(
+        request.param, package="jwst.associations.tests")
+    return sorted(glob(os.path.join(exposure_path, '*.fits')))
 
 
 @pytest.fixture(scope='module')

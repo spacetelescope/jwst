@@ -1,12 +1,11 @@
 """Helpers for tests."""
 
-from collections import namedtuple
-from contextlib import contextmanager
 import re
-from tempfile import TemporaryDirectory
+from collections import namedtuple
 from pathlib import Path
 
 from astropy.table import Table, vstack
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations import AssociationRegistry, AssociationPool, generate
 from jwst.associations.lib.counter import Counter
@@ -87,23 +86,6 @@ class BasePoolRule:
                                 ppars.path
                                 + ": Suffix {} not valid".format(match.groupdict()["suffix"])
                             )
-
-
-def make_megapool():
-    """
-    Combine the individual test pools into one.
-
-    Notes
-    -----
-    This is meant to be run in the source tree in
-    the folder the test pools reside in. The package
-    does need to have been installed.
-    `python -c 'import jwst.associations.tests.helpers as helpers; helpers.make_megapool()'`
-    """
-    pool_files = Path.glob("pool_*.csv")
-    pool_files.sort()
-    pool = combine_pools(pool_files)
-    pool.write("mega_pool.csv", format="ascii", delimiter="|", overwrite=True)
 
 
 # Basic utilities.
@@ -264,44 +246,6 @@ def fmt_fname(expnum):
     return f"jw_{expnum:0>5d}_uncal.fits"
 
 
-def generate_params(request):
-    """
-    Generate param for pytest.fixtures.
-
-    Parameters
-    ----------
-    request : _pytest.fixtures.SubRequest
-        The fixture request.
-
-    Returns
-    -------
-    str
-        The request parameter value.
-    """
-    return request.param
-
-
-@contextmanager
-def mkstemp_pool_file(pools, **pool_kwargs):
-    """Make an actual pool file."""
-    pool = combine_pools(pools, **pool_kwargs)
-    with TemporaryDirectory() as path:
-        pool_path = path + "pool"
-        pool.write(
-            pool_path,
-            format="ascii",
-            delimiter="|",
-        )
-        yield pool_path
-
-
-def generate_pool_paths(request):
-    """Fixture to create temporary files for pools."""
-    pool_file = t_path(request.param)
-    with mkstemp_pool_file(pool_file) as pool_path:
-        yield pool_path
-
-
 def get_rule_names(rules):
     """
     Return rule names found in a registry.
@@ -328,7 +272,7 @@ def level3_rule_path():
     str
         The string path to the level 3 rules.
     """
-    return t_path("../lib/rules_level3.py")
+    return get_pkg_data_filename("lib/rules_level3.py", package="jwst.associations")
 
 
 def level2_rule_path():
@@ -340,7 +284,7 @@ def level2_rule_path():
     str
         The string path to the level 2 rules.
     """
-    return t_path("../lib/rules_level2b.py")
+    return get_pkg_data_filename("lib/rules_level2b.py", package="jwst.associations")
 
 
 def registry_level3_only(global_constraints=None):
