@@ -2,7 +2,7 @@ Description
 ===========
 
 :Class: `jwst.background.BackgroundStep`
-:Alias: background
+:Alias: bkg_subtract
 
 The background subtraction step performs
 image-from-image subtraction in order to accomplish subtraction of background

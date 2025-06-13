@@ -95,7 +95,7 @@ _calculated_suffixes = {
     "extract2dstep",
     "guider_cds",
     "gain_scale",
-    "background",
+    "bkg_subtract",
     "resetstep",
     "imprintstep",
     "extract1dstep",

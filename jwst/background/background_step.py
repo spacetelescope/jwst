@@ -16,7 +16,7 @@ __all__ = ["BackgroundStep"]
 class BackgroundStep(Step):
     """Subtract background exposures from target exposures."""
 
-    class_alias = "background"
+    class_alias = "bkg_subtract"
 
     spec = """
         bkg_list = force_list(default=None)  # List of background files. Ignored for WFSS or if asn is provided
@@ -80,9 +80,9 @@ class BackgroundStep(Step):
             )
             if result is None:
                 result = input_model.copy()
-                result.meta.cal_step.back_sub = "SKIPPED"
+                result.meta.cal_step.bkg_subtract = "SKIPPED"
             else:
-                result.meta.cal_step.back_sub = "COMPLETE"
+                result.meta.cal_step.bkg_subtract = "COMPLETE"
 
         elif input_model.meta.exposure.type == "NIS_SOSS":
             # Fetch the background reference filename
@@ -126,7 +126,7 @@ class BackgroundStep(Step):
             # or report and skip the step
             if bkg_list is None or len(bkg_list) == 0:
                 self.log.warning("* No background list provided * Skipping step.")
-                result.meta.cal_step.back_sub = "SKIPPED"
+                result.meta.cal_step.bkg_subtract = "SKIPPED"
                 return result
 
             # check if input data is NRS_IFU
@@ -154,13 +154,13 @@ class BackgroundStep(Step):
             # Do the background subtraction
             if do_sub:
                 bkg_model, result = background_sub(result, bkg_list, self.sigma, self.maxiters)
-                result.meta.cal_step.back_sub = "COMPLETE"
+                result.meta.cal_step.bkg_subtract = "COMPLETE"
                 if self.save_combined_background:
                     comb_bkg_path = self.save_model(bkg_model, suffix=self.bkg_suffix, force=True)
                     self.log.info(f"Combined background written to {comb_bkg_path}.")
 
             else:
-                result.meta.cal_step.back_sub = "SKIPPED"
+                result.meta.cal_step.bkg_subtract = "SKIPPED"
                 self.log.warning("Skipping background subtraction")
                 self.log.warning(
                     "GWA_XTIL and GWA_YTIL source values are not the same as bkg values"

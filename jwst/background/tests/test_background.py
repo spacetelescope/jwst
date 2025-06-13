@@ -177,7 +177,7 @@ def test_nirspec_gwa(tmp_cwd, background, science_image):
     test = science_image.data - back_image.data
     assert_allclose(result.data, test)
     assert type(result) is type(science_image)
-    assert result.meta.cal_step.back_sub == 'COMPLETE'
+    assert result.meta.cal_step.bkg_subtract == 'COMPLETE'
     back_image.close()
 
 
@@ -199,7 +199,7 @@ def test_nirspec_gwa_xtilt(tmp_cwd, background, science_image):
     result = BackgroundStep.call(science_image, bkg)
 
     assert type(result) is type(science_image)
-    assert result.meta.cal_step.back_sub == 'SKIPPED'
+    assert result.meta.cal_step.bkg_subtract == 'SKIPPED'
     back_image.close()
 
 
@@ -221,7 +221,7 @@ def test_nirspec_gwa_ytilt(tmp_cwd, background, science_image):
     result = BackgroundStep.call(science_image, bkg)
 
     assert type(result) is type(science_image)
-    assert result.meta.cal_step.back_sub == 'SKIPPED'
+    assert result.meta.cal_step.bkg_subtract == 'SKIPPED'
 
     back_image.close()
 
@@ -245,7 +245,7 @@ def test_miri_subarray_full_overlap(data_shape, background_shape):
 
     assert_allclose(result.data, image_value - background_value)
     assert type(result) is type(image)
-    assert result.meta.cal_step.back_sub == 'COMPLETE'
+    assert result.meta.cal_step.bkg_subtract == 'COMPLETE'
 
     image.close()
     background.close()
@@ -269,7 +269,7 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
     assert_allclose(result.data[..., background_shape[-2]:, :], image_value)
     assert_allclose(result.data[..., :, background_shape[-1]:], image_value)
     assert type(result) is type(image)
-    assert result.meta.cal_step.back_sub == 'COMPLETE'
+    assert result.meta.cal_step.bkg_subtract == 'COMPLETE'
 
     image.close()
     background.close()
@@ -283,7 +283,7 @@ def test_asn_input(mk_asn):
     bgs = datamodels.open(bg_subtracted)
 
     assert_allclose(result.data, bgs.data)
-    assert result.meta.cal_step.back_sub == 'COMPLETE'
+    assert result.meta.cal_step.bkg_subtract == 'COMPLETE'
 
     result.close()
     bgs.close()
@@ -304,11 +304,11 @@ def test_bg_file_list(mk_asn):
     assert_allclose(result1.data, bgs.data)
     assert_allclose(result2.data, bgs.data)
     assert_allclose(result3.data, bgs.data)
-    assert result1.meta.cal_step.back_sub == 'COMPLETE'
-    assert result2.meta.cal_step.back_sub == 'COMPLETE'
-    assert result3.meta.cal_step.back_sub == 'COMPLETE'
-    assert result4.meta.cal_step.back_sub == 'SKIPPED'
-    assert result5.meta.cal_step.back_sub == 'SKIPPED'
+    assert result1.meta.cal_step.bkg_subtract == 'COMPLETE'
+    assert result2.meta.cal_step.bkg_subtract == 'COMPLETE'
+    assert result3.meta.cal_step.bkg_subtract == 'COMPLETE'
+    assert result4.meta.cal_step.bkg_subtract == 'SKIPPED'
+    assert result5.meta.cal_step.bkg_subtract == 'SKIPPED'
 
     result1.close()
     result2.close()

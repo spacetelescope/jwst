@@ -35,7 +35,7 @@ def get_steps():
         ("jwst.step.AmiNormalizeStep", "ami_normalize", False),
         ("jwst.step.AssignMTWcsStep", "assign_mtwcs", False),
         ("jwst.step.AssignWcsStep", "assign_wcs", False),
-        ("jwst.step.BackgroundStep", "background", False),
+        ("jwst.step.BackgroundStep", "bkg_subtract", False),
         ("jwst.step.BadpixSelfcalStep", "badpix_selfcal", False),
         ("jwst.step.BarShadowStep", "barshadow", False),
         ("jwst.step.Combine1dStep", "combine_1d", False),
