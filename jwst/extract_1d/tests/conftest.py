@@ -9,8 +9,7 @@ from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.exp_to_source import multislit_to_container
 
 
-@pytest.fixture()
-def simple_wcs():
+def simple_wcs_func():
     """
     Mock a horizontal dispersion WCS with a simple callable function.
 
@@ -75,6 +74,20 @@ def simple_wcs():
     simple_wcs_function.available_frames = []
 
     return simple_wcs_function
+
+
+@pytest.fixture
+def simple_wcs():
+    """
+    Make simple_wcs_func available as a fixture.
+
+    Returns
+    -------
+    callable
+        A function that will return mock values for RA, Dec, wave,
+        given x and y coordinates.
+    """
+    return simple_wcs_func()
 
 
 @pytest.fixture()
@@ -180,13 +193,12 @@ def simple_wcs_ifu():
     return simple_wcs_function
 
 
-@pytest.fixture()
-def mock_nirspec_fs_one_slit(simple_wcs):
+def mock_nirspec_fs_one_slit_function():
     """
     Mock one slit in NIRSpec FS mode.
 
-    Yields
-    ------
+    Returns
+    -------
     SlitModel
         The mock model.
     """
@@ -204,12 +216,26 @@ def mock_nirspec_fs_one_slit(simple_wcs):
     model.source_type = "EXTENDED"
 
     model.meta.wcsinfo.dispersion_direction = 1
-    model.meta.wcs = simple_wcs
+    model.meta.wcs = simple_wcs_func()
 
     model.data = np.arange(50 * 50, dtype=float).reshape((50, 50))
     model.var_poisson = model.data * 0.02
     model.var_rnoise = model.data * 0.02
     model.var_flat = model.data * 0.05
+    return model
+
+
+@pytest.fixture
+def mock_nirspec_fs_one_slit():
+    """
+    Make mock_nirspec_fs_one_slit_function available as a fixture.
+
+    Yields
+    ------
+    SlitModel
+        The mock model.
+    """
+    model = mock_nirspec_fs_one_slit_function()
     yield model
     model.close()
 
@@ -452,15 +478,14 @@ def mock_miri_ifu(simple_wcs_ifu):
     model.close()
 
 
-@pytest.fixture()
-def mock_niriss_wfss_l2(mock_nirspec_fs_one_slit):
+def mock_nis_wfss_l2():
     """
     Mock 3 slits in NIRISS WFSS mode, level 2 style.
 
     The slits correspond to a single exposure, with one slit per extracted source.
 
-    Yields
-    ------
+    Returns
+    -------
     MultiSlitModel
         The mock model.
     """
@@ -479,13 +504,29 @@ def mock_niriss_wfss_l2(mock_nirspec_fs_one_slit):
     model.meta.exposure.number = "5"
     model.meta.exposure.type = "NIS_WFSS"
 
+    slit0 = mock_nirspec_fs_one_slit_function()
+
     nslit = 3
     for i in range(nslit):
-        slit = mock_nirspec_fs_one_slit.copy()
+        slit = slit0.copy()
         slit.name = str(i + 1)
         slit.meta.exposure.type = "NIS_WFSS"
         model.slits.append(slit)
 
+    return model
+
+
+@pytest.fixture
+def mock_niriss_wfss_l2():
+    """
+    Make mock_nis_wfss_l2 available as a fixture.
+
+    Yields
+    ------
+    MultiSlitModel
+        The mock model.
+    """
+    model = mock_nis_wfss_l2()
     yield model
     model.close()
 
