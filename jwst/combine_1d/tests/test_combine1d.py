@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from jwst import datamodels
-from jwst.datamodels.utils.tests.test_wfss_multispec import wfss_multi, N_SOURCES
+from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi, N_SOURCES
 from jwst.combine_1d import Combine1dStep
 from jwst.combine_1d.combine1d import InputSpectrumModel, check_exptime
 

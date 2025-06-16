@@ -5,7 +5,7 @@ import numpy as np
 import stdatamodels.jwst.datamodels as dm
 import jwst
 from jwst.datamodels import SourceModelContainer
-from jwst.datamodels.utils.tests.test_wfss_multispec import wfss_multi
+from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi
 from jwst.stpipe import Step
 from jwst.extract_1d.tests.conftest import mock_nis_wfss_l2
 
