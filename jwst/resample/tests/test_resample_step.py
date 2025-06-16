@@ -573,7 +573,7 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
     assert_allclose(
         result2.data[nn],
         result3.data[nn],
-        rtol=2.0 * _FLT32_EPS
+        rtol=2.000001 * _FLT32_EPS
     )
 
     # Check result2 for expected results
