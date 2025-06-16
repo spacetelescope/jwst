@@ -5,7 +5,7 @@ from photutils.datasets import make_gwcs
 
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.source_catalog_step import SourceCatalogStep
+from jwst.source_catalog import SourceCatalogStep
 
 
 @pytest.fixture
