@@ -231,7 +231,7 @@ def test_master_background_medfilt(tmp_cwd, nirspec_asn):
 def test_master_background_logic(tmp_cwd, user_background, science_image):
     """Verify if calspec2 background step was run the master background step is skipped."""
     # the background step in calspec2 was done
-    science_image.meta.cal_step.back_sub = "COMPLETE"
+    science_image.meta.cal_step.bkg_subtract = "COMPLETE"
 
     # Run with a user-supplied background
     result = MasterBackgroundStep.call(

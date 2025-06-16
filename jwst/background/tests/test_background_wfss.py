@@ -458,5 +458,5 @@ def test_wfss_asn_input(mock_asn_and_data):
     assert result.meta.source_catalog == "test_cat.ecsv"
     assert result.meta.direct_image == i2dfile.name
     assert result.meta.segmentation_map == segmfile.name
-    assert result.meta.cal_step.back_sub == "COMPLETE"
+    assert result.meta.cal_step.bkg_subtract == "COMPLETE"
 

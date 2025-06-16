@@ -1174,7 +1174,7 @@ def test_define_aperture_optimal_with_nod(
     exptype = "MIR_LRS-FIXEDSLIT"
 
     # mock nod subtraction
-    mock_miri_lrs_fs.meta.cal_step.back_sub = "COMPLETE"
+    mock_miri_lrs_fs.meta.cal_step.bkg_subtract = "COMPLETE"
     mock_miri_lrs_fs.meta.dither.primary_type = "ALONG-SLIT-NOD"
 
     # mock a nod position at the opposite end of the array
@@ -1607,7 +1607,7 @@ def test_create_extraction_optimal(monkeypatch, create_extraction_inputs, psf_re
     model = create_extraction_inputs[0]
 
     # mock nod subtraction
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
     model.meta.dither.primary_type = "2-POINT-NOD"
 
     # mock a nod position at the opposite end of the array
