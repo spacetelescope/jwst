@@ -1,0 +1,1 @@
+Use "stpipe" as the root logger in all steps and modules.
