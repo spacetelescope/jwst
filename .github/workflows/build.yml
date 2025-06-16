@@ -12,7 +12,6 @@ concurrency:
 
 jobs:
   build:
-    if: always() && (needs.check.result == 'success' || needs.check.result == 'skipped')
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@d83bb11581e517f1e786ae76f146781fdd21cd2f # v2.0.0
     with:
       upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
