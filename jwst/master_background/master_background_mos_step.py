@@ -131,7 +131,7 @@ class MasterBackgroundMosStep(Pipeline):
             # If some type of background processing had already been done. Abort.
             # UNLESS forcing is enacted.
             if not self.force_subtract and "COMPLETE" in [
-                data_model.meta.cal_step.back_sub,
+                data_model.meta.cal_step.bkg_subtract,
                 data_model.meta.cal_step.master_background,
             ]:
                 self.log.info("Background subtraction has already occurred. Skipping.")

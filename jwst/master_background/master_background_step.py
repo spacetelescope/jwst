@@ -248,7 +248,7 @@ class MasterBackgroundStep(Step):
                 isub = 0
                 for indata in input_model:
                     if (
-                        indata.meta.cal_step.back_sub == "COMPLETE"
+                        indata.meta.cal_step.bkg_subtract == "COMPLETE"
                         or indata.meta.cal_step.master_background == "COMPLETE"
                     ):
                         do_sub = False
@@ -276,7 +276,7 @@ class MasterBackgroundStep(Step):
             # input data is a single file
             else:
                 if (
-                    input_model.meta.cal_step.back_sub == "COMPLETE"
+                    input_model.meta.cal_step.bkg_subtract == "COMPLETE"
                     or input_model.meta.cal_step.master_background == "COMPLETE"
                 ):
                     do_sub = False
