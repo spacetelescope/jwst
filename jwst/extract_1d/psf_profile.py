@@ -319,7 +319,7 @@ def psf_profile(
     # Check if we need to add a negative nod pair trace
     nod_offset = None
     if model_nod_pair:
-        nod_subtracted = str(input_model.meta.cal_step.back_sub) == "COMPLETE"
+        nod_subtracted = str(input_model.meta.cal_step.bkg_subtract) == "COMPLETE"
         pattype_ok = str(input_model.meta.dither.primary_type) in NOD_PAIR_PATTERN
         if not nod_subtracted:
             log.info("Input data was not nod-subtracted. A negative trace will not be modeled.")
