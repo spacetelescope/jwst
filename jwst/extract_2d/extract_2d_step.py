@@ -41,9 +41,10 @@ class Extract2dStep(Step):
             The resulting DataModel of the extract_2d step
         """
         reference_file_names = {}
-        for reftype in self.reference_file_types:
-            reffile = self.get_reference_file(input_model, reftype)
-            reference_file_names[reftype] = reffile if reffile else ""
+        if input_model.meta.exposure.type in extract_2d.slitless_modes:
+            for reftype in self.reference_file_types:
+                reffile = self.get_reference_file(input_model, reftype)
+                reference_file_names[reftype] = reffile if reffile else ""
         with datamodels.open(input_model) as dm:
             output_model = extract_2d.extract2d(
                 dm,

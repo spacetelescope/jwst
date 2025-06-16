@@ -10,6 +10,8 @@ from .grisms import extract_grism_objects, extract_tso_object
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
+slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM"]
+
 
 def extract2d(
     input_model,
@@ -65,7 +67,6 @@ def extract2d(
         "NRS_AUTOFLAT",
         "NRS_AUTOWAVE",
     ]
-    slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM"]
 
     exp_type = input_model.meta.exposure.type.upper()
     log.info(f"EXP_TYPE is {exp_type}")
