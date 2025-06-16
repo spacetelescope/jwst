@@ -71,6 +71,7 @@ jobs:
       envs: |
         - linux: py311-oldestdeps-xdist-cov
         - linux: py311-xdist
+          toxargs: -v
         - linux: py312-xdist
         - linux: py312-pyargs-xdist
         # `tox` does not currently respect `requires-python` versions when creating testing environments;
