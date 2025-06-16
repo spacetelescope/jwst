@@ -62,8 +62,6 @@ def test_chunk_sources(observation, monkeypatch):
     ids, n_pix_per_sources = np.unique(obs.source_ids_per_pixel, return_counts=True)
     max_pixels = np.max(n_pix_per_sources)-1 # to trigger the warning
     bad_id = ids[n_pix_per_sources > max_pixels][0]
-    print(ids, bad_id)
-    print("here")
 
     # ensure warning is emitted for source that is too large
     watcher = LogWatcher(f"Source {bad_id} has {np.max(n_pix_per_sources)} pixels, which exceeds the maximum")
