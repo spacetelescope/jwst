@@ -130,8 +130,8 @@ def test_expected_failure_bad_starfinder():
 
 
 def test_write_catalog(mock_source_catalog, tmp_cwd):
-    '''
-    Covers an issue where catalog write did not respect self.output_dir
+    """
+    Covers an issue where catalog write did not respect self.output_dir.
     """
 
     OUTDIR = "outdir"
