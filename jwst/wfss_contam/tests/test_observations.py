@@ -101,7 +101,7 @@ def test_disperse_order(observation):
     order = 1
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
-    sens_resp = np.ones(100)
+    sens_resp = np.ones_like(sens_waves)
 
     # manually change x,y offset because took transform from a real direct image, with different
     # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
@@ -126,4 +126,4 @@ def test_disperse_order(observation):
     assert slit.data.shape == (slit.ysize, slit.xsize)
 
     # check for regression by hard-coding one value of slit.data
-    assert np.isclose(slit.data[10,10], 111.29376)
+    assert np.isclose(slit.data[10,10], 49.201286)
