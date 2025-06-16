@@ -500,9 +500,7 @@ def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input):
 def test_make_tweakreg_catalog_graceful_fail_bad_background(example_input, log_watcher):
     """Test that the catalog creation fails gracefully when the background cannot be determined."""
     watcher = log_watcher(
-        "jwst.tweakreg.tweakreg_catalog",
-        message="Error determining sky background",
-        level="warning",
+        "stpipe.jwst.tweakreg", message="Error determining sky background", level="warning"
     )
 
     example_input[0].dq[:] = 1
