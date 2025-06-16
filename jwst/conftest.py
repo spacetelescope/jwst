@@ -13,6 +13,19 @@ from jwst.associations import AssociationRegistry, AssociationPool
 from jwst.tests.helpers import LogWatcher
 
 
+@pytest.fixture(scope="session", autouse=True)
+def add_stpipe_log_handler():
+    """Set a stream handler with level INFO in the stpipe log."""
+    # This function will become available (and necessary) when
+    # the stpipe log refactoring is complete.
+    try:
+        from stpipe.log_config import set_log_configuration
+
+        set_log_configuration()
+    except ImportError:
+        pass
+
+
 @pytest.fixture
 def jail_environ():
     """Lock changes to the environment."""
