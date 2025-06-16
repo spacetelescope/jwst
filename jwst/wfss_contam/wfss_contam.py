@@ -300,6 +300,8 @@ def contam_corr(
     spec_orders = np.asarray(waverange.order)
     spec_orders = spec_orders[spec_orders != 0]  # ignore any order 0 entries
     log.debug(f"Spectral orders defined = {spec_orders}")
+    # TODO: remove this later
+    spec_orders = spec_orders[spec_orders != 3]
 
     # Get the FILTER and PUPIL wheel positions, for use later
     filter_kwd = input_model.meta.instrument.filter

@@ -321,7 +321,7 @@ def disperse(
     # countrate (DN/s).
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-        counts = fluxes * lambdas * areas / (sens * oversample_factor)
+        counts = fluxes * areas / (sens * oversample_factor)
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
     outputs_by_source = _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel)

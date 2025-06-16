@@ -32,12 +32,10 @@ def run_wfss_contam(rtdata_module, resource_tracker):
     return rtdata
 
 
-@pytest.mark.skip(reason='Test too slow until contam is updated')
 def test_log_tracked_resources_tsimg(log_tracked_resources, run_wfss_contam):
     log_tracked_resources()
 
 
-@pytest.mark.skip(reason='Test too slow until contam is updated')
 @pytest.mark.parametrize(
     'suffix',
     ['simul', 'contam', 'wfsscontamstep']
