@@ -30,8 +30,7 @@ REFCAT = "GAIADR3"
 
 @pytest.fixture
 def mock_source_catalog():
-
-    columns = ['id', 'xcentroid', 'ycentroid', 'flux']
+    columns = ["id", "xcentroid", "ycentroid", "flux"]
     catalog = Table(names=columns, dtype=(int, float, float, float))
     catalog.add_row([1, 100.0, 100.0, 100.0])
 
@@ -126,7 +125,9 @@ def test_is_wcs_correction_small(offset, is_good):
 def test_expected_failure_bad_starfinder():
     model = ImageModel()
     with pytest.raises(ValueError):
-        tweakreg_catalog.make_tweakreg_catalog(model, 5.0, 2.5, bkg_boxsize=400, starfinder_name='bad_value')
+        tweakreg_catalog.make_tweakreg_catalog(
+            model, 5.0, 2.5, bkg_boxsize=400, starfinder_name="bad_value"
+        )
 
 
 def test_write_catalog(mock_source_catalog, tmp_cwd):
@@ -138,8 +139,8 @@ def test_write_catalog(mock_source_catalog, tmp_cwd):
     step = tweakreg_step.TweakRegStep()
     os.mkdir(OUTDIR)
     step.output_dir = OUTDIR
-    expected_outfile = os.path.join(OUTDIR, 'catalog.ecsv')
-    step._write_catalog(mock_source_catalog, 'catalog.ecsv')
+    expected_outfile = os.path.join(OUTDIR, "catalog.ecsv")
+    step._write_catalog(mock_source_catalog, "catalog.ecsv")
 
     assert os.path.exists(expected_outfile)
 
@@ -169,7 +170,7 @@ def example_input(example_wcs):
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
     ys = rng.choice(50, n_sources, replace=False) * 8 + 10
     for y, x in zip(ys, xs):
-        m0.data[y-2:y+3, x-2:x+3] = [
+        m0.data[y - 2 : y + 3, x - 2 : x + 3] = [
             [0.1, 0.1, 0.2, 0.1, 0.1],
             [0.1, 0.4, 0.6, 0.4, 0.1],
             [0.1, 0.6, 0.8, 0.6, 0.1],
@@ -461,10 +462,13 @@ def test_make_tweakreg_catalog(example_input):
     in the image.
     """
     # run the step on the example input modified above
-    x,y = [], []
+    x, y = [], []
     for finder_name in ["iraf", "dao", "segmentation"]:
         cat = tweakreg_catalog.make_tweakreg_catalog(
-            example_input[0], 10.0, 2.5, starfinder_name=finder_name,
+            example_input[0],
+            10.0,
+            2.5,
+            starfinder_name=finder_name,
         )
         x.append(np.sort(np.array(cat["xcentroid"])))
         y.append(np.sort(np.array(cat["ycentroid"])))
@@ -473,8 +477,8 @@ def test_make_tweakreg_catalog(example_input):
 
     # check the locations are the same to within a small fraction of a pixel
     for j in range(2):
-        assert_allclose(x[j], x[j+1], atol=0.01)
-        assert_allclose(y[j], y[j+1], atol=0.01)
+        assert_allclose(x[j], x[j + 1], atol=0.01)
+        assert_allclose(y[j], y[j + 1], atol=0.01)
 
 
 def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input):
@@ -483,7 +487,11 @@ def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input):
     example_input[0].data[:] = 0.0
     with pytest.warns(NoDetectionsWarning, match="No sources were found"):
         # run the step on the example input modified above
-        cat = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5,)
+        cat = tweakreg_catalog.make_tweakreg_catalog(
+            example_input[0],
+            10.0,
+            2.5,
+        )
 
     assert len(cat) == 0
     assert type(cat) == Table
@@ -491,9 +499,12 @@ def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input):
 
 def test_make_tweakreg_catalog_graceful_fail_bad_background(example_input, log_watcher):
     """Test that the catalog creation fails gracefully when the background cannot be determined."""
-    watcher = log_watcher("jwst.tweakreg.tweakreg_catalog",
-                          message="Error determining sky background", level="warning")
-    
+    watcher = log_watcher(
+        "jwst.tweakreg.tweakreg_catalog",
+        message="Error determining sky background",
+        level="warning",
+    )
+
     example_input[0].dq[:] = 1
     cat = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5)
 
