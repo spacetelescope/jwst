@@ -11,6 +11,11 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
+__all__ = ["extract2d"]
+
+slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM"]
+
+
 def extract2d(
     input_model,
     slit_names=None,
@@ -65,7 +70,6 @@ def extract2d(
         "NRS_AUTOFLAT",
         "NRS_AUTOWAVE",
     ]
-    slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM"]
 
     exp_type = input_model.meta.exposure.type.upper()
     log.info(f"EXP_TYPE is {exp_type}")
