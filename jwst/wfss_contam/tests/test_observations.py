@@ -74,7 +74,7 @@ def test_chunk_sources(observation, monkeypatch):
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_response = np.ones(100)
-    ids, n_pix_per_sources = np.unique_counts(observation.source_ids_per_pixel)
+    ids, n_pix_per_sources = np.unique(observation.source_ids_per_pixel, return_counts=True)
     max_pixels = np.max(n_pix_per_sources)-1 # to trigger the warning
     bad_id = ids[n_pix_per_sources > max_pixels][0]
 
