@@ -5,6 +5,10 @@ import multiprocessing
 import numpy as np
 
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.transforms.models import (
+    NIRCAMBackwardGrismDispersion,
+    NIRISSBackwardGrismDispersion,
+)
 from astropy.table import Table
 
 from .observations import Observation
@@ -229,6 +233,40 @@ def match_backplane_encompass_both(slit0, slit1):
     return slit0, slit1
 
 
+def _validate_orders_against_transform(wcs, spec_orders):
+    """
+    Ensure the requested spectral orders are defined in the WCS transforms.
+
+    Parameters
+    ----------
+    wcs : gwcs.wcs.WCS
+        The input MultiSlitModel's WCS object.
+    spec_orders : list[int]
+        The list of requested spectral orders.
+
+    Returns
+    -------
+    list
+        List of spectral orders that are defined in the WCS transform.
+    """
+    sky_to_grism = wcs.backward_transform
+    good_orders = spec_orders.copy()
+    for model in sky_to_grism:
+        if isinstance(model, (NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion)):
+            # Get the orders defined in the transform
+            orders = model.orders
+            if not all(order in orders for order in spec_orders):
+                log.warning(
+                    f"Not all requested spectral orders {spec_orders} are "
+                    f"defined in the WCS transform. Defined orders are: {orders}. "
+                    "Skipping undefined orders."
+                )
+            good_orders = [order for order in spec_orders if order in orders]
+            # There will be only one transform of this type in the wcs
+            break
+    return good_orders
+
+
 def contam_corr(
     input_model,
     waverange,
@@ -299,9 +337,8 @@ def contam_corr(
     # array of order values in the Wavelengthrange ref file
     spec_orders = np.asarray(waverange.order)
     spec_orders = spec_orders[spec_orders != 0]  # ignore any order 0 entries
-    log.debug(f"Spectral orders defined = {spec_orders}")
-    # TODO: remove this later
-    spec_orders = spec_orders[spec_orders != 3]
+    spec_orders = _validate_orders_against_transform(grism_wcs, spec_orders)
+    log.debug(f"Spectral orders defined = {[int(x) for x in spec_orders]}")
 
     # Get the FILTER and PUPIL wheel positions, for use later
     filter_kwd = input_model.meta.instrument.filter

@@ -1,5 +1,6 @@
 import pytest
 import logging
+import copy
 import numpy as np
 from numpy.testing import assert_allclose
 from astropy.stats import sigma_clipped_stats
@@ -21,30 +22,13 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     seg = segmentation_map.data
     all_ids = np.array(list(set(np.ravel(seg))))
     source_ids = all_ids[50:60]
-    obs = Observation(
+    return Observation(
         direct_image_with_gradient.data,
         segmentation_map,
         grism_wcs,
         filter_name,
         source_id=source_ids,
     )
-    return obs
-
-
-# @pytest.fixture
-# def obs_with_tiny_chunks(direct_image_with_gradient, segmentation_map, grism_wcs):
-#     filter_name = "F200W"
-#     seg = segmentation_map.data
-#     all_ids = np.array(list(set(np.ravel(seg))))
-#     obs = Observation(
-#         direct_image_with_gradient.data,
-#         segmentation_map,
-#         grism_wcs,
-#         filter_name,
-#         source_id=all_ids,
-#         max_pixels_per_chunk=50,
-#     )
-#     return obs
 
 
 @pytest.mark.parametrize(
@@ -70,18 +54,21 @@ def test_background_subtract(direct_image_with_gradient):
 
 def test_chunk_sources(observation, monkeypatch):
 
+    obs = copy.deepcopy(observation)
     order = 1
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_response = np.ones(100)
-    ids, n_pix_per_sources = np.unique(observation.source_ids_per_pixel, return_counts=True)
+    ids, n_pix_per_sources = np.unique(obs.source_ids_per_pixel, return_counts=True)
     max_pixels = np.max(n_pix_per_sources)-1 # to trigger the warning
     bad_id = ids[n_pix_per_sources > max_pixels][0]
+    print(ids, bad_id)
+    print("here")
 
     # ensure warning is emitted for source that is too large
     watcher = LogWatcher(f"Source {bad_id} has {np.max(n_pix_per_sources)} pixels, which exceeds the maximum")
     monkeypatch.setattr(logging.getLogger("jwst.wfss_contam.observations"), "warning", watcher)
-    disperse_args = observation.chunk_sources(
+    disperse_args = obs.chunk_sources(
         order,
         wmin,
         wmax,
@@ -91,13 +78,13 @@ def test_chunk_sources(observation, monkeypatch):
     )
     watcher.assert_seen()
 
-    # one of the sources was too large and skipped, so this is one less
-    # than the length of the outputs in test_disperse_order
+    # one of the sources was too large and skipped, so this should equal one less
+    # than what we get from test_disperse_order
     assert len(disperse_args) == 7
 
 
 def test_disperse_order(observation):
-    obs = observation
+    obs = copy.deepcopy(observation)
     order = 1
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
