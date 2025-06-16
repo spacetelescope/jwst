@@ -26,7 +26,7 @@ def direct_image():
     np.ndarray
         Mock 2-d direct image data.
     """
-    data = make_100gaussians_image()
+    data = make_100gaussians_image(noise=False)
     kernel = make_2dgaussian_kernel(3, size=5)
     data = convolve(data, kernel)
     return data
