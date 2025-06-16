@@ -95,8 +95,6 @@ def test_orders_are_separated(wfss_spec3_multispec):
     for i, exposure in enumerate(output_model.spec):
         assert exposure.spectral_order == (i // 4) + 1  # first 4 are order 1, next 4 are order 2
         assert exposure.group_id == str(i % 4 + 1) + str(exposure.spectral_order - 1)
-<<<<<<< HEAD
-=======
 
 
 @pytest.fixture
@@ -110,7 +108,6 @@ def wfss_multiexposure(wfss_spec3_multispec):
         inputs_list.append(this_source)
     output_model = make_wfss_multiexposure(inputs_list)
     return output_model
->>>>>>> 8ce223c7c (update tests)
 
 
 def test_wfss_flat_to_multispec(wfss_multiexposure):
@@ -182,8 +179,6 @@ def test_wfss_multi_from_wfss_multi(wfss_multiexposure):
     for i, exposure in enumerate(output_model.spec):
         assert exposure.group_id == str(i + 1)
         assert exposure.spec_table.shape == (N_SOURCES * 2,)
-<<<<<<< HEAD
-=======
 
 
 @pytest.fixture
@@ -211,7 +206,6 @@ def multi_combined():
     multi.spec.append(spec)
     multi.spec.append(spec2)
     return multi
->>>>>>> 8ce223c7c (update tests)
 
 
 @pytest.fixture

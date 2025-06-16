@@ -206,13 +206,11 @@ def create_spec_model(npoints=10, flux=1e-9, error=1e-10, wave_range=(11, 13)):
 
     return spec_model
 
-<<<<<<< HEAD
 
 @pytest.fixture
 def wfss_multiexposure():
     return wfss_multi()
-=======
->>>>>>> 8ce223c7c (update tests)
+
 
 def test_wfss_multi_input(wfss_multiexposure):
     """Smoke test to ensure combine_1d works with WFSSMultiSpecModel"""

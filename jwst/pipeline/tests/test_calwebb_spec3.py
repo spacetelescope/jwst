@@ -16,10 +16,10 @@ INPUT_WFSS_2 = "mock_wfss_2_cal.fits"
 INPUT_ASN = "mock_wfss_asn.json"
 
 
-
 @pytest.fixture
 def wfss_multiexposure():
     return wfss_multi()
+
 
 @pytest.fixture
 def mock_niriss_wfss_l2():
