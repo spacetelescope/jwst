@@ -46,19 +46,20 @@ def assign_moving_target_wcs(input_models):
 
     # loop over only science exposures in the ModelLibrary
     ind = input_models.indices_for_exptype("science")
-    mt_ra = np.empty(len(ind))
-    mt_dec = np.empty(len(ind))
+    mt_ra = np.full(len(ind), None)
+    mt_dec = np.full(len(ind), None)
     with input_models:
         for i in ind:
             model = input_models.borrow(i)
-            mt_ra[i] = model.meta.wcsinfo.mt_ra
-            mt_dec[i] = model.meta.wcsinfo.mt_dec
+            if model.meta.wcsinfo.mt_ra is not None and model.meta.wcsinfo.mt_dec is not None:
+                mt_ra[i] = model.meta.wcsinfo.mt_ra
+                mt_dec[i] = model.meta.wcsinfo.mt_dec
             input_models.shelve(model, i, modify=False)
 
     # Compute the mean MT RA/Dec over all exposures
     if None in mt_ra or None in mt_dec:
-        log.warning("One or more MT RA/Dec values missing in input images")
-        log.warning("Step will be skipped, resulting in target misalignment")
+        log.warning("One or more MT RA/Dec values missing in input images.")
+        log.warning("Step will be skipped, resulting in target misalignment.")
         record_step_status(input_models, "assign_mtwcs", False)
         return input_models
 
