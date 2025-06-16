@@ -97,19 +97,6 @@ def test_orders_are_separated(wfss_spec3_multispec):
         assert exposure.group_id == str(i % 4 + 1) + str(exposure.spectral_order - 1)
 
 
-@pytest.fixture
-def wfss_multiexposure(wfss_spec3_multispec):
-    """Make a MultiExposureSpecModel object with N_EXPOSURES exposures and N_SOURCES sources."""
-    inputs_list = []
-    for i in range(N_SOURCES):
-        this_source = wfss_spec3_multispec.copy()
-        for spec in this_source.spec:
-            spec.source_id = N_SOURCES - i
-        inputs_list.append(this_source)
-    output_model = make_wfss_multiexposure(inputs_list)
-    return output_model
-
-
 def test_wfss_flat_to_multispec(wfss_multiexposure):
     """Test conversion of a WFSSMultiSpecModel back to a list of MultiSpecModel objects."""
     # first test that the fixture is giving a model with the correct dimensions
@@ -179,33 +166,6 @@ def test_wfss_multi_from_wfss_multi(wfss_multiexposure):
     for i, exposure in enumerate(output_model.spec):
         assert exposure.group_id == str(i + 1)
         assert exposure.spec_table.shape == (N_SOURCES * 2,)
-
-
-@pytest.fixture
-def multi_combined():
-    """
-    Make a MultiCombinedSpecModel object with N_SOURCES sources, N_ROWS rows, and 2 orders.
-
-    This looks like the output of combine_1d.
-    """
-    multi = dm.MultiCombinedSpecModel()
-    spec = dm.CombinedSpecModel()
-    _add_multispec_meta(spec)
-    spectable_dtype = spec.schema["properties"]["spec_table"]["datatype"]
-    recarray_dtype = [(d["name"], d["datatype"]) for d in spectable_dtype]
-    spec_table = np.recarray((N_ROWS,), dtype=recarray_dtype)
-    spec_table["WAVELENGTH"] = np.linspace(1.0, 10.0, N_ROWS)
-    spec_table["FLUX"] = np.ones(N_ROWS)
-    spec.spec_table = spec_table
-    spec.spec_table.columns["wavelength"].unit = "um"
-    spec.dispersion_direction = 3
-
-    spec.spectral_order = 1
-    spec2 = spec.copy()
-    spec2.spectral_order = 2
-    multi.spec.append(spec)
-    multi.spec.append(spec2)
-    return multi
 
 
 @pytest.fixture

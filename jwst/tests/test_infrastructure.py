@@ -42,7 +42,7 @@ def test_data_glob_local(glob_filter, nfiles, tmp_cwd):
     path = Path("datadir")
     path.mkdir()
     for idx in range(3):
-        with open(path / ("afile" + str(idx) + ".txt"), "w") as fh:
+        with open(path / ("afile" + str(idx) + ".txt"), "w") as fh:  # codespell:ignore afile
             fh.write(f"I am file {idx}")
 
     files = _data_glob_local(path, glob_filter)
