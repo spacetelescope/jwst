@@ -5,15 +5,25 @@ import numpy as np
 import stdatamodels.jwst.datamodels as dm
 import jwst
 from jwst.datamodels import SourceModelContainer
-from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
-from jwst.datamodels.utils.tests.test_wfss_multispec import wfss_multiexposure, wfss_spec3_multispec, example_spec
+from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi
 from jwst.stpipe import Step
-from jwst.extract_1d.tests.conftest import mock_niriss_wfss_l2, mock_nirspec_fs_one_slit, simple_wcs
+from jwst.extract_1d.tests.conftest import mock_nis_wfss_l2
 
 
 INPUT_WFSS = "mock_wfss_cal.fits"
 INPUT_WFSS_2 = "mock_wfss_2_cal.fits"
 INPUT_ASN = "mock_wfss_asn.json"
+
+
+@pytest.fixture
+def wfss_multiexposure():
+    return wfss_multi()
+
+@pytest.fixture
+def mock_niriss_wfss_l2():
+    model = mock_nis_wfss_l2()
+    yield model
+    model.close()
 
 @pytest.fixture
 def spec3_wfss_asn(mock_niriss_wfss_l2, tmp_cwd):
