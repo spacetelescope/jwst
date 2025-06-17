@@ -20,19 +20,20 @@ def run_pipeline(rtdata_module, resource_tracker):
     rtdata.get_data("nirspec/mos/jw02674004001_03101_00001_nrs1_rate.fits")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.assign_wcs.save_results=true",
-            "--steps.msa_flagging.save_results=true",
-            "--steps.master_background_mos.save_results=true",
-            "--steps.extract_2d.save_results=true",
-            "--steps.srctype.save_results=true",
-            "--steps.wavecorr.save_results=true",
-            "--steps.flat_field.save_results=true",
-            "--steps.flat_field.save_interpolated_flat=true",
-            "--steps.pathloss.save_results=true",
-            "--steps.barshadow.save_results=true"]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=true",
+        "--steps.msa_flagging.save_results=true",
+        "--steps.master_background_mos.save_results=true",
+        "--steps.extract_2d.save_results=true",
+        "--steps.srctype.save_results=true",
+        "--steps.wavecorr.save_results=true",
+        "--steps.flat_field.save_results=true",
+        "--steps.flat_field.save_interpolated_flat=true",
+        "--steps.pathloss.save_results=true",
+        "--steps.barshadow.save_results=true",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -43,12 +44,28 @@ def test_log_tracked_resources_spec2(log_tracked_resources, run_pipeline):
     log_tracked_resources()
 
 
-@pytest.mark.parametrize("suffix", [
-    "assign_wcs", "msa_flagging", "extract_2d", "srctype",
-    "master_background_mos", "wavecorr", "flat_field", "interpolatedflat",
-    "pathloss", "barshadow", "wavecorr_fs", "flat_field_fs",
-    "interpolatedflat_fs", "pathloss_fs",
-    "cal", "s2d", "x1d"])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "assign_wcs",
+        "msa_flagging",
+        "extract_2d",
+        "srctype",
+        "master_background_mos",
+        "wavecorr",
+        "flat_field",
+        "interpolatedflat",
+        "pathloss",
+        "barshadow",
+        "wavecorr_fs",
+        "flat_field_fs",
+        "interpolatedflat_fs",
+        "pathloss_fs",
+        "cal",
+        "s2d",
+        "x1d",
+    ],
+)
 def test_nirspec_mos_fs_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 on a NIRSpec MOS/FS exposure."""
 

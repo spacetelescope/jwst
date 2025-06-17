@@ -8,9 +8,9 @@ from .util import (
     update_s_region_mrs,
     update_s_region_lrs,
 )
-from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
-from ..lib.dispaxis import get_dispersion_direction
-from ..lib.wcs_utils import get_wavelengths
+from jwst.lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
+from jwst.lib.dispaxis import get_dispersion_direction
+from jwst.lib.wcs_utils import get_wavelengths
 from .miri import store_dithered_position
 
 log = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ log.setLevel(logging.DEBUG)
 __all__ = ["load_wcs"]
 
 
-def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
+def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_slice_wcs=False):
     """
     Create a gWCS object and store it in ``Model.meta``.
 
@@ -30,7 +30,13 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
     reference_files : dict
         Mapping between reftype (keys) and reference file name (vals).
     nrs_slit_y_range : list
-        The slit y-range for a Nirspec slit. The center is (0, 0).
+        The slit y-range for a NIRSpec slit. The center is (0, 0).
+    nrs_ifu_slice_wcs : bool
+        If True and the exposure type is NIRSpec IFU, then a full slice-based
+        WCS that propagates slice IDs is produced.  This is intended primarily for
+        diagnostic purposes.  If False and the exposure type is NIRSpec IFU,
+        a slice map is internally applied to produce a fully coordinate-based
+        WCS pipeline that does not require slice IDs on input.
 
     Returns
     -------
@@ -75,6 +81,12 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
     output_model = input_model.copy()
     wcs = WCS(pipeline)
     output_model.meta.wcs = wcs
+    if (
+        instrument.lower() == "nirspec"
+        and output_model.meta.exposure.type.lower() not in IMAGING_TYPES
+    ):
+        cbbox = mod.generate_compound_bbox(output_model)
+        output_model.meta.wcs.bounding_box = cbbox
     output_model.meta.cal_step.assign_wcs = "COMPLETE"
     exclude_types = [
         "nrc_wfss",
@@ -110,7 +122,11 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None):
             if output_model.meta.exposure.type.lower() == "mir_lrs-slitless":
                 output_model.wavelength = get_wavelengths(output_model)
         elif output_model.meta.exposure.type.lower() == "nrs_ifu":
-            update_s_region_nrs_ifu(output_model, mod)
+            update_s_region_nrs_ifu(output_model)
+
+            # Attach a slice map in the regions attribute.
+            # Optionally, use it to further revise the output WCS pipeline.
+            mod.apply_slicemap(output_model, replace_wcs=(not nrs_ifu_slice_wcs))
         elif output_model.meta.exposure.type.lower() == "mir_mrs":
             update_s_region_mrs(output_model)
         else:

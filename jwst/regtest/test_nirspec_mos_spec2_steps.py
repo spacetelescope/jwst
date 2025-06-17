@@ -12,18 +12,19 @@ from jwst.photom import PhotomStep
 @pytest.mark.bigdata
 def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
     """Test providing a user-supplied flat field to the FlatFieldStep"""
-    basename = 'jw01345066001_05101_00001_nrs1'
-    output_file = f'{basename}_flat_from_user_file.fits'
+    basename = "jw01345066001_05101_00001_nrs1"
+    output_file = f"{basename}_flat_from_user_file.fits"
 
-    data = rtdata.get_data(f'nirspec/mos/{basename}_wavecorr.fits')
-    user_supplied_flat = rtdata.get_data(f'nirspec/mos/{basename}_interpolatedflat.fits')
+    data = rtdata.get_data(f"nirspec/mos/{basename}_wavecorr.fits")
+    user_supplied_flat = rtdata.get_data(f"nirspec/mos/{basename}_interpolatedflat.fits")
 
-    data_flat_fielded = FlatFieldStep.call(data, user_supplied_flat=user_supplied_flat,
-                                           save_results=False)
+    data_flat_fielded = FlatFieldStep.call(
+        data, user_supplied_flat=user_supplied_flat, save_results=False
+    )
     rtdata.output = output_file
     data_flat_fielded.save(rtdata.output)
 
-    rtdata.get_truth(f'truth/test_nirspec_mos_spec2/{output_file}')
+    rtdata.get_truth(f"truth/test_nirspec_mos_spec2/{output_file}")
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -31,7 +32,9 @@ def test_flat_field_step_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 @pytest.mark.bigdata
 def test_ff_inv(rtdata, fitsdiff_default_kwargs):
     """Test flat field inversion"""
-    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
+    with dm.open(
+        rtdata.get_data("nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits")
+    ) as data:
         flatted = FlatFieldStep.call(data)
         unflatted = FlatFieldStep.call(flatted, inverse=True)
 
@@ -44,18 +47,20 @@ def test_ff_inv(rtdata, fitsdiff_default_kwargs):
             test1 = np.allclose(data_slit.data[~is_nan], unflatted_slit.data[~is_nan])
 
             # make sure NaNs are only at do_not_use pixels
-            test2 = np.all(unflatted_slit.dq[is_nan] & dm.dqflags.pixel['DO_NOT_USE'])
+            test2 = np.all(unflatted_slit.dq[is_nan] & dm.dqflags.pixel["DO_NOT_USE"])
 
             if not test1 and test2:
                 bad_slits.append(idx)
 
-    assert not bad_slits, f'Inversion failed for slits {bad_slits}'
+    assert not bad_slits, f"Inversion failed for slits {bad_slits}"
 
 
 @pytest.mark.bigdata
 def test_pathloss_corrpars(rtdata):
     """Test PathLossStep using correction_pars"""
-    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
+    with dm.open(
+        rtdata.get_data("nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits")
+    ) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -67,13 +72,15 @@ def test_pathloss_corrpars(rtdata):
         corrected_slit, corrected_corrpars_slit = slits
         if not np.allclose(corrected_slit.data, corrected_corrpars_slit.data, equal_nan=True):
             bad_slits.append(idx)
-    assert not bad_slits, f'correction_pars failed for slits {bad_slits}'
+    assert not bad_slits, f"correction_pars failed for slits {bad_slits}"
 
 
 @pytest.mark.bigdata
 def test_pathloss_inverse(rtdata):
     """Test PathLossStep using inversion"""
-    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
+    with dm.open(
+        rtdata.get_data("nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits")
+    ) as data:
         pls = PathLossStep()
         corrected = pls.run(data)
 
@@ -87,15 +94,17 @@ def test_pathloss_inverse(rtdata):
             if not np.allclose(data_slit.data[non_nan], corrected_inverse_slit.data[non_nan]):
                 bad_slits.append(idx)
 
-    assert not bad_slits, f'Inversion failed for slits {bad_slits}'
+    assert not bad_slits, f"Inversion failed for slits {bad_slits}"
 
 
 @pytest.mark.bigdata
 def test_pathloss_source_type(rtdata):
     """Test PathLossStep forcing source type"""
-    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
+    with dm.open(
+        rtdata.get_data("nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits")
+    ) as data:
         pls = PathLossStep()
-        pls.source_type = 'extended'
+        pls.source_type = "extended"
         pls.run(data)
 
     bad_slits = []
@@ -103,13 +112,15 @@ def test_pathloss_source_type(rtdata):
         if slit:
             if not np.allclose(slit.data, slit.pathloss_uniform, equal_nan=True):
                 bad_slits.append(idx)
-    assert not bad_slits, f'Force to uniform failed for slits {bad_slits}'
+    assert not bad_slits, f"Force to uniform failed for slits {bad_slits}"
 
 
 @pytest.mark.bigdata
 def test_barshadow_corrpars(rtdata):
     """BarShadowStep using correction_pars"""
-    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
+    with dm.open(
+        rtdata.get_data("nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits")
+    ) as data:
         pls = BarShadowStep()
         corrected = pls.run(data)
 
@@ -121,13 +132,15 @@ def test_barshadow_corrpars(rtdata):
         corrected_slit, corrected_corrpars_slit = slits
         if not np.allclose(corrected_slit.data, corrected_corrpars_slit.data, equal_nan=True):
             bad_slits.append(idx)
-    assert not bad_slits, f'correction_pars failed for slits {bad_slits}'
+    assert not bad_slits, f"correction_pars failed for slits {bad_slits}"
 
 
 @pytest.mark.bigdata
 def test_barshadow_inverse(rtdata):
     """BarShadowStep using inversion"""
-    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
+    with dm.open(
+        rtdata.get_data("nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits")
+    ) as data:
         pls = BarShadowStep()
         corrected = pls.run(data)
 
@@ -141,28 +154,32 @@ def test_barshadow_inverse(rtdata):
             if not np.allclose(data_slit.data[non_nan], corrected_inverse_slit.data[non_nan]):
                 bad_slits.append(idx)
 
-    assert not bad_slits, f'Inversion failed for slits {bad_slits}'
+    assert not bad_slits, f"Inversion failed for slits {bad_slits}"
 
 
 @pytest.mark.bigdata
 def test_barshadow_source_type(rtdata):
     """Test BarShadowStep forcing source type"""
-    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
+    with dm.open(
+        rtdata.get_data("nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits")
+    ) as data:
         pls = BarShadowStep()
-        pls.source_type = 'extended'
+        pls.source_type = "extended"
         corrected = pls.run(data)
 
     bad_slits = []
     for idx, slit in enumerate(corrected.slits):
         if np.allclose(slit.barshadow, np.ones(slit.data.shape), equal_nan=True):
             bad_slits.append(idx)
-    assert not bad_slits, f'Force to uniform failed for slits {bad_slits}'
+    assert not bad_slits, f"Force to uniform failed for slits {bad_slits}"
 
 
 @pytest.mark.bigdata
 def test_photom_corrpars(rtdata):
     """Test for photom correction parameters"""
-    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
+    with dm.open(
+        rtdata.get_data("nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits")
+    ) as data:
         pls = PhotomStep()
         corrected = pls.run(data)
 
@@ -174,19 +191,19 @@ def test_photom_corrpars(rtdata):
         corrected_slit, corrected_corrpars_slit = slits
         if not np.allclose(corrected_slit.data, corrected_corrpars_slit.data, equal_nan=True):
             bad_slits.append(idx)
-    assert not bad_slits, f'correction_pars failed for slits {bad_slits}'
+    assert not bad_slits, f"correction_pars failed for slits {bad_slits}"
 
 
 @pytest.mark.bigdata
 def test_photom_inverse(rtdata):
     """PhotomStep using inversion"""
-    with dm.open(rtdata.get_data('nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits')) as data:
+    with dm.open(
+        rtdata.get_data("nirspec/mos/jw01345066001_05101_00001_nrs1_wavecorr.fits")
+    ) as data:
         pls = PhotomStep()
         corrected = pls.run(data)
 
         pls.inverse = True
-        # FIXME: Handle warnings properly.
-        # Example: RuntimeWarning: overflow encountered in multiply
         corrected_inverse = pls.run(corrected)
 
         bad_slits = []
@@ -196,4 +213,4 @@ def test_photom_inverse(rtdata):
             if not np.allclose(data_slit.data[non_nan], corrected_inverse_slit.data[non_nan]):
                 bad_slits.append(idx)
 
-    assert not bad_slits, f'Inversion failed for slits {bad_slits}'
+    assert not bad_slits, f"Inversion failed for slits {bad_slits}"

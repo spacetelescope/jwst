@@ -5,11 +5,11 @@ from astropy.io import fits
 from astropy.table import Table
 
 from jwst.assign_wcs.util import wcs_bbox_from_shape
+from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.exp_to_source import multislit_to_container
 
 
-@pytest.fixture()
-def simple_wcs():
+def simple_wcs_func():
     """
     Mock a horizontal dispersion WCS with a simple callable function.
 
@@ -74,6 +74,20 @@ def simple_wcs():
     simple_wcs_function.available_frames = []
 
     return simple_wcs_function
+
+
+@pytest.fixture
+def simple_wcs():
+    """
+    Make simple_wcs_func available as a fixture.
+
+    Returns
+    -------
+    callable
+        A function that will return mock values for RA, Dec, wave,
+        given x and y coordinates.
+    """
+    return simple_wcs_func()
 
 
 @pytest.fixture()
@@ -179,13 +193,12 @@ def simple_wcs_ifu():
     return simple_wcs_function
 
 
-@pytest.fixture()
-def mock_nirspec_fs_one_slit(simple_wcs):
+def mock_nirspec_fs_one_slit_function():
     """
     Mock one slit in NIRSpec FS mode.
 
-    Yields
-    ------
+    Returns
+    -------
     SlitModel
         The mock model.
     """
@@ -203,12 +216,26 @@ def mock_nirspec_fs_one_slit(simple_wcs):
     model.source_type = "EXTENDED"
 
     model.meta.wcsinfo.dispersion_direction = 1
-    model.meta.wcs = simple_wcs
+    model.meta.wcs = simple_wcs_func()
 
     model.data = np.arange(50 * 50, dtype=float).reshape((50, 50))
     model.var_poisson = model.data * 0.02
     model.var_rnoise = model.data * 0.02
     model.var_flat = model.data * 0.05
+    return model
+
+
+@pytest.fixture
+def mock_nirspec_fs_one_slit():
+    """
+    Make mock_nirspec_fs_one_slit_function available as a fixture.
+
+    Yields
+    ------
+    SlitModel
+        The mock model.
+    """
+    model = mock_nirspec_fs_one_slit_function()
     yield model
     model.close()
 
@@ -262,6 +289,7 @@ def mock_nirspec_bots(simple_wcs):
     model.meta.exposure.type = "NRS_BRIGHTOBJ"
     model.meta.subarray.name = "SUB2048"
     model.meta.exposure.nints = 10
+    model.meta.exposure.segment_number = 2
     model.meta.visit.tsovisit = True
 
     model.name = "S1600A1"
@@ -450,34 +478,81 @@ def mock_miri_ifu(simple_wcs_ifu):
     model.close()
 
 
-@pytest.fixture()
-def mock_niriss_wfss_l3(mock_nirspec_fs_one_slit):
+def mock_nis_wfss_l2():
     """
-    Mock 3 slits in NIRISS WFSS mode, level 3 style.
+    Mock 3 slits in NIRISS WFSS mode, level 2 style.
 
-    Yields
-    ------
+    The slits correspond to a single exposure, with one slit per extracted source.
+
+    Returns
+    -------
     MultiSlitModel
         The mock model.
     """
     model = dm.MultiSlitModel()
     model.meta.instrument.name = "NIRISS"
     model.meta.instrument.detector = "NIS"
+    model.meta.instrument.filter = "GR150R"
     model.meta.observation.date = "2023-07-22"
     model.meta.observation.time = "06:24:45.569"
+    model.meta.observation.program_number = "1"
+    model.meta.observation.observation_number = "1"
+    model.meta.observation.visit_number = "1"
+    model.meta.observation.visit_group = "1"
+    model.meta.observation.sequence_id = "1"
+    model.meta.observation.activity_id = "1"
+    model.meta.exposure.number = "5"
     model.meta.exposure.type = "NIS_WFSS"
+
+    slit0 = mock_nirspec_fs_one_slit_function()
 
     nslit = 3
     for i in range(nslit):
-        slit = mock_nirspec_fs_one_slit.copy()
+        slit = slit0.copy()
         slit.name = str(i + 1)
         slit.meta.exposure.type = "NIS_WFSS"
         model.slits.append(slit)
 
-    container = multislit_to_container([model])["0"]
+    return model
 
-    yield container
-    container.close()
+
+@pytest.fixture
+def mock_niriss_wfss_l2():
+    """
+    Make mock_nis_wfss_l2 available as a fixture.
+
+    Yields
+    ------
+    MultiSlitModel
+        The mock model.
+    """
+    model = mock_nis_wfss_l2()
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def mock_niriss_wfss_l3(mock_niriss_wfss_l2):
+    """
+    Mock 3 slits in NIRISS WFSS mode, level 3 style.
+
+    Here the container has one MultiSlitModel per source, and each model has one
+    slit per exposure.
+
+    Yields
+    ------
+    SourceModelContainer
+        The mock model.
+    """
+    model = mock_niriss_wfss_l2.copy()
+    for i, slit in enumerate(model.slits):
+        slit.meta.filename = f"test{i}_s2d.fits"
+    container_dict = multislit_to_container([model])
+    sources = list(container_dict.values())
+    yield sources[0]
+    for source in sources:
+        source.close()
+    model.close()
 
 
 @pytest.fixture()
@@ -623,6 +698,31 @@ def make_spec_model(name="slit1", value=1.0):
     return spec_model
 
 
+def make_tso_spec_model(n_spectra=10):
+    """
+    Make a multi-integration, multi-spec model.
+
+    Parameters
+    ----------
+    n_spectra : int, optional
+        The number of integrations to generate spectra for.
+
+    Returns
+    -------
+    TSOMultiSpecModel
+        The composite spectral model.
+    """
+    spec_list = []
+    for i in range(n_spectra):
+        spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
+        spec_list.append(spec_model)
+
+    tso_spec = make_tso_specmodel(spec_list)
+    model = dm.TSOMultiSpecModel()
+    model.spec.append(tso_spec)
+    return model
+
+
 @pytest.fixture()
 def mock_one_spec():
     """
@@ -657,6 +757,39 @@ def mock_10_spec():
         spec_model = make_spec_model(name=f"slit{i + 1}", value=i + 1)
         model.spec.append(spec_model)
 
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def mock_10_multi_int_spec():
+    """
+    Mock 10 simple spectra in a TSOMultiSpecModel.
+
+    Yields
+    ------
+    TSOMultiSpecModel
+        The mock model.
+    """
+    model = make_tso_spec_model(n_spectra=10)
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def mock_2_multi_int_spec():
+    """
+    Mock 2 simple spectra in a TSOMultiSpecModel.
+
+    Used for generating spectra that do not match the int_times
+    table in a 10-integration input.
+
+    Yields
+    ------
+    TSOMultiSpecModel
+        The mock model.
+    """
+    model = make_tso_spec_model(n_spectra=2)
     yield model
     model.close()
 

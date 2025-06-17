@@ -27,11 +27,9 @@ def run_step_with_cal(rtdata_module):
     # run step?
     rtdata.get_data("niriss/ami/jw04478001001_03102_00001_nis_cal.fits")
     args = [
-        'ami_analyze',
+        "ami_analyze",
         rtdata.input,
     ]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: Degrees of freedom <= 0 for slice
     Step.from_cmdline(args)
     return rtdata
 
@@ -49,7 +47,7 @@ def test_niriss_ami3_exp(run_pipeline, obs, suffix, fitsdiff_default_kwargs):
     rtdata.output = output
     rtdata.get_truth("truth/test_niriss_ami3/" + output)
 
-    fitsdiff_default_kwargs['atol'] = 1e-5
+    fitsdiff_default_kwargs["atol"] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -62,7 +60,7 @@ def test_niriss_ami3_product(run_pipeline, fitsdiff_default_kwargs):
     rtdata.output = output
     rtdata.get_truth("truth/test_niriss_ami3/" + output)
 
-    fitsdiff_default_kwargs['atol'] = 1e-5
+    fitsdiff_default_kwargs["atol"] = 1e-5
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 

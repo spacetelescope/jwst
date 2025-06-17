@@ -5,8 +5,8 @@ from . import cube_build
 from . import ifu_cube
 from . import data_types
 import asdf
-from ..assign_wcs.util import update_s_region_keyword
-from ..stpipe import Step, record_step_status
+from jwst.assign_wcs.util import update_s_region_keyword
+from jwst.stpipe import Step, record_step_status
 from pathlib import Path
 from astropy import units
 

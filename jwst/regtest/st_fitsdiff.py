@@ -11,7 +11,6 @@ from astropy import __version__
 from astropy.table import Table
 from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
 
-from astropy.io.fits.card import BLANK_CARD
 
 from astropy.io.fits.hdu.table import _TableLikeHDU
 
@@ -29,7 +28,7 @@ from astropy.io.fits.diff import (
 __all__ = [
     "STFITSDiff",
     "STHDUDiff",
-    "STHeaderDiff",
+    "HeaderDiff",
     "STImageDataDiff",
     "STRawDataDiff",
     "STTableDataDiff",
@@ -484,7 +483,7 @@ class STHDUDiff(HDUDiff):
             self.rtol, self.atol = self.header_tolerances["rtol"], self.header_tolerances["atol"]
 
         # Get the header differences
-        self.diff_headers = STHeaderDiff.fromdiff(self, self.a.header.copy(), self.b.header.copy())
+        self.diff_headers = HeaderDiff.fromdiff(self, self.a.header.copy(), self.b.header.copy())
         # Reset the object tolerances
         if self.header_tolerances:
             self.rtol, self.atol = rtol, atol
@@ -581,7 +580,11 @@ class STHDUDiff(HDUDiff):
         elif self.a.is_image and self.b.is_image:
             self.diff_data = STImageDataDiff.fromdiff(self, self.a.data, self.b.data)
             if self.diff_data.diff_total > 0:
-                self.nans, self.percentages, self.stats = get_quick_report(self.a.data, self.b.data)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    self.nans, self.percentages, self.stats = get_quick_report(
+                        self.a.data, self.b.data
+                    )
             # Clean up references to (possibly) memmapped arrays, so they can
             # be closed by .close()
             self.diff_data.a = None
@@ -598,7 +601,11 @@ class STHDUDiff(HDUDiff):
             # recognized image or table types
             self.diff_data = STRawDataDiff.fromdiff(self, self.a.data, self.b.data)
             if self.diff_data.diff_total > 0:
-                self.nans, self.percentages, self.stats = get_quick_report(self.a.data, self.b.data)
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore", RuntimeWarning)
+                    self.nans, self.percentages, self.stats = get_quick_report(
+                        self.a.data, self.b.data
+                    )
             # Clean up references to (possibly) memmapped arrays, so they can
             # be closed by .close()
             self.diff_data.a = None
@@ -661,192 +668,6 @@ class STHDUDiff(HDUDiff):
             if [self.nans, self.percentages, self.stats] != [None, None, None]:
                 report_data_diff()
             self.diff_data.report(self._fileobj, indent=self._indent + 1)
-
-
-class STHeaderDiff(HeaderDiff):
-    """
-    HeaderDiff class from astropy with the STScI ad hoc changes for STScI regression test reports.
-
-    STScI changes include making sure that the keyword and comments in 'a' exist in 'b' (regardless
-    of order), otherwise continue without error.
-
-    Full documentation of the base class is provided at:
-    https://docs.astropy.org/en/stable/io/fits/api/diff.html
-    """
-
-    def __init__(
-        self,
-        a,
-        b,
-        ignore_keywords=None,
-        ignore_comments=None,
-        rtol=0.0,
-        atol=0.0,
-        ignore_blanks=True,
-        ignore_blank_cards=True,
-    ):
-        """
-        For full documentation on variables, see original astropy code.
-
-        Parameters
-        ----------
-        a : `~astropy.io.fits.Header` or str or bytes
-            A header.
-
-        b : `~astropy.io.fits.Header` or str or bytes
-            A header to compare to the first header.
-
-        ignore_keywords : sequence, optional
-            Header keywords to ignore when comparing two headers.
-
-        ignore_comments : sequence, optional
-            List of header keywords whose comments should be ignored.
-
-        rtol : float, optional
-            Relative difference to allow when comparing two float values.
-
-        atol : float, optional
-            Allowed absolute difference when comparing two float values.
-
-        ignore_blanks : bool, optional
-            Ignore extra whitespace at the end of string values either in
-            headers or data. Extra leading whitespace is not ignored.
-
-        ignore_blank_cards : bool, optional
-            Ignore all cards that are blank, i.e. they only contain whitespace.
-        """
-        super().__init__(
-            a,
-            b,
-            ignore_keywords=set_variable_to_empty_list(ignore_keywords),
-            ignore_comments=set_variable_to_empty_list(ignore_comments),
-            rtol=rtol,
-            atol=atol,
-            ignore_blanks=ignore_blanks,
-            ignore_blank_cards=ignore_blank_cards,
-        )
-
-    def _diff(self):
-        # The following lines are identical to the original HeaderDiff code
-
-        if self.ignore_blank_cards:
-            cardsa = [c for c in self.a.cards if str(c) != BLANK_CARD]
-            cardsb = [c for c in self.b.cards if str(c) != BLANK_CARD]
-        else:
-            cardsa = list(self.a.cards)
-            cardsb = list(self.b.cards)
-
-        # Build dictionaries of keyword values and comments
-        def get_header_values_comments(cards):
-            values = {}
-            comments = {}
-            for card in cards:
-                value = card.value
-                if self.ignore_blanks and isinstance(value, str):
-                    value = value.rstrip()
-                values.setdefault(card.keyword, []).append(value)
-                comments.setdefault(card.keyword, []).append(card.comment)
-            return values, comments
-
-        valuesa, commentsa = get_header_values_comments(cardsa)
-        valuesb, commentsb = get_header_values_comments(cardsb)
-
-        keywordsa = set(valuesa)
-        keywordsb = set(valuesb)
-
-        self.common_keywords = sorted(keywordsa.intersection(keywordsb))
-        if len(cardsa) != len(cardsb):
-            self.diff_keyword_count = (len(cardsa), len(cardsb))
-
-        # Any other diff attributes should exclude ignored keywords
-        keywordsa = keywordsa.difference(self.ignore_keywords)
-        keywordsb = keywordsb.difference(self.ignore_keywords)
-        if self.ignore_keyword_patterns:
-            for pattern in self.ignore_keyword_patterns:
-                keywordsa = keywordsa.difference(fnmatch.filter(keywordsa, pattern))
-                keywordsb = keywordsb.difference(fnmatch.filter(keywordsb, pattern))
-
-        if "*" in self.ignore_keywords:
-            # Any other differences between keywords are to be ignored
-            return
-
-        left_only_keywords = sorted(keywordsa.difference(keywordsb))
-        right_only_keywords = sorted(keywordsb.difference(keywordsa))
-
-        if left_only_keywords or right_only_keywords:
-            self.diff_keywords = (left_only_keywords, right_only_keywords)
-
-        # Compare count of each common keyword
-        for keyword in self.common_keywords:
-            if keyword in self.ignore_keywords:
-                continue
-            if self.ignore_keyword_patterns:
-                skip = False
-                for pattern in self.ignore_keyword_patterns:
-                    if fnmatch.fnmatch(keyword, pattern):
-                        skip = True
-                        break
-                if skip:
-                    continue
-
-            counta = len(valuesa[keyword])
-            countb = len(valuesb[keyword])
-            if counta != countb:
-                self.diff_duplicate_keywords[keyword] = (counta, countb)
-
-            # The following lines include STScI's changes:
-            # - Make sure that the keyword in 'a' exists in 'b', or continue
-
-            # Compare keywords' values and comments
-            for a in valuesa[keyword]:
-                if a not in valuesb[keyword]:
-                    continue
-                bidx = valuesb[keyword].index(a)
-                b = valuesb[keyword][bidx]
-
-                # The following lines are identical to the original HeaderDiff code
-
-                if diff_values(a, b, rtol=self.rtol, atol=self.atol):
-                    self.diff_keyword_values[keyword].append((a, b))
-                else:
-                    # If there are duplicate keywords we need to be able to
-                    # index each duplicate; if the values of a duplicate
-                    # are identical use None here
-                    self.diff_keyword_values[keyword].append(None)
-
-            if not any(self.diff_keyword_values[keyword]):
-                # No differences found; delete the array of Nones
-                del self.diff_keyword_values[keyword]
-
-            if "*" in self.ignore_comments or keyword in self.ignore_comments:
-                continue
-            if self.ignore_comment_patterns:
-                skip = False
-                for pattern in self.ignore_comment_patterns:
-                    if fnmatch.fnmatch(keyword, pattern):
-                        skip = True
-                        break
-                if skip:
-                    continue
-
-            # The following lines include STScI's changes:
-            # - Make sure that the comment in 'a' exists in 'b', or continue
-
-            for a in commentsa[keyword]:
-                if a not in commentsb[keyword]:
-                    continue
-                bidx = commentsb[keyword].index(a)
-                b = commentsb[keyword][bidx]
-
-                # The following lines are identical to the original HeaderDiff code
-
-                if diff_values(a, b):
-                    self.diff_keyword_comments[keyword].append((a, b))
-                else:
-                    self.diff_keyword_comments[keyword].append(None)
-
-            if not any(self.diff_keyword_comments[keyword]):
-                del self.diff_keyword_comments[keyword]
 
 
 class STImageDataDiff(ImageDataDiff):
@@ -960,14 +781,13 @@ class STImageDataDiff(ImageDataDiff):
                 if shapea == 4:
                     for nint in range(shapea[0]):
                         for ngrp in range(shapea[1]):
-                            with warnings.catch_warnings(record=True):
-                                warnings.simplefilter("always", RuntimeWarning)
+                            with warnings.catch_warnings():
+                                warnings.simplefilter("ignore", RuntimeWarning)
                                 # Code that might generate a RuntimeWarning
                                 # this data set is weird, do nothing and report
                                 diff_total = np.abs(a[nint, ngrp, ...] - b[nint, ngrp, ...]) > (
                                     atol + rtol * np.abs(b[nint, ngrp, ...])
                                 )
-                                pass
                             if a[diff_total].size != 0:
                                 data_within_tol = False
                                 break
@@ -975,8 +795,8 @@ class STImageDataDiff(ImageDataDiff):
                             break
                 elif shapea == 3:
                     for ngrp in range(shapea[0]):
-                        with warnings.catch_warnings(record=True):
-                            warnings.simplefilter("always", RuntimeWarning)
+                        with warnings.catch_warnings():
+                            warnings.simplefilter("ignore", RuntimeWarning)
                             # Code that might generate a RuntimeWarning
                             # this data set is weird, do nothing and report
                             diff_total = np.abs(a[ngrp, ...] - b[ngrp, ...]) > (
@@ -987,8 +807,8 @@ class STImageDataDiff(ImageDataDiff):
                             data_within_tol = False
                             break
                 else:
-                    with warnings.catch_warnings(record=True):
-                        warnings.simplefilter("always", RuntimeWarning)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
                         # Code that might generate a RuntimeWarning
                         # this data set is weird, do nothing and report
                         diff_total = np.abs(a - b) > (atol + rtol * np.abs(b))
@@ -1421,7 +1241,9 @@ class STTableDataDiff(TableDataDiff):
                     nan_idx = np.isnan(arra) | np.isnan(arrb)
                     anonan = arra[~nan_idx]
                     bnonan = arrb[~nan_idx]
-                    diffs = np.abs(anonan - bnonan)
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        diffs = np.abs(anonan - bnonan)
                     abs_diffs = diffs[diffs > self.atol].size
                     nozeros = (diffs != 0.0) & (bnonan != 0.0)
                     rel_values = diffs[nozeros] / np.abs(bnonan[nozeros])

@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, SourceModelContainer
 from jwst.extract_1d.extract_1d_step import Extract1dStep
 from jwst.extract_1d.soss_extract import soss_extract
 
@@ -52,6 +52,7 @@ def test_extract_nirspec_mos_multi_slit(mock_nirspec_mos, simple_wcs):
 
 def test_extract_nirspec_bots(mock_nirspec_bots, simple_wcs):
     result = Extract1dStep.call(mock_nirspec_bots, apply_apcorr=False, use_source_posn=False)
+    assert isinstance(result, dm.TSOMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
     assert result.spec[0].name == "S1600A1"
 
@@ -87,6 +88,7 @@ def test_extract_miri_ifu(mock_miri_ifu, simple_wcs_ifu, ifu_set_srctype):
     # Source type defaults to extended, results should be the
     # same with and without override
     result = Extract1dStep.call(mock_miri_ifu, ifu_covar_scale=1.0, ifu_set_srctype=ifu_set_srctype)
+    assert isinstance(result, dm.MRSMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
     # output wavelength is the same as input
@@ -134,20 +136,20 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
     result = Extract1dStep.call(mock_niriss_wfss_l3)
 
     # output is a single spectral model (not a container)
-    assert isinstance(result, dm.MultiSpecModel)
+    assert isinstance(result, dm.WFSSMultiSpecModel)
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
-    for i, spec in enumerate(result.spec):
-        assert spec.name == str(i + 1)
+    for i, exp in enumerate(result.spec):
+        tab = exp.spec_table[0]
 
         # output wavelength is the same as input
         _, _, expected_wave = simple_wcs(np.arange(50), np.arange(50))
-        assert np.allclose(spec.spec_table["WAVELENGTH"], expected_wave)
+        assert np.allclose(tab["WAVELENGTH"], expected_wave)
 
         # output flux and errors are non-zero, exact values will depend
         # on extraction parameters
-        assert np.all(spec.spec_table["FLUX"] > 0)
-        assert np.all(spec.spec_table["FLUX_ERROR"] > 0)
+        assert np.all(tab["FLUX"] > 0)
+        assert np.all(tab["FLUX_ERROR"] > 0)
 
     result.close()
 
@@ -306,3 +308,46 @@ def test_save_output_multiple_multislit(tmp_path, mock_nirspec_mos):
 
     result.close()
     input_container.close()
+
+
+def test_save_output_wfss_l2(tmp_path, mock_niriss_wfss_l2):
+    """Test output save override for WFSS level 2 data when step called standalone."""
+    mock_niriss_wfss_l2.meta.filename = "test_s2d.fits"
+    result = Extract1dStep.call(
+        mock_niriss_wfss_l2,
+        save_results=True,
+        output_dir=str(tmp_path),
+        suffix="x1d",
+    )
+    result.close()
+
+    fname = "test_x1d.fits"
+    output_path = str(tmp_path / fname)
+
+    assert os.path.isfile(output_path)
+
+    with dm.open(output_path) as model:
+        # check that the output file name is not overridden
+        assert isinstance(model, dm.WFSSMultiSpecModel)
+        assert len(model.spec) == 1
+
+
+def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
+    """Test output for WFSS level 3 data when step called standalone."""
+    assert isinstance(mock_niriss_wfss_l3, SourceModelContainer)
+    result = Extract1dStep.call(
+        mock_niriss_wfss_l3,
+        save_results=True,
+        output_dir=str(tmp_path),
+        suffix="x1d",
+    )
+    result.close()
+
+    fname = f"test0_x1d.fits"
+    output_path = str(tmp_path / fname)
+
+    assert os.path.isfile(output_path)
+
+    with dm.open(output_path) as model:
+        assert isinstance(model, dm.WFSSMultiSpecModel)
+        assert len(model.spec) == 1

@@ -109,8 +109,27 @@ image.
 ``--blendheaders`` (bool, default=True)
     Blend metadata from all input images into the resampled output image.
 
-
 ``--in_memory`` (boolean, default=True)
   Specifies whether or not to load and create all images that are used during
   processing into memory. If ``False``, input files are loaded from disk when
   needed and all intermediate files are stored on disk, rather than in memory.
+
+``--enable_ctx`` (boolean, default=True)
+  Specifies whether or not to compute and store the context array (`con`) in the datamodel,
+  which is used to track which input images contributed to each pixel in the
+  output image. Setting this to ``False`` helps reduce memory usage for very large
+  mosaics.
+
+``--enable_err`` (boolean, default=True)
+  Specifies whether or not to compute and store the error array in the output model.
+  Setting this to ``False`` helps reduce memory usage and output file size for very
+  large mosaics, but the  `err`, `var_flat`, `var_rnoise`, and `var_poisson`
+  arrays will not be computed or reported.
+  If set to ``False``, the `report_var` flag is ignored.
+
+``--report_var`` (boolean, default=True)
+  Specifies whether or not to store the variance arrays, namely
+  `var_flat`, `var_rnoise`, and `var_poisson`, in the output model.
+  Setting this to ``False`` helps reduce output file size for very large mosaics,
+  but note that the variances are still computed internally if ``enable_err`` is ``True``
+  because they are needed to compute the error array.

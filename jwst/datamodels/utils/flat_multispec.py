@@ -2,9 +2,11 @@
 
 import logging
 import warnings
+from copy import deepcopy
+
 import numpy as np
 from asdf.tags.core.ndarray import asdf_datatype_to_numpy_dtype
-
+from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -165,6 +167,26 @@ def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, igno
         log.warning(f"Metadata could not be determined from input spec_table: {problems}")
 
 
+def set_schema_units(model):
+    """
+    Give all columns in the model the units defined in the model schema.
+
+    This gets around a bug/bad behavior in stdatamodels that units are not
+    automatically assigned to the spec_table.
+
+    Model is modified in place.
+
+    Parameters
+    ----------
+    model : DataModel
+        Any model containing a spec_table attribute.
+    """
+    data_type = model.schema["properties"]["spec_table"]["datatype"]
+    for col in data_type:
+        if "unit" in col:
+            model.spec_table.columns[col["name"]].unit = col["unit"]
+
+
 def copy_column_units(input_model, output_model):
     """
     Copy units from input columns to output columns.
@@ -186,3 +208,116 @@ def copy_column_units(input_model, output_model):
     for col_name in input_columns.names:
         if col_name in output_columns.names:
             output_columns[col_name].unit = input_columns[col_name].unit
+
+
+def copy_spec_metadata(input_model, output_model):
+    """
+    Copy spectral metadata from the input to the output spectrum.
+
+    Values to be copied are any attributes of the input model,
+    other than "meta" or "spec_table", e.g. "source_id", "name", etc.
+
+    Parameters
+    ----------
+    input_model : DataModel or ObjectNode
+        A spectral model, such as SpecModel or TSOSpecModel. If read
+        in from a list of spectra, as in MultiSpecModel, the input model may be
+        an ObjectNode rather than a full DataModel.
+    output_model : DataModel
+        A spectral model, such as SpecModel or TSOSpecModel. Updated in place
+        with metadata from the input model.  The output model must be a full
+        DataModel, not an ObjectNode.
+    """
+    copy_attributes = []
+    for prop in output_model.schema["properties"]:
+        if prop not in ["meta", "spec_table"]:
+            copy_attributes.append(prop)
+    for key in copy_attributes:
+        if hasattr(input_model, key) and getattr(input_model, key) is not None:
+            setattr(output_model, key, getattr(input_model, key))
+
+
+def expand_table(spec):
+    """
+    Expand a table of spectra into a list of SpecModel objects.
+
+    Parameters
+    ----------
+    spec : WFSSSpecModel, TSOMultiSpecModel, ObjectNode
+        Any model containing a spec_table to expand into multiple spectra
+
+    Returns
+    -------
+    list[SpecModel]
+        A list of SpecModel objects, one for each spectrum in the input spec_table.
+    """
+    all_columns = np.array([str(x) for x in spec.spec_table.dtype.names])
+    new_spec_list = []
+    n_spectra = len(spec.spec_table)
+    for i in range(n_spectra):
+        # initialize a new SpecModel
+        spec_row = spec.spec_table[i]
+        n_elements = int(spec_row["N_ALONGDISP"])
+        new_spec = datamodels.SpecModel()
+        data_type = new_spec.schema["properties"]["spec_table"]["datatype"]
+        columns_to_copy = np.array([col["name"] for col in data_type])
+
+        # Copy over the vector columns from input spec_table to output spec_table
+        spec_table = np.empty(n_elements, dtype=new_spec.spec_table.dtype)
+        for col_name in columns_to_copy:
+            spec_table[col_name] = spec_row[col_name][:n_elements]
+        new_spec.spec_table = spec_table
+
+        # Copy over the metadata columns from input spec_table to the spectrum's metadata
+        meta_columns = all_columns[~np.isin(all_columns, columns_to_copy)].tolist()
+        meta_columns.remove("N_ALONGDISP")
+        for meta_key in meta_columns:
+            try:
+                setattr(new_spec, meta_key.lower(), spec_row[meta_key])
+            except KeyError:
+                pass
+
+        # Copy over relevant metadata from the input model to the output model
+        if hasattr(spec.meta, "wcs"):
+            new_spec.meta.wcs = deepcopy(spec.meta.wcs)
+        new_spec.meta.group_id = getattr(spec, "group_id", "")
+        new_spec.meta.filename = getattr(spec, "filename", "")
+        copy_spec_metadata(spec, new_spec)
+        copy_column_units(spec, new_spec)
+
+        new_spec_list.append(new_spec)
+
+    return new_spec_list
+
+
+def expand_flat_spec(input_model):
+    """
+    Create simple spectra from a flat spectral table.
+
+    Parameters
+    ----------
+    input_model : TSOMultiSpecModel
+        Spectral model containing spectra with a mix of vector columns
+        and metadata columns in the ``spec_table`` attribute.
+        Metadata columns will be dropped.
+
+    Returns
+    -------
+    MultiSpecModel
+        A set of simple spectra, one per extension.
+    """
+    output_model = datamodels.MultiSpecModel()
+    for old_spec in input_model.spec:
+        new_spec_list = expand_table(old_spec)
+        for new_spec in new_spec_list:
+            # Add the new spec to the output model
+            output_model.spec.append(new_spec)
+
+    # Update meta
+    output_model.update(input_model, only="PRIMARY")
+
+    # Copy int_times if present
+    if hasattr(input_model, "int_times"):
+        output_model.int_times = input_model.int_times.copy()
+
+    return output_model

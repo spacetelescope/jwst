@@ -2,12 +2,14 @@ Description
 ===========
 
 :Class: `jwst.background.BackgroundStep`
-:Alias: background
+:Alias: bkg_subtract
 
 The background subtraction step performs
 image-from-image subtraction in order to accomplish subtraction of background
-signal. The step takes as input one target exposure, to which the
-subtraction will be applied, and a list of one or more background exposures.
+signal. The step takes as input a Spec2 association file or one target exposure,
+to which the subtraction will be applied, and a list of one or more
+background exposures.
+
 Two different approaches to background image subtraction are used, depending
 on the observing mode. Imaging and most spectroscopic modes use one method,
 while a special method is used for Wide-Field Slitless Spectroscopy (WFSS).
@@ -17,8 +19,8 @@ JWST pipeline. See :ref:`Background Subtraction <background_subtraction>`
 for an overview of all the methods and to which observing modes they're
 applicable.
 
-Imaging and Non-WFSS Spectroscopic Modes
-----------------------------------------
+Imaging and Non-WFSS, Non-SOSS Spectroscopic Modes
+--------------------------------------------------
 If more than one background exposure is provided, they will be averaged
 together before being subtracted from the target exposure. Iterative sigma
 clipping is applied during the averaging process, to reject sources or other
@@ -112,3 +114,20 @@ data model, leaving the original input model unchanged.
 
 Upon successful completion of the step, the S_BKDSUB keyword will be set to
 "COMPLETE" in the output product.
+
+SOSS Mode
+---------
+In a similar manner to WFSS modes, the NIRISS SOSS mode uses a set of reference
+background templates, primarily for removal of flux contribution from zodiacal
+dust.
+
+First, a mask is derived to determine which regions of the input science data are
+relatively uncontaminated, using a cutoff on flux percentile to mask out bright
+regions of the integration. Then the mask is split into two components, one for
+either side of a discontinuity in the SOSS background levels, a result of
+instrumental effects. The mask on the right side of the detector is truncated
+at column 950; pixels right of this column were found to lower the fitting accuracy
+regardless of flux cutoff. The step then performs a best-fit analysis by scaling
+each template in the background reference file to the data and finding the minimum
+residual RMS error in the fitted background pixels. The best-fit template
+is used to calculate and subtract the background for the entire science array.

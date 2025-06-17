@@ -1,6 +1,10 @@
 from stdatamodels.jwst import datamodels
+from jwst.datamodels.utils.wfss_multispec import (
+    wfss_multiexposure_to_multispec,
+    make_wfss_multicombined,
+)
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 from . import combine1d
 
 
@@ -45,11 +49,11 @@ class Combine1dStep(Step):
 
         Parameters
         ----------
-        input_data : str or ModelContainer or MultiSpecModel
+        input_data : str, ModelContainer, MultiSpecModel, TSOMultiSpecModel, MRSMultiSpecModel
             Input is expected to be an association file name, ModelContainer,
-            or MultiSpecModel containing multiple spectra to be combined.
+            or multi-spectrum model containing multiple spectra to be combined.
             Individual members of the association or container are expected
-            to be MultiSpecModel instances.
+            to be multi-spectrum model instances.
 
         Returns
         -------
@@ -57,6 +61,20 @@ class Combine1dStep(Step):
             A single combined 1D spectrum.
         """
         with datamodels.open(input_data) as input_model:
+            if isinstance(input_model, datamodels.WFSSMultiSpecModel):
+                input_list = wfss_multiexposure_to_multispec(input_model)
+                if len(input_list) == 1:
+                    input_model = input_list[0]
+                else:
+                    results_list = []
+                    for model in input_list:
+                        result = combine1d.combine_1d_spectra(
+                            model, self.exptime_key, sigma_clip=self.sigma_clip
+                        )
+                        results_list.append(result)
+                    result = make_wfss_multicombined(results_list)
+                    result.meta.cal_step.combine_1d = "COMPLETE"
+                    return result
             try:
                 result = combine1d.combine_1d_spectra(
                     input_model, self.exptime_key, sigma_clip=self.sigma_clip

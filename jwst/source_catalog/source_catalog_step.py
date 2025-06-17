@@ -10,7 +10,7 @@ from stdatamodels.jwst import datamodels
 from .detection import convolve_data, JWSTBackground, JWSTSourceFinder
 from .reference_data import ReferenceData
 from .source_catalog import JWSTSourceCatalog
-from ..stpipe import Step
+from jwst.stpipe import Step
 
 __all__ = ["SourceCatalogStep"]
 

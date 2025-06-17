@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
-from ..lib.exposure_types import IMAGING_TYPES
+from jwst.stpipe import Step
+from jwst.lib.exposure_types import IMAGING_TYPES
 import logging
 from .assign_wcs import load_wcs
 from .util import MSAFileError, wfss_imaging_wcs, wcs_bbox_from_shape, update_fits_wcsinfo
@@ -53,6 +53,7 @@ class AssignWcsStep(Step):
         sip_npoints = integer(default=12)  #  number of points for SIP
         slit_y_low = float(default=-.55)  # The lower edge of a slit (NIRSpec only).
         slit_y_high = float(default=.55)  # The upper edge of a slit (NIRSpec only).
+        nrs_ifu_slice_wcs = boolean(default=False)  # For NIRSpec IFU, create a full slice-based WCS instead of a top-level coordinate-based WCS. Used for diagnostic purposes only.
     """  # noqa: E501
 
     reference_file_types = [
@@ -118,7 +119,12 @@ class AssignWcsStep(Step):
                     log.error(message)
                     raise MSAFileError(message)
             slit_y_range = [self.slit_y_low, self.slit_y_high]
-            result = load_wcs(input_model, reference_file_names, slit_y_range)
+            result = load_wcs(
+                input_model,
+                reference_file_names,
+                slit_y_range,
+                nrs_ifu_slice_wcs=self.nrs_ifu_slice_wcs,
+            )
 
         if not (
             result.meta.exposure.type.lower() in (IMAGING_TYPES.union(WFSS_TYPES))

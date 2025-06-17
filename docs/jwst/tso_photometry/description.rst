@@ -12,12 +12,17 @@ midpoint of each integration and the photometry values.
 Assumptions
 -----------
 This step is intended to be used for aperture photometry with time-series
-exposures.  Only direct images should be used, not spectra.
+imaging exposures.  Only direct images should be used, not spectra.
 
 The target is assumed to have been placed at the aperture reference location,
 which is stored in the XREF_SCI and YREF_SCI FITS keywords
 (note that these are 1-indexed values). Hence the step uses those keyword
 values as the target location within the image.
+
+The input is usually assumed to be flux calibrated in units of MJy/sr, in which
+case the output will be in Jy. If the flux calibration step was skipped, it
+will convert from DN/s to the number of flatfielded electrons measured per
+integration.
 
 Algorithm
 ---------
@@ -42,7 +47,7 @@ in a given integration and science analysis will be focused on variability of on
 If NaNs are present, the absolute flux will be underestimated, but the relative values may still
 be useful.
 
- 
+
 The output table contains these fields:
 
 - MJD

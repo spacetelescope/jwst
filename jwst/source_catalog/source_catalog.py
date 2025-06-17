@@ -738,7 +738,13 @@ class JWSTSourceCatalog:
             (self.aperture_flux_colnames[2 * j], self.aperture_flux_colnames[2 * i])
             for (i, j) in self._ci_ee_indices
         ]
-        return [getattr(self, flux1).value / getattr(self, flux2).value for flux1, flux2 in fluxes]
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+            warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+            concentration = [
+                getattr(self, flux1).value / getattr(self, flux2).value for flux1, flux2 in fluxes
+            ]
+        return concentration
 
     def set_ci_properties(self):
         """Set the concentration indices as dynamic attributes."""

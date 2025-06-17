@@ -16,8 +16,8 @@ from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 
-DO_NOT_USE = dqflags.pixel['DO_NOT_USE']
-SATURATED = dqflags.pixel['SATURATED']
+DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
+SATURATED = dqflags.pixel["SATURATED"]
 
 
 @pytest.fixture
@@ -35,71 +35,71 @@ def nircam_rate():
     im.var_rnoise += 0
 
     im.meta.wcsinfo = {
-        'ctype1': 'RA---TAN',
-        'ctype2': 'DEC--TAN',
-        'dec_ref': 11.99875540218638,
-        'ra_ref': 22.02351763251896,
-        'roll_ref': 0.005076934167039675,
-        'v2_ref': 86.039011,
-        'v3_ref': -493.385704,
-        'v3yangle': -0.07385127,
-        'vparity': -1,
-        'wcsaxes': 2
+        "ctype1": "RA---TAN",
+        "ctype2": "DEC--TAN",
+        "dec_ref": 11.99875540218638,
+        "ra_ref": 22.02351763251896,
+        "roll_ref": 0.005076934167039675,
+        "v2_ref": 86.039011,
+        "v3_ref": -493.385704,
+        "v3yangle": -0.07385127,
+        "vparity": -1,
+        "wcsaxes": 2,
     }
     im.meta.instrument = {
-        'channel': 'LONG',
-        'detector': 'NRCALONG',
-        'filter': 'F444W',
-        'lamp_mode': 'NONE',
-        'module': 'A',
-        'name': 'NIRCAM',
-        'pupil': 'CLEAR'
+        "channel": "LONG",
+        "detector": "NRCALONG",
+        "filter": "F444W",
+        "lamp_mode": "NONE",
+        "module": "A",
+        "name": "NIRCAM",
+        "pupil": "CLEAR",
     }
     im.meta.subarray = {
-        'fastaxis': -1,
-        'name': 'FULL',
-        'slowaxis': 2,
-        'xsize': xsize,
-        'xstart': 1,
-        'ysize': ysize,
-        'ystart': 1
+        "fastaxis": -1,
+        "name": "FULL",
+        "slowaxis": 2,
+        "xsize": xsize,
+        "xstart": 1,
+        "ysize": ysize,
+        "ystart": 1,
     }
     im.meta.observation = {
-        'activity_id': '01',
-        'date': '2021-10-25',
-        'exposure_number': '00001',
-        'obs_id': 'V42424001001P0000000001101',
-        'observation_label': 'nircam_ptsrc_only',
-        'observation_number': '001',
-        'program_number': '42424',
-        'sequence_id': '1',
-        'time': '16:58:27.258',
-        'visit_group': '01',
-        'visit_id': '42424001001',
-        'visit_number': '001'
+        "activity_id": "01",
+        "date": "2021-10-25",
+        "exposure_number": "00001",
+        "obs_id": "V42424001001P0000000001101",
+        "observation_label": "nircam_ptsrc_only",
+        "observation_number": "001",
+        "program_number": "42424",
+        "sequence_id": "1",
+        "time": "16:58:27.258",
+        "visit_group": "01",
+        "visit_id": "42424001001",
+        "visit_number": "001",
     }
     im.meta.exposure = {
-        'duration': 161.05155,
-        'end_time': 59512.70899968495,
-        'exposure_time': 150.31478,
-        'frame_time': 10.73677,
-        'group_time': 21.47354,
-        'groupgap': 1,
-        'integration_time': 150.31478,
-        'mid_time': 59512.70812980775,
-        'nframes': 1,
-        'ngroups': 7,
-        'nints': 1,
-        'nresets_at_start': 1,
-        'nresets_between_ints': 1,
-        'readpatt': 'BRIGHT1',
-        'sample_time': 10,
-        'start_time': 59512.70725993055,
-        'type': 'NRC_IMAGE'
+        "duration": 161.05155,
+        "end_time": 59512.70899968495,
+        "exposure_time": 150.31478,
+        "frame_time": 10.73677,
+        "group_time": 21.47354,
+        "groupgap": 1,
+        "integration_time": 150.31478,
+        "mid_time": 59512.70812980775,
+        "nframes": 1,
+        "ngroups": 7,
+        "nints": 1,
+        "nresets_at_start": 1,
+        "nresets_between_ints": 1,
+        "readpatt": "BRIGHT1",
+        "sample_time": 10,
+        "start_time": 59512.70725993055,
+        "type": "NRC_IMAGE",
     }
     im.meta.photometry = {
-        'pixelarea_steradians': 1e-13,
-        'pixelarea_arcsecsq': 4e-3,
+        "pixelarea_steradians": 1e-13,
+        "pixelarea_arcsecsq": 4e-3,
     }
 
     im = AssignWcsStep.call(im, sip_approx=False)
@@ -151,27 +151,26 @@ def _add_bad_pixels(im, sat_val, dont_use_val):
     cy -= 5
 
     # center
-    im.data[cx:cx + 10, cy:cy + 10] = dont_use_val
-    im.dq[cx:cx + 10, cy:cy + 10] = DO_NOT_USE
-    mask[cx:cx + 10, cy:cy + 10] = False
+    im.data[cx : cx + 10, cy : cy + 10] = dont_use_val
+    im.dq[cx : cx + 10, cy : cy + 10] = DO_NOT_USE
+    mask[cx : cx + 10, cy : cy + 10] = False
 
     return im, mask
 
 
 @pytest.mark.parametrize(
-    'skymethod, subtract, skystat, match_down, grouped',
+    "skymethod, subtract, skystat, match_down, grouped",
     tuple(
         product(
-            ['local', 'match', 'global', 'global+match'],
+            ["local", "match", "global", "global+match"],
             [False, True],
-            ['median', 'mean', 'midpt', 'mode'],
+            ["median", "mean", "midpt", "mode"],
             [False, True],
-            [False, True]
+            [False, True],
         )
-    )
+    ),
 )
-def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
-                  grouped):
+def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down, grouped):
     # test basic functionality and correctness of sky computations
     np.random.seed(1)
     im1 = nircam_rate.copy()
@@ -196,11 +195,7 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
     levels = [9.12, 8.28, 2.56]
 
     for im, lev in zip(container, levels):
-        im.data += np.random.normal(
-            loc=lev,
-            scale=0.1,
-            size=im.data.shape
-        )
+        im.data += np.random.normal(loc=lev, scale=0.1, size=im.data.shape)
 
     # exclude central DO_NOT_USE and corner SATURATED pixels
     result = SkyMatchStep.call(
@@ -211,10 +206,10 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
         skystat=skystat,
         binwidth=0.2,
         nclip=0,
-        dqbits='~DO_NOT_USE+SATURATED'
+        dqbits="~DO_NOT_USE+SATURATED",
     )
 
-    if skymethod == 'match' and grouped:
+    if skymethod == "match" and grouped:
         # nothing to "match" when there is only one group:
         assert im.meta.background.method is None
         assert im.meta.background.subtracted is None
@@ -227,20 +222,20 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
 
         return
 
-    if skymethod in ['local', 'global+match']:
+    if skymethod in ["local", "global+match"]:
         if grouped:
             ref_levels = len(levels) * [min(levels)]
         else:
             ref_levels = levels
 
-    elif skymethod == 'match':
+    elif skymethod == "match":
         if grouped:
             lev0 = 0
         else:
             lev0 = min(levels) if match_down else max(levels)
         ref_levels = np.subtract(levels, lev0)
 
-    elif skymethod == 'global':
+    elif skymethod == "global":
         ref_levels = len(levels) * [min(levels)]
 
     sub_levels = np.subtract(levels, ref_levels)
@@ -263,14 +258,8 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down,
 
 
 @pytest.mark.parametrize(
-    'skymethod, subtract, skystat',
-    tuple(
-        product(
-            ['local', 'match', 'global'],
-            [False, True],
-            ['mean']
-        )
-    )
+    "skymethod, subtract, skystat",
+    tuple(product(["local", "match", "global"], [False, True], ["mean"])),
 )
 def test_skymatch_overlap(nircam_rate, skymethod, subtract, skystat):
     # test that computations are performed only in the area of overlap
@@ -294,12 +283,7 @@ def test_skymatch_overlap(nircam_rate, skymethod, subtract, skystat):
     # region:
     im1a.meta.wcs = adjust_wcs(im2a.meta.wcs, delta_ra=0.1, delta_dec=0.1)
     im2a.meta.wcs = adjust_wcs(im2a.meta.wcs, delta_roll=30)
-    im2b.meta.wcs = adjust_wcs(
-        im2a.meta.wcs,
-        delta_ra=0.1,
-        delta_dec=0.1,
-        delta_roll=30
-    )
+    im2b.meta.wcs = adjust_wcs(im2a.meta.wcs, delta_ra=0.1, delta_dec=0.1, delta_roll=30)
     im3.meta.wcs = adjust_wcs(im3.meta.wcs, delta_roll=60)
 
     im2a.meta.observation.sequence_id = "2"
@@ -324,16 +308,16 @@ def test_skymatch_overlap(nircam_rate, skymethod, subtract, skystat):
         subtract=subtract,
         skystat=skystat,
         nclip=0,
-        dqbits='~DO_NOT_USE'  # specifically DO NOT add 'SATURATED' flag
+        dqbits="~DO_NOT_USE",  # specifically DO NOT add 'SATURATED' flag
     )
 
-    if skymethod in ['local', 'global+match']:
+    if skymethod in ["local", "global+match"]:
         ref_levels = levels
 
-    elif skymethod == 'match':
+    elif skymethod == "match":
         ref_levels = np.subtract(levels, min(levels))
 
-    elif skymethod == 'global':
+    elif skymethod == "global":
         ref_levels = len(levels) * [min(levels)]
 
     sub_levels = np.subtract(levels, ref_levels)
@@ -344,7 +328,7 @@ def test_skymatch_overlap(nircam_rate, skymethod, subtract, skystat):
             assert im.meta.background.method == skymethod
             assert im.meta.background.subtracted == subtract
 
-            if skymethod in ['local', 'global']:
+            if skymethod in ["local", "global"]:
                 # These two sky methods must fail because they do not take
                 # into account (do not compute) overlap regions and use
                 # entire images:
@@ -408,11 +392,9 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     im3.save(im3_path)
 
     assoc_out = asn_from_list(
-        [im1_path, im2_path, im3_path],
-        rule=DMS_Level3_Base,
-        product_name='skymatch'
+        [im1_path, im2_path, im3_path], rule=DMS_Level3_Base, product_name="skymatch"
     )
-    asn_out_fname, out_serialized = assoc_out.dump(format='json')
+    asn_out_fname, out_serialized = assoc_out.dump(format="json")
     asn_out_fname = asn_out_fname
     with open(asn_out_fname, "w") as asn_out:
         asn_out.write(out_serialized)
@@ -421,12 +403,12 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     # images are rotated and SATURATED pixels in the corners are not in the
     # common intersection of all input images. This is the purpose of this test
     step = SkyMatchStep(
-        skymethod='match',
+        skymethod="match",
         match_down=True,
         subtract=True,
-        skystat='mean',
+        skystat="mean",
         nclip=0,
-        dqbits='~DO_NOT_USE'  # specifically DO NOT add 'SATURATED' flag
+        dqbits="~DO_NOT_USE",  # specifically DO NOT add 'SATURATED' flag
     )
 
     result = step.run(asn_out_fname)
@@ -437,7 +419,7 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
     with result:
         for im, lev, rlev, slev in zip(result, levels, ref_levels, sub_levels):
             # check that meta was set correctly:
-            assert im.meta.background.method == 'match'
+            assert im.meta.background.method == "match"
             assert im.meta.background.subtracted is True
 
             # test computed/measured sky values:
@@ -449,13 +431,8 @@ def test_asn_input(tmp_cwd, nircam_rate, tmp_path):
 
 
 @pytest.mark.parametrize(
-    'skymethod, subtract',
-    tuple(
-        product(
-            ['local', 'match', 'global', 'global+match'],
-            [False, True]
-        )
-    )
+    "skymethod, subtract",
+    tuple(product(["local", "match", "global", "global+match"], [False, True])),
 )
 def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     # Test that repetitive applications of skymatch produce the same results
@@ -489,11 +466,9 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     im3.save(im3_path)
 
     assoc_out = asn_from_list(
-        [im1_path, im2_path, im3_path],
-        rule=DMS_Level3_Base,
-        product_name='skymatch'
+        [im1_path, im2_path, im3_path], rule=DMS_Level3_Base, product_name="skymatch"
     )
-    asn_out_fname, out_serialized = assoc_out.dump(format='json')
+    asn_out_fname, out_serialized = assoc_out.dump(format="json")
     with open(asn_out_fname, "w") as asn_out:
         asn_out.write(out_serialized)
 
@@ -504,9 +479,9 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
         skymethod=skymethod,
         match_down=True,
         subtract=subtract,
-        skystat='mean',
+        skystat="mean",
         nclip=0,
-        dqbits='~DO_NOT_USE+SATURATED'
+        dqbits="~DO_NOT_USE+SATURATED",
     )
 
     result = step.run(asn_out_fname)
@@ -520,13 +495,13 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
     result2 = step.run(result)
 
     # compute expected levels
-    if skymethod in ['local', 'global+match']:
+    if skymethod in ["local", "global+match"]:
         ref_levels = levels
 
-    elif skymethod == 'match':
+    elif skymethod == "match":
         ref_levels = np.subtract(levels, min(levels))
 
-    elif skymethod == 'global':
+    elif skymethod == "global":
         ref_levels = len(levels) * [min(levels)]
 
     sub_levels = np.subtract(levels, ref_levels)
@@ -551,7 +526,6 @@ def test_skymatch_2x(tmp_cwd, nircam_rate, tmp_path, skymethod, subtract):
 
 @pytest.mark.parametrize("subtract", (False, True))
 def test_user_skyfile(tmp_cwd, nircam_rate, subtract):
-
     # give them all different suffixes to ensure they get stripped properly
     im1 = nircam_rate.copy()
     im1.meta.filename = "one_tweakregstep.fits"
@@ -577,7 +551,7 @@ def test_user_skyfile(tmp_cwd, nircam_rate, subtract):
         for fname, lev in zip(fnames_skyfile, levels):
             f.write(f"{fname} {lev}\n")
 
-    #test good inputs
+    # test good inputs
     result = SkyMatchStep.call(
         container,
         subtract=subtract,
@@ -604,14 +578,13 @@ def test_user_skyfile(tmp_cwd, nircam_rate, subtract):
                 assert abs(np.mean(im.data) - lev) < 0.01
             result.shelve(im, modify=False)
 
-
     # test failures
     # no skylist file
     with pytest.raises(ValueError):
         # skylist must be provided
         SkyMatchStep.call(
             container,
-            skymethod='user',
+            skymethod="user",
         )
 
     # skylist file doesn't have right number of lines
@@ -621,11 +594,7 @@ def test_user_skyfile(tmp_cwd, nircam_rate, subtract):
             f.write(f"{fname} {lev}\n")
 
     with pytest.raises(ValueError):
-        SkyMatchStep.call(
-            container,
-            skymethod='user',
-            skylist=skyfile
-        )
+        SkyMatchStep.call(container, skymethod="user", skylist=skyfile)
 
     # skylist file does not contain all filenames
     skyfile = "skylist_missing.txt"
@@ -635,8 +604,4 @@ def test_user_skyfile(tmp_cwd, nircam_rate, subtract):
             f.write(f"{fname} {lev}\n")
 
     with pytest.raises(ValueError):
-        SkyMatchStep.call(
-            container,
-            skymethod='user',
-            skylist=skyfile
-        )
+        SkyMatchStep.call(container, skymethod="user", skylist=skyfile)

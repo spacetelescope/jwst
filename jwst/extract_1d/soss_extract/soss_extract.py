@@ -7,6 +7,7 @@ from scipy.interpolate import UnivariateSpline, CubicSpline
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags, SossWaveGridModel
 
+from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.extract_1d.extract import populate_time_keywords
 from jwst.lib import pipe_utils
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
@@ -1203,12 +1204,14 @@ def run_extract1d(
         estimate = UnivariateSpline(wv_estimate[idx], flux_estimate[idx], k=3, s=0, ext=0)
 
     # Initialize the output model.
-    output_model = datamodels.MultiSpecModel()
+    output_model = datamodels.TSOMultiSpecModel()
     output_model.update(input_model)  # Copy meta data from input to output.
 
     # Initialize output spectra returned by ATOCA
+    # NOTE: these diagnostic spectra are formatted as a simple MultiSpecModel,
+    # with integrations in separate spectral extensions.
     output_atoca = datamodels.MultiSpecModel()
-    output_model.update(input_model)
+    output_atoca.update(input_model)
 
     # Initialize output references (model of the detector and box aperture weights).
     output_references = datamodels.SossExtractModel()
@@ -1236,6 +1239,7 @@ def run_extract1d(
         raise TypeError(msg)
 
     # Loop over images.
+    output_spec_list = {}
     for i in range(nimages):
         log.info(f"Processing integration {i + 1} of {nimages}.")
 
@@ -1307,9 +1311,8 @@ def run_extract1d(
             log.critical(msg)
             raise ValueError(msg)
         else:
-            # Return empty tracemodels and no spec_list
+            # Return empty tracemodels
             tracemodels = {}
-            spec_list = None
 
         # Decontaminate the data using trace models (if tracemodels not empty)
         data_to_extract = _decontaminate_image(scidata_bkg, tracemodels, subarray)
@@ -1362,14 +1365,25 @@ def run_extract1d(
             spec.spectral_order = order_str_2_int[order]
             spec.int_num = i + 1  # integration number starts at 1, not 0 like python
 
-            output_model.spec.append(spec)
+            if order in output_spec_list:
+                output_spec_list[order].append(spec)
+            else:
+                output_spec_list[order] = [spec]
 
-        output_model.meta.soss_extract1d.width = soss_kwargs["width"]
-        output_model.meta.soss_extract1d.apply_decontamination = soss_kwargs["atoca"]
-        output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs["tikfac"]
-        output_model.meta.soss_extract1d.oversampling = soss_kwargs["n_os"]
-        output_model.meta.soss_extract1d.threshold = soss_kwargs["threshold"]
-        output_model.meta.soss_extract1d.bad_pix = soss_kwargs["bad_pix"]
+    # Make a TSOSpecModel from the output spec list
+    for order in output_spec_list:
+        tso_spec = make_tso_specmodel(
+            output_spec_list[order], segment=input_model.meta.exposure.segment_number
+        )
+        output_model.spec.append(tso_spec)
+
+    # Update output model
+    output_model.meta.soss_extract1d.width = soss_kwargs["width"]
+    output_model.meta.soss_extract1d.apply_decontamination = soss_kwargs["atoca"]
+    output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs["tikfac"]
+    output_model.meta.soss_extract1d.oversampling = soss_kwargs["n_os"]
+    output_model.meta.soss_extract1d.threshold = soss_kwargs["threshold"]
+    output_model.meta.soss_extract1d.bad_pix = soss_kwargs["bad_pix"]
 
     # Save output references
     for order in all_tracemodels:

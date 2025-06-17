@@ -7,7 +7,7 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.resample.resample_utils import load_custom_wcs
 
 from . import resample
-from ..stpipe import Step
+from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -46,6 +46,9 @@ class ResampleStep(Step):
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
         in_memory = boolean(default=True)  # Keep images in memory
+        enable_ctx = boolean(default=True)  # Compute and report the context array
+        enable_err = boolean(default=True)  # Compute and report the err array
+        report_var = boolean(default=True)  # Report the variance array
     """  # noqa: E501
 
     reference_file_types: list = []
@@ -116,8 +119,24 @@ class ResampleStep(Step):
             result = resamp.resample_many_to_many(in_memory=self.in_memory)
 
         else:
+            if self.enable_err:
+                # If error is enabled, we compute the error from the variance
+                compute_err = "from_var"
+                enable_var = True
+                report_var = self.report_var
+            else:
+                # otherwise do not compute the error arrays at all
+                enable_var = False
+                compute_err = None
+                report_var = False
             resamp = resample.ResampleImage(
-                input_models, output=output, enable_var=True, compute_err="from_var", **kwargs
+                input_models,
+                output=output,
+                enable_ctx=self.enable_ctx,
+                enable_var=enable_var,
+                report_var=report_var,
+                compute_err=compute_err,
+                **kwargs,
             )
             result = resamp.resample_many_to_one()
 

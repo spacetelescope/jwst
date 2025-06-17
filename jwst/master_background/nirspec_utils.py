@@ -102,7 +102,7 @@ def create_background_from_multispec(bkg_model, sigma_clip=3, median_kernel=1):
     x1d: `jwst.datamodels.MultiSpecModel`
         The 1D extracted background spectra of the inputs.
     """
-    from ..combine_1d.combine1d import combine_1d_spectra
+    from jwst.combine_1d.combine1d import combine_1d_spectra
 
     # Call combine_1d to combine the 1D background spectra
     log.info("Combining 1D background spectra into master background")
