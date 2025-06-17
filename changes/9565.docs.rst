@@ -1,0 +1,1 @@
+Remove description of non-working step-specific log configuration.
