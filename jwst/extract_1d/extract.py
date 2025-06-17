@@ -17,7 +17,7 @@ from stdatamodels.jwst.datamodels.apcorr import (
 )
 
 from jwst.datamodels import ModelContainer
-from jwst.datamodels.library import attrs_to_group_id
+from jwst.datamodels.utils import attrs_to_group_id
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.lib import pipe_utils
 from jwst.lib.wcs_utils import get_wavelengths
