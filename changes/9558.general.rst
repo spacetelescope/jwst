@@ -1,0 +1,1 @@
+Removed ``pytest_jwst`` plugin. Settings from the plugin are now in ``pyproject.toml`` and ``jwst/conftest.py``.

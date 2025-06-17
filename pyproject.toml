@@ -81,9 +81,6 @@ world_coords = "jwst.scripts.world_coords:main"
 [project.entry-points."stpipe.steps"]
 jwst = "jwst.stpipe.integration:get_steps"
 
-[project.entry-points.pytest11]
-report_crds_context = "pytest_jwst.plugin"
-
 [project.optional-dependencies]
 docs = [
     "matplotlib",
@@ -124,7 +121,7 @@ include-package-data = false
 
 [tool.setuptools.packages.find]
 namespaces = false
-include = ["pytest_jwst*", "jwst*"]
+include = ["jwst*"]
 
 [tool.setuptools.package-data]
 "*" = [
@@ -207,7 +204,6 @@ norecursedirs = [
     "docs/_build",
     "docs/exts",
     "jwst/associations/tests/data",
-    "pytest_jwst",
     "scripts",
     ".tox",
     ".eggs",
