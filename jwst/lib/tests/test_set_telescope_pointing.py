@@ -1,20 +1,18 @@
 """
 Test suite for set_telescope_pointing
 """
-
-import logging
-import numpy as np
-from pathlib import Path
-import warnings
-
 import pytest
 
 pytest.importorskip("pysiaf")
 
+import logging  # noqa: E402
+import warnings  # noqa: E402
+
+import numpy as np  # noqa: E402
 from astropy.io import fits  # noqa: E402
 from astropy.table import Table  # noqa: E402
 from astropy.time import Time  # noqa: E402
-
+from astropy.utils.data import get_pkg_data_filename  # noqa: E402
 from stdatamodels.jwst import datamodels  # noqa: E402
 
 from jwst.lib import engdb_mast  # noqa: E402
@@ -35,9 +33,6 @@ ZEROTIME_END = Time("2014-01-02")
 # Header defaults
 TARG_RA = 345.0
 TARG_DEC = -87.0
-
-# Get the mock databases
-DATA_PATH = Path(__file__).parent / "data"
 
 Q_EXPECTED = np.array([0.37671179, 0.70705936, -0.57895271, 0.15155541])
 J2FGS_EXPECTED = np.array(
@@ -339,7 +334,7 @@ def test_add_wcs_default(data_file, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(DATA_PATH / expected_name) as expected:
+        with datamodels.open(get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta], f"{meta} has changed"
 
@@ -351,7 +346,7 @@ def test_add_wcs_default(data_file, tmp_path):
 
 def test_add_wcs_default_fgsacq(tmp_path):
     """Handle when no pointing exists and the default is used."""
-    with datamodels.Level1bModel(DATA_PATH / "add_wcs_default_acq1.fits") as model:
+    with datamodels.Level1bModel(get_pkg_data_filename("data/add_wcs_default_acq1.fits", package="jwst.lib.tests")) as model:
         expected_name = "add_wcs_default_acq1.fits"
         try:
             stp.update_wcs(model, tolerance=0, allow_default=True)
@@ -385,7 +380,7 @@ def test_add_wcs_with_db(data_file, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(DATA_PATH / expected_name) as expected:
+        with datamodels.open(get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
@@ -419,7 +414,7 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(DATA_PATH / expected_name) as expected:
+        with datamodels.open(get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta], f"{meta} is not equal"
 
@@ -441,7 +436,7 @@ def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(DATA_PATH / expected_name) as expected:
+        with datamodels.open(get_pkg_data_filename(f"data/{expected_name}"), package="jwst.lib.tests") as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
@@ -623,9 +618,7 @@ def _test_methods(calc_transforms, matrix, truth_ext=""):
     """
     transforms, t_pars = calc_transforms
 
-    expected_tforms = stp.Transforms.from_asdf(
-        DATA_PATH / f"tforms_{t_pars.method}{truth_ext}.asdf"
-    )
+    expected_tforms = stp.Transforms.from_asdf(get_pkg_data_filename(f"data/tforms_{t_pars.method}{truth_ext}.asdf", package="jwst.lib.tests"))
     expected_value = getattr(expected_tforms, matrix)
 
     value = getattr(transforms, matrix)
