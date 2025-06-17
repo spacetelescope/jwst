@@ -10,9 +10,9 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 
-from ..lib import reffile_utils
+from jwst.lib import reffile_utils
 
 import logging
 

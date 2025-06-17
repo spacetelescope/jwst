@@ -12,9 +12,10 @@ ASN_ID = "a008"
 INPUT_FILENAME = "foo_outlier_s2d.fits"
 SUFFIX = "test"
 
+
 @pytest.fixture(scope="module")
 def model():
-    model = ImageModel(data=np.zeros((10,10)))
+    model = ImageModel(data=np.zeros((10, 10)))
     model.meta.filename = INPUT_FILENAME
     return model
 
@@ -27,7 +28,6 @@ def make_output_path():
 @pytest.mark.parametrize("asn_id", [None, ASN_ID])
 @pytest.mark.parametrize("slit_id", [None, SLIT_ID])
 def test_save(tmp_cwd, model, make_output_path, asn_id, slit_id):
-
     this_model = model.copy()
     if slit_id is not None:
         this_model.name = slit_id
@@ -36,5 +36,5 @@ def test_save(tmp_cwd, model, make_output_path, asn_id, slit_id):
 
     stem = model.meta.filename.split("_")[0]
     inputs = [val for val in [stem, asn_id, slit_id, SUFFIX] if val is not None]
-    expected_filename = "_".join(inputs)+".fits"
+    expected_filename = "_".join(inputs) + ".fits"
     assert os.path.isfile(expected_filename)

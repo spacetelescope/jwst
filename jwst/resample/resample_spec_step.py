@@ -9,9 +9,9 @@ from jwst.lib.wcs_utils import get_wavelengths
 from jwst.resample.resample_utils import load_custom_wcs, find_miri_lrs_sregion
 
 from . import resample_spec, ResampleStep
-from ..exp_to_source import multislit_to_container
-from ..assign_wcs.util import update_s_region_spectral
-from ..stpipe import Step
+from jwst.exp_to_source import multislit_to_container
+from jwst.assign_wcs.util import update_s_region_spectral
+from jwst.stpipe import Step
 
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE

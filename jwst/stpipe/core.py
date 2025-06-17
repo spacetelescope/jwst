@@ -11,7 +11,7 @@ from stpipe import crds_client, Step, Pipeline
 from jwst import __version_commit__, __version__
 from jwst.datamodels import ModelLibrary, ModelContainer
 from ._cal_logs import _LOG_FORMATTER
-from ..lib.suffix import remove_suffix
+from jwst.lib.suffix import remove_suffix
 
 
 log = logging.getLogger(__name__)
@@ -98,8 +98,8 @@ class JwstStep(Step):
             Association
         """
         # Prevent circular import:
-        from ..associations.load_as_asn import LoadAsLevel2Asn
-        from ..associations.lib.update_path import update_key_value
+        from jwst.associations.load_as_asn import LoadAsLevel2Asn
+        from jwst.associations.lib.update_path import update_key_value
 
         asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
@@ -123,8 +123,8 @@ class JwstStep(Step):
             Association
         """
         # Prevent circular import:
-        from ..associations.load_as_asn import LoadAsAssociation
-        from ..associations.lib.update_path import update_key_value
+        from jwst.associations.load_as_asn import LoadAsAssociation
+        from jwst.associations.lib.update_path import update_key_value
 
         asn = LoadAsAssociation.load(obj)
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)

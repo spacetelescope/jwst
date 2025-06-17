@@ -2,8 +2,8 @@
 import logging
 
 from .generate import generate
-from ..lib.utilities import constrain_on_candidates, filter_discovered_only
-from ..registry import AssociationRegistry
+from jwst.associations.lib.utilities import constrain_on_candidates, filter_discovered_only
+from jwst.associations.registry import AssociationRegistry
 
 __all__ = ["generate_per_pool"]
 

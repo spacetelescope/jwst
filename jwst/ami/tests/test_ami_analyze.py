@@ -1,4 +1,5 @@
 """Unit tests for ami_analyze module and step."""
+
 import pytest
 import numpy as np
 import math
@@ -38,6 +39,7 @@ def test_ami_analyze_step(example_model, tmp_cwd):
         assert "SCI" not in extensions
         for kw in ["VPARITY", "V3I_YANG", "ROLL_REF"]:
             assert kw in list(hdul[0].header.keys())
+
 
 
 def test_ami_analyze_step_no_affine(example_model):
