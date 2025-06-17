@@ -6,18 +6,13 @@ import pytest
 from jwst.lib.file_utils import pushdir
 
 
-def test_pushdir():
+def test_pushdir(tmp_path):
     """Test for successful change"""
-    # Retrieve what the /tmp folder really is
+    # Retrieve a temp folder
     current = os.getcwd()
-    try:
-        os.chdir("/tmp")
-    except Exception:
-        pytest.xfail("Cannot change to the tmp directory. Test cannot run")
-    tmp_dir = os.getcwd()
-    os.chdir(current)
+    tmp_dir = str(tmp_path)
 
-    # Now on with the test.
+    # Temporarily move to the temp folder
     with pushdir(tmp_dir):
         assert tmp_dir == os.getcwd(), "New directory is not what was specified."
     assert current == os.getcwd(), "Directory was not restored"

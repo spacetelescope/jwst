@@ -724,8 +724,8 @@ def test_omit_ref_file():
     step.process()
 
 
-def test_search_attr():
-    value = "/tmp"
+def test_search_attr(tmp_path):
+    value = str(tmp_path)
     pipeline = SavePipeline("afile.fits", output_dir=value)  # codespell:ignore afile
 
     assert pipeline.search_attr("output_dir") == value
