@@ -41,17 +41,7 @@ ignored:
 #. ``/etc/stpipe-log.cfg``
 
 The logging configuration file is in the standard ini-file format.
-
-Each section name is a Unix-style filename glob pattern used to match
-a particular Step’s logger.  The settings in that section apply only
-to that Steps that match that pattern.  For example, to have the
-settings apply to all steps, create a section called ``[*]``.  To have
-the settings apply only to a Step called ``MyStep``, create a section
-called ``[*.MyStep]``.  To apply settings to all Steps that are
-substeps of a step called ``MyStep``, call the section
-``[*.MyStep.*]``.
-
-In each section, the following may be configured:
+The file should contain a single section called ``[*]`` that contains:
 
 #. ``level``: The level at and above which logging messages will be
    displayed.  May be one of (from least important to most
@@ -84,8 +74,8 @@ In each section, the following may be configured:
    <https://docs.python.org/3/library/logging.html#logrecord-attributes>`_
    section of the Python standard library.
 
-Examples
-========
+Example
+=======
 
 The following configuration turns on all log messages and saves them
 in the file myrun.log:
@@ -95,17 +85,3 @@ in the file myrun.log:
     [*]
     level = INFO
     handler = file:myrun.log
-
-In a scenario where the user is debugging a particular Step, they may
-want to hide all logging messages except for that Step, and stop when
-hitting any warning for that Step:
-
-.. code-block:: ini
-
-    [*]
-    level = CRITICAL
-
-    [*.MyStep]
-    level = INFO
-    break_level = WARNING
-
