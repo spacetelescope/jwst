@@ -57,7 +57,7 @@ jobs:
     outputs:
       context: ${{ steps.context.outputs.context }}
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@a2e0af7c20b84890b3a72de89c24c3382d6847fb  # v1.17.0
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@d83bb11581e517f1e786ae76f146781fdd21cd2f  # v2.0.0
     needs: [ crds_context ]
     with:
       setenv: |
