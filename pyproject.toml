@@ -219,7 +219,6 @@ doctest_rst = "enabled"
 addopts = [
     "-p no:legacypath",
     "--show-capture=no",
-    "--report-crds-context",
     "--color=yes",
 ]
 xfail_strict = true

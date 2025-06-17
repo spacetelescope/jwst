@@ -220,9 +220,6 @@ def pytest_report_header(config):
     str
         Report header string with CRDS context information.
     """
-    if config.getoption("report_crds_context"):
-        from stpipe.crds_client import get_context_used
+    from stpipe.crds_client import get_context_used
 
-        return f"crds_context: {get_context_used('jwst')}"
-    else:
-        return []
+    return f"crds_context: {get_context_used('jwst')}"
