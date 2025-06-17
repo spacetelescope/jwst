@@ -58,7 +58,9 @@ def test_calc_deltas(engdb, data_path):
     with ImageModel(data_path) as model:
         deltas = ps.calc_deltas([model])
 
-    truth = Table.read(get_pkg_data_filename("data/calc_deltas_truth.ecsv", package="jwst.lib.tests"))
+    truth = Table.read(
+        get_pkg_data_filename("data/calc_deltas_truth.ecsv", package="jwst.lib.tests")
+    )
 
     # round the delta values to a reasonable level
     deltas[0][4] = round(deltas[0][4], 8)

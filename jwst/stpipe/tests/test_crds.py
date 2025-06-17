@@ -34,7 +34,9 @@ def _run_flat_fetch_on_dataset(dataset_path):
     from stdatamodels.jwst import datamodels
 
     step = CrdsStep()
-    with datamodels.ImageModel(get_pkg_data_filename(dataset_path, package="jwst.stpipe.tests")) as input_file:
+    with datamodels.ImageModel(
+        get_pkg_data_filename(dataset_path, package="jwst.stpipe.tests")
+    ) as input_file:
         step.run(input_file)
     assert basename(step.ref_filename) == "jwst_nircam_flat_0296.fits"
 
@@ -43,8 +45,12 @@ def test_crds_step_override(tmp_path):
     """Run CRDS step with override parameter bypassing CRDS lookup."""
     from stdatamodels.jwst import datamodels
 
-    step = CrdsStep(override_flat=get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests"))
-    with datamodels.ImageModel(get_pkg_data_filename("data/crds.fits", package="jwst.stpipe.tests")) as input_file:
+    step = CrdsStep(
+        override_flat=get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests")
+    )
+    with datamodels.ImageModel(
+        get_pkg_data_filename("data/crds.fits", package="jwst.stpipe.tests")
+    ) as input_file:
         result = step.run(input_file)
     assert step.ref_filename.endswith("data/flat.fits")
     assert result.meta.ref_file.flat.name.endswith("flat.fits")

@@ -14,7 +14,9 @@ from jwst.lib.file_utils import pushdir
 
 FITS_FILE = get_pkg_data_filename("data/test.fits", package="jwst.datamodels.tests")
 ASN_FILE = get_pkg_data_filename("data/association.json", package="jwst.datamodels.tests")
-CUSTOM_GROUP_ID_ASN_FILE = get_pkg_data_filename("data/association_group_id.json", package="jwst.datamodels.tests")
+CUSTOM_GROUP_ID_ASN_FILE = get_pkg_data_filename(
+    "data/association_group_id.json", package="jwst.datamodels.tests"
+)
 
 
 @pytest.fixture

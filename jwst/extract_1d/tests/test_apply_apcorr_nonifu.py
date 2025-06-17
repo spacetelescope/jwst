@@ -8,8 +8,12 @@ from stdatamodels.jwst.datamodels import JwstDataModel
 from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrPhase, select_apcorr
 
 NIR_TEST_FILES = {
-    "MSASPEC": get_pkg_data_filename("data/jwst_nirspec_apcorr_msa_dummy.fits", package="jwst.extract_1d.tests"),
-    "FIXEDSLIT/BRIGHTOBJ": get_pkg_data_filename("data/jwst_nirspec_apcorr_fs_dummy.fits", package="jwst.extract_1d.tests"),
+    "MSASPEC": get_pkg_data_filename(
+        "data/jwst_nirspec_apcorr_msa_dummy.fits", package="jwst.extract_1d.tests"
+    ),
+    "FIXEDSLIT/BRIGHTOBJ": get_pkg_data_filename(
+        "data/jwst_nirspec_apcorr_fs_dummy.fits", package="jwst.extract_1d.tests"
+    ),
 }
 
 

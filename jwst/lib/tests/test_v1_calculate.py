@@ -37,7 +37,9 @@ def test_from_models_mast(tmp_path):
     # Save for post-test examination
     v1_formatted.write(tmp_path / "test_from_models_mast.ecsv", format="ascii.ecsv")
 
-    truth = Table.read(get_pkg_data_filename("data/test_from_models_mast.ecsv", package="jwst.lib.tests"))
+    truth = Table.read(
+        get_pkg_data_filename("data/test_from_models_mast.ecsv", package="jwst.lib.tests")
+    )
     errors = v1_compare_simplified_tables(v1_formatted, truth)
     errors_str = "\n".join(errors)
     assert len(errors) == 0, f"V1 tables are different: {errors_str}"
@@ -61,7 +63,9 @@ def test_over_time_mast(tmp_path):
     # Save for post-test examination
     v1_formatted.write(tmp_path / "test_over_time_mast.ecsv", format="ascii.ecsv")
 
-    truth = Table.read(get_pkg_data_filename("data/test_over_time_mast.ecsv", package="jwst.lib.tests"))
+    truth = Table.read(
+        get_pkg_data_filename("data/test_over_time_mast.ecsv", package="jwst.lib.tests")
+    )
     errors = v1_compare_simplified_tables(v1_formatted, truth)
     errors_str = "\n".join(errors)
     assert len(errors) == 0, f"V1 tables are different: {errors_str}"
