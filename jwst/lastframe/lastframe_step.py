@@ -1,5 +1,5 @@
 from stdatamodels.jwst import datamodels
-from ..stpipe import Step
+from jwst.stpipe import Step
 from . import lastframe_sub
 
 __all__ = ["LastFrameStep"]

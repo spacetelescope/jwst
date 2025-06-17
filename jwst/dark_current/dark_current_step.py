@@ -1,6 +1,6 @@
 from stdatamodels.jwst import datamodels
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 from stcal.dark_current import dark_sub
 import numpy as np
 

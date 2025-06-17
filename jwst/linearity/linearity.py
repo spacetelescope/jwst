@@ -1,5 +1,5 @@
 from stdatamodels.jwst.datamodels import dqflags
-from ..lib import reffile_utils
+from jwst.lib import reffile_utils
 
 import numpy as np
 import logging

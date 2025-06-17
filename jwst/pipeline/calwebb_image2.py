@@ -4,15 +4,15 @@ from pathlib import Path
 
 from stdatamodels.jwst import datamodels
 
-from ..associations.load_as_asn import LoadAsLevel2Asn
-from ..stpipe import Pipeline
+from jwst.associations.load_as_asn import LoadAsLevel2Asn
+from jwst.stpipe import Pipeline
 
 # calwebb IMAGE2 step imports
-from ..background import background_step
-from ..assign_wcs import assign_wcs_step
-from ..flatfield import flat_field_step
-from ..photom import photom_step
-from ..resample import resample_step
+from jwst.background import background_step
+from jwst.assign_wcs import assign_wcs_step
+from jwst.flatfield import flat_field_step
+from jwst.photom import photom_step
+from jwst.resample import resample_step
 
 
 __all__ = ["Image2Pipeline"]

@@ -8,9 +8,9 @@ from .util import (
     update_s_region_mrs,
     update_s_region_lrs,
 )
-from ..lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
-from ..lib.dispaxis import get_dispersion_direction
-from ..lib.wcs_utils import get_wavelengths
+from jwst.lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
+from jwst.lib.dispaxis import get_dispersion_direction
+from jwst.lib.wcs_utils import get_wavelengths
 from .miri import store_dithered_position
 
 log = logging.getLogger(__name__)

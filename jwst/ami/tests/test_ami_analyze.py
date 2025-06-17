@@ -1,4 +1,5 @@
 """Unit tests for ami_analyze module and step."""
+
 import pytest
 import numpy as np
 import math
@@ -29,6 +30,7 @@ def test_ami_analyze_no_reffile_fail(monkeypatch, example_model):
 
 def test_ami_analyze_step(example_model):
     AmiAnalyzeStep.call(example_model)
+
 
 def test_ami_analyze_step_no_affine(example_model):
     AmiAnalyzeStep.call(example_model, affine2d=None)
