@@ -1,0 +1,1 @@
+Move pointing information in AmiOIModel from model.meta.ami to model.meta.guidestar (FITS headers remain identical)
