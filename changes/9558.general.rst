@@ -1,1 +1,1 @@
-Removed ``pytest_jwst`` plugin. Settings from the plugin are now in ``pyproject.toml`` and ``jwst/conftest.py``.
+Removed ``pytest_jwst`` plugin. Pytest header customization is now in ``jwst/conftest.py`` and CRDS context is always being reported.
