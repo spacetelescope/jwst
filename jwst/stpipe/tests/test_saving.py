@@ -482,7 +482,6 @@ def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
     Step.from_cmdline(args)
 
     output_files = [path.split(result_path)[1] for result_path in glob("*")]
-    # print("Created files are: {}".format(output_files))
 
     valid_files = ["swc_model1_pp.fits", "swc_model2_pp.fits"]
     for valid_file in valid_files:
@@ -504,7 +503,6 @@ def test_save_proper_pipeline_container_nosearch(mk_tmp_dirs):
     Step.from_cmdline(args)
 
     output_files = [path.split(result_path)[1] for result_path in glob("*")]
-    # print("Created files are: {}".format(output_files))
 
     valid_files = ["flat_0_pp.fits", "flat_1_pp.fits", "swc_model1_swc.fits", "swc_model2_swc.fits"]
     for valid_file in valid_files:
