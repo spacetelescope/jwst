@@ -86,7 +86,9 @@ class MyPipeline(Pipeline):
     def process(self, *args):
         science = datamodels.open(self.science_filename)
         if self.flat_filename is None:
-            self.flat_filename = get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests")
+            self.flat_filename = get_pkg_data_filename(
+                "data/flat.fits", package="jwst.stpipe.tests"
+            )
         flat = datamodels.open(self.flat_filename)
         calibrated = []
         calibrated.append(self.flat_field.run(science, flat))
@@ -100,7 +102,9 @@ class MyPipeline(Pipeline):
 
 
 def test_pipeline_from_config_file(tmp_cwd):
-    config_file_path = get_pkg_data_filename("steps/python_pipeline.cfg", package="jwst.stpipe.tests")
+    config_file_path = get_pkg_data_filename(
+        "steps/python_pipeline.cfg", package="jwst.stpipe.tests"
+    )
     pipe = Pipeline.from_config_file(config_file_path)
 
     assert pipe.flat_field.threshold == 42.0
@@ -168,7 +172,7 @@ def test_prefetch(tmp_cwd, monkeypatch):
 def test_pipeline_from_cmdline_cfg(tmp_cwd):
     args = [
         get_pkg_data_filename("steps/python_pipeline.cfg", package="jwst.stpipe.tests"),
-        '--steps.flat_field.threshold=47',
+        "--steps.flat_field.threshold=47",
     ]
 
     pipe = Step.from_cmdline(args)

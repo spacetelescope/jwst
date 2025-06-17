@@ -27,7 +27,7 @@ def read_fit_column(file):
     # residual_fringe.py to write out a column of data
     # The function we are testing is fit_1d_background_complex.
 
-    file_path =  get_pkg_data_filename(f"data/{file}", package="jwst.residual_fringe.tests")
+    file_path = get_pkg_data_filename(f"data/{file}", package="jwst.residual_fringe.tests")
 
     with fits.open(file_path) as hdu:
         col_data = hdu[1].data

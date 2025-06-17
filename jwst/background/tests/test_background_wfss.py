@@ -122,7 +122,9 @@ def make_wfss_datamodel(mock_data):
     image.original_data_mean = mock_data[2]  # just add this here for convenience
     image.dq = np.isnan(image.data)
 
-    image.meta.source_catalog = get_pkg_data_filename("data/test_cat.ecsv", package="jwst.background.tests")
+    image.meta.source_catalog = get_pkg_data_filename(
+        "data/test_cat.ecsv", package="jwst.background.tests"
+    )
 
     return image
 
@@ -424,7 +426,10 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
 def mock_asn_and_data(tmp_path_factory, make_nis_wfss_datamodel):
     # Create temp dir and copy the catalog in there
     tmp_path = tmp_path_factory.mktemp("asn_input")
-    shutil.copy(get_pkg_data_filename("data/test_cat.ecsv", package="jwst.background.tests"), str(tmp_path / "test_cat.ecsv"))
+    shutil.copy(
+        get_pkg_data_filename("data/test_cat.ecsv", package="jwst.background.tests"),
+        str(tmp_path / "test_cat.ecsv"),
+    )
     # Save the datmodel into a rate file but remove the catalog to make sure it is
     # added back in by the asn_intake module
     make_nis_wfss_datamodel.meta.source_catalog = None

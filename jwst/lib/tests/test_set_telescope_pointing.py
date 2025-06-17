@@ -1,6 +1,7 @@
 """
 Test suite for set_telescope_pointing
 """
+
 import pytest
 
 pytest.importorskip("pysiaf")
@@ -334,7 +335,9 @@ def test_add_wcs_default(data_file, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")) as expected:
+        with datamodels.open(
+            get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")
+        ) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta], f"{meta} has changed"
 
@@ -346,7 +349,9 @@ def test_add_wcs_default(data_file, tmp_path):
 
 def test_add_wcs_default_fgsacq(tmp_path):
     """Handle when no pointing exists and the default is used."""
-    with datamodels.Level1bModel(get_pkg_data_filename("data/add_wcs_default_acq1.fits", package="jwst.lib.tests")) as model:
+    with datamodels.Level1bModel(
+        get_pkg_data_filename("data/add_wcs_default_acq1.fits", package="jwst.lib.tests")
+    ) as model:
         expected_name = "add_wcs_default_acq1.fits"
         try:
             stp.update_wcs(model, tolerance=0, allow_default=True)
@@ -380,7 +385,9 @@ def test_add_wcs_with_db(data_file, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")) as expected:
+        with datamodels.open(
+            get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")
+        ) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
@@ -414,7 +421,9 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")) as expected:
+        with datamodels.open(
+            get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")
+        ) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta], f"{meta} is not equal"
 
@@ -436,7 +445,9 @@ def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(get_pkg_data_filename(f"data/{expected_name}"), package="jwst.lib.tests") as expected:
+        with datamodels.open(
+            get_pkg_data_filename(f"data/{expected_name}"), package="jwst.lib.tests"
+        ) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
@@ -618,7 +629,11 @@ def _test_methods(calc_transforms, matrix, truth_ext=""):
     """
     transforms, t_pars = calc_transforms
 
-    expected_tforms = stp.Transforms.from_asdf(get_pkg_data_filename(f"data/tforms_{t_pars.method}{truth_ext}.asdf", package="jwst.lib.tests"))
+    expected_tforms = stp.Transforms.from_asdf(
+        get_pkg_data_filename(
+            f"data/tforms_{t_pars.method}{truth_ext}.asdf", package="jwst.lib.tests"
+        )
+    )
     expected_value = getattr(expected_tforms, matrix)
 
     value = getattr(transforms, matrix)
