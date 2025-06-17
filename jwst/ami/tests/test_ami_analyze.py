@@ -41,7 +41,6 @@ def test_ami_analyze_step(example_model, tmp_cwd):
             assert kw in list(hdul[0].header.keys())
 
 
-
 def test_ami_analyze_step_no_affine(example_model):
     AmiAnalyzeStep.call(example_model, affine2d=None)
 
