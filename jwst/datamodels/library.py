@@ -133,7 +133,7 @@ class ModelLibrary(AbstractModelLibrary):
         if "group_id" in meta.keys():
             return meta["group_id"]
         try:
-            return _attrs_to_group_id(meta["observation"])
+            return attrs_to_group_id(meta["observation"])
 
         except KeyError as e:
             msg = f"Cannot find header keyword {e} in {filename}"
@@ -166,7 +166,7 @@ class ModelLibrary(AbstractModelLibrary):
             return group_id
         if model.meta.hasattr("observation"):
             try:
-                return _attrs_to_group_id(model.meta.observation)
+                return attrs_to_group_id(model.meta.observation)
             except KeyError as e:
                 raise NoGroupID(f"Cannot build group_id from model.meta.observation: {e}") from e
         raise NoGroupID(f"{model} missing group_id: meta.observation was not found.")
@@ -241,7 +241,7 @@ class ModelLibrary(AbstractModelLibrary):
         return meta
 
 
-def _attrs_to_group_id(obs_meta):
+def attrs_to_group_id(obs_meta):
     """
     Combine a number of file metadata values into a ``group_id`` string.
 

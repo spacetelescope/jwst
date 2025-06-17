@@ -501,7 +501,7 @@ def mock_nis_wfss_l2():
     model.meta.observation.visit_group = "1"
     model.meta.observation.sequence_id = "1"
     model.meta.observation.activity_id = "1"
-    model.meta.exposure.number = "5"
+    model.meta.observation.exposure_number = "5"
     model.meta.exposure.type = "NIS_WFSS"
 
     slit0 = mock_nirspec_fs_one_slit_function()

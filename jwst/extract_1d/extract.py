@@ -17,6 +17,7 @@ from stdatamodels.jwst.datamodels.apcorr import (
 )
 
 from jwst.datamodels import ModelContainer
+from jwst.datamodels.library import attrs_to_group_id
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.lib import pipe_utils
 from jwst.lib.wcs_utils import get_wavelengths
@@ -1966,18 +1967,8 @@ def _make_group_id(model, spectral_order):
     str
         The group ID.
     """
-    program_number = model.meta.observation.program_number
-    observation_number = model.meta.observation.observation_number
-    visit_number = model.meta.observation.visit_number
-    visit_group = model.meta.observation.visit_group
-    sequence_id = model.meta.observation.sequence_id
-    activity_id = model.meta.observation.activity_id
-    exposure_number = model.meta.observation.exposure_number
-    return (
-        f"jw{program_number}{observation_number}{visit_number}"
-        f"_{visit_group}{sequence_id}{activity_id}"
-        f"_{exposure_number}_{spectral_order}"
-    )
+    group_id = attrs_to_group_id(model.meta.observation)
+    return group_id + f"_{spectral_order}"
 
 
 def _make_output_model(data_model, meta_source):
