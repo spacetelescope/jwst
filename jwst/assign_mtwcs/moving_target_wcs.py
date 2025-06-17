@@ -46,8 +46,8 @@ def assign_moving_target_wcs(input_models):
 
     # loop over only science exposures in the ModelLibrary
     ind = input_models.indices_for_exptype("science")
-    mt_ra = np.full(len(ind), None)
-    mt_dec = np.full(len(ind), None)
+    mt_ra = np.full(len(ind), np.nan)
+    mt_dec = np.full(len(ind), np.nan)
     mt_valid = True
     with input_models:
         for i in ind:
