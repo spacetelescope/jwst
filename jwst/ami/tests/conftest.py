@@ -45,6 +45,7 @@ def example_model():
     model.meta.visit.start_time = "2022-06-05 12:15:41.5020000"
     model.meta.wcsinfo.roll_ref = 171.8779402866089
     model.meta.wcsinfo.v3yangle = 0.56126717
+    model.meta.wcsinfo.vparity = 1
     model.meta.filename = "test_calints.fits"
     model.meta.instrument.pupil = "NRM"
     model.meta.exposure.type = "NIS_AMI"
