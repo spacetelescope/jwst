@@ -5,6 +5,7 @@
 
 # developers can own some specific paths
 /.github/ @spacetelescope/jwst-pipeline-developers  # CI files
+/.github/dependabot.yml @zacharyburnett  # Replaced reviewers field in the dependabot.yml
 /* @spacetelescope/jwst-pipeline-developers  # top level files only
 /changes/** @spacetelescope/jwst-pipeline-developers  # changelogs
 /docs/** @spacetelescope/jwst-pipeline-developers  # docs
