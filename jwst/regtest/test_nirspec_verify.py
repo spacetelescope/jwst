@@ -29,7 +29,7 @@ def run_detector1(rtdata_module):
         "--steps.jump.save_results=True",
     ]
     Step.from_cmdline(args)
-    
+
 
 @pytest.fixture(scope='module')
 def run_image2(run_detector1, rtdata_module):
