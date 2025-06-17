@@ -10,7 +10,8 @@ from .conftest import PXSC_RAD
 
 PSF_FOV = 21
 
-@pytest.fixture(scope="module", params=[1, 3]) #parametrize oversample
+
+@pytest.fixture(scope="module", params=[1, 3])  # parametrize oversample
 def lgmodel(request, nrm_model, bandpass):
     """Create an LgModel object."""
     model = lg_model.LgModel(
@@ -29,7 +30,6 @@ def lgmodel(request, nrm_model, bandpass):
 
 @pytest.mark.parametrize("psf_offset", [(0, 0), (1, -3)])
 def test_simulate(request, lgmodel, bandpass, psf_offset):
-
     over = lgmodel.over
     psf = lgmodel.simulate(PSF_FOV, psf_offset=psf_offset)
     psf_over = lgmodel.psf_over
@@ -40,7 +40,7 @@ def test_simulate(request, lgmodel, bandpass, psf_offset):
 
     # Check shapes and basic values
     assert psf.shape == (PSF_FOV, PSF_FOV)
-    assert psf_over.shape == (PSF_FOV*over, PSF_FOV*over)
+    assert psf_over.shape == (PSF_FOV * over, PSF_FOV * over)
     assert np.all(psf >= 0)
     assert np.sum(np.isnan(psf)) == 0
     assert np.sum(np.isinf(psf)) == 0
@@ -53,7 +53,6 @@ def test_simulate(request, lgmodel, bandpass, psf_offset):
 
 @pytest.mark.parametrize("psf_offset", [(0, 0), (1, -3)])
 def test_make_model(lgmodel, psf_offset):
-
     fringemodel = lgmodel.make_model(
         PSF_FOV,
         psf_offset=psf_offset,
@@ -67,16 +66,18 @@ def test_make_model(lgmodel, psf_offset):
 
     # Check shapes and basic values
     n_coeffs = lgmodel.N * (lgmodel.N - 1) + 2
-    sz = PSF_FOV*lgmodel.over
+    sz = PSF_FOV * lgmodel.over
     assert fringemodel.shape == (PSF_FOV, PSF_FOV, n_coeffs)
     assert lgmodel.model_beam.shape == (sz, sz)
-    assert lgmodel.fringes.shape == (n_coeffs-1, sz, sz)
+    assert lgmodel.fringes.shape == (n_coeffs - 1, sz, sz)
     assert np.sum(np.isnan(fringemodel)) == 0
     assert np.sum(np.isinf(fringemodel)) == 0
 
     # Check that the beam is centered, respecting offset
-    expected_center = (int(sz / 2 + psf_offset[1]*lgmodel.over),
-                       int(sz / 2 + psf_offset[0]*lgmodel.over))
+    expected_center = (
+        int(sz / 2 + psf_offset[1] * lgmodel.over),
+        int(sz / 2 + psf_offset[0] * lgmodel.over),
+    )
     max_idx = np.unravel_index(np.argmax(lgmodel.model_beam), lgmodel.model_beam.shape)
     assert np.all(max_idx == expected_center)
 
@@ -116,7 +117,7 @@ def test_fit_image(example_model, lgmodel, weighted):
         "modelpsf",
     ]:
         assert hasattr(lgmodel, attr)
-    
+
     # Check shapes and basic values
     assert lgmodel.soln.size == 44
     assert lgmodel.fringeamp.size == 21

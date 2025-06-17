@@ -7,8 +7,7 @@ exclude = [
     ".eggs",
     "build",
     "*.ipynb",
-    "**/tests/test_*.py",
-    "**/regtest/test_*.py",
+    "**/tests/**/__init__.py",
 ]
 line-length = 100
 
@@ -47,6 +46,7 @@ select = [
     "TRY",    # tryceratops (best practices for try/except blocks)
     "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
     "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
+    "TID252"  # Checks for relative imports
 ]
 ignore = [
     "D100", # missing docstring in public module
@@ -73,15 +73,66 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "F403", # import with *
     "F405", # ambiguous import from *
 ]
-"**/tests/**.py" = [
-    "D104", # missing docstring in public package
-    "S101", # use of assert
+"**/tests/test_*.py" = [
+    "F",      # Pyflakes (part of default flake8)
+    "E",      # pycodestyle (part of default flake8)
+    "W",      # pycodestyle (part of default flake8)
+    "D",      # docstrings, see also numpydoc pre-commit action
+    "N",      # pep8-naming (naming conventions)
+    "A",      # flake8-builtins (prevent shadowing of builtins)
+    "ARG",    # flake8-unused-arguments (prevent unused arguments)
+    "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
+    "C4",     # flake8-comprehensions (best practices for comprehensions)
+    "ICN",    # flake8-import-conventions (enforce import conventions)
+    "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
+    "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
+    "LOG",    # flake8-logging
+    "NPY",    # numpy-specific rules
+    "PGH",    # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
+    "PTH",    # flake8-use-pathlib (enforce using Pathlib instead of os)
+    "S",      # flake8-bandit (security checks)
+    "SLF",    # flake8-self (prevent using private class members outside class)
+    "SLOT",   # flake8-slots (require __slots__ for immutable classes)
+    "T20",    # flake8-print (prevent print statements in code)
+    "TRY",    # tryceratops (best practices for try/except blocks)
+    "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
+    "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
+]
+"**/regtest/test_*.py" = [
+    "F",      # Pyflakes (part of default flake8)
+    "E",      # pycodestyle (part of default flake8)
+    "W",      # pycodestyle (part of default flake8)
+    "D",      # docstrings, see also numpydoc pre-commit action
+    "N",      # pep8-naming (naming conventions)
+    "A",      # flake8-builtins (prevent shadowing of builtins)
+    "ARG",    # flake8-unused-arguments (prevent unused arguments)
+    "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
+    "C4",     # flake8-comprehensions (best practices for comprehensions)
+    "ICN",    # flake8-import-conventions (enforce import conventions)
+    "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
+    "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
+    "LOG",    # flake8-logging
+    "NPY",    # numpy-specific rules
+    "PGH",    # pygrep-hooks (ensure appropriate usage of noqa and type-ignore)
+    "PTH",    # flake8-use-pathlib (enforce using Pathlib instead of os)
+    "S",      # flake8-bandit (security checks)
+    "SLF",    # flake8-self (prevent using private class members outside class)
+    "SLOT",   # flake8-slots (require __slots__ for immutable classes)
+    "T20",    # flake8-print (prevent print statements in code)
+    "TRY",    # tryceratops (best practices for try/except blocks)
+    "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
+    "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
 ]
 "jwst/conftest.py" = [
     "SLF", "ARG", "PTH",
     "B003", # Assigning to os.environ does not clear the environment
 ]
-"**/regtest/**.py" = [ # conftest, regtestdata, and sdp_pools_source
+"jwst/regtest/regtestdata.py" = [
+    "SLF", "ARG", "PTH",
+    "A002", # builtin variable shadowing
+    "S101", # use of assert
+]
+"jwst/regtest/conftest.py" = [
     "SLF", "ARG", "PTH",
     "A002", # builtin variable shadowing
     "S101", # use of assert
@@ -91,5 +142,6 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
 ]
 "jwst/associations/tests*" = [
     "F841", # unused variable
+    "S101",
 ]
 "jwst/ipc/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]

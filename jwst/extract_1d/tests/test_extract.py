@@ -327,7 +327,9 @@ def test_populate_time_keywords(mock_nirspec_bots, mock_10_multi_int_spec):
         assert spec["TDB-END"] == mock_nirspec_bots.int_times["int_end_BJD_TDB"][i]
 
 
-def test_populate_time_keywords_no_table(mock_nirspec_fs_one_slit, mock_10_multi_int_spec, log_watcher):
+def test_populate_time_keywords_no_table(
+    mock_nirspec_fs_one_slit, mock_10_multi_int_spec, log_watcher
+):
     watcher = log_watcher("jwst.extract_1d.extract", message="no INT_TIMES table")
     ex.populate_time_keywords(mock_nirspec_fs_one_slit, mock_10_multi_int_spec)
 
@@ -409,7 +411,9 @@ def test_populate_time_keywords_ifu_table(
     assert "INT_NUM" not in mock_10_spec.spec[0].spec_table.columns.names
 
 
-def test_populate_time_keywords_mismatched_spec(mock_nirspec_bots, mock_2_multi_int_spec, log_watcher):
+def test_populate_time_keywords_mismatched_spec(
+    mock_nirspec_bots, mock_2_multi_int_spec, log_watcher
+):
     watcher = log_watcher("jwst.extract_1d.extract", message="Don't understand n_output_spec")
     ex.populate_time_keywords(mock_nirspec_bots, mock_2_multi_int_spec)
     watcher.assert_seen()
@@ -468,7 +472,7 @@ def test_copy_keyword_info(mock_nirspec_fs_one_slit, mock_one_spec):
         "shutter_state": "x",
         "wavelength_corrected": True,
         "pathloss_correction_type": "POINT",
-        "barshadow_corrected": False
+        "barshadow_corrected": False,
     }
     for key, value in expected.items():
         setattr(mock_nirspec_fs_one_slit, key, value)
@@ -1174,7 +1178,7 @@ def test_define_aperture_optimal_with_nod(
     exptype = "MIR_LRS-FIXEDSLIT"
 
     # mock nod subtraction
-    mock_miri_lrs_fs.meta.cal_step.back_sub = "COMPLETE"
+    mock_miri_lrs_fs.meta.cal_step.bkg_subtract = "COMPLETE"
     mock_miri_lrs_fs.meta.dither.primary_type = "ALONG-SLIT-NOD"
 
     # mock a nod position at the opposite end of the array
@@ -1482,8 +1486,9 @@ def test_create_extraction_partial_match(create_extraction_inputs, log_watcher):
 
 def test_create_extraction_missing_dispaxis(create_extraction_inputs, log_watcher):
     create_extraction_inputs[0].meta.wcsinfo.dispersion_direction = None
-    watcher = log_watcher("jwst.extract_1d.extract",
-                          message="dispersion direction information is missing")
+    watcher = log_watcher(
+        "jwst.extract_1d.extract", message="dispersion direction information is missing"
+    )
     with pytest.raises(ex.ContinueError):
         ex.create_extraction(*create_extraction_inputs)
     watcher.assert_seen()
@@ -1607,7 +1612,7 @@ def test_create_extraction_optimal(monkeypatch, create_extraction_inputs, psf_re
     model = create_extraction_inputs[0]
 
     # mock nod subtraction
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
     model.meta.dither.primary_type = "2-POINT-NOD"
 
     # mock a nod position at the opposite end of the array
@@ -1757,8 +1762,8 @@ def test_run_extract1d_apcorr_optimal(
     # Aperture correction that is otherwise valid is nonetheless
     # turned off for optimal extraction
     watcher = log_watcher(
-        "jwst.extract_1d.extract",
-        message="Turning off aperture correction for optimal extraction")
+        "jwst.extract_1d.extract", message="Turning off aperture correction for optimal extraction"
+    )
     output_model, _, _, _ = ex.run_extract1d(
         model,
         apcorr_ref_name=miri_lrs_apcorr_file,

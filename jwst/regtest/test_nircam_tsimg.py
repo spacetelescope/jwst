@@ -55,7 +55,9 @@ def test_nircam_tsimage_stage3_phot(run_pipelines, diff_astropy_tables):
     rtdata = run_pipelines
     rtdata.input = "jw01068-o006_20240401t151322_tso3_00002_asn.json"
     rtdata.output = "jw01068-o006_t004_nircam_f150w2-f164n-sub64p_phot.ecsv"
-    rtdata.get_truth("truth/test_nircam_tsimg_stage23/jw01068-o006_t004_nircam_f150w2-f164n-sub64p_phot.ecsv")
+    rtdata.get_truth(
+        "truth/test_nircam_tsimg_stage23/jw01068-o006_t004_nircam_f150w2-f164n-sub64p_phot.ecsv"
+    )
 
     assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
@@ -73,9 +75,10 @@ def test_nircam_setpointing_tsimg(rtdata, fitsdiff_default_kwargs):
     # Call the WCS routine
     add_wcs(rtdata.input)
 
-    rtdata.get_truth("truth/test_nircam_setpointing/jw06780001001_02103_00001-seg002_nrcblong_uncal.fits")
+    rtdata.get_truth(
+        "truth/test_nircam_setpointing/jw06780001001_02103_00001-seg002_nrcblong_uncal.fits"
+    )
 
-    fitsdiff_default_kwargs['rtol'] = 1e-6
+    fitsdiff_default_kwargs["rtol"] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
-

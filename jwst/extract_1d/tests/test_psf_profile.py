@@ -248,7 +248,7 @@ def test_psf_profile_model_nod(monkeypatch, mock_miri_lrs_fs, psf_reference_file
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
     # mock nod subtraction
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
     model.meta.dither.primary_type = "2-POINT-NOD"
 
     # mock a nod position at the opposite end of the array
@@ -283,8 +283,9 @@ def test_psf_profile_model_nod_no_trace(mock_miri_lrs_fs, psf_reference_file, lo
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    watcher = log_watcher("jwst.extract_1d.psf_profile",
-                          message="Cannot model a negative nod without position")
+    watcher = log_watcher(
+        "jwst.extract_1d.psf_profile", message="Cannot model a negative nod without position"
+    )
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
@@ -316,7 +317,7 @@ def test_psf_profile_model_nod_wrong_pattern(mock_miri_lrs_fs, psf_reference_fil
     model = mock_miri_lrs_fs
     data_shape = model.data.shape
     trace = np.full(data_shape[0], (data_shape[1] - 1) / 2.0)
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
 
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
@@ -335,13 +336,15 @@ def test_psf_profile_model_nod_bad_position(mock_miri_lrs_fs, psf_reference_file
     model = mock_miri_lrs_fs
     data_shape = model.data.shape
     trace = np.full(data_shape[0], (data_shape[1] - 1) / 2.0)
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
     model.meta.dither.primary_type = "2-POINT-NOD"
 
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    watcher = log_watcher("jwst.extract_1d.psf_profile", message="Nod center could not be estimated")
+    watcher = log_watcher(
+        "jwst.extract_1d.psf_profile", message="Nod center could not be estimated"
+    )
     profiles, lower, upper = pp.psf_profile(
         model, trace, wl_array, psf_reference_file, optimize_shifts=False, model_nod_pair=True
     )
@@ -368,7 +371,9 @@ def test_psf_profile_optimize(
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    watcher = log_watcher("jwst.extract_1d.psf_profile", message="Centering profile on spectrum at 24.5")
+    watcher = log_watcher(
+        "jwst.extract_1d.psf_profile", message="Centering profile on spectrum at 24.5"
+    )
     profiles, lower, upper = pp.psf_profile(
         model,
         trace,
@@ -394,7 +399,7 @@ def test_psf_profile_optimize_with_nod(
     data_shape = model.data.shape
 
     # mock nod subtraction
-    model.meta.cal_step.back_sub = "COMPLETE"
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
     model.meta.dither.primary_type = "2-POINT-NOD"
 
     # trace at pixel 9.5
@@ -419,7 +424,9 @@ def test_psf_profile_optimize_with_nod(
     yidx, xidx = np.mgrid[: data_shape[0], : data_shape[1]]
     _, _, wl_array = model.meta.wcs(xidx, yidx)
 
-    watcher = log_watcher("jwst.extract_1d.psf_profile", message="Also modeling a negative trace at 39.50")
+    watcher = log_watcher(
+        "jwst.extract_1d.psf_profile", message="Also modeling a negative trace at 39.50"
+    )
     profiles, lower, upper = pp.psf_profile(
         model,
         trace,

@@ -4,7 +4,7 @@ from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
 )
 
-from ..stpipe import Step
+from jwst.stpipe import Step
 from . import combine1d
 
 

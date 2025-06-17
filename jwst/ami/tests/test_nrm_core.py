@@ -18,16 +18,20 @@ from jwst.ami.bp_fix import filtwl_d
 def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
     """
     Test generating a fringe fitter object, then using it to fit example data.
-    
+
     This touches all the methods of FringeFitter, as well as creating an OIModel instance.
     """
-    
-    filt = example_model.meta.instrument.filter 
-    niriss = NIRISS(filt, nrm_model, bandpass,)
+
+    filt = example_model.meta.instrument.filter
+    niriss = NIRISS(
+        filt,
+        nrm_model,
+        bandpass,
+    )
 
     # Need data to be convolved with the PSF
     sci_data = example_model.data[0]
-    sci_data_conv = convolve(sci_data, nrm_psf, mode='same')
+    sci_data_conv = convolve(sci_data, nrm_psf, mode="same")
     example_model.data[0] = sci_data_conv
     example_model.data[1] = sci_data_conv
 
@@ -39,10 +43,9 @@ def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
     assert isinstance(output_model, dm.AmiOIModel)
     assert isinstance(output_model_multi, dm.AmiOIModel)
     for i, oimodel in enumerate([output_model, output_model_multi]):
-
-        assert len(oimodel.vis) == 21 # number of baselines: 7 holes choose 2
+        assert len(oimodel.vis) == 21  # number of baselines: 7 holes choose 2
         assert len(oimodel.vis2) == 21
-        assert len(oimodel.t3) == 35 # number of triples: 7 holes choose 3
+        assert len(oimodel.t3) == 35  # number of triples: 7 holes choose 3
         vis_amp = oimodel.vis["VISAMP"]
         vis_amp_err = oimodel.vis["VISAMPERR"]
         vis_phase = oimodel.vis["VISPHI"]
@@ -66,11 +69,11 @@ def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
         ]:
             assert arr.dtype == np.float64
             if i == 0:
-                assert arr.ndim == 1 # the mean data
+                assert arr.ndim == 1  # the mean data
             if i == 1:
                 assert arr.ndim == 2
-                assert arr.shape[1] == example_model.data.shape[0] # one value per integration
-            
+                assert arr.shape[1] == example_model.data.shape[0]  # one value per integration
+
         eff_wave, eff_bandwidth = oimodel.wavelength[0]
         assert np.isclose(eff_wave, filtwl_d[filt])
 
@@ -83,7 +86,7 @@ def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
         "norm_fit_image",
         "resid_image",
         "norm_resid_image",
-        ]:
+    ]:
         assert hasattr(lgfit, att_str)
         im = getattr(lgfit, att_str)
         assert isinstance(im, np.ndarray)

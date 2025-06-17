@@ -34,7 +34,9 @@ def empty_recarray(request):
         meta_columns.append(("EXTRA_COLUMN", np.float32))
     columns = vector_columns + meta_columns
     is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
-    defaults = [0,] * len(columns)
+    defaults = [
+        0,
+    ] * len(columns)
     return make_empty_recarray(n_rows, n_sources, columns, is_vector, defaults)
 
 
@@ -77,7 +79,7 @@ def tso_multi_spec():
     spec_table["N_ALONGDISP"] = 10
     tso_spec.spec_table = spec_table
     for column in tso_spec.spec_table.columns:
-        column.unit = 's'
+        column.unit = "s"
 
     # Add spectra to a multispec model
     tso_multi = dm.TSOMultiSpecModel()
@@ -87,7 +89,7 @@ def tso_multi_spec():
         # Add some metadata
         spec.source_id = i + 1
         spec.name = f"test {i + 1}"
-        spec.meta.wcs = ['test']
+        spec.meta.wcs = ["test"]
         spec.spec_table["INT_NUM"] = i + 1
 
         tso_multi.spec.append(spec)
@@ -101,9 +103,7 @@ def test_determine_vector_and_meta_columns():
     out_cols.append({"name": "SOURCE_ID", "datatype": "int32"})
     out_cols.append({"name": "NAME", "datatype": ["ascii", 20]})
 
-    all_columns, is_vector = determine_vector_and_meta_columns(
-        in_cols, out_cols
-    )
+    all_columns, is_vector = determine_vector_and_meta_columns(in_cols, out_cols)
 
     # Check that the names ended up in the right place
     input_names = [s["name"] for s in in_cols]
@@ -265,7 +265,7 @@ def test_copy_spec_metadata(input_spec, output_spec):
     copy_spec_metadata(input_spec, output_spec)
 
     # After copying, metadata is filled in
-    assert output_spec.name == 'test_slit'
+    assert output_spec.name == "test_slit"
     assert output_spec.source_id == 1
 
 
@@ -289,9 +289,9 @@ def test_expand_flat_spec(tso_multi_spec):
         assert spec.name == f"test {input_spec_num}"
         assert spec.int_num == input_spec_num
 
-        assert spec.meta.wcs[0] == 'test'
-        spec.meta.wcs[0] = 'copy'
-        assert spec.meta.wcs[0] == 'copy'
-        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs[0] == 'test'
+        assert spec.meta.wcs[0] == "test"
+        spec.meta.wcs[0] = "copy"
+        assert spec.meta.wcs[0] == "copy"
+        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs[0] == "test"
 
         assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)

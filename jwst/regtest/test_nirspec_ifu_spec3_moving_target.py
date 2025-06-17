@@ -15,7 +15,7 @@ def run_pipeline(rtdata_module):
 
     # Get the ASN file and input exposures
     # Note: ASN contains a background spectrum
-    rtdata.get_asn('nirspec/ifu/jw01252-o001_spec3_00003_asn_with_bg.json')
+    rtdata.get_asn("nirspec/ifu/jw01252-o001_spec3_00003_asn_with_bg.json")
 
     # Run the calwebb_spec3 pipeline; save results from intermediate steps
     args = ["calwebb_spec3", rtdata.input]
@@ -25,7 +25,8 @@ def run_pipeline(rtdata_module):
 @pytest.mark.bigdata
 @pytest.mark.parametrize("suffix", ["cal", "o001_crf", "s3d", "x1d"])
 def test_nirspec_ifu_spec3_moving_target(
-        run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix):
+    run_pipeline, rtdata_module, fitsdiff_default_kwargs, suffix
+):
     """Test spec3 pipeline on a NIRSpec IFU moving target."""
     rtdata = rtdata_module
 

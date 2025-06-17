@@ -10,9 +10,9 @@ from gwcs import wcstools
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
-from ..assign_wcs import nirspec
-from ..assign_wcs import util
-from ..lib import pipe_utils
+from jwst.assign_wcs import nirspec
+from jwst.assign_wcs import util
+from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
