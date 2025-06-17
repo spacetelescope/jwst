@@ -766,7 +766,7 @@ def test_finalize_logging(monkeypatch):
     assert watcher.seen
 
 
-def test_dunder_call_warning():
+def test_dunder_call_error():
     pipeline = EmptyPipeline()
-    with pytest.warns(UserWarning, match="Step.__call__ is deprecated"):
+    with pytest.raises(TypeError, match="not callable"):
         pipeline(None)
