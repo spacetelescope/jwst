@@ -24,7 +24,6 @@ def test_nframes_equal_frame_divisor(make_rampmodel):
     """If nframes and frame_divisor are equal, skip correction"""
     datmod = make_rampmodel(2, 4, 4, 2048, 2048)
     output = GroupScaleStep.call(datmod)
-    print(output.meta.exposure.frame_divisor, output.meta.exposure.nframes)
     assert output.meta.cal_step.group_scale == "SKIPPED"
 
 
