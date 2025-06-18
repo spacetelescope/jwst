@@ -26,7 +26,7 @@ from .util import (
     transform_bbox_from_shape,
 )
 from . import pointing
-from ..lib.reffile_utils import find_row
+from jwst.lib.reffile_utils import find_row
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

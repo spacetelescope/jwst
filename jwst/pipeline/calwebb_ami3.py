@@ -2,11 +2,11 @@
 import logging
 from pathlib import Path
 
-from ..stpipe import Pipeline
+from jwst.stpipe import Pipeline
 
 # step imports
-from ..ami import ami_analyze_step
-from ..ami import ami_normalize_step
+from jwst.ami import ami_analyze_step
+from jwst.ami import ami_normalize_step
 
 __all__ = ["Ami3Pipeline"]
 

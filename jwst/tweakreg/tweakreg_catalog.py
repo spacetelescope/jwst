@@ -13,7 +13,7 @@ from photutils.segmentation import SourceFinder, SourceCatalog
 
 from stdatamodels.jwst.datamodels import dqflags, ImageModel
 
-from ..source_catalog.detection import JWSTBackground
+from jwst.source_catalog.detection import JWSTBackground
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

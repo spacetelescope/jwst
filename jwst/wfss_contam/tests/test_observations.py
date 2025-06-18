@@ -53,18 +53,19 @@ def test_background_subtract(direct_image_with_gradient):
 
 
 def test_chunk_sources(observation, monkeypatch):
-
     obs = copy.deepcopy(observation)
     order = 1
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_response = np.ones(100)
     ids, n_pix_per_sources = np.unique(obs.source_ids_per_pixel, return_counts=True)
-    max_pixels = np.max(n_pix_per_sources)-1 # to trigger the warning
+    max_pixels = np.max(n_pix_per_sources) - 1  # to trigger the warning
     bad_id = ids[n_pix_per_sources > max_pixels][0]
 
     # ensure warning is emitted for source that is too large
-    watcher = LogWatcher(f"Source {bad_id} has {np.max(n_pix_per_sources)} pixels, which exceeds the maximum")
+    watcher = LogWatcher(
+        f"Source {bad_id} has {np.max(n_pix_per_sources)} pixels, which exceeds the maximum"
+    )
     monkeypatch.setattr(logging.getLogger("jwst.wfss_contam.observations"), "warning", watcher)
     disperse_args = obs.chunk_sources(
         order,
@@ -110,4 +111,4 @@ def test_disperse_order(observation):
     assert slit.data.shape == (slit.ysize, slit.xsize)
 
     # check for regression by hard-coding one value of slit.data
-    assert np.isclose(slit.data[10,10], 5.203127)
+    assert np.isclose(slit.data[10, 10], 5.203127)

@@ -9,8 +9,8 @@ def test_member_from_member():
     Note that this really is a smoke-screen test
     that tests both code and very basic functionality.
     """
-    data = {'exp_name': 'fred', 'exp_type': 'not_science'}
-    item = 'This is an item'
+    data = {"exp_name": "fred", "exp_type": "not_science"}
+    item = "This is an item"
     member = Member(data, item=item)
     dup = Member(member)
     assert dup.data == member.data

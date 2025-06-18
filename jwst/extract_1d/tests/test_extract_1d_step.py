@@ -140,7 +140,6 @@ def test_extract_niriss_wfss(mock_niriss_wfss_l3, simple_wcs):
     assert result.meta.cal_step.extract_1d == "COMPLETE"
 
     for i, exp in enumerate(result.spec):
-
         tab = exp.spec_table[0]
 
         # output wavelength is the same as input
