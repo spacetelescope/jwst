@@ -102,12 +102,10 @@ def get_reference_files(datamodel):
     step = AssignWcsStep()
     for reftype in AssignWcsStep.reference_file_types:
         val = step.get_reference_file(datamodel, reftype)
-        print(reftype, val)
         if val.strip() == "N/A":
             refs[reftype] = None
         else:
             refs[reftype] = val
-    print(refs)
     return refs
 
 
