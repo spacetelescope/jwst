@@ -58,7 +58,6 @@ is also available on `JDox <https://jwst-docs.stsci.edu>`__.
    jwst/user_documentation/input_output_file_conventions.rst
    jwst/user_documentation/logging.rst
    jwst/user_documentation/datamodels.rst
-   jwst/user_documentation/pub_deprecation.rst
    jwst/user_documentation/more_information.rst
 
 .. toctree::
