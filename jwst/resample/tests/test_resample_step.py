@@ -514,21 +514,24 @@ def test_pixel_scale_ratio_spec_miri(miri_cal, ratio, units):
         # flux density conservation: sum over pixels in each row
         # needs to be about the same, other than the edges
         # Check the maximum sums, to avoid edges.
-        assert_allclose(np.max(np.nansum(result1.data, axis=1)),
-                        np.max(np.nansum(result2.data, axis=1)), rtol=0.05)
+        assert_allclose(
+            np.max(np.nansum(result1.data, axis=1)),
+            np.max(np.nansum(result2.data, axis=1)),
+            rtol=0.05,
+        )
     else:
         # surface brightness conservation: weighted total values are the same
         assert np.allclose(
             np.nansum(result1.data * result1.wht),
             np.nansum(result2.data * result2.wht),
             rtol=5.0e-3,
-            equal_nan=True
+            equal_nan=True,
         )
         assert np.allclose(
             np.nansum(result1.data * result1.wht, axis=1),
             np.nansum(result2.data * result2.wht, axis=1),
             rtol=5.0e-3,
-            equal_nan=True
+            equal_nan=True,
         )
 
     # output area is updated either way
@@ -570,11 +573,7 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
 
     # pixel_scale and pixel_scale_ratio should be equivalent
     nn = ~(np.isnan(result2.data) | np.isnan(result3.data))
-    assert_allclose(
-        result2.data[nn],
-        result3.data[nn],
-        rtol=2.000001 * _FLT32_EPS
-    )
+    assert_allclose(result2.data[nn], result3.data[nn], rtol=2.000001 * _FLT32_EPS)
 
     # Check result2 for expected results
 
@@ -582,12 +581,7 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
     assert result1.data.shape[0] == result2.data.shape[0]
 
     # spatial dimension is scaled
-    assert_allclose(
-        result1.data.shape[1],
-        result2.data.shape[1] / ratio,
-        rtol=0,
-        atol=1
-    )
+    assert_allclose(result1.data.shape[1], result2.data.shape[1] / ratio, rtol=0, atol=1)
 
     # data is non-trivial
     assert np.nansum(result1.data) > 0.0
@@ -598,28 +592,29 @@ def test_pixel_scale_ratio_1spec_miri_pair(miri_rate_pair, ratio, units):
         # flux density conservation: sum over pixels in each row
         # needs to be about the same, other than the edges
         # Check the maximum sums, to avoid edges.
-        assert np.allclose(np.max(np.nansum(result1.data, axis=1)),
-                           np.max(np.nansum(result2.data, axis=1)), rtol=0.05)
+        assert np.allclose(
+            np.max(np.nansum(result1.data, axis=1)),
+            np.max(np.nansum(result2.data, axis=1)),
+            rtol=0.05,
+        )
     else:
         # surface brightness conservation: weighted total values are the same
         assert np.allclose(
             np.sum(result1.data * result1.wht),
             np.sum(result2.data * result2.wht),
             rtol=1.0e-5,
-            equal_nan=True
+            equal_nan=True,
         )
 
         with warnings.catch_warnings():
             warnings.filterwarnings(
-                "ignore",
-                category=RuntimeWarning,
-                message="All-NaN slice encountered"
+                "ignore", category=RuntimeWarning, message="All-NaN slice encountered"
             )
             assert np.allclose(
                 np.nanmedian(result1.data, axis=1),
                 np.nanmedian(result2.data, axis=1),
                 rtol=1.0e-5,
-                equal_nan=True
+                equal_nan=True,
             )
 
     # output area is updated either way
@@ -685,7 +680,7 @@ def test_pixel_scale_ratio_spec_nirspec(nirspec_cal, ratio, units):
                 np.nansum(slit1.data * slit1.wht, axis=0),
                 np.nansum(slit2.data * slit2.wht, axis=0),
                 rtol=1.0e-5,
-                equal_nan=True
+                equal_nan=True,
             )
 
         # output area is updated either way
@@ -1093,11 +1088,8 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match, tmp_p
     result.close()
 
 
-@pytest.mark.parametrize(
-    'weight_type', ["ivm", "exptime"]
-)
+@pytest.mark.parametrize("weight_type", ["ivm", "exptime"])
 def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
-
     # make some data with a WCS and some random values
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     rng = np.random.default_rng(seed=77)
@@ -1115,17 +1107,11 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
 
     im.meta.group_id = "1"
     im_dict = input_jwst_model_to_dict(
-        im,
-        weight_type=weight_type,
-        enable_var=True,
-        compute_err=True
+        im, weight_type=weight_type, enable_var=True, compute_err=True
     )
 
     in_weight = build_driz_weight(
-        im_dict,
-        weight_type=weight_type,
-        good_bits=GOOD_BITS,
-        flag_name_map=dqflags.pixel
+        im_dict, weight_type=weight_type, good_bits=GOOD_BITS, flag_name_map=dqflags.pixel
     )
 
     # first pass - create a reference output WCS:
@@ -1150,8 +1136,7 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
     pixel_area = 1e-13
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     result.meta.wcs.bounding_box = None
-    asdf.AsdfFile({"wcs": result.meta.wcs,
-                   "pixel_area": pixel_area}).write_to(refwcs)
+    asdf.AsdfFile({"wcs": result.meta.wcs, "pixel_area": pixel_area}).write_to(refwcs)
     result = ResampleStep.call(im, output_wcs=refwcs, weight_type=weight_type)
 
     data2 = result.data
@@ -1167,13 +1152,9 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
     assert np.isclose(
         np.sum(data0 * in_weight) / np.sum(in_weight),
         np.nansum(data1 * wht1) / np.sum(wht1),
-        atol=1e-4
+        atol=1e-4,
     )
-    assert np.isclose(
-        np.sum(data0 * in_weight),
-        np.nansum(data2 * wht2),
-        atol=1e-4
-    )
+    assert np.isclose(np.sum(data0 * in_weight), np.nansum(data2 * wht2), atol=1e-4)
 
     # check that output pixel area is set from input
     # rtol and atol values are from np.isclose default settings.
