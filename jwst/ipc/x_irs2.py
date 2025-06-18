@@ -156,7 +156,7 @@ def normal_shape(input_model, n=None, r=None, detector=None):
 
 def make_mask(input_model, n=None, r=None):
     """
-    Create a mask to extract "normal" pixels.
+    Create a mask to extract 'normal' pixels.
 
     Parameters
     ----------
@@ -177,7 +177,7 @@ def make_mask(input_model, n=None, r=None):
 
     Returns
     -------
-    irs2_mask : 1-D bool array
+    irs2_mask : 1-D bool numpy.ndarray
         Boolean index mask with length equal to the last axis of
         the science data shape.
     """
@@ -232,11 +232,11 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
 
     Parameters
     ----------
-    irs2_data : ndarray
+    irs2_data : numpy.ndarray
         Data in IRS2 format.  This can be a slice in the Y direction, but
         it should include the entire X (last) axis.
 
-    irs2_mask : 1-D array, bool
+    irs2_mask : 1-D numpy.ndarray, bool
         Boolean mask to extract the "normal" pixels.  This is a 1-D array
         with length equal to the size of the next-to-last axis (for data
         in DMS orientation) of `irs2_data`.
@@ -276,15 +276,15 @@ def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
 
     Parameters
     ----------
-    irs2_data : ndarray
+    irs2_data : numpy.ndarray
         Data in IRS2 format.  This will be modified in-place.
 
-    norm_data : ndarray
+    norm_data : numpy.ndarray
         The normal data, for example previously extracted from `irs2_data`
         but then modified in some way.  This will be copied back into
         `irs2_data` in the correct locations, as specified by `irs2_mask`.
 
-    irs2_mask : 1-D array, bool
+    irs2_mask : 1-D numpy.ndarray, bool
         Boolean mask identifying the locations of the "normal" pixels
         within `irs2_data`.  The length is equal to the size of the
         next-to-last axis (for data in DMS orientation) of `irs2_data`.

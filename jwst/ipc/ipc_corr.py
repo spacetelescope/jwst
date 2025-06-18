@@ -42,7 +42,7 @@ def do_correction(input_model, ipc_model):
     sci_groupgap = input_model.meta.exposure.groupgap
 
     log.debug(
-        f"IPC corr using nints={sci_nints}, ngroups={sci_ngroups},"
+        f"IPC corr using nints={sci_nints}, ngroups={sci_ngroups}, "
         f"nframes={sci_nframes}, groupgap={sci_groupgap}"
     )
 
@@ -92,11 +92,11 @@ def ipc_correction(output, ipc_model):
     kernel = get_ipc_slice(output, ipc_model)
 
     log.debug(
-        f"substrt1 = {output.meta.subarray.xstart}, subsize1 = {output.meta.subarray.xsize},"
+        f"substrt1 = {output.meta.subarray.xstart}, subsize1 = {output.meta.subarray.xsize}, "
         f"substrt2 = {output.meta.subarray.ystart}, subsize2 = {output.meta.subarray.ysize}"
     )
     log.debug(
-        "Number of reference pixels: bottom, top, left, right ="
+        "Number of reference pixels: bottom, top, left, right = "
         f"{nref.bottom_rows}, {nref.top_rows}, {nref.left_columns}, {nref.right_columns}"
     )
     log.debug(f"Shape of ipc image = {repr(ipc_model.data.shape)}")
@@ -175,7 +175,7 @@ def get_ipc_slice(input_model, ipc_model):
 
     Returns
     -------
-    kernel : ndarray, either 2-D or 4-D
+    kernel : numpy.ndarray, either 2-D or 4-D
         The data array for the IPC kernel.  If the IPC kernel is 4-D and
         the science data array is a subarray, `kernel` will be a slice of
         the reference image; otherwise, this will be the full image.
@@ -205,11 +205,11 @@ def ipc_convolve(output_data, kernel, nref):
 
     Parameters
     ----------
-    output_data : ndarray, 2-D
+    output_data : numpy.ndarray, 2-D
         A copy of the input science data for one group; this will be
         modified in-place.
 
-    kernel : ndarray, 2-D or 4-D
+    kernel : numpy.ndarray, 2-D or 4-D
         The IPC kernel; the input is corrected for IPC by convolving with
         this array.  If it is 4-D the last two dimensions will be a slice
         that matches the last two dimensions of `output_data`.
