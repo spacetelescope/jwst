@@ -12,13 +12,14 @@ from . import x_irs2
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
-NumRefPixels = namedtuple("NumRefPixels",
-                          ["bottom_rows", "top_rows",
-                           "left_columns", "right_columns"])
+NumRefPixels = namedtuple(
+    "NumRefPixels", ["bottom_rows", "top_rows", "left_columns", "right_columns"]
+)
 
 
 def do_correction(input_model, ipc_model):
-    """Execute all tasks for IPC correction.
+    """
+    Execute all tasks for IPC correction.
 
     Parameters
     ----------
@@ -41,7 +42,7 @@ def do_correction(input_model, ipc_model):
     sci_groupgap = input_model.meta.exposure.groupgap
 
     log.debug(
-        f"IPC corr using nints={sci_nints}, ngroups={sci_ngroups},",
+        f"IPC corr using nints={sci_nints}, ngroups={sci_ngroups},"
         f"nframes={sci_nframes}, groupgap={sci_groupgap}"
     )
 
@@ -52,7 +53,8 @@ def do_correction(input_model, ipc_model):
 
 
 def ipc_correction(output, ipc_model):
-    """Apply the IPC correction to the science arrays.
+    """
+    Apply the IPC correction to the science arrays.
 
     Parameters
     ----------
@@ -68,11 +70,11 @@ def ipc_correction(output, ipc_model):
     output : data model object
         IPC-corrected science data.
     """
-    log.debug("ipc_correction: nints=%d, ngroups=%d, size=%d,%d",
-              output.meta.exposure.nints,
-              output.meta.exposure.ngroups,
-              output.data.shape[-1],
-              output.data.shape[-2])
+    log.debug(
+        f"ipc_correction: nints={output.meta.exposure.nints}, "
+        f"ngroups={output.meta.exposure.ngroups}, "
+        f"size={output.data.shape[-1]},{output.data.shape[-2]}"
+    )
 
     # Was IRS2 readout used?
     is_irs2_format = pipe_utils.is_irs2(output)
@@ -90,27 +92,25 @@ def ipc_correction(output, ipc_model):
     kernel = get_ipc_slice(output, ipc_model)
 
     log.debug(
-        f"substrt1 = {output.meta.subarray.xstart}, subsize1 = {output.meta.subarray.xsize},",
+        f"substrt1 = {output.meta.subarray.xstart}, subsize1 = {output.meta.subarray.xsize},"
         f"substrt2 = {output.meta.subarray.ystart}, subsize2 = {output.meta.subarray.ysize}"
     )
     log.debug(
-        'Number of reference pixels: bottom, top, left, right ='
-        f'{nref.bottom_rows}, {nref.top_rows}, {nref.left_columns}, {nref.right_columns}'
+        "Number of reference pixels: bottom, top, left, right ="
+        f"{nref.bottom_rows}, {nref.top_rows}, {nref.left_columns}, {nref.right_columns}"
     )
     log.debug(f"Shape of ipc image = {repr(ipc_model.data.shape)}")
 
     # Loop over all integrations and groups in input science data.
-    for i in range(output.data.shape[0]):                  # integrations
-        for j in range(output.data.shape[1]):              # groups
+    for i in range(output.data.shape[0]):  # integrations
+        for j in range(output.data.shape[1]):  # groups
             # Convolve the current group in-place with the IPC kernel.
             if is_irs2_format:
                 # Extract normal data from input IRS2-format data.
-                temp = x_irs2.from_irs2(output.data[i, j, :, :], irs2_mask,
-                                        detector)
+                temp = x_irs2.from_irs2(output.data[i, j, :, :], irs2_mask, detector)
                 ipc_convolve(temp, kernel, nref)
                 # Insert normal data back into original, IRS2-format data.
-                x_irs2.to_irs2(output.data[i, j, :, :], temp, irs2_mask,
-                               detector)
+                x_irs2.to_irs2(output.data[i, j, :, :], temp, irs2_mask, detector)
             else:
                 ipc_convolve(output.data[i, j], kernel, nref)
 
@@ -118,7 +118,8 @@ def ipc_correction(output, ipc_model):
 
 
 def get_num_ref_pixels(input_model):
-    """Get the number of reference pixel rows and columns.
+    """
+    Get the number of reference pixel rows and columns.
 
     Parameters
     ----------
@@ -128,6 +129,7 @@ def get_num_ref_pixels(input_model):
     Returns
     -------
     nref : namedtuple
+        Tuple containing the number of reference pixels at each edge
         bottom_rows : int
             The number of reference rows at the bottom of the image.
         top_rows : int
@@ -137,26 +139,31 @@ def get_num_ref_pixels(input_model):
         right_columns : int
             The number of reference columns at the right edge.
     """
-    xstart = input_model.meta.subarray.xstart - 1       # zero indexed
+    xstart = input_model.meta.subarray.xstart - 1  # zero indexed
     xsize = input_model.meta.subarray.xsize
-    if input_model.meta.instrument.name == 'MIRI':
-        nref = NumRefPixels(bottom_rows=0,
-                            top_rows=0,
-                            left_columns=max(0, 4 - xstart),
-                            right_columns=max(0, xstart + xsize - 1028))
+    if input_model.meta.instrument.name == "MIRI":
+        nref = NumRefPixels(
+            bottom_rows=0,
+            top_rows=0,
+            left_columns=max(0, 4 - xstart),
+            right_columns=max(0, xstart + xsize - 1028),
+        )
     else:
-        ystart = input_model.meta.subarray.ystart - 1   # zero indexed
+        ystart = input_model.meta.subarray.ystart - 1  # zero indexed
         ysize = input_model.meta.subarray.ysize
-        nref = NumRefPixels(bottom_rows=max(0, 4 - ystart),
-                            top_rows=max(0, ystart + ysize - 2044),
-                            left_columns=max(0, 4 - xstart),
-                            right_columns=max(0, xstart + xsize - 2044))
+        nref = NumRefPixels(
+            bottom_rows=max(0, 4 - ystart),
+            top_rows=max(0, ystart + ysize - 2044),
+            left_columns=max(0, 4 - xstart),
+            right_columns=max(0, xstart + xsize - 2044),
+        )
 
     return nref
 
 
 def get_ipc_slice(input_model, ipc_model):
-    """Extract a slice from IPC kernel corresponding to science data.
+    """
+    Extract a slice from IPC kernel corresponding to science data.
 
     Parameters
     ----------
@@ -181,19 +188,20 @@ def get_ipc_slice(input_model, ipc_model):
     ystart = input_model.meta.subarray.ystart - 1
     xsize = input_model.meta.subarray.xsize
     ysize = input_model.meta.subarray.ysize
-    if input_model.meta.instrument.name == 'MIRI':
-        is_subarray = (xsize < 1032 or ysize < 1024)
+    if input_model.meta.instrument.name == "MIRI":
+        is_subarray = xsize < 1032 or ysize < 1024
     else:
-        is_subarray = (xsize < 2048 or ysize < 2048)
+        is_subarray = xsize < 2048 or ysize < 2048
 
     if is_subarray:
-        return ipc_model.data[:, :, ystart:ystart + ysize, xstart:xstart + xsize]
+        return ipc_model.data[:, :, ystart : ystart + ysize, xstart : xstart + xsize]
     else:
         return ipc_model.data
 
 
 def ipc_convolve(output_data, kernel, nref):
-    """Convolve the science data with the IPC kernel.
+    """
+    Convolve the science data with the IPC kernel.
 
     Parameters
     ----------
@@ -207,6 +215,7 @@ def ipc_convolve(output_data, kernel, nref):
         that matches the last two dimensions of `output_data`.
 
     nref : namedtuple
+        Tuple containing number of reference pixels at each edge:
         bottom_rows : int
             The number of reference rows at the bottom of the image.
         top_rows : int
