@@ -323,12 +323,6 @@ def test_estimate_tikho_factors(engine):
     factor = engine.estimate_tikho_factors(f_lam)
     assert isinstance(factor, float)
 
-    # very approximate calculation of tik fac looks like
-    # n_pixels = (~engine.mask).sum()
-    # flux = f_lam(engine.wave_grid)
-    # dlam = engine.wave_grid[1:] - engine.wave_grid[:-1]
-    # print(n_pixels/np.mean(flux[1:] * dlam))
-
 
 @pytest.fixture(scope="module")
 def tikho_tests(imagemodel, engine):
