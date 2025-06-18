@@ -4,6 +4,8 @@ import pytest
 import stdatamodels.jwst.datamodels
 from stdatamodels.jwst.datamodels import ImageModel
 
+from stpipe.library import ClosedLibraryError, BorrowError
+
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.load_as_asn import load_asn
 from jwst.datamodels.library import ModelLibrary
@@ -194,3 +196,18 @@ def test_get_crds_parameters(example_library, modify):
     channel = params["meta.instrument.channel"]
     assert channel == "SHORT"
     assert instrument_name == "MIRI" if modify else "NIRCAM"
+
+
+@pytest.mark.parametrize("example_library", [True, False], indirect=True)
+def test_read_metadata_fails(example_library):
+    """
+    Test that read_metadata fails if the library is not opened.
+    """
+    with pytest.raises(ClosedLibraryError):
+        example_library.read_metadata(0)
+
+    with example_library:
+        model = example_library.borrow(0)
+        with pytest.raises(BorrowError):
+            example_library.read_metadata(0)
+        example_library.shelve(model, 0, modify=False)
