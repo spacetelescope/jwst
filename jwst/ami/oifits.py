@@ -479,9 +479,9 @@ class RawOifits:
         oim.meta.oifits.array_name = instrument_data.arrname
         oim.meta.oifits.instrument_mode = instrument_data.pupil
 
-        oim.meta.ami.roll_ref = instrument_data.roll_ref
-        oim.meta.ami.v3yangle = instrument_data.v3iyang
-        oim.meta.ami.vparity = instrument_data.vparity
+        oim.meta.guidestar.fgs_roll_ref = instrument_data.roll_ref
+        oim.meta.guidestar.fgs_v3yangle = instrument_data.v3iyang
+        oim.meta.guidestar.fgs_vparity = instrument_data.vparity
 
         # oi_array extension data
         oim.array["TEL_NAME"] = tel_name
