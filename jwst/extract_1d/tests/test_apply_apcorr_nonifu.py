@@ -1,18 +1,19 @@
-import pytest
 import numpy as np
-import os
-
+import pytest
 from astropy.io import fits
 from astropy.table import Table
-
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import JwstDataModel
 
 from jwst.extract_1d.apply_apcorr import ApCorr, ApCorrPhase, select_apcorr
 
-data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "data"))
 NIR_TEST_FILES = {
-    "MSASPEC": os.path.join(data_dir, "jwst_nirspec_apcorr_msa_dummy.fits"),
-    "FIXEDSLIT/BRIGHTOBJ": os.path.join(data_dir, "jwst_nirspec_apcorr_fs_dummy.fits"),
+    "MSASPEC": get_pkg_data_filename(
+        "data/jwst_nirspec_apcorr_msa_dummy.fits", package="jwst.extract_1d.tests"
+    ),
+    "FIXEDSLIT/BRIGHTOBJ": get_pkg_data_filename(
+        "data/jwst_nirspec_apcorr_fs_dummy.fits", package="jwst.extract_1d.tests"
+    ),
 }
 
 

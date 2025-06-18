@@ -1,14 +1,16 @@
 """Test step/pipeline saving"""
 
-from glob import glob
 import os
-from os import path
 import shutil
+from glob import glob
+from os import path
+
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.stpipe import Step
 
 data_fn = "flat.fits"
-data_fn_path = path.join(path.dirname(__file__), "data", data_fn)
+data_fn_path = get_pkg_data_filename(f"data/{data_fn}", package="jwst.stpipe.tests")
 data_name, data_ext = path.splitext(data_fn)
 
 
@@ -35,9 +37,8 @@ def test_make_output_path():
     assert output_path == path.join(step.output_dir, "junk_jwststep.fits")
 
 
-def test_save_step_default(mk_tmp_dirs):
+def test_save_step_default(_jail):
     """Default save should be current working directory"""
-    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = ["jwst.stpipe.tests.steps.StepWithModel", data_fn_path]
 
@@ -47,9 +48,8 @@ def test_save_step_default(mk_tmp_dirs):
     assert path.isfile(fname)
 
 
-def test_save_step_withoutput(mk_tmp_dirs):
+def test_save_step_withoutput(_jail):
     """Default save should be current working directory"""
-    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     output_file = "junk.fits"
 
@@ -61,9 +61,8 @@ def test_save_step_withoutput(mk_tmp_dirs):
     assert path.isfile(output_path + "_stepwithmodel" + output_ext)
 
 
-def test_save_step_withoutputsuffix(mk_tmp_dirs):
+def test_save_step_withoutputsuffix(_jail):
     """Default save should be current working directory"""
-    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     output_file = "junk_rate.fits"
     actual_output_file = "junk_stepwithmodel.fits"
@@ -127,9 +126,8 @@ def test_save_step_withdir_withoutput(mk_tmp_dirs):
     assert path.isfile(output_fn_path)
 
 
-def test_save_container(mk_tmp_dirs):
+def test_save_container(_jail):
     """Step with output_use_model"""
-    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
         "jwst.stpipe.tests.steps.StepWithContainer",
@@ -142,9 +140,8 @@ def test_save_container(mk_tmp_dirs):
     assert path.isfile("flat_1_stepwithcontainer.fits")
 
 
-def test_save_container_usemodel(mk_tmp_dirs):
+def test_save_container_usemodel(_jail):
     """Step with output_use_model"""
-    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = ["jwst.stpipe.tests.steps.StepWithContainer", data_fn_path, "--output_use_model=true"]
 
@@ -154,9 +151,8 @@ def test_save_container_usemodel(mk_tmp_dirs):
     assert path.isfile("swc_model2_stepwithcontainer.fits")
 
 
-def test_save_container_withfile(mk_tmp_dirs):
+def test_save_container_withfile(_jail):
     """Step with output_use_model"""
-    tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
 
     args = [
         "jwst.stpipe.tests.steps.StepWithContainer",
@@ -174,8 +170,7 @@ def test_save_pipeline_default(mk_tmp_dirs):
     """Default save should be current working directory"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     step_fn = "save_pipeline.cfg"
-
-    step_fn_path = path.join(path.dirname(__file__), "steps", step_fn)
+    step_fn_path = get_pkg_data_filename(f"steps/{step_fn}", package="jwst.stpipe.tests")
 
     tmp_step_fn_path = path.join(tmp_config_path, step_fn)
     tmp_data_fn_path = path.join(tmp_data_path, data_fn)
@@ -203,7 +198,7 @@ def test_save_pipeline_withdir(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     step_fn = "save_pipeline.cfg"
-    step_fn_path = path.join(path.dirname(__file__), "steps", step_fn)
+    step_fn_path = get_pkg_data_filename(f"steps/{step_fn}", package="jwst.stpipe.tests")
 
     tmp_step_fn_path = path.join(tmp_config_path, step_fn)
     shutil.copy(step_fn_path, tmp_step_fn_path)
@@ -224,7 +219,7 @@ def test_save_substep_withdir(mk_tmp_dirs):
     """Save to specified folder"""
     tmp_current_path, tmp_data_path, tmp_config_path = mk_tmp_dirs
     step_fn = "save_pipeline.cfg"
-    step_fn_path = path.join(path.dirname(__file__), "steps", step_fn)
+    step_fn_path = get_pkg_data_filename(f"steps/{step_fn}", package="jwst.stpipe.tests")
 
     tmp_step_fn_path = path.join(tmp_config_path, step_fn)
     shutil.copy(step_fn_path, tmp_step_fn_path)
@@ -251,7 +246,7 @@ def test_save_substep_withdir(mk_tmp_dirs):
     assert path.isfile(desired)
 
 
-def test_save_proper_pipeline(mk_tmp_dirs):
+def test_save_proper_pipeline(_jail):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -300,7 +295,7 @@ def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_data_path, output_path + "_pp" + output_ext))
 
 
-def test_save_proper_pipeline_substeps(mk_tmp_dirs):
+def test_save_proper_pipeline_substeps(_jail):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -317,7 +312,7 @@ def test_save_proper_pipeline_substeps(mk_tmp_dirs):
     assert path.isfile("flat_aswm.fits")
 
 
-def test_save_proper_pipeline_substeps_skip(mk_tmp_dirs):
+def test_save_proper_pipeline_substeps_skip(_jail):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -356,7 +351,7 @@ def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_config_path, "flat_aswm.fits"))
 
 
-def test_save_proper_pipeline_container(mk_tmp_dirs):
+def test_save_proper_pipeline_container(_jail):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -405,7 +400,7 @@ def test_save_proper_pipeline_container_withdir_withoutput(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_data_path, output_path + "_1_pp" + output_ext))
 
 
-def test_save_proper_pipeline_container_substeps(mk_tmp_dirs):
+def test_save_proper_pipeline_container_substeps(_jail):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -425,7 +420,7 @@ def test_save_proper_pipeline_container_substeps(mk_tmp_dirs):
     assert path.isfile("flat_1_swc.fits")
 
 
-def test_save_proper_pipeline_container_substeps_skip(mk_tmp_dirs):
+def test_save_proper_pipeline_container_substeps_skip(_jail):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -470,7 +465,7 @@ def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_data_path, "flat_1_swc.fits"))
 
 
-def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
+def test_save_proper_pipeline_container_usemodel(_jail):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -491,7 +486,7 @@ def test_save_proper_pipeline_container_usemodel(mk_tmp_dirs):
     assert len(output_files) == 0
 
 
-def test_save_proper_pipeline_container_nosearch(mk_tmp_dirs):
+def test_save_proper_pipeline_container_nosearch(_jail):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",

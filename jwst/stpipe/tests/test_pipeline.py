@@ -1,15 +1,12 @@
-from os.path import dirname, join, abspath
 import sys
 
 import numpy as np
 import pytest
-
+from astropy.utils.data import get_pkg_data_filename
 from stpipe import crds_client
-
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step, Pipeline
-
 from jwst.stpipe.tests.steps import PipeWithReference, StepWithReference
 
 
@@ -89,7 +86,9 @@ class MyPipeline(Pipeline):
     def process(self, *args):
         science = datamodels.open(self.science_filename)
         if self.flat_filename is None:
-            self.flat_filename = join(dirname(__file__), "data", "flat.fits")
+            self.flat_filename = get_pkg_data_filename(
+                "data/flat.fits", package="jwst.stpipe.tests"
+            )
         flat = datamodels.open(self.flat_filename)
         calibrated = []
         calibrated.append(self.flat_field.run(science, flat))
@@ -103,7 +102,9 @@ class MyPipeline(Pipeline):
 
 
 def test_pipeline_from_config_file(tmp_cwd):
-    config_file_path = join(dirname(__file__), "steps", "python_pipeline.cfg")
+    config_file_path = get_pkg_data_filename(
+        "steps/python_pipeline.cfg", package="jwst.stpipe.tests"
+    )
     pipe = Pipeline.from_config_file(config_file_path)
 
     assert pipe.flat_field.threshold == 42.0
@@ -118,8 +119,8 @@ def test_pipeline_python(tmp_cwd):
     pipe = MyPipeline(
         "MyPipeline",
         steps=steps,
-        science_filename=abspath(join(dirname(__file__), "data", "science.fits")),
-        flat_filename=abspath(join(dirname(__file__), "data", "flat.fits")),
+        science_filename=get_pkg_data_filename("data/science.fits", package="jwst.stpipe.tests"),
+        flat_filename=get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests"),
         output_file="python.fits",
     )
 
@@ -170,7 +171,7 @@ def test_prefetch(tmp_cwd, monkeypatch):
 
 def test_pipeline_from_cmdline_cfg(tmp_cwd):
     args = [
-        join(dirname(__file__), "steps", "python_pipeline.cfg"),
+        get_pkg_data_filename("steps/python_pipeline.cfg", package="jwst.stpipe.tests"),
         "--steps.flat_field.threshold=47",
     ]
 
@@ -183,9 +184,10 @@ def test_pipeline_from_cmdline_cfg(tmp_cwd):
 
 
 def test_pipeline_from_cmdline_class(tmp_cwd):
+    science_filename = get_pkg_data_filename("data/science.fits", package="jwst.stpipe.tests")
     args = [
         "jwst.stpipe.tests.test_pipeline.MyPipeline",
-        f"--science_filename={join(dirname(__file__), 'data', 'science.fits')}",
+        f"--science_filename={science_filename}",
         "--output_file=output.fits",
         "--steps.flat_field.threshold=47",
     ]
@@ -201,12 +203,13 @@ def test_pipeline_from_cmdline_class(tmp_cwd):
 def test_pipeline_commandline_invalid_args():
     from io import StringIO
 
+    flat_filename = get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests")
     args = [
         "jwst.stpipe.tests.test_pipeline.MyPipeline",
         # The file_name parameters are *required*, and one of them
         # is missing, so we should get a message to that effect
         # followed by the commandline usage message.
-        "--flat_filename={0}".format(abspath(join(dirname(__file__), "data", "flat.fits"))),
+        f"--flat_filename={flat_filename}",
         "--steps.flat_field.threshold=47",
     ]
 
