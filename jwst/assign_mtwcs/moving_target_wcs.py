@@ -50,10 +50,9 @@ def assign_moving_target_wcs(input_models):
     mt_dec = np.empty(len(ind))
     with input_models:
         for i in ind:
-            model = input_models.borrow(i)
-            mt_ra[i] = model.meta.wcsinfo.mt_ra
-            mt_dec[i] = model.meta.wcsinfo.mt_dec
-            input_models.shelve(model, i, modify=False)
+            meta = input_models.read_metadata(i)
+            mt_ra[i] = meta["meta.wcsinfo.mt_ra"]
+            mt_dec[i] = meta["meta.wcsinfo.mt_dec"]
 
     # Compute the mean MT RA/Dec over all exposures
     if None in mt_ra or None in mt_dec:
