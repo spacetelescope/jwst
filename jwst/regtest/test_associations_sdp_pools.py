@@ -59,9 +59,11 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
         ("jw01292_20250316t033413_pool", []),  # pool_006_spec_nirspec (FIXED SLIT)
         ("jw04557_20250318t100949_pool", []),  # pool_006_spec_nirspec (MOS)
         ("jw03777_20250316t024410_pool", []),  # pool_006_spec_nirspec (IFU)
-        ("jw02044_20241213t004653_pool", []),  # pool_007_spec_miri (FIXED SLIT)
+        ("jw05168_20250316t055106_pool", []),  # pool_007_spec_miri (FIXED SLIT)
         ("jw02961_20250308t142131_pool", []),  # pool_007_spec_miri (SLITLESS)
         ("jw01958_20250316t041843_pool", []),  # pool_007_spec_miri (MRS)
+        ("jw01529_20250316t074500_pool", []),  # pool_009_spec_miri_lv2bkg (FIXED SLIT)
+        ("jw01523_20250321t155408_pool", []),  # pool_009_spec_miri_lv2bkg (MRS)
     ],
     ids=parfunc,
 )
