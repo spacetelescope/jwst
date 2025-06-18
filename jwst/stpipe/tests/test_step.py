@@ -93,7 +93,6 @@ def test_parameters_from_crds_filename(monkeypatch):
     monkeypatch.setattr(datamodels, "open", throw_error)
 
     fname = get_pkg_data_filename("data/miri_data.fits", package="jwst.stpipe.tests")
-    print("fname", fname)
     pars = WhiteLightStep.get_config_from_reference(fname)
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
