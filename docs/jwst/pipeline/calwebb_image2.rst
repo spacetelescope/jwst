@@ -24,7 +24,7 @@ table below.
 +--------------------------------------+---------+---------+
 | Step                                 | Non-TSO | TSO     |
 +======================================+=========+=========+
-| :ref:`background <background_step>`  | |check| |         |
+| :ref:`background <background_subtraction>`  | |check| |         |
 +--------------------------------------+---------+---------+
 | :ref:`assign_wcs <assign_wcs_step>`  | |check| | |check| |
 +--------------------------------------+---------+---------+
@@ -81,7 +81,7 @@ Outputs
 
 This is an intermediate product that is only created if "--save_bsub" is set
 to ``True`` and will contain the data as output from the
-:ref:`background <background_step>` step.
+:ref:`background <background_subtraction>` step.
 If the input is a "_rate" product, this will be a "_bsub" product, while
 "_rateints" inputs will be saved as "_bsubints."
 
