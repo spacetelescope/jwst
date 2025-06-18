@@ -1,5 +1,4 @@
 import pytest
-import warnings
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.stpipe import Step
@@ -31,7 +30,7 @@ def run_detector1(rtdata_module):
     Step.from_cmdline(args)
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def run_image2(run_detector1, rtdata_module):
     """Run a verify-only NIRSpec image through image2."""
     rtdata = rtdata_module
