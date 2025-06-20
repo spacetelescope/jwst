@@ -17,9 +17,6 @@ target-version = "py311"
 quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
-exclude = [
-    "jwst/ipc/**.py",
-]
 
 [lint]
 select = [
@@ -142,4 +139,3 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "F841", # unused variable
     "S101",
 ]
-"jwst/ipc/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
