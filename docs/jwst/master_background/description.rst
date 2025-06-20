@@ -17,7 +17,7 @@ versus wavelength - is projected into the
 2-D space of source data based on the wavelength of each pixel in the 2-D data. The resulting
 2-D background signal is then subtracted directly from the 2-D source data.
 
-Logic built into the step checks to see if the exposure-based :ref:`background <background_step>`
+Logic built into the step checks to see if the exposure-based :ref:`background <background_subtraction>`
 subtraction step in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline has already been
 performed on the input images, based on the value of the S_BKDSUB keyword. If S_BKGSUB is
 set to "COMPLETE", the master background step is skipped. If the :ref:`calwebb_spec2 <calwebb_spec2>`
