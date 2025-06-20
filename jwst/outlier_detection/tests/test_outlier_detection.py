@@ -514,7 +514,9 @@ def test_outlier_step_on_disk(three_sci_as_asn, tmp_cwd):
         result_files
     ) + len(blot_files)
 
-
+@pytest.mark.xfail(
+    reason="random data are flagged as CR; pixel area set to 1 srad in meta."
+)
 def test_outlier_step_square_source_no_outliers(mirimage_three_sci, tmp_cwd):
     """Test whole step with square source with sharp edges, no outliers"""
     container = ModelLibrary(list(mirimage_three_sci))
