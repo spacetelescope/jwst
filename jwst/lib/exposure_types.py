@@ -266,11 +266,14 @@ def is_moving_target(datamodel):
         ):
             return True
         return False
-    else:
+    elif isinstance(datamodel, dict):
         # assume datamodel is a dictionary of metadata from read_metadata
         if (
             "meta.target.type" in datamodel
             and datamodel["meta.target.type"] is not None
-            and datamodel["meta.target.type"] == "moving"
+            and datamodel["meta.target.type"].lower() == "moving"
         ):
             return True
+        return False
+    else:
+        raise TypeError(f"Expected JwstDataModel or dict, got {type(datamodel)} instead.")
