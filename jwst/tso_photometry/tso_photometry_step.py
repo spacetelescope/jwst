@@ -20,7 +20,7 @@ class TSOPhotometryStep(Step):
         save_catalog = boolean(default=False)  # save exposure-level catalog
     """  # noqa: E501
 
-    reference_file_types = ["tsophot", "gain"]
+    reference_file_types = ["gain"]
 
     def process(self, input_data):
         """

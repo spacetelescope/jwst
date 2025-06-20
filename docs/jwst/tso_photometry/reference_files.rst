@@ -1,5 +1,5 @@
 Reference Files
 ===============
-The ``tso_photometry`` step uses a TSOPHOT reference file.
+The ``tso_photometry`` step uses a GAIN reference file.
 
-.. include:: ../references_general/tsophot_reffile.inc
+.. include:: ../references_general/gain_reffile.inc
