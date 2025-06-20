@@ -1,3 +1,4 @@
+from copy import copy
 import json
 
 import pytest
@@ -168,10 +169,15 @@ def test_asn_attributes_assignment(example_library):
     # test that the association attributes are assigned to the models
     with example_library:
         for i in range(_N_MODELS):
+            meta = example_library.read_metadata(i)
             model = example_library.borrow(i)
             assert model.meta.asn.table_name.startswith(expected_table_name)
             assert model.meta.asn.pool_name == _POOL_NAME
             example_library.shelve(model, i, modify=False)
+
+            # ensure read_metadata also updates asn attributes in an identical way
+            assert meta["meta.asn.table_name"] == model.meta.asn.table_name
+            assert meta["meta.asn.pool_name"] == model.meta.asn.pool_name
 
 
 @pytest.mark.parametrize("modify", [True, False])
@@ -201,11 +207,8 @@ def test_get_crds_parameters(example_library, modify):
 @pytest.mark.parametrize("example_library", [True, False], indirect=True)
 def test_read_metadata_fails(example_library):
     """
-    Test that read_metadata fails if the library is not opened.
+    Test that read_metadata fails if the model is already borrowed
     """
-    with pytest.raises(ClosedLibraryError):
-        example_library.read_metadata(0)
-
     with example_library:
         model = example_library.borrow(0)
         with pytest.raises(BorrowError):

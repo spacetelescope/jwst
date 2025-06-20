@@ -6,7 +6,7 @@ from pathlib import Path
 from astropy.io import fits
 from stdatamodels.jwst.datamodels.util import open as datamodels_open
 from stdatamodels.jwst.datamodels import read_metadata
-from stpipe.library import AbstractModelLibrary, NoGroupID, ClosedLibraryError, BorrowError
+from stpipe.library import AbstractModelLibrary, NoGroupID, BorrowError
 
 from jwst.associations import AssociationNotValidError, load_asn
 
@@ -262,10 +262,8 @@ class ModelLibrary(AbstractModelLibrary):
         dict
             The metadata dictionary for the model.
         """
-        if not self._open:
-            raise ClosedLibraryError("ModelLibrary is not open")
-
-        # if model was already borrowed, raise
+        # if model was already borrowed, calling code should just read the metadata
+        # from the model itself, so we raise an error here
         if idx in self._ledger:
             raise BorrowError("Attempt to read metadata from model that is already borrowed")
 
@@ -290,7 +288,25 @@ class ModelLibrary(AbstractModelLibrary):
                 member = self._members[idx]
                 filename = Path(self._asn_dir) / member["expname"]
 
-        return read_metadata(filename)
+        meta = read_metadata(filename)
+        # update meta dict with asn-related attributes, similar to _assign_member_to_model
+        meta = self._assign_member_to_meta(meta, self._members[idx])
+        return meta
+
+    def _assign_member_to_meta(self, meta, member):
+        meta["meta.asn.exptype"] = member["exptype"]
+        for attr in ("group_id", "tweakreg_catalog"):
+            if attr in member:
+                meta["meta." + attr] = member[attr]
+        if "meta.asn" not in meta:
+            meta["meta.asn"] = {}
+
+        if "table_name" in self.asn.keys():
+            meta["meta.asn.table_name"] = self.asn["table_name"]
+
+        if "asn_pool" in self.asn.keys():  # do not clobber existing values
+            meta["meta.asn.pool_name"] = self.asn["asn_pool"]
+        return meta
 
 
 def _attrs_to_group_id(
