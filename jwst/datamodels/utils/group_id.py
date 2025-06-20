@@ -5,7 +5,7 @@ def attrs_to_group_id(obs_meta):
     Parameters
     ----------
     obs_meta : dict or ObjectNode
-        A dictionary or ObjectNode containing meta.observation metadata, either from finding
+        A dictionary or ObjectNode containing meta.observation metadata, either
         model.meta.observation or meta["meta"]["observation"] from read_metadata.
 
     Returns
