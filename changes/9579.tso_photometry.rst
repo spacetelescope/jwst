@@ -1,0 +1,1 @@
+Move TSO photometry radii to step parameters instead of reference file.
