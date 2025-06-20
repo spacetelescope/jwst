@@ -497,11 +497,20 @@ class STHDUDiff(HDUDiff):
         if self.header_tolerances:
             self.rtol, self.atol = rtol, atol
 
+        def report_array_zero_size(arr, arrnans, arrzeros):
+            if arrnans.size > 0:
+                nans_in_arr = arr[arrnans].size
+                nonans_in_arr = arr[~arrnans].size
+            else:
+                nans_in_arr = 0
+                nonans_in_arr = arr.size
+            if arrzeros.size > 0:
+                zeros_in_arr = arr[arrzeros].size
+            else:
+                zeros_in_arr = 0
+            return zeros_in_arr, nans_in_arr, nonans_in_arr
+
         def get_quick_report(a, b):
-            # Get the number of NaN in each array and other info
-            nan_idx = np.isnan(a) | np.isnan(b)
-            anonan = a[~nan_idx]
-            bnonan = b[~nan_idx]
             report_zeros_nan = Table()
             report_zeros_nan["Quantity"] = [
                 "zeros",
@@ -511,21 +520,40 @@ class STHDUDiff(HDUDiff):
                 "max_value",
                 "mean_value",
             ]
+            # Catch the case when the images are all nans
+            nansa, nansb = np.isnan(a), np.isnan(b)
+            zerosa, zerosb = a == 0.0, b == 0.0
+            zeros_in_a, nans_in_a, nonans_in_a = report_array_zero_size(a, nansa, zerosa)
+            zeros_in_b, nans_in_b, nonans_in_b = report_array_zero_size(b, nansb, zerosb)
+            nonansa, nonansb = a[~nansa], b[~nansb]
+            if nonansa.size > 0:
+                mina = f"{np.min(nonansa):.4g}"
+                maxa = f"{np.max(nonansa):.4g}"
+                meana = f"{np.mean(nonansa):.4g}"
+            else:
+                mina, maxa, meana = "-", "-", "-"
+            if nonansb.size > 0:
+                minb = f"{np.min(nonansb):.4g}"
+                maxb = f"{np.max(nonansb):.4g}"
+                meanb = f"{np.mean(nonansb):.4g}"
+            else:
+                minb, maxb, meanb = "-", "-", "-"
+            # Populate report table
             report_zeros_nan["a"] = [
-                a[a == 0.0].size,
-                a[np.isnan(a)].size,
-                a[~np.isnan(a)].size,
-                f"{np.min(anonan):.4g}",
-                f"{np.max(anonan):.4g}",
-                f"{np.mean(anonan):.4g}",
+                zeros_in_a,
+                nans_in_a,
+                nonans_in_a,
+                mina,
+                maxa,
+                meana,
             ]
             report_zeros_nan["b"] = [
-                b[b == 0.0].size,
-                b[np.isnan(b)].size,
-                b[~np.isnan(b)].size,
-                f"{np.min(bnonan):.4g}",
-                f"{np.max(bnonan):.4g}",
-                f"{np.mean(bnonan):.4g}",
+                zeros_in_b,
+                nans_in_b,
+                nonans_in_b,
+                minb,
+                maxb,
+                meanb,
             ]
             # Match nans for all arrays and remove them for logical comparison
             percentages, stats = Table(), Table()
@@ -535,9 +563,13 @@ class STHDUDiff(HDUDiff):
                 percentages["array_shapes_are_different"] = ""
                 stats["no_stats_available"] = ""
                 return report_zeros_nan, percentages, stats
+            # Get the number of NaN in each array and other info
+            nan_idx = np.isnan(a) | np.isnan(b)
+            anonan = a[~nan_idx]
+            bnonan = b[~nan_idx]
             values = np.abs(anonan - bnonan)
             # Nothing to report if all values are 0 and the number of nans is the same
-            if (values == 0.0).all() and a[np.isnan(a)].size == b[np.isnan(b)].size:
+            if (values == 0.0).all() and a[nansa].size == b[nansb].size:
                 return None, None, None
             # Calculate stats for absolute and relative differences
             # Catch the all NaNs case
@@ -776,10 +808,15 @@ class STImageDataDiff(ImageDataDiff):
             # Make sure to separate nans in comparison
             data_within_tol = True
 
-            # Only check the nans if the array shapes are the same
+            # Catch the case when the images are all nans
             nansa, nansb = np.isnan(self.a), np.isnan(self.b)
             nonana, nonanb = self.a[~nansa], self.b[~nansb]
-            if nansa.shape != nansb.shape or nonana.shape != nonanb.shape:
+            if nansa.all() == nansb.all() and nonana.all() == nonanb.all():
+                # data is all nans in both arrays do no further comparison and return without issue
+                return
+
+            # Only check the nans if the array shapes are the same
+            elif nansa.shape != nansb.shape or nonana.shape != nonanb.shape:
                 # No need to continue, there are differences. Go to stats calculation.
                 data_within_tol = False
             else:
