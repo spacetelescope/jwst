@@ -7,7 +7,7 @@ import logging
 import sys
 from argparse import ArgumentParser
 
-from jwst.regtest.st_fitsdiff import STFITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
 
 logging.basicConfig(level=logging.INFO, format="", datefmt="", stream=sys.stdout)
