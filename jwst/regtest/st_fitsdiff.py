@@ -520,7 +520,7 @@ class STHDUDiff(HDUDiff):
                 "max_value",
                 "mean_value",
             ]
-            # Catch the case when the images are all nans
+            # Catch the case when the images are all nans and report accordingly
             nansa, nansb = np.isnan(a), np.isnan(b)
             zerosa, zerosb = a == 0.0, b == 0.0
             zeros_in_a, nans_in_a, nonans_in_a = report_array_zero_size(a, nansa, zerosa)
