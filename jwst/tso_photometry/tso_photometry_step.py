@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from stdatamodels.jwst.datamodels import CubeModel, GainModel, TsoPhotModel
 
 from jwst.lib import reffile_utils
