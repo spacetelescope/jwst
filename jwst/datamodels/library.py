@@ -261,17 +261,30 @@ class ModelLibrary(AbstractModelLibrary):
                 filename = Path(self._asn_dir) / member["expname"]
 
         meta = read_metadata(filename)
-        # update meta dict with asn-related attributes, similar to _assign_member_to_model
+        #
         meta = self._assign_member_to_meta(meta, self._members[idx])
         return meta
 
     def _assign_member_to_meta(self, meta, member):
+        """
+        Update meta dict with asn-related attributes, similar to _assign_member_to_model.
+
+        Parameters
+        ----------
+        meta : dict
+            The metadata dictionary to update.
+        member : dict
+            The member dictionary containing association attributes.
+
+        Returns
+        -------
+        dict
+            The updated metadata dictionary with association attributes.
+        """
         meta["meta.asn.exptype"] = member["exptype"]
         for attr in ("group_id", "tweakreg_catalog"):
             if attr in member:
                 meta["meta." + attr] = member[attr]
-        if "meta.asn" not in meta:
-            meta["meta.asn"] = {}
 
         if "table_name" in self.asn.keys():
             meta["meta.asn.table_name"] = self.asn["table_name"]
