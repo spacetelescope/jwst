@@ -1,14 +1,11 @@
-import io
-
-import asdf
 import warnings
 from pathlib import Path
-from astropy.io import fits
 from stdatamodels.jwst.datamodels.util import open as datamodels_open
 from stdatamodels.jwst.datamodels import read_metadata
 from stpipe.library import AbstractModelLibrary, NoGroupID
 
 from jwst.associations import AssociationNotValidError, load_asn
+from jwst.datamodels.utils import attrs_to_group_id
 
 __all__ = ["ModelLibrary"]
 
@@ -131,34 +128,14 @@ class ModelLibrary(AbstractModelLibrary):
             The meta.group_id stored in the ASDF extension (if it exists)
             or a group_id calculated from the FITS headers.
         """
-        # use astropy.io.fits directly to read header keywords
+        # use read_metadata to read header keywords
         # avoiding the DataModel overhead
+        meta = read_metadata(filename, flatten=False)["meta"]
+        if "group_id" in meta.keys():
+            return meta["group_id"]
         try:
-            with fits.open(filename) as ff:
-                if "ASDF" in ff:
-                    asdf_yaml = asdf.util.load_yaml(
-                        io.BytesIO(ff["ASDF"].data.tobytes()), tagged=True
-                    )
-                    if group_id := asdf_yaml.get("meta", {}).get("group_id"):
-                        return group_id
-                header = ff["PRIMARY"].header
-                program_number = header["PROGRAM"]
-                observation_number = header["OBSERVTN"]
-                visit_number = header["VISIT"]
-                visit_group = header["VISITGRP"]
-                sequence_id = header["SEQ_ID"]
-                activity_id = header["ACT_ID"]
-                exposure_number = header["EXPOSURE"]
+            return attrs_to_group_id(meta["observation"])
 
-            return _attrs_to_group_id(
-                program_number,
-                observation_number,
-                visit_number,
-                visit_group,
-                sequence_id,
-                activity_id,
-                exposure_number,
-            )
         except KeyError as e:
             msg = f"Cannot find header keyword {e} in {filename}"
             raise NoGroupID(msg) from e
@@ -188,17 +165,12 @@ class ModelLibrary(AbstractModelLibrary):
         """
         if group_id := getattr(model.meta, "group_id", None):
             return group_id
-        if hasattr(model.meta, "observation"):
-            return _attrs_to_group_id(
-                model.meta.observation.program_number,
-                model.meta.observation.observation_number,
-                model.meta.observation.visit_number,
-                model.meta.observation.visit_group,
-                model.meta.observation.sequence_id,
-                model.meta.observation.activity_id,
-                model.meta.observation.exposure_number,
-            )
-        raise NoGroupID(f"{model} missing group_id")
+        if model.meta.hasattr("observation"):
+            try:
+                return attrs_to_group_id(model.meta.observation)
+            except KeyError as e:
+                raise NoGroupID(f"Cannot build group_id from model.meta.observation: {e}") from e
+        raise NoGroupID(f"{model} missing group_id: meta.observation was not found.")
 
     def _assign_member_to_model(self, model, member):
         model.meta.asn.exptype = member["exptype"]
@@ -268,55 +240,3 @@ class ModelLibrary(AbstractModelLibrary):
             meta = read_metadata(filename, flatten=True)
 
         return meta
-
-
-def _attrs_to_group_id(
-    program_number,
-    observation_number,
-    visit_number,
-    visit_group,
-    sequence_id,
-    activity_id,
-    exposure_number,
-):
-    """
-    Combine a number of file metadata values into a ``group_id`` string.
-
-    Parameters
-    ----------
-    program_number : int
-        Program number.
-    observation_number : int
-        Observation number.
-    visit_number : int
-        Visit number.
-    visit_group : str
-        Visit group.
-    sequence_id : str
-        Sequence ID.
-    activity_id : str
-        Activity ID.
-    exposure_number : int
-        Exposure number.
-
-    Returns
-    -------
-    str
-        The group_id string.
-    """
-    for val in (
-        program_number,
-        observation_number,
-        visit_number,
-        visit_group,
-        sequence_id,
-        activity_id,
-        exposure_number,
-    ):
-        if val is None:
-            raise NoGroupID(f"Missing required value for group_id: {val}")
-    return (
-        f"jw{program_number}{observation_number}{visit_number}"
-        f"_{visit_group}{sequence_id}{activity_id}"
-        f"_{exposure_number}"
-    )
