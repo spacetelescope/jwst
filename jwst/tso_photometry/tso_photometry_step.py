@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from stdatamodels.jwst.datamodels import CubeModel, TsoPhotModel, GainModel
 
 from jwst.stpipe import Step
