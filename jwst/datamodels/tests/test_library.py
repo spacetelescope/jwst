@@ -7,6 +7,7 @@ from stdatamodels.jwst.datamodels import ImageModel
 
 from stpipe.library import ClosedLibraryError, BorrowError
 
+from stpipe.library import NoGroupID
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.load_as_asn import load_asn
 from jwst.datamodels.library import ModelLibrary
@@ -213,4 +214,42 @@ def test_read_metadata_fails(example_library):
         model = example_library.borrow(0)
         with pytest.raises(BorrowError):
             example_library.read_metadata(0)
+        example_library.shelve(model, 0, modify=False)
+
+
+@pytest.mark.parametrize(
+    "example_library",
+    [
+        False,
+    ],
+    indirect=True,
+)
+def test_model_to_group_id(example_library):
+    """
+    Test that the model_to_group_id method returns the correct group_id
+    based on the model's meta.observation attributes.
+    """
+    with example_library:
+        model = example_library.borrow(0)
+        # test that if a group_id is already set, it is returned unmodified
+        assert model.meta.hasattr("group_id")
+        group_id_0 = example_library._model_to_group_id(model)
+
+        # test that if the group_id is not set, it is calculated
+        # from the meta.observation attributes in the same way as when library was initialized
+        del model.meta.group_id
+        assert not model.meta.hasattr("group_id")
+        group_id = example_library._model_to_group_id(model)
+        assert group_id == group_id_0
+
+        # test error raise from missing key
+        del model.meta.observation.program_number
+        with pytest.raises(NoGroupID):
+            example_library._model_to_group_id(model)
+
+        # test error raise from missing meta.observation
+        del model.meta.observation
+        with pytest.raises(NoGroupID):
+            example_library._model_to_group_id(model)
+
         example_library.shelve(model, 0, modify=False)
