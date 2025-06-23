@@ -11,6 +11,8 @@ from stdatamodels.jwst.datamodels.model_base import JwstDataModel
 from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst.datamodels.util import is_association
 
+from jwst.datamodels.utils import attrs_to_group_id
+
 __doctest_skip__ = ["ModelContainer"]
 
 __all__ = ["ModelContainer"]
@@ -391,39 +393,19 @@ to supply custom catalogs.
         list
             A list of lists of datamodels grouped by exposure.
         """
-        unique_exposure_parameters = [
-            "program_number",
-            "observation_number",
-            "visit_number",
-            "visit_group",
-            "sequence_id",
-            "activity_id",
-            "exposure_number",
-        ]
-
         group_dict = OrderedDict()
         for i, model in enumerate(self._models):
-            params = []
-
             if hasattr(model.meta, "group_id") and model.meta.group_id not in [None, ""]:
                 group_id = model.meta.group_id
 
             else:
-                for param in unique_exposure_parameters:
-                    params.append(getattr(model.meta.observation, param))
                 try:
-                    group_id = "jw" + "_".join(
-                        [
-                            "".join(params[:3]),
-                            "".join(params[3:6]),
-                            params[6],
-                        ]
-                    )
-                    model.meta.group_id = group_id
-                except TypeError:
-                    model.meta.group_id = f"exposure{i + 1:04d}"
+                    group_id = attrs_to_group_id(model.meta.observation)
+                except KeyError:
+                    # If the required keys are not present, assign a default group ID
+                    group_id = f"exposure{i + 1:04d}"
 
-                group_id = model.meta.group_id
+                model.meta.group_id = group_id
 
             if group_id in group_dict:
                 group_dict[group_id].append(model)
