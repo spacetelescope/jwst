@@ -8,33 +8,14 @@ from jwst.lib import reffile_utils
 from jwst.tso_photometry.tso_photometry import tso_aperture_photometry
 from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
 
-shape = (7, 100, 150)
-xcenter = 75.0
-ycenter = 50.0
-
-
-def mk_data_array(shape, value, background, xcenter, ycenter, radius):
-    """Create a data array"""
-
-    data = np.zeros(shape, dtype=np.float32) + background
-
-    xlow = int(math.floor(xcenter - radius))
-    xhigh = int(math.ceil(xcenter + radius)) + 1
-    ylow = int(math.floor(ycenter - radius))
-    yhigh = int(math.ceil(ycenter + radius)) + 1
-    xlow = max(xlow, 0)
-    xhigh = min(xhigh, shape[-1])
-    ylow = max(ylow, 0)
-    yhigh = min(yhigh, shape[-2])
-
-    radius2 = radius**2
-    for j in range(ylow, yhigh):
-        for i in range(xlow, xhigh):
-            dist2 = (float(i) - xcenter) ** 2 + (float(j) - ycenter) ** 2
-            if dist2 < radius2:
-                data[:, j, i] = value + background
-
-    return data
+# Default values for mock data
+XCENTER = 75.0
+YCENTER = 50.0
+VALUE = 17.0
+BACKGROUND = 0.8
+RADIUS = 5.0
+RADIUS_INNER = 8.0
+RADIUS_OUTER = 11.0
 
 
 def get_gain_2d(datamodel):
@@ -65,26 +46,51 @@ def get_gain_2d(datamodel):
     return gain_2d
 
 
-def dummy_wcs(x, y):
+def mk_data_array(shape, value, background, xcenter, ycenter, radius):
+    """Create a data array"""
+
+    data = np.zeros(shape, dtype=np.float32) + background
+
+    xlow = int(math.floor(xcenter - radius))
+    xhigh = int(math.ceil(xcenter + radius)) + 1
+    ylow = int(math.floor(ycenter - radius))
+    yhigh = int(math.ceil(ycenter + radius)) + 1
+    xlow = max(xlow, 0)
+    xhigh = min(xhigh, shape[-1])
+    ylow = max(ylow, 0)
+    yhigh = min(yhigh, shape[-2])
+
+    radius2 = radius**2
+    for j in range(ylow, yhigh):
+        for i in range(xlow, xhigh):
+            dist2 = (float(i) - xcenter) ** 2 + (float(j) - ycenter) ** 2
+            if dist2 < radius2:
+                data[:, j, i] = value + background
+
+    return data
+
+
+def make_mock_wcs(xcenter, ycenter):
     """Placeholder WCS"""
 
-    global xcenter, ycenter
+    def mock_wcs(x, y):
+        crpix1 = xcenter
+        crpix2 = ycenter
+        cdelt1 = 0.031
+        cdelt2 = 0.031
+        crval1 = 15.0 * (((34.4147 / 60.0 + 48.0) / 60.0) + 15.0)  # 15h 48m 34.4147s
+        crval2 = ((24.295 / 60.0 + 9.0) / 60.0) + 28.0  # 28d 09' 24.295"
 
-    crpix1 = xcenter
-    crpix2 = ycenter
-    cdelt1 = 0.031
-    cdelt2 = 0.031
-    crval1 = 15.0 * (((34.4147 / 60.0 + 48.0) / 60.0) + 15.0)  # 15h 48m 34.4147s
-    crval2 = ((24.295 / 60.0 + 9.0) / 60.0) + 28.0  # 28d 09' 24.295"
+        dec = (y + 1.0 - crpix2) * cdelt2 + crval2
+        cosdec = math.cos(dec * math.pi / 180.0)
+        ra = (x + 1.0 - crpix1) * cdelt1 / cosdec + crval1
 
-    dec = (y + 1.0 - crpix2) * cdelt2 + crval2
-    cosdec = math.cos(dec * math.pi / 180.0)
-    ra = (x + 1.0 - crpix1) * cdelt1 / cosdec + crval1
+        return ra, dec
 
-    return ra, dec
+    return mock_wcs
 
 
-def set_meta(datamodel, sub64p=False):
+def set_meta(datamodel, xcenter, ycenter, sub64p=False):
     """Assign some metadata"""
 
     datamodel.meta.exposure.nints = datamodel.data.shape[0]
@@ -120,23 +126,25 @@ def set_meta(datamodel, sub64p=False):
 
     datamodel.meta.bunit_data = "MJy/sr"
     datamodel.meta.bunit_err = "MJy/sr"
-    # NOTE: this is a dummy value that leaves the mock test data values
+    # NOTE: this is a placeholder value that leaves the mock test data values
     # unchanged during the unit conversion in tso_photometry.
     datamodel.meta.photometry.pixelarea_steradians = 1.0e-6
 
-    datamodel.meta.wcs = dummy_wcs
+    datamodel.meta.wcs = make_mock_wcs(xcenter, ycenter)
+    datamodel.meta.wcsinfo.siaf_xref_sci = xcenter + 1
+    datamodel.meta.wcsinfo.siaf_yref_sci = ycenter + 1
 
 
 def include_int_times(datamodel):
     """Create an int_times table and copy it into the data model."""
 
     int_start = datamodel.meta.exposure.integration_start
-
+    shape = datamodel.data.shape
     nrows = int_start + shape[0] + 2  # create a few extra rows
     # integration_number and time_arr are one_indexed
     integration_number = np.arange(1, nrows + 1, dtype=np.float32)
     time_arr = np.arange(1, nrows + 1, dtype=np.float64) + 58700.0
-    dummy = np.arange(nrows, dtype=np.float64)
+    mock_data = np.arange(nrows, dtype=np.float64)
 
     it_dtype = [
         ("integration_number", "<i4"),
@@ -149,33 +157,40 @@ def include_int_times(datamodel):
     ]
 
     otab = np.array(
-        list(zip(integration_number, dummy, time_arr, dummy, dummy, dummy, dummy)), dtype=it_dtype
+        list(
+            zip(integration_number, mock_data, time_arr, mock_data, mock_data, mock_data, mock_data)
+        ),
+        dtype=it_dtype,
     )
     datamodel.int_times = otab.copy()
 
     return time_arr
 
 
-def test_tso_phot_1():
-    global shape, xcenter, ycenter
-
-    # pupil = 'CLEAR' and subarray = 'FULL'
-
-    value = 17.0
-    background = 0.8
-    radius = 5.0
-    radius_inner = 8.0
-    radius_outer = 11.0
+def mock_nircam_image(
+    shape=(7, 100, 150),
+    xcenter=XCENTER,
+    ycenter=YCENTER,
+    value=VALUE,
+    background=BACKGROUND,
+    radius=RADIUS,
+    sub64p=False,
+):
     data = mk_data_array(shape, value, background, xcenter, ycenter, radius)
     datamodel = datamodels.CubeModel(data)
-    set_meta(datamodel, sub64p=False)
+    set_meta(datamodel, xcenter, ycenter, sub64p=sub64p)
+    return datamodel
+
+
+def test_tso_phot():
+    datamodel = mock_nircam_image()
 
     # Get the gain reference file
     gain_2d = get_gain_2d(datamodel)
 
     # Use a larger radius than was used for creating the data.
     catalog = tso_aperture_photometry(
-        datamodel, xcenter, ycenter, radius + 1.0, radius_inner, radius_outer, gain_2d
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
     )
 
     assert catalog.meta["instrument"] == datamodel.meta.instrument.name
@@ -184,15 +199,15 @@ def test_tso_phot_1():
     assert catalog.meta["detector"] == datamodel.meta.instrument.detector
     assert catalog.meta["channel"] == datamodel.meta.instrument.channel
     assert catalog.meta["target_name"] == datamodel.meta.target.catalog_name
-    assert math.isclose(catalog.meta["xcenter"], xcenter, abs_tol=0.01)
-    assert math.isclose(catalog.meta["ycenter"], ycenter, abs_tol=0.01)
+    assert math.isclose(catalog.meta["xcenter"], XCENTER, abs_tol=0.01)
+    assert math.isclose(catalog.meta["ycenter"], YCENTER, abs_tol=0.01)
 
     assert np.allclose(catalog["aperture_sum"].value, 1263.4778, rtol=1.0e-7)
     assert np.allclose(catalog["aperture_sum_err"].value, 0.0, atol=1.0e-7)
     assert np.allclose(catalog["net_aperture_sum"].value, 1173.0, rtol=1.0e-7)
     assert np.allclose(catalog["annulus_sum"].value, 143.256627, rtol=1.0e-7)
     assert np.allclose(catalog["annulus_sum_err"].value, 0.0, atol=1.0e-7)
-    assert np.allclose(catalog["annulus_mean"].value, background, rtol=1.0e-7)
+    assert np.allclose(catalog["annulus_mean"].value, BACKGROUND, rtol=1.0e-7)
 
     assert np.allclose(catalog["annulus_mean"].value, 0.8, rtol=1.0e-6)
     assert np.allclose(catalog["annulus_mean_err"].value, 0.0, rtol=1.0e-7)
@@ -200,21 +215,19 @@ def test_tso_phot_1():
     assert np.allclose(catalog["net_aperture_sum_err"].value, 0.0, atol=1.0e-7)
 
 
-def test_tso_phot_2():
-    # pupil = 'WLP8' and subarray = 'SUB64P'
+def test_tso_phot_sub64p():
+    """Test with pupil = 'WLP8' and subarray = 'SUB64P'."""
 
     shape = (7, 64, 64)
     xcenter = 31.0
     ycenter = 31.0
-
-    value = 17.0
-    background = 0.8
     radius = 50.0
     radius_inner = None
     radius_outer = None
-    data = mk_data_array(shape, value, background, xcenter, ycenter, radius)
-    datamodel = datamodels.CubeModel(data)
-    set_meta(datamodel, sub64p=True)
+
+    datamodel = mock_nircam_image(
+        shape=shape, xcenter=xcenter, ycenter=ycenter, radius=radius, sub64p=True
+    )
 
     # Get the gain reference file
     gain_2d = get_gain_2d(datamodel)
@@ -231,53 +244,36 @@ def test_tso_phot_2():
     assert math.isclose(catalog.meta["ycenter"], ycenter, abs_tol=0.01)
 
     assert np.allclose(
-        catalog["aperture_sum"].value, (value + background) * shape[-1] * shape[-2], rtol=1.0e-6
+        catalog["aperture_sum"].value, (VALUE + BACKGROUND) * shape[-1] * shape[-2], rtol=1.0e-6
     )
     assert np.allclose(catalog["aperture_sum_err"].value, 0.0, atol=1.0e-7)
 
 
-def test_tso_phot_3():
-    global shape, xcenter, ycenter
-
-    value = 17.0
-    background = 0.8
-    radius = 5.0
-    radius_inner = 8.0
-    radius_outer = 11.0
-    data = mk_data_array(shape, value, background, xcenter, ycenter, radius)
-    datamodel = datamodels.CubeModel(data)
-    set_meta(datamodel, sub64p=False)
+def test_tso_phot_with_int_times():
+    datamodel = mock_nircam_image()
 
     # Get the gain reference file
     gain_2d = get_gain_2d(datamodel)
 
+    # Add integration times to the model
     int_times = include_int_times(datamodel)
 
     catalog = tso_aperture_photometry(
-        datamodel, xcenter, ycenter, radius + 1.0, radius_inner, radius_outer, gain_2d
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
     )
 
     offset = datamodel.meta.exposure.integration_start - 1
-    slc = slice(offset, offset + shape[0])
+    slc = slice(offset, offset + datamodel.data.shape[0])
     assert np.allclose(catalog["MJD"], int_times[slc], atol=1.0e-8)
 
 
-def test_tso_phot_4():
-    global shape, xcenter, ycenter
-
-    value = 17.0
-    background = 0.8
-    radius = 5.0
-    radius_inner = 8.0
-    radius_outer = 11.0
-    data = mk_data_array(shape, value, background, xcenter, ycenter, radius)
-    datamodel = datamodels.CubeModel(data)
-    set_meta(datamodel, sub64p=False)
-
-    # Get the gain reference file
+def test_tso_phot_int_times_out_of_range():
+    datamodel = mock_nircam_image()
     gain_2d = get_gain_2d(datamodel)
 
-    int_times = include_int_times(datamodel)
+    # Add integration times
+    include_int_times(datamodel)
+
     # Modify the column of integration numbers so that they extend outside
     # the range of integration numbers in the science data.  This shouldn't
     # happen, i.e. this is to test an edge case.
@@ -285,7 +281,7 @@ def test_tso_phot_4():
     datamodel.int_times["integration_number"] += 2 * int_start
 
     catalog = tso_aperture_photometry(
-        datamodel, xcenter, ycenter, radius + 1.0, radius_inner, radius_outer, gain_2d
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
     )
 
     int_times = np.array(
@@ -302,21 +298,38 @@ def test_tso_phot_4():
     assert np.allclose(catalog["MJD"], int_times, rtol=1.0e-8)
 
 
-def test_tso_phot_5():
-    # pupil = 'WLP8' and subarray = 'SUB64P'
+def test_tso_phot_missing_int_start():
+    datamodel = mock_nircam_image()
+    gain_2d = get_gain_2d(datamodel)
 
+    # Add integration times
+    int_times = include_int_times(datamodel)
+
+    # Remove the integration start: it sill be assumed to be 1
+    datamodel.meta.exposure.integration_start = None
+
+    catalog = tso_aperture_photometry(
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
+    )
+
+    offset = 0
+    slc = slice(offset, offset + datamodel.data.shape[0])
+    assert np.allclose(catalog["MJD"], int_times[slc], atol=1.0e-8)
+
+
+def test_tso_phot_uncalibrated():
+    # pupil = 'WLP8' and subarray = 'SUB64P'
     shape = (7, 64, 64)
     xcenter = 31.0
     ycenter = 31.0
-
-    value = 17.0
-    background = 0.8
     radius = 50.0
     radius_inner = None
     radius_outer = None
-    data = mk_data_array(shape, value, background, xcenter, ycenter, radius)
-    datamodel = datamodels.CubeModel(data)
-    set_meta(datamodel, sub64p=True)
+    datamodel = mock_nircam_image(
+        shape=shape, xcenter=xcenter, ycenter=ycenter, radius=radius, sub64p=True
+    )
+
+    # Set uncalibrated data units
     datamodel.meta.bunit_data = "DN/s"
     datamodel.meta.bunit_err = "DN/s"
 
@@ -335,3 +348,30 @@ def test_tso_phot_5():
     assert math.isclose(catalog.meta["ycenter"], ycenter, abs_tol=0.01)
 
     assert catalog["aperture_sum"][0].unit == u.Unit("electron")
+
+
+def test_tso_phot_unexpected_units():
+    datamodel = mock_nircam_image()
+
+    # Set unknown data units
+    datamodel.meta.bunit_data = "DN"
+    datamodel.meta.bunit_err = "DN"
+
+    # Get the gain reference file
+    gain_2d = get_gain_2d(datamodel)
+
+    catalog = tso_aperture_photometry(
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
+    )
+
+    # Unexpected units are left alone
+    assert np.allclose(catalog["aperture_sum"].value, 1263.4778, rtol=1.0e-7)
+    assert catalog["aperture_sum"][0].unit == u.Unit("DN")
+
+
+def test_tso_phot_wrong_model():
+    model = datamodels.ImageModel()
+    with pytest.raises(TypeError, match="must be a CubeModel"):
+        tso_aperture_photometry(
+            model, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, None
+        )

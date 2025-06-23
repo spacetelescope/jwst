@@ -141,7 +141,7 @@ def tso_aperture_photometry(
     tbl = QTable(meta=meta)
 
     # check for the INT_TIMES table extension
-    if hasattr(datamodel, "int_times") and datamodel.int_times is not None:
+    if datamodel.hasattr("int_times") and datamodel.int_times is not None:
         nrows = len(datamodel.int_times)
     else:
         nrows = 0
@@ -150,9 +150,8 @@ def tso_aperture_photometry(
     # load the INT_TIMES table data
     if nrows > 0:
         shape = datamodel.data.shape
-        if len(shape) == 2:
-            num_integ = 1
-        else:  # len(shape) == 3
+        num_integ = 1
+        if len(shape) > 2:
             num_integ = shape[0]
         int_start = datamodel.meta.exposure.integration_start
         if int_start is None:
@@ -177,8 +176,8 @@ def tso_aperture_photometry(
             time_arr = mid_utc[offset : offset + num_integ]
             int_times = Time(time_arr, format="mjd", scale="utc")
 
-    # compute integration time stamps on the fly
     if nrows == 0:
+        # compute integration time stamps on the fly
         log.debug("Times computed from EXPSTART and EFFINTTM")
         dt = datamodel.meta.exposure.integration_time
         n_dt = (
