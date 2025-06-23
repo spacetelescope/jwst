@@ -802,12 +802,8 @@ class STImageDataDiff(ImageDataDiff):
             # Catch the case when the images are all nans
             nansa, nansb = np.isnan(self.a), np.isnan(self.b)
             nonana, nonanb = self.a[~nansa], self.b[~nansb]
-            if nansa.all() == nansb.all() and nonana.all() == nonanb.all():
-                # data is all nans in both arrays do no further comparison and return without issue
-                return
-
             # Only check the nans if the array shapes are the same
-            elif nansa.shape != nansb.shape or nonana.shape != nonanb.shape:
+            if nansa.shape != nansb.shape or nonana.shape != nonanb.shape:
                 # No need to continue, there are differences. Go to stats calculation.
                 data_within_tol = False
             else:

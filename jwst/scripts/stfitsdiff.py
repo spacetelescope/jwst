@@ -226,8 +226,9 @@ def main():
     try:
         diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
         logging.info(diff.report())
-    except (NameError, TypeError, ValueError, SyntaxError):
-        logging.error(err_msg)
+    except Exception as err:
+        logging.error("\n *** STFitsDiff crashed with the following error: \n")
+        logging.error(err)
 
 
 if __name__ == "__main__":
