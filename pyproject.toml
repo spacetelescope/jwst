@@ -18,7 +18,6 @@ classifiers = [
 ]
 dependencies = [
     "asdf>=4.0,<5",
-    "asdf-astropy>=0.8.0",
     "astropy>=6.1",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
