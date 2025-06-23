@@ -32,7 +32,7 @@ class BackgroundStep(Step):
     """  # noqa: E501
 
     # These reference files are only used for WFSS/GRISM or SOSS data.
-    reference_file_types = ["bkg", "wfssbkg", "wavelengthrange"]
+    reference_file_types = ["bkg", "wavelengthrange"]
 
     # Define a suffix for optional saved output of the combined background
     bkg_suffix = "combinedbackground"
@@ -60,9 +60,9 @@ class BackgroundStep(Step):
 
         if result.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
             # Get the reference file names
-            bkg_name = self.get_reference_file(result, "wfssbkg")
+            bkg_name = self.get_reference_file(result, "bkg")
             wlrange_name = self.get_reference_file(result, "wavelengthrange")
-            self.log.info("Using WFSSBKG reference file %s", bkg_name)
+            self.log.info("Using BKG reference file %s", bkg_name)
             self.log.info("Using WavelengthRange reference file %s", wlrange_name)
 
             # Do the background subtraction for WFSS/GRISM data
