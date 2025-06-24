@@ -491,7 +491,7 @@ class STHDUDiff(HDUDiff):
         def report_array_zero_size(arr, arrnans, arrzeros):
             if arrnans.size > 0:
                 nans_in_arr = arr[arrnans].size
-                nonans_in_arr = arr[~arrnans].size
+                nonans_in_arr = arr.size - nans_in_arr
             else:
                 nans_in_arr = 0
                 nonans_in_arr = arr.size
@@ -765,16 +765,18 @@ class STImageDataDiff(ImageDataDiff):
             # between the two images
             return
 
-        # If neither a nor b are floating point (or complex), ignore rtol and
-        # atol
-        if not (np.issubdtype(self.a.dtype, np.inexact) or np.issubdtype(self.b.dtype, np.inexact)):
-            rtol = 0
-            atol = 0
-        else:
-            rtol = self.rtol
-            atol = self.atol
+        rtol = self.rtol
+        atol = self.atol
 
         if self.report_pixel_loc_diffs:
+            # If neither a nor b are floating point (or complex), ignore rtol and
+            # atol
+            if not (
+                np.issubdtype(self.a.dtype, np.inexact) or np.issubdtype(self.b.dtype, np.inexact)
+            ):
+                rtol = 0
+                atol = 0
+
             # Find the indices where the values are not equal
             diffs = where_not_allclose(self.a, self.b, atol=atol, rtol=rtol)
 
