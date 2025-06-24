@@ -334,6 +334,7 @@ def mock_table(tmp_path_factory):
     keyword_mod = tmp_dir / "keyword_mod_x1d.fits"
     data_mod = tmp_dir / "data_mod_x1d.fits"
     nan_in_data = tmp_dir / "nan_in_data_x1d.fits"
+    nan_column = tmp_dir / "nan_column_x1d.fits"
 
     with datamodels.SpecModel() as spec:
         spec.spectral_order = 2
@@ -365,11 +366,17 @@ def mock_table(tmp_path_factory):
         spec.spec_table["FLUX"][20] = 1.0
         spec.spec_table["FLUX"][25] = 1.0
 
+        # Set a whole column to nan
+        spec.spec_table["WAVELENGTH"][:] = np.nan
+        spec.save(nan_column)
+        # return to truth
+        spec.spec_table["WAVELENGTH"] = np.arange(100) * 0.1
+
         # Add a keyword and save
         spec.meta.cal_step.flat_field = "SKIPPED"
         spec.save(keyword_mod)
 
-    return truth, keyword_mod, data_mod, nan_in_data
+    return truth, keyword_mod, data_mod, nan_in_data, nan_column
 
 
 def test_identical_tables(mock_table):
@@ -454,9 +461,9 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "a> nan_in_data_x1d.fits",
         "b> truth_x1d.fits",
         "Extension HDU 1 (EXTRACT1D, 1):",
-        "Found 2 different table data element(s). Reporting percentages above respective tolerances:",
-        "- absolute .... 0.1111%",
-        "- relative .... 0.1111%",
+        "Found 100 different table data element(s). Reporting percentages above respective tolerances:",
+        "- absolute .... 5.556%",
+        "* Unable to calculate relative differences and stats due to data types",
         "Values in a and b",
         "col_name zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
         "-------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
@@ -464,7 +471,40 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "Difference stats: abs(a - b)",
         "col_name dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
-        "FLUX    f8         2       1  0.02041  0.1414         2       1        1       0",
+        "FLUX    f8         0       0        0       0         0       0        0       0",
+    ]
+
+    assert result is False
+    assert report == expected_report
+
+
+def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
+    truth = mock_table[0]
+    nan_column = mock_table[4]
+    diff = FITSDiff(nan_column, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+
+    # The expected result is False
+    # The report should look like this
+    expected_report = [
+        "Primary HDU:",
+        "Headers contain differences:",
+        "Keyword FILENAME has different values:",
+        "a> nan_column_x1d.fits",
+        "b> truth_x1d.fits",
+        "Extension HDU 1 (EXTRACT1D, 1):",
+        "Found 100 different table data element(s). Reporting percentages above respective tolerances:",
+        "- absolute .... 5.556%",
+        "* Unable to calculate relative differences and stats due to data types",
+        "Values in a and b",
+        "col_name  zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
+        "---------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
+        "WAVELENGTH       0       1   100     0        0      100   nan   9.9   nan     0    nan   4.95",
+        "Difference stats: abs(a - b)",
+        "col_name  dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
+        "---------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
+        "WAVELENGTH    f8         0       0        0       0         0       0        0       0",
     ]
 
     assert result is False
