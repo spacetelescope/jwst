@@ -62,6 +62,13 @@ class BackgroundStep(Step):
             # Get the reference file names
             bkg_name = self.get_reference_file(result, "bkg")
             wlrange_name = self.get_reference_file(result, "wavelengthrange")
+
+            if bkg_name == "N/A":
+                self.log.warning("No BKG reference file found. Skipping background subtraction.")
+                result.meta.cal_step.bkg_subtract = "SKIPPED"
+                input_model.close()
+                return result
+
             self.log.info("Using BKG reference file %s", bkg_name)
             self.log.info("Using WavelengthRange reference file %s", wlrange_name)
 
