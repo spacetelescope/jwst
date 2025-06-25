@@ -14,10 +14,9 @@ def run_nis_wfss_spec2(rtdata_module, resource_tracker):
     """Run the calwebb_spec2 pipeline on NIRISS WFSS exposures"""
     rtdata = rtdata_module
 
-    # These are the 4 WFSS exposures we'll be processing
+    # These are the WFSS exposures we'll be processing
     spec2_asns = [
         "niriss/wfss/jw01324-o001_20220629t171902_spec2_001_asn.json",
-        "niriss/wfss/jw01324-o001_20220629t171902_spec2_002_asn.json",
         "niriss/wfss/jw01324-o001_20220629t171902_spec2_005_asn.json",
         "niriss/wfss/jw01324-o001_20220629t171902_spec2_007_asn.json",
     ]
