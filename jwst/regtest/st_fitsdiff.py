@@ -899,15 +899,22 @@ class STImageDataDiff(ImageDataDiff):
                     atol=self.atol,
                 )
 
-                rdiff = np.abs(values[1] - values[0]) / np.abs(values[0])
-                adiff = float(np.abs(values[1] - values[0]))
-                max_relative = np.max(max_relative, rdiff)
-                max_absolute = np.max(max_absolute, adiff)
+                # Added by STScI to avoid TypeError: 'numpy.float32' object
+                # cannot be interpreted as an integer
+                if np.isnan(values[0]) or np.isnan(values[1]):
+                    max_relative = 0
+                    max_absolute = 0
+                else:
+                    # Same code as astropy
+                    rdiff = np.abs(values[1] - values[0]) / np.abs(values[0])
+                    adiff = float(np.abs(values[1] - values[0]))
+                    max_relative = np.max(max_relative, rdiff)
+                    max_absolute = np.max(max_absolute, adiff)
 
             if self.diff_total > self.numdiffs:
                 self._writeln(" ...")
             self._writeln(
-                f" {self.diff_total} different pixels found ({self.diff_ratio:.4g}% different)."
+                f" {self.diff_total} different pixels found ({self.diff_ratio:.2%} different)."
             )
             self._writeln(f" Maximum relative difference: {max_relative}")
             self._writeln(f" Maximum absolute difference: {max_absolute}")
@@ -1222,6 +1229,174 @@ class STTableDataDiff(TableDataDiff):
             arra = self.a[col.name]
             arrb = self.b[col.name]
 
+            # else:
+            # The following lines include STScI's changes:
+            # - Calculate the absolute and relative differences separately for ad hoc report
+            # - If report_pixel_loc_diffs is False, just get the total differences,
+            #   it is not important where they come from
+
+            def get_stats_if_nonans(nonans):
+                if nonans.size > 0:
+                    nonansmax = np.max(nonans)
+                    nonansmin = np.min(nonans)
+                    nonansmean = np.mean(nonans)
+                else:
+                    nonansmax = np.nan
+                    nonansmin = np.nan
+                    nonansmean = np.nan
+                return nonansmax, nonansmin, nonansmean
+
+            # Calculate the absolute and relative differences
+            get_stats = False
+            reported = False
+            if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(arrb.dtype, np.floating):
+                # Catch the case of a column full of nans
+                nansa = arra[np.isnan(arra)]
+                nansb = arrb[np.isnan(arrb)]
+                if nansa.size != nansb.size:
+                    nonansa = arra[~np.isnan(arra)]
+                    nonansb = arrb[~np.isnan(arrb)]
+                    arramax, arramin, arramean = get_stats_if_nonans(nonansa)
+                    arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
+                    # Report the total number of zeros, nans, and no-nan values
+                    self.report_zeros_nan.add_row(
+                        (
+                            col.name,
+                            arra[arra == 0.0].size,
+                            arrb[arrb == 0.0].size,
+                            nansa.size,
+                            nansb.size,
+                            nonansa.size,
+                            nonansb.size,
+                            arramax,
+                            arrbmax,
+                            arramin,
+                            arrbmin,
+                            arramean,
+                            arrbmean,
+                        )
+                    )
+                    self.report_table.add_row(
+                        (
+                            col.name,
+                            str(arra.dtype).replace(">", ""),
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                            0.0,
+                        )
+                    )
+
+                    if not self.report_pixel_loc_diffs:
+                        self.diff_total += arrb.size
+                        self.rel_diffs += np.nan
+                    reported = True
+                else:
+                    nan_idx = np.isnan(arra) | np.isnan(arrb)
+                    anonan = arra[~nan_idx]
+                    bnonan = arrb[~nan_idx]
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        diffs = np.abs(anonan - bnonan)
+                    abs_diffs = diffs[diffs > self.atol].size
+                    nozeros = (diffs != 0.0) & (bnonan != 0.0)
+                    rel_values = diffs[nozeros] / np.abs(bnonan[nozeros])
+                    rel_diffs = rel_values[rel_values > self.rtol].size
+                    get_stats = True
+
+            elif "P" in col.format or "Q" in col.format:
+                diffs = []
+                rel_values = []
+                zeros_idx = []
+                nan_idx = []
+                for idx in range(len(arra)):
+                    if arra[idx] == 0 or arrb[idx] == 0:
+                        zeros_idx.append(idx)
+                    elif np.isnan(arra[idx]) or np.isnan(arrb[idx]):
+                        nan_idx.append(idx)
+                    else:
+                        df = np.abs(arra[idx] - arrb[idx])
+                        if not df <= self.atol:
+                            diffs.append(df)
+                        dfr = df / np.abs(arrb[idx])
+                        if not dfr <= self.rtol:
+                            rel_values.append(dfr)
+                get_stats = True
+                diffs = np.array(diffs)
+                abs_diffs = diffs.size
+                rel_values = np.array(rel_values)
+                rel_diffs = rel_values.size
+                anonan = arra[~np.array(nan_idx)]
+                bnonan = arrb[~np.array(nan_idx)]
+
+            if not reported:
+                if get_stats:
+                    sum_diffs = np.any(diffs > (self.atol + self.rtol * np.abs(bnonan)))
+                    if sum_diffs and len(rel_values) > 0:
+                        # Report the total number of zeros, nans, and no-nan values
+                        self.report_zeros_nan.add_row(
+                            (
+                                col.name,
+                                arra[arra == 0.0].size,
+                                arrb[arrb == 0.0].size,
+                                arra[np.isnan(arra)].size,
+                                arrb[np.isnan(arrb)].size,
+                                arra[~np.isnan(arra)].size,
+                                arrb[~np.isnan(arrb)].size,
+                                np.max(anonan),
+                                np.max(bnonan),
+                                np.min(anonan),
+                                np.min(bnonan),
+                                np.mean(anonan),
+                                np.mean(bnonan),
+                            )
+                        )
+
+                        self.report_table.add_row(
+                            (
+                                col.name,
+                                str(arra.dtype).replace(">", ""),
+                                abs_diffs,
+                                np.max(diffs),
+                                np.mean(diffs),
+                                np.std(diffs),
+                                rel_diffs,
+                                np.max(rel_values),
+                                np.mean(rel_values),
+                                np.std(rel_values),
+                            )
+                        )
+
+                        if not self.report_pixel_loc_diffs:
+                            self.diff_total += abs_diffs
+                            self.rel_diffs += rel_diffs
+
+                else:
+                    diffs = arra[arra != arrb].size
+                    if diffs > 0:
+                        # Report the differences per column
+                        self.report_table.add_row(
+                            (
+                                col.name,
+                                str(arra.dtype).replace(">", ""),
+                                diffs,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                                0,
+                            )
+                        )
+                        if not self.report_pixel_loc_diffs:
+                            self.diff_total += diffs
+                            self.rel_diffs = np.nan
+
             if self.report_pixel_loc_diffs:
                 # The following lines are identical to the original TableDataDiff code
 
@@ -1262,181 +1437,14 @@ class STTableDataDiff(TableDataDiff):
                     last_seen_idx = idx
                     self.diff_values.append(((col.name, idx), (arra[idx], arrb[idx])))
 
-            else:
-                # The following lines include STScI's changes:
-                # - Calculate the absolute and relative differences separately for ad hoc report
-                # - If report_pixel_loc_diffs is False, just get the total differences,
-                #   it is not important where they come from
-
-                def get_stats_if_nonans(nonans):
-                    if nonans.size > 0:
-                        nonansmax = np.max(nonans)
-                        nonansmin = np.min(nonans)
-                        nonansmean = np.mean(nonans)
-                    else:
-                        nonansmax = np.nan
-                        nonansmin = np.nan
-                        nonansmean = np.nan
-                    return nonansmax, nonansmin, nonansmean
-
-                # Calculate the absolute and relative differences
-                get_stats = False
-                reported = False
-                if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
-                    arrb.dtype, np.floating
-                ):
-                    # Catch the case of a column full of nans
-                    nansa = arra[np.isnan(arra)]
-                    nansb = arrb[np.isnan(arrb)]
-                    if nansa.size != nansb.size:
-                        nonansa = arra[~np.isnan(arra)]
-                        nonansb = arrb[~np.isnan(arrb)]
-                        arramax, arramin, arramean = get_stats_if_nonans(nonansa)
-                        arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
-                        # Report the total number of zeros, nans, and no-nan values
-                        self.report_zeros_nan.add_row(
-                            (
-                                col.name,
-                                arra[arra == 0.0].size,
-                                arrb[arrb == 0.0].size,
-                                nansa.size,
-                                nansb.size,
-                                nonansa.size,
-                                nonansb.size,
-                                arramax,
-                                arrbmax,
-                                arramin,
-                                arrbmin,
-                                arramean,
-                                arrbmean,
-                            )
-                        )
-                        self.report_table.add_row(
-                            (
-                                col.name,
-                                str(arra.dtype).replace(">", ""),
-                                0.0,
-                                0.0,
-                                0.0,
-                                0.0,
-                                0.0,
-                                0.0,
-                                0.0,
-                                0.0,
-                            )
-                        )
-
-                        self.diff_total += arrb.size
-                        self.rel_diffs += np.nan
-                        reported = True
-                    else:
-                        nan_idx = np.isnan(arra) | np.isnan(arrb)
-                        anonan = arra[~nan_idx]
-                        bnonan = arrb[~nan_idx]
-                        with warnings.catch_warnings():
-                            warnings.simplefilter("ignore", RuntimeWarning)
-                            diffs = np.abs(anonan - bnonan)
-                        abs_diffs = diffs[diffs > self.atol].size
-                        nozeros = (diffs != 0.0) & (bnonan != 0.0)
-                        rel_values = diffs[nozeros] / np.abs(bnonan[nozeros])
-                        rel_diffs = rel_values[rel_values > self.rtol].size
-                        get_stats = True
-
-                elif "P" in col.format or "Q" in col.format:
-                    diffs = []
-                    rel_values = []
-                    zeros_idx = []
-                    nan_idx = []
-                    for idx in range(len(arra)):
-                        if arra[idx] == 0 or arrb[idx] == 0:
-                            zeros_idx.append(idx)
-                        elif np.isnan(arra[idx]) or np.isnan(arrb[idx]):
-                            nan_idx.append(idx)
-                        else:
-                            df = np.abs(arra[idx] - arrb[idx])
-                            if not df <= self.atol:
-                                diffs.append(df)
-                            dfr = df / np.abs(arrb[idx])
-                            if not dfr <= self.rtol:
-                                rel_values.append(dfr)
-                    get_stats = True
-                    diffs = np.array(diffs)
-                    abs_diffs = diffs.size
-                    rel_values = np.array(rel_values)
-                    rel_diffs = rel_values.size
-                    anonan = arra[~np.array(nan_idx)]
-                    bnonan = arrb[~np.array(nan_idx)]
-
-                if not reported:
-                    if get_stats:
-                        sum_diffs = np.any(diffs > (self.atol + self.rtol * np.abs(bnonan)))
-                        if sum_diffs and len(rel_values) > 0:
-                            # Report the total number of zeros, nans, and no-nan values
-                            self.report_zeros_nan.add_row(
-                                (
-                                    col.name,
-                                    arra[arra == 0.0].size,
-                                    arrb[arrb == 0.0].size,
-                                    arra[np.isnan(arra)].size,
-                                    arrb[np.isnan(arrb)].size,
-                                    arra[~np.isnan(arra)].size,
-                                    arrb[~np.isnan(arrb)].size,
-                                    np.max(anonan),
-                                    np.max(bnonan),
-                                    np.min(anonan),
-                                    np.min(bnonan),
-                                    np.mean(anonan),
-                                    np.mean(bnonan),
-                                )
-                            )
-
-                            self.report_table.add_row(
-                                (
-                                    col.name,
-                                    str(arra.dtype).replace(">", ""),
-                                    abs_diffs,
-                                    np.max(diffs),
-                                    np.mean(diffs),
-                                    np.std(diffs),
-                                    rel_diffs,
-                                    np.max(rel_values),
-                                    np.mean(rel_values),
-                                    np.std(rel_values),
-                                )
-                            )
-
-                            self.diff_total += abs_diffs
-                            self.rel_diffs += rel_diffs
-
-                    else:
-                        diffs = arra[arra != arrb].size
-                        if diffs > 0:
-                            # Report the differences per column
-                            self.report_table.add_row(
-                                (
-                                    col.name,
-                                    str(arra.dtype).replace(">", ""),
-                                    diffs,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                    0,
-                                )
-                            )
-                            self.diff_total += diffs
-                            self.rel_diffs = np.nan
-
         # Calculate the absolute difference
         total_values = len(self.a) * len(self.a.dtype.fields)
+        # Calculate the absolute and relative difference percentages
         if self.report_pixel_loc_diffs:
+            total_values = len(self.a) * len(self.a.dtype.fields)
             self.diff_ratio = float(self.diff_total) / float(total_values)
-        else:
-            # Calculate the absolute and relative difference percentages
-            self.diff_ratio = (float(self.diff_total) / float(total_values)) * 100
-            self.diff_ratio_rel = (float(self.rel_diffs) / float(total_values)) * 100
+        self.stdiff_ratio = (float(self.diff_total) / float(total_values)) * 100
+        self.diff_ratio_rel = (float(self.rel_diffs) / float(total_values)) * 100
 
     def _report(self):
         # The following lines are identical to the original TableDataDiff code
@@ -1485,6 +1493,39 @@ class STTableDataDiff(TableDataDiff):
         #   otherwise report the column and the total number of differences and the
         #   percentage absolute and relative differences.
 
+        self._writeln(
+            f"Found {self.diff_total} different table data element(s). "
+            "Reporting percentages above respective tolerances: "
+            f"\n    - absolute .... {self.stdiff_ratio:.4g}%"
+        )
+        if np.isnan(self.diff_ratio_rel):
+            self._writeln(
+                "\n * Unable to calculate relative differences and stats due to data types"
+            )
+        else:
+            self._writeln(f"    - relative .... {self.diff_ratio_rel:.4g}%")
+
+        # Print differences in zeros and nans per column
+        self._writeln("\nValues in a and b")
+        for colname in self.report_zeros_nan.columns:
+            if "max" in colname or "mean" in colname or "min" in colname:
+                self.report_zeros_nan[colname].format = ".4g"
+        tlines = self.report_zeros_nan.pformat()
+        for tline in tlines:
+            self._writeln(tline)
+
+        # Print the difference (a-b) stats
+        self._writeln("\nDifference stats: abs(a - b) ")
+        # make sure the format is acceptable
+        for colname in self.report_table.columns:
+            if colname in ["col_name", "dtype"]:
+                continue
+            self.report_table[colname].format = ".4g"
+        tlines = self.report_table.pformat()
+        for tline in tlines:
+            self._writeln(tline)
+
+        # Report of column differences from astropy
         if self.report_pixel_loc_diffs:
             # Finally, let's go through and report column data differences:
             for indx, values in self.diff_values:
@@ -1507,41 +1548,6 @@ class STTableDataDiff(TableDataDiff):
                 self._writeln(" ...")
 
             self._writeln(
-                f" {self.diff_total} different table data element(s) are "
-                f"{self.diff_ratio:.4g}% different."
+                f" {self.diff_total} different table data element(s) found "
+                f"({self.diff_ratio:.2%} different)."
             )
-
-        else:
-            # Lines added by STScI to report ad hoc table differences
-
-            self._writeln(
-                f"Found {self.diff_total} different table data element(s). "
-                "Reporting percentages above respective tolerances: "
-                f"\n    - absolute .... {self.diff_ratio:.4g}%"
-            )
-            if np.isnan(self.diff_ratio_rel):
-                self._writeln(
-                    "\n * Unable to calculate relative differences and stats due to data types"
-                )
-            else:
-                self._writeln(f"    - relative .... {self.diff_ratio_rel:.4g}%")
-
-            # Print differences in zeros and nans per column
-            self._writeln("\nValues in a and b")
-            for colname in self.report_zeros_nan.columns:
-                if "max" in colname or "mean" in colname or "min" in colname:
-                    self.report_zeros_nan[colname].format = ".4g"
-            tlines = self.report_zeros_nan.pformat()
-            for tline in tlines:
-                self._writeln(tline)
-
-            # Print the difference (a-b) stats
-            self._writeln("\nDifference stats: abs(a - b) ")
-            # make sure the format is acceptable
-            for colname in self.report_table.columns:
-                if colname in ["col_name", "dtype"]:
-                    continue
-                self.report_table[colname].format = ".4g"
-            tlines = self.report_table.pformat()
-            for tline in tlines:
-                self._writeln(tline)

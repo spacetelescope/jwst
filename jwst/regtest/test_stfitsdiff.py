@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 
 from stdatamodels.jwst import datamodels
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiff
+from astropy.io.fits.diff import FITSDiff
 
 
 @pytest.fixture(scope="module")
@@ -60,51 +61,53 @@ def mock_rampfiles(tmp_path_factory):
     return truth, keyword_mod, sci_mod, nan_in_sci
 
 
-def report_to_list(report, from_line=11):
+def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
     rsplit = report.split(sep="\n")
     rsplit = [rs.strip() for rs in rsplit if rs]
     # Remove the lines of fits diff version and comparison filenames, as well
     # HDUs, keywords and columns not compared, and the maximum number of
     # different data values to be reported and the abs and rel tolerances
-    return rsplit[from_line:]
+    if not report_pixel_loc_diffs:
+        return rsplit[from_line:]
+    else:
+        # Match the astropy report
+        primary_diffs, pixidx = None, None
+        for idx, line in enumerate(rsplit):
+            if "Values" in line or "Found" in line:
+                if primary_diffs is None:
+                    primary_diffs = idx
+            if "differs" in line and pixidx is None:
+                pixidx = idx
+                break
+        streport = rsplit[from_line:pixidx]
+        pixelreport = rsplit[from_line:primary_diffs]
+        pixelreport.append("Data contains differences:")
+        pixelreport.extend(rsplit[pixidx:])
+        return streport, pixelreport
 
 
 def test_identical(mock_rampfiles):
     truth = mock_rampfiles[0]
-    diff = FITSDiff(truth, truth)
+    apdiff = FITSDiff(truth, truth)
+    diff = STFITSDiff(truth, truth)
+    assert apdiff.identical, apdiff.report()
     assert diff.identical, diff.report()
 
 
 def test_keyword_change(mock_rampfiles, fitsdiff_default_kwargs):
     truth = mock_rampfiles[0]
     keyword_mod = mock_rampfiles[1]
-    diff = FITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
+    apdiff = FITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
+    apresult = apdiff.identical
+    apreport = report_to_list(apdiff.report())
+    diff = STFITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
 
-    # The expected result is False
-    # The report should look like this
-    expected_report = [
-        "Primary HDU:",
-        "Headers contain differences:",
-        "Keyword DATE-OBS has different values:",
-        "a> 2025-10-13",
-        "?   ^",
-        "b> 2015-10-13",
-        "?   ^",
-        "Keyword FILENAME has different values:",
-        "a> keyword_mod_ramp.fits",
-        "b> truth_ramp.fits",
-        "Keyword GWA_TILT has different values:",
-        "a> 37.051",
-        "?     ^",
-        "b> 37.061",
-        "?     ^",
-    ]
-
+    # change the tolerance for the primary header
     extension_tolerances = {"primary": {"rtol": 1, "atol": 2}}
     fitsdiff_default_kwargs["extension_tolerances"] = extension_tolerances
-    diff2 = FITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
+    diff2 = STFITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
     result2 = diff2.identical
     report2 = report_to_list(diff2.report(), from_line=10)
     expected_report2 = [
@@ -121,8 +124,8 @@ def test_keyword_change(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
     ]
 
-    assert result is False
-    assert report == expected_report
+    assert result == apresult
+    assert report == apreport
     assert result2 is False
     assert report2 == expected_report2
 
@@ -130,7 +133,10 @@ def test_keyword_change(mock_rampfiles, fitsdiff_default_kwargs):
 def test_sci_change(mock_rampfiles, fitsdiff_default_kwargs):
     truth_file = mock_rampfiles[0]
     sci_mod = mock_rampfiles[2]
-    diff = FITSDiff(sci_mod, truth_file, **fitsdiff_default_kwargs)
+    apdiff = FITSDiff(sci_mod, truth_file, **fitsdiff_default_kwargs)
+    apresult = apdiff.identical
+    # The report from astropy crashes due to dividing by 0
+    diff = STFITSDiff(sci_mod, truth_file, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
 
@@ -200,17 +206,20 @@ def test_sci_change(mock_rampfiles, fitsdiff_default_kwargs):
         "0.0 0.0001893",
     ]
 
-    assert result is False
+    assert result == apresult
     assert report == expected_report
 
 
 def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
     truth = mock_rampfiles[0]
     nan_in_sci = mock_rampfiles[3]
-    diff = FITSDiff(nan_in_sci, truth, **fitsdiff_default_kwargs)
+    apdiff = FITSDiff(nan_in_sci, truth, **fitsdiff_default_kwargs)
+    apresult = apdiff.identical
+    apreport = report_to_list(apdiff.report())
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(nan_in_sci, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report())
-
+    report, pixelreport = report_to_list(diff.report(), report_pixel_loc_diffs=True)
     # The expected result is False
     # The report should look like this
     expected_report = [
@@ -249,7 +258,8 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "0.0         0",
     ]
 
-    assert result is False
+    assert result == apresult
+    assert pixelreport == apreport
     assert report == expected_report
 
 
@@ -259,7 +269,7 @@ def test_change_tols(mock_rampfiles, fitsdiff_default_kwargs):
     # Inflate all tolerances so only file names are different
     fitsdiff_default_kwargs["rtol"] = 1e4
     fitsdiff_default_kwargs["atol"] = 1e5
-    diff = FITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
+    diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     result1 = diff.identical
     report1 = report_to_list(diff.report())
     # The expected result is False
@@ -278,7 +288,7 @@ def test_change_tols(mock_rampfiles, fitsdiff_default_kwargs):
         "default": {"rtol": 1e5, "atol": 1e7},
     }
     fitsdiff_default_kwargs["extension_tolerances"] = extension_tolerances
-    diff2 = FITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
+    diff2 = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     result2 = diff.identical
     report2 = report_to_list(diff2.report(), from_line=10)
     # The expected result is False
@@ -381,14 +391,23 @@ def mock_table(tmp_path_factory):
 
 def test_identical_tables(mock_table):
     truth = mock_table[0]
-    diff = FITSDiff(truth, truth)
-    assert diff.identical, diff.report()
+    apdiff = FITSDiff(truth, truth)
+    apresult = apdiff.identical
+    apreport = report_to_list(apdiff.report())
+    diff = STFITSDiff(truth, truth)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    assert result == apresult
+    assert report == apreport
 
 
 def test_table_keyword_change(mock_table, fitsdiff_default_kwargs):
     truth = mock_table[0]
     keyword_mod = mock_table[1]
-    diff = FITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
+    apdiff = FITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
+    apresult = apdiff.identical
+    apreport = report_to_list(apdiff.report())
+    diff = STFITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
 
@@ -408,16 +427,21 @@ def test_table_keyword_change(mock_table, fitsdiff_default_kwargs):
         "b> truth_x1d.fits",
     ]
 
-    assert result is False
+    assert result == apresult
+    assert report == apreport
     assert report == expected_report
 
 
 def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
     truth = mock_table[0]
     data_mod = mock_table[2]
-    diff = FITSDiff(data_mod, truth, **fitsdiff_default_kwargs)
+    apdiff = FITSDiff(data_mod, truth, **fitsdiff_default_kwargs)
+    apresult = apdiff.identical
+    apreport = report_to_list(apdiff.report())
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(data_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report())
+    report, pixelreport = report_to_list(diff.report(), report_pixel_loc_diffs=True)
 
     # The expected result is False
     # The report should look like this
@@ -430,7 +454,7 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "Extension HDU 1 (EXTRACT1D, 1):",
         "Found 2 different table data element(s). Reporting percentages above respective tolerances:",
         "- absolute .... 0.1111%",
-        "- relative .... 0.1111%",
+        "- relative .... 0%",
         "Values in a and b",
         "col_name zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
         "-------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
@@ -441,16 +465,21 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "FLUX    f8         2      99        1    9.85         2      99       50      49",
     ]
 
-    assert result is False
+    assert result == apresult
+    assert pixelreport == apreport
     assert report == expected_report
 
 
 def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
     truth = mock_table[0]
     nan_in_data = mock_table[3]
-    diff = FITSDiff(nan_in_data, truth, **fitsdiff_default_kwargs)
+    apdiff = FITSDiff(nan_in_data, truth, **fitsdiff_default_kwargs)
+    apresult = apdiff.identical
+    apreport = report_to_list(apdiff.report())
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(nan_in_data, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report())
+    report, pixelreport = report_to_list(diff.report(), report_pixel_loc_diffs=True)
 
     # The expected result is False
     # The report should look like this
@@ -461,9 +490,9 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "a> nan_in_data_x1d.fits",
         "b> truth_x1d.fits",
         "Extension HDU 1 (EXTRACT1D, 1):",
-        "Found 100 different table data element(s). Reporting percentages above respective tolerances:",
-        "- absolute .... 5.556%",
-        "* Unable to calculate relative differences and stats due to data types",
+        "Found 4 different table data element(s). Reporting percentages above respective tolerances:",
+        "- absolute .... 0.2222%",
+        "- relative .... 0%",
         "Values in a and b",
         "col_name zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
         "-------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
@@ -474,16 +503,21 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "FLUX    f8         0       0        0       0         0       0        0       0",
     ]
 
-    assert result is False
+    assert result == apresult
+    assert pixelreport == apreport
     assert report == expected_report
 
 
 def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
     truth = mock_table[0]
     nan_column = mock_table[4]
-    diff = FITSDiff(nan_column, truth, **fitsdiff_default_kwargs)
+    apdiff = FITSDiff(nan_column, truth, **fitsdiff_default_kwargs)
+    apresult = apdiff.identical
+    apreport = report_to_list(apdiff.report())
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(nan_column, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report())
+    report, pixelreport = report_to_list(diff.report(), report_pixel_loc_diffs=True)
 
     # The expected result is False
     # The report should look like this
@@ -496,7 +530,7 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "Extension HDU 1 (EXTRACT1D, 1):",
         "Found 100 different table data element(s). Reporting percentages above respective tolerances:",
         "- absolute .... 5.556%",
-        "* Unable to calculate relative differences and stats due to data types",
+        "- relative .... 0%",
         "Values in a and b",
         "col_name  zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
         "---------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
@@ -507,5 +541,6 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "WAVELENGTH    f8         0       0        0       0         0       0        0       0",
     ]
 
-    assert result is False
+    assert result == apresult
+    assert pixelreport == apreport
     assert report == expected_report
