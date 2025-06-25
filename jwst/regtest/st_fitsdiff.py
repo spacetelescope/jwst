@@ -1229,7 +1229,6 @@ class STTableDataDiff(TableDataDiff):
             arra = self.a[col.name]
             arrb = self.b[col.name]
 
-            # else:
             # The following lines include STScI's changes:
             # - Calculate the absolute and relative differences separately for ad hoc report
             # - If report_pixel_loc_diffs is False, just get the total differences,
