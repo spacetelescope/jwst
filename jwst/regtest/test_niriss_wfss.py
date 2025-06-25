@@ -57,7 +57,7 @@ def run_nis_wfss_spec3(run_nis_wfss_spec2, rtdata_module, resource_tracker):
     # Get the level3 association file and run the spec3 pipeline on it.
     # We don't need to retrieve any of the cal members of the association,
     # because they were all just created by the preceding spec2 test.
-    rtdata.get_data("niriss/wfss/jw01324-o001_20220629t171902_spec3_003_asn.json")
+    rtdata.get_data("niriss/wfss/jw01324-o001_spec3_00005_asn.json")
     args = ["calwebb_spec3", rtdata.input]
     with resource_tracker.track():
         Step.from_cmdline(args)
@@ -91,8 +91,8 @@ def test_nis_wfss_spec2(run_nis_wfss_spec2, rtdata_module, fitsdiff_default_kwar
 def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, fitsdiff_default_kwargs):
     """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data"""
     rtdata = rtdata_module
-    rtdata.input = "jw01324-o001_20220629t171902_spec3_003_asn.json"
-    output = "jw01324-o001_t0000_niriss_f115w-gr150c-gr150r_" + suffix + ".fits"
+    rtdata.input = "jw01324-o001_spec3_00005_asn.json"
+    output = "jw01324-o001_t0000_niriss_f115w-gr150c_" + suffix + ".fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 
