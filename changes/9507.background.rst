@@ -1,1 +1,0 @@
-Fix a bug where highly-masked input data for wfss modes were raising errors instead of skipping

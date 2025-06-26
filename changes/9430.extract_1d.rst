@@ -1,2 +1,0 @@
-Reorganize multi-integration spectra into a single table, in which each row is a 1D spectrum.
-The datamodel for TSO x1dints files is now TSOMultiSpecModel, instead of MultiSpecModel.
