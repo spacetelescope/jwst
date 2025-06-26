@@ -495,13 +495,13 @@ class STHDUDiff(HDUDiff):
 
         def report_array_zero_size(arr, arrnans, arrzeros):
             if arrnans.size > 0:
-                nans_in_arr = arr[arrnans].size
+                nans_in_arr = arrnans.size
                 nonans_in_arr = arr.size - nans_in_arr
             else:
                 nans_in_arr = 0
                 nonans_in_arr = arr.size
             if arrzeros.size > 0:
-                zeros_in_arr = arr[arrzeros].size
+                zeros_in_arr = arrzeros.size
             else:
                 zeros_in_arr = 0
             return zeros_in_arr, nans_in_arr, nonans_in_arr
@@ -517,11 +517,11 @@ class STHDUDiff(HDUDiff):
                 "mean_value",
             ]
             # Catch the case when the images are all nans and report accordingly
-            nansa, nansb = np.isnan(a), np.isnan(b)
-            zerosa, zerosb = a == 0.0, b == 0.0
+            nansa, nansb = a[np.isnan(a)], b[np.isnan(b)]
+            zerosa, zerosb = a[a == 0.0], b[b == 0.0]
             zeros_in_a, nans_in_a, nonans_in_a = report_array_zero_size(a, nansa, zerosa)
             zeros_in_b, nans_in_b, nonans_in_b = report_array_zero_size(b, nansb, zerosb)
-            nonansa, nonansb = a[~nansa], b[~nansb]
+            nonansa, nonansb = a[~np.isnan(a)], b[~np.isnan(b)]
             if nonansa.size > 0:
                 mina = f"{np.min(nonansa):.4g}"
                 maxa = f"{np.max(nonansa):.4g}"
@@ -565,7 +565,7 @@ class STHDUDiff(HDUDiff):
             bnonan = b[~nan_idx]
             values = np.abs(anonan - bnonan)
             # Nothing to report if all values are 0 and the number of nans is the same
-            if (values == 0.0).all() and a[nansa].size == b[nansb].size:
+            if (values == 0.0).all() and nans_in_a == nans_in_b:
                 return None, None, None
             # Calculate stats for absolute and relative differences
             # Catch the all NaNs case
