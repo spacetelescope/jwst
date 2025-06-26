@@ -113,7 +113,7 @@ to supply custom catalogs.
     >>> c.append(m)
     """
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None):
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):  # noqa: ARG002
         """
         Initialize the container.
 
