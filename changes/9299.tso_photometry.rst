@@ -1,1 +1,0 @@
-In TSO photometry reductions, added support for processing data in units of DN/s by using the gain reference file to convert to flatfielded electrons.

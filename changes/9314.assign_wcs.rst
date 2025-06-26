@@ -1,1 +1,0 @@
-Expanded the hard-coded NIRSpec wavelength range to safer limits.
