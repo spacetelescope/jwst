@@ -1,3 +1,0 @@
-Remove unused code and fix various small bugs found while adding test suite.
-
-Deprecate unused and out-of-date AmiAverageStep.
