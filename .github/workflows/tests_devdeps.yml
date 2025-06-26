@@ -57,9 +57,13 @@ jobs:
       envs: |
         - linux: py3-stdevdeps-xdist
           pytest-results-summary: true
+          python-version: '>3.12 <3.13.4'
         - macos: py3-stdevdeps-xdist
           pytest-results-summary: true
+          python-version: '>3.12 <3.13.4'
         - linux: py3-devdeps-xdist
           pytest-results-summary: true
+          python-version: '>3.12 <3.13.4'
         - macos: py3-devdeps-xdist
           pytest-results-summary: true
+          python-version: '>3.12 <3.13.4'
