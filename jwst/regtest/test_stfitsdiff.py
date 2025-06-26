@@ -192,12 +192,12 @@ def test_ignore(mock_rampfiles, fitsdiff_default_kwargs):
     # 'CRDS_CTX', 'NAXIS1', 'TFORM*'), files should be identical
     fitsdiff_default_kwargs["ignore_keywords"].extend(["FILENAME", "DATE"])
     # Ignoring these extensions but with indices (indices only work for STFITSDIFF)
-    fitsdiff_default_kwargs["ignore_hdus"].extend([1, 2, 3])
+    fitsdiff_default_kwargs["ignore_hdus"].extend([1, 2])
     diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
     # Ignoring these extensions, files should be identical
-    fitsdiff_default_kwargs["ignore_hdus"] = ["ASDF", "GROUPDQ", "PIXELDQ", "SCI"]
+    fitsdiff_default_kwargs["ignore_hdus"] = ["ASDF", "PIXELDQ", "SCI"]
     apdiff = FITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     assert apdiff.identical, apdiff.report()
