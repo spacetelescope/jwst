@@ -15,6 +15,7 @@ def mock_rampfiles(tmp_path_factory):
     keyword_mod = tmp_dir / "keyword_mod_ramp.fits"
     sci_mod = tmp_dir / "sci_mod_ramp.fits"
     nan_in_sci = tmp_dir / "nan_in_sci_ramp.fits"
+    diff_exts = tmp_dir / "ext_removed_ramp.fits"
 
     nints = 3
     ngroups = 10
@@ -23,6 +24,16 @@ def mock_rampfiles(tmp_path_factory):
     data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
     pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
     gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
+    with datamodels.open(data=data) as model:
+        model.meta.instrument.name = "MIRI"
+        model.meta.instrument.detector = "MIRIMAGE"
+        model.meta.instrument.filter = "F480M"
+        model.meta.observation.date = "2015-10-13"
+        model.meta.exposure.type = "MIR_IMAGE"
+        model.meta.subarray.name = "FULL"
+        model.meta.instrument.gwa_tilt = 37.0610
+        model.save(diff_exts)
+
     with datamodels.RampModel(data=data, pixeldq=pixdq, groupdq=gdq) as rampmodel:
         rampmodel.meta.instrument.name = "MIRI"
         rampmodel.meta.instrument.detector = "MIRIMAGE"
@@ -58,7 +69,7 @@ def mock_rampfiles(tmp_path_factory):
         rampmodel.data[0, 0, ...] = np.nan
         rampmodel.save(nan_in_sci)
 
-    return truth, keyword_mod, sci_mod, nan_in_sci
+    return truth, keyword_mod, sci_mod, nan_in_sci, diff_exts
 
 
 def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
@@ -92,6 +103,50 @@ def test_identical(mock_rampfiles):
     diff = STFITSDiff(truth, truth)
     assert apdiff.identical, apdiff.report()
     assert diff.identical, diff.report()
+
+
+def test_diff_exts(mock_rampfiles, fitsdiff_default_kwargs):
+    truth = mock_rampfiles[0]
+    diff_exts = mock_rampfiles[4]
+    apdiff = FITSDiff(diff_exts, truth, **fitsdiff_default_kwargs)
+    apresult = apdiff.identical
+    apreport = report_to_list(apdiff.report())
+    diff = STFITSDiff(diff_exts, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+
+    asptropy_expected_report = [
+        "Files contain different numbers of HDUs:",
+        "a: 2",
+        "b: 5",
+        "Primary HDU:",
+        "Headers contain differences:",
+        "Keyword DATAMODL has different values:",
+        "a> JwstDataModel",
+        "b> RampModel",
+        "Keyword FILENAME has different values:",
+        "a> ext_removed_ramp.fits",
+        "b> truth_ramp.fits",
+    ]
+    expected_report = [
+        "Files contain different numbers of HDUs:",
+        "a: 2, ['ASDF', 'PRIMARY']",
+        "b: 5, ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
+        "Common HDUs: ['ASDF', 'PRIMARY']",
+        "Missing HDUs: ['GROUPDQ', 'PIXELDQ', 'SCI']",
+        "Primary HDU:",
+        "Headers contain differences:",
+        "Keyword DATAMODL has different values:",
+        "a> JwstDataModel",
+        "b> RampModel",
+        "Keyword FILENAME has different values:",
+        "a> ext_removed_ramp.fits",
+        "b> truth_ramp.fits",
+    ]
+
+    assert result == apresult
+    assert apreport == asptropy_expected_report
+    assert report == expected_report
 
 
 def test_keyword_change(mock_rampfiles, fitsdiff_default_kwargs):

@@ -212,7 +212,12 @@ class STFITSDiff(FITSDiff):
         ext_not_in_both = set(ext_namesa).symmetric_difference(set(ext_namesb))
         ext_intersection = set.intersection(set(ext_namesa), set(ext_namesb))
         if self.diff_hdu_count:
-            self.diff_extnames = (ext_namesa, ext_namesb, ext_intersection, ext_not_in_both)
+            self.diff_extnames = (
+                sorted(ext_namesa),
+                sorted(ext_namesb),
+                sorted(ext_intersection),
+                sorted(ext_not_in_both),
+            )
 
         # Set the tolerance for the headers
         if "HEADERS" in list(self.expected_extension_tolerances):
