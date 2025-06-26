@@ -78,5 +78,7 @@ jobs:
         - linux: py3-cov-xdist
           coverage: codecov
           pytest-results-summary: true
+          python-version: '>3.12 <3.13.4'
         - macos: py3-xdist
           pytest-results-summary: true
+          python-version: '>3.12 <3.13.4'

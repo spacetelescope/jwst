@@ -49,4 +49,5 @@ jobs:
         - macos: py312-xdist
         - linux: py311-pyargs-xdist
         - linux: py3-pyargs-xdist
+          python-version: '>3.12 <3.13.4'
 
