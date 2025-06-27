@@ -17,30 +17,22 @@ def mock_rampfiles(tmp_path_factory):
     nan_in_sci = tmp_dir / "nan_in_sci_ramp.fits"
     diff_exts = tmp_dir / "ext_removed_ramp.fits"
 
-    nints = 3
-    ngroups = 10
-    nrows = 1032
-    ncols = 1024
-    data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float32)
-    pixdq = np.zeros(shape=(nrows, ncols), dtype=np.uint32)
-    gdq = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.uint8)
+    nints = 2
+    ngroups = 2
+    nrows = 3
+    ncols = 3
+    data = np.ones(shape=(nints, ngroups, nrows, ncols))
+    data[0, 0, ...] += np.arange(3) * 0.001
+    data[1, 1, ...] += np.arange(3) * 0.0001
+    pixdq = np.ones(shape=(nrows, ncols), dtype=int)
+    gdq = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=int)
     with datamodels.open(data=data) as model:
-        model.meta.instrument.name = "MIRI"
-        model.meta.instrument.detector = "MIRIMAGE"
-        model.meta.instrument.filter = "F480M"
         model.meta.observation.date = "2015-10-13"
-        model.meta.exposure.type = "MIR_IMAGE"
-        model.meta.subarray.name = "FULL"
         model.meta.instrument.gwa_tilt = 37.0610
         model.save(diff_exts)
 
     with datamodels.RampModel(data=data, pixeldq=pixdq, groupdq=gdq) as rampmodel:
-        rampmodel.meta.instrument.name = "MIRI"
-        rampmodel.meta.instrument.detector = "MIRIMAGE"
-        rampmodel.meta.instrument.filter = "F480M"
         rampmodel.meta.observation.date = "2015-10-13"
-        rampmodel.meta.exposure.type = "MIR_IMAGE"
-        rampmodel.meta.subarray.name = "FULL"
         rampmodel.meta.instrument.gwa_tilt = 37.0610
         # Save the 'truth' file
         rampmodel.save(truth)
@@ -54,19 +46,19 @@ def mock_rampfiles(tmp_path_factory):
         rampmodel.meta.instrument.gwa_tilt = 37.0610
 
         # Change the data in a couple of places in the SCI extension and save
-        rampmodel.data[1, 5, 100, 100] = 100.0
-        rampmodel.data[1, 5, 101, 101] = 101.0
-        rampmodel.pixeldq[100, 100] = 1.0
-        rampmodel.pixeldq[101, 101] = 1.0
+        rampmodel.data[1, 1, 1, 0] = 1.5
+        rampmodel.data[1, 1, 1, 2] = 0.5
+        rampmodel.data[1, 1, 1, 2] = 0.01
+        rampmodel.data[1, 1, 2, 0] = 1.0005
+        rampmodel.data[1, 1, 2, 1] = 0.0005
+        rampmodel.data[1, 1, 2, 2] = 1.0000005
         rampmodel.save(sci_mod)
         # return to truth value
-        rampmodel.data[1, 5, 100, 100] = 0.0
-        rampmodel.data[1, 5, 101, 101] = 0.0
-        rampmodel.pixeldq[100, 100] = 0.0
-        rampmodel.pixeldq[101, 101] = 0.0
+        rampmodel.data = data
 
-        # Set first group to nans and save
+        # To test nans and zeros
         rampmodel.data[0, 0, ...] = np.nan
+        rampmodel.data[1, 1, ...] = 0.0
         rampmodel.save(nan_in_sci)
 
     return truth, keyword_mod, sci_mod, nan_in_sci, diff_exts
@@ -224,60 +216,33 @@ def test_sci_change(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
         "Values in a and b",
-        "Quantity     a        b",
-        "---------- -------- --------",
-        "zeros 31703038 31703040",
-        "nan        0        0",
-        "no-nan 31703040 31703040",
-        "min_value        0        0",
-        "max_value      101        0",
-        "mean_value 6.34e-06        0",
+        "Quantity   a        b",
+        "-------- ------ ---------",
+        "zeros      0         0",
+        "nans      0         0",
+        "no-nans     36        36",
+        "min 0.0005         1",
+        "max    1.5     1.002",
+        "mean 0.9589         1",
+        "std_dev 0.2454 0.0005875",
         "Difference stats: abs(a - b)",
-        "Quantity abs_diff no_rel_stats_available",
-        "-------- -------- ----------------------",
-        "max      101                    nan",
-        "min        0                    nan",
-        "mean 6.34e-06                    nan",
-        "std_dev  0.02524                    nan",
+        "Quantity abs_diff rel_diff",
+        "-------- -------- --------",
+        "max   0.9996   0.9995",
+        "min        0        0",
+        "mean  0.06918  0.06917",
+        "std_dev   0.2391    0.239",
         "Percentages of difference above (tolerance + threshold)",
-        "threshold abs_diff%",
-        "--------- ---------",
-        "0.1 6.309e-06",
-        "0.01 6.309e-06",
-        "0.001 6.309e-06",
-        "0.0001 6.309e-06",
-        "1e-05 6.309e-06",
-        "1e-06 6.309e-06",
-        "1e-07 6.309e-06",
-        "0.0 6.309e-06",
-        "Extension HDU 2 (PIXELDQ, 1):",
-        "Values in a and b",
-        "Quantity      a        b",
-        "---------- --------- -------",
-        "zeros   1056766 1056768",
-        "nan         0       0",
-        "no-nan   1056768 1056768",
-        "min_value         0       0",
-        "max_value         1       0",
-        "mean_value 1.893e-06       0",
-        "Difference stats: abs(a - b)",
-        "Quantity  abs_diff no_rel_stats_available",
-        "-------- --------- ----------------------",
-        "max         1                    nan",
-        "min         0                    nan",
-        "mean 1.893e-06                    nan",
-        "std_dev  0.001376                    nan",
-        "Percentages of difference above (tolerance + threshold)",
-        "threshold abs_diff%",
-        "--------- ---------",
-        "0.1 0.0001893",
-        "0.01 0.0001893",
-        "0.001 0.0001893",
-        "0.0001 0.0001893",
-        "1e-05 0.0001893",
-        "1e-06 0.0001893",
-        "1e-07 0.0001893",
-        "0.0 0.0001893",
+        "threshold abs_diff% rel_diff%",
+        "--------- --------- ---------",
+        "0.1     8.333     8.333",
+        "0.01     8.333     8.333",
+        "0.001     8.333     8.333",
+        "0.0001     13.89     13.89",
+        "1e-05     13.89     13.89",
+        "1e-06     13.89     13.89",
+        "1e-07     13.89     13.89",
+        "0.0     13.89     13.89",
     ]
 
     assert result == apresult
@@ -304,32 +269,33 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
         "Values in a and b",
-        "Quantity     a        b",
-        "---------- -------- --------",
-        "zeros 30646272 31703040",
-        "nan  1056768        0",
-        "no-nan 30646272 31703040",
-        "min_value        0        0",
-        "max_value        0        0",
-        "mean_value        0        0",
+        "Quantity   a        b",
+        "-------- ------ ---------",
+        "zeros      9         0",
+        "nans      9         0",
+        "no-nans     27        36",
+        "min      0         1",
+        "max      1     1.002",
+        "mean 0.6667         1",
+        "std_dev 0.4714 0.0005875",
         "Difference stats: abs(a - b)",
-        "Quantity abs_diff no_rel_stats_available",
-        "-------- -------- ----------------------",
-        "max        0                    nan",
-        "min        0                    nan",
-        "mean        0                    nan",
-        "std_dev        0                    nan",
+        "Quantity abs_diff rel_diff",
+        "-------- -------- --------",
+        "max        1        1",
+        "min        0        0",
+        "mean   0.3334   0.3333",
+        "std_dev   0.4715   0.4714",
         "Percentages of difference above (tolerance + threshold)",
-        "threshold abs_diff%",
-        "--------- ---------",
-        "0.1         0",
-        "0.01         0",
-        "0.001         0",
-        "0.0001         0",
-        "1e-05         0",
-        "1e-06         0",
-        "1e-07         0",
-        "0.0         0",
+        "threshold abs_diff% rel_diff%",
+        "--------- --------- ---------",
+        "0.1        25        25",
+        "0.01        25        25",
+        "0.001        25        25",
+        "0.0001        25        25",
+        "1e-05        25        25",
+        "1e-06        25        25",
+        "1e-07        25        25",
+        "0.0        25        25",
     ]
 
     assert result == apresult
@@ -346,7 +312,7 @@ def test_change_tols(mock_rampfiles, fitsdiff_default_kwargs):
     diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     result1 = diff.identical
     report1 = report_to_list(diff.report())
-    # The expected result is False
+    # The expected result is False but only for the file name diffs
     # The report should look like this
     expected_report1 = [
         "Primary HDU:",
@@ -357,9 +323,9 @@ def test_change_tols(mock_rampfiles, fitsdiff_default_kwargs):
     ]
     # Only fail the PIXELDQ extension
     extension_tolerances = {
-        "sci": {"rtol": 1e2, "atol": 1e3},
-        "pixeldq": {"rtol": 1e-3, "atol": 1e-5},
-        "default": {"rtol": 1e5, "atol": 1e7},
+        "sci": {"rtol": 1e-3, "atol": 1e-5},
+        "pixeldq": {"rtol": 1, "atol": 2},
+        "default": {"rtol": 1e3, "atol": 1e4},
     }
     fitsdiff_default_kwargs["extension_tolerances"] = extension_tolerances
     diff2 = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
@@ -369,40 +335,41 @@ def test_change_tols(mock_rampfiles, fitsdiff_default_kwargs):
     # The report should look like this
     expected_report2 = [
         "Extension HDU 0 (PRIMARY, 1):",
-        "Relative tolerance: 1.0e+05, Absolute tolerance: 1.0e+07",
+        "Relative tolerance: 1.0e+03, Absolute tolerance: 1.0e+04",
         "Headers contain differences:",
         "Keyword FILENAME has different values:",
         "a> sci_mod_ramp.fits",
         "b> truth_ramp.fits",
-        "Extension HDU 2 (PIXELDQ, 1):",
+        "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 1.0e-03, Absolute tolerance: 1.0e-05",
         "Values in a and b",
-        "Quantity      a        b",
-        "---------- --------- -------",
-        "zeros   1056766 1056768",
-        "nan         0       0",
-        "no-nan   1056768 1056768",
-        "min_value         0       0",
-        "max_value         1       0",
-        "mean_value 1.893e-06       0",
+        "Quantity   a        b",
+        "-------- ------ ---------",
+        "zeros      0         0",
+        "nans      0         0",
+        "no-nans     36        36",
+        "min 0.0005         1",
+        "max    1.5     1.002",
+        "mean 0.9589         1",
+        "std_dev 0.2454 0.0005875",
         "Difference stats: abs(a - b)",
-        "Quantity  abs_diff no_rel_stats_available",
-        "-------- --------- ----------------------",
-        "max         1                    nan",
-        "min         0                    nan",
-        "mean 1.893e-06                    nan",
-        "std_dev  0.001376                    nan",
+        "Quantity abs_diff rel_diff",
+        "-------- -------- --------",
+        "max   0.9996   0.9995",
+        "min        0        0",
+        "mean  0.06918  0.06917",
+        "std_dev   0.2391    0.239",
         "Percentages of difference above (tolerance + threshold)",
-        "threshold abs_diff%",
-        "--------- ---------",
-        "0.1 0.0001893",
-        "0.01 0.0001893",
-        "0.001 0.0001893",
-        "0.0001 0.0001893",
-        "1e-05 0.0001893",
-        "1e-06 0.0001893",
-        "1e-07 0.0001893",
-        "0.0 0.0001893",
+        "threshold abs_diff% rel_diff%",
+        "--------- --------- ---------",
+        "0.1     8.333     8.333",
+        "0.01     8.333     8.333",
+        "0.001     8.333     8.333",
+        "0.0001     13.89     8.333",
+        "1e-05     13.89     8.333",
+        "1e-06     13.89     8.333",
+        "1e-07     13.89     8.333",
+        "0.0     13.89     8.333",
     ]
 
     assert result1 is False

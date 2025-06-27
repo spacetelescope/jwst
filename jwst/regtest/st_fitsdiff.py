@@ -510,11 +510,12 @@ class STHDUDiff(HDUDiff):
             report_zeros_nan = Table()
             report_zeros_nan["Quantity"] = [
                 "zeros",
-                "nan",
-                "no-nan",
-                "min_value",
-                "max_value",
-                "mean_value",
+                "nans",
+                "no-nans",
+                "min",
+                "max",
+                "mean",
+                "std_dev",
             ]
             # Catch the case when the images are all nans and report accordingly
             nansa, nansb = a[np.isnan(a)], b[np.isnan(b)]
@@ -526,31 +527,19 @@ class STHDUDiff(HDUDiff):
                 mina = f"{np.min(nonansa):.4g}"
                 maxa = f"{np.max(nonansa):.4g}"
                 meana = f"{np.mean(nonansa):.4g}"
+                stdeva = f"{np.std(nonansa):.4g}"
             else:
-                mina, maxa, meana = "-", "-", "-"
+                mina, maxa, meana, stdeva = "-", "-", "-", "-"
             if nonansb.size > 0:
                 minb = f"{np.min(nonansb):.4g}"
                 maxb = f"{np.max(nonansb):.4g}"
                 meanb = f"{np.mean(nonansb):.4g}"
+                stdevb = f"{np.std(nonansb):.4g}"
             else:
-                minb, maxb, meanb = "-", "-", "-"
+                minb, maxb, meanb, stdevb = "-", "-", "-", "-"
             # Populate report table
-            report_zeros_nan["a"] = [
-                zeros_in_a,
-                nans_in_a,
-                nonans_in_a,
-                mina,
-                maxa,
-                meana,
-            ]
-            report_zeros_nan["b"] = [
-                zeros_in_b,
-                nans_in_b,
-                nonans_in_b,
-                minb,
-                maxb,
-                meanb,
-            ]
+            report_zeros_nan["a"] = [zeros_in_a, nans_in_a, nonans_in_a, mina, maxa, meana, stdeva]
+            report_zeros_nan["b"] = [zeros_in_b, nans_in_b, nonans_in_b, minb, maxb, meanb, stdevb]
             # Match nans for all arrays and remove them for logical comparison
             percentages, stats = Table(), Table()
             shapea = a.shape
@@ -576,8 +565,8 @@ class STHDUDiff(HDUDiff):
             stats["Quantity"] = ["max", "min", "mean", "std_dev"]
             stats["abs_diff"] = [np.max(values), np.min(values), np.mean(values), np.std(values)]
             stats["abs_diff"].format = "1.4g"
-            nozeros = (values != 0.0) & (bnonan != 0.0)
-            relative_values = values[nozeros] / np.abs(bnonan[nozeros])
+            nozeros = bnonan[bnonan != 0.0]
+            relative_values = values[bnonan != 0.0] / np.abs(nozeros)
             # Catch an empty sequence
             if relative_values.size == 0:
                 stats["no_rel_stats_available"] = np.nan
@@ -592,18 +581,19 @@ class STHDUDiff(HDUDiff):
             # Calculate difference percentages
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
             percentages["threshold"] = thresholds
-            n_total = values.size
             percent_abs_list = []
+            diffs = np.abs(a - b)
+            n_total = diffs.size
             for threshold in thresholds:
-                n = values[values > threshold + self.atol].size
-                percent_abs = (n / n_total) * 100
+                n = diffs[diffs > (self.atol + threshold)].size
+                percent_abs = float(n / n_total) * 100
                 percent_abs_list.append(f"{percent_abs:.4g}")
             percentages["abs_diff%"] = percent_abs_list
             if relative_values.size > 0:
                 percent_rel_list = []
                 for threshold in thresholds:
-                    n = relative_values[relative_values > threshold + self.rtol].size
-                    percent_rel = (n / n_total) * 100
+                    n = relative_values[relative_values > (threshold + self.rtol)].size
+                    percent_rel = float(n / n_total) * 100
                     percent_rel_list.append(f"{percent_rel:.4g}")
                 percentages["rel_diff%"] = percent_rel_list
             return report_zeros_nan, percentages, stats
@@ -909,12 +899,15 @@ class STImageDataDiff(ImageDataDiff):
                 if np.isnan(values[0]) or np.isnan(values[1]):
                     max_relative = 0
                     max_absolute = 0
+                elif values[0] == 0.0:
+                    max_relative = values[1]
+                    max_absolute = values[1]
                 else:
                     # Same code as astropy
-                    rdiff = np.abs(values[1] - values[0]) / np.abs(values[0])
-                    adiff = float(np.abs(values[1] - values[0]))
-                    max_relative = np.max(max_relative, rdiff)
-                    max_absolute = np.max(max_absolute, adiff)
+                    rdiff = abs(values[1] - values[0]) / np.abs(values[0])
+                    adiff = float(abs(values[1] - values[0]))
+                    max_relative = max(max_relative, rdiff)
+                    max_absolute = max(max_absolute, adiff)
 
             if self.diff_total > self.numdiffs:
                 self._writeln(" ...")
