@@ -214,7 +214,7 @@ The :ref:`calwebb_image2 <calwebb_image2>` and :ref:`calwebb_spec2 <calwebb_spec
 pipelines have the capability to perform background subtraction on countrate data.
 In its simplest form, this consists of subtracting background exposures or a
 CRDS background reference image from science images. This operation is performed by
-the :ref:`background <background_step>` step in the stage 2 pipelines. If the pipeline
+the :ref:`background <background_subtraction>` step in the stage 2 pipelines. If the pipeline
 parameter ``save_bsub`` is set to ``True``, the result of the background subtraction
 step will be saved to a file. Because this is a direct image-from-image operation, the
 form of the result is identical to input. If the input is a ``rate`` product, the

@@ -23,7 +23,7 @@ class Image2Pipeline(Pipeline):
     Process JWST imaging-mode slope data from Level-2a to Level-2b.
 
     Included steps are:
-    background_subtraction, assign_wcs, flat_field, photom and resample.
+    background, assign_wcs, flat_field, photom and resample.
     """
 
     class_alias = "calwebb_image2"

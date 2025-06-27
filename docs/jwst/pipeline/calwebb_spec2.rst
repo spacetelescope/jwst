@@ -55,7 +55,7 @@ TSO exposures. The instrument mode abbreviations used in the table are as follow
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`imprint <imprint_step>`                            |     | |c| | |c| |     |     |     |                 |      |        |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
-| :ref:`background <background_step>`                      | |c| | |c| | |c| | |c| |     | |c| |       |c|       | |c|  |  |c|   |     |
+| :ref:`background <background_subtraction>`               | |c| | |c| | |c| | |c| |     | |c| |       |c|       | |c|  |  |c|   |     |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
 | :ref:`extract_2d <extract_2d_step>`\ :sup:`1`            | |c| | |c| |     |     |     |     |                 | |c|  |  |c|   | |c| |
 +----------------------------------------------------------+-----+-----+-----+-----+-----+-----+-----------------+------+--------+-----+
@@ -233,7 +233,7 @@ abbreviations used in the table are as follows:
 +--------------------------------------------+------------+--------------+-----------------+--------------+
 | :ref:`imprint <imprint_step>`              |  NONE      |     IFU      |      NONE       |      NONE    |
 +--------------------------------------------+------------+--------------+-----------------+--------------+
-| :ref:`background <background_step>`        |  NONE      |    NONE      |      NONE       |      NONE    |
+| :ref:`background <background_subtraction>` |  NONE      |    NONE      |      NONE       |      NONE    |
 +--------------------------------------------+------------+--------------+-----------------+--------------+
 | :ref:`extract_2d <extract_2d_step>`        |  MOS, FS   |   MOS, FS    |    MOS, FS      |       MOS    |
 +--------------------------------------------+------------+--------------+-----------------+--------------+
@@ -278,7 +278,7 @@ The ``calwebb_spec2`` pipeline has two optional arguments.
   If set to ``True``, an intermediate image product is created for WFSS exposures that
   is in units of electrons/sec, instead of the normal DN/sec units that are used throughout
   the rest of processing. This product can be useful for doing off-line specialized
-  processing of WFSS images. This product is created after the :ref:`background <background_step>`
+  processing of WFSS images. This product is created after the :ref:`background <background_subtraction>`
   and :ref:`flat-field <flatfield_step>` steps have been applied, but before the
   :ref:`extract_2d <extract_2d_step>` step, so that it is the full WFSS image. The conversion
   to units of electrons/sec is accomplished by loading the :ref:`GAIN <gain_reffile>` reference file,
@@ -308,7 +308,7 @@ skip both the :ref:`resample_spec <resample_spec_step>` step and the
 :ref:`extract_1d <extract_1d_step>` step, because neither step supports
 multiple integration input products for this mode.
 
-Note that the steps :ref:`background <background_step>` and :ref:`imprint <imprint_step>`
+Note that the steps :ref:`background <background_subtraction>` and :ref:`imprint <imprint_step>`
 can only be executed when the pipeline is given an ASN file as input, because they rely on
 multiple, associated exposures to perform their tasks. The ASN file must list not only the
 input science exposure(s), but must also list the exposures to be used as background
@@ -332,7 +332,7 @@ Outputs
 :File suffix: _bsub or _bsubints
 
 This is an intermediate product that is only created if "--save_bsub" is set
-to ``True`` and will contain the data as output from the :ref:`background <background_step>`
+to ``True`` and will contain the data as output from the :ref:`background <background_subtraction>`
 step. If the input is a "_rate" product, this will be a "_bsub" product, while
 "_rateints" inputs will be saved as "_bsubints."
 
