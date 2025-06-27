@@ -156,6 +156,31 @@ def make_nis_wfss_datamodel(make_wfss_datamodel):
     return result
 
 
+@pytest.fixture
+def make_nis_wfss_sub64(make_wfss_datamodel):
+    """Make a NIRISS WFSS datamodel with subarray 64x2048"""
+    model = make_wfss_datamodel.copy()
+    model.meta.instrument.filter = "GR150C"
+    model.meta.instrument.pupil = "F090W"
+    model.meta.instrument.detector = "NIS"
+    model.meta.instrument.name = "NIRISS"
+    model.meta.exposure.type = "NIS_WFSS"
+
+    model.meta.subarray.xsize = 2048
+    model.meta.subarray.ysize = 64
+    model.meta.subarray.xstart = 1
+    model.meta.subarray.ystart = 1985
+    model.meta.subarray.name = "WFSS64C"
+
+    model.data = model.data[-64:, :2048]  # simulate subarray by slicing data
+    model.err = model.err[-64:, :2048]
+    model.dq = model.dq[-64:, :2048]
+
+    result = AssignWcsStep.call(model)
+
+    return result
+
+
 @pytest.fixture()
 def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     """Mock background reference file"""
@@ -211,9 +236,13 @@ def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
     shared_tests(sci, mask, data.original_data_mean)
 
 
-def test_nis_wfss_background(make_nis_wfss_datamodel, bkg_file):
+@pytest.mark.parametrize("subarray", [None, "WFSS64C"])
+def test_nis_wfss_background(subarray, make_nis_wfss_datamodel, make_nis_wfss_sub64, bkg_file):
     """Test background subtraction for NIRISS WFSS modes."""
-    data = make_nis_wfss_datamodel.copy()
+    if subarray == "WFSS64C":
+        data = make_nis_wfss_sub64.copy()
+    else:
+        data = make_nis_wfss_datamodel.copy()
 
     # Get References
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
