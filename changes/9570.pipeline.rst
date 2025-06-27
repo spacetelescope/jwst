@@ -1,0 +1,1 @@
+Use ``read_metadata`` where possible in calwebb_image3; result is a few percent runtime improvement if in_memory=False

@@ -1,5 +1,7 @@
 """Module for lists of modes grouped in different ways."""
 
+from stdatamodels.jwst.datamodels import JwstDataModel
+
 from jwst.associations.lib.dms_base import (
     ACQ_EXP_TYPES,
     IMAGE2_SCIENCE_EXP_TYPES,
@@ -248,18 +250,30 @@ def is_moving_target(datamodel):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`
-        JWST data model.
+    datamodel : `~jwst.datamodels.JwstDataModel` or dict
+        JWST data model or flattened metadata dictionary.
 
     Returns
     -------
     status : bool
         `True` if it is.
     """
-    if (
-        hasattr(datamodel.meta.target, "type")
-        and datamodel.meta.target.type is not None
-        and datamodel.meta.target.type.lower() == "moving"
-    ):
-        return True
-    return False
+    if isinstance(datamodel, JwstDataModel):
+        if (
+            hasattr(datamodel.meta.target, "type")
+            and datamodel.meta.target.type is not None
+            and datamodel.meta.target.type.lower() == "moving"
+        ):
+            return True
+        return False
+    elif isinstance(datamodel, dict):
+        # assume datamodel is a dictionary of metadata from read_metadata
+        if (
+            "meta.target.type" in datamodel
+            and datamodel["meta.target.type"] is not None
+            and datamodel["meta.target.type"].lower() == "moving"
+        ):
+            return True
+        return False
+    else:
+        raise TypeError(f"Expected JwstDataModel or dict, got {type(datamodel)} instead.")
