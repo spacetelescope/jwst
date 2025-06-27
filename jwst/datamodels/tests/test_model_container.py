@@ -153,3 +153,24 @@ def test_save(tmp_cwd, container, path):
         container.save(path)
         expected_fname = path.replace(".fits", "") + ".fits"
         assert os.path.exists(expected_fname)
+
+
+def test_open_guess(container):
+    # test that open() accepts guess arg
+    assert not container[0].meta.hasattr("model_type")
+    ModelContainer(container)  # this should work with default options
+    with pytest.raises(TypeError):
+        ModelContainer(container, guess=False)
+
+
+def test_open_kwargs(container):
+    wrong_schema = datamodels.NRMModel()._schema
+    asn_file_path, _asn_file_name = os.path.split(ASN_FILE)
+    fnames = [m.meta.filename for m in container]
+    with pushdir(asn_file_path):
+        # opening it normally works fine
+        ModelContainer(fnames)
+        with pytest.raises(AttributeError):
+            # but schema can be passed all the way through to DataModel.__init__ on the
+            # individual datamodels, and cause AttributeError
+            ModelContainer(fnames, schema=wrong_schema)
