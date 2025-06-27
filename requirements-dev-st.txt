@@ -7,6 +7,7 @@ git+https://github.com/spacetelescope/stpipe
 
 # Other important upstream packages
 git+https://github.com/spacetelescope/crds
+git+https://github.com/spacetelescope/drizzle
 git+https://github.com/spacetelescope/gwcs
 git+https://github.com/spacetelescope/tweakwcs
 git+https://github.com/spacetelescope/wiimatch
