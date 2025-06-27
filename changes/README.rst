@@ -16,6 +16,7 @@ News fragment change types
 - ``<PR#>.scripts.rst``
 - ``<PR#>.set_telescope_pointing.rst``
 - ``<PR#>.pipeline.rst``
+- ``<PR#>.associations.rst``
 
 Stage 1
 ^^^^^^^

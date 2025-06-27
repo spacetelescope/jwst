@@ -1,0 +1,1 @@
+Fix an edge case in duplicate association checks affecting NIRCam coranagraphy associations, where a duplicate "rateints" association should be removed, but an equivalent "rate" association is present, and was accidentally removed instead.
