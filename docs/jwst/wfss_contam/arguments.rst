@@ -23,3 +23,17 @@ The ``wfss_contam`` step uses the following optional arguments.
   multi-processing. The other options are 'quarter', 'half', and 'all'. Note that these
   fractions refer to the total available cores and on most CPUs these include physical
   and virtual cores.
+
+``--brightest_n``
+  Limits the number of direct image sources that are dispersed to only the brightest n sources.
+  If set to ``None``, all sources will be used. Defaults to ``None``.
+
+``--wl_oversample``
+  Indicates the oversampling factor for the wavelength grid used in the
+  simulation of the dispersed spectra. Defaults to 2.
+
+``--max_pixels_per_chunk``
+  Sets the maximum number of direct image pixels to run through the grism transforms at once.
+  Decreasing this value will reduce the memory usage of the step, but will
+  increase the runtime. Note that if a single source has more pixels than the value of 
+  ``max_pixels_per_chunk``, that source will be skipped. Defaults to 50,000.
