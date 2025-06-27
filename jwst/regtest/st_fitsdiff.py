@@ -582,10 +582,9 @@ class STHDUDiff(HDUDiff):
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
             percentages["threshold"] = thresholds
             percent_abs_list = []
-            diffs = np.abs(a - b)
-            n_total = diffs.size
+            n_total = a.size
             for threshold in thresholds:
-                n = diffs[diffs > (self.atol + threshold)].size
+                n = values[values > (self.atol + threshold)].size
                 percent_abs = float(n / n_total) * 100
                 percent_abs_list.append(f"{percent_abs:.4g}")
             percentages["abs_diff%"] = percent_abs_list
