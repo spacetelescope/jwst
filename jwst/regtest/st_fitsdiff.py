@@ -344,7 +344,7 @@ class STFITSDiff(FITSDiff):
                 else:
                     rtol = self.expected_extension_tolerances["DEFAULT"]["rtol"]
                     atol = self.expected_extension_tolerances["DEFAULT"]["atol"]
-                self._writeln(f"\n  Relative tolerance: {rtol:.1e}, Absolute tolerance: {atol:.1e}")
+                self._writeln(f"\n  Relative tolerance: {rtol:.4g}, Absolute tolerance: {atol:.4g}")
             hdu_diff.report(self._fileobj, indent=self._indent + 1)
 
 
@@ -522,7 +522,7 @@ class STHDUDiff(HDUDiff):
             zerosa, zerosb = a[a == 0.0], b[b == 0.0]
             zeros_in_a, nans_in_a, nonans_in_a = report_array_zero_size(a, nansa, zerosa)
             zeros_in_b, nans_in_b, nonans_in_b = report_array_zero_size(b, nansb, zerosb)
-            nonansa, nonansb = a[~np.isnan(a)], b[~np.isnan(b)]
+            nonansa, nonansb = a[np.isfinite(a)], b[np.isfinite(b)]
             if nonansa.size > 0:
                 mina = f"{np.min(nonansa):.4g}"
                 maxa = f"{np.max(nonansa):.4g}"
@@ -549,24 +549,28 @@ class STHDUDiff(HDUDiff):
                 stats["no_stats_available"] = ""
                 return report_zeros_nan, percentages, stats
             # Get the number of NaN in each array and other info
-            nan_idx = np.isnan(a) | np.isnan(b)
-            anonan = a[~nan_idx]
-            bnonan = b[~nan_idx]
-            values = np.abs(anonan - bnonan)
+            diffs = np.abs(b - a)
             # Nothing to report if all values are 0 and the number of nans is the same
-            if (values == 0.0).all() and nans_in_a == nans_in_b:
+            if (diffs == 0.0).all() and nans_in_a == nans_in_b:
                 return None, None, None
             # Calculate stats for absolute and relative differences
+            good_idx = np.isfinite(diffs)
+            good_diffs = diffs[good_idx]
             # Catch the all NaNs case
-            if values.size == 0:
-                percentages["NaN"] = 100
-                stats["no_stats_available"] = ""
+            if diffs.size == 0:
+                percentages["all_nans"] = 100
+                stats["no_stats_available"] = np.nan
                 return report_zeros_nan, percentages, stats
             stats["Quantity"] = ["max", "min", "mean", "std_dev"]
-            stats["abs_diff"] = [np.max(values), np.min(values), np.mean(values), np.std(values)]
+            stats["abs_diff"] = [
+                np.max(good_diffs),
+                np.min(good_diffs),
+                np.mean(good_diffs),
+                np.std(good_diffs),
+            ]
             stats["abs_diff"].format = "1.4g"
-            nozeros = bnonan[bnonan != 0.0]
-            relative_values = values[bnonan != 0.0] / np.abs(nozeros)
+            bgood = b[good_idx]
+            relative_values = good_diffs[bgood != 0.0] / np.abs(bgood[bgood != 0.0])
             # Catch an empty sequence
             if relative_values.size == 0:
                 stats["no_rel_stats_available"] = np.nan
@@ -582,9 +586,9 @@ class STHDUDiff(HDUDiff):
             thresholds = [0.1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 0.0]
             percentages["threshold"] = thresholds
             percent_abs_list = []
-            n_total = a.size
+            n_total = b.size
             for threshold in thresholds:
-                n = values[values > (self.atol + threshold)].size
+                n = good_diffs[good_diffs > (self.atol + threshold)].size
                 percent_abs = float(n / n_total) * 100
                 percent_abs_list.append(f"{percent_abs:.4g}")
             percentages["abs_diff%"] = percent_abs_list
@@ -680,7 +684,7 @@ class STHDUDiff(HDUDiff):
                 self._writeln(tline)
 
             # Show the difference (a-b) stats
-            self._writeln("\nDifference stats: abs(a - b) ")
+            self._writeln("\nDifference stats: abs(b - a) ")
             for tline in self.stats.pformat():
                 self._writeln(tline)
 
@@ -840,7 +844,7 @@ class STImageDataDiff(ImageDataDiff):
                         warnings.simplefilter("ignore", RuntimeWarning)
                         # Code that might generate a RuntimeWarning
                         # this data set is weird, do nothing and report
-                        diff_total = np.abs(a - b) > (atol + rtol * np.abs(b))
+                        diff_total = np.abs(b - a) > (atol + rtol * np.abs(b))
                         pass
 
                     if a[diff_total].size != 0:
@@ -1510,8 +1514,8 @@ class STTableDataDiff(TableDataDiff):
         for tline in tlines:
             self._writeln(tline)
 
-        # Print the difference (a-b) stats
-        self._writeln("\nDifference stats: abs(a - b) ")
+        # Print the difference (b - a) stats
+        self._writeln("\nDifference stats: abs(b - a) ")
         # make sure the format is acceptable
         for colname in self.report_table.columns:
             if colname in ["col_name", "dtype"]:

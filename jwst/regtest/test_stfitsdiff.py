@@ -16,6 +16,7 @@ def mock_rampfiles(tmp_path_factory):
     sci_mod = tmp_dir / "sci_mod_ramp.fits"
     nan_in_sci = tmp_dir / "nan_in_sci_ramp.fits"
     diff_exts = tmp_dir / "ext_removed_ramp.fits"
+    diff_dim = tmp_dir / "diff_dim.fits"
 
     nints = 2
     ngroups = 2
@@ -60,8 +61,14 @@ def mock_rampfiles(tmp_path_factory):
         rampmodel.data[0, 0, ...] = np.nan
         rampmodel.data[1, 1, ...] = 0.0
         rampmodel.save(nan_in_sci)
+        # return to truth value
+        rampmodel.data = data
 
-    return truth, keyword_mod, sci_mod, nan_in_sci, diff_exts
+        # Test different shapes
+        rampmodel.data = np.ones(shape=(2, 2, 4, 4))
+        rampmodel.save(diff_dim)
+
+    return truth, keyword_mod, sci_mod, nan_in_sci, diff_exts, diff_dim
 
 
 def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
@@ -79,11 +86,16 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
             if "Values" in line or "Found" in line:
                 if primary_diffs is None:
                     primary_diffs = idx
-            if "differs" in line and pixidx is None:
+            if "differs" in line or "differ:" in line and pixidx is None:
                 pixidx = idx
                 break
         streport = rsplit[from_line:pixidx]
-        pixelreport = rsplit[from_line:primary_diffs]
+        # If primary_diffs is still None, means that no further comparison
+        # was made and so no stats were calculated
+        if primary_diffs is None:
+            pixelreport = rsplit[from_line:pixidx]
+        else:
+            pixelreport = rsplit[from_line:primary_diffs]
         pixelreport.append("Data contains differences:")
         pixelreport.extend(rsplit[pixidx:])
         return streport, pixelreport
@@ -159,7 +171,7 @@ def test_keyword_change(mock_rampfiles, fitsdiff_default_kwargs):
     report2 = report_to_list(diff2.report(), from_line=10)
     expected_report2 = [
         "Extension HDU 0 (PRIMARY, 1):",
-        "Relative tolerance: 1.0e+00, Absolute tolerance: 2.0e+00",
+        "Relative tolerance: 1, Absolute tolerance: 2",
         "Headers contain differences:",
         "Keyword DATE-OBS has different values:",
         "a> 2025-10-13",
@@ -225,7 +237,7 @@ def test_sci_change(mock_rampfiles, fitsdiff_default_kwargs):
         "max    1.5     1.002",
         "mean 0.9589         1",
         "std_dev 0.2454 0.0005875",
-        "Difference stats: abs(a - b)",
+        "Difference stats: abs(b - a)",
         "Quantity abs_diff rel_diff",
         "-------- -------- --------",
         "max   0.9996   0.9995",
@@ -278,7 +290,7 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "max      1     1.002",
         "mean 0.6667         1",
         "std_dev 0.4714 0.0005875",
-        "Difference stats: abs(a - b)",
+        "Difference stats: abs(b - a)",
         "Quantity abs_diff rel_diff",
         "-------- -------- --------",
         "max        1        1",
@@ -306,42 +318,22 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
 def test_change_tols(mock_rampfiles, fitsdiff_default_kwargs):
     truth = mock_rampfiles[0]
     sci_mod = mock_rampfiles[2]
-    # Inflate all tolerances so only file names are different
-    fitsdiff_default_kwargs["rtol"] = 1e4
-    fitsdiff_default_kwargs["atol"] = 1e5
-    diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
-    result1 = diff.identical
-    report1 = report_to_list(diff.report())
-    # The expected result is False but only for the file name diffs
-    # The report should look like this
-    expected_report1 = [
-        "Primary HDU:",
-        "Headers contain differences:",
-        "Keyword FILENAME has different values:",
-        "a> sci_mod_ramp.fits",
-        "b> truth_ramp.fits",
-    ]
-    # Only fail the PIXELDQ extension
-    extension_tolerances = {
-        "sci": {"rtol": 1e-3, "atol": 1e-5},
-        "pixeldq": {"rtol": 1, "atol": 2},
-        "default": {"rtol": 1e3, "atol": 1e4},
-    }
-    fitsdiff_default_kwargs["extension_tolerances"] = extension_tolerances
-    diff2 = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
-    result2 = diff.identical
-    report2 = report_to_list(diff2.report(), from_line=10)
+    # Only change the abs tolerance
+    fitsdiff_default_kwargs["extension_tolerances"] = {"sci": {"atol": 0.01}}
+    diff1 = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
+    result1 = diff1.identical
+    report1 = report_to_list(diff1.report(), from_line=10)
     # The expected result is False
     # The report should look like this
-    expected_report2 = [
+    expected_report1 = [
         "Extension HDU 0 (PRIMARY, 1):",
-        "Relative tolerance: 1.0e+03, Absolute tolerance: 1.0e+04",
+        "Relative tolerance: 1e-05, Absolute tolerance: 1e-07",
         "Headers contain differences:",
         "Keyword FILENAME has different values:",
         "a> sci_mod_ramp.fits",
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
-        "Relative tolerance: 1.0e-03, Absolute tolerance: 1.0e-05",
+        "Relative tolerance: 1e-05, Absolute tolerance: 0.01",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -352,7 +344,53 @@ def test_change_tols(mock_rampfiles, fitsdiff_default_kwargs):
         "max    1.5     1.002",
         "mean 0.9589         1",
         "std_dev 0.2454 0.0005875",
-        "Difference stats: abs(a - b)",
+        "Difference stats: abs(b - a)",
+        "Quantity abs_diff rel_diff",
+        "-------- -------- --------",
+        "max   0.9996   0.9995",
+        "min        0        0",
+        "mean  0.06918  0.06917",
+        "std_dev   0.2391    0.239",
+        "Percentages of difference above (tolerance + threshold)",
+        "threshold abs_diff% rel_diff%",
+        "--------- --------- ---------",
+        "0.1     8.333     8.333",
+        "0.01     8.333     8.333",
+        "0.001     8.333     8.333",
+        "0.0001     8.333     13.89",
+        "1e-05     8.333     13.89",
+        "1e-06     8.333     13.89",
+        "1e-07     8.333     13.89",
+        "0.0     8.333     13.89",
+    ]
+
+    # Only change the rtol tolerance
+    fitsdiff_default_kwargs["extension_tolerances"] = {1: {"rtol": 0.001}}
+    diff2 = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
+    result2 = diff2.identical
+    report2 = report_to_list(diff2.report(), from_line=10)
+    # The expected result is False
+    # The report should look like this
+    expected_report2 = [
+        "Extension HDU 0 (PRIMARY, 1):",
+        "Relative tolerance: 1e-05, Absolute tolerance: 1e-07",
+        "Headers contain differences:",
+        "Keyword FILENAME has different values:",
+        "a> sci_mod_ramp.fits",
+        "b> truth_ramp.fits",
+        "Extension HDU 1 (SCI, 1):",
+        "Relative tolerance: 0.001, Absolute tolerance: 1e-07",
+        "Values in a and b",
+        "Quantity   a        b",
+        "-------- ------ ---------",
+        "zeros      0         0",
+        "nans      0         0",
+        "no-nans     36        36",
+        "min 0.0005         1",
+        "max    1.5     1.002",
+        "mean 0.9589         1",
+        "std_dev 0.2454 0.0005875",
+        "Difference stats: abs(b - a)",
         "Quantity abs_diff rel_diff",
         "-------- -------- --------",
         "max   0.9996   0.9995",
@@ -372,10 +410,95 @@ def test_change_tols(mock_rampfiles, fitsdiff_default_kwargs):
         "0.0     13.89     8.333",
     ]
 
+    # Fail the SCI extension a little less bad
+    extension_tolerances = {
+        "sci": {"rtol": 1e-3, "atol": 1e-5},
+        "pixeldq": {"rtol": 1, "atol": 2},
+        "default": {"rtol": 1e3, "atol": 1e4},
+    }
+    fitsdiff_default_kwargs["extension_tolerances"] = extension_tolerances
+    diff3 = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
+    result3 = diff3.identical
+    report3 = report_to_list(diff3.report(), from_line=10)
+    # The expected result is False
+    # The report should look like this
+    expected_report3 = [
+        "Extension HDU 0 (PRIMARY, 1):",
+        "Relative tolerance: 1000, Absolute tolerance: 1e+04",
+        "Headers contain differences:",
+        "Keyword FILENAME has different values:",
+        "a> sci_mod_ramp.fits",
+        "b> truth_ramp.fits",
+        "Extension HDU 1 (SCI, 1):",
+        "Relative tolerance: 0.001, Absolute tolerance: 1e-05",
+        "Values in a and b",
+        "Quantity   a        b",
+        "-------- ------ ---------",
+        "zeros      0         0",
+        "nans      0         0",
+        "no-nans     36        36",
+        "min 0.0005         1",
+        "max    1.5     1.002",
+        "mean 0.9589         1",
+        "std_dev 0.2454 0.0005875",
+        "Difference stats: abs(b - a)",
+        "Quantity abs_diff rel_diff",
+        "-------- -------- --------",
+        "max   0.9996   0.9995",
+        "min        0        0",
+        "mean  0.06918  0.06917",
+        "std_dev   0.2391    0.239",
+        "Percentages of difference above (tolerance + threshold)",
+        "threshold abs_diff% rel_diff%",
+        "--------- --------- ---------",
+        "0.1     8.333     8.333",
+        "0.01     8.333     8.333",
+        "0.001     8.333     8.333",
+        "0.0001     13.89     8.333",
+        "1e-05     13.89     8.333",
+        "1e-06     13.89     8.333",
+        "1e-07     13.89     8.333",
+        "0.0     13.89     8.333",
+    ]
+
+    # Inflate all tolerances so only file names are different
+    fitsdiff_default_kwargs["extension_tolerances"] = None
+    fitsdiff_default_kwargs["rtol"] = 1e4
+    fitsdiff_default_kwargs["atol"] = 1e5
+    diff4 = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
+    result4 = diff4.identical
+    report4 = report_to_list(diff4.report())
+    # The expected result is False but only for the file name diffs
+    # The report should look like this
+    expected_report4 = [
+        "Primary HDU:",
+        "Headers contain differences:",
+        "Keyword FILENAME has different values:",
+        "a> sci_mod_ramp.fits",
+        "b> truth_ramp.fits",
+    ]
     assert result1 is False
     assert report1 == expected_report1
     assert result2 is False
     assert report2 == expected_report2
+    assert result3 is False
+    assert report3 == expected_report3
+    assert result4 is False
+    assert report4 == expected_report4
+
+
+def test_diff_dim(mock_rampfiles, fitsdiff_default_kwargs):
+    truth = mock_rampfiles[0]
+    diff_dim = mock_rampfiles[5]
+    apdiff = FITSDiff(diff_dim, truth, **fitsdiff_default_kwargs)
+    apresult = apdiff.identical
+    apreport = report_to_list(apdiff.report())
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(diff_dim, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    _, pixelreport = report_to_list(diff.report(), report_pixel_loc_diffs=True)
+    assert result == apresult
+    assert pixelreport == apreport
 
 
 @pytest.fixture(scope="module")
@@ -500,7 +623,7 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "col_name zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
         "-------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
         "FLUX       0       0     0     0      100      100   100     1 1e-05     1   1.98      1",
-        "Difference stats: abs(a - b)",
+        "Difference stats: abs(b - a)",
         "col_name dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
         "FLUX    f8         2      99        1    9.85         2      99       50      49",
@@ -538,7 +661,7 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "col_name zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
         "-------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
         "FLUX       2       0     2     0       98      100     1     1     0     1 0.9796      1",
-        "Difference stats: abs(a - b)",
+        "Difference stats: abs(b - a)",
         "col_name dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
         "FLUX    f8         0       0        0       0         0       0        0       0",
@@ -576,7 +699,7 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "col_name  zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
         "---------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
         "WAVELENGTH       0       1   100     0        0      100   nan   9.9   nan     0    nan   4.95",
-        "Difference stats: abs(a - b)",
+        "Difference stats: abs(b - a)",
         "col_name  dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "---------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
         "WAVELENGTH    f8         0       0        0       0         0       0        0       0",
