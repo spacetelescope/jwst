@@ -634,6 +634,8 @@ def dms_product_name_wfss(asn):
     str
         The product name.
     """
+    target = asn.get_target()
+
     instrument = asn.get_instrument()
 
     opt_elem = asn.get_opt_element()
@@ -646,11 +648,12 @@ def dms_product_name_wfss(asn):
     if subarray:
         subarray = "-" + subarray
 
-    product_name_format = "jw{program}-{acid}_t000_{instrument}_{opt_elem}{slit_name}{subarray}"
+    product_name_format = "jw{program}-{acid}_{target}_{instrument}_{opt_elem}{slit_name}{subarray}"
     product_name = format_product(
         product_name_format,
         program=asn.data["program"],
         acid=asn.acid.id,
+        target=target,
         instrument=instrument,
         opt_elem=opt_elem,
         slit_name=slit_name,
