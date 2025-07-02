@@ -1,1 +1,0 @@
-Update output table to show correct timestamps and spectral orders for NIRISS tsgrism observations.

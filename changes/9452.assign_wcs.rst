@@ -1,3 +1,0 @@
-Attach a pixel-to-slice map to NIRSpec IFU images, in a ``regions`` attribute.
-Optionally (but on by default), use the slice map to revise the WCS to be fully coordinate-based,
-so it does not require the slice number on input nor report it on output.

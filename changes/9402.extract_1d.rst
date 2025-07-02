@@ -1,3 +1,0 @@
-For WFSS modes, reorganize output such that a single table extension holds the spectra
-from all the sources for a given exposure and spectral order.
-The output datamodel type is now WFSSMultiSpecModel for those modes.

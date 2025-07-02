@@ -1,1 +1,0 @@
-Pipeline utility function ``match_nans_and_flags()`` now raises ``TypeError`` instead of ``ValueError`` on invalid input model.

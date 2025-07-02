@@ -1,2 +1,0 @@
-For nodded NIRSpec FS or MOS spec2 associations, exclude background candidates that do not match the science target ID.
-For NIRSpec FS spec3 associations, update the product name to include the target ID.

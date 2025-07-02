@@ -1,1 +1,0 @@
-For NIRSpec multislit data, add a metadata keyword to each slit to record whether it has been barshadow corrected.

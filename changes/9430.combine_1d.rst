@@ -1,1 +1,0 @@
-Allow spectra from TSOMultiSpecModel to be combined.

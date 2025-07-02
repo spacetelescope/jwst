@@ -1,1 +1,0 @@
-Read only metadata, not whole datamodel, when getting CRDS references

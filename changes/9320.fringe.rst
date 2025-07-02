@@ -1,1 +1,0 @@
-Apply fringe correction to VAR_POISSON, VAR_RNOISE, and VAR_FLAT also.

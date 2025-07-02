@@ -1,1 +1,0 @@
-Provide subarray name to ``Lv2WFSSNIS`` association rule so that direct image association members have correct Level 3 product name. 
