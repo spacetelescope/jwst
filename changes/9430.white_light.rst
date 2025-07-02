@@ -1,2 +1,0 @@
-Update handling to expect multi-integration spectra in TSOMultiSpecModel datamodels.
-Separate fluxes from different detectors into different output columns.
