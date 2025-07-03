@@ -1,9 +1,10 @@
 """Unit tests for ami_analyze module and step."""
+
 import pytest
 import numpy as np
 import math
 import stpipe
-from stdatamodels.jwst import datamodels
+from astropy.io import fits
 
 from jwst.ami import AmiAnalyzeStep
 
@@ -27,8 +28,18 @@ def test_ami_analyze_no_reffile_fail(monkeypatch, example_model):
         AmiAnalyzeStep.call(example_model)
 
 
-def test_ami_analyze_step(example_model):
-    AmiAnalyzeStep.call(example_model)
+def test_ami_analyze_step(example_model, tmp_cwd):
+    model, _, _ = AmiAnalyzeStep.call(example_model)
+
+    # ensure the primary header contains expected wcs info, but no SCI extension
+    model.save("ami_analyze_step_output.fits")
+    model.close()
+    with fits.open("ami_analyze_step_output.fits") as hdul:
+        extensions = [ext.name for ext in hdul]
+        assert "SCI" not in extensions
+        for kw in ["VPARITY", "V3I_YANG", "ROLL_REF"]:
+            assert kw in list(hdul[0].header.keys())
+
 
 def test_ami_analyze_step_no_affine(example_model):
     AmiAnalyzeStep.call(example_model, affine2d=None)

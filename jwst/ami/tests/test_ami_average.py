@@ -6,7 +6,6 @@ from stdatamodels.jwst.datamodels import ImageModel
 
 
 def test_ami_average_deprecated(example_model):
-
     image_list = []
     for i in range(example_model.data.shape[0]):
         image_list.append(ImageModel(example_model.data[i, :, :]))

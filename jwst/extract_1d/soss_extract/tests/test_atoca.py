@@ -4,7 +4,12 @@ from functools import partial
 from scipy.sparse import csr_matrix
 from jwst.extract_1d.soss_extract import atoca
 from jwst.extract_1d.soss_extract.tests.conftest import (
-    SPECTRAL_SLOPE, f_lam, DATA_SHAPE, WAVE_BNDS_O1, WAVE_BNDS_O2)
+    SPECTRAL_SLOPE,
+    f_lam,
+    DATA_SHAPE,
+    WAVE_BNDS_O1,
+    WAVE_BNDS_O2,
+)
 
 """Tests for the ATOCA extraction engine, taking advantage of the miniature
 model set up by conftest.py.
@@ -30,7 +35,7 @@ def test_extraction_engine_init(
     assert np.allclose(engine.wave_grid, unq)
     assert engine.n_wavepoints == unq.size
 
-    for order in [0,1]:
+    for order in [0, 1]:
         # test assignment of attributes and conversion to expected float64 dtype
         assert engine.wave_map[order].dtype == np.float64
         assert engine.trace_profile[order].dtype == np.float64
@@ -49,11 +54,11 @@ def test_extraction_engine_init(
     for att in ["wave_p", "wave_m"]:
         wave = getattr(engine, att)
         assert wave.dtype == np.float64
-        assert wave.shape == (2,)+DATA_SHAPE
+        assert wave.shape == (2,) + DATA_SHAPE
 
     # test _get_i_bounds
     assert len(engine.i_bounds) == 2
-    for order in [0,1]:
+    for order in [0, 1]:
         assert len(engine.i_bounds[order]) == 2
         assert engine.i_bounds[order][0] >= 0
         assert engine.i_bounds[order][1] < DATA_SHAPE[1]
@@ -66,7 +71,6 @@ def test_extraction_engine_init(
     assert engine.i_bounds[0][0] > 0
     assert engine.i_bounds[1][1] < engine.n_wavepoints
 
-
     # test _get_masks
     # ensure they all include the input detector bad pixel mask
     for mask in [engine.mask_ord[0], engine.mask_ord[1], engine.mask, engine.general_mask]:
@@ -78,7 +82,7 @@ def test_extraction_engine_init(
     assert np.allclose(engine.mask, engine.general_mask)
 
     wave_bnds = [WAVE_BNDS_O1, WAVE_BNDS_O2]
-    for order in [0,1]:
+    for order in [0, 1]:
         # ensure wavelength bounds from wave_grid are respected in mask_ord
         mask = engine.mask_ord[order]
         wls = wave_map[order]
@@ -98,14 +102,14 @@ def test_extraction_engine_init(
         assert np.all(mask[combined_profile])
 
     # test throughput function conversion to array
-    for order in [0,1]:
+    for order in [0, 1]:
         thru = engine.throughput[order]
         assert thru.size == engine.n_wavepoints
         assert np.all(thru >= 0)
         assert thru.dtype == np.float64
 
     # test kernel is cast to proper shape for input (trivial) kernel
-    for order in [0,1]:
+    for order in [0, 1]:
         n_valid = engine.i_bounds[order][1] - engine.i_bounds[order][0]
         expected_shape = (n_valid, engine.n_wavepoints)
         assert engine.kernels[order].shape == expected_shape
@@ -113,7 +117,7 @@ def test_extraction_engine_init(
         assert engine.kernels[order].count_nonzero() == expected_shape[0]
 
     # test weights. see separate unit tests to ensure the calculation is correct
-    for order in [0,1]:
+    for order in [0, 1]:
         n_valid = engine.i_bounds[order][1] - engine.i_bounds[order][0]
         weights = engine.weights[order]
         k_idx = engine.weights_k_idx[order]
@@ -142,25 +146,31 @@ def test_extraction_engine_bad_inputs(
     # not enough good pixels in order
     with pytest.raises(atoca.MaskOverlapError):
         detector_mask = np.ones_like(detector_mask)
-        detector_mask[5:7,50:55] = 0 #still a few good pixels but very few
-        atoca.ExtractionEngine(wave_map,
-                               trace_profile,
-                               throughput,
-                               kernels_unity,
-                               wave_grid,
-                               mask_trace_profile,
-                               global_mask=detector_mask)
+        detector_mask[5:7, 50:55] = 0  # still a few good pixels but very few
+        atoca.ExtractionEngine(
+            wave_map,
+            trace_profile,
+            throughput,
+            kernels_unity,
+            wave_grid,
+            mask_trace_profile,
+            global_mask=detector_mask,
+        )
 
     # wrong number of orders
     with pytest.raises(ValueError):
-        atoca.ExtractionEngine(wave_map,
-                               trace_profile,
-                               throughput,
-                               kernels_unity,
-                               wave_grid,
-                               mask_trace_profile,
-                               global_mask=detector_mask,
-                               orders=[0,])
+        atoca.ExtractionEngine(
+            wave_map,
+            trace_profile,
+            throughput,
+            kernels_unity,
+            wave_grid,
+            mask_trace_profile,
+            global_mask=detector_mask,
+            orders=[
+                0,
+            ],
+        )
 
 
 def test_get_attributes(engine):
@@ -172,7 +182,7 @@ def test_get_attributes(engine):
     att_list = engine.get_attributes(*name_list)
     expected = [engine.wave_map, engine.wave_grid]
     for i in range(len(expected)):
-        for j in range(2): #orders
+        for j in range(2):  # orders
             assert np.allclose(att_list[i][j], expected[i][j])
 
     # test i_order not None
@@ -183,7 +193,6 @@ def test_get_attributes(engine):
 
 
 def test_update_throughput(engine, throughput):
-
     old_thru = engine.throughput
 
     # test callable input
@@ -197,10 +206,10 @@ def test_update_throughput(engine, throughput):
     # test array input
     # first reset to old throughput
     engine.throughput = old_thru
-    new_thru = [thru*2 for thru in engine.throughput]
+    new_thru = [thru * 2 for thru in engine.throughput]
     engine.update_throughput(new_thru)
     for i, thru in enumerate(engine.throughput):
-        assert np.allclose(thru, old_thru[i]*2)
+        assert np.allclose(thru, old_thru[i] * 2)
 
     # test fail on bad array shape
     new_thru = [thru[:-1] for thru in engine.throughput]
@@ -210,6 +219,7 @@ def test_update_throughput(engine, throughput):
     # test fail on callable that doesn't return correct array shape
     def new_thru_f(wl):
         return 1.0
+
     with pytest.raises(TypeError):
         engine.update_throughput([new_thru_f, new_thru_f])
 
@@ -224,14 +234,14 @@ def test_create_kernels(webb_kernels, engine):
 
     for kernel_list in [kernels_0, kernels_1]:
         assert len(kernel_list) == 2
-        for order in [0,1]:
+        for order in [0, 1]:
             kern = kernel_list[order]
             assert isinstance(kern, csr_matrix)
             assert kern.dtype == np.float64
 
 
 def test_wave_grid_c(engine):
-    for order in [0,1]:
+    for order in [0, 1]:
         n_valid = engine.i_bounds[order][1] - engine.i_bounds[order][0]
         assert engine.wave_grid_c(order).size == n_valid
 
@@ -247,7 +257,6 @@ def test_set_w_t_wave_c(engine):
 
 
 def test_get_pixel_mapping(engine):
-
     pixel_mapping_0 = engine.get_pixel_mapping(0)
     # check attribute is set and identical to output
     # check the second one is not set but there is space for it
@@ -258,7 +267,7 @@ def test_get_pixel_mapping(engine):
 
     # set the second one so can check both at once
     engine.get_pixel_mapping(1)
-    for order in [0,1]:
+    for order in [0, 1]:
         mapping = engine.pixel_mapping[order]
         assert mapping.dtype == np.float64
         # why is this the shape, instead of using mask_ord and only the valid wave_grid?
@@ -281,7 +290,6 @@ def test_get_pixel_mapping(engine):
 
 
 def test_rebuild(engine):
-
     detector_model = engine.rebuild(f_lam)
     assert detector_model.dtype == np.float64
     assert detector_model.shape == engine.wave_map[0].shape
@@ -295,7 +303,6 @@ def test_rebuild(engine):
 
 
 def test_build_sys(imagemodel, engine):
-
     data, error = imagemodel
     matrix, result = engine.build_sys(data, error)
     assert result.size == engine.n_wavepoints
@@ -303,26 +310,18 @@ def test_build_sys(imagemodel, engine):
 
 
 def test_get_detector_model(imagemodel, engine):
-
     data, error = imagemodel
     unmasked_size = np.sum(~engine.mask)
     b_matrix, data_matrix = engine.get_detector_model(data, error)
 
     assert data_matrix.shape == (1, unmasked_size)
     assert b_matrix.shape == (unmasked_size, engine.n_wavepoints)
-    assert np.allclose(data_matrix.toarray()[0], (data/error)[~engine.mask])
+    assert np.allclose(data_matrix.toarray()[0], (data / error)[~engine.mask])
 
 
 def test_estimate_tikho_factors(engine):
-
     factor = engine.estimate_tikho_factors(f_lam)
     assert isinstance(factor, float)
-
-    # very approximate calculation of tik fac looks like
-    # n_pixels = (~engine.mask).sum()
-    # flux = f_lam(engine.wave_grid)
-    # dlam = engine.wave_grid[1:] - engine.wave_grid[:-1]
-    # print(n_pixels/np.mean(flux[1:] * dlam))
 
 
 @pytest.fixture(scope="module")
@@ -335,7 +334,6 @@ def tikho_tests(imagemodel, engine):
 
 
 def test_get_tikho_tests(tikho_tests, engine):
-
     factors, tests = tikho_tests
     unmasked_size = np.sum(~engine.mask)
 
@@ -343,7 +341,7 @@ def test_get_tikho_tests(tikho_tests, engine):
     assert np.allclose(tests["factors"], factors)
     assert tests["solution"].shape == (len(factors), engine.n_wavepoints)
     assert tests["error"].shape == (len(factors), unmasked_size)
-    assert tests["reg"].shape == (len(factors), engine.n_wavepoints-1)
+    assert tests["reg"].shape == (len(factors), engine.n_wavepoints - 1)
     assert tests["chi2"].shape == (len(factors),)
     assert tests["chi2_soft_l1"].shape == (len(factors),)
     assert tests["chi2_cauchy"].shape == (len(factors),)
@@ -355,7 +353,6 @@ def test_get_tikho_tests(tikho_tests, engine):
 
 
 def test_best_tikho_factor(engine, tikho_tests):
-
     input_factors, tests = tikho_tests
     fit_modes = ["all", "curvature", "chi2", "d_chi2"]
     best_factors = []
@@ -388,7 +385,7 @@ def test_call(engine, tikho_tests, imagemodel):
     expected_spectrum = f_lam(engine.wave_grid)
     for tikhonov in [True, False]:
         spectrum = engine(data, error, tikhonov=tikhonov, factor=best_factor)
-        diff = (spectrum - expected_spectrum)/expected_spectrum
+        diff = (spectrum - expected_spectrum) / expected_spectrum
         assert not np.all(np.isnan(diff))
         diff = diff[~np.isnan(diff)]
         assert np.all(np.abs(diff) < 0.05)

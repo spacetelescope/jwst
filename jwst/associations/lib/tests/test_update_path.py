@@ -36,7 +36,6 @@ def test_update_key_value_default():
 
 
 def test_update_key_value_mod_func():
-
     obj = deepcopy(_test_obj)
     target = "a"
     new_value = "changed"

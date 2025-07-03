@@ -1,4 +1,5 @@
 """Unit tests for EMI correction."""
+
 import warnings
 
 import numpy as np
@@ -182,34 +183,37 @@ def test_emicorrstep_skip_default():
     assert step.skip == True
 
 
-@pytest.mark.parametrize('skip', [True, False])
+@pytest.mark.parametrize("skip", [True, False])
 def test_run_in_pipeline(skip):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
     pipeline_instance = Detector1Pipeline()
 
-    assert pipeline_instance.steps['emicorr']['skip'] == True
+    assert pipeline_instance.steps["emicorr"]["skip"] == True
 
     # Run the pipeline, omitting steps that are incompatible with our datamodel
-    cleaned = pipeline_instance.call(input_model,
-                                     steps={'emicorr': {'skip': skip},
-                                            'dq_init': {'skip': True},
-                                            'saturation': {'skip': True},
-                                            'ipc': {'skip': True},
-                                            'reset': {'skip': True},
-                                            'linearity': {'skip': True},
-                                            'rscd': {'skip': True},
-                                            'dark_current': {'skip': True},
-                                            'jump': {'skip': True},
-                                            'ramp_fit': {'skip': True},
-                                           })
+    cleaned = pipeline_instance.call(
+        input_model,
+        steps={
+            "emicorr": {"skip": skip},
+            "dq_init": {"skip": True},
+            "saturation": {"skip": True},
+            "ipc": {"skip": True},
+            "reset": {"skip": True},
+            "linearity": {"skip": True},
+            "rscd": {"skip": True},
+            "dark_current": {"skip": True},
+            "jump": {"skip": True},
+            "ramp_fit": {"skip": True},
+        },
+    )
 
     if skip:
-        assert cleaned.meta.cal_step.emicorr == 'SKIPPED'
+        assert cleaned.meta.cal_step.emicorr == "SKIPPED"
     else:
-        assert cleaned.meta.cal_step.emicorr == 'COMPLETE'
-    
+        assert cleaned.meta.cal_step.emicorr == "COMPLETE"
+
     input_model.close()
     cleaned.close()
 
@@ -402,9 +406,7 @@ def test_apply_emicorr_separate_ints(data_without_emi_3int, data_with_emi_3int, 
 @pytest.mark.parametrize("algorithm", ["sequential", "joint"])
 @pytest.mark.parametrize("model_placeholder", ["bad_model", None])
 @pytest.mark.parametrize("output_ext", ["fits", "asdf"])
-def test_apply_emicorr_with_freq(
-    tmp_path, algorithm, log_watcher, model_placeholder, output_ext
-):
+def test_apply_emicorr_with_freq(tmp_path, algorithm, log_watcher, model_placeholder, output_ext):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 

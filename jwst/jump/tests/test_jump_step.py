@@ -11,7 +11,7 @@ from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel, d
 
 from jwst.jump import JumpStep
 
-MAXIMUM_CORES = ['2', 'none', 'quarter', 'half', 'all']
+MAXIMUM_CORES = ["2", "none", "quarter", "half", "all"]
 
 JUMP_DET = dqflags.group["JUMP_DET"]
 DO_NOT_USE = dqflags.group["DO_NOT_USE"]
@@ -25,9 +25,8 @@ def generate_miri_reffiles(tmp_path_factory):
     """Generate MIRI reference files."""
 
     def _generate_miri_reffiles(xsize=103, ysize=102, ingain=6):
-
         gainfile = tmp_path_factory.mktemp("data") / "gain.fits"
-        readnoisefile = tmp_path_factory.mktemp("data") / 'readnoise.fits'
+        readnoisefile = tmp_path_factory.mktemp("data") / "readnoise.fits"
 
         ingain = ingain
         xsize = xsize
@@ -65,7 +64,7 @@ def generate_nircam_reffiles(tmp_path_factory):
 
     def _generate_nircam_reffiles(xsize=20, ysize=20, ingain=6):
         gainfile = tmp_path_factory.mktemp("ndata") / "gain.fits"
-        readnoisefile = tmp_path_factory.mktemp("ndata") / 'readnoise.fits'
+        readnoisefile = tmp_path_factory.mktemp("ndata") / "readnoise.fits"
 
         ingain = ingain
         xsize = xsize
@@ -102,9 +101,18 @@ def generate_nircam_reffiles(tmp_path_factory):
 def setup_inputs():
     """Create test containers for test data."""
 
-    def _setup(ngroups=10, readnoise=10, nints=1, nrows=1024, ncols=1032,
-               nframes=1, grouptime=1.0, gain=1, deltatime=1, subarray=False):
-
+    def _setup(
+        ngroups=10,
+        readnoise=10,
+        nints=1,
+        nrows=1024,
+        ncols=1032,
+        nframes=1,
+        grouptime=1.0,
+        gain=1,
+        deltatime=1,
+        subarray=False,
+    ):
         times = np.array(list(range(ngroups)), dtype=np.float64) * deltatime
 
         data = np.zeros(shape=(nints, ngroups, nrows, ncols), dtype=np.float64)
@@ -116,14 +124,14 @@ def setup_inputs():
         read_noise = np.full((nrows, ncols), readnoise, dtype=np.float64)
 
         rampmodel = RampModel(data=data, err=err, pixeldq=pixdq, groupdq=gdq, times=times)
-        rampmodel.meta.instrument.name = 'MIRI'
-        rampmodel.meta.instrument.detector = 'MIRIMAGE'
-        rampmodel.meta.instrument.filter = 'F480M'
+        rampmodel.meta.instrument.name = "MIRI"
+        rampmodel.meta.instrument.detector = "MIRIMAGE"
+        rampmodel.meta.instrument.filter = "F480M"
 
-        rampmodel.meta.observation.date = '2023-01-13'
-        rampmodel.meta.observation.time = '00:00:00'
+        rampmodel.meta.observation.date = "2023-01-13"
+        rampmodel.meta.observation.time = "00:00:00"
 
-        rampmodel.meta.exposure.type = 'MIR_IMAGE'
+        rampmodel.meta.exposure.type = "MIR_IMAGE"
         rampmodel.meta.exposure.group_time = deltatime
 
         rampmodel.meta.exposure.frame_time = deltatime
@@ -132,21 +140,21 @@ def setup_inputs():
         rampmodel.meta.exposure.nframes = 1
         rampmodel.meta.exposure.groupgap = 0
 
-        rampmodel.meta.subarray.name = 'FULL'
+        rampmodel.meta.subarray.name = "FULL"
         rampmodel.meta.subarray.xstart = 1
         rampmodel.meta.subarray.ystart = 1
         rampmodel.meta.subarray.xsize = ncols
         rampmodel.meta.subarray.ysize = nrows
 
         gain = GainModel(data=gain)
-        gain.meta.instrument.name = 'MIRI'
+        gain.meta.instrument.name = "MIRI"
         gain.meta.subarray.xstart = 1
         gain.meta.subarray.ystart = 1
         gain.meta.subarray.xsize = ncols
         gain.meta.subarray.ysize = nrows
 
         rnmodel = ReadnoiseModel(data=read_noise)
-        rnmodel.meta.instrument.name = 'MIRI'
+        rnmodel.meta.instrument.name = "MIRI"
         rnmodel.meta.subarray.xstart = 1
         rnmodel.meta.subarray.ystart = 1
         rnmodel.meta.subarray.xsize = ncols
@@ -158,14 +166,14 @@ def setup_inputs():
 
 
 def add_crs(model, crs_frac):
-    """"Randomly add a cosmic ray of magnitude CR_MAG some of the SCI groups."""
+    """ "Randomly add a cosmic ray of magnitude CR_MAG some of the SCI groups."""
     num_ints = model.data.shape[0]
     num_groups = model.data.shape[1]
     num_rows = model.data.shape[2]
     num_cols = model.data.shape[3]
 
     tot_cr = 0  # counter
-    CR_MAG = 1000.  # consider making a variable ?
+    CR_MAG = 1000.0  # consider making a variable ?
 
     np.random.seed(0)  # to generate same CRs
 
@@ -188,14 +196,13 @@ def add_circles_to_data(data, center_coords, radii, fill_val=None):
     At positions specified by `center_coords` of sizes specified by `radii`.  The
     magnitude of each circle is 10x its radius (bigger snowballs are brighter).
     """
-    X, Y = np.ogrid[:data.shape[0], :data.shape[1]]
+    X, Y = np.ogrid[: data.shape[0], : data.shape[1]]
 
     for i, _ in enumerate(radii):
-
         radius = radii[i]
         x_center = center_coords[i][0]
         y_center = center_coords[i][1]
-        dist_from_center = np.sqrt((X - x_center)**2 + (Y - y_center)**2)
+        dist_from_center = np.sqrt((X - x_center) ** 2 + (Y - y_center) ** 2)
         circular_mask = ~(dist_from_center >= radius)
         if fill_val is None:
             data[circular_mask] += 10 * radius
@@ -207,7 +214,6 @@ def add_circles_to_data(data, center_coords, radii, fill_val=None):
 def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     """Test one cosmic ray."""
     override_gain, override_readnoise = generate_miri_reffiles()
-    print("max_cores = ", max_cores)
     grouptime = 3.0
     deltaDN = 5
     ingain = 6
@@ -216,10 +222,14 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     CR_fraction = 3
     xsize = 103
     ysize = 102
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                          nrows=ysize, ncols=xsize,
-                                                          gain=ingain, readnoise=inreadnoise,
-                                                          deltatime=grouptime)
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups,
+        nrows=ysize,
+        ncols=xsize,
+        gain=ingain,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
     for i in range(ngroups):
         model1.data[0, i, :, :] = deltaDN * i
     first_CR_group_locs = [x for x in range(1, 89) if x % 5 == 0]
@@ -229,13 +239,16 @@ def test_one_CR(generate_miri_reffiles, max_cores, setup_inputs):
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
-        model1.data[0, CR_group:, CR_y_locs[i], CR_x_locs[i]] = \
+        model1.data[0, CR_group:, CR_y_locs[i], CR_x_locs[i]] = (
             model1.data[0, CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
+        )
 
-    print("number of CRs {}".format(len(CR_x_locs)))
-
-    out_model = JumpStep.call(model1, override_gain=override_gain,
-                              override_readnoise=override_readnoise, maximum_cores=max_cores)
+    out_model = JumpStep.call(
+        model1,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores=max_cores,
+    )
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
@@ -255,10 +268,14 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
     CR_fraction = 5
     nrows = 20
     ncols = 20
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                          nrows=nrows, ncols=ncols,
-                                                          gain=ingain, readnoise=inreadnoise,
-                                                          deltatime=grouptime)
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
     for i in range(ngroups):
         model1.data[0, i, :, :] = deltaDN * i
     first_CR_group_locs = [x for x in range(1, 89) if x % 5 == 0]
@@ -268,13 +285,16 @@ def test_nircam(generate_nircam_reffiles, setup_inputs, max_cores):
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
-        model1.data[0, CR_group:, CR_y_locs[i], CR_x_locs[i]] = \
+        model1.data[0, CR_group:, CR_y_locs[i], CR_x_locs[i]] = (
             model1.data[0, CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
+        )
 
-    print("number of CRs {}".format(len(CR_x_locs)))
-
-    out_model = JumpStep.call(model1, override_gain=override_gain,
-                              override_readnoise=override_readnoise, maximum_cores=max_cores)
+    out_model = JumpStep.call(
+        model1,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores=max_cores,
+    )
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
@@ -293,10 +313,14 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
     CR_fraction = 5
     xsize = 103
     ysize = 102
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                          nrows=ysize, ncols=xsize,
-                                                          gain=ingain, readnoise=inreadnoise,
-                                                          deltatime=grouptime)
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups,
+        nrows=ysize,
+        ncols=xsize,
+        gain=ingain,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
     for i in range(ngroups):
         model1.data[0, i, :, :] = deltaDN * i
     first_CR_group_locs = [x for x in range(1, 89) if x % 5 == 0]
@@ -306,12 +330,18 @@ def test_two_CRs(generate_miri_reffiles, max_cores, setup_inputs):
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
-        model1.data[0, CR_group:, CR_y_locs[i], CR_x_locs[i]] = \
+        model1.data[0, CR_group:, CR_y_locs[i], CR_x_locs[i]] = (
             model1.data[0, CR_group:, CR_y_locs[i], CR_x_locs[i]] + 500
-        model1.data[0, CR_group + 8:, CR_y_locs[i], CR_x_locs[i]] = \
-            model1.data[0, CR_group + 8:, CR_y_locs[i], CR_x_locs[i]] + 700
-    out_model = JumpStep.call(model1, override_gain=override_gain,
-                              override_readnoise=override_readnoise, maximum_cores=max_cores)
+        )
+        model1.data[0, CR_group + 8 :, CR_y_locs[i], CR_x_locs[i]] = (
+            model1.data[0, CR_group + 8 :, CR_y_locs[i], CR_x_locs[i]] + 700
+        )
+    out_model = JumpStep.call(
+        model1,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores=max_cores,
+    )
     CR_pool = cycle(first_CR_group_locs)
     for i in range(len(CR_x_locs)):
         CR_group = next(CR_pool)
@@ -329,13 +359,21 @@ def test_two_group_integration(generate_miri_reffiles, max_cores, setup_inputs):
     ngroups = 2
     xsize = 103
     ysize = 102
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                          nrows=ysize, ncols=xsize,
-                                                          gain=ingain, readnoise=inreadnoise,
-                                                          deltatime=grouptime)
-    out_model = JumpStep.call(model1, override_gain=override_gain,
-                              override_readnoise=override_readnoise, maximum_cores=max_cores)
-    assert out_model.meta.cal_step.jump == 'SKIPPED'
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups,
+        nrows=ysize,
+        ncols=xsize,
+        gain=ingain,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
+    out_model = JumpStep.call(
+        model1,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores=max_cores,
+    )
+    assert out_model.meta.cal_step.jump == "SKIPPED"
 
 
 def test_three_group_integration(generate_miri_reffiles, setup_inputs):
@@ -347,13 +385,21 @@ def test_three_group_integration(generate_miri_reffiles, setup_inputs):
     ngroups = 3
     xsize = 103
     ysize = 102
-    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(ngroups=ngroups,
-                                                          nrows=ysize, ncols=xsize,
-                                                          gain=ingain, readnoise=inreadnoise,
-                                                          deltatime=grouptime)
-    out_model = JumpStep.call(model1, override_gain=override_gain,
-                              override_readnoise=override_readnoise, maximum_cores='none')
-    assert out_model.meta.cal_step.jump == 'COMPLETE'
+    model1, gdq, rnModel, pixdq, err, gain = setup_inputs(
+        ngroups=ngroups,
+        nrows=ysize,
+        ncols=xsize,
+        gain=ingain,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
+    out_model = JumpStep.call(
+        model1,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        maximum_cores="none",
+    )
+    assert out_model.meta.cal_step.jump == "COMPLETE"
 
 
 def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
@@ -366,10 +412,10 @@ def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
     pixels out a snowball is grown, is being used properly.
     """
     # make datamodel
-    override_gain, override_readnoise = generate_nircam_reffiles(xsize=100,
-                                                                 ysize=100)
-    mod, _, _, _, _, _ = setup_inputs(ngroups=5, nrows=100, ncols=100, gain=6,
-                                      readnoise=7, deltatime=3.0)
+    override_gain, override_readnoise = generate_nircam_reffiles(xsize=100, ysize=100)
+    mod, _, _, _, _, _ = setup_inputs(
+        ngroups=5, nrows=100, ncols=100, gain=6, readnoise=7, deltatime=3.0
+    )
 
     # add 'snowballs' to data array in 0th integration, 1st read. when run though
     # jump step, the DQ array in the 1st groupdq group should have clusters of
@@ -380,10 +426,14 @@ def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
     add_circles_to_data(mod.data[0, 1], center_coords, radii)
 
     expand_factor = 2
-    jump_result = JumpStep.call(mod, override_gain=override_gain,
-                                override_readnoise=override_readnoise,
-                                expand_large_events=True, sat_required_snowball=False,
-                                expand_factor=expand_factor)
+    jump_result = JumpStep.call(
+        mod,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        expand_large_events=True,
+        sat_required_snowball=False,
+        expand_factor=expand_factor,
+    )
 
     # both clusters should be detected as jumps then flagged as snowballs,
     # resulting in a circle of x2 radius of the original having a jump flag in
@@ -393,12 +443,16 @@ def test_snowball_flagging_nosat(generate_nircam_reffiles, setup_inputs):
         rad = radii[i]
         expanded_rad = expand_factor * rad
 
-        initial_area = np.sum((mod.data[0, 1, y - rad: y + rad, x - rad: x + rad]).astype(bool))
-        expanded_area = np.sum((jump_result.groupdq[0, 1,
-                                                    y - expanded_rad: y + expanded_rad,
-                                                    x - expanded_rad: x + expanded_rad]).astype(bool))
+        initial_area = np.sum((mod.data[0, 1, y - rad : y + rad, x - rad : x + rad]).astype(bool))
+        expanded_area = np.sum(
+            (
+                jump_result.groupdq[
+                    0, 1, y - expanded_rad : y + expanded_rad, x - expanded_rad : x + expanded_rad
+                ]
+            ).astype(bool)
+        )
 
-        assert (np.floor(expanded_area / initial_area) == (expand_factor**2))
+        assert np.floor(expanded_area / initial_area) == (expand_factor**2)
 
 
 def test_snowball_flagging_sat(generate_nircam_reffiles, setup_inputs):
@@ -411,10 +465,10 @@ def test_snowball_flagging_sat(generate_nircam_reffiles, setup_inputs):
     pixels out a snowball is grown, is being used properly.
     """
     # make datamodel
-    override_gain, override_readnoise = generate_nircam_reffiles(xsize=100,
-                                                                 ysize=100)
-    mod, _, _, _, _, _ = setup_inputs(ngroups=5, nrows=100, ncols=100, gain=6,
-                                      readnoise=7, deltatime=3.0)
+    override_gain, override_readnoise = generate_nircam_reffiles(xsize=100, ysize=100)
+    mod, _, _, _, _, _ = setup_inputs(
+        ngroups=5, nrows=100, ncols=100, gain=6, readnoise=7, deltatime=3.0
+    )
 
     # add 'snowballs' to data array in 0th integration, 1st read. when run though
     # jump step, the DQ array in the 1st groupdq group should have clusters of
@@ -431,10 +485,14 @@ def test_snowball_flagging_sat(generate_nircam_reffiles, setup_inputs):
         add_circles_to_data(mod.groupdq[0, i], center_coords, [4, 4], fill_val=2)
 
     expand_factor = 2
-    jump_result = JumpStep.call(mod, override_gain=override_gain,
-                                override_readnoise=override_readnoise,
-                                expand_large_events=True, sat_required_snowball=True,
-                                expand_factor=expand_factor)
+    jump_result = JumpStep.call(
+        mod,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+        expand_large_events=True,
+        sat_required_snowball=True,
+        expand_factor=expand_factor,
+    )
 
     # both clusters should be detected as jumps then flagged as snowballs,
     # resulting in a circle of x2 radius of the original having a jump flag in
@@ -444,26 +502,38 @@ def test_snowball_flagging_sat(generate_nircam_reffiles, setup_inputs):
         rad = radii[i]
         expanded_rad = expand_factor * rad
 
-        initial_area = np.sum((mod.data[0, 1, y - rad: y + rad, x - rad: x + rad]).astype(bool))
-        expanded_area = np.sum((jump_result.groupdq[0, 1,
-                                                    y - expanded_rad: y + expanded_rad,
-                                                    x - expanded_rad: x + expanded_rad]).astype(bool))
+        initial_area = np.sum((mod.data[0, 1, y - rad : y + rad, x - rad : x + rad]).astype(bool))
+        expanded_area = np.sum(
+            (
+                jump_result.groupdq[
+                    0, 1, y - expanded_rad : y + expanded_rad, x - expanded_rad : x + expanded_rad
+                ]
+            ).astype(bool)
+        )
 
-    assert (np.floor(expanded_area / initial_area) == (expand_factor**2))
+    assert np.floor(expanded_area / initial_area) == (expand_factor**2)
+
 
 # --------  Brought over from detect jumps --------
 
 
 def test_exec_time_0_crs(setup_inputs):
-    """"Set up with dimension similar to simulated MIRI datasets.
+    """ "Set up with dimension similar to simulated MIRI datasets.
 
     Dataset has no cosmic rays. Test only the execution time of jump detection
     for comparison with nominal time; hopefully indicative of faults with newly
     added code.
     """
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=10, nrows=1024, ncols=1032, nints=2, readnoise=6.5, gain=5.5,
-        grouptime=2.775, deltatime=2.775)
+        ngroups=10,
+        nrows=1024,
+        ncols=1032,
+        nints=2,
+        readnoise=6.5,
+        gain=5.5,
+        grouptime=2.775,
+        deltatime=2.775,
+    )
 
     tstart = time.monotonic()
 
@@ -472,7 +542,6 @@ def test_exec_time_0_crs(setup_inputs):
         model1,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -484,7 +553,7 @@ def test_exec_time_0_crs(setup_inputs):
     tstop = time.monotonic()
 
     t_elapsed = tstop - tstart
-    if platform.system() == 'Darwin' and os.environ.get('CI', False):
+    if platform.system() == "Darwin" and os.environ.get("CI", False):
         # github mac runners have known performance issues see:
         # https://github.com/actions/runner-images/issues/1336
         # use a longer MAX_TIME when running on github on a mac
@@ -496,7 +565,7 @@ def test_exec_time_0_crs(setup_inputs):
 
 
 def test_exec_time_many_crs(setup_inputs):
-    """"Set up with dimension similar to simulated MIRI datasets.
+    """ "Set up with dimension similar to simulated MIRI datasets.
 
     Dataset has many cosmic rays; approximately one CR per 4 groups. Test only
     the execution time of jump detection for comparison with nominal time;
@@ -506,8 +575,15 @@ def test_exec_time_many_crs(setup_inputs):
     ncols = 400
 
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=10, nrows=nrows, ncols=ncols, nints=2, readnoise=6.5, gain=5.5,
-        grouptime=2.775, deltatime=2.775)
+        ngroups=10,
+        nrows=nrows,
+        ncols=ncols,
+        nints=2,
+        readnoise=6.5,
+        gain=5.5,
+        grouptime=2.775,
+        deltatime=2.775,
+    )
 
     crs_frac = 0.25  # fraction of groups having a CR
     model1 = add_crs(model1, crs_frac)  # add desired fraction of CRs
@@ -518,7 +594,6 @@ def test_exec_time_many_crs(setup_inputs):
         model1,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -536,14 +611,13 @@ def test_exec_time_many_crs(setup_inputs):
 
 
 def test_nocrs_noflux(setup_inputs):
-    """"All pixel values are zero. So slope should be zero."""
+    """ "All pixel values are zero. So slope should be zero."""
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(ngroups=5)
 
     out_model = JumpStep.call(
         model1,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -557,7 +631,7 @@ def test_nocrs_noflux(setup_inputs):
 
 
 def test_nocrs_noflux_badgain_pixel(setup_inputs):
-    """"Test all pixel values are zero.
+    """ "Test all pixel values are zero.
 
     So slope should be zero, pixel with bad gain should have pixel dq set to
     'NO_GAIN_VALUE' and 'DO_NOT_USE'.
@@ -570,7 +644,6 @@ def test_nocrs_noflux_badgain_pixel(setup_inputs):
         model1,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -588,7 +661,7 @@ def test_nocrs_noflux_badgain_pixel(setup_inputs):
 
 
 def test_nocrs_noflux_subarray(setup_inputs):
-    """"Test all pixel values are zero.
+    """ "Test all pixel values are zero.
 
     This shows that the subarray reference files get extracted from the full frame versions.
     """
@@ -597,7 +670,6 @@ def test_nocrs_noflux_subarray(setup_inputs):
         model1,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -617,8 +689,8 @@ def test_onecr_10_groups_neighbors_flagged(setup_inputs):
     ngroups = 10
 
     model1, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, gain=ingain, nrows=10, ncols=10,
-        readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups, gain=ingain, nrows=10, ncols=10, readnoise=inreadnoise, deltatime=grouptime
+    )
 
     # two segments perfect fit, second segment has twice the slope
     model1.data[0, 0, 5, 5] = 15.0
@@ -636,7 +708,6 @@ def test_onecr_10_groups_neighbors_flagged(setup_inputs):
         model1,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -654,7 +725,7 @@ def test_onecr_10_groups_neighbors_flagged(setup_inputs):
 
 
 def test_nocr_100_groups_nframes1(setup_inputs):
-    """"Test no CR in a 100 group exposure.
+    """ "Test no CR in a 100 group exposure.
 
     This makes sure that frames_per_group is passed correctly to twopoint_difference.
     This test recreates the problem found in issue #4571.
@@ -664,8 +735,14 @@ def test_nocr_100_groups_nframes1(setup_inputs):
     inreadnoise = 7.0
     ngroups = 100
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, gain=ingain, nframes=1, nrows=10, ncols=10,
-        readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups,
+        gain=ingain,
+        nframes=1,
+        nrows=10,
+        ncols=10,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
 
     # two segments perfect fit, second segment has twice the slope
     model.data[0, 0, 5, 5] = 14.0
@@ -684,7 +761,6 @@ def test_nocr_100_groups_nframes1(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -697,7 +773,7 @@ def test_nocr_100_groups_nframes1(setup_inputs):
 
 
 def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
-    """"Two integrations with CRs in different locations.
+    """ "Two integrations with CRs in different locations.
 
     This makes sure we are correctly dealing with integrations.
     """
@@ -706,8 +782,14 @@ def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
     inreadnoise = 7.0
     ngroups = 10
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, nints=2, gain=ingain, nrows=20, ncols=20,
-        readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups,
+        nints=2,
+        gain=ingain,
+        nrows=20,
+        ncols=20,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
 
     # two segments perfect fit, second segment has twice the slope
     model.data[0, 0, 5, 5] = 15.0
@@ -735,7 +817,6 @@ def test_twoints_onecr_each_10_groups_neighbors_flagged(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -774,46 +855,232 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
     ncols = 10
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, nints=1, nrows=nrows, ncols=ncols, gain=ingain,
-        readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups,
+        nints=1,
+        nrows=nrows,
+        ncols=ncols,
+        gain=ingain,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
 
     # Setup the desired pixel values
-    model.data[0, :, 1, 1] = [10019.966, 10057.298,  10078.248,  10096.01,  20241.627,
-                              20248.752, 20268.047,  20284.895,  20298.705, 20314.25]
-    model.data[0, :, 1, 2] = [10016.457, 10053.907,  10063.568,  10076.166, 11655.773,
-                              11654.063, 11681.795,  11693.763,  11712.788, 11736.994]
-    model.data[0, :, 1, 3] = [10013.259, 10050.348,  10070.398,  10097.658, 10766.534,
-                              10787.84,  10802.418,  10818.872,  10832.695, 10861.175]
-    model.data[0, :, 1, 4] = [10016.422, 10053.959,  10070.934,  10090.381, 10104.014,
-                              10127.665, 10143.687,  10172.227,  10178.138, 10199.59]
-    model.data[0, :, 2, 1] = [10021.067, 10042.973,  10059.062,  10069.323, 18732.406,
-                              18749.602, 18771.908,  18794.695,  18803.223, 18819.523]
-    model.data[0, :, 2, 2] = [10019.651, 10043.371,  10056.423,  10085.121, 40584.703,
-                              40606.08,  40619.51,   40629.574,  40641.9,   40660.145]
-    model.data[0, :, 2, 3] = [10021.223, 10042.112,  10052.958,  10067.142, 28188.316,
-                              28202.922, 28225.557,  28243.79,   28253.883, 28273.586]
-    model.data[0, :, 2, 4] = [10022.608, 10037.174,  10069.476,  10081.729, 11173.748,
-                              11177.344, 11201.127,  11219.607,  11229.468, 11243.174]
-    model.data[0, :, 2, 5] = [10011.095, 10047.422,  10061.066,  10079.375, 10106.405,
-                              10116.071, 10129.348,  10136.305,  10161.373, 10181.479]
-    model.data[0, :, 3, 1] = [10011.877, 10052.809,  10075.108,  10085.111, 10397.106,
-                              10409.291, 10430.475,  10445.3,    10462.004, 10484.906]
-    model.data[0, :, 3, 2] = [10012.124, 10059.202,  10078.984,  10092.74,  11939.488,
-                              11958.45,  11977.5625, 11991.776,  12025.897, 12027.326]
-    model.data[0, :, 3, 3] = [10013.282, 10046.887,  10062.308,  10085.447, 28308.426,
-                              28318.957, 28335.55,   28353.832,  28371.746, 28388.848]
-    model.data[0, :, 3, 4] = [10016.784, 10048.249,  10060.097,  10074.606, 21506.082,
-                              21522.027, 21542.309,  21558.34,   21576.365, 21595.58]
-    model.data[0, :, 3, 5] = [10014.916, 10052.995,  10063.7705, 10092.866, 10538.075,
-                              10558.318, 10570.754,  10597.343,  10608.488, 10628.104]
-    model.data[0, :, 4, 1] = [10017.438, 10038.94,   10057.657,  10069.987, 10090.22,
-                              10114.296, 10133.543,  10148.657,  10158.109, 10172.842]
-    model.data[0, :, 4, 2] = [10011.129, 10037.982,  10054.445,  10079.703, 10097.964,
-                              10110.593, 10135.701,  10149.448,  10171.771, 10185.874]
-    model.data[0, :, 4, 3] = [10021.109, 10043.658,  10063.909,  10072.364, 10766.232,
-                              10774.402, 10790.677,  10809.337,  10833.65,  10849.55]
-    model.data[0, :, 4, 4] = [10023.877, 10035.997,  10052.321,  10077.937, 10529.645,
-                              10541.947, 10571.127,  10577.249,  10599.716, 10609.544]
+    model.data[0, :, 1, 1] = [
+        10019.966,
+        10057.298,
+        10078.248,
+        10096.01,
+        20241.627,
+        20248.752,
+        20268.047,
+        20284.895,
+        20298.705,
+        20314.25,
+    ]
+    model.data[0, :, 1, 2] = [
+        10016.457,
+        10053.907,
+        10063.568,
+        10076.166,
+        11655.773,
+        11654.063,
+        11681.795,
+        11693.763,
+        11712.788,
+        11736.994,
+    ]
+    model.data[0, :, 1, 3] = [
+        10013.259,
+        10050.348,
+        10070.398,
+        10097.658,
+        10766.534,
+        10787.84,
+        10802.418,
+        10818.872,
+        10832.695,
+        10861.175,
+    ]
+    model.data[0, :, 1, 4] = [
+        10016.422,
+        10053.959,
+        10070.934,
+        10090.381,
+        10104.014,
+        10127.665,
+        10143.687,
+        10172.227,
+        10178.138,
+        10199.59,
+    ]
+    model.data[0, :, 2, 1] = [
+        10021.067,
+        10042.973,
+        10059.062,
+        10069.323,
+        18732.406,
+        18749.602,
+        18771.908,
+        18794.695,
+        18803.223,
+        18819.523,
+    ]
+    model.data[0, :, 2, 2] = [
+        10019.651,
+        10043.371,
+        10056.423,
+        10085.121,
+        40584.703,
+        40606.08,
+        40619.51,
+        40629.574,
+        40641.9,
+        40660.145,
+    ]
+    model.data[0, :, 2, 3] = [
+        10021.223,
+        10042.112,
+        10052.958,
+        10067.142,
+        28188.316,
+        28202.922,
+        28225.557,
+        28243.79,
+        28253.883,
+        28273.586,
+    ]
+    model.data[0, :, 2, 4] = [
+        10022.608,
+        10037.174,
+        10069.476,
+        10081.729,
+        11173.748,
+        11177.344,
+        11201.127,
+        11219.607,
+        11229.468,
+        11243.174,
+    ]
+    model.data[0, :, 2, 5] = [
+        10011.095,
+        10047.422,
+        10061.066,
+        10079.375,
+        10106.405,
+        10116.071,
+        10129.348,
+        10136.305,
+        10161.373,
+        10181.479,
+    ]
+    model.data[0, :, 3, 1] = [
+        10011.877,
+        10052.809,
+        10075.108,
+        10085.111,
+        10397.106,
+        10409.291,
+        10430.475,
+        10445.3,
+        10462.004,
+        10484.906,
+    ]
+    model.data[0, :, 3, 2] = [
+        10012.124,
+        10059.202,
+        10078.984,
+        10092.74,
+        11939.488,
+        11958.45,
+        11977.5625,
+        11991.776,
+        12025.897,
+        12027.326,
+    ]
+    model.data[0, :, 3, 3] = [
+        10013.282,
+        10046.887,
+        10062.308,
+        10085.447,
+        28308.426,
+        28318.957,
+        28335.55,
+        28353.832,
+        28371.746,
+        28388.848,
+    ]
+    model.data[0, :, 3, 4] = [
+        10016.784,
+        10048.249,
+        10060.097,
+        10074.606,
+        21506.082,
+        21522.027,
+        21542.309,
+        21558.34,
+        21576.365,
+        21595.58,
+    ]
+    model.data[0, :, 3, 5] = [
+        10014.916,
+        10052.995,
+        10063.7705,
+        10092.866,
+        10538.075,
+        10558.318,
+        10570.754,
+        10597.343,
+        10608.488,
+        10628.104,
+    ]
+    model.data[0, :, 4, 1] = [
+        10017.438,
+        10038.94,
+        10057.657,
+        10069.987,
+        10090.22,
+        10114.296,
+        10133.543,
+        10148.657,
+        10158.109,
+        10172.842,
+    ]
+    model.data[0, :, 4, 2] = [
+        10011.129,
+        10037.982,
+        10054.445,
+        10079.703,
+        10097.964,
+        10110.593,
+        10135.701,
+        10149.448,
+        10171.771,
+        10185.874,
+    ]
+    model.data[0, :, 4, 3] = [
+        10021.109,
+        10043.658,
+        10063.909,
+        10072.364,
+        10766.232,
+        10774.402,
+        10790.677,
+        10809.337,
+        10833.65,
+        10849.55,
+    ]
+    model.data[0, :, 4, 4] = [
+        10023.877,
+        10035.997,
+        10052.321,
+        10077.937,
+        10529.645,
+        10541.947,
+        10571.127,
+        10577.249,
+        10599.716,
+        10609.544,
+    ]
 
     # Flag first and last frame as DO_NOT_USE
     model.groupdq[0, 0, :, :] = 1
@@ -824,7 +1091,6 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=200.0,
         three_group_rejection_threshold=200.0,
         four_group_rejection_threshold=200.0,
@@ -832,7 +1098,6 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=10,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -861,7 +1126,7 @@ def test_multiple_neighbor_jumps_firstlastbad(setup_inputs):
 
 
 def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
-    """"Test two CRs on the boundary between two slices.
+    """ "Test two CRs on the boundary between two slices.
 
     A multiprocessing test that has two CRs on the boundary between two slices.
     This makes sure that we are correctly flagging neighbors in different  slices.
@@ -872,8 +1137,14 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
     ngroups = 10
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, nints=2, nrows=102, ncols=103,
-        gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups,
+        nints=2,
+        nrows=102,
+        ncols=103,
+        gain=ingain,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
 
     nrows = model.data.shape[3]
     num_cores = multiprocessing.cpu_count()
@@ -909,7 +1180,6 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
             model,
             override_gain=gain,
             override_readnoise=rnoise,
-
             rejection_threshold=4.0,
             three_group_rejection_threshold=5.0,
             four_group_rejection_threshold=6.0,
@@ -917,7 +1187,6 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
             max_jump_to_flag_neighbors=200,
             min_jump_to_flag_neighbors=4,
             flag_4_neighbors=True,
-
             after_jump_flag_dn1=0.0,
             after_jump_flag_time1=0.0,
             after_jump_flag_dn2=0.0,
@@ -939,7 +1208,7 @@ def test_flagging_of_CRs_across_slice_boundaries(setup_inputs):
 
 
 def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
-    """"Test two CRs on the boundary between two slices in different integrations.
+    """ "Test two CRs on the boundary between two slices in different integrations.
 
     A multiprocessing test that has two CRs on the boundary between two slices
     in different integrations. This makes sure that we are correctly flagging
@@ -951,8 +1220,14 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
     ngroups = 10
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-        ngroups=ngroups, nints=2, nrows=40, ncols=10, gain=ingain,
-        readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups,
+        nints=2,
+        nrows=40,
+        ncols=10,
+        gain=ingain,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
 
     # two segments perfect fit, second segment has twice the slope
     model.data[0, 0, 5, 5] = 15.0
@@ -981,7 +1256,6 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -989,7 +1263,6 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=4,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1009,7 +1282,7 @@ def test_twoints_onecr_10_groups_neighbors_flagged_multi(setup_inputs):
 
 
 def test_every_pixel_CR_neighbors_flagged(setup_inputs):
-    """"Test jump in every pixel.
+    """ "Test jump in every pixel.
 
     A multiprocessing test that has a jump in every pixel. This is used
     to test the performance gain from multiprocessing.
@@ -1019,8 +1292,13 @@ def test_every_pixel_CR_neighbors_flagged(setup_inputs):
     inreadnoise = 7.0
     ngroups = 10
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, nrows=100, ncols=100,
-            readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups,
+        gain=ingain,
+        nrows=100,
+        ncols=100,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
 
     # two segments perfect fit, second segment has twice the slope
     model.data[0, 0, :, :] = 15.0
@@ -1039,7 +1317,6 @@ def test_every_pixel_CR_neighbors_flagged(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1047,7 +1324,6 @@ def test_every_pixel_CR_neighbors_flagged(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=4,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1062,14 +1338,14 @@ def test_every_pixel_CR_neighbors_flagged(setup_inputs):
 
 
 def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
-    """"Test to make sure CR neighbors on the edges of the array are flagged correctly."""
+    """ "Test to make sure CR neighbors on the edges of the array are flagged correctly."""
     grouptime = 3.0
     ingain = 200
     inreadnoise = 7.0
     ngroups = 10
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, nrows=20, ncols=20,
-            gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups, nrows=20, ncols=20, gain=ingain, readnoise=inreadnoise, deltatime=grouptime
+    )
 
     # two segments perfect fit, second segment has twice the slope
     # CR on 1st row
@@ -1122,7 +1398,6 @@ def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1130,7 +1405,6 @@ def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=10,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1162,15 +1436,15 @@ def test_crs_on_edge_with_neighbor_flagging(setup_inputs):
 
 
 def test_onecr_10_groups(setup_inputs):
-    """"A test to make sure that neighbors are not flagged when they are not requested to be flagged."""
+    """ "A test to make sure that neighbors are not flagged when they are not requested to be flagged."""
     grouptime = 3.0
     ingain = 200
     inreadnoise = 7.0
     ngroups = 10
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, nrows=20, ncols=20,
-            readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups, gain=ingain, nrows=20, ncols=20, readnoise=inreadnoise, deltatime=grouptime
+    )
 
     # two segments perfect fit, second segment has twice the slope
     model.data[0, 0, 5, 5] = 15.0
@@ -1189,7 +1463,6 @@ def test_onecr_10_groups(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1197,7 +1470,6 @@ def test_onecr_10_groups(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=10,
         flag_4_neighbors=False,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1212,7 +1484,7 @@ def test_onecr_10_groups(setup_inputs):
 
 
 def test_onecr_10_groups_fullarray(setup_inputs):
-    """"Test cosmic ray 5th group special case.
+    """ "Test cosmic ray 5th group special case.
 
     A test that has a cosmic ray in the 5th group for all pixels except column 10. In column
     10 the jump is in the 7th group.
@@ -1223,8 +1495,8 @@ def test_onecr_10_groups_fullarray(setup_inputs):
     ngroups = 10
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, nrows=20, ncols=20,
-            readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups, gain=ingain, nrows=20, ncols=20, readnoise=inreadnoise, deltatime=grouptime
+    )
 
     model.data[0, 0, 5, :] = 15.0
     model.data[0, 1, 5, :] = 20.0
@@ -1250,7 +1522,6 @@ def test_onecr_10_groups_fullarray(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1258,7 +1529,6 @@ def test_onecr_10_groups_fullarray(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=10,
         flag_4_neighbors=False,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1276,7 +1546,7 @@ def test_onecr_10_groups_fullarray(setup_inputs):
 
 
 def test_onecr_50_groups(setup_inputs):
-    """"Test a 50 group integration.
+    """ "Test a 50 group integration.
 
     There are two jumps in pixel 5,5. One in group 5 and one in group 30.
     """
@@ -1286,8 +1556,8 @@ def test_onecr_50_groups(setup_inputs):
     ngroups = 50
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, nrows=10, ncols=10,
-            readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups, gain=ingain, nrows=10, ncols=10, readnoise=inreadnoise, deltatime=grouptime
+    )
 
     model.data[0, 0, 5, 5] = 15.0
     model.data[0, 1, 5, 5] = 20.0
@@ -1307,7 +1577,6 @@ def test_onecr_50_groups(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1315,7 +1584,6 @@ def test_onecr_50_groups(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=10,
         flag_4_neighbors=False,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1331,7 +1599,7 @@ def test_onecr_50_groups(setup_inputs):
 
 
 def test_onecr_50_groups_afterjump(setup_inputs):
-    """"Test a 50 group integration.
+    """ "Test a 50 group integration.
 
     A test with a fifty group integration. There are two jumps in pixel 5,5. One in group 5 and
     one in group 30.  Test includes after jump flagging.
@@ -1342,8 +1610,8 @@ def test_onecr_50_groups_afterjump(setup_inputs):
     ngroups = 50
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, nrows=10, ncols=10,
-            readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups, gain=ingain, nrows=10, ncols=10, readnoise=inreadnoise, deltatime=grouptime
+    )
 
     model.data[0, 0, 5, 5] = 15.0
     model.data[0, 1, 5, 5] = 20.0
@@ -1363,7 +1631,6 @@ def test_onecr_50_groups_afterjump(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1371,7 +1638,6 @@ def test_onecr_50_groups_afterjump(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=10,
         flag_4_neighbors=False,
-
         after_jump_flag_dn1=20.0,
         after_jump_flag_time1=grouptime * 2,
         after_jump_flag_dn2=150.0,
@@ -1391,7 +1657,7 @@ def test_onecr_50_groups_afterjump(setup_inputs):
 
 
 def test_single_CR_neighbor_flag(setup_inputs):
-    """"Test a single CR in a 10 group exposure.
+    """ "Test a single CR in a 10 group exposure.
 
     Tests that:
     - if neighbor-flagging is set, the 4 neighboring pixels *ARE* flagged, and
@@ -1403,8 +1669,8 @@ def test_single_CR_neighbor_flag(setup_inputs):
     ngroups = 10
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, nrows=5, ncols=6,
-            gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups, nrows=5, ncols=6, gain=ingain, readnoise=inreadnoise, deltatime=grouptime
+    )
 
     # two segments perfect fit, second segment has twice the slope
     model.data[0, 0, 3, 3] = 15.0
@@ -1425,7 +1691,6 @@ def test_single_CR_neighbor_flag(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1433,7 +1698,6 @@ def test_single_CR_neighbor_flag(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=4,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1454,7 +1718,6 @@ def test_single_CR_neighbor_flag(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1462,7 +1725,6 @@ def test_single_CR_neighbor_flag(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=4,
         flag_4_neighbors=False,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1477,7 +1739,7 @@ def test_single_CR_neighbor_flag(setup_inputs):
 
 
 def test_proc(setup_inputs):
-    """"Test a single CR in a 10 group exposure.
+    """ "Test a single CR in a 10 group exposure.
 
     Verify that the pixels flagged using multiprocessing are identical to the
     pixels flagged when no multiprocessing is done.
@@ -1488,8 +1750,14 @@ def test_proc(setup_inputs):
     ngroups = 10
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, nrows=25, ncols=6, nints=2,
-            gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups,
+        nrows=25,
+        ncols=6,
+        nints=2,
+        gain=ingain,
+        readnoise=inreadnoise,
+        deltatime=grouptime,
+    )
 
     model.data[0, 0, 2, 3] = 15.0
     model.data[0, 1, 2, 3] = 21.0
@@ -1509,7 +1777,6 @@ def test_proc(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1517,7 +1784,6 @@ def test_proc(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=4,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1529,7 +1795,6 @@ def test_proc(setup_inputs):
         model_b,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1537,7 +1802,6 @@ def test_proc(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=4,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1551,7 +1815,6 @@ def test_proc(setup_inputs):
         model_c,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1559,7 +1822,6 @@ def test_proc(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=4,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1581,8 +1843,8 @@ def test_adjacent_CRs(setup_inputs):
     ngroups = 10
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, nrows=15, ncols=6,
-            gain=ingain, readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups, nrows=15, ncols=6, gain=ingain, readnoise=inreadnoise, deltatime=grouptime
+    )
 
     # Populate arrays for 1st CR, centered at (x=2, y=3)
     x = 2
@@ -1631,7 +1893,6 @@ def test_adjacent_CRs(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1639,7 +1900,6 @@ def test_adjacent_CRs(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=4,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1674,7 +1934,7 @@ def test_cr_neighbor_sat_flagging(setup_inputs):
     covered by the tests test_nirspec_saturated_pix() and
     test_crs_on_edge_with_neighbor_flagging().
     """
-    SAT_SCI = 1E4  # dummy saturation level
+    SAT_SCI = 1e4  # dummy saturation level
 
     grouptime = 3.0
     ingain = 200
@@ -1682,8 +1942,8 @@ def test_cr_neighbor_sat_flagging(setup_inputs):
     ngroups = 8
 
     model, gdq, rnoise, pixdq, err, gain = setup_inputs(
-            ngroups=ngroups, gain=ingain, nrows=6, ncols=7,
-            readnoise=inreadnoise, deltatime=grouptime)
+        ngroups=ngroups, gain=ingain, nrows=6, ncols=7, readnoise=inreadnoise, deltatime=grouptime
+    )
 
     # Construct ramps with cosmic rays having some neighboring SAT pixels:
     # CR (A): group 2, in corner
@@ -1775,7 +2035,6 @@ def test_cr_neighbor_sat_flagging(setup_inputs):
         model,
         override_gain=gain,
         override_readnoise=rnoise,
-
         rejection_threshold=4.0,
         three_group_rejection_threshold=5.0,
         four_group_rejection_threshold=6.0,
@@ -1783,7 +2042,6 @@ def test_cr_neighbor_sat_flagging(setup_inputs):
         max_jump_to_flag_neighbors=200,
         min_jump_to_flag_neighbors=4,
         flag_4_neighbors=True,
-
         after_jump_flag_dn1=0.0,
         after_jump_flag_time1=0.0,
         after_jump_flag_dn2=0.0,
@@ -1850,6 +2108,6 @@ def test_cr_neighbor_sat_flagging(setup_inputs):
     assert dq_out[0, 4, 5, 1] == SATURATED
 
 
-'''
+"""
 test_cr_neighbor_sat_flagging
-'''
+"""

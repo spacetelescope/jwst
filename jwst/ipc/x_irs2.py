@@ -2,7 +2,7 @@ from collections import namedtuple
 
 import numpy as np
 
-from ..lib import pipe_utils
+from jwst.lib import pipe_utils
 
 """ This is the interface:
     mask = make_mask(input_model)
@@ -34,7 +34,8 @@ ReadoutParam = namedtuple("ReadoutParam", ["refout", "n", "r"])
 
 
 def _get_irs2_parameters(input_model, n=None, r=None):
-    """Get the parameters describing IRS2 readout format.
+    """
+    Get the parameters describing IRS2 readout format.
 
     Parameters
     ----------
@@ -57,6 +58,7 @@ def _get_irs2_parameters(input_model, n=None, r=None):
     Returns
     -------
     param : namedtuple
+        Tuple containing reference pixel parameters
         param.refout : int
             The length (in the last image axis) of the reference output
             section.  The reference output is assumed to be on the left
@@ -70,7 +72,6 @@ def _get_irs2_parameters(input_model, n=None, r=None):
             The number of reference pixels read out before jumping back to
             the normal pixel region.
     """
-
     try:
         # Try to get keyword values
         n_norm = input_model.meta.exposure.nrs_normal
@@ -86,14 +87,14 @@ def _get_irs2_parameters(input_model, n=None, r=None):
     if r is not None:
         n_ref = r
 
-    param = ReadoutParam(refout=(512 + 512 // n_norm * n_ref),
-                         n=n_norm, r=n_ref)
+    param = ReadoutParam(refout=(512 + 512 // n_norm * n_ref), n=n_norm, r=n_ref)
 
     return param
 
 
 def normal_shape(input_model, n=None, r=None, detector=None):
-    """Determine the shape of the 'normal' pixel data.
+    """
+    Determine the shape of the 'normal' pixel data.
 
     Parameters
     ----------
@@ -123,7 +124,6 @@ def normal_shape(input_model, n=None, r=None, detector=None):
     tuple of int
         The shape of the input science data array.
     """
-
     if isinstance(input_model, np.ndarray):
         shape = input_model.shape
     else:
@@ -131,7 +131,7 @@ def normal_shape(input_model, n=None, r=None, detector=None):
         if detector is None:
             detector = input_model.meta.instrument.detector
 
-    if not pipe_utils.is_irs2(input_model):     # not IRS2 format
+    if not pipe_utils.is_irs2(input_model):  # not IRS2 format
         return shape
 
     param = _get_irs2_parameters(input_model, n=n, r=r)
@@ -141,8 +141,7 @@ def normal_shape(input_model, n=None, r=None, detector=None):
     elif detector == "NRS1" or detector == "NRS2":
         irs2_nx = shape[-2]
     else:
-        raise RuntimeError("Detector %s is not supported for IRS2 data" %
-                           detector)
+        raise RuntimeError(f"Detector {detector} is not supported for IRS2 data")
 
     k = (irs2_nx - param.refout) // (param.n + param.r)
     n_output = (irs2_nx - param.refout) - k * param.r
@@ -156,7 +155,8 @@ def normal_shape(input_model, n=None, r=None, detector=None):
 
 
 def make_mask(input_model, n=None, r=None):
-    """Create a mask to extract "normal" pixels.
+    """
+    Create a mask to extract 'normal' pixels.
 
     Parameters
     ----------
@@ -177,11 +177,10 @@ def make_mask(input_model, n=None, r=None):
 
     Returns
     -------
-    irs2_mask : 1-D boolean array
+    irs2_mask : 1-D bool numpy.ndarray
         Boolean index mask with length equal to the last axis of
         the science data shape.
     """
-
     param = _get_irs2_parameters(input_model, n=n, r=r)
     refout = param.refout
     n_norm = param.n
@@ -208,35 +207,36 @@ def make_mask(input_model, n=None, r=None):
         # The interspersed reference pixels are in the same locations
         # regardless of readout direction.
         for i in range(refout + n_norm // 2, irs2_nx + 1, n_norm + n_ref):
-            irs2_mask[i:i + n_ref] = False
+            irs2_mask[i : i + n_ref] = False
     else:
         # Set the flags for each readout direction separately.
-        nelem = (irs2_nx - refout) // 4         # number of elements per output
+        nelem = (irs2_nx - refout) // 4  # number of elements per output
         temp = np.ones(nelem, dtype=bool)
         for i in range(n_norm // 2, nelem + 1, n_norm + n_ref):
-            temp[i:i + n_ref] = False
+            temp[i : i + n_ref] = False
         j = refout
-        irs2_mask[j:j + nelem] = temp.copy()
+        irs2_mask[j : j + nelem] = temp.copy()
         j = refout + nelem
-        irs2_mask[j + nelem - 1:j - 1:-1] = temp.copy()
+        irs2_mask[j + nelem - 1 : j - 1 : -1] = temp.copy()
         j = refout + 2 * nelem
-        irs2_mask[j:j + nelem] = temp.copy()
+        irs2_mask[j : j + nelem] = temp.copy()
         j = refout + 3 * nelem
-        irs2_mask[j + nelem - 1:j - 1:-1] = temp.copy()
+        irs2_mask[j + nelem - 1 : j - 1 : -1] = temp.copy()
 
     return irs2_mask
 
 
 def from_irs2(irs2_data, irs2_mask, detector=None):
-    """Extract 'normal' pixel data from an IRS2 image.
+    """
+    Extract 'normal' pixel data from an IRS2 image.
 
     Parameters
     ----------
-    irs2_data : ndarray
+    irs2_data : numpy.ndarray
         Data in IRS2 format.  This can be a slice in the Y direction, but
         it should include the entire X (last) axis.
 
-    irs2_mask : 1-D array, boolean
+    irs2_mask : 1-D numpy.ndarray, bool
         Boolean mask to extract the "normal" pixels.  This is a 1-D array
         with length equal to the size of the next-to-last axis (for data
         in DMS orientation) of `irs2_data`.
@@ -254,7 +254,6 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
     ndarray
         The normal pixel data (i.e. without embedded reference pixels).
     """
-
     if detector is None:
         # Select columns.
         norm_data = irs2_data[..., irs2_mask]
@@ -266,26 +265,26 @@ def from_irs2(irs2_data, irs2_mask, detector=None):
         temp_mask = irs2_mask[::-1]
         norm_data = irs2_data[..., temp_mask, :]
     else:
-        raise RuntimeError("Detector %s is not supported for IRS2 data" %
-                           detector)
+        raise RuntimeError(f"Detector {detector} is not supported for IRS2 data")
 
     return norm_data
 
 
 def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
-    """Copy 'normal' pixel data into an IRS2 image.
+    """
+    Copy 'normal' pixel data into an IRS2 image.
 
     Parameters
     ----------
-    irs2_data : ndarray
+    irs2_data : numpy.ndarray
         Data in IRS2 format.  This will be modified in-place.
 
-    norm_data : ndarray
+    norm_data : numpy.ndarray
         The normal data, for example previously extracted from `irs2_data`
         but then modified in some way.  This will be copied back into
         `irs2_data` in the correct locations, as specified by `irs2_mask`.
 
-    irs2_mask : 1-D array, boolean
+    irs2_mask : 1-D numpy.ndarray, bool
         Boolean mask identifying the locations of the "normal" pixels
         within `irs2_data`.  The length is equal to the size of the
         next-to-last axis (for data in DMS orientation) of `irs2_data`.
@@ -298,7 +297,6 @@ def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
         For IRS2 data in detector orientation, `detector` should be None
         (the default), and the mask will be applied to the columns.
     """
-
     if detector is None:
         # Mask specifies columns.
         irs2_data[..., irs2_mask] = norm_data.copy()
@@ -311,5 +309,4 @@ def to_irs2(irs2_data, norm_data, irs2_mask, detector=None):
         temp_mask = irs2_mask[::-1]
         irs2_data[..., temp_mask, :] = norm_data.copy()
     else:
-        raise RuntimeError("Detector %s is not supported for IRS2 data" %
-                           detector)
+        raise RuntimeError(f"Detector {detector} is not supported for IRS2 data")
