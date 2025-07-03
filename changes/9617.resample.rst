@@ -1,0 +1,2 @@
+Corrected the units for the ResampleStep pixel_scale parameter in the
+documentation.
