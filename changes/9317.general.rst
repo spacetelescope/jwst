@@ -1,1 +1,0 @@
-Bumped minversions of requests to 2.31, spherical-geometry to 1.3, synphot to 1.3, and wiimatch to 0.3.2 to avoid using deprecated infrastructure from those packages.

@@ -1,1 +1,0 @@
-In WFSS background calculations, use higher precision for mean and sum calculations for better numerical consistency across build environments.

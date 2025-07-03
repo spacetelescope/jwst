@@ -98,7 +98,7 @@ website:
 
 CRDS Servers
 ------------
-The CRDS server can be found at
+The CRDS server [1]_ can be found at
 
 ::
 
@@ -125,6 +125,16 @@ two environment variables:
 This server will be used to determine the appropriate CRDS context for a given pipeline
 version, and the pipeline will automatically download individual
 reference files within this context to the local cache specified by ``CRDS_PATH``.
+
+.. [1] Prior to November 10, 2022, there was a second CRDS server available to users,
+   at ``https://jwst-crds-pub.stsci.edu``.  This PUB server was set up in anticipation of
+   rapid reference file updates during commissioning and Cycle 1, but it was found to
+   be unnecessary, due to the smooth transition to science operations.  It was
+   decommissioned in March 2023.  The institute retains an internal archive of the
+   reference files available on the PUB server at that time.  Observers who wish to
+   use historical files from the PUB server will need to file a JWST Pipeline help
+   desk ticket to access the information.
+
 
 CRDS Cache Configuration for Developers
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

@@ -17,9 +17,6 @@ target-version = "py311"
 quote-style = "double"
 indent-style = "space"
 docstring-code-format = true
-exclude = [
-    "jwst/ipc/**.py",
-]
 
 [lint]
 select = [
@@ -93,7 +90,6 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "S",      # flake8-bandit (security checks)
     "SLF",    # flake8-self (prevent using private class members outside class)
     "SLOT",   # flake8-slots (require __slots__ for immutable classes)
-    "T20",    # flake8-print (prevent print statements in code)
     "TRY",    # tryceratops (best practices for try/except blocks)
     "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
     "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
@@ -118,7 +114,6 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "S",      # flake8-bandit (security checks)
     "SLF",    # flake8-self (prevent using private class members outside class)
     "SLOT",   # flake8-slots (require __slots__ for immutable classes)
-    "T20",    # flake8-print (prevent print statements in code)
     "TRY",    # tryceratops (best practices for try/except blocks)
     "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
     "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
@@ -144,4 +139,3 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "F841", # unused variable
     "S101",
 ]
-"jwst/ipc/**.py" = ["D", "N", "A", "ARG", "B", "C4", "ICN", "INP", "ISC", "LOG", "NPY", "PGH", "PTH", "S", "SLF", "SLOT", "T20", "TRY", "UP", "YTT", "E501"]
