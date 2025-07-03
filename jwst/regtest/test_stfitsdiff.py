@@ -158,7 +158,6 @@ def test_diff_exts(mock_rampfiles, fitsdiff_default_kwargs):
     diff = STFITSDiff(diff_exts, truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
-
     asptropy_expected_report = [
         "Files contain different numbers of HDUs:",
         "a: 2",
@@ -187,9 +186,28 @@ def test_diff_exts(mock_rampfiles, fitsdiff_default_kwargs):
         "a> ext_removed_ramp.fits",
         "b> truth_ramp.fits",
     ]
-
     assert result == apresult
     assert apreport == asptropy_expected_report
+    assert report == expected_report
+
+    tmp_dir = mock_rampfiles[6]
+    hdu = fits.open(truth)
+    del hdu[1]
+    rmsci = tmp_dir / "rm_sci.fits"
+    hdu.writeto(rmsci)
+    hdu.close()
+    diff = STFITSDiff(rmsci, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report(), from_line=11)
+    expected_report = [
+        "Files contain different numbers of HDUs:",
+        "a: 4, ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY']",
+        "b: 5, ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
+        "Common HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY']",
+        "Missing HDUs: ['SCI']",
+        "No differences found between common HDUs.",
+    ]
+    assert result is False
     assert report == expected_report
 
 
