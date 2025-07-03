@@ -41,7 +41,7 @@ class ResampleStep(Step):
         crval = float_list(min=2, max=2, default=None)  # world coordinates of the reference pixel
         rotation = float(default=None)  # Output image Y-axis PA relative to North
         pixel_scale_ratio = float(default=1.0)  # Ratio of output to input pixel scale.
-        pixel_scale = float(default=None)  # Absolute pixel scale in arcsec
+        pixel_scale = float(default=None)  # Absolute pixel scale in degrees
         output_wcs = string(default='')  # Custom output WCS
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output

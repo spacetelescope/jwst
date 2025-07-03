@@ -22,7 +22,7 @@ image.
     Ignored when ``pixel_scale`` or ``output_wcs`` are provided.
 
 ``--pixel_scale`` (float, default=None)
-    Absolute pixel scale in ``arcsec``. When provided, overrides
+    Absolute pixel scale in ``degrees``. When provided, overrides
     ``pixel_scale_ratio``. Ignored when ``output_wcs`` is provided.
 
 ``--rotation`` (float, default=None)
