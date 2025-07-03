@@ -329,7 +329,6 @@ class Spec3Pipeline(Pipeline):
 
         # Save the final output products for WFSS modes
         if exptype in WFSS_TYPES:
-            # outstem = output_file.replace("_{source_id}", "_t0000")
             if self.save_results:
                 x1d_output = make_wfss_multiexposure(wfss_x1d)
                 x1d_filename = output_file + "_x1d.fits"

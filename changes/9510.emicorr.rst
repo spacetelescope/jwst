@@ -1,1 +1,0 @@
-Change the default fitting algorithm for MIRI EMI correction to the 'joint' method to improve performance for low numbers of groups.
