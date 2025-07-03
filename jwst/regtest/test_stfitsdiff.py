@@ -509,6 +509,7 @@ def test_array2d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
 def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
     truth = mock_rampfiles[0]
     nan_in_sci = mock_rampfiles[3]
+    fitsdiff_default_kwargs["numdiffs"] = 5
     apdiff = FITSDiff(nan_in_sci, truth, **fitsdiff_default_kwargs)
     apresult = apdiff.identical
     apreport = report_to_list(apdiff.report())
