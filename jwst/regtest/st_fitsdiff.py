@@ -9,8 +9,8 @@ from itertools import islice
 
 from astropy import __version__
 from astropy.table import Table
+from astropy.table.pprint import conf
 from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
-
 
 from astropy.io.fits.hdu.table import _TableLikeHDU
 
@@ -33,6 +33,10 @@ __all__ = [
     "STRawDataDiff",
     "STTableDataDiff",
 ]
+
+
+# Disable width limit for the current session for all tables
+conf.max_width = -1
 
 
 def set_variable_to_empty_list(variable):
@@ -1090,33 +1094,21 @@ class STTableDataDiff(TableDataDiff):
         self.report_zeros_nan = Table(
             names=(
                 "col_name",
-                "zeros_a",
-                "zeros_b",
-                "nan_a",
-                "nan_b",
-                "no-nan_a",
-                "no-nan_b",
-                "max_a",
-                "max_b",
-                "min_a",
-                "min_b",
-                "mean_a",
-                "mean_b",
+                "zeros_a_b",
+                "nan_a_b",
+                "no-nan_a_b",
+                "max_a_b",
+                "min_a_b",
+                "mean_a_b",
             ),
             dtype=(
                 "str",
-                "int32",
-                "int32",
-                "int32",
-                "int32",
-                "int32",
-                "int32",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
-                "float64",
+                "str",
+                "str",
+                "str",
+                "str",
+                "str",
+                "str",
             ),
         )
 
@@ -1253,40 +1245,49 @@ class STTableDataDiff(TableDataDiff):
                 nansa = arra[np.isnan(arra)]
                 nansb = arrb[np.isnan(arrb)]
                 if nansa.size != nansb.size:
-                    nonansa = arra[~np.isnan(arra)]
-                    nonansb = arrb[~np.isnan(arrb)]
+                    nonansa = arra[np.isfinite(arra)]
+                    nonansb = arrb[np.isfinite(arrb)]
                     arramax, arramin, arramean = get_stats_if_nonans(nonansa)
                     arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
+                    finite_idx = np.isfinite(arra) & np.isfinite(arrb)
+                    diffs = np.abs(arrb[finite_idx] - arra[finite_idx])
+                    maxa, meana, stda, rdiff, maxr, meanr, stdr = 0, 0, 0, 0, 0, 0, 0
+                    if diffs.size > 0:
+                        maxa = np.max(diffs)
+                        meana = np.mean(diffs)
+                        stda = np.std(diffs)
+                        finiteb = arrb[finite_idx]
+                        rel_diffs = diffs[finiteb != 0.0] / finiteb[finiteb != 0.0]
+                        rdiff = rel_diffs.size
+                        if rdiff > 0:
+                            maxr = np.max(rel_diffs)
+                            meanr = np.mean(rel_diffs)
+                            stdr = np.std(rel_diffs)
+
                     # Report the total number of zeros, nans, and no-nan values
                     self.report_zeros_nan.add_row(
                         (
                             col.name,
-                            arra[arra == 0.0].size,
-                            arrb[arrb == 0.0].size,
-                            nansa.size,
-                            nansb.size,
-                            nonansa.size,
-                            nonansb.size,
-                            arramax,
-                            arrbmax,
-                            arramin,
-                            arrbmin,
-                            arramean,
-                            arrbmean,
+                            f"{arra[arra == 0.0].size} {arrb[arrb == 0.0].size}",
+                            f"{nansa.size} {nansb.size}",
+                            f"{nonansa.size} {nonansb.size}",
+                            f"{arramax:>9.4g} {arrbmax:>9.4g}",
+                            f"{arramin:>9.4g} {arrbmin:>9.4g}",
+                            f"{arramean:>9.4g} {arrbmean:>9.4g}",
                         )
                     )
                     self.report_table.add_row(
                         (
                             col.name,
                             str(arra.dtype).replace(">", ""),
-                            0.0,
-                            0.0,
-                            0.0,
-                            0.0,
-                            0.0,
-                            0.0,
-                            0.0,
-                            0.0,
+                            diffs.size,
+                            maxa,
+                            meana,
+                            stda,
+                            rdiff,
+                            maxr,
+                            meanr,
+                            stdr,
                         )
                     )
 
@@ -1340,18 +1341,12 @@ class STTableDataDiff(TableDataDiff):
                         self.report_zeros_nan.add_row(
                             (
                                 col.name,
-                                arra[arra == 0.0].size,
-                                arrb[arrb == 0.0].size,
-                                arra[np.isnan(arra)].size,
-                                arrb[np.isnan(arrb)].size,
-                                arra[~np.isnan(arra)].size,
-                                arrb[~np.isnan(arrb)].size,
-                                np.max(anonan),
-                                np.max(bnonan),
-                                np.min(anonan),
-                                np.min(bnonan),
-                                np.mean(anonan),
-                                np.mean(bnonan),
+                                f"{arra[arra == 0.0].size} {arrb[arrb == 0.0].size}",
+                                f"{arra[np.isnan(arra)].size} {arrb[np.isnan(arrb)].size}",
+                                f"{arra[~np.isnan(arra)].size} {arrb[~np.isnan(arrb)].size}",
+                                f"{np.max(anonan):>9.4g} {np.max(bnonan):>9.4g}",
+                                f"{np.min(anonan):>9.4g} {np.min(bnonan):>9.4g}",
+                                f"{np.mean(anonan):>9.4g} {np.mean(bnonan):>9.4g}",
                             )
                         )
 
@@ -1506,9 +1501,6 @@ class STTableDataDiff(TableDataDiff):
 
         # Print differences in zeros and nans per column
         self._writeln("\nValues in a and b")
-        for colname in self.report_zeros_nan.columns:
-            if "max" in colname or "mean" in colname or "min" in colname:
-                self.report_zeros_nan[colname].format = ".4g"
         tlines = self.report_zeros_nan.pformat()
         for tline in tlines:
             self._writeln(tline)

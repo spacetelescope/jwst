@@ -919,15 +919,14 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "- absolute .... 0.1111%",
         "- relative .... 0%",
         "Values in a and b",
-        "col_name zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
-        "-------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
-        "FLUX       0       0     0     0      100      100   100     1 1e-05     1   1.98      1",
+        "col_name zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
+        "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
+        "FLUX       0 0     0 0    100 100       100         1     1e-05         1      1.98         1",
         "Difference stats: abs(b - a)",
         "col_name dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
         "FLUX    f8         2      99        1    9.85         2      99       50      49",
     ]
-
     assert result == apresult
     assert pixelreport == apreport
     assert report == expected_report
@@ -956,13 +955,13 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "- absolute .... 0.2222%",
         "- relative .... 0%",
         "Values in a and b",
-        "col_name zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
-        "-------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
-        "FLUX       2       0     2     0       98      100     1     1     0     1 0.9796      1",
+        "col_name zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
+        "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
+        "FLUX       2 0     2 0     98 100         1         1         0         1    0.9796         1",
         "Difference stats: abs(b - a)",
         "col_name dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
-        "FLUX    f8         0       0        0       0         0       0        0       0",
+        "FLUX    f8        98       1  0.02041  0.1414        98       1  0.02041  0.1414",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -992,9 +991,9 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "- absolute .... 5.556%",
         "- relative .... 0%",
         "Values in a and b",
-        "col_name  zeros_a zeros_b nan_a nan_b no-nan_a no-nan_b max_a max_b min_a min_b mean_a mean_b",
-        "---------- ------- ------- ----- ----- -------- -------- ----- ----- ----- ----- ------ ------",
-        "WAVELENGTH       0       1   100     0        0      100   nan   9.9   nan     0    nan   4.95",
+        "col_name  zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
+        "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
+        "WAVELENGTH       0 1   100 0      0 100       nan       9.9       nan         0       nan      4.95",
         "Difference stats: abs(b - a)",
         "col_name  dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "---------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
