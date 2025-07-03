@@ -14,7 +14,7 @@ Background subtraction for imaging data is currently available in several places
 within the calibration pipeline stages.
 
 1. Image-from-image subtraction can be performed by the
-   :ref:`background <background_step>` step during :ref:`calwebb_image2 <calwebb_image2>`
+   :ref:`background <background_subtraction>` step during :ref:`calwebb_image2 <calwebb_image2>`
    processing. The background images come from observations of a dedicated
    background target.
 2. Background matching and subtraction can be performed within an ensemble of
@@ -30,7 +30,7 @@ Spectroscopic observations allow for some additional ways of performing
 background subtraction. The list of options includes:
 
 1. Image-from-image subtraction can be performed by the
-   :ref:`background <background_step>` step during :ref:`calwebb_spec2 <calwebb_spec2>`
+   :ref:`background <background_subtraction>` step during :ref:`calwebb_spec2 <calwebb_spec2>`
    processing. The background images can come from:
 
    a) Observations of a dedicated background target
@@ -112,7 +112,7 @@ Spectroscopy (SOSS), and MIRI LRS slitless, use other ways of handling backgroun
 
 Image-from-Image Subtraction
 ----------------------------
-As explained in the documentation for the :ref:`background <background_step>` step,
+As explained in the documentation for the :ref:`background <background_subtraction>` step,
 this process combines one or more exposures to be treated as backgrounds into a
 sigma-clipped mean background image, which is then directly subtracted, in
 detector space, from an exposure being processed in the :ref:`calwebb_image2 <calwebb_image2>`
