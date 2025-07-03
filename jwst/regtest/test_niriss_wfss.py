@@ -91,7 +91,7 @@ def test_nis_wfss_spec3(run_nis_wfss_spec3, rtdata_module, suffix, fitsdiff_defa
     """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data"""
     rtdata = rtdata_module
     rtdata.input = "jw01324-o001_spec3_00005_asn.json"
-    output = "jw01324-o001_t0000_niriss_f115w-gr150c_" + suffix + ".fits"
+    output = "jw01324-o001_t001_niriss_f115w-gr150c_" + suffix + ".fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 

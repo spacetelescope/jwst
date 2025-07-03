@@ -29,7 +29,7 @@ def test_nircam_wfss_spec3(run_nircam_wfss_spec3, rtdata_module, suffix, fitsdif
     """Regression test of the calwebb_spec3 pipeline applied to NIRISS WFSS data"""
     rtdata = rtdata_module
     rtdata.input = "jw02279-o001_spec3_00001_asn.json"
-    output = "jw02279-o001_t0000_nircam_grismr_" + suffix + ".fits"
+    output = "jw02279-o001_t001_nircam_grismr_" + suffix + ".fits"
     rtdata.output = output
     rtdata.get_truth(f"truth/test_nircam_wfss_spec3/{output}")
 
