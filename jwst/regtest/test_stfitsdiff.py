@@ -517,6 +517,8 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
     diff = STFITSDiff(nan_in_sci, truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report, pixelreport = report_to_list(diff.report(), report_pixel_loc_diffs=True)
+    apreport.append("")
+    pixelreport.append("")
     # The expected result is False
     # The report should look like this
     expected_report = [
