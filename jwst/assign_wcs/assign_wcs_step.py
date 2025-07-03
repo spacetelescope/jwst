@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 __all__ = ["AssignWcsStep"]
 
 
-WFSS_TYPES = {"nrc_wfss", "nis_wfss"}
+WFSS_TYPES = {"nrc_wfss", "nis_wfss", "mir_wfss"}
 
 
 class AssignWcsStep(Step):
