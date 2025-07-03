@@ -1,7 +1,6 @@
 """Utilities for re-organizing spectral products into a flat structure."""
 
 import logging
-import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -142,13 +141,22 @@ def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, igno
     for col, _ in vector_columns:
         if col in ignore_columns:
             continue
-        padded_data = np.full(n_rows, np.nan)
+
+        # figure out how to pad it based on the dtype
+        if np.issubdtype(input_table[col].dtype, np.integer):
+            if col == "DQ":
+                padded_data = np.full(n_rows, 1, dtype=input_table[col].dtype)
+            else:
+                log.warning(
+                    "Unexpected integer column in input spec_table: %s"
+                    "Will be padded with zeros where not present.",
+                    col,
+                )
+                padded_data = np.full(n_rows, 0, dtype=input_table[col].dtype)
+        else:
+            padded_data = np.full(n_rows, np.nan, dtype=input_table[col].dtype)
         padded_data[: input_table.shape[0]] = input_table[col]
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=RuntimeWarning, message="invalid value encountered in cast"
-            )
-            output_table[col] = padded_data
+        output_table[col] = padded_data
 
     # Copy the metadata into the new table
     # Metadata columns must have identical names to spec_meta columns
