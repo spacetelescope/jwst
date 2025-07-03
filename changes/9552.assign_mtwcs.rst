@@ -1,1 +1,0 @@
-Fixed a bug where ``assign_moving_target_wcs`` could crash (instead of skipping the step) for some invalid RA or Dec values.
