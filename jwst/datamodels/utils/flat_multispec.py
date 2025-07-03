@@ -102,7 +102,7 @@ def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=0):
     return arr
 
 
-def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, ignore_columns=None):
+def populate_recarray(output_table, input_spec, columns, is_vector, ignore_columns=None):
     """
     Populate the output table in-place with data from the input spectrum.
 
@@ -117,9 +117,6 @@ def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, igno
         The output table to be populated with the spectral data.
     input_spec : `~jwst.datamodels.SpecModel` or `~jwst.datamodels.CombinedSpecModel`
         The input data model containing the spectral data.
-    n_rows : int
-        The number of rows in the output table; this is the maximum number of
-        data points for any spectrum in the exposure.
     columns : np.ndarray[tuple]
         Array of tuples containing the column names and their dtypes.
     is_vector : np.ndarray[bool]
@@ -137,26 +134,12 @@ def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, igno
     vector_columns = columns[is_vector]
     meta_columns = columns[~is_vector]
 
-    # Copy the data into the new table with NaN padding
+    # Copy the data into the new table
     for col, _ in vector_columns:
         if col in ignore_columns:
             continue
 
-        # figure out how to pad it based on the dtype
-        if np.issubdtype(input_table[col].dtype, np.integer):
-            if col == "DQ":
-                padded_data = np.full(n_rows, 1, dtype=input_table[col].dtype)
-            else:
-                log.warning(
-                    "Unexpected integer column in input spec_table: %s"
-                    "Will be padded with zeros where not present.",
-                    col,
-                )
-                padded_data = np.full(n_rows, 0, dtype=input_table[col].dtype)
-        else:
-            padded_data = np.full(n_rows, np.nan, dtype=input_table[col].dtype)
-        padded_data[: input_table.shape[0]] = input_table[col]
-        output_table[col] = padded_data
+        output_table[col][: input_table.shape[0]] = input_table[col]
 
     # Copy the metadata into the new table
     # Metadata columns must have identical names to spec_meta columns
