@@ -2,7 +2,7 @@ import warnings
 from pathlib import Path
 from stdatamodels.jwst.datamodels.util import open as datamodels_open
 from stdatamodels.jwst.datamodels import read_metadata
-from stpipe.library import AbstractModelLibrary, NoGroupID
+from stpipe.library import AbstractModelLibrary, NoGroupID, BorrowError
 
 from jwst.associations import AssociationNotValidError, load_asn
 from jwst.datamodels.utils import attrs_to_group_id
@@ -218,25 +218,77 @@ class ModelLibrary(AbstractModelLibrary):
                 )
                 idx = 0
 
-            # find model in _loaded_models, temp_filenames, or asn_dir
-            if self._on_disk:
-                if idx in self._temp_filenames:
-                    # if model has been modified, find its temp filename
-                    filename = self._temp_filenames[idx]
-                else:
-                    # otherwise, find the filename in the asn_dir
-                    member = self._members[idx]
-                    filename = Path(self._asn_dir) / member["expname"]
+            return self.read_metadata(idx)
+
+    def read_metadata(self, idx):
+        """
+        Read metadata for a model at the given index.
+
+        Parameters
+        ----------
+        idx : int
+            Index of the model in the library.
+
+        Returns
+        -------
+        dict
+            The metadata dictionary for the model.
+        """
+        # if model was already borrowed, calling code should just read the metadata
+        # from the model itself, so we raise an error here
+        if idx in self._ledger:
+            raise BorrowError("Attempt to read metadata from model that is already borrowed")
+
+        # find model in _loaded_models, temp_filenames, or asn_dir
+        if self._on_disk:
+            if idx in self._temp_filenames:
+                # if model has been modified, find its temp filename
+                filename = self._temp_filenames[idx]
             else:
-                if idx in self._loaded_models:
-                    # if this model is in memory, retrieve parameters from it directly
-                    model = self._loaded_models[idx]
-                    return model.get_crds_parameters()
-                else:
-                    # otherwise, find the filename in the asn_dir
-                    member = self._members[idx]
-                    filename = Path(self._asn_dir) / member["expname"]
+                # otherwise, find the filename in the asn_dir
+                member = self._members[idx]
+                filename = Path(self._asn_dir) / member["expname"]
+        else:
+            if idx in self._loaded_models:
+                # if this model is in memory, retrieve parameters from it directly
+                # the desired behavior is already implemented by get_crds_parameters
+                # so we can just call it here, it is not inherently CRDS-specific
+                model = self._loaded_models[idx]
+                return model.get_crds_parameters()
+            else:
+                # otherwise, find the filename in the asn_dir
+                member = self._members[idx]
+                filename = Path(self._asn_dir) / member["expname"]
 
-            meta = read_metadata(filename, flatten=True)
+        meta = read_metadata(filename)
+        #
+        meta = self._assign_member_to_meta(meta, self._members[idx])
+        return meta
 
+    def _assign_member_to_meta(self, meta, member):
+        """
+        Update meta dict with asn-related attributes, similar to _assign_member_to_model.
+
+        Parameters
+        ----------
+        meta : dict
+            The metadata dictionary to update.
+        member : dict
+            The member dictionary containing association attributes.
+
+        Returns
+        -------
+        dict
+            The updated metadata dictionary with association attributes.
+        """
+        meta["meta.asn.exptype"] = member["exptype"]
+        for attr in ("group_id", "tweakreg_catalog"):
+            if attr in member:
+                meta["meta." + attr] = member[attr]
+
+        if "table_name" in self.asn.keys():
+            meta["meta.asn.table_name"] = self.asn["table_name"]
+
+        if "asn_pool" in self.asn.keys():  # do not clobber existing values
+            meta["meta.asn.pool_name"] = self.asn["asn_pool"]
         return meta
