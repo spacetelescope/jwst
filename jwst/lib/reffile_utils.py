@@ -296,8 +296,8 @@ def get_subarray_model(sci_model, ref_model):
     model_type = ref_model.__class__
     sub_model = model_type()
     primary = ref_model.get_primary_array_name()
-    for attr in [primary, "err", "dq"]:
-        if hasattr(ref_model, attr):
+    for attr in {primary, "err", "dq"}:
+        if ref_model.hasattr(attr):
             sub_data = getattr(ref_model, attr)[..., ystart:ystop, xstart:xstop]
             setattr(sub_model, attr, sub_data)
     sub_model.update(ref_model)
