@@ -78,17 +78,19 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
     # Remove the lines of fits diff version and comparison filenames, as well
     # HDUs, keywords and columns not compared, and the maximum number of
     # different data values to be reported and the abs and rel tolerances
-    rsplit = [
+    report = rsplit[from_line:]
+    # Remove the max absolute and max relative to pass old astropy version tests
+    report = [
         line
-        for line in rsplit
+        for line in report
         if "Maximum relative difference" not in line or "Maximum absolute difference" not in line
     ]
     if not report_pixel_loc_diffs:
-        return rsplit[from_line:]
+        return report
     else:
         # Match the astropy report
         # Remove the legend '* Pixel indices below are 1-based.'
-        report = [line for line in rsplit if "Pixel indices below are 1-based." not in line]
+        report = [line for line in report if "Pixel indices below are 1-based." not in line]
         primary_diffs, pixidx = None, None
         for idx, line in enumerate(report):
             if "Values" in line or "Found" in line:
@@ -97,13 +99,13 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
             if "differs" in line or "differ:" in line and pixidx is None:
                 pixidx = idx
                 break
-        streport = report[from_line:pixidx]
+        streport = report[:pixidx]
         # If primary_diffs is still None, means that no further comparison
         # was made and so no stats were calculated
         if primary_diffs is None:
-            pixelreport = report[from_line:pixidx]
+            pixelreport = report[:pixidx]
         else:
-            pixelreport = report[from_line:primary_diffs]
+            pixelreport = report[:primary_diffs]
         pixelreport.append("Data contains differences:")
         pixelreport.extend(report[pixidx:])
         return streport, pixelreport
