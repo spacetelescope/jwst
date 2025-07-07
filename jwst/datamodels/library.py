@@ -220,7 +220,7 @@ class ModelLibrary(AbstractModelLibrary):
 
             return self.read_metadata(idx)
 
-    def read_metadata(self, idx):
+    def read_metadata(self, idx, flatten=True):
         """
         Read metadata for a model at the given index.
 
@@ -260,12 +260,11 @@ class ModelLibrary(AbstractModelLibrary):
                 member = self._members[idx]
                 filename = Path(self._asn_dir) / member["expname"]
 
-        meta = read_metadata(filename)
-        #
-        meta = self._assign_member_to_meta(meta, self._members[idx])
+        meta = read_metadata(filename, flatten=flatten)
+        meta = self._assign_member_to_meta(meta, self._members[idx], flatten)
         return meta
 
-    def _assign_member_to_meta(self, meta, member):
+    def _assign_member_to_meta(self, meta, member, flatten):
         """
         Update meta dict with asn-related attributes, similar to _assign_member_to_model.
 
@@ -275,20 +274,32 @@ class ModelLibrary(AbstractModelLibrary):
             The metadata dictionary to update.
         member : dict
             The member dictionary containing association attributes.
+        flatten : bool
+            If True, the metadata will be flattened to a single level.
+            If False, the metadata will be nested.
 
         Returns
         -------
         dict
             The updated metadata dictionary with association attributes.
         """
-        meta["meta.asn.exptype"] = member["exptype"]
-        for attr in ("group_id", "tweakreg_catalog"):
-            if attr in member:
-                meta["meta." + attr] = member[attr]
-
-        if "table_name" in self.asn.keys():
-            meta["meta.asn.table_name"] = self.asn["table_name"]
-
-        if "asn_pool" in self.asn.keys():  # do not clobber existing values
-            meta["meta.asn.pool_name"] = self.asn["asn_pool"]
+        if flatten:
+            meta["meta.asn.exptype"] = member["exptype"]
+            for attr in ("group_id", "tweakreg_catalog"):
+                if attr in member:
+                    meta["meta." + attr] = member[attr]
+            if "table_name" in self.asn.keys():
+                meta["meta.asn.table_name"] = self.asn["table_name"]
+            if "asn_pool" in self.asn.keys():
+                meta["meta.asn.pool_name"] = self.asn["asn_pool"]
+        else:
+            meta["meta"].setdefault("asn", {})
+            meta["meta"]["asn"]["exptype"] = member["exptype"]
+            for attr in ("group_id", "tweakreg_catalog"):
+                if attr in member:
+                    meta["meta"][attr] = member[attr]
+            if "table_name" in self.asn.keys():
+                meta["meta"]["asn"]["table_name"] = self.asn["table_name"]
+            if "asn_pool" in self.asn.keys():
+                meta["meta"]["asn"]["pool_name"] = self.asn["asn_pool"]
         return meta

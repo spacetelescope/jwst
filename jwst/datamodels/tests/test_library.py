@@ -41,6 +41,7 @@ def example_asn_path(tmp_path):
         m.meta.observation.exposure_number = "1"
         m.meta.instrument.name = "NIRCAM"
         m.meta.instrument.channel = "SHORT"
+        m.meta.tweakreg_catalog = "some_catalog.fits"
         base_fn = f"{i}.fits"
         m.meta.filename = base_fn
         m.save(str(tmp_path / base_fn))
@@ -203,6 +204,48 @@ def test_get_crds_parameters(example_library, modify):
     channel = params["meta.instrument.channel"]
     assert channel == "SHORT"
     assert instrument_name == "MIRI" if modify else "NIRCAM"
+
+
+@pytest.mark.parametrize("example_library", [True, False], indirect=True)
+def test_read_metadata_flat_nested(example_library):
+    """
+    Test that read_metadata flat and nested options return the same metadata
+    but in different formats.
+    """
+    meta_flat = example_library.read_metadata(0, flatten=True)
+    meta_nested = example_library.read_metadata(0, flatten=False)
+
+    # trigger loading model into memory.
+    # if on_disk is False, the model will stay in memory after shelve and follow a different
+    # code path than if on_disk is False but it was never borrowed.
+    with example_library:
+        model = example_library.borrow(0)
+        example_library.shelve(model, 0, modify=True)
+    meta_open_flat = example_library.read_metadata(0, flatten=True)
+    meta_open_nested = example_library.read_metadata(0, flatten=False)
+
+    # these should be identical to the closed version, except for fits hash and meta.date
+    for flat in [meta_flat, meta_open_flat]:
+        for key in ["_fits_hash", "meta.date"]:
+            del flat[key]
+    for nested in [meta_nested, meta_open_nested]:
+        del nested["meta"]["date"]
+        del nested["_fits_hash"]
+    assert meta_flat == meta_open_flat
+    assert meta_nested == meta_open_nested
+
+    # test a few keys to ensure they are the same
+    assert (
+        meta_flat["meta.observation.program_number"]
+        == meta_nested["meta"]["observation"]["program_number"]
+    )
+    assert meta_flat["meta.instrument.name"] == meta_nested["meta"]["instrument"]["name"]
+
+    # including all of the meta.asn keys, which get customized by init of ModelLibrary
+    for key in ["table_name", "pool_name", "exptype"]:
+        assert meta_flat[f"meta.asn.{key}"] == meta_nested["meta"]["asn"][key]
+    for key in ["group_id", "tweakreg_catalog"]:
+        assert meta_flat[f"meta.{key}"] == meta_nested["meta"][key]
 
 
 @pytest.mark.parametrize("example_library", [True, False], indirect=True)
