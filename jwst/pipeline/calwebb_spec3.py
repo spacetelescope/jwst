@@ -341,8 +341,8 @@ class Spec3Pipeline(Pipeline):
                 )
                 convex_sregion_hull = ConvexHull(input_sregion_vertices)
                 # Index vertices on those selected by ConvexHull
-                # Invert order to provide S_REGION points in clockwise order
-                convex_vertices = input_sregion_vertices[convex_sregion_hull.vertices][::-1]
+                # By default, ConvexHull vertices are returned in counterclockwise order
+                convex_vertices = input_sregion_vertices[convex_sregion_hull.vertices]
                 s_region = "POLYGON ICRS  " + " ".join(
                     [f"{x:.9f}" for x in convex_vertices.flatten()]
                 )
