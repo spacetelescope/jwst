@@ -78,6 +78,11 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
     # Remove the lines of fits diff version and comparison filenames, as well
     # HDUs, keywords and columns not compared, and the maximum number of
     # different data values to be reported and the abs and rel tolerances
+    rsplit = [
+        line
+        for line in rsplit
+        if "Maximum relative difference" not in line or "Maximum absolute difference" not in line
+    ]
     if not report_pixel_loc_diffs:
         return rsplit[from_line:]
     else:
@@ -517,8 +522,6 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
     diff = STFITSDiff(nan_in_sci, truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report, pixelreport = report_to_list(diff.report(), report_pixel_loc_diffs=True)
-    apreport.append("")
-    pixelreport.append("")
     # The expected result is False
     # The report should look like this
     expected_report = [
