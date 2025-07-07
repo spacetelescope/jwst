@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
 from pathlib import Path
+import numpy as np
 
 import stdatamodels.jwst.datamodels as dm
 
@@ -12,6 +13,8 @@ from jwst.exp_to_source import multislit_to_container
 from jwst.master_background.master_background_step import split_container
 from jwst.stpipe import Pipeline
 from jwst.lib.exposure_types import is_moving_target
+from scipy.spatial import ConvexHull
+from stcal.alignment.util import sregion_to_footprint
 
 # step imports
 from jwst.assign_mtwcs import assign_mtwcs_step
@@ -21,6 +24,7 @@ from jwst.master_background import master_background_step
 from jwst.mrs_imatch import mrs_imatch_step
 from jwst.outlier_detection import outlier_detection_step
 from jwst.resample import resample_spec_step
+
 from jwst.combine_1d import combine_1d_step
 from jwst.photom import photom_step
 from jwst.spectral_leak import spectral_leak_step
@@ -331,6 +335,18 @@ class Spec3Pipeline(Pipeline):
         if exptype in WFSS_TYPES:
             if self.save_results:
                 x1d_output = make_wfss_multiexposure(wfss_x1d)
+                # Populate S_REGION in first entry of output model spec list.
+                input_sregion_vertices = np.concatenate(
+                    [sregion_to_footprint(w.meta.wcsinfo.s_region) for w in input_models]
+                )
+                convex_sregion_hull = ConvexHull(input_sregion_vertices)
+                # Index vertices on those selected by ConvexHull
+                # Invert order to provide S_REGION points in clockwise order
+                convex_vertices = input_sregion_vertices[convex_sregion_hull.vertices][::-1]
+                s_region = "POLYGON ICRS  " + " ".join(
+                    [f"{x:.9f}" for x in convex_vertices.flatten()]
+                )
+                x1d_output.spec[0].s_region = s_region
                 x1d_filename = output_file + "_x1d.fits"
                 self.log.info(f"Saving the final x1d product as {x1d_filename}.")
                 x1d_output.save(x1d_filename)
