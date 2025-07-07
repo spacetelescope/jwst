@@ -31,7 +31,7 @@ def example_asn_path(tmp_path):
     """
     fns = []
     for i in range(_N_MODELS):
-        m = ImageModel()
+        m = ImageModel((10, 10))
         m.meta.observation.program_number = "0001"
         m.meta.observation.observation_number = _OBSERVATION_NUMBERS[i]
         m.meta.observation.visit_number = "1"
@@ -215,6 +215,19 @@ def test_read_metadata_flat_nested(example_library):
     meta_flat = example_library.read_metadata(0, flatten=True)
     meta_nested = example_library.read_metadata(0, flatten=False)
 
+    # test a few keys to ensure they are the same
+    assert (
+        meta_flat["meta.observation.program_number"]
+        == meta_nested["meta"]["observation"]["program_number"]
+    )
+    assert meta_flat["meta.instrument.name"] == meta_nested["meta"]["instrument"]["name"]
+
+    # test all of the meta.asn keys because they get customized by init of ModelLibrary
+    for key in ["table_name", "pool_name", "exptype"]:
+        assert meta_flat[f"meta.asn.{key}"] == meta_nested["meta"]["asn"][key]
+    for key in ["group_id", "tweakreg_catalog"]:
+        assert meta_flat[f"meta.{key}"] == meta_nested["meta"][key]
+
     # trigger loading model into memory.
     # if on_disk is False, the model will stay in memory after shelve and follow a different
     # code path than if on_disk is False but it was never borrowed.
@@ -224,28 +237,23 @@ def test_read_metadata_flat_nested(example_library):
     meta_open_flat = example_library.read_metadata(0, flatten=True)
     meta_open_nested = example_library.read_metadata(0, flatten=False)
 
-    # these should be identical to the closed version, except for fits hash and meta.date
+    # these should be identical to the closed version, except for:
+    # _fits_hash, which changes on load/save
+    # meta.date, which encodes when the model was last modified
+    # data, which is handled differently by read_metadata and model.to_flat_dict
     for flat in [meta_flat, meta_open_flat]:
         for key in ["_fits_hash", "meta.date"]:
             del flat[key]
+        for key in flat.copy().keys():
+            if key.startswith("data."):
+                del flat[key]
     for nested in [meta_nested, meta_open_nested]:
         del nested["meta"]["date"]
         del nested["_fits_hash"]
+        if "data" in nested:
+            del nested["data"]
     assert meta_flat == meta_open_flat
     assert meta_nested == meta_open_nested
-
-    # test a few keys to ensure they are the same
-    assert (
-        meta_flat["meta.observation.program_number"]
-        == meta_nested["meta"]["observation"]["program_number"]
-    )
-    assert meta_flat["meta.instrument.name"] == meta_nested["meta"]["instrument"]["name"]
-
-    # including all of the meta.asn keys, which get customized by init of ModelLibrary
-    for key in ["table_name", "pool_name", "exptype"]:
-        assert meta_flat[f"meta.asn.{key}"] == meta_nested["meta"]["asn"][key]
-    for key in ["group_id", "tweakreg_catalog"]:
-        assert meta_flat[f"meta.{key}"] == meta_nested["meta"][key]
 
 
 @pytest.mark.parametrize("example_library", [True, False], indirect=True)

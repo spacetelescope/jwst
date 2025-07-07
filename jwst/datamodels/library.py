@@ -1,5 +1,10 @@
 import warnings
 from pathlib import Path
+import numpy as np
+from datetime import datetime
+from astropy.time import Time
+from asdf.tags.core import NDArrayType
+
 from stdatamodels.jwst.datamodels.util import open as datamodels_open
 from stdatamodels.jwst.datamodels import read_metadata
 from stpipe.library import AbstractModelLibrary, NoGroupID, BorrowError
@@ -254,7 +259,7 @@ class ModelLibrary(AbstractModelLibrary):
                 # the desired behavior is already implemented by get_crds_parameters
                 # so we can just call it here, it is not inherently CRDS-specific
                 model = self._loaded_models[idx]
-                return model.get_crds_parameters()
+                return _read_meta_from_open_model(model, flatten=flatten)
             else:
                 # otherwise, find the filename in the asn_dir
                 member = self._members[idx]
@@ -303,3 +308,41 @@ class ModelLibrary(AbstractModelLibrary):
             if "asn_pool" in self.asn.keys():
                 meta["meta"]["asn"]["pool_name"] = self.asn["asn_pool"]
         return meta
+
+
+def _read_meta_from_open_model(model, flatten):
+    """
+    Read metadata from an open model.
+
+    Parameters
+    ----------
+    model : DataModel
+        The model from which to read metadata.
+    flatten : bool
+        If True, the metadata will be flattened to a single level.
+        If False, the metadata will be nested.
+
+    Returns
+    -------
+    dict
+        The metadata dictionary for the model.
+    """
+    if flatten:
+        return model.to_flat_dict(include_arrays=False)
+
+    def recurse(tree):  # numpydoc ignore=RT01
+        """Do all conversions and exclusions model.to_flat_dict does, but without flattening."""
+        for key, val in tree.copy().items():  # copy to avoid modifying dict while iterating
+            if key == "wcs":
+                del tree[key]
+            elif isinstance(val, datetime):
+                tree[key] = val.isoformat()
+            elif isinstance(val, Time):
+                tree[key] = str(val)
+            elif isinstance(val, (np.ndarray, NDArrayType)):
+                del tree[key]
+            if isinstance(val, dict):
+                recurse(val)
+        return tree
+
+    return recurse(model._instance)  # noqa: SLF001
