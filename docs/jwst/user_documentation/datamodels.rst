@@ -5,7 +5,7 @@ JWST Datamodels
 ===============
 
 The `stdatamodels` package contains the interface for JWST datamodels. This package
-is separated from the `jwst` pipeline (to allow models to be manipulated without needing
+is separated from the `jwst` pipeline package (to allow models to be manipulated without needing
 to install the whole pipeline), but the contents of ``stdatamodels.jwst.datamodels``
 are also accessible from ``jwst.datamodels``.
 
@@ -36,21 +36,22 @@ file on disk. E.g:
 	input_model = dm.open('jw00001001001_01101_00001_mirimage_uncal.fits')
 	result = LinearityStep.call(input_model)
 
-If a string path to a file on disk is passed in, a ``JwstDataModel`` object will be
+If a string path to a file on disk is passed in, a ``DataModel`` object will be
 created internally when the pipeline/step is run.
 
 By default, when running in Python, the corrected data will be returned in-memory
-as a ``JwstDataModel`` instead of being written as an output file.
-See :ref:`controlling output file behavior`<python_outputs>` for instructions on
-how to write the returned ``JwstDataModel`` to an output file.
+as a ``DataModel`` instead of being written as an output file.
+See :ref:`controlling output file behavior`<python_outputs> for instructions on
+how to write the returned ``DataModel`` to an output file.
 
 Groups of Datamodels
 ====================
 
 Many of the JWST calibration steps and pipelines expect an
 :ref:`Association <associations>` file as input. When opened with
-:meth:`~jwst.datamodels.open`, a
-:class:`~jwst.datamodels.ModelContainer` is returned. ``ModelContainer``
+:meth:`~stdatamodels.jwst.datamodels.util.open`, a
+:class:`~jwst.datamodels.container.ModelContainer` is returned.
+:class:`~jwst.datamodels.container.ModelContainer`
 is a list-like object where each element is the
 ``DataModel`` of each member of the association. The ``asn_table`` attribute is
 populated with the association data structure, allowing direct access
