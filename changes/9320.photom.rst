@@ -1,1 +1,0 @@
-Apply MRS IFU time-dependent correction to VAR_POISSON, VAR_RNOISE, and VAR_FLAT also.

@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11,<3.13.4"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -21,7 +21,7 @@ dependencies = [
     "astropy>=6.1",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
-    "drizzle>=2.0.1",
+    "drizzle>=2.0.1,<2.1.0",
     # "gwcs>=0.22.0,<0.23.0",
     "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
     "numpy>=1.25",
