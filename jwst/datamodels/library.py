@@ -328,7 +328,7 @@ def _read_meta_from_open_model(model, flatten):
         The metadata dictionary for the model.
     """
     if flatten:
-        return model.to_flat_dict(include_arrays=False)
+        return model.get_crds_parameters()
 
     def convert_val(val):
         if isinstance(val, datetime):
@@ -337,12 +337,28 @@ def _read_meta_from_open_model(model, flatten):
             return str(val)
         return val
 
-    def recurse(tree):  # numpydoc ignore=RT01
-        """Do all conversions and exclusions model.to_flat_dict does, but without flattening."""
+    def recurse(tree):
+        """
+        Walk the tree and add metadata to a new dictionary.
+
+        Do all conversions and exclusions model.get_crds_parameters does,
+        but without flattening.
+
+        Parameters
+        ----------
+        tree : dict
+            An asdf-like nested dictionary structure, e.g. model._instance.
+
+        Returns
+        -------
+        dict
+            A new nested dictionary containing the metadata.
+        """
         new_tree = {}
         for key, val in tree.items():
             if key == "wcs":
                 continue
+            val = convert_val(val)
             if isinstance(val, dict):
                 new_tree[key] = recurse(val)
             elif isinstance(val, list):
@@ -361,7 +377,7 @@ def _read_meta_from_open_model(model, flatten):
             elif isinstance(val, (np.ndarray, NDArrayType)):
                 continue
             elif isinstance(val, (str, int, float, complex, bool)):
-                new_tree[key] = convert_val(val)
+                new_tree[key] = val
             else:
                 continue  # skip unsupported types
         return new_tree

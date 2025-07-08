@@ -1,5 +1,9 @@
 import json
 import numpy as np
+import gwcs
+from gwcs import coordinate_frames as cf
+from datetime import datetime
+from astropy.time import Time
 
 import pytest
 import stdatamodels.jwst.datamodels
@@ -259,16 +263,31 @@ def test_read_metadata_flat_nested(example_library):
 
 @pytest.mark.parametrize("flatten", [True, False])
 def test_read_meta_from_open_model(example_asn_path, flatten):
-    """Test that read_meta_from_open_model returns the same metadata as get_crds_parameters."""
+    """
+    Test that read_meta_from_open_model returns the same metadata as get_crds_parameters.
+
+    Add a bunch of different types of attributes to the model to ensure they are handled
+    in the same way.
+    """
     model = dm.open(example_asn_path.parent / "0.fits")
+    model.astropy_time = Time(datetime(2020, 1, 1, 12, 0, 0))
+    model.datetime_time = datetime(2020, 1, 1, 12, 0, 0)
+    model.data_list = [np.array([1, 2, 3]), np.array([4, 5, 6])]
+    model.int_list = [1, 2, 3, 4]
+    model.nested_list = [[{"key": "value"}], [{"key2": "value2"}]] * 2
+    model.meta.wcs = gwcs.WCS(
+        input_frame=cf.Frame2D(name="input"), output_frame=cf.Frame2D(name="output")
+    )
+    model.unsupported_type = set([1, 2, 3])
     meta = _read_meta_from_open_model(model, flatten)
     meta_crds = model.get_crds_parameters()
+
     assert _to_flat_dict(meta) == meta_crds
 
 
 @pytest.mark.parametrize("flatten", [True, False])
 def test_read_meta_from_open_multislit(flatten):
-    """Test that read_meta_from_open_model works with a multislit model."""
+    """Test that read_meta_from_open_model returns the same metadata as get_crds_parameters."""
     model = dm.MultiSlitModel()
     slit = dm.SlitModel()
     slit.meta.observation.program_number = "0001"
@@ -276,7 +295,6 @@ def test_read_meta_from_open_multislit(flatten):
     slit.meta.observation.visit_number = "1"
     slit.meta.observation.visit_group = "1"
     slit.data = np.zeros((10, 10))
-    slit.nested = [{"key": "value"}] * 2  # to test nested list handling
     model.slits.extend([slit.copy() for _ in range(3)])
     model.meta.instrument.name = "NIRCAM"
     model.meta.instrument.channel = "SHORT"
