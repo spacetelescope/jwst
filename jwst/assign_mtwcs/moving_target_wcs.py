@@ -51,12 +51,12 @@ def assign_moving_target_wcs(input_models):
     mt_valid = True
     with input_models:
         for i in ind:
-            meta = input_models.read_metadata(i)
+            meta = input_models.read_metadata(i, flatten=False)
             mt_valid = _is_mt_meta_valid(meta)
             if not mt_valid:
                 break
-            mt_ra[i] = meta["meta.wcsinfo.mt_ra"]
-            mt_dec[i] = meta["meta.wcsinfo.mt_dec"]
+            mt_ra[i] = meta["meta"]["wcsinfo"]["mt_ra"]
+            mt_dec[i] = meta["meta"]["wcsinfo"]["mt_dec"]
 
     # Compute the mean MT RA/Dec over all exposures
     if not mt_valid:
@@ -147,33 +147,31 @@ def _is_mt_meta_valid(meta):
     """
     Check if the metadata contains valid moving target RA/DEC.
 
-    Includes a check for all slits in a MultiSlitModel. The metadata should contain
-    slit information in keys of the form 'slits.<n>.meta.wcsinfo.mt_ra' and
-    'slits.<n>.meta.wcsinfo.mt_dec', where <n> is the slit index.
+    Checks both the top-level wcsinfo as well as the wcsinfo for all
+    the slits in a MultiSlitModel.
 
     Parameters
     ----------
     meta : dict
-        Flattened metadata dictionary from a data model, as output from `read_metadata`.
+        Nested metadata dictionary from a data model, as output from `read_metadata`
+        with `flatten=False`.
 
     Returns
     -------
     bool
         True if valid, False otherwise.
     """
-    # find each slit's meta.wcsinfo for MultiSlitModel types.
-    # For other input types, n_slits is 0 and mt_ra_keys and mt_dec_keys
-    # are expected to have length 1
-    slit_meta = [key for key in meta.keys() if key.startswith("slits.")]
-    slit_indices = [key.split(".")[1] for key in slit_meta]
-    n_slits = len(np.unique(slit_indices))
-    mt_ra_keys = [key for key in meta.keys() if key.endswith("meta.wcsinfo.mt_ra")]
-    mt_dec_keys = [key for key in meta.keys() if key.endswith("meta.wcsinfo.mt_dec")]
-
-    if len(mt_ra_keys) != n_slits + 1 or len(mt_dec_keys) != n_slits + 1:
-        return False
-    invalid_ra = [meta[key] is None for key in mt_ra_keys]
-    invalid_dec = [meta[key] is None for key in mt_dec_keys]
+    invalid_ra = [
+        slit["meta"]["wcsinfo"].get("mt_ra", None) is None for slit in meta.get("slits", [])
+    ]
+    invalid_dec = [
+        slit["meta"]["wcsinfo"].get("mt_dec", None) is None for slit in meta.get("slits", [])
+    ]
     if any(invalid_ra) or any(invalid_dec):
+        return False
+    if (
+        meta["meta"]["wcsinfo"].get("mt_ra", None) is None
+        or meta["meta"]["wcsinfo"].get("mt_dec", None) is None
+    ):
         return False
     return True
