@@ -466,6 +466,7 @@ def test_array2d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         model.data[1, 1] = 4.5
         model.data[1, 2] = 8.00023
         model.save(test2d)
+    fitsdiff_default_kwargs["numdiffs"] = -1
     diff = STFITSDiff(test2d, truth2d, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
@@ -560,6 +561,7 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "1e-07        25        25",
         "0.0        25        25",
     ]
+    assert "Pixel indices below are 1-based." in diff.report()
     assert result == apresult
     assert pixelreport == apreport
     assert report == expected_report
@@ -574,7 +576,6 @@ def test_allnan_sci(mock_rampfiles, fitsdiff_default_kwargs):
     hdu[1].data = np.ones(shape) * np.nan
     hdu.writeto(all_sci_nan)
     hdu.close()
-    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = False
     diff = STFITSDiff(all_sci_nan, truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report(), from_line=11)
@@ -817,6 +818,8 @@ def mock_table(tmp_path_factory):
     data_mod = tmp_dir / "data_mod_x1d.fits"
     nan_in_data = tmp_dir / "nan_in_data_x1d.fits"
     nan_column = tmp_dir / "nan_column_x1d.fits"
+    diff_column = tmp_dir / "diff_column_x1d.fits"
+    diff_coltype = tmp_dir / "diff_coltype_x1d.fits"
 
     with datamodels.SpecModel() as spec:
         spec.spectral_order = 2
@@ -854,11 +857,29 @@ def mock_table(tmp_path_factory):
         # return to truth
         spec.spec_table["WAVELENGTH"] = np.arange(100) * 0.1
 
+        # Different number of columns
+        spec.spec_table = np.zeros((105,), dtype=datamodels.SpecModel().spec_table.dtype)
+        spec.spec_table["WAVELENGTH"] = np.arange(105) * 0.1
+        spec.spec_table["FLUX"] = np.ones(105)
+        spec.spec_table["DQ"] = np.ones(105, dtype=int)
+        spec.save(diff_column)
+        # return to truth
+        spec.spec_table = np.zeros((100,), dtype=datamodels.SpecModel().spec_table.dtype)
+        spec.spec_table["WAVELENGTH"] = np.arange(100) * 0.1
+        spec.spec_table["FLUX"] = np.ones(100)
+        spec.spec_table["DQ"] = np.ones(100, dtype=int)
+
+        # Diff column type
+        spec.spec_table["DQ"] = bytearray(100)
+        spec.save(diff_coltype)
+        # return to truth
+        spec.spec_table["DQ"] = np.ones(100)
+
         # Add a keyword and save
         spec.meta.cal_step.flat_field = "SKIPPED"
         spec.save(keyword_mod)
 
-    return truth, keyword_mod, data_mod, nan_in_data, nan_column
+    return truth, keyword_mod, data_mod, nan_in_data, nan_column, diff_column, diff_coltype
 
 
 def test_identical_tables(mock_table):
@@ -1007,4 +1028,62 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
     ]
     assert result == apresult
     assert pixelreport == apreport
+    assert report == expected_report
+
+
+def test_table_diff_column(mock_table, fitsdiff_default_kwargs):
+    truth = mock_table[0]
+    diff_column = mock_table[5]
+    diff = STFITSDiff(diff_column, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    # The expected result is False
+    # The report should look like this
+    expected_report = [
+        "Primary HDU:",
+        "Headers contain differences:",
+        "Keyword FILENAME has different values:",
+        "a> diff_column_x1d.fits",
+        "b> truth_x1d.fits",
+        "Extension HDU 1 (EXTRACT1D, 1):",
+        "Headers contain differences:",
+        "Keyword NAXIS2   has different values:",
+        "a> 105",
+        "b> 100",
+        "Table rows differ:",
+        "a: 105",
+        "b: 100",
+        "No further data comparison performed.",
+    ]
+    assert result is False
+    assert report == expected_report
+
+
+def test_table_diff_coltype(mock_table, fitsdiff_default_kwargs):
+    truth = mock_table[0]
+    diff_coltype = mock_table[6]
+    diff = STFITSDiff(diff_coltype, truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    # The expected result is False
+    # The report should look like this
+    expected_report = [
+        "Primary HDU:",
+        "Headers contain differences:",
+        "Keyword FILENAME has different values:",
+        "a> diff_coltype_x1d.fits",
+        "b> truth_x1d.fits",
+        "Extension HDU 1 (EXTRACT1D, 1):",
+        "Found 100 different table data element(s). Reporting percentages above respective tolerances:",
+        "- absolute .... 5.556%",
+        "* Unable to calculate relative differences and stats due to data types",
+        "Values in a and b",
+        "col_name zeros_a_b nan_a_b no-nan_a_b max_a_b min_a_b mean_a_b",
+        "-------- --------- ------- ---------- ------- ------- --------",
+        "Difference stats: abs(b - a)",
+        "col_name dtype  abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
+        "-------- ------ --------- ------- -------- ------- --------- ------- -------- -------",
+        "DQ uint32       100       0        0       0         0       0        0       0",
+    ]
+    assert result is False
     assert report == expected_report
