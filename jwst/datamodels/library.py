@@ -21,8 +21,8 @@ class ModelLibrary(AbstractModelLibrary):
 
     ModelLibrary is a container designed to allow
     efficient processing of datamodel instances created from an association.
-    See the `stpipe library documentation <https://stpipe.readthedocs.io/en/latest/model_library.html`
-    for details.
+    See the `stpipe library documentation <https://stpipe.readthedocs.io/en/latest/model_library.html>`_
+    for more information.
     """
 
     @property
