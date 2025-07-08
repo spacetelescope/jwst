@@ -330,19 +330,40 @@ def _read_meta_from_open_model(model, flatten):
     if flatten:
         return model.to_flat_dict(include_arrays=False)
 
+    def convert_val(val):
+        if isinstance(val, datetime):
+            return val.isoformat()
+        elif isinstance(val, Time):
+            return str(val)
+        return val
+
     def recurse(tree):  # numpydoc ignore=RT01
         """Do all conversions and exclusions model.to_flat_dict does, but without flattening."""
-        for key, val in tree.copy().items():  # copy to avoid modifying dict while iterating
+        new_tree = {}
+        for key, val in tree.items():
             if key == "wcs":
-                del tree[key]
-            elif isinstance(val, datetime):
-                tree[key] = val.isoformat()
-            elif isinstance(val, Time):
-                tree[key] = str(val)
-            elif isinstance(val, (np.ndarray, NDArrayType)):
-                del tree[key]
+                continue
             if isinstance(val, dict):
-                recurse(val)
-        return tree
+                new_tree[key] = recurse(val)
+            elif isinstance(val, list):
+                new_list = []
+                for item in val:
+                    if isinstance(item, dict):
+                        new_list.append(recurse(item))
+                    elif isinstance(item, list):
+                        # handle nested lists
+                        new_list.append(recurse({"_idx": item})["_idx"])  # placeholder key
+                    elif isinstance(item, (np.ndarray, NDArrayType)):
+                        continue
+                    else:
+                        new_list.append(convert_val(item))
+                new_tree[key] = new_list
+            elif isinstance(val, (np.ndarray, NDArrayType)):
+                continue
+            elif isinstance(val, (str, int, float, complex, bool)):
+                new_tree[key] = convert_val(val)
+            else:
+                continue  # skip unsupported types
+        return new_tree
 
     return recurse(model._instance)  # noqa: SLF001

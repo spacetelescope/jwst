@@ -1,16 +1,17 @@
-from copy import copy
 import json
+import numpy as np
 
 import pytest
 import stdatamodels.jwst.datamodels
 from stdatamodels.jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels.util import _to_flat_dict
 
-from stpipe.library import ClosedLibraryError, BorrowError
+from stpipe.library import BorrowError
 
 from stpipe.library import NoGroupID
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.load_as_asn import load_asn
-from jwst.datamodels.library import ModelLibrary
+from jwst.datamodels.library import ModelLibrary, _read_meta_from_open_model
 import jwst.datamodels as dm
 
 
@@ -254,6 +255,35 @@ def test_read_metadata_flat_nested(example_library):
             del nested["data"]
     assert meta_flat == meta_open_flat
     assert meta_nested == meta_open_nested
+
+
+@pytest.mark.parametrize("flatten", [True, False])
+def test_read_meta_from_open_model(example_asn_path, flatten):
+    """Test that read_meta_from_open_model returns the same metadata as get_crds_parameters."""
+    model = dm.open(example_asn_path.parent / "0.fits")
+    meta = _read_meta_from_open_model(model, flatten)
+    meta_crds = model.get_crds_parameters()
+    assert _to_flat_dict(meta) == meta_crds
+
+
+@pytest.mark.parametrize("flatten", [True, False])
+def test_read_meta_from_open_multislit(flatten):
+    """Test that read_meta_from_open_model works with a multislit model."""
+    model = dm.MultiSlitModel()
+    slit = dm.SlitModel()
+    slit.meta.observation.program_number = "0001"
+    slit.meta.observation.observation_number = "1"
+    slit.meta.observation.visit_number = "1"
+    slit.meta.observation.visit_group = "1"
+    slit.data = np.zeros((10, 10))
+    slit.nested = [{"key": "value"}] * 2  # to test nested list handling
+    model.slits.extend([slit.copy() for _ in range(3)])
+    model.meta.instrument.name = "NIRCAM"
+    model.meta.instrument.channel = "SHORT"
+
+    meta = _read_meta_from_open_model(model, flatten)
+    meta_crds = model.get_crds_parameters()
+    assert _to_flat_dict(meta) == meta_crds
 
 
 @pytest.mark.parametrize("example_library", [True, False], indirect=True)
