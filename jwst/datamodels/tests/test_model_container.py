@@ -162,7 +162,9 @@ def test_open_guess(container):
     with pushdir(asn_file_path):
         # opening it normally works fine
         ModelContainer(fnames, guess=True)
-        with pytest.raises(TypeError):
+        with pytest.raises(
+            TypeError, match="Model type is not specifically defined and guessing has been disabled"
+        ):
             # but if you don't allow guessing the model type, it raises TypeError
             ModelContainer(fnames, guess=False)
 
