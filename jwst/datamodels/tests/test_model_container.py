@@ -156,11 +156,15 @@ def test_save(tmp_cwd, container, path):
 
 
 def test_open_guess(container):
-    # test that open() accepts guess arg
-    assert not container[0].meta.hasattr("model_type")
-    ModelContainer(container)  # this should work with default options
-    with pytest.raises(TypeError):
-        ModelContainer(container, guess=False)
+    """Test that `guess` keyword argument works in ModelContainer."""
+    asn_file_path, _asn_file_name = os.path.split(ASN_FILE)
+    fnames = [m.meta.filename for m in container]
+    with pushdir(asn_file_path):
+        # opening it normally works fine
+        ModelContainer(fnames, guess=True)
+        with pytest.raises(TypeError):
+            # but if you don't allow guessing the model type, it raises TypeError
+            ModelContainer(fnames, guess=False)
 
 
 def test_open_kwargs(container):

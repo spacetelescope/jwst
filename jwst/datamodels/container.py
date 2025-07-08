@@ -145,15 +145,13 @@ to supply custom catalogs.
         self.asn_pool_name = None
         self.asn_file_path = None
 
-        self._guess = kwargs.get("guess", True)
-
         if init is None:
             # Don't populate the container with models
             pass
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
                 for m in init:
-                    self._models.append(datamodel_open(m, guess=self._guess, **kwargs))
+                    self._models.append(datamodel_open(m, **kwargs))
                 # set asn_table_name and product name to first datamodel stem
                 # since they were not provided
                 fname = self._models[0].meta.filename
@@ -170,7 +168,7 @@ to supply custom catalogs.
                 )
         elif isinstance(init, self.__class__):
             for m in init:
-                self._models.append(datamodel_open(m, guess=self._guess, **kwargs))
+                self._models.append(datamodel_open(m, **kwargs))
             self.asn_exptypes = init.asn_exptypes
             self.asn_n_members = init.asn_n_members
             self.asn_table = init.asn_table
