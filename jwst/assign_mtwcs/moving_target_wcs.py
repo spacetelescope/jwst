@@ -161,14 +161,14 @@ def _is_mt_meta_valid(meta):
     bool
         True if valid, False otherwise.
     """
-    invalid_ra = [
-        slit["meta"]["wcsinfo"].get("mt_ra", None) is None for slit in meta.get("slits", [])
-    ]
-    invalid_dec = [
-        slit["meta"]["wcsinfo"].get("mt_dec", None) is None for slit in meta.get("slits", [])
-    ]
-    if any(invalid_ra) or any(invalid_dec):
-        return False
+    # check all the slits
+    for slit in meta.get("slits", []):
+        if (
+            slit["meta"]["wcsinfo"].get("mt_ra", None) is None
+            or slit["meta"]["wcsinfo"].get("mt_dec", None) is None
+        ):
+            return False
+    # check the top-level wcsinfo
     if (
         meta["meta"]["wcsinfo"].get("mt_ra", None) is None
         or meta["meta"]["wcsinfo"].get("mt_dec", None) is None

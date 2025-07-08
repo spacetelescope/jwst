@@ -256,8 +256,6 @@ class ModelLibrary(AbstractModelLibrary):
         else:
             if idx in self._loaded_models:
                 # if this model is in memory, retrieve parameters from it directly
-                # the desired behavior is already implemented by get_crds_parameters
-                # so we can just call it here, it is not inherently CRDS-specific
                 model = self._loaded_models[idx]
                 return _read_meta_from_open_model(model, flatten=flatten)
             else:
