@@ -2,6 +2,8 @@ import os
 
 import numpy as np
 import pytest
+from jwst.tests.helpers import LogWatcher
+import logging
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
@@ -351,3 +353,14 @@ def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
     with dm.open(output_path) as model:
         assert isinstance(model, dm.WFSSMultiSpecModel)
         assert len(model.spec) == 1
+
+
+def test_slit_skip_all_nan(mock_niriss_wfss_l3, monkeypatch):
+    """Test that all-nan slits are skipped."""
+    # Set flux values to NaN for one of the slit data
+    mock_niriss_wfss_l3[1].data *= np.nan
+
+    watcher = LogWatcher("No valid data for slit")
+    monkeypatch.setattr(logging.getLogger("jwst.extract_1d.extract"), "info", watcher)
+    _result = Extract1dStep.call(mock_niriss_wfss_l3)
+    watcher.assert_seen()
