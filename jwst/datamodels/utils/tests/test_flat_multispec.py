@@ -27,14 +27,21 @@ def empty_recarray(request):
     """
     n_rows = 10
     n_sources = 5
-    vector_columns = [("FLUX", np.float32), ("WAVELENGTH", np.float64)]
+    vector_columns = [
+        ("FLUX", np.float32),
+        ("WAVELENGTH", np.float64),
+        ("DQ", np.uint32),
+        ("UNKNOWN", np.int32),
+    ]
     meta_columns = [("NAME", "S20"), ("SOURCE_ID", np.int32)]
     if request.param:
         # Add a column that is not in the input model
         meta_columns.append(("EXTRA_COLUMN", np.float32))
     columns = vector_columns + meta_columns
     is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
-    defaults = [0,] * len(columns)
+    defaults = [
+        0,
+    ] * len(columns)
     return make_empty_recarray(n_rows, n_sources, columns, is_vector, defaults)
 
 
@@ -77,7 +84,7 @@ def tso_multi_spec():
     spec_table["N_ALONGDISP"] = 10
     tso_spec.spec_table = spec_table
     for column in tso_spec.spec_table.columns:
-        column.unit = 's'
+        column.unit = "s"
 
     # Add spectra to a multispec model
     tso_multi = dm.TSOMultiSpecModel()
@@ -87,7 +94,7 @@ def tso_multi_spec():
         # Add some metadata
         spec.source_id = i + 1
         spec.name = f"test {i + 1}"
-        spec.meta.wcs = ['test']
+        spec.meta.wcs = ["test"]
         spec.spec_table["INT_NUM"] = i + 1
 
         tso_multi.spec.append(spec)
@@ -101,9 +108,7 @@ def test_determine_vector_and_meta_columns():
     out_cols.append({"name": "SOURCE_ID", "datatype": "int32"})
     out_cols.append({"name": "NAME", "datatype": ["ascii", 20]})
 
-    all_columns, is_vector = determine_vector_and_meta_columns(
-        in_cols, out_cols
-    )
+    all_columns, is_vector = determine_vector_and_meta_columns(in_cols, out_cols)
 
     # Check that the names ended up in the right place
     input_names = [s["name"] for s in in_cols]
@@ -173,11 +178,18 @@ def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
     all_datatypes = [output_table[name].dtype for name in all_names]
     all_columns = [(name, dtype) for name, dtype in zip(all_names, all_datatypes)]
     all_columns = np.array(all_columns)
-    vector_columns = [(name, dtype) for name, dtype in zip(all_names[:2], all_datatypes[:2])]
-    meta_columns = [(name, dtype) for name, dtype in zip(all_names[2:], all_datatypes[2:])]
+    vector_columns = [(name, dtype) for name, dtype in zip(all_names[:4], all_datatypes[:4])]
+    meta_columns = [(name, dtype) for name, dtype in zip(all_names[4:], all_datatypes[4:])]
     is_vector = [True] * len(vector_columns) + [False] * len(meta_columns)
     is_vector = np.array(is_vector, dtype=bool)
     (n_sources, n_rows) = output_table["FLUX"].shape
+
+    schema_dtype = [
+        {"name": "WAVELENGTH", "datatype": "float64"},
+        {"name": "FLUX", "datatype": "float64"},
+        {"name": "DQ", "datatype": "uint32"},
+        {"name": "UNKNOWN", "datatype": "int32"},
+    ]
 
     for i in range(n_sources):
         input_spec = dm.SpecModel()
@@ -186,17 +198,15 @@ def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
 
         this_output = output_table[i]
 
-        # hack input model schema to have only the flux and wavelength columns
-        input_spec.schema["properties"]["spec_table"]["datatype"] = input_spec.schema["properties"][
-            "spec_table"
-        ]["datatype"][:2]
+        # hack input model schema to have only the columns we want
+        input_spec.schema["properties"]["spec_table"]["datatype"] = schema_dtype
 
         # give all the input spectra different numbers of rows
         input_spec.spec_table = np.ones(
             (n_rows - i,), dtype=[(name, dtype) for name, dtype in vector_columns]
         )
         populate_recarray(
-            this_output, input_spec, n_rows, all_columns, is_vector, ignore_columns=ignore_columns
+            this_output, input_spec, all_columns, is_vector, ignore_columns=ignore_columns
         )
 
     if ignore_columns is None:
@@ -207,7 +217,7 @@ def test_populate_recarray(empty_recarray, ignore_columns, monkeypatch):
         for name, _ in vector_columns:
             if name not in ignore_columns:
                 # ensure proper nan-padding of output
-                expected = np.ones((n_rows,)) * np.nan
+                expected = this_output[name].copy()
                 expected[: n_rows - i] = 1.0
                 assert np.array_equal(output_table[name][i], expected, equal_nan=True)
             else:
@@ -265,7 +275,7 @@ def test_copy_spec_metadata(input_spec, output_spec):
     copy_spec_metadata(input_spec, output_spec)
 
     # After copying, metadata is filled in
-    assert output_spec.name == 'test_slit'
+    assert output_spec.name == "test_slit"
     assert output_spec.source_id == 1
 
 
@@ -289,9 +299,9 @@ def test_expand_flat_spec(tso_multi_spec):
         assert spec.name == f"test {input_spec_num}"
         assert spec.int_num == input_spec_num
 
-        assert spec.meta.wcs[0] == 'test'
-        spec.meta.wcs[0] = 'copy'
-        assert spec.meta.wcs[0] == 'copy'
-        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs[0] == 'test'
+        assert spec.meta.wcs[0] == "test"
+        spec.meta.wcs[0] = "copy"
+        assert spec.meta.wcs[0] == "copy"
+        assert tso_multi_spec.spec[input_spec_num - 1].meta.wcs[0] == "test"
 
         assert spec.spec_table.columns.units == ["s"] * len(spec.spec_table.columns)

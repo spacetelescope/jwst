@@ -1,4 +1,4 @@
-from ..stpipe import Step
+from jwst.stpipe import Step
 from . import ami_average
 import warnings
 

@@ -21,19 +21,19 @@ table below.
 
 .. |check| unicode:: U+2713 .. checkmark
 
-+--------------------------------------+---------+---------+
-| Step                                 | Non-TSO | TSO     |
-+======================================+=========+=========+
-| :ref:`background <background_step>`  | |check| |         |
-+--------------------------------------+---------+---------+
-| :ref:`assign_wcs <assign_wcs_step>`  | |check| | |check| |
-+--------------------------------------+---------+---------+
-| :ref:`flat_field <flatfield_step>`   | |check| | |check| |
-+--------------------------------------+---------+---------+
-| :ref:`photom <photom_step>`          | |check| | |check| |
-+--------------------------------------+---------+---------+
-| :ref:`resample <resample_step>` [1]_ | |check| |         |
-+--------------------------------------+---------+---------+
++--------------------------------------------+---------+---------+
+| Step                                       | Non-TSO | TSO     |
++============================================+=========+=========+
+| :ref:`background <background_subtraction>` | |check| |         |
++--------------------------------------------+---------+---------+
+| :ref:`assign_wcs <assign_wcs_step>`        | |check| | |check| |
++--------------------------------------------+---------+---------+
+| :ref:`flat_field <flatfield_step>`         | |check| | |check| |
++--------------------------------------------+---------+---------+
+| :ref:`photom <photom_step>`                | |check| | |check| |
++--------------------------------------------+---------+---------+
+| :ref:`resample <resample_step>` [1]_       | |check| |         |
++--------------------------------------------+---------+---------+
 
 .. [1] Resampling is only performed for exposure types "MIR_IMAGE", "NRC_IMAGE", and
    "NIS_IMAGE".
@@ -81,7 +81,7 @@ Outputs
 
 This is an intermediate product that is only created if "--save_bsub" is set
 to ``True`` and will contain the data as output from the
-:ref:`background <background_step>` step.
+:ref:`background <background_subtraction>` step.
 If the input is a "_rate" product, this will be a "_bsub" product, while
 "_rateints" inputs will be saved as "_bsubints."
 

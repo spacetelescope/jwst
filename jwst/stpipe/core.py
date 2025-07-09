@@ -2,7 +2,6 @@
 
 from functools import wraps
 import logging
-import warnings
 from pathlib import Path
 
 from stdatamodels.jwst.datamodels import JwstDataModel, read_metadata
@@ -12,7 +11,7 @@ from stpipe import crds_client, Step, Pipeline
 from jwst import __version_commit__, __version__
 from jwst.datamodels import ModelLibrary, ModelContainer
 from ._cal_logs import _LOG_FORMATTER
-from ..lib.suffix import remove_suffix
+from jwst.lib.suffix import remove_suffix
 
 
 log = logging.getLogger(__name__)
@@ -99,8 +98,8 @@ class JwstStep(Step):
             Association
         """
         # Prevent circular import:
-        from ..associations.load_as_asn import LoadAsLevel2Asn
-        from ..associations.lib.update_path import update_key_value
+        from jwst.associations.load_as_asn import LoadAsLevel2Asn
+        from jwst.associations.lib.update_path import update_key_value
 
         asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
@@ -124,8 +123,8 @@ class JwstStep(Step):
             Association
         """
         # Prevent circular import:
-        from ..associations.load_as_asn import LoadAsAssociation
-        from ..associations.lib.update_path import update_key_value
+        from jwst.associations.load_as_asn import LoadAsAssociation
+        from jwst.associations.lib.update_path import update_key_value
 
         asn = LoadAsAssociation.load(obj)
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
@@ -199,21 +198,6 @@ class JwstStep(Step):
         if not self.parent:
             log.info(f"Results used jwst version: {__version__}")
         return result
-
-    @wraps(Step.__call__)
-    def __call__(self, *args, **kwargs):  # numpydoc ignore=RT01
-        """Deprecated method. Use `run` instead."""  # noqa: D401
-        if not self.parent:
-            warnings.warn(
-                "Step.__call__ is deprecated. It is equivalent to Step.run "
-                "and is not recommended. See "
-                "https://jwst-pipeline.readthedocs.io/en/latest/jwst/"
-                "user_documentation/running_pipeline_python.html"
-                "#advanced-use-pipeline-run-vs-pipeline-call for more details.",
-                UserWarning,
-                stacklevel=2,
-            )
-        return super().__call__(*args, **kwargs)
 
 
 class JwstPipeline(Pipeline, JwstStep):

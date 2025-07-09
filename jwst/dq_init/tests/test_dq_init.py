@@ -9,16 +9,18 @@ from jwst.dq_init.dq_initialization import do_dqinit
 
 # Set parameters for multiple runs of data
 args = "xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type"
-test_data = [(1, 1, 2304, 2048, 2, 2, 'FGS', 'FGS_ID-STACK'),
-             (1, 1, 2048, 2048, 2, 2, 'FGS', 'FGS_ID-IMAGE'),
-             (1, 1, 2048, 2048, 2, 2, 'NIRCAM', 'NRC_IMAGE'),
-             (1, 1, 1032, 1024, 1, 5, 'MIRI', 'MIR_IMAGE')]
+test_data = [
+    (1, 1, 2304, 2048, 2, 2, "FGS", "FGS_ID-STACK"),
+    (1, 1, 2048, 2048, 2, 2, "FGS", "FGS_ID-IMAGE"),
+    (1, 1, 2048, 2048, 2, 2, "NIRCAM", "NRC_IMAGE"),
+    (1, 1, 1032, 1024, 1, 5, "MIRI", "MIR_IMAGE"),
+]
 ids = ["GuiderRawModel-Stack", "GuiderRawModel-Image", "RampModel", "RampModel"]
 
 
 @pytest.mark.parametrize(args, test_data, ids=ids)
 def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type):
-    """ Check that PIXELDQ is initialized with the information from the reference file.
+    """Check that PIXELDQ is initialized with the information from the reference file.
     test that a flagged value in the reference file flags the PIXELDQ array"""
 
     # create raw input data for step
@@ -28,14 +30,14 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
     dq, dq_def = make_maskmodel(ysize, xsize)
 
     # edit reference file with known bad pixel values
-    dq[100, 100] = 2   # Dead pixel
-    dq[200, 100] = 4   # Hot pixel
-    dq[300, 100] = 8   # Unreliable_slope
+    dq[100, 100] = 2  # Dead pixel
+    dq[200, 100] = 4  # Hot pixel
+    dq[300, 100] = 8  # Unreliable_slope
     dq[400, 100] = 16  # RC
-    dq[500, 100] = 1   # Do_not_use
-    dq[100, 200] = 3   # Dead pixel + do not use
-    dq[200, 200] = 5   # Hot pixel + do not use
-    dq[300, 200] = 9   # Unreliable slope + do not use
+    dq[500, 100] = 1  # Do_not_use
+    dq[100, 200] = 3  # Dead pixel + do not use
+    dq[200, 200] = 5  # Hot pixel + do not use
+    dq[300, 200] = 9  # Unreliable slope + do not use
     dq[400, 200] = 17  # RC + do not use
 
     # write mask model
@@ -55,11 +57,11 @@ def test_dq_im(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_typ
         dqdata = outfile.pixeldq
 
     # assert that the pixels read back in match the mapping from ref data to science data
-    assert dqdata[100, 100] == dqflags.pixel['DEAD']
-    assert dqdata[200, 100] == dqflags.pixel['HOT']
-    assert dqdata[300, 100] == dqflags.pixel['UNRELIABLE_SLOPE']
-    assert dqdata[400, 100] == dqflags.pixel['RC']
-    assert dqdata[500, 100] == dqflags.pixel['DO_NOT_USE']
+    assert dqdata[100, 100] == dqflags.pixel["DEAD"]
+    assert dqdata[200, 100] == dqflags.pixel["HOT"]
+    assert dqdata[300, 100] == dqflags.pixel["UNRELIABLE_SLOPE"]
+    assert dqdata[400, 100] == dqflags.pixel["RC"]
+    assert dqdata[500, 100] == dqflags.pixel["DO_NOT_USE"]
     assert dqdata[100, 200] == 1025
     assert dqdata[200, 200] == 2049
     assert dqdata[300, 200] == 16777217
@@ -70,7 +72,7 @@ def test_groupdq():
     """Check that GROUPDQ extension is added to the data and all values are initialized to zero."""
 
     # size of integration
-    instrument = 'MIRI'
+    instrument = "MIRI"
     nints = 1
     ngroups = 5
     xsize = 1032
@@ -98,11 +100,11 @@ def test_groupdq():
     # check that GROUPDQ was created and initialized to zero
     groupdq = outfile.groupdq
 
-    np.testing.assert_array_equal(np.full((1, ngroups, ysize, xsize),
-                                          0,
-                                          dtype=int),
-                                  groupdq,
-                                  err_msg='groupdq not initialized to zero')
+    np.testing.assert_array_equal(
+        np.full((1, ngroups, ysize, xsize), 0, dtype=int),
+        groupdq,
+        err_msg="groupdq not initialized to zero",
+    )
 
 
 def test_dq_subarray():
@@ -126,14 +128,14 @@ def test_dq_subarray():
     # create a JWST datamodel for MIRI data
     im = RampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
 
-    im.meta.instrument.name = 'MIRI'
-    im.meta.instrument.detector = 'MIRIMAGE'
-    im.meta.instrument.filter = 'F1500W'
-    im.meta.instrument.band = 'N/A'
-    im.meta.observation.date = '2016-06-01'
-    im.meta.observation.time = '00:00:00'
-    im.meta.exposure.type = 'MIR_IMAGE'
-    im.meta.subarray.name = 'MASK1550'
+    im.meta.instrument.name = "MIRI"
+    im.meta.instrument.detector = "MIRIMAGE"
+    im.meta.instrument.filter = "F1500W"
+    im.meta.instrument.band = "N/A"
+    im.meta.observation.date = "2016-06-01"
+    im.meta.observation.time = "00:00:00"
+    im.meta.exposure.type = "MIR_IMAGE"
+    im.meta.subarray.name = "MASK1550"
     im.meta.subarray.xstart = 1
     im.meta.subarray.xsize = xsize
     im.meta.subarray.ystart = 467
@@ -150,7 +152,7 @@ def test_dq_subarray():
 
     # write mask model
     ref_data = MaskModel(dq=dq, dq_def=dq_def)
-    ref_data.meta.instrument.name = 'MIRI'
+    ref_data.meta.instrument.name = "MIRI"
     ref_data.meta.subarray.xstart = 1
     ref_data.meta.subarray.xsize = fullxsize
     ref_data.meta.subarray.ystart = 1
@@ -194,12 +196,12 @@ def test_dq_add1_groupdq():
 
     # write reference file with known bad pixel values
 
-    dq[505, 505] = 1   # Do_not_use
+    dq[505, 505] = 1  # Do_not_use
     dq[400, 500] = 3  # do_not_use and dead pixel
 
     # write mask model
     ref_data = MaskModel(dq=dq, dq_def=dq_def)
-    ref_data.meta.instrument.name = 'MIRI'
+    ref_data.meta.instrument.name = "MIRI"
     ref_data.meta.subarray.xstart = 1
     ref_data.meta.subarray.xsize = xsize
     ref_data.meta.subarray.ystart = 1
@@ -218,8 +220,10 @@ def test_dq_add1_groupdq():
 
 # Set parameters for multiple runs of guider data
 args = "xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type, detector"
-test_data_multiple = [(1, 1, 2048, 2048, 2, 2, 'FGS', 'FGS_ID-IMAGE', 'GUIDER1'),
-             (1, 1, 1032, 1024, 1, 5, 'MIRI', 'MIR_IMAGE', 'MIRIMAGE')]
+test_data_multiple = [
+    (1, 1, 2048, 2048, 2, 2, "FGS", "FGS_ID-IMAGE", "GUIDER1"),
+    (1, 1, 1032, 1024, 1, 5, "MIRI", "MIR_IMAGE", "MIRIMAGE"),
+]
 ids = ["GuiderRawModel-Image", "RampModel"]
 
 
@@ -232,8 +236,8 @@ def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_
 
     dm_ramp.meta.instrument.name = instrument
     dm_ramp.meta.instrument.detector = detector
-    dm_ramp.meta.observation.date = '2016-06-01'
-    dm_ramp.meta.observation.time = '00:00:00'
+    dm_ramp.meta.observation.date = "2016-06-01"
+    dm_ramp.meta.observation.time = "00:00:00"
 
     # run the full step
     outfile = DQInitStep.call(dm_ramp)
@@ -277,9 +281,9 @@ def make_rampmodel(nints, ngroups, ysize, xsize):
     # create a JWST datamodel for MIRI data
     dm_ramp = RampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
 
-    dm_ramp.meta.instrument.name = 'MIRI'
-    dm_ramp.meta.observation.date = '2018-01-01'
-    dm_ramp.meta.observation.time = '00:00:00'
+    dm_ramp.meta.instrument.name = "MIRI"
+    dm_ramp.meta.observation.date = "2018-01-01"
+    dm_ramp.meta.observation.time = "00:00:00"
     dm_ramp.meta.subarray.xstart = 1
     dm_ramp.meta.subarray.xsize = xsize
     dm_ramp.meta.subarray.ystart = 1
@@ -295,12 +299,14 @@ def make_maskmodel(ysize, xsize):
     # define a dq_def extension
     mask = MaskModel()
 
-    dqdef = [(0, 1, 'DO_NOT_USE', 'Bad Pixel do not use'),
-             (1, 2, 'DEAD', 'Dead Pixel'),
-             (2, 4, 'HOT', 'Hot pixel'),
-             (3, 8, 'UNRELIABLE_SLOPE', 'Large slope variance'),
-             (4, 16, 'RC', 'RC pixel'),
-             (5, 32, 'REFERENCE_PIXEL', 'Reference Pixel')]
+    dqdef = [
+        (0, 1, "DO_NOT_USE", "Bad Pixel do not use"),
+        (1, 2, "DEAD", "Dead Pixel"),
+        (2, 4, "HOT", "Hot pixel"),
+        (3, 8, "UNRELIABLE_SLOPE", "Large slope variance"),
+        (4, 16, "RC", "RC pixel"),
+        (5, 32, "REFERENCE_PIXEL", "Reference Pixel"),
+    ]
 
     dq_def = np.array((dqdef), dtype=mask.dq_def.dtype)
 

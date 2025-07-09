@@ -1,8 +1,8 @@
 """Routines related to WCS procedures of cube_build."""
 
 import numpy as np
-from ..assign_wcs import nirspec
-from ..assign_wcs.util import wrap_ra
+from jwst.assign_wcs import nirspec
+from jwst.assign_wcs.util import wrap_ra
 from gwcs import wcstools
 import logging
 

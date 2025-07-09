@@ -7,24 +7,24 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.datamodels import SourceModelContainer
 from jwst.stpipe import query_step_status
 from jwst.stpipe.utilities import invariant_filename
-from ..associations.lib.rules_level3_base import format_product
-from ..exp_to_source import multislit_to_container
-from ..master_background.master_background_step import split_container
-from ..stpipe import Pipeline
-from ..lib.exposure_types import is_moving_target
+from jwst.associations.lib.rules_level3_base import format_product
+from jwst.exp_to_source import multislit_to_container
+from jwst.master_background.master_background_step import split_container
+from jwst.stpipe import Pipeline
+from jwst.lib.exposure_types import is_moving_target
 
 # step imports
-from ..assign_mtwcs import assign_mtwcs_step
-from ..cube_build import cube_build_step
-from ..extract_1d import extract_1d_step
-from ..master_background import master_background_step
-from ..mrs_imatch import mrs_imatch_step
-from ..outlier_detection import outlier_detection_step
-from ..resample import resample_spec_step
-from ..combine_1d import combine_1d_step
-from ..photom import photom_step
-from ..spectral_leak import spectral_leak_step
-from ..pixel_replace import pixel_replace_step
+from jwst.assign_mtwcs import assign_mtwcs_step
+from jwst.cube_build import cube_build_step
+from jwst.extract_1d import extract_1d_step
+from jwst.master_background import master_background_step
+from jwst.mrs_imatch import mrs_imatch_step
+from jwst.outlier_detection import outlier_detection_step
+from jwst.resample import resample_spec_step
+from jwst.combine_1d import combine_1d_step
+from jwst.photom import photom_step
+from jwst.spectral_leak import spectral_leak_step
+from jwst.pixel_replace import pixel_replace_step
 
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure, make_wfss_multicombined
 
@@ -329,7 +329,6 @@ class Spec3Pipeline(Pipeline):
 
         # Save the final output products for WFSS modes
         if exptype in WFSS_TYPES:
-            # outstem = output_file.replace("_{source_id}", "_t0000")
             if self.save_results:
                 x1d_output = make_wfss_multiexposure(wfss_x1d)
                 x1d_filename = output_file + "_x1d.fits"

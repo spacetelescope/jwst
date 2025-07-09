@@ -19,8 +19,8 @@ def test_makedisk(n):
     arr = utils.makedisk(n, r)
 
     # test disk is symmetric about center in both directions
-    assert_allclose(arr[:10,:], arr[-10:,:][::-1,:])
-    assert_allclose(arr[:,:10], arr[:,-10:][:,::-1])
+    assert_allclose(arr[:10, :], arr[-10:, :][::-1, :])
+    assert_allclose(arr[:, :10], arr[:, -10:][:, ::-1])
 
     # test disk is all 0 or 1
     assert np.all(np.logical_or(arr == 0, arr == 1))
@@ -58,7 +58,7 @@ def test_min_distance_to_edge():
     shp = (sz, sz)
     img = np.zeros(shp)
     img[10, 10] = 1
-    
+
     # basic test
     x_out, y_out, dist = utils.min_distance_to_edge(img)
     assert dist == 10.0
@@ -100,8 +100,8 @@ def test_quadratic_extremum():
 
     def quadratic(p, x):
         """Ordering of p is consistent with np.polyfit"""
-        return p[0]*x**2 + p[1] * x + p[2]
-    
+        return p[0] * x**2 + p[1] * x + p[2]
+
     x = np.linspace(-5, 5, 100)
 
     # Test of quadratic_extremum with a maximum
@@ -146,6 +146,7 @@ def test_make_a():
     )
     assert_allclose(arr, true_arr)
 
+
 def test_fringes2pistons():
     """Test of fringes2pistons in utils module"""
     fringephases = np.array([0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.1])
@@ -155,6 +156,7 @@ def test_fringes2pistons():
 
     true_result = np.array([-0.02, -0.034, -0.02, 0.014, 0.06])
     assert_allclose(result, true_result)
+
 
 def test_rebin():
     """Test of rebin() and krebin() in utils module"""
@@ -232,23 +234,26 @@ def test_crosscorrelate():
     )
     assert_allclose(result, true_result)
 
-def test_rotate2dccw():
 
+def test_rotate2dccw():
     # test 90 degree rotation
     vectors = np.array([[1, 0], [0, 1], [-1, 0], [0, -1]])
-    rotated = utils.rotate2dccw(vectors, np.pi/2)
+    rotated = utils.rotate2dccw(vectors, np.pi / 2)
     # very near zero so default rtol
     assert_allclose(rotated, np.array([[0, 1], [-1, 0], [0, -1], [1, 0]]), atol=1e-10)
 
     # test that small positive rotation makes x smaller and y larger
-    vector = np.array([[1, 1],])
-    rotated = utils.rotate2dccw(vector, np.pi/30)[0]
+    vector = np.array(
+        [
+            [1, 1],
+        ]
+    )
+    rotated = utils.rotate2dccw(vector, np.pi / 30)[0]
     assert rotated[0] < vector[0][0]
     assert rotated[1] > vector[0][1]
 
 
 def test_get_cw_beta(example_model, bandpass):
-
     filt = example_model.meta.instrument.filter
     cw, beta = utils.get_cw_beta(bandpass)
 
@@ -289,7 +294,7 @@ def test_handle_bandpass(bandpass, throughput_model):
     assert np.all(wls <= wlhp_h)
 
     # ensure the throughput is flat and normalized
-    assert np.allclose(thrus/np.mean(thrus), 1.0, rtol=1e-5)
+    assert np.allclose(thrus / np.mean(thrus), 1.0, rtol=1e-5)
     assert np.isclose(np.sum(thrus), 1.0)
 
     # test case where user-defined bandpass is provided as an array
@@ -310,7 +315,6 @@ def test_handle_bandpass(bandpass, throughput_model):
 
 
 def test_degrees_per_pixel(example_model):
-
     # example_model has no wcsinfo to start with
     pixscale_x, pixscale_y = utils.degrees_per_pixel(example_model)
     assert pixscale_x == pixscale_y == 65.6 / (60.0 * 60.0 * 1000)

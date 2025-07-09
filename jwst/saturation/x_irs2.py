@@ -1,7 +1,7 @@
 from collections import namedtuple
 
 import numpy as np
-from ..lib import pipe_utils
+from jwst.lib import pipe_utils
 
 """ This is the interface:
     mask = make_mask(input_model)

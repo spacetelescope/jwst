@@ -1,4 +1,5 @@
 """Test DMSBaseMixin features"""
+
 import inspect
 import re
 
@@ -8,21 +9,20 @@ from astropy.utils.data import get_pkg_data_filename
 from jwst.associations import AssociationRegistry
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dms_registry():
     """Create the registry"""
     dms_test_rules_path = get_pkg_data_filename(
-        "data/dms_rules.py", package="jwst.associations.tests")
-    dms_registry = AssociationRegistry(
-        [dms_test_rules_path], include_default=False
+        "data/dms_rules.py", package="jwst.associations.tests"
     )
+    dms_registry = AssociationRegistry([dms_test_rules_path], include_default=False)
     return dms_registry
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dms_asns(dms_registry):
     """Create basic associations"""
-    result = dms_registry.match('item')
+    result = dms_registry.match("item")
     return result
 
 
@@ -31,7 +31,7 @@ def test_asn_name(dms_asns):
     asns, _ = dms_asns
     asn = asns[0]
 
-    regex = re.compile(r'jwnoprogram-a3001_none_\d\d\d\d\d_asn')
+    regex = re.compile(r"jwnoprogram-a3001_none_\d\d\d\d\d_asn")
     assert regex.match(asn.asn_name)
 
 
@@ -39,14 +39,14 @@ def test_asn_name_override(dms_asns):
     """Test for generating an association name"""
     asns, _ = dms_asns
     asn = asns[0]
-    asn.asn_name = 'new_name'
-    assert asn.asn_name == 'new_name'
+    asn.asn_name = "new_name"
+    assert asn.asn_name == "new_name"
 
 
 def test_registry(dms_registry):
     """Test basic registry creation and usage"""
     assert len(dms_registry) == 1
-    assert 'AsnDMSBase' in dms_registry
+    assert "AsnDMSBase" in dms_registry
 
 
 def test_asn(dms_asns):
@@ -60,7 +60,7 @@ def test_finalize(dms_registry, dms_asns):
     """Test finalization"""
     asns, orphaned = dms_asns
 
-    finalized = dms_registry.callback.reduce('finalize', asns)
+    finalized = dms_registry.callback.reduce("finalize", asns)
 
     assert len(finalized) == 1
 
@@ -68,17 +68,18 @@ def test_finalize(dms_registry, dms_asns):
 def test_include_bases():
     """Test for included bases"""
     dms_test_rules_path = get_pkg_data_filename(
-        "data/dms_rules.py", package="jwst.associations.tests")
+        "data/dms_rules.py", package="jwst.associations.tests"
+    )
     dms_registry = AssociationRegistry(
         [dms_test_rules_path], include_default=False, include_bases=True
     )
 
     assert len(dms_registry) > 1
-    assert 'DMSBaseMixin' in dms_registry
+    assert "DMSBaseMixin" in dms_registry
 
 
 def test_utility(dms_registry):
     """Test the utility inclusion marker"""
 
     names, objs = zip(*inspect.getmembers(dms_registry.Utility))
-    assert 'valid_function' in names
+    assert "valid_function" in names

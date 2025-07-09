@@ -8,6 +8,7 @@ from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
     wfss_multiexposure_to_multispec,
 )
+
 from jwst.datamodels.utils.tests.wfss_helpers import (
     wfss_spec2_multi,
     wfss_spec3_multi,
@@ -37,7 +38,6 @@ def wfss_multiexposure():
 @pytest.fixture
 def multi_combined():
     return wfss_comb()
-
 
 
 @pytest.mark.parametrize("input_model_maker", ["wfss_spec2_multispec", "wfss_spec3_multispec"])

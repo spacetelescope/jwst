@@ -8,7 +8,6 @@ from jwst.ami import matrix_dft
 
 
 def test_matrix_dft(circular_pupil):
-
     # roundtrip
     nlam_d = 100
     npix = circular_pupil.shape[0]
@@ -19,16 +18,18 @@ def test_matrix_dft(circular_pupil):
     # can't just use assert_allclose because there are always a few pixels that are not
     # very close given that the input has sharp edges
     isclose = np.isclose(np.abs(idft), circular_pupil, atol=0.1)
-    fraction_close = np.sum(isclose)/circular_pupil.size
+    fraction_close = np.sum(isclose) / circular_pupil.size
     assert fraction_close > 0.99
 
     # test nonzero offset
     offset = (10.9, -7.1)
-    dft_offset = matrix_dft.matrix_dft(circular_pupil, nlam_d, npix, centering="ADJUSTABLE", offset=offset)
+    dft_offset = matrix_dft.matrix_dft(
+        circular_pupil, nlam_d, npix, centering="ADJUSTABLE", offset=offset
+    )
 
     # ensure max value of dft is at the offset from center of array
     argmax_2d = np.unravel_index(np.argmax(np.abs(dft_offset)), dft.shape)
-    center = np.array(dft_offset.shape)/2
+    center = np.array(dft_offset.shape) / 2
     offset_idx = center + np.floor(np.array(offset))
     assert_allclose(argmax_2d, offset_idx)
 
@@ -39,9 +40,8 @@ def test_matrix_dft(circular_pupil):
 
     # test expected failure with offset non-tuple
     with pytest.raises(ValueError):
-        dft = matrix_dft.matrix_dft(circular_pupil, nlam_d, npix,
-            centering="ADJUSTABLE", offset=1)
-    
+        dft = matrix_dft.matrix_dft(circular_pupil, nlam_d, npix, centering="ADJUSTABLE", offset=1)
+
     # test nlam_d and npix as tuples
     dft = matrix_dft.matrix_dft(circular_pupil, (nlam_d, nlam_d), (npix, npix))
     assert dft.shape == (npix, npix)

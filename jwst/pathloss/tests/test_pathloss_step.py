@@ -8,7 +8,10 @@ from stdatamodels.jwst import datamodels
 import jwst
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_nirspec import (
-    create_nirspec_mos_file, create_nirspec_fs_file, create_nirspec_ifu_file)
+    create_nirspec_mos_file,
+    create_nirspec_fs_file,
+    create_nirspec_ifu_file,
+)
 from jwst.extract_2d import Extract2dStep
 from jwst.pathloss import PathLossStep
 
@@ -111,12 +114,8 @@ def test_pathloss_step_mos_point(nirspec_mos_model_point):
 
         # data should have been divided by pathloss
         nnan = ~np.isnan(slit.data)
-        assert np.allclose(
-            slit.data[nnan] * pathloss[nnan], model.slits[0].data[nnan]
-        )
-        assert np.allclose(
-            slit.err[nnan] * pathloss[nnan], model.slits[0].err[nnan]
-        )
+        assert np.allclose(slit.data[nnan] * pathloss[nnan], model.slits[0].data[nnan])
+        assert np.allclose(slit.err[nnan] * pathloss[nnan], model.slits[0].err[nnan])
         assert np.allclose(
             slit.var_rnoise[nnan] * pathloss[nnan] ** 2,
             model.slits[0].var_rnoise[nnan],
@@ -155,12 +154,8 @@ def test_pathloss_step_mos_uniform(nirspec_mos_model_extended):
 
         # data should have been divided by pathloss
         nnan = ~np.isnan(slit.data)
-        assert np.allclose(
-            slit.data[nnan] * pathloss[nnan], model.slits[0].data[nnan]
-        )
-        assert np.allclose(
-            slit.err[nnan] * pathloss[nnan], model.slits[0].err[nnan]
-        )
+        assert np.allclose(slit.data[nnan] * pathloss[nnan], model.slits[0].data[nnan])
+        assert np.allclose(slit.err[nnan] * pathloss[nnan], model.slits[0].err[nnan])
         assert np.allclose(
             slit.var_rnoise[nnan] * pathloss[nnan] ** 2,
             model.slits[0].var_rnoise[nnan],
@@ -201,9 +196,9 @@ def test_pathloss_step_fs_uniform(nirspec_fs_model_extended):
         assert slit.pathloss_correction_type == "UNIFORM"
 
 
-@pytest.mark.parametrize('mode', ['mos', 'fs'])
+@pytest.mark.parametrize("mode", ["mos", "fs"])
 def test_pathloss_correction_pars(mode, nirspec_mos_model_point, nirspec_fs_model_point):
-    if mode == 'mos':
+    if mode == "mos":
         model = nirspec_mos_model_point.copy()
     else:
         model = nirspec_fs_model_point.copy()

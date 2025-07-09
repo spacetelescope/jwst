@@ -15,15 +15,15 @@ from stdatamodels.jwst.transforms.models import _toindex
 from astropy.coordinates import SkyCoord
 from astropy import units as u
 
-from ..model_blender import blendmeta
-from ..assign_wcs import pointing
+from jwst.model_blender import blendmeta
+from jwst.assign_wcs import pointing
 from jwst.datamodels import ModelContainer
-from ..assign_wcs import nirspec
-from ..assign_wcs.util import wrap_ra
+from jwst.assign_wcs import nirspec
+from jwst.assign_wcs.util import wrap_ra
 from . import cube_build_wcs_util
 from . import cube_internal_cal
 from . import coord
-from ..mrs_imatch.mrs_imatch_step import apply_background_2d
+from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
 from .cube_match_sky_pointcloud import cube_wrapper  # c extension
 from .cube_match_sky_driz import cube_wrapper_driz  # c extension
 
@@ -2181,24 +2181,19 @@ class IFUCubeData:
         dec3_det = np.zeros((ysize, xsize))
         dec4_det = np.zeros((ysize, xsize))
 
-        pixfrac = 1.0
-
         # determine the slice width using slice 1 and 3
         slice_wcs1 = nirspec.nrs_wcs_set_input(input_model, 0)
         detector2slicer = slice_wcs1.get_transform("detector", "slicer")
-        x, y = wcstools.grid_from_bounding_box(slice_wcs1.bounding_box)
-        across1, along1, _ = detector2slicer(x, y - 0.4999 * pixfrac)
-        across1 = across1[~np.isnan(across1)]
-        slice_loc1 = np.unique(across1)
+        mean_x, mean_y = np.mean(slice_wcs1.bounding_box[0]), np.mean(slice_wcs1.bounding_box[1])
+        slice_loc1, _, _ = detector2slicer(mean_x, mean_y)
 
         slice_wcs3 = nirspec.nrs_wcs_set_input(input_model, 2)
         detector2slicer = slice_wcs3.get_transform("detector", "slicer")
-        x, y = wcstools.grid_from_bounding_box(slice_wcs3.bounding_box)
-        across3, along3, _ = detector2slicer(x, y - 0.4999 * pixfrac)
-        across3 = across3[~np.isnan(across3)]
-        slice_loc3 = np.unique(across3)
+        mean_x, mean_y = np.mean(slice_wcs3.bounding_box[0]), np.mean(slice_wcs3.bounding_box[1])
+        slice_loc3, _, _ = detector2slicer(mean_x, mean_y)
 
         across_width = abs(slice_loc1 - slice_loc3)
+
         # for NIRSPEC each file has 30 slices
         # wcs information access separately for each slice
         nslices = 30
