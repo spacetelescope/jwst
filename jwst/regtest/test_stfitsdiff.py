@@ -879,7 +879,17 @@ def mock_table(tmp_path_factory):
         spec.meta.cal_step.flat_field = "SKIPPED"
         spec.save(keyword_mod)
 
-    return truth, keyword_mod, data_mod, nan_in_data, nan_column, diff_column, diff_coltype
+    testing_tables = [
+        truth,
+        keyword_mod,
+        data_mod,
+        nan_in_data,
+        nan_column,
+        diff_column,
+        diff_coltype,
+    ]
+
+    return testing_tables
 
 
 def test_identical_tables(mock_table):
