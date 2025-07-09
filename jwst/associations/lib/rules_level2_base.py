@@ -424,7 +424,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             )
         )
 
-        result.append(f"        {str(self.constraints):s}")
+        result.append(f"        {self.constraints!s:s}")
 
         # Products of the association
         for product in self.data["products"]:

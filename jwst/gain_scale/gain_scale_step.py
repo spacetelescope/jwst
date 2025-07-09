@@ -17,7 +17,7 @@ class GainScaleStep(Step):
     class_alias = "gain_scale"
 
     spec = """
-    """  # noqa: E501
+    """
     reference_file_types = ["gain"]
 
     def process(self, step_input):

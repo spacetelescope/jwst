@@ -84,7 +84,7 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
         "--steps.outlier_detection.skip=true",
         "--steps.resample.skip=true",
         "--steps.source_catalog.skip=true",
-        f"--in_memory={str(in_memory)}",
+        f"--in_memory={in_memory!s}",
     ]
 
     Step.from_cmdline(args)

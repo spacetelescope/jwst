@@ -83,7 +83,7 @@ def test_parameters_from_crds_filename(monkeypatch):
     """
 
     def throw_error(self):
-        raise Exception()  # noqa: TRY002
+        raise Exception()
 
     monkeypatch.setattr(datamodels, "open", throw_error)
 
@@ -107,7 +107,7 @@ def test_parameters_from_crds_association(on_disk_status, monkeypatch):
     """
 
     def throw_error(self):
-        raise Exception()  # noqa: TRY002
+        raise Exception()
 
     monkeypatch.setattr(datamodels, "open", throw_error)
 

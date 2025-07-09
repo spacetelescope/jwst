@@ -65,8 +65,8 @@ class SimpleConstraintABC(abc.ABC):
             New instance of class.
         """
         obj = super().__new__(cls)
-        obj._ca_history = collections.deque()  # noqa: SLF001
-        obj._constraint_attributes = {}  # noqa: SLF001
+        obj._ca_history = collections.deque()
+        obj._constraint_attributes = {}
         return obj
 
     def __init__(self, init=None, value=None, name=None, **kwargs):
@@ -208,7 +208,7 @@ class SimpleConstraintABC(abc.ABC):
         yield self
 
     def __repr__(self):
-        result = f"{self.__class__.__name__}({str(self._constraint_attributes)})"
+        result = f"{self.__class__.__name__}({self._constraint_attributes!s})"
         return result
 
     def __str__(self):

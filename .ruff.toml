@@ -43,7 +43,8 @@ select = [
     "TRY",    # tryceratops (best practices for try/except blocks)
     "UP",     # pyupgrade (simplified syntax allowed by newer Python versions)
     "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
-    "TID252"  # Checks for relative imports
+    "TID252", # Checks for relative imports
+    "RUF",    # Ruff specific rules not found in other tools
 ]
 ignore = [
     "D100", # missing docstring in public module
@@ -55,6 +56,14 @@ ignore = [
     "TRY003", # prevents custom exception messages not defined in exception itself.
     "TRY400", # enforces log.exception instead of log.error in except clause.
     "ISC001", # single line implicit string concatenation. formatter recommends ignoring this.
+
+    # Require discussion before enabling these rules
+    "RUF002", # ambiguous unicode character in docstring
+    "RUF005", # Literal concatenation
+    "RUF009", # Do not perform function calls in dataclass defaults
+    "RUF012", # Mutable class attributes should be annotated with `typing.ClassVar`
+    "RUF015", # Unnecessary iterable allocation for first element
+    "RUF022", # Unsorted __all__
 ]
 
 [lint.pydocstyle]

@@ -11,16 +11,16 @@ import pytest
 
 pytest.importorskip("pysiaf")
 
-from astropy.io import fits  # noqa: E402
-from astropy.table import Table  # noqa: E402
-from astropy.time import Time  # noqa: E402
+from astropy.io import fits
+from astropy.table import Table
+from astropy.time import Time
 
-from stdatamodels.jwst import datamodels  # noqa: E402
+from stdatamodels.jwst import datamodels
 
-from jwst.lib import engdb_mast  # noqa: E402
-from jwst.lib import set_telescope_pointing as stp  # noqa: E402
-from jwst.lib import siafdb  # noqa: E402
-from jwst.tests.helpers import word_precision_check  # noqa: E402
+from jwst.lib import engdb_mast
+from jwst.lib import set_telescope_pointing as stp
+from jwst.lib import siafdb
+from jwst.tests.helpers import word_precision_check
 
 # Ensure that `set_telescope_pointing` logs.
 stp.logger.setLevel(logging.DEBUG)

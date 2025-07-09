@@ -37,7 +37,7 @@ class Tso3Pipeline(Pipeline):
     class_alias = "calwebb_tso3"
 
     spec = """
-    """  # noqa: E501
+    """
 
     # Define alias to steps
     step_defs = {

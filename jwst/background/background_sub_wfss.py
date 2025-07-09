@@ -352,10 +352,10 @@ def _mask_from_source_cat(input_model, wl_range_name, mmag_extract=None):
         order_bounding = obj.order_bounding
         for order in order_bounding.keys():
             ((ymin, ymax), (xmin, xmax)) = order_bounding[order]
-            xmin = int(math.floor(xmin))
-            xmax = int(math.ceil(xmax)) + 1  # convert to slice limit
-            ymin = int(math.floor(ymin))
-            ymax = int(math.ceil(ymax)) + 1
+            xmin = math.floor(xmin)
+            xmax = math.ceil(xmax) + 1  # convert to slice limit
+            ymin = math.floor(ymin)
+            ymax = math.ceil(ymax) + 1
             xmin = max(xmin, 0)
             xmax = min(xmax, shape[-1])
             ymin = max(ymin, 0)

@@ -63,8 +63,8 @@ def contrast_curve(target_model, width):
     # Get the target array size and center
     nrows = target_model.data.shape[0]
     ncols = target_model.data.shape[1]
-    crow = int(round(nrows / 2)) - 1
-    ccol = int(round(ncols / 2)) - 1
+    crow = round(nrows / 2) - 1
+    ccol = round(ncols / 2) - 1
 
     # Create a series of annuli inner radii that starts at zero, extends
     # to the nearest edge of the image, and goes in increments of "width"

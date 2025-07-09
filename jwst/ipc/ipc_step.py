@@ -12,7 +12,7 @@ class IPCStep(Step):
     class_alias = "ipc"
 
     spec = """
-    """  # noqa: E501
+    """
 
     reference_file_types = ["ipc"]
 

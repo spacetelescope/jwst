@@ -504,7 +504,7 @@ class ResidualFringeCorrection:
 
                     except Exception as e:
                         log.warning(f"  Skipping col={col} {ss}:")
-                        log.warning(f"  {str(e)}")
+                        log.warning(f"  {e!s}")
 
                 del ss_data, ss_wmap, ss_weight  # end of column
 

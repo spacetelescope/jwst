@@ -31,7 +31,7 @@ class WavecorrStep(Step):
     class_alias = "wavecorr"
 
     spec = """
-    """  # noqa: E501
+    """
 
     reference_file_types = ["wavecorr"]
 

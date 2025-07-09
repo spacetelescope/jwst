@@ -42,9 +42,7 @@ def asn_get_data(asn):
     # there are more, we'll just get the first one found.
     science_member = members_by_type["science"]
     if len(science_member) != 1:
-        log.warning(
-            "Wrong number of science exposures found in {}".format(exp_product["name"])  # noqa: E501
-        )
+        log.warning("Wrong number of science exposures found in {}".format(exp_product["name"]))
         log.warning("    Using only first one.")
 
     science_member = science_member[0]

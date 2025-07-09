@@ -16,7 +16,7 @@ class TSOPhotometryStep(Step):
 
     spec = """
         save_catalog = boolean(default=False)  # save exposure-level catalog
-    """  # noqa: E501
+    """
 
     reference_file_types = ["tsophot", "gain"]
 

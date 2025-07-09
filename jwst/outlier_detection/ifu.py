@@ -123,7 +123,7 @@ def detect_outliers(
     ndet = len(uq_det)
     for idet in range(ndet):
         indx = (np.where(detector == uq_det[idet]))[0]
-        ndet_files = int(len(indx))
+        ndet_files = len(indx)
         flag_outliers(
             input_models,
             idet,

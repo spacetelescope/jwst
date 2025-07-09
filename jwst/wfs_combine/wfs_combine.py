@@ -114,12 +114,12 @@ class DataSet:
         new_model.history.append(f"Flip dithers = {self.flip_dithers}")
         new_model.history.append(f"WFS_COMBINE refine offset = {self.do_refine}")
         new_model.history.append(
-            f"WFS_COMBINE X offset applied {str(self.off_x)} pixels "
-            f"actual offset {str(round(self.flt_off_x, 2))} pixels"
+            f"WFS_COMBINE X offset applied {self.off_x!s} pixels "
+            f"actual offset {round(self.flt_off_x, 2)!s} pixels"
         )
         new_model.history.append(
-            f"WFS_COMBINE Y offset applied {str(self.off_y)} pixels "
-            f"actual offset {str(round(self.flt_off_y, 2))} pixels"
+            f"WFS_COMBINE Y offset applied {self.off_y!s} pixels "
+            f"actual offset {round(self.flt_off_y, 2)!s} pixels"
         )
         return new_model
 
@@ -180,10 +180,10 @@ class DataSet:
             # 3. Set limits of the subarrays (in frames of input data)
             #    for interpolation by taking this centroid +/- psf_size
             #    and adding BLUR_SIZE, taking edges into account
-            xmin = int(round(max(0, ctrd_x - self.psf_size)))
-            ymin = int(round(max(0, ctrd_y - self.psf_size)))
-            xmax = int(round(min(self.input_1.data.shape[1], ctrd_x + self.psf_size)))
-            ymax = int(round(min(self.input_1.data.shape[0], ctrd_y + self.psf_size)))
+            xmin = round(max(0, ctrd_x - self.psf_size))
+            ymin = round(max(0, ctrd_y - self.psf_size))
+            xmax = round(min(self.input_1.data.shape[1], ctrd_x + self.psf_size))
+            ymax = round(min(self.input_1.data.shape[0], ctrd_y + self.psf_size))
 
             # 3a. Set subarrays and interpolate over bad pixels
             data_sub_1 = self.input_1.data[ymin:ymax, xmin:xmax]
@@ -210,8 +210,8 @@ class DataSet:
             # 6. Add the refined delta offsets to the nominal offsets
             self.flt_off_x = self.off_x + ref_del_off_x
             self.flt_off_y = self.off_y + ref_del_off_y
-            self.off_x += int(round(ref_del_off_x))
-            self.off_y += int(round(ref_del_off_y))
+            self.off_x += round(ref_del_off_x)
+            self.off_y += round(ref_del_off_y)
 
         # Do the final alignment for original (not interpolated) image two
         data_2_a, dq_2_a, err_2_a = self.apply_final_offsets()
@@ -272,8 +272,8 @@ class DataSet:
         log.info("From the WCS the x,y pixel offsets are: %s %s", round(off_x, 2), round(off_y, 2))
         self.flt_off_x = off_x
         self.flt_off_y = off_y
-        off_x = int(round(off_x))  # Offsets required to be integers
-        off_y = int(round(off_y))
+        off_x = round(off_x)  # Offsets required to be integers
+        off_y = round(off_y)
 
         return off_x, off_y
 

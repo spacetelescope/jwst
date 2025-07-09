@@ -59,7 +59,7 @@ class Spec3Pipeline(Pipeline):
     class_alias = "calwebb_spec3"
 
     spec = """
-    """  # noqa: E501
+    """
 
     # Define aliases to steps
     step_defs = {
@@ -396,7 +396,7 @@ class Spec3Pipeline(Pipeline):
         # MOS background sources have "BKG" in the source name
         if "BKG" in source_name:
             # prepend "b" to the source_id number and format to 9 chars
-            srcid = f"b{str(source_id):>09s}"
+            srcid = f"b{source_id!s:>09s}"
             self.log.debug(f"Source {source_name} is a MOS background slitlet: ID={srcid}")
 
         # MOS virtual sources have a negative source_id value
@@ -408,6 +408,6 @@ class Spec3Pipeline(Pipeline):
         # Regular MOS sources
         else:
             # prepend "s" to the source_id number and format to 9 chars
-            srcid = f"s{str(source_id):>09s}"
+            srcid = f"s{source_id!s:>09s}"
 
         return srcid

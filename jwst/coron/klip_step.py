@@ -21,7 +21,7 @@ class KlipStep(Step):
 
     spec = """
         truncate = integer(default=50,min=0) # The number of KL transform rows to keep
-    """  # noqa: E501
+    """
 
     def process(self, target, psfrefs):
         """
