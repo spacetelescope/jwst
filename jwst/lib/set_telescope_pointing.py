@@ -1994,7 +1994,7 @@ def get_mnemonics(
     logger.info("Querying engineering DB: %s", engdb.base_url)
 
     # Construct the mnemonic values structure.
-    mnemonics = {mnemonic: None for mnemonic in mnemonics_to_read}
+    mnemonics = dict.fromkeys(mnemonics_to_read)
 
     # Retrieve the mnemonics from the engineering database.
     # Check for whether the bracket values are used and
