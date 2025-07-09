@@ -124,7 +124,6 @@ def make_wfss_multiexposure(input_list):
             populate_recarray(
                 fltdata[spec_idx],
                 spec,
-                n_rows,
                 all_columns,
                 is_vector,
                 ignore_columns=["SOURCE_ID", "N_ALONGDISP"],
@@ -261,7 +260,6 @@ def make_wfss_multicombined(results_list):
             populate_recarray(
                 fltdata[j],
                 spec,
-                n_rows,
                 all_columns,
                 is_vector,
                 ignore_columns=["N_ALONGDISP"],
