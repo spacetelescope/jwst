@@ -113,7 +113,7 @@ to supply custom catalogs.
     >>> c.append(m)
     """
 
-    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):
+    def __init__(self, init=None, asn_exptypes=None, asn_n_members=None, **kwargs):  # noqa: ARG002
         """
         Initialize the container.
 
@@ -131,6 +131,11 @@ to supply custom catalogs.
 
         asn_n_members : int
             Open only the first N qualifying members.
+
+        **kwargs : dict
+            Additional keyword arguments passed to `datamodel_open()`, such as
+            `memmap`, `guess`, `strict_validation`, etc. See `datamodels.open()`
+            for a full list of available keyword arguments.
         """
         self._models = []
         self.asn_exptypes = asn_exptypes
@@ -140,15 +145,13 @@ to supply custom catalogs.
         self.asn_pool_name = None
         self.asn_file_path = None
 
-        self._memmap = kwargs.get("memmap", False)
-
         if init is None:
             # Don't populate the container with models
             pass
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
                 for m in init:
-                    self._models.append(datamodel_open(m, memmap=self._memmap))
+                    self._models.append(datamodel_open(m, **kwargs))
                 # set asn_table_name and product name to first datamodel stem
                 # since they were not provided
                 fname = self._models[0].meta.filename
@@ -165,7 +168,7 @@ to supply custom catalogs.
                 )
         elif isinstance(init, self.__class__):
             for m in init:
-                self._models.append(datamodel_open(m, memmap=self._memmap))
+                self._models.append(datamodel_open(m, **kwargs))
             self.asn_exptypes = init.asn_exptypes
             self.asn_n_members = init.asn_n_members
             self.asn_table = init.asn_table
@@ -294,7 +297,7 @@ to supply custom catalogs.
         try:
             for member in sublist:
                 filepath = asn_dir / member["expname"]
-                m = datamodel_open(filepath, memmap=self._memmap)
+                m = datamodel_open(filepath)
                 m.meta.asn.exptype = member["exptype"]
                 for attr, val in member.items():
                     if attr in RECOGNIZED_MEMBER_FIELDS:
