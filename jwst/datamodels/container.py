@@ -131,6 +131,11 @@ to supply custom catalogs.
 
         asn_n_members : int
             Open only the first N qualifying members.
+
+        **kwargs : dict
+            Additional keyword arguments passed to `datamodel_open()`, such as
+            `memmap`, `guess`, `strict_validation`, etc. See `datamodels.open()`
+            for a full list of available keyword arguments.
         """
         self._models = []
         self.asn_exptypes = asn_exptypes
@@ -146,7 +151,7 @@ to supply custom catalogs.
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
                 for m in init:
-                    self._models.append(datamodel_open(m))
+                    self._models.append(datamodel_open(m, **kwargs))
                 # set asn_table_name and product name to first datamodel stem
                 # since they were not provided
                 fname = self._models[0].meta.filename
@@ -163,7 +168,7 @@ to supply custom catalogs.
                 )
         elif isinstance(init, self.__class__):
             for m in init:
-                self._models.append(datamodel_open(m))
+                self._models.append(datamodel_open(m, **kwargs))
             self.asn_exptypes = init.asn_exptypes
             self.asn_n_members = init.asn_n_members
             self.asn_table = init.asn_table

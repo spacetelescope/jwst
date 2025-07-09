@@ -153,3 +153,30 @@ def test_save(tmp_cwd, container, path):
         container.save(path)
         expected_fname = path.replace(".fits", "") + ".fits"
         assert os.path.exists(expected_fname)
+
+
+def test_open_guess(container):
+    """Test that `guess` keyword argument works in ModelContainer."""
+    asn_file_path, _asn_file_name = os.path.split(ASN_FILE)
+    fnames = [m.meta.filename for m in container]
+    with pushdir(asn_file_path):
+        # opening it normally works fine
+        ModelContainer(fnames, guess=True)
+        with pytest.raises(
+            TypeError, match="Model type is not specifically defined and guessing has been disabled"
+        ):
+            # but if you don't allow guessing the model type, it raises TypeError
+            ModelContainer(fnames, guess=False)
+
+
+def test_open_kwargs(container):
+    wrong_schema = datamodels.NRMModel()._schema
+    asn_file_path, _asn_file_name = os.path.split(ASN_FILE)
+    fnames = [m.meta.filename for m in container]
+    with pushdir(asn_file_path):
+        # opening it normally works fine
+        ModelContainer(fnames)
+        with pytest.raises(AttributeError):
+            # but schema can be passed all the way through to DataModel.__init__ on the
+            # individual datamodels, and cause AttributeError
+            ModelContainer(fnames, schema=wrong_schema)
