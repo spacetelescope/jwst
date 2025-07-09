@@ -1,0 +1,1 @@
+Allow all-NaN slits to be skipped instead of causing crashes
