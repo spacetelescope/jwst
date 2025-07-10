@@ -362,5 +362,6 @@ def test_slit_skip_all_nan(mock_niriss_wfss_l3, monkeypatch):
 
     watcher = LogWatcher("No valid data for slit")
     monkeypatch.setattr(logging.getLogger("jwst.extract_1d.extract"), "info", watcher)
-    _result = Extract1dStep.call(mock_niriss_wfss_l3)
+    result = Extract1dStep.call(mock_niriss_wfss_l3)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
     watcher.assert_seen()

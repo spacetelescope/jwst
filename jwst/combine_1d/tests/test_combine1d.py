@@ -243,9 +243,8 @@ def test_allnan_skip(wfss_multiexposure, monkeypatch):
     )
     monkeypatch.setattr(logging.getLogger("jwst.combine_1d.combine1d"), "warning", watcher0)
     result = Combine1dStep.call(wfss_multiexposure)
-    watcher0.assert_seen()
-
     assert result.meta.cal_step.combine_1d == "SKIPPED"
+    watcher0.assert_seen()
 
     # check for the other log messages
     # these must be done one at a time because the watcher can only be monkeypatched once
@@ -253,10 +252,12 @@ def test_allnan_skip(wfss_multiexposure, monkeypatch):
     watcher1 = LogWatcher("No valid input spectra found for source. Skipping.")
     monkeypatch.setattr(logging.getLogger("jwst.combine_1d.combine1d"), "error", watcher1)
     result = Combine1dStep.call(wfss_multiexposure)
+    assert result.meta.cal_step.combine_1d == "SKIPPED"
     watcher1.assert_seen()
 
     # message when no valid input spectra at all are found
     watcher2 = LogWatcher("No valid input spectra found in WFSSMultiSpecModel")
     monkeypatch.setattr(logging.getLogger("stpipe.Combine1dStep"), "error", watcher2)
     result = Combine1dStep.call(wfss_multiexposure)
+    assert result.meta.cal_step.combine_1d == "SKIPPED"
     watcher2.assert_seen()
