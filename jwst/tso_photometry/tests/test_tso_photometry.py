@@ -5,7 +5,7 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.lib import reffile_utils
-from jwst.tso_photometry.tso_photometry import tso_aperture_photometry
+from jwst.tso_photometry import tso_photometry as tp
 from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
 
 # Default values for mock data
@@ -175,22 +175,27 @@ def mock_nircam_image(
     background=BACKGROUND,
     radius=RADIUS,
     sub64p=False,
+    convert_units=False,
 ):
     data = mk_data_array(shape, value, background, xcenter, ycenter, radius)
     datamodel = datamodels.CubeModel(data)
     set_meta(datamodel, xcenter, ycenter, sub64p=sub64p)
+    if convert_units:
+        tp.convert_data_units(datamodel)
     return datamodel
 
 
 def test_tso_phot():
-    datamodel = mock_nircam_image()
-
-    # Get the gain reference file
-    gain_2d = get_gain_2d(datamodel)
+    datamodel = mock_nircam_image(convert_units=True)
 
     # Use a larger radius than was used for creating the data.
-    catalog = tso_aperture_photometry(
-        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
+    catalog = tp.tso_aperture_photometry(
+        datamodel,
+        XCENTER,
+        YCENTER,
+        RADIUS + 1.0,
+        RADIUS_INNER,
+        RADIUS_OUTER,
     )
 
     assert catalog.meta["instrument"] == datamodel.meta.instrument.name
@@ -226,14 +231,16 @@ def test_tso_phot_sub64p():
     radius_outer = None
 
     datamodel = mock_nircam_image(
-        shape=shape, xcenter=xcenter, ycenter=ycenter, radius=radius, sub64p=True
+        shape=shape,
+        xcenter=xcenter,
+        ycenter=ycenter,
+        radius=radius,
+        sub64p=True,
+        convert_units=True,
     )
 
-    # Get the gain reference file
-    gain_2d = get_gain_2d(datamodel)
-
-    catalog = tso_aperture_photometry(
-        datamodel, xcenter, ycenter, radius, radius_inner, radius_outer, gain_2d
+    catalog = tp.tso_aperture_photometry(
+        datamodel, xcenter, ycenter, radius, radius_inner, radius_outer
     )
 
     assert catalog.meta["instrument"] == datamodel.meta.instrument.name
@@ -252,14 +259,11 @@ def test_tso_phot_sub64p():
 def test_tso_phot_with_int_times():
     datamodel = mock_nircam_image()
 
-    # Get the gain reference file
-    gain_2d = get_gain_2d(datamodel)
-
     # Add integration times to the model
     int_times = include_int_times(datamodel)
 
-    catalog = tso_aperture_photometry(
-        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
+    catalog = tp.tso_aperture_photometry(
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER
     )
 
     offset = datamodel.meta.exposure.integration_start - 1
@@ -269,7 +273,6 @@ def test_tso_phot_with_int_times():
 
 def test_tso_phot_int_times_out_of_range():
     datamodel = mock_nircam_image()
-    gain_2d = get_gain_2d(datamodel)
 
     # Add integration times
     include_int_times(datamodel)
@@ -280,8 +283,8 @@ def test_tso_phot_int_times_out_of_range():
     int_start = datamodel.meta.exposure.integration_start
     datamodel.int_times["integration_number"] += 2 * int_start
 
-    catalog = tso_aperture_photometry(
-        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
+    catalog = tp.tso_aperture_photometry(
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER
     )
 
     int_times = np.array(
@@ -300,7 +303,6 @@ def test_tso_phot_int_times_out_of_range():
 
 def test_tso_phot_missing_int_start():
     datamodel = mock_nircam_image()
-    gain_2d = get_gain_2d(datamodel)
 
     # Add integration times
     int_times = include_int_times(datamodel)
@@ -308,8 +310,8 @@ def test_tso_phot_missing_int_start():
     # Remove the integration start: it sill be assumed to be 1
     datamodel.meta.exposure.integration_start = None
 
-    catalog = tso_aperture_photometry(
-        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
+    catalog = tp.tso_aperture_photometry(
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER
     )
 
     offset = 0
@@ -326,7 +328,11 @@ def test_tso_phot_uncalibrated():
     radius_inner = None
     radius_outer = None
     datamodel = mock_nircam_image(
-        shape=shape, xcenter=xcenter, ycenter=ycenter, radius=radius, sub64p=True
+        shape=shape,
+        xcenter=xcenter,
+        ycenter=ycenter,
+        radius=radius,
+        sub64p=True,
     )
 
     # Set uncalibrated data units
@@ -336,8 +342,11 @@ def test_tso_phot_uncalibrated():
     # Get the gain reference file
     gain_2d = get_gain_2d(datamodel)
 
-    catalog = tso_aperture_photometry(
-        datamodel, xcenter, ycenter, radius, radius_inner, radius_outer, gain_2d
+    # Convert the data units
+    tp.convert_data_units(datamodel, gain_2d)
+
+    catalog = tp.tso_aperture_photometry(
+        datamodel, xcenter, ycenter, radius, radius_inner, radius_outer
     )
 
     assert catalog.meta["instrument"] == datamodel.meta.instrument.name
@@ -359,9 +368,10 @@ def test_tso_phot_unexpected_units():
 
     # Get the gain reference file
     gain_2d = get_gain_2d(datamodel)
+    tp.convert_data_units(datamodel, gain_2d)
 
-    catalog = tso_aperture_photometry(
-        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, gain_2d
+    catalog = tp.tso_aperture_photometry(
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER
     )
 
     # Unexpected units are left alone
@@ -372,6 +382,141 @@ def test_tso_phot_unexpected_units():
 def test_tso_phot_wrong_model():
     model = datamodels.ImageModel()
     with pytest.raises(TypeError, match="must be a CubeModel"):
-        tso_aperture_photometry(
+        tp.tso_aperture_photometry(
             model, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER, None
         )
+
+
+def test_tso_phot_multiple_center_values():
+    datamodel = mock_nircam_image()
+
+    # Use an array of xcenter, ycenter values and provide psf values
+    nint = datamodel.data.shape[0]
+    xcenter = np.full(nint, XCENTER)
+    ycenter = np.full(nint, YCENTER)
+    centroid_x = np.arange(nint)
+    centroid_y = np.arange(nint)
+    psf_width_x = np.full(nint, 1.0)
+    psf_width_y = np.full(nint, 2.0)
+    psf_flux = np.full(nint, 3.0)
+
+    catalog = tp.tso_aperture_photometry(
+        datamodel,
+        xcenter,
+        ycenter,
+        RADIUS + 1.0,
+        RADIUS_INNER,
+        RADIUS_OUTER,
+        centroid_x=centroid_x,
+        centroid_y=centroid_y,
+        psf_width_x=psf_width_x,
+        psf_width_y=psf_width_y,
+        psf_flux=psf_flux,
+    )
+
+    assert np.allclose(catalog.meta["xcenter"], XCENTER, atol=0.01)
+    assert np.allclose(catalog.meta["ycenter"], YCENTER, atol=0.01)
+    assert np.allclose(catalog["aperture_sum"].value, 1263.4778, rtol=1.0e-7)
+    assert np.allclose(catalog["aperture_x"].value, XCENTER, atol=0.01)
+    assert np.allclose(catalog["aperture_y"].value, YCENTER, atol=0.01)
+    assert np.allclose(catalog["centroid_x"].value, np.arange(nint))
+    assert np.allclose(catalog["centroid_y"].value, np.arange(nint))
+    assert np.allclose(catalog["psf_width_x"].value, 1.0)
+    assert np.allclose(catalog["psf_width_y"].value, 2.0)
+    assert np.allclose(catalog["psf_flux"].value, 3.0)
+
+
+@pytest.mark.parametrize("fit_psf", [True, False])
+def test_fit_source_fail(monkeypatch, fit_psf):
+    datamodel = mock_nircam_image()
+    mask = np.full(datamodel.data.shape, False)
+    box_size = int(RADIUS * 2 + 1)
+    xcenter, ycenter = XCENTER, YCENTER
+
+    def mock_centroid(*args, **kwargs):
+        raise ValueError("test fail")
+
+    monkeypatch.setattr(tp, "centroid_sources", mock_centroid)
+
+    # Failure in centroid just returns NaNs for all values
+    result = tp._fit_source(
+        datamodel.data, mask, mask[0], xcenter, ycenter, box_size, fit_psf=fit_psf
+    )
+    if fit_psf:
+        assert len(result) == 5
+        assert np.all(np.isnan(result))
+    else:
+        assert len(result) == 2
+        assert np.all(np.isnan(result))
+
+
+@pytest.mark.parametrize("fit_func", [tp._psf_fit_gaussian_prf, tp._psf_fit_gaussian_width])
+def test_psf_fit(fit_func):
+    datamodel = mock_nircam_image()
+    data = datamodel.data[0]
+    mask = np.full(data.shape, False)
+    fit_box_width = int(RADIUS * 2 + 1)
+    xcenter, ycenter = XCENTER, YCENTER
+
+    # Fit values vary for the flat synthetic source, but they should
+    # be in the same ballpark.
+    x_width, y_width, flux = fit_func(data, mask, fit_box_width, xcenter, ycenter)
+    assert np.allclose([x_width, y_width], RADIUS / 2, rtol=0.3)
+    assert np.allclose(flux, 1263.4778, rtol=0.3)  # expected aperture sum value
+
+
+def test_psf_fit_gaussian_prf_fail(monkeypatch):
+    datamodel = mock_nircam_image()
+    data = datamodel.data[0]
+    mask = np.full(data.shape, False)
+    fit_box_width = int(RADIUS * 2 + 1)
+    xcenter, ycenter = XCENTER, YCENTER
+
+    def mock_phot_call(*args, **kwargs):
+        raise ValueError("test fail")
+
+    monkeypatch.setattr(tp.PSFPhotometry, "__call__", mock_phot_call)
+
+    # Failure in psf fit just returns NaNs
+    result = tp._psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter)
+    assert len(result) == 3
+    assert np.all(np.isnan(result))
+
+
+def test_psf_fit_gaussian_width_fail(monkeypatch):
+    datamodel = mock_nircam_image()
+    data = datamodel.data[0]
+    mask = np.full(data.shape, False)
+    fit_box_width = int(RADIUS * 2 + 1)
+    xcenter, ycenter = XCENTER, YCENTER
+
+    class MockResults:
+        def __init__(self, *args, **kwargs):
+            self.success = False
+
+    monkeypatch.setattr(tp, "minimize", MockResults)
+
+    # Failure in psf fit just returns NaNs
+    result = tp._psf_fit_gaussian_width(data, mask, fit_box_width, xcenter, ycenter)
+    assert len(result) == 3
+    assert np.all(np.isnan(result))
+
+
+def test_tso_source_centroid_fail(monkeypatch):
+    datamodel = mock_nircam_image()
+    xcenter, ycenter = XCENTER, YCENTER
+
+    def mock_fit_source(*args, **kwargs):
+        nan_array = np.full(datamodel.shape[0], np.nan)
+        return nan_array, nan_array
+
+    monkeypatch.setattr(tp, "_fit_source", mock_fit_source)
+
+    # Failure in fit just returns NaNs for centroid,
+    # None for PSF values
+    result = tp.tso_source_centroid(datamodel, xcenter, ycenter)
+    assert len(result) == 5
+    assert np.all(np.isnan(result[:2]))
+    assert result[2] is None
+    assert result[3] is None
+    assert result[4] is None
