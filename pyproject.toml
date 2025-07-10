@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11,<3.13.4"
+requires-python = ">=3.11"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -34,7 +34,7 @@ dependencies = [
     "spherical-geometry>=1.3",
     "stdatamodels @ git+https://github.com/spacetelescope/stdatamodels.git@main",
     "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
-    "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
+    "stpipe>=0.10.0,<0.11.0",
     "stsci.imagestats>=1.6.3",
     "synphot>=1.3",
     "tweakwcs>=0.8.8",
