@@ -9,16 +9,35 @@ from gwcs import wcs
 from astropy.io import fits
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-wcs_kw = {'wcsaxes': 3, 'ra_ref': 165, 'dec_ref': 54,
-          'v2_ref': -8.3942412, 'v3_ref': -5.3123744, 'roll_ref': 37,
-          'crpix1': 1024, 'crpix2': 1024, 'crpix3': 0,
-          'cdelt1': .08, 'cdelt2': .08, 'cdelt3': 1,
-          'ctype1': 'RA---TAN', 'ctype2': 'DEC--TAN', 'ctype3': 'WAVE',
-          'pc1_1': 1, 'pc1_2': 0, 'pc1_3': 0,
-          'pc2_1': 0, 'pc2_2': 1, 'pc2_3': 0,
-          'pc3_1': 0, 'pc3_2': 0, 'pc3_3': 1,
-          'cunit1': 'deg', 'cunit2': 'deg', 'cunit3': 'um',
-          }
+wcs_kw = {
+    "wcsaxes": 3,
+    "ra_ref": 165,
+    "dec_ref": 54,
+    "v2_ref": -8.3942412,
+    "v3_ref": -5.3123744,
+    "roll_ref": 37,
+    "crpix1": 1024,
+    "crpix2": 1024,
+    "crpix3": 0,
+    "cdelt1": 0.08,
+    "cdelt2": 0.08,
+    "cdelt3": 1,
+    "ctype1": "RA---TAN",
+    "ctype2": "DEC--TAN",
+    "ctype3": "WAVE",
+    "pc1_1": 1,
+    "pc1_2": 0,
+    "pc1_3": 0,
+    "pc2_1": 0,
+    "pc2_2": 1,
+    "pc2_3": 0,
+    "pc3_1": 0,
+    "pc3_2": 0,
+    "pc3_3": 1,
+    "cunit1": "deg",
+    "cunit2": "deg",
+    "cunit3": "um",
+}
 
 # these are often warm pixels, so need to be much larger than noise,
 # which has std dev of 1,
@@ -30,17 +49,17 @@ outlier_indices = [(100, 100), (300, 300), (500, 600), (1000, 900)]
 def create_hdul(detector, channel, band):
     hdul = fits.HDUList()
     phdu = fits.PrimaryHDU()
-    phdu.header['telescop'] = "JWST"
-    phdu.header['filename'] = "test" + channel + band
-    phdu.header['instrume'] = 'MIRI'
-    phdu.header['detector'] = detector
-    phdu.header['CHANNEL'] = channel
-    phdu.header['BAND'] = band
-    phdu.header['time-obs'] = '8:59:37'
-    phdu.header['date-obs'] = '2017-09-05'
-    phdu.header['exp_type'] = 'MIR_MRS'
+    phdu.header["telescop"] = "JWST"
+    phdu.header["filename"] = "test" + channel + band
+    phdu.header["instrume"] = "MIRI"
+    phdu.header["detector"] = detector
+    phdu.header["CHANNEL"] = channel
+    phdu.header["BAND"] = band
+    phdu.header["time-obs"] = "8:59:37"
+    phdu.header["date-obs"] = "2017-09-05"
+    phdu.header["exp_type"] = "MIR_MRS"
     scihdu = fits.ImageHDU()
-    scihdu.header['EXTNAME'] = "SCI"
+    scihdu.header["EXTNAME"] = "SCI"
     scihdu.header.update(wcs_kw)
     hdul.append(phdu)
     hdul.append(scihdu)
@@ -128,34 +147,19 @@ def asn(tmp_cwd_module, background, sci):
         "products": [
             {
                 "members": [
-                    {
-                        "expname": "sci.fits",
-                        "exptype": "science"
-                    },
-                    {
-                        "expname": "bkg0.fits",
-                        "exptype": "background"
-                    },
-                    {
-                        "expname": "bkg1.fits",
-                        "exptype": "background"
-                    },
-                    {
-                        "expname": "selfcal0.fits",
-                        "exptype": "selfcal"
-                    },
-                    {
-                        "expname": "selfcal1.fits",
-                        "exptype": "selfcal"
-                    }
+                    {"expname": "sci.fits", "exptype": "science"},
+                    {"expname": "bkg0.fits", "exptype": "background"},
+                    {"expname": "bkg1.fits", "exptype": "background"},
+                    {"expname": "selfcal0.fits", "exptype": "selfcal"},
+                    {"expname": "selfcal1.fits", "exptype": "selfcal"},
                 ]
             }
-        ]
+        ],
     }
-    with open(tmp_cwd_module / 'tmp_asn.json', 'w') as f:
+    with open(tmp_cwd_module / "tmp_asn.json", "w") as f:
         json.dump(asn_table, f)
 
-    container = dm.open(tmp_cwd_module / 'tmp_asn.json')
+    container = dm.open(tmp_cwd_module / "tmp_asn.json")
 
     return container
 
@@ -175,13 +179,27 @@ def test_input_parsing(asn, sci, background):
     assert len(selfcal_list) == 4
 
     # association with background_list provided
-    input_sci, selfcal_list, bkg_list = _parse_inputs(asn, [], [background,] * 3)
+    input_sci, selfcal_list, bkg_list = _parse_inputs(
+        asn,
+        [],
+        [
+            background,
+        ]
+        * 3,
+    )
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 5
     assert len(selfcal_list) == 7
 
     # association with selfcal_list provided
-    input_sci, selfcal_list, bkg_list = _parse_inputs(asn, [background,] * 3, [])
+    input_sci, selfcal_list, bkg_list = _parse_inputs(
+        asn,
+        [
+            background,
+        ]
+        * 3,
+        [],
+    )
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 2
     assert len(selfcal_list) == 7
@@ -193,7 +211,17 @@ def test_input_parsing(asn, sci, background):
     assert len(selfcal_list) == 0
 
     # single science exposure with selfcal_list and bkg_list provided
-    input_sci, selfcal_list, bkg_list = _parse_inputs(sci, [background,] * 3, [background,] * 1)
+    input_sci, selfcal_list, bkg_list = _parse_inputs(
+        sci,
+        [
+            background,
+        ]
+        * 3,
+        [
+            background,
+        ]
+        * 1,
+    )
     assert isinstance(input_sci, dm.IFUImageModel)
     assert len(bkg_list) == 1
     assert len(selfcal_list) == 4
@@ -305,13 +333,10 @@ def test_dispersion_direction(vertical_striping, dispaxis):
     flagged_indices = badpix_selfcal(vertical_striping, dispaxis=dispaxis)
 
     if dispaxis == 2:
-
         assert len(flagged_indices[0]) == 4
 
     elif dispaxis == 1:
-
         assert len(flagged_indices[0]) == 1
 
     elif dispaxis is None:
-
         assert len(flagged_indices[0]) == 1

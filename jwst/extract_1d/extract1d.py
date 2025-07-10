@@ -238,9 +238,15 @@ def _box_extract(
 
     # Compute the variance on the sum, same shape as f.
     # Need to decompose this into read noise, photon noise, and flat noise.
-    var_rn = np.array([np.nansum(variance_rn * profile_2d**2, axis=0)])
-    var_phnoise = np.array([np.nansum(variance_phnoise * profile_2d**2, axis=0)])
-    var_flat = np.array([np.nansum(variance_flat * profile_2d**2, axis=0)])
+
+    # Ignore overflow warnings and invalid values - some variance values may be
+    # very small or very large.
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "overflow encountered", RuntimeWarning)
+        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+        var_rn = np.array([np.nansum(variance_rn * profile_2d**2, axis=0)])
+        var_phnoise = np.array([np.nansum(variance_phnoise * profile_2d**2, axis=0)])
+        var_flat = np.array([np.nansum(variance_flat * profile_2d**2, axis=0)])
 
     if bkg_2d is not None:
         var_rn += var_bkg_rn

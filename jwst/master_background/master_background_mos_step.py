@@ -6,14 +6,14 @@ from jwst.stpipe import record_step_status
 from stdatamodels.jwst import datamodels
 
 from . import nirspec_utils
-from ..barshadow import barshadow_step
-from ..flatfield import flat_field_step
-from ..pathloss import pathloss_step
-from ..photom import photom_step
-from ..pixel_replace import pixel_replace_step
-from ..resample import resample_spec_step
-from ..extract_1d import extract_1d_step
-from ..stpipe import Pipeline
+from jwst.barshadow import barshadow_step
+from jwst.flatfield import flat_field_step
+from jwst.pathloss import pathloss_step
+from jwst.photom import photom_step
+from jwst.pixel_replace import pixel_replace_step
+from jwst.resample import resample_spec_step
+from jwst.extract_1d import extract_1d_step
+from jwst.stpipe import Pipeline
 
 __all__ = ["MasterBackgroundMosStep"]
 
@@ -131,7 +131,7 @@ class MasterBackgroundMosStep(Pipeline):
             # If some type of background processing had already been done. Abort.
             # UNLESS forcing is enacted.
             if not self.force_subtract and "COMPLETE" in [
-                data_model.meta.cal_step.back_sub,
+                data_model.meta.cal_step.bkg_subtract,
                 data_model.meta.cal_step.master_background,
             ]:
                 self.log.info("Background subtraction has already occurred. Skipping.")

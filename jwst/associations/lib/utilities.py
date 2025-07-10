@@ -6,7 +6,7 @@ import logging
 
 from numpy.ma import masked
 
-from .. import config
+from jwst.associations import config
 
 # Configure logging
 logger = logging.getLogger(__name__)

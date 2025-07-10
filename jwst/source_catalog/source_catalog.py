@@ -743,12 +743,12 @@ class JWSTSourceCatalog:
             for (i, j) in self._ci_ee_indices
         ]
         with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=RuntimeWarning, message="invalid value encountered in divide"
-            )
-            return [
+            warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+            warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+            concentration = [
                 getattr(self, flux1).value / getattr(self, flux2).value for flux1, flux2 in fluxes
             ]
+        return concentration
 
     def set_ci_properties(self):
         """Set the concentration indices as dynamic attributes."""

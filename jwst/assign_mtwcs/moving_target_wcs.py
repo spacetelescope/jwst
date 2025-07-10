@@ -46,19 +46,22 @@ def assign_moving_target_wcs(input_models):
 
     # loop over only science exposures in the ModelLibrary
     ind = input_models.indices_for_exptype("science")
-    mt_ra = np.empty(len(ind))
-    mt_dec = np.empty(len(ind))
+    mt_ra = np.full(len(ind), np.nan)
+    mt_dec = np.full(len(ind), np.nan)
+    mt_valid = True
     with input_models:
         for i in ind:
-            model = input_models.borrow(i)
-            mt_ra[i] = model.meta.wcsinfo.mt_ra
-            mt_dec[i] = model.meta.wcsinfo.mt_dec
-            input_models.shelve(model, i, modify=False)
+            meta = input_models.read_metadata(i, flatten=False)
+            mt_valid = _is_mt_meta_valid(meta)
+            if not mt_valid:
+                break
+            mt_ra[i] = meta["meta"]["wcsinfo"]["mt_ra"]
+            mt_dec[i] = meta["meta"]["wcsinfo"]["mt_dec"]
 
     # Compute the mean MT RA/Dec over all exposures
-    if None in mt_ra or None in mt_dec:
-        log.warning("One or more MT RA/Dec values missing in input images")
-        log.warning("Step will be skipped, resulting in target misalignment")
+    if not mt_valid:
+        log.warning("One or more MT RA/Dec values missing in input images.")
+        log.warning("Step will be skipped, resulting in target misalignment.")
         record_step_status(input_models, "assign_mtwcs", False)
         return input_models
 
@@ -138,3 +141,37 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
     pipeline.append((mt, None))
     new_wcs = WCS(pipeline)
     return new_wcs
+
+
+def _is_mt_meta_valid(meta):
+    """
+    Check if the metadata contains valid moving target RA/DEC.
+
+    Checks both the top-level wcsinfo as well as the wcsinfo for all
+    the slits in a MultiSlitModel.
+
+    Parameters
+    ----------
+    meta : dict
+        Nested metadata dictionary from a data model, as output from `read_metadata`
+        with `flatten=False`.
+
+    Returns
+    -------
+    bool
+        True if valid, False otherwise.
+    """
+    # check all the slits
+    for slit in meta.get("slits", []):
+        if (
+            slit["meta"]["wcsinfo"].get("mt_ra", None) is None
+            or slit["meta"]["wcsinfo"].get("mt_dec", None) is None
+        ):
+            return False
+    # check the top-level wcsinfo
+    if (
+        meta["meta"]["wcsinfo"].get("mt_ra", None) is None
+        or meta["meta"]["wcsinfo"].get("mt_dec", None) is None
+    ):
+        return False
+    return True

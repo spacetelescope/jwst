@@ -10,7 +10,7 @@ from stdatamodels.jwst import datamodels
 from jwst.source_catalog.reference_data import ReferenceData
 from jwst.source_catalog.source_catalog import JWSTSourceCatalog
 from jwst.stpipe import Step
-from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog, NoCatalogError
+from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
 
 
 __all__ = ["SourceCatalogStep"]
@@ -125,19 +125,17 @@ class SourceCatalogStep(Step):
                 "wcs": model.meta.wcs,
                 "relabel": True,
             }
-            try:
-                catalog = make_tweakreg_catalog(
-                    model,
-                    self.snr_threshold,
-                    self.kernel_fwhm,
-                    bkg_boxsize=self.bkg_boxsize,
-                    coverage_mask=coverage_mask,
-                    starfinder_name=self.starfinder,
-                    starfinder_kwargs=starfinder_kwargs,
-                )
-            except NoCatalogError as err:
-                msg = f"{err} Source catalog will not be created."
-                self.log.warning(msg)
+            catalog = make_tweakreg_catalog(
+                model,
+                self.snr_threshold,
+                self.kernel_fwhm,
+                bkg_boxsize=self.bkg_boxsize,
+                coverage_mask=coverage_mask,
+                starfinder_name=self.starfinder,
+                starfinder_kwargs=starfinder_kwargs,
+            )
+            if len(catalog) == 0:
+                self.log.warning("No sources found in the image. Catalog will be empty.")
                 return None
 
             JWSTSourceCatalog.convert_to_jy(model)

@@ -51,8 +51,8 @@ class TweakRegStep(Step):
 
         # general starfinder options
         snr_threshold = float(default=10.0) # SNR threshold above the bkg for star finder
-        bkg_boxsize = integer(default=400) # The background mesh box size in pixels.
         kernel_fwhm = float(default=2.5) # Gaussian kernel FWHM in pixels
+        bkg_boxsize = integer(default=400) # The background mesh box size in pixels.
 
         # kwargs for DAOStarFinder and IRAFStarFinder, only used if starfinder is 'dao' or 'iraf'
         minsep_fwhm = float(default=0.0) # Minimum separation between detected objects in FWHM

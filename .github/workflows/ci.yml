@@ -41,7 +41,7 @@ jobs:
         python-version: '3.12'
     - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd  # v3.0.1
   check:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@8c0fde6f7e926df6ed7057255d29afa9c1ad5320  # v1.16.0
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@86823142467dd2afcd1bbac57d3a664cf468eb3b # v2.1.0
     with:
       default_python: "3.12"
       envs: |
@@ -57,7 +57,7 @@ jobs:
     outputs:
       context: ${{ steps.context.outputs.context }}
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@8c0fde6f7e926df6ed7057255d29afa9c1ad5320  # v1.16.0
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@86823142467dd2afcd1bbac57d3a664cf468eb3b  # v2.1.0
     needs: [ crds_context ]
     with:
       setenv: |
@@ -71,11 +71,14 @@ jobs:
       envs: |
         - linux: py311-oldestdeps-xdist-cov
         - linux: py311-xdist
+          posargs: -vv
         - linux: py312-xdist
         # `tox` does not currently respect `requires-python` versions when creating testing environments;
         # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
         - linux: py3-cov-xdist
           coverage: codecov
           pytest-results-summary: true
+          python-version: '>3.12 <3.13.4'
         - macos: py3-xdist
           pytest-results-summary: true
+          python-version: '>3.12 <3.13.4'

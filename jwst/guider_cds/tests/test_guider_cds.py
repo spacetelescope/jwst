@@ -27,9 +27,9 @@ def make_guider_image_and_refs():
     image.meta.subarray.xsize = 10
     image.meta.subarray.ysize = 10
 
-    refs = getreferences(image, reftypes=['gain', 'readnoise'])
-    gain_model = datamodels.GainModel(refs['gain'])
-    readnoise_model = datamodels.ReadnoiseModel(refs['gain'])
+    refs = getreferences(image, reftypes=["gain", "readnoise"])
+    gain_model = datamodels.GainModel(refs["gain"])
+    readnoise_model = datamodels.ReadnoiseModel(refs["gain"])
 
     return image, gain_model, readnoise_model
 
@@ -59,7 +59,7 @@ def test_guider_cds_fineguide_mode(make_guider_image_and_refs):
     assert np.allclose(result.data, truth)
 
 
-@pytest.mark.parametrize("exptype", ['FGS_ACQ1', 'FGS_ACQ2', 'FGS_TRACK'])
+@pytest.mark.parametrize("exptype", ["FGS_ACQ1", "FGS_ACQ2", "FGS_TRACK"])
 def test_guider_cds_acq_track_modes(exptype, make_guider_image_and_refs):
     """Test acq and track exptypes."""
 
@@ -85,7 +85,7 @@ def test_guider_cds_acq_track_modes(exptype, make_guider_image_and_refs):
     assert np.allclose(result.data, truth)
 
 
-@pytest.mark.parametrize("exptype", ['FGS_ID-IMAGE', 'FGS_ID-STACK'])
+@pytest.mark.parametrize("exptype", ["FGS_ID-IMAGE", "FGS_ID-STACK"])
 def test_guider_cds_id_modes(exptype, make_guider_image_and_refs):
     """Test fgs id exptypes."""
 
@@ -121,7 +121,7 @@ def test_unit_assignment(make_guider_image_and_refs):
 
     result = guider_cds(model, gain_model, readnoise_model)
 
-    assert result.meta.bunit_data == 'DN/s'
+    assert result.meta.bunit_data == "DN/s"
 
 
 def test_table_extensions(make_guider_image_and_refs):
@@ -137,11 +137,11 @@ def test_table_extensions(make_guider_image_and_refs):
 
     result = guider_cds(model, gain_model, readnoise_model)
 
-    assert 'planned_star_table' in result
-    assert 'flight_star_table' in result
-    assert 'pointing_table' in result
-    assert 'centroid_table' in result
-    assert 'track_sub_table' in result
+    assert "planned_star_table" in result
+    assert "flight_star_table" in result
+    assert "pointing_table" in result
+    assert "centroid_table" in result
+    assert "track_sub_table" in result
 
 
 def test_err_nonzero(make_guider_image_and_refs):

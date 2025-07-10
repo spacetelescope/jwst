@@ -1,14 +1,15 @@
 """Set project defaults and add fixtures for pytest."""
 
-import os
-import logging
-import tempfile
-import pytest
 import inspect
+import logging
+import os
+import tempfile
 from pathlib import Path
 
+import pytest
+from astropy.utils.data import get_pkg_data_filename
+
 from jwst.associations import AssociationRegistry, AssociationPool
-from jwst.associations.tests.helpers import t_path
 from jwst.tests.helpers import LogWatcher
 
 
@@ -29,14 +30,14 @@ def full_pool_rules(request):
 
     Returns
     -------
-    pool: AssociationPool
+    pool : AssociationPool
         The full example pool as read from data/mega_pool.csv.
-    rules: AssociationRegistry
+    rules : AssociationRegistry
         The registry of available associations.
-    pool_fname: str
+    pool_fname : str
         The full test path to mega_pool.csv.
     """
-    pool_fname = t_path("data/mega_pool.csv")
+    pool_fname = get_pkg_data_filename("data/mega_pool.csv", package="jwst.associations.tests")
     pool = AssociationPool.read(pool_fname)
     rules = AssociationRegistry()
 
@@ -203,3 +204,22 @@ def log_watcher(monkeypatch):
         return watcher
 
     return _log_watcher
+
+
+def pytest_report_header(config):
+    """
+    Add CRDS_CONTEXT to pytest report header.
+
+    Parameters
+    ----------
+    config : pytest.config.Config
+        Pytest configuration object.
+
+    Returns
+    -------
+    str
+        Report header string with CRDS context information.
+    """
+    from stpipe.crds_client import get_context_used
+
+    return f"crds_context: {get_context_used('jwst')}"

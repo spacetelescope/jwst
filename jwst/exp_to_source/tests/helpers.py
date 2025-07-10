@@ -1,20 +1,9 @@
-# Testing helpers
-from pathlib import Path
+"""Testing helpers."""
 
-
-def t_path(partial_path):
-    """
-    Construct the full path for test files.
-
-    Returns
-    -------
-    Path
-        The full path to the test file.
-    """
-    test_dir = Path(__file__).parent
-    return Path(test_dir) / partial_path
-
+from astropy.utils.data import get_pkg_data_filename
 
 # Calculate some extra constants
-INPUT_FILES = list(t_path("data").glob("jwst_nod?_cal.fits"))
-INPUT_FILES = [str(infile) for infile in INPUT_FILES]
+INPUT_FILES = [
+    get_pkg_data_filename(f"data/jwst_nod{i}_cal.fits", package="jwst.exp_to_source.tests")
+    for i in (1, 2, 3)
+]

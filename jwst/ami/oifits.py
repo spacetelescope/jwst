@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+import warnings
 
 import numpy as np
 from scipy.special import comb
@@ -325,7 +326,13 @@ class RawOifits:
         """
         xx = rr * np.cos(theta)
         yy = rr * np.sin(theta)
-        cov_mat_xy = np.cov(xx, yy)
+
+        # np.cov returns NaN if there are too few input values - ignore the warnings.
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "Degrees of freedom <= 0", RuntimeWarning)
+            warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+            warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+            cov_mat_xy = np.cov(xx, yy)
         return self.rotate_matrix(cov_mat_xy, averfunc(theta))
 
     def make_oifits(self):
@@ -472,9 +479,9 @@ class RawOifits:
         oim.meta.oifits.array_name = instrument_data.arrname
         oim.meta.oifits.instrument_mode = instrument_data.pupil
 
-        oim.meta.ami.roll_ref = instrument_data.roll_ref
-        oim.meta.ami.v3yangle = instrument_data.v3iyang
-        oim.meta.ami.vparity = instrument_data.vparity
+        oim.meta.guidestar.fgs_roll_ref = instrument_data.roll_ref
+        oim.meta.guidestar.fgs_v3yangle = instrument_data.v3iyang
+        oim.meta.guidestar.fgs_vparity = instrument_data.vparity
 
         # oi_array extension data
         oim.array["TEL_NAME"] = tel_name

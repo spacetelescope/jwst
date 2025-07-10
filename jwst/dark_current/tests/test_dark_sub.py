@@ -1,6 +1,7 @@
 """
 Unit tests for dark current correction
 """
+
 import warnings
 
 import pytest
@@ -23,12 +24,11 @@ NGROUPS_DARK = 10
 DELIM = "-" * 80
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def setup_nrc_cube():
-    '''Set up fake NIRCam data to test.'''
+    """Set up fake NIRCam data to test."""
 
     def _cube(readpatt, ngroups, nframes, groupgap, nrows, ncols):
-
         nints = 1
 
         data_model = RampModel((nints, ngroups, nrows, ncols))
@@ -41,10 +41,10 @@ def setup_nrc_cube():
         data_model.meta.exposure.nframes = nframes
         data_model.meta.exposure.frame_time = TFRAME
         data_model.meta.exposure.group_time = (nframes + groupgap) * TFRAME
-        data_model.meta.instrument.name = 'NIRCAM'
-        data_model.meta.instrument.detector = 'NRCA1'
-        data_model.meta.observation.date = '2017-10-01'
-        data_model.meta.observation.time = '00:00:00'
+        data_model.meta.instrument.name = "NIRCAM"
+        data_model.meta.instrument.detector = "NRCA1"
+        data_model.meta.observation.date = "2017-10-01"
+        data_model.meta.observation.time = "00:00:00"
 
         dark_model = DarkModel((NGROUPS_DARK, 2048, 2048))
         dark_model.meta.subarray.xstart = 1
@@ -54,13 +54,13 @@ def setup_nrc_cube():
         dark_model.meta.exposure.ngroups = NGROUPS_DARK
         dark_model.meta.exposure.groupgap = 0
         dark_model.meta.exposure.nframes = 1
-        dark_model.meta.instrument.name = 'NIRCAM'
-        dark_model.meta.description = 'Fake data.'
-        dark_model.meta.telescope = 'JWST'
-        dark_model.meta.reftype = 'DarkModel'
-        dark_model.meta.author = 'Alicia'
-        dark_model.meta.pedigree = 'Dummy'
-        dark_model.meta.useafter = '2015-10-01T00:00:00'
+        dark_model.meta.instrument.name = "NIRCAM"
+        dark_model.meta.description = "Fake data."
+        dark_model.meta.telescope = "JWST"
+        dark_model.meta.reftype = "DarkModel"
+        dark_model.meta.author = "Alicia"
+        dark_model.meta.pedigree = "Dummy"
+        dark_model.meta.useafter = "2015-10-01T00:00:00"
 
         return data_model, dark_model
 
@@ -95,17 +95,17 @@ def _params():
     nrows = 20
     ncols = 20
     for readpatt, values in readpatterns.items():
-        params.append((readpatt, ngroups, values['nframes'], values['nskip'], nrows, ncols))
+        params.append((readpatt, ngroups, values["nframes"], values["nskip"], nrows, ncols))
 
     return params
 
 
 # Refac done
-@pytest.mark.parametrize('readpatt, ngroups, nframes, groupgap, nrows, ncols', _params())
+@pytest.mark.parametrize("readpatt, ngroups, nframes, groupgap, nrows, ncols", _params())
 def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, nrows, ncols):
-    '''Check that if nframes>1 or groupgap>0, then the pipeline reconstructs
-       the dark reference file to match the frame averaging and groupgap
-       settings of the exposure.'''
+    """Check that if nframes>1 or groupgap>0, then the pipeline reconstructs
+    the dark reference file to match the frame averaging and groupgap
+    settings of the exposure."""
 
     # Create data and dark model
     data, dark_model = setup_nrc_cube(readpatt, ngroups, nframes, groupgap, nrows, ncols)
@@ -115,10 +115,7 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
     dark.data[:, 10, 10] = np.arange(0, NGROUPS_DARK)
 
     # Run the pipeline's averaging function
-    with np.errstate(divide="ignore", invalid="ignore"), warnings.catch_warnings():
-        # These warnings only appear for certain deps combo.
-        warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
-        avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
+    avg_dark = average_dark_frames(dark, ngroups, nframes, groupgap)
 
     # Group input groups into collections of frames which will be averaged
     total_frames = (nframes * ngroups) + (groupgap * (ngroups - 1))
@@ -132,11 +129,12 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
 
     # Manually average the input data to compare with pipeline output
     for newgp, gstart, gend in zip(range(ngroups), gstrt_ind, gend_ind):
-
         # Average the data frames
         with np.errstate(divide="ignore", invalid="ignore"), warnings.catch_warnings():
             # These warnings only appear for certain deps combo.
-            warnings.filterwarnings("ignore", category=RuntimeWarning, message="Mean of empty slice")
+            warnings.filterwarnings(
+                "ignore", category=RuntimeWarning, message="Mean of empty slice"
+            )
             newframe = np.mean(dark.data[gstart:gend, 10, 10])
         manual_avg[newgp] = newframe
 
@@ -151,8 +149,8 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
 
 # Refac done
 def test_sub_by_frame(make_rampmodel, make_darkmodel):
-    '''Check that if NFRAMES=1 and GROUPGAP=0 for the science data, the dark reference data are
-    directly subtracted frame by frame'''
+    """Check that if NFRAMES=1 and GROUPGAP=0 for the science data, the dark reference data are
+    directly subtracted frame by frame"""
 
     # size of integration
     nints = 1
@@ -187,12 +185,14 @@ def test_sub_by_frame(make_rampmodel, make_darkmodel):
     diff = dm_ramp.data[0] - dark.data[0, :ngroups]
 
     # test that the output data file is equal to the difference found when subtracting ref file from sci file
-    np.testing.assert_array_equal(outdata, diff, err_msg='dark file should be subtracted from sci file ')
+    np.testing.assert_array_equal(
+        outdata, diff, err_msg="dark file should be subtracted from sci file "
+    )
 
 
 # Refac done
 def test_nan(make_rampmodel, make_darkmodel):
-    '''Verify that when a dark has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly'''
+    """Verify that when a dark has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly"""
 
     # size of integration
     nints = 1
@@ -230,7 +230,7 @@ def test_nan(make_rampmodel, make_darkmodel):
 
 # Refac done
 def test_dq_combine(make_rampmodel, make_darkmodel):
-    '''Verify that the DQ array of the dark is correctly combined with the PIXELDQ array of the science data.'''
+    """Verify that the DQ array of the dark is correctly combined with the PIXELDQ array of the science data."""
 
     # size of integration
     nints = 1
@@ -251,9 +251,9 @@ def test_dq_combine(make_rampmodel, make_darkmodel):
     refgroups = 7
     dark = make_darkmodel(refgroups, ysize, xsize)
 
-    jump_det = dqflags.pixel['JUMP_DET']
-    saturated = dqflags.pixel['SATURATED']
-    do_not_use = dqflags.pixel['DO_NOT_USE']
+    jump_det = dqflags.pixel["JUMP_DET"]
+    saturated = dqflags.pixel["SATURATED"]
+    do_not_use = dqflags.pixel["DO_NOT_USE"]
 
     # populate dq flags of sci pixeldq and reference dq
     dm_ramp.pixeldq[50, 50] = jump_det
@@ -272,7 +272,7 @@ def test_dq_combine(make_rampmodel, make_darkmodel):
 
 # Refac done
 def test_2_int(make_rampmodel, make_darkmodel):
-    '''Verify the dark correction is done by integration for MIRI observations'''
+    """Verify the dark correction is done by integration for MIRI observations"""
 
     # size of integration
     nints = 2
@@ -392,7 +392,9 @@ def test_basic_step(make_rampmodel, make_darkmodel):
     diff = dm_ramp.data[0] - dark.data[0, :ngroups]
 
     # test that the output data file is equal to the difference found when subtracting ref file from sci file
-    np.testing.assert_array_equal(outdata, diff, err_msg='dark file should be subtracted from sci file ')
+    np.testing.assert_array_equal(
+        outdata, diff, err_msg="dark file should be subtracted from sci file "
+    )
 
 
 def test_average_dark_current(make_rampmodel, make_darkmodel):
@@ -420,19 +422,20 @@ def test_average_dark_current(make_rampmodel, make_darkmodel):
         dark.data[0, i] = i * 0.1
 
     average_current = 1.234
-    dark_output = DarkCurrentStep.call(dm_ramp, override_dark=dark, average_dark_current=average_current)
+    dark_output = DarkCurrentStep.call(
+        dm_ramp, override_dark=dark, average_dark_current=average_current
+    )
 
     assert dark_output.meta.cal_step.dark_sub == "COMPLETE"
 
     assert dark_output.average_dark_current[nrows - 1, ncols - 1] == pytest.approx(average_current)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def make_rampmodel():
-    '''Make MIRI Ramp model for testing'''
+    """Make MIRI Ramp model for testing"""
 
     def _ramp(nints, ngroups, ysize, xsize):
-
         # create the data and groupdq arrays
         csize = (nints, ngroups, ysize, xsize)
         data = np.full(csize, 1.0)
@@ -440,23 +443,23 @@ def make_rampmodel():
         # create a JWST datamodel for MIRI data
         dm_ramp = RampModel(data=data)
 
-        dm_ramp.meta.instrument.name = 'MIRI'
-        dm_ramp.meta.observation.date = '2018-01-01'
-        dm_ramp.meta.observation.time = '00:00:00'
+        dm_ramp.meta.instrument.name = "MIRI"
+        dm_ramp.meta.observation.date = "2018-01-01"
+        dm_ramp.meta.observation.time = "00:00:00"
         dm_ramp.meta.subarray.xstart = 1
         dm_ramp.meta.subarray.xsize = xsize
         dm_ramp.meta.subarray.ystart = 1
         dm_ramp.meta.subarray.ysize = ysize
-        dm_ramp.meta.description = 'Fake data.'
+        dm_ramp.meta.description = "Fake data."
 
         return dm_ramp
 
     return _ramp
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def make_darkmodel():
-    '''Make MIRI dark model for testing'''
+    """Make MIRI dark model for testing"""
 
     def _dark(ngroups, ysize, xsize):
         # create the data and groupdq arrays
@@ -467,20 +470,20 @@ def make_darkmodel():
         # create a JWST datamodel for MIRI data
         dark = DarkMIRIModel(data=data)
 
-        dark.meta.instrument.name = 'MIRI'
-        dark.meta.date = '2018-01-01'
-        dark.meta.time = '00:00:00'
+        dark.meta.instrument.name = "MIRI"
+        dark.meta.date = "2018-01-01"
+        dark.meta.time = "00:00:00"
         dark.meta.subarray.xstart = 1
         dark.meta.subarray.xsize = xsize
         dark.meta.subarray.ystart = 1
         dark.meta.subarray.ysize = ysize
         dark.meta.exposure.nframes = 1
         dark.meta.exposure.groupgap = 0
-        dark.meta.description = 'Fake data.'
-        dark.meta.reftype = 'DarkModel'
-        dark.meta.author = 'Alicia'
-        dark.meta.pedigree = 'Dummy'
-        dark.meta.useafter = '2015-10-01T00:00:00'
+        dark.meta.description = "Fake data."
+        dark.meta.reftype = "DarkModel"
+        dark.meta.author = "Alicia"
+        dark.meta.pedigree = "Dummy"
+        dark.meta.useafter = "2015-10-01T00:00:00"
 
         return dark
 

@@ -1,8 +1,7 @@
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
-from astropy.table import Table, setdiff
 
 from jwst.lib.set_telescope_pointing import add_wcs
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 # Mark all tests in this module
@@ -16,11 +15,13 @@ def run_spec2_pipeline(rtdata_module, resource_tracker):
 
     # Run spec2 pipeline on the _rateints file, saving intermediate products
     rtdata.get_data("nircam/tsgrism/jw01366002001_04103_00001-seg001_nrcalong_rateints.fits")
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.flat_field.save_results=True",
-            "--steps.extract_2d.save_results=True",
-            "--steps.srctype.save_results=True"
-            ]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.flat_field.save_results=True",
+        "--steps.extract_2d.save_results=True",
+        "--steps.srctype.save_results=True",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -42,14 +43,21 @@ def run_tso3_pipeline(rtdata_module, run_spec2_pipeline, resource_tracker):
     return rtdata
 
 
-@pytest.fixture(scope="module",
-                params=["jw01185015001_03104_00001-seg004_nrcalong_rate.fits",
-                        "jw01185013001_04103_00001-seg003_nrcalong_rate.fits"])
+@pytest.fixture(
+    scope="module",
+    params=[
+        "jw01185015001_03104_00001-seg004_nrcalong_rate.fits",
+        "jw01185013001_04103_00001-seg003_nrcalong_rate.fits",
+    ],
+)
 def run_pipeline_offsetSR(request, rtdata_module):
     rtdata = rtdata_module
     rtdata.get_data("nircam/tsgrism/" + request.param)
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.extract_1d.save_results=True",]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.extract_1d.save_results=True",
+    ]
     Step.from_cmdline(args)
     return rtdata
 
@@ -72,14 +80,15 @@ def test_nircam_tsgrism_stage2_offsetSR(run_pipeline_offsetSR, fitsdiff_default_
     which is why the zero-offset case is also included here."""
     rtdata = run_pipeline_offsetSR
     rtdata.output = rtdata.input.replace("rate", "x1d")
-    rtdata.get_truth("truth/test_nircam_tsgrism_stages/" + rtdata.output.split('/')[-1])
+    rtdata.get_truth("truth/test_nircam_tsgrism_stages/" + rtdata.output.split("/")[-1])
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
 
-@pytest.mark.parametrize("suffix", ["calints", "extract_2d", "flat_field",
-                                    "o002_crfints", "srctype", "x1dints"])
+@pytest.mark.parametrize(
+    "suffix", ["calints", "extract_2d", "flat_field", "o002_crfints", "srctype", "x1dints"]
+)
 def test_nircam_tsgrism_stage2(run_spec2_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test of tso-spec2 pipeline performed on NIRCam TSO grism data."""
     rtdata = run_spec2_pipeline
@@ -97,23 +106,23 @@ def test_nircam_tsgrism_stage3_x1dints(run_tso3_pipeline, fitsdiff_default_kwarg
     rtdata = run_tso3_pipeline
     rtdata.input = "jw01366-o002_20230107t004627_tso3_00001_asn.json"
     rtdata.output = "jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_x1dints.fits"
-    rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_x1dints.fits")
+    rtdata.get_truth(
+        "truth/test_nircam_tsgrism_stages/jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_x1dints.fits"
+    )
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
 
-def test_nircam_tsgrism_stage3_whtlt(run_tso3_pipeline):
+def test_nircam_tsgrism_stage3_whtlt(run_tso3_pipeline, diff_astropy_tables):
     rtdata = run_tso3_pipeline
     rtdata.input = "jw01366-o002_20230107t004627_tso3_00001_asn.json"
     rtdata.output = "jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_whtlt.ecsv"
-    rtdata.get_truth("truth/test_nircam_tsgrism_stages/jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_whtlt.ecsv")
+    rtdata.get_truth(
+        "truth/test_nircam_tsgrism_stages/jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_whtlt.ecsv"
+    )
 
-    table = Table.read(rtdata.output)
-    table_truth = Table.read(rtdata.truth)
-
-    # setdiff returns a table of length zero if there is no difference
-    assert len(setdiff(table, table_truth)) == 0
+    assert diff_astropy_tables(rtdata.output, rtdata.truth)
 
 
 def test_nircam_setpointing_tsgrism(rtdata, fitsdiff_default_kwargs):
@@ -127,8 +136,10 @@ def test_nircam_setpointing_tsgrism(rtdata, fitsdiff_default_kwargs):
     # Call the WCS routine
     add_wcs(rtdata.input)
 
-    rtdata.get_truth("truth/test_nircam_setpointing/jw02459001001_03103_00001-seg001_nrcalong_uncal.fits")
+    rtdata.get_truth(
+        "truth/test_nircam_setpointing/jw02459001001_03103_00001-seg001_nrcalong_uncal.fits"
+    )
 
-    fitsdiff_default_kwargs['rtol'] = 1e-6
+    fitsdiff_default_kwargs["rtol"] = 1e-6
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()

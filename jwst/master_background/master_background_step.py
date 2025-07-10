@@ -8,8 +8,8 @@ from scipy.signal import medfilt
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import record_step_status
 
-from ..stpipe import Step
-from ..combine_1d.combine1d import combine_1d_spectra
+from jwst.stpipe import Step
+from jwst.combine_1d.combine1d import combine_1d_spectra
 from .expand_to_2d import expand_to_2d
 
 __all__ = ["MasterBackgroundStep"]
@@ -248,7 +248,7 @@ class MasterBackgroundStep(Step):
                 isub = 0
                 for indata in input_model:
                     if (
-                        indata.meta.cal_step.back_sub == "COMPLETE"
+                        indata.meta.cal_step.bkg_subtract == "COMPLETE"
                         or indata.meta.cal_step.master_background == "COMPLETE"
                     ):
                         do_sub = False
@@ -276,7 +276,7 @@ class MasterBackgroundStep(Step):
             # input data is a single file
             else:
                 if (
-                    input_model.meta.cal_step.back_sub == "COMPLETE"
+                    input_model.meta.cal_step.bkg_subtract == "COMPLETE"
                     or input_model.meta.cal_step.master_background == "COMPLETE"
                 ):
                     do_sub = False

@@ -1,0 +1,78 @@
+#ASDF 1.0.0
+#ASDF_STANDARD 1.5.0
+%YAML 1.1
+%TAG ! tag:stsci.edu:asdf/
+--- !core/asdf-1.1.0
+asdf_library: !core/software-1.0.0 {author: The ASDF Developers, homepage: 'http://github.com/asdf-format/asdf',
+  name: asdf, version: 2.14.3}
+history:
+  entries:
+  - !core/history_entry-1.0.0
+    description: New version created from CV3 with updated file structure
+    software: !core/software-1.0.0 {author: N.Dencheva, homepage: 'https://grit.stsci.edu/nirspec_commissioning/nrsjwreftools',
+      name: nrsjwstreftools, version: 0.7.1}
+    time: 2023-07-28 17:58:39.903239
+  extensions:
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension.BuiltinExtension
+    software: !core/software-1.0.0 {name: asdf, version: 2.14.3}
+  - !core/extension_metadata-1.0.0
+    extension_class: asdf.extension._manifest.ManifestExtension
+    extension_uri: asdf://asdf-format.org/core/extensions/core-1.5.0
+    software: !core/software-1.0.0 {name: asdf-astropy, version: 0.3.0}
+meta:
+  author: p_generateReferenceFile_20160722.py - version 1.0.0
+  date: '2023-07-28T17:58:39.884'
+  description: model v7.3.1 commissioning, updated IFU TA pt src centering
+  exposure: {p_exptype: NRS_AUTOWAVE|NRS_AUTOFLAT|NRS_MSATA|NRS_WATA|NRS_BRIGHTOBJ|NRS_CONFIRM|NRS_FIXEDSLIT|NRS_FOCUS|NRS_IFU|NRS_IMAGE|NRS_LAMP|NRS_MIMF|NRS_MSASPEC|NRS_TACONFIRM|NRS_TACQ|NRS_TASLIT,
+    type: N/A}
+  instrument: {name: NIRSPEC, p_detector: NRS1|NRS2|}
+  model_type: WavelengthrangeModel
+  pedigree: INFLIGHT 2022-04-01 2022-06-01
+  reftype: wavelengthrange
+  telescope: JWST
+  useafter: '2023-07-24T00:00:00'
+  wavelength_units: !unit/unit-1.0.0 m
+order: [0, -1, 0, -1, -1, -1, 0, 0, 0, -1, -1, 0, 0, -3, -1, -1, 0, 0, -1, -1, -1,
+  -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1]
+wavelengthrange:
+- [1.0e-06, 5.3e-06]
+- [2.87e-06, 5.27e-06]
+- [7.8e-07, 2.1e-06]
+- [2.87e-06, 5.27e-06]
+- [7.0e-07, 1.27e-06]
+- [9.7e-07, 1.89e-06]
+- [7.0e-07, 5.3e-06]
+- [9.6e-07, 1.24e-06]
+- [1.7e-06, 5.3e-06]
+- [9.7e-07, 1.89e-06]
+- [7.0e-07, 1.27e-06]
+- [6.0e-07, 5.3e-06]
+- [1.0e-06, 5.3e-06]
+- [1.0e-06, 1.25e-06]
+- [1.66e-06, 3.17e-06]
+- [1.66e-06, 3.17e-06]
+- [2.9e-06, 5.3e-06]
+- [6.0e-07, 5.3e-06]
+- [1.0e-06, 1.8e-06]
+- [1.7e-06, 3.1e-06]
+- [2.9e-06, 5.3e-06]
+- [1.3e-06, 1.7e-06]
+- [1.3e-06, 1.7e-06]
+- [1.7e-06, 3.1e-06]
+- [1.0e-06, 1.8e-06]
+- [2.9e-06, 5.3e-06]
+- [1.0e-06, 1.8e-06]
+- [2.9e-06, 5.3e-06]
+- [1.0e-06, 1.8e-06]
+- [1.7e-06, 3.1e-06]
+- [2.9e-06, 5.3e-06]
+- [1.7e-06, 3.1e-06]
+- [6.0e-07, 5.3e-06]
+waverange_selector: [F100LP_PRISM, F290LP_G395M, F140X_MIRROR, F290LP_G395H, F070LP_G140H,
+  F100LP_G140M, F070LP_MIRROR, F110W_MIRROR, F170LP_MIRROR, F100LP_G140H, F070LP_G140M,
+  CLEAR_PRISM, F100LP_MIRROR, F110W_G395H, F170LP_G235H, F170LP_G235M, F290LP_MIRROR,
+  CLEAR_MIRROR, FLAT1_G140H, FLAT2_G235H, LINE3_G395H, REF_G140H, REF_G140M, FLAT2_G235M,
+  LINE1_G140H, FLAT3_G395M, LINE1_G140M, FLAT3_G395H, FLAT1_G140M, LINE2_G235M, LINE3_G395M,
+  LINE2_G235H, TEST_MIRROR]
+...

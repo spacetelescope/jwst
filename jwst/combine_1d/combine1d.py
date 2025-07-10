@@ -6,11 +6,21 @@ import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
-
+from jwst.datamodels.utils.flat_multispec import expand_flat_spec
 from jwst.extract_1d.spec_wcs import create_spectral_wcs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
+
+
+# attributes that we want to copy unmodified from input to output spectra
+SPECMETA_ATTRIBUTES = [
+    "source_id",
+    "dispersion_direction",
+    "source_type",
+    "source_ra",
+    "source_dec",
+]
 
 
 class InputSpectrumModel:
@@ -47,6 +57,12 @@ class InputSpectrumModel:
         Source ID for the spectrum.
     source_type : str
         Source type for the spectrum.
+    source_ra : float
+        Right ascension of the source.
+    source_dec : float
+        Declination of the source.
+    dispersion_direction : str
+        Dispersion direction for the spectrum.
     flux_unit : str
         Unit for the flux values.
     sb_unit : str
@@ -84,8 +100,8 @@ class InputSpectrumModel:
         self.right_ascension = np.zeros_like(self.wavelength)
         self.declination = np.zeros_like(self.wavelength)
         self.name = spec.name
-        self.source_id = spec.source_id
-        self.source_type = spec.source_type
+        for attr in SPECMETA_ATTRIBUTES:
+            setattr(self, attr, getattr(spec, attr))
         self.flux_unit = spec.spec_table.columns["flux"].unit
         self.sb_unit = spec.spec_table.columns["surf_bright"].unit
 
@@ -104,7 +120,11 @@ class InputSpectrumModel:
         except AttributeError:
             self.right_ascension[:] = ms.meta.target.ra
             self.declination[:] = ms.meta.target.dec
-            log.warning("There is no WCS in the input.")
+            # This exception is hit for NIRISS and NIRCam WFSS data,
+            # for which it doesn't matter anyway, since the RA and Dec are not used
+            # in any meaningful way to combine the spectra. A future refactor should
+            # make it so the WCS is not expected in the input spectra for those modes.
+            log.debug("There is no WCS in the input. Getting RA, Dec from target metadata.")
 
     def close(self):
         """Set data attributes to null values."""
@@ -674,6 +694,46 @@ def check_exptime(exptime_key):
     return exptime_key
 
 
+def _read_input_spectra(input_model, exptime_key, input_spectra):
+    """
+    Read input spectra from a datamodel.
+
+    Parameters
+    ----------
+    input_model : MultiSpecModel, TSOMultiSpecModel, MRSSpecModel
+        A datamodel with a ``spec`` attribute, containing spectra.
+        If TSOMultiSpecModel, integrations in the spectral table rows
+        are expanded into separate spectra.
+    exptime_key : str
+        Exposure time key to use for weighting.
+    input_spectra : dict
+        Dictionary to hold input spectra, keyed by spectral order.
+        Updated in place.
+
+    Returns
+    -------
+    input_spectra : dict
+        The updated dictionary, holding all spectra in the input model.
+
+    Raises
+    ------
+    TypeError
+        If the input datamodel does not have a ``spec`` attribute.
+    """
+    if not hasattr(input_model, "spec"):
+        raise TypeError(f"Invalid input datamodel: {type(input_model)}")
+    if isinstance(input_model, datamodels.TSOMultiSpecModel):
+        spectra = expand_flat_spec(input_model).spec
+    else:
+        spectra = input_model.spec
+    for in_spec in spectra:
+        spectral_order = in_spec.spectral_order
+        if spectral_order not in input_spectra:
+            input_spectra[spectral_order] = []
+        input_spectra[spectral_order].append(InputSpectrumModel(input_model, in_spec, exptime_key))
+    return input_spectra
+
+
 def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     """
     Combine the input spectra.
@@ -681,8 +741,10 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     Parameters
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
-        The input spectra.  This will likely be a ModelContainer object.
-
+        The input spectra.  This will likely be a ModelContainer object,
+        but may also be a multi-spectrum model, such as MultiSpecModel or
+        TSOMultiSpecModel.  Input spectra may have different spectral orders
+        or wavelengths but should all share the same target.
     exptime_key : str
         A string identifying which keyword to use to get the exposure time,
         which is used as a weight when combining spectra.  The value should
@@ -691,8 +753,8 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
 
     Returns
     -------
-    output_model : `~jwst.datamodels.JwstDataModel`
-        A datamodels.CombinedSpecModel object.
+    output_model : `~jwst.datamodels.MultiCombinedSpecModel`
+        A combined spectra datamodel.
     """
     log.debug(f"Using exptime_key = {exptime_key}.")
 
@@ -702,23 +764,9 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     output_spectra = {}
     if isinstance(input_model, ModelContainer):
         for ms in input_model:
-            if not hasattr(ms, "spec"):
-                raise TypeError(f"Invalid input datamodel: {type(ms)}")
-            for in_spec in ms.spec:
-                spectral_order = in_spec.spectral_order
-                if spectral_order not in input_spectra:
-                    input_spectra[spectral_order] = []
-                input_spectra[spectral_order].append(InputSpectrumModel(ms, in_spec, exptime_key))
+            _read_input_spectra(ms, exptime_key, input_spectra)
     else:
-        if not hasattr(input_model, "spec"):
-            raise TypeError(f"Invalid input datamodel: {type(input_model)}")
-        for in_spec in input_model.spec:
-            spectral_order = in_spec.spectral_order
-            if spectral_order not in input_spectra:
-                input_spectra[spectral_order] = []
-            input_spectra[spectral_order].append(
-                InputSpectrumModel(input_model, in_spec, exptime_key)
-            )
+        _read_input_spectra(input_model, exptime_key, input_spectra)
 
     for order in input_spectra:
         output_spectra[order] = OutputSpectrumModel()
@@ -730,8 +778,8 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
     for order in output_spectra:
         output_order = output_spectra[order].create_output_data()
         output_order.spectral_order = order
-        output_order.source_id = input_spectra[order][0].source_id
-        output_order.source_type = input_spectra[order][0].source_type
+        for attr in SPECMETA_ATTRIBUTES:
+            setattr(output_order, attr, getattr(input_spectra[order][0], attr))
         output_model.spec.append(output_order)
 
     # Copy one of the input headers to output.

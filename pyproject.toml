@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.11,<3.13.4"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -17,11 +17,11 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "asdf>=3.3,<5",
+    "asdf>=4.0,<5",
     "astropy>=6.1",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
-    "drizzle>=2.0.1",
+    "drizzle>=2.0.1,<2.1.0",
     # "gwcs>=0.22.0,<0.23.0",
     "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
     "numpy>=1.25",
@@ -38,7 +38,6 @@ dependencies = [
     "stsci.imagestats>=1.6.3",
     "synphot>=1.3",
     "tweakwcs>=0.8.8",
-    "asdf-astropy>=0.6.0",
     "wiimatch>=0.3.2",
     "packaging>20.0",
     "importlib-metadata>=4.11.4",
@@ -81,9 +80,6 @@ world_coords = "jwst.scripts.world_coords:main"
 [project.entry-points."stpipe.steps"]
 jwst = "jwst.stpipe.integration:get_steps"
 
-[project.entry-points.pytest11]
-report_crds_context = "pytest_jwst.plugin"
-
 [project.optional-dependencies]
 docs = [
     "matplotlib",
@@ -124,7 +120,7 @@ include-package-data = false
 
 [tool.setuptools.packages.find]
 namespaces = false
-include = ["pytest_jwst*", "jwst*"]
+include = ["jwst*"]
 
 [tool.setuptools.package-data]
 "*" = [
@@ -207,7 +203,6 @@ norecursedirs = [
     "docs/_build",
     "docs/exts",
     "jwst/associations/tests/data",
-    "pytest_jwst",
     "scripts",
     ".tox",
     ".eggs",
@@ -223,22 +218,19 @@ doctest_rst = "enabled"
 addopts = [
     "-p no:legacypath",
     "--show-capture=no",
-    "--report-crds-context",
     "--color=yes",
 ]
 xfail_strict = true
 # This is for regtests. All unhandled warnings become exceptions for
 # regular CI in tox.ini file.
 filterwarnings = [
-    "error::ResourceWarning",
-    "error::DeprecationWarning",
-    "error::stdatamodels.exceptions.ValidationWarning",
-    "error:Invalid interval",
-    "ignore:Models in math_functions:astropy.utils.exceptions.AstropyUserWarning",
+    "error"
 ]
 
 [tool.coverage.run]
 omit = [
+    "config.py",
+    "config-3.py",
     "jwst/conftest.py",
     "jwst/setup.py",
     "jwst/tests/test*",

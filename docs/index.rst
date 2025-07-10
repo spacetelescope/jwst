@@ -48,6 +48,7 @@ is also available on `JDox <https://jwst-docs.stsci.edu>`__.
    :maxdepth: 2
    :caption: User Documentation
 
+   jwst/user_documentation/background_subtraction_methods/index.rst
    jwst/user_documentation/introduction.rst
    jwst/user_documentation/reference_files_crds.rst
    jwst/user_documentation/parameters.rst
@@ -57,7 +58,6 @@ is also available on `JDox <https://jwst-docs.stsci.edu>`__.
    jwst/user_documentation/input_output_file_conventions.rst
    jwst/user_documentation/logging.rst
    jwst/user_documentation/datamodels.rst
-   jwst/user_documentation/pub_deprecation.rst
    jwst/user_documentation/more_information.rst
 
 .. toctree::

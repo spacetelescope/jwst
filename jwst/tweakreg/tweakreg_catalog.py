@@ -6,12 +6,14 @@ from astropy.utils.exceptions import AstropyUserWarning
 from astropy.utils import lazyproperty
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.convolution import Gaussian2DKernel, convolve
+from astropy.table import Table
 
 import numpy as np
 from photutils.detection import DAOStarFinder, IRAFStarFinder
 from photutils.segmentation import SourceFinder, SourceCatalog
 from photutils.segmentation.catalog import DEFAULT_COLUMNS
 from photutils.background import Background2D, MedianBackground
+from photutils.utils import NoDetectionsWarning
 
 from stdatamodels.jwst.datamodels import dqflags, ImageModel
 
@@ -28,6 +30,8 @@ SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
     "sky_bbox_lr",
     "sky_bbox_ur",
 ]
+
+EMPTY_TABLE = Table(names=SOURCECAT_COLUMNS, dtype=[str] * len(SOURCECAT_COLUMNS))
 
 
 class NoCatalogError(Exception):
@@ -200,6 +204,8 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
         The 2D array of the image.
     threshold_img : np.ndarray
         The per-pixel absolute image value above which to select sources.
+    kernel_fwhm : float
+        The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
     mask : array_like (bool), optional
         The image mask
     **kwargs : dict
@@ -241,7 +247,7 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     finder = SourceFinder(**finder_dict)
     segment_map = finder(conv_data, threshold_img, mask=mask)
     if segment_map is None:
-        raise NoCatalogError("No sources found in the image.")
+        return None
     sources = SourceCatalog(
         data,
         segment_map,
@@ -250,8 +256,6 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
         **catalog_dict,
     ).to_table(columns=SOURCECAT_COLUMNS)
 
-    # rename columns to match DAOStarFinder and IRAFStarFinder
-    _rename_columns(sources)
     return sources
 
 
@@ -285,7 +289,6 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = IRAFStarFinder(threshold, kernel_fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
-    _rename_columns(sources)
     return sources
 
 
@@ -327,7 +330,6 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = DAOStarFinder(threshold, kernel_fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
-    _rename_columns(sources)
     return sources
 
 
@@ -409,17 +411,26 @@ def make_tweakreg_catalog(
             warnings.simplefilter("ignore", AstropyUserWarning)
             threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
     except ValueError as e:
-        raise NoCatalogError(f"Error determining sky background: {e.args[0]}") from None
+        log.warning(f"Error determining sky background: {e.args[0]}")
+        sources = EMPTY_TABLE.copy()
+        _rename_columns(sources)
+        return sources
 
     # Run the star finder
-    sources = starfinder(
-        model.data,
-        threshold_img,
-        kernel_fwhm,
-        mask=coverage_mask,
-        **starfinder_kwargs,
-    )
+    with warnings.catch_warnings():  # handle lack of detections below
+        warnings.filterwarnings(
+            "ignore", category=NoDetectionsWarning, message="No sources were found"
+        )
+        sources = starfinder(
+            model.data,
+            threshold_img,
+            kernel_fwhm,
+            mask=coverage_mask,
+            **starfinder_kwargs,
+        )
     if not sources:
-        raise NoCatalogError("No sources found in the image.")
+        log.warning("No sources found in the image.")
+        sources = EMPTY_TABLE.copy()
 
+    _rename_columns(sources)
     return sources

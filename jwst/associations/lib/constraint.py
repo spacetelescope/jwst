@@ -9,7 +9,7 @@ import re
 
 from .process_list import ListCategory, ProcessList
 from .utilities import evaluate, getattr_from_list, is_iterable
-from ..pool import PoolRow
+from jwst.associations.pool import PoolRow
 
 __all__ = [
     "AttrConstraint",

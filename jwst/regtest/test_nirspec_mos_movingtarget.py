@@ -17,18 +17,19 @@ def run_spec2_pipeline(rtdata_module):
     rtdata.get_data("nirspec/mos/jw01444003001_04102_00001_nrs1_rate.fits")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.assign_wcs.save_results=true",
-            "--steps.msa_flagging.save_results=true",
-            "--steps.master_background_mos.save_results=true",
-            "--steps.extract_2d.save_results=true",
-            "--steps.srctype.save_results=true",
-            "--steps.wavecorr.save_results=true",
-            "--steps.flat_field.save_results=true",
-            "--steps.pathloss.save_results=true",
-            "--steps.barshadow.save_results=true"]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: Invalid interval: upper bound XXX is strictly less than lower bound XXX
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.assign_wcs.save_results=true",
+        "--steps.msa_flagging.save_results=true",
+        "--steps.master_background_mos.save_results=true",
+        "--steps.extract_2d.save_results=true",
+        "--steps.srctype.save_results=true",
+        "--steps.wavecorr.save_results=true",
+        "--steps.flat_field.save_results=true",
+        "--steps.pathloss.save_results=true",
+        "--steps.barshadow.save_results=true",
+    ]
     Step.from_cmdline(args)
 
     return rtdata
@@ -42,18 +43,29 @@ def run_spec3_pipeline(run_spec2_pipeline, rtdata_module):
 
     # Run the calwebb_spec3 pipeline on the association
     args = ["calwebb_spec3", rtdata.input]
-    # FIXME: Handle warnings properly.
-    # Example: RuntimeWarning: overflow encountered in cast
     Step.from_cmdline(args)
 
     return rtdata
 
 
 @pytest.mark.bigdata
-@pytest.mark.parametrize("suffix", [
-    "assign_wcs", "msa_flagging", "extract_2d", "srctype",
-    "master_background_mos", "wavecorr", "flat_field", "pathloss", "barshadow",
-    "cal", "s2d", "x1d"])
+@pytest.mark.parametrize(
+    "suffix",
+    [
+        "assign_wcs",
+        "msa_flagging",
+        "extract_2d",
+        "srctype",
+        "master_background_mos",
+        "wavecorr",
+        "flat_field",
+        "pathloss",
+        "barshadow",
+        "cal",
+        "s2d",
+        "x1d",
+    ],
+)
 def test_nirspec_mos_mt_spec2(run_spec2_pipeline, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 on a NIRSpec MOS Moving Target exposure."""
 

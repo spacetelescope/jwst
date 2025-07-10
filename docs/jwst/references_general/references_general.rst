@@ -80,7 +80,7 @@ documentation on each reference file.
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
 +-------------------------------------------------------+--------------------------------------------------+
-| :ref:`background <background_step>`                   | :ref:`WFSSBKG <wfssbkg_reffile>`                 |
+| :ref:`background <background_subtraction>`            | :ref:`WFSSBKG <wfssbkg_reffile>`                 |
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
 +-------------------------------------------------------+--------------------------------------------------+
@@ -306,13 +306,13 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` | :ref:`assign_wcs <assign_wcs_step>`                   |
 +                                                  +-------------------------------------------------------+
-|                                                  | :ref:`background <background_step>`                   |
+|                                                  | :ref:`background <background_subtraction>`            |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`extract_2d <extract_2d_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVECORR <wavecorr_reffile>`               | :ref:`wavecorr <wavecorr_step>`                       |
 +--------------------------------------------------+-------------------------------------------------------+
-| :ref:`WFSSBKG <wfssbkg_reffile>`                 | :ref:`background <background_step>`                   |
+| :ref:`WFSSBKG <wfssbkg_reffile>`                 | :ref:`background <background_subtraction>`            |
 +--------------------------------------------------+-------------------------------------------------------+
 
 Step Parameters Reference Types
@@ -414,9 +414,10 @@ EXP_TYPE  MIR_MRS             Exposure type.
                               NIRISS allowed values: NIS_IMAGE, NIS_TACQ, NIS_TACONFIRM, NIS_WFSS, NIS_SOSS, NIS_AMI,
                               NIS_FOCUS, NIS_DARK, NIS_LAMP
 
-                              NIRSpec allowed values: NRS_TASLIT, NRS_TACQ, NRS_TACONFIRM, NRS_CONFIRM, NRS_FIXEDSLIT,
-                              NRS_AUTOWAVE, NRS_IFU, NRS_MSASPEC, NRS_AUTOFLAT, NRS_IMAGE, NRS_FOCUS, NRS_DARK, NRS_LAMP,
-                              NRS_BOTA, NRS_BRIGHTOBJ, NRS_MIMF
+                              NIRSpec allowed values: NRS_AUTOFLAT, NRS_AUTOWAVE, NRS_BRIGHTOBJ, NRS_CONFIRM, NRS_DARK,
+                              NRS_FIXEDSLIT, NRS_FOCUS, NRS_IFU, NRS_IMAGE, NRS_LAMP, NRS_MIMF,
+                              NRS_MSASPEC, NRS_MSATA, NRS_TACONFIRM, NRS_TACQ, NRS_TASLIT,
+                              NRS_VERIFY, NRS_WATA
 DETECTOR  MIRIFULONG          Allowed values:
                               GUIDER1, GUIDER2
 

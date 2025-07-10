@@ -14,10 +14,10 @@ from jwst.associations.asn_from_list import asn_from_list
 from jwst.lib.file_utils import pushdir
 
 
-ROOT_DIR = os.path.join(os.path.dirname(__file__), 'data')
-FITS_FILE = os.path.join(ROOT_DIR, 'test.fits')
-ASN_FILE = os.path.join(ROOT_DIR, 'association.json')
-CUSTOM_GROUP_ID_ASN_FILE = os.path.join(ROOT_DIR, 'association_group_id.json')
+ROOT_DIR = os.path.join(os.path.dirname(__file__), "data")
+FITS_FILE = os.path.join(ROOT_DIR, "test.fits")
+ASN_FILE = os.path.join(ROOT_DIR, "association.json")
+CUSTOM_GROUP_ID_ASN_FILE = os.path.join(ROOT_DIR, "association_group_id.json")
 
 
 @pytest.fixture
@@ -28,15 +28,15 @@ def container():
         with pushdir(asn_file_path):
             with ModelContainer(asn_file_name) as c:
                 for m in c:
-                    m.meta.observation.program_number = '0001'
-                    m.meta.observation.observation_number = '1'
-                    m.meta.observation.visit_number = '1'
-                    m.meta.observation.visit_group = '1'
-                    m.meta.observation.sequence_id = '01'
-                    m.meta.observation.activity_id = '1'
-                    m.meta.observation.exposure_number = '1'
-                    m.meta.instrument.name = 'NIRCAM'
-                    m.meta.instrument.channel = 'SHORT'
+                    m.meta.observation.program_number = "0001"
+                    m.meta.observation.observation_number = "1"
+                    m.meta.observation.visit_number = "1"
+                    m.meta.observation.visit_group = "1"
+                    m.meta.observation.sequence_id = "01"
+                    m.meta.observation.activity_id = "1"
+                    m.meta.observation.exposure_number = "1"
+                    m.meta.instrument.name = "NIRCAM"
+                    m.meta.instrument.channel = "SHORT"
             yield c
 
 
@@ -51,7 +51,7 @@ def reset_group_id(container):
 
 def test_modelcontainer_iteration(container):
     for model in container:
-        assert model.meta.telescope == 'JWST'
+        assert model.meta.telescope == "JWST"
 
 
 def test_modelcontainer_indexing(container):
@@ -66,18 +66,18 @@ def test_modelcontainer_group1(container):
 
 
 def test_modelcontainer_group2(container):
-    container[0].meta.observation.exposure_number = '2'
+    container[0].meta.observation.exposure_number = "2"
     for group in container.models_grouped:
         assert len(group) == 1
         for model in group:
             pass
-    container[0].meta.observation.exposure_number = '1'
+    container[0].meta.observation.exposure_number = "1"
 
 
 def test_modelcontainer_group_names(container):
     assert len(container.group_names) == 1
     reset_group_id(container)
-    container[0].meta.observation.exposure_number = '2'
+    container[0].meta.observation.exposure_number = "2"
     assert len(container.group_names) == 2
 
 
@@ -97,7 +97,7 @@ def test_modelcontainer_error_from_asn(tmp_path):
 
 
 def test_model_container_ind_asn_exptype(container):
-    ind = container.ind_asn_type('science')
+    ind = container.ind_asn_type("science")
     assert ind == [0, 1]
 
 
@@ -112,10 +112,10 @@ def test_group_id(tmp_path):
         asn_data = load_as_asn.load_asn(f)
 
     asn_group_ids = set()
-    for d in asn_data['products'][0]['members']:
-        group_id = d.get('group_id')
+    for d in asn_data["products"][0]["members"]:
+        group_id = d.get("group_id")
         if group_id is None:
-            asn_group_ids.add('jw00001001001_02201_00001')
+            asn_group_ids.add("jw00001001001_02201_00001")
         else:
             asn_group_ids.add(group_id)
 
@@ -129,11 +129,9 @@ def test_group_id(tmp_path):
 
 @pytest.mark.parametrize("path", ["foo", "foo.fits"])
 def test_save(tmp_cwd, container, path):
-
     # container pushes us to data/ directory so need to go back to tmp_cwd
     # to avoid polluting the data/ directory
     with pushdir(tmp_cwd):
-
         # test default just saves things at model meta filename
         container.save()
         expected_fnames = []
@@ -144,7 +142,9 @@ def test_save(tmp_cwd, container, path):
 
         # test specifying path saves to custom path with indices
         container.save(path)
-        expected_fnames = [path.replace(".fits", "")+str(i)+".fits" for i in range(len(container))]
+        expected_fnames = [
+            path.replace(".fits", "") + str(i) + ".fits" for i in range(len(container))
+        ]
         for fname in expected_fnames:
             assert os.path.exists(fname)
 
@@ -153,3 +153,30 @@ def test_save(tmp_cwd, container, path):
         container.save(path)
         expected_fname = path.replace(".fits", "") + ".fits"
         assert os.path.exists(expected_fname)
+
+
+def test_open_guess(container):
+    """Test that `guess` keyword argument works in ModelContainer."""
+    asn_file_path, _asn_file_name = os.path.split(ASN_FILE)
+    fnames = [m.meta.filename for m in container]
+    with pushdir(asn_file_path):
+        # opening it normally works fine
+        ModelContainer(fnames, guess=True)
+        with pytest.raises(
+            TypeError, match="Model type is not specifically defined and guessing has been disabled"
+        ):
+            # but if you don't allow guessing the model type, it raises TypeError
+            ModelContainer(fnames, guess=False)
+
+
+def test_open_kwargs(container):
+    wrong_schema = datamodels.NRMModel()._schema
+    asn_file_path, _asn_file_name = os.path.split(ASN_FILE)
+    fnames = [m.meta.filename for m in container]
+    with pushdir(asn_file_path):
+        # opening it normally works fine
+        ModelContainer(fnames)
+        with pytest.raises(AttributeError):
+            # but schema can be passed all the way through to DataModel.__init__ on the
+            # individual datamodels, and cause AttributeError
+            ModelContainer(fnames, schema=wrong_schema)

@@ -17,20 +17,26 @@ def run_tso_spec2(rtdata_module):
     rtdata = rtdata_module
 
     # Run tso-spec2 pipeline on the first _rateints file, saving intermediate products
+    rtdata.get_data("niriss/soss/jwst_niriss_soss_bkg_sub256.fits")
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_nis_short_rateints.fits")
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.flat_field.save_results=True",
-            "--steps.srctype.save_results=True",
-            "--steps.extract_1d.soss_atoca=False",
-            ]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.bkg_subtract.save_results=True",
+        "--steps.flat_field.save_results=True",
+        "--steps.srctype.save_results=True",
+        "--steps.extract_1d.soss_atoca=False",
+    ]
     Step.from_cmdline(args)
 
     # Run tso-spec2 pipeline on the second _rateints file, without saving or
     # checking any results (simply create a fresh input for level-3 test)
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg002_nis_short_rateints.fits")
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.extract_1d.soss_atoca=False",
-            ]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.extract_1d.soss_atoca=False",
+    ]
     Step.from_cmdline(args)
 
 
@@ -41,9 +47,11 @@ def run_tso_spec3(rtdata_module, run_tso_spec2, resource_tracker):
     # Get the level3 association json file (though not its members) and run
     # the tso3 pipeline on all _calints files listed in association
     rtdata.get_data("niriss/soss/jw01091-o002_20220714t155100_tso3_001_asn.json")
-    args = ["calwebb_tso3", rtdata.input,
-            "--steps.extract_1d.soss_rtol=1.e-3",
-            ]
+    args = [
+        "calwebb_tso3",
+        rtdata.input,
+        "--steps.extract_1d.soss_rtol=1.e-3",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -56,13 +64,15 @@ def run_atoca_extras(rtdata_module, resource_tracker):
     # Run spec2 pipeline on the second _rateints file, using wavegrid generated from first segment.
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg001_wavegrid.fits")
     rtdata.get_data("niriss/soss/jw01091002001_03101_00001-seg002_nis_short_rateints.fits")
-    args = ["calwebb_spec2", rtdata.input,
-            "--output_file=atoca_extras",
-            "--steps.extract_1d.soss_modelname=atoca_extras",
-            "--steps.extract_1d.soss_wave_grid_in=jw01091002001_03101_00001-seg001_wavegrid.fits",
-            "--steps.extract_1d.soss_bad_pix=model",
-            "--steps.extract_1d.soss_rtol=1.e-3",
-            ]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--output_file=atoca_extras",
+        "--steps.extract_1d.soss_modelname=atoca_extras",
+        "--steps.extract_1d.soss_wave_grid_in=jw01091002001_03101_00001-seg001_wavegrid.fits",
+        "--steps.extract_1d.soss_bad_pix=model",
+        "--steps.extract_1d.soss_rtol=1.e-3",
+    ]
     with resource_tracker.track():
         Step.from_cmdline(args)
 
@@ -85,6 +95,7 @@ def test_niriss_soss_stage2(rtdata_module, run_tso_spec2, fitsdiff_default_kwarg
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    # Ignore the custom bkg reference file because it contains a full path.
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -98,6 +109,8 @@ def test_niriss_soss_stage3_crfints(rtdata_module, run_tso_spec3, fitsdiff_defau
 
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    # Ignore the custom bkg reference file because it contains a full path.
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_BKG")
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -110,6 +123,8 @@ def test_niriss_soss_stage3_x1dints(run_tso_spec3, rtdata_module, fitsdiff_defau
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_soss_stages/{output}")
 
+    # Ignore the custom bkg reference file because it contains a full path.
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_BKG")
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
 
@@ -144,7 +159,7 @@ def test_niriss_soss_extras(rtdata_module, run_atoca_extras, fitsdiff_default_kw
         assert diff.identical, diff.report()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def run_extract1d_null_order2(rtdata_module):
     """
     Test coverage for fix to error thrown when all of the pixels
@@ -154,14 +169,15 @@ def run_extract1d_null_order2(rtdata_module):
     """
     rtdata = rtdata_module
     rtdata.get_data("niriss/soss/jw01201008001_04101_00001-seg003_nis_int72.fits")
-    args = ["extract_1d", rtdata.input,
-            "--soss_tikfac=4.290665733550672e-17",
-            ]
+    args = [
+        "extract_1d",
+        rtdata.input,
+        "--soss_tikfac=4.290665733550672e-17",
+    ]
     Step.from_cmdline(args)
 
 
 def test_extract1d_null_order2(rtdata_module, run_extract1d_null_order2, fitsdiff_default_kwargs):
-
     rtdata = rtdata_module
 
     output = "jw01201008001_04101_00001-seg003_nis_int72_extract1dstep.fits"
@@ -173,7 +189,7 @@ def test_extract1d_null_order2(rtdata_module, run_extract1d_null_order2, fitsdif
     assert diff.identical, diff.report()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def run_spec2_substrip96(rtdata_module):
     """
     Run stage 2 pipeline on substrip96 data.
@@ -195,9 +211,12 @@ def run_spec2_substrip96(rtdata_module):
     wave_grid = SossWaveGridModel(wavegrid=wave_grid)
     wave_grid.save(wave_fname)
 
-    args = ["calwebb_spec2", rtdata.input,
-            "--steps.extract_1d.soss_tikfac=1.0e-16",
-            "--steps.extract_1d.soss_wave_grid_in=jw03596001001_wavegrid.fits",]
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--steps.extract_1d.soss_tikfac=1.0e-16",
+        "--steps.extract_1d.soss_wave_grid_in=jw03596001001_wavegrid.fits",
+    ]
     Step.from_cmdline(args)
 
 
