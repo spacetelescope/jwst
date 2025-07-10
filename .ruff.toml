@@ -139,6 +139,3 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "F841", # unused variable
     "S101",
 ]
-"jwst/scripts/*.py" = [
-    "LOG015",  # call warning() on root logger
-]

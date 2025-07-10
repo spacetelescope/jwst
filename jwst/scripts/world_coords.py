@@ -120,7 +120,7 @@ def main():
         else:
             hdulist = method(model)
             hdulist.writeto(output_file, overwrite=True)
-            logging.info(f"File written: {output_file}")
+            logger.info(f"File written: {output_file}")
             del hdulist
         model.close()
 
@@ -389,7 +389,7 @@ def imaging_coords(model):
 
 def warn_user(*argv):
     """Send a warning message to stderr."""
-    logging.warning(*argv)
+    logger.warning(*argv)
 
 
 if __name__ == "__main__":
