@@ -92,6 +92,7 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
         if not all(isinstance(m, dm.WFSSMultiSpecModel) for m in input_model):
             raise TypeError("Input to make_wfss_multiexposure is not a list of WFSSMultiSpecModel")
         output_model = dm.WFSSMultiSpecModel()
+        output_model.spec.append(dm.WFSSSpecModel())
         return output_model
 
     monkeypatch.setattr(

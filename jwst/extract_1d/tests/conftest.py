@@ -503,6 +503,7 @@ def mock_nis_wfss_l2():
     model.meta.observation.activity_id = "1"
     model.meta.observation.exposure_number = "5"
     model.meta.exposure.type = "NIS_WFSS"
+    model.meta.wcsinfo = {}
     model.meta.wcsinfo.s_region = (
         "POLYGON ICRS  247.883569817 30.206692493 247.901987783 "
         "30.174116268 247.864126916 30.158804440 247.846405241 30.190721550"

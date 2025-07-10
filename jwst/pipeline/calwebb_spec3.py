@@ -335,18 +335,7 @@ class Spec3Pipeline(Pipeline):
         if exptype in WFSS_TYPES:
             if self.save_results:
                 x1d_output = make_wfss_multiexposure(wfss_x1d)
-                # Populate S_REGION in first entry of output model spec list.
-                input_sregion_vertices = np.concatenate(
-                    [sregion_to_footprint(w.meta.wcsinfo.s_region) for w in input_models]
-                )
-                convex_sregion_hull = ConvexHull(input_sregion_vertices)
-                # Index vertices on those selected by ConvexHull
-                # By default, ConvexHull vertices are returned in counterclockwise order
-                convex_vertices = input_sregion_vertices[convex_sregion_hull.vertices]
-                s_region = "POLYGON ICRS  " + " ".join(
-                    [f"{x:.9f}" for x in convex_vertices.flatten()]
-                )
-                x1d_output.spec[0].s_region = s_region
+                self._populate_wfss_sregion(x1d_output, input_models)
                 x1d_filename = output_file + "_x1d.fits"
                 self.log.info(f"Saving the final x1d product as {x1d_filename}.")
                 x1d_output.save(x1d_filename)
@@ -427,3 +416,38 @@ class Spec3Pipeline(Pipeline):
             srcid = f"s{str(source_id):>09s}"
 
         return srcid
+
+    def _populate_wfss_sregion(self, wfss_model, cal_model_list):
+        """
+        Generate cumulative S_REGION footprint from input grism images.
+
+        This takes the input model S_REGION vertices, generates a convex hull
+        from those points and returns the vertices corresponding to that hull
+        in counterclockwise order.
+
+        Parameters
+        ----------
+        wfss_model : ~datamodels.WfssMultiExposureModel
+            The newly generated WfssMultiExposureModel made as part of
+            the save operation for spec3 processing of WFSS data.
+
+        cal_model_list : list(~datamodels.MultiSlitModel)
+            The list of input_models provided to Spec3Pipeline by the
+            input association.
+
+        Returns
+        -------
+        ~datamodels.WfssMultiExposureModel
+            The WfssMultiExposureModel with the S_REGION stored in the
+            first spec list entry.
+        """
+        # Populate S_REGION in first entry of output model spec list.
+        input_sregion_vertices = np.concatenate(
+            [sregion_to_footprint(w.meta.wcsinfo.s_region) for w in cal_model_list]
+        )
+        convex_sregion_hull = ConvexHull(input_sregion_vertices)
+        # Index vertices on those selected by ConvexHull
+        # By default, ConvexHull vertices are returned in counterclockwise order
+        convex_vertices = input_sregion_vertices[convex_sregion_hull.vertices]
+        s_region = "POLYGON ICRS  " + " ".join([f"{x:.9f}" for x in convex_vertices.flatten()])
+        wfss_model.spec[0].s_region = s_region
