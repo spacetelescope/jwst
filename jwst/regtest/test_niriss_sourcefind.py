@@ -20,7 +20,7 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
     stem = "jw01088003001_01101_00005"
     rtdata.get_data(f"niriss/imaging/{stem}_nis_cal.fits")
     model = datamodels.ImageModel(rtdata.input)
-    catalog = tweakreg_catalog.make_tweakreg_catalog(
+    catalog, _ = tweakreg_catalog.make_tweakreg_catalog(
         model,
         snr_threshold=2.5,
         kernel_fwhm=2.5,

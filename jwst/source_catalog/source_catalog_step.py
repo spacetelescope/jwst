@@ -125,7 +125,7 @@ class SourceCatalogStep(Step):
                 "wcs": model.meta.wcs,
                 "relabel": True,
             }
-            catalog = make_tweakreg_catalog(
+            catalog, segment_img = make_tweakreg_catalog(
                 model,
                 self.snr_threshold,
                 self.kernel_fwhm,
@@ -156,12 +156,13 @@ class SourceCatalogStep(Step):
                 model.meta.source_catalog = Path(cat_filepath).name
                 self.log.info(f"Wrote source catalog: {cat_filepath}")
 
-                # segm_model = datamodels.SegmentationMapModel(segment_img.data)
-                # segm_model.update(model, only="PRIMARY")
-                # segm_model.meta.wcs = model.meta.wcs
-                # segm_model.meta.wcsinfo = model.meta.wcsinfo
-                # self.save_model(segm_model, suffix="segm")
-                # model.meta.segmentation_map = segm_model.meta.filename
-                # self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
+                if segment_img is not None:
+                    segm_model = datamodels.SegmentationMapModel(segment_img.data)
+                    segm_model.update(model, only="PRIMARY")
+                    segm_model.meta.wcs = model.meta.wcs
+                    segm_model.meta.wcsinfo = model.meta.wcsinfo
+                    self.save_model(segm_model, suffix="segm")
+                    model.meta.segmentation_map = segm_model.meta.filename
+                    self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
 
         return catalog

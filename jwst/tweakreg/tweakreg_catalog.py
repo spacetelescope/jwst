@@ -247,7 +247,7 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     finder = SourceFinder(**finder_dict)
     segment_map = finder(conv_data, threshold_img, mask=mask)
     if segment_map is None:
-        return None
+        return None, None
     sources = SourceCatalog(
         data,
         segment_map,
@@ -256,7 +256,7 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
         **catalog_dict,
     ).to_table(columns=SOURCECAT_COLUMNS)
 
-    return sources
+    return sources, segment_map
 
 
 def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs):
@@ -280,6 +280,8 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
     -------
     sources : `~astropy.table.QTable`
         A table containing the found sources.
+    segmentation_image : `~numpy.ndarray` or None
+        The segmentation image, or None if not applicable.
     """
     # note that this suppresses TypeError: unexpected keyword arguments
     # so user must be careful to know which kwargs are passed in here
@@ -289,7 +291,7 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = IRAFStarFinder(threshold, kernel_fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
-    return sources
+    return sources, None
 
 
 def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs):
@@ -313,6 +315,8 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     -------
     sources : `~astropy.table.QTable`
         A table containing the found sources.
+    segmentation_image : `~numpy.ndarray` or None
+        The segmentation image, or None if not applicable.
     """
     # for consistency with IRAFStarFinder, allow minsep_fwhm to be passed in
     # and convert to pixels in the same way that IRAFStarFinder does
@@ -330,7 +334,7 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = DAOStarFinder(threshold, kernel_fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
-    return sources
+    return sources, None
 
 
 def make_tweakreg_catalog(
@@ -382,6 +386,8 @@ def make_tweakreg_catalog(
     -------
     catalog : `~astropy.Table`
         An astropy Table containing the source catalog.
+    segmentation_image : `~numpy.ndarray` or None
+        The segmentation image, or None if not applicable.
     """
     if not isinstance(model, ImageModel):
         raise TypeError("The input model must be an ImageModel.")
@@ -414,14 +420,14 @@ def make_tweakreg_catalog(
         log.warning(f"Error determining sky background: {e.args[0]}")
         sources = EMPTY_TABLE.copy()
         _rename_columns(sources)
-        return sources
+        return sources, None
 
     # Run the star finder
     with warnings.catch_warnings():  # handle lack of detections below
         warnings.filterwarnings(
             "ignore", category=NoDetectionsWarning, message="No sources were found"
         )
-        sources = starfinder(
+        sources, segmentation_image = starfinder(
             model.data,
             threshold_img,
             kernel_fwhm,
@@ -433,4 +439,4 @@ def make_tweakreg_catalog(
         sources = EMPTY_TABLE.copy()
 
     _rename_columns(sources)
-    return sources
+    return sources, segmentation_image

@@ -460,7 +460,7 @@ class TweakRegStep(Step):
 
         columns = ["id", "xcentroid", "ycentroid", "flux"]
         try:
-            catalog = make_tweakreg_catalog(
+            catalog, _ = make_tweakreg_catalog(
                 image_model,
                 self.snr_threshold,
                 self.kernel_fwhm,

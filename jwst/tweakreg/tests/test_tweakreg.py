@@ -459,9 +459,9 @@ def test_sourcefinders(example_input):
     model = example_input[0]
     thresh = 10.0  # SNR threshold above the bkg for star finder
     fwhm = 2.5  # Gaussian kernel FWHM in pixels
-    iraf = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name="iraf")
-    dao = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name="dao")
-    segm = tweakreg_catalog.make_tweakreg_catalog(
+    iraf, _ = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name="iraf")
+    dao, _ = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name="dao")
+    segm, _ = tweakreg_catalog.make_tweakreg_catalog(
         model, thresh, fwhm, starfinder_name="segmentation"
     )
 
@@ -479,7 +479,7 @@ def test_make_tweakreg_catalog(example_input):
     # run the step on the example input modified above
     x, y = [], []
     for finder_name in ["iraf", "dao", "segmentation"]:
-        cat = tweakreg_catalog.make_tweakreg_catalog(
+        cat, _ = tweakreg_catalog.make_tweakreg_catalog(
             example_input[0],
             10.0,
             2.5,
@@ -501,7 +501,7 @@ def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input, finder):
     """Test that the catalog creation fails gracefully when no sources are found."""
     # run the step on an input that is completely blank
     example_input[0].data[:] = 0.0
-    cat = tweakreg_catalog.make_tweakreg_catalog(
+    cat, _ = tweakreg_catalog.make_tweakreg_catalog(
         example_input[0],
         10.0,
         2.5,
@@ -521,7 +521,7 @@ def test_make_tweakreg_catalog_graceful_fail_bad_background(example_input, log_w
     )
 
     example_input[0].dq[:] = 1
-    cat = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5)
+    cat, _ = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5)
 
     watcher.assert_seen()
     assert len(cat) == 0
