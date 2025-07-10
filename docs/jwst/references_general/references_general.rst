@@ -80,7 +80,7 @@ documentation on each reference file.
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
 +-------------------------------------------------------+--------------------------------------------------+
-| :ref:`background <background_step>`                   | :ref:`WFSSBKG <wfssbkg_reffile>`                 |
+| :ref:`background <background_subtraction>`            | :ref:`WFSSBKG <wfssbkg_reffile>`                 |
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
 +-------------------------------------------------------+--------------------------------------------------+
@@ -306,13 +306,13 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` | :ref:`assign_wcs <assign_wcs_step>`                   |
 +                                                  +-------------------------------------------------------+
-|                                                  | :ref:`background <background_step>`                   |
+|                                                  | :ref:`background <background_subtraction>`            |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`extract_2d <extract_2d_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVECORR <wavecorr_reffile>`               | :ref:`wavecorr <wavecorr_step>`                       |
 +--------------------------------------------------+-------------------------------------------------------+
-| :ref:`WFSSBKG <wfssbkg_reffile>`                 | :ref:`background <background_step>`                   |
+| :ref:`WFSSBKG <wfssbkg_reffile>`                 | :ref:`background <background_subtraction>`            |
 +--------------------------------------------------+-------------------------------------------------------+
 
 Step Parameters Reference Types
