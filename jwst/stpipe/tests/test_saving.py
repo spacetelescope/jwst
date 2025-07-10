@@ -37,7 +37,7 @@ def test_make_output_path():
     assert output_path == path.join(step.output_dir, "junk_jwststep.fits")
 
 
-def test_save_step_default(_jail):
+def test_save_step_default(tmp_cwd):
     """Default save should be current working directory"""
 
     args = ["jwst.stpipe.tests.steps.StepWithModel", data_fn_path]
@@ -48,7 +48,7 @@ def test_save_step_default(_jail):
     assert path.isfile(fname)
 
 
-def test_save_step_withoutput(_jail):
+def test_save_step_withoutput(tmp_cwd):
     """Default save should be current working directory"""
 
     output_file = "junk.fits"
@@ -61,7 +61,7 @@ def test_save_step_withoutput(_jail):
     assert path.isfile(output_path + "_stepwithmodel" + output_ext)
 
 
-def test_save_step_withoutputsuffix(_jail):
+def test_save_step_withoutputsuffix(tmp_cwd):
     """Default save should be current working directory"""
 
     output_file = "junk_rate.fits"
@@ -126,7 +126,7 @@ def test_save_step_withdir_withoutput(mk_tmp_dirs):
     assert path.isfile(output_fn_path)
 
 
-def test_save_container(_jail):
+def test_save_container(tmp_cwd):
     """Step with output_use_model"""
 
     args = [
@@ -140,7 +140,7 @@ def test_save_container(_jail):
     assert path.isfile("flat_1_stepwithcontainer.fits")
 
 
-def test_save_container_usemodel(_jail):
+def test_save_container_usemodel(tmp_cwd):
     """Step with output_use_model"""
 
     args = ["jwst.stpipe.tests.steps.StepWithContainer", data_fn_path, "--output_use_model=true"]
@@ -151,7 +151,7 @@ def test_save_container_usemodel(_jail):
     assert path.isfile("swc_model2_stepwithcontainer.fits")
 
 
-def test_save_container_withfile(_jail):
+def test_save_container_withfile(tmp_cwd):
     """Step with output_use_model"""
 
     args = [
@@ -246,7 +246,7 @@ def test_save_substep_withdir(mk_tmp_dirs):
     assert path.isfile(desired)
 
 
-def test_save_proper_pipeline(_jail):
+def test_save_proper_pipeline(tmp_cwd):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -295,7 +295,7 @@ def test_save_proper_pipeline_withdir_withoutput(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_data_path, output_path + "_pp" + output_ext))
 
 
-def test_save_proper_pipeline_substeps(_jail):
+def test_save_proper_pipeline_substeps(tmp_cwd):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -312,7 +312,7 @@ def test_save_proper_pipeline_substeps(_jail):
     assert path.isfile("flat_aswm.fits")
 
 
-def test_save_proper_pipeline_substeps_skip(_jail):
+def test_save_proper_pipeline_substeps_skip(tmp_cwd):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -351,7 +351,7 @@ def test_save_proper_pipeline_substeps_withdir(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_config_path, "flat_aswm.fits"))
 
 
-def test_save_proper_pipeline_container(_jail):
+def test_save_proper_pipeline_container(tmp_cwd):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -400,7 +400,7 @@ def test_save_proper_pipeline_container_withdir_withoutput(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_data_path, output_path + "_1_pp" + output_ext))
 
 
-def test_save_proper_pipeline_container_substeps(_jail):
+def test_save_proper_pipeline_container_substeps(tmp_cwd):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -420,7 +420,7 @@ def test_save_proper_pipeline_container_substeps(_jail):
     assert path.isfile("flat_1_swc.fits")
 
 
-def test_save_proper_pipeline_container_substeps_skip(_jail):
+def test_save_proper_pipeline_container_substeps_skip(tmp_cwd):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -465,7 +465,7 @@ def test_save_proper_pipeline_container_substeps_withdir(mk_tmp_dirs):
     assert path.isfile(path.join(tmp_data_path, "flat_1_swc.fits"))
 
 
-def test_save_proper_pipeline_container_usemodel(_jail):
+def test_save_proper_pipeline_container_usemodel(tmp_cwd):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
@@ -486,7 +486,7 @@ def test_save_proper_pipeline_container_usemodel(_jail):
     assert len(output_files) == 0
 
 
-def test_save_proper_pipeline_container_nosearch(_jail):
+def test_save_proper_pipeline_container_nosearch(tmp_cwd):
     """Test how pipeline saving should work"""
     args = [
         "jwst.stpipe.tests.steps.ProperPipeline",
