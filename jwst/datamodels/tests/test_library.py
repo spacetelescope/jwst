@@ -1,13 +1,21 @@
 import json
+import numpy as np
+import gwcs
+from gwcs import coordinate_frames as cf
+from datetime import datetime
+from astropy.time import Time
 
 import pytest
 import stdatamodels.jwst.datamodels
 from stdatamodels.jwst.datamodels import ImageModel
+from stdatamodels.jwst.datamodels.util import _to_flat_dict
+
+from stpipe.library import BorrowError
 
 from stpipe.library import NoGroupID
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.load_as_asn import load_asn
-from jwst.datamodels.library import ModelLibrary
+from jwst.datamodels.library import ModelLibrary, _read_meta_from_open_model
 import jwst.datamodels as dm
 
 
@@ -28,7 +36,7 @@ def example_asn_path(tmp_path):
     """
     fns = []
     for i in range(_N_MODELS):
-        m = ImageModel()
+        m = ImageModel((10, 10))
         m.meta.observation.program_number = "0001"
         m.meta.observation.observation_number = _OBSERVATION_NUMBERS[i]
         m.meta.observation.visit_number = "1"
@@ -38,6 +46,7 @@ def example_asn_path(tmp_path):
         m.meta.observation.exposure_number = "1"
         m.meta.instrument.name = "NIRCAM"
         m.meta.instrument.channel = "SHORT"
+        m.meta.tweakreg_catalog = "some_catalog.fits"
         base_fn = f"{i}.fits"
         m.meta.filename = base_fn
         m.save(str(tmp_path / base_fn))
@@ -167,10 +176,15 @@ def test_asn_attributes_assignment(example_library):
     # test that the association attributes are assigned to the models
     with example_library:
         for i in range(_N_MODELS):
+            meta = example_library.read_metadata(i)
             model = example_library.borrow(i)
             assert model.meta.asn.table_name.startswith(expected_table_name)
             assert model.meta.asn.pool_name == _POOL_NAME
             example_library.shelve(model, i, modify=False)
+
+            # ensure read_metadata also updates asn attributes in an identical way
+            assert meta["meta.asn.table_name"] == model.meta.asn.table_name
+            assert meta["meta.asn.pool_name"] == model.meta.asn.pool_name
 
 
 @pytest.mark.parametrize("modify", [True, False])
@@ -195,6 +209,111 @@ def test_get_crds_parameters(example_library, modify):
     channel = params["meta.instrument.channel"]
     assert channel == "SHORT"
     assert instrument_name == "MIRI" if modify else "NIRCAM"
+
+
+@pytest.mark.parametrize("example_library", [True, False], indirect=True)
+def test_read_metadata_flat_nested(example_library):
+    """
+    Test that read_metadata flat and nested options return the same metadata
+    but in different formats.
+    """
+    meta_flat = example_library.read_metadata(0, flatten=True)
+    meta_nested = example_library.read_metadata(0, flatten=False)
+
+    # test a few keys to ensure they are the same
+    assert (
+        meta_flat["meta.observation.program_number"]
+        == meta_nested["meta"]["observation"]["program_number"]
+    )
+    assert meta_flat["meta.instrument.name"] == meta_nested["meta"]["instrument"]["name"]
+
+    # test all of the meta.asn keys because they get customized by init of ModelLibrary
+    for key in ["table_name", "pool_name", "exptype"]:
+        assert meta_flat[f"meta.asn.{key}"] == meta_nested["meta"]["asn"][key]
+    for key in ["group_id", "tweakreg_catalog"]:
+        assert meta_flat[f"meta.{key}"] == meta_nested["meta"][key]
+
+    # trigger loading model into memory.
+    # if on_disk is False, the model will stay in memory after shelve and follow a different
+    # code path than if on_disk is False but it was never borrowed.
+    with example_library:
+        model = example_library.borrow(0)
+        example_library.shelve(model, 0, modify=True)
+    meta_open_flat = example_library.read_metadata(0, flatten=True)
+    meta_open_nested = example_library.read_metadata(0, flatten=False)
+
+    # these should be identical to the closed version, except for:
+    # _fits_hash, which changes on load/save
+    # meta.date, which encodes when the model was last modified
+    # data, which is handled differently by read_metadata and model.to_flat_dict
+    for flat in [meta_flat, meta_open_flat]:
+        for key in ["_fits_hash", "meta.date"]:
+            del flat[key]
+        for key in flat.copy().keys():
+            if key.startswith("data."):
+                del flat[key]
+    for nested in [meta_nested, meta_open_nested]:
+        del nested["meta"]["date"]
+        del nested["_fits_hash"]
+        if "data" in nested:
+            del nested["data"]
+    assert meta_flat == meta_open_flat
+    assert meta_nested == meta_open_nested
+
+
+@pytest.mark.parametrize("flatten", [True, False])
+def test_read_meta_from_open_model(example_asn_path, flatten):
+    """
+    Test that read_meta_from_open_model returns the same metadata as get_crds_parameters.
+
+    Add a bunch of different types of attributes to the model to ensure they are handled
+    in the same way.
+    """
+    model = dm.open(example_asn_path.parent / "0.fits")
+    model.astropy_time = Time(datetime(2020, 1, 1, 12, 0, 0))
+    model.datetime_time = datetime(2020, 1, 1, 12, 0, 0)
+    model.data_list = [np.array([1, 2, 3]), np.array([4, 5, 6])]
+    model.int_list = [1, 2, 3, 4]
+    model.nested_list = [[{"key": "value"}], [{"key2": "value2"}]] * 2
+    model.meta.wcs = gwcs.WCS(
+        input_frame=cf.Frame2D(name="input"), output_frame=cf.Frame2D(name="output")
+    )
+    model.unsupported_type = set([1, 2, 3])
+    meta = _read_meta_from_open_model(model, flatten)
+    meta_crds = model.get_crds_parameters()
+
+    assert _to_flat_dict(meta) == meta_crds
+
+
+@pytest.mark.parametrize("flatten", [True, False])
+def test_read_meta_from_open_multislit(flatten):
+    """Test that read_meta_from_open_model returns the same metadata as get_crds_parameters."""
+    model = dm.MultiSlitModel()
+    slit = dm.SlitModel()
+    slit.meta.observation.program_number = "0001"
+    slit.meta.observation.observation_number = "1"
+    slit.meta.observation.visit_number = "1"
+    slit.meta.observation.visit_group = "1"
+    slit.data = np.zeros((10, 10))
+    model.slits.extend([slit.copy() for _ in range(3)])
+    model.meta.instrument.name = "NIRCAM"
+    model.meta.instrument.channel = "SHORT"
+
+    meta = _read_meta_from_open_model(model, flatten)
+    meta_crds = model.get_crds_parameters()
+    assert _to_flat_dict(meta) == meta_crds
+
+
+@pytest.mark.parametrize("example_library", [True, False], indirect=True)
+def test_read_metadata_fails(example_library):
+    """
+    Test that read_metadata fails if the model is already borrowed
+    """
+    with example_library:
+        model = example_library.borrow(0)
+        with pytest.raises(BorrowError):
+            example_library.read_metadata(0)
+        example_library.shelve(model, 0, modify=False)
 
 
 @pytest.mark.parametrize(

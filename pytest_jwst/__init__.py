@@ -1,1 +1,0 @@
-"""Pytest plugins for JWST."""

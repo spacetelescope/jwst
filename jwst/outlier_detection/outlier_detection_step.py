@@ -167,18 +167,18 @@ class OutlierDetectionStep(Step):
         # Select which version of OutlierDetection
         # needs to be used depending on the input data
         if isinstance(input_models, ModelContainer):
-            single_model = input_models[0]
+            exptype = input_models[0].meta.exposure.type
         elif isinstance(input_models, ModelLibrary):
             with input_models:
-                single_model = input_models.borrow(0)
-                input_models.shelve(single_model, modify=False)
+                single_meta = input_models.read_metadata(0)
+            exptype = single_meta["meta.exposure.type"]
         else:
-            single_model = input_models
+            exptype = input_models.meta.exposure.type
+            # only need to check for TSO type here because container and library are not
+            # expected inputs for TSO type
+            if is_tso(input_models):
+                return "tso"
 
-        if is_tso(single_model):
-            return "tso"
-
-        exptype = single_model.meta.exposure.type
         if exptype in CORON_IMAGE_MODES:
             return "coron"
         if exptype in IMAGE_MODES:
