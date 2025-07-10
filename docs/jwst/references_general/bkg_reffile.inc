@@ -1,7 +1,7 @@
 .. _bkg_reffile:
 
 Background reference file
-------------------------------
+-------------------------
 
 :REFTYPE: BKG
 
@@ -13,7 +13,7 @@ dispersed background produced by a particular filter+grism combination.
 .. include:: ../includes/standard_keywords.inc
 
 Type Specific Keywords for BKG
-++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++
 In addition to the standard reference file keywords listed above,
 the following keywords are *required* in BKG reference files,
 because they are used as CRDS selectors.
@@ -30,7 +30,7 @@ PUPIL      model.meta.instrument.pupil
 
 Reference File Format
 +++++++++++++++++++++
-BKG reference files are FITS format. The content of the background references differ
+BKG reference files are in FITS format. The content of the background references differ
 based on exposure type:
 
 :Data model: `~jwst.datamodels.WfssBkgModel`
