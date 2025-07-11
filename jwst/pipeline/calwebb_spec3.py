@@ -296,13 +296,17 @@ class Spec3Pipeline(Pipeline):
                     extraction_complete = (
                         result is not None and result.meta.cal_step.extract_1d == "COMPLETE"
                     )
-                    if extraction_complete:
-                        # Combine the results for all sources
-                        comb = self.combine_1d.run(result)
-                        # add metadata that only WFSS wants
-                        comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
-                        comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
-                        wfss_comb.append(comb)
+                    if not extraction_complete:
+                        continue
+                    # Combine the results for all sources
+                    comb = self.combine_1d.run(result)
+                    comb_complete = comb is not None and comb.meta.cal_step.combine_1d == "COMPLETE"
+                    if not comb_complete:
+                        continue
+                    # add metadata that only WFSS wants
+                    comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
+                    comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
+                    wfss_comb.append(comb)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
                 # If 2D data were resampled and combined, just do a 1D extraction
