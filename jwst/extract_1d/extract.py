@@ -2171,10 +2171,6 @@ def run_extract1d(
                 log.info(f"No data for slit {slit.name}, skipping ...")
                 continue
 
-            if not np.any(np.isfinite(slit.data)):
-                log.info(f"No valid data for slit {slit.name}, skipping ...")
-                continue
-
             sp_order = get_spectral_order(slit)
             if sp_order == 0 and not prism_mode:
                 log.info("Spectral order 0 is a direct image, skipping ...")
