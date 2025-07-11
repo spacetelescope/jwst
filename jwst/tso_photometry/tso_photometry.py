@@ -90,7 +90,7 @@ def tso_aperture_photometry(
         one for each integration. If provided, the arrays will be added
         to the output catalog.
     psf_width_x, psf_width_y : ndarray or None, optional
-        An array of fit PSF width values (1-sigma) in the y-direction,
+        An array of fit PSF width values (1-sigma) in the x- and y-direction,
         one for each integration. If provided, the arrays will be added
         to the output catalog.
     psf_flux : ndarray or None, optional

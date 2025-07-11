@@ -74,6 +74,9 @@ def make_mock_wcs(xcenter, ycenter):
     """Placeholder WCS"""
 
     def mock_wcs(x, y):
+        if np.isscalar(x):
+            x = [x]
+            y = [y]
         crpix1 = xcenter
         crpix2 = ycenter
         cdelt1 = 0.031
@@ -81,11 +84,17 @@ def make_mock_wcs(xcenter, ycenter):
         crval1 = 15.0 * (((34.4147 / 60.0 + 48.0) / 60.0) + 15.0)  # 15h 48m 34.4147s
         crval2 = ((24.295 / 60.0 + 9.0) / 60.0) + 28.0  # 28d 09' 24.295"
 
-        dec = (y + 1.0 - crpix2) * cdelt2 + crval2
-        cosdec = math.cos(dec * math.pi / 180.0)
-        ra = (x + 1.0 - crpix1) * cdelt1 / cosdec + crval1
+        ra, dec = [], []
+        for xval, yval in zip(x, y):
+            decval = (yval + 1.0 - crpix2) * cdelt2 + crval2
+            dec.append(decval)
+            cosdec = math.cos(decval * math.pi / 180.0)
+            ra.append((xval + 1.0 - crpix1) * cdelt1 / cosdec + crval1)
 
-        return ra, dec
+        if np.isscalar(x):
+            return ra[0], dec[0]
+        else:
+            return ra, dec
 
     return mock_wcs
 
@@ -204,8 +213,9 @@ def test_tso_phot():
     assert catalog.meta["detector"] == datamodel.meta.instrument.detector
     assert catalog.meta["channel"] == datamodel.meta.instrument.channel
     assert catalog.meta["target_name"] == datamodel.meta.target.catalog_name
-    assert math.isclose(catalog.meta["xcenter"], XCENTER, abs_tol=0.01)
-    assert math.isclose(catalog.meta["ycenter"], YCENTER, abs_tol=0.01)
+
+    assert np.allclose(catalog["aperture_x"].value, XCENTER, atol=0.01)
+    assert np.allclose(catalog["aperture_y"].value, YCENTER, atol=0.01)
 
     assert np.allclose(catalog["aperture_sum"].value, 1263.4778, rtol=1.0e-7)
     assert np.allclose(catalog["aperture_sum_err"].value, 0.0, atol=1.0e-7)
@@ -247,9 +257,9 @@ def test_tso_phot_sub64p():
     assert catalog.meta["filter"] == datamodel.meta.instrument.filter
     assert catalog.meta["subarray"] == datamodel.meta.subarray.name
     assert catalog.meta["pupil"] == datamodel.meta.instrument.pupil
-    assert math.isclose(catalog.meta["xcenter"], xcenter, abs_tol=0.01)
-    assert math.isclose(catalog.meta["ycenter"], ycenter, abs_tol=0.01)
 
+    assert np.allclose(catalog["aperture_x"].value, xcenter, atol=0.01)
+    assert np.allclose(catalog["aperture_y"].value, ycenter, atol=0.01)
     assert np.allclose(
         catalog["aperture_sum"].value, (VALUE + BACKGROUND) * shape[-1] * shape[-2], rtol=1.0e-6
     )
@@ -353,9 +363,8 @@ def test_tso_phot_uncalibrated():
     assert catalog.meta["filter"] == datamodel.meta.instrument.filter
     assert catalog.meta["subarray"] == datamodel.meta.subarray.name
     assert catalog.meta["pupil"] == datamodel.meta.instrument.pupil
-    assert math.isclose(catalog.meta["xcenter"], xcenter, abs_tol=0.01)
-    assert math.isclose(catalog.meta["ycenter"], ycenter, abs_tol=0.01)
-
+    assert np.allclose(catalog["aperture_x"].value, xcenter, atol=0.01)
+    assert np.allclose(catalog["aperture_y"].value, ycenter, atol=0.01)
     assert catalog["aperture_sum"][0].unit == u.Unit("electron")
 
 
@@ -414,8 +423,8 @@ def test_tso_phot_multiple_center_values():
         psf_flux=psf_flux,
     )
 
-    assert np.allclose(catalog.meta["xcenter"], XCENTER, atol=0.01)
-    assert np.allclose(catalog.meta["ycenter"], YCENTER, atol=0.01)
+    assert np.allclose(catalog["aperture_x"].value, XCENTER, atol=0.01)
+    assert np.allclose(catalog["aperture_y"].value, YCENTER, atol=0.01)
     assert np.allclose(catalog["aperture_sum"].value, 1263.4778, rtol=1.0e-7)
     assert np.allclose(catalog["aperture_x"].value, XCENTER, atol=0.01)
     assert np.allclose(catalog["aperture_y"].value, YCENTER, atol=0.01)
