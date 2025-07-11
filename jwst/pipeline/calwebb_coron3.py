@@ -84,7 +84,7 @@ class Coron3Pipeline(Pipeline):
 
     spec = """
         suffix = string(default='i2d')
-    """  # noqa: E501
+    """
 
     # Define aliases to steps
     step_defs = {

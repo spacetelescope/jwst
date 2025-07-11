@@ -23,7 +23,7 @@ class JwstStep(Step):
 
     spec = """
     output_ext = string(default='.fits')  # Output file type
-    """  # noqa: E501
+    """
 
     _log_records_formatter = _LOG_FORMATTER
 

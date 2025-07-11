@@ -99,7 +99,7 @@ def ipc_correction(output, ipc_model):
         "Number of reference pixels: bottom, top, left, right = "
         f"{nref.bottom_rows}, {nref.top_rows}, {nref.left_columns}, {nref.right_columns}"
     )
-    log.debug(f"Shape of ipc image = {repr(ipc_model.data.shape)}")
+    log.debug(f"Shape of ipc image = {ipc_model.data.shape!r}")
 
     # Loop over all integrations and groups in input science data.
     for i in range(output.data.shape[0]):  # integrations

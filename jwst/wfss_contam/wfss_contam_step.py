@@ -18,9 +18,9 @@ class WfssContamStep(Step):
         save_contam_images = boolean(default=False)  # Save source contam estimates
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none')
         skip = boolean(default=True)
-    """  # noqa: E501
+    """
 
-    reference_file_types = ["photom", "wavelengthrange"]
+    reference_file_types = ("photom", "wavelengthrange")
 
     def process(self, input_model):
         """

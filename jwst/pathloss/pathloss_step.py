@@ -20,7 +20,7 @@ class PathLossStep(Step):
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type
         user_slit_loc = float(default=None)   # User-provided correction to MIRI LRS source location
-    """  # noqa: E501
+    """
 
     reference_file_types = ["pathloss"]
 

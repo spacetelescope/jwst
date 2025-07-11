@@ -26,7 +26,7 @@ class MRSIMatchStep(Step):
         bkg_degree = integer(min=0, default=1) # Degree of the polynomial for background fitting
         subtract = boolean(default=False) # subtract computed sky from 'images' cube data?
         skip = boolean(default=True) # Step must be turned on by parameter reference or user
-    """  # noqa: E501
+    """
 
     reference_file_types: list = []
 

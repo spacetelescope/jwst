@@ -14,7 +14,7 @@ class AmiNormalizeStep(Step):
 
     spec = """
     suffix = string(default='aminorm-oi')
-    """  # noqa: E501
+    """
 
     def process(self, target, reference):
         """

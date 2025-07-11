@@ -32,7 +32,7 @@ class PixelReplaceStep(Step):
         n_adjacent_cols = integer(default=3)
         skip = boolean(default=True) # Step must be turned on by parameter reference or user
         output_use_model = boolean(default=True) # Use input filenames in the output models
-    """  # noqa: E501
+    """
 
     def process(self, input_data):
         """
@@ -62,11 +62,11 @@ class PixelReplaceStep(Step):
                 | datamodels.IFUImageModel
                 | datamodels.CubeModel,
             ):
-                self.log.debug(f"Input is a {str(input_model)}.")
+                self.log.debug(f"Input is a {input_model!s}.")
             elif isinstance(input_model, datamodels.ModelContainer):
                 self.log.debug("Input is a ModelContainer.")
             else:
-                self.log.error(f"Input is of type {str(input_model)} for which")
+                self.log.error(f"Input is of type {input_model!s} for which")
                 self.log.error("pixel_replace does not have an algorithm.")
                 self.log.error("Pixel replacement will be skipped.")
                 input_model.meta.cal_step.pixel_replace = "SKIPPED"
@@ -105,9 +105,9 @@ class PixelReplaceStep(Step):
                         | datamodels.IFUImageModel
                         | datamodels.CubeModel,
                     ):
-                        self.log.debug(f"Input is a {str(model)}.")
+                        self.log.debug(f"Input is a {model!s}.")
                     else:
-                        self.log.error(f"Input is of type {str(model)} for which")
+                        self.log.error(f"Input is of type {model!s} for which")
                         self.log.error("pixel_replace does not have an algorithm.")
                         self.log.error("Pixel replacement will be skipped.")
                         model.meta.cal_step.pixel_replace = "SKIPPED"

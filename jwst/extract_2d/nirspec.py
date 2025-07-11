@@ -342,7 +342,7 @@ def extract_slit(input_model, slit):
         var_poisson=ext_var_poisson,
         int_times=int_times,
     )
-    log.debug(f"Input model type is {str(input_model)}")
+    log.debug(f"Input model type is {input_model!s}")
     new_model.update(input_model)
     new_model.meta.wcs = slit_wcs
 

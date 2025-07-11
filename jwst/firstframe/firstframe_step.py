@@ -18,7 +18,7 @@ class FirstFrameStep(Step):
 
     spec = """
         bright_use_group1 = boolean(default=False) # do not flag group1 if group3 is saturated
-    """  # noqa: E501
+    """
 
     def process(self, step_input):
         """

@@ -18,7 +18,7 @@ from .source_container import SourceModelContainer
 import stdatamodels.jwst.datamodels
 
 # Import everything defined in stdatamodels.jwst.datamodels.__all__
-from stdatamodels.jwst.datamodels import *  # noqa: F403
+from stdatamodels.jwst.datamodels import *
 
 # Define __all__ to include stdatamodels.jwst.datamodels.__all__
 __all__ = [

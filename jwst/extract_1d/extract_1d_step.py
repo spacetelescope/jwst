@@ -496,7 +496,7 @@ class Extract1dStep(Step):
             ),
         ):
             # Acceptable input type, just log it
-            self.log.debug(f"Input is a {str(input_model)}.")
+            self.log.debug(f"Input is a {input_model!s}.")
         elif isinstance(input_model, datamodels.MultiSlitModel):
             # If input is multislit, with 3D calints, skip the step
             self.log.debug("Input is a MultiSlitModel")
@@ -505,7 +505,7 @@ class Extract1dStep(Step):
                 input_model.meta.cal_step.extract_1d = "SKIPPED"
                 return input_model
         else:
-            self.log.error(f"Input is a {str(input_model)}, ")
+            self.log.error(f"Input is a {input_model!s}, ")
             self.log.error("which was not expected for extract_1d.")
             self.log.error("The extract_1d step will be skipped.")
             input_model.meta.cal_step.extract_1d = "SKIPPED"

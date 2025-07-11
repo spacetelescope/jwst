@@ -26,7 +26,7 @@ class EngDBLogStep(Step):
     etime = string(default='2022-01-26 02:10:00')  # End time
     verbosity = option('initial', 'all', default='initial')  # How much to report.
     engdb_url = string(default=None)  # Mock url
-    """  # noqa: E501
+    """
 
     def process(self, mnemonics):
         """

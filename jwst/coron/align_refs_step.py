@@ -19,7 +19,7 @@ class AlignRefsStep(Step):
     spec = """
         median_box_length = integer(default=3,min=0) # box size for the median filter
         bad_bits = string(default="DO_NOT_USE") # the DQ bit values of bad pixels
-    """  # noqa: E501
+    """
 
     reference_file_types = ["psfmask"]
 

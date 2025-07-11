@@ -562,7 +562,7 @@ def _data_glob_url(*url_parts, root=None):
             headers = {"X-JFrog-Art-Api": fp.readline().strip()}
     except (PermissionError, FileNotFoundError):
         print(  # noqa: T201
-            "Warning: Anonymous Artifactory search requests are limited to "  # noqa: T201
+            "Warning: Anonymous Artifactory search requests are limited to "
             "1000 results. Use an API key and define API_KEY_FILE environment "
             "variable to get full search results.",
             file=sys.stderr,

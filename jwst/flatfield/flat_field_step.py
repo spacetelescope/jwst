@@ -60,7 +60,7 @@ class FlatFieldStep(Step):
         save_interpolated_flat = boolean(default=False) # Save interpolated NRS flat
         user_supplied_flat = string(default=None)  # User-supplied flat
         inverse = boolean(default=False)  # Invert the operation
-    """  # noqa: E501
+    """
 
     reference_file_types = ["flat", "fflat", "sflat", "dflat"]
 
@@ -85,7 +85,7 @@ class FlatFieldStep(Step):
         input_model = datamodels.open(input_data)
         exposure_type = input_model.meta.exposure.type.upper()
 
-        self.log.debug(f"Input is {str(input_model)} of exposure type {exposure_type}")
+        self.log.debug(f"Input is {input_model!s} of exposure type {exposure_type}")
 
         if input_model.meta.instrument.name.upper() == "NIRSPEC":
             if exposure_type not in NRS_SPEC_MODES and exposure_type not in NRS_IMAGING_MODES:

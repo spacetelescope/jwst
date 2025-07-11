@@ -409,7 +409,7 @@ class IFUCubeData:
             self.lambda_min = lambda_min
             self.lambda_max = lambda_max
             range_lambda = self.lambda_max - self.lambda_min
-            self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
+            self.naxis3 = math.ceil(range_lambda / self.cdelt3)
 
             # adjust max based on integer value of naxis3
             self.lambda_max = self.lambda_min + (self.naxis3) * self.cdelt3
@@ -479,7 +479,7 @@ class IFUCubeData:
             self.naxis1 = n1a + n1b + 1
             along_naxis = self.naxis1
 
-            self.naxis2 = int(math.ceil(range_b / self.cdelt2))
+            self.naxis2 = math.ceil(range_b / self.cdelt2)
             across_naxis = self.naxis2
             across_cdelt = self.cdelt2
 
@@ -494,7 +494,7 @@ class IFUCubeData:
 
             self.naxis2 = n1a + n1b + 1
             along_naxis = self.naxis2
-            self.naxis1 = int(math.ceil(range_b / self.cdelt1))
+            self.naxis1 = math.ceil(range_b / self.cdelt1)
             across_naxis = self.naxis1
             across_cdelt = self.cdelt1
 
@@ -534,7 +534,7 @@ class IFUCubeData:
 
         # set up the lambda (z) coordinate of the cube
         range_lambda = self.lambda_max - self.lambda_min
-        self.naxis3 = int(math.ceil(range_lambda / self.cdelt3))
+        self.naxis3 = math.ceil(range_lambda / self.cdelt3)
 
         # adjust max based on integer value of naxis3
         lambda_center = (self.lambda_max + self.lambda_min) / 2.0

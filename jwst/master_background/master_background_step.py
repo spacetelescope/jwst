@@ -46,7 +46,7 @@ class MasterBackgroundStep(Step):
         save_background = boolean(default=False) # Save computed master background
         force_subtract = boolean(default=False) # Force subtracting master background
         output_use_model = boolean(default=True)
-    """  # noqa: E501
+    """
 
     def process(self, input_data):
         """

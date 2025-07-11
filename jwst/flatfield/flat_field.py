@@ -1689,10 +1689,10 @@ def flat_for_nirspec_ifu(output_model, f_flat_model, s_flat_model, d_flat_model,
 
         # Convert these to integers, and add one to the upper limits,
         # because we want to use these as slice limits.
-        xstart = int(math.ceil(xstart))
-        xstop = int(math.floor(xstop)) + 1
-        ystart = int(math.ceil(ystart))
-        ystop = int(math.floor(ystop)) + 1
+        xstart = math.ceil(xstart)
+        xstop = math.floor(xstop) + 1
+        ystart = math.ceil(ystart)
+        ystop = math.floor(ystop) + 1
 
         dx = xstop - xstart
         dy = ystop - ystart
@@ -1807,7 +1807,7 @@ def flat_for_nirspec_brightobj(output_model, f_flat_model, s_flat_model, d_flat_
         got_wl_attribute = False
 
     # There must be either a wavelength array or a meta.wcs.
-    if not got_wl_attribute or np.nanmin(wl) == 0.0 and np.nanmax(wl) == 0.0:
+    if not got_wl_attribute or (np.nanmin(wl) == 0.0 and np.nanmax(wl) == 0.0):
         log.warning("The wavelength array has not been populated,")
         if got_wcs:
             log.warning("so using wcs instead of the wavelength array.")

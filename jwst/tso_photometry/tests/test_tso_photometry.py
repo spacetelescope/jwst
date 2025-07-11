@@ -19,10 +19,10 @@ def mk_data_array(shape, value, background, xcenter, ycenter, radius):
 
     data = np.zeros(shape, dtype=np.float32) + background
 
-    xlow = int(math.floor(xcenter - radius))
-    xhigh = int(math.ceil(xcenter + radius)) + 1
-    ylow = int(math.floor(ycenter - radius))
-    yhigh = int(math.ceil(ycenter + radius)) + 1
+    xlow = math.floor(xcenter - radius)
+    xhigh = math.ceil(xcenter + radius) + 1
+    ylow = math.floor(ycenter - radius)
+    yhigh = math.ceil(ycenter + radius) + 1
     xlow = max(xlow, 0)
     xhigh = min(xhigh, shape[-1])
     ylow = max(ylow, 0)

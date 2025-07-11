@@ -866,7 +866,7 @@ class DMSBaseMixin(ACIDMixin):
         else:
             value = []
         target_id = format_list(value)
-        target = f"t{str(target_id):0>3s}"
+        target = f"t{target_id!s:0>3s}"
         return target
 
     def get_grating(self):
@@ -880,7 +880,7 @@ class DMSBaseMixin(ACIDMixin):
             of the grating in use.
         """
         grating_id = format_list(self.constraints["grating"].found_values)
-        grating = f"{str(grating_id):0>3s}"
+        grating = f"{grating_id!s:0>3s}"
         return grating
 
     def __eq__(self, other):

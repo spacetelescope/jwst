@@ -22,7 +22,7 @@ class DQInitStep(Step):
     class_alias = "dq_init"
 
     spec = """
-    """  # noqa: E501
+    """
     reference_file_types = ["mask"]
 
     def process(self, step_input):

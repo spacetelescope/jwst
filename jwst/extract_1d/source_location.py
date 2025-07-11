@@ -46,7 +46,7 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
     if dispaxis == HORIZONTAL:
         # Width (height) in the cross-dispersion direction, from the start of
         # the 2-D cutout (or of the full image) to the upper limit of the bounding box.
-        xd_width = int(round(bounding_box[1][1]))  # must be an int
+        xd_width = round(bounding_box[1][1])  # must be an int
 
         # Middle of the bounding_box in the dispersion direction.
         middle_disp = (bounding_box[0][0] + bounding_box[0][1]) / 2.0
@@ -57,7 +57,7 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
 
     else:
         # Cross-dispersion total width of bounding box; must be an int
-        xd_width = int(round(bounding_box[0][1]))
+        xd_width = round(bounding_box[0][1])
 
         # Middle of the bounding_box in the dispersion direction.
         middle_disp = (bounding_box[1][0] + bounding_box[1][1]) / 2.0

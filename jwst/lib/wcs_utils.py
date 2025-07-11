@@ -45,8 +45,7 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
         empty_wl = (
             wl_array is None
             or len(wl_array) == 0
-            or np.nanmin(wl_array) == 0.0
-            and np.nanmax(wl_array) == 0.0
+            or (np.nanmin(wl_array) == 0.0 and np.nanmax(wl_array) == 0.0)
         )
 
     if empty_wl:

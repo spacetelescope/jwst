@@ -18,7 +18,7 @@ class AmiAverageStep(Step):
 
     spec = """
     skip = boolean(default=True) # Do not run this step
-    """  # noqa: E501
+    """
 
     def __init__(self, *args, **kwargs):
         warnings.warn(

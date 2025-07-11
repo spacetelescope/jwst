@@ -22,7 +22,7 @@ class PhotomStep(Step):
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type.
         mrs_time_correction = boolean(default=True) # Apply the MIRI MRS time dependent correction
-    """  # noqa: E501
+    """
 
     reference_file_types = ["photom", "area"]
 
@@ -46,7 +46,7 @@ class PhotomStep(Step):
             self.log.error("Input can not be opened as a Model.")
 
         # Report the detected type of input model
-        self.log.debug(f"Input is {str(input_model)}")
+        self.log.debug(f"Input is {input_model!s}")
         if not isinstance(
             input_model,
             datamodels.CubeModel
@@ -102,7 +102,7 @@ class PhotomStep(Step):
         except photom.DataModelTypeError:
             # should trip e.g. for NIRISS SOSS data in FULL subarray
             self.log.error(
-                f"Unexpected data model type {str(input_model)} for "
+                f"Unexpected data model type {input_model!s} for "
                 f"{input_model.meta.instrument.name.upper()}. "
                 "Photom will be skipped."
             )

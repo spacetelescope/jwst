@@ -67,7 +67,7 @@ class BadpixSelfcalStep(Step):
             Suffix to append to the filename
         """
         for i, bkg_model in enumerate(bkg_list):
-            self.save_model(bkg_model, suffix=suffix + f"_{str(i)}")
+            self.save_model(bkg_model, suffix=suffix + f"_{i!s}")
 
     def process(self, input_data, selfcal_list=None, bkg_list=None):
         """
