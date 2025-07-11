@@ -1,14 +1,12 @@
 import pytest
-import logging
 import numpy as np
 from numpy.testing import assert_allclose
 from photutils.datasets import make_gwcs
-from photutils.utils.exceptions import NoDetectionsWarning
+from pathlib import Path
 
-from stdatamodels.jwst.datamodels import ImageModel
+import stdatamodels.jwst.datamodels as dm
 
 from jwst.source_catalog import SourceCatalogStep
-from jwst.tests.helpers import LogWatcher
 
 
 @pytest.fixture
@@ -27,7 +25,7 @@ def nircam_model():
     wht = np.ones(data.shape)
     wht[0:10, :] = 0.0
     err = np.abs(data) / 10.0
-    model = ImageModel(data, wht=wht, err=err)
+    model = dm.ImageModel(data, wht=wht, err=err)
     model.meta.bunit_data = "MJy/sr"
     model.meta.bunit_err = "MJy/sr"
     model.meta.photometry.pixelarea_steradians = 1.0
@@ -78,7 +76,7 @@ def nircam_model_without_apcorr():
     wht = np.ones(data.shape)
     wht[0:10, :] = 0.0
     err = np.abs(data) / 10.0
-    model = ImageModel(data, wht=wht, err=err)
+    model = dm.ImageModel(data, wht=wht, err=err)
     model.meta.bunit_data = "MJy/sr"
     model.meta.bunit_err = "MJy/sr"
     model.meta.photometry.pixelarea_steradians = 1.0
@@ -171,7 +169,7 @@ def test_input_model_reset(nircam_model):
 
 
 @pytest.mark.parametrize("finder", ["segmentation", "iraf", "dao"])
-def test_source_catalog_point_sources(finder, nircam_model):
+def test_source_catalog_point_sources(finder, nircam_model, tmp_cwd):
     """Test the three source finding algorithms with point sources."""
     data = np.random.default_rng(seed=123).normal(0, 0.5, size=(101, 101))
 
@@ -195,8 +193,20 @@ def test_source_catalog_point_sources(finder, nircam_model):
         bkg_boxsize=50,
         kernel_fwhm=2.0,
         starfinder=finder,
-        save_results=False,
+        save_results=True,
     )
     cat = step.run(nircam_model)
 
     assert len(cat) == 2, f"Expected 2 sources, found {len(cat)} with {finder} finder."
+
+    # check output products were created
+    cat_name = "step_SourceCatalogStep_cat.ecsv"
+    assert Path(cat_name).exists()
+
+    if finder == "segmentation":
+        segm_name = "step_SourceCatalogStep_segm.fits"
+        assert Path(segm_name).exists()
+        with dm.open(segm_name) as segm:
+            assert segm.data.shape == (101, 101)
+            assert segm.meta.hasattr("wcs")
+            assert segm.meta.hasattr("wcsinfo")
