@@ -235,7 +235,7 @@ def test_niriss_image_detector1_with_likelihood(
     _assert_is_same(rtdata_module, fitsdiff_default_kwargs, suffix, truth_dir)
 
 
-def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
+def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs, log_watcher):
     """Make sure tweakreg is skipped when sources are not found."""
 
     rtdata.input = "niriss/imaging/jw01537-o003_20240406t164421_image3_00004_asn.json"
@@ -249,17 +249,22 @@ def test_niriss_tweakreg_no_sources(rtdata, fitsdiff_default_kwargs):
     ]
 
     # run the test from the command line:
-    with pytest.warns(Warning, match="No sources were found"):
-        result = Step.from_cmdline(args)
+    watcher = log_watcher(
+        "jwst.tweakreg.tweakreg_catalog", message="No sources found in the image", level="warning"
+    )
+    result = Step.from_cmdline(args)
+    watcher.assert_seen()
 
     # Check the status of the step is set correctly in the files.
     mc = datamodels.ModelContainer(rtdata.input)
-
     for model in mc:
         assert model.meta.cal_step.tweakreg != "SKIPPED"
 
-    with pytest.warns(Warning, match="No sources were found"):
-        result = TweakRegStep.call(mc)
+    watcher = log_watcher(
+        "jwst.tweakreg.tweakreg_catalog", message="No sources found in the image", level="warning"
+    )
+    result = TweakRegStep.call(mc)
+    watcher.assert_seen()
     with result:
         for model in result:
             assert model.meta.cal_step.tweakreg == "SKIPPED"
