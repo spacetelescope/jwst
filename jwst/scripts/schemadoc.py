@@ -30,10 +30,10 @@ def get_docstrings(template, model_names, all_models=False):
         try:
             docstring = build_docstring(klass, template)
         except Exception as err:
-            logging.error(f"{klassname} : {err}")
+            logger.error(f"{klassname} : {err}")
         else:
-            logging.info(f".. {klassname} ..")
-            logging.info(docstring)
+            logger.info(f".. {klassname} ..")
+            logger.info(docstring)
 
 
 def main():

@@ -11,6 +11,8 @@ from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
 
 logging.basicConfig(level=logging.INFO, format="", datefmt="", stream=sys.stdout)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def _is_number(s):
@@ -218,16 +220,16 @@ def main():
                 args.extension_tolerances
             )
         except (NameError, TypeError, ValueError, SyntaxError):
-            logging.error(err_msg)
+            logger.error(err_msg)
             exit()
 
     # Find the differences
-    logging.info("\n* STScI Custom FITSDiff")
+    logger.info("\n* STScI Custom FITSDiff")
     try:
         diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
-        logging.info(diff.report())
+        logger.info(diff.report())
     except (NameError, TypeError, ValueError, SyntaxError):
-        logging.error(err_msg)
+        logger.error(err_msg)
 
 
 if __name__ == "__main__":
