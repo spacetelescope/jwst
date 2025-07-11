@@ -31,8 +31,8 @@ def mock_tsophot_reffile(tmp_path, monkeypatch):
 
 def spot_check_expected_values(datamodel, catalog):
     """Spot check some output values to make sure they are as expected."""
-    assert np.isclose(catalog.meta["xcenter"], datamodel.meta.wcsinfo.siaf_xref_sci - 1)
-    assert np.isclose(catalog.meta["ycenter"], datamodel.meta.wcsinfo.siaf_yref_sci - 1)
+    assert np.allclose(catalog["aperture_x"].value, datamodel.meta.wcsinfo.siaf_xref_sci - 1)
+    assert np.allclose(catalog["aperture_y"].value, datamodel.meta.wcsinfo.siaf_yref_sci - 1)
     assert np.allclose(catalog["aperture_sum"].value, 1263.4778, rtol=1.0e-7)
 
 
