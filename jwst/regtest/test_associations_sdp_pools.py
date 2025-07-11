@@ -129,7 +129,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     ],
     ids=parfunc,
 )
-def test_sdp(_jail, rtdata, resource_tracker, request, pool_args):
+def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
@@ -153,7 +153,7 @@ def test_sdp(_jail, rtdata, resource_tracker, request, pool_args):
     ids=parfunc,
 )
 @pytest.mark.slow
-def test_slow(_jail, rtdata, resource_tracker, request, pool_args):
+def test_slow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
@@ -166,7 +166,7 @@ def test_slow(_jail, rtdata, resource_tracker, request, pool_args):
     ],
     ids=parfunc,
 )
-def test_fail(_jail, rtdata, resource_tracker, request, pool_args):
+def test_fail(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     with pytest.raises(MultiDiffError):
         _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
@@ -179,6 +179,6 @@ def test_fail(_jail, rtdata, resource_tracker, request, pool_args):
     ids=parfunc,
 )
 @pytest.mark.slow
-def test_fslow(_jail, rtdata, resource_tracker, request, pool_args):
+def test_fslow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     with pytest.raises(MultiDiffError):
         _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)

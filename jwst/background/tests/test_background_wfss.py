@@ -1,13 +1,14 @@
-import os
-
-import pytest
-import shutil
 import json
-import numpy as np
+import os
+import shutil
 from pathlib import Path
 
+import numpy as np
+import pytest
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels.dqflags import pixel
 from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
@@ -72,7 +73,7 @@ def mock_data(known_bkg):
 
 
 @pytest.fixture(scope="module")
-def make_wfss_datamodel(data_path, mock_data):
+def make_wfss_datamodel(mock_data):
     """Generate WFSS Observation"""
     wcsinfo = {
         "dec_ref": -27.79156387419731,
@@ -121,7 +122,9 @@ def make_wfss_datamodel(data_path, mock_data):
     image.original_data_mean = mock_data[2]  # just add this here for convenience
     image.dq = np.isnan(image.data)
 
-    image.meta.source_catalog = str(data_path / "test_cat.ecsv")
+    image.meta.source_catalog = get_pkg_data_filename(
+        "data/test_cat.ecsv", package="jwst.background.tests"
+    )
 
     return image
 
@@ -420,10 +423,13 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
 
 
 @pytest.fixture()
-def mock_asn_and_data(tmp_path_factory, data_path, make_nis_wfss_datamodel):
+def mock_asn_and_data(tmp_path_factory, make_nis_wfss_datamodel):
     # Create temp dir and copy the catalog in there
     tmp_path = tmp_path_factory.mktemp("asn_input")
-    shutil.copy(str(data_path / "test_cat.ecsv"), str(tmp_path / "test_cat.ecsv"))
+    shutil.copy(
+        get_pkg_data_filename("data/test_cat.ecsv", package="jwst.background.tests"),
+        str(tmp_path / "test_cat.ecsv"),
+    )
     # Save the datmodel into a rate file but remove the catalog to make sure it is
     # added back in by the asn_intake module
     make_nis_wfss_datamodel.meta.source_catalog = None

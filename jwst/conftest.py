@@ -3,7 +3,6 @@
 import inspect
 import logging
 import os
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -45,13 +44,14 @@ def full_pool_rules(request):
 
 
 @pytest.fixture
-def mk_tmp_dirs():
+def mk_tmp_dirs(tmp_path_factory):
     """Create a set of temporary directories and change to one of them."""
-    tmp_current_path = tempfile.mkdtemp()
-    tmp_data_path = tempfile.mkdtemp()
-    tmp_config_path = tempfile.mkdtemp()
-
     old_path = os.getcwd()
+
+    tmp_current_path = str(tmp_path_factory.mktemp("current"))
+    tmp_data_path = str(tmp_path_factory.mktemp("data"))
+    tmp_config_path = str(tmp_path_factory.mktemp("config"))
+
     try:
         os.chdir(tmp_current_path)
         yield (tmp_current_path, tmp_data_path, tmp_config_path)

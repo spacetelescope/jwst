@@ -12,7 +12,7 @@ from jwst.stpipe import Step
 from jwst.stpipe.tests.steps import StepWithModel, StepWithContainer
 
 
-def test_default_input_with_container(mk_tmp_dirs):
+def test_default_input_with_container(tmp_cwd):
     """Test default input name from a ModelContainer"""
 
     model_path = get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests")
@@ -44,7 +44,7 @@ def test_default_input_with_new_model():
     assert step._input_filename is None
 
 
-def test_default_input_dir(mk_tmp_dirs):
+def test_default_input_dir(tmp_cwd):
     """Test defaults"""
     input_file = get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests")
 
@@ -55,7 +55,7 @@ def test_default_input_dir(mk_tmp_dirs):
     assert step.input_dir == input_path
 
 
-def test_set_input_dir(mk_tmp_dirs):
+def test_set_input_dir(tmp_cwd):
     """Simply set the path"""
     input_file = get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests")
 
@@ -67,7 +67,7 @@ def test_set_input_dir(mk_tmp_dirs):
     assert step.input_dir == "junkdir"
 
 
-def test_use_input_dir(mk_tmp_dirs):
+def test_use_input_dir(tmp_cwd):
     """Test with a specified path"""
     input_dir = get_pkg_data_path("data", package="jwst.stpipe.tests")
     input_file = "flat.fits"
@@ -80,7 +80,7 @@ def test_use_input_dir(mk_tmp_dirs):
     assert step.input_dir == input_dir
 
 
-def test_fail_input_dir(mk_tmp_dirs):
+def test_fail_input_dir(tmp_cwd):
     """Fail with a bad file path"""
     input_file = "flat.fits"
 
@@ -93,7 +93,7 @@ def test_fail_input_dir(mk_tmp_dirs):
         )
 
 
-def test_input_dir_with_model(mk_tmp_dirs):
+def test_input_dir_with_model(tmp_cwd):
     """Use with an already opened DataModel"""
     with datamodels.open(
         get_pkg_data_filename("data/flat.fits", package="jwst.stpipe.tests")
