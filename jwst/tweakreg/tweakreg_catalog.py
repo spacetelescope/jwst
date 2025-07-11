@@ -34,12 +34,6 @@ SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
 EMPTY_TABLE = Table(names=SOURCECAT_COLUMNS, dtype=[str] * len(SOURCECAT_COLUMNS))
 
 
-class NoCatalogError(Exception):
-    """Exception raised when background not determined or no sources are found in the image."""
-
-    pass
-
-
 class JWSTBackground:
     """Class to estimate a 2D background and background RMS noise in an image."""
 
@@ -438,7 +432,7 @@ def make_tweakreg_catalog(
         return sources, None
 
     # Run the star finder
-    with warnings.catch_warnings():  # handle lack of detections below
+    with warnings.catch_warnings():  # handle lack of detections later
         warnings.filterwarnings(
             "ignore", category=NoDetectionsWarning, message="No sources were found"
         )

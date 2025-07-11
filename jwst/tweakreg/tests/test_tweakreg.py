@@ -11,7 +11,6 @@ from astropy.wcs import WCS
 from astropy.modeling.models import Shift
 from astropy.table import Table
 from astropy.utils.data import get_pkg_data_filename
-from jwst.tweakreg.tweakreg_catalog import NoCatalogError
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import ImageModel
 
@@ -482,8 +481,14 @@ def test_make_tweakreg_catalog(example_input):
 
 
 @pytest.mark.parametrize("finder", ["iraf", "dao", "segmentation"])
-def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input, finder):
+def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input, finder, log_watcher):
     """Test that the catalog creation fails gracefully when no sources are found."""
+    watcher = log_watcher(
+        "jwst.tweakreg.tweakreg_catalog",
+        message="No sources found in the image",
+        level="warning",
+    )
+
     # run the step on an input that is completely blank
     example_input[0].data[:] = 0.0
     cat, _ = tweakreg_catalog.make_tweakreg_catalog(
@@ -493,6 +498,7 @@ def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input, finder):
         starfinder_name=finder,
     )
 
+    watcher.assert_seen()
     assert len(cat) == 0
     assert type(cat) == Table
 

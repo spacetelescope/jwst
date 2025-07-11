@@ -15,7 +15,7 @@ import stcal.tweakreg.tweakreg as twk
 from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 from jwst.datamodels import ModelLibrary
 from jwst.stpipe import Step, record_step_status
-from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog, NoCatalogError
+from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
 
 
 def _oxford_or_str_join(str_list):
@@ -459,19 +459,15 @@ class TweakRegStep(Step):
         }
 
         columns = ["id", "xcentroid", "ycentroid", "flux"]
-        try:
-            catalog, _ = make_tweakreg_catalog(
-                image_model,
-                self.snr_threshold,
-                self.kernel_fwhm,
-                starfinder_name=self.starfinder,
-                bkg_boxsize=self.bkg_boxsize,
-                starfinder_kwargs=starfinder_kwargs,
-            )
-            catalog = catalog[columns]
-        except NoCatalogError as e:
-            self.log.warning(str(e))
-            catalog = Table(names=columns, dtype=(int, float, float, float))
+        catalog, _ = make_tweakreg_catalog(
+            image_model,
+            self.snr_threshold,
+            self.kernel_fwhm,
+            starfinder_name=self.starfinder,
+            bkg_boxsize=self.bkg_boxsize,
+            starfinder_kwargs=starfinder_kwargs,
+        )
+        catalog = catalog[columns]
         return catalog
 
 
