@@ -129,3 +129,5 @@ def test_spec3_wfss(run_spec3_wfss):
     files_created = os.listdir(".")
     assert "test_x1d.fits" in files_created
     assert "test_c1d.fits" in files_created
+    x1d = dm.open("test_x1d.fits")
+    assert len(x1d.spec[0].s_region) > 0
