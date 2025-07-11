@@ -33,12 +33,10 @@ def run_wfss_contam(rtdata_module, resource_tracker):
     return rtdata
 
 
-@pytest.mark.skip(reason="Test too slow until contam is updated")
 def test_log_tracked_resources_tsimg(log_tracked_resources, run_wfss_contam):
     log_tracked_resources()
 
 
-@pytest.mark.skip(reason="Test too slow until contam is updated")
 @pytest.mark.parametrize("suffix", ["simul", "contam", "wfsscontamstep"])
 def test_nrc_wfss_contam(run_wfss_contam, fitsdiff_default_kwargs, suffix):
     """Regression test for wfss_contam applied to NIRCam WFSS data"""
