@@ -81,15 +81,23 @@ Github main branch:
 There may be occasions where an exact copy of an operational DMS build is
 desired (e.g. for validation testing or debugging operational issues).
 We package releases for DMS builds via environment snapshots that specify the
-exact versions of all packages to be installed.
+exact versions of all packages to be installed. You can find the list of available releases at the
+[top-level stasis domain](https://ssb.stsci.edu/stasis/releases/jwst/).
+
+Each DMS delivery has its own installation instructions,
+which may be found in the corresponding release documentation, e.g.:
+https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.16.1/delivery/README-py312-macos-x86_64.html
+The installation procedures may change from time to time, so consulting the
+documentation page for the specific version in question is the best way to get
+that version installed. 
 
 To install a particular DMS build, consult the
 [Software vs DMS build version map](https://github.com/spacetelescope/jwst#software-vs-dms-build-version-map)
 table shown below to determine the correct jwst tag. For example, to install the
-version of `jwst` used in DMS build 9.0, use jwst tag 1.8.2. The overall
+version of `jwst` used in DMS build 11.2, use jwst tag 1.17.1. The overall
 procedure is similar to the 3-step process outlined in the previous section, but the
 details of each command vary, due to the use of environment snapshot files that specify
-all of the particular packages to install. Also note that different snapshot files are
+the required package versions to install. Also note that different snapshot files are
 used for Linux and Mac OS systems.
 
 Linux:
@@ -109,15 +117,8 @@ MacOS x86_64:
 
 
 Starting with the jwst 1.16.1 release, we updated our release procedures to use
-[stasis](https://github.com/spacetelescope/stasis). Each DMS delivery has its own installation instructions,
-which may be found in the corresponding release documentation, e.g.:
-https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.16.1/delivery/README-py312-macos-x86_64.html
-The installation procedures may change from time to time, so consulting the
-documentation page for the specific version in question is the best way to get
-that version installed. You can find the list of available releases at the
-[top-level stasis domain](https://ssb.stsci.edu/stasis/releases/jwst/).
-
-For releases prior to 1.16.1, please instead follow the directions below. The complete list of releases prior to 1.16.1
+[stasis](https://github.com/spacetelescope/stasis). For releases prior to 1.16.1, 
+please instead follow the directions below. The complete list of releases prior to 1.16.1
 is available on [astroconda-releases](https://github.com/astroconda/astroconda-releases/tree/master/jwstdp).
 
 Linux:
@@ -260,8 +261,8 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
-| 1.19.0              | B12.0     | 2025.2.0 | 1386         | 2025-06-26 |             | First release candidate for B12.0             |
-| 1.18.1              | B11.3.1   | 2025.2.0 | 1364         | 2025-06-10 |             | Patch release for B11.3.1                     |
+| 1.19.0              | B12.0     | 2025.3.0 | 1408         | 2025-06-26 |             | First release candidate for B12.0             |
+| 1.18.1              | B11.3.1   | 2025.2.1 | 1364         | 2025-06-10 |             | Patch release for B11.3.1                     |
 | 1.18.0              | B11.3     | 2025.2.0 | 1364         | 2025-04-01 | 2025-05-20  | First release for B11.3                       |
 | 1.17.1              | B11.2     | 2025.1.0 | 1321         | 2025-01-02 | 2025-03-05  | Final release candidate for B11.2             |
 | 1.17.0              | B11.2     | 2025.1.0 | 1321         | 2024-12-20 | TBD         | First release candidate for B11.2             |
