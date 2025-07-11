@@ -1,0 +1,1 @@
+Fix slice width calculation for NIRSpec IFU with a new-style slice map WCS.
