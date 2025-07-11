@@ -155,12 +155,11 @@ def _convolve_data(data, kernel_fwhm, mask=None):
     """
     sigma = kernel_fwhm * gaussian_fwhm_to_sigma
     kernel = Gaussian2DKernel(sigma)
-    kernel.normalize(mode="integral")
 
     # All data have NaNs.  Suppress warnings about them.
     with warnings.catch_warnings():
         warnings.filterwarnings(action="ignore", category=AstropyUserWarning)
-        return convolve(data, kernel, mask=mask, normalize_kernel=True)
+        return convolve(data, kernel, mask=mask)
 
 
 def _rename_columns(sources):
