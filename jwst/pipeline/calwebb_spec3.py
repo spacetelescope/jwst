@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from collections import defaultdict
 from pathlib import Path
+import numpy as np
 
 import stdatamodels.jwst.datamodels as dm
 
@@ -12,6 +13,8 @@ from jwst.exp_to_source import multislit_to_container
 from jwst.master_background.master_background_step import split_container
 from jwst.stpipe import Pipeline
 from jwst.lib.exposure_types import is_moving_target
+from scipy.spatial import ConvexHull, QhullError
+from stcal.alignment.util import sregion_to_footprint
 
 # step imports
 from jwst.assign_mtwcs import assign_mtwcs_step
@@ -21,6 +24,7 @@ from jwst.master_background import master_background_step
 from jwst.mrs_imatch import mrs_imatch_step
 from jwst.outlier_detection import outlier_detection_step
 from jwst.resample import resample_spec_step
+
 from jwst.combine_1d import combine_1d_step
 from jwst.photom import photom_step
 from jwst.spectral_leak import spectral_leak_step
@@ -335,6 +339,7 @@ class Spec3Pipeline(Pipeline):
         if exptype in WFSS_TYPES:
             if self.save_results:
                 x1d_output = make_wfss_multiexposure(wfss_x1d)
+                self._populate_wfss_sregion(x1d_output, input_models)
                 x1d_filename = output_file + "_x1d.fits"
                 self.log.info(f"Saving the final x1d product as {x1d_filename}.")
                 x1d_output.save(x1d_filename)
@@ -415,3 +420,47 @@ class Spec3Pipeline(Pipeline):
             srcid = f"s{str(source_id):>09s}"
 
         return srcid
+
+    def _populate_wfss_sregion(self, wfss_model, cal_model_list):
+        """
+        Generate cumulative S_REGION footprint from input grism images.
+
+        This takes the input model S_REGION vertices, generates a convex hull
+        from those points and returns the vertices corresponding to that hull
+        in counterclockwise order.
+
+        Parameters
+        ----------
+        wfss_model : ~datamodels.WfssMultiExposureModel
+            The newly generated WfssMultiExposureModel made as part of
+            the save operation for spec3 processing of WFSS data.
+
+        cal_model_list : list(~datamodels.MultiSlitModel)
+            The list of input_models provided to Spec3Pipeline by the
+            input association.
+        """
+        # Make array of S_REGION vertices from input model values, then generate convex hull
+        try:
+            input_sregion_vertices = np.concatenate(
+                [sregion_to_footprint(w.meta.wcsinfo.s_region) for w in cal_model_list]
+            )
+            convex_sregion_hull = ConvexHull(input_sregion_vertices)
+        except AttributeError as err:
+            log.warning(
+                "Missing S_REGION info in input files. Skipping S_REGION assignment for x1d output."
+            )
+            log.debug(err)
+            return
+        except QhullError as qerr:
+            log.warning(
+                "Error generating convex hull from input S_REGION vertices. Skipping S_REGION "
+                "assignment for x1d output."
+            )
+            log.debug(qerr)
+            return
+        # Index vertices on those selected by ConvexHull
+        # By default, ConvexHull vertices are returned in counterclockwise order
+        convex_vertices = input_sregion_vertices[convex_sregion_hull.vertices]
+        s_region = "POLYGON ICRS  " + " ".join([f"{x:.9f}" for x in convex_vertices.flatten()])
+        # Populate S_REGION in first entry of output model spec list.
+        wfss_model.spec[0].s_region = s_region
