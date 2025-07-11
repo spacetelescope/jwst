@@ -13,7 +13,7 @@ from jwst.exp_to_source import multislit_to_container
 from jwst.master_background.master_background_step import split_container
 from jwst.stpipe import Pipeline
 from jwst.lib.exposure_types import is_moving_target
-from scipy.spatial import ConvexHull
+from scipy.spatial import ConvexHull, QhullError
 from stcal.alignment.util import sregion_to_footprint
 
 # step imports
@@ -434,20 +434,29 @@ class Spec3Pipeline(Pipeline):
         cal_model_list : list(~datamodels.MultiSlitModel)
             The list of input_models provided to Spec3Pipeline by the
             input association.
-
-        Returns
-        -------
-        ~datamodels.WfssMultiExposureModel
-            The WfssMultiExposureModel with the S_REGION stored in the
-            first spec list entry.
         """
-        # Populate S_REGION in first entry of output model spec list.
-        input_sregion_vertices = np.concatenate(
-            [sregion_to_footprint(w.meta.wcsinfo.s_region) for w in cal_model_list]
-        )
-        convex_sregion_hull = ConvexHull(input_sregion_vertices)
+        # Make array of S_REGION vertices from input model values, then generate convex hull
+        try:
+            input_sregion_vertices = np.concatenate(
+                [sregion_to_footprint(w.meta.wcsinfo.s_region) for w in cal_model_list]
+            )
+            convex_sregion_hull = ConvexHull(input_sregion_vertices)
+        except AttributeError as err:
+            log.warning(
+                "Missing S_REGION info in input files. Skipping S_REGION assignment for x1d output."
+            )
+            log.debug(err)
+            return
+        except QhullError as qerr:
+            log.warning(
+                "Error generating convex hull from input S_REGION vertices. Skipping S_REGION "
+                "assignment for x1d output."
+            )
+            log.debug(qerr)
+            return
         # Index vertices on those selected by ConvexHull
         # By default, ConvexHull vertices are returned in counterclockwise order
         convex_vertices = input_sregion_vertices[convex_sregion_hull.vertices]
         s_region = "POLYGON ICRS  " + " ".join([f"{x:.9f}" for x in convex_vertices.flatten()])
+        # Populate S_REGION in first entry of output model spec list.
         wfss_model.spec[0].s_region = s_region
