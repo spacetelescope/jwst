@@ -180,6 +180,7 @@ def test_reftype(cfg_file, expected_reftype):
     assert step.get_config_reftype() == expected_reftype
 
 
+@pytest.mark.filterwarnings("ignore::ResourceWarning")
 def test_saving_pars(tmp_path):
     """Save the step parameters from the commandline"""
     cfg_path = get_pkg_data_filename(
