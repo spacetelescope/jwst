@@ -12,14 +12,10 @@ segment.
 
 Source Detection
 ----------------
-
-
-Source Detection
-----------------
 Stars are detected in the input image with one of the following source
-detection algorithms: ``photutils.detection.DAOStarFinder`` (default),
+detection algorithms: ``photutils.detection.DAOStarFinder``,
 ``photutils.detection.IRAFStarFinder``, or ``photutils.segmentation.SourceFinder``
-in conjunction with ``photutils.segmentation.SourceCatalog``.
+in conjunction with ``photutils.segmentation.SourceCatalog`` (default).
 
 DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
@@ -68,6 +64,14 @@ there is a saddle between them.
     imaging data, ``DAOStarFinder`` gives bad results no matter the input parameters
     due to its use of 1-D Gaussian fits.
     ``IRAFStarFinder`` or ``SourceFinder`` should be used instead.
+
+.. note::
+    If any other source detection algorithm other than ``SourceFinder`` is used,
+    the output segmentation map will not be created, and the source catalog will
+    be missing column values that are required for use as input to Level 2 spectral
+    associations. Therefore if the direct image is to be used as part of a
+    ``spec2`` association, ``SourceFinder`` should be used as the source
+    detection algorithm.
 
 .. _DAOFIND: http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?daofind
 
