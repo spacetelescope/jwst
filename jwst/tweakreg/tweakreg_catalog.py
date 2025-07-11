@@ -23,6 +23,7 @@ log.setLevel(logging.DEBUG)
 
 __all__ = ["make_tweakreg_catalog"]
 
+
 SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
     "ellipticity",
     "sky_bbox_ll",
@@ -30,8 +31,6 @@ SOURCECAT_COLUMNS = DEFAULT_COLUMNS + [
     "sky_bbox_lr",
     "sky_bbox_ur",
 ]
-
-EMPTY_TABLE = Table(names=SOURCECAT_COLUMNS, dtype=[str] * len(SOURCECAT_COLUMNS))
 
 
 class JWSTBackground:
@@ -426,7 +425,7 @@ def make_tweakreg_catalog(
             threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
     except ValueError as e:
         log.warning(f"Error determining sky background: {e.args[0]}")
-        sources = EMPTY_TABLE.copy()
+        sources = _empty_table()
         _rename_columns(sources)
         return sources, None
 
@@ -444,7 +443,21 @@ def make_tweakreg_catalog(
         )
     if not sources:
         log.warning("No sources found in the image.")
-        sources = EMPTY_TABLE.copy()
+        sources = _empty_table()
 
     _rename_columns(sources)
     return sources, segmentation_image
+
+
+def _empty_table():
+    """
+    Return an empty table with the correct column names and dtypes.
+
+    Returns
+    -------
+    `~astropy.table.Table`
+        An empty table with the correct column names and dtypes.
+    """
+    default_names = ["id", "xcentroid", "ycentroid", "flux"]
+    default_dtypes = (int, float, float, float)
+    return Table(names=default_names, dtype=default_dtypes).copy()

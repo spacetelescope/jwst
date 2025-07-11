@@ -231,9 +231,10 @@ class TweakRegStep(Step):
                 catalog = _rename_catalog_columns(catalog)
 
                 # filter all sources outside the wcs bounding box
-                catalog = twk.filter_catalog_by_bounding_box(
-                    catalog, image_model.meta.wcs.bounding_box
-                )
+                if len(catalog) > 0:
+                    catalog = twk.filter_catalog_by_bounding_box(
+                        catalog, image_model.meta.wcs.bounding_box
+                    )
 
                 # setting 'name' is important for tweakwcs logging
                 if catalog.meta.get("name") is None:
