@@ -9,7 +9,6 @@ from itertools import islice
 
 from astropy import __version__
 from astropy.table import Table
-from astropy.table.pprint import conf
 from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
 
 from astropy.io.fits.hdu.table import _TableLikeHDU
@@ -35,10 +34,6 @@ __all__ = [
 ]
 
 
-# Disable width limit for the current session for all tables
-conf.max_width = -1
-
-
 def set_variable_to_empty_list(variable):
     if variable is None:
         variable = []
@@ -46,6 +41,14 @@ def set_variable_to_empty_list(variable):
 
 
 class STFITSDiff(FITSDiff):
+    """FITSDiff class that just filters warnings from astropy FITSDiff."""
+
+    def _report(self):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", RuntimeWarning)
+
+
+class STFITSDiffBeta(FITSDiff):
     """
     FITSDiff class from astropy with STScI ad hoc changes for STScI regression test reports.
 
@@ -885,7 +888,7 @@ class STImageDataDiff(ImageDataDiff):
             max_relative = 0
             max_absolute = 0
 
-            self._writeln(" * Pixel indices below are 1-based.")
+            self._writeln("\n * Pixel indices below are 1-based.")
             for index, values in self.diff_pixels:
                 # Convert to int to avoid np.int64 in list repr.
                 index = [int(x + 1) for x in reversed(index)]
@@ -918,6 +921,9 @@ class STImageDataDiff(ImageDataDiff):
                 self._writeln(" ...")
             self._writeln(
                 f" {self.diff_total} different pixels found ({self.diff_ratio:.2%} different)."
+            )
+            self._writeln(
+                f"\n * These values are calculated from the first {self.numdiffs} differences"
             )
             self._writeln(f" Maximum relative difference: {max_relative}")
             self._writeln(f" Maximum absolute difference: {max_absolute}")
@@ -994,7 +1000,7 @@ class STRawDataDiff(STImageDataDiff):
             return
 
         if self.report_pixel_loc_diffs:
-            self._writeln(" * Pixel indices below are 1-based.")
+            self._writeln("\n * Pixel indices below are 1-based.")
             for index, values in self.diff_bytes:
                 self._writeln(f" Data differs at byte {index}:")
                 report_diff_values(
@@ -1309,29 +1315,44 @@ class STTableDataDiff(TableDataDiff):
                     get_stats = True
 
             elif "P" in col.format or "Q" in col.format:
-                diffs = []
-                rel_values = []
-                zeros_idx = []
-                nan_idx = []
-                for idx in range(len(arra)):
-                    if arra[idx] == 0 or arrb[idx] == 0:
-                        zeros_idx.append(idx)
-                    elif np.isnan(arra[idx]) or np.isnan(arrb[idx]):
-                        nan_idx.append(idx)
-                    else:
-                        df = np.abs(arra[idx] - arrb[idx])
-                        if not df <= self.atol:
-                            diffs.append(df)
-                        dfr = df / np.abs(arrb[idx])
-                        if not dfr <= self.rtol:
-                            rel_values.append(dfr)
-                get_stats = True
-                diffs = np.array(diffs)
-                abs_diffs = diffs.size
-                rel_values = np.array(rel_values)
-                rel_diffs = rel_values.size
-                anonan = arra[~np.array(nan_idx)]
-                bnonan = arrb[~np.array(nan_idx)]
+                diffs = (
+                    [
+                        idx
+                        for idx in range(len(arra))
+                        if not np.allclose(arra[idx], arrb[idx], rtol=self.rtol, atol=self.atol)
+                    ],
+                )
+                reported = True
+                self.report_zeros_nan.add_row(
+                    (
+                        col.name,
+                        "- -",
+                        "- -",
+                        "- -",
+                        "- -",
+                        "- -",
+                        "- -",
+                    )
+                )
+                abs_diffs = np.array(diffs).size
+                self.report_table.add_row(
+                    (
+                        col.name,
+                        str(arra.dtype).replace(">", ""),
+                        abs_diffs,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                        0,
+                    )
+                )
+
+                if not self.report_pixel_loc_diffs:
+                    self.diff_total += abs_diffs
+                    self.rel_diffs += 0
 
             if not reported:
                 if get_stats:
@@ -1519,7 +1540,7 @@ class STTableDataDiff(TableDataDiff):
         # Report of column differences from astropy
         if self.report_pixel_loc_diffs:
             # Finally, let's go through and report column data differences:
-            self._writeln(" * Pixel indices below are 1-based.")
+            self._writeln("\n * Pixel indices below are 1-based.")
             for indx, values in self.diff_values:
                 self._writeln(" Column {} data differs in row {}:".format(*indx))
                 report_diff_values(

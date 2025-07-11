@@ -4,9 +4,14 @@ import numpy as np
 import pytest
 
 from stdatamodels.jwst import datamodels
-from jwst.regtest.st_fitsdiff import STFITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 from astropy.io.fits.diff import FITSDiff
 from astropy.io import fits
+from astropy.table.pprint import conf
+
+
+# Disable width limit for the current session for all tables
+conf.max_width = -1
 
 
 @pytest.fixture(scope="module")
@@ -80,14 +85,27 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
     # different data values to be reported and the abs and rel tolerances
     report = rsplit[from_line:]
     # Remove the max absolute and max relative to pass old astropy version tests
-    end_idx = [idx for idx, line in enumerate(report) if "Maximum relative difference" in line]
-    if end_idx:
-        report = report[: end_idx[0]]
+    end_idx, no_diffs = None, False
+    for idx, line in enumerate(report):
+        if "No differences found" in line:
+            no_diffs = True
+            break
+        if "Maximum relative difference" in line:
+            end_idx = idx
+            break
+    if no_diffs:
+        if report_pixel_loc_diffs:
+            return report, report
+        else:
+            return report
+    if end_idx is not None:
+        report = report[:end_idx]
     if not report_pixel_loc_diffs:
         return report
     else:
         # Match the astropy report
-        # Remove the legend '* Pixel indices below are 1-based.'
+        # Remove the ST legends'
+        report = [line for line in report if "These values are calculated" not in line]
         report = [line for line in report if "Pixel indices below are 1-based." not in line]
         primary_diffs, pixidx = None, None
         for idx, line in enumerate(report):
@@ -819,7 +837,6 @@ def mock_table(tmp_path_factory):
     nan_in_data = tmp_dir / "nan_in_data_x1d.fits"
     nan_column = tmp_dir / "nan_column_x1d.fits"
     diff_column = tmp_dir / "diff_column_x1d.fits"
-    diff_coltype = tmp_dir / "diff_coltype_x1d.fits"
 
     with datamodels.SpecModel() as spec:
         spec.spectral_order = 2
@@ -869,12 +886,6 @@ def mock_table(tmp_path_factory):
         spec.spec_table["FLUX"] = np.ones(100)
         spec.spec_table["DQ"] = np.ones(100, dtype=int)
 
-        # Diff column type
-        spec.spec_table["DQ"] = bytearray(100)
-        spec.save(diff_coltype)
-        # return to truth
-        spec.spec_table["DQ"] = np.ones(100)
-
         # Add a keyword and save
         spec.meta.cal_step.flat_field = "SKIPPED"
         spec.save(keyword_mod)
@@ -886,7 +897,7 @@ def mock_table(tmp_path_factory):
         nan_in_data,
         nan_column,
         diff_column,
-        diff_coltype,
+        tmp_dir,
     ]
 
     return testing_tables
@@ -1069,31 +1080,49 @@ def test_table_diff_column(mock_table, fitsdiff_default_kwargs):
     assert report == expected_report
 
 
-def test_table_diff_coltype(mock_table, fitsdiff_default_kwargs):
-    truth = mock_table[0]
-    diff_coltype = mock_table[6]
-    diff = STFITSDiff(diff_coltype, truth, **fitsdiff_default_kwargs)
+def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
+    tmp_dir = mock_table[6]
+    diff_coltype_truth = tmp_dir / "diff_coltype_truth.fits"
+    diff_coltype = tmp_dir / "diff_coltype.fits"
+
+    arr1 = [[0, 1], [2, 3]]
+    arr2 = [[0, 1], [2, 3]]
+    c1 = fits.Column(name="col_1", array=arr1, format="PI(2)")
+    c2 = fits.Column(name="col_2", array=arr2, format="QJ(2)")
+    tab = fits.BinTableHDU.from_columns([c1, c2], name="test")
+    outfile = fits.HDUList()
+    outfile.append(tab)
+    outfile.writeto(diff_coltype_truth)
+
+    arr1 = [[0, 11], [2, 3]]
+    arr2 = [[0, 1], [2, 13]]
+    c1 = fits.Column(name="col_1", array=arr1, format="PI(2)")
+    c2 = fits.Column(name="col_2", array=arr2, format="QJ(2)")
+    tab = fits.BinTableHDU.from_columns([c1, c2], name="test")
+    outfile = fits.HDUList()
+    outfile.append(tab)
+    outfile.writeto(diff_coltype)
+
+    diff = STFITSDiff(diff_coltype, diff_coltype_truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
     # The expected result is False
     # The report should look like this
     expected_report = [
-        "Primary HDU:",
-        "Headers contain differences:",
-        "Keyword FILENAME has different values:",
-        "a> diff_coltype_x1d.fits",
-        "b> truth_x1d.fits",
-        "Extension HDU 1 (EXTRACT1D, 1):",
-        "Found 100 different table data element(s). Reporting percentages above respective tolerances:",
-        "- absolute .... 5.556%",
-        "* Unable to calculate relative differences and stats due to data types",
+        "Extension HDU 1 (TEST, 1):",
+        "Found 2 different table data element(s). Reporting percentages above respective tolerances:",
+        "- absolute .... 50%",
+        "- relative .... 0%",
         "Values in a and b",
         "col_name zeros_a_b nan_a_b no-nan_a_b max_a_b min_a_b mean_a_b",
         "-------- --------- ------- ---------- ------- ------- --------",
+        "col_1       - -     - -        - -     - -     - -      - -",
+        "col_2       - -     - -        - -     - -     - -      - -",
         "Difference stats: abs(b - a)",
         "col_name dtype  abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "-------- ------ --------- ------- -------- ------- --------- ------- -------- -------",
-        "DQ uint32       100       0        0       0         0       0        0       0",
+        "col_1 object         1       0        0       0         0       0        0       0",
+        "col_2 object         1       0        0       0         0       0        0       0",
     ]
     assert result is False
     assert report == expected_report
