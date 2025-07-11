@@ -1,0 +1,1 @@
+Change the background reference filetype for WFSS processing from ``wfssbkg`` to ``bkg``.
