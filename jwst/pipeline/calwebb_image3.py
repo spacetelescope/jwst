@@ -79,9 +79,8 @@ class Image3Pipeline(Pipeline):
 
         if has_groups:
             with input_models:
-                model = input_models.borrow(0)
-                is_moving = is_moving_target(model)
-                input_models.shelve(model, 0, modify=False)
+                meta = input_models.read_metadata(0)
+                is_moving = is_moving_target(meta)
             if is_moving:
                 input_models = self.assign_mtwcs.run(input_models)
             else:
