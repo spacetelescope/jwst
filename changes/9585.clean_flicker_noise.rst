@@ -1,0 +1,1 @@
+Catch bad values in the computed weight matrix for the FFT method to avoid setting entire images to NaN.
