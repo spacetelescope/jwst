@@ -288,6 +288,13 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
     finder_args = list(inspect.signature(IRAFStarFinder).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
 
+    # oldestdeps still encounters bug with roundlo=0.0
+    # see https://github.com/astropy/photutils/issues/1977
+    # remove once minimum photutils version is >=2.1
+    roundlo = finder_dict.get("roundlo", 0.0)
+    if roundlo == 0.0:
+        finder_dict["roundlo"] = -1.0e-12
+
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = IRAFStarFinder(threshold, kernel_fwhm, **finder_dict)
     sources = starfind(data, mask=mask)
@@ -330,6 +337,14 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     # so user must be careful to know which kwargs are passed in here
     finder_args = list(inspect.signature(DAOStarFinder).parameters)
     finder_dict = {k: kwargs.pop(k) for k in dict(kwargs) if k in finder_args}
+
+    # oldestdeps still encounters bug with roundlo=0.0
+    # see https://github.com/astropy/photutils/issues/1977
+    # remove once minimum photutils version is >=2.1
+    # note for DAOStarFinder the default is -1.0, in contrast to IRAFStarFinder
+    # which has a default of 0.0 for roundlo
+    if finder_dict.get("roundlo", -1.0) == 0.0:
+        finder_dict["roundlo"] = -1.0e-12
 
     threshold = np.median(threshold_img)  # only float is supported, not per-pixel value
     starfind = DAOStarFinder(threshold, kernel_fwhm, **finder_dict)
