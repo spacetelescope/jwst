@@ -26,7 +26,6 @@ from stdatamodels.jwst.datamodels import (
 from stdatamodels.jwst.transforms.models import (
     MIRI_AB2Slice, IdealToV2V3,
     MIRIWFSSBackwardDispersion,
-    MIRIWFSSForwardDispersion
     )
 
 from . import pointing
