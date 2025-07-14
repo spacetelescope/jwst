@@ -78,6 +78,28 @@ def mock_rampfiles(tmp_path_factory):
 
 
 def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
+    """
+    Turn the fitsdiff or stfitsdiff report into a comparable list of strings.
+
+    Parameters
+    ----------
+    report : str
+        Full string report.
+    from_line : int
+        The index of the line at which to start the comparison (this is to skip the lines
+        that contain the astropy version and directory path).
+    report_pixel_loc_diffs : bool
+        If True, it is expected that the pixel or column differences are part of the
+        report (at the end), as well as the ST ad hoc report (at the beginning).
+
+    Returns
+    -------
+    report or streport: list
+        This is either the no differences report, or the ST ad hoc report.
+    pixelreport : list
+        Report containing the pixel or column location of the differences, also
+        only returned when pixelreport is True.
+    """
     rsplit = report.split(sep="\n")
     rsplit = [rs.strip() for rs in rsplit if rs]
     # Remove the lines of fits diff version and comparison filenames, as well
@@ -104,26 +126,31 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
         return report
     else:
         # Match the astropy report
-        # Remove the ST legends'
-        report = [line for line in report if "These values are calculated" not in line]
-        report = [line for line in report if "Pixel indices below are 1-based." not in line]
-        primary_diffs, pixidx = None, None
+        streport, pixelreport = [], []
         for idx, line in enumerate(report):
-            if "Values" in line or "Found" in line:
-                if primary_diffs is None:
-                    primary_diffs = idx
-            if "differs" in line or "differ:" in line and pixidx is None:
-                pixidx = idx
-                break
-        streport = report[:pixidx]
-        # If primary_diffs is still None, means that no further comparison
-        # was made and so no stats were calculated
-        if primary_diffs is None:
-            pixelreport = report[:pixidx]
-        else:
-            pixelreport = report[:primary_diffs]
-        pixelreport.append("Data contains differences:")
-        pixelreport.extend(report[pixidx:])
+            # Ignore the ST added legends
+            if "These values are calculated" in line:
+                continue
+            elif "Pixel indices below are 1-based." in line:
+                continue
+            elif "Primary" in line or "Extension" in line:
+                stidx = True
+                pixidx = True
+                diffsline = True
+            elif "Values in" in line or "Reporting percentages" in line:
+                stidx = True
+                pixidx = False
+            elif "differs" in line or "differ:" in line:
+                stidx = False
+                pixidx = True
+                if diffsline:
+                    pixelreport.insert(idx, "Data contains differences:")
+                    diffsline = False
+            if stidx:
+                streport.append(line)
+            if pixidx:
+                pixelreport.append(line)
+
         return streport, pixelreport
 
 

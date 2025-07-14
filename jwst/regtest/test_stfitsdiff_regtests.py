@@ -5,62 +5,13 @@ import pytest
 from stdatamodels.jwst import datamodels
 from jwst.stpipe import Step
 from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
+from jwst.regtest.test_stfitsdiff import report_to_list
 from jwst.flatfield.flat_field import nirspec_ifu
 from astropy.io.fits.diff import FITSDiff
 
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata]
-
-
-def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
-    rsplit = report.split(sep="\n")
-    rsplit = [rs.strip() for rs in rsplit if rs]
-    # Remove the lines of fits diff version and comparison filenames, as well
-    # HDUs, keywords and columns not compared, and the maximum number of
-    # different data values to be reported and the abs and rel tolerances
-    report = rsplit[from_line:]
-    # Remove the max absolute and max relative to pass old astropy version tests
-    end_idx, no_diffs = None, False
-    for idx, line in enumerate(report):
-        if "No differences found" in line:
-            no_diffs = True
-            break
-        if "Maximum relative difference" in line:
-            end_idx = idx
-            break
-    if no_diffs:
-        if report_pixel_loc_diffs:
-            return report, report
-        else:
-            return report
-    if end_idx is not None:
-        report = report[:end_idx]
-    if not report_pixel_loc_diffs:
-        return report
-    else:
-        # Match the astropy report
-        # Remove the ST legends'
-        report = [line for line in report if "These values are calculated" not in line]
-        report = [line for line in report if "Pixel indices below are 1-based." not in line]
-        primary_diffs, pixidx = None, None
-        for idx, line in enumerate(report):
-            if "Values" in line or "Found" in line:
-                if primary_diffs is None:
-                    primary_diffs = idx
-            if "differs" in line or "differ:" in line and pixidx is None:
-                pixidx = idx
-                break
-        streport = report[:pixidx]
-        # If primary_diffs is still None, means that no further comparison
-        # was made and so no stats were calculated
-        if primary_diffs is None:
-            pixelreport = report[:pixidx]
-        else:
-            pixelreport = report[:primary_diffs]
-        pixelreport.append("Data contains differences:")
-        pixelreport.extend(report[pixidx:])
-        return streport, pixelreport
 
 
 def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
