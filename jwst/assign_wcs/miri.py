@@ -773,6 +773,130 @@ def abl_to_v2v3l(input_model, reference_files):
     return abl2v2v3l
 
 
+def wfss(input_model, reference_files):
+    """
+    Create the WCS pipeline for a MIRI WFSS observation.
+
+    Parameters
+    ----------
+    input_model : ImageModel
+        The input data model.
+    reference_files : dict
+        Mapping between reftype (keys) and reference file name (vals).
+        Requires 'distortion' and 'specwcs' reference files.
+
+    Returns
+    -------
+    pipeline : list
+        The WCS pipeline, suitable for input into `gwcs.WCS`.
+
+    Notes
+    -----
+    The direct image the catalog has been created from was corrected for
+    distortion, but the dispersed images have not. This is OK if the trace and
+    dispersion solutions are defined with respect to the distortion-corrected
+    image. The catalog from the combined direct image has object locations in
+    in detector space and the RA DEC of the object on sky.
+
+    The WCS information for the dispersed image  will be
+    used to translate these to pixel locations for each of the objects.
+    The disperse images will then use their trace information to translate
+    to detector space. The translation is assumed to be one-to-one for purposes
+    of identifying the center of the object trace.
+
+    The extent of the trace for each object is determined where
+    the bottom of the trace starts at t = 0 and the top of the trace ends at t = 1,
+
+    The extraction box is calculated to be the minimum bounding box of the
+    object extent in the segmentation map associated with the direct image.
+    The values of the min and max corners are saved in the photometry
+    catalog in units of RA,DEC so they can be translated to pixels by
+    the dispersed image's imaging wcs.
+
+    Source catalog use moved to extract_2d.
+    """
+    # The input is the WFSS image
+    if not isinstance(input_model, ImageModel):
+        raise TypeError("The input data model must be an ImageModel.")
+
+    # make sure this is a WFSS image
+    if "MIR_WFSS" != input_model.meta.exposure.type:
+        raise ValueError("The input exposure is not MIRI WFSS")
+
+    # Create the empty detector as a 2D coordinate frame in pixel units
+    gdetector = cf.Frame2D(
+        name="dispersed_detector",
+        axes_order=(0, 1),
+        axes_names=("x_dispersed", "y_dispersed"),
+        unit=(u.pix, u.pix),
+    )
+    spec = cf.SpectralFrame(
+        name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+    )
+
+    # translate the x,y detector-in to x,y detector out coordinates
+    # Get the disperser parameters which are defined as a model for each
+    # spectral order
+    with MiriWFSSSpecwcsModel(reference_files["specwcs"]) as f:
+        dispx = f.dispx
+        dispy = f.dispy
+        displ = f.displ
+        invdispl = f.invdispl
+
+    print('in assign wcs miri')
+    print('dispx',dispx)
+    print('dispy',dispy)
+    print('displ', displ)
+    
+    image2disp = MIRIWFSSBackwardDispersion(
+        lmodels=displ, xmodels=dispx, ymodels=dispy
+    )
+
+    print('RETURN from setting up MIRI WFSS backward')
+    # Add in the wavelength shift from the velocity dispersion
+    #try:
+    #    velosys = input_model.meta.wcsinfo.velosys
+    #except AttributeError:
+    #    pass
+    #if velosys is not None:
+    #    velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+    #    log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
+    #    det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+
+    # create the pipeline to construct a WCS object for the whole image
+    # which can translate ra,dec to image frame reference pixels
+    # it also needs to be part of the dispersed image wcs pipeline to
+    # go from detector to world coordinates. However, the disperse image
+    # will be effectively translating pixel->world coordinates in a
+    # manner that gives you the originating pixels ra and dec, not the
+    # pure ra/dec on the sky from the pointing wcs.
+
+    # use the imaging_distortion reference file here
+    image_pipeline = imaging(input_model, reference_files)
+
+    # forward input is (x,y,lam,order) -> x, y
+    # backward input needs to be the same ra, dec, lam, order -> x, y
+    wfss_pipeline = [(gdetector, image2disp)]
+
+    # pass through the wave, beam  and theta in the pipeline
+    # Theta is a constant for each grism exposure and is in the
+    # meta information for the input_model, pass it to the model
+    # so the user doesn't have to
+
+    imagepipe = []
+    world = image_pipeline.pop()[0]
+    world.name = "sky"
+    for cframe, trans in image_pipeline:
+        trans = trans & (Identity(2))
+        name = cframe.name
+        cframe.name = name + "spatial"
+        spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=name)
+        imagepipe.append((spatial_and_spectral, trans))
+    imagepipe.append((cf.CompositeFrame([world, spec], name="world"), None))
+    wfss_pipeline.extend(imagepipe)
+
+    return wfss_pipeline
+
 exp_type2transform = {
     "mir_image": imaging,
     "mir_tacq": imaging,
