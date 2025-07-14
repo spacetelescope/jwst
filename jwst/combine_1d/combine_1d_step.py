@@ -71,7 +71,15 @@ class Combine1dStep(Step):
                         result = combine1d.combine_1d_spectra(
                             model, self.exptime_key, sigma_clip=self.sigma_clip
                         )
-                        results_list.append(result)
+                        if not result.meta.cal_step.combine_1d == "SKIPPED":
+                            results_list.append(result)
+                    if not results_list:
+                        self.log.error(
+                            "No valid input spectra found in WFSSMultiSpecModel. Skipping."
+                        )
+                        result = input_model.copy()
+                        result.meta.cal_step.combine_1d = "SKIPPED"
+                        return result
                     result = make_wfss_multicombined(results_list)
                     result.meta.cal_step.combine_1d = "COMPLETE"
                     return result
