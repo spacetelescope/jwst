@@ -369,12 +369,8 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
     -------
     order : str
         The spectral order for which a trace is computed.
-    x_new, y_new : Tuple[np.ndarray, np.ndarray]
+    x, y : np.ndarray
         The x and y coordinates of the rotated points.
-        If `order` is '1', a tuple of the x and y coordinates of the rotated
-        points for the first spectral order.
-        If `order` is '2', a tuple of the x and y coordinates of the rotated
-        points for the second spectral order.
     wavelengths : np.ndarray
         The wavelengths associated with the rotated points.
     """
@@ -415,11 +411,8 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
     -------
     order : str
         The spectral order for which a trace is computed.
-    x_new, y_new : Tuple[np.ndarray, np.ndarray]
-        If `order` is '1', a tuple of the x and y coordinates of the rotated
-        points for the first spectral order.
-        If `order` is '2', a tuple of the x and y coordinates of the rotated
-        points for the second spectral order.
+    x, y : np.ndarray
+        The x and y coordinates of the rotated points.
     wavelengths : np.ndarray
         The wavelengths associated with the rotated points.
 
@@ -628,15 +621,15 @@ def _get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spe
         The reference file datamodel containing the SOSS trace positions and
         wavelength calibration models.
     pwcpos : float
-        The pupil wheel position
+        The pupil wheel position angle, e.g. as provided in the FITS header under keyword PWCPOS.
     subarray : str
-        The subarray name, ['FULL', 'SUBSTRIP256', 'SUBSTRIP96']
+        The subarray name, one of 'SUBSTRIP256', 'SUBSTRIP96', or 'FULL'.
     padding : bool
-        Include padding on map edges (only needed for reference files)
+        If True, include padding on map edges (only needed for reference files)
     padsize : int
-        The size of the padding to include on each side
+        The size of the padding to include on each side.
     spectraces : bool
-        If True, return the interpolated spectraces as well
+        If True, return the interpolated spectraces as well.
 
     Returns
     -------
