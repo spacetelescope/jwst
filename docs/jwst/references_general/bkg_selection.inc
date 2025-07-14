@@ -1,9 +1,9 @@
-.. _wfssbkg_selectors:
+.. _bkg_selectors:
 
-Reference Selection Keywords for WFSSBKG
-++++++++++++++++++++++++++++++++++++++++
-CRDS selects appropriate WFSSBKG references based on the following keywords.
-WFSSBKG is not applicable for instruments not in the table.
+Reference Selection Keywords for BKG
+++++++++++++++++++++++++++++++++++++
+CRDS selects appropriate BKG references based on the following keywords.
+BKG is not applicable for instruments not in the table.
 
 ========== ===============================================================
 Instrument Keywords                                                        
