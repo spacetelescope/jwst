@@ -10,7 +10,6 @@ from jwst.associations import config
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 def constrain_on_candidates(candidates):

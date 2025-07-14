@@ -17,7 +17,6 @@ pytestmark = [pytest.mark.bigdata, pytest.mark.filterwarnings("error")]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Decompose pool name to retrieve proposal and version id.
 pool_regex = re.compile(r"(?P<proposal>jw.+?)_(?P<versionid>.+)_pool")

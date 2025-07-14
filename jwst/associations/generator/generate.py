@@ -13,7 +13,6 @@ from jwst.lib.progress import Bar
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 __all__ = ["generate"]
 

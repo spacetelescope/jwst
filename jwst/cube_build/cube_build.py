@@ -5,7 +5,6 @@ import logging
 from . import cube_build_io_util, file_table, instrument_defaults
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class CubeData:

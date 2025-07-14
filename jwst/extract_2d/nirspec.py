@@ -14,7 +14,6 @@ from jwst.assign_wcs import nirspec, util
 from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def nrs_extract2d(input_model, slit_names=None, source_ids=None):

@@ -7,7 +7,6 @@ import numpy as np
 from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, bias_model):

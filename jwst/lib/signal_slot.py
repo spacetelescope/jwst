@@ -8,7 +8,6 @@ __all__ = ["Signal", "Signals", "SignalsNotAClass"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 Slot = namedtuple("Slot", ["func", "single_shot"])
 """Slot data structure."""

@@ -12,7 +12,6 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 # There are 30 slices in the NIRSpec IFU, numbered from 0 to 29

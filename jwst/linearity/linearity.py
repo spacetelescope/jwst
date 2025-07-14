@@ -7,7 +7,6 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(output_model, lin_model):

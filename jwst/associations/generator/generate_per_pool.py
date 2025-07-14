@@ -10,7 +10,6 @@ __all__ = ["generate_per_pool"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Ruleset names
 DISCOVER_RULESET = "discover"

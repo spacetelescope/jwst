@@ -6,7 +6,6 @@ from stdatamodels.jwst import datamodels
 from jwst.datamodels import ModelContainer
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class DataTypes:

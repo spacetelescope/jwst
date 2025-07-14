@@ -12,7 +12,6 @@ from .lib.member import Member
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 __all__: list = []
 

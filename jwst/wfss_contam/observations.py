@@ -11,7 +11,6 @@ from stdatamodels.jwst import datamodels
 from .disperse import dispersed_pixel
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def background_subtract(

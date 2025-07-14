@@ -24,7 +24,6 @@ from .soss_boxextract import box_extract, estim_error_nearest_data, get_box_weig
 from .soss_syscor import make_background_mask, soss_background
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 ORDER2_SHORT_CUTOFF = 0.58
 

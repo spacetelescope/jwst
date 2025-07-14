@@ -5,7 +5,6 @@ from gwcs.wcstools import grid_from_bounding_box
 from scipy.interpolate import RegularGridInterpolator
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Set of routines to find a  correction for a time-wavelength
 # photometric response that is particularly significant at long wavelengths.

@@ -10,7 +10,6 @@ from jwst.lib import reffile_utils
 from . import x_irs2
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 DONOTUSE = dqflags.pixel["DO_NOT_USE"]
 SATURATED = dqflags.pixel["SATURATED"]

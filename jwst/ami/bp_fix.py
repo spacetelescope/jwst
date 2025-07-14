@@ -11,8 +11,6 @@ from stdatamodels.jwst.datamodels import dqflags
 from .matrix_dft import matrix_dft
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-logging.captureWarnings(True)
 
 micron = 1.0e-6
 filts = ["F277W", "F380M", "F430M", "F480M", "F356W", "F444W"]

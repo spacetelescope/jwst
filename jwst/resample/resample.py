@@ -16,10 +16,6 @@ from jwst.datamodels import ModelLibrary
 from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
 
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
-
 __all__ = [
     "input_jwst_model_to_dict",
     "is_imaging_wcs",
@@ -36,7 +32,6 @@ _SUPPORTED_CUSTOM_WCS_PARS = [
 ]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class ResampleImage(Resample):

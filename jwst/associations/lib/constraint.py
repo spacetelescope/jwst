@@ -21,7 +21,6 @@ __all__ = [
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 class SimpleConstraintABC(abc.ABC):

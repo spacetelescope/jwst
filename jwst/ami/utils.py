@@ -9,8 +9,6 @@ from scipy.integrate import simpson
 from .matrix_dft import matrix_dft
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-log.addHandler(logging.NullHandler())
 
 
 class Affine2d:

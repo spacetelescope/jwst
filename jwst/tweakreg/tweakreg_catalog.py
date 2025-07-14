@@ -14,7 +14,6 @@ from stdatamodels.jwst.datamodels import ImageModel, dqflags
 from jwst.source_catalog.detection import JWSTBackground
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["make_tweakreg_catalog"]

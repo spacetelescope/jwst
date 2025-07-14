@@ -10,7 +10,6 @@ from stdatamodels.jwst import datamodels
 from . import subtract_images
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class ImageSubsetArray:

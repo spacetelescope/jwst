@@ -26,7 +26,6 @@ EMPTY_ASN_TABLE = {
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 class ModelContainer(Sequence):

@@ -95,7 +95,6 @@ __all__ = [
 
 # Setup logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 DEBUG_FULL = logging.DEBUG - 1
 LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 

@@ -7,7 +7,6 @@ from stdatamodels.jwst import datamodels
 from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def guider_cds(model, gain_model, readnoise_model):

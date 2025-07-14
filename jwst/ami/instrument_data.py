@@ -8,7 +8,6 @@ from . import bp_fix, utils
 from .mask_definition_ami import NRMDefinition
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]

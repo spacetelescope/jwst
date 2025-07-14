@@ -23,7 +23,6 @@ __all__ = ["AssociationRegistry", "RegistryMarker"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Library files
 _ASN_RULE = "association_rules.py"

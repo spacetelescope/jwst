@@ -9,7 +9,6 @@ from jwst.assign_wcs import nirspec
 from jwst.assign_wcs.util import wrap_ra
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 # ******************************************************************************

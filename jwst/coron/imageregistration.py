@@ -6,7 +6,6 @@ from scipy.ndimage import fourier_shift
 from stdatamodels.jwst.datamodels import CubeModel
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def align_fourier_lsq(reference, target, mask=None):
