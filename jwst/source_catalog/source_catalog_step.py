@@ -138,7 +138,7 @@ class SourceCatalogStep(Step):
                 self.log.warning("No sources found in the image. Catalog will be empty.")
                 return None
 
-            JWSTSourceCatalog.convert_to_jy(model)
+            JWSTSourceCatalog.convert_mjysr_to_jy(model)
             ci_star_thresholds = (self.ci1_star_threshold, self.ci2_star_threshold)
             catobj = JWSTSourceCatalog(
                 model,

@@ -98,7 +98,7 @@ class JWSTSourceCatalog:
         self.meta = {}
 
     @staticmethod
-    def convert_to_jy(model):
+    def convert_mjysr_to_jy(model):
         """Convert data and errors from MJy/sr to Jy, and into `~astropy.unit.Quantity` objects."""
         in_unit = "MJy/sr"
         if model.meta.bunit_data != in_unit or model.meta.bunit_err != in_unit:
@@ -117,7 +117,7 @@ class JWSTSourceCatalog:
             model.meta.bunit_err = unit.name
 
     @staticmethod
-    def convert_from_jy(model):
+    def convert_jy_to_mjysr(model):
         """Convert data and errors from Jy to MJy/sr, and from `Quantity` to `~np.ndarray`."""
         if model.meta.photometry.pixelarea_steradians is None:
             log.warning("Pixel area is None. Can't convert from Jy.")
@@ -1217,6 +1217,6 @@ class JWSTSourceCatalog:
         catalog.meta.update(self.meta)
 
         # reset units on input model back to MJy/sr
-        self.convert_from_jy(self.model)
+        self.convert_jy_to_mjysr(self.model)
 
         return catalog
