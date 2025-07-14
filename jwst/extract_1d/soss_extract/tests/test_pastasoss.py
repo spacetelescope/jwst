@@ -4,7 +4,7 @@ import numpy as np
 from jwst.extract_1d.soss_extract.pastasoss import (
     _get_wavelengths,
     _find_spectral_order_index,
-    get_soss_traces,
+    _get_soss_traces,
     _extrapolate_to_wavegrid,
 )
 
@@ -53,7 +53,7 @@ def test_get_soss_traces(refmodel):
     for order in ["1", "2"]:
         idx = int(order) - 1
         for subarray in ["SUBSTRIP96", "SUBSTRIP256"]:
-            order_out, x_new, y_new, wavelengths = get_soss_traces(
+            order_out, x_new, y_new, wavelengths = _get_soss_traces(
                 refmodel, PWCPOS, order, subarray
             )
 

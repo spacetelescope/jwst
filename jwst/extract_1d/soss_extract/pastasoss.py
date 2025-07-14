@@ -2,6 +2,8 @@ from functools import partial
 import logging
 import numpy as np
 from scipy.interpolate import interp1d
+from stpipe import crds_client
+import stdatamodels.jwst.datamodels as dm
 
 log = logging.getLogger(__name__)
 
@@ -337,7 +339,46 @@ def _find_spectral_order_index(refmodel, order):
     return -1
 
 
-def get_soss_traces(refmodel, pwcpos, order, subarray):
+def get_soss_traces(input_model, order, refmodel=None):
+    """
+    Get the SOSS traces for a given input model and spectral order.
+
+    Parameters
+    ----------
+    input_model : datamodel
+        The input data model containing the necessary metadata.
+    order : int
+        The spectral order for which to retrieve the traces.
+    refmodel : PastasossModel, optional
+        The reference model for the SOSS extraction. If not set, it will be fetched
+        from CRDS using the input model's metadata.
+
+    Returns
+    -------
+    order : str
+        The spectral order for which a trace is computed.
+    x_new, y_new : Tuple[np.ndarray, np.ndarray]
+        The x and y coordinates of the rotated points.
+        If `order` is '1', a tuple of the x and y coordinates of the rotated
+        points for the first spectral order.
+        If `order` is '2', a tuple of the x and y coordinates of the rotated
+        points for the second spectral order.
+    wavelengths : np.ndarray
+        The wavelengths associated with the rotated points.
+    """
+    if refmodel is None:
+        crds_params = input_model.get_crds_parameters()
+        ref_name = crds_client.get_reference_file(crds_params, "pastasoss", "jwst")
+        ref_file = crds_client.check_reference_open(ref_name)
+        refmodel = dm.PastasossModel(ref_file)
+
+    pwcpos = input_model.meta.instrument.pupil_position
+    subarray = input_model.meta.subarray.name
+
+    return _get_soss_traces(refmodel, pwcpos, order, subarray)
+
+
+def _get_soss_traces(refmodel, pwcpos, order, subarray):
     """
     Generate the traces given a pupil wheel position.
 
@@ -366,7 +407,7 @@ def get_soss_traces(refmodel, pwcpos, order, subarray):
     -------
     order : str
         The spectral order for which a trace is computed.
-    x_new, y_new : Tuple[np.ndarray, np.ndarray]]
+    x_new, y_new : Tuple[np.ndarray, np.ndarray]
         If `order` is '1', a tuple of the x and y coordinates of the rotated
         points for the first spectral order.
         If `order` is '2', a tuple of the x and y coordinates of the rotated
@@ -520,12 +561,60 @@ def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, ma
     return wave_map_2d
 
 
-def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spectraces=False):
+def get_soss_wavemaps(input_model, refmodel=None, padsize=None, spectraces=False):
+    """
+    Get the SOSS wavelength maps and (optionally) spectraces.
+
+    Parameters
+    ----------
+    input_model : JwstDataModel
+        The input data model.
+    refmodel : PastasossModel, optional
+        The reference model for the SOSS extraction. If not set, it will be fetched
+        from CRDS using the input model's metadata.
+    padsize : int, optional
+        The padding to apply to the wavelength maps.
+    spectraces : bool, optional
+        If True, return the interpolated spectraces as well.
+
+    Returns
+    -------
+    wavemaps : np.ndarray
+        The 2D wavemaps. Will have shape (2, array_x, array_y) with orders 1 and 2 being
+        the first and second elements, respectively.
+    spectraces : np.ndarray, optional
+        The corresponding 1D spectraces (if `spectraces` is True).
+    """
+    if refmodel is None:
+        crds_params = input_model.get_crds_parameters()
+        ref_name = crds_client.get_reference_file(crds_params, "pastasoss", "jwst")
+        ref_file = crds_client.check_reference_open(ref_name)
+        refmodel = dm.PastasossModel(ref_file)
+
+    pwcpos = input_model.meta.instrument.pupil_position
+    subarray = input_model.meta.subarray.name
+
+    if padsize is None:
+        padsize = getattr(refmodel.traces[0], "padding", 0)
+    if padsize > 0:
+        do_padding = True
+    else:
+        do_padding = False
+
+    return _get_soss_wavemaps(
+        refmodel, pwcpos, subarray, padding=do_padding, padsize=padsize, spectraces=spectraces
+    )
+
+
+def _get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spectraces=False):
     """
     Generate order 1 and 2 2D wavemaps from the rotated SOSS trace positions.
 
     Parameters
     ----------
+    refmodel : PastasossModel
+        The reference file datamodel containing the SOSS trace positions and
+        wavelength calibration models.
     pwcpos : float
         The pupil wheel position
     subarray : str
@@ -535,17 +624,20 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
     padsize : int
         The size of the padding to include on each side
     spectraces : bool
-        Return the interpolated spectraces as well
+        If True, return the interpolated spectraces as well
 
     Returns
     -------
-    Array, Array
-        The 2D wavemaps and corresponding 1D spectraces
+    wavemaps : np.ndarray
+        The 2D wavemaps. Will have shape (2, array_x, array_y) with orders 1 and 2 being
+        the first and second elements, respectively.
+    spectraces : np.ndarray, optional
+        The corresponding 1D spectraces (if `spectraces` is True).
     """
-    _, order1_x, order1_y, order1_wl = get_soss_traces(
+    _, order1_x, order1_y, order1_wl = _get_soss_traces(
         refmodel, pwcpos, order="1", subarray=subarray
     )
-    _, order2_x, order2_y, order2_wl = get_soss_traces(
+    _, order2_x, order2_y, order2_wl = _get_soss_traces(
         refmodel, pwcpos, order="2", subarray=subarray
     )
 

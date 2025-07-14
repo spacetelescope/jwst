@@ -23,7 +23,7 @@ from .atoca_utils import (
     oversample_grid,
 )
 from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
-from .pastasoss import get_soss_wavemaps, XTRACE_ORD1_LEN, XTRACE_ORD2_LEN
+from .pastasoss import _get_soss_wavemaps, XTRACE_ORD1_LEN, XTRACE_ORD2_LEN
 
 
 log = logging.getLogger(__name__)
@@ -55,7 +55,7 @@ def get_ref_file_args(ref_files):
     else:
         do_padding = False
 
-    (wavemap_o1, wavemap_o2) = get_soss_wavemaps(
+    (wavemap_o1, wavemap_o2) = _get_soss_wavemaps(
         pastasoss_ref,
         pwcpos=ref_files["pwcpos"],
         subarray=ref_files["subarray"],
@@ -167,7 +167,7 @@ def _get_trace_1d(ref_files, order):
     else:
         do_padding = False
 
-    (_, _), (spectrace_o1, spectrace_o2) = get_soss_wavemaps(
+    (_, _), (spectrace_o1, spectrace_o2) = _get_soss_wavemaps(
         pastasoss_ref,
         pwcpos=ref_files["pwcpos"],
         subarray=ref_files["subarray"],
