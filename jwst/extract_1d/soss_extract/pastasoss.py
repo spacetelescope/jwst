@@ -355,8 +355,8 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
     Parameters
     ----------
     pwcpos : float
-        The pupil wheel position angle provided in the FITS header under
-        keyword PWCPOS.
+        The pupil wheel position angle provided in the FITS header under keyword PWCPOS.
+        Values are expected to be within +/- 0.5 degrees of the commanded position (245.76 degrees).
     order : int
         The spectral order for which to retrieve the traces.
     subarray : str
@@ -576,6 +576,7 @@ def get_soss_wavemaps(
     ----------
     pwcpos : float
         The pupil wheel position angle, e.g. as provided in the FITS header under keyword PWCPOS.
+        Values are expected to be within +/- 0.5 degrees of the commanded position (245.76 degrees).
     subarray : str, optional
         The subarray name, one of 'SUBSTRIP256', 'SUBSTRIP96', or 'FULL'.
     refmodel : PastasossModel, optional

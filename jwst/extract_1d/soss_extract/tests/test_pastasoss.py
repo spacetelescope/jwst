@@ -99,11 +99,11 @@ def test_extrapolate_to_wavegrid(refmodel):
     assert np.isclose(m_extrap, m)
 
 
+@pytest.mark.parametrize("pwcpos", [245.29, 245.79, 246.29])  # Bounds of reasonable PWC positions
 @pytest.mark.parametrize("order", ["1", "2"])
 @pytest.mark.parametrize("subarray", [None, "SUBSTRIP96", "FULL"])
-def test_get_soss_traces_public(subarray, order):
+def test_get_soss_traces_public(subarray, order, pwcpos):
     """Test of public interface to get_soss_traces, which should not require datamodel or refmodel"""
-    pwcpos = 245.7909
     order_out, x_new, y_new, wavelengths = get_soss_traces(pwcpos, order, subarray=subarray)
 
     assert str(order_out) == order
@@ -111,11 +111,11 @@ def test_get_soss_traces_public(subarray, order):
     assert x_new.shape == wavelengths.shape
 
 
+@pytest.mark.parametrize("pwcpos", [245.29, 245.79, 246.29])  # Bounds of reasonable PWC positions
 @pytest.mark.parametrize("padsize", [None, 9])
 @pytest.mark.parametrize("subarray", ["SUBSTRIP256", "SUBSTRIP96", "FULL"])
-def test_get_soss_wavemaps_public(subarray, padsize):
+def test_get_soss_wavemaps_public(subarray, padsize, pwcpos):
     """Test of public interface to get_soss_wavemaps, which should not require datamodel or refmodel"""
-    pwcpos = 245.7909
     subarray_shapes = {"SUBSTRIP96": 96, "SUBSTRIP256": 256, "FULL": 2048}
     wavemaps, traces = get_soss_wavemaps(
         pwcpos, subarray=subarray, padsize=padsize, spectraces=True
