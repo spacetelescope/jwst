@@ -839,12 +839,11 @@ def wfss(input_model, reference_files):
 
     Source catalog use moved to extract_2d.
     """
-    # The input is the grism image
-    print(input_model) 
+    # The input is the WFSS image
     if not isinstance(input_model, ImageModel):
         raise TypeError("The input data model must be an ImageModel.")
 
-    # make sure this is a grism image
+    # make sure this is a WFSS image
     if "MIR_WFSS" != input_model.meta.exposure.type:
         raise ValueError("The input exposure is not MIRI WFSS")
 
@@ -867,19 +866,17 @@ def wfss(input_model, reference_files):
         dispy = f.dispy
         displ = f.displ
         invdispl = f.invdispl
-        orders = f.orders
 
-
-        det2det = MIRIWFSSForwardDispersion(
-            orders, lmodels=displ, xmodels=dispx, ymodels=dispy
-            )
-
-
-    backward = MIRIWFSSBackwardDispersion(
-        orders, lmodels=invdispl, xmodels=dispx, ymodels=dispy
+    print('in assign wcs miri')
+    print('dispx',dispx)
+    print('dispy',dispy)
+    print('displ', displ)
+    
+    image2disp = MIRIWFSSBackwardDispersion(
+        lmodels=displ, xmodels=dispx, ymodels=dispy
     )
-    det2det.inverse = backward
 
+    print('RETURN from setting up MIRI WFSS backward')
     # Add in the wavelength shift from the velocity dispersion
     #try:
     #    velosys = input_model.meta.wcsinfo.velosys
@@ -903,7 +900,7 @@ def wfss(input_model, reference_files):
 
     # forward input is (x,y,lam,order) -> x, y
     # backward input needs to be the same ra, dec, lam, order -> x, y
-    wfss_pipeline = [(gdetector, det2det)]
+    wfss_pipeline = [(gdetector, image2disp)]
 
     # pass through the wave, beam  and theta in the pipeline
     # Theta is a constant for each grism exposure and is in the
