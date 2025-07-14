@@ -167,6 +167,7 @@ example .imap taken from NIRSPEC::
   selector = {
     'AREA' : 'jwst_nirspec_area_0010.rmap',
     'BARSHADOW' : 'jwst_nirspec_barshadow_0002.rmap',
+    'BKG' : 'N/A',
     'CAMERA' : 'jwst_nirspec_camera_0015.rmap',
     ...,
     'PATHLOSS' : 'jwst_nirspec_pathloss_0003.rmap',
@@ -174,7 +175,6 @@ example .imap taken from NIRSPEC::
     'WAVECORR' : 'jwst_nirspec_wavecorr_0003.rmap',
     'WAVELENGTHRANGE' : 'jwst_nirspec_wavelengthrange_0015.rmap',
     'WCSREGIONS' : 'N/A',
-    'WFSSBKG' : 'N/A',
   }
 
 A value of N/A indicates that a particular reference type is not yet used by

@@ -233,6 +233,10 @@ def get_subarray_model(sci_model, ref_model):
     """
     # If science data is in multistripe readout, use
     # multistripe-specific subarray reconstruction.
+    if not isinstance(sci_model, datamodels.JwstDataModel):
+        raise TypeError("Science model must be a JWST data model.")
+    if not isinstance(ref_model, datamodels.JwstDataModel):
+        raise TypeError("Reference model must be a JWST data model.")
     if getattr(sci_model.meta.subarray, "multistripe_reads1", None) is not None:
         return get_multistripe_subarray_model(sci_model, ref_model)
 
@@ -289,43 +293,14 @@ def get_subarray_model(sci_model, ref_model):
     # Extract subarrays from each data attribute in the particular
     # type of reference file model and return a new copy of the
     # data model
-    if isinstance(ref_model, datamodels.FlatModel):
-        sub_data = ref_model.data[ystart:ystop, xstart:xstop]
-        sub_err = ref_model.err[ystart:ystop, xstart:xstop]
-        sub_dq = ref_model.dq[ystart:ystop, xstart:xstop]
-        sub_model = datamodels.FlatModel(data=sub_data, err=sub_err, dq=sub_dq)
-        sub_model.update(ref_model)
-    elif isinstance(ref_model, datamodels.GainModel):
-        sub_data = ref_model.data[ystart:ystop, xstart:xstop]
-        sub_model = datamodels.GainModel(data=sub_data)
-        sub_model.update(ref_model)
-    elif isinstance(ref_model, datamodels.LinearityModel):
-        sub_data = ref_model.coeffs[:, ystart:ystop, xstart:xstop]
-        sub_dq = ref_model.dq[ystart:ystop, xstart:xstop]
-        sub_model = datamodels.LinearityModel(coeffs=sub_data, dq=sub_dq)
-        sub_model.update(ref_model)
-    elif isinstance(ref_model, datamodels.MaskModel):
-        sub_dq = ref_model.dq[ystart:ystop, xstart:xstop]
-        sub_model = datamodels.MaskModel(dq=sub_dq)
-        sub_model.update(ref_model)
-    elif isinstance(ref_model, datamodels.ReadnoiseModel):
-        sub_data = ref_model.data[ystart:ystop, xstart:xstop]
-        sub_model = datamodels.ReadnoiseModel(data=sub_data)
-        sub_model.update(ref_model)
-    elif isinstance(ref_model, datamodels.SaturationModel):
-        sub_data = ref_model.data[ystart:ystop, xstart:xstop]
-        sub_dq = ref_model.dq[ystart:ystop, xstart:xstop]
-        sub_model = datamodels.SaturationModel(data=sub_data, dq=sub_dq)
-        sub_model.update(ref_model)
-    elif isinstance(ref_model, datamodels.SuperBiasModel):
-        sub_data = ref_model.data[ystart:ystop, xstart:xstop]
-        sub_err = ref_model.err[ystart:ystop, xstart:xstop]
-        sub_dq = ref_model.dq[ystart:ystop, xstart:xstop]
-        sub_model = datamodels.SuperBiasModel(data=sub_data, err=sub_err, dq=sub_dq)
-        sub_model.update(ref_model)
-    else:
-        log.warning("Unsupported reference file model type")
-        sub_model = None
+    model_type = ref_model.__class__
+    sub_model = model_type()
+    primary = ref_model.get_primary_array_name()
+    for attr in {primary, "err", "dq"}:
+        if ref_model.hasattr(attr):
+            sub_data = getattr(ref_model, attr)[..., ystart:ystop, xstart:xstop]
+            setattr(sub_model, attr, sub_data)
+    sub_model.update(ref_model)
 
     return sub_model
 

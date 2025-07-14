@@ -1,0 +1,1 @@
+Allow all-NaN spectra to be skipped instead of causing crashes

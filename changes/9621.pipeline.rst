@@ -1,0 +1,1 @@
+Populate S_REGION keyword in Level 3 WFSS x1d products using cumulative footprint of grism images supplied to Spec3Pipeline.
