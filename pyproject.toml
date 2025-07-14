@@ -33,7 +33,7 @@ dependencies = [
     "scipy>=1.14.1",
     "spherical-geometry>=1.3",
     "stdatamodels>=4.0.0,<4.1.0",
-    "stcal>=1.14.1",
+    "stcal>=1.14.1,<1.15.0",
     "stpipe>=0.10.0,<0.11.0",
     "stsci.imagestats>=1.6.3",
     "synphot>=1.3",
@@ -96,7 +96,7 @@ sdp = [
     "pysiaf>=0.13.0",
 ]
 test = [
-    "ci-watson @ git+https://github.com/spacetelescope/ci_watson.git@main",
+    "ci-watson>=0.10.0",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
