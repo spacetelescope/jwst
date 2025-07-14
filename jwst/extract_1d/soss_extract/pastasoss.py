@@ -2,6 +2,7 @@ from functools import partial
 import logging
 import numpy as np
 from scipy.interpolate import interp1d
+from datetime import datetime
 from stpipe import crds_client
 import stdatamodels.jwst.datamodels as dm
 
@@ -15,6 +16,14 @@ WAVEMAP_WLMIN = 0.5
 WAVEMAP_WLMAX = 5.5
 WAVEMAP_NWL = 5001
 SUBARRAY_YMIN = 2048 - 256
+DEFAULT_CRDS_PARAMS = {
+    "meta.instrument.name": "NIRISS",
+    "meta.observation.date": datetime.today().strftime("%Y-%m-%d"),
+    "meta.observation.time": datetime.today().strftime("%H:%M:%S.%f"),
+    "meta.instrument.detector": "NIS",
+    "meta.instrument.filter": "CLEAR",
+    "meta.exposure.type": "NIS_SOSS",
+}
 
 __all__ = ["get_soss_traces", "get_soss_wavemaps"]
 
@@ -339,19 +348,22 @@ def _find_spectral_order_index(refmodel, order):
     return -1
 
 
-def get_soss_traces(input_model, order, refmodel=None):
+def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
     """
     Get the SOSS traces for a given input model and spectral order.
 
     Parameters
     ----------
-    input_model : datamodel
-        The input data model containing the necessary metadata.
+    pwcpos : float
+        The pupil wheel position angle provided in the FITS header under
+        keyword PWCPOS.
     order : int
         The spectral order for which to retrieve the traces.
+    subarray : str
+        Name of subarray in use, typically 'SUBSTRIP96' or 'SUBSTRIP256'.
     refmodel : PastasossModel, optional
         The reference model for the SOSS extraction. If not set, it will be fetched
-        from CRDS using the input model's metadata.
+        from CRDS.
 
     Returns
     -------
@@ -367,13 +379,9 @@ def get_soss_traces(input_model, order, refmodel=None):
         The wavelengths associated with the rotated points.
     """
     if refmodel is None:
-        crds_params = input_model.get_crds_parameters()
-        ref_name = crds_client.get_reference_file(crds_params, "pastasoss", "jwst")
+        ref_name = crds_client.get_reference_file(DEFAULT_CRDS_PARAMS, "pastasoss", "jwst")
         ref_file = crds_client.check_reference_open(ref_name)
         refmodel = dm.PastasossModel(ref_file)
-
-    pwcpos = input_model.meta.instrument.pupil_position
-    subarray = input_model.meta.subarray.name
 
     return _get_soss_traces(refmodel, pwcpos, order, subarray)
 
@@ -561,17 +569,25 @@ def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, ma
     return wave_map_2d
 
 
-def get_soss_wavemaps(input_model, refmodel=None, padsize=None, spectraces=False):
+def get_soss_wavemaps(
+    pwcpos,
+    subarray="SUBSTRIP256",
+    refmodel=None,
+    padsize=None,
+    spectraces=False,
+):
     """
     Get the SOSS wavelength maps and (optionally) spectraces.
 
     Parameters
     ----------
-    input_model : JwstDataModel
-        The input data model.
+    pwcpos : float
+        The pupil wheel position angle, e.g. as provided in the FITS header under keyword PWCPOS.
+    subarray : str, optional
+        The subarray name, one of 'SUBSTRIP256', 'SUBSTRIP96', or 'FULL'.
     refmodel : PastasossModel, optional
         The reference model for the SOSS extraction. If not set, it will be fetched
-        from CRDS using the input model's metadata.
+        from CRDS.
     padsize : int, optional
         The padding to apply to the wavelength maps.
     spectraces : bool, optional
@@ -586,13 +602,9 @@ def get_soss_wavemaps(input_model, refmodel=None, padsize=None, spectraces=False
         The corresponding 1D spectraces (if `spectraces` is True).
     """
     if refmodel is None:
-        crds_params = input_model.get_crds_parameters()
-        ref_name = crds_client.get_reference_file(crds_params, "pastasoss", "jwst")
+        ref_name = crds_client.get_reference_file(DEFAULT_CRDS_PARAMS, "pastasoss", "jwst")
         ref_file = crds_client.check_reference_open(ref_name)
         refmodel = dm.PastasossModel(ref_file)
-
-    pwcpos = input_model.meta.instrument.pupil_position
-    subarray = input_model.meta.subarray.name
 
     if padsize is None:
         padsize = getattr(refmodel.traces[0], "padding", 0)
