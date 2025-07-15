@@ -1,20 +1,15 @@
 """Test module pointing_summary"""
 
 import sys
-from pathlib import Path
 
 import pytest
-
 from astropy.table import Table
+from astropy.utils.data import get_pkg_data_filename
 from astropy.utils.diff import report_diff_values
-
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.lib import engdb_tools
 import jwst.lib.pointing_summary as ps
-
-
-DATA_PATH = Path(__file__).parent / "data"
+from jwst.lib import engdb_tools
 
 # Engineering parameters
 GOOD_STARTTIME = "2016-01-18"
@@ -63,7 +58,9 @@ def test_calc_deltas(engdb, data_path):
     with ImageModel(data_path) as model:
         deltas = ps.calc_deltas([model])
 
-    truth = Table.read(DATA_PATH / "calc_deltas_truth.ecsv")
+    truth = Table.read(
+        get_pkg_data_filename("data/calc_deltas_truth.ecsv", package="jwst.lib.tests")
+    )
 
     # round the delta values to a reasonable level
     deltas[0][4] = round(deltas[0][4], 8)
