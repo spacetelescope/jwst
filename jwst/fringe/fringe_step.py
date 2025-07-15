@@ -1,10 +1,13 @@
-#! /usr/bin/env python
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.fringe import fringe
 from jwst.stpipe import Step
 
 __all__ = ["FringeStep"]
+
+log = logging.getLogger(__name__)
 
 
 class FringeStep(Step):
@@ -31,12 +34,12 @@ class FringeStep(Step):
         with datamodels.open(input_data) as input_model:
             # Open the reference file
             self.fringe_filename = self.get_reference_file(input_model, "fringe")
-            self.log.info("Using FRINGE reference file: %s", self.fringe_filename)
+            log.info("Using FRINGE reference file: %s", self.fringe_filename)
 
             # Check for a valid reference file
             if self.fringe_filename == "N/A":
-                self.log.warning("No FRINGE reference file found")
-                self.log.warning("Fringe step will be skipped")
+                log.warning("No FRINGE reference file found")
+                log.warning("Fringe step will be skipped")
                 result = input_model.copy()
                 result.meta.cal_step.fringe = "SKIPPED"
                 return result

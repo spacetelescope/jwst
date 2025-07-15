@@ -1,11 +1,15 @@
 """Barshadow correction step."""
 
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.barshadow import bar_shadow
 from jwst.stpipe import Step
 
 __all__ = ["BarShadowStep"]
+
+log = logging.getLogger(__name__)
 
 
 class BarShadowStep(Step):
@@ -54,12 +58,12 @@ class BarShadowStep(Step):
 
                     # Get the name of the bar shadow reference file to use
                     self.barshadow_name = self.get_reference_file(input_model, "barshadow")
-                    self.log.info(f"Using BARSHADOW reference file {self.barshadow_name}")
+                    log.info(f"Using BARSHADOW reference file {self.barshadow_name}")
 
                     # Check for a valid reference file
                     if self.barshadow_name == "N/A":
-                        self.log.warning("No BARSHADOW reference file found")
-                        self.log.warning("Bar shadow step will be skipped")
+                        log.warning("No BARSHADOW reference file found")
+                        log.warning("Bar shadow step will be skipped")
                         result = input_model.copy()
                         result.meta.cal_step.barshadow = "SKIPPED"
                         return result

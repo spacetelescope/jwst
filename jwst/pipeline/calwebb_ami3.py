@@ -107,7 +107,7 @@ class Ami3Pipeline(Pipeline):
                 result.meta.asn.table_name = Path(asn.filename).name
 
                 # Perform blending of metadata for all inputs to this output file
-                # self.log.info('Blending metadata for PSF normalized target')
+                # log.info('Blending metadata for PSF normalized target')
                 self.save_model(result, suffix="aminorm-oi")
                 result.close()
             del psf_lg

@@ -216,6 +216,6 @@ class ResampleStep(Step):
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug(f"   {k}={v}")
+            log.debug(f"   {k}={v}")
 
         return kwargs
