@@ -12,6 +12,8 @@ from jwst.ami import leastsqnrm
 
 log = logging.getLogger(__name__)
 
+__all__ = ["RawOifits", "CalibOifits"]
+
 
 class RawOifits:
     """

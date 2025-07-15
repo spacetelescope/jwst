@@ -9,6 +9,8 @@ from jwst.ami import oifits
 
 log = logging.getLogger(__name__)
 
+__all__ = ["normalize_lg"]
+
 
 def normalize_lg(target_model, reference_model):
     """

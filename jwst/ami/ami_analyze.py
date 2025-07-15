@@ -9,6 +9,8 @@ from jwst.datamodels import CubeModel, ImageModel  # type: ignore[attr-defined]
 
 log = logging.getLogger(__name__)
 
+__all__ = ["apply_lg_plus"]
+
 
 def apply_lg_plus(
     input_model,
