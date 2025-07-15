@@ -70,8 +70,9 @@ class WhiteLightStep(Step):
 
         Returns
         -------
-        astropy.table.Table
-            Table containing the wavelength range information.
+        astropy.table.Table or None
+            If the input model is of type NIS_SOSS, returns a table with the wavelength
+            range information. Otherwise, returns None.
         """
         if input_model.meta.exposure.type != "NIS_SOSS":
             return None

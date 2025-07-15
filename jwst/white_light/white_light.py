@@ -59,7 +59,7 @@ def white_light(input_model, wr=None, min_wave=None, max_wave=None):
             detectors.append(detector)
         detector_list.extend([detector] * n_spec)
 
-        # Determine wavelength range from the reference file
+        # Determine wavelength range from either user-specified values or ref file
         min_wave, max_wave = _determine_wavelength_range(
             spectral_order,
             input_model.meta.instrument.filter,
@@ -185,7 +185,7 @@ def _make_empty_output_table(input_model):
 
 def _determine_wavelength_range(order, filt, wr=None, min_wave=None, max_wave=None):
     """
-    Figure out final wavelength range for a given filter and order.
+    Figure out wavelength range for a given filter and spectral order.
 
     If user-specified min/max wavelengths are provided, they will be used.
     Otherwise, the function will look for the wavelength range in the reference file info.
@@ -212,10 +212,12 @@ def _determine_wavelength_range(order, filt, wr=None, min_wave=None, max_wave=No
     if wr is not None:
         this_one = (wr["order"] == int(order)) & (wr["filter"] == filt)
         if not np.any(this_one):
-            raise ValueError(f"No wavelength range found for order {order} and filter {filt}.")
+            raise ValueError(
+                f"No reference wavelength range found for order {order} and filter {filt}."
+            )
         if np.sum(this_one) > 1:
             raise ValueError(
-                f"Multiple wavelength ranges found for order {order} and filter {filt}."
+                f"Multiple reference wavelength ranges found for order {order} and filter {filt}."
             )
         min_wave_ref = wr["min_wave"][this_one]
         max_wave_ref = wr["max_wave"][this_one]

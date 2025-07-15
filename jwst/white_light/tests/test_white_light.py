@@ -285,7 +285,9 @@ def test_determine_wavelength_range(wavelengthrange):
 
 def test_determine_wavelength_range_no_match(wavelengthrange):
     """Test that an error is raised if no match is found."""
-    with pytest.raises(ValueError, match="No wavelength range found for order 4 and filter CLEAR"):
+    with pytest.raises(
+        ValueError, match="No reference wavelength range found for order 4 and filter CLEAR"
+    ):
         _determine_wavelength_range(4, "CLEAR", wr=wavelengthrange)
 
 
@@ -293,7 +295,7 @@ def test_determine_wavelength_range_multiple_matches(wavelengthrange):
     """Test that an error is raised if more than one match is found."""
     wavelengthrange["order"][2] = 1
     with pytest.raises(
-        ValueError, match="Multiple wavelength ranges found for order 1 and filter CLEAR"
+        ValueError, match="Multiple reference wavelength ranges found for order 1 and filter CLEAR"
     ):
         _determine_wavelength_range(1, "CLEAR", wr=wavelengthrange)
 
@@ -309,8 +311,9 @@ def test_get_reference_wavelength_range(make_datamodel):
     assert "max_wave" in wr.columns
 
 
-def test_get_reference_wavelength_range_wrong_exptype(make_datamodel):
+def test_get_reference_wavelength_range_other_exptype(make_datamodel):
+    """Test that non-SOSS exposure types return None."""
     model = make_datamodel.copy()
     model.meta.exposure.type = "NRC_TSIMAGE"
     wr = WhiteLightStep()._get_reference_wavelength_range(model)
-    assert wr is None, "Expected None for non-NIS_SOSS exposure type"
+    assert wr is None
