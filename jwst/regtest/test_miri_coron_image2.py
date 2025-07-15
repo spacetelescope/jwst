@@ -2,8 +2,8 @@
 including multiple background exposures that have a mixture of NINTS values"""
 
 import pytest
-from jwst.regtest import regtestdata as rt
 
+from jwst.regtest import regtestdata as rt
 from jwst.stpipe import Step
 
 # Mark all tests in this module

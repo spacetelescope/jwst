@@ -2,7 +2,6 @@ import logging
 import warnings
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer

@@ -1,15 +1,14 @@
-import pytest
 import os
-import numpy as np
 
+import numpy as np
+import pytest
 import stdatamodels.jwst.datamodels as dm
+
 import jwst
 from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi
-
-from jwst.stpipe import Step
 from jwst.extract_1d.tests.conftest import mock_nis_wfss_l2
-
+from jwst.stpipe import Step
 
 INPUT_WFSS = "mock_wfss_cal.fits"
 INPUT_WFSS_2 = "mock_wfss_2_cal.fits"

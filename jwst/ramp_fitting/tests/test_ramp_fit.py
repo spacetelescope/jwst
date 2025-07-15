@@ -1,9 +1,7 @@
-import pytest
 import numpy as np
-
+import pytest
 from stcal.ramp_fitting.ramp_fit import ramp_fit
-
-from stdatamodels.jwst.datamodels import dqflags, RampModel, GainModel, ReadnoiseModel
+from stdatamodels.jwst.datamodels import GainModel, RampModel, ReadnoiseModel, dqflags
 
 GOOD = dqflags.pixel["GOOD"]
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]

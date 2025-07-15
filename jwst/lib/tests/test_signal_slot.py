@@ -2,7 +2,6 @@
 
 from jwst.lib import signal_slot as ss
 
-
 REFLECT_CALLED = "reflect: called."
 
 

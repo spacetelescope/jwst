@@ -1,5 +1,5 @@
 import numpy as np
-from setuptools import setup, Extension
+from setuptools import Extension, setup
 
 # Setup C module include directories
 include_dirs = [np.get_include()]

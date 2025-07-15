@@ -1,8 +1,9 @@
 """Unit tests for AMI leastsqnrm module."""
 
-import pytest
-import numpy as np
 import math
+
+import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from jwst.ami import leastsqnrm

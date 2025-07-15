@@ -6,18 +6,18 @@ from pathlib import Path
 import numpy as np
 import pytest
 from astropy.utils.data import get_pkg_data_filename
-from stdatamodels.jwst.datamodels.dqflags import pixel
 from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from jwst.stpipe import Step
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
 from jwst.background.background_sub_wfss import (
-    subtract_wfss_bkg,
     _mask_from_source_cat,
-    _sufficient_background_pixels,
     _ScalingFactorComputer,
+    _sufficient_background_pixels,
+    subtract_wfss_bkg,
 )
+from jwst.stpipe import Step
 
 BKG_SCALING = 0.123
 DETECTOR_SHAPE = (2048, 2048)

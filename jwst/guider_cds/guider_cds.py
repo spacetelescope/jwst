@@ -1,8 +1,7 @@
+import logging
 import warnings
 
 import numpy as np
-import logging
-
 from stdatamodels.jwst import datamodels
 
 from jwst.lib import reffile_utils

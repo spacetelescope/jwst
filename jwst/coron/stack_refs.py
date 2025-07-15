@@ -1,9 +1,9 @@
 """Stack individual coronagraphic PSF reference images into a cube model."""
 
+import logging
+
 import numpy as np
 from stdatamodels.jwst import datamodels
-
-import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

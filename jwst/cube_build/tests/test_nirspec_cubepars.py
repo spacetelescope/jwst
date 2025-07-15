@@ -2,13 +2,13 @@
 Unit test for Cube Build for reading nirspec cube pars ref file and using it
 """
 
+import math
+
 import numpy as np
 import pytest
-import math
 from astropy.io import fits
-from jwst.cube_build import ifu_cube
-from jwst.cube_build import cube_build_io_util
-from jwst.cube_build import instrument_defaults
+
+from jwst.cube_build import cube_build_io_util, ifu_cube, instrument_defaults
 
 
 @pytest.fixture(scope="module")

@@ -1,13 +1,10 @@
+import numpy as np
 import pytest
-
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.associations.asn_from_list import asn_from_list
-from jwst.wfs_combine import WfsCombineStep
-from jwst.wfs_combine import wfs_combine
-import numpy as np
-
+from jwst.wfs_combine import WfsCombineStep, wfs_combine
 
 GOOD = datamodels.dqflags.pixel["GOOD"]
 DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]

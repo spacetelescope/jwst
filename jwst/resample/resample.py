@@ -1,25 +1,20 @@
-import logging
 import json
-from pathlib import Path
+import logging
 import re
+from pathlib import Path
 
 import numpy as np
-
 from spherical_geometry.polygon import SphericalPolygon
-
+from stcal.resample import Resample
+from stcal.resample.utils import is_imaging_wcs
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from stcal.resample import Resample
-from stcal.resample.utils import is_imaging_wcs
-
-from jwst.datamodels import ModelLibrary
+from jwst.assign_wcs import util as assign_wcs_util
 from jwst.associations.asn_from_list import asn_from_list
-
+from jwst.datamodels import ModelLibrary
 from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
-from jwst.assign_wcs import util as assign_wcs_util
-
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

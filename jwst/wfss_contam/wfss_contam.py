@@ -2,8 +2,8 @@
 
 import logging
 import multiprocessing
-import numpy as np
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 from .observations import Observation

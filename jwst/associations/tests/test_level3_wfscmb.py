@@ -1,7 +1,7 @@
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations.tests.helpers import combine_pools
 from jwst.associations.main import Main
+from jwst.associations.tests.helpers import combine_pools
 
 
 def jitter_name_base(fname):

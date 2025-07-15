@@ -1,13 +1,13 @@
+import logging
+
 import numpy as np
-from jwst.resample.resample_utils import build_mask
+from stcal.outlier_detection.utils import compute_weight_threshold
 
 from jwst import datamodels as dm
+from jwst.resample.resample_utils import build_mask
 
-from stcal.outlier_detection.utils import compute_weight_threshold
-from .utils import flag_model_crs, nanmedian3D
 from ._fileio import save_median
-
-import logging
+from .utils import flag_model_crs, nanmedian3D
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

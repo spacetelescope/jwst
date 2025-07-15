@@ -1,6 +1,7 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
+
 from . import linearity
 
 __all__ = ["LinearityStep"]

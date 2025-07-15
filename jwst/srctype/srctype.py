@@ -1,6 +1,7 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
-import logging
 from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)

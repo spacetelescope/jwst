@@ -1,17 +1,15 @@
 #! /usr/bin/env python
 
-from jwst.stpipe import Step
 import time
 
 import numpy as np
-
-from jwst.lib import reffile_utils
-
-from stcal.jump.jump_class import JumpData
 from stcal.jump.jump import detect_jumps_data
-
+from stcal.jump.jump_class import JumpData
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
+
+from jwst.lib import reffile_utils
+from jwst.stpipe import Step
 
 __all__ = ["JumpStep"]
 

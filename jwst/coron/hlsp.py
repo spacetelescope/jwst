@@ -1,11 +1,10 @@
 """Create High-Level Science Products for a KLIP-processed coronagraphic exposure."""
 
-import numpy as np
+import logging
 import math
 
+import numpy as np
 from stdatamodels.jwst import datamodels
-
-import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

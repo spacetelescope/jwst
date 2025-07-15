@@ -1,14 +1,15 @@
 """Diff and compare associations."""
 
+import logging
+import re
 from collections import Counter, UserList, defaultdict
 from copy import copy
-import logging
 from pathlib import Path
-import re
 
-from .product_utils import sort_by_candidate
 from jwst.associations.load_asn import load_asn
 from jwst.lib.suffix import remove_suffix
+
+from .product_utils import sort_by_candidate
 
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())

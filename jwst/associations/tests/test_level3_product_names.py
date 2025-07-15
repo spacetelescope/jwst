@@ -5,13 +5,12 @@ import re
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
+from jwst.associations import generate
+from jwst.associations.lib.dms_base import DMSAttrConstraint
 from jwst.associations.tests.helpers import (
     combine_pools,
     registry_level3_only,
 )
-from jwst.associations import generate
-from jwst.associations.lib.dms_base import DMSAttrConstraint
-
 
 LEVEL3_PRODUCT_NAME_REGEX = (
     r"jw"

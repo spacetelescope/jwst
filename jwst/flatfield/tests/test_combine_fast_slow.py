@@ -4,9 +4,9 @@ Test for flat_field.combine_fast_slow
 
 import numpy as np
 import pytest
-from scipy.integrate import quad
 from astropy.modeling import polynomial
 from numpy.testing import assert_allclose, assert_array_equal
+from scipy.integrate import quad
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.flatfield.flat_field import combine_fast_slow

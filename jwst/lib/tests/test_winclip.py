@@ -1,5 +1,6 @@
-from jwst.lib.winclip import get_clipped_pixels
 import numpy as np
+
+from jwst.lib.winclip import get_clipped_pixels
 
 
 def test_clip_to_large_window():

@@ -1,7 +1,7 @@
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Step
 from jwst.flatfield import flat_field
+from jwst.stpipe import Step
 
 # For the following types of data, it is OK -- and in some cases
 # required -- for the extract_2d step to have been run.  For all

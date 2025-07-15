@@ -4,10 +4,10 @@ import warnings
 
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import RampModel, EmiModel
+from stdatamodels.jwst.datamodels import EmiModel, RampModel
 
-from jwst.pipeline import Detector1Pipeline
 from jwst.emicorr import emicorr, emicorr_step
+from jwst.pipeline import Detector1Pipeline
 
 
 @pytest.fixture()

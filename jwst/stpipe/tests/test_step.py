@@ -8,26 +8,25 @@ import pytest
 from astropy.extern.configobj.configobj import ConfigObj
 from astropy.utils.data import get_pkg_data_filename
 from crds.core.exceptions import CrdsLookupError
-from stpipe import crds_client
-from stpipe import cmdline
+from stdatamodels.jwst import datamodels
+from stpipe import cmdline, crds_client
 from stpipe.config import StepConfig
 from stpipe.config_parser import ValidationError
-from stdatamodels.jwst import datamodels
 
 from jwst import __version__ as jwst_version
-from jwst.white_light import WhiteLightStep
-from jwst.tests.helpers import LogWatcher
-from jwst.datamodels import ModelLibrary, ModelContainer
-
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe import Step
 from jwst.stpipe.tests.steps import (
+    AnotherDummyStep,
     EmptyPipeline,
     MakeListPipeline,
     MakeListStep,
+    OptionalRefTypeStep,
     ProperPipeline,
-    AnotherDummyStep,
+    SavePipeline,
 )
-from jwst.stpipe.tests.steps import OptionalRefTypeStep, SavePipeline
+from jwst.tests.helpers import LogWatcher
+from jwst.white_light import WhiteLightStep
 
 WHITELIGHTSTEP_CRDS_MIRI_PARS = {
     "max_wavelength": 12.0,

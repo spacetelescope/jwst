@@ -1,16 +1,15 @@
 import numpy as np
-from numpy.testing import assert_allclose
-
-from astropy import units as u
 from astropy import coordinates as coord
-from astropy.modeling.models import Mapping, Identity, Shift, Scale
-from gwcs import wcstools, wcs
+from astropy import units as u
+from astropy.modeling.models import Identity, Mapping, Scale, Shift
 from gwcs import coordinate_frames as cf
-
+from gwcs import wcs, wcstools
+from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import NirissSOSSModel
-from jwst.lib.wcs_utils import get_wavelengths
+
 from jwst.assign_wcs import util
+from jwst.lib.wcs_utils import get_wavelengths
 
 
 def create_model():

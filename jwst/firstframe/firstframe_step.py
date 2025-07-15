@@ -1,7 +1,8 @@
-from jwst.stpipe import Step
-from . import firstframe_sub
 from stdatamodels.jwst import datamodels
 
+from jwst.stpipe import Step
+
+from . import firstframe_sub
 
 __all__ = ["FirstFrameStep"]
 

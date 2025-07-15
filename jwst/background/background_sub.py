@@ -1,14 +1,13 @@
 import copy
-import numpy as np
+import logging
 import warnings
 
+import numpy as np
+from astropy.stats import sigma_clip
+from astropy.utils.exceptions import AstropyUserWarning
 from stdatamodels.jwst import datamodels
 
 from . import subtract_images
-from astropy.stats import sigma_clip
-from astropy.utils.exceptions import AstropyUserWarning
-
-import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

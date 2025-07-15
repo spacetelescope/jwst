@@ -1,6 +1,6 @@
-import numpy as np
-
 import logging
+
+import numpy as np
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

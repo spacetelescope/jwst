@@ -6,22 +6,21 @@ import functools
 import shutil
 from math import cos, sin
 
-import astropy.units as u
 import astropy.coordinates as coords
+import astropy.units as u
 import numpy as np
 import pytest
-from astropy.io import fits
-from astropy.modeling import models as astmodels
 from astropy import table
 from astropy import wcs as astwcs
+from astropy.io import fits
+from astropy.modeling import models as astmodels
 from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcs, wcstools
 from numpy.testing import assert_allclose, assert_array_equal
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
-from jwst.assign_wcs import nirspec, assign_wcs_step
+from jwst.assign_wcs import assign_wcs_step, nirspec
 from jwst.assign_wcs.util import MSAFileError, in_ifu_slice
 
 wcs_kw = {

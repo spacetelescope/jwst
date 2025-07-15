@@ -5,14 +5,14 @@ import re
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
+from jwst.associations import generate
+from jwst.associations.lib.utilities import constrain_on_candidates
 from jwst.associations.tests.helpers import (
     BasePoolRule,
     PoolParams,
     combine_pools,
     registry_level3_only,
 )
-from jwst.associations import generate
-from jwst.associations.lib.utilities import constrain_on_candidates
 
 
 class TestLevel3Spec(BasePoolRule):

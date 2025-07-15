@@ -4,8 +4,9 @@ Test script for set_velocity_aberration.py
 
 import subprocess
 
-from numpy import isclose
 from astropy.io import fits
+from numpy import isclose
+
 import jwst.datamodels as dm
 from jwst.lib.set_velocity_aberration import compute_va_effects
 

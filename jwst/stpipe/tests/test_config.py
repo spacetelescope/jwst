@@ -1,9 +1,8 @@
 from datetime import datetime, timedelta, timezone
 
-import pytest
 import asdf
-
-from stpipe.config import export_config, StepConfig, _validate_asdf
+import pytest
+from stpipe.config import StepConfig, _validate_asdf, export_config
 
 from jwst.stpipe.tests.steps import MakeListPipeline, WithDefaultsStep
 

@@ -1,7 +1,7 @@
 """Unit tests for AMI mask_definition_ami module."""
 
-import pytest
 import numpy as np
+import pytest
 
 from jwst.ami.mask_definition_ami import NRMDefinition
 

@@ -2,9 +2,9 @@
 
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations.tests import helpers
 from jwst.associations import generate
 from jwst.associations.lib.utilities import constrain_on_candidates
+from jwst.associations.tests import helpers
 
 
 class TestLevel3WFS(helpers.BasePoolRule):

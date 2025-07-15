@@ -1,7 +1,9 @@
 """Module for subtracting a super-bias image from science data sets."""
 
-import numpy as np
 import logging
+
+import numpy as np
+
 from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)

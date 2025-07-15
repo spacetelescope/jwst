@@ -2,15 +2,15 @@
 
 from pathlib import Path
 
-from crds.core.exceptions import CrdsLookupError
 import numpy as np
-
+from crds.core.exceptions import CrdsLookupError
 from stdatamodels.jwst import datamodels
 
-from .detection import convolve_data, JWSTBackground, JWSTSourceFinder
+from jwst.stpipe import Step
+
+from .detection import JWSTBackground, JWSTSourceFinder, convolve_data
 from .reference_data import ReferenceData
 from .source_catalog import JWSTSourceCatalog
-from jwst.stpipe import Step
 
 __all__ = ["SourceCatalogStep"]
 
