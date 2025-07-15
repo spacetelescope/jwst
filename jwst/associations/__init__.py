@@ -24,6 +24,7 @@ def libpath():
 
     return Path(__file__).parent / "lib"
 
+
 # isort: off
 from .association import *
 from .association_io import *
