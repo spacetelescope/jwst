@@ -116,7 +116,7 @@ def test_save_noise(tmp_path):
 def test_apply_flat(log_watcher):
     input_model = make_small_ramp_model()
 
-    watcher = log_watcher("stpipe.CleanFlickerNoiseStep", message="Using FLAT")
+    watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise_step", message="Using FLAT")
     cleaned = CleanFlickerNoiseStep.call(input_model, skip=False, apply_flat_field=True)
     watcher.assert_seen()
 
@@ -132,7 +132,8 @@ def test_apply_flat_not_available(log_watcher):
     input_model = make_nirspec_fs_model()
 
     watcher = log_watcher(
-        "stpipe.CleanFlickerNoiseStep", message="Flat correction is not available"
+        "jwst.clean_flicker_noise.clean_flicker_noise_step",
+        message="Flat correction is not available",
     )
     cleaned = CleanFlickerNoiseStep.call(input_model, skip=False, apply_flat_field=True)
     watcher.assert_seen()

@@ -1,5 +1,6 @@
 """Module for the source catalog step."""
 
+import logging
 from pathlib import Path
 
 import numpy as np
@@ -12,6 +13,8 @@ from jwst.stpipe import Step
 from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
 
 __all__ = ["SourceCatalogStep"]
+
+log = logging.getLogger(__name__)
 
 
 class SourceCatalogStep(Step):
@@ -63,10 +66,10 @@ class SourceCatalogStep(Step):
         for reffile_type in self.reference_file_types:
             try:
                 filepath = self.get_reference_file(model, reffile_type)
-                self.log.info(f"Using {reffile_type.upper()} reference file: {filepath}")
+                log.info(f"Using {reffile_type.upper()} reference file: {filepath}")
             except CrdsLookupError as err:
                 msg = f"{err} Source catalog will not be created."
-                self.log.warning(msg)
+                log.warning(msg)
                 return None
 
             filepaths.append(filepath)
@@ -96,7 +99,7 @@ class SourceCatalogStep(Step):
                 abvega_offset = refdata.abvega_offset
             except RuntimeError as err:
                 msg = f"{err} Source catalog will not be created."
-                self.log.warning(msg)
+                log.warning(msg)
                 return None
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
@@ -133,7 +136,7 @@ class SourceCatalogStep(Step):
                 starfinder_kwargs=starfinder_kwargs,
             )
             if len(catalog) == 0:
-                self.log.warning("No sources found in the image. Catalog will be empty.")
+                log.warning("No sources found in the image. Catalog will be empty.")
                 return None
 
             JWSTSourceCatalog.convert_mjysr_to_jy(model)
@@ -152,7 +155,7 @@ class SourceCatalogStep(Step):
                 cat_filepath = self.make_output_path(ext=".ecsv")
                 catalog.write(cat_filepath, format="ascii.ecsv", overwrite=True)
                 model.meta.source_catalog = Path(cat_filepath).name
-                self.log.info(f"Wrote source catalog: {cat_filepath}")
+                log.info(f"Wrote source catalog: {cat_filepath}")
 
                 if segment_img is not None:
                     segm_model = datamodels.SegmentationMapModel(segment_img.data)
@@ -161,6 +164,6 @@ class SourceCatalogStep(Step):
                     segm_model.meta.wcsinfo = model.meta.wcsinfo
                     self.save_model(segm_model, suffix="segm")
                     model.meta.segmentation_map = segm_model.meta.filename
-                    self.log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
+                    log.info(f"Wrote segmentation map: {segm_model.meta.filename}")
 
         return catalog

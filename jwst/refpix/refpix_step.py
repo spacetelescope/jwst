@@ -1,3 +1,5 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.lib import pipe_utils
@@ -5,6 +7,8 @@ from jwst.refpix import irs2_subtract_reference, reference_pixels
 from jwst.stpipe import Step
 
 __all__ = ["RefPixStep"]
+
+log = logging.getLogger(__name__)
 
 
 class RefPixStep(Step):
@@ -66,7 +70,7 @@ class RefPixStep(Step):
                 # side pixel handling
                 if self.irs2_mean_subtraction:
                     if self.use_side_ref_pixels:
-                        self.log.info("Turning off side pixel correction for IRS2")
+                        log.info("Turning off side pixel correction for IRS2")
                         self.use_side_ref_pixels = False
                     reference_pixels.correct_model(
                         result,
@@ -83,12 +87,12 @@ class RefPixStep(Step):
 
                 # Get the necessary refpix reference file for IRS2 correction
                 self.irs2_name = self.get_reference_file(result, "refpix")
-                self.log.info(f"Using refpix reference file: {self.irs2_name}")
+                log.info(f"Using refpix reference file: {self.irs2_name}")
 
                 # Check for a valid reference file
                 if self.irs2_name == "N/A":
-                    self.log.warning("No refpix reference file found")
-                    self.log.warning("RefPix step will be skipped")
+                    log.warning("No refpix reference file found")
+                    log.warning("RefPix step will be skipped")
                     result.meta.cal_step.refpix = "SKIPPED"
                     return result
 
@@ -117,23 +121,23 @@ class RefPixStep(Step):
                     ):
                         sirs_ref_filename = self.get_reference_file(result, "sirskernel")
                         if sirs_ref_filename == "N/A":
-                            self.log.warning(
+                            log.warning(
                                 "No reference file found for the optimized convolution kernel."
                             )
-                            self.log.warning(
+                            log.warning(
                                 "REFPIX step will use the running median algorithm for side pixels."
                             )
                         else:
-                            self.log.info(f"Using SIRS reference file: {sirs_ref_filename}")
+                            log.info(f"Using SIRS reference file: {sirs_ref_filename}")
                             sirs_kernel_model = datamodels.SIRSKernelModel(sirs_ref_filename)
                             conv_kernel_params["sirs_kernel_model"] = sirs_kernel_model
                     elif input_model.meta.instrument.name == "MIRI":
-                        self.log.info(
+                        log.info(
                             "Simple Improved Reference Subtraction (SIRS) "
                             "not applied for MIRI data."
                         )
                     elif "FULL" not in input_model.meta.subarray.name:
-                        self.log.info(
+                        log.info(
                             "Simple Improved Reference Subtraction (SIRS) "
                             "not applied for subarray data."
                         )
@@ -151,10 +155,10 @@ class RefPixStep(Step):
                 if status == reference_pixels.REFPIX_OK:
                     result.meta.cal_step.refpix = "COMPLETE"
                 elif status == reference_pixels.SUBARRAY_DOESNTFIT:
-                    self.log.warning("Subarray doesn't fit in full-sized array")
+                    log.warning("Subarray doesn't fit in full-sized array")
                     result.meta.cal_step.refpix = "SKIPPED"
                 elif status == reference_pixels.BAD_REFERENCE_PIXELS:
-                    self.log.warning("No valid reference pixels, refpix step skipped")
+                    log.warning("No valid reference pixels, refpix step skipped")
                     result.meta.cal_step.refpix = "SKIPPED"
                 elif status == reference_pixels.SUBARRAY_SKIPPED:
                     result.meta.cal_step.refpix = "SKIPPED"
