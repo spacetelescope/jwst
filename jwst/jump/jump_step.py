@@ -1,5 +1,4 @@
-#! /usr/bin/env python
-
+import logging
 import time
 
 import numpy as np
@@ -12,6 +11,8 @@ from jwst.lib import reffile_utils
 from jwst.stpipe import Step
 
 __all__ = ["JumpStep"]
+
+log = logging.getLogger(__name__)
 
 
 class JumpStep(Step):
@@ -81,14 +82,14 @@ class JumpStep(Step):
             # Check for an input model with NGROUPS<=2
             nints, ngroups, nrows, ncols = input_model.data.shape
             if ngroups <= 2:
-                self.log.warning("Cannot apply jump detection when NGROUPS<=2;")
-                self.log.warning("Jump step will be skipped")
+                log.warning("Cannot apply jump detection when NGROUPS<=2;")
+                log.warning("Jump step will be skipped")
                 input_model.meta.cal_step.jump = "SKIPPED"
                 return input_model
 
-            self.log.info("CR rejection threshold = %g sigma", self.rejection_threshold)
+            log.info("CR rejection threshold = %g sigma", self.rejection_threshold)
             if self.maximum_cores != "none":
-                self.log.info("Maximum cores to use = %s", self.maximum_cores)
+                log.info("Maximum cores to use = %s", self.maximum_cores)
 
             # Detect jumps using a copy of the input data model.
             result = input_model.copy()
@@ -121,7 +122,7 @@ class JumpStep(Step):
                 result.meta.exposure.extended_emission_events = events
 
             tstop = time.time()
-            self.log.info("The execution time in seconds: %f", tstop - tstart)
+            log.info("The execution time in seconds: %f", tstop - tstart)
 
             result.meta.cal_step.jump = "COMPLETE"
 
@@ -143,9 +144,9 @@ class JumpStep(Step):
         """
         # Get the gain and readnoise reference files
         gain_filename = self.get_reference_file(result, "gain")
-        self.log.info("Using GAIN reference file: %s", gain_filename)
+        log.info("Using GAIN reference file: %s", gain_filename)
         readnoise_filename = self.get_reference_file(result, "readnoise")
-        self.log.info("Using READNOISE reference file: %s", readnoise_filename)
+        log.info("Using READNOISE reference file: %s", readnoise_filename)
 
         with (
             datamodels.ReadnoiseModel(readnoise_filename) as rnoise_m,
@@ -155,13 +156,13 @@ class JumpStep(Step):
             if reffile_utils.ref_matches_sci(result, gain_m):
                 gain_2d = gain_m.data
             else:
-                self.log.info("Extracting gain subarray to match science data")
+                log.info("Extracting gain subarray to match science data")
                 gain_2d = reffile_utils.get_subarray_model(result, gain_m).data
 
             if reffile_utils.ref_matches_sci(result, rnoise_m):
                 rnoise_2d = rnoise_m.data
             else:
-                self.log.info("Extracting readnoise subarray to match science data")
+                log.info("Extracting readnoise subarray to match science data")
                 rnoise_2d = reffile_utils.get_subarray_model(result, rnoise_m).data
 
         # Instantiate a JumpData class and populate it based on the input RampModel.

@@ -1,4 +1,4 @@
-__all__ = ["ResampleSpecStep"]
+import logging
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel
@@ -12,8 +12,12 @@ from jwst.resample import ResampleStep, resample_spec
 from jwst.resample.resample_utils import find_miri_lrs_sregion, load_custom_wcs
 from jwst.stpipe import Step
 
+__all__ = ["ResampleSpecStep"]
+
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
+
+log = logging.getLogger(__name__)
 
 
 class ResampleSpecStep(Step):
@@ -56,7 +60,7 @@ class ResampleSpecStep(Step):
 
         #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
         if model_is_msm and len((input_new[0]).shape) == 3:
-            self.log.warning("Resample spec step will be skipped")
+            log.warning("Resample spec step will be skipped")
             input_new.meta.cal_step.resample = "SKIPPED"
 
             return input_new
@@ -209,7 +213,7 @@ class ResampleSpecStep(Step):
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug(f"   {k}={v}")
+            log.debug(f"   {k}={v}")
 
         kwargs["wcs_pars"] = wcs_pars
 
@@ -263,7 +267,7 @@ class ResampleSpecStep(Step):
             s_region_model1 = input_models[0].meta.wcsinfo.s_region
             s_region = find_miri_lrs_sregion(s_region_model1, result.meta.wcs)
             result.meta.wcsinfo.s_region = s_region
-            self.log.info(f"Updating S_REGION: {s_region}.")
+            log.info(f"Updating S_REGION: {s_region}.")
         else:
             update_s_region_spectral(result)
         return result

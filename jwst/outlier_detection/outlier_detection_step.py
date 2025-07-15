@@ -1,5 +1,6 @@
 """Public common step definition for OutlierDetection processing."""
 
+import logging
 from functools import partial
 
 from stdatamodels import filetype
@@ -20,6 +21,8 @@ TSO_IMAGE_MODES = ["NRC_TSIMAGE"]  # missing MIR_IMAGE with TSOVIST=True, not re
 CORON_IMAGE_MODES = ["NRC_CORON", "MIR_LYOT", "MIR_4QPM"]
 
 __all__ = ["OutlierDetectionStep"]
+
+log = logging.getLogger(__name__)
 
 
 class OutlierDetectionStep(Step):
@@ -82,7 +85,7 @@ class OutlierDetectionStep(Step):
             record_step_status(result_models, "outlier_detection", False)
             return result_models
 
-        self.log.info(f"Outlier Detection mode: {mode}")
+        log.info(f"Outlier Detection mode: {mode}")
 
         # determine the asn_id (if not set by the pipeline)
         self._get_asn_id(input_data)
@@ -156,7 +159,7 @@ class OutlierDetectionStep(Step):
                 self.make_output_path,
             )
         else:
-            self.log.error(f"Outlier detection failed for unknown/unsupported mode: {mode}")
+            log.error(f"Outlier detection failed for unknown/unsupported mode: {mode}")
             record_step_status(result_models, "outlier_detection", False)
 
         if query_step_status(result_models, "outlier_detection") != "SKIPPED":
@@ -202,7 +205,7 @@ class OutlierDetectionStep(Step):
         if exptype in IFU_SPEC_MODES:
             return "ifu"
 
-        self.log.error(f"Outlier detection failed for unknown/unsupported exposure type: {exptype}")
+        log.error(f"Outlier detection failed for unknown/unsupported exposure type: {exptype}")
         return None
 
     def _get_asn_id(self, input_models):
@@ -228,7 +231,7 @@ class OutlierDetectionStep(Step):
             _make_output_path = self.search_attr("_make_output_path", parent_first=True)
 
             self._make_output_path = partial(_make_output_path, asn_id=asn_id)
-        self.log.info(f"Outlier Detection asn_id: {asn_id}")
+        log.info(f"Outlier Detection asn_id: {asn_id}")
         return
 
     def _open_models(self, input_models):
