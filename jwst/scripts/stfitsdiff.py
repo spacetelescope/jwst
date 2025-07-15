@@ -7,7 +7,7 @@ import logging
 import sys
 from argparse import ArgumentParser
 
-from jwst.regtest.st_fitsdiff import STFITSDiff
+from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
 
 logging.basicConfig(level=logging.INFO, format="", datefmt="", stream=sys.stdout)
@@ -227,10 +227,10 @@ def main():
     logger.info("\n* STScI Custom FITSDiff")
     try:
         diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
-        logging.info(diff.report())
+        logger.info(diff.report())
     except Exception as err:
-        logging.error("\n *** STFitsDiff crashed with the following error: \n")
-        logging.error(err)
+        logger.error("\n *** STFitsDiff crashed with the following error: \n")
+        logger.error(err)
 
 
 if __name__ == "__main__":
