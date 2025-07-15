@@ -727,6 +727,12 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
     else:
         spectra = input_model.spec
     for in_spec in spectra:
+        if not np.any(np.isfinite(in_spec.spec_table.field("flux"))):
+            log.warning(
+                f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
+                f"from group_id {in_spec.meta.group_id} has no valid flux values; skipping."
+            )
+            continue
         spectral_order = in_spec.spectral_order
         if spectral_order not in input_spectra:
             input_spectra[spectral_order] = []
@@ -767,6 +773,12 @@ def combine_1d_spectra(input_model, exptime_key, sigma_clip=None):
             _read_input_spectra(ms, exptime_key, input_spectra)
     else:
         _read_input_spectra(input_model, exptime_key, input_spectra)
+
+    if len(input_spectra) == 0:
+        log.error("No valid input spectra found for source. Skipping.")
+        result = input_model.copy()
+        result.meta.cal_step.combine_1d = "SKIPPED"
+        return result
 
     for order in input_spectra:
         output_spectra[order] = OutputSpectrumModel()
