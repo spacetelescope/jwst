@@ -16,7 +16,7 @@ WAVEMAP_WLMIN = 0.5
 WAVEMAP_WLMAX = 5.5
 WAVEMAP_NWL = 5001
 SUBARRAY_YMIN = 2048 - 256
-PWCPOS_BOUNDS = {"1": (245.656, 245.923), "2": (245.656, 245.918)}  # reasonable PWC position limits
+PWCPOS_BOUNDS = (245.79 - 0.25, 245.79 + 0.25)  # reasonable PWC position limits
 DEFAULT_CRDS_PARAMS = {
     "meta.instrument.name": "NIRISS",
     "meta.observation.date": datetime.today().strftime("%Y-%m-%d"),
@@ -380,9 +380,9 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
         ref_file = crds_client.check_reference_open(ref_name)
         refmodel = dm.PastasossModel(ref_file)
 
-    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos, order)
+    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos)
     if not pwcpos_is_valid:
-        raise ValueError(f"PWC position {pwcpos} is outside bounds for order {order}.")
+        raise ValueError(f"PWC position {pwcpos} is outside bounds ({PWCPOS_BOUNDS}).")
 
     return _get_soss_traces(refmodel, pwcpos, order, subarray)
 
@@ -729,21 +729,18 @@ def _get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spe
     return np.array([wavemap_1, wavemap_2])
 
 
-def _check_pwcpos_bounds(pwcpos, order):
+def _check_pwcpos_bounds(pwcpos):
     """
-    Check if the provided PWC position is within the bounds for the given order.
+    Check if the provided PWC position is within the bounds.
 
     Parameters
     ----------
     pwcpos : float
         The pupil wheel position angle.
-    order : str or int
-        The spectral order to check.
 
     Returns
     -------
     bool
         True if the PWC position is within bounds, False otherwise.
     """
-    bounds = PWCPOS_BOUNDS[str(order)]
-    return bounds[0] <= pwcpos <= bounds[1]
+    return PWCPOS_BOUNDS[0] <= pwcpos <= PWCPOS_BOUNDS[1]
