@@ -4,11 +4,13 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 from stdatamodels.jwst import datamodels
+from astropy.table import Table
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.extract_1d.extract import populate_time_keywords
 from jwst.tests.helpers import LogWatcher
-from jwst.white_light.white_light import white_light
+from jwst.white_light.white_light import white_light, _determine_wavelength_range
+from jwst.white_light.white_light_step import WhiteLightStep
 
 
 @pytest.fixture(scope="module")
@@ -23,6 +25,14 @@ def make_datamodel():
     model.meta.exposure.integration_start = 1
     model.meta.exposure.integration_end = 2
     model.meta.exposure.nints = n_spec
+
+    model.meta.instrument.name = "NIRISS"
+    model.meta.instrument.detector = "NIS"
+    model.meta.exposure.type = "NIS_SOSS"
+    model.meta.instrument.filter = "CLEAR"
+    model.meta.instrument.pupil = "GR700XD"
+    model.meta.observation.date = "2025-07-15"
+    model.meta.observation.time = "00:00:00.000"
 
     # Make data arrays
     n_points = 20
@@ -237,3 +247,63 @@ def test_white_light_multi_detector(make_datamodel):
 
     assert_allclose(result["whitelight_flux_order_1_NRS1"], expected_flux_order_1, equal_nan=True)
     assert_allclose(result["whitelight_flux_order_2_NRS2"], expected_flux_order_2, equal_nan=True)
+
+
+@pytest.fixture
+def wavelengthrange():
+    """Mock the wavelengthrange info from reference files."""
+    orders = [1, 1, 2, 3]
+    filters = ["CLEAR", "F277W", "CLEAR", "CLEAR"]
+    wl_min = [0.93, 2.41, 0.64, 0.64]
+    wl_max = [2.82, 2.82, 0.83, 0.95]
+    return Table(
+        data=[orders, filters, wl_min, wl_max],
+        names=["order", "filter", "min_wave", "max_wave"],
+        dtype=[int, str, float, float],
+    )
+
+
+def test_determine_wavelength_range(wavelengthrange):
+    """Test that the wavelength range is determined correctly."""
+    # retrieve from reference file
+    wl_min, wl_max = _determine_wavelength_range(1, "F277W", wr=wavelengthrange)
+    assert wl_min == 2.41
+    assert wl_max == 2.82
+
+    # user-specified values override reference file values
+    wl_min, wl_max = _determine_wavelength_range(
+        1, "F277W", wr=wavelengthrange, min_wave=2.0, max_wave=3.0
+    )
+    assert wl_min == 2.0
+    assert wl_max == 3.0
+
+    # use default values when no reference file is provided
+    wl_min, wl_max = _determine_wavelength_range(4, "CLEAR")
+    assert wl_min == -1.0
+    assert wl_max == 1.0e10
+
+
+def test_determine_wavelength_range_no_match(wavelengthrange):
+    """Test that an error is raised if no match is found."""
+    with pytest.raises(ValueError, match="No wavelength range found for order 4 and filter CLEAR"):
+        _determine_wavelength_range(4, "CLEAR", wr=wavelengthrange)
+
+
+def test_determine_wavelength_range_multiple_matches(wavelengthrange):
+    """Test that an error is raised if more than one match is found."""
+    wavelengthrange["order"][2] = 1
+    with pytest.raises(
+        ValueError, match="Multiple wavelength ranges found for order 1 and filter CLEAR"
+    ):
+        _determine_wavelength_range(1, "CLEAR", wr=wavelengthrange)
+
+
+def test_get_reference_wavelength_range(make_datamodel):
+    """Test reading of wavelength range reference file."""
+    wr = WhiteLightStep()._get_reference_wavelength_range(make_datamodel)
+    assert isinstance(wr, Table)
+    assert len(wr) > 0
+    assert "order" in wr.columns
+    assert "filter" in wr.columns
+    assert "min_wave" in wr.columns
+    assert "max_wave" in wr.columns

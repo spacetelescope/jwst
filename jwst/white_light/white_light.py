@@ -60,20 +60,13 @@ def white_light(input_model, wr=None, min_wave=None, max_wave=None):
         detector_list.extend([detector] * n_spec)
 
         # Determine wavelength range from the reference file
-        if wr is None:
-            min_wave_ref = -1.0
-            max_wave_ref = 1.0e10
-        else:
-            min_wave_ref, max_wave_ref = _determine_reference_wavelength_range(
-                wr,
-                spectral_order,
-                input_model.meta.instrument.filter,
-            )
-        # but only use ref file values if the user has not specified any values
-        if min_wave is None:
-            min_wave = min_wave_ref
-        if max_wave is None:
-            max_wave = max_wave_ref
+        min_wave, max_wave = _determine_wavelength_range(
+            spectral_order,
+            input_model.meta.instrument.filter,
+            wr=wr,
+            min_wave=min_wave,
+            max_wave=max_wave,
+        )
 
         # Get mid times for all integrations in this order
         mid_time = spec.spec_table["MJD-AVG"]
@@ -190,25 +183,51 @@ def _make_empty_output_table(input_model):
     return QTable(meta=tbl_meta)
 
 
-def _determine_reference_wavelength_range(wr, order, filt):
+def _determine_wavelength_range(order, filt, wr=None, min_wave=None, max_wave=None):
     """
-    Pull the wavelength range for a given order and filter from the wavelength range reference file.
+    Figure out final wavelength range for a given filter and order.
+
+    If user-specified min/max wavelengths are provided, they will be used.
+    Otherwise, the function will look for the wavelength range in the reference file info.
+    If no reference file is provided, the entire wavelength range will be used.
 
     Parameters
     ----------
-    wr : astropy.table.Table
+    order : int
+        Spectral order for which to determine the wavelength range.
+    filt : str
+        Filter for which to determine the wavelength range.
+    wr : astropy.table.Table, optional
         Wavelength range information from the reference file.
+    min_wave : float, optional
+        User-specified minimum wavelength for integration.
+    max_wave : float, optional
+        User-specified maximum wavelength for integration.
 
     Returns
     -------
     tuple
         Minimum and maximum wavelengths for integration.
     """
-    this_one = (wr["order"] == int(order)) & (wr["filt"] == filt)
-    if not np.any(this_one):
-        raise ValueError(f"No wavelength range found for order {order} and filter {filt}.")
-    if np.sum(this_one) > 1:
-        raise ValueError(f"Multiple wavelength ranges found for order {order} and filter {filt}.")
-    min_wave = wr["min_wave"][this_one]
-    max_wave = wr["max_wave"][this_one]
+    if wr is not None:
+        this_one = (wr["order"] == int(order)) & (wr["filter"] == filt)
+        if not np.any(this_one):
+            raise ValueError(f"No wavelength range found for order {order} and filter {filt}.")
+        if np.sum(this_one) > 1:
+            raise ValueError(
+                f"Multiple wavelength ranges found for order {order} and filter {filt}."
+            )
+        min_wave_ref = wr["min_wave"][this_one]
+        max_wave_ref = wr["max_wave"][this_one]
+    else:
+        # Set default values to well beyond any possible observed wavelength range
+        min_wave_ref = -1.0
+        max_wave_ref = 1.0e10
+
+    # Only use ref file values if the user has not specified any values
+    if min_wave is None:
+        min_wave = min_wave_ref
+    if max_wave is None:
+        max_wave = max_wave_ref
+
     return min_wave, max_wave

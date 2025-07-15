@@ -43,19 +43,13 @@ class WhiteLightStep(Step):
             Table containing the integrated flux as a function of time.
         """
         # load the wavelength range reference file
-        wavelengthrange_file = self.get_reference_file(step_input, "wavelengthrange")
-        with datamodels.WavelengthrangeModel(wavelengthrange_file) as f:
-            wr = Table(
-                np.array(f.wavelengthrange.instance),
-                names=["order", "filt", "min_wave", "max_wave"],
-                dtype=[int, str, float, float],
-            )
 
         # Load the input
         with datamodels.open(step_input) as input_model:
+            wr = self._get_reference_wavelength_range(input_model)
             # Call the white light curve generation routine
             result = white_light(
-                input_model, wr, min_wave=self.min_wavelength, max_wave=self.max_wavelength
+                input_model, wr=wr, min_wave=self.min_wavelength, max_wave=self.max_wavelength
             )
 
             # Write the output catalog
@@ -64,3 +58,25 @@ class WhiteLightStep(Step):
                 result.write(output_path, format="ascii.ecsv", overwrite=True)
 
         return result
+
+    def _get_reference_wavelength_range(self, input_model):
+        """
+        Get the wavelength range reference file and convert it to an astropy table.
+
+        Parameters
+        ----------
+        input_model : datamodels.Model
+            The input data model from which to extract the wavelength range.
+
+        Returns
+        -------
+        astropy.table.Table
+            Table containing the wavelength range information.
+        """
+        wavelengthrange_file = self.get_reference_file(input_model, "wavelengthrange")
+        with datamodels.WavelengthrangeModel(wavelengthrange_file) as f:
+            return Table(
+                np.array(f.wavelengthrange.instance),
+                names=["order", "filter", "min_wave", "max_wave"],
+                dtype=[int, str, float, float],
+            )
