@@ -30,7 +30,7 @@ The actual process consists of the following steps:
    array using numpy's ``bitwise_or`` function.
 
 #. Propagate any DO_NOT_USE flags from the reference file DQ array to the science data
-   "GROUPDQ" array, if present - this lets us avoid generating a ramp for pixels
+   "GROUPDQ" array, if present - this avoids generating a ramp in ramp_fit for pixels
    marked as unusable by the reference file.
 
 Note that when applying the ``dq_init`` step to FGS guide star data, as is done in
