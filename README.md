@@ -1,5 +1,7 @@
 # JWST Calibration Pipeline
 
+DO NOT MERGE THIS
+
 [![Build Status](https://github.com/spacetelescope/jwst/workflows/CI/badge.svg)](https://github.com/spacetelescope/jwst/actions)
 [![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/main/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
 [![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
