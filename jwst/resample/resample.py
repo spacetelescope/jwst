@@ -205,7 +205,7 @@ class ResampleImage(Resample):
 
                 - ``pixel_scale`` : float, None
 
-                    Desired pixel scale (in degrees) of the output WCS. When
+                    Desired pixel scale (in arcsec) of the output WCS. When
                     provided, overrides ``pixel_scale_ratio``. Default value
                     is `None`.
 
@@ -314,7 +314,7 @@ class ResampleImage(Resample):
             # determine output WCS:
             shape = wcs_pars.get("output_shape")
             if (pscale := wcs_pars.get("pixel_scale")) is not None:
-                pscale /= 3600.0
+                pscale /= 3600.0  # convert pixel_scale to degrees/pix
             wcs, _, ps, ps_ratio = resample_utils.resampled_wcs_from_models(
                 input_models,
                 pixel_scale_ratio=wcs_pars.get("pixel_scale_ratio", 1.0),
