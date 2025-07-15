@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.reset import reset_sub
 from jwst.stpipe import Step
 
 __all__ = ["ResetStep"]
+
+log = logging.getLogger(__name__)
 
 
 class ResetStep(Step):
@@ -35,19 +39,19 @@ class ResetStep(Step):
             # check the data is MIRI data
             detector = input_model.meta.instrument.detector
             if not detector.startswith("MIR"):
-                self.log.warning("Reset Correction is only for MIRI data")
-                self.log.warning("Reset step will be skipped")
+                log.warning("Reset Correction is only for MIRI data")
+                log.warning("Reset step will be skipped")
                 input_model.meta.cal_step.reset = "SKIPPED"
                 return input_model
 
             # Get the name of the reset reference file to use
             self.reset_name = self.get_reference_file(input_model, "reset")
-            self.log.info(f"Using RESET reference file {self.reset_name}")
+            log.info(f"Using RESET reference file {self.reset_name}")
 
             # Check for a valid reference file
             if self.reset_name == "N/A":
-                self.log.warning("No RESET reference file found")
-                self.log.warning("Reset step will be skipped")
+                log.warning("No RESET reference file found")
+                log.warning("Reset step will be skipped")
                 input_model.meta.cal_step.reset = "SKIPPED"
                 return input_model
 
