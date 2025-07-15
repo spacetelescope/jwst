@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def white_light(input_model, min_wave=None, max_wave=None):
+def white_light(input_model, wr=None, min_wave=None, max_wave=None):
     """
     Compute the integrated flux over all wavelengths for a multi-integration extracted spectrum.
 
@@ -18,21 +18,19 @@ def white_light(input_model, min_wave=None, max_wave=None):
     ----------
     input_model : TSOMultiSpecModel
         Datamodel containing the multi-integration data.
+    wr : astropy.table.Table, optional
+        Wavelength range information from the reference file. These ranges will be
+        superseded by user-specified values if provided.
     min_wave : float, optional
-        Default wavelength minimum for integration.
+        User-specified wavelength minimum for integration.
     max_wave : float, optional
-        Default wavelength maximum for integration.
+        User-specified wavelength maximum for integration.
 
     Returns
     -------
     tbl : astropy.table.table.QTable
         Table containing the integrated flux as a function of time.
     """
-    if min_wave is None:
-        min_wave = -1.0
-    if max_wave is None:
-        max_wave = 1.0e10
-
     # The input should contain separate spectra for each spectral
     # order or detector.  NIRISS SOSS data can contain up to three orders;
     # NIRSpec BOTS can contain up to two detectors.
@@ -60,6 +58,22 @@ def white_light(input_model, min_wave=None, max_wave=None):
         if detector not in detectors:
             detectors.append(detector)
         detector_list.extend([detector] * n_spec)
+
+        # Determine wavelength range from the reference file
+        if wr is None:
+            min_wave_ref = -1.0
+            max_wave_ref = 1.0e10
+        else:
+            min_wave_ref, max_wave_ref = _determine_reference_wavelength_range(
+                wr,
+                spectral_order,
+                input_model.meta.instrument.filter,
+            )
+        # but only use ref file values if the user has not specified any values
+        if min_wave is None:
+            min_wave = min_wave_ref
+        if max_wave is None:
+            max_wave = max_wave_ref
 
         # Get mid times for all integrations in this order
         mid_time = spec.spec_table["MJD-AVG"]
@@ -174,3 +188,27 @@ def _make_empty_output_table(input_model):
     tbl_meta["pupil"] = input_model.meta.instrument.pupil
     tbl_meta["target_name"] = input_model.meta.target.catalog_name
     return QTable(meta=tbl_meta)
+
+
+def _determine_reference_wavelength_range(wr, order, filt):
+    """
+    Pull the wavelength range for a given order and filter from the wavelength range reference file.
+
+    Parameters
+    ----------
+    wr : astropy.table.Table
+        Wavelength range information from the reference file.
+
+    Returns
+    -------
+    tuple
+        Minimum and maximum wavelengths for integration.
+    """
+    this_one = (wr["order"] == int(order)) & (wr["filt"] == filt)
+    if not np.any(this_one):
+        raise ValueError(f"No wavelength range found for order {order} and filter {filt}.")
+    if np.sum(this_one) > 1:
+        raise ValueError(f"Multiple wavelength ranges found for order {order} and filter {filt}.")
+    min_wave = wr["min_wave"][this_one]
+    max_wave = wr["max_wave"][this_one]
+    return min_wave, max_wave

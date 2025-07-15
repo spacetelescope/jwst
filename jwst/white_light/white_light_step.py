@@ -1,5 +1,7 @@
 """Get integrated flux as a function of time for a multi-integration spectroscopic observation."""
 
+from astropy.table import Table
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
@@ -40,10 +42,21 @@ class WhiteLightStep(Step):
         result : astropy.table.table.QTable
             Table containing the integrated flux as a function of time.
         """
+        # load the wavelength range reference file
+        wavelengthrange_file = self.get_reference_file(step_input, "wavelengthrange")
+        with datamodels.WavelengthrangeModel(wavelengthrange_file) as f:
+            wr = Table(
+                np.array(f.wavelengthrange.instance),
+                names=["order", "filt", "min_wave", "max_wave"],
+                dtype=[int, str, float, float],
+            )
+
         # Load the input
         with datamodels.open(step_input) as input_model:
             # Call the white light curve generation routine
-            result = white_light(input_model, self.min_wavelength, self.max_wavelength)
+            result = white_light(
+                input_model, wr, min_wave=self.min_wavelength, max_wave=self.max_wavelength
+            )
 
             # Write the output catalog
             if self.save_results:
