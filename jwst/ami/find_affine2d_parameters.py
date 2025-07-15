@@ -6,6 +6,8 @@ from jwst.ami import lg_model, utils
 
 log = logging.getLogger(__name__)
 
+__all__ = ["create_afflist_rot", "find_rotation"]
+
 
 def create_afflist_rot(rotdegs):
     """

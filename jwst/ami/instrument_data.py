@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
 
+__all__ = ["NIRISS"]
+
 
 class NIRISS:
     """Module for defining NIRISS data format, wavelength info, and mask geometry."""
