@@ -307,3 +307,10 @@ def test_get_reference_wavelength_range(make_datamodel):
     assert "filter" in wr.columns
     assert "min_wave" in wr.columns
     assert "max_wave" in wr.columns
+
+
+def test_get_reference_wavelength_range_wrong_exptype(make_datamodel):
+    model = make_datamodel.copy()
+    model.meta.exposure.type = "NRC_TSIMAGE"
+    wr = WhiteLightStep()._get_reference_wavelength_range(model)
+    assert wr is None, "Expected None for non-NIS_SOSS exposure type"

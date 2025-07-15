@@ -73,6 +73,8 @@ class WhiteLightStep(Step):
         astropy.table.Table
             Table containing the wavelength range information.
         """
+        if input_model.meta.exposure.type != "NIS_SOSS":
+            return None
         wavelengthrange_file = self.get_reference_file(input_model, "wavelengthrange")
         with datamodels.WavelengthrangeModel(wavelengthrange_file) as f:
             return Table(
