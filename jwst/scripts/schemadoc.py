@@ -13,6 +13,7 @@ from stdatamodels.schema import build_docstring
 
 def get_docstrings(template, model_names, all_models=False):
     """Get the docstring for every model class."""
+    logger = logging.getLogger()
     if all_models:
         klasses = defined_models
     else:

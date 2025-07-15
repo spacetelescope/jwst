@@ -389,6 +389,7 @@ def imaging_coords(model):
 
 def warn_user(*argv):
     """Send a warning message to stderr."""
+    logger = logging.getLogger()
     logger.warning(*argv)
 
 
