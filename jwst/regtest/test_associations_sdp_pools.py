@@ -15,9 +15,6 @@ from jwst.associations.main import Main as asn_generate
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata, pytest.mark.filterwarnings("error")]
 
-# Configure logging
-logger = logging.getLogger(__name__)
-
 # Decompose pool name to retrieve proposal and version id.
 pool_regex = re.compile(r"(?P<proposal>jw.+?)_(?P<versionid>.+)_pool")
 
