@@ -24,13 +24,14 @@ def libpath():
 
     return Path(__file__).parent / "lib"
 
-
+# isort: off
 from .association import *
 from .association_io import *
 from .exceptions import *
 from .generator import *
 from .lib.process_list import *
-from .load_asn import load_asn
-from .main import *
 from .pool import *
 from .registry import *
+from .load_asn import load_asn
+from .main import *
+# isort: on
