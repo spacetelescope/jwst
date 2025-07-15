@@ -114,7 +114,7 @@ def mkpool(
     # Make sure there's no duplicates
     params = list(set(params))
     params.sort()
-    defaults = {param: "null" for param in params}
+    defaults = dict.fromkeys(params, "null")
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
     # Set non-header values from hard-coded defaults

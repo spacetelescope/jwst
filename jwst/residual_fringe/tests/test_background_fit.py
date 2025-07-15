@@ -1,12 +1,11 @@
 """Unit test for Residual Fringe Correction fitting of the background."""
 
 import pytest
-
-from pathlib import Path
+from astropy.io import fits
+from astropy.utils.data import get_pkg_data_filename
+from numpy.testing import assert_allclose
 
 from jwst.residual_fringe import utils
-from numpy.testing import assert_allclose
-from astropy.io import fits
 
 
 def read_fit_column(file):
@@ -28,8 +27,7 @@ def read_fit_column(file):
     # residual_fringe.py to write out a column of data
     # The function we are testing is fit_1d_background_complex.
 
-    file_dir = Path(__file__).parent.resolve() / "data"
-    file_path = str(file_dir / file)
+    file_path = get_pkg_data_filename(f"data/{file}", package="jwst.residual_fringe.tests")
 
     with fits.open(file_path) as hdu:
         col_data = hdu[1].data
