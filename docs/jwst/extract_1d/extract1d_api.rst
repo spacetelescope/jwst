@@ -6,3 +6,4 @@ Python interfaces for 1D Extraction
 .. automodapi:: jwst.extract_1d.ifu
 .. automodapi:: jwst.extract_1d.source_location
 .. automodapi:: jwst.extract_1d.psf_profile
+.. automodapi:: jwst.extract_1d.soss_extract.pastasoss
