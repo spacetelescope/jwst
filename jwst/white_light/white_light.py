@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 
 
-def white_light(input_model, wr=None, min_wave=None, max_wave=None):
+def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None):
     """
     Compute the integrated flux over all wavelengths for a multi-integration extracted spectrum.
 
@@ -18,7 +18,7 @@ def white_light(input_model, wr=None, min_wave=None, max_wave=None):
     ----------
     input_model : TSOMultiSpecModel
         Datamodel containing the multi-integration data.
-    wr : astropy.table.Table, optional
+    waverange_table : astropy.table.Table, optional
         Wavelength range information from the reference file. These ranges will be
         superseded by user-specified values if provided.
     min_wave : float, optional
@@ -63,7 +63,7 @@ def white_light(input_model, wr=None, min_wave=None, max_wave=None):
         min_wave, max_wave = _determine_wavelength_range(
             spectral_order,
             input_model.meta.instrument.filter,
-            wr=wr,
+            waverange_table=waverange_table,
             min_wave=min_wave,
             max_wave=max_wave,
         )
@@ -183,13 +183,15 @@ def _make_empty_output_table(input_model):
     return QTable(meta=tbl_meta)
 
 
-def _determine_wavelength_range(order, filt, wr=None, min_wave=None, max_wave=None):
+def _determine_wavelength_range(order, filt, waverange_table=None, min_wave=None, max_wave=None):
     """
     Figure out wavelength range for a given filter and spectral order.
 
     If user-specified min/max wavelengths are provided, they will be used.
     Otherwise, the function will look for the wavelength range in the reference file info.
-    If no reference file is provided, the entire wavelength range will be used.
+    If no reference file range is found, broad fallback values are returned,
+    such that all wavelengths found in the input model spectral tables are used
+    by the step.
 
     Parameters
     ----------
@@ -197,7 +199,7 @@ def _determine_wavelength_range(order, filt, wr=None, min_wave=None, max_wave=No
         Spectral order for which to determine the wavelength range.
     filt : str
         Filter for which to determine the wavelength range.
-    wr : astropy.table.Table, optional
+    waverange_table : astropy.table.Table, optional
         Wavelength range information from the reference file.
     min_wave : float, optional
         User-specified minimum wavelength for integration.
@@ -209,8 +211,8 @@ def _determine_wavelength_range(order, filt, wr=None, min_wave=None, max_wave=No
     tuple
         Minimum and maximum wavelengths for integration.
     """
-    if wr is not None:
-        this_one = (wr["order"] == int(order)) & (wr["filter"] == filt)
+    if waverange_table is not None:
+        this_one = (waverange_table["order"] == int(order)) & (waverange_table["filter"] == filt)
         if not np.any(this_one):
             raise ValueError(
                 f"No reference wavelength range found for order {order} and filter {filt}."
@@ -219,8 +221,8 @@ def _determine_wavelength_range(order, filt, wr=None, min_wave=None, max_wave=No
             raise ValueError(
                 f"Multiple reference wavelength ranges found for order {order} and filter {filt}."
             )
-        min_wave_ref = wr["min_wave"][this_one]
-        max_wave_ref = wr["max_wave"][this_one]
+        min_wave_ref = waverange_table["min_wave"][this_one]
+        max_wave_ref = waverange_table["max_wave"][this_one]
     else:
         # Set default values to well beyond any possible observed wavelength range
         min_wave_ref = -1.0

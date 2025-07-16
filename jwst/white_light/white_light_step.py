@@ -1,12 +1,16 @@
 """Get integrated flux as a function of time for a multi-integration spectroscopic observation."""
 
-from astropy.table import Table
+import logging
+
 import numpy as np
+from astropy.table import Table
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
 
 from .white_light import white_light
+
+log = logging.getLogger(__name__)
 
 __all__ = ["WhiteLightStep"]
 
@@ -29,6 +33,8 @@ class WhiteLightStep(Step):
     suffix             = string(default='whtlt')  # Default suffix for output files
     """  # noqa: E501
 
+    reference_file_types = ["wavelengthrange"]
+
     def process(self, step_input):
         """
         Sum the flux over all wavelengths in each integration as a function of time for the target.
@@ -43,14 +49,15 @@ class WhiteLightStep(Step):
         result : astropy.table.table.QTable
             Table containing the integrated flux as a function of time.
         """
-        # load the wavelength range reference file
-
-        # Load the input
         with datamodels.open(step_input) as input_model:
-            wr = self._get_reference_wavelength_range(input_model)
+            # load the wavelength range reference file
+            waverange_table = self._get_reference_wavelength_range(input_model)
             # Call the white light curve generation routine
             result = white_light(
-                input_model, wr=wr, min_wave=self.min_wavelength, max_wave=self.max_wavelength
+                input_model,
+                waverange_table=waverange_table,
+                min_wave=self.min_wavelength,
+                max_wave=self.max_wavelength,
             )
 
             # Write the output catalog
@@ -78,6 +85,14 @@ class WhiteLightStep(Step):
         if input_model.meta.exposure.type != "NIS_SOSS":
             return None
         wavelengthrange_file = self.get_reference_file(input_model, "wavelengthrange")
+        if wavelengthrange_file == "N/A":
+            log.warning(
+                "No wavelength range reference file found. "
+                "The entire wavelength range in the input spectral tables will be used "
+                "for all spectral orders."
+            )
+            return None
+        log.info(f"Using wavelength range reference file: {wavelengthrange_file}")
         with datamodels.WavelengthrangeModel(wavelengthrange_file) as f:
             return Table(
                 np.array(f.wavelengthrange.instance),

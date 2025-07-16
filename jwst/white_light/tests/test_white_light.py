@@ -1,15 +1,16 @@
 import logging
+from pathlib import Path
 
 import numpy as np
 import pytest
+from astropy.table import Table
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
-from astropy.table import Table
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.extract_1d.extract import populate_time_keywords
 from jwst.tests.helpers import LogWatcher
-from jwst.white_light.white_light import white_light, _determine_wavelength_range
+from jwst.white_light.white_light import _determine_wavelength_range, white_light
 from jwst.white_light.white_light_step import WhiteLightStep
 
 
@@ -266,13 +267,13 @@ def wavelengthrange():
 def test_determine_wavelength_range(wavelengthrange):
     """Test that the wavelength range is determined correctly."""
     # retrieve from reference file
-    wl_min, wl_max = _determine_wavelength_range(1, "F277W", wr=wavelengthrange)
+    wl_min, wl_max = _determine_wavelength_range(1, "F277W", waverange_table=wavelengthrange)
     assert wl_min == 2.41
     assert wl_max == 2.82
 
     # user-specified values override reference file values
     wl_min, wl_max = _determine_wavelength_range(
-        1, "F277W", wr=wavelengthrange, min_wave=2.0, max_wave=3.0
+        1, "F277W", waverange_table=wavelengthrange, min_wave=2.0, max_wave=3.0
     )
     assert wl_min == 2.0
     assert wl_max == 3.0
@@ -288,7 +289,7 @@ def test_determine_wavelength_range_no_match(wavelengthrange):
     with pytest.raises(
         ValueError, match="No reference wavelength range found for order 4 and filter CLEAR"
     ):
-        _determine_wavelength_range(4, "CLEAR", wr=wavelengthrange)
+        _determine_wavelength_range(4, "CLEAR", waverange_table=wavelengthrange)
 
 
 def test_determine_wavelength_range_multiple_matches(wavelengthrange):
@@ -297,7 +298,7 @@ def test_determine_wavelength_range_multiple_matches(wavelengthrange):
     with pytest.raises(
         ValueError, match="Multiple reference wavelength ranges found for order 1 and filter CLEAR"
     ):
-        _determine_wavelength_range(1, "CLEAR", wr=wavelengthrange)
+        _determine_wavelength_range(1, "CLEAR", waverange_table=wavelengthrange)
 
 
 def test_get_reference_wavelength_range(make_datamodel):
@@ -317,3 +318,31 @@ def test_get_reference_wavelength_range_other_exptype(make_datamodel):
     model.meta.exposure.type = "NRC_TSIMAGE"
     wr = WhiteLightStep()._get_reference_wavelength_range(model)
     assert wr is None
+
+
+def test_get_reference_wavelength_range_no_file(make_datamodel, monkeypatch, log_watcher):
+    """Test that missing wavelength range reference files are handled."""
+    model = make_datamodel.copy()
+    monkeypatch.setattr(WhiteLightStep, "get_reference_file", lambda *args: "N/A")
+
+    watcher = log_watcher(
+        "jwst.white_light.white_light_step",
+        message="No wavelength range reference file found",
+        level="warning",
+    )
+    wr = WhiteLightStep()._get_reference_wavelength_range(model)
+    watcher.assert_seen()
+    assert wr is None
+
+
+def test_call_step(make_datamodel, tmp_cwd, log_watcher):
+    """Smoke test to ensure the step at least runs without error."""
+    watcher = log_watcher(
+        "jwst.white_light.white_light_step",
+        message="Using wavelength range reference file",
+        level="info",
+    )
+    result = WhiteLightStep().call(make_datamodel, save_results=True)
+    watcher.assert_seen()
+    assert isinstance(result, Table)
+    assert Path("step_WhiteLightStep_whtlt.ecsv").exists()
