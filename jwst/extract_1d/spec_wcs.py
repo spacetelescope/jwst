@@ -8,7 +8,6 @@ from gwcs import coordinate_frames as cf
 from gwcs.wcs import WCS
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def create_spectral_wcs(ra, dec, wavelength):

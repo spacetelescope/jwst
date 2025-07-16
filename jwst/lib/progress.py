@@ -14,7 +14,6 @@ __all__ = ["Bar"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 class _BarStub:

@@ -21,11 +21,8 @@ from jwst.lib import (
     siafdb,  # noqa: E402
 )
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
+from jwst.lib.basic_utils import LoggingContext
 from jwst.tests.helpers import word_precision_check  # noqa: E402
-
-# Ensure that `set_telescope_pointing` logs.
-stp.logger.setLevel(logging.DEBUG)
-stp.logger.addHandler(logging.StreamHandler())
 
 # Setup mock engineering service
 STARTTIME = Time("2022-06-03T17:25:40", format="isot")
@@ -302,9 +299,10 @@ def test_get_pointing_fail():
 
 
 def test_logging(caplog):
-    (q, j2fgs_matrix, fsmcorr, obstime, gs_commanded, fgsid, gs_position) = stp.get_pointing(
-        STARTTIME.mjd, ENDTIME.mjd
-    )
+    with LoggingContext(stp.logger, level=logging.DEBUG):
+        (q, j2fgs_matrix, fsmcorr, obstime, gs_commanded, fgsid, gs_position) = stp.get_pointing(
+            STARTTIME.mjd, ENDTIME.mjd
+        )
     assert "Determining pointing between observations times" in caplog.text
     assert "Telemetry search tolerance" in caplog.text
     assert "Reduction function" in caplog.text
@@ -370,7 +368,7 @@ def test_add_wcs_default_fgsacq(tmp_path):
         assert model.meta.wcsinfo.crpix2 == 0
 
 
-def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
+def test_add_wcs_default_nosiaf(data_file_nosiaf):
     """Handle when no pointing exists and the default is used and no SIAF specified."""
     with pytest.raises(ValueError):
         stp.add_wcs(data_file_nosiaf, tolerance=0, allow_default=True)
@@ -512,7 +510,8 @@ def test_mirim_tamrs_siaf_values(data_file_nosiaf):
 def test_moving_target_update(caplog, data_file_moving_target):
     """Test moving target table updates."""
     with datamodels.open(data_file_moving_target) as model:
-        stp.update_mt_kwds(model)
+        with LoggingContext(stp.logger, level=logging.DEBUG):
+            stp.update_mt_kwds(model)
 
         expected_ra = 6.200036603575057e-05
         expected_dec = 1.7711407285091175e-10
@@ -527,7 +526,8 @@ def test_moving_target_update(caplog, data_file_moving_target):
 def test_moving_target_no_mtt(caplog, data_file):
     """Test moving target table updates, no table present."""
     with datamodels.open(data_file) as model:
-        stp.update_mt_kwds(model)
+        with LoggingContext(stp.logger, level=logging.DEBUG):
+            stp.update_mt_kwds(model)
 
         # No update without table
         assert model.meta.wcsinfo.mt_ra is None
@@ -540,7 +540,8 @@ def test_moving_target_tnotinrange(caplog, data_file_moving_target):
     """Test moving target table updates, time not in range."""
     with datamodels.open(data_file_moving_target) as model:
         model.meta.exposure.mid_time -= 0.2
-        stp.update_mt_kwds(model)
+        with LoggingContext(stp.logger, level=logging.DEBUG):
+            stp.update_mt_kwds(model)
 
         # No update without times in range
         assert model.meta.wcsinfo.mt_ra is None

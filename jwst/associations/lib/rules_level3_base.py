@@ -57,7 +57,6 @@ __all__ = [
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = RegistryMarker.schema(libpath() / "asn_schema_jw_level3.json")

@@ -31,7 +31,6 @@ from jwst.datamodels import Level1bModel  # type: ignore[attr-defined]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 SPEED_OF_LIGHT = speed_of_light / 1000  # km / s
 

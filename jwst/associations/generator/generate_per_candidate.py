@@ -12,7 +12,6 @@ from .generate_per_pool import CANDIDATE_RULESET, DISCOVER_RULESET, constrain_on
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 def generate_per_candidate(

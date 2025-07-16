@@ -21,7 +21,6 @@ from jwst.resample.resample import compute_image_pixel_area
 from . import _fileio
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]

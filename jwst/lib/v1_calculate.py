@@ -10,7 +10,6 @@ from . import set_telescope_pointing as stp
 from . import siafdb
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 __all__ = ["v1_calculate_from_models", "v1_calculate_over_time"]
 

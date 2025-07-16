@@ -15,7 +15,6 @@ from jwst.lib.suffix import remove_suffix
 from ._cal_logs import _LOG_FORMATTER
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class JwstStep(Step):

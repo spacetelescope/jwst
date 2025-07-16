@@ -14,7 +14,6 @@ from jwst.residual_fringe import utils
 from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Noise factor for DER_SNR spectroscopic signal-to-noise calculation
 # (see Stoehr, ADASS 2008: https://archive.stsci.edu/vodocs/der_snr.pdf)

@@ -3,7 +3,6 @@ import logging
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class FileTable:

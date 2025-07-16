@@ -18,7 +18,6 @@ from scipy.sparse import csr_matrix, diags
 from scipy.sparse.linalg import MatrixRankWarning, lsqr, spsolve
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def arange_2d(starts, stops):

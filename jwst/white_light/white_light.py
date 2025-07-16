@@ -7,7 +7,6 @@ import numpy as np
 from astropy.table import QTable
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None):

@@ -12,7 +12,6 @@ from jwst.lib.suffix import remove_suffix
 from .product_utils import sort_by_candidate
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 __all__ = [
     "compare_asn_files",

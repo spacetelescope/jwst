@@ -30,7 +30,6 @@ __all__ = ["Detector1Pipeline"]
 
 # Define logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class Detector1Pipeline(Pipeline):
