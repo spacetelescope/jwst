@@ -15,7 +15,6 @@ from jwst.datamodels import Level1bModel  # type: ignore[attr-defined] # noqa: E
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
 from jwst.lib import siafdb  # noqa: E402
 
-
 # All the FGS GUIDER examples. Generated from proposal JW01029
 FGS_PATHS = sorted(
     get_pkg_data_filenames("data/fgs_exposures", package="jwst.lib.tests", pattern="*.fits")
