@@ -355,7 +355,9 @@ class STFITSDiffBeta(FITSDiff):
                     rtol = self.expected_extension_tolerances["DEFAULT"]["rtol"]
                     atol = self.expected_extension_tolerances["DEFAULT"]["atol"]
                 self._writeln(f"\n  Relative tolerance: {rtol:.4g}, Absolute tolerance: {atol:.4g}")
-            hdu_diff.report(self._fileobj, indent=self._indent + 1)
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", RuntimeWarning)
+                hdu_diff.report(self._fileobj, indent=self._indent + 1)
 
 
 class STHDUDiff(HDUDiff):
@@ -915,8 +917,10 @@ class STImageDataDiff(ImageDataDiff):
                     max_absolute = values[1]
                 else:
                     # Same code as astropy
-                    rdiff = abs(values[1] - values[0]) / np.abs(values[0])
-                    adiff = float(abs(values[1] - values[0]))
+                    with warnings.catch_warnings():
+                        warnings.simplefilter("ignore", RuntimeWarning)
+                        rdiff = abs(values[1] - values[0]) / np.abs(values[0])
+                        adiff = float(abs(values[1] - values[0]))
                     max_relative = max(max_relative, rdiff)
                     max_absolute = max(max_absolute, adiff)
 

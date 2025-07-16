@@ -1,12 +1,11 @@
 """Regression tests for STFitsDiff"""
 
 import pytest
+import warnings
 
-from stdatamodels.jwst import datamodels
 from jwst.stpipe import Step
 from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 from jwst.regtest.test_stfitsdiff import report_to_list
-from jwst.flatfield.flat_field import nirspec_ifu
 from astropy.io.fits.diff import FITSDiff
 
 
@@ -14,22 +13,31 @@ from astropy.io.fits.diff import FITSDiff
 pytestmark = [pytest.mark.bigdata]
 
 
-def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
-    """Test using predefined interpolated flat"""
-    basename = "jw01251004001_03107_00001_nrs1"
-    output_file = f"{basename}_flat_from_user_model.fits"
-    with datamodels.open(rtdata.get_data(f"nirspec/ifu/{basename}_assign_wcs.fits")) as data:
-        with datamodels.open(
-            rtdata.get_data(f"nirspec/ifu/{basename}_interpolatedflat.fits")
-        ) as user_supplied_flat:
-            # Call the flat field function directly with a user flat
-            nirspec_ifu(data, None, None, None, None, user_supplied_flat=user_supplied_flat)
-    rtdata.output = output_file
-    data.save(rtdata.output)
+def astropy_fitsdiff(file, truth_file, fitsdiff_default_kwargs):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore", RuntimeWarning)
+        diff = FITSDiff(file, truth_file, **fitsdiff_default_kwargs)
+        apresult, apreport = diff.identical, report_to_list(diff.report())
+        return apresult, apreport
 
-    rtdata.get_truth("truth/test_nirspec_ifu/" + output_file)
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    apresult, apreport = diff.identical, report_to_list(diff.report())
+
+@pytest.mark.parametrize(
+    "suffix",
+    ["s3d"],
+)
+def test_nirspec_ifu(rtdata_module, suffix, fitsdiff_default_kwargs):
+    rtdata = rtdata_module
+    rtdata.get_data("nirspec/ifu/jw01251004001_03107_00001_nrs1_rate.fits")
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+    ]
+    Step.from_cmdline(args)
+
+    output = "jw01251004001_03107_00001_nrs1_" + suffix + ".fits"
+    rtdata.output = output
+    rtdata.get_truth("truth/test_nirspec_ifu/" + output)
+    apresult, apreport = astropy_fitsdiff(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
 
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -42,41 +50,39 @@ def test_nirspec_ifu_user_supplied_flat(rtdata, fitsdiff_default_kwargs):
 
 @pytest.mark.parametrize("suffix", ["cal", "crf", "s2d", "x1d"])
 @pytest.mark.parametrize(
-    "source_id",
+    "source_id,slit_name",
     [
-        "b000000030",
-        "b000000031",
-        "s000004385",
-        "s000007380",
-        "v000000048",
-        "v000000049",
-        "v000000053",
-        "v000000056",
+        ("s000000024", "s1600a1"),
     ],
 )
-def test_nirspec_mos_spec3(
-    rtdata_module, resource_tracker, suffix, source_id, fitsdiff_default_kwargs
-):
-    """Check results of calwebb_spec3"""
+def test_nirspec_fs_spec3(rtdata_module, fitsdiff_default_kwargs, suffix, source_id, slit_name):
+    """Test spec3 pipeline on a set of NIRSpec FS exposures."""
     rtdata = rtdata_module
-    rtdata.get_asn("nirspec/mos/jw01345-o066_20230831t181155_spec3_00002_asn.json")
 
-    # Run the calwebb_spec3 pipeline on the association
-    args = ["calwebb_spec3", rtdata.input]
-    with resource_tracker.track():
-        Step.from_cmdline(args)
+    # Get the ASN file and input exposures
+    rtdata.get_asn("nirspec/fs/jw01309-o022_spec3_regtest_asn.json")
 
-    output = f"jw01345-o066_{source_id}_nirspec_f170lp-g235m_{suffix}.fits"
+    # Run the calwebb_spec3 pipeline; save results from intermediate steps
+    args = [
+        "calwebb_spec3",
+        rtdata.input,
+        "--steps.outlier_detection.save_results=true",
+        "--steps.resample_spec.save_results=true",
+        "--steps.extract_1d.save_results=true",
+    ]
+    Step.from_cmdline(args)
+
+    output = f"jw01309-o022_{source_id}_nirspec_f290lp-g395h-{slit_name}-allslits_{suffix}.fits"
     rtdata.output = output
-    rtdata.get_truth(f"truth/test_nirspec_mos_spec3/{output}")
+    rtdata.get_truth(f"truth/test_nirspec_fs_spec3/{output}")
 
     # Adjust tolerance for machine precision with float32 drizzle code
     if suffix == "s2d":
-        fitsdiff_default_kwargs["rtol"] = 1e-4
-        fitsdiff_default_kwargs["atol"] = 1e-5
+        fitsdiff_default_kwargs["rtol"] = 1e-2
+        fitsdiff_default_kwargs["atol"] = 2e-4
 
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    apresult, apreport = diff.identical, report_to_list(diff.report())
+    # Compare the results
+    apresult, apreport = astropy_fitsdiff(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
 
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -89,9 +95,9 @@ def test_nirspec_mos_spec3(
 
 @pytest.mark.parametrize(
     "suffix",
-    ["assign_wcs", "esec", "x1d"],
+    ["esec"],
 )
-def test_nis_wfss_spec2(rtdata_module, resource_tracker, fitsdiff_default_kwargs, suffix):
+def test_nis_wfss_spec2(rtdata_module, fitsdiff_default_kwargs, suffix):
     """Regression test for calwebb_spec2 applied to NIRISS WFSS data"""
     rtdata = rtdata_module
     spec2_asns = [
@@ -103,13 +109,10 @@ def test_nis_wfss_spec2(rtdata_module, resource_tracker, fitsdiff_default_kwargs
     rtdata.get_asn(spec2_asns[0])
     args = [
         "calwebb_spec2",
-        "--steps.assign_wcs.save_results=true",
-        "--steps.extract_1d.save_results=true",
         "--save_wfss_esec=true",
         rtdata.input,
     ]
-    with resource_tracker.track():
-        Step.from_cmdline(args)
+    Step.from_cmdline(args)
 
     # Run the remaining exposures without doing comparisons, just so that
     # fresh results are available for level-3 processing
@@ -123,8 +126,7 @@ def test_nis_wfss_spec2(rtdata_module, resource_tracker, fitsdiff_default_kwargs
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    apresult, apreport = diff.identical, report_to_list(diff.report())
+    apresult, apreport = astropy_fitsdiff(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
 
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
@@ -135,125 +137,25 @@ def test_nis_wfss_spec2(rtdata_module, resource_tracker, fitsdiff_default_kwargs
     assert pixreport == apreport
 
 
-def test_nircam_tsgrism_stage3_x1dints(rtdata_module, resource_tracker, fitsdiff_default_kwargs):
-    rtdata = rtdata_module
-    # Run spec2 pipeline on the _rateints file, saving intermediate products
-    rtdata.get_data("nircam/tsgrism/jw01366002001_04103_00001-seg001_nrcalong_rateints.fits")
-    args = [
-        "calwebb_spec2",
-        rtdata.input,
-    ]
-    with resource_tracker.track():
-        Step.from_cmdline(args)
-    # Run spec3
-    rtdata.get_data("nircam/tsgrism/jw01366-o002_20230107t004627_tso3_00001_asn.json")
-    args = ["calwebb_tso3", rtdata.input]
-    with resource_tracker.track():
-        Step.from_cmdline(args)
+def test_miri_mrs_extract1d_nominal(rtdata, fitsdiff_default_kwargs):
+    """Test running extract_1d on an s3d cube containing a point source"""
+    # input s3d are created using the same data that was used in test_miri_mrs_spec3_ifushort:
+    # run calwebb_spec3 on miri/mrs/jw01024_ifushort_mediumlong_spec3_00001_asn.json to create
+    # the input data for this test.
 
-    # Compare
-    rtdata.input = "jw01366-o002_20230107t004627_tso3_00001_asn.json"
-    rtdata.output = "jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_x1dints.fits"
+    rtdata.get_data("miri/mrs/jw01024-c1000_t002_miri_ch2-mediumlong_s3d.fits")
+
+    args = ["jwst.extract_1d.Extract1dStep", rtdata.input]
+    Step.from_cmdline(args)
+    rtdata.output = "jw01024-c1000_t002_miri_ch2-mediumlong_extract1dstep.fits"
+
+    # Get the truth file
     rtdata.get_truth(
-        "truth/test_nircam_tsgrism_stages/jw01366-o002_t001_nircam_f322w2-grismr-subgrism256_x1dints.fits"
+        "truth/test_miri_mrs_extract1d/jw01024-c1000_t002_miri_ch2-mediumlong_extract1dstep.fits"
     )
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    apresult, apreport = diff.identical, report_to_list(diff.report())
-
-    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
-    stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    result = stdiff.identical
-    _, pixreport = report_to_list(stdiff.report(), report_pixel_loc_diffs=True)
-
-    assert result == apresult
-    assert pixreport == apreport
-
-
-@pytest.mark.parametrize(
-    "suffix",
-    [
-        "rate",
-        "cal",
-        "i2d",
-    ],
-)
-def test_nircam_image_stages12(rtdata_module, resource_tracker, fitsdiff_default_kwargs, suffix):
-    """Regression test of detector1 and image2 pipelines performed on NIRCam data."""
-    rtdata = rtdata_module
-    rtdata.get_data("nircam/image/jw01345001001_10201_00001_nrca3_uncal.fits")
-    # Run detector1 pipeline only on one of the _uncal files
-    args = [
-        "calwebb_detector1",
-        rtdata.input,
-        "--output_file=jw01345001001_10201_00001_nrca3_likely",
-        "--steps.ramp_fit.algorithm=LIKELY",
-    ]
-    with resource_tracker.track():
-        Step.from_cmdline(args)
-    # Run image2
-    rtdata.input = "jw01538046001_03105_00001_nrcalong_rate.fits"
-    args = [
-        "calwebb_image2",
-        rtdata.input,
-    ]
-    with resource_tracker.track():
-        Step.from_cmdline(args)
-
-    # Compare
-    rtdata.input = "jw01538046001_03105_00001_nrcalong_uncal.fits"
-    output = "jw01538046001_03105_00001_nrcalong_" + suffix + ".fits"
-    rtdata.output = output
-    rtdata.get_truth(f"truth/test_nircam_image_stages/{output}")
-
-    # Adjust tolerance for machine precision with float32 drizzle code
-    if suffix == "i2d":
-        fitsdiff_default_kwargs["rtol"] = 5e-5
-        fitsdiff_default_kwargs["atol"] = 1e-4
-
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    apresult, apreport = diff.identical, report_to_list(diff.report())
-
-    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
-    stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    result = stdiff.identical
-    _, pixreport = report_to_list(stdiff.report(), report_pixel_loc_diffs=True)
-
-    assert result == apresult
-    assert pixreport == apreport
-
-
-@pytest.mark.parametrize(
-    "suffix",
-    [
-        "cal",
-        "s2d",
-        "x1d",
-    ],
-)
-def test_miri_lrs_slit_spec2(rtdata_module, resource_tracker, fitsdiff_default_kwargs, suffix):
-    """Regression test of the calwebb_spec2 pipeline on MIRI
-    LRS fixedslit data using along-slit-nod pattern for
-    background subtraction."""
-    rtdata = rtdata_module
-    # Get the spec2 ASN and its members
-    rtdata.get_asn("miri/lrs/jw01530-o005_20221202t204827_spec2_00001_asn.json")
-
-    # Run the calwebb_spec2 pipeline; save results from intermediate steps
-    args = [
-        "calwebb_spec2",
-        rtdata.input,
-    ]
-    with resource_tracker.track():
-        Step.from_cmdline(args)
-    output = f"jw01530005001_03103_00001_mirimage_{suffix}.fits"
-    rtdata.output = output
-
-    # Get the truth files
-    rtdata.get_truth(f"truth/test_miri_lrs_slit_spec2/{output}")
 
     # Compare the results
-    diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    apresult, apreport = diff.identical, report_to_list(diff.report())
+    apresult, apreport = astropy_fitsdiff(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
 
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)

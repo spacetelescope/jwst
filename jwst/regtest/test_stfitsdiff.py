@@ -7,11 +7,6 @@ from stdatamodels.jwst import datamodels
 from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 from astropy.io.fits.diff import FITSDiff
 from astropy.io import fits
-from astropy.table.pprint import conf
-
-
-# Disable width limit for the current session for all tables
-conf.max_width = -1
 
 
 @pytest.fixture(scope="module")
@@ -98,7 +93,7 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
         This is either the no differences report, or the ST ad hoc report.
     pixelreport : list
         Report containing the pixel or column location of the differences, also
-        only returned when pixelreport is True.
+        only returned when report_pixel_loc_diffs is True.
     """
     rsplit = report.split(sep="\n")
     rsplit = [rs.strip() for rs in rsplit if rs]
