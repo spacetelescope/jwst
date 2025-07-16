@@ -5,13 +5,15 @@ import warnings
 
 import astropy.units as u
 import numpy as np
-from astropy.convolution import Gaussian2DKernel
 from astropy.nddata.utils import NoOverlapError, extract_array
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import QTable
 from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
 from photutils.aperture import CircularAnnulus, CircularAperture, aperture_photometry
+from photutils.detection.core import _StarFinderKernel
+from photutils.detection.daofinder import _DAOStarFinderCatalog
+from photutils.segmentation import SourceCatalog
 from scipy import ndimage
 from scipy.spatial import KDTree
 from stdatamodels.jwst.datamodels import ImageModel
@@ -289,21 +291,8 @@ class JWSTSourceCatalog:
         """
         return ~np.isfinite(self.xypos).all(axis=1)
 
-    @lazyproperty
-    def sky_centroid(self):
-        """
-        Compute the sky coordinate of the source centroid.
-
-        The output coordinate frame is the same as the input ``wcs``.
-
-        Returns
-        -------
-        `~astropy.coordinates.SkyCoord` or `None`
-            The sky coordinate of the source centroid, or `None` if the WCS is not set.
-        """
-        if self.wcs is None:
-            return np.array([None] * self.n_sources)
-        return self.wcs.pixel_to_world(self.xcentroid, self.ycentroid)
+    # TODO: check if this is still a lazyproperty
+    sky_centroid = SourceCatalog.sky_centroid
 
     @lazyproperty
     def _isophotal_abmag(self):
@@ -767,62 +756,21 @@ class JWSTSourceCatalog:
         return np.logical_and(mask1, mask2)
 
     @lazyproperty
-    def _kernel_size(self):
+    def cutout_center(self):  # noqa: D102
+        return tuple((size - 1) // 2 for size in self.kernel.shape)
+
+    @property
+    def kernel(self):
         """
-        Return the DAOFind kernel size (in both x and y dimensions), always odd.
+        Return the DAOFind kernel.
 
         Returns
         -------
-        int
-            The DAOFind kernel size.
+        _StarFinderKernel
+            The DAOFind kernel object.
         """
-        return 2 * int(max(2.0, 1.5 * self.kernel_sigma)) + 1
-
-    @lazyproperty
-    def _kernel_center(self):
-        """
-        Return the DAOFind kernel x/y center.
-
-        Returns
-        -------
-        int
-            The DAOFind kernel center.
-        """
-        return (self._kernel_size - 1) // 2
-
-    @lazyproperty
-    def _kernel_mask(self):
-        """
-        Make the DAOFind kernel circular mask.
-
-        Returns
-        -------
-        `~numpy.ndarray`
-            A 2D array containing the DAOFind kernel mask, where 1=good pixels and 0=masked pixels.
-        """
-        yy, xx = np.mgrid[0 : self._kernel_size, 0 : self._kernel_size]
-        radius = np.sqrt((xx - self._kernel_center) ** 2 + (yy - self._kernel_center) ** 2)
-        return (radius <= max(2.0, 1.5 * self.kernel_sigma)).astype(int)
-
-    @lazyproperty
-    def _daofind_kernel(self):
-        """
-        Compute the DAOFind kernel, a 2D circular Gaussian normalized to have zero sum.
-
-        Returns
-        -------
-        `~numpy.ndarray`
-            The DAOFind kernel.
-        """
-        size = self._kernel_size
-        kernel = Gaussian2DKernel(self.kernel_sigma, x_size=size, y_size=size).array
-        kernel /= np.max(kernel)
-        kernel *= self._kernel_mask
-
-        # normalize the kernel to zero sum
-        npixels = self._kernel_mask.sum()
-        denom = np.sum(kernel**2) - (np.sum(kernel) ** 2 / npixels)
-        return ((kernel - (kernel.sum() / npixels)) / denom) * self._kernel_mask
+        fwhm = self.kernel_sigma / gaussian_fwhm_to_sigma
+        return _StarFinderKernel(fwhm, ratio=1.0, normalize_zerosum=True)
 
     @lazyproperty
     def _daofind_convolved_data(self):
@@ -834,9 +782,7 @@ class JWSTSourceCatalog:
         `~numpy.ndarray`
             The convolved data.
         """
-        return ndimage.convolve(
-            self.model.data.value, self._daofind_kernel, mode="constant", cval=0.0
-        )
+        return ndimage.convolve(self.model.data.value, self.kernel.data, mode="constant", cval=0.0)
 
     @lazyproperty
     def _daofind_cutout(self):
@@ -854,10 +800,10 @@ class JWSTSourceCatalog:
         for xcen, ycen in zip(*np.transpose(self._xypos_finite), strict=False):
             try:
                 cutout_ = extract_array(
-                    self.model.data, self._daofind_kernel.shape, (ycen, xcen), fill_value=0.0
+                    self.model.data, self.kernel.shape, (ycen, xcen), fill_value=0.0
                 )
             except NoOverlapError:
-                cutout_ = np.zeros(self._daofind_kernel.shape)
+                cutout_ = np.zeros(self.kernel.shape)
             cutout.append(cutout_)
 
         return np.array(cutout)  # all cutouts are the same size
@@ -879,88 +825,35 @@ class JWSTSourceCatalog:
             try:
                 cutout_ = extract_array(
                     self._daofind_convolved_data,
-                    self._daofind_kernel.shape,
+                    self.kernel.shape,
                     (ycen, xcen),
                     fill_value=0.0,
                 )
             except NoOverlapError:
-                cutout_ = np.zeros(self._daofind_kernel.shape)
+                cutout_ = np.zeros(self.kernel.shape)
             cutout.append(cutout_)
 
         return np.array(cutout)  # all cutouts are the same size
 
     @lazyproperty
-    def sharpness(self):
-        """
-        Compute the DAOFind source sharpness statistic.
-
-        The sharpness statistic measures the ratio of the difference
-        between the height of the central pixel and the mean of the
-        surrounding non-bad pixels to the height of the best fitting
-        Gaussian function at that point.
-
-        Stars generally have a ``sharpness`` between 0.2 and 1.0.
-
-        Returns
-        -------
-        `~numpy.ndarray`
-            The DAOFind source sharpness statistic.
-        """
-        npixels = self._kernel_mask.sum() - 1  # exclude the peak pixel
-        data_masked = self._daofind_cutout * self._kernel_mask
-        data_peak = self._daofind_cutout[:, self._kernel_center, self._kernel_center]
-        conv_peak = self._daofind_cutout_conv[:, self._kernel_center, self._kernel_center]
-
-        data_mean = (np.sum(data_masked, axis=(1, 2)) - data_peak) / npixels
-
-        with warnings.catch_warnings():
-            # ignore 0 / 0 for non-finite xypos
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            return (data_peak - data_mean) / conv_peak
+    def cutout_data(self):  # noqa: D102
+        return self._daofind_cutout
 
     @lazyproperty
-    def roundness(self):
-        """
-        Compute the DAOFind source roundness statistic based on symmetry.
+    def data_peak(self):  # noqa: D102
+        return self._daofind_cutout[:, self.cutout_center[0], self.cutout_center[1]]
 
-        The roundness characteristic computes the ratio of a measure of
-        the bilateral symmetry of the object to a measure of the
-        four-fold symmetry of the object.
+    @lazyproperty
+    def cutout_convdata(self):  # noqa: D102
+        return self._daofind_cutout_conv
 
-        "Round" objects have a ``roundness`` close to 0, generally
-        between -1 and 1.
+    @lazyproperty
+    def convdata_peak(self):  # noqa: D102
+        return self._daofind_cutout_conv[:, self.cutout_center[0], self.cutout_center[1]]
 
-        Returns
-        -------
-        `~numpy.ndarray`
-            The DAOFind source roundness statistic.
-        """
-        # set the central (peak) pixel to zero
-        cutout = self._daofind_cutout_conv.copy()
-        cutout[:, self._kernel_center, self._kernel_center] = 0.0
+    sharpness = _DAOStarFinderCatalog.sharpness
 
-        # calculate the four roundness quadrants
-        quad1 = cutout[:, 0 : self._kernel_center + 1, self._kernel_center + 1 :]
-        quad2 = cutout[:, 0 : self._kernel_center, 0 : self._kernel_center + 1]
-        quad3 = cutout[:, self._kernel_center :, 0 : self._kernel_center]
-        quad4 = cutout[:, self._kernel_center + 1 :, self._kernel_center :]
-
-        axis = (1, 2)
-        sum2 = (
-            -quad1.sum(axis=axis)
-            + quad2.sum(axis=axis)
-            - quad3.sum(axis=axis)
-            + quad4.sum(axis=axis)
-        )
-        sum2[sum2 == 0] = 0.0
-
-        sum4 = np.abs(cutout).sum(axis=axis)
-        sum4[sum4 == 0] = np.nan
-
-        with warnings.catch_warnings():
-            # ignore 0 / 0 for non-finite xypos
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            return 2.0 * sum2 / sum4
+    roundness = _DAOStarFinderCatalog.roundness1
 
     @lazyproperty
     def _kdtree_query(self):
