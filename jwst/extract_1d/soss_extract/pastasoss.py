@@ -27,7 +27,7 @@ DEFAULT_CRDS_PARAMS = {
     "meta.exposure.type": "NIS_SOSS",
 }
 
-__all__ = ["get_soss_traces", "get_soss_wavemaps"]
+__all__ = ["get_soss_traces", "get_soss_wavemaps", "retrieve_default_pastasoss_model"]
 
 
 def _get_wavelengths(refmodel, x, pwcpos, order):
