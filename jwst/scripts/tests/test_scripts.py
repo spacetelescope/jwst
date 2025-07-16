@@ -8,7 +8,6 @@ SCRIPTS = [
     "asn_gather",
     "asn_make_pool",
     "collect_pipeline_cfgs",
-    "create_data",
     "pointing_summary",
     "schemadoc",
     "set_telescope_pointing",
