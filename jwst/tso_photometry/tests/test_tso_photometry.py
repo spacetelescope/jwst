@@ -1,13 +1,13 @@
 import math
 
+import astropy.units as u
 import numpy as np
 import pytest
-import astropy.units as u
-
 from stdatamodels.jwst import datamodels
+
 from jwst.lib import reffile_utils
-from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
 from jwst.tso_photometry.tso_photometry import tso_aperture_photometry
+from jwst.tso_photometry.tso_photometry_step import TSOPhotometryStep
 
 shape = (7, 100, 150)
 xcenter = 75.0

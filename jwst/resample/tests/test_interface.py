@@ -1,5 +1,4 @@
 import pytest
-
 from stdatamodels.jwst import datamodels
 
 from jwst.resample import ResampleSpecStep, ResampleStep

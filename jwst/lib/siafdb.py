@@ -7,10 +7,10 @@ Under operations, the SIAF is found in a sqlite database.
 Otherwise, use the standard interface defined by the `pysiaf` package
 """
 
-from collections import namedtuple
-from datetime import date
 import logging
 import os
+from collections import namedtuple
+from datetime import date
 from pathlib import Path
 
 from .basic_utils import LoggingContext

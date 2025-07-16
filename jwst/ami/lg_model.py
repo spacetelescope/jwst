@@ -1,10 +1,9 @@
 import logging
+
 import numpy as np
 
+from . import analyticnrm2, mask_definition_ami, utils
 from . import leastsqnrm as leastsqnrm
-from . import analyticnrm2
-from . import utils
-from . import mask_definition_ami
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

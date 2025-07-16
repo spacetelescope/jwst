@@ -1,7 +1,7 @@
 """Unit tests for AMI analyticnrm2 module."""
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from jwst.ami import analyticnrm2, utils

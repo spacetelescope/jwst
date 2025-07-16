@@ -1,16 +1,15 @@
 from copy import deepcopy
 
+import numpy as np
 from astropy import units
 from gwcs.wcs import WCS
-import numpy as np
+from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
+from stdatamodels.jwst.datamodels import ImageModel
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.linearfit import build_fit_matrix
 
-from stdatamodels.jwst.datamodels import ImageModel
-from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
 from jwst.assign_wcs.pointing import _v23tosky
 from jwst.assign_wcs.util import update_fits_wcsinfo
-
 
 _RAD2ARCSEC = 3600.0 * np.rad2deg(1.0)
 

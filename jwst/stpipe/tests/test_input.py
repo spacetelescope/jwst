@@ -9,7 +9,7 @@ from stdatamodels.jwst.datamodels import JwstDataModel
 
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import Step
-from jwst.stpipe.tests.steps import StepWithModel, StepWithContainer
+from jwst.stpipe.tests.steps import StepWithContainer, StepWithModel
 
 
 def test_default_input_with_container(tmp_cwd):

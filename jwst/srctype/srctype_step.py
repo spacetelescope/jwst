@@ -2,6 +2,7 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
+
 from .srctype import set_source_type
 
 __all__ = ["SourceTypeStep"]

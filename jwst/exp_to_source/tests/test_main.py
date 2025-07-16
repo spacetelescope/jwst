@@ -1,7 +1,7 @@
 from glob import glob
 
-from jwst.exp_to_source.tests import helpers
 from jwst.exp_to_source.main import Main
+from jwst.exp_to_source.tests import helpers
 
 
 def test_help(capsys):

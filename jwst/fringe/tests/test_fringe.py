@@ -1,10 +1,9 @@
 """Unit tests for fringe correction."""
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_array_equal
-
-from stdatamodels.jwst.datamodels import IFUImageModel, FringeModel
+from stdatamodels.jwst.datamodels import FringeModel, IFUImageModel
 
 from jwst.fringe import fringe
 

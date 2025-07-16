@@ -1,10 +1,9 @@
-from pathlib import Path
 import importlib
-from pkgutil import iter_modules
 import os
+from pathlib import Path
+from pkgutil import iter_modules
 
 import pytest
-
 from ci_watson.artifactory_helpers import get_bigdata_root
 
 from jwst.regtest.regtestdata import _data_glob_local, _data_glob_url

@@ -1,16 +1,13 @@
 import pytest
-
-from numpy import zeros
-from numpy.testing import assert_allclose
 from astropy import units as u
 from astropy import wcs
 from astropy.io import fits
 from astropy.modeling.models import RotationSequence3D
-
+from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
 from gwcs.wcstools import grid_from_bounding_box
-from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
-
-from stdatamodels.jwst.datamodels import ImageModel, CubeModel, open
+from numpy import zeros
+from numpy.testing import assert_allclose
+from stdatamodels.jwst.datamodels import CubeModel, ImageModel, open
 
 from jwst.assign_wcs import AssignWcsStep, pointing
 

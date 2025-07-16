@@ -3,12 +3,10 @@
 from functools import partial
 from pathlib import Path
 
-from jwst.associations import Association, AssociationRegistry
-from jwst.associations import libpath
-
-from jwst.associations.load_asn import load_asn
+from jwst.associations import Association, AssociationRegistry, libpath
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.lib.rules_level2_base import DMSLevel2bBase
+from jwst.associations.load_asn import load_asn
 
 __all__ = [
     "LoadAsAssociation",

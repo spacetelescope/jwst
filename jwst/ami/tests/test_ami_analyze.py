@@ -1,8 +1,9 @@
 """Unit tests for ami_analyze module and step."""
 
-import pytest
-import numpy as np
 import math
+
+import numpy as np
+import pytest
 import stpipe
 from astropy.io import fits
 

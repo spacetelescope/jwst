@@ -1,15 +1,13 @@
 """Association attributes common to DMS-based Rules."""
 
-from jwst.associations.lib.counter import Counter
-
 from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
 from jwst.associations.lib.acid import ACIDMixin
-from jwst.associations.lib.constraint import Constraint, AttrConstraint, SimpleConstraint
+from jwst.associations.lib.constraint import AttrConstraint, Constraint, SimpleConstraint
+from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.diff import MultiDiffError, compare_asns
 from jwst.associations.lib.utilities import getattr_from_list
-
 
 __all__ = ["Constraint_TargetAcq", "Constraint_TSO", "Constraint_WFSC", "DMSBaseMixin"]
 

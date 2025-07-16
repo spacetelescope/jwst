@@ -1,14 +1,14 @@
 """Pipeline implementation of Jens Kammerer's bp_fix code based on Ireland 2013 algorithm."""
 
-import numpy as np
 import logging
 import warnings
-
 from copy import deepcopy
-from .matrix_dft import matrix_dft
-from scipy.ndimage import median_filter
 
+import numpy as np
+from scipy.ndimage import median_filter
 from stdatamodels.jwst.datamodels import dqflags
+
+from .matrix_dft import matrix_dft
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

@@ -2,11 +2,11 @@
 Unit tests for straylight step configuration
 """
 
+import numpy as np
+import pytest
 from stdatamodels.jwst.datamodels import CubeModel, IFUImageModel
 
 from jwst.straylight import StraylightStep
-import numpy as np
-import pytest
 
 
 @pytest.fixture(scope="module")

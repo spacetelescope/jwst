@@ -6,15 +6,16 @@ candidates from a list of PoolRow entries.
 """
 
 import importlib.util
-from inspect import getmembers, isclass, isfunction, ismethod, ismodule
 import logging
+from enum import EnumMeta
+from inspect import getmembers, isclass, isfunction, ismethod, ismodule
 from os.path import (
     expandvars,
 )
 from pathlib import Path
-from enum import EnumMeta
 
 from jwst.associations import libpath
+
 from .exceptions import AssociationError, AssociationNotValidError
 from .lib.callback_registry import CallbackRegistry
 

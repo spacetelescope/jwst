@@ -2,8 +2,8 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from . import extract_2d
 
+from . import extract_2d
 
 __all__ = ["Extract2dStep"]
 

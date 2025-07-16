@@ -16,9 +16,11 @@ from astropy.time import Time  # noqa: E402
 from astropy.utils.data import get_pkg_data_filename  # noqa: E402
 from stdatamodels.jwst import datamodels  # noqa: E402
 
-from jwst.lib import engdb_mast  # noqa: E402
+from jwst.lib import (
+    engdb_mast,  # noqa: E402
+    siafdb,  # noqa: E402
+)
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
-from jwst.lib import siafdb  # noqa: E402
 from jwst.tests.helpers import word_precision_check  # noqa: E402
 
 # Ensure that `set_telescope_pointing` logs.

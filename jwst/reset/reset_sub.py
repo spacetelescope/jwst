@@ -1,8 +1,9 @@
 #
 #  Module for  subtracting reset correction from  science data sets
 #
-import numpy as np
 import logging
+
+import numpy as np
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

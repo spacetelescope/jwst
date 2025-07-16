@@ -1,8 +1,8 @@
 """A signal/slot implementation."""
 
-from collections import namedtuple
 import inspect
 import logging
+from collections import namedtuple
 
 __all__ = ["Signal", "Signals", "SignalsNotAClass"]
 

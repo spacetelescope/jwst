@@ -1,10 +1,11 @@
+import logging
+
 import numpy as np
 import pytest
-import logging
 from scipy.integrate import trapezoid
 
-from jwst.tests.helpers import LogWatcher
 from jwst.extract_1d.soss_extract import atoca_utils as au
+from jwst.tests.helpers import LogWatcher
 
 
 def test_arange_2d():

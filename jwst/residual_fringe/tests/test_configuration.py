@@ -1,11 +1,10 @@
 """Unit tests for Residual Fringe Correction step interface."""
 
-import pytest
 import numpy as np
+import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.residual_fringe import ResidualFringeStep
-from jwst.residual_fringe import residual_fringe
+from jwst.residual_fringe import ResidualFringeStep, residual_fringe
 
 
 @pytest.fixture(scope="function")

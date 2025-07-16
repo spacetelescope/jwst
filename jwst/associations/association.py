@@ -1,16 +1,18 @@
-from collections.abc import MutableMapping
-from datetime import datetime, UTC
 import json
-import jsonschema
 import logging
 import re
 import warnings
+from collections.abc import MutableMapping
+from datetime import UTC, datetime
 from pathlib import Path
 
+import jsonschema
+from stpipe.format_template import FormatTemplate
+
 from jwst import __version__
+
 from .exceptions import AssociationNotValidError
 from .lib.constraint import Constraint, meets_conditions
-from stpipe.format_template import FormatTemplate
 from .lib.keyvalue_registry import KeyValueRegistry
 
 __all__ = ["Association"]

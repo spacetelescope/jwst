@@ -21,9 +21,11 @@ in the header other than what is required by the standard.
 """
 
 import logging
+
 import numpy as np
-from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
+from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
 from scipy.constants import speed_of_light
+
 import jwst.datamodels as dm
 from jwst.datamodels import Level1bModel  # type: ignore[attr-defined]
 

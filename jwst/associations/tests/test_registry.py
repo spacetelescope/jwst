@@ -1,8 +1,8 @@
 """Test the Registry"""
 
-from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
-
 import pytest
+
+from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
 
 
 def test_registry_match(full_pool_rules):

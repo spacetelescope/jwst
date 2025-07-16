@@ -3,9 +3,9 @@
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations.tests import helpers
 from jwst.associations import Association, AssociationError, AssociationRegistry, generate
 from jwst.associations.lib.dms_base import DMSAttrConstraint
+from jwst.associations.tests import helpers
 
 
 # Basic Association object

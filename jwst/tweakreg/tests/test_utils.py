@@ -1,21 +1,21 @@
 from copy import deepcopy
 
-import pytest
-import numpy as np
 import asdf
+import numpy as np
+import pytest
+from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.utils.data import get_pkg_data_filename
-from astropy import units as u
 from numpy.testing import assert_allclose
+from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
+from stdatamodels.jwst.datamodels import ImageModel
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.linearfit import build_fit_matrix
 
-from stdatamodels.jwst.datamodels import ImageModel
 from jwst.tweakreg.utils import (
     adjust_wcs,
     transfer_wcs_correction,
 )
-from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
 
 
 def _get_test_pts(model, npts=5):

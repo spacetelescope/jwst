@@ -1,8 +1,8 @@
 from stpipe.entry_points import get_steps
 
+import jwst
 import jwst.pipeline
 import jwst.step
-import jwst
 
 
 def test_get_steps():

@@ -40,7 +40,6 @@ import stdatamodels.jwst.datamodels as dm
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 
-
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 

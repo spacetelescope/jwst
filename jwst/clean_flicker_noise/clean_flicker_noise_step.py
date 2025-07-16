@@ -1,6 +1,7 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
+
 from . import clean_flicker_noise
 
 __all__ = ["CleanFlickerNoiseStep"]

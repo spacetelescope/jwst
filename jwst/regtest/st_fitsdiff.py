@@ -12,17 +12,20 @@ from astropy.table import Table
 from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
 
 from astropy.io.fits.hdu.table import _TableLikeHDU
-
 import numpy as np
+
+from astropy import __version__
 from astropy.io.fits.diff import (
+    _COL_ATTRS,
     FITSDiff,
     HDUDiff,
     HeaderDiff,
-    TableDataDiff,
     ImageDataDiff,
-    _COL_ATTRS,
+    TableDataDiff,
 )
-
+from astropy.io.fits.hdu.table import _TableLikeHDU
+from astropy.table import Table
+from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
 
 __all__ = [
     "STFITSDiff",

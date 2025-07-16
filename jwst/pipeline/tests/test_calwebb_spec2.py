@@ -3,10 +3,9 @@ import shutil
 
 import pytest
 
+from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 from jwst.stpipe import Step
-from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
-
 
 INPUT_FILE = "dummy_rate.fits"
 INPUT_FILE_2 = "dummy2_rate.fits"

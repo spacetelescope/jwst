@@ -2,10 +2,10 @@
 
 import pytest
 from astropy.utils.data import get_pkg_data_filename
-from stpipe.config_parser import ValidationError
 from stpipe import Step
+from stpipe.config_parser import ValidationError
 
-from jwst.stpipe.tests.steps import MakeListStep, MakeListPipeline
+from jwst.stpipe.tests.steps import MakeListPipeline, MakeListStep
 
 DEFAULT_PAR1 = 42.0
 DEFAULT_PAR2 = "Yes, a string"

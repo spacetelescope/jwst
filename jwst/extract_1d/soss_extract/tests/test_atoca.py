@@ -1,14 +1,16 @@
-import pytest
-import numpy as np
 from functools import partial
+
+import numpy as np
+import pytest
 from scipy.sparse import csr_matrix
+
 from jwst.extract_1d.soss_extract import atoca
 from jwst.extract_1d.soss_extract.tests.conftest import (
-    SPECTRAL_SLOPE,
-    f_lam,
     DATA_SHAPE,
+    SPECTRAL_SLOPE,
     WAVE_BNDS_O1,
     WAVE_BNDS_O2,
+    f_lam,
 )
 
 """Tests for the ATOCA extraction engine, taking advantage of the miniature

@@ -1,15 +1,12 @@
 import logging
 
 import numpy as np
-
 from gwcs.wcstools import grid_from_bounding_box
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.datamodels import ModelContainer
-
 from jwst.assign_wcs import nirspec  # For NIRSpec IFU data
+from jwst.datamodels import ModelContainer
 from jwst.lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)

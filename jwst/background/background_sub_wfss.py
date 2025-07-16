@@ -1,14 +1,13 @@
+import logging
 import math
-import numpy as np
 import warnings
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.assign_wcs.util import create_grism_bbox
 from jwst.lib.reffile_utils import get_subarray_model
-
-import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

@@ -5,11 +5,11 @@ from functools import partial
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.lib.pipe_utils import is_tso
 from jwst.stpipe import Step
 from jwst.stpipe.utilities import record_step_status
-from jwst.lib.pipe_utils import is_tso
 
-from . import coron, ifu, imaging, tso, spec
+from . import coron, ifu, imaging, spec, tso
 
 # Categorize all supported modes
 IMAGE_MODES = ["NRC_IMAGE", "MIR_IMAGE", "NRS_IMAGE", "NIS_IMAGE", "FGS_IMAGE"]

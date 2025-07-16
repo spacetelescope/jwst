@@ -1,11 +1,11 @@
 """Fixtures for AMI tests."""
 
-import pytest
 import numpy as np
-from jwst.stpipe import Step
+import pytest
 import stdatamodels.jwst.datamodels as dm
-from jwst.ami.bp_fix import filthp_d, calc_pupil_support
 
+from jwst.ami.bp_fix import calc_pupil_support, filthp_d
+from jwst.stpipe import Step
 
 PXSC_DEG = 65.6 / (60.0 * 60.0 * 1000)
 PXSC_RAD = PXSC_DEG * np.pi / (180)

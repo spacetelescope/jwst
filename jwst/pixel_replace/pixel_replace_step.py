@@ -2,7 +2,7 @@ from functools import partial
 
 from jwst import datamodels
 from jwst.pixel_replace.pixel_replace import PixelReplacement
-from jwst.stpipe import record_step_status, Step
+from jwst.stpipe import Step, record_step_status
 
 __all__ = ["PixelReplaceStep"]
 

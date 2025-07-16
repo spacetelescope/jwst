@@ -1,15 +1,15 @@
 """Test operations in Combine1dStep."""
 
+import logging
+
 import numpy as np
 import pytest
-import logging
-from jwst.tests.helpers import LogWatcher
 
 from jwst import datamodels
-
-from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi, N_SOURCES
 from jwst.combine_1d import Combine1dStep
 from jwst.combine_1d.combine1d import InputSpectrumModel, check_exptime
+from jwst.datamodels.utils.tests.wfss_helpers import N_SOURCES, wfss_multi
+from jwst.tests.helpers import LogWatcher
 
 
 @pytest.fixture

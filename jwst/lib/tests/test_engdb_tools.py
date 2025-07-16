@@ -10,9 +10,9 @@ which is generally not available.
 """
 
 import os
+
 import pytest
 import requests
-
 from astropy.time import Time
 
 from jwst.lib import engdb_direct, engdb_tools

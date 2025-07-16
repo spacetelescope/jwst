@@ -1,7 +1,7 @@
 """Association Candidate Identifier."""
 
-from ast import literal_eval
 import re
+from ast import literal_eval
 
 from .counter import Counter
 

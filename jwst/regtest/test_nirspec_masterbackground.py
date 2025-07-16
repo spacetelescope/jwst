@@ -1,12 +1,12 @@
 import warnings
 
-import pytest
 import numpy as np
+import pytest
 import stdatamodels.jwst.datamodels as dm
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.master_background import MasterBackgroundMosStep, MasterBackgroundStep
 from jwst.regtest import regtestdata as rt
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 pytestmark = pytest.mark.bigdata
 

@@ -1,11 +1,11 @@
 """Test suffix replacement"""
 
 import logging
+
 import pytest
 
-from jwst.lib.basic_utils import LoggingContext
-
 from jwst.lib import suffix as s
+from jwst.lib.basic_utils import LoggingContext
 
 
 @pytest.fixture(scope="module")

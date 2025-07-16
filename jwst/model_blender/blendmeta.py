@@ -7,7 +7,6 @@ list of input datamodels or filenames.
 
 from .blender import ModelBlender
 
-
 __all__ = ["blendmodels"]
 
 # Primary functional interface for the code

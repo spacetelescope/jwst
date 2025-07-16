@@ -1,11 +1,10 @@
 """Test the routines in persistence.py."""
 
 import numpy as np
-from astropy.io import fits
 import pytest
+from astropy.io import fits
 
 from jwst import datamodels
-
 from jwst.persistence import persistence
 
 

@@ -2,16 +2,12 @@
 Unit test for Cube Build testing for various wcs functions
 """
 
-import numpy as np
 import math
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 
-from jwst.cube_build import ifu_cube
-from jwst.cube_build import coord
-from jwst.cube_build import cube_build_wcs_util
-from jwst.cube_build import instrument_defaults
-
+from jwst.cube_build import coord, cube_build_wcs_util, ifu_cube, instrument_defaults
 
 shape = (101, 101)
 xcenter = 50
