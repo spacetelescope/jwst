@@ -1,11 +1,10 @@
 """Reformat Level2b multi-source data to be source-based."""
 
 import logging
-
 from collections import defaultdict
 
-from stdatamodels.properties import merge_tree
 from stdatamodels.jwst.datamodels import MultiExposureModel
+from stdatamodels.properties import merge_tree
 
 from jwst.datamodels import SourceModelContainer
 

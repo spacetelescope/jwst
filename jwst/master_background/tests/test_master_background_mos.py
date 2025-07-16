@@ -4,15 +4,14 @@ from astropy.io import fits
 from astropy.table import Table
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel
 
-from jwst.stpipe import query_step_status
 from jwst.assign_wcs import AssignWcsStep
+from jwst.extract_1d import Extract1dStep
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.tests.test_nirspec import create_nirspec_hdul
-from jwst.master_background import MasterBackgroundMosStep
-from jwst.master_background import nirspec_utils
+from jwst.master_background import MasterBackgroundMosStep, nirspec_utils
 from jwst.pixel_replace import PixelReplaceStep
 from jwst.resample import ResampleSpecStep
-from jwst.extract_1d import Extract1dStep
+from jwst.stpipe import query_step_status
 
 
 def create_msa_hdul():

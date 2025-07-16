@@ -1,8 +1,8 @@
 import logging
 
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
+from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel

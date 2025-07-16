@@ -1,8 +1,8 @@
 # Collect the pipeline configurations
 
-from pathlib import Path
 import shutil
 from importlib.util import find_spec
+from pathlib import Path
 
 
 def collect_pipeline_cfgs(dst="./"):

@@ -1,12 +1,13 @@
-import pytest
 import numpy as np
+import pytest
+from stdatamodels.jwst.datamodels import ImageModel, RampModel, ReadnoiseModel, WfssBkgModel
+
 from jwst.lib.reffile_utils import (
     find_row,
     generate_stripe_array,
     get_subarray_model,
     science_detector_frame_transform,
 )
-from stdatamodels.jwst.datamodels import ReadnoiseModel, RampModel, ImageModel, WfssBkgModel
 
 
 def generate_test_refmodel_metadata(refmodel):

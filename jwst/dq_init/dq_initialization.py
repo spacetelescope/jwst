@@ -1,11 +1,10 @@
 import logging
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
-from jwst.lib import reffile_utils
 from jwst.datamodels import dqflags  # type: ignore[attr-defined]
+from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

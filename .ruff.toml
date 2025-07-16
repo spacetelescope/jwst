@@ -29,6 +29,7 @@ select = [
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
     "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
     "C4",     # flake8-comprehensions (best practices for comprehensions)
+    "I",      # isort
     "ICN",    # flake8-import-conventions (enforce import conventions)
     "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
     "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
@@ -139,3 +140,6 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "F841", # unused variable
     "S101",
 ]
+
+[lint.isort]
+known-first-party = ["jwst"]

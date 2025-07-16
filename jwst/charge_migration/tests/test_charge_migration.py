@@ -1,13 +1,9 @@
 import numpy as np
-
-from stdatamodels.jwst.datamodels import RampModel
-from stdatamodels.jwst.datamodels import dqflags
+import numpy.testing as npt
+from stdatamodels.jwst.datamodels import RampModel, dqflags
 
 from jwst.charge_migration.charge_migration import charge_migration
 from jwst.charge_migration.charge_migration_step import ChargeMigrationStep
-
-import numpy.testing as npt
-
 
 test_dq_flags = dqflags.pixel
 GOOD = test_dq_flags["GOOD"]

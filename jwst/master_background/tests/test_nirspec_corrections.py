@@ -2,12 +2,11 @@
 
 import numpy as np
 import pytest
-
 from stdatamodels.jwst import datamodels
 
 from jwst.master_background.nirspec_utils import (
-    correct_nrs_ifu_bkg,
     correct_nrs_fs_bkg,
+    correct_nrs_ifu_bkg,
     is_background_msa_slit,
 )
 

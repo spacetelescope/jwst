@@ -1,10 +1,11 @@
-from functools import partial
 import logging
-import numpy as np
-from scipy.interpolate import interp1d
 from datetime import datetime
-from stpipe import crds_client
+from functools import partial
+
+import numpy as np
 import stdatamodels.jwst.datamodels as dm
+from scipy.interpolate import interp1d
+from stpipe import crds_client
 
 log = logging.getLogger(__name__)
 

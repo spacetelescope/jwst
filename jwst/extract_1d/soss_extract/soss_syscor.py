@@ -1,5 +1,6 @@
-import numpy as np
 import logging
+
+import numpy as np
 from astropy.stats import SigmaClip
 
 log = logging.getLogger(__name__)

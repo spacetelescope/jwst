@@ -1,10 +1,11 @@
 import logging
-import pytest
 import subprocess
 
-from jwst.stpipe import Step
+import pytest
+
 from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.pipeline import Spec2Pipeline
+from jwst.stpipe import Step
 from jwst.tests.helpers import LogWatcher
 
 

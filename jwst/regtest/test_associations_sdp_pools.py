@@ -9,7 +9,7 @@ from glob import glob
 
 import pytest
 
-from jwst.associations.lib.diff import compare_asn_files, MultiDiffError
+from jwst.associations.lib.diff import MultiDiffError, compare_asn_files
 from jwst.associations.main import Main as asn_generate
 
 # Mark all tests in this module

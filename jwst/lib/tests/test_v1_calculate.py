@@ -7,9 +7,9 @@ from astropy.time import Time
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.lib import engdb_mast
 import jwst.lib.set_telescope_pointing as stp
 import jwst.lib.v1_calculate as v1c
+from jwst.lib import engdb_mast
 
 # Engineering parameters
 # Time range corresponds to OTE-1 exposure jw01134001037_03107_00001_nrcb1_uncal.fits

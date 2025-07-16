@@ -1,17 +1,15 @@
 """Test various utility functions"""
 
+import numpy as np
+import pytest
 from astropy import coordinates as coord
 from astropy import wcs as fitswcs
 from astropy.modeling import models as astmodels
 from gwcs import coordinate_frames as cf
 from gwcs.wcstools import wcs_from_fiducial
-import numpy as np
-import pytest
-
 from stdatamodels.jwst.datamodels import SlitModel, dqflags
 
 from jwst.resample.resample_spec import find_dispersion_axis
-
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 GOOD = dqflags.pixel["GOOD"]

@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 
+import numpy as np
 from stdatamodels.jwst import datamodels
+
 from jwst.datamodels import ModelContainer
 from jwst.stpipe import Step
-import numpy as np
 
 from . import spectral_leak
 

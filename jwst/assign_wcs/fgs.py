@@ -2,20 +2,19 @@
 
 import logging
 
-from astropy import units as u
 from astropy import coordinates as coord
+from astropy import units as u
 from astropy.modeling import bind_bounding_box
 from gwcs import coordinate_frames as cf
-
 from stdatamodels.jwst.datamodels import DistortionModel
 
+from . import pointing
 from .util import (
+    bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,
     transform_bbox_from_shape,
-    bounding_box_from_subarray,
 )
-from . import pointing
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

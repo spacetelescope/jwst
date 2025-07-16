@@ -2,9 +2,9 @@ import pathlib
 
 import numpy as np
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from stdatamodels.jwst.datamodels import SossWaveGridModel
 
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 # Mark all tests in this module

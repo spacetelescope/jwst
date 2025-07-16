@@ -4,8 +4,8 @@ Unit tests for superbias subtraction
 
 """
 
-import pytest
 import numpy as np
+import pytest
 from stdatamodels.jwst.datamodels import RampModel, SuperBiasModel, dqflags
 
 from jwst.superbias import SuperBiasStep

@@ -5,7 +5,6 @@ import numpy as np
 import numpy.linalg as linalg
 from scipy.special import comb
 
-
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())
 

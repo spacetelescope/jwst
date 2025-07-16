@@ -1,12 +1,13 @@
 #! /usr/bin/env python
 
 
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from . import guider_cds
 
-import logging
+from . import guider_cds
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

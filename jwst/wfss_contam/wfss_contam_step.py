@@ -2,8 +2,8 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from . import wfss_contam
 
+from . import wfss_contam
 
 __all__ = ["WfssContamStep"]
 

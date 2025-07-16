@@ -1,6 +1,7 @@
 """Tests for asn_from_list"""
 
 import os
+
 import pytest
 
 from jwst.associations import Association, AssociationRegistry, load_asn

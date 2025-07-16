@@ -1,23 +1,20 @@
 import json
-import numpy as np
-import gwcs
-from gwcs import coordinate_frames as cf
 from datetime import datetime
-from astropy.time import Time
 
+import gwcs
+import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels
+from astropy.time import Time
+from gwcs import coordinate_frames as cf
 from stdatamodels.jwst.datamodels import ImageModel
 from stdatamodels.jwst.datamodels.util import _to_flat_dict
+from stpipe.library import BorrowError, NoGroupID
 
-from stpipe.library import BorrowError
-
-from stpipe.library import NoGroupID
+import jwst.datamodels as dm
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.load_as_asn import load_asn
 from jwst.datamodels.library import ModelLibrary, _read_meta_from_open_model
-import jwst.datamodels as dm
-
 
 # for the example association, set 2 different observation numbers
 # so the association will have 2 groups (since all other group_id

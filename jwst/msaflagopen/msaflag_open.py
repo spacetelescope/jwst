@@ -14,6 +14,8 @@ from jwst.assign_wcs.nirspec import (
     generate_compound_bbox,
     nrs_wcs_set_input,
     slitlets_wcs,
+)
+from jwst.assign_wcs.nirspec import (
     log as nirspec_log,
 )
 from jwst.lib.basic_utils import LoggingContext

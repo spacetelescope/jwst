@@ -1,17 +1,16 @@
-import pytest
 import numpy as np
+import pytest
 
 from jwst.extract_1d.soss_extract.pastasoss import (
-    _get_wavelengths,
+    _extrapolate_to_wavegrid,
     _find_spectral_order_index,
     _get_soss_traces,
-    _extrapolate_to_wavegrid,
+    _get_wavelengths,
     get_soss_traces,
     get_soss_wavemaps,
 )
 
-from .conftest import TRACE_END_IDX, PWCPOS, WAVE_BNDS_O1, WAVE_BNDS_O2
-
+from .conftest import PWCPOS, TRACE_END_IDX, WAVE_BNDS_O1, WAVE_BNDS_O2
 
 """Test coverage for the helper functions in pastasoss.py"""
 

@@ -6,19 +6,18 @@ https://github.com/spacetelescope/jwst/pull/7439
 """
 
 import importlib
-from inspect import ismodule
 import sys
-
-from stdatamodels.jwst.datamodels.util import open  # noqa: A004
-
-from .container import ModelContainer
-from .library import ModelLibrary
-from .source_container import SourceModelContainer
+from inspect import ismodule
 
 import stdatamodels.jwst.datamodels
 
 # Import everything defined in stdatamodels.jwst.datamodels.__all__
 from stdatamodels.jwst.datamodels import *  # noqa: F403
+from stdatamodels.jwst.datamodels.util import open  # noqa: A004
+
+from .container import ModelContainer
+from .library import ModelLibrary
+from .source_container import SourceModelContainer
 
 # Define __all__ to include stdatamodels.jwst.datamodels.__all__
 __all__ = [

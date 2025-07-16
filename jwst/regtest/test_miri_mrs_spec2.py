@@ -5,8 +5,8 @@ from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Step
 from jwst.regtest import regtestdata as rt
+from jwst.stpipe import Step
 
 # Define artifactory source and truth file paths
 INPUT_PATH = "miri/mrs"

@@ -11,18 +11,13 @@ file.
 
 import numpy as np
 import pytest
-
-
 from astropy.io import fits
 from gwcs import wcs
-
+from stcal.alignment.util import sregion_to_footprint
 from stdatamodels.jwst.datamodels import CubeModel, ImageModel
 
+from jwst.assign_wcs import nircam, util
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
-from jwst.assign_wcs import nircam
-from jwst.assign_wcs import util
-from stcal.alignment.util import sregion_to_footprint
-
 
 # Allowed settings for nircam
 tsgrism_filters = ["F277W", "F444W", "F322W2", "F356W"]

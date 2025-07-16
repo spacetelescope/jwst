@@ -3,8 +3,8 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from . import bar_shadow
 
+from . import bar_shadow
 
 __all__ = ["BarShadowStep"]
 

@@ -1,19 +1,13 @@
 import logging
+import math
 
 import numpy as np
-import math
 import numpy.polynomial.polynomial as poly
-
-from scipy.interpolate import pchip
 from astropy.timeseries import LombScargle
-from BayesicFitting import SineModel
-from BayesicFitting import LevenbergMarquardtFitter
-from BayesicFitting import RobustShell
-from BayesicFitting import ConstantModel
-from BayesicFitting import Fitter
+from BayesicFitting import ConstantModel, Fitter, LevenbergMarquardtFitter, RobustShell, SineModel
+from scipy.interpolate import pchip
 
 from jwst.residual_fringe.fitter import spline_fitter
-
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)

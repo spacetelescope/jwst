@@ -4,6 +4,7 @@
 #
 
 import logging
+
 from . import oifits
 
 log = logging.getLogger(__name__)

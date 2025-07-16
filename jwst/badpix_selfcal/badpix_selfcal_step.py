@@ -1,8 +1,11 @@
 import warnings
-from jwst.stpipe import Step
-from . import badpix_selfcal
+
 import numpy as np
+
 from jwst import datamodels as dm
+from jwst.stpipe import Step
+
+from . import badpix_selfcal
 
 __all__ = ["BadpixSelfcalStep"]
 

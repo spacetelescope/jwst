@@ -5,8 +5,7 @@ Unit test for Cube Build testing setting up configuration
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.cube_build import cube_build
-from jwst.cube_build import file_table
+from jwst.cube_build import cube_build, file_table
 from jwst.cube_build.cube_build import NoFiltersError
 
 wcsinfo = {

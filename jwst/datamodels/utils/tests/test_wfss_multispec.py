@@ -1,22 +1,21 @@
-import pytest
 import numpy as np
+import pytest
+import stdatamodels.jwst.datamodels as dm
 from numpy.testing import assert_allclose
 
-import stdatamodels.jwst.datamodels as dm
-from jwst.datamodels.utils.wfss_multispec import (
-    make_wfss_multiexposure,
-    make_wfss_multicombined,
-    wfss_multiexposure_to_multispec,
-)
-
 from jwst.datamodels.utils.tests.wfss_helpers import (
+    N_EXPOSURES,
+    N_ROWS,
+    N_SOURCES,
+    wfss_comb,
+    wfss_multi,
     wfss_spec2_multi,
     wfss_spec3_multi,
-    wfss_multi,
-    wfss_comb,
-    N_EXPOSURES,
-    N_SOURCES,
-    N_ROWS,
+)
+from jwst.datamodels.utils.wfss_multispec import (
+    make_wfss_multicombined,
+    make_wfss_multiexposure,
+    wfss_multiexposure_to_multispec,
 )
 
 

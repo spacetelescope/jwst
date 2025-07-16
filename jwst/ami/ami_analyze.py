@@ -1,13 +1,12 @@
-import logging
-import numpy as np
 import copy
+import logging
+
+import numpy as np
 
 from jwst.datamodels import CubeModel, ImageModel  # type: ignore[attr-defined]
 
+from . import instrument_data, nrm_core, utils
 from .find_affine2d_parameters import find_rotation
-from . import instrument_data
-from . import nrm_core
-from . import utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

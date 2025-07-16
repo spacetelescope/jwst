@@ -1,10 +1,11 @@
-import pytest
 import os
 import shutil
-from jwst.stpipe import Step
+
+import pytest
+
 from jwst.assign_wcs import AssignWcsStep
 from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
-
+from jwst.stpipe import Step
 
 INPUT_FILE = "dummy_cal.fits"
 INPUT_FILE_2 = "dummy2_cal.fits"

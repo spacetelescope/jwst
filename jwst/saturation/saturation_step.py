@@ -1,9 +1,10 @@
 #! /usr/bin/env python
 from stdatamodels.jwst import datamodels
-from jwst.stpipe import Step
-from jwst.lib import pipe_utils, reffile_utils
-from . import saturation
 
+from jwst.lib import pipe_utils, reffile_utils
+from jwst.stpipe import Step
+
+from . import saturation
 
 __all__ = ["SaturationStep"]
 

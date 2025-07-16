@@ -1,7 +1,7 @@
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations import AssociationRegistry, AssociationNotValidError, load_asn
+from jwst.associations import AssociationNotValidError, AssociationRegistry, load_asn
 
 
 def test_invalid():

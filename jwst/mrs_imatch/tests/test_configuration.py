@@ -7,7 +7,7 @@ import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
-from jwst.mrs_imatch.mrs_imatch_step import MRSIMatchStep, _get_2d_pixgrid, _find_channel_bkg_index
+from jwst.mrs_imatch.mrs_imatch_step import MRSIMatchStep, _find_channel_bkg_index, _get_2d_pixgrid
 
 mirifushort_short = {"detector": "MIRIFUSHORT", "channel": "12", "band": "SHORT", "name": "MIRI"}
 

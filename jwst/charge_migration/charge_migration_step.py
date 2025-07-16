@@ -2,6 +2,7 @@
 import logging
 
 from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step
 
 from . import charge_migration

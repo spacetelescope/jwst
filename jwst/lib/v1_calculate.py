@@ -1,10 +1,9 @@
 """V1 Calculation based on time and engineering database info."""
 
-from collections import defaultdict
 import logging
+from collections import defaultdict
 
 from astropy.table import Table
-
 from stdatamodels.jwst import datamodels as dm
 
 from . import set_telescope_pointing as stp

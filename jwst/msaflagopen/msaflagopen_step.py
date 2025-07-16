@@ -1,10 +1,9 @@
 from stdatamodels.jwst import datamodels
-
 from stpipe.crds_client import reference_uri_to_cache_path
 
-from jwst.stpipe import Step
 from jwst.assign_wcs import AssignWcsStep
 from jwst.msaflagopen import msaflag_open
+from jwst.stpipe import Step
 
 __all__ = ["MSAFlagOpenStep"]
 

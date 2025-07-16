@@ -1,6 +1,7 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
+
 from . import wavecorr
 
 __all__ = ["WavecorrStep"]

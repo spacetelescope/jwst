@@ -11,12 +11,9 @@ import numpy as np
 from astropy.io import fits
 from gwcs import wcs
 from numpy.testing import assert_allclose
+from stdatamodels.jwst.datamodels import CubeModel, ImageModel
 
-from stdatamodels.jwst.datamodels import ImageModel, CubeModel
-
-from jwst.assign_wcs import miri
-from jwst.assign_wcs import AssignWcsStep
-
+from jwst.assign_wcs import AssignWcsStep, miri
 
 wcs_kw = {
     "wcsaxes": 3,

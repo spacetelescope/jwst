@@ -1,8 +1,8 @@
 import numpy as np
 import pytest
+from crds import getreferences
 
 from jwst import datamodels
-from crds import getreferences
 from jwst.guider_cds.guider_cds import guider_cds
 
 

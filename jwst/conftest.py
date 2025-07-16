@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations import AssociationRegistry, AssociationPool
+from jwst.associations import AssociationPool, AssociationRegistry
 from jwst.tests.helpers import LogWatcher
 
 

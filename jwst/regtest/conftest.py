@@ -5,8 +5,8 @@ import os
 from datetime import datetime
 
 import pytest
-from astropy.table import Table
 from astropy.io.fits import conf
+from astropy.table import Table
 from ci_watson.artifactory_helpers import UPLOAD_SCHEMA
 from numpy.testing import assert_allclose, assert_equal
 
