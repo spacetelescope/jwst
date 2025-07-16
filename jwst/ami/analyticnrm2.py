@@ -4,11 +4,11 @@
 
 import logging
 import warnings
+
 import numpy as np
 import scipy.special
-from . import leastsqnrm
-from . import utils
-from . import hextransformee
+
+from . import hextransformee, leastsqnrm, utils
 
 log = logging.getLogger(__name__)
 log.addHandler(logging.NullHandler())

@@ -1,4 +1,5 @@
 import pytest
+
 from jwst.scripts.set_velocity_aberration import parse_args
 
 

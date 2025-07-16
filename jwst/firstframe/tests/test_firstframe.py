@@ -1,9 +1,8 @@
 import numpy as np
-
 from stdatamodels.jwst.datamodels import RampModel, dqflags
 
-from jwst.firstframe.firstframe_sub import do_correction
 from jwst.firstframe import FirstFrameStep
+from jwst.firstframe.firstframe_sub import do_correction
 
 
 def test_firstframe_set_groupdq():

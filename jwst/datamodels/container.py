@@ -1,15 +1,15 @@
+import copy
+import logging
+import os.path as op
+import re
 from collections import OrderedDict
 from collections.abc import Sequence
-import copy
-import os.path as op
 from pathlib import Path
-import re
-import logging
-from astropy.io import fits
 
+from astropy.io import fits
 from stdatamodels.jwst.datamodels.model_base import JwstDataModel
-from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst.datamodels.util import is_association
+from stdatamodels.jwst.datamodels.util import open as datamodel_open
 
 from jwst.datamodels.utils import attrs_to_group_id
 

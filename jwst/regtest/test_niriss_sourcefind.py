@@ -1,8 +1,8 @@
 import pytest
 from astropy.io import ascii
 from numpy.testing import assert_allclose
-
 from stdatamodels.jwst import datamodels
+
 from jwst.tweakreg import tweakreg_catalog
 
 

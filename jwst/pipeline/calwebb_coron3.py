@@ -1,20 +1,16 @@
 #!/usr/bin/env python
-from pathlib import Path
 from collections import defaultdict
-from jwst.stpipe import Pipeline
+from pathlib import Path
 
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer, ModelLibrary
-
-from jwst.model_blender import ModelBlender
-
 # step imports
-from jwst.coron import stack_refs_step
-from jwst.coron import align_refs_step
-from jwst.coron import klip_step
+from jwst.coron import align_refs_step, klip_step, stack_refs_step
+from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.model_blender import ModelBlender
 from jwst.outlier_detection import outlier_detection_step
 from jwst.resample import resample_step
+from jwst.stpipe import Pipeline
 
 __all__ = ["Coron3Pipeline"]
 

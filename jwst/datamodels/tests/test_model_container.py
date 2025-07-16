@@ -3,9 +3,9 @@ import warnings
 
 import pytest
 from astropy.utils.data import get_pkg_data_filename
+from stdatamodels.exceptions import NoTypeWarning
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import JwstDataModel
-from stdatamodels.exceptions import NoTypeWarning
 
 from jwst.associations import load_as_asn
 from jwst.associations.asn_from_list import asn_from_list

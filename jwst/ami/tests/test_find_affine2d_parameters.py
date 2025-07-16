@@ -3,6 +3,7 @@
 import numpy as np
 
 from jwst.ami import find_affine2d_parameters, utils
+
 from .conftest import PXSC_DEG
 
 

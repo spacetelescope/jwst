@@ -1,10 +1,9 @@
 import logging
-import numpy as np
-from . import lg_model
-from . import utils
-from . import oifits
 
+import numpy as np
 from stdatamodels.jwst import datamodels
+
+from . import lg_model, oifits, utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

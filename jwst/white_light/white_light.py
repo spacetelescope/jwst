@@ -1,9 +1,9 @@
 """Sum the flux over all wavelengths in each integration as a function of time for the target."""
 
 import logging
+from collections import OrderedDict
 
 import numpy as np
-from collections import OrderedDict
 from astropy.table import QTable
 
 log = logging.getLogger(__name__)

@@ -1,9 +1,9 @@
 """Unit tests for AMI utils module."""
 
-import pytest
 import numpy as np
-from numpy.testing import assert_allclose
+import pytest
 import stdatamodels.jwst.datamodels as dm
+from numpy.testing import assert_allclose
 
 from jwst.ami import utils
 from jwst.ami.bp_fix import filthp_d, filtwl_d

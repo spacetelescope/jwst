@@ -1,20 +1,18 @@
-from itertools import product
 from copy import deepcopy
+from itertools import product
 
-import pytest
 import numpy as np
+import pytest
 from astropy.modeling.models import Shift
 from gwcs import WCS
-
 from stdatamodels.jwst.datamodels import ImageModel, dqflags
 
-from jwst.datamodels import ModelContainer
 from jwst.assign_wcs import AssignWcsStep
-from jwst.skymatch import SkyMatchStep
-from jwst.tweakreg.utils import adjust_wcs
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
-
+from jwst.datamodels import ModelContainer
+from jwst.skymatch import SkyMatchStep
+from jwst.tweakreg.utils import adjust_wcs
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 SATURATED = dqflags.pixel["SATURATED"]

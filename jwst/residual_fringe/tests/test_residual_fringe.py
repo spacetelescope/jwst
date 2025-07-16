@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.residual_fringe.residual_fringe import utils, ResidualFringeCorrection
+from jwst.residual_fringe.residual_fringe import ResidualFringeCorrection, utils
 from jwst.residual_fringe.residual_fringe_step import ResidualFringeStep
 from jwst.residual_fringe.utils import fit_residual_fringes_1d as rf1d
 

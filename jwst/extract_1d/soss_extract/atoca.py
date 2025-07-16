@@ -8,13 +8,13 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 """
 
 # General imports.
+import logging
+
 import numpy as np
-from scipy.sparse import issparse, csr_matrix, diags
+from scipy.sparse import csr_matrix, diags, issparse
 
 # Local imports.
 from . import atoca_utils
-
-import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

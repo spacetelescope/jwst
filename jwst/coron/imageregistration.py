@@ -1,11 +1,9 @@
-import numpy as np
+import logging
 
+import numpy as np
 from scipy import optimize
 from scipy.ndimage import fourier_shift
-
 from stdatamodels.jwst.datamodels import CubeModel
-
-import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

@@ -2,9 +2,8 @@
 Unit tests for reset anomaly correction
 """
 
-import pytest
 import numpy as np
-
+import pytest
 from stdatamodels.jwst.datamodels import RampModel, ResetModel, dqflags
 
 from jwst.reset.reset_sub import do_correction as resetcorr

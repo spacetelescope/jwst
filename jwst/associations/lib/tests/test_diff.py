@@ -1,6 +1,7 @@
 """Test association diffing"""
 
 import json
+
 import pytest
 
 import jwst.associations.lib.diff as asn_diff

@@ -1,10 +1,9 @@
 """Configure Association Logging."""
 
-import sys
 import logging
-from logging.config import dictConfig
+import sys
 from collections import defaultdict
-
+from logging.config import dictConfig
 
 __all__ = ["log_config"]
 

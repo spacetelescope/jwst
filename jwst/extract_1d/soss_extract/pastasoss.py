@@ -1,5 +1,6 @@
-from functools import partial
 import logging
+from functools import partial
+
 import numpy as np
 from scipy.interpolate import interp1d
 

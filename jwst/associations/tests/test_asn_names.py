@@ -1,12 +1,11 @@
-import pytest
 import re
 
+import pytest
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations.tests import helpers
-from jwst.associations import generate
-from jwst.associations import load_asn
+from jwst.associations import generate, load_asn
 from jwst.associations.lib.utilities import constrain_on_candidates
+from jwst.associations.tests import helpers
 
 LEVEL3_ASN_ACID_NAME_REGEX = (
     r"jw"

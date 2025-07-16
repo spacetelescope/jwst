@@ -2,14 +2,15 @@
 
 import abc
 import collections
-from copy import deepcopy
-from itertools import chain
 import logging
 import re
+from copy import deepcopy
+from itertools import chain
+
+from jwst.associations.pool import PoolRow
 
 from .process_list import ListCategory, ProcessList
 from .utilities import evaluate, getattr_from_list, is_iterable
-from jwst.associations.pool import PoolRow
 
 __all__ = [
     "AttrConstraint",

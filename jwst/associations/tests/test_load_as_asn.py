@@ -1,7 +1,6 @@
 """Test LoadAsAssociation"""
 
 import pytest
-
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import ImageModel
 

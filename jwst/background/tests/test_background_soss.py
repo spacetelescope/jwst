@@ -1,15 +1,14 @@
-import pytest
 import numpy as np
-
-
+import pytest
 from stdatamodels.jwst import datamodels
+
 from jwst.background import BackgroundStep
 from jwst.background.background_sub_soss import (
+    BACKGROUND_MASK_CUTOFF,
+    SUBSTRIP96_ROWSTART,
     find_discontinuity,
     generate_background_masks,
     subtract_soss_bkg,
-    BACKGROUND_MASK_CUTOFF,
-    SUBSTRIP96_ROWSTART,
 )
 
 DETECTOR_SHAPE = (256, 2048)

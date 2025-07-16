@@ -1,15 +1,14 @@
 from pathlib import Path
 
 import numpy as np
-from stdatamodels.properties import merge_tree
-from stdatamodels.jwst import datamodels
 from scipy.signal import medfilt
+from stdatamodels.jwst import datamodels
+from stdatamodels.properties import merge_tree
 
-from jwst.datamodels import ModelContainer
-from jwst.stpipe import record_step_status
-
-from jwst.stpipe import Step
 from jwst.combine_1d.combine1d import combine_1d_spectra
+from jwst.datamodels import ModelContainer
+from jwst.stpipe import Step, record_step_status
+
 from .expand_to_2d import expand_to_2d
 
 __all__ = ["MasterBackgroundStep"]

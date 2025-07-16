@@ -4,15 +4,15 @@ import re
 
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations.tests.helpers import (
-    combine_pools,
-    registry_level2_only,
-)
 from jwst.associations import (
     generate,
     load_asn,
 )
 from jwst.associations.main import Main
+from jwst.associations.tests.helpers import (
+    combine_pools,
+    registry_level2_only,
+)
 
 REGEX_LEVEL2A = r"(?P<path>.+)(?P<type>_rate(ints)?)(?P<extension>\..+)"
 

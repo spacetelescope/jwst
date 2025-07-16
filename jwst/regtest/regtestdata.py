@@ -1,26 +1,26 @@
-from difflib import unified_diff
-from glob import glob as _sys_glob
 import os
 import os.path as op
-from pathlib import Path
 import pprint
-import requests
 import shutil
 import sys
+from difflib import unified_diff
+from glob import glob as _sys_glob
+from pathlib import Path
 
 import asdf
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+import requests
 from ci_watson.artifactory_helpers import (
-    check_url,
-    get_bigdata_root,
-    get_bigdata,
     BigdataError,
+    check_url,
+    get_bigdata,
+    get_bigdata_root,
 )
 
 from jwst.associations import AssociationNotValidError, load_asn
 from jwst.lib.file_utils import pushdir
 from jwst.lib.suffix import replace_suffix
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 # Define location of default Artifactory API key

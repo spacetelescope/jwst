@@ -1,11 +1,11 @@
 import os
 
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
-from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
+from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 DATASET1_ID = "jw01536028001_03103_00001-seg001_mirimage"

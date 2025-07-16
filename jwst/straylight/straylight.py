@@ -1,11 +1,14 @@
 """Module for  applying straylight correction."""
 
-import numpy as np
 import logging
-from jwst import datamodels
-from stdatamodels.jwst.datamodels import dqflags
+
+import numpy as np
+from astropy.convolution import Gaussian2DKernel, convolve_fft
 from astropy.stats import sigma_clipped_stats as scs
-from astropy.convolution import convolve_fft, Gaussian2DKernel
+from stdatamodels.jwst.datamodels import dqflags
+
+from jwst import datamodels
+
 from .calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)

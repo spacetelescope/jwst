@@ -31,13 +31,13 @@ import logging
 import warnings
 
 import numpy as np
+from stcal.outlier_detection.utils import medfilt
+from stdatamodels.jwst import datamodels
+from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe.utilities import record_step_status
-from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import dqflags
-from stcal.outlier_detection.utils import medfilt
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

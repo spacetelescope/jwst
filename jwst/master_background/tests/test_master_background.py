@@ -1,13 +1,11 @@
 """Unit tests for master background subtraction."""
 
+import json
 from pathlib import Path
 
 import numpy as np
 import pytest
-import json
-
 from stdatamodels.jwst import datamodels
-from jwst.stpipe import query_step_status
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_1d import Extract1dStep
@@ -19,6 +17,7 @@ from jwst.master_background.master_background_step import (
     split_container,
 )
 from jwst.srctype import SourceTypeStep
+from jwst.stpipe import query_step_status
 
 
 @pytest.fixture(scope="module")

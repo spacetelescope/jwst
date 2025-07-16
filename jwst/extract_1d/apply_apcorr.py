@@ -1,10 +1,10 @@
 import abc
 
+import numpy as np
 from scipy.interpolate import RectBivariateSpline, interp1d
 from stdatamodels.jwst.datamodels import MultiSlitModel
 
 from jwst.assign_wcs.util import compute_scale
-import numpy as np
 
 
 class ApCorrBase(abc.ABC):

@@ -4,8 +4,8 @@ from stdatamodels.jwst.datamodels import JwstDataModel
 
 from jwst.associations.lib.dms_base import (
     ACQ_EXP_TYPES,
-    IMAGE2_SCIENCE_EXP_TYPES,
     IMAGE2_NONSCIENCE_EXP_TYPES,
+    IMAGE2_SCIENCE_EXP_TYPES,
     SPEC2_SCIENCE_EXP_TYPES,
 )
 

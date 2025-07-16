@@ -4,8 +4,8 @@ Test the engdblog step
 
 import pytest
 
-from jwst.lib import engdb_mast
 from jwst.engdblog import EngDBLogStep
+from jwst.lib import engdb_mast
 
 
 def test_engdblogstep(caplog, engdb):

@@ -1,5 +1,6 @@
-import numpy as np
 import logging
+
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)

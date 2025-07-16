@@ -1,7 +1,8 @@
 from stdatamodels.jwst import datamodels
-from jwst.stpipe import Step
-from . import group_scale
 
+from jwst.stpipe import Step
+
+from . import group_scale
 
 __all__ = ["GroupScaleStep"]
 

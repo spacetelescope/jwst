@@ -1,12 +1,11 @@
-import logging
-import numpy as np
-
-from .mask_definition_ami import NRMDefinition
-from . import utils
-from . import bp_fix
-from stdatamodels.jwst.datamodels import dqflags
 import copy
+import logging
 
+import numpy as np
+from stdatamodels.jwst.datamodels import dqflags
+
+from . import bp_fix, utils
+from .mask_definition_ami import NRMDefinition
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

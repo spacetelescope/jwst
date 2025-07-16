@@ -2,16 +2,14 @@
 
 import logging
 import math
-import numpy as np
 
+import numpy as np
+import stdatamodels.jwst.datamodels as datamodels
 from gwcs import wcstools
 
-import stdatamodels.jwst.datamodels as datamodels
-
 from jwst.assign_wcs import nirspec, util
-from jwst.lib.wcs_utils import get_wavelengths
 from jwst.lib.pipe_utils import match_nans_and_flags
-
+from jwst.lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

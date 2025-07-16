@@ -1,18 +1,18 @@
 import warnings
 
-import pytest
-import numpy as np
 import asdf
+import numpy as np
+import pytest
 from astropy.convolution import convolve
 from astropy.stats import sigma_clipped_stats
 from astropy.utils.data import get_pkg_data_filename
 from numpy.testing import assert_allclose
 from photutils.datasets import make_100gaussians_image
-from photutils.segmentation import make_2dgaussian_kernel, SourceFinder
+from photutils.segmentation import SourceFinder, make_2dgaussian_kernel
 
-from jwst.wfss_contam.observations import background_subtract
+from jwst.datamodels import ImageModel, SegmentationMapModel  # type: ignore[attr-defined]
 from jwst.wfss_contam.disperse import dispersed_pixel
-from jwst.datamodels import SegmentationMapModel, ImageModel  # type: ignore[attr-defined]
+from jwst.wfss_contam.observations import background_subtract
 
 DIR_IMAGE = "direct_image.fits"
 

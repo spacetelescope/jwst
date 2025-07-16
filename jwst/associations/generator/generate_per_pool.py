@@ -1,9 +1,10 @@
 # Generate associations per-pool
 import logging
 
-from .generate import generate
 from jwst.associations.lib.utilities import constrain_on_candidates, filter_discovered_only
 from jwst.associations.registry import AssociationRegistry
+
+from .generate import generate
 
 __all__ = ["generate_per_pool"]
 

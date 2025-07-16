@@ -2,14 +2,15 @@
 
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
+
 from jwst.datamodels.utils.flat_multispec import (
-    set_schema_units,
     copy_column_units,
     copy_spec_metadata,
     determine_vector_and_meta_columns,
+    expand_table,
     make_empty_recarray,
     populate_recarray,
-    expand_table,
+    set_schema_units,
 )
 
 

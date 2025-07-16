@@ -14,8 +14,8 @@ from numpy import array  # noqa: E402
 from numpy.testing import assert_allclose  # noqa: E402
 
 from jwst.datamodels import Level1bModel  # type: ignore[attr-defined] # noqa: E402
-from jwst.lib import siafdb  # noqa: E402
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
+from jwst.lib import siafdb  # noqa: E402
 
 # Set logging for the module to be tested.
 logger = logging.getLogger(stp.__name__)

@@ -10,11 +10,11 @@ import logging
 import os
 import sys
 
-import jwst
-from jwst.tweakreg.utils import adjust_wcs
-from jwst.assign_wcs.util import update_fits_wcsinfo
 from astropy import units
 
+import jwst
+from jwst.assign_wcs.util import update_fits_wcsinfo
+from jwst.tweakreg.utils import adjust_wcs
 
 _ANGLE_PARS = ["-r", "--ra_delta", "-d", "--dec_delta", "-o", "--roll_delta"]
 

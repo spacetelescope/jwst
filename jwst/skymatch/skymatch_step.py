@@ -5,24 +5,20 @@ JWST pipeline step for sky matching.
 :Authors: Mihai Cara
 """
 
-from copy import deepcopy
 import logging
+from copy import deepcopy
+from pathlib import Path
 
 import numpy as np
-
 from astropy.nddata.bitmask import (
     bitfield_to_boolean_mask,
     interpret_bit_flags,
 )
-
-from stcal.skymatch import skymatch, SkyImage, SkyGroup, SkyStats
-
+from stcal.skymatch import SkyGroup, SkyImage, SkyStats, skymatch
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.datamodels import ModelLibrary
 from jwst.lib.suffix import remove_suffix
-from pathlib import Path
-
 from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)

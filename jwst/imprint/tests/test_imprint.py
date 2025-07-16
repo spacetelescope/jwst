@@ -1,9 +1,9 @@
 """Unit tests for imprint correction."""
 
+import numpy as np
 from stdatamodels.jwst.datamodels import ImageModel
 
 from jwst.imprint import ImprintStep
-import numpy as np
 
 
 def make_imagemodel(ysize, xsize, value=None):
