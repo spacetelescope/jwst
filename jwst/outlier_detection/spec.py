@@ -1,17 +1,17 @@
 """Perform outlier detection on spectra."""
 
+import logging
+
 from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.resample import resample_spec
 from jwst.stpipe.utilities import record_step_status
 
-from jwst.resample import resample_spec
 from .utils import (
     flag_crs_in_models,
     flag_crs_in_models_with_resampling,
     median_with_resampling,
     median_without_resampling,
 )
-
-import logging
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

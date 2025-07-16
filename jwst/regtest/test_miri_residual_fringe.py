@@ -1,8 +1,8 @@
 """Test ResidualFringeStep on MIRI MRS"""
 
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 

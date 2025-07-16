@@ -3,7 +3,6 @@ import warnings
 
 from scipy.signal import medfilt
 
-
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
 

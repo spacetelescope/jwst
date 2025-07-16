@@ -1,11 +1,9 @@
 import numpy as np
 import pytest
-
-from stdatamodels.jwst.datamodels import MaskModel, GuiderRawModel, RampModel, dqflags
+from stdatamodels.jwst.datamodels import GuiderRawModel, MaskModel, RampModel, dqflags
 
 from jwst.dq_init import DQInitStep
 from jwst.dq_init.dq_initialization import do_dqinit
-
 
 # Set parameters for multiple runs of data
 args = "xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_type"

@@ -1,13 +1,13 @@
 """Test the siaf db classes"""
 
-from contextlib import nullcontext as does_not_raise
 import os
+from contextlib import nullcontext as does_not_raise
 from pathlib import Path
-import pytest
+
 import pysiaf
+import pytest
 
 from jwst.lib import siafdb
-
 
 # Database paths
 DATA_PATH = Path(__file__).parent / "data"

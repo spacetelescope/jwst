@@ -1,13 +1,13 @@
-from itertools import cycle
 import multiprocessing
-import numpy as np
-from numpy.testing import assert_array_equal
 import os
 import platform
-import pytest
 import time
+from itertools import cycle
 
-from stdatamodels.jwst.datamodels import GainModel, ReadnoiseModel, RampModel, dqflags
+import numpy as np
+import pytest
+from numpy.testing import assert_array_equal
+from stdatamodels.jwst.datamodels import GainModel, RampModel, ReadnoiseModel, dqflags
 
 from jwst.jump import JumpStep
 

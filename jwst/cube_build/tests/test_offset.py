@@ -2,19 +2,17 @@
 Unit test for Cube Build testing setting up configuration
 """
 
-import pytest
 import math
+
 import asdf
-from stdatamodels.jwst import datamodels
 import astropy.units as u
-from gwcs import WCS
 import numpy as np
-from jwst.cube_build import CubeBuildStep
-from jwst.cube_build import cube_build
-from jwst.cube_build import ifu_cube
-from jwst.cube_build import file_table
-from jwst.cube_build import instrument_defaults
+import pytest
+from gwcs import WCS
+from stdatamodels.jwst import datamodels
+
 from jwst import assign_wcs
+from jwst.cube_build import CubeBuildStep, cube_build, file_table, ifu_cube, instrument_defaults
 
 
 @pytest.fixture(scope="module")

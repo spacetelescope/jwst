@@ -1,13 +1,13 @@
 import warnings
-from pathlib import Path
-import numpy as np
 from datetime import datetime
-from astropy.time import Time
-from asdf.tags.core import NDArrayType
+from pathlib import Path
 
-from stdatamodels.jwst.datamodels.util import open as datamodels_open
+import numpy as np
+from asdf.tags.core import NDArrayType
+from astropy.time import Time
 from stdatamodels.jwst.datamodels import read_metadata
-from stpipe.library import AbstractModelLibrary, NoGroupID, BorrowError
+from stdatamodels.jwst.datamodels.util import open as datamodels_open
+from stpipe.library import AbstractModelLibrary, BorrowError, NoGroupID
 
 from jwst.associations import AssociationNotValidError, load_asn
 from jwst.datamodels.utils import attrs_to_group_id

@@ -5,14 +5,13 @@ import numpy as np
 from astropy import stats
 from astropy.stats import sigma_clipped_stats as sigclip
 from photutils.aperture import (
-    CircularAperture,
     CircularAnnulus,
+    CircularAperture,
     RectangularAperture,
     aperture_photometry,
 )
 from photutils.detection import DAOStarFinder
 from scipy.interpolate import interp1d
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 

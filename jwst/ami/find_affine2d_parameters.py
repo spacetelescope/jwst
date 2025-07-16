@@ -1,8 +1,8 @@
 import logging
+
 import numpy as np
 
-from . import lg_model
-from . import utils
+from . import lg_model, utils
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

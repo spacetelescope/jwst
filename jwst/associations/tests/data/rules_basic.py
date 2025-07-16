@@ -1,8 +1,8 @@
 """Basic association rules."""  # noqa: INP001
 
 from jwst.associations import Association
-from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import ConstraintTrue
+from jwst.associations.registry import RegistryMarker
 
 
 @RegistryMarker.rule

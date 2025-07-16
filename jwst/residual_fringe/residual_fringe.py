@@ -4,14 +4,14 @@ import logging
 import warnings
 
 import numpy as np
-from astropy.table import Table
-from astropy.io import fits
 from astropy.io import ascii as astropy_ascii
+from astropy.io import fits
+from astropy.table import Table
 from stdatamodels import fits_support
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Step
 from jwst.residual_fringe import utils
+from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

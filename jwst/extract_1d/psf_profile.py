@@ -1,6 +1,6 @@
 import logging
-import numpy as np
 
+import numpy as np
 from scipy import ndimage, optimize
 from stdatamodels.jwst.datamodels import SpecPsfModel
 

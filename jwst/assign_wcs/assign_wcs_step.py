@@ -1,14 +1,15 @@
 #! /usr/bin/env python
+import logging
+
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Step
 from jwst.lib.exposure_types import IMAGING_TYPES
-import logging
+from jwst.stpipe import Step
+
 from .assign_wcs import load_wcs
-from .util import MSAFileError, wfss_imaging_wcs, wcs_bbox_from_shape, update_fits_wcsinfo
 from .nircam import imaging as nircam_imaging
 from .niriss import imaging as niriss_imaging
-
+from .util import MSAFileError, update_fits_wcsinfo, wcs_bbox_from_shape, wfss_imaging_wcs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

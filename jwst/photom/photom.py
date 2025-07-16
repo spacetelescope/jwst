@@ -1,18 +1,17 @@
-import logging
 import functools
+import logging
 import warnings
 
 import numpy as np
 from astropy import units as u
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
+from jwst.lib.dispaxis import get_dispersion_direction
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
-from jwst.lib.dispaxis import get_dispersion_direction
-from . import miri_mrs
-from . import miri_imager
+
+from . import miri_imager, miri_mrs
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)
@@ -683,8 +682,9 @@ class DataSet:
         dqmap : 2-D numpy.ndarray
             Array of DQ flags per pixel.
         """
-        from jwst.assign_wcs import nirspec  # for NIRSpec IFU data
         import gwcs
+
+        from jwst.assign_wcs import nirspec  # for NIRSpec IFU data
 
         microns_100 = 1.0e-4  # 100 microns, in meters
 

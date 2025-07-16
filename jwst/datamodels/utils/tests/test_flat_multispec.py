@@ -1,17 +1,18 @@
-import pytest
-import logging
 import copy
-import numpy as np
+import logging
 
+import numpy as np
+import pytest
 import stdatamodels.jwst.datamodels as dm
+
 from jwst.datamodels.utils.flat_multispec import (
-    set_schema_units,
     copy_column_units,
     copy_spec_metadata,
     determine_vector_and_meta_columns,
     expand_flat_spec,
     make_empty_recarray,
     populate_recarray,
+    set_schema_units,
 )
 from jwst.tests.helpers import LogWatcher
 

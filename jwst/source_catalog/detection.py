@@ -3,14 +3,14 @@
 import logging
 import warnings
 
+import numpy as np
 from astropy.convolution import Gaussian2DKernel, convolve
-from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
+from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
-import numpy as np
 from photutils.background import Background2D, MedianBackground
+from photutils.segmentation import deblend_sources, detect_sources
 from photutils.utils.exceptions import NoDetectionsWarning
-from photutils.segmentation import detect_sources, deblend_sources
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

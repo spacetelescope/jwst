@@ -5,9 +5,9 @@ import pytest
 from astropy.table import Table
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations.tests.helpers import combine_pools
 from jwst.associations import load_asn
 from jwst.associations.main import Main
+from jwst.associations.tests.helpers import combine_pools
 
 
 @pytest.fixture(scope="module")

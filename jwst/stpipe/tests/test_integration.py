@@ -1,11 +1,10 @@
 from stpipe.utilities import import_class
 
-from jwst.stpipe.integration import get_steps
-from jwst.stpipe import Step, Pipeline
-from jwst.stpipe.utilities import NON_STEPS
-
 import jwst.pipeline
 import jwst.step
+from jwst.stpipe import Pipeline, Step
+from jwst.stpipe.integration import get_steps
+from jwst.stpipe.utilities import NON_STEPS
 
 
 def test_get_steps():

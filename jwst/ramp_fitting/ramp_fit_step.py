@@ -1,20 +1,14 @@
 #! /usr/bin/env python
+import logging
+
 import numpy as np
-
 from stcal.ramp_fitting import ramp_fit
-
 from stcal.ramp_fitting.likely_fit import LIKELY_MIN_NGROUPS
-
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-
-from jwst.stpipe import Step
-
 from jwst.lib import reffile_utils
-
-import logging
+from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

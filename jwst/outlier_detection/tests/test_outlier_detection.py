@@ -2,20 +2,23 @@ import os
 import warnings
 from glob import glob
 
-import pytest
 import numpy as np
+import pytest
+from gwcs.wcs import WCS
 from numpy.testing import assert_allclose, assert_array_equal
 from scipy.ndimage import gaussian_filter
-from gwcs.wcs import WCS
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.outlier_detection import OutlierDetectionStep
-from jwst.outlier_detection.utils import _flag_resampled_model_crs
-from jwst.resample.tests.test_resample_step import miri_rate_model
-from jwst.outlier_detection.utils import median_with_resampling, median_without_resampling
+from jwst.outlier_detection.utils import (
+    _flag_resampled_model_crs,
+    median_with_resampling,
+    median_without_resampling,
+)
 from jwst.resample.resample import ResampleImage
+from jwst.resample.tests.test_resample_step import miri_rate_model
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]

@@ -1,17 +1,13 @@
-from pathlib import Path
-from collections import defaultdict
 import traceback
+from collections import defaultdict
+from pathlib import Path
+
 import numpy as np
-
 from stdatamodels.jwst import datamodels
-from jwst.stpipe import query_step_status
-
-from jwst.assign_wcs.util import NoDataOnDetectorError
-from jwst.lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
-from jwst.stpipe import Pipeline
 
 # step imports
 from jwst.assign_wcs import assign_wcs_step
+from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.background import background_step
 from jwst.badpix_selfcal import badpix_selfcal_step
 from jwst.barshadow import barshadow_step
@@ -20,8 +16,8 @@ from jwst.extract_1d import extract_1d_step
 from jwst.extract_2d import extract_2d_step
 from jwst.flatfield import flat_field_step
 from jwst.fringe import fringe_step
-from jwst.residual_fringe import residual_fringe_step
 from jwst.imprint import imprint_step
+from jwst.lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
 from jwst.master_background import master_background_mos_step
 from jwst.msaflagopen import msaflagopen_step
 from jwst.nsclean import nsclean_step
@@ -29,7 +25,9 @@ from jwst.pathloss import pathloss_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
 from jwst.resample import resample_spec_step
+from jwst.residual_fringe import residual_fringe_step
 from jwst.srctype import srctype_step
+from jwst.stpipe import Pipeline, query_step_status
 from jwst.straylight import straylight_step
 from jwst.wavecorr import wavecorr_step
 from jwst.wfss_contam import wfss_contam_step

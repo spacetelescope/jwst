@@ -1,7 +1,7 @@
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Step
 from jwst.background import subtract_images
+from jwst.stpipe import Step
 
 __all__ = ["ImprintStep"]
 

@@ -3,10 +3,10 @@ import sys
 import numpy as np
 import pytest
 from astropy.utils.data import get_pkg_data_filename
-from stpipe import crds_client
 from stdatamodels.jwst import datamodels
+from stpipe import crds_client
 
-from jwst.stpipe import Step, Pipeline
+from jwst.stpipe import Pipeline, Step
 from jwst.stpipe.tests.steps import PipeWithReference, StepWithReference
 
 

@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
-
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)

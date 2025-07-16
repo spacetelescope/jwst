@@ -2,10 +2,10 @@
 
 """Add velocity aberration correction information to the FITS files provided."""
 
+import argparse
 import logging
 import sys
 import warnings
-import argparse
 from pathlib import Path
 
 from jwst.lib.set_velocity_aberration import add_dva

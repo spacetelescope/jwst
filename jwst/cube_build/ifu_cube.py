@@ -1,31 +1,27 @@
 """Work horse routines used for building ifu spectra cubes."""
 
+import logging
+import math
 import warnings
 
 import numpy as np
-import logging
-import math
-
+from astropy import units as u
+from astropy.coordinates import SkyCoord
 from astropy.stats import circmean
 from gwcs import wcstools
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 from stdatamodels.jwst.transforms.models import _toindex
-from astropy.coordinates import SkyCoord
-from astropy import units as u
 
-from jwst.model_blender import blendmeta
-from jwst.assign_wcs import pointing
-from jwst.datamodels import ModelContainer
-from jwst.assign_wcs import nirspec
+from jwst.assign_wcs import nirspec, pointing
 from jwst.assign_wcs.util import wrap_ra
-from . import cube_build_wcs_util
-from . import cube_internal_cal
-from . import coord
+from jwst.datamodels import ModelContainer
+from jwst.model_blender import blendmeta
 from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
-from .cube_match_sky_pointcloud import cube_wrapper  # c extension
+
+from . import coord, cube_build_wcs_util, cube_internal_cal
 from .cube_match_sky_driz import cube_wrapper_driz  # c extension
+from .cube_match_sky_pointcloud import cube_wrapper  # c extension
 
 log = logging.getLogger(__name__)
 log.setLevel(logging.DEBUG)

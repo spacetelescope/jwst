@@ -2,13 +2,12 @@ import numpy as np
 import pytest
 from astropy.io import fits
 from astropy.table import Table
-from stdatamodels.jwst.datamodels import ImageModel, CubeModel, MultiSlitModel, SlitModel
+from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, SlitModel
 from stdatamodels.jwst.transforms.models import Slit
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.nirspec import select_slits
-
 
 # WCS keywords, borrowed from NIRCam grism tests
 WCS_KEYS = {

@@ -1,15 +1,12 @@
 """Test blend_models"""
 
-import pytest
-
 import numpy as np
-
+import pytest
+from stdatamodels.jwst.datamodels import CubeModel, ImageModel
 from stdatamodels.schema import walk_schema
-from stdatamodels.jwst.datamodels import ImageModel, CubeModel
 
 from jwst.model_blender import blendmeta
 from jwst.model_blender.blender import ModelBlender
-
 
 # Setup various input meta data
 N_MODELS = 3  # Number of input models made. All below lists should be this length.

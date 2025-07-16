@@ -1,11 +1,11 @@
 import numpy as np
 from stdatamodels.jwst.datamodels import RampModel, SIRSKernelModel
-from jwst.refpix.optimized_convolution import (
-    make_kernels,
-    get_conv_kernel_coeffs,
-    apply_conv_kernel,
-)
 
+from jwst.refpix.optimized_convolution import (
+    apply_conv_kernel,
+    get_conv_kernel_coeffs,
+    make_kernels,
+)
 
 # create the ConvKernelModel
 ckm = {

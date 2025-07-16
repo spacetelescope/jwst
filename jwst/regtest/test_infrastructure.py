@@ -1,10 +1,11 @@
-from glob import glob
 import os
+from glob import glob
 
-import pytest
-from astropy.table import Table
 import astropy.units as u
 import numpy as np
+import pytest
+from astropy.table import Table
+
 from jwst.regtest.regtestdata import text_diff
 
 

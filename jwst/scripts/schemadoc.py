@@ -8,9 +8,8 @@ import argparse
 import logging
 from pathlib import Path
 
-from stdatamodels.schema import build_docstring
 from stdatamodels.jwst.datamodels import _defined_models as defined_models
-
+from stdatamodels.schema import build_docstring
 
 # Set logger to only print to screen
 logger = logging.getLogger()

@@ -1,7 +1,7 @@
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
-from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
 
 N_SOURCES = 5
 N_EXPOSURES = 4

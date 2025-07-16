@@ -1,18 +1,17 @@
 __all__ = ["ResampleSpecStep"]
 
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import MultiSlitModel, ImageModel
+from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel
 
+from jwst.assign_wcs.util import update_s_region_spectral
 from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.exp_to_source import multislit_to_container
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
-from jwst.resample.resample_utils import load_custom_wcs, find_miri_lrs_sregion
-
-from . import resample_spec, ResampleStep
-from jwst.exp_to_source import multislit_to_container
-from jwst.assign_wcs.util import update_s_region_spectral
+from jwst.resample.resample_utils import find_miri_lrs_sregion, load_custom_wcs
 from jwst.stpipe import Step
 
+from . import ResampleStep, resample_spec
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"

@@ -2,9 +2,8 @@
 
 import pytest
 
-from jwst.associations.tests.helpers import combine_pools, registry_level3_only, t_path
-
 from jwst.associations import generate
+from jwst.associations.tests.helpers import combine_pools, registry_level3_only, t_path
 
 
 def test_meta():

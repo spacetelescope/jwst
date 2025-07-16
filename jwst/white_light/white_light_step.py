@@ -3,6 +3,7 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
+
 from .white_light import white_light
 
 __all__ = ["WhiteLightStep"]

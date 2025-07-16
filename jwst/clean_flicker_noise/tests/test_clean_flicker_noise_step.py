@@ -3,12 +3,12 @@ import os
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.pipeline import Detector1Pipeline
 from jwst.clean_flicker_noise import CleanFlickerNoiseStep
 from jwst.clean_flicker_noise.tests.test_clean_flicker_noise import (
-    make_small_ramp_model,
     make_nirspec_fs_model,
+    make_small_ramp_model,
 )
+from jwst.pipeline import Detector1Pipeline
 
 
 @pytest.mark.parametrize("skip", [True, False])

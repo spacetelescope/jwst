@@ -1,10 +1,10 @@
 #
 #  Module for correcting for persistence
 
-import math
-import numpy as np
 import logging
+import math
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 

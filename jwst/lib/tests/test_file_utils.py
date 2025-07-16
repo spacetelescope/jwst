@@ -1,6 +1,7 @@
 """Test file utilities"""
 
 import os
+
 import pytest
 
 from jwst.lib.file_utils import pushdir

@@ -1,21 +1,18 @@
 from pathlib import Path
 
 import numpy as np
+from astropy.io.fits import FITS_rec
 from astropy.table import vstack
-
 from stdatamodels.jwst import datamodels
 
-
-from jwst.stpipe import Pipeline
-
-from jwst.outlier_detection import outlier_detection_step
-from jwst.tso_photometry import tso_photometry_step
 from jwst.extract_1d import extract_1d_step
-from jwst.white_light import white_light_step
+from jwst.lib.pipe_utils import is_tso
+from jwst.outlier_detection import outlier_detection_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
-from jwst.lib.pipe_utils import is_tso
-from astropy.io.fits import FITS_rec
+from jwst.stpipe import Pipeline
+from jwst.tso_photometry import tso_photometry_step
+from jwst.white_light import white_light_step
 
 __all__ = ["Tso3Pipeline"]
 

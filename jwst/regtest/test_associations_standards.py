@@ -2,15 +2,15 @@
 
 import os
 from pathlib import Path
+
 import pytest
 
 from jwst.associations.lib.diff import (
     compare_asn_files,
 )
+from jwst.associations.main import Main
 from jwst.associations.tests.helpers import combine_pools, t_path
 from jwst.lib.file_utils import pushdir
-
-from jwst.associations.main import Main
 
 # #################
 # Setup environment

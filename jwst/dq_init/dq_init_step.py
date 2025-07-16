@@ -2,8 +2,8 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from . import dq_initialization
 
+from . import dq_initialization
 
 __all__ = ["DQInitStep"]
 

@@ -1,9 +1,9 @@
 """Test the srctype step on exposures with various settings."""
 
+import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.srctype import srctype
-import pytest
 
 
 def test_background_target_set():

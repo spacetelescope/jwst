@@ -1,5 +1,6 @@
 import pytest
 from stdatamodels.jwst.datamodels import JwstDataModel
+
 from jwst.lib.exposure_types import is_moving_target
 
 

@@ -1,8 +1,9 @@
 #! /usr/bin/env python
 from stdatamodels.jwst import datamodels
 
-from . import hlsp
 from jwst.stpipe import Step
+
+from . import hlsp
 
 __all__ = ["HlspStep"]
 
