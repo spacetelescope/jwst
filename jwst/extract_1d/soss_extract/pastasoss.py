@@ -357,7 +357,8 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
     ----------
     pwcpos : float
         The pupil wheel position angle provided in the FITS header under keyword PWCPOS.
-        Values are expected to be within +/- 0.5 degrees of the commanded position (245.76 degrees).
+        Values are expected to be within +/- 0.25 degrees of the commanded position
+        (245.76 degrees).
     order : int
         The spectral order for which to retrieve the traces.
     subarray : str
@@ -370,21 +371,38 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
     -------
     order : str
         The spectral order for which a trace is computed.
-    x, y : np.ndarray
-        The x and y coordinates of the rotated points.
+    x : np.ndarray
+        The x coordinates of the rotated points.
+    y : np.ndarray
+        The y coordinates of the rotated points.
     wavelengths : np.ndarray
         The wavelengths associated with the rotated points.
     """
     if refmodel is None:
-        ref_name = crds_client.get_reference_file(DEFAULT_CRDS_PARAMS, "pastasoss", "jwst")
-        ref_file = crds_client.check_reference_open(ref_name)
-        refmodel = dm.PastasossModel(ref_file)
+        refmodel = retrieve_default_pastasoss_model()
 
     pwcpos_is_valid = _check_pwcpos_bounds(pwcpos)
     if not pwcpos_is_valid:
         raise ValueError(f"PWC position {pwcpos} is outside bounds ({PWCPOS_BOUNDS}).")
 
     return _get_soss_traces(refmodel, pwcpos, order, subarray)
+
+
+def retrieve_default_pastasoss_model():
+    """
+    Retrieve the default PastasossModel reference file.
+
+    This function fetches the default PastasossModel reference file from CRDS.
+    It is used when no specific reference model is provided.
+
+    Returns
+    -------
+    PastasossModel
+        The default PastasossModel reference file.
+    """
+    ref_name = crds_client.get_reference_file(DEFAULT_CRDS_PARAMS, "pastasoss", "jwst")
+    ref_file = crds_client.check_reference_open(ref_name)
+    return dm.PastasossModel(ref_file)
 
 
 def _get_soss_traces(refmodel, pwcpos, order, subarray):
@@ -416,8 +434,10 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
     -------
     order : str
         The spectral order for which a trace is computed.
-    x, y : np.ndarray
-        The x and y coordinates of the rotated points.
+    x : np.ndarray
+        The x coordinates of the rotated points.
+    y : np.ndarray
+        The y coordinates of the rotated points.
     wavelengths : np.ndarray
         The wavelengths associated with the rotated points.
 
@@ -581,7 +601,8 @@ def get_soss_wavemaps(
     ----------
     pwcpos : float
         The pupil wheel position angle, e.g. as provided in the FITS header under keyword PWCPOS.
-        Values are expected to be within +/- 0.5 degrees of the commanded position (245.76 degrees).
+        Values are expected to be within +/- 0.25 degrees of the commanded position
+        (245.76 degrees).
     subarray : str, optional
         The subarray name, one of 'SUBSTRIP256', 'SUBSTRIP96', or 'FULL'.
     refmodel : PastasossModel, optional
@@ -601,9 +622,11 @@ def get_soss_wavemaps(
         The corresponding 1D spectraces (if `spectraces` is True).
     """
     if refmodel is None:
-        ref_name = crds_client.get_reference_file(DEFAULT_CRDS_PARAMS, "pastasoss", "jwst")
-        ref_file = crds_client.check_reference_open(ref_name)
-        refmodel = dm.PastasossModel(ref_file)
+        refmodel = retrieve_default_pastasoss_model()
+
+    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos)
+    if not pwcpos_is_valid:
+        raise ValueError(f"PWC position {pwcpos} is outside bounds ({PWCPOS_BOUNDS}).")
 
     if padsize is None:
         padsize = getattr(refmodel.traces[0], "padding", 0)
