@@ -13,16 +13,15 @@ from stdatamodels.jwst.transforms.models import (
     NIRCAMForwardRowGrismDispersion,
 )
 
-from jwst.lib.reffile_utils import find_row
-
-from . import pointing
-from .util import (
+from jwst.assign_wcs import pointing
+from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,
     transform_bbox_from_shape,
     velocity_correction,
 )
+from jwst.lib.reffile_utils import find_row
 
 log = logging.getLogger(__name__)
 

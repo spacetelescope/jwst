@@ -5,9 +5,8 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.ami import AmiNormalizeStep
+from jwst.ami.tests.conftest import PXSC_MAS
 from jwst.ami.utils import get_cw_beta
-
-from .conftest import PXSC_MAS
 
 RAW_AMP = 3
 REF_AMP = 2

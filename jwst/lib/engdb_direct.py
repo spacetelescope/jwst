@@ -8,7 +8,7 @@ import requests
 from astropy.time import Time
 from requests.adapters import HTTPAdapter, Retry
 
-from .engdb_lib import FORCE_STATUSES, RETRIES, TIMEOUT, EngDB_Value, EngdbABC
+from jwst.lib.engdb_lib import FORCE_STATUSES, RETRIES, TIMEOUT, EngDB_Value, EngdbABC
 
 # Configure logging
 logger = logging.getLogger(__name__)

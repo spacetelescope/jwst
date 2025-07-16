@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 
-from . import lg_model, utils
+from jwst.ami import lg_model, utils
 
 log = logging.getLogger(__name__)
 

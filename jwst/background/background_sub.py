@@ -7,7 +7,7 @@ from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
 from stdatamodels.jwst import datamodels
 
-from . import subtract_images
+from jwst.background import subtract_images
 
 log = logging.getLogger(__name__)
 

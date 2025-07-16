@@ -3,15 +3,14 @@
 import logging
 
 from jwst.datamodels import ModelContainer, ModelLibrary
-from jwst.resample import resample_spec
-from jwst.stpipe.utilities import record_step_status
-
-from .utils import (
+from jwst.outlier_detection.utils import (
     flag_crs_in_models,
     flag_crs_in_models_with_resampling,
     median_with_resampling,
     median_without_resampling,
 )
+from jwst.resample import resample_spec
+from jwst.stpipe.utilities import record_step_status
 
 log = logging.getLogger(__name__)
 

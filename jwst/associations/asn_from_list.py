@@ -4,8 +4,8 @@ import argparse
 import sys
 from pathlib import Path
 
-from . import AssociationRegistry
-from .lib.rules_level3_base import DMS_Level3_Base
+from jwst.associations import AssociationRegistry
+from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
 
 __all__ = ["asn_from_list"]
 

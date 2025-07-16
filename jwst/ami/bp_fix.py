@@ -8,7 +8,7 @@ import numpy as np
 from scipy.ndimage import median_filter
 from stdatamodels.jwst.datamodels import dqflags
 
-from .matrix_dft import matrix_dft
+from jwst.ami.matrix_dft import matrix_dft
 
 log = logging.getLogger(__name__)
 

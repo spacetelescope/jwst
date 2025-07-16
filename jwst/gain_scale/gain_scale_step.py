@@ -1,8 +1,7 @@
 from stdatamodels.jwst import datamodels
 
+from jwst.gain_scale import gain_scale
 from jwst.stpipe import Step
-
-from . import gain_scale
 
 __all__ = ["GainScaleStep"]
 

@@ -5,9 +5,8 @@ import pytest
 
 from jwst.ami import hextransformee
 from jwst.ami.bp_fix import filtwl_d
+from jwst.ami.tests.conftest import PXSC_RAD
 from jwst.ami.utils import Affine2d
-
-from .conftest import PXSC_RAD
 
 
 @pytest.mark.parametrize("ctr_offset", [None, (4, -3)])

@@ -55,7 +55,7 @@ def asn_gather(
     dest_asn : pathlib.Path
         The copied association.
     """
-    from .load_as_asn import LoadAsAssociation
+    from jwst.associations.load_as_asn import LoadAsAssociation
 
     exclude_types = exclude_types if exclude_types is not None else []
     source_asn_path = Path(association)

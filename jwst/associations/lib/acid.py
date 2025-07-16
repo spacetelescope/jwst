@@ -3,7 +3,7 @@
 import re
 from ast import literal_eval
 
-from .counter import Counter
+from jwst.associations.lib.counter import Counter
 
 __all__ = ["ACID"]
 

@@ -1,12 +1,11 @@
 from stdatamodels.jwst import datamodels
 
+from jwst.combine_1d import combine1d
 from jwst.datamodels.utils.wfss_multispec import (
     make_wfss_multicombined,
     wfss_multiexposure_to_multispec,
 )
 from jwst.stpipe import Step
-
-from . import combine1d
 
 __all__ = ["Combine1dStep"]
 
