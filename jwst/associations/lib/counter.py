@@ -1,3 +1,6 @@
+__all__ = ["Counter"]
+
+
 class Counter:
     """Like itertools.count but access to the current value."""
 

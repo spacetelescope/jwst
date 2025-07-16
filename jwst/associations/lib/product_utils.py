@@ -5,6 +5,8 @@ from collections import Counter
 
 logger = logging.getLogger(__name__)
 
+__all__ = ["sort_by_candidate", "get_product_names"]
+
 
 def sort_by_candidate(asns):
     """
