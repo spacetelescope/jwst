@@ -1,6 +1,7 @@
 from collections import namedtuple
 
 import numpy as np
+
 from jwst.lib import pipe_utils
 
 """ This is the interface:

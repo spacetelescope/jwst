@@ -10,11 +10,10 @@ from stdatamodels.jwst.transforms import models
 from stpipe.crds_client import reference_uri_to_cache_path
 
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_mos_file, create_nirspec_fs_file
+from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_nirspec_mos_file
 from jwst.extract_2d import Extract2dStep
 from jwst.srctype import SourceTypeStep
-from jwst.wavecorr import WavecorrStep
-from jwst.wavecorr import wavecorr
+from jwst.wavecorr import WavecorrStep, wavecorr
 
 
 @pytest.fixture(scope="module")

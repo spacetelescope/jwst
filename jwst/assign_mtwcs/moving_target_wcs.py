@@ -9,20 +9,19 @@ location of the target.
 
 import logging
 from copy import deepcopy
+
 import numpy as np
-from astropy.modeling.models import Shift, Identity
+from astropy.modeling.models import Identity, Shift
 from gwcs import WCS
 from gwcs import coordinate_frames as cf
-
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelLibrary
-from jwst.stpipe.utilities import record_step_status
 from jwst.assign_wcs.util import update_s_region_imaging
+from jwst.datamodels import ModelLibrary
 from jwst.lib.exposure_types import IMAGING_TYPES
+from jwst.stpipe.utilities import record_step_status
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["assign_moving_target_wcs"]
 

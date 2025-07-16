@@ -2,8 +2,8 @@ import pytest
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
-from jwst.datamodels import ModelLibrary
 from jwst.assign_mtwcs import AssignMTWcsStep
+from jwst.datamodels import ModelLibrary
 
 
 @pytest.mark.parametrize("errtype", ["ra", "dec", "both", "none"])

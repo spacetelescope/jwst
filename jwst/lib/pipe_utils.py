@@ -3,14 +3,12 @@
 import logging
 
 import numpy as np
+from stdatamodels.jwst.datamodels import JwstDataModel, dqflags
 from stdatamodels.properties import ObjectNode
-from stdatamodels.jwst.datamodels import dqflags, JwstDataModel
 
 from jwst.associations.lib.dms_base import TSO_EXP_TYPES
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def is_tso(model):

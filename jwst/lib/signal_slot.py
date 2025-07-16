@@ -1,14 +1,13 @@
 """A signal/slot implementation."""
 
-from collections import namedtuple
 import inspect
 import logging
+from collections import namedtuple
 
 __all__ = ["Signal", "Signals", "SignalsNotAClass"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 Slot = namedtuple("Slot", ["func", "single_shot"])
 """Slot data structure."""

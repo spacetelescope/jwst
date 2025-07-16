@@ -1,11 +1,12 @@
-import pytest
-from jwst.outlier_detection._fileio import _save_intermediate_output
-from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
-from jwst.step import OutlierDetectionStep
 import os
-import numpy as np
 from functools import partial
 
+import numpy as np
+import pytest
+
+from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
+from jwst.outlier_detection._fileio import _save_intermediate_output
+from jwst.step import OutlierDetectionStep
 
 SLIT_ID = "slit007"
 ASN_ID = "a008"

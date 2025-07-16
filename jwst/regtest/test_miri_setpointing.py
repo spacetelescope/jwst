@@ -1,6 +1,7 @@
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+
 from jwst.lib.set_telescope_pointing import add_wcs
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 
 @pytest.mark.bigdata

@@ -1,16 +1,15 @@
 """Copy data that is listed in an association."""
 
 import logging
-from pathlib import Path
 import subprocess
+from pathlib import Path
 
 __all__ = ["asn_gather"]
 
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
+LOGLEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 
 def asn_gather(
@@ -182,7 +181,7 @@ def from_cmdline(args=None):
     parsed = parser.parse_args(args)
 
     # Set output detail.
-    level = LogLevels[min(len(LogLevels) - 1, parsed.verbose)]
+    level = LOGLEVELS[min(len(LOGLEVELS) - 1, parsed.verbose)]
     logger.setLevel(level)
 
     # That's all folks.

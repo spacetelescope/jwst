@@ -7,18 +7,17 @@ ATOCA: Algorithm to Treat Order ContAmination (English)
 @authors: Antoine Darveau-Bernier, Geert Jan Talens
 """
 
+import logging
+import warnings
+
 import numpy as np
 from numpy.polynomial import Polynomial
-import warnings
-from scipy.sparse import diags, csr_matrix
-from scipy.sparse.linalg import spsolve, lsqr, MatrixRankWarning
-from scipy.interpolate import interp1d, RectBivariateSpline, Akima1DInterpolator
-from scipy.optimize import minimize_scalar, brentq
-from scipy.interpolate import make_interp_spline
-import logging
+from scipy.interpolate import Akima1DInterpolator, RectBivariateSpline, interp1d, make_interp_spline
+from scipy.optimize import brentq, minimize_scalar
+from scipy.sparse import csr_matrix, diags
+from scipy.sparse.linalg import MatrixRankWarning, lsqr, spsolve
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def arange_2d(starts, stops):

@@ -1,8 +1,8 @@
 """General Utilities."""
 
+import logging
 from ast import literal_eval
 from functools import wraps
-import logging
 
 from numpy.ma import masked
 
@@ -10,7 +10,6 @@ from jwst.associations import config
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 def constrain_on_candidates(candidates):

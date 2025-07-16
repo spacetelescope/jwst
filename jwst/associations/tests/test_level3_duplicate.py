@@ -4,13 +4,13 @@ import logging
 
 from astropy.utils.data import get_pkg_data_filename
 
+from jwst.associations import AssociationPool, generate
+from jwst.associations.lib.utilities import constrain_on_candidates
+from jwst.associations.main import Main
 from jwst.associations.tests.helpers import (
     level3_rule_path,
     registry_level3_only,
 )
-from jwst.associations import AssociationPool, generate
-from jwst.associations.main import Main
-from jwst.associations.lib.utilities import constrain_on_candidates
 from jwst.tests.helpers import LogWatcher
 
 

@@ -1,15 +1,14 @@
 """Base classes which define the Level3 Associations."""
 
-from collections import defaultdict
 import logging
-from os.path import split
 import re
-from jwst.lib.suffix import remove_suffix
+from collections import defaultdict
+from os.path import split
 from pathlib import Path
 
+from stpipe.format_template import FormatTemplate
+
 from jwst.associations import Association, ListCategory, libpath
-from jwst.associations.registry import RegistryMarker
-from jwst.associations.lib.utilities import evaluate, is_iterable
 from jwst.associations.exceptions import (
     AssociationNotValidError,
 )
@@ -21,16 +20,18 @@ from jwst.associations.lib.constraint import (
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.dms_base import (
     _EMPTY,
+    IMAGE2_NONSCIENCE_EXP_TYPES,
+    IMAGE2_SCIENCE_EXP_TYPES,
+    SPEC2_SCIENCE_EXP_TYPES,
     Constraint_TargetAcq,
     DMSAttrConstraint,
     DMSBaseMixin,
-    IMAGE2_SCIENCE_EXP_TYPES,
-    IMAGE2_NONSCIENCE_EXP_TYPES,
-    SPEC2_SCIENCE_EXP_TYPES,
 )
-from stpipe.format_template import FormatTemplate
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.prune import prune
+from jwst.associations.lib.utilities import evaluate, is_iterable
+from jwst.associations.registry import RegistryMarker
+from jwst.lib.suffix import remove_suffix
 
 __all__ = [
     "ASN_SCHEMA",
@@ -56,7 +57,6 @@ __all__ = [
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # The schema that these associations must adhere to.
 ASN_SCHEMA = RegistryMarker.schema(libpath() / "asn_schema_jw_level3.json")

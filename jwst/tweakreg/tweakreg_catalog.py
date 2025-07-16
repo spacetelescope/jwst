@@ -1,24 +1,21 @@
-import logging
 import inspect
+import logging
 import warnings
 
-from astropy.utils.exceptions import AstropyUserWarning
-from astropy.utils import lazyproperty
-from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
-from astropy.convolution import Gaussian2DKernel, convolve
-from astropy.table import Table
-
 import numpy as np
-from photutils.detection import DAOStarFinder, IRAFStarFinder
-from photutils.segmentation import SourceFinder, SourceCatalog
-from photutils.segmentation.catalog import DEFAULT_COLUMNS
+from astropy.convolution import Gaussian2DKernel, convolve
+from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
+from astropy.table import Table
+from astropy.utils import lazyproperty
+from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
+from photutils.detection import DAOStarFinder, IRAFStarFinder
+from photutils.segmentation import SourceCatalog, SourceFinder
+from photutils.segmentation.catalog import DEFAULT_COLUMNS
 from photutils.utils import NoDetectionsWarning
-
-from stdatamodels.jwst.datamodels import dqflags, ImageModel
+from stdatamodels.jwst.datamodels import ImageModel, dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["make_tweakreg_catalog"]

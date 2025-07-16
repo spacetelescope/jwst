@@ -4,9 +4,9 @@ charge_migration, are saved for comparisons with truth files.
 """
 
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst import datamodels
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 from jwst.tweakreg import TweakRegStep
 

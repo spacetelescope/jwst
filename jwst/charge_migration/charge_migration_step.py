@@ -2,12 +2,12 @@
 import logging
 
 from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step
 
 from . import charge_migration
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["ChargeMigrationStep"]
 

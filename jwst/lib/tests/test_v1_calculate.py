@@ -1,20 +1,15 @@
 """Test module v1_calculate"""
 
-from pathlib import Path
-
+import numpy as np
 import pytest
-
 from astropy.table import Table
 from astropy.time import Time
-import numpy as np
-
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst.datamodels import ImageModel
 
-from jwst.lib import engdb_mast
 import jwst.lib.set_telescope_pointing as stp
 import jwst.lib.v1_calculate as v1c
-
-DATA_PATH = Path(__file__).parent / "data"
+from jwst.lib import engdb_mast
 
 # Engineering parameters
 # Time range corresponds to OTE-1 exposure jw01134001037_03107_00001_nrcb1_uncal.fits
@@ -42,7 +37,9 @@ def test_from_models_mast(tmp_path):
     # Save for post-test examination
     v1_formatted.write(tmp_path / "test_from_models_mast.ecsv", format="ascii.ecsv")
 
-    truth = Table.read(DATA_PATH / "test_from_models_mast.ecsv")
+    truth = Table.read(
+        get_pkg_data_filename("data/test_from_models_mast.ecsv", package="jwst.lib.tests")
+    )
     errors = v1_compare_simplified_tables(v1_formatted, truth)
     errors_str = "\n".join(errors)
     assert len(errors) == 0, f"V1 tables are different: {errors_str}"
@@ -66,7 +63,9 @@ def test_over_time_mast(tmp_path):
     # Save for post-test examination
     v1_formatted.write(tmp_path / "test_over_time_mast.ecsv", format="ascii.ecsv")
 
-    truth = Table.read(DATA_PATH / "test_over_time_mast.ecsv")
+    truth = Table.read(
+        get_pkg_data_filename("data/test_over_time_mast.ecsv", package="jwst.lib.tests")
+    )
     errors = v1_compare_simplified_tables(v1_formatted, truth)
     errors_str = "\n".join(errors)
     assert len(errors) == 0, f"V1 tables are different: {errors_str}"

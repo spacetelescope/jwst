@@ -2,15 +2,14 @@
 
 import logging
 import multiprocessing
-import numpy as np
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 from .observations import Observation
 from .sens1d import get_photom_data
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def contam_corr(input_model, waverange, photom, max_cores):

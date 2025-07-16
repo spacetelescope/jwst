@@ -1,11 +1,10 @@
 """Python implementation of the KLIP algorithm."""
 
-import numpy as np
-
 import logging
 
+import numpy as np
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def klip(target_model, refs_model, truncate):

@@ -1,9 +1,9 @@
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
-from astropy.modeling.models import Polynomial1D, Polynomial2D, Shift, Const1D, Mapping
+from astropy.modeling.models import Const1D, Mapping, Polynomial1D, Polynomial2D, Shift
 from gwcs import wcs
 from gwcs.wcstools import grid_from_bounding_box
+from numpy.testing import assert_allclose
 from stdatamodels.jwst.datamodels import SlitModel
 from stdatamodels.jwst.transforms import models as transforms
 

@@ -5,6 +5,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.stpipe import Step
+
 from . import imageregistration
 from .median_replace_img import median_replace_img
 

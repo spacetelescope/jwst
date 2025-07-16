@@ -1,7 +1,7 @@
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Step
 from jwst.residual_fringe import residual_fringe
+from jwst.stpipe import Step
 
 __all__ = ["ResidualFringeStep"]
 

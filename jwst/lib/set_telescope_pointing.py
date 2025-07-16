@@ -52,34 +52,33 @@ of transformations, the DCM for the reference point of the target aperture
 is calculated.
 """
 
-import functools
-import sys
-
-import asdf
-from collections import defaultdict, namedtuple
-from copy import copy
 import dataclasses
-from enum import Enum
+import functools
 import logging
+import sys
+from collections import defaultdict, namedtuple
+from collections.abc import Callable
+from copy import copy
+from enum import Enum
 from math import cos, sin, sqrt
 from typing import Any
-from collections.abc import Callable
 
+import asdf
+import numpy as np
 from astropy import units as u
 from astropy.table import Table
 from astropy.time import Time
-import numpy as np
 from scipy.interpolate import interp1d
-
 from stdatamodels.jwst import datamodels
 
-from .exposure_types import IMAGING_TYPES, FGS_GUIDE_EXP_TYPES
-from .set_velocity_aberration import compute_va_effects_vector
-from .siafdb import SIAF, SiafDb
-from jwst.assign_wcs.util import update_s_region_keyword, calc_rotation_matrix
 from jwst.assign_wcs.pointing import v23tosky
+from jwst.assign_wcs.util import calc_rotation_matrix, update_s_region_keyword
 from jwst.lib.engdb_tools import ENGDB_Service
 from jwst.lib.pipe_utils import is_tso
+
+from .exposure_types import FGS_GUIDE_EXP_TYPES, IMAGING_TYPES
+from .set_velocity_aberration import compute_va_effects_vector
+from .siafdb import SIAF, SiafDb
 
 __all__ = [
     "Methods",
@@ -96,7 +95,6 @@ __all__ = [
 
 # Setup logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 DEBUG_FULL = logging.DEBUG - 1
 LOGLEVELS = [logging.INFO, logging.DEBUG, DEBUG_FULL]
 
@@ -1994,7 +1992,7 @@ def get_mnemonics(
     logger.info("Querying engineering DB: %s", engdb.base_url)
 
     # Construct the mnemonic values structure.
-    mnemonics = {mnemonic: None for mnemonic in mnemonics_to_read}
+    mnemonics = dict.fromkeys(mnemonics_to_read)
 
     # Retrieve the mnemonics from the engineering database.
     # Check for whether the bracket values are used and

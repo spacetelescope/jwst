@@ -1,16 +1,14 @@
-from .matrix_dft import matrix_dft
-
 import logging
+
 import numpy as np
 import numpy.fft as fft
-from scipy.integrate import simpson
-from astropy import units as u
-
 import synphot
+from astropy import units as u
+from scipy.integrate import simpson
+
+from .matrix_dft import matrix_dft
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-log.addHandler(logging.NullHandler())
 
 
 class Affine2d:

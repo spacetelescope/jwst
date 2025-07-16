@@ -2,27 +2,23 @@
 
 import logging
 import warnings
-import numpy as np
 
+import numpy as np
+from astropy.constants import c
 from astropy.coordinates import SkyCoord
 from astropy.modeling import models as astmodels
 from astropy.table import QTable
-from astropy.constants import c
-
 from gwcs import WCS
-from gwcs.wcstools import grid_from_bounding_box
 from gwcs import utils as gwutils
-from stpipe.exceptions import StpipeExitException
-from stcal.alignment.util import compute_s_region_keyword, compute_s_region_imaging
-
-from stdatamodels.jwst.datamodels import WavelengthrangeModel, MiriLRSSpecwcsModel
+from gwcs.wcstools import grid_from_bounding_box
+from stcal.alignment.util import compute_s_region_imaging, compute_s_region_keyword
+from stdatamodels.jwst.datamodels import MiriLRSSpecwcsModel, WavelengthrangeModel
 from stdatamodels.jwst.transforms.models import GrismObject
+from stpipe.exceptions import StpipeExitException
 
 from jwst.lib.catalog_utils import SkyObject
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 _MAX_SIP_DEGREE = 6

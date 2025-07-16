@@ -1,30 +1,25 @@
-from copy import deepcopy
 import logging
 import math
+from copy import deepcopy
 
 import asdf
 import numpy as np
 from astropy import units as u
-
-from stdatamodels.jwst.datamodels.dqflags import pixel
 from astropy.coordinates import SkyCoord
-
+from gwcs import wcstools
 from stcal.alignment.util import (
+    compute_s_region_keyword,
     compute_scale,
     wcs_from_sregions,
 )
-from gwcs import wcstools
-
-from stcal.alignment.util import compute_s_region_keyword
 from stcal.resample import UnsupportedWCSError
-from stcal.resample.utils import compute_mean_pixel_area
 from stcal.resample.utils import build_mask as _stcal_build_mask
-
+from stcal.resample.utils import compute_mean_pixel_area
+from stdatamodels.jwst.datamodels.dqflags import pixel
 
 __all__ = ["build_mask", "resampled_wcs_from_models"]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def resampled_wcs_from_models(

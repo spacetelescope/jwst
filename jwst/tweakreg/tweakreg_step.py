@@ -6,11 +6,10 @@ JWST pipeline step for image alignment.
 
 from pathlib import Path
 
+import stcal.tweakreg.tweakreg as twk
 from astropy.table import Table
 from astropy.time import Time
 from tweakwcs.correctors import JWSTWCSCorrector
-
-import stcal.tweakreg.tweakreg as twk
 
 from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 from jwst.datamodels import ModelLibrary

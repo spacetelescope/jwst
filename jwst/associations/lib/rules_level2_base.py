@@ -1,11 +1,11 @@
 """Base classes which define the Level2 Associations."""
 
-from collections import deque
 import copy
 import logging
+import re
+from collections import deque
 from os.path import split
 from pathlib import Path
-import re
 
 from jwst.associations import Association, libpath
 from jwst.associations.exceptions import AssociationNotValidError
@@ -15,13 +15,13 @@ from jwst.associations.lib.constraint import (
     SimpleConstraint,
 )
 from jwst.associations.lib.dms_base import (
-    Constraint_TargetAcq,
-    DMSAttrConstraint,
-    DMSBaseMixin,
     IMAGE2_NONSCIENCE_EXP_TYPES,
     IMAGE2_SCIENCE_EXP_TYPES,
     PRODUCT_NAME_DEFAULT,
     SPEC2_SCIENCE_EXP_TYPES,
+    Constraint_TargetAcq,
+    DMSAttrConstraint,
+    DMSBaseMixin,
 )
 from jwst.associations.lib.member import Member
 from jwst.associations.lib.process_list import ListCategory
@@ -34,7 +34,6 @@ from jwst.lib.suffix import remove_suffix
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 __all__ = [
     "_EMPTY",

@@ -1,10 +1,9 @@
 """Utilities for product manipulation."""
 
-from collections import Counter
 import logging
+from collections import Counter
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 def sort_by_candidate(asns):

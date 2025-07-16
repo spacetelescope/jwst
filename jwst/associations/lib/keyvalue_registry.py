@@ -2,7 +2,6 @@
 
 from collections import UserDict
 
-
 __all__ = [
     "KeyValueRegistry",
     "KeyValueRegistryError",

@@ -15,21 +15,20 @@ object 25 should have partial boxes for both orders
 object 26 should be excluded
 """
 
-import pytest
 import numpy as np
+import pytest
 from astropy.io import fits
 from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcs
-from stdatamodels.jwst.datamodels import ImageModel, CubeModel, SlitModel, MultiSlitModel
+from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, SlitModel
 
-from jwst.assign_wcs.util import create_grism_bbox
 from jwst.assign_wcs import AssignWcsStep, nircam
-
+from jwst.assign_wcs.util import create_grism_bbox
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.grisms import (
-    extract_tso_object,
-    extract_grism_objects,
     compute_tso_offset_center,
+    extract_grism_objects,
+    extract_tso_object,
 )
 
 # Allowed settings for nircam

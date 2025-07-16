@@ -1,13 +1,14 @@
-import numpy as np
-import pytest
 from collections import namedtuple
 
+import numpy as np
+import pytest
 from stdatamodels.jwst import datamodels
+
 from jwst.ipc import ipc_corr, x_irs2
-from jwst.ipc.ipc_step import IPCStep
 
 # Define the nref namedtuple
 from jwst.ipc.ipc_corr import NumRefPixels as Nref
+from jwst.ipc.ipc_step import IPCStep
 
 
 @pytest.fixture

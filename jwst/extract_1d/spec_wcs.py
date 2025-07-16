@@ -1,14 +1,13 @@
 import logging
 
 import numpy as np
-from astropy.modeling.models import Mapping, Const1D, Tabular1D
-from astropy import units as u
 from astropy import coordinates as coord
-from gwcs.wcs import WCS
+from astropy import units as u
+from astropy.modeling.models import Const1D, Mapping, Tabular1D
 from gwcs import coordinate_frames as cf
+from gwcs.wcs import WCS
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def create_spectral_wcs(ra, dec, wavelength):

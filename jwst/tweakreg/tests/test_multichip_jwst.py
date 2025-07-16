@@ -1,33 +1,30 @@
+import gwcs
 import numpy as np
-from astropy.io import fits
+from astropy import coordinates as coord
 from astropy import table
+from astropy import units as u
 from astropy import wcs as fitswcs
+from astropy.io import fits
 from astropy.modeling import polynomial
 from astropy.modeling.models import (
-    Shift,
     AffineTransformation2D,
-    Pix2Sky_TAN,
-    RotateNative2Celestial,
+    Const1D,
     Identity,
     Mapping,
-    Const1D,
+    Pix2Sky_TAN,
+    RotateNative2Celestial,
     Scale,
+    Shift,
 )
-from astropy import units as u
-from astropy import coordinates as coord
 from astropy.utils.data import get_pkg_data_filename
-
+from gwcs import coordinate_frames as cf
+from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
+from stdatamodels.jwst.datamodels import ImageModel
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.imalign import align_wcs
 
-from stdatamodels.jwst.datamodels import ImageModel
-
 from jwst.datamodels import ModelContainer
 from jwst.tweakreg import tweakreg_step
-
-import gwcs
-from gwcs import coordinate_frames as cf
-from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 
 _REF_RMSE_RA = 3e-9
 _REF_RMSE_DEC = 3e-10

@@ -2,26 +2,24 @@ import logging
 import warnings
 
 import gwcs
-from gwcs.utils import _toindex
 import numpy as np
-from astropy.stats import sigma_clipped_stats, SigmaClip
+from astropy.stats import SigmaClip, sigma_clipped_stats
 from astropy.utils.exceptions import AstropyUserWarning
+from gwcs.utils import _toindex
 from photutils.background import Background2D, MedianBackground
 from scipy.optimize import curve_fit
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst import datamodels
-from jwst.assign_wcs import nirspec, AssignWcsStep
-from jwst.flatfield import FlatFieldStep
+from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.clean_flicker_noise.lib import NSClean, NSCleanSubarray
+from jwst.flatfield import FlatFieldStep
 from jwst.lib.basic_utils import LoggingContext
-from jwst.lib.reffile_utils import ref_matches_sci, get_subarray_model
+from jwst.lib.reffile_utils import get_subarray_model, ref_matches_sci
 from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.ramp_fitting import RampFitStep
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Fixed slit region to mask, for NIRSpec MOS and IFU data
 # Values are y start and stop indices, for the edges of the

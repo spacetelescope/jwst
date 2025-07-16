@@ -1,16 +1,17 @@
 import collections
 import logging
-import numpy as np
 from timeit import default_timer as timer
 
-from .generate import generate
-from .generate_per_pool import CANDIDATE_RULESET, DISCOVER_RULESET, constrain_on_candidates
+import numpy as np
+
 from jwst.associations.lib.utilities import evaluate, filter_discovered_only
 from jwst.associations.registry import AssociationRegistry
 
+from .generate import generate
+from .generate_per_pool import CANDIDATE_RULESET, DISCOVER_RULESET, constrain_on_candidates
+
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 def generate_per_candidate(

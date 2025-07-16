@@ -1,12 +1,12 @@
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.barshadow import BarShadowStep
 from jwst.flatfield import FlatFieldStep
 from jwst.pathloss import PathLossStep
 from jwst.photom import PhotomStep
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 
 @pytest.mark.bigdata

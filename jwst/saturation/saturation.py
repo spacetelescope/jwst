@@ -1,15 +1,15 @@
 import logging
+
 import numpy as np
 from scipy.ndimage import binary_dilation
-
-from stdatamodels.jwst.datamodels import dqflags
 from stcal.saturation.saturation import flag_saturated_pixels
+from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.lib import reffile_utils
+
 from . import x_irs2
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 DONOTUSE = dqflags.pixel["DO_NOT_USE"]
 SATURATED = dqflags.pixel["SATURATED"]

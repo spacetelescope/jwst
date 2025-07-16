@@ -9,15 +9,11 @@ from glob import glob
 
 import pytest
 
-from jwst.associations.lib.diff import compare_asn_files, MultiDiffError
+from jwst.associations.lib.diff import MultiDiffError, compare_asn_files
 from jwst.associations.main import Main as asn_generate
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata, pytest.mark.filterwarnings("error")]
-
-# Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Decompose pool name to retrieve proposal and version id.
 pool_regex = re.compile(r"(?P<proposal>jw.+?)_(?P<versionid>.+)_pool")
@@ -129,7 +125,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     ],
     ids=parfunc,
 )
-def test_sdp(_jail, rtdata, resource_tracker, request, pool_args):
+def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
@@ -153,7 +149,7 @@ def test_sdp(_jail, rtdata, resource_tracker, request, pool_args):
     ids=parfunc,
 )
 @pytest.mark.slow
-def test_slow(_jail, rtdata, resource_tracker, request, pool_args):
+def test_slow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
@@ -166,7 +162,7 @@ def test_slow(_jail, rtdata, resource_tracker, request, pool_args):
     ],
     ids=parfunc,
 )
-def test_fail(_jail, rtdata, resource_tracker, request, pool_args):
+def test_fail(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     with pytest.raises(MultiDiffError):
         _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
@@ -179,6 +175,6 @@ def test_fail(_jail, rtdata, resource_tracker, request, pool_args):
     ids=parfunc,
 )
 @pytest.mark.slow
-def test_fslow(_jail, rtdata, resource_tracker, request, pool_args):
+def test_fslow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     with pytest.raises(MultiDiffError):
         _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)

@@ -1,7 +1,7 @@
 """Make header-only images from real images."""
 
-from pathlib import Path
 import os.path as ospath
+from pathlib import Path
 
 from astropy.io import fits
 

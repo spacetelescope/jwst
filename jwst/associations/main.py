@@ -1,22 +1,21 @@
 """Main entry for the association generator."""
 
-import sys
 import argparse
 import logging
+import sys
+from pathlib import Path
 
 import numpy as np
 
-from pathlib import Path
 from jwst import __version__
-from jwst.associations import AssociationPool
-from jwst.associations import config
+from jwst.associations import AssociationPool, config
 from jwst.associations.exceptions import AssociationError
-from jwst.associations.lib.log_config import log_config, DMS_config
+from jwst.associations.lib.log_config import DMS_config, log_config
 
 __all__ = ["Main", "main"]
 
 # Configure logging
-logger = log_config(name=__package__)
+logger = logging.getLogger(__package__)
 
 
 class Main:

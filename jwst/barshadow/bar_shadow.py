@@ -1,14 +1,13 @@
 """Calculate bar shadow correction for science data sets."""
 
-import numpy as np
 import logging
+
+import numpy as np
 from gwcs import wcstools
 from scipy import ndimage
 from stdatamodels.jwst import datamodels
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Fallback value for ratio of slit spacing to slit height
 SLITRATIO = 1.15

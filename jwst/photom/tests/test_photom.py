@@ -1,15 +1,15 @@
 import math
 
-import pytest
 import numpy as np
+import pytest
 from astropy import units as u
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, TSOMultiSpecModel
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
-from jwst.photom import photom
 from jwst.lib.dispaxis import get_dispersion_direction
+from jwst.photom import photom
 
 MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / (u.arcsecond**2))
 

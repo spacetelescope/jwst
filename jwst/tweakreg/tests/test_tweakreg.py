@@ -5,21 +5,19 @@ from copy import deepcopy
 
 import asdf
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
-from astropy.wcs import WCS
 from astropy.modeling.models import Shift
 from astropy.table import Table
 from astropy.utils.data import get_pkg_data_filename
+from astropy.wcs import WCS
 from gwcs.wcstools import grid_from_bounding_box
+from numpy.testing import assert_allclose
+from stcal.tweakreg import tweakreg as twk
+from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
 from stdatamodels.jwst.datamodels import ImageModel
 
 from jwst.datamodels import ModelContainer
-from jwst.tweakreg import tweakreg_step
-from jwst.tweakreg import tweakreg_catalog
-from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
-from stcal.tweakreg import tweakreg as twk
-
+from jwst.tweakreg import tweakreg_catalog, tweakreg_step
 
 BKG_LEVEL = 0.001
 N_EXAMPLE_SOURCES = 21

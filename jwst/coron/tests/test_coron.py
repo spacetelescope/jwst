@@ -1,10 +1,8 @@
 import numpy as np
 import numpy.testing as npt
-
 from stdatamodels.jwst import datamodels
 
-from jwst.coron import imageregistration
-from jwst.coron import klip
+from jwst.coron import imageregistration, klip
 
 
 def test_fourier_imshift():

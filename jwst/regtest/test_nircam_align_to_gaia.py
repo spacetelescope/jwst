@@ -1,8 +1,8 @@
 import pytest
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-
 from stdatamodels.jwst import datamodels
+
 from jwst.stpipe import Step
 from jwst.tweakreg import TweakRegStep
 

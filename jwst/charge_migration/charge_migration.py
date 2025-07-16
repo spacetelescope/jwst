@@ -1,13 +1,11 @@
 #  Module for charge migration
 #
 import logging
-import numpy as np
 
+import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 GOOD = dqflags.group["GOOD"]
 DNU = dqflags.group["DO_NOT_USE"]

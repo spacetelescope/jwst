@@ -1,35 +1,34 @@
 import logging
-import numpy as np
 
 import asdf
+import gwcs.coordinate_frames as cf
+import numpy as np
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling import bind_bounding_box
-from astropy.modeling.models import Const1D, Mapping, Identity, Shift
 from astropy.modeling.bounding_box import CompoundBoundingBox
-import gwcs.coordinate_frames as cf
+from astropy.modeling.models import Const1D, Identity, Mapping, Shift
 from gwcs import wcs
-
-from stdatamodels.jwst.datamodels import ImageModel, NIRISSGrismModel, DistortionModel
+from stdatamodels.jwst.datamodels import DistortionModel, ImageModel, NIRISSGrismModel
 from stdatamodels.jwst.transforms.models import (
-    NirissSOSSModel,
-    NIRISSForwardRowGrismDispersion,
     NIRISSBackwardGrismDispersion,
     NIRISSForwardColumnGrismDispersion,
+    NIRISSForwardRowGrismDispersion,
+    NirissSOSSModel,
 )
 
-from .util import (
-    not_implemented_mode,
-    subarray_transform,
-    velocity_correction,
-    bounding_box_from_subarray,
-    transform_bbox_from_shape,
-)
-from . import pointing
 from jwst.lib.reffile_utils import find_row
 
+from . import pointing
+from .util import (
+    bounding_box_from_subarray,
+    not_implemented_mode,
+    subarray_transform,
+    transform_bbox_from_shape,
+    velocity_correction,
+)
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["create_pipeline", "imaging", "niriss_soss", "niriss_soss_set_input", "wfss"]
 

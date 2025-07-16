@@ -1,15 +1,14 @@
 import logging
+
 import numpy as np
-from gwcs import wcstools
-from gwcs import coordinate_frames as cf
 from astropy import units as u
 from astropy.modeling import tabular
 from astropy.modeling.mappings import Identity
-
+from gwcs import coordinate_frames as cf
+from gwcs import wcstools
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(input_model, wavecorr_file):

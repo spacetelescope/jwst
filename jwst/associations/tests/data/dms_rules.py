@@ -2,9 +2,9 @@
 
 from jwst.associations import Association
 from jwst.associations.association import finalize as general_asn_finalize
-from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import ConstraintTrue
 from jwst.associations.lib.dms_base import DMSBaseMixin
+from jwst.associations.registry import RegistryMarker
 
 
 @RegistryMarker.rule

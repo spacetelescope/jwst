@@ -24,7 +24,6 @@ from collections import deque
 from enum import Enum
 from functools import reduce
 
-
 __all__ = ["ListCategory", "ProcessList", "ProcessItem", "ProcessQueue", "ProcessQueueSorted"]
 
 

@@ -3,19 +3,17 @@
 import logging
 import warnings
 
-from astropy.convolution import Gaussian2DKernel
-from astropy.nddata.utils import extract_array, NoOverlapError
-from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
-from astropy.table import QTable
 import astropy.units as u
+import numpy as np
+from astropy.convolution import Gaussian2DKernel
+from astropy.nddata.utils import NoOverlapError, extract_array
+from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
+from astropy.table import QTable
 from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
-import numpy as np
+from photutils.aperture import CircularAnnulus, CircularAperture, aperture_photometry
 from scipy import ndimage
 from scipy.spatial import KDTree
-
-from photutils.aperture import CircularAperture, CircularAnnulus, aperture_photometry
-
 from stdatamodels.jwst.datamodels import ImageModel
 
 from jwst import __version__ as jwst_version
@@ -23,7 +21,6 @@ from jwst import __version__ as jwst_version
 from ._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class JWSTSourceCatalog:

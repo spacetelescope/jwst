@@ -9,12 +9,11 @@ from jwst.stpipe.utilities import record_step_status
 from .utils import (
     flag_model_crs,
     flag_resampled_model_crs,
-    median_without_resampling,
     median_with_resampling,
+    median_without_resampling,
 )
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["detect_outliers"]

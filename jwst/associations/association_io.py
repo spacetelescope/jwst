@@ -2,6 +2,7 @@
 
 import json as json_lib
 import logging
+
 import numpy as np
 import yaml as yaml_lib
 
@@ -11,7 +12,6 @@ from .lib.member import Member
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 __all__: list = []
 

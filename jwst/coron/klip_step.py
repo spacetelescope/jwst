@@ -2,8 +2,8 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from . import klip
 
+from . import klip
 
 __all__ = ["KlipStep"]
 

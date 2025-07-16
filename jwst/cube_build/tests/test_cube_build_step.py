@@ -2,18 +2,18 @@
 Unit test for Cube Build testing reading in MIRI cubepars ref file and using it
 """
 
-import numpy as np
 import os
+
+import numpy as np
 import pytest
 from astropy.io import fits
-
 from gwcs import WCS
 from stdatamodels.jwst.datamodels import IFUImageModel
 
 from jwst import assign_wcs
 from jwst.cube_build import CubeBuildStep
-from jwst.cube_build.file_table import NoAssignWCSError
 from jwst.cube_build.cube_build import NoChannelsError
+from jwst.cube_build.file_table import NoAssignWCSError
 from jwst.datamodels import ModelContainer
 
 

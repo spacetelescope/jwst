@@ -1,10 +1,10 @@
-import pytest
-import numpy as np
-from numpy.testing import assert_allclose
-from photutils.datasets import make_gwcs
 from pathlib import Path
 
+import numpy as np
+import pytest
 import stdatamodels.jwst.datamodels as dm
+from numpy.testing import assert_allclose
+from photutils.datasets import make_gwcs
 
 from jwst.source_catalog import SourceCatalogStep
 

@@ -1,15 +1,15 @@
 import os
+from glob import glob
+
 import numpy as np
 import pytest
-
 from stdatamodels.jwst import datamodels
-from jwst.datamodels import ModelContainer
 from stdatamodels.jwst.datamodels.dqflags import pixel as flags
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
+from jwst.datamodels import ModelContainer
 from jwst.pixel_replace.pixel_replace_step import PixelReplaceStep
-from glob import glob
 
 
 def cal_data(shape, bad_idx, dispaxis=1, model="slit"):

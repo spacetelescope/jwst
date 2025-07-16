@@ -2,8 +2,8 @@
 
 import contextlib
 import logging
-from pathlib import Path
 import re
+from pathlib import Path
 
 
 class ListHandler(logging.Handler):

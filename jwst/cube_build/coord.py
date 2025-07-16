@@ -1,7 +1,9 @@
 """A set of routines to assist in the WCS transforms used in the cube_build step."""
 
-import numpy as np
 import math
+
+import numpy as np
+
 # _______________________________________________________________________
 
 

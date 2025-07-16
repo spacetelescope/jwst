@@ -2,20 +2,19 @@
 Test the utility functions
 """
 
-from astropy.modeling.models import Shift, Identity
+from astropy.modeling.models import Identity, Shift
 from astropy.table import QTable
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
 
-from jwst.lib.catalog_utils import SkyObject
-
 from jwst.assign_wcs.util import (
-    get_object_info,
-    wcs_bbox_from_shape,
-    subarray_transform,
     bounding_box_from_subarray,
+    get_object_info,
+    subarray_transform,
     transform_bbox_from_shape,
+    wcs_bbox_from_shape,
 )
+from jwst.lib.catalog_utils import SkyObject
 
 
 def test_transform_bbox_from_shape_2d():

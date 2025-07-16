@@ -1,15 +1,16 @@
-import pytest
 import numpy as np
+import pytest
 
 from jwst.extract_1d.soss_extract.pastasoss import (
-    _get_wavelengths,
-    _find_spectral_order_index,
-    get_soss_traces,
     _extrapolate_to_wavegrid,
+    _find_spectral_order_index,
+    _get_soss_traces,
+    _get_wavelengths,
+    get_soss_traces,
+    get_soss_wavemaps,
 )
 
-from .conftest import TRACE_END_IDX, PWCPOS, WAVE_BNDS_O1, WAVE_BNDS_O2
-
+from .conftest import PWCPOS, TRACE_END_IDX, WAVE_BNDS_O1, WAVE_BNDS_O2
 
 """Test coverage for the helper functions in pastasoss.py"""
 
@@ -53,7 +54,7 @@ def test_get_soss_traces(refmodel):
     for order in ["1", "2"]:
         idx = int(order) - 1
         for subarray in ["SUBSTRIP96", "SUBSTRIP256"]:
-            order_out, x_new, y_new, wavelengths = get_soss_traces(
+            order_out, x_new, y_new, wavelengths = _get_soss_traces(
                 refmodel, PWCPOS, order, subarray
             )
 
@@ -95,3 +96,40 @@ def test_extrapolate_to_wavegrid(refmodel):
     m_extrap = (x_extrap[-1] - x_extrap[0]) / (wave_grid[-1] - wave_grid[0])
     m = (x[-1] - x[0]) / (wl[-1] - wl[0])
     assert np.isclose(m_extrap, m)
+
+
+@pytest.mark.parametrize("pwcpos", [245.79 - 0.24, 245.79, 245.79 + 0.24])  # edges of bounds
+@pytest.mark.parametrize("order", ["1", "2"])
+@pytest.mark.parametrize("subarray", [None, "SUBSTRIP96", "FULL"])
+def test_get_soss_traces_public(subarray, order, pwcpos):
+    """Test of public interface to get_soss_traces, which should not require datamodel or refmodel"""
+    order_out, x_new, y_new, wavelengths = get_soss_traces(pwcpos, order, subarray=subarray)
+
+    assert str(order_out) == order
+    assert x_new.shape == y_new.shape
+    assert x_new.shape == wavelengths.shape
+
+
+@pytest.mark.parametrize("pwcpos", [245.79 - 0.24, 245.79, 245.79 + 0.24])  # edges of bounds
+@pytest.mark.parametrize("padsize", [None, 9])
+@pytest.mark.parametrize("subarray", ["SUBSTRIP256", "SUBSTRIP96", "FULL"])
+def test_get_soss_wavemaps_public(subarray, padsize, pwcpos):
+    """Test of public interface to get_soss_wavemaps, which should not require datamodel or refmodel"""
+    subarray_shapes = {"SUBSTRIP96": 96, "SUBSTRIP256": 256, "FULL": 2048}
+    wavemaps, traces = get_soss_wavemaps(
+        pwcpos, subarray=subarray, padsize=padsize, spectraces=True
+    )
+
+    if padsize is None:
+        padsize = 0
+    expected_shape = (2, subarray_shapes[subarray] + padsize * 2, 2048 + padsize * 2)
+    assert wavemaps.shape == expected_shape
+    assert traces.shape == (2, 3, 5001)
+
+
+def test_get_soss_traces_bad_pwcpos():
+    """Test that get_soss_traces raises ValueError for bad PWC positions"""
+    with pytest.raises(ValueError, match="PWC position 245.0 is outside bounds"):
+        get_soss_traces(245.0, "1")
+    with pytest.raises(ValueError, match="PWC position 247.0 is outside bounds"):
+        get_soss_traces(247.0, "2")

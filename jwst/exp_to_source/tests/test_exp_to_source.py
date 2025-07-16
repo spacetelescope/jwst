@@ -1,11 +1,10 @@
-import pytest
 import numpy as np
-
+import pytest
 from stdatamodels.jwst.datamodels import MultiExposureModel, MultiSlitModel
 
-from jwst.exp_to_source.tests import helpers
 from jwst.datamodels import ModelContainer
 from jwst.exp_to_source import exp_to_source, multislit_to_container
+from jwst.exp_to_source.tests import helpers
 
 
 @pytest.fixture(scope="module")

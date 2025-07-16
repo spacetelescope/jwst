@@ -1,7 +1,6 @@
 """Process JWST data with Python."""
 
 import re
-
 from importlib.metadata import version
 
 __version__ = version(__name__)

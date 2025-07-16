@@ -1,19 +1,18 @@
 """Apply master background corrections to NIRSpec MOS data."""
 
-from stpipe.step import preserve_step_pars
-from jwst.stpipe import record_step_status
-
 from stdatamodels.jwst import datamodels
+from stpipe.step import preserve_step_pars
 
-from . import nirspec_utils
 from jwst.barshadow import barshadow_step
+from jwst.extract_1d import extract_1d_step
 from jwst.flatfield import flat_field_step
 from jwst.pathloss import pathloss_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
 from jwst.resample import resample_spec_step
-from jwst.extract_1d import extract_1d_step
-from jwst.stpipe import Pipeline
+from jwst.stpipe import Pipeline, record_step_status
+
+from . import nirspec_utils
 
 __all__ = ["MasterBackgroundMosStep"]
 

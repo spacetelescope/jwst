@@ -1,13 +1,12 @@
-from stdatamodels.jwst.datamodels import dqflags
-from jwst.lib import reffile_utils
-
-import numpy as np
 import logging
 
+import numpy as np
 from stcal.linearity.linearity import linearity_correction
+from stdatamodels.jwst.datamodels import dqflags
+
+from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(output_model, lin_model):

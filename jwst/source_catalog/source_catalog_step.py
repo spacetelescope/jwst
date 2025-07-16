@@ -2,16 +2,14 @@
 
 from pathlib import Path
 
-from crds.core.exceptions import CrdsLookupError
 import numpy as np
-
+from crds.core.exceptions import CrdsLookupError
 from stdatamodels.jwst import datamodels
 
 from jwst.source_catalog.reference_data import ReferenceData
 from jwst.source_catalog.source_catalog import JWSTSourceCatalog
 from jwst.stpipe import Step
 from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
-
 
 __all__ = ["SourceCatalogStep"]
 
