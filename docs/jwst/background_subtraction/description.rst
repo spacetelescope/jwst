@@ -6,18 +6,70 @@ Description
 
 The background subtraction step performs
 image-from-image subtraction in order to accomplish subtraction of background
-signal. The step takes as input a Spec2 association file or one target exposure,
-to which the subtraction will be applied, and a list of one or more
-background exposures.
+signal.
 
 Two different approaches to background image subtraction are used, depending
 on the observing mode. Imaging and most spectroscopic modes use one method,
 while a special method is used for Wide-Field Slitless Spectroscopy (WFSS).
 
 This type of background subtraction is just one method available within the
-JWST pipeline. See :ref:`Background Subtraction <background_subtraction>`
+JWST pipeline. See :ref:`Background Subtraction Methods <background_subtraction_methods>`
 for an overview of all the methods and to which observing modes they're
 applicable.
+
+Input Data
+----------
+When run as part of a stage 2 pipeline, the background step takes as input a
+target exposure, to which the subtraction will be applied, and, for non-WFSS
+modes, a list of one or more background exposures.  For WFSS modes, background
+exposures are not required, but the target exposure must have a WCS applied,
+and it must have a source catalog identified prior to processing.
+
+When run as a standalone step, the input may be specified either as file name(s)
+for appropriate intermediate products or as a file name for an association
+that contains these filenames.
+
+For example, for a non-WFSS mode observation, the background subtraction step can be run
+on an intermediate target exposure `exp_001`, subtracting `exp_002` and `exp_003` rate files
+as follows::
+
+    strun bkg_subtract exp_001_assignwcsstep.fits --bkg_list=exp_002_rate.fits,exp_003_rate.fits
+
+
+For a WFSS mode observation, the step can be run on a single file, if it contains an assigned
+WCS and the source catalog name in the SCATFILE FITS header keyword.  It can also be run on an
+association file that contains the intermediate exposure file name and a source catalog.
+For example, if the following contents are stored in a file called `bkg_sub_asn.json`::
+
+
+        {"products": [
+            {
+            "name": "wfss_exp_001",
+            "members": [
+                {
+                    "expname": "wfss_exp_001_assignwcsstep.fits",
+                    "exptype": "science",
+                },
+                {
+                    "expname": "image_exp_001_cat.ecsv",
+                    "exptype": "sourcecat"
+                }
+            ]
+        }
+
+then the background step can be run on the target exposure wfss_exp_001 as::
+
+    strun bkg_subtract bkg_sub_asn.json
+
+From Python code, the source catalog can also be directly specified in the input model
+before calling the BackgroundStep. For example:
+
+.. doctest-skip::
+
+  >>> model = datamodels.open("wfss_exp_001_assignwcsstep.fits")
+  >>> model.meta.source_catalog = "image_exp_001_cat.ecsv"
+  >>> result = BackgroundStep.call(model)
+
 
 Imaging and Non-WFSS, Non-SOSS Spectroscopic Modes
 --------------------------------------------------
