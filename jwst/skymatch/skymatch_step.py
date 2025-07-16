@@ -22,7 +22,6 @@ from jwst.lib.suffix import remove_suffix
 from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["SkyMatchStep"]
@@ -76,8 +75,6 @@ class SkyMatchStep(Step):
         ModelLibrary
             A library of datamodels with the skymatch step applied.
         """
-        self.log.setLevel(logging.DEBUG)
-
         if isinstance(input_models, ModelLibrary):
             library = input_models
         else:

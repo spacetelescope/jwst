@@ -6,7 +6,6 @@ import logging
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def average_lg(lg_products):

@@ -11,7 +11,6 @@ import scipy.special
 from . import hextransformee, leastsqnrm, utils
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 
 def jinc(x, y, d, lam, pitch, offx=0.0, offy=0.0):

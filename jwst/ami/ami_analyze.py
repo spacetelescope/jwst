@@ -9,7 +9,6 @@ from . import instrument_data, nrm_core, utils
 from .find_affine2d_parameters import find_rotation
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def apply_lg_plus(

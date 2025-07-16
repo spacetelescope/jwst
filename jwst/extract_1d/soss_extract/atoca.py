@@ -17,7 +17,6 @@ from scipy.sparse import csr_matrix, diags, issparse
 from . import atoca_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class MaskOverlapError(Exception):

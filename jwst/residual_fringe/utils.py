@@ -10,7 +10,6 @@ from scipy.interpolate import pchip
 from jwst.residual_fringe.fitter import spline_fitter
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.INFO)
 
 # Number of knots for bkg model if no other info provided
 # Hard coded parameter, has been selected based on testing but can be changed

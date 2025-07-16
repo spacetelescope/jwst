@@ -18,11 +18,6 @@ from jwst.tweakreg.utils import adjust_wcs
 
 _ANGLE_PARS = ["-r", "--ra_delta", "-d", "--dec_delta", "-o", "--roll_delta"]
 
-# Configure logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.NullHandler())
-
 
 def _replace_suffix(file, new_suffix):
     sep = "_"
@@ -152,6 +147,11 @@ def main():
                 argv_new.append(f" {angle_value}")
 
     options = parser.parse_args(argv_new)
+
+    # Configure logging
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logging.NullHandler())
 
     files = []
     for f in options.arg0:

@@ -10,7 +10,6 @@ from ._fileio import save_median
 from .utils import flag_model_crs, nanmedian3D
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["detect_outliers"]

@@ -53,7 +53,6 @@ from . import pointing
 from .util import MSAFileError, NoDataOnDetectorError, not_implemented_mode, velocity_correction
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 FIXED_SLIT_NUMS = {"NONE": 0, "S200A1": 1, "S200A2": 2, "S400A1": 3, "S1600A1": 4, "S200B1": 5}
 

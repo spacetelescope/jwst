@@ -40,7 +40,6 @@ from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe.utilities import record_step_status
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["detect_outliers"]
 

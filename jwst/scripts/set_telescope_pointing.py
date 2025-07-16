@@ -17,13 +17,6 @@ from pathlib import Path
 
 import jwst.lib.set_telescope_pointing as stp
 
-# Configure logging
-logger = logging.getLogger("jwst")
-logger.propagate = False
-logger_handler = logging.StreamHandler()
-logger.addHandler(logger_handler)
-logger_format_debug = logging.Formatter("%(levelname)s:%(filename)s::%(funcName)s: %(message)s")
-
 
 def main():
     """Set the initial world coordinate system."""
@@ -119,6 +112,13 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # Configure logging
+    logger = logging.getLogger("jwst")
+    logger.propagate = False
+    logger_handler = logging.StreamHandler()
+    logger.addHandler(logger_handler)
+    logger_format_debug = logging.Formatter("%(levelname)s:%(filename)s::%(funcName)s: %(message)s")
 
     # Set output detail.
     level = stp.LOGLEVELS[min(len(stp.LOGLEVELS) - 1, args.verbose)]

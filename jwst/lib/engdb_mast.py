@@ -24,7 +24,6 @@ SERVICE_URI = "mast:jwstedb/"
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 class EngdbMast(EngdbABC):

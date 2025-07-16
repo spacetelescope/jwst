@@ -17,7 +17,6 @@ from .util import (
 )
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["create_pipeline", "imaging"]

@@ -6,8 +6,6 @@ from . import analyticnrm2, mask_definition_ami, utils
 from . import leastsqnrm as leastsqnrm
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-log.setLevel(logging.DEBUG)
 
 
 m = 1.0

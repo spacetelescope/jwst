@@ -12,7 +12,6 @@ from .niriss import imaging as niriss_imaging
 from .util import MSAFileError, update_fits_wcsinfo, wcs_bbox_from_shape, wfss_imaging_wcs
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["AssignWcsStep"]
 

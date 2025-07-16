@@ -34,7 +34,6 @@ from jwst.lib.suffix import remove_suffix
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 __all__ = [
     "_EMPTY",

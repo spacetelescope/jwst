@@ -8,7 +8,6 @@ import logging
 from . import oifits
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
 
 
 def normalize_lg(target_model, reference_model):

@@ -6,9 +6,6 @@ from pathlib import Path
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
 
 def main():
     """
@@ -17,6 +14,9 @@ def main():
     Use from terminal as follows:
     $ collect_pipeline_cfgs .
     """
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     if len(sys.argv) < 2:
         logger.error("ERROR: missing argument (destination directory")
         sys.exit(1)

@@ -12,7 +12,6 @@ from .engdb_lib import FORCE_STATUSES, RETRIES, TIMEOUT, EngDB_Value, EngdbABC
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # #############################################
 # Where is the engineering service? Its HERE!!!

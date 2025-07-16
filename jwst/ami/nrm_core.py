@@ -6,7 +6,6 @@ from stdatamodels.jwst import datamodels
 from . import lg_model, oifits, utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class FringeFitter:

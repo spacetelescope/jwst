@@ -24,7 +24,6 @@ from .cube_match_sky_driz import cube_wrapper_driz  # c extension
 from .cube_match_sky_pointcloud import cube_wrapper  # c extension
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class IFUCubeData:

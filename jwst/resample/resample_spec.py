@@ -26,7 +26,6 @@ from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleImage
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["ResampleSpec"]

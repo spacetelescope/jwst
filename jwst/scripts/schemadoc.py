@@ -11,13 +11,10 @@ from pathlib import Path
 from stdatamodels.jwst.datamodels import _defined_models as defined_models
 from stdatamodels.schema import build_docstring
 
-# Set logger to only print to screen
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
 
 def get_docstrings(template, model_names, all_models=False):
     """Get the docstring for every model class."""
+    logger = logging.getLogger()
     if all_models:
         klasses = defined_models
     else:
@@ -47,6 +44,10 @@ def main():
     parser.add_argument("-t", "--template", type=str, help="input file containing templates")
     parser.add_argument("models", nargs="*", help="Models to generate docstrings for")
     args = parser.parse_args()
+
+    # Set logger to only print to screen
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
 
     if args.template is None:
         template = "{path} : {title} ({datatype})\n"

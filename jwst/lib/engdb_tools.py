@@ -61,7 +61,6 @@ from .engdb_mast import EngdbMast
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 __all__ = ["ENGDB_Service"]
 

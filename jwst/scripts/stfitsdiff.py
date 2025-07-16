@@ -9,10 +9,6 @@ from argparse import ArgumentParser
 
 from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
-logging.basicConfig(level=logging.INFO, format="", datefmt="", stream=sys.stdout)
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-
 
 def _is_number(s):
     is_number = True
@@ -166,8 +162,13 @@ def main():
     )
 
     # Get the arguments
-
     args = parser.parse_args()
+
+    # Configure logging
+    logging.basicConfig(level=logging.INFO, format="", datefmt="", stream=sys.stdout)
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     file_a = args.file_a
     file_b = args.file_b
 

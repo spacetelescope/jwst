@@ -20,7 +20,6 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 __all__ = ["build_mask", "resampled_wcs_from_models"]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def resampled_wcs_from_models(

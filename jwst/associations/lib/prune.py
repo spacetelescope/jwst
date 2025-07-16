@@ -11,7 +11,6 @@ from .product_utils import get_product_names, sort_by_candidate
 __all__ = ["prune"]
 
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Duplicate association counter
 # Used in function `prune_remove`

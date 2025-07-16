@@ -17,7 +17,6 @@ from stdatamodels.jwst.transforms.models import IdealToV2V3
 from jwst.assign_wcs import util
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def extract_tso_object(

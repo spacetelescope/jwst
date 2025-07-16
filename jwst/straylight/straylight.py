@@ -12,7 +12,6 @@ from jwst import datamodels
 from .calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):

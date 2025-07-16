@@ -22,7 +22,6 @@ from jwst.lib.exposure_types import IMAGING_TYPES
 from jwst.stpipe.utilities import record_step_status
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["assign_moving_target_wcs"]
 
