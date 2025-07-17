@@ -1,9 +1,8 @@
 """Test degraded exposure info"""
 
-from jwst.associations.tests.helpers import combine_pools, t_path
-
-from jwst.associations.lib.dms_base import _DEGRADED_STATUS_OK, _DEGRADED_STATUS_NOTOK, _EMPTY
+from jwst.associations.lib.dms_base import _DEGRADED_STATUS_NOTOK, _DEGRADED_STATUS_OK, _EMPTY
 from jwst.associations.main import Main
+from jwst.associations.tests.helpers import combine_pools, t_path
 
 
 def test_exposerr():

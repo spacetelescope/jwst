@@ -1,9 +1,8 @@
 import pytest
 
-from jwst.stpipe.tests.steps import CalLogsStep, CalLogsPipeline
 import jwst.stpipe._cal_logs
 from jwst.stpipe._cal_logs import _scrub
-
+from jwst.stpipe.tests.steps import CalLogsPipeline, CalLogsStep
 
 _FAKE_HOSTNAME = "my_hostname"
 _FAKE_USER = "my_user"

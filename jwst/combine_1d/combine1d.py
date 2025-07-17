@@ -2,7 +2,6 @@ import logging
 import warnings
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer
@@ -10,7 +9,6 @@ from jwst.datamodels.utils.flat_multispec import expand_flat_spec
 from jwst.extract_1d.spec_wcs import create_spectral_wcs
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 # attributes that we want to copy unmodified from input to output spectra

@@ -10,9 +10,17 @@ import numpy as np
 import requests
 from astropy.table import Table
 from astropy.time import Time
+from astropy.utils.data import get_pkg_data_filename
 from requests.adapters import HTTPAdapter, Retry
 
-from .engdb_lib import EngDB_Value, EngdbABC, FORCE_STATUSES, RETRIES, TIMEOUT, mnemonic_data_fname
+from jwst.lib.engdb_lib import (
+    FORCE_STATUSES,
+    RETRIES,
+    TIMEOUT,
+    EngDB_Value,
+    EngdbABC,
+    mnemonic_data_fname,
+)
 
 __all__ = ["EngdbMast"]
 
@@ -23,7 +31,6 @@ SERVICE_URI = "mast:jwstedb/"
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 class EngdbMast(EngdbABC):
@@ -163,7 +170,7 @@ class EngdbMast(EngdbABC):
 
         # When used with EngDB_Mocker, a `meta.json` needs to exist.
         # A default is saved within the package.
-        metas_path = Path(__file__).parent / "tests/data/meta_for_mock.json"
+        metas_path = get_pkg_data_filename("data/meta_for_mock.json", package="jwst.lib.tests")
         copy2(metas_path, cache_path / "meta.json")
 
     def configure(self, base_url=None, token=None):

@@ -1,11 +1,9 @@
+import asdf
+import numpy as np
 from stdatamodels.jwst import datamodels
 
+from jwst.ami import ami_analyze, utils
 from jwst.stpipe import Step
-from . import ami_analyze
-from . import utils
-
-import numpy as np
-import asdf
 
 __all__ = ["AmiAnalyzeStep"]
 

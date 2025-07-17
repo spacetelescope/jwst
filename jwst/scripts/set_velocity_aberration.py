@@ -2,17 +2,12 @@
 
 """Add velocity aberration correction information to the FITS files provided."""
 
-import logging
+import argparse
 import sys
 import warnings
-import argparse
 from pathlib import Path
 
 from jwst.lib.set_velocity_aberration import add_dva
-
-# Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 def parse_args(args):

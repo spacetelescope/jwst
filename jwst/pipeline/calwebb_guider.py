@@ -3,18 +3,16 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Pipeline
-
 # step imports
 from jwst.dq_init import dq_init_step
 from jwst.flatfield import flat_field_step
 from jwst.guider_cds import guider_cds_step
+from jwst.stpipe import Pipeline
 
 __all__ = ["GuiderPipeline"]
 
 # Define logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class GuiderPipeline(Pipeline):

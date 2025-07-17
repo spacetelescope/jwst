@@ -2,23 +2,21 @@
 
 import logging
 
-from astropy import units as u
 from astropy import coordinates as coord
+from astropy import units as u
 from astropy.modeling import bind_bounding_box
 from gwcs import coordinate_frames as cf
-
 from stdatamodels.jwst.datamodels import DistortionModel
 
-from .util import (
+from jwst.assign_wcs import pointing
+from jwst.assign_wcs.util import (
+    bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,
     transform_bbox_from_shape,
-    bounding_box_from_subarray,
 )
-from . import pointing
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["create_pipeline", "imaging"]

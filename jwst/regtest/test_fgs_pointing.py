@@ -7,22 +7,13 @@ import pytest
 # Only run if `pysiaf` is installed.
 pytest.importorskip("pysiaf")
 
-import logging  # noqa: E402
-
 from astropy.utils.data import get_pkg_data_filenames  # noqa: E402
 from numpy import array  # noqa: E402
 from numpy.testing import assert_allclose  # noqa: E402
 
 from jwst.datamodels import Level1bModel  # type: ignore[attr-defined] # noqa: E402
-from jwst.lib import siafdb  # noqa: E402
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
-
-# Set logging for the module to be tested.
-logger = logging.getLogger(stp.__name__)
-logger.setLevel(logging.INFO)
-handler = logging.StreamHandler()
-handler.setLevel(logging.INFO)
-logger.addHandler(handler)
+from jwst.lib import siafdb  # noqa: E402
 
 # All the FGS GUIDER examples. Generated from proposal JW01029
 FGS_PATHS = sorted(

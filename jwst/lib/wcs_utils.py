@@ -2,7 +2,6 @@ import warnings
 
 import numpy as np
 
-
 WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM", "NRC_TSGRISM"]
 
 

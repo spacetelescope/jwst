@@ -16,13 +16,15 @@ The model has the following features:
 - (partial) Mock of the Pastasoss reference model
 """
 
-import pytest
-import numpy as np
-from scipy.signal import savgol_filter
 from functools import partial
+
+import numpy as np
+import pytest
+from scipy.signal import savgol_filter
+from stdatamodels.jwst.datamodels import PastasossModel
+
 from jwst.extract_1d.soss_extract import atoca
 from jwst.extract_1d.soss_extract import atoca_utils as au
-from stdatamodels.jwst.datamodels import PastasossModel
 
 PWCPOS = 245.85932900002442
 DATA_SHAPE = (25, 200)

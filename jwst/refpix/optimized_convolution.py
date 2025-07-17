@@ -4,10 +4,10 @@
 #
 
 import logging
+
 import numpy as np
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):

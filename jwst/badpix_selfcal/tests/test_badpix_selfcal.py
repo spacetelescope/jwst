@@ -1,13 +1,15 @@
 import json
-import pytest
+
 import numpy as np
-from jwst.badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep, _parse_inputs
-from jwst.badpix_selfcal.badpix_selfcal import badpix_selfcal, apply_flags
+import pytest
+from astropy.io import fits
+from gwcs import wcs
+from stdatamodels.jwst.datamodels.dqflags import pixel
+
 from jwst import datamodels as dm
 from jwst.assign_wcs import AssignWcsStep, miri
-from gwcs import wcs
-from astropy.io import fits
-from stdatamodels.jwst.datamodels.dqflags import pixel
+from jwst.badpix_selfcal.badpix_selfcal import apply_flags, badpix_selfcal
+from jwst.badpix_selfcal.badpix_selfcal_step import BadpixSelfcalStep, _parse_inputs
 
 wcs_kw = {
     "wcsaxes": 3,

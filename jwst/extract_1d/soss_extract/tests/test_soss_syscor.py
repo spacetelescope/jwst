@@ -1,9 +1,9 @@
-import pytest
 import numpy as np
+import pytest
 
 from jwst.extract_1d.soss_extract.soss_syscor import (
-    soss_background,
     make_background_mask,
+    soss_background,
 )
 
 

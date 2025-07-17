@@ -1,5 +1,5 @@
-import sys
 import argparse
+import sys
 from pathlib import Path
 
 from stdatamodels.jwst.datamodels import MultiSlitModel

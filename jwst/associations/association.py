@@ -1,24 +1,24 @@
-from collections.abc import MutableMapping
-from datetime import datetime, UTC
 import json
-import jsonschema
 import logging
 import re
 import warnings
+from collections.abc import MutableMapping
+from datetime import UTC, datetime
 from pathlib import Path
 
-from jwst import __version__
-from .exceptions import AssociationNotValidError
-from .lib.constraint import Constraint, meets_conditions
+import jsonschema
 from stpipe.format_template import FormatTemplate
-from .lib.keyvalue_registry import KeyValueRegistry
+
+from jwst import __version__
+from jwst.associations.exceptions import AssociationNotValidError
+from jwst.associations.lib.constraint import Constraint, meets_conditions
+from jwst.associations.lib.keyvalue_registry import KeyValueRegistry
 
 __all__ = ["Association"]
 
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Timestamp template
 _TIMESTAMP_TEMPLATE = "%Y%m%dt%H%M%S"

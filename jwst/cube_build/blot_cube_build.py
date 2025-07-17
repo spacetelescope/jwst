@@ -1,15 +1,15 @@
-import numpy as np
 import logging
 
-from jwst.datamodels import ModelContainer
-from jwst.assign_wcs import nirspec
+import numpy as np
 from gwcs import wcstools
+
+from jwst.assign_wcs import nirspec
 from jwst.assign_wcs.util import in_ifu_slice
-from . import instrument_defaults
-from .blot_median import blot_wrapper  # c extension
+from jwst.cube_build import instrument_defaults
+from jwst.cube_build.blot_median import blot_wrapper  # c extension
+from jwst.datamodels import ModelContainer
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class CubeBlot:

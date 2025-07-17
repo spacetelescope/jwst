@@ -1,6 +1,6 @@
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 # Input is jw01970001001_02102_00001_nrs1_uncal.fits, a verify-only image

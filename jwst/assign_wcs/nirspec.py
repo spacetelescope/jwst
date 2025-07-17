@@ -13,47 +13,50 @@ import numpy as np
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.io import fits
+from astropy.modeling import bind_bounding_box, fix_inputs, models
 from astropy.modeling import bounding_box as mbbox
-from astropy.modeling import fix_inputs, models, bind_bounding_box
-from astropy.modeling.models import Mapping, Identity, Const1D, Scale, Tabular1D
+from astropy.modeling.models import Const1D, Identity, Mapping, Scale, Tabular1D
 from gwcs import coordinate_frames as cf
 from gwcs import selector
 from gwcs.wcstools import grid_from_bounding_box
-
 from stdatamodels.jwst.datamodels import (
-    CollimatorModel,
     CameraModel,
+    CollimatorModel,
     DisperserModel,
     FOREModel,
+    FPAModel,
     IFUFOREModel,
-    MSAModel,
-    OTEModel,
     IFUPostModel,
     IFUSlicerModel,
+    MSAModel,
+    OTEModel,
     WavelengthrangeModel,
-    FPAModel,
 )
 from stdatamodels.jwst.transforms.models import (
-    Rotation3DToGWA,
+    AngleFromGratingEquation,
     DirCos2Unitless,
+    Gwa2Slit,
+    Logical,
+    RefractionIndexFromPrism,
+    Rotation3DToGWA,
+    Slit,
     Slit2Msa,
     Slit2MsaLegacy,
-    AngleFromGratingEquation,
-    WavelengthFromGratingEquation,
-    Gwa2Slit,
-    Unitless2DirCos,
-    Logical,
-    Slit,
     Snell,
-    RefractionIndexFromPrism,
+    Unitless2DirCos,
+    WavelengthFromGratingEquation,
 )
 
+from jwst.assign_wcs import pointing
+from jwst.assign_wcs.util import (
+    MSAFileError,
+    NoDataOnDetectorError,
+    not_implemented_mode,
+    velocity_correction,
+)
 from jwst.lib.exposure_types import is_nrs_ifu_lamp
-from .util import MSAFileError, NoDataOnDetectorError, not_implemented_mode, velocity_correction
-from . import pointing
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 FIXED_SLIT_NUMS = {"NONE": 0, "S200A1": 1, "S200A2": 2, "S400A1": 3, "S1600A1": 4, "S200B1": 5}
 

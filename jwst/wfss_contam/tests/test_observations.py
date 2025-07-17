@@ -1,14 +1,14 @@
-import pytest
-import logging
 import copy
+import logging
+
 import numpy as np
-from numpy.testing import assert_allclose
-from astropy.stats import sigma_clipped_stats
-
+import pytest
 import stdatamodels.jwst.datamodels as dm
-from jwst.tests.helpers import LogWatcher
+from astropy.stats import sigma_clipped_stats
+from numpy.testing import assert_allclose
 
-from jwst.wfss_contam.observations import background_subtract, _select_ids, Observation
+from jwst.tests.helpers import LogWatcher
+from jwst.wfss_contam.observations import Observation, _select_ids, background_subtract
 
 
 @pytest.fixture

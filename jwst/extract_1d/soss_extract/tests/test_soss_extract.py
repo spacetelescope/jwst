@@ -1,13 +1,14 @@
 from functools import partial
-import pytest
+
 import numpy as np
-from stdatamodels.jwst.datamodels import SpecModel, SossWaveGridModel
+import pytest
+from stdatamodels.jwst.datamodels import SossWaveGridModel, SpecModel
 
 from jwst.extract_1d.soss_extract.soss_extract import (
-    _model_image,
     _compute_box_weights,
+    _model_image,
 )
-from .conftest import DATA_SHAPE
+from jwst.extract_1d.soss_extract.tests.conftest import DATA_SHAPE
 
 
 @pytest.fixture

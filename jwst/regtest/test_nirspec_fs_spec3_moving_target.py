@@ -1,10 +1,10 @@
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
-import pytest
 import numpy as np
+import pytest
 from gwcs import wcstools
-
-from jwst.stpipe import Step
 from stdatamodels.jwst import datamodels
+
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
+from jwst.stpipe import Step
 
 
 @pytest.fixture(scope="module")

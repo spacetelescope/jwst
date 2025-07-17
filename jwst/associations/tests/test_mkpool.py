@@ -10,7 +10,7 @@ from astropy.io import fits
 from astropy.utils.data import get_pkg_data_path
 
 from jwst.associations import AssociationPool
-from jwst.associations.mkpool import from_cmdline, mkpool, NON_HEADER_COLS
+from jwst.associations.mkpool import NON_HEADER_COLS, from_cmdline, mkpool
 
 # Optional column settings
 OPT_COLS = [

@@ -2,29 +2,27 @@
 Test suite for set_telescope_pointing
 """
 
-import logging
-import numpy as np
-from pathlib import Path
-import warnings
-
 import pytest
 
 pytest.importorskip("pysiaf")
 
+import logging  # noqa: E402
+import warnings  # noqa: E402
+
+import numpy as np  # noqa: E402
 from astropy.io import fits  # noqa: E402
 from astropy.table import Table  # noqa: E402
 from astropy.time import Time  # noqa: E402
-
+from astropy.utils.data import get_pkg_data_filename  # noqa: E402
 from stdatamodels.jwst import datamodels  # noqa: E402
 
-from jwst.lib import engdb_mast  # noqa: E402
+from jwst.lib import (
+    engdb_mast,  # noqa: E402
+    siafdb,  # noqa: E402
+)
 from jwst.lib import set_telescope_pointing as stp  # noqa: E402
-from jwst.lib import siafdb  # noqa: E402
+from jwst.lib.basic_utils import LoggingContext
 from jwst.tests.helpers import word_precision_check  # noqa: E402
-
-# Ensure that `set_telescope_pointing` logs.
-stp.logger.setLevel(logging.DEBUG)
-stp.logger.addHandler(logging.StreamHandler())
 
 # Setup mock engineering service
 STARTTIME = Time("2022-06-03T17:25:40", format="isot")
@@ -35,9 +33,6 @@ ZEROTIME_END = Time("2014-01-02")
 # Header defaults
 TARG_RA = 345.0
 TARG_DEC = -87.0
-
-# Get the mock databases
-DATA_PATH = Path(__file__).parent / "data"
 
 Q_EXPECTED = np.array([0.37671179, 0.70705936, -0.57895271, 0.15155541])
 J2FGS_EXPECTED = np.array(
@@ -304,9 +299,10 @@ def test_get_pointing_fail():
 
 
 def test_logging(caplog):
-    (q, j2fgs_matrix, fsmcorr, obstime, gs_commanded, fgsid, gs_position) = stp.get_pointing(
-        STARTTIME.mjd, ENDTIME.mjd
-    )
+    with LoggingContext(stp.logger, level=logging.DEBUG):
+        (q, j2fgs_matrix, fsmcorr, obstime, gs_commanded, fgsid, gs_position) = stp.get_pointing(
+            STARTTIME.mjd, ENDTIME.mjd
+        )
     assert "Determining pointing between observations times" in caplog.text
     assert "Telemetry search tolerance" in caplog.text
     assert "Reduction function" in caplog.text
@@ -339,7 +335,9 @@ def test_add_wcs_default(data_file, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(DATA_PATH / expected_name) as expected:
+        with datamodels.open(
+            get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")
+        ) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta], f"{meta} has changed"
 
@@ -351,7 +349,9 @@ def test_add_wcs_default(data_file, tmp_path):
 
 def test_add_wcs_default_fgsacq(tmp_path):
     """Handle when no pointing exists and the default is used."""
-    with datamodels.Level1bModel(DATA_PATH / "add_wcs_default_acq1.fits") as model:
+    with datamodels.Level1bModel(
+        get_pkg_data_filename("data/add_wcs_default_acq1.fits", package="jwst.lib.tests")
+    ) as model:
         expected_name = "add_wcs_default_acq1.fits"
         try:
             stp.update_wcs(model, tolerance=0, allow_default=True)
@@ -368,7 +368,7 @@ def test_add_wcs_default_fgsacq(tmp_path):
         assert model.meta.wcsinfo.crpix2 == 0
 
 
-def test_add_wcs_default_nosiaf(data_file_nosiaf, caplog):
+def test_add_wcs_default_nosiaf(data_file_nosiaf):
     """Handle when no pointing exists and the default is used and no SIAF specified."""
     with pytest.raises(ValueError):
         stp.add_wcs(data_file_nosiaf, tolerance=0, allow_default=True)
@@ -385,7 +385,9 @@ def test_add_wcs_with_db(data_file, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(DATA_PATH / expected_name) as expected:
+        with datamodels.open(
+            get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")
+        ) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
@@ -419,7 +421,9 @@ def test_add_wcs_with_mast(data_file_fromsim, fgsid, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(DATA_PATH / expected_name) as expected:
+        with datamodels.open(
+            get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")
+        ) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta], f"{meta} is not equal"
 
@@ -441,7 +445,9 @@ def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
         # Save for post-test comparison and update
         model.save(tmp_path / expected_name)
 
-        with datamodels.open(DATA_PATH / expected_name) as expected:
+        with datamodels.open(
+            get_pkg_data_filename(f"data/{expected_name}"), package="jwst.lib.tests"
+        ) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
 
@@ -504,7 +510,8 @@ def test_mirim_tamrs_siaf_values(data_file_nosiaf):
 def test_moving_target_update(caplog, data_file_moving_target):
     """Test moving target table updates."""
     with datamodels.open(data_file_moving_target) as model:
-        stp.update_mt_kwds(model)
+        with LoggingContext(stp.logger, level=logging.DEBUG):
+            stp.update_mt_kwds(model)
 
         expected_ra = 6.200036603575057e-05
         expected_dec = 1.7711407285091175e-10
@@ -519,7 +526,8 @@ def test_moving_target_update(caplog, data_file_moving_target):
 def test_moving_target_no_mtt(caplog, data_file):
     """Test moving target table updates, no table present."""
     with datamodels.open(data_file) as model:
-        stp.update_mt_kwds(model)
+        with LoggingContext(stp.logger, level=logging.DEBUG):
+            stp.update_mt_kwds(model)
 
         # No update without table
         assert model.meta.wcsinfo.mt_ra is None
@@ -532,7 +540,8 @@ def test_moving_target_tnotinrange(caplog, data_file_moving_target):
     """Test moving target table updates, time not in range."""
     with datamodels.open(data_file_moving_target) as model:
         model.meta.exposure.mid_time -= 0.2
-        stp.update_mt_kwds(model)
+        with LoggingContext(stp.logger, level=logging.DEBUG):
+            stp.update_mt_kwds(model)
 
         # No update without times in range
         assert model.meta.wcsinfo.mt_ra is None
@@ -624,7 +633,9 @@ def _test_methods(calc_transforms, matrix, truth_ext=""):
     transforms, t_pars = calc_transforms
 
     expected_tforms = stp.Transforms.from_asdf(
-        DATA_PATH / f"tforms_{t_pars.method}{truth_ext}.asdf"
+        get_pkg_data_filename(
+            f"data/tforms_{t_pars.method}{truth_ext}.asdf", package="jwst.lib.tests"
+        )
     )
     expected_value = getattr(expected_tforms, matrix)
 

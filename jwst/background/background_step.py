@@ -1,14 +1,12 @@
 #! /usr/bin/env python
+import numpy as np
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Step
-from .background_sub import background_sub
-from .background_sub_wfss import subtract_wfss_bkg
-from .asn_intake import asn_get_data
+from jwst.background.asn_intake import asn_get_data
+from jwst.background.background_sub import background_sub
 from jwst.background.background_sub_soss import subtract_soss_bkg
-
-import numpy as np
-
+from jwst.background.background_sub_wfss import subtract_wfss_bkg
+from jwst.stpipe import Step
 
 __all__ = ["BackgroundStep"]
 

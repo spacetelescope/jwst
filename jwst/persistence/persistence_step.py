@@ -1,8 +1,8 @@
 #! /usr/bin/env python
 from stdatamodels.jwst import datamodels
 
+from jwst.persistence import persistence
 from jwst.stpipe import Step
-from . import persistence
 
 __all__ = ["PersistenceStep"]
 

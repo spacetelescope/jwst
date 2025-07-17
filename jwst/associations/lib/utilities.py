@@ -1,8 +1,8 @@
 """General Utilities."""
 
+import logging
 from ast import literal_eval
 from functools import wraps
-import logging
 
 from numpy.ma import masked
 
@@ -10,7 +10,6 @@ from jwst.associations import config
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 def constrain_on_candidates(candidates):
@@ -28,7 +27,7 @@ def constrain_on_candidates(candidates):
     DMSAttrConstraint
         The constraint built off the candidate list.
     """
-    from .dms_base import DMSAttrConstraint
+    from jwst.associations.lib.dms_base import DMSAttrConstraint
 
     if candidates is not None and len(candidates):
         c_list = "|".join(candidates)
@@ -101,7 +100,7 @@ def filter_discovered_only(
     been constructed. Associations that have been Association.dump
     and then Association.load will not return proper results.
     """
-    from .prune import identify_dups
+    from jwst.associations.lib.prune import identify_dups
 
     # Split the associations along discovered/not discovered lines
     dups, valid = identify_dups(associations)

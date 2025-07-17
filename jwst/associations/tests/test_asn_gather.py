@@ -1,9 +1,9 @@
 """Test asn_gather functionality"""
 
-import pytest
-
-from pathlib import Path
 import shutil
+from pathlib import Path
+
+import pytest
 
 from jwst.associations import asn_gather
 from jwst.associations.asn_from_list import asn_from_list

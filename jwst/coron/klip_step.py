@@ -1,9 +1,8 @@
 #! /usr/bin/env python
 from stdatamodels.jwst import datamodels
 
+from jwst.coron import klip
 from jwst.stpipe import Step
-from . import klip
-
 
 __all__ = ["KlipStep"]
 

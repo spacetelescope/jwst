@@ -1,10 +1,10 @@
 #!/usr/bin/env python
-from stdatamodels.jwst.datamodels import CubeModel, TsoPhotModel, GainModel
+from stdatamodels.jwst.datamodels import CubeModel, GainModel, TsoPhotModel
 
-from jwst.stpipe import Step
-from jwst.lib.catalog_utils import replace_suffix_ext
 from jwst.lib import reffile_utils
-from .tso_photometry import tso_aperture_photometry
+from jwst.lib.catalog_utils import replace_suffix_ext
+from jwst.stpipe import Step
+from jwst.tso_photometry.tso_photometry import tso_aperture_photometry
 
 __all__ = ["TSOPhotometryStep"]
 

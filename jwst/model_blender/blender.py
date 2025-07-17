@@ -1,10 +1,9 @@
 from astropy.io import fits
 from stdatamodels import fits_support
 
-from .rules import make_blender
-from ._schemautil import parse_schema
-from ._tablebuilder import TableBuilder, table_to_schema
-
+from jwst.model_blender._schemautil import parse_schema
+from jwst.model_blender._tablebuilder import TableBuilder, table_to_schema
+from jwst.model_blender.rules import make_blender
 
 __all__ = ["ModelBlender"]
 

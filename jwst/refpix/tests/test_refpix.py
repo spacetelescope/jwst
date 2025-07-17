@@ -1,17 +1,15 @@
 import numpy as np
 import pytest
-
 from stdatamodels.jwst.datamodels import RampModel, dqflags
 
 from jwst.refpix import RefPixStep
 from jwst.refpix.reference_pixels import (
     Dataset,
     NIRDataset,
+    NRS_edgeless_subarrays,
     correct_model,
     create_dataset,
-    NRS_edgeless_subarrays,
 )
-
 
 conv_kernel_params = {
     "refpix_algorithm": "median",

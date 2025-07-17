@@ -1,7 +1,7 @@
 from stdatamodels.jwst import datamodels
 
+from jwst.pathloss import pathloss
 from jwst.stpipe import Step
-from . import pathloss
 
 __all__ = ["PathLossStep"]
 

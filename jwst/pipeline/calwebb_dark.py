@@ -3,27 +3,26 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Pipeline
+from jwst.dq_init import dq_init_step
+from jwst.emicorr import emicorr_step
+from jwst.firstframe import firstframe_step
 
 # step imports
 from jwst.group_scale import group_scale_step
-from jwst.dq_init import dq_init_step
-from jwst.emicorr import emicorr_step
-from jwst.saturation import saturation_step
 from jwst.ipc import ipc_step
-from jwst.superbias import superbias_step
+from jwst.lastframe import lastframe_step
+from jwst.linearity import linearity_step
 from jwst.refpix import refpix_step
 from jwst.reset import reset_step
 from jwst.rscd import rscd_step
-from jwst.firstframe import firstframe_step
-from jwst.lastframe import lastframe_step
-from jwst.linearity import linearity_step
+from jwst.saturation import saturation_step
+from jwst.stpipe import Pipeline
+from jwst.superbias import superbias_step
 
 __all__ = ["DarkPipeline"]
 
 # Define logging
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class DarkPipeline(Pipeline):

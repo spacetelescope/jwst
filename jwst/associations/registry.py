@@ -6,23 +6,22 @@ candidates from a list of PoolRow entries.
 """
 
 import importlib.util
-from inspect import getmembers, isclass, isfunction, ismethod, ismodule
 import logging
+from enum import EnumMeta
+from inspect import getmembers, isclass, isfunction, ismethod, ismodule
 from os.path import (
     expandvars,
 )
 from pathlib import Path
-from enum import EnumMeta
 
 from jwst.associations import libpath
-from .exceptions import AssociationError, AssociationNotValidError
-from .lib.callback_registry import CallbackRegistry
+from jwst.associations.exceptions import AssociationError, AssociationNotValidError
+from jwst.associations.lib.callback_registry import CallbackRegistry
 
 __all__ = ["AssociationRegistry", "RegistryMarker"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Library files
 _ASN_RULE = "association_rules.py"

@@ -5,14 +5,13 @@ from copy import copy
 
 from astropy.io.fits import getheader as fits_getheader
 
-from . import AssociationPool
+from jwst.associations import AssociationPool
 
 __all__ = ["mkpool"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
-LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
+LOGLEVELS = [logging.WARNING, logging.INFO, logging.DEBUG]
 
 # Header keywords to ignore
 IGNORE_KEYS = ("", "COMMENT", "HISTORY")
@@ -114,7 +113,7 @@ def mkpool(
     # Make sure there's no duplicates
     params = list(set(params))
     params.sort()
-    defaults = {param: "null" for param in params}
+    defaults = dict.fromkeys(params, "null")
     pool = AssociationPool(names=params, dtype=[object] * len(params))
 
     # Set non-header values from hard-coded defaults
@@ -217,7 +216,7 @@ def from_cmdline(args=None):
     parsed = parser.parse_args(args)
 
     # Set output detail.
-    level = LogLevels[min(len(LogLevels) - 1, parsed.verbose)]
+    level = LOGLEVELS[min(len(LOGLEVELS) - 1, parsed.verbose)]
     logger.setLevel(level)
 
     # That's all folks.

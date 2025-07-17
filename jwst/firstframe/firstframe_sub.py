@@ -1,13 +1,12 @@
 #
 #  Module for the firstframe correction for MIRI science data sets
 #
-import numpy as np
 import logging
 
+import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def do_correction(output, bright_use_group1=False):

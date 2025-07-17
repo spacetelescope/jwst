@@ -1,7 +1,6 @@
 """Test master_background.expand_to_2d."""
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
 from jwst.master_background import expand_to_2d

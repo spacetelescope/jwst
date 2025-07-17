@@ -1,9 +1,10 @@
+import numpy as np
+import pytest
 import stdatamodels.jwst.datamodels as dm
+
 from jwst.combine_1d import Combine1dStep
 from jwst.extract_1d import Extract1dStep
 from jwst.photom import PhotomStep
-import pytest
-import numpy as np
 
 
 @pytest.fixture(scope="module")

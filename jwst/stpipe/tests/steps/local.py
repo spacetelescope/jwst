@@ -1,8 +1,8 @@
-from jwst.stpipe import Step
 import logging
 
+from jwst.stpipe import Step
+
 log = logging.getLogger("FOO")
-log.setLevel(logging.DEBUG)
 
 
 class DummyStep(Step):

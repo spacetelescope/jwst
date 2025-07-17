@@ -3,12 +3,11 @@ import logging
 import warnings
 
 import numpy as np
-from scipy import interpolate
 from astropy.stats import sigma_clipped_stats as scs
+from scipy import interpolate
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 subarray_clocks = {
     "SLITLESSPRISM": {"rowclocks": 28, "frameclocks": 15904},

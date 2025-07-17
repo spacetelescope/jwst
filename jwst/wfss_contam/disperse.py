@@ -1,16 +1,14 @@
-import numpy as np
-import warnings
+import logging
 import multiprocessing as mp
+import warnings
 
+import numpy as np
 from scipy import sparse
 
 from jwst.lib.winclip import get_clipped_pixels
 from jwst.wfss_contam.sens1d import create_1d_sens
 
-import logging
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def _determine_native_wl_spacing(

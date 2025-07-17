@@ -1,5 +1,4 @@
 import numpy as np
-
 from stdatamodels.jwst.datamodels import RampModel, dqflags
 
 from jwst.rscd.rscd_sub import correction_skip_groups

@@ -1,4 +1,5 @@
 import pytest
+
 from jwst.scripts.set_velocity_aberration import parse_args
 
 
@@ -12,7 +13,7 @@ def test_argparse_set_velocity_aberration():
     assert args.filename == args2.filename
 
     args3 = parse_args(["filename0", "filename1", "filename2"])
-    assert args3.force_level1bmodel is True
+    assert args3.force_level1bmodel == 1
 
 
 def test_argparse_set_velocity_aberration_bad_input(capsys):

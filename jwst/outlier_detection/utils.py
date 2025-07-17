@@ -1,26 +1,25 @@
 """Utilities for outlier detection methods."""
 
 import copy
+import logging
 from functools import partial
-import numpy as np
 
-from jwst.lib.pipe_utils import match_nans_and_flags
-from jwst.resample.resample import compute_image_pixel_area
-from stcal.resample.utils import build_driz_weight
+import numpy as np
+from stcal.outlier_detection.median import MedianComputer, nanmedian3D
 from stcal.outlier_detection.utils import (
     compute_weight_threshold,
-    gwcs_blot,
     flag_crs,
     flag_resampled_crs,
+    gwcs_blot,
 )
-from stcal.outlier_detection.median import MedianComputer, nanmedian3D
+from stcal.resample.utils import build_driz_weight
 from stdatamodels.jwst import datamodels
-from . import _fileio
 
-import logging
+from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.outlier_detection import _fileio
+from jwst.resample.resample import compute_image_pixel_area
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]

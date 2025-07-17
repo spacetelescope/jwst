@@ -2,20 +2,19 @@
 
 import logging
 import multiprocessing
-import numpy as np
 
+import numpy as np
+from astropy.table import Table
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import (
     NIRCAMBackwardGrismDispersion,
     NIRISSBackwardGrismDispersion,
 )
-from astropy.table import Table
 
-from .observations import Observation
-from .sens1d import get_photom_data
+from jwst.wfss_contam.observations import Observation
+from jwst.wfss_contam.sens1d import get_photom_data
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def determine_multiprocessing_ncores(max_cores, num_cores):

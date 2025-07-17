@@ -1,12 +1,10 @@
 """Basic routines used to set up IFU cubes."""
 
 import logging
-from . import cube_build_io_util
-from . import file_table
-from . import instrument_defaults
+
+from jwst.cube_build import cube_build_io_util, file_table, instrument_defaults
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class CubeData:

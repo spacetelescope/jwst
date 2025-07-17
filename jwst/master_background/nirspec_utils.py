@@ -3,9 +3,7 @@ import warnings
 
 from scipy.signal import medfilt
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def apply_master_background(source_model, bkg_model, inverse=False):
@@ -26,7 +24,7 @@ def apply_master_background(source_model, bkg_model, inverse=False):
     output_model: `~jwst.datamodels.MultiSlitModel`
         The output background-subtracted data model.
     """
-    from .master_background_step import subtract_2d_background
+    from jwst.master_background.master_background_step import subtract_2d_background
 
     if inverse:
         log.info("Adding master background from each MOS source slitlet")
@@ -66,7 +64,7 @@ def map_to_science_slits(input_model, master_bkg):
     output_model: `~jwst.datamodels.MultiSlitModel`
         The output data model containing background signal.
     """
-    from .expand_to_2d import expand_to_2d
+    from jwst.master_background.expand_to_2d import expand_to_2d
 
     log.info("Interpolating 1D master background to all MOS 2D slitlets")
 

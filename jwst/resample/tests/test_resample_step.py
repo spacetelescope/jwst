@@ -1,28 +1,25 @@
-import pytest
 import warnings
 from copy import deepcopy
 
 import asdf
 import numpy as np
+import pytest
 from astropy.io import fits
-
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-
+from stcal.resample.utils import build_driz_weight, compute_mean_pixel_area
 from stdatamodels.jwst.datamodels import ImageModel, dqflags
-from stcal.resample.utils import compute_mean_pixel_area, build_driz_weight
 
-from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.util import compute_scale
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep
 from jwst.resample import ResampleSpecStep, ResampleStep
 from jwst.resample.resample import input_jwst_model_to_dict
-from jwst.resample.resample_step import GOOD_BITS
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
+from jwst.resample.resample_step import GOOD_BITS
 from jwst.resample.resample_utils import load_custom_wcs
-
 
 _FLT32_EPS = np.finfo(np.float32).eps
 

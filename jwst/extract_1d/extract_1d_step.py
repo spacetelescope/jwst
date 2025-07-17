@@ -3,10 +3,10 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, SourceModelContainer
 from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure
-from jwst.stpipe import Step
 from jwst.extract_1d import extract
-from jwst.extract_1d.soss_extract import soss_extract
 from jwst.extract_1d.ifu import ifu_extract1d
+from jwst.extract_1d.soss_extract import soss_extract
+from jwst.stpipe import Step
 
 __all__ = ["Extract1dStep"]
 

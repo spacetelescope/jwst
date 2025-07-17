@@ -5,15 +5,14 @@ from stdatamodels.jwst.datamodels import ImageModel, dqflags
 from stdatamodels.jwst.transforms.models import Slit
 
 from jwst.assign_wcs import AssignWcsStep
+from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.msaflagopen.msaflag_open import (
     boundingbox_to_indices,
     create_slitlets,
     get_failed_open_shutters,
     wcs_to_dq,
 )
-from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.stpipe import Step
-
 
 MSA_FAILED_OPEN = dqflags.pixel["MSA_FAILED_OPEN"]
 

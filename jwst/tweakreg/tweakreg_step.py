@@ -6,19 +6,17 @@ JWST pipeline step for image alignment.
 
 from pathlib import Path
 
+import stcal.tweakreg.tweakreg as twk
 from astropy.table import Table
 from astropy.time import Time
 from tweakwcs.correctors import JWSTWCSCorrector
 
-import stcal.tweakreg.tweakreg as twk
-
-from jwst.stpipe import record_step_status
 from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 from jwst.datamodels import ModelLibrary
 
 # LOCAL
-from jwst.stpipe import Step
-from .tweakreg_catalog import make_tweakreg_catalog
+from jwst.stpipe import Step, record_step_status
+from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
 
 
 def _oxford_or_str_join(str_list):

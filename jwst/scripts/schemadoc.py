@@ -8,17 +8,13 @@ import argparse
 import logging
 from pathlib import Path
 
-from stdatamodels.schema import build_docstring
 from stdatamodels.jwst.datamodels import _defined_models as defined_models
-
-
-# Set logger to only print to screen
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+from stdatamodels.schema import build_docstring
 
 
 def get_docstrings(template, model_names, all_models=False):
     """Get the docstring for every model class."""
+    logger = logging.getLogger()
     if all_models:
         klasses = defined_models
     else:
@@ -30,10 +26,10 @@ def get_docstrings(template, model_names, all_models=False):
         try:
             docstring = build_docstring(klass, template)
         except Exception as err:
-            logging.error(f"{klassname} : {err}")
+            logger.error(f"{klassname} : {err}")
         else:
-            logging.info(f".. {klassname} ..")
-            logging.info(docstring)
+            logger.info(f".. {klassname} ..")
+            logger.info(docstring)
 
 
 def main():
@@ -48,6 +44,10 @@ def main():
     parser.add_argument("-t", "--template", type=str, help="input file containing templates")
     parser.add_argument("models", nargs="*", help="Models to generate docstrings for")
     args = parser.parse_args()
+
+    # Set logger to only print to screen
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
 
     if args.template is None:
         template = "{path} : {title} ({datatype})\n"

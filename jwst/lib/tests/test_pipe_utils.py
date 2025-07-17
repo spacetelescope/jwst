@@ -1,14 +1,12 @@
 """Test utilities"""
 
-import pytest
-
 import numpy as np
-
+import pytest
 from stdatamodels.jwst import datamodels
 from stdatamodels.properties import ObjectNode
 
-from jwst.lib import pipe_utils
 from jwst.associations.lib import dms_base
+from jwst.lib import pipe_utils
 from jwst.lib.pipe_utils import is_tso
 
 all_exp_types = (

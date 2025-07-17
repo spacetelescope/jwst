@@ -13,7 +13,6 @@ from jwst import datamodels
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Step classes that are not user-api steps
 NON_STEPS = [

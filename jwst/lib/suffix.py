@@ -25,7 +25,6 @@ __all__ = ["remove_suffix"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Suffixes that are hard-coded or otherwise
 # have to exist. Used by `find_suffixes` to

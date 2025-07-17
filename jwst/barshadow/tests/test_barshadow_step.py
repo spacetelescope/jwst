@@ -7,9 +7,9 @@ from stdatamodels.jwst import datamodels
 
 import jwst
 from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.tests.test_nirspec import create_nirspec_mos_file
 from jwst.barshadow import BarShadowStep
 from jwst.extract_2d import Extract2dStep
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_mos_file
 
 
 def create_nirspec_mos_model():

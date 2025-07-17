@@ -25,7 +25,10 @@ Algorithm
 The algorithm performs a simple sum of the flux values over all
 wavelengths for each extracted spectrum contained in the input product.
 If provided, ``min_wavelength`` and ``max_wavelength`` will modify the
-bounds of the sum to the specified bounds.
+bounds of the sum to the specified bounds. For NIRISS SOSS data, if the
+``min_wavelength`` and ``max_wavelength`` are not provided, a wavelength
+range appropriate to each filter and spectral order will be used; these 
+are read from the WAVELENGTHRANGE reference file.
 
 Output product
 --------------

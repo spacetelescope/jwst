@@ -5,6 +5,7 @@ import warnings
 import numpy as np
 from astropy import coordinates as coord
 from astropy import units as u
+from astropy.modeling.fitting import LinearLSQFitter
 from astropy.modeling.models import (
     Const1D,
     Linear1D,
@@ -13,22 +14,18 @@ from astropy.modeling.models import (
     RotateNative2Celestial,
     Tabular1D,
 )
-from astropy.modeling.fitting import LinearLSQFitter
 from astropy.stats import sigma_clip
-
 from astropy.utils.exceptions import AstropyUserWarning
-from gwcs import wcstools, WCS
+from gwcs import WCS, wcstools
 from gwcs import coordinate_frames as cf
-
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.util import compute_scale, wcs_bbox_from_shape, wrap_ra
+from jwst.datamodels import ModelLibrary
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleImage
-from jwst.datamodels import ModelLibrary
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["ResampleSpec"]

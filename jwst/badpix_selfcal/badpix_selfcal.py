@@ -1,11 +1,12 @@
 from __future__ import annotations
+
 import warnings
 
 import numpy as np
-
-from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 from stcal.outlier_detection.utils import medfilt
 from stdatamodels.jwst.datamodels.dqflags import pixel
+
+from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 
 
 def badpix_selfcal(

@@ -1,8 +1,7 @@
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 from photutils.datasets import make_gwcs
-
 from stdatamodels.jwst.datamodels import ImageModel
 
 from jwst.source_catalog import SourceCatalogStep
