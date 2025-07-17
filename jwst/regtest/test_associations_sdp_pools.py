@@ -85,7 +85,10 @@ def test_std(_jail, rtdata, resource_tracker, request, pool_args):
 #       test_associations_standards.py test module (slow).
 @pytest.mark.parametrize(
     "pool_args",
-    [pytest.param(("jw01467_20250316t025827_pool", []), id="pool_004_wfs")],
+    [
+        pytest.param(("jw01467_20250316t025827_pool", []), id="pool_004_wfs"),
+        pytest.param(("jw04090_20250316t054542_pool", []), id="pool_013_coron_nircam"),
+    ],
     ids=parfunc,
 )
 @pytest.mark.slow
