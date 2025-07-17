@@ -69,7 +69,8 @@ jobs:
       cache-path: /tmp/data/crds_cache
       cache-key: crds-${{ needs.crds_context.outputs.context }}
       artifact-path: |
-        /tmp/result-*.xml
+        result.xml
+        **/result.xml
       envs: |
         - linux: py311-oldestdeps-xdist-cov
         - linux: py311-xdist
