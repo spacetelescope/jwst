@@ -6,6 +6,8 @@ from scipy.interpolate import RegularGridInterpolator
 
 log = logging.getLogger(__name__)
 
+__all__ = ["expfunc_bounded", "get_correction_function", "time_correction"]
+
 # Set of routines to find a  correction for a time-wavelength
 # photometric response that is particularly significant at long wavelengths.
 

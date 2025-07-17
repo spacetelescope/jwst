@@ -22,6 +22,8 @@ MJSR_TO_UJA2 = (u.megajansky / u.steradian).to(u.microjansky / u.arcsecond / u.a
 # Conversion factor from square arcseconds to steradians
 A2_TO_SR = (np.pi / (180.0 * 3600.0)) ** 2
 
+__all__ = ["MatchFitsTableRowError", "DataModelTypeError", "find_row", "DataSet"]
+
 
 class MatchFitsTableRowError(Exception):
     """Class to handle error when matching FITS Table rows."""
