@@ -4,6 +4,8 @@ import re
 from collections import namedtuple
 from pathlib import Path
 
+__all__ = ["replace_suffix_ext", "SkyObject"]
+
 
 def replace_suffix_ext(filename, old_suffix_list, new_suffix, output_ext="ecsv", output_dir=None):
     """
