@@ -1,6 +1,6 @@
 # Spacetelescope Open Source Code of Conduct
 
-We expect all "spacetelescope" organization projects to adopt a code of conduct that ensures a productive, respectful environment for all open source contributors and participants. We are committed to providing a strong and enforced code of conduct and expect everyone in our community to follow these guidelines when interacting with others in all forums. Our goal is to keep ours a positive, inclusive, successful, and growing community. The community of participants in open source Astronomy projects is made up of members from around the globe with a diverse set of skills, personalities, and experiences. It is through these differences that our community experiences success and continued growth. 
+We expect all "spacetelescope" organization projects to adopt a code of conduct that ensures a productive, respectful environment for all open source contributors and participants. We are committed to providing a strong and enforced code of conduct and expect everyone in our community to follow these guidelines when interacting with others in all forums. Our goal is to keep ours a positive, inclusive, successful, and growing community. The community of participants in open source Astronomy projects is made up of members from around the globe with a diverse set of skills, personalities, and experiences. It is through these differences that our community experiences success and continued growth.
 
 
 As members of the community,
@@ -20,5 +20,5 @@ As members of the community,
 This code of conduct applies to all community situations online and offline, including mailing lists, forums, social media, conferences, meetings, associated social events, and one-to-one interactions.
 
 Parts of this code of conduct have been adapted from the Astropy and Numfocus codes of conduct.
-http://www.astropy.org/code_of_conduct.html
+https://www.astropy.org/code_of_conduct.html
 https://www.numfocus.org/about/code-of-conduct/
