@@ -64,7 +64,9 @@ total-error array includes source Poisson noise.
 Source Position
 ---------------
 The source centroid is computed as the center of mass of the unmasked pixels
-within the source segment. As such, the centroid depends on the source morphology,
+within the source segment (see
+`photutils SourceCatalog <https://photutils.readthedocs.io/en/stable/api/photutils.segmentation.SourceCatalog.html>`_)
+for details. As such, the centroid depends on the source morphology,
 the parameters passed to the segmentation algorithm, and the local background
 noise properties. This also makes the uncertainty in the centroid position
 difficult to estimate, and a formal error estimate is not provided by the step.
