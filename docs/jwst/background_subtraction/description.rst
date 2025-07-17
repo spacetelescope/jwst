@@ -25,12 +25,12 @@ modes, a list of one or more background exposures.  For WFSS modes, background
 exposures are not required, but the target exposure must have a WCS applied,
 and it must have a source catalog identified prior to processing.
 
-When run as a standalone step, the input may be specified either as file name(s)
+When run as a standalone step, the input may be specified either as file names
 for appropriate intermediate products or as a file name for an association
-that contains these filenames.
+that contains these file names.
 
 For example, for a non-WFSS mode observation, the background subtraction step can be run
-on an intermediate target exposure `exp_001`, subtracting `exp_002` and `exp_003` rate files
+on an intermediate target exposure exp_001, subtracting exp_002 and exp_003 rate files
 as follows::
 
     strun bkg_subtract exp_001_assignwcsstep.fits --bkg_list=exp_002_rate.fits,exp_003_rate.fits
