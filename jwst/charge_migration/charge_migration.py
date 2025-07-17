@@ -13,6 +13,8 @@ CHLO = dqflags.group["CHARGELOSS"]
 
 CHLO_DNU = CHLO + DNU
 
+__all__ = ["charge_migration", "flag_pixels"]
+
 
 def charge_migration(output_model, signal_threshold):
     """
