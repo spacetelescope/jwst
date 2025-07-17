@@ -1,13 +1,13 @@
 """Regression tests for STFitsDiff"""
 
-import pytest
 import warnings
 
-from jwst.stpipe import Step
-from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
-from jwst.regtest.test_stfitsdiff import report_to_list
+import pytest
 from astropy.io.fits.diff import FITSDiff
 
+from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
+from jwst.regtest.test_stfitsdiff import report_to_list
+from jwst.stpipe import Step
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata]

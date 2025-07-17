@@ -2,11 +2,11 @@
 
 import numpy as np
 import pytest
-
-from stdatamodels.jwst import datamodels
-from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
-from astropy.io.fits.diff import FITSDiff
 from astropy.io import fits
+from astropy.io.fits.diff import FITSDiff
+from stdatamodels.jwst import datamodels
+
+from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
 
 @pytest.fixture(scope="module")
