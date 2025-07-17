@@ -11,6 +11,8 @@ from pathlib import Path
 from stdatamodels.jwst.datamodels import _defined_models as defined_models
 from stdatamodels.schema import build_docstring
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def get_docstrings(template, model_names, all_models=False):
     """Get the docstring for every model class."""

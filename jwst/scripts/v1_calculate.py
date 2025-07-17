@@ -19,6 +19,8 @@ REDUCE_FUNCS_MAPPING = {
 }
 REDUCE_FUNCS = list(REDUCE_FUNCS_MAPPING.keys())
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 # Begin execution
 def main():

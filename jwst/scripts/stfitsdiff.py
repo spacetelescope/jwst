@@ -9,6 +9,8 @@ from argparse import ArgumentParser
 
 from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def _is_number(s):
     is_number = True

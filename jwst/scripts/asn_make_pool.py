@@ -2,6 +2,8 @@
 
 from jwst.associations import mkpool
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def main():
     """

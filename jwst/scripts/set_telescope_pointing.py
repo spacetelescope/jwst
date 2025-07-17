@@ -17,6 +17,8 @@ from pathlib import Path
 
 import jwst.lib.set_telescope_pointing as stp
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def main():
     """Set the initial world coordinate system."""
