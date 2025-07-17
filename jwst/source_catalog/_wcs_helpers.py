@@ -3,6 +3,8 @@
 import astropy.units as u
 import numpy as np
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def pixel_scale_angle_at_skycoord(skycoord, wcs, offset=1 * u.arcsec):
     """
