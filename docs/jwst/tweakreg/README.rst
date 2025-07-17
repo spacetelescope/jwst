@@ -27,7 +27,7 @@ in conjunction with ``photutils.segmentation.SourceCatalog``.
 
 DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
-<http://adsabs.harvard.edu/abs/1987PASP...99..191S>`_).  It searches
+<https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract>`_).  It searches
 images for local density maxima that have a peak amplitude greater
 than a specified threshold (the threshold is applied to a convolved
 image) and have a size and shape similar to a defined 2D Gaussian

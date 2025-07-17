@@ -78,8 +78,7 @@ together before being subtracted from the target exposure. Iterative sigma
 clipping is applied during the averaging process, to reject sources or other
 outliers.
 The clipping is accomplished using the function
-`astropy.stats.sigma_clip
-<http://docs.astropy.org/en/stable/api/astropy.stats.sigma_clip.html>`_.
+:func:`astropy.stats.sigma_clip`.
 The background step allows users to supply values for the ``sigma_clip``
 parameters ``sigma`` and ``maxiters`` (see :ref:`bkg_step_args`),
 in order to control the clipping operation.
@@ -114,7 +113,7 @@ background image is produced as follows:
 #. Combine the DQ arrays of all background exposures, by first using a bitwise
    OR operation over all integrations in each exposure, followed by doing by a
    bitwise OR operation over all exposures.
-        
+
 The average background exposure is then subtracted from the target exposure.
 The subtraction consists of the following operations:
 
@@ -144,7 +143,7 @@ signal level of the WFSS image within background (source-free) regions of the
 image. The scaling factor is determined based on the variance-weighted mean
 of the science data, i.e., ``factor = sum(sci*bkg/var) / sum(bkg*bkg/var)``.
 This factor is equivalent to solving for the scaling constant applied to the
-reference background that gives the maximum likelihood of matching 
+reference background that gives the maximum likelihood of matching
 the science data.
 Outliers are rejected iteratively during determination of the scaling factor
 in order to avoid biasing the scaling factor based on outliers. The iterative

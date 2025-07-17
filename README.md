@@ -2,11 +2,11 @@
 
 [![Build Status](https://github.com/spacetelescope/jwst/actions/workflows/ci.yml/badge.svg)](https://github.com/spacetelescope/jwst/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/gh/spacetelescope/jwst/branch/main/graph/badge.svg?token=Utf5Zs9g7z)](https://codecov.io/gh/spacetelescope/jwst)
-[![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](http://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
+[![Documentation Status](https://readthedocs.org/projects/jwst-pipeline/badge/?version=latest)](https://jwst-pipeline.readthedocs.io/en/latest/?badge=latest)
 [![Pre-Commit](https://img.shields.io/badge/pre--commit-enabled-brightgreen?logo=pre-commit&logoColor=white)](https://github.com/pre-commit/pre-commit)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
-[![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](http://www.stsci.edu)
-[![Powered by Astropy Badge](http://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](http://www.astropy.org/)
+[![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](https://www.stsci.edu)
+[![Powered by Astropy Badge](https://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](https://www.astropy.org/)
 [![DOI](https://zenodo.org/badge/60551519.svg)](https://zenodo.org/badge/latestdoi/60551519)
 
 ![STScI Logo](docs/_static/stsci_logo.png)
@@ -89,7 +89,7 @@ which may be found in the corresponding release documentation, e.g.:
 https://ssb.stsci.edu/stasis/releases/jwst/JWSTDP-1.16.1/delivery/README-py312-macos-x86_64.html
 The installation procedures may change from time to time, so consulting the
 documentation page for the specific version in question is the best way to get
-that version installed. 
+that version installed.
 
 To install a particular DMS build, consult the
 [Software vs DMS build version map](https://github.com/spacetelescope/jwst#software-vs-dms-build-version-map)
@@ -117,7 +117,7 @@ MacOS x86_64:
 
 
 Starting with the jwst 1.16.1 release, we updated our release procedures to use
-[stasis](https://github.com/spacetelescope/stasis). For releases prior to 1.16.1, 
+[stasis](https://github.com/spacetelescope/stasis). For releases prior to 1.16.1,
 please instead follow the directions below. The complete list of releases prior to 1.16.1
 is available on [astroconda-releases](https://github.com/astroconda/astroconda-releases/tree/master/jwstdp).
 
