@@ -5,6 +5,8 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = ["do_correction"]
+
 
 def do_correction(sp_leak_ref, ch1b, ch3a):
     """

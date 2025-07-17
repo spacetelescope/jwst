@@ -8,6 +8,8 @@ from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
 
+__all__ = ["do_correction", "subtract_bias"]
+
 
 def do_correction(input_model, bias_model):
     """
