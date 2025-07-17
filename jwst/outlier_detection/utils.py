@@ -16,9 +16,8 @@ from stcal.resample.utils import build_driz_weight
 from stdatamodels.jwst import datamodels
 
 from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.outlier_detection import _fileio
 from jwst.resample.resample import compute_image_pixel_area
-
-from . import _fileio
 
 log = logging.getLogger(__name__)
 

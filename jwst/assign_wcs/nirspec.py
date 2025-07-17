@@ -47,10 +47,14 @@ from stdatamodels.jwst.transforms.models import (
     WavelengthFromGratingEquation,
 )
 
+from jwst.assign_wcs import pointing
+from jwst.assign_wcs.util import (
+    MSAFileError,
+    NoDataOnDetectorError,
+    not_implemented_mode,
+    velocity_correction,
+)
 from jwst.lib.exposure_types import is_nrs_ifu_lamp
-
-from . import pointing
-from .util import MSAFileError, NoDataOnDetectorError, not_implemented_mode, velocity_correction
 
 log = logging.getLogger(__name__)
 

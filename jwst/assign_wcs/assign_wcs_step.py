@@ -3,13 +3,17 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs.assign_wcs import load_wcs
+from jwst.assign_wcs.nircam import imaging as nircam_imaging
+from jwst.assign_wcs.niriss import imaging as niriss_imaging
+from jwst.assign_wcs.util import (
+    MSAFileError,
+    update_fits_wcsinfo,
+    wcs_bbox_from_shape,
+    wfss_imaging_wcs,
+)
 from jwst.lib.exposure_types import IMAGING_TYPES
 from jwst.stpipe import Step
-
-from .assign_wcs import load_wcs
-from .nircam import imaging as nircam_imaging
-from .niriss import imaging as niriss_imaging
-from .util import MSAFileError, update_fits_wcsinfo, wcs_bbox_from_shape, wfss_imaging_wcs
 
 log = logging.getLogger(__name__)
 

@@ -1,11 +1,10 @@
 #! /usr/bin/env python
 import logging
 
+from jwst.assign_mtwcs.moving_target_wcs import assign_moving_target_wcs
 from jwst.datamodels import ModelLibrary
 from jwst.stpipe import Step
 from jwst.stpipe.utilities import record_step_status
-
-from .moving_target_wcs import assign_moving_target_wcs
 
 log = logging.getLogger(__name__)
 

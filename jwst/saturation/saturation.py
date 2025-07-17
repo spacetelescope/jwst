@@ -6,8 +6,7 @@ from stcal.saturation.saturation import flag_saturated_pixels
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.lib import reffile_utils
-
-from . import x_irs2
+from jwst.saturation import x_irs2
 
 log = logging.getLogger(__name__)
 
