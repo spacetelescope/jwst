@@ -7,6 +7,8 @@ import logging
 
 log = logging.getLogger(__name__)
 
+__all__ = ["do_correction"]
+
 
 def do_correction(model):
     """
