@@ -101,9 +101,9 @@ def create_reference_files(datamodel):
     return refs
 
 
-def create_nirspec_imaging_file(filter_name="F290LP"):
+def create_nirspec_imaging_file(filter_name="F290LP", exptype="NRS_IMAGE"):
     image = create_hdul()
-    image[0].header["exp_type"] = "NRS_IMAGE"
+    image[0].header["exp_type"] = exptype
     image[0].header["filter"] = filter_name
     image[0].header["grating"] = "MIRROR"
     image[0].header["lamp"] = "NONE"
@@ -165,12 +165,13 @@ def create_nirspec_fs_file(grating, filter, lamp="N/A"):
     return image
 
 
-def test_nirspec_imaging():
+@pytest.mark.parametrize("exptype", ["NRS_IMAGE", "NRS_LAMP"])
+def test_nirspec_imaging(exptype):
     """
     Test Nirspec Imaging mode using build 6 reference files.
     """
     # Test creating the WCS
-    f = create_nirspec_imaging_file()
+    f = create_nirspec_imaging_file(exptype=exptype)
     im = datamodels.ImageModel(f)
 
     refs = create_reference_files(im)
@@ -189,6 +190,28 @@ def test_nirspec_imaging():
     msa2det = im.meta.wcs.get_transform("msa", "detector")
     result = msa2det(1.0, 2.0)
     assert len(result) == 2
+
+
+@pytest.mark.parametrize("exptype", ["NRS_IMAGE", "NRS_LAMP"])
+def test_nirspec_imaging_via_step_call(exptype):
+    """Test Nirspec Imaging modes in the step call."""
+    f = create_nirspec_imaging_file(exptype=exptype)
+    im = datamodels.ImageModel(f)
+    result = assign_wcs_step.AssignWcsStep.call(im)
+    assert result.meta.wcs.available_frames == [
+        "detector",
+        "sca",
+        "gwa",
+        "msa",
+        "oteip",
+        "v2v3",
+        "v2v3vacorr",
+        "world",
+    ]
+    if exptype == "NRS_LAMP":
+        assert result.meta.wcs.bounding_box is None
+    else:
+        assert result.meta.wcs.bounding_box is not None
 
 
 def test_nirspec_imaging_opaque():
