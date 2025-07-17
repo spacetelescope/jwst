@@ -26,6 +26,20 @@ log = logging.getLogger(__name__)
 # region to mask.
 NRS_FS_REGION = [922, 1116]
 
+__all__ = [
+    "make_rate",
+    "post_process_rate",
+    "mask_ifu_slices",
+    "mask_slits",
+    "clip_to_background",
+    "create_mask",
+    "background_level",
+    "fft_clean_full_frame",
+    "fft_clean_subarray",
+    "median_clean",
+    "do_correction",
+]
+
 
 def make_rate(input_model, input_dir="", return_cube=False):
     """
