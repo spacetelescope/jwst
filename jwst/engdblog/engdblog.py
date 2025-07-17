@@ -2,6 +2,8 @@ from jwst.lib.engdb_mast import EngdbMast
 from jwst.lib.engdb_tools import ENGDB_Service
 from jwst.stpipe import Step
 
+__all__ = ["EngDBLogStep"]
+
 
 class EngDBLogStep(Step):
     """
