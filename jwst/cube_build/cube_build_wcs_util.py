@@ -10,8 +10,11 @@ from jwst.assign_wcs.util import wrap_ra
 
 log = logging.getLogger(__name__)
 
+__all__ = ["find_corners_miri", "find_corners_nirspec"]
 
 # ******************************************************************************
+
+
 def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
     """
     For MIRI channel data find the footprint of this data on the sky.

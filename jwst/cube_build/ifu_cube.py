@@ -24,6 +24,8 @@ from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
 
 log = logging.getLogger(__name__)
 
+__all__ = ["IFUCubeData", "IncorrectInputError", "IncorrectParameterError"]
+
 
 class IFUCubeData:
     """Combine IFU data onto a regular grid."""
@@ -2827,14 +2829,12 @@ class IFUCubeData:
         return ra_new, dec_new
 
 
-# class Error_incorrect_input(Exception):
 class IncorrectInputError(Exception):
     """Raise an exception if Interpolation=area when more than 1 file is used to build cube."""
 
     pass
 
 
-# class Error_incorrect_parameter(Exception):
 class IncorrectParameterError(Exception):
     """Raise an exception if cube building parameter is nan."""
 
