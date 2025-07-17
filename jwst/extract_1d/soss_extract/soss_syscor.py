@@ -5,6 +5,8 @@ from astropy.stats import SigmaClip
 
 log = logging.getLogger(__name__)
 
+__all__ = ["soss_background", "make_background_mask"]
+
 
 def soss_background(scidata, scimask, bkg_mask):
     """

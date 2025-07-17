@@ -18,6 +18,8 @@ from jwst.extract_1d.soss_extract import atoca_utils
 
 log = logging.getLogger(__name__)
 
+__all__ = ["MaskOverlapError", "ExtractionEngine"]
+
 
 class MaskOverlapError(Exception):
     """Exception to raise if there are too few valid pixels in a spectral order."""
