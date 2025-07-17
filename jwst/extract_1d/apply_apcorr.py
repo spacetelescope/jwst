@@ -6,6 +6,8 @@ from stdatamodels.jwst.datamodels import MultiSlitModel
 
 from jwst.assign_wcs.util import compute_scale
 
+__all__ = ["ApCorrBase", "ApCorrPhase", "ApCorrRadial", "ApCorr", "select_apcorr"]
+
 
 class ApCorrBase(abc.ABC):
     """Base class for aperture correction classes."""
