@@ -8,6 +8,8 @@ from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
 
+__all__ = ["median_fill_value", "median_replace_img", "separate_non_science_pixels"]
+
 
 def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
     """

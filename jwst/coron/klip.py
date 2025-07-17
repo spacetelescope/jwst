@@ -6,6 +6,8 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
+__all__ = ["klip", "karhunen_loeve_transform"]
+
 
 def klip(target_model, refs_model, truncate):
     """
