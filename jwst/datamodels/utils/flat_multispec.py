@@ -9,6 +9,17 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "determine_vector_and_meta_columns",
+    "make_empty_recarray",
+    "populate_recarray",
+    "set_schema_units",
+    "copy_column_units",
+    "copy_spec_metadata",
+    "expand_table",
+    "expand_flat_spec",
+]
+
 
 def determine_vector_and_meta_columns(input_datatype, output_datatype):
     """

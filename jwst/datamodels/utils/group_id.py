@@ -1,3 +1,6 @@
+__all__ = ["attrs_to_group_id"]
+
+
 def attrs_to_group_id(obs_meta):
     """
     Combine a number of file metadata values into a ``group_id`` string.

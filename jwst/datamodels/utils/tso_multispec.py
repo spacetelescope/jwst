@@ -3,6 +3,8 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels.utils import flat_multispec
 
+__all__ = ["make_tso_specmodel"]
+
 
 def make_tso_specmodel(spec_list, segment=None):
     """
