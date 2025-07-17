@@ -10,6 +10,12 @@ on:
   pull_request:
     branches:
       - main
+      - '*x'
+    # We also want this workflow triggered if the 'run devdeps tests' label is added
+    # or present when PR is updated
+    types:
+      - synchronize
+      - labeled
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
