@@ -85,6 +85,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
     if (
         instrument.lower() == "nirspec"
         and output_model.meta.exposure.type.lower() not in IMAGING_TYPES
+        and output_model.meta.instrument.grating.lower() != "mirror"
     ):
         cbbox = mod.generate_compound_bbox(output_model)
         output_model.meta.wcs.bounding_box = cbbox
