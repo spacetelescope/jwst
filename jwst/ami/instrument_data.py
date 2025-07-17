@@ -4,8 +4,8 @@ import logging
 import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
-from . import bp_fix, utils
-from .mask_definition_ami import NRMDefinition
+from jwst.ami import bp_fix, utils
+from jwst.ami.mask_definition_ami import NRMDefinition
 
 log = logging.getLogger(__name__)
 

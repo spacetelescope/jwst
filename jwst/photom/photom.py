@@ -10,8 +10,7 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst.lib.dispaxis import get_dispersion_direction
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
-
-from . import miri_imager, miri_mrs
+from jwst.photom import miri_imager, miri_mrs
 
 log = logging.getLogger(__name__)
 

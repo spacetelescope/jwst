@@ -5,7 +5,7 @@ from copy import copy
 
 from astropy.io.fits import getheader as fits_getheader
 
-from . import AssociationPool
+from jwst.associations import AssociationPool
 
 __all__ = ["mkpool"]
 

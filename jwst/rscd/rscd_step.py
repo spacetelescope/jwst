@@ -1,8 +1,7 @@
 from stdatamodels.jwst import datamodels
 
+from jwst.rscd import rscd_sub
 from jwst.stpipe import Step
-
-from . import rscd_sub
 
 __all__ = ["RscdStep"]
 

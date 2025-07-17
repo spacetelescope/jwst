@@ -3,8 +3,7 @@
 import numpy as np
 
 from jwst.ami import find_affine2d_parameters, utils
-
-from .conftest import PXSC_DEG
+from jwst.ami.tests.conftest import PXSC_DEG
 
 
 def test_create_afflist_rot():

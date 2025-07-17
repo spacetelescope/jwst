@@ -4,9 +4,8 @@ import os.path as op
 import warnings
 from pathlib import Path
 
+from jwst.associations import Association, AssociationNotValidError
 from jwst.lib import suffix
-
-from . import Association, AssociationNotValidError
 
 
 class AsnFileWarning(Warning):

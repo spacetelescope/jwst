@@ -7,9 +7,8 @@ from stdatamodels.properties import merge_tree
 
 from jwst.combine_1d.combine1d import combine_1d_spectra
 from jwst.datamodels import ModelContainer
+from jwst.master_background.expand_to_2d import expand_to_2d
 from jwst.stpipe import Step, record_step_status
-
-from .expand_to_2d import expand_to_2d
 
 __all__ = ["MasterBackgroundStep"]
 

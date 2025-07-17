@@ -8,7 +8,7 @@ from photutils.background import Background2D, MedianBackground
 from scipy import sparse
 from stdatamodels.jwst import datamodels
 
-from .disperse import dispersed_pixel
+from jwst.wfss_contam.disperse import dispersed_pixel
 
 log = logging.getLogger(__name__)
 

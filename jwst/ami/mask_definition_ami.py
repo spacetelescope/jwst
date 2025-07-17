@@ -1,6 +1,6 @@
 import numpy as np
 
-from .utils import rotate2dccw
+from jwst.ami.utils import rotate2dccw
 
 
 class NRMDefinition:

@@ -17,8 +17,7 @@ from scipy.spatial import KDTree
 from stdatamodels.jwst.datamodels import ImageModel
 
 from jwst import __version__ as jwst_version
-
-from ._wcs_helpers import pixel_scale_angle_at_skycoord
+from jwst.source_catalog._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
 

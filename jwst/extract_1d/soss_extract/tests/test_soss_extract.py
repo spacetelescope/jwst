@@ -8,8 +8,7 @@ from jwst.extract_1d.soss_extract.soss_extract import (
     _compute_box_weights,
     _model_image,
 )
-
-from .conftest import DATA_SHAPE
+from jwst.extract_1d.soss_extract.tests.conftest import DATA_SHAPE
 
 
 @pytest.fixture

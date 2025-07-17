@@ -1,9 +1,8 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.lib import pipe_utils
+from jwst.refpix import irs2_subtract_reference, reference_pixels
 from jwst.stpipe import Step
-
-from . import irs2_subtract_reference, reference_pixels
 
 __all__ = ["RefPixStep"]
 

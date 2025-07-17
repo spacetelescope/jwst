@@ -5,9 +5,8 @@ import logging
 
 from stdatamodels.jwst import datamodels
 
+from jwst.guider_cds import guider_cds
 from jwst.stpipe import Step
-
-from . import guider_cds
 
 log = logging.getLogger(__name__)
 
