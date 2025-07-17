@@ -175,7 +175,7 @@ def bkg_for_multislit(input_data, tab_wavelength, tab_background, allow_mos=Fals
         A copy of `input_data` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
-    from .nirspec_utils import correct_nrs_fs_bkg
+    from jwst.master_background.nirspec_utils import correct_nrs_fs_bkg
 
     background = input_data.copy()
     min_wave = np.amin(tab_wavelength)
@@ -294,7 +294,7 @@ def bkg_for_ifu_image(input_data, tab_wavelength, tab_background):
         for the pixels outside the region provided in the X1D background
         wavelength table.
     """
-    from .nirspec_utils import correct_nrs_ifu_bkg
+    from jwst.master_background.nirspec_utils import correct_nrs_ifu_bkg
 
     background = input_data.copy()
     background.data[:, :] = 0.0

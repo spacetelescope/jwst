@@ -6,8 +6,8 @@ from collections import defaultdict
 from astropy.table import Table
 from stdatamodels.jwst import datamodels as dm
 
-from . import set_telescope_pointing as stp
-from . import siafdb
+from jwst.lib import set_telescope_pointing as stp
+from jwst.lib import siafdb
 
 logger = logging.getLogger(__name__)
 

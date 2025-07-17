@@ -16,8 +16,7 @@ from jwst.datamodels import ModelLibrary
 
 # LOCAL
 from jwst.stpipe import Step, record_step_status
-
-from .tweakreg_catalog import make_tweakreg_catalog
+from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
 
 
 def _oxford_or_str_join(str_list):

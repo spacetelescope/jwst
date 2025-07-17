@@ -5,7 +5,7 @@
 
 import logging
 
-from . import oifits
+from jwst.ami import oifits
 
 log = logging.getLogger(__name__)
 

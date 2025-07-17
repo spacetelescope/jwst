@@ -6,7 +6,7 @@ import synphot
 from astropy import units as u
 from scipy.integrate import simpson
 
-from .matrix_dft import matrix_dft
+from jwst.ami.matrix_dft import matrix_dft
 
 log = logging.getLogger(__name__)
 

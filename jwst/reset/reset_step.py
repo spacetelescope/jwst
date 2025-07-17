@@ -1,8 +1,7 @@
 from stdatamodels.jwst import datamodels
 
+from jwst.reset import reset_sub
 from jwst.stpipe import Step
-
-from . import reset_sub
 
 __all__ = ["ResetStep"]
 

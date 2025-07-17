@@ -5,11 +5,10 @@ import asdf
 from astropy import units
 
 from jwst.assign_wcs.util import update_s_region_keyword
+from jwst.cube_build import cube_build, data_types, ifu_cube
 from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.stpipe import Step, record_step_status
-
-from . import cube_build, data_types, ifu_cube
 
 __all__ = ["CubeBuildStep"]
 

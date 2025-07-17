@@ -4,9 +4,8 @@ import logging
 from collections import defaultdict
 
 from jwst.associations import config
-
-from . import diff
-from .product_utils import get_product_names, sort_by_candidate
+from jwst.associations.lib import diff
+from jwst.associations.lib.product_utils import get_product_names, sort_by_candidate
 
 __all__ = ["prune"]
 

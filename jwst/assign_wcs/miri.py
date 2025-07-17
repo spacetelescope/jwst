@@ -19,8 +19,8 @@ from stdatamodels.jwst.datamodels import (
 )
 from stdatamodels.jwst.transforms.models import IdealToV2V3, MIRI_AB2Slice
 
-from . import pointing
-from .util import (
+from jwst.assign_wcs import pointing
+from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,

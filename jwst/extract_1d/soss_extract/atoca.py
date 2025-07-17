@@ -14,7 +14,7 @@ import numpy as np
 from scipy.sparse import csr_matrix, diags, issparse
 
 # Local imports.
-from . import atoca_utils
+from jwst.extract_1d.soss_extract import atoca_utils
 
 log = logging.getLogger(__name__)
 

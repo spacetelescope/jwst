@@ -8,10 +8,8 @@ from stdatamodels.jwst.datamodels import SossWaveGridModel, dqflags
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.extract_1d.extract import populate_time_keywords
-from jwst.lib import pipe_utils
-
-from .atoca import ExtractionEngine, MaskOverlapError
-from .atoca_utils import (
+from jwst.extract_1d.soss_extract.atoca import ExtractionEngine, MaskOverlapError
+from jwst.extract_1d.soss_extract.atoca_utils import (
     WebbKernel,
     get_wave_p_or_m,
     grid_from_map_with_extrapolation,
@@ -19,9 +17,18 @@ from .atoca_utils import (
     oversample_grid,
     throughput_soss,
 )
-from .pastasoss import XTRACE_ORD1_LEN, XTRACE_ORD2_LEN, _get_soss_wavemaps
-from .soss_boxextract import box_extract, estim_error_nearest_data, get_box_weights
-from .soss_syscor import make_background_mask, soss_background
+from jwst.extract_1d.soss_extract.pastasoss import (
+    XTRACE_ORD1_LEN,
+    XTRACE_ORD2_LEN,
+    _get_soss_wavemaps,
+)
+from jwst.extract_1d.soss_extract.soss_boxextract import (
+    box_extract,
+    estim_error_nearest_data,
+    get_box_weights,
+)
+from jwst.extract_1d.soss_extract.soss_syscor import make_background_mask, soss_background
+from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)
 

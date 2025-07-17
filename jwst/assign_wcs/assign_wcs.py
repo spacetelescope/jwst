@@ -3,18 +3,17 @@ import logging
 
 from gwcs.wcs import WCS
 
-from jwst.lib.dispaxis import get_dispersion_direction
-from jwst.lib.exposure_types import IMAGING_TYPES, NRS_LAMP_MODE_SPEC_TYPES, SPEC_TYPES
-from jwst.lib.wcs_utils import get_wavelengths
-
-from .miri import store_dithered_position
-from .util import (
+from jwst.assign_wcs.miri import store_dithered_position
+from jwst.assign_wcs.util import (
     update_s_region_imaging,
     update_s_region_lrs,
     update_s_region_mrs,
     update_s_region_nrs_ifu,
     update_s_region_spectral,
 )
+from jwst.lib.dispaxis import get_dispersion_direction
+from jwst.lib.exposure_types import IMAGING_TYPES, NRS_LAMP_MODE_SPEC_TYPES, SPEC_TYPES
+from jwst.lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
 
