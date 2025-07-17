@@ -6,6 +6,8 @@ from stdatamodels.jwst.datamodels import MultiSlitModel
 
 from jwst.exp_to_source import exp_to_source
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 class Main:
     """
