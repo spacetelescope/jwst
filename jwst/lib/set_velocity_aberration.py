@@ -34,6 +34,8 @@ logger = logging.getLogger(__name__)
 
 SPEED_OF_LIGHT = speed_of_light / 1000  # km / s
 
+__all__ = ["compute_va_effects_vector", "compute_va_effects", "add_dva"]
+
 
 def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
     """
