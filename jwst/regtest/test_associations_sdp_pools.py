@@ -74,6 +74,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
         pytest.param(
             ("jw01863_20250316t002754_pool", []), id="pool_010_spec_nirspec_lv2bkg_IFU_BG_DEDICATED"
         ),
+        pytest.param(("jw04611_20250308t142406_pool", []), id="pool_014_ami_niriss"),
     ],
     ids=parfunc,
 )
