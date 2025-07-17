@@ -1,5 +1,7 @@
 from stdatamodels import schema as dm_schema
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def parse_schema(schema):
     """
