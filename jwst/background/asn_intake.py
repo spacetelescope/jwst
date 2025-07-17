@@ -6,8 +6,9 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
-
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+
+__all__ = ["asn_get_data"]
 
 
 def asn_get_data(asn):
