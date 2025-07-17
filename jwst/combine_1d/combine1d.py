@@ -20,6 +20,15 @@ SPECMETA_ATTRIBUTES = [
     "source_dec",
 ]
 
+__all__ = [
+    "InputSpectrumModel",
+    "OutputSpectrumModel",
+    "count_input",
+    "compute_output_wl",
+    "check_exptime",
+    "combine_1d_spectra",
+]
+
 
 class InputSpectrumModel:
     """
