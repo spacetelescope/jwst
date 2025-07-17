@@ -32,8 +32,10 @@ concurrency:
 
 jobs:
   latest_crds_contexts:
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run scheduled tests')))
     uses: ./.github/workflows/contexts.yml
   crds_context:
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run scheduled tests')))
     needs: [ latest_crds_contexts ]
     runs-on: ubuntu-latest
     steps:
