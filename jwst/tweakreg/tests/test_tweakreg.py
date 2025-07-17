@@ -12,7 +12,6 @@ from astropy.utils.data import get_pkg_data_filename
 from astropy.wcs import WCS
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
-from photutils.utils import NoDetectionsWarning
 from stcal.tweakreg import tweakreg as twk
 from stcal.tweakreg.utils import _wcsinfo_from_wcs_transform
 from stdatamodels.jwst.datamodels import ImageModel
@@ -95,9 +94,6 @@ def test_is_wcs_correction_small(offset, is_good):
     twcs.bounding_box = wcs.bounding_box
 
     step = tweakreg_step.TweakRegStep()
-    # TODO: remove 'roundlo' once
-    # https://github.com/astropy/photutils/issues/1977 is fixed
-    step.roundlo = -1.0e-12
 
     class FakeCorrector:
         def __init__(self, wcs, original_skycoord):
@@ -162,19 +158,18 @@ def example_input(example_wcs):
     m0.meta.observation.date = "2024-07-10T00:00:00.0"
 
     # and a few 'sources'
+    point_source = np.ones((7, 7)) * 0.1
+    point_source[1:6, 1:6] = 0.3
+    point_source[2:5, 2:5] = 0.5
+    point_source[3, 3] = 1.0
+
     m0.data[:] = BKG_LEVEL
     n_sources = N_EXAMPLE_SOURCES  # a few more than default minobj
     rng = np.random.default_rng(26)
     xs = rng.choice(50, n_sources, replace=False) * 8 + 10
     ys = rng.choice(50, n_sources, replace=False) * 8 + 10
     for y, x in zip(ys, xs):
-        m0.data[y - 2 : y + 3, x - 2 : x + 3] = [
-            [0.1, 0.1, 0.2, 0.1, 0.1],
-            [0.1, 0.4, 0.6, 0.4, 0.1],
-            [0.1, 0.6, 0.8, 0.6, 0.1],
-            [0.1, 0.4, 0.6, 0.4, 0.1],
-            [0.1, 0.1, 0.2, 0.1, 0.1],
-        ]
+        m0.data[y - 3 : y + 4, x - 3 : x + 4] = point_source
 
     m1 = m0.copy()
     # give each a unique filename
@@ -202,9 +197,6 @@ def test_tweakreg_step(example_input, with_shift):
 
     # make the step with default arguments
     step = tweakreg_step.TweakRegStep()
-    # TODO: remove 'roundlo' once
-    # https://github.com/astropy/photutils/issues/1977 is fixed
-    step.roundlo = -1.0e-12
 
     # run the step on the example input modified above
     result = step.run(example_input)
@@ -239,9 +231,6 @@ def test_src_confusion_pars(example_input, alignment_type):
         f"{alignment_type}separation": 1.0,
         f"{alignment_type}tolerance": 1.0,
         "abs_refcat": REFCAT,
-        # TODO: remove 'roundlo' once
-        # https://github.com/astropy/photutils/issues/1977 is fixed
-        "roundlo": -1.0e-12,
     }
     step = tweakreg_step.TweakRegStep(**pars)
     result = step.run(example_input)
@@ -360,9 +349,6 @@ def test_custom_catalog(
 
     kwargs = {
         "use_custom_catalogs": custom,
-        # TODO: remove 'roundlo' once
-        # https://github.com/astropy/photutils/issues/1977 is fixed
-        "roundlo": -1.0e-12,
     }
     if catfile != "no_catfile":
         kwargs["catfile"] = str(catfile_path)
@@ -410,9 +396,6 @@ def test_sip_approx(example_input, with_shift):
     step.sip_max_inv_pix_error = 0.1
     step.sip_inv_degree = 3
     step.sip_npoints = 12
-    # TODO: remove 'roundlo' once
-    # https://github.com/astropy/photutils/issues/1977 is fixed
-    step.roundlo = -1.0e-12
 
     # run the step on the example input modified above
     result = step.run(example_input)
@@ -452,6 +435,22 @@ def test_sip_approx(example_input, with_shift):
     assert np.allclose(fitswcs_res.dec.deg, gwcs_dec)
 
 
+def test_sourcefinders(example_input):
+    """Test that the three source finder options give the same results for high SNR sources."""
+
+    model = example_input[0]
+    thresh = 10.0  # SNR threshold above the bkg for star finder
+    fwhm = 2.5  # Gaussian kernel FWHM in pixels
+    iraf, _ = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name="iraf")
+    dao, _ = tweakreg_catalog.make_tweakreg_catalog(model, thresh, fwhm, starfinder_name="dao")
+    segm, _ = tweakreg_catalog.make_tweakreg_catalog(
+        model, thresh, fwhm, starfinder_name="segmentation"
+    )
+
+    # check that the catalogs have the same number of sources
+    assert len(iraf) == len(dao) == len(segm) == N_EXAMPLE_SOURCES
+
+
 def test_make_tweakreg_catalog(example_input):
     """
     Simple test for the three starfinder options.
@@ -462,7 +461,7 @@ def test_make_tweakreg_catalog(example_input):
     # run the step on the example input modified above
     x, y = [], []
     for finder_name in ["iraf", "dao", "segmentation"]:
-        cat = tweakreg_catalog.make_tweakreg_catalog(
+        cat, _ = tweakreg_catalog.make_tweakreg_catalog(
             example_input[0],
             10.0,
             2.5,
@@ -479,18 +478,25 @@ def test_make_tweakreg_catalog(example_input):
         assert_allclose(y[j], y[j + 1], atol=0.01)
 
 
-def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input):
+@pytest.mark.parametrize("finder", ["iraf", "dao", "segmentation"])
+def test_make_tweakreg_catalog_graceful_fail_no_sources(example_input, finder, log_watcher):
     """Test that the catalog creation fails gracefully when no sources are found."""
+    watcher = log_watcher(
+        "jwst.tweakreg.tweakreg_catalog",
+        message="No sources found in the image",
+        level="warning",
+    )
+
     # run the step on an input that is completely blank
     example_input[0].data[:] = 0.0
-    with pytest.warns(NoDetectionsWarning, match="No sources were found"):
-        # run the step on the example input modified above
-        cat = tweakreg_catalog.make_tweakreg_catalog(
-            example_input[0],
-            10.0,
-            2.5,
-        )
+    cat, _ = tweakreg_catalog.make_tweakreg_catalog(
+        example_input[0],
+        10.0,
+        2.5,
+        starfinder_name=finder,
+    )
 
+    watcher.assert_seen()
     assert len(cat) == 0
     assert type(cat) == Table
 
@@ -504,7 +510,7 @@ def test_make_tweakreg_catalog_graceful_fail_bad_background(example_input, log_w
     )
 
     example_input[0].dq[:] = 1
-    cat = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5)
+    cat, _ = tweakreg_catalog.make_tweakreg_catalog(example_input[0], 10.0, 2.5)
 
     watcher.assert_seen()
     assert len(cat) == 0
