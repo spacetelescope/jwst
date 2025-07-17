@@ -835,21 +835,31 @@ class JWSTSourceCatalog:
 
         return np.array(cutout)  # all cutouts are the same size
 
+    @property
+    def unit(self):  # noqa: D102
+        return None
+
+    @property
+    def cutout_shape(self):  # noqa: D102
+        return self.kernel.shape
+
+    make_cutouts = _DAOStarFinderCatalog.make_cutouts
+
     @lazyproperty
     def cutout_data(self):  # noqa: D102
-        return self._daofind_cutout
+        return self.make_cutouts(self.model.data)
 
     @lazyproperty
     def data_peak(self):  # noqa: D102
-        return self._daofind_cutout[:, self.cutout_center[0], self.cutout_center[1]]
+        return self.cutout_data[:, self.cutout_center[0], self.cutout_center[1]]
 
     @lazyproperty
     def cutout_convdata(self):  # noqa: D102
-        return self._daofind_cutout_conv
+        return self.make_cutouts(self._daofind_convolved_data)
 
     @lazyproperty
     def convdata_peak(self):  # noqa: D102
-        return self._daofind_cutout_conv[:, self.cutout_center[0], self.cutout_center[1]]
+        return self.cutout_convdata[:, self.cutout_center[0], self.cutout_center[1]]
 
     sharpness = _DAOStarFinderCatalog.sharpness
 
