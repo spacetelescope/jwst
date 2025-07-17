@@ -9,6 +9,8 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
+__all__ = ["make_kernels", "get_conv_kernel_coeffs", "apply_conv_kernel"]
+
 
 def make_kernels(sirs_kernel_model, detector, gaussmooth, halfwidth):
     """
