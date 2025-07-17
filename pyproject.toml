@@ -221,8 +221,6 @@ addopts = [
     "--color=yes",
 ]
 xfail_strict = true
-# This is for regtests. All unhandled warnings become exceptions for
-# regular CI in tox.ini file.
 filterwarnings = [
     "error"
 ]
