@@ -413,7 +413,7 @@ class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     produced by APT.
     Tracking Issues:
 
-        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
+        - `github #311 <https://github.com/spacetelescope/jwst/issues/311>`_
         - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
     """
 
