@@ -11,6 +11,8 @@ from jwst.lib.reffile_utils import get_subarray_model
 
 log = logging.getLogger(__name__)
 
+__all__ = ["subtract_wfss_bkg"]
+
 
 def subtract_wfss_bkg(
     input_model,
