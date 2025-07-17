@@ -19,7 +19,7 @@ in conjunction with ``photutils.segmentation.SourceCatalog`` (default).
 
 DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
-<http://adsabs.harvard.edu/abs/1987PASP...99..191S>`_).  It searches
+<https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract>`_).  It searches
 images for local density maxima that have a peak amplitude greater
 than a specified threshold (the threshold is applied to a convolved
 image) and have a size and shape similar to a defined 2D Gaussian
@@ -37,8 +37,8 @@ SourceFinder, the default option, implements an `image segmentation
 <https://en.wikipedia.org/wiki/Image_segmentation>`_ algorithm, which is a
 process of assigning a label to every pixel in an image such that
 pixels with the same label are part of the same source.  The
-segmentation procedure used is from `Photutils source extraction
-<https://photutils.readthedocs.io/en/latest/segmentation.html>`_.
+segmentation procedure used is from
+:ref:`Photutils source extraction <photutils:image_segmentation>`.
 Detected sources must have a minimum number of connected pixels that
 are each greater than a specified threshold value in an image.  The
 threshold level is usually defined at some multiple of the background
@@ -50,7 +50,7 @@ sources requires a deblending procedure, such as a multi-thresholding
 technique used by `SExtractor
 <https://www.astromatic.net/software/sextractor>`_.  Here we use the
 `Photutils deblender
-<https://photutils.readthedocs.io/en/latest/segmentation.html#source-deblending>`_,
+<https://photutils.readthedocs.io/en/stable/user_guide/segmentation.html#source-deblending>`_,
 which is an algorithm that deblends sources using a combination of
 multi-thresholding and `watershed segmentation
 <https://en.wikipedia.org/wiki/Watershed_(image_processing)>`_.  In
@@ -73,7 +73,7 @@ there is a saddle between them.
     ``spec2`` association, ``SourceFinder`` should be used as the source
     detection algorithm.
 
-.. _DAOFIND: http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?daofind
+.. _DAOFIND: https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract
 
 
 Source Photometry and Properties
@@ -101,8 +101,8 @@ Output Products
 
 Source Catalog Table
 ^^^^^^^^^^^^^^^^^^^^
-The output source catalog table is saved in `ECSV format
-<https://docs.astropy.org/en/stable/io/ascii/ecsv.html>`_.
+The output source catalog table is saved in
+:ref:`ECSV format <astropy:ecsv_format>`.
 
 The table contains a row for each source, with the following default
 columns (assuming the default encircled energies of 30, 50, and 70):

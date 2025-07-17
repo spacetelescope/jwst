@@ -4,7 +4,7 @@ The following tables contain lists of all data product types, as given by their 
 All tables indicate whether the file naming is exposure-based (Exp) or source-based (Src).
 When the product is not created by default, the flag *Optional* is indicated in the
 description. The different stages of the calibration pipeline are as defined in
-the `Algorithms Documentation <https://jwst-docs.stsci.edu/jwst-data-reduction-pipeline/algorithm-documentation>`_.
+the `Algorithms Documentation <https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline>`_.
 The product name suffixes are active links to detailed descriptions in the following sections.
 
 Stage 0 and Stage 1 Data Products

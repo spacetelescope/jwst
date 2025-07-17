@@ -117,7 +117,7 @@ class Asn_Lv3AMI(AsnMixin_Science):
     produced by APT.
     Tracking Issues:
 
-        - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`_
+        - `github #310 <https://github.com/spacetelescope/jwst/issues/310>`_
     """
 
     def __init__(self, *args, **kwargs):

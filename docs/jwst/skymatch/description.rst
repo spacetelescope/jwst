@@ -129,7 +129,7 @@ value computations.
 
 The first method, called "local", essentially is an enhanced version of the
 original sky subtraction method used in older versions of
-`astrodrizzle <https://drizzlepac.readthedocs.io/en/latest/astrodrizzle.html>`_.
+:ref:`astrodrizzle <drizzle:astrodrizzle_>`.
 This method simply computes the mean/median/mode/etc. value of the sky
 separately in each input image. This method was upgraded to be able to use DQ
 flags to remove bad pixels from being used in the computations of sky

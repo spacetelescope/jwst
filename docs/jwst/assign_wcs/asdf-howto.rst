@@ -1,7 +1,7 @@
 How To Create Reference files in ASDF format
 ============================================
 
-All WCS reference files are in `ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__  format.
+All WCS reference files are in `ASDF <https://asdf-standard.readthedocs.io/en/latest/>`__  format.
 ASDF is a human-readable, hierarchical metadata structure, made up of basic dynamic data
 types such as strings, numbers, lists and mappings. Data is saved as binary arrays. It is
 primarily intended as an interchange format for delivering products from
@@ -10,8 +10,8 @@ provides automatic structure and metadata validation.
 
 While it is possible to write or edit an ASDF file in a text editor, or to use the ASDF interface, the best way to create
 reference files is using the datamodels in the jwst pipeline
-`jwst.datamodels <http://jwst-pipeline.readthedocs.io/en/latest/jwst/datamodels/index.html#classes>`__ and
-`astropy.modeling <http://astropy.readthedocs.io/en/latest/modeling/index.html>`__ .
+:ref:`jwst.datamodels <jwst-data-models>` and
+:ref:`astropy.modeling <astropy:astropy-modeling>`.
 
 There are two steps in this process:
 
@@ -19,13 +19,13 @@ There are two steps in this process:
 - save the transform to an ASDF file (this automatically validates it)
 
 The rest of this document provides a brief description and examples of models in
-`astropy.modeling <http://astropy.readthedocs.org/en/latest/modeling/index.html>`__
+:ref:`astropy.modeling <astropy:astropy-modeling>`
 which are most relevant to WCS and examples of creating WCS reference files.
 
 Create a transform
 ------------------
 
-`astropy.modeling <http://astropy.readthedocs.org/en/latest/modeling/index.html>`__
+:ref:`astropy.modeling <astropy:astropy-modeling>`
 is a framework for representing, evaluating and fitting models. All available
 models can be imported from the ``models`` module.
 
@@ -125,8 +125,8 @@ validation of the file structure.
 Save a transform to an ASDF file
 --------------------------------
 
-`asdf <http://asdf.readthedocs.io/en/latest/>`__ is used to read and write reference files in
-`ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__ format. Once the model has been created using the rules
+`asdf <https://asdf.readthedocs.io/en/latest/>`__ is used to read and write reference files in
+`ASDF <https://asdf-standard.readthedocs.io/en/latest/>`__ format. Once the model has been created using the rules
 in the above section, it needs to be assigned to the ASDF tree.
 
 >>> import asdf
@@ -144,5 +144,3 @@ To test the file, it can be read in again using the ``asdf.open()`` function:
 ...     model = ff.tree['model']
 ...     model(1)
     -152.2
-
-
