@@ -1,19 +1,13 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """STScI edits to astropy FitsDiff."""
 
-import warnings
 import fnmatch
 import operator
 import textwrap
+import warnings
 from itertools import islice
 
-from astropy import __version__
-from astropy.table import Table
-from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
-
-from astropy.io.fits.hdu.table import _TableLikeHDU
 import numpy as np
-
 from astropy import __version__
 from astropy.io.fits.diff import (
     _COL_ATTRS,
@@ -1529,7 +1523,7 @@ class STTableDataDiff(TableDataDiff):
 
         # Print differences in zeros and nans per column
         self._writeln("\nValues in a and b")
-        tlines = self.report_zeros_nan.pformat()
+        tlines = self.report_zeros_nan.pformat(max_width=-1)
         for tline in tlines:
             self._writeln(tline)
 
@@ -1540,7 +1534,7 @@ class STTableDataDiff(TableDataDiff):
             if colname in ["col_name", "dtype"]:
                 continue
             self.report_table[colname].format = ".4g"
-        tlines = self.report_table.pformat()
+        tlines = self.report_table.pformat(max_width=-1)
         for tline in tlines:
             self._writeln(tline)
 
