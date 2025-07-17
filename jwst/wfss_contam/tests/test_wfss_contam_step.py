@@ -1,13 +1,14 @@
-import pytest
 import numpy as np
+import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.wfss_contam.wfss_contam_step import WfssContamStep
 
 
 @pytest.fixture
-def multislitmodel(tmp_cwd_module, direct_image_with_gradient, segmentation_map, source_catalog, grism_wcs):
-
+def multislitmodel(
+    tmp_cwd_module, direct_image_with_gradient, segmentation_map, source_catalog, grism_wcs
+):
     model = dm.MultiSlitModel()
     # add metadata
     model.meta.instrument.name = "NIRISS"
@@ -43,7 +44,7 @@ def multislitmodel(tmp_cwd_module, direct_image_with_gradient, segmentation_map,
         slit.xsize = slit.data.shape[1]
         slit.ysize = slit.data.shape[0]
         model.slits.append(slit)
-    
+
     # manually change x,y offset because took transform from a real direct image, with different
     # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
     model.slits[0].xstart = 2200
@@ -57,7 +58,7 @@ def multislitmodel(tmp_cwd_module, direct_image_with_gradient, segmentation_map,
 def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
     """
     Smoke test that the step runs.
-    
+
     Right now none of the slits overlap with the simulated slits because of the incompatibility
     between a WCS taken from a random real image and the mock data.
     This could be fixed in the future by mocking the WCS object.

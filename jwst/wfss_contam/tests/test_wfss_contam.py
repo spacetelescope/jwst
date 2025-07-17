@@ -1,15 +1,16 @@
+import numpy as np
 import pytest
+from stdatamodels.jwst.datamodels import SlitModel
+
 from jwst.wfss_contam.wfss_contam import (
-    match_backplane_prefer_first,
-    match_backplane_encompass_both,
     SlitOverlapError,
     UnmatchedSlitIDError,
-    determine_multiprocessing_ncores,
     _cut_frame_to_match_slit,
     _find_matching_simul_slit,
+    determine_multiprocessing_ncores,
+    match_backplane_encompass_both,
+    match_backplane_prefer_first,
 )
-from stdatamodels.jwst.datamodels import SlitModel
-import numpy as np
 
 
 @pytest.mark.parametrize(

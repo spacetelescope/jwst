@@ -1,17 +1,15 @@
-import pytest
 import warnings
-import numpy as np
 
-from astropy.utils.data import get_pkg_data_filename
+import asdf
+import numpy as np
+import pytest
+import stdatamodels.jwst.datamodels as dm
 from astropy.convolution import convolve
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
+from astropy.utils.data import get_pkg_data_filename
 from photutils.datasets import make_100gaussians_image
-from photutils.segmentation import make_2dgaussian_kernel, SourceFinder
-
-import asdf
-import stdatamodels.jwst.datamodels as dm
-
+from photutils.segmentation import SourceFinder, make_2dgaussian_kernel
 
 DIR_IMAGE = "direct_image.fits"
 
