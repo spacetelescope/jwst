@@ -13,6 +13,15 @@ log = logging.getLogger(__name__)
 
 WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM", "NRC_TSGRISM"]
 
+__all__ = [
+    "expand_to_2d",
+    "bkg_for_container",
+    "create_bkg",
+    "bkg_for_multislit",
+    "bkg_for_image",
+    "bkg_for_ifu_image",
+]
+
 
 def expand_to_2d(input_data, m_bkg_spec, allow_mos=False):
     """
