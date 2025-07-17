@@ -63,7 +63,7 @@ as the retrieved star positions.
     derived source catalog and the reference catalog during the
     alignment step.
 
-.. _DAOFIND: http://stsdas.stsci.edu/cgi-bin/gethelp.cgi?daofind
+.. _DAOFIND: https://ui.adsabs.harvard.edu/abs/1987PASP...99..191S/abstract
 
 Custom Source Catalogs
 ----------------------

@@ -77,6 +77,7 @@ intersphinx_mapping = {
     'scipy': ('https://scipy.github.io/devdocs', None),
     'matplotlib': ('https://matplotlib.org/', None),
     'astropy': ('https://docs.astropy.org/en/stable/', None),
+    'photutils': ('https://photutils.readthedocs.io/en/stable/', None),
     'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
     'stdatamodels': ('https://stdatamodels.readthedocs.io/en/latest/', None),
     'stcal': ('https://stcal.readthedocs.io/en/latest/', None),
@@ -463,6 +464,19 @@ epub_exclude_files = ['search.html']
 
 # If false, no index is generated.
 # epub_use_index = True
+
+# - ----------------------------------------------
+
+# linkcheck
+linkcheck_retry = 5
+linkcheck_ignore = [
+    "http://stsci.edu/schemas/fits-schema/",  # Old schema from CHANGEST.rst
+    r"https://github\.com/spacetelescope/jwst/(?:issues|pull)/\d+",
+]
+linkcheck_timeout = 180
+linkcheck_anchors = False
+linkcheck_report_timeouts_as_broken = True
+linkcheck_allow_unauthorized = False
 
 # Enable nitpicky mode - which ensures that all references in the docs
 # resolve.
