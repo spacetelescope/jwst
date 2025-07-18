@@ -1,0 +1,1 @@
+Deprecate logging configuration files in ``logcfg`` arguments. Users should transition to using log configuration command line arguments or directly configuring logging in their Python code.
