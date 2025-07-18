@@ -43,6 +43,7 @@ class STFITSDiff(FITSDiff):
     def _report(self):
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", RuntimeWarning)
+            super()._report()
 
 
 class STFITSDiffBeta(FITSDiff):
