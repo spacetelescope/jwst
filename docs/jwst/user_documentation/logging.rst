@@ -35,61 +35,78 @@ logs for those messages.
 Configuration
 =============
 
+By default, either the command line interface or the ``call`` function for
+Step or Pipeline classes will log messages at the INFO level to the ``stderr``
+stream.
+
 The name of a file in which to save log information, as well as the desired
-level of logging messages, can be specified in an optional configuration file.
-Two options exist - if the configuration file should be used for all instances
-of the pipeline, the configuration file should be named "stpipe-log.cfg".
-This file must be in the same directory in which you run the pipeline in order
-for it to be used.
+level of logging messages, can be specified in optional command line arguments
+provided to ``strun``, or can be directly configured via the logging module
+in Python code.
 
-If instead the configuration should be active only when specified,
-you should name it something other than "stpipe-log.cfg"; this filename should be
-specified using either the ``--logcfg`` parameter to the command line ``strun`` or
-using the ``logcfg`` keyword to a .call() execution of either a Step or Pipeline
-instance.
+From the Command Line
+---------------------
 
-If this file does not exist, the default logging mechanism is STDOUT,
-with a level of INFO. An example of the contents of the stpipe-log.cfg file is:
+The available options for the command line are::
 
-::
+  --verbose, -v         Turn on all logging messages
+  --log_level LOG_LEVEL
+                        Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Ignored if 'verbose' is specified.
+  --log_format LOG_FORMAT
+                        A format string for the logger
+  --log_file LOG_FILE   Full path to a file name to record log messages
+  --log_stream LOG_STREAM
+                        Log stream for terminal messages (stdout, stderr, or null).
 
-    [*]
-    handler = file:pipeline.log
-    level = INFO
-
-If there's no ``stpipe-log.cfg`` file in the working directory, which specifies
-how to handle process log information, the default is to display log messages
-to stdout.
-
-For example:
-::
+For example::
 
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
-        --logcfg=pipeline-log.cfg
+        --log_level=INFO --log_file=pipeline.log --log_stream=stdout
 
-Or in an interactive python environment:
-::
+will log messages to the terminal at the INFO level in the ``stdout`` stream
+and also record them to a file called "pipeline.log" in the current working directory.
 
-    result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits",
-                                    logcfg="pipeline-log.cfg")
+To turn off all logging instead::
 
-and the file ``pipeline-log.cfg`` contains:
-::
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --log_stream=null
 
-    [*]
-    handler = file:pipeline.log
-    level = INFO
+CRDS messages may still display, since its logger is separately configured.
 
-In this example log information is written to a file called ``pipeline.log``.
-The ``level`` argument in the log cfg file can be set to one of the standard
-logging level designations of ``DEBUG``, ``INFO``, ``WARNING``, ``ERROR``, and
-``CRITICAL``. Only messages at or above the specified level
-will be displayed.
+In Python Code
+--------------
 
-.. note::
+In a Python environment, more complex configuration is possible. For example,
+to configure logging to print only the message at the INFO level and direct time-stamped
+messages to a file at the DEBUG level::
 
-   Setting up ``stpipe-log.cfg`` can lead to confusion, especially if it is
-   forgotten about. If one has not run a pipeline in awhile, and then sees no
-   logging information, most likely it is because ``stpipe-log.cfg`` is
-   present. Consider using a different name and specifying it explicitly on the
-   command line.
+    import logging
+    import sys
+    from jwst.pipeline import Detector1Pipeline
+
+    # Set the log level to DEBUG to allow all messages
+    log = logging.getLogger()
+    log.setLevel(logging.DEBUG)
+
+    # Add a file handler for all messages, time-stamped
+    handler = logging.FileHandler('pipeline.log')
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.DEBUG)
+    log.addHandler(handler)
+
+    # Add a stream handler to just print messages at the INFO level
+    handler = logging.StreamHandler(stream=sys.stdout)
+    formatter = logging.Formatter("%(message)s")
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.INFO)
+    log.addHandler(handler)
+
+    result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits")
+
+To override the default logging configuration from Python code without directly
+configuring the logger, turn it off in the ``call`` function with the ``configure_log`` option::
+
+    Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits", configure_log=False)
+
+This will print no log messages from the JWST pipeline code. As with the command line configuration,
+CRDS messages may still display, since its logger is separately configured.
