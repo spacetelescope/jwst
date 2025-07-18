@@ -546,7 +546,7 @@ multiprocessing to simultaneously run the entire pipeline on multiple observatio
 Since the pipeline uses multiprocessing it is critical that any code using the pipeline adhere
 to the guidelines described in the
 `python multiprocessing documentation <https://docs.python.org/3/library/multiprocessing.html#multiprocessing-programming>`_.
-The pipeline uses the `forkserver` start method internally and it is recommended that any
+The pipeline uses the `spawn` start method internally and it is recommended that any
 multiprocessing scripts that use the pipeline use the same start. As detailed in the
 `python documentation <https://docs.python.org/3/library/multiprocessing.html#the-spawn-and-forkserver-start-methods>`_
 this will require that code be "protected" with a ``if __name__ == '__main__':`` check as follows
@@ -569,10 +569,7 @@ as a string or it can be set to the words `quarter`, `half`, `all`,
 or `none`, which is the default value.
 
 The following example turns on a step's multiprocessing option. Notice only
-one of the steps has multiprocessing turned on. We do not recommend
-simultaneously enabling both steps to do multiprocessing, as this may likely
-lead to running out of system memory.
-
+one of the steps has multiprocessing turned on.
 
 
 ::
@@ -595,55 +592,39 @@ lead to running out of system memory.
 
 
 2. Calling the pipeline using multiprocessing. The following example uses this
-option setting up a log file for each run of the pipeline and a text file with
-the full traceback in case there is a crash. Notice that the ``import`` statement
-of the pipeline is within the multiprocessing block that gets called by every
-worker. This is to avoid a known memory leak.
+option setting up a text file with the full traceback in case there is a crash.
+Notice that the ``import`` statement of the pipeline is within the multiprocessing
+block that gets called by every worker. This is to avoid a known memory leak.
 
 
 ::
 
     # SampleScript2
 
-    import os, sys
+    import os
+    import sys
     import traceback
     import configparser
     import multiprocessing
     from glob import glob
 
-    def mk_stpipe_log_cfg(output_dir, log_name):
-        """
-        Create a configuration file with the name log_name, where
-        the pipeline will write all output.
-        Args:
-            outpur_dir: str, path of the output directory
-            log_name: str, name of the log to record screen output
-        Returns:
-            nothing
-        """
-        config = configparser.ConfigParser()
-        config.add_section("*")
-        config.set("*", "handler", "file:" + log_name)
-        config.set("*", "level", "INFO")
-        pipe_log_config = os.path.join(output_dir, "pipeline-log.cfg")
-        config.write(open(pipe_log_config, "w"))
 
     def run_det1(uncal_file, output_dir):
         """
         Run the Detector1 pipeline on the given file.
         Args:
             uncal_file: str, name of uncalibrated file to run
-            outpur_dir: str, path of the output directory
-        Returns:
-            nothing
+            output_dir: str, path of the output directory
         """
-        log_name = os.path.basename(uncal_file).replace('.fits', '')
-        mk_stpipe_log_cfg(output_dir, log_name+'.log')
         from jwst.pipeline.calwebb_detector1 import Detector1Pipeline
+
+        log_name = os.path.basename(uncal_file).replace('.fits', '')
+
         pipe_success = False
         try:
+            # Run the pipeline, turning off terminal logging messages
             det1 = Detector1Pipeline()
-            det1.call(uncal_file, output_dir=output_dir, logcfg="pipeline-log.cfg", save_results=True)
+            det1.call(uncal_file, output_dir=output_dir, save_results=True, configure_log=False)
             pipe_success = True
             print('\n * Pipeline finished for file: ', uncal_file, ' \n')
         except Exception:

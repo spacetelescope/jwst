@@ -12,7 +12,6 @@ INPUT_ASN = "dummy_asn.json"
 OUTPUT_FILE = "custom_name.fits"
 OUTPUT_FILE_ASN = "custom_name_asn.fits"  # cannot reuse because everything runs in same cwd
 LOGFILE = "run_asn.log"
-LOGCFG = "test_logs.cfg"
 
 
 @pytest.fixture(scope="module")
@@ -83,16 +82,11 @@ def run_image2_pipeline_asn(make_dummy_association, request):
     and the output_file parameter should be ignored.
     """
     # save warnings to logfile so can be checked later
-    logcfg_content = f"[*] \n \
-        level = INFO \n \
-        handler = file:{LOGFILE}"
-    with open(LOGCFG, "w") as f:
-        f.write(logcfg_content)
-
     args = [
         "calwebb_image2",
         INPUT_ASN,
-        f"--logcfg={LOGCFG}",
+        "--log_level=INFO",
+        f"--log_file={LOGFILE}",
         "--steps.flat_field.skip=true",
         "--steps.photom.skip=true",
         "--steps.resample.skip=true",
