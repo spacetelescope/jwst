@@ -18,10 +18,7 @@ import sys
 from pathlib import Path
 
 import tomllib
-from packaging.version import Version
 from configparser import ConfigParser
-
-import sphinx
 
 from stpipe import Step
 from sphinx.ext.autodoc import AttributeDocumenter
@@ -466,4 +463,4 @@ epub_exclude_files = ['search.html']
 
 # Enable nitpicky mode - which ensures that all references in the docs
 # resolve.
-nitpicky = False
+nitpicky = True
