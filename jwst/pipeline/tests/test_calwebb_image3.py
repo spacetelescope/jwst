@@ -12,9 +12,6 @@ INPUT_FILE_2 = "dummy2_cal.fits"
 INPUT_ASN = "dummy_asn.json"
 OUTPUT_PRODUCT = "custom_name"
 LOGFILE = "run_asn.log"
-LOGCFG = "test_logs.cfg"
-LOGCFG_CONTENT = f"[*] \n \
-        handler = file:{LOGFILE}"
 
 
 @pytest.fixture(scope="module")
@@ -73,13 +70,11 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
     Two-product association passed in, run pipeline, skipping most steps
     """
     # save warnings to logfile so can be checked later
-    with open(LOGCFG, "w") as f:
-        f.write(LOGCFG_CONTENT)
-
     args = [
         "calwebb_image3",
         INPUT_ASN,
-        f"--logcfg={LOGCFG}",
+        "--log_level=INFO",
+        f"--log_file={LOGFILE}",
         "--steps.tweakreg.skip=true",
         "--steps.skymatch.skip=true",
         "--steps.outlier_detection.skip=true",
@@ -95,13 +90,11 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
 
 @pytest.mark.filterwarnings("ignore::ResourceWarning")
 def test_run_image3_single_file(make_dummy_cal_file):
-    with open(LOGCFG, "w") as f:
-        f.write(LOGCFG_CONTENT)
-
     args = [
         "calwebb_image3",
         INPUT_FILE,
-        f"--logcfg={LOGCFG}",
+        "--log_level=INFO",
+        f"--log_file={LOGFILE}",
         "--steps.tweakreg.skip=true",
         "--steps.skymatch.skip=true",
         "--steps.outlier_detection.skip=true",
