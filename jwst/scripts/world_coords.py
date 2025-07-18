@@ -26,6 +26,8 @@ from stdatamodels.jwst.datamodels.util import open as dmopen
 
 from jwst.assign_wcs import nirspec
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def main():
     """Loop over the input files and apply the proper method to create the output file."""

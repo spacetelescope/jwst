@@ -12,6 +12,21 @@ from jwst.ami import hextransformee, leastsqnrm, utils
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "jinc",
+    "ffc",
+    "ffs",
+    "harmonicfringes",
+    "phasor",
+    "image_center",
+    "interf",
+    "model_array",
+    "asf",
+    "asffringe",
+    "asf_hex",
+    "psf",
+]
+
 
 def jinc(x, y, d, lam, pitch, offx=0.0, offy=0.0):
     """

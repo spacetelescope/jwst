@@ -36,6 +36,21 @@ NRS_LAMP_MODE_SPEC_TYPES = [
     "msaspec",
 ]
 
+__all__ = [
+    "is_nrs_lamp",
+    "is_nrs_linelamp",
+    "is_nrs_flatlamp",
+    "is_nrs_slit_linelamp",
+    "is_nrs_ifu_linelamp",
+    "is_nrs_ifu_flatlamp",
+    "is_nrs_ifu_lamp",
+    "is_nrs_msaspec_lamp",
+    "is_nrs_msaspec_linelamp",
+    "is_nrs_msaspec_flatlamp",
+    "is_nrs_autoflat",
+    "is_moving_target",
+]
+
 
 def is_nrs_lamp(datamodel):
     """

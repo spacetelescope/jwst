@@ -5,6 +5,8 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = ["create_background"]
+
 
 def create_background(wavelength, surf_bright):
     """

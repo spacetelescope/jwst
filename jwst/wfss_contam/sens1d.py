@@ -6,6 +6,8 @@ from jwst.photom.photom import find_row
 
 log = logging.getLogger(__name__)
 
+__all__ = ["get_photom_data", "create_1d_sens"]
+
 
 def get_photom_data(phot_model, filter_name, pupil, order):
     """

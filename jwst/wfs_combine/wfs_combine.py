@@ -11,6 +11,17 @@ log = logging.getLogger(__name__)
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 
+__all__ = [
+    "DataSet",
+    "get_final_index_range",
+    "gauss_kern",
+    "interp_array",
+    "create_griddata_array",
+    "get_index_range",
+    "get_overlap",
+    "calc_refined_offsets",
+]
+
 
 class DataSet:
     """Two dithered input wavefront sensing images to be combined."""

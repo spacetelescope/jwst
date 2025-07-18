@@ -6,6 +6,8 @@ from pathlib import Path
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def main():
     """

@@ -7,6 +7,23 @@ from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "correct_model",
+    "float_to_complex",
+    "make_irs2_mask",
+    "strip_ref_pixels",
+    "clobber_ref",
+    "decode_mask",
+    "replace_refpix",
+    "flag_bad_refpix",
+    "subtract_reference",
+    "fft_interp_norm",
+    "ols_line",
+    "remove_slopes",
+    "replace_bad_pixels",
+    "fill_bad_regions",
+]
+
 
 def correct_model(
     output_model, irs2_model, scipix_n_default=16, refpix_r_default=4, pad=8, preserve_refpix=False

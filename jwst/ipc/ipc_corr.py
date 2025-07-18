@@ -16,6 +16,8 @@ NumRefPixels = namedtuple(
     "NumRefPixels", ["bottom_rows", "top_rows", "left_columns", "right_columns"]
 )
 
+__all__ = ["do_correction", "ipc_correction", "get_num_ref_pixels", "get_ipc_slice", "ipc_convolve"]
+
 
 def do_correction(input_model, ipc_model):
     """

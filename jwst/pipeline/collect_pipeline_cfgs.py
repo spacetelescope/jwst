@@ -4,6 +4,8 @@ import shutil
 from importlib.util import find_spec
 from pathlib import Path
 
+__all__ = ["collect_pipeline_cfgs"]
+
 
 def collect_pipeline_cfgs(dst="./"):
     """

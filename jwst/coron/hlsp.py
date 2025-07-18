@@ -8,6 +8,8 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = ["snr_image", "contrast_curve"]
+
 
 def snr_image(target_model):
     """

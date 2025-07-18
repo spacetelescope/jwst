@@ -3,6 +3,8 @@
 from collections import UserDict
 from copy import copy
 
+__all__ = ["Member"]
+
 
 class Member(UserDict):
     """

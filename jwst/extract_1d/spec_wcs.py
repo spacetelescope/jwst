@@ -9,6 +9,8 @@ from gwcs.wcs import WCS
 
 log = logging.getLogger(__name__)
 
+__all__ = ["create_spectral_wcs"]
+
 
 def create_spectral_wcs(ra, dec, wavelength):
     """

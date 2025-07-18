@@ -1,6 +1,8 @@
 #  Module for calculation of the hexagon-aperture PSFs
 import numpy as np
 
+__all__ = ["gfunction", "hextransform"]
+
 
 def gfunction(xi, eta, c, pixel, d, lam, affine2d, minus=False):
     """

@@ -70,6 +70,8 @@ SIAF_MAP = {
     "YSciScale": "cdelt2",
 }
 
+__all__ = ["SiafDb", "nearest_prd"]
+
 
 class SiafDb:
     """

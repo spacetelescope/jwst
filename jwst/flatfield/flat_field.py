@@ -35,6 +35,29 @@ BADFLAT = (
     dqflags.pixel["NO_FLAT_FIELD"] | dqflags.pixel["DO_NOT_USE"] | dqflags.pixel["UNRELIABLE_FLAT"]
 )
 
+__all__ = [
+    "do_correction",
+    "do_flat_field",
+    "apply_flat_field",
+    "do_nirspec_flat_field",
+    "nirspec_fs_msa",
+    "nirspec_brightobj",
+    "nirspec_ifu",
+    "create_flat_field",
+    "fore_optics_flat",
+    "spectrograph_flat",
+    "detector_flat",
+    "combine_dq",
+    "read_image_wl",
+    "read_flat_table",
+    "combine_fast_slow",
+    "clean_wl",
+    "interpolate_flat",
+    "flat_for_nirspec_ifu",
+    "flat_for_nirspec_brightobj",
+    "flat_for_nirspec_slit",
+]
+
 
 def do_correction(
     input_model,

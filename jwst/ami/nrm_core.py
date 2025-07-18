@@ -7,6 +7,8 @@ from jwst.ami import lg_model, oifits, utils
 
 log = logging.getLogger(__name__)
 
+__all__ = ["FringeFitter"]
+
 
 class FringeFitter:
     """

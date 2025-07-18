@@ -5,6 +5,15 @@ from scipy.signal import medfilt
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "apply_master_background",
+    "map_to_science_slits",
+    "create_background_from_multispec",
+    "correct_nrs_ifu_bkg",
+    "correct_nrs_fs_bkg",
+    "is_background_msa_slit",
+]
+
 
 def apply_master_background(source_model, bkg_model, inverse=False):
     """

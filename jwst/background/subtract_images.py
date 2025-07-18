@@ -4,6 +4,8 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
+__all__ = ["subtract"]
+
 
 def subtract(model1, model2):
     """

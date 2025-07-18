@@ -15,6 +15,8 @@ from jwst.stpipe._cal_logs import _LOG_FORMATTER
 
 log = logging.getLogger(__name__)
 
+__all__ = ["JwstStep", "JwstPipeline"]
+
 
 class JwstStep(Step):
     """A JWST pipeline step."""

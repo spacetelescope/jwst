@@ -2,6 +2,8 @@
 
 from jwst.associations import asn_gather
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def main():
     """Copy or move data that is listed in an association."""

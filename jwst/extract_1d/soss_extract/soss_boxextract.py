@@ -4,6 +4,8 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
+__all__ = ["get_box_weights", "box_extract", "estim_error_nearest_data"]
+
 
 def get_box_weights(centroid, n_pix, shape, cols):
     """

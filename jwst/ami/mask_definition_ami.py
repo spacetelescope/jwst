@@ -2,6 +2,8 @@ import numpy as np
 
 from jwst.ami.utils import rotate2dccw
 
+__all__ = ["NRMDefinition"]
+
 
 class NRMDefinition:
     """Defines the geometry of the NRM mask."""

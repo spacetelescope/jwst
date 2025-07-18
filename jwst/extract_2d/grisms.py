@@ -18,6 +18,16 @@ from jwst.assign_wcs import util
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "extract_tso_object",
+    "extract_grism_objects",
+    "clamp",
+    "compute_dispersion",
+    "compute_tso_wavelength_array",
+    "compute_tso_offset_center",
+    "compute_wfss_wavelength",
+]
+
 
 def extract_tso_object(
     input_model,

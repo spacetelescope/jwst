@@ -8,6 +8,8 @@ from astropy.table import QTable
 
 log = logging.getLogger(__name__)
 
+__all__ = ["white_light"]
+
 
 def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None):
     """

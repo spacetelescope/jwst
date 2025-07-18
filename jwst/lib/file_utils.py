@@ -4,6 +4,8 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 
+__all__ = ["pushdir"]
+
 
 @contextmanager
 def pushdir(directory):

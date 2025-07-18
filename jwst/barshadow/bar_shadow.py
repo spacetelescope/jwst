@@ -12,6 +12,17 @@ log = logging.getLogger(__name__)
 # Fallback value for ratio of slit spacing to slit height
 SLITRATIO = 1.15
 
+__all__ = [
+    "do_correction",
+    "create_shutter_elements",
+    "create_shadow",
+    "create_empty_shadow_array",
+    "add_first_half_shutter",
+    "add_next_shutter",
+    "add_last_half_shutter",
+    "has_uniform_source",
+]
+
 
 def do_correction(
     input_model,

@@ -13,6 +13,8 @@ mm = 1.0e-3 * m
 um = 1.0e-6 * m
 mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
 
+__all__ = ["LgModel", "goodness_of_fit", "run_data_correlate"]
+
 
 class LgModel:
     """

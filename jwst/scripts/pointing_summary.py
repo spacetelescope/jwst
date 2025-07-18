@@ -8,6 +8,8 @@ from sys import stdout
 
 from jwst.lib import pointing_summary
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 # Begin execution
 def main():

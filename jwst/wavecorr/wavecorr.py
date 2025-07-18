@@ -10,6 +10,14 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "do_correction",
+    "apply_zero_point_correction",
+    "calculate_wavelength_correction_transform",
+    "compute_dispersion",
+    "compute_wavelength",
+]
+
 
 def do_correction(input_model, wavecorr_file):
     """

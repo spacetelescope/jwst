@@ -8,6 +8,8 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
+__all__ = ["do_correction", "apply_fringe"]
+
 
 def do_correction(input_model, fringe_model):
     """

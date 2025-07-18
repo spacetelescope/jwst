@@ -11,6 +11,8 @@ from jwst.datamodels import ModelContainer
 
 log = logging.getLogger(__name__)
 
+__all__ = ["CubeBlot"]
+
 
 class CubeBlot:
     """Main module for blotting a sky cube back to detector space."""
