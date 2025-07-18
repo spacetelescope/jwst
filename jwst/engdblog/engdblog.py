@@ -1,6 +1,10 @@
+import logging
+
 from jwst.lib.engdb_mast import EngdbMast
 from jwst.lib.engdb_tools import ENGDB_Service
 from jwst.stpipe import Step
+
+log = logging.getLogger(__name__)
 
 
 class EngDBLogStep(Step):
@@ -58,18 +62,18 @@ class EngDBLogStep(Step):
             try:
                 values = edb.get_values(mnemonic, stime, etime)
             except Exception:
-                self.log.info("Cannot retrieve info for %s", mnemonic)
+                log.info("Cannot retrieve info for %s", mnemonic)
                 continue
 
             if len(values) < 1:
-                self.log.info("%s has no entries in time range %s:%s", mnemonic, stime, etime)
+                log.info("%s has no entries in time range %s:%s", mnemonic, stime, etime)
                 continue
 
             if verbosity == "initial":
                 result[mnemonic] = values[0]
-                self.log.info("%s[%s:%s] = %s", mnemonic, stime, etime, str(values[0]))
+                log.info("%s[%s:%s] = %s", mnemonic, stime, etime, str(values[0]))
             elif verbosity == "all":
                 result[mnemonic] = values
-                self.log.info("%s[%s:%s] = %s", mnemonic, stime, etime, str(values))
+                log.info("%s[%s:%s] = %s", mnemonic, stime, etime, str(values))
 
         return result

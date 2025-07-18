@@ -54,9 +54,9 @@ def make_rate(input_model, input_dir="", return_cube=False):
     # Use software default values for parameters
 
     log.info("Creating draft rate file for scene masking")
-    step = RampFitStep()
-    step.input_dir = input_dir
-    with LoggingContext(step.log, level=logging.WARNING):
+    with LoggingContext(logging.getLogger("stpipe"), level=logging.WARNING):
+        step = RampFitStep()
+        step.input_dir = input_dir
         # Note: the copy is currently needed because ramp fit
         # closes the input model when it's done, and we need
         # it to stay open.
@@ -108,29 +108,30 @@ def post_process_rate(
         The updated model.
     """
     output_model = input_model
+    stpipe_log = logging.getLogger("stpipe")
 
     # If needed, assign a WCS
     if (assign_wcs or msaflagopen) and not hasattr(output_model.meta, "wcs"):
         log.info("Assigning a WCS for scene masking")
-        step = AssignWcsStep()
-        step.input_dir = input_dir
-        with LoggingContext(step.log, level=logging.WARNING):
+        with LoggingContext(stpipe_log, level=logging.WARNING):
+            step = AssignWcsStep()
+            step.input_dir = input_dir
             output_model = step.run(output_model)
 
     # If needed, flag open MSA shutters
     if msaflagopen:
         log.info("Flagging failed-open MSA shutters for scene masking")
-        step = MSAFlagOpenStep()
-        step.input_dir = input_dir
-        with LoggingContext(step.log, level=logging.WARNING):
+        with LoggingContext(stpipe_log, level=logging.WARNING):
+            step = MSAFlagOpenStep()
+            step.input_dir = input_dir
             output_model = step.run(output_model)
 
     # If needed, draft a flat correction to retrieve non-science areas
     if flat_dq:
         log.info("Retrieving flat DQ values for scene masking")
-        step = FlatFieldStep()
-        step.input_dir = input_dir
-        with LoggingContext(step.log, level=logging.WARNING):
+        with LoggingContext(stpipe_log, level=logging.WARNING):
+            step = FlatFieldStep()
+            step.input_dir = input_dir
             flat_corrected_model = step.run(output_model)
 
         # Copy out the flat DQ plane, leave the data as is

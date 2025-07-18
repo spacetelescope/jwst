@@ -9,7 +9,6 @@ import jwst
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_nirspec import (
     create_nirspec_fs_file,
-    create_nirspec_ifu_file,
     create_nirspec_mos_file,
 )
 from jwst.extract_2d import Extract2dStep

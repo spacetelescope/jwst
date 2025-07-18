@@ -1,10 +1,13 @@
-#! /usr/bin/env python
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.coron import klip
 from jwst.stpipe import Step
 
 __all__ = ["KlipStep"]
+
+log = logging.getLogger(__name__)
 
 
 class KlipStep(Step):
@@ -41,7 +44,7 @@ class KlipStep(Step):
         with datamodels.open(target) as target_model:
             # Retrieve the parameter values
             truncate = self.truncate
-            self.log.info("KL transform truncation = %d", truncate)
+            log.info("KL transform truncation = %d", truncate)
 
             # Get the PSF reference images
             refs_model = datamodels.open(psfrefs)
