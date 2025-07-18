@@ -117,7 +117,7 @@ class Asn_Lv3AMI(AsnMixin_Science):
     produced by APT.
     Tracking Issues:
 
-        - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`_
+        - `github #310 <https://github.com/spacetelescope/jwst/issues/310>`_
     """
 
     def __init__(self, *args, **kwargs):
@@ -254,7 +254,7 @@ class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     produced by APT.
     Tracking Issues:
 
-        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
+        - `github #311 <https://github.com/spacetelescope/jwst/issues/311>`_
         - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
     """
 
@@ -413,7 +413,7 @@ class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     produced by APT.
     Tracking Issues:
 
-        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
+        - `github #311 <https://github.com/spacetelescope/jwst/issues/311>`_
         - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
     """
 

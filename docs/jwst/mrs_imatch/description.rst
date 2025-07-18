@@ -73,4 +73,4 @@ This step does not require any reference files.
 
 Also See
 ========
-See `wiimatch package documentation <http://wiimatch.readthedocs.io>`_ for more details.
+See `wiimatch package documentation <https://wiimatch.readthedocs.io>`_ for more details.

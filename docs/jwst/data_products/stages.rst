@@ -5,7 +5,7 @@ JWST science data products, the vast majority of which are in FITS format. Each 
 file is the result of serialization of a corresponding data model. All
 JWST pipeline input and output products, with the exception of a few
 reference files and catalogs, are serialized as FITS files.
-The `ASDF <https://asdf-standard.readthedocs.io/en/stable/>`_ representation
+The `ASDF <https://asdf-standard.readthedocs.io/>`_ representation
 of the data model is serialized as a FITS BINTABLE extension
 within the FITS file, with EXTNAME="ASDF". The ASDF extension is essentially a
 text character serialization in `YAML <https://yaml.org>`_ format of the
@@ -57,4 +57,3 @@ multiple exposures for a given source or target. They are referred to as "source
 and use a "source-based" file naming syntax. Observing modes that include multiple defined sources
 within a single exposure or observation, such as NIRSpec MOS and NIRCam/NIRISS WFSS, will result in
 multiple Stage 3 products, one for each defined or identifiable source.
-
