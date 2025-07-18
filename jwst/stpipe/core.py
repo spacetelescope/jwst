@@ -78,6 +78,20 @@ class JwstStep(Step):
         # for all other cases, use read_metadata directly to lazy-load
         return (read_metadata(dataset, flatten=True), crds_observatory)
 
+    @staticmethod
+    def get_known_loggers():
+        """
+        Get the names of loggers to configure.
+
+        Returns
+        -------
+        loggers : list
+            List of log names to configure.
+        """
+        # Specify the log names for any dependencies whose
+        # loggers we want to configure
+        return ["stpipe", "jwst", "stcal", "stdatamodels"]
+
     def load_as_level2_asn(self, obj):
         """
         Load object as an association.
