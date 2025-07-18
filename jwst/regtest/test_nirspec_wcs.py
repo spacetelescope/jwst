@@ -1,5 +1,3 @@
-import warnings
-
 import pytest
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose

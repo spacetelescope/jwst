@@ -2,7 +2,6 @@
 Test using SDP-generated pools.
 """
 
-import logging
 import os
 import re
 from glob import glob

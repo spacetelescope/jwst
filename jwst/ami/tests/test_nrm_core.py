@@ -5,9 +5,7 @@ Since nrm_core makes oifits objects, we also test oifits here.
 """
 
 import numpy as np
-import pytest
 import stdatamodels.jwst.datamodels as dm
-from numpy.testing import assert_allclose
 from scipy.signal import convolve
 
 from jwst.ami.bp_fix import filtwl_d

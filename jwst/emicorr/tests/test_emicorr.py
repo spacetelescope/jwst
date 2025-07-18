@@ -168,6 +168,10 @@ def model_with_emi(emicorr_model):
 
 @pytest.fixture()
 def module_log_watcher(monkeypatch):
+    import logging
+
+    from jwst.tests.helpers import LogWatcher
+
     # Set a log watcher to check for a log message at any level
     # in the emicorr module
     watcher = LogWatcher("")
