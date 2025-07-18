@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 from os.path import abspath
@@ -9,7 +8,7 @@ from astropy.extern.configobj.configobj import ConfigObj
 from astropy.utils.data import get_pkg_data_filename
 from crds.core.exceptions import CrdsLookupError
 from stdatamodels.jwst import datamodels
-from stpipe import cmdline, crds_client
+from stpipe import crds_client
 from stpipe.config import StepConfig
 from stpipe.config_parser import ValidationError
 

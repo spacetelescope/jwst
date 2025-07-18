@@ -1,5 +1,3 @@
-import warnings
-
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm

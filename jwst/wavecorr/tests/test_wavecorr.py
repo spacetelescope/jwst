@@ -1,5 +1,3 @@
-from pathlib import Path
-
 import numpy as np
 import pytest
 from astropy.utils.data import get_pkg_data_filename

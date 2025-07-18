@@ -1,5 +1,3 @@
-from collections import namedtuple
-
 import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
