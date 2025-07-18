@@ -195,7 +195,7 @@ def test_make_wfss_combined(comb1d_list):
 
         # test units
         to_check = ["WAVELENGTH", "SOURCE_RA"]
-        expected_units = ["um", "degrees"]
+        expected_units = ["um", "deg"]
         for col in to_check:
             assert col in spec.spec_table.columns.names
             assert spec.spec_table.columns[col].unit == expected_units[to_check.index(col)]
