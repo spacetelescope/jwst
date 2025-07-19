@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-from numpy.testing import assert_allclose
 
 from jwst.ami import lg_model
 from jwst.ami.tests.conftest import PXSC_RAD

@@ -1,7 +1,6 @@
 """Test the x_irs2 module in the ipc package."""
 
 import re
-from collections import namedtuple
 
 import numpy as np
 import pytest

@@ -1,7 +1,5 @@
 """Regression tests for NIRSpec IFU"""
 
-import warnings
-
 import pytest
 
 from jwst.regtest import regtestdata as rt

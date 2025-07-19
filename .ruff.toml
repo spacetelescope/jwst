@@ -76,7 +76,6 @@ ban-relative-imports = "all"  # Disallow all relative imports.
     "TID252",  # Checks for relative imports
 ]
 "**/tests/test_*.py" = [
-    "F",      # Pyflakes (part of default flake8)
     "E",      # pycodestyle (part of default flake8)
     "W",      # pycodestyle (part of default flake8)
     "D",      # docstrings, see also numpydoc pre-commit action
@@ -85,6 +84,7 @@ ban-relative-imports = "all"  # Disallow all relative imports.
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
     "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
     "C4",     # flake8-comprehensions (best practices for comprehensions)
+    "F841",   # Local variable `result` is assigned to but never used
     "ICN",    # flake8-import-conventions (enforce import conventions)
     "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
     "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
@@ -100,7 +100,6 @@ ban-relative-imports = "all"  # Disallow all relative imports.
     "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
 ]
 "**/regtest/test_*.py" = [
-    "F",      # Pyflakes (part of default flake8)
     "E",      # pycodestyle (part of default flake8)
     "W",      # pycodestyle (part of default flake8)
     "D",      # docstrings, see also numpydoc pre-commit action

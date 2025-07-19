@@ -2,7 +2,6 @@
 Test functions for NIRSPEC WCS - all modes.
 """
 
-import functools
 import shutil
 from math import cos, sin
 
