@@ -343,7 +343,7 @@ def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
     )
     result.close()
 
-    fname = f"test0_x1d.fits"
+    fname = "test0_x1d.fits"
     output_path = str(tmp_path / fname)
 
     assert os.path.isfile(output_path)
