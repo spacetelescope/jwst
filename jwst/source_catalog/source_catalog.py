@@ -8,6 +8,7 @@ import numpy as np
 from astropy.stats import gaussian_fwhm_to_sigma
 from astropy.table import QTable
 from astropy.utils import lazyproperty
+from astropy.utils.exceptions import AstropyUserWarning
 from photutils.aperture import CircularAperture, aperture_photometry
 from photutils.background import BackgroundRMSBase, LocalBackground, MedianBackground
 from photutils.detection.core import _StarFinderKernel
@@ -595,8 +596,12 @@ class JWSTSourceCatalog:
             bkg_estimator=MedianRMS(),
         )
         xpos, ypos = self._xypos_finite.T
-        bkg_median = bkg_estimator(self.model.data.value, xpos, ypos)
-        bkg_median_err = rms_estimator(self.model.data.value, xpos, ypos)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=AstropyUserWarning, message="Input data contains invalid values"
+            )
+            bkg_median = bkg_estimator(self.model.data.value, xpos, ypos)
+            bkg_median_err = rms_estimator(self.model.data.value, xpos, ypos)
 
         bkg_median <<= self.model.data.unit
         bkg_median_err <<= self.model.data.unit
