@@ -2,8 +2,7 @@
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-
-from . import straylight
+from jwst.straylight import straylight
 
 __all__ = ["StraylightStep"]
 

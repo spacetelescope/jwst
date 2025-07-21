@@ -6,9 +6,9 @@ import logging
 import numpy as np
 import yaml as yaml_lib
 
-from .association import Association
-from .exceptions import AssociationNotValidError
-from .lib.member import Member
+from jwst.associations.association import Association
+from jwst.associations.exceptions import AssociationNotValidError
+from jwst.associations.lib.member import Member
 
 # Configure logging
 logger = logging.getLogger(__name__)

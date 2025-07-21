@@ -8,7 +8,7 @@ from astropy.time.core import Time
 from scipy.special import comb
 from stdatamodels.jwst import datamodels
 
-from . import leastsqnrm
+from jwst.ami import leastsqnrm
 
 log = logging.getLogger(__name__)
 

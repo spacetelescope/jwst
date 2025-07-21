@@ -9,8 +9,12 @@ from jwst.extract_1d.soss_extract.pastasoss import (
     get_soss_traces,
     get_soss_wavemaps,
 )
-
-from .conftest import PWCPOS, TRACE_END_IDX, WAVE_BNDS_O1, WAVE_BNDS_O2
+from jwst.extract_1d.soss_extract.tests.conftest import (
+    PWCPOS,
+    TRACE_END_IDX,
+    WAVE_BNDS_O1,
+    WAVE_BNDS_O2,
+)
 
 """Test coverage for the helper functions in pastasoss.py"""
 

@@ -13,7 +13,14 @@ from astropy.time import Time
 from astropy.utils.data import get_pkg_data_filename
 from requests.adapters import HTTPAdapter, Retry
 
-from .engdb_lib import FORCE_STATUSES, RETRIES, TIMEOUT, EngDB_Value, EngdbABC, mnemonic_data_fname
+from jwst.lib.engdb_lib import (
+    FORCE_STATUSES,
+    RETRIES,
+    TIMEOUT,
+    EngDB_Value,
+    EngdbABC,
+    mnemonic_data_fname,
+)
 
 __all__ = ["EngdbMast"]
 

@@ -15,9 +15,8 @@ from os.path import (
 from pathlib import Path
 
 from jwst.associations import libpath
-
-from .exceptions import AssociationError, AssociationNotValidError
-from .lib.callback_registry import CallbackRegistry
+from jwst.associations.exceptions import AssociationError, AssociationNotValidError
+from jwst.associations.lib.callback_registry import CallbackRegistry
 
 __all__ = ["AssociationRegistry", "RegistryMarker"]
 

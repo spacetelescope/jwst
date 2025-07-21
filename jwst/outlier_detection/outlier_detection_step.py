@@ -6,10 +6,9 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib.pipe_utils import is_tso
+from jwst.outlier_detection import coron, ifu, imaging, spec, tso
 from jwst.stpipe import Step
 from jwst.stpipe.utilities import record_step_status
-
-from . import coron, ifu, imaging, spec, tso
 
 # Categorize all supported modes
 IMAGE_MODES = ["NRC_IMAGE", "MIR_IMAGE", "NRS_IMAGE", "NIS_IMAGE", "FGS_IMAGE"]

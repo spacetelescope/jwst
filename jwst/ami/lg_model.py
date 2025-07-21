@@ -2,8 +2,8 @@ import logging
 
 import numpy as np
 
-from . import analyticnrm2, mask_definition_ami, utils
-from . import leastsqnrm as leastsqnrm
+from jwst.ami import analyticnrm2, mask_definition_ami, utils
+from jwst.ami import leastsqnrm as leastsqnrm
 
 log = logging.getLogger(__name__)
 

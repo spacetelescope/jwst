@@ -3,10 +3,9 @@ import logging
 
 import numpy as np
 
+from jwst.ami import instrument_data, nrm_core, utils
+from jwst.ami.find_affine2d_parameters import find_rotation
 from jwst.datamodels import CubeModel, ImageModel  # type: ignore[attr-defined]
-
-from . import instrument_data, nrm_core, utils
-from .find_affine2d_parameters import find_rotation
 
 log = logging.getLogger(__name__)
 

@@ -7,8 +7,7 @@ from astropy.table import Table
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-
-from .white_light import white_light
+from jwst.white_light.white_light import white_light
 
 log = logging.getLogger(__name__)
 

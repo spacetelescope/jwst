@@ -7,9 +7,8 @@ from collections import namedtuple
 
 import numpy as np
 
+from jwst.ipc import x_irs2
 from jwst.lib import pipe_utils
-
-from . import x_irs2
 
 log = logging.getLogger(__name__)
 
