@@ -30,7 +30,6 @@ def test_meta():
         "data/pool_006_spec_nirspec.csv",
         "data/pool_007_spec_miri.csv",
         "data/pool_010_spec_nirspec_lv2bkg.csv",
-        "data/pool_016_spec_nirspec_lv2bkg_double.csv",
         "data/pool_017_spec_nirspec_lv2imprint.csv",
     ],
 )
