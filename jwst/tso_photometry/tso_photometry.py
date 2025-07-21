@@ -433,7 +433,6 @@ def _psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter):
         log.debug("PSF fit failure: %s", str(err))
         return np.nan, np.nan, np.nan
 
-    # TODO: is FWHM or sigma preferable for the catalog?
     x_width = gaussian_fwhm_to_sigma * results["x_fwhm_fit"][0]
     y_width = gaussian_fwhm_to_sigma * results["y_fwhm_fit"][0]
     flux = results["flux_fit"][0]
