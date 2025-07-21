@@ -19,6 +19,14 @@ General
   <https://github.com/spacetelescope/jwst/issues/9569>`_)
 
 
+Data Models
+-----------
+
+- Fix a bug where DQ table column was not padded properly where no valid data
+  for multi-spec type tables (`#9602
+  <https://github.com/spacetelescope/jwst/issues/9602>`_)
+
+
 Documentation
 -------------
 
@@ -72,6 +80,9 @@ Pipeline
   exposures to psf exposures, to allow successful processing of associations
   with differing numbers of science and psf members. (`#9361
   <https://github.com/spacetelescope/jwst/issues/9361>`_)
+- Populate S_REGION keyword in Level 3 WFSS x1d products using cumulative
+  footprint of grism images supplied to Spec3Pipeline. (`#9621
+  <https://github.com/spacetelescope/jwst/issues/9621>`_)
 
 
 ami_analyze / ami_normalize / ami_average (ami3)
@@ -140,6 +151,10 @@ background (image2, spec2)
   step. The new alias is the one currently used for running the step or
   changing parameters from the stage2 pipelines. (`#9533
   <https://github.com/spacetelescope/jwst/issues/9533>`_)
+- Change the background reference filetype for WFSS processing from ``wfssbkg``
+  to ``bkg``. (`#9584 <https://github.com/spacetelescope/jwst/issues/9584>`_)
+- Add support for processing WFSS subarray data (`#9603
+  <https://github.com/spacetelescope/jwst/issues/9603>`_)
 
 
 barshadow (spec2 MOS)
@@ -169,6 +184,8 @@ combine_1d (spec3)
   (`#9402 <https://github.com/spacetelescope/jwst/issues/9402>`_)
 - Allow spectra from TSOMultiSpecModel to be combined. (`#9430
   <https://github.com/spacetelescope/jwst/issues/9430>`_)
+- Allow all-NaN spectra to be skipped instead of causing crashes (`#9625
+  <https://github.com/spacetelescope/jwst/issues/9625>`_)
 
 
 cube_build (spec2 IFU, spec3)
@@ -177,6 +194,8 @@ cube_build (spec2 IFU, spec3)
 - Updated cube_build function names to adhere to Python standards and updated
   some of the exception names. (`#9347
   <https://github.com/spacetelescope/jwst/issues/9347>`_)
+- Fix slice width calculation for NIRSpec IFU with a new-style slice map WCS.
+  (`#9606 <https://github.com/spacetelescope/jwst/issues/9606>`_)
 
 
 dark_current (detector1 NIR)
@@ -210,6 +229,13 @@ extract_1d (spec2, spec3)
   <https://github.com/spacetelescope/jwst/issues/9430>`_)
 - Fix crashes in the SOSS ATOCA algorithm when adaptive refinement reaches max
   grid size (`#9491 <https://github.com/spacetelescope/jwst/issues/9491>`_)
+
+extract_2d (spec2 MOS)
+----------------------
+
+- Update handling of wavelengthrange reference files to handle new NIRCam
+  delivery with fieldpoint column in table. (`#9609
+  <https://github.com/spacetelescope/jwst/issues/9609>`_)
 
 
 flatfield (image2, spec2)
