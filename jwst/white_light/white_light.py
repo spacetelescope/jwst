@@ -70,6 +70,14 @@ def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None)
         # Get mid times for all integrations in this order
         mid_time = spec.spec_table["MJD-AVG"]
         mid_tdb = spec.spec_table["TDB-MID"]
+
+        # Check for unique time stamps: keep only the first
+        _, unq_idx = np.unique(mid_time, return_index=True)
+        is_unique = np.full(mid_time.shape, False)
+        is_unique[unq_idx] = True
+        mid_time[~is_unique] = np.nan
+
+        # Store time arrays
         good = ~np.isnan(mid_time)
         if len(mid_times) == 0:
             mid_times = mid_time
@@ -94,9 +102,10 @@ def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None)
         if problems > 0:
             log.warning(
                 f"There were {problems} spectra in order {spectral_order} "
-                f"with no mid time ({100.0 * problems / n_spec} percent of spectra). "
-                "These spectra will be ignored in the output table."
+                "with no mid time or repeated mid time "
+                f"({100.0 * problems / n_spec} percent of spectra). "
             )
+            log.warning("These spectra will be ignored in the output table.")
 
     # Set up output table, removing problems
     tbl = _make_empty_output_table(input_model)

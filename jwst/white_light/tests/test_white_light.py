@@ -162,7 +162,7 @@ def test_white_light(make_datamodel, monkeypatch):
     """Test white light step"""
     data = make_datamodel
 
-    watcher = LogWatcher("There were 1 spectra in order 1 with no mid time (20")
+    watcher = LogWatcher("1 spectra in order 1 with no mid time or repeated mid time (20")
     monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
     result = white_light(data)
     watcher.assert_seen()
@@ -201,7 +201,7 @@ def test_white_light(make_datamodel, monkeypatch):
 
 
 def test_white_light_multi_detector(make_datamodel):
-    """Test white light step"""
+    """Test white light step on data with multiple detectors."""
     # Set the detectors in the two spec tables to different values
     data = make_datamodel.copy()
     data.spec[0].detector = "NRS1"
@@ -248,6 +248,51 @@ def test_white_light_multi_detector(make_datamodel):
 
     assert_allclose(result["whitelight_flux_order_1_NRS1"], expected_flux_order_1, equal_nan=True)
     assert_allclose(result["whitelight_flux_order_2_NRS2"], expected_flux_order_2, equal_nan=True)
+
+
+def test_white_light_repeated_times(monkeypatch, make_datamodel):
+    """Test white light step on data with repeated time stamps."""
+    # Set all integration times to the same value for order 1
+    data = make_datamodel.copy()
+    data.spec[0].spec_table["MJD-AVG"][:] = 0.1
+
+    watcher = LogWatcher("4 spectra in order 1 with no mid time or repeated mid time")
+    monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
+    result = white_light(data)
+    watcher.assert_seen()
+
+    n_spec = len(data.spec[0].spec_table)
+    times = np.linspace(0, 1, n_spec + 1)
+    start_times = times[:-1]
+    end_times = times[1:]
+    mid_times = (start_times + end_times) / 2.0
+
+    # add the adjusted midtime for order 2
+    mid_times[2] = 0.51
+    expected_tdb = mid_times + 3
+
+    np.testing.assert_allclose(result["MJD_UTC"], mid_times)
+    np.testing.assert_allclose(result["BJD_TDB"], expected_tdb, equal_nan=True)
+    assert result["whitelight_flux_order_1"].shape == (len(mid_times),)
+    assert result["whitelight_flux_order_2"].shape == (len(mid_times),)
+
+    # For order 1, repeated timestamps so only the first flux is kept
+    assert np.sum(np.isnan(result["whitelight_flux_order_1"])) == n_spec - 1
+
+    # check fluxes are summed appropriately
+    expected_flux_per_spec = np.sum(np.arange(1, 21, dtype=np.float32))
+    expected_flux = np.array(
+        [
+            expected_flux_per_spec,
+        ]
+        * len(mid_times)
+    )
+    expected_flux_order_1 = expected_flux.copy()
+    expected_flux_order_1[1:] = np.nan
+    expected_flux_order_2 = expected_flux.copy()
+
+    assert_allclose(result["whitelight_flux_order_1"], expected_flux_order_1, equal_nan=True)
+    assert_allclose(result["whitelight_flux_order_2"], expected_flux_order_2, equal_nan=True)
 
 
 @pytest.fixture
