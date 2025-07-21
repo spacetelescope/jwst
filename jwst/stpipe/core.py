@@ -11,8 +11,7 @@ from stpipe import Pipeline, Step, crds_client
 from jwst import __version__, __version_commit__
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib.suffix import remove_suffix
-
-from ._cal_logs import _LOG_FORMATTER
+from jwst.stpipe._cal_logs import _LOG_FORMATTER
 
 log = logging.getLogger(__name__)
 

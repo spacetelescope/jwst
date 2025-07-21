@@ -64,15 +64,18 @@ convention = "numpy"
 [lint.flake8-annotations]
 ignore-fully-untyped = true  # Turn off annotation checking for fully untyped code
 
+[lint.flake8-tidy-imports]
+ban-relative-imports = "all"  # Disallow all relative imports.
+
 [lint.per-file-ignores]
 "jwst/**/__init__.py" = [
     "E402", # module-level import not at top of file
     "F401", # unused import
     "F403", # import with *
     "F405", # ambiguous import from *
+    "TID252",  # Checks for relative imports
 ]
 "**/tests/test_*.py" = [
-    "F",      # Pyflakes (part of default flake8)
     "E",      # pycodestyle (part of default flake8)
     "W",      # pycodestyle (part of default flake8)
     "D",      # docstrings, see also numpydoc pre-commit action
@@ -81,6 +84,7 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "ARG",    # flake8-unused-arguments (prevent unused arguments)
     "B",      # flake8-bugbear (miscellaneous best practices to avoid bugs)
     "C4",     # flake8-comprehensions (best practices for comprehensions)
+    "F841",   # Local variable `result` is assigned to but never used
     "ICN",    # flake8-import-conventions (enforce import conventions)
     "INP",    # flake8-no-pep420 (prevent use of PEP420, i.e. implicit name spaces)
     "ISC",    # flake8-implicit-str-concat (conventions for concatenating long strings)
@@ -96,7 +100,6 @@ ignore-fully-untyped = true  # Turn off annotation checking for fully untyped co
     "YTT",    # flake8-2020 (prevent some specific gotchas from sys.version)
 ]
 "**/regtest/test_*.py" = [
-    "F",      # Pyflakes (part of default flake8)
     "E",      # pycodestyle (part of default flake8)
     "W",      # pycodestyle (part of default flake8)
     "D",      # docstrings, see also numpydoc pre-commit action

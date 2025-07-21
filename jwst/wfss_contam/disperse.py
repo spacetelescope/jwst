@@ -4,8 +4,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from jwst.lib.winclip import get_clipped_pixels
-
-from .sens1d import create_1d_sens
+from jwst.wfss_contam.sens1d import create_1d_sens
 
 
 def dispersed_pixel(

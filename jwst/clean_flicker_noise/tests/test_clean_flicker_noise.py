@@ -1,5 +1,3 @@
-import warnings
-
 import gwcs
 import numpy as np
 import pytest

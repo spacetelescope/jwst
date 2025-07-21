@@ -15,13 +15,12 @@ from stdatamodels.jwst.transforms.models import _toindex
 
 from jwst.assign_wcs import nirspec, pointing
 from jwst.assign_wcs.util import wrap_ra
+from jwst.cube_build import coord, cube_build_wcs_util, cube_internal_cal
+from jwst.cube_build.cube_match_sky_driz import cube_wrapper_driz  # c extension
+from jwst.cube_build.cube_match_sky_pointcloud import cube_wrapper  # c extension
 from jwst.datamodels import ModelContainer
 from jwst.model_blender import blendmeta
 from jwst.mrs_imatch.mrs_imatch_step import apply_background_2d
-
-from . import coord, cube_build_wcs_util, cube_internal_cal
-from .cube_match_sky_driz import cube_wrapper_driz  # c extension
-from .cube_match_sky_pointcloud import cube_wrapper  # c extension
 
 log = logging.getLogger(__name__)
 

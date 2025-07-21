@@ -8,10 +8,9 @@ from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.exp_to_source import multislit_to_container
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
+from jwst.resample import ResampleStep, resample_spec
 from jwst.resample.resample_utils import find_miri_lrs_sregion, load_custom_wcs
 from jwst.stpipe import Step
-
-from . import ResampleStep, resample_spec
 
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"

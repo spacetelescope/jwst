@@ -6,10 +6,9 @@ from collections import Counter, UserList, defaultdict
 from copy import copy
 from pathlib import Path
 
+from jwst.associations.lib.product_utils import sort_by_candidate
 from jwst.associations.load_asn import load_asn
 from jwst.lib.suffix import remove_suffix
-
-from .product_utils import sort_by_candidate
 
 logger = logging.getLogger(__name__)
 

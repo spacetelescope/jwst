@@ -13,11 +13,8 @@ from tweakwcs.correctors import JWSTWCSCorrector
 
 from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 from jwst.datamodels import ModelLibrary
-
-# LOCAL
 from jwst.stpipe import Step, record_step_status
-
-from .tweakreg_catalog import make_tweakreg_catalog
+from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
 
 
 def _oxford_or_str_join(str_list):
@@ -75,6 +72,7 @@ class TweakRegStep(Step):
         localbkg_width = integer(default=0) # Width of rectangular annulus used to compute local background around each source
         apermask_method = option('correct', 'mask', 'none', default='correct') # How to handle neighboring sources
         kron_params = float_list(min=2, max=3, default=None) # Parameters defining Kron aperture
+        deblend = boolean(default=True) # deblend sources?
 
         # align wcs options
         enforce_user_order = boolean(default=False) # Align images in user specified order?
@@ -232,9 +230,10 @@ class TweakRegStep(Step):
                 catalog = _rename_catalog_columns(catalog)
 
                 # filter all sources outside the wcs bounding box
-                catalog = twk.filter_catalog_by_bounding_box(
-                    catalog, image_model.meta.wcs.bounding_box
-                )
+                if len(catalog) > 0:
+                    catalog = twk.filter_catalog_by_bounding_box(
+                        catalog, image_model.meta.wcs.bounding_box
+                    )
 
                 # setting 'name' is important for tweakwcs logging
                 if catalog.meta.get("name") is None:
@@ -456,9 +455,11 @@ class TweakRegStep(Step):
             "localbkg_width": self.localbkg_width,
             "apermask_method": self.apermask_method,
             "kron_params": self.kron_params,
+            "deblend": self.deblend,
         }
 
-        return make_tweakreg_catalog(
+        columns = ["id", "xcentroid", "ycentroid", "flux"]
+        catalog, _ = make_tweakreg_catalog(
             image_model,
             self.snr_threshold,
             self.kernel_fwhm,
@@ -466,6 +467,8 @@ class TweakRegStep(Step):
             bkg_boxsize=self.bkg_boxsize,
             starfinder_kwargs=starfinder_kwargs,
         )
+        catalog = catalog[columns]
+        return catalog
 
 
 def _parse_catfile(catfile):

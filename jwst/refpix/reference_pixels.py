@@ -49,9 +49,8 @@ from scipy import stats
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.lib import pipe_utils, reffile_utils
-
-from .irs2_subtract_reference import make_irs2_mask
-from .optimized_convolution import apply_conv_kernel, make_kernels
+from jwst.refpix.irs2_subtract_reference import make_irs2_mask
+from jwst.refpix.optimized_convolution import apply_conv_kernel, make_kernels
 
 log = logging.getLogger(__name__)
 

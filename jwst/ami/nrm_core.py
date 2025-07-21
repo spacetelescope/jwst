@@ -3,7 +3,7 @@ import logging
 import numpy as np
 from stdatamodels.jwst import datamodels
 
-from . import lg_model, oifits, utils
+from jwst.ami import lg_model, oifits, utils
 
 log = logging.getLogger(__name__)
 

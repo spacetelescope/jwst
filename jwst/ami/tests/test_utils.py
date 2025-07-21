@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-import stdatamodels.jwst.datamodels as dm
 from numpy.testing import assert_allclose
 
 from jwst.ami import utils

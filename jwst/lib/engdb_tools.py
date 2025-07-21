@@ -56,8 +56,8 @@ The typical workflow is as follows:
 
 import logging
 
-from .engdb_direct import EngdbDirect
-from .engdb_mast import EngdbMast
+from jwst.lib.engdb_direct import EngdbDirect
+from jwst.lib.engdb_mast import EngdbMast
 
 # Configure logging
 logger = logging.getLogger(__name__)

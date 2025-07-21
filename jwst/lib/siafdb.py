@@ -13,7 +13,7 @@ from collections import namedtuple
 from datetime import date
 from pathlib import Path
 
-from .basic_utils import LoggingContext
+from jwst.lib.basic_utils import LoggingContext
 
 # Setup logging
 logger = logging.getLogger(__name__)

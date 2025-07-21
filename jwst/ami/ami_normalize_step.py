@@ -1,8 +1,7 @@
 from stdatamodels.jwst import datamodels
 
+from jwst.ami import ami_normalize
 from jwst.stpipe import Step
-
-from . import ami_normalize
 
 __all__ = ["AmiNormalizeStep"]
 

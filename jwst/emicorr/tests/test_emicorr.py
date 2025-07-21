@@ -166,17 +166,6 @@ def model_with_emi(emicorr_model):
     return emicorr_model
 
 
-@pytest.fixture()
-def module_log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in the emicorr module
-    watcher = LogWatcher("")
-    logger = logging.getLogger("jwst.emicorr.emicorr")
-    for level in ["debug", "info", "warning", "error"]:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
-
-
 def test_emicorrstep_skip_default():
     step = emicorr_step.EmiCorrStep()
     # Default is that step is skipped

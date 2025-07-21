@@ -5,8 +5,7 @@ import pytest
 from numpy.testing import assert_allclose
 
 from jwst.ami import bp_fix
-
-from .conftest import PXSC_MAS, PXSC_RAD
+from jwst.ami.tests.conftest import PXSC_MAS, PXSC_RAD
 
 
 @pytest.mark.parametrize("filt", bp_fix.filts)

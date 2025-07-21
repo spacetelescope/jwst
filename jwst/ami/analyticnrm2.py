@@ -8,7 +8,7 @@ import warnings
 import numpy as np
 import scipy.special
 
-from . import hextransformee, leastsqnrm, utils
+from jwst.ami import hextransformee, leastsqnrm, utils
 
 log = logging.getLogger(__name__)
 

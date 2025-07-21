@@ -1,8 +1,7 @@
 from stdatamodels.jwst import datamodels
 
+from jwst.ipc import ipc_corr
 from jwst.stpipe import Step
-
-from . import ipc_corr
 
 __all__ = ["IPCStep"]
 
