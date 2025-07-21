@@ -5,7 +5,6 @@ import warnings
 
 import astropy.units as u
 import numpy as np
-from astropy.nddata.utils import NoOverlapError, extract_array
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import QTable
 from astropy.utils import lazyproperty
@@ -290,7 +289,6 @@ class JWSTSourceCatalog:
         """
         return ~np.isfinite(self.xypos).all(axis=1)
 
-    # TODO: check if this is still a lazyproperty
     sky_centroid = SourceCatalog.sky_centroid
 
     @lazyproperty
@@ -755,7 +753,15 @@ class JWSTSourceCatalog:
         return np.logical_and(mask1, mask2)
 
     @lazyproperty
-    def cutout_center(self):  # noqa: D102
+    def cutout_center(self):
+        """
+        Return the center of the cutout, which is the center of the DAOFind kernel.
+
+        Returns
+        -------
+        tuple
+            The (y, x) coordinates of the cutout center.
+        """
         return tuple((size - 1) // 2 for size in self.kernel.shape)
 
     @property
@@ -783,57 +789,8 @@ class JWSTSourceCatalog:
         """
         return ndimage.convolve(self.model.data.value, self.kernel.data, mode="constant", cval=0.0)
 
-    @lazyproperty
-    def _daofind_cutout(self):
-        """
-        Construct cutouts centered on each source from the input data.
-
-        The cutout size always matches the size of the DAOFind kernel, which has odd dimensions.
-
-        Returns
-        -------
-        `~numpy.ndarray`
-            A 3D array containing 2D cutouts centered on each source from the input data.
-        """
-        cutout = []
-        for xcen, ycen in zip(*np.transpose(self._xypos_finite), strict=False):
-            try:
-                cutout_ = extract_array(
-                    self.model.data, self.kernel.shape, (ycen, xcen), fill_value=0.0
-                )
-            except NoOverlapError:
-                cutout_ = np.zeros(self.kernel.shape)
-            cutout.append(cutout_)
-
-        return np.array(cutout)  # all cutouts are the same size
-
-    @lazyproperty
-    def _daofind_cutout_conv(self):
-        """
-        Construct cutouts centered on each source from the convolved data.
-
-        The cutout size always matches the size of the DAOFind kernel, which has odd dimensions.
-
-        Returns
-        -------
-        `~numpy.ndarray`
-            A 3D array containing 2D cutouts centered on each source from the convolved data.
-        """
-        cutout = []
-        for xcen, ycen in zip(*np.transpose(self._xypos_finite), strict=False):
-            try:
-                cutout_ = extract_array(
-                    self._daofind_convolved_data,
-                    self.kernel.shape,
-                    (ycen, xcen),
-                    fill_value=0.0,
-                )
-            except NoOverlapError:
-                cutout_ = np.zeros(self.kernel.shape)
-            cutout.append(cutout_)
-
-        return np.array(cutout)  # all cutouts are the same size
-
+    # the following seven properties are defined to match the
+    # _DAOStarFinderCatalog interface. their names should not be changed.
     @property
     def unit(self):  # noqa: D102
         return None
