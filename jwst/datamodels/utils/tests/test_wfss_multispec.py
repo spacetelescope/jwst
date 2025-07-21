@@ -70,7 +70,7 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     # test one vector-like column, which should come from the input specmodels
     # and one meta column, which should be copied from the schema by set_schema_units
     to_check = ["WAVELENGTH", "SOURCE_RA"]
-    expected_units = ["um", "degrees"]
+    expected_units = ["um", "deg"]
     for exposure in output_model.spec:
         for col in to_check:
             assert col in exposure.spec_table.columns.names
@@ -196,7 +196,7 @@ def test_make_wfss_combined(comb1d_list):
 
         # test units
         to_check = ["WAVELENGTH", "SOURCE_RA"]
-        expected_units = ["um", "degrees"]
+        expected_units = ["um", "deg"]
         for col in to_check:
             assert col in spec.spec_table.columns.names
             assert spec.spec_table.columns[col].unit == expected_units[to_check.index(col)]
