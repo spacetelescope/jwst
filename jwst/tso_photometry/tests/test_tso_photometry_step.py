@@ -135,3 +135,19 @@ def test_tsophotometry_step_failed_centroid(monkeypatch, mock_tsophot_reffile, l
     # failed fits fall back on estimated location.
     assert isinstance(catalog, QTable)
     spot_check_expected_values(datamodel, catalog)
+
+
+@pytest.mark.parametrize("box", ["search_box_width", "fit_box_width"])
+def test_tsophotometry_step_odd_boxes(mock_tsophot_reffile, log_watcher, box):
+    datamodel = mock_nircam_image()
+    kwargs = {box: 22}
+
+    watcher = log_watcher(
+        "stpipe.TSOPhotometryStep", message=f"Rounding the {box} down to 21", level="warning"
+    )
+    catalog = tp.TSOPhotometryStep.call(datamodel, **kwargs)
+    watcher.assert_seen()
+
+    # Output is the same for easy-to-fit synthetic data
+    assert isinstance(catalog, QTable)
+    spot_check_expected_values(datamodel, catalog)

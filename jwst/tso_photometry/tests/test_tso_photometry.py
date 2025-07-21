@@ -2,6 +2,7 @@ import math
 
 import astropy.units as u
 import numpy as np
+import pytest
 from stdatamodels.jwst import datamodels
 
 from jwst.lib import reffile_utils

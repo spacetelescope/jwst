@@ -403,18 +403,20 @@ def _psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter):
     cutout = CutoutImage(data, [ycenter, xcenter], fit_shape)
     cutout_mask = CutoutImage(mask, [ycenter, xcenter], fit_shape)
 
+    # Guess FWHM from box width
+    x_fwhm = fit_box_width / 2
+    y_fwhm = fit_box_width / 2
+
     # Initial parameters for fix
     init_params = QTable()
     init_params["x"] = [xcenter]
     init_params["y"] = [ycenter]
     init_params["flux"] = [np.sum(cutout.data[~cutout_mask.data])]
-    init_params["x_fwhm"] = [fit_box_width / 2]
-    init_params["y_fwhm"] = [fit_box_width / 2]
+    init_params["x_fwhm"] = [x_fwhm]
+    init_params["y_fwhm"] = [y_fwhm]
 
     # Integrated 2D Gaussian model
-    model = GaussianPRF(
-        x_0=xcenter, y_0=ycenter, x_fwhm=fit_box_width / 2, y_fwhm=fit_box_width / 2
-    )
+    model = GaussianPRF(x_0=xcenter, y_0=ycenter, x_fwhm=x_fwhm, y_fwhm=y_fwhm)
     model.x_0.fixed = True
     model.y_0.fixed = True
     model.x_fwhm.min = 0.0

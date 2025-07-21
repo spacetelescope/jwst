@@ -25,8 +25,8 @@ class TSOPhotometryStep(Step):
     spec = """
         save_catalog = boolean(default=False)  # Save exposure-level catalog
         centroid_source = boolean(default=True)  # Centroid source before photometry
-        search_box_width = integer(default=41)  # Box width for initial source search
-        fit_box_width = integer(default=11)  # Box width for centroid fit
+        search_box_width = integer(default=41)  # Box width for initial source search; must be odd.
+        fit_box_width = integer(default=11)  # Box width for centroid fit; must be odd.
         moving_centroid = boolean(default=False)  # Fit centroid values for each integration
     """  # noqa: E501
 
@@ -98,6 +98,17 @@ class TSOPhotometryStep(Step):
 
             # Centroid the source if desired
             if self.centroid_source:
+                # Check the box sizes: they must be odd integers
+                boxes = ["search_box_width", "fit_box_width"]
+                for box in boxes:
+                    box_input = getattr(self, box)
+                    if box_input % 2 == 0:
+                        setattr(self, box, box_input - 1)
+                        self.log.warning(
+                            "Even box widths are not supported."
+                            f" Rounding the {box} down to {box_input - 1}."
+                        )
+
                 centroid_x, centroid_y, psf_width_x, psf_width_y, psf_flux = tso_source_centroid(
                     model,
                     xcenter,
