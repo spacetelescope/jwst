@@ -5,11 +5,11 @@ import warnings
 
 import astropy.units as u
 import numpy as np
-from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
+from astropy.stats import gaussian_fwhm_to_sigma
 from astropy.table import QTable
 from astropy.utils import lazyproperty
-from astropy.utils.exceptions import AstropyUserWarning
-from photutils.aperture import CircularAnnulus, CircularAperture, aperture_photometry
+from photutils.aperture import CircularAperture, aperture_photometry
+from photutils.background import BackgroundRMSBase, LocalBackground, MedianBackground
 from photutils.detection.core import _StarFinderKernel
 from photutils.detection.daofinder import _DAOStarFinderCatalog
 from photutils.segmentation import SourceCatalog
@@ -21,6 +21,38 @@ from jwst import __version__ as jwst_version
 from jwst.source_catalog._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
+
+
+class MedianRMS(BackgroundRMSBase):
+    """A photutils class to calculate the standard error of the median."""
+
+    def calc_background_rms(self, data, axis=None, masked=False):  # noqa: ARG002
+        """
+        Calculate the standard error of the median of the input data.
+
+        The default is to apply 3-sigma clipping to the data.
+
+        Parameters
+        ----------
+        data : `~numpy.ndarray`
+            The input data array.
+        axis : int, optional
+            The axis along which to calculate the standard error of the median.
+            If None, the standard error is calculated over the entire array.
+        masked : bool, optional
+            If True, the input data is assumed to be a masked array.
+            If False, the input data is assumed to be a regular NumPy array.
+
+        Returns
+        -------
+        `~numpy.ndarray`
+            The standard error of the median of the input data.
+        """
+        if self.sigma_clip is not None:
+            data = self.sigma_clip(data, axis=axis, masked=masked)
+
+        n_points = np.sum(np.isfinite(data), axis=axis)
+        return np.sqrt(np.pi / (2.0 * n_points)) * np.nanstd(data, axis=axis)
 
 
 class JWSTSourceCatalog:
@@ -552,32 +584,19 @@ class JWSTSourceCatalog:
         bkg_median, bkg_median_err : tuple of `~astropy.unit.Quantity`
             The local background and error.
         """
-        bkg_aper = CircularAnnulus(
-            self._xypos_finite,
+        bkg_estimator = LocalBackground(
             self.aperture_params["bkg_aperture_inner_radius"],
             self.aperture_params["bkg_aperture_outer_radius"],
+            bkg_estimator=MedianBackground(),  # uses 3-sigma clip by default
         )
-        bkg_aper_masks = bkg_aper.to_mask(method="center")
-        sigclip = SigmaClip(sigma=3.0)
-
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", category=RuntimeWarning)
-            warnings.simplefilter("ignore", category=AstropyUserWarning)
-
-            nvalues = []
-            bkg_median = []
-            bkg_std = []
-            for mask in bkg_aper_masks:
-                bkg_data = mask.get_values(self.model.data.value)
-                values = sigclip(bkg_data, masked=False)
-                nvalues.append(values.size)
-                bkg_median.append(np.median(values))
-                bkg_std.append(np.std(values))
-
-            nvalues = np.array(nvalues)
-            bkg_median = np.array(bkg_median)
-            # standard error of the median
-            bkg_median_err = np.sqrt(np.pi / (2.0 * nvalues)) * np.array(bkg_std)
+        rms_estimator = LocalBackground(
+            self.aperture_params["bkg_aperture_inner_radius"],
+            self.aperture_params["bkg_aperture_outer_radius"],
+            bkg_estimator=MedianRMS(),
+        )
+        xpos, ypos = self._xypos_finite.T
+        bkg_median = bkg_estimator(self.model.data.value, xpos, ypos)
+        bkg_median_err = rms_estimator(self.model.data.value, xpos, ypos)
 
         bkg_median <<= self.model.data.unit
         bkg_median_err <<= self.model.data.unit

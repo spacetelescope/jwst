@@ -127,6 +127,15 @@ def test_source_catalog(nircam_model, npixels, nsources):
     min_snr = np.min(cat["isophotal_flux"] / cat["isophotal_flux_err"])
     assert min_snr >= 100
 
+    if npixels == 5 and nsources == 2:
+        # test values of some specific computed quantities
+        assert np.isclose(cat["xcentroid"][1], 19.46399720865899)
+        assert np.isclose(cat["ycentroid"][1], 41.95288393407728)
+        assert np.isclose(cat["sharpness"][1], 0.9102634628764403)
+        assert np.isclose(cat["roundness"][1], 1.5954264)
+        assert np.isclose(cat["aper_bkg_flux"][1].value, 1400000.0)
+        assert np.isclose(cat["aper_bkg_flux_err"][1].value, 85223.70700074881)
+
 
 def test_source_catalog_no_sources(nircam_model, monkeypatch):
     npixels = 5000
