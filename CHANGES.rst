@@ -1,3 +1,23 @@
+1.19.1 (2025-07-21)
+===================
+
+assign_wcs (image2, spec2)
+--------------------------
+
+- Catch an edge case where a NIRSpec imaging WCS is assigned, but a
+  spectroscopic bounding box is attempted, causing a crash in assign_wcs for
+  some calibration exposure types. (`#9659
+  <https://github.com/spacetelescope/jwst/issues/9659>`_)
+
+
+white_light
+-----------
+
+- Fix a crash caused by repeated time stamps in the spectral table. If found,
+  warn and keep only the first one. (`#9672
+  <https://github.com/spacetelescope/jwst/issues/9672>`_)
+
+
 1.19.0 (2025-06-26)
 ===================
 

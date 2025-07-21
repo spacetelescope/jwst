@@ -1,1 +1,0 @@
-Catch an edge case where a NIRSpec imaging WCS is assigned, but a spectroscopic bounding box is attempted, causing a crash in assign_wcs for some calibration exposure types.
