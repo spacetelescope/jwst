@@ -102,7 +102,7 @@ def white_light(input_model, waverange_table=None, min_wave=None, max_wave=None)
         if problems > 0:
             log.warning(
                 f"There were {problems} spectra in order {spectral_order} "
-                "with no mid time or repeated mid time "
+                "with no mid time or duplicate mid time "
                 f"({100.0 * problems / n_spec} percent of spectra). "
             )
             log.warning("These spectra will be ignored in the output table.")

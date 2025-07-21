@@ -13,6 +13,15 @@ from jwst.tests.helpers import LogWatcher
 from jwst.white_light.white_light import _determine_wavelength_range, white_light
 from jwst.white_light.white_light_step import WhiteLightStep
 
+TIME_KEYS = [
+    "MJD-BEG",
+    "MJD-AVG",
+    "MJD-END",
+    "TDB-BEG",
+    "TDB-MID",
+    "TDB-END",
+]
+
 
 @pytest.fixture(scope="module")
 def make_datamodel():
@@ -140,19 +149,12 @@ def make_datamodel():
 
     # set blank times for one integration in order 1 to test warning raise
     model.spec[0].spec_table["INT_NUM"][2] = 0
-    time_keys = [
-        "MJD-BEG",
-        "MJD-AVG",
-        "MJD-END",
-        "TDB-BEG",
-        "TDB-MID",
-        "TDB-END",
-    ]
-    for key in time_keys:
+
+    for key in TIME_KEYS:
         model.spec[0].spec_table[key][2] = np.nan
 
     # set one time to a different value for order 2 to test table integration
-    for key in time_keys:
+    for key in TIME_KEYS:
         model.spec[1].spec_table[key][2] += 0.01
 
     return model
@@ -162,7 +164,7 @@ def test_white_light(make_datamodel, monkeypatch):
     """Test white light step"""
     data = make_datamodel
 
-    watcher = LogWatcher("1 spectra in order 1 with no mid time or repeated mid time (20")
+    watcher = LogWatcher("1 spectra in order 1 with no mid time or duplicate mid time (20")
     monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
     result = white_light(data)
     watcher.assert_seen()
@@ -250,33 +252,29 @@ def test_white_light_multi_detector(make_datamodel):
     assert_allclose(result["whitelight_flux_order_2_NRS2"], expected_flux_order_2, equal_nan=True)
 
 
-def test_white_light_repeated_times(monkeypatch, make_datamodel):
-    """Test white light step on data with repeated time stamps."""
-    # Set all integration times to the same value for order 1
+def test_white_light_duplicate_times(monkeypatch, make_datamodel):
+    """Test white light step on data with duplicate time stamps."""
+    # Set all times to the same value for order 1
     data = make_datamodel.copy()
-    data.spec[0].spec_table["MJD-AVG"][:] = 0.1
+    for key in TIME_KEYS:
+        data.spec[0].spec_table[key][:] = data.spec[0].spec_table[key][0]
 
-    watcher = LogWatcher("4 spectra in order 1 with no mid time or repeated mid time")
+    watcher = LogWatcher("4 spectra in order 1 with no mid time or duplicate mid time")
     monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
     result = white_light(data)
     watcher.assert_seen()
 
-    n_spec = len(data.spec[0].spec_table)
-    times = np.linspace(0, 1, n_spec + 1)
-    start_times = times[:-1]
-    end_times = times[1:]
-    mid_times = (start_times + end_times) / 2.0
-
-    # add the adjusted midtime for order 2
-    mid_times[2] = 0.51
-    expected_tdb = mid_times + 3
+    # Expected times match input for the order 2 spectrum
+    n_spec = len(data.spec[1].spec_table)
+    mid_times = data.spec[1].spec_table["MJD-AVG"]
+    expected_tdb = data.spec[1].spec_table["TDB-MID"]
 
     np.testing.assert_allclose(result["MJD_UTC"], mid_times)
     np.testing.assert_allclose(result["BJD_TDB"], expected_tdb, equal_nan=True)
     assert result["whitelight_flux_order_1"].shape == (len(mid_times),)
     assert result["whitelight_flux_order_2"].shape == (len(mid_times),)
 
-    # For order 1, repeated timestamps so only the first flux is kept
+    # For order 1, duplicate timestamps so only the first flux is kept
     assert np.sum(np.isnan(result["whitelight_flux_order_1"])) == n_spec - 1
 
     # check fluxes are summed appropriately
