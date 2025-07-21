@@ -461,7 +461,7 @@ epub_exclude_files = ['search.html']
 # linkcheck
 linkcheck_retry = 5
 linkcheck_ignore = [
-    "http://stsci.edu/schemas/fits-schema/",  # Old schema from CHANGEST.rst
+    "http://stsci.edu/schemas/fits-schema/",  # Old schema from CHANGES.rst
     "https://jwst-docs.stsci.edu",  # CI blocked by service provider
     "https://jira.stsci.edu/",  # Internal access only
     r"https://github\.com/spacetelescope/jwst/(?:issues|pull)/\d+",
