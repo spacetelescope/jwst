@@ -115,7 +115,7 @@ class AmiAnalyzeStep(Step):
 
         Returns
         -------
-        affine2d : Affine2d object
+        affine2d : `~jwst.ami.utils.Affine2d`
             User-defined affine transform
         """
         msg_defaulting = "\t **** DEFAULTING TO USE IDENTITY TRANSFORM ****"
