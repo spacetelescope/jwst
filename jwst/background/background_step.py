@@ -104,9 +104,9 @@ class BackgroundStep(Step):
             )
             if result is None:
                 result = input_model
-                result.meta.cal_step.back_sub = "SKIPPED"
+                result.meta.cal_step.bkg_subtract = "SKIPPED"
             else:
-                result.meta.cal_step.back_sub = "COMPLETE"
+                result.meta.cal_step.bkg_subtract = "COMPLETE"
 
         else:
             # Get the background files to be subtracted

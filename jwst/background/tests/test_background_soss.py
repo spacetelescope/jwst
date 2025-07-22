@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.background import BackgroundStep
+from jwst.background import BackgroundStep, background_sub_soss
 from jwst.background.background_sub_soss import (
     BACKGROUND_MASK_CUTOFF,
     SUBSTRIP96_ROWSTART,
@@ -83,6 +83,9 @@ def generate_soss_cube_substrip96(mock_data):
     cube.data = np.array([mock_data[0][SUBSTRIP96_ROWSTART : SUBSTRIP96_ROWSTART + 96, :]] * 10)
     cube.err = np.array([mock_data[1][SUBSTRIP96_ROWSTART : SUBSTRIP96_ROWSTART + 96, :]] * 10)
     cube.dq = np.isnan(cube.data)
+    cube.meta.instrument.filter = "CLEAR"
+    cube.meta.instrument.pupil = "GR700XD"
+    cube.meta.exposure.type = "NIS_SOSS"
     return cube
 
 
@@ -124,15 +127,45 @@ def test_subtract_soss_bkg(
     result = subtract_soss_bkg(generate_soss_cube, template_model, 35.0, [25.0, 50.0])
     assert type(result) == type(generate_soss_cube)
 
-    mock_model = generate_soss_cube_substrip96
-    mock_model.meta.instrument.filter = "CLEAR"
-    mock_model.meta.instrument.pupil = "GR700XD"
-    mock_model.meta.exposure.type = "NIS_SOSS"
-
     # Test step-level call along with substrip96-shaped data.
+    mock_model = generate_soss_cube_substrip96
     result = BackgroundStep.call(
         mock_model,
         override_bkg=template_model,
     )
-
     assert type(result) == type(generate_soss_cube_substrip96)
+    assert result is not mock_model
+    assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+
+
+def test_bkg_fail(monkeypatch, caplog, generate_background_template, generate_soss_cube_substrip96):
+    template_model = datamodels.SossBkgModel(
+        data=np.stack((generate_background_template, generate_background_template))
+    )
+    mock_model = generate_soss_cube_substrip96
+
+    # Mock a failure in the background correction
+    monkeypatch.setattr(background_sub_soss, "_rms_error", lambda *args: np.inf)
+
+    result = BackgroundStep.call(
+        mock_model,
+        override_bkg=template_model,
+    )
+    assert result is not mock_model
+    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert "Template matching failed" in caplog.text
+
+
+def test_bkg_percentile(generate_background_template, generate_soss_cube_substrip96):
+    template_model = datamodels.SossBkgModel(
+        data=np.stack((generate_background_template, generate_background_template))
+    )
+    mock_model = generate_soss_cube_substrip96
+
+    # provide background percentile in arguments -
+    # should still complete successfully
+    result = BackgroundStep.call(
+        mock_model, override_bkg=template_model, soss_bkg_percentile=[5.0, 95.0]
+    )
+    assert result is not mock_model
+    assert result.meta.cal_step.bkg_subtract == "COMPLETE"
