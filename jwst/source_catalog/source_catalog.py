@@ -53,7 +53,16 @@ class MedianRMS(BackgroundRMSBase):
             data = self.sigma_clip(data, axis=axis, masked=masked)
 
         n_points = np.sum(np.isfinite(data), axis=axis)
-        return np.sqrt(np.pi / (2.0 * n_points)) * np.nanstd(data, axis=axis)
+        if n_points == 0:
+            return np.nan
+        with warnings.catch_warnings():
+            # warnings.filterwarnings(
+            #     "ignore", category=RuntimeWarning, message="divide by zero"
+            # )
+            # warnings.filterwarnings(
+            #     "ignore", category=RuntimeWarning, message="Degrees of freedom <= 0 for slice"
+            # )
+            return np.sqrt(np.pi / (2.0 * n_points)) * np.nanstd(data, axis=axis)
 
 
 class JWSTSourceCatalog:
