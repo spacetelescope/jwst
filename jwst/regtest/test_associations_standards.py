@@ -59,7 +59,6 @@ class MakePars:
 
 
 standards = [
-    MakePars("pool_017_spec_nirspec_lv2imprint"),
     MakePars("pool_018_all_exptypes", main_args=LV2_ONLY_ARGS),
     MakePars("pool_019_niriss_wfss"),
     MakePars("pool_020_00009_image_miri"),
