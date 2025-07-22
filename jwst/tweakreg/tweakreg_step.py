@@ -37,7 +37,7 @@ __all__ = ["TweakRegStep"]
 
 
 class TweakRegStep(Step):
-    """Image alignment based on catalogs of sources detected in input images."""
+    """Perform image alignment based on catalogs of sources detected in input images."""
 
     class_alias = "tweakreg"
 

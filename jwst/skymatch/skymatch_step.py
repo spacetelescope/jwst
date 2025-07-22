@@ -28,7 +28,7 @@ __all__ = ["SkyMatchStep"]
 
 
 class SkyMatchStep(Step):
-    """SkyMatchStep: Subtraction or equalization of sky background in science images."""
+    """Subtract or equalize sky background in science images."""
 
     class_alias = "skymatch"
 

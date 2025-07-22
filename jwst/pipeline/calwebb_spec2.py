@@ -50,13 +50,14 @@ EXP_TYPES_USING_REFBKGDS = WFSS_TYPES + ["NIS_SOSS"]
 
 class Spec2Pipeline(Pipeline):
     """
-    Processes JWST spectroscopic exposures from Level 2a to 2b.
+    Process JWST spectroscopic exposures from Level 2a to 2b.
 
     Included steps are:
-    assign_wcs, NIRSpec MSA bad shutter flagging, nsclean, background subtraction,
-    NIRSpec MSA imprint subtraction, 2-D subwindow extraction, flat field,
-    source type decision, straylight, fringe, residual_fringe, pathloss,
-    barshadow,  photom, pixel_replace, resample_spec, cube_build, and extract_1d.
+    assign_wcs, badpix_selfcal, msa_flagging, nsclean, bkg_subtract,
+    imprint_subtract, extract_2d, master_background_mos, wavecorr,
+    flat_field, srctype, straylight, fringe, residual_fringe, pathloss,
+    barshadow, wfss_contam, photom, pixel_replace, resample_spec,
+    cube_build, and extract_1d.
     """
 
     class_alias = "calwebb_spec2"
