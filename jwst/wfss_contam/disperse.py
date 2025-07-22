@@ -11,6 +11,9 @@ from jwst.wfss_contam.sens1d import create_1d_sens
 log = logging.getLogger(__name__)
 
 
+__all__ = ["disperse"]
+
+
 def _determine_native_wl_spacing(
     x0_sky,
     y0_sky,

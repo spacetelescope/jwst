@@ -9,6 +9,8 @@ from jwst.assign_wcs import nirspec
 
 log = logging.getLogger(__name__)
 
+__all__ = ["PixelReplacement"]
+
 
 class PixelReplacement:
     """

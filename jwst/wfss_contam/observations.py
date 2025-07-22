@@ -11,6 +11,8 @@ from jwst.wfss_contam.disperse import disperse
 
 log = logging.getLogger(__name__)
 
+__all__ = ["background_subtract", "Observation"]
+
 
 def background_subtract(
     data,

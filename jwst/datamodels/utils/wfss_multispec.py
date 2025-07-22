@@ -13,6 +13,8 @@ from jwst.datamodels.utils.flat_multispec import (
     set_schema_units,
 )
 
+__all__ = ["make_wfss_multiexposure", "wfss_multiexposure_to_multispec", "make_wfss_multicombined"]
+
 
 def make_wfss_multiexposure(input_list):
     """

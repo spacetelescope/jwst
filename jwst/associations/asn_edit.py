@@ -7,6 +7,8 @@ from pathlib import Path
 from jwst.associations import Association, AssociationNotValidError
 from jwst.lib import suffix
 
+__all__ = ["AsnFileWarning", "add", "reader", "remove"]
+
 
 class AsnFileWarning(Warning):
     """Generic association file warning."""

@@ -8,6 +8,8 @@ from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
 
+__all__ = ["do_correction"]
+
 
 def do_correction(output_model, lin_model):
     """

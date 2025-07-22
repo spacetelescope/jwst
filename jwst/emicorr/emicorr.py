@@ -23,6 +23,20 @@ subarray_clocks = {
     "SUB256": {"rowclocks": 96, "frameclocks": 29952},
 }
 
+__all__ = [
+    "apply_emicorr",
+    "sloper",
+    "minmed",
+    "get_subarcase",
+    "get_frequency_info",
+    "rebin",
+    "mk_reffile",
+    "emicorr_refwave",
+    "get_best_phase",
+    "calc_chisq_amplitudes",
+    "EMIfitter",
+]
+
 
 def apply_emicorr(
     input_model,

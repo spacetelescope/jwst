@@ -7,6 +7,8 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = ["average_lg"]
+
 
 def average_lg(lg_products):
     """

@@ -4,6 +4,8 @@ from inspect import isclass
 
 from jwst.associations import Association, AssociationRegistry
 
+__all__ = ["load_asn"]
+
 
 def load_asn(
     serialized, fmt=None, first=True, validate=True, registry=AssociationRegistry, **kwargs

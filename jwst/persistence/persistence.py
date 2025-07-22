@@ -15,6 +15,8 @@ SCALEFACTOR = 2.0
 from traps, compared with photon-generated charges.
 """
 
+__all__ = ["no_nan", "DataSet"]
+
 
 def no_nan(
     input_model,

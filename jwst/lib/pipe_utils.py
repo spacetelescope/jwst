@@ -10,6 +10,8 @@ from jwst.associations.lib.dms_base import TSO_EXP_TYPES
 
 log = logging.getLogger(__name__)
 
+__all__ = ["is_tso", "is_irs2", "match_nans_and_flags"]
+
 
 def is_tso(model):
     """

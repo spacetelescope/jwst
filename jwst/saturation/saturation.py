@@ -16,6 +16,8 @@ AD_FLOOR = dqflags.pixel["AD_FLOOR"]
 NO_SAT_CHECK = dqflags.pixel["NO_SAT_CHECK"]
 ATOD_LIMIT = 65535.0  # Hard DN limit of 16-bit A-to-D converter
 
+__all__ = ["flag_saturation", "irs2_flag_saturation", "adjacency_sat"]
+
 
 def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, bias_model=None):
     """

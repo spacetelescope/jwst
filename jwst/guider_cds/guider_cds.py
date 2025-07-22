@@ -8,6 +8,8 @@ from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
 
+__all__ = ["guider_cds", "get_ref_arr"]
+
 
 def guider_cds(model, gain_model, readnoise_model):
     """

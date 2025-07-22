@@ -6,6 +6,8 @@ import argparse
 
 from jwst.associations import asn_edit
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def main():
     """Edit Association File."""

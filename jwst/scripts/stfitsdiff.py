@@ -9,6 +9,8 @@ from argparse import ArgumentParser
 
 from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def _is_number(s):
     is_number = True
@@ -228,8 +230,9 @@ def main():
     try:
         diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
         logger.info(diff.report())
-    except (NameError, TypeError, ValueError, SyntaxError):
-        logger.error(err_msg)
+    except Exception as err:
+        logger.error("\n *** STFitsDiff crashed with the following error: \n")
+        logger.error(err)
 
 
 if __name__ == "__main__":

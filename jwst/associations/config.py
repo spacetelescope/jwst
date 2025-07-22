@@ -6,3 +6,5 @@
 #    removed, they are no longer removed. This assists in determining
 #    why they were an issue.
 DEBUG = False
+
+__all__ = ["DEBUG"]

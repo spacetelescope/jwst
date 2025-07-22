@@ -40,6 +40,16 @@ PUPL_CRC = 6.603464  # / Circumscribing diameter for JWST primary
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
 
+__all__ = [
+    "create_wavelengths",
+    "calc_pupil_support",
+    "transform_image",
+    "calcpsf",
+    "bad_pixels",
+    "fourier_corr",
+    "fix_bad_pixels",
+]
+
 
 def create_wavelengths(filtername):
     """

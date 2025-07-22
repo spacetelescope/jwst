@@ -16,6 +16,8 @@ from jwst.wfss_contam.sens1d import get_photom_data
 
 log = logging.getLogger(__name__)
 
+__all__ = ["contam_corr"]
+
 
 def determine_multiprocessing_ncores(max_cores, num_cores):
     """
