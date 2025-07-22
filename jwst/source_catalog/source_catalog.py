@@ -52,8 +52,7 @@ class MedianRMS(BackgroundRMSBase):
         if self.sigma_clip is not None:
             bkg_data = self.sigma_clip(data, axis=axis, masked=masked)
 
-        # n_points = np.nansum(bkg_data, axis=axis)
-        n_points = bkg_data.size
+        n_points = np.sum(~np.isnan(bkg_data), axis=axis)
         if n_points == 0:
             return np.nan
         return np.sqrt(np.pi / (2.0 * n_points)) * np.nanstd(bkg_data, axis=axis)
