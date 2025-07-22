@@ -4,6 +4,8 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = ["FileTable", "NoAssignWCSError", "NotIFUImageModelError"]
+
 
 class FileTable:
     """Dictionary contains defaults for MIRI and NIRSPEC data."""

@@ -23,6 +23,8 @@ from jwst.source_catalog._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
 
+__all__ = ["JWSTSourceCatalog"]
+
 
 class MedianRMS(BackgroundRMSBase):
     """A photutils class to calculate the standard error of the median."""

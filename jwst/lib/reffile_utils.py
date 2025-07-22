@@ -5,6 +5,18 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "is_subarray",
+    "ref_matches_sci",
+    "get_subarray_model",
+    "get_multistripe_subarray_model",
+    "stripe_read",
+    "generate_stripe_array",
+    "science_detector_frame_transform",
+    "MatchRowError",
+    "find_row",
+]
+
 
 def is_subarray(input_model):
     """

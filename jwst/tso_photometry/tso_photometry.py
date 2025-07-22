@@ -10,6 +10,8 @@ from stdatamodels.jwst.datamodels import CubeModel
 
 log = logging.getLogger(__name__)
 
+__all__ = ["tso_aperture_photometry"]
+
 
 def tso_aperture_photometry(
     datamodel, xcenter, ycenter, radius, radius_inner, radius_outer, gain_2d

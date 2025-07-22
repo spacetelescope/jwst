@@ -11,6 +11,8 @@ from jwst.background import subtract_images
 
 log = logging.getLogger(__name__)
 
+__all__ = ["ImageSubsetArray", "background_sub", "average_background"]
+
 
 class ImageSubsetArray:
     """

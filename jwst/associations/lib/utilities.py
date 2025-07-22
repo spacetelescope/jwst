@@ -11,6 +11,16 @@ from jwst.associations import config
 # Configure logging
 logger = logging.getLogger(__name__)
 
+__all__ = [
+    "constrain_on_candidates",
+    "evaluate",
+    "filter_discovered_only",
+    "getattr_from_list",
+    "return_on_exception",
+    "getattr_from_list_nofail",
+    "is_iterable",
+]
+
 
 def constrain_on_candidates(candidates):
     """

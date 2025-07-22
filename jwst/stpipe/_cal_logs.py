@@ -12,6 +12,8 @@ _IP_REGEX = re.compile(
 _HOSTNAME = socket.gethostname()
 _USER = getpass.getuser()
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def _scrub(msg):
     """

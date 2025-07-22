@@ -175,6 +175,34 @@ BAD_REFERENCE_PIXELS = 1
 SUBARRAY_DOESNTFIT = 2
 SUBARRAY_SKIPPED = 3
 
+__all__ = [
+    "Dataset",
+    "NIRDataset",
+    "NRS1Dataset",
+    "NRS2Dataset",
+    "NRCA1Dataset",
+    "NRCA2Dataset",
+    "NRCA3Dataset",
+    "NRCA4Dataset",
+    "NRCALONGDataset",
+    "NRCB1Dataset",
+    "NRCB2Dataset",
+    "NRCB3Dataset",
+    "NRCB4Dataset",
+    "NRCBLONGDataset",
+    "NIRISSDataset",
+    "GUIDER1Dataset",
+    "GUIDER2Dataset",
+    "MIRIDataset",
+    "create_dataset",
+    "correct_model",
+    "reference_pixel_correction",
+    "process_zeroframe_correction",
+    "restore_input_model",
+    "setup_dataset_for_zeroframe",
+    "save_science_values",
+]
+
 
 class Dataset:
     """Base Class to handle passing data from routine to routine."""

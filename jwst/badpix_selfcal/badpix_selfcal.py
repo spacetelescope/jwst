@@ -8,6 +8,8 @@ from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 
+__all__ = ["badpix_selfcal", "apply_flags"]
+
 
 def badpix_selfcal(
     minimg: np.ndarray,
