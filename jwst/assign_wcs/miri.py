@@ -8,9 +8,7 @@ from astropy import units as u
 from scipy.interpolate import UnivariateSpline
 import gwcs.coordinate_frames as cf
 from gwcs import selector
-from astropy.modeling.models import Const1D, Mapping, Identity, Shift
-from astropy.modeling.bounding_box import CompoundBoundingBox
-from gwcs import wcs
+from astropy.modeling.models import Mapping, Identity
 
 from stdatamodels.jwst.datamodels import (
     ImageModel,
@@ -24,9 +22,10 @@ from stdatamodels.jwst.datamodels import (
     MiriWFSSSpecwcsModel,
 )
 from stdatamodels.jwst.transforms.models import (
-    MIRI_AB2Slice, IdealToV2V3,
+    MIRI_AB2Slice,
+    IdealToV2V3,
     MIRIWFSSBackwardDispersion,
-    )
+)
 
 from . import pointing
 from .util import (
@@ -798,6 +797,7 @@ def abl_to_v2v3l(input_model, reference_files):
 
     return abl2v2v3l
 
+
 def wfss(input_model, reference_files):
     """
     Create the WCS pipeline for a MIRI WFSS observation.
@@ -865,28 +865,21 @@ def wfss(input_model, reference_files):
     with MiriWFSSSpecwcsModel(reference_files["specwcs"]) as f:
         dispx = f.dispx
         dispy = f.dispy
-        displ = f.displ
+        #displ = f.displ
+        order = f.orders
         invdispl = f.invdispl
 
-    print('in assign wcs miri')
-    print('dispx',dispx)
-    print('dispy',dispy)
-    print('displ', displ)
-    
-    image2disp = MIRIWFSSBackwardDispersion(
-        lmodels=displ, xmodels=dispx, ymodels=dispy
-    )
+    image2disp = MIRIWFSSBackwardDispersion(order, lmodels=invdispl, xmodels=dispx, ymodels=dispy)
 
-    print('RETURN from setting up MIRI WFSS backward')
     # Add in the wavelength shift from the velocity dispersion
-    #try:
-    #    velosys = input_model.meta.wcsinfo.velosys
-    #except AttributeError:
-    #    pass
-    #if velosys is not None:
-    #    velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-    #    log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
-    #    det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    if velosys is not None:
+        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+        log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
+        image2disp = image2disp | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
 
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
@@ -903,11 +896,6 @@ def wfss(input_model, reference_files):
     # backward input needs to be the same ra, dec, lam, order -> x, y
     wfss_pipeline = [(gdetector, image2disp)]
 
-    # pass through the wave, beam  and theta in the pipeline
-    # Theta is a constant for each grism exposure and is in the
-    # meta information for the input_model, pass it to the model
-    # so the user doesn't have to
-
     imagepipe = []
     world = image_pipeline.pop()[0]
     world.name = "sky"
@@ -921,6 +909,7 @@ def wfss(input_model, reference_files):
     wfss_pipeline.extend(imagepipe)
 
     return wfss_pipeline
+
 
 exp_type2transform = {
     "mir_image": imaging,
