@@ -17,7 +17,9 @@ def astropy_fitsdiff(file, truth_file, fitsdiff_default_kwargs):
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)
         diff = FITSDiff(file, truth_file, **fitsdiff_default_kwargs)
-        apresult, apreport = diff.identical, report_to_list(diff.report())
+        apresult = diff.identical
+        # Turn the report into a list of strings for easier comparison
+        apreport = report_to_list(diff.report())
         return apresult, apreport
 
 
@@ -25,6 +27,10 @@ def get_stfitsdiff_reports(file, truth_file, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     stdiff = STFITSDiff(file, truth_file, **fitsdiff_default_kwargs)
     result = stdiff.identical
+    # The function report_to_list returns two lists when report_pixel_loc_diffs
+    # is True. The first list is the ST ad hoc report and the second is the
+    # report that  matches astropy's, with pixel or table location differences.
+    # This report is the one we want to compare to validate stfitsdiff.
     _, report = report_to_list(stdiff.report(), report_pixel_loc_diffs=True)
     return result, report
 
