@@ -5,7 +5,7 @@ import warnings
 
 import astropy.units as u
 import numpy as np
-from astropy.stats import gaussian_fwhm_to_sigma
+from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
 from astropy.table import QTable
 from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
@@ -50,19 +50,12 @@ class MedianRMS(BackgroundRMSBase):
             The standard error of the median of the input data.
         """
         if self.sigma_clip is not None:
-            data = self.sigma_clip(data, axis=axis, masked=masked)
+            bkg_data = self.sigma_clip(data, axis=axis, masked=masked)
 
-        n_points = np.sum(np.isfinite(data), axis=axis)
+        n_points = np.nansum(bkg_data, axis=axis)
         if n_points == 0:
             return np.nan
-        with warnings.catch_warnings():
-            # warnings.filterwarnings(
-            #     "ignore", category=RuntimeWarning, message="divide by zero"
-            # )
-            # warnings.filterwarnings(
-            #     "ignore", category=RuntimeWarning, message="Degrees of freedom <= 0 for slice"
-            # )
-            return np.sqrt(np.pi / (2.0 * n_points)) * np.nanstd(data, axis=axis)
+        return np.sqrt(np.pi / (2.0 * n_points)) * np.nanstd(bkg_data, axis=axis)
 
 
 class JWSTSourceCatalog:
@@ -594,15 +587,16 @@ class JWSTSourceCatalog:
         bkg_median, bkg_median_err : tuple of `~astropy.unit.Quantity`
             The local background and error.
         """
+        sigclip = SigmaClip(sigma=3.0)
         bkg_estimator = LocalBackground(
             self.aperture_params["bkg_aperture_inner_radius"],
             self.aperture_params["bkg_aperture_outer_radius"],
-            bkg_estimator=MedianBackground(),  # uses 3-sigma clip by default
+            bkg_estimator=MedianBackground(sigma_clip=sigclip),
         )
         rms_estimator = LocalBackground(
             self.aperture_params["bkg_aperture_inner_radius"],
             self.aperture_params["bkg_aperture_outer_radius"],
-            bkg_estimator=MedianRMS(),
+            bkg_estimator=MedianRMS(sigma_clip=sigclip),
         )
         xpos, ypos = self._xypos_finite.T
         with warnings.catch_warnings():
