@@ -21,6 +21,14 @@ def astropy_fitsdiff(file, truth_file, fitsdiff_default_kwargs):
         return apresult, apreport
 
 
+def get_stfitsdiff_reports(file, truth_file, fitsdiff_default_kwargs):
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    stdiff = STFITSDiff(file, truth_file, **fitsdiff_default_kwargs)
+    result = stdiff.identical
+    _, report = report_to_list(stdiff.report(), report_pixel_loc_diffs=True)
+    return result, report
+
+
 @pytest.mark.parametrize(
     "suffix",
     ["s3d"],
@@ -38,11 +46,7 @@ def test_nirspec_ifu(rtdata_module, suffix, fitsdiff_default_kwargs):
     rtdata.output = output
     rtdata.get_truth("truth/test_nirspec_ifu/" + output)
     apresult, apreport = astropy_fitsdiff(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
-
-    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
-    stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    result = stdiff.identical
-    _, report = report_to_list(stdiff.report(), report_pixel_loc_diffs=True)
+    result, report = get_stfitsdiff_reports(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
 
     assert result == apresult
     assert report == apreport
@@ -83,11 +87,7 @@ def test_nirspec_fs_spec3(rtdata_module, fitsdiff_default_kwargs, suffix, source
 
     # Compare the results
     apresult, apreport = astropy_fitsdiff(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
-
-    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
-    stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    result = stdiff.identical
-    _, report = report_to_list(stdiff.report(), report_pixel_loc_diffs=True)
+    result, report = get_stfitsdiff_reports(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
 
     assert result == apresult
     assert report == apreport
@@ -109,8 +109,8 @@ def test_nis_wfss_spec2(rtdata_module, fitsdiff_default_kwargs, suffix):
     rtdata.get_asn(spec2_asns[0])
     args = [
         "calwebb_spec2",
-        "--save_wfss_esec=true",
         rtdata.input,
+        "--save_wfss_esec=true",
     ]
     Step.from_cmdline(args)
 
@@ -126,15 +126,12 @@ def test_nis_wfss_spec2(rtdata_module, fitsdiff_default_kwargs, suffix):
     rtdata.output = output
     rtdata.get_truth(f"truth/test_niriss_wfss/{output}")
 
+    # Compare the results
     apresult, apreport = astropy_fitsdiff(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
-
-    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
-    stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    result = stdiff.identical
-    _, pixreport = report_to_list(stdiff.report(), report_pixel_loc_diffs=True)
+    result, report = get_stfitsdiff_reports(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
 
     assert result == apresult
-    assert pixreport == apreport
+    assert report == apreport
 
 
 def test_miri_mrs_extract1d_nominal(rtdata, fitsdiff_default_kwargs):
@@ -156,11 +153,7 @@ def test_miri_mrs_extract1d_nominal(rtdata, fitsdiff_default_kwargs):
 
     # Compare the results
     apresult, apreport = astropy_fitsdiff(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
-
-    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
-    stdiff = STFITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
-    result = stdiff.identical
-    _, pixreport = report_to_list(stdiff.report(), report_pixel_loc_diffs=True)
+    result, report = get_stfitsdiff_reports(rtdata.output, rtdata.truth, fitsdiff_default_kwargs)
 
     assert result == apresult
-    assert pixreport == apreport
+    assert report == apreport
