@@ -1,5 +1,7 @@
 """JWST pipeline step for image intensity matching of MIRI images."""
 
+import logging
+
 import numpy as np
 from astropy.stats import sigma_clipped_stats as sigclip
 from wiimatch.match import match_lsq
@@ -8,6 +10,8 @@ from jwst.datamodels import ModelContainer
 from jwst.stpipe import Step
 
 __all__ = ["MRSIMatchStep", "apply_background_2d"]
+
+log = logging.getLogger(__name__)
 
 
 class MRSIMatchStep(Step):
@@ -46,7 +50,7 @@ class MRSIMatchStep(Step):
             Input images.
         """
         # Provide warning to user this code is deprecated
-        self.log.warning("mrs_imatch is deprecated")
+        log.warning("mrs_imatch is deprecated")
 
         chm = {}
         all_models2d = ModelContainer(images)
@@ -98,7 +102,7 @@ class MRSIMatchStep(Step):
 
         # subtract the background, if requested
         if self.subtract:
-            self.log.info("Subtracting background offsets from input images")
+            log.info("Subtracting background offsets from input images")
             for m in all_models2d:
                 apply_background_2d(m)
                 m.meta.background.subtracted = True
@@ -106,7 +110,7 @@ class MRSIMatchStep(Step):
         # set step completion status in the input images
         for m in all_models2d:
             if m.meta.cal_step.mrs_imatch == "SKIPPED":
-                self.log.info("Background can not be determined, skipping mrs_imatch")
+                log.info("Background can not be determined, skipping mrs_imatch")
             else:
                 m.meta.cal_step.mrs_imatch = "COMPLETE"
 
@@ -384,8 +388,8 @@ def _match_models(models, channel, degree, center=None, center_cs="image"):
 
     # TODO: try to identify if all images overlap
     # if nsubspace > 1:
-    #     self.log.warning("Not all cubes have been sky matched as "
-    #                      "some of them do not overlap.")
+    #     log.warning("Not all cubes have been sky matched as "
+    #                 "some of them do not overlap.")
 
     # save background info in 'meta' and subtract sky from 2D images
     # if requested:

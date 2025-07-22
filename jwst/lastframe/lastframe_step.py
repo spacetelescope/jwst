@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.lastframe import lastframe_sub
 from jwst.stpipe import Step
 
 __all__ = ["LastFrameStep"]
+
+log = logging.getLogger(__name__)
 
 
 class LastFrameStep(Step):
@@ -39,8 +43,8 @@ class LastFrameStep(Step):
             detector = input_model.meta.instrument.detector
 
             if detector[:3] != "MIR":
-                self.log.warning("Last Frame Correction is only for MIRI data")
-                self.log.warning("Last frame step will be skipped")
+                log.warning("Last Frame Correction is only for MIRI data")
+                log.warning("Last frame step will be skipped")
                 input_model.meta.cal_step.lastframe = "SKIPPED"
                 return input_model
 
