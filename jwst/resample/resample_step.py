@@ -19,14 +19,7 @@ GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
 
 
 class ResampleStep(Step):
-    """
-    Resample imaging data onto a regular grid using the drizzle algorithm.
-
-    .. note::
-        When supplied via ``output_wcs``, a custom WCS overrides other custom
-        WCS parameters such as ``output_shape`` (now computed from by
-        ``output_wcs.bounding_box``), ``crpix``
-    """
+    """Resample imaging data onto a regular grid using the drizzle algorithm."""
 
     class_alias = "resample"
 
@@ -41,7 +34,7 @@ class ResampleStep(Step):
         rotation = float(default=None)  # Output image Y-axis PA relative to North
         pixel_scale_ratio = float(default=1.0)  # Ratio of output to input pixel scale.
         pixel_scale = float(default=None)  # Absolute pixel scale in arcsec
-        output_wcs = string(default='')  # Custom output WCS
+        output_wcs = string(default='')  # Custom output WCS. Overrides other WCS parameters if provided.
         single = boolean(default=False)  # Resample each input to its own output grid
         blendheaders = boolean(default=True)  # Blend metadata from inputs into output
         in_memory = boolean(default=True)  # Keep images in memory
@@ -67,6 +60,12 @@ class ResampleStep(Step):
         ModelLibrary or ImageModel
             The final output data. If the `single` parameter is set to True, then this
             is a single ImageModel; otherwise, it is a ModelLibrary.
+
+        Notes
+        -----
+        When supplied via ``output_wcs``, a custom WCS overrides other custom
+        WCS parameters such as ``output_shape`` (now computed from by
+        ``output_wcs.bounding_box``), ``crpix``
         """
         if isinstance(input_data, str):
             ext = filetype.check(input_data)

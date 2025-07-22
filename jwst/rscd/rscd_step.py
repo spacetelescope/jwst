@@ -21,7 +21,7 @@ class RscdStep(Step):
     class_alias = "rscd"
 
     spec = """
-        """  # noqa: E501
+    """  # noqa: E501
 
     reference_file_types = ["rscd"]
 

@@ -15,13 +15,7 @@ __all__ = ["WhiteLightStep"]
 
 
 class WhiteLightStep(Step):
-    """
-    Sum the spectroscopic flux over all wavelengths in each integration.
-
-    Produce an integrated (“white”) flux as a function of time for the target. This
-    is to be applied to the _x1dints product in a spectroscopic
-    Time-Series Observation (TSO).
-    """
+    """Sum the spectroscopic flux over all wavelengths in each integration."""
 
     class_alias = "white_light"
 
@@ -37,6 +31,10 @@ class WhiteLightStep(Step):
     def process(self, step_input):
         """
         Sum the flux over all wavelengths in each integration as a function of time for the target.
+
+        Produce an integrated (“white”) flux as a function of time for the target. This
+        is to be applied to the _x1dints product in a spectroscopic
+        Time-Series Observation (TSO).
 
         Parameters
         ----------

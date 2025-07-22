@@ -14,27 +14,7 @@ __all__ = ["MasterBackgroundStep"]
 
 
 class MasterBackgroundStep(Step):
-    """
-    Compute and subtract master background from spectra.
-
-    Attributes
-    ----------
-    median_kernel : int
-        Optional user-supplied kernel with which to moving-median boxcar
-        filter the master background spectrum.  Must be an odd integer; even integers
-        will be rounded down to the nearest odd integer.
-    user_background : None, str, or `~jwst.datamodels.MultiSpecModel`
-        Optional user-supplied master background 1D spectrum, path to file
-        or opened datamodel
-    save_background : bool, optional
-        Save computed master background.
-    force_subtract : bool, optional
-        Optional user-supplied flag that overrides step logic to force subtraction of the
-        master background. Default is False, in which case the step logic determines
-        if the calspec2 background step has already been applied and, if so, the master
-        background step is skipped. If set to True, the step logic is bypassed and the
-        master background is subtracted.
-    """
+    """Compute and subtract master background from spectra."""
 
     class_alias = "master_background"
 

@@ -8,7 +8,7 @@ __all__ = ["PathLossStep"]
 
 class PathLossStep(Step):
     """
-    PathLossStep: Apply the path loss correction to a science exposure.
+    Apply the path loss correction to a science exposure.
 
     Pathloss depends on the centering of the source in the aperture if the
     source is a point source.
