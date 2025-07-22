@@ -3,6 +3,8 @@
 import re
 from importlib.metadata import version
 
+__all__ = ["__version__", "__version_commit__"]
+
 __version__ = version(__name__)
 
 _regex_git_hash = re.compile(r".*\+g(\w+)")

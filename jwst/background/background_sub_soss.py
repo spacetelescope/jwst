@@ -15,6 +15,8 @@ BKG_DISCON_COLUMNS = [685, 725]  # The columns to check for a discontinuity in b
 BACKGROUND_MASK_CUTOFF = 950  # Drop all pixels with col > cutoff for template matching of bkgd.
 SUBSTRIP96_ROWSTART = 10  # Determine where to place SUBSTRIP96 slice wrt. SUBSTRIP256 array.
 
+__all__ = ["find_discontinuity", "generate_background_masks", "subtract_soss_bkg"]
+
 
 def find_discontinuity(image):
     """

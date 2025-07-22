@@ -7,6 +7,8 @@ from jwst.datamodels import ModelContainer
 
 log = logging.getLogger(__name__)
 
+__all__ = ["DataTypes", "NotIFUImageModelError"]
+
 
 class DataTypes:
     """Class to handle reading input data to cube_build."""

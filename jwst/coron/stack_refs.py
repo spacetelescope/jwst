@@ -7,6 +7,8 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = ["make_cube"]
+
 
 def make_cube(input_models):
     """

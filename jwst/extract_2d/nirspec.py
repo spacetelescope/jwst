@@ -15,6 +15,17 @@ from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "nrs_extract2d",
+    "select_slits",
+    "process_slit",
+    "set_slit_attributes",
+    "offset_wcs",
+    "extract_slit",
+    "DitherMetadataError",
+    "get_source_xpos",
+]
+
 
 def nrs_extract2d(input_model, slit_names=None, source_ids=None):
     """

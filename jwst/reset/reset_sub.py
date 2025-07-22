@@ -7,6 +7,8 @@ import numpy as np
 
 log = logging.getLogger(__name__)
 
+__all__ = ["do_correction"]
+
 
 def do_correction(output_model, reset_model):
     """

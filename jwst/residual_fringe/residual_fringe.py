@@ -19,6 +19,8 @@ log = logging.getLogger(__name__)
 # (see Stoehr, ADASS 2008: https://archive.stsci.edu/vodocs/der_snr.pdf)
 DER_SNR_FACTOR = 1.482602 / np.sqrt(6)
 
+__all__ = ["ResidualFringeCorrection", "NoFringeFlatError"]
+
 
 class ResidualFringeCorrection:
     """Calculate and apply correction for residual fringes."""

@@ -16,6 +16,8 @@ from jwst.associations.registry import AssociationRegistry
 # Configure logging
 logger = logging.getLogger(__name__)
 
+__all__ = ["generate_per_candidate", "generate_on_candidate", "ids_by_ctype", "pool_from_candidate"]
+
 
 def generate_per_candidate(
     pool,

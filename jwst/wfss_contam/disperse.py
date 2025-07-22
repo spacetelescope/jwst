@@ -6,6 +6,8 @@ from scipy.interpolate import interp1d
 from jwst.lib.winclip import get_clipped_pixels
 from jwst.wfss_contam.sens1d import create_1d_sens
 
+__all__ = ["dispersed_pixel"]
+
 
 def dispersed_pixel(
     x0,

@@ -9,6 +9,8 @@ from stdatamodels.jwst.datamodels import ABVegaOffsetModel, ImageModel
 
 log = logging.getLogger(__name__)
 
+__all__ = ["ReferenceData"]
+
 
 class ReferenceData:
     """Manipulate APCORR and ABVEGAOFFSET reference file data needed by `SourceCatalogStep`."""

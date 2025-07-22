@@ -19,6 +19,23 @@ from scipy.sparse.linalg import MatrixRankWarning, lsqr, spsolve
 
 log = logging.getLogger(__name__)
 
+__all__ = [
+    "arange_2d",
+    "sparse_k",
+    "get_wave_p_or_m",
+    "oversample_grid",
+    "grid_from_map",
+    "grid_from_map_with_extrapolation",
+    "make_combined_adaptive_grid",
+    "throughput_soss",
+    "WebbKernel",
+    "get_c_matrix",
+    "finite_first_d",
+    "TikhoTests",
+    "try_solve_two_methods",
+    "Tikhonov",
+]
+
 
 def arange_2d(starts, stops):
     """

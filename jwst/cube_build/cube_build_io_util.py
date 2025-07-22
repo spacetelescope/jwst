@@ -6,6 +6,8 @@ from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
 
+__all__ = ["read_cubepars"]
+
 
 def read_cubepars(
     par_filename,

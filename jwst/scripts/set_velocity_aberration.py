@@ -9,6 +9,8 @@ from pathlib import Path
 
 from jwst.lib.set_velocity_aberration import add_dva
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def parse_args(args):
     """

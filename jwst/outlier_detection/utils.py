@@ -21,9 +21,18 @@ from jwst.resample.resample import compute_image_pixel_area
 
 log = logging.getLogger(__name__)
 
-
 DO_NOT_USE = datamodels.dqflags.pixel["DO_NOT_USE"]
 OUTLIER = datamodels.dqflags.pixel["OUTLIER"]
+
+__all__ = [
+    "create_cube_median",
+    "median_without_resampling",
+    "median_with_resampling",
+    "flag_crs_in_models",
+    "flag_resampled_model_crs",
+    "flag_crs_in_models_with_resampling",
+    "flag_model_crs",
+]
 
 
 def create_cube_median(cube_model, maskpt):

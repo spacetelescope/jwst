@@ -12,6 +12,8 @@ log = logging.getLogger(__name__)
 # FGS guide star mode exposure types
 guider_list = ["FGS_ID-IMAGE", "FGS_ID-STACK", "FGS_ACQ1", "FGS_ACQ2", "FGS_TRACK", "FGS_FINEGUIDE"]
 
+__all__ = ["correct_model", "do_dqinit", "check_dimensions"]
+
 
 def correct_model(input_model, mask_model):
     """
@@ -123,4 +125,3 @@ def check_dimensions(input_model):
                 input_model.groupdq = np.zeros(input_shape).astype("uint8")
             else:
                 log.error(f"Groupdq array has wrong shape: {input_model.groupdq.shape}")
-    return

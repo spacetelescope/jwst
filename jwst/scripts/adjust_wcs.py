@@ -18,6 +18,8 @@ from jwst.tweakreg.utils import adjust_wcs
 
 _ANGLE_PARS = ["-r", "--ra_delta", "-d", "--dec_delta", "-o", "--roll_delta"]
 
+__all__ = []  # type: ignore[var-annotated]
+
 
 def _replace_suffix(file, new_suffix):
     sep = "_"
