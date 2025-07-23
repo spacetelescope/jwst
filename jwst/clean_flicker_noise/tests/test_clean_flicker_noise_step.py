@@ -185,3 +185,15 @@ def test_autoparam_failed(caplog, monkeypatch):
     assert "Auto parameter setting failed" in caplog.text
     assert "Using input parameters as provided" in caplog.text
     assert "apply_flat_field: True" not in caplog.text
+
+
+def test_output_is_not_input():
+    input_model = make_small_ramp_model()
+    cleaned = CleanFlickerNoiseStep.call(input_model)
+
+    # successful completion
+    assert cleaned is not input_model
+    assert cleaned.meta.cal_step.clean_flicker_noise == "COMPLETE"
+
+    input_model.close()
+    cleaned.close()
