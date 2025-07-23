@@ -1,8 +1,5 @@
 """Unit tests for ami_analyze module and step."""
 
-import math
-
-import numpy as np
 import pytest
 import stpipe
 from astropy.io import fits
@@ -46,16 +43,7 @@ def test_ami_analyze_step_no_affine(example_model):
     AmiAnalyzeStep.call(example_model, affine2d=None)
 
 
-def create_throughput(nelem):
-    """Create a symmetric dummy throughput function that has values near
-    0 on the wings and near 1 at the center.
-    """
-    ctr = int(nelem / 2.0)
-
-    lower_half = [2.0 / (1.0 + math.e ** (-5.0 * i / ctr)) - 1.0 for i in range(ctr)]
-
-    throughput = np.zeros(nelem, dtype=np.float32)
-    throughput[:ctr] = lower_half
-    throughput[ctr:] = lower_half[::-1]  # mirror image for upper half
-
-    return throughput
+def test_output_is_not_input(example_model):
+    results = AmiAnalyzeStep.call(example_model)
+    for result in results:
+        assert result is not example_model

@@ -176,3 +176,9 @@ def test_ami_normalize(oi_data, ref_data):
     assert np.allclose(result.t3["T3PHI"], RAW_PHI - REF_PHI)
     assert np.allclose(result.q4["Q4AMP"], np.log(RAW_AMP / REF_AMP))
     assert np.allclose(result.q4["Q4PHI"], RAW_PHI)
+
+
+def test_output_is_not_input(oi_data, ref_data):
+    result = AmiNormalizeStep.call(oi_data, ref_data)
+    assert result is not oi_data
+    assert result is not ref_data

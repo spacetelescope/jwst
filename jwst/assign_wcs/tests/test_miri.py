@@ -181,6 +181,14 @@ def test_mrs_tso_bounding_box():
     assert_allclose(cube.meta.wcs.bounding_box, ((-0.5, 49.5), (-0.5, 39.5)))
 
 
+def test_output_is_not_input():
+    hdul = create_hdul(detector="MIRIFULONG", channel="34", band="MEDIUM")
+    model = CubeModel(hdul)
+    model.data = np.zeros((3, 40, 50))
+    result = AssignWcsStep.call(model)
+    assert result is not model
+
+
 # MRS test reference data
 mrs_ref_data = {
     "1A": {
