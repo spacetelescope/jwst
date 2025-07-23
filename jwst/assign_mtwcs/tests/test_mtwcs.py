@@ -70,3 +70,16 @@ def test_mt_slitmodel(errtype):
         zero = result.borrow(0)
         assert zero.meta.wcs.output_frame.name == expected_frame
         result.shelve(zero, 0, modify=False)
+
+
+def test_output_is_not_input():
+    file_path = get_pkg_data_filename("data/test_mt_asn.json", package="jwst.assign_mtwcs.tests")
+    with datamodels.open(file_path) as model:
+        result = AssignMTWcsStep.call(model)
+        assert result is not model
+
+
+@pytest.mark.parametrize("input_data", [datamodels.ImageModel(), None, 10])
+def test_input_not_supported(input_data, caplog):
+    AssignMTWcsStep.call(input_data)
+    assert "Input data type is not supported" in caplog.text

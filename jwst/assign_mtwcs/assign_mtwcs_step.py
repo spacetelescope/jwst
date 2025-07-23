@@ -38,9 +38,13 @@ class AssignMTWcsStep(Step):
         if not isinstance(input_lib, ModelLibrary):
             try:
                 input_lib = ModelLibrary(input_lib)
-            except Exception:
+            except Exception as err:
                 log.warning("Input data type is not supported.")
-                record_step_status(input_lib, "assign_mtwcs", False)
+                log.debug(f"Error was: {err}")
+                try:
+                    record_step_status(input_lib, "assign_mtwcs", False)
+                except AttributeError:
+                    pass
                 return input_lib
 
         result = assign_moving_target_wcs(input_lib)

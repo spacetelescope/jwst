@@ -80,11 +80,11 @@ def create_reference_files(datamodel):
 @pytest.fixture(scope="module")
 def background():
     """
-    Create background IFUImageModel for testing. This is a mockup of the expected
-    background data in a .rate file.
+    Create background IFUImageModel for testing.
+
+    This is a mockup of the expected background data in a .rate file.
     Three components: random noise, low-order variability, and outliers
     """
-
     # random noise
     rng = np.random.default_rng(seed=77)
     shp = (1024, 1032)
@@ -120,7 +120,9 @@ def background():
 
 @pytest.fixture(scope="module")
 def sci(background):
-    """Create science IFUImageMoel for testing.
+    """
+    Create science IFUImageMoel for testing.
+
     Same data as background with different noise.
     """
     hdul = create_hdul(detector="MIRIFULONG", channel="34", band="LONG")
@@ -134,8 +136,11 @@ def sci(background):
 
 @pytest.fixture(scope="module")
 def asn(tmp_cwd_module, background, sci):
-    """Create association for testing. Needs at least
-    two background images to properly test the step."""
+    """
+    Create association for testing.
+
+    Needs at least two background images to properly test the step.
+    """
 
     sci_path = tmp_cwd_module / "sci.fits"
     sci.save(sci_path)
@@ -167,7 +172,10 @@ def asn(tmp_cwd_module, background, sci):
 
 
 def test_input_parsing(asn, sci, background):
-    """Test that the input parsing function correctly identifies the science,
+    """
+    Test the input parsing function.
+
+    It should correctly identify the science,
     background, and selfcal exposures in the association file
     given association vs imagemodel inputs, and selfcal_list vs not
 
@@ -229,11 +237,20 @@ def test_input_parsing(asn, sci, background):
     assert len(selfcal_list) == 4
 
 
+def test_bad_input():
+    input_data = dm.SlitModel()
+    with pytest.raises(TypeError, match="Cannot continue"):
+        _parse_inputs(input_data, [], [])
+
+
+def test_bad_input_in_container():
+    input_data = dm.ModelContainer([dm.ImageModel(), dm.ImageModel()])
+    with pytest.raises(ValueError, match="multiple science exposures"):
+        _parse_inputs(input_data, [], [])
+
+
 def test_background_flagger_mrs(background):
-    """
-    Ensure the right number of outliers are found, and that
-    true outliers are among those.
-    """
+    """Ensure the right number of true outliers are found."""
 
     bg = background.data
 
@@ -252,6 +269,8 @@ def test_background_flagger_mrs(background):
 
 def test_apply_flags(background):
     """
+    Test apply_flags.
+
     Ensure that flagged pixels are set to NaN in the data and err arrays,
     and that the DQ flag is set to 1.
     """
@@ -276,12 +295,15 @@ def test_apply_flags(background):
 
 @pytest.mark.parametrize("dset", ["sci", "asn"])
 def test_badpix_selfcal_step(request, dset):
-    """Test the badpix_selfcal step. This is a functional test that checks
-    that the step runs without error. The output will be checked by the
-    regtest.
+    """
+    Test the badpix_selfcal step.
+
+    This is a functional test that checks that the step runs without error.
+    The output will be checked by the regtest.
     """
     input_data = request.getfixturevalue(dset)
     result = BadpixSelfcalStep.call(input_data, skip=False, force_single=True)
+    assert result is not input_data
 
     assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"
     if dset == "sci":
@@ -301,12 +323,16 @@ def test_expected_fail_sci(sci):
     """
     result = BadpixSelfcalStep.call(sci, skip=False, force_single=False)
     assert result[0].meta.cal_step.badpix_selfcal == "SKIPPED"
+    assert result is not sci
 
 
 @pytest.fixture(scope="module")
 def vertical_striping():
-    """2-D array with vertical stripes and some outliers, used to test that
-    the step is flagging in the correct (along-dispersion) direction
+    """
+    Make an array with vertical stripes.
+
+    Array is 2-D with vertical stripes and some outliers, used to test that
+    the step is flagging in the correct (along-dispersion) direction.
     """
     shp = (102, 96)
     stripes = np.zeros(shp)
@@ -342,3 +368,17 @@ def test_dispersion_direction(vertical_striping, dispaxis):
 
     elif dispaxis is None:
         assert len(flagged_indices[0]) == 1
+
+
+def test_save_bkg(asn, tmp_path):
+    """Test background saving."""
+    BadpixSelfcalStep.call(
+        asn, output_dir=str(tmp_path), output_file="test", save_flagged_bkg=True, save_results=True
+    )
+    expected = [
+        "test_badpix_selfcal_bkg_0.fits",
+        "test_badpix_selfcal_bkg_1.fits",
+        "test_badpixselfcalstep.fits",
+    ]
+    for filename in expected:
+        assert (tmp_path / filename).exists()
