@@ -38,12 +38,13 @@ class CleanFlickerNoiseStep(Step):
         jump and ramp fitting steps, or a rate file (ImageModel or CubeModel).
 
         Correction algorithms implemented are:
-            - `fft`: Background noise is fit in frequency space.
+
+            - "fft": Background noise is fit in frequency space.
                Implementation is based on the NSClean algorithm, developed
                by Bernard Rauscher.
-            - `median`: Background noise is characterized by a median
+            - "median": Background noise is characterized by a median
               along the detector slow axis. Implementation is based on the
-              `image1overf` algorithm, developed by Chris Willott.
+              "image1overf" algorithm, developed by Chris Willott.
 
         Parameters
         ----------

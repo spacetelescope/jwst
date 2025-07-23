@@ -65,7 +65,7 @@ class ResampleStep(Step):
         -----
         When supplied via ``output_wcs``, a custom WCS overrides other custom
         WCS parameters such as ``output_shape`` (now computed from by
-        ``output_wcs.bounding_box``), ``crpix``
+        ``output_wcs.bounding_box``) and ``crpix``.
         """
         if isinstance(input_data, str):
             ext = filetype.check(input_data)

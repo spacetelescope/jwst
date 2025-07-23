@@ -62,11 +62,11 @@ class CubeBuildStep(Step):
         This routine does the following operations:
 
            1. Extracts the input parameters from the cubepars reference file and
-           merges them with any user-provided values.
+              merges them with any user-provided values.
            2. Creates the output WCS from the input images and defines the mapping
-           between all the input arrays and the output array.
+              between all the input arrays and the output array.
            3. Passes the input data to the function to map all their input data
-           to the output array.
+              to the output array.
            4. Updates the output data model with correct meta data.
 
         Parameters
