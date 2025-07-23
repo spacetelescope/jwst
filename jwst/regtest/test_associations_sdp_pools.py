@@ -76,7 +76,19 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
         ),
         pytest.param(("jw04611_20250308t142406_pool", []), id="pool_014_ami_niriss"),
         pytest.param(("jw01970_20250317t180031_pool", []), id="pool_017_spec_nirspec_lv2imprint"),
+        pytest.param(("jw01928_20250318t105523_pool", []), id="imprint_single_obs_1"),
+        pytest.param(("jw01741_20250318t062014_pool", []), id="imprint_n_dithers_obs_6"),
+        pytest.param(("jw01893_20250316t095836_pool", []), id="imprint_sci_bg_obs_1_2"),
+        pytest.param(("jw01554_20250316t071400_pool", []), id="imprint_sci_bg_sep_obs_1"),
+        pytest.param(("jw03702_20250320t002824_pool", []), id="imprint_2n_dithers_obs_1_2"),
+        pytest.param(("jw02770_20250409t122318_pool", []), id="imprint_mos_obs_2"),
         pytest.param(("jw04368_20250318t032038_pool", []), id="pool_019_niriss_wfss"),
+        pytest.param(("jw02508_20250308t182800_pool", []), id="pool_021_tso_MIRI_LRS"),
+        pytest.param(("jw03596_20250308t161159_pool", []), id="pool_021_tso_NIRISS_SOSS"),
+        pytest.param(
+            ("jw02084_20250320t081615_pool", []), id="pool_021_tso_NIRCAM_TSIMAGE_TSGRISM"
+        ),
+        pytest.param(("jw03969_20250316t131526_pool", []), id="pool_021_tso_NIRSPEC_BRIGHTOBJ"),
     ],
     ids=parfunc,
 )
@@ -124,7 +136,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
         ("jw01290_20230304t140931_withids_pool", ["-i", "o012", "c1018"]),
         ("jw01493_20230307t040130_pool", []),
         ("jw01493_20230307t040130_withids_pool", ["-i", "o003", "c1000"]),
-        ("jw01554_20241213t060033_pool", []),
         ("jw01678_20240721t195707_pool", []),
         ("jw02064_20230302t112350_withids_pool", ["-i", "o061", "c1008", "c1017"]),
         ("jw02162_20241213t063547_pool", []),
@@ -132,7 +143,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
             "jw02739_20230710t150016_pool",
             ["-i", "c1000"],
         ),  # This association tests the Asn_Lv3ImageMosaic rule
-        ("jw03596_20240314t012345_pool", []),
         ("jw03855_20241103t042455_pool", []),
         (
             "jw04225_20241213t150701_pool",
