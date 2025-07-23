@@ -51,6 +51,7 @@ def test_barshadow_step(nirspec_mos_model):
     model = nirspec_mos_model.copy()
     result = BarShadowStep.call(model)
     assert result.meta.cal_step.barshadow == "COMPLETE"
+    assert result is not model
 
     # check all slits for appropriate correction
     for slit in result.slits:
@@ -131,6 +132,7 @@ def test_barshadow_no_reffile(monkeypatch, nirspec_mos_model):
     assert result.meta.cal_step.barshadow == "SKIPPED"
     assert result.slits[0].barshadow.size == 0
     assert result.slits[0].barshadow_corrected is None
+    assert result is not model
     result.close()
 
 
