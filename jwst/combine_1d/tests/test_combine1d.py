@@ -218,6 +218,8 @@ def test_wfss_multi_input(wfss_multiexposure):
     """Smoke test to ensure combine_1d works with WFSSMultiSpecModel"""
     result = Combine1dStep.call(wfss_multiexposure)
     assert isinstance(result, datamodels.WFSSMultiCombinedSpecModel)
+    assert result is not wfss_multiexposure
+
     tab = result.spec[0].spec_table
     assert tab.shape == (N_SOURCES,)
     assert result.meta.cal_step.combine_1d == "COMPLETE"
@@ -261,3 +263,23 @@ def test_allnan_skip(wfss_multiexposure, monkeypatch):
     result = Combine1dStep.call(wfss_multiexposure)
     assert result.meta.cal_step.combine_1d == "SKIPPED"
     watcher2.assert_seen()
+
+
+def test_output_is_not_input(two_spectra):
+    """Test that input is not modified."""
+    result = Combine1dStep.call(two_spectra)
+
+    # Successful completion
+    assert result.meta.cal_step.combine_1d == "COMPLETE"
+    assert result is not two_spectra
+
+
+def test_combination_error(caplog):
+    """Test an error in combination."""
+    bad_model = datamodels.ImageModel()
+    result = Combine1dStep.call(bad_model)
+
+    # Step is skipped
+    assert result.meta.cal_step.combine_1d == "SKIPPED"
+    assert result is not bad_model
+    assert "Invalid input model" in caplog.text
