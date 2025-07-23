@@ -142,3 +142,15 @@ def test_apply_flat_not_available(log_watcher):
 
     input_model.close()
     cleaned.close()
+
+
+def test_output_is_not_input():
+    input_model = make_small_ramp_model()
+    cleaned = CleanFlickerNoiseStep.call(input_model)
+
+    # successful completion
+    assert cleaned is not input_model
+    assert cleaned.meta.cal_step.clean_flicker_noise == "COMPLETE"
+
+    input_model.close()
+    cleaned.close()
