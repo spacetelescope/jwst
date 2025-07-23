@@ -28,10 +28,10 @@ class WavecorrStep(Step):
         The x direction is the one parallel to dispersion/wavelength for
         both MOS and FS slits.
 
-        The slit_x_position is read from the `source_xpos` attribute in the input
+        The slit_x_position is read from the ``source_xpos`` attribute in the input
         slit metadata.  For MOS data, the x position is read from the msa_metadata_file
         in the assign_wcs step.  For FS data, the x position is calculated from
-        the dither `x_offset` value in the extract_2d step.
+        the dither ``x_offset`` value in the extract_2d step.
 
         The wavelength value used to look up the wavelength correction at each dispersion
         element is an average of the wavelength values in the cross-dispersion direction
