@@ -13,7 +13,10 @@ def test_align_refs_no_shift(request, dataset):
 
     # Successful completion
     assert result.meta.cal_step.align_psfs == "COMPLETE"
+
+    # Input is not modified
     assert result is not target
+    assert target.meta.cal_step.align_psfs is None
 
     # No significant change to result
     np.testing.assert_allclose(result.data, target.data, atol=1e-5)
@@ -29,8 +32,12 @@ def test_align_refs_with_shift(request, dataset):
 
     # Successful completion
     assert result.meta.cal_step.align_psfs == "COMPLETE"
+
+    # Input is not modified
     assert result is not target
     assert result is not psf
+    assert target.meta.cal_step.align_psfs is None
+    assert psf.meta.cal_step.align_psfs is None
 
     # Result is shifted
     assert not np.allclose(result.data, psf.data, atol=1e-5)
@@ -44,8 +51,12 @@ def test_no_psf_mask(monkeypatch, target_model, psf_model):
 
     # Step is skipped
     assert result.meta.cal_step.align_psfs == "SKIPPED"
+
+    # Input is not modified
     assert result is not target_model
     assert result is not psf_model
+    assert target_model.meta.cal_step.align_psfs is None
+    assert psf_model.meta.cal_step.align_psfs is None
 
     # No change to result
     np.testing.assert_array_equal(result.data, psf_model.data)
