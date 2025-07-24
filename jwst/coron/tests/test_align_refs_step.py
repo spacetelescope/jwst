@@ -1,30 +1,39 @@
 import numpy as np
+import pytest
 
 from jwst.coron.align_refs_step import AlignRefsStep
 
 
-def test_align_refs_no_shift(target_model):
+@pytest.mark.parametrize("dataset", ["target_model", "target_model_miri"])
+def test_align_refs_no_shift(request, dataset):
+    target = request.getfixturevalue(dataset)
+
     # Align the target to itself (no shift)
-    result = AlignRefsStep.call(target_model, target_model)
+    result = AlignRefsStep.call(target, target)
 
     # Successful completion
     assert result.meta.cal_step.align_psfs == "COMPLETE"
-    assert result is not target_model
+    assert result is not target
 
     # No significant change to result
-    np.testing.assert_allclose(result.data, target_model.data, atol=1e-5)
+    np.testing.assert_allclose(result.data, target.data, atol=1e-5)
 
 
-def test_align_refs_with_shift(target_model, psf_model):
-    result = AlignRefsStep.call(target_model, psf_model)
+@pytest.mark.parametrize(
+    "dataset", [("target_model", "psf_model"), ("target_model_miri", "psf_model_miri")]
+)
+def test_align_refs_with_shift(request, dataset):
+    target = request.getfixturevalue(dataset[0])
+    psf = request.getfixturevalue(dataset[1])
+    result = AlignRefsStep.call(target, psf)
 
     # Successful completion
     assert result.meta.cal_step.align_psfs == "COMPLETE"
-    assert result is not target_model
-    assert result is not psf_model
+    assert result is not target
+    assert result is not psf
 
     # Result is shifted
-    assert not np.allclose(result.data, target_model.data, atol=1e-5)
+    assert not np.allclose(result.data, psf.data, atol=1e-5)
 
 
 def test_no_psf_mask(monkeypatch, target_model, psf_model):
