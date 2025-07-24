@@ -12,9 +12,6 @@ def test_stack_refs_step(target_model, psf_model, use_container):
         input_data = ModelContainer(input_data)
 
     result = StackRefsStep.call(input_data)
-    assert result is not input_data
-    assert result is not target_model
-    assert result is not psf_model
 
     expected_shape = (
         target_model.shape[0] + psf_model.shape[0],
@@ -25,6 +22,13 @@ def test_stack_refs_step(target_model, psf_model, use_container):
     assert result.data.shape == expected_shape
 
     assert result.meta.cal_step.stack_psfs == "COMPLETE"
+
+    # Make sure input was not modified
+    assert result is not input_data
+    assert result is not target_model
+    assert result is not psf_model
+    assert target_model.meta.cal_step.stack_psfs is None
+    assert psf_model.meta.cal_step.stack_psfs is None
 
 
 def test_stack_refs_shape_mismatch():
