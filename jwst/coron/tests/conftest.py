@@ -29,6 +29,31 @@ def nircam_model():
     return model
 
 
+def miri_model():
+    """
+    Create a MIR_LYOT cube model.
+
+    Returns
+    -------
+    CubeModel
+        The MIRI coron model.
+    """
+    model = datamodels.CubeModel()
+    model.meta.exposure.type = "MIR_LYOT"
+    model.meta.instrument.name = "MIRI"
+    model.meta.instrument.filter = "F2300C"
+    model.meta.instrument.coronagraph = "LYOT_2300"
+    model.meta.observation.date = "2024-01-01"
+    model.meta.observation.time = "00:00:00"
+    model.meta.subarray.name = "MASKLYOT"
+
+    shape = (3, 304, 320)
+    model.data = np.zeros(shape, dtype=np.float32)
+    model.err = np.full(shape, 0.1, dtype=np.float32)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    return model
+
+
 def gaussian_source(shape, amplitude=10.0, x_mean=None, y_mean=None, x_stddev=30.0, y_stddev=30.0):
     """
     Model a Gaussian source.
@@ -50,7 +75,7 @@ def gaussian_source(shape, amplitude=10.0, x_mean=None, y_mean=None, x_stddev=30
 @pytest.fixture()
 def target_model():
     """
-    Make a model with a Gaussian target, offset from center.
+    Make a NIRCam model with a Gaussian target, offset from center.
 
     Yields
     ------
@@ -71,7 +96,7 @@ def target_model():
 @pytest.fixture()
 def psf_model():
     """
-    Make a model with a Gaussian target at center.
+    Make a NIRCam model with a Gaussian target at center.
 
     Yields
     ------
@@ -79,6 +104,43 @@ def psf_model():
         The PSF model.
     """
     model = nircam_model()
+    model.data += gaussian_source(model.shape[1:])
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def target_model_miri():
+    """
+    Make a MIRI model with a Gaussian target, offset from center.
+
+    Yields
+    ------
+    CubeModel
+        The target model.
+    """
+    model = miri_model()
+    shape = model.shape[1:]
+    y_mean = shape[0] / 2 + 1.0
+    x_mean = shape[1] / 2 + 1.0
+    amplitude = 5.0
+    model.data += gaussian_source(shape, amplitude=amplitude, x_mean=x_mean, y_mean=y_mean)
+
+    yield model
+    model.close()
+
+
+@pytest.fixture()
+def psf_model_miri():
+    """
+    Make a MIRI model with a Gaussian target at center.
+
+    Yields
+    ------
+    CubeModel
+        The PSF model.
+    """
+    model = miri_model()
     model.data += gaussian_source(model.shape[1:])
     yield model
     model.close()
