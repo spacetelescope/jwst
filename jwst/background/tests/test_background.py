@@ -350,6 +350,19 @@ def test_output_is_not_input():
     result = BackgroundStep.call(image, [background])
     assert result is not image
     assert result is not background
+    assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+    assert image.meta.cal_step.bkg_subtract is None
+
+
+def test_output_is_not_input_when_skipped():
+    data_shape = (10, 10)
+    image_value = 10.0
+    image = miri_rate_model(data_shape, value=image_value)
+
+    result = BackgroundStep.call(image, [])
+    assert result is not image
+    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert image.meta.cal_step.bkg_subtract is None
 
 
 def test_save_combined_bg_file(tmp_path):
