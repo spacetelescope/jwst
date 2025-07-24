@@ -220,9 +220,11 @@ def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename):
     assert model.meta.filename == "test_nirspec_g395h-f290lp_internal_s3d.fits"
     assert os.path.isfile(model.meta.filename)
 
-    # make sure output is not input
+    # make sure input is not modified
     assert result is not step_input
     assert result[0] is not step_input
+    if not as_filename:
+        assert step_input.meta.cal_step.cube_build is None
 
 
 @pytest.mark.parametrize("as_filename", [True, False])
@@ -246,6 +248,7 @@ def test_call_cube_build_nirspec_multi(tmp_cwd, nirspec_data, tmp_path, as_filen
     assert model.meta.cal_step.cube_build == "COMPLETE"
     assert model.meta.filename == "test_nirspec_s3d.fits"
 
-    # make sure output is not input
+    # make sure input is not modified
     assert result is not step_input
     assert result[0] is not step_input
+    assert step_input.meta.cal_step.cube_build is None

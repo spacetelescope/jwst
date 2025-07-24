@@ -187,6 +187,8 @@ def test_output_is_not_input():
     model.data = np.zeros((3, 40, 50))
     result = AssignWcsStep.call(model)
     assert result is not model
+    assert result.meta.cal_step.assign_wcs == "COMPLETE"
+    assert model.meta.cal_step.assign_wcs is None
 
 
 # MRS test reference data

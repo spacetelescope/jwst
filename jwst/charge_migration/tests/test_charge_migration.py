@@ -233,6 +233,7 @@ def test_output_is_not_input():
 
     # Output is not input
     assert result is not ramp_model
+    assert ramp_model.meta.cal_step.charge_migration is None
 
 
 def test_too_few_groups():
@@ -252,6 +253,7 @@ def test_too_few_groups():
     npt.assert_string_equal(status, "SKIPPED")
 
     assert result is not ramp_model
+    assert ramp_model.meta.cal_step.charge_migration is None
 
 
 def create_mod_arrays(ngroups, nints, nrows, ncols):

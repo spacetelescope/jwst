@@ -45,5 +45,7 @@ def test_ami_analyze_step_no_affine(example_model):
 
 def test_output_is_not_input(example_model):
     results = AmiAnalyzeStep.call(example_model)
+    assert example_model.meta.cal_step.ami_analyze is None
     for result in results:
         assert result is not example_model
+        assert result.meta.cal_step.ami_analyze == "COMPLETE"

@@ -271,7 +271,10 @@ def test_output_is_not_input(two_spectra):
 
     # Successful completion
     assert result.meta.cal_step.combine_1d == "COMPLETE"
+
+    # Input is not modified
     assert result is not two_spectra
+    assert two_spectra.meta.cal_step.combine_1d is None
 
 
 def test_combination_error(caplog):
@@ -283,3 +286,7 @@ def test_combination_error(caplog):
     assert result.meta.cal_step.combine_1d == "SKIPPED"
     assert result is not bad_model
     assert "Invalid input model" in caplog.text
+
+    # Input is not modified
+    assert result is not bad_model
+    assert bad_model.meta.cal_step.combine_1d is None
