@@ -49,6 +49,9 @@ def test_run_in_pipeline(skip):
     else:
         assert cleaned.meta.cal_step.clean_flicker_noise == "COMPLETE"
 
+    # Either way, input model is not modified
+    assert input_model.meta.cal_step.clean_flicker_noise is None
+
     input_model.close()
     cleaned.close()
 
@@ -149,8 +152,11 @@ def test_output_is_not_input():
     cleaned = CleanFlickerNoiseStep.call(input_model)
 
     # successful completion
-    assert cleaned is not input_model
     assert cleaned.meta.cal_step.clean_flicker_noise == "COMPLETE"
+
+    # make sure input is not modified
+    assert cleaned is not input_model
+    assert input_model.meta.cal_step.clean_flicker_noise is None
 
     input_model.close()
     cleaned.close()

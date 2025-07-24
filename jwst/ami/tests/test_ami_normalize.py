@@ -180,3 +180,6 @@ def test_output_is_not_input(oi_data, ref_data):
     result = AmiNormalizeStep.call(oi_data, ref_data)
     assert result is not oi_data
     assert result is not ref_data
+    assert oi_data.meta.cal_step.ami_normalize is None
+    assert ref_data.meta.cal_step.ami_normalize is None
+    assert result.meta.cal_step.ami_normalize == "COMPLETE"

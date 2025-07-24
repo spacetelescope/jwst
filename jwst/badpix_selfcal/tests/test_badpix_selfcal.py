@@ -303,7 +303,6 @@ def test_badpix_selfcal_step(request, dset):
     """
     input_data = request.getfixturevalue(dset)
     result = BadpixSelfcalStep.call(input_data, skip=False, force_single=True)
-    assert result is not input_data
 
     assert result[0].meta.cal_step.badpix_selfcal == "COMPLETE"
     if dset == "sci":
@@ -316,6 +315,11 @@ def test_badpix_selfcal_step(request, dset):
         assert isinstance(result[0], dm.IFUImageModel)
         assert len(result[1]) == 2
 
+    # Make sure input is not modified
+    assert result[0] is not input_data
+    if dset == "sci":
+        assert input_data.meta.cal_step.badpix_selfcal is None
+
 
 def test_expected_fail_sci(sci):
     """Test that the step fails as expected when given only a science exposure
@@ -323,7 +327,8 @@ def test_expected_fail_sci(sci):
     """
     result = BadpixSelfcalStep.call(sci, skip=False, force_single=False)
     assert result[0].meta.cal_step.badpix_selfcal == "SKIPPED"
-    assert result is not sci
+    assert result[0] is not sci
+    assert sci.meta.cal_step.badpix_selfcal is None
 
 
 @pytest.fixture(scope="module")
