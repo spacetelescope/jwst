@@ -38,15 +38,15 @@ class DarkCurrentStep(Step):
             self.dark_name = self.get_reference_file(input_model, "dark")
             log.info("Using DARK reference file %s", self.dark_name)
 
+            # Work on a copy
+            result = input_model.copy()
+
             # Check for a valid reference file
             if self.dark_name == "N/A":
                 log.warning("No DARK reference file found")
                 log.warning("Dark current step will be skipped")
-                input_model.meta.cal_step.dark = "SKIPPED"
-                return input_model
-
-            # Work on a copy
-            result = input_model.copy()
+                result.meta.cal_step.dark_sub = "SKIPPED"
+                return result
 
             # Create name for the intermediate dark, if desired.
             dark_output = self.dark_output
