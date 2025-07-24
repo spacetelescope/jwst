@@ -27,6 +27,7 @@ class BackgroundStep(Step):
         wfss_maxiter = integer(default=5)  # WFSS iterative outlier rejection max iterations
         wfss_rms_stop = float(default=0)  # WFSS iterative outlier rejection RMS improvement threshold (percent)
         wfss_outlier_percent = float(default=1)  # WFSS outlier percentile to reject per iteration
+        wfss_save_bsub = boolean(default=False)  # Save the background mask used in an extension
     """  # noqa: E501
 
     # These reference files are only used for WFSS/GRISM or SOSS data.
@@ -87,6 +88,12 @@ class BackgroundStep(Step):
                 result = input_model.copy()
                 result.meta.cal_step.bkg_subtract = "SKIPPED"
             else:
+                # Save the intermediary file with the background mask
+                if self.wfss_save_bsub:
+                    wfss_mask_bsub = self.make_output_path(suffix="bsub")
+                    self.output_file = wfss_mask_bsub
+                    self.suffix = "bsub"
+                    result.save(wfss_mask_bsub)
                 result.meta.cal_step.bkg_subtract = "COMPLETE"
 
         elif input_model.meta.exposure.type == "NIS_SOSS":
