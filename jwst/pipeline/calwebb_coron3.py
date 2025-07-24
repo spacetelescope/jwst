@@ -64,16 +64,9 @@ def to_container(model):
 
 class Coron3Pipeline(Pipeline):
     """
-    Class for defining Coron3Pipeline.
+    Apply all level-3 calibration steps to an association of coronagraphic exposures.
 
-    Coron3Pipeline: Apply all level-3 calibration steps to a
-    coronagraphic association of exposures. Included steps are:
-
-    #. stack_refs (assemble reference PSF inputs)
-    #. align_refs (align reference PSFs to target images)
-    #. klip (PSF subtraction using the KLIP algorithm)
-    #. outlier_detection (flag outliers)
-    #. resample (image combination and resampling)
+    Included steps are: stack_refs, align_refs, klip, outlier_detection, and resample.
     """
 
     class_alias = "calwebb_coron3"

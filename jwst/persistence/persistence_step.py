@@ -8,7 +8,7 @@ __all__ = ["PersistenceStep"]
 
 
 class PersistenceStep(Step):
-    """PersistenceStep: Correct a science image for persistence."""
+    """Correct a science image for persistence."""
 
     class_alias = "persistence"
 

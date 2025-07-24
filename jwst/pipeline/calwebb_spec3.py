@@ -41,18 +41,11 @@ WFSS_TYPES = ["NIS_WFSS", "NRC_WFSS"]
 
 class Spec3Pipeline(Pipeline):
     """
-    Spec3Pipeline: Processes JWST spectroscopic exposures from Level 2b to 3.
+    Process JWST spectroscopic exposures from Level 2b to 3.
 
-    Included steps are:
-    assign moving target wcs (assign_mtwcs)
-    master background subtraction (master_background)
-    MIRI MRS background matching (mrs_imatch)
-    outlier detection (outlier_detection)
-    2-D spectroscopic resampling (resample_spec)
-    3-D spectroscopic resampling (cube_build)
-    1-D spectral extraction (extract_1d)
-    Absolute Photometric Calibration (photom)
-    1-D spectral combination (combine_1d)
+    Included steps are: assign_mtwcs, master_background, mrs_imatch,
+    outlier_detection, pixel_replace, resample_spec, cube_build,
+    extract_1d, photom, combine_1d, and spectral_leak.
     """
 
     class_alias = "calwebb_spec3"

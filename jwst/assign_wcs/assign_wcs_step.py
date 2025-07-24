@@ -24,27 +24,7 @@ WFSS_TYPES = {"nrc_wfss", "nis_wfss"}
 
 
 class AssignWcsStep(Step):
-    """
-    AssignWcsStep: Create a gWCS object and store it in ``Model.meta``.
-
-    Reference file types:
-
-    camera             Camera model (NIRSPEC)
-    collimator         Collimator Model (NIRSPEC)
-    disperser          Disperser model (NIRSPEC)
-    distortion         Spatial distortion model (FGS, MIRI, NIRCAM, NIRISS)
-    filteroffset       Filter offsets (MIRI Imager)
-    fore               Transform through the FORE optics (NIRSPEC)
-    fpa                Transform in the FPA plane (NIRSPEC)
-    ifufore            Transforms from the MSA plane to the plane of the IFU slicer (NIRSPEC)
-    ifupost            Transforms from the slicer plane to the MSA plane (NIRSPEC)
-    ifuslicer          Metrology of the IFU slicer (NIRSPEC)
-    msa                Metrology of the MSA plane (NIRSPEC)
-    ote                Transform through the Optical Telescope Element (NIRSPEC)
-    specwcs            Wavelength calibration models (MIRI, NIRCAM, NIRISS)
-    regions            Stores location of the regions on the detector (MIRI)
-    wavelengthrange    Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
-    """
+    """Create a gWCS object and store it in ``Model.meta.wcs``."""
 
     class_alias = "assign_wcs"
 
@@ -81,6 +61,24 @@ class AssignWcsStep(Step):
     def process(self, input_data):
         """
         Run the assign_wcs step.
+
+        Reference file types for this step:
+
+            - camera: Camera model (NIRSPEC)
+            - collimator: Collimator Model (NIRSPEC)
+            - disperser: Disperser model (NIRSPEC)
+            - distortion: Spatial distortion model (FGS, MIRI, NIRCAM, NIRISS)
+            - filteroffset: Filter offsets (MIRI Imager)
+            - fore: Transform through the FORE optics (NIRSPEC)
+            - fpa: Transform in the FPA plane (NIRSPEC)
+            - ifufore: Transforms from the MSA plane to the plane of the IFU slicer (NIRSPEC)
+            - ifupost: Transforms from the slicer plane to the MSA plane (NIRSPEC)
+            - ifuslicer: Metrology of the IFU slicer (NIRSPEC)
+            - msa: Metrology of the MSA plane (NIRSPEC)
+            - ote: Transform through the Optical Telescope Element (NIRSPEC)
+            - specwcs: Wavelength calibration models (MIRI, NIRCAM, NIRISS)
+            - regions: Stores location of the regions on the detector (MIRI)
+            - wavelengthrange: Typical wavelength ranges (MIRI, NIRCAM, NIRISS, NIRSPEC)
 
         Parameters
         ----------
