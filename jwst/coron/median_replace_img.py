@@ -1,7 +1,6 @@
 """Replace bad pixels in the input images with the median of the surrounding pixels."""
 
 import logging
-import warnings
 
 import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
@@ -45,24 +44,16 @@ def median_fill_value(input_array, input_dq_array, bsize, bad_bitvalue, xc, yc):
     hbox = int(bsize / 2)
 
     # Extract the region of interest for the data
-    try:
-        data_array = input_array[xc - hbox : xc + hbox + 1, yc - hbox : yc + hbox + 1]
-        dq_array = input_dq_array[xc - hbox : xc + hbox + 1, yc - hbox : yc + hbox + 1]
-    except IndexError:
-        # If the box is outside the data return 0
-        log.warning("Box for median filter is outside the data.")
-        return 0.0
+    # If the index is out of range, this will return empty arrays.
+    data_array = input_array[xc - hbox : xc + hbox + 1, yc - hbox : yc + hbox + 1]
+    dq_array = input_dq_array[xc - hbox : xc + hbox + 1, yc - hbox : yc + hbox + 1]
 
     # Calculate the median value using only good pixels
-    filtered_array = data_array[np.bitwise_and(dq_array, bad_bitvalue) == 0]
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "Mean of empty slice", RuntimeWarning)
-        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
-        median_value = np.median(filtered_array)
-
-    if np.isnan(median_value):
-        # If the median fails return 0
-        log.debug("Median filter returned NaN; setting value to 0.")
+    good = np.isfinite(data_array) & (dq_array & bad_bitvalue == 0)
+    if np.any(good):
+        median_value = np.median(data_array[good])
+    else:
+        # No good pixels, return 0
         median_value = 0.0
 
     return median_value
@@ -147,7 +138,7 @@ def separate_non_science_pixels(img_dq, bad_locations):
     non_science_pixels : numpy.ndarray of bool
         Flagged non-science pixels.
     """
-    is_non_science = (img_dq & dqflags.pixel["NON_SCIENCE"]) > 0
+    is_non_science = img_dq & dqflags.pixel["NON_SCIENCE"] > 0
     science_pixels = bad_locations & ~is_non_science
     non_science_pixels = bad_locations & is_non_science
     return science_pixels, non_science_pixels
