@@ -14,3 +14,7 @@ def test_ami_average_deprecated(example_model):
     with pytest.deprecated_call():
         result = AmiAverageStep.call(image_list)
         assert result is not image_list
+        assert result.meta.cal_step.ami_average == "COMPLETE"
+        for model in image_list:
+            assert result is not model
+            assert model.meta.cal_step.ami_average is None
