@@ -144,3 +144,41 @@ def psf_model_miri():
     model.data += gaussian_source(model.shape[1:])
     yield model
     model.close()
+
+
+@pytest.fixture()
+def target_image(target_model):
+    """
+    Make an image model from the first slice of the target cube.
+
+    Yields
+    ------
+    ImageModel
+        The target model.
+    """
+    target_image = datamodels.ImageModel()
+    target_image.data = target_model.data[0]
+    target_image.err = target_model.err[0]
+    target_image.dq = target_model.dq[0]
+    target_image.update(target_model)
+    yield target_image
+    target_image.close()
+
+
+@pytest.fixture()
+def psf_image(psf_model):
+    """
+    Make an image model from the first slice of the psf cube.
+
+    Yields
+    ------
+    ImageModel
+        The psf model.
+    """
+    psf_image = datamodels.ImageModel()
+    psf_image.data = psf_model.data[0]
+    psf_image.err = psf_model.err[0]
+    psf_image.dq = psf_model.dq[0]
+    psf_image.update(psf_model)
+    yield psf_image
+    psf_image.close()
