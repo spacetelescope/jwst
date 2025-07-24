@@ -97,7 +97,6 @@ def _params():
     return params
 
 
-# Refac done
 @pytest.mark.parametrize("readpatt, ngroups, nframes, groupgap, nrows, ncols", _params())
 def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, nrows, ncols):
     """Check that if nframes>1 or groupgap>0, then the pipeline reconstructs
@@ -144,7 +143,6 @@ def test_frame_averaging(setup_nrc_cube, readpatt, ngroups, nframes, groupgap, n
     assert avg_dark.exp_groupgap == groupgap
 
 
-# Refac done
 def test_sub_by_frame(make_rampmodel, make_darkmodel):
     """Check that if NFRAMES=1 and GROUPGAP=0 for the science data, the dark reference data are
     directly subtracted frame by frame"""
@@ -187,7 +185,6 @@ def test_sub_by_frame(make_rampmodel, make_darkmodel):
     )
 
 
-# Refac done
 def test_nan(make_rampmodel, make_darkmodel):
     """Verify that when a dark has NaNs, these are correctly assumed as zero and the PIXELDQ is set properly"""
 
@@ -225,7 +222,6 @@ def test_nan(make_rampmodel, make_darkmodel):
     assert outfile.data[0, 5, 100, 100] == 5.0
 
 
-# Refac done
 def test_dq_combine(make_rampmodel, make_darkmodel):
     """Verify that the DQ array of the dark is correctly combined with the PIXELDQ array of the science data."""
 
@@ -267,7 +263,6 @@ def test_dq_combine(make_rampmodel, make_darkmodel):
     assert outfile.pixeldq[50, 51] == np.bitwise_or(saturated, do_not_use)
 
 
-# Refac done
 def test_2_int(make_rampmodel, make_darkmodel):
     """Verify the dark correction is done by integration for MIRI observations"""
 
@@ -307,7 +302,6 @@ def test_2_int(make_rampmodel, make_darkmodel):
     np.testing.assert_array_equal(outfile.data[1], diff_int2)
 
 
-# Refac done
 def test_frame_avg(make_rampmodel, make_darkmodel):
     """
     Test frame averaging.
@@ -354,7 +348,6 @@ def test_frame_avg(make_rampmodel, make_darkmodel):
     assert outfile.data[0, 3, 500, 500] == pytest.approx(2.65)
 
 
-# ------------------------------------------------------------------------------
 def test_basic_step(make_rampmodel, make_darkmodel):
     """
     Same as test_more_sci_frames above, but done calling the step code.
@@ -380,8 +373,11 @@ def test_basic_step(make_rampmodel, make_darkmodel):
         dark.data[0, i] = i * 0.1
 
     dark_model = DarkCurrentStep.call(dm_ramp, override_dark=dark)
-
     assert dark_model.meta.cal_step.dark_sub == "COMPLETE"
+
+    # check that output is not input
+    assert dark_model is not dm_ramp
+    assert dm_ramp.meta.cal_step.dark_sub is None
 
     outdata = np.squeeze(dark_model.data)
 
@@ -426,6 +422,20 @@ def test_average_dark_current(make_rampmodel, make_darkmodel):
     assert dark_output.meta.cal_step.dark_sub == "COMPLETE"
 
     assert dark_output.average_dark_current[nrows - 1, ncols - 1] == pytest.approx(average_current)
+
+
+def test_no_dark(make_rampmodel):
+    """Test missing dark file."""
+    nints, ngroups, nrows, ncols = 1, 10, 200, 200
+    dm_ramp = make_rampmodel(nints, ngroups, nrows, ncols)
+    assert dm_ramp.meta.cal_step.dark_sub is None
+
+    dark_model = DarkCurrentStep.call(dm_ramp, override_dark="N/A")
+
+    # check that output is not input
+    assert dark_model is not dm_ramp
+    assert dm_ramp.meta.cal_step.dark_sub is None
+    assert dark_model.meta.cal_step.dark_sub == "SKIPPED"
 
 
 @pytest.fixture(scope="function")
