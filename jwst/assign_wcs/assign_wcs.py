@@ -56,7 +56,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
     instrument = input_model.meta.instrument.name.lower()
     mod = importlib.import_module("." + instrument, "jwst.assign_wcs")
 
-    print("SPEC_TYPES", SPEC_TYPES, type(SPEC_TYPES))
     if (
         input_model.meta.exposure.type.lower() in SPEC_TYPES
         or input_model.meta.instrument.lamp_mode.lower() in NRS_LAMP_MODE_SPEC_TYPES
@@ -102,6 +101,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
         "nrs_lamp",
         "nrs_brightobj",
         "nis_soss",
+        "mir_wfss"
     ]
 
     if output_model.meta.exposure.type.lower() not in exclude_types:
