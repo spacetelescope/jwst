@@ -101,7 +101,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
         "nrs_lamp",
         "nrs_brightobj",
         "nis_soss",
-        "mir_wfss"
+        "mir_wfss",
     ]
 
     if output_model.meta.exposure.type.lower() not in exclude_types:
