@@ -1,1 +1,1 @@
-Remove schemadoc strip that produces no output.
+Removed schemadoc script that produces no output.
