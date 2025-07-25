@@ -9,7 +9,6 @@ SCRIPTS = [
     "asn_make_pool",
     "collect_pipeline_cfgs",
     "pointing_summary",
-    "schemadoc",
     "set_telescope_pointing",
     "set_telescope_pointing.py",
     "set_velocity_aberration",
