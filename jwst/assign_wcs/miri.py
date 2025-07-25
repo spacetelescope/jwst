@@ -7,15 +7,7 @@ from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling import bind_bounding_box, models
 from gwcs import selector
-
 from scipy.interpolate import UnivariateSpline
-<<<<<<< HEAD
-=======
-#from astropy.modeling.models import Const1D, Mapping, Identity, Shift
-#from astropy.modeling.bounding_box import CompoundBoundingBox
-#from gwcs import wcs
-
->>>>>>> e0841e2f2 (update miri.py in assign_wcs)
 from stdatamodels.jwst.datamodels import (
     DistortionModel,
     DistortionMRSModel,
@@ -25,9 +17,6 @@ from stdatamodels.jwst.datamodels import (
     SpecwcsModel,
     WavelengthrangeModel,
 )
-<<<<<<< HEAD
-from stdatamodels.jwst.transforms.models import IdealToV2V3, MIRI_AB2Slice
-=======
 
 from stdatamodels.jwst.transforms.models import (
     MIRI_AB2Slice,
@@ -35,7 +24,6 @@ from stdatamodels.jwst.transforms.models import (
     MIRIWFSSBackwardDispersion,
     MIRIWFSSForwardDispersion,
 )
->>>>>>> e0841e2f2 (update miri.py in assign_wcs)
 
 from jwst.assign_wcs import pointing
 from jwst.assign_wcs.util import (
@@ -863,11 +851,12 @@ def wfss(input_model, reference_files):
         invdispl = f.invdispl
 
     det2det = det2det = MIRIWFSSForwardDispersion(
-            order, lmodels=displ, xmodels=dispx, ymodels=dispy)
-    
+        order, lmodels=displ, xmodels=dispx, ymodels=dispy
+    )
+
     backward = MIRIWFSSBackwardDispersion(order, lmodels=invdispl, xmodels=dispx, ymodels=dispy)
 
-    det2det.inverse  = backward
+    det2det.inverse = backward
     # Add in the wavelength shift from the velocity dispersion
     try:
         velosys = input_model.meta.wcsinfo.velosys
