@@ -6,6 +6,42 @@ from numpy.testing import assert_array_equal
 from stdatamodels.jwst.datamodels import FringeModel, IFUImageModel
 
 from jwst.fringe import fringe
+from jwst.fringe.fringe_step import FringeStep
+
+FRINGE_CONSTANT = 2.0  # correction will be input data divided by this factor
+FRINGE_CONSTANT_SQ = 4.0
+
+
+@pytest.fixture
+def setup_inputs():
+    """Create input and fringe models."""
+
+    def _setup(shape=(2, 2), bad_corner=False, fringe_constant=1.0):
+        input_data = np.ones(shape) * 6.0
+        input_err = input_data * 0.1
+        err_poisson = np.sqrt(input_data)
+        fake_var = input_err * input_err * 0.3333
+        input_model = IFUImageModel(
+            data=input_data,
+            err=input_err,
+            var_poisson=err_poisson * err_poisson,
+            var_rnoise=fake_var,
+            var_flat=fake_var,
+        )
+
+        fringe_model = FringeModel(data=np.ones(shape) / fringe_constant)
+
+        if bad_corner:
+            # Make 1 bad pixel.
+            input_model.data[0, 0] = np.nan
+            input_model.err[0, 0] = np.nan
+            input_model.var_poisson[0, 0] = np.nan
+            input_model.var_rnoise[0, 0] = np.nan
+            input_model.var_flat[0, 0] = np.nan
+
+        return input_model, fringe_model
+
+    return _setup
 
 
 def test_data_correction(setup_inputs):
@@ -46,33 +82,31 @@ def test_data_correction(setup_inputs):
     assert np.isnan(output_model.var_flat[0, 0])
 
 
-@pytest.fixture
-def setup_inputs():
-    """Create input and fringe models."""
+def test_step_call_succeeds(setup_inputs):
+    """Test the step interface for a successful run."""
 
-    def _setup(shape=(2, 2), bad_corner=False, fringe_constant=1):
-        input_data = np.ones(shape) * 6.0
-        input_err = input_data * 0.1
-        err_poisson = np.sqrt(input_data)
-        fake_var = input_err * input_err * 0.3333
-        input_model = IFUImageModel(
-            data=input_data,
-            err=input_err,
-            var_poisson=err_poisson * err_poisson,
-            var_rnoise=fake_var,
-            var_flat=fake_var,
-        )
+    input_model, fringe_model = setup_inputs(
+        shape=(4, 5), bad_corner=True, fringe_constant=FRINGE_CONSTANT
+    )
 
-        fringe_model = FringeModel(data=np.ones(shape) / fringe_constant)
+    result = FringeStep.call(input_model, override_fringe=fringe_model)
+    assert result.meta.cal_step.fringe == "COMPLETE"
 
-        if bad_corner:
-            # Make 1 bad pixel.
-            input_model.data[0, 0] = np.nan
-            input_model.err[0, 0] = np.nan
-            input_model.var_poisson[0, 0] = np.nan
-            input_model.var_rnoise[0, 0] = np.nan
-            input_model.var_flat[0, 0] = np.nan
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.fringe is None
 
-        return input_model, fringe_model
 
-    return _setup
+def test_step_call_skipped(setup_inputs):
+    """Test the step interface for a successful run."""
+
+    input_model, _ = setup_inputs(shape=(4, 5), bad_corner=True, fringe_constant=FRINGE_CONSTANT)
+
+    # No fringe model: step is skipped
+    result = FringeStep.call(input_model, override_fringe="N/A")
+    assert result.meta.cal_step.fringe == "SKIPPED"
+    assert_array_equal(result.data, input_model.data)
+
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.fringe is None
