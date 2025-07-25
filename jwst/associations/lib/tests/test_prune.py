@@ -1,11 +1,10 @@
-import json
 from copy import deepcopy
 
 import pytest
 
 from jwst.associations.asn_from_list import asn_from_list
-from jwst.associations.lib.rules_level2b import Asn_Lv2Image
 from jwst.associations.lib.prune import prune_remove
+from jwst.associations.lib.rules_level2b import Asn_Lv2Image
 
 
 def test_prune_duplicate():
