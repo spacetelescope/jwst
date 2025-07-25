@@ -251,4 +251,5 @@ def test_call_cube_build_nirspec_multi(tmp_cwd, nirspec_data, tmp_path, as_filen
     # make sure input is not modified
     assert result is not step_input
     assert result[0] is not step_input
-    assert step_input.meta.cal_step.cube_build is None
+    if not as_filename:
+        assert step_input.meta.cal_step.cube_build is None
