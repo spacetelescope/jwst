@@ -101,7 +101,7 @@ class OptionalRefTypeStep(Step):
     reference_file_types = ["to_be_ignored_ref_type"]
 
     def process(self):  # noqa: D102
-        ref_file = self.get_reference_file(datamodels.open(), "to_be_ignored_ref_type")
+        ref_file = self.get_reference_file(datamodels.JwstDataModel(), "to_be_ignored_ref_type")
         assert ref_file == ""  # noqa: S101
 
 
