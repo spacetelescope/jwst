@@ -296,3 +296,37 @@ def test_select_slits(nirspec_slit_list):
     with_integer = select_slits(slit_list, [2, "5"], None)
     assert Slit(name="2", source_id="2000") in with_integer
     assert Slit(name="5", source_id="5000") in with_integer
+
+
+def test_output_is_not_input(nirspec_fs_rate):
+    model = ImageModel(nirspec_fs_rate)
+    model_wcs = AssignWcsStep.call(model)
+    result = Extract2dStep.call(model_wcs)
+
+    # successful completion
+    assert result.meta.cal_step.extract_2d == "COMPLETE"
+
+    # input is not modified
+    assert result is not model_wcs
+    assert model_wcs.meta.cal_step.extract_2d is None
+
+
+def test_skip_assign_wcs_skipped(caplog, nirspec_fs_rate):
+    model = ImageModel(nirspec_fs_rate)
+    result = Extract2dStep.call(model)
+
+    # step is skipped
+    assert result.meta.cal_step.extract_2d == "SKIPPED"
+
+    # input is not modified
+    assert result is not model
+    assert model.meta.cal_step.extract_2d is None
+
+
+def test_skip_missing_wcs(caplog, nirspec_fs_rate):
+    model = ImageModel(nirspec_fs_rate)
+    model.meta.cal_step.assign_wcs = "COMPLETE"
+
+    # raises exception: wcs is missing
+    with pytest.raises(AttributeError, match="does not have a WCS object"):
+        Extract2dStep.call(model)
