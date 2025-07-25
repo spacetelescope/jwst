@@ -9,9 +9,6 @@ from astropy.modeling import bind_bounding_box, models
 from gwcs import selector
 
 from scipy.interpolate import UnivariateSpline
-#from astropy.modeling.models import Const1D, Mapping, Identity, Shift
-#from astropy.modeling.bounding_box import CompoundBoundingBox
-#from gwcs import wcs
 
 from stdatamodels.jwst.datamodels import (
     ImageModel,
@@ -873,11 +870,12 @@ def wfss(input_model, reference_files):
         invdispl = f.invdispl
 
     det2det = det2det = MIRIWFSSForwardDispersion(
-            order, lmodels=displ, xmodels=dispx, ymodels=dispy)
-    
+        order, lmodels=displ, xmodels=dispx, ymodels=dispy
+    )
+
     backward = MIRIWFSSBackwardDispersion(order, lmodels=invdispl, xmodels=dispx, ymodels=dispy)
 
-    det2det.inverse  = backward
+    det2det.inverse = backward
     # Add in the wavelength shift from the velocity dispersion
     try:
         velosys = input_model.meta.wcsinfo.velosys
