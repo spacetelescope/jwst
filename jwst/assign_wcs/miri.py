@@ -33,6 +33,7 @@ from stdatamodels.jwst.transforms.models import (
     MIRI_AB2Slice,
     IdealToV2V3,
     MIRIWFSSBackwardDispersion,
+    MIRIWFSSForwardDispersion,
 )
 >>>>>>> e0841e2f2 (update miri.py in assign_wcs)
 
@@ -857,12 +858,16 @@ def wfss(input_model, reference_files):
     with MiriWFSSSpecwcsModel(reference_files["specwcs"]) as f:
         dispx = f.dispx
         dispy = f.dispy
-        #displ = f.displ
+        displ = f.displ
         order = f.orders
         invdispl = f.invdispl
 
-    image2disp = MIRIWFSSBackwardDispersion(order, lmodels=invdispl, xmodels=dispx, ymodels=dispy)
+    det2det = det2det = MIRIWFSSForwardDispersion(
+            order, lmodels=displ, xmodels=dispx, ymodels=dispy)
+    
+    backward = MIRIWFSSBackwardDispersion(order, lmodels=invdispl, xmodels=dispx, ymodels=dispy)
 
+    det2det.inverse  = backward
     # Add in the wavelength shift from the velocity dispersion
     try:
         velosys = input_model.meta.wcsinfo.velosys
@@ -871,7 +876,7 @@ def wfss(input_model, reference_files):
     if velosys is not None:
         velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
         log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
-        image2disp = image2disp | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+        det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
 
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
@@ -886,7 +891,7 @@ def wfss(input_model, reference_files):
 
     # forward input is (x,y,lam,order) -> x, y
     # backward input needs to be the same ra, dec, lam, order -> x, y
-    wfss_pipeline = [(gdetector, image2disp)]
+    wfss_pipeline = [(gdetector, det2det)]
 
     imagepipe = []
     world = image_pipeline.pop()[0]
