@@ -207,7 +207,24 @@ def prune_remove(remove_from, to_remove, known_dups):
     if to_remove:
         logger.debug("Duplicate associations found: %s", to_remove)
     for asn in to_remove:
-        remove_from.remove(asn)
+        # Check for an association in the list that "is" the
+        # intended removal (not "equals" the intended removal).
+        # That is, ``remove_from.remove(asn)`` will not work here because
+        # there may be multiple associations in the list that are
+        # equivalent, but only one of them should be removed. For
+        # example, there may be associations present containing rate and
+        # rateints members from the same source file -- these are considered
+        # "equal", but only one of them is the duplicate.
+        remove_index = None
+        for i, test_asn in enumerate(remove_from):
+            if test_asn is asn:
+                remove_index = i
+                break
+        if remove_index is not None:
+            remove_from.pop(remove_index)
+        else:
+            raise IndexError("Expected duplicate association not found in list")
+
         if config.DEBUG:
             DupCount += 1
             asn.asn_name = f"dup{DupCount:05d}_{asn.asn_name}"
