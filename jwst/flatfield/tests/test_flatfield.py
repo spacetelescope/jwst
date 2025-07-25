@@ -8,7 +8,7 @@ from stdatamodels.jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.flatfield import FlatFieldStep
-from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES, NRS_SPEC_MODES
+from jwst.flatfield.flat_field_step import NRS_IMAGING_MODES
 
 
 @pytest.mark.parametrize(
@@ -76,35 +76,25 @@ def test_flatfield_step_interface(instrument, exptype):
     assert result.var_flat.shape == shape
     assert result.meta.cal_step.flat_field == "COMPLETE"
 
+    # Input is not modified
+    assert result is not data
+    assert data.meta.cal_step.flat_field is None
 
-def exptypes():
-    """Generate NRS EXPTYPES from the schema enum, removing spec types"""
+
+def test_nirspec_unsupported():
+    """Test that NRS unsupported types are skipped."""
     model = datamodels.ImageModel()
-    alltypes = set(model.meta.exposure._schema["properties"]["type"]["enum"])
-    spectypes = set(NRS_SPEC_MODES)
-    return sorted([i for i in (alltypes - spectypes)])
+    model.meta.instrument.name = "NIRSPEC"
+    model.meta.exposure.type = "NRS_AUTOFLAT"
 
+    result = FlatFieldStep.call(model)
 
-@pytest.mark.parametrize("exptype", exptypes())
-def test_nirspec_flatfield_step_interface(exptype):
-    """Test that the interface works all NIRSpec types"""
+    # Step is skipped
+    assert result.meta.cal_step.flat_field == "SKIPPED"
 
-    shape = (20, 20)
-
-    data = datamodels.ImageModel(shape)
-    data.meta.observation.date = "2019-01-01"
-    data.meta.observation.time = "00:00:00"
-    data.meta.instrument.name = "NIRSPEC"
-    data.meta.instrument.detector = "NRS1"
-    data.meta.instrument.filter = "CLEAR"
-    data.meta.instrument.grating = "MIRROR"
-    data.meta.exposure.type = exptype
-    data.meta.subarray.xstart = 1
-    data.meta.subarray.ystart = 1
-    data.meta.subarray.xsize = shape[1]
-    data.meta.subarray.ysize = shape[0]
-
-    FlatFieldStep.call(data)
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.flat_field is None
 
 
 def create_nirspec_flats(shape, msa=False, flat_data_value=1.0, flat_err_value=0.1):
@@ -428,3 +418,49 @@ def test_nirspec_ifu_flat():
     result.close()
     for flat in flats:
         flat.close()
+
+
+def test_skip_extract2d():
+    model = datamodels.ImageModel()
+    model.meta.instrument.name = "MIRI"
+    model.meta.exposure.type = "MIR_IMAGE"
+    model.meta.cal_step.extract_2d = "COMPLETE"
+
+    # Step is skipped
+    result = FlatFieldStep.call(model)
+    assert result.meta.cal_step.flat_field == "SKIPPED"
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.flat_field is None
+
+
+def test_skip_no_flat(caplog):
+    model = datamodels.ImageModel()
+    model.meta.instrument.name = "MIRI"
+    model.meta.exposure.type = "MIR_IMAGE"
+
+    # Step is skipped
+    result = FlatFieldStep.call(model, override_flat="N/A")
+    assert result.meta.cal_step.flat_field == "SKIPPED"
+    assert "No flat found or supplied" in caplog.text
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.flat_field is None
+
+
+def test_skip_no_flat_multislit():
+    model = datamodels.MultiSlitModel()
+    model.meta.instrument.name = "NIRSPEC"
+    model.meta.exposure.type = "NRS_FIXEDSLIT"
+
+    # Step is skipped
+    result = FlatFieldStep.call(
+        model, override_flat="N/A", override_sflat="N/A", override_dflat="N/A", override_fflat="N/A"
+    )
+    assert result.meta.cal_step.flat_field == "SKIPPED"
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.flat_field is None
