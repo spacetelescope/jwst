@@ -485,3 +485,32 @@ def test_wfss_extract_custom_wavelength_range():
         ids = [source for source in test_boxes if source.sid == sid]
         assert len(ids) == 1
         assert [1] == list(ids[0].order_bounding.keys())
+
+
+def test_output_is_not_input_wfss():
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    model = create_wfss_image(pupil="GRISMR")
+    model.meta.source_catalog = source_catalog
+
+    result = Extract2dStep.call(model)
+
+    # successful completion
+    assert result.meta.cal_step.extract_2d == "COMPLETE"
+
+    # input is not modified
+    assert result is not model
+    assert model.meta.cal_step.extract_2d is None
+
+
+def test_output_is_not_input_tsgrism():
+    model = create_tso_wcsimage(subarray=True)
+    result = Extract2dStep.call(model)
+
+    # successful completion
+    assert result.meta.cal_step.extract_2d == "COMPLETE"
+
+    # input is not modified
+    assert result is not model
+    assert model.meta.cal_step.extract_2d is None
