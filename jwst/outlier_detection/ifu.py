@@ -35,8 +35,8 @@ from stcal.outlier_detection.utils import medfilt
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.outlier_detection._fileio import _save_intermediate_output
 from jwst.stpipe.utilities import record_step_status
 
 log = logging.getLogger(__name__)
@@ -57,7 +57,7 @@ def detect_outliers(
 
     Parameters
     ----------
-    input_models : ModelContainer or str
+    input_models : ModelContainer
         A container of data models or an association file readable into a ModelContainer.
     save_intermediate_results : bool
         If True, save intermediate results.
@@ -78,9 +78,6 @@ def detect_outliers(
     input_models : ModelContainer
         The input data with DQ flags set for detected outliers.
     """
-    if not isinstance(input_models, ModelContainer):
-        input_models = ModelContainer(input_models)
-
     if len(input_models) < 2:
         log.warning(f"Input only contains {len(input_models)} exposures")
         log.warning("Outlier detection will be skipped")
@@ -236,11 +233,14 @@ def flag_outliers(
     # Normalise the differences to a local median image to deal with ultra-bright sources
     normarr = medfilt(minarr, kern_size)
     nfloor = np.nanmedian(minarr) / 3
-    normarr[normarr < nfloor] = nfloor  # Ensure we never divide by a tiny number
+    # Ensure we never divide by a tiny number
+    normarr[normarr < nfloor] = nfloor
     minarr_norm = minarr / normarr
+
     # Percentile cut of the central region (cutting out weird detector edge effects)
     pctmin = np.nanpercentile(minarr_norm[4 : ny - 4, 4 : nx - 4], threshold_percent)
     log.debug(f"Flag pixels with values above {threshold_percent} {pctmin}: ")
+
     # Flag everything above this percentile value. Using np.where here because we count
     # the number of pixels flagged using len(indx[0])
     indx = minarr_norm > pctmin
@@ -258,12 +258,8 @@ def flag_outliers(
             minarr_norm,
         )
         opt_model = create_optional_results_model(opt_info)
-        opt_model.meta.filename = make_output_path(
-            basepath=input_models.meta.asn_table.products[0].name,
-            suffix=detector_name + "_outlier_output",
-        )
-        log.info(f"Writing out intermediate outlier file {opt_model.meta.filename}")
-        opt_model.save(opt_model.meta.filename)
+        opt_model.update(input_models[0])
+        _save_intermediate_output(opt_model, f"{detector_name}_outlier_output", make_output_path)
 
     del diffarr
 
@@ -325,7 +321,7 @@ def flag_outliers(
 
             total_bad = num_above + nadditional
             percent_cr = total_bad / (model.data.shape[0] * model.data.shape[1]) * 100
-            log.info(f"Total #  pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
+            log.info(f"Total # pixels flagged as outliers: {total_bad} ({percent_cr:.2f}%)")
 
             # Make sure all error and variance arrays also have matching
             # NaNs and DQ flags

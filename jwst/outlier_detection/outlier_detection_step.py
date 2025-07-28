@@ -8,7 +8,7 @@ from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib.pipe_utils import is_tso
 from jwst.outlier_detection import coron, ifu, imaging, spec, tso
 from jwst.stpipe import Step
-from jwst.stpipe.utilities import record_step_status
+from jwst.stpipe.utilities import query_step_status, record_step_status
 
 # Categorize all supported modes
 IMAGE_MODES = ["NRC_IMAGE", "MIR_IMAGE", "NRS_IMAGE", "NIS_IMAGE", "FGS_IMAGE"]
@@ -70,10 +70,15 @@ class OutlierDetectionStep(Step):
         result_models : ~jwst.datamodels.ModelContainer or ~jwst.datamodels.ModelLibrary
             The modified input data with DQ flags set for detected outliers.
         """
+        # Work on a copy to avoid modifying the input data
+        result_models = self._copy_models(input_data)
+
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
         if mode is None:
-            return self._set_status(input_data, False)
+            record_step_status(result_models, "outlier_detection", False)
+            return result_models
+
         self.log.info(f"Outlier Detection mode: {mode}")
 
         # determine the asn_id (if not set by the pipeline)
@@ -84,7 +89,7 @@ class OutlierDetectionStep(Step):
 
         if mode == "tso":
             result_models = tso.detect_outliers(
-                input_data,
+                result_models,
                 self.save_intermediate_results,
                 self.good_bits,
                 self.maskpt,
@@ -94,7 +99,7 @@ class OutlierDetectionStep(Step):
             )
         elif mode == "coron":
             result_models = coron.detect_outliers(
-                input_data,
+                result_models,
                 self.save_intermediate_results,
                 self.good_bits,
                 self.maskpt,
@@ -103,7 +108,7 @@ class OutlierDetectionStep(Step):
             )
         elif mode == "imaging":
             result_models = imaging.detect_outliers(
-                input_data,
+                result_models,
                 self.save_intermediate_results,
                 self.good_bits,
                 self.maskpt,
@@ -122,7 +127,7 @@ class OutlierDetectionStep(Step):
             )
         elif mode == "spec":
             result_models = spec.detect_outliers(
-                input_data,
+                result_models,
                 self.save_intermediate_results,
                 self.good_bits,
                 self.maskpt,
@@ -140,7 +145,7 @@ class OutlierDetectionStep(Step):
             )
         elif mode == "ifu":
             result_models = ifu.detect_outliers(
-                input_data,
+                result_models,
                 self.save_intermediate_results,
                 self.kernel_size,
                 self.ifu_second_check,
@@ -149,9 +154,12 @@ class OutlierDetectionStep(Step):
             )
         else:
             self.log.error(f"Outlier detection failed for unknown/unsupported mode: {mode}")
-            return self._set_status(input_data, False)
+            record_step_status(result_models, "outlier_detection", False)
+            return result_models
 
-        return self._set_status(result_models, True)
+        if query_step_status(result_models, "outlier_detection") != "SKIPPED":
+            record_step_status(result_models, "outlier_detection", True)
+        return result_models
 
     def _guess_mode(self, input_models):
         # The pipelines should set this mode or ideally these should
@@ -216,10 +224,22 @@ class OutlierDetectionStep(Step):
         self.log.info(f"Outlier Detection asn_id: {asn_id}")
         return
 
-    def _set_status(self, input_models, status):
-        # this might be called with the input which might be a filename or path
-        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
-            input_models = datamodels.open(input_models)
+    def _copy_models(self, input_models):
+        # Check whether input contains datamodels
+        make_copy = False
+        if isinstance(input_models, list):
+            is_datamodel = [isinstance(m, datamodels.JwstDataModel) for m in input_models]
+            if any(is_datamodel):
+                make_copy = True
+        elif isinstance(input_models, (datamodels.JwstDataModel, ModelContainer)):
+            make_copy = True
 
-        record_step_status(input_models, "outlier_detection", status)
+        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
+            # Input might be a filename or path.
+            # In that case, open it.
+            input_models = datamodels.open(input_models)
+        if make_copy:
+            # For regular models, make a copy to avoid modifying the input.
+            # Leave libraries alone for memory management reasons.
+            input_models = input_models.copy()
         return input_models

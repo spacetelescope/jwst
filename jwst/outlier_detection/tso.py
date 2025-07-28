@@ -48,8 +48,6 @@ def detect_outliers(
     ~jwst.datamodels.CubeModel
         The input model with outliers flagged.
     """
-    if not isinstance(input_model, dm.JwstDataModel):
-        input_model = dm.open(input_model)
     if isinstance(input_model, dm.ModelContainer):
         raise TypeError("OutlierDetectionTSO does not support ModelContainer input.")
     weighted_cube = weight_no_resample(input_model, good_bits)

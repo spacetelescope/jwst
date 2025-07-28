@@ -19,6 +19,7 @@ from jwst.outlier_detection.utils import (
 )
 from jwst.resample.resample import ResampleImage
 from jwst.resample.tests.test_resample_step import miri_rate_model
+from jwst.stpipe.utilities import query_step_status
 
 OUTLIER_DO_NOT_USE = np.bitwise_or(
     datamodels.dqflags.pixel["DO_NOT_USE"], datamodels.dqflags.pixel["OUTLIER"]
@@ -370,9 +371,14 @@ def test_outlier_step_spec(tmp_cwd, tmp_path, resample, save_intermediate):
     )
 
     # Make sure nothing changed in SCI array
-    for image in result:
+    for i, image in enumerate(result):
         nn = ~np.isnan(image.data)
         np.testing.assert_allclose(image.data[nn], miri_cal.data[nn])
+
+        # Step is complete; input is not modified
+        assert image.meta.cal_step.outlier_detection == "COMPLETE"
+        assert image is not container[i]
+        assert container[i].meta.cal_step.outlier_detection is None
 
     # Verify CR is flagged
     assert np.isnan(result[0].data[209, 37])
@@ -572,6 +578,11 @@ def test_outlier_step_weak_cr_coron(we_three_sci, tmp_cwd):
 
     result = OutlierDetectionStep.call(cube)
 
+    # Step is complete; input is not modified
+    assert result.meta.cal_step.outlier_detection == "COMPLETE"
+    assert result is not cube
+    assert cube.meta.cal_step.outlier_detection is None
+
     # Make sure nothing changed in SCI array except that
     # outliers are NaN
     for i, image in enumerate(container):
@@ -586,6 +597,22 @@ def test_outlier_step_weak_cr_coron(we_three_sci, tmp_cwd):
     # Verify CR is flagged
     assert result.dq[0, 12, 12] == OUTLIER_DO_NOT_USE
     assert np.isnan(result.data[0, 12, 12])
+
+
+def test_coron_save_intermediate(we_three_sci, tmp_path):
+    """Test intermediate files for coronagraphic mode"""
+    exptype = "MIR_LYOT"
+    with pytest.warns(UserWarning, match="Double sampling check FAILED"):
+        we_three_sci = assign_wcs_to_models(we_three_sci, exptype, False)
+    container = ModelContainer(we_three_sci)
+    cube = container_to_cube(container)
+
+    OutlierDetectionStep.call(
+        cube, output_dir=str(tmp_path), save_results=True, save_intermediate_results=True
+    )
+    basename = "foo1"
+    assert (tmp_path / f"{basename}_median.fits").exists()
+    assert (tmp_path / f"{basename}_outlierdetectionstep.fits").exists()
 
 
 @pytest.mark.parametrize("rolling_window_width", [7, 0])
@@ -611,6 +638,11 @@ def test_outlier_step_weak_cr_tso(mirimage_50_sci, rolling_window_width):
 
     result = OutlierDetectionStep.call(cube, rolling_window_width=rolling_window_width)
 
+    # Step is complete; input is not modified
+    assert result.meta.cal_step.outlier_detection == "COMPLETE"
+    assert result is not cube
+    assert cube.meta.cal_step.outlier_detection is None
+
     # Make sure nothing changed in SCI array except
     # that outliers are NaN
     for i, model in enumerate(im):
@@ -628,6 +660,22 @@ def test_outlier_step_weak_cr_tso(mirimage_50_sci, rolling_window_width):
 
     # Verify CR is flagged
     assert result.dq[cr_timestep, 12, 12] == OUTLIER_DO_NOT_USE
+
+
+def test_tso_save_intermediate(tmp_path, mirimage_50_sci):
+    """Test intermediate output for TSO."""
+    im = ModelContainer(mirimage_50_sci)
+    cube = container_to_cube(im)
+
+    OutlierDetectionStep.call(
+        cube,
+        output_dir=str(tmp_path),
+        save_results=True,
+        save_intermediate_results=True,
+    )
+    basename = "foo1"
+    assert (tmp_path / f"{basename}_median.fits").exists()
+    assert (tmp_path / f"{basename}_outlierdetectionstep.fits").exists()
 
 
 def test_same_median_on_disk(three_sci_as_asn, tmp_cwd):
@@ -700,3 +748,125 @@ def make_resamp(input_models):
         compute_err="driz_err",
     )
     return resamp
+
+
+@pytest.mark.parametrize("mode", [None, "unknown"])
+def test_guess_mode_assigned(caplog, mode):
+    input_model = datamodels.ImageModel()
+
+    # Assign a "None" mode -
+    # processing should gracefully skip
+    step = OutlierDetectionStep()
+    step.mode = mode
+    result = step.run(input_model)
+
+    assert result.meta.cal_step.outlier_detection == "SKIPPED"
+    assert isinstance(result, datamodels.ImageModel)
+
+    # If mode was unrecognized, error message is issued
+    if mode is None:
+        assert "ERROR" not in caplog.text
+    else:
+        assert "ERROR" in caplog.text
+
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.outlier_detection is None
+
+
+def test_skip_unknown_mode_file(tmp_path, caplog):
+    input_model = datamodels.ImageModel()
+    input_file = str(tmp_path / "test.fits")
+    input_model.save(input_file)
+    result = OutlierDetectionStep.call(input_file)
+
+    # Step is skipped with an error message
+    assert result.meta.cal_step.outlier_detection == "SKIPPED"
+    assert isinstance(result, datamodels.ImageModel)
+    assert "ERROR" in caplog.text
+
+    # Input is not modified
+    with datamodels.open(input_file) as input_model:
+        assert result is not input_model
+        assert input_model.meta.cal_step.outlier_detection is None
+
+
+def test_skip_unknown_mode_image():
+    input_model = datamodels.ImageModel()
+    result = OutlierDetectionStep.call(input_model)
+
+    # Step is skipped
+    assert result.meta.cal_step.outlier_detection == "SKIPPED"
+
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.outlier_detection is None
+
+
+def test_skip_unknown_mode_container():
+    input_model = datamodels.ImageModel()
+    container = ModelContainer([input_model])
+    result = OutlierDetectionStep.call(container)
+
+    # Step is skipped
+    assert result[0].meta.cal_step.outlier_detection == "SKIPPED"
+
+    # Input is not modified
+    assert result[0] is not input_model
+    assert input_model.meta.cal_step.outlier_detection is None
+
+
+def test_skip_one_exposure_imaging():
+    model = datamodels.ImageModel()
+    input_models = [model]
+    step = OutlierDetectionStep()
+    step.mode = "imaging"
+
+    # Run the specified mode on one input model:
+    # it should skip and return a copy of the input with the status set
+    result = step.run(input_models)
+
+    # Step is skipped
+    assert query_step_status(result, "outlier_detection") == "SKIPPED"
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.outlier_detection is None
+
+
+def test_skip_one_exposure_spec():
+    model = datamodels.ImageModel()
+    input_models = [model]
+    step = OutlierDetectionStep()
+    step.mode = "spec"
+
+    # Run the specified mode on one input model:
+    # it should skip and return a copy of the input with the status set
+    result = step.run(input_models)
+
+    # Step is skipped
+    assert result[0].meta.cal_step.outlier_detection == "SKIPPED"
+
+    # Input is not modified
+    assert result[0] is not model
+    assert model.meta.cal_step.outlier_detection is None
+
+
+def test_tso_error_invalid():
+    model = ModelContainer([datamodels.CubeModel()])
+    step = OutlierDetectionStep()
+    step.mode = "tso"
+
+    # model containers not allowed
+    with pytest.raises(TypeError, match="does not support ModelContainer input"):
+        step.run(model)
+
+
+def test_coron_error_invalid():
+    model = datamodels.ImageModel()
+    step = OutlierDetectionStep()
+    step.mode = "coron"
+
+    # model containers not allowed
+    with pytest.raises(TypeError, match="must be a CubeModel"):
+        step.run(model)
