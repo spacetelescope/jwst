@@ -315,20 +315,73 @@ def test_bg_file_list(mk_asn):
     result3 = BackgroundStep.call(rate_file, bkg_list=[bg_file, bg_file])
     result4 = BackgroundStep.call(rate_file, bkg_list=[])
     result5 = BackgroundStep.call(rate_file)
+    result6 = BackgroundStep.call(rate_file, ",".join([bg_file, bg_file]))
 
     bg_subtracted = mk_asn[3]
     bgs = datamodels.open(bg_subtracted)
+    rate = datamodels.open(rate_file)
 
-    assert_allclose(result1.data, bgs.data)
-    assert_allclose(result2.data, bgs.data)
-    assert_allclose(result3.data, bgs.data)
+    results = [result1, result2, result3, result4, result5, result6]
+    expected = ["COMPLETE"] * len(results)
+    expected[3:5] = ["SKIPPED"] * 2
+    for i, result in enumerate(results):
+        # status is recorded
+        assert result.meta.cal_step.bkg_subtract == expected[i]
 
-    assert result1.meta.cal_step.bkg_subtract == "COMPLETE"
-    assert result2.meta.cal_step.bkg_subtract == "COMPLETE"
-    assert result3.meta.cal_step.bkg_subtract == "COMPLETE"
-    assert result4.meta.cal_step.bkg_subtract == "SKIPPED"
-    assert result5.meta.cal_step.bkg_subtract == "SKIPPED"
+        # data is as expected
+        if expected[i] == "COMPLETE":
+            assert_allclose(result.data, bgs.data)
+        else:
+            assert_allclose(result.data, rate.data)
 
-    result1.close()
-    result2.close()
-    result3.close()
+        result.close()
+
+    bgs.close()
+    rate.close()
+
+
+def test_output_is_not_input():
+    data_shape = (10, 10)
+    image_value = 10.0
+    background_value = 1.0
+    image = miri_rate_model(data_shape, value=image_value)
+    background = miri_rate_model(data_shape, value=background_value)
+
+    result = BackgroundStep.call(image, [background])
+    assert result is not image
+    assert result is not background
+    assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+    assert image.meta.cal_step.bkg_subtract is None
+
+
+def test_output_is_not_input_when_skipped():
+    data_shape = (10, 10)
+    image_value = 10.0
+    image = miri_rate_model(data_shape, value=image_value)
+
+    result = BackgroundStep.call(image, [])
+    assert result is not image
+    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert image.meta.cal_step.bkg_subtract is None
+
+
+def test_save_combined_bg_file(tmp_path):
+    data_shape = (10, 10)
+    image_value = 10.0
+    background_value = 1.0
+    image = miri_rate_model(data_shape, value=image_value)
+    background = miri_rate_model(data_shape, value=background_value)
+
+    image.meta.filename = "test.fits"
+    expected_output = tmp_path / "test_bsub.fits"
+    expected_bg_output = tmp_path / "test_combinedbackground.fits"
+    BackgroundStep.call(
+        image,
+        [background],
+        save_combined_background=True,
+        save_results=True,
+        output_dir=str(tmp_path),
+        suffix="bsub",
+    )
+    assert expected_output.exists()
+    assert expected_bg_output.exists()
