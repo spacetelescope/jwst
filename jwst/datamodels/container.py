@@ -233,6 +233,14 @@ to supply custom catalogs.
         result = self.__class__(init=None)
         for m in self._models:
             result.append(m.copy(memo=memo))
+
+        result.asn_exptypes = copy.deepcopy(self.asn_exptypes, memo=memo)
+        result.asn_table = copy.deepcopy(self.asn_table, memo=memo)
+        result.asn_n_members = self.asn_n_members
+        result.asn_table_name = self.asn_table_name
+        result.asn_pool_name = self.asn_pool_name
+        result.asn_file_path = self.asn_file_path
+
         return result
 
     @staticmethod
