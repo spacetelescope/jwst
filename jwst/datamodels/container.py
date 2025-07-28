@@ -1,15 +1,15 @@
+import copy
+import logging
+import os.path as op
+import re
 from collections import OrderedDict
 from collections.abc import Sequence
-import copy
-import os.path as op
 from pathlib import Path
-import re
-import logging
-from astropy.io import fits
 
+from astropy.io import fits
 from stdatamodels.jwst.datamodels.model_base import JwstDataModel
-from stdatamodels.jwst.datamodels.util import open as datamodel_open
 from stdatamodels.jwst.datamodels.util import is_association
+from stdatamodels.jwst.datamodels.util import open as datamodel_open
 
 from jwst.datamodels.utils import attrs_to_group_id
 
@@ -26,7 +26,6 @@ EMPTY_ASN_TABLE = {
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 class ModelContainer(Sequence):
@@ -131,6 +130,11 @@ to supply custom catalogs.
 
         asn_n_members : int
             Open only the first N qualifying members.
+
+        **kwargs : dict
+            Additional keyword arguments passed to `datamodel_open()`, such as
+            `memmap`, `guess`, `strict_validation`, etc. See `datamodels.open()`
+            for a full list of available keyword arguments.
         """
         self._models = []
         self.asn_exptypes = asn_exptypes
@@ -146,7 +150,7 @@ to supply custom catalogs.
         elif isinstance(init, list):
             if all(isinstance(x, (str, fits.HDUList, JwstDataModel)) for x in init):
                 for m in init:
-                    self._models.append(datamodel_open(m))
+                    self._models.append(datamodel_open(m, **kwargs))
                 # set asn_table_name and product name to first datamodel stem
                 # since they were not provided
                 fname = self._models[0].meta.filename
@@ -163,7 +167,7 @@ to supply custom catalogs.
                 )
         elif isinstance(init, self.__class__):
             for m in init:
-                self._models.append(datamodel_open(m))
+                self._models.append(datamodel_open(m, **kwargs))
             self.asn_exptypes = init.asn_exptypes
             self.asn_n_members = init.asn_n_members
             self.asn_table = init.asn_table

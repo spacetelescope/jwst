@@ -2,15 +2,18 @@
 
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
+
 from jwst.datamodels.utils.flat_multispec import (
-    set_schema_units,
     copy_column_units,
     copy_spec_metadata,
     determine_vector_and_meta_columns,
+    expand_table,
     make_empty_recarray,
     populate_recarray,
-    expand_table,
+    set_schema_units,
 )
+
+__all__ = ["make_wfss_multiexposure", "wfss_multiexposure_to_multispec", "make_wfss_multicombined"]
 
 
 def make_wfss_multiexposure(input_list):
@@ -124,7 +127,6 @@ def make_wfss_multiexposure(input_list):
             populate_recarray(
                 fltdata[spec_idx],
                 spec,
-                n_rows,
                 all_columns,
                 is_vector,
                 ignore_columns=["SOURCE_ID", "N_ALONGDISP"],
@@ -261,7 +263,6 @@ def make_wfss_multicombined(results_list):
             populate_recarray(
                 fltdata[j],
                 spec,
-                n_rows,
                 all_columns,
                 is_vector,
                 ignore_columns=["N_ALONGDISP"],

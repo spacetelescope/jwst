@@ -19,7 +19,7 @@ and the input pixel coordinates are 0-indexed.
 
 The ``assign_wcs`` step expects to find the basic WCS keywords in the
 "SCI" extension header of the input FITS file. Distortion and spectral models are stored in reference files in the
-`ASDF <http://asdf-standard.readthedocs.org/en/latest/>`__  format.
+`ASDF <https://asdf-standard.readthedocs.io/en/latest/>`__  format.
 
 For each observing mode, determined by the value of ``EXP_TYPE`` in the science header,
 ``assign_wcs`` retrieves reference files from CRDS and creates a pipeline of transforms from
@@ -41,7 +41,7 @@ averaging over all integrations in an exposure, or a ``rateints`` product, which
 per-integration images.
 
 The ``assign_wcs`` WCS implementation is based on `gwcs <https://gwcs.readthedocs.io/en/latest/>`__ and
-uses `asdf <http://asdf.readthedocs.io/en/latest/>`__ to define and store reference files and transforms.
+uses `asdf <https://asdf.readthedocs.io/en/latest/>`__ to define and store reference files and transforms.
 
 .. Note:: In addition to CRDS reference files, applying ``assign_wcs`` to NIRSpec MOS
    exposures depends critically on an MSA metadata file to provide information

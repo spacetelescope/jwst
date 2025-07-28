@@ -1,9 +1,11 @@
-import numpy as np
 import logging
+
+import numpy as np
 from astropy.stats import SigmaClip
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["soss_background", "make_background_mask"]
 
 
 def soss_background(scidata, scimask, bkg_mask):

@@ -3,6 +3,8 @@ import warnings
 import numpy as np
 import scipy.interpolate
 
+__all__ = ["spline_fitter"]
+
 
 def _lsq_spline(x, y, weights, knots, degree):
     return scipy.interpolate.LSQUnivariateSpline(x, y, knots, w=weights, k=degree)

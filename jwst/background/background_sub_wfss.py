@@ -1,16 +1,17 @@
+import logging
 import math
-import numpy as np
 import warnings
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.assign_wcs.util import create_grism_bbox
-
-import logging
+from jwst.lib.reffile_utils import get_subarray_model
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["subtract_wfss_bkg"]
 
 
 def subtract_wfss_bkg(
@@ -46,6 +47,7 @@ def subtract_wfss_bkg(
         Background-subtracted target data model
     """
     bkg_ref = datamodels.open(bkg_filename)
+    bkg_ref = get_subarray_model(input_model, bkg_ref)
 
     # get the dispersion axis
     try:

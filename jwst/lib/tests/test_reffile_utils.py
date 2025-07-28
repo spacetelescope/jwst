@@ -1,11 +1,13 @@
 import numpy as np
+import pytest
+from stdatamodels.jwst.datamodels import ImageModel, RampModel, ReadnoiseModel, WfssBkgModel
+
 from jwst.lib.reffile_utils import (
     find_row,
     generate_stripe_array,
     get_subarray_model,
     science_detector_frame_transform,
 )
-from stdatamodels.jwst.datamodels import ReadnoiseModel, RampModel
 
 
 def generate_test_refmodel_metadata(refmodel):
@@ -108,3 +110,46 @@ def test_multistripe_subarray_model():
     }
     mock_rn_cutout = get_subarray_model(mock_sci, mock_rn)
     assert mock_rn_cutout.data.shape == mock_sci.shape[-2:]
+
+
+@pytest.fixture
+def mock_sci():
+    """Fixture to create a mock science model in a subarray."""
+    sci = ImageModel(data=np.ones((64, 2048)), dq=np.zeros((64, 2048), dtype=int))
+    sci.meta.subarray.xstart = 1
+    sci.meta.subarray.ystart = 1985
+    sci.meta.subarray.xsize = 2048
+    sci.meta.subarray.ysize = 64
+    generate_test_refmodel_metadata(sci)
+    sci.meta.instrument.name = "NIRISS"
+    return sci
+
+
+@pytest.fixture
+def mock_bkg():
+    """Fixture to create a mock background model that is full detector size."""
+    bkg = WfssBkgModel(data=np.ones((2048, 2048)))
+    bkg.meta.subarray.xstart = 1
+    bkg.meta.subarray.ystart = 1
+    bkg.meta.subarray.xsize = 2048
+    bkg.meta.subarray.ysize = 2048
+    generate_test_refmodel_metadata(bkg)
+    bkg.meta.instrument.name = "NIRISS"
+    return bkg
+
+
+def test_get_subarray_model(mock_sci, mock_bkg):
+    """Test that get_subarray_model returns a subarray model with correct shape and metadata."""
+    sub_model = get_subarray_model(mock_sci, mock_bkg)
+    assert sub_model.data.shape == (64, 2048)
+    assert sub_model.dq.shape == (64, 2048)
+    assert sub_model.meta.instrument.name == "NIRISS"
+
+
+def test_get_subarray_model_typeerror(mock_sci, mock_bkg):
+    """Test that TypeError is raised when non-model types are passed."""
+    with pytest.raises(TypeError):
+        get_subarray_model(mock_sci, "not_a_model")
+
+    with pytest.raises(TypeError):
+        get_subarray_model("not_a_model", mock_bkg)

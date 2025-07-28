@@ -154,4 +154,4 @@ A full description of the drizzling algorithm can be found in
 A description of the inverse variance map method can be found in
 `Casertano et al., AJ 2000 <https://doi.org/10.1086/316851>`_, see Appendix A2.
 A description of the drizzle parameters and other useful drizzle-related
-resources can be found at `DrizzlePac Handbook <http://drizzlepac.stsci.edu>`_.
+resources can be found at `DrizzlePac Handbook <https://www.stsci.edu/scientific-community/software/drizzlepac.html>`_.

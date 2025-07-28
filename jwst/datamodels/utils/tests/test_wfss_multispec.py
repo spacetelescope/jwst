@@ -1,22 +1,21 @@
-import pytest
 import numpy as np
+import pytest
+import stdatamodels.jwst.datamodels as dm
 from numpy.testing import assert_allclose
 
-import stdatamodels.jwst.datamodels as dm
-from jwst.datamodels.utils.wfss_multispec import (
-    make_wfss_multiexposure,
-    make_wfss_multicombined,
-    wfss_multiexposure_to_multispec,
-)
-
 from jwst.datamodels.utils.tests.wfss_helpers import (
+    N_EXPOSURES,
+    N_ROWS,
+    N_SOURCES,
+    wfss_comb,
+    wfss_multi,
     wfss_spec2_multi,
     wfss_spec3_multi,
-    wfss_multi,
-    wfss_comb,
-    N_EXPOSURES,
-    N_SOURCES,
-    N_ROWS,
+)
+from jwst.datamodels.utils.wfss_multispec import (
+    make_wfss_multicombined,
+    make_wfss_multiexposure,
+    wfss_multiexposure_to_multispec,
 )
 
 
@@ -70,7 +69,7 @@ def test_make_wfss_multiexposure(input_model_maker, request):
     # test one vector-like column, which should come from the input specmodels
     # and one meta column, which should be copied from the schema by set_schema_units
     to_check = ["WAVELENGTH", "SOURCE_RA"]
-    expected_units = ["um", "degrees"]
+    expected_units = ["um", "deg"]
     for exposure in output_model.spec:
         for col in to_check:
             assert col in exposure.spec_table.columns.names
@@ -196,7 +195,7 @@ def test_make_wfss_combined(comb1d_list):
 
         # test units
         to_check = ["WAVELENGTH", "SOURCE_RA"]
-        expected_units = ["um", "degrees"]
+        expected_units = ["um", "deg"]
         for col in to_check:
             assert col in spec.spec_table.columns.names
             assert spec.spec_table.columns[col].unit == expected_units[to_check.index(col)]

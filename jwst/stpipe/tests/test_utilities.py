@@ -1,16 +1,13 @@
 """Test utility funcs"""
 
+from stdatamodels.jwst import datamodels
 from stpipe.utilities import resolve_step_class_alias
-from jwst.stpipe import record_step_status, query_step_status
 
-from jwst.stpipe.utilities import all_steps, NOT_SET
 import jwst.pipeline
 import jwst.step
-from stdatamodels.jwst import datamodels
-from jwst.stpipe.utilities import invariant_filename
-
 from jwst import datamodels as dm
-
+from jwst.stpipe import query_step_status, record_step_status
+from jwst.stpipe.utilities import NOT_SET, all_steps, invariant_filename
 
 # All steps available to users should be represented in one
 # of these two modules:

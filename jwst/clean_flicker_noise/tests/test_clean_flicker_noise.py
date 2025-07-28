@@ -1,5 +1,3 @@
-import warnings
-
 import gwcs
 import numpy as np
 import pytest
@@ -7,9 +5,9 @@ from astropy.utils.data import get_pkg_data_filename
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file, create_nirspec_fs_file
-from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
+from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_nirspec_ifu_file
 from jwst.clean_flicker_noise import clean_flicker_noise as cfn
+from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
 
 
 def add_metadata(model, shape):

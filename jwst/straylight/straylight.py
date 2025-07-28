@@ -1,15 +1,18 @@
 """Module for  applying straylight correction."""
 
-import numpy as np
 import logging
-from jwst import datamodels
-from stdatamodels.jwst.datamodels import dqflags
+
+import numpy as np
+from astropy.convolution import Gaussian2DKernel, convolve_fft
 from astropy.stats import sigma_clipped_stats as scs
-from astropy.convolution import convolve_fft, Gaussian2DKernel
-from .calc_xart import xart_wrapper  # c extension
+from stdatamodels.jwst.datamodels import dqflags
+
+from jwst import datamodels
+from jwst.straylight.calc_xart import xart_wrapper  # c extension
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["makemodel_ccode", "makemodel_composite", "correct_xartifact", "clean_showers"]
 
 
 def makemodel_ccode(fimg, xvec, imin, imax, lor_fwhm, lor_amp, g_fwhm, g_dx, g1_amp, g2_amp):

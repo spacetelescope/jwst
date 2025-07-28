@@ -1,13 +1,12 @@
-import pytest
 import numpy as np
+import pytest
 
-from .conftest import DATA_SHAPE
 from jwst.extract_1d.soss_extract.soss_boxextract import (
-    get_box_weights,
     box_extract,
     estim_error_nearest_data,
+    get_box_weights,
 )
-
+from jwst.extract_1d.soss_extract.tests.conftest import DATA_SHAPE
 
 WIDTH = 5.1
 

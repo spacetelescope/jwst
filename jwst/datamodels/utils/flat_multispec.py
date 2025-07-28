@@ -1,7 +1,6 @@
 """Utilities for re-organizing spectral products into a flat structure."""
 
 import logging
-import warnings
 from copy import deepcopy
 
 import numpy as np
@@ -9,7 +8,17 @@ from asdf.tags.core.ndarray import asdf_datatype_to_numpy_dtype
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = [
+    "determine_vector_and_meta_columns",
+    "make_empty_recarray",
+    "populate_recarray",
+    "set_schema_units",
+    "copy_column_units",
+    "copy_spec_metadata",
+    "expand_table",
+    "expand_flat_spec",
+]
 
 
 def determine_vector_and_meta_columns(input_datatype, output_datatype):
@@ -103,7 +112,7 @@ def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=0):
     return arr
 
 
-def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, ignore_columns=None):
+def populate_recarray(output_table, input_spec, columns, is_vector, ignore_columns=None):
     """
     Populate the output table in-place with data from the input spectrum.
 
@@ -118,9 +127,6 @@ def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, igno
         The output table to be populated with the spectral data.
     input_spec : `~jwst.datamodels.SpecModel` or `~jwst.datamodels.CombinedSpecModel`
         The input data model containing the spectral data.
-    n_rows : int
-        The number of rows in the output table; this is the maximum number of
-        data points for any spectrum in the exposure.
     columns : np.ndarray[tuple]
         Array of tuples containing the column names and their dtypes.
     is_vector : np.ndarray[bool]
@@ -138,17 +144,12 @@ def populate_recarray(output_table, input_spec, n_rows, columns, is_vector, igno
     vector_columns = columns[is_vector]
     meta_columns = columns[~is_vector]
 
-    # Copy the data into the new table with NaN padding
+    # Copy the data into the new table
     for col, _ in vector_columns:
         if col in ignore_columns:
             continue
-        padded_data = np.full(n_rows, np.nan)
-        padded_data[: input_table.shape[0]] = input_table[col]
-        with warnings.catch_warnings():
-            warnings.filterwarnings(
-                "ignore", category=RuntimeWarning, message="invalid value encountered in cast"
-            )
-            output_table[col] = padded_data
+
+        output_table[col][: input_table.shape[0]] = input_table[col]
 
     # Copy the metadata into the new table
     # Metadata columns must have identical names to spec_meta columns

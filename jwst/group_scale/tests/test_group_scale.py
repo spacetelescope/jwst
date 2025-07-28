@@ -2,12 +2,12 @@
 Unit tests for group_scale correction
 """
 
-from stdatamodels.jwst.datamodels import RampModel
-
-from jwst.group_scale.group_scale import do_correction
-from jwst.group_scale import GroupScaleStep
 import numpy as np
 import pytest
+from stdatamodels.jwst.datamodels import RampModel
+
+from jwst.group_scale import GroupScaleStep
+from jwst.group_scale.group_scale import do_correction
 
 
 def test_nframes_or_frame_divisor_is_none(make_rampmodel):

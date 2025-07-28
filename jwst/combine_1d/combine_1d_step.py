@@ -1,12 +1,11 @@
 from stdatamodels.jwst import datamodels
+
+from jwst.combine_1d import combine1d
 from jwst.datamodels.utils.wfss_multispec import (
-    wfss_multiexposure_to_multispec,
     make_wfss_multicombined,
+    wfss_multiexposure_to_multispec,
 )
-
 from jwst.stpipe import Step
-from . import combine1d
-
 
 __all__ = ["Combine1dStep"]
 
@@ -71,7 +70,15 @@ class Combine1dStep(Step):
                         result = combine1d.combine_1d_spectra(
                             model, self.exptime_key, sigma_clip=self.sigma_clip
                         )
-                        results_list.append(result)
+                        if not result.meta.cal_step.combine_1d == "SKIPPED":
+                            results_list.append(result)
+                    if not results_list:
+                        self.log.error(
+                            "No valid input spectra found in WFSSMultiSpecModel. Skipping."
+                        )
+                        result = input_model.copy()
+                        result.meta.cal_step.combine_1d = "SKIPPED"
+                        return result
                     result = make_wfss_multicombined(results_list)
                     result.meta.cal_step.combine_1d = "COMPLETE"
                     return result

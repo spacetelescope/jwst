@@ -1,6 +1,5 @@
 """Test the x_irs2 module in the ipc package."""
 
-from collections import namedtuple
 import re
 
 import numpy as np
@@ -8,7 +7,6 @@ import pytest
 
 from jwst import datamodels
 from jwst.ipc import x_irs2
-
 from jwst.ipc.x_irs2 import ReadoutParam
 
 

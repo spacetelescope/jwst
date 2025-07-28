@@ -3,10 +3,12 @@
 #
 
 import logging
+
 import numpy as np
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["do_correction", "apply_fringe"]
 
 
 def do_correction(input_model, fringe_model):

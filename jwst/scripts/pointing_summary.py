@@ -8,10 +8,7 @@ from sys import stdout
 
 from jwst.lib import pointing_summary
 
-log_handler = logging.StreamHandler()
-logger = logging.getLogger("jwst")
-logger.addHandler(log_handler)
-LogLevels = [logging.WARNING, logging.INFO, logging.DEBUG]
+__all__ = []  # type: ignore[var-annotated]
 
 
 # Begin execution
@@ -52,8 +49,14 @@ def main():
 
     args = parser.parse_args()
 
+    # Configure logging
+    log_handler = logging.StreamHandler()
+    logger = logging.getLogger("jwst")
+    logger.addHandler(log_handler)
+    log_levels = [logging.WARNING, logging.INFO, logging.DEBUG]
+
     # Set output detail.
-    level = LogLevels[min(len(LogLevels) - 1, args.verbose)]
+    level = log_levels[min(len(log_levels) - 1, args.verbose)]
     logger.setLevel(level)
 
     # Process the file list.

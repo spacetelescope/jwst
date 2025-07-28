@@ -1,14 +1,26 @@
 import logging
+from pathlib import Path
 
 import numpy as np
-from numpy.testing import assert_allclose
 import pytest
+from astropy.table import Table
+from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.extract_1d.extract import populate_time_keywords
 from jwst.tests.helpers import LogWatcher
-from jwst.white_light.white_light import white_light
+from jwst.white_light.white_light import _determine_wavelength_range, white_light
+from jwst.white_light.white_light_step import WhiteLightStep
+
+TIME_KEYS = [
+    "MJD-BEG",
+    "MJD-AVG",
+    "MJD-END",
+    "TDB-BEG",
+    "TDB-MID",
+    "TDB-END",
+]
 
 
 @pytest.fixture(scope="module")
@@ -23,6 +35,14 @@ def make_datamodel():
     model.meta.exposure.integration_start = 1
     model.meta.exposure.integration_end = 2
     model.meta.exposure.nints = n_spec
+
+    model.meta.instrument.name = "NIRISS"
+    model.meta.instrument.detector = "NIS"
+    model.meta.exposure.type = "NIS_SOSS"
+    model.meta.instrument.filter = "CLEAR"
+    model.meta.instrument.pupil = "GR700XD"
+    model.meta.observation.date = "2025-07-15"
+    model.meta.observation.time = "00:00:00.000"
 
     # Make data arrays
     n_points = 20
@@ -129,19 +149,12 @@ def make_datamodel():
 
     # set blank times for one integration in order 1 to test warning raise
     model.spec[0].spec_table["INT_NUM"][2] = 0
-    time_keys = [
-        "MJD-BEG",
-        "MJD-AVG",
-        "MJD-END",
-        "TDB-BEG",
-        "TDB-MID",
-        "TDB-END",
-    ]
-    for key in time_keys:
+
+    for key in TIME_KEYS:
         model.spec[0].spec_table[key][2] = np.nan
 
     # set one time to a different value for order 2 to test table integration
-    for key in time_keys:
+    for key in TIME_KEYS:
         model.spec[1].spec_table[key][2] += 0.01
 
     return model
@@ -151,7 +164,7 @@ def test_white_light(make_datamodel, monkeypatch):
     """Test white light step"""
     data = make_datamodel
 
-    watcher = LogWatcher("There were 1 spectra in order 1 with no mid time (20")
+    watcher = LogWatcher("1 spectra in order 1 with no mid time or duplicate mid time (20")
     monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
     result = white_light(data)
     watcher.assert_seen()
@@ -190,7 +203,7 @@ def test_white_light(make_datamodel, monkeypatch):
 
 
 def test_white_light_multi_detector(make_datamodel):
-    """Test white light step"""
+    """Test white light step on data with multiple detectors."""
     # Set the detectors in the two spec tables to different values
     data = make_datamodel.copy()
     data.spec[0].detector = "NRS1"
@@ -237,3 +250,142 @@ def test_white_light_multi_detector(make_datamodel):
 
     assert_allclose(result["whitelight_flux_order_1_NRS1"], expected_flux_order_1, equal_nan=True)
     assert_allclose(result["whitelight_flux_order_2_NRS2"], expected_flux_order_2, equal_nan=True)
+
+
+def test_white_light_duplicate_times(monkeypatch, make_datamodel):
+    """Test white light step on data with duplicate time stamps."""
+    # Set all times to the same value for order 1
+    data = make_datamodel.copy()
+    for key in TIME_KEYS:
+        data.spec[0].spec_table[key][:] = data.spec[0].spec_table[key][0]
+
+    watcher = LogWatcher("4 spectra in order 1 with no mid time or duplicate mid time")
+    monkeypatch.setattr(logging.getLogger("jwst.white_light.white_light"), "warning", watcher)
+    result = white_light(data)
+    watcher.assert_seen()
+
+    # Expected times match input for the order 2 spectrum
+    n_spec = len(data.spec[1].spec_table)
+    mid_times = data.spec[1].spec_table["MJD-AVG"]
+    expected_tdb = data.spec[1].spec_table["TDB-MID"]
+
+    np.testing.assert_allclose(result["MJD_UTC"], mid_times)
+    np.testing.assert_allclose(result["BJD_TDB"], expected_tdb, equal_nan=True)
+    assert result["whitelight_flux_order_1"].shape == (len(mid_times),)
+    assert result["whitelight_flux_order_2"].shape == (len(mid_times),)
+
+    # For order 1, duplicate timestamps so only the first flux is kept
+    assert np.sum(np.isnan(result["whitelight_flux_order_1"])) == n_spec - 1
+
+    # check fluxes are summed appropriately
+    expected_flux_per_spec = np.sum(np.arange(1, 21, dtype=np.float32))
+    expected_flux = np.array(
+        [
+            expected_flux_per_spec,
+        ]
+        * len(mid_times)
+    )
+    expected_flux_order_1 = expected_flux.copy()
+    expected_flux_order_1[1:] = np.nan
+    expected_flux_order_2 = expected_flux.copy()
+
+    assert_allclose(result["whitelight_flux_order_1"], expected_flux_order_1, equal_nan=True)
+    assert_allclose(result["whitelight_flux_order_2"], expected_flux_order_2, equal_nan=True)
+
+
+@pytest.fixture
+def wavelengthrange():
+    """Mock the wavelengthrange info from reference files."""
+    orders = [1, 1, 2, 3]
+    filters = ["CLEAR", "F277W", "CLEAR", "CLEAR"]
+    wl_min = [0.93, 2.41, 0.64, 0.64]
+    wl_max = [2.82, 2.82, 0.83, 0.95]
+    return Table(
+        data=[orders, filters, wl_min, wl_max],
+        names=["order", "filter", "min_wave", "max_wave"],
+        dtype=[int, str, float, float],
+    )
+
+
+def test_determine_wavelength_range(wavelengthrange):
+    """Test that the wavelength range is determined correctly."""
+    # retrieve from reference file
+    wl_min, wl_max = _determine_wavelength_range(1, "F277W", waverange_table=wavelengthrange)
+    assert wl_min == 2.41
+    assert wl_max == 2.82
+
+    # user-specified values override reference file values
+    wl_min, wl_max = _determine_wavelength_range(
+        1, "F277W", waverange_table=wavelengthrange, min_wave=2.0, max_wave=3.0
+    )
+    assert wl_min == 2.0
+    assert wl_max == 3.0
+
+    # use default values when no reference file is provided
+    wl_min, wl_max = _determine_wavelength_range(4, "CLEAR")
+    assert wl_min == -1.0
+    assert wl_max == 1.0e10
+
+
+def test_determine_wavelength_range_no_match(wavelengthrange):
+    """Test that an error is raised if no match is found."""
+    with pytest.raises(
+        ValueError, match="No reference wavelength range found for order 4 and filter CLEAR"
+    ):
+        _determine_wavelength_range(4, "CLEAR", waverange_table=wavelengthrange)
+
+
+def test_determine_wavelength_range_multiple_matches(wavelengthrange):
+    """Test that an error is raised if more than one match is found."""
+    wavelengthrange["order"][2] = 1
+    with pytest.raises(
+        ValueError, match="Multiple reference wavelength ranges found for order 1 and filter CLEAR"
+    ):
+        _determine_wavelength_range(1, "CLEAR", waverange_table=wavelengthrange)
+
+
+def test_get_reference_wavelength_range(make_datamodel):
+    """Test reading of wavelength range reference file."""
+    wr = WhiteLightStep()._get_reference_wavelength_range(make_datamodel)
+    assert isinstance(wr, Table)
+    assert len(wr) > 0
+    assert "order" in wr.columns
+    assert "filter" in wr.columns
+    assert "min_wave" in wr.columns
+    assert "max_wave" in wr.columns
+
+
+def test_get_reference_wavelength_range_other_exptype(make_datamodel):
+    """Test that non-SOSS exposure types return None."""
+    model = make_datamodel.copy()
+    model.meta.exposure.type = "NRC_TSIMAGE"
+    wr = WhiteLightStep()._get_reference_wavelength_range(model)
+    assert wr is None
+
+
+def test_get_reference_wavelength_range_no_file(make_datamodel, monkeypatch, log_watcher):
+    """Test that missing wavelength range reference files are handled."""
+    model = make_datamodel.copy()
+    monkeypatch.setattr(WhiteLightStep, "get_reference_file", lambda *args: "N/A")
+
+    watcher = log_watcher(
+        "jwst.white_light.white_light_step",
+        message="No wavelength range reference file found",
+        level="warning",
+    )
+    wr = WhiteLightStep()._get_reference_wavelength_range(model)
+    watcher.assert_seen()
+    assert wr is None
+
+
+def test_call_step(make_datamodel, tmp_cwd, log_watcher):
+    """Smoke test to ensure the step at least runs without error."""
+    watcher = log_watcher(
+        "jwst.white_light.white_light_step",
+        message="Using wavelength range reference file",
+        level="info",
+    )
+    result = WhiteLightStep().call(make_datamodel, save_results=True)
+    watcher.assert_seen()
+    assert isinstance(result, Table)
+    assert Path("step_WhiteLightStep_whtlt.ecsv").exists()

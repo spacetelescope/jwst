@@ -4,21 +4,22 @@ import logging
 import warnings
 
 import numpy as np
-from astropy.table import Table
-from astropy.io import fits
 from astropy.io import ascii as astropy_ascii
+from astropy.io import fits
+from astropy.table import Table
 from stdatamodels import fits_support
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Step
 from jwst.residual_fringe import utils
+from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Noise factor for DER_SNR spectroscopic signal-to-noise calculation
 # (see Stoehr, ADASS 2008: https://archive.stsci.edu/vodocs/der_snr.pdf)
 DER_SNR_FACTOR = 1.482602 / np.sqrt(6)
+
+__all__ = ["ResidualFringeCorrection", "NoFringeFlatError"]
 
 
 class ResidualFringeCorrection:

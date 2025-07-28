@@ -14,22 +14,19 @@ The file is saved with a suffix 'world_coordinates'.
 # Licensed under a 3-clause BSD style license - see LICENSE
 
 import argparse
+import logging
 import os
 import warnings
-import logging
 
 import numpy as np
 from astropy.io import fits
 from gwcs import wcstools
 from gwcs.utils import _toindex
-
 from stdatamodels.jwst.datamodels.util import open as dmopen
 
 from jwst.assign_wcs import nirspec
 
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+__all__ = []  # type: ignore[var-annotated]
 
 
 def main():
@@ -78,6 +75,11 @@ def main():
     parser.add_argument("-m", "--mode", default=None, help="set exposure mode")
 
     res = parser.parse_args()
+
+    # Configure logging
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     filenames = res.filenames
     mode = res.mode
 
@@ -120,7 +122,7 @@ def main():
         else:
             hdulist = method(model)
             hdulist.writeto(output_file, overwrite=True)
-            logging.info(f"File written: {output_file}")
+            logger.info(f"File written: {output_file}")
             del hdulist
         model.close()
 
@@ -389,7 +391,8 @@ def imaging_coords(model):
 
 def warn_user(*argv):
     """Send a warning message to stderr."""
-    logging.warning(*argv)
+    logger = logging.getLogger()
+    logger.warning(*argv)
 
 
 if __name__ == "__main__":

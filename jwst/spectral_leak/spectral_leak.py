@@ -1,9 +1,11 @@
-import numpy as np
 import logging
+
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["do_correction"]
 
 
 def do_correction(sp_leak_ref, ch1b, ch3a):

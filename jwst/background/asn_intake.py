@@ -1,14 +1,14 @@
-from pathlib import Path
-from collections import defaultdict
 import logging
+from collections import defaultdict
+from pathlib import Path
 
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
 
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+
+__all__ = ["asn_get_data"]
 
 
 def asn_get_data(asn):

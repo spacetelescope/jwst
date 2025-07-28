@@ -68,17 +68,21 @@ jobs:
         CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
       cache-path: /tmp/data/crds_cache
       cache-key: crds-${{ needs.crds_context.outputs.context }}
+      artifact-path: |
+        results.xml
       envs: |
         - linux: py311-oldestdeps-xdist-cov
+          pytest-results-summary: true
         - linux: py311-xdist
+          posargs: -vv
+          pytest-results-summary: true
         - linux: py312-xdist
-        - linux: py312-pyargs-xdist
+          pytest-results-summary: true
         # `tox` does not currently respect `requires-python` versions when creating testing environments;
         # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
         - linux: py3-cov-xdist
           coverage: codecov
           pytest-results-summary: true
-          python-version: '>3.12 <3.13.4'
         - macos: py3-xdist
           pytest-results-summary: true
-          python-version: '>3.12 <3.13.4'
+        - linux: linkcheck

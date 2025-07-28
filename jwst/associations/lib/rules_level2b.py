@@ -2,8 +2,6 @@
 
 import logging
 
-from jwst.associations.lib.rules_level2_base import AsnMixin_Lv2WFSS, Constraint_Imprint_Special
-from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.constraint import Constraint, SimpleConstraint
 from jwst.associations.lib.dms_base import (
     Constraint_TSO,
@@ -18,24 +16,27 @@ from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level2_base import (
     ASN_SCHEMA,  # noqa: F401
     AsnMixin_Lv2Image,
-    AsnMixin_Lv2Spectral,
-    AsnMixin_Lv2Nod,
     AsnMixin_Lv2Imprint,
+    AsnMixin_Lv2Nod,
     AsnMixin_Lv2Special,
-    DMSLevel2bBase,
-    DMSAttrConstraint,
-    Utility,  # noqa: F401
-    Constraint_Mode,
-    Constraint_Base,
+    AsnMixin_Lv2Spectral,
+    AsnMixin_Lv2WFSS,
     Constraint_Background,
-    Constraint_Single_Science,
-    Constraint_Image_Science,
+    Constraint_Base,
     Constraint_Image_Nonscience,
+    Constraint_Image_Science,
+    Constraint_Imprint,
+    Constraint_Imprint_Special,
+    Constraint_Mode,
+    Constraint_Single_Science,
     Constraint_Special,
     Constraint_Spectral_Science,
-    Constraint_Imprint,
     Constraint_Target,
+    DMSAttrConstraint,
+    DMSLevel2bBase,
+    Utility,  # noqa: F401
 )
+from jwst.associations.registry import RegistryMarker
 
 __all__ = [
     "Asn_Lv2CoronAsRate",
@@ -62,7 +63,6 @@ __all__ = [
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 # --------------------------------

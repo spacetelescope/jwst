@@ -1,9 +1,9 @@
 #! /usr/bin/env python
 
 from stdatamodels.jwst import datamodels
-from jwst.stpipe import Step
-from jwst.emicorr import emicorr
 
+from jwst.emicorr import emicorr
+from jwst.stpipe import Step
 
 __all__ = ["EmiCorrStep"]
 

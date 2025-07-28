@@ -1,23 +1,22 @@
 import os
 import warnings
-from jwst.associations import load_as_asn
 
 import pytest
-
+from astropy.utils.data import get_pkg_data_filename
+from stdatamodels.exceptions import NoTypeWarning
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import JwstDataModel
-from stdatamodels.exceptions import NoTypeWarning
 
-from jwst.datamodels import ModelContainer
+from jwst.associations import load_as_asn
 from jwst.associations.asn_from_list import asn_from_list
-
+from jwst.datamodels import ModelContainer
 from jwst.lib.file_utils import pushdir
 
-
-ROOT_DIR = os.path.join(os.path.dirname(__file__), "data")
-FITS_FILE = os.path.join(ROOT_DIR, "test.fits")
-ASN_FILE = os.path.join(ROOT_DIR, "association.json")
-CUSTOM_GROUP_ID_ASN_FILE = os.path.join(ROOT_DIR, "association_group_id.json")
+FITS_FILE = get_pkg_data_filename("data/test.fits", package="jwst.datamodels.tests")
+ASN_FILE = get_pkg_data_filename("data/association.json", package="jwst.datamodels.tests")
+CUSTOM_GROUP_ID_ASN_FILE = get_pkg_data_filename(
+    "data/association_group_id.json", package="jwst.datamodels.tests"
+)
 
 
 @pytest.fixture
@@ -153,3 +152,30 @@ def test_save(tmp_cwd, container, path):
         container.save(path)
         expected_fname = path.replace(".fits", "") + ".fits"
         assert os.path.exists(expected_fname)
+
+
+def test_open_guess(container):
+    """Test that `guess` keyword argument works in ModelContainer."""
+    asn_file_path, _asn_file_name = os.path.split(ASN_FILE)
+    fnames = [m.meta.filename for m in container]
+    with pushdir(asn_file_path):
+        # opening it normally works fine
+        ModelContainer(fnames, guess=True)
+        with pytest.raises(
+            TypeError, match="Model type is not specifically defined and guessing has been disabled"
+        ):
+            # but if you don't allow guessing the model type, it raises TypeError
+            ModelContainer(fnames, guess=False)
+
+
+def test_open_kwargs(container):
+    wrong_schema = datamodels.NRMModel()._schema
+    asn_file_path, _asn_file_name = os.path.split(ASN_FILE)
+    fnames = [m.meta.filename for m in container]
+    with pushdir(asn_file_path):
+        # opening it normally works fine
+        ModelContainer(fnames)
+        with pytest.raises(AttributeError):
+            # but schema can be passed all the way through to DataModel.__init__ on the
+            # individual datamodels, and cause AttributeError
+            ModelContainer(fnames, schema=wrong_schema)

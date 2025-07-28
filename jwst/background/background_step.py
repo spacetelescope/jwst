@@ -1,14 +1,12 @@
 #! /usr/bin/env python
+import numpy as np
 from stdatamodels.jwst import datamodels
 
-from jwst.stpipe import Step
-from .background_sub import background_sub
-from .background_sub_wfss import subtract_wfss_bkg
-from .asn_intake import asn_get_data
+from jwst.background.asn_intake import asn_get_data
+from jwst.background.background_sub import background_sub
 from jwst.background.background_sub_soss import subtract_soss_bkg
-
-import numpy as np
-
+from jwst.background.background_sub_wfss import subtract_wfss_bkg
+from jwst.stpipe import Step
 
 __all__ = ["BackgroundStep"]
 
@@ -32,7 +30,7 @@ class BackgroundStep(Step):
     """  # noqa: E501
 
     # These reference files are only used for WFSS/GRISM or SOSS data.
-    reference_file_types = ["bkg", "wfssbkg", "wavelengthrange"]
+    reference_file_types = ["bkg", "wavelengthrange"]
 
     # Define a suffix for optional saved output of the combined background
     bkg_suffix = "combinedbackground"
@@ -60,9 +58,16 @@ class BackgroundStep(Step):
 
         if result.meta.exposure.type in ["NIS_WFSS", "NRC_WFSS"]:
             # Get the reference file names
-            bkg_name = self.get_reference_file(result, "wfssbkg")
+            bkg_name = self.get_reference_file(result, "bkg")
             wlrange_name = self.get_reference_file(result, "wavelengthrange")
-            self.log.info("Using WFSSBKG reference file %s", bkg_name)
+
+            if bkg_name == "N/A":
+                self.log.warning("No BKG reference file found. Skipping background subtraction.")
+                result.meta.cal_step.bkg_subtract = "SKIPPED"
+                input_model.close()
+                return result
+
+            self.log.info("Using BKG reference file %s", bkg_name)
             self.log.info("Using WavelengthRange reference file %s", wlrange_name)
 
             # Do the background subtraction for WFSS/GRISM data

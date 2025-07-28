@@ -1,21 +1,21 @@
 """JWST-specific Step and Pipeline base classes."""
 
-from functools import wraps
 import logging
+from functools import wraps
 from pathlib import Path
 
-from stdatamodels.jwst.datamodels import JwstDataModel, read_metadata
 from stdatamodels.jwst import datamodels
-from stpipe import crds_client, Step, Pipeline
+from stdatamodels.jwst.datamodels import JwstDataModel, read_metadata
+from stpipe import Pipeline, Step, crds_client
 
-from jwst import __version_commit__, __version__
-from jwst.datamodels import ModelLibrary, ModelContainer
-from ._cal_logs import _LOG_FORMATTER
+from jwst import __version__, __version_commit__
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.lib.suffix import remove_suffix
-
+from jwst.stpipe._cal_logs import _LOG_FORMATTER
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["JwstStep", "JwstPipeline"]
 
 
 class JwstStep(Step):
@@ -98,8 +98,8 @@ class JwstStep(Step):
             Association
         """
         # Prevent circular import:
-        from jwst.associations.load_as_asn import LoadAsLevel2Asn
         from jwst.associations.lib.update_path import update_key_value
+        from jwst.associations.load_as_asn import LoadAsLevel2Asn
 
         asn = LoadAsLevel2Asn.load(obj, basename=self.output_file)
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
@@ -123,8 +123,8 @@ class JwstStep(Step):
             Association
         """
         # Prevent circular import:
-        from jwst.associations.load_as_asn import LoadAsAssociation
         from jwst.associations.lib.update_path import update_key_value
+        from jwst.associations.load_as_asn import LoadAsAssociation
 
         asn = LoadAsAssociation.load(obj)
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)

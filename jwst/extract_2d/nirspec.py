@@ -2,20 +2,29 @@
 #  Module for 2d extraction of Nirspec fixed slits or MOS slitlets.
 #
 import logging
+
 import numpy as np
 from astropy.modeling.models import Shift
-from gwcs.utils import _toindex
 from gwcs import wcstools
-
+from gwcs.utils import _toindex
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
-from jwst.assign_wcs import nirspec
-from jwst.assign_wcs import util
+from jwst.assign_wcs import nirspec, util
 from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = [
+    "nrs_extract2d",
+    "select_slits",
+    "process_slit",
+    "set_slit_attributes",
+    "offset_wcs",
+    "extract_slit",
+    "DitherMetadataError",
+    "get_source_xpos",
+]
 
 
 def nrs_extract2d(input_model, slit_names=None, source_ids=None):

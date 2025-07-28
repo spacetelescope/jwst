@@ -7,7 +7,7 @@ from pathlib import Path
 from astropy.table import Table, vstack
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations import AssociationRegistry, AssociationPool, generate
+from jwst.associations import AssociationPool, AssociationRegistry, generate
 from jwst.associations.lib.counter import Counter
 from jwst.associations.lib.utilities import is_iterable
 

@@ -1,17 +1,18 @@
 #! /usr/bin/env python
+import logging
 import warnings
 
 import numpy as np
-from scipy.special import comb
 from astropy.stats import sigma_clipped_stats
 from astropy.time.core import Time
-import logging
-
+from scipy.special import comb
 from stdatamodels.jwst import datamodels
-from . import leastsqnrm
+
+from jwst.ami import leastsqnrm
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["RawOifits", "CalibOifits"]
 
 
 class RawOifits:

@@ -1,11 +1,12 @@
+import logging
+
 import numpy as np
 
 from jwst.photom.photom import find_row
 
-import logging
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["get_photom_data", "create_1d_sens"]
 
 
 def get_photom_data(phot_model, filter_name, pupil, order):

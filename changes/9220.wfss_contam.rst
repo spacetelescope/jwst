@@ -1,0 +1,3 @@
+Vectorize computations to make step run faster. Runtime decreased from several hours to a few minutes for representative NIRCam and NIRISS datasets.
+Support multiprocessing; maximum_cores parameter existed but did not work before.
+Add new diagnostic simul_slits model, saved when save_simulated_image is True.

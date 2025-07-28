@@ -1,10 +1,10 @@
 """Subtract a template background reference file from NIRISS SOSS data."""
 
-import numpy as np
-from scipy import ndimage
 import logging
 import warnings
 
+import numpy as np
+from scipy import ndimage
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
@@ -14,6 +14,8 @@ log = logging.getLogger(__name__)
 BKG_DISCON_COLUMNS = [685, 725]  # The columns to check for a discontinuity in background level.
 BACKGROUND_MASK_CUTOFF = 950  # Drop all pixels with col > cutoff for template matching of bkgd.
 SUBSTRIP96_ROWSTART = 10  # Determine where to place SUBSTRIP96 slice wrt. SUBSTRIP256 array.
+
+__all__ = ["find_discontinuity", "generate_background_masks", "subtract_soss_bkg"]
 
 
 def find_discontinuity(image):

@@ -1,17 +1,16 @@
+import logging
 from collections import OrderedDict
 
-import logging
-
+import astropy.units as u
 import numpy as np
 from astropy.table import QTable
 from astropy.time import Time, TimeDelta
-import astropy.units as u
-from photutils.aperture import CircularAperture, CircularAnnulus, ApertureStats
-
+from photutils.aperture import ApertureStats, CircularAnnulus, CircularAperture
 from stdatamodels.jwst.datamodels import CubeModel
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["tso_aperture_photometry"]
 
 
 def tso_aperture_photometry(

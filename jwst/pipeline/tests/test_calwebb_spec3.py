@@ -1,15 +1,13 @@
-import pytest
 import os
-import numpy as np
 
+import pytest
 import stdatamodels.jwst.datamodels as dm
+
 import jwst
 from jwst.datamodels import SourceModelContainer
 from jwst.datamodels.utils.tests.wfss_helpers import wfss_multi
-
-from jwst.stpipe import Step
 from jwst.extract_1d.tests.conftest import mock_nis_wfss_l2
-
+from jwst.stpipe import Step
 
 INPUT_WFSS = "mock_wfss_cal.fits"
 INPUT_WFSS_2 = "mock_wfss_2_cal.fits"
@@ -92,6 +90,7 @@ def run_spec3_wfss(spec3_wfss_asn, monkeypatch, wfss_multiexposure):
         if not all(isinstance(m, dm.WFSSMultiSpecModel) for m in input_model):
             raise TypeError("Input to make_wfss_multiexposure is not a list of WFSSMultiSpecModel")
         output_model = dm.WFSSMultiSpecModel()
+        output_model.spec.append(dm.WFSSSpecModel())
         return output_model
 
     monkeypatch.setattr(
@@ -128,3 +127,5 @@ def test_spec3_wfss(run_spec3_wfss):
     files_created = os.listdir(".")
     assert "test_x1d.fits" in files_created
     assert "test_c1d.fits" in files_created
+    x1d = dm.open("test_x1d.fits")
+    assert len(x1d.spec[0].s_region) > 0

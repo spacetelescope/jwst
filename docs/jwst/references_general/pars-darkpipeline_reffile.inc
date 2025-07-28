@@ -8,7 +8,7 @@ PARS-DARKPIPELINE Reference File
 
 Reference Selection Keywords
 ++++++++++++++++++++++++++++
-CRDS selects appropriate pars-whitelightstep references based on the following keywords.
+CRDS selects appropriate pars-darkpipeline references based on the following keywords.
 
 ========== ====================================
 Instrument Keywords

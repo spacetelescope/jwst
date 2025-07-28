@@ -2,13 +2,14 @@
 #  Module for the RSCD correction for MIRI science data
 #
 
-import numpy as np
 import logging
 
+import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["do_correction", "correction_skip_groups", "get_rscd_parameters"]
 
 
 def do_correction(output_model, rscd_model):

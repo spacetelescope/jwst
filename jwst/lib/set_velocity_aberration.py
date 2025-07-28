@@ -21,17 +21,20 @@ in the header other than what is required by the standard.
 """
 
 import logging
+
 import numpy as np
-from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
+from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
 from scipy.constants import speed_of_light
+
 import jwst.datamodels as dm
 from jwst.datamodels import Level1bModel  # type: ignore[attr-defined]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 SPEED_OF_LIGHT = speed_of_light / 1000  # km / s
+
+__all__ = ["compute_va_effects_vector", "compute_va_effects", "add_dva"]
 
 
 def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):

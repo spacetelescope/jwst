@@ -3,7 +3,8 @@
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["InstrumentInfo"]
 
 
 class InstrumentInfo:

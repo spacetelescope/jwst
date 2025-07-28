@@ -4,10 +4,10 @@ import warnings
 
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import RampModel, EmiModel
+from stdatamodels.jwst.datamodels import EmiModel, RampModel
 
-from jwst.pipeline import Detector1Pipeline
 from jwst.emicorr import emicorr, emicorr_step
+from jwst.pipeline import Detector1Pipeline
 
 
 @pytest.fixture()
@@ -164,17 +164,6 @@ def model_with_emi(emicorr_model):
     emicorr_model.frequencies = frequencies
     emicorr_model.subarray_cases = subarray_cases
     return emicorr_model
-
-
-@pytest.fixture()
-def module_log_watcher(monkeypatch):
-    # Set a log watcher to check for a log message at any level
-    # in the emicorr module
-    watcher = LogWatcher("")
-    logger = logging.getLogger("jwst.emicorr.emicorr")
-    for level in ["debug", "info", "warning", "error"]:
-        monkeypatch.setattr(logger, level, watcher)
-    return watcher
 
 
 def test_emicorrstep_skip_default():

@@ -1,29 +1,20 @@
-import logging
 import json
-from pathlib import Path
+import logging
 import re
+from pathlib import Path
 
 import numpy as np
-
 from spherical_geometry.polygon import SphericalPolygon
-
+from stcal.resample import Resample
+from stcal.resample.utils import is_imaging_wcs
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from stcal.resample import Resample
-from stcal.resample.utils import is_imaging_wcs
-
-from jwst.datamodels import ModelLibrary
+from jwst.assign_wcs import util as assign_wcs_util
 from jwst.associations.asn_from_list import asn_from_list
-
+from jwst.datamodels import ModelLibrary
 from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
-from jwst.assign_wcs import util as assign_wcs_util
-
-
-log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
-
 
 __all__ = [
     "input_jwst_model_to_dict",
@@ -41,7 +32,6 @@ _SUPPORTED_CUSTOM_WCS_PARS = [
 ]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 class ResampleImage(Resample):
@@ -205,7 +195,7 @@ class ResampleImage(Resample):
 
                 - ``pixel_scale`` : float, None
 
-                    Desired pixel scale (in degrees) of the output WCS. When
+                    Desired pixel scale (in arcsec) of the output WCS. When
                     provided, overrides ``pixel_scale_ratio``. Default value
                     is `None`.
 
@@ -314,7 +304,7 @@ class ResampleImage(Resample):
             # determine output WCS:
             shape = wcs_pars.get("output_shape")
             if (pscale := wcs_pars.get("pixel_scale")) is not None:
-                pscale /= 3600.0
+                pscale /= 3600.0  # convert pixel_scale to degrees/pix
             wcs, _, ps, ps_ratio = resample_utils.resampled_wcs_from_models(
                 input_models,
                 pixel_scale_ratio=wcs_pars.get("pixel_scale_ratio", 1.0),

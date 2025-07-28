@@ -5,8 +5,7 @@ Unit test for Cube Build testing setting up configuration
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.cube_build import cube_build
-from jwst.cube_build import file_table
+from jwst.cube_build import cube_build, file_table
 from jwst.cube_build.cube_build import NoFiltersError
 
 wcsinfo = {
@@ -366,7 +365,6 @@ def test_calspec3_config_miri_multi_ch1(tmp_cwd, miri_full_coverage):
     par_filename = "None"
 
     pars = {
-        "channel": pars_input["channel"],
         "subchannel": pars_input["subchannel"],
         "grating": pars_input["grating"],
         "filter": pars_input["filter"],
@@ -499,8 +497,6 @@ def test_calspec3_config_nirspec_grating(tmp_cwd, nirspec_medium_coverage):
     pars = {
         "channel": pars_input["channel"],
         "subchannel": pars_input["subchannel"],
-        "grating": pars_input["grating"],
-        "filter": pars_input["filter"],
         "weighting": weighting,
         "grating": grating,
         "filter": filter,
@@ -545,8 +541,6 @@ def test_calspec3_config_nirspec_no_grating(tmp_cwd, nirspec_medium_coverage):
     pars = {
         "channel": pars_input["channel"],
         "subchannel": pars_input["subchannel"],
-        "grating": pars_input["grating"],
-        "filter": pars_input["filter"],
         "weighting": weighting,
         "grating": grating,
         "filter": filter,

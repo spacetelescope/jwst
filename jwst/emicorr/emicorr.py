@@ -3,12 +3,11 @@ import logging
 import warnings
 
 import numpy as np
-from scipy import interpolate
 from astropy.stats import sigma_clipped_stats as scs
+from scipy import interpolate
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 subarray_clocks = {
     "SLITLESSPRISM": {"rowclocks": 28, "frameclocks": 15904},
@@ -23,6 +22,20 @@ subarray_clocks = {
     "BRIGHTSKY": {"rowclocks": 162, "frameclocks": 86528},
     "SUB256": {"rowclocks": 96, "frameclocks": 29952},
 }
+
+__all__ = [
+    "apply_emicorr",
+    "sloper",
+    "minmed",
+    "get_subarcase",
+    "get_frequency_info",
+    "rebin",
+    "mk_reffile",
+    "emicorr_refwave",
+    "get_best_phase",
+    "calc_chisq_amplitudes",
+    "EMIfitter",
+]
 
 
 def apply_emicorr(

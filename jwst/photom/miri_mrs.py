@@ -1,10 +1,12 @@
 import logging
+
 import numpy as np
-from scipy.interpolate import RegularGridInterpolator
 from gwcs.wcstools import grid_from_bounding_box
+from scipy.interpolate import RegularGridInterpolator
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["expfunc_bounded", "get_correction_function", "time_correction"]
 
 # Set of routines to find a  correction for a time-wavelength
 # photometric response that is particularly significant at long wavelengths.

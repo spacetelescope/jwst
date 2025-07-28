@@ -2,26 +2,24 @@
 Test functions for NIRSPEC WCS - all modes.
 """
 
-import functools
 import shutil
 from math import cos, sin
 
-import astropy.units as u
 import astropy.coordinates as coords
+import astropy.units as u
 import numpy as np
 import pytest
-from astropy.io import fits
-from astropy.modeling import models as astmodels
 from astropy import table
 from astropy import wcs as astwcs
+from astropy.io import fits
+from astropy.modeling import models as astmodels
 from astropy.utils.data import get_pkg_data_filename
 from gwcs import wcs, wcstools
 from numpy.testing import assert_allclose, assert_array_equal
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
-from jwst.assign_wcs import nirspec, assign_wcs_step
+from jwst.assign_wcs import assign_wcs_step, nirspec
 from jwst.assign_wcs.util import MSAFileError, in_ifu_slice
 
 wcs_kw = {
@@ -101,9 +99,9 @@ def create_reference_files(datamodel):
     return refs
 
 
-def create_nirspec_imaging_file(filter_name="F290LP"):
+def create_nirspec_imaging_file(filter_name="F290LP", exptype="NRS_IMAGE"):
     image = create_hdul()
-    image[0].header["exp_type"] = "NRS_IMAGE"
+    image[0].header["exp_type"] = exptype
     image[0].header["filter"] = filter_name
     image[0].header["grating"] = "MIRROR"
     image[0].header["lamp"] = "NONE"
@@ -165,12 +163,13 @@ def create_nirspec_fs_file(grating, filter, lamp="N/A"):
     return image
 
 
-def test_nirspec_imaging():
+@pytest.mark.parametrize("exptype", ["NRS_IMAGE", "NRS_LAMP"])
+def test_nirspec_imaging(exptype):
     """
     Test Nirspec Imaging mode using build 6 reference files.
     """
     # Test creating the WCS
-    f = create_nirspec_imaging_file()
+    f = create_nirspec_imaging_file(exptype=exptype)
     im = datamodels.ImageModel(f)
 
     refs = create_reference_files(im)
@@ -189,6 +188,28 @@ def test_nirspec_imaging():
     msa2det = im.meta.wcs.get_transform("msa", "detector")
     result = msa2det(1.0, 2.0)
     assert len(result) == 2
+
+
+@pytest.mark.parametrize("exptype", ["NRS_IMAGE", "NRS_LAMP"])
+def test_nirspec_imaging_via_step_call(exptype):
+    """Test Nirspec Imaging modes in the step call."""
+    f = create_nirspec_imaging_file(exptype=exptype)
+    im = datamodels.ImageModel(f)
+    result = assign_wcs_step.AssignWcsStep.call(im)
+    assert result.meta.wcs.available_frames == [
+        "detector",
+        "sca",
+        "gwa",
+        "msa",
+        "oteip",
+        "v2v3",
+        "v2v3vacorr",
+        "world",
+    ]
+    if exptype == "NRS_LAMP":
+        assert result.meta.wcs.bounding_box is None
+    else:
+        assert result.meta.wcs.bounding_box is not None
 
 
 def test_nirspec_imaging_opaque():

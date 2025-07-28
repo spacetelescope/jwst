@@ -1,11 +1,12 @@
 """Python implementation of the KLIP algorithm."""
 
-import numpy as np
-
 import logging
 
+import numpy as np
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["klip", "karhunen_loeve_transform"]
 
 
 def klip(target_model, refs_model, truncate):

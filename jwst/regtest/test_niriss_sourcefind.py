@@ -1,8 +1,8 @@
 import pytest
 from astropy.io import ascii
 from numpy.testing import assert_allclose
-
 from stdatamodels.jwst import datamodels
+
 from jwst.tweakreg import tweakreg_catalog
 
 
@@ -20,11 +20,11 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
     stem = "jw01088003001_01101_00005"
     rtdata.get_data(f"niriss/imaging/{stem}_nis_cal.fits")
     model = datamodels.ImageModel(rtdata.input)
-    catalog = tweakreg_catalog.make_tweakreg_catalog(
+    catalog, _ = tweakreg_catalog.make_tweakreg_catalog(
         model,
-        2.5,
-        2.5,
-        10.0,
+        snr_threshold=2.5,
+        kernel_fwhm=2.5,
+        bkg_boxsize=10.0,
         starfinder_name=starfinder,
         starfinder_kwargs={
             "brightest": None,
@@ -33,7 +33,6 @@ def test_tweakreg_catalog_starfinder_alternatives(rtdata, starfinder):
             "sigma_radius": 2.5,
         },
     )
-
     output_name = f"{stem}_{starfinder}_cat.ecsv"
     catalog.write(output_name, format="ascii.ecsv")
     rtdata.output = output_name

@@ -1,11 +1,11 @@
 """Unit tests for AMI bp_fix module."""
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from jwst.ami import bp_fix
-from .conftest import PXSC_RAD, PXSC_MAS
+from jwst.ami.tests.conftest import PXSC_MAS, PXSC_RAD
 
 
 @pytest.mark.parametrize("filt", bp_fix.filts)

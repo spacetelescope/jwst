@@ -1,19 +1,19 @@
 #  Module for charge migration
 #
 import logging
-import numpy as np
 
+import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 GOOD = dqflags.group["GOOD"]
 DNU = dqflags.group["DO_NOT_USE"]
 CHLO = dqflags.group["CHARGELOSS"]
 
 CHLO_DNU = CHLO + DNU
+
+__all__ = ["charge_migration", "flag_pixels"]
 
 
 def charge_migration(output_model, signal_threshold):

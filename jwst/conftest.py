@@ -3,13 +3,12 @@
 import inspect
 import logging
 import os
-import tempfile
 from pathlib import Path
 
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations import AssociationRegistry, AssociationPool
+from jwst.associations import AssociationPool, AssociationRegistry
 from jwst.tests.helpers import LogWatcher
 
 
@@ -45,13 +44,14 @@ def full_pool_rules(request):
 
 
 @pytest.fixture
-def mk_tmp_dirs():
+def mk_tmp_dirs(tmp_path_factory):
     """Create a set of temporary directories and change to one of them."""
-    tmp_current_path = tempfile.mkdtemp()
-    tmp_data_path = tempfile.mkdtemp()
-    tmp_config_path = tempfile.mkdtemp()
-
     old_path = os.getcwd()
+
+    tmp_current_path = str(tmp_path_factory.mktemp("current"))
+    tmp_data_path = str(tmp_path_factory.mktemp("data"))
+    tmp_config_path = str(tmp_path_factory.mktemp("config"))
+
     try:
         os.chdir(tmp_current_path)
         yield (tmp_current_path, tmp_data_path, tmp_config_path)
@@ -204,3 +204,22 @@ def log_watcher(monkeypatch):
         return watcher
 
     return _log_watcher
+
+
+def pytest_report_header(config):
+    """
+    Add CRDS_CONTEXT to pytest report header.
+
+    Parameters
+    ----------
+    config : pytest.config.Config
+        Pytest configuration object.
+
+    Returns
+    -------
+    str
+        Report header string with CRDS context information.
+    """
+    from stpipe.crds_client import get_context_used
+
+    return f"crds_context: {get_context_used('jwst')}"

@@ -1,7 +1,7 @@
 # Generate associations per-pool
 import logging
 
-from .generate import generate
+from jwst.associations.generator.generate import generate
 from jwst.associations.lib.utilities import constrain_on_candidates, filter_discovered_only
 from jwst.associations.registry import AssociationRegistry
 
@@ -9,7 +9,6 @@ __all__ = ["generate_per_pool"]
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Ruleset names
 DISCOVER_RULESET = "discover"

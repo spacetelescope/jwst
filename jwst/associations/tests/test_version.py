@@ -1,7 +1,7 @@
 """Test versioning consistency"""
 
-from jwst.associations.asn_from_list import asn_from_list
 from jwst import __version__
+from jwst.associations.asn_from_list import asn_from_list
 
 
 def test_asn_version():

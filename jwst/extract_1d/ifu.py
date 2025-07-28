@@ -5,14 +5,13 @@ import numpy as np
 from astropy import stats
 from astropy.stats import sigma_clipped_stats as sigclip
 from photutils.aperture import (
-    CircularAperture,
     CircularAnnulus,
+    CircularAperture,
     RectangularAperture,
     aperture_photometry,
 )
 from photutils.detection import DAOStarFinder
 from scipy.interpolate import interp1d
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -25,7 +24,6 @@ from jwst.residual_fringe import utils as rfutils
 __all__ = ["ifu_extract1d"]
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # This is intended to be larger than any possible distance (in pixels)
 # between the target and any point in the image; used by locn_from_wcs().

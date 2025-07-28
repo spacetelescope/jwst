@@ -1,11 +1,11 @@
 import logging
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["create_background"]
 
 
 def create_background(wavelength, surf_bright):

@@ -1,9 +1,8 @@
+import numpy as np
 import pytest
-
 from stdatamodels.jwst.datamodels import CubeModel
 
 from jwst.pipeline.calwebb_coron3 import to_container
-import numpy as np
 
 
 # Generate data

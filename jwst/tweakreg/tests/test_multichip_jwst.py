@@ -1,33 +1,30 @@
+import gwcs
 import numpy as np
-from astropy.io import fits
+from astropy import coordinates as coord
 from astropy import table
+from astropy import units as u
 from astropy import wcs as fitswcs
+from astropy.io import fits
 from astropy.modeling import polynomial
 from astropy.modeling.models import (
-    Shift,
     AffineTransformation2D,
-    Pix2Sky_TAN,
-    RotateNative2Celestial,
+    Const1D,
     Identity,
     Mapping,
-    Const1D,
+    Pix2Sky_TAN,
+    RotateNative2Celestial,
     Scale,
+    Shift,
 )
-from astropy import units as u
-from astropy import coordinates as coord
 from astropy.utils.data import get_pkg_data_filename
-
+from gwcs import coordinate_frames as cf
+from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
+from stdatamodels.jwst.datamodels import ImageModel
 from tweakwcs.correctors import JWSTWCSCorrector
 from tweakwcs.imalign import align_wcs
 
-from stdatamodels.jwst.datamodels import ImageModel
-
 from jwst.datamodels import ModelContainer
 from jwst.tweakreg import tweakreg_step
-
-import gwcs
-from gwcs import coordinate_frames as cf
-from gwcs.geometry import SphericalToCartesian, CartesianToSpherical
 
 _REF_RMSE_RA = 3e-9
 _REF_RMSE_DEC = 3e-10
@@ -197,7 +194,7 @@ def _match(x, y, **kwargs):
     return match
 
 
-def _make_tweakreg_catalog(model, *args, **kwargs):
+def _make_tweakreg_catalog(self, model, *args, **kwargs):
     return model.tweakreg_catalog
 
 
@@ -216,7 +213,7 @@ def test_multichip_jwst_alignment(monkeypatch):
     #    in the meta data and so test_multichip_jwst_alignment() can test
     #    the fit more extensively.
     monkeypatch.setattr(tweakreg_step.twk, "align_wcs", _align_wcs)
-    monkeypatch.setattr(tweakreg_step, "make_tweakreg_catalog", _make_tweakreg_catalog)
+    monkeypatch.setattr(tweakreg_step.TweakRegStep, "_find_sources", _make_tweakreg_catalog)
 
     w1 = _make_gwcs_wcs(get_pkg_data_filename("data/wfc3_uvis1.hdr", package="jwst.tweakreg.tests"))
     imcat1 = JWSTWCSCorrector(w1, {"v2_ref": 0, "v3_ref": 0, "roll_ref": 0})
@@ -281,7 +278,7 @@ def test_multichip_jwst_alignment(monkeypatch):
 
 def test_multichip_alignment_step_rel(monkeypatch):
     monkeypatch.setattr(tweakreg_step.twk, "align_wcs", _align_wcs)
-    monkeypatch.setattr(tweakreg_step, "make_tweakreg_catalog", _make_tweakreg_catalog)
+    monkeypatch.setattr(tweakreg_step.TweakRegStep, "_find_sources", _make_tweakreg_catalog)
 
     # image 1
     w1 = _make_gwcs_wcs(get_pkg_data_filename("data/wfc3_uvis1.hdr", package="jwst.tweakreg.tests"))
@@ -417,7 +414,7 @@ def test_multichip_alignment_step_rel(monkeypatch):
 
 def test_multichip_alignment_step_abs(monkeypatch):
     monkeypatch.setattr(tweakreg_step.twk, "align_wcs", _align_wcs)
-    monkeypatch.setattr(tweakreg_step, "make_tweakreg_catalog", _make_tweakreg_catalog)
+    monkeypatch.setattr(tweakreg_step.TweakRegStep, "_find_sources", _make_tweakreg_catalog)
 
     refcat_path = get_pkg_data_filename("data/ref.ecsv", package="jwst.tweakreg.tests")
 

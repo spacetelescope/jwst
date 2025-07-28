@@ -31,7 +31,7 @@ The master background subtraction step uses the following optional arguments.
 ``--force_subtract``
   A boolean indicating whether or not to override the step's built-in logic for determining
   if the step should be applied. By default, the step will be skipped if the
-  :ref:`calwebb_spec2 <calwebb_spec2>` :ref:`background <background_step>` step has
+  :ref:`calwebb_spec2 <calwebb_spec2>` :ref:`background <background_subtraction>` step has
   already been applied. If ``--force_subtract = True``, the master background will be
   applied.
 

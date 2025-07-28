@@ -3,6 +3,8 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels.utils import flat_multispec
 
+__all__ = ["make_tso_specmodel"]
+
 
 def make_tso_specmodel(spec_list, segment=None):
     """
@@ -56,7 +58,6 @@ def make_tso_specmodel(spec_list, segment=None):
         flat_multispec.populate_recarray(
             this_output,
             input_spec,
-            n_rows,
             all_cols,
             is_vector,
             ignore_columns=ignore_columns,

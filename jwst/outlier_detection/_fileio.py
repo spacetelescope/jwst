@@ -1,7 +1,8 @@
 import logging
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = []  # type: ignore[var-annotated]
 
 
 def save_median(median_model, make_output_path):

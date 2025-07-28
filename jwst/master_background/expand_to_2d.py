@@ -1,21 +1,26 @@
 import logging
 
 import numpy as np
-
 from gwcs.wcstools import grid_from_bounding_box
-
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.datamodels import ModelContainer
-
 from jwst.assign_wcs import nirspec  # For NIRSpec IFU data
+from jwst.datamodels import ModelContainer
 from jwst.lib.wcs_utils import get_wavelengths
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM", "NRC_TSGRISM"]
+
+__all__ = [
+    "expand_to_2d",
+    "bkg_for_container",
+    "create_bkg",
+    "bkg_for_multislit",
+    "bkg_for_image",
+    "bkg_for_ifu_image",
+]
 
 
 def expand_to_2d(input_data, m_bkg_spec, allow_mos=False):
@@ -179,7 +184,7 @@ def bkg_for_multislit(input_data, tab_wavelength, tab_background, allow_mos=Fals
         A copy of `input_data` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """
-    from .nirspec_utils import correct_nrs_fs_bkg
+    from jwst.master_background.nirspec_utils import correct_nrs_fs_bkg
 
     background = input_data.copy()
     min_wave = np.amin(tab_wavelength)
@@ -298,7 +303,7 @@ def bkg_for_ifu_image(input_data, tab_wavelength, tab_background):
         for the pixels outside the region provided in the X1D background
         wavelength table.
     """
-    from .nirspec_utils import correct_nrs_ifu_bkg
+    from jwst.master_background.nirspec_utils import correct_nrs_ifu_bkg
 
     background = input_data.copy()
     background.data[:, :] = 0.0

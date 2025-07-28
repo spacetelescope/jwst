@@ -80,7 +80,7 @@ documentation on each reference file.
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
 +-------------------------------------------------------+--------------------------------------------------+
-| :ref:`background <background_step>`                   | :ref:`WFSSBKG <wfssbkg_reffile>`                 |
+| :ref:`background <background_subtraction>`            | :ref:`BKG <bkg_reffile>`                         |
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` |
 +-------------------------------------------------------+--------------------------------------------------+
@@ -306,13 +306,13 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` | :ref:`assign_wcs <assign_wcs_step>`                   |
 +                                                  +-------------------------------------------------------+
-|                                                  | :ref:`background <background_step>`                   |
+|                                                  | :ref:`background <background_subtraction>`            |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`extract_2d <extract_2d_step>`                   |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVECORR <wavecorr_reffile>`               | :ref:`wavecorr <wavecorr_step>`                       |
 +--------------------------------------------------+-------------------------------------------------------+
-| :ref:`WFSSBKG <wfssbkg_reffile>`                 | :ref:`background <background_step>`                   |
+| :ref:`BKG <bkg_reffile>`                         | :ref:`background <background_subtraction>`            |
 +--------------------------------------------------+-------------------------------------------------------+
 
 Step Parameters Reference Types
@@ -339,7 +339,7 @@ The required Keywords Documenting Contents of Reference Files are:
 ========  ==================================================================================
 Keyword   Comment
 ========  ==================================================================================
-REFTYPE   `WFSSBKG    Required values are listed in the discussion of each pipeline step.`
+REFTYPE   `BKG        Required values are listed in the discussion of each pipeline step.`
 DESCRIP   `Summary of file content and/or reason for delivery`
 AUTHOR    `Fred Jones     Person(s) who created the file`
 USEAFTER  `YYYY-MM-DDThh:mm:ss Date and time after the reference files will

@@ -1,7 +1,6 @@
-from .container import ModelContainer
-
 from stdatamodels.jwst.datamodels import MultiExposureModel, SlitModel
 
+from jwst.datamodels.container import ModelContainer
 
 __all__ = ["SourceModelContainer"]
 

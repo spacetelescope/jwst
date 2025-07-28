@@ -11,13 +11,6 @@ from astropy.time import Time
 import jwst.lib.set_telescope_pointing as stp
 from jwst.lib import v1_calculate
 
-# Configure logging
-logger = logging.getLogger("jwst")
-logger.propagate = False
-logger_handler = logging.StreamHandler()
-logger.addHandler(logger_handler)
-logger_format_debug = logging.Formatter("%(levelname)s:%(filename)s::%(funcName)s: %(message)s")
-
 # Available reduce functions
 REDUCE_FUNCS_MAPPING = {
     "all": stp.all_pointings,
@@ -25,6 +18,8 @@ REDUCE_FUNCS_MAPPING = {
     "average": stp.pointing_from_average,
 }
 REDUCE_FUNCS = list(REDUCE_FUNCS_MAPPING.keys())
+
+__all__ = []  # type: ignore[var-annotated]
 
 
 # Begin execution
@@ -91,6 +86,13 @@ def main():
     )
 
     args = parser.parse_args()
+
+    # Configure logging
+    logger = logging.getLogger("jwst")
+    logger.propagate = False
+    logger_handler = logging.StreamHandler()
+    logger.addHandler(logger_handler)
+    logger_format_debug = logging.Formatter("%(levelname)s:%(filename)s::%(funcName)s: %(message)s")
 
     # Set output detail.
     level = stp.LOGLEVELS[min(len(stp.LOGLEVELS) - 1, args.verbose)]

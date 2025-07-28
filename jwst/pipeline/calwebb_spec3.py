@@ -1,34 +1,33 @@
 #!/usr/bin/env python
+import logging
 from collections import defaultdict
 from pathlib import Path
 
+import numpy as np
 import stdatamodels.jwst.datamodels as dm
-
-from jwst.datamodels import SourceModelContainer
-from jwst.stpipe import query_step_status
-from jwst.stpipe.utilities import invariant_filename
-from jwst.associations.lib.rules_level3_base import format_product
-from jwst.exp_to_source import multislit_to_container
-from jwst.master_background.master_background_step import split_container
-from jwst.stpipe import Pipeline
-from jwst.lib.exposure_types import is_moving_target
+from scipy.spatial import ConvexHull, QhullError
+from stcal.alignment.util import sregion_to_footprint
 
 # step imports
 from jwst.assign_mtwcs import assign_mtwcs_step
+from jwst.associations.lib.rules_level3_base import format_product
+from jwst.combine_1d import combine_1d_step
 from jwst.cube_build import cube_build_step
+from jwst.datamodels import SourceModelContainer
+from jwst.datamodels.utils.wfss_multispec import make_wfss_multicombined, make_wfss_multiexposure
+from jwst.exp_to_source import multislit_to_container
 from jwst.extract_1d import extract_1d_step
+from jwst.lib.exposure_types import is_moving_target
 from jwst.master_background import master_background_step
+from jwst.master_background.master_background_step import split_container
 from jwst.mrs_imatch import mrs_imatch_step
 from jwst.outlier_detection import outlier_detection_step
-from jwst.resample import resample_spec_step
-from jwst.combine_1d import combine_1d_step
 from jwst.photom import photom_step
-from jwst.spectral_leak import spectral_leak_step
 from jwst.pixel_replace import pixel_replace_step
-
-from jwst.datamodels.utils.wfss_multispec import make_wfss_multiexposure, make_wfss_multicombined
-
-import logging
+from jwst.resample import resample_spec_step
+from jwst.spectral_leak import spectral_leak_step
+from jwst.stpipe import Pipeline, query_step_status
+from jwst.stpipe.utilities import invariant_filename
 
 log = logging.getLogger(__name__)
 
@@ -296,13 +295,17 @@ class Spec3Pipeline(Pipeline):
                     extraction_complete = (
                         result is not None and result.meta.cal_step.extract_1d == "COMPLETE"
                     )
-                    if extraction_complete:
-                        # Combine the results for all sources
-                        comb = self.combine_1d.run(result)
-                        # add metadata that only WFSS wants
-                        comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
-                        comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
-                        wfss_comb.append(comb)
+                    if not extraction_complete:
+                        continue
+                    # Combine the results for all sources
+                    comb = self.combine_1d.run(result)
+                    comb_complete = comb is not None and comb.meta.cal_step.combine_1d == "COMPLETE"
+                    if not comb_complete:
+                        continue
+                    # add metadata that only WFSS wants
+                    comb.spec[0].source_ra = result.spec[0].spec_table["SOURCE_RA"][0]
+                    comb.spec[0].source_dec = result.spec[0].spec_table["SOURCE_DEC"][0]
+                    wfss_comb.append(comb)
 
             elif resample_complete is not None and resample_complete.upper() == "COMPLETE":
                 # If 2D data were resampled and combined, just do a 1D extraction
@@ -331,6 +334,7 @@ class Spec3Pipeline(Pipeline):
         if exptype in WFSS_TYPES:
             if self.save_results:
                 x1d_output = make_wfss_multiexposure(wfss_x1d)
+                self._populate_wfss_sregion(x1d_output, input_models)
                 x1d_filename = output_file + "_x1d.fits"
                 self.log.info(f"Saving the final x1d product as {x1d_filename}.")
                 x1d_output.save(x1d_filename)
@@ -411,3 +415,47 @@ class Spec3Pipeline(Pipeline):
             srcid = f"s{str(source_id):>09s}"
 
         return srcid
+
+    def _populate_wfss_sregion(self, wfss_model, cal_model_list):
+        """
+        Generate cumulative S_REGION footprint from input grism images.
+
+        This takes the input model S_REGION vertices, generates a convex hull
+        from those points and returns the vertices corresponding to that hull
+        in counterclockwise order.
+
+        Parameters
+        ----------
+        wfss_model : ~datamodels.WfssMultiExposureModel
+            The newly generated WfssMultiExposureModel made as part of
+            the save operation for spec3 processing of WFSS data.
+
+        cal_model_list : list(~datamodels.MultiSlitModel)
+            The list of input_models provided to Spec3Pipeline by the
+            input association.
+        """
+        # Make array of S_REGION vertices from input model values, then generate convex hull
+        try:
+            input_sregion_vertices = np.concatenate(
+                [sregion_to_footprint(w.meta.wcsinfo.s_region) for w in cal_model_list]
+            )
+            convex_sregion_hull = ConvexHull(input_sregion_vertices)
+        except AttributeError as err:
+            log.warning(
+                "Missing S_REGION info in input files. Skipping S_REGION assignment for x1d output."
+            )
+            log.debug(err)
+            return
+        except QhullError as qerr:
+            log.warning(
+                "Error generating convex hull from input S_REGION vertices. Skipping S_REGION "
+                "assignment for x1d output."
+            )
+            log.debug(qerr)
+            return
+        # Index vertices on those selected by ConvexHull
+        # By default, ConvexHull vertices are returned in counterclockwise order
+        convex_vertices = input_sregion_vertices[convex_sregion_hull.vertices]
+        s_region = "POLYGON ICRS  " + " ".join([f"{x:.9f}" for x in convex_vertices.flatten()])
+        # Populate S_REGION in first entry of output model spec list.
+        wfss_model.spec[0].s_region = s_region

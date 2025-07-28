@@ -4,18 +4,15 @@ Unit tests for dark current correction
 
 import warnings
 
-import pytest
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
-
+from stcal.dark_current.dark_class import DarkData
 from stcal.dark_current.dark_sub import average_dark_frames_3d as average_dark_frames
 from stcal.dark_current.dark_sub import do_correction as darkcorr
-from stcal.dark_current.dark_class import DarkData
-
-from stdatamodels.jwst.datamodels import RampModel, DarkModel, DarkMIRIModel, dqflags
+from stdatamodels.jwst.datamodels import DarkMIRIModel, DarkModel, RampModel, dqflags
 
 from jwst.dark_current.dark_current_step import DarkCurrentStep
-
 
 # Define frame_time and number of groups in the generated dark reffile
 TFRAME = 10.73677

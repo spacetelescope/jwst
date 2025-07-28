@@ -1,10 +1,13 @@
-from stdatamodels.jwst import datamodels
-from jwst.datamodels import ModelContainer
 import logging
 from pathlib import Path
 
+from stdatamodels.jwst import datamodels
+
+from jwst.datamodels import ModelContainer
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["DataTypes", "NotIFUImageModelError"]
 
 
 class DataTypes:

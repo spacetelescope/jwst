@@ -1,17 +1,27 @@
 """Calculate bar shadow correction for science data sets."""
 
-import numpy as np
 import logging
+
+import numpy as np
 from gwcs import wcstools
 from scipy import ndimage
 from stdatamodels.jwst import datamodels
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Fallback value for ratio of slit spacing to slit height
 SLITRATIO = 1.15
+
+__all__ = [
+    "do_correction",
+    "create_shutter_elements",
+    "create_shadow",
+    "create_empty_shadow_array",
+    "add_first_half_shutter",
+    "add_next_shutter",
+    "add_last_half_shutter",
+    "has_uniform_source",
+]
 
 
 def do_correction(

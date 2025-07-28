@@ -1,20 +1,21 @@
-import logging
 import importlib
+import logging
+
 from gwcs.wcs import WCS
-from .util import (
-    update_s_region_spectral,
+
+from jwst.assign_wcs.miri import store_dithered_position
+from jwst.assign_wcs.util import (
     update_s_region_imaging,
-    update_s_region_nrs_ifu,
-    update_s_region_mrs,
     update_s_region_lrs,
+    update_s_region_mrs,
+    update_s_region_nrs_ifu,
+    update_s_region_spectral,
 )
-from jwst.lib.exposure_types import IMAGING_TYPES, SPEC_TYPES, NRS_LAMP_MODE_SPEC_TYPES
 from jwst.lib.dispaxis import get_dispersion_direction
+from jwst.lib.exposure_types import IMAGING_TYPES, NRS_LAMP_MODE_SPEC_TYPES, SPEC_TYPES
 from jwst.lib.wcs_utils import get_wavelengths
-from .miri import store_dithered_position
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["load_wcs"]
 
@@ -84,6 +85,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
     if (
         instrument.lower() == "nirspec"
         and output_model.meta.exposure.type.lower() not in IMAGING_TYPES
+        and output_model.meta.instrument.grating.lower() != "mirror"
     ):
         cbbox = mod.generate_compound_bbox(output_model)
         output_model.meta.wcs.bounding_box = cbbox

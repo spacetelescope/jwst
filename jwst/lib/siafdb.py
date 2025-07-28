@@ -7,17 +7,16 @@ Under operations, the SIAF is found in a sqlite database.
 Otherwise, use the standard interface defined by the `pysiaf` package
 """
 
-from collections import namedtuple
-from datetime import date
 import logging
 import os
+from collections import namedtuple
+from datetime import date
 from pathlib import Path
 
-from .basic_utils import LoggingContext
+from jwst.lib.basic_utils import LoggingContext
 
 # Setup logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Map instrument three character mnemonic to full name
 INSTRUMENT_MAP = {"fgs": "fgs", "mir": "miri", "nis": "niriss", "nrc": "nircam", "nrs": "nirspec"}
@@ -70,6 +69,8 @@ SIAF_MAP = {
     "XSciScale": "cdelt1",
     "YSciScale": "cdelt2",
 }
+
+__all__ = ["SiafDb", "nearest_prd"]
 
 
 class SiafDb:

@@ -3,16 +3,13 @@
 import logging
 
 import numpy as np
-
 from stdatamodels.jwst import datamodels
 
+from jwst.outlier_detection._fileio import save_median
+from jwst.outlier_detection.utils import create_cube_median, flag_model_crs
 from jwst.resample.resample_utils import build_mask
 
-from .utils import create_cube_median, flag_model_crs
-from ._fileio import save_median
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["detect_outliers"]

@@ -4,15 +4,13 @@ Unit tests for nrm_core and oifits modules.
 Since nrm_core makes oifits objects, we also test oifits here.
 """
 
-import pytest
 import numpy as np
-from scipy.signal import convolve
-from numpy.testing import assert_allclose
 import stdatamodels.jwst.datamodels as dm
+from scipy.signal import convolve
 
-from jwst.ami.nrm_core import FringeFitter
-from jwst.ami.instrument_data import NIRISS
 from jwst.ami.bp_fix import filtwl_d
+from jwst.ami.instrument_data import NIRISS
+from jwst.ami.nrm_core import FringeFitter
 
 
 def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):

@@ -1,30 +1,30 @@
-import logging
 import json
+import logging
 from json.decoder import JSONDecodeError
 from pathlib import Path
 
-from astropy.modeling import polynomial
 import numpy as np
+from astropy.modeling import polynomial
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.apcorr import (
     MirLrsApcorrModel,
     MirMrsApcorrModel,
+    NisWfssApcorrModel,
     NrcWfssApcorrModel,
     NrsFsApcorrModel,
-    NrsMosApcorrModel,
     NrsIfuApcorrModel,
-    NisWfssApcorrModel,
+    NrsMosApcorrModel,
 )
 
 from jwst.datamodels import ModelContainer
 from jwst.datamodels.utils import attrs_to_group_id
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
-from jwst.lib import pipe_utils
-from jwst.lib.wcs_utils import get_wavelengths
 from jwst.extract_1d import extract1d, spec_wcs
 from jwst.extract_1d.apply_apcorr import select_apcorr
 from jwst.extract_1d.psf_profile import psf_profile
 from jwst.extract_1d.source_location import location_from_wcs
+from jwst.lib import pipe_utils
+from jwst.lib.wcs_utils import get_wavelengths
 
 __all__ = [
     "run_extract1d",
@@ -41,7 +41,6 @@ __all__ = [
 
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM"]
 """Exposure types to be regarded as wide-field slitless spectroscopy."""

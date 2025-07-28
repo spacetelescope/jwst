@@ -2,19 +2,21 @@
 #  Module for IPC correction.
 #
 
-from collections import namedtuple
 import logging
+from collections import namedtuple
+
 import numpy as np
 
+from jwst.ipc import x_irs2
 from jwst.lib import pipe_utils
-from . import x_irs2
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 NumRefPixels = namedtuple(
     "NumRefPixels", ["bottom_rows", "top_rows", "left_columns", "right_columns"]
 )
+
+__all__ = ["do_correction", "ipc_correction", "get_num_ref_pixels", "get_ipc_slice", "ipc_convolve"]
 
 
 def do_correction(input_model, ipc_model):

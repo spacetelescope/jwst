@@ -1,16 +1,15 @@
 import logging
 
-from stdatamodels.jwst import datamodels as dm
 from stdatamodels import filetype
-from jwst.datamodels import ModelLibrary, ImageModel  # type: ignore[attr-defined]
-from jwst.lib.pipe_utils import match_nans_and_flags
-from jwst.resample.resample_utils import load_custom_wcs
+from stdatamodels.jwst import datamodels as dm
 
-from . import resample
+from jwst.datamodels import ImageModel, ModelLibrary  # type: ignore[attr-defined]
+from jwst.lib.pipe_utils import match_nans_and_flags
+from jwst.resample import resample
+from jwst.resample.resample_utils import load_custom_wcs
 from jwst.stpipe import Step
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 __all__ = ["ResampleStep"]
 

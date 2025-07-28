@@ -3,11 +3,26 @@ import logging
 import numpy as np
 from astropy.stats import sigma_clipped_stats
 from scipy.ndimage import convolve1d
-
 from stdatamodels.jwst.datamodels import dqflags
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = [
+    "correct_model",
+    "float_to_complex",
+    "make_irs2_mask",
+    "strip_ref_pixels",
+    "clobber_ref",
+    "decode_mask",
+    "replace_refpix",
+    "flag_bad_refpix",
+    "subtract_reference",
+    "fft_interp_norm",
+    "ols_line",
+    "remove_slopes",
+    "replace_bad_pixels",
+    "fill_bad_regions",
+]
 
 
 def correct_model(

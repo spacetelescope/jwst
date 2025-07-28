@@ -1,13 +1,12 @@
 import os
-import warnings
 
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.lib.suffix import replace_suffix
 from jwst.pathloss import PathLossStep
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 file_roots = [

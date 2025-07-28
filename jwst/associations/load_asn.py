@@ -2,7 +2,9 @@
 
 from inspect import isclass
 
-from . import Association, AssociationRegistry
+from jwst.associations import Association, AssociationRegistry
+
+__all__ = ["load_asn"]
 
 
 def load_asn(

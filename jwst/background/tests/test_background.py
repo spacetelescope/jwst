@@ -6,8 +6,8 @@ import json
 
 import pytest
 from numpy.testing import assert_allclose
-
 from stdatamodels.jwst import datamodels
+
 from jwst.background import BackgroundStep
 
 

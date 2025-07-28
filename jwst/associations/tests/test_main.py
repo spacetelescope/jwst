@@ -6,10 +6,9 @@ import subprocess
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
-from jwst.associations.tests.helpers import combine_pools
 from jwst.associations import AssociationPool
 from jwst.associations.main import Main
-
+from jwst.associations.tests.helpers import combine_pools
 
 # Basic pool
 POOL_PATH = get_pkg_data_filename(

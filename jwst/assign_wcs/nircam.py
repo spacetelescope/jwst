@@ -1,33 +1,29 @@
 import logging
 
+import asdf
+import gwcs.coordinate_frames as cf
 from astropy import coordinates as coord
 from astropy import units as u
 from astropy.modeling import bind_bounding_box
-from astropy.modeling.models import Identity, Const1D, Mapping, Shift
-import gwcs.coordinate_frames as cf
-
-import asdf
-
-from stdatamodels.jwst.datamodels import ImageModel, NIRCAMGrismModel, DistortionModel
+from astropy.modeling.models import Const1D, Identity, Mapping, Shift
+from stdatamodels.jwst.datamodels import DistortionModel, ImageModel, NIRCAMGrismModel
 from stdatamodels.jwst.transforms.models import (
-    NIRCAMForwardRowGrismDispersion,
-    NIRCAMForwardColumnGrismDispersion,
     NIRCAMBackwardGrismDispersion,
+    NIRCAMForwardColumnGrismDispersion,
+    NIRCAMForwardRowGrismDispersion,
 )
 
-from . import pointing
-from .util import (
+from jwst.assign_wcs import pointing
+from jwst.assign_wcs.util import (
+    bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,
-    velocity_correction,
     transform_bbox_from_shape,
-    bounding_box_from_subarray,
+    velocity_correction,
 )
 from jwst.lib.reffile_utils import find_row
 
-
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 __all__ = ["create_pipeline", "imaging", "tsgrism", "wfss"]
@@ -213,12 +209,12 @@ def tsgrism(input_model, reference_files):
     # Get the disperser parameters which are defined as a model for each
     # spectral order
     with NIRCAMGrismModel(reference_files["specwcs"]) as f:
-        displ = f.displ
-        dispx = f.dispx
-        dispy = f.dispy
-        invdispx = f.invdispx
-        invdispl = f.invdispl
-        orders = f.orders
+        displ = f.displ.instance
+        dispx = f.dispx.instance
+        dispy = f.dispy.instance
+        invdispx = f.invdispx.instance
+        invdispl = f.invdispl.instance
+        orders = f.orders.instance
 
     # now create the appropriate model for the grismr
     det2det = NIRCAMForwardRowGrismDispersion(
@@ -391,13 +387,13 @@ def wfss(input_model, reference_files):
     # Get the disperser parameters which are defined as a model for each
     # spectral order
     with NIRCAMGrismModel(reference_files["specwcs"]) as f:
-        displ = f.displ
-        dispx = f.dispx
-        dispy = f.dispy
-        invdispx = f.invdispx
-        invdispy = f.invdispy
-        invdispl = f.invdispl
-        orders = f.orders
+        displ = f.displ.instance
+        dispx = f.dispx.instance
+        dispy = f.dispy.instance
+        invdispx = f.invdispx.instance
+        invdispy = f.invdispy.instance
+        invdispl = f.invdispl.instance
+        orders = f.orders.instance
 
     # now create the appropriate model for the grism[R/C]
     if "GRISMR" in input_model.meta.instrument.pupil:

@@ -3,9 +3,8 @@ import shutil
 
 import pytest
 
-from jwst.stpipe import Step
 from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
-
+from jwst.stpipe import Step
 
 INPUT_FILE = "dummy_rate.fits"
 INPUT_FILE_2 = "dummy2_rate.fits"

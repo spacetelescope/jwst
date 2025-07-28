@@ -2,22 +2,17 @@
 Test using SDP-generated pools.
 """
 
-import logging
 import os
 import re
 from glob import glob
 
 import pytest
 
-from jwst.associations.lib.diff import compare_asn_files, MultiDiffError
+from jwst.associations.lib.diff import MultiDiffError, compare_asn_files
 from jwst.associations.main import Main as asn_generate
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata, pytest.mark.filterwarnings("error")]
-
-# Configure logging
-logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 # Decompose pool name to retrieve proposal and version id.
 pool_regex = re.compile(r"(?P<proposal>jw.+?)_(?P<versionid>.+)_pool")
@@ -57,6 +52,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
+        ("jw00016_20230331t130733_pool", []),  # This pool checks coronagraphy associations
         ("jw00217_20200921t181631_pool", []),
         ("jw00217_nrsfss_pool", []),
         ("jw00620_20210113t123511_pool", []),
@@ -129,7 +125,7 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
     ],
     ids=parfunc,
 )
-def test_sdp(_jail, rtdata, resource_tracker, request, pool_args):
+def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
@@ -153,20 +149,19 @@ def test_sdp(_jail, rtdata, resource_tracker, request, pool_args):
     ids=parfunc,
 )
 @pytest.mark.slow
-def test_slow(_jail, rtdata, resource_tracker, request, pool_args):
+def test_slow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
 
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00016_20230331t130733_pool", []),  # JP-3516
         ("jw80600_20171108T041522_pool", []),  # PR 3450
         ("jw98010_20171108T062332_pool", []),  # PR 3450
     ],
     ids=parfunc,
 )
-def test_fail(_jail, rtdata, resource_tracker, request, pool_args):
+def test_fail(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     with pytest.raises(MultiDiffError):
         _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
 
@@ -179,6 +174,6 @@ def test_fail(_jail, rtdata, resource_tracker, request, pool_args):
     ids=parfunc,
 )
 @pytest.mark.slow
-def test_fslow(_jail, rtdata, resource_tracker, request, pool_args):
+def test_fslow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     with pytest.raises(MultiDiffError):
         _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)

@@ -113,7 +113,7 @@ also added to the product. The FITS file layout is as follows:
    exposure.
  - REFOUT: The MIRI detector reference output values. Only appears in MIRI exposures.
  - ADSF: The data model meta data.
- 
+
 .. _rate:
 .. _rateints:
 
@@ -214,7 +214,7 @@ The :ref:`calwebb_image2 <calwebb_image2>` and :ref:`calwebb_spec2 <calwebb_spec
 pipelines have the capability to perform background subtraction on countrate data.
 In its simplest form, this consists of subtracting background exposures or a
 CRDS background reference image from science images. This operation is performed by
-the :ref:`background <background_step>` step in the stage 2 pipelines. If the pipeline
+the :ref:`background <background_subtraction>` step in the stage 2 pipelines. If the pipeline
 parameter ``save_bsub`` is set to ``True``, the result of the background subtraction
 step will be saved to a file. Because this is a direct image-from-image operation, the
 form of the result is identical to input. If the input is a ``rate`` product, the
@@ -562,11 +562,11 @@ corrections for residual fringing (see :ref:`MIRI-MRS-1D-residual-fringe`
 for more information).
 
 For NIRCam and NIRISS WFSS ``x1d`` products, each row in the table holds the full
-spectrum for a single source, such that all extracted sources are present in the 
+spectrum for a single source, such that all extracted sources are present in the
 same binary table. The spectral data columns listed above are each 2-D: each row is a 1-D
 vector containing all data points for the spectrum in that integration.
 The table also reports several pieces of source-specific metadata; these fields are:
-SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC, 
+SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC,
 EXTRACT2D_XSTART, EXTRACT2D_YSTART, SPECTRAL_ORDER.
 Each extension in the hdulist represents a different exposure and/or spectral order,
 with the extension metadata indicating the exposure number, spectral order, and
@@ -696,7 +696,7 @@ Source catalog: ``cat``
 The :ref:`source_catalog <source_catalog_step>` step contained in the
 :ref:`calwebb_image3 <calwebb_image3>` pipeline detects and quantifies sources within imaging
 products. The derived data for the sources is stored in a ``cat`` product, which is in the form
-of an ASCII table in `ECSV <http://docs.astropy.org/en/stable/_modules/astropy/io/ascii/ecsv.html>`_
+of an ASCII table in :ref:`ECSV <astropy:ecsv_format>`
 (Enhanced Character Separated Values) format. It is a flat text file, containing meta data
 header entries and the source data in a 2-D table layout, with one row per source.
 
@@ -723,7 +723,7 @@ The :ref:`tso_photometry <tso_photometry_step>` step in the :ref:`calwebb_tso3 <
 pipeline produces light curve from TSO imaging observations by computing aperture photometry as a
 function of integration time stamp within one or more exposures. The resulting photometric data
 are stored in a ``phot`` product, which is in the form of an ASCII table in
-`ECSV <http://docs.astropy.org/en/stable/_modules/astropy/io/ascii/ecsv.html>`_
+:ref:`ECSV <astropy:ecsv_format>`
 (Enhanced Character Separated Values) format. It is a flat text file, containing meta data
 header entries and the photometric data in a 2-D table layout, with one row per exposure
 integration.
@@ -737,7 +737,7 @@ pipeline produces a light curve from TSO spectroscopic observations by computing
 wavelength-integrated spectral flux as a function of integration time stamp within one or more
 exposures. The resulting photometric timeseries data
 are stored in a ``whtlt`` product, which is in the form of an ASCII table in
-`ECSV <http://docs.astropy.org/en/stable/_modules/astropy/io/ascii/ecsv.html>`_
+:ref:`ECSV <astropy:ecsv_format>`
 (Enhanced Character Separated Values) format. It is a flat text file, containing meta data
 header entries and the white-light flux data in a 2-D table layout, with one row per exposure
 integration.
@@ -861,21 +861,21 @@ and are encapsulated within a `~jwst.datamodels.AmiOIModel` data model.
 There are two additional outputs of the :ref:`ami_analyze <ami_analyze_step>` intended
 to enable a more detailed look at the data. The ``amimulti-oi`` file contains per-integration
 interferometric observables and is also a contained in a `~jwst.datamodels.AmiOIModel`,
-while the ``amilg`` product is a primarily image-based FITS file containing the 
+while the ``amilg`` product is a primarily image-based FITS file containing the
 cropped data, model, and residuals as well as the best-fit model parameters. It
 is contained in a `~jwst.datamodels.AmiLgFitModel` data model.
 
 The :ref:`ami_normalize <ami_normalize_step>` step produces an ``aminorm-oi`` product,
-which is also contained in a `~jwst.datamodels.AmiOIModel`. The model conforms to the standard 
+which is also contained in a `~jwst.datamodels.AmiOIModel`. The model conforms to the standard
 defined in `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS", 
-and "OI_VIS2" extensions each contain 2D data columns whose second dimension equals 
+In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS",
+and "OI_VIS2" extensions each contain 2D data columns whose second dimension equals
 the number of integrations. In the averaged ``ami-oi`` product and normalized ``aminorm-oi``
-products, these columns have a single dimension whose length is independent of the number 
+products, these columns have a single dimension whose length is independent of the number
 of integrations.
 
-The overall structure of the OIFITS files (``ami-oi``, ``amimulti-oi``, and 
+The overall structure of the OIFITS files (``ami-oi``, ``amimulti-oi``, and
 ``aminorm-oi`` products) is as follows:
 
 +-----+--------------+----------+-----------+------------------+

@@ -3,28 +3,25 @@
 import logging
 import warnings
 
-from astropy.convolution import Gaussian2DKernel
-from astropy.nddata.utils import extract_array, NoOverlapError
-from astropy.stats import gaussian_fwhm_to_sigma, SigmaClip
-from astropy.table import QTable
 import astropy.units as u
+import numpy as np
+from astropy.convolution import Gaussian2DKernel
+from astropy.nddata.utils import NoOverlapError, extract_array
+from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
+from astropy.table import QTable
 from astropy.utils import lazyproperty
 from astropy.utils.exceptions import AstropyUserWarning
-import numpy as np
+from photutils.aperture import CircularAnnulus, CircularAperture, aperture_photometry
 from scipy import ndimage
 from scipy.spatial import KDTree
-
-from photutils.segmentation import SourceCatalog
-from photutils.aperture import CircularAperture, CircularAnnulus, aperture_photometry
-
 from stdatamodels.jwst.datamodels import ImageModel
 
 from jwst import __version__ as jwst_version
-
-from ._wcs_helpers import pixel_scale_angle_at_skycoord
+from jwst.source_catalog._wcs_helpers import pixel_scale_angle_at_skycoord
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["JWSTSourceCatalog"]
 
 
 class JWSTSourceCatalog:
@@ -42,8 +39,7 @@ class JWSTSourceCatalog:
     def __init__(
         self,
         model,
-        segment_img,
-        convolved_data,
+        catalog,
         kernel_fwhm,
         aperture_params,
         abvega_offset,
@@ -56,13 +52,9 @@ class JWSTSourceCatalog:
         ----------
         model : `ImageModel`
             The input `ImageModel`. The data is assumed to be background-subtracted.
-        segment_img : `~photutils.segmentation.SegmentationImage`
-            A 2D segmentation image, with the same shape as the input data,
-            where sources are marked by different positive integer values.
-            A value of zero is reserved for the background.
-        convolved_data : data : 2D `~numpy.ndarray`
-            The 2D array used to calculate the source centroid and
-            morphological properties.
+            Units are expected to be Jy.
+        catalog : astropy.table.QTable
+            Source catalog table, e.g. as output from tweakreg_catalog.make_tweakreg_catalog.
         kernel_fwhm : float
             The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
             This is needed to calculate the DAOFind sharpness and roundness
@@ -87,8 +79,7 @@ class JWSTSourceCatalog:
             raise TypeError("The input model must be a ImageModel.")
         self.model = model  # background was previously subtracted
 
-        self.segment_img = segment_img
-        self.convolved_data = convolved_data
+        self.segm_cat = catalog
         self.kernel_sigma = kernel_fwhm * gaussian_fwhm_to_sigma
         self.aperture_params = aperture_params
         self.abvega_offset = abvega_offset
@@ -97,47 +88,47 @@ class JWSTSourceCatalog:
             raise ValueError("ci_star_thresholds must contain only 2 items")
         self.ci_star_thresholds = ci_star_thresholds
 
-        self.n_sources = len(self.segment_img.labels)
+        self.n_sources = len(self.segm_cat)
         self.aperture_ee = self.aperture_params["aperture_ee"]
         self.n_aper = len(self.aperture_ee)
         self.wcs = self.model.meta.wcs
         self.column_desc = {}
-        self._xpeak = None
-        self._ypeak = None
         self.meta = {}
 
-    def convert_to_jy(self):
+    @staticmethod
+    def convert_mjysr_to_jy(model):
         """Convert data and errors from MJy/sr to Jy, and into `~astropy.unit.Quantity` objects."""
         in_unit = "MJy/sr"
-        if self.model.meta.bunit_data != in_unit or self.model.meta.bunit_err != in_unit:
+        if model.meta.bunit_data != in_unit or model.meta.bunit_err != in_unit:
             raise ValueError("data and err are expected to be in units of MJy/sr")
 
         unit = u.Jy
-        if self.model.meta.photometry.pixelarea_steradians is None:
+        if model.meta.photometry.pixelarea_steradians is None:
             log.warning("Pixel area is None. Can't convert to Jy.")
         else:
-            to_jy = 1.0e6 * self.model.meta.photometry.pixelarea_steradians
-            self.model.data *= to_jy
-            self.model.err *= to_jy
-            self.model.data <<= unit
-            self.model.err <<= unit
-            self.model.meta.bunit_data = unit.name
-            self.model.meta.bunit_err = unit.name
+            to_jy = 1.0e6 * model.meta.photometry.pixelarea_steradians
+            model.data *= to_jy
+            model.err *= to_jy
+            model.data <<= unit
+            model.err <<= unit
+            model.meta.bunit_data = unit.name
+            model.meta.bunit_err = unit.name
 
-    def convert_from_jy(self):
+    @staticmethod
+    def convert_jy_to_mjysr(model):
         """Convert data and errors from Jy to MJy/sr, and from `Quantity` to `~np.ndarray`."""
-        if self.model.meta.photometry.pixelarea_steradians is None:
+        if model.meta.photometry.pixelarea_steradians is None:
             log.warning("Pixel area is None. Can't convert from Jy.")
         else:
-            to_mjy_sr = 1.0e6 * self.model.meta.photometry.pixelarea_steradians
-            self.model.data /= to_mjy_sr
-            self.model.err /= to_mjy_sr
+            to_mjy_sr = 1.0e6 * model.meta.photometry.pixelarea_steradians
+            model.data /= to_mjy_sr
+            model.err /= to_mjy_sr
 
-            self.model.data = self.model.data.value  # remove units
-            self.model.err = self.model.err.value  # remove units
+            model.data = model.data.value  # remove units
+            model.err = model.err.value  # remove units
 
-            self.model.meta.bunit_data = "MJy/sr"
-            self.model.meta.bunit_err = "MJy/sr"
+            model.meta.bunit_data = "MJy/sr"
+            model.meta.bunit_err = "MJy/sr"
 
     @staticmethod
     def convert_flux_to_abmag(flux, flux_err):
@@ -157,14 +148,18 @@ class JWSTSourceCatalog:
         # ignore RunTimeWarning if flux or flux_err contains NaNs
         with warnings.catch_warnings():
             warnings.simplefilter("ignore", category=RuntimeWarning)
-
             abmag = -2.5 * np.log10(flux.value) + 8.9
-            abmag_err = 2.5 * np.log10(1.0 + (flux_err.value / flux.value))
+        if (flux_err is None) or np.all(np.isnan(flux_err)):
+            abmag_err = np.zeros_like(abmag) * np.nan
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore", category=RuntimeWarning)
+                abmag_err = 2.5 * np.log10(1.0 + (flux_err.value / flux.value))
 
-            # handle negative fluxes
-            idx = flux.value < 0
-            abmag[idx] = np.nan
-            abmag_err[idx] = np.nan
+        # handle negative fluxes
+        idx = flux.value < 0
+        abmag[idx] = np.nan
+        abmag_err[idx] = np.nan
 
         return abmag, abmag_err
 
@@ -234,31 +229,22 @@ class JWSTSourceCatalog:
 
         The values are set as dynamic attributes.
         """
-        segm_cat = SourceCatalog(
-            self.model.data,
-            self.segment_img,
-            convolved_data=self.convolved_data << u.Jy,
-            error=self.model.err,
-            wcs=self.wcs,
-        )
-        self._xpeak = segm_cat.maxval_xindex
-        self._ypeak = segm_cat.maxval_yindex
-
-        self.meta.update(segm_cat.meta)
+        self.meta.update(self.segm_cat.meta)
 
         # rename some columns in the output catalog
         prop_names = {}
-        prop_names["isophotal_flux"] = "segment_flux"
+        prop_names["label"] = "id"
+        prop_names["isophotal_flux"] = "flux"
         prop_names["isophotal_flux_err"] = "segment_fluxerr"
         prop_names["isophotal_area"] = "area"
 
         for column in self.segment_colnames:
             # define the property name
             prop_name = prop_names.get(column, column)
-            try:
-                value = getattr(segm_cat, prop_name)
-            except AttributeError:
-                value = getattr(self, prop_name)
+            if prop_name in self.segm_cat.colnames:
+                value = self.segm_cat[prop_name]
+            else:
+                value = getattr(self, prop_name, np.nan)
             setattr(self, column, value)
 
     @lazyproperty
@@ -303,6 +289,22 @@ class JWSTSourceCatalog:
             either the xcentroid or the ycentroid is not finite.
         """
         return ~np.isfinite(self.xypos).all(axis=1)
+
+    @lazyproperty
+    def sky_centroid(self):
+        """
+        Compute the sky coordinate of the source centroid.
+
+        The output coordinate frame is the same as the input ``wcs``.
+
+        Returns
+        -------
+        `~astropy.coordinates.SkyCoord` or `None`
+            The sky coordinate of the source centroid, or `None` if the WCS is not set.
+        """
+        if self.wcs is None:
+            return np.array([None] * self.n_sources)
+        return self.wcs.pixel_to_world(self.xcentroid, self.ycentroid)
 
     @lazyproperty
     def _isophotal_abmag(self):
@@ -1183,7 +1185,6 @@ class JWSTSourceCatalog:
         catalog : `~astropy.table.Table`
             The final source catalog.
         """
-        self.convert_to_jy()
         self.set_segment_properties()
         self.set_aperture_properties()
         self.set_ci_properties()
@@ -1214,6 +1215,6 @@ class JWSTSourceCatalog:
         catalog.meta.update(self.meta)
 
         # reset units on input model back to MJy/sr
-        self.convert_from_jy()
+        self.convert_jy_to_mjysr(self.model)
 
         return catalog

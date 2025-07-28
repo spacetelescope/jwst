@@ -1,22 +1,23 @@
-import os
-
-import pytest
-import shutil
 import json
-import numpy as np
+import os
+import shutil
 from pathlib import Path
 
-from stdatamodels.jwst.datamodels.dqflags import pixel
+import numpy as np
+import pytest
+from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.jwst import datamodels
-from jwst.stpipe import Step
+from stdatamodels.jwst.datamodels.dqflags import pixel
+
 from jwst.assign_wcs import AssignWcsStep
 from jwst.background import BackgroundStep
 from jwst.background.background_sub_wfss import (
-    subtract_wfss_bkg,
     _mask_from_source_cat,
-    _sufficient_background_pixels,
     _ScalingFactorComputer,
+    _sufficient_background_pixels,
+    subtract_wfss_bkg,
 )
+from jwst.stpipe import Step
 
 BKG_SCALING = 0.123
 DETECTOR_SHAPE = (2048, 2048)
@@ -72,7 +73,7 @@ def mock_data(known_bkg):
 
 
 @pytest.fixture(scope="module")
-def make_wfss_datamodel(data_path, mock_data):
+def make_wfss_datamodel(mock_data):
     """Generate WFSS Observation"""
     wcsinfo = {
         "dec_ref": -27.79156387419731,
@@ -121,7 +122,9 @@ def make_wfss_datamodel(data_path, mock_data):
     image.original_data_mean = mock_data[2]  # just add this here for convenience
     image.dq = np.isnan(image.data)
 
-    image.meta.source_catalog = str(data_path / "test_cat.ecsv")
+    image.meta.source_catalog = get_pkg_data_filename(
+        "data/test_cat.ecsv", package="jwst.background.tests"
+    )
 
     return image
 
@@ -152,6 +155,31 @@ def make_nis_wfss_datamodel(make_wfss_datamodel):
     data.meta.instrument.name = "NIRISS"
     data.meta.exposure.type = "NIS_WFSS"
     result = AssignWcsStep.call(data)
+
+    return result
+
+
+@pytest.fixture
+def make_nis_wfss_sub64(make_wfss_datamodel):
+    """Make a NIRISS WFSS datamodel with subarray 64x2048"""
+    model = make_wfss_datamodel.copy()
+    model.meta.instrument.filter = "GR150C"
+    model.meta.instrument.pupil = "F090W"
+    model.meta.instrument.detector = "NIS"
+    model.meta.instrument.name = "NIRISS"
+    model.meta.exposure.type = "NIS_WFSS"
+
+    model.meta.subarray.xsize = 2048
+    model.meta.subarray.ysize = 64
+    model.meta.subarray.xstart = 1
+    model.meta.subarray.ystart = 1985
+    model.meta.subarray.name = "WFSS64C"
+
+    model.data = model.data[-64:, :2048]  # simulate subarray by slicing data
+    model.err = model.err[-64:, :2048]
+    model.dq = model.dq[-64:, :2048]
+
+    result = AssignWcsStep.call(model)
 
     return result
 
@@ -211,9 +239,13 @@ def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
     shared_tests(sci, mask, data.original_data_mean)
 
 
-def test_nis_wfss_background(make_nis_wfss_datamodel, bkg_file):
+@pytest.mark.parametrize("subarray", [None, "WFSS64C"])
+def test_nis_wfss_background(subarray, make_nis_wfss_datamodel, make_nis_wfss_sub64, bkg_file):
     """Test background subtraction for NIRISS WFSS modes."""
-    data = make_nis_wfss_datamodel.copy()
+    if subarray == "WFSS64C":
+        data = make_nis_wfss_sub64.copy()
+    else:
+        data = make_nis_wfss_datamodel.copy()
 
     # Get References
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
@@ -391,10 +423,13 @@ def test_weighted_mean(make_wfss_datamodel, bkg_file):
 
 
 @pytest.fixture()
-def mock_asn_and_data(tmp_path_factory, data_path, make_nis_wfss_datamodel):
+def mock_asn_and_data(tmp_path_factory, make_nis_wfss_datamodel):
     # Create temp dir and copy the catalog in there
     tmp_path = tmp_path_factory.mktemp("asn_input")
-    shutil.copy(str(data_path / "test_cat.ecsv"), str(tmp_path / "test_cat.ecsv"))
+    shutil.copy(
+        get_pkg_data_filename("data/test_cat.ecsv", package="jwst.background.tests"),
+        str(tmp_path / "test_cat.ecsv"),
+    )
     # Save the datmodel into a rate file but remove the catalog to make sure it is
     # added back in by the asn_intake module
     make_nis_wfss_datamodel.meta.source_catalog = None

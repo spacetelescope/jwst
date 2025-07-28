@@ -1,17 +1,17 @@
 import copy
-import numpy as np
+import logging
 import warnings
 
-from stdatamodels.jwst import datamodels
-
-from . import subtract_images
+import numpy as np
 from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
+from stdatamodels.jwst import datamodels
 
-import logging
+from jwst.background import subtract_images
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["ImageSubsetArray", "background_sub", "average_background"]
 
 
 class ImageSubsetArray:

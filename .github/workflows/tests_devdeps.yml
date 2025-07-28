@@ -10,6 +10,12 @@ on:
   pull_request:
     branches:
       - main
+      - '*x'
+    # We also want this workflow triggered if the 'run devdeps tests' label is added
+    # or present when PR is updated
+    types:
+      - synchronize
+      - labeled
   schedule:
     # Weekly Monday 9AM build
     - cron: "0 9 * * 1"
@@ -32,8 +38,10 @@ concurrency:
 
 jobs:
   latest_crds_contexts:
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run devdeps tests')))
     uses: ./.github/workflows/contexts.yml
   crds_context:
+    if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'push' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run devdeps tests')))
     needs: [ latest_crds_contexts ]
     runs-on: ubuntu-latest
     steps:
@@ -54,16 +62,14 @@ jobs:
         CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
       cache-path: /tmp/data/crds_cache
       cache-key: crds-${{ needs.crds_context.outputs.context }}
+      artifact-path: |
+        results.xml
       envs: |
         - linux: py3-stdevdeps-xdist
           pytest-results-summary: true
-          python-version: '>3.12 <3.13.4'
         - macos: py3-stdevdeps-xdist
           pytest-results-summary: true
-          python-version: '>3.12 <3.13.4'
         - linux: py3-devdeps-xdist
           pytest-results-summary: true
-          python-version: '>3.12 <3.13.4'
         - macos: py3-devdeps-xdist
           pytest-results-summary: true
-          python-version: '>3.12 <3.13.4'

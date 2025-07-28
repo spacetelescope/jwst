@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-import sys
 import logging
+import sys
 from pathlib import Path
 
 from jwst.pipeline.collect_pipeline_cfgs import collect_pipeline_cfgs
 
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+__all__ = []  # type: ignore[var-annotated]
 
 
 def main():
@@ -18,12 +16,15 @@ def main():
     Use from terminal as follows:
     $ collect_pipeline_cfgs .
     """
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     if len(sys.argv) < 2:
-        logging.error("ERROR: missing argument (destination directory")
+        logger.error("ERROR: missing argument (destination directory")
         sys.exit(1)
 
     if len(sys.argv) > 2:
-        logging.error("ERROR: too many arguments")
+        logger.error("ERROR: too many arguments")
         sys.exit(1)
 
     dst = sys.argv[1]
@@ -40,7 +41,7 @@ def main():
 
             answer = input(msg).strip().lower()
             if answer not in ["yes", "no", ""]:
-                logging.info(f"\n{answer} is not a valid response\n")
+                logger.info(f"\n{answer} is not a valid response\n")
             else:
                 if answer in ["yes", ""]:
                     break

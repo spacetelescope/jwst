@@ -46,15 +46,13 @@ from copy import deepcopy
 
 import numpy as np
 from scipy import stats
-
 from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.lib import pipe_utils, reffile_utils
-from .irs2_subtract_reference import make_irs2_mask
-from .optimized_convolution import make_kernels, apply_conv_kernel
+from jwst.refpix.irs2_subtract_reference import make_irs2_mask
+from jwst.refpix.optimized_convolution import apply_conv_kernel, make_kernels
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 #
 # NIR Reference section dictionaries are zero indexed and specify the values
@@ -176,6 +174,34 @@ REFPIX_OK = 0
 BAD_REFERENCE_PIXELS = 1
 SUBARRAY_DOESNTFIT = 2
 SUBARRAY_SKIPPED = 3
+
+__all__ = [
+    "Dataset",
+    "NIRDataset",
+    "NRS1Dataset",
+    "NRS2Dataset",
+    "NRCA1Dataset",
+    "NRCA2Dataset",
+    "NRCA3Dataset",
+    "NRCA4Dataset",
+    "NRCALONGDataset",
+    "NRCB1Dataset",
+    "NRCB2Dataset",
+    "NRCB3Dataset",
+    "NRCB4Dataset",
+    "NRCBLONGDataset",
+    "NIRISSDataset",
+    "GUIDER1Dataset",
+    "GUIDER2Dataset",
+    "MIRIDataset",
+    "create_dataset",
+    "correct_model",
+    "reference_pixel_correction",
+    "process_zeroframe_correction",
+    "restore_input_model",
+    "setup_dataset_for_zeroframe",
+    "save_science_values",
+]
 
 
 class Dataset:
@@ -1247,7 +1273,6 @@ class NIRDataset(Dataset):
                 #
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration, group)
-        log.setLevel(logging.INFO)
         return
 
     def do_subarray_corrections(self):
@@ -1309,7 +1334,6 @@ class NIRDataset(Dataset):
                     thisgroup -= refpixvalue
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration, group)
-        log.setLevel(logging.INFO)
         return
 
     def get_multistripe_refvalues(self, group):
@@ -1416,8 +1440,6 @@ class NIRDataset(Dataset):
                 self.group = thisgroup
                 #  Now transform back from detector to DMS coordinates.
                 self.detector_to_dms(integration_num, group_num)
-
-        log.setLevel(logging.INFO)
 
         return
 
@@ -2338,7 +2360,6 @@ class MIRIDataset(Dataset):
                     break
                 self.do_left_right_correction(thisgroup, refvalues)
                 self.restore_group(integration, group)
-        log.setLevel(logging.INFO)
         log.info("Adding initial read back in")
 
         for i in range(self.nints):

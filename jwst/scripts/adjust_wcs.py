@@ -10,18 +10,15 @@ import logging
 import os
 import sys
 
-import jwst
-from jwst.tweakreg.utils import adjust_wcs
-from jwst.assign_wcs.util import update_fits_wcsinfo
 from astropy import units
 
+import jwst
+from jwst.assign_wcs.util import update_fits_wcsinfo
+from jwst.tweakreg.utils import adjust_wcs
 
 _ANGLE_PARS = ["-r", "--ra_delta", "-d", "--dec_delta", "-o", "--roll_delta"]
 
-# Configure logging
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-logger.addHandler(logging.NullHandler())
+__all__ = []  # type: ignore[var-annotated]
 
 
 def _replace_suffix(file, new_suffix):
@@ -152,6 +149,11 @@ def main():
                 argv_new.append(f" {angle_value}")
 
     options = parser.parse_args(argv_new)
+
+    # Configure logging
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.INFO)
+    logger.addHandler(logging.NullHandler())
 
     files = []
     for f in options.arg0:

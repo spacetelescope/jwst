@@ -29,6 +29,10 @@ The actual process consists of the following steps:
 #. Propagate the DQ flags from the reference file DQ array to the science data "PIXELDQ"
    array using numpy's ``bitwise_or`` function.
 
+#. Propagate any DO_NOT_USE flags from the reference file DQ array to the science data
+   "GROUPDQ" array, if present - this avoids generating a ramp in ramp_fit for pixels
+   marked as unusable by the reference file.
+
 Note that when applying the ``dq_init`` step to FGS guide star data, as is done in
 the :ref:`calwebb_guider <calwebb_guider>` pipeline, the flags from the MASK reference
 file are propagated into the guide star dataset "DQ" array, instead of the "PIXELDQ" array.

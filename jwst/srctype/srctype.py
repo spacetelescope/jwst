@@ -1,10 +1,12 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
-import logging
 from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["set_source_type"]
 
 
 def set_source_type(input_model, source_type=None):

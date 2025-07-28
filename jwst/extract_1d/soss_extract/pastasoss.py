@@ -1,7 +1,11 @@
-from functools import partial
 import logging
+from datetime import datetime
+from functools import partial
+
 import numpy as np
+import stdatamodels.jwst.datamodels as dm
 from scipy.interpolate import interp1d
+from stpipe import crds_client
 
 log = logging.getLogger(__name__)
 
@@ -13,8 +17,17 @@ WAVEMAP_WLMIN = 0.5
 WAVEMAP_WLMAX = 5.5
 WAVEMAP_NWL = 5001
 SUBARRAY_YMIN = 2048 - 256
+PWCPOS_BOUNDS = (245.79 - 0.25, 245.79 + 0.25)  # reasonable PWC position limits
+DEFAULT_CRDS_PARAMS = {
+    "meta.instrument.name": "NIRISS",
+    "meta.observation.date": datetime.today().strftime("%Y-%m-%d"),
+    "meta.observation.time": datetime.today().strftime("%H:%M:%S.%f"),
+    "meta.instrument.detector": "NIS",
+    "meta.instrument.filter": "CLEAR",
+    "meta.exposure.type": "NIS_SOSS",
+}
 
-__all__ = ["get_soss_traces", "get_soss_wavemaps"]
+__all__ = ["get_soss_traces", "get_soss_wavemaps", "retrieve_default_pastasoss_model"]
 
 
 def _get_wavelengths(refmodel, x, pwcpos, order):
@@ -337,7 +350,63 @@ def _find_spectral_order_index(refmodel, order):
     return -1
 
 
-def get_soss_traces(refmodel, pwcpos, order, subarray):
+def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
+    """
+    Get the SOSS traces for a given input model and spectral order.
+
+    Parameters
+    ----------
+    pwcpos : float
+        The pupil wheel position angle provided in the FITS header under keyword PWCPOS.
+        Values are expected to be within +/- 0.25 degrees of the commanded position
+        (245.76 degrees).
+    order : int
+        The spectral order for which to retrieve the traces.
+    subarray : str
+        Name of subarray in use, typically 'SUBSTRIP96' or 'SUBSTRIP256'.
+    refmodel : PastasossModel, optional
+        The reference model for the SOSS extraction. If not set, it will be fetched
+        from CRDS.
+
+    Returns
+    -------
+    order : str
+        The spectral order for which a trace is computed.
+    x : np.ndarray
+        The x coordinates of the rotated points.
+    y : np.ndarray
+        The y coordinates of the rotated points.
+    wavelengths : np.ndarray
+        The wavelengths associated with the rotated points.
+    """
+    if refmodel is None:
+        refmodel = retrieve_default_pastasoss_model()
+
+    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos)
+    if not pwcpos_is_valid:
+        raise ValueError(f"PWC position {pwcpos} is outside bounds ({PWCPOS_BOUNDS}).")
+
+    return _get_soss_traces(refmodel, pwcpos, order, subarray)
+
+
+def retrieve_default_pastasoss_model():
+    """
+    Retrieve the default PastasossModel reference file.
+
+    This function fetches the default PastasossModel reference file from CRDS.
+    It is used when no specific reference model is provided.
+
+    Returns
+    -------
+    PastasossModel
+        The default PastasossModel reference file.
+    """
+    ref_name = crds_client.get_reference_file(DEFAULT_CRDS_PARAMS, "pastasoss", "jwst")
+    ref_file = crds_client.check_reference_open(ref_name)
+    return dm.PastasossModel(ref_file)
+
+
+def _get_soss_traces(refmodel, pwcpos, order, subarray):
     """
     Generate the traces given a pupil wheel position.
 
@@ -366,11 +435,10 @@ def get_soss_traces(refmodel, pwcpos, order, subarray):
     -------
     order : str
         The spectral order for which a trace is computed.
-    x_new, y_new : Tuple[np.ndarray, np.ndarray]]
-        If `order` is '1', a tuple of the x and y coordinates of the rotated
-        points for the first spectral order.
-        If `order` is '2', a tuple of the x and y coordinates of the rotated
-        points for the second spectral order.
+    x : np.ndarray
+        The x coordinates of the rotated points.
+    y : np.ndarray
+        The y coordinates of the rotated points.
     wavelengths : np.ndarray
         The wavelengths associated with the rotated points.
 
@@ -520,32 +588,91 @@ def _calc_2d_wave_map(wave_grid, x_dms, y_dms, tilt, oversample=2, padding=0, ma
     return wave_map_2d
 
 
-def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spectraces=False):
+def get_soss_wavemaps(
+    pwcpos,
+    subarray="SUBSTRIP256",
+    refmodel=None,
+    padsize=None,
+    spectraces=False,
+):
+    """
+    Get the SOSS wavelength maps and (optionally) spectraces.
+
+    Parameters
+    ----------
+    pwcpos : float
+        The pupil wheel position angle, e.g. as provided in the FITS header under keyword PWCPOS.
+        Values are expected to be within +/- 0.25 degrees of the commanded position
+        (245.76 degrees).
+    subarray : str, optional
+        The subarray name, one of 'SUBSTRIP256', 'SUBSTRIP96', or 'FULL'.
+    refmodel : PastasossModel, optional
+        The reference model for the SOSS extraction. If not set, it will be fetched
+        from CRDS.
+    padsize : int, optional
+        The padding to apply to the wavelength maps.
+    spectraces : bool, optional
+        If True, return the interpolated spectraces as well.
+
+    Returns
+    -------
+    wavemaps : np.ndarray
+        The 2D wavemaps. Will have shape (2, array_x, array_y) with orders 1 and 2 being
+        the first and second elements, respectively.
+    spectraces : np.ndarray, optional
+        The corresponding 1D spectraces (if `spectraces` is True).
+    """
+    if refmodel is None:
+        refmodel = retrieve_default_pastasoss_model()
+
+    pwcpos_is_valid = _check_pwcpos_bounds(pwcpos)
+    if not pwcpos_is_valid:
+        raise ValueError(f"PWC position {pwcpos} is outside bounds ({PWCPOS_BOUNDS}).")
+
+    if padsize is None:
+        padsize = getattr(refmodel.traces[0], "padding", 0)
+    if padsize > 0:
+        do_padding = True
+    else:
+        do_padding = False
+
+    return _get_soss_wavemaps(
+        refmodel, pwcpos, subarray, padding=do_padding, padsize=padsize, spectraces=spectraces
+    )
+
+
+def _get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spectraces=False):
     """
     Generate order 1 and 2 2D wavemaps from the rotated SOSS trace positions.
 
     Parameters
     ----------
+    refmodel : PastasossModel
+        The reference file datamodel containing the SOSS trace positions and
+        wavelength calibration models.
     pwcpos : float
-        The pupil wheel position
+        The pupil wheel position angle, e.g. as provided in the FITS header under keyword PWCPOS.
     subarray : str
-        The subarray name, ['FULL', 'SUBSTRIP256', 'SUBSTRIP96']
+        The subarray name, one of 'SUBSTRIP256', 'SUBSTRIP96', or 'FULL'.
     padding : bool
-        Include padding on map edges (only needed for reference files)
+        If True, include padding on map edges (only needed for reference files)
     padsize : int
-        The size of the padding to include on each side
+        The size of the padding to include on each side.
     spectraces : bool
-        Return the interpolated spectraces as well
+        If True, return the interpolated spectraces as well.
 
     Returns
     -------
-    Array, Array
-        The 2D wavemaps and corresponding 1D spectraces
+    wavemaps : np.ndarray
+        The 2D wavemaps. Will have shape (2, array_x, array_y) with orders 1 and 2 being
+        the first and second elements, respectively.
+    spectraces : np.ndarray, optional
+        The corresponding 1D spectraces (if `spectraces` is True).
     """
-    _, order1_x, order1_y, order1_wl = get_soss_traces(
+    _, order1_x, order1_y, order1_wl = _get_soss_traces(
         refmodel, pwcpos, order="1", subarray=subarray
     )
-    _, order2_x, order2_y, order2_wl = get_soss_traces(
+    _, order2_x, order2_y, order2_wl = _get_soss_traces(
         refmodel, pwcpos, order="2", subarray=subarray
     )
 
@@ -624,3 +751,20 @@ def get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spec
     if spectraces:
         return np.array([wavemap_1, wavemap_2]), np.array([spectrace_1, spectrace_2])
     return np.array([wavemap_1, wavemap_2])
+
+
+def _check_pwcpos_bounds(pwcpos):
+    """
+    Check if the provided PWC position is within the bounds.
+
+    Parameters
+    ----------
+    pwcpos : float
+        The pupil wheel position angle.
+
+    Returns
+    -------
+    bool
+        True if the PWC position is within bounds, False otherwise.
+    """
+    return PWCPOS_BOUNDS[0] <= pwcpos <= PWCPOS_BOUNDS[1]

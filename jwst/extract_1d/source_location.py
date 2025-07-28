@@ -1,11 +1,11 @@
 import logging
+
 import numpy as np
 from gwcs.wcstools import grid_from_bounding_box
 from scipy.interpolate import interp1d
 from stdatamodels.jwst.transforms.models import IdealToV2V3
 
 from jwst.assign_wcs.util import wcs_bbox_from_shape
-
 
 __all__ = ["middle_from_wcs", "location_from_wcs", "trace_from_wcs", "nod_pair_location"]
 
@@ -15,7 +15,6 @@ VERTICAL = 2
 """Vertical dispersion axis."""
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 
 def middle_from_wcs(wcs, bounding_box, dispaxis):

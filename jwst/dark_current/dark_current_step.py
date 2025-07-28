@@ -1,9 +1,8 @@
+import numpy as np
+from stcal.dark_current import dark_sub
 from stdatamodels.jwst import datamodels
 
 from jwst.stpipe import Step
-from stcal.dark_current import dark_sub
-import numpy as np
-
 
 __all__ = ["DarkCurrentStep"]
 

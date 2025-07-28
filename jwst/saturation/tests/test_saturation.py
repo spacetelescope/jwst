@@ -4,9 +4,8 @@ Unit tests for saturation flagging
 
 """
 
-import pytest
 import numpy as np
-
+import pytest
 from stdatamodels.jwst.datamodels import RampModel, SaturationModel, SuperBiasModel, dqflags
 
 from jwst.saturation import SaturationStep

@@ -1,11 +1,14 @@
 """Module for subtracting a super-bias image from science data sets."""
 
-import numpy as np
 import logging
+
+import numpy as np
+
 from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["do_correction", "subtract_bias"]
 
 
 def do_correction(input_model, bias_model):

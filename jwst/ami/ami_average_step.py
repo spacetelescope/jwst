@@ -1,6 +1,7 @@
-from jwst.stpipe import Step
-from . import ami_average
 import warnings
+
+from jwst.ami import ami_average
+from jwst.stpipe import Step
 
 __all__ = ["AmiAverageStep"]
 

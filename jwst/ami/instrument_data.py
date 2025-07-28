@@ -1,18 +1,18 @@
-import logging
-import numpy as np
-
-from .mask_definition_ami import NRMDefinition
-from . import utils
-from . import bp_fix
-from stdatamodels.jwst.datamodels import dqflags
 import copy
+import logging
 
+import numpy as np
+from stdatamodels.jwst.datamodels import dqflags
+
+from jwst.ami import bp_fix, utils
+from jwst.ami.mask_definition_ami import NRMDefinition
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 DO_NOT_USE = dqflags.pixel["DO_NOT_USE"]
 JUMP_DET = dqflags.pixel["JUMP_DET"]
+
+__all__ = ["NIRISS"]
 
 
 class NIRISS:

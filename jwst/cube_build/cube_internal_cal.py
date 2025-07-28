@@ -4,7 +4,9 @@ import numpy as np
 from stdatamodels.jwst.datamodels import dqflags
 from stdatamodels.jwst.transforms.models import _toindex
 
-from .cube_match_internal import cube_wrapper_internal  # c extension
+from jwst.cube_build.cube_match_internal import cube_wrapper_internal  # c extension
+
+__all__ = ["match_det2cube"]
 
 
 def match_det2cube(

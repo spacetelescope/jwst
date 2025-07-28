@@ -2,10 +2,11 @@
 Unit tests for straylight correction
 """
 
-from jwst.straylight.straylight import makemodel_ccode, makemodel_composite, clean_showers
-from astropy.convolution import convolve_fft, Gaussian2DKernel
-from jwst import datamodels
 import numpy as np
+from astropy.convolution import Gaussian2DKernel, convolve_fft
+
+from jwst import datamodels
+from jwst.straylight.straylight import clean_showers, makemodel_ccode, makemodel_composite
 
 
 def test_correct_mrs_xartifact():

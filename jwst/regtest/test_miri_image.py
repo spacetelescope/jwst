@@ -1,13 +1,11 @@
-import tracemalloc
 import warnings
 
-import numpy as np
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
-from numpy.testing import assert_allclose
 from gwcs.wcstools import grid_from_bounding_box
+from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 # Mark all tests in this module

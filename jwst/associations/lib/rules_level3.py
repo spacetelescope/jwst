@@ -2,7 +2,6 @@
 
 import logging
 
-from jwst.associations.registry import RegistryMarker
 from jwst.associations.lib.dms_base import (
     Constraint_TargetAcq,
     Constraint_TSO,
@@ -14,29 +13,28 @@ from jwst.associations.lib.dms_base import (
 from jwst.associations.lib.process_list import ListCategory
 from jwst.associations.lib.rules_level3_base import (
     ASN_SCHEMA,  # noqa: F401
-    AsnMixin_Science,
     AsnMixin_AuxData,
     AsnMixin_Coronagraphy,
+    AsnMixin_Science,
     AsnMixin_Spectrum,
-    DMS_Level3_Base,
-    DMSAttrConstraint,
-    Utility,  # noqa: F401
     Constraint,
-    SimpleConstraint,
-    Constraint_Optical_Path,
-    Constraint_Target,
+    Constraint_IFU,
     Constraint_Image,
     Constraint_MSA,
-    Constraint_IFU,
-)
-from jwst.associations.lib.rules_level3_base import (
-    dms_product_name_sources,
-    dms_product_name_nrsfs_sources,
-    dms_product_name_noopt,
+    Constraint_Optical_Path,
+    Constraint_Target,
+    DMS_Level3_Base,
+    DMSAttrConstraint,
+    SimpleConstraint,
+    Utility,  # noqa: F401
     dms_product_name_coronimage,
+    dms_product_name_noopt,
+    dms_product_name_nrsfs_sources,
+    dms_product_name_sources,
     dms_product_name_wfss,
     format_product,
 )
+from jwst.associations.registry import RegistryMarker
 
 __all__ = [
     "Asn_Lv3ACQ_Reprocess",
@@ -64,7 +62,6 @@ __all__ = [
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 # --------------------------------
@@ -120,7 +117,7 @@ class Asn_Lv3AMI(AsnMixin_Science):
     produced by APT.
     Tracking Issues:
 
-        - `github #310 <https://github.com/STScI-JWST/jwst/issues/310>`_
+        - `github #310 <https://github.com/spacetelescope/jwst/issues/310>`_
     """
 
     def __init__(self, *args, **kwargs):
@@ -257,7 +254,7 @@ class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     produced by APT.
     Tracking Issues:
 
-        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
+        - `github #311 <https://github.com/spacetelescope/jwst/issues/311>`_
         - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
     """
 
@@ -416,7 +413,7 @@ class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     produced by APT.
     Tracking Issues:
 
-        - `github #311 <https://github.com/STScI-JWST/jwst/issues/311>`_
+        - `github #311 <https://github.com/spacetelescope/jwst/issues/311>`_
         - `JP-3219 <https://jira.stsci.edu/browse/JP-3219>`_
     """
 

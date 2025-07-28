@@ -1,35 +1,40 @@
 import logging
 
 import numpy as np
-
-from scipy.interpolate import UnivariateSpline, CubicSpline
-
+from astropy.nddata.bitmask import bitfield_to_boolean_mask
+from scipy.interpolate import CubicSpline, UnivariateSpline
 from stdatamodels.jwst import datamodels
-from stdatamodels.jwst.datamodels import dqflags, SossWaveGridModel
+from stdatamodels.jwst.datamodels import SossWaveGridModel, dqflags
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.extract_1d.extract import populate_time_keywords
-from jwst.lib import pipe_utils
-from astropy.nddata.bitmask import bitfield_to_boolean_mask
-
-from .soss_syscor import make_background_mask, soss_background
-from .atoca import ExtractionEngine, MaskOverlapError
-from .atoca_utils import (
-    throughput_soss,
+from jwst.extract_1d.soss_extract.atoca import ExtractionEngine, MaskOverlapError
+from jwst.extract_1d.soss_extract.atoca_utils import (
     WebbKernel,
+    get_wave_p_or_m,
     grid_from_map_with_extrapolation,
     make_combined_adaptive_grid,
-    get_wave_p_or_m,
     oversample_grid,
+    throughput_soss,
 )
-from .soss_boxextract import get_box_weights, box_extract, estim_error_nearest_data
-from .pastasoss import get_soss_wavemaps, XTRACE_ORD1_LEN, XTRACE_ORD2_LEN
-
+from jwst.extract_1d.soss_extract.pastasoss import (
+    XTRACE_ORD1_LEN,
+    XTRACE_ORD2_LEN,
+    _get_soss_wavemaps,
+)
+from jwst.extract_1d.soss_extract.soss_boxextract import (
+    box_extract,
+    estim_error_nearest_data,
+    get_box_weights,
+)
+from jwst.extract_1d.soss_extract.soss_syscor import make_background_mask, soss_background
+from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 ORDER2_SHORT_CUTOFF = 0.58
+
+__all__ = ["get_ref_file_args", "run_extract1d"]
 
 
 def get_ref_file_args(ref_files):
@@ -55,7 +60,7 @@ def get_ref_file_args(ref_files):
     else:
         do_padding = False
 
-    (wavemap_o1, wavemap_o2) = get_soss_wavemaps(
+    (wavemap_o1, wavemap_o2) = _get_soss_wavemaps(
         pastasoss_ref,
         pwcpos=ref_files["pwcpos"],
         subarray=ref_files["subarray"],
@@ -167,7 +172,7 @@ def _get_trace_1d(ref_files, order):
     else:
         do_padding = False
 
-    (_, _), (spectrace_o1, spectrace_o2) = get_soss_wavemaps(
+    (_, _), (spectrace_o1, spectrace_o2) = _get_soss_wavemaps(
         pastasoss_ref,
         pwcpos=ref_files["pwcpos"],
         subarray=ref_files["subarray"],

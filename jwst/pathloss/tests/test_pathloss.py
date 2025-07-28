@@ -2,19 +2,19 @@
 Unit tests for pathloss correction
 """
 
+import numpy as np
 from stdatamodels.jwst.datamodels import MultiSlitModel, PathlossModel
 
 from jwst.pathloss.pathloss import (
     calculate_pathloss_vector,
+    do_correction,
     get_aperture_from_model,
     get_center,
     interpolate_onto_grid,
     is_pointsource,
-    shutter_below_is_closed,
     shutter_above_is_closed,
+    shutter_below_is_closed,
 )
-from jwst.pathloss.pathloss import do_correction
-import numpy as np
 
 
 def test_get_center_ifu():

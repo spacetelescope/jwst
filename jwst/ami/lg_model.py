@@ -1,20 +1,19 @@
 import logging
+
 import numpy as np
 
-from . import leastsqnrm as leastsqnrm
-from . import analyticnrm2
-from . import utils
-from . import mask_definition_ami
+from jwst.ami import analyticnrm2, mask_definition_ami, utils
+from jwst.ami import leastsqnrm as leastsqnrm
 
 log = logging.getLogger(__name__)
-log.addHandler(logging.NullHandler())
-log.setLevel(logging.DEBUG)
 
 
 m = 1.0
 mm = 1.0e-3 * m
 um = 1.0e-6 * m
 mas = 1.0e-3 / (60 * 60 * 180 / np.pi)  # in radians
+
+__all__ = ["LgModel", "goodness_of_fit", "run_data_correlate"]
 
 
 class LgModel:

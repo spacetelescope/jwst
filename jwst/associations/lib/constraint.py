@@ -2,13 +2,13 @@
 
 import abc
 import collections
-from copy import deepcopy
-from itertools import chain
 import logging
 import re
+from copy import deepcopy
+from itertools import chain
 
-from .process_list import ListCategory, ProcessList
-from .utilities import evaluate, getattr_from_list, is_iterable
+from jwst.associations.lib.process_list import ListCategory, ProcessList
+from jwst.associations.lib.utilities import evaluate, getattr_from_list, is_iterable
 from jwst.associations.pool import PoolRow
 
 __all__ = [
@@ -20,7 +20,6 @@ __all__ = [
 
 # Configure logging
 logger = logging.getLogger(__name__)
-logger.addHandler(logging.NullHandler())
 
 
 class SimpleConstraintABC(abc.ABC):
@@ -55,7 +54,7 @@ class SimpleConstraintABC(abc.ABC):
     # Attributes to show in the string representation.
     _str_attrs: tuple = ("name", "value")
 
-    def __new__(cls, *args, **kwargs):  # noqa: ARG003
+    def __new__(cls, *args, **kwargs):  # noqa: ARG004
         """
         Force creation of the constraint attribute dict before anything else.
 

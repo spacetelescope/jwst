@@ -3,8 +3,8 @@
 import os
 
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
 
 # Define artifactory source and truth

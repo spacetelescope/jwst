@@ -4,11 +4,11 @@ Authors:
     M. Cracraft
 """
 
-from stdatamodels.jwst.datamodels import dqflags, LinearityModel, RampModel
+import numpy as np
+from stdatamodels.jwst.datamodels import LinearityModel, RampModel, dqflags
 
 from jwst.linearity import LinearityStep
 from jwst.linearity.linearity import do_correction as lincorr
-import numpy as np
 
 
 def test_coeff_dq():

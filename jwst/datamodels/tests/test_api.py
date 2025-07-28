@@ -1,12 +1,12 @@
 """Test that the stdatamodels.jwst.datamodels API is replicated in jwst.datamodels"""
 
-import pytest
-import pkgutil
 import importlib
+import pkgutil
 
+import pytest
 from stdatamodels.jwst import datamodels as stdm
-from jwst import datamodels as jwstdm
 
+from jwst import datamodels as jwstdm
 
 DEPRECATED_MODELS = jwstdm._deprecated_models
 DEPRECATED_MODULES = jwstdm._deprecated_modules

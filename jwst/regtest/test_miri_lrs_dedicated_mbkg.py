@@ -1,8 +1,9 @@
 import os
+
 import pytest
-from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 from jwst.master_background import MasterBackgroundStep
+from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 
 
 @pytest.fixture(scope="module")

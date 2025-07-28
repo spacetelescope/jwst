@@ -1,11 +1,12 @@
 """Read in reference files for the cube_build step."""
 
-from stdatamodels.jwst import datamodels
-
 import logging
 
+from stdatamodels.jwst import datamodels
+
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
+
+__all__ = ["read_cubepars"]
 
 
 def read_cubepars(

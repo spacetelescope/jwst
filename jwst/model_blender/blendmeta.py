@@ -5,8 +5,7 @@ This module will create a new metadata instance and table from a
 list of input datamodels or filenames.
 """
 
-from .blender import ModelBlender
-
+from jwst.model_blender.blender import ModelBlender
 
 __all__ = ["blendmodels"]
 
