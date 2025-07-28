@@ -55,6 +55,14 @@ def test_record_query_step_status():
     model3 = dm.MultiSpecModel()
     assert query_step_status(model3, "test_step") == NOT_SET
 
+    # test library
+    model4 = dm.ModelLibrary([model])
+    assert query_step_status(model4, "test_step") == "COMPLETE"
+    model5 = dm.ModelLibrary(model2)
+    assert query_step_status(model5, "test_step") == "SKIPPED"
+    model6 = dm.ModelLibrary([model3])
+    assert query_step_status(model6, "test_step") == NOT_SET
+
 
 def change_name_func(model):
     model.meta.filename = "changed"
