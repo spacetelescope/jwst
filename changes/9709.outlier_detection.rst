@@ -1,0 +1,2 @@
+Copy input data before processing to ensure input datamodels are not modified.
+Fix a crash in intermediate file saving for IFU mode.
