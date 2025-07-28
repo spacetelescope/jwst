@@ -30,60 +30,7 @@ GLOBAL_PARS_TO_IGNORE = [
 
 
 class MasterBackgroundMosStep(Pipeline):
-    """
-    Apply master background processing to NIRSpec MOS data.
-
-    For MOS, and ignoring FS, the calibration process needs to occur
-    twice: Once to calibrate background slits and create a master background.
-    Then a second time to calibrate science using the master background.
-
-    Attributes
-    ----------
-    correction_pars : dict
-        The master background information from a previous invocation of the step.
-        Keys are:
-
-        - "masterbkg_1d": `~jwst.datamodels.CombinedSpecModel`
-            The 1D version of the master background.
-        - "masterbkg_2d": `~jwst.datamodels.MultiSlitModel`
-            The 2D slit-based version of the master background.
-
-    sigma_clip : None or float
-        Optional factor for sigma clipping outliers when combining background spectra.
-    median_kernel : int
-        Optional user-supplied kernel with which to moving-median boxcar filter
-        the master background spectrum.  Must be an odd integer; even integers will be
-        rounded down to the nearest odd integer.
-    force_subtract : bool
-        Optional user-supplied flag that overrides step logic to force subtraction of the
-        master background.
-        Default is False, in which case the step logic determines if the calspec2 background step
-        has already been applied and, if so, the master background step is skipped.
-        If set to True, the step logic is bypassed and the master background is subtracted.
-    save_background : bool
-        Save computed master background.
-    user_background : None, str, or `~jwst.datamodels.CombinedSpecModel`
-        Optional user-supplied master background 1D spectrum, path to file
-        or opened datamodel
-
-    Notes
-    -----
-    The algorithm is as follows
-
-    - Calibrate all slits
-
-      - For each step
-
-        - Force the source type to be extended source for all slits.
-        - Return the correction array used.
-
-    - Create the 1D master background
-    - For each slit
-
-      - Expand out the 1D master background to match the 2D wavelength grid of the slit
-      - Reverse-calibrate the 2D background, using the correction arrays calculated above.
-      - Subtract the background from the input slit data
-    """
+    """Apply master background processing to NIRSpec MOS data."""
 
     class_alias = "master_background_mos"
 
@@ -115,6 +62,24 @@ class MasterBackgroundMosStep(Pipeline):
         """
         Compute and subtract a master background spectrum.
 
+        For MOS, and ignoring FS, the calibration process needs to occur
+        twice. Once, to calibrate background slits and create a master background.
+        Then, a second time to calibrate science using the master background.
+
+        For repeating or undoing the correction, this step makes use of
+        two special attributes:
+
+            correction_pars : dict
+                The master background information from a previous invocation of the step.
+                Keys are:
+
+                - "masterbkg_1d": `~jwst.datamodels.CombinedSpecModel`
+                    The 1D version of the master background.
+                - "masterbkg_2d": `~jwst.datamodels.MultiSlitModel`
+                    The 2D slit-based version of the master background.
+            use_correction_pars : bool
+                Use the corrections stored in `correction_pars`.
+
         Parameters
         ----------
         data : `~jwst.datamodels.MultiSlitModel`
@@ -124,6 +89,22 @@ class MasterBackgroundMosStep(Pipeline):
         -------
         result : `~jwst.datamodels.MultiSlitModel`
             The background corrected data.
+
+        Notes
+        -----
+        The algorithm is as follows:
+
+            - Calibrate all slits.  For each step:
+
+              - Force the source type to be extended source for all slits.
+              - Return the correction array used.
+
+            - Create the 1D master background
+            - For each slit:
+
+              - Expand out the 1D master background to match the 2D wavelength grid of the slit.
+              - Reverse-calibrate the 2D background, using the correction arrays calculated above.
+              - Subtract the background from the input slit data.
         """
         with datamodels.open(data) as data_model:
             # If some type of background processing had already been done. Abort.

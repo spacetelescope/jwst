@@ -8,28 +8,13 @@ __all__ = ["PixelReplaceStep"]
 
 
 class PixelReplaceStep(Step):
-    """
-    Module for replacing flagged bad pixels prior to spectral extraction.
-
-    Attributes
-    ----------
-    algorithm : str
-        Method used to estimate flux values for bad pixels. Currently only one option is
-        implemented, using a profile fit to adjacent column values.
-
-    n_adjacent_cols : int
-        Number of adjacent columns (on either side of column containing a bad pixel) to use in
-        creation of source profile, in cross-dispersion direction. The total number of columns
-        used in the profile will be twice this number; on array edges, take adjacent columns until
-        this number is reached.
-    """
+    """Replace flagged bad pixels prior to spectral extraction."""
 
     class_alias = "pixel_replace"
 
     spec = """
-        algorithm = option("fit_profile", "mingrad", "N/A", default="fit_profile")
-        # Number of adjacent columns to use in profile creation
-        n_adjacent_cols = integer(default=3)
+        algorithm = option("fit_profile", "mingrad", "N/A", default="fit_profile") # Replacement algorithm
+        n_adjacent_cols = integer(default=3) # Number of adjacent columns to use in profile creation
         skip = boolean(default=True) # Step must be turned on by parameter reference or user
         output_use_model = boolean(default=True) # Use input filenames in the output models
     """  # noqa: E501

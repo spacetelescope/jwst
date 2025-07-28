@@ -21,14 +21,8 @@ class Tso3Pipeline(Pipeline):
     """
     Apply level 3 processing to TSO-mode data from any JWST instrument.
 
-    Included steps are:
-
-        * outlier_detection
-        * tso_photometry
-        * pixel_replace
-        * extract_1d
-        * photom
-        * white_light
+    Included steps are: outlier_detection, tso_photometry, pixel_replace,
+    extract_1d, photom, and white_light.
     """
 
     class_alias = "calwebb_tso3"

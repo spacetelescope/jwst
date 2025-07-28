@@ -15,7 +15,7 @@ __all__ = ["JumpStep"]
 
 
 class JumpStep(Step):
-    """Step class to perform just detection using two point difference."""
+    """Perform jump detection using two point difference."""
 
     spec = """
         rejection_threshold = float(default=4.0,min=0) # CR sigma rejection threshold

@@ -37,9 +37,10 @@ class Detector1Pipeline(Pipeline):
     Apply all calibration steps to raw JWST ramps to produce a 2-D slope product.
 
     Included steps are:
-    group_scale, dq_init, saturation, ipc, superbias, refpix, rscd,
-    lastframe, linearity, dark_current, persistence, jump detection,
-    ramp_fit, and gain_scale.
+    group_scale, dq_init, emicorr, saturation, ipc, superbias, refpix, rscd,
+    firstframe, lastframe, linearity, dark_current, reset, persistence,
+    charge_migration, jump detection, clean_flicker_noise, ramp_fit,
+    and gain_scale.
     """
 
     class_alias = "calwebb_detector1"
