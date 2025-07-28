@@ -2,7 +2,7 @@
 
 import logging
 
-from jwst.datamodels import ModelLibrary
+from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.outlier_detection.utils import (
     flag_crs_in_models,
     flag_crs_in_models_with_resampling,
@@ -80,6 +80,9 @@ def detect_outliers(
     ModelContainer
         The input models with outliers flagged.
     """
+    if not isinstance(input_models, ModelContainer):
+        input_models = ModelContainer(input_models)
+
     if len(input_models) < 2:
         log.warning(f"Input only contains {len(input_models)} exposures")
         log.warning("Outlier detection will be skipped")

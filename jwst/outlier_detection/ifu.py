@@ -35,6 +35,7 @@ from stcal.outlier_detection.utils import medfilt
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
+from jwst.datamodels import ModelContainer
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.outlier_detection._fileio import _save_intermediate_output
 from jwst.stpipe.utilities import record_step_status
@@ -78,6 +79,9 @@ def detect_outliers(
     input_models : ModelContainer
         The input data with DQ flags set for detected outliers.
     """
+    if not isinstance(input_models, ModelContainer):
+        input_models = ModelContainer(input_models)
+
     if len(input_models) < 2:
         log.warning(f"Input only contains {len(input_models)} exposures")
         log.warning("Outlier detection will be skipped")
