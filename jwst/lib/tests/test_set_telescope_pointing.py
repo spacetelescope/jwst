@@ -446,7 +446,7 @@ def test_add_wcs_method_full_nosiafdb(data_file, tmp_path):
         model.save(tmp_path / expected_name)
 
         with datamodels.open(
-            get_pkg_data_filename(f"data/{expected_name}"), package="jwst.lib.tests"
+            get_pkg_data_filename(f"data/{expected_name}", package="jwst.lib.tests")
         ) as expected:
             for meta in METAS_EQUALITY:
                 assert model[meta] == expected[meta]
