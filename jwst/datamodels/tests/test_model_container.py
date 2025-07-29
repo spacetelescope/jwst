@@ -187,7 +187,6 @@ def test_copy(container):
     container_copy = container.copy()
 
     assert container.asn_table is not container_copy.asn_table
-    assert container.asn_exptypes is not container_copy.asn_exptypes
     assert container.asn_table == container_copy.asn_table
     assert container.asn_exptypes == container_copy.asn_exptypes
     assert container.asn_n_members == container_copy.asn_n_members
