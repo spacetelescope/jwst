@@ -107,9 +107,6 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
         if "No differences found" in line:
             no_diffs = True
             break
-        if "Maximum relative difference" in line:
-            end_idx = idx
-            break
     if no_diffs:
         if report_pixel_loc_diffs:
             return report, report
