@@ -400,16 +400,22 @@ def _psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter):
     x_fwhm = fit_box_width / 2
     y_fwhm = fit_box_width / 2
 
+    # Guess flux level
+    flux = np.sum(cutout.data[~cutout_mask.data])
+
     # Initial parameters for fix
     init_params = QTable()
     init_params["x"] = [xcenter]
     init_params["y"] = [ycenter]
-    init_params["flux"] = [np.sum(cutout.data[~cutout_mask.data])]
+    init_params["flux"] = [flux]
     init_params["x_fwhm"] = [x_fwhm]
     init_params["y_fwhm"] = [y_fwhm]
 
     # Integrated 2D Gaussian model
-    model = GaussianPRF(x_0=xcenter, y_0=ycenter, x_fwhm=x_fwhm, y_fwhm=y_fwhm)
+    model = GaussianPRF(flux=flux, x_0=xcenter, y_0=ycenter, x_fwhm=x_fwhm, y_fwhm=y_fwhm)
+    model.flux.fixed = False
+    model.flux.min = 0.0
+    model.flux.max = np.inf
     model.x_0.fixed = True
     model.y_0.fixed = True
     model.x_fwhm.min = 0.0
