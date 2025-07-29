@@ -7,71 +7,7 @@ __all__ = ["CleanFlickerNoiseStep"]
 
 
 class CleanFlickerNoiseStep(Step):
-    """
-    Perform flicker noise correction.
-
-    Input data is expected to be a ramp file (RampModel), in between
-    jump and ramp fitting steps, or a rate file (ImageModel or CubeModel).
-
-    Correction algorithms implemented are:
-        - `fft`: Background noise is fit in frequency space.
-           Implementation is based on the NSClean algorithm, developed
-           by Bernard Rauscher.
-        - `median`: Background noise is characterized by a median
-          along the detector slow axis. Implementation is based on the
-          `image1overf` algorithm, developed by Chris Willott.
-
-    Attributes
-    ----------
-    fit_method : str, optional
-        The noise fitting algorithm to use.  Options are 'fft' and 'median'.
-    fit_by_channel : bool, optional
-        If set, flicker noise is fit independently for each detector channel.
-        Ignored for MIRI, for subarray data, and for `fit_method` = 'fft'
-    background_method : {'median', 'model', None}
-        If 'median', the preliminary background to remove and restore
-        is a simple median of the background data.  If 'model', the
-        background data is fit with a low-resolution model via
-        `~photutils.background.Background2D`.  If None, the background
-        value is 0.0.
-    background_box_size : tuple of int or None, optional
-        Box size for the data grid used by `Background2D` when
-        `background_method` = 'model'. For best results, use a box size
-        that evenly divides the input image shape.  If None, the largest
-        value between 1 and 32 that evenly divides the image dimension
-        is used.
-    mask_science_regions : bool, optional
-        For NIRSpec, mask regions of the image defined by WCS bounding
-        boxes for slits/slices, as well as any regions known to be
-        affected by failed-open MSA shutters.  For MIRI imaging, mask
-        regions of the detector not used for science.
-    apply_flat_field : bool, optional
-        If set, images are flat-corrected prior to fitting background
-        and noise levels.  A full-frame flat field image
-        (reference type FLAT) is required. For modes that do not provide
-        FLAT files via CRDS, including all NIRSpec spectral modes, a manually
-        generated override flat is required to enable this option.
-        Use the `override_flat` parameter to provide an alternate flat image
-        as needed.
-    n_sigma : float, optional
-        Sigma clipping threshold to be used in detecting outliers in the image.
-    fit_histogram : bool, optional
-        If set, the 'sigma' used with `n_sigma` for clipping outliers
-        is derived from a Gaussian fit to a histogram of values.
-        Otherwise, a simple iterative sigma clipping is performed.
-    single_mask : bool, optional
-        If set, a single mask will be created, regardless of
-        the number of input integrations. Otherwise, the mask will
-        be a 3D cube, with one plane for each integration.
-    user_mask : None, str, or `~jwst.datamodels.ImageModel`
-        Optional user-supplied mask image; path to file or opened datamodel.
-    save_mask : bool, optional
-        Save the computed mask image.
-    save_background : bool, optional
-        Save the computed background image.
-    save_noise : bool, optional
-        Save the computed noise image.
-    """
+    """Perform flicker noise correction."""
 
     class_alias = "clean_flicker_noise"
 
@@ -97,6 +33,18 @@ class CleanFlickerNoiseStep(Step):
     def process(self, input_data):
         """
         Fit and subtract 1/f background noise from a ramp data set.
+
+        Input data is expected to be a ramp file (RampModel), in between
+        jump and ramp fitting steps, or a rate file (ImageModel or CubeModel).
+
+        Correction algorithms implemented are:
+
+            - "fft": Background noise is fit in frequency space.
+               Implementation is based on the NSClean algorithm, developed
+               by Bernard Rauscher.
+            - "median": Background noise is characterized by a median
+              along the detector slow axis. Implementation is based on the
+              "image1overf" algorithm, developed by Chris Willott.
 
         Parameters
         ----------
