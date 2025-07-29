@@ -298,7 +298,7 @@ def _apply_magnitude_limit(source_catalog, sens_response, magnitude_limit, min_r
     if len(good_sources) == 0:
         return None
     log.info(
-        f"Applying magnitude limit of {order_mag_limit}. Sources selected: {len(good_sources)}"
+        f"Applying magnitude limit of {order_mag_limit:.1f}. Sources selected: {len(good_sources)}"
     )
     return good_sources["label"].tolist()
 

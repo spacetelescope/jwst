@@ -5,6 +5,7 @@ from stdatamodels.jwst.datamodels import SlitModel
 from jwst.wfss_contam.wfss_contam import (
     SlitOverlapError,
     UnmatchedSlitIDError,
+    _apply_magnitude_limit,
     _cut_frame_to_match_slit,
     _find_matching_simul_slit,
     determine_multiprocessing_ncores,
@@ -131,3 +132,27 @@ def test_common_slit_prefer(slit0, slit1):
 def test_common_slit_prefer_expected_raise(slit0, slit2):
     with pytest.raises(SlitOverlapError):
         match_backplane_prefer_first(slit0.copy(), slit2.copy())
+
+
+def test_apply_magnitude_limit(photom_ref_model, source_catalog):
+    magnitude_limit = 23
+    min_relresp_order1 = 1
+    order = -1
+    order_idx = np.where(photom_ref_model.phot_table["order"] == order)[0]
+    sens_response = photom_ref_model.phot_table["relresponse"][order_idx]
+    sources = _apply_magnitude_limit(
+        source_catalog, sens_response, magnitude_limit, min_relresp_order1
+    )
+    assert sources == [17, 39, 51, 82, 93]
+
+
+def test_apply_magnitude_limit_no_sources(photom_ref_model, source_catalog):
+    magnitude_limit = 10
+    min_relresp_order1 = 1
+    order = -1
+    order_idx = np.where(photom_ref_model.phot_table["order"] == order)[0]
+    sens_response = photom_ref_model.phot_table["relresponse"][order_idx]
+    sources = _apply_magnitude_limit(
+        source_catalog, sens_response, magnitude_limit, min_relresp_order1
+    )
+    assert sources is None
