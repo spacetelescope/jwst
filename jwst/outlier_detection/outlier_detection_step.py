@@ -70,8 +70,8 @@ class OutlierDetectionStep(Step):
         result_models : ~jwst.datamodels.ModelContainer or ~jwst.datamodels.ModelLibrary
             The modified input data with DQ flags set for detected outliers.
         """
-        # Work on a copy to avoid modifying the input data
-        result_models = self._copy_models(input_data)
+        # Open the input data, making a copy as needed.
+        result_models = self._open_models(input_data)
 
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
@@ -155,7 +155,6 @@ class OutlierDetectionStep(Step):
         else:
             self.log.error(f"Outlier detection failed for unknown/unsupported mode: {mode}")
             record_step_status(result_models, "outlier_detection", False)
-            return result_models
 
         if query_step_status(result_models, "outlier_detection") != "SKIPPED":
             record_step_status(result_models, "outlier_detection", True)
@@ -224,7 +223,32 @@ class OutlierDetectionStep(Step):
         self.log.info(f"Outlier Detection asn_id: {asn_id}")
         return
 
-    def _copy_models(self, input_models):
+    def _open_models(self, input_models):
+        """
+        Open the input data, making a copy if necessary.
+
+        If the input data is a filename or path, it is opened
+        and the open model is returned.
+
+        If it is a list of models, it is opened as a ModelContainer.
+        In this case, or if the input is a simple datamodel or a
+        ModelContainer, a deep copy of the model/container is returned,
+        in order to avoid modifying the input models.
+
+        If the input is a ModelLibrary, it is simply returned, in order
+        to avoid making unnecessary copies for performance-critical
+        use cases.
+
+        Parameters
+        ----------
+        input_models : str, list, JwstDataModel, ModelContainer, or ModelLibrary
+            Input data to open.
+
+        Returns
+        -------
+        JwstDataModel, ModelContainer, or ModelLibrary
+            The opened datamodel(s).
+        """
         # Check whether input contains datamodels
         make_copy = False
         if isinstance(input_models, list):

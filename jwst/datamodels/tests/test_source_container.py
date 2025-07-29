@@ -21,14 +21,14 @@ def test_source_container_invalid_init():
         SourceModelContainer(None)
 
 
-def test_source_container_empty_multiexp():
+def test_source_container_from_empty_multiexp():
     model = datamodels.MultiExposureModel()
     container = SourceModelContainer(model)
     assert len(container._models) == 0
     assert container.multiexposure is model
 
 
-def test_source_container_multiexp(multi_exp):
+def test_source_container_from_multiexp(multi_exp):
     container = SourceModelContainer(multi_exp)
     assert len(container._models) == len(multi_exp.exposures)
     assert container.multiexposure is multi_exp

@@ -95,14 +95,14 @@ def detect_outliers(
 
     # check if kernel size is an odd value
     if kern_size[0] % 2 == 0:
-        log.info(
+        log.warning(
             "X kernel size is given as an even number. This value must be an odd number. "
             "Increasing number by 1"
         )
         kern_size[0] = kern_size[0] + 1
         log.info(f"New x kernel size is {kern_size[0]}: ")
     if kern_size[1] % 2 == 0:
-        log.info(
+        log.warning(
             "Y kernel size is given as an even number. This value must be an odd number. "
             "Increasing number by 1"
         )

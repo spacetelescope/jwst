@@ -173,6 +173,9 @@ def query_step_status(datamodel, cal_step):
     """
     Query the status of a step in meta.cal_step.
 
+    For container types (ModelContainer and ModelLibrary), only
+    the first datamodel in the container is checked.
+
     Parameters
     ----------
     datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.ModelContainer`,
