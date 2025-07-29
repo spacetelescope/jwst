@@ -255,7 +255,7 @@ def _validate_orders_against_transform(wcs, spec_orders):
     for model in sky_to_grism:
         if isinstance(model, (NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion)):
             # Get the orders defined in the transform
-            orders = model.orders
+            orders = np.sort(model.orders)
             if not all(order in orders for order in spec_orders):
                 log.warning(
                     f"Not all requested spectral orders {spec_orders} are "
@@ -265,10 +265,10 @@ def _validate_orders_against_transform(wcs, spec_orders):
             good_orders = [order for order in spec_orders if order in orders]
             # There will be only one transform of this type in the wcs
             break
-    return good_orders
+    return np.sort(good_orders)
 
 
-def _apply_magnitude_limit(source_catalog, sens_response, magnitude_limit, min_relresp_order1):
+def _apply_magnitude_limit(source_catalog, sens_response, magnitude_limit, min_relresp_order0):
     """
     Rescale the magnitude limit based on the sensitivity response for a given spectral order.
 
@@ -280,8 +280,8 @@ def _apply_magnitude_limit(source_catalog, sens_response, magnitude_limit, min_r
         The sensitivity response for the order.
     magnitude_limit : float
         The isophotal AB magnitude limit for sources to be included in the contamination correction.
-    min_relresp_order1 : float
-        Minimum relative response for order 1, used to scale the magnitude limit.
+    min_relresp_order0 : float
+        Minimum relative response for order 0, used to scale the magnitude limit.
 
     Returns
     -------
@@ -289,7 +289,7 @@ def _apply_magnitude_limit(source_catalog, sens_response, magnitude_limit, min_r
         List of source IDs that meet the magnitude limit criteria.
     """
     # Scale the magnitude limit according to the order sensitivity response
-    order_sens_factor = min_relresp_order1 / np.nanmin(sens_response)
+    order_sens_factor = min_relresp_order0 / np.nanmin(sens_response)
     order_mag_diff = -2.5 * np.log10(order_sens_factor)
     order_mag_limit = magnitude_limit - order_mag_diff
 
@@ -333,9 +333,9 @@ def contam_corr(
     magnitude_limit : float, optional
         Isophotal AB magnitude limit for sources to be included in the contamination correction.
         The magnitude limit is applied per spectral order, where the orders are scaled relative
-        to order 1 based on their photometric response as read from the photom reference file.
-        This means that all sources with AB mag smaller than the magnitude limit will be dispersed
-        in order 1, but fewer sources will be dispersed in higher orders.
+        to order 0 based on their photometric response as read from the photom reference file.
+        This means that generally fewer sources will be dispersed in higher orders.
+        If None, no magnitude limit is applied and all sources are included.
     max_pixels_per_chunk : int, optional
         Maximum number of pixels to disperse simultaneously.
     oversample_factor : int, optional
@@ -392,9 +392,9 @@ def contam_corr(
 
     # Read the source catalog to perform magnitude-based source selection later
     source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
-    # mag limit will be scaled according to order 1 sensitivity
-    _, order1_sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, 1)
-    min_relresp_order1 = np.nanmin(order1_sens_response)
+    # mag limit will be scaled according to order 0 sensitivity
+    _, order0_sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, 0)
+    min_relresp_order0 = np.nanmin(order0_sens_response)
 
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
@@ -408,7 +408,7 @@ def contam_corr(
         source_id = None
         if magnitude_limit is not None:
             good_ids = _apply_magnitude_limit(
-                source_catalog, sens_response, magnitude_limit, min_relresp_order1
+                source_catalog, sens_response, magnitude_limit, min_relresp_order0
             )
             if good_ids is None:
                 log.info(
