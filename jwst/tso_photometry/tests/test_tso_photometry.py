@@ -460,8 +460,7 @@ def test_fit_source_fail(monkeypatch, fit_psf):
         assert np.all(np.isnan(result))
 
 
-@pytest.mark.parametrize("fit_func", [tp._psf_fit_gaussian_prf, tp._psf_fit_gaussian_width])
-def test_psf_fit(fit_func):
+def test_psf_fit():
     datamodel = mock_nircam_image()
     data = datamodel.data[0]
     mask = np.full(data.shape, False)
@@ -469,8 +468,8 @@ def test_psf_fit(fit_func):
     xcenter, ycenter = XCENTER, YCENTER
 
     # Fit values vary for the flat synthetic source, but they should
-    # be in the same ballpark.
-    x_width, y_width, flux = fit_func(data, mask, fit_box_width, xcenter, ycenter)
+    # be close to the initial estimates
+    x_width, y_width, flux = tp._psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter)
     assert np.allclose([x_width, y_width], RADIUS / 2, rtol=0.3)
     assert np.allclose(flux, 1263.4778, rtol=0.3)  # expected aperture sum value
 
@@ -489,25 +488,6 @@ def test_psf_fit_gaussian_prf_fail(monkeypatch):
 
     # Failure in psf fit just returns NaNs
     result = tp._psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter)
-    assert len(result) == 3
-    assert np.all(np.isnan(result))
-
-
-def test_psf_fit_gaussian_width_fail(monkeypatch):
-    datamodel = mock_nircam_image()
-    data = datamodel.data[0]
-    mask = np.full(data.shape, False)
-    fit_box_width = int(RADIUS * 2 + 1)
-    xcenter, ycenter = XCENTER, YCENTER
-
-    class MockResults:
-        def __init__(self, *args, **kwargs):
-            self.success = False
-
-    monkeypatch.setattr(tp, "minimize", MockResults)
-
-    # Failure in psf fit just returns NaNs
-    result = tp._psf_fit_gaussian_width(data, mask, fit_box_width, xcenter, ycenter)
     assert len(result) == 3
     assert np.all(np.isnan(result))
 
