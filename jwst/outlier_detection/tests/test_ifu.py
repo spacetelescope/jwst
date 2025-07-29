@@ -1,59 +1,8 @@
 import numpy as np
 import pytest
-from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
-from jwst.assign_wcs.tests.test_miri import create_hdul
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.datamodels import ModelContainer
 from jwst.outlier_detection.outlier_detection_step import OutlierDetectionStep
-
-
-@pytest.fixture(scope="module")
-def miri_ifu_rate():
-    """
-    Create a MIRI IFU test model.
-
-    Test data is borrowed from assign_wcs tests.
-
-    Yields
-    -------
-    IFUImageModel
-        A MIRI IFU model with a wcs assigned.
-    """
-    # metadata for assign_wcs
-    hdul = create_hdul(detector="MIRIFUSHORT", channel="12", band="SHORT")
-
-    # mock data for processing
-    shape = (100, 100)
-    model = datamodels.IFUImageModel(hdul)
-    model.data = np.arange(shape[0] * shape[1], dtype=np.float32).reshape(shape)
-    model.err = np.full(shape, 1.0)
-    model.dq = np.full(shape, 0)
-
-    model_wcs = AssignWcsStep.call(model)
-    hdul.close()
-    model.close()
-    yield model_wcs
-    model_wcs.close()
-
-
-@pytest.fixture(scope="module")
-def nirspec_ifu_rate():
-    shape = (2048, 2048)
-    hdul = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    model = datamodels.IFUImageModel(hdul)
-    model.data = np.arange(shape[0] * shape[1], dtype=np.float32).reshape(shape)
-    model.err = np.full(shape, 1.0)
-    model.dq = np.full(shape, 0)
-    model_wcs = AssignWcsStep.call(model)
-
-    hdul.close()
-    model.close()
-    yield model_wcs
-    model_wcs.close()
 
 
 def test_ifu_one_exposure(miri_ifu_rate):
