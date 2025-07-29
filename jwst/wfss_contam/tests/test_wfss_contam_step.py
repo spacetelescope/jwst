@@ -63,6 +63,11 @@ def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
     between a WCS taken from a random real image and the mock data.
     This could be fixed in the future by mocking the WCS object.
     """
-    result = WfssContamStep.call(multislitmodel, save_simulated_image=True, save_contam_images=True)
+    result = WfssContamStep.call(
+        multislitmodel,
+        save_simulated_image=True,
+        save_contam_images=True,
+        magnitude_limit=25,
+    )
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
