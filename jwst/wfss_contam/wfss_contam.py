@@ -234,6 +234,48 @@ def match_backplane_encompass_both(slit0, slit1):
     return slit0, slit1
 
 
+def _constrain_orders(orders, spec_orders):
+    """
+    Compare user-requested spectral orders with the orders defined in the reference file.
+
+    Parameters
+    ----------
+    orders : list[int]
+        List of user-requested spectral orders.
+    spec_orders : list[int]
+        List of spectral orders defined in the reference file.
+
+    Returns
+    -------
+    np.ndarray[int]
+        List of spectral orders constrained to the user-specified ones
+        that are also defined in the reference file.
+
+    Raises
+    ------
+    ValueError
+        If none of the requested spectral orders are defined in the reference file.
+    """
+    spec_orders = np.array(spec_orders, dtype=int)
+    if orders is None:
+        return spec_orders
+    orders = np.array(orders, dtype=int)
+    good_orders = np.isin(orders, spec_orders, assume_unique=True)
+    if (len(good_orders) == 0) or (not np.any(good_orders)):
+        raise ValueError(
+            f"None of the requested spectral orders {orders} are defined "
+            "in the wavelength range reference file. "
+            f"Expected orders are: {spec_orders}"
+        )
+    if not np.all(good_orders):
+        log.warning(
+            f"Not all requested spectral orders {orders} are defined in the "
+            f"wavelength range reference file. Defined orders are: {spec_orders}. "
+            "Skipping undefined orders."
+        )
+    return orders[good_orders]
+
+
 def _validate_orders_against_transform(wcs, spec_orders):
     """
     Ensure the requested spectral orders are defined in the WCS transforms.
@@ -308,6 +350,7 @@ def contam_corr(
     waverange,
     photom,
     max_cores,
+    orders=None,
     magnitude_limit=None,
     max_pixels_per_chunk=5e4,
     oversample_factor=2,
@@ -330,6 +373,9 @@ def contam_corr(
         the fraction of cores to use for multi-proc. The total number of
         cores includes the SMT cores (Hyper Threading for Intel).
         If an integer is provided, it will be the exact number of cores used.
+    orders : list, optional
+        List of spectral orders to process.
+        If None, all orders defined in the wavelengthrange file will be processed.
     magnitude_limit : float, optional
         Isophotal AB magnitude limit for sources to be included in the contamination correction.
         The magnitude limit is applied per spectral order, where the orders are scaled relative
@@ -369,12 +415,13 @@ def contam_corr(
     xoffset = input_model.slits[0].xstart - 1
     yoffset = input_model.slits[0].ystart - 1
 
-    # Find out how many spectral orders are defined, based on the
-    # array of order values in the Wavelengthrange ref file
+    # Find out how many spectral orders are defined based on the
+    # array of order values in the Wavelengthrange ref file,
+    # then constrain the orders to the user-specified ones
     spec_orders = np.asarray(waverange.order)
-    spec_orders = spec_orders[spec_orders != 0]  # ignore any order 0 entries
+    spec_orders = _constrain_orders(orders, spec_orders)
     spec_orders = _validate_orders_against_transform(grism_wcs, spec_orders)
-    log.debug(f"Spectral orders defined = {[int(x) for x in spec_orders]}")
+    log.debug(f"Spectral orders requested = {[int(x) for x in spec_orders]}")
 
     # Get the FILTER and PUPIL wheel positions, for use later
     filter_kwd = input_model.meta.instrument.filter
@@ -391,9 +438,9 @@ def contam_corr(
         filter_name = filter_kwd
 
     # Read the source catalog to perform magnitude-based source selection later
-    source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
     # mag limit will be scaled according to order 0 sensitivity
-    _, order0_sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, 0)
+    source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
+    _, order0_sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order=0)
     min_relresp_order0 = np.nanmin(order0_sens_response)
 
     for order in spec_orders:

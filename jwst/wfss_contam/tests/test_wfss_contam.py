@@ -6,6 +6,7 @@ from jwst.wfss_contam.wfss_contam import (
     SlitOverlapError,
     UnmatchedSlitIDError,
     _apply_magnitude_limit,
+    _constrain_orders,
     _cut_frame_to_match_slit,
     _find_matching_simul_slit,
     determine_multiprocessing_ncores,
@@ -156,3 +157,34 @@ def test_apply_magnitude_limit_no_sources(photom_ref_model, source_catalog):
         source_catalog, sens_response, magnitude_limit, min_relresp_order1
     )
     assert sources is None
+
+
+def test_constrain_sources(log_watcher):
+    # normal case
+    spec_orders = [-1, 0, 1, 2, 3]
+    orders = [1, 2]
+    constrained_orders = _constrain_orders(orders, spec_orders)
+    assert np.array_equal(constrained_orders, np.array(orders))
+
+    # orders is None
+    constrained_orders = _constrain_orders(None, spec_orders)
+    assert np.array_equal(constrained_orders, np.array(spec_orders))
+
+    # orders is empty
+    orders = []
+    with pytest.raises(ValueError, match="None of the requested spectral orders "):
+        _constrain_orders(orders, spec_orders)
+
+    # none of the orders match spec_orders
+    orders = [4, 5]
+    with pytest.raises(ValueError, match="None of the requested spectral orders "):
+        _constrain_orders(orders, spec_orders)
+
+    # only a subset of orders match
+    orders = [1, 4]
+    watcher = log_watcher(
+        "jwst.wfss_contam.wfss_contam", message="Skipping undefined orders", level="warning"
+    )
+    constrained_orders = _constrain_orders(orders, spec_orders)
+    assert np.array_equal(constrained_orders, np.array([1]))
+    watcher.assert_seen()

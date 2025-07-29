@@ -57,7 +57,7 @@ def multislitmodel(
 
 def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
     """
-    Smoke test that the step runs.
+    Smoke test that the step runs with some user-defined options enabled.
 
     Right now none of the slits overlap with the simulated slits because of the incompatibility
     between a WCS taken from a random real image and the mock data.
@@ -68,6 +68,7 @@ def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
         save_simulated_image=True,
         save_contam_images=True,
         magnitude_limit=25,
+        orders="1",
     )
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
