@@ -10,14 +10,11 @@ from photutils.aperture import ApertureStats, CircularAnnulus, CircularAperture
 from photutils.centroids import centroid_sources
 from photutils.psf import GaussianPRF, PSFPhotometry
 from photutils.utils import CutoutImage
-from scipy.optimize import minimize
 from stdatamodels.jwst.datamodels import CubeModel
 
 __all__ = ["convert_data_units", "tso_aperture_photometry", "tso_source_centroid"]
 
 log = logging.getLogger(__name__)
-
-__all__ = ["tso_aperture_photometry"]
 
 
 def convert_data_units(datamodel, gain_2d=None):
@@ -361,10 +358,6 @@ def _fit_source(data, mask, source_mask, xcenter, ycenter, box_size, fit_psf=Fal
             continue
 
         # Fit to the PSF at the centroid location
-        # TODO: follow up on algorithm preference
-        # psf_width_x[i], psf_width_y[i], psf_flux[i] = _psf_fit_gaussian_width(
-        #    background_sub, mask[i], box_size, centroid_x[i], centroid_y[i]
-        # )
         psf_width_x[i], psf_width_y[i], psf_flux[i] = _psf_fit_gaussian_prf(
             background_sub, mask[i], box_size, centroid_x[i], centroid_y[i]
         )
@@ -437,77 +430,6 @@ def _psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter):
     y_width = gaussian_fwhm_to_sigma * results["y_fwhm_fit"][0]
     flux = results["flux_fit"][0]
     return x_width, y_width, flux
-
-
-def _psf_fit_gaussian_width(data, mask, fit_box_width, xcenter, ycenter):
-    """
-    Fit the source width with a Gaussian model, using scipy optimize.
-
-    Parameters
-    ----------
-    data : ndarray of float
-        Background subtracted image to fit.
-    mask : ndarray of bool
-        Mask for bad pixels, matching the data shape. True indicates an invalid pixel.
-    fit_box_width : int
-        Width of the subimage to use for the fit to the source.
-    xcenter, ycenter : float
-        Centroid position of the source.
-
-    Returns
-    -------
-    x_width : float
-        The x-width of the Gaussian profile (1-sigma).
-    y_width : float
-        The y-width of the Gaussian profile (1-sigma).
-    flux : float
-        The integrated flux contained in the Gaussian profile.
-    """
-    # Cut out a box around the centroid to measure the PSF width
-    source_radius = int(fit_box_width / 2)
-    minx = -source_radius + int(np.round(xcenter))
-    maxx = source_radius + int(np.round(xcenter)) + 1
-    miny = -source_radius + int(np.round(ycenter))
-    maxy = source_radius + int(np.round(ycenter)) + 1
-    data_cutout = np.ma.masked_where(mask[miny:maxy, minx:maxx], data[miny:maxy, minx:maxx])
-
-    # Estimate the PSF width by calculating sqrt of the second moment
-    ypixels, xpixels = np.mgrid[miny:maxy, minx:maxx]
-    x_width = (
-        np.ma.sqrt(np.ma.sum((xpixels - xcenter) ** 2 * data_cutout) / np.ma.sum(data_cutout)) / 2
-    )
-    y_width = (
-        np.ma.sqrt(np.ma.sum((ypixels - ycenter) ** 2 * data_cutout) / np.ma.sum(data_cutout)) / 2
-    )
-    y_int, x_int = int(np.round(ycenter)), int(np.round(xcenter))
-    amp = np.ma.max(data[y_int - 1 : y_int + 2, x_int - 1 : x_int + 2])
-
-    # The initial guess for [Gaussian amplitude, xsigma, ysigma]
-    initial_guess = [amp, x_width, y_width]
-    # The bounds for the fit
-    bounds = [(amp / 2, amp * 2), (x_width / 2, x_width * 2), (y_width / 2, y_width * 2)]
-
-    # Define the function to minimize
-    def minfunc(params, data, x_mesh, y_mesh, x, y):
-        amp, sx, sy = params
-        model = amp * np.ma.exp(-0.5 * ((x_mesh - x) ** 2 / sx**2 + (y_mesh - y) ** 2 / sy**2))
-        return np.ma.mean((data - model) ** 2)
-
-    # Fit the gaussian width by minimizing minfunc with the Powell method.
-    results = minimize(
-        minfunc,
-        initial_guess,
-        args=(data_cutout, xpixels, ypixels, xcenter, ycenter),
-        method="Powell",
-        bounds=bounds,
-    )
-    if results.success:
-        amp, x_width, y_width = results.x
-    else:
-        amp, x_width, y_width = np.nan, np.nan, np.nan
-
-    psf_flux = 2 * np.pi * amp * x_width * y_width
-    return x_width, y_width, psf_flux
 
 
 def tso_source_centroid(datamodel, xcenter, ycenter, search_box_width=41, fit_box_width=11):
