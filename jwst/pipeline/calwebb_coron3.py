@@ -122,11 +122,6 @@ class Coron3Pipeline(Pipeline):
         self.outlier_detection.save_results = self.save_results
         self.resample.blendheaders = False
 
-        # Save the original outlier_detection.skip setting from the
-        # input, because it may get toggled off within loops for
-        # processing individual inputs
-        skip_outlier_detection = self.outlier_detection.skip
-
         # Extract lists of all the PSF and science target members
         psf_files = members_by_type["psf"]
         targ_files = members_by_type["science"]
@@ -148,22 +143,16 @@ class Coron3Pipeline(Pipeline):
             self.prefetch(member)
 
         # Assemble all the input psf files into a single ModelContainer
+        # and run outlier detection if desired
         psf_models = ModelContainer()
         for i in range(len(psf_files)):
             psf_input = datamodels.CubeModel(psf_files[i])
+
+            if not self.outlier_detection.skip:
+                psf_input = self.outlier_detection.run(psf_input)
+
             psf_models.append(psf_input)
-
             psf_input.close()
-
-        # Perform outlier detection on the PSFs.
-        if not skip_outlier_detection:
-            for model in psf_models:
-                self.outlier_detection.run(model)
-                # step may have been skipped for this model;
-                # turn back on for next model
-                self.outlier_detection.skip = False
-        else:
-            self.log.info("Outlier detection skipped for PSFs")
 
         # Stack all the PSF images into a single CubeModel
         psf_stack = self.stack_refs.run(psf_models)
@@ -181,11 +170,8 @@ class Coron3Pipeline(Pipeline):
                 model_blender.accumulate(target)
 
                 # Remove outliers from the target
-                if not skip_outlier_detection:
+                if not self.outlier_detection.skip:
                     target = self.outlier_detection.run(target)
-                    # step may have been skipped for this model;
-                    # turn back on for next model
-                    self.outlier_detection.skip = False
 
                 # Call align_refs
                 psf_aligned = self.align_refs.run(target, psf_stack)
