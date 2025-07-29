@@ -17,7 +17,7 @@ class WfssContamStep(Step):
         save_contam_images = boolean(default=False)  # Save source contam estimates
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none')
         skip = boolean(default=True)
-        brightest_n = integer(default=None)
+        magnitude_limit = float(default=None) # Isophotal AB magnitude limit for sources to be included in the contamination correction
         wl_oversample = integer(default=2) # oversampling factor for wavelength grid
         max_pixels_per_chunk = integer(default=50000) # max number of pixels to disperse at once
     """  # noqa: E501
@@ -54,7 +54,7 @@ class WfssContamStep(Step):
                 waverange_model,
                 photom_model,
                 self.maximum_cores,
-                brightest_n=self.brightest_n,
+                magnitude_limit=self.magnitude_limit,
                 oversample_factor=self.wl_oversample,
                 max_pixels_per_chunk=self.max_pixels_per_chunk,
             )

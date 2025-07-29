@@ -268,12 +268,47 @@ def _validate_orders_against_transform(wcs, spec_orders):
     return good_orders
 
 
+def _apply_magnitude_limit(source_catalog, sens_response, magnitude_limit, min_relresp_order1):
+    """
+    Rescale the magnitude limit based on the sensitivity response for a given spectral order.
+
+    Parameters
+    ----------
+    source_catalog : astropy.table.Table
+        The source catalog containing source IDs and isophotal AB magnitudes.
+    sens_response : np.ndarray
+        The sensitivity response for the order.
+    magnitude_limit : float
+        The isophotal AB magnitude limit for sources to be included in the contamination correction.
+    min_relresp_order1 : float
+        Minimum relative response for order 1, used to scale the magnitude limit.
+
+    Returns
+    -------
+    list
+        List of source IDs that meet the magnitude limit criteria.
+    """
+    # Scale the magnitude limit according to the order sensitivity response
+    order_sens_factor = min_relresp_order1 / np.nanmin(sens_response)
+    order_mag_diff = -2.5 * np.log10(order_sens_factor)
+    order_mag_limit = magnitude_limit - order_mag_diff
+
+    # Select sources that are brighter than the magnitude limit
+    good_sources = source_catalog[source_catalog["isophotal_abmag"] < order_mag_limit]
+    if len(good_sources) == 0:
+        return None
+    log.info(
+        f"Applying magnitude limit of {order_mag_limit}. Sources selected: {len(good_sources)}"
+    )
+    return good_sources["label"].tolist()
+
+
 def contam_corr(
     input_model,
     waverange,
     photom,
     max_cores,
-    brightest_n,
+    magnitude_limit=None,
     max_pixels_per_chunk=5e4,
     oversample_factor=2,
 ):
@@ -295,12 +330,12 @@ def contam_corr(
         the fraction of cores to use for multi-proc. The total number of
         cores includes the SMT cores (Hyper Threading for Intel).
         If an integer is provided, it will be the exact number of cores used.
-    brightest_n : int
-        Number of sources to simulate. If None, then all sources in the
-        input model will be simulated. Requires loading the source catalog
-        file if not None. Note runtime scales non-linearly with this number
-        because brightest (and therefore typically largest) sources are
-        simulated first.
+    magnitude_limit : float, optional
+        Isophotal AB magnitude limit for sources to be included in the contamination correction.
+        The magnitude limit is applied per spectral order, where the orders are scaled relative
+        to order 1 based on their photometric response as read from the photom reference file.
+        This means that all sources with AB mag smaller than the magnitude limit will be dispersed
+        in order 1, but fewer sources will be dispersed in higher orders.
     max_pixels_per_chunk : int, optional
         Maximum number of pixels to disperse simultaneously.
     oversample_factor : int, optional
@@ -355,29 +390,11 @@ def contam_corr(
     else:
         filter_name = filter_kwd
 
-    # select a subset of the brightest sources using source catalog
-    if brightest_n is not None:
-        log.info(f"Simulating only the brightest {brightest_n} sources")
-        source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
-        # magnitudes in ascending order, since brighter is smaller mag number
-        source_catalog.sort("isophotal_abmag", reverse=False)
-        selected_ids = list(source_catalog["label"])[:brightest_n]
-    else:
-        selected_ids = None
-
-    # set up observation object to disperse
-    obs = Observation(
-        direct_image,
-        seg_model,
-        grism_wcs,
-        filter_name,
-        boundaries=[0, 2047, 0, 2047],
-        offsets=[xoffset, yoffset],
-        max_cpu=ncpus,
-        source_id=selected_ids,
-        max_pixels_per_chunk=max_pixels_per_chunk,
-        oversample_factor=oversample_factor,
-    )
+    # Read the source catalog to perform magnitude-based source selection later
+    source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
+    # mag limit will be scaled according to order 1 sensitivity
+    _, order1_sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, 1)
+    min_relresp_order1 = np.nanmin(order1_sens_response)
 
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
@@ -387,8 +404,39 @@ def contam_corr(
         log.debug(f"wmin={wmin}, wmax={wmax} for order {order}")
         sens_waves, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
 
+        # Constrain the source IDs to those that are below the magnitude limit
+        source_id = None
+        if magnitude_limit is not None:
+            good_ids = _apply_magnitude_limit(
+                source_catalog, sens_response, magnitude_limit, min_relresp_order1
+            )
+            if good_ids is None:
+                log.info(
+                    f"No sources meet the magnitude limit of {magnitude_limit} for order {order}. "
+                    "Skipping contamination correction for this order."
+                )
+                continue
+            source_id = good_ids
+
+        # set up observation object to disperse
+        obs = Observation(
+            direct_image,
+            seg_model,
+            grism_wcs,
+            filter_name,
+            boundaries=[0, 2047, 0, 2047],
+            offsets=[xoffset, yoffset],
+            max_cpu=ncpus,
+            source_id=source_id,
+            max_pixels_per_chunk=max_pixels_per_chunk,
+            oversample_factor=oversample_factor,
+        )
+
         # Compute the dispersion for all sources in this order
-        log.info(f"Creating full simulated grism image for order {order}")
+        log.info(
+            f"Creating full simulated grism image for order {order} including "
+            f"{len(obs.source_ids)} sources"
+        )
         obs.disperse_order(order, wmin, wmax, sens_waves, sens_response)
 
     # Initialize the full-frame simulated grism image
