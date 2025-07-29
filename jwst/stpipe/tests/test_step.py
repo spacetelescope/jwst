@@ -707,7 +707,7 @@ def test_crds_override():
         "SomeOtherStepOriginal", par1=42.0, par2="abc def", override_flat_field=ff_name
     )
 
-    fd = step.get_reference_file(datamodels.open(), "flat_field")
+    fd = step.get_reference_file(datamodels.JwstDataModel(), "flat_field")
     assert fd == ff_name
 
 

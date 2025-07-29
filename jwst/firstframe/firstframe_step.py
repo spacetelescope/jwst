@@ -10,8 +10,8 @@ class FirstFrameStep(Step):
     """
     Set data quality flags for the first group in MIRI ramps.
 
-    A MIRI specific task.  If the number of groups is > than 3,
-    the DO_NOT_USE group data quality flag is added to first group.
+    If the number of groups is > than 3, the DO_NOT_USE group data
+    quality flag is added to first group.
     """
 
     class_alias = "firstframe"

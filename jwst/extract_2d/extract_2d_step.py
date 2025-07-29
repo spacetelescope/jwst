@@ -8,7 +8,7 @@ __all__ = ["Extract2dStep"]
 
 
 class Extract2dStep(Step):
-    """Class that provides method to perform a 2D extraction of spectra."""
+    """Extract 2D spectral cutouts."""
 
     class_alias = "extract_2d"
 

@@ -10,7 +10,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
 from jwst.assign_wcs import AssignWcsStep
-from jwst.background import BackgroundStep
+from jwst.background import BackgroundStep, background_sub_wfss
 from jwst.background.background_sub_wfss import (
     _mask_from_source_cat,
     _ScalingFactorComputer,
@@ -285,6 +285,7 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
         wfss_outlier_percent=0.5,
         wfss_rms_stop=0,
     )
+    assert result is not data
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
@@ -315,6 +316,7 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
         wfss_outlier_percent=0.5,
         wfss_rms_stop=0,
     )
+    assert result is not data
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
@@ -486,3 +488,29 @@ def test_wfss_asn_input(mock_asn_and_data):
     assert result.meta.direct_image == i2dfile.name
     assert result.meta.segmentation_map == segmfile.name
     assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+
+
+def test_missing_bkg(monkeypatch, caplog, make_nrc_wfss_datamodel):
+    """Test for missing background file."""
+    model = make_nrc_wfss_datamodel.copy()
+    step = BackgroundStep()
+    monkeypatch.setattr(step, "get_reference_file", lambda *args: "N/A")
+
+    result = step.run(model)
+    assert result is not model
+    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert "No BKG reference file" in caplog.text
+
+
+def test_bkg_fail(monkeypatch, caplog, make_nrc_wfss_datamodel):
+    """Test for missing background file."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Mock a failure in the background algorithm, for
+    # insufficient pixels
+    monkeypatch.setattr(background_sub_wfss, "_sufficient_background_pixels", lambda *args: False)
+
+    result = BackgroundStep.call(model)
+    assert result is not model
+    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert "Not enough background pixels" in caplog.text
