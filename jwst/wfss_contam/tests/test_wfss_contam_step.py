@@ -37,7 +37,7 @@ def multislitmodel(
         slit = dm.SlitModel()
         slit.meta.wcs = grism_wcs
         slit.meta.wcsinfo.spectral_order = 1
-        slit.source_id = this_source["source_id"]
+        slit.source_id = this_source["label"]
         slit.xstart = int(this_source["xcentroid"] - 10)
         slit.ystart = int(this_source["ycentroid"] - 10)
         slit.data = np.ones((20, 20))
