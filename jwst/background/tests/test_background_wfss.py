@@ -217,7 +217,8 @@ def shared_tests(sci, mask, original_data_mean, dm):
     assert np.isclose(np.nanmean(sci), original_data_mean, atol=tol)
 
     # Verify that the mask extension in the datamodel is populated
-    assert dm.mask.all() == mask.all()
+    np.testing.assert_allclose(dm.mask, mask)
+    assert dm.mask.dtype == np.uint32
 
 
 def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
