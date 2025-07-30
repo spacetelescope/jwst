@@ -1,1 +1,1 @@
-Included background mask used for WFSS data as extension in output datamodel and inetmediary file.
+Included background mask used for WFSS data as extension in output datamodel.
