@@ -11,6 +11,7 @@ from jwst.assign_wcs.tests.test_nirspec import (
     create_nirspec_fs_file,
     create_nirspec_mos_file,
 )
+from jwst.extract_1d.tests.conftest import mock_miri_lrs_fs_func
 from jwst.extract_2d import Extract2dStep
 from jwst.pathloss import PathLossStep
 
@@ -91,10 +92,48 @@ def nirspec_fs_model_extended():
     return create_nirspec_fs_model(source_type="EXTENDED")
 
 
+def mock_get_transform(tfm_from, tfm_to):  # noqa: ARG001
+    """Mock the specific wcs functions needed."""
+    if tfm_from == "detector":
+
+        def return_results(*args, **kwargs):  # noqa: ARG001
+            return 1.0, 1.0, 1.0
+
+        return_results.offset_1 = -300
+        return_results.offset_2 = -300
+        return return_results
+
+    else:
+
+        def return_results(*args, **kwargs):  # noqa: ARG001
+            return 1.0, 1.0
+
+        return return_results
+
+
+@pytest.fixture(scope="module")
+def miri_lrs_model_point():
+    model = mock_miri_lrs_fs_func()
+    model.meta.wcs.get_transform = mock_get_transform
+    model.meta.target.source_type = "POINT"
+    return model
+
+
+@pytest.fixture(scope="module")
+def miri_lrs_model_extended():
+    model = mock_miri_lrs_fs_func()
+    model.meta.wcs.get_transform = mock_get_transform
+    return model
+
+
 def test_pathloss_step_mos_point(nirspec_mos_model_point):
     model = nirspec_mos_model_point.copy()
     result = PathLossStep.call(model)
     assert result.meta.cal_step.pathloss == "COMPLETE"
+
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
 
     # check all slits for appropriate correction
     for slit in result.slits:
@@ -136,6 +175,10 @@ def test_pathloss_step_mos_uniform(nirspec_mos_model_extended):
     result = PathLossStep.call(model)
     assert result.meta.cal_step.pathloss == "COMPLETE"
 
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
+
     # check all slits for appropriate correction
     for slit in result.slits:
         # correction type should be "UNIFORM"
@@ -176,6 +219,10 @@ def test_pathloss_step_fs_point(nirspec_fs_model_point):
     result = PathLossStep.call(model)
     assert result.meta.cal_step.pathloss == "COMPLETE"
 
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
+
     # correction type should be "POINT" for the first slit,
     # with source type set; uniform otherwise
     for i, slit in enumerate(result.slits):
@@ -190,9 +237,43 @@ def test_pathloss_step_fs_uniform(nirspec_fs_model_extended):
     result = PathLossStep.call(model)
     assert result.meta.cal_step.pathloss == "COMPLETE"
 
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
+
     # correction type should be "UNIFORM" for all slits
     for slit in result.slits:
         assert slit.pathloss_correction_type == "UNIFORM"
+
+
+def test_pathloss_step_miri_lrs_point(miri_lrs_model_point):
+    model = miri_lrs_model_point.copy()
+
+    result = PathLossStep.call(model)
+    assert result.meta.cal_step.pathloss == "COMPLETE"
+    assert isinstance(result, datamodels.ImageModel)
+    assert not np.allclose(result.data, model.data)
+    assert np.mean(result.pathloss_point) > 1.0
+
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
+    assert not model.hasattr("pathloss_point")
+
+
+def test_pathloss_step_miri_lrs_extended(miri_lrs_model_extended):
+    model = miri_lrs_model_extended.copy()
+
+    result = PathLossStep.call(model)
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+    assert isinstance(result, datamodels.ImageModel)
+    assert np.allclose(result.data, model.data)
+    assert not result.hasattr("pathloss_point")
+
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
+    assert not model.hasattr("pathloss_point")
 
 
 @pytest.mark.parametrize("mode", ["mos", "fs"])
@@ -224,3 +305,18 @@ def test_pathloss_correction_pars(mode, nirspec_mos_model_point, nirspec_fs_mode
 
     result.close()
     inverse_result.close()
+
+
+def test_pathloss_no_reffile(caplog, nirspec_fs_model_point):
+    model = nirspec_fs_model_point.copy()
+    result = PathLossStep.call(model, override_pathloss="N/A")
+
+    # step is skipped
+    assert result.meta.cal_step.pathloss == "SKIPPED"
+    assert "No PATHLOSS reference file" in caplog.text
+    assert np.all(result.slits[0].data == model.slits[0].data)
+    assert not result.slits[0].hasattr("pathloss_point")
+
+    # make sure input is not modified
+    assert result is not model
+    assert model.meta.cal_step.pathloss is None
