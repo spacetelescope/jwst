@@ -152,11 +152,11 @@ class Coron3Pipeline(Pipeline):
                 psf_input = self.outlier_detection.run(psf_input)
 
             psf_models.append(psf_input)
-            psf_input.close()
 
         # Stack all the PSF images into a single CubeModel
         psf_stack = self.stack_refs.run(psf_models)
         psf_models.close()
+        del psf_models
 
         # Save the resulting PSF stack
         self.save_model(psf_stack, suffix="psfstack")
