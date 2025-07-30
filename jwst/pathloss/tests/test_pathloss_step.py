@@ -11,7 +11,7 @@ from jwst.assign_wcs.tests.test_nirspec import (
     create_nirspec_fs_file,
     create_nirspec_mos_file,
 )
-from jwst.extract_1d.tests.conftest import mock_miri_lrs_fs_func
+from jwst.extract_1d.tests.helpers import mock_miri_lrs_fs_func
 from jwst.extract_2d import Extract2dStep
 from jwst.pathloss import PathLossStep
 
