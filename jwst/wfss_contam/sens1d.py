@@ -53,11 +53,6 @@ def get_photom_data(phot_model, filter_name, pupil, order):
         ref_waves = ref_waves[index].copy()
         relresps = relresps[index].copy()
 
-    # Convert wavelengths from meters to microns, if necessary
-    microns_100 = 1.0e-4  # 100 microns, in meters
-    if ref_waves.max() > 0.0 and ref_waves.max() < microns_100:
-        ref_waves *= 1.0e6
-
     return ref_waves, relresps
 
 
