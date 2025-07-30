@@ -310,37 +310,72 @@ def _validate_orders_against_transform(wcs, spec_orders):
     return np.sort(good_orders)
 
 
-def _apply_magnitude_limit(source_catalog, sens_response, magnitude_limit, min_relresp_order0):
+def _find_min_relresp(sens_waves, sens_response):
+    """
+    Find the minimum relative response in the sensitivity response.
+
+    Helper function is necessary instead of just nanmin because reference file
+    sometimes has zero-valued wavelength/response pairs.
+
+    Parameters
+    ----------
+    sens_waves : np.ndarray
+        Wavelengths corresponding to the sensitivity response.
+    sens_response : np.ndarray
+        Sensitivity response values.
+
+    Returns
+    -------
+    float
+        Minimum relative response value.
+    """
+    good = (sens_waves > 0) & (sens_response > 0) & np.isfinite(sens_waves)
+    return np.nanmin(sens_response[good])
+
+
+def _apply_magnitude_limit(
+    order, source_catalog, sens_wave, sens_response, magnitude_limit, min_relresp_order1
+):
     """
     Rescale the magnitude limit based on the sensitivity response for a given spectral order.
 
     Parameters
     ----------
+    order : int
+        Spectral order for which the magnitude limit is applied.
     source_catalog : astropy.table.Table
         The source catalog containing source IDs and isophotal AB magnitudes.
+    sens_wave : np.ndarray
+        The wavelengths corresponding to the sensitivity response.
     sens_response : np.ndarray
         The sensitivity response for the order.
     magnitude_limit : float
         The isophotal AB magnitude limit for sources to be included in the contamination correction.
-    min_relresp_order0 : float
-        Minimum relative response for order 0, used to scale the magnitude limit.
+    min_relresp_order1 : float
+        Minimum relative response for order 1, used to scale the magnitude limit.
 
     Returns
     -------
     list
         List of source IDs that meet the magnitude limit criteria.
     """
-    # Scale the magnitude limit according to the order sensitivity response
-    order_sens_factor = min_relresp_order0 / np.nanmin(sens_response)
-    order_mag_diff = -2.5 * np.log10(order_sens_factor)
-    order_mag_limit = magnitude_limit - order_mag_diff
+    if order in [0, 1]:
+        # Magnitude limit is set according to order 1 sensitivity response
+        # and order 0 is a special case because it's not dispersed
+        order_mag_limit = magnitude_limit
+    else:
+        # Scale the magnitude limit according to the order sensitivity response
+        order_sens_factor = min_relresp_order1 / _find_min_relresp(sens_wave, sens_response)
+        order_mag_diff = -2.5 * np.log10(order_sens_factor)
+        order_mag_limit = magnitude_limit - order_mag_diff
 
     # Select sources that are brighter than the magnitude limit
     good_sources = source_catalog[source_catalog["isophotal_abmag"] < order_mag_limit]
     if len(good_sources) == 0:
         return None
     log.info(
-        f"Applying magnitude limit of {order_mag_limit:.1f}. Sources selected: {len(good_sources)}"
+        f"Applying magnitude limit of {order_mag_limit:.1f} to order {order}. "
+        f"Sources selected: {len(good_sources)}"
     )
     return good_sources["label"].tolist()
 
@@ -438,10 +473,12 @@ def contam_corr(
         filter_name = filter_kwd
 
     # Read the source catalog to perform magnitude-based source selection later
-    # mag limit will be scaled according to order 0 sensitivity
+    # mag limit will be scaled according to order 1 sensitivity
     source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
-    _, order0_sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order=0)
-    min_relresp_order0 = np.nanmin(order0_sens_response)
+    order1_wave_response, order1_sens_response = get_photom_data(
+        photom, filter_kwd, pupil_kwd, order=1
+    )
+    min_relresp_order1 = _find_min_relresp(order1_wave_response, order1_sens_response)
 
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
@@ -449,13 +486,13 @@ def contam_corr(
         wmin = wavelength_range[order][0]
         wmax = wavelength_range[order][1]
         log.debug(f"wmin={wmin}, wmax={wmax} for order {order}")
-        sens_waves, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
+        sens_wave, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
 
         # Constrain the source IDs to those that are below the magnitude limit
         source_id = None
         if magnitude_limit is not None:
             good_ids = _apply_magnitude_limit(
-                source_catalog, sens_response, magnitude_limit, min_relresp_order0
+                order, source_catalog, sens_wave, sens_response, magnitude_limit, min_relresp_order1
             )
             if good_ids is None:
                 log.info(
@@ -484,7 +521,7 @@ def contam_corr(
             f"Creating full simulated grism image for order {order} including "
             f"{len(obs.source_ids)} sources"
         )
-        obs.disperse_order(order, wmin, wmax, sens_waves, sens_response)
+        obs.disperse_order(order, wmin, wmax, sens_wave, sens_response)
 
     # Initialize the full-frame simulated grism image
     simul_model = datamodels.ImageModel(data=obs.simulated_image)

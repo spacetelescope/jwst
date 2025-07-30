@@ -140,9 +140,10 @@ def test_apply_magnitude_limit(photom_ref_model, source_catalog):
     min_relresp_order1 = 1
     order = -1
     order_idx = np.where(photom_ref_model.phot_table["order"] == order)[0]
+    sens_wave = photom_ref_model.phot_table["wavelength"][order_idx]
     sens_response = photom_ref_model.phot_table["relresponse"][order_idx]
     sources = _apply_magnitude_limit(
-        source_catalog, sens_response, magnitude_limit, min_relresp_order1
+        order, source_catalog, sens_wave, sens_response, magnitude_limit, min_relresp_order1
     )
     assert sources == [17, 39, 51, 82, 93]
 
@@ -152,9 +153,10 @@ def test_apply_magnitude_limit_no_sources(photom_ref_model, source_catalog):
     min_relresp_order1 = 1
     order = -1
     order_idx = np.where(photom_ref_model.phot_table["order"] == order)[0]
+    sens_wave = photom_ref_model.phot_table["wavelength"][order_idx]
     sens_response = photom_ref_model.phot_table["relresponse"][order_idx]
     sources = _apply_magnitude_limit(
-        source_catalog, sens_response, magnitude_limit, min_relresp_order1
+        order, source_catalog, sens_wave, sens_response, magnitude_limit, min_relresp_order1
     )
     assert sources is None
 
