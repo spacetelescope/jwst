@@ -87,12 +87,6 @@ class BackgroundStep(Step):
                 result = input_model.copy()
                 result.meta.cal_step.bkg_subtract = "SKIPPED"
             else:
-                # Save the intermediary file with the background mask
-                if self.save_results:
-                    wfss_mask_bsub = self.make_output_path(suffix="bsub")
-                    self.output_file = wfss_mask_bsub
-                    self.suffix = "bsub"
-                    result.save(wfss_mask_bsub)
                 result.meta.cal_step.bkg_subtract = "COMPLETE"
 
         elif input_model.meta.exposure.type == "NIS_SOSS":
