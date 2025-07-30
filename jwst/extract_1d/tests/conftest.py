@@ -26,8 +26,7 @@ def simple_wcs():
     return helpers.simple_wcs_func()
 
 
-@pytest.fixture()
-def simple_wcs_transpose():
+def simple_wcs_transpose_func():
     """
     Mock a vertical dispersion WCS with a simple callable function.
 
@@ -44,6 +43,20 @@ def simple_wcs_transpose():
         given x and y coordinates.
     """
     return helpers.simple_wcs_transpose_func()
+
+
+@pytest.fixture()
+def simple_wcs_transpose():
+    """
+    Make simple_wcs_transpose_func available as a fixture.
+
+    Returns
+    -------
+    callable
+        A function that will return mock values for RA, Dec, wave,
+        given x and y coordinates.
+    """
+    return simple_wcs_transpose_func()
 
 
 @pytest.fixture()
