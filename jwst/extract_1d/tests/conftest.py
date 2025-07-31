@@ -10,7 +10,12 @@ from jwst.extract_1d.tests import helpers
 @pytest.fixture
 def simple_wcs():
     """
-    Make simple_wcs_func available as a fixture.
+    Mock a horizontal dispersion WCS with a simple callable function.
+
+    Some other expected WCS attributes are also mocked with placeholder values:
+       - bounding_box
+       - get_transform
+       - available_frames
 
     Returns
     -------
@@ -24,7 +29,13 @@ def simple_wcs():
 @pytest.fixture()
 def simple_wcs_transpose():
     """
-    Make simple_wcs_transpose_func available as a fixture.
+    Mock a vertical dispersion WCS with a simple callable function.
+
+    Some other expected WCS attributes are also mocked with placeholder values:
+       - bounding_box
+       - get_transform
+       - backward_transform
+       - available_frames
 
     Returns
     -------
@@ -38,7 +49,9 @@ def simple_wcs_transpose():
 @pytest.fixture()
 def simple_wcs_ifu():
     """
-    Make simple_wcs_ifu_func available as a fixture.
+    Mock an IFU WCS with a simple callable function.
+
+    The bounding_box attribute is also mocked with a placeholder value.
 
     Returns
     -------
@@ -52,7 +65,7 @@ def simple_wcs_ifu():
 @pytest.fixture
 def mock_nirspec_fs_one_slit():
     """
-    Make mock_nirspec_fs_one_slit_func available as a fixture.
+    Mock one slit in NIRSpec FS mode.
 
     Yields
     ------
@@ -67,7 +80,7 @@ def mock_nirspec_fs_one_slit():
 @pytest.fixture()
 def mock_nirspec_mos():
     """
-    Make mock_nirspec_mos_func available as a fixture.
+    Mock three slits in NIRSpec MOS mode.
 
     Yields
     ------
@@ -82,7 +95,7 @@ def mock_nirspec_mos():
 @pytest.fixture()
 def mock_nirspec_bots():
     """
-    Make mock_nirspec_bots_func available as a fixture.
+    Mock a single slit with 10 integrations in NIRSpec BOTS mode.
 
     Yields
     ------
@@ -97,7 +110,7 @@ def mock_nirspec_bots():
 @pytest.fixture()
 def mock_miri_lrs_fs():
     """
-    Make mock_miri_lrs_fs_func available as a fixture.
+    Mock a spectral image in MIRI LRS FS mode.
 
     Yields
     ------
@@ -112,7 +125,7 @@ def mock_miri_lrs_fs():
 @pytest.fixture()
 def mock_miri_ifu():
     """
-    Make mock_miri_ifu_func available as a fixture.
+    Mock an IFU cube in MIRI MRS mode.
 
     Yields
     ------
@@ -127,7 +140,9 @@ def mock_miri_ifu():
 @pytest.fixture
 def mock_niriss_wfss_l2():
     """
-    Make mock_nis_wfss_l2 available as a fixture.
+    Mock 3 slits in NIRISS WFSS mode, level 2 style.
+
+    The slits correspond to a single exposure, with one slit per extracted source.
 
     Yields
     ------
@@ -142,7 +157,10 @@ def mock_niriss_wfss_l2():
 @pytest.fixture()
 def mock_niriss_wfss_l3():
     """
-    Make mock_nis_wfss_l3 available as a fixture.
+    Mock 3 slits in NIRISS WFSS mode, level 3 style.
+
+    Here the container has one MultiSlitModel per source, and each model has one
+    slit per exposure.
 
     Yields
     ------
@@ -158,7 +176,7 @@ def mock_niriss_wfss_l3():
 @pytest.fixture()
 def mock_niriss_soss():
     """
-    Make mock_niriss_soss_func available as a fixture.
+    Mock a multi-integration cube with metadata for NIRISS SOSS mode.
 
     Yields
     ------
