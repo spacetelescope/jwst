@@ -283,6 +283,8 @@ class Dataset:
         self.ystart = input_model.meta.subarray.ystart
         self.xsize = input_model.meta.subarray.xsize
         self.ysize = input_model.meta.subarray.ysize
+        self.fastaxis = input_model.meta.subarray.fastaxis
+        self.slowaxis = input_model.meta.subarray.slowaxis
 
         self.colstart = self.xstart - 1
         self.colstop = self.colstart + self.xsize
@@ -452,7 +454,7 @@ class Dataset:
             else:
                 log.info("NIR subarray data")
                 # Transform the pixeldq array from DMS to detector coords
-                self.dms_to_detector_dq()
+                self.new_dms_to_detector_dq()
                 ngoodside = self.count_good_side_refpixels()
                 ngoodtopbottom = self.count_good_top_bottom_refpixels()
                 # Re-assign the pixeldq array since we transformed it to detector space
@@ -1253,7 +1255,7 @@ class NIRDataset(Dataset):
         """
         #
         #  First transform pixeldq array to detector coordinates
-        self.dms_to_detector_dq()
+        self.new_dms_to_detector_dq()
 
         for integration in range(self.nints):
             for group in range(self.ngroups):
@@ -1261,7 +1263,7 @@ class NIRDataset(Dataset):
                 # Get the reference values from the top and bottom reference
                 # pixels
                 #
-                self.dms_to_detector(integration, group)
+                self.new_dms_to_detector(integration, group)
                 thisgroup = self.group
                 refvalues = self.get_refvalues(thisgroup)
                 self.do_top_bottom_correction(thisgroup, refvalues)
@@ -1272,7 +1274,7 @@ class NIRDataset(Dataset):
                     self.group = thisgroup
                 #
                 #  Now transform back from detector to DMS coordinates.
-                self.detector_to_dms(integration, group)
+                self.new_detector_to_dms(integration, group)
         return
 
     def do_subarray_corrections(self):
@@ -1288,7 +1290,7 @@ class NIRDataset(Dataset):
         # First transform to detector coordinates
         # This transforms the pixeldq array from DMS to detector coordinates,
         # only needs to be done once
-        self.dms_to_detector_dq()
+        self.new_dms_to_detector_dq()
         # Determined refpix indices to use on each group
         refpixindices = np.where(
             (self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse)
@@ -1315,7 +1317,7 @@ class NIRDataset(Dataset):
         for integration in range(self.nints):
             for group in range(self.ngroups):
                 # Get the reference values from the top and bottom reference pixels
-                self.dms_to_detector(integration, group)
+                self.new_dms_to_detector(integration, group)
                 thisgroup = self.group
 
                 if self.odd_even_columns:
@@ -1333,7 +1335,7 @@ class NIRDataset(Dataset):
                     )
                     thisgroup -= refpixvalue
                 #  Now transform back from detector to DMS coordinates.
-                self.detector_to_dms(integration, group)
+                self.new_detector_to_dms(integration, group)
         return
 
     def get_multistripe_refvalues(self, group):
@@ -1425,12 +1427,12 @@ class NIRDataset(Dataset):
         needs separate methods.
         """
         #  First transform pixeldq array to detector coordinates
-        self.dms_to_detector_dq()
+        self.new_dms_to_detector_dq()
 
         for integration_num in range(self.nints):
             for group_num in range(self.ngroups):
                 # Select group and transform to detector frame.
-                self.dms_to_detector(integration_num, group_num)
+                self.new_dms_to_detector(integration_num, group_num)
                 thisgroup = self.group
 
                 refvalues = self.get_multistripe_refvalues(thisgroup)
@@ -1439,9 +1441,47 @@ class NIRDataset(Dataset):
 
                 self.group = thisgroup
                 #  Now transform back from detector to DMS coordinates.
-                self.detector_to_dms(integration_num, group_num)
+                self.new_detector_to_dms(integration_num, group_num)
 
         return
+
+    def new_dms_to_detector(self, integration, group):
+        """
+        Convert data from DMS to detector frame.
+
+        Parameters
+        ----------
+        integration : int
+            Integration number
+        group : int
+            Group number
+        """
+        self.get_group(integration, group)
+        self.group = reffile_utils.science_detector_frame_transform(
+            self.group, self.fastaxis, self.slowaxis
+        )
+
+    def new_detector_to_dms(self, integration, group):
+        """
+        Convert data from detector to DMS frame.
+
+        Parameters
+        ----------
+        integration : int
+            Integration number
+        group : int
+            Group number
+        """
+        self.group = reffile_utils.detector_science_frame_transform(
+            self.group, self.fastaxis, self.slowaxis
+        )
+        self.restore_group(integration, group)
+
+    def new_dms_to_detector_dq(self):
+        """Convert dq data from DMS to detector frame."""
+        self.pixeldq = reffile_utils.science_detector_frame_transform(
+            self.pixeldq, self.fastaxis, self.slowaxis
+        )
 
 
 class NRS1Dataset(NIRDataset):

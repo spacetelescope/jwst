@@ -564,6 +564,42 @@ def science_detector_frame_transform(data, fastaxis, slowaxis):
     return data
 
 
+def detector_science_frame_transform(data, fastaxis, slowaxis):
+    """
+    Swap data array between detector and science frames.
+
+    Use the fastaxis and slowaxis keywords to invert
+    and/or transpose data array axes to move between the
+    detector frame and the science frame.
+
+    Parameters
+    ----------
+    data : np.array
+        Science array containing at least two dimensions.
+    fastaxis : int
+        Value of the fastaxis keyword for the data array
+        to be transformed.
+    slowaxis : int
+        Value of the slowaxis keyword for the data array
+        to be transformed.
+
+    Returns
+    -------
+    np.array
+        Data array transformed between detector and
+        science frames.
+    """
+    # If fastaxis is x-axis
+    if np.abs(fastaxis) == 1:
+        # Use sign of keywords to possibly reverse the ordering of the axes.
+        data = data[..., :: slowaxis // np.abs(slowaxis), :: fastaxis // np.abs(fastaxis)]
+    # Else fastaxis is y-axis, also need to transpose array
+    else:
+        data = np.swapaxes(data, -2, -1)
+        data = data[..., :: fastaxis // np.abs(fastaxis), :: slowaxis // np.abs(slowaxis)]
+    return data
+
+
 class MatchRowError(Exception):
     """Raised when more than one row is matched in a FITS table or list of dict."""
 
