@@ -13,6 +13,8 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     """
     Retrieve wavelength and response data from photom ref file.
 
+    Wavelengths from the reference file are expected to be in units of microns.
+
     Parameters
     ----------
     phot_model : `jwst.datamodels.NrcWfssPhotomModel` or `jwst.datamodels.NisWfssPhotomModel`
@@ -27,9 +29,10 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     Returns
     -------
     ref_waves : float array
-        Array of wavelengths from the ref file
+        Wavelengths from the ref file.
     relresps : float array
-        Array of response (flux calibration) values from the ref file
+        Wavelength-dependent response (flux calibration) values from the ref file,
+        same shape as `ref_waves`.
     """
     # Get the appropriate row of data from the reference table
     phot_table = phot_model.phot_table
