@@ -116,7 +116,7 @@ def test_multistripe_subarray_model():
 @pytest.fixture
 def mock_sci():
     """
-    Fixture to create a mock science model in a subarray.
+    Create a mock science model in a subarray.
 
     Returns
     -------
@@ -136,7 +136,7 @@ def mock_sci():
 @pytest.fixture
 def mock_bkg():
     """
-    Fixture to create a mock background model that is full detector size.
+    Create a mock background model that is full detector size.
 
     Returns
     -------

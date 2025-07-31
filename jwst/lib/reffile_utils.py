@@ -13,6 +13,7 @@ __all__ = [
     "stripe_read",
     "generate_stripe_array",
     "science_detector_frame_transform",
+    "detector_science_frame_transform",
     "MatchRowError",
     "find_row",
 ]
