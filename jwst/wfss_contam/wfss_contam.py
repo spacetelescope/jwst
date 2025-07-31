@@ -481,6 +481,19 @@ def contam_corr(
         )
         min_relresp_order1 = _find_min_relresp(order1_wave_response, order1_sens_response)
 
+    # set up observation object to disperse
+    obs = Observation(
+        direct_image,
+        seg_model,
+        grism_wcs,
+        filter_name,
+        boundaries=[0, 2047, 0, 2047],
+        offsets=[xoffset, yoffset],
+        max_cpu=ncpus,
+        max_pixels_per_chunk=max_pixels_per_chunk,
+        oversample_factor=oversample_factor,
+    )
+
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
         wavelength_range = waverange.get_wfss_wavelength_range(filter_name, [order])
@@ -508,26 +521,9 @@ def contam_corr(
                 continue
             selected_ids = good_ids
 
-        # set up observation object to disperse
-        obs = Observation(
-            direct_image,
-            seg_model,
-            grism_wcs,
-            filter_name,
-            boundaries=[0, 2047, 0, 2047],
-            offsets=[xoffset, yoffset],
-            max_cpu=ncpus,
-            source_id=selected_ids,
-            max_pixels_per_chunk=max_pixels_per_chunk,
-            oversample_factor=oversample_factor,
-        )
-
         # Compute the dispersion for all sources in this order
-        log.info(
-            f"Creating full simulated grism image for order {order} including "
-            f"{len(obs.source_ids)} sources"
-        )
-        obs.disperse_order(order, wmin, wmax, sens_waves, sens_response)
+        log.info(f"Creating full simulated grism image for order {order}")
+        obs.disperse_order(order, wmin, wmax, sens_waves, sens_response, selected_ids)
 
     # Initialize the full-frame simulated grism image
     simul_model = datamodels.ImageModel(data=obs.simulated_image)
