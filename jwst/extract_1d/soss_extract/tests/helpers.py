@@ -10,6 +10,8 @@ ORDER2_SCALING = 2.0
 TRACE_END_IDX = [DATA_SHAPE[1], 180]
 SPECTRAL_SLOPE = 2
 
+__all__ = ["f_lam"]
+
 
 def f_lam(wl, m=SPECTRAL_SLOPE, b=0):
     """

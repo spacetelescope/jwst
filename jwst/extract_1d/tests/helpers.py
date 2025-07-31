@@ -5,6 +5,24 @@ from jwst.assign_wcs.util import wcs_bbox_from_shape
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.exp_to_source import multislit_to_container
 
+__all__ = [
+    "simple_wcs_func",
+    "simple_wcs_transpose_func",
+    "simple_wcs_ifu_func",
+    "mock_nirspec_fs_one_slit_func",
+    "mock_nirspec_mos_func",
+    "mock_nirspec_bots_func",
+    "mock_miri_lrs_fs_func",
+    "mock_miri_ifu_func",
+    "mock_nis_wfss_l2",
+    "mock_nis_wfss_l3",
+    "mock_niriss_soss_func",
+    "mock_niriss_soss_256_func",
+    "mock_niriss_soss_96_func",
+    "make_spec_model",
+    "make_tso_specmodel",
+]
+
 
 def simple_wcs_func():
     """
