@@ -456,7 +456,7 @@ def contam_corr(
     spec_orders = np.asarray(waverange.order)
     spec_orders = _constrain_orders(orders, spec_orders)
     spec_orders = _validate_orders_against_transform(grism_wcs, spec_orders)
-    log.debug(f"Spectral orders requested = {[int(x) for x in spec_orders]}")
+    log.info(f"Spectral orders requested = {[int(x) for x in spec_orders]}")
 
     # Get the FILTER and PUPIL wheel positions, for use later
     filter_kwd = input_model.meta.instrument.filter
@@ -474,11 +474,12 @@ def contam_corr(
 
     # Read the source catalog to perform magnitude-based source selection later
     # mag limit will be scaled according to order 1 sensitivity
-    source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
-    order1_wave_response, order1_sens_response = get_photom_data(
-        photom, filter_kwd, pupil_kwd, order=1
-    )
-    min_relresp_order1 = _find_min_relresp(order1_wave_response, order1_sens_response)
+    if magnitude_limit is not None:
+        source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
+        order1_wave_response, order1_sens_response = get_photom_data(
+            photom, filter_kwd, pupil_kwd, order=1
+        )
+        min_relresp_order1 = _find_min_relresp(order1_wave_response, order1_sens_response)
 
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
@@ -486,13 +487,18 @@ def contam_corr(
         wmin = wavelength_range[order][0]
         wmax = wavelength_range[order][1]
         log.debug(f"wmin={wmin}, wmax={wmax} for order {order}")
-        sens_wave, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
+        sens_waves, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
 
         # Constrain the source IDs to those that are below the magnitude limit
-        source_id = None
+        selected_ids = None
         if magnitude_limit is not None:
             good_ids = _apply_magnitude_limit(
-                order, source_catalog, sens_wave, sens_response, magnitude_limit, min_relresp_order1
+                order,
+                source_catalog,
+                sens_waves,
+                sens_response,
+                magnitude_limit,
+                min_relresp_order1,
             )
             if good_ids is None:
                 log.info(
@@ -500,7 +506,7 @@ def contam_corr(
                     "Skipping contamination correction for this order."
                 )
                 continue
-            source_id = good_ids
+            selected_ids = good_ids
 
         # set up observation object to disperse
         obs = Observation(
@@ -511,7 +517,7 @@ def contam_corr(
             boundaries=[0, 2047, 0, 2047],
             offsets=[xoffset, yoffset],
             max_cpu=ncpus,
-            source_id=source_id,
+            source_id=selected_ids,
             max_pixels_per_chunk=max_pixels_per_chunk,
             oversample_factor=oversample_factor,
         )
@@ -521,7 +527,7 @@ def contam_corr(
             f"Creating full simulated grism image for order {order} including "
             f"{len(obs.source_ids)} sources"
         )
-        obs.disperse_order(order, wmin, wmax, sens_wave, sens_response)
+        obs.disperse_order(order, wmin, wmax, sens_waves, sens_response)
 
     # Initialize the full-frame simulated grism image
     simul_model = datamodels.ImageModel(data=obs.simulated_image)
