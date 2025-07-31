@@ -3,6 +3,7 @@ import pytest
 from stdatamodels.jwst.datamodels import ImageModel, RampModel, ReadnoiseModel, WfssBkgModel
 
 from jwst.lib.reffile_utils import (
+    detector_science_frame_transform,
     find_row,
     generate_stripe_array,
     get_subarray_model,
@@ -114,7 +115,14 @@ def test_multistripe_subarray_model():
 
 @pytest.fixture
 def mock_sci():
-    """Fixture to create a mock science model in a subarray."""
+    """
+    Fixture to create a mock science model in a subarray.
+
+    Returns
+    -------
+    sci : ImageModel
+        The mock science datamodel
+    """
     sci = ImageModel(data=np.ones((64, 2048)), dq=np.zeros((64, 2048), dtype=int))
     sci.meta.subarray.xstart = 1
     sci.meta.subarray.ystart = 1985
@@ -127,7 +135,14 @@ def mock_sci():
 
 @pytest.fixture
 def mock_bkg():
-    """Fixture to create a mock background model that is full detector size."""
+    """
+    Fixture to create a mock background model that is full detector size.
+
+    Returns
+    -------
+    bkg : WfssBkgModel
+        The mock background datamodel
+    """
     bkg = WfssBkgModel(data=np.ones((2048, 2048)))
     bkg.meta.subarray.xstart = 1
     bkg.meta.subarray.ystart = 1
@@ -153,3 +168,41 @@ def test_get_subarray_model_typeerror(mock_sci, mock_bkg):
 
     with pytest.raises(TypeError):
         get_subarray_model("not_a_model", mock_bkg)
+
+
+@pytest.mark.parametrize(
+    "fastaxis, slowaxis, result",
+    [
+        (1, 2, np.array([[1, 2], [3, 4]])),
+        (1, -2, np.array([[3, 4], [1, 2]])),
+        (-1, 2, np.array([[2, 1], [4, 3]])),
+        (-1, -2, np.array([[4, 3], [2, 1]])),
+        (2, 1, np.array([[1, 3], [2, 4]])),
+        (2, -1, np.array([[2, 4], [1, 3]])),
+        (-2, 1, np.array([[3, 1], [4, 2]])),
+        (-2, -1, np.array([[4, 2], [3, 1]])),
+    ],
+)
+def test_science_detector_frame_transform(fastaxis, slowaxis, result):
+    detector_array = np.array([[1, 2], [3, 4]])
+    returned = science_detector_frame_transform(detector_array.copy(), fastaxis, slowaxis)
+    assert np.allclose(returned, result)
+
+
+@pytest.mark.parametrize(
+    "fastaxis, slowaxis, input",
+    [
+        (1, 2, np.array([[1, 2], [3, 4]])),
+        (1, -2, np.array([[3, 4], [1, 2]])),
+        (-1, 2, np.array([[2, 1], [4, 3]])),
+        (-1, -2, np.array([[4, 3], [2, 1]])),
+        (2, 1, np.array([[1, 3], [2, 4]])),
+        (2, -1, np.array([[2, 4], [1, 3]])),
+        (-2, 1, np.array([[3, 1], [4, 2]])),
+        (-2, -1, np.array([[4, 2], [3, 1]])),
+    ],
+)
+def test_detector_science_frame_transform(fastaxis, slowaxis, input):
+    detector_array = np.array([[1, 2], [3, 4]])
+    returned = detector_science_frame_transform(input.copy(), fastaxis, slowaxis)
+    assert np.allclose(returned, detector_array)

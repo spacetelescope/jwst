@@ -165,6 +165,24 @@ MIR_reference_sections = {
         "data": (0, 1024, 3, 1032, 4)
         },
 }
+
+NIR_DETECTORS = [
+    "GUIDER1",
+    "GUIDER2",
+    "NRCA1",
+    "NRCA2",
+    "NRCA3",
+    "NRCA4",
+    "NRCALONG",
+    "NRCB1",
+    "NRCB2",
+    "NRCB3",
+    "NRCB4",
+    "NRCBLONG",
+    "NIRISS",
+    "NRS1",
+    "NRS2"
+]
 # fmt: on
 
 #
@@ -178,21 +196,6 @@ SUBARRAY_SKIPPED = 3
 __all__ = [
     "Dataset",
     "NIRDataset",
-    "NRS1Dataset",
-    "NRS2Dataset",
-    "NRCA1Dataset",
-    "NRCA2Dataset",
-    "NRCA3Dataset",
-    "NRCA4Dataset",
-    "NRCALONGDataset",
-    "NRCB1Dataset",
-    "NRCB2Dataset",
-    "NRCB3Dataset",
-    "NRCB4Dataset",
-    "NRCBLONGDataset",
-    "NIRISSDataset",
-    "GUIDER1Dataset",
-    "GUIDER2Dataset",
     "MIRIDataset",
     "create_dataset",
     "correct_model",
@@ -454,7 +457,7 @@ class Dataset:
             else:
                 log.info("NIR subarray data")
                 # Transform the pixeldq array from DMS to detector coords
-                self.new_dms_to_detector_dq()
+                self.dms_to_detector_dq()
                 ngoodside = self.count_good_side_refpixels()
                 ngoodtopbottom = self.count_good_top_bottom_refpixels()
                 # Re-assign the pixeldq array since we transformed it to detector space
@@ -1255,7 +1258,7 @@ class NIRDataset(Dataset):
         """
         #
         #  First transform pixeldq array to detector coordinates
-        self.new_dms_to_detector_dq()
+        self.dms_to_detector_dq()
 
         for integration in range(self.nints):
             for group in range(self.ngroups):
@@ -1263,7 +1266,7 @@ class NIRDataset(Dataset):
                 # Get the reference values from the top and bottom reference
                 # pixels
                 #
-                self.new_dms_to_detector(integration, group)
+                self.dms_to_detector(integration, group)
                 thisgroup = self.group
                 refvalues = self.get_refvalues(thisgroup)
                 self.do_top_bottom_correction(thisgroup, refvalues)
@@ -1274,7 +1277,7 @@ class NIRDataset(Dataset):
                     self.group = thisgroup
                 #
                 #  Now transform back from detector to DMS coordinates.
-                self.new_detector_to_dms(integration, group)
+                self.detector_to_dms(integration, group)
         return
 
     def do_subarray_corrections(self):
@@ -1290,7 +1293,7 @@ class NIRDataset(Dataset):
         # First transform to detector coordinates
         # This transforms the pixeldq array from DMS to detector coordinates,
         # only needs to be done once
-        self.new_dms_to_detector_dq()
+        self.dms_to_detector_dq()
         # Determined refpix indices to use on each group
         refpixindices = np.where(
             (self.pixeldq & refdq == refdq) & (self.pixeldq & donotuse != donotuse)
@@ -1317,7 +1320,7 @@ class NIRDataset(Dataset):
         for integration in range(self.nints):
             for group in range(self.ngroups):
                 # Get the reference values from the top and bottom reference pixels
-                self.new_dms_to_detector(integration, group)
+                self.dms_to_detector(integration, group)
                 thisgroup = self.group
 
                 if self.odd_even_columns:
@@ -1335,7 +1338,7 @@ class NIRDataset(Dataset):
                     )
                     thisgroup -= refpixvalue
                 #  Now transform back from detector to DMS coordinates.
-                self.new_detector_to_dms(integration, group)
+                self.detector_to_dms(integration, group)
         return
 
     def get_multistripe_refvalues(self, group):
@@ -1427,12 +1430,12 @@ class NIRDataset(Dataset):
         needs separate methods.
         """
         #  First transform pixeldq array to detector coordinates
-        self.new_dms_to_detector_dq()
+        self.dms_to_detector_dq()
 
         for integration_num in range(self.nints):
             for group_num in range(self.ngroups):
                 # Select group and transform to detector frame.
-                self.new_dms_to_detector(integration_num, group_num)
+                self.dms_to_detector(integration_num, group_num)
                 thisgroup = self.group
 
                 refvalues = self.get_multistripe_refvalues(thisgroup)
@@ -1441,11 +1444,11 @@ class NIRDataset(Dataset):
 
                 self.group = thisgroup
                 #  Now transform back from detector to DMS coordinates.
-                self.new_detector_to_dms(integration_num, group_num)
+                self.detector_to_dms(integration_num, group_num)
 
         return
 
-    def new_dms_to_detector(self, integration, group):
+    def dms_to_detector(self, integration, group):
         """
         Convert data from DMS to detector frame.
 
@@ -1461,7 +1464,7 @@ class NIRDataset(Dataset):
             self.group, self.fastaxis, self.slowaxis
         )
 
-    def new_detector_to_dms(self, integration, group):
+    def detector_to_dms(self, integration, group):
         """
         Convert data from detector to DMS frame.
 
@@ -1477,613 +1480,11 @@ class NIRDataset(Dataset):
         )
         self.restore_group(integration, group)
 
-    def new_dms_to_detector_dq(self):
+    def dms_to_detector_dq(self):
         """Convert dq data from DMS to detector frame."""
         self.pixeldq = reffile_utils.science_detector_frame_transform(
             self.pixeldq, self.fastaxis, self.slowaxis
         )
-
-
-class NRS1Dataset(NIRDataset):
-    """
-    Handle NRS1 transformations between DMS and detector frames.
-
-    NRS1 data is flipped over the line Y=X.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRS1 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = np.swapaxes(self.group, 0, 1)
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRS1 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = np.swapaxes(self.group, 0, 1)
-        self.restore_group(integration, group)
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)
-
-
-class NRS2Dataset(NIRDataset):
-    """
-    Handle NRS2 transformations between DMS and detector frames.
-
-    NRS2 data is flipped over the line Y=X, then rotated 180 degrees.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRS2 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = np.swapaxes(self.group, 0, 1)[::-1, ::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = np.swapaxes(self.pixeldq, 0, 1)[::-1, ::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRS2 data from detector to DMS frame.
-
-        The inverse of the above is to rotate 180 degrees, then flip over the line Y=X
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = np.swapaxes(self.group[::-1, ::-1], 0, 1)
-        self.restore_group(integration, group)
-
-
-class NRCA1Dataset(NIRDataset):
-    """
-    Handle NRCA1 transformations between DMS and detector frames.
-
-    NRCA1 data is flipped in the X direction.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCA1 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[:, ::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[:, ::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCA1 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[:, ::-1]
-        self.restore_group(integration, group)
-
-
-class NRCA2Dataset(NIRDataset):
-    """
-    Handle NRCA2 transformations between DMS and detector frames.
-
-    NRCA2 data is flipped in Y.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCA2 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCA2 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[::-1]
-        self.restore_group(integration, group)
-
-
-class NRCA3Dataset(NIRDataset):
-    """
-    Handle NRCA3 transformations between DMS and detector frames.
-
-    NRCA3 data is flipped in X.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCA3 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[:, ::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[:, ::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCA3 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[:, ::-1]
-        self.restore_group(integration, group)
-
-
-class NRCA4Dataset(NIRDataset):
-    """
-    Handle NRCA4 transformations between DMS and detector frames.
-
-    NRCA4 data is flipped in Y.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCA4 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCA4 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[::-1]
-        self.restore_group(integration, group)
-
-
-class NRCALONGDataset(NIRDataset):
-    """
-    Handle NRCALONG transformations between DMS and detector frames.
-
-    NRCALONG data is flipped in X.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCALONG data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[:, ::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[:, ::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCALONG data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[:, ::-1]
-        self.restore_group(integration, group)
-
-
-class NRCB1Dataset(NIRDataset):
-    """
-    Handle NRCB1 transformations between DMS and detector frames.
-
-    NRCB1 data is flipped in Y.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCB1 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCB1 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[::-1]
-        self.restore_group(integration, group)
-
-
-class NRCB2Dataset(NIRDataset):
-    """
-    Handle NRCB2 transformations between DMS and detector frames.
-
-    NRCB2 data is flipped in X.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCB2 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[:, ::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[:, ::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCB2 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[:, ::-1]
-        self.restore_group(integration, group)
-
-
-class NRCB3Dataset(NIRDataset):
-    """
-    Handle NRCB3 transformations between DMS and detector frames.
-
-    NRCB3 data is flipped in Y.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCB3 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCB3 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[::-1]
-        self.restore_group(integration, group)
-
-
-class NRCB4Dataset(NIRDataset):
-    """
-    Handle NRCB4 transformations between DMS and detector frames.
-
-    NRCB4 data is flipped in X.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCB4 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[:, ::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[:, ::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCB4 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[:, ::-1]
-        self.restore_group(integration, group)
-
-
-class NRCBLONGDataset(NIRDataset):
-    """
-    Handle NRCBLONG transformations between DMS and detector frames.
-
-    NRCBLONG data is flipped in Y.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NRCBLONG data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NRCBLONG data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[::-1]
-        self.restore_group(integration, group)
-
-
-class NIRISSDataset(NIRDataset):
-    """
-    Handle NIRISS transformations between DMS and detector frames.
-
-    NIRISS data is rotated 180 degrees then flipped across the line Y=X.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert NIRISS data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = np.swapaxes(self.group[::-1, ::-1], 0, 1)
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = np.swapaxes(self.pixeldq[::-1, ::-1], 0, 1)
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert NIRISS data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = np.swapaxes(self.group, 0, 1)[::-1, ::-1]
-        self.restore_group(integration, group)
-
-
-class GUIDER1Dataset(NIRDataset):
-    """
-    Handle GUIDER1 transformations between DMS and detector frames.
-
-    GUIDER1 data is flipped in X and Y.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert GUIDER1 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[::-1, ::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[::-1, ::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert GUIDER1 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[::-1, ::-1]
-        self.restore_group(integration, group)
-
-
-class GUIDER2Dataset(NIRDataset):
-    """
-    Handle GUIDER2 transformations between DMS and detector frames.
-
-    GUIDER2 data is flipped in X.
-    """
-
-    def dms_to_detector(self, integration, group):
-        """
-        Convert GUIDER2 data from DMS to detector frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.get_group(integration, group)
-        self.group = self.group[:, ::-1]
-
-    def dms_to_detector_dq(self):
-        """Convert dq data from DMS to detector frame."""
-        self.pixeldq = self.pixeldq[:, ::-1]
-
-    def detector_to_dms(self, integration, group):
-        """
-        Convert GUIDER2 data from detector to DMS frame.
-
-        Parameters
-        ----------
-        integration : int
-            Integration number
-        group : int
-            Group number
-        """
-        self.group = self.group[:, ::-1]
-        self.restore_group(integration, group)
 
 
 class MIRIDataset(Dataset):
@@ -2460,134 +1861,8 @@ def create_dataset(
 
     if detector[:3] == "MIR":
         return MIRIDataset(input_model, odd_even_rows, conv_kernel_params)
-    elif detector == "NRS1":
-        return NRS1Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRS2":
-        return NRS2Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCA1":
-        return NRCA1Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCA2":
-        return NRCA2Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCA3":
-        return NRCA3Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCA4":
-        return NRCA4Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCALONG":
-        return NRCALONGDataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCB1":
-        return NRCB1Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCB2":
-        return NRCB2Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCB3":
-        return NRCB3Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCB4":
-        return NRCB4Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NRCBLONG":
-        return NRCBLONGDataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "NIS":
-        return NIRISSDataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "GUIDER1":
-        return GUIDER1Dataset(
-            input_model,
-            odd_even_columns,
-            use_side_ref_pixels,
-            side_smoothing_length,
-            side_gain,
-            conv_kernel_params,
-        )
-    elif detector == "GUIDER2":
-        return GUIDER2Dataset(
+    elif detector in NIR_DETECTORS:
+        return NIRDataset(
             input_model,
             odd_even_columns,
             use_side_ref_pixels,
