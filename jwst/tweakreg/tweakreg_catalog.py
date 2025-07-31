@@ -2,6 +2,7 @@ import inspect
 import logging
 import warnings
 
+import astropy.units as u
 import numpy as np
 from astropy.convolution import Gaussian2DKernel, convolve
 from astropy.stats import SigmaClip, gaussian_fwhm_to_sigma
@@ -160,7 +161,7 @@ def _convolve_data(data, kernel_fwhm, mask=None):
 
 def _rename_columns(sources):
     """
-    Rename catalog columns to be consistent between the three star finders.
+    Rename catalog columns and add astropy units to be consistent between the three star finders.
 
     Table is modified in place.
 
@@ -178,6 +179,10 @@ def _rename_columns(sources):
     for old_col, new_col in rename_map.items():
         if old_col in sources.colnames:
             sources.rename_column(old_col, new_col)
+    units_map = {"orientation": u.deg}
+    for col, unit in units_map.items():
+        if col in sources.colnames:
+            sources[col] = u.Quantity(sources[col], unit=unit)
 
 
 def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs):

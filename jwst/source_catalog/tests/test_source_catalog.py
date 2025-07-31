@@ -220,6 +220,13 @@ def test_source_catalog_point_sources(finder, nircam_model, tmp_cwd):
     cat_name = "step_SourceCatalogStep_cat.ecsv"
     assert Path(cat_name).exists()
 
+    # test coverage for bug that iraf orientation did not have units
+    assert "orientation" in cat.colnames
+    if finder != "dao":
+        assert cat["orientation"].unit == "deg"
+    else:
+        assert np.all(np.isnan(cat["orientation"]))
+
     if finder == "segmentation":
         segm_name = "step_SourceCatalogStep_segm.fits"
         assert Path(segm_name).exists()

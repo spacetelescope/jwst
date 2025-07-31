@@ -28,7 +28,7 @@ def mock_rampfiles(tmp_path_factory):
     data[1, 1, ...] += np.arange(3) * 0.0001
     pixdq = np.ones(shape=(nrows, ncols), dtype=int)
     gdq = np.ones(shape=(nints, ngroups, nrows, ncols), dtype=int)
-    with datamodels.open(data=data) as model:
+    with datamodels.JwstDataModel(data=data) as model:
         model.meta.observation.date = "2015-10-13"
         model.meta.instrument.gwa_tilt = 37.0610
         model.save(diff_exts)

@@ -12,7 +12,7 @@ __all__ = ["SpectralLeakStep"]
 
 class SpectralLeakStep(Step):
     """
-    Apply a spectral leak correction to the Channel 3A of MIRI MRS data.
+    Apply a spectral leak correction to Channel 3A of MIRI MRS data.
 
     The MIRI MRS has a spectral leak in which 6 micron light leaks into the
     12 micron channel.  This step applies a correction to the 12 micron channel.
