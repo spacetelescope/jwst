@@ -28,8 +28,8 @@ def test_get_photom_data(photom_ref_model):
 
     # get the flux scaling out of the table: F200W is the 3rd row
     scalar_conversion = refmodel.phot_table["photmjsr"][2]
-    assert ref_relresp[0] == 10 * scalar_conversion
-    assert ref_relresp[-1] == 99 * scalar_conversion
+    assert np.isclose(ref_relresp[0], 10 * scalar_conversion)
+    assert np.isclose(ref_relresp[-1], 99 * scalar_conversion)
 
 
 def test_create_1d_sens(photom_ref_model):
