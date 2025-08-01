@@ -11,6 +11,24 @@ from jwst.refpix.reference_pixels import (
     create_dataset,
 )
 
+AXES = {
+    "NRCA1": (-1, 2),
+    "NRCA2": (1, -2),
+    "NRCA3": (-1, 2),
+    "NRCA4": (1, -2),
+    "NRCALONG": (-1, 2),
+    "NRCB1": (1, -2),
+    "NRCB2": (-1, 2),
+    "NRCB3": (1, -2),
+    "NRCB4": (-1, 2),
+    "NRCBLONG": (1, -2),
+    "NRS1": (2, 1),
+    "NRS2": (-2, -1),
+    "NIS": (-2, -1),
+    "GUIDER1": (-2, -1),
+    "GUIDER2": (2, -1),
+}
+
 conv_kernel_params = {
     "refpix_algorithm": "median",
     "sirs_kernel_model": None,
@@ -26,7 +44,6 @@ def test_refpix_subarray_miri():
 
     For MIRI, no reference pixel correction is performed on subarray data
     No changes should be seen in the data arrays before and after correction
-
     """
     ngroups = 3
     ysize = 22
@@ -257,6 +274,7 @@ def test_odd_even_amp_nirspec(detector, ysize, odd_even):
     # make ramp model
     im = make_rampmodel(ngroups, ysize, xsize, instrument="NIRSPEC", fill_value=0.0)
     im.meta.instrument.detector = detector
+    im.meta.subarray.fastaxis, im.meta.subarray.slowaxis = AXES[detector]
 
     # check for irs2 data
     if ysize == 3200:
@@ -495,6 +513,8 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     input_model.data[0, 0, :, :4] = left_rpix
     input_model.pixeldq[:4, :] = dqflags.pixel["REFERENCE_PIXEL"]
     input_model.pixeldq[:, :4] = dqflags.pixel["REFERENCE_PIXEL"]
+    detector = input_model.meta.instrument.detector
+    input_model.meta.subarray.fastaxis, input_model.meta.subarray.slowaxis = AXES[detector]
 
     init_dataset = create_dataset(
         input_model,
@@ -545,6 +565,8 @@ def test_do_corrections_subarray(setup_subarray_cube):
     input_model.data[0, 0, :, :4] = left_rpix
     input_model.pixeldq[:4, :] = dqflags.pixel["REFERENCE_PIXEL"]
     input_model.pixeldq[:, :4] = dqflags.pixel["REFERENCE_PIXEL"]
+    detector = input_model.meta.instrument.detector
+    input_model.meta.subarray.fastaxis, input_model.meta.subarray.slowaxis = AXES[detector]
 
     init_dataset = create_dataset(
         input_model,
@@ -607,6 +629,7 @@ def test_do_corrections_subarray_4amp(setup_subarray_cube):
     input_model.data[0, 0, 4:-4, 1025:1536:2] = dataval + bottom_rpix_c_even + side_rpix_mean
     input_model.data[0, 0, 4:-4, 1536:2044:2] = dataval + bottom_rpix_d_odd + side_rpix_mean
     input_model.data[0, 0, 4:-4, 1537:2044:2] = dataval + bottom_rpix_d_even + side_rpix_mean
+    input_model.meta.subarray.fastaxis, input_model.meta.subarray.slowaxis = AXES["NRCA1"]
 
     input_model.data[0, 0, :4, 0:512:2] = bottom_rpix_a_odd
     input_model.data[0, 0, :4, 1:512:2] = bottom_rpix_a_even
@@ -840,8 +863,9 @@ def make_rampmodel(ngroups, ysize, xsize, instrument="MIRI", fill_value=None):
         Number of columns in created data
     instrument : str
         Instrument name
-    full_value : float or None
+    fill_value : float or None
         Fill value for data
+
     Returns
     -------
     dm_ramp : jwst RampModel
@@ -866,6 +890,7 @@ def make_rampmodel(ngroups, ysize, xsize, instrument="MIRI", fill_value=None):
         dm_ramp.meta.instrument.name = "NIRSPEC"
         dm_ramp.meta.instrument.detector = "NRS1"
         dm_ramp.meta.exposure.type = "NRS_FIXEDSLIT"
+        dm_ramp.meta.subarray.fastaxis, dm_ramp.meta.subarray.slowaxis = AXES["NRS1"]
         if ysize > 2048:
             dm_ramp.meta.exposure.readpatt = "NRSIRS2"
             dm_ramp.meta.exposure.nrs_normal = 16
@@ -877,6 +902,8 @@ def make_rampmodel(ngroups, ysize, xsize, instrument="MIRI", fill_value=None):
         dm_ramp.meta.instrument.detector = "MIRIMAGE"
         dm_ramp.meta.instrument.filter = "F560W"
         dm_ramp.meta.exposure.type = "MIR_IMAGE"
+        dm_ramp.meta.subarray.fastaxis = 1
+        dm_ramp.meta.subarray.slowaxis = 2
 
     dm_ramp.meta.instrument.band = "N/A"
     dm_ramp.meta.observation.date = "2016-06-01"
@@ -916,6 +943,7 @@ def setup_cube():
         data_model.meta.instrument.detector = detector
         data_model.meta.observation.date = "2019-10-14"
         data_model.meta.observation.time = "16:44:12.000"
+        data_model.meta.subarray.fastaxis, data_model.meta.subarray.slowaxis = AXES[detector]
 
         return data_model
 
@@ -1087,6 +1115,7 @@ def test_preserve_refpix(detector, irs2, preserve):
     # make ramp model
     im = make_rampmodel(ngroups, ysize, xsize, instrument="NIRSPEC", fill_value=0.0)
     im.meta.instrument.detector = detector
+    im.meta.subarray.fastaxis, im.meta.subarray.slowaxis = AXES[detector]
 
     # run the step
     out = RefPixStep.call(im, preserve_irs2_refpix=preserve)
