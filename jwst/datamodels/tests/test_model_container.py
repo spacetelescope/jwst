@@ -1,6 +1,7 @@
 import os
 import warnings
 
+import numpy as np
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 from stdatamodels.exceptions import NoTypeWarning
@@ -179,3 +180,26 @@ def test_open_kwargs(container):
             # but schema can be passed all the way through to DataModel.__init__ on the
             # individual datamodels, and cause AttributeError
             ModelContainer(fnames, schema=wrong_schema)
+
+
+def test_copy(container):
+    # make a deep copy of a container
+    container_copy = container.copy()
+
+    assert container.asn_table is not container_copy.asn_table
+    assert container.asn_table == container_copy.asn_table
+    assert container.asn_exptypes == container_copy.asn_exptypes
+    assert container.asn_n_members == container_copy.asn_n_members
+    assert container.asn_table_name == container_copy.asn_table_name
+    assert container.asn_pool_name == container_copy.asn_pool_name
+    assert container.asn_file_path == container_copy.asn_file_path
+
+    assert len(container._models) == len(container_copy._models)
+    for in_exp, out_exp in zip(container._models, container_copy._models, strict=True):
+        assert in_exp is not out_exp
+        assert in_exp.meta.filename == out_exp.meta.filename
+        assert np.all(in_exp.data == out_exp.data)
+
+        # Equal comparison fails when underlying instance is not a shallow copy
+        with pytest.raises(ValueError, match="truth value of an array"):
+            assert in_exp == out_exp

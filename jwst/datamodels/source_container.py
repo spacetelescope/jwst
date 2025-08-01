@@ -87,3 +87,21 @@ class SourceModelContainer(ModelContainer):
             self.multiexposure.save(*args, path=path, dir_path=dir_path, **kwargs)
         else:
             save_model_func(self.multiexposure, output_file=path)
+
+    def copy(self, memo=None):
+        """
+        Make a deep copy of the container.
+
+        Parameters
+        ----------
+        memo : dict
+            Keeps track of elements that have already been copied to avoid infinite recursion.
+
+        Returns
+        -------
+        SourceModelContainer
+            A deep copy of the container and all the models in it.
+        """
+        multi_exposure = self.multiexposure.copy(memo=memo)
+        result = self.__class__(init=multi_exposure)
+        return result

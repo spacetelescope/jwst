@@ -46,9 +46,6 @@ def detect_outliers(
     ~jwst.datamodels.CubeModel
         The input model with outliers flagged.
     """
-    if not isinstance(input_model, datamodels.JwstDataModel):
-        input_model = datamodels.open(input_model)
-
     if not isinstance(input_model, datamodels.CubeModel):
         raise TypeError(f"Input must be a CubeModel: {input_model}")
 

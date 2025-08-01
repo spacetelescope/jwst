@@ -9,7 +9,7 @@ from jwst.extract_1d.soss_extract.pastasoss import (
     get_soss_traces,
     get_soss_wavemaps,
 )
-from jwst.extract_1d.soss_extract.tests.conftest import (
+from jwst.extract_1d.soss_extract.tests.helpers import (
     PWCPOS,
     TRACE_END_IDX,
     WAVE_BNDS_O1,
