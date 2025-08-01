@@ -206,3 +206,26 @@ def test_detector_science_frame_transform(fastaxis, slowaxis, input):
     detector_array = np.array([[1, 2], [3, 4]])
     returned = detector_science_frame_transform(input.copy(), fastaxis, slowaxis)
     assert np.allclose(returned, detector_array)
+
+
+@pytest.mark.parametrize(
+    "fastaxis, slowaxis",
+    [
+        (1, 2),
+        (1, -2),
+        (-1, 2),
+        (-1, -2),
+        (2, 1),
+        (2, -1),
+        (-2, 1),
+        (-2, -1),
+    ],
+)
+def test_roundtrip(fastaxis, slowaxis):
+    input = np.zeros((100, 100), dtype=np.float32)
+    for row in range(100):
+        for column in range(100):
+            input[row, column] = row * 100 + column
+    forward = science_detector_frame_transform(input.copy(), fastaxis, slowaxis)
+    reverse = detector_science_frame_transform(forward.copy(), fastaxis, slowaxis)
+    assert np.allclose(reverse, input)
