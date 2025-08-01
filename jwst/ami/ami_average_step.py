@@ -49,7 +49,7 @@ class AmiAverageStep(Step):
 
         Returns
         -------
-        result : AmiLgModel object
+        result : `~jwst.datamodels.AmiLgModel`
             Averaged AMI data model
         """
         # Input may be a simple list if run in interactive environment,

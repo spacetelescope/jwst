@@ -11,3 +11,4 @@ AMI Analyze
    ami_test.rst
 
 .. automodapi:: jwst.ami.ami_analyze_step
+   :no-inheritance-diagram:
