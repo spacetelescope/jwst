@@ -222,10 +222,7 @@ def test_detector_science_frame_transform(fastaxis, slowaxis, input):
     ],
 )
 def test_roundtrip(fastaxis, slowaxis):
-    input = np.zeros((100, 100), dtype=np.float32)
-    for row in range(100):
-        for column in range(100):
-            input[row, column] = row * 100 + column
-    forward = science_detector_frame_transform(input.copy(), fastaxis, slowaxis)
+    test_array = np.arange(100 * 100, dtype=np.float32).reshape((100, 100))
+    forward = science_detector_frame_transform(test_array.copy(), fastaxis, slowaxis)
     reverse = detector_science_frame_transform(forward.copy(), fastaxis, slowaxis)
-    assert np.allclose(reverse, input)
+    assert np.allclose(reverse, test_array)
