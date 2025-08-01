@@ -557,10 +557,10 @@ def science_detector_frame_transform(data, fastaxis, slowaxis):
     # If fastaxis is x-axis
     if np.abs(fastaxis) == 1:
         # Use sign of keywords to possibly reverse the ordering of the axes.
-        data = data[..., :: slowaxis // np.abs(slowaxis), :: fastaxis // np.abs(fastaxis)]
+        data = data[..., :: np.sign(slowaxis), :: np.sign(fastaxis)]
     # Else fastaxis is y-axis, also need to transpose array
     else:
-        data = data[..., :: fastaxis // np.abs(fastaxis), :: slowaxis // np.abs(slowaxis)]
+        data = data[..., :: np.sign(fastaxis), :: np.sign(slowaxis)]
         data = np.swapaxes(data, -2, -1)
     return data
 
@@ -593,11 +593,11 @@ def detector_science_frame_transform(data, fastaxis, slowaxis):
     # If fastaxis is x-axis
     if np.abs(fastaxis) == 1:
         # Use sign of keywords to possibly reverse the ordering of the axes.
-        data = data[..., :: slowaxis // np.abs(slowaxis), :: fastaxis // np.abs(fastaxis)]
+        data = data[..., :: np.sign(slowaxis), :: np.sign(fastaxis)]
     # Else fastaxis is y-axis, also need to transpose array
     else:
         data = np.swapaxes(data, -2, -1)
-        data = data[..., :: fastaxis // np.abs(fastaxis), :: slowaxis // np.abs(slowaxis)]
+        data = data[..., :: np.sign(fastaxis), :: np.sign(slowaxis)]
     return data
 
 

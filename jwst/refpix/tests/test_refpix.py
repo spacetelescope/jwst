@@ -89,7 +89,6 @@ def test_refpix_subarray_nirspec(subarray, ysize, xsize):
     im.meta.subarray.name = subarray
     im.meta.subarray.xstart = 1
     im.meta.subarray.ystart = 1
-    im.meta.subarray.fastaxis, im.meta.subarray.slowaxis = AXES[im.meta.instrument.detector]
 
     # set reference pixel values top and bottom, left and right
     im.data[:, :, :4, :] = 1.0
@@ -891,6 +890,7 @@ def make_rampmodel(ngroups, ysize, xsize, instrument="MIRI", fill_value=None):
         dm_ramp.meta.instrument.name = "NIRSPEC"
         dm_ramp.meta.instrument.detector = "NRS1"
         dm_ramp.meta.exposure.type = "NRS_FIXEDSLIT"
+        dm_ramp.meta.subarray.fastaxis, dm_ramp.meta.subarray.slowaxis = AXES["NRS1"]
         if ysize > 2048:
             dm_ramp.meta.exposure.readpatt = "NRSIRS2"
             dm_ramp.meta.exposure.nrs_normal = 16
@@ -902,6 +902,8 @@ def make_rampmodel(ngroups, ysize, xsize, instrument="MIRI", fill_value=None):
         dm_ramp.meta.instrument.detector = "MIRIMAGE"
         dm_ramp.meta.instrument.filter = "F560W"
         dm_ramp.meta.exposure.type = "MIR_IMAGE"
+        dm_ramp.meta.subarray.fastaxis = 1
+        dm_ramp.meta.subarray.slowaxis = 2
 
     dm_ramp.meta.instrument.band = "N/A"
     dm_ramp.meta.observation.date = "2016-06-01"

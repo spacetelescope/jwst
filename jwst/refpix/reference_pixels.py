@@ -179,7 +179,7 @@ NIR_DETECTORS = [
     "NRCB3",
     "NRCB4",
     "NRCBLONG",
-    "NIRISS",
+    "NIS",
     "NRS1",
     "NRS2"
 ]
