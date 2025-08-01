@@ -59,7 +59,6 @@ class MakePars:
 
 
 standards = [
-    MakePars("pool_023_nirspec_msa_3nod", main_args=LV2_ONLY_ARGS),
     MakePars("pool_024_nirspec_fss_nods"),
     MakePars("pool_025_nirspec_fss_nod_chop"),
     MakePars("pool_026_mir_image_tso"),
