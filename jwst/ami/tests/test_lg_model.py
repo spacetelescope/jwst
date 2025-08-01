@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 
 from jwst.ami import lg_model
-from jwst.ami.tests.conftest import PXSC_RAD
+from jwst.ami.tests.helpers import PXSC_RAD
 
 PSF_FOV = 21
 

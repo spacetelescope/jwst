@@ -5,7 +5,7 @@ import pytest
 from scipy.sparse import csr_matrix
 
 from jwst.extract_1d.soss_extract import atoca
-from jwst.extract_1d.soss_extract.tests.conftest import (
+from jwst.extract_1d.soss_extract.tests.helpers import (
     DATA_SHAPE,
     SPECTRAL_SLOPE,
     WAVE_BNDS_O1,
