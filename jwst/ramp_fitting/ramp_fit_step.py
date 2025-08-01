@@ -161,7 +161,7 @@ def create_optional_results_model(input_model, opt_info):
 
 
 class RampFitStep(Step):
-    """Fit line to determine the value of mean rate counts vs. time."""
+    """Fit ramp data to determine the mean count rate."""
 
     class_alias = "ramp_fit"
 

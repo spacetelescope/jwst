@@ -20,12 +20,7 @@ class Image3Pipeline(Pipeline):
     Apply level 3 processing to imaging-mode data from any JWST instrument.
 
     Included steps are:
-        assign_mtwcs
-        tweakreg
-        skymatch
-        outlier_detection
-        resample
-        source_catalog
+    assign_mtwcs, tweakreg, skymatch, outlier_detection, resample, and source_catalog.
     """
 
     class_alias = "calwebb_image3"

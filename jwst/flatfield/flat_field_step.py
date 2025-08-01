@@ -42,17 +42,7 @@ __all__ = ["FlatFieldStep"]
 
 
 class FlatFieldStep(Step):
-    """
-    Flat-field a science image using a flatfield reference image.
-
-    Attributes
-    ----------
-    correction_pars : dict
-        After the step has successfully run, the flat field applied is
-        stored, as {'flat': DataModel}.
-    use_correction_pars : bool
-        Use the flat stored in `correction_pars`.
-    """
+    """Flat-field a science image using a flatfield reference image."""
 
     class_alias = "flat_field"
 
@@ -70,6 +60,15 @@ class FlatFieldStep(Step):
     def process(self, input_data):
         """
         Perform the flat field step.
+
+        For repeating or undoing the correction, this step makes use of
+        two special attributes:
+
+            correction_pars : dict
+                After the step has successfully run, the flat field applied is
+                stored, as {'flat': DataModel}.
+            use_correction_pars : bool
+                Use the flat stored in `correction_pars`.
 
         Parameters
         ----------

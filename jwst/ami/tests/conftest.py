@@ -5,11 +5,8 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.ami.bp_fix import calc_pupil_support, filthp_d
+from jwst.ami.tests.helpers import PXSC_RAD
 from jwst.stpipe import Step
-
-PXSC_DEG = 65.6 / (60.0 * 60.0 * 1000)
-PXSC_RAD = PXSC_DEG * np.pi / (180)
-PXSC_MAS = PXSC_DEG * 3600 * 1000
 
 
 @pytest.fixture(scope="package")
