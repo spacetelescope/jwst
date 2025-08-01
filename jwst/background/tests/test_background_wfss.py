@@ -196,7 +196,7 @@ def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     return bkg_fname
 
 
-def shared_tests(sci, mask, original_data_mean):
+def shared_tests(sci, mask, original_data_mean, dm):
     """
     Tests that are common to all WFSS modes.
 
@@ -215,6 +215,10 @@ def shared_tests(sci, mask, original_data_mean):
     sci[sci > 50] = np.nan
     tol = 0.01 * np.nanstd(sci)
     assert np.isclose(np.nanmean(sci), original_data_mean, atol=tol)
+
+    # Verify that the mask extension in the datamodel is populated
+    np.testing.assert_allclose(dm.mask, mask)
+    assert dm.mask.dtype == np.uint32
 
 
 def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
@@ -236,7 +240,7 @@ def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
     # re-compute mask to ignore "real" sources for tests
     mask = _mask_from_source_cat(result, wavelenrange)
 
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
 
 
 @pytest.mark.parametrize("subarray", [None, "WFSS64C"])
@@ -260,7 +264,7 @@ def test_nis_wfss_background(subarray, make_nis_wfss_datamodel, make_nis_wfss_su
     assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=1e-2)
 
     mask = _mask_from_source_cat(result, wavelenrange)
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
 
 
 # test both filters because they have opposite dispersion directions
@@ -291,7 +295,7 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
     # re-derive mask to ignore "real" sources for tests
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
     mask = _mask_from_source_cat(result, wavelenrange)
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
     assert isinstance(result.meta.background.scaling_factor, float)
 
 
@@ -322,7 +326,7 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
     # re-derive mask to ignore "real" sources for tests
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
     mask = _mask_from_source_cat(result, wavelenrange)
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
     assert isinstance(result.meta.background.scaling_factor, float)
 
 
