@@ -38,13 +38,10 @@ class KlipStep(Step):
         psf_sub : CubeModel
             Science target CubeModel with the PSF subtracted
         """
-        with datamodels.open(target) as target_model:
+        with datamodels.open(target) as target_model, datamodels.open(psfrefs) as refs_model:
             # Retrieve the parameter values
             truncate = self.truncate
             self.log.info("KL transform truncation = %d", truncate)
-
-            # Get the PSF reference images
-            refs_model = datamodels.open(psfrefs)
 
             # Call the KLIP routine
             psf_sub, psf_fit = klip.klip(target_model, refs_model, truncate)
