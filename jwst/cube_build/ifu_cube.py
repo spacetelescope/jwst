@@ -1248,6 +1248,20 @@ class IFUCubeData:
             self.soft_rad = np.amin(softrad)
             self.scalerad = np.amin(scalerad)
 
+        # if we have NIRSPEC Prism then force wavelength to be non-linear
+        elif self.instrument == "NIRSPEC":
+            if "prism" in self.list_par1:
+                self.linear_wavelength = False
+                table = self.instrument_info.get_prism_table()
+                (
+                    table_wavelength,
+                    table_sroi,
+                    table_wroi,
+                    table_power,
+                    table_softrad,
+                    table_scalerad,
+                ) = table
+
         # if all bands have the same spectral size then linear_wavelength
         elif all_same_spectral:
             self.spectral_size = spectralsize[0]
@@ -1292,8 +1306,11 @@ class IFUCubeData:
                         table_softrad,
                         table_scalerad,
                     ) = table
-            # based on Min and Max wavelength - pull out the tables values that fall in this range
-            # find the closest table entries to the self.wavemin and self.wavemax limits
+
+        # non-linear wavelength range.
+        # Based on Min and Max wavelength - pull out the tables values that fall in this range.
+        # Find the closest table entries to the self.wavemin and self.wavemax limits
+        if not self.linear_wavelength:
             imin = (np.abs(table_wavelength - self.wavemin)).argmin()
             imax = (np.abs(table_wavelength - self.wavemax)).argmin()
 
