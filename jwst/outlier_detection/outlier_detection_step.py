@@ -2,6 +2,7 @@
 
 from functools import partial
 
+from stdatamodels import filetype
 from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
@@ -167,7 +168,12 @@ class OutlierDetectionStep(Step):
             return self.mode
 
         # guess mode from input type
-        if isinstance(input_models, (str, dict, list)):
+        if isinstance(input_models, str):
+            if filetype.check(input_models) == "asn":
+                input_models = datamodels.open(input_models, asn_n_members=1)
+            else:
+                input_models = datamodels.open(input_models)
+        elif isinstance(input_models, (dict, list)):
             input_models = datamodels.open(input_models, asn_n_members=1)
 
         # Select which version of OutlierDetection
