@@ -36,6 +36,9 @@ class SaturationStep(Step):
         """
         # Open the input data model
         with datamodels.open(step_input) as input_model:
+            # Work on a copy
+            result = input_model.copy()
+
             # Get the name of the saturation reference file
             self.ref_name = self.get_reference_file(input_model, "saturation")
             self.bias_name = self.get_reference_file(input_model, "superbias")
@@ -46,8 +49,8 @@ class SaturationStep(Step):
             if self.ref_name == "N/A":
                 self.log.warning("No SATURATION reference file found")
                 self.log.warning("Saturation step will be skipped")
-                input_model.meta.cal_step.saturation = "SKIPPED"
-                return input_model
+                result.meta.cal_step.saturation = "SKIPPED"
+                return result
 
             # Open the reference file data model
             ref_model = datamodels.SaturationModel(self.ref_name)
@@ -60,9 +63,6 @@ class SaturationStep(Step):
                 # bias reference data if necessary
                 if not reffile_utils.ref_matches_sci(input_model, bias_model):
                     bias_model = reffile_utils.get_subarray_model(input_model, bias_model)
-
-            # Work on a copy
-            result = input_model.copy()
 
             # Do the saturation check
             if pipe_utils.is_irs2(result):
