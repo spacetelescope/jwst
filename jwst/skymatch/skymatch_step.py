@@ -71,6 +71,8 @@ class SkyMatchStep(Step):
         ModelLibrary
             A library of datamodels with the skymatch step applied.
         """
+        # Open the input data, making a copy as needed.
+        input_models = self.open_model(input_models)
         if isinstance(input_models, ModelLibrary):
             library = input_models
         else:

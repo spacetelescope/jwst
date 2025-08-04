@@ -77,7 +77,7 @@ class OutlierDetectionStep(Step):
             The modified input data with DQ flags set for detected outliers.
         """
         # Open the input data, making a copy as needed.
-        result_models = self._open_models(input_data)
+        result_models = self.open_model(input_data)
 
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
@@ -233,48 +233,3 @@ class OutlierDetectionStep(Step):
             self._make_output_path = partial(_make_output_path, asn_id=asn_id)
         log.info(f"Outlier Detection asn_id: {asn_id}")
         return
-
-    def _open_models(self, input_models):
-        """
-        Open the input data, making a copy if necessary.
-
-        If the input data is a filename or path, it is opened
-        and the open model is returned.
-
-        If it is a list of models, it is opened as a ModelContainer.
-        In this case, or if the input is a simple datamodel or a
-        ModelContainer, a deep copy of the model/container is returned,
-        in order to avoid modifying the input models.
-
-        If the input is a ModelLibrary, it is simply returned, in order
-        to avoid making unnecessary copies for performance-critical
-        use cases.
-
-        Parameters
-        ----------
-        input_models : str, list, JwstDataModel, ModelContainer, or ModelLibrary
-            Input data to open.
-
-        Returns
-        -------
-        JwstDataModel, ModelContainer, or ModelLibrary
-            The opened datamodel(s).
-        """
-        # Check whether input contains datamodels
-        make_copy = False
-        if isinstance(input_models, list):
-            is_datamodel = [isinstance(m, datamodels.JwstDataModel) for m in input_models]
-            if any(is_datamodel):
-                make_copy = True
-        elif isinstance(input_models, (datamodels.JwstDataModel, ModelContainer)):
-            make_copy = True
-
-        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
-            # Input might be a filename or path.
-            # In that case, open it.
-            input_models = datamodels.open(input_models)
-        if make_copy:
-            # For regular models, make a copy to avoid modifying the input.
-            # Leave libraries alone for memory management reasons.
-            input_models = input_models.copy()
-        return input_models

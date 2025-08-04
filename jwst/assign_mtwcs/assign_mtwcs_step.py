@@ -35,6 +35,8 @@ class AssignMTWcsStep(Step):
         `~jwst.datamodels.library.ModelLibrary`
             The modified data models.
         """
+        # Open the input, making a copy if necessary
+        input_lib = self.open_model(input_lib)
         if not isinstance(input_lib, ModelLibrary):
             try:
                 input_lib = ModelLibrary(input_lib)
@@ -44,4 +46,5 @@ class AssignMTWcsStep(Step):
                 return input_lib
 
         result = assign_moving_target_wcs(input_lib)
+        record_step_status(result, "assign_mtwcs", True)
         return result

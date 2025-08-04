@@ -138,6 +138,7 @@ class TweakRegStep(Step):
         output : `~jwst.datamodels.library.ModelLibrary`
             The aligned input data models.
         """
+        input_data = self.open_model(input_data)
         if isinstance(input_data, ModelLibrary):
             images = input_data
         else:
