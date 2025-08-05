@@ -54,6 +54,7 @@ def test_tsophotometry_step_missing_values(missing):
 
 def test_tsophotometry_step_subarray(mock_tsophot_reffile, log_watcher):
     datamodel = mock_nircam_image()
+    input_copy = datamodel.copy()
 
     watcher = log_watcher("stpipe.TSOPhotometryStep", message="Extracting gain subarray")
     catalog = tp.TSOPhotometryStep.call(datamodel)
@@ -63,9 +64,14 @@ def test_tsophotometry_step_subarray(mock_tsophot_reffile, log_watcher):
     assert isinstance(catalog, QTable)
     spot_check_expected_values(datamodel, catalog)
 
+    # Input is not modified
+    assert catalog is not datamodel
+    np.testing.assert_allclose(datamodel.data, input_copy.data)
+
 
 def test_tsophotometry_step_full_frame(mock_tsophot_reffile, log_watcher):
     datamodel = mock_nircam_image(shape=(7, 2048, 2048))
+    input_copy = datamodel.copy()
 
     # Gain reference already matches data, no need to extract subarray
     watcher = log_watcher("stpipe.TSOPhotometryStep", message="Extracting gain subarray")
@@ -75,6 +81,10 @@ def test_tsophotometry_step_full_frame(mock_tsophot_reffile, log_watcher):
     # Results are otherwise the same as for the subarray
     assert isinstance(catalog, QTable)
     spot_check_expected_values(datamodel, catalog)
+
+    # Input is not modified
+    assert catalog is not datamodel
+    np.testing.assert_allclose(datamodel.data, input_copy.data)
 
 
 def test_tsophotometry_step_save_catalog(mock_tsophot_reffile, tmp_path, log_watcher):
