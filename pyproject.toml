@@ -68,7 +68,6 @@ asn_make_pool = "jwst.scripts.asn_make_pool:main"
 collect_pipeline_cfgs = "jwst.scripts.collect_pipeline_cfgs:main"
 exp_to_source = "jwst.exp_to_source.main:Main"
 pointing_summary = "jwst.scripts.pointing_summary:main"
-schemadoc = "jwst.scripts.schemadoc:main"
 set_telescope_pointing = "jwst.scripts.set_telescope_pointing:main"
 "set_telescope_pointing.py" = "jwst.scripts.set_telescope_pointing:deprecated_name"
 set_velocity_aberration = "jwst.scripts.set_velocity_aberration:main"
@@ -113,6 +112,10 @@ requires = [
     "numpy>=2.0",
 ]
 build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+# explicitly skip free-threaded builds
+skip = ["cp314t-*"]
 
 [tool.setuptools]
 zip-safe = false
