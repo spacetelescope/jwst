@@ -24,6 +24,7 @@ def test_tsophotometry_step_missing_values(missing):
 
 def test_tsophotometry_step_subarray(log_watcher):
     datamodel = mock_nircam_image()
+    input_copy = datamodel.copy()
 
     watcher = log_watcher("jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray")
     catalog = TSOPhotometryStep.call(datamodel, radius=6.0, radius_inner=8.0, radius_outer=11.0)
@@ -37,9 +38,14 @@ def test_tsophotometry_step_subarray(log_watcher):
     assert np.isclose(catalog.meta["ycenter"], datamodel.meta.wcsinfo.siaf_yref_sci - 1, atol=0.01)
     assert np.allclose(catalog["aperture_sum"].value, 1263.4778, rtol=1.0e-7)
 
+    # Input is not modified
+    assert catalog is not datamodel
+    np.testing.assert_allclose(datamodel.data, input_copy.data)
+
 
 def test_tsophotometry_step_full_frame(log_watcher):
     datamodel = mock_nircam_image(shape=(7, 2048, 2048))
+    input_copy = datamodel.copy()
 
     # Gain reference already matches data, no need to extract subarray
     watcher = log_watcher("jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray")
@@ -53,6 +59,10 @@ def test_tsophotometry_step_full_frame(log_watcher):
     assert np.isclose(catalog.meta["xcenter"], datamodel.meta.wcsinfo.siaf_xref_sci - 1, atol=0.01)
     assert np.isclose(catalog.meta["ycenter"], datamodel.meta.wcsinfo.siaf_yref_sci - 1, atol=0.01)
     assert np.allclose(catalog["aperture_sum"].value, 1263.4778, rtol=1.0e-7)
+
+    # Input is not modified
+    assert catalog is not datamodel
+    np.testing.assert_allclose(datamodel.data, input_copy.data)
 
 
 def test_tsophotometry_step_save_catalog(tmp_path, log_watcher):
