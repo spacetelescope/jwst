@@ -113,6 +113,10 @@ requires = [
 ]
 build-backend = "setuptools.build_meta"
 
+[tool.cibuildwheel]
+# explicitly skip free-threaded builds
+skip = ["cp314t-*"]
+
 [tool.setuptools]
 zip-safe = false
 include-package-data = false
