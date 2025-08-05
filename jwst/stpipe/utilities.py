@@ -141,7 +141,7 @@ def record_step_status(datamodel, cal_step, success=True):
     Parameters
     ----------
     datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.ModelContainer`,
-        `~jwst.datamodels.ModelLibrary`, str, or Path instance
+        `~jwst.datamodels.ModelLibrary`
         This is the datamodel or container of datamodels to modify in place
 
     cal_step : str
@@ -173,9 +173,13 @@ def query_step_status(datamodel, cal_step):
     """
     Query the status of a step in meta.cal_step.
 
+    For container types (ModelContainer and ModelLibrary), only
+    the first datamodel in the container is checked.
+
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel` or `~jwst.datamodels.ModelContainer` instance
+    datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.ModelContainer`,
+        `~jwst.datamodels.ModelLibrary`
         The datamodel or container of datamodels to check
 
     cal_step : str
@@ -195,6 +199,11 @@ def query_step_status(datamodel, cal_step):
     """
     if isinstance(datamodel, Sequence):
         return getattr(datamodel[0].meta.cal_step, cal_step, NOT_SET)
+    elif isinstance(datamodel, datamodels.ModelLibrary):
+        with datamodel:
+            meta = datamodel.read_metadata(0)
+            status = meta.get(f"meta.cal_step.{cal_step}", NOT_SET)
+        return status
     else:
         return getattr(datamodel.meta.cal_step, cal_step, NOT_SET)
 

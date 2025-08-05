@@ -1,7 +1,7 @@
 import pytest
 import stdatamodels.jwst.datamodels as dm
 
-from jwst.extract_1d.tests.conftest import mock_nirspec_fs_one_slit_function
+from jwst.extract_1d.tests.helpers import mock_nirspec_fs_one_slit_func
 
 
 @pytest.fixture
@@ -14,7 +14,7 @@ def mock_nirspec_fs_one_slit():
     SlitModel
         The mock model.
     """
-    model = mock_nirspec_fs_one_slit_function()
+    model = mock_nirspec_fs_one_slit_func()
     # mock WCS was originally a function which is not serializable
     model.meta.wcs = None
     yield model

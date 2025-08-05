@@ -1,0 +1,3 @@
+For cases where the input is not a ModelLibrary, copy the input data before processing to ensure input datamodels are not modified.
+This will increase peak memory usage for the spec3, tso3, and coron3 pipelines, but performance for large imaging mosaics is not impacted.
+Fix a crash in intermediate file saving for IFU mode.
