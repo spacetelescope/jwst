@@ -917,6 +917,7 @@ def make_rampmodel(ngroups, ysize, xsize, instrument="MIRI", fill_value=None):
         dm_ramp.meta.instrument.detector = "NRCALONG"
         dm_ramp.meta.instrument.filter = "CLEAR"
         dm_ramp.meta.exposure.type = "NRC_IMAGE"
+        dm_ramp.meta.subarray.fastaxis, dm_ramp.meta.subarray.slowaxis = AXES["NRCALONG"]
     else:
         dm_ramp.meta.instrument.name = "MIRI"
         dm_ramp.meta.instrument.detector = "MIRIMAGE"
