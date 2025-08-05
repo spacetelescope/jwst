@@ -33,4 +33,11 @@ For Developers
    devel_io_design.rst
 
 .. automodapi:: jwst.stpipe
+   :no-inheritance-diagram:
 
+Base Classes
+------------
+
+.. autoclass:: jwst.stpipe.core::JwstStep
+
+.. autoclass:: jwst.stpipe.core::JwstPipeline

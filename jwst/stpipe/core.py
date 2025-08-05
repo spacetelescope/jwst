@@ -6,7 +6,8 @@ from pathlib import Path
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import JwstDataModel, read_metadata
-from stpipe import Pipeline, Step, crds_client
+from stpipe import Pipeline, crds_client
+from stpipe import Step as _Step
 
 from jwst import __version__, __version_commit__
 from jwst.datamodels import ModelContainer, ModelLibrary
@@ -18,7 +19,7 @@ log = logging.getLogger(__name__)
 __all__ = ["JwstStep", "JwstPipeline"]
 
 
-class JwstStep(Step):
+class JwstStep(_Step):
     """A JWST pipeline step."""
 
     spec = """
@@ -177,7 +178,7 @@ class JwstStep(Step):
         """
         return remove_suffix(name)
 
-    @wraps(Step.run)
+    @wraps(_Step.run)
     def run(self, *args, **kwargs):
         """
         Run the step.
