@@ -121,7 +121,7 @@ def background():
 @pytest.fixture(scope="module")
 def sci(background):
     """
-    Create science IFUImageMoel for testing.
+    Create science IFUImageModel for testing.
 
     Same data as background with different noise.
     """
