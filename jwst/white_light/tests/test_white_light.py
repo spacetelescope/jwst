@@ -380,12 +380,21 @@ def test_get_reference_wavelength_range_no_file(make_datamodel, monkeypatch, log
 
 def test_call_step(make_datamodel, tmp_cwd, log_watcher):
     """Smoke test to ensure the step at least runs without error."""
+    input_copy = make_datamodel.copy()
+
     watcher = log_watcher(
         "jwst.white_light.white_light_step",
         message="Using wavelength range reference file",
         level="info",
     )
-    result = WhiteLightStep().call(make_datamodel, save_results=True)
+    result = WhiteLightStep.call(make_datamodel, save_results=True)
     watcher.assert_seen()
     assert isinstance(result, Table)
     assert Path("step_WhiteLightStep_whtlt.ecsv").exists()
+
+    # Input is not modified
+    assert result is not make_datamodel
+    for input_spec, input_spec_copy in zip(make_datamodel.spec, input_copy.spec):
+        np.testing.assert_allclose(
+            input_spec.spec_table["FLUX"], input_spec_copy.spec_table["FLUX"]
+        )
