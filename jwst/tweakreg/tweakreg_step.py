@@ -138,12 +138,11 @@ class TweakRegStep(Step):
         output : `~jwst.datamodels.library.ModelLibrary`
             The aligned input data models.
         """
-        if self.in_memory:
-            output_models = self.prepare_output(input_data)
-        else:
-            # Skip loading datamodels into memory in this case - allow the
-            # ModelLibrary to handle it, below.
-            output_models = input_data
+        # Check the input for open models and make a copy if necessary
+        # to avoid modifying input data.
+        # If there are no open models already, do not open them.  Leave
+        # that to the ModelLibrary call below.
+        output_models = self.prepare_output(input_data, open_models=False)
         if isinstance(output_models, ModelLibrary):
             images = output_models
         else:

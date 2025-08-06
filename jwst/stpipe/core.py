@@ -145,7 +145,7 @@ class JwstStep(_Step):
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
 
-    def prepare_output(self, init, **kwargs):
+    def prepare_output(self, init, make_copy=None, open_models=True, **kwargs):
         """
         Open the input data as a model, making a copy if necessary.
 
@@ -164,10 +164,22 @@ class JwstStep(_Step):
         All copies are skipped if this step has a parent (i.e. it is
         called as part of a pipeline).
 
+        Set make_copy explicitly to True or False to override the above
+        behavior.
+
         Parameters
         ----------
         init : str, list, JwstDataModel, ModelContainer, or ModelLibrary
             Input data to open.
+        make_copy : bool or None
+            If True, a copy of the input will always be made.
+            If False, a copy will never be made.  If None, a copy is
+            conditionally made, depending on the input and whether the
+            step is called in a standalone context
+        open_models : bool
+            If True and the input is a filename or list of filenames,
+            then datamodels.open will be called to open the input.
+            If False, the input is returned as is.
         **kwargs
             Additional keyword arguments to pass to datamodels.open. Used
             only if the input is a str or list.
@@ -176,20 +188,30 @@ class JwstStep(_Step):
         -------
         JwstDataModel, ModelContainer, or ModelLibrary
             The opened datamodel(s).
+
+        Raises
+        ------
+        TypeError
+            If make_copy=True and the input is a type that cannot be copied.
         """
         # Check whether input contains datamodels
-        make_copy = False
+        copy_needed = False
         if isinstance(init, list):
             is_datamodel = [isinstance(m, datamodels.JwstDataModel) for m in init]
             if any(is_datamodel):
-                make_copy = True
+                # Make the list into a ModelContainer, since it contains models
+                init = ModelContainer(init)
+                copy_needed = True
         elif isinstance(init, (datamodels.JwstDataModel, ModelContainer)):
-            make_copy = True
+            copy_needed = True
 
         # Input might be a filename or path.
-        # In that case, open it.
+        # In that case, open it if desired.
         if not isinstance(init, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
-            input_models = datamodels.open(init, **kwargs)
+            if open_models:
+                input_models = datamodels.open(init, **kwargs)
+            else:
+                input_models = init
         else:
             # Use the init model directly.
             input_models = init
@@ -198,8 +220,17 @@ class JwstStep(_Step):
         # Leave libraries alone for memory management reasons.
         # No need to make a copy if the input is a file name or if the step
         # is called as part of a pipeline (self.parent is not None).
+        if make_copy is None:
+            make_copy = copy_needed
         if make_copy and self.parent is None:
-            input_models = input_models.copy()
+            try:
+                input_models = input_models.copy()
+            except AttributeError:
+                # This should only happen if make_copy is explicitly set to
+                # True and the input is a string or a ModelLibrary.
+                raise TypeError(
+                    f"Copy is not possible for input type {type(input_models)}"
+                ) from None
 
         return input_models
 

@@ -80,12 +80,12 @@ class OutlierDetectionStep(Step):
         mode = self._guess_mode(input_data)
 
         # Open the input data, making a copy as needed.
-        if self.in_memory or mode != "imaging":
+        if mode != "imaging":
             result_models = self.prepare_output(input_data)
         else:
             # Skip loading datamodels into memory in this case - allow the
             # ModelLibrary to handle it, later
-            result_models = input_data
+            result_models = self.prepare_output(input_data, open_models=False)
 
         if mode is None:
             record_step_status(result_models, "outlier_detection", False)

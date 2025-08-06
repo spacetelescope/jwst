@@ -71,13 +71,11 @@ class SkyMatchStep(Step):
         ModelLibrary
             A library of datamodels with the skymatch step applied.
         """
-        # Open the input data, making a copy as needed.
-        if self.in_memory:
-            output_models = self.prepare_output(input_models)
-        else:
-            # Skip loading datamodels into memory in this case - allow the
-            # ModelLibrary to handle it, below.
-            output_models = input_models
+        # Check the input for open models and make a copy if necessary
+        # to avoid modifying input data.
+        # If there are no open models already, do not open them.  Leave
+        # that to the ModelLibrary call below.
+        output_models = self.prepare_output(input_models, open_models=False)
         if isinstance(output_models, ModelLibrary):
             library = output_models
         else:
