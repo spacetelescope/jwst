@@ -156,8 +156,9 @@ that gives the wavelength range (based on filter and grism) that is relevant
 to the WFSS image. All regions of the image that are free of source spectra
 are used for scaling the background reference image. The mask will be
 True where there are no sources, i.e. regions where the background can be used.
-This mask will be saved in the ``MASK`` extension of the intermediate output file (_bkg.fits),
-and is accessible in the ``mask`` attribute of the output datamodel.
+This mask will be saved in the ``MASK`` extension of the intermediate output
+file (_bsub.fits), and will be accessible in the ``mask`` attribute of the
+output datamodel.
 
 The step argument
 ``wfss_mmag_extract`` can be used, if desired, to set the minimum (faintest)
