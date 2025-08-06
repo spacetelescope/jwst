@@ -423,6 +423,7 @@ def extract_grism_objects(
     # center, this information will be saved to the meta of
     # the output model as source_[x/y]pos
     inwcs = input_model.meta.wcs
+    output_model.meta.wcs = inwcs
 
     # For easy reference here, GrismObjects has:
     #

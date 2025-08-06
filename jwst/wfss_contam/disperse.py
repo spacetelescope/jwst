@@ -3,6 +3,7 @@ import multiprocessing as mp
 import warnings
 
 import numpy as np
+from astropy.modeling.mappings import Mapping
 from scipy import sparse
 
 from jwst.lib.winclip import get_clipped_pixels
@@ -268,6 +269,7 @@ def disperse(
     # Set up the transforms we need from the input WCS objects
     sky_to_imgxy = grism_wcs.get_transform("world", "detector")
     imgxy_to_grismxy = grism_wcs.get_transform("detector", "grism_detector")
+    imgxy_to_grismxy = imgxy_to_grismxy | Mapping((0, 1), n_inputs=5)
 
     # Find RA/Dec of the input pixel position in segmentation map
     x0_sky, y0_sky = seg_wcs(x0, y0)

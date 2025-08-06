@@ -446,9 +446,12 @@ def contam_corr(
     # in the segmentation map - the offsets are required so that we can shift
     # each source in the segmentation map to the proper grism image location
     # using this particular wcs, but any cutout's wcs+offsets would work.
-    grism_wcs = input_model.slits[0].meta.wcs
-    xoffset = input_model.slits[0].xstart - 1
-    yoffset = input_model.slits[0].ystart - 1
+    # grism_wcs = input_model.slits[0].meta.wcs
+    grism_wcs = input_model.meta.wcs
+    # xoffset = input_model.slits[0].xstart - 1
+    # yoffset = input_model.slits[0].ystart - 1
+    xoffset = 0
+    yoffset = 0
 
     # Find out how many spectral orders are defined based on the
     # array of order values in the Wavelengthrange ref file,
