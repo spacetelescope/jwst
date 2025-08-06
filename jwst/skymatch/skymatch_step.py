@@ -72,11 +72,16 @@ class SkyMatchStep(Step):
             A library of datamodels with the skymatch step applied.
         """
         # Open the input data, making a copy as needed.
-        input_models = self.open_model(input_models)
-        if isinstance(input_models, ModelLibrary):
-            library = input_models
+        if self.in_memory:
+            output_models = self.prepare_output(input_models)
         else:
-            library = ModelLibrary(input_models, on_disk=not self.in_memory)
+            # Skip loading datamodels into memory in this case - allow the
+            # ModelLibrary to handle it, below.
+            output_models = input_models
+        if isinstance(output_models, ModelLibrary):
+            library = output_models
+        else:
+            library = ModelLibrary(output_models, on_disk=not self.in_memory)
 
         # Method: "user". Use user-provided sky values, and bypass skymatch() altogether.
         if self.skymethod == "user":

@@ -36,15 +36,15 @@ class AssignMTWcsStep(Step):
             The modified data models.
         """
         # Open the input, making a copy if necessary
-        input_lib = self.open_model(input_lib)
-        if not isinstance(input_lib, ModelLibrary):
+        output_lib = self.prepare_output(input_lib)
+        if not isinstance(output_lib, ModelLibrary):
             try:
-                input_lib = ModelLibrary(input_lib)
+                output_lib = ModelLibrary(output_lib)
             except Exception:
                 log.warning("Input data type is not supported.")
-                record_step_status(input_lib, "assign_mtwcs", False)
-                return input_lib
+                record_step_status(output_lib, "assign_mtwcs", False)
+                return output_lib
 
-        result = assign_moving_target_wcs(input_lib)
+        result = assign_moving_target_wcs(output_lib)
         record_step_status(result, "assign_mtwcs", True)
         return result

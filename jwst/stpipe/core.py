@@ -29,65 +29,8 @@ class JwstStep(_Step):
     _log_records_formatter = _LOG_FORMATTER
 
     @classmethod
-    def _datamodels_open(cls, init, parent=None, **kwargs):
-        """
-        Open the input data as a model, making a copy if necessary.
-
-        If the input data is a filename or path, it is opened
-        and the open model is returned.
-
-        If it is a list of models, it is opened as a ModelContainer.
-        In this case, or if the input is a simple datamodel or a
-        ModelContainer, a deep copy of the model/container is returned,
-        in order to avoid modifying the input models.
-
-        If the input is a ModelLibrary, it is simply returned, in order
-        to avoid making unnecessary copies for performance-critical
-        use cases.
-
-        All copies are skipped if a non-null ``parent`` is passed in
-        the keyword arguments.
-
-        Parameters
-        ----------
-        init : str, list, JwstDataModel, ModelContainer, or ModelLibrary
-            Input data to open.
-        parent : `Step`, `Pipeline`, or None
-            If not None, all copies are skipped.
-        **kwargs
-            Additional keyword arguments to pass to datamodels.open. Used
-            only if the input is a str or list.
-
-        Returns
-        -------
-        JwstDataModel, ModelContainer, or ModelLibrary
-            The opened datamodel(s).
-        """
-        # Check whether input contains datamodels
-        make_copy = False
-        if isinstance(init, list):
-            is_datamodel = [isinstance(m, datamodels.JwstDataModel) for m in init]
-            if any(is_datamodel):
-                make_copy = True
-        elif isinstance(init, (datamodels.JwstDataModel, ModelContainer)):
-            make_copy = True
-
-        # Input might be a filename or path.
-        # In that case, open it.
-        if not isinstance(init, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
-            input_models = datamodels.open(init, **kwargs)
-        else:
-            # Use the init model directly.
-            input_models = init
-
-        # For regular models, make a copy to avoid modifying the input.
-        # Leave libraries alone for memory management reasons.
-        # No need to make a copy if the input is a file name or if the step
-        # is called as part of a pipeline (self.parent is not None).
-        if make_copy and parent is None:
-            input_models = input_models.copy()
-
-        return input_models
+    def _datamodels_open(cls, init, **kwargs):
+        return datamodels.open(init, **kwargs)
 
     @classmethod
     def _get_crds_parameters(cls, dataset):
@@ -202,7 +145,7 @@ class JwstStep(_Step):
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
 
-    def open_model(self, init, **kwargs):
+    def prepare_output(self, init, **kwargs):
         """
         Open the input data as a model, making a copy if necessary.
 
@@ -234,8 +177,31 @@ class JwstStep(_Step):
         JwstDataModel, ModelContainer, or ModelLibrary
             The opened datamodel(s).
         """
-        # Pass the step parent to the open function (may be None)
-        return self._datamodels_open(self.make_input_path(init), parent=self.parent, **kwargs)
+        # Check whether input contains datamodels
+        make_copy = False
+        if isinstance(init, list):
+            is_datamodel = [isinstance(m, datamodels.JwstDataModel) for m in init]
+            if any(is_datamodel):
+                make_copy = True
+        elif isinstance(init, (datamodels.JwstDataModel, ModelContainer)):
+            make_copy = True
+
+        # Input might be a filename or path.
+        # In that case, open it.
+        if not isinstance(init, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
+            input_models = datamodels.open(init, **kwargs)
+        else:
+            # Use the init model directly.
+            input_models = init
+
+        # For regular models, make a copy to avoid modifying the input.
+        # Leave libraries alone for memory management reasons.
+        # No need to make a copy if the input is a file name or if the step
+        # is called as part of a pipeline (self.parent is not None).
+        if make_copy and self.parent is None:
+            input_models = input_models.copy()
+
+        return input_models
 
     def finalize_result(self, result, reference_files_used):
         """

@@ -76,11 +76,17 @@ class OutlierDetectionStep(Step):
                         `~jwst.datamodels.library.ModelLibrary`
             The modified input data with DQ flags set for detected outliers.
         """
-        # Open the input data, making a copy as needed.
-        result_models = self.open_model(input_data)
-
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
+
+        # Open the input data, making a copy as needed.
+        if self.in_memory or mode != "imaging":
+            result_models = self.prepare_output(input_data)
+        else:
+            # Skip loading datamodels into memory in this case - allow the
+            # ModelLibrary to handle it, later
+            result_models = input_data
+
         if mode is None:
             record_step_status(result_models, "outlier_detection", False)
             return result_models
