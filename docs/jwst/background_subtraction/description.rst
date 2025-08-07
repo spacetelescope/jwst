@@ -159,7 +159,7 @@ are used for scaling the background reference image.
 A background mask is created and set to  True where there are no sources, i.e. regions 
 where the background can be used.
 This mask will be saved in the ``MASK`` extension of the intermediate output
-file (_bsub.fits), and will be accessible in the ``mask`` attribute of the
+file, saved with suffix "bsub", and will be accessible in the ``mask`` attribute of the
 output datamodel. The step argument``wfss_mmag_extract`` can be used, if
 desired, to set the minimum (faintest) abmag of the source catalog objects
 used to define the background regions.
