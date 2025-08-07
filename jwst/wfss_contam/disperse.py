@@ -286,6 +286,7 @@ def disperse(
         yoffset=yoffset,
     )
     nlam = len(lambdas)
+    dlam = lambdas[1] - lambdas[0]
 
     x0s, y0s, lambdas = _disperse_onto_grism(
         x0_sky,
@@ -306,7 +307,10 @@ def disperse(
     source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], nlam, axis=0)
     fluxes = np.repeat(fluxes[np.newaxis, :], nlam, axis=0)
 
-    # Compute arrays of dispersed pixel locations and areas
+    # Discretize x and y coordinates to integer pixel values, keeping track of the fractional area
+    # that each pixel contributes to the final grism image.
+    # The resulting x, y coordinate pairs are non-unique: there are multiple wavelengths
+    # that contribute to each pixel.
     padding = 1
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
     lambdas = np.take(lambdas, index)
@@ -320,9 +324,10 @@ def disperse(
     # values are naturally in units of physical fluxes, so we divide out
     # the sensitivity (flux calibration) values to convert to units of
     # countrate (DN/s).
+    # Factor of 1e4 is needed for compatibility with MJy/sr units of sens
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-        counts = fluxes * areas / (sens * oversample_factor)
+        counts = fluxes * areas * dlam * 1e4 / sens
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
     outputs_by_source = _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel)
