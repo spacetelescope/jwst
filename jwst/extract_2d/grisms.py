@@ -474,12 +474,6 @@ def extract_grism_objects(
                 order_model = Const1D(order)
                 order_model.inverse = Const1D(order)
 
-                tr = inwcs.get_transform("grism_detector", "detector")
-                tr = (
-                    Mapping((0, 1, 0, 0, 0))
-                    | (Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model)
-                    | tr
-                )
                 y_slice = slice(_toindex(ymin), _toindex(ymax) + 1)
                 x_slice = slice(_toindex(xmin), _toindex(xmax) + 1)
 
@@ -499,10 +493,18 @@ def extract_grism_objects(
                 else:
                     var_flat = None
 
+                # add a new transform to the WCS that shifts to the center of the virtual slit
+                tr = Mapping((0, 1, 0, 0, 0)) | (
+                    Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model
+                )
                 bind_bounding_box(
                     tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order="F"
                 )
-                subwcs.set_transform("grism_detector", "detector", tr)
+                grism_slit = copy.deepcopy(subwcs.grism_detector)
+                grism_slit.name = "grism_slit"
+                subwcs.insert_frame(
+                    input_frame=grism_slit, output_frame="grism_detector", transform=tr
+                )
 
                 new_slit = datamodels.SlitModel(
                     data=ext_data,
