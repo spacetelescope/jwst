@@ -256,7 +256,7 @@ def disperse(
     imgxy_to_grismxy = imgxy_to_grismxy | Mapping((0, 1), n_inputs=5)
 
     # Find RA/Dec of the input pixel position in segmentation map
-    x0_sky, y0_sky = seg_wcs.get_transform("detector", "world")(x0, y0)
+    x0_sky, y0_sky = seg_wcs(x0, y0, with_bounding_box=False)
 
     # native spacing does not change much over the detector, so just put in one x0, y0
     lambdas = _determine_native_wl_spacing(
