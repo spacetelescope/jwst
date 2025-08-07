@@ -253,7 +253,10 @@ def disperse(
     imgxy_to_grismxy = grism_wcs.get_transform("detector", "grism_detector")
 
     # We only need the x,y outputs of imgxy_to_grismxy
-    imgxy_to_grismxy = imgxy_to_grismxy | Mapping((0, 1), n_inputs=5)
+    # Making the number of outputs dynamic handles legacy WCS objects that did not pass
+    # the x0, y0, and order through the transform unmodified like the current version does.
+    n_outputs = len(imgxy_to_grismxy.outputs)
+    imgxy_to_grismxy = imgxy_to_grismxy | Mapping((0, 1), n_inputs=n_outputs)
 
     # Find RA/Dec of the input pixel position in segmentation map
     x0_sky, y0_sky = seg_wcs(x0, y0, with_bounding_box=False)
