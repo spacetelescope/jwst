@@ -175,7 +175,7 @@ class JwstStep(_Step):
             If True, a copy of the input will always be made.
             If False, a copy will never be made.  If None, a copy is
             conditionally made, depending on the input and whether the
-            step is called in a standalone context
+            step is called in a standalone context.
         open_models : bool
             If True and the input is a filename or list of filenames,
             then datamodels.open will be called to open the input.
@@ -216,13 +216,10 @@ class JwstStep(_Step):
             # Use the init model directly.
             input_models = init
 
-        # For regular models, make a copy to avoid modifying the input.
-        # Leave libraries alone for memory management reasons.
-        # No need to make a copy if the input is a file name or if the step
-        # is called as part of a pipeline (self.parent is not None).
+        # Make a copy if needed
         if make_copy is None:
-            make_copy = copy_needed
-        if make_copy and self.parent is None:
+            make_copy = copy_needed and self.parent is None
+        if make_copy:
             try:
                 input_models = input_models.copy()
             except AttributeError:
