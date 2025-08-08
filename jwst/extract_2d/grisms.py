@@ -501,7 +501,8 @@ def extract_grism_objects(
 
                 # Add a new transform to the WCS that shifts to the center of the virtual slit
                 # This needs to be separated from the "grism_detector" to "detector" transform
-                # because
+                # because the un-shifted "grism_detector" to "detector" transform is used
+                # by wfss_contam
                 tr = Mapping((0, 1, 0, 0, 0)) | (
                     Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model
                 )
