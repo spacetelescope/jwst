@@ -1,2 +1,2 @@
 Replace brightest n objects source selection with source selection based on magnitude limit; brightest_n parameter removed, magnitude_limit parameter added.
-Add parameter to select spectral orders to disperse
+Add parameter "orders" to select specific spectral orders to disperse.
