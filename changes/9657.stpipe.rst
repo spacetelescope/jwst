@@ -1,0 +1,1 @@
+Stop using ``self.log`` inside all Steps and Pipelines.  Log to local loggers, retrieved via ``logging.getLogger`` instead.
