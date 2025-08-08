@@ -72,7 +72,6 @@ Stage 3
 ^^^^^^^
 
 - ``<PR#>.assign_mtwcs.rst``
-- ``<PR#>.mrs_imatch.rst``
 - ``<PR#>.tweakreg.rst``
 - ``<PR#>.skymatch.rst``
 - ``<PR#>.exp_to_source.rst``

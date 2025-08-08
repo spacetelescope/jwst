@@ -32,7 +32,6 @@ from jwst.lastframe.lastframe_step import LastFrameStep
 from jwst.linearity.linearity_step import LinearityStep
 from jwst.master_background.master_background_mos_step import MasterBackgroundMosStep
 from jwst.master_background.master_background_step import MasterBackgroundStep
-from jwst.mrs_imatch.mrs_imatch_step import MRSIMatchStep
 from jwst.msaflagopen.msaflagopen_step import MSAFlagOpenStep
 from jwst.nsclean.nsclean_step import NSCleanStep
 from jwst.outlier_detection.outlier_detection_step import OutlierDetectionStep
@@ -95,7 +94,6 @@ __all__ = [
     "LinearityStep",
     "MasterBackgroundStep",
     "MasterBackgroundMosStep",
-    "MRSIMatchStep",
     "MSAFlagOpenStep",
     "NSCleanStep",
     "OutlierDetectionStep",
