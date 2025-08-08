@@ -230,10 +230,10 @@ def _parse_inputs(input_data, selfcal_list, bkg_list):
                     "Input data contains multiple science exposures. "
                     "This is not supported in calwebb_spec2 steps."
                 )
-            input_sci = sci_models[0]
+            input_sci = sci_models[0].copy()
 
         elif isinstance(input_dm, dm.IFUImageModel) or isinstance(input_dm, dm.ImageModel):
-            input_sci = input_dm
+            input_sci = input_dm.copy()
 
         else:
             raise TypeError(

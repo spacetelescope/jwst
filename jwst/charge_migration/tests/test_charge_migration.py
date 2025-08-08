@@ -220,6 +220,22 @@ def test_nearest_neighbor_3():
     npt.assert_array_equal(out_model.groupdq, gdq_check)
 
 
+def test_output_is_not_input():
+    """Test that input is not modified."""
+    ngroups, nints, nrows, ncols = 4, 1, 1, 1
+    ramp_model, pixdq, groupdq, err = create_mod_arrays(ngroups, nints, nrows, ncols)
+
+    result = ChargeMigrationStep.call(ramp_model)
+
+    # Successful completion
+    status = result.meta.cal_step.charge_migration
+    npt.assert_string_equal(status, "COMPLETE")
+
+    # Output is not input
+    assert result is not ramp_model
+    assert ramp_model.meta.cal_step.charge_migration is None
+
+
 def test_too_few_groups():
     """
     Test that processing for datasets having too few (<3) groups per integration
@@ -232,9 +248,12 @@ def test_too_few_groups():
     sig_thresh = 100.0
 
     result = ChargeMigrationStep.call(ramp_model, skip=False, signal_threshold=sig_thresh)
-    status = result.meta.cal_step.charge_migration
 
+    status = result.meta.cal_step.charge_migration
     npt.assert_string_equal(status, "SKIPPED")
+
+    assert result is not ramp_model
+    assert ramp_model.meta.cal_step.charge_migration is None
 
 
 def create_mod_arrays(ngroups, nints, nrows, ncols):

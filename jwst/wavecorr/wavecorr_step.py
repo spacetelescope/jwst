@@ -51,12 +51,15 @@ class WavecorrStep(Step):
 
         # Open the input
         with datamodels.open(step_input) as input_model:
+            # Work on a copy
+            output_model = input_model.copy()
+
             # Check for valid exposure type
             exp_type = input_model.meta.exposure.type.upper()
             if exp_type not in wavecorr_supported_modes:
                 self.log.info(f"Skipping wavecorr correction for EXP_TYPE {exp_type}")
-                input_model.meta.cal_step.wavecorr = "SKIPPED"
-                return input_model
+                output_model.meta.cal_step.wavecorr = "SKIPPED"
+                return output_model
 
             # Check for prerequisites
             if (
@@ -65,8 +68,8 @@ class WavecorrStep(Step):
             ):
                 self.log.warning("assign_wcs was skipped")
                 self.log.warning("Wavecorr step will be skipped")
-                input_model.meta.cal_step.wavecorr = "SKIPPED"
-                return input_model
+                output_model.meta.cal_step.wavecorr = "SKIPPED"
+                return output_model
 
             # Check for existence of WCS
             if isinstance(input_model, datamodels.SlitModel):
@@ -84,11 +87,11 @@ class WavecorrStep(Step):
             if reffile == "N/A":
                 self.log.warning("No WAVECORR reference file found")
                 self.log.warning("Wavecorr step will be skipped")
-                input_model.meta.cal_step.wavecorr = "SKIPPED"
-                return input_model
+                output_model.meta.cal_step.wavecorr = "SKIPPED"
+                return output_model
 
             # Apply the correction
-            output_model = wavecorr.do_correction(input_model, reffile)
+            output_model = wavecorr.do_correction(output_model, reffile)
 
         return output_model
 

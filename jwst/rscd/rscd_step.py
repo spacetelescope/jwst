@@ -45,30 +45,30 @@ class RscdStep(Step):
         """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
+            # Work on a copy
+            result = input_model.copy()
+
             # check the data is MIRI data
-            detector = input_model.meta.instrument.detector
+            detector = result.meta.instrument.detector
             if not detector.startswith("MIR"):
                 self.log.warning("RSCD correction is only for MIRI data")
                 self.log.warning("RSCD step will be skipped")
-                input_model.meta.cal_step.rscd = "SKIPPED"
-                return input_model
+                result.meta.cal_step.rscd = "SKIPPED"
+                return result
 
             # Get the name of the rscd reference file to use
-            self.rscd_name = self.get_reference_file(input_model, "rscd")
+            self.rscd_name = self.get_reference_file(result, "rscd")
             self.log.info("Using RSCD reference file %s", self.rscd_name)
 
             # Check for a valid reference file
             if self.rscd_name == "N/A":
                 self.log.warning("No RSCD reference file found")
                 self.log.warning("RSCD step will be skipped")
-                input_model.meta.cal_step.rscd = "SKIPPED"
-                return input_model
+                result.meta.cal_step.rscd = "SKIPPED"
+                return result
 
             # Load the rscd ref file data model
             rscd_model = datamodels.RSCDModel(self.rscd_name)
-
-            # Work on a copy
-            result = input_model.copy()
 
             # Do the rscd correction
             result = rscd_sub.do_correction(result, rscd_model)

@@ -163,6 +163,13 @@ def test_pixel_replace_no_container(input_model_function, algorithm):
     assert np.all(result.dq[..., :, 1] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
     assert np.all(result.dq[..., 1, :] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
 
+    # Step is recorded as complete
+    assert result.meta.cal_step.pixel_replace == "COMPLETE"
+
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.pixel_replace is None
+
     result.close()
     input_model.close()
 
@@ -193,6 +200,13 @@ def test_pixel_replace_multislit(input_model_function, algorithm):
     )
     assert np.all(result.slits[0].dq[..., :, 1] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
     assert np.all(result.slits[0].dq[..., 1, :] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
+
+    # Step is recorded as complete
+    assert result.meta.cal_step.pixel_replace == "COMPLETE"
+
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.pixel_replace is None
 
     result.close()
     input_model.close()
@@ -238,6 +252,10 @@ def test_pixel_replace_nirspec_ifu(tmp_cwd, input_model_function, algorithm):
     assert np.all(result.dq[..., :, 1] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
     assert np.all(result.dq[..., 1, :] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
 
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.pixel_replace is None
+
     result.close()
     input_model.close()
 
@@ -267,5 +285,34 @@ def test_pixel_replace_container_names(tmp_cwd, input_model_function):
             assert model.meta.cal_step.pixel_replace == "COMPLETE"
             assert model.meta.filename == expected_name[i]
 
+    # Input is not modified
+    for model in container:
+        assert model.meta.cal_step.pixel_replace is None
+
     result.close()
     input_model.close()
+
+
+def test_skip_unexpected_type():
+    bad_model = datamodels.RampModel()
+    result = PixelReplaceStep.call(bad_model)
+
+    # Step is skipped
+    assert result.meta.cal_step.pixel_replace == "SKIPPED"
+
+    # Input is not modified
+    assert result is not bad_model
+    assert bad_model.meta.cal_step.pixel_replace is None
+
+
+def test_skip_unexpected_type_in_container():
+    bad_model = datamodels.RampModel()
+    container = ModelContainer([bad_model])
+    result = PixelReplaceStep.call(container)
+
+    # Step is skipped
+    assert result[0].meta.cal_step.pixel_replace == "SKIPPED"
+
+    # Input is not modified
+    assert result[0] is not bad_model
+    assert bad_model.meta.cal_step.pixel_replace is None

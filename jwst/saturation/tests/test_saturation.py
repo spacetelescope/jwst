@@ -1,8 +1,4 @@
-"""
-
-Unit tests for saturation flagging
-
-"""
+"""Unit tests for saturation flagging."""
 
 import numpy as np
 import pytest
@@ -443,6 +439,13 @@ def test_full_step(setup_nrc_cube):
     # assert np.all(output.groupdq[0, :3, 5, 5] != dqflags.group['SATURATED'])
     # assert np.all(output.groupdq[0, :, 10, 10] != dqflags.group['SATURATED'])
 
+    # Step is marked complete
+    assert output.meta.cal_step.saturation == "COMPLETE"
+
+    # Input is not modified
+    assert output is not data
+    assert data.meta.cal_step.saturation is None
+
 
 def test_full_step_irs2(setup_nrs_irs2_cube):
     """Test full run of the SaturationStep for IRS2 data."""
@@ -463,6 +466,25 @@ def test_full_step_irs2(setup_nrs_irs2_cube):
     # Check that correct pixel and group 2+ are flagged as saturated
     assert dqflags.group["SATURATED"] == np.max(output.groupdq[0, :, pixx, pixy])
     assert np.all(output.groupdq[0, 1:, pixx, pixy] == dqflags.pixel["SATURATED"])
+
+    # Step is marked complete
+    assert output.meta.cal_step.saturation == "COMPLETE"
+
+    # Input is not modified
+    assert output is not data
+    assert data.meta.cal_step.saturation is None
+
+
+def test_skip_missing_reffile(setup_nrc_cube):
+    data, _ = setup_nrc_cube(5, 20, 20)
+    output = SaturationStep.call(data, override_saturation="N/A")
+
+    # Step is marked skipped
+    assert output.meta.cal_step.saturation == "SKIPPED"
+
+    # Input is not modified
+    assert output is not data
+    assert data.meta.cal_step.saturation is None
 
 
 @pytest.fixture(scope="function")

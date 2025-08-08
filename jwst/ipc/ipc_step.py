@@ -32,22 +32,22 @@ class IPCStep(Step):
         """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
+            # Work on a copy
+            result = input_model.copy()
+
             # Get the name of the ipc reference file to use
-            self.ipc_name = self.get_reference_file(input_model, "ipc")
+            self.ipc_name = self.get_reference_file(result, "ipc")
             self.log.info("Using IPC reference file %s", self.ipc_name)
 
             # Check for a valid reference file
             if self.ipc_name == "N/A":
                 self.log.warning("No IPC reference file found")
                 self.log.warning("IPC step will be skipped")
-                input_model.meta.cal_step.ipc = "SKIPPED"
-                return input_model
+                result.meta.cal_step.ipc = "SKIPPED"
+                return result
 
             # Open the ipc reference file data model
             ipc_model = datamodels.IPCModel(self.ipc_name)
-
-            # Work on a copy
-            result = input_model.copy()
 
             # Do the ipc correction
             result = ipc_corr.do_correction(result, ipc_model)

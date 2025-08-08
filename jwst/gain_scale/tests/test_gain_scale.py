@@ -36,6 +36,40 @@ def test_step(make_cubemodel):
     assert np.all(output.var_poisson == datmod.var_poisson * gf * gf)
     assert np.all(output.var_rnoise == datmod.var_rnoise * gf * gf)
 
+    # Input is not modified
+    assert output is not datmod
+    assert datmod.meta.cal_step.gain_scale is None
+
+
+def test_step_from_reference(make_cubemodel):
+    """Test application from reference model."""
+    datmod = make_cubemodel(2, 50, 50)
+    datmod.meta.exposure.gain_factor = None
+
+    output = GainScaleStep.call(datmod)
+
+    assert output.meta.cal_step.gain_scale == "COMPLETE"
+    assert not np.all(output.data == datmod.data)
+
+    # Input is not modified
+    assert output is not datmod
+    assert datmod.meta.cal_step.gain_scale is None
+
+
+def test_step_reference_missing(make_cubemodel):
+    """Test skip for missing reference model."""
+    datmod = make_cubemodel(2, 50, 50)
+    datmod.meta.exposure.gain_factor = None
+
+    output = GainScaleStep.call(datmod, override_gain="N/A")
+
+    assert output.meta.cal_step.gain_scale == "SKIPPED"
+    assert np.all(output.data == datmod.data)
+
+    # Input is not modified
+    assert output is not datmod
+    assert datmod.meta.cal_step.gain_scale is None
+
 
 @pytest.fixture(scope="function")
 def make_cubemodel():
@@ -56,6 +90,7 @@ def make_cubemodel():
         dm.meta.date = "2018-01-01"
         dm.meta.instrument.detector = "NRS1"
         dm.meta.observation.date = "2018-01-01"
+        dm.meta.observation.time = "00:00:00"
 
         dm.meta.exposure.gain_factor = 2
 
