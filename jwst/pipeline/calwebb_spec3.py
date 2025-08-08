@@ -20,7 +20,6 @@ from jwst.extract_1d import extract_1d_step
 from jwst.lib.exposure_types import is_moving_target
 from jwst.master_background import master_background_step
 from jwst.master_background.master_background_step import split_container
-from jwst.mrs_imatch import mrs_imatch_step
 from jwst.outlier_detection import outlier_detection_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
@@ -43,7 +42,7 @@ class Spec3Pipeline(Pipeline):
     """
     Process JWST spectroscopic exposures from Level 2b to 3.
 
-    Included steps are: assign_mtwcs, master_background, mrs_imatch,
+    Included steps are: assign_mtwcs, master_background,
     outlier_detection, pixel_replace, resample_spec, cube_build,
     extract_1d, photom, combine_1d, and spectral_leak.
     """
@@ -57,7 +56,6 @@ class Spec3Pipeline(Pipeline):
     step_defs = {
         "assign_mtwcs": assign_mtwcs_step.AssignMTWcsStep,
         "master_background": master_background_step.MasterBackgroundStep,
-        "mrs_imatch": mrs_imatch_step.MRSIMatchStep,
         "outlier_detection": outlier_detection_step.OutlierDetectionStep,
         "pixel_replace": pixel_replace_step.PixelReplaceStep,
         "resample_spec": resample_spec_step.ResampleSpecStep,
@@ -83,7 +81,6 @@ class Spec3Pipeline(Pipeline):
 
         # Setup sub-step defaults
         self.master_background.suffix = "mbsub"
-        self.mrs_imatch.suffix = "mrs_imatch"
         self.outlier_detection.suffix = "crf"
         self.outlier_detection.save_results = self.save_results
         self.resample_spec.suffix = "s2d"
@@ -212,10 +209,6 @@ class Spec3Pipeline(Pipeline):
             # The MultiExposureModel is a required output, except for WFSS modes.
             if isinstance(result, SourceModelContainer) and (exptype not in WFSS_TYPES):
                 self.save_model(result, "cal")
-
-            # Call the skymatch step for MIRI MRS data
-            if exptype in ["MIR_MRS"]:
-                result = self.mrs_imatch.run(result)
 
             # Call outlier detection and pixel replacement
             resample_complete = None

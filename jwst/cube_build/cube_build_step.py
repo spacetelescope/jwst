@@ -39,7 +39,7 @@ class CubeBuildStep(Step):
          weight_power = float(default=2.0) # Weighting option to use for Modified Shepard Method
          wavemin = float(default=None)  # Minimum wavelength to be used in the IFUCube
          wavemax = float(default=None)  # Maximum wavelength to be used in the IFUCube
-         single = boolean(default=false) # Internal pipeline option used by mrs_imatch & outlier detection
+         single = boolean(default=false) # Internal pipeline option used by outlier detection
          skip_dqflagging = boolean(default=false) # skip setting the DQ plane of the IFU
          search_output_file = boolean(default=false)
          output_use_model = boolean(default=true) # Use filenames in the output models
