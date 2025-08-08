@@ -110,6 +110,8 @@ def subtract_wfss_bkg(
     result.data = input_model.data - subtract_this
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
     result.meta.background.scaling_factor = factor
+    # save the mask in expected data type for the datamodel
+    result.mask = bkg_mask.astype(np.uint32)
 
     log.info(f"Average of scaled background image = {np.nanmean(subtract_this):.3e}")
     log.info(f"Scaling factor = {factor:.5e}")
