@@ -203,8 +203,13 @@ def test_tweakreg_step(example_input, with_shift):
 
     # check that step completed
     with result:
-        for model in result:
+        for model, input_model in zip(result, example_input, strict=True):
             assert model.meta.cal_step.tweakreg == "COMPLETE"
+
+            # Input model is not modified
+            assert model is not input_model
+            assert input_model.meta.cal_step.tweakreg is None
+
             result.shelve(model, modify=False)
 
         # and that the wcses differ by a small amount due to the shift above
@@ -237,8 +242,33 @@ def test_src_confusion_pars(example_input, alignment_type):
 
     # check that step was skipped
     with result:
-        for model in result:
+        for model, input_model in zip(result, example_input, strict=True):
             assert model.meta.cal_step.tweakreg == "SKIPPED"
+
+            # Input model is not modified
+            assert model is not input_model
+            assert input_model.meta.cal_step.tweakreg is None
+
+            result.shelve(model)
+
+
+def test_ngroup_1(caplog, example_input):
+    example_input[0].meta.group_id = "a"
+    example_input[1].meta.group_id = "a"
+
+    # Input has the same group, so processing should be skipped
+    result = tweakreg_step.TweakRegStep.call(example_input)
+    assert "At least two exposures are required" in caplog.text
+
+    # check that step was skipped
+    with result:
+        for model, input_model in zip(result, example_input, strict=True):
+            assert model.meta.cal_step.tweakreg == "SKIPPED"
+
+            # Input model is not modified
+            assert model is not input_model
+            assert input_model.meta.cal_step.tweakreg is None
+
             result.shelve(model)
 
 
