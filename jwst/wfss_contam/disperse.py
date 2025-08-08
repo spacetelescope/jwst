@@ -212,6 +212,7 @@ def disperse(
     oversample_factor=2,
     xoffset=0,
     yoffset=0,
+    phot_per_lam=True,
 ):
     """
     Compute the dispersed image pixel values from the direct image.
@@ -248,6 +249,12 @@ def disperse(
         X offset to apply to the dispersed pixel positions
     yoffset : float, optional
         Y offset to apply to the dispersed pixel positions
+    phot_per_lam : bool
+        If True, it is assumed that the photometric response is calibrated per wavelength,
+        as is done for NIRCam, and therefore we need to multiply by dlam to un-do the calibration
+        in this step.
+        If False, it is assumed that the response is calibrated per pixel, and there is no need
+        to multiply by dlam. This is what's done for NIRISS.
 
     Returns
     -------
@@ -320,14 +327,20 @@ def disperse(
     # compute 1D sensitivity array corresponding to list of wavelengths
     sens, no_cal = create_1d_sens(lambdas, sens_waves, sens_resp)
 
-    # Compute countrates for dispersed pixels. Note that dispersed pixel
-    # values are naturally in units of physical fluxes, so we divide out
-    # the sensitivity (flux calibration) values to convert to units of
-    # countrate (DN/s).
-    # Factor of 1e4 is needed for compatibility with MJy/sr units of sens
+    # Compute countrates for dispersed pixels.
+    # The input direct image data is already photometrically calibrated,
+    # so we need to basically apply a reverse flux calibration here.
+    # Divide out the response values to convert from Mjy/sr to DN/s.
+    # Note that the photom reference files are constructed differently for NIRCam and NIRISS
+    # in the way they handle the dispersion: NIRCam uses per/wavelength, NIRISS uses per-pixel.
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=RuntimeWarning, message="divide by zero")
-        counts = fluxes * areas * dlam * 1e4 / sens
+        if phot_per_lam:
+            # NIRCam case. Oversampling is accounted for by the spacing of dlam.
+            counts = fluxes * areas * dlam * 1e4 / sens
+        else:
+            # NIRISS case. Oversampling must be handled directly to avoid double-counting.
+            counts = fluxes * areas / (sens * oversample_factor)
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
 
     outputs_by_source = _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel)

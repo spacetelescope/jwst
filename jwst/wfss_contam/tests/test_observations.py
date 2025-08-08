@@ -18,7 +18,6 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     direct_image_with_gradient still needs to be run to produce the file,
     even though it is not called directly
     """
-    filter_name = "F200W"
     seg = segmentation_map.data
     all_ids = np.array(list(set(np.ravel(seg))))
     source_ids = all_ids[50:60]
@@ -26,8 +25,8 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
         direct_image_with_gradient.data,
         segmentation_map,
         grism_wcs,
-        filter_name,
         source_id=source_ids,
+        phot_per_lam=False,
     )
 
 
