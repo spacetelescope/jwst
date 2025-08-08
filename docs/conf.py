@@ -463,6 +463,7 @@ linkcheck_retry = 5
 linkcheck_ignore = [
     "http://stsci.edu/schemas/fits-schema/",  # Old schema from CHANGES.rst
     "https://jwst-docs.stsci.edu",  # CI blocked by service provider
+    "https://outerspace.stsci.edu",  # CI blocked by service provider
     "https://jira.stsci.edu/",  # Internal access only
     r"https://github\.com/spacetelescope/jwst/(?:issues|pull)/\d+",
 ]
