@@ -40,8 +40,9 @@ class AssignMTWcsStep(Step):
         if not isinstance(output_lib, ModelLibrary):
             try:
                 output_lib = ModelLibrary(output_lib)
-            except Exception:
+            except (ValueError, TypeError) as err:
                 log.warning("Input data type is not supported.")
+                log.debug(f"Error was: {err}")
                 record_step_status(output_lib, "assign_mtwcs", False)
                 return output_lib
 

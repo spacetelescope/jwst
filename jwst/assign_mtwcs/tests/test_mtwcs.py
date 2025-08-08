@@ -82,10 +82,11 @@ def test_output_is_not_input(monkeypatch, success):
     that performance is the most important thing and extra copies are
     not desired.
     """
+    # Mock a failure in the ModelLibrary init, to exercise the "skipped" condition
     if not success:
 
         def raise_error(*args, **kwargs):
-            raise RuntimeError("test")
+            raise ValueError("test")
 
         monkeypatch.setattr(ModelLibrary, "__init__", raise_error)
 
@@ -107,3 +108,9 @@ def test_output_is_not_input(monkeypatch, success):
 
                 if success:
                     result.shelve(im, modify=False)
+
+
+def test_input_not_supported(caplog):
+    input_data = datamodels.ImageModel()
+    AssignMTWcsStep.call(input_data)
+    assert "Input data type is not supported" in caplog.text
