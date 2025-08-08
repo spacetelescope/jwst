@@ -380,6 +380,12 @@ def extract_grism_objects(
     Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
             variable. The cross-dispersion size is taken from the minimum
             bounding box.
+
+    Each of the virtual slits in the output MultiSlitModel will have its own
+    WCS object that is a copy of the input_model WCS, but with an additional
+    transform from "grism_slit" to "grism_detector" prepended to it; this
+    transform encodes a shift to the center of the slit and a binding to the
+    slit's bounding box.
     """
     if reference_files is None or not reference_files:
         raise TypeError("Expected a dictionary for reference_files")
@@ -493,7 +499,9 @@ def extract_grism_objects(
                 else:
                     var_flat = None
 
-                # add a new transform to the WCS that shifts to the center of the virtual slit
+                # Add a new transform to the WCS that shifts to the center of the virtual slit
+                # This needs to be separated from the "grism_detector" to "detector" transform
+                # because
                 tr = Mapping((0, 1, 0, 0, 0)) | (
                     Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model
                 )
