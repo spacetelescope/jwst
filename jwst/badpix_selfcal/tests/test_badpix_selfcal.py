@@ -295,12 +295,7 @@ def test_apply_flags(background):
 
 @pytest.mark.parametrize("dset", ["sci", "asn"])
 def test_badpix_selfcal_step(request, dset):
-    """
-    Test the badpix_selfcal step.
-
-    This is a functional test that checks that the step runs without error.
-    The output will be checked by the regtest.
-    """
+    """Smoke test for the badpix_selfcal step."""
     input_data = request.getfixturevalue(dset)
     result = BadpixSelfcalStep.call(input_data, skip=False, force_single=True)
 

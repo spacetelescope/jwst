@@ -1,12 +1,13 @@
 """Unit tests for Residual Fringe Correction step interface."""
+
 import logging
 
 import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.residual_fringe import ResidualFringeStep, residual_fringe
 from jwst.lib.basic_utils import LoggingContext
+from jwst.residual_fringe import ResidualFringeStep, residual_fringe
 
 
 @pytest.fixture(scope="function")
@@ -52,7 +53,7 @@ def test_ignore_regions(caplog, tmp_cwd, monkeypatch, miri_image):
     monkeypatch.setattr(step, "get_reference_file", lambda *args: "N/A")
 
     # check for ignore regions log message
-    with LoggingContext(logging.getLogger('jwst'), level=logging.INFO):
+    with LoggingContext(logging.getLogger("jwst"), level=logging.INFO):
         result = step.run(miri_image)
     assert "Ignoring 2 wavelength regions" in caplog.text
 
