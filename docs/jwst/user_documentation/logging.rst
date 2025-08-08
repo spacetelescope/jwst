@@ -23,8 +23,8 @@ organized by step or pipeline name. For example to see log messages from
     print(model.cal_logs.calwebb_detector1)
 
 Files processed by a pipeline will contain all logs messages for that
-run under the pipeline name (and not contain ``cal_logs`` for individual
-steps that were part of the pipeline).
+run under the pipeline name (and will not contain separate ``cal_logs``
+for individual steps that were part of the pipeline).
 
 Log messages that contain sensitive information (user, hostname, paths,
 IP addresses) are replaced with empty strings. Please see the console
@@ -39,7 +39,7 @@ stream.
 
 The name of a file in which to save log information, as well as the desired
 level of logging messages, can be specified in optional command line arguments
-provided to ``strun``, or can be directly configured via the logging module
+provided to ``strun``, or can be directly configured via the `logging` module
 in Python code.
 
 From the Command Line
