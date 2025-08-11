@@ -8,6 +8,7 @@ from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SpecModel, TSOMultiSpecModel
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
+from jwst.extract_1d.tests.helpers import simple_wcs_func
 from jwst.lib.dispaxis import get_dispersion_direction
 from jwst.photom import photom
 
@@ -801,7 +802,7 @@ def create_photom_niriss_image():
     return ftab
 
 
-def create_photom_miri_mrs(shape, value, pixel_area, photmjsr):
+def create_photom_miri_mrs(shape, value, pixel_area, photmjsr, timecoeff=False):
     """
     Create a photom reference file for MIRI MRS.
 
@@ -815,18 +816,55 @@ def create_photom_miri_mrs(shape, value, pixel_area, photmjsr):
         The pixel solid angle in steradians.
     photmjsr : float
         The value to assign to the MJy / sr keyword.
+    timecoeff : bool, optional
+        If True, time dependence coefficient tables are added.
 
     Returns
     -------
-    ftab : `~jwst.datamodels.JwstDataModel`
+    ftab : `~jwst.datamodels.MirMrsPhotomModel`
         An open data model for a MIRI MRS photom reference file.
     """
+    # add photom images
     data = np.zeros(shape, dtype=np.float32) + value
     err = np.ones(shape, dtype=np.float32)
     dq = np.zeros(shape, dtype=np.uint32)
     pixsiz = np.zeros(shape, dtype=np.float32) + pixel_area
 
-    ftab = datamodels.MirMrsPhotomModel(data=data, err=err, dq=dq, pixsiz=pixsiz)
+    # exponential time coefficients
+    if timecoeff:
+        # add time coefficients
+        nrow = 10
+        binwave = np.linspace(6, 10, nrow)
+        acoeff = np.full(nrow, 1.00)
+        bcoeff = np.full(nrow, 0.009)
+        ccoeff = np.full(nrow, -0.056)
+        x0 = np.full(nrow, 59680.0)
+
+        dtypec = np.dtype(
+            [
+                ("binwave", "<f4"),
+                ("acoeff", "<f4"),
+                ("bcoeff", "<f4"),
+                ("ccoeff", "<f4"),
+                ("x0", "<f4"),
+            ]
+        )
+        reftab_exp = np.array(
+            list(zip(binwave, acoeff, bcoeff, ccoeff, x0, strict=True)), dtype=dtypec
+        )
+
+        ftab = datamodels.MirMrsPhotomModel(
+            data=data,
+            err=err,
+            dq=dq,
+            pixsiz=pixsiz,
+            timecoeff_ch1=reftab_exp,
+            timecoeff_ch2=reftab_exp,
+            timecoeff_ch3=reftab_exp,
+            timecoeff_ch4=reftab_exp,
+        )
+    else:
+        ftab = datamodels.MirMrsPhotomModel(data=data, err=err, dq=dq, pixsiz=pixsiz)
     ftab.meta.photometry.conversion_megajanskys = photmjsr
 
     return ftab
@@ -930,14 +968,16 @@ def create_photom_miri_image():
     reftab = np.array(
         list(zip(filter_list, subarray, photmjsr, uncertainty, strict=True)), dtype=dtype
     )
-    timecoeff_amp = np.linspace(2.1, 2.1 + (nrows - 1.0) * 0.1, nrows)
-    timecoeff_tau = np.asarray([145, 145, 145])
-    timecoeff_t0 = np.asarray([59720, 59720, 59720])
-    dtypec = np.dtype([("amplitude", "<f4"), ("tau", "<f4"), ("t0", "<f4")])
+    timecoeff_amp = np.linspace(2.1, 2.1 + (nrows - 1.0) * 0.1, nrows) / photmjsr
+    timecoeff_tau = np.full(nrows, 145)
+    timecoeff_t0 = np.full(nrows, 59720)
+    timecoeff_const = np.full(nrows, 1.0)
+    dtypec = np.dtype([("amplitude", "<f4"), ("tau", "<f4"), ("t0", "<f4"), ("const", "<f4")])
     reftabc = np.array(
-        list(zip(timecoeff_amp, timecoeff_tau, timecoeff_t0, strict=True)), dtype=dtypec
+        list(zip(timecoeff_amp, timecoeff_tau, timecoeff_t0, timecoeff_const, strict=True)),
+        dtype=dtypec,
     )
-    ftab = datamodels.MirImgPhotomModel(phot_table=reftab, timecoeff=reftabc)
+    ftab = datamodels.MirImgPhotomModel(phot_table=reftab, timecoeff_exponential=reftabc)
 
     return ftab
 
@@ -1555,6 +1595,48 @@ def test_miri_mrs():
     assert np.all(result)
 
 
+def test_miri_mrs_time_cor():
+    """Test the calc_miri method of the DataSet class, MRS data."""
+    input_model = create_input("MIRI", "MIRIFULONG", "MIR_MRS", filter_used="F1500W", band="LONG")
+    input_model.meta.exposure.mid_time = 59700.0
+    shape = input_model.data.shape
+
+    # Mock a wcs
+    input_model.meta.wcs = simple_wcs_func()
+    input_model.meta.wcs.bounding_box = ((-0.5, shape[-1] - 0.5), (-0.5, shape[-2] - 0.5))
+
+    save_input = input_model.copy()
+    ds = photom.DataSet(input_model, mrs_time_correction=True)
+    value = 1.436
+    pixel_area = 0.0436
+    photmjsr = 17.3
+    ftab = create_photom_miri_mrs(
+        shape, value=value, pixel_area=pixel_area, photmjsr=photmjsr, timecoeff=True
+    )
+    ds.calc_miri(ftab)
+
+    input_data = save_input.data
+    output = ds.input.data  # ds.input is the output
+
+    result = []
+    # Check the photometry keywords.
+    result.append(
+        math.isclose(photmjsr, ds.input.meta.photometry.conversion_megajanskys, rel_tol=1.0e-12)
+    )
+    result.append(
+        math.isclose(
+            photmjsr * MJSR_TO_UJA2,
+            ds.input.meta.photometry.conversion_microjanskys,
+            rel_tol=1.0e-12,
+        )
+    )
+    # Check the data values.
+    expected_time_correction = 0.94220161
+    compare = value / expected_time_correction
+    ratio = output / input_data
+    np.testing.assert_allclose(ratio, compare, rtol=1e-6)
+
+
 def test_miri_lrs():
     """Test the calc_miri method of the DataSet class, LRS data."""
     input_model = create_input("MIRI", "MIRIMAGE", "MIR_LRS-FIXEDSLIT", filter_used="P750L")
@@ -1594,13 +1676,14 @@ def test_miri_image():
     output = ds.input.data  # ds.input is the output
     rownum = find_row_in_ftab(save_input, ftab, ["filter"], slitname=None, order=None)
     photmjsr = ftab.phot_table["photmjsr"][rownum]
-    amplitude = ftab.timecoeff["amplitude"][rownum]
-    tau = ftab.timecoeff["tau"][rownum]
-    t0 = ftab.timecoeff["t0"][rownum]
+    amplitude = ftab.timecoeff_exponential["amplitude"][rownum]
+    tau = ftab.timecoeff_exponential["tau"][rownum]
+    t0 = ftab.timecoeff_exponential["t0"][rownum]
+    const = ftab.timecoeff_exponential["const"][rownum]
     shape = input_data.shape
     ix = shape[1] // 2
     iy = shape[0] // 2
-    compare = photmjsr + amplitude * np.exp(-(60000 - t0) / tau)  # Added for new PHOTOM step
+    compare = photmjsr * (amplitude * np.exp(-(60000 - t0) / tau) + const)
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input_data[iy, ix]
     assert_allclose(ratio, compare, rtol=1.0e-7)
