@@ -440,11 +440,25 @@ def _psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter):
 
 def tso_source_centroid(datamodel, xcenter, ycenter, search_box_width=41, fit_box_width=11):
     """
-    Centroid the source by fitting a Gaussian to a subimage.
+    Centroid the source and fit a Gaussian PSF to a subimage.
 
-    If the fit fails in either the initial or the secondary pass,
-    the returned centroid values will be all-NaN arrays and the PSF values
-    will be None.
+    For each integration, the source centroid is computed as the
+    center-of-mass for the subimage.
+
+    The initial fit to the data uses a wider search box centered on the
+    planned position to derive an initial guess for the centroid position.
+    A secondary fit uses a smaller subimage to compute the final centroid
+    position. The subimage in both cases is background-subtracted prior to
+    the fit, from a median value of pixels outside an assumed source radius.
+
+    If the fit is successful, a Gaussian PSF is fit to the subimage at the
+    centroid location and the PSF width and flux are reported in the output.
+
+    If the fit fails for all integrations in either the initial or the
+    secondary pass, the returned centroid values will be all-NaN arrays and
+    the PSF values will be None.  If only some integrations fail, or if
+    the centroid succeeds but the Gaussian fits fail, individual values
+    within the returned arrays will be set to NaN.
 
     Parameters
     ----------
