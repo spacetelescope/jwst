@@ -336,8 +336,8 @@ def _find_spectral_order_index(refmodel, order):
         The index to provide the reference file lists of traces and wavecal
         models to retrieve the arrays for the desired spectral order
     """
-    if order not in [1, 2]:
-        error_message = f"Order {order} is not supported at this time."
+    if order not in [1, 2, 3]:
+        error_message = f"Order {order} is not supported."
         log.error(error_message)
         raise ValueError(error_message)
 
@@ -440,11 +440,6 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
         The y coordinates of the rotated points.
     wavelengths : np.ndarray
         The wavelengths associated with the rotated points.
-
-    Raises
-    ------
-    ValueError
-        If `order` is not in ['1', '2'].
     """
     spectral_order_index = _find_spectral_order_index(refmodel, int(order))
 
@@ -646,11 +641,12 @@ def get_soss_wavemaps(
     wavemaps = []
     spectraces = []
     for order in refmodel_orders:
+        idx = _find_spectral_order_index(refmodel, order)
         _, x, y, wl = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
 
         # cut off order where it runs off the detector
         # and fill in with linear extrapolation
-        cutoff = cutoffs[order - 1] - 1
+        cutoff = cutoffs[idx] - 1
         if cutoff <= wl.size:
             # XTRACE_ORD1_LEN = 2048 so this conditional is skipped for order 1
             dwl = wl[cutoff] - wl[cutoff - 1]

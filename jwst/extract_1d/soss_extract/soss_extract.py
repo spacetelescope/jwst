@@ -17,7 +17,11 @@ from jwst.extract_1d.soss_extract.atoca_utils import (
     oversample_grid,
     throughput_soss,
 )
-from jwst.extract_1d.soss_extract.pastasoss import CUTOFFS, get_soss_wavemaps
+from jwst.extract_1d.soss_extract.pastasoss import (
+    CUTOFFS,
+    _find_spectral_order_index,
+    get_soss_wavemaps,
+)
 from jwst.extract_1d.soss_extract.soss_boxextract import (
     box_extract,
     estim_error_nearest_data,
@@ -162,7 +166,7 @@ def _get_trace_1d(ref_files, order):
         padsize=None,
         spectraces=True,
     )
-    order_idx = order - 1
+    order_idx = _find_spectral_order_index(pastasoss_ref, order)
     spectrace = spectraces[order_idx]
     xtrace = np.arange(CUTOFFS[order_idx])
 
