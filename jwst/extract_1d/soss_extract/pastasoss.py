@@ -613,8 +613,8 @@ def get_soss_wavemaps(
     wavemaps : np.ndarray
         The 2D wavemaps. Will have shape (2, array_x, array_y) with orders 1 and 2 being
         the first and second elements, respectively.
-    spectraces : np.ndarray, optional
-        The corresponding 1D spectraces (if `spectraces` is True).
+    traces : np.ndarray, optional
+        The corresponding 1D traces (if `spectraces` is True).
     """
     if refmodel is None:
         refmodel = retrieve_default_pastasoss_model()
@@ -639,7 +639,7 @@ def get_soss_wavemaps(
 
     refmodel_orders = [int(trace.spectral_order) for trace in refmodel.traces]
     wavemaps = []
-    spectraces = []
+    traces = []
     for order in refmodel_orders:
         idx = _find_spectral_order_index(refmodel, order)
         _, x, y, wl = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
@@ -681,11 +681,11 @@ def get_soss_wavemaps(
         if not do_padding and padsize != 0:
             wavemap = wavemap[padsize:-padsize, padsize:-padsize]
         wavemaps.append(wavemap)
-        spectraces.append(spectrace)
+        traces.append(spectrace)
 
     # Combine wavemaps and spectraces into ndarray output
     if spectraces:
-        return np.array(wavemaps), np.array(spectraces)
+        return np.array(wavemaps), np.array(traces)
     return np.array(wavemaps)
 
 
