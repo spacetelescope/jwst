@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 
 from jwst.extract_1d.soss_extract.pastasoss import (
+    _convert_refmodel_poly_to_astropy,
     _extrapolate_to_wavegrid,
     _find_spectral_order_index,
     _get_soss_traces,
@@ -17,6 +18,50 @@ from jwst.extract_1d.soss_extract.tests.helpers import (
 )
 
 """Test coverage for the helper functions in pastasoss.py"""
+
+
+@pytest.mark.parametrize("degree", [3, 5])
+def test_convert_refmodel_poly_to_astropy(degree):
+    """Test that the reference model polynomial coefficients are correctly converted to Astropy format."""
+
+    n_coeffs = (degree + 1) * (degree + 2) // 2
+    coeffs = np.arange(n_coeffs)
+    astropy_poly = _convert_refmodel_poly_to_astropy(coeffs)
+
+    # pick some random numbers
+    x = np.linspace(0, 1, 25)
+    offset = np.linspace(-3, 3, 25)
+
+    # this is what used to be in the code for degree 5
+    poly_features = np.array(
+        [
+            x,
+            offset,
+            x**2,
+            x * offset,
+            offset**2,
+            x**3,
+            x**2 * offset,
+            x * offset**2,
+            offset**3,
+            x**4,
+            x**3 * offset,
+            x**2 * offset**2,
+            x * offset**3,
+            offset**4,
+            x**5,
+            x**4 * offset,
+            x**3 * offset**2,
+            x**2 * offset**3,
+            x * offset**4,
+            offset**5,
+        ]
+    )
+
+    poly_features = poly_features[: n_coeffs - 1, :]
+    expected = coeffs[0] + coeffs[1:] @ poly_features
+    astropy_result = astropy_poly(x, offset)
+    assert np.allclose(astropy_result, expected)
 
 
 def test_wavecal_models(refmodel):

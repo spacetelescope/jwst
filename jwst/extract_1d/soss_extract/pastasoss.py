@@ -4,6 +4,7 @@ from functools import partial
 
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
+from astropy.modeling.polynomial import Polynomial2D
 from scipy.interpolate import interp1d
 from stpipe import crds_client
 
@@ -29,6 +30,45 @@ DEFAULT_CRDS_PARAMS = {
 __all__ = ["get_soss_traces", "get_soss_wavemaps", "retrieve_default_pastasoss_model"]
 
 
+def _convert_refmodel_poly_to_astropy(coefficients):
+    """
+    Reorder reference file 2-D polynomial coefficients to create Astropy polynomial.
+
+    Ordering in reference files is expected to be
+    C00 + C10 * x + C01 * y + C20 * x^2 + C11 * x * y + C02 * y^2 +
+    C30 * x^3 + C21 * x^2 * y + C12 * x * y^2 + C03 * y^3 ...
+
+    Astropy ordering is
+    C00 + C10 * x + C20 * x^2 ...
+    + C01 * y + C02 * y^2 + ...
+    + C11 * x * y + C12 * x^2 * y + C13 * x^3 * y ...
+
+    Parameters
+    ----------
+    coefficients : list
+        A list of polynomial coefficients in the reference file format.
+
+    Returns
+    -------
+    Polynomial2D
+        The Astropy 2-D polynomial representation of the input coefficients.
+    """
+    # figure out the degree from the length by inverting triangle number formula
+    degree = int(np.sqrt(2 * len(coefficients))) - 1
+    poly = Polynomial2D(degree=degree)
+    coeff_names = poly.param_names
+    for name in coeff_names:
+        # compute index in coefficients corresponding to that order
+        xord, yord = (int(n) for n in name.strip("c").split("_"))
+        ord_sum = xord + yord
+        min_idx_ord_sum = ord_sum * (ord_sum + 1) // 2  # triangle number
+        idx = min_idx_ord_sum + yord
+        coeff = coefficients[idx]
+        setattr(poly, name, coeff)
+
+    return poly
+
+
 def _get_wavelengths(refmodel, x, pwcpos, order):
     """
     Get the associated wavelength values for a given spectral order.
@@ -50,10 +90,38 @@ def _get_wavelengths(refmodel, x, pwcpos, order):
     wavelengths : numpy.ndarray
         The estimated wavelengths for the given pixel values.
     """
-    if order == 1:
-        wavelengths = wavecal_model_order1_poly(refmodel, x, pwcpos)
-    elif order == 2:
-        wavelengths = wavecal_model_order2_poly(refmodel, x, pwcpos)
+    order_idx = _find_spectral_order_index(refmodel, order)
+    x_scaler = partial(
+        _min_max_scaler,
+        **{
+            "x_min": refmodel.wavecal_models[order_idx].scale_extents[0][0],
+            "x_max": refmodel.wavecal_models[order_idx].scale_extents[1][0],
+        },
+    )
+
+    pwcpos_offset_scaler = partial(
+        _min_max_scaler,
+        **{
+            "x_min": refmodel.wavecal_models[order_idx].scale_extents[0][1],
+            "x_max": refmodel.wavecal_models[order_idx].scale_extents[1][1],
+        },
+    )
+
+    # extract model weights and intercept
+    coef = refmodel.wavecal_models[order_idx].coefficients
+    poly = _convert_refmodel_poly_to_astropy(coef)
+
+    # scale x and pwcpos offset to be between 0 and 1
+    x_scaled = x_scaler(x)
+    if int(order) == 2:
+        # Reference file has a bug for order 2 where the scale_extents are not
+        # defined as offsets: they have not had the commanded position subtracted
+        offset = np.ones_like(x) * pwcpos
+    else:
+        offset = np.ones_like(x) * (pwcpos - refmodel.meta.pwcpos_cmd)
+    offset_scaled = pwcpos_offset_scaler(offset)
+
+    wavelengths = poly(x_scaled, offset_scaled)
 
     return wavelengths
 
@@ -86,188 +154,6 @@ def _min_max_scaler(x, x_min, x_max):
     """
     x_scaled = (x - x_min) / (x_max - x_min)
     return x_scaled
-
-
-def wavecal_model_order1_poly(refmodel, x, pwcpos):
-    """
-    Compute order 1 wavelengths.
-
-    Parameters
-    ----------
-    refmodel : PastasossModel
-        The reference model holding the wavecal models
-        and scale extents
-    x : float or numpy.ndarray
-        The input pixel values for which the function
-        will estimate wavelengths
-    pwcpos : float
-        The position of the pupil wheel; used to determine
-        the difference between current and commanded position
-        to rotate the model
-
-    Returns
-    -------
-    wavelengths : numpy.ndarray
-        The estimated wavelengths for the given pixel values.
-    """
-    x_scaler = partial(
-        _min_max_scaler,
-        **{
-            "x_min": refmodel.wavecal_models[0].scale_extents[0][0],
-            "x_max": refmodel.wavecal_models[0].scale_extents[1][0],
-        },
-    )
-
-    pwcpos_offset_scaler = partial(
-        _min_max_scaler,
-        **{
-            "x_min": refmodel.wavecal_models[0].scale_extents[0][1],
-            "x_max": refmodel.wavecal_models[0].scale_extents[1][1],
-        },
-    )
-
-    def get_poly_features(x, offset):
-        """
-        Polynomial features for the order 1 wavecal model.
-
-        Parameters
-        ----------
-        x : float or numpy.ndarray
-            The input pixel values for which the function will estimate wavelengths
-        offset : float or numpy.ndarray
-            The offset values for the pupil wheel position
-
-        Returns
-        -------
-        numpy.ndarray
-            The polynomial features for the order 1 wavecal model.
-        """
-        poly_features = np.array(
-            [
-                x,
-                offset,
-                x**2,
-                x * offset,
-                offset**2,
-                x**3,
-                x**2 * offset,
-                x * offset**2,
-                offset**3,
-                x**4,
-                x**3 * offset,
-                x**2 * offset**2,
-                x * offset**3,
-                offset**4,
-                x**5,
-                x**4 * offset,
-                x**3 * offset**2,
-                x**2 * offset**3,
-                x * offset**4,
-                offset**5,
-            ]
-        )
-        return poly_features
-
-    # extract model weights and intercept
-    coef = refmodel.wavecal_models[0].coefficients
-
-    # get pixel columns and then scaled
-    x_scaled = x_scaler(x)
-
-    # offset
-    offset = np.ones_like(x) * (pwcpos - refmodel.meta.pwcpos_cmd)
-    offset_scaled = pwcpos_offset_scaler(offset)
-
-    # polynomial features
-    poly_features = get_poly_features(x_scaled, offset_scaled)
-    wavelengths = coef[0] + coef[1:] @ poly_features
-
-    return wavelengths
-
-
-def wavecal_model_order2_poly(refmodel, x, pwcpos):
-    """
-    Compute order 2 wavelengths.
-
-    Parameters
-    ----------
-    refmodel : PastasossModel
-        The reference model holding the wavecal models
-        and scale extents
-    x : float or numpy.ndarray
-        The input pixel values for which the function
-        will estimate wavelengths
-    pwcpos : float
-        The position of the pupil wheel; used to determine
-        the difference between current and commanded position
-        to rotate the model
-
-    Returns
-    -------
-    wavelengths : numpy.ndarray
-        The estimated wavelengths for the given pixel values.
-    """
-    x_scaler = partial(
-        _min_max_scaler,
-        **{
-            "x_min": refmodel.wavecal_models[1].scale_extents[0][0],
-            "x_max": refmodel.wavecal_models[1].scale_extents[1][0],
-        },
-    )
-
-    pwcpos_offset_scaler = partial(
-        _min_max_scaler,
-        **{
-            "x_min": refmodel.wavecal_models[1].scale_extents[0][1],
-            "x_max": refmodel.wavecal_models[1].scale_extents[1][1],
-        },
-    )
-
-    def get_poly_features(x, offset):
-        """
-        Polynomial features for the order 2 wavecal model.
-
-        Parameters
-        ----------
-        x : float or numpy.ndarray
-            The input pixel values for which the function will estimate wavelengths
-        offset : float or numpy.ndarray
-            The offset values for the pupil wheel position
-
-        Returns
-        -------
-        numpy.ndarray
-            The polynomial features for the order 2 wavecal model.
-        """
-        poly_features = np.array(
-            [
-                x,
-                offset,
-                x**2,
-                x * offset,
-                offset**2,
-                x**3,
-                x**2 * offset,
-                x * offset**2,
-                offset**3,
-            ]
-        )
-        return poly_features
-
-    # coef and intercept
-    coef = refmodel.wavecal_models[1].coefficients
-
-    # get pixel columns and then scaled
-    x_scaled = x_scaler(x)
-
-    offset = np.ones_like(x) * pwcpos
-    offset_scaled = pwcpos_offset_scaler(offset)
-
-    # polynomial features
-    poly_features = get_poly_features(x_scaled, offset_scaled)
-    wavelengths = coef[0] + coef[1:] @ poly_features
-
-    return wavelengths
 
 
 def _rotate(x, y, angle, origin=(0, 0)):
