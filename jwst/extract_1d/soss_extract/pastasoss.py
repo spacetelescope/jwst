@@ -11,8 +11,7 @@ log = logging.getLogger(__name__)
 
 SOSS_XDIM = 2048
 SOSS_YDIM = 300
-XTRACE_ORD1_LEN = SOSS_XDIM
-XTRACE_ORD2_LEN = 1783
+CUTOFFS = [SOSS_XDIM, 1783]
 WAVEMAP_WLMIN = 0.5
 WAVEMAP_WLMAX = 5.5
 WAVEMAP_NWL = 5001
@@ -636,50 +635,17 @@ def get_soss_wavemaps(
     else:
         do_padding = False
 
-    return _get_soss_wavemaps(
-        refmodel, pwcpos, subarray, padding=do_padding, padsize=padsize, spectraces=spectraces
-    )
-
-
-def _get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spectraces=False):
-    """
-    Generate order 1 and 2 2D wavemaps from the rotated SOSS trace positions.
-
-    Parameters
-    ----------
-    refmodel : PastasossModel
-        The reference file datamodel containing the SOSS trace positions and
-        wavelength calibration models.
-    pwcpos : float
-        The pupil wheel position angle, e.g. as provided in the FITS header under keyword PWCPOS.
-    subarray : str
-        The subarray name, one of 'SUBSTRIP256', 'SUBSTRIP96', or 'FULL'.
-    padding : bool
-        If True, include padding on map edges (only needed for reference files)
-    padsize : int
-        The size of the padding to include on each side.
-    spectraces : bool
-        If True, return the interpolated spectraces as well.
-
-    Returns
-    -------
-    wavemaps : np.ndarray
-        The 2D wavemaps. Will have shape (2, array_x, array_y) with orders 1 and 2 being
-        the first and second elements, respectively.
-    spectraces : np.ndarray, optional
-        The corresponding 1D spectraces (if `spectraces` is True).
-    """
     # Make wavemap from trace center wavelengths, padding to shape (296, 2088)
     wavemin = WAVEMAP_WLMIN
     wavemax = WAVEMAP_WLMAX
     nwave = WAVEMAP_NWL
+    cutoffs = CUTOFFS
     wave_grid = np.linspace(wavemin, wavemax, nwave)
 
-    cutoffs = [XTRACE_ORD1_LEN, XTRACE_ORD2_LEN]
-
+    refmodel_orders = [int(trace.spectral_order) for trace in refmodel.traces]
     wavemaps = []
     spectraces = []
-    for order in [1, 2]:  # TODO: pull order list from the reference file
+    for order in refmodel_orders:
         _, x, y, wl = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
 
         # cut off order where it runs off the detector
@@ -716,7 +682,7 @@ def _get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spe
             wavemap = wavemap[SUBARRAY_YMIN - padsize : SUBARRAY_YMIN + 96 + padsize, :]
 
         # remove padding if necessary
-        if not padding and padsize != 0:
+        if not do_padding and padsize != 0:
             wavemap = wavemap[padsize:-padsize, padsize:-padsize]
         wavemaps.append(wavemap)
         spectraces.append(spectrace)

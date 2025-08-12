@@ -17,11 +17,7 @@ from jwst.extract_1d.soss_extract.atoca_utils import (
     oversample_grid,
     throughput_soss,
 )
-from jwst.extract_1d.soss_extract.pastasoss import (
-    XTRACE_ORD1_LEN,
-    XTRACE_ORD2_LEN,
-    _get_soss_wavemaps,
-)
+from jwst.extract_1d.soss_extract.pastasoss import CUTOFFS, get_soss_wavemaps
 from jwst.extract_1d.soss_extract.soss_boxextract import (
     box_extract,
     estim_error_nearest_data,
@@ -54,18 +50,11 @@ def get_ref_file_args(ref_files):
         (wavemaps, specprofiles, throughputs, kernels)
     """
     pastasoss_ref = ref_files["pastasoss"]
-    pad = getattr(pastasoss_ref.traces[0], "padding", 0)
-    if pad > 0:
-        do_padding = True
-    else:
-        do_padding = False
-
-    (wavemap_o1, wavemap_o2) = _get_soss_wavemaps(
-        pastasoss_ref,
-        pwcpos=ref_files["pwcpos"],
+    (wavemap_o1, wavemap_o2) = get_soss_wavemaps(
+        ref_files["pwcpos"],
+        refmodel=pastasoss_ref,
         subarray=ref_files["subarray"],
-        padding=do_padding,
-        padsize=pad,
+        padsize=None,
         spectraces=False,
     )
 
@@ -166,30 +155,16 @@ def _get_trace_1d(ref_files, order):
         The x, y and wavelength of the trace.
     """
     pastasoss_ref = ref_files["pastasoss"]
-    pad = getattr(pastasoss_ref.traces[0], "padding", 0)
-    if pad > 0:
-        do_padding = True
-    else:
-        do_padding = False
-
-    (_, _), (spectrace_o1, spectrace_o2) = _get_soss_wavemaps(
-        pastasoss_ref,
-        pwcpos=ref_files["pwcpos"],
+    _, spectraces = get_soss_wavemaps(
+        ref_files["pwcpos"],
+        refmodel=pastasoss_ref,
         subarray=ref_files["subarray"],
-        padding=do_padding,
-        padsize=pad,
+        padsize=None,
         spectraces=True,
     )
-    if order == 1:
-        spectrace = spectrace_o1
-        xtrace = np.arange(XTRACE_ORD1_LEN)
-    elif order == 2:
-        spectrace = spectrace_o2
-        xtrace = np.arange(XTRACE_ORD2_LEN)
-    else:
-        errmsg = f"Order {order} is not covered by Pastasoss reference file!"
-        log.error(errmsg)
-        raise ValueError(errmsg)
+    order_idx = order - 1
+    spectrace = spectraces[order_idx]
+    xtrace = np.arange(CUTOFFS[order_idx])
 
     # CubicSpline requires monotonically increasing x arr
     if spectrace[0][0] - spectrace[0][1] > 0:
