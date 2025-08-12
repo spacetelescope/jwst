@@ -683,13 +683,10 @@ def _get_soss_wavemaps(refmodel, pwcpos, subarray, padding=False, padsize=0, spe
         _, x, y, wl = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
 
         # cut off order where it runs off the detector
+        # and fill in with linear extrapolation
         cutoff = cutoffs[order - 1] - 1
         if cutoff <= wl.size:
             # XTRACE_ORD1_LEN = 2048 so this conditional is skipped for order 1
-            wl[cutoff:] = np.nan
-            y[cutoff:] = np.nan
-
-            # Fill in with linear extrapolation
             dwl = wl[cutoff] - wl[cutoff - 1]
             pix = np.arange(wl.size) - cutoff + 1
             wl[cutoff:] = wl[cutoff] + dwl * pix[cutoff:]
