@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 SOSS_XDIM = 2048
 SOSS_YDIM = 300
-CUTOFFS = [SOSS_XDIM, 1783]
+CUTOFFS = [SOSS_XDIM, 1783, SOSS_XDIM]
 WAVEMAP_WLMIN = 0.5
 WAVEMAP_WLMAX = 5.5
 WAVEMAP_NWL = 5001
@@ -497,8 +497,9 @@ def get_soss_wavemaps(
     Returns
     -------
     wavemaps : np.ndarray
-        The 2D wavemaps. Will have shape (2, array_x, array_y) with orders 1 and 2 being
-        the first and second elements, respectively.
+        The 2D wavemaps. Will have shape (n_orders, array_x, array_y) with orders 1, 2, etc. being
+        the elements of the first dimension. Wavemaps for all orders defined in the reference file
+        will be returned.
     traces : np.ndarray, optional
         The corresponding 1D traces (if `spectraces` is True).
     """

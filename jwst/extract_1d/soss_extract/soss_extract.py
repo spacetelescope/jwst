@@ -54,7 +54,13 @@ def get_ref_file_args(ref_files):
         (wavemaps, specprofiles, throughputs, kernels)
     """
     pastasoss_ref = ref_files["pastasoss"]
-    (wavemap_o1, wavemap_o2) = get_soss_wavemaps(
+    specprofile_ref = ref_files["specprofile"]
+    speckernel_ref = ref_files["speckernel"]
+    n_pix = 2 * speckernel_ref.meta.halfwidth + 1
+    speckernel_wv_range = [np.min(speckernel_ref.wavelengths), np.max(speckernel_ref.wavelengths)]
+    refmodel_orders = [int(trace.spectral_order) for trace in pastasoss_ref.traces]
+
+    wavemaps = get_soss_wavemaps(
         ref_files["pwcpos"],
         refmodel=pastasoss_ref,
         subarray=ref_files["subarray"],
@@ -62,56 +68,42 @@ def get_ref_file_args(ref_files):
         spectraces=False,
     )
 
-    # The spectral profiles for order 1 and 2.
-    specprofile_ref = ref_files["specprofile"]
+    # Collect spectral profiles, wavemaps, throughputs, kernels for all the orders
+    spec_profiles = []
+    throughputs = []
+    kernels = []
+    for order in refmodel_orders:
+        order_idx = _find_spectral_order_index(pastasoss_ref, order)
+        wavemap = wavemaps[order_idx]
+        specprofile = specprofile_ref.profile[order_idx].data
 
-    specprofile_o1 = specprofile_ref.profile[0].data
-    specprofile_o2 = specprofile_ref.profile[1].data
+        # apply padding to make specprofile and wavemap have same shape
+        prof_shape0, prof_shape1 = specprofile.shape
+        wavemap_shape0, wavemap_shape1 = wavemap.shape
+        if prof_shape0 != wavemap_shape0:
+            pad0 = (prof_shape0 - wavemap_shape0) // 2
+            if pad0 > 0:
+                specprofile = specprofile[pad0:-pad0, :]
+            elif pad0 < 0:
+                wavemap = wavemap[pad0:-pad0, :]
+        if prof_shape1 != wavemap_shape1:
+            pad1 = (prof_shape1 - wavemap_shape1) // 2
+            if pad1 > 0:
+                specprofile = specprofile[:, pad1:-pad1]
+            elif pad1 < 0:
+                wavemap = wavemap[:, pad1:-pad1]
+        wavemaps[order_idx] = wavemap
+        spec_profiles.append(specprofile)
 
-    prof_shape0, prof_shape1 = specprofile_o1.shape
-    wavemap_shape0, wavemap_shape1 = wavemap_o1.shape
+        # make throughput interpolator
+        thru = throughput_soss(
+            pastasoss_ref.throughputs[order_idx].wavelength[:],
+            pastasoss_ref.throughputs[order_idx].throughput[:],
+        )
+        throughputs.append(thru)
 
-    if prof_shape0 != wavemap_shape0:
-        pad0 = (prof_shape0 - wavemap_shape0) // 2
-        if pad0 > 0:
-            specprofile_o1 = specprofile_o1[pad0:-pad0, :]
-            specprofile_o2 = specprofile_o2[pad0:-pad0, :]
-        elif pad0 < 0:
-            wavemap_o1 = wavemap_o1[pad0:-pad0, :]
-            wavemap_o2 = wavemap_o2[pad0:-pad0, :]
-    if prof_shape1 != wavemap_shape1:
-        pad1 = (prof_shape1 - wavemap_shape1) // 2
-        if pad1 > 0:
-            specprofile_o1 = specprofile_o1[:, pad1:-pad1]
-            specprofile_o2 = specprofile_o2[:, pad1:-pad1]
-        elif pad1 < 0:
-            wavemap_o1 = wavemap_o1[:, pad1:-pad1]
-            wavemap_o2 = wavemap_o2[:, pad1:-pad1]
-
-    # The throughput curves for order 1 and 2.
-    throughput_index_dict = {}
-    for i, throughput in enumerate(pastasoss_ref.throughputs):
-        throughput_index_dict[throughput.spectral_order] = i
-
-    throughput_o1 = throughput_soss(
-        pastasoss_ref.throughputs[throughput_index_dict[1]].wavelength[:],
-        pastasoss_ref.throughputs[throughput_index_dict[1]].throughput[:],
-    )
-    throughput_o2 = throughput_soss(
-        pastasoss_ref.throughputs[throughput_index_dict[2]].wavelength[:],
-        pastasoss_ref.throughputs[throughput_index_dict[2]].throughput[:],
-    )
-
-    # The spectral kernels.
-    speckernel_ref = ref_files["speckernel"]
-    n_pix = 2 * speckernel_ref.meta.halfwidth + 1
-
-    # Take the centroid of each trace as a grid to project the WebbKernel
-    # WebbKer needs a 2d input, so artificially add axis
-    wave_maps = [wavemap_o1, wavemap_o2]
-    centroid = {}
-    for wv_map, order in zip(wave_maps, [1, 2], strict=True):
-        wv_cent = np.zeros(wv_map.shape[1])
+        # Build a kernel for this order
+        wv_cent = np.zeros(wavemap.shape[1])
 
         # Get central wavelength as a function of columns
         col, _, wv = _get_trace_1d(ref_files, order)
@@ -120,25 +112,13 @@ def get_ref_file_args(ref_files):
         # Set invalid values to zero
         idx_invalid = ~np.isfinite(wv_cent)
         wv_cent[idx_invalid] = 0.0
-        centroid[order] = wv_cent
 
-    # Get kernels
-    kernels_o1 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, centroid[1], n_pix)
-    kernels_o2 = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, centroid[2], n_pix)
+        kernel = WebbKernel(speckernel_ref.wavelengths, speckernel_ref.kernels, wv_cent, n_pix)
+        valid_wavemap = (speckernel_wv_range[0] <= wavemap) & (wavemap <= speckernel_wv_range[1])
+        wavemap = np.where(valid_wavemap, wavemap, 0.0)
+        kernels.append(kernel)
 
-    # Make sure that the kernels cover the wavelength maps
-    speckernel_wv_range = [np.min(speckernel_ref.wavelengths), np.max(speckernel_ref.wavelengths)]
-    valid_wavemap = (speckernel_wv_range[0] <= wavemap_o1) & (wavemap_o1 <= speckernel_wv_range[1])
-    wavemap_o1 = np.where(valid_wavemap, wavemap_o1, 0.0)
-    valid_wavemap = (speckernel_wv_range[0] <= wavemap_o2) & (wavemap_o2 <= speckernel_wv_range[1])
-    wavemap_o2 = np.where(valid_wavemap, wavemap_o2, 0.0)
-
-    return (
-        [wavemap_o1, wavemap_o2],
-        [specprofile_o1, specprofile_o2],
-        [throughput_o1, throughput_o2],
-        [kernels_o1, kernels_o2],
-    )
+    return wavemaps, spec_profiles, throughputs, kernels
 
 
 def _get_trace_1d(ref_files, order):
