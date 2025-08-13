@@ -16,7 +16,7 @@ Source Detection
 If the ``meta.tweakreg_catalog`` attribute of input data models is a non-empty
 string and ``use_custom_catalogs`` is `True`, then it will be interpreted
 as a file name of a user-provided source catalog. The catalog must be in a
-format automatically recognized by :meth:`~astropy.table.Table.read`.
+format automatically recognized by :ref:`astropy.table.Table.read <astropy:read_write_tables>`.
 
 When the ``meta.tweakreg_catalog`` attribute of input data models is `None` or
 an empty string, then the ``tweakreg`` step will attempt to detect sources in the
@@ -71,7 +71,7 @@ Source detection built into the ``tweakreg`` step can be disabled by
 providing a file name to a custom source catalog in the
 ``meta.tweakreg_catalog`` attribute of input data models.
 The catalog must be in a format automatically recognized by
-:meth:`~astropy.table.Table.read`. The catalog must contain
+:ref:`astropy.table.Table.read <astropy:read_write_tables>`. The catalog must contain
 either ``'x'`` and ``'y'`` or ``'xcentroid'`` and ``'ycentroid'`` columns which
 indicate source *image* coordinates (in pixels). Pixel coordinates are
 0-indexed. An optional column in the catalog is the ``'weight'`` column,
