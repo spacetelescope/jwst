@@ -8,4 +8,3 @@ manually applying corrections to an imaging WCS.
 .. currentmodule:: jwst.tweakreg.utils
 
 .. automodapi:: jwst.tweakreg.utils
-   :noindex:
