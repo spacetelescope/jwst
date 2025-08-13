@@ -91,6 +91,13 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
         pytest.param(("jw03969_20250316t131526_pool", []), id="pool_021_tso_NIRSPEC_BRIGHTOBJ"),
         pytest.param(("jw03522_20250318t192624_pool", []), id="pool_024_nirspec_fss_nods"),
         pytest.param(("jw02304_20250316t004555_pool", []), id="pool_026_mir_image_tso"),
+        pytest.param(
+            ("jw01794_20250316t024033_pool", []), id="pool_027_nirspec_ifu_nods_NONEWITH_REPEAT"
+        ),
+        pytest.param(
+            ("jw02344_20250318t210812_pool", []), id="pool_027_nirspec_ifu_nods_2NODS_4DTH"
+        ),
+        pytest.param(("jw05308_20250319t215735_pool", []), id="pool_027_nirspec_ifu_nods_4NODS"),
     ],
     ids=parfunc,
 )
