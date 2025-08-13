@@ -521,27 +521,13 @@ def get_soss_wavemaps(
     wavemin = WAVEMAP_WLMIN
     wavemax = WAVEMAP_WLMAX
     nwave = WAVEMAP_NWL
-    cutoffs = CUTOFFS
     wave_grid = np.linspace(wavemin, wavemax, nwave)
 
     refmodel_orders = [int(trace.spectral_order) for trace in refmodel.traces]
     wavemaps = []
     traces = []
     for order in refmodel_orders:
-        idx = _find_spectral_order_index(refmodel, order)
         _, x, y, wl = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
-
-        # cut off order where it runs off the detector
-        # and fill in with linear extrapolation
-        cutoff = cutoffs[idx] - 1
-        if cutoff <= wl.size:
-            # XTRACE_ORD1_LEN = 2048 so this conditional is skipped for order 1
-            dwl = wl[cutoff] - wl[cutoff - 1]
-            pix = np.arange(wl.size) - cutoff + 1
-            wl[cutoff:] = wl[cutoff] + dwl * pix[cutoff:]
-            dy = y[cutoff] - y[cutoff - 1]
-            y[cutoff:] = y[cutoff] + dy * pix[cutoff:]
-
         xtrace = _extrapolate_to_wavegrid(wave_grid, wl, x)
         ytrace = _extrapolate_to_wavegrid(wave_grid, wl, y)
         spectrace = np.array([xtrace, ytrace, wave_grid])
