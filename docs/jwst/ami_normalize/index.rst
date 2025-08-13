@@ -10,3 +10,4 @@ AMI Normalize
    description.rst
 
 .. automodapi:: jwst.ami.ami_normalize_step
+   :no-inheritance-diagram:
