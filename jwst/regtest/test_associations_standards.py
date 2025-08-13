@@ -58,13 +58,8 @@ class MakePars:
         self.slow = slow
 
 
-standards = [
-    MakePars("pool_029_mir_lrsfs_nonod"),
-    MakePars("pool_030_mir_lrs_nods_bkg"),
-    MakePars("pool_031_mir_lrs_nonod_bkg"),
-    MakePars("pool_032_nircam_wfss"),
-    MakePars("pool_034_wfss_parallel"),
-]
+# FIXME: Remove!
+standards = []  # type: ignore[var-annotated]
 
 
 # #####
