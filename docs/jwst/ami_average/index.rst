@@ -10,3 +10,4 @@ AMI Average
    description.rst
 
 .. automodapi:: jwst.ami.ami_average_step
+   :no-inheritance-diagram:
