@@ -20,6 +20,7 @@ from jwst.extract_1d.soss_extract.atoca_utils import (
 from jwst.extract_1d.soss_extract.pastasoss import (
     CUTOFFS,
     _find_spectral_order_index,
+    _verify_requested_orders,
     get_soss_wavemaps,
 )
 from jwst.extract_1d.soss_extract.soss_boxextract import (
@@ -37,7 +38,7 @@ ORDER2_SHORT_CUTOFF = 0.58
 __all__ = ["get_ref_file_args", "run_extract1d"]
 
 
-def get_ref_file_args(ref_files):
+def get_ref_file_args(ref_files, orders_requested=None):
     """
     Prepare the reference files for the extraction engine.
 
@@ -46,6 +47,8 @@ def get_ref_file_args(ref_files):
     ref_files : dict
         A dictionary of the reference file DataModels, along with values
         for the subarray and pwcpos, i.e. the pupil wheel position.
+    orders_requested : list
+        A list of the spectral orders requested for extraction.
 
     Returns
     -------
@@ -60,19 +63,25 @@ def get_ref_file_args(ref_files):
     speckernel_wv_range = [np.min(speckernel_ref.wavelengths), np.max(speckernel_ref.wavelengths)]
     refmodel_orders = [int(trace.spectral_order) for trace in pastasoss_ref.traces]
 
+    if orders_requested is None:
+        orders_requested = refmodel_orders
+    else:
+        orders_requested = _verify_requested_orders(orders_requested, refmodel_orders)
+
     wavemaps = get_soss_wavemaps(
         ref_files["pwcpos"],
         refmodel=pastasoss_ref,
         subarray=ref_files["subarray"],
         padsize=None,
         spectraces=False,
+        orders_requested=orders_requested,
     )
 
     # Collect spectral profiles, wavemaps, throughputs, kernels for all the orders
     spec_profiles = []
     throughputs = []
     kernels = []
-    for order in refmodel_orders:
+    for order in orders_requested:
         order_idx = _find_spectral_order_index(pastasoss_ref, order)
         wavemap = wavemaps[order_idx]
         specprofile = specprofile_ref.profile[order_idx].data
@@ -512,6 +521,7 @@ def _model_image(
     estimate=None,
     rtol=1e-3,
     max_grid_size=1000000,
+    order_list=None,
 ):
     """
     Perform the spectral extraction on a single image.
@@ -555,6 +565,8 @@ def _model_image(
     max_grid_size : int
         Maximum grid size allowed when wave_grid is None.
         Default is 1000000.
+    order_list : list
+        List of spectral orders to extract.
 
     Returns
     -------
@@ -572,19 +584,24 @@ def _model_image(
         The tikhonov tests are also included.
     """
     # Generate list of orders to simulate from pastasoss trace list
-    order_list = []
-    for trace in ref_files["pastasoss"].traces:
-        order_list.append(f"Order {trace.spectral_order}")
+    if order_list is None:
+        order_list = []
+        for trace in ref_files["pastasoss"].traces:
+            order_list.append(trace.spectral_order)
+    order_strs = [f"Order {order}" for order in order_list]
+    order_indices = [
+        _find_spectral_order_index(ref_files["pastasoss"], order) for order in order_list
+    ]
 
     # Prepare the reference file arguments.
-    ref_file_args = get_ref_file_args(ref_files)
+    ref_file_args = get_ref_file_args(ref_files, orders_requested=order_list)
 
     # Some error values are 0, we need to mask those pixels for the extraction engine.
     scimask = scimask | ~(scierr > 0)
 
     # Define mask based on box aperture
     # (we want to model each contaminated pixels that will be extracted)
-    mask_trace_profile = [(~(box_weights[order] > 0)) | (refmask) for order in order_list]
+    mask_trace_profile = [(~(box_weights[order_strs[i]] > 0)) | (refmask) for i in order_indices]
 
     # Define mask of pixel to model (all pixels inside box aperture)
     global_mask = np.all(mask_trace_profile, axis=0).astype(bool)
@@ -613,6 +630,7 @@ def _model_image(
         mask_trace_profile=mask_trace_profile,
         global_mask=scimask,
         threshold=threshold,
+        orders=order_list,
     )
 
     spec_list = []
@@ -674,7 +692,7 @@ def _model_image(
         spec_ord.meta.soss_extract1d.type = "OBSERVATION"
 
         # Project on detector and save in dictionary
-        tracemodels[order] = tracemodel_ord
+        tracemodels[order_strs[i_order]] = tracemodel_ord
 
         # Add the result to spec_list
         spec_list.append(spec_ord)
@@ -744,7 +762,7 @@ def _model_image(
     return tracemodels, tikfac, logl, wave_grid, spec_list
 
 
-def _compute_box_weights(ref_files, shape, width):
+def _compute_box_weights(ref_files, shape, width, orders_requested=None):
     """
     Determine the weights for the box extraction.
 
@@ -756,6 +774,8 @@ def _compute_box_weights(ref_files, shape, width):
         The shape of the detector image.
     width : int
         The width of the box aperture.
+    orders_requested : list
+        List of orders to be extracted.
 
     Returns
     -------
@@ -764,15 +784,13 @@ def _compute_box_weights(ref_files, shape, width):
     wavelengths : dict
         A dictionary of the wavelengths for each order.
     """
-    # Generate list of orders from pastasoss trace list
-    order_list = []
-    for trace in ref_files["pastasoss"].traces:
-        order_list.append(trace.spectral_order)
+    if orders_requested is None:
+        orders_requested = [1, 2]
 
     # Extract each order from order list
     box_weights, wavelengths = {}, {}
-    order_str = {order: f"Order {order}" for order in order_list}
-    for order_integer in order_list:
+    order_str = {order: f"Order {order}" for order in orders_requested}
+    for order_integer in orders_requested:
         # Order string-name is used more often than integer-name
         order = order_str[order_integer]
 
@@ -1096,6 +1114,7 @@ def run_extract1d(
     subarray,
     soss_filter,
     soss_kwargs,
+    orders_requested=None,
 ):
     """
     Run the spectral extraction on NIRISS SOSS data.
@@ -1117,17 +1136,21 @@ def run_extract1d(
         Filter in place during observations; one of 'CLEAR' or 'F277W'.
     soss_kwargs : dict
         Dictionary of keyword arguments passed from extract_1d_step.
+    orders_requested : list
+        List of orders to be extracted.
 
     Returns
     -------
     output_model : DataModel
         DataModel containing the extracted spectra.
     """
+    if orders_requested is None:
+        orders_requested = [1, 2]
     # Generate the atoca models or not (not necessarily for decontamination)
     generate_model = soss_kwargs["atoca"] or (soss_kwargs["bad_pix"] == "model")
 
     # Map the order integer names to the string names
-    order_str_2_int = {f"Order {order}": order for order in [1, 2, 3]}
+    order_str_to_int = {f"Order {order}": order for order in [1, 2, 3]}
 
     # Read the reference files.
     pastasoss_ref = datamodels.PastasossModel(pastasoss_ref_name)
@@ -1237,8 +1260,12 @@ def run_extract1d(
             col_bkg = np.zeros(scidata.shape[1])
 
         # Pre-compute the weights for box extraction (used in modeling and extraction)
-        args = (ref_files, scidata_bkg.shape)
-        box_weights, wavelengths = _compute_box_weights(*args, width=soss_kwargs["width"])
+        box_weights, wavelengths = _compute_box_weights(
+            ref_files,
+            scidata_bkg.shape,
+            width=soss_kwargs["width"],
+            orders_requested=orders_requested,
+        )
 
         # FIXME: hardcoding the substrip96 weights to unity is a band-aid solution
         if subarray == "SUBSTRIP96":
@@ -1248,6 +1275,7 @@ def run_extract1d(
         if soss_filter == "CLEAR" and generate_model:
             # Model the image.
             kwargs = {}
+            kwargs["order_list"] = orders_requested
             kwargs["estimate"] = estimate
             kwargs["tikfac"] = soss_kwargs["tikfac"]
             kwargs["max_grid_size"] = soss_kwargs["max_grid_size"]
@@ -1326,7 +1354,7 @@ def run_extract1d(
             spec = datamodels.SpecModel(spec_table=out_table)
 
             # Add integration number and spectral order
-            spec.spectral_order = order_str_2_int[order]
+            spec.spectral_order = order_str_to_int[order]
             spec.int_num = i + 1  # integration number starts at 1, not 0 like python
 
             if order in output_spec_list:
@@ -1354,14 +1382,14 @@ def run_extract1d(
         # Convert from list to array
         tracemod_ord = np.array(all_tracemodels[order])
         # Save
-        order_int = order_str_2_int[order]
+        order_int = order_str_to_int[order]
         setattr(output_references, f"order{order_int}", tracemod_ord)
 
     for order in all_box_weights:
         # Convert from list to array
         box_w_ord = np.array(all_box_weights[order])
         # Save
-        order_int = order_str_2_int[order]
+        order_int = order_str_to_int[order]
         setattr(output_references, f"aperture{order_int}", box_w_ord)
 
     if pipe_utils.is_tso(input_model):

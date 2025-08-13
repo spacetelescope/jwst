@@ -30,6 +30,42 @@ DEFAULT_CRDS_PARAMS = {
 __all__ = ["get_soss_traces", "get_soss_wavemaps", "retrieve_default_pastasoss_model"]
 
 
+def _verify_requested_orders(orders_requested, refmodel_orders):
+    """
+    Verify that the requested orders are valid.
+
+    Parameters
+    ----------
+    orders_requested : list
+        A list of the spectral orders requested for extraction.
+    refmodel_orders : list
+        A list of the spectral orders available in the reference model.
+
+    Returns
+    -------
+    list
+        The validated list of requested orders.
+
+    Raises
+    ------
+    ValueError
+        If any of the requested orders are not available in the reference model.
+    """
+    not_in = np.isin(orders_requested, refmodel_orders, invert=True)
+    if np.all(not_in):
+        raise ValueError(
+            "None of the requested orders are available in the PASTASOSS reference file: "
+            f"{orders_requested}. Defined orders are {refmodel_orders}."
+        )
+    if np.any(not_in):
+        log.warning(
+            f"Requested orders not found in reference model: {orders_requested}. "
+            f"Skipping that order."
+        )
+        orders_requested = orders_requested[~not_in]
+    return orders_requested
+
+
 def _convert_refmodel_poly_to_astropy(coefficients):
     """
     Reorder reference file 2-D polynomial coefficients to create Astropy polynomial.
@@ -474,6 +510,7 @@ def get_soss_wavemaps(
     refmodel=None,
     padsize=None,
     spectraces=False,
+    orders_requested=None,
 ):
     """
     Get the SOSS wavelength maps and (optionally) spectraces.
@@ -493,6 +530,9 @@ def get_soss_wavemaps(
         The padding to apply to the wavelength maps.
     spectraces : bool, optional
         If True, return the interpolated spectraces as well.
+    orders_requested : list
+        A list of the spectral orders requested for extraction.
+        If None, all orders in the reference file will be used.
 
     Returns
     -------
@@ -505,6 +545,12 @@ def get_soss_wavemaps(
     """
     if refmodel is None:
         refmodel = retrieve_default_pastasoss_model()
+
+    refmodel_orders = [int(trace.spectral_order) for trace in refmodel.traces]
+    if orders_requested is None:
+        orders_requested = refmodel_orders
+    else:
+        orders_requested = _verify_requested_orders(orders_requested, refmodel_orders)
 
     pwcpos_is_valid = _check_pwcpos_bounds(pwcpos)
     if not pwcpos_is_valid:
@@ -523,10 +569,9 @@ def get_soss_wavemaps(
     nwave = WAVEMAP_NWL
     wave_grid = np.linspace(wavemin, wavemax, nwave)
 
-    refmodel_orders = [int(trace.spectral_order) for trace in refmodel.traces]
     wavemaps = []
     traces = []
-    for order in refmodel_orders:
+    for order in orders_requested:
         _, x, y, wl = _get_soss_traces(refmodel, pwcpos, order=str(order), subarray=subarray)
         xtrace = _extrapolate_to_wavegrid(wave_grid, wl, x)
         ytrace = _extrapolate_to_wavegrid(wave_grid, wl, y)
