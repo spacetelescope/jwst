@@ -1,8 +1,4 @@
-"""
-JWST pipeline step for image alignment.
-
-:Authors: Mihai Cara
-"""
+"""JWST pipeline step for image alignment."""
 
 from pathlib import Path
 
@@ -31,9 +27,11 @@ def _oxford_or_str_join(str_list):
 
 
 SINGLE_GROUP_REFCAT = ["GAIADR3", "GAIADR2", "GAIADR1"]
+"""Astrometric catalog names"""
+
 _SINGLE_GROUP_REFCAT_STR = _oxford_or_str_join(SINGLE_GROUP_REFCAT)
 
-__all__ = ["TweakRegStep"]
+__all__ = ["TweakRegStep", "SINGLE_GROUP_REFCAT"]
 
 
 class TweakRegStep(Step):
@@ -127,12 +125,14 @@ class TweakRegStep(Step):
 
         Parameters
         ----------
-        input_data : `ModelLibrary`, or asn-type input to be read into a `ModelLibrary`
+        input_data : `~jwst.datamodels.library.ModelLibrary`
             A collection of data models.
+            This can also be an ASN-type input to be read into a
+            `~jwst.datamodels.library.ModelLibrary`.
 
         Returns
         -------
-        output : `ModelLibrary`
+        output : `~jwst.datamodels.library.ModelLibrary`
             The aligned input data models.
         """
         if isinstance(input_data, ModelLibrary):
@@ -345,16 +345,16 @@ class TweakRegStep(Step):
 
         Parameters
         ----------
-        images : ModelLibrary
+        images : `~jwst.datamodels.library.ModelLibrary`
             A collection of data models.
-        correctors : list[JWSTWCSCorrector]
+        correctors : list of `~tweakwcs.correctors.JWSTWCSCorrector`
             A list of WCS correctors.
         align_to_abs_refcat : bool
             Flag indicating whether the images were aligned to an absolute reference catalog.
 
         Returns
         -------
-        images : ModelLibrary
+        images : `~jwst.datamodels.library.ModelLibrary`
             The aligned input data models
         """
         with images:
@@ -497,7 +497,8 @@ def _parse_catfile(catfile):
 
     Raises
     ------
-    ValueError if catfile contains >2 columns
+    ValueError
+        If catfile contains >2 columns
     """
     if catfile is None or not catfile.strip():
         return None
@@ -533,12 +534,12 @@ def _rename_catalog_columns(catalog):
 
     Parameters
     ----------
-    catalog : astropy.table.Table
+    catalog : `~astropy.table.Table`
         Table containing the source catalog.
 
     Returns
     -------
-    catalog : astropy.table.Table
+    catalog : `~astropy.table.Table`
         Table containing the source catalog with renamed columns.
     """
     for axis in ["x", "y"]:

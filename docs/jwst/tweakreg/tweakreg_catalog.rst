@@ -8,4 +8,3 @@ of sources from images.
 .. currentmodule:: jwst.tweakreg.tweakreg_catalog
 
 .. automodapi:: jwst.tweakreg.tweakreg_catalog
-   :noindex:
