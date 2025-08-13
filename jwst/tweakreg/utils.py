@@ -36,19 +36,19 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0, scale_factor=1.
 
     Parameters
     ----------
-    wcs : `gwcs.WCS`
+    wcs : `gwcs.wcs.WCS`
         WCS object to be adjusted. Must be an imaging JWST WCS of a calibrated
         data model.
-    delta_ra : float, astropy.units.Quantity, optional
+    delta_ra : float, astropy.units.Quantity
         Additional rotation (in degrees if units not provided) to be applied
         along the longitude direction.
-    delta_dec : float, astropy.units.Quantity, optional
+    delta_dec : float, astropy.units.Quantity
         Additional rotation (in degrees if units not provided) to be applied
         along the latitude direction.
-    delta_roll : float, astropy.units.Quantity, optional
+    delta_roll : float, astropy.units.Quantity
         Additional rotation (in degrees if units not provided) to be applied
         to the telescope roll angle (rotation about V1 axis).
-    scale_factor : float, optional
+    scale_factor : float
         A multiplicative scale factor to be applied to the current scale
         (if any) in the WCS. If input ``wcs`` does not have a scale factor
         applied, it is assumed to be 1. The scale factor is applied in
@@ -128,9 +128,9 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
     transformations in a reference tangent plane.
 
     .. warning::
-        Upon return, if the ``to_image`` argument is an `ImageModel` it will be
+        Upon return, if the ``to_image`` argument is an `~jwst.datamodels.ImageModel` it will be
         modified in-place with an updated ``ImageModel.meta.wcs`` WCS model.
-        If ``to_image`` argument is a file name of an ``ImageModel``, that
+        If ``to_image`` argument is a file name of an `~jwst.datamodels.ImageModel`, that
         model will be read in, its WCS will be updated, and the updated model
         will be written out to the same file. BACKUP the file in ``to_image``
         argument before calling this function.
@@ -142,14 +142,14 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
 
     Parameters
     ----------
-    to_image : str, ImageModel
+    to_image : str, `~jwst.datamodels.ImageModel`
         Image model to which the correction should be applied/transferred to.
 
         .. warning::
             If it is a string file name then, upon return, this file
             will be **overwritten** with a data model with an updated WCS.
 
-    from_image : str, ImageModel, gwcs.wcs.WCS
+    from_image : str, `~jwst.datamodels.ImageModel`, `gwcs.wcs.WCS`
         A data model whose WCS was previously corrected.
         This data model plays two roles: 1) it is the reference WCS which
         provides a tangent plane in which corrections have been defined, and
@@ -160,7 +160,7 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
         corrections, then *both* ``matrix`` *and* ``shift`` arguments *must be
         supplied*.
 
-    matrix : 2D list, 2D numpy.ndarray, None, optional
+    matrix : list, ndarray, None
         A 2D matrix part of an affine transformation defined in the tangent
         plane derived from the ``from_image``'s WCS.
 
@@ -169,7 +169,7 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
             which case ``matrix`` and ``shift`` arguments override the
             correction (if present) from the  ``from_file``'s WCS.
 
-    shift : list, numpy.ndarray, None, optional
+    shift : list, ndarray, None
         A list of length 2 representing the translational part of an affine
         transformation (in arcsec) defined in the tangent plane derived
         from the ``from_image``'s WCS.

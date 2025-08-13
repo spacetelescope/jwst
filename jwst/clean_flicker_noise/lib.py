@@ -240,7 +240,7 @@ class NSClean:
 
         Parameters
         ----------
-        data : array_like
+        data : array-like
             The input data. This should be the normal end result of Stage 1 processing.
 
         buff : bool
@@ -249,7 +249,7 @@ class NSClean:
 
         Returns
         -------
-        data : array_like
+        data : array-like
             The data, but with less striping and the background subtracted.
         """
         # Transform the data to detector space with the IRS2 zipper running along the bottom.
