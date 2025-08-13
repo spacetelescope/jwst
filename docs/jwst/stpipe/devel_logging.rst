@@ -6,7 +6,7 @@ The logging in stpipe is built on the Python standard library’s
 `logging` module.  For detailed information about logging, refer to
 the documentation there.  This document basically outlines some simple
 conventions to follow so that the configuration mechanism described in
-:ref:`user-logging` works.
+:ref:`logging` works.
 
 Logging from a Step or Pipeline
 ===============================

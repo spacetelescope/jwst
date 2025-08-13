@@ -101,24 +101,51 @@ class, pass the ``-h`` parameter, and the name of a Step class or
 parameter file::
 
     $ strun -h do_cleanup.asdf
-    usage: strun [--logcfg LOGCFG] cfg_file_or_class [-h] [--pre_hooks]
-                 [--post_hooks] [--skip] [--scale] [--extname]
+    usage: strun [-h] [--debug] [--save-parameters SAVE_PARAMETERS] [--disable-crds-steppars] [--verbose] [--log_level LOG_LEVEL] [--log_format LOG_FORMAT] [--log_file LOG_FILE] [--log_stream LOG_STREAM]
+                 [--pre_hooks] [--post_hooks] [--output_file] [--output_dir] [--output_ext] [--output_use_model] [--output_use_index] [--save_results] [--skip] [--suffix] [--search_output_file] [--input_dir]
+                 cfg_file_or_class [args ...]
 
-    optional arguments:
-      -h, --help       show this help message and exit
-      --logcfg LOGCFG  The logging configuration file to load
-      --verbose, -v    Turn on all logging messages
-      --debug          When an exception occurs, invoke the Python debugger, pdb
-      --pre_hooks
-      --post_hooks
-      --skip           Skip this step
-      --scale          A scale factor
-      --threshold      The threshold below which to apply cleanup
-      --output_file    File to save the output to
+    Clean up image.
 
-Every step has an `--output_file` parameter.  If one is not provided,
-the output filename is determined based on the input file by appending
-the name of the step.  For example, in this case, `foo.fits` is output
+    positional arguments:
+      cfg_file_or_class     The configuration file or Python class to run
+      args                  arguments to pass to step
+
+    options:
+      -h, --help            show this help message and exit
+      --debug               When an exception occurs, invoke the Python debugger, pdb
+      --save-parameters SAVE_PARAMETERS
+                            Save step parameters to specified file
+      --disable-crds-steppars
+                            Disable retrieval of step parameter references files from CRDS
+      --verbose, -v         Turn on all logging messages
+      --log_level LOG_LEVEL
+                            Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Ignored if 'verbose' is specified.
+      --log_format LOG_FORMAT
+                            A format string for the logger
+      --log_file LOG_FILE   Full path to a file name to record log messages
+      --log_stream LOG_STREAM
+                            Log stream for terminal messages (stdout, stderr, or null).
+      --pre_hooks           List of Step classes to run before step [default=list]
+      --post_hooks          List of Step classes to run after step [default=list]
+      --output_file         File to save output to.
+      --output_dir          Directory path for output files
+      --output_ext          Output file type [default='.fits']
+      --output_use_model    When saving use `DataModel.meta.filename` [default=False]
+      --output_use_index    Append index. [default=True]
+      --save_results        Force save results [default=False]
+      --skip                Skip this step [default=False]
+      --suffix              Default suffix for output files
+      --search_output_file
+                            Use outputfile define in parent step [default=True]
+      --input_dir           Input directory
+      --scale               A scale factor
+      --threshold           The threshold below which to apply cleanup
+
+
+Every step has a number of standard parameters, including the `--output_file` parameter.
+If an output filename is not provided, it is determined based on the input file by
+appending the name of the step.  For example, in this case, `foo.fits` is output
 to `foo_cleanup.fits`.
 
 Finally, the parameters a ``Step`` actually ran with can be saved to a new
@@ -158,7 +185,7 @@ Debugging
 
 To output all logging output from the step, add the `--verbose` option
 to the commandline.  (If more fine-grained control over logging is
-required, see :ref:`user-logging`).
+required, see :ref:`logging`).
 
 To start the Python debugger if the step itself raises an exception,
 pass the `--debug` option to the commandline.
@@ -220,9 +247,7 @@ signature is::
 
 The positional argument ``input`` is the data to be operated on, usually a
 string representing a file path or a :ref:`DataModel<jwst-data-models>`
-The optional
-keyword argument ``config_file`` is used to specify a local parameter file. The
-optional keyword argument ``logcfg`` is used to specify a logging configuration file.
+The optional keyword argument ``config_file`` is used to specify a local parameter file.
 Finally, the remaining optional keyword arguments are the parameters that the
 particular step accepts. The method returns the result of the step. A basic
 example is::
