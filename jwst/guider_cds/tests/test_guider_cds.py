@@ -4,6 +4,7 @@ from crds import getreferences
 
 from jwst import datamodels
 from jwst.guider_cds.guider_cds import guider_cds
+from jwst.guider_cds.guider_cds_step import GuiderCdsStep
 
 
 @pytest.fixture
@@ -152,3 +153,38 @@ def test_err_nonzero(make_guider_image_and_refs):
     result = guider_cds(model, gain_model, readnoise_model)
 
     assert result.err.max() > 0
+
+
+def test_step_call_succeeds(make_guider_image_and_refs):
+    model, gain_model, readnoise_model = make_guider_image_and_refs
+
+    result = GuiderCdsStep.call(model, override_gain=gain_model, override_readnoise=readnoise_model)
+    assert result.meta.cal_step.guider_cds == "COMPLETE"
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.guider_cds is None
+
+
+def test_step_call_no_gain(caplog, make_guider_image_and_refs):
+    model, _, _ = make_guider_image_and_refs
+
+    result = GuiderCdsStep.call(model, override_gain="N/A")
+    assert result.meta.cal_step.guider_cds == "SKIPPED"
+    assert "No GAIN reference file found" in caplog.text
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.guider_cds is None
+
+
+def test_step_call_no_readnoise(caplog, make_guider_image_and_refs):
+    model, _, _ = make_guider_image_and_refs
+
+    result = GuiderCdsStep.call(model, override_readnoise="N/A")
+    assert result.meta.cal_step.guider_cds == "SKIPPED"
+    assert "No READNOISE reference file found" in caplog.text
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.guider_cds is None

@@ -26,6 +26,10 @@ def test_step():
     assert result.meta.cal_step.imprint == "COMPLETE"
     assert result.data.sum() == 0
 
+    # Input is not modified
+    assert result is not im
+    assert im.meta.cal_step.imprint is None
+
 
 def test_step_single_imprint():
     # Make science and imprint with mismatched background flags
@@ -112,3 +116,7 @@ def test_step_no_match():
     # No match is found
     assert result.meta.cal_step.imprint == "SKIPPED"
     assert np.all(result.data == 3.0)
+
+    # Input is not modified
+    assert result is not science
+    assert science.meta.cal_step.imprint is None

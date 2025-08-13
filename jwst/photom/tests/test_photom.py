@@ -388,6 +388,8 @@ def create_input(
     input_model.meta.exposure.type = exptype
     input_model.meta.subarray.xstart = 1
     input_model.meta.subarray.ystart = 1
+    input_model.meta.observation.date = "2024-01-01"
+    input_model.meta.observation.time = "00:00:00"
 
     if data is not None:
         input_model.meta.subarray.xsize = data.shape[-1]

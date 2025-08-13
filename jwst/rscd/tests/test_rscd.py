@@ -1,32 +1,20 @@
 import numpy as np
-from stdatamodels.jwst.datamodels import RampModel, dqflags
+from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.rscd.rscd_sub import correction_skip_groups
 
 
-def test_rscd_baseline_set_groupdq():
+def test_rscd_baseline_set_groupdq(create_miri_model):
     """
     For a 2 integration exposure, test if the rscd code sets the groupdq flag on
     the n groups to 'do_not_use' for the 2nd integration and did not change the
     groupdq flags in the 1st integration
     """
-
-    exposure = {"integration_start": None, "integration_end": None, "ngroups": 10, "nints": 2}
-    # size of integration
-    ngroups = exposure["ngroups"]
-    nints = exposure["nints"]
-
+    ngroups = 10
+    nints = 2
     xsize = 10
     ysize = 10
-
-    # create the data and groupdq arrays
-    csize = (nints, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0, dtype=np.float32)
-    groupdq = np.zeros(csize, dtype=np.uint8)
-
-    # create a JWST datamodel for MIRI data
-    dm_ramp = RampModel(data=data, groupdq=groupdq)
-    dm_ramp.meta.exposure._instance.update(exposure)
+    dm_ramp = create_miri_model(nints, ngroups, ysize, xsize)
 
     # get the number of groups to flag
     nflag = 3
@@ -61,32 +49,12 @@ def test_rscd_baseline_set_groupdq():
     )
 
 
-def test_rscd_baseline_too_few_groups():
+def test_rscd_baseline_too_few_groups(create_miri_model):
     """
     Test that the baseline algorithm is skipped if too few groups are present
     in the integrations.
     """
-
-    # size of exposure
-    xsize = 10
-    ysize = 10
-
-    exposure = {"integration_start": None, "integration_end": None, "ngroups": 3, "nints": 2}
-    # size of integration
-    ngroups = exposure["ngroups"]
-    nints = exposure["nints"]
-
-    xsize = 10
-    ysize = 10
-
-    # create the data and groupdq arrays
-    csize = (nints, ngroups, ysize, xsize)
-    data = np.full(csize, 1.0, dtype=np.float32)
-    groupdq = np.zeros(csize, dtype=np.uint8)
-
-    # create a JWST datamodel for MIRI data on a copy (the copy is created at the step script)
-    dm_ramp = RampModel(data=data, groupdq=groupdq)
-    dm_ramp.meta.exposure._instance.update(exposure)
+    dm_ramp = create_miri_model(ngroups=3)
 
     # get the number of groups to flag
     nflag = 3
@@ -97,13 +65,13 @@ def test_rscd_baseline_too_few_groups():
     # test that the groupdq flags are not changed for any integration
     dq_diff = dm_ramp_rscd.groupdq[:, :, :, :] - dm_ramp.groupdq[:, :, :, :]
     np.testing.assert_array_equal(
-        np.full((nints, ngroups, ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="groupdq flags changed when " + "not enough groups are present",
+        0,
+        err_msg="groupdq flags changed when not enough groups are present",
     )
 
 
-def test_rscd_tso():
+def test_rscd_tso(create_miri_model):
     """
     The RSCD correction is generally skipped for TSO data, but some users
     have been running it on TSO data. So this test was added.
@@ -113,16 +81,15 @@ def test_rscd_tso():
     the data.
 
     """
-    exposure = {"integration_start": 25, "integration_end": 50, "ngroups": 8, "nints": 50}
-
     xsize = 10
     ysize = 10
-    ngroups = exposure["ngroups"]
-    seg_nints = exposure["integration_end"] - exposure["integration_start"] + 1
-    input_model = RampModel((seg_nints, exposure["ngroups"], ysize, xsize))
-
-    input_model.groupdq[:, :, :, :] = 0  # initize to 0 - all good
-    input_model.meta.exposure._instance.update(exposure)
+    ngroups = 8
+    int_start = 25
+    int_end = 50
+    seg_nints = int_end - int_start + 1
+    input_model = create_miri_model(nints=seg_nints, ngroups=8, ysize=ysize, xsize=xsize)
+    input_model.meta.exposure.integration_start = int_start
+    input_model.meta.exposure.integration_end = int_end
 
     # get the number of groups to flag
     nflag = 4

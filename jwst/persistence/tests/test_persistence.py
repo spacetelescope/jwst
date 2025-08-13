@@ -2,7 +2,6 @@
 
 import numpy as np
 import pytest
-from astropy.io import fits
 
 from jwst import datamodels
 from jwst.persistence import persistence
@@ -28,99 +27,6 @@ def test_no_nan():
     np.testing.assert_equal(result.data[0], 11.0)
     np.testing.assert_equal(result.data[1], 0.0)
     np.testing.assert_equal(result.data[2:], 2.0)
-
-
-@pytest.fixture(scope="module")
-def create_sci_model():
-    """
-    Science datamodel for testing.
-
-    Returns
-    -------
-    sci_datamodel : RampModel DataModel
-        Sample science datamodel for testing
-    """
-
-    def _dm(nints, ngroups, nrows, ncols, xstart, ystart):
-        scidata = np.ones((nints, ngroups, nrows, ncols), dtype=np.float32)
-        dm = datamodels.RampModel(data=scidata)
-        dm.meta.subarray.xstart = xstart
-        dm.meta.subarray.ystart = ystart
-        dm.meta.exposure.frame_time = 10.73677
-        dm.meta.exposure.group_time = 21.47354
-        dm.meta.exposure.ngroups = ngroups
-        dm.meta.exposure.nframes = 1
-        dm.meta.exposure.groupgap = 1
-        dm.meta.exposure.nresets_at_start = 0
-        dm.meta.exposure.nresets_between_ints = 1
-        dm.meta.instrument.detector = "NRCA1"
-        dm.meta.exposure.start_time = 59672.47338658912
-        return dm
-
-    return _dm
-
-
-@pytest.fixture(scope="module")
-def create_traps_filled_model():
-    """
-    Trapsfilled model for testing.
-
-    Returns
-    -------
-    trapsfilled_model : TrapsFilledModel DataModel
-        Sample TrapsFilledModel for testing
-    """
-
-    def _dm(nrows, ncols):
-        tfdata = np.ones((3, nrows, ncols), dtype=np.float32)
-        tf_dm = datamodels.TrapsFilledModel(data=tfdata)
-        tf_dm.meta.subarray.xstart = 1
-        tf_dm.meta.subarray.ystart = 1
-        tf_dm.meta.exposure.end_time = 59672.47462927084
-        return tf_dm
-
-    return _dm
-
-
-@pytest.fixture(scope="module")
-def create_trap_density_model():
-    """
-    Trap density model for testing.
-
-    Returns
-    -------
-    trapdensity_model : TrapDensityModel DataModel
-        Sample TrapDensityModel for testing
-    """
-
-    def _dm(nrows, ncols):
-        tddata = np.ones((nrows, ncols), dtype=np.float32)
-        td_dm = datamodels.TrapDensityModel(data=tddata)
-        td_dm.meta.subarray.xstart = 1
-        td_dm.meta.subarray.ystart = 1
-        return td_dm
-
-    return _dm
-
-
-def create_trappars_model():
-    """
-    Create TrapPars datamodel for testing.
-
-    Returns
-    -------
-    trappars_model : TrapParsModel DataModel
-        Sample TrapParsModel for testing
-    """
-    capture0 = fits.Column(name="capture0", array=np.array([180.0, 270.0, 80.0]), format="D")
-    capture1 = fits.Column(name="capture1", array=np.array([-0.0004, -0.004, -0.0009]), format="D")
-    capture2 = fits.Column(name="capture2", array=np.array([290.0, 140.0, 320.0]), format="D")
-    decay = fits.Column(name="decay_param", array=np.array([-0.01, -0.001, -0.0002]), format="D")
-    column_definitions = fits.ColDefs([capture0, capture1, capture2, decay])
-    trappars_table = fits.BinTableHDU.from_columns(column_definitions, nrows=3)
-    trappars_model = datamodels.TrapParsModel()
-    trappars_model.trappars_table = trappars_table.data
-    return trappars_model
 
 
 def test_get_slice(create_sci_model, create_traps_filled_model):
@@ -190,11 +96,11 @@ def generate_trap_pars():
 class TrapParsTester:
     """Class to handle testing trap pars."""
 
-    def test_get_parameters(self):
+    def test_get_parameters(self, create_trappars_model):
         """Test the get_parameters method."""
         # Create empty DataSet
         ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
-        ds.trappars_model = create_trappars_model()
+        ds.trappars_model = create_trappars_model
         pars = ds.get_parameters()
         assert np.allclose(pars[0], np.array([180.0, 270.0, 80.0]), rtol=1.0e-7, atol=1.0e-7)
         assert np.allclose(pars[1], np.array([-0.0004, -0.004, -0.0009]), rtol=1.0e-7, atol=1.0e-7)
@@ -272,7 +178,9 @@ def create_persistencesat_model():
     return persat_model
 
 
-def test_do_all(create_sci_model, create_traps_filled_model, create_trap_density_model):
+def test_do_all(
+    create_sci_model, create_traps_filled_model, create_trap_density_model, create_trappars_model
+):
     """
     Test the do_all method.
 
@@ -287,7 +195,7 @@ def test_do_all(create_sci_model, create_traps_filled_model, create_trap_density
     """
     input_model = create_sci_model(3, 12, 512, 512, 257, 769)
     traps_filled_model = create_traps_filled_model(2048, 2048)
-    trappars_model = create_trappars_model()
+    trappars_model = create_trappars_model
     trap_density_model = create_trap_density_model(2048, 2048)
     persistencesat_model = create_persistencesat_model()
     ds = persistence.DataSet(

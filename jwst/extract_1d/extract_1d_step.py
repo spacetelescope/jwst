@@ -117,6 +117,9 @@ class Extract1dStep(Step):
         DataModel
             The output spectra.
         """
+        # Work on a copy of the model
+        model = model.copy()
+
         # Set the filter configuration
         if model.meta.instrument.filter == "CLEAR":
             self.log.info("Exposure is through the GR700XD + CLEAR (science).")
@@ -367,14 +370,16 @@ class Extract1dStep(Step):
             self.log.debug("Input is a MultiSlitModel")
             if len((input_model[0]).shape) == 3:
                 self.log.warning("3D input is unsupported; step will be skipped")
-                input_model.meta.cal_step.extract_1d = "SKIPPED"
-                return input_model
+                result = input_model.copy()
+                result.meta.cal_step.extract_1d = "SKIPPED"
+                return result
         else:
             self.log.error(f"Input is a {str(input_model)}, ")
             self.log.error("which was not expected for extract_1d.")
             self.log.error("The extract_1d step will be skipped.")
-            input_model.meta.cal_step.extract_1d = "SKIPPED"
-            return input_model
+            result = input_model.copy()
+            result.meta.cal_step.extract_1d = "SKIPPED"
+            return result
 
         if not isinstance(input_model, ModelContainer):
             exp_type = input_model.meta.exposure.type

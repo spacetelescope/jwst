@@ -84,8 +84,9 @@ class ResidualFringeStep(Step):
         if exptype != "MIR_MRS":
             self.log.warning("Residual fringe correction is only for MIRI MRS data")
             self.log.warning(f"Input is: {exptype}")
-            input_data.meta.cal_step.residual_fringe = "SKIPPED"
-            return input_data
+            result = input_data.copy()
+            result.meta.cal_step.residual_fringe = "SKIPPED"
+            return result
 
         # 1. set up the reference files
         # 2. correct the  model
@@ -108,8 +109,9 @@ class ResidualFringeStep(Step):
                 self.log.warning("No MRS regions reference file found")
                 self.log.warning("Residual Fringe step will be skipped")
 
-            input_data.meta.cal_step.residual_fringe = "SKIPPED"
-            return input_data
+            result = input_data.copy()
+            result.meta.cal_step.residual_fringe = "SKIPPED"
+            return result
 
         # Do the correction
         rfc = residual_fringe.ResidualFringeCorrection(

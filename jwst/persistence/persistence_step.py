@@ -41,6 +41,9 @@ class PersistenceStep(Step):
                 self.input_trapsfilled = None
 
         with datamodels.RampModel(step_input) as input_model:
+            # Work on a copy
+            result = input_model.copy()
+
             self.trap_density_filename = self.get_reference_file(input_model, "trapdensity")
             self.trappars_filename = self.get_reference_file(input_model, "trappars")
             self.persat_filename = self.get_reference_file(input_model, "persat")
@@ -65,11 +68,8 @@ class PersistenceStep(Step):
                     for name in missing_reftypes:
                         msg += " " + name
                 self.log.warning("%s", msg)
-                input_model.meta.cal_step.persistence = "SKIPPED"
-                return input_model
-
-            # Work on a copy
-            result = input_model.copy()
+                result.meta.cal_step.persistence = "SKIPPED"
+                return result
 
             if self.input_trapsfilled is None:
                 traps_filled_model = None
@@ -102,8 +102,9 @@ class PersistenceStep(Step):
                 del traps_filled
 
             if output_pers is not None:  # output file of persistence
-                self.save_model(output_pers, suffix="output_pers")
+                self.save_model(output_pers, suffix="output_pers", force=self.save_persistence)
                 output_pers.close()
+                del output_pers
 
             # Cleanup
             del trap_density_model
