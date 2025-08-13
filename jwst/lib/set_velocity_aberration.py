@@ -21,9 +21,9 @@ in the header other than what is required by the standard.
 """
 
 import logging
+import warnings
 
-import numpy as np
-from gwcs.geometry import CartesianToSpherical, SphericalToCartesian
+import stcal.velocity_aberration as va
 from scipy.constants import speed_of_light
 
 import jwst.datamodels as dm
@@ -68,21 +68,13 @@ def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
     u_corr : numpy.array([ua0, ua1, ua2])
         Apparent position vector in the moving telescope frame.
     """
-    beta = np.array([velocity_x, velocity_y, velocity_z]) / SPEED_OF_LIGHT
-    beta2 = np.dot(beta, beta)  # |beta|^2
-    if beta2 == 0.0:
-        logger.warning("Observatory speed is zero. Setting VA scale to 1.0")
-        return 1.0, u
-
-    u_beta = np.dot(u, beta)
-    igamma = np.sqrt(1.0 - beta2)  # inverse of usual gamma
-    scale_factor = (1.0 + u_beta) / igamma
-
-    # Algorithm below is from Colin Cox notebook.
-    # Also see: Instrument Science Report OSG-CAL-97-06 by Colin Cox (1997).
-    u_corr = (igamma * u + beta * (1.0 + (1.0 - igamma) * u_beta / beta2)) / (1.0 + u_beta)
-
-    return scale_factor, u_corr
+    warnings.warn(
+        "compute_va_effects_vector is deprecated. "
+        "Use stcal.velocity_aberration.compute_va_effects_vector instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return va.compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u)
 
 
 def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
@@ -119,10 +111,13 @@ def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
     apparent_dec : float
         Apparent star position in the moving telescope frame.
     """
-    u = np.asanyarray(SphericalToCartesian()(ra, dec))
-    scale_factor, u_corr = compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u)
-    apparent_ra, apparent_dec = CartesianToSpherical()(*u_corr)
-    return scale_factor, apparent_ra, apparent_dec
+    warnings.warn(
+        "compute_va_effects is deprecated. "
+        "Use stcal.velocity_aberration.compute_va_effects instead.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    return va.compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec)
 
 
 def add_dva(filename, force_level1bmodel=True):
@@ -147,7 +142,7 @@ def add_dva(filename, force_level1bmodel=True):
         model = Level1bModel(filename)
     else:
         model = dm.open(filename)
-    scale_factor, apparent_ra, apparent_dec = compute_va_effects(
+    scale_factor, apparent_ra, apparent_dec = va.compute_va_effects(
         velocity_x=model.meta.ephemeris.velocity_x_bary,
         velocity_y=model.meta.ephemeris.velocity_y_bary,
         velocity_z=model.meta.ephemeris.velocity_z_bary,
