@@ -654,7 +654,7 @@ def _model_image(
         all_tests = _append_tiktests(all_tests, tiktests)
 
         # Save spectra in a list of SingleSpecModels for optional output
-        for i_order in range(len(order_list)):
+        for i_order in order_indices:
             for idx in range(len(all_tests["factors"])):
                 f_k = all_tests["solution"][idx, :]
                 args = (engine, ref_file_args, f_k, i_order, global_mask, ref_files)

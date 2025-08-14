@@ -139,14 +139,13 @@ def trace1d(wave_map, trace_profile):
             # same strategy for wavelength
             mean_wave = np.nanmean(wave2d, axis=0)
 
+        # apply cutoff
+        xtrace = np.arange(0, end_idx)
+        mean_wave = mean_wave[:end_idx]
+        mean_trace = mean_trace[:end_idx]
         # smooth it. we know it should be linear so use 1st order poly and large box size
         ytrace = savgol_filter(mean_trace, mean_trace.size - 1, 1)
         wavetrace = savgol_filter(mean_wave, mean_wave.size - 1, 1)
-
-        # apply cutoff
-        wavetrace = wavetrace[:end_idx]
-        ytrace = ytrace[:end_idx]
-        xtrace = np.arange(0, end_idx)
 
         trace_list.append((xtrace, ytrace, wavetrace))
 
