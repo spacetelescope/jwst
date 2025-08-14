@@ -698,11 +698,11 @@ def _model_image(
         spec_list.append(spec_ord)
 
     # Model the remaining part of order 2
-    if ref_files["subarray"] != "SUBSTRIP96":
-        idx_order2 = 1
-        order = idx_order2 + 1
-        order_str = "Order 2"
-        log.info("Generate model for blue-most part of order 2")
+    if (ref_files["subarray"] != "SUBSTRIP96") and (2 in order_list):
+        order = 2
+        idx_order2 = np.array(order_indices)[np.array(order_list) == order][0]
+        order_str = order_strs[idx_order2]
+        log.info(f"Generate model for blue-most part of {order_str}")
 
         # Take only the second order's specific ref_files
         ref_file_order = [[ref_f[idx_order2]] for ref_f in ref_file_args]
