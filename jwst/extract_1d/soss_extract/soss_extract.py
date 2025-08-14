@@ -61,8 +61,8 @@ def get_ref_file_args(ref_files, orders_requested=None):
     speckernel_ref = ref_files["speckernel"]
     n_pix = 2 * speckernel_ref.meta.halfwidth + 1
     speckernel_wv_range = [np.min(speckernel_ref.wavelengths), np.max(speckernel_ref.wavelengths)]
-    refmodel_orders = [int(trace.spectral_order) for trace in pastasoss_ref.traces]
 
+    refmodel_orders = [int(trace.spectral_order) for trace in pastasoss_ref.traces]
     if orders_requested is None:
         orders_requested = refmodel_orders
     else:
@@ -784,8 +784,11 @@ def _compute_box_weights(ref_files, shape, width, orders_requested=None):
     wavelengths : dict
         A dictionary of the wavelengths for each order.
     """
+    refmodel_orders = [int(trace.spectral_order) for trace in ref_files["pastasoss"].traces]
     if orders_requested is None:
-        orders_requested = [1, 2]
+        orders_requested = refmodel_orders
+    else:
+        orders_requested = _verify_requested_orders(orders_requested, refmodel_orders)
 
     # Extract each order from order list
     box_weights, wavelengths = {}, {}
@@ -1114,7 +1117,6 @@ def run_extract1d(
     subarray,
     soss_filter,
     soss_kwargs,
-    orders_requested=None,
 ):
     """
     Run the spectral extraction on NIRISS SOSS data.
@@ -1136,16 +1138,12 @@ def run_extract1d(
         Filter in place during observations; one of 'CLEAR' or 'F277W'.
     soss_kwargs : dict
         Dictionary of keyword arguments passed from extract_1d_step.
-    orders_requested : list
-        List of orders to be extracted.
 
     Returns
     -------
     output_model : DataModel
         DataModel containing the extracted spectra.
     """
-    if orders_requested is None:
-        orders_requested = [1, 2]
     # Generate the atoca models or not (not necessarily for decontamination)
     generate_model = soss_kwargs["atoca"] or (soss_kwargs["bad_pix"] == "model")
 
@@ -1264,7 +1262,7 @@ def run_extract1d(
             ref_files,
             scidata_bkg.shape,
             width=soss_kwargs["width"],
-            orders_requested=orders_requested,
+            orders_requested=soss_kwargs["orders_requested"],
         )
 
         # FIXME: hardcoding the substrip96 weights to unity is a band-aid solution
@@ -1275,7 +1273,7 @@ def run_extract1d(
         if soss_filter == "CLEAR" and generate_model:
             # Model the image.
             kwargs = {}
-            kwargs["order_list"] = orders_requested
+            kwargs["order_list"] = soss_kwargs["orders_requested"]
             kwargs["estimate"] = estimate
             kwargs["tikfac"] = soss_kwargs["tikfac"]
             kwargs["max_grid_size"] = soss_kwargs["max_grid_size"]
