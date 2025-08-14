@@ -100,7 +100,7 @@ def test_find_spectral_order_index(refmodel):
 
 
 def test_get_soss_traces(refmodel):
-    for order in ["1", "2"]:
+    for order in ["1", "2", "3"]:
         idx = int(order) - 1
         for subarray in ["SUBSTRIP96", "SUBSTRIP256"]:
             order_out, x_new, y_new, wavelengths = _get_soss_traces(
@@ -162,18 +162,23 @@ def test_get_soss_traces_public(subarray, order, pwcpos):
 @pytest.mark.parametrize("pwcpos", [245.79 - 0.24, 245.79, 245.79 + 0.24])  # edges of bounds
 @pytest.mark.parametrize("padsize", [None, 9])
 @pytest.mark.parametrize("subarray", ["SUBSTRIP256", "SUBSTRIP96", "FULL"])
-def test_get_soss_wavemaps_public(subarray, padsize, pwcpos):
+@pytest.mark.parametrize("orders_requested", [[1], [2], [1, 2]])
+def test_get_soss_wavemaps_public(subarray, padsize, pwcpos, orders_requested):
     """Test of public interface to get_soss_wavemaps, which should not require datamodel or refmodel"""
     subarray_shapes = {"SUBSTRIP96": 96, "SUBSTRIP256": 256, "FULL": 2048}
     wavemaps, traces = get_soss_wavemaps(
-        pwcpos, subarray=subarray, padsize=padsize, spectraces=True
+        pwcpos,
+        subarray=subarray,
+        padsize=padsize,
+        spectraces=True,
+        orders_requested=orders_requested,
     )
-
+    n_orders = len(orders_requested)
     if padsize is None:
         padsize = 0
-    expected_shape = (2, subarray_shapes[subarray] + padsize * 2, 2048 + padsize * 2)
+    expected_shape = (n_orders, subarray_shapes[subarray] + padsize * 2, 2048 + padsize * 2)
     assert wavemaps.shape == expected_shape
-    assert traces.shape == (2, 3, 5001)
+    assert traces.shape == (n_orders, 3, 5001)
 
 
 def test_get_soss_traces_bad_pwcpos():
