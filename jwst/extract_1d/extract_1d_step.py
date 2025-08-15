@@ -53,7 +53,7 @@ class Extract1dStep(Step):
     soss_width = float(default=40.)  # aperture width used to extract the 1D spectrum from the de-contaminated trace.
     soss_bad_pix = option("model", "masking", default="masking")  # method used to handle bad pixels
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
-    soss_orders_requested = string(default="1,2")
+    soss_order_3 = boolean(default=False)
     """  # noqa: E501
 
     reference_file_types = ["extract1d", "apcorr", "pastasoss", "specprofile", "speckernel", "psf"]
@@ -160,9 +160,7 @@ class Extract1dStep(Step):
 
         # Build SOSS kwargs dictionary.
         soss_kwargs = {}
-        soss_kwargs["orders_requested"] = [
-            int(order) for order in self.soss_orders_requested.split(",")
-        ]
+        soss_kwargs["order_3"] = bool(self.soss_order_3)
         soss_kwargs["threshold"] = self.soss_threshold
         soss_kwargs["n_os"] = self.soss_n_os
         soss_kwargs["tikfac"] = self.soss_tikfac
