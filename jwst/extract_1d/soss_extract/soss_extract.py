@@ -807,7 +807,7 @@ def _model_image(
     return tracemodels, tikfac, logl, wave_grid, spec_list
 
 
-def _compute_box_weights(ref_files, shape, width, orders_requested=None):
+def _compute_box_weights(ref_files, shape, width, orders_requested):
     """
     Determine the weights for the box extraction.
 
@@ -829,12 +829,6 @@ def _compute_box_weights(ref_files, shape, width, orders_requested=None):
     wavelengths : dict
         A dictionary of the wavelengths for each order.
     """
-    refmodel_orders = [int(trace.spectral_order) for trace in ref_files["pastasoss"].traces]
-    if orders_requested is None:
-        orders_requested = refmodel_orders
-    else:
-        orders_requested = _verify_requested_orders(orders_requested, refmodel_orders)
-
     # Extract each order from order list
     box_weights, wavelengths = {}, {}
     order_str = {order: f"Order {order}" for order in orders_requested}
