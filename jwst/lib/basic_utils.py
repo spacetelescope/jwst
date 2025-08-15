@@ -69,7 +69,7 @@ def disable_logging(level=logging.CRITICAL):
     The context manager is used as::
 
         with disable_logging(level=logging.ERROR):
-            # code containing logging to ignore, other than errors
+            # code containing logging to ignore, other than CRITICAL messages
             ...
     """
     logging.disable(level)

@@ -241,16 +241,22 @@ def test_niriss_image_high_mask_high_offset_low_slope(tmp_path, caplog):
 
 def test_niriss_image_low_mask_high_slope(tmp_path, caplog):
     # Image is all 1.0
-    image = helpers.make_niriss_rate_model(shape=(3, 5, 100, 100))
+    image = helpers.make_niriss_rate_model(shape=(3, 5, 2048, 2048))
 
     # Add small sources to flag
-    add_small_sources(image.data, nsource=100)
+    add_small_sources(image.data, nsource=2000)
 
-    # Add an offset to the first half of the data
-    image.data[:50] += 0.1
+    # Add diffuse sources to make the slope high
+    add_large_source(image.data, radius=700, value=0.2, center=(600, 600))
+    add_large_source(image.data, radius=700, value=-0.2, center=(600, 1480))
+    add_large_source(image.data, radius=700, value=0.2, center=(1480, 600))
+    add_large_source(image.data, radius=700, value=-0.2, center=(1480, 1480))
+
+    # Make channel 1 noisy
+    image.data[1537:] += 0.1 * np.sin(np.arange(2048))
 
     # Flat is flat
-    flat = helpers.make_flat_model(image, shape=(100, 100), value=1.0)
+    flat = helpers.make_flat_model(image, shape=(2048, 2048), value=1.0)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
 
@@ -313,3 +319,29 @@ def test_niriss_image_low_mask_medium_slope_low_ratio(tmp_path, caplog):
     assert "Low channel sigma" in caplog.text
 
     assert param == expected
+
+
+def test_fit_line():
+    data = np.arange(10)
+    intercept, slope, sigma = autoparam._line_fit(data)
+    assert np.isclose(slope, 1)
+    assert np.isclose(intercept, 0)
+    assert np.isclose(sigma, 0)
+
+
+@pytest.mark.parametrize("intercept_only", [True, False])
+def test_fit_flat_line(monkeypatch, intercept_only):
+    # Sometimes, depending on architecture, fitting a flat line returns
+    # a single coefficient only:
+    #     https://github.com/numpy/numpy/issues/26617
+    # Mock that case here to make sure it is covered.
+    if intercept_only:
+        monkeypatch.setattr(
+            np.polynomial.Polynomial, "convert", lambda *args: np.polynomial.Polynomial(coef=[1.0])
+        )
+
+    data = np.ones(10)
+    intercept, slope, sigma = autoparam._line_fit(data)
+    assert np.isclose(slope, 0)
+    assert np.isclose(intercept, 1)
+    assert np.isclose(sigma, 0)

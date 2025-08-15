@@ -103,7 +103,6 @@ class CleanFlickerNoiseStep(Step):
             # Assign fit and background parameters appropriate
             # to the input data if desired
             if self.autoparam:
-                # Override some parameter with specific rules by exposure type
                 self._set_auto_parameters(input_model)
 
             flat_filename = None

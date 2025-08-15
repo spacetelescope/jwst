@@ -1,4 +1,5 @@
 import logging
+import warnings
 
 import numpy as np
 from astropy.stats import sigma_clipped_stats
@@ -87,7 +88,7 @@ def quick_clean(input_model, flat_filename=None):
 
 def _row_average(image, start_fraction=0.0, stop_fraction=1.0):
     """
-    Average an image section over specified rows for all cols.
+    Average an image section over specified rows for all columns.
 
     Parameters
     ----------
@@ -158,7 +159,10 @@ def _line_fit(data):
     # Get the line coefficients
     coef = p_fit.convert().coef
     intercept = coef[0]
-    slope = coef[1]
+    if len(coef) > 1:
+        slope = coef[1]
+    else:
+        slope = 0.0
 
     # Get the standard deviation of the residuals on the fit
     _, _, sigma = sigma_clipped_stats(data[good] - p_fit(x[good]), sigma=10.0)
@@ -271,7 +275,7 @@ def _image_decision_tree(
         else:
             log.debug("  Low mask, low offset, low slope: median background")
             parameters["background_method"] = "median"
-        if channel_sigma > limits["channel_sigma"]:
+        if max_offset > 0 and channel_sigma > limits["channel_sigma"]:
             log.debug("  High channel sigma: fit by channel")
             parameters["fit_by_channel"] = True
         else:
@@ -331,7 +335,9 @@ def niriss_image_parameters(input_model, flat_filename):
     abs_slopes = np.abs([row_slope, col_slope])
     max_slope = np.max(abs_slopes)
     min_slope = np.min(abs_slopes)
-    slope_ratio = max_slope / min_slope
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+        slope_ratio = max_slope / min_slope
 
     # Also get an average from rows near the top of the image:
     # for NIRISS, channel 1 can look significantly different from the others
@@ -409,7 +415,9 @@ def nircam_image_parameters(input_model):
     abs_slopes = np.abs([row_slope, col_slope])
     max_slope = np.max(abs_slopes)
     min_slope = np.min(abs_slopes)
-    slope_ratio = max_slope / min_slope
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+        slope_ratio = max_slope / min_slope
 
     # From the average column levels, get the maximum channel offset
     max_offset = _max_channel_offset(avg_over_row)
