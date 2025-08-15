@@ -37,7 +37,7 @@ def multislitmodel(
         slit = dm.SlitModel()
         slit.meta.wcs = grism_wcs
         slit.meta.wcsinfo.spectral_order = 1
-        slit.source_id = this_source["source_id"]
+        slit.source_id = this_source["label"]
         slit.xstart = int(this_source["xcentroid"] - 10)
         slit.ystart = int(this_source["ycentroid"] - 10)
         slit.data = np.ones((20, 20))
@@ -57,12 +57,18 @@ def multislitmodel(
 
 def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
     """
-    Smoke test that the step runs.
+    Smoke test that the step runs with some user-defined options enabled.
 
     Right now none of the slits overlap with the simulated slits because of the incompatibility
     between a WCS taken from a random real image and the mock data.
     This could be fixed in the future by mocking the WCS object.
     """
-    result = WfssContamStep.call(multislitmodel, save_simulated_image=True, save_contam_images=True)
+    result = WfssContamStep.call(
+        multislitmodel,
+        save_simulated_image=True,
+        save_contam_images=True,
+        magnitude_limit=25,
+        orders="1",
+    )
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
