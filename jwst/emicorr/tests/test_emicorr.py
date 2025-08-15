@@ -214,7 +214,7 @@ def test_emicorrstep_skip_instrument(log_watcher):
     nirmdl = input_model.copy()
     nirmdl.meta.instrument.name = "NIRISS"
 
-    watcher = log_watcher("stpipe.EmiCorrStep", message="not implemented for instrument")
+    watcher = log_watcher("jwst.emicorr.emicorr_step", message="not implemented for instrument")
     step = emicorr_step.EmiCorrStep()
     nir_result = step.call(nirmdl, skip=False)
     watcher.assert_seen()
@@ -228,7 +228,7 @@ def test_emicorrstep_skip_readpatt(log_watcher):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "ANY", "MIRIMAGE")
 
-    watcher = log_watcher("stpipe.EmiCorrStep", message="not implemented for read pattern")
+    watcher = log_watcher("jwst.emicorr.emicorr_step", message="not implemented for read pattern")
     step = emicorr_step.EmiCorrStep()
     result = step.call(input_model, skip=False)
     watcher.assert_seen()
@@ -246,7 +246,7 @@ def test_emicorrstep_skip_no_reffile(monkeypatch, log_watcher):
     monkeypatch.setattr(emicorr_step.EmiCorrStep, "get_reference_file", lambda *args: "N/A")
     step = emicorr_step.EmiCorrStep()
 
-    watcher = log_watcher("stpipe.EmiCorrStep", message="No reference file")
+    watcher = log_watcher("jwst.emicorr.emicorr_step", message="No reference file")
     result = step.call(input_model, skip=False)
     watcher.assert_seen()
 
@@ -263,7 +263,7 @@ def test_emicorrstep_skip_for_failure(monkeypatch, log_watcher):
     monkeypatch.setattr(emicorr, "apply_emicorr", lambda *args, **kwargs: None)
     step = emicorr_step.EmiCorrStep()
 
-    watcher = log_watcher("stpipe.EmiCorrStep", message="Step skipped")
+    watcher = log_watcher("jwst.emicorr.emicorr_step", message="Step skipped")
     result = step.call(input_model, skip=False)
     watcher.assert_seen()
 
