@@ -117,7 +117,6 @@ class Observation:
         filter_name,
         source_id=None,
         boundaries=None,
-        offsets=None,
         max_cpu=1,
         max_pixels_per_chunk=5e4,
         oversample_factor=2,
@@ -139,8 +138,6 @@ class Observation:
             ID of source to process. If 0, all sources processed.
         boundaries : list, optional, default []
             Start/Stop coordinates of the FOV within the larger seed image.
-        offsets : list, optional, default [0,0]
-            Offset values for x and y axes
         max_cpu : int, optional, default 1
             Max number of cpu's to use when multiprocessing
         max_pixels_per_chunk : int, optional, default 1e5
@@ -150,8 +147,6 @@ class Observation:
         """
         if boundaries is None:
             boundaries = []
-        if offsets is None:
-            offsets = [0, 0]
         # Load all the info for this grism mode
         self.seg_wcs = segmap_model.meta.wcs
         self.grism_wcs = grism_wcs
@@ -164,8 +159,6 @@ class Observation:
         self.max_cpu = max_cpu
         self.max_pixels_per_chunk = max_pixels_per_chunk
         self.oversample_factor = oversample_factor
-        self.xoffset = offsets[0]
-        self.yoffset = offsets[1]
 
         # ensure the direct image has background subtracted
         self.dimage = background_subtract(direct_image)
@@ -271,8 +264,6 @@ class Observation:
                     self.grism_wcs,
                     self.naxis,
                     self.oversample_factor,
-                    self.xoffset,
-                    self.yoffset,
                 ]
             )
 
