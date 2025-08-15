@@ -14,7 +14,7 @@ from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.clean_flicker_noise.lib import NSClean, NSCleanSubarray
 from jwst.flatfield import FlatFieldStep
-from jwst.lib.basic_utils import LoggingContext
+from jwst.lib.basic_utils import disable_logging
 from jwst.lib.reffile_utils import get_subarray_model, ref_matches_sci
 from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.ramp_fitting import RampFitStep
@@ -27,6 +27,7 @@ log = logging.getLogger(__name__)
 NRS_FS_REGION = [922, 1116]
 
 __all__ = [
+    "read_flat_file",
     "make_rate",
     "post_process_rate",
     "mask_ifu_slices",
@@ -39,6 +40,61 @@ __all__ = [
     "median_clean",
     "do_correction",
 ]
+
+
+def read_flat_file(input_model, flat_filename):
+    """
+    Read flat data from an input file path.
+
+    Flat data is assumed to be full frame.  Subarrays matching the input
+    data are extracted as needed.
+
+    Only the flat image is returned: error and DQ arrays are ignored.
+    Any zeros or NaNs in the flat image are set to a smoothed local average
+    value (via `background_level`, with background_method = 'model') before
+    returning, to avoid impacting the background and noise fits near
+    missing flat data.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodel.JwstDataModel`
+        The input data.
+    flat_filename : str
+        File path for a full-frame flat image.
+
+    Returns
+    -------
+    flat_data : array-like of float
+        A 2D flat image array matching the input data.
+    """
+    if flat_filename is None:
+        return None
+
+    # Open the provided flat as FlatModel
+    log.debug("Dividing by flat data prior to fitting")
+    flat = datamodels.FlatModel(flat_filename)
+
+    # Extract subarray from reference data, if necessary
+    if ref_matches_sci(input_model, flat):
+        flat_data = flat.data
+    else:
+        log.debug("Extracting matching subarray from flat")
+        sub_flat = get_subarray_model(input_model, flat)
+        flat_data = sub_flat.data
+        sub_flat.close()
+    flat.close()
+
+    # Set any zeros or non-finite values in the flat data to a smoothed local value
+    bad_data = (flat_data == 0) | ~np.isfinite(flat_data)
+    if np.any(bad_data):
+        smoothed_flat = background_level(flat_data, ~bad_data, background_method="model")
+        try:
+            flat_data[bad_data] = smoothed_flat[bad_data]
+        except IndexError:
+            # 2D model failed, median value returned instead
+            flat_data[bad_data] = smoothed_flat
+
+    return flat_data
 
 
 def make_rate(input_model, input_dir="", return_cube=False):
@@ -70,7 +126,7 @@ def make_rate(input_model, input_dir="", return_cube=False):
     log.info("Creating draft rate file for scene masking")
     step = RampFitStep()
     step.input_dir = input_dir
-    with LoggingContext(step.log, level=logging.WARNING):
+    with disable_logging(level=logging.WARNING):
         # Note: the copy is currently needed because ramp fit
         # closes the input model when it's done, and we need
         # it to stay open.
@@ -128,7 +184,7 @@ def post_process_rate(
         log.info("Assigning a WCS for scene masking")
         step = AssignWcsStep()
         step.input_dir = input_dir
-        with LoggingContext(step.log, level=logging.WARNING):
+        with disable_logging(level=logging.WARNING):
             output_model = step.run(output_model)
 
     # If needed, flag open MSA shutters
@@ -136,7 +192,7 @@ def post_process_rate(
         log.info("Flagging failed-open MSA shutters for scene masking")
         step = MSAFlagOpenStep()
         step.input_dir = input_dir
-        with LoggingContext(step.log, level=logging.WARNING):
+        with disable_logging(level=logging.WARNING):
             output_model = step.run(output_model)
 
     # If needed, draft a flat correction to retrieve non-science areas
@@ -144,7 +200,7 @@ def post_process_rate(
         log.info("Retrieving flat DQ values for scene masking")
         step = FlatFieldStep()
         step.input_dir = input_dir
-        with LoggingContext(step.log, level=logging.WARNING):
+        with disable_logging(level=logging.WARNING):
             flat_corrected_model = step.run(output_model)
 
         # Copy out the flat DQ plane, leave the data as is
@@ -1050,61 +1106,6 @@ def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit
     return axis_to_correct, background_method, fit_by_channel, fc
 
 
-def _read_flat_file(input_model, flat_filename):
-    """
-    Read flat data from an input file path.
-
-    Flat data is assumed to be full frame.  Subarrays matching the input
-    data are extracted as needed.
-
-    Only the flat image is returned: error and DQ arrays are ignored.
-    Any zeros or NaNs in the flat image are set to a smoothed local average
-    value (via `background_level`, with background_method = 'model') before
-    returning, to avoid impacting the background and noise fits near
-    missing flat data.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
-        The input data.
-    flat_filename : str
-        File path for a full-frame flat image.
-
-    Returns
-    -------
-    flat_data : array-like of float
-        A 2D flat image array matching the input data.
-    """
-    if flat_filename is None:
-        return None
-
-    # Open the provided flat as FlatModel
-    log.debug("Dividing by flat data prior to fitting")
-    flat = datamodels.FlatModel(flat_filename)
-
-    # Extract subarray from reference data, if necessary
-    if ref_matches_sci(input_model, flat):
-        flat_data = flat.data
-    else:
-        log.debug("Extracting matching subarray from flat")
-        sub_flat = get_subarray_model(input_model, flat)
-        flat_data = sub_flat.data
-        sub_flat.close()
-    flat.close()
-
-    # Set any zeros or non-finite values in the flat data to a smoothed local value
-    bad_data = (flat_data == 0) | ~np.isfinite(flat_data)
-    if np.any(bad_data):
-        smoothed_flat = background_level(flat_data, ~bad_data, background_method="model")
-        try:
-            flat_data[bad_data] = smoothed_flat[bad_data]
-        except IndexError:
-            # 2D model failed, median value returned instead
-            flat_data[bad_data] = smoothed_flat
-
-    return flat_data
-
-
 def _make_processed_rate_image(
     input_model, single_mask, input_dir, exp_type, mask_science_regions, flat
 ):
@@ -1564,7 +1565,7 @@ def do_correction(
     )
 
     # Read the flat file, if provided
-    flat = _read_flat_file(input_model, flat_filename)
+    flat = read_flat_file(input_model, flat_filename)
 
     # Make a rate file if needed
     if user_mask is None:

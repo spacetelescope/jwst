@@ -1,6 +1,9 @@
 """General utility objects."""
 
-__all__ = ["LoggingContext"]
+__all__ = ["LoggingContext", "disable_logging"]
+
+import logging
+from contextlib import contextmanager
 
 
 class LoggingContext:
@@ -48,3 +51,29 @@ class LoggingContext:
         if self.handler and self.close:
             self.handler.close()
         # implicit return of None => don't swallow exceptions
+
+
+@contextmanager
+def disable_logging(level=logging.CRITICAL):
+    """
+    Disable logging within a context.
+
+    Parameters
+    ----------
+    level : int, optional
+        Logging level.  At this level and below, all logging is disabled.
+        Defaults to `logging.CRITICAL`, which disables logging at all levels.
+
+    Examples
+    --------
+    The context manager is used as::
+
+        with disable_logging(level=logging.ERROR):
+            # code containing logging to ignore, other than CRITICAL messages
+            ...
+    """
+    logging.disable(level)
+    try:
+        yield
+    finally:
+        logging.disable(logging.NOTSET)
