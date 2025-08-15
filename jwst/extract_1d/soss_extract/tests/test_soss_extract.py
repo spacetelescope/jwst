@@ -44,8 +44,6 @@ def monkeypatch_setup(
     )
 
 
-# slow because tests multiple Tikhonov factors
-@pytest.mark.slow
 @pytest.mark.parametrize("order_list", [[1, 2], [1, 2, 3]])
 def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_files, order_list):
     scidata, scierr = imagemodel

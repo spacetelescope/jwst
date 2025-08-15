@@ -33,7 +33,18 @@ from jwst.lib import pipe_utils
 
 log = logging.getLogger(__name__)
 
-ORDER2_SHORT_CUTOFF = 0.58
+"""Shortest wavelength to consider for each spectral order"""
+SHORT_CUTOFF = [None, 0.58, 0.63]
+
+"""
+Wavelengths short of which to consider Order 2 to be well-separated from order 1.
+Two values are defined. The first is the cutoff longwave of which should be included
+in the combined extraction; the second is the cutoff shortwave of which should be
+included in the extraction of just that order. Some overlap is helpful to avoid
+numerical issues.
+"""
+ORDER2_SEPARATION_CUTOFF = [0.77, 0.95]
+
 
 __all__ = ["get_ref_file_args", "run_extract1d"]
 
@@ -347,7 +358,7 @@ def _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os):
     # Cut order 2 at 0.77 (not smaller than that)
     # because there is no contamination there. Can be extracted afterward.
     # In the red, no cut.
-    wv_range = [0.77, np.max(grids_ord[1])]
+    wv_range = [ORDER2_SEPARATION_CUTOFF[0], np.max(grids_ord[1])]
 
     # Finally, build the list of corresponding estimates.
     # The estimate for the overlapping part is the order 1 estimate.
@@ -478,7 +489,7 @@ def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask, ref_files
     return tracemodel_ord, spec_ord
 
 
-def _build_null_spec_table(wave_grid):
+def _build_null_spec_table(wave_grid, order):
     """
     Build a SpecModel of entirely bad values.
 
@@ -486,6 +497,8 @@ def _build_null_spec_table(wave_grid):
     ----------
     wave_grid : np.array
         Input wavelengths
+    order : int
+        Spectral order
 
     Returns
     -------
@@ -493,9 +506,13 @@ def _build_null_spec_table(wave_grid):
         Null SpecModel. Flux values are NaN, DQ flags are 1,
         but note that DQ gets overwritten at end of run_extract1d
     """
-    wave_grid_cut = wave_grid[wave_grid > ORDER2_SHORT_CUTOFF]
+    cut = SHORT_CUTOFF[order - 1]
+    if cut is None:
+        wave_grid_cut = wave_grid
+    else:
+        wave_grid_cut = wave_grid[wave_grid > cut]
     spec = datamodels.SpecModel()
-    spec.spectral_order = 2
+    spec.spectral_order = order
     spec.meta.soss_extract1d.type = "OBSERVATION"
     spec.meta.soss_extract1d.factor = np.nan
     spec.spec_table = np.zeros((wave_grid_cut.size,), dtype=datamodels.SpecModel().spec_table.dtype)
@@ -525,6 +542,14 @@ def _model_image(
 ):
     """
     Perform the spectral extraction on a single image.
+
+    The extraction takes place in three stages.
+    First, Order 1 is extracted together with the long-wave portion of Order 2,
+    since these are overlapping.
+    Second, the short-wave portion of Order 2 is extracted standalone, since it
+    is assumed not to overlap much with the other orders.
+    Third, all of Order 3 (if requested) is extracted standalone, since it too is assumed
+    not to overlap with the other orders.
 
     Parameters
     ----------
@@ -623,14 +648,15 @@ def _model_image(
     else:
         log.info("Using previously computed or user specified wavelength grid.")
 
-    # Initialize the Engine.
+    # Initialize the Engine for combined extraction of orders 1 and 2
+    args_orders_12 = [arg[:2] for arg in ref_file_args]
     engine = ExtractionEngine(
-        *ref_file_args,
+        *args_orders_12,
         wave_grid=wave_grid,
-        mask_trace_profile=mask_trace_profile,
+        mask_trace_profile=mask_trace_profile[:2],
         global_mask=scimask,
         threshold=threshold,
-        orders=order_list,
+        orders=[1, 2],
     )
 
     spec_list = []
@@ -654,12 +680,12 @@ def _model_image(
         all_tests = _append_tiktests(all_tests, tiktests)
 
         # Save spectra in a list of SingleSpecModels for optional output
-        for i_order in order_indices:
+        for order in [1, 2]:
             for idx in range(len(all_tests["factors"])):
                 f_k = all_tests["solution"][idx, :]
-                args = (engine, ref_file_args, f_k, i_order, global_mask, ref_files)
+                args = (engine, ref_file_args, f_k, order - 1, global_mask, ref_files)
                 _, spec_ord = _build_tracemodel_order(*args)
-                _populate_tikho_attr(spec_ord, all_tests, idx, i_order + 1)
+                _populate_tikho_attr(spec_ord, all_tests, idx, order)
                 spec_ord.meta.soss_extract1d.color_range = "RED"
 
                 # Add the result to spec_list
@@ -679,10 +705,9 @@ def _model_image(
 
     # Create a new instance of the engine for evaluating the trace model.
     # This allows bad pixels and pixels below the threshold to be reconstructed as well.
-    # Model the order 1 and order 2 trace separately.
+    # Model the traces for each order separately.
     tracemodels = {}
-
-    for i_order, order in enumerate(order_list):
+    for i_order, order in enumerate([1, 2]):
         log.debug(f"Building the model image of {order}.")
 
         args = (engine, ref_file_args, f_k, i_order, global_mask, ref_files)
@@ -697,31 +722,48 @@ def _model_image(
         # Add the result to spec_list
         spec_list.append(spec_ord)
 
-    # Model the remaining part of order 2
-    if (ref_files["subarray"] != "SUBSTRIP96") and (2 in order_list):
-        order = 2
-        idx_order2 = np.array(order_indices)[np.array(order_list) == order][0]
-        order_str = order_strs[idx_order2]
-        log.info(f"Generate model for blue-most part of {order_str}")
+    # Make a null tracemodel to be overwritten later for order 3
+    if 3 in order_list:
+        tracemodels["Order 3"] = np.zeros_like(tracemodels["Order 2"]) * np.nan
+
+    # Model the blue part of order 2 and all of order 3 assuming they are well-separated
+    # from order 1
+    for order in [2, 3]:
+        if ref_files["subarray"] == "SUBSTRIP96":
+            continue
+        if order not in order_list:
+            continue
+        if order == 2:
+            cutoff = ORDER2_SEPARATION_CUTOFF[1]
+        else:
+            cutoff = None
+
+        idx_order = np.array(order_indices)[np.array(order_list) == order][0]
+        order_str = order_strs[idx_order]
+        log.info(f"Generate model for well-separated part of {order_str}")
 
         # Take only the second order's specific ref_files
-        ref_file_order = [[ref_f[idx_order2]] for ref_f in ref_file_args]
+        ref_file_order = [[ref_f[idx_order]] for ref_f in ref_file_args]
 
         # Mask for the fit. All valid pixels inside box aperture
-        mask_fit = mask_trace_profile[idx_order2] | scimask
+        mask_fit = mask_trace_profile[idx_order] | scimask
 
         # Build 1d spectrum integrated over pixels
         pixel_wave_grid, valid_cols = _get_native_grid_from_trace(ref_files, order)
 
         # Hardcode wavelength highest boundary as well.
         # Must overlap with lower limit in make_decontamination_grid
-        is_in_wv_range = pixel_wave_grid < 0.95
-        pixel_wave_grid, valid_cols = pixel_wave_grid[is_in_wv_range], valid_cols[is_in_wv_range]
+        if cutoff is not None:
+            is_in_wv_range = pixel_wave_grid < cutoff
+            pixel_wave_grid, valid_cols = (
+                pixel_wave_grid[is_in_wv_range],
+                valid_cols[is_in_wv_range],
+            )
 
         # Range of initial tikhonov factors
         tikfac_log_range = np.log10(tikfac) + np.array([-2, 8])
 
-        # Model the remaining part of order 2 with atoca
+        # Model with atoca
         try:
             model, spec_ord = _model_single_order(
                 scidata_bkg,
@@ -741,7 +783,7 @@ def _model_image(
                 "Not enough unmasked pixels to model the remaining part of order 2."
                 " Model and spectrum will be NaN in that spectral region."
             )
-            spec_ord = [_build_null_spec_table(pixel_wave_grid)]
+            spec_ord = [_build_null_spec_table(pixel_wave_grid, order)]
             model = np.nan * np.ones_like(scidata_bkg)
 
         # Keep only pixels from which order 2 contribution
@@ -756,7 +798,10 @@ def _model_image(
 
         # Add the result to spec_list
         for sp in spec_ord:
-            sp.meta.soss_extract1d.color_range = "BLUE"
+            if order == 2:
+                sp.meta.soss_extract1d.color_range = "BLUE"
+            else:
+                sp.meta.soss_extract1d.color_range = "ALL"
         spec_list += spec_ord
 
     return tracemodels, tikfac, logl, wave_grid, spec_list
@@ -936,7 +981,6 @@ def _model_single_order(
 
     # Define wavelength grid with oversampling of 3 (should be enough)
     wave_grid_os = oversample_grid(wave_grid, n_os=3)
-    wave_grid_os = wave_grid_os[wave_grid_os > ORDER2_SHORT_CUTOFF]
 
     # Initialize the Engine.
     engine = ExtractionEngine(
@@ -1148,7 +1192,11 @@ def run_extract1d(
     generate_model = soss_kwargs["atoca"] or (soss_kwargs["bad_pix"] == "model")
 
     # Map the order integer names to the string names
-    order_str_to_int = {f"Order {order}": order for order in [1, 2, 3]}
+    if soss_kwargs["order_3"]:
+        order_list = [1, 2, 3]
+    else:
+        order_list = [1, 2]
+    order_str_to_int = {f"Order {order}": order for order in order_list}
 
     # Read the reference files.
     pastasoss_ref = datamodels.PastasossModel(pastasoss_ref_name)
@@ -1262,7 +1310,7 @@ def run_extract1d(
             ref_files,
             scidata_bkg.shape,
             width=soss_kwargs["width"],
-            orders_requested=soss_kwargs["orders_requested"],
+            orders_requested=order_list,
         )
 
         # FIXME: hardcoding the substrip96 weights to unity is a band-aid solution
@@ -1273,7 +1321,7 @@ def run_extract1d(
         if soss_filter == "CLEAR" and generate_model:
             # Model the image.
             kwargs = {}
-            kwargs["order_list"] = soss_kwargs["orders_requested"]
+            kwargs["order_list"] = order_list
             kwargs["estimate"] = estimate
             kwargs["tikfac"] = soss_kwargs["tikfac"]
             kwargs["max_grid_size"] = soss_kwargs["max_grid_size"]
