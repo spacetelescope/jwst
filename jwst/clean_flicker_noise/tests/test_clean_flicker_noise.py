@@ -1,115 +1,11 @@
 import gwcs
 import numpy as np
 import pytest
-from astropy.utils.data import get_pkg_data_filename
 from numpy.testing import assert_allclose
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.tests.test_nirspec import create_nirspec_fs_file, create_nirspec_ifu_file
 from jwst.clean_flicker_noise import clean_flicker_noise as cfn
-from jwst.msaflagopen.tests.test_msa_open import make_nirspec_mos_model
-
-
-def add_metadata(model, shape):
-    model.meta.instrument.name = "MIRI"
-    model.meta.instrument.detector = "MIRIMAGE"
-    model.meta.instrument.filter = "F480M"
-    model.meta.observation.date = "2015-10-13"
-    model.meta.observation.time = "00:00:00"
-    model.meta.exposure.type = "MIR_IMAGE"
-    model.meta.exposure.group_time = 1.0
-    model.meta.subarray.name = "FULL"
-    model.meta.subarray.xstart = 1
-    model.meta.subarray.ystart = 1
-    model.meta.subarray.xsize = shape[3]
-    model.meta.subarray.ysize = shape[2]
-    model.meta.exposure.frame_time = 1.0
-    model.meta.exposure.ngroups = shape[1]
-    model.meta.exposure.group_time = 1.0
-    model.meta.exposure.nints = shape[0]
-    model.meta.exposure.nframes = 1
-    model.meta.exposure.groupgap = 0
-    model.meta.exposure.readpatt = "FASTR1"
-    model.meta.subarray.slowaxis = 2
-
-
-def make_small_ramp_model(shape=(3, 5, 10, 10)):
-    rampmodel = datamodels.RampModel(shape)
-    add_metadata(rampmodel, shape)
-
-    # Make data with a constant rate
-    for group in range(shape[1]):
-        rampmodel.data[:, group, :, :] = group
-
-    return rampmodel
-
-
-def make_small_rate_model(shape=(3, 5, 10, 10)):
-    ratemodel = datamodels.ImageModel(shape[2:])
-    add_metadata(ratemodel, shape)
-    ratemodel.data[:] = 1.0
-    return ratemodel
-
-
-def make_small_rateints_model(shape=(3, 5, 10, 10)):
-    ratemodel = datamodels.CubeModel((shape[0], shape[2], shape[3]))
-    add_metadata(ratemodel, shape)
-    ratemodel.data[:] = 1.0
-    return ratemodel
-
-
-def make_flat_model(model, shape=(10, 10), value=None):
-    # make a flat model with appropriate size and metadata
-    flat = datamodels.FlatModel()
-    if value is None:
-        flat.data = np.arange(shape[0] * shape[1], dtype=float).reshape(shape)
-    else:
-        flat.data = np.full(shape, value)
-
-    # add required metadata
-    flat.meta.description = "test"
-    flat.meta.reftype = "test"
-    flat.meta.author = "test"
-    flat.meta.pedigree = "test"
-    flat.meta.useafter = "test"
-
-    # copy any other matching metadata
-    flat.update(model)
-
-    # make sure shape keys match input
-    flat.meta.subarray.xsize = shape[1]
-    flat.meta.subarray.ysize = shape[0]
-
-    return flat
-
-
-def make_nirspec_ifu_model(shape=(2048, 2048)):
-    hdul = create_nirspec_ifu_file(
-        grating="PRISM", filter="CLEAR", gwa_xtil=0.35986012, gwa_ytil=0.13448857, gwa_tilt=37.1
-    )
-    hdul["SCI"].data = np.ones(shape, dtype=float)
-    rate_model = datamodels.IFUImageModel(hdul)
-    hdul.close()
-    return rate_model
-
-
-def make_nirspec_mos_fs_model():
-    mos_model = make_nirspec_mos_model()
-    mos_model.meta.instrument.msa_metadata_file = get_pkg_data_filename(
-        "data/msa_fs_configuration.fits", package="jwst.assign_wcs.tests"
-    )
-    return mos_model
-
-
-def make_nirspec_fs_model():
-    hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
-    hdul["SCI"].data = np.ones((2048, 2048), dtype=float)
-    rate_model = datamodels.ImageModel(hdul)
-    hdul.close()
-
-    # add the slow axis
-    rate_model.meta.subarray.slowaxis = 1
-    return rate_model
+from jwst.clean_flicker_noise.tests import helpers
 
 
 class MockUpdate:
@@ -123,7 +19,7 @@ class MockUpdate:
 
 def test_make_rate(log_watcher):
     shape = (3, 5, 10, 10)
-    ramp_model = make_small_ramp_model(shape)
+    ramp_model = helpers.make_small_ramp_model(shape)
 
     watcher = log_watcher(
         "jwst.clean_flicker_noise.clean_flicker_noise", message="Creating draft rate file"
@@ -146,7 +42,7 @@ def test_make_rate(log_watcher):
 
 
 def test_postprocess_rate_nirspec(log_watcher):
-    rate_model = make_nirspec_mos_model()
+    rate_model = helpers.make_nirspec_mos_model()
 
     watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="Assigning a WCS")
     result = cfn.post_process_rate(rate_model, assign_wcs=True)
@@ -164,7 +60,7 @@ def test_postprocess_rate_nirspec(log_watcher):
 
 
 def test_postprocess_rate_miri(log_watcher):
-    rate_model = make_small_rate_model()
+    rate_model = helpers.make_small_rate_model()
     assert np.sum(rate_model.dq & datamodels.dqflags.pixel["DO_NOT_USE"]) == 0
 
     watcher = log_watcher(
@@ -180,7 +76,7 @@ def test_postprocess_rate_miri(log_watcher):
 
 
 def test_mask_ifu_slices():
-    rate_model = make_nirspec_ifu_model()
+    rate_model = helpers.make_nirspec_ifu_model()
 
     rate_model = cfn.post_process_rate(rate_model, assign_wcs=True)
     mask = np.full_like(rate_model.data, True)
@@ -195,11 +91,11 @@ def test_mask_ifu_slices():
 @pytest.mark.parametrize("exptype,blocked", [("mos", 0.012), ("mos_fs", 0.025), ("fs", 0.05)])
 def test_mask_slits(exptype, blocked):
     if exptype == "mos":
-        rate_model = make_nirspec_mos_model()
+        rate_model = helpers.make_nirspec_mos_model()
     elif exptype == "mos_fs":
-        rate_model = make_nirspec_mos_fs_model()
+        rate_model = helpers.make_nirspec_mos_fs_model()
     else:
-        rate_model = make_nirspec_fs_model()
+        rate_model = helpers.make_nirspec_fs_model()
 
     # Assign a WCS
     rate_model = cfn.post_process_rate(rate_model, assign_wcs=True)
@@ -296,17 +192,17 @@ def test_create_mask_nirspec(monkeypatch, exptype):
     if exptype == "mos":
         # NIRSpec MOS data
         monkeypatch.setattr(cfn, "mask_slits", mock)
-        rate_model = make_nirspec_mos_model()
+        rate_model = helpers.make_nirspec_mos_model()
     elif exptype == "mos_fs":
         monkeypatch.setattr(cfn, "mask_slits", mock)
-        rate_model = make_nirspec_mos_fs_model()
+        rate_model = helpers.make_nirspec_mos_fs_model()
 
         # also assign a WCS so the FS can be detected
         rate_model = cfn.post_process_rate(rate_model, assign_wcs=True)
     else:
         # NIRSpec IFU data
         monkeypatch.setattr(cfn, "mask_ifu_slices", mock)
-        rate_model = make_nirspec_ifu_model((2048, 2038))
+        rate_model = helpers.make_nirspec_ifu_model((2048, 2038))
 
     rate_model.data[:] = 1.0
     mask = cfn.create_mask(rate_model)
@@ -333,7 +229,7 @@ def test_create_mask_nirspec(monkeypatch, exptype):
 
 def test_create_mask_miri():
     # small MIRI imaging data
-    rate_model = make_small_rate_model()
+    rate_model = helpers.make_small_rate_model()
     rate_model.dq[5, 5] = datamodels.dqflags.pixel["DO_NOT_USE"]
 
     mask = cfn.create_mask(rate_model)
@@ -352,7 +248,7 @@ def test_create_mask_miri():
 
 def test_create_mask_from_rateints():
     # small rateints data
-    rate_model = make_small_rateints_model()
+    rate_model = helpers.make_small_rateints_model()
 
     # Add an outlier in each integration
     for i in range(rate_model.data.shape[0]):
@@ -589,7 +485,7 @@ def test_median_clean_by_channel():
 
 @pytest.mark.parametrize("mask_science", [True, False])
 def test_do_correction_miri_imaging_ramp(mask_science):
-    ramp_model = make_small_ramp_model()
+    ramp_model = helpers.make_small_ramp_model()
     cleaned, mask, bg, noise, status = cfn.do_correction(
         ramp_model, mask_science_regions=mask_science
     )
@@ -610,7 +506,7 @@ def test_do_correction_miri_imaging_ramp(mask_science):
 
 @pytest.mark.parametrize("mask_science", [True, False])
 def test_do_correction_nirspec_rate(mask_science):
-    rate_model = make_nirspec_fs_model()
+    rate_model = helpers.make_nirspec_fs_model()
     cleaned, mask, bg, noise, status = cfn.do_correction(
         rate_model, mask_science_regions=mask_science
     )
@@ -631,7 +527,7 @@ def test_do_correction_nirspec_rate(mask_science):
 
 @pytest.mark.parametrize("single_mask", [True, False])
 def test_do_correction_rateints(single_mask):
-    rate_model = make_small_rateints_model()
+    rate_model = helpers.make_small_rateints_model()
     cleaned, mask, bg, noise, status = cfn.do_correction(
         rate_model, single_mask=single_mask, save_mask=True
     )
@@ -652,7 +548,7 @@ def test_do_correction_rateints(single_mask):
 
 
 def test_do_correction_unsupported(log_watcher):
-    ramp_model = make_small_ramp_model()
+    ramp_model = helpers.make_small_ramp_model()
     ramp_model.meta.exposure.type = "MIR_MRS"
 
     watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="not supported")
@@ -665,7 +561,7 @@ def test_do_correction_unsupported(log_watcher):
 
 
 def test_do_correction_no_fit_by_channel(log_watcher):
-    ramp_model = make_small_ramp_model()
+    ramp_model = helpers.make_small_ramp_model()
 
     # fit_by_channel is only used for NIR data -
     # log a warning, but step still completes
@@ -683,7 +579,7 @@ def test_do_correction_no_fit_by_channel(log_watcher):
 
 @pytest.mark.parametrize("exptype", ["MIR_IMAGE", "NRC_IMAGE", "NIS_IMAGE"])
 def test_do_correction_fft_not_allowed(log_watcher, exptype):
-    ramp_model = make_small_ramp_model()
+    ramp_model = helpers.make_small_ramp_model()
     ramp_model.meta.exposure.type = exptype
 
     # not allowed for MIRI, NIRCAM, NIRISS
@@ -701,7 +597,7 @@ def test_do_correction_fft_not_allowed(log_watcher, exptype):
 
 @pytest.mark.parametrize("none_value", [None, "none", "None"])
 def test_do_correction_no_background(none_value):
-    ramp_model = make_small_ramp_model()
+    ramp_model = helpers.make_small_ramp_model()
 
     # Don't remove background before fitting noise
     cleaned, _, _, _, _ = cfn.do_correction(ramp_model, background_method=none_value)
@@ -715,7 +611,7 @@ def test_do_correction_no_background(none_value):
 
 @pytest.mark.parametrize("ndim", [2, 3])
 def test_do_correction_user_mask(tmp_path, ndim):
-    ramp_model = make_small_ramp_model()
+    ramp_model = helpers.make_small_ramp_model()
 
     if ndim == 3:
         mask = np.full((ramp_model.shape[0], ramp_model.shape[2], ramp_model.shape[3]), True)
@@ -743,11 +639,11 @@ def test_do_correction_user_mask(tmp_path, ndim):
 def test_do_correction_user_mask_mismatch(tmp_path, input_type, log_watcher):
     shape = (3, 5, 20, 20)
     if input_type == "rate":
-        model = make_small_rate_model(shape)
+        model = helpers.make_small_rate_model(shape)
     elif input_type == "rateints":
-        model = make_small_rateints_model(shape)
+        model = helpers.make_small_rateints_model(shape)
     else:
-        model = make_small_ramp_model(shape)
+        model = helpers.make_small_ramp_model(shape)
 
     mask = np.full((10, 10), True)
     mask_model = datamodels.ImageModel(mask)
@@ -772,7 +668,7 @@ def test_do_correction_user_mask_mismatch(tmp_path, input_type, log_watcher):
 
 def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
     shape = (3, 5, 20, 20)
-    model = make_small_rateints_model(shape)
+    model = helpers.make_small_rateints_model(shape)
 
     mask = np.full((2, 20, 20), True)
     mask_model = datamodels.CubeModel(mask)
@@ -797,7 +693,7 @@ def test_do_correction_user_mask_mismatch_integ(tmp_path, log_watcher):
 
 @pytest.mark.parametrize("subarray", ["SUBS200A1", "ALLSLITS"])
 def test_do_correction_fft_subarray(subarray):
-    ramp_model = make_small_ramp_model()
+    ramp_model = helpers.make_small_ramp_model()
     ramp_model.meta.exposure.type = "NRS_FIXEDSLIT"
     ramp_model.meta.subarray.slowaxis = 1
     ramp_model.meta.subarray.name = subarray
@@ -815,7 +711,7 @@ def test_do_correction_fft_subarray(subarray):
 
 
 def test_do_correction_fft_full():
-    rate_model = make_nirspec_fs_model()
+    rate_model = helpers.make_nirspec_fs_model()
 
     cleaned, _, _, noise, _ = cfn.do_correction(rate_model, fit_method="fft", save_noise=True)
 
@@ -830,7 +726,7 @@ def test_do_correction_fft_full():
 
 
 def test_do_correction_clean_fails(monkeypatch, log_watcher):
-    ramp_model = make_small_ramp_model()
+    ramp_model = helpers.make_small_ramp_model()
     ramp_model.meta.exposure.type = "NRS_FIXEDSLIT"
     ramp_model.meta.subarray.slowaxis = 1
 
@@ -864,11 +760,11 @@ def test_do_correction_clean_fails(monkeypatch, log_watcher):
 def test_do_correction_save_intermediate(save_type, input_type):
     shape = (3, 5, 20, 20)
     if input_type == "rate":
-        model = make_small_rate_model(shape)
+        model = helpers.make_small_rate_model(shape)
     elif input_type == "rateints":
-        model = make_small_rateints_model(shape)
+        model = helpers.make_small_rateints_model(shape)
     else:
-        model = make_small_ramp_model(shape)
+        model = helpers.make_small_ramp_model(shape)
 
     save_bg = save_type == "background"
     save_noise = save_type == "noise"
@@ -899,14 +795,14 @@ def test_do_correction_with_flat_unity(tmp_path, input_type, log_watcher):
     # make input data
     shape = (3, 5, 20, 20)
     if input_type == "rate":
-        model = make_small_rate_model(shape)
+        model = helpers.make_small_rate_model(shape)
     elif input_type == "rateints":
-        model = make_small_rateints_model(shape)
+        model = helpers.make_small_rateints_model(shape)
     else:
-        model = make_small_ramp_model(shape)
+        model = helpers.make_small_ramp_model(shape)
 
     # make a flat image matching the input data
-    flat = make_flat_model(model, shape=shape[-2:], value=1.0)
+    flat = helpers.make_flat_model(model, shape=shape[-2:], value=1.0)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
 
@@ -932,14 +828,14 @@ def test_do_correction_with_flat_structure(tmp_path, log_watcher, input_type, ap
     # make input data
     shape = (3, 5, 20, 20)
     if input_type == "rate":
-        model = make_small_rate_model(shape)
+        model = helpers.make_small_rate_model(shape)
     elif input_type == "rateints":
-        model = make_small_rateints_model(shape)
+        model = helpers.make_small_rateints_model(shape)
     else:
-        model = make_small_ramp_model(shape)
+        model = helpers.make_small_ramp_model(shape)
 
     # make a flat image matching the input data
-    flat = make_flat_model(model, shape=shape[-2:])
+    flat = helpers.make_flat_model(model, shape=shape[-2:])
     if apply_flat:
         flat_file = str(tmp_path / "flat.fits")
         flat.save(flat_file)
@@ -973,11 +869,11 @@ def test_do_correction_with_flat_structure(tmp_path, log_watcher, input_type, ap
 def test_do_correction_with_flat_subarray(tmp_path, log_watcher):
     # make input data
     shape = (3, 5, 20, 20)
-    model = make_small_rate_model(shape)
+    model = helpers.make_small_rate_model(shape)
 
     # make a flat image larger than the input data
     flat_shape = (50, 50)
-    flat = make_flat_model(model, shape=flat_shape)
+    flat = helpers.make_flat_model(model, shape=flat_shape)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
 
