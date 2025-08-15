@@ -93,7 +93,7 @@ class JwstStep(_Step):
         """
         # Specify the log names for any dependencies whose
         # loggers we want to configure
-        return ["jwst", "stcal", "stdatamodels", "stpipe"]
+        return ["jwst", "stcal", "stdatamodels", "stpipe", "tweakwcs"]
 
     def load_as_level2_asn(self, obj):
         """
