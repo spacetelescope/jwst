@@ -1191,17 +1191,19 @@ def run_extract1d(
     # Generate the atoca models or not (not necessarily for decontamination)
     generate_model = soss_kwargs["atoca"] or (soss_kwargs["bad_pix"] == "model")
 
+    # Read the reference files.
+    pastasoss_ref = datamodels.PastasossModel(pastasoss_ref_name)
+    specprofile_ref = datamodels.SpecProfileModel(specprofile_ref_name)
+    speckernel_ref = datamodels.SpecKernelModel(speckernel_ref_name)
+
     # Map the order integer names to the string names
     if soss_kwargs["order_3"]:
         order_list = [1, 2, 3]
     else:
         order_list = [1, 2]
+    refmodel_orders = [int(trace.spectral_order) for trace in pastasoss_ref.traces]
+    order_list = _verify_requested_orders(order_list, refmodel_orders)
     order_str_to_int = {f"Order {order}": order for order in order_list}
-
-    # Read the reference files.
-    pastasoss_ref = datamodels.PastasossModel(pastasoss_ref_name)
-    specprofile_ref = datamodels.SpecProfileModel(specprofile_ref_name)
-    speckernel_ref = datamodels.SpecKernelModel(speckernel_ref_name)
 
     ref_files = {}
     ref_files["pastasoss"] = pastasoss_ref

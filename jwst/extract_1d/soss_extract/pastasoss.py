@@ -51,6 +51,8 @@ def _verify_requested_orders(orders_requested, refmodel_orders):
     ValueError
         If any of the requested orders are not available in the reference model.
     """
+    orders_requested = np.array(orders_requested)
+    refmodel_orders = np.array(refmodel_orders)
     not_in = np.isin(orders_requested, refmodel_orders, invert=True)
     if np.all(not_in):
         raise ValueError(
@@ -63,7 +65,7 @@ def _verify_requested_orders(orders_requested, refmodel_orders):
             f"Skipping that order."
         )
         orders_requested = orders_requested[~not_in]
-    return orders_requested
+    return orders_requested.tolist()
 
 
 def _convert_refmodel_poly_to_astropy(coefficients):
