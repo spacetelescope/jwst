@@ -27,7 +27,7 @@ def _oxford_or_str_join(str_list):
 
 
 SINGLE_GROUP_REFCAT = ["GAIADR3", "GAIADR2", "GAIADR1"]
-"""Astrometric catalog names"""
+"""List of astrometric catalogs available to the tweakreg step."""
 
 _SINGLE_GROUP_REFCAT_STR = _oxford_or_str_join(SINGLE_GROUP_REFCAT)
 
