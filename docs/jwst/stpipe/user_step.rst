@@ -101,7 +101,7 @@ class, pass the ``-h`` parameter, and the name of a Step class or
 parameter file::
 
     $ strun -h do_cleanup.asdf
-    usage: strun [-h] [--debug] [--save-parameters SAVE_PARAMETERS] [--disable-crds-steppars] [--verbose] [--log_level LOG_LEVEL] [--log_format LOG_FORMAT] [--log_file LOG_FILE] [--log_stream LOG_STREAM]
+    usage: strun [-h] [--debug] [--save-parameters SAVE_PARAMETERS] [--disable-crds-steppars] [--verbose] [--log_level LOG_LEVEL] [--log_file LOG_FILE] [--log_stream LOG_STREAM]
                  [--pre_hooks] [--post_hooks] [--output_file] [--output_dir] [--output_ext] [--output_use_model] [--output_use_index] [--save_results] [--skip] [--suffix] [--search_output_file] [--input_dir]
                  cfg_file_or_class [args ...]
 
@@ -121,8 +121,6 @@ parameter file::
       --verbose, -v         Turn on all logging messages
       --log_level LOG_LEVEL
                             Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Ignored if 'verbose' is specified.
-      --log_format LOG_FORMAT
-                            A format string for the logger
       --log_file LOG_FILE   Full path to a file name to record log messages
       --log_stream LOG_STREAM
                             Log stream for terminal messages (stdout, stderr, or null).

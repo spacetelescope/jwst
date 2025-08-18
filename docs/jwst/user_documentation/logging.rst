@@ -52,8 +52,6 @@ The available options for the command line are::
   --verbose, -v         Turn on all logging messages
   --log_level LOG_LEVEL
                         Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Ignored if 'verbose' is specified.
-  --log_format LOG_FORMAT
-                        A format string for the logger
   --log_file LOG_FILE   Full path to a file name to record log messages
   --log_stream LOG_STREAM
                         Log stream for terminal messages (stdout, stderr, or null).
