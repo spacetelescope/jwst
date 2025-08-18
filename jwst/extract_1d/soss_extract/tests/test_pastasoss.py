@@ -7,6 +7,7 @@ from jwst.extract_1d.soss_extract.pastasoss import (
     _find_spectral_order_index,
     _get_soss_traces,
     _get_wavelengths,
+    _verify_requested_orders,
     get_soss_traces,
     get_soss_wavemaps,
 )
@@ -18,6 +19,26 @@ from jwst.extract_1d.soss_extract.tests.helpers import (
 )
 
 """Test coverage for the helper functions in pastasoss.py"""
+
+
+def test_verify_requested_orders(log_watcher):
+    refmodel_orders = [1, 2, 3]
+    requested_orders = [1, 2]
+    good_orders = _verify_requested_orders(refmodel_orders, requested_orders)
+    assert good_orders == requested_orders
+
+    requested_orders = [1, 2, 4]
+    watcher = log_watcher(
+        "jwst.extract_1d.soss_extract.pastasoss",
+        message="Requested orders not found in reference model",
+    )
+    good_orders = _verify_requested_orders(refmodel_orders, requested_orders)
+    watcher.assert_seen()
+    assert good_orders == [1, 2]
+
+    with pytest.raises(ValueError):
+        requested_orders = [0]
+        _verify_requested_orders(refmodel_orders, requested_orders)
 
 
 @pytest.mark.parametrize("degree", [3, 5])
