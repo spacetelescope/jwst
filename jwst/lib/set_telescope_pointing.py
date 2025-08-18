@@ -69,6 +69,7 @@ from astropy import units as u
 from astropy.table import Table
 from astropy.time import Time
 from scipy.interpolate import interp1d
+from stcal.velocity_aberration import compute_va_effects_vector
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.pointing import v23tosky
@@ -76,7 +77,6 @@ from jwst.assign_wcs.util import calc_rotation_matrix, update_s_region_keyword
 from jwst.lib.engdb_tools import ENGDB_Service
 from jwst.lib.exposure_types import FGS_GUIDE_EXP_TYPES, IMAGING_TYPES
 from jwst.lib.pipe_utils import is_tso
-from jwst.lib.set_velocity_aberration import compute_va_effects_vector
 from jwst.lib.siafdb import SIAF, SiafDb
 
 __all__ = [
