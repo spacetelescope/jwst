@@ -11,6 +11,11 @@ signal.
 Two different approaches to background image subtraction are used, depending
 on the observing mode. Imaging and most spectroscopic modes use one method,
 while a special method is used for Wide-Field Slitless Spectroscopy (WFSS).
+For both background methods the output results are always returned in a new
+data model, leaving the original input model unchanged.
+
+Upon successful completion of the step, the S_BKDSUB keyword will be set to
+"COMPLETE" in the output product.
 
 This type of background subtraction is just one method available within the
 JWST pipeline. See :ref:`Background Subtraction Methods <background_subtraction_methods>`
@@ -154,17 +159,19 @@ The locations of source spectra are determined from a source catalog (specified
 by the primary header keyword SCATFILE), in conjunction with a reference file
 that gives the wavelength range (based on filter and grism) that is relevant
 to the WFSS image. All regions of the image that are free of source spectra
-are used for scaling the background reference image. The step argument
-``wfss_mmag_extract`` can be used, if desired, to set the minimum (faintest)
-abmag of the source catalog objects used to define the background regions.
+are used for scaling the background reference image. 
+
+A background mask is created and set to True where there are no sources, i.e. regions
+where the background can be used.
+This mask will be saved in the ``MASK`` extension of the intermediate output
+file, saved with suffix "bsub", and will be accessible in the ``mask`` attribute of the
+output datamodel. 
+
+The step argument``wfss_mmag_extract`` can be used, if
+desired, to set the minimum (faintest) abmag of the source catalog objects
+used to define the background regions.
 The default is to use all source catalog entries that result in a spectrum
 falling within the WFSS image.
-
-For both background methods the output results are always returned in a new
-data model, leaving the original input model unchanged.
-
-Upon successful completion of the step, the S_BKDSUB keyword will be set to
-"COMPLETE" in the output product.
 
 SOSS Mode
 ---------
