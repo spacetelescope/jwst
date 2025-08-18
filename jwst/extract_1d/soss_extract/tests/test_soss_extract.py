@@ -5,10 +5,24 @@ import pytest
 from stdatamodels.jwst.datamodels import SossWaveGridModel, SpecModel
 
 from jwst.extract_1d.soss_extract.soss_extract import (
+    SHORT_CUTOFF,
+    _build_null_spec_table,
     _compute_box_weights,
     _model_image,
 )
 from jwst.extract_1d.soss_extract.tests.helpers import DATA_SHAPE
+
+
+@pytest.mark.parametrize("order", [1, 2, 3])
+def test_build_null_spec_table(wave_grid, order):
+    expected_cut = SHORT_CUTOFF[order - 1]
+    spec = _build_null_spec_table(wave_grid, order)
+
+    assert isinstance(spec, SpecModel)
+    assert spec.spectral_order == order
+    assert spec.spec_table.shape == (93,)
+    assert np.all(np.isnan(spec.spec_table["FLUX"]))
+    assert np.all(spec.spec_table["DQ"] == 1)
 
 
 @pytest.fixture
