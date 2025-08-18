@@ -44,14 +44,18 @@ def monkeypatch_setup(
     )
 
 
-@pytest.mark.parametrize("order_list", [[1, 2], [1, 2, 3]])
+@pytest.mark.parametrize("order_list", [[1, 2], None])
 def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_files, order_list):
     scidata, scierr = imagemodel
 
+    if order_list is None:
+        orders_expected = [1, 2, 3]
+    else:
+        orders_expected = order_list
     refmask = np.zeros_like(detector_mask)
     box_width = 5.0
-    box_weights, wavelengths = _compute_box_weights(
-        ref_files, DATA_SHAPE, box_width, orders_requested=order_list
+    box_weights, _wavelengths = _compute_box_weights(
+        ref_files, DATA_SHAPE, box_width, orders_requested=orders_expected
     )
 
     tracemodels, tikfac, logl, wave_grid, spec_list = _model_image(
@@ -72,8 +76,8 @@ def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_files, or
     )
 
     # check output basics, types and shapes
-    assert len(tracemodels) == len(order_list)
-    for order in order_list:
+    assert len(tracemodels) == len(orders_expected)
+    for order in orders_expected:
         tm = tracemodels[f"Order {order}"]
         assert tm.dtype == np.float64
         assert tm.shape == DATA_SHAPE
