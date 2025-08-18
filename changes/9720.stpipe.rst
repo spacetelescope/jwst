@@ -1,1 +1,1 @@
-Specify loggers to configure.
+New ``JwstStep.get_stpipe_loggers()` method to specify loggers to configure.
