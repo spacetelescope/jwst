@@ -41,7 +41,7 @@ class AlignRefsStep(Step):
             first science target image
         """
         # Open the input science target model
-        with datamodels.open(target) as target_model:
+        with datamodels.open(target) as target_model, datamodels.open(psf) as psf_model:
             # Get the name of the psf mask reference file to use
             self.mask_name = self.get_reference_file(target_model, "psfmask")
             self.log.info("Using PSFMASK reference file %s", self.mask_name)
@@ -50,13 +50,12 @@ class AlignRefsStep(Step):
             if self.mask_name == "N/A":
                 self.log.warning("No PSFMASK reference file found")
                 self.log.warning("Align_refs step will be skipped")
-                return None
+                result = psf_model.copy()
+                result.meta.cal_step.align_psfs = "SKIPPED"
+                return result
 
             # Open the psf mask reference file
             mask_model = datamodels.ImageModel(self.mask_name)
-
-            # Open the input psf images
-            psf_model = datamodels.open(psf)
 
             # Retrieve the box size for the filter
             box_size = self.median_box_length
@@ -65,6 +64,7 @@ class AlignRefsStep(Step):
             bad_bitvalue = self.bad_bits
             bad_bitvalue = interpret_bit_flags(bad_bitvalue, flag_name_map=pixel)
             if bad_bitvalue is None:
+                self.log.debug("No bad bits provided; treating all pixels as good.")
                 bad_bitvalue = 0
 
             # Replace bad pixels in the psf images
@@ -78,6 +78,5 @@ class AlignRefsStep(Step):
             result.meta.cal_step.align_psfs = "COMPLETE"
 
             mask_model.close()
-            psf_model.close()
 
         return result

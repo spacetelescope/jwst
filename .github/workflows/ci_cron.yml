@@ -65,4 +65,4 @@ jobs:
           pytest-results-summary: true
         - linux: py3-xdist
           pytest-results-summary: true
-
+        - linux: linkcheck
