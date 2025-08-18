@@ -68,7 +68,7 @@ class AlignRefsStep(Step):
             bad_bitvalue = self.bad_bits
             bad_bitvalue = interpret_bit_flags(bad_bitvalue, flag_name_map=pixel)
             if bad_bitvalue is None:
-                self.log.debug("No bad bits provided; treating all pixels as good.")
+                log.debug("No bad bits provided; treating all pixels as good.")
                 bad_bitvalue = 0
 
             # Replace bad pixels in the psf images
