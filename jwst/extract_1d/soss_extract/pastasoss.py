@@ -12,11 +12,11 @@ log = logging.getLogger(__name__)
 
 SOSS_XDIM = 2048
 SOSS_YDIM = 300
-CUTOFFS = [SOSS_XDIM, 1783, 1134]
-WAVEMAP_WLMIN = 0.5
-WAVEMAP_WLMAX = 5.5
-WAVEMAP_NWL = 5001
-SUBARRAY_YMIN = 2048 - 256
+CUTOFFS = [SOSS_XDIM, 1783, 1134]  # max pixel x-index to consider for a given order
+WAVEMAP_WLMIN = 0.5  # min wavelength for pastasoss 1-d wavelength grid
+WAVEMAP_WLMAX = 5.5  # max wavelength for pastasoss 1-d wavelength grid
+WAVEMAP_NWL = 5001  # number of wavelengths for pastasoss 1-d wavelength grid
+SUBARRAY_YMIN = 2048 - 256  # pixel y-value defining the start of the subarray
 PWCPOS_BOUNDS = (245.79 - 0.25, 245.79 + 0.25)  # reasonable PWC position limits
 DEFAULT_CRDS_PARAMS = {
     "meta.instrument.name": "NIRISS",
