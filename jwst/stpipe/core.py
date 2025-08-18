@@ -82,18 +82,19 @@ class JwstStep(_Step):
         return (read_metadata(dataset, flatten=True), crds_observatory)
 
     @staticmethod
-    def get_known_loggers():
+    def get_stpipe_loggers():
         """
         Get the names of loggers to configure.
 
         Returns
         -------
-        loggers : list
-            List of log names to configure.
+        loggers : tuple of str
+            Tuple of log names to configure.
         """
         # Specify the log names for any dependencies whose
         # loggers we want to configure
-        return ["jwst", "stcal", "stdatamodels", "stpipe", "tweakwcs"]
+        stpipe_loggers = ("jwst", "stcal", "stdatamodels", "stpipe", "tweakwcs")
+        return stpipe_loggers
 
     def load_as_level2_asn(self, obj):
         """
