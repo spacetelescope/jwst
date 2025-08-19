@@ -21,9 +21,9 @@ format automatically recognized by :ref:`astropy.table.Table.read <astropy:read_
 When the ``meta.tweakreg_catalog`` attribute of input data models is `None` or
 an empty string, then the ``tweakreg`` step will attempt to detect sources in the
 input images. Stars are detected in the image with one of the following source
-detection algorithms: ``photutils.detection.DAOStarFinder`` (default),
-``photutils.detection.IRAFStarFinder``, or ``photutils.segmentation.SourceFinder``
-in conjunction with ``photutils.segmentation.SourceCatalog``.
+detection algorithms: `~photutils.detection.DAOStarFinder` (default),
+`~photutils.detection.IRAFStarFinder`, or `~photutils.segmentation.SourceFinder`
+in conjunction with `~photutils.segmentation.SourceCatalog`.
 
 DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
@@ -163,9 +163,8 @@ that the relative positions of (e.g., NIRCam) detectors do not change.
 Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
 `~jwst.datamodels.library.ModelLibrary`. This grouping is performed automatically
-in the ``tweakreg`` step using the
-`~jwst.datamodels.library.ModelLibrary.group_names` property.
-
+in the ``tweakreg`` step. The groups are accessible through the ``group_names``
+attribute of the library.
 
 However, when detector calibrations are not accurate, alignment of groups
 of images may fail (or result in poor alignment). In this case, it may be
