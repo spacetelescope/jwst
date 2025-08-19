@@ -63,7 +63,7 @@ and also record them to a file called "pipeline.log" in the current working dire
 
 To turn off all logging instead::
 
-    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --log_stream=null
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --log-stream=null
 
 CRDS messages may still display, since its logger is separately configured.
 

@@ -91,8 +91,8 @@ def run_spec2_pipeline_asn(make_test_association, request):
     args = [
         "calwebb_spec2",
         INPUT_ASN,
-        "--log_level=INFO",
-        f"--log_file={LOGFILE}",
+        "--log-level=INFO",
+        f"--log-file={LOGFILE}",
         "--steps.badpix_selfcal.skip=true",
         "--steps.msa_flagging.skip=true",
         "--steps.nsclean.skip=true",
