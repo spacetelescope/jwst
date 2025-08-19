@@ -73,8 +73,8 @@ def test_run_image3_pipeline(make_dummy_association, in_memory):
     args = [
         "calwebb_image3",
         INPUT_ASN,
-        "--log_level=INFO",
-        f"--log_file={LOGFILE}",
+        "--log-level=INFO",
+        f"--log-file={LOGFILE}",
         "--steps.tweakreg.skip=true",
         "--steps.skymatch.skip=true",
         "--steps.outlier_detection.skip=true",
@@ -93,8 +93,8 @@ def test_run_image3_single_file(make_dummy_cal_file):
     args = [
         "calwebb_image3",
         INPUT_FILE,
-        "--log_level=INFO",
-        f"--log_file={LOGFILE}",
+        "--log-level=INFO",
+        f"--log-file={LOGFILE}",
         "--steps.tweakreg.skip=true",
         "--steps.skymatch.skip=true",
         "--steps.outlier_detection.skip=true",

@@ -50,23 +50,23 @@ From the Command Line
 The available options for the command line are::
 
   --verbose, -v         Turn on all logging messages
-  --log_level LOG_LEVEL
+  --log-level LOG_LEVEL
                         Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Ignored if 'verbose' is specified.
-  --log_file LOG_FILE   Full path to a file name to record log messages
-  --log_stream LOG_STREAM
+  --log-file LOG_FILE   Full path to a file name to record log messages
+  --log-stream LOG_STREAM
                         Log stream for terminal messages (stdout, stderr, or null).
 
 For example::
 
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
-        --log_level=INFO --log_file=pipeline.log --log_stream=stdout
+        --log-level=INFO --log-file=pipeline.log --log-stream=stdout
 
 will log messages to the terminal at the INFO level in the ``stdout`` stream
 and also record them to a file called "pipeline.log" in the current working directory.
 
 To turn off all logging instead::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --log_stream=null
+    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --log-stream=null
 
 CRDS messages may still display, since its logger is separately configured.
 
