@@ -474,4 +474,4 @@ linkcheck_allow_unauthorized = False
 
 # Enable nitpicky mode - which ensures that all references in the docs
 # resolve.
-nitpicky = False
+nitpicky = True
