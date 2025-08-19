@@ -36,22 +36,48 @@ def create_photom():
 
     # linear time coefficients
     lossperyear = np.full(nrows, 0.01)
-    dtypec = np.dtype([("t0", "<f4"), ("lossperyear", "<f4")])
-    reftab_lin = np.array(list(zip(T0, lossperyear, strict=True)), dtype=dtypec)
+    dtypec = np.dtype(
+        [("filter", "S12"), ("subarray", "S15"), ("t0", "<f4"), ("lossperyear", "<f4")]
+    )
+    reftab_lin = np.array(
+        list(zip(filter_list, subarray, T0, lossperyear, strict=True)), dtype=dtypec
+    )
 
     # exponential time coefficients
     amp = np.linspace(2.1, 2.1 + (nrows - 1.0) * 0.1, nrows) / photmjsr
     tau = np.full(nrows, 145)
     const = np.full(nrows, 1.0)
-    dtypec = np.dtype([("t0", "<f4"), ("amplitude", "<f4"), ("tau", "<f4"), ("const", "<f4")])
-    reftab_exp = np.array(list(zip(T0, amp, tau, const, strict=True)), dtype=dtypec)
+    dtypec = np.dtype(
+        [
+            ("filter", "S12"),
+            ("subarray", "S15"),
+            ("t0", "<f4"),
+            ("amplitude", "<f4"),
+            ("tau", "<f4"),
+            ("const", "<f4"),
+        ]
+    )
+    reftab_exp = np.array(
+        list(zip(filter_list, subarray, T0, amp, tau, const, strict=True)), dtype=dtypec
+    )
 
     # power law time coefficients
     year1value = np.full(nrows, 0.01)
     tsoft = np.full(nrows, 1.0)
     alpha = np.full(nrows, -1.01)
-    dtypec = np.dtype([("t0", "<f4"), ("year1value", "<f4"), ("tsoft", "<f4"), ("alpha", "<f4")])
-    reftab_plaw = np.array(list(zip(T0, year1value, tsoft, alpha, strict=True)), dtype=dtypec)
+    dtypec = np.dtype(
+        [
+            ("filter", "S12"),
+            ("subarray", "S15"),
+            ("t0", "<f4"),
+            ("year1value", "<f4"),
+            ("tsoft", "<f4"),
+            ("alpha", "<f4"),
+        ]
+    )
+    reftab_plaw = np.array(
+        list(zip(filter_list, subarray, T0, year1value, tsoft, alpha, strict=True)), dtype=dtypec
+    )
 
     ftab = datamodels.MirImgPhotomModel(
         phot_table=reftab,
