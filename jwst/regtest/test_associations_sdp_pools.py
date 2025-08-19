@@ -116,7 +116,23 @@ def test_std(_jail, rtdata, resource_tracker, request, pool_args):
     "pool_args",
     [
         pytest.param(("jw01467_20250316t025827_pool", []), id="pool_004_wfs"),
+        pytest.param(("jw03383_20250307t235057_pool", []), id="pool_034_wfss_parallel_NIRISS"),
         pytest.param(("jw04090_20250316t054542_pool", []), id="pool_013_coron_nircam"),
+        pytest.param(
+            ("jw05398_20250312t000159_pool", ["-i", "o041", "o042", "o043", "c1016"]),
+            id="pool_034_wfss_parallel_NIRCAM_DEFAULT",
+        ),  # This is "default" scenario: row grism, column grism, and direct image.
+        pytest.param(
+            ("jw05398_20250312t000159_pool", ["-i", "o036", "o037", "c1029"]),
+            id="pool_034_wfss_parallel_NIRCAM_ROW_ONLY",
+        ),  # Only row grism and direct image, but no column grism image.
+        pytest.param(
+            (
+                "jw05398_20250312t000159_pool",
+                ["-i", "o030", "o031", "o032", "o033", "o035", "c1012", "c1013", "c1014"],
+            ),
+            id="pool_034_wfss_parallel_NIRCAM_3ROW_2DIRECT",
+        ),  # Three row grism images and two direct images.
     ],
     ids=parfunc,
 )
@@ -128,7 +144,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00016_20230331t130733_pool", []),  # This pool checks coronagraphy associations
         ("jw00217_20200921t181631_pool", []),
         ("jw00217_nrsfss_pool", []),
         ("jw00620_20210113t123511_pool", []),
@@ -210,7 +225,7 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
         ("jw00628_20191102t153956_pool", []),
         ("jw00629_20190605t025157_pool", []),
         ("jw00676_20210403t114320_pool", []),
-        ("jw01194_20230115t113819_pool", ["--DMS"]),
+        ("jw01194_20230115t113819_pool", ["--DMS"]),  # This pool checks coronagraphy associations
         ("jw01257_20221201t192226_pool", []),
         ("jw01290_20230304t140931_pool", []),
         ("jw02064_20230302t112350_pool", []),
