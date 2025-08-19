@@ -103,7 +103,7 @@ parameter file::
 
 The command would show text similar to this::
 
-    usage: strun [-h] [--debug] [--save-parameters SAVE_PARAMETERS] [--disable-crds-steppars] [--verbose] [--log_level LOG_LEVEL] [--log_format LOG_FORMAT] [--log_file LOG_FILE] [--log_stream LOG_STREAM]
+    usage: strun [-h] [--debug] [--save-parameters SAVE_PARAMETERS] [--disable-crds-steppars] [--verbose] [--log-level LOG_LEVEL] [--log-file LOG_FILE] [--log-stream LOG_STREAM]
                  [--pre_hooks] [--post_hooks] [--output_file] [--output_dir] [--output_ext] [--output_use_model] [--output_use_index] [--save_results] [--skip] [--suffix] [--search_output_file] [--input_dir]
                  cfg_file_or_class [args ...]
 
@@ -121,10 +121,10 @@ The command would show text similar to this::
       --disable-crds-steppars
                             Disable retrieval of step parameter references files from CRDS
       --verbose, -v         Turn on all logging messages
-      --log_level LOG_LEVEL
+      --log-level LOG_LEVEL
                             Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Ignored if 'verbose' is specified.
-      --log_file LOG_FILE   Full path to a file name to record log messages
-      --log_stream LOG_STREAM
+      --log-file LOG_FILE   Full path to a file name to record log messages
+      --log-stream LOG_STREAM
                             Log stream for terminal messages (stdout, stderr, or null).
       --pre_hooks           List of Step classes to run before step [default=list]
       --post_hooks          List of Step classes to run after step [default=list]

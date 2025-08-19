@@ -86,8 +86,8 @@ def run_image2_pipeline_asn(make_association, request):
     args = [
         "calwebb_image2",
         INPUT_ASN,
-        "--log_level=INFO",
-        f"--log_file={LOGFILE}",
+        "--log-level=INFO",
+        f"--log-file={LOGFILE}",
         "--steps.flat_field.skip=true",
         "--steps.photom.skip=true",
         "--steps.resample.skip=true",
