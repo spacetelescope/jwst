@@ -621,6 +621,14 @@ def create_photom_nrs_msa(min_wl=1.0, max_wl=5.0, min_r=8.0, max_r=9.0):
     )
     ftab = datamodels.NrsMosPhotomModel(phot_table=reftab)
 
+    # Add required metadata
+    ftab.meta.description = "Test description"
+    ftab.meta.reftype = "photom"
+    ftab.meta.author = "Test Author"
+    ftab.meta.pedigree = "test"
+    ftab.meta.useafter = "2024-01-01"
+    ftab.meta.instrument.name = "NIRSPEC"
+
     return ftab
 
 
@@ -998,6 +1006,14 @@ def create_photom_miri_image():
     )
     ftab = datamodels.MirImgPhotomModel(phot_table=reftab, timecoeff_exponential=reftabc)
 
+    # Add required metadata
+    ftab.meta.description = "Test description"
+    ftab.meta.reftype = "photom"
+    ftab.meta.author = "Test Author"
+    ftab.meta.pedigree = "test"
+    ftab.meta.useafter = "2024-01-01"
+    ftab.meta.instrument.name = "MIRI"
+
     return ftab
 
 
@@ -1027,6 +1043,14 @@ def create_photom_nircam_image():
     )
 
     ftab = datamodels.NrcImgPhotomModel(phot_table=reftab)
+
+    # Add required metadata
+    ftab.meta.description = "Test description"
+    ftab.meta.reftype = "photom"
+    ftab.meta.author = "Test Author"
+    ftab.meta.pedigree = "test"
+    ftab.meta.useafter = "2024-01-01"
+    ftab.meta.instrument.name = "NIRCAM"
 
     return ftab
 
@@ -1983,3 +2007,59 @@ def test_find_row():
 
     ind = photom.find_row(ftab.phot_table, {"filter": "F444W", "pupil": "GRISMR", "order": 2})
     assert ind is None
+
+
+def test_invalid_photom_file_missing_meta():
+    ftab = create_photom_miri_image()
+    input_model = create_input("MIRI", "MIRIMAGE", "MIR_IMAGE", filter_used="F1800W")
+    ds = photom.DataSet(input_model)
+
+    # With required values, apply_photom succeeds
+    ds.apply_photom(ftab, None)
+
+    # Error is raised if created model does not have required
+    # metadata (description, pedigree, etc.)
+    ftab.meta.description = None
+    with pytest.raises(ValueError, match="Model.meta is missing values"):
+        ds.apply_photom(ftab, None)
+
+
+def test_invalid_photom_file_bad_timecoeff_order():
+    # Modify the created model to introduce a mismatch between the photom table
+    # and the timecoeff table row order
+    ftab = create_photom_miri_image()
+    ftab.timecoeff_exponential = ftab.timecoeff_exponential[::-1]
+
+    input_model = create_input("MIRI", "MIRIMAGE", "MIR_IMAGE", filter_used="F1800W")
+    ds = photom.DataSet(input_model)
+    with pytest.raises(
+        ValueError, match="Model.phot_table and Model.timecoeff_exponential do not match"
+    ):
+        ds.apply_photom(ftab, None)
+
+
+def test_invalid_photom_file_bad_timecoeff_length():
+    # Modify the created model to introduce a mismatch between the photom table
+    # and the timecoeff table length
+    ftab = create_photom_miri_image()
+    ftab.timecoeff_exponential = ftab.timecoeff_exponential[:-1]
+
+    input_model = create_input("MIRI", "MIRIMAGE", "MIR_IMAGE", filter_used="F1800W")
+    ds = photom.DataSet(input_model)
+    with pytest.raises(
+        ValueError, match="Model.phot_table and Model.timecoeff_exponential do not match"
+    ):
+        ds.apply_photom(ftab, None)
+
+
+def test_invalid_photom_file_empty_timecoeff_table():
+    # Auto-generate an empty extension in the photom model by trying to access it
+    ftab = create_photom_miri_image()
+    ftab.timecoeff_linear = ftab.timecoeff_linear
+
+    input_model = create_input("MIRI", "MIRIMAGE", "MIR_IMAGE", filter_used="F1800W")
+    ds = photom.DataSet(input_model)
+    with pytest.raises(
+        ValueError, match="Model.phot_table and Model.timecoeff_linear do not match"
+    ):
+        ds.apply_photom(ftab, None)
