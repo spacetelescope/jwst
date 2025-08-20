@@ -1439,7 +1439,12 @@ class DataSet:
         output_model : ~jwst.datamodels.JwstDataModel
             Output data model with the flux calibrations applied.
         """
-        with datamodels.open(photom_fname) as ftab:
+        with datamodels.open(photom_fname, strict_validation=True) as ftab:
+            # Make sure the file is valid.
+            # This will raise a ValueError if time coefficient tables
+            # are present and they do not match the photometry table.
+            ftab.validate()
+
             # Load the pixel area reference file, if it exists, and attach the
             # reference data to the science model
             # SOSS data are in a TSOMultiSpecModel, which will not allow for
