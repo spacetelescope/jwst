@@ -1726,7 +1726,7 @@ def test_miri_image():
     shape = input_data.shape
     ix = shape[1] // 2
     iy = shape[0] // 2
-    compare = photmjsr * (amplitude * np.exp(-(60000 - t0) / tau) + const)
+    compare = photmjsr / (amplitude * np.exp(-(60000 - t0) / tau) + const)
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input_data[iy, ix]
     assert_allclose(ratio, compare, rtol=1.0e-7)

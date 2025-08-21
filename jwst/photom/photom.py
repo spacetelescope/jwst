@@ -740,7 +740,10 @@ class DataSet:
         order : int
             Spectral order number.
         time_correction : float or None
-            Multiplicative correction for time dependence.
+            Multiplicative correction for time dependence, defined as the
+            fractional amount of light recorded now divided by the light
+            recorded on the zero-day MJD (t0).  The scalar conversion factor
+            will be divided by the correction value if provided.
         """
         # First get the scalar conversion factor.
         # For most modes, the scalar conversion factor in the photom reference
@@ -795,7 +798,7 @@ class DataSet:
         # Apply the time-dependence correction
         if time_correction is not None and time_correction != 1.0:
             log.info(f"Multiplicative time dependence correction is {time_correction:.6g}")
-            conversion *= time_correction
+            conversion /= time_correction
 
         # Store the conversion factor in the meta data
         log.info(f"PHOTMJSR value: {conversion:.6g}")
