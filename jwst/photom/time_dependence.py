@@ -186,16 +186,13 @@ def _get_mrs_correction_function(side, timecoeff, mid_time):
         Time-wavelength dependent photom loss correction
     """
     binwave = timecoeff[side]["binwave"]
-    a = timecoeff[side]["acoeff"]
-    b = timecoeff[side]["bcoeff"]
-    c = timecoeff[side]["ccoeff"]
-    x0 = timecoeff[side]["x0"]
-
-    # Timescale is (100/b) days
-    tau = 100 / b
+    alpha = timecoeff[side]["alpha"]
+    year1value = timecoeff[side]["year1value"]
+    tsoft = timecoeff[side]["tsoft"]
+    t0 = timecoeff[side]["t0"]
 
     # Time dependent function. Time is set by mid_time (modified julian day)
-    corgrid = exponential_correction(mid_time, x0, a, tau, c, bounded=True)
+    corgrid = powerlaw_correction(mid_time, t0, year1value, tsoft, alpha, bounded=True)
 
     # Now fold in the wavelength dependence
     func = RegularGridInterpolator([binwave], corgrid, bounds_error=False, fill_value=None)
@@ -225,10 +222,10 @@ def miri_mrs_time_correction(input_model, detector, ftab, mid_time):
     # Read in the time-wavelength dependent coefficients
     # for each channel from the MRS photom reference file
     table_ch = {}
-    table_ch["ch1"] = ftab.timecoeff_ch1
-    table_ch["ch2"] = ftab.timecoeff_ch2
-    table_ch["ch3"] = ftab.timecoeff_ch3
-    table_ch["ch4"] = ftab.timecoeff_ch4
+    table_ch["ch1"] = ftab.timecoeff_powerlaw_ch1
+    table_ch["ch2"] = ftab.timecoeff_powerlaw_ch2
+    table_ch["ch3"] = ftab.timecoeff_powerlaw_ch3
+    table_ch["ch4"] = ftab.timecoeff_powerlaw_ch4
     # Each MIRI MRS exposure has 2 channels
     # We want to correct the channels separately
     # If we have MIRIFUSHORT data then channel 1 is on the left
@@ -252,16 +249,16 @@ def miri_mrs_time_correction(input_model, detector, ftab, mid_time):
 
     # Pull out the time coefficients for the detector we are working on
     timecoeff["left"]["binwave"] = table_ch[left]["binwave"]
-    timecoeff["left"]["acoeff"] = table_ch[left]["acoeff"]
-    timecoeff["left"]["bcoeff"] = table_ch[left]["bcoeff"]
-    timecoeff["left"]["ccoeff"] = table_ch[left]["ccoeff"]
-    timecoeff["left"]["x0"] = table_ch[left]["x0"]
+    timecoeff["left"]["alpha"] = table_ch[left]["alpha"]
+    timecoeff["left"]["year1value"] = table_ch[left]["year1value"]
+    timecoeff["left"]["tsoft"] = table_ch[left]["tsoft"]
+    timecoeff["left"]["t0"] = table_ch[left]["t0"]
 
     timecoeff["right"]["binwave"] = table_ch[right]["binwave"]
-    timecoeff["right"]["acoeff"] = table_ch[right]["acoeff"]
-    timecoeff["right"]["bcoeff"] = table_ch[right]["bcoeff"]
-    timecoeff["right"]["ccoeff"] = table_ch[right]["ccoeff"]
-    timecoeff["right"]["x0"] = table_ch[right]["x0"]
+    timecoeff["right"]["alpha"] = table_ch[right]["alpha"]
+    timecoeff["right"]["year1value"] = table_ch[right]["year1value"]
+    timecoeff["right"]["tsoft"] = table_ch[right]["tsoft"]
+    timecoeff["right"]["t0"] = table_ch[right]["t0"]
 
     ysize, xsize = input_model.data.shape[-2], input_model.data.shape[-1]
     # the correction is time and wavelength dependent. Pull out the

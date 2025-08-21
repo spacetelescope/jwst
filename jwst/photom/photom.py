@@ -538,7 +538,7 @@ class DataSet:
             # Check if reference file contains time dependent correction
 
             try:
-                ftab.getarray_noinit("timecoeff_ch1")
+                ftab.getarray_noinit("timecoeff_powerlaw_ch1")
             except AttributeError:
                 # Old style ref file; skip the correction
                 log.info(
