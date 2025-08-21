@@ -843,22 +843,22 @@ def create_photom_miri_mrs(shape, value, pixel_area, photmjsr, timecoeff=False):
         # add time coefficients
         nrow = 10
         binwave = np.linspace(6, 10, nrow)
-        acoeff = np.full(nrow, 1.00)
-        bcoeff = np.full(nrow, 0.009)
-        ccoeff = np.full(nrow, -0.056)
-        x0 = np.full(nrow, 59680.0)
+        alpha = np.full(nrow, -1.01)
+        year1value = np.full(nrow, 0.01)
+        tsoft = np.full(nrow, 1.0)
+        t0 = np.full(nrow, 59680.0)
 
         dtypec = np.dtype(
             [
                 ("binwave", "<f4"),
-                ("acoeff", "<f4"),
-                ("bcoeff", "<f4"),
-                ("ccoeff", "<f4"),
-                ("x0", "<f4"),
+                ("alpha", "<f4"),
+                ("year1value", "<f4"),
+                ("tsoft", "<f4"),
+                ("t0", "<f4"),
             ]
         )
-        reftab_exp = np.array(
-            list(zip(binwave, acoeff, bcoeff, ccoeff, x0, strict=True)), dtype=dtypec
+        reftab_plaw = np.array(
+            list(zip(binwave, alpha, year1value, tsoft, t0, strict=True)), dtype=dtypec
         )
 
         ftab = datamodels.MirMrsPhotomModel(
@@ -866,10 +866,10 @@ def create_photom_miri_mrs(shape, value, pixel_area, photmjsr, timecoeff=False):
             err=err,
             dq=dq,
             pixsiz=pixsiz,
-            timecoeff_ch1=reftab_exp,
-            timecoeff_ch2=reftab_exp,
-            timecoeff_ch3=reftab_exp,
-            timecoeff_ch4=reftab_exp,
+            timecoeff_powerlaw_ch1=reftab_plaw,
+            timecoeff_powerlaw_ch2=reftab_plaw,
+            timecoeff_powerlaw_ch3=reftab_plaw,
+            timecoeff_powerlaw_ch4=reftab_plaw,
         )
     else:
         ftab = datamodels.MirMrsPhotomModel(data=data, err=err, dq=dq, pixsiz=pixsiz)
@@ -1674,7 +1674,7 @@ def test_miri_mrs_time_cor():
         )
     )
     # Check the data values.
-    expected_time_correction = 0.94220161
+    expected_time_correction = 0.17933886403066845
     compare = value / expected_time_correction
     ratio = output / input_data
     np.testing.assert_allclose(ratio, compare, rtol=1e-6)
