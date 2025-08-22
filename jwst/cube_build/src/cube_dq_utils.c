@@ -687,7 +687,9 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 
     int *idqv; // int vector for spaxel
     if (mem_alloc_dq(ncube, &idqv))
+    {
         return 1;
+    }
 
     double corner1[2];
     double corner2[2];
@@ -701,7 +703,11 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
     int *wave_slice_dq;
 
     if (mem_alloc_dq(nxy, &wave_slice_dq))
+    {
+        free(idqv);
+        idqv = NULL;
         return 1;
+    }
 
     // Loop over the wavelength planes and set DQ plane
     for (w = 0; w < nz; w++)
