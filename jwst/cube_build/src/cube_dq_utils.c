@@ -802,6 +802,11 @@ int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, doubl
     int *idqv; // int vector for spaxel
     idqv = (int *)calloc(ncube, sizeof(int));
 
+    if (NULL==idqv) // Validate memory allocation before usage
+    {
+        return 1;
+    }
+
     for (i = 0; i < ncube; i++)
     {
         idqv[i] = 0;
@@ -826,6 +831,9 @@ int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, doubl
         int *wave_slice_dq;
 
         if (mem_alloc_dq(nxy, &wave_slice_dq))
+        {
+            free(idqv);
+            idqv = NULL;  // Allocated memory is not needed if a failure occurs
             return 1;
 
         for (j = 0; j < nxy; j++)
