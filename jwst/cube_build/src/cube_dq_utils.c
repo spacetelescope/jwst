@@ -835,6 +835,7 @@ int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, doubl
             free(idqv);
             idqv = NULL;  // Allocated memory is not needed if a failure occurs
             return 1;
+        }
 
         for (j = 0; j < nxy; j++)
         {
