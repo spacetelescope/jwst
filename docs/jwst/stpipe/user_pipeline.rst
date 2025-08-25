@@ -53,7 +53,7 @@ class:
        pixfrac: 1.0
 
 Just like a ``Step``, it must have ``name`` and ``class`` values.
-Here the ``class`` must refer to a subclass of `stpipe.Pipeline`.
+Here the ``class`` must refer to a subclass of ``stpipe.Pipeline``.
 
 Following ``name`` and ``class`` is the ``steps`` section.  Under
 this section is a subsection for each step in the pipeline.  The easiest
