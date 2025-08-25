@@ -59,7 +59,7 @@ jobs:
       artifact-path: |
         results.xml
       envs: |
-        - linux: linkcheck
+        - linux: check-docs-links
         - macos: py311-xdist
           pytest-results-summary: true
         - macos: py312-xdist
