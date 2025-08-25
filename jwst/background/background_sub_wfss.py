@@ -70,6 +70,9 @@ def subtract_wfss_bkg(
         log.warning("No source_catalog found in input.meta.")
         got_catalog = False
 
+    # Make a copy of the input model to save the mask
+    result = input_model.copy()
+
     # Create a mask from the source catalog, True where there are no sources,
     # i.e. in regions we can use as background.
     if got_catalog:
@@ -77,10 +80,18 @@ def subtract_wfss_bkg(
         if not _sufficient_background_pixels(input_model.dq, bkg_mask, bkg_ref.data):
             log.warning("Not enough background pixels to work with.")
             log.warning("Step will be SKIPPED.")
+            # Save the mask in expected data type for the datamodel and set
+            # other keywords appropriately for this case
+            result.mask = bkg_mask.astype(np.uint32)
+            result.meta.background.scaling_factor = "N/A"
+            result.meta.cal_step.bkg_subtract = "SKIPPED"
             bkg_ref.close()
-            return None
+            return result
     else:
         bkg_mask = np.ones(input_model.data.shape, dtype=bool)
+
+    # save the mask in expected data type for the datamodel
+    result.mask = bkg_mask.astype(np.uint32)
 
     # compute scaling factor for the reference background image
     log.info("Starting iterative outlier rejection for background subtraction.")
@@ -101,17 +112,16 @@ def subtract_wfss_bkg(
             "Could not determine a finite scaling factor between reference background and data."
             " Step will be SKIPPED."
         )
+        result.meta.background.scaling_factor = "N/A"
+        result.meta.cal_step.bkg_subtract = "SKIPPED"
         bkg_ref.close()
-        return None
+        return result
 
     # extract the derived factor and apply it to the unmasked, non-outlier-rejected data
     subtract_this = factor * bkg_ref.data
-    result = input_model.copy()
     result.data = input_model.data - subtract_this
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
     result.meta.background.scaling_factor = factor
-    # save the mask in expected data type for the datamodel
-    result.mask = bkg_mask.astype(np.uint32)
 
     log.info(f"Average of scaled background image = {np.nanmean(subtract_this):.3e}")
     log.info(f"Scaling factor = {factor:.5e}")
