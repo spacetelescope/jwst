@@ -45,7 +45,9 @@ in Python code.
 From the Command Line
 ---------------------
 
-The available options for the command line are::
+The available options for the command line are:
+
+.. code-block:: text
 
   --verbose, -v         Turn on all logging messages
   --log-level LOG_LEVEL
@@ -54,14 +56,18 @@ The available options for the command line are::
   --log-stream LOG_STREAM
                         Log stream for terminal messages (stdout, stderr, or null).
 
-For example::
+For example:
+
+.. code-block:: shell
 
     strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --log-level=INFO --log-file=pipeline.log --log-stream=stdout
 
 will log messages to the terminal at the INFO level in the ``stdout`` stream
 and also record them to a file called "pipeline.log" in the current working directory.
 
-To turn off all logging instead::
+To turn off all logging instead:
+
+.. code-block:: shell
 
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --log-stream=null
 

@@ -60,7 +60,7 @@ parameters that require customization.
 Here is an example parameter file (``do_cleanup.asdf``) that runs the (imaginary)
 step ``stpipe.cleanup`` to clean up an image.
 
-.. code-block::
+.. code-block:: yaml
 
     #ASDF 1.0.0
     #ASDF_STANDARD 1.3.0
@@ -91,13 +91,17 @@ parameters on the commandline are passed to the step's process method. This will
 often be input filenames.
 
 For example, to use an existing parameter file from above, but
-override it so the threshold parameter is different::
+override it so the threshold parameter is different:
+
+.. code-block:: shell
 
     strun do_cleanup.asdf input.fits --threshold=86
 
 To display a list of the parameters that are accepted for a given Step
 class, pass the ``-h`` parameter, and the name of a Step class or
-parameter file::
+parameter file:
+
+.. code-block:: text
 
     strun -h do_cleanup.asdf
 
@@ -222,7 +226,9 @@ for ``strun``. The call signature is::
 
     Step.from_cmdline([string,...])
 
-For example, given the following command-line::
+For example, given the following command-line:
+
+.. code-block:: shell
 
     strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.override_linearity='my_lin.fits'
 
