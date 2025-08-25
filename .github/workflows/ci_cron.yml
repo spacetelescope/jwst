@@ -60,9 +60,9 @@ jobs:
         results.xml
       envs: |
         - linux: linkcheck
-        - macos: py312-xdist
+        - macos: py311-xdist
           pytest-results-summary: true
-        - linux: py311-xdist
+        - macos: py312-xdist
           pytest-results-summary: true
         - linux: py3-xdist
           pytest-results-summary: true
