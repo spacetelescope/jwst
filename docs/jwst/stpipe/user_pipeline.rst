@@ -137,9 +137,11 @@ also run Pipelines.
 The only wrinkle is that any parameters overridden from the
 commandline use dot notation to specify the parameter name.  For
 example, to override the ``pixfrac`` value on the ``resample``
-step in the example above, one can do::
+step in the example above, one can do:
 
-    > strun stpipe.pipeline.Image2Pipeline --steps.resample.pixfrac=2.0
+.. code-block:: shell
+
+    $ strun stpipe.pipeline.Image2Pipeline --steps.resample.pixfrac=2.0
 
 From Python
 -----------
