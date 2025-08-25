@@ -62,7 +62,7 @@ SRCTYPE keyword value, which is set by the :ref:`srctype <srctype_step>` step.
 If the SRCTYPE keyword is not present or is set to "UNKNOWN", the default behavior
 is to treat it as a uniform/extended source.
 
-The combination of the scalar conversion factor and the 2-D response values are
+The combination of the scalar conversion factor, and the 2-D response values are
 then applied to the science data, including the SCI and ERR arrays, as well as
 the variance (VAR_POISSON, VAR_RNOISE, and VAR_FLAT) arrays.
 The correction values are multiplied into the SCI and ERR arrays, and the square
@@ -75,14 +75,6 @@ to the data.
 The step also computes the equivalent conversion factor to units of
 microJy/square-arcsecond (or microjanskys) and stores it in the header
 keyword PHOTUJA2.
-
-MIRI Imaging
-^^^^^^^^^^^^
-For MIRI imaging mode, the reference file can optionally contain a table of
-coefficients that are used to apply time-dependent corrections to the scalar
-conversion factor. If the time-dependent coefficients are present in the
-reference file, the photom step will apply the correction based on the
-observation date of the exposure being processed.
 
 NIRSpec Fixed Slit Primary Slit
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -165,7 +157,7 @@ Variance arrays are multiplied by the square of the conversion factors.
 
 MIRI MRS data have a time-variable photometric response that is significant at
 long wavelengths. A correction has been derived from observations of calibration standard stars.
-The form of the correction uses an exponential function that asymptotically approaches a
+The form of the correction uses a power law function that asymptotically approaches a
 constant value in each wavelength band. A plot of the count rate loss in each MRS
 band, as a function of time, is shown in Figure 1.
 
@@ -182,3 +174,51 @@ The MRS photom reference file contains a table of correction coefficients
 for each band in which a correction has been determined. If the time-dependent
 coefficients are present in the reference file for a given band, the photom step will
 apply the correction to the exposure being processed.
+
+Time-Dependent Corrections
+--------------------------
+
+For any mode other than MIRI MRS (described above), the reference file can
+optionally contain tables of coefficients that are used to apply time-dependent
+corrections to the scalar conversion factor, based on the observation date of
+the exposure being processed. Each table present describes a different functional
+form for the time-dependent sensitivity loss: exponential, linear, or
+power law.  If multiple tables are present, the corrections are multiplied together
+before being applied.  If no tables are present, no time correction is applied.
+These coefficient tables also contain the descriptive exposure parameters present in
+the photometric data table (e.g. filter, pupil, grating), and the rows present
+must match the length and order of the photometric table.
+
+The correction factor described in all cases is defined as the fractional amount
+of light recorded now divided by the light recorded on the zero-day MJD (t0).
+The scalar conversion factor is divided by the correction factor to account for
+the sensitivity loss.
+
+For a linear correction, the correction factor (*corr*) is defined as:
+
+.. math::
+   corr = 1 - lossperyear * (t-t0) / 365
+
+where *lossperyear* (fractional loss of throughput per year, e.g., 0.1 is 10% in 1 year)
+and *t0* (reference day in MJD) are stored as coefficients in the TIMECOEFF_LINEAR
+extension of the PHOTOM reference file.
+
+For an exponential correction:
+
+.. math::
+   corr = amplitude * exp(-(t-t0)/tau) + const
+
+where *amplitude*, *t0* (reference day in MJD), *tau* (e-folding time constant), and
+*const* (long-term asymptote) are stored as coefficients in the TIMECOEFF_EXPONENTIAL
+extension.
+
+For a power law correction:
+
+.. math::
+   norm = (365 + tsoft)^{alpha} / year1value
+
+   corr = (t - t0 + tsoft)^{alpha} / norm
+
+where *year1value* (relative throughput one year after t0), *t0* (reference day in MJD),
+*tsoft* (softening parameter for the initial decline), and *alpha* (loss coefficient)
+are stored as coefficients in the TIMECOEFF_POWERLAW extension.
