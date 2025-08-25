@@ -260,8 +260,8 @@ PyArrayObject *ensure_array(PyObject *obj, int *is_copy)
 static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args)
 {
 
-    PyObject *result = NULL, *a1o, *a2o, *a3o, *a4o, *lam1o, *lam2o, *lam3o, *lam4o, *fluxo, *erro, *acoordo,
-             *zcoordo; // codespell:ignore erro
+    PyObject *result = NULL, *a1o, *a2o, *a3o, *a4o, *lam1o, *lam2o,
+             *lam3o, *lam4o, *fluxo, *erro, *acoordo, *zcoordo; // codespell:ignore erro
 
     double crval_along, cdelt_along, crval3, cdelt3;
     int nz, na, npt, naxis1, naxis2, ncube;
@@ -286,8 +286,8 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "iiiddddOOOOOOOOOOiOO:cube_wrapper_internal", &instrument, &naxis1, &naxis2,
                           &crval_along, &cdelt_along, &crval3, &cdelt3, &a1o, &a2o, &a3o, &a4o, &lam1o,
-                          &lam2o, &lam3o, &lam4o, &acoordo, &zcoordo, &ss, &fluxo, &erro))
-    { // codespell:ignore erro
+                          &lam2o, &lam3o, &lam4o, &acoordo, &zcoordo, &ss, &fluxo, &erro)) // codespell:ignore erro
+    {
         return NULL;
     }
 
@@ -306,8 +306,8 @@ static PyObject *cube_wrapper_internal(PyObject *module, PyObject *args)
         (!(lam3 = ensure_array(lam3o, &free_lam3))) || (!(lam4 = ensure_array(lam4o, &free_lam4))) ||
         (!(acoord = ensure_array(acoordo, &free_acoord))) ||
         (!(zcoord = ensure_array(zcoordo, &free_zcoord))) || (!(flux = ensure_array(fluxo, &free_flux))) ||
-        (!(err = ensure_array(erro, &free_err))))
-    { // codespell:ignore erro
+        (!(err = ensure_array(erro, &free_err)))) // codespell:ignore erro
+    {
         goto cleanup;
     }
 

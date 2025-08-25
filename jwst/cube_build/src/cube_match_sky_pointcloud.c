@@ -504,8 +504,8 @@ PyArrayObject *ensure_array(PyObject *obj, int *is_copy)
 // Wrapper code that is called from python code and sets up interface with C code.
 static PyObject *cube_wrapper(PyObject *module, PyObject *args)
 {
-    PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo,
-             *slicenoo; // codespell:ignore erro
+    PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, // codespell:ignore erro
+             *coord1o, *coord2o, *waveo, *slicenoo;
     PyObject *rois_pixelo, *roiw_pixelo, *scalerad_pixelo, *zcdelt3o, *softrad_pixelo, *weight_pixelo;
 
     double cdelt1, cdelt2, roiw_ave;
@@ -532,8 +532,8 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args)
 
     if (!PyArg_ParseTuple(args, "iiiiiiiOOOOOOOOOOOOOOOddd:cube_wrapper", &instrument, &flag_dq_plane,
                           &weight_type, &start_region, &end_region, &overlap_partial, &overlap_full, &xco,
-                          &yco, &zco, &coord1o, &coord2o, &waveo, &fluxo, &erro,
-                          &slicenoo, // codespell:ignore erro
+                          &yco, &zco, &coord1o, &coord2o, &waveo, &fluxo, &erro, // codespell:ignore erro
+                          &slicenoo,
                           &rois_pixelo, &roiw_pixelo, &scalerad_pixelo, &weight_pixelo, &softrad_pixelo,
                           &zcdelt3o, &roiw_ave, &cdelt1, &cdelt2))
     {
