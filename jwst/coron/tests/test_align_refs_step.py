@@ -1,7 +1,10 @@
+import logging
+
 import numpy as np
 import pytest
 
 from jwst.coron.align_refs_step import AlignRefsStep
+from jwst.lib.basic_utils import LoggingContext
 
 
 @pytest.mark.parametrize("dataset", ["target_model", "target_model_miri"])
@@ -63,8 +66,9 @@ def test_no_psf_mask(monkeypatch, target_model, psf_model):
 
 
 def test_no_bad_bit(caplog, target_model, psf_model):
-    AlignRefsStep.call(target_model, psf_model, bad_bits=None)
-    # Note: this is a debug message.
-    # The "self.log" logger for steps is always set to DEBUG level,
-    # so it's available in the caplog, regardless of default logcfg.
+    # Get a debug log message to confirm default behavior
+    log = logging.getLogger("jwst.coron.align_refs_step")
+    with LoggingContext(log, level=logging.DEBUG):
+        AlignRefsStep.call(target_model, psf_model, bad_bits=None)
+
     assert "No bad bits provided; treating all pixels as good" in caplog.text

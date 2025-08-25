@@ -1,10 +1,13 @@
-#! /usr/bin/env python
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.coron import hlsp
 from jwst.stpipe import Step
 
 __all__ = ["HlspStep"]
+
+log = logging.getLogger(__name__)
 
 
 class HlspStep(Step):
@@ -24,11 +27,11 @@ class HlspStep(Step):
         # Open the input target image model
         with datamodels.ImageModel(target) as target_model:
             # Create a signal-to-noise ratio image
-            self.log.info("Creating SNR image")
+            log.info("Creating SNR image")
             snr = hlsp.snr_image(target_model)
 
             # Create a contrast curve
-            self.log.info("Creating contrast curve")
+            log.info("Creating contrast curve")
             contrast = hlsp.contrast_curve(target_model, width)
 
         # Save the SNR output file
