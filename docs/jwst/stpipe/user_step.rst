@@ -145,13 +145,13 @@ parameter file:
       --threshold           The threshold below which to apply cleanup
 
 
-Every step has a number of standard parameters, including the `--output_file` parameter.
+Every step has a number of standard parameters, including the ``--output_file`` parameter.
 If an output filename is not provided, it is determined based on the input file by
-appending the name of the step.  For example, in this case, `foo.fits` is output
-to `foo_cleanup.fits`.
+appending the name of the step.  For example, in this case, ``foo.fits`` is output
+to ``foo_cleanup.fits``.
 
 Finally, the parameters a ``Step`` actually ran with can be saved to a new
-parameter file using the `--save-parameters` option. This file will have all
+parameter file using the ``--save-parameters`` option. This file will have all
 the parameters, specific to the step, and the final values used.
 
 .. _`Parameter Precedence`:
@@ -185,12 +185,12 @@ The full order of precedence for a pipeline and its sub steps is as follows:
 Debugging
 `````````
 
-To output all logging output from the step, add the `--verbose` option
+To output all logging output from the step, add the ``--verbose`` option
 to the commandline.  (If more fine-grained control over logging is
 required, see :ref:`logging`).
 
 To start the Python debugger if the step itself raises an exception,
-pass the `--debug` option to the commandline.
+pass the ``--debug`` option to the commandline.
 
 
 CRDS Retrieval of Step Parameters
@@ -217,7 +217,7 @@ depending on how much control one needs.
 Step.from_cmdline()
 ```````````````````
 
-For individuals who are used to using the ``strun`` command, `Step.from_cmdline`
+For individuals who are used to using the ``strun`` command, ``Step.from_cmdline``
 is the most direct method of executing a step or pipeline. The only argument is
 a list of strings, representing the command line arguments one would have used
 for ``strun``. The call signature is::
@@ -231,7 +231,7 @@ For example, given the following command-line:
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
             --steps.linearity.override_linearity='my_lin.fits'
 
-the equivalent `from_cmdline` call would be::
+the equivalent ``from_cmdline`` call would be::
 
     from jwst.pipeline import Detector1Pipeline
     Detector1Pipeline.from_cmdline(['jw00017001001_01101_00001_nrca1_uncal.fits',
@@ -241,7 +241,7 @@ the equivalent `from_cmdline` call would be::
 call()
 ``````
 
-Class method `Step.call` is the slightly more programmatic, and preferred,
+Class method ``Step.call`` is the slightly more programmatic, and preferred,
 method of executing a step or pipeline. When using ``call``, one gets the full
 configuration initialization, including CRDS parameter reference retrieval, that
 one gets with the ``strun`` command or ``Step.from_cmdline`` method. The call
@@ -259,8 +259,8 @@ example is::
     from jwst.jump import JumpStep
     output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits')
 
-makes a new instance of `JumpStep` and executes using the specified exposure
-file. `JumpStep` has a parameter ``rejection_threshold``. To use a different
+makes a new instance of ``JumpStep`` and executes using the specified exposure
+file. ``JumpStep`` has a parameter ``rejection_threshold``. To use a different
 value than the default, the statement would be::
 
     output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
@@ -275,7 +275,7 @@ to it using the ``config_file`` argument::
 run()
 `````
 
-The instance method `Step.run()` is the lowest-level method to executing a step
+The instance method ``Step.run()`` is the lowest-level method to executing a step
 or pipeline. Initialization and parameter settings are left up to the user. An
 example is::
 
@@ -285,7 +285,7 @@ example is::
     mystep.override_sflat = 'sflat.fits'
     output = mystep.run(input)
 
-`input` in this case can be a fits file containing the appropriate data, or the output
+``input`` in this case can be a fits file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular
 :ref:`datamodel<jwst-data-models>`.
 
