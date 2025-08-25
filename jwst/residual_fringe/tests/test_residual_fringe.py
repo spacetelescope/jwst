@@ -180,6 +180,10 @@ def test_rf_step_short(
     relative_diff_output = np.abs(result.data - expected) / expected
     assert np.nanmean(relative_diff_output) < np.nanmean(relative_diff_input)
 
+    # input is not modified
+    assert result is not model
+    assert model.meta.cal_step.residual_fringe is None
+
 
 @pytest.mark.parametrize("band", ["SHORT", "MEDIUM", "LONG"])
 def test_rf_step_long(
@@ -199,6 +203,10 @@ def test_rf_step_long(
     # Output data should be identical to input, although step is complete
     assert result.meta.cal_step.residual_fringe == "COMPLETE"
     assert np.allclose(model.data, result.data)
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.residual_fringe is None
 
 
 def test_rf_step_nans_in_wavelength(

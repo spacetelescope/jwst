@@ -36,16 +36,16 @@ class FirstFrameStep(Step):
         """
         # Open the input data model
         with datamodels.open(step_input) as input_model:
-            # check the data is MIRI data
+            # Work on a copy
+            result = input_model.copy()
+
+            # Check the data is MIRI data
             detector = input_model.meta.instrument.detector.upper()
             if detector[:3] != "MIR":
                 self.log.warning("First Frame Correction is only for MIRI data")
                 self.log.warning("First frame step will be skipped")
-                input_model.meta.cal_step.firstframe = "SKIPPED"
-                return input_model
-
-            # Cork on a copy
-            result = input_model.copy()
+                result.meta.cal_step.firstframe = "SKIPPED"
+                return result
 
             # Do the firstframe correction subtraction
             result = firstframe_sub.do_correction(result, bright_use_group1=self.bright_use_group1)

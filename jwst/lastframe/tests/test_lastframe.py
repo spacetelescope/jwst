@@ -186,6 +186,13 @@ def test_nircam():
         err_msg="Diff in groupdq flags is not " + "equal to 0",
     )
 
+    # Step is marked skipped
+    assert dm_ramp_lastframe.meta.cal_step.lastframe == "SKIPPED"
+
+    # Input is not modified
+    assert dm_ramp_lastframe is not dm_ramp
+    assert dm_ramp.meta.cal_step.lastframe is None
+
 
 def test_miri():
     # test that the code chooses to process a MIRI file
@@ -220,3 +227,10 @@ def test_miri():
         dq_diff,
         err_msg="Diff in groupdq flags is not " + "equal to DO_NOT_USE",
     )
+
+    # Step is marked complete
+    assert dm_ramp_lastframe.meta.cal_step.lastframe == "COMPLETE"
+
+    # Input is not modified
+    assert dm_ramp_lastframe is not dm_ramp
+    assert dm_ramp.meta.cal_step.lastframe is None

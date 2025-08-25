@@ -44,22 +44,22 @@ class EmiCorrStep(Step):
         """
         # Open the input data model as a RampModel
         with datamodels.RampModel(step_input) as input_model:
+            # Work on a copy
+            result = input_model.copy()
+
             # Catch the cases to skip
-            instrument = input_model.meta.instrument.name
+            instrument = result.meta.instrument.name
             if instrument != "MIRI":
                 self.log.warning(f"EMI correction not implemented for instrument: {instrument}")
-                input_model.meta.cal_step.emicorr = "SKIPPED"
-                return input_model
+                result.meta.cal_step.emicorr = "SKIPPED"
+                return result
 
-            readpatt = input_model.meta.exposure.readpatt
+            readpatt = result.meta.exposure.readpatt
             allowed_readpatts = ["FAST", "FASTR1", "SLOW", "SLOWR1"]
             if readpatt.upper() not in allowed_readpatts:
                 self.log.warning(f"EMI correction not implemented for read pattern: {readpatt}")
-                input_model.meta.cal_step.emicorr = "SKIPPED"
-                return input_model
-
-            # Work on a copy
-            result = input_model.copy()
+                result.meta.cal_step.emicorr = "SKIPPED"
+                return result
 
             # Setup parameters
             pars = {

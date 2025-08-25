@@ -78,20 +78,22 @@ class JumpStep(Step):
         with datamodels.RampModel(step_input) as input_model:
             tstart = time.time()
 
+            # Work on a copy
+            result = input_model.copy()
+
             # Check for an input model with NGROUPS<=2
-            nints, ngroups, nrows, ncols = input_model.data.shape
+            nints, ngroups, nrows, ncols = result.data.shape
             if ngroups <= 2:
                 self.log.warning("Cannot apply jump detection when NGROUPS<=2;")
                 self.log.warning("Jump step will be skipped")
-                input_model.meta.cal_step.jump = "SKIPPED"
-                return input_model
+                result.meta.cal_step.jump = "SKIPPED"
+                return result
 
             self.log.info("CR rejection threshold = %g sigma", self.rejection_threshold)
             if self.maximum_cores != "none":
                 self.log.info("Maximum cores to use = %s", self.maximum_cores)
 
             # Detect jumps using a copy of the input data model.
-            result = input_model.copy()
             jump_data = self._setup_jump_data(result)
             new_gdq, new_pdq, number_crs, number_extended_events, stddev = detect_jumps_data(
                 jump_data

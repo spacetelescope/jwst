@@ -73,15 +73,13 @@ def extract2d(
     exp_type = input_model.meta.exposure.type.upper()
     log.info(f"EXP_TYPE is {exp_type}")
 
-    if reference_files is None:
-        reference_files = {}
-
     if exp_type in nrs_modes:
         if input_model.meta.instrument.grating.lower() == "mirror":
             # Catch the case of EXP_TYPE=NRS_LAMP and grating=MIRROR
             log.info(f"EXP_TYPE {exp_type} with grating=MIRROR not supported for extract 2D")
-            input_model.meta.cal_step.extract_2d = "SKIPPED"
-            return input_model
+            output_model = input_model.copy()
+            output_model.meta.cal_step.extract_2d = "SKIPPED"
+            return output_model
         output_model = nrs_extract2d(input_model, slit_names=slit_names, source_ids=source_ids)
     elif exp_type in slitless_modes:
         if exp_type == "NRC_TSGRISM":
@@ -106,10 +104,12 @@ def extract2d(
 
     else:
         log.info(f"EXP_TYPE {exp_type} not supported for extract 2D")
-        input_model.meta.cal_step.extract_2d = "SKIPPED"
-        return input_model
+        output_model = input_model.copy()
+        output_model.meta.cal_step.extract_2d = "SKIPPED"
+        return output_model
 
     # Set the step status to COMPLETE
-    output_model.meta.cal_step.extract_2d = "COMPLETE"
+    if output_model.meta.cal_step.extract_2d != "SKIPPED":
+        output_model.meta.cal_step.extract_2d = "COMPLETE"
     del input_model
     return output_model
