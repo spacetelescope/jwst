@@ -119,13 +119,13 @@ class DataSet:
         # Create a new model using the combined arrays...
         new_model = datamodels.ImageModel(data=data_c, dq=dq_c, err=err_c)
         new_model.update(self.input_1)
-        new_model.history.append(f"Flip dithers = {self.flip_dithers}")
-        new_model.history.append(f"WFS_COMBINE refine offset = {self.do_refine}")
-        new_model.history.append(
+        log.info(f"Flip dithers = {self.flip_dithers}")
+        log.info(f"WFS_COMBINE refine offset = {self.do_refine}")
+        log.info(
             f"WFS_COMBINE X offset applied {str(self.off_x)} pixels "
             f"actual offset {str(round(self.flt_off_x, 2))} pixels"
         )
-        new_model.history.append(
+        log.info(
             f"WFS_COMBINE Y offset applied {str(self.off_y)} pixels "
             f"actual offset {str(round(self.flt_off_y, 2))} pixels"
         )
