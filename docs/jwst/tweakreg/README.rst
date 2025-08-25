@@ -16,14 +16,14 @@ Source Detection
 If the ``meta.tweakreg_catalog`` attribute of input data models is a non-empty
 string and ``use_custom_catalogs`` is `True`, then it will be interpreted
 as a file name of a user-provided source catalog. The catalog must be in a
-format automatically recognized by :py:meth:`~astropy.table.Table.read`.
+format automatically recognized by :ref:`astropy.table.Table.read <astropy:read_write_tables>`.
 
 When the ``meta.tweakreg_catalog`` attribute of input data models is `None` or
 an empty string, then the ``tweakreg`` step will attempt to detect sources in the
 input images. Stars are detected in the image with one of the following source
-detection algorithms: ``photutils.detection.DAOStarFinder`` (default),
-``photutils.detection.IRAFStarFinder``, or ``photutils.segmentation.SourceFinder``
-in conjunction with ``photutils.segmentation.SourceCatalog``.
+detection algorithms: `~photutils.detection.DAOStarFinder` (default),
+`~photutils.detection.IRAFStarFinder`, or `~photutils.segmentation.SourceFinder`
+in conjunction with `~photutils.segmentation.SourceCatalog`.
 
 DAOStarFinder is an implementation of the `DAOFIND`_ algorithm
 (`Stetson 1987, PASP 99, 191
@@ -71,7 +71,7 @@ Source detection built into the ``tweakreg`` step can be disabled by
 providing a file name to a custom source catalog in the
 ``meta.tweakreg_catalog`` attribute of input data models.
 The catalog must be in a format automatically recognized by
-:py:meth:`~astropy.table.Table.read`. The catalog must contain
+:ref:`astropy.table.Table.read <astropy:read_write_tables>`. The catalog must contain
 either ``'x'`` and ``'y'`` or ``'xcentroid'`` and ``'ycentroid'`` columns which
 indicate source *image* coordinates (in pixels). Pixel coordinates are
 0-indexed. An optional column in the catalog is the ``'weight'`` column,
@@ -86,7 +86,7 @@ models to the custom catalog file name, the ``tweakreg_step`` also supports two
 other ways of supplying custom source catalogs to the step:
 
 1. Adding ``tweakreg_catalog`` attribute to the ``members`` of the input ASN
-   table - see `~jwst.datamodels.ModelLibrary` for more details.
+   table - see `~jwst.datamodels.library.ModelLibrary` for more details.
    Catalog file names are relative to ASN file path.
 
 2. Providing a simple two-column text file, specified via step's parameter
@@ -138,7 +138,7 @@ for proper motion to a given epoch. The epoch is computed from the observation d
 of the input data. If ``abs_refcat`` is set to a path to an existing
 file, i.e., a user-supplied external reference catalog,
 then the catalog will be read from that file. The catalog must be readable
-into an :py:meth:`~astropy.table.Table` object and contain either
+into a `~astropy.table.Table` object and contain either
 ``'RA'`` and ``'DEC'`` columns (in degrees) or an Astropy-readable ``sky_centroid``.
 An optional column in the catalog is the ``'weight'`` column, which when present,
 will be used in fitting.
@@ -162,17 +162,16 @@ telescope pointing will be identical in all these images and it is assumed
 that the relative positions of (e.g., NIRCam) detectors do not change.
 Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
-`~jwst.datamodels.ModelLibrary`. This grouping is performed automatically
-in the ``tweakreg`` step using the
-`~jwst.datamodels.ModelLibrary.group_names` property.
-
+`~jwst.datamodels.library.ModelLibrary`. This grouping is performed automatically
+in the ``tweakreg`` step. The groups are accessible through the ``group_names``
+attribute of the library.
 
 However, when detector calibrations are not accurate, alignment of groups
 of images may fail (or result in poor alignment). In this case, it may be
 desirable to align each image independently. This can be achieved either by
 setting the ``image_model.meta.group_id`` attribute to a unique string or integer
 value for each image, or by adding the ``group_id`` attribute to the ``members`` of the input ASN
-table - see `~jwst.datamodels.ModelLibrary` for more details.
+table - see `~jwst.datamodels.library.ModelLibrary` for more details.
 
 .. note::
     Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps
@@ -206,20 +205,20 @@ The ``tweakreg`` step has the following optional arguments:
   step. (Default=False)
 
 * ``catalog_format``: A `str` indicating catalog output file format.
-  (Default= `'ecsv'`)
+  (Default= ``'ecsv'``)
 
 * ``catfile``: Name of the file with a list of custom user-provided catalogs.
   The file must contain a two-column list of format
   ``<input file name> <catalog file name>`` with one entry per input filename
   in the input association.
   This parameter has no effect if ``use_custom_catalogs`` is `False`.
-  (Default= `''`)
+  (Default= ``''``)
 
 * ``bkg_boxsize``: A positive `int` indicating the background mesh box size
   in pixels. (Default=400)
 
 * ``starfinder``: A `str` indicating the source detection algorithm to use.
-  Allowed values: `'iraf'`, `'dao'`, `'segmentation'`. (Default= `'iraf'`)
+  Allowed values: ``'iraf'``, ``'dao'``, ``'segmentation'``. (Default= ``'iraf'``)
 
 * ``snr_threshold``: A `float` value indicating SNR threshold above the
   background. Required for all star finders. (Default=10.0)
@@ -258,8 +257,8 @@ The ``tweakreg`` step has the following optional arguments:
   ``sharplo``, ``sharphi``, ``roundlo`` and ``roundhi`` parameters. These
   parameters should be adjusted to match the algorithm selected by the
   ``starfinder`` parameter. See documentation for
-  [IRAFStarFinder](https://photutils.readthedocs.io/en/stable/api/photutils.detection.IRAFStarFinder.html)
-  and [DAOStarFinder](https://photutils.readthedocs.io/en/stable/api/photutils.detection.DAOStarFinder.html).
+  `~photutils.detection.IRAFStarFinder`
+  and `~photutils.detection.DAOStarFinder`.
 
 **Additional source finding parameters for segmentation:**
 
@@ -267,8 +266,8 @@ The ``tweakreg`` step has the following optional arguments:
   connected pixels that comprises a segment (Default=10)
 
 * ``connectivity``: An `int` value indicating the connectivity defining the
-  neighborhood of a pixel. Options are `4`, i.e., connected pixels touch along edges,
-  or `8`, i.e, connected pixels touch along edges or corners (Default=8)
+  neighborhood of a pixel. Options are ``4``, i.e., connected pixels touch along edges,
+  or ``8``, i.e, connected pixels touch along edges or corners (Default=8)
 
 * ``nlevels``: An `int` value indicating the number of multi-thresholding
   levels for deblending (Default=32)
@@ -277,8 +276,8 @@ The ``tweakreg`` step has the following optional arguments:
   an object must have to be deblended (Default=0.001)
 
 * ``multithresh_mode``: A `str` indicating the multi-thresholding mode.
-  Allowed values: `'exponential'`, `'linear'`, `'sinh'`.
-  (Default= `'exponential'`)
+  Allowed values: ``'exponential'``, ``'linear'``, ``'sinh'``.
+  (Default= ``'exponential'``)
 
 * ``localbkg_width``: An `int` value indicating the width of rectangular
   annulus used to compute local background around each source. If set to 0,
@@ -286,11 +285,11 @@ The ``tweakreg`` step has the following optional arguments:
 
 * ``apermask_method``: A `str` indicating the method used to handle
   neighboring sources when performing aperture photometry.
-  Allowed values: `'correct'`, `'mask'`, `'none'`. (Default= `'correct'`)
+  Allowed values: ``'correct'``, ``'mask'``, ``'none'``. (Default= ``'correct'``)
 
 * ``kron_params``: A tuple of `float` values indicating the
   parameters defining Kron aperture. If None,
-  the parameters `(2.5, 1.4, 0.0)` are used. (Default=None)
+  the parameters ``(2.5, 1.4, 0.0)`` are used. (Default=None)
 
 **Optimize alignment order:**
 
@@ -364,13 +363,13 @@ Parameters used for absolute astrometry to a reference catalog.
 
 * ``abs_refcat``: String indicating what astrometric catalog should be used.
   Currently supported options: 'GAIADR1', 'GAIADR2', 'GAIADR3', a path to an existing
-  reference catalog, `None`, or `''`. See
+  reference catalog, `None`, or ``''``. See
   :py:data:`jwst.tweakreg.tweakreg_step.SINGLE_GROUP_REFCAT`
   for an up-to-date list of supported built-in reference catalogs.
 
   When ``abs_refcat`` is `None` or an empty string, alignment to the
   absolute astrometry catalog will be turned off.
-  (Default= `''`)
+  (Default= ``''``)
 
 * ``abs_minobj``: A positive `int` indicating minimum number of objects
   acceptable for matching. (Default=15)
@@ -439,7 +438,7 @@ in the ``assign_wcs`` step.
 
 **stpipe general options:**
 
-* ``output_use_model``: A boolean indicating whether to use `DataModel.meta.filename`
+* ``output_use_model``: A boolean indicating whether to use ``DataModel.meta.filename``
   when saving the results. (Default=True)
 
 * ``in_memory``: A boolean indicating whether to keep models in memory, or to save
