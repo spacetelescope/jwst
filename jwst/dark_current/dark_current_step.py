@@ -96,9 +96,10 @@ class DarkCurrentStep(Step):
         ----------
         input_model : `~stdatamodels.jwst.datamodels.RampModel`
             The input datamodel containing the 4-D ramp array.
-        dark_model : `~stdatamodels.jwst.datamodels.DarkModel` or `~stdatamodels.jwst.datamodels.DarkMIRIModel`
+        dark_model : `~stdatamodels.jwst.datamodels.DarkModel` or \
+                     `~stdatamodels.jwst.datamodels.DarkMIRIModel`
             The dark reference file datamodel.
-        """  # noqa: E501
+        """
         if self.average_dark_current is not None:
             input_model.average_dark_current[:, :] = self.average_dark_current
             self.log.info(
