@@ -2,7 +2,6 @@
 
 import re
 from collections import namedtuple
-from pathlib import Path
 
 from astropy.table import Table, vstack
 from astropy.utils.data import get_pkg_data_filename
@@ -86,30 +85,6 @@ class BasePoolRule:
                                 ppars.path
                                 + ": Suffix {} not valid".format(match.groupdict()["suffix"])
                             )
-
-
-# Basic utilities.
-def t_path(partial_path):
-    """
-    Construct the full path for test files.
-
-    Because the output of this utility is frequently passed
-    as a command-line argument, a str object is required for
-    playing nicely with argparse.
-
-    Parameters
-    ----------
-    partial_path : Path or str
-        The partial path for a test file.
-
-    Returns
-    -------
-    str
-        The string-converted full path.
-    """
-    test_dir = Path(__file__).parent
-
-    return str(test_dir / partial_path)
 
 
 def combine_pools(pools, **pool_kwargs):
