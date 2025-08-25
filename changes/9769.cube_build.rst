@@ -1,0 +1,1 @@
+Reformatted C files using clang-format.  Fixed potential memory leaks.
