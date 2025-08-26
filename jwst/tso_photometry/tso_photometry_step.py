@@ -104,7 +104,7 @@ class TSOPhotometryStep(Step):
                     box_input = getattr(self, box)
                     if box_input % 2 == 0:
                         setattr(self, box, box_input - 1)
-                        self.log.warning(
+                        log.warning(
                             "Even box widths are not supported."
                             f" Rounding the {box} down to {box_input - 1}."
                         )
@@ -115,6 +115,7 @@ class TSOPhotometryStep(Step):
                     ycenter,
                     search_box_width=self.search_box_width,
                     fit_box_width=self.fit_box_width,
+                    source_radius=radius_inner,
                 )
 
                 if np.all(np.isnan(centroid_x)) or np.all(np.isnan(centroid_y)):
@@ -127,12 +128,12 @@ class TSOPhotometryStep(Step):
                 elif not self.moving_centroid:
                     xc = np.nanmedian(centroid_x)
                     yc = np.nanmedian(centroid_y)
-                    log.info(f"Using median center x,y = {xc:.2f},{yc:.2f}")
+                    log.info(f"Using median centroid x,y = {xc:.2f},{yc:.2f}")
                 else:
                     xc = centroid_x
                     yc = centroid_y
                     log.info(
-                        "Using moving center. "
+                        "Using moving centroid. "
                         f"Median x,y = {np.nanmedian(xc):.2f},{np.nanmedian(yc):.2f}"
                     )
 
