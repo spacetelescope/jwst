@@ -1649,7 +1649,7 @@ def test_miri_mrs_time_cor():
     input_model.meta.wcs.bounding_box = ((-0.5, shape[-1] - 0.5), (-0.5, shape[-2] - 0.5))
 
     save_input = input_model.copy()
-    ds = photom.DataSet(input_model, mrs_time_correction=True)
+    ds = photom.DataSet(input_model, apply_time_correction=True)
     value = 1.436
     pixel_area = 0.0436
     photmjsr = 17.3
@@ -1727,6 +1727,33 @@ def test_miri_image():
     ix = shape[1] // 2
     iy = shape[0] // 2
     compare = photmjsr / (amplitude * np.exp(-(60000 - t0) / tau) + const)
+    # Compare the values at the center pixel.
+    ratio = output[iy, ix] / input_data[iy, ix]
+    assert_allclose(ratio, compare, rtol=1.0e-7)
+
+
+def test_miri_image_no_time_corr():
+    """Test the calc_miri method of the DataSet class, image data."""
+    input_model = create_input("MIRI", "MIRIMAGE", "MIR_IMAGE", filter_used="F1800W")
+    save_input = input_model.copy()
+    ds = photom.DataSet(input_model, apply_time_correction=False)
+    ftab = create_photom_miri_image()
+    ds.calc_miri(ftab)
+
+    input_data = save_input.data
+    output = ds.input.data  # ds.input is the output
+    rownum = find_row_in_ftab(save_input, ftab, ["filter"], slitname=None, order=None)
+    photmjsr = ftab.phot_table["photmjsr"][rownum]
+
+    shape = input_data.shape
+    ix = shape[1] // 2
+    iy = shape[0] // 2
+
+    # Time correction is not applied, so comparison value is just
+    # the conversion factor, even though timecoeff extensions
+    # are present.
+    compare = photmjsr
+
     # Compare the values at the center pixel.
     ratio = output[iy, ix] / input_data[iy, ix]
     assert_allclose(ratio, compare, rtol=1.0e-7)

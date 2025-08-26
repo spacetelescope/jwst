@@ -100,7 +100,7 @@ class DataSet:
         model,
         inverse=False,
         source_type=None,
-        mrs_time_correction=False,
+        apply_time_correction=True,
         correction_pars=None,
     ):
         """
@@ -114,8 +114,8 @@ class DataSet:
             Invert the math operations used to apply the corrections.
         source_type : str or None
             Force processing using the specified source type.
-        mrs_time_correction : bool
-            Switch to apply/not apply the MRS time correction.
+        apply_time_correction : bool
+            Switch to apply/not apply a time correction, if available.
         correction_pars : dict
             Correction meta-data from a previous run.
         """
@@ -158,7 +158,7 @@ class DataSet:
         self.integ_row = -1
         self.inverse = inverse
         self.source_type = None
-        self.mrs_time_correction = mrs_time_correction
+        self.apply_time_correction = apply_time_correction
 
         # For MultiSlitModels, only set a generic source_type value for the
         # entire datamodel if the user has set the source_type parameter.
@@ -545,9 +545,9 @@ class DataSet:
                     "Skipping MRS MIRI time correction.  "
                     "Extensions not found in the reference file."
                 )
-                self.mrs_time_correction = False
+                self.apply_time_correction = False
 
-            if self.mrs_time_correction:
+            if self.apply_time_correction:
                 log.info("Applying MRS IFU time dependent correction.")
                 mid_time = self.input.meta.exposure.mid_time
                 correction = time_dependence.miri_mrs_time_correction(
@@ -743,7 +743,8 @@ class DataSet:
             Multiplicative correction for time dependence, defined as the
             fractional amount of light recorded now divided by the light
             recorded on the zero-day MJD (t0).  The scalar conversion factor
-            will be divided by the correction value if provided.
+            will be divided by the correction value if provided, and if
+            ``self.apply_time_correction`` is True.
         """
         # First get the scalar conversion factor.
         # For most modes, the scalar conversion factor in the photom reference
@@ -796,7 +797,7 @@ class DataSet:
                     unit_is_surface_brightness = False
 
         # Apply the time-dependence correction
-        if time_correction is not None and time_correction != 1.0:
+        if self.apply_time_correction and time_correction is not None and time_correction != 1.0:
             log.info(f"Multiplicative time dependence correction is {time_correction:.6g}")
             conversion /= time_correction
 
