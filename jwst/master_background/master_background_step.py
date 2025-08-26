@@ -32,14 +32,14 @@ class MasterBackgroundStep(Step):
 
         Parameters
         ----------
-        input_data : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`,
+        input_data : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, \
                      `~jwst.datamodels.ModelContainer`, str
             Input target datamodel(s) or association file to which master background
             subtraction is to be applied.
 
         Returns
         -------
-        result : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`,
+        result : `~jwst.datamodels.ImageModel`,  `~jwst.datamodels.IFUImageModel`, \
                  `~jwst.datamodels.ModelContainer`
             The background-subtracted science datamodel(s)
         """
