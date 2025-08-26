@@ -390,8 +390,8 @@ def extract_grism_objects(
     if reference_files is None or not reference_files:
         raise TypeError("Expected a dictionary for reference_files")
 
-    print('_________________________________')
-    print('VALUE OD grism_objects', grism_objects)
+    print("_________________________________")
+    print("VALUE OD grism_objects", grism_objects)
     if grism_objects is None:
         # get the wavelengthrange reference file from the input_model
         if "wavelengthrange" not in reference_files or reference_files["wavelengthrange"] in [
@@ -400,6 +400,7 @@ def extract_grism_objects(
         ]:
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
+            print(' mag limits', mmag_extract, nbright)
             grism_objects = util.create_grism_bbox(
                 input_model,
                 reference_files,
@@ -412,8 +413,8 @@ def extract_grism_objects(
                 f"Grism object list created from source catalog: \
                 {input_model.meta.source_catalog}"
             )
-            print('grism_objects', grism_objects)
-            print( ' ')
+            print("grism_objects", grism_objects)
+            print(" ")
 
     if not isinstance(grism_objects, list):
         raise TypeError("Expected input grism objects to be a list")
@@ -484,15 +485,15 @@ def extract_grism_objects(
                 order_model = Const1D(order)
                 order_model.inverse = Const1D(order)
 
-                #if input_model.meta.exposure.type.upper() == 'MIR_WFSS':
-                #    tr = inwcs.get_transform("dispersed_detector", "detector")
-                #else:
-                #    tr = inwcs.get_transform("grism_detector", "detector")
-                #tr = (
-                #    Mapping((0, 1, 0, 0, 0))
-                #    | (Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model)
-                #    | tr
-                #)
+                if input_model.meta.exposure.type.upper() == "MIR_WFSS":
+                    tr = inwcs.get_transform("dispersed_detector", "detector")
+                else:
+                    tr = inwcs.get_transform("grism_detector", "detector")
+                tr = (
+                    Mapping((0, 1, 0, 0, 0))
+                    | (Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model)
+                    | tr
+                )
 
                 y_slice = slice(_toindex(ymin), _toindex(ymax) + 1)
                 x_slice = slice(_toindex(xmin), _toindex(xmax) + 1)
@@ -523,6 +524,7 @@ def extract_grism_objects(
                 bind_bounding_box(
                     tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order="F"
                 )
+
                 grism_slit = copy.deepcopy(subwcs.grism_detector)
                 grism_slit.name = "grism_slit"
                 subwcs.insert_frame(
@@ -549,7 +551,6 @@ def extract_grism_objects(
                 new_slit.meta.coordinates = input_model.meta.coordinates
                 new_slit.meta.wcs = subwcs
 
-                print('COMPUTE WAVELENGTH', compute_wavelength)
                 if compute_wavelength:
                     log.debug("Computing wavelengths")
                     new_slit.wavelength = compute_wfss_wavelength(new_slit)
@@ -709,7 +710,9 @@ def compute_wfss_wavelength(slit):
         The wavelength array
     """
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
-    
+
     wavelength = slit.meta.wcs(x, y)[2]
-    print('compute wfss_wavelengths', x,y, wavelength)
+    print("compute wfss_wavelengths x ", x)
+    print("compute wfss_wavelengths y ", y)
+    print("compute wfss_wavelengths w", wavelength)
     return wavelength
