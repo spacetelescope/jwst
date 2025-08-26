@@ -31,7 +31,7 @@ def run_spec2(rtdata_module, resource_tracker):
         "--steps.srctype.save_results=true",
         "--steps.fringe.save_results=true",
         "--steps.photom.save_results=true",
-        "--steps.photom.mrs_time_correction=true",
+        "--steps.photom.apply_time_correction=true",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)

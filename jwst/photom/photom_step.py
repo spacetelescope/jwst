@@ -18,7 +18,7 @@ class PhotomStep(Step):
     spec = """
         inverse = boolean(default=False)    # Invert the operation
         source_type = string(default=None)  # Process as specified source type
-        time_correction = boolean(default=True) # Apply time dependent corrections if available
+        apply_time_correction = boolean(default=True) # Apply time dependent corrections if available
     """  # noqa: E501
 
     reference_file_types = ["photom", "area"]
@@ -92,7 +92,7 @@ class PhotomStep(Step):
                 input_model,
                 self.inverse,
                 self.source_type,
-                self.time_correction,
+                self.apply_time_correction,
                 correction_pars,
             )
             result = phot.apply_photom(phot_filename, area_filename)
