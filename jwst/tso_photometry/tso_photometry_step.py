@@ -111,6 +111,7 @@ class TSOPhotometryStep(Step):
                     ycenter,
                     search_box_width=self.search_box_width,
                     fit_box_width=self.fit_box_width,
+                    source_radius=radius_inner,
                 )
 
                 if np.all(np.isnan(centroid_x)) or np.all(np.isnan(centroid_y)):
@@ -123,12 +124,12 @@ class TSOPhotometryStep(Step):
                 elif not self.moving_centroid:
                     xc = np.nanmedian(centroid_x)
                     yc = np.nanmedian(centroid_y)
-                    self.log.info(f"Using median center x,y = {xc:.2f},{yc:.2f}")
+                    self.log.info(f"Using median centroid x,y = {xc:.2f},{yc:.2f}")
                 else:
                     xc = centroid_x
                     yc = centroid_y
                     self.log.info(
-                        "Using moving center. "
+                        "Using moving centroid. "
                         f"Median x,y = {np.nanmedian(xc):.2f},{np.nanmedian(yc):.2f}"
                     )
 
