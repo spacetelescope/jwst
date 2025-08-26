@@ -79,7 +79,7 @@ def subtract_wfss_bkg(
         bkg_mask = _mask_from_source_cat(input_model, wl_range_name, mmag_extract)
         if not _sufficient_background_pixels(input_model.dq, bkg_mask, bkg_ref.data):
             log.warning("Not enough background pixels to work with.")
-            log.warning("Step will be SKIPPED.")
+            log.warning("Step will be FAILED.")
             # Save the mask in expected data type for the datamodel and set
             # other keywords appropriately for this case
             result.mask = bkg_mask.astype(np.uint32)
@@ -110,7 +110,7 @@ def subtract_wfss_bkg(
     if not np.isfinite(factor):
         log.warning(
             "Could not determine a finite scaling factor between reference background and data."
-            " Step will be SKIPPED."
+            " Step will be FAILED."
         )
         result.meta.background.scaling_factor = 1.0
         result.meta.cal_step.bkg_subtract = "FAILED"

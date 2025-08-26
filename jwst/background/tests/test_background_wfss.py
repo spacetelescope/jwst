@@ -518,3 +518,21 @@ def test_bkg_fail(monkeypatch, caplog, make_nrc_wfss_datamodel):
     assert result is not model
     assert result.meta.cal_step.bkg_subtract == "FAILED"
     assert "Not enough background pixels" in caplog.text
+
+
+def test_infinite_factor(monkeypatch, caplog, make_nrc_wfss_datamodel):
+    """Test for infinite scaling factor."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Mock an infinite scaling factor
+    monkeypatch.setattr(
+        background_sub_wfss._ScalingFactorComputer, "err_weighted_mean", lambda *args: np.nan
+    )
+
+    result = BackgroundStep.call(model)
+    assert result is not model
+    assert result.meta.cal_step.bkg_subtract == "FAILED"
+    assert (
+        "Could not determine a finite scaling factor between reference background and data"
+        in caplog.text
+    )
