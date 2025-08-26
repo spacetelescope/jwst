@@ -12,15 +12,16 @@ from stdatamodels.jwst.datamodels import (
     DistortionModel,
     DistortionMRSModel,
     FilteroffsetModel,
+    ImageModel,
     MiriLRSSpecwcsModel,
+    MiriWFSSSpecwcsModel,
     RegionsModel,
     SpecwcsModel,
     WavelengthrangeModel,
 )
-
 from stdatamodels.jwst.transforms.models import (
-    MIRI_AB2Slice,
     IdealToV2V3,
+    MIRI_AB2Slice,
     MIRIWFSSBackwardDispersion,
     MIRIWFSSForwardDispersion,
 )
@@ -850,9 +851,7 @@ def wfss(input_model, reference_files):
         order = f.orders
         invdispl = f.invdispl
 
-    det2det  = MIRIWFSSForwardDispersion(
-        order, lmodels=displ, xmodels=dispx, ymodels=dispy
-    )
+    det2det = MIRIWFSSForwardDispersion(order, lmodels=displ, xmodels=dispx, ymodels=dispy)
 
     backward = MIRIWFSSBackwardDispersion(order, lmodels=invdispl, xmodels=dispx, ymodels=dispy)
 
@@ -865,7 +864,11 @@ def wfss(input_model, reference_files):
     if velosys is not None:
         velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
         log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
-        det2det = det2det | models.Mapping((0, 1, 2, 3)) | models.Identity(2) & velocity_corr & models.Identity(1)
+        det2det = (
+            det2det
+            | models.Mapping((0, 1, 2, 3))
+            | models.Identity(2) & velocity_corr & models.Identity(1)
+        )
 
     # create the pipeline to construct a WCS object for the whole image
     # which can translate ra,dec to image frame reference pixels
