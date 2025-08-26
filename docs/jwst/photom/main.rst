@@ -156,9 +156,10 @@ from countrate to surface brightness.
 Variance arrays are multiplied by the square of the conversion factors.
 
 MIRI MRS data have a time-variable photometric response that is significant at
-long wavelengths. A correction has been derived from observations of calibration standard stars.
-The form of the correction uses a power law function that asymptotically approaches a
-constant value in each wavelength band. A plot of the count rate loss in each MRS
+long wavelengths. A correction has been derived from regular observations of internal
+calibration lamps augmented by repeated observations of spectrophotometric standard stars.
+The correction uses a power law function of time with coefficients optimized for each
+of the twelve spectral bands. A plot of the count rate loss in each MRS
 band, as a function of time, is shown in Figure 1.
 
 .. figure:: Model_summary.png
@@ -166,9 +167,12 @@ band, as a function of time, is shown in Figure 1.
    :align: center
 
 Figure 1:
-Time-dependent decrease in the observed MRS count rate as measured from internal flat-field exposures.
-Solid points illustrate measurements at the central wavelength of each of the 12 MRS bands;
-curves represent the best fit models used for correction in the pipeline.
+Time-dependent decrease in the observed MRS count rate as measured from internal
+calibration lamp exposures. Points illustrate measurements at the central wavelength
+of each of the 12 MRS bands; curves represent the best fit models used for correction
+in the pipeline. See
+`JDox <https://jwst-docs.stsci.edu/jwst-calibration-status/miri-calibration-status/miri-mrs-calibration-status>`__
+for an updated version of this figure.
 
 The MRS photom reference file contains a table of correction coefficients
 for each band in which a correction has been determined. If the time-dependent
