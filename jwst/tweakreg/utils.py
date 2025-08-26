@@ -39,16 +39,16 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0, scale_factor=1.
     wcs : `gwcs.wcs.WCS`
         WCS object to be adjusted. Must be an imaging JWST WCS of a calibrated
         data model.
-    delta_ra : float, astropy.units.Quantity
+    delta_ra : float, astropy.units.Quantity, optional
         Additional rotation (in degrees if units not provided) to be applied
         along the longitude direction.
-    delta_dec : float, astropy.units.Quantity
+    delta_dec : float, astropy.units.Quantity, optional
         Additional rotation (in degrees if units not provided) to be applied
         along the latitude direction.
-    delta_roll : float, astropy.units.Quantity
+    delta_roll : float, astropy.units.Quantity, optional
         Additional rotation (in degrees if units not provided) to be applied
         to the telescope roll angle (rotation about V1 axis).
-    scale_factor : float
+    scale_factor : float, optional
         A multiplicative scale factor to be applied to the current scale
         (if any) in the WCS. If input ``wcs`` does not have a scale factor
         applied, it is assumed to be 1. The scale factor is applied in
@@ -160,7 +160,7 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
         corrections, then *both* ``matrix`` *and* ``shift`` arguments *must be
         supplied*.
 
-    matrix : list, ndarray, None
+    matrix : list, ndarray, None, optional
         A 2D matrix part of an affine transformation defined in the tangent
         plane derived from the ``from_image``'s WCS.
 
@@ -169,7 +169,7 @@ def transfer_wcs_correction(to_image, from_image, matrix=None, shift=None):
             which case ``matrix`` and ``shift`` arguments override the
             correction (if present) from the  ``from_file``'s WCS.
 
-    shift : list, ndarray, None
+    shift : list, ndarray, None, optional
         A list of length 2 representing the translational part of an affine
         transformation (in arcsec) defined in the tangent plane derived
         from the ``from_image``'s WCS.

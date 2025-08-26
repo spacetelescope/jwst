@@ -48,7 +48,7 @@ class JWSTBackground:
             a square box of size ``box_size`` will be used.  If ``box_size``
             has two elements, they should be in ``(ny, nx)`` order.
 
-        coverage_mask : array-like (bool)
+        coverage_mask : array-like (bool), optional
             A boolean mask, with the same shape as ``data``, where a `True`
             value indicates the corresponding element of ``data`` is masked.
             Masked data are excluded from calculations. ``coverage_mask``
@@ -141,7 +141,7 @@ def _convolve_data(data, kernel_fwhm, mask=None):
         The 2D array to convolve.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-    mask : array-like, bool
+    mask : array-like, bool, optional
         A boolean mask with the same shape as ``data``, where a `True`
         value indicates the corresponding element of ``data`` is masked.
 
@@ -200,7 +200,7 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
         The per-pixel absolute image value above which to select sources.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-    mask : array-like (bool)
+    mask : array-like (bool), optional
         The image mask
     **kwargs : dict
         Additional keyword arguments passed to `photutils.segmentation.SourceFinder`
@@ -265,7 +265,7 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
         The per-pixel absolute image value above which to select sources.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the Gaussian kernel
-    mask : array-like (bool)
+    mask : array-like (bool), optional
         The image mask
     **kwargs : dict
         Additional keyword arguments passed to `photutils.detection.IRAFStarFinder`.
@@ -300,7 +300,7 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
         The per-pixel absolute image value above which to select sources.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the Gaussian kernel
-    mask : array-like (bool)
+    mask : array-like (bool), optional
         The image mask
     **kwargs : dict
         Additional keyword arguments passed to `photutils.detection.DAOStarFinder`.
@@ -354,18 +354,18 @@ def make_tweakreg_catalog(
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the Gaussian kernel
         used to convolve the image.
-    bkg_boxsize : float
+    bkg_boxsize : float, optional
         The background mesh box size in pixels.
-    coverage_mask : array-like (bool)
+    coverage_mask : array-like (bool), optional
         A boolean mask with the same shape as ``model.data``, where a `True`
         value indicates the corresponding element of ``model.data`` is masked.
         Masked pixels will not be included in any source.
-    starfinder_name : str
+    starfinder_name : str, optional
         The ``photutils`` star finder to use.  Options are 'dao', 'iraf', or 'segmentation'.
         - 'dao': `photutils.detection.DAOStarFinder`
         - 'iraf': `photutils.detection.IRAFStarFinder`
         - 'segmentation': `photutils.segmentation.SourceFinder`
-    starfinder_kwargs : dict
+    starfinder_kwargs : dict, optional
         Additional keyword arguments to be passed to the star finder.
         for 'segmentation', these can be kwargs to `photutils.segmentation.SourceFinder`
         and/or `photutils.segmentation.SourceCatalog`.
