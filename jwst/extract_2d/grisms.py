@@ -394,7 +394,7 @@ def extract_grism_objects(
         ]:
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
-            print(' mag limits', mmag_extract, nbright)
+            print(" mag limits", mmag_extract, nbright)
             grism_objects = util.create_grism_bbox(
                 input_model,
                 reference_files,
@@ -479,7 +479,7 @@ def extract_grism_objects(
                 order_model = Const1D(order)
                 order_model.inverse = Const1D(order)
 
-                print('WHAT ARE THESE', xmin, ymin, xcenter_model, ycenter_model, order_model)
+                print("WHAT ARE THESE", xmin, ymin, xcenter_model, ycenter_model, order_model)
                 if input_model.meta.exposure.type.upper() == "MIR_WFSS":
                     tr = inwcs.get_transform("dispersed_detector", "detector")
                 else:

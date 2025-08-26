@@ -40,7 +40,7 @@ def get_wavelengths(model, exp_type="", order=None, use_wavecorr=None):
     else:
         wl_array = None
 
-    print(' lib wcs_utils', wl_array)
+    print(" lib wcs_utils", wl_array)
     # Check for a present but empty wavelength array
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", message="All-NaN slice", category=RuntimeWarning)

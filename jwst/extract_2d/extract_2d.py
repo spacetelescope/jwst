@@ -7,7 +7,7 @@ import logging
 from jwst.extract_2d.grisms import extract_grism_objects, extract_tso_object
 from jwst.extract_2d.nirspec import nrs_extract2d
 
-#from jwst.miri import extract_wfss_objects
+# from jwst.miri import extract_wfss_objects
 
 log = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ def extract2d(
                 extract_orders=extract_orders,
             )
 
-        #elif exp_type == "MIR_WFSS":
+        # elif exp_type == "MIR_WFSS":
         #    print("extract 2d WFSS")
         #    output_model = extract_grism_objects(
         #        input_model,
