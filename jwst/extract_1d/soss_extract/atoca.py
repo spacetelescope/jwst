@@ -94,7 +94,7 @@ class ExtractionEngine:
             be used directly. N_ker is the length of the effective kernel
             and N_k_c is the length of the spectrum (f_k) convolved.
             If None, the kernel is set to 1, i.e., do not do any convolution.
-        wave_grid : array_like, required
+        wave_grid : array-like, required
             The grid on which f(lambda) will be projected, shape (N_k).
         mask_trace_profile : List or array of 2-D arrays[bool], required
             A list or array of the pixel that need to be used for extraction,
@@ -468,7 +468,7 @@ class ExtractionEngine:
         ----------
         i_order : int
             Label of the order (depending on the initiation of the object).
-        error : array_like or None, optional
+        error : array-like or None, optional
             Estimate of the error on each pixel. Same shape (N, M) as `data`.
             If None, the error is set to 1, which means the method will return
             b_n instead of b_n/sigma. Default is None.
@@ -541,9 +541,9 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        data : (N, M) array_like
+        data : (N, M) array-like
             A 2-D array of real values representing the detector image.
-        error : (N, M) array_like
+        error : (N, M) array-like
             Estimate of the error on each pixel.
 
         Returns
@@ -567,9 +567,9 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        data : array_like
+        data : array-like
             A 2-D array of real values representing the detector image, shape (N, M).
-        error : array_like
+        error : array-like
             Estimate of the error on each pixel, shape (N, M).
 
         Returns
@@ -657,9 +657,9 @@ class ExtractionEngine:
         ----------
         factors : 1D list or array-like
             Factors to be tested.
-        data : (N, M) array_like
+        data : (N, M) array-like
             A 2-D array of real values representing the detector image.
-        error : (N, M) array_like
+        error : (N, M) array-like
             Estimate of the error on each pixel. Same shape as `data`.
 
         Returns
@@ -789,9 +789,9 @@ class ExtractionEngine:
         spectrum : array[float] or callable
             Flux as a function of wavelength if callable
             or array of flux values corresponding to self.wave_grid.
-        data : (N, M) array_like
+        data : (N, M) array-like
             A 2-D array of real values representing the detector image.
-        error : (N, M) array_like
+        error : (N, M) array-like
             Estimate of the error on each pixel.
             Same shape as `data`.
 
@@ -815,9 +815,9 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        matrix : (N, M) array_like
+        matrix : (N, M) array-like
             A 2-D array of real values representing the detector image.
-        result : (N, M) array_like
+        result : (N, M) array-like
             The right-hand side of the linear system.
 
         Returns
@@ -845,11 +845,11 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        matrix : (N, M) array_like
+        matrix : (N, M) array-like
             A 2-D array of real values representing the detector image.
-        result : (N, M) array_like
+        result : (N, M) array-like
             The right-hand side of the linear system.
-        t_mat : (N, M) array_like
+        t_mat : (N, M) array-like
             The Tikhonov matrix.
         **kwargs : dict
             Keyword arguments to pass to the solver.
@@ -884,9 +884,9 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        data : (N, M) array_like
+        data : (N, M) array-like
             A 2-D array of real values representing the detector image.
-        error : (N, M) array_like
+        error : (N, M) array-like
             Estimate of the error on each pixel`
             Same shape as `data`.
         tikhonov : bool, optional
