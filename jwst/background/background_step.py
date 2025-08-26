@@ -86,7 +86,7 @@ class BackgroundStep(Step):
             if result is None:
                 result = input_model.copy()
                 result.meta.cal_step.bkg_subtract = "SKIPPED"
-            else:
+            elif not result.meta.cal_step.bkg_subtract:
                 result.meta.cal_step.bkg_subtract = "COMPLETE"
 
         elif input_model.meta.exposure.type == "NIS_SOSS":

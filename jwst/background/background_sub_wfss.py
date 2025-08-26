@@ -83,8 +83,8 @@ def subtract_wfss_bkg(
             # Save the mask in expected data type for the datamodel and set
             # other keywords appropriately for this case
             result.mask = bkg_mask.astype(np.uint32)
-            result.meta.background.scaling_factor = "N/A"
-            result.meta.cal_step.bkg_subtract = "SKIPPED"
+            result.meta.background.scaling_factor = 1.0
+            result.meta.cal_step.bkg_subtract = "FAILED"
             bkg_ref.close()
             return result
     else:
@@ -112,8 +112,8 @@ def subtract_wfss_bkg(
             "Could not determine a finite scaling factor between reference background and data."
             " Step will be SKIPPED."
         )
-        result.meta.background.scaling_factor = "N/A"
-        result.meta.cal_step.bkg_subtract = "SKIPPED"
+        result.meta.background.scaling_factor = 1.0
+        result.meta.cal_step.bkg_subtract = "FAILED"
         bkg_ref.close()
         return result
 
@@ -121,7 +121,7 @@ def subtract_wfss_bkg(
     subtract_this = factor * bkg_ref.data
     result.data = input_model.data - subtract_this
     result.dq = np.bitwise_or(input_model.dq, bkg_ref.dq)
-    result.meta.background.scaling_factor = str(factor)
+    result.meta.background.scaling_factor = factor
 
     log.info(f"Average of scaled background image = {np.nanmean(subtract_this):.3e}")
     log.info(f"Scaling factor = {factor:.5e}")
