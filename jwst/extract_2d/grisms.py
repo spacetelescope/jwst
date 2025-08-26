@@ -384,6 +384,8 @@ def extract_grism_objects(
     if reference_files is None or not reference_files:
         raise TypeError("Expected a dictionary for reference_files")
 
+    print('_________________________________')
+    print('VALUE OD grism_objects', grism_objects)
     if grism_objects is None:
         # get the wavelengthrange reference file from the input_model
         if "wavelengthrange" not in reference_files or reference_files["wavelengthrange"] in [
@@ -404,6 +406,8 @@ def extract_grism_objects(
                 f"Grism object list created from source catalog: \
                 {input_model.meta.source_catalog}"
             )
+            print('grism_objects', grism_objects)
+            print( ' ')
 
     if not isinstance(grism_objects, list):
         raise TypeError("Expected input grism objects to be a list")
@@ -474,7 +478,10 @@ def extract_grism_objects(
                 order_model = Const1D(order)
                 order_model.inverse = Const1D(order)
 
-                tr = inwcs.get_transform("grism_detector", "detector")
+                if input_model.meta.exposure.type.upper() == 'MIR_WFSS':
+                    tr = inwcs.get_transform("dispersed_detector", "detector")
+                else:
+                    tr = inwcs.get_transform("grism_detector", "detector")
                 tr = (
                     Mapping((0, 1, 0, 0, 0))
                     | (Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model)
@@ -502,7 +509,10 @@ def extract_grism_objects(
                 bind_bounding_box(
                     tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order="F"
                 )
-                subwcs.set_transform("grism_detector", "detector", tr)
+                if input_model.meta.exposure.type.upper() == 'MIR_WFSS':
+                    subwcs.set_transform("dispersed_detector", "detector", tr)
+                else:
+                    subwcs.set_transform("grism_detector", "detector", tr)
 
                 new_slit = datamodels.SlitModel(
                     data=ext_data,
@@ -520,9 +530,11 @@ def extract_grism_objects(
                 new_slit.meta.coordinates = input_model.meta.coordinates
                 new_slit.meta.wcs = subwcs
 
+                print('COMPUTE WAVELENGTH', compute_wavelength)
                 if compute_wavelength:
                     log.debug("Computing wavelengths")
                     new_slit.wavelength = compute_wfss_wavelength(new_slit)
+                    print(new_slit.wavelength)
 
                 # set x/ystart values relative to the image (screen) frame.
                 # The overall subarray offset is recorded in model.meta.subarray.
@@ -678,5 +690,7 @@ def compute_wfss_wavelength(slit):
         The wavelength array
     """
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
+    
     wavelength = slit.meta.wcs(x, y)[2]
+    print('compute wfss_wavelengths', x,y, wavelength)
     return wavelength
