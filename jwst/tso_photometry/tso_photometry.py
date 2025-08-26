@@ -438,7 +438,9 @@ def _psf_fit_gaussian_prf(data, mask, fit_box_width, xcenter, ycenter):
     return x_width, y_width, flux
 
 
-def tso_source_centroid(datamodel, xcenter, ycenter, search_box_width=41, fit_box_width=11):
+def tso_source_centroid(
+    datamodel, xcenter, ycenter, search_box_width=41, fit_box_width=11, source_radius=4.0
+):
     """
     Centroid the source and fit a Gaussian PSF to a subimage.
 
@@ -472,6 +474,9 @@ def tso_source_centroid(datamodel, xcenter, ycenter, search_box_width=41, fit_bo
         Width of the subimage to use for an initial search for the source.
     fit_box_width : int, optional
         Width of the subimage to use for the final fit to the source.
+    source_radius : float, optional
+        Expected PSF source radius, used to mask the source for approximate
+        background estimation.
 
     Returns
     -------
@@ -495,8 +500,6 @@ def tso_source_centroid(datamodel, xcenter, ycenter, search_box_width=41, fit_bo
 
     # We'll get a rough background estimate from each full image,
     # excluding pixels likely to be affected by the source
-    # TODO: initial draft hard-coded this to sqrt(30) - check preferences
-    source_radius = search_box_width / 2
     source_mask = ((xidx - xcenter) ** 2 + (yidx - ycenter) ** 2) < source_radius**2
 
     # Get initial centroids from planned position
@@ -516,9 +519,6 @@ def tso_source_centroid(datamodel, xcenter, ycenter, search_box_width=41, fit_bo
 
     # Re-centroid with a smaller search box around the new best guess,
     # and fit the PSF at the new centroid location.
-    # TODO: initial draft hard-coded this to sqrt(100) for NIRCam, sqrt(15) for MIRI
-    #  - check preferences
-    source_radius = fit_box_width / 2
     source_mask = ((xidx - xcenter) ** 2 + (yidx - ycenter) ** 2) < source_radius**2
     centroid_x, centroid_y, psf_width_x, psf_width_y, psf_flux = _fit_source(
         datamodel.data, mask, source_mask, xcenter, ycenter, fit_box_width, fit_psf=True
