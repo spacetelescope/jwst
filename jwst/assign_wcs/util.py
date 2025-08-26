@@ -398,7 +398,7 @@ def create_grism_bbox(
                 extract_orders = [x[1] for x in ref_extract_orders if x[0] == filter_name].pop()
 
             wavelength_range = f.get_wfss_wavelength_range(filter_name, extract_orders)
-
+            print('Wavelength range', wavelength_range)
     if mmag_extract is None:
         mmag_extract = 999.0  # extract all objects, regardless of magnitude
     else:
@@ -430,6 +430,8 @@ def _create_grism_bbox(
 
     # this contains the pure information from the catalog with no translations
     skyobject_list = get_object_info(input_model.meta.source_catalog)
+
+    print('sky object list', skyobject_list)
     # get the imaging transform to record the center of the object in the image
     # here, image is in the imaging reference frame, before going through the
     # dispersion coefficients
@@ -448,17 +450,10 @@ def _create_grism_bbox(
         # save the image frame center of the object
         # takes in ra, dec, wavelength, order but wave and order
         # don't get used until the detector->grism_detector transform
-        if input_model.meta.exposure.type.upper() == "MIR_WFSS":
-            print(" input ra dec", obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value)
-            xcenter, ycenter = sky_to_detector(
-                obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value, 1
-            )
-            print("return x, y", xcenter, ycenter)
-        else:
-            xcenter, ycenter, _, _ = sky_to_detector(
-                obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value, 1, 1
-            )
+        xcenter, ycenter, _, _ = sky_to_detector(
+            obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value, 1, 1)
 
+        print('X and Y center', xcenter, ycenter, obj.sky_centroid.icrs.ra.value, obj.sky_centroid.icrs.dec.value)
         order_bounding = {}
         waverange = {}
         partial_order = {}
@@ -488,9 +483,12 @@ def _create_grism_bbox(
                 ]
             )
             if input_model.meta.exposure.type.upper() == "MIR_WFSS":
-                x1, y1 = sky_to_grism(ra, dec, [lmin] * 4)
-                x2, y2 = sky_to_grism(ra, dec, [lmax] * 4)
-                print("x1,y1,x2,y2", x1, y1, x2, y2)
+                print('lmin lmax order', lmin,lmax,order)
+                x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] , [order] )
+                x2, y2,_, _ , _ = sky_to_grism(ra, dec, [lmax] , [order] )
+                #y1 = ycenter + y1
+                #y2 = ycenter + y2
+                print("+++++++++++++++++++++++++assign_wcs util.py x1,y1,x2,y2", x1, y1, x2, y2)
             else:
                 x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order] * 4)
                 x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order] * 4)
@@ -521,20 +519,18 @@ def _create_grism_bbox(
                 wfss_extract_half_height,
                 input_model.meta.wcsinfo.dispersion_direction,
             )
-            input_model.meta.wcsinfo.dispersion_direction = 2
 
+            print('object is extended', obj.is_extended)
+            
             if wfss_extract_half_height is not None and not obj.is_extended:
                 if input_model.meta.wcsinfo.dispersion_direction == 2:
                     ra_center, dec_center = (
                         obj.sky_centroid.ra.value,
                         obj.sky_centroid.dec.value,
                     )
-                    if input_model.meta.exposure.type.upper() == "MIR_WFSS":
-                        center, _ = sky_to_grism(ra_center, dec_center, (lmin + lmax) / 2)
-                    else:
-                        center, _, _, _, _ = sky_to_grism(
-                            ra_center, dec_center, (lmin + lmax) / 2, order
-                        )
+                    center, _, _, _, _ = sky_to_grism(
+                       ra_center, dec_center, (lmin + lmax) / 2, order
+                   )
                     xmin = center - wfss_extract_half_height
                     xmax = center + wfss_extract_half_height
                 elif input_model.meta.wcsinfo.dispersion_direction == 1:
@@ -550,12 +546,13 @@ def _create_grism_bbox(
                 else:
                     raise ValueError("Cannot determine dispersion direction.")
 
+            print('xmin  xmax', xmin, xmax)
             # Convert floating-point corner values to whole pixel indexes
             xmin = gwutils._toindex(xmin)  # noqa: SLF001
             xmax = gwutils._toindex(xmax)  # noqa: SLF001
             ymin = gwutils._toindex(ymin)  # noqa: SLF001
             ymax = gwutils._toindex(ymax)  # noqa: SLF001
-
+            print('ymin ymax', ymin, ymax)
             # Don't add objects and orders that are entirely off the detector.
             # "partial_order" marks objects that are near enough to the detector
             # edge to have some spectrum on the detector.

@@ -221,9 +221,11 @@ class Spec2Pipeline(Pipeline):
                 suffix = "cal"
                 self.extract_1d.suffix = "x1d"
 
-            # Check the datamodel to see if it's a grism image, if so get the catalog
+            # Check the datamodel to see if it's a grism image/direct image, if so get the catalog
             # name from the asn and record it to the meta
+            print('WFSS_TYPES', WFSS_TYPES, exp_type) 
             if exp_type in WFSS_TYPES:
+                print('In calwebb_spec2 we are in WFSS_TYPES')
                 try:
                     science.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
                     self.log.info(f"Using sourcecat file {science.meta.source_catalog}")
@@ -231,6 +233,9 @@ class Spec2Pipeline(Pipeline):
                     self.log.info(f"Using segmentation map {science.meta.segmentation_map}")
                     science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
                     self.log.info(f"Using direct image {science.meta.direct_image}")
+                    print(science.meta.source_catalog)
+                    print(science.meta.segmentation_map)
+                    print(science.meta.direct_image)
                 except IndexError:
                     if science.meta.source_catalog is None:
                         raise IndexError(
@@ -343,7 +348,7 @@ class Spec2Pipeline(Pipeline):
         elif exp_type == "NRS_MSASPEC":
             calibrated = self._process_nirspec_msa_slits(calibrated)
         elif exp_type == "MIR_WFSS":
-            print('Calling process_miri_wfss')
+            print('in calspec2 Calling process_miri_wfss')
             calibrated = self._process_miri_wfss(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
@@ -583,6 +588,9 @@ class Spec2Pipeline(Pipeline):
                 'Science data does not allow WFSS contamination correction. Skipping "wfss_contam".'
             )
             self.wfss_contam.skip = True
+        if exp_type == 'MIR_WFSS':
+            self.wfss_contam.skip = True
+            
 
     def _process_grism(self, data):
         """
@@ -668,9 +676,10 @@ class Spec2Pipeline(Pipeline):
         JWSTDataModel
             The calibrated data model.
         """
-        # Apply flat-field correction
-        calibrated = self.flat_field.run(data)
+        # Apply flat-field correction - we do not do this for MIRI WFSS
+        # calibrated = self.flat_field.run(data)
 
+        calibrated = data.copy()
         # Create and save a WFSS e-/sec image, if requested
         if self.save_wfss_esec:
             self.log.info("Creating WFSS e-/sec product")
@@ -713,8 +722,8 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.srctype.run(calibrated)
         #calibrated = self.straylight.run(calibrated)
         #calibrated = self.fringe.run(calibrated)
-        calibrated = self.pathloss.run(calibrated)
-        calibrated = self.barshadow.run(calibrated)
+        #calibrated = self.pathloss.run(calibrated)
+        #calibrated = self.barshadow.run(calibrated)
         #calibrated = self.wfss_contam.run(calibrated)
         calibrated = self.photom.run(calibrated)
         return calibrated
