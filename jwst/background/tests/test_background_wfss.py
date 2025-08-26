@@ -516,5 +516,5 @@ def test_bkg_fail(monkeypatch, caplog, make_nrc_wfss_datamodel):
 
     result = BackgroundStep.call(model)
     assert result is not model
-    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert result.meta.cal_step.bkg_subtract == "FAIL"
     assert "Not enough background pixels" in caplog.text
