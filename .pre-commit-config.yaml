@@ -2,7 +2,7 @@ exclude: ".*\\.asdf$"
 
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
@@ -17,7 +17,7 @@ repos:
       # - id: end-of-file-fixer
       # - id: trailing-whitespace
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.12.3'
+    rev: 'v0.12.10'
     hooks:
       - id: ruff
         args: ["--fix"]
@@ -28,7 +28,7 @@ repos:
     - id: codespell
       args: ["--write-changes", "--summary"]
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.0  # Use the latest stable version
+    rev: v1.17.1  # Use the latest stable version
     hooks:
       - id: mypy
   - repo: https://github.com/numpy/numpydoc
