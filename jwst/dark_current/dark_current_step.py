@@ -86,17 +86,18 @@ class DarkCurrentStep(Step):
         Take the three possible locations specifying
         the average dark current and assign them to the
         input model, in priority order:
-        1) Any value provided to the step parameter, either from
-        the user or a parameter reference file
-        2) The 2-D array stored in dark_model.average_dark_current
-        3) The scalar value stored in dark_model.meta.exposure.average_dark_current
+
+        1. Any value provided to the step parameter, either from
+           the user or a parameter reference file
+        2. The 2-D array stored in dark_model.average_dark_current
+        3. The scalar value stored in dark_model.meta.exposure.average_dark_current
 
         Parameters
         ----------
         input_model : `~stdatamodels.jwst.datamodels.RampModel`
             The input datamodel containing the 4-D ramp array.
-        dark_model : Union[stdatamodels.jwst.datamodels.DarkModel,
-                           stdatamodels.jwst.datamodels.DarkMIRIModel]
+        dark_model : `~stdatamodels.jwst.datamodels.DarkModel` or \
+                     `~stdatamodels.jwst.datamodels.DarkMIRIModel`
             The dark reference file datamodel.
         """
         if self.average_dark_current is not None:
