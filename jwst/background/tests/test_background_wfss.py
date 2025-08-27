@@ -290,6 +290,7 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
         wfss_rms_stop=0,
     )
     assert result is not data
+    assert data.meta.cal_step.bkg_subtract is None
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
@@ -321,6 +322,7 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
         wfss_rms_stop=0,
     )
     assert result is not data
+    assert data.meta.cal_step.bkg_subtract is None
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
@@ -502,6 +504,7 @@ def test_missing_bkg(monkeypatch, caplog, make_nrc_wfss_datamodel):
 
     result = step.run(model)
     assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
     assert result.meta.cal_step.bkg_subtract == "SKIPPED"
     assert "No BKG reference file" in caplog.text
 
@@ -516,6 +519,7 @@ def test_bkg_fail(monkeypatch, caplog, make_nrc_wfss_datamodel):
 
     result = BackgroundStep.call(model)
     assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
     assert result.meta.cal_step.bkg_subtract == "FAILED"
     assert "Not enough background pixels" in caplog.text
 
@@ -531,6 +535,7 @@ def test_infinite_factor(monkeypatch, caplog, make_nrc_wfss_datamodel):
 
     result = BackgroundStep.call(model)
     assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
     assert result.meta.cal_step.bkg_subtract == "FAILED"
     assert (
         "Could not determine a finite scaling factor between reference background and data"

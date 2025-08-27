@@ -172,5 +172,4 @@ class BackgroundStep(Step):
                     "GWA_XTIL and GWA_YTIL source values are not the same as bkg values"
                 )
 
-        model.close()
         return result

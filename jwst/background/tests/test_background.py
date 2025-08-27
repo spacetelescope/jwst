@@ -179,6 +179,7 @@ def test_nirspec_gwa(tmp_cwd, background, science_image):
     assert_allclose(result.data, test)
     assert type(result) is type(science_image)
     assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+    assert science_image.meta.cal_step.bkg_subtract is None
     assert result is not science_image
     back_image.close()
 
@@ -202,6 +203,7 @@ def test_nirspec_gwa_xtilt(tmp_cwd, background, science_image):
     assert type(result) is type(science_image)
     assert result.meta.cal_step.bkg_subtract == "SKIPPED"
     assert result is not science_image
+    assert science_image.meta.cal_step.bkg_subtract is None
     back_image.close()
 
 
@@ -224,6 +226,7 @@ def test_nirspec_gwa_ytilt(tmp_cwd, background, science_image):
     assert type(result) is type(science_image)
     assert result.meta.cal_step.bkg_subtract == "SKIPPED"
     assert result is not science_image
+    assert science_image.meta.cal_step.bkg_subtract is None
 
     back_image.close()
 
@@ -253,6 +256,7 @@ def test_miri_subarray_full_overlap(data_shape, background_shape):
     assert type(result) is type(image)
     assert result.meta.cal_step.bkg_subtract == "COMPLETE"
     assert result is not image
+    assert science_image.meta.cal_step.bkg_subtract is None
 
     image.close()
     background.close()
@@ -293,6 +297,7 @@ def test_miri_subarray_partial_overlap(data_shape, background_shape):
     assert type(result) is type(image)
     assert result.meta.cal_step.bkg_subtract == "COMPLETE"
     assert result is not image
+    assert image.meta.cal_step.bkg_subtract is None
 
     image.close()
     background.close()
