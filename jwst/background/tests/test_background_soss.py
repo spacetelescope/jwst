@@ -118,13 +118,16 @@ def test_subtract_soss_bkg(
     template_model = datamodels.SossBkgModel(
         data=np.stack((generate_background_template, generate_background_template))
     )
+    image = generate_soss_image.copy()
 
     # Test image-based correction.
     result = subtract_soss_bkg(generate_soss_image, template_model, 35.0, [25.0, 50.0])
+    assert result is not image
     assert type(result) == type(generate_soss_image)
 
     # Test cube-based correction.
     result = subtract_soss_bkg(generate_soss_cube, template_model, 35.0, [25.0, 50.0])
+    assert result is not generate_soss_image
     assert type(result) == type(generate_soss_cube)
 
     # Test step-level call along with substrip96-shaped data.

@@ -165,7 +165,8 @@ class BackgroundStep(Step):
                     self.log.info(f"Combined background written to {comb_bkg_path}.")
 
             else:
-                model.meta.cal_step.bkg_subtract = "SKIPPED"
+                result = model
+                result.meta.cal_step.bkg_subtract = "SKIPPED"
                 self.log.warning("Skipping background subtraction")
                 self.log.warning(
                     "GWA_XTIL and GWA_YTIL source values are not the same as bkg values"

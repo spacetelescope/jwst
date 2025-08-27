@@ -481,7 +481,7 @@ def test_wfss_asn_input(mock_asn_and_data):
     # get the file name of asn and other file objects
     asn_name, ratefile = mock_asn_and_data[0], mock_asn_and_data[1]
     i2dfile, segmfile = mock_asn_and_data[2], mock_asn_and_data[3]
-    # change the working directory into the temp so it can find all files
+    # change the working directory into the temp dir, so it can find all files
     cwd = os.getcwd()
     os.chdir(ratefile.parents[0])
     result = BackgroundStep.call(asn_name)
