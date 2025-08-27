@@ -156,7 +156,7 @@ def dark_output_data_2_ramp_model(out_data, out_model):
 
     Parameters
     ----------
-    out_data : `~stdatamodels.jwst.datamodels.DataModel`
+    out_data : `~stdatamodels.DataModel`
         Computed science data from the dark current step.
 
     out_model : `~stdatamodels.jwst.datamodels.RampModel`

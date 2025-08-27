@@ -83,7 +83,7 @@ def bkg_for_container(input_data, tab_wavelength, tab_background, allow_mos=Fals
 
     Parameters
     ----------
-    input_data : JWST association or `~jwst.datamodels.ModelContainer`
+    input_data : JWST association or `~jwst.datamodels.container.ModelContainer`
         The input science data.
     tab_wavelength : 1-D ndarray
         The wavelength column read from the 1-D background table.
@@ -99,7 +99,7 @@ def bkg_for_container(input_data, tab_wavelength, tab_background, allow_mos=Fals
 
     Returns
     -------
-    background : `~jwst.datamodels.ModelContainer`
+    background : `~jwst.datamodels.container.ModelContainer`
         A copy of `input_data` but with the data replaced by the background,
         "expanded" from 1-D to 2-D.
     """

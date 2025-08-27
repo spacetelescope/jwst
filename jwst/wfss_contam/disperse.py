@@ -31,9 +31,9 @@ def _determine_native_wl_spacing(
 
     Parameters
     ----------
-    x0_sky : float or np.ndarray
+    x0_sky : float or ndarray
         RA of the input pixel position in segmentation map
-    y0_sky : float or np.ndarray
+    y0_sky : float or ndarray
         Dec of the input pixel position in segmentation map
     sky_to_imgxy : astropy model
         Transform from sky to image coordinates
@@ -54,7 +54,7 @@ def _determine_native_wl_spacing(
 
     Returns
     -------
-    lambdas : np.ndarray
+    lambdas : ndarray
         Wavelengths at which to compute dispersed pixel values
 
     Notes
@@ -88,15 +88,15 @@ def _disperse_onto_grism(
 
     Parameters
     ----------
-    x0_sky : np.ndarray
+    x0_sky : ndarray
         RA of the input pixel position in segmentation map
-    y0_sky : np.ndarray
+    y0_sky : ndarray
         Dec of the input pixel position in segmentation map
     sky_to_imgxy : astropy model
         Transform from sky to image coordinates
     imgxy_to_grismxy : astropy model
         Transform from image to grism coordinates
-    lambdas : np.ndarray
+    lambdas : ndarray
         Wavelengths at which to compute dispersed pixel values
     order : int
         Spectral order number
@@ -107,11 +107,11 @@ def _disperse_onto_grism(
 
     Returns
     -------
-    x0s : np.ndarray
+    x0s : ndarray
         X coordinates of dispersed pixels in the grism image
-    y0s : np.ndarray
+    y0s : ndarray
         Y coordinates of dispersed pixels in the grism image
-    lambdas : np.ndarray
+    lambdas : ndarray
         Wavelengths corresponding to each dispersed pixel
     """
     # x/y in image frame of grism image is the same for all wavelengths
@@ -134,11 +134,11 @@ def _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel):
 
     Parameters
     ----------
-    xs : np.ndarray
+    xs : ndarray
         X coordinates of dispersed pixels
-    ys : np.ndarray
+    ys : ndarray
         Y coordinates of dispersed pixels
-    counts : np.ndarray
+    counts : ndarray
         Count rates of dispersed pixels
     source_ids_per_pixel : int array
         Source IDs of the dispersed pixels
@@ -173,11 +173,11 @@ def _build_dispersed_image_of_source(x, y, flux):
 
     Parameters
     ----------
-    x : np.ndarray
+    x : ndarray
         X coordinates of pixels in the grism image
-    y : np.ndarray
+    y : ndarray
         Y coordinates of pixels in the grism image
-    flux : np.ndarray
+    flux : ndarray
         Fluxes of pixels in the grism image
 
     Returns
@@ -219,11 +219,11 @@ def disperse(
 
     Parameters
     ----------
-    xs : np.ndarray
+    xs : ndarray
         Flat array of X coordinates of pixels in the direct image
-    ys : np.ndarray
+    ys : ndarray
         Flat array of Y coordinates of pixels in the direct image
-    fluxes : np.ndarray
+    fluxes : ndarray
         Fluxes of the pixels in the direct image corresponding to xs, ys
     source_ids_per_pixel : int array
         Source IDs of the input pixels in the segmentation map

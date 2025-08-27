@@ -73,7 +73,7 @@ class Spec3Pipeline(Pipeline):
 
         Parameters
         ----------
-        input_data : str, Level3 Association, or ~jwst.datamodels.JwstDataModel
+        input_data : str, Level3 Association, or `~jwst.datamodels.JwstDataModel`
             The exposure or association of exposures to process
         """
         self.log.info("Starting calwebb_spec3 ...")
@@ -344,7 +344,7 @@ class Spec3Pipeline(Pipeline):
 
         Parameters
         ----------
-        source_models : list of `~jwst.datamodels.DataModel`
+        source_models : list of `~stdatamodels.DataModel`
             List of input source models.
 
         Returns
@@ -371,7 +371,7 @@ class Spec3Pipeline(Pipeline):
 
         Parameters
         ----------
-        source_models : list of `~jwst.datamodels.DataModel`
+        source_models : list of `~stdatamodels.DataModel`
             List of input source models.
 
         Returns

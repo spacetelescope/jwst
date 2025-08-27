@@ -41,9 +41,9 @@ def determine_vector_and_meta_columns(input_datatype, output_datatype):
 
     Returns
     -------
-    columns : np.ndarray[tuple]
+    columns : ndarray[tuple]
         Array of tuples containing the column names and their dtypes.
-    is_vector : np.ndarray[bool]
+    is_vector : ndarray[bool]
         Array of booleans indicating whether each column is vector-like,
         same length as `columns`.
     """
@@ -72,13 +72,13 @@ def make_empty_recarray(n_rows, n_spec, columns, is_vector, defaults=0):
         data points for any spectrum in the exposure.
     n_spec : int
         The number of spectra in the output table.
-    columns : np.ndarray[tuple]
+    columns : ndarray[tuple]
         Array of tuples containing the column names and their dtypes.
-    is_vector : np.ndarray[bool]
+    is_vector : ndarray[bool]
         Array of booleans indicating whether each column is vector-like.
         If `True`, the column will be a 1D array of length `n_rows`.
         Otherwise, the column will be a scalar.
-    defaults : list, np.ndarray, int, or float, optional
+    defaults : list, ndarray, int, or float, optional
         List of default values for each column. If a column is vector-like,
         the default value will be repeated to fill the array.
         If a column is scalar, the default value will be used directly.
@@ -127,9 +127,9 @@ def populate_recarray(output_table, input_spec, columns, is_vector, ignore_colum
         The output table to be populated with the spectral data.
     input_spec : `~jwst.datamodels.SpecModel` or `~jwst.datamodels.CombinedSpecModel`
         The input data model containing the spectral data.
-    columns : np.ndarray[tuple]
+    columns : ndarray[tuple]
         Array of tuples containing the column names and their dtypes.
-    is_vector : np.ndarray[bool]
+    is_vector : ndarray[bool]
         Array of booleans indicating whether each column is vector-like,
     ignore_columns : list[str], optional
         List of column names to ignore when copying data or metadata from the input

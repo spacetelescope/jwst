@@ -37,7 +37,7 @@ def resampled_wcs_from_models(
     Parameters
     ----------
     input_models : `~jwst.datamodel.ModelLibrary`
-        Each datamodel must have a ``model.meta.wcs`` set to a ~gwcs.WCS object.
+        Each datamodel must have a ``model.meta.wcs`` set to a `~gwcs.wcs.WCS` object.
     pixel_scale_ratio : float, optional
         Desired pixel scale ratio defined as the ratio of the desired output
         pixel scale to the first input model's pixel scale computed from this
@@ -164,7 +164,7 @@ def is_sky_like(frame):
 
     Parameters
     ----------
-    frame : gwcs.WCS
+    frame : gwcs.wcs.WCS
         WCS object to check.
 
     Returns
@@ -251,7 +251,7 @@ def find_miri_lrs_sregion(sregion_model1, wcs):
     ----------
     sregion_model1 : str
         The s_regions of the first input model
-    wcs : gwcs.WCS
+    wcs : gwcs.wcs.WCS
         Spatial/spectral WCS.
 
     Returns

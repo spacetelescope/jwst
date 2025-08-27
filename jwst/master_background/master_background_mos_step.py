@@ -210,7 +210,7 @@ class MasterBackgroundMosStep(Pipeline):
 
         Parameters
         ----------
-        data : ~jwst.datamodels.MultiSlitModel`
+        data : `~jwst.datamodels.MultiSlitModel`
             The data to operate on.
 
         Returns

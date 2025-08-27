@@ -95,10 +95,10 @@ step.
 
 Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
-`jwst.datamodels.ModelContainer`. This grouping is performed automatically
+`jwst.datamodels.container.ModelContainer`. This grouping is performed automatically
 in the ``skymatch`` step using the
-`jwst.datamodels.ModelContainer.models_grouped` property or
-:py:meth:`jwst.datamodels.ModelLibrary.group_indices`.
+`jwst.datamodels.container.ModelContainer.models_grouped` property or
+:py:meth:`jwst.datamodels.library.ModelLibrary.group_indices`.
 
 However, when background across different detectors in a single "exposure"
 (or "group") is dominated by unpredictable background components, we no longer
@@ -107,7 +107,7 @@ it may be desirable to match image backgrounds independently. This can be
 achieved either by setting the ``image_model.meta.group_id`` attribute to a
 unique string or integer value for each image, or by adding the ``group_id``
 attribute to the ``members`` of the input ASN table - see
-`~jwst.datamodels.ModelContainer` for more details.
+`~jwst.datamodels.container.ModelContainer` for more details.
 
 .. note::
     Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps

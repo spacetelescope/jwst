@@ -26,7 +26,7 @@ def background_subtract(
 
     Parameters
     ----------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values
     box_size : tuple
         Size of box in pixels to use for background estimation.
@@ -40,7 +40,7 @@ def background_subtract(
 
     Returns
     -------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values with background subtracted
 
     Notes
@@ -72,7 +72,7 @@ def _select_ids(source_id, all_ids):
     ----------
     source_id : int or list-like
         ID(s) of source to process. If None, all sources processed.
-    all_ids : np.ndarray
+    all_ids : ndarray
         Array of all source IDs in the segmentation map
 
     Returns
@@ -294,9 +294,9 @@ class Observation:
             Minimum wavelength for dispersed spectra
         wmax : float
             Maximum wavelength for dispersed spectra
-        sens_waves : np.ndarray
+        sens_waves : ndarray
             Wavelength array from photom reference file
-        sens_response : np.ndarray
+        sens_response : ndarray
             Response (flux calibration) array from photom reference file
         """
         # generate lists of input parameters for the disperse function
@@ -343,7 +343,7 @@ def _construct_slitmodel(
 
     Parameters
     ----------
-    img : np.ndarray
+    img : ndarray
         Dispersed model image of segmentation map source
     bounds : list
         The bounds of the object in relation to the full-frame image.

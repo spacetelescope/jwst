@@ -137,7 +137,7 @@ class JwstStep(_Step):
 
         Parameters
         ----------
-        result : `~jwst.datamodels.DataModel`
+        result : `~stdatamodels.DataModel`
             The output data model to be updated.
         reference_files_used : list of tuple
             The names and file paths of reference files used.
@@ -216,7 +216,7 @@ class JwstPipeline(Pipeline, JwstStep):
 
         Parameters
         ----------
-        result : `~jwst.datamodels.DataModel`
+        result : `~stdatamodels.DataModel`
             The output data model to be updated.
         _reference_files_used : list of tuple
             The names and file paths of reference files used.

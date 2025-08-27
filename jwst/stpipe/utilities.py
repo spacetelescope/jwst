@@ -140,8 +140,8 @@ def record_step_status(datamodel, cal_step, success=True):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.ModelContainer`,
-        `~jwst.datamodels.ModelLibrary`
+    datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.container.ModelContainer`, \
+                `~jwst.datamodels.library.ModelLibrary`
         This is the datamodel or container of datamodels to modify in place
 
     cal_step : str
@@ -178,8 +178,8 @@ def query_step_status(datamodel, cal_step):
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.ModelContainer`,
-        `~jwst.datamodels.ModelLibrary`
+    datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.container.ModelContainer`, \
+                `~jwst.datamodels.library.ModelLibrary`
         The datamodel or container of datamodels to check
 
     cal_step : str

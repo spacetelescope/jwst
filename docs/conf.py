@@ -78,6 +78,7 @@ intersphinx_mapping = {
     'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
     'stdatamodels': ('https://stdatamodels.readthedocs.io/en/latest/', None),
     'stcal': ('https://stcal.readthedocs.io/en/latest/', None),
+    'stpipe': ('https://stpipe.readthedocs.io/en/latest/', None),
     'drizzle': ('https://drizzlepac.readthedocs.io/en/latest/', None),
     'tweakwcs': ('https://tweakwcs.readthedocs.io/en/latest/', None),
 }

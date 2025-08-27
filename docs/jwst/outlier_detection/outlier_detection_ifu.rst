@@ -5,7 +5,7 @@ Integral Field Unit (IFU) Data
 
 This module serves as the interface for applying ``outlier_detection`` to IFU
 observations, like those taken with NIRSpec and MIRI. A :ref:`Stage 3 association <asn-level3-techspecs>`,
-which is loaded into a :py:class:`~jwst.datamodels.ModelContainer` object,
+which is loaded into a :py:class:`~jwst.datamodels.container.ModelContainer` object,
 serves as the basic format for all processing performed by this step.
 
 After launch it was discovered that the bad pixels on the MIRI detectors vary with time.
