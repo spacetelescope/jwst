@@ -54,7 +54,9 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        pytest.param(("jw01292_20250316t033413_pool", []), id="pool_006_spec_nirspec_FIXED_SLIT"),
+        pytest.param(
+            ("jw01292_20250316t033413_pool", []), id="pool_006_spec_nirspec_FIXED_SLIT_AND_jw00217"
+        ),  # Also test NRS_FSS_VALID_OPTICAL_PATHS
         pytest.param(("jw01523_20250321t155408_pool", []), id="pool_009_spec_miri_lv2bkg_MRS"),
         pytest.param(
             ("jw01529_20250316t074500_pool", []),
@@ -144,7 +146,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00217_nrsfss_pool", []),
         ("jw00620_20210113t123511_pool", []),
         ("jw00620_20210527t123049_pool", []),
         ("jw00623_20200918t091537_o055_pool", []),
