@@ -1452,8 +1452,8 @@ def test_nrs_wcs_by_slit(mode):
         hdul = create_nirspec_ifu_file("F290LP", "G140M")
         im = datamodels.IFUImageModel(hdul)
 
-        # Round trip is currently up to ~half pixel off for IFU
-        pixel_tol = 0.5
+        # Round trip is currently a little worse for IFU
+        pixel_tol = 0.12
 
     elif mode == "MOS":
         hdul = create_nirspec_mos_file()
