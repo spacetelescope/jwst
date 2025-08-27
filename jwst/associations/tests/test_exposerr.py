@@ -1,12 +1,16 @@
 """Test degraded exposure info"""
 
+from astropy.utils.data import get_pkg_data_filename
+
 from jwst.associations.lib.dms_base import _DEGRADED_STATUS_NOTOK, _DEGRADED_STATUS_OK, _EMPTY
 from jwst.associations.main import Main
-from jwst.associations.tests.helpers import combine_pools, t_path
+from jwst.associations.tests.helpers import combine_pools
 
 
 def test_exposerr():
-    pool = combine_pools(t_path("data/pool_008_exposerr.csv"))
+    pool = combine_pools(
+        get_pkg_data_filename("data/pool_008_exposerr.csv", package="jwst.associations.tests")
+    )
     generated = Main.cli(
         [
             "--dry-run",
