@@ -20,12 +20,12 @@ class FringeStep(Step):
 
         Parameters
         ----------
-        input_data : jwst.datamodel.IFUImageModel
+        input_data : jwst.datamodels.IFUImageModel
             Input MRS MIRS science data.
 
         Returns
         -------
-        output_data : jwst.datamodel.IFUImageModel
+        output_data : jwst.datamodels.IFUImageModel
             Fringe corrected MRS MIRS science data.
         """
         with datamodels.open(input_data) as input_model:

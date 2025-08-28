@@ -35,8 +35,8 @@ Classes, Methods, Functions
 ---------------------------
 
 * :meth:`stpipe.Step.open_model`: Open a ``DataModel``
-* ``Step.load_as_level2_asn()``: Open a list or file as Level2 association
-* ``Step.load_as_level3_asn()``: Open a list or file as Level3 association
+* :meth:`jwst.stpipe.core.JwstStep.load_as_level2_asn`: Open a list or file as Level2 association
+* :meth:`jwst.stpipe.core.JwstStep.load_as_level3_asn`: Open a list or file as Level3 association
 * :meth:`stpipe.Step.make_input_path`: Create a file name to
   be used as input
 * :meth:`stpipe.Step.save_model`: Save a ``DataModel`` immediately
@@ -133,7 +133,7 @@ input, returning a ``DataModel`` from the specified file or a shallow
 copy of the ``DataModel`` that was originally passed to it. A typical
 pattern for handling input arguments is::
 
-  class MyStep(stpipe.Step):
+  class MyStep(jwst.stpipe.core.JwstStep):
 
       def process(self, input_argument):
 
@@ -239,7 +239,7 @@ Similarly, the basename will usually be derived from the primary input
 file. However, there are some :ref:`caveats <basename_determination>`
 discussed below.
 
-Ultimately, the suffix is what ``Step``s use to identify their output.
+Ultimately, the suffix is what ``Step`` use to identify their output.
 The most common suffixes are listed in the
 :ref:`pipeline_step_suffix_definitions`.
 
@@ -303,7 +303,7 @@ as their primary input. In general, the association defines what the
 output basename should be. A typical pattern used to handle
 associations is::
 
-  class MyStep(stpipe.Step):
+  class MyStep(jwst.stpipe.core.JwstStep):
 
       spec = ''  # Desired configuration parameters
 
@@ -350,7 +350,7 @@ Save That Model: Step.save_model
 
 If a ``Step`` needs to save a ``DataModel`` before the step completes, use
 of :meth:`stpipe.Step.save_model` is the recommended over
-directly calling :meth:`jwst.datamodels.JwstDataModel.save`.
+directly calling :meth:`jwst.datamodels.container.ModelContainer.save`.
 ``Step.save_model`` uses the ``Step`` framework and hence will honor the
 following:
 
@@ -381,7 +381,7 @@ Make That Filename: Step.make_output_path
 
 For the situations when a filename is needed to be constructed before
 saving, either to know what the filename will be or for data that is
-not a ``DataModel``, use :meth:`stpipe.Step.make_output_path`. By default, calling
+not a ``DataModel``, use `stpipe.Step.make_output_path`. By default, calling
 ``make_output_path`` without any arguments will return what the default
 output file name will be::
 

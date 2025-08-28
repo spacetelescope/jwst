@@ -97,8 +97,8 @@ Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
 `jwst.datamodels.container.ModelContainer`. This grouping is performed automatically
 in the ``skymatch`` step using the
-:attribute:`~jwst.datamodels.container.ModelContainer.models_grouped` or
-:attribute:`~stpipe.library.AbstractModelLibrary.group_indices` attribute.
+:attr:`~jwst.datamodels.container.ModelContainer.models_grouped` or
+:attr:`~stpipe.library.AbstractModelLibrary.group_indices` attribute.
 
 However, when background across different detectors in a single "exposure"
 (or "group") is dominated by unpredictable background components, we no longer
