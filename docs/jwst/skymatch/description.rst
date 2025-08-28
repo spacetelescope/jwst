@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.skymatch.SkymatchStep`
+:Class: `jwst.skymatch.SkyMatchStep`
 :Alias: skymatch
 
 Overview
@@ -97,8 +97,8 @@ Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
 `jwst.datamodels.container.ModelContainer`. This grouping is performed automatically
 in the ``skymatch`` step using the
-`jwst.datamodels.container.ModelContainer.models_grouped` property or
-:py:meth:`jwst.datamodels.library.ModelLibrary.group_indices`.
+:attribute:`~jwst.datamodels.container.ModelContainer.models_grouped` or
+:attribute:`~stpipe.library.AbstractModelLibrary.group_indices` attribute.
 
 However, when background across different detectors in a single "exposure"
 (or "group") is dominated by unpredictable background components, we no longer
@@ -179,7 +179,7 @@ instead provides additive corrections that can be used to equalize the signal
 between overlapping images.
 
 User-Supplied Sky Values
--------------------------
+------------------------
 The ``skymatch`` step can also accept user-supplied sky values for each image.
 This is useful when sky values have been determined based on a custom workflow
 outside the pipeline. To use this feature, the user must provide a list of sky
