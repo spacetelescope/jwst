@@ -55,7 +55,8 @@ class CleanFlickerNoiseStep(Step):
             flat_filename = self.get_reference_file(input_model, "flat")
             override_parameters = autoparam.niriss_image_parameters(input_model, flat_filename)
         elif exp_type == "NRC_IMAGE":
-            override_parameters = autoparam.nircam_image_parameters(input_model)
+            flat_filename = self.get_reference_file(input_model, "flat")
+            override_parameters = autoparam.nircam_image_parameters(input_model, flat_filename)
         else:
             override_parameters = None
             found_exptype = False

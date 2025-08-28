@@ -299,11 +299,19 @@ def niriss_image_parameters(input_model, flat_filename):
     dict
         Step parameters to override.
     """
+    # Check for a flat file
     if flat_filename is None or flat_filename == "N/A":
-        return None
+        apply_flat = False
+        flat_filename = None
+    else:
+        apply_flat = True
 
     # Set up some baseline defaults
-    parameters = {"apply_flat_field": True, "background_method": "median", "fit_by_channel": False}
+    parameters = {
+        "apply_flat_field": apply_flat,
+        "background_method": "median",
+        "fit_by_channel": False,
+    }
 
     # Make a rate file and run a quick default median clean on it.
     with disable_logging(logging.ERROR):
@@ -367,7 +375,7 @@ def niriss_image_parameters(input_model, flat_filename):
     return parameters
 
 
-def nircam_image_parameters(input_model):
+def nircam_image_parameters(input_model, flat_filename):
     """
     Determine appropriate parameters for cleaning a NIRCam image.
 
@@ -375,18 +383,31 @@ def nircam_image_parameters(input_model):
     ----------
     input_model : RampModel, ImageModel, or CubeModel
         Input model.
+    flat_filename : str
+        Path to a FLAT reference file.
 
     Returns
     -------
     dict
         Step parameters to override.
     """
+    # Check for a flat file
+    if flat_filename is None or flat_filename == "N/A":
+        apply_flat = False
+        flat_filename = None
+    else:
+        apply_flat = True
+
     # Set up some baseline defaults
-    parameters = {"background_method": "median", "fit_by_channel": False}
+    parameters = {
+        "apply_flat_field": apply_flat,
+        "background_method": "median",
+        "fit_by_channel": False,
+    }
 
     # Make a rate file and run a quick default median clean on it.
     with disable_logging(logging.ERROR):
-        cleaned_image, mask = quick_clean(input_model)
+        cleaned_image, mask = quick_clean(input_model, flat_filename)
 
     # Fit a 2D background to the cleaned image
     background_2d = cfn.background_level(cleaned_image, mask, background_method="model")
