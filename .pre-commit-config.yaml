@@ -52,11 +52,11 @@ repos:
           - --summary
         additional_dependencies:
           - tomli
-  # # validate change log and fragments in `changes/`
-  # - repo: https://github.com/twisted/towncrier
-  #   rev: 24.8.0
-  #   hooks:
-  #     - id: towncrier-check
+  # validate change log and fragments in `changes/`
+  - repo: https://github.com/twisted/towncrier
+    rev: 24.8.0
+    hooks:
+      - id: towncrier-check
   # format YAML and Markdown
   # - repo: https://github.com/rbubley/mirrors-prettier
   #   rev: v3.6.2
