@@ -80,7 +80,7 @@ def subtract_wfss_bkg(
             # Save the mask in expected data type for the datamodel and set
             # other keywords appropriately for this case
             model.mask = bkg_mask.astype(np.uint32)
-            model.meta.background.scaling_factor = 1.0
+            model.meta.background.scaling_factor = 0.0
             model.meta.cal_step.bkg_subtract = "FAILED"
             bkg_ref.close()
             return model
@@ -109,7 +109,7 @@ def subtract_wfss_bkg(
             "Could not determine a finite scaling factor between reference background and data."
             " Step will be marked FAILED."
         )
-        model.meta.background.scaling_factor = 1.0
+        model.meta.background.scaling_factor = 0.0
         model.meta.cal_step.bkg_subtract = "FAILED"
         bkg_ref.close()
         return model
