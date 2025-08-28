@@ -18,8 +18,7 @@ class DummyStep(Step):
         log.info("Default logger")
         log.debug("Default logger")
 
-        self.log.info(f"Foo: {self.foo}")
-
-        self.log.debug("Debug!!!")
+        log.info(f"Foo: {self.foo}")
+        log.debug("Debug!!!")
 
         return ImageModel(args[0])

@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.residual_fringe import residual_fringe
 from jwst.stpipe import Step
 
 __all__ = ["ResidualFringeStep"]
+
+log = logging.getLogger(__name__)
 
 
 class ResidualFringeStep(Step):
@@ -57,13 +61,13 @@ class ResidualFringeStep(Step):
         max_num = len(ignore_regions["max"])
 
         if max_num != min_num:
-            self.log.error("Number of minimum and maximum wavelengths to ignore are not the same")
+            log.error("Number of minimum and maximum wavelengths to ignore are not the same")
             raise ValueError("Number of ignore_region_min does not match ignore_region_max")
 
         ignore_regions["num"] = min_num
 
         if min_num > 0:
-            self.log.info(f"Ignoring {min_num} wavelength regions")
+            log.info(f"Ignoring {min_num} wavelength regions")
 
         self.ignore_regions = ignore_regions
 
@@ -82,8 +86,8 @@ class ResidualFringeStep(Step):
         }
 
         if exptype != "MIR_MRS":
-            self.log.warning("Residual fringe correction is only for MIRI MRS data")
-            self.log.warning(f"Input is: {exptype}")
+            log.warning("Residual fringe correction is only for MIRI MRS data")
+            log.warning(f"Input is: {exptype}")
             input_data.meta.cal_step.residual_fringe = "SKIPPED"
             return input_data
 
@@ -92,21 +96,21 @@ class ResidualFringeStep(Step):
         # 3. return from step
 
         self.residual_fringe_filename = self.get_reference_file(input_data, "fringefreq")
-        self.log.info(f"Using FRINGEFREQ reference file:{self.residual_fringe_filename}")
+        log.info(f"Using FRINGEFREQ reference file:{self.residual_fringe_filename}")
 
         # set up regions reference file
         self.regions_filename = self.get_reference_file(input_data, "regions")
-        self.log.info(f"Using MRS regions reference file: {self.regions_filename}")
+        log.info(f"Using MRS regions reference file: {self.regions_filename}")
 
         # Check for a valid reference files. If they are not found skip step
         if self.residual_fringe_filename == "N/A" or self.regions_filename == "N/A":
             if self.residual_fringe_filename == "N/A":
-                self.log.warning("No FRINGEFREQ reference file found")
-                self.log.warning("Residual Fringe step will be skipped")
+                log.warning("No FRINGEFREQ reference file found")
+                log.warning("Residual Fringe step will be skipped")
 
             if self.regions_filename == "N/A":
-                self.log.warning("No MRS regions reference file found")
-                self.log.warning("Residual Fringe step will be skipped")
+                log.warning("No MRS regions reference file found")
+                log.warning("Residual Fringe step will be skipped")
 
             input_data.meta.cal_step.residual_fringe = "SKIPPED"
             return input_data
