@@ -256,7 +256,7 @@ def test_miri_subarray_full_overlap(data_shape, background_shape):
     assert type(result) is type(image)
     assert result.meta.cal_step.bkg_subtract == "COMPLETE"
     assert result is not image
-    assert science_image.meta.cal_step.bkg_subtract is None
+    assert image.meta.cal_step.bkg_subtract is None
 
     image.close()
     background.close()
