@@ -32,28 +32,22 @@ def test_image_high_mask_high_slope(tmp_path, caplog, instrument):
     # Image is all 1.0
     if instrument == "NIS":
         image = helpers.make_niriss_rate_model()
-        expected = {"apply_flat_field": True, "background_method": "model", "fit_by_channel": False}
     else:
         image = helpers.make_nircam_rate_model()
-        expected = {"background_method": "model", "fit_by_channel": False}
 
     # Flat has a strong gradient: a large fraction of the image will be masked
     flat = helpers.make_flat_model(image)
     flat_file = str(tmp_path / "flat.fits")
     flat.save(flat_file)
 
-    # It's not used for NIRCam, so divide it in directly
-    if instrument == "NRC":
-        flat.data[flat.data == 0] = 1.0
-        image.data /= flat.data
-
     with LoggingContext(autoparam.log, level=logging.DEBUG):
         if instrument == "NIS":
             param = autoparam.niriss_image_parameters(image, flat_file)
         else:
-            param = autoparam.nircam_image_parameters(image)
+            param = autoparam.nircam_image_parameters(image, flat_file)
     assert "High mask, low offset, high slope" in caplog.text
 
+    expected = {"apply_flat_field": True, "background_method": "model", "fit_by_channel": False}
     assert param == expected
 
 
@@ -62,14 +56,8 @@ def test_image_high_mask_low_slope(tmp_path, caplog, instrument):
     # Image is all 1.0
     if instrument == "NIS":
         image = helpers.make_niriss_rate_model()
-        expected = {
-            "apply_flat_field": True,
-            "background_method": "median",
-            "fit_by_channel": False,
-        }
     else:
         image = helpers.make_nircam_rate_model()
-        expected = {"background_method": "median", "fit_by_channel": False}
 
     # Add a large source at the center of the array
     add_large_source(image.data)
@@ -83,9 +71,14 @@ def test_image_high_mask_low_slope(tmp_path, caplog, instrument):
         if instrument == "NIS":
             param = autoparam.niriss_image_parameters(image, flat_file)
         else:
-            param = autoparam.nircam_image_parameters(image)
+            param = autoparam.nircam_image_parameters(image, flat_file)
     assert "High mask, low offset, low slope" in caplog.text
 
+    expected = {
+        "apply_flat_field": True,
+        "background_method": "median",
+        "fit_by_channel": False,
+    }
     assert param == expected
 
 
@@ -94,14 +87,8 @@ def test_image_low_mask(tmp_path, caplog, instrument):
     # Image is all 1.0
     if instrument == "NIS":
         image = helpers.make_niriss_rate_model()
-        expected = {
-            "apply_flat_field": True,
-            "background_method": "median",
-            "fit_by_channel": False,
-        }
     else:
         image = helpers.make_nircam_rate_model()
-        expected = {"background_method": "median", "fit_by_channel": False}
 
     # Flat is flat: a small fraction of the image will be masked
     flat = helpers.make_flat_model(image, value=1.0)
@@ -112,9 +99,14 @@ def test_image_low_mask(tmp_path, caplog, instrument):
         if instrument == "NIS":
             param = autoparam.niriss_image_parameters(image, flat_file)
         else:
-            param = autoparam.nircam_image_parameters(image)
+            param = autoparam.nircam_image_parameters(image, flat_file)
     assert "Low mask, low offset, low slope" in caplog.text
 
+    expected = {
+        "apply_flat_field": True,
+        "background_method": "median",
+        "fit_by_channel": False,
+    }
     assert param == expected
 
 
@@ -126,11 +118,12 @@ def test_image_non_rate_models(tmp_path, caplog, model):
         image = helpers.make_small_rateints_model()
     else:
         image = helpers.make_small_rate_model()
-    expected = {"background_method": "median", "fit_by_channel": False}
 
     with LoggingContext(autoparam.log, level=logging.DEBUG):
-        param = autoparam.nircam_image_parameters(image)
+        param = autoparam.nircam_image_parameters(image, "N/A")
     assert "Low mask, low offset, low slope" in caplog.text
+
+    expected = {"apply_flat_field": False, "background_method": "median", "fit_by_channel": False}
     assert param == expected
 
 
@@ -138,7 +131,7 @@ def test_image_non_rate_models(tmp_path, caplog, model):
 def test_niriss_no_flat(flat):
     image = helpers.make_niriss_rate_model()
     param = autoparam.niriss_image_parameters(image, flat)
-    assert param is None
+    assert param["apply_flat_field"] is False
 
 
 def test_niriss_image_high_offset(tmp_path, caplog):
@@ -175,12 +168,11 @@ def test_nircam_image_high_offset(tmp_path, caplog):
     image.data[:, 1024:1536] += 100.0
     image.data[:, 1536:] += 100.0
 
-    expected = {"background_method": "median", "fit_by_channel": True}
-
     with LoggingContext(autoparam.log, level=logging.DEBUG):
-        param = autoparam.nircam_image_parameters(image)
+        param = autoparam.nircam_image_parameters(image, "N/A")
     assert "Low mask, high offset" in caplog.text
 
+    expected = {"apply_flat_field": False, "background_method": "median", "fit_by_channel": True}
     assert param == expected
 
 

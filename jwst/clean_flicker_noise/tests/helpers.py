@@ -277,6 +277,7 @@ def make_nircam_rate_model(shape=None):
     model.meta.instrument.name = "NIRCAM"
     model.meta.instrument.detector = "NRCBLONG"
     model.meta.instrument.filter = "F300M"
+    model.meta.instrument.pupil = "CLEAR"
     model.meta.exposure.type = "NRC_IMAGE"
     model.meta.subarray.slowaxis = -2
     return model
