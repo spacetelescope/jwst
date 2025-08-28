@@ -10,6 +10,8 @@ from jwst.lib.basic_utils import disable_logging
 
 log = logging.getLogger(__name__)
 
+__all__ = ["quick_clean", "niriss_image_parameters", "nircam_image_parameters"]
+
 
 def quick_clean(input_model, flat_filename=None):
     """
