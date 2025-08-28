@@ -23,7 +23,7 @@ API Summary
   output files will be based.
 * ``suffix``: :ref:`Suffix <pipeline_step_suffix_definitions>` defining the output of this step.
 * ``save_results``: True to create output files. :ref:`[more] <devel_io_when_files_are_created>`
-* ``search_output_file``: True to retrieve the `output_file` from a
+* ``search_output_file``: True to retrieve the ``output_file`` from a
   parent ``Step`` or ``Pipeline``. :ref:`[more] <devel_io_substeps_and_output>`
 * ``output_use_model``: True to always base output file names on the
   ``DataModel.meta.filename`` of the ``DataModel`` being saved.
@@ -69,7 +69,7 @@ best practices.
 To facilitate this design, a basic ``Step`` is suggested to have the
 following structure::
 
-  class MyStep(stpipe.Step):
+  class MyStep(jwst.stpipe.core.JwstStep):
 
       spec = ''  # Desired configuration parameters
 
@@ -98,7 +98,7 @@ environment as follows::
   input = jwst.datamodels.open('input_data.fits')
   result = MyStep.call(input)
   # result contains the resulting data
-  # which can then be used by further Step's or
+  # which can then be used by further steps or
   # other functions.
   #
   # when done, the data can be saved with the DataModel.save
@@ -239,7 +239,7 @@ Similarly, the basename will usually be derived from the primary input
 file. However, there are some :ref:`caveats <basename_determination>`
 discussed below.
 
-Ultimately, the suffix is what ``Step``'s use to identify their output.
+Ultimately, the suffix is what ``Step``s use to identify their output.
 The most common suffixes are listed in the
 :ref:`pipeline_step_suffix_definitions`.
 
