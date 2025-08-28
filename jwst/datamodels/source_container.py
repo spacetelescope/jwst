@@ -60,7 +60,7 @@ class SourceModelContainer(ModelContainer):
 
         Returns
         -------
-        jwst.datamodels.MultiExposureModel
+        `~jwst.datamodels.MultiExposureModel`
             The MultiExposureModel being wrapped, be updated with any new data in the container.
         """
         # Reapply models back to the exposures
@@ -100,7 +100,7 @@ class SourceModelContainer(ModelContainer):
 
         Returns
         -------
-        jwst.datamodels.SourceModelContainer
+        `~jwst.datamodels.SourceModelContainer`
             A deep copy of the container and all the models in it.
         """
         multi_exposure = self.multiexposure.copy(memo=memo)

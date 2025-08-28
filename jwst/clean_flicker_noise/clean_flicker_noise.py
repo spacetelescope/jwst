@@ -969,7 +969,7 @@ def _make_intermediate_model(input_model, intermediate_data):
 
     Returns
     -------
-    intermediate_model : `~jwst.datamodel.JwstDataModel`
+    intermediate_model : `~jwst.datamodels.JwstDataModel`
         A model containing only the intermediate data and top-level
         metadata matching the input.
     """
