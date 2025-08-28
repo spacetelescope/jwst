@@ -7,12 +7,14 @@ import logging
 from jwst.extract_2d.grisms import extract_grism_objects, extract_tso_object
 from jwst.extract_2d.nirspec import nrs_extract2d
 
+# from jwst.miri import extract_wfss_objects
+
 log = logging.getLogger(__name__)
 
 
 __all__ = ["extract2d"]
 
-slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM"]
+slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM", "MIR_WFSS"]
 
 
 def extract2d(
@@ -69,10 +71,12 @@ def extract2d(
         "NRS_AUTOFLAT",
         "NRS_AUTOWAVE",
     ]
+    slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM", "MIR_WFSS"]
 
     exp_type = input_model.meta.exposure.type.upper()
     log.info(f"EXP_TYPE is {exp_type}")
 
+    print("Reference files for wavelengthrange", reference_files)
     if reference_files is None:
         reference_files = {}
 
@@ -93,6 +97,18 @@ def extract2d(
                 tsgrism_extract_height=tsgrism_extract_height,
                 extract_orders=extract_orders,
             )
+
+        # elif exp_type == "MIR_WFSS":
+        #    print("extract 2d WFSS")
+        #    output_model = extract_grism_objects(
+        #        input_model,
+        #        grism_objects=grism_objects,
+        #        reference_files=reference_files,
+        #        extract_orders=extract_orders,
+        #        mmag_extract=mmag_extract,
+        #        wfss_extract_half_height=wfss_extract_half_height,
+        #        nbright=nbright,
+        #    )
         else:
             output_model = extract_grism_objects(
                 input_model,
