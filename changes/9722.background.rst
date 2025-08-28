@@ -1,0 +1,1 @@
+Added status FAILED and set scaling factor to 0.0 in such a case. Save the bkgd mask in any case for WFSS.
