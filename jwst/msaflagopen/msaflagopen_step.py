@@ -34,22 +34,24 @@ class MSAFlagOpenStep(Step):
         """
         # Open the input data model
         with datamodels.open(input_data) as input_model:
-            self.reference_name = self.get_reference_file(input_model, "msaoper")
+            # Work on a copy
+            result = input_model.copy()
+
+            self.reference_name = self.get_reference_file(result, "msaoper")
             self.log.info("Using reference file %s", self.reference_name)
 
             # Check for a valid reference file
             if self.reference_name == "N/A":
                 self.log.warning("No reference file found")
                 self.log.warning("Step will be skipped")
-                result = input_model.copy()
                 result.meta.cal_step.msa_flagging = "SKIPPED"
                 return result
 
             # Get the reference file names for constructing the WCS pipeline
-            wcs_reffile_names = create_reference_filename_dictionary(input_model)
+            wcs_reffile_names = create_reference_filename_dictionary(result)
 
             # Do the DQ flagging
-            result = msaflag_open.do_correction(input_model, self.reference_name, wcs_reffile_names)
+            result = msaflag_open.do_correction(result, self.reference_name, wcs_reffile_names)
 
             # set the step status to complete
             result.meta.cal_step.msa_flagging = "COMPLETE"

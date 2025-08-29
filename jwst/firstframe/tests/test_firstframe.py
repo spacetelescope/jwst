@@ -176,6 +176,11 @@ def test_nircam():
         err_msg="Diff in groupdq flags is not " + "equal to 0",
     )
 
+    # check that input is not modified
+    assert dm_ramp_firstframe is not dm_ramp
+    assert dm_ramp_firstframe.meta.cal_step.firstframe == "SKIPPED"
+    assert dm_ramp.meta.cal_step.firstframe is None
+
 
 def test_miri():
     # test that the code runs given MIRI as an instrument
@@ -208,6 +213,11 @@ def test_miri():
         dq_diff,
         err_msg="Diff in groupdq flags is not " + "equal to DO_NOT_USE",
     )
+
+    # check that input is not modified
+    assert dm_ramp_firstframe is not dm_ramp
+    assert dm_ramp_firstframe.meta.cal_step.firstframe == "COMPLETE"
+    assert dm_ramp.meta.cal_step.firstframe is None
 
 
 def test_firstframe_bright_use_group1():

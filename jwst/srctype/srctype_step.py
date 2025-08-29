@@ -36,23 +36,13 @@ class SourceTypeStep(Step):
         Returns
         -------
         datamodel : IFUImageModel, MultiSlitModel, or SlitModel
-            Data model with keyword “SRCTYPE” populated with either “POINT” or “EXTENDED”.
+            Data model with keyword "SRCTYPE" populated with either "POINT" or "EXTENDED".
         """
-        if self.source_type is not None:
-            self.source_type = self.source_type.upper()
+        with datamodels.open(step_input) as input_model:
+            # Call the source selection routine on a copy of the input
+            result = set_source_type(input_model.copy(), self.source_type)
 
-        source_type = self.source_type  # retrieve command line override
-
-        input_model = datamodels.open(step_input)
-
-        # Call the source selection routine
-        result = set_source_type(input_model, source_type)
-
-        # Set the step status in the output model
-        if result is None:
-            result = input_model
-            result.meta.cal_step.srctype = "SKIPPED"
-        else:
+            # Set the step status in the output model
             result.meta.cal_step.srctype = "COMPLETE"
 
         return result

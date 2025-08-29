@@ -54,8 +54,9 @@ class PixelReplaceStep(Step):
                 self.log.error(f"Input is of type {str(input_model)} for which")
                 self.log.error("pixel_replace does not have an algorithm.")
                 self.log.error("Pixel replacement will be skipped.")
-                input_model.meta.cal_step.pixel_replace = "SKIPPED"
-                return input_model
+                result = input_model.copy()
+                result.meta.cal_step.pixel_replace = "SKIPPED"
+                return result
 
             pars = {
                 "algorithm": self.algorithm,
@@ -81,7 +82,6 @@ class PixelReplaceStep(Step):
 
                 # Check models to confirm they are the correct type
                 for i, model in enumerate(output_model):
-                    run_pixel_replace = True
                     if isinstance(
                         model,
                         datamodels.MultiSlitModel
@@ -91,19 +91,17 @@ class PixelReplaceStep(Step):
                         | datamodels.CubeModel,
                     ):
                         self.log.debug(f"Input is a {str(model)}.")
+                        replacement = PixelReplacement(model, **pars)
+                        replacement.replace()
+                        output_model[i] = replacement.output
+                        success = True
                     else:
                         self.log.error(f"Input is of type {str(model)} for which")
                         self.log.error("pixel_replace does not have an algorithm.")
                         self.log.error("Pixel replacement will be skipped.")
-                        model.meta.cal_step.pixel_replace = "SKIPPED"
-                        run_pixel_replace = False
-
-                    # all checks on model have passed. Now run pixel replacement
-                    if run_pixel_replace:
-                        replacement = PixelReplacement(model, **pars)
-                        replacement.replace()
-                        output_model[i] = replacement.output
-                        record_step_status(output_model[i], "pixel_replace", success=True)
+                        output_model[i] = model.copy()
+                        success = False
+                    record_step_status(output_model[i], "pixel_replace", success=success)
 
                 return output_model
 
