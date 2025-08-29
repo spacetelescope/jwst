@@ -3,6 +3,7 @@ import logging
 import numpy as np
 import pytest
 from scipy.integrate import trapezoid
+from scipy.sparse import linalg
 
 from jwst.extract_1d.soss_extract import atoca_utils as au
 from jwst.tests.helpers import LogWatcher
@@ -495,3 +496,66 @@ def test_get_c_matrix(kernels_unity, webb_kernels, wave_grid):
     with pytest.raises(ValueError):
         kern_array_bad = kern_array[1:, 1:]
         au.get_c_matrix(kern_array_bad, wave_grid, i_bounds=i_bounds)
+
+
+def test_try_solve_two_methods(kernels_unity, webb_kernels, wave_grid):
+    kern = webb_kernels[0]
+    matrix = au.get_c_matrix(kern, wave_grid, i_bounds=None)
+    result = np.arange(matrix.shape[0])
+
+    # A finite solution is found
+    solution = au.try_solve_two_methods(matrix, result)
+    assert solution.shape == (matrix.shape[1],)
+    assert np.all(np.isfinite(solution))
+
+
+def test_try_solve_two_methods_spsolve_fail(monkeypatch, kernels_unity, webb_kernels, wave_grid):
+    kern = webb_kernels[0]
+    matrix = au.get_c_matrix(kern, wave_grid, i_bounds=None)
+    result = np.arange(matrix.shape[0])
+
+    # Monkeypatch a failure in the first method
+    def mock_spsolve(*args):
+        raise linalg.MatrixRankWarning()
+
+    monkeypatch.setattr(au, "spsolve", mock_spsolve)
+
+    # A finite solution is found by the second method
+    watcher = LogWatcher("ATOCA matrix solve failed with spsolve")
+    monkeypatch.setattr(
+        logging.getLogger("jwst.extract_1d.soss_extract.atoca_utils"), "warning", watcher
+    )
+
+    solution = au.try_solve_two_methods(matrix, result)
+    assert solution.shape == (matrix.shape[1],)
+    assert np.all(np.isfinite(solution))
+
+    watcher.assert_seen()
+
+
+def test_try_solve_two_methods_both_fail(monkeypatch, kernels_unity, webb_kernels, wave_grid):
+    kern = webb_kernels[0]
+    matrix = au.get_c_matrix(kern, wave_grid, i_bounds=None)
+    result = np.arange(matrix.shape[0])
+
+    # Monkeypatch a failure in the both methods
+    def mock_spsolve(*args):
+        raise linalg.MatrixRankWarning("Bad matrix")
+
+    def mock_lsqr(*args):
+        raise ValueError("Bad matrix")
+
+    monkeypatch.setattr(au, "spsolve", mock_spsolve)
+    monkeypatch.setattr(au, "lsqr", mock_lsqr)
+
+    watcher = LogWatcher("No solution found")
+    monkeypatch.setattr(
+        logging.getLogger("jwst.extract_1d.soss_extract.atoca_utils"), "warning", watcher
+    )
+
+    # Both methods fail: the solution is all NaN
+    solution = au.try_solve_two_methods(matrix, result)
+    assert solution.shape == (matrix.shape[1],)
+    assert np.all(np.isnan(solution))
+
+    watcher.assert_seen()
