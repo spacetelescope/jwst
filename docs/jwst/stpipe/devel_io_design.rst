@@ -350,7 +350,7 @@ Save That Model: Step.save_model
 
 If a ``Step`` needs to save a ``DataModel`` before the step completes, use
 of :meth:`stpipe.Step.save_model` is the recommended over
-directly calling :meth:`jwst.datamodels.container.ModelContainer.save`.
+directly calling :meth:`stdatamodels.DataModel.save`.
 ``Step.save_model`` uses the ``Step`` framework and hence will honor the
 following:
 
