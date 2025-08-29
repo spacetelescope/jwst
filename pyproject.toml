@@ -227,7 +227,10 @@ addopts = [
 ]
 xfail_strict = true
 filterwarnings = [
-    "error"
+    "error",
+    # GWCS is deprecating the use of non-coordinate axes, several of the WCSs in JWST
+    # need to update their step coordinate frames to account for the non-coordinate axes.
+    "ignore:.*:gwcs.wcs._step.StepAxisWarning",
 ]
 
 [tool.coverage.run]
