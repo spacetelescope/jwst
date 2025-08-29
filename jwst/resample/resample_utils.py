@@ -36,7 +36,7 @@ def resampled_wcs_from_models(
 
     Parameters
     ----------
-    input_models : `~jwst.datamodels.ModelLibrary`
+    input_models : `~jwst.datamodels.library.ModelLibrary`
         Each datamodel must have a ``model.meta.wcs`` set to a `~gwcs.wcs.WCS` object.
     pixel_scale_ratio : float, optional
         Desired pixel scale ratio defined as the ratio of the desired output

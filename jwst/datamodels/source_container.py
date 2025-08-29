@@ -100,7 +100,7 @@ class SourceModelContainer(ModelContainer):
 
         Returns
         -------
-        `~jwst.datamodels.SourceModelContainer`
+        `~jwst.datamodels.source_container.SourceModelContainer`
             A deep copy of the container and all the models in it.
         """
         multi_exposure = self.multiexposure.copy(memo=memo)
