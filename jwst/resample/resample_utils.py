@@ -70,7 +70,7 @@ def resampled_wcs_from_models(
 
     Returns
     -------
-    wcs : ~gwcs.wcs.WCS
+    wcs : `~gwcs.wcs.WCS`
         The WCS object corresponding to the combined input footprints.
     pscale_in : float
         Computed pixel scale (in degrees) of the first input image.
