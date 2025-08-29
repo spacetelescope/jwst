@@ -1,8 +1,8 @@
 """Routines for creating IFUCubes with interpolation method = area , coord_system = internal_cal."""
 
 import numpy as np
+from gwcs.utils import to_index
 from stdatamodels.jwst.datamodels import dqflags
-from stdatamodels.jwst.transforms.models import _toindex
 
 from jwst.cube_build.cube_match_internal import cube_wrapper_internal  # c extension
 
@@ -84,8 +84,8 @@ def match_det2cube(
         pixel_flux: array of pixel fluxes
         pixel_err: array of pixel errors
     """
-    x = _toindex(x)
-    y = _toindex(y)
+    x = to_index(x)
+    y = to_index(y)
     pixel_dq = input_model.dq[y, x]
 
     all_flags = dqflags.pixel["DO_NOT_USE"] + dqflags.pixel["NON_SCIENCE"]

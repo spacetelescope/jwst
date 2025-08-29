@@ -525,10 +525,10 @@ def _create_grism_bbox(
                     raise ValueError("Cannot determine dispersion direction.")
 
             # Convert floating-point corner values to whole pixel indexes
-            xmin = gwutils._toindex(xmin)  # noqa: SLF001
-            xmax = gwutils._toindex(xmax)  # noqa: SLF001
-            ymin = gwutils._toindex(ymin)  # noqa: SLF001
-            ymax = gwutils._toindex(ymax)  # noqa: SLF001
+            xmin = gwutils.to_index(xmin)
+            xmax = gwutils.to_index(xmax)
+            ymin = gwutils.to_index(ymin)
+            ymax = gwutils.to_index(ymax)
 
             # Don't add objects and orders that are entirely off the detector.
             # "partial_order" marks objects that are near enough to the detector

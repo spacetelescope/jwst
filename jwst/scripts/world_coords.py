@@ -21,7 +21,7 @@ import warnings
 import numpy as np
 from astropy.io import fits
 from gwcs import wcstools
-from gwcs.utils import _toindex
+from gwcs.utils import to_index
 from stdatamodels.jwst.datamodels.util import open as dmopen
 
 from jwst.assign_wcs import nirspec
@@ -328,10 +328,10 @@ def ifu_coords(model):
 
         # -1 and +1 are to express this in 1-based coordinates
         imhdu.header["CRVAL1"] = (
-            model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[0][0])) + 1
+            model.meta.subarray.xstart - 1 + int(to_index(slit.bounding_box[0][0])) + 1
         )
         imhdu.header["CRVAL2"] = (
-            model.meta.subarray.xstart - 1 + int(_toindex(slit.bounding_box[1][0])) + 1
+            model.meta.subarray.xstart - 1 + int(to_index(slit.bounding_box[1][0])) + 1
         )
 
         # Input coordinates will be 1-based.
@@ -377,8 +377,8 @@ def imaging_coords(model):
         imhdu.header["SLIT"] = f"SLIT_{i}"
 
         # add the overall subarray offset
-        imhdu.header["CRVAL1"] = model.meta.subarray.xstart - 1 + int(_toindex(bb[0][0]))
-        imhdu.header["CRVAL2"] = model.meta.subarray.ystart - 1 + int(_toindex(bb[1][0]))
+        imhdu.header["CRVAL1"] = model.meta.subarray.xstart - 1 + int(to_index(bb[0][0]))
+        imhdu.header["CRVAL2"] = model.meta.subarray.ystart - 1 + int(to_index(bb[1][0]))
 
         # Input coordinates will be 1-based.
         imhdu.header["CRPIX1"] = 1
