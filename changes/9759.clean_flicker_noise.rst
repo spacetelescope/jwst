@@ -1,0 +1,2 @@
+Add an ``autoparam`` parameter to determine appropriate cleaning parameters from the input data.
+Initial exposure types supported are NIS_IMAGE and NRC_IMAGE only.
