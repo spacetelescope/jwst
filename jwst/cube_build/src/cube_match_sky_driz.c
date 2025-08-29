@@ -268,19 +268,6 @@ int match_driz(double *xc, double *yc, double *zc,
 
       // estimate the wavelength overlapping region using max_cdelt3 and max_dwave
       // estimating wavelength range works if we have a linear wavelength
-      if (linear == 1){
-	w1 = wave[k] - (max_cdelt3 + max_dwave) - zc[0];
-	if(w1 < 0){
-	  iw1 = 0;
-	}else{
-	  iw1 = fabs((w1)/ (max_cdelt3+max_dwave));
-	}
-	iw2 = ceil(fabs((wave[k] + (max_cdelt3 + max_dwave) - zc[0])/max_cdelt3));
-      } else{
-	iw1 = 0;
-	iw2 = nwave;
-      }
-
       iw1 = 0;
       iw2 = nwave;
       for (iw =iw1; iw < iw2;  iw++){
