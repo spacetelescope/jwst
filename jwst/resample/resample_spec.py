@@ -63,7 +63,7 @@ class ResampleSpec(ResampleImage):
         wcs_pars : dict
             Additional parameters for WCS
         **kwargs : dict
-            Additional parameters to be passed into `ResampleImage.__init__()`.
+            Additional parameters to be passed into ``ResampleImage.__init__()``.
             See the docstring of that method for more details.
         """
         shape = None
@@ -294,8 +294,8 @@ class ResampleSpec(ResampleImage):
 
         Returns
         -------
-        output_wcs : `~gwcs.WCS`
-            A gwcs WCS object defining the output frame WCS.
+        output_wcs : `~gwcs.wcs.WCS`
+            A GWCS object defining the output frame WCS.
         """
         all_wcs = [m.meta.wcs for m in input_models if m is not refmodel]
         if refmodel:
@@ -591,8 +591,8 @@ class ResampleSpec(ResampleImage):
 
         Returns
         -------
-        output_wcs : `~gwcs.WCS` object
-            A gwcs WCS object defining the output frame WCS
+        output_wcs : `~gwcs.wcs.WCS` object
+            A GWCS object defining the output frame WCS
         """
         # for each input model convert slit x,y to ra,dec,lam
         # use first input model to set spatial scale
@@ -859,8 +859,8 @@ class ResampleSpec(ResampleImage):
 
         Returns
         -------
-        output_wcs : `~gwcs.WCS` object
-            A gwcs WCS object defining the output frame WCS.
+        output_wcs : `~gwcs.wcs.WCS` object
+            A GWCS object defining the output frame WCS.
         """
         model = input_models[0]
         wcs = model.meta.wcs
@@ -965,7 +965,7 @@ def find_dispersion_axis(refmodel):
 
     Parameters
     ----------
-    refmodel : `~jwst.datamodels.DataModel`
+    refmodel : `~stdatamodels.DataModel`
         The input data model.
 
     Returns
@@ -1051,7 +1051,7 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
 
     Parameters
     ----------
-    wcs : gwcs.WCS
+    wcs : `gwcs.wcs.WCS`
         Spatial/spectral WCS.
     fiducial : tuple of float, optional
         (RA, Dec, wavelength) taken as the fiducial reference. If

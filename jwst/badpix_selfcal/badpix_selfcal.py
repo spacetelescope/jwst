@@ -23,7 +23,7 @@ def badpix_selfcal(
 
     Parameters
     ----------
-    minimg : np.ndarray
+    minimg : ndarray
         Selfcal data of shape (x, y), i.e., after some operation has
         already been taken to combine multiple exposures,
         typically a MIN operation.
@@ -39,7 +39,7 @@ def badpix_selfcal(
 
     Returns
     -------
-    flagged_indices : np.ndarray
+    flagged_indices : ndarray
         Indices of the flagged pixels,
         shaped like output from np.where
     """
@@ -80,7 +80,7 @@ def apply_flags(input_model: IFUImageModel, flagged_indices: np.ndarray) -> IFUI
     ----------
     input_model : IFUImageModel
         Input science data to be corrected
-    flagged_indices : np.ndarray
+    flagged_indices : ndarray
         Indices of the flagged pixels,
         shaped like output from np.where
 

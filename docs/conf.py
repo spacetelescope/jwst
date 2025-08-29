@@ -65,8 +65,6 @@ sys.path.insert(0, os.path.abspath('exts/'))
 with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_file:
     metadata = tomllib.load(metadata_file)['project']
 
-on_rtd = os.environ.get('READTHEDOCS', None) == 'True'
-
 # Configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
@@ -78,6 +76,7 @@ intersphinx_mapping = {
     'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
     'stdatamodels': ('https://stdatamodels.readthedocs.io/en/latest/', None),
     'stcal': ('https://stcal.readthedocs.io/en/latest/', None),
+    'stpipe': ('https://stpipe.readthedocs.io/en/latest/', None),
     'drizzle': ('https://drizzlepac.readthedocs.io/en/latest/', None),
     'tweakwcs': ('https://tweakwcs.readthedocs.io/en/latest/', None),
 }
@@ -104,11 +103,8 @@ extensions = [
     'sphinx_automodapi.automodsumm',
     'sphinx_automodapi.autodoc_enhancements',
     'sphinx_automodapi.smart_resolver',
-    'sphinx.ext.imgmath',
+    'sphinx.ext.mathjax',
 ]
-
-if on_rtd:
-    extensions.append('sphinx.ext.mathjax')
 
 # Add any paths that contain templates here, relative to this directory.
 # templates_path = ['_templates']

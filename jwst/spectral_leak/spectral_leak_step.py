@@ -28,7 +28,7 @@ class SpectralLeakStep(Step):
 
         Parameters
         ----------
-        input_data : ~jwst.datamodels.ModelContainer
+        input_data : `~jwst.datamodels.container.ModelContainer`
             Container of models containing 1-D extracted spectra
 
         Returns

@@ -23,7 +23,7 @@ def middle_from_wcs(wcs, bounding_box, dispaxis):
 
     Parameters
     ----------
-    wcs : `~gwcs.WCS`
+    wcs : `~gwcs.wcs.WCS`
         WCS for the input data model, containing detector to wavelength
         transforms.
     bounding_box : tuple
@@ -235,7 +235,7 @@ def _nirspec_trace_from_wcs(shape, bounding_box, wcs_ref, source_xpos, source_yp
         A pair of tuples, each consisting of two numbers.
         Represents the range of useful pixel values in both dimensions,
         ((xmin, xmax), (ymin, ymax)).
-    wcs_ref : `~gwcs.WCS`
+    wcs_ref : `~gwcs.wcs.WCS`
         WCS for the input data model, containing slit and detector
         transforms.
     source_xpos : float
@@ -300,7 +300,7 @@ def _miri_trace_from_wcs(shape, bounding_box, wcs_ref, source_ra, source_dec):
         A pair of tuples, each consisting of two numbers.
         Represents the range of useful pixel values in both dimensions,
         ((xmin, xmax), (ymin, ymax)).
-    wcs_ref : `~gwcs.WCS`
+    wcs_ref : `~gwcs.wcs.WCS`
         WCS for the input data model, containing sky and detector
         transforms, forward and backward.
     source_ra : float
@@ -366,7 +366,7 @@ def trace_from_wcs(exp_type, shape, bounding_box, wcs_ref, source_x, source_y, d
         A pair of tuples, each consisting of two numbers.
         Represents the range of useful pixel values in both dimensions,
         ((xmin, xmax), (ymin, ymax)).
-    wcs_ref : `~gwcs.WCS`
+    wcs_ref : `~gwcs.wcs.WCS`
         WCS for the input data model, containing sky and detector
         transforms, forward and backward.
     source_x : float

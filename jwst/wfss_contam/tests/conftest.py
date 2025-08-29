@@ -114,7 +114,7 @@ def grism_wcs():
 
     Returns
     -------
-    gwcs.WCS
+    gwcs.wcs.WCS
         The grism wcs object.
 
     Notes

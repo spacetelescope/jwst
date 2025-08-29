@@ -93,7 +93,7 @@ class Coron3Pipeline(Pipeline):
 
         Parameters
         ----------
-        user_input : str, Level3 Association, or ~jwst.datamodels.JwstDataModel
+        user_input : str, Level3 Association, or `~jwst.datamodels.JwstDataModel`
             The exposure or association of exposures to process
         """
         self.log.info("Starting calwebb_coron3 ...")

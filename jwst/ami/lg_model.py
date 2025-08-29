@@ -52,7 +52,7 @@ class LgModel:
             Datamodel containing mask geometry information
         pixscale : float
            Initial estimate of pixel scale in radians
-        bandpass : np.ndarray[float]
+        bandpass : ndarray[float]
             Array of the form: [(weight1, wavl1), (weight2, wavl2), ...]
         mask : str
             Keyword for built-in values
@@ -173,7 +173,7 @@ class LgModel:
 
         Returns
         -------
-        model : np.ndarray[float]
+        model : ndarray[float]
             Generated fringe model, shape (fov, fov, N * (N - 1) + 2)
         """
         self.fov = fov

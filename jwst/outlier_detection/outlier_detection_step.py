@@ -61,14 +61,16 @@ class OutlierDetectionStep(Step):
 
         Parameters
         ----------
-        input_data : asn file, ~jwst.datamodels.ModelContainer, or ~jwst.datamodels.ModelLibrary
+        input_data : asn file, `~jwst.datamodels.container.ModelContainer`, or \
+                     `~jwst.datamodels.library.ModelLibrary`
             The input association.
             For imaging modes a ModelLibrary is expected, whereas for spectroscopic modes a
             ModelContainer is expected.
 
         Returns
         -------
-        result_models : ~jwst.datamodels.ModelContainer or ~jwst.datamodels.ModelLibrary
+        result_models : `~jwst.datamodels.container.ModelContainer` or \
+                        `~jwst.datamodels.library.ModelLibrary`
             The modified input data with DQ flags set for detected outliers.
         """
         # Open the input data, making a copy as needed.

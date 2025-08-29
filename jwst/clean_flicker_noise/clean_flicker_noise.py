@@ -47,7 +47,7 @@ def make_rate(input_model, input_dir="", return_cube=False):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.RampModel`
+    input_model : `~jwst.datamodels.RampModel`
         Input ramp model.
 
     input_dir : str
@@ -61,7 +61,7 @@ def make_rate(input_model, input_dir="", return_cube=False):
 
     Returns
     -------
-    rate_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+    rate_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         The rate or rateints model.
     """
     # Call the ramp fit step on a copy of the input
@@ -96,7 +96,7 @@ def post_process_rate(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         Input rate model.
 
     input_dir : str
@@ -118,7 +118,7 @@ def post_process_rate(
 
     Returns
     -------
-    output_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+    output_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         The updated model.
     """
     output_model = input_model
@@ -164,7 +164,7 @@ def mask_ifu_slices(input_model, mask):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Science data model
 
     mask : array-like of bool
@@ -220,7 +220,7 @@ def mask_slits(input_model, mask):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Science data model.
 
     mask : array-like of bool
@@ -431,7 +431,7 @@ def create_mask(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Science data model, containing rate data with all necessary
         pre-processing already performed.
 
@@ -962,14 +962,14 @@ def _make_intermediate_model(input_model, intermediate_data):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data.
     intermediate_data : array-like
         The intermediate data to save.
 
     Returns
     -------
-    intermediate_model : ~jwst.datamodel.JwstDataModel`
+    intermediate_model : `~jwst.datamodels.JwstDataModel`
         A model containing only the intermediate data and top-level
         metadata matching the input.
     """
@@ -1065,7 +1065,7 @@ def _read_flat_file(input_model, flat_filename):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data.
     flat_filename : str
         File path for a full-frame flat image.
@@ -1113,7 +1113,7 @@ def _make_processed_rate_image(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data.
     single_mask : bool
         If set, a single scene mask is desired, so create
@@ -1136,7 +1136,7 @@ def _make_processed_rate_image(
 
     Returns
     -------
-    image_model : `~jwst.datamodel.JwstDataModel`
+    image_model : `~jwst.datamodels.JwstDataModel`
         The processed rate image or cube.
     """
     if isinstance(input_model, datamodels.RampModel):
@@ -1183,7 +1183,7 @@ def _make_scene_mask(
     ----------
     user_mask : str or None
         Path to user-supplied mask image.
-    image_model : `~jwst.datamodel.JwstDataModel`
+    image_model : `~jwst.datamodels.JwstDataModel`
         A rate image or cube, processed as needed.
     mask_science_regions : bool
         For NIRSpec, mask regions of the image defined by WCS bounding
@@ -1209,7 +1209,7 @@ def _make_scene_mask(
     background_mask : array-like of bool
         Mask array, with True indicating background pixels, False
         indicating source pixels.
-    mask_model : `~jwst.datamodel.JwstDataModel` or None
+    mask_model : `~jwst.datamodels.JwstDataModel` or None
         A datamodel containing the background mask, if `save_mask`
         is True.
     """
@@ -1248,7 +1248,7 @@ def _check_data_shapes(input_model, background_mask):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data model.
     background_mask : array-like of bool
         The background mask.
@@ -1462,7 +1462,7 @@ def do_correction(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Science data to be corrected.
 
     input_dir : str
@@ -1525,16 +1525,16 @@ def do_correction(
 
     Returns
     -------
-    output_model : `~jwst.datamodel.JwstDataModel`
+    output_model : `~jwst.datamodels.JwstDataModel`
         Corrected data.
 
-    mask_model : `~jwst.datamodel.JwstDataModel`
+    mask_model : `~jwst.datamodels.JwstDataModel`
         Pixel mask to be saved or None.
 
-    background_model : `~jwst.datamodel.JwstDataModel`
+    background_model : `~jwst.datamodels.JwstDataModel`
         Background model to be saved or None.
 
-    noise_model : `~jwst.datamodel.JwstDataModel`
+    noise_model : `~jwst.datamodels.JwstDataModel`
         Background model to be saved or None.
 
     status : {'COMPLETE', 'SKIPPED'}

@@ -86,7 +86,7 @@ class JwstStep(_Step):
         Load object as an association.
 
         Loads the specified object into a Level2 association.
-        If necessary, prepend `Step.input_dir` to all members.
+        If necessary, prepend ``Step.input_dir`` to all members.
 
         Parameters
         ----------
@@ -95,8 +95,8 @@ class JwstStep(_Step):
 
         Returns
         -------
-        association : jwst.associations.lib.rules_level2_base.DMSLevel2bBase
-            Association
+        association : object
+            Association from ``jwst.associations.lib.rules_level2_base.DMSLevel2bBase``
         """
         # Prevent circular import:
         from jwst.associations.lib.update_path import update_key_value
@@ -111,7 +111,7 @@ class JwstStep(_Step):
         Load object as an association.
 
         Loads the specified object into a Level3 association.
-        If necessary, prepend `Step.input_dir` to all members.
+        If necessary, prepend ``Step.input_dir`` to all members.
 
         Parameters
         ----------
@@ -120,8 +120,8 @@ class JwstStep(_Step):
 
         Returns
         -------
-        association : jwst.associations.lib.rules_level3_base.DMS_Level3_Base
-            Association
+        association : object
+            Association from ``jwst.associations.lib.rules_level3_base.DMS_Level3_Base``
         """
         # Prevent circular import:
         from jwst.associations.lib.update_path import update_key_value
@@ -137,7 +137,7 @@ class JwstStep(_Step):
 
         Parameters
         ----------
-        result : `~jwst.datamodels.DataModel`
+        result : `~stdatamodels.DataModel`
             The output data model to be updated.
         reference_files_used : list of tuple
             The names and file paths of reference files used.
@@ -216,7 +216,7 @@ class JwstPipeline(Pipeline, JwstStep):
 
         Parameters
         ----------
-        result : `~jwst.datamodels.DataModel`
+        result : `~stdatamodels.DataModel`
             The output data model to be updated.
         _reference_files_used : list of tuple
             The names and file paths of reference files used.

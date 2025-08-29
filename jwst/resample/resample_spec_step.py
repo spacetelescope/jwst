@@ -122,7 +122,7 @@ class ResampleSpecStep(Step):
 
         Parameters
         ----------
-        input_models : `~jwst.datamodels.ModelContainer`
+        input_models : `~jwst.datamodels.container.ModelContainer`
             A container of `~jwst.datamodels.MultiSlitModel`
 
         Returns
@@ -221,7 +221,7 @@ class ResampleSpecStep(Step):
 
         Parameters
         ----------
-        input_models : `~jwst.datamodels.ModelContainer`
+        input_models : `~jwst.datamodels.container.ModelContainer`
             A container of `~jwst.datamodels.ImageModel`
             or `~jwst.datamodels.SlitModel`
 

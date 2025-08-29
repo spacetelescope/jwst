@@ -397,7 +397,7 @@ def do_correction(
 
     Returns
     -------
-    output_model, corrections : jwst.datamodel.JwstDataModel, jwst.datamodel.datamodel
+    output_model, corrections : jwst.datamodels.JwstDataModel
         2-tuple of the corrected science data with pathloss extensions added, and a
         model of the correction arrays.
     """
@@ -549,10 +549,10 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
 
     Parameters
     ----------
-    data : jwst.datamodel.JwstDataModel
+    data : jwst.datamodels.JwstDataModel
         The NIRSpec MOS data to be corrected.
 
-    pathloss : jwst.datamodel.PathlossModel or None
+    pathloss : jwst.datamodels.PathlossModel or None
         The pathloss reference data.
 
     inverse : bool
@@ -566,7 +566,7 @@ def do_correction_mos(data, pathloss, inverse=False, source_type=None, correctio
 
     Returns
     -------
-    corrections : jwst.datamodel.MultiSlitModel
+    corrections : jwst.datamodels.MultiSlitModel
         The pathloss corrections applied.
     """
     exp_type = data.meta.exposure.type
@@ -622,10 +622,10 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
 
     Parameters
     ----------
-    data : jwst.datamodel.JwstDataModel
+    data : jwst.datamodels.JwstDataModel
         The NIRSpec fixed-slit data to be corrected.
 
-    pathloss : jwst.datamodel.JwstDataModel
+    pathloss : jwst.datamodels.JwstDataModel
         The pathloss reference data.
 
     inverse : bool
@@ -639,7 +639,7 @@ def do_correction_fixedslit(data, pathloss, inverse=False, source_type=None, cor
 
     Returns
     -------
-    corrections : jwst.datamodel.MultiSlitModel
+    corrections : jwst.datamodels.MultiSlitModel
         The pathloss corrections applied.
     """
     exp_type = data.meta.exposure.type
@@ -696,10 +696,10 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
 
     Parameters
     ----------
-    data : jwst.datamodel.JwstDataModel
+    data : jwst.datamodels.JwstDataModel
         The NIRSpec IFU data to be corrected.
 
-    pathloss : jwst.datamodel.JwstDataModel
+    pathloss : jwst.datamodels.JwstDataModel
         The pathloss reference data.
 
     inverse : bool
@@ -713,7 +713,7 @@ def do_correction_ifu(data, pathloss, inverse=False, source_type=None, correctio
 
     Returns
     -------
-    corrections : jwst.datamodel.JwstDataModel
+    corrections : jwst.datamodels.JwstDataModel
         The pathloss corrections applied.
     """
     if correction_pars:
@@ -759,10 +759,10 @@ def do_correction_lrs(data, pathloss, user_slit_loc):
 
     Parameters
     ----------
-    data : jwst.datamodel.JwstDataModel
+    data : jwst.datamodels.JwstDataModel
         The MIRI LRS fixed-slit data to be corrected.
 
-    pathloss : jwst.datamodel.JwstDataModel
+    pathloss : jwst.datamodels.JwstDataModel
         The pathloss reference data.
 
     user_slit_loc : float
@@ -811,10 +811,10 @@ def do_correction_soss(data, pathloss):
 
     Parameters
     ----------
-    data : jwst.datamodel.JwstDataModel
+    data : jwst.datamodels.JwstDataModel
         The NIRISS SOSS data to be corrected.
 
-    pathloss : jwst.datamodel.JwstDataModel
+    pathloss : jwst.datamodels.JwstDataModel
         The pathloss reference data.
     """
     # Omit correction if this is a TSO observation

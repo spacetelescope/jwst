@@ -32,12 +32,12 @@ def assign_moving_target_wcs(input_models):
 
     Parameters
     ----------
-    input_models : `~jwst.datamodels.ModelLibrary`
+    input_models : `~jwst.datamodels.library.ModelLibrary`
         A collection of data models.
 
     Returns
     -------
-    `~jwst.datamodels.ModelLibrary`
+    `~jwst.datamodels.library.ModelLibrary`
         The modified data models.
     """
     if not isinstance(input_models, ModelLibrary):
@@ -107,7 +107,7 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
 
     Parameters
     ----------
-    wcs : `~gwcs.WCS`
+    wcs : `~gwcs.wcs.WCS`
         WCS object for the observation or slit.
     ra_average : float
         The average RA of all observations.
@@ -118,7 +118,7 @@ def add_mt_frame(wcs, ra_average, dec_average, mt_ra, mt_dec):
 
     Returns
     -------
-    new_wcs : `~gwcs.WCS`
+    new_wcs : `~gwcs.wcs.WCS`
         The WCS for the moving target observation.
     """
     pipeline = wcs.pipeline[:-1]
