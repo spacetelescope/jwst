@@ -1,0 +1,2 @@
+Add velocity correction to the inverse WCS transforms for NIRSpec spectroscopic modes to fix a round trip error.
+Fix a typo in NIRISS SOSS WCS calculations that confused order 2 and order 3 wavelengths.
