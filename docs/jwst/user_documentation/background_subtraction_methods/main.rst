@@ -126,7 +126,7 @@ one nod position can be used as background for exposures at the other nod positi
 assuming the source is point-like.
 
 In either instance, the exposures to be used as background are included in the
-`image2` or `spec2` ASN file used to process the science target exposures, where
+``image2`` or ``spec2`` ASN file used to process the science target exposures, where
 the background exposures are labeled with an ASN member type of "background".
 
 Spectroscopic observations that have designated background target exposures or
