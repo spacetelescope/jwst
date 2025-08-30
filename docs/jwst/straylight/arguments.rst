@@ -8,7 +8,7 @@ The ``straylight`` step has the following optional arguments.
 
 ``--save_shower_model`` (boolean, default=False)
   If set, the model of the residual cosmic ray shower artifacts will
-  be saved with the suffix `shower_model`.
+  be saved with the suffix ``shower_model``.
 
 ``--shower_plane`` (int, default=3)
   Identifies the throughput plane to use from the MRS regions reference
