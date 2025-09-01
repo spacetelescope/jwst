@@ -30,7 +30,7 @@ repos:
       - id: text-unicode-replacement-char
   # lint and format
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.12.10
+    rev: v0.12.11
     hooks:
       - id: ruff-check
         args:
@@ -54,7 +54,7 @@ repos:
           - tomli
   # validate change log and fragments in `changes/`
   - repo: https://github.com/twisted/towncrier
-    rev: 24.8.0
+    rev: 25.8.0
     hooks:
       - id: towncrier-check
   # format YAML and Markdown
