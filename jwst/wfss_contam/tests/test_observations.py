@@ -18,12 +18,12 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     direct_image_with_gradient still needs to be run to produce the file,
     even though it is not called directly
     """
-    filter_name = "F200W"
+    seg = segmentation_map.data
     return Observation(
         direct_image_with_gradient.data,
         segmentation_map,
         grism_wcs,
-        filter_name,
+        phot_per_lam=False,
     )
 
 

@@ -32,7 +32,7 @@ multiple integrations within each exposure.
 It is assumed that the ``stack_refs`` step will be called from the
 :ref:`calwebb_coron3 <calwebb_coron3>` pipeline, which is given an ASN file as input,
 specifying one or more PSF target exposures.
-The actual input passed to the ``stack_refs`` step will be a `~jwst.datamodels.ModelContainer`
+The actual input passed to the ``stack_refs`` step will be a `~jwst.datamodels.container.ModelContainer`
 created by the :ref:`calwebb_coron3 <calwebb_coron3>` pipeline, containing a
 `~jwst.datamodels.CubeModel` data model for each PSF "_calints" exposure listed in the
 ASN file. See :ref:`calwebb_coron3 <calwebb_coron3>` for more details on the contents of

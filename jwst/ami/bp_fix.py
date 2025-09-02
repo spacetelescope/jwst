@@ -182,7 +182,7 @@ def bad_pixels(data, median_size, median_tres):
 
     Returns
     -------
-    pxdq : np.ndarray[int]
+    pxdq : ndarray[int]
         Bad pixel mask identified by median filtering
     """
     mfil_data = median_filter(data, size=median_size)
@@ -280,7 +280,7 @@ def fix_bad_pixels(data, pxdq0, filt, pxsc, nrm_model):
     -------
     data : numpy array
         Corrected data
-    pxdq : np.ndarray[int]
+    pxdq : ndarray[int]
         Mask of bad pixels, updated if new ones were found
     """
     dq_dnu = pxdq0 & DO_NOT_USE == DO_NOT_USE

@@ -275,7 +275,7 @@ to supply custom catalogs.
 
         Parameters
         ----------
-        asn_data : ~jwst.associations.Association
+        asn_data : `~jwst.associations.Association`
             An association dictionary
         """
         # match the asn_exptypes to the exptype in the association and retain

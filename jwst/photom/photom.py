@@ -1438,7 +1438,7 @@ class DataSet:
 
         Returns
         -------
-        output_model : ~jwst.datamodels.JwstDataModel
+        output_model : `~jwst.datamodels.JwstDataModel`
             Output data model with the flux calibrations applied.
         """
         with datamodels.open(photom_fname) as ftab:

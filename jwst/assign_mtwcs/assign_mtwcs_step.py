@@ -27,12 +27,12 @@ class AssignMTWcsStep(Step):
 
         Parameters
         ----------
-        input_lib : `~jwst.datamodels.ModelLibrary`
+        input_lib : `~jwst.datamodels.library.ModelLibrary`
             A collection of data models.
 
         Returns
         -------
-        `~jwst.datamodels.ModelLibrary`
+        `~jwst.datamodels.library.ModelLibrary`
             The modified data models.
         """
         if not isinstance(input_lib, ModelLibrary):

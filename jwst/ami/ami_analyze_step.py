@@ -1,3 +1,5 @@
+import logging
+
 import asdf
 import numpy as np
 from stdatamodels.jwst import datamodels
@@ -14,6 +16,8 @@ SX_COMM = 6.18605e-03
 SY_COMM = -7.27008e-03
 XO_COMM = 0.0
 YO_COMM = 0.0
+
+log = logging.getLogger(__name__)
 
 
 class BandpassError(Exception):
@@ -81,10 +85,10 @@ class AmiAnalyzeStep(Step):
             # assume it is an array of the correct shape
             wavemin = np.min(bandpass[:, 1])
             wavemax = np.max(bandpass[:, 1])
-            self.log.info("User-defined bandpass provided:")
-            self.log.info("\tOVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES")
-            self.log.info(f"Using {bandpass.shape[0]} wavelengths for fit.")
-            self.log.info(f"Wavelength min: {wavemin:.3e} \t Wavelength max: {wavemax:.3e}")
+            log.info("User-defined bandpass provided:")
+            log.info("\tOVERWRITING ALL NIRISS-SPECIFIC FILTER/BANDPASS VARIABLES")
+            log.info(f"Using {bandpass.shape[0]} wavelengths for fit.")
+            log.info(f"Wavelength min: {wavemin:.3e} \t Wavelength max: {wavemax:.3e}")
 
             # update attribute and return
             self.bandpass = bandpass
@@ -130,13 +134,13 @@ class AmiAnalyzeStep(Step):
                     yo=af["yo"],
                     rotradccw=af["rotradccw"],
                 )
-                self.log.info(f"Using affine transform from ASDF file {self.affine2d}")
+                log.info(f"Using affine transform from ASDF file {self.affine2d}")
             # now self.affine2d updated from string to object
             self.affine2d = affine2d
 
         except FileNotFoundError:
-            self.log.info(f"File {self.affine2d} could not be found at the specified location.")
-            self.log.info(msg_defaulting)
+            log.info(f"File {self.affine2d} could not be found at the specified location.")
+            log.info(msg_defaulting)
             affine2d = None
 
         except KeyError:
@@ -145,15 +149,15 @@ class AmiAnalyzeStep(Step):
                 "mx, my, sx, sy ,xo, yo, rotradccw. "
             )
             message2 = "See step documentation for info on creating a custom affine2d ASDF file."
-            self.log.info(message1 + message2)
-            self.log.info(msg_defaulting)
+            log.info(message1 + message2)
+            log.info(msg_defaulting)
             affine2d = None
 
         except (IndexError, TypeError, ValueError):
             message1 = f"Could not use affine2d from {self.affine2d}. "
             message2 = "See documentation for info on creating a custom bandpass ASDF file."
-            self.log.info(message1 + message2)
-            self.log.info(msg_defaulting)
+            log.info(message1 + message2)
+            log.info(msg_defaulting)
             affine2d = None
 
         else:
@@ -199,9 +203,9 @@ class AmiAnalyzeStep(Step):
         if str(affine2d).lower() == "none":
             affine2d = None
 
-        self.log.info(f"Oversampling factor = {oversample}")
-        self.log.info(f"Initial rotation guess = {rotate} deg")
-        self.log.info(f"Initial values to use for psf offset = {psf_offset}")
+        log.info(f"Oversampling factor = {oversample}")
+        log.info(f"Initial rotation guess = {rotate} deg")
+        log.info(f"Initial values to use for psf offset = {psf_offset}")
 
         # Make sure oversample is odd
         if oversample % 2 == 0:
@@ -211,7 +215,7 @@ class AmiAnalyzeStep(Step):
         with datamodels.open(input_data) as input_model:
             # Get the name of the filter throughput reference file to use
             throughput_reffile = self.get_reference_file(input_model, "throughput")
-            self.log.info(f"Using filter throughput reference file {throughput_reffile}")
+            log.info(f"Using filter throughput reference file {throughput_reffile}")
 
             # Check for a valid reference file or user-provided bandpass
             if (throughput_reffile == "N/A") & (bandpass is None):
@@ -233,13 +237,13 @@ class AmiAnalyzeStep(Step):
                         yo=YO_COMM,
                         name="commissioning",
                     )
-                    self.log.info("Using affine parameters from commissioning.")
+                    log.info("Using affine parameters from commissioning.")
                 else:
                     affine2d = self.override_affine2d()
 
             # Get the name of the NRM reference file to use
             nrm_reffile = self.get_reference_file(input_model, "nrm")
-            self.log.info(f"Using NRM reference file {nrm_reffile}")
+            log.info(f"Using NRM reference file {nrm_reffile}")
 
             with (
                 datamodels.ThroughputModel(throughput_reffile) as throughput_model,

@@ -583,7 +583,7 @@ def _model_image(
     n_os : int, optional
         The oversampling factor of the wavelength grid used when solving for
         the uncontaminated flux. If not specified, defaults to 2.
-    wave_grid : np.ndarray, optional
+    wave_grid : ndarray, optional
         Wavelength grid used by ATOCA to model each pixel valid pixel of the detector.
         If not given, the grid is determined based on an estimate of the flux (estimate),
         the relative tolerance (rtol) required on each pixel model and

@@ -26,7 +26,7 @@ def background_subtract(
 
     Parameters
     ----------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values
     box_size : tuple
         Size of box in pixels to use for background estimation.
@@ -40,7 +40,7 @@ def background_subtract(
 
     Returns
     -------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values with background subtracted
 
     Notes
@@ -72,7 +72,7 @@ def _select_ids(source_id, all_ids):
     ----------
     source_id : int or list-like
         ID(s) of source to process. If None, all sources processed.
-    all_ids : np.ndarray
+    all_ids : ndarray
         Array of all source IDs in the segmentation map
 
     Returns
@@ -114,12 +114,12 @@ class Observation:
         direct_image,
         segmap_model,
         grism_wcs,
-        filter_name,
         boundaries=None,
         offsets=None,
         max_cpu=1,
         max_pixels_per_chunk=5e4,
         oversample_factor=2,
+        phot_per_lam=True,
     ):
         """
         Initialize all data and metadata for a given observation.
@@ -132,18 +132,20 @@ class Observation:
             Segmentation map model
         grism_wcs : gwcs object
             WCS object from grism image
-        filter_name : str
-            Filter name
-        boundaries : list, optional, default []
+        boundaries : list, optional
             Start/Stop coordinates of the FOV within the larger seed image.
         offsets : list, optional, default [0,0]
             Offset values for x and y axes
-        max_cpu : int, optional, default 1
-            Max number of cpu's to use when multiprocessing
-        max_pixels_per_chunk : int, optional, default 1e5
+        max_cpu : int, optional
+            Max number of cpus to use when multiprocessing
+        max_pixels_per_chunk : int, optional
             Maximum number of pixels per chunk when dispersing sources
-        oversample_factor : int, optional, default 2
+        oversample_factor : int, optional
             Factor by which to oversample the wavelength grid
+        phot_per_lam : bool, optional
+            Whether to compute photometry per wavelength bin (True) or per pixel (False).
+            This depends on how the photom reference file has been delivered.
+            True should be used for NIRCam, and False should be used for NIRISS.
         """
         if boundaries is None:
             boundaries = []
@@ -156,13 +158,12 @@ class Observation:
         all_ids = list(set(np.ravel(self.seg)))
         all_ids.remove(0)  # Remove the background ID
         self.source_ids = all_ids
-        self.filter = filter_name
-        self.pivlam = float(self.filter[1:4]) / 100.0
         self.max_cpu = max_cpu
         self.max_pixels_per_chunk = max_pixels_per_chunk
         self.oversample_factor = oversample_factor
         self.xoffset = offsets[0]
         self.yoffset = offsets[1]
+        self.phot_per_lam = phot_per_lam
 
         # ensure the direct image has background subtracted
         self.dimage = background_subtract(direct_image)
@@ -274,6 +275,7 @@ class Observation:
                     self.oversample_factor,
                     self.xoffset,
                     self.yoffset,
+                    self.phot_per_lam,
                 ]
             )
 
@@ -293,9 +295,9 @@ class Observation:
             Minimum wavelength for dispersed spectra
         wmax : float
             Maximum wavelength for dispersed spectra
-        sens_waves : np.ndarray
+        sens_waves : ndarray
             Wavelength array from photom reference file
-        sens_response : np.ndarray
+        sens_response : ndarray
             Response (flux calibration) array from photom reference file
         selected_ids : list, optional
             List of source IDs to process. If None, all sources are processed.
@@ -350,7 +352,7 @@ def _construct_slitmodel(
 
     Parameters
     ----------
-    img : np.ndarray
+    img : ndarray
         Dispersed model image of segmentation map source
     bounds : list
         The bounds of the object in relation to the full-frame image.

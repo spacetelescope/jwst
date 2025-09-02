@@ -77,7 +77,7 @@ def mkpool(
     ----------
     data : int
         The data to get the pool parameters from.
-        Can be pathnames or `astropy.io.fits.HDUL`
+        Can be pathnames or `astropy.io.fits.HDUList`
         or `astropy.io.fits.ImageHDU`.
 
     asn_candidate : [(id, type)[,...]] or None

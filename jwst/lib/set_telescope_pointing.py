@@ -3125,7 +3125,7 @@ def calc_wcs_guiding(
 
     Parameters
     ----------
-    model : `~jwst.datamodels.DataModel`
+    model : `~stdatamodels.DataModel`
         The model to update.
 
     t_pars : `TransformParameters`

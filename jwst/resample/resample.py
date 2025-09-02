@@ -813,7 +813,7 @@ def compute_image_pixel_area(wcs):
 
     Parameters
     ----------
-    wcs : gwcs.WCS
+    wcs : gwcs.wcs.WCS
         A WCS object.
 
     Returns

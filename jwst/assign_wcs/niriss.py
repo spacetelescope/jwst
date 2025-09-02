@@ -46,7 +46,7 @@ def create_pipeline(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     log.debug(f"reference files used in NIRISS WCS pipeline: {reference_files}")
     exp_type = input_model.meta.exposure.type.lower()
@@ -68,7 +68,7 @@ def niriss_soss_set_input(model, order_number):
 
     Returns
     -------
-    gwcs.WCS
+    gwcs.wcs.WCS
         The WCS corresponding to the spectral order.
     """
     # Make sure the spectral order is available.
@@ -150,7 +150,7 @@ def niriss_soss(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     # Get the target RA and DEC, they will be used for setting the WCS RA
     # and DEC based on a conversation with Kevin Volk.
@@ -253,7 +253,7 @@ def imaging(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     detector = cf.Frame2D(name="detector", axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(
@@ -360,7 +360,7 @@ def wfss(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
 
     Notes
     -----

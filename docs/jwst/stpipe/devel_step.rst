@@ -117,10 +117,14 @@ to describe its parameters.
 
 ::
 
+    import logging
+
+    from my_awesome_astronomy_library import combine
+    from stdatamodels.jwst.datamodels import ImageModel
+
     from jwst.stpipe import Step
 
-    from stdatamodels.jwst.datamodels import ImageModel
-    from my_awesome_astronomy_library import combine
+    log = logging.getLogger(__name__)
 
     class ExampleStep(Step):
         """
@@ -130,7 +134,7 @@ to describe its parameters.
 
         # 1.
         def process(self, image1, image2):
-            self.log.info("Inside ExampleStep")
+            log.info("Inside ExampleStep")
 
             # 2.
             threshold = self.threshold
