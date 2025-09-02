@@ -1868,7 +1868,7 @@ def try_solve_two_methods(matrix, result):
             try:
                 return lsqr(matrix, result)[0]
             except ValueError:
-                log.warning("No solution found.")
+                log.warning("No solution found. Filling solution array with NaN.")
                 return np.full(matrix.shape[1], np.nan)
 
 
