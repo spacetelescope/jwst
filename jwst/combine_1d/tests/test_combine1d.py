@@ -257,7 +257,7 @@ def test_allnan_skip(wfss_multiexposure, monkeypatch):
 
     # message when no valid input spectra at all are found
     watcher2 = LogWatcher("No valid input spectra found in WFSSMultiSpecModel")
-    monkeypatch.setattr(logging.getLogger("stpipe.Combine1dStep"), "error", watcher2)
+    monkeypatch.setattr(logging.getLogger("jwst.combine_1d.combine_1d_step"), "error", watcher2)
     result = Combine1dStep.call(wfss_multiexposure)
     assert result.meta.cal_step.combine_1d == "SKIPPED"
     watcher2.assert_seen()

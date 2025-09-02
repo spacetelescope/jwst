@@ -1,4 +1,5 @@
-#! /usr/bin/env python
+import logging
+
 import numpy as np
 from stdatamodels.jwst import datamodels
 
@@ -9,6 +10,8 @@ from jwst.background.background_sub_wfss import subtract_wfss_bkg
 from jwst.stpipe import Step
 
 __all__ = ["BackgroundStep"]
+
+log = logging.getLogger(__name__)
 
 
 class BackgroundStep(Step):
@@ -63,12 +66,12 @@ class BackgroundStep(Step):
             wlrange_name = self.get_reference_file(model, "wavelengthrange")
 
             if bkg_name == "N/A":
-                self.log.warning("No BKG reference file found. Skipping background subtraction.")
+                log.warning("No BKG reference file found. Skipping background subtraction.")
                 model.meta.cal_step.bkg_subtract = "SKIPPED"
                 return model
 
-            self.log.info("Using BKG reference file %s", bkg_name)
-            self.log.info("Using WavelengthRange reference file %s", wlrange_name)
+            log.info("Using BKG reference file %s", bkg_name)
+            log.info("Using WavelengthRange reference file %s", wlrange_name)
 
             # Do the background subtraction for WFSS/GRISM data
             rescaler_kwargs = {
@@ -92,7 +95,7 @@ class BackgroundStep(Step):
         elif model.meta.exposure.type == "NIS_SOSS":
             # Fetch the background reference filename
             bkg_name = self.get_reference_file(model, "bkg")
-            self.log.info("Using BKG reference file %s", bkg_name)
+            log.info("Using BKG reference file %s", bkg_name)
 
             if self.soss_bkg_percentile is None:
                 soss_bkg_percentile = [25.0, 50.0]
@@ -130,7 +133,7 @@ class BackgroundStep(Step):
             # Make sure that the background list is not empty for this case,
             # or report and skip the step
             if bkg_list is None or len(bkg_list) == 0:
-                self.log.warning("* No background list provided * Skipping step.")
+                log.warning("* No background list provided * Skipping step.")
                 model.meta.cal_step.bkg_subtract = "SKIPPED"
                 return model
 
@@ -162,14 +165,12 @@ class BackgroundStep(Step):
                 result.meta.cal_step.bkg_subtract = "COMPLETE"
                 if self.save_combined_background:
                     comb_bkg_path = self.save_model(bkg_model, suffix=self.bkg_suffix, force=True)
-                    self.log.info(f"Combined background written to {comb_bkg_path}.")
+                    log.info(f"Combined background written to {comb_bkg_path}.")
 
             else:
                 result = model
                 result.meta.cal_step.bkg_subtract = "SKIPPED"
-                self.log.warning("Skipping background subtraction")
-                self.log.warning(
-                    "GWA_XTIL and GWA_YTIL source values are not the same as bkg values"
-                )
+                log.warning("Skipping background subtraction")
+                log.warning("GWA_XTIL and GWA_YTIL source values are not the same as bkg values")
 
         return result
