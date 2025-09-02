@@ -146,7 +146,7 @@ and all arguments can be passed to the step directly since it is now at the step
 To use a custom parameter file, set the ``config_file`` parameter::
 
     # passing a custom parameter file to a pipeline
-    result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits",\
+    result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits",
                                     config_file='calwebb_detector1.asdf')
 
 Again, note the :ref:`parameter precedence<Parameter Precedence>` rules. If an
@@ -236,7 +236,7 @@ Multiple reference file overrides can be provided, for example::
                                     steps={"saturation": {"override_saturation": '/path/to/new_saturation_ref_file.fits'},
                                           {"jump" : {"override_jump": '/path/to/new_jump_ref_file.fits'}})
 
-To override a reference file for a standalone step, "override\_<stepname>"
+To override a reference file for a standalone step, ``override_<stepname>``
 can be passed directly as a keyword argument to that step's ``call`` method::
 
     # To override a reference file when running a standalone step
