@@ -1,0 +1,1 @@
+For WFSS, when the step exits early, the status will be set to FAILED instead of SKIPPED. In this case, the scaling factor is set to 0.0 and the background mask is saved to the output.

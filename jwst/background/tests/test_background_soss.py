@@ -121,10 +121,12 @@ def test_subtract_soss_bkg(
 
     # Test image-based correction.
     result = subtract_soss_bkg(generate_soss_image, template_model, 35.0, [25.0, 50.0])
+    assert result is generate_soss_image
     assert type(result) == type(generate_soss_image)
 
     # Test cube-based correction.
     result = subtract_soss_bkg(generate_soss_cube, template_model, 35.0, [25.0, 50.0])
+    assert result is generate_soss_cube
     assert type(result) == type(generate_soss_cube)
 
     # Test step-level call along with substrip96-shaped data.
@@ -136,6 +138,7 @@ def test_subtract_soss_bkg(
     assert type(result) == type(generate_soss_cube_substrip96)
     assert result is not mock_model
     assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+    assert mock_model.meta.cal_step.bkg_subtract is None
 
 
 def test_bkg_fail(monkeypatch, caplog, generate_background_template, generate_soss_cube_substrip96):
@@ -154,6 +157,7 @@ def test_bkg_fail(monkeypatch, caplog, generate_background_template, generate_so
     assert result is not mock_model
     assert result.meta.cal_step.bkg_subtract == "SKIPPED"
     assert "Template matching failed" in caplog.text
+    assert mock_model.meta.cal_step.bkg_subtract is None
 
 
 def test_bkg_percentile(generate_background_template, generate_soss_cube_substrip96):
@@ -169,3 +173,4 @@ def test_bkg_percentile(generate_background_template, generate_soss_cube_substri
     )
     assert result is not mock_model
     assert result.meta.cal_step.bkg_subtract == "COMPLETE"
+    assert mock_model.meta.cal_step.bkg_subtract is None

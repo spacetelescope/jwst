@@ -1,10 +1,13 @@
-#! /usr/bin/env python
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.dq_init import dq_initialization
 from jwst.stpipe import Step
 
 __all__ = ["DQInitStep"]
+
+log = logging.getLogger(__name__)
 
 
 class DQInitStep(Step):
@@ -46,28 +49,28 @@ class DQInitStep(Step):
                 # Reopen as a GuiderRawModel
                 input_model.close()
                 input_model = datamodels.GuiderRawModel(step_input)
-                self.log.info("Input opened as GuiderRawModel")
+                log.info("Input opened as GuiderRawModel")
 
         except (TypeError, ValueError):
             # If the initial open attempt fails,
             # try to open as a GuiderRawModel
             try:
                 input_model = datamodels.GuiderRawModel(step_input)
-                self.log.info("Input opened as GuiderRawModel")
+                log.info("Input opened as GuiderRawModel")
             except (TypeError, ValueError):
-                self.log.error("Unexpected or unknown input model type")
+                log.error("Unexpected or unknown input model type")
         except Exception:
-            self.log.error("Can't open input")
+            log.error("Can't open input")
             raise
 
         # Retrieve the mask reference file name
         self.mask_filename = self.get_reference_file(input_model, "mask")
-        self.log.info("Using MASK reference file %s", self.mask_filename)
+        log.info("Using MASK reference file %s", self.mask_filename)
 
         # Check for a valid reference file
         if self.mask_filename == "N/A":
-            self.log.warning("No MASK reference file found")
-            self.log.warning("DQ initialization step will be skipped")
+            log.warning("No MASK reference file found")
+            log.warning("DQ initialization step will be skipped")
             input_model.meta.cal_step.dq_init = "SKIPPED"
             return input_model
 

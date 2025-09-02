@@ -1,9 +1,5 @@
 #! /usr/bin/env python
-"""
-JWST pipeline step for sky matching.
-
-:Authors: Mihai Cara
-"""
+"""JWST pipeline step for sky matching."""
 
 import logging
 from copy import deepcopy

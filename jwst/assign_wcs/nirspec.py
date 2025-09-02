@@ -94,7 +94,7 @@ def create_pipeline(input_model, reference_files, slit_y_range):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     exp_type = input_model.meta.exposure.type.lower()
     if input_model.meta.instrument.grating.lower() == "mirror":
@@ -132,7 +132,7 @@ def imaging(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files["disperser"])
@@ -263,7 +263,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     detector = input_model.meta.instrument.detector
     grating = input_model.meta.instrument.grating
@@ -420,7 +420,7 @@ def slits_wcs(input_model, reference_files, slit_y_range):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     open_slits_id = get_open_slits(input_model, reference_files, slit_y_range)
     if not open_slits_id:
@@ -453,7 +453,7 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
 
     Notes
     -----
@@ -2922,7 +2922,7 @@ def nrs_lamp(input_model, reference_files, slit_y_range):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     lamp_mode = input_model.meta.instrument.lamp_mode
     if isinstance(lamp_mode, str):

@@ -8,9 +8,9 @@ spectroscopic observations. The algorithm is very similar to the
 :ref:`imaging algorithm <outlier-detection-imaging>`, and much of the same code is used.
 Please refer to those docs for more information.
 A :ref:`Stage 3 association <asn-level3-techspecs>`,
-which is loaded into a :py:class:`~jwst.datamodels.ModelContainer` object,
-serves as the input and output to this step, and the :py:class:`~jwst.datamodels.ModelContainer`
-is converted into a :py:class:`~jwst.datamodels.ModelLibrary` object to allow sharing code
+which is loaded into a :py:class:`~jwst.datamodels.container.ModelContainer` object,
+serves as the input and output to this step, and the :py:class:`~jwst.datamodels.container.ModelContainer`
+is converted into a :py:class:`~jwst.datamodels.library.ModelLibrary` object to allow sharing code
 with the imaging mode.
 
 This routine performs identical operations to the imaging mode, with the following exceptions:

@@ -40,7 +40,7 @@ Inputs
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.DataModel`
+:Data model: `~stdatamodels.DataModel`
 :File suffix: _calints
 
 The inputs to ``calwebb_ami3`` need to be in the form of an ASN file that lists

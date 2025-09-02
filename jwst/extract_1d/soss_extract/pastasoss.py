@@ -200,9 +200,9 @@ def _rotate(x, y, angle, origin=(0, 0)):
 
     Parameters
     ----------
-    x : np.ndarray
+    x : ndarray
         The x-coordinates of the points to be transformed.
-    y : np.ndarray
+    y : ndarray
         The y-coordinates of the points to be transformed.
     angle : float
         The angle (in degrees) by which to rotate the points.
@@ -211,7 +211,7 @@ def _rotate(x, y, angle, origin=(0, 0)):
 
     Returns
     -------
-    tuple[np.ndarray, np.ndarray]
+    tuple[ndarray, ndarray]
         The x and y coordinates of the rotated points.
 
     Examples
@@ -295,11 +295,11 @@ def get_soss_traces(pwcpos, order, subarray="SUBSTRIP256", refmodel=None):
     -------
     order : str
         The spectral order for which a trace is computed.
-    x : np.ndarray
+    x : ndarray
         The x coordinates of the rotated points.
-    y : np.ndarray
+    y : ndarray
         The y coordinates of the rotated points.
-    wavelengths : np.ndarray
+    wavelengths : ndarray
         The wavelengths associated with the rotated points.
     """
     if refmodel is None:
@@ -358,11 +358,11 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
     -------
     order : str
         The spectral order for which a trace is computed.
-    x : np.ndarray
+    x : ndarray
         The x coordinates of the rotated points.
-    y : np.ndarray
+    y : ndarray
         The y coordinates of the rotated points.
-    wavelengths : np.ndarray
+    wavelengths : ndarray
         The wavelengths associated with the rotated points.
     """
     spectral_order_index = _find_spectral_order_index(refmodel, int(order))

@@ -290,6 +290,7 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
         wfss_rms_stop=0,
     )
     assert result is not data
+    assert data.meta.cal_step.bkg_subtract is None
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
@@ -321,6 +322,7 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
         wfss_rms_stop=0,
     )
     assert result is not data
+    assert data.meta.cal_step.bkg_subtract is None
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
@@ -481,7 +483,7 @@ def test_wfss_asn_input(mock_asn_and_data):
     # get the file name of asn and other file objects
     asn_name, ratefile = mock_asn_and_data[0], mock_asn_and_data[1]
     i2dfile, segmfile = mock_asn_and_data[2], mock_asn_and_data[3]
-    # change the working directory into the temp so it can find all files
+    # change the working directory into the temp dir, so it can find all files
     cwd = os.getcwd()
     os.chdir(ratefile.parents[0])
     result = BackgroundStep.call(asn_name)
@@ -502,6 +504,7 @@ def test_missing_bkg(monkeypatch, caplog, make_nrc_wfss_datamodel):
 
     result = step.run(model)
     assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
     assert result.meta.cal_step.bkg_subtract == "SKIPPED"
     assert "No BKG reference file" in caplog.text
 
@@ -516,5 +519,27 @@ def test_bkg_fail(monkeypatch, caplog, make_nrc_wfss_datamodel):
 
     result = BackgroundStep.call(model)
     assert result is not model
-    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert model.meta.cal_step.bkg_subtract is None
+    assert result.meta.cal_step.bkg_subtract == "FAILED"
+    assert result.meta.background.scaling_factor == 0.0
     assert "Not enough background pixels" in caplog.text
+
+
+def test_infinite_factor(monkeypatch, caplog, make_nrc_wfss_datamodel):
+    """Test for infinite scaling factor."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Mock an infinite scaling factor
+    monkeypatch.setattr(
+        background_sub_wfss._ScalingFactorComputer, "err_weighted_mean", lambda *args: np.nan
+    )
+
+    result = BackgroundStep.call(model)
+    assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
+    assert result.meta.cal_step.bkg_subtract == "FAILED"
+    assert result.meta.background.scaling_factor == 0.0
+    assert (
+        "Could not determine a finite scaling factor between reference background and data"
+        in caplog.text
+    )

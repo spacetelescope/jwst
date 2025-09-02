@@ -999,7 +999,7 @@ def in_ifu_slice(slice_wcs, ra, dec, lam):
 
     Parameters
     ----------
-    slice_wcs : `~gwcs.WCS`
+    slice_wcs : `~gwcs.wcs.WCS`
         Slice WCS object.
     ra, dec, lam : float, ndarray
         Physical Coordinates.
@@ -1056,7 +1056,7 @@ def update_fits_wcsinfo(
 
     Parameters
     ----------
-    datamodel : `ImageModel`
+    datamodel : `~jwst.datamodels.ImageModel`
         The input data model for imaging or WFSS mode whose ``meta.wcsinfo``
         field should be updated from GWCS. By default, ``datamodel.meta.wcs``
         is used to compute FITS WCS + SIP approximation. When ``imwcs`` is
@@ -1115,7 +1115,7 @@ def update_fits_wcsinfo(
         reference_api.html#module-astropy.modeling.projections>`_
         projection models inherited from
         :py:class:`~astropy.modeling.projections.Pix2SkyProjection`.
-    imwcs : `gwcs.WCS`, None, optional
+    imwcs : `gwcs.wcs.WCS`, None, optional
         Imaging GWCS object for WFSS mode whose FITS WCS approximation should
         be computed and stored in the ``datamodel.meta.wcsinfo`` field.
         When ``imwcs`` is `None` then WCS from ``datamodel.meta.wcs``
