@@ -30,7 +30,7 @@ def test_verify_requested_orders(log_watcher):
     requested_orders = [1, 2, 4]
     watcher = log_watcher(
         "jwst.extract_1d.soss_extract.pastasoss",
-        message="Requested orders not found in reference model",
+        message="Some requested orders were not found in reference model",
     )
     good_orders = _verify_requested_orders(refmodel_orders, requested_orders)
     watcher.assert_seen()

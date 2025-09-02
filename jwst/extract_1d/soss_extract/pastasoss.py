@@ -60,11 +60,11 @@ def _verify_requested_orders(orders_requested, refmodel_orders):
             f"{orders_requested}. Defined orders are {refmodel_orders}."
         )
     if np.any(not_in):
-        log.warning(
-            f"Requested orders not found in reference model: {orders_requested}. "
-            f"Skipping that order."
-        )
         orders_requested = orders_requested[~not_in]
+        log.warning(
+            "Some requested orders were not found in reference model. Skipping those orders "
+            f"and proceeding with orders {orders_requested}."
+        )
     return orders_requested.tolist()
 
 
@@ -350,7 +350,6 @@ def _get_soss_traces(refmodel, pwcpos, order, subarray):
         keyword PWCPOS.
     order : str or int
         The spectral order for which a trace is computed.
-        Order 3 is currently unsupported.
     subarray : str
         Name of subarray in use, typically 'SUBSTRIP96' or 'SUBSTRIP256'.
 
