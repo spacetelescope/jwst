@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 __all__ = ["AssignWcsStep"]
 
 
-WFSS_TYPES = {"nrc_wfss", "nis_wfss"}
+WFSS_TYPES = {"nrc_wfss", "nis_wfss", "mir_wfss"}
 
 
 class AssignWcsStep(Step):
@@ -109,6 +109,8 @@ class AssignWcsStep(Step):
                 reffile = self.get_reference_file(input_model, reftype)
                 reference_file_names[reftype] = reffile if reffile else ""
             log.debug(f"reference files used in assign_wcs: {reference_file_names}")
+            print("*****************************************")
+            print(f"reference files used in assign_wcs: {reference_file_names}")
 
             # Get the MSA metadata file if needed and add to reffiles
             if input_model.meta.exposure.type == "NRS_MSASPEC":
@@ -121,6 +123,8 @@ class AssignWcsStep(Step):
                     log.error(message)
                     raise MSAFileError(message)
             slit_y_range = [self.slit_y_low, self.slit_y_high]
+
+            print("in assign_wcs_step", self.slit_y_low, self.slit_y_high)
             result = load_wcs(
                 input_model,
                 reference_file_names,
