@@ -366,7 +366,14 @@ def dhs(input_model, reference_files):
 
     label_mapper = selector.LabelMapperArray(
         regions,
-        # inputs_mapping=Mapping((0, 1,), n_inputs=3),
+        inputs_mapping=Mapping(
+            (
+                0,
+                1,
+            ),
+            n_inputs=3,
+        ),
+        inputs=("x", "y", "order"),
     )
     transforms = {}
 
