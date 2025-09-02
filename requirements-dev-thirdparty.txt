@@ -7,8 +7,9 @@ git+https://github.com/asdf-format/asdf-wcs-schemas
 
 # Use nightly Astropy dev builds
 git+https://github.com/astropy/asdf-astropy
---extra-index-url https://pypi.anaconda.org/astropy/simple
+--extra-index-url https://pypi.anaconda.org/liberfa/simple
 pyerfa>=0.0.dev0
+--extra-index-url https://pypi.anaconda.org/astropy/simple
 astropy>=0.0.dev0
 photutils>=0.0.dev0
 
