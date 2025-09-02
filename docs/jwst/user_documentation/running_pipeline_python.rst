@@ -509,10 +509,12 @@ There are a couple of scenarios to use multiprocessing with the pipeline:
    as a string or it can be set to the words ``quarter``, ``half``, ``all``,
    or ``none``, which is the default value.
 
-The following example turns on a step's multiprocessing option. Notice only
-one of the steps has multiprocessing turned on. We do not recommend
-simultaneously enabling both steps to do multiprocessing, as this may likely
-lead to running out of system memory::
+   The following example turns on a step's multiprocessing option. Notice only
+   one of the steps has multiprocessing turned on. We do not recommend
+   simultaneously enabling both steps to do multiprocessing, as this may likely
+   lead to running out of system memory.
+
+::
 
     # SampleScript1
 
