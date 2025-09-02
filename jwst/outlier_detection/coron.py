@@ -28,7 +28,7 @@ def detect_outliers(
 
     Parameters
     ----------
-    input_model : ~jwst.datamodels.CubeModel
+    input_model : `~jwst.datamodels.CubeModel`
         The input cube model.
     save_intermediate_results : bool
         If True, save the median model.
@@ -43,7 +43,7 @@ def detect_outliers(
 
     Returns
     -------
-    ~jwst.datamodels.CubeModel
+    `~jwst.datamodels.CubeModel`
         The input model with outliers flagged.
     """
     if not isinstance(input_model, datamodels.CubeModel):

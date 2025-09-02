@@ -40,7 +40,9 @@ def test_bad_ignore_regions(tmp_cwd, miri_image):
 
 def test_ignore_regions(tmp_cwd, monkeypatch, miri_image, log_watcher):
     # Set some reasonable wavelength regions - these should be read in properly
-    watcher = log_watcher("stpipe.ResidualFringeStep", message="Ignoring 2 wavelength regions")
+    watcher = log_watcher(
+        "jwst.residual_fringe.residual_fringe_step", message="Ignoring 2 wavelength regions"
+    )
 
     step = ResidualFringeStep()
     step.ignore_region_min = [4.9, 5.7]
@@ -88,7 +90,7 @@ def test_rf_step_wrong_exptype(miri_image, log_watcher):
     model = miri_image
     model.meta.exposure.type = "NRS_IFU"
 
-    watcher = log_watcher("stpipe.ResidualFringeStep", message="only for MIRI MRS")
+    watcher = log_watcher("jwst.residual_fringe.residual_fringe_step", message="only for MIRI MRS")
     result = ResidualFringeStep.call(model, skip=False)
     assert result.meta.cal_step.residual_fringe == "SKIPPED"
     watcher.assert_seen()

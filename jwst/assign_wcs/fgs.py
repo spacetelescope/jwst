@@ -36,7 +36,7 @@ def create_pipeline(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     exp_type = input_model.meta.exposure.type.lower()
     pipeline = exp_type2transform[exp_type](input_model, reference_files)
@@ -61,7 +61,7 @@ def imaging(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     # Create coordinate frames for the ``imaging`` mode.
     detector = cf.Frame2D(name="detector", axes_order=(0, 1), unit=(u.pix, u.pix))

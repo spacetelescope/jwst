@@ -19,7 +19,7 @@ in the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline.
 Input details
 -------------
 The input data must be in the form of a `~jwst.datamodels.IFUImageModel` or
-a `~jwst.datamodels.ModelContainer` containing exactly one
+a `~jwst.datamodels.container.ModelContainer` containing exactly one
 science exposure and any number of additional exposures.
 A fits or association file 
 that can be read into one of these data models is also acceptable.

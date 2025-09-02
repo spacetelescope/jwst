@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 from stcal.dark_current import dark_sub
 from stdatamodels.jwst import datamodels
@@ -5,6 +7,8 @@ from stdatamodels.jwst import datamodels
 from jwst.stpipe import Step
 
 __all__ = ["DarkCurrentStep"]
+
+log = logging.getLogger(__name__)
 
 
 class DarkCurrentStep(Step):
@@ -32,12 +36,12 @@ class DarkCurrentStep(Step):
         with datamodels.RampModel(step_input) as input_model:
             # Get the name of the dark reference file to use
             self.dark_name = self.get_reference_file(input_model, "dark")
-            self.log.info("Using DARK reference file %s", self.dark_name)
+            log.info("Using DARK reference file %s", self.dark_name)
 
             # Check for a valid reference file
             if self.dark_name == "N/A":
-                self.log.warning("No DARK reference file found")
-                self.log.warning("Dark current step will be skipped")
+                log.warning("No DARK reference file found")
+                log.warning("Dark current step will be skipped")
                 input_model.meta.cal_step.dark = "SKIPPED"
                 return input_model
 
@@ -86,22 +90,23 @@ class DarkCurrentStep(Step):
         Take the three possible locations specifying
         the average dark current and assign them to the
         input model, in priority order:
-        1) Any value provided to the step parameter, either from
-        the user or a parameter reference file
-        2) The 2-D array stored in dark_model.average_dark_current
-        3) The scalar value stored in dark_model.meta.exposure.average_dark_current
+
+        1. Any value provided to the step parameter, either from
+           the user or a parameter reference file
+        2. The 2-D array stored in dark_model.average_dark_current
+        3. The scalar value stored in dark_model.meta.exposure.average_dark_current
 
         Parameters
         ----------
         input_model : `~stdatamodels.jwst.datamodels.RampModel`
             The input datamodel containing the 4-D ramp array.
-        dark_model : Union[stdatamodels.jwst.datamodels.DarkModel,
-                           stdatamodels.jwst.datamodels.DarkMIRIModel]
+        dark_model : `~stdatamodels.jwst.datamodels.DarkModel` or \
+                     `~stdatamodels.jwst.datamodels.DarkMIRIModel`
             The dark reference file datamodel.
         """
         if self.average_dark_current is not None:
             input_model.average_dark_current[:, :] = self.average_dark_current
-            self.log.info(
+            log.info(
                 "Using Poisson noise from average dark current %s e-/sec", self.average_dark_current
             )
         else:
@@ -114,8 +119,8 @@ class DarkCurrentStep(Step):
             elif np.shape(input_model.average_dark_current) != np.shape(
                 dark_model.average_dark_current
             ):
-                self.log.warning("DarkModel average_dark_current does not match shape of data.")
-                self.log.warning("Dark current from reference file cannot be applied.")
+                log.warning("DarkModel average_dark_current does not match shape of data.")
+                log.warning("Dark current from reference file cannot be applied.")
             else:
                 input_model.average_dark_current = dark_model.average_dark_current
 
@@ -155,7 +160,7 @@ def dark_output_data_2_ramp_model(out_data, out_model):
 
     Parameters
     ----------
-    out_data : `~stdatamodels.jwst.datamodels.DataModel`
+    out_data : `~stdatamodels.DataModel`
         Computed science data from the dark current step.
 
     out_model : `~stdatamodels.jwst.datamodels.RampModel`

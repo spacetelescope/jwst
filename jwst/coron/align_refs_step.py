@@ -1,5 +1,7 @@
 """Replace bad pixels and align psf image with target image."""
 
+import logging
+
 from astropy.nddata.bitmask import interpret_bit_flags
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
@@ -9,6 +11,8 @@ from jwst.coron.median_replace_img import median_replace_img
 from jwst.stpipe import Step
 
 __all__ = ["AlignRefsStep"]
+
+log = logging.getLogger(__name__)
 
 
 class AlignRefsStep(Step):
@@ -44,12 +48,12 @@ class AlignRefsStep(Step):
         with datamodels.open(target) as target_model, datamodels.open(psf) as psf_model:
             # Get the name of the psf mask reference file to use
             self.mask_name = self.get_reference_file(target_model, "psfmask")
-            self.log.info("Using PSFMASK reference file %s", self.mask_name)
+            log.info("Using PSFMASK reference file %s", self.mask_name)
 
             # Check for a valid reference file
             if self.mask_name == "N/A":
-                self.log.warning("No PSFMASK reference file found")
-                self.log.warning("Align_refs step will be skipped")
+                log.warning("No PSFMASK reference file found")
+                log.warning("Align_refs step will be skipped")
                 result = psf_model.copy()
                 result.meta.cal_step.align_psfs = "SKIPPED"
                 return result
@@ -64,7 +68,7 @@ class AlignRefsStep(Step):
             bad_bitvalue = self.bad_bits
             bad_bitvalue = interpret_bit_flags(bad_bitvalue, flag_name_map=pixel)
             if bad_bitvalue is None:
-                self.log.debug("No bad bits provided; treating all pixels as good.")
+                log.debug("No bad bits provided; treating all pixels as good.")
                 bad_bitvalue = 0
 
             # Replace bad pixels in the psf images

@@ -101,7 +101,7 @@ def grism_wcs():
 
     Returns
     -------
-    gwcs.WCS
-        The mock grism wcs object.
+    gwcs.wcs.WCS
+        The grism wcs object.
     """
     return create_wfss_wcs("GR150C", pupil="F200W")

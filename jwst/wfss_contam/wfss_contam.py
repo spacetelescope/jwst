@@ -351,8 +351,10 @@ def contam_corr(
     # filter needs to come from the PUPIL keyword value.
     if input_model.meta.instrument.name == "NIRISS":
         filter_name = pupil_kwd
+        phot_per_lam = False
     else:
         filter_name = filter_kwd
+        phot_per_lam = True
 
     # select a subset of the brightest sources using source catalog
     if brightest_n is not None:
@@ -369,12 +371,12 @@ def contam_corr(
         direct_image,
         seg_model,
         grism_wcs,
-        filter_name,
         boundaries=[0, 2047, 0, 2047],
         max_cpu=ncpus,
         source_id=selected_ids,
         max_pixels_per_chunk=max_pixels_per_chunk,
         oversample_factor=oversample_factor,
+        phot_per_lam=phot_per_lam,
     )
 
     for order in spec_orders:
