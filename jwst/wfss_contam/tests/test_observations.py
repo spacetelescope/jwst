@@ -87,11 +87,6 @@ def test_disperse_order(observation):
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_resp = np.ones_like(sens_waves)
 
-    # manually change x,y offset because took transform from a real direct image, with different
-    # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
-    obs.xoffset = 2200
-    obs.yoffset = 1200
-
     # shorten pixel list to make this test take less time
     obs.disperse_order(order, wmin, wmax, sens_waves, sens_resp)
 
@@ -104,10 +99,10 @@ def test_disperse_order(observation):
     assert type(obs.simulated_slits) == dm.MultiSlitModel
     # two of the slits fall off the detector and do not end up here
     assert len(obs.simulated_slits.slits) == 8
-    slit = obs.simulated_slits.slits[0]
+    slit = obs.simulated_slits.slits[1]
     # check metadata
-    assert slit.name == "source_50"
+    assert slit.name == "source_51"
     assert slit.data.shape == (slit.ysize, slit.xsize)
 
     # check for regression by hard-coding one value of slit.data
-    assert np.isclose(slit.data[10, 10], 5.203127)
+    assert np.isclose(slit.data[5, 60], 20.996877670288086)

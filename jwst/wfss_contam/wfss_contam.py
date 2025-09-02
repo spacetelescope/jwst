@@ -325,14 +325,13 @@ def contam_corr(
     with datamodels.open(direct_file) as direct_model:
         direct_image = direct_model.data
 
-    # Get the grism WCS object and offsets from the first cutout in the input model.
+    # Get the grism WCS object from the first cutout in the input model.
     # This WCS is used to transform from direct image to grism frame for all sources
-    # in the segmentation map - the offsets are required so that we can shift
-    # each source in the segmentation map to the proper grism image location
-    # using this particular wcs, but any cutout's wcs+offsets would work.
+    # in the segmentation map.
+    # The "detector" to "grism_detector" and "world" to "detector" transforms are identical
+    # for all slits, so just use the first one. The "grism_detector" to "grism_slit"
+    # transform is not used by the step.
     grism_wcs = input_model.slits[0].meta.wcs
-    xoffset = input_model.slits[0].xstart - 1
-    yoffset = input_model.slits[0].ystart - 1
 
     # Find out how many spectral orders are defined, based on the
     # array of order values in the Wavelengthrange ref file
@@ -373,7 +372,6 @@ def contam_corr(
         seg_model,
         grism_wcs,
         boundaries=[0, 2047, 0, 2047],
-        offsets=[xoffset, yoffset],
         max_cpu=ncpus,
         source_id=selected_ids,
         max_pixels_per_chunk=max_pixels_per_chunk,

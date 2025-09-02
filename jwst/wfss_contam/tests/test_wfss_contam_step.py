@@ -45,11 +45,6 @@ def multislitmodel(
         slit.ysize = slit.data.shape[0]
         model.slits.append(slit)
 
-    # manually change x,y offset because took transform from a real direct image, with different
-    # pixel 0,0 than the mock data. This puts i=1, order 1 onto the real grism image
-    model.slits[0].xstart = 2200
-    model.slits[0].ystart = 1000
-
     fname = "multislit_model.fits"
     model.save(fname)
     return fname
