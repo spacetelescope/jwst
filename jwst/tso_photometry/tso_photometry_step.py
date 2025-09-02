@@ -119,9 +119,7 @@ class TSOPhotometryStep(Step):
                 )
 
                 if np.all(np.isnan(centroid_x)) or np.all(np.isnan(centroid_y)):
-                    log.warning(
-                        "Centroid fit failed. Using initial estimate for source location."
-                    )
+                    log.warning("Centroid fit failed. Using initial estimate for source location.")
                     xc = xcenter
                     yc = ycenter
                     log.info(f"Using planned center x,y = {xc:.2f},{yc:.2f}")
