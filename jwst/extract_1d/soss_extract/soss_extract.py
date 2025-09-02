@@ -1191,7 +1191,7 @@ def run_extract1d(
     speckernel_ref = datamodels.SpecKernelModel(speckernel_ref_name)
 
     # Map the order integer names to the string names
-    if soss_kwargs["order_3"]:
+    if (soss_kwargs["order_3"]) and (subarray != "SUBSTRIP96"):
         order_list = [1, 2, 3]
     else:
         order_list = [1, 2]
