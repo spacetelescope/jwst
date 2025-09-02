@@ -62,16 +62,16 @@ class CleanFlickerNoiseStep(Step):
             found_exptype = False
 
         if override_parameters is not None:
-            self.log.info(f"Auto parameters set for {exp_type}:")
+            log.info(f"Auto parameters set for {exp_type}:")
             for param, value in override_parameters.items():
-                self.log.info(f"  {param}: {value}")
+                log.info(f"  {param}: {value}")
                 setattr(self, param, value)
         else:
             if found_exptype:
-                self.log.warning("Auto parameter setting failed.")
+                log.warning("Auto parameter setting failed.")
             else:
-                self.log.warning(f"Auto parameters are not available for exposure type {exp_type}")
-            self.log.info("Using input parameters as provided; no overrides applied.")
+                log.warning(f"Auto parameters are not available for exposure type {exp_type}")
+            log.info("Using input parameters as provided; no overrides applied.")
 
     def process(self, input_data):
         """
