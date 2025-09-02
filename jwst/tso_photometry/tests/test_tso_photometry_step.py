@@ -56,7 +56,9 @@ def test_tsophotometry_step_subarray(mock_tsophot_reffile, log_watcher):
     datamodel = mock_nircam_image()
     input_copy = datamodel.copy()
 
-    watcher = log_watcher("stpipe.TSOPhotometryStep", message="Extracting gain subarray")
+    watcher = log_watcher(
+        "jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray"
+    )
     catalog = tp.TSOPhotometryStep.call(datamodel)
     watcher.assert_seen()
 
@@ -74,7 +76,9 @@ def test_tsophotometry_step_full_frame(mock_tsophot_reffile, log_watcher):
     input_copy = datamodel.copy()
 
     # Gain reference already matches data, no need to extract subarray
-    watcher = log_watcher("stpipe.TSOPhotometryStep", message="Extracting gain subarray")
+    watcher = log_watcher(
+        "jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray"
+    )
     catalog = tp.TSOPhotometryStep.call(datamodel)
     watcher.assert_not_seen()
 
@@ -91,7 +95,9 @@ def test_tsophotometry_step_save_catalog(mock_tsophot_reffile, tmp_path, log_wat
     datamodel = mock_nircam_image()
     datamodel.meta.filename = "test_calints.fits"
 
-    watcher = log_watcher("stpipe.TSOPhotometryStep", message="Wrote TSO photometry catalog")
+    watcher = log_watcher(
+        "jwst.tso_photometry.tso_photometry_step", message="Wrote TSO photometry catalog"
+    )
     tp.TSOPhotometryStep.call(
         datamodel,
         save_catalog=True,
@@ -137,7 +143,7 @@ def test_tsophotometry_step_failed_centroid(monkeypatch, mock_tsophot_reffile, l
 
     monkeypatch.setattr(tp, "tso_source_centroid", mock_centroid)
 
-    watcher = log_watcher("stpipe.TSOPhotometryStep", message="Centroid fit failed")
+    watcher = log_watcher("jwst.tso_photometry.tso_photometry_step", message="Centroid fit failed")
     catalog = tp.TSOPhotometryStep.call(datamodel, centroid_source=True)
     watcher.assert_seen()
 
@@ -153,7 +159,9 @@ def test_tsophotometry_step_odd_boxes(mock_tsophot_reffile, log_watcher, box):
     kwargs = {box: 22}
 
     watcher = log_watcher(
-        "stpipe.TSOPhotometryStep", message=f"Rounding the {box} down to 21", level="warning"
+        "jwst.tso_photometry.tso_photometry_step",
+        message=f"Rounding the {box} down to 21",
+        level="warning",
     )
     catalog = tp.TSOPhotometryStep.call(datamodel, **kwargs)
     watcher.assert_seen()
