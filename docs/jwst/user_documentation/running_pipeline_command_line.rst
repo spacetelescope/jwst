@@ -313,7 +313,7 @@ Setting ``output_dir`` at the step-level indicates that the step's result should
 be saved (so, also setting ``save_results`` is redundant), and that the files
 should be saved in the directory specified instead of the current working directory.
 For example, to save the intermediate results of ``DarkCurrentStep`` when running
-``Detector1Pipeline`` in a subdirectory ``/calibrated``::
+``Detector1Pipeline`` in a subdirectory called ``calibrated``::
 
     $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.output_dir='calibrated'
 

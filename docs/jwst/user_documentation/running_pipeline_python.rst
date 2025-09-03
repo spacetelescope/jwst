@@ -234,7 +234,7 @@ Multiple reference file overrides can be provided, for example::
     from jwst.pipeline import Detector1Pipeline
     result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits',
                                     steps={"saturation": {"override_saturation": '/path/to/new_saturation_ref_file.fits'},
-                                          {"jump" : {"override_jump": '/path/to/new_jump_ref_file.fits'}})
+                                          "jump" : {"override_jump": '/path/to/new_jump_ref_file.fits'}})
 
 To override a reference file for a standalone step, ``override_<stepname>``
 can be passed directly as a keyword argument to that step's ``call`` method::
@@ -358,13 +358,13 @@ In this example, the following output files will be written in the current worki
 
 When set at the pipeline level, the ``output_dir`` parameter will set where the final
 pipeline output products are placed. The default is the current working directory.
-For example, to save the results from Detector1Pipeline in a subdirectoy ``/calibrated``,
+For example, to save the results from Detector1Pipeline in a subdirectory ``calibrated``,
 
 Setting ``output_dir`` at the pipeline-level indicates that the pipeline's final
 results should be saved (so, also setting ``save_results`` is redundant), and that
 the files should be saved in the directory specified instead of the current working
 directory. For example, to save the intermediate results of ``Detector1Pipeline``
-in a subdirectory ``/calibrated``::
+in a subdirectory ``calibrated``::
 
     # to save the final result of a pipeline in a different specified output directory
     from jwst.pipeline import Detector1Pipeline
@@ -404,7 +404,7 @@ of ``jw00017001001_01101_00001_nrca1``::
     # To save the intermediate results of a step within a pipeline to a file with a custom name
     from jwst.pipeline import Detector1Pipeline
     result = Detector1Pipeline.call('jw00017001001_01101_00001_nrca1_uncal.fits',
-                                    steps={"saturation": {"output_file": 'saturation_result'})
+                                    steps={"saturation": {"output_file": 'saturation_result'}})
 
 Similarly, when ``output_file`` is set on an individual step class, this will indicate
 that the result from that step should be saved to a file with that basename and the
@@ -420,7 +420,7 @@ Setting ``output_dir`` at the step-level indicates that the step's result should
 be saved (so, also setting ``save_results`` is redundant), and that the files
 should be saved in the directory specified instead of the current working directory.
 For example, to save the intermediate results of ``DarkCurrentStep`` when running
-``Detector1Pipeline`` in a subdirectory ``/calibrated``::
+``Detector1Pipeline`` in a subdirectory ``calibrated``::
 
     # to save the intermediate step result in a different specified output directory
     from jwst.pipeline import Detector1Pipeline
@@ -430,7 +430,7 @@ For example, to save the intermediate results of ``DarkCurrentStep`` when runnin
 Similarly, when ``output_dir`` is set on an individual step class, this will indicate
 that the result from that step should be saved to the specified directory::
 
-    # to save the final result of a
+    # to save the final result of a pipeline run in a specified directory
     from jwst.pipeline import Detector1Pipeline
     result = DarkCurrentStep.call('jw00017001001_01101_00001_nrca1_uncal.fits', output_dir='calibrated')
 
