@@ -3,6 +3,7 @@ import multiprocessing as mp
 import warnings
 
 import numpy as np
+from astropy.modeling.mappings import Mapping
 from scipy import sparse
 
 from jwst.lib.winclip import get_clipped_pixels
@@ -23,8 +24,6 @@ def _determine_native_wl_spacing(
     wmin,
     wmax,
     oversample_factor=2,
-    xoffset=0,
-    yoffset=0,
 ):
     """
     Determine the wavelength spacing necessary to adequately sample the dispersed frame.
@@ -47,10 +46,6 @@ def _determine_native_wl_spacing(
         Maximum wavelength for dispersed spectra
     oversample_factor : int, optional
         Factor by which to oversample the wavelength grid
-    xoffset : int, optional
-        X offset to apply to the dispersed pixel positions
-    yoffset : int, optional
-        Y offset to apply to the dispersed pixel positions
 
     Returns
     -------
@@ -68,8 +63,8 @@ def _determine_native_wl_spacing(
     # Convert to x/y in the direct image frame
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
     # then convert to x/y in the grism image frame.
-    xwmin, ywmin = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmin, order)
-    xwmax, ywmax = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, wmax, order)
+    xwmin, ywmin = imgxy_to_grismxy(x0_xy, y0_xy, wmin, order)
+    xwmax, ywmax = imgxy_to_grismxy(x0_xy, y0_xy, wmax, order)
     dxw = xwmax - xwmin
     dyw = ywmax - ywmin
 
@@ -80,9 +75,7 @@ def _determine_native_wl_spacing(
     return lambdas
 
 
-def _disperse_onto_grism(
-    x0_sky, y0_sky, sky_to_imgxy, imgxy_to_grismxy, lambdas, order, xoffset=0, yoffset=0
-):
+def _disperse_onto_grism(x0_sky, y0_sky, sky_to_imgxy, imgxy_to_grismxy, lambdas, order):
     """
     Compute x/y positions in the grism image for the set of desired wavelengths.
 
@@ -100,10 +93,6 @@ def _disperse_onto_grism(
         Wavelengths at which to compute dispersed pixel values
     order : int
         Spectral order number
-    xoffset : int, optional
-        X offset to apply to the dispersed pixel positions
-    yoffset : int, optional
-        Y offset to apply to the dispersed pixel positions
 
     Returns
     -------
@@ -123,7 +112,7 @@ def _disperse_onto_grism(
 
     # Convert to x/y in grism frame.
     lambdas = np.repeat(lambdas[:, np.newaxis], x0_xy.shape[1], axis=1)
-    x0s, y0s = imgxy_to_grismxy(x0_xy + xoffset, y0_xy + yoffset, lambdas, order)
+    x0s, y0s = imgxy_to_grismxy(x0_xy, y0_xy, lambdas, order)
     # x0s, y0s now have shape (n_lam, n_pixels)
     return x0s, y0s, lambdas
 
@@ -210,8 +199,6 @@ def disperse(
     grism_wcs,
     naxis,
     oversample_factor=2,
-    xoffset=0,
-    yoffset=0,
     phot_per_lam=True,
 ):
     """
@@ -245,10 +232,6 @@ def disperse(
         Dimensions of the grism image (naxis[0], naxis[1])
     oversample_factor : int, optional
         Factor by which to oversample the wavelength grid
-    xoffset : float, optional
-        X offset to apply to the dispersed pixel positions
-    yoffset : float, optional
-        Y offset to apply to the dispersed pixel positions
     phot_per_lam : bool
         If True, it is assumed that the photometric response is calibrated per wavelength,
         as is done for NIRCam, and therefore we need to multiply by dlam to un-do the calibration
@@ -276,8 +259,14 @@ def disperse(
     sky_to_imgxy = grism_wcs.get_transform("world", "detector")
     imgxy_to_grismxy = grism_wcs.get_transform("detector", "grism_detector")
 
+    # We only need the x,y outputs of imgxy_to_grismxy
+    # Making the number of outputs dynamic handles legacy WCS objects that did not pass
+    # the x0, y0, and order through the transform unmodified like the current version does.
+    n_outputs = len(imgxy_to_grismxy.outputs)
+    imgxy_to_grismxy = imgxy_to_grismxy | Mapping((0, 1), n_inputs=n_outputs)
+
     # Find RA/Dec of the input pixel position in segmentation map
-    x0_sky, y0_sky = seg_wcs(x0, y0)
+    x0_sky, y0_sky = seg_wcs(x0, y0, with_bounding_box=False)
 
     # native spacing does not change much over the detector, so just put in one x0, y0
     lambdas = _determine_native_wl_spacing(
@@ -289,8 +278,6 @@ def disperse(
         wmin,
         wmax,
         oversample_factor=oversample_factor,
-        xoffset=xoffset,
-        yoffset=yoffset,
     )
     nlam = len(lambdas)
     dlam = lambdas[1] - lambdas[0]
@@ -302,8 +289,6 @@ def disperse(
         imgxy_to_grismxy,
         lambdas,
         order,
-        xoffset=xoffset,
-        yoffset=yoffset,
     )
 
     # If none of the dispersed pixel indexes are within the image frame,
