@@ -63,7 +63,7 @@ def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
         save_simulated_image=True,
         save_contam_images=True,
         magnitude_limit=25,
-        orders="1",
+        orders=[1],
     )
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"

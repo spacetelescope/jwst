@@ -25,11 +25,11 @@ The ``wfss_contam`` step uses the following optional arguments.
   and virtual cores.
 
 ``--orders``
-  A string indicating which grism order(s) to simulate. The default value is None, which
+  A list indicating which grism orders to simulate. The default value is None, which
   means all orders that are defined in the wavelength and specwcs reference files
   for that instrument will be simulated.
-  To specify a single order, use a string like "0" or "1". To specify multiple orders,
-  use a comma-separated string like "-1,0,1".
+  To specify a single order from the command line, use e.g. "0," or "1,"
+  (the comma allows the code to identify this as a list).
 
 ``--magnitude_limit``
   A float indicating the magnitude limit for sources to be included in the simulation.

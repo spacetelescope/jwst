@@ -20,7 +20,7 @@ class WfssContamStep(Step):
         save_contam_images = boolean(default=False)  # Save source contam estimates
         maximum_cores = option('none', 'quarter', 'half', 'all', default='none')
         skip = boolean(default=True)
-        orders = list(default=None)  # Spectral order or orders to process, e.g. 1 or 1,2,3
+        orders = list(default=None)  # Spectral orders to process, e.g. 1, or 1,2,3
         magnitude_limit = float(default=None) # Isophotal AB magnitude limit for sources to be included in the contamination correction
         wl_oversample = integer(default=2) # oversampling factor for wavelength grid
         max_pixels_per_chunk = integer(default=50000) # max number of pixels to disperse at once
