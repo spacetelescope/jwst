@@ -165,7 +165,17 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
     chunk = npixe * ((n / 10) ? (n / 10) : 10);
     nalloc = n * npixe;
     if (mem_alloc(nalloc, &xv, &yv, &av, &iv))
+    {
+        free(xv);
+        xv = NULL;
+        free(yv);
+        yv = NULL;
+        free(av);
+        av = NULL;
+        free(iv);
+        iv = NULL;
         return 1;
+    }
 
     nx -= 1;
     ny -= 1;
@@ -243,7 +253,17 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
             // allocate more memory for output vectors:
             nalloc += chunk;
             if (mem_alloc(nalloc, &xv, &yv, &av, &iv))
+            {
+                free(xv);
+                xv = NULL;
+                free(yv);
+                yv = NULL;
+                free(av);
+                av = NULL;
+                free(iv);
+                iv = NULL;
                 return 1;
+            }
         }
 
         // pre-compute fractional pixel sizes:
@@ -345,7 +365,17 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
 
     // trim memory arrays:
     if ((tnpix < nalloc) && mem_alloc(tnpix, &xv, &yv, &av, &iv))
+    {
+        free(xv);
+        xv = NULL;
+        free(yv);
+        yv = NULL;
+        free(av);
+        av = NULL;
+        free(iv);
+        iv = NULL;
         return 1;
+    }
 
     // assign output values:
     *npix = tnpix;
