@@ -2,12 +2,12 @@
 Logging
 =======
 
-The logging in stpipe is built on the Python standard library’s
+The logging in stpipe is built on the Python standard library's
 `logging` module.  For detailed information about logging, refer to
 the documentation there.
 
 By default, stpipe will pick up and configure any logger used in
-the `jwst` library code, so developers do not need to do anything
+the ``jwst`` library code, so developers do not need to do anything
 special to log messages from their modules: just get a logger by
 name, and log to it.  By convention, loggers should be named
 for the module they are used in.

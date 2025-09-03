@@ -1,7 +1,7 @@
 Description
 -----------
 
-:Class: `jwst.coron.StackRefsStep`
+:Class: `jwst.coron.stack_refs_step.StackRefsStep`
 :Alias: stack_refs
 
 The ``stack_refs`` step is one of the coronagraphic-specific steps in the
