@@ -1,0 +1,1 @@
+If the ``slit_names`` or ``source_ids`` are specified, but none of the slits are valid, a NoDataOnDetectorError exception is raised.

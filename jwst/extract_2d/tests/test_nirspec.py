@@ -6,6 +6,7 @@ from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, 
 from stdatamodels.jwst.transforms.models import Slit
 
 from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.extract_2d.nirspec import select_slits
 
@@ -273,26 +274,39 @@ def test_extract_2d_nirspec_bots(nirspec_bots_rateints):
 
 def test_select_slits(nirspec_slit_list):
     slit_list = nirspec_slit_list
-    # Choose all slits
-    all_slits = select_slits(slit_list, None, None)
-    assert all_slits == slit_list
+
+    # No slits selected
+    with pytest.raises(NoDataOnDetectorError, match="No valid slits selected"):
+        select_slits(slit_list, None, None)
+
     # Just slit with name=='3'
     single_name = select_slits(slit_list, ["3"], None)
     assert single_name[0].name == "3"
     assert single_name[0].source_id == "3000"
+
     # Just slit with source_id == '3000'
     single_id = select_slits(slit_list, None, ["2000"])
     assert single_id[0].name == "2"
     assert single_id[0].source_id == "2000"
+
     # Slits with name == '4' and source_id == '4000' are duplicates
     duplicates = select_slits(slit_list, ["1", "4"], ["2000", "4000"])
     assert Slit(name="1", source_id="1000") in duplicates
     assert Slit(name="2", source_id="2000") in duplicates
     assert Slit(name="4", source_id="4000") in duplicates
+
     # Select slit with a non-integer name
     non_integer = select_slits(slit_list, ["S200A1"], None)
     assert non_integer[0] == Slit(name="S200A1", source_id="2222")
+
     # Select slits with mix of integer and string names
     with_integer = select_slits(slit_list, [2, "5"], None)
     assert Slit(name="2", source_id="2000") in with_integer
     assert Slit(name="5", source_id="5000") in with_integer
+
+    # Select some valid, some invalid slits
+    some_valid = select_slits(slit_list, ["1", "4", "-99"], ["2000", "4000", "-9999"])
+    assert len(some_valid) == 3
+    assert Slit(name="1", source_id="1000") in some_valid
+    assert Slit(name="2", source_id="2000") in some_valid
+    assert Slit(name="4", source_id="4000") in some_valid
