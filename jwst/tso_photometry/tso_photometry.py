@@ -85,15 +85,17 @@ def tso_aperture_photometry(
     centroid_x, centroid_y : ndarray or None, optional
         An array of fit centroid values in the x- and y-direction,
         one for each integration. If provided, the arrays will be added
-        to the output catalog.
+        to the output catalog in the ``centroid_x`` and ``centroid_y``
+        columns.
     psf_width_x, psf_width_y : ndarray or None, optional
         An array of fit PSF width values (1-sigma) in the x- and y-direction,
         one for each integration. If provided, the arrays will be added
-        to the output catalog.
+        to the output catalog in the ``psf_width_x`` and ``psf_width_y``
+        columns.
     psf_flux : ndarray or None, optional
         An array of PSF flux values, derived from a Gaussian model,
-        one value for each integration. If provided, the array will be added to
-        the output catalog.
+        one value for each integration. If provided, the array will be added
+        to the output catalog in the ``psf_flux`` column.
 
     Returns
     -------
