@@ -26,7 +26,9 @@ def test_tsophotometry_step_subarray(log_watcher):
     datamodel = mock_nircam_image()
     input_copy = datamodel.copy()
 
-    watcher = log_watcher("jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray")
+    watcher = log_watcher(
+        "jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray"
+    )
     catalog = TSOPhotometryStep.call(datamodel, radius=6.0, radius_inner=8.0, radius_outer=11.0)
     watcher.assert_seen()
 
@@ -48,7 +50,9 @@ def test_tsophotometry_step_full_frame(log_watcher):
     input_copy = datamodel.copy()
 
     # Gain reference already matches data, no need to extract subarray
-    watcher = log_watcher("jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray")
+    watcher = log_watcher(
+        "jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray"
+    )
     catalog = TSOPhotometryStep.call(datamodel, radius=6.0, radius_inner=8.0, radius_outer=11.0)
     watcher.assert_not_seen()
 
@@ -69,7 +73,9 @@ def test_tsophotometry_step_save_catalog(tmp_path, log_watcher):
     datamodel = mock_nircam_image()
     datamodel.meta.filename = "test_calints.fits"
 
-    watcher = log_watcher("jwst.tso_photometry.tso_photometry_step", message="Wrote TSO photometry catalog")
+    watcher = log_watcher(
+        "jwst.tso_photometry.tso_photometry_step", message="Wrote TSO photometry catalog"
+    )
     TSOPhotometryStep.call(
         datamodel,
         radius=6.0,
