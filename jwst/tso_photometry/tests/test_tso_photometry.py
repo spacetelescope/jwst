@@ -48,25 +48,12 @@ def get_gain_2d(datamodel):
 
 
 def mk_data_array(shape, value, background, xcenter, ycenter, radius):
-    """Create a data array"""
-
+    """Create a data array with a flat circular source."""
     data = np.zeros(shape, dtype=np.float32) + background
 
-    xlow = int(math.floor(xcenter - radius))
-    xhigh = int(math.ceil(xcenter + radius)) + 1
-    ylow = int(math.floor(ycenter - radius))
-    yhigh = int(math.ceil(ycenter + radius)) + 1
-    xlow = max(xlow, 0)
-    xhigh = min(xhigh, shape[-1])
-    ylow = max(ylow, 0)
-    yhigh = min(yhigh, shape[-2])
-
-    radius2 = radius**2
-    for j in range(ylow, yhigh):
-        for i in range(xlow, xhigh):
-            dist2 = (float(i) - xcenter) ** 2 + (float(j) - ycenter) ** 2
-            if dist2 < radius2:
-                data[:, j, i] = value + background
+    yidx, xidx = np.mgrid[: shape[1], : shape[2]]
+    source_mask = ((xidx - xcenter) ** 2 + (yidx - ycenter) ** 2) < radius**2
+    data[:, source_mask] += value
 
     return data
 
