@@ -1,0 +1,34 @@
+BasedOnStyle: LLVM
+
+AlignAfterOpenBracket: AlwaysBreak
+AlignConsecutiveMacros: true
+AlignEscapedNewlines: LeftWithLastLine
+AllowAllArgumentsOnNextLine: true
+AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: TopLevel
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: Inline
+
+BraceWrapping:
+  AfterControlStatement: false
+  AfterFunction: true
+BreakBeforeBraces: Custom
+# BreakBeforeBinaryOperators: NonAssignment
+
+ColumnLimit: 100
+
+IndentCaseLabels: true
+IndentWidth: 4
+InsertBraces: true
+
+PointerAlignment: Right
+
+ReflowComments: true
+
+SpaceAfterCStyleCast: true
+SpaceBeforeParens: ControlStatements
+
+TabWidth: 4
+
+UseTab: Never
