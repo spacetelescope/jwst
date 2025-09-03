@@ -53,7 +53,7 @@ def apply_fringe(input_model, fringe):
 
     Returns
     -------
-    output_model : jwst.datamodel.IFUImageModel
+    output_model : `~jwst.datamodels.IFUImageModel`
         Input science data model which has been fringe-corrected.
     """
     # Initialize the output model as a copy of the input

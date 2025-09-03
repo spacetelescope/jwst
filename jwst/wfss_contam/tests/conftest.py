@@ -1,15 +1,13 @@
-import warnings
-
-import asdf
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.convolution import convolve
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
-from astropy.utils.data import get_pkg_data_filename
 from photutils.datasets import make_100gaussians_image
 from photutils.segmentation import SourceFinder, make_2dgaussian_kernel
+
+from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs, create_wfss_wcs
 
 DIR_IMAGE = "direct_image.fits"
 
@@ -69,18 +67,7 @@ def segmentation_map(direct_image):
 
     # turn this into a jwst datamodel
     model = dm.SegmentationMapModel(data=segm.data)
-    with warnings.catch_warnings():
-        # asdf.exceptions.AsdfPackageVersionWarning in oldestdeps job
-        warnings.filterwarnings(
-            "ignore",
-            message="File .* was created with extension URI .* which is not currently installed",
-        )
-        with asdf.open(
-            get_pkg_data_filename("data/segmentation_wcs.asdf", package="jwst.wfss_contam.tests")
-        ) as asdf_file:
-            wcsobj = asdf_file.tree["wcs"]
-            model.meta.wcs = wcsobj
-
+    model.meta.wcs = create_imaging_wcs("F200W")
     return model
 
 
@@ -114,20 +101,7 @@ def grism_wcs():
 
     Returns
     -------
-    gwcs.WCS
+    gwcs.wcs.WCS
         The grism wcs object.
-
-    Notes
-    -----
-    This should probably be mocked in future updates.
     """
-    with warnings.catch_warnings():
-        # asdf.exceptions.AsdfPackageVersionWarning in oldestdeps job
-        warnings.filterwarnings(
-            "ignore",
-            message="File .* was created with extension URI .* which is not currently installed",
-        )
-        with asdf.open(
-            get_pkg_data_filename("data/grism_wcs.asdf", package="jwst.wfss_contam.tests")
-        ) as asdf_file:
-            return asdf_file.tree["wcs"]
+    return create_wfss_wcs("GR150C", pupil="F200W")

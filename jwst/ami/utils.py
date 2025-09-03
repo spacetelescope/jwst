@@ -787,14 +787,14 @@ def rotate2dccw(vectors, thetarad):
 
     Parameters
     ----------
-    vectors : np.ndarray[float]
+    vectors : ndarray[float]
        List of 2-D vectors, so the shape is Nx2
     thetarad : float
        Rotation to apply in radians
 
     Returns
     -------
-    np.ndarray[float]
+    ndarray[float]
         Rotated vectors
     """
     c, s = (np.cos(thetarad), np.sin(thetarad))
@@ -1007,7 +1007,7 @@ def _cdmatrix_to_sky(vec, cd11, cd12, cd21, cd22):
 
     Returns
     -------
-    np.ndarray
+    ndarray
         Array containing x pixel scale vector, y pixel scale vector
 
     Notes

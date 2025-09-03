@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.linearity import linearity
 from jwst.stpipe import Step
 
 __all__ = ["LinearityStep"]
+
+log = logging.getLogger(__name__)
 
 
 class LinearityStep(Step):
@@ -34,12 +38,12 @@ class LinearityStep(Step):
         with datamodels.RampModel(step_input) as input_model:
             # Get the name of the linearity reference file to use
             self.lin_name = self.get_reference_file(input_model, "linearity")
-            self.log.info("Using Linearity reference file %s", self.lin_name)
+            log.info("Using Linearity reference file %s", self.lin_name)
 
             # Check for a valid reference file
             if self.lin_name == "N/A":
-                self.log.warning("No Linearity reference file found")
-                self.log.warning("Linearity step will be skipped")
+                log.warning("No Linearity reference file found")
+                log.warning("Linearity step will be skipped")
                 input_model.meta.cal_step.linearity = "SKIPPED"
                 return input_model
 

@@ -188,7 +188,7 @@ def test_create_fitswcs(tmp_path, create_model_3d):
     wcel = w.sub(["celestial"])
     ra, dec = wcel.all_pix2world(1, 1, 0)
 
-    # Check that astropy.wcs.WCS and gwcs.WCS give same result
+    # Check that astropy.wcs.WCS and gwcs.wcs.WCS give same result
     assert_allclose((ra, dec), (gra, gdec))
 
 

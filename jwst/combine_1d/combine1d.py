@@ -171,7 +171,7 @@ class OutputSpectrumModel:
         Weight value for each spectral element.
     count : ndarray
         Input value count for each output spectral element.
-    wcs : gwcs.WCS
+    wcs : gwcs.wcs.WCS
         Output spectral WCS.
     normalized : bool
         Flag to indicate data has been combined (sums are normalized).

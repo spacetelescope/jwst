@@ -237,11 +237,11 @@ class DataSet:
 
         Returns
         -------
-        data_2_a : np.ndarray[float]
+        data_2_a : ndarray[float]
             Aligned SCI array of image #2
-        dq_2_a : np.ndarray[int]
+        dq_2_a : ndarray[int]
             Aligned DQ array of image #2
-        err_2_a : np.ndarray[float]
+        err_2_a : ndarray[float]
             Aligned ERR array of image #2
         """
         data_2_a = self.do_2d_shifts(self.input_2.data)
@@ -320,11 +320,11 @@ class DataSet:
 
         Returns
         -------
-        data_comb : np.ndarray[float]
+        data_comb : ndarray[float]
             Combined SCI array
-        dq_comb : np.ndarray[int]
+        dq_comb : ndarray[int]
             Combined DQ array
-        err_comb : np.ndarray[float]
+        err_comb : ndarray[float]
             Combined ERR array
         """
         data1 = image1.data.astype(float)
@@ -373,12 +373,12 @@ class DataSet:
 
         Parameters
         ----------
-        a : np.ndarray[float]
+        a : ndarray[float]
             Input array
 
         Returns
         -------
-        b : np.ndarray[float]
+        b : ndarray[float]
             Shifted array of input a
         """
         ai_x, af_x = get_final_index_range(self.off_x, a.shape[1])
@@ -461,9 +461,9 @@ def interp_array(sci_data, dq_data, n_size):
 
     Parameters
     ----------
-    sci_data : np.ndarray[float]
+    sci_data : ndarray[float]
         Original SCI image to interpolate over
-    dq_data : np.ndarray[int]
+    dq_data : ndarray[int]
         Corresponding DQ image
     n_size : int
         Size of the interpolation box
@@ -508,7 +508,7 @@ def create_griddata_array(sci_data, pixel, n_size):
 
     Parameters
     ----------
-    sci_data : np.ndarray[float]
+    sci_data : ndarray[float]
         Original SCI image
     pixel : tuple(int,int)
         Coordinates y, x  of pixel to interpolate over
@@ -517,7 +517,7 @@ def create_griddata_array(sci_data, pixel, n_size):
 
     Returns
     -------
-    interp_arr : np.ndarray([int,int,float])
+    interp_arr : ndarray([int,int,float])
         Pixel coords, pixel value for each pixel neighboring the input pixel
     """
     xdim = sci_data.shape[1]
@@ -612,9 +612,9 @@ def get_overlap(sci_int_1, sci_int_2, nom_off_x, nom_off_y):
 
     Parameters
     ----------
-    sci_int_1 : np.ndarray[float]
+    sci_int_1 : ndarray[float]
         Interpolated SCI array for image 1
-    sci_int_2 : np.ndarray[float]
+    sci_int_2 : ndarray[float]
         Interpolated SCI array for image 2
     nom_off_x : int
         Nominal offset in x-direction
@@ -623,9 +623,9 @@ def get_overlap(sci_int_1, sci_int_2, nom_off_x, nom_off_y):
 
     Returns
     -------
-    sub_1 : np.ndarray[float]
+    sub_1 : ndarray[float]
         Overlapping subarray for interpolated image 1
-    sub_2 : np.ndarray[float]
+    sub_2 : ndarray[float]
         Overlapping subarray for interpolated image 2
     """
     # From the nominal offsets, determine array indices to shift image #2
@@ -649,9 +649,9 @@ def calc_refined_offsets(sci_nai_1, sci_nai_2, off_x, off_y, psf_size):
 
     Parameters
     ----------
-    sci_nai_1 : np.ndarray[float]
+    sci_nai_1 : ndarray[float]
         Nominally aligned, interpolated SCI subarray for image 1
-    sci_nai_2 : np.ndarray[float]
+    sci_nai_2 : ndarray[float]
         Nominally aligned, interpolated SCI subarray for image 2
     off_x : int
         Offset in x-direction

@@ -26,7 +26,7 @@ def background_subtract(
 
     Parameters
     ----------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values
     box_size : tuple
         Size of box in pixels to use for background estimation.
@@ -40,7 +40,7 @@ def background_subtract(
 
     Returns
     -------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values with background subtracted
 
     Notes
@@ -72,7 +72,7 @@ def _select_ids(source_id, all_ids):
     ----------
     source_id : int or list-like
         ID(s) of source to process. If None, all sources processed.
-    all_ids : np.ndarray
+    all_ids : ndarray
         Array of all source IDs in the segmentation map
 
     Returns
@@ -116,7 +116,6 @@ class Observation:
         grism_wcs,
         source_id=None,
         boundaries=None,
-        offsets=None,
         max_cpu=1,
         max_pixels_per_chunk=5e4,
         oversample_factor=2,
@@ -137,10 +136,8 @@ class Observation:
             ID of source to process. If None, all sources processed.
         boundaries : list, optional
             Start/Stop coordinates of the FOV within the larger seed image.
-        offsets : list, optional, default [0,0]
-            Offset values for x and y axes
         max_cpu : int, optional
-            Max number of cpus to use when multiprocessing
+            Max number of cpu's to use when multiprocessing
         max_pixels_per_chunk : int, optional
             Maximum number of pixels per chunk when dispersing sources
         oversample_factor : int, optional
@@ -152,8 +149,6 @@ class Observation:
         """
         if boundaries is None:
             boundaries = []
-        if offsets is None:
-            offsets = [0, 0]
         # Load all the info for this grism mode
         self.seg_wcs = segmap_model.meta.wcs
         self.grism_wcs = grism_wcs
@@ -164,8 +159,6 @@ class Observation:
         self.max_cpu = max_cpu
         self.max_pixels_per_chunk = max_pixels_per_chunk
         self.oversample_factor = oversample_factor
-        self.xoffset = offsets[0]
-        self.yoffset = offsets[1]
         self.phot_per_lam = phot_per_lam
 
         # ensure the direct image has background subtracted
@@ -272,8 +265,6 @@ class Observation:
                     self.grism_wcs,
                     self.naxis,
                     self.oversample_factor,
-                    self.xoffset,
-                    self.yoffset,
                     self.phot_per_lam,
                 ]
             )
@@ -294,9 +285,9 @@ class Observation:
             Minimum wavelength for dispersed spectra
         wmax : float
             Maximum wavelength for dispersed spectra
-        sens_waves : np.ndarray
+        sens_waves : ndarray
             Wavelength array from photom reference file
-        sens_response : np.ndarray
+        sens_response : ndarray
             Response (flux calibration) array from photom reference file
         """
         # generate lists of input parameters for the disperse function
@@ -343,7 +334,7 @@ def _construct_slitmodel(
 
     Parameters
     ----------
-    img : np.ndarray
+    img : ndarray
         Dispersed model image of segmentation map source
     bounds : list
         The bounds of the object in relation to the full-frame image.

@@ -56,7 +56,7 @@ def adjust_wcs(wcs, delta_ra=0.0, delta_dec=0.0, delta_roll=0.0, scale_factor=1.
 
     Returns
     -------
-    wcs : `gwcs.WCS`
+    wcs : `gwcs.wcs.WCS`
         Adjusted WCS object.
     """
     # convert input angles to degrees:

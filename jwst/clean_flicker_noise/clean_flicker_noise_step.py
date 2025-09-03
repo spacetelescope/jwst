@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.clean_flicker_noise import clean_flicker_noise
 from jwst.stpipe import Step
 
 __all__ = ["CleanFlickerNoiseStep"]
+
+log = logging.getLogger(__name__)
 
 
 class CleanFlickerNoiseStep(Step):
@@ -63,14 +67,14 @@ class CleanFlickerNoiseStep(Step):
                 flat_filename = self.get_reference_file(input_model, "flat")
                 exp_type = input_model.meta.exposure.type
                 if flat_filename == "N/A":
-                    self.log.warning(
+                    log.warning(
                         f"Flat correction is not available for "
                         f"exposure type {exp_type} without a user-"
                         f"supplied flat."
                     )
                     flat_filename = None
                 else:
-                    self.log.info(f"Using FLAT reference file: {flat_filename}")
+                    log.info(f"Using FLAT reference file: {flat_filename}")
 
             result = clean_flicker_noise.do_correction(
                 input_model,
@@ -94,7 +98,7 @@ class CleanFlickerNoiseStep(Step):
             # Save the mask, if requested
             if self.save_mask and mask_model is not None:
                 mask_path = self.make_output_path(basepath=input_model.meta.filename, suffix="mask")
-                self.log.info(f"Saving mask file {mask_path}")
+                log.info(f"Saving mask file {mask_path}")
                 mask_model.save(mask_path)
                 mask_model.close()
 
@@ -103,7 +107,7 @@ class CleanFlickerNoiseStep(Step):
                 bg_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_bkg"
                 )
-                self.log.info(f"Saving background file {bg_path}")
+                log.info(f"Saving background file {bg_path}")
                 background_model.save(bg_path)
                 background_model.close()
 
@@ -112,7 +116,7 @@ class CleanFlickerNoiseStep(Step):
                 noise_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_noise"
                 )
-                self.log.info(f"Saving noise file {noise_path}")
+                log.info(f"Saving noise file {noise_path}")
                 noise_model.save(noise_path)
                 noise_model.close()
 

@@ -196,7 +196,7 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
     ----------
     data : array-like
         The 2D array of the image.
-    threshold_img : np.ndarray
+    threshold_img : ndarray
         The per-pixel absolute image value above which to select sources.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
@@ -261,7 +261,7 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
     ----------
     data : array-like
         The 2D array of the image.
-    threshold_img : np.ndarray
+    threshold_img : ndarray
         The per-pixel absolute image value above which to select sources.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the Gaussian kernel
@@ -296,7 +296,7 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     ----------
     data : array-like
         The 2D array of the image.
-    threshold_img : np.ndarray
+    threshold_img : ndarray
         The per-pixel absolute image value above which to select sources.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the Gaussian kernel

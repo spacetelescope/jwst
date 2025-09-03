@@ -1705,7 +1705,9 @@ class TikhoTests(dict):
             raise KeyError(msg) from None
 
         # Compute the reduced chi^2 for all tests
-        chi2 = np.nanmean(loss(self["error"] ** 2), axis=-1)
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "Mean of empty slice", RuntimeWarning)
+            chi2 = np.nanmean(loss(self["error"] ** 2), axis=-1)
         # Remove residual dimensions
         return chi2.squeeze()
 
@@ -1749,7 +1751,10 @@ class TikhoTests(dict):
         # Get the norm-2 of the regularisation term
         reg2 = np.nansum(self["reg"] ** 2, axis=-1)
 
-        return _curvature_finite(self["factors"], np.log10(self[key]), np.log10(reg2))
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", "divide by zero", RuntimeWarning)
+            warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
+            return _curvature_finite(self["factors"], np.log10(self[key]), np.log10(reg2))
 
     def best_factor(self, mode="curvature"):
         """
@@ -1859,8 +1864,12 @@ def try_solve_two_methods(matrix, result):
         try:
             return spsolve(matrix, result)
         except MatrixRankWarning:
-            log.info("ATOCA matrix solve failed with spsolve. Retrying with least-squares.")
-            return lsqr(matrix, result)[0]
+            log.warning("ATOCA matrix solve failed with spsolve. Retrying with least-squares.")
+            try:
+                return lsqr(matrix, result)[0]
+            except ValueError:
+                log.warning("No solution found. Filling solution array with NaN.")
+                return np.full(matrix.shape[1], np.nan)
 
 
 class Tikhonov:

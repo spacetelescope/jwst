@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.ipc import ipc_corr
 from jwst.stpipe import Step
 
 __all__ = ["IPCStep"]
+
+log = logging.getLogger(__name__)
 
 
 class IPCStep(Step):
@@ -34,12 +38,12 @@ class IPCStep(Step):
         with datamodels.RampModel(step_input) as input_model:
             # Get the name of the ipc reference file to use
             self.ipc_name = self.get_reference_file(input_model, "ipc")
-            self.log.info("Using IPC reference file %s", self.ipc_name)
+            log.info("Using IPC reference file %s", self.ipc_name)
 
             # Check for a valid reference file
             if self.ipc_name == "N/A":
-                self.log.warning("No IPC reference file found")
-                self.log.warning("IPC step will be skipped")
+                log.warning("No IPC reference file found")
+                log.warning("IPC step will be skipped")
                 input_model.meta.cal_step.ipc = "SKIPPED"
                 return input_model
 
