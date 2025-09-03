@@ -146,8 +146,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00620_20210113t123511_pool", []),
-        ("jw00620_20210527t123049_pool", []),
         ("jw00623_20200918t091537_o055_pool", []),
         ("jw00624_20190205t031003_pool", []),
         ("jw00625_20190603t233254_pool", []),
@@ -161,6 +159,7 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
         ("jw00809_20220124t091748_pool", []),
         ("jw00818_20230407t030411_pool", []),
         ("jw00839_20221220t025418_pool", ["-i", "o002", "c1000"]),
+        ("jw01122_uniq_lamp_optical_path_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
         ("jw01192_o008_pool", ["--DMS", "-i", "o008"]),  # This pool checks imprint behavior.
         ("jw01290_20230304t140931_withids_pool", ["-i", "o012", "c1018"]),
         ("jw01493_20230307t040130_pool", []),
@@ -178,6 +177,7 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
             ["-i", "o001", "o002"],
         ),  # This pair of pools test the DMS flag usage to prevent o-type ASNs when a background c-type candidate is attached to the science exposure.
         ("jw04225_20241213t150701DMS_pool", ["--DMS", "-i", "o001", "o002"]),
+        ("jw04462_20250318t100414_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
         (
             "jw05554_20250528t204800_c1012_pool",
             ["--DMS", "-i", "o009", "o010", "c1012"],
