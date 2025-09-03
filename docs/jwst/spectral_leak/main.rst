@@ -1,12 +1,12 @@
 Description
 ===========
 
-:Class: `jwst.spectral_leak.SpectralLeakStep`
+:Class: `jwst.spectral_leak.spectral_leak_step.SpectralLeakStep`
 :Alias: spectral_leak
-	
+
 The MIRI MRS filters are designed to keep out-of-band light from interfering with the desired first
 order wavelengths dispersed in a given band. However, around 12.2 µm (channel 3A) a few-percent spectral leak
-admits second-order light from 6 µm (channel 1B) into the bandpass. This results in 
+admits second-order light from 6 µm (channel 1B) into the bandpass. This results in
 spectra produced by the pipeline containing additional flux around 12.2 µm that is only proportional to the object flux at 6 µm.
 
 
@@ -21,5 +21,4 @@ uncorrected and corrected spectrum is given in the figure below for a G dwarf st
    :align: center
 
 Figure: MRS spectral leak as seen in G Dwarf star. The red extracted spectrum does not have the spectral_leak step applied,
-while the the black extracted spectrum has the spectral leak correction applied. 
-
+while the the black extracted spectrum has the spectral leak correction applied.
