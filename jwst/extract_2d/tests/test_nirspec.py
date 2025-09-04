@@ -278,6 +278,10 @@ def test_select_slits(nirspec_slit_list):
     # No slits selected
     with pytest.raises(NoDataOnDetectorError, match="No valid slits selected"):
         select_slits(slit_list, None, None)
+    with pytest.raises(NoDataOnDetectorError, match="No valid slits selected"):
+        select_slits(slit_list, [], [])
+    with pytest.raises(NoDataOnDetectorError, match="No valid slits selected"):
+        select_slits(slit_list, ["-99"], [-9999])
 
     # Just slit with name=='3'
     single_name = select_slits(slit_list, ["3"], None)
