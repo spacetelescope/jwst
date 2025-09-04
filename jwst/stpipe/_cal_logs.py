@@ -29,6 +29,14 @@ def _scrub(msg):
     scrubbed : str
         The scrubbed string
     """
+    if "/" + _USER + "/" in msg:
+        # scrub directory but preserve filenames
+        pieces = msg.split()
+        for i, piece in enumerate(pieces):
+            if "/" + _USER + "/" in piece:
+                root = piece.split("/")[-1]
+                pieces[i] = root
+        return " ".join(pieces)
     if _USER in msg:
         return ""
     if _HOSTNAME in msg:
