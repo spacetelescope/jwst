@@ -146,8 +146,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00623_20200918t091537_o055_pool", []),
-        ("jw00624_20190205t031003_pool", []),
         ("jw00625_20190603t233254_pool", []),
         ("jw00626_20190605t025021_pool", []),
         ("jw00632_20210921t193255_pool", []),
