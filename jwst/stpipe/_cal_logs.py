@@ -29,7 +29,7 @@ def _scrub(msg):
     scrubbed : str
         The scrubbed string
     """
-    # scrub directory but preserve filenames
+    # Remove absolute paths to files when they contain usernames, but preserve filenames
     msg = re.sub(
         re.compile(r"[^\s]*\/" + _USER + r"\/([^\s]*\/)*([^\s\/]*)"), lambda m: m.groups()[-1], msg
     )
