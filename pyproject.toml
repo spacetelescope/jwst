@@ -23,7 +23,7 @@ dependencies = [
     "crds>=12.0.3",
     "drizzle>=2.1.1,<2.2.0",
     # "gwcs>=0.22.0,<0.23.0",
-    "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
+    "gwcs>=0.25.2",
     "numpy>=1.25",
     "opencv-python-headless>=4.6.0.66",
     "photutils>=2.1.0",
