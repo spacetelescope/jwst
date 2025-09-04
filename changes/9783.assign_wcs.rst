@@ -1,0 +1,1 @@
+Add velocity correction to the inverse WCS transforms for NIRSpec spectroscopic modes to fix a round trip error.
