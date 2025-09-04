@@ -146,7 +146,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00625_20190603t233254_pool", []),
         ("jw00626_20190605t025021_pool", []),
         ("jw00632_20210921t193255_pool", []),
         ("jw00660_20210530t152401_pool", []),
@@ -162,6 +161,7 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
         ("jw01290_20230304t140931_withids_pool", ["-i", "o012", "c1018"]),
         ("jw01493_20230307t040130_pool", []),
         ("jw01493_20230307t040130_withids_pool", ["-i", "o003", "c1000"]),
+        ("jw01512_20250316t073810_pool", []),  # NIS_EXTCAL
         ("jw01678_20240721t195707_pool", []),
         ("jw02064_20230302t112350_withids_pool", ["-i", "o061", "c1008", "c1017"]),
         ("jw02162_20241213t063547_pool", []),
