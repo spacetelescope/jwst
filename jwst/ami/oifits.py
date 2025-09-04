@@ -870,6 +870,7 @@ class CalibOifits:
         cp_out = self.targoimodel.t3["T3PHI"] - self.caloimodel.t3["T3PHI"]
         sqv_out = self.targoimodel.vis2["VIS2DATA"] / self.caloimodel.vis2["VIS2DATA"]
         va_out = self.targoimodel.vis["VISAMP"] / self.caloimodel.vis["VISAMP"]
+        ca_out = np.log(self.targoimodel.q4["Q4AMP"]/self.caloimodel.q4["Q4AMP"]) # log of ratio
         # using standard propagation of error for multiplication/division
         # which assumes uncorrelated Gaussian errors (questionable)
         cperr_t = self.targoimodel.t3["T3PHIERR"]
@@ -878,6 +879,9 @@ class CalibOifits:
         sqverr_t = self.caloimodel.vis2["VIS2ERR"]
         vaerr_t = self.targoimodel.vis["VISAMPERR"]
         vaerr_c = self.caloimodel.vis["VISAMPERR"]
+        caerr_t = self.targoimodel.q4["Q4AMPERR"]
+        caerr_c = self.caloimodel.q4["Q4AMPERR"]
+
         cperr_out = np.sqrt(cperr_t**2.0 + cperr_c**2.0)
         sqverr_out = sqv_out * np.sqrt(
             (sqverr_t / self.targoimodel.vis2["VIS2DATA"]) ** 2.0
@@ -887,6 +891,11 @@ class CalibOifits:
             (vaerr_t / self.targoimodel.vis["VISAMP"]) ** 2.0
             + (vaerr_c / self.caloimodel.vis["VISAMP"]) ** 2.0
         )
+
+        caerr_out = np.sqrt(
+            (caerr_t / self.targoimodel.q4["Q4AMP"]) ** 2
+            + (caerr_c / self.caloimodel.q4["Q4AMP"]) ** 2
+            )
 
         pistons_t = self.targoimodel.array["PISTONS"]
         pisterr_t = self.targoimodel.array["PIST_ERR"]
@@ -917,6 +926,9 @@ class CalibOifits:
         self.calib_oimodel.vis2["VIS2ERR"] = sqverr_out
         self.calib_oimodel.vis["VISAMP"] = va_out
         self.calib_oimodel.vis["VISAMPERR"] = vaerr_out
+        self.calib_oimodel.q4["Q4AMP"] = ca_out
+        self.calib_oimodel.q4["Q4AMPERR"] = caerr_out
+        # and t3amp, q4phi? not at this time.
 
         # add calibrated header keywords
         calname = self.caloimodel.meta.target.proposer_name  # name of calibrator star
