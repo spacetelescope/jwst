@@ -138,10 +138,15 @@ class TweakRegStep(Step):
         output : `~jwst.datamodels.library.ModelLibrary`
             The aligned input data models.
         """
-        if isinstance(input_data, ModelLibrary):
-            images = input_data
+        # Check the input for open models and make a copy if necessary
+        # to avoid modifying input data.
+        # If there are no open models already, do not open them.  Leave
+        # that to the ModelLibrary call below.
+        output_models = self.prepare_output(input_data, open_models=False)
+        if isinstance(output_models, ModelLibrary):
+            images = output_models
         else:
-            images = ModelLibrary(input_data, on_disk=not self.in_memory)
+            images = ModelLibrary(output_models, on_disk=not self.in_memory)
 
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")

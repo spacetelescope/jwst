@@ -35,13 +35,17 @@ class AssignMTWcsStep(Step):
         `~jwst.datamodels.library.ModelLibrary`
             The modified data models.
         """
-        if not isinstance(input_lib, ModelLibrary):
+        # Open the input, making a copy if necessary
+        output_lib = self.prepare_output(input_lib)
+        if not isinstance(output_lib, ModelLibrary):
             try:
-                input_lib = ModelLibrary(input_lib)
-            except Exception:
+                output_lib = ModelLibrary(output_lib)
+            except (ValueError, TypeError) as err:
                 log.warning("Input data type is not supported.")
-                record_step_status(input_lib, "assign_mtwcs", False)
-                return input_lib
+                log.debug(f"Error was: {err}")
+                record_step_status(output_lib, "assign_mtwcs", False)
+                return output_lib
 
-        result = assign_moving_target_wcs(input_lib)
+        result = assign_moving_target_wcs(output_lib)
+        record_step_status(result, "assign_mtwcs", True)
         return result

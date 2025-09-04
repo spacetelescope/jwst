@@ -4,7 +4,9 @@ from jwst.stpipe import Pipeline, Step
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.stpipe.utilities import record_step_status
+
 
 log = logging.getLogger("jwst.stpipe.tests.steps")
 
@@ -297,3 +299,122 @@ class CalLogsPipeline(Pipeline):
     def process(self, msg):  # noqa: D102
         log.info(msg)
         return self.a_step.run(msg)
+
+
+class PrepareOutputStep(Step):
+    """Step to test the prepare_output method with defaults."""
+    class_alias = "prepare_output"
+
+    def process(self, input_data):
+        self.log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data)
+        record_step_status(result, "prepare_output", True)
+        self.log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputNoOpenStep(Step):
+    """Step to test the prepare_output method, turning off open_models."""
+    class_alias = "prepare_output_no_open"
+
+    def process(self, input_data):
+        self.log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data, open_models=False)
+        self.log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputForceCopyStep(Step):
+    """Step to test the prepare_output method, forcing a copy."""
+    class_alias = "prepare_output_force_copy"
+
+    def process(self, input_data):
+        self.log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data, make_copy=True)
+        record_step_status(result, "prepare_output", True)
+        self.log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputForceCopyNoOpenStep(Step):
+    """Step to test the prepare_output method, forcing a copy and not opening models."""
+    class_alias = "prepare_output_force_copy_no_open"
+
+    def process(self, input_data):
+        self.log.info(f"Input data is {type(input_data)}")
+        result = self.prepare_output(input_data, make_copy=True, open_models=False)
+        self.log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputNoCopyStep(Step):
+    """Step to test the prepare_output method, without making a copy."""
+    class_alias = "prepare_output_no_copy"
+
+    def process(self, input_data):
+        self.log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data, make_copy=False)
+        record_step_status(result, "prepare_output", True)
+        self.log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputPipeline(Pipeline):
+    """Pipeline to test the prepare_output method."""
+    class_alias = "prepare_output_pipeline"
+
+    step_defs = {
+        "step1": PrepareOutputNoOpenStep,
+        "step2": PrepareOutputStep,
+        "step3": PrepareOutputStep,
+    }
+
+    def process(self, input_data):
+        self.log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data)
+        self.log.info(f"Opened data is {type(result)}")
+
+        result = self.step1.run(result)
+        self.log.info(f"Intermediate data 1 is {type(result)}")
+
+        result = self.step2.run(result)
+        self.log.info(f"Intermediate data 2 is {type(result)}")
+
+        result = self.step3.run(result)
+        self.log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputForceCopyPipeline(Pipeline):
+    """Pipeline to test the prepare_output method with a step that forces a copy."""
+    class_alias = "prepare_output_pipeline"
+
+    step_defs = {
+        "step1": PrepareOutputStep,
+        "step2": PrepareOutputForceCopyStep,
+    }
+
+    def process(self, input_data):
+        self.log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data)
+        self.log.info(f"Opened data is {type(result)}")
+
+        result = self.step1.run(result)
+        self.log.info(f"Intermediate data is {type(result)}")
+
+        result = self.step2.run(result)
+        self.log.info(f"Output data is {type(result)}")
+
+        return result
