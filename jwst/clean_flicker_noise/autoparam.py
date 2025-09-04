@@ -1,5 +1,6 @@
 import logging
 import warnings
+from fractions import Fraction
 
 import numpy as np
 from astropy.stats import sigma_clipped_stats
@@ -96,9 +97,9 @@ def _row_average(image, start_fraction=0.0, stop_fraction=1.0):
     ----------
     image : ndarray
         Full 2D image.
-    start_fraction : float, optional
+    start_fraction : float or Fraction, optional
         Start index for the rows to average over.
-    stop_fraction : float, optional
+    stop_fraction : float or Fraction, optional
         Stop index for the rows to average over.
 
     Returns
@@ -120,9 +121,9 @@ def _col_average(image, start_fraction=0.0, stop_fraction=1.0):
     ----------
     image : ndarray
         Full 2D image.
-    start_fraction : float, optional
+    start_fraction : float or Fraction, optional
         Start index for the columns to average over.
-    stop_fraction : float, optional
+    stop_fraction : float or Fraction, optional
         Stop index for the columns to average over.
 
     Returns
@@ -241,32 +242,41 @@ def _image_decision_tree(
     log.debug(f"  slope ratio: {slope_ratio:.5g}")
     log.debug(f"  channel sigma: {channel_sigma:.5g}")
     log.debug("Autoparam decision tree:")
-    if (mask_frac < limits["mask_frac"]) and (max_offset > limits["max_offset_high_mask"]):
+
+    # Check input against limits
+    high_mask_frac = mask_frac >= limits["mask_frac"]
+    high_max_offset = max_offset >= limits["max_offset_high_mask"]
+    high_max_slope_low_offset = max_slope >= limits["max_slope_low_offset"]
+    high_max_slope_high_offset = max_slope >= limits["max_slope_high_offset"]
+    high_slope_ratio = slope_ratio >= limits["slope_ratio"]
+    high_channel_sigma = channel_sigma >= limits["channel_sigma"]
+
+    if not high_mask_frac and high_max_offset:
         log.debug("  Low mask, high offset: median background, fit by channel")
         parameters["background_method"] = "median"
         parameters["fit_by_channel"] = True
-    elif mask_frac >= limits["mask_frac"]:
+    elif high_mask_frac:
         parameters["fit_by_channel"] = False
-        if max_offset < limits["max_offset_high_mask"]:
-            if max_slope > limits["max_slope_low_offset"]:
+        if not high_max_offset:
+            if high_max_slope_low_offset:
                 log.debug("  High mask, low offset, high slope: model background, fit whole image")
                 parameters["background_method"] = "model"
             else:
                 log.debug("  High mask, low offset, low slope: median background, fit whole image")
                 parameters["background_method"] = "median"
         else:
-            if max_slope > limits["max_slope_high_offset"]:
+            if high_max_slope_high_offset:
                 log.debug("  High mask, high offset, high slope: model background, fit whole image")
                 parameters["background_method"] = "model"
             else:
                 log.debug("  High mask, high offset, low slope: median background, fit whole image")
                 parameters["background_method"] = "median"
     else:
-        if max_slope > limits["max_slope_high_offset"]:
+        if high_max_slope_high_offset:
             log.debug("  Low mask, low offset, high slope: model background")
             parameters["background_method"] = "model"
-        elif max_slope > limits["max_slope_low_offset"]:
-            if slope_ratio < limits["slope_ratio"]:
+        elif high_max_slope_low_offset:
+            if not high_slope_ratio:
                 log.debug("  Low mask, low offset, medium slope, low slope ratio: model background")
                 parameters["background_method"] = "model"
             else:
@@ -277,7 +287,7 @@ def _image_decision_tree(
         else:
             log.debug("  Low mask, low offset, low slope: median background")
             parameters["background_method"] = "median"
-        if max_offset > 0 and channel_sigma > limits["channel_sigma"]:
+        if max_offset > 0 and high_channel_sigma:
             log.debug("  High channel sigma: fit by channel")
             parameters["fit_by_channel"] = True
         else:
@@ -333,8 +343,12 @@ def niriss_image_parameters(input_model, flat_filename):
 
     # Get average row and column values from the middle quarter
     # of the cleaned background image
-    avg_over_row = _row_average(cleaned_image, start_fraction=3 / 8, stop_fraction=5 / 8)
-    avg_over_col = _col_average(cleaned_image, start_fraction=3 / 8, stop_fraction=5 / 8)
+    avg_over_row = _row_average(
+        cleaned_image, start_fraction=Fraction(3, 8), stop_fraction=Fraction(5, 8)
+    )
+    avg_over_col = _col_average(
+        cleaned_image, start_fraction=Fraction(3, 8), stop_fraction=Fraction(5, 8)
+    )
 
     # Fit a line to the column and row stats to get slopes at the
     # center of the image
@@ -351,7 +365,9 @@ def niriss_image_parameters(input_model, flat_filename):
 
     # Also get an average from rows near the top of the image:
     # for NIRISS, channel 1 can look significantly different from the others
-    ch1_avg_over_row = _row_average(cleaned_image, start_fraction=10 / 12, stop_fraction=11 / 12)
+    ch1_avg_over_row = _row_average(
+        cleaned_image, start_fraction=Fraction(10, 12), stop_fraction=Fraction(11, 12)
+    )
 
     # Get the standard deviation of the residuals on the fit for channel 1
     _, _, ch1_sigma = _line_fit(ch1_avg_over_row)
@@ -425,8 +441,12 @@ def nircam_image_parameters(input_model, flat_filename):
 
     # Get average row and column values from the middle quarter
     # of the cleaned image
-    avg_over_row = _row_average(cleaned_image, start_fraction=3 / 8, stop_fraction=5 / 8)
-    avg_over_col = _col_average(cleaned_image, start_fraction=3 / 8, stop_fraction=5 / 8)
+    avg_over_row = _row_average(
+        cleaned_image, start_fraction=Fraction(3, 8), stop_fraction=Fraction(5, 8)
+    )
+    avg_over_col = _col_average(
+        cleaned_image, start_fraction=Fraction(3, 8), stop_fraction=Fraction(5, 8)
+    )
 
     # Fit a line to the column and row stats to get slopes at the center.
     # From the column fit, also get the standard deviation of the
