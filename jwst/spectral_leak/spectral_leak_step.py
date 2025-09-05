@@ -26,7 +26,7 @@ class SpectralLeakStep(Step):
 
     def process(self, input_data):
         """
-        Apply a spectral leak  correction to MIRI MRS Channel 3A data.
+        Apply a spectral leak correction to MIRI MRS Channel 3A data.
 
         Parameters
         ----------
@@ -47,8 +47,10 @@ class SpectralLeakStep(Step):
         ch3a_wave = 12.0
 
         with datamodels.open(input_data) as input_model:
+            # Work on a copy to avoid modifying input
+            result = input_model.copy()
+
             if isinstance(input_model, ModelContainer):
-                result = input_model.copy()  # copy input to return
                 # Retrieve the reference parameters for this type of data
                 sp_leak_ref = self.get_reference_file(input_model[0], "mrsptcorr")
 
@@ -118,8 +120,9 @@ class SpectralLeakStep(Step):
 
             else:
                 log.warning(
-                    "Data sent to spectral_leak step is not a ModelContainer."
-                    "It is {type(input_model)}."
+                    "Data sent to spectral_leak step is not a ModelContainer. "
+                    f"It is {type(input_model)}."
                 )
+                result.meta.cal_step.spectral_leak = "SKIPPED"
                 log.warning("Step is skipped")
-                return input_data
+                return result

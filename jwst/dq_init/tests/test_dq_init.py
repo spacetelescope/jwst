@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import GuiderRawModel, MaskModel, RampModel, dqflags
 
-from jwst.dq_init import DQInitStep
+from jwst.dq_init import DQInitStep, dq_init_step
 from jwst.dq_init.dq_initialization import do_dqinit
 
 # Set parameters for multiple runs of data
@@ -247,6 +247,70 @@ def test_fullstep(xstart, ystart, xsize, ysize, nints, ngroups, instrument, exp_
         assert outfile.pixeldq.ndim == 2  # a 2-d pixeldq frame exists
 
 
+def test_output_is_not_input():
+    """Test that input data is not modified."""
+    dm_ramp = make_rampmodel()
+    result = DQInitStep.call(dm_ramp)
+    assert result is not dm_ramp
+    assert result.meta.cal_step.dq_init == "COMPLETE"
+    assert dm_ramp.meta.cal_step.dq_init is None
+
+
+def test_missing_mask():
+    dm_ramp = make_rampmodel()
+    result = DQInitStep.call(dm_ramp, override_mask="N/A")
+    assert result is not dm_ramp
+    assert result.meta.cal_step.dq_init == "SKIPPED"
+    assert dm_ramp.meta.cal_step.dq_init is None
+
+
+def test_open_rampmodel_error(monkeypatch, caplog):
+    dm_ramp = make_rampmodel()
+
+    # Mock an error in opening the model as a RampModel
+    def mock_model(*args):
+        raise ValueError("Test error")
+
+    monkeypatch.setattr(dq_init_step.datamodels.RampModel, "__init__", mock_model)
+
+    result = DQInitStep.call(dm_ramp)
+
+    # No error raised, ramp is opened as a GuiderRawModel
+    assert "Input opened as GuiderRawModel" in caplog.text
+    assert isinstance(result, GuiderRawModel)
+
+
+def test_open_double_error(monkeypatch, caplog):
+    dm_ramp = make_rampmodel()
+
+    # Mock an error in opening the model as a RampModel
+    def mock_model(*args):
+        raise ValueError("Test error")
+
+    monkeypatch.setattr(dq_init_step.datamodels.RampModel, "__init__", mock_model)
+
+    # And also in opening the model as a GuiderRawModel
+    monkeypatch.setattr(dq_init_step.datamodels.GuiderRawModel, "__init__", mock_model)
+
+    # Exception is raised
+    with pytest.raises(ValueError, match="Test error"):
+        DQInitStep.call(dm_ramp)
+
+
+def test_open_unknown_error(monkeypatch, caplog):
+    dm_ramp = make_rampmodel()
+
+    # Mock an unknown error in opening the model as a RampModel
+    def mock_model(*args):
+        raise RuntimeError("Test error")
+
+    monkeypatch.setattr(dq_init_step.datamodels.RampModel, "__init__", mock_model)
+
+    # Exception is raised
+    with pytest.raises(RuntimeError, match="Test error"):
+        DQInitStep.call(dm_ramp)
+
+
 def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_type=None):
     # create the data and groupdq arrays
     csize = (nints, ngroups, ysize, xsize)
@@ -269,7 +333,7 @@ def make_rawramp(instrument, nints, ngroups, ysize, xsize, ystart, xstart, exp_t
     return dm_ramp
 
 
-def make_rampmodel(nints, ngroups, ysize, xsize):
+def make_rampmodel(nints=1, ngroups=5, ysize=1024, xsize=1032):
     # create the data and groupdq arrays
     csize = (nints, ngroups, ysize, xsize)
     data = np.full(csize, 1.0)
@@ -280,6 +344,7 @@ def make_rampmodel(nints, ngroups, ysize, xsize):
     dm_ramp = RampModel(data=data, pixeldq=pixeldq, groupdq=groupdq)
 
     dm_ramp.meta.instrument.name = "MIRI"
+    dm_ramp.meta.instrument.detector = "MIRIMAGE"
     dm_ramp.meta.observation.date = "2018-01-01"
     dm_ramp.meta.observation.time = "00:00:00"
     dm_ramp.meta.subarray.xstart = 1

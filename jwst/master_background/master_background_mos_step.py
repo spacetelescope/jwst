@@ -118,8 +118,9 @@ class MasterBackgroundMosStep(Pipeline):
                 data_model.meta.cal_step.master_background,
             ]:
                 log.info("Background subtraction has already occurred. Skipping.")
-                record_step_status(data, "master_background", success=False)
-                return data
+                result = data_model.copy()
+                record_step_status(result, "master_background", success=False)
+                return result
 
             if self.user_background:
                 log.info(
@@ -140,12 +141,14 @@ class MasterBackgroundMosStep(Pipeline):
                     log.warning(
                         "No background slits available for creating master background. Skipping"
                     )
-                    record_step_status(data, "master_background", False)
-                    return data
+                    result = data_model.copy()
+                    record_step_status(result, "master_background", False)
+                    return result
                 elif num_src == 0:
                     log.warning("No source slits for applying master background. Skipping")
-                    record_step_status(data, "master_background", False)
-                    return data
+                    result = data_model.copy()
+                    record_step_status(result, "master_background", False)
+                    return result
 
                 log.info("Calculating master background")
                 master_background, mb_multislit, bkg_x1d_spectra = self._calc_master_background(
@@ -155,8 +158,9 @@ class MasterBackgroundMosStep(Pipeline):
             # Check that a master background was actually determined.
             if master_background is None:
                 log.info("No master background could be calculated. Skipping.")
-                record_step_status(data, "master_background", False)
-                return data
+                result = data_model.copy()
+                record_step_status(result, "master_background", False)
+                return result
 
             # Now apply the de-calibrated background to the original science
             result = nirspec_utils.apply_master_background(
