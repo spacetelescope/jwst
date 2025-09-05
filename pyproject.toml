@@ -22,7 +22,6 @@ dependencies = [
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
     "drizzle>=2.1.1,<2.2.0",
-    # "gwcs>=0.22.0,<0.23.0",
     "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
     "numpy>=1.25",
     "photutils>=2.1.0",
@@ -93,7 +92,7 @@ sdp = [
     "pysiaf>=0.13.0",
 ]
 test = [
-    "ci-watson @ git+https://github.com/spacetelescope/ci_watson.git@main",
+    "ci-watson>=0.10",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
