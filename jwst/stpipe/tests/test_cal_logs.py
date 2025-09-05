@@ -42,11 +42,33 @@ def test_cal_logs_pipeline():
         (_FAKE_USER, True),
         (f" something from {_FAKE_USER}", True),
         ("123.42.26.1", True),
+        ("leading 123.42.26.1 trailing", True),
         ("123.42.26", False),
         ("2001:db8::ff00:42:8329", True),
-        ("2001:db8:4006:812::200e", True),
+        ("leading 2001:db8:4006:812::200e trailing", True),
     ],
 )
 def test_scrub(msg, is_empty):
     target = "" if is_empty else msg
     assert _scrub(msg) == target
+
+
+@pytest.mark.parametrize(
+    "msg, expected",
+    [
+        (f"/some/path/{_FAKE_USER}/subdir/file.txt", "file.txt"),
+        (f"before /{_FAKE_USER}/file.txt after", "before file.txt after"),
+        (
+            f"/some/{_FAKE_USER}/file.txt and /another/{_FAKE_USER}/file2.txt",
+            "file.txt and file2.txt",
+        ),
+        (f"/{_FAKE_USER}/file3.txt, /{_FAKE_USER}/file4.txt", "file3.txt, file4.txt"),
+        (f"{_FAKE_HOSTNAME} /{_FAKE_USER}/file5.txt", ""),
+        (f"{_FAKE_USER} /{_FAKE_USER}/file6.txt", ""),
+        (f"123.42.26.1 /{_FAKE_USER}/file7.txt", ""),
+        (f"2001:db8::ff00:42:8329 /{_FAKE_USER}/file8.txt", ""),
+    ],
+)
+def test_abspath_replace(msg, expected):
+    scrubbed = _scrub(msg)
+    assert scrubbed == expected
