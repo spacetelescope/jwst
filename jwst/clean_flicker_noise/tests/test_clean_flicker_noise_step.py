@@ -3,8 +3,10 @@ import os
 import pytest
 from stdatamodels.jwst import datamodels
 
-from jwst.clean_flicker_noise import CleanFlickerNoiseStep
-from jwst.clean_flicker_noise.tests.test_clean_flicker_noise import (
+from jwst.clean_flicker_noise import CleanFlickerNoiseStep, autoparam
+from jwst.clean_flicker_noise.tests.helpers import (
+    make_nircam_rate_model,
+    make_niriss_rate_model,
     make_nirspec_fs_model,
     make_small_ramp_model,
 )
@@ -143,3 +145,43 @@ def test_apply_flat_not_available(log_watcher):
 
     input_model.close()
     cleaned.close()
+
+
+def test_autoparam_niriss_image(caplog):
+    input_model = make_niriss_rate_model()
+    cleaned = CleanFlickerNoiseStep.call(input_model, autoparam=True)
+    assert "Auto parameters set for NIS_IMAGE" in caplog.text
+    assert "apply_flat_field: True" in caplog.text
+    assert "Using FLAT reference file" in caplog.text
+    assert cleaned.meta.ref_file.flat.name is not None
+    assert cleaned.meta.ref_file.flat.name != "N/A"
+    assert "background_method: median" in caplog.text
+
+
+def test_autoparam_nircam_image(caplog):
+    input_model = make_nircam_rate_model()
+    cleaned = CleanFlickerNoiseStep.call(input_model, autoparam=True)
+    assert "Auto parameters set for NRC_IMAGE" in caplog.text
+    assert "apply_flat_field: True" in caplog.text
+    assert "Using FLAT reference file" in caplog.text
+    assert cleaned.meta.ref_file.flat.name is not None
+    assert cleaned.meta.ref_file.flat.name != "N/A"
+    assert "background_method: median" in caplog.text
+
+
+def test_autoparam_not_available(caplog):
+    input_model = make_small_ramp_model()
+    CleanFlickerNoiseStep.call(input_model, autoparam=True)
+    assert "Auto parameters are not available for exposure type MIR_IMAGE" in caplog.text
+    assert "Using input parameters as provided" in caplog.text
+
+
+def test_autoparam_failed(caplog, monkeypatch):
+    # Mock a failure in autoparam: return None
+    monkeypatch.setattr(autoparam, "niriss_image_parameters", lambda *args: None)
+
+    input_model = make_niriss_rate_model()
+    CleanFlickerNoiseStep.call(input_model, autoparam=True, override_flat="N/A")
+    assert "Auto parameter setting failed" in caplog.text
+    assert "Using input parameters as provided" in caplog.text
+    assert "apply_flat_field: True" not in caplog.text
