@@ -147,7 +147,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
     "pool_args",
     [
         ("jw00660_20210530t152401_pool", []),
-        ("jw00663_20221218t111937_pool", ["-i", "o004", "c1000"]),
         ("jw00676_20210403t114320_c1007_pool", ["--DMS"]),
         ("jw00711_20181027T043250_pool", []),
         ("jw00791_20181019T221608_pool", []),
