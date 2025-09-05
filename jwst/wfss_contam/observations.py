@@ -114,7 +114,6 @@ class Observation:
         direct_image,
         segmap_model,
         grism_wcs,
-        source_id=None,
         boundaries=None,
         max_cpu=1,
         max_pixels_per_chunk=5e4,
@@ -132,8 +131,6 @@ class Observation:
             Segmentation map model
         grism_wcs : gwcs object
             WCS object from grism image
-        source_id : int, optional
-            ID of source to process. If None, all sources processed.
         boundaries : list, optional
             Start/Stop coordinates of the FOV within the larger seed image.
         max_cpu : int, optional
@@ -155,7 +152,7 @@ class Observation:
         self.seg = segmap_model.data
         all_ids = list(set(np.ravel(self.seg)))
         all_ids.remove(0)  # Remove the background ID
-        self.source_ids = _select_ids(source_id, all_ids)
+        self.source_ids = all_ids
         self.max_cpu = max_cpu
         self.max_pixels_per_chunk = max_pixels_per_chunk
         self.oversample_factor = oversample_factor
@@ -203,7 +200,9 @@ class Observation:
         self.fluxes = np.array(self.fluxes)
         self.source_ids_per_pixel = np.array(self.source_ids_per_pixel)
 
-    def chunk_sources(self, order, wmin, wmax, sens_waves, sens_response, max_pixels=1e5):
+    def chunk_sources(
+        self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, max_pixels=1e5
+    ):
         """
         Chunk the sources into groups of max_pixels.
 
@@ -223,7 +222,9 @@ class Observation:
         current_chunk = []
         current_size = 0
 
-        for sid in self.source_ids:
+        source_ids = _select_ids(selected_ids, self.source_ids)
+
+        for sid in source_ids:
             n_pixels = np.sum(self.seg == sid)
             if n_pixels > max_pixels:
                 log.warning(
@@ -271,7 +272,7 @@ class Observation:
 
         return disperse_args
 
-    def disperse_order(self, order, wmin, wmax, sens_waves, sens_response):
+    def disperse_order(self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None):
         """
         Disperse the sources for a given spectral order, with multiprocessing.
 
@@ -289,11 +290,19 @@ class Observation:
             Wavelength array from photom reference file
         sens_response : ndarray
             Response (flux calibration) array from photom reference file
+        selected_ids : list, optional
+            List of source IDs to process. If None, all sources are processed.
         """
         # generate lists of input parameters for the disperse function
         # for each chunk of sources
         disperse_args = self.chunk_sources(
-            order, wmin, wmax, sens_waves, sens_response, max_pixels=self.max_pixels_per_chunk
+            order,
+            wmin,
+            wmax,
+            sens_waves,
+            sens_response,
+            selected_ids=selected_ids,
+            max_pixels=self.max_pixels_per_chunk,
         )
         t0 = time.time()
         if self.max_cpu > 1:
