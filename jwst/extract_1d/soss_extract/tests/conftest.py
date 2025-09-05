@@ -16,6 +16,7 @@ The model has the following features:
 - (partial) Mock of the Pastasoss reference model
 """
 
+import warnings
 from functools import partial
 
 import numpy as np
@@ -32,6 +33,7 @@ from jwst.extract_1d.soss_extract.tests.helpers import (
     WAVE_BNDS_GRID,
     WAVE_BNDS_O1,
     WAVE_BNDS_O2,
+    WAVE_BNDS_O3,
     f_lam,
 )
 
@@ -54,7 +56,10 @@ def wave_map():
     # add a small region of zeros to mimic what is input to the step from ref files
     wave_ord2[:, TRACE_END_IDX[1] :] = 0.0
 
-    return [wave_ord1, wave_ord2]
+    wave_ord3 = np.linspace(WAVE_BNDS_O3[0], WAVE_BNDS_O3[1], DATA_SHAPE[1])
+    wave_ord3 = np.ones(DATA_SHAPE) * wave_ord3[np.newaxis, :]
+
+    return [wave_ord1, wave_ord2, wave_ord3]
 
 
 @pytest.fixture(scope="package")
@@ -79,18 +84,29 @@ def trace_profile():
 
     # order 2
     yy, xx = np.meshgrid(np.arange(DATA_SHAPE[0]), np.arange(DATA_SHAPE[1]))
-    yy = yy.astype(np.float32) - xx.astype(np.float32) * 0.08
-    yy = yy.T
+    yy_o2 = yy.astype(np.float32) - xx.astype(np.float32) * 0.08
+    yy_o2 = yy_o2.T
 
-    profile_ord2 = np.zeros_like(yy)
-    full = (yy >= 3) & (yy < 9)
-    half0 = (yy >= 9) & (yy < 11)
-    half1 = (yy >= 1) & (yy < 3)
+    profile_ord2 = np.zeros_like(yy_o2)
+    full = (yy_o2 >= 3) & (yy_o2 < 9)
+    half0 = (yy_o2 >= 9) & (yy_o2 < 11)
+    half1 = (yy_o2 >= 1) & (yy_o2 < 3)
     profile_ord2[full] = 0.2
     profile_ord2[half0] = 0.1
     profile_ord2[half1] = 0.1
 
-    return [profile_ord1, profile_ord2]
+    yy_o3 = yy.astype(np.float32) - xx.astype(np.float32) * 0.3
+    yy_o3 = yy_o3.T
+
+    profile_ord3 = np.zeros_like(yy_o3)
+    full = (yy_o3 >= 4) & (yy_o3 < 8)
+    half0 = (yy_o3 >= 8) & (yy_o3 < 10)
+    half1 = (yy_o3 >= 2) & (yy_o3 < 4)
+    profile_ord3[full] = 0.2
+    profile_ord3[half0] = 0.1
+    profile_ord3[half1] = 0.1
+
+    return [profile_ord1, profile_ord2, profile_ord3]
 
 
 @pytest.fixture(scope="package")
@@ -104,7 +120,7 @@ def trace1d(wave_map, trace_profile):
         (x, y, wavelength) for each order
     """
     trace_list = []
-    for order in [0, 1]:
+    for order in range(len(trace_profile)):
         profile = trace_profile[order]
         wave2d = wave_map[order].copy()  # avoid modifying wave_map, it's needed elsewhere!
         end_idx = TRACE_END_IDX[order]
@@ -114,19 +130,22 @@ def trace1d(wave_map, trace_profile):
         xx, yy = np.mgrid[: shp[0], : shp[1]]
         xx = xx.astype("float")
         xx[profile == 0] = np.nan
-        mean_trace = np.nanmean(xx, axis=0)
-        # same strategy for wavelength
         wave2d[profile == 0] = np.nan
-        mean_wave = np.nanmean(wave2d, axis=0)
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=RuntimeWarning, message="Mean of empty slice"
+            )
+            mean_trace = np.nanmean(xx, axis=0)
+            # same strategy for wavelength
+            mean_wave = np.nanmean(wave2d, axis=0)
 
+        # apply cutoff
+        xtrace = np.arange(0, end_idx)
+        mean_wave = mean_wave[:end_idx]
+        mean_trace = mean_trace[:end_idx]
         # smooth it. we know it should be linear so use 1st order poly and large box size
         ytrace = savgol_filter(mean_trace, mean_trace.size - 1, 1)
         wavetrace = savgol_filter(mean_wave, mean_wave.size - 1, 1)
-
-        # apply cutoff
-        wavetrace = wavetrace[:end_idx]
-        ytrace = ytrace[:end_idx]
-        xtrace = np.arange(0, end_idx)
 
         trace_list.append((xtrace, ytrace, wavetrace))
 
@@ -176,8 +195,9 @@ def throughput():
 
     thru_o1 = partial(filter_function, wl_max=1.7)
     thru_o2 = partial(filter_function, wl_max=0.7)
+    thru_o3 = partial(filter_function, wl_max=0.8)
 
-    return [thru_o1, thru_o2]
+    return [thru_o1, thru_o2, thru_o3]
 
 
 @pytest.fixture(scope="package")
@@ -191,17 +211,8 @@ def kernels_unity():
         Kernel for each order, both set to unity
     """
     return [
-        np.array(
-            [
-                1.0,
-            ]
-        ),
-        np.array(
-            [
-                1.0,
-            ]
-        ),
-    ]
+        np.array([1.0]),
+    ] * 3
 
 
 @pytest.fixture(scope="package")
@@ -228,7 +239,7 @@ def webb_kernels(wave_map):
     ctr_idx = kernel_width // 2
 
     kernels = []
-    for order in [0, 1]:
+    for order in range(len(wave_map)):
         # set up wavelength grid over which kernel is defined
         wave_trace = wave_map[order][0]
         wave_range = (np.min(wave_trace), np.max(wave_trace))
@@ -269,7 +280,9 @@ def mask_trace_profile(trace_profile):
 
     trace_o1 = mask_from_trace(trace_profile[0], cut_low=0, cut_hi=199)
     trace_o2 = mask_from_trace(trace_profile[1], cut_low=0, cut_hi=175)
-    return [trace_o1, trace_o2]
+    trace_o3 = mask_from_trace(trace_profile[2])
+
+    return [trace_o1, trace_o2, trace_o3]
 
 
 @pytest.fixture(scope="package")
@@ -309,6 +322,7 @@ def engine(
         wave_grid,
         mask_trace_profile,
         global_mask=detector_mask,
+        orders=[1, 2, 3],
     )
 
 
@@ -379,14 +393,20 @@ def refmodel(trace1d):
         "spectral_order": 2,
         "trace": np.array([trace1d[1][0], trace1d[1][1]], dtype=np.float64).T,
     }
-    model.traces = [trace0, trace1]
+    trace2 = {
+        "pivot_x": 144.4,
+        "pivot_y": 36.1,
+        "spectral_order": 3,
+        "trace": np.array([trace1d[2][0], trace1d[2][1]], dtype=np.float64).T,
+    }
+    model.traces = [trace0, trace1, trace2]
 
     wavecal0 = {
         "coefficients": [
             WAVE_BNDS_O1[0],
             -2.0,
         ]
-        + [0.0 for i in range(19)],
+        + [0.0 for _ in range(19)],
         "polynomial_degree": 5,
         "scale_extents": [[0, -1.03552000e-01], [DATA_SHAPE[1], 1.62882080e-01]],
     }
@@ -395,11 +415,20 @@ def refmodel(trace1d):
             WAVE_BNDS_O2[0],
             -1.0,
         ]
-        + [0.0 for i in range(8)],
+        + [0.0 for _ in range(8)],
         "polynomial_degree": 3,
         "scale_extents": [[0, 245.5929], [DATA_SHAPE[1], 245.9271]],
     }
-    model.wavecal_models = [wavecal0, wavecal1]
+    wavecal2 = {
+        "coefficients": [
+            WAVE_BNDS_O3[0],
+            -0.3,
+        ]
+        + [0.0 for _ in range(8)],
+        "polynomial_degree": 3,
+        "scale_extents": [[9.9, -1.03552000e-01], [102.8, 1.62882080e-01]],
+    }
+    model.wavecal_models = [wavecal0, wavecal1, wavecal2]
 
     thru0 = {
         "spectral_order": 1,
@@ -411,7 +440,12 @@ def refmodel(trace1d):
         "wavelength": np.linspace(0.5, 5.5, 501),
         "throughput": np.ones((501,)),
     }  # peaks around 0.7 at value of 0.16
-    model.throughputs = [thru0, thru1]
+    thru2 = {
+        "spectral_order": 3,
+        "wavelength": np.linspace(0.5, 5.5, 501),
+        "throughput": np.ones((501,)),
+    }  # peaks around 0.7 at value of 0.16
+    model.throughputs = [thru0, thru1, thru2]
 
     return model
 
