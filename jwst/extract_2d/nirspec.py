@@ -65,7 +65,8 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
     open_slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slits
 
     # Select the slits to process
-    open_slits = select_slits(open_slits, slit_names, source_ids)
+    if slit_names is not None or source_ids is not None:
+        open_slits = select_slits(open_slits, slit_names, source_ids)
 
     # NIRSpec BRIGHTOBJ (S1600A1 TSO) mode
     if exp_type == "NRS_BRIGHTOBJ":
@@ -146,6 +147,11 @@ def select_slits(open_slits, slit_names, source_ids):
     -------
     selected_open_slits : list
         List of slits selected by slit_name or source_id
+
+    Raises
+    ------
+    `~jwst.assign_wcs.util.NoDataOnDetectorError`
+        If no valid slits are selected.
     """
     open_slit_names = [str(x.name) for x in open_slits]
     open_slit_source_ids = [str(x.source_id) for x in open_slits]
@@ -156,7 +162,7 @@ def select_slits(open_slits, slit_names, source_ids):
             if this_slit in open_slit_names:
                 matched_slits.append(this_slit)
             else:
-                log.warn(f"Slit {this_slit} is not in the list of open slits.")
+                log.warning(f"Slit {this_slit} is not in the list of open slits.")
         for sub in open_slits:
             if str(sub.name) in matched_slits:
                 selected_open_slits.append(sub)
@@ -166,7 +172,7 @@ def select_slits(open_slits, slit_names, source_ids):
             if this_id in open_slit_source_ids:
                 matched_sources.append(this_id)
             else:
-                log.warn(f"Source id {this_id} is not in the list of open slits.")
+                log.warning(f"Source id {this_id} is not in the list of open slits.")
         for sub in open_slits:
             if str(sub.source_id) in matched_sources:
                 if sub not in selected_open_slits:
@@ -179,8 +185,9 @@ def select_slits(open_slits, slit_names, source_ids):
             log.info(f"Name: {this_slit.name}, source_id: {this_slit.source_id}")
         return selected_open_slits
     else:
-        log.info("All slits selected")
-        return open_slits
+        log_message = "No valid slits selected."
+        log.critical(log_message)
+        raise util.NoDataOnDetectorError(log_message)
 
 
 def process_slit(input_model, slit):
@@ -363,7 +370,7 @@ class DitherMetadataError(Exception):
     Handle DitherMetadataError exception.
 
     This exception is raised if a Slit object doesn't have the required
-    dither attribute, or the x_ and y_ offsets aren't numeric.
+    dither attribute, or the x and y offsets aren't numeric.
     """
 
     pass

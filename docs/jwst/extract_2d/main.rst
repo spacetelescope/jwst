@@ -306,6 +306,8 @@ modes. For NIRSpec observations there is one applicable argument:
   of None will cause all known slits for the instrument to be extracted.
 
 ``slit_names`` and ``source_ids`` can be used at the same time, duplicates will be filtered out.
+If either argument is specified, but no valid slits are identified, an error will be
+raised and the step will exit.
 
 There are several arguments available for Wide-Field Slitless Spectroscopy (WFSS) and
 Time-Series (TSO) grism spectroscopy:
