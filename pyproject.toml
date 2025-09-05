@@ -24,7 +24,6 @@ dependencies = [
     "drizzle>=2.1.1,<2.2.0",
     "gwcs @ git+https://github.com/spacetelescope/gwcs.git@master",
     "numpy>=1.25",
-    "opencv-python-headless>=4.6.0.66",
     "photutils>=2.1.0",
     "pyparsing>=2.2.1",
     "requests>=2.31",
