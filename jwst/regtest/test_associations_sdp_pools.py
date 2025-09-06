@@ -85,7 +85,6 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
         pytest.param(("jw02508_20250308t182800_pool", []), id="pool_021_tso_MIRI_LRS"),
         pytest.param(("jw02770_20250409t122318_pool", []), id="imprint_mos_obs_2"),
         pytest.param(("jw02961_20250308t142131_pool", []), id="pool_007_spec_miri_SLITLESS"),
-        pytest.param(("jw03522_20250318t192624_pool", []), id="pool_024_nirspec_fss_nods"),
         pytest.param(("jw03596_20250308t161159_pool", []), id="pool_021_tso_NIRISS_SOSS"),
         pytest.param(("jw03777_20250316t024410_pool", []), id="pool_006_spec_nirspec_IFU"),
         pytest.param(("jw03823_20250316t070626_pool", []), id="pool_029_mir_lrsfs_nonod"),
@@ -99,11 +98,6 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
             id="pool_007_spec_miri_FIXED_SLIT_AND_pool_028_mir_lrsfs_nods",
         ),
         pytest.param(("jw05204_20250308t202944_pool", []), id="pool_002_image_miri"),
-        pytest.param(("jw05308_20250319t215735_pool", []), id="pool_027_nirspec_ifu_nods_4NODS"),
-        pytest.param(
-            ("jw05398_20250312t000159_pool", ["-i", "o036", "o037", "c1029"]),
-            id="pool_034_wfss_parallel_NIRCAM_ROW_ONLY",
-        ),  # Only row grism and direct image, but no column grism image.
     ],
     ids=parfunc,
 )
@@ -122,19 +116,25 @@ def test_std(_jail, rtdata, resource_tracker, request, pool_args):
             ("jw02084_20250320t081615_pool", []), id="pool_021_tso_NIRCAM_TSIMAGE_TSGRISM"
         ),
         pytest.param(("jw03383_20250307t235057_pool", []), id="pool_034_wfss_parallel_NIRISS"),
+        pytest.param(("jw03522_20250318t192624_pool", []), id="pool_024_nirspec_fss_nods"),
         pytest.param(("jw03702_20250320t002824_pool", []), id="imprint_2n_dithers_obs_1_2"),
         pytest.param(("jw05221_20250411t182730_pool", []), id="pool_032_nircam_wfss"),
+        pytest.param(("jw05308_20250319t215735_pool", []), id="pool_027_nirspec_ifu_nods_4NODS"),
         pytest.param(
-            ("jw05398_20250312t000159_pool", ["-i", "o041", "o042", "o043", "c1016"]),
+            ("jw05398_20250312t000159_default_pool", ["-i", "o041", "o042", "o043", "c1016"]),
             id="pool_034_wfss_parallel_NIRCAM_DEFAULT",
         ),  # This is "default" scenario: row grism, column grism, and direct image.
         pytest.param(
             (
-                "jw05398_20250312t000159_pool",
+                "jw05398_20250312t000159_3r2d_pool",
                 ["-i", "o030", "o031", "o032", "o033", "o035", "c1012", "c1013", "c1014"],
             ),
             id="pool_034_wfss_parallel_NIRCAM_3ROW_2DIRECT",
         ),  # Three row grism images and two direct images.
+        pytest.param(
+            ("jw05398_20250312t000159_row_pool", ["-i", "o036", "o037", "c1029"]),
+            id="pool_034_wfss_parallel_NIRCAM_ROW_ONLY",
+        ),  # Only row grism and direct image, but no column grism image.
     ],
     ids=parfunc,
 )
