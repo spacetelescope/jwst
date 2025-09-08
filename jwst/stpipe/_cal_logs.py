@@ -20,8 +20,6 @@ def _scrub(msg):
     Scrub sensitive information from a message.
 
     This includes user and hostnames, IP addresses, and absolute paths.
-    Usernames and hostnames are only removed if they are standalone,
-    not part of other words.
     Absolute paths are removed by simply checking for a leading backslash,
     and they are replaced with just their root (i.e., the filename).
     Relative paths are not modified.
@@ -43,10 +41,11 @@ def _scrub(msg):
         lambda m: m.group(2),
         msg,
     )
-    # Only scrub if _USER or _HOSTNAME appear as standalone words
-    if re.search(rf"\b{re.escape(_USER)}\b", msg):
+    # Scrub anything containing username or hostname
+    # Paths containing usernames should already be removed
+    if _USER in msg:
         return ""
-    if re.search(rf"\b{re.escape(_HOSTNAME)}\b", msg):
+    if _HOSTNAME in msg:
         return ""
     if re.search(_IP_REGEX, msg):
         return ""

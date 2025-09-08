@@ -42,7 +42,7 @@ def test_cal_logs_pipeline():
         (_FAKE_USER, True),
         (f" something from {_FAKE_USER}", True),
         (f":{_FAKE_USER},", True),  # scrub if surrounded by punctuation
-        (f"run{_FAKE_USER}e", False),  # no scrub if within word
+        (f"run{_FAKE_USER}e", True),  # scrub whole line if part of word
         ("123.42.26.1", True),
         ("leading 123.42.26.1 trailing", True),
         ("123.42.26", False),
