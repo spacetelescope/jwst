@@ -147,7 +147,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
     "pool_args",
     [
         ("jw00629_20190605t025157_pool", []),
-        ("jw00676_20210403t114320_c1007_pool", ["--DMS"]),
         ("jw00711_20181027T043250_pool", []),
         ("jw00791_20181019T221608_pool", []),
         ("jw00809_20220124t091748_pool", []),
@@ -165,6 +164,7 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
             ["-i", "o001", "o002"],
         ),  # This pair of pools test the DMS flag usage to prevent o-type ASNs when a background c-type candidate is attached to the science exposure.
         ("jw04225_20241213t150701DMS_pool", ["--DMS", "-i", "o001", "o002"]),
+        ("jw04237_20250321t192812_dms_pool", ["--DMS"]),  # Lvl 3 MIRI MRS BKG with DMS
         ("jw04462_20250318t100414_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
         (
             "jw05554_20250528t204800_c1012_pool",
@@ -214,7 +214,6 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     [
         ("jw00623_20190607t021101_pool", []),
         ("jw00628_20191102t153956_pool", []),
-        ("jw00676_20210403t114320_pool", []),
         ("jw01192_o008_pool", ["--DMS", "-i", "o008"]),  # This pool checks imprint behavior.
         ("jw01194_20230115t113819_pool", ["--DMS"]),  # This pool checks coronagraphy associations
         ("jw01257_20221201t192226_pool", []),
@@ -226,6 +225,7 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
             ["-i", "c1000"],
         ),  # This association tests the Asn_Lv3ImageMosaic rule
         ("jw03855_20241103t042455_pool", []),
+        ("jw04237_20250321t192812_pool", []),  # Lvl 3 MIRI MRS BKG
         ("jw82600_20180921T023255_pool", []),
         ("jw94015_20171108T041516_pool", []),
     ],
