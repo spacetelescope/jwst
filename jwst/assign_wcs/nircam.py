@@ -24,10 +24,11 @@ from jwst.assign_wcs.util import (
     bounding_box_from_subarray,
     not_implemented_mode,
     subarray_transform,
+    substripe_subarray_transform,
     transform_bbox_from_shape,
     velocity_correction,
 )
-from jwst.lib.reffile_utils import find_row
+from jwst.lib import reffile_utils
 
 log = logging.getLogger(__name__)
 
@@ -147,7 +148,7 @@ def imaging_distortion(input_model, reference_files):
             filters = filter_offset.tree["filters"]
 
         match_keys = {"filter": obsfilter, "pupil": obspupil}
-        row = find_row(filters, match_keys)
+        row = reffile_utils.find_row(filters, match_keys)
         if row is not None:
             col_offset = row.get("column_offset", "N/A")
             row_offset = row.get("row_offset", "N/A")
@@ -361,8 +362,14 @@ def dhs(input_model, reference_files):
     """
     frames = create_coord_frames()
 
-    with RegionsModel(reference_files["regions"]) as f:
-        regions = f.regions.copy()
+    regs_model = RegionsModel(reference_files["regions"])
+
+    if regs_model.regions.shape == input_model.data.shape:
+        regions = regs_model.regions.copy()
+    else:
+        sub_regs_model = reffile_utils.get_subarray_model(input_model, regs_model)
+        regions = sub_regs_model.regions.copy()
+        sub_regs_model.close()
 
     label_mapper = selector.LabelMapperArray(
         regions,
@@ -410,6 +417,16 @@ def dhs(input_model, reference_files):
             inv_xmodels=invdispx[i],
         )
 
+        # Add in the wavelength shift from the velocity dispersion
+        try:
+            velosys = input_model.meta.wcsinfo.velosys
+        except AttributeError:
+            pass
+        if velosys is not None:
+            velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+            log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
+            det2det = det2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
+
         # input into the forward transform is x,y,x0,y0,order
         # where x,y is the pixel location in the grism image
         # and x0,y0 is the source location in the "direct" image.
@@ -436,69 +453,64 @@ def dhs(input_model, reference_files):
         setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
         setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
 
+        stripe_model = Const1D(stripe)
+        stripe_model.inverse = Const1D(stripe)
+
         # x, y, order in goes to transform to full array location and order
         # get the shift to full frame coordinates
-        sub_trans = subarray_transform(input_model)
+        sub_trans = substripe_subarray_transform(input_model, regs_model, stripe)
+
         if sub_trans is not None:
             sub2direct = (
                 sub_trans & Identity(1)
-                | Mapping((0, 1, 0, 1, 2))
-                | (Identity(2) & xcenter & ycenter & Identity(1))
-                | det2det
+                | Mapping((0, 1, 0, 1, 2, 2))
+                | (Identity(2) & xcenter & ycenter & Identity(2))
+                | det2det & stripe_model
             )
         else:
             sub2direct = (
-                Mapping((0, 1, 0, 1, 2)) | (Identity(2) & xcenter & ycenter & Identity(1)) | det2det
+                Mapping((0, 1, 0, 1, 2, 2))
+                | (Identity(2) & xcenter & ycenter & Identity(2))
+                | det2det & stripe_model
             )
 
         transforms[stripe] = sub2direct
 
-    """
-    inv_mapper = selector.LabelMapperRange(
-        ("x", "y", "lam"), ch_dict, models.Mapping((2,))
+    label_mapper.inverse = selector.LabelMapper(
+        inputs=("x0", "y0", "lam", "order", "stripe"),
+        mapper=Identity(1),
+        inputs_mapping=Mapping((4,)),
     )
-    label_mapper.inverse = inv_mapper
-    """
 
     stripe2det = selector.RegionsSelector(
         ("x", "y", "order"),
-        ("x0", "y0", "lam", "order"),
+        ("x0", "y0", "lam", "order", "stripe"),
         label_mapper=label_mapper,
         selector=transforms,
     )
 
-    # Add in the wavelength shift from the velocity dispersion
-    try:
-        velosys = input_model.meta.wcsinfo.velosys
-    except AttributeError:
-        pass
-    if velosys is not None:
-        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
-        log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
-        det2det = stripe2det | Mapping((0, 1, 2, 3)) | Identity(2) & velocity_corr & Identity(1)
-
     # take us from full frame detector to v2v3
-    distortion = imaging_distortion(input_model, reference_files) & Identity(2)
+    distortion = imaging_distortion(input_model, reference_files) & Identity(3)
 
     # Compute differential velocity aberration (DVA) correction:
     va_corr = pointing.dva_corr_model(
         va_scale=input_model.meta.velocity_aberration.scale_factor,
         v2_ref=input_model.meta.wcsinfo.v2_ref,
         v3_ref=input_model.meta.wcsinfo.v3_ref,
-    ) & Identity(2)
+    ) & Identity(3)
 
     # v2v3 to the sky
     # remap the tel2sky inverse as well since we can feed it the values of
     # crval1, crval2 which correspond to crpix1, crpix2. This leaves
     # us with a calling structure:
     #  (x, y, order) <-> (wavelength, order)
-    tel2sky = pointing.v23tosky(input_model) & Identity(2)
+    tel2sky = pointing.v23tosky(input_model) & Identity(3)
     t2skyinverse = tel2sky.inverse
-    newinverse = Mapping((0, 1, 0, 1)) | setra & setdec & Identity(2) | t2skyinverse
+    newinverse = Mapping((0, 1, 0, 3, 4)) | setra & setdec & Identity(3) | t2skyinverse
     tel2sky.inverse = newinverse
 
     pipeline = [
-        (frames["grism_detector"], sub2direct),
+        (frames["grism_detector"], stripe2det),
         (frames["direct_image"], distortion),
         (frames["v2v3"], va_corr),
         (frames["v2v3vacorr"], tel2sky),
