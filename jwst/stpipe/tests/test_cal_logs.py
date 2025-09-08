@@ -58,6 +58,8 @@ def test_scrub(msg, is_empty):
     [
         (f"/some/path/{_FAKE_USER}/subdir/file.txt", "file.txt"),
         ("before /path/file.txt after", "before file.txt after"),
+        ("before relative/file.txt after", "before file.txt after"),
+        ("file I/O error", "file I/O error"),
         (
             f"/some/path/file.txt and '/another/{_FAKE_USER}/file2.txt'",
             "file.txt and 'file2.txt'",
@@ -69,6 +71,6 @@ def test_scrub(msg, is_empty):
         (f"2001:db8::ff00:42:8329 /{_FAKE_USER}/file8.txt", ""),
     ],
 )
-def test_abspath_replace(msg, expected):
+def test_path_replace(msg, expected):
     scrubbed = _scrub(msg)
     assert scrubbed == expected
