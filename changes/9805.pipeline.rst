@@ -1,1 +1,1 @@
-Deprecate save_bsub parameter in calwebb_image2 and calwebb_spec2; use the background step save_results parameter instead
+Deprecate the ``save_bsub`` parameter in calwebb_image2 and calwebb_spec2. Use the background step ``save_results`` parameter instead.
