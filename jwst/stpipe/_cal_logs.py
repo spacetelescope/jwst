@@ -19,6 +19,13 @@ def _scrub(msg):
     """
     Scrub sensitive information from a message.
 
+    This includes user and hostnames, IP addresses, and absolute paths.
+    Usernames and hostnames are only removed if they are standalone,
+    not part of other words.
+    Absolute paths are removed by simply checking for a leading backslash,
+    and they are replaced with just their root (i.e., the filename).
+    Relative paths are not modified.
+
     Parameters
     ----------
     msg : str
@@ -29,11 +36,17 @@ def _scrub(msg):
     scrubbed : str
         The scrubbed string
     """
-    # replace all paths, relative or absolute, with just the filename
-    msg = re.sub(re.compile(r"([^\s\W]*\/)*([^\s\/])"), lambda m: m.groups()[-1], msg)
-    if _USER in msg:
+    # replace absolute paths with just the filename
+    # keep all relative paths as-is
+    msg = re.sub(
+        r"(?<!\w)(/(?:[^/\s]+/)+([^/\s]+))",
+        lambda m: m.group(2),
+        msg,
+    )
+    # Only scrub if _USER or _HOSTNAME appear as standalone words
+    if re.search(rf"\b{re.escape(_USER)}\b", msg):
         return ""
-    if _HOSTNAME in msg:
+    if re.search(rf"\b{re.escape(_HOSTNAME)}\b", msg):
         return ""
     if re.search(_IP_REGEX, msg):
         return ""

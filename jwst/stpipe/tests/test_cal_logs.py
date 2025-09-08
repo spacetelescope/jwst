@@ -8,7 +8,7 @@ from jwst.stpipe._cal_logs import _scrub
 from jwst.stpipe.tests.steps import CalLogsPipeline, CalLogsStep
 
 _FAKE_HOSTNAME = "my_hostname"
-_FAKE_USER = "my_user"
+_FAKE_USER = "tim"
 
 
 @pytest.fixture(autouse=True)
@@ -41,6 +41,8 @@ def test_cal_logs_pipeline():
         (_FAKE_HOSTNAME, True),
         (_FAKE_USER, True),
         (f" something from {_FAKE_USER}", True),
+        (f":{_FAKE_USER},", True),  # scrub if surrounded by punctuation
+        (f"run{_FAKE_USER}e", False),  # no scrub if within word
         ("123.42.26.1", True),
         ("leading 123.42.26.1 trailing", True),
         ("123.42.26", False),
@@ -58,7 +60,9 @@ def test_scrub(msg, is_empty):
     [
         (f"/some/path/{_FAKE_USER}/subdir/file.txt", "file.txt"),
         ("before /path/file.txt after", "before file.txt after"),
-        ("before relative/file.txt after", "before file.txt after"),
+        ("before relative/file.txt after", "before relative/file.txt after"),
+        ("relative/nested/file.txt", "relative/nested/file.txt"),
+        ("../file.txt", "../file.txt"),
         ("file I/O error", "file I/O error"),
         (
             f"/some/path/file.txt and '/another/{_FAKE_USER}/file2.txt'",
