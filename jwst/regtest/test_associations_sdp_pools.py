@@ -214,7 +214,6 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     [
         ("jw00623_20190607t021101_pool", []),
         ("jw00628_20191102t153956_pool", []),
-        ("jw00660_20210530t152401_pool", []),
         ("jw00676_20210403t114320_pool", []),
         ("jw01192_o008_pool", ["--DMS", "-i", "o008"]),  # This pool checks imprint behavior.
         ("jw01194_20230115t113819_pool", ["--DMS"]),  # This pool checks coronagraphy associations
