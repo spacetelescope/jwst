@@ -146,7 +146,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00629_20190605t025157_pool", []),
         ("jw00711_20181027T043250_pool", []),
         ("jw00791_20181019T221608_pool", []),
         ("jw00809_20220124t091748_pool", []),
@@ -154,6 +153,7 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
         ("jw00839_20221220t025418_pool", ["-i", "o002", "c1000"]),
         ("jw01122_uniq_lamp_optical_path_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
         ("jw01290_20230304t140931_withids_pool", ["-i", "o012", "c1018"]),
+        ("jw01464_20250318t062856_pool", []),  # WFS&C rules
         ("jw01493_20230307t040130_withids_pool", ["-i", "o003", "c1000"]),
         ("jw01512_20250316t073810_pool", []),  # NIS_EXTCAL
         ("jw01678_20240721t195707_pool", []),
