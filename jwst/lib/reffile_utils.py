@@ -338,21 +338,14 @@ def get_multistripe_subarray_model(sci_model, ref_model):
     sub_model : JWST data model
         Subarray cutout reference file model.
     """
-    if isinstance(ref_model, datamodels.MaskModel):
-        sub_model = stripe_read(sci_model, ref_model, ["dq"])
-    elif isinstance(ref_model, datamodels.GainModel):
-        sub_model = stripe_read(sci_model, ref_model, ["data"])
-    elif isinstance(ref_model, datamodels.LinearityModel):
-        sub_model = stripe_read(sci_model, ref_model, ["coeffs", "dq"])
-    elif isinstance(ref_model, datamodels.ReadnoiseModel):
-        sub_model = stripe_read(sci_model, ref_model, ["data"])
-    elif isinstance(ref_model, datamodels.SaturationModel):
-        sub_model = stripe_read(sci_model, ref_model, ["data", "dq"])
-    elif isinstance(ref_model, datamodels.SuperBiasModel):
-        sub_model = stripe_read(sci_model, ref_model, ["data", "err", "dq"])
-    else:
-        log.warning("Unsupported reference file model type for multistripe subarray cutouts.")
-        sub_model = None
+    primary = ref_model.get_primary_array_name()
+    attrs = {primary}
+
+    for att in ["err", "dq"]:
+        if ref_model.hasattr(att):
+            attrs.add(att)
+
+    sub_model = stripe_read(sci_model, ref_model, attrs)
 
     return sub_model
 
