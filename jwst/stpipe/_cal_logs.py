@@ -29,7 +29,7 @@ def _scrub(msg):
     scrubbed : str
         The scrubbed string
     """
-    msg = re.sub(re.compile(r"[^\s]*\/*\/([^\s]*\/)*([^\s\/]*)"), lambda m: m.groups()[-1], msg)
+    msg = re.sub(re.compile(r"\/*\/([^\s]*\/)*([^\s\/]*)"), lambda m: m.groups()[-1], msg)
     if _USER in msg:
         return ""
     if _HOSTNAME in msg:
@@ -37,6 +37,9 @@ def _scrub(msg):
     if re.search(_IP_REGEX, msg):
         return ""
     return msg
+
+
+# trailing quote mini-bug: when the
 
 
 class _ScrubbingFormatter(logging.Formatter):
