@@ -57,15 +57,15 @@ def test_scrub(msg, is_empty):
     "msg, expected",
     [
         (f"/some/path/{_FAKE_USER}/subdir/file.txt", "file.txt"),
-        (f"before /{_FAKE_USER}/file.txt after", "before file.txt after"),
+        ("before /path/file.txt after", "before file.txt after"),
         (
-            f"/some/{_FAKE_USER}/file.txt and /another/{_FAKE_USER}/file2.txt",
+            f"/some/path/file.txt and /another/{_FAKE_USER}/file2.txt",
             "file.txt and file2.txt",
         ),
-        (f"/{_FAKE_USER}/file3.txt, /{_FAKE_USER}/file4.txt", "file3.txt, file4.txt"),
-        (f"{_FAKE_HOSTNAME} /{_FAKE_USER}/file5.txt", ""),
+        (f"/{_FAKE_USER}/file3.txt, /some/path/file4.txt", "file3.txt, file4.txt"),
+        (f"{_FAKE_HOSTNAME} /path/file5.txt", ""),
         (f"{_FAKE_USER} /{_FAKE_USER}/file6.txt", ""),
-        (f"123.42.26.1 /{_FAKE_USER}/file7.txt", ""),
+        ("123.42.26.1 /some/path/file7.txt", ""),
         (f"2001:db8::ff00:42:8329 /{_FAKE_USER}/file8.txt", ""),
     ],
 )

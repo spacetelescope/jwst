@@ -29,10 +29,7 @@ def _scrub(msg):
     scrubbed : str
         The scrubbed string
     """
-    # Remove absolute paths to files when they contain usernames, but preserve filenames
-    msg = re.sub(
-        re.compile(r"[^\s]*\/" + _USER + r"\/([^\s]*\/)*([^\s\/]*)"), lambda m: m.groups()[-1], msg
-    )
+    msg = re.sub(re.compile(r"[^\s]*\/*\/([^\s]*\/)*([^\s\/]*)"), lambda m: m.groups()[-1], msg)
     if _USER in msg:
         return ""
     if _HOSTNAME in msg:
