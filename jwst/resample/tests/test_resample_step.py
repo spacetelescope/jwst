@@ -991,6 +991,7 @@ def test_resample_undefined_variance(nircam_rate, shape):
 def test_custom_wcs_resample_imaging(nircam_rate, ratio, rotation, crpix, crval, shape):
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     im.data += 5
+    im.var_rnoise += 0.01
 
     result = ResampleStep.call(
         im, output_shape=shape, crpix=crpix, crval=crval, rotation=rotation, pixel_scale_ratio=ratio
@@ -1027,6 +1028,7 @@ def test_custom_refwcs_resample_imaging(nircam_rate, output_shape2, match, tmp_p
     im = AssignWcsStep.call(nircam_rate, sip_approx=False)
     rng = np.random.default_rng(seed=77)
     im.data[:, :] = rng.random(im.data.shape)
+    im.var_rnoise += 0.01
 
     if output_shape2 is None:
         crpix = None
@@ -1094,6 +1096,7 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
     im.data[5:-5, 5:-5] = rng.random(tuple(i - 10 for i in im.data.shape))
     im.dq[:, :] = 1
     im.dq[5:-5, 5:-5] = 0
+    im.var_rnoise += 0.01
 
     data0 = deepcopy(im.data)
 
