@@ -60,14 +60,16 @@ def test_scrub(msg, is_empty):
     [
         (f"/some/path/{_FAKE_USER}/subdir/file.txt", "file.txt"),
         ("before /path/file.txt after", "before file.txt after"),
-        ("before relative/file.txt after", "before relative/file.txt after"),
-        ("relative/nested/file.txt", "relative/nested/file.txt"),
-        ("../file.txt", "../file.txt"),
-        ("file I/O error", "file I/O error"),
+        ("/filename/without/extension", "extension"),
+        ("/hyphenated-path/hyphenated-file.tar.gz", "hyphenated-file.tar.gz"),
         (
             f"/some/path/file.txt and '/another/{_FAKE_USER}/file2.txt'",
             "file.txt and 'file2.txt'",
         ),
+        ("before relative/file.txt after", "before relative/file.txt after"),
+        ("relative/nested/file.txt", "relative/nested/file.txt"),
+        ("../file.txt", "../file.txt"),
+        ("file I/O error", "file I/O error"),
         (f"/{_FAKE_USER}/file3.txt, /some/path/file4.txt", "file3.txt, file4.txt"),
         (f"{_FAKE_HOSTNAME} /path/file5.txt", ""),
         (f"{_FAKE_USER} /{_FAKE_USER}/file6.txt", ""),
@@ -75,6 +77,6 @@ def test_scrub(msg, is_empty):
         (f"2001:db8::ff00:42:8329 /{_FAKE_USER}/file8.txt", ""),
     ],
 )
-def test_path_replace(msg, expected):
+def test_path_scrub(msg, expected):
     scrubbed = _scrub(msg)
     assert scrubbed == expected
