@@ -142,6 +142,52 @@ def subarray_transform(input_model):
         return subarray2full
 
 
+def substripe_subarray_transform(input_model, regions_model, regions_label):
+    """
+    TBD.
+
+    Parameters
+    ----------
+    input_model : JwstDataModel
+        The science model with defined multistripe parameters.
+    regions_model : ~stdatamodels.jwst.datamodels.RegionsModel
+        The regions reference model that defines stripe labels given pixel position.
+    regions_label : int
+        The stripe number to generate a transform for.
+
+    Returns
+    -------
+    ~astropy.modeling.models.CompoundModel
+        The subarray shift model to apply to the substripe transform.
+    """
+    tr_xstart = astmodels.Identity(1)
+    tr_ystart = astmodels.Identity(1)
+
+    # Find minimum slowaxis index where region label is found in regions array.
+    # This index is the zero-indexed position where that subarray in the regions
+    # model begins, i.e. the "true (x, y)start" position for that stripe.
+    if np.abs(input_model.meta.subarray.fastaxis) == 1:
+        xstart = np.min(np.asarray(regions_model.regions == regions_label).nonzero()[1])
+        ystart = np.min(np.asarray(regions_model.regions == regions_label).nonzero()[0])
+    else:
+        xstart = np.min(np.asarray(regions_model.regions == regions_label).nonzero()[0])
+        ystart = np.min(np.asarray(regions_model.regions == regions_label).nonzero()[1])
+
+    if xstart > 0:
+        tr_xstart = astmodels.Shift(xstart)
+
+    if ystart > 0:
+        tr_ystart = astmodels.Shift(ystart)
+
+    if isinstance(tr_xstart, astmodels.Identity) and isinstance(tr_ystart, astmodels.Identity):
+        # the case of a full frame observation
+        return None
+    else:
+        log.info(f"Substripe subarray shifts: x:{xstart} y:{ystart}")
+        subarray2full = tr_xstart & tr_ystart
+        return subarray2full
+
+
 def not_implemented_mode(input_model, ref, slit_y_range=None):  # noqa: ARG001
     """
     Send an error to the log and return None if assign_wcs has not been implemented for a mode.
