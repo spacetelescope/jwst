@@ -1096,7 +1096,6 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
     im.data[5:-5, 5:-5] = rng.random(tuple(i - 10 for i in im.data.shape))
     im.dq[:, :] = 1
     im.dq[5:-5, 5:-5] = 0
-    # im.var_rnoise += 0.01
 
     data0 = deepcopy(im.data)
 
