@@ -28,10 +28,10 @@ def nirspec_cube_pars(tmp_path_factory):
 
     # make the first extension
     disp = np.array(
-        ["prism", "g140m", "g140m", "g140m", "g140h", "g235m", "g235h", "g395m", "g395h"]
+        ["prism", "g140m", "g140m", "g140h", "g140h", "g235m", "g235h", "g395m", "g395h"]
     )
     filt = np.array(
-        ["clear", "f070lp", "f100lp", "f070lp", "f100lp", "f170lp", "f170lp", "F290lp", "f290lp"]
+        ["clear", "f070lp", "f100lp", "f070lp", "f100lp", "f170lp", "f170lp", "f290lp", "f290lp"]
     )
 
     spsize = np.array([0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10, 0.10])
@@ -172,7 +172,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
         "debug_spaxel": "0 0 0",
     }
 
-    # use a mode that will give a linear wavelength range
+    # By default Prism/Clear will produce a non-linear wavelength plane.
 
     pipeline = 3
     input_model = None
@@ -206,7 +206,7 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
 
 
 def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
-    """Read in the nirspec cube pars file and test reading in correct parameters"""
+    """Read in the nirspec cube pars file and test reading in correct parameters for g140m/f100lp (non-prism)"""
 
     instrument_info = instrument_defaults.InstrumentInfo()
     all_channel = []
@@ -292,7 +292,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
 
     assert math.isclose(this_cube.wavemin, wavemin, abs_tol=0.00001)
     assert math.isclose(this_cube.wavemax, wavemax, abs_tol=0.00001)
-    # we are testing PRISM data. Linear wavelength = False
+    # we are testing g140m/f100lp which will have a linear wavelength range.
     assert this_cube.linear_wavelength is True
 
     assert math.isclose(this_cube.weight_power, 2, abs_tol=0.00001)
@@ -343,7 +343,7 @@ def test_nirspec_cubepars_test2(tmp_cwd, nirspec_cube_pars):
     # do they match the user provided ones
     assert math.isclose(this_cube.wavemin, user_wave_min, abs_tol=0.00001)
     assert math.isclose(this_cube.wavemax, user_wave_max, abs_tol=0.00001)
-    # we are testing PRISM data
+    # we are testing g140m/f100lp  data
     assert this_cube.linear_wavelength is True
     assert math.isclose(this_cube.spatial_size, user_ascale, abs_tol=0.00001)
     assert math.isclose(this_cube.spectral_size, user_wscale, abs_tol=0.00001)
