@@ -400,7 +400,13 @@ def contam_corr(
 
     # Initialize output multislitmodel
     output_model = datamodels.MultiSlitModel()
-    good_slits = [slit for slit in input_model.slits if slit.source_id in obs.source_ids]
+
+    # Copy over matching slits
+    good_slits = [
+        datamodels.SlitModel(slit.instance).copy()
+        for slit in input_model.slits
+        if slit.source_id in obs.source_ids
+    ]
     output_model.slits.extend(good_slits)
 
     # Loop over all slits/sources to subtract contaminating spectra

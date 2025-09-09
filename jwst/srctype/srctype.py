@@ -63,14 +63,9 @@ def set_source_type(input_model, source_type=None):
         # backwards compatibility with old datasets by first looking for the
         # SRCTYAPT keyword and using it if available, and if not, then use
         # SRCTYPE as both input and output (as before).
-        try:
-            user_type = input_model.meta.target.source_type_apt
-            log.info(f"Input SRCTYAPT = {user_type}")
-            if user_type is None:
-                log.warning("SRCTYAPT keyword not found in input; using SRCTYPE instead")
-                user_type = input_model.meta.target.source_type
-                input_model.meta.target.source_type_apt = user_type
-        except AttributeError:
+        user_type = input_model.meta.target.source_type_apt
+        log.info(f"Input SRCTYAPT = {user_type}")
+        if user_type is None:
             log.warning("SRCTYAPT keyword not found in input; using SRCTYPE instead")
             user_type = input_model.meta.target.source_type
             input_model.meta.target.source_type_apt = user_type

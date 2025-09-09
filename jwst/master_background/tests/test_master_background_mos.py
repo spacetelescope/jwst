@@ -103,15 +103,14 @@ def mk_multispec(model):
 
 def test_master_background_mos(nirspec_msa_extracted2d):
     model = nirspec_msa_extracted2d
-
-    # RuntimeWarning: invalid value encountered in divide (slit.data /= conversion)
-    # RuntimeWarning: overflow encountered in multiply (photom var_flat)
-    # RuntimeWarning: overflow encountered in square (flat_field var_flat)
-    with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
-        result = MasterBackgroundMosStep.call(model)
+    result = MasterBackgroundMosStep.call(model)
 
     # Check that the master_background_mos step was run
     assert query_step_status(result, "master_background") == "COMPLETE"
+
+    # Input was not modified
+    assert result is not model
+    assert query_step_status(model, "master_background") is None
 
     finite = np.isfinite(result.slits[-1].data) & np.isfinite(model.slits[-1].data)
     sci_orig = model.slits[-1].data[finite]
@@ -204,3 +203,64 @@ def test_apply_master_background(nirspec_msa_extracted2d):
     del model
     del result
     del specs_model
+
+
+def test_skip_bg_complete(nirspec_msa_extracted2d):
+    model = nirspec_msa_extracted2d
+    model.meta.cal_step.bkg_subtract = "COMPLETE"
+
+    # Step is skipped
+    result = MasterBackgroundMosStep.call(model)
+    assert result.meta.cal_step.master_background == "SKIPPED"
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.master_background is None
+
+
+def test_skip_no_bg_slits(nirspec_msa_extracted2d):
+    model = nirspec_msa_extracted2d
+
+    # Mark all slits as sources
+    for i, slit in enumerate(model.slits):
+        slit.source_name = f"SRC{i}"
+
+    # Step is skipped
+    result = MasterBackgroundMosStep.call(model)
+    assert result.meta.cal_step.master_background == "SKIPPED"
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.master_background is None
+
+
+def test_skip_no_src_slits(nirspec_msa_extracted2d):
+    model = nirspec_msa_extracted2d
+
+    # Mark all slits as background
+    for i, slit in enumerate(model.slits):
+        slit.source_name = f"BKG{i}"
+
+    # Step is skipped
+    result = MasterBackgroundMosStep.call(model)
+    assert result.meta.cal_step.master_background == "SKIPPED"
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.master_background is None
+
+
+def test_skip_no_master_bg(monkeypatch, nirspec_msa_extracted2d):
+    model = nirspec_msa_extracted2d
+    step = MasterBackgroundMosStep()
+
+    # mock a failure in master bg creation
+    monkeypatch.setattr(step, "_extend_bg_slits", lambda *args, **kwargs: None)
+
+    # Step is skipped
+    result = step.run(model)
+    assert result.meta.cal_step.master_background == "SKIPPED"
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.master_background is None

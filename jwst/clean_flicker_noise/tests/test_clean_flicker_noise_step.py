@@ -49,6 +49,9 @@ def test_run_in_pipeline(skip):
     else:
         assert cleaned.meta.cal_step.clean_flicker_noise == "COMPLETE"
 
+    # Either way, input model is not modified
+    assert input_model.meta.cal_step.clean_flicker_noise is None
+
     input_model.close()
     cleaned.close()
 
@@ -140,6 +143,21 @@ def test_apply_flat_not_available(log_watcher):
 
     # Flat file was not used but step proceeded
     assert cleaned.meta.ref_file.flat.name == "N/A"
+
+    input_model.close()
+    cleaned.close()
+
+
+def test_output_is_not_input():
+    input_model = make_small_ramp_model()
+    cleaned = CleanFlickerNoiseStep.call(input_model)
+
+    # successful completion
+    assert cleaned.meta.cal_step.clean_flicker_noise == "COMPLETE"
+
+    # make sure input is not modified
+    assert cleaned is not input_model
+    assert input_model.meta.cal_step.clean_flicker_noise is None
 
     input_model.close()
     cleaned.close()
