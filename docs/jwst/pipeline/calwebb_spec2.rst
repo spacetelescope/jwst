@@ -267,12 +267,18 @@ transformed to a space of (wavelength, offset along the slit) without applying a
 
 Arguments
 ---------
-The ``calwebb_spec2`` pipeline has two optional arguments.
+The ``calwebb_spec2`` pipeline has three optional arguments.
 
 ``--save_bsub`` (boolean, default=False)
-  If set to ``True``, the results of the background subtraction step will be saved
-  to an intermediate file, using a product type of "_bsub" or "_bsubints", depending on
-  whether the data are 2D (averaged over integrations) or 3D (per-integration results).
+  This parameter is deprecated and will be removed in a future release.
+  To save background-subtracted data ("_bsub" or "_bsubints"), use the background step's
+  ``--save_results`` parameter instead.
+
+``--fail_on_exception`` (boolean, default=False)
+  If set to ``True``, the pipeline will stop processing and raise an exception
+  if any product in the input association fails. If set to ``False``, the pipeline will
+  attempt to process all products in the input association, skipping any that fail
+  and logging the error messages instead of raising an exception.
 
 ``--save_wfss_esec`` (boolean, default=False)
   If set to ``True``, an intermediate image product is created for WFSS exposures that
@@ -331,9 +337,10 @@ Outputs
               or `~jwst.datamodels.CubeModel`
 :File suffix: _bsub or _bsubints
 
-This is an intermediate product that is only created if "--save_bsub" is set
-to ``True`` and will contain the data as output from the :ref:`background <background_subtraction>`
-step. If the input is a "_rate" product, this will be a "_bsub" product, while
+This is an intermediate product that will contain the data as output from the
+:ref:`background <background_subtraction>` step, if that step's
+``save_results`` parameter is set to ``True``.
+If the input is a "_rate" product, this will be a "_bsub" product, while
 "_rateints" inputs will be saved as "_bsubints."
 
 2D or 3D calibrated data

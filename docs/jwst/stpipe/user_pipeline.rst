@@ -41,8 +41,6 @@ class:
       name: asdf, version: 2.7.3}
    class: jwst.pipeline.Image2Pipeline
    name: Image2Pipeline
-   parameters:
-      save_bsub: false
    steps:
    - class: jwst.flatfield.flat_field_step.FlatFieldStep
      name: flat_field
