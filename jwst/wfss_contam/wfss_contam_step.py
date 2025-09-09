@@ -64,6 +64,10 @@ class WfssContamStep(Step):
                 oversample_factor=self.wl_oversample,
                 max_pixels_per_chunk=self.max_pixels_per_chunk,
             )
+            if simul is None:
+                result = dm.copy()
+                result.meta.cal_step.wfss_contam = "SKIPPED"
+                return result
 
             # Save intermediate results, if requested
             if self.save_simulated_image:

@@ -5,7 +5,7 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.wfss_contam.wfss_contam_step import WfssContamStep
 
 
-@pytest.fixture
+@pytest.fixture(scope="module")
 def multislitmodel(
     tmp_cwd_module, direct_image_with_gradient, segmentation_map, source_catalog, grism_wcs
 ):
@@ -26,7 +26,7 @@ def multislitmodel(
     seg = "segmentation_map.fits"
     segmentation_map.save(seg)
     srccat = "source_catalog.ecsv"
-    source_catalog.write(srccat, format="ascii.ecsv")
+    source_catalog.write(srccat, format="ascii.ecsv")  # , overwrite=True)
     model.meta.direct_image = dim
     model.meta.segmentation_map = seg
     model.meta.source_catalog = srccat
@@ -67,3 +67,33 @@ def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
     )
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
+
+
+def test_wfss_contam_skip_maglimit(multislitmodel, tmp_cwd_module):
+    """
+    Test that the step is skipped if no sources meet the magnitude limit.
+    """
+    result = WfssContamStep.call(
+        multislitmodel,
+        save_simulated_image=True,
+        save_contam_images=True,
+        magnitude_limit=0,  # very bright, so no sources will meet this
+        orders=[1],
+    )
+    assert isinstance(result, dm.MultiSlitModel)
+    assert result.meta.cal_step.wfss_contam == "SKIPPED"
+
+
+def test_wfss_contam_skip_bad_order(multislitmodel, tmp_cwd_module):
+    """
+    Test that the step is skipped if no valid spectral orders are found.
+    """
+    result = WfssContamStep.call(
+        multislitmodel,
+        save_simulated_image=True,
+        save_contam_images=True,
+        magnitude_limit=25,
+        orders=[99],
+    )
+    assert isinstance(result, dm.MultiSlitModel)
+    assert result.meta.cal_step.wfss_contam == "SKIPPED"

@@ -6,13 +6,15 @@ from jwst.wfss_contam.wfss_contam import (
     SlitOverlapError,
     UnmatchedSlitIDError,
     _apply_magnitude_limit,
-    _constrain_orders,
     _cut_frame_to_match_slit,
     _find_matching_simul_slit,
+    _validate_orders_against_reference,
     determine_multiprocessing_ncores,
     match_backplane_encompass_both,
     match_backplane_prefer_first,
 )
+
+VALID_ORDERS = [-1, 0, 1, 2, 3]
 
 
 @pytest.mark.parametrize(
@@ -161,32 +163,45 @@ def test_apply_magnitude_limit_no_sources(photom_ref_model, source_catalog):
     assert sources is None
 
 
-def test_constrain_sources(log_watcher):
+def test_constrain_orders(log_watcher):
     # normal case
-    spec_orders = [-1, 0, 1, 2, 3]
     orders = [1, 2]
-    constrained_orders = _constrain_orders(orders, spec_orders)
+    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array(orders))
 
     # orders is None
-    constrained_orders = _constrain_orders(None, spec_orders)
-    assert np.array_equal(constrained_orders, np.array(spec_orders))
+    constrained_orders = _validate_orders_against_reference(None, VALID_ORDERS)
+    assert np.array_equal(constrained_orders, np.array(VALID_ORDERS))
 
+
+def test_constrain_orders_error_empty(log_watcher):
     # orders is empty
     orders = []
-    with pytest.raises(ValueError, match="None of the requested spectral orders "):
-        _constrain_orders(orders, spec_orders)
+    watcher = log_watcher(
+        "jwst.wfss_contam.wfss_contam",
+        message="None of the requested spectral orders ",
+        level="error",
+    )
+    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
+    assert not constrained_orders
 
     # none of the orders match spec_orders
     orders = [4, 5]
-    with pytest.raises(ValueError, match="None of the requested spectral orders "):
-        _constrain_orders(orders, spec_orders)
+    watcher = log_watcher(
+        "jwst.wfss_contam.wfss_contam",
+        message="None of the requested spectral orders ",
+        level="error",
+    )
+    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
+    assert not constrained_orders
 
+
+def test_constrain_orders_warn_subset(log_watcher):
     # only a subset of orders match
     orders = [1, 4]
     watcher = log_watcher(
         "jwst.wfss_contam.wfss_contam", message="Skipping undefined orders", level="warning"
     )
-    constrained_orders = _constrain_orders(orders, spec_orders)
+    constrained_orders = _validate_orders_against_reference(orders, VALID_ORDERS)
     assert np.array_equal(constrained_orders, np.array([1]))
     watcher.assert_seen()

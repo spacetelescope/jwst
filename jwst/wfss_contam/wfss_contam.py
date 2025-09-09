@@ -234,7 +234,7 @@ def match_backplane_encompass_both(slit0, slit1):
     return slit0, slit1
 
 
-def _constrain_orders(orders, spec_orders):
+def _validate_orders_against_reference(orders, spec_orders):
     """
     Compare user-requested spectral orders with the orders defined in the reference file.
 
@@ -250,11 +250,6 @@ def _constrain_orders(orders, spec_orders):
     np.ndarray[int]
         List of spectral orders constrained to the user-specified ones
         that are also defined in the reference file.
-
-    Raises
-    ------
-    ValueError
-        If none of the requested spectral orders are defined in the reference file.
     """
     spec_orders = np.array(spec_orders, dtype=int)
     if orders is None:
@@ -262,11 +257,12 @@ def _constrain_orders(orders, spec_orders):
     orders = np.array(orders, dtype=int)
     good_orders = np.isin(orders, spec_orders, assume_unique=True)
     if (len(good_orders) == 0) or (not np.any(good_orders)):
-        raise ValueError(
+        log.error(
             f"None of the requested spectral orders {orders} are defined "
             "in the wavelength range reference file. "
-            f"Expected orders are: {spec_orders}"
+            f"Expected orders are: {spec_orders}. "
         )
+        return []
     if not np.all(good_orders):
         log.warning(
             f"Not all requested spectral orders {orders} are defined in the "
@@ -298,7 +294,15 @@ def _validate_orders_against_transform(wcs, spec_orders):
         if isinstance(model, (NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion)):
             # Get the orders defined in the transform
             orders = np.sort(model.orders)
-            if not all(order in orders for order in spec_orders):
+            is_good_order = [order in orders for order in spec_orders]
+            if not any(is_good_order):
+                log.error(
+                    f"None of the requested spectral orders {spec_orders} are defined "
+                    "in the WCS transform. "
+                    f"Defined orders are: {orders}. "
+                )
+                return []
+            if not all(is_good_order):
                 log.warning(
                     f"Not all requested spectral orders {spec_orders} are "
                     f"defined in the WCS transform. Defined orders are: {orders}. "
@@ -453,8 +457,11 @@ def contam_corr(
     # array of order values in the Wavelengthrange ref file,
     # then constrain the orders to the user-specified ones
     spec_orders = np.asarray(waverange.order)
-    spec_orders = _constrain_orders(orders, spec_orders)
+    spec_orders = _validate_orders_against_reference(orders, spec_orders)
     spec_orders = _validate_orders_against_transform(grism_wcs, spec_orders)
+    if len(spec_orders) == 0:
+        log.error("No valid spectral orders found. Step will be SKIPPED.")
+        return input_model, None, None, None
     log.info(f"Spectral orders requested = {[int(x) for x in spec_orders]}")
 
     # Get the FILTER and PUPIL wheel positions, for use later
@@ -494,6 +501,7 @@ def contam_corr(
         phot_per_lam=phot_per_lam,
     )
 
+    no_sources = True
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
         wavelength_range = waverange.get_wfss_wavelength_range(filter_name, [order])
@@ -519,11 +527,18 @@ def contam_corr(
                     "Skipping contamination correction for this order."
                 )
                 continue
+            no_sources = False
             selected_ids = good_ids
 
         # Compute the dispersion for all sources in this order
         log.info(f"Creating full simulated grism image for order {order}")
         obs.disperse_order(order, wmin, wmax, sens_waves, sens_response, selected_ids)
+
+    if no_sources:
+        log.error(
+            f"No sources found that met the magnitude limit {magnitude_limit}. Step will be SKIPPED"
+        )
+        return input_model, None, None, None
 
     # Initialize the full-frame simulated grism image
     simul_model = datamodels.ImageModel(data=obs.simulated_image)
