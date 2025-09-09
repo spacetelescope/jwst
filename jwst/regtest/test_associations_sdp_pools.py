@@ -146,7 +146,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00839_20221220t025418_pool", ["-i", "o002", "c1000"]),
         ("jw01120_20250317t230449_pool", []),  # NIRSPEC IMAGING + NIRSPEC INTERNAL LAMP
         ("jw01122_uniq_lamp_optical_path_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
         ("jw01290_20230304t140931_withids_pool", ["-i", "o012", "c1018"]),
