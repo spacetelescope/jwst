@@ -113,7 +113,7 @@ class RawOifits:
         Parameters
         ----------
         cov_mat : array
-            The matrix to be rotated
+            The matrix to be rotated. 2x2
         theta : float
             Angle by which to rotate the matrix (radians)
 
@@ -861,6 +861,8 @@ class CalibOifits:
     def calibrate(self):
         """
         Calibrate the target AmiOIModel by the calibrator (reference star) AmiOIModel.
+        Only closure phases, visibility amplitudes, squared visibilites are calibrated currently.
+        For other observables, calibrated output file will contain copy of target's observables.
 
         Returns
         -------
@@ -928,7 +930,6 @@ class CalibOifits:
         self.calib_oimodel.vis["VISAMPERR"] = vaerr_out
         self.calib_oimodel.q4["Q4AMP"] = ca_out
         self.calib_oimodel.q4["Q4AMPERR"] = caerr_out
-        # and t3amp, q4phi? not at this time.
 
         # add calibrated header keywords
         calname = self.caloimodel.meta.target.proposer_name  # name of calibrator star
