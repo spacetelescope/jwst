@@ -25,14 +25,18 @@ def oi_data(example_model, bandpass):
     n_holes = 7
     n_baselines = 21
     n_closure_phases = 35
+    n_quads = 35
     visamp = np.zeros((n_baselines)) + RAW_AMP
     visphi = np.zeros((n_baselines)) + RAW_PHI
     t3amp = np.zeros((n_closure_phases)) + RAW_AMP
     t3phi = np.zeros((n_closure_phases)) + RAW_PHI
+    q4amp = np.zeros((n_quads)) + RAW_AMP
+    q4phi = np.zeros((n_quads)) + RAW_PHI
     sta_index = np.arange(n_holes) + 1
     pistons = np.zeros((n_holes,))
     flag_vis = [False] * n_baselines
     flag_t3 = [False] * n_closure_phases
+    flag_q4 = [False] * n_quads
 
     isz = example_model.data.shape[1]
     pscale = PXSC_MAS / 1000.0  # arcsec
@@ -138,6 +142,23 @@ def oi_data(example_model, bandpass):
     # oim.t3["STA_INDEX"] = sta_index
     oim.t3["FLAG"] = flag_t3
 
+    # oi_q4 data
+    oim.q4 = np.zeros(n_quads, dtype=oim.q4.dtype)
+    oim.q4["TARGET_ID"] = 1
+    oim.q4["TIME"] = 0
+    # oim.q4["MJD"] = observation_date.mjd
+    oim.q4["Q4AMP"] = q4amp
+    oim.q4["Q4AMPERR"] = q4amp * ERR
+    oim.q4["Q4PHI"] = q4phi
+    oim.q4["Q4PHIERR"] = q4phi * ERR
+    # oim.q4["U1COORD"] = u1coord_q4
+    # oim.q4["V1COORD"] = v1coord_q4
+    # oim.q4["U2COORD"] = u2coord_q4
+    # oim.q4["V2COORD"] = v2coord_q4
+    # oim.q4["U3COORD"] = u3coord_q4
+    # oim.q4["V3COORD"] = v3coord_q4
+    oim.q4["FLAG"] = flag_q4
+
     # oi_wavelength extension data
     oim.wavelength["EFF_WAVE"] = lam_c
     oim.wavelength["EFF_BAND"] = lam_c * lam_w
@@ -153,6 +174,8 @@ def ref_data(oi_data):
     ref_data.vis2["VIS2DATA"] = np.zeros_like(oi_data.vis2["VIS2DATA"]) + REF_AMP**2
     ref_data.t3["T3AMP"] = np.zeros_like(oi_data.t3["T3AMP"]) + REF_AMP
     ref_data.t3["T3PHI"] = np.zeros_like(oi_data.t3["T3PHI"]) + REF_PHI
+    ref_data.q4["Q4AMP"] = np.zeros_like(oi_data.q4["Q4AMP"]) + REF_AMP
+    ref_data.q4["Q4PHI"] = np.zeros_like(oi_data.q4["Q4PHI"]) + REF_PHI
 
     return ref_data
 
@@ -174,3 +197,5 @@ def test_ami_normalize(oi_data, ref_data):
     assert np.allclose(result.vis2["VIS2DATA"], (RAW_AMP / REF_AMP) ** 2)
     assert np.allclose(result.t3["T3AMP"], RAW_AMP)
     assert np.allclose(result.t3["T3PHI"], RAW_PHI - REF_PHI)
+    assert np.allclose(result.q4["Q4_AMP"], np.log(RAW_AMP / REF_AMP))
+    assert np.allclose(result.q4["Q4_PHI"], RAW_PHI)
