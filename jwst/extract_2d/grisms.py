@@ -400,7 +400,7 @@ def extract_grism_objects(
         ]:
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
-            print(' mag limits', mmag_extract, nbright)
+            print(" mag limits", mmag_extract, nbright)
             grism_objects = util.create_grism_bbox(
                 input_model,
                 reference_files,
