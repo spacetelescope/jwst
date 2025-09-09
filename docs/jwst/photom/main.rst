@@ -62,7 +62,7 @@ SRCTYPE keyword value, which is set by the :ref:`srctype <srctype_step>` step.
 If the SRCTYPE keyword is not present or is set to "UNKNOWN", the default behavior
 is to treat it as a uniform/extended source.
 
-The combination of the scalar conversion factor, and the 2-D response values are
+The combination of the scalar conversion factor and the 2-D response values are
 then applied to the science data, including the SCI and ERR arrays, as well as
 the variance (VAR_POISSON, VAR_RNOISE, and VAR_FLAT) arrays.
 The correction values are multiplied into the SCI and ERR arrays, and the square
