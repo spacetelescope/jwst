@@ -146,7 +146,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00711_20181027T043250_pool", []),
         ("jw00791_20181019T221608_pool", []),
         ("jw00809_20220124t091748_pool", []),
         ("jw00818_20230407t030411_pool", []),
@@ -212,11 +211,11 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw00628_20191102t153956_pool", []),
         ("jw01192_o008_pool", ["--DMS", "-i", "o008"]),  # This pool checks imprint behavior.
         ("jw01194_20230115t113819_pool", ["--DMS"]),  # This pool checks coronagraphy associations
         ("jw01257_20221201t192226_pool", []),
         ("jw01290_20230304t140931_pool", []),
+        ("jw01411_20250317t143327_pool", []),  # Coron 5-POINT-SMALL-GRID
         ("jw01493_20230307t040130_pool", []),
         ("jw02064_20230302t112350_pool", []),
         (
