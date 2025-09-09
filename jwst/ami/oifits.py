@@ -358,24 +358,6 @@ class RawOifits:
         wl = instrument_data.lam_c
         e_wl = instrument_data.lam_c * instrument_data.lam_w
 
-        # Index 0 and 1 reversed to get the good u-v coverage (same fft)
-        ucoord = self.bls[:, 1]
-        vcoord = self.bls[:, 0]
-
-        v1coord = self.tuv[:, 0, 0]
-        u1coord = self.tuv[:, 0, 1]
-        v2coord = self.tuv[:, 1, 0]
-        u2coord = self.tuv[:, 1, 1]
-
-        # quads have 3 vectors
-        v1coord_q4 = self.quads[:, 0, 0]
-        u1coord_q4 = self.quads[:, 0, 1]
-        v2coord_q4 = self.quads[:, 1, 0]
-        u2coord_q4 = self.quads[:, 1, 1]
-        v3coord_q4 = self.quads[:, 2, 0]
-        u3coord_q4 = self.quads[:, 2, 1]
-
-
         flag_vis = [False] * self.n_baselines
         flag_t3 = [False] * self.n_closure_phases
         flag_q4 = [False] * self.n_closure_amplitudes
@@ -480,6 +462,8 @@ class RawOifits:
         oim = datamodels.AmiOIModel()
         self.init_oimodel_arrays(oim)
 
+        # for u-v coords: index 0 and 1 reversed to get the good coverage (same fft)
+
         # primary header keywords
         oim.meta.telescope = instrument_data.telname
         oim.meta.origin = "STScI"
@@ -534,8 +518,8 @@ class RawOifits:
         oim.vis["VISAMPERR"] = self.e_visamp
         oim.vis["VISPHI"] = self.visphi
         oim.vis["VISPHIERR"] = self.e_visphi
-        oim.vis["UCOORD"] = ucoord
-        oim.vis["VCOORD"] = vcoord
+        oim.vis["UCOORD"] = self.bls[:, 1]
+        oim.vis["VCOORD"] = self.bls[:, 0]
         oim.vis["STA_INDEX"] = self._format_staindex(self.bholes)
         oim.vis["FLAG"] = flag_vis
 
@@ -546,8 +530,8 @@ class RawOifits:
         oim.vis2["INT_TIME"] = instrument_data.itime
         oim.vis2["VIS2DATA"] = self.vis2
         oim.vis2["VIS2ERR"] = self.e_vis2
-        oim.vis2["UCOORD"] = ucoord
-        oim.vis2["VCOORD"] = vcoord
+        oim.vis2["UCOORD"] = self.bls[:, 1]
+        oim.vis2["VCOORD"] = self.bls[:, 0]
         oim.vis2["STA_INDEX"] = self._format_staindex(self.bholes)
         oim.vis2["FLAG"] = flag_vis
 
@@ -559,10 +543,10 @@ class RawOifits:
         oim.t3["T3AMPERR"] = self.e_t3amp
         oim.t3["T3PHI"] = self.closure_phases
         oim.t3["T3PHIERR"] = self.e_cp
-        oim.t3["U1COORD"] = u1coord
-        oim.t3["V1COORD"] = v1coord
-        oim.t3["U2COORD"] = u2coord
-        oim.t3["V2COORD"] = v2coord
+        oim.t3["U1COORD"] = self.tuv[:, 0, 1]
+        oim.t3["V1COORD"] = self.tuv[:, 0, 0]
+        oim.t3["U2COORD"] = self.tuv[:, 1, 1]
+        oim.t3["V2COORD"] = self.tuv[:, 1, 0]
         oim.t3["STA_INDEX"] = self._format_staindex(self.tholes)
         oim.t3["FLAG"] = flag_t3
 
@@ -574,15 +558,14 @@ class RawOifits:
         oim.q4["Q4AMPERR"] = self.e_camp
         oim.q4["Q4PHI"] = self.q4phi
         oim.q4["Q4PHIERR"] = self.e_q4phi
-        oim.q4["U1COORD"] = u1coord_q4
-        oim.q4["V1COORD"] = v1coord_q4
-        oim.q4["U2COORD"] = u2coord_q4
-        oim.q4["V2COORD"] = v2coord_q4
-        oim.q4["U3COORD"] = u3coord_q4
-        oim.q4["V3COORD"] = v3coord_q4
+        oim.q4["U1COORD"] = self.quads[:, 0, 1]
+        oim.q4["V1COORD"] = self.quads[:, 0, 0]
+        oim.q4["U2COORD"] = self.quads[:, 1, 1]
+        oim.q4["V2COORD"] = self.quads[:, 1, 0]
+        oim.q4["U3COORD"] = self.quads[:, 2, 1]
+        oim.q4["V3COORD"] = self.quads[:, 2, 0]
         oim.q4["STA_INDEX"] = self._format_staindex(self.qholes)
         oim.q4["FLAG"] = flag_q4
-
 
         # oi_wavelength extension data
         oim.wavelength["EFF_WAVE"] = wl
@@ -793,20 +776,20 @@ class RawOifits:
 
     def _format_staindex(self, tab):
         """
-        Generalized function to convert sta_index for oifits formats (T3, Q4, V2, etc.)
+        Convert sta_index for oifits formats (T3, Q4, V2, etc.).
 
         Parameters
         ----------
-        tab : array-like
-            Table of indices (rows of 2, 3, 4, ... elements)
+        tab : np.ndarray
+            Array of indices (rows of 2, 3, 4, ... elements)
 
         Returns
         -------
         sta_index : list of int arrays
-            List of hole baseline indices (of size 2, 3, 4, etc.)
+            List of arrays of hole baseline indices (of length 2, 3, 4, etc.)
         """
         sta_index = []
-        offset = 1 if np.min(tab) == 0 else 0
+        offset = 1 if np.min(tab) == 0 else 0 # 1-indexed
 
         for row in tab:
             line = np.array(row, dtype=int) + offset
@@ -820,7 +803,10 @@ class CalibOifits:
 
     Calibrate (normalize) an AMI observation by subtracting closure phases
     of a reference star from those of a target and dividing visibility amplitudes
-    of the target by those of the reference star.
+    of the target by those of the reference star. Only closure phases, visibility
+    amplitudes, squared visibilites, and closure amplitudes are calibrated currently.
+    For other observables (t3amp, q4phi), calibrated output file will contain a copy of target's
+    observables.
     """
 
     def __init__(self, targoimodel, caloimodel):
@@ -861,8 +847,6 @@ class CalibOifits:
     def calibrate(self):
         """
         Calibrate the target AmiOIModel by the calibrator (reference star) AmiOIModel.
-        Only closure phases, visibility amplitudes, squared visibilites are calibrated currently.
-        For other observables, calibrated output file will contain copy of target's observables.
 
         Returns
         -------
