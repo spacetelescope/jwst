@@ -1141,10 +1141,10 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
 
     data2 = result.data
     wht2 = result.wht
-    # Note: When pixel_shape is used without proper bounding box, 
+    # Note: When pixel_shape is used without proper bounding box,
     # the coordinate transformation may fail, resulting in NaN data.
     # This test verifies that the pixel_shape is properly set and the output shape is correct.
-    
+
     # Skip the data validation if all NaN (this may be expected behavior
     # when bounding box is removed/modified)
     if np.all(np.isnan(data2)):
@@ -1155,11 +1155,11 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
 
     # test output image shape
     assert data1.shape == data2.shape
-    
+
     # Only do detailed data comparison if data2 has valid values
     if not np.all(np.isnan(data2)):
         assert_allclose(data1, data2, equal_nan=True)
-        
+
         # make sure pixel values are similar, accounting for scale factor
         # (assuming inputs are in surface brightness units)
         assert np.isclose(
