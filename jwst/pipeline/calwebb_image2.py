@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -31,7 +32,7 @@ class Image2Pipeline(Pipeline):
     class_alias = "calwebb_image2"
 
     spec = """
-        save_bsub = boolean(default=False) # Save background-subtracted science
+        save_bsub = boolean(default=False) # Deprecated; use the background step's save_results parameter instead.
     """  # noqa: E501
 
     # Define alias to steps
@@ -61,6 +62,15 @@ class Image2Pipeline(Pipeline):
             The calibrated data models.
         """
         log.info("Starting calwebb_image2 ...")
+
+        if self.save_bsub:
+            warnings.warn(
+                "The --save_bsub parameter is deprecated and will be removed in a future release. "
+                "To toggle saving background-subtracted data, use the background step's "
+                "--save_results parameter instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input_data, basename=self.output_file)

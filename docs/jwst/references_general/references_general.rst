@@ -632,7 +632,7 @@ Bit  Value         Name              Description
 5    32            PERSISTENCE       High persistence
 6    64            AD_FLOOR          Below A/D floor
 7    128           CHARGELOSS        Charge Migration
-8    256           UNRELIABLE_ERROR  Uncertainty exceeds quoted error
+8    256           RESERVED          Reserved for future need; unused
 9    512           NON_SCIENCE       Pixel not on science portion of detector
 10   1024          DEAD              Dead pixel
 11   2048          HOT               Hot pixel
