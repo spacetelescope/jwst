@@ -207,9 +207,13 @@ def compare_asn_lists(left_asns, right_asns):
     # Ensure that the product name lists are the same.
     name_diff = left_product_names ^ right_product_names
     if name_diff:
+        left_not_right = left_product_names - right_product_names
+        right_not_left = right_product_names - left_product_names
         diffs.append(
             DifferentProductSetsError(
-                f"Left and right associations do not share a common set of products: {name_diff}"
+                f"Left and right associations do not share a common set of products:\n"
+                f"{left_not_right} in left association but not right association\n"
+                f"{right_not_left} in right association but not left association"
             )
         )
 
