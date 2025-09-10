@@ -462,8 +462,6 @@ class RawOifits:
         oim = datamodels.AmiOIModel()
         self.init_oimodel_arrays(oim)
 
-        # for u-v coords: index 0 and 1 reversed to get the good coverage (same fft)
-
         # primary header keywords
         oim.meta.telescope = instrument_data.telname
         oim.meta.origin = "STScI"
@@ -518,6 +516,7 @@ class RawOifits:
         oim.vis["VISAMPERR"] = self.e_visamp
         oim.vis["VISPHI"] = self.visphi
         oim.vis["VISPHIERR"] = self.e_visphi
+        # for all u-v coords: index 0 and 1 reversed to get the good coverage (same fft)
         oim.vis["UCOORD"] = self.bls[:, 1]
         oim.vis["VCOORD"] = self.bls[:, 0]
         oim.vis["STA_INDEX"] = self._format_staindex(self.bholes)
@@ -789,13 +788,14 @@ class RawOifits:
             List of arrays of hole baseline indices (of length 2, 3, 4, etc.)
         """
         sta_index = []
-        offset = 1 if np.min(tab) == 0 else 0 # 1-indexed
+        offset = 1 if np.min(tab) == 0 else 0  # 1-indexed
 
         for row in tab:
             line = np.array(row, dtype=int) + offset
             sta_index.append(line)
 
         return sta_index
+
 
 class CalibOifits:
     """
@@ -856,7 +856,7 @@ class CalibOifits:
         cp_out = self.targoimodel.t3["T3PHI"] - self.caloimodel.t3["T3PHI"]
         sqv_out = self.targoimodel.vis2["VIS2DATA"] / self.caloimodel.vis2["VIS2DATA"]
         va_out = self.targoimodel.vis["VISAMP"] / self.caloimodel.vis["VISAMP"]
-        ca_out = np.log(self.targoimodel.q4["Q4AMP"]/self.caloimodel.q4["Q4AMP"]) # log of ratio
+        ca_out = np.log(self.targoimodel.q4["Q4AMP"] / self.caloimodel.q4["Q4AMP"])  # log of ratio
         # using standard propagation of error for multiplication/division
         # which assumes uncorrelated Gaussian errors (questionable)
         cperr_t = self.targoimodel.t3["T3PHIERR"]
@@ -881,7 +881,7 @@ class CalibOifits:
         caerr_out = np.sqrt(
             (caerr_t / self.targoimodel.q4["Q4AMP"]) ** 2
             + (caerr_c / self.caloimodel.q4["Q4AMP"]) ** 2
-            )
+        )
 
         pistons_t = self.targoimodel.array["PISTONS"]
         pisterr_t = self.targoimodel.array["PIST_ERR"]

@@ -102,61 +102,38 @@ def oi_data(example_model, bandpass):
     oim.vis = np.zeros(n_baselines, dtype=oim.vis.dtype)
     oim.vis["TARGET_ID"] = 1
     oim.vis["TIME"] = 0
-    # oim.vis["MJD"] = 0
-    # oim.vis["INT_TIME"] = 0
     oim.vis["VISAMP"] = visamp
     oim.vis["VISAMPERR"] = visamp * ERR
     oim.vis["VISPHI"] = visphi
     oim.vis["VISPHIERR"] = visphi * ERR
-    # oim.vis["UCOORD"] = ucoord
-    # oim.vis["VCOORD"] = vcoord
-    # oim.vis["STA_INDEX"] = sta_index
     oim.vis["FLAG"] = flag_vis
 
     # oi_vis2 extension data
     oim.vis2 = np.zeros(n_baselines, dtype=oim.vis2.dtype)
     oim.vis2["TARGET_ID"] = 1
     oim.vis2["TIME"] = 0
-    # oim.vis2["MJD"] = observation_date.mjd
-    # oim.vis2["INT_TIME"] = instrument_data.itime
     oim.vis2["VIS2DATA"] = (visamp**2).T
     oim.vis2["VIS2ERR"] = (visamp**2).T * ERR
-    # oim.vis2["UCOORD"] = ucoord
-    # oim.vis2["VCOORD"] = vcoord
-    # oim.vis2["STA_INDEX"] = np.arange(n_holes) + 1
     oim.vis2["FLAG"] = flag_vis
 
     # oi_t3 extension data
     oim.t3 = np.zeros(n_closure_phases, dtype=oim.t3.dtype)
     oim.t3["TARGET_ID"] = 1
     oim.t3["TIME"] = 0
-    # oim.t3["MJD"] = observation_date.mjd
     oim.t3["T3AMP"] = t3amp
     oim.t3["T3AMPERR"] = t3amp * ERR
     oim.t3["T3PHI"] = t3phi
     oim.t3["T3PHIERR"] = t3phi * ERR
-    # oim.t3["U1COORD"] = u1coord
-    # oim.t3["V1COORD"] = v1coord
-    # oim.t3["U2COORD"] = u2coord
-    # oim.t3["V2COORD"] = v2coord
-    # oim.t3["STA_INDEX"] = sta_index
     oim.t3["FLAG"] = flag_t3
 
     # oi_q4 data
     oim.q4 = np.zeros(n_quads, dtype=oim.q4.dtype)
     oim.q4["TARGET_ID"] = 1
     oim.q4["TIME"] = 0
-    # oim.q4["MJD"] = observation_date.mjd
     oim.q4["Q4AMP"] = q4amp
     oim.q4["Q4AMPERR"] = q4amp * ERR
     oim.q4["Q4PHI"] = q4phi
     oim.q4["Q4PHIERR"] = q4phi * ERR
-    # oim.q4["U1COORD"] = u1coord_q4
-    # oim.q4["V1COORD"] = v1coord_q4
-    # oim.q4["U2COORD"] = u2coord_q4
-    # oim.q4["V2COORD"] = v2coord_q4
-    # oim.q4["U3COORD"] = u3coord_q4
-    # oim.q4["V3COORD"] = v3coord_q4
     oim.q4["FLAG"] = flag_q4
 
     # oi_wavelength extension data
@@ -197,5 +174,5 @@ def test_ami_normalize(oi_data, ref_data):
     assert np.allclose(result.vis2["VIS2DATA"], (RAW_AMP / REF_AMP) ** 2)
     assert np.allclose(result.t3["T3AMP"], RAW_AMP)
     assert np.allclose(result.t3["T3PHI"], RAW_PHI - REF_PHI)
-    assert np.allclose(result.q4["Q4_AMP"], np.log(RAW_AMP / REF_AMP))
-    assert np.allclose(result.q4["Q4_PHI"], RAW_PHI)
+    assert np.allclose(result.q4["Q4AMP"], np.log(RAW_AMP / REF_AMP))
+    assert np.allclose(result.q4["Q4PHI"], RAW_PHI)
