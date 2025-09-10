@@ -212,8 +212,8 @@ def compare_asn_lists(left_asns, right_asns):
         diffs.append(
             DifferentProductSetsError(
                 f"Left and right associations do not share a common set of products:\n"
-                f"{left_not_right} in left association but not right association\n"
-                f"{right_not_left} in right association but not left association"
+                f"Products in left but not right: {left_not_right}\n"
+                f"Products in right but not left: {right_not_left}\n"
             )
         )
 
