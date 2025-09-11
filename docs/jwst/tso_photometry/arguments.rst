@@ -15,6 +15,18 @@ The ``tso_photometry`` step has the following optional arguments:
     ``save_catalog`` argument is useful only when the ``tso_photometry`` step
     is run standalone.
 
+* ``--radius`` (float, default=3.0)
+
+    A floating point value for the photometric aperture radius in pixels.
+
+* ``--radius_inner`` (float, default=4.0)
+
+   A floating point value for the background annulus inner radius in pixels.
+
+* ``--radius_outer`` (float, default=5.0)
+
+   A floating point value for the background annulus outer radius in pixels.
+
 * ``--centroid_source`` (boolean, default=True)
 
     If True, the source position will be derived from a centroid near the

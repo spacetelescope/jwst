@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from stdatamodels.jwst.datamodels import CubeModel, GainModel, TsoPhotModel
+from stdatamodels.jwst.datamodels import CubeModel, GainModel
 
 from jwst.lib import reffile_utils
 from jwst.lib.catalog_utils import replace_suffix_ext
@@ -24,13 +24,16 @@ class TSOPhotometryStep(Step):
 
     spec = """
         save_catalog = boolean(default=False)  # Save exposure-level catalog
+        radius = float(default=3.0) # Aperture radius in pixels
+        radius_inner = float(default=4.0) # Background annulus inner radius in pixels
+        radius_outer = float(default=5.0) # Background annulus outer radius in pixels
         centroid_source = boolean(default=True)  # Centroid source before photometry
         search_box_width = integer(default=41)  # Box width for initial source search; must be odd.
         fit_box_width = integer(default=11)  # Box width for centroid fit; must be odd.
         moving_centroid = boolean(default=False)  # Fit centroid values for each integration
     """  # noqa: E501
 
-    reference_file_types = ["tsophot", "gain"]
+    reference_file_types = ["gain"]
 
     def process(self, input_data):
         """
@@ -62,14 +65,6 @@ class TSOPhotometryStep(Step):
             xcenter = model.meta.wcsinfo.siaf_xref_sci - 1  # 1-based origin
             ycenter = model.meta.wcsinfo.siaf_yref_sci - 1  # 1-based origin
 
-            # Get the tsophot reference file
-            tsophot_filename = self.get_reference_file(model, "tsophot")
-            log.debug(f"Reference file name = {tsophot_filename}")
-            if tsophot_filename == "N/A":
-                log.warning("No TSOPHOT reference file found;")
-                log.warning("the tso_photometry step will be skipped.")
-                return None
-
             # Get the gain reference file
             gain_filename = self.get_reference_file(model, "gain")
             gain_m = GainModel(gain_filename)
@@ -80,16 +75,9 @@ class TSOPhotometryStep(Step):
                 log.info("Extracting gain subarray to match science data")
                 gain_2d = reffile_utils.get_subarray_model(model, gain_m).data
 
-            # Retrieve aperture info from the reference file
-            pupil_name = "ANY"
-            if model.meta.instrument.pupil is not None:
-                pupil_name = model.meta.instrument.pupil
-
-            (radius, radius_inner, radius_outer) = get_ref_data(tsophot_filename, pupil=pupil_name)
-
-            log.debug(f"radius = {radius}")
-            log.debug(f"radius_inner = {radius_inner}")
-            log.debug(f"radius_outer = {radius_outer}")
+            log.debug(f"radius = {self.radius}")
+            log.debug(f"radius_inner = {self.radius_inner}")
+            log.debug(f"radius_outer = {self.radius_outer}")
             log.debug(f"initial xcenter = {xcenter}")
             log.debug(f"initial ycenter = {ycenter}")
 
@@ -115,7 +103,7 @@ class TSOPhotometryStep(Step):
                     ycenter,
                     search_box_width=self.search_box_width,
                     fit_box_width=self.fit_box_width,
-                    source_radius=radius_inner,
+                    source_radius=self.radius_inner,
                 )
 
                 if np.all(np.isnan(centroid_x)) or np.all(np.isnan(centroid_y)):
@@ -150,9 +138,9 @@ class TSOPhotometryStep(Step):
                 model,
                 xc,
                 yc,
-                radius,
-                radius_inner,
-                radius_outer,
+                self.radius,
+                self.radius_inner,
+                self.radius_outer,
                 centroid_x=centroid_x,
                 centroid_y=centroid_y,
                 psf_width_x=psf_width_x,
@@ -175,45 +163,3 @@ class TSOPhotometryStep(Step):
                 log.info(f"Wrote TSO photometry catalog: {cat_filepath}")
 
         return catalog
-
-
-def get_ref_data(reffile, pupil="ANY"):
-    """
-    Get reference data for TSO photometry.
-
-    Parameters
-    ----------
-    reffile : str
-        TSO photometry model reference file.
-
-    pupil : str
-        Pupil of interest.
-
-    Returns
-    -------
-    radius, radius_inner, radius_outer : float
-        Radii of associated with the given query.
-    """
-    ref_model = TsoPhotModel(reffile)
-    radii = ref_model.radii
-    value = None
-    val_any_pupil = None
-    for item in radii:
-        if item.pupil == pupil.upper():
-            value = (item.radius, item.radius_inner, item.radius_outer)
-            break
-        elif item.pupil == "ANY" and val_any_pupil is None:
-            # Save this value as a fallback, in case we don't find a match
-            # to an actual pupil name.
-            val_any_pupil = (item.radius, item.radius_inner, item.radius_outer)
-
-    if value is not None:
-        (radius, radius_inner, radius_outer) = value
-    elif val_any_pupil is not None:
-        (radius, radius_inner, radius_outer) = val_any_pupil
-    else:
-        (radius, radius_inner, radius_outer) = (0.0, 0.0, 0.0)
-
-    ref_model.close()
-
-    return radius, radius_inner, radius_outer
