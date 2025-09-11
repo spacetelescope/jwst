@@ -234,6 +234,44 @@ def match_backplane_encompass_both(slit0, slit1):
     return slit0, slit1
 
 
+def _validate_orders_against_reference(orders, spec_orders):
+    """
+    Compare user-requested spectral orders with the orders defined in the reference file.
+
+    Parameters
+    ----------
+    orders : list[int]
+        List of user-requested spectral orders.
+    spec_orders : list[int]
+        List of spectral orders defined in the reference file.
+
+    Returns
+    -------
+    np.ndarray[int]
+        List of spectral orders constrained to the user-specified ones
+        that are also defined in the reference file.
+    """
+    spec_orders = np.array(spec_orders, dtype=int)
+    if orders is None:
+        return spec_orders
+    orders = np.array(orders, dtype=int)
+    good_orders = np.isin(orders, spec_orders, assume_unique=True)
+    if (len(good_orders) == 0) or (not np.any(good_orders)):
+        log.error(
+            f"None of the requested spectral orders {orders} are defined "
+            "in the wavelength range reference file. "
+            f"Expected orders are: {spec_orders}. "
+        )
+        return []
+    if not np.all(good_orders):
+        log.warning(
+            f"Not all requested spectral orders {orders} are defined in the "
+            f"wavelength range reference file. Defined orders are: {spec_orders}. "
+            "Skipping undefined orders."
+        )
+    return orders[good_orders]
+
+
 def _validate_orders_against_transform(wcs, spec_orders):
     """
     Ensure the requested spectral orders are defined in the WCS transforms.
@@ -255,8 +293,16 @@ def _validate_orders_against_transform(wcs, spec_orders):
     for model in sky_to_grism:
         if isinstance(model, (NIRCAMBackwardGrismDispersion, NIRISSBackwardGrismDispersion)):
             # Get the orders defined in the transform
-            orders = model.orders
-            if not all(order in orders for order in spec_orders):
+            orders = np.sort(model.orders)
+            is_good_order = [order in orders for order in spec_orders]
+            if not any(is_good_order):
+                log.error(
+                    f"None of the requested spectral orders {spec_orders} are defined "
+                    "in the WCS transform. "
+                    f"Defined orders are: {orders}. "
+                )
+                return []
+            if not all(is_good_order):
                 log.warning(
                     f"Not all requested spectral orders {spec_orders} are "
                     f"defined in the WCS transform. Defined orders are: {orders}. "
@@ -265,7 +311,77 @@ def _validate_orders_against_transform(wcs, spec_orders):
             good_orders = [order for order in spec_orders if order in orders]
             # There will be only one transform of this type in the wcs
             break
-    return good_orders
+    return np.sort(good_orders)
+
+
+def _find_min_relresp(sens_waves, sens_response):
+    """
+    Find the minimum relative response in the sensitivity response.
+
+    Helper function is necessary instead of just nanmin because reference file
+    sometimes has zero-valued wavelength/response pairs.
+
+    Parameters
+    ----------
+    sens_waves : np.ndarray
+        Wavelengths corresponding to the sensitivity response.
+    sens_response : np.ndarray
+        Sensitivity response values.
+
+    Returns
+    -------
+    float
+        Minimum relative response value.
+    """
+    good = (sens_waves > 0) & (sens_response > 0) & np.isfinite(sens_waves)
+    return np.nanmin(sens_response[good])
+
+
+def _apply_magnitude_limit(
+    order, source_catalog, sens_wave, sens_response, magnitude_limit, min_relresp_order1
+):
+    """
+    Rescale the magnitude limit based on the sensitivity response for a given spectral order.
+
+    Parameters
+    ----------
+    order : int
+        Spectral order for which the magnitude limit is applied.
+    source_catalog : astropy.table.Table
+        The source catalog containing source IDs and isophotal AB magnitudes.
+    sens_wave : np.ndarray
+        The wavelengths corresponding to the sensitivity response.
+    sens_response : np.ndarray
+        The sensitivity response for the order.
+    magnitude_limit : float
+        The isophotal AB magnitude limit for sources to be included in the contamination correction.
+    min_relresp_order1 : float
+        Minimum relative response for order 1, used to scale the magnitude limit.
+
+    Returns
+    -------
+    list
+        List of source IDs that meet the magnitude limit criteria.
+    """
+    if order in [0, 1]:
+        # Magnitude limit is set according to order 1 sensitivity response
+        # and order 0 is a special case because it's not dispersed
+        order_mag_limit = magnitude_limit
+    else:
+        # Scale the magnitude limit according to the order sensitivity response
+        order_sens_factor = min_relresp_order1 / _find_min_relresp(sens_wave, sens_response)
+        order_mag_diff = -2.5 * np.log10(order_sens_factor)
+        order_mag_limit = magnitude_limit - order_mag_diff
+
+    # Select sources that are brighter than the magnitude limit
+    good_sources = source_catalog[source_catalog["isophotal_abmag"] < order_mag_limit]
+    if len(good_sources) == 0:
+        return None
+    log.info(
+        f"Applying magnitude limit of {order_mag_limit:.1f} to order {order}. "
+        f"Sources selected: {len(good_sources)}"
+    )
+    return good_sources["label"].tolist()
 
 
 def contam_corr(
@@ -273,7 +389,8 @@ def contam_corr(
     waverange,
     photom,
     max_cores,
-    brightest_n,
+    orders=None,
+    magnitude_limit=None,
     max_pixels_per_chunk=5e4,
     oversample_factor=2,
 ):
@@ -295,12 +412,15 @@ def contam_corr(
         the fraction of cores to use for multi-proc. The total number of
         cores includes the SMT cores (Hyper Threading for Intel).
         If an integer is provided, it will be the exact number of cores used.
-    brightest_n : int
-        Number of sources to simulate. If None, then all sources in the
-        input model will be simulated. Requires loading the source catalog
-        file if not None. Note runtime scales non-linearly with this number
-        because brightest (and therefore typically largest) sources are
-        simulated first.
+    orders : list, optional
+        List of spectral orders to process.
+        If None, all orders defined in the wavelengthrange file will be processed.
+    magnitude_limit : float, optional
+        Isophotal AB magnitude limit for sources to be included in the contamination correction.
+        The magnitude limit is applied per spectral order, where the orders are scaled relative
+        to order 0 based on their photometric response as read from the photom reference file.
+        This means that generally fewer sources will be dispersed in higher orders.
+        If None, no magnitude limit is applied and all sources are included.
     max_pixels_per_chunk : int, optional
         Maximum number of pixels to disperse simultaneously.
     oversample_factor : int, optional
@@ -333,12 +453,16 @@ def contam_corr(
     # transform is not used by the step.
     grism_wcs = input_model.slits[0].meta.wcs
 
-    # Find out how many spectral orders are defined, based on the
-    # array of order values in the Wavelengthrange ref file
+    # Find out how many spectral orders are defined based on the
+    # array of order values in the Wavelengthrange ref file,
+    # then constrain the orders to the user-specified ones
     spec_orders = np.asarray(waverange.order)
-    spec_orders = spec_orders[spec_orders != 0]  # ignore any order 0 entries
+    spec_orders = _validate_orders_against_reference(orders, spec_orders)
     spec_orders = _validate_orders_against_transform(grism_wcs, spec_orders)
-    log.debug(f"Spectral orders defined = {[int(x) for x in spec_orders]}")
+    if len(spec_orders) == 0:
+        log.error("No valid spectral orders found. Step will be SKIPPED.")
+        return input_model, None, None, None
+    log.info(f"Spectral orders requested = {[int(x) for x in spec_orders]}")
 
     # Get the FILTER and PUPIL wheel positions, for use later
     filter_kwd = input_model.meta.instrument.filter
@@ -356,15 +480,14 @@ def contam_corr(
         filter_name = filter_kwd
         phot_per_lam = True
 
-    # select a subset of the brightest sources using source catalog
-    if brightest_n is not None:
-        log.info(f"Simulating only the brightest {brightest_n} sources")
+    # Read the source catalog to perform magnitude-based source selection later
+    # mag limit will be scaled according to order 1 sensitivity
+    if magnitude_limit is not None:
         source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
-        # magnitudes in ascending order, since brighter is smaller mag number
-        source_catalog.sort("isophotal_abmag", reverse=False)
-        selected_ids = list(source_catalog["label"])[:brightest_n]
-    else:
-        selected_ids = None
+        order1_wave_response, order1_sens_response = get_photom_data(
+            photom, filter_kwd, pupil_kwd, order=1
+        )
+        min_relresp_order1 = _find_min_relresp(order1_wave_response, order1_sens_response)
 
     # set up observation object to disperse
     obs = Observation(
@@ -373,12 +496,12 @@ def contam_corr(
         grism_wcs,
         boundaries=[0, 2047, 0, 2047],
         max_cpu=ncpus,
-        source_id=selected_ids,
         max_pixels_per_chunk=max_pixels_per_chunk,
         oversample_factor=oversample_factor,
         phot_per_lam=phot_per_lam,
     )
 
+    no_sources = True
     for order in spec_orders:
         # Load lists of wavelength ranges and flux cal info
         wavelength_range = waverange.get_wfss_wavelength_range(filter_name, [order])
@@ -387,9 +510,35 @@ def contam_corr(
         log.debug(f"wmin={wmin}, wmax={wmax} for order {order}")
         sens_waves, sens_response = get_photom_data(photom, filter_kwd, pupil_kwd, order)
 
+        # Constrain the source IDs to those that are below the magnitude limit
+        selected_ids = None
+        if magnitude_limit is not None:
+            good_ids = _apply_magnitude_limit(
+                order,
+                source_catalog,
+                sens_waves,
+                sens_response,
+                magnitude_limit,
+                min_relresp_order1,
+            )
+            if good_ids is None:
+                log.info(
+                    f"No sources meet the magnitude limit of {magnitude_limit} for order {order}. "
+                    "Skipping contamination correction for this order."
+                )
+                continue
+            no_sources = False
+            selected_ids = good_ids
+
         # Compute the dispersion for all sources in this order
         log.info(f"Creating full simulated grism image for order {order}")
-        obs.disperse_order(order, wmin, wmax, sens_waves, sens_response)
+        obs.disperse_order(order, wmin, wmax, sens_waves, sens_response, selected_ids)
+
+    if no_sources:
+        log.error(
+            f"No sources found that met the magnitude limit {magnitude_limit}. Step will be SKIPPED"
+        )
+        return input_model, None, None, None
 
     # Initialize the full-frame simulated grism image
     simul_model = datamodels.ImageModel(data=obs.simulated_image)
