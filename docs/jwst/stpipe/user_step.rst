@@ -93,13 +93,16 @@ often be input filenames.
 For example, to use an existing parameter file from above, but
 override it so the threshold parameter is different::
 
-    $ strun do_cleanup.asdf input.fits --threshold=86
+    strun do_cleanup.asdf input.fits --threshold=86
 
 To display a list of the parameters that are accepted for a given Step
 class, pass the ``-h`` parameter, and the name of a Step class or
 parameter file::
 
-    $ strun -h do_cleanup.asdf
+    strun -h do_cleanup.asdf
+
+The command would show text similar to this::
+
     usage: strun [--logcfg LOGCFG] cfg_file_or_class [-h] [--pre_hooks]
                  [--post_hooks] [--skip] [--scale] [--extname]
 
@@ -196,7 +199,7 @@ for ``strun``. The call signature is::
 
 For example, given the following command-line::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.override_linearity='my_lin.fits'
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.override_linearity='my_lin.fits'
 
 the equivalent ``from_cmdline`` call would be::
 

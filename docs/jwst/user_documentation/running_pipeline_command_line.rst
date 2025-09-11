@@ -34,13 +34,13 @@ class of the step or pipeline to be run, or the name of a parameter file for the
 desired step or pipeline (see :ref:`parameter_files`). The second argument to
 ``strun`` is the name of the input data file to be processed::
 
-    $ strun <pipeline_name, class_name, or parameter_file> <input_file>
+    strun <pipeline_name, class_name, or parameter_file> <input_file>
 
 Pipeline classes also have a **pipeline name**, or **alias**, that can be used
 instead of the full class specification. For example, ``jwst.pipeline.Detector1Pipeline``
 has the alias ``calwebb_detector1`` and can be run as::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
 
 A full list of pipeline aliases can be found in :ref:`Pipeline Stages <pipelines>`.
 
@@ -115,13 +115,13 @@ When running a pipeline, step-level parameters can be changed by passing in a co
 line argument to that step. For example, to change the ``rejection_threshold`` parameter of
 the jump detection step when running the full Detector1Pipeline::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.jump.rejection_threshold=12.0
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.jump.rejection_threshold=12.0
 
 When running a standalone step, command line arguments do not need to be nested within
 ``steps``. For example, to change the parameter ``rejection_threshold`` for the jump detection
 step when running the step individually::
 
-    $ strun jump jw00017001001_01101_00001_nrca1_uncal.fits --rejection_threshold=12.0
+    strun jump jw00017001001_01101_00001_nrca1_uncal.fits --rejection_threshold=12.0
 
 
 **Using a Parameter File**
@@ -138,7 +138,7 @@ file to add the following snippet (in this example, to a file named
 
 And pass in the modified file to ``strun``::
 
-    $ strun my_config_file.asdf jw00017001001_01101_00001_nrca1_uncal.fits
+    strun my_config_file.asdf jw00017001001_01101_00001_nrca1_uncal.fits
 
 .. _override_ref_strun:
 
@@ -163,11 +163,11 @@ To override the use of the default linearity reference file selection with a cus
 file in the current working directory called ``my_lin.fits``, for example,
 you would do::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.override_linearity='my_lin.fits'
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.override_linearity='my_lin.fits'
 
 Or, if running the step individually, to override the reference file::
 
-    $ strun linearity jw00017001001_01101_00001_nrca1_uncal.fits --override_linearity='my_lin.fits'
+    strun linearity jw00017001001_01101_00001_nrca1_uncal.fits --override_linearity='my_lin.fits'
 
 
 **Using a Parameter File**
@@ -184,7 +184,7 @@ file named 'my_config_file.asdf' in the current working directory)::
 
 And pass in the modified file to ``strun``::
 
-    $ strun my_config_file.asdf jw00017001001_01101_00001_nrca1_uncal.fits
+    strun my_config_file.asdf jw00017001001_01101_00001_nrca1_uncal.fits
 
 To use an entire set of past reference files from a previous CRDS mapping,
 see :ref:`here<crds_context>`.
@@ -208,7 +208,7 @@ can be skipped.
 Every step in a pipeline has a ``skip`` parameter that when set to true, will entirely
 skip that step. For example, to skip the saturation step in the Detector1Pipeline::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.saturation.skip=True
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.saturation.skip=True
 
 **Using a Parameter File**
 
@@ -259,7 +259,7 @@ to disk.  If you want to save the results from individual steps, you have two op
 For example, to save the result from the dark current step of ``Detector1Pipeline``
 (using the :ref:`alias <pipelines>` name ``calwebb_detector1``)::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.save_results=true
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.save_results=true
 
 This will create the file ``jw00017001001_01101_00001_dark_current.fits`` in the
 current working directory.
@@ -275,7 +275,7 @@ within a pipeline are saved with the specified name.
 You can also specify a particular file name for saving the end result of
 the entire pipeline using the ``--output_file`` parameter::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --output_file='stage1_processed'
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --output_file='stage1_processed'
 
 In this situation, using the default configuration, three files are created:
 
@@ -287,12 +287,12 @@ When running a standalone step, setting ``--output_file`` at the top-level
 will determine the name of the final output product for that step, overriding
 the default based on input name::
 
-    $ strun linearity jw00017001001_01101_00001_nrca1_uncal.fits --output_file='intermediate_linearity'
+    strun linearity jw00017001001_01101_00001_nrca1_uncal.fits --output_file='intermediate_linearity'
 
 Similarly, to save the result from a step within a pipeline (for example,
 the dark current step of ``calwebb_detector1``) with a different file name::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.output_file='intermediate_result'
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.output_file='intermediate_result'
 
 A file, ``intermediate_result_dark_current.fits``, will then be created. Note
 that the name of the step will be appended as the file name suffix
@@ -304,7 +304,7 @@ Setting Output File Directory
 To change the output directory of the final pipeline products from the default of the
 current working directory, use the ``output_dir`` option::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.output_dir='calibrated'
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.output_dir='calibrated'
 
 When this is run, all three final output products of ``Detector1Pipeline`` will
 be saved within the subdirectory ``calibrated``.
@@ -315,9 +315,9 @@ should be saved in the directory specified instead of the current working direct
 For example, to save the intermediate results of ``DarkCurrentStep`` when running
 ``Detector1Pipeline`` in a subdirectory called ``calibrated``::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.output_dir='calibrated'
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.dark_current.output_dir='calibrated'
 
 Similarly, when ``output_dir`` is set on an individual step class, this will indicate
 that the result from that step should be saved to the specified directory::
 
-    $ strun dark_current jw00017001001_01101_00001_nrca1_uncal.fits --output_dir='calibrated'
+    strun dark_current jw00017001001_01101_00001_nrca1_uncal.fits --output_dir='calibrated'
