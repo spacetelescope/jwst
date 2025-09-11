@@ -228,4 +228,4 @@ Step Arguments for NIRISS SOSS Data
 
 ``--soss_order_3``
   Flag to enable including spectral order 3 in the extraction for SOSS.
-  Default is ``False``.
+  Default is ``True``.
