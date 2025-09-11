@@ -176,9 +176,7 @@ documentation on each reference file.
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`superbias <superbias_step>`                     | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
-| :ref:`tso_photometry <tso_photometry_step>`           | :ref:`TSOPHOT <tsophot_reffile>`                 |
-+                                                       +--------------------------------------------------+
-|                                                       | :ref:`GAIN <gain_reffile>`                       |
+| :ref:`tso_photometry <tso_photometry_step>`           | :ref:`GAIN <gain_reffile>`                       |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`wavecorr <wavecorr_step>`                       | :ref:`WAVECORR <wavecorr_reffile>`               |
 +-------------------------------------------------------+--------------------------------------------------+
@@ -301,8 +299,6 @@ documentation on each reference file.
 | :ref:`TRAPDENSITY <trapdensity_reffile>`         | :ref:`persistence <persistence_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`TRAPPARS <trappars_reffile>`               | :ref:`persistence <persistence_step>`                 |
-+--------------------------------------------------+-------------------------------------------------------+
-| :ref:`TSOPHOT <tsophot_reffile>`                 | :ref:`tso_photometry <tso_photometry_step>`           |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` | :ref:`assign_wcs <assign_wcs_step>`                   |
 +                                                  +-------------------------------------------------------+
