@@ -49,7 +49,7 @@ Groups of Datamodels
 
 Many of the JWST calibration steps and pipelines expect an
 :ref:`Association <associations>` file as input. When opened with
-`open() <https://stdatamodels.readthedocs.io/en/latest/api/jwst.datamodels.open.html>`_, a
+:func:`stdatamodels.jwst.datamodels.open`, a
 :class:`~jwst.datamodels.container.ModelContainer` is returned.
 :class:`~jwst.datamodels.container.ModelContainer`
 is a list-like object where each element is the
