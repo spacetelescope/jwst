@@ -10,6 +10,7 @@ from jwst.extract_1d.soss_extract.tests.helpers import (
     SPECTRAL_SLOPE,
     WAVE_BNDS_O1,
     WAVE_BNDS_O2,
+    WAVE_BNDS_O3,
     f_lam,
 )
 
@@ -37,7 +38,7 @@ def test_extraction_engine_init(
     assert np.allclose(engine.wave_grid, unq)
     assert engine.n_wavepoints == unq.size
 
-    for order in [0, 1]:
+    for order in [0, 1, 2]:
         # test assignment of attributes and conversion to expected float64 dtype
         assert engine.wave_map[order].dtype == np.float64
         assert engine.trace_profile[order].dtype == np.float64
@@ -50,17 +51,17 @@ def test_extraction_engine_init(
 
         # test derived attributes
         assert engine.data_shape == DATA_SHAPE
-        assert engine.n_orders == 2
+        assert engine.n_orders == 3
 
     # test wave_p and wave_m. separate unit test for their calculation
     for att in ["wave_p", "wave_m"]:
         wave = getattr(engine, att)
         assert wave.dtype == np.float64
-        assert wave.shape == (2,) + DATA_SHAPE
+        assert wave.shape == (3,) + DATA_SHAPE
 
     # test _get_i_bounds
-    assert len(engine.i_bounds) == 2
-    for order in [0, 1]:
+    assert len(engine.i_bounds) == 3
+    for order in [0, 1, 2]:
         assert len(engine.i_bounds[order]) == 2
         assert engine.i_bounds[order][0] >= 0
         assert engine.i_bounds[order][1] < DATA_SHAPE[1]
@@ -83,8 +84,8 @@ def test_extraction_engine_init(
     # general_mask should be a copy of mask
     assert np.allclose(engine.mask, engine.general_mask)
 
-    wave_bnds = [WAVE_BNDS_O1, WAVE_BNDS_O2]
-    for order in [0, 1]:
+    wave_bnds = [WAVE_BNDS_O1, WAVE_BNDS_O2, WAVE_BNDS_O3]
+    for order in [0, 1, 2]:
         # ensure wavelength bounds from wave_grid are respected in mask_ord
         mask = engine.mask_ord[order]
         wls = wave_map[order]
@@ -100,18 +101,18 @@ def test_extraction_engine_init(
         # test that NOT all locations masked by mask_trace_profile are masked in mask_ord
         assert not np.all(mask[mask_trace_profile[order]])
         # test that all locations masked by both profiles are masked in mask_ord
-        combined_profile = mask_trace_profile[0] & mask_trace_profile[1]
+        combined_profile = mask_trace_profile[0] & mask_trace_profile[1] & mask_trace_profile[2]
         assert np.all(mask[combined_profile])
 
     # test throughput function conversion to array
-    for order in [0, 1]:
+    for order in [0, 1, 2]:
         thru = engine.throughput[order]
         assert thru.size == engine.n_wavepoints
         assert np.all(thru >= 0)
         assert thru.dtype == np.float64
 
     # test kernel is cast to proper shape for input (trivial) kernel
-    for order in [0, 1]:
+    for order in [0, 1, 2]:
         n_valid = engine.i_bounds[order][1] - engine.i_bounds[order][0]
         expected_shape = (n_valid, engine.n_wavepoints)
         assert engine.kernels[order].shape == expected_shape
@@ -119,7 +120,7 @@ def test_extraction_engine_init(
         assert engine.kernels[order].count_nonzero() == expected_shape[0]
 
     # test weights. see separate unit tests to ensure the calculation is correct
-    for order in [0, 1]:
+    for order in [0, 1, 2]:
         n_valid = engine.i_bounds[order][1] - engine.i_bounds[order][0]
         weights = engine.weights[order]
         k_idx = engine.weights_k_idx[order]
@@ -133,7 +134,7 @@ def test_extraction_engine_init(
     # test assignment of empty attributes
     for att in ["w_t_wave_c", "tikho_mat", "_tikho_mat"]:
         assert hasattr(engine, att)
-    assert getattr(engine, "pixel_mapping") == [None, None]
+    assert getattr(engine, "pixel_mapping") == [None, None, None]
 
 
 def test_extraction_engine_bad_inputs(
@@ -157,9 +158,10 @@ def test_extraction_engine_bad_inputs(
             wave_grid,
             mask_trace_profile,
             global_mask=detector_mask,
+            orders=[0, 1, 2],
         )
 
-    # wrong number of orders
+    # wrong number of orders c.f. wave_map
     with pytest.raises(ValueError):
         atoca.ExtractionEngine(
             wave_map,
@@ -231,7 +233,7 @@ def test_create_kernels(webb_kernels, engine):
     of individual kernels for different input types, here just ensure
     the options get passed into that function properly"""
 
-    kernels_0 = engine._create_kernels(webb_kernels)
+    kernels_0 = engine._create_kernels(webb_kernels[:2])
     kernels_1 = engine._create_kernels([None, None])
 
     for kernel_list in [kernels_0, kernels_1]:
