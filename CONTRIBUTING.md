@@ -241,7 +241,7 @@ to generate documentation, which is then hosted online on [readthedocs](https://
 
 You can access two versions of the documentation on the
 [JWST readthedocs website](https://readthedocs.org/projects/jwst-pipeline/)
-- the 'latest' version is whatever is currently on the main branch, and the 'stable'
+-- the 'latest' version is whatever is currently on the main branch, and the 'stable'
 version is the last released version. If you successfully merge a PR with documentation
 changes, they will only appear on 'latest' until the next JWST release.
 
