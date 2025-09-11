@@ -6,6 +6,10 @@ Step Arguments
 The ``clean_flicker_noise`` step has the following optional arguments to control
 the behavior of the processing.
 
+``--autoparam`` (boolean, default=False)
+  Automatically select some fit and background parameters for the input data
+  if possible.
+
 ``--fit_method`` (str, default='median')
   The noise fitting algorithm to use.  Options are 'fft' and 'median'.
 
