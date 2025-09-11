@@ -1,22 +1,27 @@
-import pytest
-
 from jwst.associations.asn_from_list import asn_from_list
-from jwst.extract_1d.tests.helpers import mock_niriss_soss_96_func
+from jwst.extract_1d.tests.helpers import mock_niriss_soss_96_func, mock_niriss_soss_full_func
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
 
 
-def niriss_soss_tso(subarray=None):
+def niriss_soss_tso(subarray="SUBSTRIP96"):
     """
     Mock a NIRISS SOSS TSO calints model.
+
+    Parameters
+    ----------
+    subarray : str
+        May be either "SUBSTRIP96" (expected to complete processing)
+        or "FULL" (expected to fail in extract_1d).
 
     Returns
     -------
     CubeModel
         An open model with just enough metadata to run through tso3.
     """
-    input_model = mock_niriss_soss_96_func()
-    if subarray is not None:
-        input_model.meta.subarray.name = subarray
+    if subarray == "FULL":
+        input_model = mock_niriss_soss_full_func()
+    else:
+        input_model = mock_niriss_soss_96_func()
     input_model.meta.wcs = None
     input_model.meta.visit.tsovisit = True
     input_model.int_times = input_model.int_times
@@ -39,13 +44,12 @@ def tso3_asn(tmp_path, input_model):
     return str(asn_path)
 
 
-@pytest.mark.slow
 def test_niriss_soss(tmp_path):
     """Smoke test for tso3 for a valid NIRISS SOSS TSO mode."""
     asn = tso3_asn(tmp_path, niriss_soss_tso())
 
     # Reduce runtime for soss extraction
-    steps = {"extract_1d": {"soss_rtol": 0.1}}
+    steps = {"extract_1d": {"soss_rtol": 0.1, "soss_tikfac": 2.434559775e-13}}
 
     # No errors
     Tso3Pipeline.call(asn, output_dir=str(tmp_path), steps=steps)
