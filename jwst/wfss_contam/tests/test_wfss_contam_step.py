@@ -69,6 +69,15 @@ def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
 
 
+def test_wfss_contam_step_defaults(multislitmodel, tmp_cwd_module):
+    """
+    Smoke test that the step runs with all default options.
+    """
+    result = WfssContamStep.call(multislitmodel)
+    assert isinstance(result, dm.MultiSlitModel)
+    assert result.meta.cal_step.wfss_contam == "COMPLETE"
+
+
 def test_wfss_contam_skip_maglimit(multislitmodel, tmp_cwd_module):
     """
     Test that the step is skipped if no sources meet the magnitude limit.
