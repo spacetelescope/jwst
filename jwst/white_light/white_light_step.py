@@ -43,8 +43,9 @@ class WhiteLightStep(Step):
 
         Returns
         -------
-        result : astropy.table.table.QTable
+        result : astropy.table.table.QTable or None
             Table containing the integrated flux as a function of time.
+            If input is invalid, None is returned.
         """
         with datamodels.open(step_input) as input_model:
             # First check for valid input
