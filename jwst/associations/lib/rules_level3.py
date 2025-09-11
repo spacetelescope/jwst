@@ -1189,6 +1189,10 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
                     value="GRISMR|GRISMC",
                     force_unique=True,
                 ),
+                DMSAttrConstraint(
+                    name="opt_elem2",
+                    sources=["filter"],
+                ),
             ]
         )
 
