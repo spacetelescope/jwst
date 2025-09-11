@@ -538,6 +538,7 @@ class RawOifits:
         oim.t3["TARGET_ID"] = 1
         oim.t3["TIME"] = 0
         oim.t3["MJD"] = observation_date.mjd
+        oim.t3["INT_TIME"] = instrument_data.itime
         oim.t3["T3AMP"] = self.t3amp
         oim.t3["T3AMPERR"] = self.e_t3amp
         oim.t3["T3PHI"] = self.closure_phases
@@ -553,6 +554,7 @@ class RawOifits:
         oim.q4["TARGET_ID"] = 1
         oim.q4["TIME"] = 0
         oim.q4["MJD"] = observation_date.mjd
+        oim.q4["INT_TIME"] = instrument_data.itime
         oim.q4["Q4AMP"] = self.camp
         oim.q4["Q4AMPERR"] = self.e_camp
         oim.q4["Q4PHI"] = self.q4phi
