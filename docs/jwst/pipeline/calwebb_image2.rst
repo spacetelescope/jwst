@@ -41,14 +41,12 @@ table below.
 Arguments
 ---------
 
-The ``calwebb_image2`` pipeline has one optional argument::
+The ``calwebb_image2`` pipeline has one optional argument, which is deprecated::
 
   --save_bsub  boolean  default=False
 
-If set to ``True``, the results of
-the background subtraction step will be saved to an intermediate file,
-using a product type of "_bsub" or "_bsubints", depending on whether the
-data are 2D (averaged over integrations) or 3D (per-integration results).
+This parameter will be removed in a future version. To toggle saving of background-subtracted
+data, use the background step's ``save_results`` parameter instead.
 
 Inputs
 ------
@@ -79,11 +77,11 @@ Outputs
 :Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
 :File suffix: _bsub or _bsubints
 
-This is an intermediate product that is only created if "--save_bsub" is set
-to ``True`` and will contain the data as output from the
-:ref:`background <background_subtraction>` step.
-If the input is a "_rate" product, this will be a "_bsub" product, while
-"_rateints" inputs will be saved as "_bsubints."
+This is an intermediate product that will contain the data as output from the
+:ref:`background <background_subtraction>` step, if that step's
+``save_results`` parameter is set to ``True``. If the input is a "_rate"
+product, this will be a "_bsub" product, while "_rateints" inputs will be
+saved as "_bsubints."
 
 2D or 3D calibrated data
 ++++++++++++++++++++++++

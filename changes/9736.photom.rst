@@ -1,0 +1,2 @@
+Add support for time dependent photometry corrections for all instruments and modes.
+Corrections may have linear, exponential, or power law form, or any combination of these.
