@@ -5,7 +5,7 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.wfss_contam.wfss_contam_step import WfssContamStep
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def multislitmodel(
     tmp_cwd_module, direct_image_with_gradient, segmentation_map, source_catalog, grism_wcs
 ):
@@ -26,7 +26,7 @@ def multislitmodel(
     seg = "segmentation_map.fits"
     segmentation_map.save(seg)
     srccat = "source_catalog.ecsv"
-    source_catalog.write(srccat, format="ascii.ecsv")  # , overwrite=True)
+    source_catalog.write(srccat, format="ascii.ecsv")
     model.meta.direct_image = dim
     model.meta.segmentation_map = seg
     model.meta.source_catalog = srccat
@@ -37,7 +37,7 @@ def multislitmodel(
         slit = dm.SlitModel()
         slit.meta.wcs = grism_wcs
         slit.meta.wcsinfo.spectral_order = 1
-        slit.source_id = this_source["label"]
+        slit.source_id = this_source["source_id"]
         slit.xstart = int(this_source["xcentroid"] - 10)
         slit.ystart = int(this_source["ycentroid"] - 10)
         slit.data = np.ones((20, 20))
@@ -52,48 +52,12 @@ def multislitmodel(
 
 def test_wfss_contam_step(multislitmodel, tmp_cwd_module):
     """
-    Smoke test that the step runs with some user-defined options enabled.
+    Smoke test that the step runs.
 
     Right now none of the slits overlap with the simulated slits because of the incompatibility
     between a WCS taken from a random real image and the mock data.
     This could be fixed in the future by mocking the WCS object.
     """
-    result = WfssContamStep.call(
-        multislitmodel,
-        save_simulated_image=True,
-        save_contam_images=True,
-        magnitude_limit=25,
-        orders=[1],
-    )
+    result = WfssContamStep.call(multislitmodel, save_simulated_image=True, save_contam_images=True)
     assert isinstance(result, dm.MultiSlitModel)
     assert result.meta.cal_step.wfss_contam == "COMPLETE"
-
-
-def test_wfss_contam_skip_maglimit(multislitmodel, tmp_cwd_module):
-    """
-    Test that the step is skipped if no sources meet the magnitude limit.
-    """
-    result = WfssContamStep.call(
-        multislitmodel,
-        save_simulated_image=True,
-        save_contam_images=True,
-        magnitude_limit=0,  # very bright, so no sources will meet this
-        orders=[1],
-    )
-    assert isinstance(result, dm.MultiSlitModel)
-    assert result.meta.cal_step.wfss_contam == "SKIPPED"
-
-
-def test_wfss_contam_skip_bad_order(multislitmodel, tmp_cwd_module):
-    """
-    Test that the step is skipped if no valid spectral orders are found.
-    """
-    result = WfssContamStep.call(
-        multislitmodel,
-        save_simulated_image=True,
-        save_contam_images=True,
-        magnitude_limit=25,
-        orders=[99],
-    )
-    assert isinstance(result, dm.MultiSlitModel)
-    assert result.meta.cal_step.wfss_contam == "SKIPPED"

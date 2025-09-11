@@ -13,8 +13,6 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     """
     Retrieve wavelength and response data from photom ref file.
 
-    Wavelengths from the reference file are expected to be in units of microns.
-
     Parameters
     ----------
     phot_model : `jwst.datamodels.NrcWfssPhotomModel` or `jwst.datamodels.NisWfssPhotomModel`
@@ -29,10 +27,9 @@ def get_photom_data(phot_model, filter_name, pupil, order):
     Returns
     -------
     ref_waves : float array
-        Wavelengths from the ref file.
+        Array of wavelengths from the ref file
     relresps : float array
-        Wavelength-dependent response (flux calibration) values from the ref file,
-        same shape as `ref_waves`.
+        Array of response (flux calibration) values from the ref file
     """
     # Get the appropriate row of data from the reference table
     phot_table = phot_model.phot_table
@@ -55,6 +52,11 @@ def get_photom_data(phot_model, filter_name, pupil, order):
         index = np.argsort(ref_waves)
         ref_waves = ref_waves[index].copy()
         relresps = relresps[index].copy()
+
+    # Convert wavelengths from meters to microns, if necessary
+    microns_100 = 1.0e-4  # 100 microns, in meters
+    if ref_waves.max() > 0.0 and ref_waves.max() < microns_100:
+        ref_waves *= 1.0e6
 
     return ref_waves, relresps
 

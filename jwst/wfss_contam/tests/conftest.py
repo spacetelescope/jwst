@@ -86,10 +86,10 @@ def source_catalog(segmentation_map):
 
     rng = np.random.default_rng(42)
     data = {
-        "label": source_ids,
+        "source_id": source_ids,
         "xcentroid": rng.uniform(0, segmentation_map.data.shape[1], len(source_ids)),
         "ycentroid": rng.uniform(0, segmentation_map.data.shape[0], len(source_ids)),
-        "isophotal_abmag": rng.uniform(20, 30, len(source_ids)),
+        "flux": rng.uniform(100, 1000, len(source_ids)),
     }
     return Table(data)
 
@@ -105,56 +105,3 @@ def grism_wcs():
         The grism wcs object.
     """
     return create_wfss_wcs("GR150C", pupil="F200W")
-
-
-@pytest.fixture(scope="module")
-def photom_ref_model():
-    """
-    Make a mock photom reference model for NIRISS WFSS.
-
-    Returns
-    -------
-    :class:`~NisWfssPhotomModel`
-        The photom reference model.
-    """
-    filt = [
-        "GR150C",
-    ] * 5
-    pupil = [
-        "F200W",
-    ] * 5
-    order = [-1, 0, 1, 2, 3]
-    photmjsr = [1230.1855, 195.88435, 49.010494, 1584.0671, 7298.0225]
-    uncertainty = [12.301856, 1.9588436, 0.49010494, 15.840671, 72.980225]
-    nelem = [100] * 5
-    wavelength = [
-        np.linspace(1.7, 2.3, 100),
-    ] * 5
-
-    response_scaling = [10, 1, 1, 10, 100]  # response is inversely proportional to throughput
-    relresponse = [np.ones_like(wavelength[0]) * r for r in response_scaling]
-    reluncertainty = [np.ones_like(wavelength[0]) * r * 0.01 for r in response_scaling]
-
-    dtype = [
-        ("filter", "S12"),
-        ("pupil", "S15"),
-        ("order", "<i2"),
-        ("photmjsr", "<f4"),
-        ("uncertainty", "<f4"),
-        ("nelem", "<i2"),
-        ("wavelength", "<f4", (wavelength[0].size,)),
-        ("relresponse", "<f4", (relresponse[0].size,)),
-        ("reluncertainty", "<f4", (reluncertainty[0].size,)),
-    ]
-    phot_table = np.recarray((5,), dtype=dtype)
-
-    phot_table["filter"] = filt
-    phot_table["pupil"] = pupil
-    phot_table["order"] = order
-    phot_table["photmjsr"] = photmjsr
-    phot_table["uncertainty"] = uncertainty
-    phot_table["nelem"] = nelem
-    phot_table["wavelength"] = wavelength
-    phot_table["relresponse"] = relresponse
-    phot_table["reluncertainty"] = reluncertainty
-    return dm.NisWfssPhotomModel(phot_table=phot_table)

@@ -19,10 +19,13 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     even though it is not called directly
     """
     seg = segmentation_map.data
+    all_ids = np.array(list(set(np.ravel(seg))))
+    source_ids = all_ids[50:60]
     return Observation(
         direct_image_with_gradient.data,
         segmentation_map,
         grism_wcs,
+        source_id=source_ids,
         phot_per_lam=False,
     )
 
@@ -48,20 +51,13 @@ def test_background_subtract(direct_image_with_gradient):
     assert_allclose(mean, 0.0, atol=0.2 * stddev)
 
 
-def test_chunk_sources(observation, segmentation_map, monkeypatch):
+def test_chunk_sources(observation, monkeypatch):
     obs = copy.deepcopy(observation)
     order = 1
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_response = np.ones(100)
-
-    seg = segmentation_map.data
-    all_ids = np.array(list(set(np.ravel(seg))))
-    source_ids = all_ids[50:60]
-
-    # find largest source out of source_ids, then make max_pixels smaller than that
-    source_ids_per_pixel = obs.source_ids_per_pixel[np.isin(obs.source_ids_per_pixel, source_ids)]
-    ids, n_pix_per_sources = np.unique(source_ids_per_pixel, return_counts=True)
+    ids, n_pix_per_sources = np.unique(obs.source_ids_per_pixel, return_counts=True)
     max_pixels = np.max(n_pix_per_sources) - 1  # to trigger the warning
     bad_id = ids[n_pix_per_sources > max_pixels][0]
 
@@ -76,7 +72,6 @@ def test_chunk_sources(observation, segmentation_map, monkeypatch):
         wmax,
         sens_waves,
         sens_response,
-        selected_ids=source_ids,
         max_pixels=max_pixels,
     )
     watcher.assert_seen()
@@ -85,19 +80,15 @@ def test_chunk_sources(observation, segmentation_map, monkeypatch):
     assert len(disperse_args) == 8
 
 
-def test_disperse_order(observation, segmentation_map):
+def test_disperse_order(observation):
     obs = copy.deepcopy(observation)
     order = 1
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_resp = np.ones_like(sens_waves)
 
-    seg = segmentation_map.data
-    all_ids = np.array(list(set(np.ravel(seg))))
-    source_ids = all_ids[50:60]
-
     # shorten pixel list to make this test take less time
-    obs.disperse_order(order, wmin, wmax, sens_waves, sens_resp, selected_ids=source_ids)
+    obs.disperse_order(order, wmin, wmax, sens_waves, sens_resp)
 
     # test simulated image. should be majority but not all zeros
     assert obs.simulated_image.shape == obs.dims
