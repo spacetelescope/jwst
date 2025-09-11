@@ -208,8 +208,8 @@ def compare_asn_lists(left_asns, right_asns):
     left_not_right = sorted(left_product_names - right_product_names)
     right_not_left = sorted(right_product_names - left_product_names)
     if left_not_right or right_not_left:
-        left_msg = "Products in left but not right:\n" + "\n\t".join(left_not_right)
-        right_msg = "Products in right but not left:\n" + "\n\t".join(right_not_left)
+        left_msg = "Products in left but not right:\n    " + "\n    ".join(left_not_right)
+        right_msg = "Products in right but not left:\n    " + "\n    ".join(right_not_left)
         diffs.append(DifferentProductSetsError(f"{left_msg}\n{right_msg}\n"))
 
     # Compare like product associations
