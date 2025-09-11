@@ -1,3 +1,13 @@
+1.19.2 (2025-09-11)
+===================
+
+Associations
+------------
+
+- Fix a bug where NIRCam WFSS level 3 associations lacked filter name (`#9816
+  <https://github.com/spacetelescope/jwst/issues/9816>`_)
+
+
 1.19.1 (2025-07-21)
 ===================
 
