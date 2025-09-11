@@ -1410,6 +1410,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
         if velosys is not None:
             velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
             lgreq = lgreq | velocity_corr
+            agreq = velocity_corr.inverse & Identity(3) | agreq
             log.info(
                 f"Applied Barycentric velocity correction : {velocity_corr[1].amplitude.value}"
             )
@@ -1509,6 +1510,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
         if velosys is not None:
             velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
             lgreq = lgreq | velocity_corr
+            agreq = velocity_corr.inverse & Identity(3) | agreq
             log.info(
                 f"Applied Barycentric velocity correction : {velocity_corr[1].amplitude.value}"
             )
