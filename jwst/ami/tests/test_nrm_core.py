@@ -44,6 +44,7 @@ def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
         assert len(oimodel.vis) == 21  # number of baselines: 7 holes choose 2
         assert len(oimodel.vis2) == 21
         assert len(oimodel.t3) == 35  # number of triples: 7 holes choose 3
+        assert len(oimodel.q4) == 35  # number of quads: 7 holes choose 4
         vis_amp = oimodel.vis["VISAMP"]
         vis_amp_err = oimodel.vis["VISAMPERR"]
         vis_phase = oimodel.vis["VISPHI"]
@@ -52,7 +53,12 @@ def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
         vis2_err = oimodel.vis2["VIS2ERR"]
         t3_amp = oimodel.t3["T3AMP"]
         t3_amp_err = oimodel.t3["T3AMPERR"]
+        t3_phase = oimodel.t3["T3PHI"]
         t3_phase_err = oimodel.t3["T3PHIERR"]
+        q4_amp = oimodel.q4["Q4AMP"]
+        q4_amp_err = oimodel.q4["Q4AMPERR"]
+        q4_phase = oimodel.q4["Q4PHI"]
+        q4_phase_err = oimodel.q4["Q4PHIERR"]
 
         for arr in [
             vis_amp,
@@ -63,7 +69,10 @@ def test_fringe_fitter(example_model, nrm_model, bandpass, nrm_psf):
             vis2_err,
             t3_amp,
             t3_amp_err,
+            t3_phase,
             t3_phase_err,
+            q4_phase,
+            q4_phase_err,
         ]:
             assert arr.dtype == np.float64
             if i == 0:
