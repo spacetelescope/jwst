@@ -35,7 +35,7 @@ File Contents
 To describe the contents of an ASDF file, the configuration for the step
 ``CubeBuildStep`` will be used as the example:
 
-.. code-block::
+.. code-block:: yaml
 
    #ASDF 1.0.0
    #ASDF_STANDARD 1.5.0
@@ -99,7 +99,7 @@ fully-qualified Python path to the class.  Step classes can ship with
 ``stpipe`` itself, they may be part of other Python packages, or they
 exist in freestanding modules alongside the configuration file.  For
 example, to use the ``SystemCall`` step included with ``stpipe``, set
-``class`` to ``stpipe.subprocess.SystemCall``.  To use a class called
+``class`` to ``stpipe.subproc.SystemCall``.  To use a class called
 ``Custom`` defined in a file ``mysteps.py`` in the same directory as
 the configuration file, set ``class`` to ``mysteps.Custom``.
 
@@ -125,7 +125,7 @@ YAML has two ways of formatting a list of key/value pairs. In the above example,
 each key/value pair is on separate line. The other way is using a form that is similar to a Python `dict`.
 For example, the ``parameters`` block above could also have been formatted as:
 
-.. code-block::
+.. code-block:: yaml
 
     parameters: {band: all, channel: all, coord_system: world, filter: all,
       grating: all, output_type: band, output_use_model: true, rois: 0.0,
@@ -157,7 +157,7 @@ From the ``CubeBuildStep`` example, if all that needed to change is the
 ``weight_power`` parameter with a setting of ``4.0``, the ``parameters`` block
 need only contain the following:
 
-.. code-block::
+.. code-block:: yaml
 
     parameters:
       weight_power: 4.0
@@ -174,7 +174,7 @@ for that sub-step. For example, to define the ``weight_power`` of the
 ``cube_build`` step in a ``Spec2Pipeline`` parameter file, the parameter
 block would look as follows:
 
-.. code-block::
+.. code-block:: yaml
 
    class: jwst.pipeline.Spec2Pipeline
    parameters: {}
@@ -192,7 +192,7 @@ Similarly, to skip a particular step, one would specify ``skip: true`` for that
 substep. Continuing from the above example, to skip the ``msa_flagging`` step,
 the parameter file would look like:
 
-.. code-block::
+.. code-block:: yaml
 
    class: jwst.pipeline.Spec2Pipeline
    parameters: {}

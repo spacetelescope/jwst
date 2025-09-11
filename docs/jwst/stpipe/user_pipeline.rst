@@ -142,10 +142,11 @@ step in the example above, one can do::
 From Python
 -----------
 
-Once the pipeline has been configured (as above), just call the
-instance to run it::
+Once the pipeline has been configured (as above), run it::
 
-    pipe()
+    pipe.run()
+
+For more details, see :ref:`python_run_vs_call`.
 
 Caching details
 ---------------
@@ -184,9 +185,9 @@ Each of these parameters is a list of strings, where each entry is one of:
 * A dot-separated path to a Python Step class.
 * A dot-separated path to a Python function.
 
-For example, here’s a ``post_hook`` that will display a FITS file in
-the ``ds9`` FITS viewer the ``flat_field`` step has done flat field
-correction on it:
+
+For example, here's a ``post_hook`` that will display a FITS file in
+the ``ds9`` FITS viewer after the resample step has completed processing:
 
 .. code-block:: yaml
 

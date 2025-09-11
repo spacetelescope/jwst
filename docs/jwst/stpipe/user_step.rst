@@ -39,7 +39,7 @@ fully-qualified Python path to the class.  Step classes can ship with
 ``stpipe`` itself, they may be part of other Python packages, or they
 exist in freestanding modules alongside the configuration file.  For
 example, to use the ``SystemCall`` step included with ``stpipe``, set
-``class`` to ``stpipe.subprocess.SystemCall``.  To use a class called
+``class`` to ``stpipe.subproc.SystemCall``.  To use a class called
 ``Custom`` defined in a file ``mysteps.py`` in the same directory as
 the configuration file, set ``class`` to ``mysteps.Custom``.
 
@@ -203,11 +203,11 @@ For example, given the following command-line::
 
 the equivalent ``from_cmdline`` call would be::
 
-    from jwst.pipeline import Detector1Pipeline
-    Detector1Pipeline.from_cmdline([
-        'jw00017001001_01101_00001_nrca1_uncal.fits',
-        'steps.linearity.override_linearity',
-        'my_lin.fits'
+    from jwst.stpipe import Step
+    Step.from_cmdline([
+        "calwebb_detector1",
+        "jw00017001001_01101_00001_nrca1_uncal.fits",
+        "--steps.linearity.override_linearity='my_lin.fits'"
     ])
 
 
@@ -220,9 +220,9 @@ configuration initialization, including CRDS parameter reference retrieval, that
 one gets with the ``strun`` command or ``Step.from_cmdline`` method. The call
 signature is::
 
-    Step.call(input, config_file=None, **parameters)
+    Step.call(input_data, config_file=None, **parameters)
 
-The positional argument ``input`` is the data to be operated on, usually a
+The positional argument ``input_data`` is the data to be operated on, usually a
 string representing a file path or a :ref:`DataModel<jwst-data-models>`
 The optional
 keyword argument ``config_file`` is used to specify a local parameter file. The
@@ -258,9 +258,9 @@ example is::
 
     mystep = FlatFieldStep()
     mystep.override_sflat = 'sflat.fits'
-    output = mystep.run(input)
+    output = mystep.run(input_data)
 
-`input` in this case can be a fits file containing the appropriate data, or the output
+``input_data`` in this case can be a fits file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular
 :ref:`datamodel<jwst-data-models>`.
 
@@ -273,7 +273,7 @@ the step. The previous example could be re-written as::
     from jwst.flatfield import FlatFieldStep
 
     mystep = FlatFieldStep(override_sflat='sflat.fits')
-    output = mystep.run(input)
+    output = mystep.run(input_data)
 
 One can implement parameter reference file retrieval and use of a local
 parameter file as follows::
@@ -281,14 +281,9 @@ parameter file as follows::
     from stpipe import config_parser
     from jwst.flatfield import FlatFieldStep
 
-    config = FlatFieldStep.get_config_from_reference(input)
+    config = FlatFieldStep.get_config_from_reference(input_data)
     local_config = config_parser.load_config_file('my_flatfield_config.asdf')
     config_parser.merge_config(config, local_config)
 
     flat_field_step = FlatFieldStep.from_config_section(config)
-    output = flat_field_step.run(input)
-
-Using the ``.run()`` method is the same as calling the instance directly.
-They are equivalent::
-
-    output = mystep(input)
+    output = flat_field_step.run(input_data)
