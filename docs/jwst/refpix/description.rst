@@ -173,10 +173,10 @@ are averaged.  If there are no top/bottom or side reference pixels available, th
 the correction is omitted.  The routine will log which parameters are valid according to
 whether valid reference pixels exist.
 
-MIR Data
-++++++++
+MIRI Data
++++++++++
 
-The refpix correction is skipped for MIRI subarray data.
+The refpix correction is skipped by default for MIRI data.
 
 .. _IRS2:
 
