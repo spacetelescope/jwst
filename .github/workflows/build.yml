@@ -5,6 +5,12 @@ on:
     types: [ released ]
   pull_request:
   workflow_dispatch:
+  schedule:
+    # run every weekday at 4:30am UTC
+    - cron: '30 4 * * 1-5'
+
+permissions:
+  contents: read
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -12,9 +18,15 @@ concurrency:
 
 jobs:
   build:
+    permissions:
+      contents: none
     uses: OpenAstronomy/github-actions-workflows/.github/workflows/publish.yml@28e947497bed4d6ec3fa1d66d198e95a1d17bc63 # v2.2.1
     with:
       upload_to_pypi: ${{ (github.event_name == 'release') && (github.event.action == 'released') }}
+      upload_to_anaconda: ${{ (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+      anaconda_user: STScI
+      anaconda_package: jwst
+      anaconda_keep_n_latest: 10
       targets: |
         # Linux wheels
         - cp3*-manylinux_x86_64
@@ -26,3 +38,4 @@ jobs:
       test_command: python -c "from jwst.lib import winclip; from jwst.cube_build import cube_match_internal, cube_match_sky_pointcloud, cube_match_sky_driz, blot_median; from jwst.straylight import calc_xart"
     secrets:
       pypi_token: ${{ secrets.PYPI_PASSWORD_STSCI_MAINTAINER }}
+      anaconda_token: ${{ secrets.anaconda_token }}
