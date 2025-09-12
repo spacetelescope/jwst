@@ -7,7 +7,7 @@ FILTEROFFSET Reference File
 ---------------------------
 
 :REFTYPE: FILTEROFFSET
-:Data model: `~jwst.datamodels.FilteroffsetModel`
+:Data model: `~stdatamodels.jwst.datamodels.FilteroffsetModel`
 
 Reference Selection Keywords for FILTEROFFSET
 +++++++++++++++++++++++++++++++++++++++++++++

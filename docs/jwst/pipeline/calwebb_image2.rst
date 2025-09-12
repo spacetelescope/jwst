@@ -54,7 +54,7 @@ Inputs
 2D or 3D countrate data
 +++++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel` or `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _rate or _rateints
 
 The input to ``Image2Pipeline`` is
@@ -74,7 +74,7 @@ Outputs
 2D or 3D background-subtracted data
 +++++++++++++++++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel` or `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _bsub or _bsubints
 
 This is an intermediate product that will contain the data as output from the
@@ -86,7 +86,7 @@ saved as "_bsubints."
 2D or 3D calibrated data
 ++++++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel` or `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _cal or _calints
 
 The output is a fully calibrated, but unrectified, exposure, using
@@ -96,7 +96,7 @@ input, e.g. "jw80600012001_02101_00003_mirimage_cal.fits".
 2D resampled image
 ++++++++++++++++++
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _i2d
 
 This is the output of the :ref:`resample <resample_step>` step and is only created

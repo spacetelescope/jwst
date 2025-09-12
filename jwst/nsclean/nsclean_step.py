@@ -41,12 +41,14 @@ class NSCleanStep(Step):
 
         Parameters
         ----------
-        input_data : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
+        input_data : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                     `~stdatamodels.jwst.datamodels.IFUImageModel`
             Input datamodel to be corrected.
 
         Returns
         -------
-        output_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
+        output_model : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                       `~stdatamodels.jwst.datamodels.IFUImageModel`
             The 1/f corrected datamodel.
         """
         message = (

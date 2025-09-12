@@ -17,7 +17,7 @@ Input details
 The input data must have been processed through the
 :ref:`extract_2d <extract_2d_step>` step, so that cutouts have been created
 for each of the slitlets used in the exposure. Hence the input must be in the
-form of a `~jwst.datamodels.MultiSlitModel`.
+form of a `~stdatamodels.jwst.datamodels.MultiSlitModel`.
 
 It is also assumed that the input data have been processed through the
 :ref:`srctype <srctype_step>` step, which for NIRSpec MSA exposures sets the
@@ -51,7 +51,7 @@ correction values are divided into the variance arrays.
 
 Output product
 --------------
-The output is a new copy of the input `~jwst.datamodels.MultiSlitModel`, with the
+The output is a new copy of the input `~stdatamodels.jwst.datamodels.MultiSlitModel`, with the
 corrections applied to the slit data arrays. The 2-D correction array for each slit
 is also added to the datamodel in the "BARSHADOW" extension.
 

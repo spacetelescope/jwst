@@ -24,12 +24,12 @@ def to_container(model):
 
     Parameters
     ----------
-    model : CubeModel
+    model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input model to convert
 
     Returns
     -------
-    container : ModelContainer
+    container : `~jwst.datamodels.container.ModelContainer`
         The container of ImageModels
     """
     container = ModelContainer()
@@ -96,7 +96,7 @@ class Coron3Pipeline(Pipeline):
 
         Parameters
         ----------
-        user_input : str, Level3 Association, or `~jwst.datamodels.JwstDataModel`
+        user_input : str, Level3 Association, or `~stdatamodels.jwst.datamodels.JwstDataModel`
             The exposure or association of exposures to process
         """
         log.info("Starting calwebb_coron3 ...")

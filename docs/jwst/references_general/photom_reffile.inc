@@ -36,7 +36,7 @@ The FITS primary HDU does not contain a data array.
 The contents of the table extension vary a bit for different
 instrument modes, as shown in the tables below.
 
-:Data model: `~jwst.datamodels.FgsImgPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.FgsImgPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -46,7 +46,7 @@ instrument modes, as shown in the tables below.
 |            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.MirImgPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.MirImgPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -64,13 +64,13 @@ The MIRI Imager PHOTOM reference file can contain an optional BINTABLE extension
 named "TIMECOEFF", containing coefficients for an time-dependent correction. The format
 of this additional table extension is as follows:
 
-==========  ========  =====  ===========  =========  
+==========  ========  =====  ===========  =========
 EXTNAME     XTENSION  NAXIS  Dimensions   Data type
 ==========  ========  =====  ===========  =========
 TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
 ==========  ========  =====  ===========  =========
 
-:Data model: `~jwst.datamodels.MirLrsPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.MirLrsPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -92,7 +92,7 @@ TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
 |            |       | reluncertainty | float     | array      | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NrcImgPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrcImgPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -106,7 +106,7 @@ TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
 |            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NrcWfssPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrcWfssPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -130,7 +130,7 @@ TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
 |            |       | reluncertainty | float     | array      | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NisImgPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.NisImgPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -144,7 +144,7 @@ TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
 |            |       | uncertainty    | float     | scalar     | MJy/steradian/(DN/sec) |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NisSossPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.NisSossPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -168,7 +168,7 @@ TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
 |            |       | reluncertainty | float     | array      | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NisWfssPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.NisWfssPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -192,7 +192,7 @@ TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
 |            |       | reluncertainty | float     | array      | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NrsFsPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrsFsPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -216,7 +216,7 @@ TIMECOEFF   BINTABLE    2    TFIELDS = 3  float32
 |            |       | reluncertainty | float     | array      | unitless               |
 +------------+-------+----------------+-----------+------------+------------------------+
 
-:Data model: `~jwst.datamodels.NrsMosPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrsMosPhotomModel`
 
 +------------+-------+----------------+-----------+------------+------------------------+
 | Instrument | Mode  | Column name    | Data type | Dimensions | Units                  |
@@ -271,14 +271,14 @@ square arcseconds, respectively.
 MIRI MRS Photom Reference File Format
 +++++++++++++++++++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.MirMrsPhotomModel`
+:Data model: `~stdatamodels.jwst.datamodels.MirMrsPhotomModel`
 
 For MIRI MRS, the PHOTOM file contains 2-D arrays of conversion factors in
 IMAGE extensions.
 The FITS primary HDU does not contain a data array.
 The format and content of the MIRI MRS PHOTOM reference file is as follows:
 
-==================  ========  =====  ===========  =========  
+==================  ========  =====  ===========  =========
 EXTNAME             XTENSION  NAXIS  Dimensions   Data type
 ==================  ========  =====  ===========  =========
 SCI                 IMAGE       2    1032 x 1024  float
@@ -314,7 +314,7 @@ product header by the photom step.
 
 The TIMECOEFF_CH tables contain the parameters to correct the MRS time-dependent
 throughput loss. If these tables do not exist in the reference file, then the MIRI
-MRS time-dependent correction is skipped. 
+MRS time-dependent correction is skipped.
 
 Constructing a PHOTOM Reference File
 ------------------------------------

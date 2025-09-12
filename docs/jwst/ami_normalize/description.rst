@@ -1,7 +1,7 @@
 Description
 -----------
 
-:Class: `jwst.ami.AmiNormalizeStep`
+:Class: `jwst.ami.ami_normalize_step.AmiNormalizeStep`
 :Alias: ami_normalize
 
 The ``ami_normalize`` step is one of the AMI-specific steps in the ``ami``
@@ -21,23 +21,23 @@ Inputs
 
 Interferometric Observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiOIModel`
+:Data model: `~stdatamodels.jwst.datamodels.AmiOIModel`
 :File suffix: _ami-oi.fits and/or _psf-ami-oi.fits
 
-The ``ami_normalize`` step takes two inputs: the first is the 
-interferometric observables for a science target and the second 
+The ``ami_normalize`` step takes two inputs: the first is the
+interferometric observables for a science target and the second
 is the interferometric observables for the PSF target. These should
 be the _ami-oi.fits and _psf-ami-oi.fits products resulting from the
-:ref:`ami_analyze <ami_analyze_step>` step, or two _ami-oi.fits files if the steps 
-are run independently. The inputs can be in the form of filenames or 
-`~jwst.datamodels.AmiOIModel` data models.
+:ref:`ami_analyze <ami_analyze_step>` step, or two _ami-oi.fits files if the steps
+are run independently. The inputs can be in the form of filenames or
+`~stdatamodels.jwst.datamodels.AmiOIModel` data models.
 
 Outputs
 -------
 
 Normalized Interferometric Observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiOIModel`
+:Data model: `~stdatamodels.jwst.datamodels.AmiOIModel`
 :File suffix: _aminorm-oi.fits
 
 The output is a new set of interferometric observables for the science target

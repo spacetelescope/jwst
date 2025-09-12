@@ -87,7 +87,7 @@ Outputs
 There is one primary output and two optional outputs from the step:
 
 1. The primary output is the contamination-corrected grism data, in the form of a
-   `~jwst.datamodels.MultiSlitModel` data model. In the :ref:`calwebb_spec2 <calwebb_spec2>`
+   `~stdatamodels.jwst.datamodels.MultiSlitModel` data model. In the :ref:`calwebb_spec2 <calwebb_spec2>`
    pipeline flow, this data model is passed along to the :ref:`photom <photom_step>` step
    for further processing.
 2. If the step argument ``--save_simulated_image`` is set to `True`, the full-frame

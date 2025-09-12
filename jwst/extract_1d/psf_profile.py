@@ -214,7 +214,7 @@ def psf_profile(
     subtraction.  The location of the positive trace should be provided in the
     `trace` input parameter; the negative trace location will be guessed from
     the input metadata. If a negative trace is modeled, it is recommended that
-    `optimize_shifts` also be set to True, to improve the initial guess for the
+    ``optimize_shifts`` also be set to True, to improve the initial guess for the
     trace location.
 
     Parameters
@@ -234,7 +234,7 @@ def psf_profile(
     optimize_shifts : bool, optional
         If True, the spatial location of the trace will be optimized by
         minimizing the residuals in a scene model compared to the data in
-        the first integration of `input_model`.
+        the first integration of ``input_model``.
     model_nod_pair : bool, optional
         If True, and if background subtraction has taken place, a negative
         PSF will be modeled at the mirrored spatial location of the positive

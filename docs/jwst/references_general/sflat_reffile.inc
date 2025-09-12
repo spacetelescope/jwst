@@ -4,7 +4,7 @@ SFLAT Reference File
 --------------------
 
 :REFTYPE: SFLAT
-:Data model: `~jwst.datamodels.NirspecFlatModel`
+:Data model: `~stdatamodels.jwst.datamodels.NirspecFlatModel`
 
 There are 3 types of NIRSpec SFLAT reference files: fixed slit, MSA spec, and IFU.
 For each type the primary HDU does not contain a data array.

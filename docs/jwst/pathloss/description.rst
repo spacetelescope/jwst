@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.pathloss.PathlossStep`
+:Class: `jwst.pathloss.PathLossStep`
 :Alias: pathloss
 
 Overview
@@ -47,7 +47,7 @@ the 2-D space of the slit or IFU data and attached to the output data model
 (extensions "PATHLOSS_PS" and "PATHLOSS_UN") as a record of what was computed.
 For fixed slit data, if the ``wavecorr`` step has been run to provide wavelength
 corrections to point sources, the corrected wavelengths will be used to
-calculate the point source pathloss, whereas the uncorrected wavelengths (appropriate 
+calculate the point source pathloss, whereas the uncorrected wavelengths (appropriate
 for uniform sources) will be used to calculate the uniform source pathlosses.
 The form of the 2-D correction (point or uniform) that's appropriate for the
 data is divided into the SCI and ERR arrays and propagated into the variance
@@ -56,7 +56,7 @@ arrays of the science data.
 The MSA reference file contains 2 entries: one for a 1x1 slit and one for a 1x3 slit.
 Each entry contains the pathloss correction for point source and uniform sources.
 The former depends on the position of the target in the fiducial shutter and
-wavelength, whereas the latter depends on wavelength only.  The point source 
+wavelength, whereas the latter depends on wavelength only.  The point source
 entry consists of a 3-d array, where 2 of the dimensions map to the location
 of the source (ranging from -0.5 to 0.5 in both X and Y), while the third dimension
 carries the wavelength dependence.  The 1x3 shutter is 3 times as large in Y as in X.

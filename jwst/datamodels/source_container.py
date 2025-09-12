@@ -15,8 +15,8 @@ class SourceModelContainer(ModelContainer):
 
     The ``MultiExposureModel.exposures`` list contains the data for each exposure
     from a common slit id. Though the information is the same, the structures
-    are not true `~jwst.datamodels.SlitModel` instances. This container creates a
-    `~jwst.datamodels.SlitModel`
+    are not true `~stdatamodels.jwst.datamodels.SlitModel` instances. This container creates a
+    `~stdatamodels.jwst.datamodels.SlitModel`
     wrapper around each exposure, such that pipeline code can treat each
     as a `~stdatamodels.DataModel`.
     """
@@ -60,7 +60,7 @@ class SourceModelContainer(ModelContainer):
 
         Returns
         -------
-        `~jwst.datamodels.MultiExposureModel`
+        `~stdatamodels.jwst.datamodels.MultiExposureModel`
             The MultiExposureModel being wrapped, be updated with any new data in the container.
         """
         # Reapply models back to the exposures

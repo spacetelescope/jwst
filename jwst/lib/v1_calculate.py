@@ -21,13 +21,13 @@ def v1_calculate_from_models(sources, siaf_path=None, **calc_wcs_from_time_kwarg
     Returns a table of V1 pointings for all input models.
     The table has the following columns:
 
-    * source (`jwst.datamodels.JwstDataModel`): The model.
+    * source (`~stdatamodels.jwst.datamodels.JwstDataModel`): The model.
     * obstime (`astropy.time.Time`): The observation time.
     * v1 (float, float, float): 3-tuple or RA, dec, and position angle.
 
     Parameters
     ----------
-    sources : [File-like or jwst.datamodels.Datamodel[...]]
+    sources : [File-like or stdatamodels.DataModel[...]]
         The datamodels to get timings other header parameters from.
 
     siaf_path : None or file-like
