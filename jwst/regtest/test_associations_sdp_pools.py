@@ -146,6 +146,7 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
+        ("jw01019_20250316t142947_pool", []),  # FGS_FOCUS + FGS_IMAGE
         ("jw01120_20250317t230449_pool", []),  # NIRSPEC IMAGING + NIRSPEC INTERNAL LAMP
         ("jw01122_uniq_lamp_optical_path_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
         ("jw01290_20230304t140931_withids_pool", ["-i", "o012", "c1018"]),
@@ -168,7 +169,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
             ["--DMS", "-i", "o009", "o010", "c1012"],
         ),  # This pool checks background behavior with paired MIRI MRS/Imaging exposures
         ("jw84700_subpxpts_pool", []),
-        ("jw86600_20171108T043532_pool", []),
         ("jw87600_20180824T213416_pool", []),
         ("jw87800_20180824T214549_pool", []),
         ("jw88600_20171108T051731_pool", []),
