@@ -48,6 +48,7 @@ and finally, open a pull request to the ''main'' branch of `spacetelescope/jwst`
 
        cd directory
        git clone git@github.com:<your_username>/jwst.git
+       cd jwst
 
 3. Make sure that your references to 'origin' and 'upstream' are set correctly - you will
    need this to keep everything in sync and push your changes online. While your initial
@@ -195,8 +196,9 @@ Now, you can open a pull request on the main branch of the upstream `jwst` repos
    * Various code style checks will be run (see [Code Style](#code-style)). The
      pre-commit hook described above is helpful for catching and debugging these locally.
    * You will need to add a change log entry in `changes/PRID.fragmenttype.rst`
-     if your contribution is a new feature or bug fix.
-     An entry is not required for small fixes like typos.
+     if your contribution is a new feature, API change, or bug fix.
+     An entry is not required for small fixes like typos and documentation updates.
+     See [changes/README.rst](changes/README.rst) for more details.
 
 3. Ensure all the items in the **Tasks** checklist on the PR are completed.
    Instructions for how to do this are included in the checklist itself.
@@ -280,7 +282,7 @@ to build the docs frequently when editing them.
 ## Writing and running unit tests
 
 Unit tests are located in each module in `jwst` in a `tests` subdirectory (for example,
-`jwst/jwst/ramp_fitting/tests`). These tests run the code on simplified datasets to make
+`jwst/ramp_fitting/tests`). These tests run the code on simplified datasets to make
 sure there are no breaking changes introduced. Most lines of `jwst` should be covered
 by a unit test, so when adding code you will often need to write a new test or add
 to an existing test to ensure adequate coverage.
@@ -314,19 +316,19 @@ to run the tests. `pytest` searches through all the directories in your reposito
 directories called 'test' or .py files with the word 'test' in the name. Functions
 in these files will be executed.
 
-To run all of the `jwst` unit tests, while in the `jwst/jwst` level directory, simply
+To run all of the `jwst` unit tests, while in the `jwst` level directory, simply
 run the command:
 
     pytest
 
 If you want to run all the tests for a single module, for example `ramp_fitting`,
-you can run this from either the 'jwst/jwst/ramp_fitting' OR the
-'jwst/jwst/ramp_fitting/tests' directory.
+you can run this from either the 'jwst/ramp_fitting' OR the
+'jwst/ramp_fitting/tests' directory.
 
 To run all tests within a single test file (for example, all tests in
-`jwst/jwst/jump/tests/test_detect_jumps.py`):
+`jwst/jump/tests/test_detect_jumps.py`):
 
-    pytest test_detect_jumps.py
+    pytest jwst/jump/tests/test_detect_jumps.py
 
 ### Configuring pytest for unit tests
 
@@ -351,12 +353,17 @@ contain the string `testname`.
 Within the test files themselves, decorators can be used to control the behavior of the test.
 Some of the more useful decorators include:
 
-1. `@pytest.mark.parametrize` can be used to run a single test on multiples sets of input parameters
-2. `@pytest.skip` can be used to skip tests altogether, or under specific conditions
+1. `@pytest.fixture` to declare a
+   [fixture](https://docs.pytest.org/en/stable/explanation/fixtures.html)
+2. `@pytest.mark.bigdata` (provided by `ci-watson`) to declare a test accessing
+   large remote data from Artifactory and only run when `--bigdata` flag is provided
+3. `@pytest.mark.parametrize` to run a single test on multiples sets
+   of input parameters
+4. `@pytest.mark.skip` to skip tests altogether, or under specific conditions
    (for example, only when being run by the CI)
-3. `@pytest.fixture` to declare a [fixture](https://docs.pytest.org/en/stable/explanation/fixtures.html)
-4. `@pytest.mark.xfail` will make a test pass only if it fails
-
+5. `@pytest.mark.slow` (provided by `ci-watson`) to declare a test taking significant
+   amount of time to run and only run when `--slow` flag is provided
+6. `@pytest.mark.xfail` will make a test pass only if it fails
 
 ## Simultaneously developing `jwst` and one of its dependencies
 
@@ -422,14 +429,6 @@ The following style checks are performed:
   whitespace, etc., use the command:
 
       pre-commit run ruff-format
-
-  ---
-  **Note:** If you run `ruff format .` from the top-level `jwst/` folder,
-  it will re-format the entire code base.
-  Please do not do this; it makes pull requests more challenging to review.
-  It's recommended to apply `ruff-format` through `pre-commit`.
-
-  ---
 
 * **Numpy docstring style**
 
