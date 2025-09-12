@@ -870,8 +870,7 @@ The :ref:`ami_normalize <ami_normalize_step>` step produces an ``aminorm-oi`` pr
 which is also contained in a `~jwst.datamodels.AmiOIModel`. The model conforms to the standard
 defined in `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS",
-and "OI_VIS2" extensions each contain 2D data columns whose second dimension equals
+In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS", "OI_VIS2", and "OI_Q4" extensions each contain 2D data columns whose second dimension equals
 the number of integrations. In the averaged ``ami-oi`` product and normalized ``aminorm-oi``
 products, these columns have a single dimension whose length is independent of the number
 of integrations.
@@ -894,16 +893,19 @@ The overall structure of the OIFITS files (``ami-oi``, ``amimulti-oi``, and
 +-----+--------------+----------+-----------+------------------+
 |  5  |   OI_VIS2    | BINTABLE |    N/A    | 10 col x 21 rows |
 +-----+--------------+----------+-----------+------------------+
-|  6  | OI_WAVELENGTH| BINTABLE |    N/A    |    variable      |
+|  6  |    OI_Q4     | BINTABLE |    N/A    | 16 col x 35 rows |
 +-----+--------------+----------+-----------+------------------+
-|  7  |     ASDF     | BINTABLE |    N/A    |    variable      |
+|  7  | OI_WAVELENGTH| BINTABLE |    N/A    |    variable      |
++-----+--------------+----------+-----------+------------------+
+|  8  |     ASDF     | BINTABLE |    N/A    |    variable      |
 +-----+--------------+----------+-----------+------------------+
 
  - OI_ARRAY: AMI subaperture information
  - OI_TARGET: Target properties
- - OI_T3: Table of closure amplitudes, phases
+ - OI_T3: Table of triple-product amplitudes, closure phases
  - OI_VIS: Table of visibility (fringe) amplitudes, phases
  - OI_VIS2: Table of squared visibility (fringe) amplitudes
+ - OI_Q4: Table of closure amplitudes, four-hole phases
  - OI_WAVELENGTH: Filter information
  - ADSF: The data model meta data.
 

@@ -194,7 +194,7 @@ def niriss_soss(input_model, reference_files):
         velocity_corr = velocity_correction(velosys)
         wl1 = wl1 | velocity_corr
         wl2 = wl2 | velocity_corr
-        wl2 = wl3 | velocity_corr
+        wl3 = wl3 | velocity_corr
         log.info(f"Applied Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
 
     # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
