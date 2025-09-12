@@ -527,8 +527,8 @@ def contam_corr(
                     "Skipping contamination correction for this order."
                 )
                 continue
-            no_sources = False
             selected_ids = good_ids
+        no_sources = False
 
         # Compute the dispersion for all sources in this order
         log.info(f"Creating full simulated grism image for order {order}")
