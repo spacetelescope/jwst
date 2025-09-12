@@ -63,12 +63,10 @@ def subtract_bias(output, bias):
         Bias-subtracted science data
     """
     # combine the science and superbias DQ arrays
-    output.pixeldq = np.bitwise_or(output.pixeldq, bias.dq)
+    output.pixeldq |= bias.dq
 
     # Subtract the superbias image from all groups and integrations
     # of the science data
-    if not isinstance(type(output.data), float):
-        output.data = (output.data).astype(float)
     output.data -= bias.data
 
     # If ZEROFRAME is present, subtract the super bias.  Zero values

@@ -38,7 +38,7 @@ def do_correction(output_model, lin_model):
     gdq = output_model.groupdq
     # If the input data does not have an expanded DQ array, create one
     if len(output_model.groupdq) == 0:
-        gdq = (output_model.data * 0).astype(np.uint32)
+        gdq = np.zeros(output_model.data.shape, dtype=np.uint32)
 
     # Obtain linearity coefficients and dq array from reference file
     if reffile_utils.ref_matches_sci(output_model, lin_model):
