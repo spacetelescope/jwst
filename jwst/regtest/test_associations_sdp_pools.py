@@ -153,6 +153,8 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
         ("jw01464_20250318t062856_pool", []),  # WFS&C rules
         ("jw01480_20250319t173819_pool", []),  # NRC_GRISM, NRC_TSIMAGE, NRC_TSGRISM
         ("jw01493_20230307t040130_withids_pool", ["-i", "o003", "c1000"]),
+        ("jw01499_20250310t191505_pool", []),  # NIS_DARK
+        ("jw01503_20250316t013145_pool", []),  # NIS_LAMP
         ("jw01512_20250316t073810_pool", []),  # NIS_EXTCAL
         ("jw01678_20240721t195707_pool", []),
         ("jw02064_20230302t112350_withids_pool", ["-i", "o061", "c1008", "c1017"]),
@@ -169,7 +171,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
             ["--DMS", "-i", "o009", "o010", "c1012"],
         ),  # This pool checks background behavior with paired MIRI MRS/Imaging exposures
         ("jw84700_subpxpts_pool", []),
-        ("jw87600_20180824T213416_pool", []),
         ("jw90001_20171108T043223_pool", []),
         ("jw90002_20171108T051832_pool", []),
         ("jw90003_20171108T043229_pool", []),
