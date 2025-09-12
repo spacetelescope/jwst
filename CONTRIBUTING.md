@@ -24,7 +24,7 @@ for an overview of git basics.
 
 First, to clarify some terms that will be commonly used here:
 
-* `upstream` refers to the main `jwst` repository. this is where code from all
+* `upstream` refers to the main `jwst` repository. This is where code from all
   contributors is ultimately merged into and where releases of the package will be made from.
 * `origin` refers to the online fork you made of the upstream `jwst` repository.
 * `local` refers to the clone you made of the origin on your computer.
@@ -67,7 +67,7 @@ If you are using an SSH key to authenticate:
 
     git remote add upstream git@github.com:spacetelescope/jwst.git
 
-Otherwise, you can set it to the repository URL but you will have to
+Otherwise, you can set it to the repository URL but you may have to
 enter your password every time you fetch/push:
 
     git remote add upstream https://github.com/spacetelescope/jwst
@@ -85,7 +85,7 @@ have all recent changes to upstream by 'fetching' them:
 
     git fetch upstream --tags
 
-The following will create a new branch off local/main called 'my_feature',
+The following will create a new branch off upstream/main called 'my_feature',
 and automatically switch you over to your new branch:
 
     git checkout upstream/main -b my_feature
@@ -324,7 +324,7 @@ you can run this from either the 'jwst/jwst/ramp_fitting' OR the
 'jwst/jwst/ramp_fitting/tests' directory.
 
 To run all tests within a single test file (for example, all tests in
-`jwst/jwst/jump/test_detect_jumps.py`):
+`jwst/jwst/jump/tests/test_detect_jumps.py`):
 
     pytest test_detect_jumps.py
 
