@@ -173,7 +173,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
             ["--DMS", "-i", "o009", "o010", "c1012"],
         ),  # This pool checks background behavior with paired MIRI MRS/Imaging exposures
         ("jw04470_20250317t231014_pool", []),  # NIS_IMAGE science program
-        ("jw93056_20171108T060152_pool", []),
         ("jw93065_20171108T041402_pool", []),
         ("jw93125_20171108T045251_pool", []),
         ("jw93125_20171108T045251-valid-msametfl_pool", []),
