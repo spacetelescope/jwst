@@ -116,7 +116,9 @@ def test_std(_jail, rtdata, resource_tracker, request, pool_args):
             ("jw02084_20250320t081615_pool", []), id="pool_021_tso_NIRCAM_TSIMAGE_TSGRISM"
         ),
         pytest.param(("jw03383_20250307t235057_pool", []), id="pool_034_wfss_parallel_NIRISS"),
-        pytest.param(("jw03522_20250318t192624_pool", []), id="pool_024_nirspec_fss_nods"),
+        pytest.param(
+            ("jw03522_20250318t192624_pool", []), id="pool_024_nirspec_fss_nods_AND_SUBPXPTS4"
+        ),
         pytest.param(("jw03702_20250320t002824_pool", []), id="imprint_2n_dithers_obs_1_2"),
         pytest.param(("jw05221_20250411t182730_pool", []), id="pool_032_nircam_wfss"),
         pytest.param(("jw05308_20250319t215735_pool", []), id="pool_027_nirspec_ifu_nods_4NODS"),
@@ -171,7 +173,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
             ["--DMS", "-i", "o009", "o010", "c1012"],
         ),  # This pool checks background behavior with paired MIRI MRS/Imaging exposures
         ("jw04470_20250317t231014_pool", []),  # NIS_IMAGE science program
-        ("jw84700_subpxpts_pool", []),
         ("jw90002_20171108T051832_pool", []),
         ("jw90003_20171108T043229_pool", []),
         ("jw93025_20171108T062313_pool", []),
