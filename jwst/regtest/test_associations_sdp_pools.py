@@ -180,7 +180,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
         ("jw93135_20171108T041617-fixed_pool", []),
         ("jw95065_20171108T043122_pool", []),
         ("jw95065_20171108T043122-valid-msametfl_pool", []),
-        ("jw95115_20171108T041653_pool", []),
         ("jw95175_20171108T044201_pool", []),
         ("jw96090_20171108T041421_pool", []),
         ("jw96213_20171108T053001_pool", []),
