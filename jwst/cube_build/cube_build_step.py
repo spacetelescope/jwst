@@ -230,9 +230,10 @@ class CubeBuildStep(Step):
         # Read in the first input model to determine with instrument we have
         # output type is by default 'Channel' for MIRI and 'Band' for NIRSpec
         instrument = self.input_models[0].meta.instrument.name.upper()
+
         if self.output_type is None:
             if instrument == "NIRSPEC":
-                self.output_type = "band"
+                self.output_type = "grating"
 
             elif instrument == "MIRI":
                 self.output_type = "channel"
@@ -325,7 +326,9 @@ class CubeBuildStep(Step):
         filenames = master_table.FileMap["filename"]
 
         self.pipeline = 3
-        if self.output_type == "multi" and len(filenames) == 1:
+        if self.output_type == "multi" and len(filenames) == 1 and instrument == "MIRI":
+            self.pipeline = 2
+        if self.output_type == "band" and len(filenames) == 1 and instrument == "NIRSPEC":
             self.pipeline = 2
         # ________________________________________________________________________________
         # How many and what type of cubes will be made.

@@ -461,8 +461,9 @@ class CubeData:
                     cube_no = str(num_cubes)
                     cube_pars[cube_no] = {}
                     this_grating = []
-                    this_filter = band_subchannel
-                    this_grating.append(i)
+                    this_filter = []
+                    this_grating.append(band_grating[i])
+                    this_filter.append(band_filter[i])
                     cube_pars[cube_no]["par1"] = this_grating
                     cube_pars[cube_no]["par2"] = this_filter
 
