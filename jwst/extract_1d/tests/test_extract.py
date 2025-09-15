@@ -1699,11 +1699,33 @@ def test_run_extract1d_save_cube_scene(mock_nirspec_bots):
 def test_run_extract1d_tso(mock_nirspec_bots):
     model = mock_nirspec_bots
     output_model, _, _, _ = ex.run_extract1d(model)
+    assert isinstance(output_model, dm.TSOMultiSpecModel)
+    assert len(output_model.spec) == 1
+    assert len(output_model.spec[0].spec_table) == 10
 
     # time and integration keywords are populated
     for i, spec in enumerate(output_model.spec[0].spec_table):
         assert spec["int_num"] == i + 1
         assert_allclose(spec["MJD-BEG"], 59729.04367729)
+
+    output_model.close()
+
+
+def test_run_extract1d_tso_one_int(mock_nirspec_bots):
+    # Modify to keep only the first integration
+    model = mock_nirspec_bots
+    shape = model.data.shape
+    model.data = model.data[0].reshape((1, *shape[1:]))
+
+    output_model, _, _, _ = ex.run_extract1d(model)
+    assert isinstance(output_model, dm.TSOMultiSpecModel)
+    assert len(output_model.spec) == 1
+    assert len(output_model.spec[0].spec_table) == 1
+
+    # time and integration keywords are populated
+    assert output_model.spec[0].spec_table["int_num"] == 1
+    assert output_model.spec[0].spec_table["MJD-BEG"] == 59729.04367729
+    assert output_model.spec[0].spec_table["MJD-AVG"] == 59729.04378181
 
     output_model.close()
 
