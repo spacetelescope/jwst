@@ -306,11 +306,11 @@ class PrepareOutputStep(Step):
     class_alias = "prepare_output"
 
     def process(self, input_data):
-        self.log.info(f"Input data is {type(input_data)}")
+        log.info(f"Input data is {type(input_data)}")
 
         result = self.prepare_output(input_data)
         record_step_status(result, "prepare_output", True)
-        self.log.info(f"Output data is {type(result)}")
+        log.info(f"Output data is {type(result)}")
 
         return result
 
@@ -320,10 +320,10 @@ class PrepareOutputNoOpenStep(Step):
     class_alias = "prepare_output_no_open"
 
     def process(self, input_data):
-        self.log.info(f"Input data is {type(input_data)}")
+        log.info(f"Input data is {type(input_data)}")
 
         result = self.prepare_output(input_data, open_models=False)
-        self.log.info(f"Output data is {type(result)}")
+        log.info(f"Output data is {type(result)}")
 
         return result
 
@@ -333,11 +333,11 @@ class PrepareOutputForceCopyStep(Step):
     class_alias = "prepare_output_force_copy"
 
     def process(self, input_data):
-        self.log.info(f"Input data is {type(input_data)}")
+        log.info(f"Input data is {type(input_data)}")
 
         result = self.prepare_output(input_data, make_copy=True)
         record_step_status(result, "prepare_output", True)
-        self.log.info(f"Output data is {type(result)}")
+        log.info(f"Output data is {type(result)}")
 
         return result
 
@@ -347,9 +347,9 @@ class PrepareOutputForceCopyNoOpenStep(Step):
     class_alias = "prepare_output_force_copy_no_open"
 
     def process(self, input_data):
-        self.log.info(f"Input data is {type(input_data)}")
+        log.info(f"Input data is {type(input_data)}")
         result = self.prepare_output(input_data, make_copy=True, open_models=False)
-        self.log.info(f"Output data is {type(result)}")
+        log.info(f"Output data is {type(result)}")
 
         return result
 
@@ -359,11 +359,11 @@ class PrepareOutputNoCopyStep(Step):
     class_alias = "prepare_output_no_copy"
 
     def process(self, input_data):
-        self.log.info(f"Input data is {type(input_data)}")
+        log.info(f"Input data is {type(input_data)}")
 
         result = self.prepare_output(input_data, make_copy=False)
         record_step_status(result, "prepare_output", True)
-        self.log.info(f"Output data is {type(result)}")
+        log.info(f"Output data is {type(result)}")
 
         return result
 
@@ -379,19 +379,19 @@ class PrepareOutputPipeline(Pipeline):
     }
 
     def process(self, input_data):
-        self.log.info(f"Input data is {type(input_data)}")
+        log.info(f"Input data is {type(input_data)}")
 
         result = self.prepare_output(input_data)
-        self.log.info(f"Opened data is {type(result)}")
+        log.info(f"Opened data is {type(result)}")
 
         result = self.step1.run(result)
-        self.log.info(f"Intermediate data 1 is {type(result)}")
+        log.info(f"Intermediate data 1 is {type(result)}")
 
         result = self.step2.run(result)
-        self.log.info(f"Intermediate data 2 is {type(result)}")
+        log.info(f"Intermediate data 2 is {type(result)}")
 
         result = self.step3.run(result)
-        self.log.info(f"Output data is {type(result)}")
+        log.info(f"Output data is {type(result)}")
 
         return result
 
@@ -406,15 +406,15 @@ class PrepareOutputForceCopyPipeline(Pipeline):
     }
 
     def process(self, input_data):
-        self.log.info(f"Input data is {type(input_data)}")
+        log.info(f"Input data is {type(input_data)}")
 
         result = self.prepare_output(input_data)
-        self.log.info(f"Opened data is {type(result)}")
+        log.info(f"Opened data is {type(result)}")
 
         result = self.step1.run(result)
-        self.log.info(f"Intermediate data is {type(result)}")
+        log.info(f"Intermediate data is {type(result)}")
 
         result = self.step2.run(result)
-        self.log.info(f"Output data is {type(result)}")
+        log.info(f"Output data is {type(result)}")
 
         return result
