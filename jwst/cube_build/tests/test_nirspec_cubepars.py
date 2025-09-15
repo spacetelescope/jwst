@@ -172,12 +172,44 @@ def test_nirspec_cubepars_test1(tmp_cwd, nirspec_cube_pars):
         "debug_spaxel": "0 0 0",
     }
 
-    # By default Prism/Clear will produce a non-linear wavelength plane.
+    # By default Prism/Clear will produce a linear wavelength plane.
 
     pipeline = 3
     input_model = None
     output_name_base = None
     output_type = "band"
+    instrument = "NIRSPEC"
+    list_par1 = all_grating
+    list_par2 = all_filter
+    master_table = None
+    instrument_info = instrument_info
+    this_cube = ifu_cube.IFUCubeData(
+        pipeline,
+        input_model,
+        output_name_base,
+        output_type,
+        instrument,
+        list_par1,
+        list_par2,
+        instrument_info,
+        master_table,
+        **pars_cube,
+    )
+
+    this_cube.num_files = 1  # set in ifu cube
+    # test that the correct values read from the table are filled
+    # in in the this_cube class.
+    this_cube.determine_cube_parameters()
+
+    # we are testing PRISM data. Linear wavelength = True
+    assert this_cube.linear_wavelength is True
+
+    # Add output_type = 'multi' and  Prism/Clear will produce a non-linear wavelength plane.
+
+    pipeline = 3
+    input_model = None
+    output_name_base = None
+    output_type = "multi"
     instrument = "NIRSPEC"
     list_par1 = all_grating
     list_par2 = all_filter

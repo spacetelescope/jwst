@@ -1245,7 +1245,11 @@ class IFUCubeData:
             self.scalerad = np.amin(scalerad)
 
         # if we have NIRSPEC Prism then force wavelength to be non-linear
-        elif self.instrument == "NIRSPEC" and "prism" in self.list_par1:
+        elif (
+            self.instrument == "NIRSPEC"
+            and "prism" in self.list_par1
+            and self.output_type == "multi"
+        ):
             self.linear_wavelength = False
             (
                 table_wavelength,
