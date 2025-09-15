@@ -151,6 +151,7 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
         ("jw01019_20250316t142947_pool", []),  # FGS_FOCUS + FGS_IMAGE
         ("jw01120_20250317t230449_pool", []),  # NIRSPEC IMAGING + NIRSPEC INTERNAL LAMP
         ("jw01122_uniq_lamp_optical_path_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
+        ("jw01250_20250318t113408_pool", []),  # Moving target in both NRC_IMAGE and MIR_IMAGE
         ("jw01290_20230304t140931_withids_pool", ["-i", "o012", "c1018"]),
         ("jw01464_20250318t062856_pool", []),  # WFS&C rules
         ("jw01480_20250319t173819_pool", []),  # NRC_GRISM, NRC_TSIMAGE, NRC_TSGRISM
@@ -173,7 +174,6 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
             ["--DMS", "-i", "o009", "o010", "c1012"],
         ),  # This pool checks background behavior with paired MIRI MRS/Imaging exposures
         ("jw04470_20250317t231014_pool", []),  # NIS_IMAGE science program
-        ("jw93065_20171108T041402_pool", []),
         ("jw93125_20171108T045251_pool", []),
         ("jw93125_20171108T045251-valid-msametfl_pool", []),
         ("jw93135_20171108T041617_pool", []),
