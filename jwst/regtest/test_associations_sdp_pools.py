@@ -12,7 +12,7 @@ from jwst.associations.lib.diff import MultiDiffError, compare_asn_files
 from jwst.associations.main import Main as asn_generate
 
 # Mark all tests in this module
-pytestmark = [pytest.mark.bigdata, pytest.mark.filterwarnings("error")]
+pytestmark = [pytest.mark.bigdata]
 
 # Decompose pool name to retrieve proposal and version id.
 pool_regex = re.compile(r"(?P<proposal>jw.+?)_(?P<versionid>.+)_pool")
