@@ -2,10 +2,12 @@ import numpy as np
 import pytest
 
 from jwst.extract_1d.soss_extract.pastasoss import (
+    _convert_refmodel_poly_to_astropy,
     _extrapolate_to_wavegrid,
     _find_spectral_order_index,
     _get_soss_traces,
     _get_wavelengths,
+    _verify_requested_orders,
     get_soss_traces,
     get_soss_wavemaps,
 )
@@ -17,6 +19,70 @@ from jwst.extract_1d.soss_extract.tests.helpers import (
 )
 
 """Test coverage for the helper functions in pastasoss.py"""
+
+
+def test_verify_requested_orders(log_watcher):
+    refmodel_orders = [1, 2, 3]
+    requested_orders = [1, 2]
+    good_orders = _verify_requested_orders(refmodel_orders, requested_orders)
+    assert good_orders == requested_orders
+
+    requested_orders = [1, 2, 4]
+    watcher = log_watcher(
+        "jwst.extract_1d.soss_extract.pastasoss",
+        message="Some requested orders were not found in reference model",
+    )
+    good_orders = _verify_requested_orders(refmodel_orders, requested_orders)
+    watcher.assert_seen()
+    assert good_orders == [1, 2]
+
+    with pytest.raises(ValueError):
+        requested_orders = [0]
+        _verify_requested_orders(refmodel_orders, requested_orders)
+
+
+@pytest.mark.parametrize("degree", [3, 5])
+def test_convert_refmodel_poly_to_astropy(degree):
+    """Test that the reference model polynomial coefficients are correctly converted to Astropy format."""
+
+    n_coeffs = (degree + 1) * (degree + 2) // 2
+    coeffs = np.arange(n_coeffs)
+    astropy_poly = _convert_refmodel_poly_to_astropy(coeffs)
+
+    # pick some random numbers
+    x = np.linspace(0, 1, 25)
+    offset = np.linspace(-3, 3, 25)
+
+    # this is what used to be in the code for degree 5
+    poly_features = np.array(
+        [
+            x,
+            offset,
+            x**2,
+            x * offset,
+            offset**2,
+            x**3,
+            x**2 * offset,
+            x * offset**2,
+            offset**3,
+            x**4,
+            x**3 * offset,
+            x**2 * offset**2,
+            x * offset**3,
+            offset**4,
+            x**5,
+            x**4 * offset,
+            x**3 * offset**2,
+            x**2 * offset**3,
+            x * offset**4,
+            offset**5,
+        ]
+    )
+
+    poly_features = poly_features[: n_coeffs - 1, :]
+    expected = coeffs[0] + coeffs[1:] @ poly_features
+    astropy_result = astropy_poly(x, offset)
+    assert np.allclose(astropy_result, expected)
 
 
 def test_wavecal_models(refmodel):
@@ -55,7 +121,7 @@ def test_find_spectral_order_index(refmodel):
 
 
 def test_get_soss_traces(refmodel):
-    for order in ["1", "2"]:
+    for order in ["1", "2", "3"]:
         idx = int(order) - 1
         for subarray in ["SUBSTRIP96", "SUBSTRIP256"]:
             order_out, x_new, y_new, wavelengths = _get_soss_traces(
@@ -117,18 +183,23 @@ def test_get_soss_traces_public(subarray, order, pwcpos):
 @pytest.mark.parametrize("pwcpos", [245.79 - 0.24, 245.79, 245.79 + 0.24])  # edges of bounds
 @pytest.mark.parametrize("padsize", [None, 9])
 @pytest.mark.parametrize("subarray", ["SUBSTRIP256", "SUBSTRIP96", "FULL"])
-def test_get_soss_wavemaps_public(subarray, padsize, pwcpos):
+@pytest.mark.parametrize("orders_requested", [[1], [2], [1, 2]])
+def test_get_soss_wavemaps_public(subarray, padsize, pwcpos, orders_requested):
     """Test of public interface to get_soss_wavemaps, which should not require datamodel or refmodel"""
     subarray_shapes = {"SUBSTRIP96": 96, "SUBSTRIP256": 256, "FULL": 2048}
     wavemaps, traces = get_soss_wavemaps(
-        pwcpos, subarray=subarray, padsize=padsize, spectraces=True
+        pwcpos,
+        subarray=subarray,
+        padsize=padsize,
+        spectraces=True,
+        orders_requested=orders_requested,
     )
-
+    n_orders = len(orders_requested)
     if padsize is None:
         padsize = 0
-    expected_shape = (2, subarray_shapes[subarray] + padsize * 2, 2048 + padsize * 2)
+    expected_shape = (n_orders, subarray_shapes[subarray] + padsize * 2, 2048 + padsize * 2)
     assert wavemaps.shape == expected_shape
-    assert traces.shape == (2, 3, 5001)
+    assert traces.shape == (n_orders, 3, 5001)
 
 
 def test_get_soss_traces_bad_pwcpos():

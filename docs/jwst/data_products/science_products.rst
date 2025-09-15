@@ -214,8 +214,9 @@ The :ref:`calwebb_image2 <calwebb_image2>` and :ref:`calwebb_spec2 <calwebb_spec
 pipelines have the capability to perform background subtraction on countrate data.
 In its simplest form, this consists of subtracting background exposures or a
 CRDS background reference image from science images. This operation is performed by
-the :ref:`background <background_subtraction>` step in the stage 2 pipelines. If the pipeline
-parameter ``save_bsub`` is set to ``True``, the result of the background subtraction
+the :ref:`background <background_subtraction>` step in the stage 2 pipelines. If the
+background step's ``save_results`` parameter is set to ``True``,
+the result of the background subtraction
 step will be saved to a file. Because this is a direct image-from-image operation, the
 form of the result is identical to input. If the input is a ``rate`` product, the
 background-subtracted result will be a ``bsub`` product, which has the exact same
@@ -869,8 +870,7 @@ The :ref:`ami_normalize <ami_normalize_step>` step produces an ``aminorm-oi`` pr
 which is also contained in a `~jwst.datamodels.AmiOIModel`. The model conforms to the standard
 defined in `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS",
-and "OI_VIS2" extensions each contain 2D data columns whose second dimension equals
+In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS", "OI_VIS2", and "OI_Q4" extensions each contain 2D data columns whose second dimension equals
 the number of integrations. In the averaged ``ami-oi`` product and normalized ``aminorm-oi``
 products, these columns have a single dimension whose length is independent of the number
 of integrations.
@@ -893,16 +893,19 @@ The overall structure of the OIFITS files (``ami-oi``, ``amimulti-oi``, and
 +-----+--------------+----------+-----------+------------------+
 |  5  |   OI_VIS2    | BINTABLE |    N/A    | 10 col x 21 rows |
 +-----+--------------+----------+-----------+------------------+
-|  6  | OI_WAVELENGTH| BINTABLE |    N/A    |    variable      |
+|  6  |    OI_Q4     | BINTABLE |    N/A    | 16 col x 35 rows |
 +-----+--------------+----------+-----------+------------------+
-|  7  |     ASDF     | BINTABLE |    N/A    |    variable      |
+|  7  | OI_WAVELENGTH| BINTABLE |    N/A    |    variable      |
++-----+--------------+----------+-----------+------------------+
+|  8  |     ASDF     | BINTABLE |    N/A    |    variable      |
 +-----+--------------+----------+-----------+------------------+
 
  - OI_ARRAY: AMI subaperture information
  - OI_TARGET: Target properties
- - OI_T3: Table of closure amplitudes, phases
+ - OI_T3: Table of triple-product amplitudes, closure phases
  - OI_VIS: Table of visibility (fringe) amplitudes, phases
  - OI_VIS2: Table of squared visibility (fringe) amplitudes
+ - OI_Q4: Table of closure amplitudes, four-hole phases
  - OI_WAVELENGTH: Filter information
  - ADSF: The data model meta data.
 

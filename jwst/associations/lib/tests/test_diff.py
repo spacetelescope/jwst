@@ -292,7 +292,6 @@ def test_equivalency():
         disjoint_product_asn,
         badtype_asn,
         badmember_asn,
-        badexptype_asn,
         badcandidate_asn,
     ],
 )
@@ -307,9 +306,26 @@ def test_fails(mismatched, standard=standard_asn):
     standard: Association
         The standard association.
     """
-    with pytest.raises(AssertionError):
-        left_asns = asn_diff.separate_products(mismatched)
-        right_asns = asn_diff.separate_products(standard)
+    left_asns = asn_diff.separate_products(mismatched)
+    right_asns = asn_diff.separate_products(standard)
+    with pytest.raises(AssertionError, match="Products in .* but not .*"):
+        asn_diff.compare_asn_lists(left_asns, right_asns)
+
+
+def test_fails_badexptype(standard=standard_asn):
+    """
+    Test for failure with bad exptype asn
+
+    Parameters
+    ----------
+    standard: Association
+        The standard association.
+    """
+    left_asns = asn_diff.separate_products(badexptype_asn)
+    right_asns = asn_diff.separate_products(standard)
+    with pytest.raises(
+        AssertionError, match="Left member_a_b:background != Right member_a_b:science"
+    ):
         asn_diff.compare_asn_lists(left_asns, right_asns)
 
 

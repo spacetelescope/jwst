@@ -66,19 +66,21 @@ the correct reference files to use for that dataset, and downloads them to a
 local cache directory if they haven't already been downloaded so they're
 available on your filesystem for the pipeline to use.
 
-**The environment variables `crds_context` and `crds_server` must be set before running the pipeline**
+.. note::
+    The environment variables ``crds_context`` and ``crds_server`` must be set
+    before running the pipeline.
 
 
 .. _crds_context:
 
 Reference Files Mappings (CRDS Context)
 ---------------------------------------
+
 One of the main functions of CRDS is to associate a dataset with its best
 reference files - this mapping is referred to as the 'CRDS context' and is
 defined in a ``.pmap`` file, which itself is version-controlled to allow access to
 the reference file mapping at any point in time, and revert to any previous set
 of reference files if desired.
-
 
 The CRDS context is usually set by default to always give the 'best' reference files
 associated with a given pipeline version.
@@ -86,13 +88,14 @@ To use a specific CRDS context other than that automatically associated with a g
 (see https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates),
 the environment variable ``CRDS_CONTEXT`` can be used, e.g.::
 
-    $ export CRDS_CONTEXT='jwst_1293.pmap'
+    export CRDS_CONTEXT='jwst_1293.pmap'
 
 For all information about CRDS, including context lists, see the JWST CRDS
 website: https://jwst-crds.stsci.edu/
 
 CRDS Servers
 ------------
+
 The CRDS server [1]_ can be found at https://jwst-crds.stsci.edu
 
 To run the pipeline inside the STScI network, CRDS must be configured to find the CRDS server

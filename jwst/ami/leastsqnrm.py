@@ -546,7 +546,7 @@ class LinearFit:
     Python implementation and tools by Johannes Sahlmann 2009-2017
     (University of Geneva, European Space Agency, STScI/AURA)
 
-    Attributes
+    Parameters
     ----------
     dependent_variable : ndarray (1xN)
         Dependent_variables of the linear equation system (N equations, M unknown coefficients)
@@ -556,7 +556,7 @@ class LinearFit:
     independent_variable : ndarray (MxN)
         The independent_variables that are multiplied by the unknown coefficients
 
-    Calculated Attributes
+    Attributes
     ----------
     p : ndarray
         Coefficients of the solution

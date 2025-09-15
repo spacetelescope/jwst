@@ -14,8 +14,8 @@ files were retrieved using the ``collect_pipeline_cfgs`` command. The
 configuration files were used to run each of the different pipelines using the
 ``strun`` command. For example::
 
-$ collect_pipeline_cfgs ./
-$ strun calwebb_spec2.cfg an_exposure_file.fits
+    collect_pipeline_cfgs ./
+    strun calwebb_spec2.cfg an_exposure_file.fits
 
 The issue with the above process is that any changes, as determined by INS and
 the Calibration Working Group, to the default operation of the pipeline requires
@@ -34,7 +34,7 @@ old configuration file, but without the suffix ``.cfg``.
 
 Taking the example above, to get the same operation, the single command would become::
 
-$ strun calwebb_spec2 an_exposure_file.fits
+    strun calwebb_spec2 an_exposure_file.fits
 
 The JWST documentation has been updated to account for this change in usage. To
 get familiarized, it is best to start with the :ref:`Introduction<introduction>`

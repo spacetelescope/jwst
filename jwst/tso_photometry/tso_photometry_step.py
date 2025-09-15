@@ -1,11 +1,16 @@
 import logging
 
+import numpy as np
 from stdatamodels.jwst.datamodels import CubeModel, GainModel, TsoPhotModel
 
 from jwst.lib import reffile_utils
 from jwst.lib.catalog_utils import replace_suffix_ext
 from jwst.stpipe import Step
-from jwst.tso_photometry.tso_photometry import tso_aperture_photometry
+from jwst.tso_photometry.tso_photometry import (
+    convert_data_units,
+    tso_aperture_photometry,
+    tso_source_centroid,
+)
 
 __all__ = ["TSOPhotometryStep"]
 
@@ -18,7 +23,11 @@ class TSOPhotometryStep(Step):
     class_alias = "tso_photometry"
 
     spec = """
-        save_catalog = boolean(default=False)  # save exposure-level catalog
+        save_catalog = boolean(default=False)  # Save exposure-level catalog
+        centroid_source = boolean(default=True)  # Centroid source before photometry
+        search_box_width = integer(default=41)  # Box width for initial source search; must be odd.
+        fit_box_width = integer(default=11)  # Box width for centroid fit; must be odd.
+        moving_centroid = boolean(default=False)  # Fit centroid values for each integration
     """  # noqa: E501
 
     reference_file_types = ["tsophot", "gain"]
@@ -81,12 +90,74 @@ class TSOPhotometryStep(Step):
             log.debug(f"radius = {radius}")
             log.debug(f"radius_inner = {radius_inner}")
             log.debug(f"radius_outer = {radius_outer}")
-            log.debug(f"xcenter = {xcenter}")
-            log.debug(f"ycenter = {ycenter}")
+            log.debug(f"initial xcenter = {xcenter}")
+            log.debug(f"initial ycenter = {ycenter}")
+
+            # Convert the data units as needed
+            convert_data_units(model, gain_2d)
+
+            # Centroid the source if desired
+            if self.centroid_source:
+                # Check the box sizes: they must be odd integers
+                boxes = ["search_box_width", "fit_box_width"]
+                for box in boxes:
+                    box_input = getattr(self, box)
+                    if box_input % 2 == 0:
+                        setattr(self, box, box_input - 1)
+                        log.warning(
+                            "Even box widths are not supported."
+                            f" Rounding the {box} down to {box_input - 1}."
+                        )
+
+                centroid_x, centroid_y, psf_width_x, psf_width_y, psf_flux = tso_source_centroid(
+                    model,
+                    xcenter,
+                    ycenter,
+                    search_box_width=self.search_box_width,
+                    fit_box_width=self.fit_box_width,
+                    source_radius=radius_inner,
+                )
+
+                if np.all(np.isnan(centroid_x)) or np.all(np.isnan(centroid_y)):
+                    log.warning("Centroid fit failed. Using initial estimate for source location.")
+                    xc = xcenter
+                    yc = ycenter
+                    log.info(f"Using planned center x,y = {xc:.2f},{yc:.2f}")
+                elif not self.moving_centroid:
+                    xc = np.nanmedian(centroid_x)
+                    yc = np.nanmedian(centroid_y)
+                    log.info(f"Using median centroid x,y = {xc:.2f},{yc:.2f}")
+                else:
+                    xc = centroid_x
+                    yc = centroid_y
+                    log.info(
+                        "Using moving centroid. "
+                        f"Median x,y = {np.nanmedian(xc):.2f},{np.nanmedian(yc):.2f}"
+                    )
+
+            else:
+                xc = xcenter
+                yc = ycenter
+                centroid_x = None
+                centroid_y = None
+                psf_width_x = None
+                psf_width_y = None
+                psf_flux = None
+                log.info(f"Using planned center x,y = {xc:.2f},{yc:.2f}")
 
             # Compute the aperture photometry
             catalog = tso_aperture_photometry(
-                model, xcenter, ycenter, radius, radius_inner, radius_outer, gain_2d
+                model,
+                xc,
+                yc,
+                radius,
+                radius_inner,
+                radius_outer,
+                centroid_x=centroid_x,
+                centroid_y=centroid_y,
+                psf_width_x=psf_width_x,
+                psf_width_y=psf_width_y,
+                psf_flux=psf_flux,
             )
 
             # Save the photometry in an output catalog

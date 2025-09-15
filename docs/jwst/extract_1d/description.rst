@@ -546,6 +546,8 @@ algorithm known as `ATOCA (Algorithm to Treat Order ContAmination, Darveau-Berni
 constructs a linear model of each pixel on the detector and treats the underlying incident spectrum as a free variable
 to simultaneously extract the cross-contaminated spectra. Using this method, the extracted spectra are accurate to
 within 10ppm over the full spectral range when validated against simulations.
+Spectral order 3 is also optionally included in the extraction, but it is spatially well-separated
+from the other two orders; internally, ATOCA treats it as a separate extraction.
 
 The algorithm uses a wavelength solution, a spectral throughput, a spectral resolution, and a spatial throughput for
 both orders to determine the flux contribution from each order falling on a given pixel. Most of these references are

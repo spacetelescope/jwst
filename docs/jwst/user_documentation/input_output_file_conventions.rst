@@ -65,10 +65,9 @@ the ``output_file`` parameter, the ``stpipe`` infrastructure
 automatically uses the input file name as the root of the output file name
 and appends the name of the step as an additional suffix to the input file
 name. If the input file name already has a known suffix, that suffix
-will be replaced. For example:
-::
+will be replaced. For example::
 
-   $ strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_nrca1_uncal.fits
+    strun jwst.dq_init.DQInitStep jw00017001001_01101_00001_nrca1_uncal.fits
 
 produces an output file named
 ``jw00017001001_01101_00001_nrca1_dq_init.fits``.

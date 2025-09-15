@@ -1,0 +1,1 @@
+Populate AmiOiModels with quad observables in new q4 attribute (OI_Q4 FITS extension). Values and associated errors are now written out to ami-oi.fits and amimulti-oi.fits files by AmiAnalyze, and they are calibrated in AmiNormalize and written to the final aminorm-oi.fits products.

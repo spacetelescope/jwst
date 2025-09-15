@@ -113,7 +113,7 @@ class RawOifits:
         Parameters
         ----------
         cov_mat : array
-            The matrix to be rotated
+            The matrix to be rotated. 2x2
         theta : float
             Angle by which to rotate the matrix (radians)
 
@@ -358,17 +358,9 @@ class RawOifits:
         wl = instrument_data.lam_c
         e_wl = instrument_data.lam_c * instrument_data.lam_w
 
-        # Index 0 and 1 reversed to get the good u-v coverage (same fft)
-        ucoord = self.bls[:, 1]
-        vcoord = self.bls[:, 0]
-
-        v1coord = self.tuv[:, 0, 0]
-        u1coord = self.tuv[:, 0, 1]
-        v2coord = self.tuv[:, 1, 0]
-        u2coord = self.tuv[:, 1, 1]
-
         flag_vis = [False] * self.n_baselines
         flag_t3 = [False] * self.n_closure_phases
+        flag_q4 = [False] * self.n_closure_amplitudes
 
         # Average observables (or don't), and get uncertainties
         # Unwrap phases
@@ -391,7 +383,7 @@ class RawOifits:
             self.t3amp = self.t3_amplitudes.T
             self.e_t3amp = np.zeros(self.t3amp.shape)
             self.q4phi = self.q4_phases.T
-            self.e_q4phi = np.zeros(self.q4_phases.shape)
+            self.e_q4phi = np.zeros(self.q4phi.shape)
             self.camp = self.closure_amplitudes.T
             self.e_camp = np.zeros(self.camp.shape)
             self.pist = self.pistons.T
@@ -524,9 +516,10 @@ class RawOifits:
         oim.vis["VISAMPERR"] = self.e_visamp
         oim.vis["VISPHI"] = self.visphi
         oim.vis["VISPHIERR"] = self.e_visphi
-        oim.vis["UCOORD"] = ucoord
-        oim.vis["VCOORD"] = vcoord
-        oim.vis["STA_INDEX"] = self._format_staindex_v2(self.bholes)
+        # for all u-v coords: index 0 and 1 reversed to get the good coverage (same fft)
+        oim.vis["UCOORD"] = self.bls[:, 1]
+        oim.vis["VCOORD"] = self.bls[:, 0]
+        oim.vis["STA_INDEX"] = self._format_staindex(self.bholes)
         oim.vis["FLAG"] = flag_vis
 
         # oi_vis2 extension data
@@ -536,25 +529,44 @@ class RawOifits:
         oim.vis2["INT_TIME"] = instrument_data.itime
         oim.vis2["VIS2DATA"] = self.vis2
         oim.vis2["VIS2ERR"] = self.e_vis2
-        oim.vis2["UCOORD"] = ucoord
-        oim.vis2["VCOORD"] = vcoord
-        oim.vis2["STA_INDEX"] = self._format_staindex_v2(self.bholes)
+        oim.vis2["UCOORD"] = self.bls[:, 1]
+        oim.vis2["VCOORD"] = self.bls[:, 0]
+        oim.vis2["STA_INDEX"] = self._format_staindex(self.bholes)
         oim.vis2["FLAG"] = flag_vis
 
         # oi_t3 extension data
         oim.t3["TARGET_ID"] = 1
         oim.t3["TIME"] = 0
         oim.t3["MJD"] = observation_date.mjd
+        oim.t3["INT_TIME"] = instrument_data.itime
         oim.t3["T3AMP"] = self.t3amp
         oim.t3["T3AMPERR"] = self.e_t3amp
         oim.t3["T3PHI"] = self.closure_phases
         oim.t3["T3PHIERR"] = self.e_cp
-        oim.t3["U1COORD"] = u1coord
-        oim.t3["V1COORD"] = v1coord
-        oim.t3["U2COORD"] = u2coord
-        oim.t3["V2COORD"] = v2coord
-        oim.t3["STA_INDEX"] = self._format_staindex_t3(self.tholes)
+        oim.t3["U1COORD"] = self.tuv[:, 0, 1]
+        oim.t3["V1COORD"] = self.tuv[:, 0, 0]
+        oim.t3["U2COORD"] = self.tuv[:, 1, 1]
+        oim.t3["V2COORD"] = self.tuv[:, 1, 0]
+        oim.t3["STA_INDEX"] = self._format_staindex(self.tholes)
         oim.t3["FLAG"] = flag_t3
+
+        # oi_q4 extension data
+        oim.q4["TARGET_ID"] = 1
+        oim.q4["TIME"] = 0
+        oim.q4["MJD"] = observation_date.mjd
+        oim.q4["INT_TIME"] = instrument_data.itime
+        oim.q4["Q4AMP"] = self.camp
+        oim.q4["Q4AMPERR"] = self.e_camp
+        oim.q4["Q4PHI"] = self.q4phi
+        oim.q4["Q4PHIERR"] = self.e_q4phi
+        oim.q4["U1COORD"] = self.quads[:, 0, 1]
+        oim.q4["V1COORD"] = self.quads[:, 0, 0]
+        oim.q4["U2COORD"] = self.quads[:, 1, 1]
+        oim.q4["V2COORD"] = self.quads[:, 1, 0]
+        oim.q4["U3COORD"] = self.quads[:, 2, 1]
+        oim.q4["V3COORD"] = self.quads[:, 2, 0]
+        oim.q4["STA_INDEX"] = self._format_staindex(self.qholes)
+        oim.q4["FLAG"] = flag_q4
 
         # oi_wavelength extension data
         oim.wavelength["EFF_WAVE"] = wl
@@ -639,6 +651,26 @@ class RawOifits:
                     ("FLAG", "i1"),
                 ]
             )
+            q4_dtype = np.dtype(
+                [
+                    ("TARGET_ID", "<i2"),
+                    ("TIME", "<f8"),
+                    ("MJD", "<f8"),
+                    ("INT_TIME", "<f8"),
+                    ("Q4AMP", "<f8", (self.nslices,)),
+                    ("Q4AMPERR", "<f8", (self.nslices,)),
+                    ("Q4PHI", "<f8", (self.nslices,)),
+                    ("Q4PHIERR", "<f8", (self.nslices,)),
+                    ("U1COORD", "<f8"),
+                    ("V1COORD", "<f8"),
+                    ("U2COORD", "<f8"),
+                    ("V2COORD", "<f8"),
+                    ("U3COORD", "<f8"),
+                    ("V3COORD", "<f8"),
+                    ("STA_INDEX", "<i2", (4,)),
+                    ("FLAG", "i1"),
+                ]
+            )
         else:
             target_dtype = oimodel.target.dtype
             wavelength_dtype = oimodel.wavelength.dtype
@@ -659,11 +691,13 @@ class RawOifits:
             vis_dtype = oimodel.vis.dtype
             vis2_dtype = oimodel.vis2.dtype
             t3_dtype = oimodel.t3.dtype
+            q4_dtype = oimodel.q4.dtype
         oimodel.array = np.zeros(self.n_holes, dtype=array_dtype)
         oimodel.target = np.zeros(1, dtype=target_dtype)
         oimodel.vis = np.zeros(self.n_baselines, dtype=vis_dtype)
         oimodel.vis2 = np.zeros(self.n_baselines, dtype=vis2_dtype)
         oimodel.t3 = np.zeros(self.n_closure_phases, dtype=t3_dtype)
+        oimodel.q4 = np.zeros(self.n_closure_amplitudes, dtype=q4_dtype)
         oimodel.wavelength = np.zeros(1, dtype=wavelength_dtype)
 
     def _maketriples_all(self):
@@ -741,55 +775,27 @@ class RawOifits:
         qarray = np.array(qlist).astype(int)
         return qarray, np.array(uvwlist)
 
-    def _format_staindex_t3(self, tab):
+    def _format_staindex(self, tab):
         """
-        Convert sta_index to save oifits T3 in the appropriate format.
+        Convert sta_index for oifits formats (T3, Q4, V2, etc.).
 
         Parameters
         ----------
-        tab : array
-            Table of indices
+        tab : np.ndarray
+            Array of indices (rows of 2, 3, 4, ... elements)
 
         Returns
         -------
-        sta_index : list of int triples
-            Hole triples indices
+        sta_index : list of int arrays
+            List of arrays of hole baseline indices (of length 2, 3, 4, etc.)
         """
         sta_index = []
-        for x in tab:
-            ap1 = int(x[0])
-            ap2 = int(x[1])
-            ap3 = int(x[2])
-            if np.min(tab) == 0:
-                line = np.array([ap1, ap2, ap3]) + 1
-            else:
-                line = np.array([ap1, ap2, ap3])
+        offset = 1 if np.min(tab) == 0 else 0  # 1-indexed
+
+        for row in tab:
+            line = np.array(row, dtype=int) + offset
             sta_index.append(line)
-        return sta_index
 
-    def _format_staindex_v2(self, tab):
-        """
-        Convert sta_index to save oifits V2 in the appropriate format.
-
-        Parameters
-        ----------
-        tab : array
-            Table of indices
-
-        Returns
-        -------
-        sta_index : list
-            Hole baseline indices
-        """
-        sta_index = []
-        for x in tab:
-            ap1 = int(x[0])
-            ap2 = int(x[1])
-            if np.min(tab) == 0:
-                line = np.array([ap1, ap2]) + 1  # RAC 2/2021
-            else:
-                line = np.array([ap1, ap2])
-            sta_index.append(line)
         return sta_index
 
 
@@ -799,7 +805,10 @@ class CalibOifits:
 
     Calibrate (normalize) an AMI observation by subtracting closure phases
     of a reference star from those of a target and dividing visibility amplitudes
-    of the target by those of the reference star.
+    of the target by those of the reference star. Only closure phases, visibility
+    amplitudes, squared visibilites, and closure amplitudes are calibrated currently.
+    For other observables (t3amp, q4phi), calibrated output file will contain a copy of target's
+    observables.
     """
 
     def __init__(self, targoimodel, caloimodel):
@@ -849,6 +858,7 @@ class CalibOifits:
         cp_out = self.targoimodel.t3["T3PHI"] - self.caloimodel.t3["T3PHI"]
         sqv_out = self.targoimodel.vis2["VIS2DATA"] / self.caloimodel.vis2["VIS2DATA"]
         va_out = self.targoimodel.vis["VISAMP"] / self.caloimodel.vis["VISAMP"]
+        ca_out = np.log(self.targoimodel.q4["Q4AMP"] / self.caloimodel.q4["Q4AMP"])  # log of ratio
         # using standard propagation of error for multiplication/division
         # which assumes uncorrelated Gaussian errors (questionable)
         cperr_t = self.targoimodel.t3["T3PHIERR"]
@@ -857,6 +867,9 @@ class CalibOifits:
         sqverr_t = self.caloimodel.vis2["VIS2ERR"]
         vaerr_t = self.targoimodel.vis["VISAMPERR"]
         vaerr_c = self.caloimodel.vis["VISAMPERR"]
+        caerr_t = self.targoimodel.q4["Q4AMPERR"]
+        caerr_c = self.caloimodel.q4["Q4AMPERR"]
+
         cperr_out = np.sqrt(cperr_t**2.0 + cperr_c**2.0)
         sqverr_out = sqv_out * np.sqrt(
             (sqverr_t / self.targoimodel.vis2["VIS2DATA"]) ** 2.0
@@ -865,6 +878,11 @@ class CalibOifits:
         vaerr_out = va_out * np.sqrt(
             (vaerr_t / self.targoimodel.vis["VISAMP"]) ** 2.0
             + (vaerr_c / self.caloimodel.vis["VISAMP"]) ** 2.0
+        )
+
+        caerr_out = np.sqrt(
+            (caerr_t / self.targoimodel.q4["Q4AMP"]) ** 2
+            + (caerr_c / self.caloimodel.q4["Q4AMP"]) ** 2
         )
 
         pistons_t = self.targoimodel.array["PISTONS"]
@@ -896,6 +914,8 @@ class CalibOifits:
         self.calib_oimodel.vis2["VIS2ERR"] = sqverr_out
         self.calib_oimodel.vis["VISAMP"] = va_out
         self.calib_oimodel.vis["VISAMPERR"] = vaerr_out
+        self.calib_oimodel.q4["Q4AMP"] = ca_out
+        self.calib_oimodel.q4["Q4AMPERR"] = caerr_out
 
         # add calibrated header keywords
         calname = self.caloimodel.meta.target.proposer_name  # name of calibrator star

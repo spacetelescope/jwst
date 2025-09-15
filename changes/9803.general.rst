@@ -1,0 +1,1 @@
+Remove the direct dependency on opencv as this is unused within jwst code and only indirectly used via stcal (which has opencv as a dependency).

@@ -1936,7 +1936,7 @@ def create_extraction(
     if not progress_msg_printed:
         log.info(f"All {input_model.data.shape[0]} integrations done")
 
-    if len(spec_list) > 1:
+    if isinstance(output_model, datamodels.TSOMultiSpecModel):
         # For multi-int data, assemble a single TSOSpecModel from the list of spectra
         tso_spec = make_tso_specmodel(spec_list, segment=input_model.meta.exposure.segment_number)
 
@@ -1987,8 +1987,7 @@ def _make_output_model(data_model, meta_source):
         If the input data is multi-integration, a TSOMultiSpecModel is
         returned.  Otherwise, a MultiSpecModel is returned.
     """
-    multi_int = (data_model.data.ndim == 3) and (data_model.data.shape[0] > 1)
-    if multi_int:
+    if data_model.data.ndim == 3:
         output_model = datamodels.TSOMultiSpecModel()
     else:
         output_model = datamodels.MultiSpecModel()

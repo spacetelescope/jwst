@@ -16,13 +16,11 @@ of the file and can be inspected by opening the file as a
 
 The ``cal_logs`` attribute contains log messages as lists of strings
 organized by step or pipeline name. For example to see log messages from
-:ref:`calwebb_detector1`:
+:ref:`calwebb_detector1`::
 
-::
-
-        import stdatamodels.jwst.datamodels as dm
-        model = dm.open("jw00001001001_01101_00001_mirimage_cal.fits")
-        print(model.cal_logs.calwebb_detector1)
+    import stdatamodels.jwst.datamodels as dm
+    model = dm.open("jw00001001001_01101_00001_mirimage_cal.fits")
+    print(model.cal_logs.calwebb_detector1)
 
 Files processed by a pipeline will contain all logs messages for that
 run under the pipeline name (and not contain ``cal_logs`` for individual
@@ -49,9 +47,7 @@ using the ``logcfg`` keyword to a .call() execution of either a Step or Pipeline
 instance.
 
 If this file does not exist, the default logging mechanism is STDOUT,
-with a level of INFO. An example of the contents of the stpipe-log.cfg file is:
-
-::
+with a level of INFO. An example of the contents of the stpipe-log.cfg file is::
 
     [*]
     handler = file:pipeline.log
@@ -61,20 +57,18 @@ If there's no ``stpipe-log.cfg`` file in the working directory, which specifies
 how to handle process log information, the default is to display log messages
 to stdout.
 
-For example:
-::
+For example::
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
-        --logcfg=pipeline-log.cfg
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --logcfg=pipeline-log.cfg
 
-Or in an interactive python environment:
-::
+Or in an interactive python environment::
 
-    result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits",
-                                    logcfg="pipeline-log.cfg")
+    result = Detector1Pipeline.call(
+        "jw00017001001_01101_00001_nrca1_uncal.fits",
+        logcfg="pipeline-log.cfg"
+    )
 
-and the file ``pipeline-log.cfg`` contains:
-::
+and the file ``pipeline-log.cfg`` contains::
 
     [*]
     handler = file:pipeline.log
