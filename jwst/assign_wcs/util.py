@@ -144,7 +144,12 @@ def subarray_transform(input_model):
 
 def substripe_subarray_transform(input_model, regions_model, regions_label):
     """
-    TBD.
+    Return an offset model for substripe data.
+
+    The offsets correspond to the stripe assigned to the input regions_label
+    value provided. Due to the packing of stripes into a condensed,
+    subarray-like shape, the stripe x and y start values must be calculated
+    rather than taken from subarray metadata.
 
     Parameters
     ----------
@@ -183,7 +188,7 @@ def substripe_subarray_transform(input_model, regions_model, regions_label):
         # the case of a full frame observation
         return None
     else:
-        log.info(f"Substripe subarray shifts: x:{xstart} y:{ystart}")
+        log.info(f"Substripe subarray shifts: x: {xstart} y: {ystart}")
         subarray2full = tr_xstart & tr_ystart
         return subarray2full
 
