@@ -239,7 +239,7 @@ def test_call_cube_build_nirspec_multi(tmp_cwd, nirspec_data, tmp_path, as_filen
     step.channel = "1"
     step.coord_system = "internal_cal"
     step.save_results = True
-    step.output_type = "multi"
+    step.output_type = "band"
     result = step.run(step_input)
 
     assert isinstance(result, ModelContainer)
