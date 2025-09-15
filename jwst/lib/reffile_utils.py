@@ -412,7 +412,7 @@ def stripe_read(sci_model, ref_model, attribs):
             faststop = faststart + fastsize_sci
             ref_array = ref_array[..., faststart:faststop, :]
 
-        tmp = generate_stripe_array(
+        sub_model[attrib] = generate_stripe_array(
             ref_array,
             xsize_sci,
             ysize_sci,
@@ -428,11 +428,7 @@ def stripe_read(sci_model, ref_model, attribs):
             slowaxis,
             ngroups,
         )
-        # TODO: breakpoint()
-        # Current bug/issue - need to broadcast multistripe output to match science nints.
-        # Current behavior only builds ref array for one int * n_stripes - broadcast n_stripe
-        # array to nints * n_stripes shape?
-        sub_model[attrib] = tmp
+
     return sub_model
 
 
