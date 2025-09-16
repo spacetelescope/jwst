@@ -2,7 +2,7 @@ WAVELENGTHRANGE Reference File
 ------------------------------
 
 :REFTYPE: WAVELENGTHRANGE
-:Data model: `~jwst.datamodels.WavelengthrangeModel`
+:Data model: `~stdatamodels.jwst.datamodels.WavelengthrangeModel`
 
 The WAVELENGTHRANGE reference file contains information on the minimum and
 maximum wavelengths of various spectroscopic modes, which can be
@@ -34,7 +34,7 @@ These keywords are used as CRDS selectors
 Reference File Format
 +++++++++++++++++++++
 WAVELENGTHRANGE reference files are in ASDF format, with the format and contents
-specified by the `~jwst.datamodels.WavelengthrangeModel` data model schema.
+specified by the `~stdatamodels.jwst.datamodels.WavelengthrangeModel` data model schema.
 The exact content varies a bit depending on instrument mode, as explained in the
 following sections.
 
@@ -68,4 +68,3 @@ and filters that are valid with the file.
 :wavelengthrange: A list containing the list of [order, filter, wavelength min, wavelength max]
 :waverange_selector: The list of FILTER names available
 :extract_orders: A list containing the list of orders to extract for each filter
-

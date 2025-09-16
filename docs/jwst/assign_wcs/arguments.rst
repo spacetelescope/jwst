@@ -36,17 +36,17 @@ the behavior of the processing.
   the image frame, 0.0 is the center of the slit, and 0.5 is the nominal *bottom* edge
   of the slit open area in the image frame.
 
-  Set the `slit_y_low` value to a larger negative value to include more pixels
+  Set the ``slit_y_low`` value to a larger negative value to include more pixels
   at the *top* of a slit bounding box; a smaller negative value to to include fewer
   pixels.
 
-  Set the `slit_y_high` value to a larger positive value to include more pixels
+  Set the ``slit_y_high`` value to a larger positive value to include more pixels
   at the *bottom* of a slit bounding box; a smaller positive value to to include fewer
   pixels.
 
   For MSA slits in NIRSpec MOS mode, the slit units are relative to a single open shutter
   height, not a full "slitlet" composed of multiple shutters.  For this mode,
-  the `slit_y_low` and `slit_y_high` values determine the padding of the slitlet edges relative
+  the ``slit_y_low`` and ``slit_y_high`` values determine the padding of the slitlet edges relative
   to the centers of the edge shutters. An additional margin of half a shutter is also
   automatically added to the slit boundaries specified by these parameters, corresponding
   to a couple extra detector pixels at the top and bottom of each slitlet.

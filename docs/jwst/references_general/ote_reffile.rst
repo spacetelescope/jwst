@@ -1,12 +1,12 @@
 :orphan:
 
 .. _ote_reffile:
-  
+
 OTE Reference File (NIRSpec only)
 ---------------------------------
 
 :REFTYPE: OTE
-:Data model: `~jwst.datamodels.OTEModel`
+:Data model: `~stdatamodels.jwst.datamodels.OTEModel`
 
 Reference Selection Keywords for OTE
 ++++++++++++++++++++++++++++++++++++

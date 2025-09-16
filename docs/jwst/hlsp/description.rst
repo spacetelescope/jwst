@@ -1,7 +1,7 @@
 Description
 -----------
 
-:Class: `jwst.coron.HlspStep`
+:Class: `jwst.coron.hlsp_step.HlspStep`
 :Alias: hlsp
 
 The ``hlsp`` step is one of the coronagraphic-specific steps in the ``coron``
@@ -32,7 +32,7 @@ Inputs
 
 2D image
 ^^^^^^^^
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _psfsub
 
 The input is the KLIP-processed (PSF-subtracted) image to be analyzed.
@@ -42,14 +42,14 @@ Outputs
 
 2D SNR image
 ^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _snr
 
 The computed SNR image.
 
 Contrast table
 ^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.ContrastModel`
+:Data model: `~stdatamodels.jwst.datamodels.ContrastModel`
 :File suffix: _contrast
 
 The table of contrast data, containing columns of radii (in pixels) and 1-sigma noise.

@@ -102,16 +102,16 @@ def location_from_wcs(input_model, slit, make_trace=True):
 
     Parameters
     ----------
-    input_model : DataModel
+    input_model : `~stdatamodels.DataModel`
         The input science model containing metadata information.
-    slit : DataModel or None
+    slit : `~stdatamodels.DataModel` or None
         One slit from a MultiSlitModel (or similar), or None.
-        The WCS and target coordinates will be retrieved from `slit`
-        unless `slit` is None. In that case, they will be retrieved
-        from `input_model`.
+        The WCS and target coordinates will be retrieved from ``slit``
+        unless ``slit`` is None. In that case, they will be retrieved
+        from ``input_model``.
     make_trace : bool, optional
         If True, the source position will be calculated for each
-        dispersion element and returned in `trace`.  If False,
+        dispersion element and returned in ``trace``.  If False,
         None is returned.
 
     Returns
@@ -122,9 +122,9 @@ def location_from_wcs(input_model, slit, make_trace=True):
         bounding box.  This is the point at which to determine the
         nominal extraction location, in case it varies along the
         spectrum.  The offset will then be the difference between
-        `location` (below) and the nominal location.
+        ``location`` (below) and the nominal location.
     middle_wl : float or None
-        The wavelength at pixel `middle`.
+        The wavelength at pixel ``middle``.
     location : float or None
         Pixel coordinate in the cross-dispersion direction within the
         spectral image that is at the planned target location.
@@ -133,7 +133,7 @@ def location_from_wcs(input_model, slit, make_trace=True):
         An array of source positions, one per dispersion element, corresponding
         to the location at each point in the wavelength array. If the
         input data is resampled, the trace corresponds directly to the
-        location. If the trace could not be generated, or `make_trace` is
+        location. If the trace could not be generated, or ``make_trace`` is
         False, None is returned.
     """
     if slit is not None:

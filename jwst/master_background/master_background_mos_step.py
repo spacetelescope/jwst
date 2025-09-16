@@ -77,21 +77,21 @@ class MasterBackgroundMosStep(Pipeline):
                 The master background information from a previous invocation of the step.
                 Keys are:
 
-                - "masterbkg_1d": `~jwst.datamodels.CombinedSpecModel`
+                - "masterbkg_1d": `~stdatamodels.jwst.datamodels.CombinedSpecModel`
                     The 1D version of the master background.
-                - "masterbkg_2d": `~jwst.datamodels.MultiSlitModel`
+                - "masterbkg_2d": `~stdatamodels.jwst.datamodels.MultiSlitModel`
                     The 2D slit-based version of the master background.
             use_correction_pars : bool
                 Use the corrections stored in `correction_pars`.
 
         Parameters
         ----------
-        data : `~jwst.datamodels.MultiSlitModel`
+        data : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The data to operate on.
 
         Returns
         -------
-        result : `~jwst.datamodels.MultiSlitModel`
+        result : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The background corrected data.
 
         Notes
@@ -214,7 +214,7 @@ class MasterBackgroundMosStep(Pipeline):
 
         Parameters
         ----------
-        data : `~jwst.datamodels.MultiSlitModel`
+        data : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The data to operate on.
 
         Returns
@@ -239,9 +239,9 @@ class MasterBackgroundMosStep(Pipeline):
 
         Parameters
         ----------
-        data : `~jwst.datamodels.MultiSlitModel`
+        data : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The data to operate on.
-        user_background : None, str, or `~jwst.datamodels.CombinedSpecModel`
+        user_background : None, str, or `~stdatamodels.jwst.datamodels.CombinedSpecModel`
             Optional user-supplied master background 1D spectrum, path to file
             or opened datamodel
         sigma_clip : None or float
@@ -253,13 +253,13 @@ class MasterBackgroundMosStep(Pipeline):
 
         Returns
         -------
-        masterbkg_1d : `~jwst.datamodels.CombinedSpecModel`
+        masterbkg_1d : `~stdatamodels.jwst.datamodels.CombinedSpecModel`
             The master background in 1d multislit format.
             None is returned when a master background could not be determined.
-        masterbkg_2d : `~jwst.datamodels.MultiSlitModel`
+        masterbkg_2d : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The master background in 2d, multislit format.
             None is returned when a master background could not be determined.
-        bkg_x1d_spectra : `~jwst.datamodels.MultiSlitModel`
+        bkg_x1d_spectra : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The 1D extracted background spectra used to determine the master background.
             Returns None when a user_background is provided.
         """

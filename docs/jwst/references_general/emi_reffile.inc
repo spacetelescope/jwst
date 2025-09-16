@@ -4,7 +4,7 @@ EMICORR Reference File
 ----------------------
 
 :REFTYPE: EMICORR
-:Data model: `~jwst.datamodels.EmiModel`
+:Data model: `~stdatamodels.jwst.datamodels.EmiModel`
 
 The EMICORR reference file contains data necessary for removing
 noise from contaminating EMI frequencies in MIRI ramp data.

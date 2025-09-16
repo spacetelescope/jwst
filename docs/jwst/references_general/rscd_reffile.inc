@@ -4,11 +4,11 @@ RSCD Reference File
 -------------------
 
 :REFTYPE: RSCD
-:Data model: `~jwst.datamodels.RSCDModel`
+:Data model: `~stdatamodels.jwst.datamodels.RSCDModel`
 
 The RSCD reference file contains the number of groups to flag as 'DO_NOT_USE' based on
 readout mode and subarray size. Integrations two and higher are flagged; the first integration
-groups values are not flagged. 
+groups values are not flagged.
 
 .. include:: ../references_general/rscd_selection.inc
 
@@ -46,5 +46,4 @@ group_skip   int         number of initial groups in an integration to flag
 The entries in the first two columns of the table are used as selection criteria, matching
 the exposure properties of the data. The last column contains the
 number of initial groups in an integration to flag as 'DO_NOT_USE' for integrations 2 and higher.
-These initial groups are affected by the RSCD effect.  The groups in the first integration are not flagged. 
-
+These initial groups are affected by the RSCD effect.  The groups in the first integration are not flagged.

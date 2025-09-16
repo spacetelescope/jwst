@@ -62,8 +62,8 @@ class ResampleImage(Resample):
 
         Parameters
         ----------
-        input_models : ModelLibrary
-            A `ModelLibrary`-based object allowing iterating over
+        input_models : `~jwst.datamodels.library.ModelLibrary`
+            A `~jwst.datamodels.library.ModelLibrary`-based object allowing iterating over
             all contained models of interest.
 
         pixfrac : float, optional
@@ -133,9 +133,9 @@ class ResampleImage(Resample):
 
             Finally, instead of integers, ``good_bits`` can be a string of
             comma-separated mnemonics. For example, for JWST, all the following
-            specifications are equivalent:
+            specifications are equivalent::
 
-            `"12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"`
+                "12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"
 
             In order to "translate" mnemonic code to integer bit flags,
             ``Resample.dq_flag_name_map`` attribute must be set to either
@@ -156,7 +156,7 @@ class ResampleImage(Resample):
             pixels will be assigned zero weight and thus these pixels
             will not contribute to the output resampled data array.
 
-            Set `good_bits` to `None` to turn off the use of model's DQ
+            Set ``good_bits`` to `None` to turn off the use of model's DQ
             array.
 
             For more details, see documentation for
@@ -372,12 +372,12 @@ class ResampleImage(Resample):
 
         Parameters
         ----------
-        ref_input_model : `~jwst.datamodels.JwstDataModel`, optional
+        ref_input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`, optional
             The reference input model from which to copy meta data.
 
         Returns
         -------
-        ImageModel
+        `~stdatamodels.jwst.datamodels.ImageModel`
             A new blank model with updated meta data.
         """
         output_model = datamodels.ImageModel(None)  # tuple(self.output_wcs.array_shape))
@@ -475,11 +475,12 @@ class ResampleImage(Resample):
 
     def reset_arrays(self, n_input_models=None):
         """
-        Initialize/reset between finalize() and add_model() calls.
+        Initialize/reset between ``finalize()`` and ``add_model()`` calls.
 
-        Resets or re-initializes `Drizzle` objects, `ModelBlender`, output model
+        Resets or re-initializes `~drizzle.resample.Drizzle` objects,
+        `~jwst.model_blender.blender.ModelBlender`, output model
         and arrays, and time counters. Output WCS and shape are not modified
-        from `Resample` object initialization. This method needs to be called
+        from ``Resample`` object initialization. This method needs to be called
         before calling :py:meth:`add_model` for the first time after
         :py:meth:`finalize` was previously called.
 
@@ -569,7 +570,7 @@ class ResampleImage(Resample):
         """
         Resample many inputs to many outputs where outputs have a common frame.
 
-        Coadd only different detectors of the same exposure, i.e. map NRCA5 and
+        Coadd only different detectors of the same exposure, i.e., map NRCA5 and
         NRCB5 onto the same output image, as they image different areas of the
         sky.
 
@@ -578,15 +579,17 @@ class ResampleImage(Resample):
         Parameters
         ----------
         in_memory : bool, optional
-            Indicates whether to return a `ModelLibrary` with resampled models
+            Indicates whether to return a
+            `~jwst.datamodels.library.ModelLibrary` with resampled models
             loaded in memory or whether to serialize resampled models to
-            files on disk and return a `ModelLibrary` with only the associacion
-            info. See https://stpipe.readthedocs.io/en/latest/model_library.html#on-disk-mode
+            files on disk and return a `~jwst.datamodels.library.ModelLibrary`
+            with only the association
+            info. See :ref:`stpipe:library_on_disk`
             for more details.
 
         Returns
         -------
-        ModelLibrary
+        `~jwst.datamodels.library.ModelLibrary`
             A library of resampled models.
         """
         output_models = []
@@ -623,7 +626,7 @@ class ResampleImage(Resample):
 
         Returns
         -------
-        ImageModel
+        `~stdatamodels.jwst.datamodels.ImageModel`
             The resampled and coadded image.
         """
         log.info("Resampling science and variance data")
@@ -646,7 +649,7 @@ class ResampleImage(Resample):
 
         Parameters
         ----------
-        model : ImageModel
+        model : `~stdatamodels.jwst.datamodels.ImageModel`
             The resampled image
         """
         # Delete any SIP-related keywords first

@@ -35,14 +35,16 @@ class MasterBackgroundStep(Step):
 
         Parameters
         ----------
-        input_data : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`, \
+        input_data : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                     `~stdatamodels.jwst.datamodels.IFUImageModel`, \
                      `~jwst.datamodels.container.ModelContainer`, str
             Input target datamodel(s) or association file to which master background
             subtraction is to be applied.
 
         Returns
         -------
-        result : `~jwst.datamodels.ImageModel`,  `~jwst.datamodels.IFUImageModel`, \
+        result : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                 `~stdatamodels.jwst.datamodels.IFUImageModel`, \
                  `~jwst.datamodels.container.ModelContainer`
             The background-subtracted science datamodel(s)
         """
@@ -327,16 +329,18 @@ def subtract_2d_background(source, background):
 
     Parameters
     ----------
-    source : `~jwst.datamodels.JwstDataModel` or `~jwst.datamodels.container.ModelContainer`
+    source : `~stdatamodels.jwst.datamodels.JwstDataModel` or \
+             `~jwst.datamodels.container.ModelContainer`
         The input science data.
-    background : `~jwst.datamodels.JwstDataModel`
+    background : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The input background data.  Must be the same datamodel type as `source`.
-        For a `~jwst.datamodels.container.ModelContainer`, the source and background
+        For a `~jwst.datamodels.container.ModelContainer`,
+        the source and background
         models in the input containers must match one-to-one.
 
     Returns
     -------
-    `~jwst.datamodels.JwstDataModel`
+    `~stdatamodels.jwst.datamodels.JwstDataModel`
         Background subtracted from source.
     """
 

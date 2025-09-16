@@ -4,7 +4,7 @@ LINEARITY Reference File
 -------------------------
 
 :REFTYPE: LINEARITY
-:Data model: `~jwst.datamodels.LinearityModel`
+:Data model: `~stdatamodels.jwst.datamodels.LinearityModel`
 
 The LINEARITY reference file contains pixel-by-pixel polynomial correction
 coefficients.

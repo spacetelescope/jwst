@@ -21,14 +21,14 @@ class AmiNormalizeStep(Step):
 
         Parameters
         ----------
-        target : str or `~jwst.datamodels.JwstDataModel`
+        target : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
             Target input
-        reference : str or `~jwst.datamodels.JwstDataModel`
+        reference : str or `~stdatamodels.jwst.datamodels.JwstDataModel`
             Reference input
 
         Returns
         -------
-        result : `~jwst.datamodels.AmiOIModel`
+        result : `~stdatamodels.jwst.datamodels.AmiOIModel`
             AMI data model that's been normalized
         """
         # Open the target and reference input models

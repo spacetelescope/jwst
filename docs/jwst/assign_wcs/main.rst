@@ -74,7 +74,7 @@ oriented more nearly along the horizontal (DISPAXIS = 1) or vertical
 Using the WCS interactively
 ---------------------------
 
-Once a FITS file is opened as a `DataModel` the WCS can be accessed as an attribute
+Once a FITS file is opened as a `~stdatamodels.DataModel` the WCS can be accessed as an attribute
 of the meta object. Calling it as a function with detector positions as inputs returns the
 corresponding world coordinates. Using MIRI LRS fixed slit as an example:
 

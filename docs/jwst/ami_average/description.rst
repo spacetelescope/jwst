@@ -1,14 +1,14 @@
 Description
 -----------
 
-:Class: `jwst.ami.AmiAverageStep`
+:Class: `jwst.ami.ami_average_step.AmiAverageStep`
 :Alias: ami_average
-	
-.. Attention:: 
+
+.. Attention::
 	The ``ami_average`` step has been removed from the default ami3 pipeline,
 	and is deprecated as of build 1.18.1.
-	It does not use the OIFITS-format (`~jwst.datamodels.AmiOIModel`) input that the current 
-	``ami_analyze`` step produces. It uses the deprecated `~jwst.datamodels.AmiLgModel`
+	It does not use the OIFITS-format (`~stdatamodels.jwst.datamodels.AmiOIModel`) input that the current
+	``ami_analyze`` step produces. It uses the deprecated `~stdatamodels.jwst.datamodels.AmiLgModel`
 	for both input and output.
 	It will be removed in a future release.
 
@@ -19,11 +19,11 @@ It averages the results of LG processing from the
 It computes a simple average for all 8 components of the "ami" product files from all
 input exposures.
 
-For a given association of exposures, the "ami" products created by the `ami_analyze`
-step may have `fit_image` and `resid_image` images that vary in size from one
+For a given association of exposures, the "ami" products created by the ``ami_analyze``
+step may have ``fit_image`` and ``resid_image`` images that vary in size from one
 exposure to another. If this is the case, the smallest image size of all the input
-products is used for the averaged product and the averaged `fit_image` and
-`resid_image` images are created by trimming extra rows/columns from the edges of
+products is used for the averaged product and the averaged ``fit_image`` and
+``resid_image`` images are created by trimming extra rows/columns from the edges of
 images that are larger.
 
 Arguments
@@ -35,7 +35,7 @@ Inputs
 
 LG model parameters
 ^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiLgModel`
+:Data model: `~stdatamodels.jwst.datamodels.AmiLgModel`
 :File suffix: _ami
 
 The only input to the ``ami_average`` step is a list of one or more "ami" files to be
@@ -50,7 +50,7 @@ Outputs
 
 Average LG model parameters
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiLgModel`
+:Data model: `~stdatamodels.jwst.datamodels.AmiLgModel`
 :File suffix: _amiavg or _psf-amiavg
 
 The ``ami_average`` step produces a single output file, having the same format as the input

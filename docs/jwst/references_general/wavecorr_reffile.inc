@@ -4,7 +4,7 @@ WAVECORR Reference File
 -----------------------
 
 :REFTYPE: WAVECORR
-:Data model: `~jwst.datamodels.WaveCorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.WaveCorrModel`
 
 The WAVECORR reference file contains pixel offset values as a function of
 wavelength and source offset within a NIRSpec slit.
@@ -34,5 +34,4 @@ EXP_TYPE   model.meta.exposure.type
 Reference File Format
 +++++++++++++++++++++
 WAVECORR reference files are in ASDF format, with the format and contents
-specified by the `~jwst.datamodels.WaveCorrModel` data model schema.
-
+specified by the `~stdatamodels.jwst.datamodels.WaveCorrModel` data model schema.

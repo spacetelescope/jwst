@@ -61,7 +61,7 @@ def niriss_soss_set_input(model, order_number):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.ImageModel`
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
         An instance of an ImageModel
     order_number : int
         The spectral order

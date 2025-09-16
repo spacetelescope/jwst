@@ -340,13 +340,13 @@ class Extract1dStep(Step):
 
         Parameters
         ----------
-        input_data : DataModel
+        input_data : `~stdatamodels.DataModel`
             The input model.
 
         Returns
         -------
-        DataModel
-            This will be `input_model` if the step was skipped; otherwise,
+        `~stdatamodels.DataModel`
+            This will be input model if the step was skipped; otherwise,
             it will be a model containing 1-D extracted spectra.
         """
         # Open the input and figure out what type of model it is

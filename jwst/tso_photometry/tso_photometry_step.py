@@ -34,12 +34,12 @@ class TSOPhotometryStep(Step):
 
     def process(self, input_data):
         """
-        Do the tso photometry processing.
+        Do the TSO photometry processing.
 
         Parameters
         ----------
-        input_data : str or CubeModel
-            Filename for a FITS image, or a `CubeModel`.
+        input_data : str or `~stdatamodels.jwst.datamodels.CubeModel`
+            Filename for a FITS image, or a `~stdatamodels.jwst.datamodels.CubeModel`.
 
         Returns
         -------
@@ -178,6 +178,22 @@ class TSOPhotometryStep(Step):
 
 
 def get_ref_data(reffile, pupil="ANY"):
+    """
+    Get reference data for TSO photometry.
+
+    Parameters
+    ----------
+    reffile : str
+        TSO photometry model reference file.
+
+    pupil : str
+        Pupil of interest.
+
+    Returns
+    -------
+    radius, radius_inner, radius_outer : float
+        Radii of associated with the given query.
+    """
     ref_model = TsoPhotModel(reffile)
     radii = ref_model.radii
     value = None

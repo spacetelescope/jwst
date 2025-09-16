@@ -1056,7 +1056,7 @@ def update_fits_wcsinfo(
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.ImageModel`
+    datamodel : `~stdatamodels.jwst.datamodels.ImageModel`
         The input data model for imaging or WFSS mode whose ``meta.wcsinfo``
         field should be updated from GWCS. By default, ``datamodel.meta.wcs``
         is used to compute FITS WCS + SIP approximation. When ``imwcs`` is

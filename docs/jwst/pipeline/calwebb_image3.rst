@@ -6,7 +6,7 @@ calwebb_image3: Stage 3 Imaging Processing
 :Class: `jwst.pipeline.Image3Pipeline`
 :Alias: calwebb_image3
 
-Stage 3 processing for direct-imaging observations is intended for combining the 
+Stage 3 processing for direct-imaging observations is intended for combining the
 calibrated data from multiple exposures (e.g. a dither or mosaic pattern) into a
 single rectified (distortion corrected) product.
 Before being combined, the exposures receive additional corrections for the
@@ -35,7 +35,7 @@ Arguments
 ---------
 
 ``--in_memory``
-  Boolean governing whether to load all models in the input association to memory at once (faster) 
+  Boolean governing whether to load all models in the input association to memory at once (faster)
   or to save to temporary files when not in use (slower, less memory usage). Default is True.
 
 Inputs
@@ -44,7 +44,7 @@ Inputs
 2D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _cal
 
 The inputs to the ``calwebb_image3`` pipeline are one or more
@@ -61,7 +61,7 @@ Outputs
 CR-flagged exposures
 ^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _crf
 
 If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version
@@ -74,7 +74,7 @@ new field in the original product root name, e.g.
 Resampled and combined 2D image
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _i2d
 
 A resampled 2D image product of type "_i2d" is created containing the
@@ -94,7 +94,7 @@ of "_cat."
 Segmentation map
 ^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _segm
 
 A 2D image segmentation map produced by the :ref:`source_catalog <source_catalog_step>`

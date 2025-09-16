@@ -81,8 +81,8 @@ class SourceCatalogStep(Step):
 
         Parameters
         ----------
-        input_model : str or `ImageModel`
-            A FITS filename or an `ImageModel` of a drizzled image.
+        input_model : str or `~stdatamodels.jwst.datamodels.ImageModel`
+            A FITS filename or an `~stdatamodels.jwst.datamodels.ImageModel` of a drizzled image.
 
         Returns
         -------
