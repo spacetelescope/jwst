@@ -389,3 +389,17 @@ def test_call_step(make_datamodel, tmp_cwd, log_watcher):
     watcher.assert_seen()
     assert isinstance(result, Table)
     assert Path("step_WhiteLightStep_whtlt.ecsv").exists()
+
+
+def test_call_step_invalid_data(make_datamodel, log_watcher):
+    """Check return value for invalid data."""
+    input_model = datamodels.CubeModel()
+
+    watcher = log_watcher(
+        "jwst.white_light.white_light_step",
+        message="No valid input spectra found",
+        level="error",
+    )
+    result = WhiteLightStep().call(input_model, save_results=True)
+    assert result is None
+    watcher.assert_seen()
