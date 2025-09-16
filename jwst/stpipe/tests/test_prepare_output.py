@@ -64,7 +64,7 @@ def test_prepare_output_from_model(step):
     assert result is not input_data
     assert isinstance(result, datamodels.ImageModel)
     assert result.meta.cal_step.prepare_output == "COMPLETE"
-    assert not hasattr(input_data.meta.cal_step, "prepare_output")
+    assert not input_data.meta.cal_step.hasattr("prepare_output")
 
 
 def test_prepare_output_from_model_no_copy():
@@ -91,7 +91,7 @@ def test_prepare_output_from_container(step):
     assert isinstance(result, ModelContainer)
     assert isinstance(result[0], datamodels.ImageModel)
     assert result[0].meta.cal_step.prepare_output == "COMPLETE"
-    assert not hasattr(input_model.meta.cal_step, "prepare_output")
+    assert not input_model.meta.cal_step.hasattr("prepare_output")
 
 
 def test_prepare_output_from_container_no_copy():
@@ -117,7 +117,7 @@ def test_prepare_output_from_list_of_model(step):
     assert result[0] is not input_model
     assert isinstance(result[0], datamodels.ImageModel)
     assert result[0].meta.cal_step.prepare_output == "COMPLETE"
-    assert not hasattr(input_model.meta.cal_step, "prepare_output")
+    assert not input_model.meta.cal_step.hasattr("prepare_output")
 
 
 def test_prepare_output_from_list_of_model_no_copy():
@@ -172,7 +172,7 @@ def test_prepare_output_pipeline_from_model():
     assert result is not input_data
     assert isinstance(result, datamodels.ImageModel)
     assert result.meta.cal_step.prepare_output == "COMPLETE"
-    assert not hasattr(input_data.meta.cal_step, "prepare_output")
+    assert not input_data.meta.cal_step.hasattr("prepare_output")
 
 
 def test_prepare_output_pipeline_from_container():
@@ -186,7 +186,7 @@ def test_prepare_output_pipeline_from_container():
     assert isinstance(result, ModelContainer)
     assert isinstance(result[0], datamodels.ImageModel)
     assert result[0].meta.cal_step.prepare_output == "COMPLETE"
-    assert not hasattr(input_model.meta.cal_step, "prepare_output")
+    assert not input_model.meta.cal_step.hasattr("prepare_output")
 
 
 def test_prepare_output_pipeline_from_list_of_model():
@@ -199,7 +199,7 @@ def test_prepare_output_pipeline_from_list_of_model():
     assert result[0] is not input_model
     assert isinstance(result[0], datamodels.ImageModel)
     assert result[0].meta.cal_step.prepare_output == "COMPLETE"
-    assert not hasattr(input_model.meta.cal_step, "prepare_output")
+    assert not input_model.meta.cal_step.hasattr("prepare_output")
 
 
 def test_prepare_output_pipeline_from_list_of_str(mock_copy):
