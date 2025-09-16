@@ -63,7 +63,7 @@ class ResampleImage(Resample):
         Parameters
         ----------
         input_models : `~jwst.datamodels.library.ModelLibrary`
-            A ``~jwst.datamodels.library.ModelLibrary`-based object allowing iterating over
+            A `~jwst.datamodels.library.ModelLibrary`-based object allowing iterating over
             all contained models of interest.
 
         pixfrac : float, optional
@@ -133,9 +133,9 @@ class ResampleImage(Resample):
 
             Finally, instead of integers, ``good_bits`` can be a string of
             comma-separated mnemonics. For example, for JWST, all the following
-            specifications are equivalent:
+            specifications are equivalent::
 
-            ``"12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"``
+                "12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"
 
             In order to "translate" mnemonic code to integer bit flags,
             ``Resample.dq_flag_name_map`` attribute must be set to either
