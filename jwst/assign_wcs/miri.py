@@ -38,7 +38,7 @@ from jwst.assign_wcs.util import (
 log = logging.getLogger(__name__)
 
 
-__all__ = ["create_pipeline", "imaging", "lrs", "ifu"]
+__all__ = ["create_pipeline", "imaging", "lrs", "ifu", "wfss"]
 
 
 def create_pipeline(input_model, reference_files):
@@ -807,7 +807,7 @@ def wfss(input_model, reference_files):
 
     The WCS information for the dispersed image  will be
     used to translate these to pixel locations for each of the objects.
-    The disperse images will then use their trace information to translate
+    The dispersed images will then use their trace information to translate
     to detector space. The translation is assumed to be one-to-one for purposes
     of identifying the center of the object trace.
 
@@ -909,6 +909,7 @@ exp_type2transform = {
     "mir_lrs-fixedslit": lrs,
     "mir_lrs-slitless": lrs,
     "mir_mrs": ifu,
+    "mir_wfss": wfss,
     "mir_flatmrs": not_implemented_mode,
     "mir_flatimage": not_implemented_mode,
     "mir_flat-mrs": not_implemented_mode,
