@@ -147,7 +147,7 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        association : `Association`
+        association : `~jwst.associations.Association`
             Association to get the name from.
 
         Returns
@@ -203,8 +203,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
 
         Notes
         -----
-        If both `item` and `member` are given,
-        information in `member` will take precedence.
+        If both ``item`` and ``member`` are given,
+        information in ``member`` will take precedence.
         """
         super(DMS_Level3_Base, self).update_asn(item=item, member=member)
 
@@ -376,8 +376,8 @@ class DMS_Level3_Base(DMSBaseMixin, Association):
             conventions will be attempted.
         with_exptype : bool
             If True, each item is expected to be a 2-tuple with
-            the first element being the item to add as `expname`
-            and the second items is the `exptype`.
+            the first element being the item to add as ``expname``
+            and the second items is the ``exptype``.
         **kwargs : dict
             Allows other keyword arguments used by other subclasses.
 
@@ -440,8 +440,8 @@ class Utility:
         """
         Rename a Level 1b Exposure to a Level2 name.
 
-        The basic transform is changing the suffix `uncal` to
-        `cal`, `calints`, or `rate`.
+        The basic transform is changing the suffix ``uncal`` to
+        ``cal``, ``calints``, or ``rate``.
 
         Parameters
         ----------
@@ -492,7 +492,7 @@ class Utility:
         ----------
         value : str
             The value from the item to parse. Usually
-            item['ASN_CANDIDATE']
+            ``item['ASN_CANDIDATE']``.
 
         Returns
         -------
@@ -513,12 +513,12 @@ class Utility:
 
         Parameters
         ----------
-        associations : [association[, ...]]
+        associations : [Association[, ...]]
             List of associations.
 
         Returns
         -------
-        finalized_associations : [association[, ...]]
+        finalized_associations : [Association[, ...]]
             The validated list of associations.
         """
         finalized_asns = []
@@ -1006,7 +1006,7 @@ class AsnMixin_Science(DMS_Level3_Base):
 
         Returns
         -------
-        associations : [association[, ...]] or None
+        associations : [Association[, ...]] or None
             List of fully-qualified associations that this association
             represents.
             `None` if a complete association cannot be produced.
