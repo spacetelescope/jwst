@@ -1,6 +1,6 @@
 # Basic Contribution Instructions
 
-`jwst` is an open source python package, and the source code is available in the 
+`jwst` is an open source Python package, and the source code is available in the
 [JWST Github repository](https://github.com/spacetelescope/jwst/). New contributions
 and contributors are very welcome! Do not hesitate to reach out to the package
 maintainers if you are new to open-source development
@@ -24,11 +24,11 @@ for an overview of git basics.
 
 First, to clarify some terms that will be commonly used here:
 
-* `upstream` refers to the main `jwst` repository. this is where code from all
-	contributors is ultimately merged into and where releases of the package will be made from.
+* `upstream` refers to the main `jwst` repository. This is where code from all
+  contributors is ultimately merged into and where releases of the package will be made from.
 * `origin` refers to the online fork you made of the upstream `jwst` repository.
 * `local` refers to the clone you made of the origin on your computer.
-* The term `remote` in this context can refer to origin, or upstream. in general, it means anything hosted online on Github.
+* The term `remote` in this context can refer to origin, or upstream. In general, it means anything hosted online on Github.
 
 The first step is to create your own 'remote' (online) and 'local' (on your machine)
 clones of the central `spacetelescope/jwst` repository. You will make code changes
@@ -36,40 +36,42 @@ on your machine to your 'local' clone, push these to 'origin' (your online fork)
 and finally, open a pull request to the ''main'' branch of `spacetelescope/jwst`.
 
 1. On the 'spacetelescope/jwst' Github repository page, 'fork' the JWST repository
-to your own account space by clicking the appropriate button on the upper right-hand
-side. This will create an online clone of the main JWST repository but instead of
-being under the 'spacetelescope' organization, it will be under your personal
-account space. It is necessary to fork the repository so that many contributors
-aren't making branches directly on 'spacetelescope/jwst'. 
+   to your own account space by clicking the appropriate button on the upper right-hand
+   side. This will create an online clone of the main JWST repository but instead of
+   being under the 'spacetelescope' organization, it will be under your personal
+   account space. It is necessary to fork the repository so that many contributors
+   aren't making branches directly on 'spacetelescope/jwst'.
 
 2. Now that you have remotely forked `jwst`, it needs to be downloaded
-to your machine. To create this 'local' clone, choose an area on your file system
-and use the `git clone` command to download your remote fork on to your machine.
+   to your machine. To create this 'local' clone, choose an area on your file system
+   and use the `git clone` command to download your remote fork on to your machine:
 
-		>> cd directory
-		>> git clone git@github.com:<your_username>/jwst.git
+       cd directory
+       git clone git@github.com:<your_username>/jwst.git
+       cd jwst
 
 3. Make sure that your references to 'origin' and 'upstream' are set correctly - you will
-need this to keep everything in sync and push your changes online. While your initial
-local clone will be an exact copy of your remote, which is an exact copy of the 'upstream'
-`spacetelescope/jwst`, these all must be kept in sync manually (via git fetch/pull/push).
+   need this to keep everything in sync and push your changes online. While your initial
+   local clone will be an exact copy of your remote, which is an exact copy of the 'upstream'
+   `spacetelescope/jwst`, these all must be kept in sync manually (via git fetch/pull/push).
 
-	To check the current status of these references:
+To check the current status of these references:
 
-		>> git remote -v
+    git remote -v
 
 After your initial clone, you will likely be missing the reference to 'upstream'
 (which is just the most commonly used name in git to refer to the main project repository - you
-can call this whatever you want but the origin/upstream conventions are most commonly used) - to 
-set this, use the `add` git command:
+can call this whatever you want but the origin/upstream conventions are most commonly used) - to
+set this, use the `add` git command.
 
-If you are using an SSH key to authenticate.
+If you are using an SSH key to authenticate:
 
-	>> git remote add upstream git@github.com:spacetelescope/jwst.git
-Otherwise, you can simply set it to the repository URL but you will have to
-enter your password every time you fetch/push
+    git remote add upstream git@github.com:spacetelescope/jwst.git
 
-	>> git remote add upstream https://github.com/spacetelescope/jwst
+Otherwise, you can set it to the repository URL but you may have to
+enter your password every time you fetch/push:
+
+    git remote add upstream https://github.com/spacetelescope/jwst
 
 If you ever want to reset these URLs, add references to other remote forks of
 `jwst` for collaboration, or change from URL to SSH, you can use the related
@@ -82,11 +84,12 @@ for each new feature or bug fix. You can call this branch whatever you like - in
 this example, we'll call it 'my_feature'. First, make sure you
 have all recent changes to upstream by 'fetching' them:
 
-		>> git fetch upstream
+    git fetch upstream --tags
 
-The following will create a new branch off local/main called 'my_feature', and automatically switch you over to your new branch.
+The following will create a new branch off upstream/main called 'my_feature',
+and automatically switch you over to your new branch:
 
-		>> git checkout -b my_feature upstream/main
+    git checkout upstream/main -b my_feature
 
 ### Step 3: Installing `jwst` for development
 
@@ -94,74 +97,75 @@ Next, you will create a new Python environment where you will install your new
 branch of `jwst`. We will show here how to use conda to manage environments, but
 there are other options.
 
-1.  Create a conda environment.
+1. Create a conda environment.
 
-    It is good practice to maintain different environments for different versions
-    of JWST and its dependencies. You will likely want to maintain one, for example,
-    for the latest released version of JWST (i.e. what you get by doing `pip install jwst`),
-    as well as one for development. Assuming the user has conda [installed](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html),
-    here we will create a new conda environment called 'jwst_dev' where we can install the new branch of our cloned repository.
-    
-    	>> conda create -n jwst_dev python
-    
-    
+   It is good practice to maintain different environments for different versions
+   of JWST and its dependencies. You will likely want to maintain one, for example,
+   for the latest released version of JWST (i.e. what you get by doing `pip install jwst`),
+   as well as one for development. Assuming the user has conda
+   [installed](https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html),
+   here we will create a new conda environment called 'jwst_dev' where we can
+   install the new branch of our cloned repository:
+
+       conda create -n jwst_dev python
+
     Doing this will create a new environment with just some basic packages
-    (i.e setuptools, pip) installed.
+    (i.e., setuptools, pip) installed.
 
-2. Install `jwst` in this environment
+2. Install `jwst` in this environment.
 
-    Make sure you are in your new environment:
-    
-    	>> conda activate jwst_dev
-    
-    And now in the top level of your local `jwst` repository, ensuring you're
-    on the 'my_feature' branch:
-    
-    	>> pip install -e ".[contrib]"
-    
-    This will install `jwst` from this cloned source code in 'editable' mode,
-    meaning that you can import the code from this directory when within a Python
-    session. This makes it easier for development because you can have the code
-    you're editing somewhere convenient in your file system vs. with other packages
-    in 'site-packages'. If you cloned the repository on your Desktop, for example,
-    you can modify it there and Python will know that is where the source code is
-    when you're importing it within a Python session. This command will also install
-    the optional testing and documentation dependencies, including pre-commit.
-    
-	---
-    **Note:** If you use it, make sure to install iPython in your new environment
-    as well. Otherwise, it will pick up packages from the base environment instead.
+   Make sure you are in your new environment:
 
-	---
+       conda activate jwst_dev
 
-3. Set up pre-commit checks
+   And now in the top level of your local `jwst` repository, ensuring you're
+   on the 'my_feature' branch:
 
-    All of the coding style rules [described below](#code-style) can be checked
-    automatically when you make a git commit using our provided pre-commit hook for git;
-    for more information see: [Git Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks#_git_hooks),
-    [pre-commit](https://pre-commit.com/). We strongly encourage setting up
-    and using these hooks to ensure that contributed code always meets our coding style standards.
-    Pre-commit should already be installed in your conda environment after running
-    `pip install -e ".[contrib]"`, but if not, simply `pip install pre-commit`.
-    Navigate to the root directory of the jwst repository, then run
-    
-        >> pre-commit install
-    
-    This will set up the pre-commit hook in
-    `jwst/.git/hooks/`, and make it so that any modified files will be checked by the pre-commit
-    workflow every time `git commit` is run.
+       pip install -e ".[contrib]"
+
+   This will install `jwst` from this cloned source code in 'editable' mode,
+   meaning that you can import the code from this directory when within a Python
+   session. This makes it easier for development because you can have the code
+   you're editing somewhere convenient in your file system vs. with other packages
+   in 'site-packages'. If you cloned the repository on your Desktop, for example,
+   you can modify it there and Python will know that is where the source code is
+   when you're importing it within a Python session. This command will also install
+   the optional testing and documentation dependencies, including pre-commit.
+
+   ---
+   **Note:** If you use it, make sure to install iPython in your new environment
+   as well. Otherwise, it will pick up packages from the base environment instead.
+
+   ---
+
+3. Set up pre-commit checks.
+
+   All of the coding style rules [described below](#code-style) can be checked
+   automatically when you make a git commit using our provided pre-commit hook for git;
+   for more information see: [Git Hooks](https://git-scm.com/book/en/v2/Customizing-Git-Git-Hooks#_git_hooks),
+   [pre-commit](https://pre-commit.com/). We strongly encourage setting up
+   and using these hooks to ensure that contributed code always meets our coding style standards.
+   Pre-commit should already be installed in your conda environment after running
+   `pip install -e ".[contrib]"`, but if not, run `pip install pre-commit`.
+   Navigate to the root directory of the jwst repository, then run:
+
+       pre-commit install
+
+   This will set up the pre-commit hook in
+   `jwst/.git/hooks/`, and make it so that any modified files will be checked by the pre-commit
+   workflow every time `git commit` is run.
 
     ---
     **NOTE:** The changes made by `pre-commit` will not be automatically staged,
     so you will need to review and re-stage any files that pre-commit has changed.
-    
+
     ---
 
 ### Step 4: Making code changes
 
 Now that you've forked, cloned, made a new branch for your feature, and installed
 it in a new environment for development of `jwst`, you are ready to make changes
-to the code. As you make changes, make sure to `git commit -m <"some message">` frequently
+to the code. As you make changes, make sure to `git commit -m "some message"` frequently
 (in case you need to undo something by reverting back to a previous commit - you
 can't do this if you commit everything at once!). Changes should be tested locally
 using pytest; see [Writing and Running Unit Tests](#writing-and-running-unit-tests)
@@ -171,37 +175,38 @@ After you've made your desired
 changes, and committed these changes, you will need to push them online to your
 'remote' fork of `jwst`:
 
-	>> git push origin my_feature
-
+    git push origin my_feature
 
 ### Step 5: Opening a pull request
 
 Now, you can open a pull request on the main branch of the upstream `jwst` repository.
 
 1. On the `spacetelescope/jwst` web page, after you push your changes you should
-see a large green banner appear at the top prompting you to open a pull request
-with your recently pushed changes. You can also open a pull request from the
-[pull request tab](https://github.com/spacetelescope/jwst/pulls) on that page.
-Select your fork and your 'my_feature' branch, and open a pull request against
-the 'main' branch.
+   see a large green banner appear at the top prompting you to open a pull request
+   with your recently pushed changes. You can also open a pull request from the
+   [pull request tab](https://github.com/spacetelescope/jwst/pulls) on that page.
+   Select your fork and your 'my_feature' branch, and open a pull request against
+   the 'main' branch.
 
 2. Ensure the GitHub CI checks are all passing.
-    * Unit tests will be run, and unit test coverage will be checked for
-	any new code. See [Writing and Running Unit Tests](#writing-and-running-unit-tests)
-    to learn how to run and debug the unit tests if you're seeing failures.
-	* Various code style checks will be run (see [Code Style](#code-style)). The
-	pre-commit hook described above is helpful for catching and debugging these locally.
-	* You will need to add a change log entry in `changes/PRID.fragmenttype.rst`
-	if your contribution is a new feature or bug fix.
-	An entry is not required for small fixes like typos.
+
+   * Unit tests will be run, and unit test coverage will be checked for
+     any new code. See [Writing and Running Unit Tests](#writing-and-running-unit-tests)
+     to learn how to run and debug the unit tests if you're seeing failures.
+   * Various code style checks will be run (see [Code Style](#code-style)). The
+     pre-commit hook described above is helpful for catching and debugging these locally.
+   * You will need to add a change log entry in `changes/PRID.fragmenttype.rst`
+     if your contribution is a new feature, API change, or bug fix.
+     An entry is not required for small fixes like typos and documentation updates.
+     See [changes/README.rst](changes/README.rst) for more details.
 
 3. Ensure all the items in the **Tasks** checklist on the PR are completed.
-Instructions for how to do this are included in the checklist itself.
+   Instructions for how to do this are included in the checklist itself.
 
 4. Your PR will need to be reviewed and approved by at least two maintainers.
-They may require changes from you before your code can be merged, in which
-case you will need to go back and make these changes and push them (they will
-automatically appear in the PR when they're pushed to origin/my_feature).
+   They may require changes from you before your code can be merged, in which
+   case you will need to go back and make these changes and push them (they will
+   automatically appear in the PR when they're pushed to origin/my_feature).
 
 
 # Advanced Contribution Instructions
@@ -213,12 +218,12 @@ made changes to your branch off 'main', but in the time its taken you to make th
 changes, 'upstream/main' has evolved with new commits from other developers. In this
 situation, you will want to make sure you incorporate these changes into your branch.
 Rebasing allows you to do two things - 1. apply others changes on top of yours, and 2.
-squash your commits, even if there aren't new changes to apply. 
+squash your commits, even if there aren't new changes to apply.
 
 Periodically, while writing code, to keep your branch up to date you will want to
 do an interactive rebase against upstream/main to apply any new changes on top of yours:
 
-	>> git rebase -i upstream/main
+    git rebase -i upstream/main
 
 This will then prompt you to select commits and commit messages - if you select
 just the top commit, this will 'squash' the others and combine them into one. You
@@ -226,17 +231,19 @@ will be prompted to resolve any conflicts if you've made modifications to the sa
 file someone else has. Once you've completed your rebase, you must `force push` your
 branch to origin/my_feature to make your local and remote match.
 
-	>> git push -f origin/my_feature
+    git push -f origin/my_feature
 
 Before merging a PR, we typically would like you to rebase and squash all of your
-commits into a single one, which is also done with `git rebase`
+commits into a single one, which is also done with `git rebase`.
 
 ## Writing and building documentation
 
-`jwst` uses [sphinx](https://docs.readthedocs.io/en/stable/intro/getting-started-with-sphinx.html) to generate documentation, which is then hosted online on [readthedocs](https://readthedocs.org/).
+`jwst` uses [sphinx](https://docs.readthedocs.io/en/stable/intro/getting-started-with-sphinx.html)
+to generate documentation, which is then hosted online on [readthedocs](https://readthedocs.org/).
 
-You can access two versions of the documentation on the [JWST readthedocs website](https://readthedocs.org/projects/jwst-pipeline/)
-- the 'latest' version is whatever is currently on the main branch, and the 'stable'
+You can access two versions of the documentation on the
+[JWST readthedocs website](https://readthedocs.org/projects/jwst-pipeline/)
+-- the 'latest' version is whatever is currently on the main branch, and the 'stable'
 version is the last released version. If you successfully merge a PR with documentation
 changes, they will only appear on 'latest' until the next JWST release.
 
@@ -244,10 +251,11 @@ All of the documentation resides in the `jwst/docs` subdirectories (mainly withi
 directories in `jwst/docs/jwst`, organized by module). The documentation is written
 in `.rst` (reStructured text) files - if you wish to make changes or add to the documentation,
 do so in these files in the appropriate location. reStructured text is the markup
-language used by sphinx, for information on the syntax refer to the [sphinx documentation](https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html).
+language used by sphinx, for information on the syntax refer to the
+[sphinx documentation](https://www.sphinx-doc.org/en/master/usage/restructuredtext/basics.html).
 
 While writing documentation, you will want to make sure the documentation builds
-successfully  (i.e, produces a working .html file). This happens on the CI when you
+successfully  (i.e., produces a working HTML file). This happens on the CI when you
 open a pull request, but it is a good idea to build the documentation yourself locally
 as well. Before you do this, you will need to make sure you have the correct dependencies
 installed in your current environment. All of these optional dependencies are specified
@@ -256,13 +264,13 @@ necessary sphinx themes that the project uses. These do not install automaticall
 when you install `jwst` unless directly specified. To do this, while in the top level
 directory of `jwst` on your my_feature branch:
 
-	>> pip install -e ".[docs]"
+    pip install -e ".[docs]"
 
 (Note the doc dependencies are also included when installing `jwst` with the `[contrib]` tag).
 Now, with the correct documentation dependencies installed, you can attempt to build
 the documentation locally. To do this, enter into the `jwst/docs` subdirectory and do:
 
-	>> make html
+    make html
 
 If the documentation successfully builds, the output HTML files will be output in
 the `_build/html` subdirectory. You can open the main `index.html` file in your browser
@@ -274,13 +282,13 @@ to build the docs frequently when editing them.
 ## Writing and running unit tests
 
 Unit tests are located in each module in `jwst` in a `tests` subdirectory (for example,
-`jwst/jwst/ramp_fitting/tests`). These tests run the code on simplified datasets to make
+`jwst/ramp_fitting/tests`). These tests run the code on simplified datasets to make
 sure there are no breaking changes introduced. Most lines of `jwst` should be covered
 by a unit test, so when adding code you will often need to write a new test or add
 to an existing test to ensure adequate coverage.
 
 Take a look around at the existing tests for a template - a majority of these tests
-use a @pytest.fixture to set up a common dataset (usually a very simple `datamodel`
+use a `@pytest.fixture` to set up a common dataset (usually a very simple `datamodel`
 with some observational parameters and simplified data/dq arrays) for tests in that
 file, and the test functions themselves set up a scenario to run a pipeline/step
 under certain conditions, and culminate in a set of assertions that need to pass
@@ -295,9 +303,9 @@ any new lines that aren't covered by a test.
 
 You can also run unit tests locally, and you should do this periodically to test
 your code. To do this, you will need to install the optional dependencies needed
-for running tests.
+for running tests:
 
-	>> pip install -e ".[test]"
+    pip install -e ".[test]"
 
 This will install the optional 'test' dependencies specified in `pyproject.toml` that
 don't install by default. (Note these test dependencies are also included when
@@ -308,41 +316,54 @@ to run the tests. `pytest` searches through all the directories in your reposito
 directories called 'test' or .py files with the word 'test' in the name. Functions
 in these files will be executed.
 
-To run all of the `jwst` unit tests, while in the `jwst/jwst` level directory, simply
+To run all of the `jwst` unit tests, while in the `jwst` level directory, simply
 run the command:
 
-	>> pytest
+    pytest
 
 If you want to run all the tests for a single module, for example `ramp_fitting`,
-you can run this from either the 'jwst/jwst/ramp_fitting' OR the 'jwst/jwst/ramp_fitting/tests' directory/.
+you can run this from either the 'jwst/ramp_fitting' OR the
+'jwst/ramp_fitting/tests' directory.
 
-To run all tests within a single test file (for example, all tests in `jwst/jwst/jump/test_detect_jumps.py`).
-	>> pytest test_detect_jumps.py
+To run all tests within a single test file (for example, all tests in
+`jwst/jump/tests/test_detect_jumps.py`):
+
+    pytest jwst/jump/tests/test_detect_jumps.py
 
 ### Configuring pytest for unit tests
 
-`pytest` can be configured with many different flags - see the [pytest documentation](https://docs.pytest.org/en/7.1.x/contents.html)
+`pytest` can be configured with many different flags - see the
+[pytest documentation](https://docs.pytest.org/en/stable/)
 to see all of these. Here we will summarize a few of the most useful options.
 
 If you are writing and debugging a test, you may find it helpful to have print statements
-printed to the terminal while running tests (which doesn't happen by default). To do this,
+printed to the terminal while running tests (which doesn't happen by default). To do this:
 
-	>> pytest -s
+    pytest -s
 
 If you want to only run a specific test function within a file (or only tests with names
 that contain a certain string):
 
-	>> pytest -k testname.
+    pytest -k testname
+
 This will search all files under the directory you're in for files or functions with
 the string 'test' in them, and within those files run only the test functions that
 contain the string `testname`.
 
-Within the test files themselves, decorators can be used to control the behavior of the test. Some of the more useful decorators include:
-	1. @pytest.mark.parametrize can be used to run a single test on multiples sets of input parameters
-	2. @pytest.skip can be used to skip tests altogether, or under specific conditions (for example, only when being run by the CI)
-	3. @pytest.fixture to declare a [fixture](https://docs.pytest.org/en/7.1.x/explanation/fixtures.html)
-	4. @pytest.mark.xfail will make a test pass only if it fails.
+Within the test files themselves, decorators can be used to control the behavior of the test.
+Some of the more useful decorators include:
 
+1. `@pytest.fixture` to declare a
+   [fixture](https://docs.pytest.org/en/stable/explanation/fixtures.html)
+2. `@pytest.mark.bigdata` (provided by `ci-watson`) to declare a test accessing
+   large remote data from Artifactory and only run when `--bigdata` flag is provided
+3. `@pytest.mark.parametrize` to run a single test on multiples sets
+   of input parameters
+4. `@pytest.mark.skip` to skip tests altogether, or under specific conditions
+   (for example, only when being run by the CI)
+5. `@pytest.mark.slow` (provided by `ci-watson`) to declare a test taking significant
+   amount of time to run and only run when `--slow` flag is provided
+6. `@pytest.mark.xfail` will make a test pass only if it fails
 
 ## Simultaneously developing `jwst` and one of its dependencies
 
@@ -351,13 +372,14 @@ If you encounter the scenario where you wish to simultaneously make changes in
 that you create a new environment with development versions of both of these packages.
 To do this, you can follow the same workflow outlined in the 'Contributing code' section
 of this guide. To summarize, you will want to create a new Python environment
-(called, for example, jwst_stcal_dev), fork and clone a local copy of `jwst` if you
+(called, for example, `jwst_stcal_dev`), fork and clone a local copy of `jwst` if you
 haven't already and install this (doing `pip install -e .` in the top level directory
 of `jwst`), and then fork and clone `stcal` and install it in this environment in
 the same way. To double check that you have the correct dev versions of these packages
 in your environment, you can check their versions by doing:
 
-	>> conda list
+    conda list
+
 When opening up two dependent pull requests in `jwst` and one of its dependency packages,
 unit tests will not pass on the CI because the `pyproject.toml` file in `jwst` points to the
 last released version of `stcal`, and stcal points to the last version of `jwst`, so the
@@ -368,14 +390,15 @@ to `pyproject.toml` are not merged into main. In your `jwst` branch, to point to
 branch in the dependent package (in this example `stcal`), change the required `stcal`
 version in `pyproject.toml` to:
 
-	>> stcal @  git+https://github.com/<your_username>/stcal.git@<your_branch>
+    stcal @  git+https://github.com/<your_username>/stcal.git@<your_branch>
 
 And similarly, in `stcal`, change the required `jwst` version to:
 
-	>> jwst @  git+https://github.com/<your_username>/jwst.git@<your_branch>
+    jwst @  git+https://github.com/<your_username>/jwst.git@<your_branch>
 
 Let the CI run and ensure it passes, comment this in your PR and make sure the reviewers
-confirm, and then change the versions back before your PR is merged (which will again cause the CI to fail, but that’s OK).
+confirm, and then change the versions back before your PR is merged
+(which will again cause the CI to fail, but that’s OK).
 
 ## Code style
 
@@ -392,58 +415,46 @@ The following style checks are performed:
 
 * **PEP8-compliant code**
 
-	The code style for the `jwst` repository generally conforms to
-	[PEP8](https://peps.python.org/pep-0008/), and the code style rules are enforced
-	using [Ruff](https://docs.astral.sh/ruff/). To run these checks standalone,
-	use the command
+  The code style for the `jwst` repository generally conforms to
+  [PEP8](https://peps.python.org/pep-0008/), and the code style rules are enforced
+  using [Ruff](https://docs.astral.sh/ruff/). To run these checks standalone,
+  use the command:
 
-        >> pre-commit run ruff
+      pre-commit run ruff
 
-    from within the `jwst` repository. Ruff will automatically pick up the appropriate configuration from the `.ruff.toml` and `pre-commit-config.yaml` files,
-	and perform only the checks that are turned on for our repository. To run ruff's
-	auto-formatter, which automatically fixes simple things like single vs double quotes, whitespace, etc., use the command
+  from within the `jwst` repository. Ruff will automatically pick up the appropriate configuration
+  from the `.ruff.toml` and `pre-commit-config.yaml` files,
+  and perform only the checks that are turned on for our repository. To run ruff's
+  auto-formatter, which automatically fixes simple things like single vs double quotes,
+  whitespace, etc., use the command:
 
-	    >> pre-commit run ruff-format
-	
-	---
-	**Note:** If you run `ruff format .` from the top-level `jwst/` folder, it will re-format the entire code base.
-	Please do not do this; it makes pull requests more challenging to review. It's recommended to apply `ruff-format` through `pre-commit`.
-
-	---
+      pre-commit run ruff-format
 
 * **Numpy docstring style**
 
-	The docstring style for the `jwst` repository generally conforms to the
-	[Numpy style guide](https://numpydoc.readthedocs.io/en/latest/format.html), and the docstring
-	style rules are enforced using [numpydoc-validation](https://numpydoc.readthedocs.io/en/latest/validation.html).
+  The docstring style for the `jwst` repository generally conforms to the
+  [Numpy style guide](https://numpydoc.readthedocs.io/en/latest/format.html), and the docstring
+  style rules are enforced using [numpydoc-validation](https://numpydoc.readthedocs.io/en/latest/validation.html).
 
-	To run these checks standalone, use the command
+  To run these checks standalone, use the command:
 
-        >> pre-commit run numpydoc-validation
+      pre-commit run numpydoc-validation
 
 * **Spell checking**
 
-	We use [Codespell](https://github.com/codespell-project/codespell) to check for common
-	misspellings in both our codebase and documentation.
-	To run the spell checker standalone, use the command
+  We use [Codespell](https://github.com/codespell-project/codespell) to check for common
+  misspellings in both our codebase and documentation.
+  To run the spell checker standalone, use the command:
 
-        >> pre-commit run codespell
+      pre-commit run codespell
 
 
 * **PEP-compliant type hints**
 
-    The majority of the `jwst` repository does *not* have any type hints, and type hints are *not*
-    required for contributions. If type hints are used, though, their compliance with 
-	[PEP-484](https://peps.python.org/pep-0484/) standards
-    is enforced using [mypy](https://mypy.readthedocs.io/en/stable/index.html).
-    To run these checks locally, use the command
+  The majority of the `jwst` repository does *not* have any type hints, and type hints are *not*
+  required for contributions. If type hints are used, though, their compliance with
+  [PEP-484](https://peps.python.org/pep-0484/) standards
+  is enforced using [mypy](https://mypy.readthedocs.io/en/stable/index.html).
+  To run these checks locally, use the command:
 
-        >> pre-commit run mypy
-
-
----
-**Note:** At time of writing, many submodules in the repository do not yet conform to the style rules;
-however, we have made it a priority to get the whole code base up to standard in the next few months,
-and any new contributions must now follow the style rules as indicated.
-
----
+      pre-commit run mypy

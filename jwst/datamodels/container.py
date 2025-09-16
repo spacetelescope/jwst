@@ -310,7 +310,7 @@ to supply custom catalogs.
                     if attr in RECOGNIZED_MEMBER_FIELDS:
                         if attr == "tweakreg_catalog":
                             if val.strip():
-                                val = asn_dir / val
+                                val = str(asn_dir / val)
                             else:
                                 val = None
 

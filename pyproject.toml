@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
@@ -264,6 +264,7 @@ omit = [
 
 [tool.setuptools_scm]
 write_to = "jwst/_version.py"
+version_scheme = "release-branch-semver"
 
 [tool.numpydoc_validation]
 checks = [

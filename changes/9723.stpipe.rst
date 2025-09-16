@@ -1,0 +1,1 @@
+Add a ``prepare_output`` method to the JwstStep class, to support input datamodel handling and conditional copies within processing steps.
