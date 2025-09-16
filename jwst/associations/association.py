@@ -26,13 +26,19 @@ _TIMESTAMP_TEMPLATE = "%Y%m%dt%H%M%S"
 
 class Association(MutableMapping):
     """
-    Association Base Class.
+    Association base class.
+
+    Parameters
+    ----------
+    version_id : str or None
+        Version ID to use in the name of this association.
+        If None, nothing is added.
 
     Attributes
     ----------
     instance : dict-like
         The instance is the association data structure.
-        See `data` below
+        See ``data`` below.
 
     meta : dict
         Information about the association.
@@ -48,7 +54,7 @@ class Association(MutableMapping):
 
     Raises
     ------
-    AssociationError
+    jwst.associations.AssociationError
         If an item doesn't match.
     """
 
@@ -78,15 +84,6 @@ class Association(MutableMapping):
     """The association IO registry"""
 
     def __init__(self, version_id=None):
-        """
-        Initialize an Association.
-
-        Parameters
-        ----------
-        version_id : str or None
-            Version ID to use in the name of this association.
-            If None, nothing is added.
-        """
         self.data = {}
         self.run_init_hook = True
         self.meta = {}
@@ -128,11 +125,12 @@ class Association(MutableMapping):
 
         Returns
         -------
-        (association, reprocess_list)
+        tuple
             2-tuple consisting of:
-                - association or None: The association or, if the item does not
-                  match this rule, None
-                - [ProcessList[, ...]]: List of items to process again.
+
+            - Association or None: The association or, if the item does not
+              match this rule, None
+            - [ProcessList[, ...]]: List of items to process again.
         """
         asn = cls(version_id=version_id)
         matches, reprocess = asn.add(item)
@@ -189,11 +187,11 @@ class Association(MutableMapping):
         Returns
         -------
         valid : bool
-            True if valid. Otherwise the `AssociationNotValidError` is raised
+            True if valid. Otherwise the `~jwst.associations.AssociationNotValidError` is raised.
 
         Raises
         ------
-        AssociationNotValidError
+        jwst.associations.AssociationNotValidError
             If there is some reason validation failed.
 
         Notes
@@ -256,10 +254,10 @@ class Association(MutableMapping):
 
         Raises
         ------
-        AssociationError
+        jwst.associations.AssociationError
             If the operation cannot be done
 
-        AssociationNotValidError
+        jwst.associations.AssociationNotValidError
             If the given association does not validate.
         """
         if fmt is None:
@@ -286,7 +284,7 @@ class Association(MutableMapping):
             Validate against the class' defined schema, if any.
 
         **kwargs : dict
-            Other arguments to pass to the `load` method
+            Other arguments to pass to the ``load`` method.
 
         Returns
         -------
@@ -295,14 +293,14 @@ class Association(MutableMapping):
 
         Raises
         ------
-        AssociationNotValidError
+        jwst.associations.AssociationNotValidError
             Cannot create or validate the association.
 
         Notes
         -----
-        The `serialized` object can be in any format
+        The serialized object can be in any format
         supported by the registered I/O routines. For example, for
-        `json` and `yaml` formats, the input can be either a string or
+        JSON and YAML formats, the input can be either a string or
         a file object containing the string.
         """
         if fmt is None:
@@ -359,10 +357,11 @@ class Association(MutableMapping):
 
         Returns
         -------
-        (match, reprocess_list)
+        tuple
             2-tuple consisting of:
-                - bool : True if match
-                - [ProcessList[, ...]]: List of items to process again.
+
+            - bool : True if match
+            - [ProcessList[, ...]]: List of items to process again.
         """
         if self.is_item_member(item):
             return True, []
@@ -401,10 +400,11 @@ class Association(MutableMapping):
 
         Returns
         -------
-        (match, reprocess)
+        tuple
             2-tuple consisting of:
-                - bool : Did constraint match?
-                - [ProcessItem[, ...]]: List of items to process again.
+
+            - bool : Did constraint match?
+            - [ProcessItem[, ...]]: List of items to process again.
         """
         self.constraints.preserve()
         match, reprocess = self.constraints.check_and_set(item)
@@ -433,10 +433,11 @@ class Association(MutableMapping):
 
         Returns
         -------
-        (matches, reprocess_list)
+        tuple
             2-tuple consisting of:
-                - bool : True if the all constraints are satisfied
-                - [ProcessList[, ...]]: List of items to process again.
+
+            - bool : True if the all constraints are satisfied
+            - [ProcessList[, ...]]: List of items to process again.
         """
         reprocess = []
         evaled_str = conditions["inputs"](item)
@@ -548,7 +549,7 @@ class Association(MutableMapping):
 
         Returns
         -------
-        dict_keys
+        dict_keys : iter
             The keys of the data dictionary.
         """
         return self.data.keys()
@@ -559,7 +560,7 @@ class Association(MutableMapping):
 
         Returns
         -------
-        dict_items
+        dict_items : iter
             The items of the data dictionary.
         """
         return self.data.items()
@@ -570,7 +571,7 @@ class Association(MutableMapping):
 
         Returns
         -------
-        dict_values
+        dict_values : iter
             The values of the data dictionary.
         """
         return self.data.values()
@@ -579,7 +580,7 @@ class Association(MutableMapping):
 # Utilities
 def finalize(asns):
     """
-    Finalize associations by calling their `finalize_hook` method.
+    Finalize associations by calling their ``finalize_hook`` method.
 
     Parameters
     ----------
@@ -607,6 +608,14 @@ def finalize(asns):
 
 
 def make_timestamp():
+    """
+    Timestamp of current time in UTC.
+
+    Returns
+    -------
+    timestamp : str
+        UTC time in pre-determined format.
+    """
     timestamp = datetime.now(UTC).strftime(_TIMESTAMP_TEMPLATE)
     return timestamp
 
