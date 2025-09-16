@@ -3,19 +3,21 @@ Reprocessing Lists and Queues.
 
 This modules defines what process lists are and queues of process lists.
 
-A process list, `ProcessList`, is a list of (items, rules) and meta information
-, most notably `work_over`. `work_over` is one of the values of `ListCategory`.
-A `ListCategory` defines which stage of association processing the list is
+A process list, `~jwst.associations.ProcessList`, is a list of (items, rules) and meta information
+, most notably ``work_over``. ``work_over`` is one of the values of
+`~jwst.associations.ListCategory`.
+A `~jwst.associations.ListCategory` defines which stage of association processing the list is
 relevant to. In other words, the order, or priority, of when a list should be processed
-is defined by its `ListCategory`. The priority is the value of each `ListCategory`,
+is defined by its `~jwst.associations.ListCategory`.
+The priority is the value of each `~jwst.associations.ListCategory`,
 starting with zero.
 
 ProcessLists are primarily put into queues for processing. There are two
-queues for handling ProcessLists. `ProcessListQueue` is a basic
+queues for handling ProcessLists. `~jwst.associations.ProcessListQueue` is a basic
 First-In-First-Out (FIFO) queue that can be used as a generator.
 
-The second queue is `ProcessQueueSorted`, which returns ProcessLists according to
-their priority as defined by each ProcessList's `work_over`. An important aspect of
+The second queue is `~jwst.associations.ProcessQueueSorted`, which returns ProcessLists according to
+their priority as defined by each ProcessList's ``work_over``. An important aspect of
 ProcessQueueSorted is that it is mutable: New ProcessLists can be added to the queue
 while iterating over the queue.
 """
@@ -24,7 +26,14 @@ from collections import deque
 from enum import Enum
 from functools import reduce
 
-__all__ = ["ListCategory", "ProcessList", "ProcessItem", "ProcessQueue", "ProcessQueueSorted"]
+__all__ = [
+    "ListCategory",
+    "ProcessList",
+    "ProcessListQueue",
+    "ProcessItem",
+    "ProcessQueue",
+    "ProcessQueueSorted",
+]
 
 
 class ListCategory(Enum):
@@ -46,7 +55,7 @@ class ProcessItem:
     Parameters
     ----------
     obj : object
-        The object to make a `ProcessItem`.
+        The object to make a `~jwst.associations.ProcessItem`.
         Objects must be equatable.
     """
 
@@ -66,7 +75,7 @@ class ProcessItem:
         Returns
         -------
         iterable
-            An iterable where the object has been converted to a `ProcessItem`.
+            An iterable where the object has been converted to a `~jwst.associations.ProcessItem`.
         """
         for obj in iterable:
             yield cls(obj)
@@ -113,10 +122,11 @@ class ProcessList:
 
         work_over : int
             What the reprocessing should work on:
-            - `ProcessList.RULES`:      Only on the rules to create new associations
-            - `ProcessList.EXISTING`:   Only existing associations
-            - `ProcessList.BOTH`:       Compare to both existing and rules
-            - `ProcessList.NONSCIENCE`: Only on non-science items
+
+            - ``ProcessList.RULES``: Only on the rules to create new associations
+            - ``ProcessList.EXISTING``: Only existing associations
+            - ``ProcessList.BOTH``: Compare to both existing and rules
+            - ``ProcessList.NONSCIENCE``: Only on non-science items
 
         only_on_match : bool
             Only use this object if the overall condition
@@ -142,8 +152,8 @@ class ProcessList:
 
         Returns
         -------
-        Tuple(Rule, ...), int, bool
-            Tuple of: tuple of rule objects, integer and bool. Used as a unique hash.
+        tuple, int, bool
+            Tuple of rule objects, integer, and bool. Used as a unique hash.
         """
         return (tuple(self.rules), self.work_over, self.only_on_match)
 
@@ -151,12 +161,12 @@ class ProcessList:
         """
         Update with information from ProcessList.
 
-        Attributes from `process_list` are added to self's attributes. If `not
-        full`, the attributes `rules`, 'work_over`, and `only_on_match` are not
+        Attributes from ``process_list`` are added to self's attributes. If ``not full``,
+        the attributes ``rules``, ``work_over``, and ``only_on_match`` are not
         taken.
 
-        Note that if `full`, destructive action will occur with respect to
-        `work_over` and `only_on_match`.
+        Note that if ``full``, destructive action will occur with respect to
+        ``work_over`` and ``only_on_match``.
 
         Parameters
         ----------
@@ -164,7 +174,7 @@ class ProcessList:
             The source process list to absorb.
 
         full : bool
-            Include the hash attributes `rules`, `work_over`, and `only_on_match`.
+            Include the hash attributes ``rules``, ``work_over``, and ``only_on_match``.
         """
         self.items += process_list.items
         self.trigger_constraints.update(process_list.trigger_constraints)
@@ -197,16 +207,18 @@ class ProcessListQueue:
     """
     First-In-First-Out queue of ProcessLists.
 
-    ProcessLists can be added either individually using `append` method, or
+    ProcessLists can be added either individually using
+    :meth:`jwst.associations.ProcessListQueue.append` method, or
     a list of ProcessLists can be added through object initialization or
-    the `extend` method.
+    the  :meth:`jwst.associations.ProcessListQueue.extend` method.
 
     There are two generators implement. The first is the ProcessListQueue
     object itself. When the object is used as a generator, the generator will
     return the earliest ProcessList added to the queue (FIFO), popping that
     ProcessList from the queue, hence draining the queue.
 
-    The second generator is returned by the `items` method. This method will
+    The second generator is returned by the
+    :meth:`jwst.associations.ProcessListQueue.items` method. This method will
     return all the items from all the ProcessLists in the queue,
     non-destructively. The ProcessLists are accessed in their order in the
     queue, and then each item is retrieved from their ProcessList in the list
@@ -287,7 +299,7 @@ class ProcessQueueSorted:
     Sort ProcessItem based on work_over.
 
     Create a generator that implements a First-In-First-Out (FIFO) queue, with the one
-    modification that the queues are handled in order of their `work_over` priority.
+    modification that the queues are handled in order of their ``work_over`` priority.
     For example, even if a ProcessList with work_over of ListCategory.EXISTING had
     been added to the queue before a ProcessList with work_over of ListCategory.RULES,
     the second ProcessList will be returned before the first.
@@ -300,17 +312,14 @@ class ProcessQueueSorted:
     ListCategory.RULES is added during iteration, the next list returned will
     be the RULES one, because the RULES lists have priority over EXISTING
     lists, regardless of when the list was added.
+
+    Parameters
+    ----------
+    init : [ProcessList[,...]]
+        List of `~jwst.associations.ProcessList` to start the queue with.
     """
 
     def __init__(self, init=None):
-        """
-        Initialize a ProcessQueueSorted.
-
-        Parameters
-        ----------
-        init : [ProcessList[,...]]
-            List of `ProcessList` to start the queue with.
-        """
         self.queues = {list_category: ProcessListQueue() for list_category in ListCategory}
 
         if init is not None:
