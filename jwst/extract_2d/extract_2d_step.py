@@ -39,15 +39,16 @@ class Extract2dStep(Step):
         output_model : DataModel
             The resulting DataModel of the extract_2d step
         """
-        reference_file_names = {}
-        if input_model.meta.exposure.type in extract_2d.slitless_modes:
-            # The wavelengthrange file is used only by the WFSS modes.
-            # If retrieved by a Nirspec mode, it would override the name of
-            # the file in meta.ref_file if a custom file was used.
-            for reftype in self.reference_file_types:
-                reffile = self.get_reference_file(input_model, reftype)
-                reference_file_names[reftype] = reffile if reffile else ""
         with datamodels.open(input_model) as dm:
+            reference_file_names = {}
+            if dm.meta.exposure.type in extract_2d.slitless_modes:
+                # The wavelengthrange file is used only by the WFSS modes.
+                # If retrieved by a Nirspec mode, it would override the name of
+                # the file in meta.ref_file if a custom file was used.
+                for reftype in self.reference_file_types:
+                    reffile = self.get_reference_file(input_model, reftype)
+                    reference_file_names[reftype] = reffile if reffile else ""
+
             output_model = extract_2d.extract2d(
                 dm,
                 self.slit_names,
