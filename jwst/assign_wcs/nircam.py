@@ -210,6 +210,7 @@ def tsgrism(input_model, reference_files):
 
     if input_model.meta.instrument.pupil != "GRISMR":
         if "DHS" in input_model.meta.instrument.pupil:
+            log.info("Building WCS for DHS data.")
             return dhs(input_model, reference_files)
         else:
             raise ValueError("NRC_TSGRISM mode only supports GRISMR and DHS pupil values.")
@@ -397,6 +398,12 @@ def dhs(input_model, reference_files):
     if len(invdispx) == 0:
         invdispx = [[]] * len(stripes)
 
+    # Define some models to support all stripes
+    setra = Const1D(input_model.meta.wcsinfo.ra_ref)
+    setra.inverse = Const1D(input_model.meta.wcsinfo.ra_ref)
+    setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
+    setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
+
     for i, stripe in enumerate(stripes):
         # now create the appropriate model for the grismr
         det2det = NIRCAMForwardRowGrismDispersion(
@@ -448,11 +455,6 @@ def dhs(input_model, reference_files):
         ycenter = Const1D(yc)
         ycenter.inverse = Const1D(yc)
 
-        setra = Const1D(input_model.meta.wcsinfo.ra_ref)
-        setra.inverse = Const1D(input_model.meta.wcsinfo.ra_ref)
-        setdec = Const1D(input_model.meta.wcsinfo.dec_ref)
-        setdec.inverse = Const1D(input_model.meta.wcsinfo.dec_ref)
-
         stripe_model = Const1D(stripe)
         stripe_model.inverse = Const1D(stripe)
 
@@ -460,7 +462,7 @@ def dhs(input_model, reference_files):
         # get the shift to full frame coordinates
         sub_trans = substripe_subarray_transform(input_model, regs_model, stripe)
 
-        if sub_trans is not None:
+        if 0:  # sub_trans is not None:
             sub2direct = (
                 sub_trans & Identity(1)
                 | Mapping((0, 1, 0, 1, 2, 2))
@@ -503,7 +505,7 @@ def dhs(input_model, reference_files):
     # remap the tel2sky inverse as well since we can feed it the values of
     # crval1, crval2 which correspond to crpix1, crpix2. This leaves
     # us with a calling structure:
-    #  (x, y, order) <-> (wavelength, order)
+    #  (x, y, order, stripe) <-> (wavelength, order)
     tel2sky = pointing.v23tosky(input_model) & Identity(3)
     t2skyinverse = tel2sky.inverse
     newinverse = Mapping((0, 1, 0, 3, 4)) | setra & setdec & Identity(3) | t2skyinverse
