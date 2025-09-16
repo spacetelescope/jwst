@@ -778,30 +778,8 @@ Aligned PSF data: ``psfalign``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The :ref:`align_refs <align_refs_step>` step in the :ref:`calwebb_coron3 <calwebb_coron3>`
 pipeline creates a 3-D stack of PSF images that are aligned to corresponding science target
-images. The resulting ``psfalign`` product uses the `~stdatamodels.jwst.datamodels.QuadModel` data model,
-which when serialized to a FITS file has the structure and content shown below.
-
-+-----+-------------+----------+-----------+-------------------------------+
-| HDU | EXTNAME     | HDU Type | Data Type | Dimensions                    |
-+=====+=============+==========+===========+===============================+
-|  0  | N/A         | primary  | N/A       | N/A                           |
-+-----+-------------+----------+-----------+-------------------------------+
-|  1  | SCI         | IMAGE    | float32   | ncols x nrows x npsfs x nints |
-+-----+-------------+----------+-----------+-------------------------------+
-|  2  | DQ          | IMAGE    | uint32    | ncols x nrows x npsfs x nints |
-+-----+-------------+----------+-----------+-------------------------------+
-|  3  | ERR         | IMAGE    | float32   | ncols x nrows x npsfs x nints |
-+-----+-------------+----------+-----------+-------------------------------+
-|  4  | ASDF        | BINTABLE | N/A       | variable                      |
-+-----+-------------+----------+-----------+-------------------------------+
-
- - SCI: 4-D data array containing a stack of 2-D PSF images aligned to each integration
-   within a corresponding science target exposure.
-   each integration.
- - DQ: 4-D data array containing DQ flags for each PSF image.
- - ERR: 4-D data array containing a stack of 2-D uncertainty estimates for each PSF image,
-   per science target integration.
- - ADSF: The data model meta data.
+images. The resulting ``psfalign`` product uses the `~stdatamodels.jwst.datamodels.CubeModel` data model,
+which is the same as :ref:`psfstack` but shifted.
 
 .. _psfsub:
 
