@@ -210,7 +210,7 @@ def test_miri():
     )
 
 
-def test_firstframe_bright_use_group1():
+def test_firstframe_bright_use_group1(log_watcher):
     """
     Test the firstframe code when bright_use_group1 is set to True.
 
@@ -228,7 +228,8 @@ def test_firstframe_bright_use_group1():
     # create the data and groupdq arrays
     csize = (nints, ngroups, ysize, xsize)
     data = np.full(csize, 1.0)
-    groupdq = np.zeros(csize, dtype=int)
+    groupdq = np.zeros(csize, dtype=np.uint8)
+    pixeldq = np.zeros((ysize, xsize), dtype=np.uint32)
 
     # set a fraction of the pixels to saturate in between the 2nd and 3rd groups
     groupdq[0, 2, 0:100, :] = dqflags.group["SATURATED"]
@@ -238,11 +239,21 @@ def test_firstframe_bright_use_group1():
     groupdq[0, 1, 200:300, :] = dqflags.group["SATURATED"]
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = RampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq, pixeldq=pixeldq)
+
+    # check for a log message
+    n_kept = 200 * xsize
+    watcher = log_watcher(
+        "jwst.firstframe.firstframe_sub",
+        message=f"Number of usable bright pixels with first group not set to DO_NOT_USE: {n_kept}",
+        level="info",
+    )
 
     # run the first frame correction step on a copy (the detection to make the copy or
     # not would have happened at _step.py)
     dm_ramp_firstframe = do_correction(dm_ramp.copy(), bright_use_group1=True)
+
+    watcher.assert_seen()
 
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag

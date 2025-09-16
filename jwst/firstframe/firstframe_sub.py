@@ -51,9 +51,10 @@ def do_correction(output, bright_use_group1=False):
             any_kept = np.any(svals, axis=0)
             output.pixeldq[any_kept] |= dqflags.pixel["FLUX_ESTIMATED"]
 
+            any_good_kept = (output.pixeldq[any_kept] & dqflags.pixel["DO_NOT_USE"]) == 0
             log.info(
-                "Number of bright pixels with first group "
-                f"not set to DO_NOT_USE: {np.sum(any_kept)}"
+                "Number of usable bright pixels with first group "
+                f"not set to DO_NOT_USE: {np.sum(any_good_kept)}"
             )
         else:
             output.groupdq[:, 0, :, :] |= dqflags.group["DO_NOT_USE"]
