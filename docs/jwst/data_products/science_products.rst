@@ -777,9 +777,9 @@ structure shown below.
 Aligned PSF data: ``psfalign``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The :ref:`align_refs <align_refs_step>` step in the :ref:`calwebb_coron3 <calwebb_coron3>`
-pipeline creates a 3-D stack of PSF images that are aligned to corresponding science target
-images. The resulting ``psfalign`` product uses the `~stdatamodels.jwst.datamodels.CubeModel` data model,
-which is the same as :ref:`psfstack` but shifted.
+pipeline shifts the stack of PSF images to align them to the first science target image.
+The resulting ``psfalign`` product uses the `~stdatamodels.jwst.datamodels.CubeModel` data model,
+which has the same structure as the :ref:`psfstack` product.
 
 .. _psfsub:
 
