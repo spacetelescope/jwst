@@ -138,6 +138,7 @@ def get_dispersion_direction(exposure_type, grating="ANY", filter_wh="ANY", pupi
         ("NRC_GRISM", "ANY", "ANY", "GRISMR"): 1,
         ("NRC_GRISM", "ANY", "ANY", "GRISMC"): 2,
         ("NRC_TSGRISM", "ANY", "ANY", "GRISMR"): 1,
+        ("NRC_TSGRISM", "ANY", "ANY", "GDHS0"): 1,
         ("NRC_WFSS", "ANY", "ANY", "GRISMR"): 1,
         ("NRC_WFSS", "ANY", "ANY", "GRISMC"): 2,
     }
