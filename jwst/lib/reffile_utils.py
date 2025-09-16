@@ -394,7 +394,10 @@ def stripe_read(sci_model, ref_model, attribs):
             fastsize_sci = xsize_sci
 
             # Get the reference model subarray params
-            faststart_ref = ref_model.meta.subarray.xstart
+            if ref_model.meta.subarray.hasattr("xstart"):
+                faststart_ref = ref_model.meta.subarray.xstart
+            else:
+                faststart_ref = 1
 
             # Compute the slice indexes, in 0-indexed python frame
             faststart = faststart_sci - faststart_ref
@@ -405,7 +408,10 @@ def stripe_read(sci_model, ref_model, attribs):
             fastsize_sci = ysize_sci
 
             # Get the reference model subarray params
-            faststart_ref = ref_model.meta.subarray.ystart
+            if ref_model.meta.subarray.hasattr("ystart"):
+                faststart_ref = ref_model.meta.subarray.ystart
+            else:
+                faststart_ref = 1
 
             # Compute the slice indexes, in 0-indexed python frame
             faststart = faststart_sci - faststart_ref
@@ -501,7 +507,7 @@ def generate_stripe_array(
 
     if num_superstripe == 0:
         # SUBSTRIPE MODE
-        stripe_out = np.zeros((*ref_shape[:-2], fast_size, slow_size), dtype=ref_array.dtype)
+        stripe_out = np.zeros((*ref_shape[:-2], slow_size, fast_size), dtype=ref_array.dtype)
         # Track the read position in the full frame with linecount, and number of lines
         # read into subarray with sub_lines
         linecount = 0
