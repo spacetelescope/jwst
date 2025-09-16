@@ -1,0 +1,1 @@
+Require python <3.14 to exclude the currently unreleased 3.14. Once all dependencies support 3.14 and the code and results are tested with 3.14 this pin will be updated to allow 3.14.
