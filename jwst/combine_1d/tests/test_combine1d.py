@@ -265,6 +265,28 @@ def test_allnan_skip(wfss_multiexposure, monkeypatch):
     watcher2.assert_seen()
 
 
+def test_allnan_skip_non_wfss(caplog, three_spectra):
+    """Test that all-nan spectra are skipped."""
+    # Set all flux values to NaN
+    for spec in three_spectra.spec:
+        spec.spec_table["FLUX"][:] = np.nan
+
+    result = Combine1dStep.call(three_spectra)
+    assert result.meta.cal_step.combine_1d == "SKIPPED"
+
+    # message when a single spectrum has no valid flux values
+    msg1 = "Input spectrum 0 order 1 has no valid flux values; skipping."
+    assert msg1 in caplog.text
+
+    # message when no valid input spectra are found for the source
+    msg2 = "No valid input spectra found for source. Skipping."
+    assert msg2 in caplog.text
+
+    # message when no valid input spectra at all are found
+    msg3 = "No valid input spectra found in WFSSMultiSpecModel"
+    assert msg2 in caplog.text
+
+
 def test_output_is_not_input(two_spectra):
     """Test that input is not modified."""
     result = Combine1dStep.call(two_spectra)
