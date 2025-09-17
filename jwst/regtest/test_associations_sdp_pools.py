@@ -153,8 +153,8 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
         ("jw01122_uniq_lamp_optical_path_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
         ("jw01250_20250318t113408_pool", []),  # Moving target in both NRC_IMAGE and MIR_IMAGE
         ("jw01290_20230304t140931_withids_pool", ["-i", "o012", "c1018"]),
+        ("jw01411_20250317t143327_pool", ["--DMS"]),  # Coron 5-POINT-SMALL-GRID, DMS for BKG
         ("jw01464_20250318t062856_pool", []),  # WFS&C rules
-        ("jw01480_20250319t173819_pool", []),  # NRC_GRISM, NRC_TSIMAGE, NRC_TSGRISM
         ("jw01493_20230307t040130_withids_pool", ["-i", "o003", "c1000"]),
         ("jw01499_20250310t191505_pool", []),  # NIS_DARK
         ("jw01503_20250316t013145_pool", []),  # NIS_LAMP
@@ -163,13 +163,11 @@ def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
         ("jw01678_20240721t195707_pool", []),
         ("jw02064_20230302t112350_withids_pool", ["-i", "o061", "c1008", "c1017"]),
         ("jw02162_20241213t063547_pool", []),
-        ("jw02739_20230710t150016_o010_pool", ["-i", "o010"]),  # NRC_IMAGE
         (
             "jw04225_20241213t150701_pool",
             ["-i", "o001", "o002"],
         ),  # This pair of pools test the DMS flag usage to prevent o-type ASNs when a background c-type candidate is attached to the science exposure.
         ("jw04225_20241213t150701DMS_pool", ["--DMS", "-i", "o001", "o002"]),
-        ("jw04237_20250321t192812_dms_pool", ["--DMS"]),  # Lvl 3 MIRI MRS BKG with DMS
         ("jw04462_20250318t100414_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
         (
             "jw05554_20250528t204800_c1012_pool",
@@ -190,15 +188,17 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
         ("jw01257_20221201t192226_pool", []),
         ("jw01288_c1005_mostilno12_pool", ["-i", "o003", "c1001", "c1005"]),  # JP-3230
         ("jw01290_20230304t140931_pool", []),
-        ("jw01411_20250317t143327_pool", ["--DMS"]),  # Coron 5-POINT-SMALL-GRID, DMS for BKG
+        ("jw01480_20250319t173819_pool", []),  # NRC_GRISM, NRC_TSIMAGE, NRC_TSGRISM
         ("jw01493_20230307t040130_pool", []),
         ("jw02064_20230302t112350_pool", []),
         (
             "jw02739_20230710t150016_pool",
             ["-i", "c1000"],
         ),  # This association tests the Asn_Lv3ImageMosaic rule
+        ("jw02739_20230710t150016_o010_pool", ["-i", "o010"]),  # NRC_IMAGE
         ("jw03855_20241103t042455_pool", []),
         ("jw04237_20250321t192812_pool", []),  # Lvl 3 MIRI MRS BKG
+        ("jw04237_20250321t192812_dms_pool", ["--DMS"]),  # Lvl 3 MIRI MRS BKG with DMS
     ],
     ids=parfunc,
 )
