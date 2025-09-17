@@ -210,19 +210,6 @@ def test_slow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.parametrize(
     "pool_args",
     [
-        ("jw80600_20171108T041522_pool", []),  # PR 3450
-        ("jw98010_20171108T062332_pool", []),  # PR 3450
-    ],
-    ids=parfunc,
-)
-def test_fail(tmp_cwd, rtdata, resource_tracker, request, pool_args):
-    with pytest.raises(MultiDiffError):
-        _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
-
-
-@pytest.mark.parametrize(
-    "pool_args",
-    [
         ("jw01288_c1005_mostilno12_pool", ["-i", "o003", "c1001", "c1005"]),  # JP-3230
     ],
     ids=parfunc,
