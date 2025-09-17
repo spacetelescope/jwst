@@ -8,7 +8,7 @@ from glob import glob
 
 import pytest
 
-from jwst.associations.lib.diff import MultiDiffError, compare_asn_files
+from jwst.associations.lib.diff import compare_asn_files
 from jwst.associations.main import Main as asn_generate
 
 # Mark all tests in this module
@@ -189,6 +189,7 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
         ("jw01192_o008_pool", ["--DMS", "-i", "o008"]),  # This pool checks imprint behavior.
         ("jw01194_20230115t113819_pool", ["--DMS"]),  # This pool checks coronagraphy associations
         ("jw01257_20221201t192226_pool", []),
+        ("jw01288_c1005_mostilno12_pool", ["-i", "o003", "c1001", "c1005"]),  # JP-3230
         ("jw01290_20230304t140931_pool", []),
         ("jw01411_20250317t143327_pool", []),  # Coron 5-POINT-SMALL-GRID
         ("jw01493_20230307t040130_pool", []),
@@ -205,16 +206,3 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
 @pytest.mark.slow
 def test_slow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
-
-
-@pytest.mark.parametrize(
-    "pool_args",
-    [
-        ("jw01288_c1005_mostilno12_pool", ["-i", "o003", "c1001", "c1005"]),  # JP-3230
-    ],
-    ids=parfunc,
-)
-@pytest.mark.slow
-def test_fslow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
-    with pytest.raises(MultiDiffError):
-        _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
