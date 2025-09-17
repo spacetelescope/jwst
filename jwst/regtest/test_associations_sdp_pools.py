@@ -187,11 +187,10 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     "pool_args",
     [
         ("jw01192_o008_pool", ["--DMS", "-i", "o008"]),  # This pool checks imprint behavior.
-        ("jw01194_20230115t113819_pool", ["--DMS"]),  # This pool checks coronagraphy associations
         ("jw01257_20221201t192226_pool", []),
         ("jw01288_c1005_mostilno12_pool", ["-i", "o003", "c1001", "c1005"]),  # JP-3230
         ("jw01290_20230304t140931_pool", []),
-        ("jw01411_20250317t143327_pool", []),  # Coron 5-POINT-SMALL-GRID
+        ("jw01411_20250317t143327_pool", ["--DMS"]),  # Coron 5-POINT-SMALL-GRID, DMS for BKG
         ("jw01493_20230307t040130_pool", []),
         ("jw02064_20230302t112350_pool", []),
         (
