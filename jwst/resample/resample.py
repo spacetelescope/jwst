@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 
 import numpy as np
-from spherical_geometry.polygon import SphericalPolygon
+from sphersgeo import ArcString, MultiSphericalPoint, SphericalPolygon
 from stcal.resample import Resample
 from stcal.resample.utils import is_imaging_wcs
 from stdatamodels.jwst import datamodels
@@ -883,7 +883,10 @@ def compute_image_pixel_area(wcs):
     world = wcs(*center)
     wcenter = (world[spatial_idx[0]], world[spatial_idx[1]])
 
-    sky_area = SphericalPolygon.from_radec(ra, dec, center=wcenter).area()
+    sky_area = SphericalPolygon(
+        ArcString(MultiSphericalPoint.from_lonlat(np.stack([ra, dec], axis=1))),
+        interior_point=wcenter,
+    ).area
     if sky_area > 2 * np.pi:
         log.warning(
             "Unexpectedly large computed sky area for an image. Setting area to: 4*Pi - area"
