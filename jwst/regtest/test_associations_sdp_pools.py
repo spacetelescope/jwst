@@ -21,12 +21,22 @@ pool_regex = re.compile(r"(?P<proposal>jw.+?)_(?P<versionid>.+)_pool")
 def parfunc(x):
     """
     For readable param ids.
-    ``x`` is tuple of ``(pool, args)``.
+
+    Parameters
+    ----------
+    x : tuple
+        Tuple of ``(pool, args)``.
+
+    Returns
+    -------
+    param_id : str
+        Just the pool.
     """
     return x[0]
 
 
 def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
+    """Worker test function for associations regression tests."""
     pool, args = pool_args
     proposal, version_id = pool_regex.match(pool).group("proposal", "versionid")
 
@@ -99,7 +109,6 @@ def _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args):
         ),
         pytest.param(("jw05204_20250308t202944_pool", []), id="pool_002_image_miri"),
     ],
-    ids=parfunc,
 )
 def test_std(_jail, rtdata, resource_tracker, request, pool_args):
     _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
@@ -138,7 +147,6 @@ def test_std(_jail, rtdata, resource_tracker, request, pool_args):
             id="pool_034_wfss_parallel_NIRCAM_ROW_ONLY",
         ),  # Only row grism and direct image, but no column grism image.
     ],
-    ids=parfunc,
 )
 @pytest.mark.slow
 def test_sslow(_jail, rtdata, resource_tracker, request, pool_args):
@@ -186,7 +194,7 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
     [
         ("jw01192_o008_pool", ["--DMS", "-i", "o008"]),  # This pool checks imprint behavior.
         ("jw01257_20221201t192226_pool", []),
-        ("jw01288_c1005_mostilno12_pool", ["-i", "o003", "c1001", "c1005"]),  # JP-3230
+        ("jw01288_2025_c1005_mostilno12_pool", ["-i", "o003", "c1001", "c1005"]),  # JP-3230
         ("jw01290_20230304t140931_pool", []),
         ("jw01480_20250319t173819_pool", []),  # NRC_GRISM, NRC_TSIMAGE, NRC_TSGRISM
         ("jw01493_20230307t040130_pool", []),
