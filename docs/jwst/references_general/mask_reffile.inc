@@ -4,7 +4,7 @@ MASK Reference File
 -------------------
 
 :REFTYPE: MASK
-:Data model: `~jwst.datamodels.MaskModel`
+:Data model: `~stdatamodels.jwst.datamodels.MaskModel`
 
 The MASK reference file contains pixel-by-pixel DQ flag values that indicate
 problem conditions.

@@ -77,7 +77,7 @@ intersphinx_mapping = {
     'stdatamodels': ('https://stdatamodels.readthedocs.io/en/latest/', None),
     'stcal': ('https://stcal.readthedocs.io/en/latest/', None),
     'stpipe': ('https://stpipe.readthedocs.io/en/latest/', None),
-    'drizzle': ('https://drizzlepac.readthedocs.io/en/latest/', None),
+    'drizzle': ('https://spacetelescope-drizzle.readthedocs.io/en/latest/', None),
     'tweakwcs': ('https://tweakwcs.readthedocs.io/en/latest/', None),
 }
 

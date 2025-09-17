@@ -4,7 +4,7 @@ TSOPHOT Reference File
 ----------------------
 
 :REFTYPE: TSOPHOT
-:Data model: `~jwst.datamodels.TsoPhotModel`
+:Data model: `~stdatamodels.jwst.datamodels.TsoPhotModel`
 
 The TSOPHOT reference file contains photometry aperture radii for
 TSO imaging observation modes.

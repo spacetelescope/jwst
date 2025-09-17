@@ -1,0 +1,1 @@
+Set ``bright_use_group1`` to True by default. Flag any affected pixels with the FLUX_ESTIMATED flag in the pixeldq image.

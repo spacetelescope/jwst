@@ -4,7 +4,7 @@ DFLAT Reference File
 --------------------
 
 :REFTYPE: DFLAT
-:Data model: `~jwst.datamodels.NirspecFlatModel`
+:Data model: `~stdatamodels.jwst.datamodels.NirspecFlatModel`
 
 .. include:: ../references_general/dflat_selection.inc
 
@@ -45,4 +45,3 @@ The flat field values in this table are used to account for a wavelength-depende
 much finer scale than given by the values in the SCI array.  There is a single row in
 this table, which contains 1-D arrays of wavelength and flat-field values.
 The same wavelength-dependent value is applied to all pixels in a quadrant.
-

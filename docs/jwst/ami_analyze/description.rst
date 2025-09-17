@@ -138,7 +138,7 @@ the addition of the association candidate ID and the "_ami-oi", "_amimulti-oi", 
 
 Interferometric observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiOIModel`
+:Data model: `~stdatamodels.jwst.datamodels.AmiOIModel`
 :File suffix: _ami-oi.fits, _amimulti-oi.fits
 
 The inteferometric observables are saved as OIFITS files, a registered FITS format
@@ -161,7 +161,7 @@ the number of integrations: "PISTONS", "PIST_ERR", "VISAMP", "VISAMPERR", "VISPH
 
 LG model parameters
 ^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiLgFitModel`
+:Data model: `~stdatamodels.jwst.datamodels.AmiLgFitModel`
 :File suffix: _amilg.fits
 
 The _amilg.fits output file contains the cropped and cleaned data, model, and residuals (data - model) as well as

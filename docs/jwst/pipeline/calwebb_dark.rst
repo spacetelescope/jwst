@@ -36,7 +36,7 @@ pipeline, the order of steps is a bit different for MIRI exposures.
 |                                       | :ref:`rscd <rscd_step>`                 |
 +---------------------------------------+-----------------------------------------+
 
-.. [1] By default, the parameter reference `pars-darkpipeline`
+.. [1] By default, the parameter reference ``pars-darkpipeline``
    retrieved from CRDS will skip the :ref:`ipc <ipc_step>` step.
 
 Arguments
@@ -49,7 +49,7 @@ Inputs
 4D raw data
 +++++++++++
 
-:Data model: `~jwst.datamodels.RampModel`
+:Data model: `~stdatamodels.jwst.datamodels.RampModel`
 :File suffix: _uncal
 
 The input to ``DarkPipeline`` is a single raw dark exposure,
@@ -62,7 +62,7 @@ Outputs
 4D corrected ramp
 +++++++++++++++++
 
-:Data model: `~jwst.datamodels.RampModel`
+:Data model: `~stdatamodels.jwst.datamodels.RampModel`
 :File suffix: _dark
 
 Result of applying all pipeline steps listed above.

@@ -1469,7 +1469,8 @@ def create_extraction(
     are determined collectively, then multiple integrations, if present,
     are each extracted separately.
 
-    The output model must be a `MultiSpecModel` or `TSOMultiSpecModel`,
+    The output model must be a `~stdatamodels.jwst.datamodels.MultiSpecModel`
+    or `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`,
     created before calling this function, and passed as ``output_model``.
     It is updated in place, with new spectral tables appended as they are created.
 
@@ -1495,7 +1496,7 @@ def create_extraction(
        5. Set a DQ array, with DO_NOT_USE flags set where the
           flux is NaN.
        6. Create a spectral table to contain all extracted values
-          and store it in a `SpecModel`.
+          and store it in a `~stdatamodels.jwst.datamodels.SpecModel`.
        7. Apply the aperture correction to the spectral table, if
           available.
        8. Append the new SpecModel to the output_model.

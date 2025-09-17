@@ -345,8 +345,8 @@ def make_tweakreg_catalog(
 
     Parameters
     ----------
-    model : `~jwst.datamodels.ImageModel`
-        The input `~jwst.datamodels.ImageModel` of a single image.  The input image is
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
+        The input `~stdatamodels.jwst.datamodels.ImageModel` of a single image.  The input image is
         assumed to be background subtracted.
     snr_threshold : float
         The signal-to-noise ratio per pixel above the ``background`` for

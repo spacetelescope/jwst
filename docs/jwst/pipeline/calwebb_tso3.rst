@@ -44,7 +44,7 @@ Inputs
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _calints
 
 The input to ``calwebb_tso3`` is in the form of an ASN file that lists multiple
@@ -70,7 +70,7 @@ Outputs
 3D CR-flagged images
 ^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _crfints
 
 If the :ref:`outlier_detection <outlier_detection_step>` step is applied, a new version
@@ -92,7 +92,7 @@ source-based, using the output product name specified in the ASN file, e.g.
 
 1D extracted spectral data
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.MultiSpecModel`
+:Data model: `~stdatamodels.jwst.datamodels.MultiSpecModel`
 :File suffix: _x1dints
 
 For spectroscopic TS observations, the :ref:`extract_1d <extract_1d_step>` step is applied to

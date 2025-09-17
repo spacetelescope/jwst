@@ -537,12 +537,12 @@ def get_soss_wavemaps(
 
     Returns
     -------
-    wavemaps : np.ndarray
+    wavemaps : ndarray
         The 2D wavemaps. Will have shape (n_orders, array_x, array_y) with orders 1, 2, etc. being
         the elements of the first dimension. Wavemaps for all orders defined in the reference file
         will be returned.
-    traces : np.ndarray, optional
-        The corresponding 1D traces (if `spectraces` is True).
+    traces : ndarray, optional
+        The corresponding 1D traces (if ``spectraces`` is True).
     """
     if refmodel is None:
         refmodel = retrieve_default_pastasoss_model()

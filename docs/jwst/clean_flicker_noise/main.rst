@@ -52,8 +52,8 @@ Note that a user may also supply their own mask image as input to the step,
 in which case the process of creating a mask is skipped. The step parameter
 ``user_mask`` is used to specify an input mask.  If specified, the input
 mask must contain a datamodel matching the shape of a 'rate' or 'rateints'
-file generated for the input science data (either `~jwst.datamodels.ImageModel`
-or `~jwst.datamodels.CubeModel`).  To generate a custom mask, it may be
+file generated for the input science data (either `~stdatamodels.jwst.datamodels.ImageModel`
+or `~stdatamodels.jwst.datamodels.CubeModel`).  To generate a custom mask, it may be
 easiest to save the mask output from a default run of the ``clean_flicker_noise``
 step on the input data, then modify it as needed.
 

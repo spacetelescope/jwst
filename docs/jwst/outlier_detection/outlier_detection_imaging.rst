@@ -107,7 +107,7 @@ Control over this memory model happens
 with the use of the ``in_memory`` parameter, which defaults to True.
 The full impact of setting this parameter to `False` includes:
 
-#. The input :py:class:`~jwst.datamodels.library.ModelLibrary` object is loaded with `on_disk=True`.
+#. The input :py:class:`~jwst.datamodels.library.ModelLibrary` object is loaded with ``on_disk=True``.
    This ensures that input models are loaded into memory one at at time,
    and saved to a temporary file when not in use; these read-write operations are handled internally by
    the :py:class:`~jwst.datamodels.library.ModelLibrary` object.

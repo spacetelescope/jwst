@@ -44,17 +44,20 @@ def do_correction(output, bright_use_group1=False):
             # signal in group2-group1
             svals = (output.groupdq[:, 2, :, :] & dqflags.group["SATURATED"]) > 0
             tvals = output.groupdq[:, 0, :, :]
-            tvals[~svals] = np.bitwise_or(
-                (output.groupdq[:, 0, :, :])[~svals], dqflags.group["DO_NOT_USE"]
-            )
-            output.groupdq[:, 0, :, :] = tvals
+            tvals[~svals] |= dqflags.group["DO_NOT_USE"]
+
+            # also set a FLUX_ESTIMATED flag in the 2D pixeldq image
+            # for any group1 pixels that were kept
+            any_kept = np.any(svals, axis=0)
+            output.pixeldq[any_kept] |= dqflags.pixel["FLUX_ESTIMATED"]
+
+            any_good_kept = (output.pixeldq[any_kept] & dqflags.pixel["DO_NOT_USE"]) == 0
             log.info(
-                f"Number of bright pixels with first group not set to DO_NOT_USE, #{np.sum(svals)}"
+                "Number of usable bright pixels with first group "
+                f"not set to DO_NOT_USE: {np.sum(any_good_kept)}"
             )
         else:
-            output.groupdq[:, 0, :, :] = np.bitwise_or(
-                output.groupdq[:, 0, :, :], dqflags.group["DO_NOT_USE"]
-            )
+            output.groupdq[:, 0, :, :] |= dqflags.group["DO_NOT_USE"]
 
         log.debug("FirstFrame Sub: resetting GROUPDQ in first frame to DO_NOT_USE")
         output.meta.cal_step.firstframe = "COMPLETE"

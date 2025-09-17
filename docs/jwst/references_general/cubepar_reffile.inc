@@ -4,7 +4,7 @@ CUBEPAR reference file
 ----------------------
 
 :REFTYPE: CUBEPAR
-:Data models: `~jwst.datamodels.MiriIFUCubeParsModel`, `~jwst.datamodels.NirspecIFUCubeParsModel`
+:Data models: `~stdatamodels.jwst.datamodels.MiriIFUCubeParsModel`, `~stdatamodels.jwst.datamodels.NirspecIFUCubeParsModel`
 
 The CUBEPAR reference file contains parameter values used to construct
 the output IFU cubes.
@@ -30,18 +30,18 @@ MIRI Reference File Format
 ++++++++++++++++++++++++++
 The MIRI CUBEPAR reference files are FITS format, with  5  BINTABLE extensions.
 The FITS primary data array is assumed to be empty.
-The format and content of the MIRI CUBEPAR reference file 
+The format and content of the MIRI CUBEPAR reference file
 
-===================  ========  ===========  
-EXTNAME              XTENSION  Dimensions   
-===================  ========  ===========  
-CUBEPAR              BINTABLE  TFIELDS = 6  
-CUBEPAR_MSM          BINTABLE  TFIELDS = 6  
-MULTICHANNEL_MSM     BINTABLE  TFIELDS = 5  
-CUBEPAR_EMSM         BINTABLE  TFIELDS = 5  
+===================  ========  ===========
+EXTNAME              XTENSION  Dimensions
+===================  ========  ===========
+CUBEPAR              BINTABLE  TFIELDS = 6
+CUBEPAR_MSM          BINTABLE  TFIELDS = 6
+MULTICHANNEL_MSM     BINTABLE  TFIELDS = 5
+CUBEPAR_EMSM         BINTABLE  TFIELDS = 5
 MULTICHANNEL_EMSM    BINTABLE  TFIELDS = 4
 MULTICHANNEL_DRIZ    BINTABLE  TFIELDS = 1
-===================  ========  ===========  
+===================  ========  ===========
 
 
 NIRSPec Reference File Format
@@ -49,7 +49,7 @@ NIRSPec Reference File Format
 The NIRSpec CUBEPAR reference files are FITS format, with 9  BINTABLE extensions.
 
 ====================  ========  ===========
-EXTNAME               XTENSION  Dimensions 
+EXTNAME               XTENSION  Dimensions
 ====================  ========  ===========
 CUBEPAR               BINTABLE  TFIELDS = 6
 CUBEPAR_MSM           BINTABLE  TFIELDS = 6
@@ -69,11 +69,11 @@ first for the MIRI  reference file and then for NIRSpec.
 
 These reference files contain tables for each wavelength band giving the spatial
 and spectral size, and the size of the region of interest (ROI) to use to
-construct an IFU cube.  If only one band is used to construct the IFU cube then the *CUBEPAR* and *CUBEPAR_MSM* or *CUBE_EMSM* tables are used. These types of cubes will have a linear - wavelength dimension.  
+construct an IFU cube.  If only one band is used to construct the IFU cube then the *CUBEPAR* and *CUBEPAR_MSM* or *CUBE_EMSM* tables are used. These types of cubes will have a linear - wavelength dimension.
 If more than one wavelength band is used to build the IFU cube then the MULTICHANNEL (MIRI)
 or MULTICHAN (NIRSPEC) tables are used o set the spectral and spatial roi size, and the wavelength dependent weighting function parameters.
 For multi-band IFU cubes  then the final
-spatial size will be the smallest one from the list of input bands and these cubes will have a non-linear wavelength dimension. 
+spatial size will be the smallest one from the list of input bands and these cubes will have a non-linear wavelength dimension.
 
 
 The MIRI reference table descriptions:
@@ -105,4 +105,3 @@ The NIRSPEC reference table descriptions:
 - **MULTICHAN_MED_EMSM** table is used for the EMSM weighting and  contains the wavelengths and associated region of interest size to use when IFU cubes are created from the medium resolution grating and the final IFU Cube output has a varying spectral scale.
 
 - **MULTICHAN_HIGH_EMSM** table is used for the EMSM weighting and  contains the wavelengths and associated region of interest size to use when IFU cubes are created from the high resolution gratings and the final IFU Cube output has a varying spectral scale.
-

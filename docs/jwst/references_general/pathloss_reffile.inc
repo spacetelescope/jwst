@@ -4,7 +4,7 @@ PATHLOSS Reference File
 -----------------------
 
 :REFTYPE: PATHLOSS
-:Data model: `~jwst.datamodels.PathlossModel`, `~jwst.datamodels.MirLrsPathlossModel`
+:Data model: `~stdatamodels.jwst.datamodels.PathlossModel`, `~stdatamodels.jwst.datamodels.MirLrsPathlossModel`
 
 The PATHLOSS reference file contains correction factors as functions of
 source position in the aperture and wavelength.
@@ -73,10 +73,10 @@ slices. The structure of the FITS file is as follows:
 ==== =======  ==========  =============  ==========
 HDU  EXTNAME  XTENSION     Dimensions    Data type
 ==== =======  ==========  =============  ==========
-1    PS       ImageHDU     21 x 21 x 21  float64   
-2    PSVAR    ImageHDU     21 x 21 x 21  float64   
-3    UNI      ImageHDU     21            float64   
-4    UNIVAR   ImageHDU     21            float64   
+1    PS       ImageHDU     21 x 21 x 21  float64
+2    PSVAR    ImageHDU     21 x 21 x 21  float64
+3    UNI      ImageHDU     21            float64
+4    UNIVAR   ImageHDU     21            float64
 ==== =======  ==========  =============  ==========
 
 NIRSpec Fixed Slit
@@ -86,24 +86,24 @@ The NIRSpec Fixed Slit reference file has the following FITS structure:
 ==== ======= ====== ========== =============  ==========
 HDU  EXTNAME EXTVER XTENSION    Dimensions    Data type
 ==== ======= ====== ========== =============  ==========
-1    PS        1    ImageHDU    21 x 21 x 21  float64   
-2    PSVAR     1    ImageHDU    21 x 21 x 21  float64   
-3    UNI       1    ImageHDU    21            float64   
-4    UNIVAR    1    ImageHDU    21            float64   
-5    PS        2    ImageHDU    21 x 21 x 21  float64   
-6    PSVAR     2    ImageHDU    21 x 21 x 21  float64   
-7    UNI       2    ImageHDU    21            float64   
-8    UNIVAR    2    ImageHDU    21            float64   
-9    PS        3    ImageHDU    21 x 21 x 21  float64   
-10   PSVAR     3    ImageHDU    21 x 21 x 21  float64   
-11   UNI       3    ImageHDU    21            float64   
-12   UNIVAR    3    ImageHDU    21            float64   
-13   PS        4    ImageHDU    21 x 21 x 21  float64   
-14   PSVAR     4    ImageHDU    21 x 21 x 21  float64   
-15   UNI       4    ImageHDU    21            float64   
-16   UNIVAR    4    ImageHDU    21            float64   
+1    PS        1    ImageHDU    21 x 21 x 21  float64
+2    PSVAR     1    ImageHDU    21 x 21 x 21  float64
+3    UNI       1    ImageHDU    21            float64
+4    UNIVAR    1    ImageHDU    21            float64
+5    PS        2    ImageHDU    21 x 21 x 21  float64
+6    PSVAR     2    ImageHDU    21 x 21 x 21  float64
+7    UNI       2    ImageHDU    21            float64
+8    UNIVAR    2    ImageHDU    21            float64
+9    PS        3    ImageHDU    21 x 21 x 21  float64
+10   PSVAR     3    ImageHDU    21 x 21 x 21  float64
+11   UNI       3    ImageHDU    21            float64
+12   UNIVAR    3    ImageHDU    21            float64
+13   PS        4    ImageHDU    21 x 21 x 21  float64
+14   PSVAR     4    ImageHDU    21 x 21 x 21  float64
+15   UNI       4    ImageHDU    21            float64
+16   UNIVAR    4    ImageHDU    21            float64
 ==== ======= ====== ========== =============  ==========
- 
+
 HDU's 1--4 are for the S200A1 aperture, 5--8 are for S200A2,
 9--12 are for S200B1, and 13--16 are for S1600A1.  Currently there is
 no reference data for the S400A1 aperture.
@@ -118,14 +118,14 @@ The FITS file has the following structure:
 ==== ======= ====== ========== =============  ==========
 HDU  EXTNAME EXTVER XTENSION    Dimensions    Data type
 ==== ======= ====== ========== =============  ==========
-1    PS        1    ImageHDU    21 x 63 x 21  float64   
-2    PSVAR     1    ImageHDU    21 x 63 x 21  float64   
-3    UNI       1    ImageHDU    21            float64   
-4    UNIVAR    1    ImageHDU    21            float64   
-5    PS        2    ImageHDU    21 x 63 x 21  float64   
-6    PSVAR     2    ImageHDU    21 x 63 x 21  float64   
-7    UNI       2    ImageHDU    21            float64   
-8    UNIVAR    2    ImageHDU    21            float64   
+1    PS        1    ImageHDU    21 x 63 x 21  float64
+2    PSVAR     1    ImageHDU    21 x 63 x 21  float64
+3    UNI       1    ImageHDU    21            float64
+4    UNIVAR    1    ImageHDU    21            float64
+5    PS        2    ImageHDU    21 x 63 x 21  float64
+6    PSVAR     2    ImageHDU    21 x 63 x 21  float64
+7    UNI       2    ImageHDU    21            float64
+8    UNIVAR    2    ImageHDU    21            float64
 ==== ======= ====== ========== =============  ==========
 
 NIRISS SOSS
@@ -136,7 +136,7 @@ The structure of the FITS file is as follows:
 ==== ======= ========== =============  ==========
 HDU  EXTNAME XTENSION    Dimensions    Data type
 ==== ======= ========== =============  ==========
-1    PS      ImageHDU   17 x 2040 x 1  float32   
+1    PS      ImageHDU   17 x 2040 x 1  float32
 ==== ======= ========== =============  ==========
 
 The PS extension contains a 3-D array of correction values.

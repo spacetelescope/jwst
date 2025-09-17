@@ -47,10 +47,10 @@ The simplest way to run model blender only requires calling a single interface:
   from jwst.model_blender import blendmeta
   blendmeta.blendmodels(product, input_list)
 
-where
+where:
 
-  - `product`: the datamodel for the already combined product
-  - `input_list`: list of input datamodels used to create the `product`
+  - ``product``: the datamodel for the already combined product
+  - ``input_list``: list of input datamodels used to create the ``product``
 
 
 The output product will end up with new metadata attribute values and a new ``hdrtab``
@@ -60,7 +60,7 @@ to disk.
 Using ModelBlender
 ------------------
 
-Alternatively, metadata blending can be done incrementally by using `ModelBlender`
+Alternatively, metadata blending can be done incrementally by using `~jwst.model_blender.ModelBlender`
 to accumulate metadata from several models and then blending the result into an
 output model.
 
@@ -72,7 +72,7 @@ output model.
        blender.accumulate(model)
    blender.finalize_model(product)
 
-This produces a ``product`` identical to a call to `blendmodels` described above.
+This produces a ``product`` identical to a call to ``blendmodels`` described above.
 
 
 Customizing the behavior

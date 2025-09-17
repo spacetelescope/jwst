@@ -6,7 +6,7 @@ DISTORTION Reference File
 -------------------------
 
 :REFTYPE: DISTORTION
-:Data model: `~jwst.datamodels.DistortionModel`, `~jwst.datamodels.DistortionMRSModel`
+:Data model: `~stdatamodels.jwst.datamodels.DistortionModel`, `~stdatamodels.jwst.datamodels.DistortionMRSModel`
 
 Reference Selection Keywords for DISTORTION
 +++++++++++++++++++++++++++++++++++++++++++

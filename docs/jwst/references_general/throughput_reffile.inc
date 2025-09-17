@@ -4,7 +4,7 @@ THROUGHPUT Reference File
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 :REFTYPE: THROUGHPUT
-:Data model: `~jwst.datamodels.ThroughputModel`
+:Data model: `~stdatamodels.jwst.datamodels.ThroughputModel`
 
 The THROUGHPUT reference file contains throughput data for the filter used
 in the AMI image.
