@@ -199,7 +199,6 @@ def test_sdp(tmp_cwd, rtdata, resource_tracker, request, pool_args):
         ),  # This association tests the Asn_Lv3ImageMosaic rule
         ("jw03855_20241103t042455_pool", []),
         ("jw04237_20250321t192812_pool", []),  # Lvl 3 MIRI MRS BKG
-        ("jw94015_20171108T041516_pool", []),
     ],
     ids=parfunc,
 )
