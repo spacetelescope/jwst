@@ -511,6 +511,7 @@ There are a couple of scenarios to use multiprocessing with the pipeline:
 
    The following example turns on a step's multiprocessing option. Notice only
    one of the steps has multiprocessing turned on.
+
 ::
 
     # SampleScript1
