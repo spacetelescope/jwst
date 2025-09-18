@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.cube_build.CubeBuildStep`
+:Class: `jwst.cube_build.cube_build_step.CubeBuildStep`
 :Alias: cube_build
 
 The ``cube_build`` step takes MIRI or NIRSpec IFU calibrated 2-D images and produces
@@ -13,7 +13,7 @@ The ``cube_build`` step can accept several different forms of input data, includ
 
 #. A single file containing a 2-D IFU image
 
-#. A data model (`~jwst.datamodels.IFUImageModel`) containing a 2-D IFU image
+#. A data model (`~stdatamodels.jwst.datamodels.IFUImageModel`) containing a 2-D IFU image
 
 #. An association table (in json format) containing a list of input files
 
@@ -62,7 +62,7 @@ dispersed by a prism or one of six diffraction gratings.  The NIRSpec IFU gratin
 provide high-resolution and  medium resolution  spectroscopy while the prism yields lower-resolution spectroscopy.
 The NIRSpec detector focal plane consists of two HgCdTe sensor chip assemblies (SCAs). Each SCA is a 2-D array of
 2048 x 2048 pixels.  For low or medium resolution IFU data the 30 slices are imaged on
-a single NIRSpec SCA. In high resolution mode the 30 slices are imaged on the two NIRSpec SCAs. 
+a single NIRSpec SCA. In high resolution mode the 30 slices are imaged on the two NIRSpec SCAs.
 
 
 Terminology
@@ -128,7 +128,7 @@ Linear wavelength IFU cubes are constructed from a single band of data, while no
 created from more than one band of data. If the IFU cubes have a non-linear wavelength dimension
 there will be an added binary extension table to the output fits IFU cube. This extension has
 the label WCS-TABLE and contains the wavelengths for each of the IFU cube wavelength planes. This table follows the
-FITs standard described in, *Representations of spectral coordinates in FITS*, Greisen, et al., **A & A**  446, 747-771, 2006. 
+FITs standard described in, *Representations of spectral coordinates in FITS*, Greisen, et al., **A & A**  446, 747-771, 2006.
 
 The input data to ``cube_build`` can take a variety of forms, including a single file, a data
 model passed from another pipeline step, a list of files in an association table, or a collection of exposures in a
@@ -150,7 +150,7 @@ dimension. The calwebb_spec2 pipeline calls cube_build with
 In the :ref:`calwebb_spec3 <calwebb_spec3>` pipeline, on the other hand, where
 the input can be a collection of data from multiple exposures covering multiple
 bands, the default behavior is to create a set of single-channel cubes. For MIRI,
-for example, this can mean separate cubes for channel 1, 2, 3 and 4. 
+for example, this can mean separate cubes for channel 1, 2, 3 and 4.
 depending on what's included in the input. For NIRSpec this may mean
 multiple cubes, one for each grating+filter combination contained in the input
 collection. The calwebb_spec3 pipeline calls cube_build with
@@ -215,11 +215,11 @@ The string defining the type of IFU is created according to the following rules:
 Algorithm
 ---------
 The type of output IFU cube created depends on which pipeline is being run,
-:ref:`calwebb_spec2 <calwebb_spec2>` or  :ref:`calwebb_spec3 <calwebb_spec3>`, 
+:ref:`calwebb_spec2 <calwebb_spec2>` or  :ref:`calwebb_spec3 <calwebb_spec3>`,
 and if additional
-user provided options are being set  (see the :ref:`arguments` section.). 
-Based on the pipeline setting and any user provided arguments defining the type of cubes to create, the program selects 
-the data from each exposure that should be included in the spectral cube. The  output cube is defined using the WCS 
+user provided options are being set  (see the :ref:`arguments` section.).
+Based on the pipeline setting and any user provided arguments defining the type of cubes to create, the program selects
+the data from each exposure that should be included in the spectral cube. The  output cube is defined using the WCS
 information of all the input data. The input data are mapped to the output frame based on the wcs information that is
 filled in by the :ref:`assign_wcs <assign_wcs_step>` step, this mapping includes any dither offsets.
 Therefore, the default output cube WCS defines a field-of-view that encompasses the undistorted footprints on
@@ -231,7 +231,7 @@ for each dimension for each band. If the output IFU cube contains more than one 
 output scale corresponds to the channel with the smallest scale. In the case of NIRSpec only gratings of the
 same resolution are combined together in an IFU cube. The default output spatial coordinate system is right ascension-declination.
 There is an option to create IFU cubes in the coordinate system of the NIRSpec or MIRI MIRS local ifu slicer plane (see
-:ref:`arguments`, coord_system='internal_cal'). 
+:ref:`arguments`, coord_system='internal_cal').
 
 The pixels on each exposure that are to be  included in the output are mapped to the cube coordinate system. This
 pixel mapping is determined via a series of chained mapping transformations derived from the WCS of each input image and the
@@ -359,7 +359,7 @@ where the weighting ``weighting=emsm``  is:
 
 :math:`w_i =e\frac{ -({xnormalized}_i^2 + {ynormalized}_i^2 + {znormalized}_i^2)} {scale factor}`
 
-The *scale factor* = *scale rad/cdelt1*, where *scale rad* is read in from the reference file and varies with wavelength. 
+The *scale factor* = *scale rad/cdelt1*, where *scale rad* is read in from the reference file and varies with wavelength.
 
 If the alternative weighting function (set by ``weighting = msm``) is selected then:
 
@@ -367,4 +367,3 @@ If the alternative weighting function (set by ``weighting = msm``) is selected t
 
 In this weighting function the default value for *p* is read in from the cubepar reference file. It can also be set
 by the argument ``weight_power=value``.
-

@@ -14,4 +14,4 @@ Resampling Spectral Data
    resample_spec.rst
 
 See the :ref:`resample step <resample_step>` for full API documentation
-for the the `resample` module.
+for the the ``resample`` module.

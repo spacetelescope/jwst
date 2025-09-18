@@ -351,7 +351,7 @@ white_light
 General
 -------
 
-- Relax upper pin on `numpy`, allowing installation with `numpy>=2.0`. (`#8718
+- Relax upper pin on `numpy`, allowing installation with ``numpy>=2.0``. (`#8718
   <https://github.com/spacetelescope/jwst/issues/8718>`_)
 - Added more code style rules (`#9076
   <https://github.com/spacetelescope/jwst/issues/9076>`_)
@@ -913,7 +913,7 @@ outlier_detection (image3, tso3, spec3, coron3)
 - Moved median computers out of the jwst repository and into stcal. (`#8840
   <https://github.com/spacetelescope/jwst/issues/8840>`_)
 - Update documentation to clarify the interaction between pipeline-level and
-  step-level `--in_memory` flags. (`#8851
+  step-level ``--in_memory`` flags. (`#8851
   <https://github.com/spacetelescope/jwst/issues/8851>`_)
 - Avoid modifying input and saving duplicate files when resample_data=False.
   (`#8853 <https://github.com/spacetelescope/jwst/issues/8853>`_)
@@ -1000,13 +1000,13 @@ ami_average
 assign_mtwcs
 ------------
 
-- Step now uses `ModelLibrary` to handle accessing models consistently
+- Step now uses ``ModelLibrary`` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]
 
 assign_wcs
 ----------
 
-- Moved `update_s_region_imaging`, `update_s_region_keyword`, and `wcs_from_footprints`
+- Moved ``update_s_region_imaging``, ``update_s_region_keyword``, and ``wcs_from_footprints``
   into stcal. [#8624]
 
 - Add helper functions to copy only the necessary parts of the WCS so that
@@ -1026,7 +1026,7 @@ associations
 - Excluded nearby background candidates from NIRSpec fixed slit associations
   for S1600A1 with 5 point dithers, to reduce overlap between background nods
   and science exposure. [#8744]
-  
+
 - Added association rule for level 3 image mosaic candidates. [#8798]
 
 badpix_selfcal
@@ -1076,7 +1076,7 @@ cube_build
 datamodels
 ----------
 
-- Added `ModelLibrary` class to allow passing on-disk models between steps in the
+- Added ``ModelLibrary`` class to allow passing on-disk models between steps in the
   image3 pipeline. [#8683]
 
 dark_current
@@ -1089,7 +1089,7 @@ documentation
 
 - Add changelog to documentation. [#8716]
 
-- Updated description of association keyword `expname`: including path information
+- Updated description of association keyword ``expname``: including path information
   in addition to the filename is discouraged, but allowed. [#8789]
 
 dq_init
@@ -1223,7 +1223,7 @@ outlier_detection
   images. Intermediate files now have suffix ``outlier_s2d`` and are saved to
   the output directory alongside final products. [#8735]
 
-- For imaging modes, step now uses `ModelLibrary` to handle accessing models consistently
+- For imaging modes, step now uses ``ModelLibrary`` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all output science, error,
@@ -1253,14 +1253,14 @@ photom
 pipeline
 --------
 
-- Updated `calwebb_image3` to use `ModelLibrary` instead of `ModelContainer`, added
-  optional `on_disk` parameter to govern whether models in the library should be stored
+- Updated ``calwebb_image3`` to use ``ModelLibrary`` instead of ``ModelContainer``, added
+  optional ``on_disk`` parameter to govern whether models in the library should be stored
   in memory or on disk. [#8683]
 
-- Updated ``calwebb_spec2`` to run ``nsclean`` on NIRSpec imprint and background 
+- Updated ``calwebb_spec2`` to run ``nsclean`` on NIRSpec imprint and background
   association members. [#8786, #8809]
 
-- Updated `calwebb_spec3` to not save the `pixel_replacement` output by default.[#8765]
+- Updated ``calwebb_spec3`` to not save the ``pixel_replacement`` output by default.[#8765]
 
 - Replaced deep copies of NIRSpec WCS objects within most loops. [#8793]
 
@@ -1297,7 +1297,7 @@ resample
   changed to use values in the top-level ASDF structure if the values in the WCS
   are ``None``. [#8698]
 
-- Step now uses `ModelLibrary` to handle accessing models consistently
+- Step now uses ``ModelLibrary`` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]
 
 - Ensure that NaNs and DO_NOT_USE flags match up in all input data before
@@ -1359,17 +1359,17 @@ set_telescope_pointing
 skymatch
 --------
 
-- Step now uses `ModelLibrary` to handle accessing models consistently
+- Step now uses ``ModelLibrary`` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]
 
 stpipe
 ------
 
-- Removed setting of the `self.skip` attribute in the `record_step_status()` function;
-  added a `query_step_status()` function to use as an alternative to checking
-  `self.skip`. [#8600]
+- Removed setting of the ``self.skip`` attribute in the ``record_step_status()`` function;
+  added a ``query_step_status()`` function to use as an alternative to checking
+  ``self.skip``. [#8600]
 
-- Log jwst version at end of `Step.run`. [#8769]
+- Log jwst version at end of ``Step.run``. [#8769]
 
 superbias
 ---------
@@ -1396,7 +1396,7 @@ tweakreg
 - Removed direct setting of the ``self.skip`` attribute from within the step
   itself. [#8600]
 
-- Step now uses `ModelLibrary` to handle accessing models consistently
+- Step now uses ``ModelLibrary`` to handle accessing models consistently
   whether they are in memory or on disk. [#8683]
 
 1.15.1 (2024-07-08)
@@ -1514,8 +1514,8 @@ emicorr
 exp_to_source
 -------------
 
-- Modified slit sorting to use `source_name` as the key, rather than `source_id`,
-  in order to support changes in `source_id` handling for NIRSpec MOS exposures
+- Modified slit sorting to use ``source_name`` as the key, rather than ``source_id``,
+  in order to support changes in ``source_id`` handling for NIRSpec MOS exposures
   that contain background and virtual slits. [#8442]
 
 - Update the top-level model exposure type from the slit exposure type,
@@ -1662,7 +1662,7 @@ outlier_detection
   finished, unless save_intermediate_results is True. This PR also addressed
   the _i2d files not being saved in the specified output directory. [#8464]
 
-- Removed the setting of `self.skip = True` when the step gets skipped (due to
+- Removed the setting of ``self.skip = True`` when the step gets skipped (due to
   inappropriate inputs), so that the step still executes when called again
   while processing a list of multiple sources. [#8442]
 
@@ -1679,10 +1679,10 @@ outlier_detection
 
 - Fix errors in documentation describing arguments. [#8603]
 
-- Re-enabled saving of blot models when `save_intermediate_results` is True. [#8758]
+- Re-enabled saving of blot models when ``save_intermediate_results`` is True. [#8758]
 
 - Fixed a bug that caused different results from the median calculation when the
-  `in_memory` parameter was set to `True` vs `False`. [#8777]
+  ``in_memory`` parameter was set to `True` vs `False`. [#8777]
 
 pathloss
 --------
@@ -1770,24 +1770,24 @@ resample
   the issue in operation [#8419]
 
 - Update variance handling to propagate resampled variance components with
-  weights that match the science `weight_type`. [#8437]
+  weights that match the science ``weight_type``. [#8437]
 
-- Change `fillval` parameter default from INDEF to NaN [#8488]
+- Change ``fillval`` parameter default from INDEF to NaN [#8488]
 
-- Removed the use of the `drizpars` reference file [#8546]
+- Removed the use of the ``drizpars`` reference file [#8546]
 
 resample_spec
 -------------
 
-- Populate the wavelength array in resampled `Slit` and `MultiSlit` models. [#8374]
+- Populate the wavelength array in resampled ``Slit`` and ``MultiSlit`` models. [#8374]
 
-- Change `fillval` parameter default from INDEF to NaN [#8488]
+- Change ``fillval`` parameter default from INDEF to NaN [#8488]
 
 - Fix a bug resulting in large WCS errors in the resampled image's WCS
   when the slit was closely aligned with the RA direction
   sky. [#8511]
 
-- Removed the use of the `drizpars` reference file [#8546]
+- Removed the use of the ``drizpars`` reference file [#8546]
 
 - Fix a bug resulting in incorrect output spectral WCS for NIRSpec data when
   the first input data set is filled with zero or NaN. [#8562]
@@ -2004,7 +2004,7 @@ extract_1d
 extract_2d
 ----------
 
-- Fixed crash when user provides an integer value for the `slit_name` argument,
+- Fixed crash when user provides an integer value for the ``slit_name`` argument,
   by converting to a string. This change had been done in #8108, but it got undone
   by another PR. [#8272]
 
@@ -2237,7 +2237,7 @@ documentation
 ramp_fitting
 ------------
 
-- Updated the argument description and parameter definition for `maximum_cores`
+- Updated the argument description and parameter definition for ``maximum_cores``
   to accept integer values to be passed to STCAL ramp_fit.py. [#8123]
 
 
@@ -3209,7 +3209,7 @@ other
 - Fix memory leaks in packages that use C code: ``cube_build``, ``wfss_contam``,
   and ``straylight``. [#7493]
 
-- add `opencv-python` to hard dependencies for usage of snowball detection in the jump step in `stcal` [#7499]
+- add ``opencv-python`` to hard dependencies for usage of snowball detection in the jump step in `stcal` [#7499]
 
 outlier_detection
 -----------------
@@ -3928,9 +3928,9 @@ documentation
 - Update the Error Propagation section to include info for the ``resample`` step
   [#6994]
 
-- For the `ModelContainer` method `ind_asn_type` directory information
+- For the ``ModelContainer`` method ``ind_asn_type`` directory information
   is now properly handled if directory information is included as part
-  of the filename for `expname`. [#6985]
+  of the filename for ``expname``. [#6985]
 
 extract_1d
 ----------
@@ -4060,7 +4060,7 @@ source_catalog
 general
 -------
 
-- Update `stpipe` requirement to `>=0.4.1` [#6925]
+- Update ``stpipe`` requirement to ``>=0.4.1`` [#6925]
 
 
 1.6.0 (2022-07-11)
@@ -4099,10 +4099,10 @@ pipeline
   open an ASN file, and improve the construction of lists of the ASN
   members [#6855]
 
-- Fixed the logic used in the `calwebb_tso3` pipeline to check for null
+- Fixed the logic used in the ``calwebb_tso3`` pipeline to check for null
   photometry results. [#6912]
 
-- Check source_ids in `calwebb_spec3` and force into 5 digit positive number,
+- Check source_ids in ``calwebb_spec3`` and force into 5 digit positive number,
   if available [#6915]
 
 - Only apply source_id fix from #6915 to models with multiple
@@ -4161,8 +4161,8 @@ ami_analyze
 ami_average
 -----------
 
-- Updated the step to handle inputs with different sizes for `fit_image` and
-  `resid_image`. Larger inputs are trimmed to match the size of the smallest
+- Updated the step to handle inputs with different sizes for ``fit_image`` and
+  ``resid_image``. Larger inputs are trimmed to match the size of the smallest
   input. [#6870]
 
 associations
@@ -4376,8 +4376,8 @@ associations
 - Added valid optical paths for NRS_LAMP observations to generate
   or exclude associations using lamp, disperser and detector [#6695]
 
-- Include filename extension for `asn_pool` entry, to maintain consistency
-  with `asntable` entry [#6699]
+- Include filename extension for ``asn_pool`` entry, to maintain consistency
+  with ``asntable`` entry [#6699]
 
 - Add constraint on NIRCam TSGRISM exposures, preventing level 2 and 3
   associations for detector NRCBLONG [#6709]
@@ -4482,14 +4482,14 @@ extract_1d
 
 - Propagate non-differentiated errors for IFU mode observations [#6732]
 
-- Remove temporary `soss_atoca` parameter and make ATOCA the default
+- Remove temporary ``soss_atoca`` parameter and make ATOCA the default
   algorithm for SOSS data [#6734]
 
 - Add separate behavior for 2D vs (3D data with only one image)
   by passing appropriate integ value [#6745]
 
 - Allow reference files to specify extraction region for extended
-  sources, modify `bkg_fit` default to None while retaining `poly`
+  sources, modify ``bkg_fit`` default to None while retaining ``poly``
   as default mode [#6793]
 
 flatfield
@@ -4526,15 +4526,15 @@ photom
 pipeline
 --------
 
-- Improve memory performance of `calwebb_detector1` pipeline [#6758]
+- Improve memory performance of ``calwebb_detector1`` pipeline [#6758]
 
-- Update the `calwebb_spec2` pipeline to allow for the creation of an
+- Update the ``calwebb_spec2`` pipeline to allow for the creation of an
   optional WFSS product that's in units of e-/sec [#6783]
 
-- Updated `calwebb_spec2`, `calwebb_spec3`, and `calwebb_tso3` to reorder
-  step processing for SOSS data - `photom` now comes after `extract_1d` [#6734]
+- Updated ``calwebb_spec2``, ``calwebb_spec3``, and ``calwebb_tso3`` to reorder
+  step processing for SOSS data - ``photom`` now comes after ``extract_1d`` [#6734]
 
-- Added ResetStep back into `calwebb_dark` for MIRI exposures [#6798]
+- Added ResetStep back into ``calwebb_dark`` for MIRI exposures [#6798]
 
 ramp_fitting
 ------------
@@ -4916,7 +4916,7 @@ extract_1d
 ----------
 
 - Updated to propagate SRCTYPE keyword during extraction of MIRI LRS
-  fixed-slit inputs that are in `SlitModel` form. [#6212]
+  fixed-slit inputs that are in ``SlitModel`` form. [#6212]
 
 - Assign 0-indexed integration number to INT_NUM if input
   INT_TIMES table is empty. [#6369]
@@ -4928,10 +4928,10 @@ extract_1d
 - Added the ``center_xy`` step argument to allow user-specified x/y
   center of IFU extraction apertures [#6503]
 
-- Delivery of new algorithm `ATOCA` for SOSS extraction, along with four new reference
+- Delivery of new algorithm ``ATOCA`` for SOSS extraction, along with four new reference
   files: speckernel, specprofile, spectrace and wavemap. [#6467]
 
-- Added step parameter `soss_atoca` to turn ATOCA algorithm on, with box extraction
+- Added step parameter ``soss_atoca`` to turn ATOCA algorithm on, with box extraction
   the default algorithm [#6551]
 
 flatfield
@@ -4995,14 +4995,14 @@ pathloss
 persistence
 -----------
 
-- Changed logger from root to `__name__` [#6389]
+- Changed logger from root to ``__name__`` [#6389]
 
 pipeline
 --------
 
-- Added wfss_contam step to `calwebb_spec2` pipeline flow for WFSS modes [#6207]
+- Added wfss_contam step to ``calwebb_spec2`` pipeline flow for WFSS modes [#6207]
 
-- Changed logger from root to `__name__` for Ami3, Detector1, Dark, and Guider
+- Changed logger from root to ``__name__`` for Ami3, Detector1, Dark, and Guider
   Pipelines [#6389]
 
 - Updated the ``calwebb_spec2`` pipeline to apply the ``pathloss`` step to
@@ -5181,7 +5181,7 @@ datamodels
 
 - Update ``DarkModel`` to use uint32 for DQ array. [#6228]
 
-- Add NOUTPUTS keyword to the `DarkModel` schema. [#6213]
+- Add NOUTPUTS keyword to the ``DarkModel`` schema. [#6213]
 
 lib
 ---
@@ -5961,7 +5961,7 @@ cube_build
 datamodels
 ----------
 
-- Skip serializing `None` in datamodels to be compatible with `asdf>=2.8` [#5371]
+- Skip serializing `None` in datamodels to be compatible with ``asdf>=2.8`` [#5371]
 
 - Implement full class deprecator decorator and use for MIRIRampModel [#5382]
 
@@ -6060,7 +6060,7 @@ pipeline
 ramp_fitting
 ------------
 
-- Update to store output as an `IFUImageModel` for NIRSpec AUTOWAVE exposures
+- Update to store output as an ``IFUImageModel`` for NIRSpec AUTOWAVE exposures
   using the IFU mode. [#5356]
 
 - Update to add 'DO_NOT_USE' DQ flag to pixels with all groups flagged as
@@ -6137,7 +6137,7 @@ white_light
 associations
 ------------
 
-- Add product name override to the `IFUGratingBkg` class, to prevent the default
+- Add product name override to the ``IFUGratingBkg`` class, to prevent the default
   "clear" suffix showing up in NIRSpec IFU product names. [#5326]
 
 barshadow
@@ -6171,7 +6171,7 @@ flat_field
 master_background
 -----------------
 
-- Create new step `MasterBackgroundNrsSlits` step to handle NIRSpec MOS data in `Spec2Pipeline` [#5317]
+- Create new step ``MasterBackgroundNrsSlits`` step to handle NIRSpec MOS data in ``Spec2Pipeline`` [#5317]
 
 - Implement option to save the 2d version of the calculated master background [#5317]
 
@@ -6386,7 +6386,7 @@ master_background
 mrs_imatch
 ----------
 
-- MRSIMatchStep to create its ModelContainers with `iscopy=True` [#5256]
+- MRSIMatchStep to create its ModelContainers with ``iscopy=True`` [#5256]
 
 outlier_detection
 -----------------
@@ -6945,13 +6945,13 @@ pipeline
 - Added FGS_IMAGE to the exposure types to apply resampling in
   calwebb_image2.py [#4421]
 
-- Make the naming and writing out of the resampled results to an `i2d` file
-  in `Image2Pipeline` consistent between config and class invocations [#4333]
+- Make the naming and writing out of the resampled results to an ``i2d`` file
+  in ``Image2Pipeline`` consistent between config and class invocations [#4333]
 
 - Don't try to save the ``cube_build`` result if the step is skipped in the
   ``calwebb_spec2`` pipeline. [#4478]
 
-- Use the `overwrite` option when saving the white-light photometry catalog in
+- Use the ``overwrite`` option when saving the white-light photometry catalog in
   the ``calwebb_tso3`` pipeline. [#4493]
 
 - Fixed error in formatting of example ASN file contents in the documents for
@@ -7138,7 +7138,7 @@ transforms
 
 - Updated all transforms to be consistent with astropy v 4.0.
   Transform classes define now two class variables - ``n_inputs``
-  and `n_outputs``. The variables ``inputs`` and ``outputs`` are
+  and ``n_outputs``. The variables ``inputs`` and ``outputs`` are
   now instance variables (previously they were class variables). [#4216]
 
 
@@ -7265,7 +7265,7 @@ datamodels
 - Add EXP_TYPE and P_EXP_TY keywords to new imaging photom reference file
   data model schemas. [#4068]
 
-- Introduced a flag ``ignore_missing_extensions=True`` to the `DataModel` initializer
+- Introduced a flag ``ignore_missing_extensions=True`` to the ``DataModel`` initializer
   which is propagated to the ``asdf.open`` function. It allows control over a warning
   asdf issues when opening files written with an extension version older than the
   extension version the file was written with. An example message is
@@ -7529,7 +7529,7 @@ extract_1d
 exp_to_source
 -------------
 
-- Changed `exp_to_source`` to use ``source_id`` to group exposures. [#3584]
+- Changed ``exp_to_source`` to use ``source_id`` to group exposures. [#3584]
 
 - Removed the enum list for the SUBPXPAT keyword to allow validation of any value. [#3616]
 
@@ -7657,8 +7657,8 @@ extract_1d
 flatfield
 ---------
 
-- Remove flatfield step parameter `flat_suffix`.  Add boolean step parameter
-  `save_interpolated_flat`.  Refactor flatfield internals. [#3493]
+- Remove flatfield step parameter ``flat_suffix``.  Add boolean step parameter
+  ``save_interpolated_flat``.  Refactor flatfield internals. [#3493]
 
 - Propagate uncertainty from FFLAT, SFLAT and DFLAT flat fields into science
   ERR array and VAR_FLAT array for NIRSpec spectroscopic modes.  [#3538]
@@ -8035,7 +8035,7 @@ combine_1d
 coron
 -----
 
-- Updated the `stack_refs` routine to update the output data model with metadata
+- Updated the ``stack_refs`` routine to update the output data model with metadata
   from the first input model. [#3111]
 
 csv_tools
@@ -8148,7 +8148,7 @@ linearity
 master_background
 -----------------
 
-- Implement the basic step scaffolding for `MasterBackgroundStep`. [#3090]
+- Implement the basic step scaffolding for ``MasterBackgroundStep``. [#3090]
 
 - Record user-supplied master background in MSTRBKGD keyword [#3101]
 
@@ -8237,7 +8237,7 @@ scripts
 stpipe
 ------
 
-- Add `Step.record_step_status()` method for use by this step (and any other
+- Add ``Step.record_step_status()`` method for use by this step (and any other
   pipeline or pipeline step) [#3110]
 
 straylight
@@ -8253,7 +8253,7 @@ timeconversion
 transforms
 ----------
 
-- The `LRSWavelength` model was removed as obsolete.
+- The ``LRSWavelength`` model was removed as obsolete.
   Instead a spline is used for the wavelength solution. [#3106]
 
 tso_photometry
@@ -8298,7 +8298,7 @@ associations
 wfs_combine
 -----------
 
-- Renamed the configuration from `wfs_combine` to `calwebb_wfs-image3`. [#2831]
+- Renamed the configuration from ``wfs_combine`` to ``calwebb_wfs-image3``. [#2831]
 
 
 0.12.1 (2018-10-30)
@@ -8607,7 +8607,7 @@ srctype
 scripts
 -------
 
-- Fixed bug in logging configuration for `set_telescope_pointing.py`. [#2521]
+- Fixed bug in logging configuration for ``set_telescope_pointing.py``. [#2521]
 
 stpipe
 ------
@@ -8704,7 +8704,7 @@ associations
 
 - Removed MIR_LRS-SLITLESS and NIS_SOSS from the permanent TSO list. [#2330]
 
-- Implemented new Level2a rule `Asn_Lv2NRSLAMP`. [#2177]
+- Implemented new Level2a rule ``Asn_Lv2NRSLAMP``. [#2177]
 
 - Allowed "N/A" as a valid, but False, value in association pools. [#2334]
 
@@ -8881,13 +8881,13 @@ pipeline
 
 - Enabled resample_spec to run on MIRI fixed slit data in calspec2 [#2424]
 
-- Implemented new `Spec2Pipeline` configuration for NIRSpec LAMP exposures [#2174]
+- Implemented new ``Spec2Pipeline`` configuration for NIRSpec LAMP exposures [#2174]
 
 - Implemented specific exit status for "no science on detector" [#2336]
 
-- Enabled `extract_2d` for NRC_TSGRISM [#2460]
+- Enabled ``extract_2d`` for NRC_TSGRISM [#2460]
 
-- Turn off `resample` in `Spec2Pipeline` for multi-integration cube data [#2456]
+- Turn off ``resample`` in ``Spec2Pipeline`` for multi-integration cube data [#2456]
 
 ramp_fitting
 ------------

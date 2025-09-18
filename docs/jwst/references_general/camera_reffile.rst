@@ -6,7 +6,7 @@ CAMERA Reference File (NIRSpec only)
 ------------------------------------
 
 :REFTYPE: CAMERA
-:Data model: `~jwst.datamodels.CameraModel`
+:Data model: `~stdatamodels.jwst.datamodels.CameraModel`
 
 Reference Selection Keywords for CAMERA
 +++++++++++++++++++++++++++++++++++++++
@@ -27,4 +27,3 @@ Reference File Format
 The camera reference file contains an astropy compound model made up of polynomial models, rotations, and translations. The forward direction is from the FPA to the GWA.
 
 :model: Transform through the CAMERA.
-

@@ -105,12 +105,13 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        data : str, Level2 Association, or `~jwst.datamodels.JwstDataModel`
+        data : str, Level2 Association, or \
+               `~stdatamodels.jwst.datamodels.JwstDataModel`
             The exposure or association of exposures to process
 
         Returns
         -------
-        list[JWSTDataModel]
+        list of `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data models.
         """
         log.info("Starting calwebb_spec2 ...")
@@ -198,7 +199,7 @@ class Spec2Pipeline(Pipeline):
 
         Returns
         -------
-        JWSTDataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The final calibrated product.
         """
         # Find all the member types in the product
@@ -467,7 +468,7 @@ class Spec2Pipeline(Pipeline):
         ----------
         exp_type : str
             The exposure type of the data.
-        science : JWSTDataModel
+        science : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input science data model.
         members_by_type : dict
             Dictionary of members in the association, keyed by type.
@@ -596,12 +597,12 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        data : JWSTDataModel
+        data : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input science data model.
 
         Returns
         -------
-        JWSTDataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model.
         """
         # Apply flat-field correction
@@ -667,12 +668,12 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        data : JWSTDataModel
+        data : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input science data model.
 
         Returns
         -------
-        JWSTDataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model.
         """
         calibrated = self.extract_2d.run(data)
@@ -702,12 +703,12 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        data : JWSTDataModel
+        data : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input science data model.
 
         Returns
         -------
-        JWSTDataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model
         """
         calibrated = self.extract_2d.run(data)
@@ -784,12 +785,12 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        data : JWSTDataModel
+        data : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input science data model.
 
         Returns
         -------
-        JWSTDataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model
         """
         calibrated = self.srctype.run(data)
@@ -807,12 +808,12 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        data : JWSTDataModel
+        data : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The input science data model.
 
         Returns
         -------
-        JWSTDataModel
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model
         """
         calibrated = self.srctype.run(data)
@@ -832,12 +833,12 @@ class Spec2Pipeline(Pipeline):
 
         Parameters
         ----------
-        resampled : JWSTDataModel
+        resampled : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The resampled data model from which to update the metadata of the output
 
         Returns
         -------
-        MultiSpecModel
+        `~stdatamodels.jwst.datamodels.MultiSpecModel`
             The extracted 1D spectra
         """
         # Check for fixed slits mixed in with MSA spectra:

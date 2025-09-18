@@ -476,10 +476,10 @@ class TransformParameters:
     #: If no telemetry can be found during the observation,
     #: the time, in seconds, beyond the observation time to search for telemetry.
     tolerance: float = 60.0
-    #: The date of observation (`jwst.datamodels.JwstDataModel.meta.date`)
+    #: The date of observation (``stdatamodels.jwst.datamodels.JwstDataModel.meta.date``)
     useafter: str | None = None
     #: V3 position angle at Guide Star
-    # (`jwst.datamodels.JwstDataModel.meta.guide_star.gs_v3_pa_science`)
+    # (``stdatamodels.jwst.datamodels.JwstDataModel.meta.guide_star.gs_v3_pa_science``)
     v3pa_at_gs: float | None = None
 
     def as_reprdict(self):
@@ -532,10 +532,12 @@ def add_wcs(
     allow_any_file : bool
         Attempt to add the WCS information to any type of file.
         The default, `False`, only allows modifications of files that contain
-        known datamodels of `Level1bmodel`, `ImageModel`, or `CubeModel`.
+        known datamodels of `~stdatamodels.jwst.datamodels.Level1bModel`,
+        `~stdatamodels.jwst.datamodels.ImageModel`, or
+        `~stdatamodels.jwst.datamodels.CubeModel`.
 
     force_level1bmodel : bool
-        If not `allow_any_file`, and the input file model is unknown,
+        If not ``allow_any_file``, and the input file model is unknown,
         open the input file as a Level1bModel regardless.
 
     default_pa_v3 : float
@@ -543,11 +545,11 @@ def add_wcs(
         is not found.
 
     siaf_path : str or file-like object or None
-        The path to the SIAF database. See `SiafDb` for more information.
+        The path to the SIAF database. See ``SiafDb`` for more information.
 
     prd : str
-        The PRD version from the `pysiaf` to use.
-        `siaf_path` overrides this value.
+        The PRD version from the ``pysiaf`` to use.
+        ``siaf_path`` overrides this value.
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
@@ -584,7 +586,7 @@ def add_wcs(
     allowed to be updated. These have the suffixes of "uncal", "rate", and
     "rateints" representing datamodels Level1bModel, ImageModel, and CubeModel.
     Any higher level product, from Stage 2b and beyond, that has had the
-    `assign_wcs` step applied, have improved WCS information. Running
+    ``assign_wcs`` step applied, have improved WCS information. Running
     this task on such files will potentially corrupt the WCS.
 
     It starts by populating the headers with values from the SIAF database.
@@ -739,7 +741,7 @@ def update_wcs(
     """
     Update WCS pointing information.
 
-    Given a `jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
+    Given a `~stdatamodels.jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
     from the SIAF keywords in the model and the engineering parameters
     that contain information about the telescope pointing.
 
@@ -747,7 +749,7 @@ def update_wcs(
 
     Parameters
     ----------
-    model : `~jwst.datamodels.JwstDataModel`
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The model to update.
 
     default_roll_ref : float
@@ -755,11 +757,11 @@ def update_wcs(
         use this as the roll ref angle.
 
     siaf_path : str or Path-like object
-        The path to the SIAF database. See `SiafDb` for more information.
+        The path to the SIAF database. See ``SiafDb`` for more information.
 
     prd : str
-        The PRD version from the `pysiaf` to use.
-        `siaf_path` overrides this value.
+        The PRD version from the ``pysiaf`` to use.
+        ``siaf_path`` overrides this value.
 
     engdb_url : str or None
         URL of the engineering telemetry database REST interface.
@@ -789,7 +791,7 @@ def update_wcs(
         The parameters and transforms calculated. May be
         None for either if telemetry calculations were not
         performed. In particular, FGS GUIDER data does
-        not need `transforms`.
+        not need ``transforms``.
     """
     t_pars = transforms = None  # Assume telemetry is not used.
 
@@ -847,7 +849,7 @@ def update_wcs_from_fgs_guiding(
 
     Parameters
     ----------
-    model : `~jwst.datamodels.JwstDataModel`
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The model to update.
 
     t_pars : `TransformParameters`
@@ -893,7 +895,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
     """
     Update WCS pointing information.
 
-    Given a `jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
+    Given a `~stdatamodels.jwst.datamodels.JwstDataModel`, determine the simple WCS parameters
     from the SIAF keywords in the model and the engineering parameters
     that contain information about the telescope pointing.
 
@@ -901,7 +903,7 @@ def update_wcs_from_telem(model, t_pars: TransformParameters):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.JwstDataModel`
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The model to update. The update is done in-place.
 
     t_pars : `TransformParameters`
@@ -1014,7 +1016,7 @@ def update_s_region(model, siaf):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.JwstDataModel`
+    model : `~stdatamodels.jwst.datamodels.JwstDataModel`
         The model to update in-place.
     siaf : namedtuple
         The ``SIAF`` tuple with values populated from the PRD database.

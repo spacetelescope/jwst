@@ -127,7 +127,7 @@ is expected to accept other object types as well.
 
 A ``Step``'s primary argument is expected to be either a string containing
 the file path to a data file, or a JWST
-:class:`~jwst.datamodels.JwstDataModel` object. The method
+:class:`~stdatamodels.jwst.datamodels.JwstDataModel` object. The method
 :meth:`~stpipe.Step.open_model` handles either type of
 input, returning a ``DataModel`` from the specified file or a shallow
 copy of the ``DataModel`` that was originally passed to it. A typical

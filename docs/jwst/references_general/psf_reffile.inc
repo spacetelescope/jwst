@@ -4,7 +4,7 @@ PSF Reference File
 ^^^^^^^^^^^^^^^^^^
 
 :REFTYPE: PSF
-:Data model: `~jwst.datamodels.SpecPsfModel`
+:Data model: `~stdatamodels.jwst.datamodels.SpecPsfModel`
 
 The PSF reference file contains a model of the 1-D point spread function
 by wavelength, intended to support spectral modeling and extraction.

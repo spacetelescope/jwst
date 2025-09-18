@@ -34,12 +34,12 @@ class WfssContamStep(Step):
 
         Parameters
         ----------
-        input_model : `~jwst.datamodels.MultiSlitModel`
+        input_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The input data model containing 2-D cutouts for each identified source.
 
         Returns
         -------
-        output_model : `~jwst.datamodels.MultiSlitModel`
+        output_model : `~stdatamodels.jwst.datamodels.MultiSlitModel`
             A copy of the input_model with contamination removed
         """
         with datamodels.open(input_model) as dm:

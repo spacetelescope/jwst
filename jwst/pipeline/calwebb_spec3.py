@@ -72,7 +72,8 @@ class Spec3Pipeline(Pipeline):
 
         Parameters
         ----------
-        input_data : str, Level3 Association, or `~jwst.datamodels.JwstDataModel`
+        input_data : str, Level3 Association, or \
+                     `~stdatamodels.jwst.datamodels.JwstDataModel`
             The exposure or association of exposures to process
         """
         log.info("Starting calwebb_spec3 ...")
@@ -407,11 +408,11 @@ class Spec3Pipeline(Pipeline):
 
         Parameters
         ----------
-        wfss_model : ~datamodels.WfssMultiExposureModel
+        wfss_model : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
             The newly generated WfssMultiExposureModel made as part of
             the save operation for spec3 processing of WFSS data.
 
-        cal_model_list : list(~datamodels.MultiSlitModel)
+        cal_model_list : list of `~stdatamodels.jwst.datammodels.MultiSlitModel`
             The list of input_models provided to Spec3Pipeline by the
             input association.
         """

@@ -79,7 +79,7 @@ Outputs
 
 Interferometric observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiOIModel`
+:Data model: `~stdatamodels.jwst.datamodels.AmiOIModel`
 :File suffix: _ami-oi.fits
 
 For every input exposure, the interferometric observables calculated
@@ -91,7 +91,7 @@ included and the product type changed to "_ami-oi.fits", e.g.
 
 Normalized interferometric observables
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.AmiOIModel`
+:Data model: `~stdatamodels.jwst.datamodels.AmiOIModel`
 :File suffix: _aminorm-oi.fits
 
 If reference PSF exposures are included in the input ASN, the AMI results
@@ -101,7 +101,6 @@ product file. This file has the same FITS table format as the "_ami-oi.fits" pro
 The file name root uses the source-based output product name given in the ASN file,
 e.g. "jw93210-a0003_t001_niriss_f480m-nrm_aminorm-oi.fits."
 
-.. note:: 
-   
-   Users may wish to run the :ref:`ami_analyze step <ami_analyze_step>` separately for access to flexible input arguments and to save additional diagnostic output products. See the step documentation for more details.
+.. note::
 
+   Users may wish to run the :ref:`ami_analyze step <ami_analyze_step>` separately for access to flexible input arguments and to save additional diagnostic output products. See the step documentation for more details.

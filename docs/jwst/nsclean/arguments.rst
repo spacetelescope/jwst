@@ -11,7 +11,7 @@ the behavior of the processing.
 
 ``--fit_by_channel`` (boolean, default=False)
   If set, flicker noise is fit independently for each detector channel.
-  Ignored for subarray data and for `fit_method` = 'fft'.
+  Ignored for subarray data and for ``fit_method = 'fft'``.
 
 ``--background_method`` (str, default=None)
   If 'median', the preliminary background to remove and restore
@@ -22,7 +22,7 @@ the behavior of the processing.
 
 ``--background_box_size`` (list of int, default=(32,32))
   Box size for the data grid used by `~photutils.background.Background2D`
-  when `background_method` = 'model'. For best results, use a
+  when ``background_method = 'model'``. For best results, use a
   box size that evenly divides the input image shape.
 
 ``--mask_spectral_regions`` (boolean, default=True)
@@ -36,7 +36,7 @@ the behavior of the processing.
   and noise fitting processes.
 
 ``--fit_histogram`` (boolean, default=False)
-  If set, the 'sigma' used with `n_sigma` for clipping outliers
+  If set, the 'sigma' used with ``n_sigma`` for clipping outliers
   is derived from a Gaussian fit to a histogram of values.
   Otherwise, a simple iterative sigma clipping is performed.
 
@@ -50,8 +50,8 @@ the behavior of the processing.
   directly and the process of creating a scene mask in the step is
   skipped.
 
-  The mask file must contain either a `~jwst.datamodels.ImageModel`
-  or a `~jwst.datamodels.CubeModel`, with image dimensions matching
+  The mask file must contain either a `~stdatamodels.jwst.datamodels.ImageModel`
+  or a `~stdatamodels.jwst.datamodels.CubeModel`, with image dimensions matching
   the input science data.  If an ImageModel is provided, the same
   mask will be used for all integrations.  If a CubeModel is provided,
   the number of slices must equal the number of integrations in
