@@ -139,10 +139,6 @@ ban-relative-imports = "all"  # Disallow all relative imports.
 "jwst/associations/lib/*" = [
     "N801", # Use CapWords class naming convention
 ]
-"jwst/associations/tests*" = [
-    "F841", # unused variable
-    "S101",
-]
 "jwst/regtest/associations_sdp_pools/*.py" = [
     "SLF", "ARG", "PTH",
     "D103", # Missing docstring in public function
