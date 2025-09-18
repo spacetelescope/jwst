@@ -5,64 +5,6 @@ from stcal.alignment import sregion_to_footprint
 __all__ = ["combine_sregions"]
 
 
-def _combine_sregions(sregion_list, wcs, intersect=False):
-    """
-    Combine s_regions from input models to compute the s_region for the resampled data.
-
-    Parameters
-    ----------
-    sregion_list : list of str
-        List of s_regions from input models.
-    wcs : gwcs.WCS
-        WCS object for the resampled data.
-        Needs to have "world" and "detector" frames, and the corresponding transforms
-        must take in (RA, Dec) as their first two inputs
-        and return (x, y) as their first two outputs.
-    intersect : bool, optional
-        If True, intersect the combined footprint with the WCS footprint.
-        Default is False.
-
-    Returns
-    -------
-    sregion : str
-        The s_region for the resample data.
-    """
-    footprints = [sregion_to_footprint(sregion) for sregion in sregion_list]
-    footprints = np.array(footprints)
-
-    # convert to pixel coordinates to feed into polygon combine method
-    # need to hack this a bit to ignore additional inputs and outputs
-    # which are typically wavelength and order
-    footprints_flat = footprints.reshape(-1, 2)
-    world2det = wcs.get_transform("world", "detector")
-    args = [1.0] * world2det.n_inputs
-    args[0:2] = [footprints_flat[:, 0], footprints_flat[:, 1]]
-    xy = world2det(*args)
-    x, y = xy[0], xy[1]
-    footprints_pixels = np.vstack([x, y]).T.reshape(footprints.shape)
-
-    combined_polygons = _combine_footprints(footprints_pixels)
-
-    # convert back to world coordinates
-    det2world = wcs.get_transform("detector", "world")
-    args = [1.0] * det2world.n_inputs
-    combined_polygons_world = []
-    for polygon in combined_polygons:
-        args[0:2] = [polygon[:, 0], polygon[:, 1]]
-        radec = det2world(*args)
-        ra, dec = radec[0], radec[1]  # hack to ignore additional outputs
-        combined_polygons_world.append(np.vstack([ra, dec]).T)
-
-    # make s_region string
-    sregion = _polygons_to_sregion(combined_polygons_world)
-    if intersect:
-        # TODO: add intersection with WCS footprint here
-        # Relevant for resample when called on a custom WCS that may not cover
-        # the full combined footprint
-        pass
-    return sregion
-
-
 def combine_sregions(sregion_list, det2world, intersect=False):
     """
     Combine s_regions from input models to compute the s_region for the resampled data.

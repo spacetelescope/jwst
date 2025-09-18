@@ -470,7 +470,9 @@ class ResampleImage(Resample):
             # only for an imaging WCS:
             self.update_fits_wcsinfo(self.output_jwst_model)
             # assign_wcs_util.update_s_region_imaging(self.output_jwst_model)
-            self.output_jwst_model.meta.wcsinfo.s_region = self.combine_input_sregions()
+            output_sregion = self.combine_input_sregions()
+            log.info(f"Assigning output S_REGION: {output_sregion}")
+            self.output_jwst_model.meta.wcsinfo.s_region = output_sregion
 
         self.output_jwst_model.meta.cal_step.resample = "COMPLETE"
 
