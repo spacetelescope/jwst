@@ -175,5 +175,4 @@ def test_fail(tmp_cwd, rtdata, resource_tracker, request, pool_args):
 )
 @pytest.mark.slow
 def test_fslow(tmp_cwd, rtdata, resource_tracker, request, pool_args):
-    with pytest.raises(MultiDiffError):
-        _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
+    _assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
