@@ -2,7 +2,7 @@
 
 import pytest
 
-from jwst.regtest.assoc_rt_helpers import assoc_sdp_against_standard, parfunc
+from jwst.regtest.associations_sdp_pools.assoc_rt_helpers import assoc_sdp_against_standard, parfunc
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata]

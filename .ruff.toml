@@ -126,10 +126,6 @@ ban-relative-imports = "all"  # Disallow all relative imports.
     "SLF", "ARG", "PTH",
     "B003", # Assigning to os.environ does not clear the environment
 ]
-"jwst/regtest/assoc_rt_helpers.py" = [
-    "SLF",  "ARG", "PTH",
-    "N813", # Camelcase imported as lowercase
-]
 "jwst/regtest/regtestdata.py" = [
     "SLF", "ARG", "PTH",
     "A002", # builtin variable shadowing
@@ -146,6 +142,14 @@ ban-relative-imports = "all"  # Disallow all relative imports.
 "jwst/associations/tests*" = [
     "F841", # unused variable
     "S101",
+]
+"jwst/regtest/associations_sdp_pools/*.py" = [
+    "SLF", "ARG", "PTH",
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "E501", # Line too long
+    "N802", # Function name should be lowercase
+    "N813", # Camelcase imported as lowercase
 ]
 
 [lint.isort]

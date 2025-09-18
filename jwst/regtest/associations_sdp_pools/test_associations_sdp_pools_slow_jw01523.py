@@ -8,12 +8,12 @@ Test using SDP-generated pools (slow).
 
 import pytest
 
-from jwst.regtest.assoc_rt_helpers import assoc_sdp_against_standard
+from jwst.regtest.associations_sdp_pools.assoc_rt_helpers import assoc_sdp_against_standard
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.bigdata, pytest.mark.slow]
 
 
-def test_pool_032_nircam_wfss(_jail, rtdata, resource_tracker, request):
-    pool_args = ("jw05221_20250411t182730_pool", [])
+def test_pool_009_spec_miri_lv2bkg_MRS(_jail, rtdata, resource_tracker, request):
+    pool_args = ("jw01523_20250321t155408_pool", [])
     assoc_sdp_against_standard(rtdata, resource_tracker, request, pool_args)
