@@ -16,10 +16,17 @@
 
 // routines used from cube_utils.c
 
-extern double sh_find_overlap(const double xcenter, const double ycenter, const double xlength, const double ylength,
-                              double xPixelCorner[], double yPixelCorner[]);
+extern double sh_find_overlap(
+    const double xcenter,
+    const double ycenter,
+    const double xlength,
+    const double ylength,
+    double xPixelCorner[],
+    double yPixelCorner[]);
 
-int mem_alloc_dq(int nelem, int **idqv) {
+int
+mem_alloc_dq(int nelem, int **idqv)
+{
     /*
       Allocate the memory of the spaxel DQ array.
 
@@ -46,9 +53,24 @@ int mem_alloc_dq(int nelem, int **idqv) {
     return 0;
 }
 
-int corner_wave_plane_miri(int w, int start_region, int end_region, double roiw_ave, double *zc, double *coord1,
-                           double *coord2, double *wave, double *sliceno, long ncube, long npt, double *corner1,
-                           double *corner2, double *corner3, double *corner4) {
+int
+corner_wave_plane_miri(
+    int w,
+    int start_region,
+    int end_region,
+    double roiw_ave,
+    double *zc,
+    double *coord1,
+    double *coord2,
+    double *wave,
+    double *sliceno,
+    long ncube,
+    long npt,
+    double *corner1,
+    double *corner2,
+    double *corner3,
+    double *corner4)
+{
     /*
 
        Determine the MIRI DQ plane of IFU cubes.
@@ -128,10 +150,10 @@ int corner_wave_plane_miri(int w, int start_region, int end_region, double roiw_
         slice = (int)sliceno[ipt];
         wave_distance = fabs(zc[w] - wave[ipt]);
 
-        c11 = -1; // coord1 for start region
-        c21 = -1; // coord2 for start region
-        c12 = -1; // coord1 for end region
-        c22 = -1; // corrd2 for end region
+        c11 = -1;  // coord1 for start region
+        c21 = -1;  // coord2 for start region
+        c12 = -1;  // coord1 for end region
+        c22 = -1;  // corrd2 for end region
 
         if (slice == start_region || slice == end_region) {
             // Find all the coordinates on wave slice with slice = start region
@@ -190,7 +212,7 @@ int corner_wave_plane_miri(int w, int start_region, int end_region, double roiw_
                 }
             }
         }
-    } // end looping over point cloud
+    }  // end looping over point cloud
 
     // Make sure the 2 extreme slices are found on the FOV. Not finding both can occur for edge wavelength
     // planes or empty wavelength planes between channels
@@ -205,9 +227,9 @@ int corner_wave_plane_miri(int w, int start_region, int end_region, double roiw_
         length_c1_start = c1_start_max - c1_start_min;
         length_c2_start = c2_start_max - c2_start_min;
 
-        c1_use = 1; // use the c1 coords to set corners
+        c1_use = 1;  // use the c1 coords to set corners
         if (length_c1_start < length_c2_start) {
-            c1_use = 0; // use the c2 coords to set the corners
+            c1_use = 0;  // use the c2 coords to set the corners
         }
 
         if (c1_use == 0) {
@@ -241,10 +263,20 @@ int corner_wave_plane_miri(int w, int start_region, int end_region, double roiw_
     }
 }
 
-int overlap_fov_with_spaxels(int overlap_partial, int overlap_full, double cdelt1, double cdelt2, int naxis1,
-                             int naxis2, double xcenters[], double ycenters[], double xi_corner[], double eta_corner[],
-                             int wave_slice_dq[]) {
-
+int
+overlap_fov_with_spaxels(
+    int overlap_partial,
+    int overlap_full,
+    double cdelt1,
+    double cdelt2,
+    int naxis1,
+    int naxis2,
+    double xcenters[],
+    double ycenters[],
+    double xi_corner[],
+    double eta_corner[],
+    int wave_slice_dq[])
+{
     /* MIRI routine to find the overlap of the FOV for a wavelength slice in the IFU cube.
 
           Given the corners of the FOV  find the spaxels that
@@ -316,14 +348,13 @@ int overlap_fov_with_spaxels(int overlap_partial, int overlap_full, double cdelt
     }
 
     area_box = cdelt1 * cdelt2;
-    tolerance_dq_overlap = 0.05; // spaxel has to have 5% overlap to flag in FOV
+    tolerance_dq_overlap = 0.05;  // spaxel has to have 5% overlap to flag in FOV
     // loop over cube xcenters and cube ycenters
     for (ix = 0; ix < naxis1; ix++) {
         x1 = (xcenters[ix] - cdelt1) / 2;
         x2 = (xcenters[ix] + cdelt1) / 2;
         if (x1 > ximin && x2 < ximax) {
             for (iy = 0; iy < naxis2; iy++) {
-
                 y1 = (ycenters[ix] - cdelt2) / 2;
                 y2 = (ycenters[ix] + cdelt2) / 2;
                 if (y1 > etamin && y2 < etamax) {
@@ -339,18 +370,29 @@ int overlap_fov_with_spaxels(int overlap_partial, int overlap_full, double cdelt
                             wave_slice_dq[ixy] = overlap_partial;
                         }
                     }
-                } // end y1, y2 test
-            } // end loop over iy
-        } // end x1, x2 test
-    } // end loop over ix
+                }  // end y1, y2 test
+            }  // end loop over iy
+        }  // end x1, x2 test
+    }  // end loop over ix
 
     return 0;
 }
 
-long match_wave_plane_nirspec(double wave_plane, double roiw_ave, double coord1[], double coord2[], double wave[],
-                              double sliceno[], long npt, double *c1_min, double *c2_min, double *c1_max,
-                              double *c2_max, int *match_slice) {
-
+long
+match_wave_plane_nirspec(
+    double wave_plane,
+    double roiw_ave,
+    double coord1[],
+    double coord2[],
+    double wave[],
+    double sliceno[],
+    long npt,
+    double *c1_min,
+    double *c2_min,
+    double *c1_max,
+    double *c2_max,
+    int *match_slice)
+{
     /* Determine the NIRSpec DQ plane for each wavelength plane of an IFU cube.
 
        NIRSpec dq plane is set by mapping each slice to the IFU wavelength plane.
@@ -417,7 +459,6 @@ long match_wave_plane_nirspec(double wave_plane, double roiw_ave, double coord1[
 
         // Find all the coordinates that fall on wavelength plane
         if (wave_distance < roiw_ave) {
-
             int islice = (int)slice - 1;
 
             if (c1 < c1_min[islice]) {
@@ -443,7 +484,6 @@ long match_wave_plane_nirspec(double wave_plane, double roiw_ave, double coord1[
     if (ii > 0) {
         for (i = 0; i < 30; i++) {
             if (c1_min[i] != minvalue && c2_min[i] != minvalue && c1_max[i] != maxvalue && c2_max[i] != maxvalue) {
-
                 if (c1_min[i] != c1_max[i] && c2_min[i] != c2_max[i]) {
                     match_slice[i] = 1;
                 }
@@ -453,10 +493,21 @@ long match_wave_plane_nirspec(double wave_plane, double roiw_ave, double coord1[
     return ii;
 }
 
-int overlap_slice_with_spaxels(int overlap_partial, double cdelt1, double cdelt2, int naxis1, int naxis2, double xstart,
-                               double ystart, double xi_min, double eta_min, double xi_max, double eta_max,
-                               int wave_slice_dq[]) {
-
+int
+overlap_slice_with_spaxels(
+    int overlap_partial,
+    double cdelt1,
+    double cdelt2,
+    int naxis1,
+    int naxis2,
+    double xstart,
+    double ystart,
+    double xi_min,
+    double eta_min,
+    double xi_max,
+    double eta_max,
+    int wave_slice_dq[])
+{
     /*
        Set the NIRSpec initial dq plane indicating if the input data falls on a spaxel.
 
@@ -558,8 +609,9 @@ int overlap_slice_with_spaxels(int overlap_partial, double cdelt1, double cdelt2
 
 //________________________________________________________________________________
 
-int set_dqplane_to_zero(int ncube, int **spaxel_dq) {
-
+int
+set_dqplane_to_zero(int ncube, int **spaxel_dq)
+{
     /*
       Set the spaxel dq = 0.
 
@@ -578,19 +630,39 @@ int set_dqplane_to_zero(int ncube, int **spaxel_dq) {
         0 success
         1 failure
     */
-    int *idqv; // int vector for spaxel
-    if (mem_alloc_dq(ncube, &idqv))
+    int *idqv;  // int vector for spaxel
+    if (mem_alloc_dq(ncube, &idqv)) {
         return 1;
+    }
     *spaxel_dq = idqv;
     return 0;
 }
 
 //________________________________________________________________________________
 
-int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_full, int nx, int ny, int nz,
-            double cdelt1, double cdelt2, double roiw_ave, double *xc, double *yc, double *zc, double *coord1,
-            double *coord2, double *wave, double *sliceno, long ncube, long npt, int **spaxel_dq) {
-
+int
+dq_miri(
+    int start_region,
+    int end_region,
+    int overlap_partial,
+    int overlap_full,
+    int nx,
+    int ny,
+    int nz,
+    double cdelt1,
+    double cdelt2,
+    double roiw_ave,
+    double *xc,
+    double *yc,
+    double *zc,
+    double *coord1,
+    double *coord2,
+    double *wave,
+    double *sliceno,
+    long ncube,
+    long npt,
+    int **spaxel_dq)
+{
     /*
 
       Main MIRI routine to set DQ plane.
@@ -624,7 +696,7 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
     int status, status_wave, w, nxy, i, istart, iend, in, ii;
     double xi_corner[4], eta_corner[4];
 
-    int *idqv; // int vector for spaxel
+    int *idqv;  // int vector for spaxel
 
     if (mem_alloc_dq(ncube, &idqv)) {
         return 1;
@@ -649,14 +721,14 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
 
     // Loop over the wavelength planes and set DQ plane
     for (w = 0; w < nz; w++) {
-
         for (i = 0; i < nxy; i++) {
             wave_slice_dq[i] = 0;
         }
         status_wave = 0;
-        status_wave = corner_wave_plane_miri(w, start_region, end_region, roiw_ave, zc, coord1, coord2, wave, sliceno,
-                                             ncube, npt, corner1, corner2, corner3, corner4);
-        if (status_wave == 0) { // found min and max slice on wavelength plane
+        status_wave = corner_wave_plane_miri(
+            w, start_region, end_region, roiw_ave, zc, coord1, coord2, wave, sliceno, ncube, npt, corner1, corner2,
+            corner3, corner4);
+        if (status_wave == 0) {  // found min and max slice on wavelength plane
 
             xi_corner[0] = corner1[0];
             xi_corner[1] = corner2[0];
@@ -668,8 +740,8 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
             eta_corner[2] = corner3[1];
             eta_corner[3] = corner4[1];
 
-            status = overlap_fov_with_spaxels(overlap_partial, overlap_full, cdelt1, cdelt2, nx, ny, xc, yc, xi_corner,
-                                              eta_corner, wave_slice_dq);
+            status = overlap_fov_with_spaxels(
+                overlap_partial, overlap_full, cdelt1, cdelt2, nx, ny, xc, yc, xi_corner, eta_corner, wave_slice_dq);
         }
         istart = nxy * w;
         iend = istart + nxy;
@@ -682,7 +754,7 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
             }
         }
 
-    } // end loop over wavelength
+    }  // end loop over wavelength
 
     *spaxel_dq = idqv;
 
@@ -690,10 +762,26 @@ int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_f
     return 0;
 }
 
-int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, double cdelt2, double roiw_ave, double *xc,
-               double *yc, double *zc, double *coord1, double *coord2, double *wave, double *sliceno, long ncube,
-               long npt, int **spaxel_dq) {
-
+int
+dq_nirspec(
+    int overlap_partial,
+    int nx,
+    int ny,
+    int nz,
+    double cdelt1,
+    double cdelt2,
+    double roiw_ave,
+    double *xc,
+    double *yc,
+    double *zc,
+    double *coord1,
+    double *coord2,
+    double *wave,
+    double *sliceno,
+    long ncube,
+    long npt,
+    int **spaxel_dq)
+{
     /*
       Set a DQ flag for the NIRSPEC IFU cube based on FOV of input data.
 
@@ -735,7 +823,7 @@ int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, doubl
     int w, islice, status, status_wave, nxy, j;
     long istart, in, iend, ii, i;
     double c1_min, c2_min, c1_max, c2_max;
-    int *idqv; // int vector for spaxel
+    int *idqv;  // int vector for spaxel
 
     idqv = (int *)calloc(ncube, sizeof(int));
     if (NULL == idqv) {
@@ -758,8 +846,8 @@ int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, doubl
 
         // At each wavelength plane find the min and max of the
         // tangent plane coordinates for each slice
-        imatch = match_wave_plane_nirspec(zc[w], roiw_ave, coord1, coord2, wave, sliceno, npt, c1_min, c2_min, c1_max,
-                                          c2_max, match_slice);
+        imatch = match_wave_plane_nirspec(
+            zc[w], roiw_ave, coord1, coord2, wave, sliceno, npt, c1_min, c2_min, c1_max, c2_max, match_slice);
 
         int *wave_slice_dq;
 
@@ -775,7 +863,7 @@ int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, doubl
 
         int slice_found = 0;
 
-        if (imatch > 0) { // some matches were found on the wavelength slice
+        if (imatch > 0) {  // some matches were found on the wavelength slice
             for (islice = 0; islice < 30; islice++) {
                 float slice_c1_min = c1_min[islice];
                 float slice_c1_max = c1_max[islice];
@@ -791,13 +879,13 @@ int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, doubl
 
                     float xstart = xc[0];
                     float ystart = yc[0];
-                    status = overlap_slice_with_spaxels(overlap_partial, cdelt1, cdelt2, nx, ny, xstart, ystart,
-                                                        slice_c1_min, slice_c2_min, slice_c1_max, slice_c2_max,
-                                                        wave_slice_dq);
-                } // end loop if slice has match
-            } // end loop over slices
+                    status = overlap_slice_with_spaxels(
+                        overlap_partial, cdelt1, cdelt2, nx, ny, xstart, ystart, slice_c1_min, slice_c2_min,
+                        slice_c1_max, slice_c2_max, wave_slice_dq);
+                }  // end loop if slice has match
+            }  // end loop over slices
 
-        } // end loop over imatch > 0 match found for wavelength
+        }  // end loop over imatch > 0 match found for wavelength
         if (imatch > 0 && slice_found == 1) {
             istart = nxy * w;
             iend = istart + nxy;
@@ -808,7 +896,7 @@ int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, doubl
             }
         }
         free(wave_slice_dq);
-    } // end of wavelength
+    }  // end of wavelength
     *spaxel_dq = idqv;
 
     return 0;
