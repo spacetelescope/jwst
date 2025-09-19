@@ -99,7 +99,7 @@ to supply custom catalogs.
 
     .. warning::
         Input files will be updated in-place with new ``meta`` attribute
-        values when ASN table's members contain additional attributes.
+        values when the ASN table's members contain additional attributes.
 
     .. warning::
         Custom ``group_id`` affects how models are grouped **both** for
@@ -110,8 +110,8 @@ to supply custom catalogs.
 
     .. note::
         ``group_id`` can be an integer, a string, or Null. When ``group_id``
-        is ``Null``, it is converted to `None` in Python and it will be
-        assigned a group ID based on various exposure attributes - see
+        is ``Null``, it is converted to `None` in Python and a group ID will be assigned
+        based on various exposure attributes - see the
         ``models_grouped`` property for more details.
 
     Examples
@@ -488,7 +488,7 @@ to supply custom catalogs.
         Returns
         -------
         ind : list
-            Indices of models in ``ModelContainer._models`` matching ``asn_exptype``.
+            Indices of models in the container matching ``asn_exptype``.
         """
         ind = []
         for i, model in enumerate(self._models):
