@@ -83,20 +83,15 @@ Using ``call``
 ^^^^^^^^^^^^^^
 
 In a Python environment, the default settings for the ``call`` method are the same as
-for the command line, but more complex configuration is possible via the `logging` module.
+for the command line, but more complex configuration is possible via the `logging` module
+if the default configuration is disabled with the ``configure_log`` parameter.
 
-For example, to configure the ``stpipe`` loggers to print only the message at the INFO
+For example, to configure the root logger to print only the log name and message at the INFO
 level and direct time-stamped messages to a file at the DEBUG level::
 
     import logging
     import sys
     from jwst.pipeline import Detector1Pipeline
-
-    # Make a file handler for all messages, time-stamped
-    file_handler = logging.FileHandler('pipeline.log')
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.DEBUG)
 
     # Make a stream handler to just print the log name and the
     # message at the INFO level
@@ -105,26 +100,22 @@ level and direct time-stamped messages to a file at the DEBUG level::
     stream_handler.setFormatter(formatter)
     stream_handler.setLevel(logging.INFO)
 
-    # Attach the handlers to the stpipe loggers
-    for log_name in Detector1Pipeline.get_stpipe_loggers():
-        # Set the log level to DEBUG to allow all messages
-        log = logging.getLogger(log_name)
-        log.setLevel(logging.DEBUG)
+    # Make a file handler for all messages, time-stamped
+    file_handler = logging.FileHandler('pipeline.log')
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.DEBUG)
 
-        # Attach the handlers
-        log.addHandler(file_handler)
-        log.addHandler(stream_handler)
+    # Get the root logger and allow all messages through
+    log = logging.getLogger()
+    log.setLevel(logging.DEBUG)
 
-    result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits")
+    # Attach the handlers
+    log.addHandler(file_handler)
+    log.addHandler(stream_handler)
 
-To override the default logging configuration from Python code without directly
-configuring the stpipe loggers, turn it off in the ``call`` method with the ``configure_log`` option::
+    result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits", configure_log=False)
 
-    Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits", configure_log=False)
-
-If the root logger is not otherwise configured, this will print no log messages from the JWST
-pipeline code. As with the command line configuration, CRDS messages may still display,
-since its logger is separately configured.
 
 Using ``run``
 ^^^^^^^^^^^^^
@@ -133,7 +124,7 @@ Since it is a lower-level interface, the ``run`` method does not configure logge
 by default: no log messages will display when the ``run`` method is called unless the log
 is directly configured.
 
-To configure loggers for the ``run`` method, the above example for configuring stpipe loggers
+To configure loggers for the ``run`` method, the above example for configuring the root logger
 with the logging module will work exactly as it does for the ``call`` method.
 
 For a minimum configuration that replicates the messages produced by the ``call`` method,
