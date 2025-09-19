@@ -1446,14 +1446,15 @@ def test_in_slice(slice, wcs_ifu_grating, ifu_world_coord):
 
 
 @pytest.mark.parametrize("mode", ["IFU", "MOS", "FS"])
-def test_nrs_wcs_by_slit(mode):
+@pytest.mark.parametrize("velocity_corr", [True, False])
+def test_nrs_wcs_by_slit(mode, velocity_corr):
     pixel_tol = 0.02
     if mode == "IFU":
         hdul = create_nirspec_ifu_file("F290LP", "G140M")
         im = datamodels.IFUImageModel(hdul)
 
-        # Round trip is currently up to ~half pixel off for IFU
-        pixel_tol = 0.5
+        # Round trip is currently a little worse for IFU
+        pixel_tol = 0.12
 
     elif mode == "MOS":
         hdul = create_nirspec_mos_file()
@@ -1466,6 +1467,10 @@ def test_nrs_wcs_by_slit(mode):
     else:
         hdul = create_nirspec_fs_file(grating="G140M", filter="F100LP")
         im = datamodels.ImageModel(hdul)
+
+    # Add a significant velosys to trigger velocity correction
+    if velocity_corr:
+        im.meta.wcsinfo.velosys = 20000.0
 
     datamodel = assign_wcs_step.AssignWcsStep.call(im, nrs_ifu_slice_wcs=True)
     slit_ids = datamodel.meta.wcs.get_transform("gwa", "slit_frame").slit_ids

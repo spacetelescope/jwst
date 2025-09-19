@@ -64,13 +64,13 @@ class Image2Pipeline(Pipeline):
         log.info("Starting calwebb_image2 ...")
 
         if self.save_bsub:
-            warnings.warn(
+            deprecation_message = (
                 "The --save_bsub parameter is deprecated and will be removed in a future release. "
                 "To toggle saving background-subtracted data, use the background step's "
-                "--save_results parameter instead.",
-                DeprecationWarning,
-                stacklevel=2,
+                "--save_results parameter instead."
             )
+            warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+            log.warning(deprecation_message)
 
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input_data, basename=self.output_file)
