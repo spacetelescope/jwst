@@ -49,11 +49,11 @@ Groups of Datamodels
 
 Many of the JWST calibration steps and pipelines expect an
 :ref:`Association <associations>` file as input. When opened with
-:func:`stdatamodels.jwst.datamodels.open`, a
+:func:`~stdatamodels.jwst.datamodels.open`, a
 :class:`~jwst.datamodels.container.ModelContainer` is returned.
 :class:`~jwst.datamodels.container.ModelContainer`
 is a list-like object where each element is the
-``DataModel`` of each member of the association. The ``asn_table`` attribute is
+`~stdatamodels.DataModel` of each member of the association. The ``asn_table`` attribute is
 populated with the association data structure, allowing direct access
 to the association itself.  The association file, as well as the files
 listed in the association file, must be in the input directory.
@@ -64,6 +64,8 @@ is documented here:
 
 .. automodapi:: jwst.datamodels.container
 	:no-inheritance-diagram:
+
+.. autodata:: jwst.datamodels.container.RECOGNIZED_MEMBER_FIELDS
 
 .. automodapi:: jwst.datamodels.library
 	:no-inheritance-diagram:
