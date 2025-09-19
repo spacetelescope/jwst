@@ -27,6 +27,10 @@ from docutils import nodes
 
 from jwst import __version__ as version
 
+if 'dev' in version:
+    split_sem_ver = version.split('.')
+    decremented_semver = '.'.join((split_sem_ver[0], str(int(split_sem_ver[1]) - 1)))
+
 
 class StepSpecDocumenter(AttributeDocumenter):
     def should_suppress_value_header(self):
