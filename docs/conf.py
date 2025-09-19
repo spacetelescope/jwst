@@ -25,7 +25,7 @@ from sphinx.ext.autodoc import AttributeDocumenter
 from sphinx.util.docutils import SphinxDirective
 from docutils import nodes
 
-import jwst.__version__ as version
+from jwst import __version__ as version
 
 class StepSpecDocumenter(AttributeDocumenter):
     def should_suppress_value_header(self):
