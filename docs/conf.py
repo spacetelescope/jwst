@@ -22,7 +22,10 @@ from configparser import ConfigParser
 
 from stpipe import Step
 from sphinx.ext.autodoc import AttributeDocumenter
+from sphinx.util.docutils import SphinxDirective
+from docutils import nodes
 
+import jwst.__version__ as version
 
 class StepSpecDocumenter(AttributeDocumenter):
     def should_suppress_value_header(self):
@@ -47,9 +50,18 @@ class StepSpecDocumenter(AttributeDocumenter):
         self.add_line(f"  {txt}", source_name, 2)
 
 
+class PipInstallVersionDirective(SphinxDirective):
+
+    def run(self):
+        help_text = f"pip install jwst=={version}"
+        paragraph_node = nodes.literal_block(text=help_text)
+        return [paragraph_node]
+
+
 def setup(app):
     # add a custom AttributeDocumenter subclass to handle Step.spec formatting
     app.add_autodocumenter(StepSpecDocumenter, True)
+    app.add_directive('pip_install_literal', PipInstallVersionDirective)
 
 
 conf = ConfigParser()
