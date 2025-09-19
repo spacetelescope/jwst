@@ -59,10 +59,23 @@ class PipInstallVersionDirective(SphinxDirective):
         return [paragraph_node]
 
 
+class CondaInstallVersionDirective(SphinxDirective):
+
+    def run(self):
+        help_text = (
+            "conda create -n <env_name> python=3.13\n"
+            "conda activate <env_name>\n"
+            f"pip install jwst=={version}\n"
+        )
+        paragraph_node = nodes.literal_block(text=help_text)
+        return [paragraph_node]
+
+
 def setup(app):
     # add a custom AttributeDocumenter subclass to handle Step.spec formatting
     app.add_autodocumenter(StepSpecDocumenter, True)
     app.add_directive('pip_install_literal', PipInstallVersionDirective)
+    app.add_directive('conda_install_literal', CondaInstallVersionDirective)
 
 
 conf = ConfigParser()
