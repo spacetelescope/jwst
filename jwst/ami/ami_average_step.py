@@ -1,9 +1,12 @@
+import logging
 import warnings
 
 from jwst.ami import ami_average
 from jwst.stpipe import Step
 
 __all__ = ["AmiAverageStep"]
+
+log = logging.getLogger(__name__)
 
 
 class AmiAverageStep(Step):
@@ -22,12 +25,12 @@ class AmiAverageStep(Step):
     """  # noqa: E501
 
     def __init__(self, *args, **kwargs):
-        warnings.warn(
+        deprecation_message = (
             "'AmiAverageStep' has been deprecated since 1.18.1 and "
-            "will be removed in a future release. ",
-            DeprecationWarning,
-            stacklevel=2,
+            "will be removed in a future release. "
         )
+        warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+        log.warning(deprecation_message)
         super().__init__(*args, **kwargs)
 
     def flatten_input(self, input_items):
