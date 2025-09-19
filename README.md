@@ -12,11 +12,6 @@
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-> [!IMPORTANT]
-> JWST requires a C compiler for dependencies.
-> 
-> Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
-
 > [!WARNING]
 > `jwst` is not yet compatible with python 3.14.
 > 
@@ -24,6 +19,11 @@
 > this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
 >
 > Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
+
+> [!IMPORTANT]
+> JWST requires a C compiler for dependencies.
+> 
+> Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 ## Installation
 
