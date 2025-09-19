@@ -18,7 +18,7 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
     ----------
     items : [object [, ...]]
         List of items to add.
-    rule : `Association` rule
+    rule : `~jwst.associations.Association` rule
         The association rule to use.
     **kwargs : dict
         Other named parameters required or pertinent to adding
@@ -26,7 +26,7 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
 
     Returns
     -------
-    association : `Association`-based instance
+    association : `~jwst.associations.Association`-based instance
         The association with the items added.
 
     Notes
@@ -41,20 +41,20 @@ def asn_from_list(items, rule=DMS_Level3_Base, **kwargs):
 
 
 class Main:
-    """Command-line interface for asn_from_list."""
+    """
+    Command-line interface for :func:`~jwst.associations.asn_from_list.asn_from_list`.
+
+    Parameters
+    ----------
+    args : list of str or None
+        The command line arguments. Can be one of:
+
+        - `None`: Command line arguments are then used.
+        - List of str: A list of strings which create the command line
+          with the similar structure as ``sys.argv``
+    """
 
     def __init__(self, args=None):
-        """
-        Initialize the class for asn_from_list.
-
-        Parameters
-        ----------
-        args : list or None
-            The command line arguments. Can be one of
-                - `None`: `sys.argv` is then used.
-                - `[str, ...]`: A list of strings which create the command line
-                  with the similar structure as `sys.argv`
-        """
         self.configure(args)
 
     def asn_from_list(self):
@@ -71,15 +71,16 @@ class Main:
 
         Parameters
         ----------
-        args : list or None
-            The command line arguments. Can be one of
-                - `None`: `sys.argv` is then used.
-                - `[str, ...]`: A list of strings which create the command line
-                  with the similar structure as `sys.argv`
+        args : list of str or None
+            The command line arguments. Can be one of:
+
+            - `None`: Command line arguments are then used.
+            - List of str: A list of strings which create the command line
+              with the similar structure as ``sys.argv``
 
         Returns
         -------
-        ~jwst.associations.association.Association
+        `~jwst.associations.Association`
             The association created from the list.
         """
         association = cls(args=args)
@@ -89,15 +90,16 @@ class Main:
 
     def configure(self, args=None):
         """
-        Configure the asn_from_list CLI object.
+        Configure the :func:`~jwst.associations.asn_from_list.asn_from_list` CLI object.
 
         Parameters
         ----------
-        args : list or None
-            The command line arguments. Can be one of
-                - `None`: `sys.argv` is then used.
-                - `[str, ...]`: A list of strings which create the command line
-                  with the similar structure as `sys.argv`
+        args : list of str or None
+            The command line arguments. Can be one of:
+
+            - `None`: Command line arguments are then used.
+            - List of str: A list of strings which create the command line
+              with the similar structure as ``sys.argv``
         """
         if args is None:
             args = sys.argv[1:]
@@ -174,11 +176,11 @@ def main(args=None):
 
     Parameters
     ----------
-    args : list or None
-        The command line arguments. Can be one of
+    args : list of str or None
+        The command line arguments. Can be one of:
 
-        - `None`: `sys.argv` is then used.
-        - `[str, ...]`: A list of strings which create the command line
-          with the similar structure as `sys.argv`
+        - `None`: Command line arguments are then used.
+        - List of str: A list of strings which create the command line
+          with the similar structure as ``sys.argv``
     """
     Main.cli(args=args)
