@@ -55,7 +55,7 @@ Remember that all conda operations must be done from within a bash/zsh shell.
 
 ### Installing latest releases
 
-You can install the latest released version with:
+You can install the latest released version via `pip`.  From a bash/zsh shell:
 
     conda create -n <env_name> python=3.13
     conda activate <env_name>
