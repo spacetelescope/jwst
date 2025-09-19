@@ -1,57 +1,33 @@
 ---
-# Joe's style clang-format configuration file
+# Mihai's style clang-format configuration file
+# My original clang from drizzle was a compromize between Google, PEP7, K&R, and
+# my own preferences.
+# This version adds some style preferences after discussion on slack.
+BasedOnStyle: Google
 Language: Cpp
-BasedOnStyle: LLVM
-AlignConsecutiveAssignments: false
-AlignConsecutiveDeclarations: false
-AlignOperands: false
-AlignTrailingComments: false
-AllowShortIfStatementsOnASingleLine: false
-AlwaysBreakTemplateDeclarations: Yes
-BraceWrapping:
-  AfterCaseLabel: false
-  AfterClass: false
-  AfterControlStatement: false
-  AfterEnum: false
-  AfterFunction: false
-  AfterNamespace: false
-  AfterStruct: false
-  AfterUnion: false
-  AfterExternBlock: false
-  BeforeCatch: false
-  BeforeElse: false
-  BeforeLambdaBody: false
-  BeforeWhile: false
-  SplitEmptyFunction: true
-  SplitEmptyRecord: true
-  SplitEmptyNamespace: true
-BreakBeforeBraces: Custom
-BreakConstructorInitializers: AfterColon
-BreakConstructorInitializersBeforeComma: false
-ColumnLimit: 120
-ConstructorInitializerAllOnOneLineOrOnePerLine: false
-IncludeCategories:
-  - Regex: '^<.*'
-    Priority: 1
-  - Regex: '^".*'
-    Priority: 2
-  - Regex: '.*'
-    Priority: 3
-IncludeIsMainRegex: '([-_](test|unittest))?$'
-IndentAccessModifiers: True
-IndentCaseLabels: true
-IndentPPDirectives: BeforeHash
+AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: TopLevel
+DerivePointerAlignment: false
+PointerAlignment: Right
+SortIncludes: false
+SortUsingDeclarations: false
 IndentWidth: 4
-InsertNewlineAtEOF: true
-MacroBlockBegin: ''
-MacroBlockEnd: ''
-MaxEmptyLinesToKeep: 2
-NamespaceIndentation: All
-SpaceBeforeRangeBasedForLoopColon: false
-SpaceInEmptyParentheses: false
-SpacesInAngles: false
-SpacesInConditionalStatement: false
-SpacesInCStyleCastParentheses: false
-SpacesInParentheses: false
 TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+AlignConsecutiveMacros: true
+ReflowComments: true
+SpaceBeforeParens: ControlStatements
+InsertBraces: true
+
+AllowAllArgumentsOnNextLine: true
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+
+AlignAfterOpenBracket: AlwaysBreak
+BinPackParameters: BinPack
+# OR:
+# BinPackParameters: OnePerLine
 ...

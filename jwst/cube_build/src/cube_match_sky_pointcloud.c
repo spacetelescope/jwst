@@ -1,27 +1,25 @@
 /*
-If the weighting method for IFU cube building is set to 'msm' or 'emsm' this c method
-is used.
-The detector pixels are represented by a 'point cloud' on the sky. Each point cloud member
-contains the coordinates for the pixel center, the flux, error and variance of that pixel.
-The IFU cube is represented by a 3-D regular grid. This module finds the point cloud members contained
-in a region centered on the center of the cube spaxel. The size of the spaxel in spatial
+If the weighting method for IFU cube building is set to 'msm' or 'emsm' this c
+method is used. The detector pixels are represented by a 'point cloud' on the
+sky. Each point cloud member contains the coordinates for the pixel center, the
+flux, error and variance of that pixel. The IFU cube is represented by a 3-D
+regular grid. This module finds the point cloud members contained in a region
+centered on the center of the cube spaxel. The size of the spaxel in spatial
 coordinates is cdetl1 and cdelt2, while the wavelength size is zcdelt3.
-This module uses the modified Shepard weighting method (emsm if weight_type =0 or msm if weight_type =1)
-to determine how to  weight each point cloud member in the spaxel.
+This module uses the modified Shepard weighting method (emsm if weight_type =0
+or msm if weight_type =1) to determine how to  weight each point cloud member in
+the spaxel.
 
 Main function for Python: cube_wrapper
 
-Python signature: result = cube_wrapper(instrument, flag_dq_plane, weight_type, start_region, end_region,
-                                        overlap_partial, overlap_full,
-                                        xcoord, ycoord, zcoord,
-                                        coord1, coord2, wave, flux, err, slice_no,
-                                        rois_pixel, roiw_pixel, scalerad_pixel
-                    weight_pixel, softrad_pixel,cdelt3_normal,
-                                        roiw_ave, cdelt1, cdelt2)
-provide more details
+Python signature: result = cube_wrapper(instrument, flag_dq_plane, weight_type,
+start_region, end_region, overlap_partial, overlap_full, xcoord, ycoord, zcoord,
+                                        coord1, coord2, wave, flux, err,
+slice_no, rois_pixel, roiw_pixel, scalerad_pixel weight_pixel,
+softrad_pixel,cdelt3_normal, roiw_ave, cdelt1, cdelt2) provide more details
 
-The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux,
-spaxel_dq) example output
+The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight,
+spaxel_var, spaxel_iflux, spaxel_dq) example output
 
 Parameters
 ----------
@@ -38,41 +36,25 @@ start_region : int
 end_region: int
     Ending slice number for detector region used in dq flagging
 overlap_partial : int
-    A dq flag indicating that only a portion of the spaxel is overlapped by a mapped detector pixel
-overlap_full : int
-    A dq flag indicating that the entire spaxel is overlapped by the mapped detector pixel
-xcoord : double array
-  This array holds the center x axis values of the ifu cube. It has a size of naxis1.
+    A dq flag indicating that only a portion of the spaxel is overlapped by a
+mapped detector pixel overlap_full : int A dq flag indicating that the entire
+spaxel is overlapped by the mapped detector pixel xcoord : double array This
+array holds the center x axis values of the ifu cube. It has a size of naxis1.
 ycoord : double array
-   This array holds the center y axis values of the ifu cube. It has a size of naxis2.
-zcoord : double array
-   This array holds the center x axis values of the ifu cube. It has a size of naxis3.
-flux : double array
-   Flux of each point cloud member.
-err : double array
-   Error of each point cloud member
-slice_no: int
-   Slice number of point cloud member to be in dq flagging
-coord1 : double array
-   Naxis 1 coordinate of point cloud member (xi).
-coord2 : double array
-   Naxis 2 coordinate of point cloud member (eta).
-wave : double array
-   Wavelength of each point cloud member.
-rois_pixel : double array
-   Roi in spatial dimension to use for point cloud member.
-roiw_pixel : double array
-   Roi in wavelength dimension to use point cloud member.
-scalerad_pixel : double array
-   MSM weight parameter to use for point cloud member
-zcdelt3: double array
-   Spectral scale to use at wavelength of point cloud member
-roiw_ave : double
-   Average roiw for all the wavelength planes. Used in dq flagging
-cdelt1 : double
-   Naxis 1 scale for cube
-cdelt2 : double
-   Naxis 2 scale for cube
+   This array holds the center y axis values of the ifu cube. It has a size of
+naxis2. zcoord : double array This array holds the center x axis values of the
+ifu cube. It has a size of naxis3. flux : double array Flux of each point cloud
+member. err : double array Error of each point cloud member slice_no: int Slice
+number of point cloud member to be in dq flagging coord1 : double array Naxis 1
+coordinate of point cloud member (xi). coord2 : double array Naxis 2 coordinate
+of point cloud member (eta). wave : double array Wavelength of each point cloud
+member. rois_pixel : double array Roi in spatial dimension to use for point
+cloud member. roiw_pixel : double array Roi in wavelength dimension to use point
+cloud member. scalerad_pixel : double array MSM weight parameter to use for
+point cloud member zcdelt3: double array Spectral scale to use at wavelength of
+point cloud member roiw_ave : double Average roiw for all the wavelength planes.
+Used in dq flagging cdelt1 : double Naxis 1 scale for cube cdelt2 : double Naxis
+2 scale for cube
 
 
 Sets
@@ -98,35 +80,42 @@ spaxel_dq : ndarray
 #include <stdlib.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_pointcloud_numpy_api
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
 
 // routines used from cube_utils.c
 
-extern int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv);
+extern int alloc_flux_arrays(
+    int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv);
 
-extern int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_full, int nx, int ny, int nz,
-                   double cdelt1, double cdelt2, double roiw_ave, double *xc, double *yc, double *zc, double *coord1,
-                   double *coord2, double *wave, double *sliceno, long ncube, long npt, int **spaxel_dq);
+extern int dq_miri(
+    int start_region, int end_region, int overlap_partial, int overlap_full, int nx, int ny, int nz,
+    double cdelt1, double cdelt2, double roiw_ave, double *xc, double *yc, double *zc,
+    double *coord1, double *coord2, double *wave, double *sliceno, long ncube, long npt,
+    int **spaxel_dq);
 
-extern int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, double cdelt2, double roiw_ave,
-                      double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *sliceno,
-                      long ncube, long npt, int **spaxel_dq);
+extern int dq_nirspec(
+    int overlap_partial, int nx, int ny, int nz, double cdelt1, double cdelt2, double roiw_ave,
+    double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave,
+    double *sliceno, long ncube, long npt, int **spaxel_dq);
 
 extern int set_dqplane_to_zero(int ncube, int **spaxel_dq);
 
-// Match point cloud to sky and determine the weighting to assign to each point cloud  member
-// to matched spaxel based on ROI - weighting type is emsm.
+// Match point cloud to sky and determine the weighting to assign to each point
+// cloud  member to matched spaxel based on ROI - weighting type is emsm.
 
 // sets values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux
 
 // returns : 0 success, 1 failure
 
-int match_point_emsm(double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *flux,
-                     double *err, double *rois_pixel, double *roiw_pixel, double *scalerad_pixel, double *zcdelt3,
-                     int nx, int ny, int nwave, int ncube, int npt, double cdelt1, double cdelt2, double **spaxel_flux,
-                     double **spaxel_weight, double **spaxel_var, double **spaxel_iflux) {
-
-    double *fluxv = NULL, *weightv = NULL, *varv = NULL, *ifluxv = NULL; // vector for spaxel
+int
+match_point_emsm(
+    double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *flux,
+    double *err, double *rois_pixel, double *roiw_pixel, double *scalerad_pixel, double *zcdelt3,
+    int nx, int ny, int nwave, int ncube, int npt, double cdelt1, double cdelt2,
+    double **spaxel_flux, double **spaxel_weight, double **spaxel_var, double **spaxel_iflux)
+{
+    double *fluxv = NULL, *weightv = NULL, *varv = NULL,
+           *ifluxv = NULL;  // vector for spaxel
 
     int k, iwstart, iwend, ixstart, ixend, iystart, iyend;
     int ii, nxy, ix, iy, iw, index_xy, index_cube;
@@ -135,8 +124,9 @@ int match_point_emsm(double *xc, double *yc, double *zc, double *coord1, double 
     double d1, d2, dxy, d3, d32, w, wn, ww, weighted_flux, weighted_var;
 
     // allocate memory to hold output
-    if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv))
+    if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) {
         return 1;
+    }
 
     // loop over each point cloud member and find which roi spaxels it is found
 
@@ -161,7 +151,8 @@ int match_point_emsm(double *xc, double *yc, double *zc, double *coord1, double 
             }
             ii = ii + 1;
         }
-        // catch the case of iwstart near nwave and becomes = nwave before iwend can be set.
+        // catch the case of iwstart near nwave and becomes = nwave before iwend
+        // can be set.
         if (iwstart != -1 && iwend == -1) {
             iwend = nwave;
             done_search_w = 1;
@@ -187,7 +178,8 @@ int match_point_emsm(double *xc, double *yc, double *zc, double *coord1, double 
             ii = ii + 1;
         }
 
-        // catch the case of ixstart near nx and becomes = nx before ixend can be set.
+        // catch the case of ixstart near nx and becomes = nx before ixend can
+        // be set.
         if (ixstart != -1 && ixend == -1) {
             ixend = nx;
             done_search_x = 1;
@@ -212,7 +204,8 @@ int match_point_emsm(double *xc, double *yc, double *zc, double *coord1, double 
             }
             ii = ii + 1;
         }
-        // catch the case of iystart near ny and becomes = ny before iyend can be set.
+        // catch the case of iystart near ny and becomes = ny before iyend can
+        // be set.
         if (iystart != -1 && iyend == -1) {
             iyend = ny;
             done_search_y = 1;
@@ -221,11 +214,11 @@ int match_point_emsm(double *xc, double *yc, double *zc, double *coord1, double 
         // set up the values for fluxv, weightv, ifluxv, varv
         nxy = nx * ny;
         if (done_search_x == 1 && done_search_y == 1 && done_search_w == 1) {
-            // The search above for x,y  was a crude search - now narrow the search using the distance between
-            // the spaxel center and point cloud
+            // The search above for x,y  was a crude search - now narrow the
+            // search using the distance between the spaxel center and point
+            // cloud
 
             for (ix = ixstart; ix < ixend; ix++) {
-
                 for (iy = iystart; iy < iyend; iy++) {
                     ydist = fabs(yc[iy] - coord2[k]);
                     xdist = fabs(xc[ix] - coord1[k]);
@@ -254,10 +247,10 @@ int match_point_emsm(double *xc, double *yc, double *zc, double *coord1, double 
                             ifluxv[index_cube] = ifluxv[index_cube] + 1.0;
                         }
                     }
-                } // end loop over iy
-            } // end loop over ix
-        } // end done_search_x, done_search_y, done_search_w
-    } // end loop over point cloud
+                }  // end loop over iy
+            }  // end loop over ix
+        }  // end done_search_x, done_search_y, done_search_w
+    }  // end loop over point cloud
 
     // assign output values:
     *spaxel_flux = fluxv;
@@ -268,17 +261,21 @@ int match_point_emsm(double *xc, double *yc, double *zc, double *coord1, double 
     return 0;
 }
 
-// Match point cloud to sky and determine the weighting to assign to each point cloud  member
-// to matched spaxel based on ROI - weighting type = msm.
-// set values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux.
-// returns: 0 = success, 1 = failure.
+// Match point cloud to sky and determine the weighting to assign to each point
+// cloud  member to matched spaxel based on ROI - weighting type = msm. set
+// values: spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux. returns: 0 =
+// success, 1 = failure.
 
-int match_point_msm(double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *flux,
-                    double *err, double *rois_pixel, double *roiw_pixel, double *weight_pixel, double *softrad_pixel,
-                    double *zcdelt3, int nx, int ny, int nwave, int ncube, int npt, double cdelt1, double cdelt2,
-                    double **spaxel_flux, double **spaxel_weight, double **spaxel_var, double **spaxel_iflux) {
-
-    double *fluxv = NULL, *weightv = NULL, *varv = NULL, *ifluxv = NULL; // vector for spaxel
+int
+match_point_msm(
+    double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *flux,
+    double *err, double *rois_pixel, double *roiw_pixel, double *weight_pixel,
+    double *softrad_pixel, double *zcdelt3, int nx, int ny, int nwave, int ncube, int npt,
+    double cdelt1, double cdelt2, double **spaxel_flux, double **spaxel_weight, double **spaxel_var,
+    double **spaxel_iflux)
+{
+    double *fluxv = NULL, *weightv = NULL, *varv = NULL,
+           *ifluxv = NULL;  // vector for spaxel
 
     int k;
     int iwstart, iwend, ixstart, ixend, iystart, iyend;
@@ -289,8 +286,9 @@ int match_point_msm(double *xc, double *yc, double *zc, double *coord1, double *
     double weighted_flux, weighted_var;
 
     // allocate memory to hold output
-    if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv))
+    if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) {
         return 1;
+    }
 
     // loop over each point cloud member and find which roi spaxels it is found
 
@@ -315,7 +313,8 @@ int match_point_msm(double *xc, double *yc, double *zc, double *coord1, double *
             }
             ii = ii + 1;
         }
-        // catch the case of iwstart near nwave and becomes = nwave before iwend can be set.
+        // catch the case of iwstart near nwave and becomes = nwave before iwend
+        // can be set.
         if (iwstart != -1 && iwend == -1) {
             iwend = nwave;
             done_search_w = 1;
@@ -340,7 +339,8 @@ int match_point_msm(double *xc, double *yc, double *zc, double *coord1, double *
             }
             ii = ii + 1;
         }
-        // catch the case of ixstart near nx and becomes = nx before ixend can be set.
+        // catch the case of ixstart near nx and becomes = nx before ixend can
+        // be set.
         if (ixstart != -1 && ixend == -1) {
             ixend = nx;
             done_search_x = 1;
@@ -365,7 +365,8 @@ int match_point_msm(double *xc, double *yc, double *zc, double *coord1, double *
             }
             ii = ii + 1;
         }
-        // catch the case of iystart near ny and becomes = ny before iyend can be set.
+        // catch the case of iystart near ny and becomes = ny before iyend can
+        // be set.
         if (iystart != -1 && iyend == -1) {
             iyend = ny;
             done_search_y = 1;
@@ -374,8 +375,9 @@ int match_point_msm(double *xc, double *yc, double *zc, double *coord1, double *
         // set up the values for fluxv, weightv, ifluxv, varv
         nxy = nx * ny;
         if (done_search_x == 1 && done_search_y == 1 && done_search_w == 1) {
-            // The search above for x,y  was a crude search - now narrow the search using the distance between
-            // the spaxel center and point cloud
+            // The search above for x,y  was a crude search - now narrow the
+            // search using the distance between the spaxel center and point
+            // cloud
             for (ix = ixstart; ix < ixend; ix++) {
                 for (iy = iystart; iy < iyend; iy++) {
                     ydist = fabs(yc[iy] - coord2[k]);
@@ -409,11 +411,11 @@ int match_point_msm(double *xc, double *yc, double *zc, double *coord1, double *
                             ifluxv[index_cube] = ifluxv[index_cube] + 1.0;
                         }
                     }
-                } // end loop over iy
-            } // end loop over ix
+                }  // end loop over iy
+            }  // end loop over ix
 
-        } // end done_search_x, done_search_y, done_search_w
-    } // end loop over point cloud
+        }  // end done_search_x, done_search_y, done_search_w
+    }  // end loop over point cloud
 
     // assign output values:
 
@@ -425,38 +427,48 @@ int match_point_msm(double *xc, double *yc, double *zc, double *coord1, double *
     return 0;
 }
 
-PyArrayObject *ensure_array(PyObject *obj, int *is_copy) {
+PyArrayObject *
+ensure_array(PyObject *obj, int *is_copy)
+{
     if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *)obj) &&
         PyArray_TYPE((PyArrayObject *)obj) == NPY_DOUBLE) {
         *is_copy = 0;
         return (PyArrayObject *)obj;
     } else {
         *is_copy = 1;
-        return (PyArrayObject *)PyArray_FromAny(obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0,
-                                                NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST, NULL);
+        return (PyArrayObject *)PyArray_FromAny(
+            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
     }
 }
 
-// Wrapper code that is called from python code and sets up interface with C code.
-static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
+// Wrapper code that is called from python code and sets up interface with C
+// code.
+static PyObject *
+cube_wrapper(PyObject *module, PyObject *args)
+{
     PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo,
-             *slicenoo; // codespell:ignore erro
-    PyObject *rois_pixelo, *roiw_pixelo, *scalerad_pixelo, *zcdelt3o, *softrad_pixelo, *weight_pixelo;
+             *slicenoo;  // codespell:ignore erro
+    PyObject *rois_pixelo, *roiw_pixelo, *scalerad_pixelo, *zcdelt3o, *softrad_pixelo,
+        *weight_pixelo;
 
     double cdelt1, cdelt2, roiw_ave;
     int nwave, npt, nxx, nyy, ncube;
 
-    int instrument, flag_dq_plane, start_region, end_region, overlap_partial, overlap_full, weight_type;
+    int instrument, flag_dq_plane, start_region, end_region, overlap_partial, overlap_full,
+        weight_type;
     double *spaxel_flux = NULL, *spaxel_weight = NULL, *spaxel_var = NULL;
     double *spaxel_iflux = NULL;
     int *spaxel_dq = NULL;
 
-    int free_xc = 0, free_yc = 0, free_zc = 0, free_coord1 = 0, free_coord2 = 0, free_wave = 0, status = 0;
-    int free_rois_pixel = 0, free_roiw_pixel = 0, free_scalerad_pixel = 0, free_flux = 0, free_err = 0,
-        free_zcdelt3 = 0;
+    int free_xc = 0, free_yc = 0, free_zc = 0, free_coord1 = 0, free_coord2 = 0, free_wave = 0,
+        status = 0;
+    int free_rois_pixel = 0, free_roiw_pixel = 0, free_scalerad_pixel = 0, free_flux = 0,
+        free_err = 0, free_zcdelt3 = 0;
     int free_sliceno = 0, free_softrad_pixel, free_weight_pixel = 0;
 
-    PyArrayObject *xc, *yc, *zc, *flux, *err, *coord1, *coord2, *wave, *rois_pixel, *roiw_pixel, *scalerad_pixel;
+    PyArrayObject *xc, *yc, *zc, *flux, *err, *coord1, *coord2, *wave, *rois_pixel, *roiw_pixel,
+        *scalerad_pixel;
     PyArrayObject *zcdelt3, *sliceno, *softrad_pixel, *weight_pixel;
     PyArrayObject *spaxel_flux_arr = NULL, *spaxel_weight_arr = NULL, *spaxel_var_arr = NULL;
     PyArrayObject *spaxel_iflux_arr = NULL, *spaxel_dq_arr = NULL;
@@ -464,29 +476,33 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
 
     int ny, nz;
 
-    if (!PyArg_ParseTuple(args, "iiiiiiiOOOOOOOOOOOOOOOddd:cube_wrapper", &instrument, &flag_dq_plane, &weight_type,
-                          &start_region, &end_region, &overlap_partial, &overlap_full, &xco, &yco, &zco, &coord1o,
-                          &coord2o, &waveo, &fluxo, &erro,
-                          &slicenoo, // codespell:ignore erro
-                          &rois_pixelo, &roiw_pixelo, &scalerad_pixelo, &weight_pixelo, &softrad_pixelo, &zcdelt3o,
-                          &roiw_ave, &cdelt1, &cdelt2)) {
+    if (!PyArg_ParseTuple(
+            args, "iiiiiiiOOOOOOOOOOOOOOOddd:cube_wrapper", &instrument, &flag_dq_plane,
+            &weight_type, &start_region, &end_region, &overlap_partial, &overlap_full, &xco, &yco,
+            &zco, &coord1o, &coord2o, &waveo, &fluxo, &erro,
+            &slicenoo,  // codespell:ignore erro
+            &rois_pixelo, &roiw_pixelo, &scalerad_pixelo, &weight_pixelo, &softrad_pixelo,
+            &zcdelt3o, &roiw_ave, &cdelt1, &cdelt2)) {
         return NULL;
     }
 
     // check that input parameters are valid:
 
     if ((cdelt1 < 0) || (cdelt2 < 0)) {
-        PyErr_SetString(PyExc_ValueError, "'cdelt1' and 'cdelt2' must be a strictly positive number.");
+        PyErr_SetString(
+            PyExc_ValueError, "'cdelt1' and 'cdelt2' must be a strictly positive number.");
         return NULL;
     }
 
     // ensure we are working with numpy arrays and avoid creating new ones
     // if possible:
     if ((!(xc = ensure_array(xco, &free_xc))) || (!(yc = ensure_array(yco, &free_yc))) ||
-        (!(zc = ensure_array(zco, &free_zc))) || (!(coord1 = ensure_array(coord1o, &free_coord1))) ||
-        (!(coord2 = ensure_array(coord2o, &free_coord2))) || (!(wave = ensure_array(waveo, &free_wave))) ||
+        (!(zc = ensure_array(zco, &free_zc))) ||
+        (!(coord1 = ensure_array(coord1o, &free_coord1))) ||
+        (!(coord2 = ensure_array(coord2o, &free_coord2))) ||
+        (!(wave = ensure_array(waveo, &free_wave))) ||
         (!(flux = ensure_array(fluxo, &free_flux))) ||
-        (!(err = ensure_array(erro, &free_err))) || // codespell:ignore erro
+        (!(err = ensure_array(erro, &free_err))) ||  // codespell:ignore erro
         (!(sliceno = ensure_array(slicenoo, &free_sliceno))) ||
         (!(rois_pixel = ensure_array(rois_pixelo, &free_rois_pixel))) ||
         (!(roiw_pixel = ensure_array(roiw_pixelo, &free_roiw_pixel))) ||
@@ -514,27 +530,33 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
     if (ncube == 0) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
         spaxel_flux_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-        if (!spaxel_flux_arr)
+        if (!spaxel_flux_arr) {
             goto fail;
+        }
 
         spaxel_weight_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-        if (!spaxel_weight_arr)
+        if (!spaxel_weight_arr) {
             goto fail;
+        }
 
         spaxel_var_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-        if (!spaxel_var_arr)
+        if (!spaxel_var_arr) {
             goto fail;
+        }
 
         spaxel_iflux_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-        if (!spaxel_iflux_arr)
+        if (!spaxel_iflux_arr) {
             goto fail;
+        }
 
         spaxel_dq_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_INT, 0);
-        if (!spaxel_dq_arr)
+        if (!spaxel_dq_arr) {
             goto fail;
+        }
 
-        result = Py_BuildValue("(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
-                               spaxel_dq_arr);
+        result = Py_BuildValue(
+            "(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
+            spaxel_dq_arr);
 
         goto cleanup;
     }
@@ -545,18 +567,21 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
     int status1 = 0;
     if (flag_dq_plane) {
         if (instrument == 0) {
-            status1 =
-                dq_miri(start_region, end_region, overlap_partial, overlap_full, nxx, nyy, nwave, cdelt1, cdelt2,
-                        roiw_ave, (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc),
-                        (double *)PyArray_DATA(coord1), (double *)PyArray_DATA(coord2), (double *)PyArray_DATA(wave),
-                        (double *)PyArray_DATA(sliceno), ncube, npt, &spaxel_dq);
+            status1 = dq_miri(
+                start_region, end_region, overlap_partial, overlap_full, nxx, nyy, nwave, cdelt1,
+                cdelt2, roiw_ave, (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc),
+                (double *)PyArray_DATA(zc), (double *)PyArray_DATA(coord1),
+                (double *)PyArray_DATA(coord2), (double *)PyArray_DATA(wave),
+                (double *)PyArray_DATA(sliceno), ncube, npt, &spaxel_dq);
         } else {
-            status1 = dq_nirspec(overlap_partial, nxx, nyy, nwave, cdelt1, cdelt2, roiw_ave, (double *)PyArray_DATA(xc),
-                                 (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc), (double *)PyArray_DATA(coord1),
-                                 (double *)PyArray_DATA(coord2), (double *)PyArray_DATA(wave),
-                                 (double *)PyArray_DATA(sliceno), ncube, npt, &spaxel_dq);
+            status1 = dq_nirspec(
+                overlap_partial, nxx, nyy, nwave, cdelt1, cdelt2, roiw_ave,
+                (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc),
+                (double *)PyArray_DATA(coord1), (double *)PyArray_DATA(coord2),
+                (double *)PyArray_DATA(wave), (double *)PyArray_DATA(sliceno), ncube, npt,
+                &spaxel_dq);
         }
-    } else { // set dq plane to 0
+    } else {  // set dq plane to 0
         status1 = set_dqplane_to_zero(ncube, &spaxel_dq);
     }
 
@@ -566,18 +591,21 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
     if (weight_type == 0) {
         status = match_point_emsm(
             (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc),
-            (double *)PyArray_DATA(coord1), (double *)PyArray_DATA(coord2), (double *)PyArray_DATA(wave),
-            (double *)PyArray_DATA(flux), (double *)PyArray_DATA(err), (double *)PyArray_DATA(rois_pixel),
-            (double *)PyArray_DATA(roiw_pixel), (double *)PyArray_DATA(scalerad_pixel), (double *)PyArray_DATA(zcdelt3),
-            nxx, nyy, nwave, ncube, npt, cdelt1, cdelt2, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux);
+            (double *)PyArray_DATA(coord1), (double *)PyArray_DATA(coord2),
+            (double *)PyArray_DATA(wave), (double *)PyArray_DATA(flux), (double *)PyArray_DATA(err),
+            (double *)PyArray_DATA(rois_pixel), (double *)PyArray_DATA(roiw_pixel),
+            (double *)PyArray_DATA(scalerad_pixel), (double *)PyArray_DATA(zcdelt3), nxx, nyy,
+            nwave, ncube, npt, cdelt1, cdelt2, &spaxel_flux, &spaxel_weight, &spaxel_var,
+            &spaxel_iflux);
     } else {
         status = match_point_msm(
             (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc),
-            (double *)PyArray_DATA(coord1), (double *)PyArray_DATA(coord2), (double *)PyArray_DATA(wave),
-            (double *)PyArray_DATA(flux), (double *)PyArray_DATA(err), (double *)PyArray_DATA(rois_pixel),
-            (double *)PyArray_DATA(roiw_pixel), (double *)PyArray_DATA(weight_pixel),
-            (double *)PyArray_DATA(softrad_pixel), (double *)PyArray_DATA(zcdelt3), nxx, nyy, nwave, ncube, npt, cdelt1,
-            cdelt2, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux);
+            (double *)PyArray_DATA(coord1), (double *)PyArray_DATA(coord2),
+            (double *)PyArray_DATA(wave), (double *)PyArray_DATA(flux), (double *)PyArray_DATA(err),
+            (double *)PyArray_DATA(rois_pixel), (double *)PyArray_DATA(roiw_pixel),
+            (double *)PyArray_DATA(weight_pixel), (double *)PyArray_DATA(softrad_pixel),
+            (double *)PyArray_DATA(zcdelt3), nxx, nyy, nwave, ncube, npt, cdelt1, cdelt2,
+            &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux);
     }
 
     if (status || status1) {
@@ -586,29 +614,39 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
         // create return tuple:
         npy_ncube = (npy_intp)ncube;
 
-        spaxel_flux_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_flux);
-        if (!spaxel_flux_arr)
+        spaxel_flux_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_flux);
+        if (!spaxel_flux_arr) {
             goto fail;
+        }
         spaxel_flux = NULL;
 
-        spaxel_weight_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_weight);
-        if (!spaxel_weight_arr)
+        spaxel_weight_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_weight);
+        if (!spaxel_weight_arr) {
             goto fail;
+        }
         spaxel_weight = NULL;
 
-        spaxel_var_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_var);
-        if (!spaxel_var_arr)
+        spaxel_var_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_var);
+        if (!spaxel_var_arr) {
             goto fail;
+        }
         spaxel_var = NULL;
 
-        spaxel_iflux_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_iflux);
-        if (!spaxel_iflux_arr)
+        spaxel_iflux_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_iflux);
+        if (!spaxel_iflux_arr) {
             goto fail;
+        }
         spaxel_iflux = NULL;
 
-        spaxel_dq_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_INT, spaxel_dq);
-        if (!spaxel_dq_arr)
+        spaxel_dq_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_INT, spaxel_dq);
+        if (!spaxel_dq_arr) {
             goto fail;
+        }
         spaxel_dq = NULL;
 
         PyArray_ENABLEFLAGS(spaxel_flux_arr, NPY_ARRAY_OWNDATA);
@@ -616,8 +654,9 @@ static PyObject *cube_wrapper(PyObject *module, PyObject *args) {
         PyArray_ENABLEFLAGS(spaxel_var_arr, NPY_ARRAY_OWNDATA);
         PyArray_ENABLEFLAGS(spaxel_iflux_arr, NPY_ARRAY_OWNDATA);
         PyArray_ENABLEFLAGS(spaxel_dq_arr, NPY_ARRAY_OWNDATA);
-        result = Py_BuildValue("(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
-                               spaxel_dq_arr);
+        result = Py_BuildValue(
+            "(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
+            spaxel_dq_arr);
 
         goto cleanup;
     }
@@ -640,36 +679,51 @@ fail:
     }
 
 cleanup:
-    if (free_xc)
+    if (free_xc) {
         Py_XDECREF(xc);
-    if (free_yc)
+    }
+    if (free_yc) {
         Py_XDECREF(yc);
-    if (free_zc)
+    }
+    if (free_zc) {
         Py_XDECREF(zc);
-    if (free_coord1)
+    }
+    if (free_coord1) {
         Py_XDECREF(coord1);
-    if (free_coord2)
+    }
+    if (free_coord2) {
         Py_XDECREF(coord2);
-    if (free_wave)
+    }
+    if (free_wave) {
         Py_XDECREF(wave);
-    if (free_flux)
+    }
+    if (free_flux) {
         Py_XDECREF(flux);
-    if (free_err)
+    }
+    if (free_err) {
         Py_XDECREF(err);
-    if (free_rois_pixel)
+    }
+    if (free_rois_pixel) {
         Py_XDECREF(rois_pixel);
-    if (free_roiw_pixel)
+    }
+    if (free_roiw_pixel) {
         Py_XDECREF(roiw_pixel);
-    if (free_scalerad_pixel)
+    }
+    if (free_scalerad_pixel) {
         Py_XDECREF(scalerad_pixel);
-    if (free_softrad_pixel)
+    }
+    if (free_softrad_pixel) {
         Py_XDECREF(softrad_pixel);
-    if (free_weight_pixel)
+    }
+    if (free_weight_pixel) {
         Py_XDECREF(weight_pixel);
-    if (free_zcdelt3)
+    }
+    if (free_zcdelt3) {
         Py_XDECREF(zcdelt3);
-    if (free_sliceno)
+    }
+    if (free_sliceno) {
         Py_XDECREF(sliceno);
+    }
 
     return result;
 }
@@ -681,17 +735,19 @@ static PyMethodDef cube_methods[] = {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "cube_match_sky_pointcloud", /* m_name */
+    "cube_match_sky_pointcloud",                       /* m_name */
     "find point cloud matches for each spaxel center", /* m_doc */
-    -1, /* m_size */
-    cube_methods, /* m_methods */
-    NULL, /* m_reload */
-    NULL, /* m_traverse */
-    NULL, /* m_clear */
-    NULL, /* m_free */
+    -1,                                                /* m_size */
+    cube_methods,                                      /* m_methods */
+    NULL,                                              /* m_reload */
+    NULL,                                              /* m_traverse */
+    NULL,                                              /* m_clear */
+    NULL,                                              /* m_free */
 };
 
-PyMODINIT_FUNC PyInit_cube_match_sky_pointcloud(void) {
+PyMODINIT_FUNC
+PyInit_cube_match_sky_pointcloud(void)
+{
     PyObject *m;
     import_array();
     m = PyModule_Create(&moduledef);

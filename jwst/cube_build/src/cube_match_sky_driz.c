@@ -1,7 +1,8 @@
 /*
-An IFU spectral cube is built using the overlap between the detector pixels mapped
-to the 3-D spectral grid. This method is similar to 2D drizzle type mapping techniques.
-This is the top level c routine that interfaces with the python wrapper.
+An IFU spectral cube is built using the overlap between the detector pixels
+mapped to the 3-D spectral grid. This method is similar to 2D drizzle type
+mapping techniques. This is the top level c routine that interfaces with the
+python wrapper.
 
 
 Main function for Python: cube_wrapper_driz
@@ -33,8 +34,8 @@ Python signature:  result = cube_wrapper_driz(
                             debug_cube_index
                         )
 
-The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight, spaxel_var, spaxel_iflux,
-spaxel_dq)
+The output of this function is a tuple of 5 arrays:(spaxel_flux, spaxel_weight,
+spaxel_var, spaxel_iflux, spaxel_dq)
 
 Parameters
 ----------
@@ -48,40 +49,27 @@ start_region : int
 end_region: int
     ending slice number for detector region used in dq flagging
 overlap_partial : int
-    a dq flag indicating that only a portion of the spaxel is overlapped by a mapped detector pixel
-overlap_full : int
-    a dq flag indicating that the entire spaxel is overlapped by the mapped detector pixel
-xcoord : ndarray of float
-   size of naxis1. This array holds the center x axis values of the ifu cube
-ycoord : ndarray of float
-   size of naxis2. This array holds the center y axis values of the ifu cube
-zcoord : ndarray of float
-   size of naxis3. This array holds the center z axis /wavelength values of the ifu cube
-coord1 : ndarray of float
-   The tangent projected xi values of the center of detector pixel.
-coord2 : ndarray of float
-   The tangent projected wave values of the center of detector pixel..
-wave : ndarray of float
-   The wavelength corresponding to the center of the detector pixel.
-flux : ndarray of float
-   size: point cloud elements. Flux of each point cloud member
-err : ndarray of float
-   size: point cloud elements. err of each point cloud member
-slice_no : int
-   slice number of point cloud member to be in dq flagging
-xi1, eta1 : ndarray of floats
-   xi, eta coordinates (tangent projection) of the detector pixel corner 1.
-xi2, eta2 : ndarray of floats
-   xi, eta coordinates (tangent projection) of the detector pixel corner 2.
-xi3, eta3 : ndarray of floats
-   xi, eta coordinates (tangent projection) of the detector pixel corner 3.
-xi4, eta4 : ndarray of floats
-   xi, eta coordinates (tangent projection) of the detector pixel corner 4.
-dwave : ndarray of float
-   Delta wavelength ranges for pixel
-cdelt3_normal : ndarray of float
-   For linear wavelength range = 0
-   For non-linear wavelength range = delta wavelength of neighboring wavelength planes
+    a dq flag indicating that only a portion of the spaxel is overlapped by a
+mapped detector pixel overlap_full : int a dq flag indicating that the entire
+spaxel is overlapped by the mapped detector pixel xcoord : ndarray of float size
+of naxis1. This array holds the center x axis values of the ifu cube ycoord :
+ndarray of float size of naxis2. This array holds the center y axis values of
+the ifu cube zcoord : ndarray of float size of naxis3. This array holds the
+center z axis /wavelength values of the ifu cube coord1 : ndarray of float The
+tangent projected xi values of the center of detector pixel. coord2 : ndarray of
+float The tangent projected wave values of the center of detector pixel.. wave :
+ndarray of float The wavelength corresponding to the center of the detector
+pixel. flux : ndarray of float size: point cloud elements. Flux of each point
+cloud member err : ndarray of float size: point cloud elements. err of each
+point cloud member slice_no : int slice number of point cloud member to be in dq
+flagging xi1, eta1 : ndarray of floats xi, eta coordinates (tangent projection)
+of the detector pixel corner 1. xi2, eta2 : ndarray of floats xi, eta
+coordinates (tangent projection) of the detector pixel corner 2. xi3, eta3 :
+ndarray of floats xi, eta coordinates (tangent projection) of the detector pixel
+corner 3. xi4, eta4 : ndarray of floats xi, eta coordinates (tangent projection)
+of the detector pixel corner 4. dwave : ndarray of float Delta wavelength ranges
+for pixel cdelt3_normal : ndarray of float For linear wavelength range = 0 For
+non-linear wavelength range = delta wavelength of neighboring wavelength planes
 cdelt1 : double
    Naxis 1 scale for cube
 cdelt2 : double
@@ -120,34 +108,42 @@ spaxel_dq : numpy.ndarray
 #include <stdlib.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_cube_match_sky_driz_numpy_api
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
 
 // routines used from cube_utils.c
 
-extern int alloc_flux_arrays(int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv);
+extern int alloc_flux_arrays(
+    int nelem, double **fluxv, double **weightv, double **varv, double **ifluxv);
 
-extern int dq_miri(int start_region, int end_region, int overlap_partial, int overlap_full, int nx, int ny, int nz,
-                   double cdelt1, double cdelt2, double cdelt3_mean, double *xc, double *yc, double *zc, double *coord1,
-                   double *coord2, double *wave, double *sliceno, long ncube, long npt, int **spaxel_dq);
+extern int dq_miri(
+    int start_region, int end_region, int overlap_partial, int overlap_full, int nx, int ny, int nz,
+    double cdelt1, double cdelt2, double cdelt3_mean, double *xc, double *yc, double *zc,
+    double *coord1, double *coord2, double *wave, double *sliceno, long ncube, long npt,
+    int **spaxel_dq);
 
-extern int dq_nirspec(int overlap_partial, int nx, int ny, int nz, double cdelt1, double cdelt2, double cdelt3_mean,
-                      double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave, double *sliceno,
-                      long ncube, long npt, int **spaxel_dq);
+extern int dq_nirspec(
+    int overlap_partial, int nx, int ny, int nz, double cdelt1, double cdelt2, double cdelt3_mean,
+    double *xc, double *yc, double *zc, double *coord1, double *coord2, double *wave,
+    double *sliceno, long ncube, long npt, int **spaxel_dq);
 
 extern int set_dqplane_to_zero(int ncube, int **spaxel_dq);
 
-extern double sh_find_overlap(double xcenter, double ycenter, double xlength, double ylength, double xPixelCorner[],
-                              double yPixelCorner[]);
+extern double sh_find_overlap(
+    double xcenter, double ycenter, double xlength, double ylength, double xPixelCorner[],
+    double yPixelCorner[]);
 
-// extern double find_area_quad(double MinX, double MinY, double Xcorner[], double Ycorner[]);
+// extern double find_area_quad(double MinX, double MinY, double Xcorner[],
+// double Ycorner[]);
 
 // C routine that  does that does the drizzling
-int match_driz(double *xc, double *yc, double *zc, double *wave, double *flux, double *err, double *xi1, double *eta1,
-               double *xi2, double *eta2, double *xi3, double *eta3, double *xi4, double *eta4, double *dwave,
-               double *cdelt3, double *x_det, double *y_det, double cdelt1, double cdelt2, int nx, int ny, int nwave,
-               long ncube, long npt, int linear, long debug_cube_index, double **spaxel_flux, double **spaxel_weight,
-               double **spaxel_var, double **spaxel_iflux) {
-
+int
+match_driz(
+    double *xc, double *yc, double *zc, double *wave, double *flux, double *err, double *xi1,
+    double *eta1, double *xi2, double *eta2, double *xi3, double *eta3, double *xi4, double *eta4,
+    double *dwave, double *cdelt3, double *x_det, double *y_det, double cdelt1, double cdelt2,
+    int nx, int ny, int nwave, long ncube, long npt, int linear, long debug_cube_index,
+    double **spaxel_flux, double **spaxel_weight, double **spaxel_var, double **spaxel_iflux)
+{
     // xc : IFU grid point values along x-axis
     // yc : IFU grid point values along y-axis
     // zc : IFU grid point values along the z-axis
@@ -174,7 +170,8 @@ int match_driz(double *xc, double *yc, double *zc, double *wave, double *flux, d
     // spaxel_var : return value of weighted combined variance
     // spaxel_iflux :return value of weighted combined iweighting map
 
-    double *fluxv = NULL, *weightv = NULL, *varv = NULL, *ifluxv = NULL; // vector for spaxel
+    double *fluxv = NULL, *weightv = NULL, *varv = NULL,
+           *ifluxv = NULL;  // vector for spaxel
 
     int k, j, ix1, ix2, iy1, iy2, iw1, iw2;
     int nxy, ix, iy, iw, index_xy, index_cube;
@@ -190,11 +187,12 @@ int match_driz(double *xc, double *yc, double *zc, double *wave, double *flux, d
     double xleft, xright, ybot, ytop;
     // double area_quad;
     // allocate memory to hold output
-    if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv))
+    if (alloc_flux_arrays(ncube, &fluxv, &weightv, &varv, &ifluxv)) {
         return 1;
+    }
 
-    // find max of cdelt3, dwave to be used to estimate which wavelength plane the
-    // pixel falls on
+    // find max of cdelt3, dwave to be used to estimate which wavelength plane
+    // the pixel falls on
     zreg = 0;
     max_cdelt3 = cdelt3[0];
     max_dwave = dwave[0];
@@ -228,21 +226,26 @@ int match_driz(double *xc, double *yc, double *zc, double *wave, double *flux, d
         xmax = xmin;
         ymax = ymin;
         for (j = 1; j < 5; j++) {
-            if (xpixel[j] > xmax)
+            if (xpixel[j] > xmax) {
                 xmax = xpixel[j];
-            if (ypixel[j] > ymax)
+            }
+            if (ypixel[j] > ymax) {
                 ymax = ypixel[j];
-            if (xpixel[j] < xmin)
+            }
+            if (xpixel[j] < xmin) {
                 xmin = xpixel[j];
-            if (ypixel[j] < ymin)
+            }
+            if (ypixel[j] < ymin) {
                 ymin = ypixel[j];
+            }
         }
 
         cdelt1_half = cdelt1 / 2.0;
         cdelt2_half = cdelt2 / 2.0;
 
-        // find the area of the pixel (quadrilateral) not needed now - keeping if needed later
-        // area_quad = find_area_quad(xmin, ymin, xpixel, ypixel);
+        // find the area of the pixel (quadrilateral) not needed now - keeping
+        // if needed later area_quad = find_area_quad(xmin, ymin, xpixel,
+        // ypixel);
 
         // convert to integer values to get the approximate region to search
         // cdelt1_half and cdelt2_half - may not be needed.
@@ -264,8 +267,9 @@ int match_driz(double *xc, double *yc, double *zc, double *wave, double *flux, d
             iy2 = ny;
         }
 
-        // estimate the wavelength overlapping region using max_cdelt3 and max_dwave
-        // estimating wavelength range works if we have a linear wavelength
+        // estimate the wavelength overlapping region using max_cdelt3 and
+        // max_dwave estimating wavelength range works if we have a linear
+        // wavelength
         iw1 = 0;
         iw2 = nwave;
         for (iw = iw1; iw < iw2; iw++) {
@@ -296,11 +300,10 @@ int match_driz(double *xc, double *yc, double *zc, double *wave, double *flux, d
                     zoverlap = 0;
                 }
 
-                // find match in spatial dimension using approximate locations based on
-                // ix1, ix2, iy1, iy2
+                // find match in spatial dimension using approximate locations
+                // based on ix1, ix2, iy1, iy2
                 for (ix = ix1; ix < ix2; ix++) {
                     for (iy = iy1; iy < iy2; iy++) {
-
                         // narrow down the spatial region
                         xleft = xc[ix] - cdelt1 * 0.5;
                         xright = xc[ix] + cdelt1 * 0.5;
@@ -311,13 +314,14 @@ int match_driz(double *xc, double *yc, double *zc, double *wave, double *flux, d
                         index_xy = iy * nx + ix;
 
                         if (xleft < xmax && xright > xmin && ybot < ymax && ytop > ymin) {
-
                             index_xy = iy * nx + ix;
                             index_cube = iw * nxy + index_xy;
-                            // Spatial overlap between detector pixel and cube spaxel
+                            // Spatial overlap between detector pixel and cube
+                            // spaxel
                             area = sh_find_overlap(xc[ix], yc[iy], cdelt1, cdelt2, xpixel, ypixel);
 
-                            // area_weight = area of overlap * wavelength overlap
+                            // area_weight = area of overlap * wavelength
+                            // overlap
                             area_weight = area * zoverlap;
                             if (area_weight > 0) {
                                 weighted_flux = flux[k] * area_weight;
@@ -330,18 +334,20 @@ int match_driz(double *xc, double *yc, double *zc, double *wave, double *flux, d
 
                             // Keep print statement in code - used for debugging
                             if (index_cube == debug_cube_index) {
-                                printf("spaxel, flux, x, y [count starting at 0]  %i %f %f %f  \n ", index_cube,
-                                       flux[k], x_det[k], y_det[k]);
+                                printf(
+                                    "spaxel, flux, x, y [count starting at 0]  "
+                                    "%i %f %f %f  \n ",
+                                    index_cube, flux[k], x_det[k], y_det[k]);
                             }
 
                             // end of print statements
-                        } // xleft, xright, ybot, ytop
+                        }  // xleft, xright, ybot, ytop
 
-                    } // end loop over iy
-                } // end loop over ix
-            } // check of wave
-        } // end loop over wave
-    } // end loop over detector elements
+                    }  // end loop over iy
+                }  // end loop over ix
+            }  // check of wave
+        }  // end loop over wave
+    }  // end loop over detector elements
 
     // assign output values:
     *spaxel_flux = fluxv;
@@ -355,24 +361,29 @@ int match_driz(double *xc, double *yc, double *zc, double *wave, double *flux, d
 // This is a C structure that represents a NumPy array in the C API.
 // This ensures that all the numpy arrays passed to the C routines
 // follow C array rules.
-PyArrayObject *ensure_array(PyObject *obj, int *is_copy) {
+PyArrayObject *
+ensure_array(PyObject *obj, int *is_copy)
+{
     if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *)obj) &&
         PyArray_TYPE((PyArrayObject *)obj) == NPY_DOUBLE) {
         *is_copy = 0;
         return (PyArrayObject *)obj;
     } else {
         *is_copy = 1;
-        return (PyArrayObject *)PyArray_FromAny(obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0,
-                                                NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST, NULL);
+        return (PyArrayObject *)PyArray_FromAny(
+            obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
     }
 }
 
-// Wrapper code that is called from python code and sets up interface with C code.
-// cube_wrapper_driz.
+// Wrapper code that is called from python code and sets up interface with C
+// code. cube_wrapper_driz.
 
-static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
+static PyObject *
+cube_wrapper_driz(PyObject *module, PyObject *args)
+{
     PyObject *result = NULL, *xco, *yco, *zco, *fluxo, *erro, *coord1o, *coord2o, *waveo,
-             *slicenoo; // codespell:ignore erro
+             *slicenoo;  // codespell:ignore erro
     PyObject *cdelt3o;
     PyObject *xi1o, *eta1o, *xi2o, *eta2o, *xi3o, *eta3o, *xi4o, *eta4o, *x_deto, *y_deto;
     PyObject *dwaveo;
@@ -386,11 +397,12 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
     double *spaxel_iflux = NULL;
     int *spaxel_dq = NULL;
 
-    int free_xc = 0, free_yc = 0, free_zc = 0, free_coord1 = 0, free_coord2 = 0, free_wave = 0, status = 0;
+    int free_xc = 0, free_yc = 0, free_zc = 0, free_coord1 = 0, free_coord2 = 0, free_wave = 0,
+        status = 0;
     int free_flux = 0, free_err = 0, free_cdelt3 = 0;
     int free_sliceno = 0, free_x_det = 0, free_y_det = 0;
-    int free_xi1 = 0, free_eta1 = 0, free_xi2 = 0, free_eta2 = 0, free_xi3 = 0, free_eta3 = 0, free_xi4 = 0,
-        free_eta4 = 0;
+    int free_xi1 = 0, free_eta1 = 0, free_xi2 = 0, free_eta2 = 0, free_xi3 = 0, free_eta3 = 0,
+        free_xi4 = 0, free_eta4 = 0;
     int free_dwave = 0;
 
     PyArrayObject *xc, *yc, *zc, *flux, *err, *coord1, *coord2, *wave;
@@ -402,35 +414,41 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 
     int ny, nz;
 
-    if (!PyArg_ParseTuple(args, "iiiiiiOOOOOOOOOOOOOOOOOOOdddiOOl:cube_wrapper_driz", &instrument, &flag_dq_plane,
-                          &start_region, &end_region, &overlap_partial, &overlap_full, &xco, &yco, &zco, &coord1o,
-                          &coord2o, &waveo, &fluxo, &erro,
-                          &slicenoo, // codespell:ignore erro
-                          &xi1o, &eta1o, &xi2o, &eta2o, &xi3o, &eta3o, &xi4o, &eta4o, &dwaveo, &cdelt3o, &cdelt1,
-                          &cdelt2, &cdelt3_mean, &linear, &x_deto, &y_deto, &debug_cube_index)) {
+    if (!PyArg_ParseTuple(
+            args, "iiiiiiOOOOOOOOOOOOOOOOOOOdddiOOl:cube_wrapper_driz", &instrument, &flag_dq_plane,
+            &start_region, &end_region, &overlap_partial, &overlap_full, &xco, &yco, &zco, &coord1o,
+            &coord2o, &waveo, &fluxo, &erro,
+            &slicenoo,  // codespell:ignore erro
+            &xi1o, &eta1o, &xi2o, &eta2o, &xi3o, &eta3o, &xi4o, &eta4o, &dwaveo, &cdelt3o, &cdelt1,
+            &cdelt2, &cdelt3_mean, &linear, &x_deto, &y_deto, &debug_cube_index)) {
         return NULL;
     }
 
     // check that input parameters are valid:
 
     if ((cdelt1 <= 0) || (cdelt2 <= 0)) {
-        PyErr_SetString(PyExc_ValueError, "'cdelt1' and 'cdelt2' must be a strictly positive number.");
+        PyErr_SetString(
+            PyExc_ValueError, "'cdelt1' and 'cdelt2' must be a strictly positive number.");
         return NULL;
     }
 
     // ensure we are working with numpy arrays and avoid creating new ones
     // if possible:
     if ((!(xc = ensure_array(xco, &free_xc))) || (!(yc = ensure_array(yco, &free_yc))) ||
-        (!(zc = ensure_array(zco, &free_zc))) || (!(coord1 = ensure_array(coord1o, &free_coord1))) ||
-        (!(coord2 = ensure_array(coord2o, &free_coord2))) || (!(wave = ensure_array(waveo, &free_wave))) ||
-        (!(flux = ensure_array(fluxo, &free_flux))) || (!(x_det = ensure_array(x_deto, &free_x_det))) ||
+        (!(zc = ensure_array(zco, &free_zc))) ||
+        (!(coord1 = ensure_array(coord1o, &free_coord1))) ||
+        (!(coord2 = ensure_array(coord2o, &free_coord2))) ||
+        (!(wave = ensure_array(waveo, &free_wave))) ||
+        (!(flux = ensure_array(fluxo, &free_flux))) ||
+        (!(x_det = ensure_array(x_deto, &free_x_det))) ||
         (!(y_det = ensure_array(y_deto, &free_y_det))) ||
-        (!(err = ensure_array(erro, &free_err))) || // codespell:ignore erro
-        (!(sliceno = ensure_array(slicenoo, &free_sliceno))) || (!(xi1 = ensure_array(xi1o, &free_xi1))) ||
-        (!(eta1 = ensure_array(eta1o, &free_eta1))) || (!(xi2 = ensure_array(xi2o, &free_xi2))) ||
-        (!(eta2 = ensure_array(eta2o, &free_eta2))) || (!(xi3 = ensure_array(xi3o, &free_xi3))) ||
-        (!(eta3 = ensure_array(eta3o, &free_eta3))) || (!(xi4 = ensure_array(xi4o, &free_xi4))) ||
-        (!(eta4 = ensure_array(eta4o, &free_eta4))) || (!(cdelt3 = ensure_array(cdelt3o, &free_cdelt3))) ||
+        (!(err = ensure_array(erro, &free_err))) ||  // codespell:ignore erro
+        (!(sliceno = ensure_array(slicenoo, &free_sliceno))) ||
+        (!(xi1 = ensure_array(xi1o, &free_xi1))) || (!(eta1 = ensure_array(eta1o, &free_eta1))) ||
+        (!(xi2 = ensure_array(xi2o, &free_xi2))) || (!(eta2 = ensure_array(eta2o, &free_eta2))) ||
+        (!(xi3 = ensure_array(xi3o, &free_xi3))) || (!(eta3 = ensure_array(eta3o, &free_eta3))) ||
+        (!(xi4 = ensure_array(xi4o, &free_xi4))) || (!(eta4 = ensure_array(eta4o, &free_eta4))) ||
+        (!(cdelt3 = ensure_array(cdelt3o, &free_cdelt3))) ||
         (!(dwave = ensure_array(dwaveo, &free_dwave)))) {
         goto cleanup;
     }
@@ -452,27 +470,33 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
     if (ncube == 0) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
         spaxel_flux_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-        if (!spaxel_flux_arr)
+        if (!spaxel_flux_arr) {
             goto fail;
+        }
 
         spaxel_weight_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-        if (!spaxel_weight_arr)
+        if (!spaxel_weight_arr) {
             goto fail;
+        }
 
         spaxel_var_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-        if (!spaxel_var_arr)
+        if (!spaxel_var_arr) {
             goto fail;
+        }
 
         spaxel_iflux_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_DOUBLE, 0);
-        if (!spaxel_iflux_arr)
+        if (!spaxel_iflux_arr) {
             goto fail;
+        }
 
         spaxel_dq_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_ncube, NPY_INT, 0);
-        if (!spaxel_dq_arr)
+        if (!spaxel_dq_arr) {
             goto fail;
+        }
 
-        result = Py_BuildValue("(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
-                               spaxel_dq_arr);
+        result = Py_BuildValue(
+            "(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
+            spaxel_dq_arr);
 
         goto cleanup;
     }
@@ -483,31 +507,35 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
 
     if (flag_dq_plane) {
         if (instrument == 0) {
-            status1 =
-                dq_miri(start_region, end_region, overlap_partial, overlap_full, nxx, nyy, nwave, cdelt1, cdelt2,
-                        cdelt3_mean, (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc),
-                        (double *)PyArray_DATA(coord1), (double *)PyArray_DATA(coord2), (double *)PyArray_DATA(wave),
-                        (double *)PyArray_DATA(sliceno), ncube, npt, &spaxel_dq);
+            status1 = dq_miri(
+                start_region, end_region, overlap_partial, overlap_full, nxx, nyy, nwave, cdelt1,
+                cdelt2, cdelt3_mean, (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc),
+                (double *)PyArray_DATA(zc), (double *)PyArray_DATA(coord1),
+                (double *)PyArray_DATA(coord2), (double *)PyArray_DATA(wave),
+                (double *)PyArray_DATA(sliceno), ncube, npt, &spaxel_dq);
         } else {
-            status1 = dq_nirspec(overlap_partial, nxx, nyy, nwave, cdelt1, cdelt2, cdelt3_mean,
-                                 (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc),
-                                 (double *)PyArray_DATA(coord1), (double *)PyArray_DATA(coord2),
-                                 (double *)PyArray_DATA(wave), (double *)PyArray_DATA(sliceno), ncube, npt, &spaxel_dq);
+            status1 = dq_nirspec(
+                overlap_partial, nxx, nyy, nwave, cdelt1, cdelt2, cdelt3_mean,
+                (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc),
+                (double *)PyArray_DATA(coord1), (double *)PyArray_DATA(coord2),
+                (double *)PyArray_DATA(wave), (double *)PyArray_DATA(sliceno), ncube, npt,
+                &spaxel_dq);
         }
-    } else { // set dq plane to 0
+    } else {  // set dq plane to 0
         status1 = set_dqplane_to_zero(ncube, &spaxel_dq);
     }
     //______________________________________________________________________
     // Driz the mapped detector data onto the IFU cube
     //______________________________________________________________________
-    status = match_driz((double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc),
-                        (double *)PyArray_DATA(wave), (double *)PyArray_DATA(flux), (double *)PyArray_DATA(err),
-                        (double *)PyArray_DATA(xi1), (double *)PyArray_DATA(eta1), (double *)PyArray_DATA(xi2),
-                        (double *)PyArray_DATA(eta2), (double *)PyArray_DATA(xi3), (double *)PyArray_DATA(eta3),
-                        (double *)PyArray_DATA(xi4), (double *)PyArray_DATA(eta4), (double *)PyArray_DATA(dwave),
-                        (double *)PyArray_DATA(cdelt3), (double *)PyArray_DATA(x_det), (double *)PyArray_DATA(y_det),
-                        cdelt1, cdelt2, nxx, nyy, nwave, ncube, npt, linear, debug_cube_index, &spaxel_flux,
-                        &spaxel_weight, &spaxel_var, &spaxel_iflux);
+    status = match_driz(
+        (double *)PyArray_DATA(xc), (double *)PyArray_DATA(yc), (double *)PyArray_DATA(zc),
+        (double *)PyArray_DATA(wave), (double *)PyArray_DATA(flux), (double *)PyArray_DATA(err),
+        (double *)PyArray_DATA(xi1), (double *)PyArray_DATA(eta1), (double *)PyArray_DATA(xi2),
+        (double *)PyArray_DATA(eta2), (double *)PyArray_DATA(xi3), (double *)PyArray_DATA(eta3),
+        (double *)PyArray_DATA(xi4), (double *)PyArray_DATA(eta4), (double *)PyArray_DATA(dwave),
+        (double *)PyArray_DATA(cdelt3), (double *)PyArray_DATA(x_det),
+        (double *)PyArray_DATA(y_det), cdelt1, cdelt2, nxx, nyy, nwave, ncube, npt, linear,
+        debug_cube_index, &spaxel_flux, &spaxel_weight, &spaxel_var, &spaxel_iflux);
 
     if (status || status1) {
         goto fail;
@@ -515,29 +543,39 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
         // create return tuple:
         npy_ncube = (npy_intp)ncube;
 
-        spaxel_flux_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_flux);
-        if (!spaxel_flux_arr)
+        spaxel_flux_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_flux);
+        if (!spaxel_flux_arr) {
             goto fail;
+        }
         spaxel_flux = NULL;
 
-        spaxel_weight_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_weight);
-        if (!spaxel_weight_arr)
+        spaxel_weight_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_weight);
+        if (!spaxel_weight_arr) {
             goto fail;
+        }
         spaxel_weight = NULL;
 
-        spaxel_var_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_var);
-        if (!spaxel_var_arr)
+        spaxel_var_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_var);
+        if (!spaxel_var_arr) {
             goto fail;
+        }
         spaxel_var = NULL;
 
-        spaxel_iflux_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_iflux);
-        if (!spaxel_iflux_arr)
+        spaxel_iflux_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_DOUBLE, spaxel_iflux);
+        if (!spaxel_iflux_arr) {
             goto fail;
+        }
         spaxel_iflux = NULL;
 
-        spaxel_dq_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_INT, spaxel_dq);
-        if (!spaxel_dq_arr)
+        spaxel_dq_arr =
+            (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_ncube, NPY_INT, spaxel_dq);
+        if (!spaxel_dq_arr) {
             goto fail;
+        }
         spaxel_dq = NULL;
 
         PyArray_ENABLEFLAGS(spaxel_flux_arr, NPY_ARRAY_OWNDATA);
@@ -545,8 +583,9 @@ static PyObject *cube_wrapper_driz(PyObject *module, PyObject *args) {
         PyArray_ENABLEFLAGS(spaxel_var_arr, NPY_ARRAY_OWNDATA);
         PyArray_ENABLEFLAGS(spaxel_iflux_arr, NPY_ARRAY_OWNDATA);
         PyArray_ENABLEFLAGS(spaxel_dq_arr, NPY_ARRAY_OWNDATA);
-        result = Py_BuildValue("(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
-                               spaxel_dq_arr);
+        result = Py_BuildValue(
+            "(NNNNN)", spaxel_flux_arr, spaxel_weight_arr, spaxel_var_arr, spaxel_iflux_arr,
+            spaxel_dq_arr);
 
         goto cleanup;
     }
@@ -569,44 +608,63 @@ fail:
     }
 
 cleanup:
-    if (free_xc)
+    if (free_xc) {
         Py_XDECREF(xc);
-    if (free_yc)
+    }
+    if (free_yc) {
         Py_XDECREF(yc);
-    if (free_zc)
+    }
+    if (free_zc) {
         Py_XDECREF(zc);
-    if (free_coord1)
+    }
+    if (free_coord1) {
         Py_XDECREF(coord1);
-    if (free_coord2)
+    }
+    if (free_coord2) {
         Py_XDECREF(coord2);
-    if (free_wave)
+    }
+    if (free_wave) {
         Py_XDECREF(wave);
-    if (free_flux)
+    }
+    if (free_flux) {
         Py_XDECREF(flux);
-    if (free_err)
+    }
+    if (free_err) {
         Py_XDECREF(err);
-    if (free_cdelt3)
+    }
+    if (free_cdelt3) {
         Py_XDECREF(cdelt3);
-    if (free_sliceno)
+    }
+    if (free_sliceno) {
         Py_XDECREF(sliceno);
-    if (free_xi1)
+    }
+    if (free_xi1) {
         Py_XDECREF(xi1);
-    if (free_xi2)
+    }
+    if (free_xi2) {
         Py_XDECREF(xi2);
-    if (free_xi3)
+    }
+    if (free_xi3) {
         Py_XDECREF(xi3);
-    if (free_xi4)
+    }
+    if (free_xi4) {
         Py_XDECREF(xi4);
-    if (free_eta1)
+    }
+    if (free_eta1) {
         Py_XDECREF(eta1);
-    if (free_eta2)
+    }
+    if (free_eta2) {
         Py_XDECREF(eta2);
-    if (free_eta3)
+    }
+    if (free_eta3) {
         Py_XDECREF(eta3);
-    if (free_eta4)
+    }
+    if (free_eta4) {
         Py_XDECREF(eta4);
-    if (free_dwave)
+    }
+    if (free_dwave) {
         Py_XDECREF(dwave);
+    }
     return result;
 }
 
@@ -617,17 +675,19 @@ static PyMethodDef cube_methods[] = {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "cube_match_sky_driz", /* m_name */
+    "cube_match_sky_driz",                             /* m_name */
     "find point cloud matches for each spaxel center", /* m_doc */
-    -1, /* m_size */
-    cube_methods, /* m_methods */
-    NULL, /* m_reload */
-    NULL, /* m_traverse */
-    NULL, /* m_clear */
-    NULL, /* m_free */
+    -1,                                                /* m_size */
+    cube_methods,                                      /* m_methods */
+    NULL,                                              /* m_reload */
+    NULL,                                              /* m_traverse */
+    NULL,                                              /* m_clear */
+    NULL,                                              /* m_free */
 };
 
-PyMODINIT_FUNC PyInit_cube_match_sky_driz(void) {
+PyMODINIT_FUNC
+PyInit_cube_match_sky_driz(void)
+{
     PyObject *m;
     import_array();
     m = PyModule_Create(&moduledef);
