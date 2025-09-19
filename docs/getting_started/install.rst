@@ -51,9 +51,9 @@ You can install the latest released version via ``pip``.  From a bash/zsh shell:
 
 .. conda_install_literal::
 
-If no version tag is specified in the install command, `pip` will find the latest release compatible
-with the current environment. This can lead to an unintended `jwst` version, if the latest release
-of `jwst` is not compatible with your environment's python version. Explicitly setting the version
+If no version tag is specified in the install command, ``pip`` will find the latest release compatible
+with the current environment. This can lead to an unintended ``jwst`` version, if the latest release
+of ``jwst`` is not compatible with your environment's python version. Explicitly setting the version
 in the install command will return an informative error if the latest release is not compatible
 with your environment.
 
