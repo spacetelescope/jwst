@@ -9,6 +9,7 @@
 [![Powered by Astropy Badge](https://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](https://www.astropy.org/)
 [![DOI](https://zenodo.org/badge/60551519.svg)](https://zenodo.org/badge/latestdoi/60551519)
 [![Python Versions](https://img.shields.io/pypi/pyversions/jwst)](https://pypi.org/project/jwst/)
+
 ![STScI Logo](docs/_static/stsci_logo.png)
 
 > [!IMPORTANT]
