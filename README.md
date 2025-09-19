@@ -18,7 +18,7 @@
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 > [!WARNING]
-> `jwst` should only be installed with python versions 3.11, 3.12, and 3.13.
+> `jwst` is not yet compatible with python 3.14.
 > 
 > Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
 > this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
