@@ -228,7 +228,7 @@ def test_call_cube_build_nirspec(tmp_cwd, nirspec_data, tmp_path, as_filename):
 
 
 @pytest.mark.parametrize("as_filename", [True, False])
-def test_call_cube_build_nirspec_multi(tmp_cwd, nirspec_data, tmp_path, as_filename):
+def test_call_cube_build_nirspec_band(tmp_cwd, nirspec_data, tmp_path, as_filename):
     if as_filename:
         fn = tmp_path / "test_nirspec_cal.fits"
         nirspec_data.save(fn)
@@ -239,7 +239,7 @@ def test_call_cube_build_nirspec_multi(tmp_cwd, nirspec_data, tmp_path, as_filen
     step.channel = "1"
     step.coord_system = "internal_cal"
     step.save_results = True
-    step.output_type = "multi"
+    step.output_type = "band"
     result = step.run(step_input)
 
     assert isinstance(result, ModelContainer)

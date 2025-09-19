@@ -390,6 +390,8 @@ class Spec2Pipeline(Pipeline):
             # For cube_build always create a single cube containing multiple
             # wavelength bands
 
+            if exp_type == "NRS_IFU":
+                self.cube_build.output_type = "band"
             resampled = calibrated.copy()
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.

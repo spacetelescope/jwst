@@ -1193,12 +1193,10 @@ class IFUCubeData:
                 par2 = self.list_par2[i]
 
             a_scale, b_scale, w_scale = self.instrument_info.get_scale(par1, par2)
-
             spaxelsize[i] = a_scale
             spectralsize[i] = w_scale
             minwave[i] = self.instrument_info.get_wave_min(par1, par2)
             maxwave[i] = self.instrument_info.get_wave_max(par1, par2)
-
             # pull out the values from the cube pars reference file
             roiw[i] = self.instrument_info.get_wave_roi(par1, par2)
             rois[i] = self.instrument_info.get_spatial_roi(par1, par2)
@@ -1208,7 +1206,6 @@ class IFUCubeData:
 
         # Check the spatial size. If it is the same for the array set up the parameters
         all_same = np.all(spaxelsize == spaxelsize[0])
-
         if all_same:
             self.spatial_size = spaxelsize[0]
             spatial_roi = rois[0]
@@ -1239,7 +1236,6 @@ class IFUCubeData:
         all_same_spectral = np.all(spectralsize == spectralsize[0])
 
         # check if scalew has been set - if yes then linear scale
-
         if self.scalew != 0:
             self.spectral_size = self.scalew
             self.linear_wavelength = True
@@ -1247,6 +1243,22 @@ class IFUCubeData:
             weight_power = np.amin(power)
             self.soft_rad = np.amin(softrad)
             self.scalerad = np.amin(scalerad)
+
+        # if we have NIRSPEC Prism then force wavelength to be non-linear
+        elif (
+            self.instrument == "NIRSPEC"
+            and "prism" in self.list_par1
+            and self.output_type == "multi"
+        ):
+            self.linear_wavelength = False
+            (
+                table_wavelength,
+                table_sroi,
+                table_wroi,
+                table_power,
+                table_softrad,
+                table_scalerad,
+            ) = self.instrument_info.get_prism_table()
 
         # if all bands have the same spectral size then linear_wavelength
         elif all_same_spectral:
@@ -1292,8 +1304,11 @@ class IFUCubeData:
                         table_softrad,
                         table_scalerad,
                     ) = table
-            # based on Min and Max wavelength - pull out the tables values that fall in this range
-            # find the closest table entries to the self.wavemin and self.wavemax limits
+
+        # non-linear wavelength range.
+        # Based on Min and Max wavelength - pull out the tables values that fall in this range.
+        # Find the closest table entries to the self.wavemin and self.wavemax limits
+        if not self.linear_wavelength:
             imin = (np.abs(table_wavelength - self.wavemin)).argmin()
             imax = (np.abs(table_wavelength - self.wavemax)).argmin()
 
@@ -1341,13 +1356,13 @@ class IFUCubeData:
                     )
 
                 # set wave_roi and  weight_power to same values if they are in  list
+
         if self.roiw == 0:
             self.roiw = wave_roi
         if self.weight_power == 0:
             self.weight_power = weight_power
         if self.scalexy != 0:
             self.spatial_size = self.scalexy
-
         # check on valid values
 
         found_error = False
@@ -1592,7 +1607,6 @@ class IFUCubeData:
                         ch_corners = cube_build_wcs_util.find_corners_miri(
                             input_model, this_a, self.instrument_info, self.coord_system
                         )
-
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
 
                 # now append this model spatial and spectral corner
