@@ -735,10 +735,17 @@ def _read_input_spectra(input_model, exptime_key, input_spectra):
         spectra = input_model.spec
     for in_spec in spectra:
         if not np.any(np.isfinite(in_spec.spec_table.field("flux"))):
-            log.warning(
-                f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
-                f"from group_id {in_spec.meta.group_id} has no valid flux values; skipping."
-            )
+            if in_spec.meta.hasattr("group_id"):
+                msg = (
+                    f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
+                    f"from group_id {in_spec.meta.group_id} has no valid flux values; skipping."
+                )
+            else:
+                msg = (
+                    f"Input spectrum {in_spec.source_id} order {in_spec.spectral_order} "
+                    "has no valid flux values; skipping."
+                )
+            log.warning(msg)
             continue
         spectral_order = in_spec.spectral_order
         if spectral_order not in input_spectra:
