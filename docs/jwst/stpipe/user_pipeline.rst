@@ -53,7 +53,7 @@ class:
        pixfrac: 1.0
 
 Just like a ``Step``, it must have ``name`` and ``class`` values.
-Here the ``class`` must refer to a subclass of `stpipe.Pipeline`.
+Here the ``class`` must refer to a subclass of ``stpipe.Pipeline``.
 
 Following ``name`` and ``class`` is the ``steps`` section.  Under
 this section is a subsection for each step in the pipeline.  The easiest
@@ -135,7 +135,9 @@ also run Pipelines.
 The only wrinkle is that any parameters overridden from the
 commandline use dot notation to specify the parameter name.  For
 example, to override the ``pixfrac`` value on the ``resample``
-step in the example above, one can do::
+step in the example above, one can do:
+
+.. code-block:: shell
 
     strun stpipe.pipeline.Image2Pipeline --steps.resample.pixfrac=2.0
 
