@@ -124,6 +124,11 @@ class Spec2Pipeline(Pipeline):
                 DeprecationWarning,
                 stacklevel=2,
             )
+            log.warning(
+                "The --save_bsub parameter is deprecated and will be removed in a future release. "
+                "To toggle saving background-subtracted data, use the background step's "
+                "--save_results parameter instead."
+            )
 
         # Setup step parameters required by the pipeline.
         self.resample_spec.save_results = self.save_results

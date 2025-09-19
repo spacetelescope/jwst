@@ -71,6 +71,11 @@ class Image2Pipeline(Pipeline):
                 DeprecationWarning,
                 stacklevel=2,
             )
+        log.warning(
+            "The --save_bsub parameter is deprecated and will be removed in a future release. "
+            "To toggle saving background-subtracted data, use the background step's "
+            "--save_results parameter instead."
+        )
 
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input_data, basename=self.output_file)
