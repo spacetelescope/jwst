@@ -71,21 +71,18 @@ blot_weight : numpy.ndarray
 // Allocate the memory to for the blotted arrays
 //_______________________________________________________________________
 
-int alloc_blot_arrays(int nelem, double **fluxv, double **weightv)
-{
+int alloc_blot_arrays(int nelem, double **fluxv, double **weightv) {
 
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // flux:
-    if (!(*fluxv = (double *)calloc(nelem, sizeof(double))))
-    {
+    if (!(*fluxv = (double *)calloc(nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc;
     }
 
     // weight
-    if (!(*weightv = (double *)calloc(nelem, sizeof(double))))
-    {
+    if (!(*weightv = (double *)calloc(nelem, sizeof(double)))) {
         PyErr_SetString(PyExc_MemoryError, msg);
         goto failed_mem_alloc;
     }
@@ -105,8 +102,7 @@ failed_mem_alloc:
 
 int blot_overlap(double roi, int xsize_det, int ysize_det, int xstart, int xsize2, int ncube, double *xcenter,
                  double *ycenter, double *x_cube, double *y_cube, double *flux_cube, double **blot_flux,
-                 double **blot_weight)
-{
+                 double **blot_weight) {
 
     double *fluxv, *weightv; // vector for blot values
     int k, ix, iy;
@@ -118,18 +114,13 @@ int blot_overlap(double roi, int xsize_det, int ysize_det, int xstart, int xsize
     if (alloc_blot_arrays(npt, &fluxv, &weightv))
         return 1;
 
-    for (k = 0; k < ncube; k++)
-    {
-        for (ix = 0; ix < xsize2; ix++)
-        {
+    for (k = 0; k < ncube; k++) {
+        for (ix = 0; ix < xsize2; ix++) {
             dx = fabs(x_cube[k] - xcenter[ix]);
-            if (dx <= roi)
-            {
-                for (iy = 0; iy < ysize_det; iy++)
-                {
+            if (dx <= roi) {
+                for (iy = 0; iy < ysize_det; iy++) {
                     dy = fabs(y_cube[k] - ycenter[iy]);
-                    if (dy <= roi)
-                    {
+                    if (dy <= roi) {
                         dxy = sqrt(dx * dx + dy * dy);
                         weight_distance = exp(-dxy);
                         weighted_flux = weight_distance * flux_cube[k];
@@ -152,24 +143,19 @@ int blot_overlap(double roi, int xsize_det, int ysize_det, int xstart, int xsize
 
 //  set up the C extension
 
-PyArrayObject *ensure_array(PyObject *obj, int *is_copy)
-{
+PyArrayObject *ensure_array(PyObject *obj, int *is_copy) {
     if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *)obj) &&
-        PyArray_TYPE((PyArrayObject *)obj) == NPY_DOUBLE)
-    {
+        PyArray_TYPE((PyArrayObject *)obj) == NPY_DOUBLE) {
         *is_copy = 0;
         return (PyArrayObject *)obj;
-    }
-    else
-    {
+    } else {
         *is_copy = 1;
         return (PyArrayObject *)PyArray_FromAny(obj, PyArray_DescrFromType(NPY_DOUBLE), 0, 0,
                                                 NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST, NULL);
     }
 }
 
-static PyObject *blot_wrapper(PyObject *module, PyObject *args)
-{
+static PyObject *blot_wrapper(PyObject *module, PyObject *args) {
     PyObject *result = NULL, *xcentero, *ycentero, *x_cubeo, *y_cubeo, *flux_cubeo;
 
     double roi;
@@ -183,35 +169,29 @@ static PyObject *blot_wrapper(PyObject *module, PyObject *args)
 
     npy_intp npt = 0;
 
-    if (!PyArg_ParseTuple(args, "diiiiOOOOO:blot_wrapper", &roi, &xsize_det, &ysize_det, &xstart, &xsize2,
-                          &xcentero, &ycentero, &x_cubeo, &y_cubeo, &flux_cubeo))
-    {
+    if (!PyArg_ParseTuple(args, "diiiiOOOOO:blot_wrapper", &roi, &xsize_det, &ysize_det, &xstart, &xsize2, &xcentero,
+                          &ycentero, &x_cubeo, &y_cubeo, &flux_cubeo)) {
         return NULL;
     }
 
     // ensure we are working with numpy arrays and avoid creating new ones
     // if possible:
-    if ((!(xcenter = ensure_array(xcentero, &free_xcenter))) ||
-        (!(ycenter = ensure_array(ycentero, &free_ycenter))) ||
-        (!(x_cube = ensure_array(x_cubeo, &free_xcube))) ||
-        (!(y_cube = ensure_array(y_cubeo, &free_ycube))) ||
-        (!(flux_cube = ensure_array(flux_cubeo, &free_flux))))
-    {
+    if ((!(xcenter = ensure_array(xcentero, &free_xcenter))) || (!(ycenter = ensure_array(ycentero, &free_ycenter))) ||
+        (!(x_cube = ensure_array(x_cubeo, &free_xcube))) || (!(y_cube = ensure_array(y_cubeo, &free_ycube))) ||
+        (!(flux_cube = ensure_array(flux_cubeo, &free_flux)))) {
         goto cleanup;
     }
 
     nx = (int)PyArray_Size((PyObject *)x_cube);
     ny = (int)PyArray_Size((PyObject *)y_cube);
     nz = (int)PyArray_Size((PyObject *)flux_cube);
-    if (ny != nz || nz != nx)
-    {
+    if (ny != nz || nz != nx) {
         PyErr_SetString(PyExc_ValueError, "Input coordinate arrays of unequal size.");
         goto cleanup;
     }
 
     npt = (npy_intp)(xsize_det * ysize_det);
-    if (npt == 0)
-    {
+    if (npt == 0) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
         blot_flux_arr = (PyArrayObject *)PyArray_EMPTY(1, &npt, NPY_DOUBLE, 0);
         if (!blot_flux_arr)
@@ -229,15 +209,11 @@ static PyObject *blot_wrapper(PyObject *module, PyObject *args)
     ncube = nx;
     status = blot_overlap(roi, xsize_det, ysize_det, xstart, xsize2, ncube, (double *)PyArray_DATA(xcenter),
                           (double *)PyArray_DATA(ycenter), (double *)PyArray_DATA(x_cube),
-                          (double *)PyArray_DATA(y_cube), (double *)PyArray_DATA(flux_cube), &blot_flux,
-                          &blot_weight);
+                          (double *)PyArray_DATA(y_cube), (double *)PyArray_DATA(flux_cube), &blot_flux, &blot_weight);
 
-    if (status)
-    {
+    if (status) {
         goto fail;
-    }
-    else
-    {
+    } else {
         // create return tuple:
 
         blot_flux_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npt, NPY_DOUBLE, blot_flux);
@@ -264,8 +240,7 @@ fail:
     free(blot_flux);
     free(blot_weight);
 
-    if (!PyErr_Occurred())
-    {
+    if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_MemoryError, "Unable to allocate memory for output arrays.");
     }
 
@@ -290,18 +265,17 @@ static PyMethodDef blot_methods[] = {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "blot_median",                   /* m_name */
+    "blot_median", /* m_name */
     "blot median to detector space", /* m_doc */
-    -1,                              /* m_size */
-    blot_methods,                    /* m_methods */
-    NULL,                            /* m_reload */
-    NULL,                            /* m_traverse */
-    NULL,                            /* m_clear */
-    NULL,                            /* m_free */
+    -1, /* m_size */
+    blot_methods, /* m_methods */
+    NULL, /* m_reload */
+    NULL, /* m_traverse */
+    NULL, /* m_clear */
+    NULL, /* m_free */
 };
 
-PyMODINIT_FUNC PyInit_blot_median(void)
-{
+PyMODINIT_FUNC PyInit_blot_median(void) {
     PyObject *m;
     import_array();
     m = PyModule_Create(&moduledef);

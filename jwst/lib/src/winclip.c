@@ -84,56 +84,43 @@ static const float full_pixel_area = 1.0f;
 
 inline dbl_type dbl_min(dbl_type x, dbl_type y) { return (x < y) ? x : y; }
 
-int mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx)
-{
+int mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx) {
     int *x, *y, *i;
     dbl_type *a;
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // x-array:
     x = (int *)realloc(*xv, nelem * sizeof(int));
-    if (x)
-    {
+    if (x) {
         *xv = x;
-    }
-    else
-    {
+    } else {
         PyErr_SetString(PyExc_MemoryError, msg);
         return 1;
     }
 
     // y-array:
     y = (int *)realloc(*yv, nelem * sizeof(int));
-    if (y)
-    {
+    if (y) {
         *yv = y;
-    }
-    else
-    {
+    } else {
         PyErr_SetString(PyExc_MemoryError, msg);
         return 1;
     }
 
     // area-array:
     a = (dbl_type *)realloc(*av, nelem * sizeof(dbl_type));
-    if (a)
-    {
+    if (a) {
         *av = a;
-    }
-    else
-    {
+    } else {
         PyErr_SetString(PyExc_MemoryError, msg);
         return 1;
     }
 
     // idx-array:
     i = (int *)realloc(*idx, nelem * sizeof(int));
-    if (i)
-    {
+    if (i) {
         *idx = i;
-    }
-    else
-    {
+    } else {
         PyErr_SetString(PyExc_MemoryError, msg);
         return 1;
     }
@@ -145,16 +132,15 @@ int mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx)
 Caller is responsible for de-allocating memory for the
 return values: x, y, areas, idx
 */
-int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, double w, double h, int *npix,
-                int **x, int **y, dbl_type **areas, int **idx)
-{
+int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, double w, double h, int *npix, int **x,
+                int **y, dbl_type **areas, int **idx) {
     double x1, x2, y1, y2;
     double wx1, wx2, wy1, wy2; // temp values for fractional pixel size
-    int npixe;                 // estimate of number of output pixels per input coord
-    int nalloc;                // number of allocated output values (not bytes)
+    int npixe; // estimate of number of output pixels per input coord
+    int nalloc; // number of allocated output values (not bytes)
     int l, r, b, t, ix, iy, np, chunk, tnpix = 0;
     int imin, imax, jmin, jmax, imin1, jmin1;
-    dbl_type *av = NULL;                    // vector for clipped pixel area
+    dbl_type *av = NULL; // vector for clipped pixel area
     int *xv = NULL, *yv = NULL, *iv = NULL; // vectors of coordinates
     int i, j, k;
 
@@ -170,8 +156,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
     nx -= 1;
     ny -= 1;
 
-    for (k = 0; k < n; k++)
-    {
+    for (k = 0; k < n; k++) {
         // compute clipping window:
         ix = (int)xc[k];
         iy = (int)yc[k];
@@ -209,25 +194,21 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
         */
 
         // compute indices' ranges for the rectangle clipped to the window:
-        if ((imin = (int)floor(x1)) < l)
-        {
+        if ((imin = (int)floor(x1)) < l) {
             imin = l;
             x1 = (double)imin;
         }
-        if ((imax = (int)ceil(x2 - 1.0)) > r)
-        {
+        if ((imax = (int)ceil(x2 - 1.0)) > r) {
             imax = r;
             x2 = (double)(imax + 1);
         }
         if (x1 >= x2)
             continue;
-        if ((jmin = (int)floor(y1)) < b)
-        {
+        if ((jmin = (int)floor(y1)) < b) {
             jmin = b;
             y1 = (double)jmin;
         }
-        if ((jmax = (int)ceil(y2 - 1)) > t)
-        {
+        if ((jmax = (int)ceil(y2 - 1)) > t) {
             jmax = t;
             y2 = (double)(jmax + 1);
         }
@@ -238,8 +219,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
 
         np = (jmax - jmin + 1) * (imax - imin + 1);
 
-        if (tnpix + np > nalloc)
-        {
+        if (tnpix + np > nalloc) {
             // allocate more memory for output vectors:
             nalloc += chunk;
             if (mem_alloc(nalloc, &xv, &yv, &av, &iv))
@@ -262,8 +242,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
         iv[tnpix] = k;
         tnpix++;
 
-        if (jmax > jmin)
-        {
+        if (jmax > jmin) {
             //   -1.b: top (large j)-left corner pixel:
             xv[tnpix] = imin;
             yv[tnpix] = jmax;
@@ -272,8 +251,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
             tnpix++;
 
             //   - 1.c: middle of the left column:
-            for (j = jmin + 1; j < jmax; j++)
-            {
+            for (j = jmin + 1; j < jmax; j++) {
                 xv[tnpix] = imin;
                 yv[tnpix] = j;
                 av[tnpix] = (dbl_type)wx1;
@@ -282,11 +260,9 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
             }
         }
 
-        if (imax > imin)
-        {
+        if (imax > imin) {
             // 2. process middle columns:
-            for (i = imin + 1; i < imax; i++)
-            {
+            for (i = imin + 1; i < imax; i++) {
                 //   -2.a: bottom pixel:
                 xv[tnpix] = i;
                 yv[tnpix] = jmin;
@@ -294,11 +270,9 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
                 iv[tnpix] = k;
                 tnpix++;
 
-                if (jmax > jmin)
-                {
+                if (jmax > jmin) {
                     //   -2.b: middle of each column:
-                    for (j = jmin + 1; j < jmax; j++)
-                    {
+                    for (j = jmin + 1; j < jmax; j++) {
                         xv[tnpix] = i;
                         yv[tnpix] = j;
                         av[tnpix] = full_pixel_area;
@@ -322,11 +296,9 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
             iv[tnpix] = k;
             tnpix++;
 
-            if (jmax > jmin)
-            {
+            if (jmax > jmin) {
                 //   -3.b: middle of the right column:
-                for (j = jmin + 1; j < jmax; j++)
-                {
+                for (j = jmin + 1; j < jmax; j++) {
                     xv[tnpix] = imax;
                     yv[tnpix] = j;
                     av[tnpix] = (dbl_type)wx2;
@@ -357,24 +329,19 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, 
     return 0;
 }
 
-PyArrayObject *ensure_array(PyObject *obj, int *is_copy)
-{
+PyArrayObject *ensure_array(PyObject *obj, int *is_copy) {
     if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *)obj) &&
-        PyArray_TYPE((PyArrayObject *)obj) == npy_dbl)
-    {
+        PyArray_TYPE((PyArrayObject *)obj) == npy_dbl) {
         *is_copy = 0;
         return (PyArrayObject *)obj;
-    }
-    else
-    {
+    } else {
         *is_copy = 1;
         return (PyArrayObject *)PyArray_FromAny(obj, PyArray_DescrFromType(npy_dbl), 0, 0,
                                                 NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST, NULL);
     }
 }
 
-static PyObject *get_clipped_pixels(PyObject *module, PyObject *args)
-{
+static PyObject *get_clipped_pixels(PyObject *module, PyObject *args) {
     PyObject *result = NULL, *xco, *yco;
     double w, h;
     dbl_type *areas = NULL;
@@ -385,45 +352,38 @@ static PyObject *get_clipped_pixels(PyObject *module, PyObject *args)
     PyArrayObject *x_arr = NULL, *y_arr = NULL, *areas_arr = NULL, *idx_arr = NULL;
     npy_intp npy_npix = 0;
 
-    if (!PyArg_ParseTuple(args, "OOiiidd:get_clipped_pixels", &xco, &yco, &padding, &nx, &ny, &w, &h))
-    {
+    if (!PyArg_ParseTuple(args, "OOiiidd:get_clipped_pixels", &xco, &yco, &padding, &nx, &ny, &w, &h)) {
         return NULL;
     }
 
     // check that input parameters are valid:
-    if (padding < 0)
-    {
+    if (padding < 0) {
         PyErr_SetString(PyExc_ValueError, "'padding' must be a strictly positive number.");
         return NULL;
     }
 
-    if ((nx < 1) || (ny < 1))
-    {
+    if ((nx < 1) || (ny < 1)) {
         PyErr_SetString(PyExc_ValueError, "'nx' and 'ny' must be a strictly positive integer numbers.");
         return NULL;
     }
 
-    if ((w <= 0) || (h <= 0))
-    {
+    if ((w <= 0) || (h <= 0)) {
         PyErr_SetString(PyExc_ValueError, "'w' and 'h' must be a strictly positive numbers.");
         return NULL;
     }
 
     // ensure we are working with numpy arrays and avoid creating new ones
     // if possible:
-    if ((!(xc = ensure_array(xco, &free_xc))) || (!(yc = ensure_array(yco, &free_yc))))
-    {
+    if ((!(xc = ensure_array(xco, &free_xc))) || (!(yc = ensure_array(yco, &free_yc)))) {
         goto cleanup;
     }
 
     n = (int)PyArray_Size((PyObject *)xc);
-    if (n != PyArray_Size((PyObject *)yc))
-    {
+    if (n != PyArray_Size((PyObject *)yc)) {
         PyErr_SetString(PyExc_ValueError, "Input coordinate arrays of unequal size.");
         goto cleanup;
     }
-    if (!n)
-    {
+    if (!n) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
         x_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
         if (!x_arr)
@@ -445,15 +405,12 @@ static PyObject *get_clipped_pixels(PyObject *module, PyObject *args)
         goto cleanup;
     }
 
-    status = clip_pixels(n, (dbl_type *)PyArray_DATA(xc), (dbl_type *)PyArray_DATA(yc), padding, nx, ny, w, h,
-                         &npix, &x, &y, &areas, &idx);
+    status = clip_pixels(n, (dbl_type *)PyArray_DATA(xc), (dbl_type *)PyArray_DATA(yc), padding, nx, ny, w, h, &npix,
+                         &x, &y, &areas, &idx);
 
-    if (status)
-    {
+    if (status) {
         goto fail;
-    }
-    else
-    {
+    } else {
         // create return tuple:
         npy_npix = (npy_intp)npix;
         x_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_npix, NPY_INT, x);
@@ -495,8 +452,7 @@ fail:
     free(areas);
     free(idx);
 
-    if (!PyErr_Occurred())
-    {
+    if (!PyErr_Occurred()) {
         PyErr_SetString(PyExc_MemoryError, "Unable to allocate memory for output arrays.");
     }
 
@@ -517,18 +473,17 @@ static PyMethodDef winclip_methods[] = {
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "winclip",                                          /* m_name */
+    "winclip", /* m_name */
     "Clip a rectangle to multiple rectangular windows", /* m_doc */
-    -1,                                                 /* m_size */
-    winclip_methods,                                    /* m_methods */
-    NULL,                                               /* m_reload */
-    NULL,                                               /* m_traverse */
-    NULL,                                               /* m_clear */
-    NULL,                                               /* m_free */
+    -1, /* m_size */
+    winclip_methods, /* m_methods */
+    NULL, /* m_reload */
+    NULL, /* m_traverse */
+    NULL, /* m_clear */
+    NULL, /* m_free */
 };
 
-PyMODINIT_FUNC PyInit_winclip(void)
-{
+PyMODINIT_FUNC PyInit_winclip(void) {
     PyObject *m;
     import_array();
     m = PyModule_Create(&moduledef);
