@@ -51,6 +51,7 @@ You can install the latest released version via ``pip``.  From a bash/zsh shell:
 
     conda create -n <env_name> python=3.13
     conda activate <env_name>
+
 .. pip_install_literal::
 
 |version| |release| If no version tag is specified in the install command, `pip` will find the latest release compatible
