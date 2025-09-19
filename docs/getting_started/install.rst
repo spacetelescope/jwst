@@ -38,6 +38,7 @@ shell.
 
 .. warning::
     JWST requires a C compiler for dependencies.
+    JWST is only compatible with python versions 3.11, 3.12, and 3.13.
 
 .. warning::
     Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
@@ -47,9 +48,14 @@ Installing Latest Release
 
 You can install the latest released version via ``pip``.  From a bash/zsh shell::
 
-    conda create -n <env_name> python=3.12
+    conda create -n <env_name> python=3.13
     conda activate <env_name>
-    pip install jwst
+    pip install jwst==|version|
+
+If no version tag is specified in the install command, `pip` will find the latest release compatible
+with the current environment. This could lead to an unintended `jwst` version if the latest release
+of `jwst` is not compatible with your environment's python version. Explicitly setting the version
+in the install command will provide an informative version error if one occurs.
 
 .. _installing_previous_release:
 
@@ -60,7 +66,7 @@ You can also install a specific version (from ``jwst 0.17.0`` onward)::
 
     conda create -n <env_name> python=3.12
     conda activate <env_name>
-    pip install jwst==1.12.5
+    pip install jwst==1.17.1
 
 .. _installing_dev:
 
@@ -70,7 +76,7 @@ Installing the Development Version from Github
 You can install the latest development version (not as well tested) from the
 Github main branch::
 
-    conda create -n <env_name> python=3.12
+    conda create -n <env_name> python=3.13
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
 

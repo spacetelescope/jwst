@@ -13,11 +13,12 @@
 
 > [!IMPORTANT]
 > JWST requires a C compiler for dependencies.
-
-> [!NOTE]
+> 
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 > [!WARNING]
+> `jwst` should only be installed with python versions 3.11, 3.12, and 3.13.
+> 
 > Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
 > this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
 >
@@ -29,7 +30,7 @@ Please contact the [JWST Help Desk](https://jwsthelp.stsci.edu) for installation
 
 The easiest way to install the latest `jwst` release into a fresh virtualenv or conda environment is
 
-    pip install jwst
+    pip install jwst==1.19.1
 
 ### Detailed Installation
 
@@ -54,24 +55,23 @@ Remember that all conda operations must be done from within a bash/zsh shell.
 
 ### Installing latest releases
 
-You can install the latest released version via `pip`.  From a bash/zsh shell:
+You can install the latest released version with:
 
-    conda create -n <env_name> python=3.12
+    conda create -n <env_name> python=3.13
     conda activate <env_name>
-    pip install jwst
+    pip install jwst==1.19.1
 
-You can also install a specific version:
-
-    conda create -n <env_name> python=3.12
-    conda activate <env_name>
-    pip install jwst==1.18.1
+If no version tag is specified in the install command, `pip` will find the latest release compatible
+with the current environment. This could lead to an unintended `jwst` version if the latest release 
+of `jwst` is not compatible with your environment's python version. Explicitly setting the version
+in the install command will provide an informative version error if one occurs. 
 
 ### Installing the development version from Github
 
 You can install the latest development version (not as well tested) from the
 Github main branch:
 
-    conda create -n <env_name> python=3.12
+    conda create -n <env_name> python=3.13
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
 
