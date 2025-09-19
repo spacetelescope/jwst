@@ -62,9 +62,10 @@ You can install the latest released version with:
     pip install jwst==1.19.1
 
 If no version tag is specified in the install command, `pip` will find the latest release compatible
-with the current environment. This could lead to an unintended `jwst` version if the latest release 
+with the current environment. This can lead to an unintended `jwst` version, if the latest release
 of `jwst` is not compatible with your environment's python version. Explicitly setting the version
-in the install command will provide an informative version error if one occurs. 
+in the install command will return an informative error if the latest release is not compatible
+with your environment.
 
 ### Installing the development version from Github
 
