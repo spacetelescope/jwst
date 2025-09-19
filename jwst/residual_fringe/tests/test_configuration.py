@@ -1,9 +1,12 @@
 """Unit tests for Residual Fringe Correction step interface."""
 
+import logging
+
 import numpy as np
 import pytest
 from stdatamodels.jwst import datamodels
 
+from jwst.lib.basic_utils import LoggingContext
 from jwst.residual_fringe import ResidualFringeStep, residual_fringe
 
 
@@ -38,12 +41,8 @@ def test_bad_ignore_regions(tmp_cwd, miri_image):
         step.run(miri_image)
 
 
-def test_ignore_regions(tmp_cwd, monkeypatch, miri_image, log_watcher):
+def test_ignore_regions(caplog, tmp_cwd, monkeypatch, miri_image):
     # Set some reasonable wavelength regions - these should be read in properly
-    watcher = log_watcher(
-        "jwst.residual_fringe.residual_fringe_step", message="Ignoring 2 wavelength regions"
-    )
-
     step = ResidualFringeStep()
     step.ignore_region_min = [4.9, 5.7]
     step.ignore_region_max = [5.6, 6.5]
@@ -54,8 +53,16 @@ def test_ignore_regions(tmp_cwd, monkeypatch, miri_image, log_watcher):
     monkeypatch.setattr(step, "get_reference_file", lambda *args: "N/A")
 
     # check for ignore regions log message
-    step.run(miri_image)
-    watcher.assert_seen()
+    with LoggingContext(logging.getLogger("jwst"), level=logging.INFO):
+        result = step.run(miri_image)
+    assert "Ignoring 2 wavelength regions" in caplog.text
+
+    # step is marked skipped
+    assert result.meta.cal_step.residual_fringe == "SKIPPED"
+
+    # input is not modified
+    assert result is not miri_image
+    assert miri_image.meta.cal_step.residual_fringe is None
 
 
 def test_fringe_flat_applied(tmp_cwd, miri_image):
@@ -86,11 +93,15 @@ def test_rf_step_wrong_input_type():
         ResidualFringeStep.call(model, skip=False)
 
 
-def test_rf_step_wrong_exptype(miri_image, log_watcher):
+def test_rf_step_wrong_exptype(caplog, miri_image):
     model = miri_image
     model.meta.exposure.type = "NRS_IFU"
-
-    watcher = log_watcher("jwst.residual_fringe.residual_fringe_step", message="only for MIRI MRS")
     result = ResidualFringeStep.call(model, skip=False)
+
+    # step is skipped
+    assert "only for MIRI MRS" in caplog.text
     assert result.meta.cal_step.residual_fringe == "SKIPPED"
-    watcher.assert_seen()
+
+    # input is not modified
+    assert result is not model
+    assert model.meta.cal_step.residual_fringe is None
