@@ -216,7 +216,7 @@ def generate_artifactory_json(request, artifactory_repos):
                 upload_schema = generate_upload_schema(
                     rtdata.output, rtdata.remote_results_path, schema=upload_schema
                 )
-            elif rtdata.okify_op in ("folder_copy", "sdp_pool_copy"):
+            elif rtdata.okify_op == "sdp_pool_copy":
                 output = rtdata.output + "/"
                 target = rtdata.remote_results_path + os.path.basename(rtdata.output) + "/"
                 upload_schema = generate_upload_schema(output, target, schema=upload_schema)
