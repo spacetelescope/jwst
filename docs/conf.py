@@ -27,6 +27,7 @@ from docutils import nodes
 
 from jwst import __version__ as version
 
+
 class StepSpecDocumenter(AttributeDocumenter):
     def should_suppress_value_header(self):
         if self.name == "spec" and issubclass(self.parent, Step):
@@ -53,7 +54,7 @@ class StepSpecDocumenter(AttributeDocumenter):
 class PipInstallVersionDirective(SphinxDirective):
 
     def run(self):
-        help_text = f"pip install jwst=={version}"
+        help_text = f"pip install jwst=={version}\n"
         paragraph_node = nodes.literal_block(text=help_text)
         return [paragraph_node]
 
