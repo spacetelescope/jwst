@@ -415,3 +415,13 @@ If developers need to update the truth files in our nightly regression tests,
 there are instructions in the repository wiki.
 
 https://github.com/spacetelescope/jwst/wiki/Maintaining-Regression-Tests
+
+
+## Public API and Deprecation Policy
+
+We consider our public API to be steps (e.g., ``JumpStep``), pipelines (e.g. ``Spec3Pipeline``),
+and command-line tools (e.g. ``calwebb_spec3``, ``set_telescope_pointing``) only.
+When API changes are made to these scripts and classes, a deprecation warning will be issued
+before the change is finalized. The deprecation period is typically two builds or six months.
+Other classes, functions, and methods may be modified or removed in minor releases
+and without warning.
