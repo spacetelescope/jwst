@@ -198,9 +198,8 @@ def writer(asn, output_file):
         temp_file = _rename(output_file)
 
     try:
-        fd = Path.open(output_file, "w")
-        fd.write(serialized)
-        fd.close()
+        with Path.open(output_file, "w") as fd:
+            fd.write(serialized)
     except OSError:
         if in_place:
             Path.rename(temp_file, output_file)
