@@ -2,6 +2,9 @@ import os
 
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.modeling.models import Identity
+from gwcs import coordinate_frames as cf
+from gwcs import wcs
 
 import jwst
 from jwst.datamodels import SourceModelContainer
@@ -12,6 +15,19 @@ from jwst.stpipe import Step
 INPUT_WFSS = "mock_wfss_cal.fits"
 INPUT_WFSS_2 = "mock_wfss_2_cal.fits"
 INPUT_ASN = "mock_wfss_asn.json"
+
+
+def make_identity_wcs():
+    """
+    Create a simple identity WCS for testing.
+
+    4 inputs and 4 outputs, to simulate WFSS (x, y, wavelength, order).
+    """
+    input_frame = cf.Frame2D(name="detector", axes_order=(0, 1))
+    output_frame = cf.Frame2D(name="world", axes_order=(0, 1))
+    return wcs.WCS(
+        forward_transform=Identity(4), input_frame=input_frame, output_frame=output_frame
+    )
 
 
 @pytest.fixture
@@ -30,7 +46,8 @@ def mock_niriss_wfss_l2():
 def spec3_wfss_asn(mock_niriss_wfss_l2, tmp_cwd):
     model = mock_niriss_wfss_l2
     for slit in model.slits:
-        slit.meta.wcs = None  # mock WCS coming in from fixture is not serializable
+        wcs = make_identity_wcs()
+        slit.meta.wcs = wcs
     model.save(INPUT_WFSS)
     model2 = model.copy()
     model2.meta.group_id = "8"
