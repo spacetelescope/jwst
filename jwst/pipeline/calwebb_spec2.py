@@ -128,7 +128,7 @@ class Spec2Pipeline(Pipeline):
         # Setup step parameters required by the pipeline.
         self.resample_spec.save_results = self.save_results
         self.resample_spec.suffix = "s2d"
-        self.cube_build.output_type = "multi"
+        # self.cube_build.output_type = "multi"
         self.cube_build.save_results = False
         self.cube_build.skip_dqflagging = True
         self.extract_1d.save_results = self.save_results
@@ -390,8 +390,11 @@ class Spec2Pipeline(Pipeline):
             # For cube_build always create a single cube containing multiple
             # wavelength bands
 
-            if exp_type == "NRS_IFU":
+            if exp_type == "NRS_IFU" and self.cube_build.output_type is None:
                 self.cube_build.output_type = "band"
+
+            if exp_type == "MIR_MRS" and self.cube_build.output_type is None:
+                self.cube_build.output_type = "multi"
             resampled = calibrated.copy()
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.

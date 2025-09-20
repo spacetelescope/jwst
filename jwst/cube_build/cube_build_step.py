@@ -231,6 +231,11 @@ class CubeBuildStep(Step):
         # output type is by default 'Channel' for MIRI and 'Band' for NIRSpec
         instrument = self.input_models[0].meta.instrument.name.upper()
 
+        # Set up output_type for pipeline 3 type cubes.
+        # MIRI calwebb_spec2 parameter reference file has output_type =multi
+        # TODO - determine if we should make a calwebb_spec2 parameter reference file for NIRSpec
+        # that sets output_type = band.
+        # Instead in calwebb_spec2 if output_type is None for NIRSpec data then set it to band
         if self.output_type is None:
             if instrument == "NIRSPEC":
                 self.output_type = "grating"
@@ -328,8 +333,10 @@ class CubeBuildStep(Step):
         self.pipeline = 3
         if self.output_type == "multi" and len(filenames) == 1 and instrument == "MIRI":
             self.pipeline = 2
-        if self.output_type == "band" and len(filenames) == 1 and instrument == "NIRSPEC":
+        # if self.output_type == "band" and len(filenames) == 1 and instrument == "NIRSPEC":
+        if len(filenames) == 1 and instrument == "NIRSPEC":
             self.pipeline = 2
+
         # ________________________________________________________________________________
         # How many and what type of cubes will be made.
         # send self.pars_input['output_type'], all_channel, all_subchannel, all_grating, all_filter

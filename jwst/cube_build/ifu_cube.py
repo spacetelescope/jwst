@@ -218,67 +218,71 @@ class IFUCubeData:
         newname : str
             Output name of the IFU cube.
         """
-        if self.pipeline == 2:
-            newname = self.output_name_base + "_" + self.suffix + ".fits"
-        else:
-            if self.instrument == "MIRI":
-                # Check to see if the output base name already contains the
-                # field "clear", which sometimes shows up in IFU product
-                # names created by the ASN rules. If so, strip it off, so
-                # that the remaining suffixes created below form the entire
-                # list of optical elements in the final output name.
-                basename = self.output_name_base
-                suffix = basename[basename.rfind("_") + 1 :]
-                if suffix in ["clear"]:
-                    self.output_name_base = basename[: basename.rfind("_")]
+        # if self.pipeline == 2:
+        #    newname = self.output_name_base + "_" + self.suffix + ".fits"
+        # else:
+        if self.instrument == "MIRI":
+            # Check to see if the output base name already contains the
+            # field "clear", which sometimes shows up in IFU product
+            # names created by the ASN rules. If so, strip it off, so
+            # that the remaining suffixes created below form the entire
+            # list of optical elements in the final output name.
+            basename = self.output_name_base
+            suffix = basename[basename.rfind("_") + 1 :]
+            if suffix in ["clear"]:
+                self.output_name_base = basename[: basename.rfind("_")]
 
-                # Now compose the appropriate list of optical element suffix names
-                # based on MRS channel and sub-channel
-                channels = []
-                for ch in self.list_par1:
-                    if ch not in channels:
-                        channels.append(ch)
-                    number_channels = len(channels)
-                    ch_name = "_ch"
-                    for i in range(number_channels):
-                        ch_name = ch_name + channels[i]
-                        if i < number_channels - 1:
-                            ch_name = ch_name + "-"
+            # Now compose the appropriate list of optical element suffix names
+            # based on MRS channel and sub-channel
+            channels = []
+            for ch in self.list_par1:
+                if ch not in channels:
+                    channels.append(ch)
+                number_channels = len(channels)
+                ch_name = "_ch"
+                for i in range(number_channels):
+                    ch_name = ch_name + channels[i]
+                    if i < number_channels - 1:
+                        ch_name = ch_name + "-"
 
-                # Sort by inverse alphabetical, e.g. short -> medium -> long
-                subchannels = sorted(set(self.list_par2))[::-1]
-                log.info(f"Subchannel listing: {subchannels}")
-                number_subchannels = len(subchannels)
-                b_name = ""
-                for i in range(number_subchannels):
-                    b_name = b_name + subchannels[i]
-                b_name = b_name.lower()
-                newname = self.output_name_base + ch_name + "-" + b_name
-                if self.coord_system == "internal_cal":
-                    newname = self.output_name_base + ch_name + "-" + b_name + "_internal"
-                if self.output_type == "single":
-                    newname = self.output_name_base + ch_name + "-" + b_name + "_single"
-            # ________________________________________________________________________________
-            elif self.instrument == "NIRSPEC":
-                # Check to see if the output base name already has a grating/prism
-                # suffix attached. If so, strip it off, and let the following logic
-                # add all necessary grating and filter suffixes.
-                basename = self.output_name_base
-                suffix = basename[basename.rfind("_") + 1 :]
-                if suffix in ["g140m", "g235m", "g395m", "g140h", "g235h", "g395h", "prism"]:
-                    self.output_name_base = basename[: basename.rfind("_")]
+            # Sort by inverse alphabetical, e.g. short -> medium -> long
+            subchannels = sorted(set(self.list_par2))[::-1]
+            log.info(f"Subchannel listing: {subchannels}")
+            number_subchannels = len(subchannels)
+            b_name = ""
+            for i in range(number_subchannels):
+                b_name = b_name + subchannels[i]
+            b_name = b_name.lower()
+            newname = self.output_name_base + ch_name + "-" + b_name
+            if self.coord_system == "internal_cal":
+                newname = self.output_name_base + ch_name + "-" + b_name + "_internal"
+            elif self.output_type == "single":
+                newname = self.output_name_base + ch_name + "-" + b_name + "_single"
+            elif self.pipeline == 2:
+                newname = self.output_name_base + "_" + self.suffix + ".fits"
 
-                fg_name = "_"
-                for i in range(len(self.list_par1)):
-                    fg_name = fg_name + self.list_par1[i] + "-" + self.list_par2[i]
-                    if i < self.num_bands - 1:
-                        fg_name = fg_name + "-"
-                fg_name = fg_name.lower()
-                newname = self.output_name_base + fg_name
-                if self.output_type == "single":
-                    newname = self.output_name_base + fg_name + "_single"
-                if self.coord_system == "internal_cal":
-                    newname = self.output_name_base + fg_name + "_internal"
+        elif self.instrument == "NIRSPEC":
+            # Check to see if the output base name already has a grating/prism
+            # suffix attached. If so, strip it off, and let the following logic
+            # add all necessary grating and filter suffixes.
+            basename = self.output_name_base
+            suffix = basename[basename.rfind("_") + 1 :]
+            if suffix in ["g140m", "g235m", "g395m", "g140h", "g235h", "g395h", "prism"]:
+                self.output_name_base = basename[: basename.rfind("_")]
+
+            fg_name = "_"
+            for i in range(len(self.list_par1)):
+                fg_name = fg_name + self.list_par1[i] + "-" + self.list_par2[i]
+                if i < self.num_bands - 1:
+                    fg_name = fg_name + "-"
+            fg_name = fg_name.lower()
+            newname = self.output_name_base + fg_name
+            if self.output_type == "single":
+                newname = self.output_name_base + fg_name + "_single"
+            elif self.coord_system == "internal_cal":
+                newname = self.output_name_base + fg_name + "_internal"
+            elif self.pipeline == 2:
+                newname = self.output_name_base + "_" + self.suffix + ".fits"
 
         if self.output_type != "single":
             log.info(f"Output Name: {newname}")
