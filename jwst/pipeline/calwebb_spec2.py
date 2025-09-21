@@ -128,7 +128,6 @@ class Spec2Pipeline(Pipeline):
         # Setup step parameters required by the pipeline.
         self.resample_spec.save_results = self.save_results
         self.resample_spec.suffix = "s2d"
-        # self.cube_build.output_type = "multi"
         self.cube_build.save_results = False
         self.cube_build.skip_dqflagging = True
         self.extract_1d.save_results = self.save_results
@@ -387,9 +386,7 @@ class Spec2Pipeline(Pipeline):
 
         elif (exp_type in ["MIR_MRS", "NRS_IFU"]) or is_nrs_ifu_linelamp(calibrated):
             # First call pixel_replace then call cube_build step for IFU data.
-            # For cube_build always create a single cube containing multiple
-            # wavelength bands
-
+            # set the default output type for both instruments if is not set
             if exp_type == "NRS_IFU" and self.cube_build.output_type is None:
                 self.cube_build.output_type = "band"
 

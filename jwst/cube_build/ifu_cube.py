@@ -218,9 +218,6 @@ class IFUCubeData:
         newname : str
             Output name of the IFU cube.
         """
-        # if self.pipeline == 2:
-        #    newname = self.output_name_base + "_" + self.suffix + ".fits"
-        # else:
         if self.instrument == "MIRI":
             # Check to see if the output base name already contains the
             # field "clear", which sometimes shows up in IFU product

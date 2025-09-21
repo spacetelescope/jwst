@@ -232,16 +232,16 @@ class CubeBuildStep(Step):
         instrument = self.input_models[0].meta.instrument.name.upper()
 
         # Set up output_type for pipeline 3 type cubes.
-        # MIRI calwebb_spec2 parameter reference file has output_type =multi
-        # TODO - determine if we should make a calwebb_spec2 parameter reference file for NIRSpec
-        # that sets output_type = band.
-        # Instead in calwebb_spec2 if output_type is None for NIRSpec data then set it to band
+        # calspec2 sets the default output_type for each instrument. This could be moved to a
+        # the parameter reference file.
+        # In calspec3 the output_type default type is grating for NIRSpec and band for MIRI.
+        # MIRI sets output_type in the calspec3 parameter reference file.
         if self.output_type is None:
             if instrument == "NIRSPEC":
                 self.output_type = "grating"
 
             elif instrument == "MIRI":
-                self.output_type = "channel"
+                self.output_type = "band"
         self.pars_input["output_type"] = self.output_type
         log.info(f"Setting output type to: {self.output_type}")
         # ________________________________________________________________________________
@@ -330,10 +330,13 @@ class CubeBuildStep(Step):
             return
         filenames = master_table.FileMap["filename"]
 
+        # Because the names are different calspec2 and calspec3 output try and figure out which
+        # pipeline we have. #TODO we might want to update how we do this.
         self.pipeline = 3
         if self.output_type == "multi" and len(filenames) == 1 and instrument == "MIRI":
             self.pipeline = 2
-        # if self.output_type == "band" and len(filenames) == 1 and instrument == "NIRSPEC":
+        # By default pipeline 2 sets output_type=band for NIRSpec but the user can override this
+        # for prism data so we want to handle that case too.
         if len(filenames) == 1 and instrument == "NIRSPEC":
             self.pipeline = 2
 
