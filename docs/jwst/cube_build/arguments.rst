@@ -62,8 +62,8 @@ each band will be created.
     :ref:`calwebb_spec2 <calwebb_spec2>` pipeline is to produce ``band`` cubes). 
     If in addition, if channel, band, grating, or filter are also set, then only the data set by those
     parameters will be combined into an "uber" cube.
-    If the `output_type=multi` 	option is used with  NIRSPec prism data when running the cube_build step
-    standalone, then  the output IFU cubes will have a non-linear wavelength plane. 
+    If the `output_type=multi` 	option is used with  NIRSPec prism data, then the output IFU cubes will
+    have a non-linear wavelength plane. 
 
 The following arguments control the size and sampling characteristics of the output IFU cube.
 
