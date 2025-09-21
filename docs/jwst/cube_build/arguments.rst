@@ -60,7 +60,7 @@ each band will be created.
   - ``output_type = multi`` combines data  into a single "uber" IFU cube, this the default mode for
     :ref:`calwebb_spec2 <calwebb_spec2>` pipeline for MIRI data (the default mode for NIRSpec data in the
     :ref:`calwebb_spec2 <calwebb_spec2>` pipeline is to produce ``band`` cubes). 
-    If in addition, if channel, band, grating, or filter are also set, then only the data set by those
+    In addition, if channel, band, grating, or filter are also set, then only the data set by those
     parameters will be combined into an "uber" cube.
     If the `output_type=multi` 	option is used with  NIRSPec prism data, then the output IFU cubes will
     have a non-linear wavelength plane. 
