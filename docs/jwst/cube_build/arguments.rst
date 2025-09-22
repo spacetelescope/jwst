@@ -18,8 +18,8 @@ each band will be created.
   ``calwebb_spec3`` pipeline the parameter ``pipeline=3`` is set for ``cube_build``.
   
   - ``pipeline = 2`` sets up the rules for making ``calwebb_spec2`` pipeline type cubes. For NIRSpec data the default
-    rules   produce cubes with a single grating and filter and  with a linear wavelength dimension. For MIRI data
-    the default rules produce a single IFU cube contains the two channels in the input data with a non-linear
+    rules produce cubes with a single grating and filter and  with a linear wavelength dimension. For MIRI data
+    the default rules produce a single IFU cube containing the two channels in the input data with a non-linear
     wavelength dimension. In both cases,  the input filename  suffix ``cal`` is replaced with ``s3d``.
 
   - ``pipeline = 3`` setups up the results for making ``calwebb_spec3`` pipeline type cbes. For NIRSpec data
