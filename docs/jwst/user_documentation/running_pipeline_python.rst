@@ -523,9 +523,8 @@ There are a couple of scenarios to use multiprocessing with the pipeline:
     output_dir = '/my_project'
 
     def main():
-        det1 = Detector1Pipeline()
         parameter_dict = {"ramp_fit": {"maximum_cores": 'all'}}
-        det1.call(uncal_file, save_results=True, steps=parameter_dict, output_dir=output_dir)
+        Detector1Pipeline.call(uncal_file, save_results=True, steps=parameter_dict, output_dir=output_dir)
 
     if __name__ = '__main__':
         sys.exit(main())
@@ -561,8 +560,7 @@ There are a couple of scenarios to use multiprocessing with the pipeline:
         pipe_success = False
         try:
             # Run the pipeline, turning off terminal logging messages
-            det1 = Detector1Pipeline()
-            det1.call(uncal_file, output_dir=output_dir, save_results=True, configure_log=False)
+            Detector1Pipeline.call(uncal_file, output_dir=output_dir, save_results=True, configure_log=False)
             pipe_success = True
             print('\n * Pipeline finished for file: ', uncal_file, ' \n')
         except Exception:
