@@ -187,8 +187,7 @@ def writer(asn, output_file):
         The output filename was not a json file
     """
     output_file = Path(output_file)
-    asn_format = output_file.suffix[1:]
-    if asn_format != "json":
+    if output_file.suffix != ".json":
         raise ValueError("Only json format supported for output: " + output_file)
 
     serialized = json.dumps(asn, indent=4, separators=(",", ": "))
