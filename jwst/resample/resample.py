@@ -5,6 +5,7 @@ from pathlib import Path
 
 import numpy as np
 from spherical_geometry.polygon import SphericalPolygon
+from stcal.alignment import combine_sregions
 from stcal.resample import Resample
 from stcal.resample.utils import is_imaging_wcs
 from stdatamodels.jwst import datamodels
@@ -14,7 +15,6 @@ from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels import ModelLibrary
 from jwst.model_blender.blender import ModelBlender
 from jwst.resample import resample_utils
-from jwst.resample.combine_sregions import combine_sregions
 
 __all__ = [
     "input_jwst_model_to_dict",

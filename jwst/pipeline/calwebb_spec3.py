@@ -5,6 +5,7 @@ from pathlib import Path
 
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling.models import Mapping
+from stcal.alignment import combine_sregions
 
 # step imports
 from jwst.assign_mtwcs import assign_mtwcs_step
@@ -22,7 +23,6 @@ from jwst.outlier_detection import outlier_detection_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
 from jwst.resample import resample_spec_step
-from jwst.resample.combine_sregions import combine_sregions
 from jwst.spectral_leak import spectral_leak_step
 from jwst.stpipe import Pipeline, query_step_status
 from jwst.stpipe.utilities import invariant_filename
