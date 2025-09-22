@@ -26,7 +26,7 @@ def do_correction(input_model, wavecorr_file):
     Parameters
     ----------
     input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
-        Input data model.
+        Input data model.  Updated in place.
     wavecorr_file : str
         Wavecorr reference file name.
 
@@ -44,15 +44,13 @@ def do_correction(input_model, wavecorr_file):
         input_model.meta.cal_step.wavecorr = "SKIPPED"
         return input_model
 
-    output_model = input_model.copy()
-
     # For BRIGHTOBJ, operate on the single SlitModel
     corrected = False
     if isinstance(input_model, datamodels.SlitModel):
         if _is_point_source(input_model):
-            corrected = apply_zero_point_correction(output_model, wavecorr_file)
+            corrected = apply_zero_point_correction(input_model, wavecorr_file)
     else:
-        for slit in output_model.slits:
+        for slit in input_model.slits:
             if _is_point_source(slit):
                 completed = apply_zero_point_correction(slit, wavecorr_file)
                 if completed:
@@ -66,11 +64,11 @@ def do_correction(input_model, wavecorr_file):
                 slit.wavelength_corrected = False
 
     if corrected:
-        output_model.meta.cal_step.wavecorr = "COMPLETE"
+        input_model.meta.cal_step.wavecorr = "COMPLETE"
     else:
-        output_model.meta.cal_step.wavecorr = "SKIPPED"
+        input_model.meta.cal_step.wavecorr = "SKIPPED"
 
-    return output_model
+    return input_model
 
 
 def apply_zero_point_correction(slit, reffile):

@@ -223,6 +223,10 @@ def test_emicorrstep_skip_instrument(log_watcher):
     assert np.all(input_model.data == nir_result.data)
     assert nir_result.meta.cal_step.emicorr == "SKIPPED"
 
+    # check that input is not modified
+    assert nir_result is not nirmdl
+    assert nirmdl.meta.cal_step.emicorr is None
+
 
 def test_emicorrstep_skip_readpatt(log_watcher):
     data = np.ones((1, 5, 20, 20))
@@ -236,6 +240,10 @@ def test_emicorrstep_skip_readpatt(log_watcher):
     # expect no change because read pattern is not supported
     assert np.all(input_model.data == result.data)
     assert result.meta.cal_step.emicorr == "SKIPPED"
+
+    # check that input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.emicorr is None
 
 
 def test_emicorrstep_skip_no_reffile(monkeypatch, log_watcher):
@@ -253,6 +261,10 @@ def test_emicorrstep_skip_no_reffile(monkeypatch, log_watcher):
     # expect no change because step is skipped
     assert np.all(input_model.data == result.data)
     assert result.meta.cal_step.emicorr == "SKIPPED"
+
+    # check that input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.emicorr is None
 
 
 def test_emicorrstep_skip_for_failure(monkeypatch, log_watcher):
@@ -285,6 +297,10 @@ def test_emicorrstep_skip_for_small_groups(log_watcher):
     assert np.all(input_model.data == result.data)
     assert result.meta.cal_step.emicorr == "SKIPPED"
 
+    # check that input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.emicorr is None
+
 
 @pytest.mark.parametrize("algorithm", ["sequential", "joint"])
 @pytest.mark.parametrize("subarray", ["MASK1550", "FULL"])
@@ -298,6 +314,10 @@ def test_emicorrstep_succeeds(algorithm, subarray):
     # step completes but we expect no change for flat data
     assert np.all(input_model.data == result.data)
     assert result.meta.cal_step.emicorr == "COMPLETE"
+
+    # check that input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.emicorr is None
 
 
 @pytest.mark.parametrize("readpatt", ["FAST", "SLOW"])

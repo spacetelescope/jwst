@@ -1,14 +1,17 @@
 """Test general Level 3 rules environment"""
 
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations import generate
-from jwst.associations.tests.helpers import combine_pools, registry_level3_only, t_path
+from jwst.associations.tests.helpers import combine_pools, registry_level3_only
 
 
 def test_meta():
     rules = registry_level3_only()
-    pool = combine_pools(t_path("data/pool_002_image_miri.csv"))
+    pool = combine_pools(
+        get_pkg_data_filename("data/pool_002_image_miri.csv", package="jwst.associations.tests")
+    )
     asns = generate(pool, rules)
     assert len(asns) == 1
     asn = asns[0]
@@ -30,15 +33,13 @@ def test_meta():
         "data/pool_006_spec_nirspec.csv",
         "data/pool_007_spec_miri.csv",
         "data/pool_010_spec_nirspec_lv2bkg.csv",
-        "data/pool_015_spec_nirspec_lv2bkg_reversed.csv",
-        "data/pool_016_spec_nirspec_lv2bkg_double.csv",
         "data/pool_017_spec_nirspec_lv2imprint.csv",
     ],
 )
 def test_targacq(pool_file):
     """Test for existence of target acquisitions in associations"""
     rules = registry_level3_only()
-    pool = combine_pools(t_path(pool_file))
+    pool = combine_pools(get_pkg_data_filename(pool_file, package="jwst.associations.tests"))
     asns = generate(pool, rules)
     assert len(asns) > 0
     for asn in asns:

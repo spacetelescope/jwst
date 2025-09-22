@@ -15,6 +15,8 @@ class GuiderCdsStep(Step):
 
     class_alias = "guider_cds"
 
+    reference_file_types = ["gain", "readnoise"]
+
     def process(self, input_data):
         """
         Execute the step.
@@ -37,8 +39,9 @@ class GuiderCdsStep(Step):
             if gain_filename == "N/A":
                 log.warning("No GAIN reference file found!")
                 log.warning("guider_cds step will be skipped.")
-                input_model.meta.cal_step.guider_cds = "SKIPPED"
-                return input_model
+                out_model = input_model.copy()
+                out_model.meta.cal_step.guider_cds = "SKIPPED"
+                return out_model
 
             log.info("Using GAIN reference file: %s", gain_filename)
             gain_model = datamodels.GainModel(gain_filename)
@@ -48,8 +51,9 @@ class GuiderCdsStep(Step):
             if readnoise_filename == "N/A":
                 log.warning("No READNOISE reference file found!")
                 log.warning("guider_cds step will be skipped.")
-                input_model.meta.cal_step.guider_cds = "SKIPPED"
-                return input_model
+                out_model = input_model.copy()
+                out_model.meta.cal_step.guider_cds = "SKIPPED"
+                return out_model
 
             log.info("Using READNOISE reference file: %s", readnoise_filename)
             readnoise_model = datamodels.ReadnoiseModel(readnoise_filename)

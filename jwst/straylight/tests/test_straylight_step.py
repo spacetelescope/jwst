@@ -43,10 +43,38 @@ def miri_mrs_short():
     return image
 
 
+def test_step_complete(miri_mrs_short):
+    result = StraylightStep.call(miri_mrs_short)
+
+    # Step is complete
+    assert result.meta.cal_step.straylight == "COMPLETE"
+
+    # Input is not modified
+    assert result is not miri_mrs_short
+    assert miri_mrs_short.meta.cal_step.straylight is None
+
+
+def test_skip_missing_reffile(miri_mrs_short):
+    result = StraylightStep.call(miri_mrs_short, override_mrsxartcorr="N/A")
+
+    # Step is skipped
+    assert result.meta.cal_step.straylight == "SKIPPED"
+
+    # Input is not modified
+    assert result is not miri_mrs_short
+    assert miri_mrs_short.meta.cal_step.straylight is None
+
+
 def test_call_straylight_mrsshort_tso(tmp_cwd, miri_mrs_short_tso):
     """Test step is skipped for MRS IFUSHORT TSO data"""
     result = StraylightStep.call(miri_mrs_short_tso)
+
+    # Step is skipped
     assert result.meta.cal_step.straylight == "SKIPPED"
+
+    # Input is not modified
+    assert result is not miri_mrs_short_tso
+    assert miri_mrs_short_tso.meta.cal_step.straylight is None
 
 
 def test_step_save_shower_model(tmp_path, miri_mrs_short):

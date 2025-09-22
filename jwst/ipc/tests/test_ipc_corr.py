@@ -329,11 +329,14 @@ def test_ipc_convolve_no_reference(science_data, simple_kernel_2d):
     "input_model",
     ["miri_full_science_datamodel", "nir_full_science_datamodel", "nir_subarray_science_datamodel"],
 )
-def test_ipc_step_run(input_model, request):
-    step_instance = IPCStep()
+def test_ipc_step_call(input_model, request):
     used_input_model = request.getfixturevalue(input_model)
     result = IPCStep.call(used_input_model)
     assert result.meta.cal_step.ipc == "COMPLETE"
+
+    # Input is not modified
+    assert result is not used_input_model
+    assert used_input_model.meta.cal_step.ipc is None
 
 
 def mock_crds_getref(*args, **kwargs):
@@ -346,3 +349,7 @@ def test_ipc_step_skip(miri_subarray_science_datamodel, monkeypatch):
     monkeypatch.setattr("stpipe.crds_client.get_reference_file", mock_crds_getref)
     result = IPCStep.call(miri_subarray_science_datamodel)
     assert result.meta.cal_step.ipc == "SKIPPED"
+
+    # Input is not modified
+    assert result is not miri_subarray_science_datamodel
+    assert miri_subarray_science_datamodel.meta.cal_step.ipc is None
