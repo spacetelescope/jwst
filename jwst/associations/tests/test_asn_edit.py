@@ -31,7 +31,7 @@ def test_remove_asn(ignore):
     assert len(found) == 0
 
 
-def test_write_asn(_jail):
+def test_write_asn(tmp_cwd):
     """Test adding a product to an association"""
     asn = asn_edit.reader(JSON_FILE)
 
