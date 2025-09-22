@@ -199,7 +199,7 @@ def writer(asn, output_file):
     try:
         with Path.open(output_file, "w") as fd:
             fd.write(serialized)
-    except OSError:
+    except Exception:
         if in_place:
             Path.rename(temp_file, output_file)
         raise

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 from astropy.utils.data import get_pkg_data_filename
 
@@ -38,3 +40,4 @@ def test_write_asn(_jail):
     asn2 = asn_edit.reader(new_file)
 
     assert asn == asn2
+    assert Path.exists(Path(new_file))
