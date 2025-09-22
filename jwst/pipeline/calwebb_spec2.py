@@ -130,6 +130,7 @@ class Spec2Pipeline(Pipeline):
         self.resample_spec.suffix = "s2d"
         self.cube_build.save_results = False
         self.cube_build.skip_dqflagging = True
+        self.cube_build.pipeline = (2,)
         self.extract_1d.save_results = self.save_results
 
         # Retrieve the input(s)
@@ -385,14 +386,17 @@ class Spec2Pipeline(Pipeline):
             resampled = self.resample_spec.run(resampled)
 
         elif (exp_type in ["MIR_MRS", "NRS_IFU"]) or is_nrs_ifu_linelamp(calibrated):
-            # First call pixel_replace then call cube_build step for IFU data.
             # set the default output type for both instruments if is not set
             if exp_type == "NRS_IFU" and self.cube_build.output_type is None:
+                self.cube_build.output_type = "band"
+
+            if is_nrs_ifu_linelamp(calibrated):
                 self.cube_build.output_type = "band"
 
             if exp_type == "MIR_MRS" and self.cube_build.output_type is None:
                 self.cube_build.output_type = "multi"
             resampled = calibrated.copy()
+            # First call pixel_replace then call cube_build step for IFU data.
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace.run(resampled)

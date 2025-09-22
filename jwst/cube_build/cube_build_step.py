@@ -22,6 +22,7 @@ class CubeBuildStep(Step):
     class_alias = "cube_build"
 
     spec = """
+         pipeline = integer(2,3, default=2) # Set calwebb_spec2 or calwebb_spec3
          channel = option('1','2','3','4','all',default='all') # Channel
          band = option('short','medium','long','short-medium','short-long','medium-short', \
                 'medium-long', 'long-short', 'long-medium','all',default='all') # Band
@@ -144,6 +145,9 @@ class CubeBuildStep(Step):
         if self.coord_system == "internal_cal":
             self.interpolation = "area"
             self.weighting = "emsm"
+            if self.output_type is None:  # when running stand alone
+                self.output_type = "band"
+            self.pipeline = 2
 
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified Shepard method
@@ -231,17 +235,26 @@ class CubeBuildStep(Step):
         # output type is by default 'Channel' for MIRI and 'Band' for NIRSpec
         instrument = self.input_models[0].meta.instrument.name.upper()
 
+        # The calspec2 pipeline sets up output_type for each instrument. When running cube_build
+        # stand alone we to set output_type.
+
+        # Running cube build stand-alone without setting self.pipeline will default to pipeline=2
+        if self.pipeline == 2 and self.output_type is None:
+            if instrument == "MIRI":
+                self.output_type = "multi"
+            elif instrument == "NIRSPEC":
+                self.output_type = "band"
         # Set up output_type for pipeline 3 type cubes.
-        # calspec2 sets the default output_type for each instrument. This could be moved to a
-        # the parameter reference file.
         # In calspec3 the output_type default type is grating for NIRSpec and band for MIRI.
         # MIRI sets output_type in the calspec3 parameter reference file.
-        if self.output_type is None:
+
+        if self.pipeline == 3 and self.output_type is None:
             if instrument == "NIRSPEC":
                 self.output_type = "grating"
 
             elif instrument == "MIRI":
                 self.output_type = "band"
+
         self.pars_input["output_type"] = self.output_type
         log.info(f"Setting output type to: {self.output_type}")
         # ________________________________________________________________________________
@@ -310,6 +323,10 @@ class CubeBuildStep(Step):
         for model in self.input_models:
             match_nans_and_flags(model)
 
+        # We need to know what type of cubes we are building for cube_build.py to correctly
+        # group the data. This information is controlled by the self.output_type parameter, which
+        # is also dependent on the self.pipeline parameter.
+
         cubeinfo = cube_build.CubeData(self.input_models, par_filename, **pars)
         # ________________________________________________________________________________
         # cubeinfo.setup:
@@ -328,17 +345,9 @@ class CubeBuildStep(Step):
             log.warning("use output_coord = ifualign instead")
             input_table.close()
             return
-        filenames = master_table.FileMap["filename"]
-
-        # Because the names are different calspec2 and calspec3 output try and figure out which
-        # pipeline we have. #TODO we might want to update how we do this.
-        self.pipeline = 3
-        if self.output_type == "multi" and len(filenames) == 1 and instrument == "MIRI":
-            self.pipeline = 2
-        # By default pipeline 2 sets output_type=band for NIRSpec but the user can override this
-        # for prism data so we want to handle that case too.
-        if len(filenames) == 1 and instrument == "NIRSPEC":
-            self.pipeline = 2
+        # filenames = master_table.FileMap["filename"] # This was used to determine if we have
+        # pipeline 2 or 3. I don't think we need it - but saving it just in case I need know if
+        # there is only 1 filename
 
         # ________________________________________________________________________________
         # How many and what type of cubes will be made.

@@ -15,7 +15,7 @@ def test_cube_build_nirspec_prism_linear(rtdata, fitsdiff_default_kwargs):
     args = ["jwst.cube_build.CubeBuildStep", input_file]
     Step.from_cmdline(args)
 
-    output = input_file.replace("cal", "prism-clear_s3d")
+    output = input_file.replace("cal", "s3d")
     rtdata.output = output
 
     rtdata.get_truth(f"truth/test_nirspec_cubebuild_prism/{output}")
@@ -38,7 +38,7 @@ def test_cube_build_nirspec_prism_nonlinear(rtdata, fitsdiff_default_kwargs):
         "--output_file=" + output_name,
     ]
     Step.from_cmdline(args)
-    output = output_name + "_prism-clear_s3d.fits"
+    output = output_name + "_s3d.fits"
 
     rtdata.output = output
 
