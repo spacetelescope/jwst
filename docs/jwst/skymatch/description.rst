@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.skymatch.SkymatchStep`
+:Class: `jwst.skymatch.SkyMatchStep`
 :Alias: skymatch
 
 Overview
@@ -95,10 +95,10 @@ step.
 
 Identification of images that belong to the same "exposure" and therefore
 can be grouped together is based on several attributes described in
-`jwst.datamodels.ModelContainer`. This grouping is performed automatically
+`jwst.datamodels.container.ModelContainer`. This grouping is performed automatically
 in the ``skymatch`` step using the
-`jwst.datamodels.ModelContainer.models_grouped` property or
-:py:meth:`jwst.datamodels.ModelLibrary.group_indices`.
+:attr:`~jwst.datamodels.container.ModelContainer.models_grouped` or
+:attr:`~stpipe.library.AbstractModelLibrary.group_indices` attribute.
 
 However, when background across different detectors in a single "exposure"
 (or "group") is dominated by unpredictable background components, we no longer
@@ -107,7 +107,7 @@ it may be desirable to match image backgrounds independently. This can be
 achieved either by setting the ``image_model.meta.group_id`` attribute to a
 unique string or integer value for each image, or by adding the ``group_id``
 attribute to the ``members`` of the input ASN table - see
-`~jwst.datamodels.ModelContainer` for more details.
+`~jwst.datamodels.container.ModelContainer` for more details.
 
 .. note::
     Group ID (``group_id``) is used by both ``tweakreg`` and ``skymatch`` steps
@@ -129,7 +129,7 @@ value computations.
 
 The first method, called "local", essentially is an enhanced version of the
 original sky subtraction method used in older versions of
-:ref:`astrodrizzle <drizzle:astrodrizzle_>`.
+`AstroDrizzle <https://drizzlepac.readthedocs.io/en/latest/drizzlepac_api/astrodrizzle.html>`_.
 This method simply computes the mean/median/mode/etc. value of the sky
 separately in each input image. This method was upgraded to be able to use DQ
 flags to remove bad pixels from being used in the computations of sky
@@ -179,7 +179,7 @@ instead provides additive corrections that can be used to equalize the signal
 between overlapping images.
 
 User-Supplied Sky Values
--------------------------
+------------------------
 The ``skymatch`` step can also accept user-supplied sky values for each image.
 This is useful when sky values have been determined based on a custom workflow
 outside the pipeline. To use this feature, the user must provide a list of sky

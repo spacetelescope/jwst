@@ -595,6 +595,53 @@ def mock_niriss_soss_96_func():
     return model
 
 
+def mock_niriss_soss_full_func():
+    """
+    Mock 3 integrations in NIRISS SOSS mode, subarray FULL.
+
+    Returns
+    -------
+    CubeModel
+        The mock model.
+    """
+    model = mock_niriss_soss_func()
+    model.meta.subarray.name = "FULL"
+
+    shape = (3, 2048, 2048)
+    model.data = np.ones(shape, dtype=np.float32)
+    model.dq = np.zeros(shape, dtype=np.uint32)
+    model.err = model.data * 0.02
+    model.var_poisson = model.data * 0.001
+    model.var_rnoise = model.data * 0.001
+    model.var_flat = model.data * 0.001
+
+    return model
+
+
+def mock_niriss_soss_f277w_func():
+    """
+    Mock 3 integrations in NIRISS SOSS mode, filter F277W.
+
+    Returns
+    -------
+    CubeModel
+        The mock model.
+    """
+    model = dm.CubeModel((3, 3, 3))
+    model.meta.instrument.name = "NIRISS"
+    model.meta.instrument.detector = "NIS"
+    model.meta.observation.date = "2023-07-22"
+    model.meta.observation.time = "06:24:45.569"
+    model.meta.instrument.name = "NIRISS"
+    model.meta.instrument.detector = "NIS"
+    model.meta.instrument.filter = "F277W"
+    model.meta.exposure.type = "NIS_SOSS"
+    model.meta.subarray.name = "FULL"
+    model.data = np.arange(27).reshape((3, 3, 3))
+
+    return model
+
+
 def make_spec_model(name="slit1", value=1.0):
     """
     Make a simple spectrum.

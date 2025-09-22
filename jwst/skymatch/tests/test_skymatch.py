@@ -208,13 +208,13 @@ def test_skymatch(nircam_rate, skymethod, subtract, skystat, match_down, grouped
     )
 
     if skymethod == "match" and grouped:
-        # nothing to "match" when there is only one group:
-        assert im.meta.background.method is None
-        assert im.meta.background.subtracted is None
-
         # test that output models have original sky levels on failure:
         with result:
             for im, lev in zip(result, levels):
+                # nothing to "match" when there is only one group:
+                assert im.meta.background.method is None
+                assert im.meta.background.subtracted is None
+
                 assert abs(np.mean(im.data[dq_mask]) - lev) < 0.01
                 result.shelve(im, modify=False)
 
@@ -603,3 +603,37 @@ def test_user_skyfile(tmp_cwd, nircam_rate, subtract):
 
     with pytest.raises(ValueError):
         SkyMatchStep.call(container, skymethod="user", skylist=skyfile)
+
+
+@pytest.mark.parametrize("success", [True, False])
+def test_output_is_not_input(nircam_rate, success):
+    """
+    Test that input is not modified by the step.
+
+    This is specific to the use case of calling the step on non-library
+    model input.  When the input is already a ModelLibrary, it's assumed
+    that performance is the most important thing and extra copies are
+    not desired.
+    """
+    im1 = nircam_rate.copy()
+    im2 = im1.copy()
+    im3 = im1.copy()
+    if success:
+        # Set sequence IDs to allow skymatch to proceed.
+        # Without this, the step will be skipped.
+        im2.meta.observation.sequence_id = "2"
+        im3.meta.observation.sequence_id = "3"
+    container = ModelContainer([im1, im2, im3])
+
+    result = SkyMatchStep.call(container)
+
+    with result:
+        for im, input_im in zip(result, container):
+            if success:
+                assert im.meta.cal_step.skymatch == "COMPLETE"
+            else:
+                assert im.meta.cal_step.skymatch == "SKIPPED"
+            assert im is not input_im
+            assert input_im.meta.cal_step.skymatch is None
+
+            result.shelve(im, modify=False)

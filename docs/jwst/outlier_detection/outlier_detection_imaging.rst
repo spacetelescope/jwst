@@ -6,7 +6,7 @@ Imaging Data
 This module serves as the interface for applying ``outlier_detection`` to direct
 image observations, like those taken with MIRI, NIRCam, and NIRISS.
 A :ref:`Stage 3 association <asn-level3-techspecs>`,
-which is loaded into a :py:class:`~jwst.datamodels.ModelLibrary` object,
+which is loaded into a :py:class:`~jwst.datamodels.library.ModelLibrary` object,
 serves as the basic format for all processing performed by this step.
 This routine performs the following operations:
 
@@ -107,10 +107,10 @@ Control over this memory model happens
 with the use of the ``in_memory`` parameter, which defaults to True.
 The full impact of setting this parameter to `False` includes:
 
-#. The input :py:class:`~jwst.datamodels.ModelLibrary` object is loaded with `on_disk=True`.
+#. The input :py:class:`~jwst.datamodels.library.ModelLibrary` object is loaded with ``on_disk=True``.
    This ensures that input models are loaded into memory one at at time,
    and saved to a temporary file when not in use; these read-write operations are handled internally by
-   the :py:class:`~jwst.datamodels.ModelLibrary` object.
+   the :py:class:`~jwst.datamodels.library.ModelLibrary` object.
 
 #. Computing the median image works by writing the resampled data frames to appendable files
    on disk that are split into sections spatially but contain the entire ``groups``

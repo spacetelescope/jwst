@@ -1,0 +1,79 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+      - 'release/*.x'
+    tags:
+      - '*'
+  pull_request:
+    branches:
+      - main
+      - 'release/*.x'
+  schedule:
+    # Weekly Monday 9AM build
+    - cron: "0 9 * * 1"
+  workflow_dispatch:
+    inputs:
+      crds_context:
+        description: CRDS context (leave blank for latest)
+        type: string
+        required: false
+        default: ''
+      crds_server:
+        description: CRDS server
+        type: string
+        required: false
+        default: https://jwst-crds.stsci.edu
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.crds_context }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@28e947497bed4d6ec3fa1d66d198e95a1d17bc63 # v2.2.1
+    with:
+      default_python: "3.12"
+      envs: |
+        - linux: check-dependencies
+  latest_crds_contexts:
+    uses: ./.github/workflows/contexts.yml
+  crds_context:
+    needs: [ latest_crds_contexts ]
+    runs-on: ubuntu-latest
+    steps:
+      - id: context
+        run: echo context=${{ github.event_name == 'workflow_dispatch' && (inputs.crds_context != '' && inputs.crds_context || needs.latest_crds_contexts.outputs.jwst) || needs.latest_crds_contexts.outputs.jwst }} >> $GITHUB_OUTPUT
+    outputs:
+      context: ${{ steps.context.outputs.context }}
+  test:
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@28e947497bed4d6ec3fa1d66d198e95a1d17bc63  # v2.2.1
+    needs: [ crds_context ]
+    with:
+      setenv: |
+        CRDS_PATH: /tmp/data/crds_cache
+        CRDS_SERVER_URL: ${{ github.event_name == 'workflow_dispatch' && inputs.crds_server || 'https://jwst-crds.stsci.edu' }}
+        CRDS_CONTEXT: ${{ needs.crds_context.outputs.context }}
+        CRDS_CLIENT_RETRY_COUNT: 3
+        CRDS_CLIENT_RETRY_DELAY_SECONDS: 20
+      cache-path: /tmp/data/crds_cache
+      cache-key: crds-${{ needs.crds_context.outputs.context }}
+      artifact-path: |
+        results.xml
+      envs: |
+        - linux: py311-oldestdeps-xdist-cov
+          pytest-results-summary: true
+        - linux: py311-xdist
+          posargs: -vv
+          pytest-results-summary: true
+        - linux: py312-xdist
+          pytest-results-summary: true
+        # `tox` does not currently respect `requires-python` versions when creating testing environments;
+        # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
+        - linux: py3-cov-xdist
+          coverage: codecov
+          pytest-results-summary: true
+        - macos: py3-xdist
+          pytest-results-summary: true

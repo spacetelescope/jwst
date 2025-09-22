@@ -43,12 +43,19 @@ class WhiteLightStep(Step):
 
         Returns
         -------
-        result : astropy.table.table.QTable
+        result : astropy.table.table.QTable or None
             Table containing the integrated flux as a function of time.
+            If input is invalid, None is returned.
         """
         with datamodels.open(step_input) as input_model:
-            # load the wavelength range reference file
+            # First check for valid input
+            if not input_model.hasattr("spec") or len(input_model.spec) == 0:
+                log.error("No valid input spectra found.")
+                return None
+
+            # Load the wavelength range reference file
             waverange_table = self._get_reference_wavelength_range(input_model)
+
             # Call the white light curve generation routine
             result = white_light(
                 input_model,

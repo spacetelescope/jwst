@@ -351,3 +351,15 @@ def test_save_output_wfss_l3(tmp_path, mock_niriss_wfss_l3):
     with dm.open(output_path) as model:
         assert isinstance(model, dm.WFSSMultiSpecModel)
         assert len(model.spec) == 1
+
+
+@pytest.mark.parametrize(
+    "dataset", ["mock_niriss_soss_256", "mock_nirspec_fs_one_slit", "mock_miri_ifu"]
+)
+def test_output_is_not_input(request, dataset):
+    input_model = request.getfixturevalue(dataset)
+    result = Extract1dStep.call(input_model, soss_rtol=1)
+    assert result.meta.cal_step.extract_1d == "COMPLETE"
+
+    assert result is not input_model
+    assert input_model.meta.cal_step.extract_1d is None

@@ -9,7 +9,9 @@ from jwst.extract_1d.soss_extract.soss_syscor import (
 
 def test_soss_background(imagemodel, detector_mask, mask_trace_profile):
     data, err = imagemodel
-    bkg_mask = ~mask_trace_profile[0] | ~mask_trace_profile[1] | detector_mask
+    bkg_mask = (
+        ~mask_trace_profile[0] | ~mask_trace_profile[1] | ~mask_trace_profile[2] | detector_mask
+    )
 
     data_bkg, col_bkg = soss_background(data, detector_mask, bkg_mask)
     assert data_bkg.shape == data.shape

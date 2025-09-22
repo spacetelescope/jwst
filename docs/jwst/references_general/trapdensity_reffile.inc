@@ -4,7 +4,7 @@ TRAPDENSITY Reference File
 --------------------------
 
 :REFTYPE: TRAPDENSITY
-:Data model: `~jwst.datamodels.TrapDensityModel`
+:Data model: `~stdatamodels.jwst.datamodels.TrapDensityModel`
 
 The TRAPDENSITY reference file contains a pixel-by-pixel map of the
 trap density.

@@ -1,9 +1,5 @@
 #! /usr/bin/env python
-"""
-JWST pipeline step for sky matching.
-
-:Authors: Mihai Cara
-"""
+"""JWST pipeline step for sky matching."""
 
 import logging
 from copy import deepcopy
@@ -75,10 +71,15 @@ class SkyMatchStep(Step):
         ModelLibrary
             A library of datamodels with the skymatch step applied.
         """
-        if isinstance(input_models, ModelLibrary):
-            library = input_models
+        # Check the input for open models and make a copy if necessary
+        # to avoid modifying input data.
+        # If there are no open models already, do not open them.  Leave
+        # that to the ModelLibrary call below.
+        output_models = self.prepare_output(input_models, open_models=False)
+        if isinstance(output_models, ModelLibrary):
+            library = output_models
         else:
-            library = ModelLibrary(input_models, on_disk=not self.in_memory)
+            library = ModelLibrary(output_models, on_disk=not self.in_memory)
 
         # Method: "user". Use user-provided sky values, and bypass skymatch() altogether.
         if self.skymethod == "user":

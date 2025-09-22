@@ -275,7 +275,7 @@ to supply custom catalogs.
 
         Parameters
         ----------
-        asn_data : ~jwst.associations.Association
+        asn_data : `~jwst.associations.Association`
             An association dictionary
         """
         # match the asn_exptypes to the exptype in the association and retain
@@ -310,7 +310,7 @@ to supply custom catalogs.
                     if attr in RECOGNIZED_MEMBER_FIELDS:
                         if attr == "tweakreg_catalog":
                             if val.strip():
-                                val = asn_dir / val
+                                val = str(asn_dir / val)
                             else:
                                 val = None
 

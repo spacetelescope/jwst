@@ -4,7 +4,7 @@ SATURATION Reference File
 -------------------------
 
 :REFTYPE: SATURATION
-:Data model: `jwst.datamodels.SaturationModel`
+:Data model: `~stdatamodels.jwst.datamodels.SaturationModel`
 
 The SATURATION reference file contains pixel-by-pixel saturation threshold
 values.

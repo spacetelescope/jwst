@@ -1,12 +1,12 @@
 :orphan:
 
 .. _specwcs_reffile:
-  
+
 SPECWCS Reference File
 ----------------------
 
 :REFTYPE: SPECWCS
-:Data model: `~jwst.datamodels.SpecwcsModel`
+:Data model: `~stdatamodels.jwst.datamodels.SpecwcsModel`
 
 Reference Selection Keywords for SPECWCS
 ++++++++++++++++++++++++++++++++++++++++
@@ -77,4 +77,3 @@ For NIRISS WFSS mode the SPECWCS file is in ASDF format with the following struc
 :invdispl: The inverse wavelength transform models
 :fwcpos_ref: The reference filter wheel position in degrees
 :orders: a list of order numbers that the models relate to, in the same order as the models
-

@@ -1,12 +1,12 @@
 :orphan:
 
 .. _regions_reffile:
-  
+
 REGIONS Reference File (MIRI only)
 ----------------------------------
 
 :REFTYPE: REGIONS
-:Data model: `~jwst.datamodels.RegionsModel`
+:Data model: `~stdatamodels.jwst.datamodels.RegionsModel`
 
 Reference Selection Keywords for REGIONS
 ++++++++++++++++++++++++++++++++++++++++

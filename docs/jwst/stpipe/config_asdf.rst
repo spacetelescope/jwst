@@ -21,12 +21,11 @@ class, Step class, or already existing .asdf or .cfg file, and run that step
 using the ``--save-parameters`` option. For example, to get the parameters for
 the ``Spec2Pipeline`` pipeline, do the following: ::
 
-   $ strun jwst.pipeline.Spec2Pipeline jw00017001001_01101_00001_nrs1_uncal.fits --save-parameters my_spec2.asdf
+    strun jwst.pipeline.Spec2Pipeline jw00017001001_01101_00001_nrs1_uncal.fits --save-parameters my_spec2.asdf
 
-Once created and modified as necessary, the file can now be used by ``strun`` to run the step/pipeline with the desired parameters:
-::
+Once created and modified as necessary, the file can now be used by ``strun`` to run the step/pipeline with the desired parameters::
 
-   $ strun my_spec2.asdf jw00017001001_01101_00001_nrs1_uncal.fits
+    strun my_spec2.asdf jw00017001001_01101_00001_nrs1_uncal.fits
 
 The remaining sections will describe the file format and contents.
 
@@ -36,7 +35,7 @@ File Contents
 To describe the contents of an ASDF file, the configuration for the step
 ``CubeBuildStep`` will be used as the example:
 
-.. code-block::
+.. code-block:: yaml
 
    #ASDF 1.0.0
    #ASDF_STANDARD 1.5.0
@@ -100,7 +99,7 @@ fully-qualified Python path to the class.  Step classes can ship with
 ``stpipe`` itself, they may be part of other Python packages, or they
 exist in freestanding modules alongside the configuration file.  For
 example, to use the ``SystemCall`` step included with ``stpipe``, set
-``class`` to ``stpipe.subprocess.SystemCall``.  To use a class called
+``class`` to ``stpipe.subproc.SystemCall``.  To use a class called
 ``Custom`` defined in a file ``mysteps.py`` in the same directory as
 the configuration file, set ``class`` to ``mysteps.Custom``.
 
@@ -123,10 +122,10 @@ Formatting
 **********
 
 YAML has two ways of formatting a list of key/value pairs. In the above example,
-each key/value pair is on separate line. The other way is using a form that is similar to a Python ``dict``.
+each key/value pair is on separate line. The other way is using a form that is similar to a Python `dict`.
 For example, the ``parameters`` block above could also have been formatted as:
 
-.. code-block::
+.. code-block:: yaml
 
     parameters: {band: all, channel: all, coord_system: world, filter: all,
       grating: all, output_type: band, output_use_model: true, rois: 0.0,
@@ -158,7 +157,7 @@ From the ``CubeBuildStep`` example, if all that needed to change is the
 ``weight_power`` parameter with a setting of ``4.0``, the ``parameters`` block
 need only contain the following:
 
-.. code-block::
+.. code-block:: yaml
 
     parameters:
       weight_power: 4.0
@@ -169,13 +168,13 @@ Pipeline Configuration
 
 Pipelines are essentially steps that refer to sub-steps. As in the original cfg
 format, parameters for sub-steps can also be specified. All sub-step parameters
-appear in a key called `steps`. Sub-step parameters are specified by using the
+appear in a key called ``steps``. Sub-step parameters are specified by using the
 sub-step name as the key, then underneath and indented, the parameters to change
 for that sub-step. For example, to define the ``weight_power`` of the
 ``cube_build`` step in a ``Spec2Pipeline`` parameter file, the parameter
 block would look as follows:
 
-.. code-block::
+.. code-block:: yaml
 
    class: jwst.pipeline.Spec2Pipeline
    parameters: {}
@@ -193,7 +192,7 @@ Similarly, to skip a particular step, one would specify ``skip: true`` for that
 substep. Continuing from the above example, to skip the ``msa_flagging`` step,
 the parameter file would look like:
 
-.. code-block::
+.. code-block:: yaml
 
    class: jwst.pipeline.Spec2Pipeline
    parameters: {}
@@ -221,13 +220,11 @@ command line utility ``strun``, the option ``--save-parameters`` can be used.
 
 Within a Python script, the method ``Step.export_config(filename: str)`` can be
 used. For example, to create a parameter file for ``CubeBuildStep``, use the
-following:
+following::
 
-.. doctest-skip::
-
-   >>> from jwst.cube_build import CubeBuildStep
-   >>> step = CubeBuildStep()
-   >>> step.export_config('cube_build.asdf')
+    from jwst.cube_build import CubeBuildStep
+    step = CubeBuildStep()
+    step.export_config('cube_build.asdf')
 
 Parameter Files as Reference Files
 ----------------------------------
@@ -240,14 +237,11 @@ The direct way of creating a parameter reference file is through the
 ``Step.export_config`` method, just as one would to get a basic parameter file.
 The only addition is the argument ``include_metadata=True``. For example, to get a
 reference-file ready version of the ``CubeBuildStep``, use the following Python
-code:
+code::
 
-.. doctest-skip::
-
-   >>> from jwst.cube_build import CubeBuildStep
-   >>> step = CubeBuildStep()
-   >>> step.export_config('pars-cubebuildstep.asdf', include_metadata=True)
-
+    from jwst.cube_build import CubeBuildStep
+    step = CubeBuildStep()
+    step.export_config('pars-cubebuildstep.asdf', include_metadata=True)
 
 The explanations for the ``meta`` and ``history`` blocks are given below.
 
@@ -300,26 +294,25 @@ lowercase.
 History
 ~~~~~~~
 
-Parameter reference files also require at least one history entry. This can be found in the ``history`` block under ``entries``:
+Parameter reference files also require at least one history entry.
+This can be found in the ``history`` block under ``entries``:
 
-.. code-block::
+.. code-block:: yaml
 
     history:
       entries:
       - !core/history_entry-1.0.0 {description: Base values, time: !!timestamp '2019-10-29
           21:20:50'}
 
-It is highly suggested to use the ASDF API to add history entries:
+It is highly suggested to use the ASDF API to add history entries::
 
-.. doctest-skip::
-
-   >>> import asdf
-   >>> cfg = asdf.open('config.asdf')
-       #
-       # Modify `parameters` and `meta` as necessary.
-       #
-   >>> cfg.add_history_entry('Parameters modified for some reason')
-   >>> cfg.write_to('config_modified.asdf')
+    import asdf
+    cfg = asdf.open('config.asdf')
+    #
+    # Modify `parameters` and `meta` as necessary.
+    #
+    cfg.add_history_entry('Parameters modified for some reason')
+    cfg.write_to('config_modified.asdf')
 
 JWST, Parameters and Parameter References
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -342,13 +335,13 @@ need to be updated. See :ref:`Completeness` for more information.
 
 Furthermore, every pipeline/step have a common set of parameters, listed
 below. These parameters generally affect the infrastructure operation of
-pipelines/steps, and should not be included in a parameter reference.
+pipelines/steps, and should not be included in a parameter reference:
 
-- input_dir
-- output_ext
-- output_use_index
-- output_use_model
-- post_hooks
-- pre_hooks
-- save_results
-- search_output_file
+* ``input_dir``
+* ``output_ext``
+* ``output_use_index``
+* ``output_use_model``
+* ``post_hooks``
+* ``pre_hooks``
+* ``save_results``
+* ``search_output_file``

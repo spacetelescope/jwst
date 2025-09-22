@@ -2,7 +2,7 @@ import numpy as np
 import pytest
 from stdatamodels.jwst.datamodels import RampModel, dqflags
 
-from jwst.refpix import RefPixStep
+from jwst.refpix import reference_pixels
 from jwst.refpix.reference_pixels import (
     Dataset,
     NIRDataset,
@@ -10,6 +10,25 @@ from jwst.refpix.reference_pixels import (
     correct_model,
     create_dataset,
 )
+from jwst.refpix.refpix_step import RefPixStep
+
+AXES = {
+    "NRCA1": (-1, 2),
+    "NRCA2": (1, -2),
+    "NRCA3": (-1, 2),
+    "NRCA4": (1, -2),
+    "NRCALONG": (-1, 2),
+    "NRCB1": (1, -2),
+    "NRCB2": (-1, 2),
+    "NRCB3": (1, -2),
+    "NRCB4": (-1, 2),
+    "NRCBLONG": (1, -2),
+    "NRS1": (2, 1),
+    "NRS2": (-2, -1),
+    "NIS": (-2, -1),
+    "GUIDER1": (-2, -1),
+    "GUIDER2": (2, -1),
+}
 
 conv_kernel_params = {
     "refpix_algorithm": "median",
@@ -26,7 +45,6 @@ def test_refpix_subarray_miri():
 
     For MIRI, no reference pixel correction is performed on subarray data
     No changes should be seen in the data arrays before and after correction
-
     """
     ngroups = 3
     ysize = 22
@@ -47,6 +65,13 @@ def test_refpix_subarray_miri():
 
     # test that the science data are not changed
     np.testing.assert_array_equal(im.data, outim.data)
+
+    # step is marked skipped
+    assert outim.meta.cal_step.refpix == "SKIPPED"
+
+    # input is not modified
+    assert outim is not im
+    assert im.meta.cal_step.refpix is None
 
 
 @pytest.mark.parametrize("subarray,ysize,xsize", [("SUB512", 32, 512), ("SUBS200A1", 64, 2048)])
@@ -90,6 +115,13 @@ def test_refpix_subarray_nirspec(subarray, ysize, xsize):
     # value subtracted should be the average of the left and right
     # reference pixels
     assert np.allclose(out.data[:, :, 4:-5, 4:-5], -3.5)
+
+    # step is marked complete
+    assert out.meta.cal_step.refpix == "COMPLETE"
+
+    # input is not modified
+    assert out is not im
+    assert im.meta.cal_step.refpix is None
 
 
 def test_each_amp():
@@ -257,6 +289,7 @@ def test_odd_even_amp_nirspec(detector, ysize, odd_even):
     # make ramp model
     im = make_rampmodel(ngroups, ysize, xsize, instrument="NIRSPEC", fill_value=0.0)
     im.meta.instrument.detector = detector
+    im.meta.subarray.fastaxis, im.meta.subarray.slowaxis = AXES[detector]
 
     # check for irs2 data
     if ysize == 3200:
@@ -495,6 +528,8 @@ def test_do_corrections_subarray_no_oddEven(setup_subarray_cube):
     input_model.data[0, 0, :, :4] = left_rpix
     input_model.pixeldq[:4, :] = dqflags.pixel["REFERENCE_PIXEL"]
     input_model.pixeldq[:, :4] = dqflags.pixel["REFERENCE_PIXEL"]
+    detector = input_model.meta.instrument.detector
+    input_model.meta.subarray.fastaxis, input_model.meta.subarray.slowaxis = AXES[detector]
 
     init_dataset = create_dataset(
         input_model,
@@ -545,6 +580,8 @@ def test_do_corrections_subarray(setup_subarray_cube):
     input_model.data[0, 0, :, :4] = left_rpix
     input_model.pixeldq[:4, :] = dqflags.pixel["REFERENCE_PIXEL"]
     input_model.pixeldq[:, :4] = dqflags.pixel["REFERENCE_PIXEL"]
+    detector = input_model.meta.instrument.detector
+    input_model.meta.subarray.fastaxis, input_model.meta.subarray.slowaxis = AXES[detector]
 
     init_dataset = create_dataset(
         input_model,
@@ -607,6 +644,7 @@ def test_do_corrections_subarray_4amp(setup_subarray_cube):
     input_model.data[0, 0, 4:-4, 1025:1536:2] = dataval + bottom_rpix_c_even + side_rpix_mean
     input_model.data[0, 0, 4:-4, 1536:2044:2] = dataval + bottom_rpix_d_odd + side_rpix_mean
     input_model.data[0, 0, 4:-4, 1537:2044:2] = dataval + bottom_rpix_d_even + side_rpix_mean
+    input_model.meta.subarray.fastaxis, input_model.meta.subarray.slowaxis = AXES["NRCA1"]
 
     input_model.data[0, 0, :4, 0:512:2] = bottom_rpix_a_odd
     input_model.data[0, 0, :4, 1:512:2] = bottom_rpix_a_even
@@ -828,7 +866,7 @@ def test_do_top_bottom_correction_no_even_odd(setup_cube):
 
 def make_rampmodel(ngroups, ysize, xsize, instrument="MIRI", fill_value=None):
     """
-    Make MIRI or NIRSpec ramp model for testing.
+    Make MIRI, NIRSpec, or NIRCam ramp model for testing.
 
     Parameters
     ----------
@@ -840,8 +878,9 @@ def make_rampmodel(ngroups, ysize, xsize, instrument="MIRI", fill_value=None):
         Number of columns in created data
     instrument : str
         Instrument name
-    full_value : float or None
+    fill_value : float or None
         Fill value for data
+
     Returns
     -------
     dm_ramp : jwst RampModel
@@ -866,20 +905,29 @@ def make_rampmodel(ngroups, ysize, xsize, instrument="MIRI", fill_value=None):
         dm_ramp.meta.instrument.name = "NIRSPEC"
         dm_ramp.meta.instrument.detector = "NRS1"
         dm_ramp.meta.exposure.type = "NRS_FIXEDSLIT"
+        dm_ramp.meta.subarray.fastaxis, dm_ramp.meta.subarray.slowaxis = AXES["NRS1"]
         if ysize > 2048:
             dm_ramp.meta.exposure.readpatt = "NRSIRS2"
             dm_ramp.meta.exposure.nrs_normal = 16
             dm_ramp.meta.exposure.nrs_reference = 4
         else:
             dm_ramp.meta.exposure.readpatt = "NRS"
+    elif instrument == "NIRCAM":
+        dm_ramp.meta.instrument.name = "NIRCAM"
+        dm_ramp.meta.instrument.detector = "NRCALONG"
+        dm_ramp.meta.instrument.filter = "CLEAR"
+        dm_ramp.meta.exposure.type = "NRC_IMAGE"
+        dm_ramp.meta.subarray.fastaxis, dm_ramp.meta.subarray.slowaxis = AXES["NRCALONG"]
     else:
         dm_ramp.meta.instrument.name = "MIRI"
         dm_ramp.meta.instrument.detector = "MIRIMAGE"
         dm_ramp.meta.instrument.filter = "F560W"
         dm_ramp.meta.exposure.type = "MIR_IMAGE"
+        dm_ramp.meta.subarray.fastaxis = 1
+        dm_ramp.meta.subarray.slowaxis = 2
 
     dm_ramp.meta.instrument.band = "N/A"
-    dm_ramp.meta.observation.date = "2016-06-01"
+    dm_ramp.meta.observation.date = "2024-06-01"
     dm_ramp.meta.observation.time = "00:00:00"
     dm_ramp.meta.subarray.name = "FULL"
     dm_ramp.meta.subarray.xstart = 1
@@ -916,6 +964,7 @@ def setup_cube():
         data_model.meta.instrument.detector = detector
         data_model.meta.observation.date = "2019-10-14"
         data_model.meta.observation.time = "16:44:12.000"
+        data_model.meta.subarray.fastaxis, data_model.meta.subarray.slowaxis = AXES[detector]
 
         return data_model
 
@@ -1087,6 +1136,7 @@ def test_preserve_refpix(detector, irs2, preserve):
     # make ramp model
     im = make_rampmodel(ngroups, ysize, xsize, instrument="NIRSPEC", fill_value=0.0)
     im.meta.instrument.detector = detector
+    im.meta.subarray.fastaxis, im.meta.subarray.slowaxis = AXES[detector]
 
     # run the step
     out = RefPixStep.call(im, preserve_irs2_refpix=preserve)
@@ -1102,3 +1152,109 @@ def test_preserve_refpix(detector, irs2, preserve):
         # output data is trimmed to remove interleaved refpix
         assert out.data.shape == (1, ngroups, xsize, xsize)
         assert out.pixeldq.shape == (xsize, xsize)
+
+
+def test_irs2_no_side_ref(caplog):
+    # make some irs2 nirspec data
+    im = make_rampmodel(1, 3200, 2048, instrument="NIRSPEC")
+
+    # run the step
+    out = RefPixStep.call(im, irs2_mean_subtraction=True, use_side_ref_pixels=True)
+    assert "Turning off side pixel correction for IRS2" in caplog.text
+
+    # step is complete
+    assert out.meta.cal_step.refpix == "COMPLETE"
+
+    # input is not modified
+    assert out is not im
+    assert im.meta.cal_step.refpix is None
+
+
+def test_missing_irs2_ref(caplog):
+    # make some irs2 nirspec data
+    im = make_rampmodel(1, 3200, 2048, instrument="NIRSPEC")
+
+    # run the step
+    out = RefPixStep.call(im, override_refpix="N/A")
+
+    # step is skipped
+    assert "No refpix reference file found" in caplog.text
+    assert out.meta.cal_step.refpix == "SKIPPED"
+
+    # input is not modified
+    assert out is not im
+    assert im.meta.cal_step.refpix is None
+
+
+def test_skip_sirs_miri(caplog):
+    # specify SIRS for a miri model
+    im = make_rampmodel(3, 22, 28)
+    RefPixStep.call(im, refpix_algorithm="sirs")
+    assert "Simple Improved Reference Subtraction (SIRS) not applied for MIRI" in caplog.text
+
+
+def test_skip_sirs_subarray(caplog):
+    # specify SIRS for a subarray NIR model
+    im = make_rampmodel(2, 32, 512, instrument="NIRSPEC")
+    im.meta.subarray.name = "SUB512"
+    RefPixStep.call(im, refpix_algorithm="sirs")
+    assert "Simple Improved Reference Subtraction (SIRS) not applied for subarray" in caplog.text
+
+
+def test_missing_sirs_ref(caplog):
+    # specify SIRS for a full frame NIR model, but no ref file available
+    im = make_rampmodel(1, 2048, 2048, instrument="NIRSPEC")
+    RefPixStep.call(im, refpix_algorithm="sirs", override_sirskernel="N/A")
+    assert "No reference file found for the optimized convolution kernel" in caplog.text
+
+
+def test_run_sirs(caplog):
+    # specify SIRS for a full frame NIR model with ref file available
+    im = make_rampmodel(1, 2048, 2048, instrument="NIRCAM")
+    out = RefPixStep.call(im, refpix_algorithm="sirs")
+
+    # SIRS is used
+    assert "Using SIRS reference file" in caplog.text
+
+    # step is complete
+    assert out.meta.cal_step.refpix == "COMPLETE"
+
+    # input is not modified
+    assert out is not im
+    assert im.meta.cal_step.refpix is None
+
+
+def test_refpix_bad_subarray(monkeypatch, caplog):
+    # mock a bad subarray error
+    monkeypatch.setattr(
+        reference_pixels, "correct_model", lambda *args: reference_pixels.SUBARRAY_DOESNTFIT
+    )
+
+    im = make_rampmodel(3, 22, 28)
+    out = RefPixStep.call(im)
+
+    # step is skipped
+    assert "Subarray doesn't fit" in caplog.text
+    assert out.meta.cal_step.refpix == "SKIPPED"
+
+    # input is not modified
+    assert out is not im
+    assert im.meta.cal_step.refpix is None
+
+
+def test_refpix_bad_reference_pixels(monkeypatch, caplog):
+    # mock a bad reference pixel error
+    monkeypatch.setattr(
+        reference_pixels, "correct_model", lambda *args: reference_pixels.BAD_REFERENCE_PIXELS
+    )
+
+    im = make_rampmodel(3, 22, 28)
+    out = RefPixStep.call(im)
+
+    # step is skipped
+    assert "No valid reference pixels" in caplog.text
+    assert out.meta.cal_step.refpix == "SKIPPED"
+
+    # input is not modified
+    assert out is not im
+    assert im.meta.cal_step.refpix is None

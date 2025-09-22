@@ -1,9 +1,6 @@
-"""
-JWST pipeline step for image alignment.
+"""JWST pipeline step for image alignment."""
 
-:Authors: Mihai Cara
-"""
-
+import logging
 from pathlib import Path
 
 import stcal.tweakreg.tweakreg as twk
@@ -15,6 +12,8 @@ from jwst.assign_wcs.util import update_fits_wcsinfo, update_s_region_imaging
 from jwst.datamodels import ModelLibrary
 from jwst.stpipe import Step, record_step_status
 from jwst.tweakreg.tweakreg_catalog import make_tweakreg_catalog
+
+log = logging.getLogger(__name__)
 
 
 def _oxford_or_str_join(str_list):
@@ -31,6 +30,8 @@ def _oxford_or_str_join(str_list):
 
 
 SINGLE_GROUP_REFCAT = ["GAIADR3", "GAIADR2", "GAIADR1"]
+"""List of astrometric catalogs available to the tweakreg step."""
+
 _SINGLE_GROUP_REFCAT_STR = _oxford_or_str_join(SINGLE_GROUP_REFCAT)
 
 __all__ = ["TweakRegStep"]
@@ -127,18 +128,25 @@ class TweakRegStep(Step):
 
         Parameters
         ----------
-        input_data : `ModelLibrary`, or asn-type input to be read into a `ModelLibrary`
+        input_data : `~jwst.datamodels.library.ModelLibrary`
             A collection of data models.
+            This can also be an ASN-type input to be read into a
+            `~jwst.datamodels.library.ModelLibrary`.
 
         Returns
         -------
-        output : `ModelLibrary`
+        output : `~jwst.datamodels.library.ModelLibrary`
             The aligned input data models.
         """
-        if isinstance(input_data, ModelLibrary):
-            images = input_data
+        # Check the input for open models and make a copy if necessary
+        # to avoid modifying input data.
+        # If there are no open models already, do not open them.  Leave
+        # that to the ModelLibrary call below.
+        output_models = self.prepare_output(input_data, open_models=False)
+        if isinstance(output_models, ModelLibrary):
+            images = output_models
         else:
-            images = ModelLibrary(input_data, on_disk=not self.in_memory)
+            images = ModelLibrary(output_models, on_disk=not self.in_memory)
 
         if len(images) == 0:
             raise ValueError("Input must contain at least one image model.")
@@ -156,7 +164,7 @@ class TweakRegStep(Step):
                 # valid 'catfile' file name that has no custom catalogs,
                 # turn off the use of custom catalogs:
                 if not catdict:
-                    self.log.warning(
+                    log.warning(
                         "'use_custom_catalogs' is set to True but 'catfile' "
                         "contains no user catalogs. Turning on built-in catalog "
                         "creation."
@@ -187,8 +195,8 @@ class TweakRegStep(Step):
             # are saving catalogs, if not, and we have 1 group, skip
             if not self.save_catalogs and n_groups == 1:
                 # we need at least two exposures to perform image alignment
-                self.log.warning("At least two exposures are required for image alignment.")
-                self.log.warning("Nothing to do. Skipping 'TweakRegStep'...")
+                log.warning("At least two exposures are required for image alignment.")
+                log.warning("Nothing to do. Skipping 'TweakRegStep'...")
                 record_step_status(images, "tweakreg", success=False)
                 return images
 
@@ -211,7 +219,7 @@ class TweakRegStep(Step):
                 if use_custom_catalogs and catdict.get(image_model.meta.filename, None) is not None:
                     image_model.meta.tweakreg_catalog = catdict[image_model.meta.filename]
                     # use user-supplied catalog:
-                    self.log.info(
+                    log.info(
                         f"Using user-provided input catalog '{image_model.meta.tweakreg_catalog}'"
                     )
                     catalog = Table.read(
@@ -243,9 +251,9 @@ class TweakRegStep(Step):
                 filename = image_model.meta.filename
                 nsources = len(catalog)
                 if nsources == 0:
-                    self.log.warning(f"No sources found in {filename}.")
+                    log.warning(f"No sources found in {filename}.")
                 else:
-                    self.log.info(f"Detected {len(catalog)} sources in {filename}.")
+                    log.info(f"Detected {len(catalog)} sources in {filename}.")
 
                 # save catalog (if requested)
                 if save_catalog:
@@ -261,8 +269,8 @@ class TweakRegStep(Step):
                 )
                 images.shelve(image_model, model_index)
 
-        self.log.info("")
-        self.log.info(f"Number of image groups to be aligned: {n_groups}.")
+        log.info("")
+        log.info(f"Number of image groups to be aligned: {n_groups}.")
 
         # wrapper to stcal tweakreg routines
         # step skip conditions should throw TweakregError from stcal
@@ -285,7 +293,7 @@ class TweakRegStep(Step):
                     yoffset=self.yoffset,
                 )
             except twk.TweakregError as e:
-                self.log.warning(str(e))
+                log.warning(str(e))
                 local_align_failed = True
             else:
                 local_align_failed = False
@@ -295,7 +303,7 @@ class TweakRegStep(Step):
         # absolute alignment to the reference catalog
         # can (and does) occur after alignment between groups
         if align_to_abs_refcat:
-            self.log.info(f"Aligning to absolute reference catalog: {self.abs_refcat}")
+            log.info(f"Aligning to absolute reference catalog: {self.abs_refcat}")
             with images:
                 ref_image = images.borrow(0)
                 try:
@@ -318,7 +326,7 @@ class TweakRegStep(Step):
                     )
                     images.shelve(ref_image, 0, modify=False)
                 except twk.TweakregError as e:
-                    self.log.warning(str(e))
+                    log.warning(str(e))
                     images.shelve(ref_image, 0, modify=False)
                     record_step_status(images, "tweakreg", success=False)
                     return images
@@ -345,16 +353,16 @@ class TweakRegStep(Step):
 
         Parameters
         ----------
-        images : ModelLibrary
+        images : `~jwst.datamodels.library.ModelLibrary`
             A collection of data models.
-        correctors : list[JWSTWCSCorrector]
+        correctors : list of `~tweakwcs.correctors.JWSTWCSCorrector`
             A list of WCS correctors.
         align_to_abs_refcat : bool
             Flag indicating whether the images were aligned to an absolute reference catalog.
 
         Returns
         -------
-        images : ModelLibrary
+        images : `~jwst.datamodels.library.ModelLibrary`
             The aligned input data models
         """
         with images:
@@ -394,11 +402,11 @@ class TweakRegStep(Step):
                                 crpix=None,
                             )
                         except (ValueError, RuntimeError) as e:
-                            self.log.warning(
+                            log.warning(
                                 "Failed to update 'meta.wcsinfo' with FITS SIP "
                                 "approximation. Reported error is:"
                             )
-                            self.log.warning(f'"{e.args[0]}"')
+                            log.warning(f'"{e.args[0]}"')
                 record_step_status(image_model, "tweakreg", success=True)
                 images.shelve(image_model)
         return images
@@ -432,7 +440,7 @@ class TweakRegStep(Step):
             catalog.write(catalog_filename, format=fmt, overwrite=True)
         else:
             catalog.write(Path(self.output_dir) / catalog_filename, format=fmt, overwrite=True)
-        self.log.info(f"Wrote source catalog: {catalog_filename}")
+        log.info(f"Wrote source catalog: {catalog_filename}")
         return catalog_filename
 
     def _find_sources(self, image_model):
@@ -497,7 +505,8 @@ def _parse_catfile(catfile):
 
     Raises
     ------
-    ValueError if catfile contains >2 columns
+    ValueError
+        If catfile contains >2 columns
     """
     if catfile is None or not catfile.strip():
         return None
@@ -533,12 +542,12 @@ def _rename_catalog_columns(catalog):
 
     Parameters
     ----------
-    catalog : astropy.table.Table
+    catalog : `~astropy.table.Table`
         Table containing the source catalog.
 
     Returns
     -------
-    catalog : astropy.table.Table
+    catalog : `~astropy.table.Table`
         Table containing the source catalog with renamed columns.
     """
     for axis in ["x", "y"]:

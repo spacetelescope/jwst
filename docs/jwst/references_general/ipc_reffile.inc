@@ -4,7 +4,7 @@ IPC Reference File
 ------------------
 
 :REFTYPE: IPC
-:Data model: `~jwst.datamodels.IPCModel`
+:Data model: `~stdatamodels.jwst.datamodels.IPCModel`
 
 The IPC reference file contains a deconvolution kernel.
 

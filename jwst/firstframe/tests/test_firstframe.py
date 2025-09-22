@@ -176,6 +176,11 @@ def test_nircam():
         err_msg="Diff in groupdq flags is not " + "equal to 0",
     )
 
+    # check that input is not modified
+    assert dm_ramp_firstframe is not dm_ramp
+    assert dm_ramp_firstframe.meta.cal_step.firstframe == "SKIPPED"
+    assert dm_ramp.meta.cal_step.firstframe is None
+
 
 def test_miri():
     # test that the code runs given MIRI as an instrument
@@ -209,25 +214,32 @@ def test_miri():
         err_msg="Diff in groupdq flags is not " + "equal to DO_NOT_USE",
     )
 
+    # check that input is not modified
+    assert dm_ramp_firstframe is not dm_ramp
+    assert dm_ramp_firstframe.meta.cal_step.firstframe == "COMPLETE"
+    assert dm_ramp.meta.cal_step.firstframe is None
 
-def test_firstframe_bright_use_group1():
+
+def test_firstframe_bright_use_group1(log_watcher):
     """
-    Test if the firstframe code when bright_use_group1 is set to True.
+    Test the firstframe code when bright_use_group1 is set to True.
 
     The groupdq flag for group 1 should not be set to DO_NOT_USE for the pixels that saturate
     the 3rd group.  Otherwise, all other pixels should have their group1 groupdq
     flags set to DO_NOT_USE.
     """
 
-    # size of integration
+    # size of ramp
+    nints = 3
     ngroups = 5
     xsize = 1032
     ysize = 1024
 
     # create the data and groupdq arrays
-    csize = (1, ngroups, ysize, xsize)
+    csize = (nints, ngroups, ysize, xsize)
     data = np.full(csize, 1.0)
-    groupdq = np.zeros(csize, dtype=int)
+    groupdq = np.zeros(csize, dtype=np.uint8)
+    pixeldq = np.zeros((ysize, xsize), dtype=np.uint32)
 
     # set a fraction of the pixels to saturate in between the 2nd and 3rd groups
     groupdq[0, 2, 0:100, :] = dqflags.group["SATURATED"]
@@ -237,30 +249,51 @@ def test_firstframe_bright_use_group1():
     groupdq[0, 1, 200:300, :] = dqflags.group["SATURATED"]
 
     # create a JWST datamodel for MIRI data
-    dm_ramp = RampModel(data=data, groupdq=groupdq)
+    dm_ramp = RampModel(data=data, groupdq=groupdq, pixeldq=pixeldq)
+
+    # check for a log message
+    n_kept = 200 * xsize
+    watcher = log_watcher(
+        "jwst.firstframe.firstframe_sub",
+        message=f"Number of usable bright pixels with first group not set to DO_NOT_USE: {n_kept}",
+        level="info",
+    )
 
     # run the first frame correction step on a copy (the detection to make the copy or
     # not would have happened at _step.py)
     dm_ramp_firstframe = do_correction(dm_ramp.copy(), bright_use_group1=True)
 
+    watcher.assert_seen()
+
     # check that the difference in the groupdq flags is equal to
     #   the 'do_not_use' flag
-    dq_diff = dm_ramp_firstframe.groupdq[0, 0, :, :] - dm_ramp.groupdq[0, 0, :, :]
+    dq_diff = dm_ramp_firstframe.groupdq[:, 0, :, :] - dm_ramp.groupdq[:, 0, :, :]
 
-    expected_diff = np.full((ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int)
-    expected_diff[0:100, :] = 0
-    expected_diff[200:300, :] = 0
+    expected_diff = np.full((nints, ysize, xsize), dqflags.group["DO_NOT_USE"], dtype=int)
+    expected_diff[0, 0:100, :] = 0
+    expected_diff[0, 200:300, :] = 0
 
     np.testing.assert_array_equal(
         expected_diff,
         dq_diff,
-        err_msg="Diff in groupdq flags is not " + "equal to the DO_NOT_USE flag",
+        err_msg="Diff in groupdq flags is not equal to the DO_NOT_USE flag",
     )
 
     # test that the groupdq flags are not changed for the rest of the groups
-    dq_diff = dm_ramp_firstframe.groupdq[0, 1:ngroups, :, :] - dm_ramp.groupdq[0, 1:ngroups, :, :]
+    dq_diff = dm_ramp_firstframe.groupdq[:, 1:ngroups, :, :] - dm_ramp.groupdq[:, 1:ngroups, :, :]
     np.testing.assert_array_equal(
-        np.full((ngroups - 1, ysize, xsize), 0, dtype=int),
+        np.full((nints, ngroups - 1, ysize, xsize), 0, dtype=int),
         dq_diff,
-        err_msg="n >= 2 groupdq flags changes " + "and they should not be",
+        err_msg="n >= 2 groupdq flags changes and they should not be",
+    )
+
+    # also check that pixel dq flags are set for the pixels that were kept
+    dq_diff = dm_ramp_firstframe.pixeldq - dm_ramp.pixeldq
+    expected_diff = np.full((ysize, xsize), 0, dtype=int)
+    expected_diff[0:100, :] = dqflags.pixel["FLUX_ESTIMATED"]
+    expected_diff[200:300, :] = dqflags.pixel["FLUX_ESTIMATED"]
+    np.testing.assert_array_equal(
+        expected_diff,
+        dq_diff,
+        err_msg="pixeldq flags do not have expected values",
     )

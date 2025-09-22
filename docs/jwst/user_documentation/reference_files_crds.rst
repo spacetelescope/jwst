@@ -66,48 +66,40 @@ the correct reference files to use for that dataset, and downloads them to a
 local cache directory if they haven't already been downloaded so they're
 available on your filesystem for the pipeline to use.
 
-**The environment variables `crds_context` and `crds_server` must be set before running the pipeline**
+.. note::
+    The environment variables ``crds_context`` and ``crds_server`` must be set
+    before running the pipeline.
 
- 
+
 .. _crds_context:
 
 Reference Files Mappings (CRDS Context)
 ---------------------------------------
+
 One of the main functions of CRDS is to associate a dataset with its best
 reference files - this mapping is referred to as the 'CRDS context' and is
-defined in a `.pmap` file, which itself is version-controlled to allow access to
+defined in a ``.pmap`` file, which itself is version-controlled to allow access to
 the reference file mapping at any point in time, and revert to any previous set
-of reference files if desired. 
-
+of reference files if desired.
 
 The CRDS context is usually set by default to always give the 'best' reference files
 associated with a given pipeline version.
 To use a specific CRDS context other than that automatically associated with a given pipeline version
 (see https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline/crds-migration-to-quarterly-calibration-updates),
-the environment variable ``CRDS_CONTEXT`` can be used, e.g.
+the environment variable ``CRDS_CONTEXT`` can be used, e.g.::
 
-::
-
-  $ export CRDS_CONTEXT='jwst_1293.pmap'
+    export CRDS_CONTEXT='jwst_1293.pmap'
 
 For all information about CRDS, including context lists, see the JWST CRDS
-website:
-
-    `https://jwst-crds.stsci.edu/ <https://jwst-crds.stsci.edu/>`_
-
+website: https://jwst-crds.stsci.edu/
 
 CRDS Servers
 ------------
-The CRDS server [1]_ can be found at
 
-::
-
-   https://jwst-crds.stsci.edu
+The CRDS server [1]_ can be found at https://jwst-crds.stsci.edu
 
 To run the pipeline inside the STScI network, CRDS must be configured to find the CRDS server
-by setting the environment variable
-
-::
+by setting the environment variable::
 
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
@@ -115,9 +107,7 @@ This server will be used to determine the appropriate CRDS context for a given p
 version, and the pipeline will obtain individual reference files within this context from a local shared disk.
 
 To run the pipeline outside the STScI network, CRDS must be configured by setting
-two environment variables:
-
-::
+two environment variables::
 
     export CRDS_PATH=$HOME/crds_cache/
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
@@ -141,29 +131,23 @@ CRDS Cache Configuration for Developers
 
 For most pipeline users, the above settings will suffice for establishing a consistent
 local cache.  For pipeline developers or testers, however, it is important to be aware
-that if you need to switch between CRDS servers (e.g. the `ops` and `test` servers), you
+that if you need to switch between CRDS servers (e.g. the ``ops`` and ``test`` servers), you
 will need to establish a separate cache for each server.  Using the same cache for
 more than one server will lead to a corrupted local cache.
 
-For example, the recommended configuration for developers while using the `ops` server is :
-
-::
+For example, the recommended configuration for developers while using the ``ops`` server is::
 
     export CRDS_PATH=$HOME/crds_cache/jwst_ops
     export CRDS_SERVER_URL=https://jwst-crds.stsci.edu
 
-and while using the `test` server:
-
-::
+and while using the ``test`` server::
 
     export CRDS_PATH=$HOME/crds_cache/jwst_test
     export CRDS_SERVER_URL=https://jwst-test-crds.stsci.edu
 
 If your cache does become corrupted, the best way to fix it is simply to remove
 the local cache and allow subsequent pipeline runs to repopulate it as needed.
-For example:
-
-::
+For example::
 
     rm -r $CRDS_PATH
 
@@ -178,14 +162,12 @@ Setting CRDS Environment Variables in Python
 --------------------------------------------
 
 The CRDS environment variables need to be defined *before* importing anything
-from `jwst` or `crds`. The examples above show how to set an environment variable in
+from ``jwst`` or ``crds``. The examples above show how to set an environment variable in
 the shell, but this can also be done within a Python session by using `os.environ`.
 In general, any scripts should assume the environment variables have been set before the scripts
 have run. If one needs to define the CRDS environment variables within a script,
 the following code snippet is the suggested method. These lines should be the first
-executable lines:
-
-::
+executable lines::
 
    import os
    os.environ['CRDS_PATH'] = 'path_to_local_cache'

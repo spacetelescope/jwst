@@ -1,29 +1,23 @@
 import numpy as np
+import pytest
 from numpy.testing import assert_allclose
 
 from jwst.wfss_contam.disperse import disperse
 
 
-def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
+@pytest.mark.parametrize("phot_per_lam", [True, False])
+def test_disperse_oversample_same_result(grism_wcs, segmentation_map, phot_per_lam):
     """Coverage for bug where wavelength oversampling led to double-counted fluxes."""
-    x0 = np.array([300.5])
-    y0 = np.array([300.5])
+    x0 = np.array([200.5])
+    y0 = np.array([200.5])
     order = 1
     flxs = np.array([1.0])
-    source_id = np.array([0])
+    source_id = np.array([50])
     naxis = (300, 500)
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_resp = np.ones(100)
     seg_wcs = segmentation_map.meta.wcs
-    (
-        0,
-        (300, 500),
-        2,
-        False,
-    )
-    xoffset = 2200
-    yoffset = 1000
 
     output_images = []
     for os in [2, 3]:
@@ -41,8 +35,7 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map):
             grism_wcs,
             naxis,
             oversample_factor=os,
-            xoffset=xoffset,
-            yoffset=yoffset,
+            phot_per_lam=phot_per_lam,
         )
         output_images.append(src[source_id[0]]["image"])
 

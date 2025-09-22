@@ -92,7 +92,7 @@ class ModelLibrary(AbstractModelLibrary):
 
         Notes
         -----
-        Library does NOT need to be open (i.e., this can be called outside the `with` context)
+        Library does NOT need to be open (i.e., this can be called outside the ``with`` context)
         """
         return [
             i

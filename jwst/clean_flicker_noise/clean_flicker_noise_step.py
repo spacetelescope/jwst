@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
-from jwst.clean_flicker_noise import clean_flicker_noise
+from jwst.clean_flicker_noise import autoparam, clean_flicker_noise
 from jwst.stpipe import Step
 
 __all__ = ["CleanFlickerNoiseStep"]
+
+log = logging.getLogger(__name__)
 
 
 class CleanFlickerNoiseStep(Step):
@@ -12,23 +16,62 @@ class CleanFlickerNoiseStep(Step):
     class_alias = "clean_flicker_noise"
 
     spec = """
-        fit_method = option('fft', 'median', default='median')  # Noise fitting algorithm
-        fit_by_channel = boolean(default=False)  # Fit noise separately by amplifier (NIR only)
-        background_method = option('median', 'model', None, default='median') # Background fit
-        background_box_size = int_list(min=2, max=2, default=None)  # Background box size
-        mask_science_regions = boolean(default=False)  # Mask known science regions
-        apply_flat_field = boolean(default=False)  # Apply a flat correction before fitting
-        n_sigma = float(default=2.0)  # Clipping level for non-background signal
-        fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma
-        single_mask = boolean(default=True)  # Make a single mask for all integrations
+        autoparam = boolean(default=False) # Automatically select some fit and background parameters for the input data.
+        fit_method = option('fft', 'median', default='median')  # Noise fitting algorithm.
+        fit_by_channel = boolean(default=False)  # Fit noise separately by amplifier (NIR only).
+        background_method = option('median', 'model', None, default='median') # Background fit.
+        background_box_size = int_list(min=2, max=2, default=None)  # Background box size.
+        mask_science_regions = boolean(default=False)  # Mask known science regions.
+        apply_flat_field = boolean(default=False)  # Apply a flat correction before fitting.
+        n_sigma = float(default=2.0)  # Clipping level for non-background signal.
+        fit_histogram = boolean(default=False)  # Fit a value histogram to derive sigma.
+        single_mask = boolean(default=True)  # Make a single mask for all integrations.
         user_mask = string(default=None)  # Path to user-supplied mask
         save_mask = boolean(default=False)  # Save the created mask
         save_background = boolean(default=False)  # Save the fit background
         save_noise = boolean(default=False)  # Save the fit noise
-        skip = boolean(default=True)  # By default, skip the step
+        skip = boolean(default=True)  # By default, skip the step.
     """  # noqa: E501
 
     reference_file_types = ["flat"]
+
+    def _set_auto_parameters(self, input_model):
+        """
+        Override fit parameters from input data characteristics if possible.
+
+        For any supported exposure type, the data is inspected and fit
+        parameters are determined accordingly.  Any parameters specified
+        by the `autoparam` algorithm are directly overridden, ignoring
+        user input.
+
+        Parameters
+        ----------
+        input_model : DataModel
+            Input datamodel to be corrected.
+        """
+        exp_type = input_model.meta.exposure.type
+        found_exptype = True
+        if exp_type == "NIS_IMAGE":
+            flat_filename = self.get_reference_file(input_model, "flat")
+            override_parameters = autoparam.niriss_image_parameters(input_model, flat_filename)
+        elif exp_type == "NRC_IMAGE":
+            flat_filename = self.get_reference_file(input_model, "flat")
+            override_parameters = autoparam.nircam_image_parameters(input_model, flat_filename)
+        else:
+            override_parameters = None
+            found_exptype = False
+
+        if override_parameters is not None:
+            log.info(f"Auto parameters set for {exp_type}:")
+            for param, value in override_parameters.items():
+                log.info(f"  {param}: {value}")
+                setattr(self, param, value)
+        else:
+            if found_exptype:
+                log.warning("Auto parameter setting failed.")
+            else:
+                log.warning(f"Auto parameters are not available for exposure type {exp_type}")
+            log.info("Using input parameters as provided; no overrides applied.")
 
     def process(self, input_data):
         """
@@ -49,28 +92,33 @@ class CleanFlickerNoiseStep(Step):
         Parameters
         ----------
         input_data : DataModel
-            Input datamodel to be corrected
+            Input datamodel to be corrected.
 
         Returns
         -------
         output_model : DataModel
-            The flicker noise corrected datamodel
+            The flicker noise corrected datamodel.
         """
         # Open the input data model
         with datamodels.open(input_data) as input_model:
+            # Assign fit and background parameters appropriate
+            # to the input data if desired
+            if self.autoparam:
+                self._set_auto_parameters(input_model)
+
             flat_filename = None
             if self.apply_flat_field:
                 flat_filename = self.get_reference_file(input_model, "flat")
                 exp_type = input_model.meta.exposure.type
                 if flat_filename == "N/A":
-                    self.log.warning(
+                    log.warning(
                         f"Flat correction is not available for "
                         f"exposure type {exp_type} without a user-"
                         f"supplied flat."
                     )
                     flat_filename = None
                 else:
-                    self.log.info(f"Using FLAT reference file: {flat_filename}")
+                    log.info(f"Using FLAT reference file: {flat_filename}")
 
             result = clean_flicker_noise.do_correction(
                 input_model,
@@ -94,7 +142,7 @@ class CleanFlickerNoiseStep(Step):
             # Save the mask, if requested
             if self.save_mask and mask_model is not None:
                 mask_path = self.make_output_path(basepath=input_model.meta.filename, suffix="mask")
-                self.log.info(f"Saving mask file {mask_path}")
+                log.info(f"Saving mask file {mask_path}")
                 mask_model.save(mask_path)
                 mask_model.close()
 
@@ -103,7 +151,7 @@ class CleanFlickerNoiseStep(Step):
                 bg_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_bkg"
                 )
-                self.log.info(f"Saving background file {bg_path}")
+                log.info(f"Saving background file {bg_path}")
                 background_model.save(bg_path)
                 background_model.close()
 
@@ -112,7 +160,7 @@ class CleanFlickerNoiseStep(Step):
                 noise_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_noise"
                 )
-                self.log.info(f"Saving noise file {noise_path}")
+                log.info(f"Saving noise file {noise_path}")
                 noise_model.save(noise_path)
                 noise_model.close()
 

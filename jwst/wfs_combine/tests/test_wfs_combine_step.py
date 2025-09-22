@@ -6,6 +6,7 @@ from stdatamodels.jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep
 from jwst.associations import asn_from_list
 from jwst.associations.lib.rules_level3_base import DMS_Level3_Base
+from jwst.datamodels import ModelContainer
 from jwst.wfs_combine import WfsCombineStep
 
 
@@ -180,3 +181,28 @@ def test_step_pos_order_no_refine_with_flip(wfs_association):
             path_asn, do_refine=False, flip_dithers=True, psf_size=50, blur_size=10, n_size=2
         )
     assert wfs[0].meta.wcsinfo.ra_ref == 22.02351763251896
+
+
+def test_step_complete(wfs_association):
+    path_asn, path1, path2 = wfs_association
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore",
+            category=UserWarning,
+            message="Input association file contains path information",
+        )
+        container = WfsCombineStep.call(path_asn)
+
+    assert isinstance(container, ModelContainer)
+    assert len(container) == 1
+    result = container[0]
+
+    # Step is complete
+    assert result.meta.cal_step.wfs_combine == "COMPLETE"
+
+    # Step requires ASN file as input, so input cannot be modified,
+    # but verify that output is not input anyway.
+    assert container is not path_asn
+    assert result is not path_asn
+
+    container.close()

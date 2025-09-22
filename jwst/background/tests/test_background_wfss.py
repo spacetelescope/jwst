@@ -196,7 +196,7 @@ def bkg_file(tmp_cwd, make_wfss_datamodel, known_bkg):
     return bkg_fname
 
 
-def shared_tests(sci, mask, original_data_mean):
+def shared_tests(sci, mask, original_data_mean, dm):
     """
     Tests that are common to all WFSS modes.
 
@@ -215,6 +215,10 @@ def shared_tests(sci, mask, original_data_mean):
     sci[sci > 50] = np.nan
     tol = 0.01 * np.nanstd(sci)
     assert np.isclose(np.nanmean(sci), original_data_mean, atol=tol)
+
+    # Verify that the mask extension in the datamodel is populated
+    np.testing.assert_allclose(dm.mask, mask)
+    assert dm.mask.dtype == np.uint32
 
 
 def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
@@ -236,7 +240,7 @@ def test_nrc_wfss_background(make_nrc_wfss_datamodel, bkg_file):
     # re-compute mask to ignore "real" sources for tests
     mask = _mask_from_source_cat(result, wavelenrange)
 
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
 
 
 @pytest.mark.parametrize("subarray", [None, "WFSS64C"])
@@ -260,7 +264,7 @@ def test_nis_wfss_background(subarray, make_nis_wfss_datamodel, make_nis_wfss_su
     assert np.isclose(nan_frac, INITIAL_NAN_FRACTION, rtol=1e-2)
 
     mask = _mask_from_source_cat(result, wavelenrange)
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
 
 
 # test both filters because they have opposite dispersion directions
@@ -286,12 +290,13 @@ def test_nrc_wfss_full_run(pupil, make_nrc_wfss_datamodel):
         wfss_rms_stop=0,
     )
     assert result is not data
+    assert data.meta.cal_step.bkg_subtract is None
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
     mask = _mask_from_source_cat(result, wavelenrange)
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
     assert isinstance(result.meta.background.scaling_factor, float)
 
 
@@ -317,12 +322,13 @@ def test_nis_wfss_full_run(filt, make_nis_wfss_datamodel):
         wfss_rms_stop=0,
     )
     assert result is not data
+    assert data.meta.cal_step.bkg_subtract is None
 
     sci = result.data.copy()
     # re-derive mask to ignore "real" sources for tests
     wavelenrange = Step().get_reference_file(data, "wavelengthrange")
     mask = _mask_from_source_cat(result, wavelenrange)
-    shared_tests(sci, mask, data.original_data_mean)
+    shared_tests(sci, mask, data.original_data_mean, result)
     assert isinstance(result.meta.background.scaling_factor, float)
 
 
@@ -477,7 +483,7 @@ def test_wfss_asn_input(mock_asn_and_data):
     # get the file name of asn and other file objects
     asn_name, ratefile = mock_asn_and_data[0], mock_asn_and_data[1]
     i2dfile, segmfile = mock_asn_and_data[2], mock_asn_and_data[3]
-    # change the working directory into the temp so it can find all files
+    # change the working directory into the temp dir, so it can find all files
     cwd = os.getcwd()
     os.chdir(ratefile.parents[0])
     result = BackgroundStep.call(asn_name)
@@ -498,6 +504,7 @@ def test_missing_bkg(monkeypatch, caplog, make_nrc_wfss_datamodel):
 
     result = step.run(model)
     assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
     assert result.meta.cal_step.bkg_subtract == "SKIPPED"
     assert "No BKG reference file" in caplog.text
 
@@ -512,5 +519,27 @@ def test_bkg_fail(monkeypatch, caplog, make_nrc_wfss_datamodel):
 
     result = BackgroundStep.call(model)
     assert result is not model
-    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert model.meta.cal_step.bkg_subtract is None
+    assert result.meta.cal_step.bkg_subtract == "FAILED"
+    assert result.meta.background.scaling_factor == 0.0
     assert "Not enough background pixels" in caplog.text
+
+
+def test_infinite_factor(monkeypatch, caplog, make_nrc_wfss_datamodel):
+    """Test for infinite scaling factor."""
+    model = make_nrc_wfss_datamodel.copy()
+
+    # Mock an infinite scaling factor
+    monkeypatch.setattr(
+        background_sub_wfss._ScalingFactorComputer, "err_weighted_mean", lambda *args: np.nan
+    )
+
+    result = BackgroundStep.call(model)
+    assert result is not model
+    assert model.meta.cal_step.bkg_subtract is None
+    assert result.meta.cal_step.bkg_subtract == "FAILED"
+    assert result.meta.background.scaling_factor == 0.0
+    assert (
+        "Could not determine a finite scaling factor between reference background and data"
+        in caplog.text
+    )

@@ -58,7 +58,7 @@ class ModelBlender:
 
         Parameters
         ----------
-        model : `jwst.datamodels.JwstDataModel`
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The datamodel to blend.
         """
         if self._first_header_meta is None:
@@ -133,7 +133,7 @@ class ModelBlender:
 
         Parameters
         ----------
-        model : `jwst.datamodels.JwstDataModel`
+        model : `~stdatamodels.jwst.datamodels.JwstDataModel`
             A datamodel that will have its metadata set
             to the blended metadata and have the metadata
             table assigned to the "hdrtab" attribute.

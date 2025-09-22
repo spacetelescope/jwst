@@ -1,7 +1,7 @@
 Description
 -----------
 
-:Class: `jwst.coron.KlipStep`
+:Class: `jwst.coron.klip_step.KlipStep`
 :Alias: klip
 
 The ``klip`` step is one of the coronagraphic-specific steps in the ``coron``
@@ -40,7 +40,7 @@ cube and a 3D aligned PSF image ("_psfalign") product.
 
 3D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _calints
 
 A 3D calibrated science target product containing a stack of per-integration images.
@@ -50,7 +50,7 @@ as input to the :ref:`calwebb_coron3 <calwebb_coron3>` pipeline.
 
 3D aligned PSF images
 ^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _psfalign
 
 A collection of PSF images that have been aligned to the first of the images
@@ -62,7 +62,7 @@ Outputs
 
 3D PSF-subtracted images
 ^^^^^^^^^^^^^^^^^^^^^^^^
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _psfsub
 
 The output is a 3D stack of PSF-subtracted images of the science target, having the same

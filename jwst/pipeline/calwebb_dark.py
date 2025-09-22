@@ -58,7 +58,7 @@ class DarkPipeline(Pipeline):
 
         Parameters
         ----------
-        input_data : str or `~jwst.datamodels.RampModel`
+        input_data : str or `~stdatamodels.jwst.datamodels.RampModel`
             The input data to process. If a string, it is assumed
             to be a filename pointing to a RampModel.
 

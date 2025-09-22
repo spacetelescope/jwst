@@ -65,7 +65,7 @@ def circular_pupil():
 
     Returns
     -------
-    np.ndarray
+    ndarray
         A 1024x1024 array with a circular pupil of radius 0.2x the array shape.
     """
     shape = (1024, 1024)
@@ -115,7 +115,7 @@ def nrm_psf(example_model, nrm_model):
 
     Returns
     -------
-    psf : np.ndarray
+    psf : ndarray
         The PSF computed from the nrm model.
     """
     filt = example_model.meta.instrument.filter
@@ -130,7 +130,7 @@ def bandpass(example_model):
 
     Returns
     -------
-    np.ndarray
+    ndarray
         An Nx2 array with the first column being the throughput and the second
         column being the wavelength in meters.
     """

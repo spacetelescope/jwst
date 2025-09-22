@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+import logging
+import warnings
 from collections import defaultdict
 from pathlib import Path
 
@@ -16,6 +18,8 @@ from jwst.stpipe import Pipeline
 
 __all__ = ["Image2Pipeline"]
 
+log = logging.getLogger(__name__)
+
 
 class Image2Pipeline(Pipeline):
     """
@@ -28,7 +32,7 @@ class Image2Pipeline(Pipeline):
     class_alias = "calwebb_image2"
 
     spec = """
-        save_bsub = boolean(default=False) # Save background-subtracted science
+        save_bsub = boolean(default=False) # Deprecated; use the background step's save_results parameter instead.
     """  # noqa: E501
 
     # Define alias to steps
@@ -57,21 +61,28 @@ class Image2Pipeline(Pipeline):
         list[JWSTDataModel]
             The calibrated data models.
         """
-        self.log.info("Starting calwebb_image2 ...")
+        log.info("Starting calwebb_image2 ...")
+
+        if self.save_bsub:
+            deprecation_message = (
+                "The --save_bsub parameter is deprecated and will be removed in a future release. "
+                "To toggle saving background-subtracted data, use the background step's "
+                "--save_results parameter instead."
+            )
+            warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+            log.warning(deprecation_message)
 
         # Retrieve the input(s)
         asn = LoadAsLevel2Asn.load(input_data, basename=self.output_file)
         if len(asn["products"]) > 1 and self.output_file is not None:
-            self.log.warning(
-                "Multiple products in input association. Output file name will be ignored."
-            )
+            log.warning("Multiple products in input association. Output file name will be ignored.")
             self.output_file = None
 
         # Each exposure is a product in the association.
         # Process each exposure.
         results = []
         for product in asn["products"]:
-            self.log.info("Processing product {}".format(product["name"]))
+            log.info("Processing product {}".format(product["name"]))
             if (self.save_results) & (self.output_file is None):
                 self.output_file = product["name"]
             if not hasattr(asn, "filename"):
@@ -89,7 +100,7 @@ class Image2Pipeline(Pipeline):
             results.append(result)
             self.output_file = None
 
-        self.log.info("... ending calwebb_image2")
+        log.info("... ending calwebb_image2")
 
         self.output_use_model = True
         self.suffix = False
@@ -128,13 +139,11 @@ class Image2Pipeline(Pipeline):
         # one. We'll just get the first one found.
         science = members_by_type["science"]
         if len(science) != 1:
-            self.log.warning(
-                "Wrong number of science files found in {}".format(exp_product["name"])
-            )
-            self.log.warning("    Using only first one.")
+            log.warning("Wrong number of science files found in {}".format(exp_product["name"]))
+            log.warning("    Using only first one.")
         science = science[0]
 
-        self.log.info("Working on input %s ...", science)
+        log.info("Working on input %s ...", science)
         if isinstance(science, datamodels.JwstDataModel):
             input_data = science
         else:
@@ -175,5 +184,5 @@ class Image2Pipeline(Pipeline):
             self.resample.run(input_data)
 
         # That's all folks
-        self.log.info("Finished processing product {}".format(exp_product["name"]))
+        log.info("Finished processing product {}".format(exp_product["name"]))
         return input_data

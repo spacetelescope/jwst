@@ -29,7 +29,7 @@ Inputs
 2D calibrated images
 ^^^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _cal
 
 The input to ``calwebb_wfs-image3`` is a pair of calibrated ("_cal") exposures, specified
@@ -41,7 +41,7 @@ Outputs
 2D combined image
 ^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _wfscmb
 
 The output is a combined image, using the product type suffix "_wfscmb."

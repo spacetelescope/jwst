@@ -6,7 +6,7 @@ COLLIMATOR Reference File (NIRSpec only)
 ----------------------------------------
 
 :REFTYPE: COLLIMATOR
-:Data model: `~jwst.datamodels.CollimatorModel`
+:Data model: `~stdatamodels.jwst.datamodels.CollimatorModel`
 
 Reference Selection Keywords for COLLIMATOR
 +++++++++++++++++++++++++++++++++++++++++++

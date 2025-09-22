@@ -51,15 +51,18 @@ class ResampleStep(Step):
 
         Parameters
         ----------
-        input_data : str, ImageModel, or any asn-type input loadable into ModelLibrary
-            Filename pointing to an ImageModel or an association, or the ImageModel or
-            association itself.
+        input_data : str, `~stdatamodels.jwst.datamodels.ImageModel`, \
+                     or any asn-type input loadable into \
+                     `~jwst.datamodels.library.ModelLibrary`
+            Filename pointing to an `~stdatamodels.jwst.datamodels.ImageModel`
+            or an association, or the object itself.
 
         Returns
         -------
-        ModelLibrary or ImageModel
-            The final output data. If the `single` parameter is set to True, then this
-            is a single ImageModel; otherwise, it is a ModelLibrary.
+        `~jwst.datamodels.library.ModelLibrary` or `~stdatamodels.jwst.datamodels.ImageModel`
+            The final output data. If the ``single`` parameter is set to True, then this
+            is a single `~jwst.datamodels.library.ModelLibrary`; otherwise, it is a
+            `~jwst.datamodels.library.ModelLibrary`.
 
         Notes
         -----
@@ -215,6 +218,6 @@ class ResampleStep(Step):
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug(f"   {k}={v}")
+            log.debug(f"   {k}={v}")
 
         return kwargs

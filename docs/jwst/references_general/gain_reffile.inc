@@ -2,7 +2,7 @@ GAIN reference file
 -------------------
 
 :REFTYPE: GAIN
-:Data model: `~jwst.datamodels.GainModel`
+:Data model: `~stdatamodels.jwst.datamodels.GainModel`
 
 The GAIN reference file contains a pixel-by-pixel gain map, which can be
 used to convert pixel values from units of DN to electrons. The gain
@@ -42,4 +42,3 @@ EXTNAME  XTENSION  NAXIS  Dimensions      Data type
 =======  ========  =====  ==============  =========
 SCI      IMAGE       2    ncols x nrows   float
 =======  ========  =====  ==============  =========
-
