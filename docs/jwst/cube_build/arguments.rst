@@ -75,10 +75,10 @@ each band will be created.
     grating option into a single IFU cube.  This option is currently not being used by the pipeline.
     For NIRSpec data ``output_type = band or multi`` only. 
 
-  - ``output_type = multi`` combines data  into a single "uber"
+  - ``output_type = multi`` combines data  into a single "uber".
     In addition, if channel, band, grating, or filter are also set, then only the data set by those
     parameters will be combined into an "uber" cube.
-    If the `output_type=multi` 	option is used with  NIRSPec prism data, then the output IFU cubes will
+    If the `output_type=multi` option is used with  NIRSPec prism data, then the output IFU cubes will
     have a non-linear wavelength plane. 
 
 
