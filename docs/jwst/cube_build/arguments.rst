@@ -14,13 +14,13 @@ each band will be created.
   have a different name depending which pipeline calls it. This parameter defaults to 3 which follows the rules
   for creating cubes based on the ``calwebb_spec3`` pipeline and is also the behavior when running
   ``cube_build`` stand-alone. When the ``calwebb_spec2`` pipeline  calls cube
-  build it sets `pipeline = 2`.   When running stand-alone or in 
-  ``calwebb_spec3`` pipeline the parameter `pipeline=3` is set for ``cube_build``.
+  build it sets ``pipeline = 2``.   When running stand-alone or in 
+  ``calwebb_spec3`` pipeline the parameter ``pipeline=3`` is set for ``cube_build``.
   
   - ``pipeline = 2`` sets up the rules for making ``calwebb_spec2`` pipeline type cubes. For NIRSpec data the default
     rules   produce cubes with a single grating and filter and  with a linear wavelength dimension. For MIRI data
     the default rules produce a single IFU cube contains the two channels in the input data with a non-linear
-    wavelength dimension. In both cases,  the input filename  suffix `cal` is replaced with `s3d`.
+    wavelength dimension. In both cases,  the input filename  suffix ``cal`` is replaced with ``s3d``.
 
   - ``pipeline = 3`` setups up the results for making ``calwebb_spec3`` pipeline type cbes. For NIRSpec data
     the default rules will a single IFU cube from the same grating and filter, while for MIRI data the a single
@@ -78,17 +78,17 @@ each band will be created.
   - ``output_type = multi`` combines data  into a single "uber".
     In addition, if channel, band, grating, or filter are also set, then only the data set by those
     parameters will be combined into an "uber" cube.
-    If the `output_type=multi` option is used with  NIRSPec prism data, then the output IFU cubes will
+    If the ``output_type=multi`` option is used with  NIRSPec prism data, then the output IFU cubes will
     have a non-linear wavelength plane. 
 
 
   The default rules for creating IFU cube depend on the instrument and  which pipeline called `cube_build`.
   
-  - `'calwebb_spec2`` pipeline rules for NIRSpec is produce ``output_type`` = band.
-  - `'calwebb_spec3`` pipeline rules for NIRSpec is produce ``output_type`` = band.
+  - ``calwebb_spec2`` pipeline rules for NIRSpec is produce ``output_type`` = band.
+  - ``calwebb_spec3`` pipeline rules for NIRSpec is produce ``output_type`` = band.
 
-  - `'calwebb_spec2`` pipeline rules for MIRI is produce ``output_type`` = multi.
-  - `'calwebb_spec3`` pipeline rules for MIRI is produce ``output_type`` = band.    
+  - ``calwebb_spec2`` pipeline rules for MIRI is produce ``output_type`` = multi.
+  - ``calwebb_spec3`` pipeline rules for MIRI is produce ``output_type`` = band.    
 
 
 
