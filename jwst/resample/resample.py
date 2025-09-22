@@ -703,7 +703,8 @@ class ResampleImage(Resample):
             sregion_list.append(meta["meta.wcsinfo.s_region"])
 
         det2world = self.output_wcs.get_transform("detector", "world")
-        return combine_sregions(sregion_list, det2world)
+        bbox = self.output_wcs.footprint()
+        return combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
 
 
 def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):

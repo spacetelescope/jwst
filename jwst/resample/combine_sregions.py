@@ -5,7 +5,7 @@ from stcal.alignment import sregion_to_footprint
 __all__ = ["combine_sregions"]
 
 
-def combine_sregions(sregion_list, det2world, intersect=False):
+def combine_sregions(sregion_list, det2world, intersect_footprint=None):
     """
     Combine s_regions from input models to compute the s_region for the resampled data.
 
@@ -17,9 +17,10 @@ def combine_sregions(sregion_list, det2world, intersect=False):
         WCS detector-to-world transform for the resampled data.
         Must take in exactly two inputs (x, y) and return exactly two outputs (RA, Dec).
         Must have a valid inverse transform.
-    intersect : bool, optional
-        If True, intersect the combined footprint with the WCS footprint.
-        Default is False.
+    intersect_footprint : np.ndarray, optional
+        Footprint of the output WCS in world coordinates, shape (4, 2).
+        If provided, the combined footprint from the input s_region list
+        will be intersected with this footprint.
 
     Returns
     -------
@@ -35,21 +36,28 @@ def combine_sregions(sregion_list, det2world, intersect=False):
     x, y = world2det(footprints_flat[:, 0], footprints_flat[:, 1])
     footprints_pixels = np.vstack([x, y]).T.reshape(footprints.shape)
 
+    # combine footprints with Shapely
     combined_polygons = _combine_footprints(footprints_pixels)
+
+    if intersect_footprint is not None:
+        # intersect with output WCS footprint
+        x, y = world2det(intersect_footprint[:, 0], intersect_footprint[:, 1])
+        intersect_footprint_pixels = np.vstack([x, y]).T
+        final_polygons = _intersect_with_bbox(combined_polygons, intersect_footprint_pixels)
+        if not final_polygons:
+            raise ValueError("No overlap between input s_regions and intersection footprint")
+    else:
+        final_polygons = combined_polygons
 
     # convert back to world coordinates
     combined_polygons_world = []
-    for polygon in combined_polygons:
+    for polygon in final_polygons:
         ra, dec = det2world(polygon[:, 0], polygon[:, 1])
         combined_polygons_world.append(np.vstack([ra, dec]).T)
 
     # make s_region string
     sregion = _polygons_to_sregion(combined_polygons_world)
-    if intersect:
-        # TODO: add intersection with WCS footprint here
-        # Relevant for resample when called on a custom WCS that may not cover
-        # the full combined footprint
-        pass
+
     return sregion
 
 
@@ -104,6 +112,35 @@ def _combine_footprints(footprints):
     return combined_polys
 
 
+def _intersect_with_bbox(polygons, bbox):
+    """
+    Intersect a list of polygons with a bounding box.
+
+    Parameters
+    ----------
+    polygons : list[np.ndarray]
+        List of polygons. Each polygon should have shape (V, 2), where V is the number of vertices.
+    bbox : np.ndarray
+        2D array of shape (N, 2) representing the bounding box vertices.
+
+    Returns
+    -------
+    np.ndarray
+        2D array of shape (M, 2) representing the intersected polygon vertices.
+    """
+    intersect_polygon = shapely.geometry.Polygon(bbox)
+    final_polygons = []
+    for polygon in polygons:
+        polygon = shapely.geometry.Polygon(polygon)
+        intersection = shapely.intersection(polygon, intersect_polygon)
+        if not intersection.is_empty:
+            x, y = intersection.exterior.coords.xy
+            poly_out = np.vstack([x, y]).T
+            poly_out = poly_out[:-1]  # remove duplicate last point
+            final_polygons.append(poly_out)
+    return final_polygons
+
+
 def _simplify_by_angle(coords, point_thresh=1e-6, angle_thresh=1e-6):
     """
     Simplify a polygon by removing points that are collinear with their neighbors.
@@ -118,11 +155,8 @@ def _simplify_by_angle(coords, point_thresh=1e-6, angle_thresh=1e-6):
     np.ndarray
         2D array of shape (M, 2) representing the simplified polygon vertices.
     """
-    n = len(coords)
-    if n < 3:
-        return coords
-
     # Indices for previous, current, next points (wrap around)
+    n = len(coords)
     idx_prev = np.arange(-1, n - 1)
     idx_curr = np.arange(n)
     idx_next = np.arange(1, n + 1) % n

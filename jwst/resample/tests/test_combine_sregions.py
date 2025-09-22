@@ -351,3 +351,43 @@ def test_sregion_complex(complex_footprint_set, det2world):
     region_shapes = sorted([region.shape for region in footprints_out])
     expected_shapes = [(4, 2), (16, 2), (20, 2)]
     assert region_shapes == expected_shapes
+
+
+def test_sregion_intersection(complex_footprint_set, det2world):
+    """Test for a complex set of footprints intersected with a bounding box."""
+    sregion_list = _footprints_to_sregion_list(complex_footprint_set)
+
+    # bounding box that intersects only two of the three combined regions
+    # and cuts both of them
+    bbox = np.array(
+        [
+            [178.5, 0.5],
+            [181.5, 0.5],
+            [181.5, 1.5],
+            [178.5, 1.5],
+        ]
+    )
+    combined_sregion = combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
+
+    assert combined_sregion.count("POLYGON ICRS") == 2
+    assert combined_sregion.startswith("POLYGON ICRS")
+    expected = "POLYGON ICRS  179.000000000 1.000000000 179.000000000 0.500000000 178.500000000 0.500000000 178.500000000 1.000000000  POLYGON ICRS  180.500000000 1.100000000 180.500000000 1.200000000 180.900000000 1.200000000 180.900000000 1.400000000 181.000000000 1.400000000 181.000000000 1.500000000 181.500000000 1.500000000 181.500000000 0.500000000 180.000000000 0.500000000 180.000000000 1.000000000 180.100000000 1.000000000 180.100000000 1.100000000"
+    assert combined_sregion == expected
+
+
+def test_sregion_no_overlap(complex_footprint_set, det2world):
+    """Test for a complex set of footprints intersected with a bounding box that has no overlap."""
+    sregion_list = _footprints_to_sregion_list(complex_footprint_set)
+
+    # bounding box that does not intersect any of the combined regions
+    bbox = np.array(
+        [
+            [10.0, 10.0],
+            [11.0, 10.0],
+            [11.0, 11.0],
+            [10.0, 11.0],
+        ]
+    )
+    with pytest.raises(ValueError) as excinfo:
+        combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
+    assert str(excinfo.value) == "No overlap between input s_regions and intersection footprint"
