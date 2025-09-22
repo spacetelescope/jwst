@@ -17,7 +17,7 @@ classifiers = [
     "Programming Language :: Python :: 3.13",
 ]
 dependencies = [
-    "asdf>=4.0,<6",
+    "asdf>=4.1,<6",
     "astropy>=6.1",
     "BayesicFitting>=3.2.2",
     "crds>=12.0.3",
@@ -236,12 +236,14 @@ omit = [
     "jwst/setup.py",
     "jwst/tests/test*",
     "jwst/regtest/test*",
+    "jwst/regtest/associations_sdp_pools/*",
     "jwst/*/tests/*",
     "docs/*",
     "*/jwst/conftest.py",
     "*/jwst/setup.py",
     "*/jwst/tests/test*",
     "*/jwst/regtest/test*",
+    "*/jwst/regtest/associations_sdp_pools/*",
     "*/jwst/*/tests/*",
     "*/docs/*",
     "*.rmap",

@@ -140,8 +140,15 @@ ban-relative-imports = "all"  # Disallow all relative imports.
     "N801", # Use CapWords class naming convention
 ]
 "jwst/associations/tests*" = [
-    "F841", # unused variable
-    "S101",
+    "S101", # use of assert
+]
+"jwst/regtest/associations_sdp_pools/*.py" = [
+    "SLF", "ARG", "PTH",
+    "D103", # Missing docstring in public function
+    "D104", # Missing docstring in public package
+    "E501", # Line too long
+    "N802", # Function name should be lowercase
+    "N813", # Camelcase imported as lowercase
 ]
 
 [lint.isort]

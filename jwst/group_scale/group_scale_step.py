@@ -38,18 +38,21 @@ class GroupScaleStep(Step):
         """
         # Open the input data model
         with datamodels.RampModel(step_input) as input_model:
+            # Work on a copy
+            result = input_model.copy()
+
             # Try to get values of NFRAMES and FRMDIVSR to see
             # if we need to do any rescaling
-            nframes = input_model.meta.exposure.nframes
-            frame_divisor = input_model.meta.exposure.frame_divisor
+            nframes = result.meta.exposure.nframes
+            frame_divisor = result.meta.exposure.frame_divisor
 
             # If we didn't find NFRAMES, we don't have enough info
             # to continue. Skip the step.
             if nframes is None:
                 log.warning("NFRAMES value not found")
                 log.warning("Step will be skipped")
-                input_model.meta.cal_step.group_scale = "SKIPPED"
-                return input_model
+                result.meta.cal_step.group_scale = "SKIPPED"
+                return result
 
             # If we didn't find FRMDIVSR, then check to see if NFRAMES
             # is a power of 2. If it is, rescaling isn't needed.
@@ -57,19 +60,16 @@ class GroupScaleStep(Step):
                 if nframes & (nframes - 1) == 0:
                     log.info(f"NFRAMES={nframes} is a power of 2; correction not needed")
                     log.info("Step will be skipped")
-                    input_model.meta.cal_step.group_scale = "SKIPPED"
-                    return input_model
+                    result.meta.cal_step.group_scale = "SKIPPED"
+                    return result
 
             # Compare NFRAMES and FRMDIVSR. If they're equal,
             # rescaling isn't needed.
             elif nframes == frame_divisor:
                 log.info("NFRAMES and FRMDIVSR are equal; correction not needed")
                 log.info("Step will be skipped")
-                input_model.meta.cal_step.group_scale = "SKIPPED"
-                return input_model
-
-            # Work on a copy
-            result = input_model.copy()
+                result.meta.cal_step.group_scale = "SKIPPED"
+                return result
 
             # Do the scaling
             group_scale.do_correction(result)

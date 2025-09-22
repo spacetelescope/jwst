@@ -1,14 +1,8 @@
-"""
-
-Unit tests for superbias subtraction
-
-"""
+"""Unit tests for superbias subtraction."""
 
 import numpy as np
-import pytest
-from stdatamodels.jwst.datamodels import RampModel, SuperBiasModel, dqflags
+from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.superbias import SuperBiasStep
 from jwst.superbias.bias_sub import do_correction
 
 
@@ -115,27 +109,6 @@ def test_nans_in_superbias(setup_full_cube):
     assert np.array_equal(output.data[0, :, 50, 50], data.data[0, :, 50, 50] - blevel)
 
 
-def test_full_step(setup_full_cube):
-    """Test full run of the SuperBiasStep."""
-
-    # Create inputs, data, and superbiases
-    ngroups = 5
-    nrows = 2048
-    ncols = 2048
-
-    data, bias = setup_full_cube(ngroups, nrows, ncols)
-
-    # Add signal values and bias values
-    # Use signal = 0 ADU so value will be negative after superbias step
-    data.data[0, :, 500, 500] = 0
-
-    # Run the pipeline
-    output = SuperBiasStep.call(data)
-
-    # Check that pixel value is negative after bias is subtracted
-    assert np.sign(output.data[0, 0, 500, 500]) == -1
-
-
 def test_zeroframe(setup_full_cube):
     """ """
     darr1 = [11800.0, 11793.0, 11823.0, 11789.0, 11857.0]
@@ -169,80 +142,3 @@ def test_zeroframe(setup_full_cube):
 
     check = np.array([zarr[0], zarr[1] - bval, zarr[2] - bval])
     np.testing.assert_equal(check, output.zeroframe[0, 0, :])
-
-
-@pytest.fixture(scope="function")
-def setup_full_cube():
-    """Set up fake NIRCam FULL data to test."""
-
-    def _cube(ngroups, nrows, ncols):
-        nints = 1
-
-        # create a JWST datamodel for NIRCam FULL data
-        data_model = RampModel((nints, ngroups, nrows, ncols))
-        data_model.meta.subarray.xstart = 1
-        data_model.meta.subarray.ystart = 1
-        data_model.meta.subarray.xsize = ncols
-        data_model.meta.subarray.ysize = nrows
-        data_model.meta.exposure.ngroups = ngroups
-        data_model.meta.instrument.name = "NIRCAM"
-        data_model.meta.instrument.detector = "NRCA1"
-        data_model.meta.observation.date = "2017-10-01"
-        data_model.meta.observation.time = "00:00:00"
-
-        # create a superbias model for the superbias step
-        bias_model = SuperBiasModel((2048, 2048))
-        bias_model.meta.subarray.xstart = 1
-        bias_model.meta.subarray.ystart = 1
-        bias_model.meta.subarray.xsize = 2048
-        bias_model.meta.subarray.ysize = 2048
-        bias_model.meta.instrument.name = "NIRCAM"
-        bias_model.meta.description = "Fake data."
-        bias_model.meta.telescope = "JWST"
-        bias_model.meta.reftype = "SuperBiasModel"
-        bias_model.meta.author = "Alicia"
-        bias_model.meta.pedigree = "Dummy"
-        bias_model.meta.useafter = "2015-10-01T00:00:00"
-
-        return data_model, bias_model
-
-    return _cube
-
-
-@pytest.fixture(scope="function")
-def setup_subarray_cube():
-    """Set up fake NIRCam subarray data to test."""
-
-    def _cube(xstart, ystart, ngroups, nrows, ncols):
-        nints = 1
-
-        # create a JWST datamodel for NIRCam SUB320A335R data
-        data_model = RampModel((nints, ngroups, nrows, ncols))
-        data_model.meta.subarray.name = "SUB320A335R"
-        data_model.meta.subarray.xstart = xstart
-        data_model.meta.subarray.ystart = ystart
-        data_model.meta.subarray.xsize = ncols
-        data_model.meta.subarray.ysize = nrows
-        data_model.meta.exposure.ngroups = ngroups
-        data_model.meta.instrument.name = "NIRCAM"
-        data_model.meta.instrument.detector = "NRCALONG"
-        data_model.meta.observation.date = "2019-10-14"
-        data_model.meta.observation.time = "16:44:12.000"
-
-        # create a superbias model for the superbias step
-        bias_model = SuperBiasModel((2048, 2048))
-        bias_model.meta.subarray.xstart = 1
-        bias_model.meta.subarray.ystart = 1
-        bias_model.meta.subarray.xsize = 2048
-        bias_model.meta.subarray.ysize = 2048
-        bias_model.meta.instrument.name = "NIRCAM"
-        bias_model.meta.description = "Fake data."
-        bias_model.meta.telescope = "JWST"
-        bias_model.meta.reftype = "SuperBiasModel"
-        bias_model.meta.author = "Alicia"
-        bias_model.meta.pedigree = "Dummy"
-        bias_model.meta.useafter = "2015-10-01T00:00:00"
-
-        return data_model, bias_model
-
-    return _cube

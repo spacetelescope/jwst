@@ -1,10 +1,11 @@
 """Test Level2 background nods"""
 
 import pytest
+from astropy.utils.data import get_pkg_data_filename
 
 from jwst.associations import generate
 from jwst.associations.lib.utilities import constrain_on_candidates
-from jwst.associations.tests.helpers import combine_pools, registry_level2_only, t_path
+from jwst.associations.tests.helpers import combine_pools, registry_level2_only
 
 DITHER_PATTERN_MULTIPLIER = {
     "0": 1,  # No pattern, 1-to-1 exposure count
@@ -15,7 +16,11 @@ DITHER_PATTERN_MULTIPLIER = {
 
 
 def test_nrs_msa_nod():
-    pool = combine_pools(t_path("data/pool_023_nirspec_msa_3nod.csv"))
+    pool = combine_pools(
+        get_pkg_data_filename(
+            "data/pool_023_nirspec_msa_3nod.csv", package="jwst.associations.tests"
+        )
+    )
     all_candidates = constrain_on_candidates(None)
     asns = generate(pool, registry_level2_only(global_constraints=all_candidates))
     assert len(asns) == 12
@@ -30,7 +35,11 @@ def test_nrs_msa_nod_subpix():
     # (one spec2 asn for each exposure). So each spec2 asn should contain 1
     # science member, and the 6 exposures from the other 2 primary nod positions
     # as background members.
-    pool = combine_pools(t_path("data/pool_023b_nirspec_msa_3nod_subpix.csv"))
+    pool = combine_pools(
+        get_pkg_data_filename(
+            "data/pool_023b_nirspec_msa_3nod_subpix.csv", package="jwst.associations.tests"
+        )
+    )
     all_candidates = constrain_on_candidates(None)
     asns = generate(pool, registry_level2_only(global_constraints=all_candidates))
     assert len(asns) == 18
@@ -49,7 +58,11 @@ def test_nrs_msa_nod_subpix():
 
 def test_nrs_fixedslit_nod():
     """Test NIRSpec Fixed-slit background nods"""
-    pool = combine_pools(t_path("data/pool_024_nirspec_fss_nods.csv"))
+    pool = combine_pools(
+        get_pkg_data_filename(
+            "data/pool_024_nirspec_fss_nods.csv", package="jwst.associations.tests"
+        )
+    )
     constraint_all_candidates = constrain_on_candidates(None)
     asns = generate(pool, registry_level2_only(global_constraints=constraint_all_candidates))
     assert len(asns) == 30
@@ -63,7 +76,11 @@ def test_nrs_fixedslit_nod():
 
 def test_nrs_fixedslit_nod_chop():
     """Test NIRSpec Fixed-slit background nods"""
-    pool = combine_pools(t_path("data/pool_025_nirspec_fss_nod_chop.csv"))
+    pool = combine_pools(
+        get_pkg_data_filename(
+            "data/pool_025_nirspec_fss_nod_chop.csv", package="jwst.associations.tests"
+        )
+    )
     constraint_all_candidates = constrain_on_candidates(None)
     asns = generate(pool, registry_level2_only(global_constraints=constraint_all_candidates))
     assert len(asns) == 8
@@ -83,7 +100,9 @@ def test_nrs_fixedslit_nod_chop():
 )
 def test_nrs_fixedslit_5point(pool_name, n_asn):
     """Test NIRSpec Fixed-slit background nod S1600A1 5 point + subpixel"""
-    pool = combine_pools(t_path(f"data/{pool_name}.csv"))
+    pool = combine_pools(
+        get_pkg_data_filename(f"data/{pool_name}.csv", package="jwst.associations.tests")
+    )
     constraint_all_candidates = constrain_on_candidates(None)
     asns = generate(pool, registry_level2_only(global_constraints=constraint_all_candidates))
     assert len(asns) == n_asn

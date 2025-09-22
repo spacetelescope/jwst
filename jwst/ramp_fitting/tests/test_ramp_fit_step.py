@@ -211,6 +211,12 @@ def test_ramp_fit_step(generate_miri_reffiles, setup_inputs, max_cores):
     # Test to make sure the ramps are as expected and that the step is complete
     np.testing.assert_allclose(slopes.data, ans_slopes, rtol=1e-5)
     assert slopes.meta.cal_step.ramp_fit == "COMPLETE"
+    assert cube_model.meta.cal_step.ramp_fit == "COMPLETE"
+
+    # Input is not modified
+    assert slopes is not model
+    assert cube_model is not model
+    assert model.meta.cal_step.ramp_fit is None
 
 
 def test_subarray_5groups(tmp_path_factory):
