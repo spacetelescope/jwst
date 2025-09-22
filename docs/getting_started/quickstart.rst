@@ -29,7 +29,7 @@ If you don't already have ``conda``, please follow the
 To create a conda environment specifically for the latest stable release of
 ``jwst`` (in this example, called jwst_latest)::
 
-    conda create --name jwst_latest python=3.12
+    conda create --name jwst_latest python=3.13
 
 This will create a new, (nearly) empty Python 3.12 environment in which you can
 install the ``jwst`` package.
@@ -41,9 +41,9 @@ Once you have created your conda environment, make sure it is active by doing::
     conda activate jwst_latest
 
 To install the last stable release of ``jwst``, and all its basic dependencies
-(e.g., numpy, stcal)::
+(e.g., numpy, stcal):
 
-    pip install jwst
+.. pip_install_literal::
 
 For detailed installation instructions, including how to install the development
 version of ``jwst`` from Github or how to install a previous released version, see
