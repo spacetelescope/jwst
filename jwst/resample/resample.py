@@ -469,7 +469,6 @@ class ResampleImage(Resample):
         if is_imaging_wcs(self.output_jwst_model.meta.wcs):
             # only for an imaging WCS:
             self.update_fits_wcsinfo(self.output_jwst_model)
-            # assign_wcs_util.update_s_region_imaging(self.output_jwst_model)
             output_sregion = self.combine_input_sregions()
             log.info(f"Assigning output S_REGION: {output_sregion}")
             self.output_jwst_model.meta.wcsinfo.s_region = output_sregion

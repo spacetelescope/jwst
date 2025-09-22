@@ -10,9 +10,9 @@ from jwst.resample.combine_sregions import (
 )
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def simple_footprint_pair():
-    """Fixture for a pair of overlapping footprints."""
+    """A pair of overlapping footprints."""
     footprint1 = np.array(
         [
             [0.0, 0.0],
@@ -72,7 +72,7 @@ def test_combine_footprints_simple(simple_footprint_pair):
     np.testing.assert_allclose(combined, expected)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def complex_footprint_set():
     """
     Set of nine footprints in three groups.
@@ -95,7 +95,7 @@ def complex_footprint_set():
             [-2.0, 2.0],
         ]
     )
-    offsets[:, 0] += 180  # shift to positive RA
+    offsets[:, 0] += 180
 
     square = np.array(
         [
@@ -145,9 +145,9 @@ def test_combine_footprints_complex(complex_footprint_set):
     assert region_shapes == expected_shapes
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def shared_edge_footprints():
-    """Fixture for two footprints that share an edge."""
+    """Two footprints that share an edge."""
     footprint1 = np.array(
         [
             [0.0, 0.0],
@@ -194,9 +194,9 @@ def test_combine_footprints_shared_edge(shared_edge_footprints):
     np.testing.assert_allclose(combined, expected)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def shared_vertex_footprints():
-    """Fixture for two footprints that share a vertex."""
+    """Two footprints that share a vertex."""
     footprint1 = np.array(
         [
             [0.0, 0.0],
@@ -243,9 +243,9 @@ def test_combine_footprints_shared_vertex(shared_vertex_footprints):
     assert all(matched)
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture
 def hole_footprint():
-    """Fixture for a footprint with a hole in the middle."""
+    """Four footprints that, when combined, leave a hole in the middle."""
     left = np.array(
         [
             [0.0, 0.0],
@@ -285,8 +285,9 @@ def test_combine_footprints_hole(hole_footprint):
     """
     Test combining footprints where their combination has a hole in the middle.
 
-    The expected result is a single region with NO hole, because MAST cannot handle an
-    S_REGION keyword with a hole in the middle.
+    The expected result is a single region with NO hole, because there is no easy way to specify
+    an S_REGION keyword with a hole in the middle,
+    and MAST cannot handle that case.
     """
     combined = _combine_footprints(hole_footprint)
 
@@ -323,7 +324,7 @@ def _footprints_to_sregion_list(footprints):
 def test_sregion_pair(simple_footprint_pair, det2world):
     """Test for a pair of overlapping footprints as S_REGION strings."""
     sregion_list = _footprints_to_sregion_list(simple_footprint_pair)
-    # since we're constructing this with code, let's make sure the list looks right
+    # since we're constructing this with code, let's first make sure the list looks right
     assert (
         sregion_list[0]
         == "POLYGON ICRS  0.000000000 0.000000000 1.000000000 0.000000000 1.000000000 1.000000000 0.000000000 1.000000000"
@@ -333,6 +334,7 @@ def test_sregion_pair(simple_footprint_pair, det2world):
         == "POLYGON ICRS  0.500000000 0.500000000 1.500000000 0.500000000 1.500000000 1.500000000 0.500000000 1.500000000"
     )
 
+    # now combine them and test their combination
     combined_sregion = combine_sregions(sregion_list, det2world)
     expected = "POLYGON ICRS  1.000000000 0.000000000 0.000000000 0.000000000 0.000000000 1.000000000 0.500000000 1.000000000 0.500000000 1.500000000 1.500000000 1.500000000 1.500000000 0.500000000 1.000000000 0.500000000"
     assert combined_sregion == expected
@@ -348,17 +350,19 @@ def test_sregion_complex(complex_footprint_set, det2world):
     sregions_out = [s.strip() for s in combined_sregion.split("POLYGON ICRS")][1:]
     footprints_out = [sregion_to_footprint(sregion) for sregion in sregions_out]
 
+    # Too tedious to check exact coordinates, so just check the shapes of the regions.
     region_shapes = sorted([region.shape for region in footprints_out])
     expected_shapes = [(4, 2), (16, 2), (20, 2)]
     assert region_shapes == expected_shapes
 
 
 def test_sregion_intersection(complex_footprint_set, det2world):
-    """Test for a complex set of footprints intersected with a bounding box."""
-    sregion_list = _footprints_to_sregion_list(complex_footprint_set)
+    """
+    Test for a complex set of footprints intersected with a bounding box.
 
-    # bounding box that intersects only two of the three combined regions
-    # and cuts both of them
+    The bounding box is chosen to intersect only two of the three combined regions,
+    and to cut both of them.
+    """
     bbox = np.array(
         [
             [178.5, 0.5],
@@ -367,6 +371,7 @@ def test_sregion_intersection(complex_footprint_set, det2world):
             [178.5, 1.5],
         ]
     )
+    sregion_list = _footprints_to_sregion_list(complex_footprint_set)
     combined_sregion = combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
 
     assert combined_sregion.count("POLYGON ICRS") == 2
@@ -376,10 +381,7 @@ def test_sregion_intersection(complex_footprint_set, det2world):
 
 
 def test_sregion_no_overlap(complex_footprint_set, det2world):
-    """Test for a complex set of footprints intersected with a bounding box that has no overlap."""
-    sregion_list = _footprints_to_sregion_list(complex_footprint_set)
-
-    # bounding box that does not intersect any of the combined regions
+    """Test error raise when intersection footprint does not overlap any input footprints."""
     bbox = np.array(
         [
             [10.0, 10.0],
@@ -388,6 +390,7 @@ def test_sregion_no_overlap(complex_footprint_set, det2world):
             [10.0, 11.0],
         ]
     )
+    sregion_list = _footprints_to_sregion_list(complex_footprint_set)
     with pytest.raises(ValueError) as excinfo:
         combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
     assert str(excinfo.value) == "No overlap between input s_regions and intersection footprint"

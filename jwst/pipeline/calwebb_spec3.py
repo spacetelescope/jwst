@@ -421,14 +421,14 @@ class Spec3Pipeline(Pipeline):
         wcs = cal_model_list[0].slits[0].meta.wcs
         input_sregions = [w.meta.wcsinfo.s_region for w in cal_model_list]
 
-        # Modify the det2world transform to ignore extra inputs/outputs wavelength and order
+        # Modify the det2world transform to ignore extra inputs/outputs (wavelength and order)
         det2world = wcs.get_transform("detector", "world")
-        mapping1 = Mapping((0, 1, 0, 1))
+        mapping1 = Mapping((0, 1, 0, 1))  # last two are placeholders and don't do anything
         mapping1.inverse = Mapping((0, 1), n_inputs=4)
         mapping2 = Mapping((0, 1), n_inputs=4)
         mapping2.inverse = Mapping((0, 1, 0, 1))
         det2world = mapping1 | det2world | mapping2
 
         sregion = combine_sregions(input_sregions, det2world)
-        log.info(f"Combined S_REGION: {sregion}")
+        log.info(f"Setting S_REGION for combined footprint to: {sregion}")
         wfss_model.spec[0].s_region = sregion

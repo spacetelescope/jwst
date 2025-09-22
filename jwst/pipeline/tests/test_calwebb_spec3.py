@@ -17,9 +17,9 @@ INPUT_WFSS_2 = "mock_wfss_2_cal.fits"
 INPUT_ASN = "mock_wfss_asn.json"
 
 
-def make_identity_wcs():
+def identity_wcs_wfss():
     """
-    Create a simple identity WCS for testing.
+    Create a simple WCS whose transform is an identity transform.
 
     4 inputs and 4 outputs, to simulate WFSS (x, y, wavelength, order).
     """
@@ -46,8 +46,7 @@ def mock_niriss_wfss_l2():
 def spec3_wfss_asn(mock_niriss_wfss_l2, tmp_cwd):
     model = mock_niriss_wfss_l2
     for slit in model.slits:
-        wcs = make_identity_wcs()
-        slit.meta.wcs = wcs
+        slit.meta.wcs = identity_wcs_wfss()
     model.save(INPUT_WFSS)
     model2 = model.copy()
     model2.meta.group_id = "8"

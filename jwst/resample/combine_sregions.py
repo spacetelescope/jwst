@@ -13,24 +13,23 @@ def combine_sregions(sregion_list, det2world, intersect_footprint=None):
     ----------
     sregion_list : list of str
         List of s_regions from input models.
-    det2world : astropy.modeling.CompoundModel
+    det2world : `~astropy.modeling.Model`
         WCS detector-to-world transform for the resampled data.
         Must take in exactly two inputs (x, y) and return exactly two outputs (RA, Dec).
         Must have a valid inverse transform.
     intersect_footprint : np.ndarray, optional
-        Footprint of the output WCS in world coordinates, shape (4, 2).
+        Footprint of the output WCS in world coordinates, shape (N, 2).
         If provided, the combined footprint from the input s_region list
         will be intersected with this footprint.
 
     Returns
     -------
-    sregion : str
-        The s_region for the resample data.
+    str
+        The combined s_region.
     """
-    footprints = [sregion_to_footprint(sregion) for sregion in sregion_list]
-    footprints = np.array(footprints)
+    footprints = np.array([sregion_to_footprint(sregion) for sregion in sregion_list])
 
-    # convert to pixel coordinates to feed into polygon combine method
+    # convert from world to pixel coordinates
     footprints_flat = footprints.reshape(-1, 2)
     world2det = det2world.inverse
     x, y = world2det(footprints_flat[:, 0], footprints_flat[:, 1])
@@ -39,8 +38,8 @@ def combine_sregions(sregion_list, det2world, intersect_footprint=None):
     # combine footprints with Shapely
     combined_polygons = _combine_footprints(footprints_pixels)
 
+    # intersect with output WCS footprint
     if intersect_footprint is not None:
-        # intersect with output WCS footprint
         x, y = world2det(intersect_footprint[:, 0], intersect_footprint[:, 1])
         intersect_footprint_pixels = np.vstack([x, y]).T
         final_polygons = _intersect_with_bbox(combined_polygons, intersect_footprint_pixels)
@@ -49,13 +48,13 @@ def combine_sregions(sregion_list, det2world, intersect_footprint=None):
     else:
         final_polygons = combined_polygons
 
-    # convert back to world coordinates
+    # convert back from pixel to world coordinates
     combined_polygons_world = []
     for polygon in final_polygons:
         ra, dec = det2world(polygon[:, 0], polygon[:, 1])
         combined_polygons_world.append(np.vstack([ra, dec]).T)
 
-    # make s_region string
+    # turn lists of indices into a single S_REGION string
     sregion = _polygons_to_sregion(combined_polygons_world)
 
     return sregion
@@ -63,17 +62,18 @@ def combine_sregions(sregion_list, det2world, intersect_footprint=None):
 
 def _polygons_to_sregion(polygons):
     """
-    Create a FITS S_REGION from a list of polygons.
+    Create an S_REGION from a list of polygons.
 
     Parameters
     ----------
     polygons : list[np.ndarray]
         List of polygons. Each polygon should have shape (V, 2), where V is the number of vertices.
+        V can be different for each polygon.
 
     Returns
     -------
     str
-        FITS S_REGION string.
+        S_REGION string.
     """
     s_region = ""
     for poly in polygons:
@@ -84,17 +84,17 @@ def _polygons_to_sregion(polygons):
 
 def _combine_footprints(footprints):
     """
-    Combine a list of footprints into one or more combined footprints.
+    Combine a list of footprints into one or more combined footprints using a Shapely union.
 
     Parameters
     ----------
     footprints : list of np.ndarray
-        List of footprints, where each footprint is a 2D array of shape (N, 2).
+        List of footprints, where each footprint is a 2-D array of shape (N, 2).
 
     Returns
     -------
     list of np.ndarray
-        List of combined footprints, where each footprint is a 2D array of shape (M, 2).
+        List of combined footprints, where each footprint is a 2-D array of shape (M, 2).
     """
     footprints_shapely = [shapely.geometry.Polygon(footprint) for footprint in footprints]
     combined_footprints = shapely.unary_union(footprints_shapely)
@@ -137,6 +137,7 @@ def _intersect_with_bbox(polygons, bbox):
             x, y = intersection.exterior.coords.xy
             poly_out = np.vstack([x, y]).T
             poly_out = poly_out[:-1]  # remove duplicate last point
+            poly_out = _simplify_by_angle(poly_out)
             final_polygons.append(poly_out)
     return final_polygons
 
