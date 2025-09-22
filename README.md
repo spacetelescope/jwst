@@ -8,20 +8,22 @@
 [![Powered by STScI Badge](https://img.shields.io/badge/powered%20by-STScI-blue.svg?colorA=707170&colorB=3e8ddd&style=flat)](https://www.stsci.edu)
 [![Powered by Astropy Badge](https://img.shields.io/badge/powered%20by-AstroPy-orange.svg?style=flat)](https://www.astropy.org/)
 [![DOI](https://zenodo.org/badge/60551519.svg)](https://zenodo.org/badge/latestdoi/60551519)
+[![Python Versions](https://img.shields.io/pypi/pyversions/jwst)](https://pypi.org/project/jwst/)
 
 ![STScI Logo](docs/_static/stsci_logo.png)
 
-> [!IMPORTANT]
-> JWST requires a C compiler for dependencies.
-
-> [!NOTE]
-> Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
-
 > [!WARNING]
+> `jwst` is not yet compatible with python 3.14.
+> 
 > Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
 > this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
 >
 > Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
+
+> [!IMPORTANT]
+> JWST requires a C compiler for dependencies.
+> 
+> Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 ## Installation
 
@@ -29,7 +31,7 @@ Please contact the [JWST Help Desk](https://jwsthelp.stsci.edu) for installation
 
 The easiest way to install the latest `jwst` release into a fresh virtualenv or conda environment is
 
-    pip install jwst
+    pip install jwst==1.19.1
 
 ### Detailed Installation
 
@@ -56,22 +58,22 @@ Remember that all conda operations must be done from within a bash/zsh shell.
 
 You can install the latest released version via `pip`.  From a bash/zsh shell:
 
-    conda create -n <env_name> python=3.12
+    conda create -n <env_name> python=3.13
     conda activate <env_name>
-    pip install jwst
+    pip install jwst==1.19.1
 
-You can also install a specific version:
-
-    conda create -n <env_name> python=3.12
-    conda activate <env_name>
-    pip install jwst==1.18.1
+If no version tag is specified in the install command, `pip` will find the latest release compatible
+with the current environment. This can lead to an unintended `jwst` version, if the latest release
+of `jwst` is not compatible with your environment's python version. Explicitly setting the version
+in the install command will return an informative error if the latest release is not compatible
+with your environment.
 
 ### Installing the development version from Github
 
 You can install the latest development version (not as well tested) from the
 Github main branch:
 
-    conda create -n <env_name> python=3.12
+    conda create -n <env_name> python=3.13
     conda activate <env_name>
     pip install git+https://github.com/spacetelescope/jwst
 
