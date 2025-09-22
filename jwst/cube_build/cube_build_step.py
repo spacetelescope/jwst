@@ -147,7 +147,7 @@ class CubeBuildStep(Step):
             self.weighting = "emsm"
             if self.output_type is None:  # when running stand alone
                 self.output_type = "band"
-            self.pipeline = 2
+            self.pipeline = 3
 
         # if interpolation is point cloud then weighting can be
         # 1. MSM: modified Shepard method

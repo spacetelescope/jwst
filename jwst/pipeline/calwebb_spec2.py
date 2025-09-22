@@ -390,7 +390,7 @@ class Spec2Pipeline(Pipeline):
             if exp_type == "NRS_IFU" and self.cube_build.output_type is None:
                 self.cube_build.output_type = "band"
 
-            if is_nrs_ifu_linelamp(calibrated):
+            if is_nrs_ifu_linelamp(calibrated) and self.cube_build.output_type is None:
                 self.cube_build.output_type = "band"
 
             if exp_type == "MIR_MRS" and self.cube_build.output_type is None:

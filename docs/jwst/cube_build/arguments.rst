@@ -10,12 +10,12 @@ created. For example, if the input data span several bands, but ``output_type = 
 each band will be created.
 
 ``pipeline [integer]``
-  `Cube_build` can be called from ``calwebb_spec2``, ``calwebb_spec3``, or stand-alone. The output IFU cubes
+  ``Cube_build`` can be called from ``calwebb_spec2``, ``calwebb_spec3``, or stand-alone. The output IFU cubes
   have a different name depending which pipeline calls it. This parameter defaults to 3 which follows the rules
   for creating cubes based on the ``calwebb_spec3`` pipeline and is also the behavior when running
-  `cube_build` stand-alone. When the ``calwebb_spec2` pipeline  calls cube
+  ``cube_build`` stand-alone. When the ``calwebb_spec2`` pipeline  calls cube
   build it sets `pipeline = 2`.   When running stand-alone or in 
-  ``calwebb_spec3`` pipeline the parameter `pipeline=3` is set for `cube_build`.
+  ``calwebb_spec3`` pipeline the parameter `pipeline=3` is set for ``cube_build``.
   
   - ``pipeline = 2`` sets up the rules for making ``calwebb_spec2`` pipeline type cubes. For NIRSpec data the default
     rules   produce cubes with a single grating and filter and  with a linear wavelength dimension. For MIRI data
