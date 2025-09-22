@@ -22,7 +22,7 @@ class CubeBuildStep(Step):
     class_alias = "cube_build"
 
     spec = """
-         pipeline = integer(2,3, default=2) # Set calwebb_spec2 or calwebb_spec3
+         pipeline = integer(2,3, default=3) # Set calwebb_spec2 or calwebb_spec3
          channel = option('1','2','3','4','all',default='all') # Channel
          band = option('short','medium','long','short-medium','short-long','medium-short', \
                 'medium-long', 'long-short', 'long-medium','all',default='all') # Band
@@ -250,7 +250,7 @@ class CubeBuildStep(Step):
 
         if self.pipeline == 3 and self.output_type is None:
             if instrument == "NIRSPEC":
-                self.output_type = "grating"
+                self.output_type = "band"  # we might switch that to grating
 
             elif instrument == "MIRI":
                 self.output_type = "band"
