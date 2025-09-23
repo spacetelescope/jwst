@@ -2348,13 +2348,13 @@ def nrs_wcs_set_input_legacy(
     wcsobj : `~gwcs.wcs.WCS`
         WCS object for this slit.
     """
-    warnings.warn(
+    msg = (
         "The nrs_wcs_set_input_legacy function is intended for use with an "
         "old-style NIRSpec WCS pipeline. "
-        "It will be removed in a future build.",
-        DeprecationWarning,
-        stacklevel=2,
+        "It will be removed in a future build."
     )
+    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    log.warning(msg)
 
     def _get_y_range(input_model):
         # get the open slits from the model
