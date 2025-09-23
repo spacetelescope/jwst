@@ -701,7 +701,10 @@ class ResampleImage(Resample):
             meta = self.input_models.read_metadata(i)
             sregion_list.append(meta["meta.wcsinfo.s_region"])
 
-        det2world = self.output_wcs.get_transform("detector", "world")
+        if "moving_target" in self.output_wcs.available_frames:
+            det2world = self.output_wcs.get_transform("detector", "moving_target")
+        else:
+            det2world = self.output_wcs.get_transform("detector", "world")
         bbox = self.output_wcs.footprint()
         return combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
 
