@@ -86,6 +86,7 @@ class Spec3Pipeline(Pipeline):
         self.resample_spec.suffix = "s2d"
         self.resample_spec.save_results = self.save_results
         self.cube_build.suffix = "s3d"
+        self.cube_build.pipeline = 3
         self.cube_build.save_results = self.save_results
         self.extract_1d.suffix = "x1d"
         self.extract_1d.save_results = self.save_results
