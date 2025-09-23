@@ -1,1 +1,0 @@
-Fix a bug where incorrect pixel locations were fed into the detector-to-grism transform, leading to incorrectly-shaped model traces

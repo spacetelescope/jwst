@@ -1,1 +1,0 @@
-Add DAO and IRAF starfinder options, and expose parameters to tune star finding

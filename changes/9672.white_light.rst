@@ -1,1 +1,0 @@
-Fix a crash caused by repeated time stamps in the spectral table. If found, warn and keep only the first one.
