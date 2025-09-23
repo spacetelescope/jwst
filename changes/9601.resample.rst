@@ -1,1 +1,0 @@
-Use ``gwcs.FITSImagingWCSTransform`` for resampled imaging WCS to provide a consistent serialization of the WCS of resampled products to enable parsing in other languages other than Python.

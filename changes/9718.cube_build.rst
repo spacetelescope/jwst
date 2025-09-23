@@ -1,1 +1,0 @@
-Allow NIRSpec prism IFU cubes to have non-linear wavelength range if output_type=multi.
