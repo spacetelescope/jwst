@@ -146,15 +146,18 @@ def test_extraction_engine_bad_inputs(
     mask_trace_profile,
     detector_mask,
 ):
+    ref_file_args = {
+        "wavemaps": wave_map,
+        "spec_profiles": trace_profile,
+        "throughputs": throughput,
+        "kernels": kernels_unity,
+    }
     # not enough good pixels in order
     with pytest.raises(atoca.MaskOverlapError):
         detector_mask = np.ones_like(detector_mask)
         detector_mask[5:7, 50:55] = 0  # still a few good pixels but very few
         atoca.ExtractionEngine(
-            wave_map,
-            trace_profile,
-            throughput,
-            kernels_unity,
+            ref_file_args,
             wave_grid,
             mask_trace_profile,
             global_mask=detector_mask,
@@ -164,10 +167,7 @@ def test_extraction_engine_bad_inputs(
     # wrong number of orders c.f. wave_map
     with pytest.raises(ValueError):
         atoca.ExtractionEngine(
-            wave_map,
-            trace_profile,
-            throughput,
-            kernels_unity,
+            ref_file_args,
             wave_grid,
             mask_trace_profile,
             global_mask=detector_mask,

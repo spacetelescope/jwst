@@ -314,11 +314,14 @@ def engine(
     detector_mask,
 ):  # numpydoc ignore=RT01
     """Instantiate the extraction engine from the mock detector model."""
+    ref_file_args = {
+        "wavemaps": wave_map,
+        "spec_profiles": trace_profile,
+        "throughputs": throughput,
+        "kernels": kernels_unity,
+    }
     return atoca.ExtractionEngine(
-        wave_map,
-        trace_profile,
-        throughput,
-        kernels_unity,
+        ref_file_args,
         wave_grid,
         mask_trace_profile,
         global_mask=detector_mask,

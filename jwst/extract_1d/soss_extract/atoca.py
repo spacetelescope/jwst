@@ -55,10 +55,7 @@ class ExtractionEngine:
 
     def __init__(
         self,
-        wave_map,
-        trace_profile,
-        throughput,
-        kernels,
+        ref_file_args,
         wave_grid,
         mask_trace_profile,
         global_mask=None,
@@ -70,30 +67,32 @@ class ExtractionEngine:
 
         Parameters
         ----------
-        wave_map : list or array of 2-D arrays
-            A list or array of the central wavelength position for each
-            order on the detector. Has shape (N_ord, N, M).
-            It has to have the same (N, M) as `data`.
-        trace_profile : list or array of 2-D arrays
-            A list or array of the spatial profile for each order
-            Has shape (N_ord, N, M).
-            on the detector. It has to have the same (N, M) as `data`.
-        throughput : list of array or callable
-            A list of functions or array of the throughput at each order.
-            If callable, the functions depend on the wavelength.
-            If array, projected on `wave_grid`. Has shape (N_ord [, N_k]).
-        kernels : callable, sparse matrix, or None
-            Convolution kernel to be applied on spectrum (f_k) for each orders.
-            Can be a callable with the form f(x, x0) where x0 is
-            the position of the center of the kernel. In this case, it must
-            return a 1D array (len(x)), so a kernel value
-            for each pairs of (x, x0). If callable,
-            it will be passed to `convolution.get_c_matrix` function
-            and the `c_kwargs` can be passed to this function.
-            If sparse, the shape has to be (N_k_c, N_k) and it will
-            be used directly. N_ker is the length of the effective kernel
-            and N_k_c is the length of the spectrum (f_k) convolved.
-            If None, the kernel is set to 1, i.e., do not do any convolution.
+        ref_file_args : dict
+            A dictionary of the reference file arguments used by the ExtractionEngine.
+            These are:
+                - "wavemaps": list or array of 2-D arrays
+                    A list or array of the central wavelength position for each
+                    order on the detector. Has shape (N_ord, N, M).
+                    It has to have the same (N, M) as `data`.
+                - "spec_profiles": list or array of 2-D arrays
+                    A list or array of the spatial profile for each order
+                    Has shape (N_ord, N, M).
+                - "throughputs": list of array or callable
+                    A list of functions or array of the throughput at each order.
+                    If callable, the functions depend on the wavelength.
+                    If array, projected on `wave_grid`. Has shape (N_ord [, N_k]).
+                - "kernels": callable, sparse matrix, or None
+                    Convolution kernel to be applied on spectrum (f_k) for each orders.
+                    Can be a callable with the form f(x, x0) where x0 is
+                    the position of the center of the kernel. In this case, it must
+                    return a 1D array (len(x)), so a kernel value
+                    for each pairs of (x, x0). If callable,
+                    it will be passed to `convolution.get_c_matrix` function
+                    and the `c_kwargs` can be passed to this function.
+                    If sparse, the shape has to be (N_k_c, N_k) and it will
+                    be used directly. N_ker is the length of the effective kernel
+                    and N_k_c is the length of the spectrum (f_k) convolved.
+                    If None, the kernel is set to 1, i.e., do not do any convolution.
         wave_grid : array-like, required
             The grid on which f(lambda) will be projected, shape (N_k).
         mask_trace_profile : List or array of 2-D arrays[bool], required
@@ -115,8 +114,8 @@ class ExtractionEngine:
         if orders is None:
             orders = [1, 2]
         # Set the attributes and ensure everything has correct dtype
-        self.wave_map = np.array(wave_map).astype(self.dtype)
-        self.trace_profile = np.array(trace_profile).astype(self.dtype)
+        self.wave_map = np.array(ref_file_args["wavemaps"]).astype(self.dtype)
+        self.trace_profile = np.array(ref_file_args["spec_profiles"]).astype(self.dtype)
         self.mask_trace_profile = np.array(mask_trace_profile).astype(bool)
         self.threshold = threshold
         self.data_shape = self.wave_map[0].shape
@@ -172,7 +171,7 @@ class ExtractionEngine:
 
         # if throughput is given as callable, turn it into an array
         # with shape (n_ord, wave_grid.size)
-        self.update_throughput(throughput)
+        self.update_throughput(ref_file_args["throughputs"])
 
         # Re-build global mask and masks for each orders
         self.mask, self.mask_ord = self._get_masks(global_mask)
@@ -180,7 +179,7 @@ class ExtractionEngine:
         self.general_mask = self.mask.copy()
 
         # turn kernels into sparse matrix
-        self.kernels = self._create_kernels(kernels)
+        self.kernels = self._create_kernels(ref_file_args["kernels"])
 
         # Compute integration weights. see method self.get_w() for details.
         self.weights, self.weights_k_idx = self.compute_weights()

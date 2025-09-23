@@ -68,7 +68,7 @@ def get_ref_file_args(ref_files, orders_requested=None):
         (wavemaps, specprofiles, throughputs, kernels)
     """
     pastasoss_ref = ref_files["pastasoss"]
-    specprofile_ref = ref_files["specprofile"]
+    specprofile_ref = ref_files["spec_profiles"]
     speckernel_ref = ref_files["speckernel"]
     n_pix = 2 * speckernel_ref.meta.halfwidth + 1
     speckernel_wv_range = [np.min(speckernel_ref.wavelengths), np.max(speckernel_ref.wavelengths)]
@@ -79,12 +79,12 @@ def get_ref_file_args(ref_files, orders_requested=None):
     else:
         orders_requested = _verify_requested_orders(orders_requested, refmodel_orders)
 
-    wavemaps = get_soss_wavemaps(
+    wavemaps, spectraces = get_soss_wavemaps(
         ref_files["pwcpos"],
         refmodel=pastasoss_ref,
         subarray=ref_files["subarray"],
         padsize=None,
-        spectraces=False,
+        spectraces=True,
         orders_requested=orders_requested,
     )
 
@@ -126,7 +126,7 @@ def get_ref_file_args(ref_files, orders_requested=None):
         wv_cent = np.zeros(wavemap.shape[1])
 
         # Get central wavelength as a function of columns
-        col, _, wv = _get_trace_1d(ref_files, order)
+        col, _, wv = _get_trace_1d(spectraces, order)
         wv_cent[col] = wv
 
         # Set invalid values to zero
@@ -138,18 +138,25 @@ def get_ref_file_args(ref_files, orders_requested=None):
         wavemap = np.where(valid_wavemap, wavemap, 0.0)
         kernels.append(kernel)
 
-    return wavemaps, spec_profiles, throughputs, kernels
+    out = {
+        "wavemaps": wavemaps,
+        "spectraces": spectraces,
+        "spec_profiles": spec_profiles,
+        "throughputs": throughputs,
+        "kernels": kernels,
+        "subarray": ref_files["subarray"],
+    }
+    return out
 
 
-def _get_trace_1d(ref_files, order):
+def _get_trace_1d(spectraces, order):
     """
     Get the x, y, wavelength of the trace after applying the transform.
 
     Parameters
     ----------
-    ref_files : dict
-        A dictionary of the reference file DataModels, along with values
-        for subarray and pwcpos, i.e. the pupil wheel position.
+    spectraces : list[np.ndarray]
+        The list of spectral traces from the pastasoss reference file, one per spectral order.
     order : int
         The spectral order for which to return the trace parameters.
 
@@ -158,15 +165,7 @@ def _get_trace_1d(ref_files, order):
     xtrace, ytrace, wavetrace : array[float]
         The x, y and wavelength of the trace.
     """
-    pastasoss_ref = ref_files["pastasoss"]
-    _, spectraces = get_soss_wavemaps(
-        ref_files["pwcpos"],
-        refmodel=pastasoss_ref,
-        subarray=ref_files["subarray"],
-        padsize=None,
-        spectraces=True,
-    )
-    order_idx = _find_spectral_order_index(pastasoss_ref, order)
+    order_idx = order - 1
     spectrace = spectraces[order_idx]
     xtrace = np.arange(CUTOFFS[order_idx])
 
@@ -197,8 +196,8 @@ def _estim_flux_first_order(
         The uncertainties corresponding to the detector image.
     scimask : array
         Pixel mask to apply to the detector image.
-    ref_file_args : tuple
-        A tuple of reference file arguments constructed by get_ref_file_args().
+    ref_file_args : dict
+        A dictionary of the reference file arguments used by the ExtractionEngine.
     mask_trace_profile : array[bool]
         Mask determining the aperture used for extraction.
         Set to False where the pixel should be extracted.
@@ -212,7 +211,9 @@ def _estim_flux_first_order(
         A spline estimator that provides the underlying flux as a function of wavelength
     """
     # Unpack ref_file arguments
-    wave_maps, spat_pros, thrpts, _ = ref_file_args
+    wave_maps = ref_file_args["wavemaps"]
+    spat_pros = ref_file_args["spec_profiles"]
+    thrpts = ref_file_args["throughputs"]
 
     # Define wavelength grid based on order 1 only (so first index)
     wave_grid = grid_from_map_with_extrapolation(wave_maps[0], spat_pros[0], n_os=1)
@@ -221,8 +222,13 @@ def _estim_flux_first_order(
     mask = (spat_pros[1] >= threshold) | mask_trace_profile[0]
 
     # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
-    ref_file_args = [wave_maps[0]], [spat_pros[0]], [thrpts[0]], [None]
-    engine = ExtractionEngine(*ref_file_args, wave_grid, [mask], global_mask=scimask, orders=[1])
+    args = {
+        "wavemaps": [wave_maps[0]],
+        "spec_profiles": [spat_pros[0]],
+        "throughputs": [thrpts[0]],
+        "kernels": [None],
+    }
+    engine = ExtractionEngine(args, wave_grid, [mask], global_mask=scimask, orders=[1])
 
     # Extract estimate
     spec_estimate = engine(scidata_bkg, scierr)
@@ -232,14 +238,14 @@ def _estim_flux_first_order(
     return UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
 
 
-def _get_native_grid_from_trace(ref_files, spectral_order):
+def _get_native_grid_from_trace(spectraces, spectral_order):
     """
     Make a 1d-grid of the pixels boundary based on the wavelength solution.
 
     Parameters
     ----------
-    ref_files : dict
-        A dictionary of the reference file DataModels.
+    spectraces : list[np.ndarray]
+        The list of spectral traces from the pastasoss reference file, one per spectral order.
     spectral_order : int
         The spectral order for which to return the trace parameters.
 
@@ -251,7 +257,7 @@ def _get_native_grid_from_trace(ref_files, spectral_order):
         The column number of the pixel
     """
     # From wavelength solution
-    col, _, wave = _get_trace_1d(ref_files, spectral_order)
+    col, _, wave = _get_trace_1d(spectraces, spectral_order)
 
     # Keep only valid solution ...
     idx_valid = np.isfinite(wave)
@@ -272,14 +278,14 @@ def _get_native_grid_from_trace(ref_files, spectral_order):
     return wave, col
 
 
-def _get_grid_from_trace(ref_files, spectral_order, n_os):
+def _get_grid_from_trace(spectraces, spectral_order, n_os):
     """
     Make a 1d-grid of the pixels boundary based on the wavelength solution.
 
     Parameters
     ----------
-    ref_files : dict
-        A dictionary of the reference file DataModels.
+    spectraces : list[np.ndarray]
+        The list of spectral traces from the pastasoss reference file, one per spectral order.
     spectral_order : int
         The spectral order for which to return the trace parameters.
     n_os : int or array
@@ -291,7 +297,7 @@ def _get_grid_from_trace(ref_files, spectral_order, n_os):
     array[float]
         Grid of the pixels boundaries at the native sampling (1d array)
     """
-    wave, _ = _get_native_grid_from_trace(ref_files, spectral_order)
+    wave, _ = _get_native_grid_from_trace(spectraces, spectral_order)
 
     # Use pixel boundaries instead of the center values
     wv_upper_bnd, wv_lower_bnd = get_wave_p_or_m(wave[None, :])
@@ -306,7 +312,7 @@ def _get_grid_from_trace(ref_files, spectral_order, n_os):
     return oversample_grid(wave_grid, n_os=n_os)
 
 
-def _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os):
+def _make_decontamination_grid(spectraces, rtol, max_grid_size, estimate, n_os):
     """
     Create the grid to use for the simultaneous extraction of order 1 and 2.
 
@@ -319,8 +325,8 @@ def _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os):
 
     Parameters
     ----------
-    ref_files : dict
-        A dictionary of the reference file DataModels.
+    spectraces : list[np.ndarray]
+        The list of spectral traces from the pastasoss reference file, one per spectral order.
     rtol : float
         The relative tolerance needed on a pixel model.
     max_grid_size : int
@@ -340,7 +346,7 @@ def _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os):
     spectral_orders = [2, 1]
     grids_ord = {}
     for sp_ord in spectral_orders:
-        grids_ord[sp_ord] = _get_grid_from_trace(ref_files, sp_ord, n_os=n_os)
+        grids_ord[sp_ord] = _get_grid_from_trace(spectraces, sp_ord, n_os=n_os)
 
     # Build the list of grids given to make_combined_grid.
     # It must be ordered in increasing priority.
@@ -402,7 +408,7 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
         The solution f_k of the linear system.
     grid_order : np.array
         The wavelength grid of the solution, usually oversampled compared to the pixel grid.
-    ref_file_args : list
+    ref_file_args : dict
         The reference file arguments used by the ExtractionEngine.
     pixel_grid : np.array
         The pixel grid to which the flux should be binned.
@@ -416,15 +422,16 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     spec : SpecModel
         The SpecModel containing the extracted spectrum.
     """
-    # Make sure the input is not modified
-    ref_file_args = ref_file_args.copy()
-
     # Build 1d spectrum integrated over pixels
     pixel_grid = pixel_grid[np.newaxis, :]
-    ref_file_args[0] = [pixel_grid]  # Wavelength map
-    ref_file_args[1] = [np.ones_like(pixel_grid)]  # No spatial profile
+    args = {
+        "wavemaps": [pixel_grid],
+        "spec_profiles": [np.ones_like(pixel_grid)],
+        "throughputs": ref_file_args["throughputs"].copy(),
+        "kernels": ref_file_args["kernels"].copy(),
+    }
     model = ExtractionEngine(
-        *ref_file_args,
+        args,
         wave_grid=grid_order,
         mask_trace_profile=[mask[np.newaxis, :]],
         orders=[sp_ord],
@@ -446,9 +453,17 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     return spec
 
 
-def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask, ref_files):
+def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask):
     # Take only the order's specific ref_files
-    ref_file_order = [[ref_f[i_order]] for ref_f in ref_file_args]
+    # And give the identity kernel to the Engine (so no convolution)
+    kernel = [np.array([1.0])]
+    args_order = {
+        "wavemaps": [ref_file_args["wavemaps"][i_order]],
+        "spec_profiles": [ref_file_args["spec_profiles"][i_order]],
+        "throughputs": [ref_file_args["throughputs"][i_order]],
+        "kernels": kernel,
+    }
+    spectraces = ref_file_args["spectraces"]
 
     # Pre-convolve the extracted flux (f_k) at the order's resolution
     # so that the convolution matrix must not be re-computed.
@@ -461,26 +476,23 @@ def _build_tracemodel_order(engine, ref_file_args, f_k, i_order, mask, ref_files
     idx_valid = np.isfinite(flux_order)
     grid_order, flux_order = grid_order[idx_valid], flux_order[idx_valid]
 
-    # And give the identity kernel to the Engine (so no convolution)
-    ref_file_order[3] = [np.array([1.0])]
-
     # Spectral order
     sp_ord = i_order + 1
 
     # Build model of the order
     model = ExtractionEngine(
-        *ref_file_order, wave_grid=grid_order, mask_trace_profile=[mask], orders=[sp_ord]
+        args_order, wave_grid=grid_order, mask_trace_profile=[mask], orders=[sp_ord]
     )
 
     # Project on detector and save in dictionary
     tracemodel_ord = model.rebuild(flux_order, fill_value=np.nan)
 
     # Build 1d spectrum integrated over pixels
-    pixel_wave_grid, valid_cols = _get_native_grid_from_trace(ref_files, sp_ord)
+    pixel_wave_grid, valid_cols = _get_native_grid_from_trace(spectraces, sp_ord)
     spec_ord = _f_to_spec(
         flux_order,
         grid_order,
-        ref_file_order,
+        args_order,
         pixel_wave_grid,
         np.all(mask, axis=0)[valid_cols],
         sp_ord,
@@ -529,8 +541,9 @@ def _model_image(
     scierr,
     scimask,
     refmask,
-    ref_files,
+    ref_file_args,
     box_weights,
+    order_list,
     tikfac=None,
     threshold=1e-4,
     n_os=2,
@@ -538,7 +551,6 @@ def _model_image(
     estimate=None,
     rtol=1e-3,
     max_grid_size=1000000,
-    order_list=None,
 ):
     """
     Perform the spectral extraction on a single image.
@@ -561,12 +573,13 @@ def _model_image(
         Pixel mask to apply to detector image.
     refmask : array[bool]
         Pixels that should never be reconstructed e.g. the reference pixels.
-    ref_files : dict
-        A dictionary of the reference file DataModels, along with values for
-        subarray and pwcpos, i.e. the pupil wheel position.
+    ref_file_args : dict
+        A dictionary of arrays derived from the reference files.
     box_weights : dict
         A dictionary of the weights (for each order) used in the box extraction.
         The weights for each order are 2d arrays with the same size as the detector.
+    order_list : list
+        List of spectral orders to extract.
     tikfac : float, optional
         The Tikhonov regularization factor used when solving for
         the uncontaminated flux. If not specified, the optimal Tikhonov factor
@@ -590,8 +603,6 @@ def _model_image(
     max_grid_size : int
         Maximum grid size allowed when wave_grid is None.
         Default is 1000000.
-    order_list : list
-        List of spectral orders to extract.
 
     Returns
     -------
@@ -608,18 +619,8 @@ def _model_image(
         List of the underlying spectra for each integration and order.
         The tikhonov tests are also included.
     """
-    # Generate list of orders to simulate from pastasoss trace list
-    if order_list is None:
-        order_list = []
-        for trace in ref_files["pastasoss"].traces:
-            order_list.append(trace.spectral_order)
     order_strs = [f"Order {order}" for order in order_list]
-    order_indices = [
-        _find_spectral_order_index(ref_files["pastasoss"], order) for order in order_list
-    ]
-
-    # Prepare the reference file arguments.
-    ref_file_args = get_ref_file_args(ref_files, orders_requested=order_list)
+    order_indices = [o - 1 for o in order_list]
 
     # Some error values are 0, we need to mask those pixels for the extraction engine.
     scimask = scimask | ~(scierr > 0)
@@ -640,7 +641,9 @@ def _model_image(
     # Generate grid based on estimate if not given
     if wave_grid is None:
         log.info(f"wave_grid not given: generating grid based on rtol={rtol}")
-        wave_grid = _make_decontamination_grid(ref_files, rtol, max_grid_size, estimate, n_os)
+        wave_grid = _make_decontamination_grid(
+            ref_file_args["spectraces"], rtol, max_grid_size, estimate, n_os
+        )
         log.debug(
             f"wave_grid covering from {wave_grid.min()} to {wave_grid.max()}"
             f" with {wave_grid.size} points"
@@ -649,9 +652,14 @@ def _model_image(
         log.info("Using previously computed or user specified wavelength grid.")
 
     # Initialize the Engine for combined extraction of orders 1 and 2
-    args_orders_12 = [arg[:2] for arg in ref_file_args]
+    args_orders_12 = {
+        "wavemaps": ref_file_args["wavemaps"][:2],
+        "spec_profiles": ref_file_args["spec_profiles"][:2],
+        "throughputs": ref_file_args["throughputs"][:2],
+        "kernels": ref_file_args["kernels"][:2],
+    }
     engine = ExtractionEngine(
-        *args_orders_12,
+        args_orders_12,
         wave_grid=wave_grid,
         mask_trace_profile=mask_trace_profile[:2],
         global_mask=scimask,
@@ -683,7 +691,7 @@ def _model_image(
         for order in [1, 2]:
             for idx in range(len(all_tests["factors"])):
                 f_k = all_tests["solution"][idx, :]
-                args = (engine, ref_file_args, f_k, order - 1, global_mask, ref_files)
+                args = (engine, ref_file_args, f_k, order - 1, global_mask)
                 _, spec_ord = _build_tracemodel_order(*args)
                 _populate_tikho_attr(spec_ord, all_tests, idx, order)
                 spec_ord.meta.soss_extract1d.color_range = "RED"
@@ -710,7 +718,7 @@ def _model_image(
     for i_order, order in enumerate([1, 2]):
         log.debug(f"Building the model image of {order}.")
 
-        args = (engine, ref_file_args, f_k, i_order, global_mask, ref_files)
+        args = (engine, ref_file_args, f_k, i_order, global_mask)
         tracemodel_ord, spec_ord = _build_tracemodel_order(*args)
         spec_ord.meta.soss_extract1d.factor = tikfac
         spec_ord.meta.soss_extract1d.color_range = "RED"
@@ -729,7 +737,7 @@ def _model_image(
     # Model the blue part of order 2 and all of order 3 assuming they are well-separated
     # from order 1
     for order in [2, 3]:
-        if ref_files["subarray"] == "SUBSTRIP96":
+        if ref_file_args["subarray"] == "SUBSTRIP96":
             continue
         if order not in order_list:
             continue
@@ -743,13 +751,19 @@ def _model_image(
         log.info(f"Generate model for well-separated part of {order_str}")
 
         # Take only the second order's specific ref_files
-        ref_file_order = [[ref_f[idx_order]] for ref_f in ref_file_args]
+        ref_file_order = {
+            "wavemaps": [ref_file_args["wavemaps"][idx_order]],
+            "spec_profiles": [ref_file_args["spec_profiles"][idx_order]],
+            "throughputs": [ref_file_args["throughputs"][idx_order]],
+            "kernels": [ref_file_args["kernels"][idx_order]],
+        }
+        spectraces = ref_file_args["spectraces"]
 
         # Mask for the fit. All valid pixels inside box aperture
         mask_fit = mask_trace_profile[idx_order] | scimask
 
         # Build 1d spectrum integrated over pixels
-        pixel_wave_grid, valid_cols = _get_native_grid_from_trace(ref_files, order)
+        pixel_wave_grid, valid_cols = _get_native_grid_from_trace(spectraces, order)
 
         # Hardcode wavelength highest boundary as well.
         # Must overlap with lower limit in make_decontamination_grid
@@ -807,14 +821,14 @@ def _model_image(
     return tracemodels, tikfac, logl, wave_grid, spec_list
 
 
-def _compute_box_weights(ref_files, shape, width, orders_requested):
+def _compute_box_weights(spectraces, shape, width, orders_requested):
     """
     Determine the weights for the box extraction.
 
     Parameters
     ----------
-    ref_files : dict
-        A dictionary of the reference file DataModels.
+    spectraces : list[np.ndarray]
+        The list of spectral traces from the pastasoss reference file, one per spectral order.
     shape : tuple
         The shape of the detector image.
     width : int
@@ -839,7 +853,7 @@ def _compute_box_weights(ref_files, shape, width, orders_requested):
         log.debug(f"Compute box weights for {order}.")
 
         # Define the box aperture
-        xtrace, ytrace, wavelengths[order] = _get_trace_1d(ref_files, order_integer)
+        xtrace, ytrace, wavelengths[order] = _get_trace_1d(spectraces, order_integer)
         box_weights[order] = get_box_weights(ytrace, width, shape, cols=xtrace)
 
     return box_weights, wavelengths
@@ -925,7 +939,7 @@ def _model_single_order(
         The 2D data array for the spectral order to be extracted.
     err_order : np.array
         The 2D error array for the spectral order to be extracted.
-    ref_file_args : list
+    ref_file_args : dict
         The reference file arguments used by the ExtractionEngine.
     mask_fit : np.array
         Mask determining the aperture used for extraction. This typically includes
@@ -970,15 +984,15 @@ def _model_single_order(
         return np.ones_like(wavelength)
 
     kernel = np.array([1.0])
-    ref_file_args[2] = [throughput]
-    ref_file_args[3] = [kernel]
+    ref_file_args["throughputs"] = [throughput]
+    ref_file_args["kernels"] = [kernel]
 
     # Define wavelength grid with oversampling of 3 (should be enough)
     wave_grid_os = oversample_grid(wave_grid, n_os=3)
 
     # Initialize the Engine.
     engine = ExtractionEngine(
-        *ref_file_args,
+        ref_file_args,
         wave_grid=wave_grid_os,
         mask_trace_profile=[mask_fit],
         orders=[order],
@@ -1022,7 +1036,7 @@ def _model_single_order(
 
     # Rebuild trace, including bad pixels
     engine = ExtractionEngine(
-        *ref_file_args,
+        ref_file_args,
         wave_grid=wave_grid_os,
         mask_trace_profile=[mask_rebuild],
         orders=[order],
@@ -1201,7 +1215,7 @@ def run_extract1d(
 
     ref_files = {}
     ref_files["pastasoss"] = pastasoss_ref
-    ref_files["specprofile"] = specprofile_ref
+    ref_files["spec_profiles"] = specprofile_ref
     ref_files["speckernel"] = speckernel_ref
     ref_files["subarray"] = subarray
     ref_files["pwcpos"] = input_model.meta.instrument.pupil_position
@@ -1267,6 +1281,9 @@ def run_extract1d(
         log.critical(msg)
         raise TypeError(msg)
 
+    # Prepare the reference file arguments.
+    ref_file_args = get_ref_file_args(ref_files, orders_requested=order_list)
+
     # Loop over images.
     output_spec_list = {}
     for i in range(nimages):
@@ -1303,7 +1320,7 @@ def run_extract1d(
 
         # Pre-compute the weights for box extraction (used in modeling and extraction)
         box_weights, wavelengths = _compute_box_weights(
-            ref_files,
+            ref_file_args["spectraces"],
             scidata_bkg.shape,
             width=soss_kwargs["width"],
             orders_requested=order_list,
@@ -1327,7 +1344,7 @@ def run_extract1d(
             kwargs["threshold"] = soss_kwargs["threshold"]
 
             result = _model_image(
-                scidata_bkg, scierr, scimask, refmask, ref_files, box_weights, **kwargs
+                scidata_bkg, scierr, scimask, refmask, ref_file_args, box_weights, **kwargs
             )
             tracemodels, soss_kwargs["tikfac"], _, wave_grid, spec_list = result
 
