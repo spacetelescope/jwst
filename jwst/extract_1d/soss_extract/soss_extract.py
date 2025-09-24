@@ -58,8 +58,9 @@ def get_ref_file_args(ref_files, orders_requested=None):
     ref_files : dict
         A dictionary of the reference file DataModels, along with values
         for the subarray and pwcpos, i.e. the pupil wheel position.
-    orders_requested : list
+    orders_requested : list or None, optional
         A list of the spectral orders requested for extraction.
+        If None, all orders in the pastasoss reference file are used.
 
     Returns
     -------
