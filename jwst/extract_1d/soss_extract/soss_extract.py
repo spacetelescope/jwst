@@ -1443,7 +1443,9 @@ def run_extract1d(
         generate_model=generate_model,
         int_num=0,
     )
-    output_atoca.spec.append(atoca_list)
+    for atoca_spec in atoca_list:
+        # this is a ListNode so can't just do +=
+        output_atoca.spec.append(atoca_spec)
 
     # Loop over images.
     all_tracemodels = {order: [tracemodels[order]] for order in tracemodels}
