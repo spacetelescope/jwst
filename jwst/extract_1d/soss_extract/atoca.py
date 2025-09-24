@@ -72,37 +72,37 @@ class ExtractionEngine:
             These are:
 
             - "wavemaps": list or array of 2-D arrays
-                A list or array of the central wavelength position for each
-                order on the detector. Has shape (N_ord, N, M).
-                It has to have the same (N, M) as `data`.
+              A list or array of the central wavelength position for each
+              order on the detector. Has shape (N_ord, N, M).
+              It has to have the same (N, M) as ``data``.
             - "spec_profiles": list or array of 2-D arrays
-                A list or array of the spatial profile for each order
-                Has shape (N_ord, N, M).
+              A list or array of the spatial profile for each order
+              Has shape (N_ord, N, M).
             - "throughputs": list of array or callable
-                A list of functions or array of the throughput at each order.
-                If callable, the functions depend on the wavelength.
-                If array, projected on `wave_grid`. Has shape (N_ord [, N_k]).
+              A list of functions or array of the throughput at each order.
+              If callable, the functions depend on the wavelength.
+              If array, projected on ``wave_grid``. Has shape (N_ord [, N_k]).
             - "kernels": callable, sparse matrix, or None
-                Convolution kernel to be applied on spectrum (f_k) for each orders.
-                Can be a callable with the form f(x, x0) where x0 is
-                the position of the center of the kernel. In this case, it must
-                return a 1D array (len(x)), so a kernel value
-                for each pairs of (x, x0). If callable,
-                it will be passed to `convolution.get_c_matrix` function
-                and the `c_kwargs` can be passed to this function.
-                If sparse, the shape has to be (N_k_c, N_k) and it will
-                be used directly. N_ker is the length of the effective kernel
-                and N_k_c is the length of the spectrum (f_k) convolved.
-                If None, the kernel is set to 1, i.e., do not do any convolution.
+              Convolution kernel to be applied on spectrum (f_k) for each orders.
+              Can be a callable with the form f(x, x0) where x0 is
+              the position of the center of the kernel. In this case, it must
+              return a 1D array (len(x)), so a kernel value
+              for each pairs of (x, x0). If callable,
+              it will be passed to `convolution.get_c_matrix` function
+              and the ``c_kwargs`` can be passed to this function.
+              If sparse, the shape has to be (N_k_c, N_k) and it will
+              be used directly. N_ker is the length of the effective kernel
+              and N_k_c is the length of the spectrum (f_k) convolved.
+              If None, the kernel is set to 1, i.e., do not do any convolution.
         wave_grid : array-like, required
             The grid on which f(lambda) will be projected, shape (N_k).
         mask_trace_profile : List or array of 2-D arrays[bool], required
             A list or array of the pixel that need to be used for extraction,
             for each order on the detector.
-            It has to have the same shape (N_ord, N, M) as `trace_profile`.
+            It has to have the same shape (N_ord, N, M) as ``trace_profile``.
         global_mask : array[bool], optional
             Boolean Mask of the detector pixels to mask for every extraction, e.g. bad pixels.
-            Should not be related to a specific order (if so, use `mask_trace_profile` instead).
+            Should not be related to a specific order (if so, use ``mask_trace_profile`` instead).
             Has shape (N, M).
         orders : list, optional
             List of orders considered. Default is orders = [1, 2]
