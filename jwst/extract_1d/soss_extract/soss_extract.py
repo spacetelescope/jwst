@@ -45,6 +45,8 @@ numerical issues.
 """
 ORDER2_SEPARATION_CUTOFF = [0.77, 0.95]
 
+ORDER_STR_TO_INT = {f"Order {order}": order for order in [1, 2, 3]}
+
 
 __all__ = ["get_ref_file_args", "run_extract1d"]
 
@@ -1162,6 +1164,126 @@ def _extract_image(
     return fluxes, fluxerrs, npixels
 
 
+def _process_one_integration(
+    scidata,
+    scierr,
+    scimask,
+    refmask,
+    ref_file_args,
+    box_weights,
+    wavelengths,
+    order_list,
+    soss_kwargs,
+    wave_grid=None,
+    tikfac=None,
+    generate_model=True,
+    int_num=None,
+):
+    # Make sure there aren't any nans not flagged in scimask
+    not_finite = ~(np.isfinite(scidata) & np.isfinite(scierr))
+    if (not_finite & ~scimask).any():
+        log.warning(
+            "Input contains invalid values that "
+            "are not flagged correctly in the dq map. "
+            "They will be masked for the following procedure."
+        )
+        scimask |= not_finite
+        refmask &= ~not_finite
+
+    # Perform background correction.
+    if soss_kwargs["subtract_background"]:
+        log.info("Applying background subtraction.")
+        bkg_mask = make_background_mask(scidata, width=40)
+        scidata_bkg, col_bkg = soss_background(scidata, scimask, bkg_mask)
+    else:
+        log.info("Skip background subtraction.")
+        scidata_bkg = scidata
+        col_bkg = np.zeros(scidata.shape[1])
+
+    # Model the traces based on optics filter configuration (CLEAR or F277W)
+    if generate_model:
+        # Model the image.
+        result = _model_image(
+            scidata_bkg,
+            scierr,
+            scimask,
+            refmask,
+            ref_file_args,
+            box_weights,
+            order_list,
+            tikfac=tikfac,
+            rtol=soss_kwargs["rtol"],
+            n_os=soss_kwargs["n_os"],
+            estimate=soss_kwargs["estimate"],
+            max_grid_size=soss_kwargs["max_grid_size"],
+            threshold=soss_kwargs["threshold"],
+            wave_grid=wave_grid,
+        )
+        tracemodels, tikfac, _, wave_grid, atoca_list = result
+
+        # Add atoca spectra to multispec for output
+        for spec in atoca_list:
+            # If it was a test, not the best spectrum,
+            # int_num is already set to 0.
+            if not hasattr(spec, "int_num") and int_num is not None:
+                spec.int_num = int_num
+    else:
+        # Return empty tracemodels
+        tracemodels = {}
+        atoca_list = []
+
+    # Decontaminate the data using trace models (if tracemodels not empty)
+    data_to_extract = _decontaminate_image(scidata_bkg, tracemodels, ref_file_args["subarray"])
+
+    if soss_kwargs["bad_pix"] == "model":
+        # Generate new trace models for each individual decontaminated orders
+        bad_pix_models = tracemodels
+    else:
+        bad_pix_models = None
+
+    # Use the bad pixel models to perform a de-contaminated extraction.
+    result = _extract_image(
+        data_to_extract,
+        scierr,
+        scimask,
+        box_weights,
+        bad_pix=soss_kwargs["bad_pix"],
+        tracemodels=bad_pix_models,
+    )
+    fluxes, fluxerrs, npixels = result
+
+    # Save trace models for output reference
+    for order in tracemodels:
+        # Put NaNs to zero
+        model_ord = tracemodels[order]
+        model_ord = np.where(np.isfinite(model_ord), model_ord, 0.0)
+        tracemodels[order] = model_ord
+
+    # Copy spectral data for each order into the output model.
+    spec_list = {}
+    for order in fluxes.keys():
+        table_size = len(wavelengths[order])
+
+        out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+        out_table["WAVELENGTH"] = wavelengths[order][:table_size]
+        out_table["FLUX"] = fluxes[order][:table_size]
+        out_table["FLUX_ERROR"] = fluxerrs[order][:table_size]
+        out_table["DQ"] = np.zeros(table_size)
+        out_table["BACKGROUND"] = col_bkg[:table_size]
+        out_table["NPIXELS"] = npixels[order][:table_size]
+
+        spec = datamodels.SpecModel(spec_table=out_table)
+
+        # Add integration number and spectral order
+        spec.spectral_order = ORDER_STR_TO_INT[order]
+        if int_num is not None:
+            spec.int_num = int_num
+
+        spec_list[order] = spec
+
+    return tracemodels, spec_list, atoca_list, tikfac, wave_grid
+
+
 def run_extract1d(
     input_model,
     pastasoss_ref_name,
@@ -1200,6 +1322,12 @@ def run_extract1d(
     # Generate the atoca models or not (not necessarily for decontamination)
     generate_model = soss_kwargs["atoca"] or (soss_kwargs["bad_pix"] == "model")
 
+    if soss_filter != "CLEAR" and generate_model:
+        # No model can be fit for F277W yet, missing throughput reference files.
+        msg = f"No extraction possible for filter {soss_filter}."
+        log.critical(msg)
+        raise ValueError(msg)
+
     # Read the reference files.
     pastasoss_ref = datamodels.PastasossModel(pastasoss_ref_name)
     specprofile_ref = datamodels.SpecProfileModel(specprofile_ref_name)
@@ -1212,7 +1340,6 @@ def run_extract1d(
         order_list = [1, 2]
     refmodel_orders = [int(trace.spectral_order) for trace in pastasoss_ref.traces]
     order_list = _verify_requested_orders(order_list, refmodel_orders)
-    order_str_to_int = {f"Order {order}": order for order in order_list}
 
     ref_files = {}
     ref_files["pastasoss"] = pastasoss_ref
@@ -1246,6 +1373,7 @@ def run_extract1d(
         # Keep only finite values
         idx = np.isfinite(flux_estimate)
         estimate = UnivariateSpline(wv_estimate[idx], flux_estimate[idx], k=3, s=0, ext=0)
+    soss_kwargs["estimate"] = estimate
 
     # Initialize the output model.
     output_model = datamodels.TSOMultiSpecModel()
@@ -1261,8 +1389,6 @@ def run_extract1d(
     output_references = datamodels.SossExtractModel()
     output_references.update(input_model)
 
-    all_tracemodels, all_box_weights = {}, {}
-
     # Convert to Cube if datamodels is an ImageModel
     if isinstance(input_model, datamodels.ImageModel):
         cube_model = datamodels.CubeModel(shape=(1, *input_model.shape))
@@ -1271,12 +1397,10 @@ def run_extract1d(
         cube_model.dq = input_model.dq[None, :, :]
         nimages = 1
         log.info("Input is an ImageModel, processing a single integration.")
-
     elif isinstance(input_model, datamodels.CubeModel):
         cube_model = input_model
         nimages = len(cube_model.data)
         log.info(f"Input is a CubeModel containing {nimages} integrations.")
-
     else:
         msg = "Only ImageModel and CubeModel are implemented for the NIRISS SOSS extraction."
         log.critical(msg)
@@ -1285,9 +1409,46 @@ def run_extract1d(
     # Prepare the reference file arguments.
     ref_file_args = get_ref_file_args(ref_files, orders_requested=order_list)
 
+    # Run the first integration to get the Tikhonov factor for the rest
+    scidata = cube_model.data[0].astype("float64")
+    scierr = cube_model.err[0].astype("float64")
+    scimask = np.bitwise_and(cube_model.dq[0], dqflags.pixel["DO_NOT_USE"]).astype(bool)
+    refmask = bitfield_to_boolean_mask(
+        cube_model.dq[0], ignore_flags=dqflags.pixel["REFERENCE_PIXEL"], flip_bits=True
+    )
+
+    # Pre-compute the weights for box extraction (used in modeling and extraction)
+    box_weights, wavelengths = _compute_box_weights(
+        ref_file_args["spectraces"],
+        scidata.shape,
+        width=soss_kwargs["width"],
+        orders_requested=order_list,
+    )
+    # FIXME: hardcoding the substrip96 weights to unity is a band-aid solution
+    if subarray == "SUBSTRIP96":
+        box_weights["Order 2"] = np.ones((96, 2048))
+
+    tracemodels, spec_list, atoca_list, tikfac_first, wave_grid_first = _process_one_integration(
+        scidata,
+        scierr,
+        scimask,
+        refmask,
+        ref_file_args,
+        box_weights,
+        wavelengths,
+        order_list,
+        soss_kwargs,
+        wave_grid=wave_grid,
+        tikfac=soss_kwargs["tikfac"],
+        generate_model=generate_model,
+        int_num=0,
+    )
+    output_atoca.spec.append(atoca_list)
+
     # Loop over images.
-    output_spec_list = {}
-    for i in range(nimages):
+    all_tracemodels = {order: [tracemodels[order]] for order in tracemodels}
+    output_spec_list = {order: [spec_list[order]] for order in spec_list}
+    for i in range(1, nimages):
         log.info(f"Processing integration {i + 1} of {nimages}.")
 
         # Unpack the i-th image, set dtype to float64 and convert DQ to boolean mask.
@@ -1298,129 +1459,25 @@ def run_extract1d(
             cube_model.dq[i], ignore_flags=dqflags.pixel["REFERENCE_PIXEL"], flip_bits=True
         )
 
-        # Make sure there aren't any nans not flagged in scimask
-        not_finite = ~(np.isfinite(scidata) & np.isfinite(scierr))
-        if (not_finite & ~scimask).any():
-            log.warning(
-                "Input contains invalid values that "
-                "are not flagged correctly in the dq map. "
-                "They will be masked for the following procedure."
-            )
-            scimask |= not_finite
-            refmask &= ~not_finite
-
-        # Perform background correction.
-        if soss_kwargs["subtract_background"]:
-            log.info("Applying background subtraction.")
-            bkg_mask = make_background_mask(scidata, width=40)
-            scidata_bkg, col_bkg = soss_background(scidata, scimask, bkg_mask)
-        else:
-            log.info("Skip background subtraction.")
-            scidata_bkg = scidata
-            col_bkg = np.zeros(scidata.shape[1])
-
-        # Pre-compute the weights for box extraction (used in modeling and extraction)
-        box_weights, wavelengths = _compute_box_weights(
-            ref_file_args["spectraces"],
-            scidata_bkg.shape,
-            width=soss_kwargs["width"],
-            orders_requested=order_list,
+        tracemodels, spec_list, atoca_list, _, _ = _process_one_integration(
+            scidata,
+            scierr,
+            scimask,
+            refmask,
+            ref_file_args,
+            box_weights,
+            wavelengths,
+            order_list,
+            soss_kwargs,
+            wave_grid=wave_grid_first,
+            tikfac=tikfac_first,
+            generate_model=generate_model,
+            int_num=i,
         )
-
-        # FIXME: hardcoding the substrip96 weights to unity is a band-aid solution
-        if subarray == "SUBSTRIP96":
-            box_weights["Order 2"] = np.ones((96, 2048))
-
-        # Model the traces based on optics filter configuration (CLEAR or F277W)
-        if soss_filter == "CLEAR" and generate_model:
-            # Model the image.
-            kwargs = {}
-            kwargs["order_list"] = order_list
-            kwargs["estimate"] = estimate
-            kwargs["tikfac"] = soss_kwargs["tikfac"]
-            kwargs["max_grid_size"] = soss_kwargs["max_grid_size"]
-            kwargs["rtol"] = soss_kwargs["rtol"]
-            kwargs["n_os"] = soss_kwargs["n_os"]
-            kwargs["wave_grid"] = wave_grid
-            kwargs["threshold"] = soss_kwargs["threshold"]
-
-            result = _model_image(
-                scidata_bkg, scierr, scimask, refmask, ref_file_args, box_weights, **kwargs
-            )
-            tracemodels, soss_kwargs["tikfac"], _, wave_grid, spec_list = result
-
-            # Add atoca spectra to multispec for output
-            for spec in spec_list:
-                # If it was a test, not the best spectrum,
-                # int_num is already set to 0.
-                if not hasattr(spec, "int_num"):
-                    spec.int_num = i + 1
-                output_atoca.spec.append(spec)
-
-        elif soss_filter != "CLEAR" and generate_model:
-            # No model can be fit for F277W yet, missing throughput reference files.
-            msg = f"No extraction possible for filter {soss_filter}."
-            log.critical(msg)
-            raise ValueError(msg)
-        else:
-            # Return empty tracemodels
-            tracemodels = {}
-
-        # Decontaminate the data using trace models (if tracemodels not empty)
-        data_to_extract = _decontaminate_image(scidata_bkg, tracemodels, subarray)
-
-        if soss_kwargs["bad_pix"] == "model":
-            # Generate new trace models for each individual decontaminated orders
-            bad_pix_models = tracemodels
-        else:
-            bad_pix_models = None
-
-        # Use the bad pixel models to perform a de-contaminated extraction.
-        kwargs = {}
-        kwargs["bad_pix"] = soss_kwargs["bad_pix"]
-        kwargs["tracemodels"] = bad_pix_models
-        result = _extract_image(data_to_extract, scierr, scimask, box_weights, **kwargs)
-        fluxes, fluxerrs, npixels = result
-
-        # Save trace models for output reference
         for order in tracemodels:
-            # Initialize a list for first integration
-            if i == 0:
-                all_tracemodels[order] = []
-            # Put NaNs to zero
-            model_ord = tracemodels[order]
-            model_ord = np.where(np.isfinite(model_ord), model_ord, 0.0)
-            # Save as a list (convert to array at the end)
-            all_tracemodels[order].append(model_ord)
-
-        # Save box weights for output reference
-        for order in box_weights:
-            # Initialize a list for first integration
-            if i == 0:
-                all_box_weights[order] = []
-            all_box_weights[order].append(box_weights[order])
-        # Copy spectral data for each order into the output model.
-        for order in fluxes.keys():
-            table_size = len(wavelengths[order])
-
-            out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
-            out_table["WAVELENGTH"] = wavelengths[order][:table_size]
-            out_table["FLUX"] = fluxes[order][:table_size]
-            out_table["FLUX_ERROR"] = fluxerrs[order][:table_size]
-            out_table["DQ"] = np.zeros(table_size)
-            out_table["BACKGROUND"] = col_bkg[:table_size]
-            out_table["NPIXELS"] = npixels[order][:table_size]
-
-            spec = datamodels.SpecModel(spec_table=out_table)
-
-            # Add integration number and spectral order
-            spec.spectral_order = order_str_to_int[order]
-            spec.int_num = i + 1  # integration number starts at 1, not 0 like python
-
-            if order in output_spec_list:
-                output_spec_list[order].append(spec)
-            else:
-                output_spec_list[order] = [spec]
+            all_tracemodels[order].append(tracemodels[order])
+        for order in spec_list:
+            output_spec_list[order].append(spec_list[order])
 
     # Make a TSOSpecModel from the output spec list
     for order in output_spec_list:
@@ -1442,14 +1499,16 @@ def run_extract1d(
         # Convert from list to array
         tracemod_ord = np.array(all_tracemodels[order])
         # Save
-        order_int = order_str_to_int[order]
+        order_int = ORDER_STR_TO_INT[order]
         setattr(output_references, f"order{order_int}", tracemod_ord)
 
-    for order in all_box_weights:
+    for order in box_weights:
         # Convert from list to array
-        box_w_ord = np.array(all_box_weights[order])
+        box_w_ord = np.array(box_weights[order])
+        # repeat along axis zero to have shape (nints, y, x)
+        box_w_ord = np.repeat(box_w_ord[None, :, :], nimages, axis=0)
         # Save
-        order_int = order_str_to_int[order]
+        order_int = ORDER_STR_TO_INT[order]
         setattr(output_references, f"aperture{order_int}", box_w_ord)
 
     if pipe_utils.is_tso(input_model):
