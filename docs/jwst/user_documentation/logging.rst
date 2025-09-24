@@ -106,7 +106,6 @@ called "pipeline.log" that will be appended to for every subsequent pipeline or 
 
     result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits")
 
-
 More complex configuration is possible via the `logging` module
 if the default configuration is disabled with the ``configure_log`` parameter.
 For example, to configure the root logger to print only the log name and message at the INFO
