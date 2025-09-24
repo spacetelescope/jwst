@@ -64,6 +64,8 @@ For example:
 
 will log messages to the terminal at the INFO level in the ``stdout`` stream
 and also record them to a file called "pipeline.log" in the current working directory.
+Note that the log file is recreated every time the command is run, so subsequent
+commands will overwrite earlier logs unless a new file name is provided.
 
 To turn off all logging instead:
 
@@ -83,9 +85,30 @@ Using ``call``
 ^^^^^^^^^^^^^^
 
 In a Python environment, the default settings for the ``call`` method are the same as
-for the command line, but more complex configuration is possible via the `logging` module
-if the default configuration is disabled with the ``configure_log`` parameter.
+for the command line. The following code, for example, will log messages at the INFO level to the
+``stderr`` stream::
 
+    from jwst.pipeline import Detector1Pipeline
+    result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits")
+
+The following code will keep the default logging to the ``stderr`` stream and also add a log file
+called "pipeline.log" that will be appended to for every subsequent pipeline or step call::
+
+    import logging
+    from jwst.pipeline import Detector1Pipeline
+
+    # Set up a file handler
+    log = logging.getLogger()
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    handler = logging.FileHandler("pipeline.log")
+    handler.setFormatter(formatter)
+    log.addHandler(handler)
+
+    result = Detector1Pipeline.call("jw00017001001_01101_00001_nrca1_uncal.fits")
+
+
+More complex configuration is possible via the `logging` module
+if the default configuration is disabled with the ``configure_log`` parameter.
 For example, to configure the root logger to print only the log name and message at the INFO
 level and direct time-stamped messages to a file at the DEBUG level::
 
@@ -101,7 +124,7 @@ level and direct time-stamped messages to a file at the DEBUG level::
     stream_handler.setLevel(logging.INFO)
 
     # Make a file handler for all messages, time-stamped
-    file_handler = logging.FileHandler('pipeline.log')
+    file_handler = logging.FileHandler("pipeline.log")
     formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
     file_handler.setFormatter(formatter)
     file_handler.setLevel(logging.DEBUG)
@@ -162,7 +185,7 @@ command line configuration options as follows.
    displayed.  May be one of (from least important to most
    important): DEBUG, INFO, WARNING, ERROR or CRITICAL.
 
-   **Via the command line, specify the log level with ``--log-level``.**
+   **Via the command line, specify the log level with "--log-level".**
 
 #. ``handler``: Defines where log messages are to be sent.  By
    default, they are sent to stderr.  However, one may also
@@ -176,8 +199,8 @@ command line configuration options as follows.
    Multiple handlers may be specified by putting the whole value in
    quotes and separating the entries with a comma.
 
-   **Via the command line, specify a log file name with ``--log-file``.**
-   **Specify the output stream with ``--log-stream``.**
+   **Via the command line, specify a log file name with "--log-file".**
+   **Specify the output stream with "--log-stream".**
 
 These features, formerly supported by ``logcfg``, will no longer be available
 via the command line:
