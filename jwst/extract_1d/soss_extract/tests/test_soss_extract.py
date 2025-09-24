@@ -34,39 +34,12 @@ def monkeypatch_setup(
     webb_kernels,
     trace1d,
 ):
-    """Monkeypatch get_ref_file_args and get_trace_1d to return the miniature model detector"""
-
-    def mock_get_ref_file_args(wave, trace, thru, kern, reffiles, orders_requested):
-        """Return the arrays from conftest instead of querying CRDS"""
-        if (orders_requested is None) or (orders_requested == [1, 2, 3]):
-            out = {
-                "wavemaps": wave,
-                "spec_profiles": trace,
-                "throughputs": thru,
-                "kernels": kern,
-                "spectraces": trace1d,
-            }
-            return out
-        elif orders_requested == [1, 2]:
-            out = {
-                "wavemaps": wave[:2],
-                "spec_profiles": trace[:2],
-                "throughputs": thru[:2],
-                "kernels": kern[:2],
-                "spectraces": trace1d[:2],
-            }
-            return out
-        else:
-            raise ValueError(f"Unexpected orders_requested for mock: {orders_requested}")
+    """Monkeypatch get_trace_1d to return the miniature model detector"""
 
     def mock_trace1d(trace, reffiles, order):
         """Return the traces from conftest instead of doing math that requires a full-sized detector"""
         return trace[int(order) - 1]
 
-    monkeypatch.setattr(
-        "jwst.extract_1d.soss_extract.soss_extract.get_ref_file_args",
-        partial(mock_get_ref_file_args, wave_map, trace_profile, throughput, webb_kernels),
-    )
     monkeypatch.setattr(
         "jwst.extract_1d.soss_extract.soss_extract._get_trace_1d", partial(mock_trace1d, trace1d)
     )
@@ -87,22 +60,18 @@ def ref_file_args(
         "throughputs": throughput,
         "kernels": webb_kernels,
         "spectraces": trace1d,
-        "subarray": "SUBSTRIP96",
+        "subarray": "SUBSTRIP256",
     }
 
 
-@pytest.mark.parametrize("order_list", [[1, 2], None])
+@pytest.mark.parametrize("order_list", [[1, 2], [1, 2, 3]])
 def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_file_args, order_list):
     scidata, scierr = imagemodel
 
-    if order_list is None:
-        orders_expected = [1, 2, 3]
-    else:
-        orders_expected = order_list
     refmask = np.zeros_like(detector_mask)
     box_width = 5.0
     box_weights, _wavelengths = _compute_box_weights(
-        ref_file_args["spectraces"], DATA_SHAPE, box_width, orders_requested=orders_expected
+        ref_file_args["spectraces"], DATA_SHAPE, box_width, orders_requested=order_list
     )
 
     tracemodels, tikfac, logl, wave_grid, spec_list = _model_image(
@@ -112,6 +81,7 @@ def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_file_args
         refmask,
         ref_file_args,
         box_weights,
+        order_list,
         tikfac=None,
         threshold=1e-4,
         n_os=2,
@@ -119,12 +89,11 @@ def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_file_args
         estimate=None,
         rtol=1e-3,
         max_grid_size=1000000,
-        order_list=order_list,
     )
 
     # check output basics, types and shapes
-    assert len(tracemodels) == len(orders_expected)
-    for order in orders_expected:
+    assert len(tracemodels) == len(order_list)
+    for order in order_list:
         tm = tracemodels[f"Order {order}"]
         assert tm.dtype == np.float64
         assert tm.shape == DATA_SHAPE
@@ -208,6 +177,7 @@ def test_model_image_tikfac_specified(
         refmask,
         ref_file_args,
         box_weights,
+        order_list,
         tikfac=tikfac_in,
         threshold=1e-4,
         n_os=2,
@@ -215,7 +185,6 @@ def test_model_image_tikfac_specified(
         estimate=None,
         rtol=1e-3,
         max_grid_size=1000000,
-        order_list=order_list,
     )
     # check that spec_list is a single-element list per order in this case
     assert len(spec_list) == 3
@@ -252,6 +221,7 @@ def test_model_image_wavegrid_specified(
         refmask,
         ref_file_args,
         box_weights,
+        order_list,
         tikfac=tikfac_in,
         threshold=1e-4,
         n_os=2,
@@ -259,7 +229,6 @@ def test_model_image_wavegrid_specified(
         estimate=None,
         rtol=1e-3,
         max_grid_size=1000000,
-        order_list=order_list,
     )
     assert np.allclose(wave_grid, wave_grid_in)
 

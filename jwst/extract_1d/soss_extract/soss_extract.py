@@ -579,7 +579,7 @@ def _model_image(
         A dictionary of the weights (for each order) used in the box extraction.
         The weights for each order are 2d arrays with the same size as the detector.
     order_list : list
-        List of spectral orders to extract.
+        List of spectral orders to extract. Must be either [1,2] or [1,2,3].
     tikfac : float, optional
         The Tikhonov regularization factor used when solving for
         the uncontaminated flux. If not specified, the optimal Tikhonov factor
@@ -736,7 +736,7 @@ def _model_image(
 
     # Model the blue part of order 2 and all of order 3 assuming they are well-separated
     # from order 1
-    for order in [2, 3]:
+    for order in order_list[1:]:
         if ref_file_args["subarray"] == "SUBSTRIP96":
             continue
         if order not in order_list:
