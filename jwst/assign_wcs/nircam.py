@@ -462,7 +462,7 @@ def dhs(input_model, reference_files):
         # get the shift to full frame coordinates
         sub_trans = substripe_subarray_transform(input_model, regs_model, stripe)
 
-        if 0:  # sub_trans is not None:
+        if sub_trans is not None:
             sub2direct = (
                 sub_trans & Identity(1)
                 | Mapping((0, 1, 0, 1, 2, 2))

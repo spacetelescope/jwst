@@ -394,7 +394,7 @@ def stripe_read(sci_model, ref_model, attribs):
             fastsize_sci = xsize_sci
 
             # Get the reference model subarray params
-            if ref_model.meta.subarray.hasattr("xstart"):
+            if ref_model.meta.hasattr("subarray") and ref_model.meta.subarray.hasattr("xstart"):
                 faststart_ref = ref_model.meta.subarray.xstart
             else:
                 faststart_ref = 1
@@ -408,7 +408,7 @@ def stripe_read(sci_model, ref_model, attribs):
             fastsize_sci = ysize_sci
 
             # Get the reference model subarray params
-            if ref_model.meta.subarray.hasattr("ystart"):
+            if ref_model.meta.hasattr("subarray") and ref_model.meta.subarray.hasattr("ystart"):
                 faststart_ref = ref_model.meta.subarray.ystart
             else:
                 faststart_ref = 1
