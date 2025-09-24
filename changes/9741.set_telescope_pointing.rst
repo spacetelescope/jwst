@@ -1,1 +1,0 @@
-Deprecate lib.compute_va_effects and lib.compute_va_effects_vector in favor of stcal versions

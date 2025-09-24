@@ -1,1 +1,0 @@
-Included background mask used for WFSS data as extension in output datamodel.
