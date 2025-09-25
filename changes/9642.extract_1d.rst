@@ -1,1 +1,0 @@
-Simplify API for get_soss_traces and get_soss_wavemaps; refmodel is no longer required and will be retrieved from CRDS if not set

@@ -1,2 +1,0 @@
-Fixed a log message that caused a crashing error in the ``master_background_mos`` step,
-when attempting to combine one or more background spectra with no valid values.

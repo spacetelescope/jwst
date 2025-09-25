@@ -1,1 +1,0 @@
-Fix a crash for NIRISS SOSS FULL frame TSO data by skipping the ``white_light`` step if 1D extraction does not complete successfully.

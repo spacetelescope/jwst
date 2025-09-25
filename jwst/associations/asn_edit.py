@@ -1,13 +1,14 @@
 """Association edit operations."""
 
-import os.path as op
+import json
+import os
 import warnings
 from pathlib import Path
 
 from jwst.associations import Association, AssociationNotValidError
 from jwst.lib import suffix
 
-__all__ = ["AsnFileWarning", "add", "reader", "remove"]
+__all__ = ["AsnFileWarning", "add", "reader", "remove", "writer"]
 
 
 class AsnFileWarning(Warning):
@@ -165,4 +166,65 @@ def _path(filename):
         Full path including any username and environment
         variables included.
     """
-    return Path(op.expandvars(filename)).expanduser().resolve()
+    return Path(os.path.expandvars(filename)).expanduser().resolve()
+
+
+def writer(asn, output_file):
+    """
+    Write the association out to disk.
+
+    Parameters
+    ----------
+    asn : object
+        An association object
+
+    output_file : str or Path
+        The filename of the association
+
+    Raises
+    ------
+    ValueError
+        The output filename was not a json file
+    """
+    output_file = Path(output_file)
+    if output_file.suffix != ".json":
+        raise ValueError(f"Only json format supported for output: {output_file}")
+
+    serialized = json.dumps(asn, indent=4, separators=(",", ": "))
+
+    in_place = Path.exists(output_file)
+    if in_place:
+        temp_file = _rename(output_file)
+
+    try:
+        with Path.open(output_file, "w") as fd:
+            fd.write(serialized)
+    except Exception:
+        if in_place:
+            Path.rename(temp_file, output_file)
+        raise
+    if in_place:
+        Path.unlink(temp_file)
+
+
+def _rename(output_file):
+    """
+    Rename output file to prevent overwriting.
+
+    Parameters
+    ----------
+    output_file : Path
+        The filename of the association
+
+    Returns
+    -------
+    Path
+        The renamed filename Path.
+    """
+    trial = 0
+    while 1:
+        trial += 1
+        temp_file = output_file.with_name(f"{output_file.name}.sv{trial}")
+        if not Path.exists(temp_file):
+            Path.rename(output_file, temp_file)
+            return temp_file

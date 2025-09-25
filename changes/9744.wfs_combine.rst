@@ -1,1 +1,0 @@
-Replace history messages with log messages so they show during standard pipeline runs.
