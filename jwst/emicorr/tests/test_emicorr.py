@@ -386,7 +386,7 @@ def test_apply_emicorr_noiseless(data_case, algorithm, emicorr_model, readpatt):
     assert isinstance(outmdl, RampModel)
 
     # flat or linear ramp data shows no correction
-    assert np.allclose(outmdl.data, input_model.data)
+    np.testing.assert_allclose(outmdl.data, input_model.data, rtol=1e-6, atol=1e-6)
 
 
 @pytest.mark.parametrize("algorithm,accuracy", [("sequential", 0.1), ("joint", 0.0001)])
