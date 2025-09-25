@@ -407,29 +407,50 @@ class Spec3Pipeline(Pipeline):
         """
         Generate cumulative S_REGION footprint from input grism images.
 
+        Take the input S_REGION values from all input models, and combine
+        them using a polygon union to create a cumulative footprint for the output WFSS product.
+        The union is performed in pixel coordinates to avoid distortion,
+        so the WCS of the first slit
+        of the first input model is used to convert to and from sky coordinates.
+
         Parameters
         ----------
         wfss_model : `~stdatamodels.jwst.datamodels.WFSSMultiSpecModel`
             The newly generated WfssMultiExposureModel made as part of
             the save operation for spec3 processing of WFSS data.
 
-        cal_model_list : list of `~stdatamodels.jwst.datammodels.MultiSlitModel`
+        cal_model_list : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The list of input_models provided to Spec3Pipeline by the
             input association.
         """
         # WCS of any slit should be ok - internally this does a round-trip, so any offsets
         # introduced for a specific slit won't matter
         wcs = cal_model_list[0].slits[0].meta.wcs
-        input_sregions = [w.meta.wcsinfo.s_region for w in cal_model_list]
+        try:
+            input_sregions = [w.meta.wcsinfo.s_region for w in cal_model_list]
+        except AttributeError:
+            log.warning(
+                "One or more input model(s) are missing an `s_region` attribute; "
+                "output S_REGION will not be set."
+            )
+            return
 
         # Modify the det2world transform to ignore extra inputs/outputs (wavelength and order)
-        det2world = wcs.get_transform("detector", "world")
+        if "moving_target" in wcs.available_frames:
+            # This should never be hit for WFSS data but is here just in case
+            det2world = wcs.get_transform("detector", "moving_target")
+        else:
+            det2world = wcs.get_transform("detector", "world")
         mapping1 = Mapping((0, 1, 0, 1))  # last two are placeholders and don't do anything
         mapping1.inverse = Mapping((0, 1), n_inputs=4)
         mapping2 = Mapping((0, 1), n_inputs=4)
         mapping2.inverse = Mapping((0, 1, 0, 1))
         det2world = mapping1 | det2world | mapping2
 
-        sregion = combine_sregions(input_sregions, det2world)
+        try:
+            sregion = combine_sregions(input_sregions, det2world)
+        except ValueError as e:
+            log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
+            return
         log.info(f"Setting S_REGION for combined footprint to: {sregion}")
         wfss_model.spec[0].s_region = sregion

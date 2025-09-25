@@ -695,7 +695,7 @@ class ResampleImage(Resample):
         str
             The combined S_REGION.
         """
-        # get s_regions from model meta without loading the whole models into memory
+        # get s_regions from model meta without loading the whole model into memory
         sregion_list = []
         for i in range(len(self.input_models)):
             meta = self.input_models.read_metadata(i)
@@ -706,7 +706,12 @@ class ResampleImage(Resample):
         else:
             det2world = self.output_wcs.get_transform("detector", "world")
         bbox = self.output_wcs.footprint()
-        return combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
+        try:
+            output_sregion = combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
+        except ValueError as e:
+            log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
+            return
+        return output_sregion
 
 
 def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
