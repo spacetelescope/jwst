@@ -455,16 +455,16 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     return spec
 
 
-def _build_tracemodel_order(i_order, engine, spectraces, f_k, mask):
+def _build_tracemodel_order(order, engine, spectraces, f_k, mask):
     """
     Build the trace model for a specific spectral order.
 
     Parameters
     ----------
-    i_order : int
-        The spectral order index.
+    order : int
+        The spectral order.
     engine : ExtractionEngine
-        The engine used to model combined orders 1 and 2.
+        The extraction engine used to extract the spectrum.
     spectraces : _type_
         _description_
     f_k : np.ndarray
@@ -480,6 +480,7 @@ def _build_tracemodel_order(i_order, engine, spectraces, f_k, mask):
     spec_ord : SpecModel
         The SpecModel containing the extracted spectrum for the spectral order.
     """
+    i_order = np.where(np.array(engine.orders) == order)[0][0]
     # Pre-convolve the extracted flux (f_k) at the order's resolution
     # so that the convolution matrix must not be re-computed.
     flux_order = engine.kernels[i_order].dot(f_k)
@@ -491,34 +492,30 @@ def _build_tracemodel_order(i_order, engine, spectraces, f_k, mask):
     idx_valid = np.isfinite(flux_order)
     grid_order, flux_order = grid_order[idx_valid], flux_order[idx_valid]
 
-    # Spectral order
-    sp_ord = i_order + 1
-
     # Build model of the order
     # Give the identity kernel to the Engine (so no convolution)
-    kernel = [np.array([1.0])]
     args_order = {
         "wavemaps": [engine.wave_map[i_order]],
         "spec_profiles": [engine.trace_profile[i_order]],
         "throughputs": [engine.throughput_orig[i_order]],
-        "kernels": kernel,
+        "kernels": [None],
     }
     model = ExtractionEngine(
-        args_order, wave_grid=grid_order, mask_trace_profile=[mask], orders=[sp_ord]
+        args_order, wave_grid=grid_order, mask_trace_profile=[mask], orders=[order]
     )
 
     # Project on detector and save in dictionary
     tracemodel_ord = model.rebuild(flux_order, fill_value=np.nan)
 
     # Build 1d spectrum integrated over pixels
-    pixel_wave_grid, valid_cols = _get_native_grid_from_trace(spectraces, sp_ord)
+    pixel_wave_grid, valid_cols = _get_native_grid_from_trace(spectraces, order)
     spec_ord = _f_to_spec(
         flux_order,
         grid_order,
         args_order,
         pixel_wave_grid,
         np.all(mask, axis=0)[valid_cols],
-        sp_ord,
+        order,
     )
 
     return tracemodel_ord, spec_ord
@@ -559,10 +556,13 @@ def _build_null_spec_table(wave_grid, order):
     return spec
 
 
-def _do_tiktests(engine, scidata_bkg, scierr, estimate, spectraces, global_mask):
+def _do_tiktests(
+    engine, scidata_bkg, scierr, guess_factor, spectraces, global_mask, order_list=None
+):
+    if order_list is None:
+        order_list = [1, 2]
     # Find the tikhonov factor.
     # Initial pass 8 orders of magnitude with 10 grid points.
-    guess_factor = engine.estimate_tikho_factors(estimate)
     log_guess = np.log10(guess_factor)
     factors = np.logspace(log_guess - 4, log_guess + 4, 10)
     all_tests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
@@ -577,12 +577,11 @@ def _do_tiktests(engine, scidata_bkg, scierr, estimate, spectraces, global_mask)
 
     # Save spectra in a list of SingleSpecModels for optional output
     spec_list = []
-    for order in [1, 2]:
+    for order in order_list:
         for idx in range(len(all_tests["factors"])):
             f_k = all_tests["solution"][idx, :]
-            _, spec_ord = _build_tracemodel_order(order - 1, engine, spectraces, f_k, global_mask)
+            _, spec_ord = _build_tracemodel_order(order, engine, spectraces, f_k, global_mask)
             _populate_tikho_attr(spec_ord, all_tests, idx, order)
-            spec_ord.meta.soss_extract1d.color_range = "RED"
             spec_list.append(spec_ord)
     return tikfac, spec_list
 
@@ -633,8 +632,8 @@ def _model_single_order(
     mask_rebuild,
     order,
     wave_grid,
-    valid_cols,
-    tikfac_log_range,
+    tikfac,
+    do_tiktests=False,
     save_tiktests=False,
 ):
     """
@@ -665,12 +664,13 @@ def _model_single_order(
         The spectral order to be extracted.
     wave_grid : np.array
         The wavelength grid used to model the data.
-    valid_cols : np.array
-        The columns of the detector that are valid for extraction.
-    tikfac_log_range : list
-        The range of Tikhonov factors to test, in log space.
+    tikfac : float
+        The Tikhonov factor to use. If do_tiktests is True, the best factor will be
+        determined by testing a range of factors around this value; otherwise, it will be taken
+        to be the best value.
     save_tiktests : bool, optional
         If True, save the intermediate models and spectra for each Tikhonov factor tested.
+        Has no effect if do_tiktests is False. Default is False.
 
     Returns
     -------
@@ -696,9 +696,8 @@ def _model_single_order(
     def throughput(wavelength):
         return np.ones_like(wavelength)
 
-    kernel = np.array([1.0])
     ref_file_args["throughputs"] = [throughput]
-    ref_file_args["kernels"] = [kernel]
+    ref_file_args["kernels"] = [None]
 
     # Define wavelength grid with oversampling of 3 (should be enough)
     wave_grid_os = oversample_grid(wave_grid, n_os=3)
@@ -712,58 +711,25 @@ def _model_single_order(
     )
 
     # Find the tikhonov factor.
-    # Initial pass with tikfac_range.
-    factors = np.logspace(tikfac_log_range[0], tikfac_log_range[-1], 10)
-    all_tests = engine.get_tikho_tests(factors, data_order, err_order)
-    tikfac = engine.best_tikho_factor(tests=all_tests, fit_mode="all")
+    if do_tiktests:
+        tikfac, spec_list = _do_tiktests(
+            engine,
+            data_order,
+            err_order,
+            tikfac,
+            ref_file_args["spectraces"],
+            mask_rebuild,
+            order_list=[order],
+        )
+        if not save_tiktests:
+            spec_list = []
+    else:
+        spec_list = []
 
-    # Refine across 4 orders of magnitude.
-    tikfac = np.log10(tikfac)
-    factors = np.logspace(tikfac - 2, tikfac + 2, 20)
-    tiktests = engine.get_tikho_tests(factors, data_order, err_order)
-    tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
-    all_tests = _append_tiktests(all_tests, tiktests)
-
-    # Run the extract method of the Engine.
+    # Use the best Tikhonov factor to build the final model and spectrum
     f_k_final = engine(data_order, err_order, tikhonov=True, factor=tikfac)
-
-    # Save binned spectra in a list of SingleSpecModels for optional output
-    spec_list = []
-    if save_tiktests:
-        for idx in range(len(all_tests["factors"])):
-            f_k = all_tests["solution"][idx, :]
-
-            # Build 1d spectrum integrated over pixels
-            spec_ord = _f_to_spec(
-                f_k,
-                wave_grid_os,
-                ref_file_args,
-                wave_grid,
-                np.all(mask_rebuild, axis=0)[valid_cols],
-                order,
-            )
-            _populate_tikho_attr(spec_ord, all_tests, idx, order)
-
-            # Add the result to spec_list
-            spec_list.append(spec_ord)
-
-    # Rebuild trace, including bad pixels
-    engine = ExtractionEngine(
-        ref_file_args,
-        wave_grid=wave_grid_os,
-        mask_trace_profile=[mask_rebuild],
-        orders=[order],
-    )
-    model = engine.rebuild(f_k_final, fill_value=np.nan)
-
-    # Build 1d spectrum integrated over pixels
-    spec_ord = _f_to_spec(
-        f_k_final,
-        wave_grid_os,
-        ref_file_args,
-        wave_grid,
-        np.all(mask_rebuild, axis=0)[valid_cols],
-        order,
+    model, spec_ord = _build_tracemodel_order(
+        order, engine, ref_file_args["spectraces"], f_k_final, mask_rebuild
     )
     spec_ord.meta.soss_extract1d.factor = tikfac
     spec_ord.meta.soss_extract1d.type = "OBSERVATION"
@@ -899,14 +865,18 @@ class Integration:
         if tikfac is None:
             log.info("Solving for the optimal Tikhonov factor.")
             save_tiktests = True
+            guess_factor = engine.estimate_tikho_factors(estimate)
             tikfac, spec_list = _do_tiktests(
                 engine,
                 self.scidata_bkg,
                 self.scierr,
-                estimate,
+                guess_factor,
                 self.spectraces,
                 global_mask,
+                order_list=[1, 2],
             )
+            for spec in spec_list:
+                spec.meta.soss_extract1d.color_range = "RED"
 
         else:
             save_tiktests = False
@@ -930,7 +900,7 @@ class Integration:
             log.debug(f"Building the model image of {order}.")
 
             tracemodel_ord, spec_ord = _build_tracemodel_order(
-                i_order, engine, self.spectraces, f_k, global_mask
+                order, engine, self.spectraces, f_k, global_mask
             )
             spec_ord.meta.soss_extract1d.factor = tikfac
             spec_ord.meta.soss_extract1d.color_range = "RED"
@@ -968,6 +938,7 @@ class Integration:
                 "spec_profiles": [self.spec_profiles[idx_order]],
                 "throughputs": [self.throughputs[idx_order]],
                 "kernels": [self.kernels[idx_order]],
+                "spectraces": self.spectraces,
             }
 
             # Mask for the fit. All valid pixels inside box aperture
@@ -985,9 +956,6 @@ class Integration:
                     valid_cols[is_in_wv_range],
                 )
 
-            # Range of initial tikhonov factors
-            tikfac_log_range = np.log10(tikfac) + np.array([-2, 8])
-
             # Model with atoca
             try:
                 model, spec_ord = _model_single_order(
@@ -998,8 +966,8 @@ class Integration:
                     global_mask,
                     order,
                     pixel_wave_grid,
-                    valid_cols,
-                    tikfac_log_range,
+                    tikfac,
+                    do_tiktests=True,
                     save_tiktests=save_tiktests,
                 )
 
