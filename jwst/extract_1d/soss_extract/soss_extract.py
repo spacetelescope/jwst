@@ -1222,11 +1222,12 @@ def _process_one_integration(
         tracemodels, tikfac, _, wave_grid, atoca_list = result
 
         # Add atoca spectra to multispec for output
-        for spec in atoca_list:
+        for i, spec in enumerate(atoca_list):
             # If it was a test, not the best spectrum,
             # int_num is already set to 0.
-            if not hasattr(spec, "int_num") and int_num is not None:
+            if not spec.hasattr("int_num") and int_num is not None:
                 spec.int_num = int_num
+            atoca_list[i] = spec
     else:
         # Return empty tracemodels
         tracemodels = {}
@@ -1444,7 +1445,6 @@ def run_extract1d(
         int_num=0,
     )
     for atoca_spec in atoca_list:
-        # this is a ListNode so can't just do +=
         output_atoca.spec.append(atoca_spec)
 
     # Loop over images.
