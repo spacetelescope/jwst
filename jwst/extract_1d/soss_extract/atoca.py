@@ -116,6 +116,7 @@ class ExtractionEngine:
         # Set the attributes and ensure everything has correct dtype
         self.wave_map = np.array(ref_file_args["wavemaps"]).astype(self.dtype)
         self.trace_profile = np.array(ref_file_args["spec_profiles"]).astype(self.dtype)
+        self.throughput_orig = ref_file_args["throughputs"]
         self.mask_trace_profile = np.array(mask_trace_profile).astype(bool)
         self.threshold = threshold
         self.data_shape = self.wave_map[0].shape
