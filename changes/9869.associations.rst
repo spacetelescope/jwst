@@ -1,1 +1,0 @@
-Restore ``asn_edit.writer`` to write associations to disk, removed in 1.19.0.

@@ -1,1 +1,0 @@
-Fixed a crash for an edge case in pixel replacement: a bad pixel with no valid adjacent data.
