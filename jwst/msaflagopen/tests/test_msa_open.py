@@ -127,10 +127,10 @@ def test_wcs_to_dq():
 
 
 def test_boundingbox_from_indices():
-    dm = ImageModel((10, 10))
+    data_shape = (10, 10)
     bbox = ((1, 2), (3, 4))
 
-    result = boundingbox_to_indices(dm, bbox)
+    result = boundingbox_to_indices(data_shape, bbox)
 
     assert result == (1, 3, 3, 5)
 
