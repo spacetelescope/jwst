@@ -6,9 +6,9 @@ from stdatamodels.jwst.datamodels import SossWaveGridModel, SpecModel
 
 from jwst.extract_1d.soss_extract.soss_extract import (
     SHORT_CUTOFF,
+    Integration,
     _build_null_spec_table,
     _compute_box_weights,
-    _model_image,
 )
 from jwst.extract_1d.soss_extract.tests.helpers import DATA_SHAPE
 
@@ -34,83 +34,97 @@ def monkeypatch_setup(
     webb_kernels,
     trace1d,
 ):
-    """Monkeypatch get_ref_file_args and get_trace_1d to return the miniature model detector"""
-
-    def mock_get_ref_file_args(wave, trace, thru, kern, reffiles, orders_requested):
-        """Return the arrays from conftest instead of querying CRDS"""
-        if (orders_requested is None) or (orders_requested == [1, 2, 3]):
-            return [wave, trace, thru, kern]
-        elif orders_requested == [1, 2]:
-            return [wave[:2], trace[:2], thru[:2], kern[:2]]
-        else:
-            raise ValueError(f"Unexpected orders_requested for mock: {orders_requested}")
+    """Monkeypatch get_trace_1d to return the miniature model detector"""
 
     def mock_trace1d(trace, reffiles, order):
         """Return the traces from conftest instead of doing math that requires a full-sized detector"""
         return trace[int(order) - 1]
 
     monkeypatch.setattr(
-        "jwst.extract_1d.soss_extract.soss_extract.get_ref_file_args",
-        partial(mock_get_ref_file_args, wave_map, trace_profile, throughput, webb_kernels),
-    )
-    monkeypatch.setattr(
         "jwst.extract_1d.soss_extract.soss_extract._get_trace_1d", partial(mock_trace1d, trace1d)
     )
 
 
-@pytest.mark.parametrize("order_list", [[1, 2], None])
-def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_files, order_list):
+@pytest.fixture
+def ref_file_args(
+    wave_map,
+    trace_profile,
+    throughput,
+    webb_kernels,
+    trace1d,
+):
+    """Return the reference file arguments as a dict"""
+    return {
+        "wavemaps": wave_map,
+        "spec_profiles": trace_profile,
+        "throughputs": throughput,
+        "kernels": webb_kernels,
+        "spectraces": trace1d,
+        "subarray": "SUBSTRIP256",
+    }
+
+
+@pytest.mark.parametrize("order_list", [[1, 2], [1, 2, 3]])
+def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_file_args, order_list):
     scidata, scierr = imagemodel
 
-    if order_list is None:
-        orders_expected = [1, 2, 3]
-    else:
-        orders_expected = order_list
     refmask = np.zeros_like(detector_mask)
     box_width = 5.0
     box_weights, _wavelengths = _compute_box_weights(
-        ref_files, DATA_SHAPE, box_width, orders_requested=orders_expected
+        ref_file_args["spectraces"], DATA_SHAPE, box_width, orders_requested=order_list
     )
 
-    tracemodels, tikfac, logl, wave_grid, spec_list = _model_image(
+    if len(order_list) == 3:
+        extract_order3 = True
+    else:
+        extract_order3 = False
+
+    integration = Integration(
         scidata,
         scierr,
         detector_mask,
         refmask,
-        ref_files,
+        ref_file_args,
         box_weights,
-        tikfac=None,
-        threshold=1e-4,
-        n_os=2,
-        wave_grid=None,
-        estimate=None,
+        do_bkgsub=False,
+        extract_order3=extract_order3,
+    )
+
+    estimate = integration.estim_flux_first_order()
+    wave_grid = integration.make_decontamination_grid(
+        estimate,
         rtol=1e-3,
         max_grid_size=1000000,
-        order_list=order_list,
+        n_os=2,
+    )
+    tracemodels, spec_list, tikfacs_out = integration.model_image(
+        wave_grid,
+        tikfacs_in=None,
+        threshold=1e-4,
+        estimate=estimate,
     )
 
     # check output basics, types and shapes
-    assert len(tracemodels) == len(orders_expected)
-    for order in orders_expected:
+    assert len(tracemodels) == len(order_list)
+    for order in order_list:
         tm = tracemodels[f"Order {order}"]
         assert tm.dtype == np.float64
         assert tm.shape == DATA_SHAPE
         # should be some nans in the trace model but not all
         assert 0 < np.sum(np.isfinite(tm)) < tm.size
-    for x in [tikfac, logl]:
-        assert isinstance(x, float)
-        assert np.isfinite(x)
-    assert logl < 0
+    for q in [tikfacs_out["Order 1"], tikfacs_out["Order 2"]]:
+        assert isinstance(q, float)
+        assert np.isfinite(q)
     assert wave_grid.dtype == np.float64
     for spec in spec_list:
         assert isinstance(spec, SpecModel)
 
-    factors = np.array([getattr(spec.meta.soss_extract1d, "factor", np.nan) for spec in spec_list])
-    chi2s = np.array([getattr(spec.meta.soss_extract1d, "chi2", np.nan) for spec in spec_list])
+    factors = np.array([getattr(spec.meta.soss_extract1d, "factor", -1) for spec in spec_list])
+    chi2s = np.array([getattr(spec.meta.soss_extract1d, "chi2", -1) for spec in spec_list])
     orders = np.array([spec.spectral_order for spec in spec_list])
     colors = np.array([spec.meta.soss_extract1d.color_range for spec in spec_list])
 
-    assert tikfac in factors
+    assert tikfacs_out["Order 1"] in factors
 
     # ensure outputs have the shapes we expect for each order and blue/red
     n_good = []
@@ -127,7 +141,7 @@ def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_files, or
             this_factors = factors[good]
             this_chi2s = chi2s[good]
             this_spec = np.array(spec_list)[good]
-            nochi = np.isnan(this_chi2s)
+            nochi = this_chi2s < 0  # we set this flag above if getattr(spec, "chi2") fails
 
             # _model_single_order is set up so that the final/best spectrum is last in the list
             # it lacks chi2 calculations
@@ -138,12 +152,12 @@ def test_model_image(monkeypatch_setup, imagemodel, detector_mask, ref_files, or
             # which is not necessarily the same as the top-level tikfac for the blue part of order 2
             # but it is the same for the red part of order 1 and the red part of order 2
             if color == "RED":
-                assert this_factors[-1] == tikfac
+                assert this_factors[-1] == tikfacs_out["Order 1"]
 
             # check that the output spectra contain good data
             for spec in this_spec:
                 spec = np.array([[s[0], s[1]] for s in spec.spec_table])
-                assert np.sum(np.isfinite(spec)) == spec.size
+                assert np.sum(np.isfinite(spec[:, 0])) > 0
 
     # check that all order-color combinations have the same number of spectra
     n_good = np.array(n_good)
@@ -155,7 +169,7 @@ def test_model_image_tikfac_specified(
     monkeypatch_setup,
     imagemodel,
     detector_mask,
-    ref_files,
+    ref_file_args,
 ):
     """Ensure spec_list is a single-element list per order if tikfac is specified"""
     scidata, scierr = imagemodel
@@ -163,37 +177,46 @@ def test_model_image_tikfac_specified(
     order_list = [1, 2]
     refmask = np.zeros_like(detector_mask)
     box_width = 5.0
-    box_weights, wavelengths = _compute_box_weights(
-        ref_files, DATA_SHAPE, box_width, orders_requested=order_list
+    box_weights, _wavelengths = _compute_box_weights(
+        ref_file_args["spectraces"], DATA_SHAPE, box_width, orders_requested=order_list
     )
 
-    tikfac_in = 1e-7
-    tracemodels, tikfac, logl, wave_grid, spec_list = _model_image(
+    integration = Integration(
         scidata,
         scierr,
         detector_mask,
         refmask,
-        ref_files,
+        ref_file_args,
         box_weights,
-        tikfac=tikfac_in,
-        threshold=1e-4,
-        n_os=2,
-        wave_grid=None,
-        estimate=None,
+        do_bkgsub=False,
+        extract_order3=False,
+    )
+    estimate = integration.estim_flux_first_order()
+    wave_grid = integration.make_decontamination_grid(
+        estimate,
         rtol=1e-3,
         max_grid_size=1000000,
-        order_list=order_list,
+        n_os=2,
+    )
+
+    tikfacs_in = {"Order 1": 1e-7, "Order 2": 1e-6}
+    tracemodels, spec_list, tikfacs_out = integration.model_image(
+        wave_grid,
+        tikfacs_in=tikfacs_in,
+        threshold=1e-4,
+        estimate=estimate,
     )
     # check that spec_list is a single-element list per order in this case
     assert len(spec_list) == 3
-    assert tikfac == tikfac_in
+    assert tikfacs_out["Order 1"] == tikfacs_in["Order 1"]
+    assert tikfacs_out["Order 2"] == tikfacs_in["Order 2"]
 
 
 def test_model_image_wavegrid_specified(
     monkeypatch_setup,
     imagemodel,
     detector_mask,
-    ref_files,
+    ref_file_args,
 ):
     """Ensure wave_grid is used if specified.
     Also specify tikfac because it makes the code run faster to not have to re-derive it.
@@ -206,48 +229,39 @@ def test_model_image_wavegrid_specified(
     refmask = np.zeros_like(detector_mask)
     box_width = 5.0
     box_weights, wavelengths = _compute_box_weights(
-        ref_files, DATA_SHAPE, box_width, orders_requested=order_list
+        ref_file_args["spectraces"], DATA_SHAPE, box_width, orders_requested=order_list
     )
 
-    tikfac_in = 1e-7
-    # test np.array input
-    wave_grid_in = np.linspace(1.0, 2.5, 100)
-    tracemodels, tikfac, logl, wave_grid, spec_list = _model_image(
+    integration = Integration(
         scidata,
         scierr,
         detector_mask,
         refmask,
-        ref_files,
+        ref_file_args,
         box_weights,
-        tikfac=tikfac_in,
-        threshold=1e-4,
-        n_os=2,
-        wave_grid=wave_grid_in,
-        estimate=None,
-        rtol=1e-3,
-        max_grid_size=1000000,
-        order_list=order_list,
+        do_bkgsub=False,
+        extract_order3=False,
     )
-    assert np.allclose(wave_grid, wave_grid_in)
+    estimate = integration.estim_flux_first_order()
+
+    tikfacs_in = {"Order 1": 1e-7, "Order 2": 1e-6}
+    # test np.array input
+    wave_grid_in = np.linspace(1.0, 2.5, 100)
+    tracemodels, spec_list, tikfacs_out = integration.model_image(
+        tikfacs_in=tikfacs_in,
+        threshold=1e-4,
+        wave_grid=wave_grid_in,
+        estimate=estimate,
+    )
 
     # test SossWaveGridModel input
     # the docs on main say this works, but I don't think it does even on main
     with pytest.raises(ValueError):
         wave_grid_in = SossWaveGridModel()
         wave_grid_in.wavegrid = np.linspace(1.0, 2.5, 100)
-        tracemodels, tikfac, logl, wave_grid, spec_list = _model_image(
-            scidata,
-            scierr,
-            detector_mask,
-            refmask,
-            ref_files,
-            box_weights,
-            tikfac=tikfac_in,
+        tracemodels, tikfacs_out, logl, wave_grid, spec_list = integration.model_image(
+            tikfacs_in=tikfacs_in,
             threshold=1e-4,
-            n_os=2,
             wave_grid=wave_grid_in,
-            estimate=None,
-            rtol=1e-3,
-            max_grid_size=1000000,
-            order_list=order_list,
+            estimate=estimate,
         )

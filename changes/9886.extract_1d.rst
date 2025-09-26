@@ -1,0 +1,1 @@
+Refactor soss extraction to compute reference wavelength maps only once, instead of every integration
