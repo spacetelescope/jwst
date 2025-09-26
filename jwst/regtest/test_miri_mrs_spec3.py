@@ -6,6 +6,7 @@ import pytest
 
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
+from jwst.tests.helpers import _help_pytest_warns
 
 # Define artifactory source and truth
 TRUTH_PATH = "truth/test_miri_mrs"
@@ -72,7 +73,7 @@ def run_spec3_ifushort_emsm(rtdata_module):
         '--steps.cube_build.output_file="miri_mrs_emsm"',
         "--steps.extract_1d.save_results=true",
     ]
-    with pytest.warns(Warning, match="Sources were found, but none pass"):
+    with _help_pytest_warns(), pytest.warns(Warning, match="Sources were found, but none pass"):
         Step.from_cmdline(args)
     return rtdata
 
