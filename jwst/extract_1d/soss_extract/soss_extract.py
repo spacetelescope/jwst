@@ -1314,10 +1314,11 @@ def run_extract1d(
         order_list = [1, 2, 3]
     else:
         # order 3 is not supported for substrip96
-        soss_kwargs["order_3"] = False
         order_list = [1, 2]
     refmodel_orders = [int(trace.spectral_order) for trace in pastasoss_ref.traces]
     order_list = _verify_requested_orders(order_list, refmodel_orders)
+    if len(order_list) < 3:
+        soss_kwargs["order_3"] = False
 
     ref_files = {}
     ref_files["pastasoss"] = pastasoss_ref
