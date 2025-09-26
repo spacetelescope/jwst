@@ -183,63 +183,6 @@ def _get_trace_1d(spectraces, order):
     return xtrace, ytrace, wavetrace
 
 
-def _estim_flux_first_order(
-    scidata_bkg, scierr, scimask, wave_maps, spat_pros, thrpts, mask_trace_profile, threshold=1e-4
-):
-    """
-    Roughly estimate the underlying flux of the target spectrum.
-
-    This is done by simply masking out order 2 and retrieving the flux from order 1.
-
-    Parameters
-    ----------
-    scidata_bkg : array
-        A single background subtracted NIRISS SOSS detector image.
-    scierr : array
-        The uncertainties corresponding to the detector image.
-    scimask : array
-        Pixel mask to apply to the detector image.
-    wave_maps : list[array]
-        The wavelength maps for each spectral order.
-    spat_pros : list[array]
-        The spatial profiles for each spectral order.
-    thrpts : list[func]
-        The throughput functions for each spectral order.
-    mask_trace_profile : array[bool]
-        Mask determining the aperture used for extraction.
-        Set to False where the pixel should be extracted.
-    threshold : float, optional:
-        The pixels with an aperture[order 2] > `threshold` are considered contaminated
-        and will be masked. Default is 1e-4.
-
-    Returns
-    -------
-    func
-        A spline estimator that provides the underlying flux as a function of wavelength
-    """
-    # Define wavelength grid based on order 1 only (so first index)
-    wave_grid = grid_from_map_with_extrapolation(wave_maps[0], spat_pros[0], n_os=1)
-
-    # Mask parts contaminated by order 2 based on its spatial profile
-    mask = (spat_pros[1] >= threshold) | mask_trace_profile[0]
-
-    # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
-    args = {
-        "wavemaps": [wave_maps[0]],
-        "spec_profiles": [spat_pros[0]],
-        "throughputs": [thrpts[0]],
-        "kernels": [None],
-    }
-    engine = ExtractionEngine(args, wave_grid, [mask], global_mask=scimask, orders=[1])
-
-    # Extract estimate
-    spec_estimate = engine(scidata_bkg, scierr)
-
-    # Interpolate
-    idx = np.isfinite(spec_estimate)
-    return UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
-
-
 def _get_native_grid_from_trace(spectraces, spectral_order):
     """
     Make a 1d-grid of the pixels boundary based on the wavelength solution.
@@ -312,73 +255,6 @@ def _get_grid_from_trace(spectraces, spectral_order, n_os):
 
     # Oversample as needed
     return oversample_grid(wave_grid, n_os=n_os)
-
-
-def _make_decontamination_grid(spectraces, rtol, max_grid_size, estimate, n_os):
-    """
-    Create the grid to use for the simultaneous extraction of order 1 and 2.
-
-    The grid is made by:
-    1) requiring that it satisfies the oversampling n_os
-    2) trying to reach the specified tolerance for the spectral range shared between order 1 and 2
-    3) trying to reach the specified tolerance in the rest of spectral range
-    The max_grid_size overrules steps 2) and 3), so the precision may not be reached if
-    the grid size needed is too large.
-
-    Parameters
-    ----------
-    spectraces : list[np.ndarray]
-        The list of spectral traces from the pastasoss reference file, one per spectral order.
-    rtol : float
-        The relative tolerance needed on a pixel model.
-    max_grid_size : int
-        Maximum grid size allowed.
-    estimate : UnivariateSpline
-        Estimate of the target flux as a function of wavelength in microns.
-    n_os : int
-        The oversampling factor of the wavelength grid used when solving for
-        the uncontaminated flux.
-
-    Returns
-    -------
-    wave_grid : 1d array
-        The grid of the pixels boundaries at the native sampling.
-    """
-    # Build native grid for each  orders.
-    spectral_orders = [2, 1]
-    grids_ord = {}
-    for sp_ord in spectral_orders:
-        grids_ord[sp_ord] = _get_grid_from_trace(spectraces, sp_ord, n_os=n_os)
-
-    # Build the list of grids given to make_combined_grid.
-    # It must be ordered in increasing priority.
-    # 1rst priority: shared wavelengths with order 1 and 2.
-    # 2nd priority: remaining red part of order 1
-    # 3rd priority: remaining blue part of order 2
-    # So, split order 2 in 2 parts, the shared wavelength and the bluemost part
-    is_shared = grids_ord[2] >= np.min(grids_ord[1])
-    # Make sure order 1 is not more in the blue than order 2
-    cond = grids_ord[1] > np.min(grids_ord[2][is_shared])
-    grids_ord[1] = grids_ord[1][cond]
-    # And make grid list
-    all_grids = [grids_ord[2][is_shared], grids_ord[1], grids_ord[2][~is_shared]]
-
-    # Cut order 2 at 0.77 (not smaller than that)
-    # because there is no contamination there. Can be extracted afterward.
-    # In the red, no cut.
-    wv_range = [ORDER2_SEPARATION_CUTOFF[0], np.max(grids_ord[1])]
-
-    # Finally, build the list of corresponding estimates.
-    # The estimate for the overlapping part is the order 1 estimate.
-    # There is no estimate yet for the blue part of order 2, so give a flat spectrum.
-    def flat_fct(wv):
-        return np.ones_like(wv)
-
-    all_estimates = [estimate, estimate, flat_fct]
-
-    # Generate the combined grid
-    kwargs = {"rtol": rtol, "max_total_size": max_grid_size, "max_iter": 30}
-    return make_combined_adaptive_grid(all_grids, all_estimates, wv_range, **kwargs)
 
 
 def _append_tiktests(test_a, test_b):
@@ -557,7 +433,14 @@ def _build_null_spec_table(wave_grid, order):
 
 
 def _do_tiktests(
-    engine, scidata_bkg, scierr, guess_factor, spectraces, global_mask, order_list=None
+    engine,
+    scidata_bkg,
+    scierr,
+    guess_factor,
+    spectraces,
+    global_mask,
+    order_list=None,
+    save_tiktests=True,
 ):
     if order_list is None:
         order_list = [1, 2]
@@ -573,16 +456,22 @@ def _do_tiktests(
     factors = np.logspace(tikfac - 2, tikfac + 2, 20)
     tiktests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
     tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
-    all_tests = _append_tiktests(all_tests, tiktests)
 
-    # Save spectra in a list of SingleSpecModels for optional output
     spec_list = []
-    for order in order_list:
-        for idx in range(len(all_tests["factors"])):
-            f_k = all_tests["solution"][idx, :]
-            _, spec_ord = _build_tracemodel_order(order, engine, spectraces, f_k, global_mask)
-            _populate_tikho_attr(spec_ord, all_tests, idx, order)
-            spec_list.append(spec_ord)
+    if save_tiktests:
+        # Save spectra in a list of SingleSpecModels for optional output
+        all_tests = _append_tiktests(all_tests, tiktests)
+        for order in order_list:
+            for idx in range(len(all_tests["factors"])):
+                f_k = all_tests["solution"][idx, :]
+                if np.all(~np.isfinite(f_k)):
+                    spec_ord = _build_null_spec_table(engine.wave_grid, order)
+                else:
+                    _, spec_ord = _build_tracemodel_order(
+                        order, engine, spectraces, f_k, global_mask
+                    )
+                _populate_tikho_attr(spec_ord, all_tests, idx, order)
+                spec_list.append(spec_ord)
     return tikfac, spec_list
 
 
@@ -668,6 +557,9 @@ def _model_single_order(
         The Tikhonov factor to use. If do_tiktests is True, the best factor will be
         determined by testing a range of factors around this value; otherwise, it will be taken
         to be the best value.
+    do_tiktests : bool, optional
+        If True, test a range of Tikhonov factors to determine the best value.
+        Default is False.
     save_tiktests : bool, optional
         If True, save the intermediate models and spectra for each Tikhonov factor tested.
         Has no effect if do_tiktests is False. Default is False.
@@ -720,9 +612,8 @@ def _model_single_order(
             ref_file_args["spectraces"],
             mask_rebuild,
             order_list=[order],
+            save_tiktests=save_tiktests,
         )
-        if not save_tiktests:
-            spec_list = []
     else:
         spec_list = []
 
@@ -775,8 +666,15 @@ class Integration:
         self.kernels = ref_file_args["kernels"]
         self.subarray = ref_file_args["subarray"]
 
+        # Define mask based on box aperture
+        # (we want to model each contaminated pixels that will be extracted)
+        self.mask_trace_profile = [
+            (~(self.box_weights[self.order_strs[i]] > 0)) | (self.refmask)
+            for i in self.order_indices
+        ]
+
     def _subtract_bkg(self, do_bkgsub):
-        # Perform background correction.
+        # Perform background correction if requested
         if do_bkgsub:
             log.info("Applying background subtraction.")
             bkg_mask = make_background_mask(self.scidata, width=40)
@@ -798,53 +696,68 @@ class Integration:
             self.scimask |= not_finite
             self.refmask &= ~not_finite
 
+        # Some error values are 0, we need to mask those pixels for the extraction engine.
+        self.scimask = self.scimask | ~(self.scierr > 0)
+
     def model_image(
         self,
-        wave_grid=None,
+        wave_grid,
         estimate=None,
-        tikfac=None,
-        rtol=1e-4,
-        n_os=2,
-        max_grid_size=20000,
+        tikfacs_in=None,
         threshold=1e-2,
     ):
-        # Some error values are 0, we need to mask those pixels for the extraction engine.
-        scimask = self.scimask | ~(self.scierr > 0)
+        """
+        Extract the uncontaminated spectra of using the ATOCA algorithm.
 
-        # Define mask based on box aperture
-        # (we want to model each contaminated pixels that will be extracted)
-        mask_trace_profile = [
-            (~(self.box_weights[self.order_strs[i]] > 0)) | (self.refmask)
-            for i in self.order_indices
-        ]
+        Add description here.
+
+        Parameters
+        ----------
+        wave_grid : np.array
+            The wavelength grid to use for the simultaneous extraction of orders 1 and 2.
+        estimate : func, optional
+            An estimate of the target flux as a function of wavelength in microns.
+            This is used to generate the wavelength grid if wave_grid is None,
+            and to estimate the Tikhonov factor if not provided in tikfacs_in.
+            If wave_grid is given and the Tikhonov factor for order 1 is provided
+            in tikfacs_in, this is not needed. If either are not provided, this must be given.
+        tikfacs_in : dict, optional
+            A dictionary with keys "Order 1", "Order 2", and "Order 3" and values
+            giving the Tikhonov factor to use for each order. If None (default), the Tikhonov factor
+            that minimizes the chi-squared for each order will be determined via a grid search.
+        threshold : float, optional
+            The threshold (between 0 and 1) for determining which pixels to include in the
+            extraction. Pixels with a normalized flux contribution from the spectral trace
+            above this threshold will be included. Default is 1e-2.
+
+        Returns
+        -------
+        tracemodels : dict
+            A dictionary with keys "Order 1", "Order 2", and "Order 3" (if extracted)
+            and values giving the modeled detector image for each order.
+        spec_list : list of SpecModel
+            A list of the extracted spectra for each order. If the Tikhonov factor
+            was determined via a grid search, this will include the intermediate spectra
+            for each factor tested, with the best-fitting spectrum last in the list.
+        tikfacs_out : dict
+            A dictionary with keys "Order 1", "Order 2", and "Order 3" (if extracted)
+            and values giving the Tikhonov factor used for each order.
+        """
+        if tikfacs_in is None:
+            tikfacs_in = {"Order 1": None, "Order 2": None, "Order 3": None}
+        tikfacs_out = {"Order 1": None, "Order 2": None, "Order 3": None}
+
+        # Check that the inputs are valid
+        if (estimate is None) and (tikfacs_in["Order 1"] is None):
+            msg = (
+                "If the Tikhonov factor for Order 1 is not given, "
+                "an estimate of the target flux as a function of wavelength must be provided."
+            )
+            log.error(msg)
+            raise ValueError(msg)
 
         # Define mask of pixel to model (all pixels inside box aperture)
-        global_mask = np.all(mask_trace_profile, axis=0).astype(bool)
-
-        # Rough estimate of the underlying flux
-        if (tikfac is None or wave_grid is None) and estimate is None:
-            estimate = _estim_flux_first_order(
-                self.scidata_bkg,
-                self.scierr,
-                scimask,
-                self.wavemaps,
-                self.spec_profiles,
-                self.throughputs,
-                mask_trace_profile,
-            )
-
-        # Generate grid based on estimate if not given
-        if wave_grid is None:
-            log.info(f"wave_grid not given: generating grid based on rtol={rtol}")
-            wave_grid = _make_decontamination_grid(
-                self.spectraces, rtol, max_grid_size, estimate, n_os
-            )
-            log.debug(
-                f"wave_grid covering from {wave_grid.min()} to {wave_grid.max()}"
-                f" with {wave_grid.size} points"
-            )
-        else:
-            log.info("Using previously computed or user specified wavelength grid.")
+        global_mask = np.all(self.mask_trace_profile, axis=0).astype(bool)
 
         # Initialize the Engine for combined extraction of orders 1 and 2
         args_orders_12 = {
@@ -856,13 +769,14 @@ class Integration:
         engine = ExtractionEngine(
             args_orders_12,
             wave_grid=wave_grid,
-            mask_trace_profile=mask_trace_profile[:2],
-            global_mask=scimask,
+            mask_trace_profile=self.mask_trace_profile[:2],
+            global_mask=self.scimask,
             threshold=threshold,
             orders=[1, 2],
         )
 
-        if tikfac is None:
+        # Find the tikhonov factor for order 1 (and contaminated part of order 2)
+        if tikfacs_in["Order 1"] is None:
             log.info("Solving for the optimal Tikhonov factor.")
             save_tiktests = True
             guess_factor = engine.estimate_tikho_factors(estimate)
@@ -874,18 +788,20 @@ class Integration:
                 self.spectraces,
                 global_mask,
                 order_list=[1, 2],
+                save_tiktests=save_tiktests,
             )
+            tikfacs_out["Order 1"] = tikfac
             for spec in spec_list:
                 spec.meta.soss_extract1d.color_range = "RED"
-
         else:
             save_tiktests = False
             spec_list = []
+            tikfacs_out["Order 1"] = tikfacs_in["Order 1"]
 
-        log.info(f"Using a Tikhonov factor of {tikfac}")
+        log.info(f"Using a Tikhonov factor of {tikfacs_out['Order 1']}")
 
         # Run the extract method of the Engine.
-        f_k = engine(self.scidata_bkg, self.scierr, tikhonov=True, factor=tikfac)
+        f_k = engine(self.scidata_bkg, self.scierr, tikhonov=True, factor=tikfacs_out["Order 1"])
 
         # Compute the log-likelihood of the best fit.
         logl = engine.compute_likelihood(f_k, self.scidata_bkg, self.scierr)
@@ -902,7 +818,7 @@ class Integration:
             tracemodel_ord, spec_ord = _build_tracemodel_order(
                 order, engine, self.spectraces, f_k, global_mask
             )
-            spec_ord.meta.soss_extract1d.factor = tikfac
+            spec_ord.meta.soss_extract1d.factor = tikfacs_out["Order 1"]
             spec_ord.meta.soss_extract1d.color_range = "RED"
             spec_ord.meta.soss_extract1d.type = "OBSERVATION"
 
@@ -932,6 +848,15 @@ class Integration:
             order_str = self.order_strs[idx_order]
             log.info(f"Generate model for well-separated part of {order_str}")
 
+            # Use provided tikfac if given
+            tikfac = tikfacs_in[order_str]
+            if tikfac is None:
+                # If not given just try what was done for Order 1
+                tikfac = tikfacs_out["Order 1"]
+                do_tiktests = True
+            else:
+                do_tiktests = False
+
             # Take only the second order's specific ref_files
             ref_file_order = {
                 "wavemaps": [self.wavemaps[idx_order]],
@@ -942,19 +867,16 @@ class Integration:
             }
 
             # Mask for the fit. All valid pixels inside box aperture
-            mask_fit = mask_trace_profile[idx_order] | scimask
+            mask_fit = self.mask_trace_profile[idx_order] | self.scimask
 
             # Build 1d spectrum integrated over pixels
-            pixel_wave_grid, valid_cols = _get_native_grid_from_trace(self.spectraces, order)
+            pixel_wave_grid, _valid_cols = _get_native_grid_from_trace(self.spectraces, order)
 
             # Hardcode wavelength highest boundary as well.
             # Must overlap with lower limit in make_decontamination_grid
             if cutoff is not None:
                 is_in_wv_range = pixel_wave_grid < cutoff
-                pixel_wave_grid, valid_cols = (
-                    pixel_wave_grid[is_in_wv_range],
-                    valid_cols[is_in_wv_range],
-                )
+                pixel_wave_grid = pixel_wave_grid[is_in_wv_range]
 
             # Model with atoca
             try:
@@ -967,9 +889,10 @@ class Integration:
                     order,
                     pixel_wave_grid,
                     tikfac,
-                    do_tiktests=True,
+                    do_tiktests=do_tiktests,
                     save_tiktests=save_tiktests,
                 )
+                tikfacs_out[order_str] = spec_ord[-1].meta.soss_extract1d.factor
 
             except MaskOverlapError:
                 log.error(
@@ -997,7 +920,113 @@ class Integration:
                     sp.meta.soss_extract1d.color_range = "ALL"
             spec_list += spec_ord
 
-        return tracemodels, tikfac, logl, wave_grid, spec_list
+        return tracemodels, spec_list, tikfacs_out
+
+    def estim_flux_first_order(self, threshold=1e-4):
+        """
+        Roughly estimate the underlying flux of the target spectrum.
+
+        This is done by simply masking out order 2 and retrieving the flux from order 1.
+
+        Parameters
+        ----------
+        threshold : float, optional:
+            The pixels with an aperture[order 2] > `threshold` are considered contaminated
+            and will be masked. Default is 1e-4.
+
+        Returns
+        -------
+        func
+            A spline estimator that provides the underlying flux as a function of wavelength
+        """
+        # Define wavelength grid based on order 1 only (so first index)
+        wave_grid = grid_from_map_with_extrapolation(
+            self.wavemaps[0], self.spec_profiles[0], n_os=1
+        )
+
+        # Mask parts contaminated by order 2 based on its spatial profile
+        mask = (self.spec_profiles[1] >= threshold) | self.mask_trace_profile[0]
+
+        # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
+        args = {
+            "wavemaps": [self.wavemaps[0]],
+            "spec_profiles": [self.spec_profiles[0]],
+            "throughputs": [self.throughputs[0]],
+            "kernels": [None],
+        }
+        engine = ExtractionEngine(args, wave_grid, [mask], global_mask=self.scimask, orders=[1])
+
+        # Extract estimate
+        spec_estimate = engine(self.scidata_bkg, self.scierr)
+
+        # Interpolate
+        idx = np.isfinite(spec_estimate)
+        return UnivariateSpline(wave_grid[idx], spec_estimate[idx], k=3, s=0, ext=0)
+
+    def make_decontamination_grid(self, estimate, rtol=1e-4, max_grid_size=20000, n_os=2):
+        """
+        Create the grid to use for the simultaneous extraction of order 1 and 2.
+
+        The grid is made by:
+        1) requiring that it satisfies the oversampling n_os
+        2) trying to reach the specified tolerance for the spectral range
+           shared between order 1 and 2
+        3) trying to reach the specified tolerance in the rest of spectral range
+        The max_grid_size overrules steps 2) and 3), so the precision may not be reached if
+        the grid size needed is too large.
+
+        Parameters
+        ----------
+        estimate : UnivariateSpline
+            Estimate of the target flux as a function of wavelength in microns.
+        rtol : float, optional
+            The relative tolerance needed on a pixel model.
+        max_grid_size : int, optional
+            Maximum grid size allowed.
+        n_os : int, optional
+            The oversampling factor of the wavelength grid used when solving for
+            the uncontaminated flux.
+
+        Returns
+        -------
+        wave_grid : 1d array
+            The grid of the pixels boundaries at the native sampling.
+        """
+        # Build native grid for each  orders.
+        spectral_orders = [2, 1]
+        grids_ord = {}
+        for sp_ord in spectral_orders:
+            grids_ord[sp_ord] = _get_grid_from_trace(self.spectraces, sp_ord, n_os=n_os)
+
+        # Build the list of grids given to make_combined_grid.
+        # It must be ordered in increasing priority.
+        # 1rst priority: shared wavelengths with order 1 and 2.
+        # 2nd priority: remaining red part of order 1
+        # 3rd priority: remaining blue part of order 2
+        # So, split order 2 in 2 parts, the shared wavelength and the bluemost part
+        is_shared = grids_ord[2] >= np.min(grids_ord[1])
+        # Make sure order 1 is not more in the blue than order 2
+        cond = grids_ord[1] > np.min(grids_ord[2][is_shared])
+        grids_ord[1] = grids_ord[1][cond]
+        # And make grid list
+        all_grids = [grids_ord[2][is_shared], grids_ord[1], grids_ord[2][~is_shared]]
+
+        # Cut order 2 at 0.77 (not smaller than that)
+        # because there is no contamination there. Can be extracted afterward.
+        # In the red, no cut.
+        wv_range = [ORDER2_SEPARATION_CUTOFF[0], np.max(grids_ord[1])]
+
+        # Finally, build the list of corresponding estimates.
+        # The estimate for the overlapping part is the order 1 estimate.
+        # There is no estimate yet for the blue part of order 2, so give a flat spectrum.
+        def flat_fct(wv):
+            return np.ones_like(wv)
+
+        all_estimates = [estimate, estimate, flat_fct]
+
+        # Generate the combined grid
+        kwargs = {"rtol": rtol, "max_total_size": max_grid_size, "max_iter": 30}
+        return make_combined_adaptive_grid(all_grids, all_estimates, wv_range, **kwargs)
 
     def decontaminate_image(self, tracemodels):
         """
@@ -1119,10 +1148,12 @@ def _process_one_integration(
     wavelengths,
     soss_kwargs,
     wave_grid=None,
-    tikfac=None,
+    tikfacs_in=None,
     generate_model=True,
     int_num=None,
 ):
+    if tikfacs_in is None:
+        tikfacs_in = {"Order 1": None, "Order 2": None, "Order 3": None}
     integration = Integration(
         scidata,
         scierr,
@@ -1136,14 +1167,34 @@ def _process_one_integration(
 
     # Model the traces based on optics filter configuration (CLEAR or F277W)
     if generate_model:
+        if (tikfacs_in["Order 1"] is None or wave_grid is None) and soss_kwargs["estimate"] is None:
+            # If tikfac and wave_grid already given, no need to make an estimate
+            # So this if statement saves a bit of runtime
+            estimate = integration.estim_flux_first_order(threshold=soss_kwargs["threshold"])
+        else:
+            estimate = soss_kwargs["estimate"]
+
+        # Generate grid based on estimate if not given
+        if wave_grid is None:
+            log.info(f"wave_grid not given: generating grid based on rtol={soss_kwargs['rtol']}")
+            wave_grid = integration.make_decontamination_grid(
+                estimate,
+                rtol=soss_kwargs["rtol"],
+                max_grid_size=soss_kwargs["max_grid_size"],
+                n_os=soss_kwargs["n_os"],
+            )
+            log.debug(
+                f"wave_grid covering from {wave_grid.min()} to {wave_grid.max()}"
+                f" with {wave_grid.size} points"
+            )
+        else:
+            log.info("Using previously computed or user specified wavelength grid.")
+
         # Model the image.
-        tracemodels, tikfac, _, wave_grid, atoca_list = integration.model_image(
-            estimate=soss_kwargs["estimate"],
-            wave_grid=wave_grid,
-            tikfac=tikfac,
-            rtol=soss_kwargs["rtol"],
-            n_os=soss_kwargs["n_os"],
-            max_grid_size=soss_kwargs["max_grid_size"],
+        tracemodels, atoca_list, tikfacs_out = integration.model_image(
+            wave_grid,
+            estimate=estimate,
+            tikfacs_in=tikfacs_in,
             threshold=soss_kwargs["threshold"],
         )
 
@@ -1158,6 +1209,7 @@ def _process_one_integration(
         # Return empty tracemodels
         tracemodels = {}
         atoca_list = []
+        tikfacs_out = tikfacs_in
 
     # Decontaminate the data using trace models (if tracemodels not empty)
     data_to_extract = integration.decontaminate_image(tracemodels)
@@ -1199,7 +1251,7 @@ def _process_one_integration(
 
         spec_list[order] = spec
 
-    return tracemodels, spec_list, atoca_list, tikfac, wave_grid
+    return tracemodels, spec_list, atoca_list, tikfacs_out, wave_grid
 
 
 def run_extract1d(
@@ -1251,10 +1303,12 @@ def run_extract1d(
     specprofile_ref = datamodels.SpecProfileModel(specprofile_ref_name)
     speckernel_ref = datamodels.SpecKernelModel(speckernel_ref_name)
 
-    # Map the order integer names to the string names
+    # Determine the requested orders
     if (soss_kwargs["order_3"]) and (subarray != "SUBSTRIP96"):
         order_list = [1, 2, 3]
     else:
+        # order 3 is not supported for substrip96
+        soss_kwargs["order_3"] = False
         order_list = [1, 2]
     refmodel_orders = [int(trace.spectral_order) for trace in pastasoss_ref.traces]
     order_list = _verify_requested_orders(order_list, refmodel_orders)
@@ -1274,7 +1328,7 @@ def run_extract1d(
         # Make sure it has the correct precision
         wave_grid = wave_grid.astype("float64")
     else:
-        # wave_grid will be estimated later in the first call of `_model_image`
+        # wave_grid will be estimated later in the first call of `Integration.model_image`
         log.info("Wavelength grid was not specified. Setting `wave_grid` to None.")
         wave_grid = None
 
@@ -1346,7 +1400,12 @@ def run_extract1d(
     if subarray == "SUBSTRIP96":
         box_weights["Order 2"] = np.ones((96, 2048))
 
-    tracemodels, spec_list, atoca_list, tikfac_first, wave_grid_first = _process_one_integration(
+    # Process the 0th integration to compute a good Tikhonov factor and adaptive wave_grid
+    if soss_kwargs["tikfac"] is not None:
+        tikfacs_in = {"Order 1": soss_kwargs["tikfac"], "Order 2": None, "Order 3": None}
+    else:
+        tikfacs_in = None
+    tracemodels, spec_list, atoca_list, tikfacs_first, wave_grid_first = _process_one_integration(
         scidata,
         scierr,
         scimask,
@@ -1356,14 +1415,14 @@ def run_extract1d(
         wavelengths,
         soss_kwargs,
         wave_grid=wave_grid,
-        tikfac=soss_kwargs["tikfac"],
+        tikfacs_in=tikfacs_in,
         generate_model=generate_model,
         int_num=0,
     )
     for atoca_spec in atoca_list:
         output_atoca.spec.append(atoca_spec)
 
-    # Loop over images.
+    # Loop over integrations, applying the same wave_grid and Tikhonov factor
     all_tracemodels = {order: [tracemodels[order]] for order in tracemodels}
     output_spec_list = {order: [spec_list[order]] for order in spec_list}
     for i in range(1, nimages):
@@ -1387,7 +1446,7 @@ def run_extract1d(
             wavelengths,
             soss_kwargs,
             wave_grid=wave_grid_first,
-            tikfac=tikfac_first,
+            tikfacs_in=tikfacs_first,
             generate_model=generate_model,
             int_num=i,
         )
