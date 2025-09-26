@@ -25,12 +25,12 @@ def load_asn(
     validate : bool
         Validate against the class's defined schema, if any.
     registry : AssociationRegistry or None
-        The `AssociationRegistry` to use.
+        The `~jwst.associations.AssociationRegistry` to use.
         If None, no registry is used.
         Can be passed just a registry class instead of instance.
     **kwargs : dict
-        Other arguments to pass to the `load` methods defined
-        in the `Association.KeyValueRegistry`
+        Other arguments to pass to the ``load`` methods defined
+        in the `~jwst.associations.lib.keyvalue_registry.KeyValueRegistry`
 
     Returns
     -------
@@ -44,13 +44,13 @@ def load_asn(
 
     Notes
     -----
-    The `serialized` object can be in any format
+    The serialized object can be in any format
     supported by the registered I/O routines. For example, for
-    `json` and `yaml` formats, the input can be either a string or
+    JSON and YAML formats, the input can be either a string or
     a file object containing the string.
 
-    If no registry is specified, the default `Association.load`
-    method is used.
+    If no registry is specified, the default
+    :meth:`~jwst.associations.Association.load` method is used.
     """
     if registry is None:
         return Association.load(serialized, fmt=fmt, validate=validate)
