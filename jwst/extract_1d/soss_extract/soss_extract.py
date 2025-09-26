@@ -709,7 +709,13 @@ class Integration:
         """
         Extract the uncontaminated spectra of using the ATOCA algorithm.
 
-        Add description here.
+        The model consists of three separate extractions:
+        1. A simultaneous extraction of orders 1 and 2.
+        2. An extraction of the blue (uncontaminated) part of order 2.
+        3. An extraction of order 3, if requested.
+
+        For each of these extractions, the Tikhonov factor can either be provided
+        using the tikfacs_in dictionary, or else determined via a grid search.
 
         Parameters
         ----------
