@@ -1,5 +1,7 @@
 """Handy helpful pytest helpers helping pytest test."""
 
+import contextlib
+import logging
 from os import path as op
 from pathlib import Path
 
@@ -126,3 +128,26 @@ class LogWatcher:
 
         # reset flag after check
         self.seen = False
+
+
+@contextlib.contextmanager
+def _help_pytest_warns():
+    """
+    Help pytest.warns.
+
+    Helper context to deal with a limitation with using warnings and logging.
+
+    This should be used for any pytest.warns context that contains a Step.call
+    (where logging.captureWarnings will be enabled) due to an incompatibility
+    between what python logging does to capture warnings and what python
+    warnings does to catch_warnings (and by extension what pytest.warns does).
+
+    This context works around the incompatibility by calling logging.captureWarnings
+    prior to the catch_warnings call. This allows the warnings module to
+    do the internal patching that is required to record warnings.
+
+    For minimal examples see the tests in test_helpers.
+    """
+    logging.captureWarnings(True)
+    yield
+    logging.captureWarnings(False)

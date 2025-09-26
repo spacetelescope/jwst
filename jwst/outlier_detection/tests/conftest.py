@@ -10,6 +10,7 @@ from jwst.assign_wcs.tests.test_miri import create_hdul
 from jwst.assign_wcs.tests.test_nirspec import create_nirspec_ifu_file
 from jwst.datamodels import ModelContainer
 from jwst.outlier_detection.tests import helpers
+from jwst.tests.helpers import _help_pytest_warns
 
 
 @pytest.fixture()
@@ -248,7 +249,7 @@ def miri_container(three_sci):
         Container of 3 models with MIR_LYOT exp_type and an assigned WCS.
     """
     exptype = "MIR_LYOT"
-    with pytest.warns(UserWarning, match="Double sampling check FAILED"):
+    with _help_pytest_warns(), pytest.warns(UserWarning, match="Double sampling check FAILED"):
         three_sci = helpers.assign_wcs_to_models(three_sci, exptype, False)
     container = ModelContainer(three_sci)
     return container

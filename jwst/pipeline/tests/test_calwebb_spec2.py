@@ -6,6 +6,7 @@ import pytest
 from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 from jwst.stpipe import Step
+from jwst.tests.helpers import _help_pytest_warns
 
 INPUT_FILE = "test_rate.fits"
 INPUT_FILE_2 = "test2_rate.fits"
@@ -181,5 +182,8 @@ def test_bsub_deprecated(make_test_rate_file):
         "--steps.extract_1d.skip=true",
     ]
 
-    with pytest.warns(DeprecationWarning, match="The --save_bsub parameter is deprecated"):
+    with (
+        _help_pytest_warns(),
+        pytest.warns(DeprecationWarning, match="The --save_bsub parameter is deprecated"),
+    ):
         Step.from_cmdline(args)
