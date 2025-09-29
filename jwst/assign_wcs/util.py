@@ -369,12 +369,18 @@ def create_grism_bbox(
     ``wfss_extract_half_height`` can only be applied to point source objects.
     """
     instr_name = input_model.meta.instrument.name
+    print(input_model.meta.filename)
+    print("********", instr_name)
     if instr_name == "NIRCAM":
         filter_name = input_model.meta.instrument.filter
     elif instr_name == "NIRISS":
         filter_name = input_model.meta.instrument.pupil
+    elif instr_name == "MIRI":
+        filter_name = input_model.meta.instrument.filter
     else:
-        raise ValueError("create_grism_object works with NIRCAM and NIRISS WFSS exposures only.")
+        raise ValueError(
+            "create_grism_object works with NIRCAM, NIRISS, and MIRI  WFSS exposures only."
+        )
 
     if reference_files is None:
         # Get the list of extract_orders and lmin, lmax from wavelength_range.
@@ -487,9 +493,9 @@ def _create_grism_bbox(
             )
 
             if input_model.meta.exposure.type.upper() == "MIR_WFSS":
-                print('lmin lmax order', lmin,lmax,order)
-                x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] , [order] )
-                x2, y2,_, _ , _ = sky_to_grism(ra, dec, [lmax] , [order] )
+                print("lmin lmax order", lmin, lmax, order)
+                x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin], [order])
+                x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax], [order])
             else:
                 x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order] * 4)
                 x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order] * 4)
