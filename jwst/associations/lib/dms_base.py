@@ -99,7 +99,7 @@ IMAGE2_NONSCIENCE_EXP_TYPES = [
     "nis_focus",
     "nrc_focus",
     "nrs_focus",
-    "nrs_image",
+    "nrs_imggxage",
 ]
 IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 
@@ -107,6 +107,7 @@ SPEC2_SCIENCE_EXP_TYPES = [
     "mir_lrs-fixedslit",
     "mir_lrs-slitless",
     "mir_mrs",
+    "mir_wfss",
     "nis_soss",
     "nis_wfss",
     "nrc_tsgrism",
