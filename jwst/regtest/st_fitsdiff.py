@@ -19,7 +19,7 @@ from astropy.io.fits.diff import (
 )
 from astropy.io.fits.hdu.table import _TableLikeHDU
 from astropy.table import Table
-from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
+from astropy.utils.diff import diff_values, report_diff_values
 
 __all__ = [
     "STFITSDiff",
@@ -29,6 +29,67 @@ __all__ = [
     "STRawDataDiff",
     "STTableDataDiff",
 ]
+
+
+# This function is for now copied from astropy. We can remove it once jwst updates the
+# astropy pin that contains this new functionality.
+def where_not_allclose(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):
+    """
+    Return array where values are above tolerances. Include max and min.
+
+    A version of :func:`numpy.allclose` that returns the indices
+    where the two arrays differ, instead of just a boolean value.
+
+    Parameters
+    ----------
+    a, b : array-like
+        Input arrays to compare.
+    rtol, atol : float
+        Relative and absolute tolerances as accepted by
+        :func:`numpy.allclose`.
+    return_maxdiff : bool
+        Return the maximum of absolute and relative differences.
+
+    Returns
+    -------
+    idx : tuple of array
+        Indices where the two arrays differ.
+    max_absolute : float
+        Maximum of absolute difference, returned if ``return_maxdiff=True``.
+    max_relative : float
+        Maximum of relative difference, returned if ``return_maxdiff=True``.
+    """
+    # Create fixed mask arrays to handle INF and NaN; currently INF and NaN
+    # are handled as equivalent
+    a = np.ma.masked_invalid(a)
+    b = np.ma.masked_invalid(b)
+
+    absolute = np.ma.abs(b - a)
+
+    if atol == 0.0 and rtol == 0.0:
+        # Use a faster comparison for the most simple (and common) case
+        thresh = 0
+    else:
+        thresh = atol + rtol * np.abs(b)
+
+    # values invalid in only one of the two arrays should be reported
+    invalid = a.mask ^ b.mask
+    indices = np.where(invalid | (absolute.filled(0) > thresh))
+
+    if return_maxdiff:
+        absolute[invalid] = np.ma.masked
+        finites = ~absolute.mask
+        absolute = absolute.compressed()
+        if len(indices[0]) == 0 or absolute.size == 0:
+            max_absolute = max_relative = 0
+        else:
+            # remove all invalid values before computing max differences
+            relative = absolute / np.abs(b[finites])
+            max_absolute = float(np.max(absolute))
+            max_relative = np.max(relative)
+        return indices, max_absolute, max_relative
+    else:
+        return indices
 
 
 def set_variable_to_empty_list(variable):
