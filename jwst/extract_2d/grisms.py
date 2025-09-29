@@ -391,7 +391,7 @@ def extract_grism_objects(
         raise TypeError("Expected a dictionary for reference_files")
 
     print("_________________________________")
-    print("VALUE OD grism_objects", grism_objects)
+    print("VALUE of grism_objects", grism_objects)
     if grism_objects is None:
         # get the wavelengthrange reference file from the input_model
         if "wavelengthrange" not in reference_files or reference_files["wavelengthrange"] in [
@@ -530,7 +530,7 @@ def extract_grism_objects(
                 subwcs.insert_frame(
                     input_frame=grism_slit, output_frame="grism_detector", transform=tr
                 )
-                if input_model.meta.exposure.type.upper() == 'MIR_WFSS':
+                if input_model.meta.exposure.type.upper() == "MIR_WFSS":
                     subwcs.set_transform("dispersed_detector", "detector", tr)
                 else:
                     subwcs.set_transform("grism_detector", "detector", tr)
