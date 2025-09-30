@@ -67,13 +67,11 @@ then the background step can be run on the target exposure wfss_exp_001 as::
     strun bkg_subtract bkg_sub_asn.json
 
 From Python code, the source catalog can also be directly specified in the input model
-before calling the BackgroundStep. For example:
+before calling the BackgroundStep. For example::
 
-.. doctest-skip::
-
-  >>> model = datamodels.open("wfss_exp_001_assignwcsstep.fits")
-  >>> model.meta.source_catalog = "image_exp_001_cat.ecsv"
-  >>> result = BackgroundStep.call(model)
+    model = datamodels.open("wfss_exp_001_assignwcsstep.fits")
+    model.meta.source_catalog = "image_exp_001_cat.ecsv"
+    result = BackgroundStep.call(model)
 
 
 Imaging and Non-WFSS, Non-SOSS Spectroscopic Modes
