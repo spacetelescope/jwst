@@ -426,11 +426,8 @@ def _do_tiktests(
     guess_factor,
     order_models,
     global_mask,
-    order_list=None,
     save_tiktests=True,
 ):
-    if order_list is None:
-        order_list = [1, 2]
     # Find the tikhonov factor.
     # Initial pass 8 orders of magnitude with 10 grid points.
     log_guess = np.log10(guess_factor)
@@ -448,7 +445,7 @@ def _do_tiktests(
     if save_tiktests:
         # Save spectra in a list of SingleSpecModels for optional output
         all_tests = _append_tiktests(all_tests, tiktests)
-        for i, order in enumerate(order_list):
+        for i, order in enumerate(engine.orders):
             order_model = order_models[i]
             for idx in range(len(all_tests["factors"])):
                 f_k = all_tests["solution"][idx, :]
@@ -573,8 +570,6 @@ def _model_single_order(
     def throughput(wavelength):
         return np.ones_like(wavelength)
 
-    kernel = np.array([1.0])
-
     # Define wavelength grid with oversampling of 3 (should be enough)
     wave_grid_os = oversample_grid(wave_grid, n_os=3)
 
@@ -583,7 +578,7 @@ def _model_single_order(
         [order_model.wavemap],
         [order_model.specprofile],
         [throughput],
-        [kernel],
+        [np.array([1.0])],
         wave_grid=wave_grid_os,
         mask_trace_profile=[mask_fit],
         orders=[order],
@@ -598,7 +593,6 @@ def _model_single_order(
             tikfac,
             [order_model],
             mask_rebuild,
-            order_list=[order],
             save_tiktests=save_tiktests,
         )
     else:
@@ -776,7 +770,6 @@ class Integration:
                 guess_factor,
                 self.order_models[:2],
                 global_mask,
-                order_list=[1, 2],
                 save_tiktests=save_tiktests,
             )
             tikfacs_out["Order 1"] = tikfac
@@ -1155,6 +1148,7 @@ def _process_one_integration(
         if (tikfacs_in["Order 1"] is None or wave_grid is None) and soss_kwargs["estimate"] is None:
             # If tikfac and wave_grid already given, no need to make an estimate
             # So this if statement saves a bit of runtime
+            log.info("Estimating the target flux based on order 1 low-contamination pixels.")
             estimate = integration.estim_flux_first_order(threshold=soss_kwargs["threshold"])
         else:
             estimate = soss_kwargs["estimate"]

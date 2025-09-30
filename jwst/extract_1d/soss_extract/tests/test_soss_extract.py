@@ -8,6 +8,7 @@ from jwst.extract_1d.soss_extract.soss_extract import (
     Integration,
     _build_null_spec_table,
     _compute_box_weights,
+    _process_one_integration,
 )
 from jwst.extract_1d.soss_extract.tests.helpers import DATA_SHAPE
 
@@ -30,6 +31,12 @@ def monkeypatch_setup(
 ):
     """Monkeypatch get_trace_1d to return the miniature model detector"""
 
+    def mock_make_background_mask(*args, **kwargs):
+        return np.zeros(DATA_SHAPE, dtype="bool")
+
+    monkeypatch.setattr(
+        "jwst.extract_1d.soss_extract.soss_extract.make_background_mask", mock_make_background_mask
+    )
     monkeypatch.setattr("jwst.extract_1d.soss_extract.soss_extract.CUTOFFS", [200, 200, 200])
 
 
@@ -258,3 +265,53 @@ def test_model_image_wavegrid_specified(
             wave_grid=wave_grid_in,
             estimate=estimate,
         )
+
+
+@pytest.mark.parametrize("tikfacs_in", [None, {"Order 1": 1e-7, "Order 2": 1e-6, "Order 3": 1e-5}])
+@pytest.mark.parametrize("do_bkgsub", [False, True])
+@pytest.mark.parametrize("bad_pix", ["masking", "model"])
+@pytest.mark.parametrize("generate_model", [False, True])
+def test_process_one_integration(
+    monkeypatch_setup,
+    imagemodel,
+    detector_mask,
+    detector_models,
+    tikfacs_in,
+    do_bkgsub,
+    bad_pix,
+    generate_model,
+):
+    """Smoke test for a bunch of configurations of _process_one_integration"""
+    scidata, scierr = imagemodel
+    refmask = np.zeros_like(detector_mask)
+    box_width = 5.0
+    box_weights, wavelengths = _compute_box_weights(
+        detector_models, DATA_SHAPE, box_width, orders_requested=[1, 2, 3]
+    )
+
+    soss_kwargs = {
+        "subtract_background": do_bkgsub,
+        "order_3": True,
+        "bad_pix": bad_pix,
+        "box_width": box_width,
+        "estimate": None,
+        "threshold": 1e-4,
+        "rtol": 1e-3,
+        "max_grid_size": 1000000,
+        "n_os": 2,
+    }
+
+    tracemodels, spec_list, atoca_list, tikfacs_out, wave_grid = _process_one_integration(
+        scidata,
+        scierr,
+        detector_mask,
+        refmask,
+        detector_models,
+        box_weights,
+        wavelengths,
+        soss_kwargs,
+        wave_grid=None,
+        tikfacs_in=tikfacs_in,
+        generate_model=generate_model,
+        int_num=5,
+    )
