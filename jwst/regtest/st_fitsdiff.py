@@ -92,19 +92,22 @@ def where_not_allclose_new(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):
         return indices
 
 
-def _get_float_version(__version__):
-    return float(__version__.replace("v", "").replace(".", ""))
+def set_correct_where_not_allclose(__version__):
+    # check which function to use
+    ver = float(__version__.replace("v", "").replace(".", ""))
+    if ver <= 710.0:
+        astropy_ver_msg = ""
+    else:
+        astropy_ver_msg = (
+            "\n\n *** Astropy version greater than v7.1.0. "
+            "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"
+        )
+    return astropy_ver_msg
 
 
-# check which function to use
-if _get_float_version(__version__) <= 710.0:
+ASTROPY_VER_MSG = set_correct_where_not_allclose(__version__)
+if ASTROPY_VER_MSG == "":
     where_not_allclose = where_not_allclose_new
-    ASTROPY_VER_MSG = ""
-else:
-    ASTROPY_VER_MSG = (
-        "\n\n *** Astropy version greater than v7.1.0. "
-        "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"
-    )
 
 
 def set_variable_to_empty_list(variable):

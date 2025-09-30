@@ -7,6 +7,7 @@ from astropy.io.fits.diff import FITSDiff
 from stdatamodels.jwst import datamodels
 
 from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
+from jwst.regtest.st_fitsdiff import set_correct_where_not_allclose
 
 
 @pytest.fixture(scope="module")
@@ -1145,3 +1146,15 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
     ]
     assert result is False
     assert report == expected_report
+
+
+def test_astropy_version():
+    # Test if the astropy version is higher than v7.1.0, there is a message to remove the
+    # current workaround.
+    pretend_version = "v7.2.0"
+    astropy_ver_msg = set_correct_where_not_allclose(pretend_version)
+    expect = (
+        "\n\n *** Astropy version greater than v7.1.0. "
+        "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"
+    )
+    assert astropy_ver_msg == expect
