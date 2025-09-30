@@ -40,17 +40,7 @@ def do_correction(model):
 
     # Apply the rescaling to the entire data array
     scale = float(frame_divisor) / nframes
-    try:
-        # Multiply in place if possible
-        model.data *= scale
-    except TypeError:
-        # Inform the user
-        msg = (
-            "Input data model does not have float-type data. "
-            "The file should be opened as a RampModel."
-        )
-        log.error(msg)
-        raise TypeError(msg) from None
+    model.data *= scale
     model.meta.cal_step.group_scale = "COMPLETE"
 
     return

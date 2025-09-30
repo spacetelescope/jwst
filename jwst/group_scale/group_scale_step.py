@@ -1,5 +1,6 @@
 import logging
 
+import numpy as np
 from stdatamodels.jwst import datamodels
 
 from jwst.group_scale import group_scale
@@ -68,6 +69,16 @@ class GroupScaleStep(Step):
             log.info("Step will be skipped")
             result.meta.cal_step.group_scale = "SKIPPED"
             return result
+
+        # Make sure the input data has an appropriate data type
+        if not np.issubdtype(result.data.dtype, np.floating):
+            # Inform the user
+            msg = (
+                "Input data model does not have float-type data. "
+                "The file should be opened as a RampModel before calling the step."
+            )
+            log.error(msg)
+            raise TypeError(msg)
 
         # Do the scaling
         group_scale.do_correction(result)
