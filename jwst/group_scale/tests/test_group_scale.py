@@ -122,11 +122,7 @@ def test_level1b(make_rampmodel):
     l1b_model.update(model)
 
     with pytest.warns(ValidationWarning, match="'uint16' is not compatible with 'float32'"):
-        with pytest.raises(
-            TypeError,
-            match="Input data model does not have float-type data. "
-            "The file should be opened as a RampModel.",
-        ):
+        with pytest.raises(TypeError, match="Input data model does not have float-type data"):
             GroupScaleStep().run(l1b_model)
 
 
