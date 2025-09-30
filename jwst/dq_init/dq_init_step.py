@@ -33,29 +33,32 @@ class DQInitStep(Step):
 
         Parameters
         ----------
-        step_input : JWST datamodel
-            Input jwst datamodel.
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            Input JWST datamodel or filename.
 
         Returns
         -------
-        output_model : JWST datamodel
+        output_model : `~stdatamodels.jwst.datamodels.RampModel` \
+                       or `~stdatamodels.jwst.datamodels.GuiderRawModel`
             Result JWST datamodel.
         """
         # Try to open the input as a regular RampModel
         try:
-            input_model = datamodels.RampModel(step_input)
+            result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
             # Check to see if it's Guider raw data
-            if input_model.meta.exposure.type in dq_initialization.guider_list:
+            if result.meta.exposure.type in dq_initialization.guider_list:
+                # Close and delete the current model if it's not the same as the input
+                if result is not step_input:
+                    del result
+
                 # Reopen as a GuiderRawModel
-                input_model.close()
-                input_model = datamodels.GuiderRawModel(step_input)
+                result = self.prepare_output(step_input, open_as_type=datamodels.GuiderRawModel)
                 log.info("Input opened as GuiderRawModel")
 
         except (TypeError, ValueError):
-            # If the initial open attempt fails,
-            # try to open as a GuiderRawModel
+            # If the initial open attempt fails, try to open as a GuiderRawModel
             try:
-                input_model = datamodels.GuiderRawModel(step_input)
+                result = self.prepare_output(step_input, open_as_type=datamodels.GuiderRawModel)
                 log.info("Input opened as GuiderRawModel")
             except (TypeError, ValueError):
                 log.error("Unexpected or unknown input model type")
@@ -65,11 +68,8 @@ class DQInitStep(Step):
             raise
 
         # Retrieve the mask reference file name
-        self.mask_filename = self.get_reference_file(input_model, "mask")
+        self.mask_filename = self.get_reference_file(result, "mask")
         log.info("Using MASK reference file %s", self.mask_filename)
-
-        # Work on a copy
-        result = input_model.copy()
 
         # Check for a valid reference file
         if self.mask_filename == "N/A":
@@ -82,10 +82,9 @@ class DQInitStep(Step):
         mask_model = datamodels.MaskModel(self.mask_filename)
 
         # Apply the step
-        result = dq_initialization.correct_model(result, mask_model)
+        result = dq_initialization.do_dqinit(result, mask_model)
 
         # Cleanup
         del mask_model
-        del input_model
 
         return result
