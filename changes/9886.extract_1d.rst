@@ -1,2 +1,1 @@
 Refactor SOSS extraction to compute reference wavelength maps only once, instead of every integration.
-ATOCA ExtractionEngine now takes a dictionary of reference file data instead of individual arrays.

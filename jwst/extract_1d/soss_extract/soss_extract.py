@@ -294,13 +294,9 @@ def _estim_flux_first_order(
     mask = (order2_profile >= threshold) | mask_trace_profile[0]
 
     # Init extraction without convolution kernel (so extract the spectrum at order 1 resolution)
-    args = {
-        "wavemaps": [wave_map],
-        "spec_profiles": [spat_pro],
-        "throughputs": [thrpt],
-        "kernels": [None],
-    }
-    engine = ExtractionEngine(args, wave_grid, [mask], global_mask=scimask, orders=[1])
+    engine = ExtractionEngine(
+        [wave_map], [spat_pro], [thrpt], [None], wave_grid, [mask], global_mask=scimask, orders=[1]
+    )
 
     # Extract estimate
     spec_estimate = engine(scidata_bkg, scierr)
@@ -397,7 +393,7 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.int_num = 0
 
 
-def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
+def _f_to_spec(f_order, grid_order, detector_model, pixel_grid, mask):
     """
     Bin the flux to the pixel grid and build a SpecModel.
 
@@ -407,14 +403,12 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
         The solution f_k of the linear system.
     grid_order : np.array
         The wavelength grid of the solution, usually oversampled compared to the pixel grid.
-    ref_file_args : dict
-        The reference file arguments used by the ExtractionEngine.
+    detector_model : DetectorModelOrder
+        The model for the spectral order.
     pixel_grid : np.array
         The pixel grid to which the flux should be binned.
     mask : np.array
         The mask of the pixels to be extracted.
-    sp_ord : int
-        The spectral order of the flux.
 
     Returns
     -------
@@ -423,17 +417,14 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     """
     # Build 1d spectrum integrated over pixels
     pixel_grid = pixel_grid[np.newaxis, :]
-    args = {
-        "wavemaps": [pixel_grid],
-        "spec_profiles": [np.ones_like(pixel_grid)],
-        "throughputs": ref_file_args["throughputs"].copy(),
-        "kernels": ref_file_args["kernels"].copy(),
-    }
     model = ExtractionEngine(
-        args,
+        [pixel_grid],
+        [np.ones_like(pixel_grid)],
+        [detector_model.throughput],
+        [detector_model.kernel],
         wave_grid=grid_order,
         mask_trace_profile=[mask[np.newaxis, :]],
-        orders=[sp_ord],
+        orders=[detector_model.spectral_order],
     )
     f_binned = model.rebuild(f_order, fill_value=np.nan)
 
@@ -447,7 +438,7 @@ def _f_to_spec(f_order, grid_order, ref_file_args, pixel_grid, mask, sp_ord):
     out_table["WAVELENGTH"] = pixel_grid[is_valid]
     out_table["FLUX"] = f_binned[is_valid]
     spec = datamodels.SpecModel(spec_table=out_table)
-    spec.spectral_order = sp_ord
+    spec.spectral_order = detector_model.spectral_order
 
     return spec
 
@@ -456,12 +447,6 @@ def _build_tracemodel_order(engine, detector_model, f_k, mask):
     # Take only the order's specific ref_files
     # And give the identity kernel to the Engine (so no convolution)
     kernel = [np.array([1.0])]
-    args_order = {
-        "wavemaps": [detector_model.wavemap],
-        "spec_profiles": [detector_model.specprofile],
-        "throughputs": [detector_model.throughput],
-        "kernels": kernel,
-    }
     i_order = detector_model.spectral_order - 1
 
     # Pre-convolve the extracted flux (f_k) at the order's resolution
@@ -480,7 +465,13 @@ def _build_tracemodel_order(engine, detector_model, f_k, mask):
 
     # Build model of the order
     model = ExtractionEngine(
-        args_order, wave_grid=grid_order, mask_trace_profile=[mask], orders=[sp_ord]
+        [detector_model.wavemap],
+        [detector_model.specprofile],
+        [detector_model.throughput],
+        [kernel],
+        wave_grid=grid_order,
+        mask_trace_profile=[mask],
+        orders=[sp_ord],
     )
 
     # Project on detector and save in dictionary
@@ -491,10 +482,9 @@ def _build_tracemodel_order(engine, detector_model, f_k, mask):
     spec_ord = _f_to_spec(
         flux_order,
         grid_order,
-        args_order,
+        detector_model,
         pixel_wave_grid,
         np.all(mask, axis=0)[valid_cols],
-        sp_ord,
     )
 
     return tracemodel_ord, spec_ord
@@ -652,14 +642,11 @@ def _model_image(
         log.info("Using previously computed or user specified wavelength grid.")
 
     # Initialize the Engine for combined extraction of orders 1 and 2
-    args_orders_12 = {
-        "wavemaps": [model.wavemap for model in detector_models[:2]],
-        "spec_profiles": [model.specprofile for model in detector_models[:2]],
-        "throughputs": [model.throughput for model in detector_models[:2]],
-        "kernels": [model.kernel for model in detector_models[:2]],
-    }
     engine = ExtractionEngine(
-        args_orders_12,
+        [model.wavemap for model in detector_models[:2]],
+        [model.specprofile for model in detector_models[:2]],
+        [model.throughput for model in detector_models[:2]],
+        [model.kernel for model in detector_models[:2]],
         wave_grid=wave_grid,
         mask_trace_profile=mask_trace_profile[:2],
         global_mask=scimask,
@@ -751,14 +738,6 @@ def _model_image(
         order_str = order_strs[idx_order]
         log.info(f"Generate model for well-separated part of {order_str}")
 
-        # Take only the second order's specific ref_files
-        ref_file_order = {
-            "wavemaps": [order_model.wavemap],
-            "spec_profiles": [order_model.specprofile],
-            "throughputs": [order_model.throughput],
-            "kernels": [order_model.kernel],
-        }
-
         # Mask for the fit. All valid pixels inside box aperture
         mask_fit = mask_trace_profile[idx_order] | scimask
 
@@ -782,10 +761,9 @@ def _model_image(
             model, spec_ord = _model_single_order(
                 scidata_bkg,
                 scierr,
-                ref_file_order,
+                order_model,
                 mask_fit,
                 global_mask,
-                order,
                 pixel_wave_grid,
                 valid_cols,
                 tikfac_log_range,
@@ -916,10 +894,9 @@ def _decontaminate_image(scidata_bkg, tracemodels, subarray):
 def _model_single_order(
     data_order,
     err_order,
-    ref_file_args,
+    detector_model,
     mask_fit,
     mask_rebuild,
-    order,
     wave_grid,
     valid_cols,
     tikfac_log_range,
@@ -940,8 +917,8 @@ def _model_single_order(
         The 2D data array for the spectral order to be extracted.
     err_order : np.array
         The 2D error array for the spectral order to be extracted.
-    ref_file_args : dict
-        The reference file arguments used by the ExtractionEngine.
+    detector_model : DetectorModelOrder
+        The model for the spectral order to be extracted.
     mask_fit : np.array
         Mask determining the aperture used for extraction. This typically includes
         detector bad pixels and any pixels that are not part of the trace
@@ -949,8 +926,6 @@ def _model_single_order(
         Mask determining the aperture used for rebuilding the trace. This typically includes
         only pixels that do not belong to either spectral trace, i.e., regions of the detector
         where no real data could exist.
-    order : int
-        The spectral order to be extracted.
     wave_grid : np.array
         The wavelength grid used to model the data.
     valid_cols : np.array
@@ -978,6 +953,7 @@ def _model_single_order(
     necessarily identical to any of the spectra in the list, as it is reconstructed according to
     mask_rebuild instead of fit respecting mask_fit; that is, bad pixels are included.
     """
+    order = detector_model.spectral_order
 
     # The throughput and kernel is not needed here
     # set them so they have no effect on the extraction.
@@ -985,15 +961,16 @@ def _model_single_order(
         return np.ones_like(wavelength)
 
     kernel = np.array([1.0])
-    ref_file_args["throughputs"] = [throughput]
-    ref_file_args["kernels"] = [kernel]
 
     # Define wavelength grid with oversampling of 3 (should be enough)
     wave_grid_os = oversample_grid(wave_grid, n_os=3)
 
     # Initialize the Engine.
     engine = ExtractionEngine(
-        ref_file_args,
+        [detector_model.wavemap],
+        [detector_model.specprofile],
+        [throughput],
+        [kernel],
         wave_grid=wave_grid_os,
         mask_trace_profile=[mask_fit],
         orders=[order],
@@ -1025,10 +1002,9 @@ def _model_single_order(
             spec_ord = _f_to_spec(
                 f_k,
                 wave_grid_os,
-                ref_file_args,
+                detector_model,
                 wave_grid,
                 np.all(mask_rebuild, axis=0)[valid_cols],
-                order,
             )
             _populate_tikho_attr(spec_ord, all_tests, idx, order)
 
@@ -1037,7 +1013,10 @@ def _model_single_order(
 
     # Rebuild trace, including bad pixels
     engine = ExtractionEngine(
-        ref_file_args,
+        [detector_model.wavemap],
+        [detector_model.specprofile],
+        [throughput],
+        [kernel],
         wave_grid=wave_grid_os,
         mask_trace_profile=[mask_rebuild],
         orders=[order],
@@ -1048,10 +1027,9 @@ def _model_single_order(
     spec_ord = _f_to_spec(
         f_k_final,
         wave_grid_os,
-        ref_file_args,
+        detector_model,
         wave_grid,
         np.all(mask_rebuild, axis=0)[valid_cols],
-        order,
     )
     spec_ord.meta.soss_extract1d.factor = tikfac
     spec_ord.meta.soss_extract1d.type = "OBSERVATION"
