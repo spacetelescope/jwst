@@ -19,7 +19,7 @@ from astropy.io.fits.diff import (
 )
 from astropy.io.fits.hdu.table import _TableLikeHDU
 from astropy.table import Table
-from astropy.utils.diff import diff_values, report_diff_values
+from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
 
 __all__ = [
     "STFITSDiff",
@@ -33,7 +33,7 @@ __all__ = [
 
 # This function is for now copied from astropy. We can remove it once jwst updates the
 # astropy pin that contains this new functionality.
-def where_not_allclose(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):
+def where_not_allclose_new(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):
     """
     Return array where values are above tolerances. Include max and min.
 
@@ -90,6 +90,21 @@ def where_not_allclose(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):
         return indices, max_absolute, max_relative
     else:
         return indices
+
+
+def _get_float_version(__version__):
+    return float(__version__.replace("v", "").replace(".", ""))
+
+
+# check which function to use
+if _get_float_version(__version__) <= 710.0:
+    where_not_allclose = where_not_allclose_new
+    ASTROPY_VER_MSG = ""
+else:
+    ASTROPY_VER_MSG = (
+        "\n\n *** Astropy version greater than v7.1.0. "
+        "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"
+    )
 
 
 def set_variable_to_empty_list(variable):
@@ -414,6 +429,9 @@ class STFITSDiffBeta(FITSDiff):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 hdu_diff.report(self._fileobj, indent=self._indent + 1)
+
+        if self.report_pixel_loc_diffs:
+            self._writeln(ASTROPY_VER_MSG)
 
 
 class STHDUDiff(HDUDiff):
