@@ -446,7 +446,6 @@ def _f_to_spec(f_order, grid_order, detector_model, pixel_grid, mask):
 def _build_tracemodel_order(engine, detector_model, f_k, mask):
     # Take only the order's specific ref_files
     # And give the identity kernel to the Engine (so no convolution)
-    kernel = [np.array([1.0])]
     i_order = detector_model.spectral_order - 1
 
     # Pre-convolve the extracted flux (f_k) at the order's resolution
@@ -468,7 +467,7 @@ def _build_tracemodel_order(engine, detector_model, f_k, mask):
         [detector_model.wavemap],
         [detector_model.specprofile],
         [detector_model.throughput],
-        [kernel],
+        [np.array([1.0])],
         wave_grid=grid_order,
         mask_trace_profile=[mask],
         orders=[sp_ord],
