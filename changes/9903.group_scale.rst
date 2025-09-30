@@ -1,0 +1,1 @@
+Use ``Step.prepare_output`` to open input models and make copies only when necessary.

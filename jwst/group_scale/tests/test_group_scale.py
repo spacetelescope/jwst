@@ -4,7 +4,8 @@ Unit tests for group_scale correction
 
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import RampModel
+from stdatamodels.exceptions import ValidationWarning
+from stdatamodels.jwst.datamodels import JwstDataModel, Level1bModel, RampModel
 
 from jwst.group_scale import GroupScaleStep
 from jwst.group_scale.group_scale import do_correction
@@ -112,6 +113,33 @@ def test_scale_value(make_rampmodel):
     # Make sure the scale calculated manually from the data model above matched what the
     # pipeline calculated.
     assert scale == scale_from_data[0]
+
+
+def test_level1b(make_rampmodel):
+    model = make_rampmodel(2, 2, 4, 200, 200)
+    l1b_model = Level1bModel()
+    l1b_model.data = model.data.astype(np.uint16)
+    l1b_model.update(model)
+
+    with pytest.warns(ValidationWarning, match="'uint16' is not compatible with 'float32'"):
+        with pytest.raises(
+            TypeError,
+            match="Input data model does not have float-type data. "
+            "The file should be opened as a RampModel.",
+        ):
+            GroupScaleStep().run(l1b_model)
+
+
+def test_non_ramp_model(make_rampmodel):
+    model = make_rampmodel(2, 2, 4, 200, 200)
+    generic_model = JwstDataModel(model)
+    np.testing.assert_allclose(generic_model.data, model.data)
+
+    output = GroupScaleStep.call(generic_model)
+    assert isinstance(output, RampModel)
+
+    scale = model.meta.exposure.frame_divisor / model.meta.exposure.nframes
+    np.testing.assert_allclose(output.data / model.data, scale)
 
 
 @pytest.fixture(scope="function")
