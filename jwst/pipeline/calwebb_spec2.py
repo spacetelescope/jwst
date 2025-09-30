@@ -672,7 +672,6 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.photom.run(calibrated)
         return calibrated
 
-
     def _process_miri_wfss(self, data):
         """
         Calibrate MIRI WFSS  data.
@@ -729,18 +728,14 @@ class Spec2Pipeline(Pipeline):
 
         # Continue with remaining calibration steps, using the original
         # DN/sec image
-        print("*** run extracted_2d")
         calibrated = self.extract_2d.run(calibrated)
-        print("*** src type")
         calibrated = self.srctype.run(calibrated)
         # calibrated = self.straylight.run(calibrated)
-        # calibrated = self.fringe.run(calibrated)
         # calibrated = self.pathloss.run(calibrated)
         # calibrated = self.barshadow.run(calibrated)
         # calibrated = self.wfss_contam.run(calibrated)
         calibrated = self.photom.run(calibrated)
         return calibrated
-
 
     def _process_nirspec_slits(self, data):
         """
