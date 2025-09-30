@@ -1190,7 +1190,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
 
     wl_array = get_wavelengths(data_model, exp_type, extract_params["spectral_order"])
 
-    print("result of get_wavelengths", wl_array)
+    # print("result of get_wavelengths", wl_array)
     # Shift aperture definitions by source position if needed
     # Extract parameters are updated in place
     if extract_params["use_source_posn"]:
@@ -1621,7 +1621,7 @@ def create_extraction(
     extract_params = get_extract_parameters(
         extract_ref_dict, data_model, slitname, sp_order, input_model.meta, **kwargs
     )
-    print("in extract.py extraction parameters", extract_params["match"])
+    # print("in extract.py extraction parameters:", extract_params["match"])
 
     if extract_params["match"] == NO_MATCH:
         log.critical("Missing extraction parameters.")
@@ -1631,7 +1631,8 @@ def create_extraction(
         raise ContinueError()
 
     extract_params["dispaxis"] = data_model.meta.wcsinfo.dispersion_direction
-    print("extract params", extract_params["dispaxis"])
+    # print('dispersion direction', data_model.meta.wcsinfo.dispersion_direction)
+    # print("extract params", extract_params["dispaxis"])
 
     if extract_params["dispaxis"] is None:
         log.warning("The dispersion direction information is missing, so skipping ...")
@@ -1646,7 +1647,7 @@ def create_extraction(
 
     valid = np.isfinite(wavelength)
     wavelength = wavelength[valid]
-    print("wavelength", wavelength)
+    # print("wavelength", wavelength)
     if np.sum(valid) == 0:
         log.error("Spectrum is empty; no valid data.")
         raise ContinueError()
@@ -1664,7 +1665,7 @@ def create_extraction(
 
     # Set up aperture correction, to be used for every integration
     apcorr_available = False
-    print("Source type", source_type)
+    # print("Source type", source_type)
     if source_type is not None and source_type.upper() == "POINT" and apcorr_ref_model is not None:
         log.info("Creating aperture correction.")
         # NIRSpec needs to use a wavelength in the middle of the
@@ -1688,7 +1689,6 @@ def create_extraction(
         )
     else:
         apcorr = None
-    print("in extract.py apcorr", apcorr)
 
     # Log the parameters before extracting
     log_initial_parameters(extract_params)
@@ -1727,7 +1727,6 @@ def create_extraction(
 
     # Extract each integration
     spec_list = []
-    print("integrations", integrations)
     for integ in integrations:
         (
             sum_flux,
@@ -1742,7 +1741,6 @@ def create_extraction(
             scene_model_2d,
             residual_2d,
         ) = extract_one_slit(data_model, integ, profile, bg_profile, nod_profile, extract_params)
-        print("Got here")
 
         # Save the scene model and residual
         if save_scene_model:
@@ -1809,7 +1807,6 @@ def create_extraction(
 
         del sum_flux
 
-        print("flux", flux)
         error = np.sqrt(f_var_poisson + f_var_rnoise + f_var_flat)
         sb_error = np.sqrt(sb_var_poisson + sb_var_rnoise + sb_var_flat)
         berror = np.sqrt(b_var_poisson + b_var_rnoise + b_var_flat)
@@ -2143,8 +2140,6 @@ def run_extract1d(
         else:
             apcorr_ref_model = read_apcorr_ref(apcorr_ref_name, exp_type)
 
-    print("in extract.py", apcorr_ref_model)
-
     # This will be relevant if we're asked to extract a spectrum
     # and the spectral order is zero.
     # That's only OK if the disperser is a prism.
@@ -2154,7 +2149,7 @@ def run_extract1d(
     profile_model = None
     scene_model = None
     residual = None
-    print("is this true", isinstance(input_model, (ModelContainer, datamodels.MultiSlitModel)))
+
     if isinstance(input_model, (ModelContainer, datamodels.MultiSlitModel)):
         if isinstance(input_model, ModelContainer):
             slits = input_model
@@ -2176,7 +2171,6 @@ def run_extract1d(
         # Set up the output model
         output_model = _make_output_model(slits[0], meta_source)
 
-        print("in extract.py number of slits", len(slits))
         for slit in slits:  # Loop over the slits in the input model
             log.info(f"Working on slit {slit.name}")
             log.debug(f"Slit is of type {type(slit)}")
