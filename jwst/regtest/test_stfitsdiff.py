@@ -1158,3 +1158,8 @@ def test_astropy_version():
         "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"
     )
     assert astropy_ver_msg == expect
+
+    pretend_version = "v6.9.9"
+    astropy_ver_msg = set_correct_where_not_allclose(pretend_version)
+    expect = ""
+    assert astropy_ver_msg == expect
