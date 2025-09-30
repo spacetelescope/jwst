@@ -56,9 +56,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
     instrument = input_model.meta.instrument.name.lower()
     mod = importlib.import_module("." + instrument, "jwst.assign_wcs")
 
-    print("*************in load wcs", input_model.meta.exposure.type)
-    print("mod", mod)
-    print(SPEC_TYPES)
     if (
         input_model.meta.exposure.type.lower() in SPEC_TYPES
         or input_model.meta.instrument.lamp_mode.lower() in NRS_LAMP_MODE_SPEC_TYPES
@@ -71,8 +68,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
             input_model.meta.instrument.pupil,
         )
 
-    print(input_model.meta.wcsinfo.dispersion_direction)
-
     if instrument.lower() == "nirspec":
         pipeline = mod.create_pipeline(input_model, reference_files, slit_y_range=nrs_slit_y_range)
     else:
@@ -80,7 +75,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
     # Initialize the output model as a copy of the input
     # Make the copy after the WCS pipeline is created in order to pass updates to the model.
 
-    print("***Pipeline returned", pipeline)
     if pipeline is None:
         input_model.meta.cal_step.assign_wcs = "SKIPPED"
         log.warning("assign_wcs: SKIPPED")
@@ -89,9 +83,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
     output_model = input_model.copy()
     wcs = WCS(pipeline)
     output_model.meta.wcs = wcs
-
-    print("*** wcs", wcs)
-    print("value of wcs in model", output_model.meta.wcs)
 
     if (
         instrument.lower() == "nirspec"
@@ -116,7 +107,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
     ]
 
     if output_model.meta.exposure.type.lower() not in exclude_types:
-        print(" SHOULD NOT GET HERE")
         imaging_types = IMAGING_TYPES.copy()
         imaging_types.update(["mir_lrs-slitless"])
         imaging_lrs_types = ["mir_lrs-fixedslit"]

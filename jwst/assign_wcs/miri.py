@@ -830,7 +830,6 @@ def wfss(input_model, reference_files):
     if "MIR_WFSS" != input_model.meta.exposure.type:
         raise ValueError("The input exposure is not MIRI WFSS")
 
-    print("***** setting up assign_wcs pipeline for mir_wfss")
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(
         name="dispersed_detector",
@@ -897,7 +896,6 @@ def wfss(input_model, reference_files):
         imagepipe.append((spatial_and_spectral, trans))
     imagepipe.append((cf.CompositeFrame([world, spec], name="world"), None))
     wfss_pipeline.extend(imagepipe)
-    print("done wcs for miri wfss")
     return wfss_pipeline
 
 

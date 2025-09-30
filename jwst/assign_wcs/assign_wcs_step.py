@@ -93,7 +93,6 @@ class AssignWcsStep(Step):
         """
         reference_file_names = {}
         with datamodels.open(input_data) as input_model:
-            print(" in assignwcs", input_model)
             # If input type is not supported, log warning, set to 'skipped', exit
             if not (
                 isinstance(input_model, datamodels.ImageModel)
@@ -124,7 +123,6 @@ class AssignWcsStep(Step):
                     raise MSAFileError(message)
             slit_y_range = [self.slit_y_low, self.slit_y_high]
 
-            print("Going to load wcs in assign_wcs_step")
             result = load_wcs(
                 input_model,
                 reference_file_names,
@@ -159,7 +157,6 @@ class AssignWcsStep(Step):
                 )
                 log.warning(f'"{e.args[0]}"')
         else:  # WFSS modes
-            print("assign_wcs_step in WFSS modes ")
             try:
                 # A bounding_box is needed for the imaging WCS
                 bbox = wcs_bbox_from_shape(result.data.shape)
@@ -172,7 +169,6 @@ class AssignWcsStep(Step):
                 else:
                     print("assign_wcs_problem")
 
-                print("assign_wcs_step setting up wfss_imaging_wcs")
                 wfss_imaging_wcs(
                     result,
                     imaging_func,
@@ -190,5 +186,4 @@ class AssignWcsStep(Step):
                 )
                 log.warning(f'"{e.args[0]}"')
 
-        print(result.meta.wcs)
         return result
