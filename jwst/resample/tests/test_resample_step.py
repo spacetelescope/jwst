@@ -8,7 +8,7 @@ from astropy.io import fits
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
 from stcal.resample.utils import build_driz_weight, compute_mean_pixel_area
-from stdatamodels.jwst.datamodels import ImageModel, dqflags
+from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, dqflags
 
 from jwst.assign_wcs import AssignWcsStep
 from jwst.assign_wcs.util import compute_scale
@@ -20,6 +20,7 @@ from jwst.resample.resample import input_jwst_model_to_dict
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
 from jwst.resample.resample_step import GOOD_BITS
 from jwst.resample.resample_utils import load_custom_wcs
+from jwst.tests.helpers import _help_pytest_warns
 
 _FLT32_EPS = np.finfo(np.float32).eps
 
@@ -407,9 +408,7 @@ def test_nirspec_wcs_roundtrip(nirspec_cal):
 
 
 def test_nirspec_lamp_wcs_roundtrip(nirspec_lamp):
-    # RuntimeWarning: invalid value encountered in sqrt
-    with np.errstate(invalid="ignore"):
-        im = ResampleSpecStep.call(nirspec_lamp)
+    im = ResampleSpecStep.call(nirspec_lamp)
 
     for slit in im.slits:
         x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
@@ -444,7 +443,13 @@ def test_single_image_file_input(nircam_rate, tmp_cwd):
     result_from_file = ResampleStep.call("test_input.fits")
 
     # Check that the output is as expected
+    assert result_from_memory.meta.cal_step.resample == "COMPLETE"
+    assert result_from_file.meta.cal_step.resample == "COMPLETE"
     assert_allclose(result_from_file.data, result_from_memory.data, equal_nan=True)
+
+    # Check that input model was not modified
+    assert im is not result_from_memory
+    assert im.meta.cal_step.resample is None
 
     result_from_file.close()
     result_from_memory.close()
@@ -970,7 +975,10 @@ def test_resample_undefined_variance(nircam_rate, shape):
     im.meta.filename = "foo.fits"
     c = ModelLibrary([im])
 
-    with pytest.warns(RuntimeWarning, match="'var_rnoise' array not available"):
+    with (
+        _help_pytest_warns(),
+        pytest.warns(RuntimeWarning, match="'var_rnoise' array not available"),
+    ):
         result = ResampleStep.call(c, blendheaders=False)
 
     # no valid variance - output error and variance are all NaN
@@ -1577,9 +1585,7 @@ def test_missing_nominal_area(miri_cal, tmp_path):
 
 
 def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
-    # RuntimeWarning: invalid value encountered in sqrt
-    with np.errstate(invalid="ignore"):
-        result = ResampleSpecStep.call(nirspec_lamp)
+    result = ResampleSpecStep.call(nirspec_lamp)
 
     # output data should have the same wavelength size,
     # spatial size is close
@@ -1587,16 +1593,12 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     assert result.slits[0].data.shape[1] == nirspec_lamp.slits[0].data.shape[1]
 
     # test pixel scale setting: will not work without sky-based WCS
-    # RuntimeWarning: invalid value encountered in sqrt
-    with np.errstate(invalid="ignore"):
-        result2 = ResampleSpecStep.call(nirspec_lamp, pixel_scale=0.5)
+    result2 = ResampleSpecStep.call(nirspec_lamp, pixel_scale=0.5)
     assert_allclose(result2.slits[0].data, result.slits[0].data, equal_nan=True)
     assert result2.meta.resample.pixel_scale_ratio == 1.0
 
     # setting pixel_scale_ratio is still allowed
-    # RuntimeWarning: invalid value encountered in sqrt
-    with np.errstate(invalid="ignore"):
-        result3 = ResampleSpecStep.call(nirspec_lamp, pixel_scale_ratio=0.5)
+    result3 = ResampleSpecStep.call(nirspec_lamp, pixel_scale_ratio=0.5)
     assert result3.slits[0].data.shape[0] < result.slits[0].data.shape[0]
     assert result3.slits[0].data.shape[1] == result.slits[0].data.shape[1]
     assert result3.meta.resample.pixel_scale_ratio == 0.5
@@ -1605,9 +1607,7 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     # since output scale cannot be determined
     refwcs = str(tmp_path / "resample_refwcs.asdf")
     asdf.AsdfFile({"wcs": result3.slits[0].meta.wcs}).write_to(refwcs)
-    # RuntimeWarning: invalid value encountered in sqrt
-    with np.errstate(invalid="ignore"):
-        result4 = ResampleSpecStep.call(nirspec_lamp, output_wcs=refwcs)
+    result4 = ResampleSpecStep.call(nirspec_lamp, output_wcs=refwcs)
     assert result4.slits[0].data.shape == result3.slits[0].data.shape
     assert result4.meta.resample.pixel_scale_ratio == 1.0
 
@@ -1615,3 +1615,27 @@ def test_nirspec_lamp_pixscale(nirspec_lamp, tmp_path):
     result2.close()
     result3.close()
     result4.close()
+
+
+def test_spec_output_is_not_input(nirspec_cal):
+    im = ResampleSpecStep.call(nirspec_cal)
+
+    # Step is complete
+    assert im.meta.cal_step.resample == "COMPLETE"
+
+    # Input is not modified
+    assert im is not nirspec_cal
+    assert nirspec_cal.meta.cal_step.resample is None
+
+
+def test_spec_skip_cube():
+    model = MultiSlitModel()
+    model.slits.append(CubeModel((10, 10, 10)))
+    result = ResampleSpecStep.call(model)
+
+    # Step is skipped
+    assert result.meta.cal_step.resample == "SKIPPED"
+
+    # Input is not modified
+    assert result is not model
+    assert model.meta.cal_step.resample is None

@@ -5,6 +5,7 @@ import pytest
 
 from jwst.datamodels import ImageModel  # type: ignore[attr-defined]
 from jwst.stpipe import Step
+from jwst.tests.helpers import _help_pytest_warns
 
 INPUT_FILE = "test_rate.fits"
 INPUT_FILE_2 = "test2_rate.fits"
@@ -12,7 +13,6 @@ INPUT_ASN = "test_asn.json"
 OUTPUT_FILE = "custom_name.fits"
 OUTPUT_FILE_ASN = "custom_name_asn.fits"  # cannot reuse because everything runs in same cwd
 LOGFILE = "run_asn.log"
-LOGCFG = "test_logs.cfg"
 
 
 @pytest.fixture(scope="module")
@@ -84,16 +84,11 @@ def run_image2_pipeline_asn(make_association, request):
     and the output_file parameter should be ignored.
     """
     # save warnings to logfile so can be checked later
-    logcfg_content = f"[*] \n \
-        level = INFO \n \
-        handler = file:{LOGFILE}"
-    with open(LOGCFG, "w") as f:
-        f.write(logcfg_content)
-
     args = [
         "calwebb_image2",
         INPUT_ASN,
-        f"--logcfg={LOGCFG}",
+        "--log-level=INFO",
+        f"--log-file={LOGFILE}",
         "--steps.flat_field.skip=true",
         "--steps.photom.skip=true",
         "--steps.resample.skip=true",
@@ -158,5 +153,8 @@ def test_bsub_deprecated(make_rate_file):
         "--steps.photom.skip=true",
         "--steps.resample.skip=true",
     ]
-    with pytest.warns(DeprecationWarning, match="The --save_bsub parameter is deprecated"):
+    with (
+        _help_pytest_warns(),
+        pytest.warns(DeprecationWarning, match="The --save_bsub parameter is deprecated"),
+    ):
         Step.from_cmdline(args)

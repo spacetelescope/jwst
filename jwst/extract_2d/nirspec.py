@@ -48,13 +48,14 @@ def nrs_extract2d(input_model, slit_names=None, source_ids=None):
     exp_type = input_model.meta.exposure.type.upper()
 
     if (
-        hasattr(input_model.meta.cal_step, "assign_wcs")
-        and input_model.meta.cal_step.assign_wcs == "SKIPPED"
+        input_model.meta.cal_step.assign_wcs is None
+        or input_model.meta.cal_step.assign_wcs == "SKIPPED"
     ):
         log.info("assign_wcs was skipped")
         log.warning("extract_2d will be SKIPPED")
-        input_model.meta.cal_step.extract_2d = "SKIPPED"
-        return input_model
+        output_model = input_model.copy()
+        output_model.meta.cal_step.extract_2d = "SKIPPED"
+        return output_model
 
     if not (hasattr(input_model.meta, "wcs") and input_model.meta.wcs is not None):
         raise AttributeError(

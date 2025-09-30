@@ -1,1 +1,0 @@
-Removed ``pytest_jwst`` plugin. Pytest header customization is now in ``jwst/conftest.py`` and CRDS context is always being reported.

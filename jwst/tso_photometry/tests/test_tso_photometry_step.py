@@ -1,32 +1,11 @@
 import numpy as np
 import pytest
 from astropy.table import QTable
-from stdatamodels.jwst.datamodels import TsoPhotModel
 
-from jwst.stpipe import Step
 from jwst.tso_photometry import tso_photometry_step as tp
 from jwst.tso_photometry.tests.test_tso_photometry import mock_nircam_image
 
-
-@pytest.fixture()
-def mock_tsophot_reffile(tmp_path, monkeypatch):
-    model = TsoPhotModel()
-    model.radii = [{"pupil": "ANY", "radius": 6.0, "radius_inner": 8.0, "radius_outer": 11.0}]
-    required = ["description", "author", "pedigree", "useafter"]
-    for key in required:
-        setattr(model.meta, key, "TEST")
-    model.meta.instrument.name = "NIRCAM"
-    model.meta.exposure.type = "NRC_TSIMAGE"
-    reffile = str(tmp_path / "tso_phot.asdf")
-    model.save(reffile)
-
-    def mock_get_reference_file(self, dataset, reference_file_type):
-        if reference_file_type == "tsophot":
-            return reffile
-        else:
-            return Step().get_reference_file(dataset, reference_file_type)
-
-    monkeypatch.setattr(tp.TSOPhotometryStep, "get_reference_file", mock_get_reference_file)
+RADII_FOR_TEST = {"radius": 6.0, "radius_inner": 8.0, "radius_outer": 11.0}
 
 
 def spot_check_expected_values(datamodel, catalog):
@@ -52,14 +31,14 @@ def test_tsophotometry_step_missing_values(missing):
         tp.TSOPhotometryStep.call(datamodel)
 
 
-def test_tsophotometry_step_subarray(mock_tsophot_reffile, log_watcher):
+def test_tsophotometry_step_subarray(log_watcher):
     datamodel = mock_nircam_image()
     input_copy = datamodel.copy()
 
     watcher = log_watcher(
         "jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray"
     )
-    catalog = tp.TSOPhotometryStep.call(datamodel)
+    catalog = tp.TSOPhotometryStep.call(datamodel, **RADII_FOR_TEST)
     watcher.assert_seen()
 
     # Output is a table
@@ -71,7 +50,7 @@ def test_tsophotometry_step_subarray(mock_tsophot_reffile, log_watcher):
     np.testing.assert_allclose(datamodel.data, input_copy.data)
 
 
-def test_tsophotometry_step_full_frame(mock_tsophot_reffile, log_watcher):
+def test_tsophotometry_step_full_frame(log_watcher):
     datamodel = mock_nircam_image(shape=(7, 2048, 2048))
     input_copy = datamodel.copy()
 
@@ -79,7 +58,7 @@ def test_tsophotometry_step_full_frame(mock_tsophot_reffile, log_watcher):
     watcher = log_watcher(
         "jwst.tso_photometry.tso_photometry_step", message="Extracting gain subarray"
     )
-    catalog = tp.TSOPhotometryStep.call(datamodel)
+    catalog = tp.TSOPhotometryStep.call(datamodel, **RADII_FOR_TEST)
     watcher.assert_not_seen()
 
     # Results are otherwise the same as for the subarray
@@ -91,7 +70,7 @@ def test_tsophotometry_step_full_frame(mock_tsophot_reffile, log_watcher):
     np.testing.assert_allclose(datamodel.data, input_copy.data)
 
 
-def test_tsophotometry_step_save_catalog(mock_tsophot_reffile, tmp_path, log_watcher):
+def test_tsophotometry_step_save_catalog(tmp_path, log_watcher):
     datamodel = mock_nircam_image()
     datamodel.meta.filename = "test_calints.fits"
 
@@ -99,9 +78,7 @@ def test_tsophotometry_step_save_catalog(mock_tsophot_reffile, tmp_path, log_wat
         "jwst.tso_photometry.tso_photometry_step", message="Wrote TSO photometry catalog"
     )
     tp.TSOPhotometryStep.call(
-        datamodel,
-        save_catalog=True,
-        output_dir=str(tmp_path),
+        datamodel, save_catalog=True, output_dir=str(tmp_path), **RADII_FOR_TEST
     )
     watcher.assert_seen()
 
@@ -114,27 +91,27 @@ def test_tsophotometry_step_save_catalog(mock_tsophot_reffile, tmp_path, log_wat
     spot_check_expected_values(datamodel, catalog)
 
 
-def test_tsophotometry_step_no_centroid(mock_tsophot_reffile):
+def test_tsophotometry_step_no_centroid():
     datamodel = mock_nircam_image()
 
-    catalog = tp.TSOPhotometryStep.call(datamodel, centroid_source=False)
+    catalog = tp.TSOPhotometryStep.call(datamodel, centroid_source=False, **RADII_FOR_TEST)
 
     # Output is the same as the centroided result for the test data
     assert isinstance(catalog, QTable)
     spot_check_expected_values(datamodel, catalog)
 
 
-def test_tsophotometry_step_moving_centroid(mock_tsophot_reffile):
+def test_tsophotometry_step_moving_centroid():
     datamodel = mock_nircam_image()
 
-    catalog = tp.TSOPhotometryStep.call(datamodel, moving_centroid=True)
+    catalog = tp.TSOPhotometryStep.call(datamodel, moving_centroid=True, **RADII_FOR_TEST)
 
     # Output is the same as the single centroided result for the test data
     assert isinstance(catalog, QTable)
     spot_check_expected_values(datamodel, catalog)
 
 
-def test_tsophotometry_step_failed_centroid(monkeypatch, mock_tsophot_reffile, log_watcher):
+def test_tsophotometry_step_failed_centroid(monkeypatch, log_watcher):
     datamodel = mock_nircam_image()
 
     def mock_centroid(*args, **kwars):
@@ -144,7 +121,7 @@ def test_tsophotometry_step_failed_centroid(monkeypatch, mock_tsophot_reffile, l
     monkeypatch.setattr(tp, "tso_source_centroid", mock_centroid)
 
     watcher = log_watcher("jwst.tso_photometry.tso_photometry_step", message="Centroid fit failed")
-    catalog = tp.TSOPhotometryStep.call(datamodel, centroid_source=True)
+    catalog = tp.TSOPhotometryStep.call(datamodel, centroid_source=True, **RADII_FOR_TEST)
     watcher.assert_seen()
 
     # Output is the same as the centroided result for the test data:
@@ -154,9 +131,10 @@ def test_tsophotometry_step_failed_centroid(monkeypatch, mock_tsophot_reffile, l
 
 
 @pytest.mark.parametrize("box", ["search_box_width", "fit_box_width"])
-def test_tsophotometry_step_odd_boxes(mock_tsophot_reffile, log_watcher, box):
+def test_tsophotometry_step_odd_boxes(log_watcher, box):
     datamodel = mock_nircam_image()
     kwargs = {box: 22}
+    kwargs.update(RADII_FOR_TEST)
 
     watcher = log_watcher(
         "jwst.tso_photometry.tso_photometry_step",

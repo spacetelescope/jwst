@@ -117,20 +117,20 @@ class Spec2Pipeline(Pipeline):
         log.info("Starting calwebb_spec2 ...")
 
         if self.save_bsub:
-            warnings.warn(
+            deprecation_message = (
                 "The --save_bsub parameter is deprecated and will be removed in a future release. "
                 "To toggle saving background-subtracted data, use the background step's "
-                "--save_results parameter instead.",
-                DeprecationWarning,
-                stacklevel=2,
+                "--save_results parameter instead."
             )
+            warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+            log.warning(deprecation_message)
 
         # Setup step parameters required by the pipeline.
         self.resample_spec.save_results = self.save_results
         self.resample_spec.suffix = "s2d"
-        self.cube_build.output_type = "multi"
         self.cube_build.save_results = False
         self.cube_build.skip_dqflagging = True
+        self.cube_build.pipeline = 2
         self.extract_1d.save_results = self.save_results
 
         # Retrieve the input(s)
@@ -386,11 +386,17 @@ class Spec2Pipeline(Pipeline):
             resampled = self.resample_spec.run(resampled)
 
         elif (exp_type in ["MIR_MRS", "NRS_IFU"]) or is_nrs_ifu_linelamp(calibrated):
-            # First call pixel_replace then call cube_build step for IFU data.
-            # For cube_build always create a single cube containing multiple
-            # wavelength bands
+            # set the default output type for both instruments if is not set
+            if exp_type == "NRS_IFU" and self.cube_build.output_type is None:
+                self.cube_build.output_type = "band"
 
+            if is_nrs_ifu_linelamp(calibrated) and self.cube_build.output_type is None:
+                self.cube_build.output_type = "band"
+
+            if exp_type == "MIR_MRS" and self.cube_build.output_type is None:
+                self.cube_build.output_type = "multi"
             resampled = calibrated.copy()
+            # First call pixel_replace then call cube_build step for IFU data.
             # interpolate pixels that have a NaN value or are flagged
             # as DO_NOT_USE or NON_SCIENCE.
             resampled = self.pixel_replace.run(resampled)

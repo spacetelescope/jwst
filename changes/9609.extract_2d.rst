@@ -1,1 +1,0 @@
-Update handling of wavelengthrange reference files to handle new NIRCam delivery with fieldpoint column in table.

@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.table import QTable
 from numpy.testing import assert_allclose
 from photutils.datasets import make_gwcs
 
@@ -234,3 +235,16 @@ def test_source_catalog_point_sources(finder, nircam_model, tmp_cwd):
             assert segm.data.shape == (101, 101)
             assert segm.meta.hasattr("wcs")
             assert segm.meta.hasattr("wcsinfo")
+
+
+def test_output_is_not_input(nircam_model):
+    """Make sure output is not the same as input."""
+    step = SourceCatalogStep(
+        snr_threshold=0.5, npixels=5, bkg_boxsize=50, kernel_fwhm=2.0, save_results=False
+    )
+    result = step.run(nircam_model)
+
+    # Input is an image, output is a catalog
+    assert result is not nircam_model
+    assert isinstance(result, QTable)
+    assert isinstance(nircam_model, dm.ImageModel)

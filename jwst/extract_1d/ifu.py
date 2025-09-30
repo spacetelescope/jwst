@@ -212,7 +212,7 @@ def ifu_extract1d(
                 temp_flux, wavelength, channel=channel, dichroic_only=False, max_amp=None
             )
         except Exception:
-            log.info("Flux residual fringe correction failed- skipping.")
+            log.warning("Flux residual fringe correction failed- skipping.")
 
         # Apply residual fringe to the surf_bright array
         try:
@@ -220,7 +220,7 @@ def ifu_extract1d(
                 surf_bright, wavelength, channel=channel, dichroic_only=False, max_amp=None
             )
         except Exception:
-            log.info("Surf bright residual fringe correction failed- skipping.")
+            log.warning("Surf bright residual fringe correction failed- skipping.")
 
         # Apply residual fringe to the background array
         try:
@@ -228,7 +228,7 @@ def ifu_extract1d(
                 background, wavelength, channel=channel, dichroic_only=False, max_amp=None
             )
         except Exception:
-            log.info("Background residual fringe correction failed- skipping.")
+            log.warning("Background residual fringe correction failed- skipping.")
 
     pixel_solid_angle = input_model.meta.photometry.pixelarea_steradians
     if pixel_solid_angle is None:

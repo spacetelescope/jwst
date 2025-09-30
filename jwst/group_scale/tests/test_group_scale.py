@@ -26,6 +26,10 @@ def test_nframes_equal_frame_divisor(make_rampmodel):
     output = GroupScaleStep.call(datmod)
     assert output.meta.cal_step.group_scale == "SKIPPED"
 
+    # Input is not modified
+    assert output is not datmod
+    assert datmod.meta.cal_step.group_scale is None
+
 
 def test_nframes_not_equal_frame_divisor(make_rampmodel):
     """If nframes and frame_divisor are not equal, do correction"""
@@ -40,6 +44,10 @@ def test_nframes_not_equal_frame_divisor(make_rampmodel):
     # outputs are different than the inputs as requested in the document.
     assert not np.array_equal(output.data, datmod.data)
 
+    # Input is not modified
+    assert output is not datmod
+    assert datmod.meta.cal_step.group_scale is None
+
 
 def test_nframes_is_none(make_rampmodel):
     """Make sure step is skipped if nframes is None"""
@@ -47,6 +55,10 @@ def test_nframes_is_none(make_rampmodel):
     output = GroupScaleStep.call(datmod)
 
     assert output.meta.cal_step.group_scale == "SKIPPED"
+
+    # Input is not modified
+    assert output is not datmod
+    assert datmod.meta.cal_step.group_scale is None
 
 
 def test_nframes_is_power_of_two(make_rampmodel):
@@ -58,6 +70,10 @@ def test_nframes_is_power_of_two(make_rampmodel):
 
     assert output.meta.cal_step.group_scale == "SKIPPED"
 
+    # Input is not modified
+    assert output is not datmod
+    assert datmod.meta.cal_step.group_scale is None
+
 
 def test_nframes_is_not_power_of_two(make_rampmodel):
     """When frame_divisor is None, then do_correction will be applied if
@@ -68,6 +84,10 @@ def test_nframes_is_not_power_of_two(make_rampmodel):
     output = GroupScaleStep.call(datmod)
 
     assert output.meta.cal_step.group_scale == "SKIPPED"
+
+    # Input is not modified
+    assert output is not datmod
+    assert datmod.meta.cal_step.group_scale is None
 
 
 def test_scale_value(make_rampmodel):

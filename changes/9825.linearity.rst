@@ -1,1 +1,0 @@
-Remove cast (which consumed 3x the data array size) to reduce memory usage.
