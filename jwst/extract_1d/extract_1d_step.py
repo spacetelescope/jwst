@@ -99,8 +99,6 @@ class Extract1dStep(Step):
         if apcorr_ref != "N/A":
             log.info(f"Using APCORR file {apcorr_ref}")
 
-        print("************************", apcorr_ref)
-
         try:
             psf_ref = self.get_reference_file(model, "psf")
         except crds.core.exceptions.CrdsLookupError:
@@ -427,7 +425,6 @@ class Extract1dStep(Step):
                 profile = None
                 scene_model = None
                 residual = None
-                print("The returned reference files", extract_ref, apcorr_ref, psf_ref)
 
                 if isinstance(model, datamodels.IFUCubeModel):
                     # Call the IFU specific extraction routine
