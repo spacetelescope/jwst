@@ -23,7 +23,7 @@ def do_correction(model):
 
     Parameters
     ----------
-    model : data model object
+    model : `~stdatamodels.jwst.datamodels.RampModel`
         Science data to be corrected. Model is modified in place.
     """
     # Get the meta data values that we need
@@ -40,7 +40,17 @@ def do_correction(model):
 
     # Apply the rescaling to the entire data array
     scale = float(frame_divisor) / nframes
-    model.data *= scale
+    try:
+        # Multiply in place if possible
+        model.data *= scale
+    except TypeError:
+        # Inform the user
+        msg = (
+            "Input data model does not have float-type data. "
+            "The file should be opened as a RampModel."
+        )
+        log.error(msg)
+        raise TypeError(msg) from None
     model.meta.cal_step.group_scale = "COMPLETE"
 
     return

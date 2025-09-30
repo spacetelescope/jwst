@@ -418,3 +418,17 @@ class PrepareOutputForceCopyPipeline(Pipeline):
         log.info(f"Output data is {type(result)}")
 
         return result
+
+
+class PrepareOutputAsTypeStep(Step):
+    """Step to test the prepare_output method with a datamodel type specified."""
+    class_alias = "prepare_output_as_type"
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data, open_as_type=datamodels.IFUImageModel)
+        record_step_status(result, "prepare_output", True)
+        log.info(f"Output data is {type(result)}")
+
+        return result
