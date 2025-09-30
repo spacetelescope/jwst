@@ -95,9 +95,8 @@ def where_not_allclose_new(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):
 def set_correct_where_not_allclose(__version__):
     # check which function to use
     ver = float(__version__.replace("v", "").replace(".", ""))
-    if ver <= 710.0:
-        astropy_ver_msg = ""
-    else:
+    astropy_ver_msg = ""
+    if ver > 710.0:
         astropy_ver_msg = (
             "\n\n *** Astropy version greater than v7.1.0. "
             "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"

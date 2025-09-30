@@ -103,18 +103,23 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
     # different data values to be reported and the abs and rel tolerances
     report = rsplit[from_line:]
     # Remove the max absolute and max relative to pass old astropy version tests
-    end_idx, no_diffs = None, False
-    for idx, line in enumerate(report):
+    no_diffs = False
+    new_report = []
+    for line in report:
         if "No differences found" in line:
             no_diffs = True
             break
+        elif "Maximum relative difference" in line:
+            continue
+        elif "Maximum absolute difference" in line:
+            continue
+        new_report.append(line)
     if no_diffs:
         if report_pixel_loc_diffs:
             return report, report
         else:
             return report
-    if end_idx is not None:
-        report = report[:end_idx]
+    report = new_report
     if not report_pixel_loc_diffs:
         return report
     else:
@@ -1148,18 +1153,21 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
     assert report == expected_report
 
 
-def test_astropy_version():
+@pytest.mark.parametrize(
+    "pretend_version, expected_msg",
+    [
+        ("v6.9.9", ""),
+        (
+            "v7.2.0",
+            (
+                "\n\n *** Astropy version greater than v7.1.0. "
+                "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"
+            ),
+        ),
+    ],
+)
+def test_astropy_version(pretend_version, expected_msg):
     # Test if the astropy version is higher than v7.1.0, there is a message to remove the
     # current workaround.
-    pretend_version = "v7.2.0"
     astropy_ver_msg = set_correct_where_not_allclose(pretend_version)
-    expect = (
-        "\n\n *** Astropy version greater than v7.1.0. "
-        "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"
-    )
-    assert astropy_ver_msg == expect
-
-    pretend_version = "v6.9.9"
-    astropy_ver_msg = set_correct_where_not_allclose(pretend_version)
-    expect = ""
-    assert astropy_ver_msg == expect
+    assert astropy_ver_msg == expected_msg
