@@ -22,7 +22,7 @@ each band will be created.
     the default rules produce a single IFU cube containing the two channels in the input data with a non-linear
     wavelength dimension. In both cases,  the input filename  suffix ``cal`` is replaced with ``s3d``.
 
-  - ``pipeline = 3`` setups up the results for making ``calwebb_spec3`` pipeline type cbes. For NIRSpec data
+  - ``pipeline = 3`` setups up the results for making ``calwebb_spec3`` pipeline type cubes. For NIRSpec data
     the default rules will produce a single IFU cube from the same grating and filter, while for MIRI data a single
     IFU cube is created for each channel and band. In both cases, the output IFU cube will contain the grating and
     filter name (NIRSpec) or channel and band (MIRI).
