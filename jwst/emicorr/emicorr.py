@@ -85,9 +85,9 @@ def apply_emicorr(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
-        Input science data model to be EMI-corrected.
-    emicorr_model : `~jwst.datamodels.EmiModel` or None
+    input_model : `~stdatamodels.jwst.datamodels.RampModel`
+        Input science data model to be EMI-corrected. Updated in place.
+    emicorr_model : `~stdatamodels.jwst.datamodels.EmiModel` or None
         Data model containing EMI correction.
     save_onthefly_reffile : str or None, optional
         Full path and root name to save an on-the-fly reference file to.
@@ -118,7 +118,7 @@ def apply_emicorr(
 
     Returns
     -------
-    output_model : JWST data model
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Input science data model, corrected for EMI.
     """
     # Get the subarray case and other info
