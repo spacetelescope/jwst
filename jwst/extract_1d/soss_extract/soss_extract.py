@@ -299,7 +299,7 @@ def _f_to_spec(f_order, grid_order, detector_model, pixel_grid, mask):
         [pixel_grid],
         [np.ones_like(pixel_grid)],
         [detector_model.throughput],
-        [detector_model.kernel],
+        [None],
         wave_grid=grid_order,
         mask_trace_profile=[mask[np.newaxis, :]],
         orders=[detector_model.spectral_order],
@@ -426,18 +426,21 @@ def _do_tiktests(
     guess_factor,
     order_models,
     global_mask,
-    save_tiktests=True,
+    save_tiktests=False,
+    tikfac_log_range=None,
 ):
+    if tikfac_log_range is None:
+        tikfac_log_range = [-4, 4]
     # Find the tikhonov factor.
     # Initial pass 8 orders of magnitude with 10 grid points.
     log_guess = np.log10(guess_factor)
-    factors = np.logspace(log_guess - 4, log_guess + 4, 10)
+    factors = np.logspace(log_guess + tikfac_log_range[0], log_guess + tikfac_log_range[1], 10)
     all_tests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
     tikfac = engine.best_tikho_factor(all_tests, fit_mode="all")
 
-    # Refine across 4 orders of magnitude.
+    # Refine across 2 orders of magnitude.
     tikfac = np.log10(tikfac)
-    factors = np.logspace(tikfac - 2, tikfac + 2, 20)
+    factors = np.logspace(tikfac - 1, tikfac + 1, 10)
     tiktests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
     tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
 
@@ -455,6 +458,8 @@ def _do_tiktests(
                     _, spec_ord = _build_tracemodel_order(engine, order_model, f_k, global_mask)
                 _populate_tikho_attr(spec_ord, all_tests, idx, order)
                 spec_list.append(spec_ord)
+
+    log.info("Found best Tikhonov factor: %.4e", tikfac)
     return tikfac, spec_list
 
 
@@ -507,6 +512,7 @@ def _model_single_order(
     tikfac,
     do_tiktests=False,
     save_tiktests=False,
+    tikfac_log_range=None,
 ):
     """
     Extract an output spectrum for a single spectral order using the ATOCA algorithm.
@@ -544,6 +550,9 @@ def _model_single_order(
     save_tiktests : bool, optional
         If True, save the intermediate models and spectra for each Tikhonov factor tested.
         Has no effect if do_tiktests is False. Default is False.
+    tikfac_log_range : list, optional
+        The range in log10 space around the initial guess to test Tikhonov factors.
+        Default is [-4, 4].
 
     Returns
     -------
@@ -594,6 +603,7 @@ def _model_single_order(
             [order_model],
             mask_rebuild,
             save_tiktests=save_tiktests,
+            tikfac_log_range=tikfac_log_range,
         )
     else:
         spec_list = []
@@ -620,12 +630,14 @@ class Integration:
         box_weights,
         do_bkgsub=True,
         extract_order3=True,
+        save_intermediate=False,
     ):
         self.scidata = scidata
         self.scierr = scierr
         self.scimask = scimask
         self.refmask = refmask
         self.box_weights = box_weights
+        self.save_intermediate = save_intermediate
 
         if extract_order3:
             self.order_list = [1, 2, 3]
@@ -639,11 +651,6 @@ class Integration:
 
         # unpack ref file args
         self.order_models = order_models
-        self.wavemaps = [om.wavemap for om in order_models]
-        self.spectraces = [om.spectrace for om in order_models]
-        self.spec_profiles = [om.specprofile for om in order_models]
-        self.throughputs = [om.throughput for om in order_models]
-        self.kernels = [om.kernel for om in order_models]
         self.subarray = order_models[0].subarray
 
         # Define mask based on box aperture
@@ -747,21 +754,27 @@ class Integration:
 
         # Initialize the Engine for combined extraction of orders 1 and 2
         engine = ExtractionEngine(
-            self.wavemaps[:2],
-            self.spec_profiles[:2],
-            self.throughputs[:2],
-            self.kernels[:2],
+            [om.wavemap for om in self.order_models][:2],
+            [om.specprofile for om in self.order_models][:2],
+            [om.throughput for om in self.order_models][:2],
+            [om.kernel for om in self.order_models][:2],
             wave_grid=wave_grid,
             mask_trace_profile=self.mask_trace_profile[:2],
             global_mask=self.scimask,
             threshold=threshold,
             orders=[1, 2],
         )
+        # set the throughputs and kernels in the order models to those used in the engine
+        # these are now np.arrays and sparse matrices respectively, so this avoids re-computing
+        # them in subsequent integrations
+        for i in range(2):
+            # self.order_models[i].throughput = engine.throughput[i]
+            self.order_models[i].kernel = engine.kernels[i]
 
         # Find the tikhonov factor for order 1 (and contaminated part of order 2)
         if tikfacs_in["Order 1"] is None:
-            log.info("Solving for the optimal Tikhonov factor.")
-            save_tiktests = True
+            log.info("Solving for the optimal Tikhonov factor for overlapping orders 1 & 2.")
+            save_tiktests = self.save_intermediate
             guess_factor = engine.estimate_tikho_factors(estimate)
             tikfac, spec_list = _do_tiktests(
                 engine,
@@ -780,15 +793,10 @@ class Integration:
             spec_list = []
             tikfacs_out["Order 1"] = tikfacs_in["Order 1"]
 
-        log.info(f"Using a Tikhonov factor of {tikfacs_out['Order 1']}")
-
         # Run the extract method of the Engine.
+        log.info("Running...")
         f_k = engine(self.scidata_bkg, self.scierr, tikhonov=True, factor=tikfacs_out["Order 1"])
-
-        # Compute the log-likelihood of the best fit.
-        logl = engine.compute_likelihood(f_k, self.scidata_bkg, self.scierr)
-
-        log.info(f"Optimal solution has a log-likelihood of {logl}")
+        log.info("Done.")
 
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
@@ -831,13 +839,13 @@ class Integration:
             log.info(f"Generate model for well-separated part of {order_str}")
             order_model = self.order_models[idx_order]
 
-            # Use provided tikfac if given
-            tikfac = tikfacs_in[order_str]
-            if tikfac is None:
+            # Use provided tikfac if given=
+            if tikfacs_in[order_str] is None:
                 # If not given just try what was done for Order 1
                 tikfac = tikfacs_out["Order 1"]
                 do_tiktests = True
             else:
+                tikfac = tikfacs_in[order_str]
                 do_tiktests = False
 
             # Mask for the fit. All valid pixels inside box aperture
@@ -864,6 +872,7 @@ class Integration:
                     tikfac,
                     do_tiktests=do_tiktests,
                     save_tiktests=save_tiktests,
+                    tikfac_log_range=[-2, 8],
                 )
                 tikfacs_out[order_str] = spec_ord[-1].meta.soss_extract1d.factor
 
@@ -1141,6 +1150,7 @@ def _process_one_integration(
         box_weights,
         extract_order3=soss_kwargs["order_3"],
         do_bkgsub=soss_kwargs["subtract_background"],
+        save_intermediate=soss_kwargs["model"],
     )
 
     # Model the traces based on optics filter configuration (CLEAR or F277W)
