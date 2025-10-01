@@ -1149,7 +1149,7 @@ def _process_one_integration(
             # If tikfac and wave_grid already given, no need to make an estimate
             # So this if statement saves a bit of runtime
             log.info("Estimating the target flux based on order 1 low-contamination pixels.")
-            estimate = integration.estim_flux_first_order(threshold=soss_kwargs["threshold"])
+            estimate = integration.estim_flux_first_order()
         else:
             estimate = soss_kwargs["estimate"]
 
@@ -1162,7 +1162,7 @@ def _process_one_integration(
                 max_grid_size=soss_kwargs["max_grid_size"],
                 n_os=soss_kwargs["n_os"],
             )
-            log.debug(
+            log.info(
                 f"wave_grid covering from {wave_grid.min()} to {wave_grid.max()}"
                 f" with {wave_grid.size} points"
             )
