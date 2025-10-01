@@ -99,6 +99,7 @@ intersphinx_mapping = {
     'scipy': ('https://scipy.github.io/devdocs', None),
     'matplotlib': ('https://matplotlib.org/', None),
     'astropy': ('https://docs.astropy.org/en/stable/', None),
+    'asdf': ('https://asdf.readthedocs.io/en/stable/', None),
     'photutils': ('https://photutils.readthedocs.io/en/stable/', None),
     'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
     'stdatamodels': ('https://stdatamodels.readthedocs.io/en/latest/', None),
