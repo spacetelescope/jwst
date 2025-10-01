@@ -31,8 +31,17 @@ __all__ = [
 ]
 
 
+#
 # This function is for now copied from astropy. We can remove it once jwst updates the
-# astropy pin that contains this new functionality.
+# astropy pin that contains this new functionality, i.e. above v.7.1.0.
+#
+# When we get to the right version, the following items need to be removed:
+# Items                                                         Script where items live
+# ----------------------------------------------------------    -----------------------
+# function where_not_allclose_new                               st_fitsdiff.py
+# function set_correct_where_not_allclose                       st_fitsdiff.py
+# ASTROPY_VER_MSG and the if statement below                    st_fitsdiff.py
+# lines in function report_to_list that pass the abs/rel max    test_stfitsdiff.py
 def where_not_allclose_new(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):
     """
     Return array where values are above tolerances. Include max and min.
