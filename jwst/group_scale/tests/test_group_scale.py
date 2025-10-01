@@ -4,7 +4,6 @@ Unit tests for group_scale correction
 
 import numpy as np
 import pytest
-from stdatamodels.exceptions import ValidationWarning
 from stdatamodels.jwst.datamodels import JwstDataModel, Level1bModel, RampModel
 
 from jwst.group_scale import GroupScaleStep
@@ -121,9 +120,10 @@ def test_level1b(make_rampmodel):
     l1b_model.data = model.data.astype(np.uint16)
     l1b_model.update(model)
 
-    with pytest.warns(ValidationWarning, match="'uint16' is not compatible with 'float32'"):
-        with pytest.raises(TypeError, match="Input data model does not have float-type data"):
-            GroupScaleStep().run(l1b_model)
+    with pytest.raises(
+        TypeError, match="The file should be opened as a RampModel before calling the step"
+    ):
+        GroupScaleStep.call(l1b_model)
 
 
 def test_non_ramp_model(make_rampmodel):
