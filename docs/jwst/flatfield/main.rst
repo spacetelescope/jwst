@@ -104,7 +104,7 @@ is applied to the slit data, but that correction is not appropriate for the
 background signal contained in the slit, and hence corrections must be
 applied later in the :ref:`master background <master_background_step>` step.
 
-In this case, the `flatfield` step will compute 2D arrays of conversion
+In this case, the ``flatfield`` step will compute 2D arrays of conversion
 factors that are appropriate for a uniform source and for a point source,
 and store those correction factors in the "FLATFIELD_UN" and "FLATFIELD_PS"
 extensions, respectively, of the output data product. The point source

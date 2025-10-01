@@ -21,7 +21,7 @@ from ramp fitting.
 The count rate for each pixel is determined by a linear fit to the
 cosmic-ray-free and saturation-free ramp intervals for each pixel, with any
 intervening groups flagged as "DO_NOT_USE" excluded from the fits. Hereafter
-such intervals will be referred to as a ramp "segment." The fitting algorithm uses an 
+such intervals will be referred to as a ramp "segment." The fitting algorithm uses an
 'optimal' weighting scheme, as described by
 `Fixsen et al 2000 <https://ui.adsabs.harvard.edu/abs/2000PASP..112.1350F/abstract>`_.
 
@@ -67,8 +67,8 @@ Multiprocessing
 ---------------
 This step has the option of running in multiprocessing mode. In that mode it will
 split the input data into a number of slices based on the number of available
-cores on the host computer and the value of the `maximum_cores` step parameter. By
-default the step runs on a single processor. At the other extreme, if `maxiumum_cores` is
+cores on the host computer and the value of the ``maximum_cores`` step parameter. By
+default the step runs on a single processor. At the other extreme, if ``maximum_cores`` is
 set to 'all', it will use all available cores (real and virtual). Testing has shown
 a reduction in the elapsed time for the step proportional to the number of real
 cores used. Using the virtual cores also reduces the elapsed time, but at a slightly
