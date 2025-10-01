@@ -1,6 +1,7 @@
 import logging
+import warnings
 
-import numpy as np
+from stdatamodels.exceptions import ValidationWarning
 from stdatamodels.jwst import datamodels
 
 from jwst.group_scale import group_scale
@@ -37,8 +38,26 @@ class GroupScaleStep(Step):
         result : `~stdatamodels.jwst.datamodels.RampModel`
             Output data model on which the group scale step has been performed.
         """
-        # Open the input data model as a RampModel
-        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
+        # Open the input data model as a RampModel, catching a specific
+        # expected warning for uncal files
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "error",
+                    message=r"(?s:.*)Array datatype .* not compatible",
+                    category=ValidationWarning,
+                )
+                result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
+        except ValidationWarning as err:
+            log.error(err)
+
+            # Inform the user and raise a clearer error message
+            msg = (
+                "Input data model does not have float-type data. "
+                "The file should be opened as a RampModel before calling the step."
+            )
+            log.error(msg)
+            raise TypeError(msg) from None
 
         # Try to get values of NFRAMES and FRMDIVSR to see
         # if we need to do any rescaling
@@ -69,16 +88,6 @@ class GroupScaleStep(Step):
             log.info("Step will be skipped")
             result.meta.cal_step.group_scale = "SKIPPED"
             return result
-
-        # Make sure the input data has an appropriate data type
-        if not np.issubdtype(result.data.dtype, np.floating):
-            # Inform the user
-            msg = (
-                "Input data model does not have float-type data. "
-                "The file should be opened as a RampModel before calling the step."
-            )
-            log.error(msg)
-            raise TypeError(msg)
 
         # Do the scaling
         group_scale.do_correction(result)
