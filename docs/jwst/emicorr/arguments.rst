@@ -12,30 +12,30 @@ The ``emicorr`` step has the following step-specific arguments.
     with 3 or more groups.
 
 ``--nints_to_phase`` (integer, default=None)
-    Number of integrations to phase, when `algorithm` is 'sequential'.
+    Number of integrations to phase, when ``algorithm`` is 'sequential'.
 
 ``--nbins`` (integer, default=None)
-    Number of bins in one phased wave, when `algorithm` is 'sequential'.
+    Number of bins in one phased wave, when ``algorithm`` is 'sequential'.
 
 ``--scale_reference`` (boolean, default=True)
-    If True and `algorithm` is 'sequential', the reference wavelength will be scaled
+    If True and ``algorithm`` is 'sequential', the reference wavelength will be scaled
     to the data's phase amplitude.
 
 ``--onthefly_corr_freq``  (list, default=None)
     Frequency values to use to create a correction on-the-fly.  If provided,
-    any input EMICORR reference model is ignored and the `algorithm` is set to
+    any input EMICORR reference model is ignored and the ``algorithm`` is set to
     'sequential'.
 
 ``--use_n_cycles`` (integer, default=3)
-    Number of cycles to use to calculate the phase when `algorithm` is 'sequential'.
+    Number of cycles to use to calculate the phase when ``algorithm`` is 'sequential'.
     To use all cycles, set to None.
 
 ``--fit_ints_separately`` (boolean, default=False)
     If True, fit and remove EMI noise for each integration separately, when
-    `algorithm` is 'joint'.
+    ``algorithm`` is 'joint'.
 
-``--save_intermediate_results``  (string, default=False)
-    If True, and input frequencies are provided in `onthefly_corr_freq`,
+``--save_intermediate_results`` (string, default=False)
+    If True, and input frequencies are provided in ``onthefly_corr_freq``,
     save a reference file with the fit phase amplitudes for the provided frequencies
     to disk. The file will be in ASDF output with the same format as an
     EMICORR reference file.

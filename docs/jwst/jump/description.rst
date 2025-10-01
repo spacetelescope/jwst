@@ -47,7 +47,7 @@ threshold of normal cosmic rays.
 
 To constrain the effect of this halo, the jump step will fit ellipses or circles that
 enclose the large events and expand the ellipses and circles by the input
-`expand_factor` and mark them as jump (see :ref:`jump step arguments <jump_arguments>`
+``expand_factor`` and mark them as jump (see :ref:`jump step arguments <jump_arguments>`
 for details).
 
 The two different types of JWST detectors respond differently. The large events in the near-infrared

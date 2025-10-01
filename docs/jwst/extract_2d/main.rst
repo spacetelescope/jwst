@@ -53,11 +53,10 @@ and "S400A1". For NIRSpec MOS exposures, the slit name is the slitlet number fro
 MSA metadata file, corresponding to the value of the "SLTNAME" keyword in FITS products,
 and it has to be provided as a string, e.g. slit_name='60'.
 
-To find out what slits are available for extraction:
+To find out what slits are available for extraction::
 
-  >>> from jwst.assign_wcs import nirspec
-  >>> nirspec.get_open_slits(input_model) # doctest: +SKIP
-
+    from jwst.assign_wcs import nirspec
+    nirspec.get_open_slits(input_model)
 
 The corner locations of the regions to be extracted are determined from the
 ``bounding_box`` contained in the exposure's WCS, which defines the range of valid inputs
@@ -142,12 +141,10 @@ they are stored in the ``wavelengthrange`` reference file, which can be retrieve
 Load the grism image, which is assumed to have already been processed through ``assign_wcs``,
 into an `~stdatamodels.jwst.datamodels.ImageModel` data model
 (used for all 2-D "images", regardless of whether
-they actually contain imaging data or dispersed spectra):
+they actually contain imaging data or dispersed spectra)::
 
-.. doctest-skip::
-
-  >>> from stdatamodels.jwst.datamodels import ImageModel
-  >>> input_model = ImageModel("jw12345001001_03101_00001_nis_assign_wcs.fits")
+    from stdatamodels.jwst.datamodels import ImageModel
+    input_model = ImageModel("jw12345001001_03101_00001_nis_assign_wcs.fits")
 
 Load the ``extract_2d`` step and retrieve the ``wavelengthrange`` reference file
 specific for this mode:
