@@ -276,8 +276,8 @@ def _compare_asns(left, right):
     - key ``products``. Specifically the following are compared:
 
         - Length of the list
-        - key `name` for each product
-        - key `members` for each product
+        - key ``name`` for each product
+        - key ``members`` for each product
 
     - For the member lists of each product, the following are compared:
 
