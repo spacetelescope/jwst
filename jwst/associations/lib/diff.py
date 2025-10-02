@@ -683,6 +683,9 @@ def separate_products(asn):
     separated : [Association[, ...]]
         The list of separated associations.
     """
+    if len(asn["products"]) == 1:  # noop
+        return [asn]
+
     separated = []
     for product in asn["products"]:
         new_asn = copy(asn)
