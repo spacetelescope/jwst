@@ -135,12 +135,10 @@ True
 
 In general, to get a list of all input images that have contributed to an
 output resampled pixel with image coordinates ``(x, y)``, and given a
-context array ``con``, one can do something like this:
+context array ``con``, one can do something like this::
 
-.. doctest-skip::
-
-    >>> import numpy as np
-    >>> np.flatnonzero([v & (1 << k) for v in con[:, y, x] for k in range(32)])
+    import numpy as np
+    np.flatnonzero([v & (1 << k) for v in con[:, y, x] for k in range(32)])
 
 For convenience, this functionality was implemented in the
 :func:`~drizzle.utils.decode_context` function.
