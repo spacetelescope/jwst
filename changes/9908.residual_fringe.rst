@@ -1,1 +1,1 @@
-Fixed residual fringe subtraction that could have caused non-deterministic values under certain conditions.
+Fixed a bug that introduced arbitrary values to the residual fringe subtraction under certain conditions.
