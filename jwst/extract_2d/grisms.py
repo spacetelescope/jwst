@@ -509,11 +509,18 @@ def extract_grism_objects(
                 bind_bounding_box(
                     tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order="F"
                 )
-                grism_slit = copy.deepcopy(subwcs.grism_detector)
-                grism_slit.name = "grism_slit"
-                subwcs.insert_frame(
-                    input_frame=grism_slit, output_frame="grism_detector", transform=tr
-                )
+                if input_model.meta.exposure.type.upper() == "MIR_WFSS":
+                    grism_slit = copy.deepcopy(subwcs.dispersed_detector)
+                    grism_slit.name = "grism_slit"
+                    subwcs.insert_frame(
+                        input_frame=grism_slit, output_frame="dispersed_detector", transform=tr
+                    )
+                else:
+                    grism_slit = copy.deepcopy(subwcs.grism_detector)
+                    grism_slit.name = "grism_slit"
+                    subwcs.insert_frame(
+                        input_frame=grism_slit, output_frame="grism_detector", transform=tr
+                    )
 
                 new_slit = datamodels.SlitModel(
                     data=ext_data,
@@ -523,14 +530,20 @@ def extract_grism_objects(
                     var_rnoise=var_rnoise,
                     var_flat=var_flat,
                 )
-                new_slit.meta.wcsinfo.spectral_order = order
-                new_slit.meta.wcsinfo.dispersion_direction = (
-                    input_model.meta.wcsinfo.dispersion_direction
-                )
+
+                # print("CHECK this VALUE", input_model.meta.wcsinfo.dispersion_direction)
                 new_slit.meta.wcsinfo.specsys = input_model.meta.wcsinfo.specsys
                 new_slit.meta.coordinates = input_model.meta.coordinates
                 new_slit.meta.wcs = subwcs
 
+                # JEM added this need to check
+                if input_model.meta.exposure.type.upper() == "MIR_WFSS":
+                    new_slit.meta.wcsinfo.dispersion_direction = (
+                        input_model.meta.wcsinfo.dispersion_direction
+                    )
+                    new_slit.meta.wcsinfo.spectral_order = 1
+
+                # print(new_slit.meta.wcsinfo.dispersion_direction)
                 if compute_wavelength:
                     log.debug("Computing wavelengths")
                     new_slit.wavelength = compute_wfss_wavelength(new_slit)
