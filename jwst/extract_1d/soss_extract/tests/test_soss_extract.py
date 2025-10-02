@@ -271,6 +271,7 @@ def test_model_image_wavegrid_specified(
 @pytest.mark.parametrize("do_bkgsub", [False, True])
 @pytest.mark.parametrize("bad_pix", ["masking", "model"])
 @pytest.mark.parametrize("generate_model", [False, True])
+@pytest.mark.parametrize("intermediate", [False, True])
 def test_process_one_integration(
     monkeypatch_setup,
     imagemodel,
@@ -280,6 +281,7 @@ def test_process_one_integration(
     do_bkgsub,
     bad_pix,
     generate_model,
+    intermediate,
 ):
     """Smoke test for a bunch of configurations of _process_one_integration"""
     scidata, scierr = imagemodel
@@ -299,6 +301,7 @@ def test_process_one_integration(
         "rtol": 1e-3,
         "max_grid_size": 1000000,
         "n_os": 2,
+        "model": intermediate,
     }
 
     tracemodels, spec_list, atoca_list, tikfacs_out, wave_grid = _process_one_integration(
