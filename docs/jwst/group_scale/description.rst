@@ -4,15 +4,15 @@ Description
 :Class: `jwst.group_scale.GroupScaleStep`
 :Alias: group_scale
 
-The `group_scale` step rescales pixel values in raw JWST science
-data products to correct for instances where on-board frame averaging 
+The ``group_scale`` step rescales pixel values in raw JWST science
+data products to correct for instances where on-board frame averaging
 did not result in the proper downlinked values.
 
 When multiple frames are averaged together on-board into a single
 group, the sum of the frames is computed and then the sum is
 divided by the number of frames to compute the average. Division by
 the number of frames is accomplished by simply bit-shifting the
-sum by an appropriate number of bits, corresponding to the 
+sum by an appropriate number of bits, corresponding to the
 decimal value of the number of frames. For example, when 2 frames
 are averaged into a group, the sum is shifted by 1 bit to achieve
 the equivalent of dividing by 2, and for 8 frames, the sum is

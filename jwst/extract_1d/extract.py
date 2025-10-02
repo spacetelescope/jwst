@@ -1101,7 +1101,7 @@ def shift_by_offset(offset, extract_params, update_trace=True):
         Cross-dispersion offset to apply, in pixels.
     extract_params : dict
         Extraction parameters to update, as created by
-        `get_extraction_parameters`.
+        :func:`get_extract_parameters`.
     update_trace : bool
         If True, the trace in ``extract_params['trace']`` is also updated
         if present.
@@ -1141,7 +1141,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         unless ``slit`` is None. In that case, they will be retrieved
         from ``input_model``.
     extract_params : dict
-        Extraction parameters, as created by `get_extraction_parameters`.
+        Extraction parameters, as created by :func:`get_extract_parameters`.
     exp_type : str
         Exposure type for the input data.
 

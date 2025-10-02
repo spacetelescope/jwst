@@ -471,7 +471,7 @@ def extract1d(
         of 0 means that a simple average of the background regions, column
         by column, will be used.
         This argument must be positive or zero, and it is only used if
-        background regions have been specified and if `bkg_fit` is `poly`.
+        background regions have been specified and if ``bkg_fit_type`` is "poly".
 
     Returns
     -------
