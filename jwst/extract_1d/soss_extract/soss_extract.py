@@ -74,11 +74,14 @@ class DetectorModelOrder:
         An interpolation function for the throughput of the order, computed from the throughput
         in the pastasoss reference file.
     kernel : WebbKernel or np.ndarray or None
-        The spectral resolution kernel for this order, either as a WebbKernel object (callable)
-        or as a 2-D array.
-    kernel_nativegrid : WebbKernel or np.ndarray or None
-        The spectral resolution kernel for this order, either as a WebbKernel object (callable)
-        or as a 2-D array.
+        The spectral resolution kernel for this order on the input wave_grid,
+        either as a WebbKernel object (callable) or as a 2-D array.
+    kernel_native : WebbKernel or np.ndarray or None
+        The spectral resolution kernel for this order on the native pixel grid,
+        either as a WebbKernel object (callable) or as a 2-D array.
+    kernel_func : WebbKernel or None
+        The spectral resolution kernel for this order. This is intended not to be modified, so the
+        ExtractionEngine can use it to generate a kernel at any wavelength grid.
     subarray : str or None
         The name of the subarray used for the extraction.
     """
@@ -89,7 +92,8 @@ class DetectorModelOrder:
     specprofile: np.ndarray
     throughput: Callable
     kernel: WebbKernel | np.ndarray | None = None
-    kernel_nativegrid: WebbKernel | np.ndarray | None = None
+    kernel_native: WebbKernel | None = None
+    kernel_func: WebbKernel | None = None
     subarray: str | None = None
 
     @lazyproperty
@@ -273,7 +277,8 @@ def get_ref_file_args(ref_files, orders_requested=None):
         valid_wavemap = (speckernel_wv_range[0] <= wavemap) & (wavemap <= speckernel_wv_range[1])
         wavemap = np.where(valid_wavemap, wavemap, 0.0)
         detector_model.kernel = kernel
-        detector_model.kernel_nativegrid = kernel
+        detector_model.kernel_native = kernel
+        detector_model.kernel_func = kernel
         detector_models.append(detector_model)
 
     return detector_models
@@ -341,7 +346,7 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
 
     # Build model of the order
     # Give the identity kernel to the Engine (so no convolution)
-    model = ExtractionEngine(
+    engine = ExtractionEngine(
         [order_model.wavemap],
         [order_model.specprofile],
         [order_model.throughput],
@@ -352,25 +357,26 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
     )
 
     # Project on detector and save in dictionary
-    tracemodel_ord = model.rebuild(flux_order, fill_value=np.nan)
+    tracemodel_ord = engine.rebuild(flux_order, fill_value=np.nan)
 
     # Build 1d spectrum integrated over pixels
     pixel_grid, valid_cols = order_model.native_grid
     pixel_grid = pixel_grid[np.newaxis, :]
     mask = np.all(mask, axis=0)[valid_cols]
 
-    model = ExtractionEngine(
+    engine = ExtractionEngine(
         [pixel_grid],
         [np.ones_like(pixel_grid)],
         [order_model.throughput],
-        [order_model.kernel_nativegrid],
+        [order_model.kernel_native],
         wave_grid=grid_order,
         mask_trace_profile=[mask[np.newaxis, :]],
         orders=[order_model.spectral_order],
     )
+    order_model.kernel_native = engine.kernels[0]
 
     # Rebuild on pixel grid
-    f_binned = model.rebuild(flux_order, fill_value=np.nan)
+    f_binned = engine.rebuild(flux_order, fill_value=np.nan)
 
     pixel_grid = np.squeeze(pixel_grid)
     f_binned = np.squeeze(f_binned)
