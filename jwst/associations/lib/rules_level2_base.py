@@ -125,12 +125,12 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
             The pool entry to determine the exposure type of
         default : str or None
             The default exposure type.
-            If None, routine will raise LookupError
+            If None, routine will raise LookupError.
 
         Returns
         -------
-        exposure_type
-            Always what is defined as `default`
+        exposure_type : str
+            Always what is defined as ``default``
         """
         self.original_exposure_type = super(DMSLevel2bBase, self).get_exposure_type(
             item, default=default
@@ -145,7 +145,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Returns
         -------
-        list
+        list of str
             List of members.
         """
         member_type = member_type.lower()
@@ -276,14 +276,16 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         meta : dict
             A dict to be merged into the association meta information.
             The following are suggested to be assigned:
-                - `asn_type`
+
+                - ``asn_type``
                     The type of association.
-                - `asn_rule`
+                - ``asn_rule``
                     The rule which created this association.
-                - `asn_pool`
+                - ``asn_pool``
                     The pool from which the exposures came from
-                - `program`
+                - ``program``
                     Originating observing program
+
         product_name_func : func
             Used if product name is 'undefined' using
             the class's procedures.
@@ -298,11 +300,11 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
         by-passed, resulting in a potentially unusable association.
 
         `product_name_func` is used to define the product names instead of
-        the default methods. The call signature is:
+        the default methods. The call signature is::
 
             product_name_func(item, idx)
 
-        where `item` is each item being added and `idx` is the count of items.
+        where ``item`` is each item being added and ``idx`` is the count of items.
         """
         if meta is None:
             meta = {}
@@ -365,7 +367,7 @@ class DMSLevel2bBase(DMSBaseMixin, Association):
 
         Parameters
         ----------
-        _member : member
+        _member : Member
             Member being added; ignored.
 
         Returns
@@ -561,10 +563,11 @@ class Utility:
         Notes
         -----
         The current definition of candidates allows strictly alphabetical
-        sorting:
-        aXXXX > cXXXX > oXXX
+        sorting::
 
-        If this changes, a comparison function will need be implemented
+            aXXXX > cXXXX > oXXX
+
+        If this changes, a comparison function will need be implemented.
         """
         return sorted(asns, key=lambda asn: asn["asn_id"])
 
@@ -807,31 +810,29 @@ class Constraint_Single_Science(Constraint):
     """
     Allow only single science exposure.
 
+    Parameters
+    ----------
+    has_science_fn : func
+        Function to determine whether the association has a science member already.
+        No arguments are provided
+
+    exposure_type_fn : func
+        Function to determine the association exposure type of the item.
+        Should take a single argument of item.
+
+    **sc_kwargs : dict
+        Keyword arguments to pass to the parent class
+        `~jwst.associations.lib.constraint.Constraint`.
+
     Notes
     -----
-    The `has_science_fn` is further wrapped in a lambda function
+    The ``has_science_fn`` is further wrapped in a lambda function
     to provide a closure. Otherwise if the function is a bound method,
     that method may end up pointing to an instance that is not calling
     this constraint.
     """
 
     def __init__(self, has_science_fn, exposure_type_fn, **sc_kwargs):
-        """
-        Initialize a new single science constraint.
-
-        Parameters
-        ----------
-        has_science_fn : func
-            Function to determine whether the association has a science member already.
-            No arguments are provided
-
-        exposure_type_fn : func
-            Function to determine the association exposure type of the item.
-            Should take a single argument of item.
-
-        **sc_kwargs : dict
-            Keyword arguments to pass to the parent class `Constraint`
-        """
         super(Constraint_Single_Science, self).__init__(
             [
                 SimpleConstraint(
@@ -885,7 +886,7 @@ class Constraint_Spectral_Science(Constraint):
 
 
 class Constraint_Target(Constraint):
-    """Select on target id."""
+    """Select on target ID."""
 
     def __init__(self):
         constraints = [
@@ -1068,15 +1069,15 @@ class AsnMixin_Lv2Nod:
 
         Parameters
         ----------
-        science_item : member
+        science_item : Member
             The science member.
-        background_item : member
+        background_item : Member
             The background member.
 
         Returns
         -------
         bool
-            True if overlap is present, false otherwise.
+            True if overlap is present, False otherwise.
         """
         # Get exp_type, needed for any data:
         # if not present, return False
@@ -1180,9 +1181,9 @@ class AsnMixin_Lv2Nod:
         nodded, such that the object is in a different position in the
         slitlet. The association creation simply groups these all
         together as a single association, all exposures marked as
-        `science`. When complete, this method will create separate
+        ``science``. When complete, this method will create separate
         associations each exposure becoming the single science
-        exposure, and the other exposures then become `background`.
+        exposure, and the other exposures then become ``background``.
 
         Returns
         -------
@@ -1278,12 +1279,12 @@ class AsnMixin_Lv2Special:
             The pool entry to determine the exposure type of
         default : str or None
             The default exposure type.
-            If None, routine will raise LookupError
+            If None, routine will raise LookupError.
 
         Returns
         -------
-        exposure_type
-            Always what is defined as `default`
+        exposure_type : str
+            Always what is defined as ``default``
         """
         self.original_exposure_type = super(AsnMixin_Lv2Special, self).get_exposure_type(
             item, default=default
@@ -1372,7 +1373,7 @@ class AsnMixin_Lv2WFSS:
 
         Parameters
         ----------
-        item : member
+        item : Member
             The item to pull exposure type from.
         default : str
             The default value if no exposure type is present, defaults to "science".
@@ -1436,15 +1437,16 @@ class AsnMixin_Lv2WFSS:
 
         Returns
         -------
-        opt_elem: str
+        opt_elem : str
             The Level3 Product name representation
             of the optical elements.
 
         Notes
         -----
-        This is an override for the method in `DMSBaseMixin`.
+        This is an override for the method in
+        `~jwst.associations.lib.dms_base.DMSBaseMixin`.
         The optical element is retrieved from the chosen direct image
-        found in `self.direct_image`, determined in the `self.finalize`
+        found in ``self.direct_image``, determined in the ``self.finalize``
         method.
         """
         item = self.direct_image.item
