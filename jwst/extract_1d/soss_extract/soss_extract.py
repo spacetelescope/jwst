@@ -763,7 +763,7 @@ class Integration:
             self.scidata_bkg, self.col_bkg = soss_background(self.scidata, self.scimask, bkg_mask)
         else:
             log.info("Skip background subtraction.")
-            self.scidata_bkg = self.scidata
+            self.scidata_bkg = self.scidata.copy()
             self.col_bkg = np.zeros(self.scidata.shape[1])
 
     def _validate_masks(self):

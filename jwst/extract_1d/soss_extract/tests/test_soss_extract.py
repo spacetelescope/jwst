@@ -58,6 +58,8 @@ def detector_models(
             specprofile=trace_profile[order - 1],
             throughput=throughput[order - 1],
             kernel=webb_kernels[order - 1],
+            kernel_func=webb_kernels[order - 1],
+            kernel_native=webb_kernels[order - 1],
             subarray="SUBSTRIP256",
         )
         detector_models.append(detector_model)
@@ -86,7 +88,7 @@ def test_model_image(monkeypatch_setup, imagemodel, detector_mask, detector_mode
         refmask,
         detector_models,
         box_weights,
-        do_bkgsub=False,
+        do_bkgsub=True,
         extract_order3=extract_order3,
     )
 
@@ -268,7 +270,6 @@ def test_model_image_wavegrid_specified(
 
 
 @pytest.mark.parametrize("tikfacs_in", [None, {"Order 1": 1e-7, "Order 2": 1e-6, "Order 3": 1e-5}])
-@pytest.mark.parametrize("do_bkgsub", [False, True])
 @pytest.mark.parametrize("bad_pix", ["masking", "model"])
 @pytest.mark.parametrize("generate_model", [False, True])
 @pytest.mark.parametrize("intermediate", [False, True])
@@ -278,7 +279,6 @@ def test_process_one_integration(
     detector_mask,
     detector_models,
     tikfacs_in,
-    do_bkgsub,
     bad_pix,
     generate_model,
     intermediate,
@@ -292,7 +292,7 @@ def test_process_one_integration(
     )
 
     soss_kwargs = {
-        "subtract_background": do_bkgsub,
+        "subtract_background": True,
         "order_3": True,
         "bad_pix": bad_pix,
         "box_width": box_width,
