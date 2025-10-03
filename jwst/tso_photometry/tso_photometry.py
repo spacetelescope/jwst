@@ -355,14 +355,28 @@ def _fit_source(data, mask, source_mask, xcenter, ycenter, box_size, fit_psf=Fal
             # Source could not be centroided. Keep NaN in the output array.
             log.debug(f"Centroid failure in image {i}: {str(err)}")
 
+        # Check for centroid out of range
+        ny, nx = image.shape
+        if centroid_x[i] < 0 or centroid_x[i] >= nx or centroid_y[i] < 0 or centroid_y[i] >= ny:
+            log.debug(
+                f"Centroid out of range in image {i}: ({centroid_x[i]},{centroid_y[i]}). "
+                f"Setting to NaN."
+            )
+            centroid_x[i] = np.nan
+            centroid_y[i] = np.nan
+
         if not fit_psf or np.isnan(centroid_x[i]) or np.isnan(centroid_y[i]):
             # Skip PSF calculations
             continue
 
         # Fit to the PSF at the centroid location
-        psf_width_x[i], psf_width_y[i], psf_flux[i] = _psf_fit_gaussian_prf(
-            background_sub, mask[i], box_size, centroid_x[i], centroid_y[i]
-        )
+        try:
+            psf_width_x[i], psf_width_y[i], psf_flux[i] = _psf_fit_gaussian_prf(
+                background_sub, mask[i], box_size, centroid_x[i], centroid_y[i]
+            )
+        except ValueError as err:
+            # Source could not be fit. Keep NaN in the output array.
+            log.debug(f"PSF fit failure in image {i}: {str(err)}")
 
     if fit_psf:
         return centroid_x, centroid_y, psf_width_x, psf_width_y, psf_flux
