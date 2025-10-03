@@ -46,12 +46,12 @@ into a single image::
             'combine': Combine,
             }
 
-        def process(self, input):
-            with ImageModel(input) as science:
+        def process(self, input_data):
+            output_model = self.prepare_output(input_data, open_as_type=ImageModel)
 
-                flattened = self.flat_field(science, self.multiplier)
+            flattened = self.flat_field(output_model, self.multiplier)
 
-                combined = self.combine(flattened)
+            combined = self.combine(flattened)
 
             return combined
 
