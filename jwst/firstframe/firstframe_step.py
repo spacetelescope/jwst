@@ -1,7 +1,5 @@
 import logging
 
-from stdatamodels.jwst import datamodels
-
 from jwst.firstframe import firstframe_sub
 from jwst.stpipe import Step
 
@@ -39,19 +37,17 @@ class FirstFrameStep(Step):
             Firstframe corrected datamodel
         """
         # Open the input data model
-        with datamodels.open(step_input) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        result = self.prepare_output(step_input)
 
-            # Check the data is MIRI data
-            detector = input_model.meta.instrument.detector.upper()
-            if detector[:3] != "MIR":
-                log.warning("First Frame Correction is only for MIRI data")
-                log.warning("First frame step will be skipped")
-                result.meta.cal_step.firstframe = "SKIPPED"
-                return result
+        # Check the data is MIRI data
+        detector = result.meta.instrument.detector.upper()
+        if detector[:3] != "MIR":
+            log.warning("First Frame Correction is only for MIRI data")
+            log.warning("First frame step will be skipped")
+            result.meta.cal_step.firstframe = "SKIPPED"
+            return result
 
-            # Do the firstframe correction subtraction
-            result = firstframe_sub.do_correction(result, bright_use_group1=self.bright_use_group1)
+        # Do the firstframe correction subtraction
+        result = firstframe_sub.do_correction(result, bright_use_group1=self.bright_use_group1)
 
         return result

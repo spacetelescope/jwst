@@ -1,6 +1,6 @@
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import GuiderRawModel, MaskModel, RampModel, dqflags
+from stdatamodels.jwst.datamodels import GuiderRawModel, ImageModel, MaskModel, RampModel, dqflags
 
 from jwst.dq_init import DQInitStep, dq_init_step
 from jwst.dq_init.dq_initialization import do_dqinit
@@ -298,7 +298,8 @@ def test_open_double_error(monkeypatch, caplog):
 
 
 def test_open_unknown_error(monkeypatch, caplog):
-    dm_ramp = make_rampmodel()
+    # Make a model that is not a RampModel, so the step will attempt to convert it
+    dm_ramp = ImageModel()
 
     # Mock an unknown error in opening the model as a RampModel
     def mock_model(*args):

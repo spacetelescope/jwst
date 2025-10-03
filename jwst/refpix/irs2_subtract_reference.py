@@ -90,10 +90,9 @@ def correct_model(
         * TPIX
     This agrees with the above value of tframe (14.5889 s) if NFOH = 714.
     """
-    # Copy in SCI and PIXELDQ arrays for now; that's all we need. The rest
-    # of the input model will be copied to output at the end of the step.
-    data = output_model.data.copy()
-    pixeldq = output_model.pixeldq.copy()
+    # Get SCI and PIXELDQ arrays for now; that's all we need.
+    data = output_model.data
+    pixeldq = output_model.pixeldq
 
     # Load the reference file data.
     # The reference file data are complex, but they're stored as float, with

@@ -92,10 +92,8 @@ to describe its parameters.
    are available as member variables on ``self``.
 3. To support the caching suspend/resume feature of pipelines, images
    must be passed between steps as model objects.  To ensure you’re
-   always getting a model object, call the model constructor on the
-   parameter passed in.  It is good idea to use a ``with`` statement
-   here to ensure that if the input is a file path that the file will
-   be appropriately closed.
+   always getting a model object, call the ``prepare_output`` method
+   with the input parameter passed in.
 4. Use ``get_reference_file_model`` method to load any CRDS reference files used
    by the Step. This will make a cached network request to CRDS. If the user of
    the step has specified an override for the reference file in either the
@@ -112,8 +110,7 @@ to describe its parameters.
 
     import logging
 
-    from my_awesome_astronomy_library import combine
-    from stdatamodels.jwst.datamodels import ImageModel
+    from my_awesome_astronomy_library import do_processing
 
     from jwst.stpipe import Step
 
@@ -126,20 +123,21 @@ to describe its parameters.
         """
 
         # 1.
-        def process(self, image1, image2):
+        def process(self, step_input):
             log.info("Inside ExampleStep")
 
             # 2.
             threshold = self.threshold
 
             # 3.
-            with ImageModel(image1) as image1, ImageModel(image2) as image2:
-                # 4.
-                with self.get_reference_file_model(image1, "flat_field") as flat:
-                    new_image = combine(image1, image2, flat, threshold)
+            output_model = self.prepare_output(step_input)
+
+            # 4.
+            with self.get_reference_file_model(image1, "flat_field") as flat:
+                output_model = do_processing(output_model, flat, threshold)
 
             # 5.
-            return new_image
+            return output_model
 
        # 6.
        spec = """

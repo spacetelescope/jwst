@@ -16,10 +16,13 @@ from jwst.pipeline import Detector1Pipeline
 @pytest.mark.parametrize("skip", [True, False])
 def test_output_type(skip):
     input_model = make_small_ramp_model()
-    step_instance = CleanFlickerNoiseStep()
+
     # Default is that step is skipped
+    step_instance = CleanFlickerNoiseStep()
     assert step_instance.skip == True
-    cleaned = step_instance.call(input_model, skip=skip)
+
+    # Run call with skip option
+    cleaned = CleanFlickerNoiseStep.call(input_model, skip=skip)
 
     # output is a ramp model either way
     assert isinstance(cleaned, datamodels.RampModel)
@@ -31,12 +34,13 @@ def test_output_type(skip):
 @pytest.mark.parametrize("skip", [True, False])
 def test_run_in_pipeline(skip):
     input_model = make_small_ramp_model()
-    pipeline_instance = Detector1Pipeline()
 
+    # Default is to skip the step
+    pipeline_instance = Detector1Pipeline()
     assert pipeline_instance.steps["clean_flicker_noise"]["skip"] == True
 
     # Run the pipeline, omitting steps that are incompatible with our datamodel
-    cleaned = pipeline_instance.call(
+    cleaned = Detector1Pipeline.call(
         input_model,
         steps={
             "clean_flicker_noise": {"skip": skip},

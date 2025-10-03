@@ -24,15 +24,15 @@ def do_correction(output_model, reset_model):
 
     Parameters
     ----------
-    output_model : `~jwst.datamodels.RampModel`
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Science data to be corrected
 
-    reset_model : `~jwst.datamodels.ResetModel`
+    reset_model : `~stdatamodels.jwst.datamodels.ResetModel`
         Reset reference file model
 
     Returns
     -------
-    output_model : `~jwst.datamodels.RampModel`
+    output_model : `~stdatamodels.jwst.datamodels.RampModel`
         Reset-subtracted science data
     """
     # Save some data params for easy use later
@@ -69,7 +69,7 @@ def do_correction(output_model, reset_model):
             ir = reset_nints - 1
 
         # combine the science and reset DQ arrays
-        output_model.pixeldq = np.bitwise_or(output_model.pixeldq, reset_model.dq)
+        output_model.pixeldq |= reset_model.dq
 
         # we are only correcting the first reset_ngroups
         for j in range(igroup):
