@@ -80,6 +80,7 @@ from jwst.lib.pipe_utils import is_tso
 from jwst.lib.siafdb import SIAF, SiafDb
 
 __all__ = [
+    "GuideStarPosition",
     "Pointing",
     "Methods",
     "TransformParameters",
@@ -290,7 +291,6 @@ PI2 = np.pi * 2.0
 Pointing = namedtuple(
     "Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime", "gs_commanded", "fgsid", "gs_position"]
 )
-Pointing.__new__.__defaults__ = (None,) * 5
 """
 Pointing container.
 
@@ -315,13 +315,24 @@ fgsid : int
 gs_position : array-like
     X/Y guide star position in the FGS.
 """
+Pointing.__new__.__defaults__ = (None,) * 5
 
-# Guide Star ACQ pointing container
-# Attributes are as follows. All values are retrieved from the engineering.
-#    position : X/Y position of the guide star within the acquisition window of the FGS.
-#    corner   : X/Y corner of the acquisition window within the FGS.
-#    size     : X/Y size of the acquisition window.
 GuideStarPosition = namedtuple("GuideStarPosition", ["position", "corner", "size"])
+"""
+Guide Star ACQ pointing container.
+
+Attributes are as follows. All values are retrieved from the
+engineering data.
+
+Attributes
+----------
+position : tuple
+    X/Y position of the guide star within the acquisition window of the FGS.
+corner : tuple
+    X/Y corner of the acquisition window within the FGS.
+size : tuple
+    X/Y size of the acquisition window.
+"""
 GuideStarPosition.__new__.__defaults__ = (None,) * 3
 
 
