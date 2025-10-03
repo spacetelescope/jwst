@@ -23,7 +23,7 @@ def do_correction(model):
 
     Parameters
     ----------
-    model : data model object
+    model : `~stdatamodels.jwst.datamodels.RampModel`
         Science data to be corrected. Model is modified in place.
     """
     # Get the meta data values that we need
