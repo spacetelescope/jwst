@@ -473,6 +473,10 @@ def _do_tiktests(
         If save_tiktests is True, a list of SpecModels for all tested Tikhonov factors
         and all spectral orders; otherwise, an empty list.
     """
+    # reset the kernel so it can get a new shape here
+    for model in order_models:
+        model.kernel_native = model.kernel_func
+
     if tikfac_log_range is None:
         tikfac_log_range = [-2, 8]
     # Find the tikhonov factor.
@@ -496,7 +500,7 @@ def _do_tiktests(
         for i, order in enumerate(engine.orders):
             order_model = order_models[i]
             for idx, fac in enumerate(all_tests["factors"]):
-                log.info("Building spectrum for order %d, factor %.4e", order, fac)
+                log.debug("Building diagnostic spectrum for order %d, factor %.4e", order, fac)
                 f_k = all_tests["solution"][idx, :]
                 if np.all(~np.isfinite(f_k)):
                     spec_ord = _build_null_spec_table(engine.wave_grid, order)
@@ -505,6 +509,9 @@ def _do_tiktests(
                 _populate_tikho_attr(spec_ord, all_tests, idx, order)
                 spec_list.append(spec_ord)
 
+    # reset the kernel, as it is set to an array inside _build_tracemodel_order
+    for model in order_models:
+        model.kernel_native = model.kernel_func
     log.info("Found best Tikhonov factor: %.4e", tikfac)
     return tikfac, spec_list
 
@@ -565,8 +572,8 @@ def _model_single_order(
     Extract an output spectrum for a single spectral order using the ATOCA algorithm.
 
     The Tikhonov factor is derived in two stages: first, ten factors are tested
-    spanning tikfac_log_range, and then a further 20 factors are tested across
-    2 orders of magnitude in each direction around the best factor from the first stage.
+    spanning tikfac_log_range, and then a further 10 factors are tested across
+    1 order of magnitude in each direction around the best factor from the first stage.
     The best-fitting model and spectrum are reconstructed using the best-fit Tikhonov factor
     and respecting mask_rebuild.
 
@@ -599,7 +606,9 @@ def _model_single_order(
         Has no effect if do_tiktests is False. Default is False.
     tikfac_log_range : list, optional
         The range in log10 space around the initial guess to test Tikhonov factors.
-        Default is [-4, 4].
+        The default is [-2, 8], which was
+        chosen because we are looking for the smoothest (largest-factor) solution that
+        still provides a good fit to the data.
 
     Returns
     -------
@@ -704,6 +713,8 @@ def _model_single_order(
 
 
 class Integration:
+    """Class to handle extraction of a single integration."""
+
     def __init__(
         self,
         scidata,
@@ -878,31 +889,18 @@ class Integration:
             tikfacs_out["Order 1"] = tikfacs_in["Order 1"]
 
         # Run the extract method of the Engine.
-        log.info("Running...")
+        log.info("Running extraction engine for overlapping orders 1 & 2...")
         f_k = engine(self.scidata_bkg, self.scierr, tikhonov=True, factor=tikfacs_out["Order 1"])
-        log.info("Done.")
 
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
         # Model the traces for each order separately.
+        log.info("Building decontaminated trace models and spectra for Order 1 and Order 2 red.")
         tracemodels = {}
-        for i_order, order in enumerate([1, 2]):
-            log.info(f"Building the model image of {order}.")
-
+        for i_order, _order in enumerate([1, 2]):
             tracemodel_ord, spec_ord = _build_tracemodel_order(
                 engine, self.order_models[i_order], f_k, global_mask
             )
-
-            # print(f_k.shape)
-            # import matplotlib.pyplot as plt
-            # fig, (ax0, ax1) = plt.subplots(2, 1, figsize=(10, 5))
-            # ax0.scatter(wave_grid, f_k, s=1)
-            # ax0.set_ylim([0, 2e8])
-            # ax1.scatter(spec_ord.spec_table["WAVELENGTH"], spec_ord.spec_table["FLUX"], s=1)
-            # ax0.set_title(f"Order {order} extracted flux")
-            # ax1.set_title(f"Order {order} extracted spectrum")
-            # plt.show()
-
             spec_ord.meta.soss_extract1d.factor = tikfacs_out["Order 1"]
             spec_ord.meta.soss_extract1d.color_range = "RED"
             spec_ord.meta.soss_extract1d.type = "OBSERVATION"
