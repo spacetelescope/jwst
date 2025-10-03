@@ -2,7 +2,7 @@ import os
 
 import pytest
 import stdatamodels.jwst.datamodels as dm
-from astropy.modeling.models import Identity
+from astropy.modeling.models import Identity, Multiply
 from gwcs import coordinate_frames as cf
 from gwcs import wcs
 from stcal.alignment.util import compute_s_region_keyword, sregion_to_footprint
@@ -18,17 +18,17 @@ INPUT_WFSS_2 = "mock_wfss_2_cal.fits"
 INPUT_ASN = "mock_wfss_asn.json"
 
 
-def identity_wcs_wfss():
+def simple_wcs_wfss():
     """
-    Create a simple WCS whose transform is an identity transform.
+    Create a simple WCS whose transform is just to multiply by enough to make all
+    points sit in different pixels.
 
     4 inputs and 4 outputs, to simulate WFSS (x, y, wavelength, order).
     """
     input_frame = cf.Frame2D(name="detector", axes_order=(0, 1))
     output_frame = cf.Frame2D(name="world", axes_order=(0, 1))
-    return wcs.WCS(
-        forward_transform=Identity(4), input_frame=input_frame, output_frame=output_frame
-    )
+    transform = Multiply(0.005) & Multiply(0.005) & Identity(1) & Identity(1)
+    return wcs.WCS(forward_transform=transform, input_frame=input_frame, output_frame=output_frame)
 
 
 @pytest.fixture
@@ -71,7 +71,7 @@ def _offset_sregion(s_region, dx, dy):
 def spec3_wfss_asn(mock_niriss_wfss_l2, tmp_cwd):
     model = mock_niriss_wfss_l2
     for slit in model.slits:
-        slit.meta.wcs = identity_wcs_wfss()
+        slit.meta.wcs = simple_wcs_wfss()
     model.save(INPUT_WFSS)
     model2 = model.copy()
     model2.meta.group_id = "8"
