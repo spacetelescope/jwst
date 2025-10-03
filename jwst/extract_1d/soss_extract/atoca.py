@@ -279,6 +279,11 @@ class ExtractionEngine:
                 kernel_n = atoca_utils.get_c_matrix(
                     kernel_n, self.wave_grid, i_bounds=self.i_bounds[i_order], **c_kwargs[i_order]
                 )
+            else:
+                # ensure if input was already sparse, it has the correct shape
+                n_x = self.i_bounds[i_order][1] - self.i_bounds[i_order][0]
+                if kernel_n.shape != (n_x, self.n_wavepoints):
+                    raise ValueError("Kernel shape is inconsistent with wave_grid length.")
 
             kernels_new.append(kernel_n)
 
