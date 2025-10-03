@@ -243,7 +243,7 @@ class EngdbMast(EngdbABC):
 
         include_obstime : bool
             If `True`, the return values will include observation
-            time as `astropy.time.Time`. See `zip_results` for further details.
+            time as `astropy.time.Time`. See ``zip_results`` for further details.
 
         include_bracket_values : bool
             The DB service, by default, returns the bracketing
@@ -251,14 +251,14 @@ class EngdbMast(EngdbABC):
             these values.
 
         zip_results : bool
-            If `True` and `include_obstime` is `True`, the return values
+            If `True` and ``include_obstime`` is `True`, the return values
             will be a list of 2-tuples. If false, the return will
             be a single 2-tuple, where each element is a list.
 
         Returns
         -------
         values : [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
-            Returns the list of values. See `include_obstime` and `zip` for modifications.
+            Returns the list of values. See ``include_obstime`` and `zip` for modifications.
         """
         if not isinstance(starttime, Time):
             starttime = Time(starttime, format=time_format)
@@ -373,10 +373,10 @@ class _ValueCollection:
     ----------
     include_obstime : bool
         If `True`, the return values will include observation
-        time as `astropy.time.Time`. See `zip_results` for further details.
+        time as `astropy.time.Time`. See ``zip_results`` for further details.
 
     zip_results : bool
-        If `True` and `include_obstime` is `True`, the return values
+        If `True` and ``include_obstime`` is `True`, the return values
         will be a list of 2-tuples. If false, the return will
         be a single 2-tuple, where each element is a list.
 
@@ -384,7 +384,7 @@ class _ValueCollection:
     ----------
     collection : [value, ...] or [(obstime, value), ...] or ([obstime,...], [value, ...])
         Returns the list of values.
-        See `include_obstime` and `zip_results` for modifications.
+        See ``include_obstime`` and ``zip_results`` for modifications.
     """
 
     def __init__(self, include_obstime=False, zip_results=True):
