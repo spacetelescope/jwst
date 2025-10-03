@@ -31,12 +31,12 @@ class PersistenceStep(Step):
 
         Parameters
         ----------
-        step_input : DataModel or str
+        step_input : `~stdatamodels.jwst.datamodels.RampModel` or str
             Input datamodel or file to be corrected
 
         Returns
         -------
-        output_model : DataModel
+        output_model : `~stdatamodels.jwst.datamodels.RampModel`
             The persistence corrected datamodel
         """
         if self.input_trapsfilled is not None:
@@ -45,20 +45,20 @@ class PersistenceStep(Step):
 
         result = self.prepare_output(step_input)
 
-        self.trap_density_filename = self.get_reference_file(result, "trapdensity")
-        self.trappars_filename = self.get_reference_file(result, "trappars")
-        self.persat_filename = self.get_reference_file(result, "persat")
+        trap_density_filename = self.get_reference_file(result, "trapdensity")
+        trappars_filename = self.get_reference_file(result, "trappars")
+        persat_filename = self.get_reference_file(result, "persat")
 
         # Is any reference file missing?
         missing = False
         missing_reftypes = []
-        if self.persat_filename == "N/A":
+        if persat_filename == "N/A":
             missing = True
             missing_reftypes.append("PERSAT")
-        if self.trap_density_filename == "N/A":
+        if trap_density_filename == "N/A":
             missing = True
             missing_reftypes.append("TRAPDENSITY")
-        if self.trappars_filename == "N/A":
+        if trappars_filename == "N/A":
             missing = True
             missing_reftypes.append("TRAPPARS")
         if missing:
@@ -76,9 +76,9 @@ class PersistenceStep(Step):
             traps_filled_model = None
         else:
             traps_filled_model = datamodels.TrapsFilledModel(self.input_trapsfilled)
-        trap_density_model = datamodels.TrapDensityModel(self.trap_density_filename)
-        trappars_model = datamodels.TrapParsModel(self.trappars_filename)
-        persat_model = datamodels.PersistenceSatModel(self.persat_filename)
+        trap_density_model = datamodels.TrapDensityModel(trap_density_filename)
+        trappars_model = datamodels.TrapParsModel(trappars_filename)
+        persat_model = datamodels.PersistenceSatModel(persat_filename)
 
         pers_a = persistence.DataSet(
             result,
