@@ -528,8 +528,9 @@ def check_duplicate_products(asns, product_names=None, dup_names=None):
     Check for duplicate products in a list of associations.
 
     Duplicate products are defined as any products that share the same name.
-    The errors flagged are listed below. If no ``MultiDiffError`` is raised,
-    There are no duplicate products:
+    If no ``MultiDiffError`` is raised, there are no duplicate products.
+
+    If there are duplicate products, the possible errors that can be flagged are:
 
     - DuplicateProductError
       The general error for two products that share name and otherwise do
