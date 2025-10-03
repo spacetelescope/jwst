@@ -41,25 +41,25 @@ class SaturationStep(Step):
         result = self.prepare_output(step_input)
 
         # Get the name of the saturation reference file
-        self.ref_name = self.get_reference_file(result, "saturation")
-        self.bias_name = self.get_reference_file(result, "superbias")
-        log.info("Using SATURATION reference file %s", self.ref_name)
-        log.info("Using SUPERBIAS reference file %s", self.bias_name)
+        ref_name = self.get_reference_file(result, "saturation")
+        bias_name = self.get_reference_file(result, "superbias")
+        log.info("Using SATURATION reference file %s", ref_name)
+        log.info("Using SUPERBIAS reference file %s", bias_name)
 
         # Check for a valid reference file
-        if self.ref_name == "N/A":
+        if ref_name == "N/A":
             log.warning("No SATURATION reference file found")
             log.warning("Saturation step will be skipped")
             result.meta.cal_step.saturation = "SKIPPED"
             return result
 
         # Open the reference file data model
-        ref_model = datamodels.SaturationModel(self.ref_name)
+        ref_model = datamodels.SaturationModel(ref_name)
 
         # Open the superbias if one is available
         bias_model = None
-        if self.bias_name != "N/A":
-            bias_model = datamodels.SuperBiasModel(self.bias_name)
+        if bias_name != "N/A":
+            bias_model = datamodels.SuperBiasModel(bias_name)
             # Check for subarray mode and extract subarray from the
             # bias reference data if necessary
             if not reffile_utils.ref_matches_sci(result, bias_model):
