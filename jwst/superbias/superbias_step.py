@@ -38,18 +38,18 @@ class SuperBiasStep(Step):
         result = self.prepare_output(step_input)
 
         # Get the name of the superbias reference file to use
-        self.bias_name = self.get_reference_file(result, "superbias")
-        log.info("Using SUPERBIAS reference file %s", self.bias_name)
+        bias_name = self.get_reference_file(result, "superbias")
+        log.info("Using SUPERBIAS reference file %s", bias_name)
 
         # Check for a valid reference file
-        if self.bias_name == "N/A":
+        if bias_name == "N/A":
             log.warning("No SUPERBIAS reference file found")
             log.warning("Superbias step will be skipped")
             result.meta.cal_step.superbias = "SKIPPED"
             return result
 
         # Open the superbias ref file data model
-        bias_model = datamodels.SuperBiasModel(self.bias_name)
+        bias_model = datamodels.SuperBiasModel(bias_name)
 
         # Do the bias subtraction
         result = bias_sub.do_correction(result, bias_model)
