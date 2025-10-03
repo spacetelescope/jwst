@@ -26,12 +26,12 @@ class IPCStep(Step):
 
         Parameters
         ----------
-        step_input : data model object
+        step_input : `~stdatamodels.jwst.datamodels.RampModel`
             Science data model to be corrected.
 
         Returns
         -------
-        data model object
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             IPC-corrected science data model.
         """
         # Open the input data model
