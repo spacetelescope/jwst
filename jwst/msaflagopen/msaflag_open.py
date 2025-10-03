@@ -12,7 +12,6 @@ from stdatamodels.jwst.transforms.models import Slit
 
 from jwst.assign_wcs.nirspec import (
     generate_compound_bbox,
-    nrs_wcs_set_input,
     slitlets_wcs,
 )
 from jwst.assign_wcs.nirspec import (
@@ -101,29 +100,27 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
         pipeline = slitlets_wcs(input_datamodel, wcs_refnames, failed_slitlets)
     wcs = WCS(pipeline)
 
-    # Create output as a copy of the input science data model so we can overwrite
-    # the wcs with the wcs for the failed open shutters
-    # Have to make sure the EXP_TYPE is NRS_MSASPEC so that nrs_wcs_set_input works,
-    # We need to use the slit WCS for this even if the EXP_TYPE is NRS_IFU because we
-    # are calculating where stuck open slits affect the data
-    temporary_copy = input_datamodel.copy()
-    temporary_copy.meta.wcs = wcs
-    temporary_copy.meta.exposure.type = "NRS_MSASPEC"
-    temporary_copy.meta.wcs.bounding_box = generate_compound_bbox(temporary_copy, failed_slitlets)
+    # Create a copy of the input model's metadata, so we can overwrite
+    # the wcs with the wcs for the failed open shutters.
+    # We need to use the slit WCS for this even if the input EXP_TYPE is
+    # NRS_IFU because we are calculating where stuck open slits affect the data.
+    meta_model = datamodels.ImageModel()
+    meta_model.meta.wcs = wcs
+    meta_model.meta.wcsinfo = input_datamodel.meta.wcsinfo
+    meta_model.meta.exposure.type = "NRS_MSASPEC"
+    meta_model.meta.wcs.bounding_box = generate_compound_bbox(meta_model, failed_slitlets)
 
     dq_array = input_datamodel.dq
     for slitlet in failed_slitlets:
-        # Pick the WCS for this slitlet from the WCS of the exposure
-        thiswcs = nrs_wcs_set_input(temporary_copy, slitlet.name)
-
         # Convert the bounding box for this slitlet to a set of indices to use as a slice
-        xmin, xmax, ymin, ymax = boundingbox_to_indices(temporary_copy, thiswcs.bounding_box)
+        bbox = meta_model.meta.wcs.bounding_box[slitlet.name]
+        xmin, xmax, ymin, ymax = boundingbox_to_indices(input_datamodel.data.shape, bbox)
 
         # Make a grid of points within the slice
         y_indices, x_indices = np.mgrid[ymin:ymax, xmin:xmax]
 
         # Calculate the arrays of coordinates for each pixel in the slice
-        coordinate_array = thiswcs(x_indices, y_indices)
+        ra, dec, lam, _ = meta_model.meta.wcs(x_indices, y_indices, slitlet.name)
 
         # The coordinate_array is a tuple of arrays, one for each output coordinate
         # In this case there should be 3 arrays, one each for RA, Dec and Wavelength
@@ -131,7 +128,7 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
 
         # Make a subarray from these coordinate arrays by setting pixels that aren't
         # NaN to FAILEDOPENFLAG, the rest to 0
-        dq_subarray = wcs_to_dq(coordinate_array, FAILEDOPENFLAG)
+        dq_subarray = wcs_to_dq((ra, dec, lam), FAILEDOPENFLAG)
 
         # Bitwise-or this subarray with the slice in the original exposure's DQ array
         dq_array[..., ymin:ymax, xmin:xmax] |= dq_subarray
@@ -141,7 +138,7 @@ def flag(input_datamodel, failed_slitlets, wcs_refnames):
     return input_datamodel
 
 
-def boundingbox_to_indices(data_model, bounding_box):
+def boundingbox_to_indices(data_shape, bounding_box):
     """
     Translate a bounding box to image indices.
 
@@ -151,8 +148,8 @@ def boundingbox_to_indices(data_model, bounding_box):
 
     Parameters
     ----------
-    data_model : DataModel
-        The input science datamodel.
+    data_shape : tuple
+        The data shape for the input science datamodel.
     bounding_box : tuple of tuple
         Bounding box returned from wcs object.
 
@@ -161,8 +158,9 @@ def boundingbox_to_indices(data_model, bounding_box):
     xmin, xmax, ymin, ymax : int
         Range of indices of overlap between science data array and bounding box.
     """
-    nrows, ncols = data_model.data.shape[-2:]
-    ((x1, x2), (y1, y2)) = bounding_box
+    nrows, ncols = data_shape[-2:]
+    x1, x2 = bounding_box[0]
+    y1, y2 = bounding_box[1]
     xmin = int(min(x1, x2))
     xmin = max(xmin, 0)
     xmax = int(max(x1, x2)) + 1

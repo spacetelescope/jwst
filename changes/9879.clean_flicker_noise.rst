@@ -1,0 +1,1 @@
+Simplify WCS access for NIRSpec FS and MOS data processed with the ``mask_science_regions`` option.
