@@ -81,8 +81,8 @@ affected differences should be just below, except for jumps that are smaller
 than some of the noise.  We can then ignore saturated values and jumps by
 knowing how many of them there are (which we know from the GROUPDQ array).
 The average of the remaining differences is the slope.  The slope is needed
-with two different units.  The `grp_slope` is the slope in units of DN
-(data numbers) per group.  The `slope` is in units of
+with two different units.  The ``grp_slope`` is the slope in units of DN
+(data numbers) per group.  The ``slope`` is in units of
 (DN / persistence saturation limit) / second, where "persistence saturation
 limit" is the (pixel-dependent) value (in DN) from the PERSAT reference file.
 

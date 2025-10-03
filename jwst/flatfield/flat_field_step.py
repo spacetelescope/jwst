@@ -71,7 +71,7 @@ class FlatFieldStep(Step):
                 After the step has successfully run, the flat field applied is
                 stored, as {'flat': DataModel}.
             use_correction_pars : bool
-                Use the flat stored in `correction_pars`.
+                Use the flat stored in ``correction_pars``.
 
         Parameters
         ----------

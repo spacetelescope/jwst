@@ -111,7 +111,7 @@ def make_blender(rule):
 
     Returns
     -------
-    attr_blender : `AttrBlender`
+    attr_blender : `AttributeBlender`
         Blender instance using the provided rule.
     """
     return AttributeBlender(RULE_FUNCTIONS[rule])

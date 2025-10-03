@@ -7,7 +7,7 @@ calwebb_spec3: Stage 3 Spectroscopic Processing
 :Alias: calwebb_spec3
 
 Stage 3 processing for spectroscopic observations is intended for combining the
-calibrated data from multiple exposures (e.g. a dither/nod pattern) into a single
+calibrated data from multiple exposures (e.g., a dither/nod pattern) into a single
 combined 2D or 3D spectral product and a combined 1D spectrum.
 Before being combined, the exposures may receive additional corrections for the
 purpose of background matching and subtraction, as well as outlier rejection.
@@ -131,7 +131,7 @@ calibrated exposure files. An example source-based file name is
 "jw00042-o001_s00000002_niriss_gr150r_f150w_cal.fits", where "s00000002" is the source id.
 
 NIRCam and NIRISS WFSS observations also have a defined set of sources, and those data
-still go through `exp_to_source`, but the reorganized data products are not saved
+still go through ``exp_to_source``, but the reorganized data products are not saved
 as intermediate files because there may be hundreds or thousands of sources
 in a single exposure.
 
