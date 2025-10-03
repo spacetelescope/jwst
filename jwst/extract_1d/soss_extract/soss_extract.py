@@ -63,7 +63,8 @@ class DetectorModelOrder:
     spectrace: np.ndarray
     specprofile: np.ndarray
     throughput: Callable
-    kernel: WebbKernel | None | np.ndarray
+    kernel: WebbKernel | np.ndarray | None = None
+    kernel_nativegrid: WebbKernel | np.ndarray | None = None
     subarray: str | None = None
 
     @lazyproperty
@@ -247,6 +248,7 @@ def get_ref_file_args(ref_files, orders_requested=None):
         valid_wavemap = (speckernel_wv_range[0] <= wavemap) & (wavemap <= speckernel_wv_range[1])
         wavemap = np.where(valid_wavemap, wavemap, 0.0)
         detector_model.kernel = kernel
+        detector_model.kernel_nativegrid = kernel
         detector_models.append(detector_model)
 
     return detector_models
@@ -269,56 +271,6 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.meta.soss_extract1d.reg = np.nansum(tiktests["reg"][idx] ** 2)
     spec.meta.soss_extract1d.factor = tiktests["factors"][idx]
     spec.int_num = 0
-
-
-def _f_to_spec(f_order, grid_order, detector_model, pixel_grid, mask):
-    """
-    Bin the flux to the pixel grid and build a SpecModel.
-
-    Parameters
-    ----------
-    f_order : np.array
-        The solution f_k of the linear system.
-    grid_order : np.array
-        The wavelength grid of the solution, usually oversampled compared to the pixel grid.
-    detector_model : DetectorModelOrder
-        The model for the spectral order.
-    pixel_grid : np.array
-        The pixel grid to which the flux should be binned.
-    mask : np.array
-        The mask of the pixels to be extracted.
-
-    Returns
-    -------
-    spec : SpecModel
-        The SpecModel containing the extracted spectrum.
-    """
-    # Build 1d spectrum integrated over pixels
-    pixel_grid = pixel_grid[np.newaxis, :]
-    model = ExtractionEngine(
-        [pixel_grid],
-        [np.ones_like(pixel_grid)],
-        [detector_model.throughput],
-        [None],
-        wave_grid=grid_order,
-        mask_trace_profile=[mask[np.newaxis, :]],
-        orders=[detector_model.spectral_order],
-    )
-    f_binned = model.rebuild(f_order, fill_value=np.nan)
-
-    pixel_grid = np.squeeze(pixel_grid)
-    f_binned = np.squeeze(f_binned)
-
-    # Remove Nans to save space
-    is_valid = np.isfinite(f_binned)
-    table_size = np.sum(is_valid)
-    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
-    out_table["WAVELENGTH"] = pixel_grid[is_valid]
-    out_table["FLUX"] = f_binned[is_valid]
-    spec = datamodels.SpecModel(spec_table=out_table)
-    spec.spectral_order = detector_model.spectral_order
-
-    return spec
 
 
 def _build_tracemodel_order(engine, order_model, f_k, mask):
@@ -356,6 +308,12 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
     idx_valid = np.isfinite(flux_order)
     grid_order, flux_order = grid_order[idx_valid], flux_order[idx_valid]
 
+    # import matplotlib.pyplot as plt
+    # fig, ax = plt.subplots(1, 1, figsize=(10, 5))
+    # ax.scatter(grid_order, flux_order, s=1)
+    # ax.set_title(f"Order {order_model.spectral_order} extracted flux")
+    # plt.show()
+
     # Build model of the order
     # Give the identity kernel to the Engine (so no convolution)
     model = ExtractionEngine(
@@ -372,16 +330,38 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
     tracemodel_ord = model.rebuild(flux_order, fill_value=np.nan)
 
     # Build 1d spectrum integrated over pixels
-    pixel_wave_grid, valid_cols = order_model.native_grid
-    spec_ord = _f_to_spec(
-        flux_order,
-        grid_order,
-        order_model,
-        pixel_wave_grid,
-        np.all(mask, axis=0)[valid_cols],
-    )
+    pixel_grid, valid_cols = order_model.native_grid
+    pixel_grid = pixel_grid[np.newaxis, :]
+    mask = np.all(mask, axis=0)[valid_cols]
 
-    return tracemodel_ord, spec_ord
+    model = ExtractionEngine(
+        [pixel_grid],
+        [np.ones_like(pixel_grid)],
+        [order_model.throughput],
+        [order_model.kernel_nativegrid],
+        wave_grid=grid_order,
+        mask_trace_profile=[mask[np.newaxis, :]],
+        orders=[order_model.spectral_order],
+    )
+    # save kernel on this grid for next call
+    # order_model.kernel_nativegrid = model.kernels[0]
+
+    # Rebuild on pixel grid
+    f_binned = model.rebuild(flux_order, fill_value=np.nan)
+
+    pixel_grid = np.squeeze(pixel_grid)
+    f_binned = np.squeeze(f_binned)
+
+    # Remove Nans to save space
+    is_valid = np.isfinite(f_binned)
+    table_size = np.sum(is_valid)
+    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+    out_table["WAVELENGTH"] = pixel_grid[is_valid]
+    out_table["FLUX"] = f_binned[is_valid]
+    spec = datamodels.SpecModel(spec_table=out_table)
+    spec.spectral_order = order_model.spectral_order
+
+    return tracemodel_ord, spec
 
 
 def _build_null_spec_table(wave_grid, order):
@@ -430,13 +410,14 @@ def _do_tiktests(
     tikfac_log_range=None,
 ):
     if tikfac_log_range is None:
-        tikfac_log_range = [-4, 4]
+        tikfac_log_range = [-2, 8]
     # Find the tikhonov factor.
     # Initial pass 8 orders of magnitude with 10 grid points.
     log_guess = np.log10(guess_factor)
     factors = np.logspace(log_guess + tikfac_log_range[0], log_guess + tikfac_log_range[1], 10)
     all_tests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
     tikfac = engine.best_tikho_factor(all_tests, fit_mode="all")
+    log.info("Coarse grid best tikfac: %.4e", tikfac)
 
     # Refine across 2 orders of magnitude.
     tikfac = np.log10(tikfac)
@@ -450,7 +431,8 @@ def _do_tiktests(
         all_tests = _append_tiktests(all_tests, tiktests)
         for i, order in enumerate(engine.orders):
             order_model = order_models[i]
-            for idx in range(len(all_tests["factors"])):
+            for idx, fac in enumerate(all_tests["factors"]):
+                log.info("Building spectrum for order %d, factor %.4e", order, fac)
                 f_k = all_tests["solution"][idx, :]
                 if np.all(~np.isfinite(f_k)):
                     spec_ord = _build_null_spec_table(engine.wave_grid, order)
@@ -509,6 +491,7 @@ def _model_single_order(
     mask_fit,
     mask_rebuild,
     wave_grid,
+    valid_cols,
     tikfac,
     do_tiktests=False,
     save_tiktests=False,
@@ -610,12 +593,49 @@ def _model_single_order(
 
     # Use the best Tikhonov factor to build the final model and spectrum
     f_k_final = engine(data_order, err_order, tikhonov=True, factor=tikfac)
-    model, spec_ord = _build_tracemodel_order(engine, order_model, f_k_final, mask_rebuild)
-    spec_ord.meta.soss_extract1d.factor = tikfac
-    spec_ord.meta.soss_extract1d.type = "OBSERVATION"
+
+    # Rebuild trace, including bad pixels
+    engine = ExtractionEngine(
+        [order_model.wavemap],
+        [order_model.specprofile],
+        [throughput],
+        [np.array([1.0])],
+        wave_grid=wave_grid_os,
+        mask_trace_profile=[mask_rebuild],
+        orders=[order],
+    )
+    model = engine.rebuild(f_k_final, fill_value=np.nan)
+
+    # Build 1d spectrum integrated over pixels
+    mask = np.all(mask_rebuild, axis=0)[valid_cols]
+    wave_grid = wave_grid[np.newaxis, :]
+    engine = ExtractionEngine(
+        [wave_grid],
+        [np.ones_like(wave_grid)],
+        [throughput],
+        [np.array([1.0])],
+        wave_grid=wave_grid_os,
+        mask_trace_profile=[mask[np.newaxis, :]],
+        orders=[order_model.spectral_order],
+    )
+    f_binned = engine.rebuild(f_k_final, fill_value=np.nan)
+
+    wave_grid = np.squeeze(wave_grid)
+    f_binned = np.squeeze(f_binned)
+
+    # Remove Nans to save space
+    is_valid = np.isfinite(f_binned)
+    table_size = np.sum(is_valid)
+    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+    out_table["WAVELENGTH"] = wave_grid[is_valid]
+    out_table["FLUX"] = f_binned[is_valid]
+    spec = datamodels.SpecModel(spec_table=out_table)
+    spec.spectral_order = order_model.spectral_order
+    spec.meta.soss_extract1d.factor = tikfac
+    spec.meta.soss_extract1d.type = "OBSERVATION"
 
     # Add the result to spec_list
-    spec_list.append(spec_ord)
+    spec_list.append(spec)
     return model, spec_list
 
 
@@ -803,11 +823,22 @@ class Integration:
         # Model the traces for each order separately.
         tracemodels = {}
         for i_order, order in enumerate([1, 2]):
-            log.debug(f"Building the model image of {order}.")
+            log.info(f"Building the model image of {order}.")
 
             tracemodel_ord, spec_ord = _build_tracemodel_order(
                 engine, self.order_models[i_order], f_k, global_mask
             )
+
+            # print(f_k.shape)
+            # import matplotlib.pyplot as plt
+            # fig, (ax0, ax1) = plt.subplots(2, 1, figsize=(10, 5))
+            # ax0.scatter(wave_grid, f_k, s=1)
+            # ax0.set_ylim([0, 2e8])
+            # ax1.scatter(spec_ord.spec_table["WAVELENGTH"], spec_ord.spec_table["FLUX"], s=1)
+            # ax0.set_title(f"Order {order} extracted flux")
+            # ax1.set_title(f"Order {order} extracted spectrum")
+            # plt.show()
+
             spec_ord.meta.soss_extract1d.factor = tikfacs_out["Order 1"]
             spec_ord.meta.soss_extract1d.color_range = "RED"
             spec_ord.meta.soss_extract1d.type = "OBSERVATION"
@@ -852,13 +883,14 @@ class Integration:
             mask_fit = self.mask_trace_profile[idx_order] | self.scimask
 
             # Build 1d spectrum integrated over pixels
-            pixel_wave_grid, _valid_cols = order_model.native_grid
+            pixel_wave_grid, valid_cols = order_model.native_grid
 
             # Hardcode wavelength highest boundary as well.
             # Must overlap with lower limit in make_decontamination_grid
             if cutoff is not None:
                 is_in_wv_range = pixel_wave_grid < cutoff
                 pixel_wave_grid = pixel_wave_grid[is_in_wv_range]
+                valid_cols = valid_cols[is_in_wv_range]
 
             # Model with atoca
             try:
@@ -869,6 +901,7 @@ class Integration:
                     mask_fit,
                     global_mask,
                     pixel_wave_grid,
+                    valid_cols,
                     tikfac,
                     do_tiktests=do_tiktests,
                     save_tiktests=save_tiktests,
@@ -1445,6 +1478,8 @@ def run_extract1d(
             all_tracemodels[order].append(tracemodels[order])
         for order in spec_list:
             output_spec_list[order].append(spec_list[order])
+        for atoca_spec in atoca_list:
+            output_atoca.spec.append(atoca_spec)
 
     # Make a TSOSpecModel from the output spec list
     for order in output_spec_list:
