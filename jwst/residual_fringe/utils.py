@@ -1107,7 +1107,7 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
             res_fringes = np.divide(
                 proc_data, bg_fit, out=np.zeros_like(proc_data), where=bg_fit != 0
             )
-            res_fringes = np.subtract(res_fringes, 1, where=res_fringes != 0)
+            np.subtract(res_fringes, 1, out=res_fringes, where=res_fringes != 0)
             res_fringes *= np.where(weights > 1e-07, 1, 1e-08)
 
             # fit the residual fringes

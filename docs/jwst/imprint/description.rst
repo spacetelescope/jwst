@@ -14,7 +14,7 @@ The imprint subtraction step has two input parameters: the target exposure and a
 list of one or more imprint/leakcal exposures. When called as a standalone step, these
 arguments can be provided as either file names or JWST data models.  When the step is called
 in the context of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, imprint/leakcal file
-names should be specified in the input `spec2` association file, labeled with the member
+names should be specified in the input ``spec2`` association file, labeled with the member
 type of "imprint".
 
 In the event that multiple imprint images are provided, the step uses the
