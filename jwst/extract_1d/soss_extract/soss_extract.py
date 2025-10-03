@@ -56,7 +56,32 @@ __all__ = ["get_ref_file_args", "run_extract1d"]
 
 @dataclass
 class DetectorModelOrder:
-    """Model of detector properties for the ATOCA algorithm for a given spectral order."""
+    """
+    Model of detector properties for the ATOCA algorithm for a single spectral order.
+
+    Attributes
+    ----------
+    spectral_order : int
+        The spectral order number.
+    wavemap : np.ndarray
+        The 2-D map of the expected wavelengths at each pixel for this order
+        as determined by PASTASOSS.
+    spectrace : np.ndarray
+        The 1-D spectral trace as determined by PASTASOSS.
+    specprofile : np.ndarray
+        The 2-D spatial profile of the spectral trace from the specprofile reference file.
+    throughput : Callable
+        An interpolation function for the throughput of the order, computed from the throughput
+        in the pastasoss reference file.
+    kernel : WebbKernel or np.ndarray or None
+        The spectral resolution kernel for this order, either as a WebbKernel object (callable)
+        or as a 2-D array.
+    kernel_nativegrid : WebbKernel or np.ndarray or None
+        The spectral resolution kernel for this order, either as a WebbKernel object (callable)
+        or as a 2-D array.
+    subarray : str or None
+        The name of the subarray used for the extraction.
+    """
 
     spectral_order: int
     wavemap: np.ndarray
@@ -169,9 +194,9 @@ def get_ref_file_args(ref_files, orders_requested=None):
 
     Returns
     -------
-    tuple
-        The reference file args used with the extraction engine:
-        (wavemaps, specprofiles, throughputs, kernels)
+    list[DetectorModelOrder]
+        A list of DetectorModelOrder objects containing PASTASOSS outputs and other reference
+        information, one per spectral order to be extracted.
     """
     pastasoss_ref = ref_files["pastasoss"]
     specprofile_ref = ref_files["spec_profiles"]
@@ -343,8 +368,6 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
         mask_trace_profile=[mask[np.newaxis, :]],
         orders=[order_model.spectral_order],
     )
-    # save kernel on this grid for next call
-    # order_model.kernel_nativegrid = model.kernels[0]
 
     # Rebuild on pixel grid
     f_binned = model.rebuild(flux_order, fill_value=np.nan)
@@ -409,6 +432,41 @@ def _do_tiktests(
     save_tiktests=False,
     tikfac_log_range=None,
 ):
+    """
+    Test a grid of Tikhonov regularization factors to find the most appropriate one.
+
+    Parameters
+    ----------
+    engine : ExtractionEngine
+        The extraction engine to use for the tests.
+    scidata_bkg : np.ndarray
+        The science data with background subtracted.
+    scierr : np.ndarray
+        The error in the science data.
+    guess_factor : float
+        Initial guess for the Tikhonov factor.
+    order_models : list[DetectorModelOrder]
+        Models of the detector and trace properties, one per spectral order.
+    global_mask : np.ndarray
+        Mask determining the aperture used for rebuilding the trace. This typically includes
+        only pixels that do not belong to either spectral trace, i.e., regions of the detector
+        where no real data could exist.
+    save_tiktests : bool, optional
+        If True, re-construct spectra for all tested Tikhonov factors and for all spectral orders
+        to provide a diagnostic product.
+    tikfac_log_range : list[float], optional
+        Logarithmic range around `guess_factor` to search. The default is [-2, 8], which was
+        chosen because we are looking for the smoothest (largest-factor) solution that
+        still provides a good fit to the data.
+
+    Returns
+    -------
+    tikfac : float
+        The best-fitting Tikhonov factor.
+    spec_list : list[SpecModel]
+        If save_tiktests is True, a list of SpecModels for all tested Tikhonov factors
+        and all spectral orders; otherwise, an empty list.
+    """
     if tikfac_log_range is None:
         tikfac_log_range = [-2, 8]
     # Find the tikhonov factor.
