@@ -5,12 +5,12 @@ from pathlib import Path
 
 import numpy as np
 from spherical_geometry.polygon import SphericalPolygon
+from stcal.alignment import combine_sregions
 from stcal.resample import Resample
 from stcal.resample.utils import is_imaging_wcs
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from jwst.assign_wcs import util as assign_wcs_util
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels import ModelLibrary
 from jwst.model_blender.blender import ModelBlender
@@ -469,7 +469,9 @@ class ResampleImage(Resample):
         if is_imaging_wcs(self.output_jwst_model.meta.wcs):
             # only for an imaging WCS:
             self.update_fits_wcsinfo(self.output_jwst_model)
-            assign_wcs_util.update_s_region_imaging(self.output_jwst_model)
+            output_sregion = self.combine_input_sregions()
+            log.info(f"Assigning output S_REGION: {output_sregion}")
+            self.output_jwst_model.meta.wcsinfo.s_region = output_sregion
 
         self.output_jwst_model.meta.cal_step.resample = "COMPLETE"
 
@@ -683,6 +685,33 @@ class ResampleImage(Resample):
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]
+
+    def combine_input_sregions(self):
+        """
+        Combine the input model S_REGIONs into a single S_REGION.
+
+        Returns
+        -------
+        str
+            The combined S_REGION.
+        """
+        # get s_regions from model meta without loading the whole model into memory
+        sregion_list = []
+        for i in range(len(self.input_models)):
+            meta = self.input_models.read_metadata(i)
+            sregion_list.append(meta["meta.wcsinfo.s_region"])
+
+        if "moving_target" in self.output_wcs.available_frames:
+            det2world = self.output_wcs.get_transform("detector", "moving_target")
+        else:
+            det2world = self.output_wcs.get_transform("detector", "world")
+        bbox = self.output_wcs.footprint()
+        try:
+            output_sregion = combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
+        except ValueError as e:
+            log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
+            return
+        return output_sregion
 
 
 def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
