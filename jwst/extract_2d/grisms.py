@@ -450,6 +450,7 @@ def extract_grism_objects(
             # The bounding boxes here are also limited to the size of the detector
             # The check for boxes entirely off the detector is done in create_grism_bbox right now
             y, x = obj.order_bounding[order]
+
             log.debug(f"YYY, {y}, {clamp(y[0], 0, input_model.meta.subarray.ysize)}")
 
             # limit the boxes to the detector
@@ -471,6 +472,7 @@ def extract_grism_objects(
                 # only the first two numbers in the Mapping are used
                 # the order and source position are put directly into
                 # the new wcs for the subarray for the forward transform
+
                 xcenter_model = Const1D(obj.xcentroid)
                 xcenter_model.inverse = Const1D(obj.xcentroid)
 
@@ -500,15 +502,17 @@ def extract_grism_objects(
                     var_flat = None
 
                 # Add a new transform to the WCS that shifts to the center of the virtual slit
-                # This needs to be separated from the "grism_detector" to "detector" transform
-                # because the un-shifted "grism_detector" to "detector" transform is used
-                # by wfss_contam
+                # This needs to be separated from the "grism_detector"/ ("dispersed_detector")
+                # to "detector" transform  because the un-shifted "grism_detector" to "detector"
+                # transform is used by wfss_contam
+
                 tr = Mapping((0, 1, 0, 0, 0)) | (
                     Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model
                 )
                 bind_bounding_box(
                     tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order="F"
                 )
+
                 if input_model.meta.exposure.type.upper() == "MIR_WFSS":
                     grism_slit = copy.deepcopy(subwcs.dispersed_detector)
                     grism_slit.name = "grism_slit"
@@ -531,22 +535,19 @@ def extract_grism_objects(
                     var_flat=var_flat,
                 )
 
-                # print("CHECK this VALUE", input_model.meta.wcsinfo.dispersion_direction)
                 new_slit.meta.wcsinfo.specsys = input_model.meta.wcsinfo.specsys
                 new_slit.meta.coordinates = input_model.meta.coordinates
                 new_slit.meta.wcs = subwcs
 
-                # JEM added this need to check
                 if input_model.meta.exposure.type.upper() == "MIR_WFSS":
                     new_slit.meta.wcsinfo.dispersion_direction = (
                         input_model.meta.wcsinfo.dispersion_direction
                     )
                     new_slit.meta.wcsinfo.spectral_order = 1
 
-                # print(new_slit.meta.wcsinfo.dispersion_direction)
                 if compute_wavelength:
-                    log.debug("Computing wavelengths")
                     new_slit.wavelength = compute_wfss_wavelength(new_slit)
+                    log.debug("Computing wavelengths")
 
                 # set x/ystart values relative to the image (screen) frame.
                 # The overall subarray offset is recorded in model.meta.subarray.

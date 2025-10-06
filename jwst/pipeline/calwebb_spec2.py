@@ -234,9 +234,7 @@ class Spec2Pipeline(Pipeline):
 
             # Check the datamodel to see if it's a grism image/direct image, if so get the catalog
             # name from the asn and record it to the meta
-            print("WFSS_TYPES", WFSS_TYPES, exp_type)
             if exp_type in WFSS_TYPES:
-                print("In calwebb_spec2 we are in WFSS_TYPES")
                 try:
                     science.meta.source_catalog = Path(members_by_type["sourcecat"][0]).name
                     log.info(f"Using sourcecat file {science.meta.source_catalog}")
@@ -245,9 +243,6 @@ class Spec2Pipeline(Pipeline):
                     science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
 
                     self.log.info(f"Using direct image {science.meta.direct_image}")
-                    print(science.meta.source_catalog)
-                    print(science.meta.segmentation_map)
-                    print(science.meta.direct_image)
                 except IndexError:
                     if science.meta.source_catalog is None:
                         raise IndexError(
@@ -360,7 +355,6 @@ class Spec2Pipeline(Pipeline):
         elif exp_type == "NRS_MSASPEC":
             calibrated = self._process_nirspec_msa_slits(calibrated)
         elif exp_type == "MIR_WFSS":
-            print("in calspec2 Calling process_miri_wfss")
             calibrated = self._process_miri_wfss(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
