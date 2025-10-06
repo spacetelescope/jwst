@@ -87,11 +87,11 @@ def test_std(_jail, rtdata, resource_tracker, request, pool_args):
         ),  # This pair of pools test the DMS flag usage to prevent o-type ASNs when a background c-type candidate is attached to the science exposure.
         ("jw04225_20241213t150701DMS_pool", ["--DMS", "-i", "o001", "o002"]),
         ("jw04462_20250318t100414_pool", []),  # NRS_FSS_VALID_LAMP_OPTICAL_PATHS
+        ("jw04470_20250317t231014_pool", []),  # NIS_IMAGE science program
         (
             "jw05554_20250528t204800_c1012_pool",
             ["--DMS", "-i", "o009", "o010", "c1012"],
         ),  # This pool checks background behavior with paired MIRI MRS/Imaging exposures
-        ("jw04470_20250317t231014_pool", []),  # NIS_IMAGE science program
     ],
     ids=parfunc,
 )
