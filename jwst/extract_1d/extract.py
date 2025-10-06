@@ -1190,7 +1190,6 @@ def define_aperture(input_model, slit, extract_params, exp_type):
 
     wl_array = get_wavelengths(data_model, exp_type, extract_params["spectral_order"])
 
-    # print("result of get_wavelengths", wl_array)
     # Shift aperture definitions by source position if needed
     # Extract parameters are updated in place
     if extract_params["use_source_posn"]:
@@ -1621,7 +1620,6 @@ def create_extraction(
     extract_params = get_extract_parameters(
         extract_ref_dict, data_model, slitname, sp_order, input_model.meta, **kwargs
     )
-    # print("in extract.py extraction parameters:", extract_params["match"])
 
     if extract_params["match"] == NO_MATCH:
         log.critical("Missing extraction parameters.")
@@ -1631,9 +1629,6 @@ def create_extraction(
         raise ContinueError()
 
     extract_params["dispaxis"] = data_model.meta.wcsinfo.dispersion_direction
-    # print('dispersion direction', data_model.meta.wcsinfo.dispersion_direction)
-    # print("extract params", extract_params["dispaxis"])
-
     if extract_params["dispaxis"] is None:
         log.warning("The dispersion direction information is missing, so skipping ...")
         raise ContinueError()
@@ -1647,7 +1642,6 @@ def create_extraction(
 
     valid = np.isfinite(wavelength)
     wavelength = wavelength[valid]
-    # print("wavelength", wavelength)
     if np.sum(valid) == 0:
         log.error("Spectrum is empty; no valid data.")
         raise ContinueError()
@@ -1665,7 +1659,6 @@ def create_extraction(
 
     # Set up aperture correction, to be used for every integration
     apcorr_available = False
-    # print("Source type", source_type)
     if source_type is not None and source_type.upper() == "POINT" and apcorr_ref_model is not None:
         log.info("Creating aperture correction.")
         # NIRSpec needs to use a wavelength in the middle of the
@@ -1884,7 +1877,6 @@ def create_extraction(
 
         if exp_type in WFSS_EXPTYPES:
             spectral_order = data_model.meta.wcsinfo.spectral_order
-            print("spectral order", spectral_order)
             if hasattr(data_model.meta, "filename"):
                 # calwebb_spec3 case: no separate slit input to function
                 spec.meta.filename = data_model.meta.filename
