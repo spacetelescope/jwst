@@ -30,13 +30,13 @@ class FirstFrameStep(Step):
 
         Parameters
         ----------
-        step_input : DataModel
-            Input datamodel to be corrected
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            Input filename or datamodel to be corrected.
 
         Returns
         -------
-        output_model : DataModel
-            Firstframe corrected datamodel
+        output_model : `~stdatamodels.jwst.datamodels.RampModel`
+            First frame corrected datamodel.
         """
         # Open the input data model
         result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)

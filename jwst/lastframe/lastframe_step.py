@@ -29,13 +29,13 @@ class LastFrameStep(Step):
 
         Parameters
         ----------
-        step_input : DataModel
-            Input datamodel to be corrected
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            Input filename or datamodel to be corrected.
 
         Returns
         -------
-        output_model : DataModel
-            Lastframe corrected datamodel
+        output_model : `~stdatamodels.jwst.datamodels.RampModel`
+            Last frame corrected datamodel.
         """
         # Open the input data model
         result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
