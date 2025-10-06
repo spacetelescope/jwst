@@ -1,5 +1,7 @@
 import logging
 
+from stdatamodels.jwst import datamodels
+
 from jwst.firstframe import firstframe_sub
 from jwst.stpipe import Step
 
@@ -37,7 +39,7 @@ class FirstFrameStep(Step):
             Firstframe corrected datamodel
         """
         # Open the input data model
-        result = self.prepare_output(step_input)
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
         # Check the data is MIRI data
         detector = result.meta.instrument.detector.upper()
