@@ -26,38 +26,36 @@ class SuperBiasStep(Step):
 
         Parameters
         ----------
-        step_input : str or stdatamodels.jwst.datamodels.ramp.RampModel
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
             Either the path to the file or the science data model to be corrected.
 
         Returns
         -------
-        stdatamodels.jwst.datamodels.ramp.RampModel
+        `~stdatamodels.jwst.datamodels.RampModel`
             Superbias-corrected science data model.
         """
         # Open the input data model
-        with datamodels.open(step_input) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            # Get the name of the superbias reference file to use
-            self.bias_name = self.get_reference_file(input_model, "superbias")
-            log.info("Using SUPERBIAS reference file %s", self.bias_name)
+        # Get the name of the superbias reference file to use
+        bias_name = self.get_reference_file(result, "superbias")
+        log.info("Using SUPERBIAS reference file %s", bias_name)
 
-            # Check for a valid reference file
-            if self.bias_name == "N/A":
-                log.warning("No SUPERBIAS reference file found")
-                log.warning("Superbias step will be skipped")
-                result.meta.cal_step.superbias = "SKIPPED"
-                return result
+        # Check for a valid reference file
+        if bias_name == "N/A":
+            log.warning("No SUPERBIAS reference file found")
+            log.warning("Superbias step will be skipped")
+            result.meta.cal_step.superbias = "SKIPPED"
+            return result
 
-            # Open the superbias ref file data model
-            bias_model = datamodels.SuperBiasModel(self.bias_name)
+        # Open the superbias ref file data model
+        bias_model = datamodels.SuperBiasModel(bias_name)
 
-            # Do the bias subtraction
-            result = bias_sub.do_correction(result, bias_model)
-            result.meta.cal_step.superbias = "COMPLETE"
+        # Do the bias subtraction
+        result = bias_sub.do_correction(result, bias_model)
+        result.meta.cal_step.superbias = "COMPLETE"
 
-            # Cleanup
-            del bias_model
+        # Cleanup
+        del bias_model
 
         return result

@@ -1,7 +1,5 @@
 import logging
 
-from stdatamodels.jwst import datamodels
-
 from jwst.clean_flicker_noise import autoparam, clean_flicker_noise
 from jwst.stpipe import Step
 
@@ -91,80 +89,89 @@ class CleanFlickerNoiseStep(Step):
 
         Parameters
         ----------
-        input_data : DataModel
-            Input datamodel to be corrected.
+        input_data : str or `~stdatamodels.jwst.datamodels.RampModel` \
+                     or `~stdatamodels.jwst.datamodels.ImageModel` \
+                     or `~stdatamodels.jwst.datamodels.CubeModel`
+            Filename or input datamodel to be corrected.
 
         Returns
         -------
-        output_model : DataModel
-            The flicker noise corrected datamodel.
+        output_model : `~stdatamodels.jwst.datamodels.RampModel` \
+                       or `~stdatamodels.jwst.datamodels.ImageModel` \
+                       or `~stdatamodels.jwst.datamodels.CubeModel`
+            The flicker noise corrected datamodel, matching the type of
+            the input.
         """
         # Open the input data model
-        with datamodels.open(input_data) as input_model:
-            # Assign fit and background parameters appropriate
-            # to the input data if desired
-            if self.autoparam:
-                self._set_auto_parameters(input_model)
+        # Note: this step can be run either in stage 1 on ramp-type
+        # data or in stage 2 on rate-type data, so it's important
+        # not to provide a specific datamodel to prepare_output.
+        output_model = self.prepare_output(input_data)
 
-            flat_filename = None
-            if self.apply_flat_field:
-                flat_filename = self.get_reference_file(input_model, "flat")
-                exp_type = input_model.meta.exposure.type
-                if flat_filename == "N/A":
-                    log.warning(
-                        f"Flat correction is not available for "
-                        f"exposure type {exp_type} without a user-"
-                        f"supplied flat."
-                    )
-                    flat_filename = None
-                else:
-                    log.info(f"Using FLAT reference file: {flat_filename}")
+        # Assign fit and background parameters appropriate
+        # to the input data if desired
+        if self.autoparam:
+            self._set_auto_parameters(output_model)
 
-            result = clean_flicker_noise.do_correction(
-                input_model,
-                input_dir=self.input_dir,
-                fit_method=self.fit_method,
-                fit_by_channel=self.fit_by_channel,
-                background_method=self.background_method,
-                background_box_size=self.background_box_size,
-                mask_science_regions=self.mask_science_regions,
-                flat_filename=flat_filename,
-                n_sigma=self.n_sigma,
-                fit_histogram=self.fit_histogram,
-                single_mask=self.single_mask,
-                user_mask=self.user_mask,
-                save_mask=self.save_mask,
-                save_background=self.save_background,
-                save_noise=self.save_noise,
+        flat_filename = None
+        if self.apply_flat_field:
+            flat_filename = self.get_reference_file(output_model, "flat")
+            exp_type = output_model.meta.exposure.type
+            if flat_filename == "N/A":
+                log.warning(
+                    f"Flat correction is not available for "
+                    f"exposure type {exp_type} without a user-"
+                    f"supplied flat."
+                )
+                flat_filename = None
+            else:
+                log.info(f"Using FLAT reference file: {flat_filename}")
+
+        result = clean_flicker_noise.do_correction(
+            output_model,
+            input_dir=self.input_dir,
+            fit_method=self.fit_method,
+            fit_by_channel=self.fit_by_channel,
+            background_method=self.background_method,
+            background_box_size=self.background_box_size,
+            mask_science_regions=self.mask_science_regions,
+            flat_filename=flat_filename,
+            n_sigma=self.n_sigma,
+            fit_histogram=self.fit_histogram,
+            single_mask=self.single_mask,
+            user_mask=self.user_mask,
+            save_mask=self.save_mask,
+            save_background=self.save_background,
+            save_noise=self.save_noise,
+        )
+        output_model, mask_model, background_model, noise_model, status = result
+
+        # Save the mask, if requested
+        if self.save_mask and mask_model is not None:
+            mask_path = self.make_output_path(basepath=output_model.meta.filename, suffix="mask")
+            log.info(f"Saving mask file {mask_path}")
+            mask_model.save(mask_path)
+            mask_model.close()
+
+        # Save the background, if requested
+        if self.save_background and background_model is not None:
+            bg_path = self.make_output_path(
+                basepath=output_model.meta.filename, suffix="flicker_bkg"
             )
-            output_model, mask_model, background_model, noise_model, status = result
+            log.info(f"Saving background file {bg_path}")
+            background_model.save(bg_path)
+            background_model.close()
 
-            # Save the mask, if requested
-            if self.save_mask and mask_model is not None:
-                mask_path = self.make_output_path(basepath=input_model.meta.filename, suffix="mask")
-                log.info(f"Saving mask file {mask_path}")
-                mask_model.save(mask_path)
-                mask_model.close()
+        # Save the noise, if requested
+        if self.save_noise and noise_model is not None:
+            noise_path = self.make_output_path(
+                basepath=output_model.meta.filename, suffix="flicker_noise"
+            )
+            log.info(f"Saving noise file {noise_path}")
+            noise_model.save(noise_path)
+            noise_model.close()
 
-            # Save the background, if requested
-            if self.save_background and background_model is not None:
-                bg_path = self.make_output_path(
-                    basepath=input_model.meta.filename, suffix="flicker_bkg"
-                )
-                log.info(f"Saving background file {bg_path}")
-                background_model.save(bg_path)
-                background_model.close()
-
-            # Save the noise, if requested
-            if self.save_noise and noise_model is not None:
-                noise_path = self.make_output_path(
-                    basepath=input_model.meta.filename, suffix="flicker_noise"
-                )
-                log.info(f"Saving noise file {noise_path}")
-                noise_model.save(noise_path)
-                noise_model.close()
-
-            # Set the step completion status
-            output_model.meta.cal_step.clean_flicker_noise = status
+        # Set the step completion status
+        output_model.meta.cal_step.clean_flicker_noise = status
 
         return output_model
