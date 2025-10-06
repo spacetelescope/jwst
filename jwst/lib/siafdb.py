@@ -4,7 +4,7 @@ SIAF Database Access.
 Provide a common interface to different versions of the SIAF.
 
 Under operations, the SIAF is found in a sqlite database.
-Otherwise, use the standard interface defined by the `pysiaf` package
+Otherwise, use the standard interface defined by the ``pysiaf`` package
 """
 
 import logging
@@ -21,11 +21,6 @@ logger = logging.getLogger(__name__)
 # Map instrument three character mnemonic to full name
 INSTRUMENT_MAP = {"fgs": "fgs", "mir": "miri", "nis": "niriss", "nrc": "nircam", "nrs": "nirspec"}
 
-# SIAF container
-# The names should correspond to the names in the ``wcsinfo`` schema.
-# It is populated by the SIAF values in the PRD database based
-# on APERNAME and UseAfterDate and used to populate the keywords
-# in Level1bModel data models.
 SIAF = namedtuple(
     "SIAF",
     [
@@ -41,11 +36,20 @@ SIAF = namedtuple(
     ],
     defaults=(None, None, None, None, 0, 0, 3600, 3600, (0, 1, 1, 0, 0, 0, 1, 1)),
 )
-# Set default values for the SIAF.
-# Values which are needed by the pipeline are set to None which
-# triggers a ValueError if missing in the SIAF database.
-# Quantities not used by the pipeline get a default value -
-# FITS keywords and aperture vertices.
+"""
+SIAF container.
+
+The names should correspond to the names in the ``wcsinfo`` schema.
+It is populated by the SIAF values in the PRD database based
+on APERNAME and UseAfterDate and used to populate the keywords
+in Level1bModel data models.
+
+Default values are set for the SIAF.
+Values which are needed by the pipeline are set to `None`, which
+triggers a ValueError if missing in the SIAF database.
+Quantities not used by the pipeline get a default value -
+FITS keywords and aperture vertices.
+"""
 
 SIAF_REQUIRED = ["V2Ref", "V3Ref", "V3IdlYAngle", "VIdlParity"]
 SIAF_OPTIONAL = ["XSciRef", "YSciRef", "XSciScale", "YSciScale"]
@@ -70,12 +74,12 @@ SIAF_MAP = {
     "YSciScale": "cdelt2",
 }
 
-__all__ = ["SiafDb", "nearest_prd"]
+__all__ = ["SIAF", "SiafDb", "nearest_prd"]
 
 
 class SiafDb:
     """
-    Use pysiaf as the source of siaf information.
+    Use ``pysiaf`` as the source of SIAF information.
 
     Parameters
     ----------
@@ -108,7 +112,7 @@ class SiafDb:
 
     def get_aperture(self, aperture, useafter=None):
         """
-        Get the pysiaf.Aperture for an aperture.
+        Get the ``pysiaf.Aperture`` for an aperture.
 
         Parameters
         ----------
@@ -145,6 +149,7 @@ class SiafDb:
         ----------
         aperture : str
             The name of the aperture to retrieve.
+
         to_detector : bool
             Convert all the pixel parameters to be relative to the detector.
         useafter : str
