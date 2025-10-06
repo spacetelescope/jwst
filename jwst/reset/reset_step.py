@@ -35,7 +35,7 @@ class ResetStep(Step):
            The reset corrected ramp model.
         """
         # Open the input data model
-        result = self.prepare_output(step_input)
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
         # check the data is MIRI data
         detector = result.meta.instrument.detector
