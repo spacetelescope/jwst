@@ -447,15 +447,16 @@ def test_fit_source_fail(monkeypatch, fit_psf):
         assert np.all(np.isnan(result))
 
 
+@pytest.mark.parametrize("centroid_values", [([-1], [-1]), ([0], [-1]), ([-1], [0])])
 @pytest.mark.parametrize("fit_psf", [True, False])
-def test_fit_source_centroid_out_of_bounds(monkeypatch, fit_psf):
+def test_fit_source_centroid_out_of_bounds(monkeypatch, fit_psf, centroid_values):
     datamodel = mock_nircam_image()
     mask = np.full(datamodel.data.shape, False)
     box_size = int(RADIUS * 2 + 1)
     xcenter, ycenter = XCENTER, YCENTER
 
     def mock_centroid(*args, **kwargs):
-        return [-1], [-1]
+        return centroid_values
 
     monkeypatch.setattr(tp, "centroid_sources", mock_centroid)
 
