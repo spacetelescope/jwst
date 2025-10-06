@@ -38,7 +38,7 @@ class SaturationStep(Step):
             Output datamodel with saturation flags set for saturated pixels.
         """
         # Open the input data model
-        result = self.prepare_output(step_input)
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
         # Get the name of the saturation reference file
         ref_name = self.get_reference_file(result, "saturation")
