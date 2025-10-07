@@ -15,14 +15,13 @@ class KeyValueRegistry(UserDict):
     Provide a dict-like registry.
 
     Differences from just a `dict`:
-        - Can be given single item or a 2-tuple.
-          If an item, attempts to read the `__name__` attribute
-          and use that as the key.
 
-        - If None is given as a key, a default key can
-          be specified.
-
-        - Instances can be used as decorators.
+    - Can be given single item or a 2-tuple.
+      If an item, attempts to read the ``__name__`` attribute
+      and use that as the key.
+    - If None is given as a key, a default key can
+      be specified.
+    - Instances can be used as decorators.
 
     Parameters
     ----------
@@ -30,7 +29,7 @@ class KeyValueRegistry(UserDict):
         Initializing items.
 
     default : str or object
-        The default to use when key is `None`
+        The default to use when key is `None`.
     """
 
     def __init__(self, items=None, default=None):
@@ -102,14 +101,14 @@ def make_dict(item):
     Create a dict from an item.
 
     Items may be a dict, a 2-tuple or an object. Objects are most
-    often a file format class from ~jwst.associations.association_io - `json` or `yaml`.
+    often a file format class from `~jwst.associations.association_io` - JSON or YAML.
 
     Parameters
     ----------
     item : object or (name, object) or dict
         If dict, just return dict.
         If 2-tuple, return dict with the key/value pair
-        If just object, use `__name__` as key
+        If just object, use ``__name__`` as key
 
     Returns
     -------
