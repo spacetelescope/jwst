@@ -10,3 +10,4 @@ Stack PSF References
    description.rst
 
 .. automodapi:: jwst.coron.stack_refs_step
+   :no-inheritance-diagram:

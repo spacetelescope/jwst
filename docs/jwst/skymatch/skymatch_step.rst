@@ -11,4 +11,5 @@ from the JWST calibration pipeline.
 .. currentmodule:: jwst.skymatch.skymatch_step
 
 .. automodapi:: jwst.skymatch.skymatch_step
+   :no-inheritance-diagram:
    :noindex:
