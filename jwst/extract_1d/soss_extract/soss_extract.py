@@ -1566,7 +1566,7 @@ def run_extract1d(
     # Update output model
     output_model.meta.soss_extract1d.width = soss_kwargs["width"]
     output_model.meta.soss_extract1d.apply_decontamination = soss_kwargs["atoca"]
-    output_model.meta.soss_extract1d.tikhonov_factor = soss_kwargs["tikfac"]
+    output_model.meta.soss_extract1d.tikhonov_factor = tikfacs_first["Order 1"]
     output_model.meta.soss_extract1d.oversampling = soss_kwargs["n_os"]
     output_model.meta.soss_extract1d.threshold = soss_kwargs["threshold"]
     output_model.meta.soss_extract1d.bad_pix = soss_kwargs["bad_pix"]
