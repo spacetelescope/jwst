@@ -29,6 +29,12 @@ class MaskOverlapError(Exception):
         super().__init__(self.message)
 
 
+class KernelShapeError(Exception):
+    """Exception to raise if the kernel shape is inconsistent with the wavelength grid."""
+
+    pass
+
+
 class ExtractionEngine:
     """
     Run the ATOCA algorithm (Darveau-Bernier 2022, PASP, DOI:10.1088/1538-3873/ac8a77).
@@ -283,7 +289,7 @@ class ExtractionEngine:
                 # ensure if input was already sparse, it has the correct shape
                 n_x = self.i_bounds[i_order][1] - self.i_bounds[i_order][0]
                 if kernel_n.shape != (n_x, self.n_wavepoints):
-                    raise ValueError("Kernel shape is inconsistent with wave_grid length.")
+                    raise KernelShapeError("Kernel shape is inconsistent with wave_grid length.")
 
             kernels_new.append(kernel_n)
 

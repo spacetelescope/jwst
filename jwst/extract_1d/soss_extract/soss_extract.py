@@ -11,7 +11,7 @@ from stdatamodels.jwst.datamodels import SossWaveGridModel, dqflags
 
 from jwst.datamodels.utils.tso_multispec import make_tso_specmodel
 from jwst.extract_1d.extract import populate_time_keywords
-from jwst.extract_1d.soss_extract.atoca import ExtractionEngine, MaskOverlapError
+from jwst.extract_1d.soss_extract.atoca import ExtractionEngine, KernelShapeError, MaskOverlapError
 from jwst.extract_1d.soss_extract.atoca_utils import (
     WebbKernel,
     get_wave_p_or_m,
@@ -1275,12 +1275,25 @@ def _process_one_integration(
             log.info("Using previously computed or user specified wavelength grid.")
 
         # Model the image.
-        tracemodels, atoca_list, tikfacs_out = integration.model_image(
-            wave_grid,
-            estimate=estimate,
-            tikfacs_in=tikfacs_in,
-            threshold=soss_kwargs["threshold"],
-        )
+        try:
+            tracemodels, atoca_list, tikfacs_out = integration.model_image(
+                wave_grid,
+                estimate=estimate,
+                tikfacs_in=tikfacs_in,
+                threshold=soss_kwargs["threshold"],
+            )
+        except KernelShapeError:
+            # Revert to using kernel functions. This will happen if one integration has
+            # bad pixels covering an entire section of the detector.
+            for order_model in integration.order_models:
+                order_model.kernel = order_model.kernel_func
+                order_model.kernel_native = order_model.kernel_func
+            tracemodels, atoca_list, tikfacs_out = integration.model_image(
+                wave_grid,
+                estimate=estimate,
+                tikfacs_in=tikfacs_in,
+                threshold=soss_kwargs["threshold"],
+            )
 
         # Add atoca spectra to multispec for output
         for i, spec in enumerate(atoca_list):
