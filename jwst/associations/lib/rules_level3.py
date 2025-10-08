@@ -73,6 +73,7 @@ class Asn_Lv3ACQ_Reprocess(DMS_Level3_Base):
     Level 3 Gather Target Acquisitions.
 
     Characteristics:
+
         - Association type: Not applicable
         - Pipeline: Not applicable
         - Used to populate other related associations
@@ -107,6 +108,7 @@ class Asn_Lv3AMI(AsnMixin_Science):
     Level 3 Aperture Mask Interferometry Association.
 
     Characteristics:
+
         - Association type: ``ami3``
         - Pipeline: ``calwebb_ami3``
         - Gather science and related PSF exposures
@@ -160,6 +162,7 @@ class Asn_Lv3Image(AsnMixin_Science):
     Level 3 Science Image Association.
 
     Characteristics:
+
         - Association type: ``image3``
         - Pipeline: ``calwebb_image3``
         - Non-TSO
@@ -204,6 +207,7 @@ class Asn_Lv3ImageBackground(AsnMixin_AuxData, AsnMixin_Science):
     Level 3 Background Image Association.
 
     Characteristics:
+
         - Association type: ``image3``
         - Pipeline: ``calwebb_image3``
         - Non-TSO
@@ -243,6 +247,7 @@ class Asn_Lv3MIRCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     Level 3 Coronagraphy Association.
 
     Characteristics:
+
         - Association type: ``coron3``
         - Pipeline: ``calwebb_coron3``
         - MIRI Coronagraphy
@@ -299,6 +304,7 @@ class Asn_Lv3MIRMRS(AsnMixin_Spectrum):
     Level 3 MIRI MRS Association.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
         - Just MIRI MRS
@@ -348,6 +354,7 @@ class Asn_Lv3MIRMRSBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
     Level 3 MIRI MRS Association Auxiliary data.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
         - Just MIRI MRS
@@ -402,6 +409,7 @@ class Asn_Lv3NRCCoron(AsnMixin_Coronagraphy, AsnMixin_Science):
     Level 3 Coronagraphy Association.
 
     Characteristics:
+
         - Association type: ``coron3``
         - Pipeline: ``calwebb_coron3``
         - Gather science and related PSF exposures
@@ -463,6 +471,7 @@ class Asn_Lv3NRCCoronImage(AsnMixin_Science):
     Level 3 Coronagraphy Association handled as regular imaging.
 
     Characteristics:
+
         - Association type: ``image3``
         - Pipeline: ``calwebb_image3``
         - Gather science exposures only, no psf exposures
@@ -559,6 +568,7 @@ class Asn_Lv3NRSFSS(AsnMixin_Spectrum):
     Level 3 NIRSpec Fixed-slit Science.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
         - NIRSpec Fixed-slit Science
@@ -608,6 +618,7 @@ class Asn_Lv3NRSIFU(AsnMixin_Spectrum):
     Level 3 IFU gratings Association.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
         - optical path determined by calibration
@@ -653,6 +664,7 @@ class Asn_Lv3NRSIFUBackground(AsnMixin_AuxData, AsnMixin_Spectrum):
     Level 3 Spectral Association.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
     """
@@ -701,6 +713,7 @@ class Asn_Lv3SlitlessSpectral(AsnMixin_Spectrum):
     Level 3 slitless, target-based or single-object spectrographic Association.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
         - Single target
@@ -751,6 +764,7 @@ class Asn_Lv3SpecAux(AsnMixin_AuxData, AsnMixin_Spectrum):
     Level 3 Spectral Association.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
     """
@@ -790,6 +804,7 @@ class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
     Level 3 slit-like, multi-object spectrographic Association.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
         - Multi-object
@@ -829,7 +844,7 @@ class Asn_Lv3SpectralSource(AsnMixin_Spectrum):
         Returns
         -------
         str
-            The product name using source id.
+            The product name using source ID.
         """
         return dms_product_name_sources(self)
 
@@ -840,6 +855,7 @@ class Asn_Lv3SpectralTarget(AsnMixin_Spectrum):
     Level 3 slit-like, target-based or single-object spectrographic Association.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
         - Single target
@@ -901,6 +917,7 @@ class Asn_Lv3TSO(AsnMixin_Science):
     Level 3 Time-Series Association.
 
     Characteristics:
+
         - Association type: ``tso3``
         - Pipeline: ``calwebb_tso3``
     """
@@ -1045,6 +1062,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
     is assumed to be equivalent within an activity.
 
     Characteristics:
+
         - Association type: ``wfs-image3``
         - Pipeline: ``calwebb_wfs-image3``
         - Coarse and fine phasing dithers
@@ -1092,7 +1110,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         """
         Define product name.
 
-        Modification is to append the `expspcin` value
+        Modification is to append the ``expspcin`` value
         after the calibration suffix.
 
         Returns
@@ -1117,7 +1135,7 @@ class Asn_Lv3WFSCMB(AsnMixin_Science):
         """
         Check if current product has two members.
 
-        If `entry` is given, it is counted as one of the
+        If ``entry`` is given, it is counted as one of the
         members. If not, the existing member list is only
         accounted for.
 
@@ -1165,6 +1183,7 @@ class Asn_Lv3WFSSNRC(AsnMixin_Spectrum):
     Level 3 NIRCam WFSS/Grism Association.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
         - Gather all grism exposures
@@ -1215,6 +1234,7 @@ class Asn_Lv3WFSSNIS(AsnMixin_Spectrum):
     Level 3 NIRISS WFSS/Grism Association.
 
     Characteristics:
+
         - Association type: ``spec3``
         - Pipeline: ``calwebb_spec3``
         - Gather all grism exposures
@@ -1265,6 +1285,7 @@ class Asn_Lv3ImageMosaic(AsnMixin_Science):
     Level 3 Science Image Mosaic Association.
 
     Characteristics:
+
         - Association type: ``image3``
         - Pipeline: ``calwebb_image3``
         - Non-TSO
@@ -1319,7 +1340,7 @@ class Asn_Lv3ImageMosaic(AsnMixin_Science):
         Returns
         -------
         bool
-            True if candidate type is mosaic, false otherwise.
+            True if candidate type is mosaic, False otherwise.
         """
         # If a group candidate, reject.
         if self.acid.type.lower() != "mosaic":
