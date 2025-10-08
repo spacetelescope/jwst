@@ -300,7 +300,7 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.meta.soss_extract1d.chi2_cauchy = tiktests["chi2_cauchy"][idx]
     spec.meta.soss_extract1d.reg = np.nansum(tiktests["reg"][idx] ** 2)
     spec.meta.soss_extract1d.factor = tiktests["factors"][idx]
-    spec.int_num = 0
+    spec.int_num = 0  # marks this as a test spectrum
 
 
 def _build_tracemodel_order(engine, order_model, f_k, mask):
@@ -1286,7 +1286,7 @@ def _process_one_integration(
         for i, spec in enumerate(atoca_list):
             # If it was a test, not the best spectrum,
             # int_num is already set to 0.
-            if not spec.hasattr("int_num") and int_num is not None:
+            if spec.int_num is None and int_num is not None:
                 spec.int_num = int_num
             atoca_list[i] = spec
     else:
@@ -1503,7 +1503,7 @@ def run_extract1d(
         wave_grid=wave_grid,
         tikfacs_in=tikfacs_in,
         generate_model=generate_model,
-        int_num=0,
+        int_num=1,
     )
     for atoca_spec in atoca_list:
         output_atoca.spec.append(atoca_spec)
@@ -1534,7 +1534,7 @@ def run_extract1d(
             wave_grid=wave_grid_first,
             tikfacs_in=tikfacs_first,
             generate_model=generate_model,
-            int_num=i,
+            int_num=i + 1,
         )
         for order in tracemodels:
             all_tracemodels[order].append(tracemodels[order])
