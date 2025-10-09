@@ -94,10 +94,12 @@ with open(Path(__file__).parent.parent / "pyproject.toml", "rb") as metadata_fil
 # Configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
     'python': ('https://docs.python.org/3/', None),
+    'requests': ('https://requests.readthedocs.io/en/latest/', None),
     'numpy': ('https://numpy.org/devdocs', None),
     'scipy': ('https://scipy.github.io/devdocs', None),
     'matplotlib': ('https://matplotlib.org/', None),
     'astropy': ('https://docs.astropy.org/en/stable/', None),
+    'asdf': ('https://asdf.readthedocs.io/en/stable/', None),
     'photutils': ('https://photutils.readthedocs.io/en/stable/', None),
     'gwcs': ('https://gwcs.readthedocs.io/en/stable/', None),
     'stdatamodels': ('https://stdatamodels.readthedocs.io/en/latest/', None),
@@ -498,4 +500,4 @@ linkcheck_allow_unauthorized = False
 
 # Enable nitpicky mode - which ensures that all references in the docs
 # resolve.
-nitpicky = False
+nitpicky = True
