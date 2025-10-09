@@ -215,14 +215,13 @@ def compare_asn_lists(left_asns, right_asns):
     # Compare like product associations
     left_asns_by_product = {asn["products"][0]["name"]: asn for asn in left_asns}
     right_asns_by_product = {asn["products"][0]["name"]: asn for asn in right_asns}
-    for product_name in left_product_names:
+    for product_name in sorted(left_product_names):
+        if product_name not in right_asns_by_product:
+            continue
         try:
             compare_asns(left_asns_by_product[product_name], right_asns_by_product[product_name])
         except MultiDiffError as compare_diffs:
             diffs.extend(compare_diffs)
-        except KeyError:
-            # Most likely due to a previous error. Ignore
-            pass
 
     if diffs:
         raise diffs
@@ -243,27 +242,7 @@ def compare_asns(left, right):
     Raises
     ------
     MultiDiffError
-        If there is a difference.
-    """
-    _compare_asns(left, right)
-
-
-def _compare_asns(left, right):
-    """
-    Compare two associations.
-
-    This comparison will include metadata such as
-    ``asn_type`` and membership.
-
-    Parameters
-    ----------
-    left, right : dict
-        Two, individual, associations to compare.
-
-    Raises
-    ------
-    MultiDiffError
-        If there are differences. The message will contain
+        If there is a difference. The message will contain
         all the differences.
 
     Notes
@@ -285,6 +264,10 @@ def _compare_asns(left, right):
         - key ``expname`` for each member
         - key `'exptype`` for each member
     """
+    _compare_asns(left, right)
+
+
+def _compare_asns(left, right):
     diffs = MultiDiffError()
 
     # Assert that the same result type is the same.
@@ -339,9 +322,9 @@ def compare_membership(left, right):
             )
         )
 
-    for _left_idx, left_product in enumerate(products_left):
+    for left_product in products_left:
         left_product_name = components(left_product["name"])
-        for _right_idx, right_product in enumerate(products_right):
+        for right_product in products_right:
             if components(right_product["name"]) != left_product_name:
                 continue
             try:
@@ -423,39 +406,33 @@ def compare_product_membership(left, right, strict_expname=True):
     except DuplicateMembersError as dup_member_error:
         diffs.append(dup_member_error)
 
-    if len(right["members"]) != len(left["members"]):
+    len_left = len(left["members"])
+    len_right = len(right["members"])
+    if len_right != len_left:
         diffs.append(
             MemberLengthDifferenceError(
-                "Product Member length differs:"
-                " Left Product {left_product_name} len {left_len} !=  "
-                " Right Product {right_product_name} len {right_len}"
-                "".format(
-                    left_product_name=left["name"],
-                    left_len=len(left["members"]),
-                    right_product_name=right["name"],
-                    right_len=len(right["members"]),
-                )
+                "Product Member length differs:\n"
+                f"    Left Product : {left['name']} ({len_left})\n"
+                f"    Right Product: {right['name']} ({len_right})"
             )
         )
 
     members_right = copy(right["members"])
     left_unaccounted_members = []
     for left_member in left["members"]:
+        left_expname = left_member["expname"]
+        left_exptype = left_member["exptype"]
         for right_member in members_right:
-            if munge_expname(left_member["expname"]) != munge_expname(right_member["expname"]):
+            right_expname = right_member["expname"]
+            right_exptype = right_member["exptype"]
+            if munge_expname(left_expname) != munge_expname(right_expname):
                 continue
 
-            if left_member["exptype"] != right_member["exptype"]:
+            if left_exptype != right_exptype:
                 diffs.append(
                     MemberMismatchError(
-                        "Left {left_expname}:{left_exptype}"
-                        " != Right {right_expname}:{right_exptype}"
-                        "".format(
-                            left_expname=left_member["expname"],
-                            left_exptype=left_member["exptype"],
-                            right_expname=right_member["expname"],
-                            right_exptype=right_member["exptype"],
-                        )
+                        f"    Left {left_expname}:{left_exptype}\n"
+                        f"    Right {right_expname}:{right_exptype}"
                     )
                 )
 
@@ -464,32 +441,43 @@ def compare_product_membership(left, right, strict_expname=True):
         else:
             left_unaccounted_members.append(left_member)
 
-    if len(left_unaccounted_members):
+    def pprint_mems(unaccounted_members, indent=8):
+        s = []
+        spc = " " * indent
+        for m in unaccounted_members:
+            s.append(f"{spc}{m['expname']} ({m['exptype']})")
+        return "\n".join(s)
+
+    unaccounted_left = len(left_unaccounted_members)
+    if unaccounted_left:
         diffs.append(
             UnaccountedMembersError(
-                f"Left has {len(left_unaccounted_members)} unaccounted members. "
-                f"Members are {left_unaccounted_members}"
+                f"    Left has {unaccounted_left} unaccounted members.\n"
+                f"{pprint_mems(left_unaccounted_members, indent=8)}"
             )
         )
 
-    if len(members_right) != 0:
+    unaccounted_right = len(members_right)
+    if unaccounted_right != 0:
         diffs.append(
             UnaccountedMembersError(
-                f"Right has {len(members_right)} unaccounted members. Members are {members_right}"
+                f"    Right has {unaccounted_right} unaccounted members.\n"
+                f"{pprint_mems(members_right, indent=8)}"
             )
         )
 
     # Check if one is a subset of the other.
     err_types = diffs.err_types
-    is_subset = (
+    if (
         (len(diffs) == 2)
         and (MemberLengthDifferenceError in err_types)
         and (UnaccountedMembersError in err_types)
-    )
-    if is_subset:
-        diffs = MultiDiffError(
-            [SubsetError(f"Products are subsets: {left['name']} {right['name']}")]
-        )
+    ):  # is_subset
+        if unaccounted_left > 0:
+            errmsg = "    Right is a subset of left"
+        else:  # unaccounted_right > 0
+            errmsg = "    Left is a subset of right"
+        diffs.append(SubsetError(errmsg))
 
     if diffs:
         raise diffs
@@ -511,13 +499,8 @@ def check_duplicate_members(product):
     MultiDiffError
         If the product has duplicate members.
     """
-    seen = set()
-    dups = []
-    for expname in [member["expname"] for member in product["members"]]:
-        if expname in seen:
-            dups.append(expname)
-        else:
-            seen.add(expname)
+    prod_count = Counter([member["expname"] for member in product["members"]])
+    dups = sorted(item for item, count in prod_count.items() if count > 1)
 
     if dups:
         raise DuplicateMembersError(f"Product {product['name']} has duplicate members {dups}")
