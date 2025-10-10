@@ -4,6 +4,7 @@ from stdatamodels.jwst import datamodels
 
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.stpipe.tests.steps import (
+    PrepareOutputAsTypeStep,
     PrepareOutputForceCopyNoOpenStep,
     PrepareOutputForceCopyPipeline,
     PrepareOutputForceCopyStep,
@@ -238,3 +239,30 @@ def test_prepare_output_from_library(mock_copy, step, input_data):
             assert model is input_data
         assert model.meta.cal_step.prepare_output == "COMPLETE"
         library.shelve(model, modify=False)
+
+
+def test_prepare_output_open_as_type_from_model():
+    input_data = datamodels.ImageModel()
+    result = PrepareOutputAsTypeStep.call(input_data)
+
+    # Output is a deep copy of the input
+    assert result is not input_data
+    assert result.data is not input_data.data
+
+    # Output has the specified type
+    assert type(input_data) is datamodels.ImageModel
+    assert type(result) is datamodels.IFUImageModel
+
+    assert result.meta.cal_step.prepare_output == "COMPLETE"
+    assert not input_data.meta.cal_step.hasattr("prepare_output")
+
+
+def test_prepare_output_open_as_type_from_str():
+    input_data = get_pkg_data_filename("data/science.fits", package="jwst.stpipe.tests")
+    result = PrepareOutputAsTypeStep.call(input_data)
+
+    # Input is str, output is expected model type
+    assert result is not input_data
+    assert isinstance(input_data, str)
+    assert isinstance(result, datamodels.IFUImageModel)
+    assert result.meta.cal_step.prepare_output == "COMPLETE"
