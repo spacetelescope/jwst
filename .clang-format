@@ -1,0 +1,33 @@
+---
+# Mihai's style clang-format configuration file
+# My original clang from drizzle was a compromize between Google, PEP7, K&R, and
+# my own preferences.
+# This version adds some style preferences after discussion on slack.
+BasedOnStyle: Google
+Language: Cpp
+AlwaysBreakAfterReturnType: None
+AlwaysBreakAfterDefinitionReturnType: TopLevel
+DerivePointerAlignment: false
+PointerAlignment: Right
+SortIncludes: false
+SortUsingDeclarations: false
+IndentWidth: 4
+TabWidth: 4
+UseTab: Never
+ColumnLimit: 100
+AlignConsecutiveMacros: true
+ReflowComments: true
+SpaceBeforeParens: ControlStatements
+InsertBraces: true
+
+AllowAllArgumentsOnNextLine: true
+
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterFunction: true
+
+AlignAfterOpenBracket: AlwaysBreak
+BinPackParameters: BinPack
+# OR:
+# BinPackParameters: OnePerLine
+...
