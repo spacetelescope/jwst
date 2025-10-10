@@ -6,7 +6,6 @@ from astropy.io import fits
 from astropy.io.fits.diff import FITSDiff
 from stdatamodels.jwst import datamodels
 
-from jwst.regtest import st_fitsdiff
 from jwst.regtest.st_fitsdiff import STFITSDiffBeta as STFITSDiff
 
 
@@ -1151,17 +1150,3 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
     ]
     assert result is False
     assert report == expected_report
-
-
-@pytest.mark.parametrize("mock_version", [False, True])
-def test_astropy_version(monkeypatch, mock_version):
-    # Test if the astropy version is higher than v7.1.0, there is a message to remove the
-    # current workaround.
-    monkeypatch.setattr(st_fitsdiff, "ASTROPY_LT_7_1_1", mock_version)
-    from jwst.regtest.st_fitsdiff import where_not_allclose
-
-    res = where_not_allclose(
-        np.array([1, 1, 1]), np.array([1.5, 2.1, 1.1]), rtol=0.2, atol=0.2, return_maxdiff=True
-    )
-    expected = ((np.array([1]),), 1.1, np.float64(0.5238095238095238))
-    assert res == expected
