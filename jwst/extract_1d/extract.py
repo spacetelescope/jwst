@@ -42,7 +42,7 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
-WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM"]
+WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM", "MIR_WFSS"]
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
 SRCPOS_EXPTYPES = ["MIR_LRS-FIXEDSLIT", "NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_BRIGHTOBJ"]
@@ -146,6 +146,7 @@ def read_apcorr_ref(refname, exptype):
     apcorr_model_map = {
         "MIR_LRS-FIXEDSLIT": MirLrsApcorrModel,
         "MIR_LRS-SLITLESS": MirLrsApcorrModel,
+        "MIR_WFSS": MirLrsApcorrModel,
         "MIR_MRS": MirMrsApcorrModel,
         "NRC_GRISM": NrcWfssApcorrModel,
         "NRC_WFSS": NrcWfssApcorrModel,
@@ -1186,6 +1187,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     data_shape = data_model.data.shape[-2:]
 
     # Get a wavelength array for the data
+
     wl_array = get_wavelengths(data_model, exp_type, extract_params["spectral_order"])
 
     # Shift aperture definitions by source position if needed
@@ -1633,6 +1635,7 @@ def create_extraction(
 
     # Set up spatial profiles and wavelength array,
     # to be used for every integration
+
     (ra, dec, wavelength, profile, bg_profile, nod_profile, limits) = define_aperture(
         input_model, slit, extract_params, exp_type
     )
@@ -2138,6 +2141,7 @@ def run_extract1d(
     profile_model = None
     scene_model = None
     residual = None
+
     if isinstance(input_model, (ModelContainer, datamodels.MultiSlitModel)):
         if isinstance(input_model, ModelContainer):
             slits = input_model
