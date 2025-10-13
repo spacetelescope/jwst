@@ -425,7 +425,6 @@ class Extract1dStep(Step):
                 profile = None
                 scene_model = None
                 residual = None
-
                 if isinstance(model, datamodels.IFUCubeModel):
                     # Call the IFU specific extraction routine
                     extracted = self._extract_ifu(model, exp_type, extract_ref, apcorr_ref)

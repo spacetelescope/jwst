@@ -799,7 +799,7 @@ def wfss(input_model, reference_files):
 
     Notes
     -----
-    The direct image the catalog has been created from was corrected for
+    The direct image catalog has been created from data corrected for
     distortion, but the dispersed images have not. This is OK if the trace and
     dispersion solutions are defined with respect to the distortion-corrected
     image. The catalog from the combined direct image has object locations in
@@ -819,14 +819,11 @@ def wfss(input_model, reference_files):
     The values of the min and max corners are saved in the photometry
     catalog in units of RA,DEC so they can be translated to pixels by
     the dispersed image's imaging wcs.
-
-    Source catalog use moved to extract_2d.
     """
-    # The input is the WFSS image
     if not isinstance(input_model, ImageModel):
         raise TypeError("The input data model must be an ImageModel.")
 
-    # make sure this is a WFSS image
+    # Make sure this is a WFSS image
     if "MIR_WFSS" != input_model.meta.exposure.type:
         raise ValueError("The input exposure is not MIRI WFSS")
 
@@ -841,9 +838,9 @@ def wfss(input_model, reference_files):
         name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
     )
 
-    # translate the x,y detector-in to x,y detector out coordinates
+    # Translate the x,y detector-in to x,y detector out coordinates
     # Get the disperser parameters which are defined as a model for each
-    # spectral order
+    # spectral order. For MIRI WFSS we only have order = 1.
     with MiriWFSSSpecwcsModel(reference_files["specwcs"]) as f:
         dispx = f.dispx
         dispy = f.dispy
@@ -851,10 +848,10 @@ def wfss(input_model, reference_files):
         order = f.orders
         invdispl = f.invdispl
 
+    # ForwardModel: dispersed to direct image, also used to find wavelength
     det2det = MIRIWFSSForwardDispersion(order, lmodels=displ, xmodels=dispx, ymodels=dispy)
-
+    # BackwardModel: direct image to dispersed.
     backward = MIRIWFSSBackwardDispersion(order, lmodels=invdispl, xmodels=dispx, ymodels=dispy)
-
     det2det.inverse = backward
     # Add in the wavelength shift from the velocity dispersion
     try:
@@ -870,10 +867,10 @@ def wfss(input_model, reference_files):
             | models.Identity(2) & velocity_corr & models.Identity(1)
         )
 
-    # create the pipeline to construct a WCS object for the whole image
-    # which can translate ra,dec to image frame reference pixels
-    # it also needs to be part of the dispersed image wcs pipeline to
-    # go from detector to world coordinates. However, the disperse image
+    # Create the pipeline to construct a WCS object for the whole image
+    # which can translate ra,dec to image frame reference pixels.
+    # This pipeline also needs to be part of the dispersed image wcs pipeline to
+    # go from detector to world coordinates. However, the dispersed image
     # will be effectively translating pixel->world coordinates in a
     # manner that gives you the originating pixels ra and dec, not the
     # pure ra/dec on the sky from the pointing wcs.
@@ -881,7 +878,7 @@ def wfss(input_model, reference_files):
     # use the imaging_distortion reference file here
     image_pipeline = imaging(input_model, reference_files)
 
-    # forward input is (x,y,lam,order) -> x, y
+    # forward input is (x,y,lam,order) -> x0, y0
     # backward input needs to be the same ra, dec, lam, order -> x, y
     wfss_pipeline = [(gdetector, det2det)]
 

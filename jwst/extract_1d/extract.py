@@ -1187,7 +1187,6 @@ def define_aperture(input_model, slit, extract_params, exp_type):
     data_shape = data_model.data.shape[-2:]
 
     # Get a wavelength array for the data
-
     wl_array = get_wavelengths(data_model, exp_type, extract_params["spectral_order"])
 
     # Shift aperture definitions by source position if needed
@@ -1635,7 +1634,6 @@ def create_extraction(
 
     # Set up spatial profiles and wavelength array,
     # to be used for every integration
-
     (ra, dec, wavelength, profile, bg_profile, nod_profile, limits) = define_aperture(
         input_model, slit, extract_params, exp_type
     )
@@ -2141,7 +2139,6 @@ def run_extract1d(
     profile_model = None
     scene_model = None
     residual = None
-
     if isinstance(input_model, (ModelContainer, datamodels.MultiSlitModel)):
         if isinstance(input_model, ModelContainer):
             slits = input_model

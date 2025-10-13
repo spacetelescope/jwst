@@ -67,7 +67,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
             input_model.meta.instrument.filter,
             input_model.meta.instrument.pupil,
         )
-        print("RESULTS OF DISPERSION DIRECTION", input_model.meta.wcsinfo.dispersion_direction)
 
     if instrument.lower() == "nirspec":
         pipeline = mod.create_pipeline(input_model, reference_files, slit_y_range=nrs_slit_y_range)
