@@ -1602,8 +1602,29 @@ def angle_from_disperser(disperser, input_model):
         agreq = AngleFromGratingEquation(disperser.groovedensity, sporder, name="alpha_from_greq")
         return agreq
 
+    tref = disperser["tref"]
+    system_temperature = input_model.meta.instrument.gwa_tilt
+    delt = system_temperature - tref
+    if delt < 20:
+        sellmeier = SellmeierGlass(
+            B_coef=disperser["kcoef"], C_coef=disperser["lcoef"], name="sellmeier"
+        )
+    else:
+        sellmeier = SellmeierZemax(
+            temp=system_temperature,
+            ref_temp=tref,
+            ref_pressure=disperser["pref"],
+            pressure=disperser["pref"],
+            B_coef=disperser["kcoef"],
+            C_coef=disperser["lcoef"],
+            D_coef=[disperser["tcoef"][:3]],
+            E_coef=[disperser["tcoef"][3:]],
+            name="sellmeier",
+        )
+
     # perform Snell's law, and keep refraction index around for return thru front surface
-    front_surface = Mapping((0, 1, 2, 3, 0)) | Snell3D() & Identity(1)
+    refraction_index = sellmeier & Identity(3)
+    front_surface = refraction_index | Mapping((0, 1, 2, 3, 0)) | Snell3D() & Identity(1)
 
     # Go to back surface frame # eq 5.3.3 III in NIRSpec docs
     y_rotation = Rotation3DToGWA(angles=[disperser["angle"], 0], axes_order="yy") & Identity(1)
