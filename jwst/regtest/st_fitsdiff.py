@@ -20,7 +20,6 @@ from astropy.io.fits.diff import (
 from astropy.io.fits.hdu.table import _TableLikeHDU
 from astropy.table import Table
 from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
-from packaging.version import Version
 
 __all__ = [
     "STFITSDiff",
@@ -30,84 +29,6 @@ __all__ = [
     "STRawDataDiff",
     "STTableDataDiff",
 ]
-
-#
-# When we get to the right version, the following items need to be removed:
-# Items                                                         Script where items live
-# ----------------------------------------------------------    -----------------------
-# global variable ASTROPY_LT_7_1_1                              st_fitsdiff.py
-# global variable ASTROPY_VER_MSG                               st_fitsdiff.py
-# function where_not_allclose                                   st_fitsdiff.py
-# lines in function report_to_list that pass the abs/rel max    test_stfitsdiff.py
-ASTROPY_LT_7_1_1 = Version(astropy_version) < Version("7.1.1.dev")
-
-if ASTROPY_LT_7_1_1:
-    ASTROPY_VER_MSG = ""
-
-    # This function is for now copied from astropy. We can remove it once jwst updates the
-    # astropy pin that contains this new functionality, i.e. above v.7.1.0.
-    def where_not_allclose(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):  # noqa: no-redef
-        """
-        Return array where values are above tolerances. Include max and min.
-
-        A version of :func:`numpy.allclose` that returns the indices
-        where the two arrays differ, instead of just a boolean value.
-
-        Parameters
-        ----------
-        a, b : array-like
-            Input arrays to compare.
-        rtol, atol : float
-            Relative and absolute tolerances as accepted by
-            :func:`numpy.allclose`.
-        return_maxdiff : bool
-            Return the maximum of absolute and relative differences.
-
-        Returns
-        -------
-        idx : tuple of array
-            Indices where the two arrays differ.
-        max_absolute : float
-            Maximum of absolute difference, returned if ``return_maxdiff=True``.
-        max_relative : float
-            Maximum of relative difference, returned if ``return_maxdiff=True``.
-        """
-        # Create fixed mask arrays to handle INF and NaN; currently INF and NaN
-        # are handled as equivalent
-        a = np.ma.masked_invalid(a)
-        b = np.ma.masked_invalid(b)
-
-        absolute = np.ma.abs(b - a)
-
-        if atol == 0.0 and rtol == 0.0:
-            # Use a faster comparison for the most simple (and common) case
-            thresh = 0
-        else:
-            thresh = atol + rtol * np.abs(b)
-
-        # values invalid in only one of the two arrays should be reported
-        invalid = a.mask ^ b.mask
-        indices = np.where(invalid | (absolute.filled(0) > thresh))
-
-        if return_maxdiff:
-            absolute[invalid] = np.ma.masked
-            finites = ~absolute.mask
-            absolute = absolute.compressed()
-            if len(indices[0]) == 0 or absolute.size == 0:
-                max_absolute = max_relative = 0
-            else:
-                # remove all invalid values before computing max differences
-                relative = absolute / np.abs(b[finites])
-                max_absolute = float(np.max(absolute))
-                max_relative = np.max(relative)
-            return indices, max_absolute, max_relative
-        else:
-            return indices
-else:
-    ASTROPY_VER_MSG = (
-        "\n\n *** Astropy version greater than v7.1.0. "
-        "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"
-    )
 
 
 def set_variable_to_empty_list(variable):
@@ -432,9 +353,6 @@ class STFITSDiffBeta(FITSDiff):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 hdu_diff.report(self._fileobj, indent=self._indent + 1)
-
-        if self.report_pixel_loc_diffs:
-            self._writeln(ASTROPY_VER_MSG)
 
 
 class STHDUDiff(HDUDiff):
