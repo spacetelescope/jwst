@@ -53,7 +53,6 @@ class PathLossStep(Step):
                 # Get the name of the pathloss reference file to use
                 self.pathloss_name = self.get_reference_file(input_model, "pathloss")
                 log.info(f"Using PATHLOSS reference file {self.pathloss_name}")
-
                 # Check for a valid reference file
                 if self.pathloss_name == "N/A":
                     log.warning("No PATHLOSS reference file found")
@@ -63,7 +62,7 @@ class PathLossStep(Step):
                     return result
 
                 # Open the pathloss ref file data model
-                if input_model.meta.exposure.type.upper() in ["MIR_LRS-FIXEDSLIT"]:
+                if input_model.meta.exposure.type.upper() in ["MIR_LRS-FIXEDSLIT", "MIR_WFSS"]:
                     pathloss_model = datamodels.MirLrsPathlossModel(self.pathloss_name)
                 else:
                     pathloss_model = datamodels.PathlossModel(self.pathloss_name)

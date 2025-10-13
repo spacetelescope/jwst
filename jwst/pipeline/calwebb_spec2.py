@@ -241,7 +241,6 @@ class Spec2Pipeline(Pipeline):
                     science.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
                     log.info(f"Using segmentation map {science.meta.segmentation_map}")
                     science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
-
                     self.log.info(f"Using direct image {science.meta.direct_image}")
                 except IndexError:
                     if science.meta.source_catalog is None:
@@ -724,10 +723,7 @@ class Spec2Pipeline(Pipeline):
         # DN/sec image
         calibrated = self.extract_2d.run(calibrated)
         calibrated = self.srctype.run(calibrated)
-        # calibrated = self.straylight.run(calibrated)
-        # calibrated = self.pathloss.run(calibrated)
-        # calibrated = self.barshadow.run(calibrated)
-        # calibrated = self.wfss_contam.run(calibrated)
+        calibrated = self.pathloss.run(calibrated)
         calibrated = self.photom.run(calibrated)
         return calibrated
 

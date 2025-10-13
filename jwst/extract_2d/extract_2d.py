@@ -7,8 +7,6 @@ import logging
 from jwst.extract_2d.grisms import extract_grism_objects, extract_tso_object
 from jwst.extract_2d.nirspec import nrs_extract2d
 
-# from jwst.miri import extract_wfss_objects
-
 log = logging.getLogger(__name__)
 
 
@@ -93,7 +91,6 @@ def extract2d(
                 tsgrism_extract_height=tsgrism_extract_height,
                 extract_orders=extract_orders,
             )
-
         else:
             output_model = extract_grism_objects(
                 input_model,
@@ -104,7 +101,6 @@ def extract2d(
                 wfss_extract_half_height=wfss_extract_half_height,
                 nbright=nbright,
             )
-
     else:
         log.info(f"EXP_TYPE {exp_type} not supported for extract 2D")
         output_model = input_model.copy()
