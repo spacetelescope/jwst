@@ -1440,13 +1440,13 @@ def test_extract_one_slit_optimal_vertical(
 def test_create_extraction_with_photom(create_extraction_inputs):
     model = create_extraction_inputs[0]
     model.meta.cal_step.photom = "COMPLETE"
-    model.meta.pointing.pa_v3 = 150.0
+    model.meta.aperture.position_angle = 150.0
 
     ex.create_extraction(*create_extraction_inputs)
 
     output_model = create_extraction_inputs[2]
     assert output_model.spec[0].spec_table.columns["flux"].unit == "Jy"
-    assert output_model.spec[0].pa_v3 == 150.0
+    assert output_model.spec[0].position_angle == 150.0
 
 
 def test_create_extraction_without_photom(create_extraction_inputs):
@@ -1752,7 +1752,7 @@ def test_run_extract1d_slitmodel_name(mock_nirspec_fs_one_slit, from_name_attr):
 @pytest.mark.parametrize("from_name_attr", [True, False])
 def test_run_extract1d_imagemodel_name(mock_miri_lrs_fs, from_name_attr):
     model = mock_miri_lrs_fs
-    model.meta.pointing.pa_v3 = 150.0
+    model.meta.aperture.position_angle = 150.0
     slit_name = "test_slit_name"
     if from_name_attr:
         model.name = slit_name
@@ -1760,7 +1760,7 @@ def test_run_extract1d_imagemodel_name(mock_miri_lrs_fs, from_name_attr):
         model.name = None
 
     output_model, _, _, _ = ex.run_extract1d(model)
-    assert output_model.spec[0].pa_v3 == 150.0
+    assert output_model.spec[0].position_angle == 150.0
     if from_name_attr:
         assert output_model.spec[0].name == "test_slit_name"
     else:
