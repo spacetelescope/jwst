@@ -3,9 +3,7 @@ from pathlib import Path
 
 import numpy as np
 from astropy.io.fits import FITS_rec
-from astropy.modeling.models import Mapping
 from astropy.table import vstack
-from stcal.alignment import combine_sregions
 from stdatamodels.jwst import datamodels
 
 from jwst.extract_1d import extract_1d_step
@@ -168,16 +166,14 @@ class Tso3Pipeline(Pipeline):
             x1d_result.meta.asn.pool_name = input_models.asn_table["asn_pool"]
             x1d_result.meta.asn.table_name = Path(input_data).name
 
-            # Combine S_REGION values from all members to allow MAST to do spatial queries
-            # on this type of product
-            self._populate_tso_sregion(x1d_result, input_models)
-
             # Save the final x1d Multispec model
             x1d_result.meta.cal_step.pixel_replace = state
             if len(x1d_result.spec) == 0:
                 log.warning("extract_1d step could not be completed for any integrations")
                 log.warning("x1dints products will not be created.")
             else:
+                # Set S_REGION to allow the x1dints file to show up in MAST spatial queries
+                self._populate_tso_spectral_sregion(x1d_result, input_models)
                 self.save_model(x1d_result, suffix="x1dints")
 
         # Done with all the inputs
@@ -199,7 +195,7 @@ class Tso3Pipeline(Pipeline):
         # been created here.
         return
 
-    def _populate_tso_sregion(self, model, cal_model_list):
+    def _populate_tso_spectral_sregion(self, model, cal_model_list):
         """
         Generate cumulative S_REGION footprint from input images.
 
@@ -219,13 +215,6 @@ class Tso3Pipeline(Pipeline):
             The input models provided to Tso3Pipeline by the
             input association.
         """
-        # WCS of any slit should be ok - internally this does a round-trip, so any offsets
-        # introduced for a specific slit won't matter
-
-        # currently this gives all NaNs.
-        # problem is likely the offset for SlitModels causing NaNs in detector position
-        # can this be avoided by e.g. allowing bbox to be anything?
-        wcs = cal_model_list[0].meta.wcs
         try:
             input_sregions = [w.meta.wcsinfo.s_region for w in cal_model_list]
         except AttributeError:
@@ -235,23 +224,10 @@ class Tso3Pipeline(Pipeline):
             )
             return
 
-        # Modify the det2world transform to ignore extra inputs/outputs (wavelength and order)
-        if "moving_target" in wcs.available_frames:
-            # This should never be hit for WFSS data but is here just in case
-            det2world = wcs.get_transform("detector", "moving_target")
-        else:
-            det2world = wcs.get_transform("detector", "world")
-
-        mapping1 = Mapping((0, 1, 0, 1))  # last two are placeholders and don't do anything
-        mapping1.inverse = Mapping((0, 1), n_inputs=4)
-        mapping2 = Mapping((0, 1), n_inputs=3)
-        mapping2.inverse = Mapping((0, 1, 0))
-        det2world = det2world | mapping2
-
-        try:
-            sregion = combine_sregions(input_sregions, det2world)
-        except ValueError as e:
-            log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
-            return
-        log.info(f"Setting S_REGION for combined footprint to: {sregion}")
-        model.spec[0].s_region = sregion
+        if not all(s == input_sregions[0] for s in input_sregions):
+            log.warning(
+                "Input models have different S_REGION values; this is unexpected for tso3 data. "
+                "Setting output S_REGION to the first input model's value."
+            )
+        model.spec[0].s_region = input_sregions[0]
+        return

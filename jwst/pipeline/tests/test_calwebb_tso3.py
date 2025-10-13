@@ -1,3 +1,5 @@
+import stdatamodels.jwst.datamodels as dm
+
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.extract_1d.tests.helpers import mock_niriss_soss_96_func, mock_niriss_soss_full_func
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
@@ -23,6 +25,7 @@ def niriss_soss_tso(subarray="SUBSTRIP96"):
     else:
         input_model = mock_niriss_soss_96_func()
     input_model.meta.wcs = None
+    input_model.meta.wcsinfo.s_region = "POLYGON ICRS 0 0 0 1 1 1 1 0"
     input_model.meta.visit.tsovisit = True
     input_model.int_times = input_model.int_times
     return input_model
@@ -58,6 +61,9 @@ def test_niriss_soss(tmp_path):
     expected = ["test_a3001_crfints.fits", "test_tso3_x1dints.fits", "test_tso3_whtlt.ecsv"]
     for filename in expected:
         assert (tmp_path / filename).exists()
+
+    with dm.open(tmp_path / "test_tso3_x1dints.fits") as x1d:
+        assert x1d.spec[0].s_region == "POLYGON ICRS 0 0 0 1 1 1 1 0"
 
 
 def test_niriss_soss_full(tmp_path):
