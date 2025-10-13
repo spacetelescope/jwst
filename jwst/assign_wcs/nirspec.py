@@ -15,9 +15,14 @@ from astropy import units as u
 from astropy.io import fits
 from astropy.modeling import bind_bounding_box, fix_inputs, models
 from astropy.modeling import bounding_box as mbbox
-from astropy.modeling.models import Const1D, Identity, Mapping, Scale, Tabular1D
+from astropy.modeling.models import Const1D, Identity, Mapping, PowerLaw1D, Scale, Tabular1D
 from gwcs import coordinate_frames as cf
 from gwcs import selector
+from gwcs.spectroscopy import (
+    SellmeierGlass,
+    SellmeierZemax,
+    Snell3D,
+)
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import (
     CameraModel,
@@ -42,7 +47,6 @@ from stdatamodels.jwst.transforms.models import (
     Slit,
     Slit2Msa,
     Slit2MsaLegacy,
-    Snell,
     Unitless2DirCos,
     WavelengthFromGratingEquation,
 )
@@ -1598,20 +1602,25 @@ def angle_from_disperser(disperser, input_model):
         agreq = AngleFromGratingEquation(disperser.groovedensity, sporder, name="alpha_from_greq")
         return agreq
 
-    system_temperature = input_model.meta.instrument.gwa_tilt
-    system_pressure = disperser["pref"]
+    # perform Snell's law, and keep refraction index around for return thru front surface
+    front_surface = Mapping((0, 1, 2, 3, 0)) | Snell3D() & Identity(1)
 
-    snell = Snell(
-        disperser["angle"],
-        disperser["kcoef"],
-        disperser["lcoef"],
-        disperser["tcoef"],
-        disperser["tref"],
-        disperser["pref"],
-        system_temperature,
-        system_pressure,
-        name="snell_law",
-    )
+    # Go to back surface frame # eq 5.3.3 III in NIRSpec docs
+    y_rotation = Rotation3DToGWA(angles=[disperser["angle"], 0], axes_order="yy") & Identity(1)
+    # Reflection on back surface
+    reflection = Scale(-1) & Scale(-1) & Identity(2)
+    # Back to front surface
+    inv_y_rotation = Rotation3DToGWA(angles=[-disperser["angle"], 0], axes_order="yy") & Identity(1)
+
+    # Return through front surface is a regular Snell's law but with 1/n
+    # Note that in PowerLaw1D it's assumed that alpha is negative
+    reciprocal_n = PowerLaw1D(amplitude=1.0, x_0=1.0, alpha=1.0)
+    front_surface_return = Identity(3) & reciprocal_n | Mapping((3, 0, 1, 2)) | Snell3D()
+
+    # Put them together to model the prism
+    snell = front_surface | y_rotation | reflection | inv_y_rotation | front_surface_return
+    snell.name = "snell_law"
+
     return snell
 
 
@@ -1653,12 +1662,30 @@ def wavelength_from_disperser(disperser, input_model):
     system_pressure = disperser["pref"]
     tref = disperser["tref"]
     pref = disperser["pref"]
-    kcoef = disperser["kcoef"][:]
-    lcoef = disperser["lcoef"][:]
-    tcoef = disperser["tcoef"][:]
-    n = Snell.compute_refraction_index(
-        lam, system_temperature, tref, pref, system_pressure, kcoef, lcoef, tcoef
-    )
+    bcoef = disperser["kcoef"]
+    ccoef = disperser["lcoef"]
+    dcoef = disperser["tcoef"][:3]
+    ecoef = disperser["tcoef"][3:]
+
+    # Calculate the refraction index
+    # Use simpler approximation if temperature is close to tref
+    # Otherwise use more detailed formula
+    delt = system_temperature - tref
+    if delt < 20:
+        n = SellmeierGlass.evaluate(lam, [bcoef], [ccoef])
+    else:
+        n = SellmeierZemax.evaluate(
+            wavelength=lam,
+            temp=system_temperature,
+            ref_temp=tref,
+            ref_pressure=pref,
+            pressure=system_pressure,
+            B_coef=[bcoef],
+            C_coef=[ccoef],
+            D_coef=[dcoef],
+            E_coef=[ecoef],
+        )
+
     n = np.flipud(n)
     lam = np.flipud(lam)
     n_from_prism = RefractionIndexFromPrism(disperser["angle"], name="n_prism")
