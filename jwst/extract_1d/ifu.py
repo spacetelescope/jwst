@@ -345,7 +345,7 @@ def ifu_extract1d(
         spec = datamodels.SpecModel(spec_table=otab)
 
     spec.meta.wcs = spec_wcs.create_spectral_wcs(ra, dec, wavelength)
-    spec.pa_v3 = input_model.meta.pointing.pa_v3
+    spec.position_angle = input_model.meta.aperture.position_angle
 
     spec.spec_table.columns["wavelength"].unit = "um"
     spec.spec_table.columns["flux"].unit = "Jy"

@@ -1856,7 +1856,7 @@ def create_extraction(
         spec.spectral_order = sp_order
         spec.dispersion_direction = extract_params["dispaxis"]
         spec.detector = input_model.meta.instrument.detector
-        spec.pa_v3 = data_model.meta.pointing.pa_v3
+        spec.position_angle = data_model.meta.aperture.position_angle
 
         # Record aperture limits as x/y start/stop values
         lower_limit, upper_limit, left_limit, right_limit = limits
