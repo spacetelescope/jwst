@@ -1623,7 +1623,7 @@ def angle_from_disperser(disperser, input_model):
         )
 
     # perform Snell's law, and keep refraction index around for return thru front surface
-    refraction_index = sellmeier & Identity(3)
+    refraction_index = (Scale(1.0e6) | sellmeier) & Identity(3)
     front_surface = refraction_index | Mapping((0, 1, 2, 3, 0)) | Snell3D() & Identity(1)
 
     # Go to back surface frame # eq 5.3.3 III in NIRSpec docs
@@ -1634,7 +1634,7 @@ def angle_from_disperser(disperser, input_model):
     inv_y_rotation = Rotation3DToGWA(angles=[-disperser["angle"], 0], axes_order="yy") & Identity(1)
 
     # Return through front surface is a regular Snell's law but with 1/n
-    # Note that in PowerLaw1D it's assumed that alpha is negative
+    # Note that in PowerLaw1D it's assumed that alpha is negative, so this is just 1/n
     reciprocal_n = PowerLaw1D(amplitude=1.0, x_0=1.0, alpha=1.0)
     front_surface_return = Identity(3) & reciprocal_n | Mapping((3, 0, 1, 2)) | Snell3D()
 
