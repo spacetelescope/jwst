@@ -162,12 +162,12 @@ class AssignWcsStep(Step):
                 bbox = wcs_bbox_from_shape(result.data.shape)
                 if result_exptype == "nis_wfss":
                     imaging_func = niriss_imaging
-                elif result_exptype == "nir_wfss":
+                elif result_exptype == "nrc_wfss":
                     imaging_func = nircam_imaging
                 elif result_exptype == "mir_wfss":
                     imaging_func = miri_imaging
                 else:
-                    print("assign_wcs_problem")
+                    log.warning(f" EXP Type is not of a WFSS mode {result_exptype}")
 
                 wfss_imaging_wcs(
                     result,

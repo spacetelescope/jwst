@@ -99,7 +99,7 @@ IMAGE2_NONSCIENCE_EXP_TYPES = [
     "nis_focus",
     "nrc_focus",
     "nrs_focus",
-    "nrs_imgage",
+    "nrs_image",
 ]
 IMAGE2_NONSCIENCE_EXP_TYPES.extend(ACQ_EXP_TYPES)
 
