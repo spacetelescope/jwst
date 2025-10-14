@@ -15,7 +15,7 @@ from astropy import units as u
 from astropy.io import fits
 from astropy.modeling import bind_bounding_box, fix_inputs, models
 from astropy.modeling import bounding_box as mbbox
-from astropy.modeling.models import Const1D, Identity, Mapping, PowerLaw1D, Scale, Tabular1D
+from astropy.modeling.models import Const1D, Identity, Mapping, Scale, Tabular1D
 from gwcs import coordinate_frames as cf
 from gwcs import selector
 from gwcs.spectroscopy import (
@@ -1611,14 +1611,14 @@ def angle_from_disperser(disperser, input_model):
         )
     else:
         sellmeier = SellmeierZemax(
-            temp=system_temperature,
-            ref_temp=tref,
+            temperature=system_temperature,
+            ref_temperature=tref,
             ref_pressure=disperser["pref"],
             pressure=disperser["pref"],
             B_coef=disperser["kcoef"],
             C_coef=disperser["lcoef"],
-            D_coef=[disperser["tcoef"][:3]],
-            E_coef=[disperser["tcoef"][3:]],
+            D_coef=disperser["tcoef"][:3],
+            E_coef=disperser["tcoef"][3:],
             name="sellmeier",
         )
 
@@ -1634,8 +1634,7 @@ def angle_from_disperser(disperser, input_model):
     inv_y_rotation = Rotation3DToGWA(angles=[-disperser["angle"], 0], axes_order="yy") & Identity(1)
 
     # Return through front surface is a regular Snell's law but with 1/n
-    # Note that in PowerLaw1D it's assumed that alpha is negative, so this is just 1/n
-    reciprocal_n = PowerLaw1D(amplitude=1.0, x_0=1.0, alpha=1.0)
+    reciprocal_n = Identity(1) ** Const1D(-1)
     front_surface_return = Identity(3) & reciprocal_n | Mapping((3, 0, 1, 2)) | Snell3D()
 
     # Put them together to model the prism
@@ -1693,10 +1692,10 @@ def wavelength_from_disperser(disperser, input_model):
     # Otherwise use more detailed formula
     delt = system_temperature - tref
     if delt < 20:
-        n = SellmeierGlass.evaluate(lam, [bcoef], [ccoef])
+        n = SellmeierGlass.evaluate(lam * 1.0e6, B_coef=[bcoef], C_coef=[ccoef])
     else:
         n = SellmeierZemax.evaluate(
-            wavelength=lam,
+            wavelength=lam * 1.0e6,
             temp=system_temperature,
             ref_temp=tref,
             ref_pressure=pref,
