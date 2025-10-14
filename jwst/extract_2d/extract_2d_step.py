@@ -39,7 +39,6 @@ class Extract2dStep(Step):
         output_model : DataModel
             The resulting DataModel of the extract_2d step
         """
-
         with datamodels.open(input_model) as dm:
             reference_file_names = {}
             if dm.meta.exposure.type in extract_2d.slitless_modes:
