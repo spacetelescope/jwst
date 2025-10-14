@@ -1694,7 +1694,7 @@ def wavelength_from_disperser(disperser, input_model):
     if delt < 20:
         n = SellmeierGlass.evaluate(lam * 1.0e6, B_coef=[bcoef], C_coef=[ccoef])
     else:
-        n = SellmeierZemax.evaluate(
+        n = SellmeierZemax().evaluate(
             wavelength=lam * 1.0e6,
             temp=system_temperature,
             ref_temp=tref,
