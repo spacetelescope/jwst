@@ -324,7 +324,7 @@ def test_fails_badexptype(standard=standard_asn):
     left_asns = asn_diff.separate_products(badexptype_asn)
     right_asns = asn_diff.separate_products(standard)
     with pytest.raises(
-        AssertionError, match="Left member_a_b:background\n    Right member_a_b:science"
+        AssertionError, match="Left member_a_b: background\n    Right member_a_b: science"
     ):
         asn_diff.compare_asn_lists(left_asns, right_asns)
 
