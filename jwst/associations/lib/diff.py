@@ -115,9 +115,9 @@ class MultiDiffError(UserList, DiffError):
         return err_types
 
     def __str__(self):
-        message = ["Following diffs found:\n"]
-        for diff in self:
-            message.extend(["\n****\n", str(diff), "\n"])
+        message = ["Following diffs found:\n"] + [
+            f"\n**** {diff.__class__.__name__}\n{str(diff)}\n" for diff in self
+        ]
         return "".join(message)
 
 
@@ -192,42 +192,58 @@ def compare_asn_lists(left_asns, right_asns):
     if left_duplicates:
         try:
             check_duplicate_products(
-                left_asns, product_names=left_product_names, dup_names=left_duplicates
+                left_asns, product_names=left_product_names, dup_names=left_duplicates, pfx="Left "
             )
         except MultiDiffError as dup_errors:
             diffs.extend(dup_errors)
     if right_duplicates:
         try:
             check_duplicate_products(
-                right_asns, product_names=right_product_names, dup_names=right_duplicates
+                right_asns,
+                product_names=right_product_names,
+                dup_names=right_duplicates,
+                pfx="Right ",
             )
         except MultiDiffError as dup_errors:
             diffs.extend(dup_errors)
 
     # Ensure that the product name lists are the same.
+    errmsg_not_in = []
     left_not_right = sorted(left_product_names - right_product_names)
+    if left_not_right:
+        errmsg_not_in.append(
+            "Products in left but not right:\n    " + "\n    ".join(left_not_right)
+        )
     right_not_left = sorted(right_product_names - left_product_names)
-    if left_not_right or right_not_left:
-        left_msg = "Products in left but not right:\n    " + "\n    ".join(left_not_right)
-        right_msg = "Products in right but not left:\n    " + "\n    ".join(right_not_left)
-        diffs.append(DifferentProductSetsError(f"{left_msg}\n{right_msg}\n"))
+    if right_not_left:
+        errmsg_not_in.append(
+            "Products in right but not left:\n    " + "\n    ".join(right_not_left)
+        )
+    if errmsg_not_in:
+        diffs.append(DifferentProductSetsError("\n".join(errmsg_not_in)))
 
     # Compare like product associations
+    skip_top_level_checks = False
     left_asns_by_product = {asn["products"][0]["name"]: asn for asn in left_asns}
     right_asns_by_product = {asn["products"][0]["name"]: asn for asn in right_asns}
     for product_name in sorted(left_product_names):
         if product_name not in right_asns_by_product:
             continue
         try:
-            compare_asns(left_asns_by_product[product_name], right_asns_by_product[product_name])
+            compare_asns(
+                left_asns_by_product[product_name],
+                right_asns_by_product[product_name],
+                skip_top_level_checks=skip_top_level_checks,
+            )
         except MultiDiffError as compare_diffs:
             diffs.extend(compare_diffs)
+            skip_top_level_checks = True
 
     if diffs:
-        raise diffs
+        raise diffs from None
 
 
-def compare_asns(left, right):
+def compare_asns(left, right, skip_top_level_checks=False):
     """
     Compare two associations.
 
@@ -238,6 +254,11 @@ def compare_asns(left, right):
     ----------
     left, right : dict
         Two, individual, associations to compare.
+
+    skip_top_level_checks : bool
+        Skip checks for ``asn_type`` and ``asn_id``.
+        Set to `True` when this is called in a loop for subsequent products
+        to avoid duplicate exceptions.
 
     Raises
     ------
@@ -264,25 +285,20 @@ def compare_asns(left, right):
         - key ``expname`` for each member
         - key `'exptype`` for each member
     """
-    _compare_asns(left, right)
-
-
-def _compare_asns(left, right):
     diffs = MultiDiffError()
 
     # Assert that the same result type is the same.
-    if left["asn_type"] != right["asn_type"]:
+    if (not skip_top_level_checks) and (left["asn_type"] != right["asn_type"]):
         diffs.append(
-            TypeMismatchError("Type mismatch {} != {}".format(left["asn_type"], right["asn_type"]))
+            TypeMismatchError(f"ASN type mismatch: {left['asn_type']} != {right['asn_type']}")
         )
 
     # Assert that the level of association candidate is the same.
     # Cannot guarantee value, but that the 'a'/'c'/'o' levels are similar.
-    if left["asn_id"][0] != right["asn_id"][0]:
+    if (not skip_top_level_checks) and (left["asn_id"][0] != right["asn_id"][0]):
         diffs.append(
             CandidateLevelError(
-                f"Candidate level mismatch left '{left['asn_id'][0]}' != "
-                f"right '{right['asn_id'][0]}'"
+                f"Candidate level mismatch: {left['asn_id'][0]} != {right['asn_id'][0]}"
             )
         )
 
@@ -293,7 +309,7 @@ def _compare_asns(left, right):
         diffs.extend(compare_diffs)
 
     if diffs:
-        raise diffs
+        raise diffs from None
 
 
 def compare_membership(left, right):
@@ -340,7 +356,7 @@ def compare_membership(left, right):
         diffs.append(DifferentProductSetsError(f"Right has {len(products_right)} left over"))
 
     if diffs:
-        raise diffs
+        raise diffs from None
 
 
 def compare_product_membership(left, right, strict_expname=True):
@@ -416,6 +432,14 @@ def compare_product_membership(left, right, strict_expname=True):
                 f"    Right Product: {right['name']} ({len_right})"
             )
         )
+        err_pfx = ""
+    else:
+        good_pfx = (
+            "Comparing these products:\n"
+            f"    Left Product : {left['name']} ({len_left})\n"
+            f"    Right Product: {right['name']} ({len_right})\n\n"
+        )
+        err_pfx = good_pfx
 
     members_right = copy(right["members"])
     left_unaccounted_members = []
@@ -431,10 +455,12 @@ def compare_product_membership(left, right, strict_expname=True):
             if left_exptype != right_exptype:
                 diffs.append(
                     MemberMismatchError(
-                        f"    Left {left_expname}:{left_exptype}\n"
-                        f"    Right {right_expname}:{right_exptype}"
+                        f"{err_pfx}"
+                        f"    Left {left_expname}: {left_exptype}\n"
+                        f"    Right {right_expname}: {right_exptype}"
                     )
                 )
+                err_pfx = ""
 
             members_right.remove(right_member)
             break
@@ -452,19 +478,23 @@ def compare_product_membership(left, right, strict_expname=True):
     if unaccounted_left:
         diffs.append(
             UnaccountedMembersError(
+                f"{err_pfx}"
                 f"    Left has {unaccounted_left} unaccounted members.\n"
                 f"{pprint_mems(left_unaccounted_members, indent=8)}"
             )
         )
+        err_pfx = ""
 
     unaccounted_right = len(members_right)
     if unaccounted_right != 0:
         diffs.append(
             UnaccountedMembersError(
+                f"{err_pfx}"
                 f"    Right has {unaccounted_right} unaccounted members.\n"
                 f"{pprint_mems(members_right, indent=8)}"
             )
         )
+        err_pfx = ""
 
     # Check if one is a subset of the other.
     err_types = diffs.err_types
@@ -474,13 +504,15 @@ def compare_product_membership(left, right, strict_expname=True):
         and (UnaccountedMembersError in err_types)
     ):  # is_subset
         if unaccounted_left > 0:
-            errmsg = "    Right is a subset of left"
+            errmsg = f"{err_pfx}    Right is a subset of left"
+            err_pfx = ""
         else:  # unaccounted_right > 0
-            errmsg = "    Left is a subset of right"
+            errmsg = f"{err_pfx}    Left is a subset of right"
+            # Uncomment if more error handling added below: err_pfx = ""
         diffs.append(SubsetError(errmsg))
 
     if diffs:
-        raise diffs
+        raise diffs from None
 
 
 def check_duplicate_members(product):
@@ -503,10 +535,12 @@ def check_duplicate_members(product):
     dups = sorted(item for item, count in prod_count.items() if count > 1)
 
     if dups:
-        raise DuplicateMembersError(f"Product {product['name']} has duplicate members {dups}")
+        raise DuplicateMembersError(
+            f"Product {product['name']} has duplicate members: {', '.join(dups)}"
+        ) from None
 
 
-def check_duplicate_products(asns, product_names=None, dup_names=None):
+def check_duplicate_products(asns, product_names=None, dup_names=None, pfx=""):
     """
     Check for duplicate products in a list of associations.
 
@@ -543,6 +577,9 @@ def check_duplicate_products(asns, product_names=None, dup_names=None):
     dup_names : [str[,...]]
         Duplicate product names in the given associations.
         If None, will be generated internally.
+
+    pfx : str
+        Prefix to error message. Particularly useful during left/right diff.
 
     Raises
     ------
@@ -583,11 +620,12 @@ def check_duplicate_products(asns, product_names=None, dup_names=None):
                 # Associations are exactly the same. Pure duplicate.
                 diffs.append(
                     DuplicateProductError(
-                        f"Associations share product name {product}", asns=[current_asn, asn]
+                        f"{pfx}Associations has duplicate product name: {product}",
+                        asns=[current_asn, asn],
                     )
                 )
     if diffs:
-        raise diffs
+        raise diffs from None
 
 
 # #########
