@@ -215,15 +215,18 @@ class Tso3Pipeline(Pipeline):
             The input models provided to Tso3Pipeline by the
             input association.
         """
-        try:
-            input_sregions = [w.meta.wcsinfo.s_region for w in cal_model_list]
-        except AttributeError:
+        if (len(cal_model_list) == 0) or (len(model.spec) == 0):
+            log.warning("No input or output models provided; cannot set S_REGION.")
+            return
+        has_sregion = [w.meta.wcsinfo.hasattr("s_region") for w in cal_model_list]
+        if not all(has_sregion):
             log.warning(
                 "One or more input model(s) are missing an `s_region` attribute; "
                 "output S_REGION will not be set."
             )
             return
 
+        input_sregions = [w.meta.wcsinfo.s_region for w in cal_model_list]
         if not all(s == input_sregions[0] for s in input_sregions):
             log.warning(
                 "Input models have different S_REGION values; this is unexpected for tso3 data. "

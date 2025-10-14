@@ -1,6 +1,7 @@
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.associations.asn_from_list import asn_from_list
+from jwst.datamodels import ModelContainer
 from jwst.extract_1d.tests.helpers import mock_niriss_soss_96_func, mock_niriss_soss_full_func
 from jwst.pipeline.calwebb_tso3 import Tso3Pipeline
 
@@ -80,3 +81,72 @@ def test_niriss_soss_full(tmp_path):
         assert (tmp_path / filename).exists()
     for filename in not_expected:
         assert not (tmp_path / filename).exists()
+
+
+def test_populate_tso_spectral_sregion(log_watcher):
+    model = dm.TSOMultiSpecModel()
+    model.spec.append(dm.SpecModel())
+    model.spec.append(dm.SpecModel())
+    cal_model = dm.CubeModel((10, 10, 10))
+    cal_model_list = ModelContainer([cal_model, cal_model.copy()])
+
+    # no s_region attributes present
+    watcher = log_watcher(
+        "jwst.pipeline.calwebb_tso3",
+        message="One or more input model(s) are missing an `s_region` attribute;",
+        level="warning",
+    )
+    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    watcher.assert_seen()
+    assert result is None
+
+    # s_regions are all the same, should run without issues
+    for m in cal_model_list:
+        m.meta.wcsinfo.s_region = "POLYGON ICRS 0 0 0 1 1 1 1 0"
+    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    assert model.spec[0].s_region == "POLYGON ICRS 0 0 0 1 1 1 1 0"
+    assert not model.spec[1].hasattr("s_region")
+
+    # s_regions differ, should warn and set to first
+    cal_model_list[1].meta.wcsinfo.s_region = "POLYGON ICRS 1 1 1 2 2 2 2 1"
+    watcher = log_watcher(
+        "jwst.pipeline.calwebb_tso3",
+        message="Input models have different S_REGION values;",
+        level="warning",
+    )
+    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    watcher.assert_seen()
+    assert model.spec[0].s_region == "POLYGON ICRS 0 0 0 1 1 1 1 0"
+    assert not model.spec[1].hasattr("s_region")
+
+
+def test_populate_tso_spectral_sregion_empty_container(log_watcher):
+    """Test with an empty ModelContainer."""
+    model = dm.TSOMultiSpecModel()
+    model.spec.append(dm.SpecModel())
+    cal_model_list = ModelContainer()
+
+    # Should handle empty container gracefully
+    watcher = log_watcher(
+        "jwst.pipeline.calwebb_tso3", message="No input or output models provided;", level="warning"
+    )
+    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    watcher.assert_seen()
+    assert result is None
+    assert not model.spec[0].hasattr("s_region")
+
+
+def test_populate_tso_spectral_sregion_no_spec(log_watcher):
+    """Test with a model that has no spec entries."""
+    model = dm.TSOMultiSpecModel()
+    cal_model = dm.CubeModel((10, 10, 10))
+    cal_model.meta.wcsinfo.s_region = "POLYGON ICRS 0 0 0 1 1 1 1 0"
+    cal_model_list = ModelContainer([cal_model])
+
+    # Should handle gracefully when model.spec is empty
+    watcher = log_watcher(
+        "jwst.pipeline.calwebb_tso3", message="No input or output models provided;", level="warning"
+    )
+    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    watcher.assert_seen()
+    assert result is None
