@@ -294,7 +294,6 @@ class RawOifits:
             covmat = self.cov_r_theta(quadamp, quadphase, averfunc)
             cov_mat_quads.append(covmat)
 
-        # covmats to be written to oifits.
         # lists of cov mats have shape e.g. (21, 2, 2) or (35, 2, 2)
 
         return (
