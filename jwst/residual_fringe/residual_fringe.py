@@ -401,7 +401,7 @@ class ResidualFringeCorrection:
                                 out=np.zeros_like(proc_data),
                                 where=bg_fit != 0,
                             )
-                            res_fringes = np.subtract(res_fringes, 1, where=res_fringes != 0)
+                            np.subtract(res_fringes, 1, out=res_fringes, where=res_fringes != 0)
                             res_fringes *= np.where(col_weight > 1e-07, 1, 1e-08)
 
                             # fit the residual fringes
@@ -474,7 +474,7 @@ class ResidualFringeCorrection:
                             out=np.zeros_like(fringe_sub),
                             where=pbg_fit != 0,
                         )
-                        fit_res = np.subtract(fit_res, 1, where=fit_res != 0)
+                        np.subtract(fit_res, 1, out=fit_res, where=fit_res != 0)
                         fit_res *= np.where(col_weight > 1e-07, 1, 1e-08)
 
                         out_table.add_row(

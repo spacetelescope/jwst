@@ -20,6 +20,7 @@ from jwst.resample.resample import input_jwst_model_to_dict
 from jwst.resample.resample_spec import ResampleSpec, compute_spectral_pixel_scale
 from jwst.resample.resample_step import GOOD_BITS
 from jwst.resample.resample_utils import load_custom_wcs
+from jwst.tests.helpers import _help_pytest_warns
 
 _FLT32_EPS = np.finfo(np.float32).eps
 
@@ -974,7 +975,10 @@ def test_resample_undefined_variance(nircam_rate, shape):
     im.meta.filename = "foo.fits"
     c = ModelLibrary([im])
 
-    with pytest.warns(RuntimeWarning, match="'var_rnoise' array not available"):
+    with (
+        _help_pytest_warns(),
+        pytest.warns(RuntimeWarning, match="'var_rnoise' array not available"),
+    ):
         result = ResampleStep.call(c, blendheaders=False)
 
     # no valid variance - output error and variance are all NaN
@@ -1142,6 +1146,9 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
     result.meta.wcs.pixel_shape = (data1.shape[1], data1.shape[0])  # (nx, ny)
     asdf.AsdfFile({"wcs": result.meta.wcs, "array_shape": data1.shape}).write_to(refwcs)
     result = ResampleStep.call(im, output_wcs=refwcs, weight_type=weight_type)
+
+    expected_sregion = "POLYGON ICRS  22.041995703 11.984458479 22.041980486 11.984462467 22.038319420 11.984418718 22.038318266 11.984414505 22.038377332 11.980791478 22.042066180 11.980835622"
+    assert result.meta.wcsinfo.s_region == expected_sregion
 
     data2 = result.data
     wht2 = result.wht

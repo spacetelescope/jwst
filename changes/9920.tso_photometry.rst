@@ -1,0 +1,1 @@
+Add a check for centroid values outside of array dimensions.

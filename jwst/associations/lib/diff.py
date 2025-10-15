@@ -31,10 +31,10 @@ class DiffError(AssertionError):
     Attributes
     ----------
     args : tuple
-        Standard exception arguments
+        Standard exception arguments.
 
     asns : [Association[,...]]
-        List of associations that generated the exception
+        List of associations that generated the exception.
     """
 
     def __init__(self, *args, asns=None, **kwargs):
@@ -128,9 +128,9 @@ def compare_asn_files(left_paths, right_paths):
     Parameters
     ----------
     left_paths : [Path or str[, ...]]
-        Set of association files
+        Set of association files.
     right_paths : [Path or str[, ...]]
-        Set of association files to compare against
+        Set of association files to compare against.
 
     Raises
     ------
@@ -167,7 +167,7 @@ def compare_asn_lists(left_asns, right_asns):
     Compare to lists of associations.
 
     Both association lists must contain associations that only have
-    single products. Use `separate_products` prior to calling this
+    single products. Use ``separate_products`` prior to calling this
     function.
 
     Parameters
@@ -233,12 +233,12 @@ def compare_asns(left, right):
     Compare two associations.
 
     This comparison will include metadata such as
-    `asn_type` and membership
+    ``asn_type`` and membership.
 
     Parameters
     ----------
     left, right : dict
-        Two, individual, associations to compare
+        Two, individual, associations to compare.
 
     Raises
     ------
@@ -253,12 +253,12 @@ def _compare_asns(left, right):
     Compare two associations.
 
     This comparison will include metadata such as
-    `asn_type` and membership
+    ``asn_type`` and membership.
 
     Parameters
     ----------
     left, right : dict
-        Two, individual, associations to compare
+        Two, individual, associations to compare.
 
     Raises
     ------
@@ -270,15 +270,20 @@ def _compare_asns(left, right):
     -----
     This comparison is dependent on the associations being JWST-like associations.
     The attributes that are compared are as follows:
-        - key `asn_type`
-        - key `products`. Specifically the following are compared:
-            - Length of the list
-            - key `name` for each product
-            - key `members` for each product
-        - For the member lists of each product, the following are compared:
-            - Length of the list
-            - key `expname` for each member
-            - key 'exptype` for each member
+
+    - key ``asn_type``
+
+    - key ``products``. Specifically the following are compared:
+
+        - Length of the list
+        - key ``name`` for each product
+        - key ``members`` for each product
+
+    - For the member lists of each product, the following are compared:
+
+        - Length of the list
+        - key ``expname`` for each member
+        - key `'exptype`` for each member
     """
     diffs = MultiDiffError()
 
@@ -315,7 +320,7 @@ def compare_membership(left, right):
     Parameters
     ----------
     left, right : dict
-        Two, individual, associations to compare
+        Two, individual, associations to compare.
 
     Raises
     ------
@@ -371,7 +376,7 @@ def compare_product_membership(left, right, strict_expname=True):
       Number of members in the two products differ.
 
     - MemberMismatchError
-      Members with the same `expname` do not share the other attributes.
+      Members with the same ``expname`` do not share the other attributes.
 
     - SubsetError
       A member list is a subset of another member list.
@@ -386,8 +391,8 @@ def compare_product_membership(left, right, strict_expname=True):
         these are not associations, just products from associations.
 
     strict_expname : bool
-        Compare `expname` exactly. If False, `expname` munging
-        will occur. See `exposure_name` for further details.
+        Compare ``expname`` exactly. If False, ``expname`` munging
+        will occur. See ``exposure_name`` for further details.
         Generally False for when comparing unrelated association lists.
         Generally True when comparing related associations;
         those associations generated together.
@@ -494,7 +499,7 @@ def check_duplicate_members(product):
     """
     Check for duplicate members in an association product.
 
-    The check is based solely on `expname`.
+    The check is based solely on ``expname``.
 
     Parameters
     ----------
@@ -523,8 +528,9 @@ def check_duplicate_products(asns, product_names=None, dup_names=None):
     Check for duplicate products in a list of associations.
 
     Duplicate products are defined as any products that share the same name.
-    The errors flagged are listed below. If no `MultiDiffError` is raised,
-    There are no duplicate products.
+    If no ``MultiDiffError`` is raised, there are no duplicate products.
+
+    If there are duplicate products, the possible errors that can be flagged are:
 
     - DuplicateProductError
       The general error for two products that share name and otherwise do
@@ -615,7 +621,7 @@ def components(s):
 
     Returns
     -------
-    set(str)
+    components_set : set(str)
         The string components set.
     """
     return set(re.split("[_-]", s))
@@ -633,7 +639,7 @@ def exposure_name(path):
     Returns
     -------
     exposure : str
-        The exposure name
+        The exposure name.
     """
     path = Path(path)
     exposure, _ = remove_suffix(path.stem)
@@ -646,7 +652,7 @@ def get_product_names(asns):
 
     Parameters
     ----------
-    asns : [`Association`[, ...]]
+    asns : [Association[, ...]]
         List of associations.
 
     Returns
@@ -669,13 +675,13 @@ def separate_products(asn):
 
     Parameters
     ----------
-    asn : `Association`
-        The association to split
+    asn : Association
+        The association to split.
 
     Returns
     -------
-    separated : [`Association`[, ...]]
-        The list of separated associations
+    separated : [Association[, ...]]
+        The list of separated associations.
     """
     separated = []
     for product in asn["products"]:
