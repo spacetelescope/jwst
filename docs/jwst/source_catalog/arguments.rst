@@ -30,7 +30,7 @@ The ``source_catalog`` step uses the following user-settable arguments:
   and aperture_ee3 that is used to determine whether a source is a
   star. Sources must meet the criteria of both ci1_star_threshold and
   ci2_star_threshold to be considered a star. (Default=1.8)
-  
+
 
 **General source finding parameters:**
 
@@ -47,7 +47,7 @@ The ``source_catalog`` step uses the following user-settable arguments:
   pixels. (Default=2.0)
 
 
-**Additional source finding parameters for segmentation:**
+**Additional source finding parameters for "segmentation":**
 
 * ``npixels``: An `int` value indicating the minimum number of
   connected pixels that comprises a segment (Default=25)
@@ -78,10 +78,10 @@ The ``source_catalog`` step uses the following user-settable arguments:
   parameters defining Kron aperture. If None,
   the parameters ``(2.5, 1.4, 0.0)`` are used. (Default=None)
 
-* ``deblend``: A `boolean` value indicating whether to deblend sources. (Default=False)
+* ``deblend``: A `bool` indicating whether to deblend sources. (Default=False)
 
 
-**Additional source finding parameters for DAO and IRAF:**
+**Additional source finding parameters for "dao" and "iraf":**
 
 * ``minsep_fwhm``: A `float` value indicating the minimum separation between
   detected objects in units of number of FWHMs. (Default=0.0)
