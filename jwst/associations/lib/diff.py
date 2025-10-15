@@ -263,7 +263,7 @@ def compare_asns(left, right, skip_top_level_checks=False):
     Raises
     ------
     MultiDiffError
-        If there is a difference. The message will contain
+        If there are differences, the message will contain
         all the differences.
 
     Notes
