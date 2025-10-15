@@ -80,11 +80,14 @@ from jwst.lib.pipe_utils import is_tso
 from jwst.lib.siafdb import SIAF, SiafDb
 
 __all__ = [
+    "GuideStarPosition",
+    "Pointing",
     "Methods",
     "TransformParameters",
     "Transforms",
     "WCSRef",
     "add_wcs",
+    "calc_sifov_fsm_delta_matrix",
     "calc_transforms",
     "calc_transforms_ops_tr_202111",
     "calc_wcs",
@@ -285,28 +288,51 @@ A2R = D2R / 3600.0
 R2A = 3600.0 * R2D
 PI2 = np.pi * 2.0
 
-# Pointing container
-# Attributes are as follows. Except for the observation time, all values
-# are retrieved from the engineering data.
-#    q            : Quaternion of the FGS.
-#    j2fgs_matrix : J-frame to FGS transformation.
-#    fsmcorr      : Fine Steering Mirror position.
-#    obstime      : Mid-point time of the observation at which all other values have been
-#                   calculated.
-#    gs_commanded : Guide star position as originally commanded.
-#    fgsid        : FGS in use, 1 or 2.
-#    gs_position  : X/Y guide star position in the FGS.
 Pointing = namedtuple(
     "Pointing", ["q", "j2fgs_matrix", "fsmcorr", "obstime", "gs_commanded", "fgsid", "gs_position"]
 )
+"""
+Pointing container.
+
+Attributes are as follows. Except for the observation time, all values
+are retrieved from the engineering data.
+
+Attributes
+----------
+q : array-like
+    Quaternion of the FGS.
+j2fgs_matrix : array-like
+    J-frame to FGS transformation.
+fsmcorr : array-like
+    Fine Steering Mirror position.
+obstime : obj
+    Mid-point time of the observation at which all other values have been
+    calculated.
+gs_commanded : array-like
+    Guide star position as originally commanded.
+fgsid : int
+    FGS in use, 1 or 2.
+gs_position : array-like
+    X/Y guide star position in the FGS.
+"""
 Pointing.__new__.__defaults__ = (None,) * 5
 
-# Guide Star ACQ pointing container
-# Attributes are as follows. All values are retrieved from the engineering.
-#    position : X/Y position of the guide star within the acquisition window of the FGS.
-#    corner   : X/Y corner of the acquisition window within the FGS.
-#    size     : X/Y size of the acquisition window.
 GuideStarPosition = namedtuple("GuideStarPosition", ["position", "corner", "size"])
+"""
+Guide Star ACQ pointing container.
+
+Attributes are as follows. All values are retrieved from the
+engineering data.
+
+Attributes
+----------
+position : tuple
+    X/Y position of the guide star within the acquisition window of the FGS.
+corner : tuple
+    X/Y corner of the acquisition window within the FGS.
+size : tuple
+    X/Y size of the acquisition window.
+"""
 GuideStarPosition.__new__.__defaults__ = (None,) * 3
 
 
@@ -373,12 +399,12 @@ class Transforms:
 
         Returns
         -------
-        asdf_file : asdf.AsdfFile
+        asdf_file : `asdf.AsdfFile`
             The ASDF serialization.
 
         Notes
         -----
-        The `override` transforms are not serialized, since the values of this transform
+        The ``override`` transforms are not serialized, since the values of this transform
         automatically represent what is in the override.
         """
         self_dict = dataclasses.asdict(self)
@@ -449,7 +475,7 @@ class TransformParameters:
     fsmcorr_units: str = "arcsec"
     #: Guide star WCS info, typically from the input model.
     guide_star_wcs: WCSRef = WCSRef(None, None, None)
-    #: Transpose the `j2fgs1` matrix.
+    #: Transpose the ``j2fgs1`` matrix.
     j2fgs_transpose: bool = True
     #: The [DX, DY, DZ] barycentri velocity vector
     jwst_velocity: np.ndarray | None = None
@@ -1624,18 +1650,20 @@ def calc_sifov_fsm_delta_matrix(fsmcorr, fsmcorr_version="latest", fsmcorr_units
     ----------
     fsmcorr : np.array((2,))
         The FSM correction parameters:
-        0: SA_ZADUCMDX
-        1: SA_ZADUCMDY
+
+        * 0: SA_ZADUCMDX
+        * 1: SA_ZADUCMDY
 
     fsmcorr_version : str
         The version of the FSM correction calculation to use.
         Versions available:
-        latest: The state-of-art. Currently `v2`
-        v2: Update 201708 to use actual spherical calculations
-        v1: Original linear approximation.
+        latest: The state-of-art. Currently ``v2``:
+
+        * v2: Update 201708 to use actual spherical calculations
+        * v1: Original linear approximation.
 
     fsmcorr_units : str
-        The units of the FSM correction values. Default is `arcsec`.
+        The units of the FSM correction values. Default is ``arcsec``.
 
     Returns
     -------

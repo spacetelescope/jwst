@@ -1176,7 +1176,7 @@ def calc_chisq_amplitudes(emifitter, ints=None, phases=None):
             )
             b_ -= 2 * np.sum(s_yz)
 
-        if a_ == 0 or ~np.isfinite(a_) or ~np.isfinite(b_):
+        if np.isclose(a_, 0, atol=1e-8) or ~np.isfinite(a_) or ~np.isfinite(b_):
             chisq.append(np.nan)
             amplitudes.append(0.0)
         else:

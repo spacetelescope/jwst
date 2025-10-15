@@ -447,6 +447,49 @@ def test_fit_source_fail(monkeypatch, fit_psf):
         assert np.all(np.isnan(result))
 
 
+@pytest.mark.parametrize("centroid_values", [([-1], [-1]), ([0], [-1]), ([-1], [0])])
+@pytest.mark.parametrize("fit_psf", [True, False])
+def test_fit_source_centroid_out_of_bounds(monkeypatch, fit_psf, centroid_values):
+    datamodel = mock_nircam_image()
+    mask = np.full(datamodel.data.shape, False)
+    box_size = int(RADIUS * 2 + 1)
+    xcenter, ycenter = XCENTER, YCENTER
+
+    def mock_centroid(*args, **kwargs):
+        return centroid_values
+
+    monkeypatch.setattr(tp, "centroid_sources", mock_centroid)
+
+    # Failure in centroid just returns NaNs for all values
+    result = tp._fit_source(
+        datamodel.data, mask, mask[0], xcenter, ycenter, box_size, fit_psf=fit_psf
+    )
+    if fit_psf:
+        assert len(result) == 5
+        assert np.all(np.isnan(result))
+    else:
+        assert len(result) == 2
+        assert np.all(np.isnan(result))
+
+
+def test_fit_source_psf_fail(monkeypatch):
+    datamodel = mock_nircam_image()
+    mask = np.full(datamodel.data.shape, False)
+    box_size = int(RADIUS * 2 + 1)
+    xcenter, ycenter = XCENTER, YCENTER
+
+    def mock_psf(*args, **kwargs):
+        raise ValueError("test fail")
+
+    monkeypatch.setattr(tp, "_psf_fit_gaussian_prf", mock_psf)
+
+    # Failure in fit returns valid centroids, but NaNs for all psf values
+    result = tp._fit_source(datamodel.data, mask, mask[0], xcenter, ycenter, box_size, fit_psf=True)
+    assert len(result) == 5
+    assert not np.all(np.isnan(result[:3]))
+    assert np.all(np.isnan(result[3:]))
+
+
 def test_psf_fit():
     datamodel = mock_nircam_image()
     data = datamodel.data[0]
