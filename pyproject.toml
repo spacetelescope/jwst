@@ -41,7 +41,7 @@ dependencies = [
     "synphot>=1.3",
     "tweakwcs>=0.8.8",
     "wiimatch>=0.3.2",
-    "packaging>20.0",
+    "packaging>=22.0",
     "importlib-metadata>=4.11.4",
     "jsonschema>=4.8",
 ]
