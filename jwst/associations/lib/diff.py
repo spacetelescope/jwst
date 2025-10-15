@@ -474,26 +474,23 @@ def compare_product_membership(left, right, strict_expname=True):
             s.append(f"{spc}{m['expname']} ({m['exptype']})")
         return "\n".join(s)
 
+    errmsg = []
     unaccounted_left = len(left_unaccounted_members)
     if unaccounted_left:
-        diffs.append(
-            UnaccountedMembersError(
-                f"{err_pfx}"
-                f"    Left has {unaccounted_left} unaccounted members.\n"
-                f"{pprint_mems(left_unaccounted_members, indent=8)}"
-            )
+        errmsg.append(
+            f"    Left has {unaccounted_left} unaccounted members.\n"
+            f"{pprint_mems(left_unaccounted_members, indent=8)}"
         )
-        err_pfx = ""
 
     unaccounted_right = len(members_right)
     if unaccounted_right != 0:
-        diffs.append(
-            UnaccountedMembersError(
-                f"{err_pfx}"
-                f"    Right has {unaccounted_right} unaccounted members.\n"
-                f"{pprint_mems(members_right, indent=8)}"
-            )
+        errmsg.append(
+            f"    Right has {unaccounted_right} unaccounted members.\n"
+            f"{pprint_mems(members_right, indent=8)}"
         )
+
+    if errmsg:
+        diffs.append(UnaccountedMembersError(err_pfx + "\n".join(errmsg)))
         err_pfx = ""
 
     # Check if one is a subset of the other.
@@ -508,7 +505,8 @@ def compare_product_membership(left, right, strict_expname=True):
             err_pfx = ""
         else:  # unaccounted_right > 0
             errmsg = f"{err_pfx}    Left is a subset of right"
-            # Uncomment if more error handling added below: err_pfx = ""
+            # Uncomment if more error handling added below:
+            # err_pfx = ""
         diffs.append(SubsetError(errmsg))
 
     if diffs:
