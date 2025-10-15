@@ -18,6 +18,11 @@ from astropy.modeling import bounding_box as mbbox
 from astropy.modeling.models import Const1D, Identity, Mapping, Scale, Tabular1D
 from gwcs import coordinate_frames as cf
 from gwcs import selector
+from gwcs.spectroscopy import (
+    SellmeierGlass,
+    SellmeierZemax,
+    Snell3D,
+)
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import (
     CameraModel,
@@ -42,7 +47,6 @@ from stdatamodels.jwst.transforms.models import (
     Slit,
     Slit2Msa,
     Slit2MsaLegacy,
-    Snell,
     Unitless2DirCos,
     WavelengthFromGratingEquation,
 )
@@ -1598,20 +1602,45 @@ def angle_from_disperser(disperser, input_model):
         agreq = AngleFromGratingEquation(disperser.groovedensity, sporder, name="alpha_from_greq")
         return agreq
 
+    tref = disperser["tref"]
     system_temperature = input_model.meta.instrument.gwa_tilt
-    system_pressure = disperser["pref"]
+    delt = system_temperature - tref
+    if delt < 20:
+        sellmeier = SellmeierGlass(
+            B_coef=disperser["kcoef"], C_coef=disperser["lcoef"], name="sellmeier"
+        )
+    else:
+        sellmeier = SellmeierZemax(
+            temperature=system_temperature,
+            ref_temperature=tref,
+            ref_pressure=disperser["pref"],
+            pressure=disperser["pref"],
+            B_coef=disperser["kcoef"],
+            C_coef=disperser["lcoef"],
+            D_coef=disperser["tcoef"][:3],
+            E_coef=disperser["tcoef"][3:],
+            name="sellmeier",
+        )
 
-    snell = Snell(
-        disperser["angle"],
-        disperser["kcoef"],
-        disperser["lcoef"],
-        disperser["tcoef"],
-        disperser["tref"],
-        disperser["pref"],
-        system_temperature,
-        system_pressure,
-        name="snell_law",
-    )
+    # perform Snell's law, and keep refraction index around for return thru front surface
+    refraction_index = (Scale(1.0e6) | sellmeier) & Identity(3)
+    front_surface = refraction_index | Mapping((0, 1, 2, 3, 0)) | Snell3D() & Identity(1)
+
+    # Go to back surface frame # eq 5.3.3 III in NIRSpec docs
+    y_rotation = Rotation3DToGWA(angles=[disperser["angle"], 0], axes_order="yy") & Identity(1)
+    # Reflection on back surface
+    reflection = Scale(-1) & Scale(-1) & Identity(2)
+    # Back to front surface
+    inv_y_rotation = Rotation3DToGWA(angles=[-disperser["angle"], 0], axes_order="yy") & Identity(1)
+
+    # Return through front surface is a regular Snell's law but with 1/n
+    reciprocal_n = Identity(1) ** Const1D(-1)
+    front_surface_return = Identity(3) & reciprocal_n | Mapping((3, 0, 1, 2)) | Snell3D()
+
+    # Put them together to model the prism
+    snell = front_surface | y_rotation | reflection | inv_y_rotation | front_surface_return
+    snell.name = "snell_law"
+
     return snell
 
 
@@ -1653,12 +1682,30 @@ def wavelength_from_disperser(disperser, input_model):
     system_pressure = disperser["pref"]
     tref = disperser["tref"]
     pref = disperser["pref"]
-    kcoef = disperser["kcoef"][:]
-    lcoef = disperser["lcoef"][:]
-    tcoef = disperser["tcoef"][:]
-    n = Snell.compute_refraction_index(
-        lam, system_temperature, tref, pref, system_pressure, kcoef, lcoef, tcoef
-    )
+    bcoef = disperser["kcoef"]
+    ccoef = disperser["lcoef"]
+    dcoef = disperser["tcoef"][:3]
+    ecoef = disperser["tcoef"][3:]
+
+    # Calculate the refraction index
+    # Use simpler approximation if temperature is close to tref
+    # Otherwise use more detailed formula
+    delt = system_temperature - tref
+    if delt < 20:
+        n = SellmeierGlass.evaluate(lam * 1.0e6, B_coef=[bcoef], C_coef=[ccoef])
+    else:
+        n = SellmeierZemax().evaluate(
+            wavelength=lam * 1.0e6,
+            temp=system_temperature,
+            ref_temp=tref,
+            ref_pressure=pref,
+            pressure=system_pressure,
+            B_coef=[bcoef],
+            C_coef=[ccoef],
+            D_coef=[dcoef],
+            E_coef=[ecoef],
+        )
+
     n = np.flipud(n)
     lam = np.flipud(lam)
     n_from_prism = RefractionIndexFromPrism(disperser["angle"], name="n_prism")
