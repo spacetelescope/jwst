@@ -179,7 +179,7 @@ def set_source_type(input_model, source_type=None):
         input_model.meta.target.source_type = src_type
 
     # For WFSS modes check slit values of is_extended to set SRCTYPE
-    elif exptype in ["NIS_WFSS", "NRC_WFSS"]:
+    elif exptype in ["NIS_WFSS", "NRC_WFSS", "MIR_WFSS"]:
         for slit in input_model.slits:
             if slit.is_extended:
                 slit.source_type = "EXTENDED"

@@ -107,6 +107,7 @@ SPEC2_SCIENCE_EXP_TYPES = [
     "mir_lrs-fixedslit",
     "mir_lrs-slitless",
     "mir_mrs",
+    "mir_wfss",
     "nis_soss",
     "nis_wfss",
     "nrc_tsgrism",

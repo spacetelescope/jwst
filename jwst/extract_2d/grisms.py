@@ -500,20 +500,29 @@ def extract_grism_objects(
                     var_flat = None
 
                 # Add a new transform to the WCS that shifts to the center of the virtual slit
-                # This needs to be separated from the "grism_detector" to "detector" transform
-                # because the un-shifted "grism_detector" to "detector" transform is used
-                # by wfss_contam
+                # This needs to be separated from the "grism_detector"/("dispersed_detector")
+                # to "detector" transform  because the un-shifted "grism_detector" to "detector"
+                # transform is used by wfss_contam
+
                 tr = Mapping((0, 1, 0, 0, 0)) | (
                     Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model
                 )
                 bind_bounding_box(
                     tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order="F"
                 )
-                grism_slit = copy.deepcopy(subwcs.grism_detector)
-                grism_slit.name = "grism_slit"
-                subwcs.insert_frame(
-                    input_frame=grism_slit, output_frame="grism_detector", transform=tr
-                )
+
+                if input_model.meta.exposure.type.upper() == "MIR_WFSS":
+                    grism_slit = copy.deepcopy(subwcs.dispersed_detector)
+                    grism_slit.name = "grism_slit"
+                    subwcs.insert_frame(
+                        input_frame=grism_slit, output_frame="dispersed_detector", transform=tr
+                    )
+                else:
+                    grism_slit = copy.deepcopy(subwcs.grism_detector)
+                    grism_slit.name = "grism_slit"
+                    subwcs.insert_frame(
+                        input_frame=grism_slit, output_frame="grism_detector", transform=tr
+                    )
 
                 new_slit = datamodels.SlitModel(
                     data=ext_data,
@@ -523,6 +532,7 @@ def extract_grism_objects(
                     var_rnoise=var_rnoise,
                     var_flat=var_flat,
                 )
+
                 new_slit.meta.wcsinfo.spectral_order = order
                 new_slit.meta.wcsinfo.dispersion_direction = (
                     input_model.meta.wcsinfo.dispersion_direction
@@ -532,8 +542,8 @@ def extract_grism_objects(
                 new_slit.meta.wcs = subwcs
 
                 if compute_wavelength:
-                    log.debug("Computing wavelengths")
                     new_slit.wavelength = compute_wfss_wavelength(new_slit)
+                    log.debug("Computing wavelengths")
 
                 # set x/ystart values relative to the image (screen) frame.
                 # The overall subarray offset is recorded in model.meta.subarray.
