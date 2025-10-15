@@ -102,6 +102,7 @@ test = [
     "pytest-cov>=2.9.0",
     "pytest-doctestplus>=0.10.0",
     "requests_mock>=1.0",
+    "matplotlib>=3.8",
 ]
 contrib = [
     "pre-commit>=4.1.0",
