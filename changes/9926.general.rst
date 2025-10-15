@@ -1,1 +1,1 @@
-Bumped minimum supported versions of astropy to 7.1.1 and packaging to 22.
+Bumped minimum supported versions of astropy to 7.1.1, packaging to 22, and pyparsing to 2.3.1.
