@@ -1,0 +1,1 @@
+Bumped minimum supported versions of astropy to 7.1.1 and packaging to 22.
