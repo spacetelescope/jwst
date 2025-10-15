@@ -1147,6 +1147,9 @@ def test_custom_refwcs_pixel_shape_imaging(nircam_rate, tmp_path, weight_type):
     asdf.AsdfFile({"wcs": result.meta.wcs, "array_shape": data1.shape}).write_to(refwcs)
     result = ResampleStep.call(im, output_wcs=refwcs, weight_type=weight_type)
 
+    expected_sregion = "POLYGON ICRS  22.041995703 11.984458479 22.041980486 11.984462467 22.038319420 11.984418718 22.038318266 11.984414505 22.038377332 11.980791478 22.042066180 11.980835622"
+    assert result.meta.wcsinfo.s_region == expected_sregion
+
     data2 = result.data
     wht2 = result.wht
     # Note: When pixel_shape is used without proper bounding box,

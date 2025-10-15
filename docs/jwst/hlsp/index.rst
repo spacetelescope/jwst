@@ -10,3 +10,4 @@ HLSP Processing
    description.rst
 
 .. automodapi:: jwst.coron.hlsp_step
+   :no-inheritance-diagram:

@@ -10,3 +10,4 @@ Align PSF References
    description.rst
 
 .. automodapi:: jwst.coron.align_refs_step
+   :no-inheritance-diagram:

@@ -11,5 +11,6 @@ Cube Building
    arguments.rst
    examples.rst
    reference_files.rst
-   
+
 .. automodapi:: jwst.cube_build.cube_build_step
+   :no-inheritance-diagram:

@@ -3,10 +3,9 @@ import logging
 from collections import defaultdict
 from pathlib import Path
 
-import numpy as np
 import stdatamodels.jwst.datamodels as dm
-from scipy.spatial import ConvexHull, QhullError
-from stcal.alignment.util import sregion_to_footprint
+from astropy.modeling.models import Mapping
+from stcal.alignment import combine_sregions
 
 # step imports
 from jwst.assign_mtwcs import assign_mtwcs_step
@@ -408,9 +407,11 @@ class Spec3Pipeline(Pipeline):
         """
         Generate cumulative S_REGION footprint from input grism images.
 
-        This takes the input model S_REGION vertices, generates a convex hull
-        from those points and returns the vertices corresponding to that hull
-        in counterclockwise order.
+        Take the input S_REGION values from all input models, and combine
+        them using a polygon union to create a cumulative footprint for the output WFSS product.
+        The union is performed in pixel coordinates to avoid distortion,
+        so the WCS of the first slit
+        of the first input model is used to convert to and from sky coordinates.
 
         Parameters
         ----------
@@ -418,32 +419,38 @@ class Spec3Pipeline(Pipeline):
             The newly generated WfssMultiExposureModel made as part of
             the save operation for spec3 processing of WFSS data.
 
-        cal_model_list : list of `~stdatamodels.jwst.datammodels.MultiSlitModel`
+        cal_model_list : list of `~stdatamodels.jwst.datamodels.MultiSlitModel`
             The list of input_models provided to Spec3Pipeline by the
             input association.
         """
-        # Make array of S_REGION vertices from input model values, then generate convex hull
+        # WCS of any slit should be ok - internally this does a round-trip, so any offsets
+        # introduced for a specific slit won't matter
+        wcs = cal_model_list[0].slits[0].meta.wcs
         try:
-            input_sregion_vertices = np.concatenate(
-                [sregion_to_footprint(w.meta.wcsinfo.s_region) for w in cal_model_list]
-            )
-            convex_sregion_hull = ConvexHull(input_sregion_vertices)
-        except AttributeError as err:
+            input_sregions = [w.meta.wcsinfo.s_region for w in cal_model_list]
+        except AttributeError:
             log.warning(
-                "Missing S_REGION info in input files. Skipping S_REGION assignment for x1d output."
+                "One or more input model(s) are missing an `s_region` attribute; "
+                "output S_REGION will not be set."
             )
-            log.debug(err)
             return
-        except QhullError as qerr:
-            log.warning(
-                "Error generating convex hull from input S_REGION vertices. Skipping S_REGION "
-                "assignment for x1d output."
-            )
-            log.debug(qerr)
+
+        # Modify the det2world transform to ignore extra inputs/outputs (wavelength and order)
+        if "moving_target" in wcs.available_frames:
+            # This should never be hit for WFSS data but is here just in case
+            det2world = wcs.get_transform("detector", "moving_target")
+        else:
+            det2world = wcs.get_transform("detector", "world")
+        mapping1 = Mapping((0, 1, 0, 1))  # last two are placeholders and don't do anything
+        mapping1.inverse = Mapping((0, 1), n_inputs=4)
+        mapping2 = Mapping((0, 1), n_inputs=4)
+        mapping2.inverse = Mapping((0, 1, 0, 1))
+        det2world = mapping1 | det2world | mapping2
+
+        try:
+            sregion = combine_sregions(input_sregions, det2world)
+        except ValueError as e:
+            log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
             return
-        # Index vertices on those selected by ConvexHull
-        # By default, ConvexHull vertices are returned in counterclockwise order
-        convex_vertices = input_sregion_vertices[convex_sregion_hull.vertices]
-        s_region = "POLYGON ICRS  " + " ".join([f"{x:.9f}" for x in convex_vertices.flatten()])
-        # Populate S_REGION in first entry of output model spec list.
-        wfss_model.spec[0].s_region = s_region
+        log.info(f"Setting S_REGION for combined footprint to: {sregion}")
+        wfss_model.spec[0].s_region = sregion

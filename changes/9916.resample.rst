@@ -1,0 +1,1 @@
+Use polygon unions to make S_REGION keywords more accurately represent true combined footprint for imaging mosaics

@@ -10,3 +10,4 @@ KLIP Processing
    description.rst
 
 .. automodapi:: jwst.coron.klip_step
+   :no-inheritance-diagram:

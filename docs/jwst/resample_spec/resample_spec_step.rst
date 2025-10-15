@@ -4,3 +4,4 @@ Python Step Interface: ResampleSpecStep()
 =========================================
 
 .. automodapi:: jwst.resample.resample_spec_step
+   :no-inheritance-diagram:
