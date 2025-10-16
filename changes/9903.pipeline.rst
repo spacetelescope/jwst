@@ -1,0 +1,1 @@
+Use ``Step.prepare_output`` in pipeline steps to open input models and make copies only when necessary.
