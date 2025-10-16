@@ -1,7 +1,6 @@
 """JWST-specific Step and Pipeline base classes."""
 
 import logging
-from functools import wraps
 from pathlib import Path
 
 from stdatamodels.jwst import datamodels
@@ -279,8 +278,7 @@ class JwstStep(_Step):
         """
         return remove_suffix(name)
 
-    @wraps(_Step.run)
-    def run(self, *args, **kwargs):
+    def run(self, *args):
         """
         Run the step.
 
@@ -288,15 +286,13 @@ class JwstStep(_Step):
         ----------
         *args
             Arguments passed to `stpipe.Step.run`.
-        **kwargs
-            Keyword arguments passed to `stpipe.Step.run`.
 
         Returns
         -------
         result : Any
             The step output
         """
-        result = super().run(*args, **kwargs)
+        result = super().run(*args)
         if not self.parent:
             log.info(f"Results used jwst version: {__version__}")
         return result
