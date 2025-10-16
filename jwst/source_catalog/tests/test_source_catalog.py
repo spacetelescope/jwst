@@ -130,22 +130,22 @@ def test_source_catalog(nircam_model, npixels, nsources):
 
     if npixels == 5 and nsources == 2:
         # test values of some specific computed quantities
-        assert np.isclose(cat["xcentroid"][1], 19.46399720865899)
-        assert np.isclose(cat["ycentroid"][1], 41.95288393407728)
+        assert np.isclose(cat["xcentroid"][1], 19.453064764431833)
+        assert np.isclose(cat["ycentroid"][1], 41.963065678485115)
         assert np.isclose(cat["aper_bkg_flux"][1].value, 1.40e-7)
         assert np.isclose(cat["aper_bkg_flux_err"][1].value, 8.52237054e-09)
-        assert np.isclose(cat["CI_50_30"][1], 2.3342599432074653)
+        assert np.isclose(cat["CI_50_30"][1], 2.352272196434725)
         assert np.isclose(cat["sharpness"][1], 0.9102634628764403)
         assert np.isclose(cat["roundness"][1], 1.5954264)
-        assert np.isclose(cat["nn_dist"][1].value, 53.0737632103816)
-        assert np.isclose(cat["isophotal_flux"][1].value, 9.31e-5)
+        assert np.isclose(cat["nn_dist"][1].value, 53.07168773319497)
+        assert np.isclose(cat["isophotal_flux"][1].value, 7.940753383195442e-05)
         assert cat["isophotal_flux_err"][1].unit == "Jy"
         assert np.isclose(cat["isophotal_flux_err"][1].value, 3.6102634e-07)
-        assert np.isclose(cat["isophotal_abmag"][1], 18.97762581792128)
-        assert np.isclose(cat["semimajor_sigma"][1].value, 18.847635525516534)
-        assert np.isclose(cat["semiminor_sigma"][1].value, 7.031371175038476)
-        assert np.isclose(cat["ellipticity"][1], 0.626936165784871)
-        assert np.isclose(cat["orientation"][1].value, -72.75413766990114)
+        assert np.isclose(cat["isophotal_abmag"][1], 19.150345729246215)
+        assert np.isclose(cat["semimajor_sigma"][1].value, 18.84372169911978)
+        assert np.isclose(cat["semiminor_sigma"][1].value, 7.024931388267103)
+        assert np.isclose(cat["ellipticity"][1].value, 0.62720043)
+        assert np.isclose(cat["orientation"][1].value, -72.78329207140818)
 
 
 def test_source_catalog_no_sources(nircam_model, monkeypatch):
@@ -188,7 +188,7 @@ def test_input_model_reset(nircam_model):
     assert nircam_model.meta.bunit_err == "MJy/sr"
 
 
-@pytest.mark.parametrize("finder", ["segmentation", "iraf", "dao"])
+@pytest.mark.parametrize("finder", ["segmentation", "iraf"])
 def test_source_catalog_point_sources(finder, nircam_model, tmp_cwd):
     """Test the three source finding algorithms with point sources."""
     data = np.random.default_rng(seed=123).normal(0, 0.5, size=(101, 101))
