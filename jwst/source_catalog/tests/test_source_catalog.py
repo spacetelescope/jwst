@@ -29,7 +29,7 @@ def nircam_model():
     model = dm.ImageModel(data, wht=wht, err=err)
     model.meta.bunit_data = "MJy/sr"
     model.meta.bunit_err = "MJy/sr"
-    model.meta.photometry.pixelarea_steradians = 1.0
+    model.meta.photometry.pixelarea_steradians = 1.0e-13
     model.meta.wcs = make_gwcs(data.shape)
     model.meta.wcsinfo = {
         "ctype1": "RA---TAN",
@@ -80,7 +80,7 @@ def nircam_model_without_apcorr():
     model = dm.ImageModel(data, wht=wht, err=err)
     model.meta.bunit_data = "MJy/sr"
     model.meta.bunit_err = "MJy/sr"
-    model.meta.photometry.pixelarea_steradians = 1.0
+    model.meta.photometry.pixelarea_steradians = 1.0e-13
     model.meta.wcs = make_gwcs(data.shape)
     model.meta.wcsinfo = {
         "ctype1": "RA---TAN",
@@ -132,14 +132,16 @@ def test_source_catalog(nircam_model, npixels, nsources):
         # test values of some specific computed quantities
         assert np.isclose(cat["xcentroid"][1], 19.46399720865899)
         assert np.isclose(cat["ycentroid"][1], 41.95288393407728)
-        assert np.isclose(cat["aper_bkg_flux"][1].value, 1400000.0)
-        assert np.isclose(cat["aper_bkg_flux_err"][1].value, 85223.70700074881)
+        assert np.isclose(cat["aper_bkg_flux"][1].value, 1.40e-7)
+        assert np.isclose(cat["aper_bkg_flux_err"][1].value, 8.52237054e-09)
         assert np.isclose(cat["CI_50_30"][1], 2.3342599432074653)
         assert np.isclose(cat["sharpness"][1], 0.9102634628764403)
         assert np.isclose(cat["roundness"][1], 1.5954264)
         assert np.isclose(cat["nn_dist"][1].value, 53.0737632103816)
-        assert np.isclose(cat["isophotal_flux"][1], 930.9999841451645)
-        assert np.isclose(cat["isophotal_flux_err"][1], 3.6102633)
+        assert np.isclose(cat["isophotal_flux"][1].value, 9.31e-5)
+        assert cat["isophotal_flux_err"][1].unit == "Jy"
+        assert np.isclose(cat["isophotal_flux_err"][1].value, 3.6102634e-07)
+        assert np.isclose(cat["isophotal_abmag"][1], 18.97762581792128)
         assert np.isclose(cat["semimajor_sigma"][1].value, 18.847635525516534)
         assert np.isclose(cat["semiminor_sigma"][1].value, 7.031371175038476)
         assert np.isclose(cat["ellipticity"][1], 0.626936165784871)
