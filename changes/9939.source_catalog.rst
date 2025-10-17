@@ -1,0 +1,2 @@
+Fix a bug where fluxes were not being converted from Mjy/sr to Jy.
+Fix a bug where fluxes included background flux when they shouldn't.
