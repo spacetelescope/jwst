@@ -90,4 +90,11 @@ associations depending on the candidates.
 Association Candidates
 ----------------------
 
-TBD
+An association candidate has identifier of ``c1NNN`` in the pool.
+It is used for combining data across different observations.
+Type of data included:
+
+* Data that should be combined at stage 3 across observations;
+  e.g., coronagraphic science and PSF reference observations,
+  dedicated background observations for some observing modes.
+* All data for a given configuration that has been taken in a mosaic.
