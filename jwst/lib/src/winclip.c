@@ -61,13 +61,13 @@ idx_arr : numpy.ndarray
 
 */
 
-#include <stdlib.h>
 #include <math.h>
+#include <stdlib.h>
 
 #include <Python.h>
 
 #define PY_ARRAY_UNIQUE_SYMBOL _jwst_winclip_numpy_api
-#define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define NPY_NO_DEPRECATED_API  NPY_1_7_API_VERSION
 #include <numpy/arrayobject.h>
 #include <numpy/npy_math.h>
 
@@ -82,19 +82,21 @@ static const int npy_dbl = NPY_FLOAT;
 static const float full_pixel_area = 1.0f;
 */
 
-
-inline dbl_type dbl_min(dbl_type x, dbl_type y) {
+inline dbl_type
+dbl_min(dbl_type x, dbl_type y)
+{
     return (x < y) ? x : y;
 }
 
-
-int mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx) {
+int
+mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx)
+{
     int *x, *y, *i;
     dbl_type *a;
     const char *msg = "Couldn't allocate memory for output arrays.";
 
     // x-array:
-    x = (int*) realloc(*xv, nelem * sizeof(int));
+    x = (int *)realloc(*xv, nelem * sizeof(int));
     if (x) {
         *xv = x;
     } else {
@@ -103,7 +105,7 @@ int mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx) {
     }
 
     // y-array:
-    y = (int*) realloc(*yv, nelem * sizeof(int));
+    y = (int *)realloc(*yv, nelem * sizeof(int));
     if (y) {
         *yv = y;
     } else {
@@ -112,7 +114,7 @@ int mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx) {
     }
 
     // area-array:
-    a = (dbl_type*) realloc(*av, nelem * sizeof(dbl_type));
+    a = (dbl_type *)realloc(*av, nelem * sizeof(dbl_type));
     if (a) {
         *av = a;
     } else {
@@ -121,7 +123,7 @@ int mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx) {
     }
 
     // idx-array:
-    i = (int*) realloc(*idx, nelem * sizeof(int));
+    i = (int *)realloc(*idx, nelem * sizeof(int));
     if (i) {
         *idx = i;
     } else {
@@ -136,35 +138,39 @@ int mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx) {
 Caller is responsible for de-allocating memory for the
 return values: x, y, areas, idx
 */
-int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
-    int nx, int ny, double w, double h,
-    int *npix, int **x, int **y, dbl_type **areas, int **idx) {
+int
+clip_pixels(
+    int n, dbl_type *xc, dbl_type *yc, int padding, int nx, int ny, double w, double h, int *npix,
+    int **x, int **y, dbl_type **areas, int **idx)
+{
     double x1, x2, y1, y2;
     double wx1, wx2, wy1, wy2;  // temp values for fractional pixel size
-    int npixe;  // estimate of number of output pixels per input coord
-    int nalloc;  // number of allocated output values (not bytes)
+    int npixe;                  // estimate of number of output pixels per input coord
+    int nalloc;                 // number of allocated output values (not bytes)
     int l, r, b, t, ix, iy, np, chunk, tnpix = 0;
     int imin, imax, jmin, jmax, imin1, jmin1;
-    dbl_type *av = NULL;  // vector for clipped pixel area
+    dbl_type *av = NULL;                     // vector for clipped pixel area
     int *xv = NULL, *yv = NULL, *iv = NULL;  // vectors of coordinates
     int i, j, k;
 
-    npixe = (int) (dbl_min(ceil(w + 1.0), 2.0 * padding + 1.0) *
-                   dbl_min(ceil(h + 1.0), 2.0 * padding + 1.0));
+    npixe = (int)(dbl_min(ceil(w + 1.0), 2.0 * padding + 1.0) *
+                  dbl_min(ceil(h + 1.0), 2.0 * padding + 1.0));
 
     // allocate enough memory to hold output pixel data (coordinates and area)
     // for about 1/10 of input coordinates (for large inputs):
-    chunk =  npixe * ((n / 10) ? (n / 10) : 10);
+    chunk = npixe * ((n / 10) ? (n / 10) : 10);
     nalloc = n * npixe;
-    if (mem_alloc(nalloc, &xv, &yv, &av, &iv)) return 1;
+    if (mem_alloc(nalloc, &xv, &yv, &av, &iv)) {
+        return 1;
+    }
 
     nx -= 1;
     ny -= 1;
 
     for (k = 0; k < n; k++) {
         // compute clipping window:
-        ix = (int) xc[k];
-        iy = (int) yc[k];
+        ix = (int)xc[k];
+        iy = (int)yc[k];
 
         l = ix - padding;
         r = ix + padding;
@@ -172,16 +178,26 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
         t = iy + padding;
 
         // clip l, r, b, t to 0...nx(ny) - image window
-        if ((l > nx) || (r < 0) || (b > ny) || (t < 0)) continue;
-        if (l < 0) l = 0;
-        if (r > nx) r = nx;
-        if (b < 0) b = 0;
-        if (t > ny) t = ny;
+        if ((l > nx) || (r < 0) || (b > ny) || (t < 0)) {
+            continue;
+        }
+        if (l < 0) {
+            l = 0;
+        }
+        if (r > nx) {
+            r = nx;
+        }
+        if (b < 0) {
+            b = 0;
+        }
+        if (t > ny) {
+            t = ny;
+        }
 
         // compute rectangle edge positions:
-        x1 = ((double) xc[k]) - w / 2.0;
+        x1 = ((double)xc[k]) - w / 2.0;
         x2 = x1 + w;
-        y1 = ((double) yc[k]) - h / 2.0;
+        y1 = ((double)yc[k]) - h / 2.0;
         y2 = y1 + h;
 
         // For testing purposes, to simulate accuracy loss in wfss_contam algorithm,
@@ -194,24 +210,28 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
         */
 
         // compute indices' ranges for the rectangle clipped to the window:
-        if ((imin = (int) floor(x1)) < l) {
+        if ((imin = (int)floor(x1)) < l) {
             imin = l;
-            x1 = (double) imin;
+            x1 = (double)imin;
         }
-        if ((imax = (int) ceil(x2 - 1.0)) > r) {
+        if ((imax = (int)ceil(x2 - 1.0)) > r) {
             imax = r;
-            x2 = (double) (imax + 1);
+            x2 = (double)(imax + 1);
         }
-        if (x1 >= x2) continue;
-        if ((jmin = (int) floor(y1)) < b) {
+        if (x1 >= x2) {
+            continue;
+        }
+        if ((jmin = (int)floor(y1)) < b) {
             jmin = b;
-            y1 = (double) jmin;
+            y1 = (double)jmin;
         }
-        if ((jmax = (int) ceil(y2 - 1)) > t) {
+        if ((jmax = (int)ceil(y2 - 1)) > t) {
             jmax = t;
-            y2 = (double) (jmax + 1);
+            y2 = (double)(jmax + 1);
         }
-        if (y1 >= y2) continue;
+        if (y1 >= y2) {
+            continue;
+        }
         imin1 = imin + 1;
         jmin1 = jmin + 1;
 
@@ -220,7 +240,9 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
         if (tnpix + np > nalloc) {
             // allocate more memory for output vectors:
             nalloc += chunk;
-            if (mem_alloc(nalloc, &xv, &yv, &av, &iv)) return 1;
+            if (mem_alloc(nalloc, &xv, &yv, &av, &iv)) {
+                return 1;
+            }
         }
 
         // pre-compute fractional pixel sizes:
@@ -235,7 +257,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
         //   - 1.a: bottom (small j)-left pixel
         xv[tnpix] = imin;
         yv[tnpix] = jmin;
-        av[tnpix] = (dbl_type) (wx1 * wy1);
+        av[tnpix] = (dbl_type)(wx1 * wy1);
         iv[tnpix] = k;
         tnpix++;
 
@@ -243,7 +265,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
             //   -1.b: top (large j)-left corner pixel:
             xv[tnpix] = imin;
             yv[tnpix] = jmax;
-            av[tnpix] = (dbl_type) (wx1 * wy2);
+            av[tnpix] = (dbl_type)(wx1 * wy2);
             iv[tnpix] = k;
             tnpix++;
 
@@ -251,7 +273,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
             for (j = jmin + 1; j < jmax; j++) {
                 xv[tnpix] = imin;
                 yv[tnpix] = j;
-                av[tnpix] = (dbl_type) wx1;
+                av[tnpix] = (dbl_type)wx1;
                 iv[tnpix] = k;
                 tnpix++;
             }
@@ -263,7 +285,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
                 //   -2.a: bottom pixel:
                 xv[tnpix] = i;
                 yv[tnpix] = jmin;
-                av[tnpix] = (dbl_type) wy1;
+                av[tnpix] = (dbl_type)wy1;
                 iv[tnpix] = k;
                 tnpix++;
 
@@ -279,7 +301,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
                     //   -2.c: top pixel:
                     xv[tnpix] = i;
                     yv[tnpix] = jmax;
-                    av[tnpix] = (dbl_type) wy2;
+                    av[tnpix] = (dbl_type)wy2;
                     iv[tnpix] = k;
                     tnpix++;
                 }
@@ -289,7 +311,7 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
             //   -3.a: top-right corner pixel:
             xv[tnpix] = imax;
             yv[tnpix] = jmin;
-            av[tnpix] = (dbl_type) (wx2 * wy1);
+            av[tnpix] = (dbl_type)(wx2 * wy1);
             iv[tnpix] = k;
             tnpix++;
 
@@ -298,14 +320,14 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
                 for (j = jmin + 1; j < jmax; j++) {
                     xv[tnpix] = imax;
                     yv[tnpix] = j;
-                    av[tnpix] = (dbl_type) wx2;
+                    av[tnpix] = (dbl_type)wx2;
                     iv[tnpix] = k;
                     tnpix++;
                 }
                 //   -3.c: bottom-right corner pixel:
                 xv[tnpix] = imax;
                 yv[tnpix] = jmax;
-                av[tnpix] = (dbl_type) (wx2 * wy2);
+                av[tnpix] = (dbl_type)(wx2 * wy2);
                 iv[tnpix] = k;
                 tnpix++;
             }
@@ -313,7 +335,9 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
     }
 
     // trim memory arrays:
-    if ((tnpix < nalloc) && mem_alloc(tnpix, &xv, &yv, &av, &iv)) return 1;
+    if ((tnpix < nalloc) && mem_alloc(tnpix, &xv, &yv, &av, &iv)) {
+        return 1;
+    }
 
     // assign output values:
     *npix = tnpix;
@@ -325,121 +349,124 @@ int clip_pixels(int n, dbl_type *xc, dbl_type *yc, int padding,
     return 0;
 }
 
-
-PyArrayObject * ensure_array(PyObject *obj, int *is_copy) {
-    if (PyArray_CheckExact(obj) &&
-        PyArray_IS_C_CONTIGUOUS((PyArrayObject *) obj) &&
-        PyArray_TYPE((PyArrayObject *) obj) == npy_dbl) {
+PyArrayObject *
+ensure_array(PyObject *obj, int *is_copy)
+{
+    if (PyArray_CheckExact(obj) && PyArray_IS_C_CONTIGUOUS((PyArrayObject *)obj) &&
+        PyArray_TYPE((PyArrayObject *)obj) == npy_dbl) {
         *is_copy = 0;
-        return (PyArrayObject *) obj;
+        return (PyArrayObject *)obj;
     } else {
         *is_copy = 1;
-        return (PyArrayObject *) PyArray_FromAny(
-            obj, PyArray_DescrFromType(npy_dbl), 0, 0,
-            NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST, NULL
-        );
+        return (PyArrayObject *)PyArray_FromAny(
+            obj, PyArray_DescrFromType(npy_dbl), 0, 0, NPY_ARRAY_CARRAY | NPY_ARRAY_FORCECAST,
+            NULL);
     }
 }
 
-
-static PyObject * get_clipped_pixels(PyObject *module, PyObject *args) {
+static PyObject *
+get_clipped_pixels(PyObject *module, PyObject *args)
+{
     PyObject *result = NULL, *xco, *yco;
     double w, h;
-    dbl_type *areas=NULL;
+    dbl_type *areas = NULL;
     int n, nx, ny, npix, padding;
-    int *x=NULL, *y=NULL, *idx=NULL;
-    int free_xc=0, free_yc=0, status=0;
+    int *x = NULL, *y = NULL, *idx = NULL;
+    int free_xc = 0, free_yc = 0, status = 0;
     PyArrayObject *xc, *yc;
-    PyArrayObject *x_arr=NULL, *y_arr=NULL, *areas_arr=NULL, *idx_arr=NULL;
+    PyArrayObject *x_arr = NULL, *y_arr = NULL, *areas_arr = NULL, *idx_arr = NULL;
     npy_intp npy_npix = 0;
 
-    if (!PyArg_ParseTuple(args, "OOiiidd:get_clipped_pixels",
-        &xco, &yco, &padding, &nx, &ny, &w, &h)) {
-    return NULL;
+    if (!PyArg_ParseTuple(
+            args, "OOiiidd:get_clipped_pixels", &xco, &yco, &padding, &nx, &ny, &w, &h)) {
+        return NULL;
     }
 
     // check that input parameters are valid:
     if (padding < 0) {
-        PyErr_SetString(PyExc_ValueError,
-            "'padding' must be a strictly positive number.");
+        PyErr_SetString(PyExc_ValueError, "'padding' must be a strictly positive number.");
         return NULL;
     }
 
     if ((nx < 1) || (ny < 1)) {
-        PyErr_SetString(PyExc_ValueError,
-            "'nx' and 'ny' must be a strictly positive integer numbers.");
+        PyErr_SetString(
+            PyExc_ValueError, "'nx' and 'ny' must be a strictly positive integer numbers.");
         return NULL;
     }
 
     if ((w <= 0) || (h <= 0)) {
-        PyErr_SetString(PyExc_ValueError,
-            "'w' and 'h' must be a strictly positive numbers.");
+        PyErr_SetString(PyExc_ValueError, "'w' and 'h' must be a strictly positive numbers.");
         return NULL;
     }
 
     // ensure we are working with numpy arrays and avoid creating new ones
     // if possible:
-    if ((!(xc = ensure_array(xco, &free_xc))) ||
-        (!(yc = ensure_array(yco, &free_yc)))) {
+    if ((!(xc = ensure_array(xco, &free_xc))) || (!(yc = ensure_array(yco, &free_yc)))) {
         goto cleanup;
     }
 
-    n = (int) PyArray_Size((PyObject *) xc);
-    if (n != PyArray_Size((PyObject *) yc)) {
-        PyErr_SetString(PyExc_ValueError,
-            "Input coordinate arrays of unequal size.");
+    n = (int)PyArray_Size((PyObject *)xc);
+    if (n != PyArray_Size((PyObject *)yc)) {
+        PyErr_SetString(PyExc_ValueError, "Input coordinate arrays of unequal size.");
         goto cleanup;
     }
     if (!n) {
         // 0-length input arrays. Nothing to clip. Return 0-length arrays
-        x_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
-        if (!x_arr) goto fail;
+        x_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
+        if (!x_arr) {
+            goto fail;
+        }
 
-        y_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
-        if (!y_arr) goto fail;
+        y_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
+        if (!y_arr) {
+            goto fail;
+        }
 
-        areas_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_npix, npy_dbl, 0);
-        if (!areas_arr) goto fail;
+        areas_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_npix, npy_dbl, 0);
+        if (!areas_arr) {
+            goto fail;
+        }
 
-        idx_arr = (PyArrayObject*) PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
-        if (!idx_arr) goto fail;
+        idx_arr = (PyArrayObject *)PyArray_EMPTY(1, &npy_npix, NPY_INT, 0);
+        if (!idx_arr) {
+            goto fail;
+        }
 
         result = Py_BuildValue("(NNNN)", x_arr, y_arr, areas_arr, idx_arr);
         goto cleanup;
     }
 
-    status = clip_pixels(n, (dbl_type *) PyArray_DATA(xc),
-        (dbl_type *) PyArray_DATA(yc), padding, nx, ny, w, h,
-        &npix, &x, &y, &areas, &idx);
+    status = clip_pixels(
+        n, (dbl_type *)PyArray_DATA(xc), (dbl_type *)PyArray_DATA(yc), padding, nx, ny, w, h, &npix,
+        &x, &y, &areas, &idx);
 
     if (status) {
         goto fail;
-
     } else {
         // create return tuple:
-        npy_npix = (npy_intp) npix;
-        x_arr = (PyArrayObject*) PyArray_SimpleNewFromData(
-            1, &npy_npix, NPY_INT, x
-        );
-        if (!x_arr) goto fail;
+        npy_npix = (npy_intp)npix;
+        x_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_npix, NPY_INT, x);
+        if (!x_arr) {
+            goto fail;
+        }
         x = NULL;
 
-        y_arr = (PyArrayObject*) PyArray_SimpleNewFromData(
-            1, &npy_npix, NPY_INT, y
-        );
-        if (!y_arr) goto fail;
+        y_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_npix, NPY_INT, y);
+        if (!y_arr) {
+            goto fail;
+        }
         y = NULL;
 
-        areas_arr = (PyArrayObject*) PyArray_SimpleNewFromData(
-            1, &npy_npix, npy_dbl, areas
-        );
-        if (!areas_arr) goto fail;
+        areas_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_npix, npy_dbl, areas);
+        if (!areas_arr) {
+            goto fail;
+        }
         areas = NULL;
 
-        idx_arr = (PyArrayObject*) PyArray_SimpleNewFromData(
-            1, &npy_npix, NPY_INT, idx
-        );
-        if (!idx_arr) goto fail;
+        idx_arr = (PyArrayObject *)PyArray_SimpleNewFromData(1, &npy_npix, NPY_INT, idx);
+        if (!idx_arr) {
+            goto fail;
+        }
         idx = NULL;
 
         PyArray_ENABLEFLAGS(x_arr, NPY_ARRAY_OWNDATA);
@@ -462,43 +489,42 @@ fail:
     free(idx);
 
     if (!PyErr_Occurred()) {
-        PyErr_SetString(PyExc_MemoryError,
-            "Unable to allocate memory for output arrays.");
+        PyErr_SetString(PyExc_MemoryError, "Unable to allocate memory for output arrays.");
     }
 
 cleanup:
-    if (free_xc) Py_XDECREF(xc);
-    if (free_yc) Py_XDECREF(yc);
+    if (free_xc) {
+        Py_XDECREF(xc);
+    }
+    if (free_yc) {
+        Py_XDECREF(yc);
+    }
 
     return result;
 }
 
-
-static PyMethodDef winclip_methods[] =
-{
-    {
-        "get_clipped_pixels",  get_clipped_pixels, METH_VARARGS,
-        "get_clipped_pixels(image, histogram, minValue, maxValue, binWidth)"
-    },
-    {0, 0}  /* sentinel */
+static PyMethodDef winclip_methods[] = {
+    {"get_clipped_pixels", get_clipped_pixels, METH_VARARGS,
+     "get_clipped_pixels(image, histogram, minValue, maxValue, binWidth)"},
+    {0, 0} /* sentinel */
 };
-
 
 static struct PyModuleDef moduledef = {
     PyModuleDef_HEAD_INIT,
-    "winclip",                   /* m_name */
-    "Clip a rectangle to multiple rectangular windows",  /* m_doc */
-    -1,                          /* m_size */
-    winclip_methods,             /* m_methods */
-    NULL,                        /* m_reload */
-    NULL,                        /* m_traverse */
-    NULL,                        /* m_clear */
-    NULL,                        /* m_free */
+    "winclip",                                          /* m_name */
+    "Clip a rectangle to multiple rectangular windows", /* m_doc */
+    -1,                                                 /* m_size */
+    winclip_methods,                                    /* m_methods */
+    NULL,                                               /* m_reload */
+    NULL,                                               /* m_traverse */
+    NULL,                                               /* m_clear */
+    NULL,                                               /* m_free */
 };
 
-PyMODINIT_FUNC PyInit_winclip(void)
+PyMODINIT_FUNC
+PyInit_winclip(void)
 {
-    PyObject* m;
+    PyObject *m;
     import_array();
     m = PyModule_Create(&moduledef);
     return m;
