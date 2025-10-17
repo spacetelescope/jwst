@@ -38,6 +38,12 @@ repos:
           - --fix
           - --show-fixes
       - id: ruff-format
+  # C style
+  - repo: https://github.com/pre-commit/mirrors-clang-format
+    rev: v21.1.0
+    hooks:
+      - id: clang-format
+        types_or: [c]
   # type checking
   - repo: https://github.com/pre-commit/mirrors-mypy
     rev: v1.18.2
