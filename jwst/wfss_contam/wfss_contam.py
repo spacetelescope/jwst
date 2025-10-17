@@ -444,6 +444,7 @@ def contam_corr(
     log.debug(f"Direct image ={direct_file}")
     with datamodels.open(direct_file) as direct_model:
         direct_image = direct_model.data
+        direct_image_wcs = direct_model.meta.wcs
 
     # Get the grism WCS object from the first cutout in the input model.
     # This WCS is used to transform from direct image to grism frame for all sources
@@ -492,8 +493,9 @@ def contam_corr(
     # set up observation object to disperse
     obs = Observation(
         direct_image,
-        seg_model,
+        seg_model.data,
         grism_wcs,
+        direct_image_wcs,
         boundaries=[0, 2047, 0, 2047],
         max_cpu=ncpus,
         max_pixels_per_chunk=max_pixels_per_chunk,

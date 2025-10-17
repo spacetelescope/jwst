@@ -21,8 +21,9 @@ def observation(direct_image_with_gradient, segmentation_map, grism_wcs):
     seg = segmentation_map.data
     return Observation(
         direct_image_with_gradient.data,
-        segmentation_map,
+        segmentation_map.data,
         grism_wcs,
+        direct_image_with_gradient.meta.wcs,
         phot_per_lam=False,
     )
 
