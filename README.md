@@ -31,7 +31,7 @@ Please contact the [JWST Help Desk](https://jwsthelp.stsci.edu) for installation
 
 The easiest way to install the latest `jwst` release into a fresh virtualenv or conda environment is
 
-    pip install jwst==1.20.0
+    pip install jwst==1.20.1
 
 ### Detailed Installation
 
