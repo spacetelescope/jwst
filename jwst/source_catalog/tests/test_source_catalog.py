@@ -3,6 +3,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.modeling import models
 from astropy.table import QTable
 from numpy.testing import assert_allclose
 from photutils.datasets import make_gwcs
@@ -188,19 +189,25 @@ def test_input_model_reset(nircam_model):
     assert nircam_model.meta.bunit_err == "MJy/sr"
 
 
-@pytest.mark.parametrize("finder", ["segmentation", "iraf"])
+@pytest.mark.parametrize("finder", ["segmentation", "iraf", "dao"])
 def test_source_catalog_point_sources(finder, nircam_model, tmp_cwd):
     """Test the three source finding algorithms with point sources."""
     data = np.random.default_rng(seed=123).normal(0, 0.5, size=(101, 101))
 
-    # make a point source with some size that looks a bit like a psf, no need to be realistic
-    point_source = np.ones((7, 7))
-    point_source[1:6, 1:6] = 3.0
-    point_source[2:5, 2:5] = 5.0
-    point_source[3, 3] = 10.0
+    # Create coordinate grids for Airy disk models
+    y, x = np.mgrid[0:101, 0:101]
 
-    data[30:37, 30:37] = point_source
-    data[70:77, 70:77] = point_source
+    # Create two Airy disk point sources
+    # First source at position (33, 33)
+    airy1 = models.AiryDisk2D(amplitude=10.0, x_0=33, y_0=33, radius=5.0)
+    source1 = airy1(x, y)
+
+    # Second source at position (73, 73)
+    airy2 = models.AiryDisk2D(amplitude=10.0, x_0=73, y_0=73, radius=5.0)
+    source2 = airy2(x, y)
+
+    # Add the sources to the background
+    data += source1 + source2
 
     nircam_model.data = data
 
@@ -212,6 +219,8 @@ def test_source_catalog_point_sources(finder, nircam_model, tmp_cwd):
         npixels=5,
         bkg_boxsize=50,
         kernel_fwhm=2.0,
+        roundlo=-1.0,
+        sharplo=0.0,
         starfinder=finder,
         save_results=True,
     )
