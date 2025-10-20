@@ -1,7 +1,6 @@
 """JWST-specific Step and Pipeline base classes."""
 
 import logging
-from functools import wraps
 from pathlib import Path
 
 from stdatamodels.jwst import datamodels
@@ -146,7 +145,7 @@ class JwstStep(_Step):
         update_key_value(asn, "expname", (), mod_func=self.make_input_path)
         return asn
 
-    def prepare_output(self, init, make_copy=None, open_models=True, **kwargs):
+    def prepare_output(self, init, make_copy=None, open_models=True, open_as_type=None, **kwargs):
         """
         Open the input data as a model, making a copy if necessary.
 
@@ -181,13 +180,18 @@ class JwstStep(_Step):
             If True and the input is a filename or list of filenames,
             then datamodels.open will be called to open the input.
             If False, the input is returned as is.
+        open_as_type : class or None
+            If provided, the input will be opened as the specified class
+            before returning. Intended for use with simple datamodel input
+            only: container types and associations should be handled directly
+            in the calling code.
         **kwargs
             Additional keyword arguments to pass to datamodels.open. Used
             only if the input is a str or list.
 
         Returns
         -------
-        JwstDataModel, ModelContainer, or ModelLibrary
+        model : JwstDataModel or ModelContainer or ModelLibrary
             The opened datamodel(s).
 
         Raises
@@ -210,14 +214,28 @@ class JwstStep(_Step):
         # In that case, open it if desired.
         if not isinstance(init, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
             if open_models:
-                input_models = datamodels.open(init, **kwargs)
+                if open_as_type is not None:
+                    # It is assumed the provided class is appropriate for the input.
+                    input_models = open_as_type(init, **kwargs)
+                else:
+                    input_models = datamodels.open(init)
             else:
+                # Return the filename or path -
+                # the calling code will handle opening it as needed.
+                input_models = init
+        elif isinstance(init, datamodels.JwstDataModel):
+            # Simple data model: update the datamodel type if needed
+            if open_as_type is not None and type(init) is not open_as_type:
+                # This will make a shallow copy.
+                input_models = open_as_type(init, **kwargs)
+            else:
+                # Otherwise use the init model directly
                 input_models = init
         else:
-            # Use the init model directly.
+            # ModelContainer or ModelLibrary: use the init model directly.
             input_models = init
 
-        # Make a copy if needed
+        # Make a deep copy if needed
         if make_copy is None:
             make_copy = copy_needed and self.parent is None
         if make_copy:
@@ -279,8 +297,7 @@ class JwstStep(_Step):
         """
         return remove_suffix(name)
 
-    @wraps(_Step.run)
-    def run(self, *args, **kwargs):
+    def run(self, *args):
         """
         Run the step.
 
@@ -288,15 +305,13 @@ class JwstStep(_Step):
         ----------
         *args
             Arguments passed to `stpipe.Step.run`.
-        **kwargs
-            Keyword arguments passed to `stpipe.Step.run`.
 
         Returns
         -------
         result : Any
             The step output
         """
-        result = super().run(*args, **kwargs)
+        result = super().run(*args)
         if not self.parent:
             log.info(f"Results used jwst version: {__version__}")
         return result
