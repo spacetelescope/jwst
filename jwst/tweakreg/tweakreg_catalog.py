@@ -412,7 +412,8 @@ def make_tweakreg_catalog(
         with warnings.catch_warnings():
             # suppress warning about NaNs being automatically masked - this is desired
             warnings.simplefilter("ignore", AstropyUserWarning)
-            threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
+            threshold_img = snr_threshold * bkg.background_rms
+        data = model.data - bkg.background
     except ValueError as e:
         log.warning(f"Error determining sky background: {e.args[0]}")
         sources = _empty_table()
@@ -425,7 +426,7 @@ def make_tweakreg_catalog(
             "ignore", category=NoDetectionsWarning, message="No sources were found"
         )
         sources, segmentation_image = starfinder(
-            model.data,
+            data,
             threshold_img,
             kernel_fwhm,
             mask=coverage_mask,
