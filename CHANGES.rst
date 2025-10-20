@@ -1,3 +1,14 @@
+1.20.1 (2025-10-20)
+===================
+
+source_catalog (image3)
+-----------------------
+
+- Fix a bug where fluxes were not being converted from Mjy/sr to Jy.
+  Fix a bug where fluxes included background flux when they shouldn't. (`#9939
+  <https://github.com/spacetelescope/jwst/issues/9939>`_)
+
+
 1.20.0 (2025-09-23)
 ===================
 
