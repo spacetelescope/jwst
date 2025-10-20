@@ -283,7 +283,7 @@ corrections for different radii.
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
-| NIRSpec    | MOS   | filter      | string    | 12         | N/A      |
+| NIRSpec    | IFU   | filter      | string    | 12         | N/A      |
 +            +       +-------------+-----------+------------+----------+
 |            |       | grating     | string    | 15         | N/A      |
 +            +       +-------------+-----------+------------+----------+
