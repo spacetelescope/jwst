@@ -74,7 +74,7 @@ def create_hdu_wfss():
     phdu.header["telescop"] = "JWST"
     phdu.header["filename"] = "test_miri_wfss"
     phdu.header["instrume"] = "MIRI"
-    phdu.header["detector"] = 'MIRIMAGE'
+    phdu.header["detector"] = "MIRIMAGE"
     phdu.header["filter"] = "P750L"
     phdu.header["time-obs"] = "8:59:37"
     phdu.header["date-obs"] = "2017-09-05"
@@ -115,6 +115,7 @@ def create_reference_files(datamodel):
 
     return refs
 
+
 def create_wfss_wcs():
     hdul = create_hdu_wfss()
     im = ImageModel(hdul)
@@ -122,6 +123,7 @@ def create_wfss_wcs():
     pipeline = miri.create_pipeline(im, ref)
     wcsobj = wcs.WCS(pipeline)
     return wcsobj
+
 
 def traverse_wfss_trace():
     wcsobj = create_wfss_wcs()
@@ -142,9 +144,10 @@ def traverse_wfss_trace():
 
 
 # Envoke this test when the reference files for MIRI WFSS are in CRDS
-#def test_traverse_wfss():
+# def test_traverse_wfss():
 #    """Make sure the trace polynomials roundtrip."""
 #    traverse_wfss_trace()
+
 
 def run_test(model):
     wcsobj = model.meta.wcs
