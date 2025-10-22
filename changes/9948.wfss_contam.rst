@@ -1,0 +1,1 @@
+Allow sources larger than max_pixels_per_chunk to be processed
