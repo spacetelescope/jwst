@@ -254,7 +254,6 @@ def disperse(
     height = 1.0
     x0 = xs + 0.5 * width
     y0 = ys + 0.5 * height
-    del xs, ys
 
     # Set up the transforms we need from the input WCS objects
     sky_to_imgxy = grism_wcs.get_transform("world", "detector")
@@ -268,7 +267,6 @@ def disperse(
 
     # Find RA/Dec of the input pixel position in segmentation map
     x0_sky, y0_sky = seg_wcs(x0, y0, with_bounding_box=False)
-    del x0, y0
 
     # native spacing does not change much over the detector, so just put in one x0, y0
     lambdas = _determine_native_wl_spacing(
@@ -292,7 +290,6 @@ def disperse(
         lambdas,
         order,
     )
-    del x0_sky, y0_sky
 
     # If none of the dispersed pixel indexes are within the image frame,
     # return a null result without wasting time doing other computations
@@ -308,16 +305,12 @@ def disperse(
     # that contribute to each pixel.
     padding = 1
     xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, naxis[0], naxis[1], width, height)
-    del x0s, y0s
-
     lambdas = np.take(lambdas, index)
     fluxes = np.take(fluxes, index)
     source_ids_per_pixel = np.take(source_ids_per_pixel, index)
-    del index
 
     # compute 1D sensitivity array corresponding to list of wavelengths
     sens, no_cal = create_1d_sens(lambdas, sens_waves, sens_resp)
-    del lambdas
 
     # Compute countrates for dispersed pixels.
     # The input direct image data is already photometrically calibrated,
@@ -334,10 +327,8 @@ def disperse(
             # NIRISS case. Oversampling must be handled directly to avoid double-counting.
             counts = fluxes * areas / (sens * oversample_factor)
     counts[no_cal] = 0.0  # set to zero where no flux cal info available
-    del fluxes, areas, sens, dlam, no_cal
 
     outputs_by_source = _collect_outputs_by_source(xs, ys, counts, source_ids_per_pixel)
-    del xs, ys, counts, source_ids_per_pixel
     n_out = len(outputs_by_source)
     log.debug(
         f"{mp.current_process()} finished order {order} with {n_out} "
