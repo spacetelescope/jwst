@@ -1,1 +1,1 @@
-Remove arrays after usage to reduce peak memory footprint. Peak memory was lowered by ~40%
+Remove arrays after usage to reduce peak memory footprint. Peak memory was lowered by ~40% for a test NIRCam WFSS dataset.
