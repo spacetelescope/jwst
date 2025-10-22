@@ -297,7 +297,6 @@ def disperse(
     # If none of the dispersed pixel indexes are within the image frame,
     # return a null result without wasting time doing other computations
     if x0s.min() >= naxis[0] or x0s.max() < 0 or y0s.min() >= naxis[1] or y0s.max() < 0:
-        del x0s, y0s, lambdas
         return
 
     source_ids_per_pixel = np.repeat(source_ids_per_pixel[np.newaxis, :], nlam, axis=0)
