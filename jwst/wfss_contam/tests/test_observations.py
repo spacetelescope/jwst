@@ -1,5 +1,4 @@
 import copy
-import logging
 
 import numpy as np
 import pytest
@@ -7,7 +6,6 @@ import stdatamodels.jwst.datamodels as dm
 from astropy.stats import sigma_clipped_stats
 from numpy.testing import assert_allclose
 
-from jwst.tests.helpers import LogWatcher
 from jwst.wfss_contam.observations import Observation, _select_ids, background_subtract
 
 
@@ -62,14 +60,8 @@ def test_chunk_sources(observation, segmentation_map, monkeypatch):
     # find largest source out of source_ids, then make max_pixels smaller than that
     source_ids_per_pixel = obs.source_ids_per_pixel[np.isin(obs.source_ids_per_pixel, source_ids)]
     ids, n_pix_per_sources = np.unique(source_ids_per_pixel, return_counts=True)
-    max_pixels = np.max(n_pix_per_sources) - 1  # to trigger the warning
-    bad_id = ids[n_pix_per_sources > max_pixels][0]
+    max_pixels = np.max(n_pix_per_sources) - 1  # Make chunks smaller to force splitting
 
-    # ensure warning is emitted for source that is too large
-    watcher = LogWatcher(
-        f"Source {bad_id} has {np.max(n_pix_per_sources)} pixels, which exceeds the maximum"
-    )
-    monkeypatch.setattr(logging.getLogger("jwst.wfss_contam.observations"), "warning", watcher)
     disperse_args = obs.chunk_sources(
         order,
         wmin,
@@ -79,10 +71,16 @@ def test_chunk_sources(observation, segmentation_map, monkeypatch):
         selected_ids=source_ids,
         max_pixels=max_pixels,
     )
-    watcher.assert_seen()
 
-    # two of the sources were too large and skipped
-    assert len(disperse_args) == 8
+    # check that all but the last chunk is at max_pixels and the last chunk is <= max_pixels
+    for args in disperse_args[:-1]:
+        assert len(args[0]) == max_pixels
+    assert len(disperse_args[-1][0]) <= max_pixels
+
+    # Verify total number of pixels is preserved
+    total_pixels_in_chunks = sum(len(args[0]) for args in disperse_args)
+    total_expected_pixels = len(source_ids_per_pixel)
+    assert total_pixels_in_chunks == total_expected_pixels
 
 
 def test_disperse_order(observation, segmentation_map):
@@ -115,3 +113,51 @@ def test_disperse_order(observation, segmentation_map):
 
     # check for regression by hard-coding one value of slit.data
     assert np.isclose(slit.data[5, 60], 20.996877670288086)
+
+
+def test_split_sources_into_many_chunks(observation, segmentation_map):
+    """Test chunking behavior and source aggregation when sources are split across chunks."""
+    obs = copy.deepcopy(observation)
+    order = 1
+    sens_waves = np.linspace(1.708, 2.28, 100)
+    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+    sens_resp = np.ones_like(sens_waves)
+
+    seg = segmentation_map.data
+    all_ids = np.array(list(set(np.ravel(seg))))
+    source_ids = all_ids[50:55]
+
+    # Find largest source and set max_pixels to force splitting
+    source_ids_per_pixel = obs.source_ids_per_pixel[np.isin(obs.source_ids_per_pixel, source_ids)]
+    ids, n_pix_per_sources = np.unique(source_ids_per_pixel, return_counts=True)
+
+    # Now run disperse_order twice: once for reference, once with very small chunks
+    obs_reference = copy.deepcopy(obs)
+    obs_reference.disperse_order(order, wmin, wmax, sens_waves, sens_resp, selected_ids=source_ids)
+
+    # Run with forced splitting
+    obs.max_pixels_per_chunk = 100  # c.f. largest source size 375 pixels
+    obs.disperse_order(order, wmin, wmax, sens_waves, sens_resp, selected_ids=source_ids)
+
+    # Ensure each source ID appears exactly once in final slits
+    slit_source_ids = [slit.source_id for slit in obs.simulated_slits.slits]
+    unique_slit_ids = list(set(slit_source_ids))
+    assert len(slit_source_ids) == len(unique_slit_ids), "Duplicate source IDs found in slits"
+
+    # Verify bounds calculation accuracy
+    ref_slits = {slit.source_id: slit for slit in obs_reference.simulated_slits.slits}
+    test_slits = {slit.source_id: slit for slit in obs.simulated_slits.slits}
+
+    common_sources = set(ref_slits.keys()) & set(test_slits.keys())
+    for source_id in common_sources:
+        ref_slit = ref_slits[source_id]
+        test_slit = test_slits[source_id]
+
+        # Bounds and shapes should be identical
+        assert ref_slit.xstart == test_slit.xstart, f"xstart mismatch for source {source_id}"
+        assert ref_slit.ystart == test_slit.ystart, f"ystart mismatch for source {source_id}"
+        assert ref_slit.xsize == test_slit.xsize, f"xsize mismatch for source {source_id}"
+        assert ref_slit.ysize == test_slit.ysize, f"ysize mismatch for source {source_id}"
+        assert ref_slit.data.shape == test_slit.data.shape, (
+            f"Data shape mismatch for source {source_id}"
+        )
