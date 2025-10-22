@@ -1,1 +1,0 @@
-Remove arrays after usage to reduce peak memory footprint. Peak memory was lowered by ~40%
