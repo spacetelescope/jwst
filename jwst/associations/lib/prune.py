@@ -139,7 +139,7 @@ def prune_duplicate_products(asns):
                     diff.compare_product_membership(asn["products"][0], entrant["products"][0])
                 except diff.MultiDiffError as diffs:
                     # If one is a pure subset, remove the smaller association.
-                    if len(diffs) == 1 and isinstance(diffs[0], diff.SubsetError):
+                    if diff.SubsetError in diffs.err_types:
                         if len(entrant["products"][0]["members"]) > len(
                             asn["products"][0]["members"]
                         ):
