@@ -1,3 +1,4 @@
 Allow sources larger than max_pixels_per_chunk to be processed.
 Fix a bug where max_pixels_per_chunk was not strictly enforced.
-Use the same wavelength grid over the whole detector when dispersing sources.
+Use the same wavelength grid over the whole detector when dispersing sources, to fix a bug where the
+numerical results changed with chunk size.
