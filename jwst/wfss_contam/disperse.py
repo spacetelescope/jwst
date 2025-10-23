@@ -200,6 +200,7 @@ def disperse(
     naxis,
     oversample_factor=2,
     phot_per_lam=True,
+    lambdas=None,
 ):
     """
     Compute the dispersed image pixel values from the direct image.
@@ -238,6 +239,8 @@ def disperse(
         in this step.
         If False, it is assumed that the response is calibrated per pixel, and there is no need
         to multiply by dlam. This is what's done for NIRISS.
+    lambdas : ndarray, optional
+        Pre-computed wavelength grid. If provided, wavelength grid calculation is skipped.
 
     Returns
     -------
@@ -268,17 +271,21 @@ def disperse(
     # Find RA/Dec of the input pixel position in segmentation map
     x0_sky, y0_sky = seg_wcs(x0, y0, with_bounding_box=False)
 
-    # native spacing does not change much over the detector, so just put in one x0, y0
-    lambdas = _determine_native_wl_spacing(
-        x0_sky[0],
-        y0_sky[0],
-        sky_to_imgxy,
-        imgxy_to_grismxy,
-        order,
-        wmin,
-        wmax,
-        oversample_factor=oversample_factor,
-    )
+    # Use provided wavelength grid if available, otherwise calculate it
+    if lambdas is not None:
+        pass
+    else:
+        # Just use the first pixel's position
+        lambdas = _determine_native_wl_spacing(
+            x0_sky[0],
+            y0_sky[0],
+            sky_to_imgxy,
+            imgxy_to_grismxy,
+            order,
+            wmin,
+            wmax,
+            oversample_factor=oversample_factor,
+        )
     nlam = len(lambdas)
     dlam = lambdas[1] - lambdas[0]
 

@@ -3,11 +3,12 @@ import multiprocessing as mp
 import time
 
 import numpy as np
+from astropy.modeling.mappings import Mapping
 from astropy.stats import SigmaClip
 from photutils.background import Background2D, MedianBackground
 from stdatamodels.jwst import datamodels
 
-from jwst.wfss_contam.disperse import disperse
+from jwst.wfss_contam.disperse import _determine_native_wl_spacing, disperse
 
 log = logging.getLogger(__name__)
 
@@ -177,6 +178,9 @@ class Observation:
         # Create lists of pixels labeled in segmentation map
         self._create_pixel_list()
 
+        # Pre-compute wavelength grid for consistent dispersion
+        self._lambdas_cache = {}
+
         # Initialize the output MultiSlitModel
         self.simulated_slits = datamodels.MultiSlitModel()
 
@@ -199,6 +203,62 @@ class Observation:
         self.ys = np.array(self.ys)
         self.fluxes = np.array(self.fluxes)
         self.source_ids_per_pixel = np.array(self.source_ids_per_pixel)
+
+    def _compute_wavelength_grid(self, order, wmin, wmax):
+        """
+        Pre-compute wavelength grid for consistent dispersion across all chunks.
+
+        Samples a 10x10 grid across the detector, and chooses the finest native wavelength spacing
+        among those sampled points to avoid loss of resolution.
+
+        Parameters
+        ----------
+        order : int
+            Spectral order number
+        wmin : float
+            Minimum wavelength for dispersed spectra
+        wmax : float
+            Maximum wavelength for dispersed spectra
+
+        Returns
+        -------
+        lambdas : ndarray
+            Wavelengths at which to compute dispersed pixel values
+        """
+        # Set up transforms for wavelength grid calculation
+        sky_to_imgxy = self.grism_wcs.get_transform("world", "detector")
+        imgxy_to_grismxy = self.grism_wcs.get_transform("detector", "grism_detector")
+        n_outputs = len(imgxy_to_grismxy.outputs)
+        imgxy_to_grismxy = imgxy_to_grismxy | Mapping((0, 1), n_inputs=n_outputs)
+
+        # Sample a 10x10 grid across the detector to find minimum wavelength spacing
+        ny, nx = self.seg.shape
+        x = np.linspace(0, nx - 1, 10)
+        y = np.linspace(0, ny - 1, 10)
+        xx, yy = np.meshgrid(x, y)
+        x_sky, y_sky = self.seg_wcs(xx.flatten(), yy.flatten(), with_bounding_box=False)
+
+        min_dlam = np.inf
+        best_lambdas = None
+        for xi, yi in zip(x_sky, y_sky, strict=True):
+            # Calculate wavelength grid for this position
+            lambdas = _determine_native_wl_spacing(
+                xi,
+                yi,
+                sky_to_imgxy,
+                imgxy_to_grismxy,
+                order,
+                wmin,
+                wmax,
+                oversample_factor=self.oversample_factor,
+            )
+            dlam = lambdas[1] - lambdas[0]
+            if dlam < min_dlam:
+                min_dlam = dlam
+                best_lambdas = lambdas
+
+        log.info(f"Selected wavelength grid with dlam={min_dlam:.6f} microns for order {order}")
+        return best_lambdas
 
     def chunk_sources(
         self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, max_pixels=1e5
@@ -229,6 +289,9 @@ class Observation:
         selected_ys = self.ys[selected_mask]
         selected_fluxes = self.fluxes[selected_mask]
         selected_source_ids = self.source_ids_per_pixel[selected_mask]
+
+        # Get pre-computed wavelength grid
+        lambdas = self._compute_wavelength_grid(order, wmin, wmax)
 
         # Sort by source ID to keep sources mostly together
         # This reduces the number of times we have to call build_dispersed_image_of_source
@@ -273,6 +336,7 @@ class Observation:
                     self.naxis,
                     self.oversample_factor,
                     self.phot_per_lam,
+                    lambdas,
                 ]
             )
 
@@ -350,7 +414,7 @@ def _aggregate_by_source(results, sid, source_results):
             "image": results[sid]["image"].copy(),
         }
     else:
-        # Combine bounds (take the union)
+        # Combine bounds
         old_bounds = source_results[sid]["bounds"]
         new_bounds = results[sid]["bounds"]
         combined_bounds = [

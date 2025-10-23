@@ -112,7 +112,7 @@ def test_disperse_order(observation, segmentation_map):
     assert slit.data.shape == (slit.ysize, slit.xsize)
 
     # check for regression by hard-coding one value of slit.data
-    assert np.isclose(slit.data[5, 60], 20.996877670288086)
+    assert np.isclose(slit.data[5, 60], 21.067791)
 
 
 def test_split_sources_into_many_chunks(observation, segmentation_map):
@@ -127,16 +127,11 @@ def test_split_sources_into_many_chunks(observation, segmentation_map):
     all_ids = np.array(list(set(np.ravel(seg))))
     source_ids = all_ids[50:55]
 
-    # Find largest source and set max_pixels to force splitting
-    source_ids_per_pixel = obs.source_ids_per_pixel[np.isin(obs.source_ids_per_pixel, source_ids)]
-    ids, n_pix_per_sources = np.unique(source_ids_per_pixel, return_counts=True)
-
-    # Now run disperse_order twice: once for reference, once with very small chunks
+    # Run disperse_order twice: once for reference, once with very small chunks to force splitting
     obs_reference = copy.deepcopy(obs)
     obs_reference.disperse_order(order, wmin, wmax, sens_waves, sens_resp, selected_ids=source_ids)
 
-    # Run with forced splitting
-    obs.max_pixels_per_chunk = 100  # c.f. largest source size 375 pixels
+    obs.max_pixels_per_chunk = 50  # c.f. largest source size 375 pixels
     obs.disperse_order(order, wmin, wmax, sens_waves, sens_resp, selected_ids=source_ids)
 
     # Ensure each source ID appears exactly once in final slits
@@ -154,10 +149,11 @@ def test_split_sources_into_many_chunks(observation, segmentation_map):
         test_slit = test_slits[source_id]
 
         # Bounds and shapes should be identical
-        assert ref_slit.xstart == test_slit.xstart, f"xstart mismatch for source {source_id}"
-        assert ref_slit.ystart == test_slit.ystart, f"ystart mismatch for source {source_id}"
-        assert ref_slit.xsize == test_slit.xsize, f"xsize mismatch for source {source_id}"
-        assert ref_slit.ysize == test_slit.ysize, f"ysize mismatch for source {source_id}"
-        assert ref_slit.data.shape == test_slit.data.shape, (
-            f"Data shape mismatch for source {source_id}"
-        )
+        assert ref_slit.xstart == test_slit.xstart
+        assert ref_slit.ystart == test_slit.ystart
+        assert ref_slit.xsize == test_slit.xsize
+        assert ref_slit.ysize == test_slit.ysize
+        assert ref_slit.data.shape == test_slit.data.shape
+
+        # Data should be nearly identical
+        assert_allclose(ref_slit.data, test_slit.data)
