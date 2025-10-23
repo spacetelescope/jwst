@@ -93,17 +93,17 @@ def test_populate_tso_spectral_sregion(log_watcher):
     # no s_region attributes present
     watcher = log_watcher(
         "jwst.pipeline.calwebb_tso3",
-        message="One or more input model(s) are missing an `s_region` attribute;",
+        message="No input model(s) have an `s_region` attribute; output S_REGION will not be set.",
         level="warning",
     )
-    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
     watcher.assert_seen()
-    assert result is None
+    assert not model.spec[0].hasattr("s_region")
 
     # s_regions are all the same, should run without issues
     for m in cal_model_list:
         m.meta.wcsinfo.s_region = "POLYGON ICRS 0 0 0 1 1 1 1 0"
-    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
     assert model.spec[0].s_region == "POLYGON ICRS 0 0 0 1 1 1 1 0"
     assert not model.spec[1].hasattr("s_region")
 
@@ -114,9 +114,21 @@ def test_populate_tso_spectral_sregion(log_watcher):
         message="Input models have different S_REGION values;",
         level="warning",
     )
-    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
     watcher.assert_seen()
     assert model.spec[0].s_region == "POLYGON ICRS 0 0 0 1 1 1 1 0"
+    assert not model.spec[1].hasattr("s_region")
+
+    # only one model has s_region, should warn and set to that one
+    del cal_model_list[0].meta.wcsinfo.s_region
+    watcher = log_watcher(
+        "jwst.pipeline.calwebb_tso3",
+        message="One or more input model(s) are missing an `s_region` attribute;",
+        level="warning",
+    )
+    Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    watcher.assert_seen()
+    assert model.spec[0].s_region == "POLYGON ICRS 1 1 1 2 2 2 2 1"
     assert not model.spec[1].hasattr("s_region")
 
 
@@ -130,9 +142,8 @@ def test_populate_tso_spectral_sregion_empty_container(log_watcher):
     watcher = log_watcher(
         "jwst.pipeline.calwebb_tso3", message="No input or output models provided;", level="warning"
     )
-    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
     watcher.assert_seen()
-    assert result is None
     assert not model.spec[0].hasattr("s_region")
 
 
@@ -147,6 +158,5 @@ def test_populate_tso_spectral_sregion_no_spec(log_watcher):
     watcher = log_watcher(
         "jwst.pipeline.calwebb_tso3", message="No input or output models provided;", level="warning"
     )
-    result = Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
+    Tso3Pipeline()._populate_tso_spectral_sregion(model, cal_model_list)
     watcher.assert_seen()
-    assert result is None

@@ -218,19 +218,23 @@ class Tso3Pipeline(Pipeline):
         if (len(cal_model_list) == 0) or (len(model.spec) == 0):
             log.warning("No input or output models provided; cannot set S_REGION.")
             return
-        has_sregion = [w.meta.wcsinfo.hasattr("s_region") for w in cal_model_list]
-        if not all(has_sregion):
+
+        input_sregions = [
+            w.meta.wcsinfo.s_region for w in cal_model_list if w.meta.wcsinfo.hasattr("s_region")
+        ]
+        if len(input_sregions) == 0:
             log.warning(
-                "One or more input model(s) are missing an `s_region` attribute; "
-                "output S_REGION will not be set."
+                "No input model(s) have an `s_region` attribute; output S_REGION will not be set."
             )
             return
-
-        input_sregions = [w.meta.wcsinfo.s_region for w in cal_model_list]
+        if len(input_sregions) < len(cal_model_list):
+            log.warning(
+                "One or more input model(s) are missing an `s_region` attribute; "
+                "output S_REGION will be set to first available value."
+            )
         if not all(s == input_sregions[0] for s in input_sregions):
             log.warning(
                 "Input models have different S_REGION values; this is unexpected for tso3 data. "
-                "Setting output S_REGION to the first input model's value."
+                "Setting output S_REGION to the value of the first model."
             )
         model.spec[0].s_region = input_sregions[0]
-        return
