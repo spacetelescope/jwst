@@ -31,7 +31,7 @@ Please contact the [JWST Help Desk](https://jwsthelp.stsci.edu) for installation
 
 The easiest way to install the latest `jwst` release into a fresh virtualenv or conda environment is
 
-    pip install jwst==1.20.0
+    pip install jwst==1.20.1
 
 ### Detailed Installation
 
@@ -263,6 +263,7 @@ the specified context and less than the context for the next release.
 
 | jwst tag            | DMS build | SDP_VER  | CRDS_CONTEXT | Released   | Ops Install | Notes                                         |
 |---------------------|-----------|----------|--------------|------------|-------------|-----------------------------------------------|
+| 1.20.0              | B12.0.3   | 2025.4.0 | 1439         | 2025-09-23 |             | First release candidate for B12.0.3           |
 | 1.19.2              | B12.0.2   | 2025.3.0 | 1408         | 2025-09-11 |             | Patch release for B12.0.2                     |
 | 1.19.1              | B12.0.1   | 2025.3.0 | 1408         | 2025-07-21 |             | Patch release for B12.0.1                     |
 | 1.19.0              | B12.0     | 2025.3.0 | 1408         | 2025-06-26 |             | First release candidate for B12.0             |

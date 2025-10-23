@@ -45,7 +45,7 @@ jobs:
       context: ${{ steps.context.outputs.context }}
   test:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@28e947497bed4d6ec3fa1d66d198e95a1d17bc63 # v2.2.1
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@930ac90540ecc5f43ba6d3d176efd25cd5f3c6c2 # v2.2.2
     needs: [ crds_context ]
     with:
       setenv: |
