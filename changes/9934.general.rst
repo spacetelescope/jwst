@@ -1,11 +1,1 @@
-Bumped minimum supported versions of the following dependencies:
-
-* astropy: from 6.1 to 7.1.1
-* BayesicFitting: from 3.2.2 to 3.2.5
-* numpy: from 1.25 to 2
-* pyparsing: from 2.2.1 to 3.2.5
-* scikit-image: from 0.20.0 to 0.25.0
-* spherical-geometry: from 1.3 to 1.3.3
-* stsci.imagestats: from 1.6.3 to 1.8.3
-* packaging: from 20.0.1 to 23.0
-* pysiaf: from 0.13.0 to 0.24.1
+Bumped minimum supported versions of the following dependencies: astropy from 6.1 to 7.1.1, BayesicFitting from 3.2.2 to 3.2.5, numpy from 1.25 to 2, pyparsing from 2.2.1 to 3.2.5, scikit-image from 0.20.0 to 0.25.0, spherical-geometry from 1.3 to 1.3.3, stsci.imagestats from 1.6.3 to 1.8.3, packaging from 20.0.1 to 23.0, and pysiaf from 0.13.0 to 0.24.1
