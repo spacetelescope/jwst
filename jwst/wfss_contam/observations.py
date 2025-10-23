@@ -178,9 +178,6 @@ class Observation:
         # Create lists of pixels labeled in segmentation map
         self._create_pixel_list()
 
-        # Pre-compute wavelength grid for consistent dispersion
-        self._lambdas_cache = {}
-
         # Initialize the output MultiSlitModel
         self.simulated_slits = datamodels.MultiSlitModel()
 

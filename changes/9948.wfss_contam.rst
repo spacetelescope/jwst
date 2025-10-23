@@ -1,1 +1,3 @@
-Allow sources larger than max_pixels_per_chunk to be processed
+Allow sources larger than max_pixels_per_chunk to be processed.
+Fix a bug where max_pixels_per_chunk was not strictly enforced.
+Use the same wavelength grid over the whole detector when dispersing sources.

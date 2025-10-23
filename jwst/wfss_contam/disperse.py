@@ -271,11 +271,8 @@ def disperse(
     # Find RA/Dec of the input pixel position in segmentation map
     x0_sky, y0_sky = seg_wcs(x0, y0, with_bounding_box=False)
 
-    # Use provided wavelength grid if available, otherwise calculate it
-    if lambdas is not None:
-        pass
-    else:
-        # Just use the first pixel's position
+    # Use provided wavelength grid if available, otherwise calculate it using first pixel position
+    if lambdas is None:
         lambdas = _determine_native_wl_spacing(
             x0_sky[0],
             y0_sky[0],

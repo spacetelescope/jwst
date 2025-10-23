@@ -116,7 +116,7 @@ def test_disperse_order(observation, segmentation_map):
 
 
 def test_split_sources_into_many_chunks(observation, segmentation_map):
-    """Test chunking behavior and source aggregation when sources are split across chunks."""
+    """Test that when sources are split into many chunks, they have the same result as when not split."""
     obs = copy.deepcopy(observation)
     order = 1
     sens_waves = np.linspace(1.708, 2.28, 100)
@@ -139,12 +139,10 @@ def test_split_sources_into_many_chunks(observation, segmentation_map):
     unique_slit_ids = list(set(slit_source_ids))
     assert len(slit_source_ids) == len(unique_slit_ids), "Duplicate source IDs found in slits"
 
-    # Verify bounds calculation accuracy
+    # Verify all slits are identical between reference and test
     ref_slits = {slit.source_id: slit for slit in obs_reference.simulated_slits.slits}
     test_slits = {slit.source_id: slit for slit in obs.simulated_slits.slits}
-
-    common_sources = set(ref_slits.keys()) & set(test_slits.keys())
-    for source_id in common_sources:
+    for source_id in ref_slits.keys():
         ref_slit = ref_slits[source_id]
         test_slit = test_slits[source_id]
 
@@ -153,7 +151,7 @@ def test_split_sources_into_many_chunks(observation, segmentation_map):
         assert ref_slit.ystart == test_slit.ystart
         assert ref_slit.xsize == test_slit.xsize
         assert ref_slit.ysize == test_slit.ysize
-        assert ref_slit.data.shape == test_slit.data.shape
 
-        # Data should be nearly identical
+        # Data should be identical
+        assert ref_slit.data.shape == test_slit.data.shape
         assert_allclose(ref_slit.data, test_slit.data)
