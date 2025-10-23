@@ -38,46 +38,44 @@ class RscdStep(Step):
 
         Parameters
         ----------
-        step_input : RampModel
+        step_input : `~stdatamodels.jwst.datamodels.RampModel`
             Ramp datamodel to be corrected, or the path to the ramp file.
 
         Returns
         -------
-        result : RampModel
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             Ramp datamodel with initial groups in an integration flagged as DO_NOT_USE.
             Flags are only set of integration 2 and higher.
         """
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            # check the data is MIRI data
-            detector = result.meta.instrument.detector
-            if not detector.startswith("MIR"):
-                log.warning("RSCD correction is only for MIRI data")
-                log.warning("RSCD step will be skipped")
-                result.meta.cal_step.rscd = "SKIPPED"
-                return result
+        # check the data is MIRI data
+        detector = result.meta.instrument.detector
+        if not detector.startswith("MIR"):
+            log.warning("RSCD correction is only for MIRI data")
+            log.warning("RSCD step will be skipped")
+            result.meta.cal_step.rscd = "SKIPPED"
+            return result
 
-            # Get the name of the rscd reference file to use
-            self.rscd_name = self.get_reference_file(result, "rscd")
-            log.info("Using RSCD reference file %s", self.rscd_name)
+        # Get the name of the rscd reference file to use
+        rscd_name = self.get_reference_file(result, "rscd")
+        log.info("Using RSCD reference file %s", rscd_name)
 
-            # Check for a valid reference file
-            if self.rscd_name == "N/A":
-                log.warning("No RSCD reference file found")
-                log.warning("RSCD step will be skipped")
-                result.meta.cal_step.rscd = "SKIPPED"
-                return result
+        # Check for a valid reference file
+        if rscd_name == "N/A":
+            log.warning("No RSCD reference file found")
+            log.warning("RSCD step will be skipped")
+            result.meta.cal_step.rscd = "SKIPPED"
+            return result
 
-            # Load the rscd ref file data model
-            rscd_model = datamodels.RSCDModel(self.rscd_name)
+        # Load the rscd ref file data model
+        rscd_model = datamodels.RSCDModel(rscd_name)
 
-            # Do the rscd correction
-            result = rscd_sub.do_correction(result, rscd_model)
+        # Do the rscd correction
+        result = rscd_sub.do_correction(result, rscd_model)
 
-            # Cleanup
-            del rscd_model
+        # Cleanup
+        del rscd_model
 
         return result

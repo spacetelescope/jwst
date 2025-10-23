@@ -26,38 +26,36 @@ class IPCStep(Step):
 
         Parameters
         ----------
-        step_input : data model object
+        step_input : `~stdatamodels.jwst.datamodels.RampModel`
             Science data model to be corrected.
 
         Returns
         -------
-        data model object
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             IPC-corrected science data model.
         """
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            # Get the name of the ipc reference file to use
-            self.ipc_name = self.get_reference_file(result, "ipc")
-            log.info("Using IPC reference file %s", self.ipc_name)
+        # Get the name of the ipc reference file to use
+        ipc_name = self.get_reference_file(result, "ipc")
+        log.info("Using IPC reference file %s", ipc_name)
 
-            # Check for a valid reference file
-            if self.ipc_name == "N/A":
-                log.warning("No IPC reference file found")
-                log.warning("IPC step will be skipped")
-                result.meta.cal_step.ipc = "SKIPPED"
-                return result
+        # Check for a valid reference file
+        if ipc_name == "N/A":
+            log.warning("No IPC reference file found")
+            log.warning("IPC step will be skipped")
+            result.meta.cal_step.ipc = "SKIPPED"
+            return result
 
-            # Open the ipc reference file data model
-            ipc_model = datamodels.IPCModel(self.ipc_name)
+        # Open the ipc reference file data model
+        ipc_model = datamodels.IPCModel(ipc_name)
 
-            # Do the ipc correction
-            result = ipc_corr.do_correction(result, ipc_model)
-            result.meta.cal_step.ipc = "COMPLETE"
+        # Do the ipc correction
+        result = ipc_corr.do_correction(result, ipc_model)
+        result.meta.cal_step.ipc = "COMPLETE"
 
-            # Cleanup
-            del ipc_model
+        # Cleanup
+        del ipc_model
 
         return result

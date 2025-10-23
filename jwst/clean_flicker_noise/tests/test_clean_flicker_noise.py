@@ -734,7 +734,9 @@ def test_do_correction_clean_fails(monkeypatch, log_watcher):
     # expected to be different
     rng = np.random.default_rng(seed=123)
     ramp_model.data += rng.normal(0, 0.1, size=ramp_model.data.shape)
-    cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_method="fft")
+    output_model = ramp_model.copy()
+
+    cleaned, _, _, _, status = cfn.do_correction(output_model, fit_method="fft")
     assert not np.allclose(cleaned.data, ramp_model.data)
     assert status == "COMPLETE"
 
@@ -742,8 +744,9 @@ def test_do_correction_clean_fails(monkeypatch, log_watcher):
     monkeypatch.setattr(cfn, "fft_clean_subarray", lambda *args, **kwargs: None)
 
     # Call again
+    output_model = ramp_model.copy()
     watcher = log_watcher("jwst.clean_flicker_noise.clean_flicker_noise", message="Cleaning failed")
-    cleaned, _, _, _, status = cfn.do_correction(ramp_model, fit_method="fft")
+    cleaned, _, _, _, status = cfn.do_correction(output_model, fit_method="fft")
 
     # Error message issued, status is skipped,
     # output data is the same as input
@@ -845,6 +848,7 @@ def test_do_correction_with_flat_structure(tmp_path, log_watcher, input_type, ap
     # multiply the data by the flat to mock real structure
     model.data *= flat.data
 
+    input_model = model.copy()
     watcher = log_watcher(
         "jwst.clean_flicker_noise.clean_flicker_noise", message="Dividing by flat"
     )
@@ -855,12 +859,12 @@ def test_do_correction_with_flat_structure(tmp_path, log_watcher, input_type, ap
         watcher.assert_seen()
 
         # output is the same as input: flat structure is not removed
-        assert np.all(cleaned.data == model.data)
+        assert np.all(cleaned.data == input_model.data)
     else:
         watcher.assert_not_seen()
 
         # output is not the same as input: flat structure is fit as background/noise
-        assert not np.all(cleaned.data == model.data)
+        assert not np.all(cleaned.data == input_model.data)
 
     model.close()
     flat.close()
