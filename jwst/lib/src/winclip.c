@@ -490,7 +490,7 @@ static PyMethodDef winclip_methods[] =
 {
     {
         "get_clipped_pixels",  get_clipped_pixels, METH_VARARGS,
-        "get_clipped_pixels(image, histogram, minValue, maxValue, binWidth)"
+        "get_clipped_pixels(xc, yc, padding, nx, ny, width, height)"
     },
     {0, 0}  /* sentinel */
 };
