@@ -31,9 +31,9 @@ def _determine_native_wl_spacing(
     Parameters
     ----------
     x0_sky : float or ndarray
-        RA of the input pixel position in segmentation map
+        RA of the input pixel position in direct image and segmentation map
     y0_sky : float or ndarray
-        Dec of the input pixel position in segmentation map
+        Dec of the input pixel position in direct image and segmentation map
     sky_to_imgxy : astropy model
         Transform from sky to image coordinates
     imgxy_to_grismxy : astropy model
@@ -82,9 +82,9 @@ def _disperse_onto_grism(x0_sky, y0_sky, sky_to_imgxy, imgxy_to_grismxy, lambdas
     Parameters
     ----------
     x0_sky : ndarray
-        RA of the input pixel position in segmentation map
+        RA of the input pixel position in direct image and segmentation map
     y0_sky : ndarray
-        Dec of the input pixel position in segmentation map
+        Dec of the input pixel position in direct image and segmentation map
     sky_to_imgxy : astropy model
         Transform from sky to image coordinates
     imgxy_to_grismxy : astropy model
@@ -195,7 +195,7 @@ def disperse(
     wmax,
     sens_waves,
     sens_resp,
-    seg_wcs,
+    direct_image_wcs,
     grism_wcs,
     naxis,
     oversample_factor=2,
@@ -224,8 +224,8 @@ def disperse(
         Wavelength array from photom reference file
     sens_resp : float array
         Response (flux calibration) array from photom reference file
-    seg_wcs : WCS object
-        WCS object for the segmentation map
+    direct_image_wcs : WCS object
+        WCS object for the direct image and segmentation map
     grism_wcs : WCS object
         WCS object for the grism image
     naxis : tuple
@@ -265,8 +265,8 @@ def disperse(
     n_outputs = len(imgxy_to_grismxy.outputs)
     imgxy_to_grismxy = imgxy_to_grismxy | Mapping((0, 1), n_inputs=n_outputs)
 
-    # Find RA/Dec of the input pixel position in segmentation map
-    x0_sky, y0_sky = seg_wcs(x0, y0, with_bounding_box=False)
+    # Find RA/Dec of the input pixel position in direct image
+    x0_sky, y0_sky = direct_image_wcs(x0, y0, with_bounding_box=False)
 
     # native spacing does not change much over the detector, so just put in one x0, y0
     lambdas = _determine_native_wl_spacing(

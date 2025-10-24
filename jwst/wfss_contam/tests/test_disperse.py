@@ -6,7 +6,7 @@ from jwst.wfss_contam.disperse import disperse
 
 
 @pytest.mark.parametrize("phot_per_lam", [True, False])
-def test_disperse_oversample_same_result(grism_wcs, segmentation_map, phot_per_lam):
+def test_disperse_oversample_same_result(grism_wcs, direct_image_with_gradient, phot_per_lam):
     """Coverage for bug where wavelength oversampling led to double-counted fluxes."""
     x0 = np.array([200.5])
     y0 = np.array([200.5])
@@ -17,7 +17,7 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map, phot_per_l
     sens_waves = np.linspace(1.708, 2.28, 100)
     wmin, wmax = np.min(sens_waves), np.max(sens_waves)
     sens_resp = np.ones(100)
-    seg_wcs = segmentation_map.meta.wcs
+    direct_image_wcs = direct_image_with_gradient.meta.wcs
 
     output_images = []
     for os in [2, 3]:
@@ -31,7 +31,7 @@ def test_disperse_oversample_same_result(grism_wcs, segmentation_map, phot_per_l
             wmax,
             sens_waves,
             sens_resp,
-            seg_wcs,
+            direct_image_wcs,
             grism_wcs,
             naxis,
             oversample_factor=os,
