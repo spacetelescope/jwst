@@ -266,7 +266,7 @@ def disperse(
     n_outputs = len(imgxy_to_grismxy.outputs)
     imgxy_to_grismxy = imgxy_to_grismxy | Mapping((0, 1), n_inputs=n_outputs)
 
-    # Find RA/Dec of the input pixel position in segmentation map
+    # Find RA/Dec of the input pixel position in direct image
     x0_sky, y0_sky = direct_image_wcs(x0, y0, with_bounding_box=False)
     del x0, y0
 
