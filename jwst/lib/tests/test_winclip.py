@@ -29,3 +29,21 @@ def test_clip_small_rect_at_edges():
     assert np.all(yi == [3, 0, 0, 0])
     assert np.all(ki == [0, 1, 3, 5])
     assert np.allclose(ai, [0.16, 0.09, 0.015, 0.0025])
+
+
+def test_no_clipped_pixels():
+    nx = 2048
+    ny = 1024
+    npts = 2 * nx * ny
+
+    x0s = nx + 1 + 123.0 * np.random.random(size=npts)
+    y0s = ny + 1 + 987.0 * np.random.random(size=npts)
+    width = 1.0
+    height = 1.0
+    padding = 1
+    xs, ys, areas, index = get_clipped_pixels(x0s, y0s, padding, nx, ny, width, height)
+
+    assert len(xs) == 0
+    assert len(ys) == 0
+    assert len(areas) == 0
+    assert len(index) == 0
