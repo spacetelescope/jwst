@@ -150,7 +150,7 @@ class Observation:
         if boundaries is None:
             boundaries = []
         # Load all the info for this grism mode
-        self.seg_wcs = direct_image_wcs
+        self.direct_image_wcs = direct_image_wcs
         self.grism_wcs = grism_wcs
         self.seg = segmentation_map
         all_ids = list(set(np.ravel(self.seg)))
@@ -265,7 +265,7 @@ class Observation:
                     wmax,
                     sens_waves,
                     sens_response,
-                    self.seg_wcs,
+                    self.direct_image_wcs,
                     self.grism_wcs,
                     self.naxis,
                     self.oversample_factor,
