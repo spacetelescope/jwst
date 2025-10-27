@@ -241,7 +241,7 @@ class Spec2Pipeline(Pipeline):
                     science.meta.segmentation_map = Path(members_by_type["segmap"][0]).name
                     log.info(f"Using segmentation map {science.meta.segmentation_map}")
                     science.meta.direct_image = Path(members_by_type["direct_image"][0]).name
-                    self.log.info(f"Using direct image {science.meta.direct_image}")
+                    log.info(f"Using direct image {science.meta.direct_image}")
                 except IndexError:
                     if science.meta.source_catalog is None:
                         raise IndexError(
@@ -687,11 +687,11 @@ class Spec2Pipeline(Pipeline):
         calibrated = data.copy()
         # Create and save a WFSS e-/sec image, if requested
         if self.save_wfss_esec:
-            self.log.info("Creating WFSS e-/sec product")
+            log.info("Creating WFSS e-/sec product")
 
             # Find and load the gain reference file that we need
             gain_filename = self.get_reference_file(calibrated, "gain")
-            self.log.info("Using GAIN reference file %s", gain_filename)
+            log.info("Using GAIN reference file %s", gain_filename)
             with datamodels.GainModel(gain_filename) as gain_model:
                 # Always use the full-frame version of the gain ref file,
                 # even the science data are taken with a subarray
@@ -702,7 +702,7 @@ class Spec2Pipeline(Pipeline):
                 # mask bad values, so manually exclude NaN's and gain <= 0.
                 gain_image[gain_image <= 0.0] = np.nan
                 mean_gain = np.nanmean(gain_image[4:-4, 4:-4])
-                self.log.info("mean gain = %s", mean_gain)
+                log.info("mean gain = %s", mean_gain)
 
                 # Apply gain to the intermediate WFSS image
                 wfss_esec = calibrated.copy()
