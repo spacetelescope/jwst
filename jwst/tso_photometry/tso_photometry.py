@@ -184,7 +184,8 @@ def tso_aperture_photometry(
     # populate table columns
     unit = u.Unit(datamodel.meta.bunit_data)
     tbl["MJD"] = int_times_utc.mjd
-    tbl["BJD_TDB"] = int_times_bjd.mjd
+    if int_times_bjd is not None:
+        tbl["BJD_TDB"] = int_times_bjd.mjd
     tbl["aperture_sum"] = aperture_sum << unit
     tbl["aperture_sum_err"] = aperture_sum_err << unit
 
@@ -315,7 +316,8 @@ def _get_int_times(datamodel):
         int_times_utc = Time(datamodel.meta.exposure.start_time, format="mjd") + int_dt
 
         # Convert to approximate BJD TDB
-        int_times_bjd = int_times_utc.tdb
+        log.warning("INT_TIMES table missing; BJD_TDB times not computed.")
+        int_times_bjd = None
 
     return int_times_utc, int_times_bjd
 

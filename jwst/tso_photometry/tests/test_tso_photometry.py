@@ -299,8 +299,7 @@ def test_tso_phot_int_times_out_of_range():
         ]
     )
     assert np.allclose(catalog["MJD"], int_times, rtol=1.0e-8)
-    bjd_times = int_times + 8.0e-4
-    assert np.allclose(catalog["BJD_TDB"], bjd_times, rtol=0, atol=1.0e-4)
+    assert "BJD_TDB" not in catalog.colnames
 
 
 def test_tso_phot_missing_int_start():
