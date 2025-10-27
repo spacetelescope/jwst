@@ -186,6 +186,8 @@ def tso_aperture_photometry(
     tbl["MJD"] = int_times_utc.mjd
     if int_times_bjd is not None:
         tbl["BJD_TDB"] = int_times_bjd.mjd
+    else:
+        tbl["BJD_TDB"] = np.full(nimg, np.nan)
     tbl["aperture_sum"] = aperture_sum << unit
     tbl["aperture_sum_err"] = aperture_sum_err << unit
 
