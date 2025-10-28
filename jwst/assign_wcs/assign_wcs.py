@@ -74,7 +74,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
         pipeline = mod.create_pipeline(input_model, reference_files)
     # Initialize the output model as a copy of the input
     # Make the copy after the WCS pipeline is created in order to pass updates to the model.
-
     if pipeline is None:
         input_model.meta.cal_step.assign_wcs = "SKIPPED"
         log.warning("assign_wcs: SKIPPED")
@@ -150,5 +149,4 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
             f"{output_model.meta.dither.dithered_ra} {output_model.meta.dither.dithered_dec}"
         )
     log.info("COMPLETED assign_wcs")
-
     return output_model

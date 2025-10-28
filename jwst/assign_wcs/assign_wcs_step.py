@@ -122,7 +122,6 @@ class AssignWcsStep(Step):
                     log.error(message)
                     raise MSAFileError(message)
             slit_y_range = [self.slit_y_low, self.slit_y_high]
-
             result = load_wcs(
                 input_model,
                 reference_file_names,
