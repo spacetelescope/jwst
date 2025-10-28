@@ -131,8 +131,8 @@ In the future, reference files will be used
 to set more detailed threshold values for stellarity, based on the
 particular filters, gratings, etc. of each exposure.
 
-NIRCam and NIRISS WFSS
-++++++++++++++++++++++
+NIRCam, NIRISS and MIRI WFSS
++++++++++++++++++++++++++++++
 It is not possible to specify ahead of time the source types for spectra that
 may show up in a Wide-Field Slitless Spectroscopy exposure. So for these modes
 the ``srctype`` step uses the value from the ``is_extended`` column of the

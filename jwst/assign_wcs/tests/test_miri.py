@@ -132,8 +132,8 @@ def traverse_wfss_trace():
 
     # check the round trip, grism pixel 100,100, source at 110,110,order 1
     xdis, ydis, xsource, ysource, order_in = (100, 100, 110, 110, 1)
-    x0, y0, lam, order = dispersed_detector_to_detector(xdis, ydis, xsource, ysource, order_in)
-    x, y, xdet, ydet, orderdet = detector_to_dispersed_detector(x0, y0, lam, order)
+    x0, y0, lam, order = dispersed_to_detector(xdis, ydis, xsource, ysource, order_in)
+    x, y, xdet, ydet, orderdet = detector_to_dispersed(x0, y0, lam, order)
 
     assert x0 == xsource
     assert y0 == ysource
@@ -143,7 +143,7 @@ def traverse_wfss_trace():
     assert orderdet == order_in
 
 
-# Envoke this test when the reference files for MIRI WFSS are in CRDS
+# Invoke this test when the reference files for MIRI WFSS are in CRDS
 # def test_traverse_wfss():
 #    """Make sure the trace polynomials roundtrip."""
 #    traverse_wfss_trace()
