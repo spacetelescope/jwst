@@ -48,7 +48,6 @@ class Extract2dStep(Step):
                 for reftype in self.reference_file_types:
                     reffile = self.get_reference_file(input_model, reftype)
                     reference_file_names[reftype] = reffile if reffile else ""
-
             output_model = extract_2d.extract2d(
                 dm,
                 self.slit_names,

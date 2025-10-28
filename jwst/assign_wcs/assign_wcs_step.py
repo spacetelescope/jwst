@@ -166,6 +166,7 @@ class AssignWcsStep(Step):
                     imaging_func = nircam_imaging
                 elif result_exptype == "mir_wfss":
                     imaging_func = miri_imaging
+                    self.sip_max_inv_pix_error = self.sip_max_inv_pix_error * 2
                 else:
                     log.warning(f" EXP Type is not of a WFSS mode {result_exptype}")
 

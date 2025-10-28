@@ -681,7 +681,9 @@ class Spec2Pipeline(Pipeline):
         JWSTDataModel
             The calibrated data model.
         """
-        # Apply flat-field correction - we do not do this for MIRI WFSS
+        # Apply flat-field correction - we do not do this for MIRI WFSS.
+        # After more data is taken we might come back to this. Leaving the
+        # code commented out as a reminder.
         # calibrated = self.flat_field.run(data)
 
         calibrated = data.copy()

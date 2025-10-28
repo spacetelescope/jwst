@@ -1181,7 +1181,6 @@ def update_fits_wcsinfo(
         degree = range(1, _MAX_SIP_DEGREE)
     if inv_degree is None:
         inv_degree = range(1, _MAX_SIP_DEGREE)
-
     hdr = imwcs.to_fits_sip(
         max_pix_error=max_pix_error,
         degree=degree,
