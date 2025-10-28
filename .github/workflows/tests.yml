@@ -75,5 +75,5 @@ jobs:
         - linux: py3-cov-xdist
           coverage: codecov
           pytest-results-summary: true
-        - macos: py3-xdist
+        - macos: py313-xdist
           pytest-results-summary: true
