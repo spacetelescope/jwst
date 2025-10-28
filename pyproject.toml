@@ -228,7 +228,11 @@ addopts = [
 ]
 xfail_strict = true
 filterwarnings = [
-    "error"
+    "error",
+    "ignore:Argument 'scale' has been deprecated since version 3.0.*Use 'iscale' and 'pixel_scale_ratio' instead.*:DeprecationWarning",
+    "ignore:Argument 'output_pixel_shape' has been deprecated since version 3.0.*can be inferred from 'pixmap'.*:DeprecationWarning",
+    "ignore:Argument 'exptime' has been deprecated since version 3.0.*Use 'iscale' instead and set iscale=exptime.*:DeprecationWarning",
+    "ignore:Argument 'pix_ratio' has been deprecated since version 3.0.*Use 'iscale' instead and set iscale.*:DeprecationWarning",
 ]
 
 [tool.coverage.run]
