@@ -36,14 +36,11 @@ __all__ = [
 # Items                                                         Script where items live
 # ----------------------------------------------------------    -----------------------
 # global variable ASTROPY_LT_7_1_1                              st_fitsdiff.py
-# global variable ASTROPY_VER_MSG                               st_fitsdiff.py
 # function where_not_allclose                                   st_fitsdiff.py
 # lines in function report_to_list that pass the abs/rel max    test_stfitsdiff.py
 ASTROPY_LT_7_1_1 = Version(astropy_version) < Version("7.1.1.dev")
 
 if ASTROPY_LT_7_1_1:
-    ASTROPY_VER_MSG = ""
-
     # This function is for now copied from astropy. We can remove it once jwst updates the
     # astropy pin that contains this new functionality, i.e. above v.7.1.0.
     def where_not_allclose(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):  # noqa: no-redef
@@ -103,11 +100,6 @@ if ASTROPY_LT_7_1_1:
             return indices, max_absolute, max_relative
         else:
             return indices
-else:
-    ASTROPY_VER_MSG = (
-        "\n\n *** Astropy version greater than v7.1.0. "
-        "PLEASE REMOVE FUNCTION where_not_allclose_new FROM st_fitsdiff.py\n\n"
-    )
 
 
 def set_variable_to_empty_list(variable):
@@ -432,9 +424,6 @@ class STFITSDiffBeta(FITSDiff):
             with warnings.catch_warnings():
                 warnings.simplefilter("ignore", RuntimeWarning)
                 hdu_diff.report(self._fileobj, indent=self._indent + 1)
-
-        if self.report_pixel_loc_diffs:
-            self._writeln(ASTROPY_VER_MSG)
 
 
 class STHDUDiff(HDUDiff):
