@@ -185,6 +185,14 @@ def mock_nircam_image(
 def test_tso_phot():
     datamodel = mock_nircam_image(convert_units=True)
 
+    # add some NaNs to one of the integrations
+    # make sure at least one is in the annulus and one in the aperture
+    data = datamodel.data
+    data[-1, 50, 75] = np.nan
+    data[-1, 50 + 2, 75 - 2] = np.nan
+    data[-1, 50 - 9, 75] = np.nan
+    datamodel.data = data
+
     # Use a larger radius than was used for creating the data.
     catalog = tp.tso_aperture_photometry(
         datamodel,
@@ -205,16 +213,19 @@ def test_tso_phot():
     assert np.allclose(catalog["aperture_x"].value, XCENTER, atol=0.01)
     assert np.allclose(catalog["aperture_y"].value, YCENTER, atol=0.01)
 
-    assert np.allclose(catalog["aperture_sum"].value, 1263.4778, rtol=1.0e-7)
-    assert np.allclose(catalog["aperture_sum_err"].value, 0.0, atol=1.0e-7)
-    assert np.allclose(catalog["net_aperture_sum"].value, 1173.0, rtol=1.0e-7)
-    assert np.allclose(catalog["annulus_sum"].value, 143.256627, rtol=1.0e-7)
-    assert np.allclose(catalog["annulus_sum_err"].value, 0.0, atol=1.0e-7)
-    assert np.allclose(catalog["annulus_mean"].value, BACKGROUND, rtol=1.0e-7)
+    assert np.allclose(catalog["aperture_sum"].value[:-1], 1263.4778, rtol=1.0e-7)
+    assert np.allclose(catalog["net_aperture_sum"].value[:-1], 1173.0, rtol=1.0e-7)
+    assert np.allclose(catalog["annulus_sum"].value[:-1], 143.256627, rtol=1.0e-7)
+    # check that NaNs made sums smaller
+    assert np.isclose(catalog["aperture_sum"].value[-1], 1227.8778178321238, rtol=1.0e-7)
+    assert np.isclose(catalog["net_aperture_sum"].value[-1], 1138.9999480843544, rtol=1.0e-7)
+    assert np.isclose(catalog["annulus_sum"].value[-1], 142.45662712646373, rtol=1.0e-7)
 
-    assert np.allclose(catalog["annulus_mean"].value, 0.8, rtol=1.0e-6)
+    # mean of background annulus should be the same even with NaNs because dividing by non-NaN area
+    assert np.allclose(catalog["annulus_mean"].value, BACKGROUND, rtol=1.0e-7)
+    assert np.allclose(catalog["aperture_sum_err"].value, 0.0, atol=1.0e-7)
+    assert np.allclose(catalog["annulus_sum_err"].value, 0.0, atol=1.0e-7)
     assert np.allclose(catalog["annulus_mean_err"].value, 0.0, rtol=1.0e-7)
-    assert np.allclose(catalog["net_aperture_sum"].value, 1173.0, rtol=1.0e-7)
     assert np.allclose(catalog["net_aperture_sum_err"].value, 0.0, atol=1.0e-7)
 
 
