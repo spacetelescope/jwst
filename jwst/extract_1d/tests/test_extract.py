@@ -8,7 +8,9 @@ from numpy.testing import assert_allclose, assert_equal
 
 from jwst.datamodels import ModelContainer
 from jwst.extract_1d import extract as ex
+from jwst.extract_1d import ifu
 from jwst.extract_1d import psf_profile as pp
+from jwst.extract_1d.extract_1d_step import Extract1dStep
 
 
 @pytest.fixture()
@@ -455,6 +457,24 @@ def test_is_prism_nirspec(mock_nirspec_fs_one_slit):
 def test_is_prism_miri(mock_miri_ifu):
     mock_miri_ifu.meta.instrument.filter = "P750L"
     assert ex.is_prism(mock_miri_ifu) is True
+
+
+def test_ifu_extract_1d(mock_miri_ifu):
+    # set the inputs for the IFU 1D extraction
+    source_type = "UNKNOWN"
+    subtract_background = None
+    bkg_sigma_clip = 3.0
+    step = Extract1dStep()
+    ref_file = step.get_reference_file(mock_miri_ifu, "extract1d")
+    ifu_extraction_inputs = [
+        mock_miri_ifu,
+        ref_file,
+        source_type,
+        subtract_background,
+        bkg_sigma_clip,
+    ]
+    output_model = ifu.ifu_extract1d(*ifu_extraction_inputs)
+    assert output_model.spec[0].position_angle == 150.0
 
 
 def test_copy_keyword_info(mock_nirspec_fs_one_slit, mock_one_spec):
@@ -1440,13 +1460,11 @@ def test_extract_one_slit_optimal_vertical(
 def test_create_extraction_with_photom(create_extraction_inputs):
     model = create_extraction_inputs[0]
     model.meta.cal_step.photom = "COMPLETE"
-    model.meta.aperture.position_angle = 150.0
 
     ex.create_extraction(*create_extraction_inputs)
 
     output_model = create_extraction_inputs[2]
     assert output_model.spec[0].spec_table.columns["flux"].unit == "Jy"
-    assert output_model.spec[0].position_angle == 150.0
 
 
 def test_create_extraction_without_photom(create_extraction_inputs):
@@ -1531,6 +1549,7 @@ def test_create_extraction_one_int(create_extraction_inputs, mock_nirspec_bots, 
     ex.create_extraction(*create_extraction_inputs, log_increment=1)
     output_model = create_extraction_inputs[2]
     assert len(output_model.spec) == 1
+    assert output_model.spec[0].position_angle == 150.0
     watcher.assert_seen()
 
 
@@ -1637,7 +1656,6 @@ def test_create_extraction_optimal(monkeypatch, create_extraction_inputs, psf_re
     # profile contains positive and negative nod, summed
     assert np.all(profile_model.data[:10] > 0)
     assert np.all(profile_model.data[-10:] < 0)
-
     profile_model.close()
 
 
@@ -1752,7 +1770,6 @@ def test_run_extract1d_slitmodel_name(mock_nirspec_fs_one_slit, from_name_attr):
 @pytest.mark.parametrize("from_name_attr", [True, False])
 def test_run_extract1d_imagemodel_name(mock_miri_lrs_fs, from_name_attr):
     model = mock_miri_lrs_fs
-    model.meta.aperture.position_angle = 150.0
     slit_name = "test_slit_name"
     if from_name_attr:
         model.name = slit_name
@@ -1760,7 +1777,6 @@ def test_run_extract1d_imagemodel_name(mock_miri_lrs_fs, from_name_attr):
         model.name = None
 
     output_model, _, _, _ = ex.run_extract1d(model)
-    assert output_model.spec[0].position_angle == 150.0
     if from_name_attr:
         assert output_model.spec[0].name == "test_slit_name"
     else:
