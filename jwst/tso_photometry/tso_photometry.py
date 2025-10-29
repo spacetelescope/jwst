@@ -121,8 +121,10 @@ def tso_aperture_photometry(
 
     aperture_sum = []
     aperture_sum_err = []
+    aperture_area = []
     annulus_sum = []
     annulus_sum_err = []
+    annulus_area = []
 
     if sub64p_wlp8:
         info = (
@@ -155,15 +157,20 @@ def tso_aperture_photometry(
                 datamodel.data[i, :, :], bkg_aper, error=datamodel.err[i, :, :]
             )
 
+            # sum_aper_area is the number of valid (unmasked) pixels in the aperture
             aperture_sum.append(aperstats.sum)
             aperture_sum_err.append(aperstats.sum_err)
+            aperture_area.append(aperstats.sum_aper_area.value)
             annulus_sum.append(annstats.sum)
             annulus_sum_err.append(annstats.sum_err)
+            annulus_area.append(annstats.sum_aper_area.value)
 
     aperture_sum = np.array(aperture_sum)
     aperture_sum_err = np.array(aperture_sum_err)
+    aperture_area = np.array(aperture_area)
     annulus_sum = np.array(annulus_sum)
     annulus_sum_err = np.array(annulus_sum_err)
+    annulus_area = np.array(annulus_area)
 
     # construct metadata for output table
     meta = OrderedDict()
@@ -195,10 +202,10 @@ def tso_aperture_photometry(
         tbl["annulus_sum"] = annulus_sum << unit
         tbl["annulus_sum_err"] = annulus_sum_err << unit
 
-        annulus_mean = annulus_sum / bkg_aper.area
-        annulus_mean_err = annulus_sum_err / bkg_aper.area
-        aperture_bkg = annulus_mean * phot_aper.area
-        aperture_bkg_err = annulus_mean_err * phot_aper.area
+        annulus_mean = annulus_sum / annulus_area
+        annulus_mean_err = annulus_sum_err / annulus_area
+        aperture_bkg = annulus_mean * aperture_area
+        aperture_bkg_err = annulus_mean_err * aperture_area
 
         tbl["annulus_mean"] = annulus_mean << unit
         tbl["annulus_mean_err"] = annulus_mean_err << unit
