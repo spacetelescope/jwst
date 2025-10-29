@@ -72,8 +72,12 @@ def disable_logging(level=logging.CRITICAL):
             # code containing logging to ignore, other than CRITICAL messages
             ...
     """
-    logging.disable(level)
-    try:
+    current_level = logging.root.manager.disable
+    if current_level < level:
+        logging.disable(level)
+        try:
+            yield
+        finally:
+            logging.disable(current_level)
+    else:
         yield
-    finally:
-        logging.disable(logging.NOTSET)
