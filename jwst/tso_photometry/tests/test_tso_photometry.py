@@ -141,6 +141,7 @@ def include_int_times(datamodel):
     # integration_number and time_arr are one_indexed
     integration_number = np.arange(1, nrows + 1, dtype=np.float32)
     time_arr = np.arange(1, nrows + 1, dtype=np.float64) + 58700.0
+    bjd_arr = time_arr + 0.5  # placeholder BJD TDB values
     mock_data = np.arange(nrows, dtype=np.float64)
 
     it_dtype = [
@@ -155,13 +156,13 @@ def include_int_times(datamodel):
 
     otab = np.array(
         list(
-            zip(integration_number, mock_data, time_arr, mock_data, mock_data, mock_data, mock_data)
+            zip(integration_number, mock_data, time_arr, mock_data, mock_data, bjd_arr, mock_data)
         ),
         dtype=it_dtype,
     )
     datamodel.int_times = otab.copy()
 
-    return time_arr
+    return time_arr, bjd_arr
 
 
 def mock_nircam_image(
@@ -258,7 +259,7 @@ def test_tso_phot_with_int_times():
     datamodel = mock_nircam_image()
 
     # Add integration times to the model
-    int_times = include_int_times(datamodel)
+    int_times, bjd_times = include_int_times(datamodel)
 
     catalog = tp.tso_aperture_photometry(
         datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER
@@ -267,6 +268,7 @@ def test_tso_phot_with_int_times():
     offset = datamodel.meta.exposure.integration_start - 1
     slc = slice(offset, offset + datamodel.data.shape[0])
     assert np.allclose(catalog["MJD"], int_times[slc], atol=1.0e-8)
+    assert np.allclose(catalog["BJD_TDB"], bjd_times[slc], atol=1.0e-8)
 
 
 def test_tso_phot_int_times_out_of_range():
@@ -297,13 +299,14 @@ def test_tso_phot_int_times_out_of_range():
         ]
     )
     assert np.allclose(catalog["MJD"], int_times, rtol=1.0e-8)
+    assert np.all(np.isnan(catalog["BJD_TDB"]))
 
 
 def test_tso_phot_missing_int_start():
     datamodel = mock_nircam_image()
 
     # Add integration times
-    int_times = include_int_times(datamodel)
+    int_times, bjd_times = include_int_times(datamodel)
 
     # Remove the integration start: it sill be assumed to be 1
     datamodel.meta.exposure.integration_start = None
@@ -315,6 +318,7 @@ def test_tso_phot_missing_int_start():
     offset = 0
     slc = slice(offset, offset + datamodel.data.shape[0])
     assert np.allclose(catalog["MJD"], int_times[slc], atol=1.0e-8)
+    assert np.allclose(catalog["BJD_TDB"], bjd_times[slc], atol=1.0e-8)
 
 
 def test_tso_phot_uncalibrated():
