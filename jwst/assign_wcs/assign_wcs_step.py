@@ -165,9 +165,10 @@ class AssignWcsStep(Step):
                     imaging_func = nircam_imaging
                 elif result_exptype == "mir_wfss":
                     imaging_func = miri_imaging
+                    # The current MIRI WFSS specwcs is an best that can be derived using
+                    # limited test data. With specific MIRI WFSS test data the specwsc will
+                    # be updated and likely the sip_max_inv_pix_error increase can be relaxed.
                     self.sip_max_inv_pix_error = self.sip_max_inv_pix_error * 2
-                else:
-                    log.warning(f" EXP Type is not of a WFSS mode {result_exptype}")
 
                 wfss_imaging_wcs(
                     result,

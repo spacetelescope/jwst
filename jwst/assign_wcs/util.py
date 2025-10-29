@@ -369,15 +369,13 @@ def create_grism_bbox(
     ``wfss_extract_half_height`` can only be applied to point source objects.
     """
     instr_name = input_model.meta.instrument.name
-    if instr_name == "NIRCAM":
+    if instr_name in ["NIRCAM", "MIRI"]:
         filter_name = input_model.meta.instrument.filter
     elif instr_name == "NIRISS":
         filter_name = input_model.meta.instrument.pupil
-    elif instr_name == "MIRI":
-        filter_name = input_model.meta.instrument.filter
     else:
         raise ValueError(
-            "create_grism_object works with NIRCAM, NIRISS, and MIRI  WFSS exposures only."
+            "create_grism_object works with NIRCAM, NIRISS, and MIRI WFSS exposures only."
         )
 
     if reference_files is None:

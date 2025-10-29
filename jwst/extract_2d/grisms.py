@@ -542,8 +542,8 @@ def extract_grism_objects(
                 new_slit.meta.wcs = subwcs
 
                 if compute_wavelength:
-                    new_slit.wavelength = compute_wfss_wavelength(new_slit)
                     log.debug("Computing wavelengths")
+                    new_slit.wavelength = compute_wfss_wavelength(new_slit)
 
                 # set x/ystart values relative to the image (screen) frame.
                 # The overall subarray offset is recorded in model.meta.subarray.

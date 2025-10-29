@@ -46,12 +46,10 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
         f"--steps.extract_1d.override_extract1d={extract1d_file}",
         f"--steps.extract_1d.override_apcorr={apcorr_file}",
         "--steps.bkg_subtract.skip=true",
-        "--steps.flat_field.save_results=true",
         "--steps.extract_2d.save_results=true",
         "--steps.srctype.save_results=true",
         "--steps.photom.save_results=true",
         "--steps.extract_1d.save_results=true",
-        "--steps.bkg_subtract.skip=true",
     ]
 
     Step.from_cmdline(args)
