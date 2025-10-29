@@ -256,14 +256,14 @@ def _get_int_times(datamodel):
 
     Parameters
     ----------
-    datamodel : ~stdatamodels.jwst.datamodels.CubeModel
+    datamodel : `~stdatamodels.jwst.datamodels.CubeModel`
         The input data model.
 
     Returns
     -------
-    int_times_utc : ~astropy.time.Time
+    int_times_utc : `~astropy.time.Time`
         An array of integration mid-times in MJD UTC.
-    int_times_bjd : ~astropy.time.Time
+    int_times_bjd : `~astropy.time.Time`
         An array of integration mid-times in BJD_TDB.
     """
     # check for the INT_TIMES table extension
@@ -317,7 +317,6 @@ def _get_int_times(datamodel):
         int_dt = TimeDelta(dt_arr, format="sec")
         int_times_utc = Time(datamodel.meta.exposure.start_time, format="mjd") + int_dt
 
-        # Convert to approximate BJD TDB
         log.warning("INT_TIMES table missing; BJD_TDB times not computed.")
         int_times_bjd = None
 
