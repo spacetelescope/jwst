@@ -5,7 +5,7 @@ import gwcs
 import numpy as np
 from astropy.stats import SigmaClip, sigma_clipped_stats
 from astropy.utils.exceptions import AstropyUserWarning
-from gwcs.utils import _toindex
+from gwcs.utils import to_index
 from photutils.background import Background2D, MedianBackground
 from scipy.optimize import curve_fit
 from stdatamodels.jwst.datamodels import dqflags
@@ -298,8 +298,8 @@ def mask_slits(input_model, mask):
     # Note that for 3D masks (TSO mode), all planes will be set to the same value.
     for slit in slits:
         bbox = input_model.meta.wcs.bounding_box[slit]
-        xlo, xhi = _toindex(bbox[0])
-        ylo, yhi = _toindex(bbox[1])
+        xlo, xhi = to_index(bbox[0])
+        ylo, yhi = to_index(bbox[1])
         mask[..., ylo:yhi, xlo:xhi] = False
 
     return mask

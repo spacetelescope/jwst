@@ -9,9 +9,9 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord
 from astropy.stats import circmean
 from gwcs import wcstools
+from gwcs.utils import to_index
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
-from stdatamodels.jwst.transforms.models import _toindex
 
 from jwst.assign_wcs import nirspec, pointing
 from jwst.assign_wcs.util import wrap_ra
@@ -2008,8 +2008,8 @@ class IFUCubeData:
         regions = list(range(start_region, end_region + 1))
         for i in regions:
             ys, xs = (det2ab_transform.label_mapper.mapper == i).nonzero()
-            xind = _toindex(xs)
-            yind = _toindex(ys)
+            xind = to_index(xs)
+            yind = to_index(ys)
             xind = np.ndarray.flatten(xind)
             yind = np.ndarray.flatten(yind)
             slice_det[yind, xind] = i
@@ -2036,8 +2036,8 @@ class IFUCubeData:
         x = x[valid1]
         y = y[valid1]
 
-        xind = _toindex(x)
-        yind = _toindex(y)
+        xind = to_index(x)
+        yind = to_index(y)
         xind = np.ndarray.flatten(xind)
         yind = np.ndarray.flatten(yind)
         slice_no = slice_det[yind, xind]
@@ -2234,8 +2234,8 @@ class IFUCubeData:
                 dec4 = dec4[final]
                 dwave = dwave[final]
 
-                xind = _toindex(x)
-                yind = _toindex(y)
+                xind = to_index(x)
+                yind = to_index(y)
                 xind = np.ndarray.flatten(xind)
                 yind = np.ndarray.flatten(yind)
                 ra = np.ndarray.flatten(ra)
@@ -2260,8 +2260,8 @@ class IFUCubeData:
                 dec4_det[yind, xind] = dec4
 
             else:  # not drizzling
-                xind = _toindex(x)
-                yind = _toindex(y)
+                xind = to_index(x)
+                yind = to_index(y)
                 xind = np.ndarray.flatten(xind)
                 yind = np.ndarray.flatten(yind)
 
