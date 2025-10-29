@@ -112,8 +112,9 @@ class Observation:
     def __init__(
         self,
         direct_image,
-        segmap_model,
+        segmentation_map,
         grism_wcs,
+        direct_image_wcs,
         boundaries=None,
         max_cpu=1,
         max_pixels_per_chunk=5e4,
@@ -125,12 +126,14 @@ class Observation:
 
         Parameters
         ----------
-        direct_image : str
-            File name containing direct imaging data
-        segmap_model : `jwst.datamodels.ImageModel`
-            Segmentation map model
-        grism_wcs : gwcs object
+        direct_image : np.ndarray
+            Direct imaging data.
+        segmentation_map : np.ndarray
+            Segmentation map data.
+        grism_wcs : `~gwcs.wcs.WCS`
             WCS object from grism image
+        direct_image_wcs : `~gwcs.wcs.WCS`
+            WCS object from direct image
         boundaries : list, optional
             Start/Stop coordinates of the FOV within the larger seed image.
         max_cpu : int, optional
@@ -147,9 +150,9 @@ class Observation:
         if boundaries is None:
             boundaries = []
         # Load all the info for this grism mode
-        self.seg_wcs = segmap_model.meta.wcs
+        self.direct_image_wcs = direct_image_wcs
         self.grism_wcs = grism_wcs
-        self.seg = segmap_model.data
+        self.seg = segmentation_map
         all_ids = list(set(np.ravel(self.seg)))
         all_ids.remove(0)  # Remove the background ID
         self.source_ids = all_ids
@@ -262,7 +265,7 @@ class Observation:
                     wmax,
                     sens_waves,
                     sens_response,
-                    self.seg_wcs,
+                    self.direct_image_wcs,
                     self.grism_wcs,
                     self.naxis,
                     self.oversample_factor,

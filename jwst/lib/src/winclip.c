@@ -93,6 +93,18 @@ int mem_alloc(int nelem, int **xv, int **yv, dbl_type **av, int **idx) {
     dbl_type *a;
     const char *msg = "Couldn't allocate memory for output arrays.";
 
+    if (nelem <= 0) {
+        free(*xv);
+        free(*yv);
+        free(*av);
+        free(*idx);
+        *xv = NULL;
+        *yv = NULL;
+        *av = NULL;
+        *idx = NULL;
+        return 0;
+    }
+
     // x-array:
     x = (int*) realloc(*xv, nelem * sizeof(int));
     if (x) {
@@ -478,7 +490,7 @@ static PyMethodDef winclip_methods[] =
 {
     {
         "get_clipped_pixels",  get_clipped_pixels, METH_VARARGS,
-        "get_clipped_pixels(image, histogram, minValue, maxValue, binWidth)"
+        "get_clipped_pixels(xc, yc, padding, nx, ny, width, height)"
     },
     {0, 0}  /* sentinel */
 };

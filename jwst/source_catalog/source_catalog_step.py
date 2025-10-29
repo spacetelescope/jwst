@@ -104,6 +104,9 @@ class SourceCatalogStep(Step):
 
             coverage_mask = np.isnan(model.err) | (model.wht == 0)
 
+            # convert to Jy before calling make_tweakreg_catalog so the outputs end up in Jy
+            JWSTSourceCatalog.convert_mjysr_to_jy(model)
+
             starfinder_kwargs = {
                 "sigma_radius": self.sigma_radius,
                 "minsep_fwhm": self.minsep_fwhm,
@@ -139,7 +142,6 @@ class SourceCatalogStep(Step):
                 log.warning("No sources found in the image. Catalog will be empty.")
                 return None
 
-            JWSTSourceCatalog.convert_mjysr_to_jy(model)
             ci_star_thresholds = (self.ci1_star_threshold, self.ci2_star_threshold)
             catobj = JWSTSourceCatalog(
                 model,
