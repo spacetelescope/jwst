@@ -5,7 +5,7 @@ Step Arguments
 The master background subtraction step uses the following optional arguments.
 
 ``--median_kernel``
-  Optional user-supplied kernel size for a moving-median boxcar filter to filter 
+  Optional user-supplied kernel size for a moving-median boxcar filter to filter
   outliers in the master background spectrum.  The kernel size must be an odd integer.
   Even integers will be rounded down to the nearest odd integer.
   Defaults to 1 (which applies no median filtering).
@@ -21,9 +21,9 @@ The master background subtraction step uses the following optional arguments.
 ``--save_background``
   A boolean indicating whether the computed 1-D master background spectrum should be saved
   to a file. The file name uses a product type suffix of "masterbg".
-  For the `master_background_mos` step, multiple files will be produced including the 1-D 
+  For the ``master_background_mos`` step, multiple files will be produced including the 1-D
   master background spectrum (saved with the suffix "masterbg1d"), the expanded 2-D background spectra
-  for each MOS slitlet (with the suffix "masterbg2d"), and the 1-D background spectra 
+  for each MOS slitlet (with the suffix "masterbg2d"), and the 1-D background spectra
   that were combined into the master background spectrum (with the suffix "bkgx1d").
   If a user-supplied background is specified, this argument is ignored.
   Defaults to ``False``.
@@ -40,11 +40,11 @@ The master background subtraction step uses the following optional arguments.
   determine the name of the output file created by the step. Defaults to ``True``.
 
 ``--sigma_clip``
-  Factor for sigma clipping outliers and contaminated spectra when combining MOS 
-  background spectra in the `master_background_mos` step.  The value of ``sigma_clip`` 
-  will be used to set an outlier threshold for clipping any pixels in the background 
+  Factor for sigma clipping outliers and contaminated spectra when combining MOS
+  background spectra in the ``master_background_mos`` step.  The value of ``sigma_clip``
+  will be used to set an outlier threshold for clipping any pixels in the background
   spectra that deviate from the median and median absolute deviation of the inputs before
   combining the background spectra.  Setting ``sigma_clip`` to None will
-  skip any outlier clipping.  This parameter is only available in `master_background_mos`
-  step and is not available in the generic `master_background` step.
+  skip any outlier clipping.  This parameter is only available in ``master_background_mos``
+  step and is not available in the generic ``master_background`` step.
   Defaults to 3.

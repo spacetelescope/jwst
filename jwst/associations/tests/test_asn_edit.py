@@ -27,3 +27,14 @@ def test_remove_asn(ignore):
     assert len(asn["products"]) == 5
     found = asn_edit._lookup(asn, "test_lrs1_rate.fits")
     assert len(found) == 0
+
+
+def test_write_asn(tmp_cwd):
+    """Test adding a product to an association"""
+    asn = asn_edit.reader(JSON_FILE)
+
+    new_file = "tempcopy_asn_level2.json"
+    asn_edit.writer(asn, new_file)
+    asn2 = asn_edit.reader(new_file)
+
+    assert asn == asn2

@@ -58,8 +58,8 @@ def detect_outliers(
         Scale factor used to scale the absolute dervative of the blot model for the second pass.
     backg : float
         Scalar background level to add to the blotted image.
-        Ignored if `input_model.meta.background.level` is not None but
-        `input_model.meta.background.subtracted` is False.
+        Ignored if ``input_model.meta.background.level`` is not None but
+        ``input_model.meta.background.subtracted`` is False.
     resample_data : bool
         If True, resample the data before detecting outliers.
     weight_type : str
@@ -77,7 +77,7 @@ def detect_outliers(
 
     Returns
     -------
-    ModelContainer
+    `~jwst.datamodels.container.ModelContainer`
         The input models with outliers flagged.
     """
     if not isinstance(input_models, ModelContainer):

@@ -23,7 +23,7 @@ def do_correction(model):
 
     Parameters
     ----------
-    model : data model object
+    model : `~stdatamodels.jwst.datamodels.RampModel`
         Science data to be corrected. Model is modified in place.
     """
     # Get the meta data values that we need
@@ -40,8 +40,6 @@ def do_correction(model):
 
     # Apply the rescaling to the entire data array
     scale = float(frame_divisor) / nframes
-    if not isinstance(type(model.data), float):
-        model.data = (model.data).astype(float)
     model.data *= scale
     model.meta.cal_step.group_scale = "COMPLETE"
 

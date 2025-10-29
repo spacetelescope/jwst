@@ -163,6 +163,13 @@ def test_pixel_replace_no_container(input_model_function, algorithm):
     assert np.all(result.dq[..., :, 1] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
     assert np.all(result.dq[..., 1, :] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
 
+    # Step is recorded as complete
+    assert result.meta.cal_step.pixel_replace == "COMPLETE"
+
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.pixel_replace is None
+
     result.close()
     input_model.close()
 
@@ -193,6 +200,13 @@ def test_pixel_replace_multislit(input_model_function, algorithm):
     )
     assert np.all(result.slits[0].dq[..., :, 1] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
     assert np.all(result.slits[0].dq[..., 1, :] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
+
+    # Step is recorded as complete
+    assert result.meta.cal_step.pixel_replace == "COMPLETE"
+
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.pixel_replace is None
 
     result.close()
     input_model.close()
@@ -238,6 +252,10 @@ def test_pixel_replace_nirspec_ifu(tmp_cwd, input_model_function, algorithm):
     assert np.all(result.dq[..., :, 1] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
     assert np.all(result.dq[..., 1, :] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
 
+    # Input is not modified
+    assert result is not input_model
+    assert input_model.meta.cal_step.pixel_replace is None
+
     result.close()
     input_model.close()
 
@@ -267,5 +285,86 @@ def test_pixel_replace_container_names(tmp_cwd, input_model_function):
             assert model.meta.cal_step.pixel_replace == "COMPLETE"
             assert model.meta.filename == expected_name[i]
 
+    # Input is not modified
+    for model in container:
+        assert model.meta.cal_step.pixel_replace is None
+
     result.close()
     input_model.close()
+
+
+def test_pixel_replace_no_valid_data(caplog):
+    """Test pixel replace for no valid data."""
+    input_model, bad_idx = nirspec_tso()
+
+    # Set a middle region to NaN to test invalid data handling
+    input_model.data[2, :, 5:15] = np.nan
+    input_model.dq[2, 1:-1, 5:15] = 1
+
+    # Set one pixel valid in the middle with no valid data next to
+    # it to test missing adjacent data
+    input_model.data[2, 10, 10] = 1.0
+    input_model.dq[2, 10, 10] = 0
+    input_model.dq[2, :, 9] = 1
+    input_model.dq[2, :, 11] = 1
+
+    result = PixelReplaceStep.call(input_model, algorithm="fit_profile", n_adjacent_cols=1)
+
+    assert caplog.text.count("has no valid values - skipping") == 7
+    assert caplog.text.count("has no valid adjacent values - skipping") == 1
+
+    for ext in ["data", "err", "var_poisson", "var_rnoise", "var_flat"]:
+        # non-science edges are uncorrected
+        assert np.all(np.isnan(getattr(result, ext)[..., :, 1]))
+        assert np.all(np.isnan(getattr(result, ext)[..., 1, :]))
+
+        # bad pixel is replaced: input had one nan value, output does not
+        assert np.isnan(getattr(input_model, ext)[bad_idx])
+        assert getattr(result, ext)[bad_idx] == 1.0
+
+        # invalid data is left alone
+        assert np.all(np.isnan(result.data[2, 1:-1, 5:10]))
+        assert np.all(np.isnan(result.data[2, 1:-1, 11:15]))
+
+    # The DQ plane for the bad pixel is updated to remove do-not-use
+    # and add flux-estimated. The non-science edges are unchanged.
+    assert result.dq[bad_idx] == (
+        input_model.dq[bad_idx] - flags["DO_NOT_USE"] + flags["FLUX_ESTIMATED"]
+    )
+    assert np.all(result.dq[:2, :, 1] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
+    assert np.all(result.dq[:2, 1, :] == flags["DO_NOT_USE"] + flags["NON_SCIENCE"])
+
+    # Invalid region is still marked DNU
+    assert np.all(result.dq[2, 1:-1, 5:10] == flags["DO_NOT_USE"])
+    assert np.all(result.dq[2, 1:-1, 11:15] == flags["DO_NOT_USE"])
+    assert np.all(result.dq[2, 10, 10] == 0)
+    assert np.all(result.dq[2, :, 9] == flags["DO_NOT_USE"])
+    assert np.all(result.dq[2, :, 11] == flags["DO_NOT_USE"])
+
+    result.close()
+    input_model.close()
+
+
+def test_skip_unexpected_type():
+    bad_model = datamodels.RampModel()
+    result = PixelReplaceStep.call(bad_model)
+
+    # Step is skipped
+    assert result.meta.cal_step.pixel_replace == "SKIPPED"
+
+    # Input is not modified
+    assert result is not bad_model
+    assert bad_model.meta.cal_step.pixel_replace is None
+
+
+def test_skip_unexpected_type_in_container():
+    bad_model = datamodels.RampModel()
+    container = ModelContainer([bad_model])
+    result = PixelReplaceStep.call(container)
+
+    # Step is skipped
+    assert result[0].meta.cal_step.pixel_replace == "SKIPPED"
+
+    # Input is not modified
+    assert result[0] is not bad_model
+    assert bad_model.meta.cal_step.pixel_replace is None

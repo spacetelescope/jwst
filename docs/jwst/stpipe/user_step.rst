@@ -12,8 +12,8 @@ parameters on it.
 
 Steps can be configured by either:
 
-    - Writing a parameter file
-    - Instantiating the Step directly from Python
+* Writing a parameter file
+* Instantiating the Step directly from Python
 
 .. _running_a_step_from_a_configuration_file:
 
@@ -39,7 +39,7 @@ fully-qualified Python path to the class.  Step classes can ship with
 ``stpipe`` itself, they may be part of other Python packages, or they
 exist in freestanding modules alongside the configuration file.  For
 example, to use the ``SystemCall`` step included with ``stpipe``, set
-``class`` to ``stpipe.subprocess.SystemCall``.  To use a class called
+``class`` to ``stpipe.subproc.SystemCall``.  To use a class called
 ``Custom`` defined in a file ``mysteps.py`` in the same directory as
 the configuration file, set ``class`` to ``mysteps.Custom``.
 
@@ -60,7 +60,7 @@ parameters that require customization.
 Here is an example parameter file (``do_cleanup.asdf``) that runs the (imaginary)
 step ``stpipe.cleanup`` to clean up an image.
 
-.. code-block::
+.. code-block:: yaml
 
     #ASDF 1.0.0
     #ASDF_STANDARD 1.3.0
@@ -82,9 +82,8 @@ The ``strun`` command can be used to run Steps from the commandline.
 
 The first argument may be either:
 
-    - The path to a parameter file
-
-    - A Python class
+* The path to a parameter file
+* A Python class
 
 Additional parameters may be passed on the commandline. These parameters
 override any that are present in the parameter file. Any extra positional
@@ -92,37 +91,69 @@ parameters on the commandline are passed to the step's process method. This will
 often be input filenames.
 
 For example, to use an existing parameter file from above, but
-override it so the threshold parameter is different::
+override it so the threshold parameter is different:
 
-    $ strun do_cleanup.asdf input.fits --threshold=86
+.. code-block:: shell
+
+    strun do_cleanup.asdf input.fits --threshold=86
 
 To display a list of the parameters that are accepted for a given Step
 class, pass the ``-h`` parameter, and the name of a Step class or
-parameter file::
+parameter file:
 
-    $ strun -h do_cleanup.asdf
-    usage: strun [--logcfg LOGCFG] cfg_file_or_class [-h] [--pre_hooks]
-                 [--post_hooks] [--skip] [--scale] [--extname]
+.. code-block:: text
 
-    optional arguments:
-      -h, --help       show this help message and exit
-      --logcfg LOGCFG  The logging configuration file to load
-      --verbose, -v    Turn on all logging messages
-      --debug          When an exception occurs, invoke the Python debugger, pdb
-      --pre_hooks
-      --post_hooks
-      --skip           Skip this step
-      --scale          A scale factor
-      --threshold      The threshold below which to apply cleanup
-      --output_file    File to save the output to
+    strun -h do_cleanup.asdf
 
-Every step has an `--output_file` parameter.  If one is not provided,
-the output filename is determined based on the input file by appending
-the name of the step.  For example, in this case, `foo.fits` is output
-to `foo_cleanup.fits`.
+The command would show text similar to this::
+
+    usage: strun [-h] [--debug] [--save-parameters SAVE_PARAMETERS] [--disable-crds-steppars] [--verbose] [--log-level LOG_LEVEL] [--log-file LOG_FILE] [--log-stream LOG_STREAM]
+                 [--pre_hooks] [--post_hooks] [--output_file] [--output_dir] [--output_ext] [--output_use_model] [--output_use_index] [--save_results] [--skip] [--suffix] [--search_output_file] [--input_dir]
+                 cfg_file_or_class [args ...]
+
+    Clean up image.
+
+    positional arguments:
+      cfg_file_or_class     The configuration file or Python class to run
+      args                  arguments to pass to step
+
+    options:
+      -h, --help            show this help message and exit
+      --debug               When an exception occurs, invoke the Python debugger, pdb
+      --save-parameters SAVE_PARAMETERS
+                            Save step parameters to specified file
+      --disable-crds-steppars
+                            Disable retrieval of step parameter references files from CRDS
+      --verbose, -v         Turn on all logging messages
+      --log-level LOG_LEVEL
+                            Log level (DEBUG, INFO, WARNING, ERROR, CRITICAL). Ignored if 'verbose' is specified.
+      --log-file LOG_FILE   Full path to a file name to record log messages
+      --log-stream LOG_STREAM
+                            Log stream for terminal messages (stdout, stderr, or null).
+      --pre_hooks           List of Step classes to run before step [default=list]
+      --post_hooks          List of Step classes to run after step [default=list]
+      --output_file         File to save output to.
+      --output_dir          Directory path for output files
+      --output_ext          Output file type [default='.fits']
+      --output_use_model    When saving use `DataModel.meta.filename` [default=False]
+      --output_use_index    Append index. [default=True]
+      --save_results        Force save results [default=False]
+      --skip                Skip this step [default=False]
+      --suffix              Default suffix for output files
+      --search_output_file
+                            Use outputfile define in parent step [default=True]
+      --input_dir           Input directory
+      --scale               A scale factor
+      --threshold           The threshold below which to apply cleanup
+
+
+Every step has a number of standard parameters, including the ``--output_file`` parameter.
+If an output filename is not provided, it is determined based on the input file by
+appending the name of the step.  For example, in this case, ``foo.fits`` is output
+to ``foo_cleanup.fits``.
 
 Finally, the parameters a ``Step`` actually ran with can be saved to a new
-parameter file using the `--save-parameters` option. This file will have all
+parameter file using the ``--save-parameters`` option. This file will have all
 the parameters, specific to the step, and the final values used.
 
 .. _`Parameter Precedence`:
@@ -134,34 +165,34 @@ There are a number of places where the value of a parameter can be specified.
 The order of precedence, from most to least significant, for parameter value
 assignment is as follows:
 
-    1. Value specified on the command-line: ``strun step.asdf --par=value_that_will_be_used``
-    2. Value found in the user-specified parameter file
-    3. CRDS-retrieved parameter reference
-    4. ``Step``-coded default, determined by the parameter definition ``Step.spec``
+1. Value specified on the command-line: ``strun step.asdf --par=value_that_will_be_used``
+2. Value found in the user-specified parameter file
+3. CRDS-retrieved parameter reference
+4. ``Step``-coded default, determined by the parameter definition ``Step.spec``
 
 For pipelines, if a pipeline parameter file specifies a value for a step in the
 pipeline, that takes precedence over any step-specific value found, either from
 a step-specific parameter file or CRDS-retrieved step-specific parameter file.
 The full order of precedence for a pipeline and its sub steps is as follows:
 
-    1. Value specified on the command-line: ``strun pipeline.asdf --steps.step.par=value_that_will_be_used``
-    2. Value found in the user-specified pipeline parameter file: ``strun pipeline.asdf``
-    3. Value found in the parameter file specified in a pipeline parameter file
-    4. CRDS-retrieved parameter reference for the pipeline
-    5. CRDS-retrieved parameter reference for each sub-step
-    6. ``Pipeline``-coded default for itself and all sub-steps
-    7. ``Step``-coded default for each sub-step
+1. Value specified on the command-line: ``strun pipeline.asdf --steps.step.par=value_that_will_be_used``
+2. Value found in the user-specified pipeline parameter file: ``strun pipeline.asdf``
+3. Value found in the parameter file specified in a pipeline parameter file
+4. CRDS-retrieved parameter reference for the pipeline
+5. CRDS-retrieved parameter reference for each sub-step
+6. ``Pipeline``-coded default for itself and all sub-steps
+7. ``Step``-coded default for each sub-step
 
 
 Debugging
 `````````
 
-To output all logging output from the step, add the `--verbose` option
+To output all logging output from the step, add the ``--verbose`` option
 to the commandline.  (If more fine-grained control over logging is
-required, see :ref:`user-logging`).
+required, see :ref:`logging`).
 
 To start the Python debugger if the step itself raises an exception,
-pass the `--debug` option to the commandline.
+pass the ``--debug`` option to the commandline.
 
 
 CRDS Retrieval of Step Parameters
@@ -188,41 +219,43 @@ depending on how much control one needs.
 Step.from_cmdline()
 ```````````````````
 
-For individuals who are used to using the ``strun`` command, `Step.from_cmdline`
+For individuals who are used to using the ``strun`` command, ``Step.from_cmdline``
 is the most direct method of executing a step or pipeline. The only argument is
 a list of strings, representing the command line arguments one would have used
 for ``strun``. The call signature is::
 
     Step.from_cmdline([string,...])
 
-For example, given the following command-line::
+For example, given the following command-line:
 
-    $ strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits
-            --steps.linearity.override_linearity='my_lin.fits'
+.. code-block:: shell
 
-the equivalent `from_cmdline` call would be::
+    strun calwebb_detector1 jw00017001001_01101_00001_nrca1_uncal.fits --steps.linearity.override_linearity='my_lin.fits'
 
-    from jwst.pipeline import Detector1Pipeline
-    Detector1Pipeline.from_cmdline(['jw00017001001_01101_00001_nrca1_uncal.fits',
-                                   'steps.linearity.override_linearity', 'my_lin.fits'])
+the equivalent ``from_cmdline`` call would be::
+
+    from jwst.stpipe import Step
+    Step.from_cmdline([
+        "calwebb_detector1",
+        "jw00017001001_01101_00001_nrca1_uncal.fits",
+        "--steps.linearity.override_linearity='my_lin.fits'"
+    ])
 
 
 call()
 ``````
 
-Class method `Step.call` is the slightly more programmatic, and preferred,
+Class method ``Step.call`` is the slightly more programmatic, and preferred,
 method of executing a step or pipeline. When using ``call``, one gets the full
 configuration initialization, including CRDS parameter reference retrieval, that
 one gets with the ``strun`` command or ``Step.from_cmdline`` method. The call
 signature is::
 
-    Step.call(input, config_file=None, **parameters)
+    Step.call(input_data, config_file=None, **parameters)
 
-The positional argument ``input`` is the data to be operated on, usually a
+The positional argument ``input_data`` is the data to be operated on, usually a
 string representing a file path or a :ref:`DataModel<jwst-data-models>`
-The optional
-keyword argument ``config_file`` is used to specify a local parameter file. The
-optional keyword argument ``logcfg`` is used to specify a logging configuration file.
+The optional keyword argument ``config_file`` is used to specify a local parameter file.
 Finally, the remaining optional keyword arguments are the parameters that the
 particular step accepts. The method returns the result of the step. A basic
 example is::
@@ -230,8 +263,8 @@ example is::
     from jwst.jump import JumpStep
     output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits')
 
-makes a new instance of `JumpStep` and executes using the specified exposure
-file. `JumpStep` has a parameter ``rejection_threshold``. To use a different
+makes a new instance of ``JumpStep`` and executes using the specified exposure
+file. ``JumpStep`` has a parameter ``rejection_threshold``. To use a different
 value than the default, the statement would be::
 
     output = JumpStep.call('jw00017001001_01101_00001_nrca1_uncal.fits',
@@ -246,7 +279,7 @@ to it using the ``config_file`` argument::
 run()
 `````
 
-The instance method `Step.run()` is the lowest-level method to executing a step
+The instance method ``Step.run()`` is the lowest-level method to executing a step
 or pipeline. Initialization and parameter settings are left up to the user. An
 example is::
 
@@ -254,9 +287,9 @@ example is::
 
     mystep = FlatFieldStep()
     mystep.override_sflat = 'sflat.fits'
-    output = mystep.run(input)
+    output = mystep.run(input_data)
 
-`input` in this case can be a fits file containing the appropriate data, or the output
+``input_data`` in this case can be a fits file containing the appropriate data, or the output
 of a previously run step/pipeline, which is an instance of a particular
 :ref:`datamodel<jwst-data-models>`.
 
@@ -269,7 +302,7 @@ the step. The previous example could be re-written as::
     from jwst.flatfield import FlatFieldStep
 
     mystep = FlatFieldStep(override_sflat='sflat.fits')
-    output = mystep.run(input)
+    output = mystep.run(input_data)
 
 One can implement parameter reference file retrieval and use of a local
 parameter file as follows::
@@ -277,14 +310,9 @@ parameter file as follows::
     from stpipe import config_parser
     from jwst.flatfield import FlatFieldStep
 
-    config = FlatFieldStep.get_config_from_reference(input)
+    config = FlatFieldStep.get_config_from_reference(input_data)
     local_config = config_parser.load_config_file('my_flatfield_config.asdf')
     config_parser.merge_config(config, local_config)
 
     flat_field_step = FlatFieldStep.from_config_section(config)
-    output = flat_field_step.run(input)
-
-Using the ``.run()`` method is the same as calling the instance directly.
-They are equivalent::
-
-    output = mystep(input)
+    output = flat_field_step.run(input_data)

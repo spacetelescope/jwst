@@ -46,7 +46,7 @@ def create_pipeline(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     log.debug(f"reference files used in NIRISS WCS pipeline: {reference_files}")
     exp_type = input_model.meta.exposure.type.lower()
@@ -61,14 +61,14 @@ def niriss_soss_set_input(model, order_number):
 
     Parameters
     ----------
-    model : `~jwst.datamodels.ImageModel`
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
         An instance of an ImageModel
     order_number : int
         The spectral order
 
     Returns
     -------
-    gwcs.WCS
+    gwcs.wcs.WCS
         The WCS corresponding to the spectral order.
     """
     # Make sure the spectral order is available.
@@ -150,7 +150,7 @@ def niriss_soss(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     # Get the target RA and DEC, they will be used for setting the WCS RA
     # and DEC based on a conversation with Kevin Volk.
@@ -194,7 +194,7 @@ def niriss_soss(input_model, reference_files):
         velocity_corr = velocity_correction(velosys)
         wl1 = wl1 | velocity_corr
         wl2 = wl2 | velocity_corr
-        wl2 = wl3 | velocity_corr
+        wl3 = wl3 | velocity_corr
         log.info(f"Applied Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
 
     # Reverse the order of inputs passed to Tabular because it's in python order in modeling.
@@ -253,7 +253,7 @@ def imaging(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     detector = cf.Frame2D(name="detector", axes_order=(0, 1), unit=(u.pix, u.pix))
     v2v3 = cf.Frame2D(
@@ -360,7 +360,7 @@ def wfss(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
 
     Notes
     -----

@@ -58,17 +58,17 @@ The FITS file structure is as follows.
  - REFOUT: The MIRI detector reference output values. Only appears in MIRI exposures.
  - ADSF: The data model meta data.
 
-This FITS file structure is the result of serializing a `~jwst.datamodels.Level1bModel`, but
-can also be read into a `~jwst.datamodels.RampModel`, in which case zero-filled
+This FITS file structure is the result of serializing a `~stdatamodels.jwst.datamodels.Level1bModel`, but
+can also be read into a `~stdatamodels.jwst.datamodels.RampModel`, in which case zero-filled
 GROUPDQ and PIXELDQ data arrays will be created and stored in the model, having array
-dimensions based on the shape of the SCI array (see `~jwst.datamodels.RampModel`).
+dimensions based on the shape of the SCI array (see `~stdatamodels.jwst.datamodels.RampModel`).
 
 .. _ramp:
 
 Ramp data: ``ramp``
 ^^^^^^^^^^^^^^^^^^^
 As raw data progress through the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline
-they are stored internally in a `~jwst.datamodels.RampModel`.
+they are stored internally in a `~stdatamodels.jwst.datamodels.RampModel`.
 This type of data model is serialized to a ``ramp`` type FITS
 file on disk. The original detector pixel values (in the SCI extension) are converted
 from integer to floating-point data type. The same is true for the ZEROFRAME and REFOUT
@@ -166,7 +166,7 @@ The FITS file structure for a ``rateints`` product is as follows:
    based on read noise only.
  - ADSF: The data model meta data.
 
-These FITS files are compatible with the `~jwst.datamodels.CubeModel` data model.
+These FITS files are compatible with the `~stdatamodels.jwst.datamodels.CubeModel` data model.
 
 The FITS file structure for a ``rate`` product is as follows:
 
@@ -199,7 +199,7 @@ The FITS file structure for a ``rate`` product is as follows:
    based on read noise only.
  - ADSF: The data model meta data.
 
-These FITS files are compatible with the `~jwst.datamodels.ImageModel` data model.
+These FITS files are compatible with the `~stdatamodels.jwst.datamodels.ImageModel` data model.
 
 Note that the ``INT_TIMES`` table does not appear in ``rate`` products, because the
 data have been averaged over all integrations and hence the per-integration time stamps
@@ -214,8 +214,9 @@ The :ref:`calwebb_image2 <calwebb_image2>` and :ref:`calwebb_spec2 <calwebb_spec
 pipelines have the capability to perform background subtraction on countrate data.
 In its simplest form, this consists of subtracting background exposures or a
 CRDS background reference image from science images. This operation is performed by
-the :ref:`background <background_subtraction>` step in the stage 2 pipelines. If the pipeline
-parameter ``save_bsub`` is set to ``True``, the result of the background subtraction
+the :ref:`background <background_subtraction>` step in the stage 2 pipelines. If the
+background step's ``save_results`` parameter is set to ``True``,
+the result of the background subtraction
 step will be saved to a file. Because this is a direct image-from-image operation, the
 form of the result is identical to input. If the input is a ``rate`` product, the
 background-subtracted result will be a ``bsub`` product, which has the exact same
@@ -749,7 +750,7 @@ Stacked PSF data: ``psfstack``
 The :ref:`stack_refs <stack_refs_step>` step in the :ref:`calwebb_coron3 <calwebb_coron3>`
 pipeline takes a collection of PSF reference image and assembles them into a 3-D stack of
 PSF images, which results in a ``psfstack`` product. The ``psfstack`` product uses the
-`~jwst.datamodels.CubeModel` data model, which when serialized to a FITS file has the
+`~stdatamodels.jwst.datamodels.CubeModel` data model, which when serialized to a FITS file has the
 structure shown below.
 
 +-----+-------------+----------+-----------+-----------------------+
@@ -776,31 +777,9 @@ structure shown below.
 Aligned PSF data: ``psfalign``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The :ref:`align_refs <align_refs_step>` step in the :ref:`calwebb_coron3 <calwebb_coron3>`
-pipeline creates a 3-D stack of PSF images that are aligned to corresponding science target
-images. The resulting ``psfalign`` product uses the `~jwst.datamodels.QuadModel` data model,
-which when serialized to a FITS file has the structure and content shown below.
-
-+-----+-------------+----------+-----------+-------------------------------+
-| HDU | EXTNAME     | HDU Type | Data Type | Dimensions                    |
-+=====+=============+==========+===========+===============================+
-|  0  | N/A         | primary  | N/A       | N/A                           |
-+-----+-------------+----------+-----------+-------------------------------+
-|  1  | SCI         | IMAGE    | float32   | ncols x nrows x npsfs x nints |
-+-----+-------------+----------+-----------+-------------------------------+
-|  2  | DQ          | IMAGE    | uint32    | ncols x nrows x npsfs x nints |
-+-----+-------------+----------+-----------+-------------------------------+
-|  3  | ERR         | IMAGE    | float32   | ncols x nrows x npsfs x nints |
-+-----+-------------+----------+-----------+-------------------------------+
-|  4  | ASDF        | BINTABLE | N/A       | variable                      |
-+-----+-------------+----------+-----------+-------------------------------+
-
- - SCI: 4-D data array containing a stack of 2-D PSF images aligned to each integration
-   within a corresponding science target exposure.
-   each integration.
- - DQ: 4-D data array containing DQ flags for each PSF image.
- - ERR: 4-D data array containing a stack of 2-D uncertainty estimates for each PSF image,
-   per science target integration.
- - ADSF: The data model meta data.
+pipeline shifts the stack of PSF images to align them to the first science target image.
+The resulting ``psfalign`` product uses the `~stdatamodels.jwst.datamodels.CubeModel` data model,
+which has the same structure as the :ref:`psfstack` product.
 
 .. _psfsub:
 
@@ -809,7 +788,7 @@ PSF-subtracted data: ``psfsub``
 The :ref:`klip <klip_step>` step in the :ref:`calwebb_coron3 <calwebb_coron3>`
 pipeline subtracts an optimized combination of PSF images from each integration in a
 science target exposure. The resulting PSF-subtracted science exposure data uses the
-`~jwst.datamodels.CubeModel` data model, which when serialized to a FITS file has the
+`~stdatamodels.jwst.datamodels.CubeModel` data model, which when serialized to a FITS file has the
 structure shown below.
 
 +-----+-------------+----------+-----------+-----------------------+
@@ -857,20 +836,19 @@ AMI derived data created by the :ref:`ami_analyze <ami_analyze_step>`
 and :ref:`ami_normalize <ami_normalize_step>` steps
 as part of the :ref:`calwebb_ami3 <calwebb_ami3>` pipeline are stored in OIFITS files.
 These are a particular type of FITS files containing several binary table extensions
-and are encapsulated within a `~jwst.datamodels.AmiOIModel` data model.
+and are encapsulated within a `~stdatamodels.jwst.datamodels.AmiOIModel` data model.
 There are two additional outputs of the :ref:`ami_analyze <ami_analyze_step>` intended
 to enable a more detailed look at the data. The ``amimulti-oi`` file contains per-integration
-interferometric observables and is also a contained in a `~jwst.datamodels.AmiOIModel`,
+interferometric observables and is also a contained in a `~stdatamodels.jwst.datamodels.AmiOIModel`,
 while the ``amilg`` product is a primarily image-based FITS file containing the
 cropped data, model, and residuals as well as the best-fit model parameters. It
-is contained in a `~jwst.datamodels.AmiLgFitModel` data model.
+is contained in a `~stdatamodels.jwst.datamodels.AmiLgFitModel` data model.
 
 The :ref:`ami_normalize <ami_normalize_step>` step produces an ``aminorm-oi`` product,
-which is also contained in a `~jwst.datamodels.AmiOIModel`. The model conforms to the standard
+which is also contained in a `~stdatamodels.jwst.datamodels.AmiOIModel`. The model conforms to the standard
 defined in `OIFITS2 standard <https://doi.org/10.1051/0004-6361/201526405>`_.
 
-In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS",
-and "OI_VIS2" extensions each contain 2D data columns whose second dimension equals
+In the per-integration ``amimulti-oi`` products the "OI_ARRAY", "OI_T3", "OI_VIS", "OI_VIS2", and "OI_Q4" extensions each contain 2D data columns whose second dimension equals
 the number of integrations. In the averaged ``ami-oi`` product and normalized ``aminorm-oi``
 products, these columns have a single dimension whose length is independent of the number
 of integrations.
@@ -893,16 +871,19 @@ The overall structure of the OIFITS files (``ami-oi``, ``amimulti-oi``, and
 +-----+--------------+----------+-----------+------------------+
 |  5  |   OI_VIS2    | BINTABLE |    N/A    | 10 col x 21 rows |
 +-----+--------------+----------+-----------+------------------+
-|  6  | OI_WAVELENGTH| BINTABLE |    N/A    |    variable      |
+|  6  |    OI_Q4     | BINTABLE |    N/A    | 16 col x 35 rows |
 +-----+--------------+----------+-----------+------------------+
-|  7  |     ASDF     | BINTABLE |    N/A    |    variable      |
+|  7  | OI_WAVELENGTH| BINTABLE |    N/A    |    variable      |
++-----+--------------+----------+-----------+------------------+
+|  8  |     ASDF     | BINTABLE |    N/A    |    variable      |
 +-----+--------------+----------+-----------+------------------+
 
  - OI_ARRAY: AMI subaperture information
  - OI_TARGET: Target properties
- - OI_T3: Table of closure amplitudes, phases
+ - OI_T3: Table of triple-product amplitudes, closure phases
  - OI_VIS: Table of visibility (fringe) amplitudes, phases
  - OI_VIS2: Table of squared visibility (fringe) amplitudes
+ - OI_Q4: Table of closure amplitudes, four-hole phases
  - OI_WAVELENGTH: Filter information
  - ADSF: The data model meta data.
 

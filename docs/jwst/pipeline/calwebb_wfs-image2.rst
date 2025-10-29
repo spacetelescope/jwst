@@ -4,7 +4,7 @@ calwebb_wfs-image2: Stage 2 WFS&C Processing
 ============================================
 
 :Deprecated post-1.1.0:
-   
+
    The operation of the pipeline is no longer dependent on built-in configuration files.
    How `jwst.pipeline.Image2Pipeline` processes WFS&C data is determined by the CRDS
    reftype ``pars-image2pipeline``. The version of ``calwebb_wfs-image2.cfg`` delivered with
@@ -46,10 +46,10 @@ Inputs
 2D countrate data
 ^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _rate
 
-The input to ``Image2Pipeline`` is a countrate exposure, in the form of "_rate" 
+The input to ``Image2Pipeline`` is a countrate exposure, in the form of "_rate"
 data. A single input file can be processed or an ASN file listing
 multiple inputs can be used, in which case the processing steps will be
 applied to each input exposure, one at a time.
@@ -60,7 +60,7 @@ Outputs
 2D calibrated data
 ^^^^^^^^^^^^^^^^^^
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _cal
 
 The output is a fully calibrated, but unrectified, exposure, using

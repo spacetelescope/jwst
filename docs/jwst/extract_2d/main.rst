@@ -10,7 +10,8 @@ The ``extract_2d`` step extracts 2D arrays from spectral images. The extractions
 are performed within all of the SCI, ERR, and DQ arrays of the input image
 model, as well as any variance arrays that may be present. It also computes an
 array of wavelengths to attach to the extracted data. The extracted arrays
-are stored as one or more ``slit`` objects in an output ``MultiSlitModel``
+are stored as one or more ``slit`` objects in an output
+`~stdatamodels.jwst.datamodels.MultiSlitModel`
 and saved as separate tuples of extensions in the output FITS file.
 
 Assumptions
@@ -52,24 +53,23 @@ and "S400A1". For NIRSpec MOS exposures, the slit name is the slitlet number fro
 MSA metadata file, corresponding to the value of the "SLTNAME" keyword in FITS products,
 and it has to be provided as a string, e.g. slit_name='60'.
 
-To find out what slits are available for extraction:
+To find out what slits are available for extraction::
 
-  >>> from jwst.assign_wcs import nirspec
-  >>> nirspec.get_open_slits(input_model) # doctest: +SKIP
-
+    from jwst.assign_wcs import nirspec
+    nirspec.get_open_slits(input_model)
 
 The corner locations of the regions to be extracted are determined from the
 ``bounding_box`` contained in the exposure's WCS, which defines the range of valid inputs
 along each axis. The input coordinates are in the image frame, i.e. subarray shifts
 are accounted for.
 
-The output ``MultiSlitModel`` data model will have the meta data associated with each
+The output `~stdatamodels.jwst.datamodels.MultiSlitModel` data model will have the meta data associated with each
 slit region populated with the name and region characteristic for the slits,
 corresponding to the FITS keywords "SLTNAME", "SLTSTRT1", "SLTSIZE1",
 "SLTSTRT2", and "SLTSIZE2."  Keyword "DISPAXIS" (dispersion direction)
 will be copied from the input file to each of the output cutout images.
 
-The "SRCXPOS" and "SRCYPOS" keywords in the SCI extension header of each slitlet 
+The "SRCXPOS" and "SRCYPOS" keywords in the SCI extension header of each slitlet
 are also populated with estimates of the source
 x (dispersion) and y (cross-dispersion) location within the slitlet.
 For MOS data, these values are taken from the :ref:`MSA metadata file<msa_metadata>`.
@@ -93,7 +93,7 @@ position from the WCS information.
 NIRCam and NIRISS WFSS
 ++++++++++++++++++++++
 
-During normal, automated processing of WFSS grism images, the 
+During normal, automated processing of WFSS grism images, the
 step parameter ``grism_objects`` is left unspecified, in which case the ``extract_2d``
 step uses the source catalog that is specified in the input model's meta information,
 ``input_model.meta.source_catalog.filename`` ("SCATFILE" keyword) to define the
@@ -113,8 +113,8 @@ The ``wfss_mmag_extract`` and ``wfss_nbright`` parameters both affect which obje
 from a source catalog will be retained for extraction. The rejection or retention of
 objects proceeds as follows:
 
-1. As each object is read from the source catalog, they are immediately rejected if 
-   their isophotal_abmag > ``wfss_mmag_extract``, meaning that only objects brighter than
+1. As each object is read from the source catalog, they are immediately rejected if
+   their ``isophotal_abmag > wfss_mmag_extract``, meaning that only objects brighter than
    ``wfss_mmag_extract`` will be retained. The default ``wfss_mmag_extract`` value of
    ``None`` retains all objects.
 
@@ -139,13 +139,12 @@ for the wavelength range of each spectral order to be extracted are also require
 they are stored in the ``wavelengthrange`` reference file, which can be retrieved from CRDS.
 
 Load the grism image, which is assumed to have already been processed through ``assign_wcs``,
-into an `ImageModel` data model (used for all 2-D "images", regardless of whether
-they actually contain imaging data or dispersed spectra):
+into an `~stdatamodels.jwst.datamodels.ImageModel` data model
+(used for all 2-D "images", regardless of whether
+they actually contain imaging data or dispersed spectra)::
 
-.. doctest-skip::
-
-  >>> from stdatamodels.jwst.datamodels import ImageModel
-  >>> input_model = ImageModel("jw12345001001_03101_00001_nis_assign_wcs.fits")
+    from stdatamodels.jwst.datamodels import ImageModel
+    input_model = ImageModel("jw12345001001_03101_00001_nis_assign_wcs.fits")
 
 Load the ``extract_2d`` step and retrieve the ``wavelengthrange`` reference file
 specific for this mode:
@@ -196,7 +195,7 @@ Create a list of grism objects for a specified spectral order and wavelength ran
 In this case we don't use the default wavelength range limits from the ``wavelengthrange``
 reference file, but instead designate custom limits via the ``wavelength_range`` parameter
 passed to the ``create_grism_bbox`` function, which is a dictionary of the form
-``{spectral_order: (wave_min, wave_max)}``. 
+``{spectral_order: (wave_min, wave_max)}``.
 Use the source ID, ``sid``, to identify the object(s) to be modified.
 The computed extraction limits are stored in the ``order_bounding`` attribute,
 which is ordered ``(y, x)``.
@@ -239,7 +238,8 @@ defined in that list:
 
   >>> result = step.call(input_model, grism_objects=grism_objects)
 
-``result`` is a ``MultiSlitModel`` data model, containing one ``SlitModel``
+``result`` is a `~stdatamodels.jwst.datamodels.MultiSlitModel` data model,
+containing one `~stdatamodels.jwst.datamodels.SlitModel`
 instance for each extracted object, which includes meta data that identify
 each object and the actual extracted data arrays, e.g.:
 
@@ -266,10 +266,10 @@ for all computations involving the extent of the spectral trace and pixel wavele
 assignments.
 
 In rare cases, it may be desirable to shift the source location in the X-direction, e.g.
-for a custom noise suppression scheme. This is achieved in the APT by specifying an 
-offset special requirement, and shows up in the header keyword "XOFFSET". The 
+for a custom noise suppression scheme. This is achieved in the APT by specifying an
+offset special requirement, and shows up in the header keyword "XOFFSET". The
 ``extract_2d`` step accounts for this offset by simply shifting the wavelength array by
-the appropriate amount. The WCS information remains unchanged. Note that offsets in the 
+the appropriate amount. The WCS information remains unchanged. Note that offsets in the
 Y-direction (cross-dispersion direction) are not supported and should not be attempted.
 
 NIRCam subarrays used for TSGRISM observations always have their "bottom" edge located
@@ -306,6 +306,8 @@ modes. For NIRSpec observations there is one applicable argument:
   of None will cause all known slits for the instrument to be extracted.
 
 ``slit_names`` and ``source_ids`` can be used at the same time, duplicates will be filtered out.
+If either argument is specified, but no valid slits are identified, an error will be
+raised and the step will exit.
 
 There are several arguments available for Wide-Field Slitless Spectroscopy (WFSS) and
 Time-Series (TSO) grism spectroscopy:
@@ -320,7 +322,7 @@ Time-Series (TSO) grism spectroscopy:
 
 ``--wfss_mmag_extract``
   float (default is ``None``). The minimum (faintest) magnitude object to extract, based on
-  the value of `isophotal_abmag` in the source catalog. Only applies to WFSS mode.
+  the value of ``isophotal_abmag`` in the source catalog. Only applies to WFSS mode.
 
 ``--wfss_nbright``
   int (default is 1000). The number of brightest source catalog objects to extract.

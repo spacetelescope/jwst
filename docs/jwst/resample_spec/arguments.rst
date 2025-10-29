@@ -2,7 +2,7 @@
 
 Step Arguments
 ==============
-The `resample_spec` step has the following optional arguments that control
+The ``resample_spec`` step has the following optional arguments that control
 the behavior of the processing and the characteristics of the resampled
 image.
 
@@ -12,7 +12,7 @@ image.
 
 ``--kernel`` (str, default='square')
     The form of the kernel function used to distribute flux onto the output
-    image.  Available kernels for spectral data are `square` and `point`.
+    image.  Available kernels for spectral data are ``square`` and ``point``.
     Other drizzle kernels, available for imaging data, do not conserve
     spectral flux.
 
@@ -100,11 +100,11 @@ image.
 
 ``--weight_type`` (str, default='ivm')
     The weighting type for each input image.
-    If `weight_type=ivm` (the default), the scaling value
+    If ``weight_type="ivm"`` (the default), the scaling value
     will be determined per-pixel using the inverse of the read noise
     (VAR_RNOISE) array stored in each input image. If the VAR_RNOISE array does
     not exist, the variance is set to 1 for all pixels (equal weighting).
-    If `weight_type=exptime`, the scaling value will be set equal to the
+    If ``weight_type="exptime"``, the scaling value will be set equal to the
     measurement time (TMEASURE) found in the image header if available;
     if unavailable, the scaling will be set equal to the exposure time (EFFEXPTM).
 
@@ -118,5 +118,5 @@ image.
 
 ``--in_memory`` (boolean, default=True)
   Specifies whether or not to load and create all images that are used during
-  processing into memory. If ``False``, input files are loaded from disk when
+  processing into memory. If `False`, input files are loaded from disk when
   needed and all intermediate files are stored on disk, rather than in memory.

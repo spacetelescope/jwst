@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import logging
 from collections import defaultdict
 from pathlib import Path
 
@@ -14,6 +15,8 @@ from jwst.stpipe import Pipeline
 
 __all__ = ["Coron3Pipeline"]
 
+log = logging.getLogger(__name__)
+
 
 def to_container(model):
     """
@@ -21,12 +24,12 @@ def to_container(model):
 
     Parameters
     ----------
-    model : CubeModel
+    model : `~stdatamodels.jwst.datamodels.CubeModel`
         The input model to convert
 
     Returns
     -------
-    container : ModelContainer
+    container : `~jwst.datamodels.container.ModelContainer`
         The container of ImageModels
     """
     container = ModelContainer()
@@ -93,10 +96,10 @@ class Coron3Pipeline(Pipeline):
 
         Parameters
         ----------
-        user_input : str, Level3 Association, or ~jwst.datamodels.JwstDataModel
+        user_input : str, Level3 Association, or `~stdatamodels.jwst.datamodels.JwstDataModel`
             The exposure or association of exposures to process
         """
-        self.log.info("Starting calwebb_coron3 ...")
+        log.info("Starting calwebb_coron3 ...")
         asn_exptypes = ["science", "psf"]
 
         # Create a DM object using the association table
@@ -129,14 +132,14 @@ class Coron3Pipeline(Pipeline):
         # Make sure we found some PSF and target members
         if len(psf_files) == 0:
             err_str1 = "No reference PSF members found in association table."
-            self.log.error(err_str1)
-            self.log.error("Calwebb_coron3 processing will be aborted")
+            log.error(err_str1)
+            log.error("Calwebb_coron3 processing will be aborted")
             return
 
         if len(targ_files) == 0:
             err_str1 = "No science target members found in association table"
-            self.log.error(err_str1)
-            self.log.error("Calwebb_coron3 processing will be aborted")
+            log.error(err_str1)
+            log.error("Calwebb_coron3 processing will be aborted")
             return
 
         for member in psf_files + targ_files:
@@ -205,25 +208,25 @@ class Coron3Pipeline(Pipeline):
         try:
             completed = result.meta.cal_step.resample
         except AttributeError:
-            self.log.debug("Could not determine if resample was completed.")
-            self.log.debug("Presuming not.")
+            log.debug("Could not determine if resample was completed.")
+            log.debug("Presuming not.")
 
             completed = "SKIPPED"
         if completed == "COMPLETE":
-            self.log.debug(f"Blending metadata for {result}")
+            log.debug(f"Blending metadata for {result}")
             model_blender.finalize_model(result)
 
         try:
             result.meta.asn.pool_name = input_models.asn_pool_name
             result.meta.asn.table_name = Path(user_input).name
         except AttributeError:
-            self.log.debug("Cannot set association information on final")
-            self.log.debug(f"result {result}")
+            log.debug("Cannot set association information on final")
+            log.debug(f"result {result}")
 
         # Save the final result
         self.save_model(result, suffix=self.suffix)
 
         # We're done
-        self.log.info("...ending calwebb_coron3")
+        log.info("...ending calwebb_coron3")
 
         return

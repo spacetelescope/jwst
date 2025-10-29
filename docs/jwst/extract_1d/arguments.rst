@@ -15,7 +15,7 @@ The following arguments apply to all modes unless otherwise specified.
 
 ``--apply_apcorr``
   Switch to select whether or not to apply an APERTURE correction during the
-  Extract1dStep processing. Default is ``True``. Has no effect for NIRISS SOSS data
+  Extract1dStep processing. Default is `True`. Has no effect for NIRISS SOSS data
   or for optimal extractions.
 
 Step Arguments for Slit and Slitless Spectroscopic Data
@@ -42,7 +42,7 @@ Step Arguments for Slit and Slitless Spectroscopic Data
   source position correction for extended sources.
 
 ``--position_offset``
-  Specify a number of pixels (fractional pixels are allowed) to offset the 
+  Specify a number of pixels (fractional pixels are allowed) to offset the
   extraction aperture from the nominal position.  The default is 0.
 
 ``--model_nod_pair``
@@ -104,7 +104,7 @@ Step Arguments for Slit and Slitless Spectroscopic Data
 
 ``--log_increment``
   For multi-integration extractions, if this parameter is set to a value greater
-  than zero, an INFO-level log message will be printed every `log_increment` integrations
+  than zero, an INFO-level log message will be printed every ``log_increment`` integrations
   to report on progress. Default value is 50.
 
 ``--save_profile``
@@ -148,7 +148,7 @@ Step Arguments for IFU Data
   A string that can be used to override the extraction method for the source_type
   given by the SRCTYPE keyword. The allowed values are POINT and EXTENDED. The SRCTYPE keyword is
   not changed, instead the extraction method used is based on this parameter setting. This is
-  only allowed for MIRI MRS IFU data. 
+  only allowed for MIRI MRS IFU data.
 
 ``--ifu_rscale``
    A float designating the number of PSF FWHMs to use for the extraction radius. This
@@ -167,7 +167,7 @@ Step Arguments for NIRISS SOSS Data
 -----------------------------------
 
 ``--soss_atoca``
-  Flag to enable using the ATOCA algorithm to treat order contamination. Default is ``True``.
+  Flag to enable using the ATOCA algorithm to treat order contamination. Default is `True`.
 
 ``--soss_threshold``
   Threshold value for a pixel to be included when modeling the spectral trace. The default
@@ -225,3 +225,7 @@ Step Arguments for NIRISS SOSS Data
   the optional ATOCA model output of traces and pixel weights, with the filename
   set by this parameter. By default this is set to None and this output is
   not provided.
+
+``--soss_order_3``
+  Flag to enable including spectral order 3 in the extraction for SOSS.
+  Default is `True`.

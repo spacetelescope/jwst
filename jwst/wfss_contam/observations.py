@@ -26,7 +26,7 @@ def background_subtract(
 
     Parameters
     ----------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values
     box_size : tuple
         Size of box in pixels to use for background estimation.
@@ -40,7 +40,7 @@ def background_subtract(
 
     Returns
     -------
-    data : np.ndarray
+    data : ndarray
         2D array of pixel values with background subtracted
 
     Notes
@@ -72,7 +72,7 @@ def _select_ids(source_id, all_ids):
     ----------
     source_id : int or list-like
         ID(s) of source to process. If None, all sources processed.
-    all_ids : np.ndarray
+    all_ids : ndarray
         Array of all source IDs in the segmentation map
 
     Returns
@@ -112,60 +112,54 @@ class Observation:
     def __init__(
         self,
         direct_image,
-        segmap_model,
+        segmentation_map,
         grism_wcs,
-        filter_name,
-        source_id=None,
+        direct_image_wcs,
         boundaries=None,
-        offsets=None,
         max_cpu=1,
         max_pixels_per_chunk=5e4,
         oversample_factor=2,
+        phot_per_lam=True,
     ):
         """
         Initialize all data and metadata for a given observation.
 
         Parameters
         ----------
-        direct_image : str
-            File name containing direct imaging data
-        segmap_model : `jwst.datamodels.ImageModel`
-            Segmentation map model
-        grism_wcs : gwcs object
+        direct_image : np.ndarray
+            Direct imaging data.
+        segmentation_map : np.ndarray
+            Segmentation map data.
+        grism_wcs : `~gwcs.wcs.WCS`
             WCS object from grism image
-        filter_name : str
-            Filter name
-        source_id : int, optional, default 0
-            ID of source to process. If 0, all sources processed.
-        boundaries : list, optional, default []
+        direct_image_wcs : `~gwcs.wcs.WCS`
+            WCS object from direct image
+        boundaries : list, optional
             Start/Stop coordinates of the FOV within the larger seed image.
-        offsets : list, optional, default [0,0]
-            Offset values for x and y axes
-        max_cpu : int, optional, default 1
+        max_cpu : int, optional
             Max number of cpu's to use when multiprocessing
-        max_pixels_per_chunk : int, optional, default 1e5
+        max_pixels_per_chunk : int, optional
             Maximum number of pixels per chunk when dispersing sources
-        oversample_factor : int, optional, default 2
+        oversample_factor : int, optional
             Factor by which to oversample the wavelength grid
+        phot_per_lam : bool, optional
+            Whether to compute photometry per wavelength bin (True) or per pixel (False).
+            This depends on how the photom reference file has been delivered.
+            True should be used for NIRCam, and False should be used for NIRISS.
         """
         if boundaries is None:
             boundaries = []
-        if offsets is None:
-            offsets = [0, 0]
         # Load all the info for this grism mode
-        self.seg_wcs = segmap_model.meta.wcs
+        self.direct_image_wcs = direct_image_wcs
         self.grism_wcs = grism_wcs
-        self.seg = segmap_model.data
+        self.seg = segmentation_map
         all_ids = list(set(np.ravel(self.seg)))
         all_ids.remove(0)  # Remove the background ID
-        self.source_ids = _select_ids(source_id, all_ids)
-        self.filter = filter_name
-        self.pivlam = float(self.filter[1:4]) / 100.0
+        self.source_ids = all_ids
         self.max_cpu = max_cpu
         self.max_pixels_per_chunk = max_pixels_per_chunk
         self.oversample_factor = oversample_factor
-        self.xoffset = offsets[0]
-        self.yoffset = offsets[1]
+        self.phot_per_lam = phot_per_lam
 
         # ensure the direct image has background subtracted
         self.dimage = background_subtract(direct_image)
@@ -209,7 +203,9 @@ class Observation:
         self.fluxes = np.array(self.fluxes)
         self.source_ids_per_pixel = np.array(self.source_ids_per_pixel)
 
-    def chunk_sources(self, order, wmin, wmax, sens_waves, sens_response, max_pixels=1e5):
+    def chunk_sources(
+        self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None, max_pixels=1e5
+    ):
         """
         Chunk the sources into groups of max_pixels.
 
@@ -229,7 +225,9 @@ class Observation:
         current_chunk = []
         current_size = 0
 
-        for sid in self.source_ids:
+        source_ids = _select_ids(selected_ids, self.source_ids)
+
+        for sid in source_ids:
             n_pixels = np.sum(self.seg == sid)
             if n_pixels > max_pixels:
                 log.warning(
@@ -267,18 +265,17 @@ class Observation:
                     wmax,
                     sens_waves,
                     sens_response,
-                    self.seg_wcs,
+                    self.direct_image_wcs,
                     self.grism_wcs,
                     self.naxis,
                     self.oversample_factor,
-                    self.xoffset,
-                    self.yoffset,
+                    self.phot_per_lam,
                 ]
             )
 
         return disperse_args
 
-    def disperse_order(self, order, wmin, wmax, sens_waves, sens_response):
+    def disperse_order(self, order, wmin, wmax, sens_waves, sens_response, selected_ids=None):
         """
         Disperse the sources for a given spectral order, with multiprocessing.
 
@@ -292,15 +289,23 @@ class Observation:
             Minimum wavelength for dispersed spectra
         wmax : float
             Maximum wavelength for dispersed spectra
-        sens_waves : np.ndarray
+        sens_waves : ndarray
             Wavelength array from photom reference file
-        sens_response : np.ndarray
+        sens_response : ndarray
             Response (flux calibration) array from photom reference file
+        selected_ids : list, optional
+            List of source IDs to process. If None, all sources are processed.
         """
         # generate lists of input parameters for the disperse function
         # for each chunk of sources
         disperse_args = self.chunk_sources(
-            order, wmin, wmax, sens_waves, sens_response, max_pixels=self.max_pixels_per_chunk
+            order,
+            wmin,
+            wmax,
+            sens_waves,
+            sens_response,
+            selected_ids=selected_ids,
+            max_pixels=self.max_pixels_per_chunk,
         )
         t0 = time.time()
         if self.max_cpu > 1:
@@ -341,7 +346,7 @@ def _construct_slitmodel(
 
     Parameters
     ----------
-    img : np.ndarray
+    img : ndarray
         Dispersed model image of segmentation map source
     bounds : list
         The bounds of the object in relation to the full-frame image.

@@ -292,7 +292,6 @@ def test_equivalency():
         disjoint_product_asn,
         badtype_asn,
         badmember_asn,
-        badexptype_asn,
         badcandidate_asn,
     ],
 )
@@ -307,9 +306,26 @@ def test_fails(mismatched, standard=standard_asn):
     standard: Association
         The standard association.
     """
-    with pytest.raises(AssertionError):
-        left_asns = asn_diff.separate_products(mismatched)
-        right_asns = asn_diff.separate_products(standard)
+    left_asns = asn_diff.separate_products(mismatched)
+    right_asns = asn_diff.separate_products(standard)
+    with pytest.raises(AssertionError, match="Products in .* but not .*"):
+        asn_diff.compare_asn_lists(left_asns, right_asns)
+
+
+def test_fails_badexptype(standard=standard_asn):
+    """
+    Test for failure with bad exptype asn
+
+    Parameters
+    ----------
+    standard: Association
+        The standard association.
+    """
+    left_asns = asn_diff.separate_products(badexptype_asn)
+    right_asns = asn_diff.separate_products(standard)
+    with pytest.raises(
+        AssertionError, match="Left member_a_b: background\n    Right member_a_b: science"
+    ):
         asn_diff.compare_asn_lists(left_asns, right_asns)
 
 
@@ -359,8 +375,8 @@ def test_separate_products():
 def test_subset_product():
     """Test subset identification"""
     left, right = asn_diff.separate_products(asns_subset)
-    try:
+    with (
+        pytest.raises(asn_diff.MultiDiffError, match="Product Member length differs"),
+        pytest.raises(asn_diff.SubsetError, match="Left is a subset of right"),
+    ):
         asn_diff.compare_product_membership(left["products"][0], right["products"][0])
-    except asn_diff.MultiDiffError as exception:
-        if len(exception) > 1 or not isinstance(exception[0], asn_diff.SubsetError):
-            raise

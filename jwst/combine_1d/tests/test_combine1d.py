@@ -218,6 +218,8 @@ def test_wfss_multi_input(wfss_multiexposure):
     """Smoke test to ensure combine_1d works with WFSSMultiSpecModel"""
     result = Combine1dStep.call(wfss_multiexposure)
     assert isinstance(result, datamodels.WFSSMultiCombinedSpecModel)
+    assert result is not wfss_multiexposure
+
     tab = result.spec[0].spec_table
     assert tab.shape == (N_SOURCES,)
     assert result.meta.cal_step.combine_1d == "COMPLETE"
@@ -257,7 +259,56 @@ def test_allnan_skip(wfss_multiexposure, monkeypatch):
 
     # message when no valid input spectra at all are found
     watcher2 = LogWatcher("No valid input spectra found in WFSSMultiSpecModel")
-    monkeypatch.setattr(logging.getLogger("stpipe.Combine1dStep"), "error", watcher2)
+    monkeypatch.setattr(logging.getLogger("jwst.combine_1d.combine_1d_step"), "error", watcher2)
     result = Combine1dStep.call(wfss_multiexposure)
     assert result.meta.cal_step.combine_1d == "SKIPPED"
     watcher2.assert_seen()
+
+
+def test_allnan_skip_non_wfss(caplog, three_spectra):
+    """Test that all-nan spectra are skipped."""
+    # Set all flux values to NaN
+    for spec in three_spectra.spec:
+        spec.spec_table["FLUX"][:] = np.nan
+
+    result = Combine1dStep.call(three_spectra)
+    assert result.meta.cal_step.combine_1d == "SKIPPED"
+
+    # message when a single spectrum has no valid flux values
+    msg1 = "Input spectrum 0 order 1 has no valid flux values; skipping."
+    assert msg1 in caplog.text
+
+    # message when no valid input spectra are found for the source
+    msg2 = "No valid input spectra found for source. Skipping."
+    assert msg2 in caplog.text
+
+    # message when no valid input spectra at all are found
+    msg3 = "No valid input spectra found in WFSSMultiSpecModel"
+    assert msg2 in caplog.text
+
+
+def test_output_is_not_input(two_spectra):
+    """Test that input is not modified."""
+    result = Combine1dStep.call(two_spectra)
+
+    # Successful completion
+    assert result.meta.cal_step.combine_1d == "COMPLETE"
+
+    # Input is not modified
+    assert result is not two_spectra
+    assert two_spectra.meta.cal_step.combine_1d is None
+
+
+def test_combination_error(caplog):
+    """Test an error in combination."""
+    bad_model = datamodels.ImageModel()
+    result = Combine1dStep.call(bad_model)
+
+    # Step is skipped
+    assert result.meta.cal_step.combine_1d == "SKIPPED"
+    assert result is not bad_model
+    assert "Invalid input model" in caplog.text
+
+    # Input is not modified
+    assert result is not bad_model
+    assert bad_model.meta.cal_step.combine_1d is None

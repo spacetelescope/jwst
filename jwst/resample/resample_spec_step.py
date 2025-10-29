@@ -1,4 +1,4 @@
-__all__ = ["ResampleSpecStep"]
+import logging
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, MultiSlitModel
@@ -12,8 +12,12 @@ from jwst.resample import ResampleStep, resample_spec
 from jwst.resample.resample_utils import find_miri_lrs_sregion, load_custom_wcs
 from jwst.stpipe import Step
 
+__all__ = ["ResampleSpecStep"]
+
 # Force use of all DQ flagged data except for DO_NOT_USE and NON_SCIENCE
 GOOD_BITS = "~DO_NOT_USE+NON_SCIENCE"
+
+log = logging.getLogger(__name__)
 
 
 class ResampleSpecStep(Step):
@@ -49,70 +53,70 @@ class ResampleSpecStep(Step):
         SlitModel or MultiSlitModel
             The resampled output, one slit per source.
         """
-        input_new = datamodels.open(input_data)
+        with datamodels.open(input_data) as input_new:
+            # Check if input_new is a MultiSlitModel
+            model_is_msm = isinstance(input_new, MultiSlitModel)
 
-        # Check if input_new is a MultiSlitModel
-        model_is_msm = isinstance(input_new, MultiSlitModel)
+            #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
+            if model_is_msm and len((input_new[0]).shape) == 3:
+                log.warning("Resample spec step will be skipped")
+                result = input_new.copy()
+                result.meta.cal_step.resample = "SKIPPED"
 
-        #  If input is a 3D rateints MultiSlitModel (unsupported) skip the step
-        if model_is_msm and len((input_new[0]).shape) == 3:
-            self.log.warning("Resample spec step will be skipped")
-            input_new.meta.cal_step.resample = "SKIPPED"
+                return result
 
-            return input_new
+            # Convert ImageModel to SlitModel (needed for MIRI LRS)
+            if isinstance(input_new, ImageModel):
+                input_new = datamodels.SlitModel(input_new)
 
-        # Convert ImageModel to SlitModel (needed for MIRI LRS)
-        if isinstance(input_new, ImageModel):
-            input_new = datamodels.SlitModel(input_new)
+            if isinstance(input_new, ModelContainer):
+                input_models = input_new
 
-        if isinstance(input_new, ModelContainer):
-            input_models = input_new
+                try:
+                    output = input_models.meta.asn_table.products[0].name
+                except AttributeError:
+                    # NIRSpec MOS data goes through this path, as the container
+                    # is only ModelContainer-like, and doesn't have an asn_table
+                    # attribute attached.  Output name handling gets done in
+                    # _process_multislit() via the update method
+                    # TODO: the container-like object should retain asn_table
+                    output = None
+            else:
+                input_models = ModelContainer([input_new])
+                output = input_new.meta.filename
+                self.blendheaders = False
 
-            try:
-                output = input_models.meta.asn_table.products[0].name
-            except AttributeError:
-                # NIRSpec MOS data goes through this path, as the container
-                # is only ModelContainer-like, and doesn't have an asn_table
-                # attribute attached.  Output name handling gets done in
-                # _process_multislit() via the update method
-                # TODO: the container-like object should retain asn_table
-                output = None
-        else:
-            input_models = ModelContainer([input_new])
-            output = input_new.meta.filename
-            self.blendheaders = False
+            # Setup drizzle-related parameters
+            kwargs = self.get_drizpars()
+            kwargs["output"] = output
+            self.drizpars = kwargs
 
-        # Setup drizzle-related parameters
-        kwargs = self.get_drizpars()
-        kwargs["output"] = output
-        self.drizpars = kwargs
+            # Call resampling
+            if isinstance(input_models[0], MultiSlitModel):
+                result = self._process_multislit(input_models)
 
-        # Call resampling
-        if isinstance(input_models[0], MultiSlitModel):
-            result = self._process_multislit(input_models)
+            elif len(input_models[0].data.shape) != 2:
+                # resample can only handle 2D images, not 3D cubes, etc
+                raise TypeError(f"Input {input_models[0]} is not a 2D image.")
 
-        elif len(input_models[0].data.shape) != 2:
-            # resample can only handle 2D images, not 3D cubes, etc
-            raise TypeError(f"Input {input_models[0]} is not a 2D image.")
+            else:
+                # result is a SlitModel
+                result = self._process_slit(input_models)
 
-        else:
-            # result is a SlitModel
-            result = self._process_slit(input_models)
+            # Update ASNTABLE in output
+            result.meta.cal_step.resample = "COMPLETE"
+            result.meta.asn.table_name = input_models[0].meta.asn.table_name
+            result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
 
-        # Update ASNTABLE in output
-        result.meta.cal_step.resample = "COMPLETE"
-        result.meta.asn.table_name = input_models[0].meta.asn.table_name
-        result.meta.asn.pool_name = input_models[0].meta.asn.pool_name
-
-        # populate the result wavelength attribute for MultiSlitModel
-        if isinstance(result, MultiSlitModel):
-            for slit_idx, _slit in enumerate(result.slits):
-                wl_array = get_wavelengths(result.slits[slit_idx])
-                result.slits[slit_idx].wavelength = wl_array
-        else:
-            # populate the result wavelength attribute for SlitModel
-            wl_array = get_wavelengths(result)
-            result.wavelength = wl_array
+            # populate the result wavelength attribute for MultiSlitModel
+            if isinstance(result, MultiSlitModel):
+                for slit_idx, _slit in enumerate(result.slits):
+                    wl_array = get_wavelengths(result.slits[slit_idx])
+                    result.slits[slit_idx].wavelength = wl_array
+            else:
+                # populate the result wavelength attribute for SlitModel
+                wl_array = get_wavelengths(result)
+                result.wavelength = wl_array
 
         return result
 
@@ -122,7 +126,7 @@ class ResampleSpecStep(Step):
 
         Parameters
         ----------
-        input_models : `~jwst.datamodels.ModelContainer`
+        input_models : `~jwst.datamodels.container.ModelContainer`
             A container of `~jwst.datamodels.MultiSlitModel`
 
         Returns
@@ -209,7 +213,7 @@ class ResampleSpecStep(Step):
 
         # Report values to processing log
         for k, v in kwargs.items():
-            self.log.debug(f"   {k}={v}")
+            log.debug(f"   {k}={v}")
 
         kwargs["wcs_pars"] = wcs_pars
 
@@ -221,7 +225,7 @@ class ResampleSpecStep(Step):
 
         Parameters
         ----------
-        input_models : `~jwst.datamodels.ModelContainer`
+        input_models : `~jwst.datamodels.container.ModelContainer`
             A container of `~jwst.datamodels.ImageModel`
             or `~jwst.datamodels.SlitModel`
 
@@ -263,7 +267,7 @@ class ResampleSpecStep(Step):
             s_region_model1 = input_models[0].meta.wcsinfo.s_region
             s_region = find_miri_lrs_sregion(s_region_model1, result.meta.wcs)
             result.meta.wcsinfo.s_region = s_region
-            self.log.info(f"Updating S_REGION: {s_region}.")
+            log.info(f"Updating S_REGION: {s_region}.")
         else:
             update_s_region_spectral(result)
         return result

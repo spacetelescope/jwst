@@ -11,7 +11,6 @@ For Users
 
    user_step.rst
    user_pipeline.rst
-   user_logging.rst
    config_asdf.rst
    config_cfg.rst
    call_via_call.rst
@@ -39,5 +38,6 @@ Base Classes
 ------------
 
 .. autoclass:: jwst.stpipe.core::JwstStep
+   :members: load_as_level2_asn, load_as_level3_asn
 
 .. autoclass:: jwst.stpipe.core::JwstPipeline

@@ -10,7 +10,7 @@ from stdatamodels.jwst.datamodels import dqflags
 from jwst.lib.dispaxis import get_dispersion_direction
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
-from jwst.photom import miri_imager, miri_mrs
+from jwst.photom import time_dependence
 
 log = logging.getLogger(__name__)
 
@@ -100,7 +100,7 @@ class DataSet:
         model,
         inverse=False,
         source_type=None,
-        mrs_time_correction=False,
+        apply_time_correction=True,
         correction_pars=None,
     ):
         """
@@ -114,8 +114,8 @@ class DataSet:
             Invert the math operations used to apply the corrections.
         source_type : str or None
             Force processing using the specified source type.
-        mrs_time_correction : bool
-            Switch to apply/not apply the MRS time correction.
+        apply_time_correction : bool
+            Switch to apply/not apply a time correction, if available.
         correction_pars : dict
             Correction meta-data from a previous run.
         """
@@ -158,7 +158,7 @@ class DataSet:
         self.integ_row = -1
         self.inverse = inverse
         self.source_type = None
-        self.mrs_time_correction = mrs_time_correction
+        self.apply_time_correction = apply_time_correction
 
         # For MultiSlitModels, only set a generic source_type value for the
         # entire datamodel if the user has set the source_type parameter.
@@ -244,6 +244,10 @@ class DataSet:
         area_fname : str
             Pixel area map reference file name.
         """
+        # Get a time-dependent correction from the reference file if available
+        mid_time = self.input.meta.exposure.mid_time
+        correction_table = time_dependence.get_correction_table(ftab, mid_time)
+
         # Normal fixed-slit exposures get handled as a MultiSlitModel
         if self.exptype == "NRS_FIXEDSLIT":
             # We have to find and apply a separate set of flux cal
@@ -260,7 +264,7 @@ class DataSet:
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     continue
-                self.photom_io(ftab.phot_table[row])
+                self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
         # Bright object fixed-slit exposures use a SlitModel
         elif self.exptype == "NRS_BRIGHTOBJ":
@@ -271,7 +275,7 @@ class DataSet:
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
-            self.photom_io(ftab.phot_table[row])
+            self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
         # IFU and MSA exposures use one set of flux cal data
         else:
@@ -287,7 +291,7 @@ class DataSet:
                 for slit in self.input.slits:
                     log.info(f"Working on slit {slit.name}")
                     self.slitnum += 1
-                    self.photom_io(ftab.phot_table[row])
+                    self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
             # IFU data
             else:
@@ -404,6 +408,10 @@ class DataSet:
                `~jwst.datamodels.NisImgPhotomModel`
             NIRISS photom reference file data model.
         """
+        # Get a time-dependent correction from the reference file if available
+        mid_time = self.input.meta.exposure.mid_time
+        correction_table = time_dependence.get_correction_table(ftab, mid_time)
+
         # Handle MultiSlit models separately, which are used for NIRISS WFSS
         if isinstance(self.input, datamodels.MultiSlitModel):
             # We have to find and apply a separate set of flux cal
@@ -420,7 +428,7 @@ class DataSet:
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     continue
-                self.photom_io(ftab.phot_table[row])
+                self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
         elif isinstance(self.input, datamodels.CubeModel):
             raise DataModelTypeError(
@@ -443,13 +451,17 @@ class DataSet:
                 # Correct each integration
                 for integ_row in range(len(spec.spec_table)):
                     self.integ_row = integ_row
-                    self.photom_io(ftab.phot_table[row], self.order)
+                    self.photom_io(
+                        ftab.phot_table[row],
+                        order=self.order,
+                        time_correction=correction_table[row],
+                    )
         else:
             fields_to_match = {"filter": self.filter, "pupil": self.pupil}
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
-            self.photom_io(ftab.phot_table[row])
+            self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
     def calc_miri(self, ftab):
         """
@@ -483,40 +495,10 @@ class DataSet:
                 if row is None:
                     return
 
-            # Check to see if the reference file contains the coefficients for the
-            # time-dependent correction of the PHOTOM value
-            try:
-                ftab.getarray_noinit("timecoeff")
-                log.info("Applying the time-dependent correction to the PHOTOM value.")
-
-                mid_time = self.input.meta.exposure.mid_time
-                photom_corr = miri_imager.time_corr_photom(ftab.timecoeff[row], mid_time)
-
-                data = np.array(
-                    [
-                        (
-                            self.filter,
-                            self.subarray,
-                            ftab.phot_table[row]["photmjsr"] + photom_corr,
-                            ftab.phot_table[row]["uncertainty"],
-                        )
-                    ],
-                    dtype=[
-                        ("filter", "O"),
-                        ("subarray", "O"),
-                        ("photmjsr", "<f4"),
-                        ("uncertainty", "<f4"),
-                    ],
-                )
-                fftab = datamodels.MirImgPhotomModel(phot_table=data)
-                self.photom_io(fftab.phot_table[0])
-            except AttributeError:
-                # No time-dependent correction is applied
-                log.info(
-                    " Skipping MIRI imager time correction."
-                    " Extension not found in the reference file."
-                )
-                self.photom_io(ftab.phot_table[row])
+            # Get a time-dependent correction from the reference file if available
+            mid_time = self.input.meta.exposure.mid_time
+            correction_table = time_dependence.get_correction_table(ftab, mid_time)
+            self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
         # MRS detectors
         elif self.detector == "MIRIFUSHORT" or self.detector == "MIRIFULONG":
@@ -556,19 +538,21 @@ class DataSet:
             # Check if reference file contains time dependent correction
 
             try:
-                ftab.getarray_noinit("timecoeff_ch1")
+                ftab.getarray_noinit("timecoeff_powerlaw_ch1")
             except AttributeError:
                 # Old style ref file; skip the correction
                 log.info(
                     "Skipping MRS MIRI time correction.  "
                     "Extensions not found in the reference file."
                 )
-                self.mrs_time_correction = False
+                self.apply_time_correction = False
 
-            if self.mrs_time_correction:
+            if self.apply_time_correction:
                 log.info("Applying MRS IFU time dependent correction.")
                 mid_time = self.input.meta.exposure.mid_time
-                correction = miri_mrs.time_correction(self.input, self.detector, ftab, mid_time)
+                correction = time_dependence.miri_mrs_time_correction(
+                    self.input, self.detector, ftab, mid_time
+                )
                 inv_correction_sq = 1.0 / (correction * correction)
                 self.input.data /= correction
                 self.input.err /= correction
@@ -611,6 +595,10 @@ class DataSet:
         ftab : `~jwst.datamodels.NrcImgPhotomModel` or `~jwst.datamodels.NrcWfssPhotomModel`
             NIRCam photom reference file data model.
         """
+        # Get a time-dependent correction from the reference file if available
+        mid_time = self.input.meta.exposure.mid_time
+        correction_table = time_dependence.get_correction_table(ftab, mid_time)
+
         # Handle WFSS data separately from regular imaging
         if isinstance(self.input, datamodels.MultiSlitModel) and self.exptype == "NRC_WFSS":
             # Loop over the WFSS slits, applying the correct photom ref data
@@ -624,13 +612,13 @@ class DataSet:
                 row = find_row(ftab.phot_table, fields_to_match)
                 if row is None:
                     continue
-                self.photom_io(ftab.phot_table[row])
+                self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
         elif self.exptype == "NRC_TSGRISM":
             fields_to_match = {"filter": self.filter, "pupil": self.pupil, "order": self.order}
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
-            self.photom_io(ftab.phot_table[row])
+            self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
         else:
             # check for subarray in the phot_table: older files do not have it
             fields_to_match = {"filter": self.filter, "pupil": self.pupil}
@@ -641,7 +629,7 @@ class DataSet:
             row = find_row(ftab.phot_table, fields_to_match)
             if row is None:
                 return
-            self.photom_io(ftab.phot_table[row])
+            self.photom_io(ftab.phot_table[row], time_correction=correction_table[row])
 
     def calc_fgs(self, ftab):
         """
@@ -659,8 +647,12 @@ class DataSet:
         ftab : `~jwst.datamodels.FgsImgPhotomModel`
             FGS photom reference file data model.
         """
+        # Get a time-dependent correction from the reference file if available
+        mid_time = self.input.meta.exposure.mid_time
+        correction_table = time_dependence.get_correction_table(ftab, mid_time)
+
         # Read the first (and only) row in the reference file
-        self.photom_io(ftab.phot_table[0])
+        self.photom_io(ftab.phot_table[0], time_correction=correction_table[0])
 
     def calc_nrs_ifu_sens2d(self, area_data):
         """
@@ -737,7 +729,7 @@ class DataSet:
 
         return wave2d, area2d, dqmap
 
-    def photom_io(self, tabdata, order=None):
+    def photom_io(self, tabdata, order=None, time_correction=None):
         """
         Combine photometric conversion factors and apply to the science dataset.
 
@@ -745,9 +737,14 @@ class DataSet:
         ----------
         tabdata : FITS record
             Single row of data from reference table.
-
         order : int
             Spectral order number.
+        time_correction : float or None
+            Multiplicative correction for time dependence, defined as the
+            fractional amount of light recorded now divided by the light
+            recorded on the zero-day MJD (t0).  The scalar conversion factor
+            will be divided by the correction value if provided, and if
+            ``self.apply_time_correction`` is True.
         """
         # First get the scalar conversion factor.
         # For most modes, the scalar conversion factor in the photom reference
@@ -798,6 +795,11 @@ class DataSet:
                     pixel_area_steradians = self.input.meta.photometry.pixelarea_steradians
                     conversion_uniform = conversion / pixel_area_steradians
                     unit_is_surface_brightness = False
+
+        # Apply the time-dependence correction
+        if self.apply_time_correction and time_correction is not None and time_correction != 1.0:
+            log.info(f"Multiplicative time dependence correction is {time_correction:.6g}")
+            conversion /= time_correction
 
         # Store the conversion factor in the meta data
         log.info(f"PHOTMJSR value: {conversion:.6g}")
@@ -1438,10 +1440,15 @@ class DataSet:
 
         Returns
         -------
-        output_model : ~jwst.datamodels.JwstDataModel
+        output_model : `~jwst.datamodels.JwstDataModel`
             Output data model with the flux calibrations applied.
         """
-        with datamodels.open(photom_fname) as ftab:
+        with datamodels.open(photom_fname, strict_validation=True) as ftab:
+            # Make sure the file is valid.
+            # This will raise a ValueError if time coefficient tables
+            # are present and they do not match the photometry table.
+            ftab.validate()
+
             # Load the pixel area reference file, if it exists, and attach the
             # reference data to the science model
             # SOSS data are in a TSOMultiSpecModel, which will not allow for

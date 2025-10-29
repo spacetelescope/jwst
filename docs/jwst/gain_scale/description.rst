@@ -18,7 +18,7 @@ the change was made in the instrument flight software to use gain=2.
 NIRSpec subarray data obtained previous to that time used the
 standard gain=1 setting.
 
-The `gain_scale` step is applied at the end of the
+The ``gain_scale`` step is applied at the end of the
 :ref:`calwebb_detector1 <calwebb_detector1>` pipeline, after the
 :ref:`ramp_fit <ramp_fitting_step>` step has been applied. It is applied
 to both the "rate" and "rateints" products from

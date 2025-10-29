@@ -1,14 +1,20 @@
+ci:
+  autofix_prs: false
+  autoupdate_schedule: monthly
+
 exclude: ".*\\.asdf$"
 
 repos:
+  # basic checks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-ast
       - id: check-case-conflict
       - id: check-yaml
-        args: ["--unsafe"]
+        args:
+          - --unsafe
       - id: check-toml
       - id: check-merge-conflict
       - id: check-symlinks
@@ -16,21 +22,56 @@ repos:
       - id: detect-private-key
       # - id: end-of-file-fixer
       # - id: trailing-whitespace
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: 'v0.12.3'
+  # simple text searches for common issues
+  - repo: https://github.com/pre-commit/pygrep-hooks
+    rev: v1.10.0
     hooks:
-      - id: ruff
-        args: ["--fix"]
+      - id: rst-directive-colons
+      - id: rst-inline-touching-normal
+      - id: text-unicode-replacement-char
+  # lint and format
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.13.3
+    hooks:
+      - id: ruff-check
+        args:
+          - --fix
+          - --show-fixes
       - id: ruff-format
+  # type checking
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.18.2
+    hooks:
+      - id: mypy
+  # spell-checking
   - repo: https://github.com/codespell-project/codespell
     rev: v2.4.1
     hooks:
-    - id: codespell
-      args: ["--write-changes", "--summary"]
-  - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v1.17.0  # Use the latest stable version
+      - id: codespell
+        args:
+          - --write-changes
+          - --summary
+        additional_dependencies:
+          - tomli
+  # validate change log and fragments in `changes/`
+  - repo: https://github.com/twisted/towncrier
+    rev: 25.8.0
     hooks:
-      - id: mypy
+      - id: towncrier-check
+  # format YAML and Markdown
+  # - repo: https://github.com/rbubley/mirrors-prettier
+  #   rev: v3.6.2
+  #   hooks:
+  #     - id: prettier
+  #       types_or:
+  #         - yaml
+  #         - markdown
+  # format TOML
+  # - repo: https://github.com/ComPWA/taplo-pre-commit
+  #   rev: v0.9.3
+  #   hooks:
+  #     - id: taplo-format
+  # validate numpy-style docstrings
   - repo: https://github.com/numpy/numpydoc
     rev: v1.9.0
     hooks:

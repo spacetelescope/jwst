@@ -38,7 +38,6 @@ the Astropy affiliated package
 object and perform extraction.  For 3D NIRSpec fixed slit rateints data, the
 ``extract_1d`` step will be skipped as 3D input for the mode is not supported.
 
-
 For most spectral modes, an aperture correction will be applied to the extracted
 1D spectral data (unless otherwise selected by the user), in order to put the
 results onto an infinite aperture scale.
@@ -90,23 +89,19 @@ FLUX_VAR_FLAT, SURF_BRIGHT, SB_ERROR, SB_VAR_POISSON, SB_VAR_RNOISE,
 SB_VAR_FLAT, DQ, BACKGROUND, BKGD_ERROR, BKGD_VAR_POISSON, BKGD_VAR_RNOISE,
 BKGD_VAR_FLAT and NPIXELS.
 
-For example, to access the slit name, wavelength, and flux from each spectrum in a model:
+For example, to access the slit name, wavelength, and flux from each spectrum in a model::
 
-.. doctest-skip::
-
-  >>> from stdatamodels.jwst import datamodels
-  >>> multi_spec = datamodels.open('multi_spec_x1d.fits')
-  >>> for spectrum in multi_spec.spec:
-  >>>     slit_name = spectrum.name
-  >>>     wave = spectrum.spec_table["WAVELENGTH"]
-  >>>     flux = spectrum.spec_table["FLUX"]
-
+    from stdatamodels.jwst import datamodels
+    multi_spec = datamodels.open('multi_spec_x1d.fits')
+    for spectrum in multi_spec.spec:
+        slit_name = spectrum.name
+        wave = spectrum.spec_table["WAVELENGTH"]
+        flux = spectrum.spec_table["FLUX"]
 
 In the case of MIRI MRS data, the output is a ``MRSMultiSpecModel``. This model has the
 same structure as a ``MultiSpecModel``, except that there are three additional
 columns in the output table:  RF_FLUX, RF_SURF_BRIGHT, and RF_BACKGROUND.
 For more details on the MIRI MRS extracted data see :ref:`MIRI-MRS-1D-residual-fringe`.
-
 
 For NIRCam and NIRISS WFSS data, hundreds to thousands of spectra from different sources
 may be extracted. For those modes, the output is a ``WFSSMultiSpecModel``.
@@ -120,7 +115,7 @@ each row in the table contains the full spectrum for a single source and order. 
 are 2D: each row is a 1D vector containing all data points for the spectrum. In addition, the
 spectral tables for this model have extra 1D columns to contain the metadata for the spectrum in each row.
 These metadata fields include:
-SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC, 
+SOURCE_ID, N_ALONGDISP, SOURCE_TYPE, SOURCE_XPOS, SOURCE_YPOS, SOURCE_RA, SOURCE_DEC,
 EXTRACT2D_XSTART, EXTRACT2D_YSTART.
 
 Note that the vector columns have the same length for all the sources in the table, meaning that
@@ -130,18 +125,15 @@ and the number of valid data points for each spectrum is recorded
 in the N_ALONGDISP column.
 
 For example, to access the wavelength and flux for a specific source ID (say, 1200) and
-integration (the first) in a WFSSMultiSpecModel:
+integration (the first) in a WFSSMultiSpecModel::
 
-.. doctest-skip::
-
-  >>> from stdatamodels.jwst import datamodels
-  >>> model = datamodels.open('multi_wfss_x1d.fits')
-  >>> first_table = model.spec[0].spec_table
-  >>> id_want = 1200
-  >>> row_want = first_table[first_table["SOURCE_ID"] == id_want][0]
-  >>> nelem = row_want["N_ALONGDISP"]
-  >>> wave, flux = row_want["WAVELENGTH"][:nelem], row_want["FLUX"][:nelem]
-
+    from stdatamodels.jwst import datamodels
+    model = datamodels.open('multi_wfss_x1d.fits')
+    first_table = model.spec[0].spec_table
+    id_want = 1200
+    row_want = first_table[first_table["SOURCE_ID"] == id_want][0]
+    nelem = row_want["N_ALONGDISP"]
+    wave, flux = row_want["WAVELENGTH"][:nelem], row_want["FLUX"][:nelem]
 
 For time series observations (TSO) with spectra extracted from multiple integrations,
 the output is a ``TSOMultiSpecModel``.  The spectral tables for this model have
@@ -154,19 +146,16 @@ as follows:
 SEGMENT, INT_NUM, START_TIME_MJD, MID_TIME_MJD, END_TIME_MJD, START_TDB, MID_TDB, and END_TDB.
 
 For example, to access the slit name, integration number, wavelength, and flux from
-each spectrum in a TSO model:
+each spectrum in a TSO model::
 
-.. doctest-skip::
-
-  >>> from stdatamodels.jwst import datamodels
-  >>> multi_int_spec = datamodels.open('multi_spec_x1dints.fits')
-  >>> for spectrum in multi_int_spec.spec:
-  >>>     slit_name = spectrum.name
-  >>>     integrations = spectrum.spec_table["INT_NUM"]
-  >>>     for i, int_num in enumerate(integrations):
-  >>>         wave = spectrum.spec_table["WAVELENGTH"][i]
-  >>>         flux = spectrum.spec_table["FLUX"][i]
-
+    from stdatamodels.jwst import datamodels
+    multi_int_spec = datamodels.open('multi_spec_x1dints.fits')
+    for spectrum in multi_int_spec.spec:
+        slit_name = spectrum.name
+        integrations = spectrum.spec_table["INT_NUM"]
+        for i, int_num in enumerate(integrations):
+            wave = spectrum.spec_table["WAVELENGTH"][i]
+            flux = spectrum.spec_table["FLUX"][i]
 
 Data sources
 ^^^^^^^^^^^^
@@ -245,92 +234,92 @@ As described in the documentation for the
 the characteristics of the source extraction region can be specified in one
 of two different ways.
 
-The simplest approach is to use the `xstart`, `xstop`, `ystart`,
-`ystop`, and `extract_width` parameters.  Note that all of these values are
+The simplest approach is to use the ``xstart``, ``xstop``, ``ystart``,
+``ystop``, and ``extract_width`` parameters.  Note that all of these values are
 zero-indexed floating point values, the start and stop limits are inclusive, and
 the values are in the frame of the image being operated on (which could be a cutout
 of a larger original image).
-If `dispaxis=1`, the limits in the dispersion direction are `xstart`
-and `xstop` and the limits in the cross-dispersion direction are `ystart`
-and `ystop`. If `dispaxis=2`, the roles are reversed.
+If ``dispaxis=1``, the limits in the dispersion direction are ``xstart``
+and ``xstop`` and the limits in the cross-dispersion direction are ``ystart``
+and ``ystop``. If ``dispaxis=2``, the roles are reversed.
 
-If `extract_width` is also given, the start and stop values are used to define
+If ``extract_width`` is also given, the start and stop values are used to define
 the center of the extraction region in the cross-dispersion direction, but the
-width of the aperture is set by the `extract_width` value.
+width of the aperture is set by the ``extract_width`` value.
 
 For some instruments and modes, the extraction region may be adjusted
-to account for the expected location of the source with the `use_source_posn` 
-option. This option is available for NIRSpec MOS, fixed-slit, and BOTS data, 
+to account for the expected location of the source with the ``use_source_posn``
+option. This option is available for NIRSpec MOS, fixed-slit, and BOTS data,
 as well as MIRI LRS fixed-slit.
-If `use_source_posn` is set to None via the reference file or input parameters,
+If ``use_source_posn`` is set to None via the reference file or input parameters,
 it is turned on by default for all point sources in these modes.
-To turn it on for extended sources, set `use_source_posn` to True.
-To turn it off for any mode, set `use_source_posn` to False.
-If source position option is enabled, the planned location for the source and its 
-trace are calculated internally via header metadata recording the source position 
-and the spectral WCS transforms.  The source location will be used to offset the 
+To turn it on for extended sources, set ``use_source_posn`` to True.
+To turn it off for any mode, set ``use_source_posn`` to False.
+If source position option is enabled, the planned location for the source and its
+trace are calculated internally via header metadata recording the source position
+and the spectral WCS transforms.  The source location will be used to offset the
 extraction start and stop values in the cross-dispersion direction.
-If `extract_width` is provided, the source extraction region will be centered 
-on the calculated trace with a width set by the `extract_width` value.  
-For resampled, "s2d", products this will effectively be the rectangular 
-extraction region offset in the cross-dispersion direction.  For 
-"cal" or "calints" products that have not been resampled, the extraction region 
+If ``extract_width`` is provided, the source extraction region will be centered
+on the calculated trace with a width set by the ``extract_width`` value.
+For resampled, "s2d", products this will effectively be the rectangular
+extraction region offset in the cross-dispersion direction.  For
+"cal" or "calints" products that have not been resampled, the extraction region
 will be curved to follow the calculated trace.
-If no `extract_width` has been provided, the shifted extraction start and 
+If no ``extract_width`` has been provided, the shifted extraction start and
 stop values will be used.
 
-A more flexible way to specify the source extraction region is via the `src_coeff`
-parameter. `src_coeff` is specified as a list of lists of floating-point
+A more flexible way to specify the source extraction region is via the ``src_coeff``
+parameter. ``src_coeff`` is specified as a list of lists of floating-point
 polynomial coefficients that define the lower and upper
 limits of the source extraction region as a function of dispersion. This allows,
 for example, following a tilted or curved spectral trace or simply
 following the variation in cross-dispersion FWHM as a function of wavelength.
-If both `src_coeff` and cross-dispersion start/stop values are given, `src_coeff`
+If both ``src_coeff`` and cross-dispersion start/stop values are given, ``src_coeff``
 takes precedence. The start/stop values can still be used to
 limit the range of the extraction in the dispersion direction. More details on
 the specification and use of polynomial coefficients is given below.
 
 Note that if source position correction is enabled, the position offset is applied to
-any supplied `src_coeff` values, as well as the cross-dispersion start/stop values.
-To ensure the provided `src_coeff` values are used as-is, set `use_source_posn`
+any supplied ``src_coeff`` values, as well as the cross-dispersion start/stop values.
+To ensure the provided ``src_coeff`` values are used as-is, set ``use_source_posn``
 to False.
 
 
 Background Extraction Regions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 One or more background extraction regions for a given aperture instance can
-be specified using the `bkg_coeff` parameter in the EXTRACT1D reference file.
-This is directly analogous to the use of `src_coeff` for specifying source
+be specified using the ``bkg_coeff`` parameter in the EXTRACT1D reference file.
+This is directly analogous to the use of ``src_coeff`` for specifying source
 extraction regions and functions in exactly the same way. More details on the
 use of polynomial coefficients is given in the next section.
 
-By default, background subtraction will be done if `bkg_coeff` is set in
+By default, background subtraction will be done if ``bkg_coeff`` is set in
 the EXTRACT1D reference file. To turn it off without modifying the reference
-file, set `subtract_background` to False in the input step parameters.
+file, set ``subtract_background`` to False in the input step parameters.
 
 The background values are determined independently for
 each column (or row, if dispersion is vertical), using pixel values from all
 background regions within each column (or row).
-Parameters related to background fitting are `smoothing_length`,
-`bkg_fit`, and `bkg_order`:
+Parameters related to background fitting are ``smoothing_length``,
+``bkg_fit``, and ``bkg_order``:
 
-#. If `smoothing_length` is specified, the 2D image data used to perform
+#. If ``smoothing_length`` is specified, the 2D image data used to perform
    background extraction will be smoothed along the dispersion direction using
-   a boxcar of width `smoothing_length` (in pixels). If not specified, no
+   a boxcar of width ``smoothing_length`` (in pixels). If not specified, no
    smoothing of the input 2D image data is performed.
 
-#. `bkg_fit` specifies the type of fit to the background data, to be performed
+#. ``bkg_fit`` specifies the type of fit to the background data, to be performed
    within each column (or row). The default value is None; if not set by
    the user, the step will search the reference file for a value. If no value
-   is found, `bkg_fit` will be set to "poly". The "poly" mode fits a
-   polynomial of order `bkg_order` to the background values within
+   is found, ``bkg_fit`` will be set to "poly". The "poly" mode fits a
+   polynomial of order ``bkg_order`` to the background values within
    the column (or row). Alternatively, values of "mean" or "median" can be
    specified in order to compute the simple mean or median of the background
-   values in each column (or row). Note that using `bkg_fit=mean` is
-   mathematically equivalent to `bkg_fit=poly` with `bkg_order=0`.
+   values in each column (or row). Note that using ``bkg_fit="mean"`` is
+   mathematically equivalent to ``bkg_fit="poly"`` with ``bkg_order=0``.
 
-#. If `bkg_fit=poly` is specified, `bkg_order` is used to indicate the
-   polynomial order to be used. The default value is zero, i.e. a constant.
+#. If ``bkg_fit="poly"`` is specified, ``bkg_order`` is used to indicate the
+   polynomial order to be used. The default value is zero, i.e., a constant.
 
 During source extraction, the background fit is evaluated at each pixel within the
 source extraction region for that column/row, and the fitted values will
@@ -338,19 +327,19 @@ be subtracted (pixel by pixel) from the source count rate, prior to summing
 over the aperture.
 
 If source position correction is enabled, the calculated position offset is applied to
-any supplied `bkg_coeff` values, as well as the source aperture limit values.
-To ensure the provided `bkg_coeff` values are used as-is, set `use_source_posn`
+any supplied ``bkg_coeff`` values, as well as the source aperture limit values.
+To ensure the provided ``bkg_coeff`` values are used as-is, set ``use_source_posn``
 to False.
 
 Source and Background Coefficient Lists
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 The interpretation and use of polynomial coefficients to specify source and
-background extraction regions is the same for both source coefficients (`src_coeff`)
-and background coefficients (`bkg_coeff`).
+background extraction regions is the same for both source coefficients (``src_coeff``)
+and background coefficients (``bkg_coeff``).
 
-Polynomials specified via `src_coeff` and `bkg_coeff` are functions of either wavelength
+Polynomials specified via ``src_coeff`` and ``bkg_coeff`` are functions of either wavelength
 (in microns) or pixel number (pixels in the dispersion direction, with respect to
-the input 2D slit image), which is specified by the parameter `independent_var`.
+the input 2D slit image), which is specified by the parameter ``independent_var``.
 The default is "pixel"; the alternative is "wavelength".  The dependent values of these
 polynomial functions are always pixel numbers (zero-indexed) in the cross-dispersion
 direction, with respect to the input 2D slit image.
@@ -361,24 +350,23 @@ extraction region must be specified).  The source extraction coefficients will n
 be a list of just two lists: the coefficients for the lower limit function
 and the coefficients for the upper limit function of one extraction
 region.  The limits could just be constant values,
-e.g. `[[324.5], [335.5]]`.  Straight but tilted lines are linear functions, e.g.
-`[[324.5, 0.0137], [335.5, 0.0137]]`.
+e.g., ``[[324.5], [335.5]]``.  Straight but tilted lines are linear functions, e.g.,
+``[[324.5, 0.0137], [335.5, 0.0137]]``.
 
 Multiple regions may be specified for either the source or background, but it is
 more common to specify more than one background region.  Here
-is an example for specifying two background regions:
+is an example for specifying two background regions::
 
-`[[315.2, 0.0135], [320.7, 0.0135], [341.1, 0.0139], [346.8, 0.0139]]`
+    [[315.2, 0.0135], [320.7, 0.0135], [341.1, 0.0139], [346.8, 0.0139]]
 
 This is interpreted as follows:
 
-* `[315.2, 0.0135]`: lower limit for first background region
-* `[320.7, 0.0135]`: upper limit for first background region
-* `[341.1, 0.0139]`: lower limit for second background region
-* `[346.8, 0.0139]`: upper limit for second background region
+* ``[315.2, 0.0135]``: lower limit for first background region
+* ``[320.7, 0.0135]``: upper limit for first background region
+* ``[341.1, 0.0139]``: lower limit for second background region
+* ``[346.8, 0.0139]``: upper limit for second background region
 
-
-Note that `src_coeff` and `bkg_coeff` contain floating-point
+Note that ``src_coeff`` and ``bkg_coeff`` contain floating-point
 values.  For interpreting fractions of a pixel, the convention used here
 is that the pixel number at the center of a pixel is a whole number.  Thus,
 if a lower or upper limit is a whole number, that limit splits the pixel
@@ -388,14 +376,14 @@ limits would be given as 324.5 and 335.5 respectively.
 
 Please note that this is different from the convention used for the cross-dispersion
 start/stop values, which are expected to be inclusive index values. For the example here,
-for horizontal dispersion, `ystart = 325`, `ystop = 335` is equivalent
-to `src_coeff = [[324.5],[335.5]]`.  To include half a pixel more at the top
-and bottom of the aperture, `ystart = 324.5`, `ystop = 335.5` is equivalent
-to `src_coeff = [[324],[336]]`.
+for horizontal dispersion, ``ystart = 325``, ``ystop = 335`` is equivalent
+to ``src_coeff = [[324.5],[335.5]]``.  To include half a pixel more at the top
+and bottom of the aperture, ``ystart = 324.5``, ``ystop = 335.5`` is equivalent
+to ``src_coeff = [[324],[336]]``.
 
 The order of the polynomial is specified implicitly to be one less than the
 number of coefficients. The number of coefficients for a lower or upper extraction
-region limit must be at least one (i.e. zeroth-order polynomial). There is no
+region limit must be at least one (i.e., zeroth-order polynomial). There is no
 predefined upper limit on the number of coefficients (and hence polynomial order).
 The various polynomials (lower limits, upper limits, possibly multiple regions) do
 not need to have the same number of coefficients; each of the inner lists specifies
@@ -418,30 +406,30 @@ Optimal extraction is suited only to point sources with known source locations, 
 high-fidelity PSF model is available.  Currently, only the MIRI LRS fixed slit exposure type
 has a PSF model available in CRDS.
 
-When optimal extraction is selected (`extraction_type = 'optimal'`), the aperture definitions in
+When optimal extraction is selected (``extraction_type = 'optimal'``), the aperture definitions in
 the extraction reference file are ignored, and the following parameters
 are used instead:
 
-* `use_source_posn`: Source position is estimated from the input metadata and used to
+* ``use_source_posn``: Source position is estimated from the input metadata and used to
   center the PSF model.  The recommended value is True, in order to account for spatial offsets
   within the slit; if False, or if the source position could not be estimated, the source is
   assumed to be at the center of the slit.
-* `model_nod_pair`: If nod subtraction occurred prior to extraction, setting this option to
+* ``model_nod_pair``: If nod subtraction occurred prior to extraction, setting this option to
   True will allow the extraction algorithm to model a single negative trace from the nod pair
   alongside the positive trace. This can be helpful in accounting for PSF overlap between the
   positive and negative traces.  This option is ignored if no background subtraction occurred,
   or if the dither pattern was not a 2-point nod.
-* `optimize_psf_location`: Since source position estimates may be slightly inaccurate,
+* ``optimize_psf_location``: Since source position estimates may be slightly inaccurate,
   it may be useful to iteratively optimize the PSF location.  When this option is set to True, the
   location of the positive and negative traces (if used) are optimized with respect to the
   residuals of the scene modeled by the PSF at that location.  This option is
-  strongly recommended if `model_nod_pair` is True, since the negative nod location is less
+  strongly recommended if ``model_nod_pair`` is True, since the negative nod location is less
   reliably estimated than the positive trace location.
-* `subtract_background`: Unlike during box extraction, the background levels can be modeled and removed
+* ``subtract_background``: Unlike during box extraction, the background levels can be modeled and removed
   during optimal extraction without explicitly setting a background region.  It is recommended to
   set this parameter to True if background subtraction was skipped prior to extraction. Set this
-  parameter to False if a negative nod trace is present but not modeled (`model_nod_pair = False`).
-* `override_psf`: If a custom flux model is required, it is possible to provide one by overriding
+  parameter to False if a negative nod trace is present but not modeled (``model_nod_pair = False``).
+* ``override_psf``: If a custom flux model is required, it is possible to provide one by overriding
   the PSF model reference file. Set this parameter to the filename for a FITS file matching the
   :ref:`SpecPsfModel <psf_reffile>` format.
 
@@ -458,27 +446,30 @@ or step arguments will be ignored; the entire image will be extracted, and no ba
 
 For point sources, a circular extraction aperture is used, along with an optional
 circular annulus for background extraction and subtraction. The size of the extraction
-region and the background annulus size varies with wavelength. 
+region and the background annulus size varies with wavelength.
 The extraction related vectors are found in the asdf extract1d reference file.
-For each element in the `wavelength` vector there are three size components: `radius`, `inner_bkg`, and
-`outer_bkg`. The radius vector sets the extraction size; while `inner_bkg` and `outer_bkg` specify the
-limits of an annular background aperture. There are two additional vectors in the reference file, `axis_ratio`
-and `axis_pa`, which are placeholders for possible future functionality.
+For each element in the ``wavelength`` vector there are three size components: ``radius``, ``inner_bkg``, and
+``outer_bkg``. The radius vector sets the extraction size; while ``inner_bkg`` and ``outer_bkg`` specify the
+limits of an annular background aperture. There are two additional vectors in the reference file, ``axis_ratio``
+and ``axis_pa``, which are placeholders for possible future functionality.
 The extraction size parameters are given in units of arcseconds and converted to units of pixels
-in the extraction process. 
+in the extraction process.
 
 The region of overlap between an aperture and a pixel can be calculated by
-one of three different methods, specified by the `method` parameter:  "exact"
-(default), limited only by finite precision arithmetic; "center", the full value
-in a pixel will be included if its center is within the aperture; or "subsample",
-which means pixels will be subsampled N x N and the "center" option will be used
-for each sub-pixel. When `method` is "subsample", the parameter `subpixels`
+one of three different methods, specified by the ``method`` parameter:
+
+* "exact" (default), limited only by finite precision arithmetic;
+* "center", the full value in a pixel will be included if its center is within the aperture; or
+* "subsample", which means pixels will be subsampled N x N and the "center" option will be used
+  for each sub-pixel.
+
+When ``method`` is "subsample", the parameter ``subpixels``
 is used to set the resampling value. The default value is 10.
 
 For IFU cubes the error information is contained entirely in the ERR array, and is not broken out into the
 VAR_POISSON, VAR_RNOISE, and VAR_FLAT arrays.  As such, ``extract_1d`` only propagates this
 non-differentiated error term.  Since covariance is also extremely important for undersampled IFU data
-(see discussion by Law et al. 2023; AJ, 166, 45) the optional parameter `ifu_covar_scale`
+(see discussion by Law et al. 2023; AJ, 166, 45) the optional parameter ``ifu_covar_scale``
 will multiply all ERR arrays in the extracted spectra by a constant prefactor to account
 for this covariance.  As discussed by Law et al. 2023, this prefactor provides
 a reasonable first-order correction for the vast majority of use cases.  Values for the prefactor
@@ -518,25 +509,25 @@ is part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, but currently it i
 information see :ref:`residual_fringe <residual_fringe_step>`.
 
 The pipeline also can apply a 1-D residual fringe correction. This correction is only relevant for MIRI MRS
-single band data. The parameter controlling applying the residual fringe correction is by default set to true, 
-`ifu_rfcorr = True`,  in the ``extract_1d`` step.
+single band data. The parameter controlling applying the residual fringe correction is by default set to True,
+``ifu_rfcorr = True``,  in the ``extract_1d`` step.
 Empirically, the 1-D correction step has been found to work better than the 2-D correction step if it is
 applied to per-band spectra. If the MIRI MRS data is from multiple bands/channels the residual fringe correction
-is turned off. Three additional columns are present in MIRI MRS extracted spectra: RF_FLUX, RF_SURF_BRIGHT, and 
+is turned off. Three additional columns are present in MIRI MRS extracted spectra: RF_FLUX, RF_SURF_BRIGHT, and
 RF_BACKGROUND. These three columns are the flux, surface brightness and background arrays with the residiual
 fringe correction applied. If the data is not from a single band or the residual fringe correction fails
-NaN values are reported for the arrays. 
+NaN values are reported for the arrays.
 
-When using the `ifu_rfcorr` option in the ``extract_1d`` step  to apply a 1-D residual fringe
+When using the ``ifu_rfcorr`` option in the ``extract_1d`` step  to apply a 1-D residual fringe
 correction, it is applied during the extraction of spectra from the IFU cube. The 1D residual fringe code can also
 be called outside the pipeline to correct an extracted spectrum. If running outside the pipeline, the correction
 works best on single-band cubes, and the channel of
 the data must be given. The steps to run this correction outside the pipeline are::
 
-  from jwst.residual_fringe.utils import fit_residual_fringes_1d as rf1d
-  flux_cor = rf1d(flux, wave, channel=4)
+    from jwst.residual_fringe.utils import fit_residual_fringes_1d as rf1d
+    flux_cor = rf1d(flux, wave, channel=4)
 
-where `flux` is the extracted spectral data, and the data are from channel 4 for this example.
+where ``flux`` is the extracted spectral data, and the data are from channel 4 for this example.
 
 
 Extraction for NIRISS SOSS Data
@@ -546,12 +537,14 @@ algorithm known as `ATOCA (Algorithm to Treat Order ContAmination, Darveau-Berni
 constructs a linear model of each pixel on the detector and treats the underlying incident spectrum as a free variable
 to simultaneously extract the cross-contaminated spectra. Using this method, the extracted spectra are accurate to
 within 10ppm over the full spectral range when validated against simulations.
+Spectral order 3 is also optionally included in the extraction, but it is spatially well-separated
+from the other two orders; internally, ATOCA treats it as a separate extraction.
 
 The algorithm uses a wavelength solution, a spectral throughput, a spectral resolution, and a spatial throughput for
 both orders to determine the flux contribution from each order falling on a given pixel. Most of these references are
-determined by analysis of on-sky data and supplied to the algorithm via the `pastasoss` and `spec_profile` reference
-files. The exception is the `spec_kernel` reference file which supplies the convolution kernels used in the extraction,
-determined from monochromatic PSFs generated by STPSF. The `pastasoss` reference file predicts the trace centroids,
+determined by analysis of on-sky data and supplied to the algorithm via the ``pastasoss`` and ``spec_profile`` reference
+files. The exception is the ``spec_kernel`` reference file which supplies the convolution kernels used in the extraction,
+determined from monochromatic PSFs generated by STPSF. The ``pastasoss`` reference file predicts the trace centroids,
 taking into account the small rotations of the trace introduced by the slight visit-to-visit offsets of the GR700XD
 grism in the optical path.
 

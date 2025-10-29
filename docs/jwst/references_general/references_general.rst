@@ -176,9 +176,7 @@ documentation on each reference file.
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`superbias <superbias_step>`                     | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
-| :ref:`tso_photometry <tso_photometry_step>`           | :ref:`TSOPHOT <tsophot_reffile>`                 |
-+                                                       +--------------------------------------------------+
-|                                                       | :ref:`GAIN <gain_reffile>`                       |
+| :ref:`tso_photometry <tso_photometry_step>`           | :ref:`GAIN <gain_reffile>`                       |
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`wavecorr <wavecorr_step>`                       | :ref:`WAVECORR <wavecorr_reffile>`               |
 +-------------------------------------------------------+--------------------------------------------------+
@@ -302,8 +300,6 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`TRAPPARS <trappars_reffile>`               | :ref:`persistence <persistence_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
-| :ref:`TSOPHOT <tsophot_reffile>`                 | :ref:`tso_photometry <tso_photometry_step>`           |
-+--------------------------------------------------+-------------------------------------------------------+
 | :ref:`WAVELENGTHRANGE <wavelengthrange_reffile>` | :ref:`assign_wcs <assign_wcs_step>`                   |
 +                                                  +-------------------------------------------------------+
 |                                                  | :ref:`background <background_subtraction>`            |
@@ -339,41 +335,41 @@ The required Keywords Documenting Contents of Reference Files are:
 ========  ==================================================================================
 Keyword   Comment
 ========  ==================================================================================
-REFTYPE   `BKG        Required values are listed in the discussion of each pipeline step.`
-DESCRIP   `Summary of file content and/or reason for delivery`
-AUTHOR    `Fred Jones     Person(s) who created the file`
-USEAFTER  `YYYY-MM-DDThh:mm:ss Date and time after the reference files will
+REFTYPE   ``BKG        Required values are listed in the discussion of each pipeline step.``
+DESCRIP   ``Summary of file content and/or reason for delivery``
+AUTHOR    ``Fred Jones     Person(s) who created the file``
+USEAFTER  ``YYYY-MM-DDThh:mm:ss Date and time after the reference files will
           be used. The T is required. Time string may NOT be omitted;
-          use T00:00:00 if no meaningful value is available.`
-PEDIGREE  `Options are
+          use T00:00:00 if no meaningful value is available.``
+PEDIGREE  ``Options are
           'SIMULATION'
           'GROUND'
           'DUMMY'
-          'INFLIGHT YYYY-MM-DD YYYY-MM-DD'`
-HISTORY   `Description of Reference File Creation`
-HISTORY   `DOCUMENT: Name of document describing the strategy and algorithms
-          used to create file.`
-HISTORY   `SOFTWARE: Description, version number, location of software used
-          to create file.`
-HISTORY   `DATA USED: Data used to create file`
-HISTORY   `DIFFERENCES: How is this version different from the one that
-          it replaces?`
-HISTORY   `If your text spills over to the next line,
-          begin it with another HISTORY keyword, as in this example.`
-TELESCOP  `JWST   Name of the telescope/project.`
-INSTRUME  `FGS   Instrument name. Allowed values: FGS, NIRCAM, NIRISS,
-          NIRSPEC, MIRI`
-SUBARRAY  `FULL, GENERIC, SUBS200A1, ...   (XXX abstract technical description
-          of SUBARRAY)`
-SUBSTRT1  `1        Starting pixel index along axis 1 (1-indexed)`
-SUBSIZE1  `2048     Size of subarray along axis 1`
-SUBSTRT2  `1        Starting pixel index along axis 2 (1-indexed)`
-SUBSIZE2  `2048     Size of subarray along axis 2`
-FASTAXIS  `1        Fast readout direction relative to image axes for
+          'INFLIGHT YYYY-MM-DD YYYY-MM-DD'``
+HISTORY   ``Description of Reference File Creation``
+HISTORY   ``DOCUMENT: Name of document describing the strategy and algorithms
+          used to create file.``
+HISTORY   ``SOFTWARE: Description, version number, location of software used
+          to create file.``
+HISTORY   ``DATA USED: Data used to create file``
+HISTORY   ``DIFFERENCES: How is this version different from the one that
+          it replaces?``
+HISTORY   ``If your text spills over to the next line,
+          begin it with another HISTORY keyword, as in this example.``
+TELESCOP  ``JWST   Name of the telescope/project.``
+INSTRUME  ``FGS   Instrument name. Allowed values: FGS, NIRCAM, NIRISS,
+          NIRSPEC, MIRI``
+SUBARRAY  ``FULL, GENERIC, SUBS200A1, ...   (XXX abstract technical description
+          of SUBARRAY)``
+SUBSTRT1  ``1        Starting pixel index along axis 1 (1-indexed)``
+SUBSIZE1  ``2048     Size of subarray along axis 1``
+SUBSTRT2  ``1        Starting pixel index along axis 2 (1-indexed)``
+SUBSIZE2  ``2048     Size of subarray along axis 2``
+FASTAXIS  ``1        Fast readout direction relative to image axes for
           Amplifier #1 (1 = +x axis, 2 = +y axis, -1 = -x axis, -2 = -y axis)
-          SEE NOTE BELOW.`
-SLOWAXIS  `2        Slow readout direction relative to image axes for
-          all amplifiers (1 = +x axis, 2 = +y axis, -1 = -x axis, -2 = -y axis)`
+          SEE NOTE BELOW.``
+SLOWAXIS  ``2        Slow readout direction relative to image axes for
+          all amplifiers (1 = +x axis, 2 = +y axis, -1 = -x axis, -2 = -y axis)``
 ========  ==================================================================================
 
 
@@ -632,7 +628,7 @@ Bit  Value         Name              Description
 5    32            PERSISTENCE       High persistence
 6    64            AD_FLOOR          Below A/D floor
 7    128           CHARGELOSS        Charge Migration
-8    256           UNRELIABLE_ERROR  Uncertainty exceeds quoted error
+8    256           RESERVED          Reserved for future need; unused
 9    512           NON_SCIENCE       Pixel not on science portion of detector
 10   1024          DEAD              Dead pixel
 11   2048          HOT               Hot pixel
@@ -683,9 +679,9 @@ bit flags that should be summed to obtain the final "good" bits. For example,
 both "4,8" and "4+8" are equivalent to a setting of "12".
 
 Finally, instead of integers, the JWST mnemonics, as defined above, may be used.
-For example, all the following specifications are equivalent:
+For example, all the following specifications are equivalent::
 
-`"12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"`
+    "12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"
 
 .. note::
  The default value (0) will make *all* non-zero

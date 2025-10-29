@@ -33,7 +33,7 @@ def run_wfss_contam(rtdata_module, resource_tracker):
     return rtdata
 
 
-def test_log_tracked_resources_tsimg(log_tracked_resources, run_wfss_contam):
+def test_log_tracked_resources_nircam_wfss_contam(log_tracked_resources, run_wfss_contam):
     log_tracked_resources()
 
 

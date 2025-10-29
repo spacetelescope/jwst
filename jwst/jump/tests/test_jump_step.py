@@ -2108,6 +2108,42 @@ def test_cr_neighbor_sat_flagging(setup_inputs):
     assert dq_out[0, 4, 5, 1] == SATURATED
 
 
-"""
-test_cr_neighbor_sat_flagging
-"""
+def test_output_is_not_input(generate_miri_reffiles, setup_inputs):
+    """Test that input is not modified when step completes."""
+    override_gain, override_readnoise = generate_miri_reffiles()
+
+    ngroups = 3
+    xsize = 103
+    ysize = 102
+    model1, _, _, _, _, _ = setup_inputs(
+        ngroups=ngroups,
+        nrows=ysize,
+        ncols=xsize,
+    )
+
+    out_model = JumpStep.call(
+        model1,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+    )
+    assert out_model.meta.cal_step.jump == "COMPLETE"
+
+    # Input is not modified
+    assert out_model is not model1
+    assert model1.meta.cal_step.jump is None
+
+
+def test_output_is_not_input_when_skipped(generate_miri_reffiles, setup_inputs):
+    """Test that input is not modified when step is skipped."""
+    override_gain, override_readnoise = generate_miri_reffiles()
+    model1, _, _, _, _, _ = setup_inputs(ngroups=2)
+    out_model = JumpStep.call(
+        model1,
+        override_gain=override_gain,
+        override_readnoise=override_readnoise,
+    )
+    assert out_model.meta.cal_step.jump == "SKIPPED"
+
+    # Input is not modified
+    assert out_model is not model1
+    assert model1.meta.cal_step.jump is None

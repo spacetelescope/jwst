@@ -1,8 +1,14 @@
+import logging
+
 from jwst.stpipe import Pipeline, Step
 
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel
-from jwst.datamodels import ModelContainer
+from jwst.datamodels import ModelContainer, ModelLibrary
+from jwst.stpipe.utilities import record_step_status
+
+
+log = logging.getLogger("jwst.stpipe.tests.steps")
 
 
 class StepWithReference(Step):
@@ -46,10 +52,10 @@ class AnotherDummyStep(Step):
     reference_file_types = ["flat_field"]
 
     def process(self, a=0, b=0):  # noqa: D102
-        self.log.info(f"Found a: {a}, b: {b}")
-        self.log.info(f"par1: {self.par1}")
-        self.log.info(f"par2: {self.par2}")
-        self.log.info(f"par3: {self.par3}")
+        log.info(f"Found a: {a}, b: {b}")
+        log.info(f"par1: {self.par1}")
+        log.info(f"par2: {self.par2}")
+        log.info(f"par3: {self.par3}")
 
         return a + b
 
@@ -65,7 +71,7 @@ class WithDefaultsStep(Step):
     """
 
     def process(self, input_data):  # noqa: D102
-        self.log.info(
+        log.info(
             "Parameters par1=%s, par2=%s, par3=%s, par4=%s",
             self.par1,
             self.par2,
@@ -86,12 +92,12 @@ class MakeListStep(Step):
     """
 
     def process(self, a=None, b=None):  # noqa: D102
-        self.log.info("Arguments a=%s b=%s", a, b)
-        self.log.info("Parameters par1=%s, par2=%s, par3=%s", self.par1, self.par2, self.par3)
+        log.info("Arguments a=%s b=%s", a, b)
+        log.info("Parameters par1=%s, par2=%s, par3=%s", self.par1, self.par2, self.par3)
 
         result = [item for item in [a, b, self.par1, self.par2, self.par3] if item is not None]
 
-        self.log.info("The list is %s", result)
+        log.info("The list is %s", result)
         return result
 
 
@@ -112,8 +118,8 @@ class PostHookStep(Step):
     """
 
     def process(self, *args):  # noqa: D102
-        self.log.info(f'Received args: "{args}"')
-        self.log.info(f'Self.parent = "{self.parent}"')
+        log.info(f'Received args: "{args}"')
+        log.info(f'Self.parent = "{self.parent}"')
 
         args[0].post_hook_run = True
         self.parent.post_hook_run = True
@@ -126,8 +132,8 @@ class PostHookWithReturnStep(Step):
     """
 
     def process(self, *args):  # noqa: D102
-        self.log.info(f'Received args: "{args}"')
-        self.log.info(f'Self.parent = "{self.parent}"')
+        log.info(f'Received args: "{args}"')
+        log.info(f'Self.parent = "{self.parent}"')
 
         self.parent.post_hook_run = True
         return "PostHookWithReturnStep executed"
@@ -140,8 +146,8 @@ class PreHookStep(Step):
     """
 
     def process(self, *args):  # noqa: D102
-        self.log.info(f'Received args: "{args}"')
-        self.log.info(f'Self.parent = "{self.parent}"')
+        log.info(f'Received args: "{args}"')
+        log.info(f'Self.parent = "{self.parent}"')
 
         args[0].pre_hook_run = True
         self.parent.pre_hook_run = True
@@ -156,7 +162,7 @@ class SaveStep(Step):
     def process(self, *args):  # noqa: D102
         model = ImageModel(args[0])
 
-        self.log.info('Saving model as "processed"')
+        log.info('Saving model as "processed"')
         self.save_model(model, "processed")
 
         return model
@@ -277,7 +283,7 @@ class CalLogsStep(Step):
     def process(self, msg):  # noqa: D102
         from stdatamodels.jwst.datamodels import ImageModel
 
-        self.log.info(msg)
+        log.info(msg)
         return ImageModel()
 
 
@@ -291,5 +297,138 @@ class CalLogsPipeline(Pipeline):
     }
 
     def process(self, msg):  # noqa: D102
-        self.log.info(msg)
+        log.info(msg)
         return self.a_step.run(msg)
+
+
+class PrepareOutputStep(Step):
+    """Step to test the prepare_output method with defaults."""
+    class_alias = "prepare_output"
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data)
+        record_step_status(result, "prepare_output", True)
+        log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputNoOpenStep(Step):
+    """Step to test the prepare_output method, turning off open_models."""
+    class_alias = "prepare_output_no_open"
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data, open_models=False)
+        log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputForceCopyStep(Step):
+    """Step to test the prepare_output method, forcing a copy."""
+    class_alias = "prepare_output_force_copy"
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data, make_copy=True)
+        record_step_status(result, "prepare_output", True)
+        log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputForceCopyNoOpenStep(Step):
+    """Step to test the prepare_output method, forcing a copy and not opening models."""
+    class_alias = "prepare_output_force_copy_no_open"
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+        result = self.prepare_output(input_data, make_copy=True, open_models=False)
+        log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputNoCopyStep(Step):
+    """Step to test the prepare_output method, without making a copy."""
+    class_alias = "prepare_output_no_copy"
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data, make_copy=False)
+        record_step_status(result, "prepare_output", True)
+        log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputPipeline(Pipeline):
+    """Pipeline to test the prepare_output method."""
+    class_alias = "prepare_output_pipeline"
+
+    step_defs = {
+        "step1": PrepareOutputNoOpenStep,
+        "step2": PrepareOutputStep,
+        "step3": PrepareOutputStep,
+    }
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data)
+        log.info(f"Opened data is {type(result)}")
+
+        result = self.step1.run(result)
+        log.info(f"Intermediate data 1 is {type(result)}")
+
+        result = self.step2.run(result)
+        log.info(f"Intermediate data 2 is {type(result)}")
+
+        result = self.step3.run(result)
+        log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputForceCopyPipeline(Pipeline):
+    """Pipeline to test the prepare_output method with a step that forces a copy."""
+    class_alias = "prepare_output_pipeline"
+
+    step_defs = {
+        "step1": PrepareOutputStep,
+        "step2": PrepareOutputForceCopyStep,
+    }
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data)
+        log.info(f"Opened data is {type(result)}")
+
+        result = self.step1.run(result)
+        log.info(f"Intermediate data is {type(result)}")
+
+        result = self.step2.run(result)
+        log.info(f"Output data is {type(result)}")
+
+        return result
+
+
+class PrepareOutputAsTypeStep(Step):
+    """Step to test the prepare_output method with a datamodel type specified."""
+    class_alias = "prepare_output_as_type"
+
+    def process(self, input_data):
+        log.info(f"Input data is {type(input_data)}")
+
+        result = self.prepare_output(input_data, open_as_type=datamodels.IFUImageModel)
+        record_step_status(result, "prepare_output", True)
+        log.info(f"Output data is {type(result)}")
+
+        return result

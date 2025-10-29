@@ -28,7 +28,7 @@ build:
     pre_install:
       - git update-index --assume-unchanged docs/rtd_environment.yaml docs/conf.py
     post_install:
-      - towncrier build --keep
+      - git describe --exact-match || towncrier build --keep
 
 conda:
   environment: docs/rtd_environment.yaml

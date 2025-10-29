@@ -33,7 +33,7 @@ Reference File Format
 BKG reference files are in FITS format. The content of the background references differ
 based on exposure type:
 
-:Data model: `~jwst.datamodels.WfssBkgModel`
+:Data model: `~stdatamodels.jwst.datamodels.WfssBkgModel`
 
 Wide-field slitless spectroscopy (WFSS) background files contain 3 IMAGE extensions and
 1 BINTABLE extension. The FITS primary HDU does not contain a data array.
@@ -50,7 +50,7 @@ DQ_DEF   BINTABLE    2    TFIELDS = 4     N/A
 
 .. include:: ../includes/dq_def.inc
 
-:Data model: `~jwst.datamodels.SossBkgModel`
+:Data model: `~stdatamodels.jwst.datamodels.SossBkgModel`
 
 Background reference files supporting NIRISS SOSS exposures contain three
 image extensions, each with three dimensions. The extensions contain templates

@@ -13,7 +13,7 @@ def save_median(median_model, make_output_path):
 
     Parameters
     ----------
-    median_model : ~jwst.datamodels.ImageModel
+    median_model : `~jwst.datamodels.ImageModel`
         The median ImageModel or CubeModel to save
 
     make_output_path : function
@@ -32,7 +32,7 @@ def save_drizzled(drizzled_model, make_output_path):
 
     Parameters
     ----------
-    drizzled_model : ~jwst.datamodels.ImageModel
+    drizzled_model : `~jwst.datamodels.ImageModel`
         The median ImageModel or CubeModel to save.
 
     make_output_path : function
@@ -50,7 +50,7 @@ def save_blot(input_model, blot, blot_err, make_output_path):
 
     Parameters
     ----------
-    input_model : ~jwst.datamodels.ImageModel
+    input_model : `~jwst.datamodels.ImageModel`
         An input model corresponding to the blotted data,
         containing metadata to copy.
 
@@ -74,7 +74,7 @@ def _make_blot_model(input_model, blot, blot_err):
 
     Parameters
     ----------
-    input_model : ~jwst.datamodels.ImageModel
+    input_model : `~jwst.datamodels.ImageModel`
         An input model corresponding to the blotted data,
         containing metadata to copy.
 
@@ -86,7 +86,7 @@ def _make_blot_model(input_model, blot, blot_err):
 
     Returns
     -------
-    blot_model : ~jwst.datamodels.ImageModel
+    blot_model : `~jwst.datamodels.ImageModel`
         An image model containing the blotted data.
     """
     blot_model = type(input_model)()
@@ -106,7 +106,7 @@ def _save_intermediate_output(model, suffix, make_output_path):
 
     Parameters
     ----------
-    model : ~jwst.datamodels.ImageModel
+    model : `~jwst.datamodels.ImageModel`
         The intermediate datamodel to save.
 
     suffix : str

@@ -27,7 +27,7 @@ From a parameter file
 A Pipeline parameter file follows the same format as a Step parameter file:
 :ref:`config_asdf_files`
 
-Here is an example pipeline parameter file for the `Image2Pipeline`
+Here is an example pipeline parameter file for the ``Image2Pipeline``
 class:
 
 .. code-block:: yaml
@@ -41,8 +41,6 @@ class:
       name: asdf, version: 2.7.3}
    class: jwst.pipeline.Image2Pipeline
    name: Image2Pipeline
-   parameters:
-      save_bsub: false
    steps:
    - class: jwst.flatfield.flat_field_step.FlatFieldStep
      name: flat_field
@@ -55,7 +53,7 @@ class:
        pixfrac: 1.0
 
 Just like a ``Step``, it must have ``name`` and ``class`` values.
-Here the ``class`` must refer to a subclass of `stpipe.Pipeline`.
+Here the ``class`` must refer to a subclass of ``stpipe.Pipeline``.
 
 Following ``name`` and ``class`` is the ``steps`` section.  Under
 this section is a subsection for each step in the pipeline.  The easiest
@@ -128,8 +126,8 @@ equivalent of the parameter file above:
 Running a Pipeline
 ==================
 
-From the commandline
---------------------
+From the command line
+---------------------
 
 The same ``strun`` script used to run Steps from the commandline can
 also run Pipelines.
@@ -137,17 +135,20 @@ also run Pipelines.
 The only wrinkle is that any parameters overridden from the
 commandline use dot notation to specify the parameter name.  For
 example, to override the ``pixfrac`` value on the ``resample``
-step in the example above, one can do::
+step in the example above, one can do:
 
-    > strun stpipe.pipeline.Image2Pipeline --steps.resample.pixfrac=2.0
+.. code-block:: shell
+
+    strun stpipe.pipeline.Image2Pipeline --steps.resample.pixfrac=2.0
 
 From Python
 -----------
 
-Once the pipeline has been configured (as above), just call the
-instance to run it.
+Once the pipeline has been configured (as above), run it::
 
-    pipe()
+    pipe.run()
+
+For more details, see :ref:`python_run_vs_call`.
 
 Caching details
 ---------------
@@ -180,17 +181,15 @@ they are run in the order they are given. There can also be ``pre_hooks`` and
 ``post_hooks`` on the Pipeline as a whole (since a Pipeline is also a Step).
 Each of these parameters is a list of strings, where each entry is one of:
 
-   - An external commandline application.  The arguments can be
-     accessed using {0}, {1} etc.  (See
-     `stpipe.subproc.SystemCall`).
+* An external commandline application.  The arguments can be
+  accessed using {0}, {1} etc.  (See
+  ``stpipe.subproc.SystemCall``).
+* A dot-separated path to a Python Step class.
+* A dot-separated path to a Python function.
 
-   - A dot-separated path to a Python Step class.
 
-   - A dot-separated path to a Python function.
-
-For example, here’s a ``post_hook`` that will display a FITS file in
-the ``ds9`` FITS viewer the ``flat_field`` step has done flat field
-correction on it:
+For example, here's a ``post_hook`` that will display a FITS file in
+the ``ds9`` FITS viewer after the resample step has completed processing:
 
 .. code-block:: yaml
 

@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.residual_fringe.ResidualFringeStep`
+:Class: `jwst.residual_fringe.residual_fringe_step.ResidualFringeStep`
 :Alias: residual_fringe
 
 The JWST pipeline contains multiple steps to mitigate the impact of fringing on science spectra, which
@@ -31,15 +31,15 @@ The ``residual_fringe`` step can accept several different forms of input data, i
 
 #. a single file containing a 2-D IFU image
 
-#. a data model (`~jwst.datamodels.IFUImageModel`) containing a 2-D IFU image
+#. a data model (`~stdatamodels.jwst.datamodels.IFUImageModel`) containing a 2-D IFU image
 
 #. an association table (in json format) containing a single input file
-   
+
 The second of the residual fringe correction steps is a 1-D correction  that can be applied to one-dimensional
 spectra extracted from MRS data cubes by setting the optional parameter ``extract_1d.ifu_rfcorr = True``
 in the :ref:`extract_1d <extract_1d_step>` step.  Empirically, the 1-D correction step has been found to work
 better than the 2-D correction step if it is applied to per-band spectra.
-For more details on this step see :ref:`extract_1d <extract_1d_step>` step. 
+For more details on this step see :ref:`extract_1d <extract_1d_step>` step.
 
 
 Assumptions
@@ -67,6 +67,3 @@ The residual fringes are corrected for by fitting and removing sinusoidal gain t
 While the fringe frequencies are well known, amplitudes can vary due to beating between the different fringe components
 and additionally are sensitive to the detailed location and intensity of objects within a given astronomical scene.
 Fringing thus cannot be corrected in its entirety for an arbitrary astronomical scene without forward modeling.
-
-
-

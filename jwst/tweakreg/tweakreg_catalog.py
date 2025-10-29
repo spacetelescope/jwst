@@ -40,15 +40,15 @@ class JWSTBackground:
 
         Parameters
         ----------
-        data : `~numpy.ndarray`
+        data : ndarray
             The input 2D image for which to estimate the background.
 
-        box_size : int or array_like (int)
+        box_size : int or array-like (int)
             The box size along each axis.  If ``box_size`` is a scalar then
             a square box of size ``box_size`` will be used.  If ``box_size``
             has two elements, they should be in ``(ny, nx)`` order.
 
-        coverage_mask : array_like (bool), optional
+        coverage_mask : array-like (bool), optional
             A boolean mask, with the same shape as ``data``, where a `True`
             value indicates the corresponding element of ``data`` is masked.
             Masked data are excluded from calculations. ``coverage_mask``
@@ -113,7 +113,7 @@ class JWSTBackground:
 
         Returns
         -------
-        background : `~numpy.ndarray`
+        background : ndarray
             The 2D background image.
         """
         return self._background2d.background
@@ -125,7 +125,7 @@ class JWSTBackground:
 
         Returns
         -------
-        background_rms : `~numpy.ndarray`
+        background_rms : ndarray
             The 2D background RMS image.
         """
         return self._background2d.background_rms
@@ -137,17 +137,17 @@ def _convolve_data(data, kernel_fwhm, mask=None):
 
     Parameters
     ----------
-    data : `~numpy.ndarray`
+    data : ndarray
         The 2D array to convolve.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-    mask : array_like, bool, optional
+    mask : array-like, bool, optional
         A boolean mask with the same shape as ``data``, where a `True`
         value indicates the corresponding element of ``data`` is masked.
 
     Returns
     -------
-    convolved_data : `~numpy.ndarray`
+    convolved_data : ndarray
         The convolved 2D array.
     """
     sigma = kernel_fwhm * gaussian_fwhm_to_sigma
@@ -194,13 +194,13 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
 
     Parameters
     ----------
-    data : array_like
+    data : array-like
         The 2D array of the image.
-    threshold_img : np.ndarray
+    threshold_img : ndarray
         The per-pixel absolute image value above which to select sources.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the 2D Gaussian kernel.
-    mask : array_like (bool), optional
+    mask : array-like (bool), optional
         The image mask
     **kwargs : dict
         Additional keyword arguments passed to `photutils.segmentation.SourceFinder`
@@ -213,7 +213,7 @@ def _sourcefinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwargs)
 
     References
     ----------
-    `photutils segmentation tutorial <https://photutils.readthedocs.io/en/stable/segmentation.html>`_.
+    :ref:`photutils segmentation tutorial <photutils:image_segmentation>`.
     """
     default_kwargs = {
         "npixels": 10,
@@ -259,13 +259,13 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
 
     Parameters
     ----------
-    data : array_like
+    data : array-like
         The 2D array of the image.
-    threshold_img : np.ndarray
+    threshold_img : ndarray
         The per-pixel absolute image value above which to select sources.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the Gaussian kernel
-    mask : array_like (bool), optional
+    mask : array-like (bool), optional
         The image mask
     **kwargs : dict
         Additional keyword arguments passed to `photutils.detection.IRAFStarFinder`.
@@ -274,7 +274,7 @@ def _iraf_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwar
     -------
     sources : `~astropy.table.QTable`
         A table containing the found sources.
-    segmentation_image : `~numpy.ndarray` or None
+    segmentation_image : ndarray or None
         The segmentation image, or None if not applicable.
     """
     # note that this suppresses TypeError: unexpected keyword arguments
@@ -294,13 +294,13 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
 
     Parameters
     ----------
-    data : array_like
+    data : array-like
         The 2D array of the image.
-    threshold_img : np.ndarray
+    threshold_img : ndarray
         The per-pixel absolute image value above which to select sources.
     kernel_fwhm : float
         The full-width at half-maximum (FWHM) of the Gaussian kernel
-    mask : array_like (bool), optional
+    mask : array-like (bool), optional
         The image mask
     **kwargs : dict
         Additional keyword arguments passed to `photutils.detection.DAOStarFinder`.
@@ -309,7 +309,7 @@ def _dao_starfinder_wrapper(data, threshold_img, kernel_fwhm, mask=None, **kwarg
     -------
     sources : `~astropy.table.QTable`
         A table containing the found sources.
-    segmentation_image : `~numpy.ndarray` or None
+    segmentation_image : ndarray or None
         The segmentation image, or None if not applicable.
     """
     # for consistency with IRAFStarFinder, allow minsep_fwhm to be passed in
@@ -345,8 +345,8 @@ def make_tweakreg_catalog(
 
     Parameters
     ----------
-    model : `ImageModel`
-        The input `ImageModel` of a single image.  The input image is
+    model : `~stdatamodels.jwst.datamodels.ImageModel`
+        The input `~stdatamodels.jwst.datamodels.ImageModel` of a single image.  The input image is
         assumed to be background subtracted.
     snr_threshold : float
         The signal-to-noise ratio per pixel above the ``background`` for
@@ -356,15 +356,17 @@ def make_tweakreg_catalog(
         used to convolve the image.
     bkg_boxsize : float, optional
         The background mesh box size in pixels.
-    coverage_mask : array_like (bool), optional
+    coverage_mask : array-like (bool), optional
         A boolean mask with the same shape as ``model.data``, where a `True`
         value indicates the corresponding element of ``model.data`` is masked.
         Masked pixels will not be included in any source.
     starfinder_name : str, optional
-        The `photutils` star finder to use.  Options are 'dao', 'iraf', or 'segmentation'.
+        The ``photutils`` star finder to use.  Options are 'dao', 'iraf', or 'segmentation':
+
         - 'dao': `photutils.detection.DAOStarFinder`
         - 'iraf': `photutils.detection.IRAFStarFinder`
         - 'segmentation': `photutils.segmentation.SourceFinder`
+
     starfinder_kwargs : dict, optional
         Additional keyword arguments to be passed to the star finder.
         for 'segmentation', these can be kwargs to `photutils.segmentation.SourceFinder`
@@ -372,15 +374,16 @@ def make_tweakreg_catalog(
         for 'dao' or 'iraf', these are kwargs to `photutils.detection.DAOStarFinder`
         or `photutils.detection.IRAFStarFinder`, respectively.
         Defaults are as stated in the docstrings of those functions unless noted here:
+
         - 'dao': fwhm=2.5
         - 'iraf': fwhm=2.5
         - 'segmentation': npixels=10, progress_bar=False
 
     Returns
     -------
-    catalog : `~astropy.Table`
+    catalog : `~astropy.table.Table`
         An astropy Table containing the source catalog.
-    segmentation_image : `~numpy.ndarray` or None
+    segmentation_image : ndarray or None
         The segmentation image, or None if not applicable.
     """
     if not isinstance(model, ImageModel):
@@ -409,7 +412,8 @@ def make_tweakreg_catalog(
         with warnings.catch_warnings():
             # suppress warning about NaNs being automatically masked - this is desired
             warnings.simplefilter("ignore", AstropyUserWarning)
-            threshold_img = bkg.background + (snr_threshold * bkg.background_rms)
+            threshold_img = snr_threshold * bkg.background_rms
+        data = model.data - bkg.background
     except ValueError as e:
         log.warning(f"Error determining sky background: {e.args[0]}")
         sources = _empty_table()
@@ -422,7 +426,7 @@ def make_tweakreg_catalog(
             "ignore", category=NoDetectionsWarning, message="No sources were found"
         )
         sources, segmentation_image = starfinder(
-            model.data,
+            data,
             threshold_img,
             kernel_fwhm,
             mask=coverage_mask,

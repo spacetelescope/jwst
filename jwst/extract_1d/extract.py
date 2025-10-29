@@ -1101,7 +1101,7 @@ def shift_by_offset(offset, extract_params, update_trace=True):
         Cross-dispersion offset to apply, in pixels.
     extract_params : dict
         Extraction parameters to update, as created by
-        `get_extraction_parameters`.
+        :func:`get_extract_parameters`.
     update_trace : bool
         If True, the trace in ``extract_params['trace']`` is also updated
         if present.
@@ -1141,7 +1141,7 @@ def define_aperture(input_model, slit, extract_params, exp_type):
         unless ``slit`` is None. In that case, they will be retrieved
         from ``input_model``.
     extract_params : dict
-        Extraction parameters, as created by `get_extraction_parameters`.
+        Extraction parameters, as created by :func:`get_extract_parameters`.
     exp_type : str
         Exposure type for the input data.
 
@@ -1469,7 +1469,8 @@ def create_extraction(
     are determined collectively, then multiple integrations, if present,
     are each extracted separately.
 
-    The output model must be a `MultiSpecModel` or `TSOMultiSpecModel`,
+    The output model must be a `~stdatamodels.jwst.datamodels.MultiSpecModel`
+    or `~stdatamodels.jwst.datamodels.TSOMultiSpecModel`,
     created before calling this function, and passed as ``output_model``.
     It is updated in place, with new spectral tables appended as they are created.
 
@@ -1495,7 +1496,7 @@ def create_extraction(
        5. Set a DQ array, with DO_NOT_USE flags set where the
           flux is NaN.
        6. Create a spectral table to contain all extracted values
-          and store it in a `SpecModel`.
+          and store it in a `~stdatamodels.jwst.datamodels.SpecModel`.
        7. Apply the aperture correction to the spectral table, if
           available.
        8. Append the new SpecModel to the output_model.
@@ -1936,7 +1937,7 @@ def create_extraction(
     if not progress_msg_printed:
         log.info(f"All {input_model.data.shape[0]} integrations done")
 
-    if len(spec_list) > 1:
+    if isinstance(output_model, datamodels.TSOMultiSpecModel):
         # For multi-int data, assemble a single TSOSpecModel from the list of spectra
         tso_spec = make_tso_specmodel(spec_list, segment=input_model.meta.exposure.segment_number)
 
@@ -1987,8 +1988,7 @@ def _make_output_model(data_model, meta_source):
         If the input data is multi-integration, a TSOMultiSpecModel is
         returned.  Otherwise, a MultiSpecModel is returned.
     """
-    multi_int = (data_model.data.ndim == 3) and (data_model.data.shape[0] > 1)
-    if multi_int:
+    if data_model.data.ndim == 3:
         output_model = datamodels.TSOMultiSpecModel()
     else:
         output_model = datamodels.MultiSpecModel()

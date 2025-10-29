@@ -7,7 +7,7 @@ calwebb_detector1: Stage 1 Detector Processing
 :Class: `jwst.pipeline.Detector1Pipeline`
 :Alias: calwebb_detector1
 
-The ``Detector1Pipeline`` applies basic detector-level corrections to all exposure
+The `~jwst.pipeline.Detector1Pipeline` applies basic detector-level corrections to all exposure
 types (imaging, spectroscopic, coronagraphic, etc.). It is applied to one
 exposure at a time.
 It is sometimes referred to as "ramps-to-slopes" processing, because the input raw data
@@ -22,7 +22,7 @@ Non-TSO exposures, all applicable steps are applied to the data. For TSO
 exposures, some steps are set to be skipped by default (see the list of steps in
 the table below).
 
-The list of steps applied by the ``Detector1Pipeline`` pipeline is shown in the
+The list of steps applied by the `~jwst.pipeline.Detector1Pipeline` pipeline is shown in the
 table below. Note that MIRI exposures use some instrument-specific steps and
 some of the steps are applied in a different order than for Near-IR (NIR)
 instrument exposures.
@@ -38,7 +38,7 @@ pixels that go into saturation already in the first group (see more details on
 that process in the :ref:`ramp_fitting <ramp_fitting_step>` step). In order for
 the frame zero image to be utilized during ramp fitting, it must have all of
 the same calibrations and corrections applied as the first group in the various
-``Detector1Pipeline`` steps. This includes the :ref:`saturation <saturation_step>`,
+`~jwst.pipeline.Detector1Pipeline` steps. This includes the :ref:`saturation <saturation_step>`,
 :ref:`superbias <superbias_step>`, :ref:`refpix <refpix_step>`, and
 :ref:`linearity <linearity_step>` steps. Other steps do not have a direct effect
 on either the first group or frame zero pixel values.
@@ -72,7 +72,7 @@ on either the first group or frame zero pixel values.
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`dark_current <dark_current_step>`                              | |check| | |check| | :ref:`dark_current <dark_current_step>`              | |check| | |check| |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
-|                                                                      |         |         | :ref:`refpix <refpix_step>`                          | |check| | |check| |
+|                                                                      |         |         | :ref:`refpix <refpix_step>`                          |         |         |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
 | :ref:`charge_migration <charge_migration_step>` [1]_                 | |check| |         |                                                      |         |         |
 +----------------------------------------------------------------------+---------+---------+------------------------------------------------------+---------+---------+
@@ -89,7 +89,7 @@ on either the first group or frame zero pixel values.
 .. [1] By default, this step is skipped in the ``calwebb_detector1`` pipeline
    for all instruments and modes.
 .. [2] The :ref:`persistence <persistence_step>` step is currently hardwired to be skipped in
-   the `Detector1Pipeline` module for all NIRSpec exposures.
+   the `~jwst.pipeline.Detector1Pipeline` module for all NIRSpec exposures.
 
 
 Arguments
@@ -114,19 +114,19 @@ Inputs
 4D raw data
 +++++++++++
 
-:Data model: `~jwst.datamodels.RampModel`
+:Data model: `~stdatamodels.jwst.datamodels.RampModel`
 :File suffix: _uncal
 
-The input to ``Detector1Pipeline`` is a single raw exposure,
+The input to `~jwst.pipeline.Detector1Pipeline` is a single raw exposure,
 e.g. "jw80600012001_02101_00003_mirimage_uncal.fits", which contains the
 original raw data from all of the detector readouts in the exposure
 (ncols x nrows x ngroups x nintegrations).
 
 Note that in the operational environment, the
-input will be in the form of a `~jwst.datamodels.Level1bModel`, which only
+input will be in the form of a `~stdatamodels.jwst.datamodels.Level1bModel`, which only
 contains the 4D array of detector pixel values, along with some optional
 extensions. When such a file is loaded into the pipeline, it is immediately
-converted into a `~jwst.datamodels.RampModel`, and has all additional data arrays
+converted into a `~stdatamodels.jwst.datamodels.RampModel`, and has all additional data arrays
 for Data Quality flags created and initialized to zero.
 
 The input can also contain a 3D cube of NIRCam "Frame 0" data, where
@@ -140,7 +140,7 @@ Outputs
 4D corrected ramp
 +++++++++++++++++
 
-:Data model: `~jwst.datamodels.RampModel`
+:Data model: `~stdatamodels.jwst.datamodels.RampModel`
 :File suffix: _ramp
 
 Result of applying all pipeline steps up through the :ref:`jump <jump_step>` step,
@@ -151,7 +151,7 @@ pipeline argument ``--save_calibrated_ramp`` is set to ``True`` (default is ``Fa
 2D countrate product
 ++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.IFUImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel` or `~stdatamodels.jwst.datamodels.IFUImageModel`
 :File suffix: _rate
 
 All types of inputs result in a 2D countrate product,
@@ -160,12 +160,12 @@ The output file will be of type "_rate", e.g.
 "jw80600012001_02101_00003_mirimage_rate.fits". The 2D "_rate" product is passed along
 to subsequent pipeline modules for all non-TSO and non-Coronagraphic exposures.
 For MIRI MRS and NIRSpec IFU exposures, the output data model will be
-`~jwst.datamodels.IFUImageModel`, while all others will be `~jwst.datamodels.ImageModel`.
+`~stdatamodels.jwst.datamodels.IFUImageModel`, while all others will be `~stdatamodels.jwst.datamodels.ImageModel`.
 
 3D countrate product
 ++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _rateints
 
 A 3D countrate product is created that contains the individual

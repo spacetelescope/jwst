@@ -1,9 +1,15 @@
+import logging
+import warnings
+
+from stdatamodels.exceptions import ValidationWarning
 from stdatamodels.jwst import datamodels
 
 from jwst.group_scale import group_scale
 from jwst.stpipe import Step
 
 __all__ = ["GroupScaleStep"]
+
+log = logging.getLogger(__name__)
 
 
 class GroupScaleStep(Step):
@@ -24,53 +30,66 @@ class GroupScaleStep(Step):
 
         Parameters
         ----------
-        step_input : datamodel
-            Input data model on which to perform group scale step.
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            Input file name or data model on which to perform group scale step.
 
         Returns
         -------
-        result : datamodel
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             Output data model on which the group scale step has been performed.
         """
-        # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
-            # Try to get values of NFRAMES and FRMDIVSR to see
-            # if we need to do any rescaling
-            nframes = input_model.meta.exposure.nframes
-            frame_divisor = input_model.meta.exposure.frame_divisor
+        # Open the input data model as a RampModel, catching a specific
+        # expected warning for uncal files
+        try:
+            with warnings.catch_warnings():
+                warnings.filterwarnings(
+                    "error",
+                    message=r"(?s:.*)Array datatype .* not compatible",
+                    category=ValidationWarning,
+                )
+                result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
+        except ValidationWarning as err:
+            log.error(err)
 
-            # If we didn't find NFRAMES, we don't have enough info
-            # to continue. Skip the step.
-            if nframes is None:
-                self.log.warning("NFRAMES value not found")
-                self.log.warning("Step will be skipped")
-                input_model.meta.cal_step.group_scale = "SKIPPED"
-                return input_model
+            # Inform the user and raise a clearer error message
+            msg = (
+                "Input data model does not have float-type data. "
+                "The file should be opened as a RampModel before calling the step."
+            )
+            log.error(msg)
+            raise TypeError(msg) from None
 
-            # If we didn't find FRMDIVSR, then check to see if NFRAMES
-            # is a power of 2. If it is, rescaling isn't needed.
-            if frame_divisor is None:
-                if nframes & (nframes - 1) == 0:
-                    self.log.info(f"NFRAMES={nframes} is a power of 2; correction not needed")
-                    self.log.info("Step will be skipped")
-                    input_model.meta.cal_step.group_scale = "SKIPPED"
-                    return input_model
+        # Try to get values of NFRAMES and FRMDIVSR to see
+        # if we need to do any rescaling
+        nframes = result.meta.exposure.nframes
+        frame_divisor = result.meta.exposure.frame_divisor
 
-            # Compare NFRAMES and FRMDIVSR. If they're equal,
-            # rescaling isn't needed.
-            elif nframes == frame_divisor:
-                self.log.info("NFRAMES and FRMDIVSR are equal; correction not needed")
-                self.log.info("Step will be skipped")
-                input_model.meta.cal_step.group_scale = "SKIPPED"
-                return input_model
+        # If we didn't find NFRAMES, we don't have enough info
+        # to continue. Skip the step.
+        if nframes is None:
+            log.warning("NFRAMES value not found")
+            log.warning("Step will be skipped")
+            result.meta.cal_step.group_scale = "SKIPPED"
+            return result
 
-            # Work on a copy
-            result = input_model.copy()
+        # If we didn't find FRMDIVSR, then check to see if NFRAMES
+        # is a power of 2. If it is, rescaling isn't needed.
+        if frame_divisor is None:
+            if nframes & (nframes - 1) == 0:
+                log.info(f"NFRAMES={nframes} is a power of 2; correction not needed")
+                log.info("Step will be skipped")
+                result.meta.cal_step.group_scale = "SKIPPED"
+                return result
 
-            # Do the scaling
-            group_scale.do_correction(result)
+        # Compare NFRAMES and FRMDIVSR. If they're equal,
+        # rescaling isn't needed.
+        elif nframes == frame_divisor:
+            log.info("NFRAMES and FRMDIVSR are equal; correction not needed")
+            log.info("Step will be skipped")
+            result.meta.cal_step.group_scale = "SKIPPED"
+            return result
 
-            # Cleanup
-            del input_model
+        # Do the scaling
+        group_scale.do_correction(result)
 
         return result

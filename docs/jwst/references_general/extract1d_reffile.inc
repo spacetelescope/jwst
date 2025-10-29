@@ -4,7 +4,7 @@ EXTRACT1D Reference File
 ------------------------
 The EXTRACT1D reference file contains information needed to guide
 the 1D extraction process. It is a text file, with the information
-in JSON format for Non-IFU data and in ASDF format for IFU data. 
+in JSON format for Non-IFU data and in ASDF format for IFU data.
 
 .. include:: ../references_general/extract1d_selection.inc
 
@@ -91,7 +91,7 @@ and use this modified file in ``extract_1d`` by specifying this modified referen
 (:ref:`override in python <override_ref_python>` or :ref:`override in strun <override_ref_strun>`). The format for
 JSON files has to be exact, for example, the format of a floating-point value with a fractional portion must include
 at least one decimal digit, so "1." is invalid, while "1.0" is valid. The best practice after editing a JSON reference
-file is to run a JSON validator off-line, such as `https://jsonlint.com/`, and correct any format errors before using
+file is to run a JSON validator off-line, such as https://jsonlint.com/, and correct any format errors before using
 the JSON reference file in the pipeline.
 
 
@@ -100,14 +100,14 @@ Reference File Format IFU data
 For IFU data the reference files are stored as ASDF files. The extraction size
 varies with wavelength. The reference file contains a set of vectors defining
 the extraction size based on wavelength. These vectors are all the same size and
-are defined as follows: 
+are defined as follows:
 
-* wavelength: wavelength in microns. 
+* wavelength: wavelength in microns.
 * radius: the radius of the circular extraction aperture (arcseconds, float)
 * inner_bkg: of the inner edge of the background annulus (arcseconds, float)
 * outer_bkg: of the outer edge of the background annulus (arcseconds, float)
 
-  
+
 In addition following general keys are also in the ASDF reference file:
 
 * subtract_background: if true, subtract a background determined from an

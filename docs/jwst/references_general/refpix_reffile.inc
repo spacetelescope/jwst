@@ -4,7 +4,7 @@ REFPIX Reference File
 ---------------------
 
 :REFTYPE: REFPIX
-:Data model: `~jwst.datamodels.IRS2Model`
+:Data model: `~stdatamodels.jwst.datamodels.IRS2Model`
 
 The REFPIX reference file contains the complex coefficients
 for the correction.

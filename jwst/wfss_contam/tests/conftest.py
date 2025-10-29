@@ -1,15 +1,13 @@
-import warnings
-
-import asdf
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.convolution import convolve
 from astropy.stats import sigma_clipped_stats
 from astropy.table import Table
-from astropy.utils.data import get_pkg_data_filename
 from photutils.datasets import make_100gaussians_image
 from photutils.segmentation import SourceFinder, make_2dgaussian_kernel
+
+from jwst.assign_wcs.tests.test_niriss import create_imaging_wcs, create_wfss_wcs
 
 DIR_IMAGE = "direct_image.fits"
 
@@ -47,6 +45,7 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
 
     # obs expects input list of direct image filenames
     model = dm.ImageModel(data=data)
+    model.meta.wcs = create_imaging_wcs("F200W")
     model.save(DIR_IMAGE)
 
     return model
@@ -69,18 +68,7 @@ def segmentation_map(direct_image):
 
     # turn this into a jwst datamodel
     model = dm.SegmentationMapModel(data=segm.data)
-    with warnings.catch_warnings():
-        # asdf.exceptions.AsdfPackageVersionWarning in oldestdeps job
-        warnings.filterwarnings(
-            "ignore",
-            message="File .* was created with extension URI .* which is not currently installed",
-        )
-        with asdf.open(
-            get_pkg_data_filename("data/segmentation_wcs.asdf", package="jwst.wfss_contam.tests")
-        ) as asdf_file:
-            wcsobj = asdf_file.tree["wcs"]
-            model.meta.wcs = wcsobj
-
+    model.meta.wcs = create_imaging_wcs("F200W")
     return model
 
 
@@ -99,10 +87,10 @@ def source_catalog(segmentation_map):
 
     rng = np.random.default_rng(42)
     data = {
-        "source_id": source_ids,
+        "label": source_ids,
         "xcentroid": rng.uniform(0, segmentation_map.data.shape[1], len(source_ids)),
         "ycentroid": rng.uniform(0, segmentation_map.data.shape[0], len(source_ids)),
-        "flux": rng.uniform(100, 1000, len(source_ids)),
+        "isophotal_abmag": rng.uniform(20, 30, len(source_ids)),
     }
     return Table(data)
 
@@ -114,20 +102,60 @@ def grism_wcs():
 
     Returns
     -------
-    gwcs.WCS
+    gwcs.wcs.WCS
         The grism wcs object.
-
-    Notes
-    -----
-    This should probably be mocked in future updates.
     """
-    with warnings.catch_warnings():
-        # asdf.exceptions.AsdfPackageVersionWarning in oldestdeps job
-        warnings.filterwarnings(
-            "ignore",
-            message="File .* was created with extension URI .* which is not currently installed",
-        )
-        with asdf.open(
-            get_pkg_data_filename("data/grism_wcs.asdf", package="jwst.wfss_contam.tests")
-        ) as asdf_file:
-            return asdf_file.tree["wcs"]
+    return create_wfss_wcs("GR150C", pupil="F200W")
+
+
+@pytest.fixture(scope="module")
+def photom_ref_model():
+    """
+    Make a mock photom reference model for NIRISS WFSS.
+
+    Returns
+    -------
+    :class:`~NisWfssPhotomModel`
+        The photom reference model.
+    """
+    filt = [
+        "GR150C",
+    ] * 5
+    pupil = [
+        "F200W",
+    ] * 5
+    order = [-1, 0, 1, 2, 3]
+    photmjsr = [1230.1855, 195.88435, 49.010494, 1584.0671, 7298.0225]
+    uncertainty = [12.301856, 1.9588436, 0.49010494, 15.840671, 72.980225]
+    nelem = [100] * 5
+    wavelength = [
+        np.linspace(1.7, 2.3, 100),
+    ] * 5
+
+    response_scaling = [10, 1, 1, 10, 100]  # response is inversely proportional to throughput
+    relresponse = [np.ones_like(wavelength[0]) * r for r in response_scaling]
+    reluncertainty = [np.ones_like(wavelength[0]) * r * 0.01 for r in response_scaling]
+
+    dtype = [
+        ("filter", "S12"),
+        ("pupil", "S15"),
+        ("order", "<i2"),
+        ("photmjsr", "<f4"),
+        ("uncertainty", "<f4"),
+        ("nelem", "<i2"),
+        ("wavelength", "<f4", (wavelength[0].size,)),
+        ("relresponse", "<f4", (relresponse[0].size,)),
+        ("reluncertainty", "<f4", (reluncertainty[0].size,)),
+    ]
+    phot_table = np.recarray((5,), dtype=dtype)
+
+    phot_table["filter"] = filt
+    phot_table["pupil"] = pupil
+    phot_table["order"] = order
+    phot_table["photmjsr"] = photmjsr
+    phot_table["uncertainty"] = uncertainty
+    phot_table["nelem"] = nelem
+    phot_table["wavelength"] = wavelength
+    phot_table["relresponse"] = relresponse
+    phot_table["reluncertainty"] = reluncertainty
+    return dm.NisWfssPhotomModel(phot_table=phot_table)

@@ -14,7 +14,7 @@ from jwst import datamodels
 from jwst.assign_wcs import AssignWcsStep, nirspec
 from jwst.clean_flicker_noise.lib import NSClean, NSCleanSubarray
 from jwst.flatfield import FlatFieldStep
-from jwst.lib.basic_utils import LoggingContext
+from jwst.lib.basic_utils import disable_logging
 from jwst.lib.reffile_utils import get_subarray_model, ref_matches_sci
 from jwst.msaflagopen import MSAFlagOpenStep
 from jwst.ramp_fitting import RampFitStep
@@ -27,6 +27,7 @@ log = logging.getLogger(__name__)
 NRS_FS_REGION = [922, 1116]
 
 __all__ = [
+    "read_flat_file",
     "make_rate",
     "post_process_rate",
     "mask_ifu_slices",
@@ -41,13 +42,68 @@ __all__ = [
 ]
 
 
+def read_flat_file(input_model, flat_filename):
+    """
+    Read flat data from an input file path.
+
+    Flat data is assumed to be full frame.  Subarrays matching the input
+    data are extracted as needed.
+
+    Only the flat image is returned: error and DQ arrays are ignored.
+    Any zeros or NaNs in the flat image are set to a smoothed local average
+    value (via `background_level`, with background_method = 'model') before
+    returning, to avoid impacting the background and noise fits near
+    missing flat data.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.JwstDataModel`
+        The input data.
+    flat_filename : str
+        File path for a full-frame flat image.
+
+    Returns
+    -------
+    flat_data : array-like of float
+        A 2D flat image array matching the input data.
+    """
+    if flat_filename is None:
+        return None
+
+    # Open the provided flat as FlatModel
+    log.debug("Dividing by flat data prior to fitting")
+    flat = datamodels.FlatModel(flat_filename)
+
+    # Extract subarray from reference data, if necessary
+    if ref_matches_sci(input_model, flat):
+        flat_data = flat.data
+    else:
+        log.debug("Extracting matching subarray from flat")
+        sub_flat = get_subarray_model(input_model, flat)
+        flat_data = sub_flat.data
+        sub_flat.close()
+    flat.close()
+
+    # Set any zeros or non-finite values in the flat data to a smoothed local value
+    bad_data = (flat_data == 0) | ~np.isfinite(flat_data)
+    if np.any(bad_data):
+        smoothed_flat = background_level(flat_data, ~bad_data, background_method="model")
+        try:
+            flat_data[bad_data] = smoothed_flat[bad_data]
+        except IndexError:
+            # 2D model failed, median value returned instead
+            flat_data[bad_data] = smoothed_flat
+
+    return flat_data
+
+
 def make_rate(input_model, input_dir="", return_cube=False):
     """
     Make a rate model from a ramp model.
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.RampModel`
+    input_model : `~jwst.datamodels.RampModel`
         Input ramp model.
 
     input_dir : str
@@ -61,7 +117,7 @@ def make_rate(input_model, input_dir="", return_cube=False):
 
     Returns
     -------
-    rate_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+    rate_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         The rate or rateints model.
     """
     # Call the ramp fit step on a copy of the input
@@ -70,7 +126,7 @@ def make_rate(input_model, input_dir="", return_cube=False):
     log.info("Creating draft rate file for scene masking")
     step = RampFitStep()
     step.input_dir = input_dir
-    with LoggingContext(step.log, level=logging.WARNING):
+    with disable_logging(level=logging.WARNING):
         # Note: the copy is currently needed because ramp fit
         # closes the input model when it's done, and we need
         # it to stay open.
@@ -96,7 +152,7 @@ def post_process_rate(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+    input_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         Input rate model.
 
     input_dir : str
@@ -118,7 +174,7 @@ def post_process_rate(
 
     Returns
     -------
-    output_model : `~jwst.datamodel.ImageModel` or `~jwst.datamodel.CubeModel`
+    output_model : `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
         The updated model.
     """
     output_model = input_model
@@ -128,7 +184,7 @@ def post_process_rate(
         log.info("Assigning a WCS for scene masking")
         step = AssignWcsStep()
         step.input_dir = input_dir
-        with LoggingContext(step.log, level=logging.WARNING):
+        with disable_logging(level=logging.WARNING):
             output_model = step.run(output_model)
 
     # If needed, flag open MSA shutters
@@ -136,7 +192,7 @@ def post_process_rate(
         log.info("Flagging failed-open MSA shutters for scene masking")
         step = MSAFlagOpenStep()
         step.input_dir = input_dir
-        with LoggingContext(step.log, level=logging.WARNING):
+        with disable_logging(level=logging.WARNING):
             output_model = step.run(output_model)
 
     # If needed, draft a flat correction to retrieve non-science areas
@@ -144,7 +200,7 @@ def post_process_rate(
         log.info("Retrieving flat DQ values for scene masking")
         step = FlatFieldStep()
         step.input_dir = input_dir
-        with LoggingContext(step.log, level=logging.WARNING):
+        with disable_logging(level=logging.WARNING):
             flat_corrected_model = step.run(output_model)
 
         # Copy out the flat DQ plane, leave the data as is
@@ -164,7 +220,7 @@ def mask_ifu_slices(input_model, mask):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Science data model
 
     mask : array-like of bool
@@ -220,7 +276,7 @@ def mask_slits(input_model, mask):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Science data model.
 
     mask : array-like of bool
@@ -235,15 +291,15 @@ def mask_slits(input_model, mask):
     log.info("Finding slit/slitlet pixels")
 
     # Get the slits from the WCS object
-    slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slits
+    slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slit_ids
 
     # Loop over the slits, marking all the pixels within each bounding
     # box as False (do not use) in the mask.
     # Note that for 3D masks (TSO mode), all planes will be set to the same value.
     for slit in slits:
-        slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-        xlo, xhi = to_index(slit_wcs.bounding_box[0])
-        ylo, yhi = to_index(slit_wcs.bounding_box[1])
+        bbox = input_model.meta.wcs.bounding_box[slit]
+        xlo, xhi = to_index(bbox[0])
+        ylo, yhi = to_index(bbox[1])
         mask[..., ylo:yhi, xlo:xhi] = False
 
     return mask
@@ -431,7 +487,7 @@ def create_mask(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Science data model, containing rate data with all necessary
         pre-processing already performed.
 
@@ -962,14 +1018,14 @@ def _make_intermediate_model(input_model, intermediate_data):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data.
     intermediate_data : array-like
         The intermediate data to save.
 
     Returns
     -------
-    intermediate_model : ~jwst.datamodel.JwstDataModel`
+    intermediate_model : `~jwst.datamodels.JwstDataModel`
         A model containing only the intermediate data and top-level
         metadata matching the input.
     """
@@ -1050,61 +1106,6 @@ def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit
     return axis_to_correct, background_method, fit_by_channel, fc
 
 
-def _read_flat_file(input_model, flat_filename):
-    """
-    Read flat data from an input file path.
-
-    Flat data is assumed to be full frame.  Subarrays matching the input
-    data are extracted as needed.
-
-    Only the flat image is returned: error and DQ arrays are ignored.
-    Any zeros or NaNs in the flat image are set to a smoothed local average
-    value (via `background_level`, with background_method = 'model') before
-    returning, to avoid impacting the background and noise fits near
-    missing flat data.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
-        The input data.
-    flat_filename : str
-        File path for a full-frame flat image.
-
-    Returns
-    -------
-    flat_data : array-like of float
-        A 2D flat image array matching the input data.
-    """
-    if flat_filename is None:
-        return None
-
-    # Open the provided flat as FlatModel
-    log.debug("Dividing by flat data prior to fitting")
-    flat = datamodels.FlatModel(flat_filename)
-
-    # Extract subarray from reference data, if necessary
-    if ref_matches_sci(input_model, flat):
-        flat_data = flat.data
-    else:
-        log.debug("Extracting matching subarray from flat")
-        sub_flat = get_subarray_model(input_model, flat)
-        flat_data = sub_flat.data
-        sub_flat.close()
-    flat.close()
-
-    # Set any zeros or non-finite values in the flat data to a smoothed local value
-    bad_data = (flat_data == 0) | ~np.isfinite(flat_data)
-    if np.any(bad_data):
-        smoothed_flat = background_level(flat_data, ~bad_data, background_method="model")
-        try:
-            flat_data[bad_data] = smoothed_flat[bad_data]
-        except IndexError:
-            # 2D model failed, median value returned instead
-            flat_data[bad_data] = smoothed_flat
-
-    return flat_data
-
-
 def _make_processed_rate_image(
     input_model, single_mask, input_dir, exp_type, mask_science_regions, flat
 ):
@@ -1113,7 +1114,7 @@ def _make_processed_rate_image(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data.
     single_mask : bool
         If set, a single scene mask is desired, so create
@@ -1136,7 +1137,7 @@ def _make_processed_rate_image(
 
     Returns
     -------
-    image_model : `~jwst.datamodel.JwstDataModel`
+    image_model : `~jwst.datamodels.JwstDataModel`
         The processed rate image or cube.
     """
     if isinstance(input_model, datamodels.RampModel):
@@ -1183,7 +1184,7 @@ def _make_scene_mask(
     ----------
     user_mask : str or None
         Path to user-supplied mask image.
-    image_model : `~jwst.datamodel.JwstDataModel`
+    image_model : `~jwst.datamodels.JwstDataModel`
         A rate image or cube, processed as needed.
     mask_science_regions : bool
         For NIRSpec, mask regions of the image defined by WCS bounding
@@ -1209,7 +1210,7 @@ def _make_scene_mask(
     background_mask : array-like of bool
         Mask array, with True indicating background pixels, False
         indicating source pixels.
-    mask_model : `~jwst.datamodel.JwstDataModel` or None
+    mask_model : `~jwst.datamodels.JwstDataModel` or None
         A datamodel containing the background mask, if `save_mask`
         is True.
     """
@@ -1248,7 +1249,7 @@ def _check_data_shapes(input_model, background_mask):
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         The input data model.
     background_mask : array-like of bool
         The background mask.
@@ -1462,7 +1463,7 @@ def do_correction(
 
     Parameters
     ----------
-    input_model : `~jwst.datamodel.JwstDataModel`
+    input_model : `~jwst.datamodels.JwstDataModel`
         Science data to be corrected.
 
     input_dir : str
@@ -1525,16 +1526,16 @@ def do_correction(
 
     Returns
     -------
-    output_model : `~jwst.datamodel.JwstDataModel`
+    output_model : `~jwst.datamodels.JwstDataModel`
         Corrected data.
 
-    mask_model : `~jwst.datamodel.JwstDataModel`
+    mask_model : `~jwst.datamodels.JwstDataModel`
         Pixel mask to be saved or None.
 
-    background_model : `~jwst.datamodel.JwstDataModel`
+    background_model : `~jwst.datamodels.JwstDataModel`
         Background model to be saved or None.
 
-    noise_model : `~jwst.datamodel.JwstDataModel`
+    noise_model : `~jwst.datamodels.JwstDataModel`
         Background model to be saved or None.
 
     status : {'COMPLETE', 'SKIPPED'}
@@ -1564,7 +1565,7 @@ def do_correction(
     )
 
     # Read the flat file, if provided
-    flat = _read_flat_file(input_model, flat_filename)
+    flat = read_flat_file(input_model, flat_filename)
 
     # Make a rate file if needed
     if user_mask is None:

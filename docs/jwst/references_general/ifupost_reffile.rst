@@ -1,12 +1,12 @@
 :orphan:
 
 .. _ifupost_reffile:
-  
+
 IFUPOST Reference File (NIRSpec only)
 -------------------------------------
 
 :REFTYPE: IFUPOST
-:Data model: `~jwst.datamodels.IFUPostModel`
+:Data model: `~stdatamodels.jwst.datamodels.IFUPostModel`
 
 Reference Selection Keywords for IFUPOST
 ++++++++++++++++++++++++++++++++++++++++

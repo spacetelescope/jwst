@@ -380,6 +380,12 @@ def extract_grism_objects(
     Step 4: Compute the WIDTH of each spectral subwindow, which may be fixed or
             variable. The cross-dispersion size is taken from the minimum
             bounding box.
+
+    Each of the virtual slits in the output MultiSlitModel will have its own
+    WCS object that is a copy of the input_model WCS, but with an additional
+    transform from "grism_slit" to "grism_detector" prepended to it; this
+    transform encodes a shift to the center of the slit and a binding to the
+    slit's bounding box.
     """
     if reference_files is None or not reference_files:
         raise TypeError("Expected a dictionary for reference_files")
@@ -474,12 +480,6 @@ def extract_grism_objects(
                 order_model = Const1D(order)
                 order_model.inverse = Const1D(order)
 
-                tr = inwcs.get_transform("grism_detector", "detector")
-                tr = (
-                    Mapping((0, 1, 0, 0, 0))
-                    | (Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model)
-                    | tr
-                )
                 y_slice = slice(to_index(ymin), to_index(ymax) + 1)
                 x_slice = slice(to_index(xmin), to_index(xmax) + 1)
 
@@ -499,10 +499,21 @@ def extract_grism_objects(
                 else:
                     var_flat = None
 
+                # Add a new transform to the WCS that shifts to the center of the virtual slit
+                # This needs to be separated from the "grism_detector" to "detector" transform
+                # because the un-shifted "grism_detector" to "detector" transform is used
+                # by wfss_contam
+                tr = Mapping((0, 1, 0, 0, 0)) | (
+                    Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model
+                )
                 bind_bounding_box(
                     tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order="F"
                 )
-                subwcs.set_transform("grism_detector", "detector", tr)
+                grism_slit = copy.deepcopy(subwcs.grism_detector)
+                grism_slit.name = "grism_slit"
+                subwcs.insert_frame(
+                    input_frame=grism_slit, output_frame="grism_detector", transform=tr
+                )
 
                 new_slit = datamodels.SlitModel(
                     data=ext_data,

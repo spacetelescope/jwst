@@ -127,10 +127,10 @@ def test_wcs_to_dq():
 
 
 def test_boundingbox_from_indices():
-    dm = ImageModel((10, 10))
+    data_shape = (10, 10)
     bbox = ((1, 2), (3, 4))
 
-    result = boundingbox_to_indices(dm, bbox)
+    result = boundingbox_to_indices(data_shape, bbox)
 
     assert result == (1, 3, 3, 5)
 
@@ -140,8 +140,14 @@ def test_msaflagopen_step():
     im = AssignWcsStep.call(im)
     result = MSAFlagOpenStep.call(im)
 
+    # step completes
+    assert result.meta.cal_step.msa_flagging == "COMPLETE"
     nonzero = np.nonzero(result.dq)
     assert_array_equal(result.dq[nonzero], MSA_FAILED_OPEN)
+
+    # input is not modified
+    assert result is not im
+    assert im.meta.cal_step.msa_flagging is None
 
 
 def test_no_ref_file():
@@ -152,6 +158,10 @@ def test_no_ref_file():
     result = MSAFlagOpenStep.call(im)
     assert result.meta.cal_step.msa_flagging == "SKIPPED"
 
+    # input is not modified
+    assert result is not im
+    assert im.meta.cal_step.msa_flagging is None
+
 
 def test_custom_ref_file():
     im = make_nirspec_mos_model()
@@ -159,5 +169,11 @@ def test_custom_ref_file():
     im = AssignWcsStep.call(im, override_wavelengthrange=wavelength_range)
     result = MSAFlagOpenStep.call(im)
 
+    # step completes
+    assert result.meta.cal_step.msa_flagging == "COMPLETE"
     nonzero = np.nonzero(result.dq)
     assert_array_equal(result.dq[nonzero], MSA_FAILED_OPEN)
+
+    # input is not modified
+    assert result is not im
+    assert im.meta.cal_step.msa_flagging is None

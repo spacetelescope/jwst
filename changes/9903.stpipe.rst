@@ -1,0 +1,1 @@
+Add an option to ``Step.prepare_output`` to open the input with a specific datamodel class.

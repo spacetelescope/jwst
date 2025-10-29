@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.background import subtract_images
 from jwst.stpipe import Step
 
 __all__ = ["ImprintStep"]
+
+log = logging.getLogger(__name__)
 
 
 class ImprintStep(Step):
@@ -27,24 +31,24 @@ class ImprintStep(Step):
         without further checks.
 
         If multiple imprint images are provided, the background target
-        flag (`meta.dither.observation.bkgdtarg`) is checked for a match to
+        flag (``meta.dither.observation.bkgdtarg``) is checked for a match to
         the input data.  If there is a single imprint image matching the
         input data's background flag, then it is directly subtracted without
         further checks.
 
         If there are multiple imprint images that match the input data's
         background flag, then the imprint is checked for an
-        observation ID (`meta.observation.observation_number`) and
-        dither position index (`meta.dither.position_number`).  If there is
+        observation ID (``meta.observation.observation_number``) and
+        dither position index (``meta.dither.position_number``).  If there is
         a match, then the matching imprint image is subtracted from the
         input data.  If there is no match, then the step is skipped for the
         input data.
 
         Parameters
         ----------
-        input_data : DataModel or str
+        input_data : `~stdatamodels.DataModel` or str
             Input exposure to be corrected.
-        imprint : list of str or DataModel
+        imprint : list of str or `~stdatamodels.DataModel`
             Imprint exposures associated with the input.
 
         Returns
@@ -95,7 +99,7 @@ class ImprintStep(Step):
 
         if match_model is not None:
             # Subtract the matching imprint image
-            self.log.info(
+            log.info(
                 f"Subtracting imprint image {match_model.meta.filename} "
                 f"from {input_model.meta.filename}"
             )
@@ -104,8 +108,8 @@ class ImprintStep(Step):
             # Update the step status and close the imprint model
             result.meta.cal_step.imprint = "COMPLETE"
         else:
-            self.log.warning(f"No matching imprint image found for {input_model.meta.filename}")
-            self.log.warning("Step will be skipped")
+            log.warning(f"No matching imprint image found for {input_model.meta.filename}")
+            log.warning("Step will be skipped")
             result.meta.cal_step.imprint = "SKIPPED"
 
         # Close any open imprint models

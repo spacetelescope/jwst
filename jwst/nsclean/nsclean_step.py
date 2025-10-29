@@ -1,9 +1,13 @@
+import logging
+
 from stdatamodels.jwst import datamodels
 
 from jwst.clean_flicker_noise import clean_flicker_noise
 from jwst.stpipe import Step
 
 __all__ = ["NSCleanStep"]
+
+log = logging.getLogger(__name__)
 
 
 class NSCleanStep(Step):
@@ -37,19 +41,21 @@ class NSCleanStep(Step):
 
         Parameters
         ----------
-        input_data : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
+        input_data : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                     `~stdatamodels.jwst.datamodels.IFUImageModel`
             Input datamodel to be corrected.
 
         Returns
         -------
-        output_model : `~jwst.datamodels.ImageModel`, `~jwst.datamodels.IFUImageModel`
+        output_model : `~stdatamodels.jwst.datamodels.ImageModel`, \
+                       `~stdatamodels.jwst.datamodels.IFUImageModel`
             The 1/f corrected datamodel.
         """
         message = (
             "The 'nsclean' step is a deprecated alias to 'clean_flicker_noise' "
             "and will be removed in future builds."
         )
-        self.log.warning(message)
+        log.warning(message)
 
         # Open the input data model
         with datamodels.open(input_data) as input_model:
@@ -82,7 +88,7 @@ class NSCleanStep(Step):
             # Save the mask, if requested
             if self.save_mask and mask_model is not None:
                 mask_path = self.make_output_path(basepath=input_model.meta.filename, suffix="mask")
-                self.log.info(f"Saving mask file {mask_path}")
+                log.info(f"Saving mask file {mask_path}")
                 mask_model.save(mask_path)
                 mask_model.close()
 
@@ -91,7 +97,7 @@ class NSCleanStep(Step):
                 bg_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_bkg"
                 )
-                self.log.info(f"Saving background file {bg_path}")
+                log.info(f"Saving background file {bg_path}")
                 background_model.save(bg_path)
                 background_model.close()
 
@@ -100,7 +106,7 @@ class NSCleanStep(Step):
                 noise_path = self.make_output_path(
                     basepath=input_model.meta.filename, suffix="flicker_noise"
                 )
-                self.log.info(f"Saving noise file {noise_path}")
+                log.info(f"Saving noise file {noise_path}")
                 noise_model.save(noise_path)
                 noise_model.close()
 

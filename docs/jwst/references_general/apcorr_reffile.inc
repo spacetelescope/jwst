@@ -36,7 +36,7 @@ The FITS primary HDU does not contain a data array.
 The contents of the table extension varies for different
 instrument modes, as shown in the tables below.
 
-:Data model: `~jwst.datamodels.FgsImgApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.FgsImgApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -52,7 +52,7 @@ instrument modes, as shown in the tables below.
 |            |       | skyout      | float     | scalar     | pixels   |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.MirImgApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.MirImgApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -72,7 +72,7 @@ instrument modes, as shown in the tables below.
 |            |       | skyout      | float     | scalar     | pixels   |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.MirLrsApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.MirLrsApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -93,7 +93,7 @@ instrument modes, as shown in the tables below.
 +------------+-------+-------------+-----------+------------+----------+
 
 
-:Data model: `~jwst.datamodels.NrcImgApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrcImgApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -113,7 +113,7 @@ instrument modes, as shown in the tables below.
 |            |       | skyout      | float     | scalar     | pixels   |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NrcWfssApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrcWfssApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -135,7 +135,7 @@ instrument modes, as shown in the tables below.
 |            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NisImgApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NisImgApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -155,7 +155,7 @@ instrument modes, as shown in the tables below.
 |            |       | skyout      | float     | scalar     | pixels   |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NisWfssApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NisWfssApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -177,7 +177,7 @@ instrument modes, as shown in the tables below.
 |            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NrsFsApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrsFsApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -203,7 +203,7 @@ instrument modes, as shown in the tables below.
 |            |       | apcorr_err  | float     | 3D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NrsMosApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrsMosApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -262,9 +262,9 @@ For IFU data the APCORR reference files are in ASDF format. The aperture correct
 varies with wavelength and the contents of the files are shown below. The radius,
 aperture correction and error are all 2D arrays. Currently the 2nd dimension does
 not add information, but in the future it could be used to provide different aperture
-corrections for different radii. 
+corrections for different radii.
 
-:Data model: `~jwst.datamodels.MirMrsApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.MirMrsApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
@@ -278,12 +278,12 @@ corrections for different radii.
 |            |       | apcorr_err  | float     | 2D array   | unitless |
 +------------+-------+-------------+-----------+------------+----------+
 
-:Data model: `~jwst.datamodels.NRSIFUApcorrModel`
+:Data model: `~stdatamodels.jwst.datamodels.NrsIfuApcorrModel`
 
 +------------+-------+-------------+-----------+------------+----------+
 | Instrument | Mode  | Column name | Data type | Dimensions | Units    |
 +============+=======+=============+===========+============+==========+
-| NIRSpec    | MOS   | filter      | string    | 12         | N/A      |
+| NIRSpec    | IFU   | filter      | string    | 12         | N/A      |
 +            +       +-------------+-----------+------------+----------+
 |            |       | grating     | string    | 15         | N/A      |
 +            +       +-------------+-----------+------------+----------+

@@ -136,12 +136,13 @@ def folder_traverse(folder_path, basename_regex=".+", path_exclude_regex="^$"):
 
 def record_step_status(datamodel, cal_step, success=True):
     """
-    Record whether or not a step completed in meta.cal_step.
+    Record whether or not a step completed in ``meta.cal_step``.
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.ModelContainer`,
-        `~jwst.datamodels.ModelLibrary`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+                `~jwst.datamodels.container.ModelContainer`, \
+                `~jwst.datamodels.library.ModelLibrary`
         This is the datamodel or container of datamodels to modify in place
 
     cal_step : str
@@ -173,13 +174,15 @@ def query_step_status(datamodel, cal_step):
     """
     Query the status of a step in meta.cal_step.
 
-    For container types (ModelContainer and ModelLibrary), only
+    For container types (`~jwst.datamodels.container.ModelContainer`
+    and `~jwst.datamodels.library.ModelLibrary`), only
     the first datamodel in the container is checked.
 
     Parameters
     ----------
-    datamodel : `~jwst.datamodels.JwstDataModel`, `~jwst.datamodels.ModelContainer`,
-        `~jwst.datamodels.ModelLibrary`
+    datamodel : `~stdatamodels.jwst.datamodels.JwstDataModel`, \
+                `~jwst.datamodels.container.ModelContainer`, \
+                `~jwst.datamodels.library.ModelLibrary`
         The datamodel or container of datamodels to check
 
     cal_step : str
@@ -188,7 +191,7 @@ def query_step_status(datamodel, cal_step):
     Returns
     -------
     status : str
-        The status of the step in meta.cal_step, typically 'COMPLETE' or 'SKIPPED'
+        The status of the step in ``meta.cal_step``, typically 'COMPLETE' or 'SKIPPED'
 
     Notes
     -----

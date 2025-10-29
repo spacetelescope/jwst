@@ -13,11 +13,12 @@ class SourceModelContainer(ModelContainer):
     """
     A container to make MultiExposureModel look like ModelContainer.
 
-    The `MultiExposureModel.exposures` list contains the data for each exposure
+    The ``MultiExposureModel.exposures`` list contains the data for each exposure
     from a common slit id. Though the information is the same, the structures
-    are not true `SlitModel` instances. This container creates a `SlitModel`
+    are not true `~stdatamodels.jwst.datamodels.SlitModel` instances. This container creates a
+    `~stdatamodels.jwst.datamodels.SlitModel`
     wrapper around each exposure, such that pipeline code can treat each
-    as a `DataModel`.
+    as a `~stdatamodels.DataModel`.
     """
 
     def __init__(self, init=None, **kwargs):
@@ -30,7 +31,7 @@ class SourceModelContainer(ModelContainer):
             The models to wrap, by default None
         **kwargs : dict
             Additional arguments to pass to the initializer of the parent class,
-            e.g. to `MultiExpsoureModel.__init__()`.
+            e.g., to ``MultiExpsoureModel.__init__()``.
         """
         if not isinstance(init, (self.__class__,) + VALID_INITS):
             raise TypeError(f"Input {init} cannot initialize a SourceModelContainer")
@@ -59,7 +60,7 @@ class SourceModelContainer(ModelContainer):
 
         Returns
         -------
-        MultiExposureModel
+        `~stdatamodels.jwst.datamodels.MultiExposureModel`
             The MultiExposureModel being wrapped, be updated with any new data in the container.
         """
         # Reapply models back to the exposures
@@ -99,7 +100,7 @@ class SourceModelContainer(ModelContainer):
 
         Returns
         -------
-        SourceModelContainer
+        `~jwst.datamodels.source_container.SourceModelContainer`
             A deep copy of the container and all the models in it.
         """
         multi_exposure = self.multiexposure.copy(memo=memo)

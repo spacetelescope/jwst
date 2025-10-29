@@ -218,67 +218,68 @@ class IFUCubeData:
         newname : str
             Output name of the IFU cube.
         """
-        if self.pipeline == 2:
-            newname = self.output_name_base + "_" + self.suffix + ".fits"
-        else:
-            if self.instrument == "MIRI":
-                # Check to see if the output base name already contains the
-                # field "clear", which sometimes shows up in IFU product
-                # names created by the ASN rules. If so, strip it off, so
-                # that the remaining suffixes created below form the entire
-                # list of optical elements in the final output name.
-                basename = self.output_name_base
-                suffix = basename[basename.rfind("_") + 1 :]
-                if suffix in ["clear"]:
-                    self.output_name_base = basename[: basename.rfind("_")]
+        if self.instrument == "MIRI":
+            # Check to see if the output base name already contains the
+            # field "clear", which sometimes shows up in IFU product
+            # names created by the ASN rules. If so, strip it off, so
+            # that the remaining suffixes created below form the entire
+            # list of optical elements in the final output name.
+            basename = self.output_name_base
+            suffix = basename[basename.rfind("_") + 1 :]
+            if suffix in ["clear"]:
+                self.output_name_base = basename[: basename.rfind("_")]
 
-                # Now compose the appropriate list of optical element suffix names
-                # based on MRS channel and sub-channel
-                channels = []
-                for ch in self.list_par1:
-                    if ch not in channels:
-                        channels.append(ch)
-                    number_channels = len(channels)
-                    ch_name = "_ch"
-                    for i in range(number_channels):
-                        ch_name = ch_name + channels[i]
-                        if i < number_channels - 1:
-                            ch_name = ch_name + "-"
+            # Now compose the appropriate list of optical element suffix names
+            # based on MRS channel and sub-channel
+            channels = []
+            for ch in self.list_par1:
+                if ch not in channels:
+                    channels.append(ch)
+                number_channels = len(channels)
+                ch_name = "_ch"
+                for i in range(number_channels):
+                    ch_name = ch_name + channels[i]
+                    if i < number_channels - 1:
+                        ch_name = ch_name + "-"
 
-                # Sort by inverse alphabetical, e.g. short -> medium -> long
-                subchannels = sorted(set(self.list_par2))[::-1]
-                log.info(f"Subchannel listing: {subchannels}")
-                number_subchannels = len(subchannels)
-                b_name = ""
-                for i in range(number_subchannels):
-                    b_name = b_name + subchannels[i]
-                b_name = b_name.lower()
-                newname = self.output_name_base + ch_name + "-" + b_name
-                if self.coord_system == "internal_cal":
-                    newname = self.output_name_base + ch_name + "-" + b_name + "_internal"
-                if self.output_type == "single":
-                    newname = self.output_name_base + ch_name + "-" + b_name + "_single"
-            # ________________________________________________________________________________
-            elif self.instrument == "NIRSPEC":
-                # Check to see if the output base name already has a grating/prism
-                # suffix attached. If so, strip it off, and let the following logic
-                # add all necessary grating and filter suffixes.
-                basename = self.output_name_base
-                suffix = basename[basename.rfind("_") + 1 :]
-                if suffix in ["g140m", "g235m", "g395m", "g140h", "g235h", "g395h", "prism"]:
-                    self.output_name_base = basename[: basename.rfind("_")]
+            # Sort by inverse alphabetical, e.g. short -> medium -> long
+            subchannels = sorted(set(self.list_par2))[::-1]
+            log.info(f"Subchannel listing: {subchannels}")
+            number_subchannels = len(subchannels)
+            b_name = ""
+            for i in range(number_subchannels):
+                b_name = b_name + subchannels[i]
+            b_name = b_name.lower()
+            newname = self.output_name_base + ch_name + "-" + b_name
+            if self.coord_system == "internal_cal":
+                newname = self.output_name_base + ch_name + "-" + b_name + "_internal"
+            elif self.output_type == "single":
+                newname = self.output_name_base + ch_name + "-" + b_name + "_single"
+            elif self.pipeline == 2:
+                newname = self.output_name_base + "_" + self.suffix + ".fits"
 
-                fg_name = "_"
-                for i in range(len(self.list_par1)):
-                    fg_name = fg_name + self.list_par1[i] + "-" + self.list_par2[i]
-                    if i < self.num_bands - 1:
-                        fg_name = fg_name + "-"
-                fg_name = fg_name.lower()
-                newname = self.output_name_base + fg_name
-                if self.output_type == "single":
-                    newname = self.output_name_base + fg_name + "_single"
-                if self.coord_system == "internal_cal":
-                    newname = self.output_name_base + fg_name + "_internal"
+        elif self.instrument == "NIRSPEC":
+            # Check to see if the output base name already has a grating/prism
+            # suffix attached. If so, strip it off, and let the following logic
+            # add all necessary grating and filter suffixes.
+            basename = self.output_name_base
+            suffix = basename[basename.rfind("_") + 1 :]
+            if suffix in ["g140m", "g235m", "g395m", "g140h", "g235h", "g395h", "prism"]:
+                self.output_name_base = basename[: basename.rfind("_")]
+
+            fg_name = "_"
+            for i in range(len(self.list_par1)):
+                fg_name = fg_name + self.list_par1[i] + "-" + self.list_par2[i]
+                if i < self.num_bands - 1:
+                    fg_name = fg_name + "-"
+            fg_name = fg_name.lower()
+            newname = self.output_name_base + fg_name
+            if self.output_type == "single":
+                newname = self.output_name_base + fg_name + "_single"
+            elif self.coord_system == "internal_cal":
+                newname = self.output_name_base + fg_name + "_internal"
+            elif self.pipeline == 2:
+                newname = self.output_name_base + "_" + self.suffix + ".fits"
 
         if self.output_type != "single":
             log.info(f"Output Name: {newname}")
@@ -1193,12 +1194,10 @@ class IFUCubeData:
                 par2 = self.list_par2[i]
 
             a_scale, b_scale, w_scale = self.instrument_info.get_scale(par1, par2)
-
             spaxelsize[i] = a_scale
             spectralsize[i] = w_scale
             minwave[i] = self.instrument_info.get_wave_min(par1, par2)
             maxwave[i] = self.instrument_info.get_wave_max(par1, par2)
-
             # pull out the values from the cube pars reference file
             roiw[i] = self.instrument_info.get_wave_roi(par1, par2)
             rois[i] = self.instrument_info.get_spatial_roi(par1, par2)
@@ -1208,7 +1207,6 @@ class IFUCubeData:
 
         # Check the spatial size. If it is the same for the array set up the parameters
         all_same = np.all(spaxelsize == spaxelsize[0])
-
         if all_same:
             self.spatial_size = spaxelsize[0]
             spatial_roi = rois[0]
@@ -1239,7 +1237,6 @@ class IFUCubeData:
         all_same_spectral = np.all(spectralsize == spectralsize[0])
 
         # check if scalew has been set - if yes then linear scale
-
         if self.scalew != 0:
             self.spectral_size = self.scalew
             self.linear_wavelength = True
@@ -1247,6 +1244,22 @@ class IFUCubeData:
             weight_power = np.amin(power)
             self.soft_rad = np.amin(softrad)
             self.scalerad = np.amin(scalerad)
+
+        # if we have NIRSPEC Prism then force wavelength to be non-linear
+        elif (
+            self.instrument == "NIRSPEC"
+            and "prism" in self.list_par1
+            and self.output_type == "multi"
+        ):
+            self.linear_wavelength = False
+            (
+                table_wavelength,
+                table_sroi,
+                table_wroi,
+                table_power,
+                table_softrad,
+                table_scalerad,
+            ) = self.instrument_info.get_prism_table()
 
         # if all bands have the same spectral size then linear_wavelength
         elif all_same_spectral:
@@ -1292,8 +1305,11 @@ class IFUCubeData:
                         table_softrad,
                         table_scalerad,
                     ) = table
-            # based on Min and Max wavelength - pull out the tables values that fall in this range
-            # find the closest table entries to the self.wavemin and self.wavemax limits
+
+        # non-linear wavelength range.
+        # Based on Min and Max wavelength - pull out the tables values that fall in this range.
+        # Find the closest table entries to the self.wavemin and self.wavemax limits
+        if not self.linear_wavelength:
             imin = (np.abs(table_wavelength - self.wavemin)).argmin()
             imax = (np.abs(table_wavelength - self.wavemax)).argmin()
 
@@ -1341,13 +1357,13 @@ class IFUCubeData:
                     )
 
                 # set wave_roi and  weight_power to same values if they are in  list
+
         if self.roiw == 0:
             self.roiw = wave_roi
         if self.weight_power == 0:
             self.weight_power = weight_power
         if self.scalexy != 0:
             self.spatial_size = self.scalexy
-
         # check on valid values
 
         found_error = False
@@ -1592,7 +1608,6 @@ class IFUCubeData:
                         ch_corners = cube_build_wcs_util.find_corners_miri(
                             input_model, this_a, self.instrument_info, self.coord_system
                         )
-
                         ca1, cb1, ca2, cb2, ca3, cb3, ca4, cb4, lmin, lmax = ch_corners
 
                 # now append this model spatial and spectral corner

@@ -1,5 +1,6 @@
 """Public common step definition for OutlierDetection processing."""
 
+import logging
 from functools import partial
 
 from stdatamodels import filetype
@@ -20,6 +21,8 @@ TSO_IMAGE_MODES = ["NRC_TSIMAGE"]  # missing MIR_IMAGE with TSOVIST=True, not re
 CORON_IMAGE_MODES = ["NRC_CORON", "MIR_LYOT", "MIR_4QPM"]
 
 __all__ = ["OutlierDetectionStep"]
+
+log = logging.getLogger(__name__)
 
 
 class OutlierDetectionStep(Step):
@@ -61,26 +64,34 @@ class OutlierDetectionStep(Step):
 
         Parameters
         ----------
-        input_data : asn file, ~jwst.datamodels.ModelContainer, or ~jwst.datamodels.ModelLibrary
+        input_data : asn file, `~jwst.datamodels.container.ModelContainer`, or \
+                     `~jwst.datamodels.library.ModelLibrary`
             The input association.
             For imaging modes a ModelLibrary is expected, whereas for spectroscopic modes a
             ModelContainer is expected.
 
         Returns
         -------
-        result_models : ~jwst.datamodels.ModelContainer or ~jwst.datamodels.ModelLibrary
+        result_models : `~jwst.datamodels.container.ModelContainer` or \
+                        `~jwst.datamodels.library.ModelLibrary`
             The modified input data with DQ flags set for detected outliers.
         """
-        # Open the input data, making a copy as needed.
-        result_models = self._open_models(input_data)
-
         # determine the "mode" (if not set by the pipeline)
         mode = self._guess_mode(input_data)
+
+        # Open the input data, making a copy as needed.
+        if mode != "imaging":
+            result_models = self.prepare_output(input_data)
+        else:
+            # Skip loading datamodels into memory in this case - allow the
+            # ModelLibrary to handle it, later
+            result_models = self.prepare_output(input_data, open_models=False)
+
         if mode is None:
             record_step_status(result_models, "outlier_detection", False)
             return result_models
 
-        self.log.info(f"Outlier Detection mode: {mode}")
+        log.info(f"Outlier Detection mode: {mode}")
 
         # determine the asn_id (if not set by the pipeline)
         self._get_asn_id(input_data)
@@ -154,7 +165,7 @@ class OutlierDetectionStep(Step):
                 self.make_output_path,
             )
         else:
-            self.log.error(f"Outlier detection failed for unknown/unsupported mode: {mode}")
+            log.error(f"Outlier detection failed for unknown/unsupported mode: {mode}")
             record_step_status(result_models, "outlier_detection", False)
 
         if query_step_status(result_models, "outlier_detection") != "SKIPPED":
@@ -200,7 +211,7 @@ class OutlierDetectionStep(Step):
         if exptype in IFU_SPEC_MODES:
             return "ifu"
 
-        self.log.error(f"Outlier detection failed for unknown/unsupported exposure type: {exptype}")
+        log.error(f"Outlier detection failed for unknown/unsupported exposure type: {exptype}")
         return None
 
     def _get_asn_id(self, input_models):
@@ -226,50 +237,5 @@ class OutlierDetectionStep(Step):
             _make_output_path = self.search_attr("_make_output_path", parent_first=True)
 
             self._make_output_path = partial(_make_output_path, asn_id=asn_id)
-        self.log.info(f"Outlier Detection asn_id: {asn_id}")
+        log.info(f"Outlier Detection asn_id: {asn_id}")
         return
-
-    def _open_models(self, input_models):
-        """
-        Open the input data, making a copy if necessary.
-
-        If the input data is a filename or path, it is opened
-        and the open model is returned.
-
-        If it is a list of models, it is opened as a ModelContainer.
-        In this case, or if the input is a simple datamodel or a
-        ModelContainer, a deep copy of the model/container is returned,
-        in order to avoid modifying the input models.
-
-        If the input is a ModelLibrary, it is simply returned, in order
-        to avoid making unnecessary copies for performance-critical
-        use cases.
-
-        Parameters
-        ----------
-        input_models : str, list, JwstDataModel, ModelContainer, or ModelLibrary
-            Input data to open.
-
-        Returns
-        -------
-        JwstDataModel, ModelContainer, or ModelLibrary
-            The opened datamodel(s).
-        """
-        # Check whether input contains datamodels
-        make_copy = False
-        if isinstance(input_models, list):
-            is_datamodel = [isinstance(m, datamodels.JwstDataModel) for m in input_models]
-            if any(is_datamodel):
-                make_copy = True
-        elif isinstance(input_models, (datamodels.JwstDataModel, ModelContainer)):
-            make_copy = True
-
-        if not isinstance(input_models, (datamodels.JwstDataModel, ModelLibrary, ModelContainer)):
-            # Input might be a filename or path.
-            # In that case, open it.
-            input_models = datamodels.open(input_models)
-        if make_copy:
-            # For regular models, make a copy to avoid modifying the input.
-            # Leave libraries alone for memory management reasons.
-            input_models = input_models.copy()
-        return input_models

@@ -2,7 +2,7 @@
 
 Step Arguments
 ==============
-The `resample` step has the following optional arguments that control
+The ``resample`` step has the following optional arguments that control
 the behavior of the processing and the characteristics of the resampled
 image.
 
@@ -12,8 +12,8 @@ image.
 
 ``--kernel`` (str, default='square')
     The form of the kernel function used to distribute flux onto the output
-    image.  Available kernels are `square`, `gaussian`, `point`,
-    `turbo`, `lanczos2`, and `lanczos3`.
+    image.  Available kernels are ``square``, ``gaussian``, ``point``,
+    ``turbo``, ``lanczos2``, and ``lanczos3``.
 
 ``--pixel_scale_ratio`` (float, default=1.0)
     Ratio of output pixel scale to input pixel scale.
@@ -93,11 +93,11 @@ image.
 
 ``--weight_type`` (str, default='ivm')
     The weighting type for each input image.
-    If `weight_type=ivm` (the default), the scaling value
+    If ``weight_type="ivm"`` (the default), the scaling value
     will be determined per-pixel using the inverse of the read noise
     (VAR_RNOISE) array stored in each input image. If the VAR_RNOISE array does
     not exist, the variance is set to 1 for all pixels (equal weighting).
-    If `weight_type=exptime`, the scaling value will be set equal to the
+    If ``weight_type="exptime"``, the scaling value will be set equal to the
     measurement time (TMEASURE) found in the image header if available;
     if unavailable, the scaling will be set equal to the exposure time (EFFEXPTM).
 
@@ -111,25 +111,25 @@ image.
 
 ``--in_memory`` (boolean, default=True)
   Specifies whether or not to load and create all images that are used during
-  processing into memory. If ``False``, input files are loaded from disk when
+  processing into memory. If `False`, input files are loaded from disk when
   needed and all intermediate files are stored on disk, rather than in memory.
 
 ``--enable_ctx`` (boolean, default=True)
-  Specifies whether or not to compute and store the context array (`con`) in the datamodel,
+  Specifies whether or not to compute and store the context array (``con``) in the datamodel,
   which is used to track which input images contributed to each pixel in the
-  output image. Setting this to ``False`` helps reduce memory usage for very large
+  output image. Setting this to `False` helps reduce memory usage for very large
   mosaics.
 
 ``--enable_err`` (boolean, default=True)
   Specifies whether or not to compute and store the error array in the output model.
-  Setting this to ``False`` helps reduce memory usage and output file size for very
-  large mosaics, but the  `err`, `var_flat`, `var_rnoise`, and `var_poisson`
+  Setting this to `False` helps reduce memory usage and output file size for very
+  large mosaics, but the  ``err``, ``var_flat``, ``var_rnoise``, and ``var_poisson``
   arrays will not be computed or reported.
-  If set to ``False``, the `report_var` flag is ignored.
+  If set to `False`, the ``report_var`` flag is ignored.
 
 ``--report_var`` (boolean, default=True)
   Specifies whether or not to store the variance arrays, namely
-  `var_flat`, `var_rnoise`, and `var_poisson`, in the output model.
-  Setting this to ``False`` helps reduce output file size for very large mosaics,
-  but note that the variances are still computed internally if ``enable_err`` is ``True``
+  ``var_flat``, ``var_rnoise``, and ``var_poisson``, in the output model.
+  Setting this to `False` helps reduce output file size for very large mosaics,
+  but note that the variances are still computed internally if ``enable_err`` is `True`
   because they are needed to compute the error array.

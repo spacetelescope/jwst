@@ -5,12 +5,12 @@ from pathlib import Path
 
 import numpy as np
 from spherical_geometry.polygon import SphericalPolygon
+from stcal.alignment import combine_sregions
 from stcal.resample import Resample
 from stcal.resample.utils import is_imaging_wcs
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels.dqflags import pixel
 
-from jwst.assign_wcs import util as assign_wcs_util
 from jwst.associations.asn_from_list import asn_from_list
 from jwst.datamodels import ModelLibrary
 from jwst.model_blender.blender import ModelBlender
@@ -62,8 +62,8 @@ class ResampleImage(Resample):
 
         Parameters
         ----------
-        input_models : ModelLibrary
-            A `ModelLibrary`-based object allowing iterating over
+        input_models : `~jwst.datamodels.library.ModelLibrary`
+            A `~jwst.datamodels.library.ModelLibrary`-based object allowing iterating over
             all contained models of interest.
 
         pixfrac : float, optional
@@ -133,9 +133,9 @@ class ResampleImage(Resample):
 
             Finally, instead of integers, ``good_bits`` can be a string of
             comma-separated mnemonics. For example, for JWST, all the following
-            specifications are equivalent:
+            specifications are equivalent::
 
-            `"12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"`
+                "12" == "4+8" == "4, 8" == "JUMP_DET, DROPOUT"
 
             In order to "translate" mnemonic code to integer bit flags,
             ``Resample.dq_flag_name_map`` attribute must be set to either
@@ -156,7 +156,7 @@ class ResampleImage(Resample):
             pixels will be assigned zero weight and thus these pixels
             will not contribute to the output resampled data array.
 
-            Set `good_bits` to `None` to turn off the use of model's DQ
+            Set ``good_bits`` to `None` to turn off the use of model's DQ
             array.
 
             For more details, see documentation for
@@ -372,12 +372,12 @@ class ResampleImage(Resample):
 
         Parameters
         ----------
-        ref_input_model : `~jwst.datamodels.JwstDataModel`, optional
+        ref_input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`, optional
             The reference input model from which to copy meta data.
 
         Returns
         -------
-        ImageModel
+        `~stdatamodels.jwst.datamodels.ImageModel`
             A new blank model with updated meta data.
         """
         output_model = datamodels.ImageModel(None)  # tuple(self.output_wcs.array_shape))
@@ -469,17 +469,20 @@ class ResampleImage(Resample):
         if is_imaging_wcs(self.output_jwst_model.meta.wcs):
             # only for an imaging WCS:
             self.update_fits_wcsinfo(self.output_jwst_model)
-            assign_wcs_util.update_s_region_imaging(self.output_jwst_model)
+            output_sregion = self.combine_input_sregions()
+            log.info(f"Assigning output S_REGION: {output_sregion}")
+            self.output_jwst_model.meta.wcsinfo.s_region = output_sregion
 
         self.output_jwst_model.meta.cal_step.resample = "COMPLETE"
 
     def reset_arrays(self, n_input_models=None):
         """
-        Initialize/reset between finalize() and add_model() calls.
+        Initialize/reset between ``finalize()`` and ``add_model()`` calls.
 
-        Resets or re-initializes `Drizzle` objects, `ModelBlender`, output model
+        Resets or re-initializes `~drizzle.resample.Drizzle` objects,
+        `~jwst.model_blender.blender.ModelBlender`, output model
         and arrays, and time counters. Output WCS and shape are not modified
-        from `Resample` object initialization. This method needs to be called
+        from ``Resample`` object initialization. This method needs to be called
         before calling :py:meth:`add_model` for the first time after
         :py:meth:`finalize` was previously called.
 
@@ -569,7 +572,7 @@ class ResampleImage(Resample):
         """
         Resample many inputs to many outputs where outputs have a common frame.
 
-        Coadd only different detectors of the same exposure, i.e. map NRCA5 and
+        Coadd only different detectors of the same exposure, i.e., map NRCA5 and
         NRCB5 onto the same output image, as they image different areas of the
         sky.
 
@@ -578,15 +581,17 @@ class ResampleImage(Resample):
         Parameters
         ----------
         in_memory : bool, optional
-            Indicates whether to return a `ModelLibrary` with resampled models
+            Indicates whether to return a
+            `~jwst.datamodels.library.ModelLibrary` with resampled models
             loaded in memory or whether to serialize resampled models to
-            files on disk and return a `ModelLibrary` with only the associacion
-            info. See https://stpipe.readthedocs.io/en/latest/model_library.html#on-disk-mode
+            files on disk and return a `~jwst.datamodels.library.ModelLibrary`
+            with only the association
+            info. See :ref:`stpipe:library_on_disk`
             for more details.
 
         Returns
         -------
-        ModelLibrary
+        `~jwst.datamodels.library.ModelLibrary`
             A library of resampled models.
         """
         output_models = []
@@ -623,7 +628,7 @@ class ResampleImage(Resample):
 
         Returns
         -------
-        ImageModel
+        `~stdatamodels.jwst.datamodels.ImageModel`
             The resampled and coadded image.
         """
         log.info("Resampling science and variance data")
@@ -646,7 +651,7 @@ class ResampleImage(Resample):
 
         Parameters
         ----------
-        model : ImageModel
+        model : `~stdatamodels.jwst.datamodels.ImageModel`
             The resampled image
         """
         # Delete any SIP-related keywords first
@@ -680,6 +685,33 @@ class ResampleImage(Resample):
         for key in rm_keys:
             if key in model.meta.wcsinfo.instance:
                 del model.meta.wcsinfo.instance[key]
+
+    def combine_input_sregions(self):
+        """
+        Combine the input model S_REGIONs into a single S_REGION.
+
+        Returns
+        -------
+        str
+            The combined S_REGION.
+        """
+        # get s_regions from model meta without loading the whole model into memory
+        sregion_list = []
+        for i in range(len(self.input_models)):
+            meta = self.input_models.read_metadata(i)
+            sregion_list.append(meta["meta.wcsinfo.s_region"])
+
+        if "moving_target" in self.output_wcs.available_frames:
+            det2world = self.output_wcs.get_transform("detector", "moving_target")
+        else:
+            det2world = self.output_wcs.get_transform("detector", "world")
+        bbox = self.output_wcs.footprint()
+        try:
+            output_sregion = combine_sregions(sregion_list, det2world, intersect_footprint=bbox)
+        except ValueError as e:
+            log.warning(f"Could not combine S_REGIONs: {e}. Output S_REGION will not be set.")
+            return
+        return output_sregion
 
 
 def input_jwst_model_to_dict(model, weight_type, enable_var, compute_err):
@@ -813,7 +845,7 @@ def compute_image_pixel_area(wcs):
 
     Parameters
     ----------
-    wcs : gwcs.WCS
+    wcs : gwcs.wcs.WCS
         A WCS object.
 
     Returns

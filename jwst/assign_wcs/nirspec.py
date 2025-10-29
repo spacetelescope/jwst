@@ -6,7 +6,6 @@ Calls create_pipeline() which redirects based on EXP_TYPE.
 
 import copy
 import logging
-import warnings
 
 import gwcs
 import numpy as np
@@ -41,7 +40,6 @@ from stdatamodels.jwst.transforms.models import (
     Rotation3DToGWA,
     Slit,
     Slit2Msa,
-    Slit2MsaLegacy,
     Snell,
     Unitless2DirCos,
     WavelengthFromGratingEquation,
@@ -94,7 +92,7 @@ def create_pipeline(input_model, reference_files, slit_y_range):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     exp_type = input_model.meta.exposure.type.lower()
     if input_model.meta.instrument.grating.lower() == "mirror":
@@ -132,7 +130,7 @@ def imaging(input_model, reference_files):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     # Get the corrected disperser model
     disperser = get_disperser(input_model, reference_files["disperser"])
@@ -263,7 +261,7 @@ def ifu(input_model, reference_files, slit_y_range=(-0.55, 0.55)):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     detector = input_model.meta.instrument.detector
     grating = input_model.meta.instrument.grating
@@ -420,7 +418,7 @@ def slits_wcs(input_model, reference_files, slit_y_range):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     open_slits_id = get_open_slits(input_model, reference_files, slit_y_range)
     if not open_slits_id:
@@ -453,7 +451,7 @@ def slitlets_wcs(input_model, reference_files, open_slits_id):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
 
     Notes
     -----
@@ -1410,6 +1408,7 @@ def gwa_to_ifuslit(slits, input_model, disperser, reference_files, slit_y_range)
         if velosys is not None:
             velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
             lgreq = lgreq | velocity_corr
+            agreq = velocity_corr.inverse & Identity(3) | agreq
             log.info(
                 f"Applied Barycentric velocity correction : {velocity_corr[1].amplitude.value}"
             )
@@ -1509,6 +1508,7 @@ def gwa_to_slit(open_slits, input_model, disperser, reference_files):
         if velosys is not None:
             velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
             lgreq = lgreq | velocity_corr
+            agreq = velocity_corr.inverse & Identity(3) | agreq
             log.info(
                 f"Applied Barycentric velocity correction : {velocity_corr[1].amplitude.value}"
             )
@@ -2280,109 +2280,6 @@ def gwa_to_ymsa(msa2gwa_model, lam_cen=None, slit=None, slit_y_range=None):
     return tab
 
 
-def _nrs_wcs_set_slit_input_legacy(input_model, slit_name):
-    """
-    Return a WCS object for a specific slit, slice or shutter.
-
-    Does not compute the bounding box.
-
-    Parameters
-    ----------
-    input_model : JwstDataModel
-        A WCS object for the all open slitlets in an observation.
-    slit_name : int or str
-        Slit.name of an open slit.
-
-    Returns
-    -------
-    wcsobj : `~gwcs.wcs.WCS`
-        WCS object for this slit.
-    """
-    wcsobj = input_model.meta.wcs
-
-    slit_wcs = copy.deepcopy(wcsobj)
-    slit_wcs.set_transform("sca", "gwa", wcsobj.pipeline[1].transform[1:])
-    g2s = slit_wcs.pipeline[2].transform
-    slit_wcs.set_transform("gwa", "slit_frame", g2s.get_model(slit_name))
-
-    exp_type = input_model.meta.exposure.type
-    is_nirspec_ifu = is_nrs_ifu_lamp(input_model) or (exp_type.lower() == "nrs_ifu")
-    if is_nirspec_ifu:
-        slit_wcs.set_transform(
-            "slit_frame", "slicer", wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1)
-        )
-    else:
-        slit_wcs.set_transform(
-            "slit_frame",
-            "msa_frame",
-            wcsobj.pipeline[3].transform.get_model(slit_name) & Identity(1),
-        )
-    return slit_wcs
-
-
-def nrs_wcs_set_input_legacy(
-    input_model, slit_name, wavelength_range=None, slit_y_low=None, slit_y_high=None
-):
-    """
-    Return a WCS object for a specific slit, slice or shutter.
-
-    This function is intended to work with old-style NIRSpec WCS implementations,
-    to support reading in WCS data from existing datamodels.  For new datamodels,
-    produced after v1.18.0, use `nrs_wcs_set_input`.
-
-    Parameters
-    ----------
-    input_model : JwstDataModel
-        A WCS object for the all open slitlets in an observation.
-    slit_name : int or str
-        Slit.name of an open slit.
-    wavelength_range : list
-        Wavelength range for the combination of filter and grating.
-    slit_y_low, slit_y_high : float
-        The lower and upper bounds of the slit. Optional.
-
-    Returns
-    -------
-    wcsobj : `~gwcs.wcs.WCS`
-        WCS object for this slit.
-    """
-    warnings.warn(
-        "The nrs_wcs_set_input_legacy function is intended for use with an "
-        "old-style NIRSpec WCS pipeline. "
-        "It will be removed in a future build.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    def _get_y_range(input_model):
-        # get the open slits from the model
-        # Need them to get the slit ymin,ymax
-        g2s = input_model.meta.wcs.get_transform("gwa", "slit_frame")
-        open_slits = g2s.slits
-        slit = [s for s in open_slits if s.name == slit_name][0]
-        return slit.ymin, slit.ymax
-
-    if wavelength_range is None:
-        _, wavelength_range = spectral_order_wrange_from_model(input_model)
-
-    slit_wcs = _nrs_wcs_set_slit_input_legacy(input_model, slit_name)
-    transform = slit_wcs.get_transform("detector", "slit_frame")
-    is_nirspec_ifu = (
-        is_nrs_ifu_lamp(input_model) or input_model.meta.exposure.type.lower() == "nrs_ifu"
-    )
-    if is_nirspec_ifu:
-        bb = compute_bounding_box(transform, None, wavelength_range)
-    else:
-        if slit_y_low is None or slit_y_high is None:
-            slit_y_low, slit_y_high = _get_y_range(input_model)
-        bb = compute_bounding_box(
-            transform, None, wavelength_range, slit_ymin=slit_y_low, slit_ymax=slit_y_high
-        )
-
-    slit_wcs.bounding_box = bb
-    return slit_wcs
-
-
 def _fix_slit_name(transform, slit_name):
     """
     Create a new WCS transform by fixing the slit input to a specific value.
@@ -2560,13 +2457,6 @@ def nrs_wcs_set_input(input_model, slit_name):
     """
     # Get the full WCS object
     full_wcs = input_model.meta.wcs
-
-    # Check for an old-style WCS that needs different handling
-    for step in full_wcs.pipeline:
-        if isinstance(step.transform, Slit2MsaLegacy):
-            # There is a legacy slit2msa transform somewhere in the pipeline.
-            # Use the old deepcopy-and-replace method.
-            return nrs_wcs_set_input_legacy(input_model, slit_name)
 
     # Convert FS slit names to numbers
     if str(slit_name).upper() in FIXED_SLIT_NUMS.keys():
@@ -2922,7 +2812,7 @@ def nrs_lamp(input_model, reference_files, slit_y_range):
     Returns
     -------
     pipeline : list
-        The WCS pipeline, suitable for input into `gwcs.WCS`.
+        The WCS pipeline, suitable for input into `gwcs.wcs.WCS`.
     """
     lamp_mode = input_model.meta.instrument.lamp_mode
     if isinstance(lamp_mode, str):

@@ -79,12 +79,12 @@ class Detector1Pipeline(Pipeline):
 
         Parameters
         ----------
-        input_data : str or `~jwst.datamodels.RampModel`
+        input_data : str or `~stdatamodels.jwst.datamodels.RampModel`
             The input data to process.
 
         Returns
         -------
-        `~jwst.datamodels.JwstDataModel`
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model.
         """
         log.info("Starting calwebb_detector1 ...")
@@ -187,7 +187,7 @@ class Detector1Pipeline(Pipeline):
 
         Parameters
         ----------
-        input_data : `~jwst.datamodels.JwstDataModel`
+        input_data : `~stdatamodels.jwst.datamodels.JwstDataModel`
             The output data product from the Detector1 pipeline
         """
         if input_data is None:

@@ -41,14 +41,12 @@ table below.
 Arguments
 ---------
 
-The ``calwebb_image2`` pipeline has one optional argument::
+The ``calwebb_image2`` pipeline has one optional argument, which is deprecated::
 
   --save_bsub  boolean  default=False
 
-If set to ``True``, the results of
-the background subtraction step will be saved to an intermediate file,
-using a product type of "_bsub" or "_bsubints", depending on whether the
-data are 2D (averaged over integrations) or 3D (per-integration results).
+This parameter will be removed in a future version. To toggle saving of background-subtracted
+data, use the background step's ``save_results`` parameter instead.
 
 Inputs
 ------
@@ -56,7 +54,7 @@ Inputs
 2D or 3D countrate data
 +++++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel` or `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _rate or _rateints
 
 The input to ``Image2Pipeline`` is
@@ -76,19 +74,19 @@ Outputs
 2D or 3D background-subtracted data
 +++++++++++++++++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel` or `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _bsub or _bsubints
 
-This is an intermediate product that is only created if "--save_bsub" is set
-to ``True`` and will contain the data as output from the
-:ref:`background <background_subtraction>` step.
-If the input is a "_rate" product, this will be a "_bsub" product, while
-"_rateints" inputs will be saved as "_bsubints."
+This is an intermediate product that will contain the data as output from the
+:ref:`background <background_subtraction>` step, if that step's
+``save_results`` parameter is set to ``True``. If the input is a "_rate"
+product, this will be a "_bsub" product, while "_rateints" inputs will be
+saved as "_bsubints."
 
 2D or 3D calibrated data
 ++++++++++++++++++++++++
 
-:Data model: `~jwst.datamodels.ImageModel` or `~jwst.datamodels.CubeModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel` or `~stdatamodels.jwst.datamodels.CubeModel`
 :File suffix: _cal or _calints
 
 The output is a fully calibrated, but unrectified, exposure, using
@@ -98,7 +96,7 @@ input, e.g. "jw80600012001_02101_00003_mirimage_cal.fits".
 2D resampled image
 ++++++++++++++++++
 
-:Data model: `~jwst.datamodels.ImageModel`
+:Data model: `~stdatamodels.jwst.datamodels.ImageModel`
 :File suffix: _i2d
 
 This is the output of the :ref:`resample <resample_step>` step and is only created

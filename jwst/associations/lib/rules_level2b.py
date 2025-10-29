@@ -74,6 +74,7 @@ class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
     Create normal rate products for some coronographic data.
 
     Characteristics;
+
         - Association type: ``image2``
         - Pipeline: ``calwebb_image2``
         - NIRCam Coronagraphic
@@ -118,7 +119,7 @@ class Asn_Lv2CoronAsRate(AsnMixin_Lv2Image, DMSLevel2bBase):
         """
         Override to always return false.
 
-        The override will force `make_member` to create a "rate"
+        The override will force ``make_member`` to create a "rate"
         product instead of a "rateints" product.
 
         Returns
@@ -135,6 +136,7 @@ class Asn_Lv2Image(AsnMixin_Lv2Image, DMSLevel2bBase):
     Level2b Non-TSO Science Image Association.
 
     Characteristics:
+
         - Association type: ``image2``
         - Pipeline: ``calwebb_image2``
         - Image-based science exposures
@@ -176,6 +178,7 @@ class Asn_Lv2ImageNonScience(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bB
     Level2b Non-science Image Association.
 
     Characteristics:
+
         - Association type: ``image2``
         - Pipeline: ``calwebb_image2``
         - Image-based non-science exposures, such as target acquisitions
@@ -202,6 +205,7 @@ class Asn_Lv2ImageSpecial(AsnMixin_Lv2Special, AsnMixin_Lv2Image, DMSLevel2bBase
     Level2b Auxiliary Science Image Association.
 
     Characteristics:
+
         - Association type: ``image2``
         - Pipeline: ``calwebb_image2``
         - Image-based science exposures that are to be used as background or PSF exposures
@@ -231,6 +235,7 @@ class Asn_Lv2ImageTSO(AsnMixin_Lv2Image, DMSLevel2bBase):
     Level2b Time Series Science Image Association.
 
     Characteristics:
+
         - Association type: ``tso-image2``
         - Pipeline: ``calwebb_tso-image2``
         - Image-based Time Series exposures
@@ -264,6 +269,7 @@ class Asn_Lv2FGS(AsnMixin_Lv2Image, DMSLevel2bBase):
     Level2b FGS Association.
 
     Characteristics:
+
         - Association type: ``image2``
         - Pipeline: ``calwebb_image2``
         - Image-based FGS science exposures
@@ -294,6 +300,7 @@ class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
     Level2b Science Spectral Association.
 
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Spectral-based single target science exposures
@@ -363,6 +370,7 @@ class Asn_Lv2SpecImprint(AsnMixin_Lv2Special, AsnMixin_Lv2Spectral, DMSLevel2bBa
     Level2b Treat Imprint/Leakcal as science.
 
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Only handles Imprint/Leakcal exposures
@@ -398,6 +406,7 @@ class Asn_Lv2SpecSpecial(
     Level2b Auxiliary Science Spectral Association.
 
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Spectral-based single target science exposures that are background exposures
@@ -437,6 +446,7 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     Level2b Time Series Science Spectral Association.
 
     Characteristics:
+
         - Association type: ``tso-spec2``
         - Pipeline: ``calwebb_tso-spec2``
         - Spectral-based single target time series exposures
@@ -527,6 +537,7 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     Level2b MIRI LRS Fixed Slit background nods Association.
 
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - MIRI LRS Fixed slit
@@ -599,8 +610,8 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
         Modify exposure type depending on dither pointing index.
 
         Behaves as the superclass method. However, if the constraint
-        `is_current_patt_num` is True, mark the exposure type as
-        `background`.
+        ``is_current_patt_num`` is True, mark the exposure type as
+        ``background``.
 
         Parameters
         ----------
@@ -627,6 +638,7 @@ class Asn_Lv2NRSLAMPImage(AsnMixin_Lv2Image, AsnMixin_Lv2Special, DMSLevel2bBase
     Level2b NIRSpec image Lamp Calibrations Association.
 
     Characteristics:
+
         - Association type: ``image2``
         - Pipeline: ``calwebb_image2``
         - Image-based calibration exposures
@@ -654,6 +666,7 @@ class Asn_Lv2NRSLAMPSpectral(AsnMixin_Lv2Special, DMSLevel2bBase):
     Level2b NIRSpec spectral Lamp Calibrations Association.
 
     Characteristics:
+
         - Association type: ``nrslamp-spec2``
         - Pipeline: ``calwebb_nrslamp-spec2``
         - Spectral-based calibration exposures
@@ -741,6 +754,7 @@ class Asn_Lv2WFSSNIS(
     Level2b WFSS/GRISM Association.
 
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Multi-object science exposures
@@ -812,6 +826,7 @@ class Asn_Lv2WFSSNRC(
     Level2b WFSS/GRISM Association.
 
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Multi-object science exposures
@@ -872,6 +887,7 @@ class Asn_Lv2NRSMSA(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
     Level2b NIRSpec MSA Association.
 
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Spectral-based NIRSpec MSA multi-object science exposures
@@ -912,6 +928,7 @@ class Asn_Lv2NRSFSS(AsnMixin_Lv2Nod, AsnMixin_Lv2Spectral, DMSLevel2bBase):
     Notes
     -----
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Spectral-based NIRSpec fixed-slit single target science exposures
@@ -979,6 +996,7 @@ class Asn_Lv2NRSIFUNod(AsnMixin_Lv2Imprint, AsnMixin_Lv2Nod, AsnMixin_Lv2Spectra
     Level2b NIRSpec IFU Association.
 
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Spectral-based NIRSpec IFU multi-object science exposures
@@ -1022,6 +1040,7 @@ class Asn_Lv2WFSC(DMSLevel2bBase):
     Level2b Wavefront Sensing & Control Association.
 
     Characteristics:
+
         - Association type: ``wfs-image2``
         - Pipeline: ``calwebb_wfs-image2``
         - WFS and WFS&C observations
@@ -1068,6 +1087,7 @@ class Asn_Lv2WFSSParallel(
     Level 2b WFSS/GRISM associations for WFSS taken in pure-parallel mode.
 
     Characteristics:
+
         - Association type: ``spec2``
         - Pipeline: ``calwebb_spec2``
         - Multi-object science exposures
@@ -1157,7 +1177,7 @@ class Asn_Lv2WFSSParallel(
         Returns
         -------
         closest : dict
-            The direct image that is the "closest"
+            The direct image that is the "closest".
         """
         long_directs = [d for d in directs if "long" in d["expname"]]
         if len(long_directs) == 0:

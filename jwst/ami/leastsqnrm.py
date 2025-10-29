@@ -546,33 +546,33 @@ class LinearFit:
     Python implementation and tools by Johannes Sahlmann 2009-2017
     (University of Geneva, European Space Agency, STScI/AURA)
 
-    Attributes
+    Parameters
     ----------
-    dependent_variable : np.ndarray (1xN)
+    dependent_variable : ndarray (1xN)
         Dependent_variables of the linear equation system (N equations, M unknown coefficients)
-    inverse_covariance_matrix : np.ndarray (NxN)
+    inverse_covariance_matrix : ndarray (NxN)
         Inverse covariance matrix corresponding to the dependent_variable.
         i.e. data weights proportional to 1/sigma**2 where sigma=uncertainty
-    independent_variable : np.ndarray (MxN)
+    independent_variable : ndarray (MxN)
         The independent_variables that are multiplied by the unknown coefficients
 
-    Calculated Attributes
+    Attributes
     ----------
-    p : np.ndarray
+    p : ndarray
         Coefficients of the solution
-    p_formal_uncertainty : np.ndarray
+    p_formal_uncertainty : ndarray
         Formal uncertainty of the coefficients
-    p_formal_covariance_matrix : np.ndarray
+    p_formal_covariance_matrix : ndarray
         Formal covariance matrix of the coefficients (not rescaled)
-    p_normalised_uncertainty : np.ndarray
+    p_normalised_uncertainty : ndarray
         Normalised uncertainty (chi2 = 1) of the coefficients
-    p_normalised_covariance_matrix : np.ndarray
+    p_normalised_covariance_matrix : ndarray
         Normalised covariance matrix of the coefficients (rescaled to yield chi2=1)
-    p_correlation_matrix : np.ndarray
+    p_correlation_matrix : ndarray
         Coefficient correlation matrix
-    fit : np.ndarray
+    fit : ndarray
         Values of the best-fit model
-    residuals : np.ndarray
+    residuals : ndarray
         Observed - Calculated (O-C) residuals
     chi2 : float
         Chi-square value of the best fit

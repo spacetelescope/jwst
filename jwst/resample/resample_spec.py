@@ -37,15 +37,15 @@ class ResampleSpec(ResampleImage):
 
     Notes
     -----
-    This routine performs the following operations::
+    This routine performs the following operations:
 
-      1. Extracts parameter settings from input model, such as pixfrac,
-         weight type, exposure time (if relevant), and kernel, and merges
-         them with any user-provided values.
-      2. Creates output WCS based on input images and define mapping function
-         between all input arrays and the output array.
-      3. Updates output data model with output arrays from drizzle, including
-         a record of metadata from all input models.
+    1. Extracts parameter settings from input model, such as pixfrac,
+       weight type, exposure time (if relevant), and kernel, and merges
+       them with any user-provided values.
+    2. Creates output WCS based on input images and define mapping function
+       between all input arrays and the output array.
+    3. Updates output data model with output arrays from drizzle, including
+       a record of metadata from all input models.
     """
 
     def __init__(self, input_models, good_bits=0, output_wcs=None, wcs_pars=None, **kwargs):
@@ -63,7 +63,7 @@ class ResampleSpec(ResampleImage):
         wcs_pars : dict
             Additional parameters for WCS
         **kwargs : dict
-            Additional parameters to be passed into `ResampleImage.__init__()`.
+            Additional parameters to be passed into ``ResampleImage.__init__()``.
             See the docstring of that method for more details.
         """
         shape = None
@@ -216,12 +216,12 @@ class ResampleSpec(ResampleImage):
 
         Parameters
         ----------
-        ref_input_model : `~jwst.datamodels.JwstDataModel`, optional
+        ref_input_model : `~stdatamodels.jwst.datamodels.JwstDataModel`, optional
             The reference input model from which to copy meta data.
 
         Returns
         -------
-        SlitModel
+        `~stdatamodels.jwst.datamodels.SlitModel`
             A new blank model with updated meta data.
         """
         output_model = datamodels.SlitModel(None)
@@ -237,7 +237,7 @@ class ResampleSpec(ResampleImage):
 
         Parameters
         ----------
-        model : SlitModel
+        model : `~stdatamodels.jwst.datamodels.SlitModel`
             The output model to be updated.
         info_dict : dict
             A dictionary containing information about the resampling process.
@@ -280,13 +280,13 @@ class ResampleSpec(ResampleImage):
 
         Frames available in the output WCS are:
 
-            - `detector`: image x, y
-            - `slit_frame`: slit x, slit y, wavelength
-            - `world`: RA, Dec, wavelength
+        - ``detector``: image x, y
+        - ``slit_frame``: slit x, slit y, wavelength
+        - ``world``: RA, Dec, wavelength
 
         Parameters
         ----------
-        refmodel : `~jwst.datamodels.JwstDataModel`, optional
+        refmodel : `~stdatamodels.jwst.datamodels.JwstDataModel`, optional
             The reference input image from which the fiducial WCS is created.
             If not specified, the first image in input_models. If the
             first model is empty (all-NaN or all-zero), the first non-empty
@@ -294,8 +294,8 @@ class ResampleSpec(ResampleImage):
 
         Returns
         -------
-        output_wcs : `~gwcs.WCS`
-            A gwcs WCS object defining the output frame WCS.
+        output_wcs : `~gwcs.wcs.WCS`
+            A GWCS object defining the output frame WCS.
         """
         all_wcs = [m.meta.wcs for m in input_models if m is not refmodel]
         if refmodel:
@@ -579,8 +579,8 @@ class ResampleSpec(ResampleImage):
 
         Frames available in the output WCS are:
 
-            - `detector`: image x, y
-            - `world`: RA, Dec, wavelength
+        - ``detector``: image x, y
+        - ``world``: RA, Dec, wavelength
 
         Parameters
         ----------
@@ -591,8 +591,8 @@ class ResampleSpec(ResampleImage):
 
         Returns
         -------
-        output_wcs : `~gwcs.WCS` object
-            A gwcs WCS object defining the output frame WCS
+        output_wcs : `~gwcs.wcs.WCS` object
+            A GWCS object defining the output frame WCS
         """
         # for each input model convert slit x,y to ra,dec,lam
         # use first input model to set spatial scale
@@ -847,8 +847,8 @@ class ResampleSpec(ResampleImage):
 
         Frames available in the output WCS are:
 
-            - `detector`: image x, y
-            - `world`: MSA x, MSA y, wavelength
+        - ``detector``: image x, y
+        - ``world``: MSA x, MSA y, wavelength
 
         Parameters
         ----------
@@ -859,8 +859,8 @@ class ResampleSpec(ResampleImage):
 
         Returns
         -------
-        output_wcs : `~gwcs.WCS` object
-            A gwcs WCS object defining the output frame WCS.
+        output_wcs : `~gwcs.wcs.WCS` object
+            A GWCS object defining the output frame WCS.
         """
         model = input_models[0]
         wcs = model.meta.wcs
@@ -965,7 +965,7 @@ def find_dispersion_axis(refmodel):
 
     Parameters
     ----------
-    refmodel : `~jwst.datamodels.DataModel`
+    refmodel : `~stdatamodels.DataModel`
         The input data model.
 
     Returns
@@ -1051,7 +1051,7 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
 
     Parameters
     ----------
-    wcs : gwcs.WCS
+    wcs : `gwcs.wcs.WCS`
         Spatial/spectral WCS.
     fiducial : tuple of float, optional
         (RA, Dec, wavelength) taken as the fiducial reference. If

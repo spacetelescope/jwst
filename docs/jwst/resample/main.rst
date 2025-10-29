@@ -55,10 +55,10 @@ sum.  The process is:
 
 #. Square the resampled read noise to make a variance array.
 
-   a. If the resampling `weight_type` is an inverse variance map (`ivm`), weight
+   a. If the resampling ``weight_type`` is an inverse variance map (``ivm``), weight
       the resampled variance by the square of its own inverse.
 
-   #. If the `weight_type` is the exposure time (`exptime`), weight the
+   #. If the ``weight_type`` is the exposure time (``exptime``), weight the
       resampled variance by the square of the exposure time for the image.
 
 #. Add the weighted, resampled read noise variance to a running sum across all
@@ -135,16 +135,13 @@ True
 
 In general, to get a list of all input images that have contributed to an
 output resampled pixel with image coordinates ``(x, y)``, and given a
-context array ``con``, one can do something like this:
+context array ``con``, one can do something like this::
 
-.. doctest-skip::
-
-    >>> import numpy as np
-    >>> np.flatnonzero([v & (1 << k) for v in con[:, y, x] for k in range(32)])
+    import numpy as np
+    np.flatnonzero([v & (1 << k) for v in con[:, y, x] for k in range(32)])
 
 For convenience, this functionality was implemented in the
-:py:func:`~drizzle.utils.decode_context` function.
-
+:func:`~drizzle.utils.decode_context` function.
 
 References
 ----------

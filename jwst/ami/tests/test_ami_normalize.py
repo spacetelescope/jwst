@@ -25,14 +25,18 @@ def oi_data(example_model, bandpass):
     n_holes = 7
     n_baselines = 21
     n_closure_phases = 35
+    n_quads = 35
     visamp = np.zeros((n_baselines)) + RAW_AMP
     visphi = np.zeros((n_baselines)) + RAW_PHI
     t3amp = np.zeros((n_closure_phases)) + RAW_AMP
     t3phi = np.zeros((n_closure_phases)) + RAW_PHI
+    q4amp = np.zeros((n_quads)) + RAW_AMP
+    q4phi = np.zeros((n_quads)) + RAW_PHI
     sta_index = np.arange(n_holes) + 1
     pistons = np.zeros((n_holes,))
     flag_vis = [False] * n_baselines
     flag_t3 = [False] * n_closure_phases
+    flag_q4 = [False] * n_quads
 
     isz = example_model.data.shape[1]
     pscale = PXSC_MAS / 1000.0  # arcsec
@@ -98,45 +102,39 @@ def oi_data(example_model, bandpass):
     oim.vis = np.zeros(n_baselines, dtype=oim.vis.dtype)
     oim.vis["TARGET_ID"] = 1
     oim.vis["TIME"] = 0
-    # oim.vis["MJD"] = 0
-    # oim.vis["INT_TIME"] = 0
     oim.vis["VISAMP"] = visamp
     oim.vis["VISAMPERR"] = visamp * ERR
     oim.vis["VISPHI"] = visphi
     oim.vis["VISPHIERR"] = visphi * ERR
-    # oim.vis["UCOORD"] = ucoord
-    # oim.vis["VCOORD"] = vcoord
-    # oim.vis["STA_INDEX"] = sta_index
     oim.vis["FLAG"] = flag_vis
 
     # oi_vis2 extension data
     oim.vis2 = np.zeros(n_baselines, dtype=oim.vis2.dtype)
     oim.vis2["TARGET_ID"] = 1
     oim.vis2["TIME"] = 0
-    # oim.vis2["MJD"] = observation_date.mjd
-    # oim.vis2["INT_TIME"] = instrument_data.itime
     oim.vis2["VIS2DATA"] = (visamp**2).T
     oim.vis2["VIS2ERR"] = (visamp**2).T * ERR
-    # oim.vis2["UCOORD"] = ucoord
-    # oim.vis2["VCOORD"] = vcoord
-    # oim.vis2["STA_INDEX"] = np.arange(n_holes) + 1
     oim.vis2["FLAG"] = flag_vis
 
     # oi_t3 extension data
     oim.t3 = np.zeros(n_closure_phases, dtype=oim.t3.dtype)
     oim.t3["TARGET_ID"] = 1
     oim.t3["TIME"] = 0
-    # oim.t3["MJD"] = observation_date.mjd
     oim.t3["T3AMP"] = t3amp
     oim.t3["T3AMPERR"] = t3amp * ERR
     oim.t3["T3PHI"] = t3phi
     oim.t3["T3PHIERR"] = t3phi * ERR
-    # oim.t3["U1COORD"] = u1coord
-    # oim.t3["V1COORD"] = v1coord
-    # oim.t3["U2COORD"] = u2coord
-    # oim.t3["V2COORD"] = v2coord
-    # oim.t3["STA_INDEX"] = sta_index
     oim.t3["FLAG"] = flag_t3
+
+    # oi_q4 data
+    oim.q4 = np.zeros(n_quads, dtype=oim.q4.dtype)
+    oim.q4["TARGET_ID"] = 1
+    oim.q4["TIME"] = 0
+    oim.q4["Q4AMP"] = q4amp
+    oim.q4["Q4AMPERR"] = q4amp * ERR
+    oim.q4["Q4PHI"] = q4phi
+    oim.q4["Q4PHIERR"] = q4phi * ERR
+    oim.q4["FLAG"] = flag_q4
 
     # oi_wavelength extension data
     oim.wavelength["EFF_WAVE"] = lam_c
@@ -153,6 +151,8 @@ def ref_data(oi_data):
     ref_data.vis2["VIS2DATA"] = np.zeros_like(oi_data.vis2["VIS2DATA"]) + REF_AMP**2
     ref_data.t3["T3AMP"] = np.zeros_like(oi_data.t3["T3AMP"]) + REF_AMP
     ref_data.t3["T3PHI"] = np.zeros_like(oi_data.t3["T3PHI"]) + REF_PHI
+    ref_data.q4["Q4AMP"] = np.zeros_like(oi_data.q4["Q4AMP"]) + REF_AMP
+    ref_data.q4["Q4PHI"] = np.zeros_like(oi_data.q4["Q4PHI"]) + REF_PHI
 
     return ref_data
 
@@ -174,3 +174,14 @@ def test_ami_normalize(oi_data, ref_data):
     assert np.allclose(result.vis2["VIS2DATA"], (RAW_AMP / REF_AMP) ** 2)
     assert np.allclose(result.t3["T3AMP"], RAW_AMP)
     assert np.allclose(result.t3["T3PHI"], RAW_PHI - REF_PHI)
+    assert np.allclose(result.q4["Q4AMP"], np.log(RAW_AMP / REF_AMP))
+    assert np.allclose(result.q4["Q4PHI"], RAW_PHI)
+
+
+def test_output_is_not_input(oi_data, ref_data):
+    result = AmiNormalizeStep.call(oi_data, ref_data)
+    assert result is not oi_data
+    assert result is not ref_data
+    assert oi_data.meta.cal_step.ami_normalize is None
+    assert ref_data.meta.cal_step.ami_normalize is None
+    assert result.meta.cal_step.ami_normalize == "COMPLETE"

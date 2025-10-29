@@ -2,7 +2,7 @@ READNOISE Reference File
 ------------------------
 
 :REFTYPE: READNOISE
-:Data model: `~jwst.datamodels.ReadnoiseModel`
+:Data model: `~stdatamodels.jwst.datamodels.ReadnoiseModel`
 
 The READNOISE reference file contains a pixel-by-pixel map of read noise,
 which is used in estimating the expected noise in each pixel.
@@ -46,4 +46,3 @@ EXTNAME  XTENSION  NAXIS  Dimensions      Data type
 =======  ========  =====  ==============  =========
 SCI      IMAGE       2    ncols x nrows   float
 =======  ========  =====  ==============  =========
-

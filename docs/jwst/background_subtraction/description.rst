@@ -44,7 +44,7 @@ as follows::
 For a WFSS mode observation, the step can be run on a single file, if it contains an assigned
 WCS and the source catalog name in the SCATFILE FITS header keyword.  It can also be run on an
 association file that contains the intermediate exposure file name and a source catalog.
-For example, if the following contents are stored in a file called `bkg_sub_asn.json`::
+For example, if the following contents are stored in a file called ``bkg_sub_asn.json``::
 
 
         {"products": [
@@ -67,13 +67,11 @@ then the background step can be run on the target exposure wfss_exp_001 as::
     strun bkg_subtract bkg_sub_asn.json
 
 From Python code, the source catalog can also be directly specified in the input model
-before calling the BackgroundStep. For example:
+before calling the BackgroundStep. For example::
 
-.. doctest-skip::
-
-  >>> model = datamodels.open("wfss_exp_001_assignwcsstep.fits")
-  >>> model.meta.source_catalog = "image_exp_001_cat.ecsv"
-  >>> result = BackgroundStep.call(model)
+    model = datamodels.open("wfss_exp_001_assignwcsstep.fits")
+    model.meta.source_catalog = "image_exp_001_cat.ecsv"
+    result = BackgroundStep.call(model)
 
 
 Imaging and Non-WFSS, Non-SOSS Spectroscopic Modes
@@ -159,15 +157,15 @@ The locations of source spectra are determined from a source catalog (specified
 by the primary header keyword SCATFILE), in conjunction with a reference file
 that gives the wavelength range (based on filter and grism) that is relevant
 to the WFSS image. All regions of the image that are free of source spectra
-are used for scaling the background reference image. 
+are used for scaling the background reference image.
 
 A background mask is created and set to True where there are no sources, i.e. regions
 where the background can be used.
 This mask will be saved in the ``MASK`` extension of the intermediate output
 file, saved with suffix "bsub", and will be accessible in the ``mask`` attribute of the
-output datamodel. 
+output datamodel.
 
-The step argument``wfss_mmag_extract`` can be used, if
+The step argument ``wfss_mmag_extract`` can be used, if
 desired, to set the minimum (faintest) abmag of the source catalog objects
 used to define the background regions.
 The default is to use all source catalog entries that result in a spectrum
