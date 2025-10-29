@@ -121,8 +121,10 @@ def tso_aperture_photometry(
 
     aperture_sum = []
     aperture_sum_err = []
+    aperture_area = []
     annulus_sum = []
     annulus_sum_err = []
+    annulus_area = []
 
     if sub64p_wlp8:
         info = (
@@ -155,15 +157,20 @@ def tso_aperture_photometry(
                 datamodel.data[i, :, :], bkg_aper, error=datamodel.err[i, :, :]
             )
 
+            # sum_aper_area is the number of valid (unmasked) pixels in the aperture
             aperture_sum.append(aperstats.sum)
             aperture_sum_err.append(aperstats.sum_err)
+            aperture_area.append(aperstats.sum_aper_area.value)
             annulus_sum.append(annstats.sum)
             annulus_sum_err.append(annstats.sum_err)
+            annulus_area.append(annstats.sum_aper_area.value)
 
     aperture_sum = np.array(aperture_sum)
     aperture_sum_err = np.array(aperture_sum_err)
+    aperture_area = np.array(aperture_area)
     annulus_sum = np.array(annulus_sum)
     annulus_sum_err = np.array(annulus_sum_err)
+    annulus_area = np.array(annulus_area)
 
     # construct metadata for output table
     meta = OrderedDict()
@@ -179,57 +186,15 @@ def tso_aperture_photometry(
     # initialize the output table
     tbl = QTable(meta=meta)
 
-    # check for the INT_TIMES table extension
-    if datamodel.hasattr("int_times") and datamodel.int_times is not None:
-        nrows = len(datamodel.int_times)
-    else:
-        nrows = 0
-        log.warning("The INT_TIMES table in the input file is missing or empty.")
-
-    # load the INT_TIMES table data
-    if nrows > 0:
-        shape = datamodel.data.shape
-        num_integ = 1
-        if len(shape) > 2:
-            num_integ = shape[0]
-        int_start = datamodel.meta.exposure.integration_start
-        if int_start is None:
-            int_start = 1
-            log.warning(f"INTSTART not found; assuming a value of {int_start}")
-
-        # Columns of integration numbers & times of integration from the
-        # INT_TIMES table.
-        int_num = datamodel.int_times["integration_number"]
-        mid_utc = datamodel.int_times["int_mid_MJD_UTC"]
-        offset = int_start - int_num[0]  # both are one-indexed
-        if offset < 0:
-            log.warning(
-                "Range of integration numbers in science data extends "
-                "outside the range in INT_TIMES table."
-            )
-            log.warning("Can't use INT_TIMES table.")
-            del int_num, mid_utc
-            nrows = 0  # flag as bad
-        else:
-            log.debug("Times are from the INT_TIMES table")
-            time_arr = mid_utc[offset : offset + num_integ]
-            int_times = Time(time_arr, format="mjd", scale="utc")
-
-    if nrows == 0:
-        # No int_times available.
-        # Compute integration time stamps on the fly
-        log.debug("Times computed from EXPSTART and EFFINTTM")
-        dt = datamodel.meta.exposure.integration_time
-        n_dt = (
-            datamodel.meta.exposure.integration_end - datamodel.meta.exposure.integration_start + 1
-        )
-        dt_arr = np.arange(1, 1 + n_dt) * dt - (dt / 2.0)
-        int_dt = TimeDelta(dt_arr, format="sec")
-        int_times = Time(datamodel.meta.exposure.start_time, format="mjd") + int_dt
+    int_times_utc, int_times_bjd = _get_int_times(datamodel)
 
     # populate table columns
     unit = u.Unit(datamodel.meta.bunit_data)
-    tbl["MJD"] = int_times.mjd
+    tbl["MJD"] = int_times_utc.mjd
+    if int_times_bjd is not None:
+        tbl["BJD_TDB"] = int_times_bjd.mjd
+    else:
+        tbl["BJD_TDB"] = np.full(nimg, np.nan)
     tbl["aperture_sum"] = aperture_sum << unit
     tbl["aperture_sum_err"] = aperture_sum_err << unit
 
@@ -237,10 +202,10 @@ def tso_aperture_photometry(
         tbl["annulus_sum"] = annulus_sum << unit
         tbl["annulus_sum_err"] = annulus_sum_err << unit
 
-        annulus_mean = annulus_sum / bkg_aper.area
-        annulus_mean_err = annulus_sum_err / bkg_aper.area
-        aperture_bkg = annulus_mean * phot_aper.area
-        aperture_bkg_err = annulus_mean_err * phot_aper.area
+        annulus_mean = annulus_sum / annulus_area
+        annulus_mean_err = annulus_sum_err / annulus_area
+        aperture_bkg = annulus_mean * aperture_area
+        aperture_bkg_err = annulus_mean_err * aperture_area
 
         tbl["annulus_mean"] = annulus_mean << unit
         tbl["annulus_mean_err"] = annulus_mean_err << unit
@@ -287,6 +252,82 @@ def tso_aperture_photometry(
         tbl["psf_flux"] = psf_flux << unit
 
     return tbl
+
+
+def _get_int_times(datamodel):
+    """
+    Find mid times of each integration.
+
+    If the int_times table is available in the datamodel, use that.
+    If not, approximate the times using exposure metadata.
+
+    Parameters
+    ----------
+    datamodel : `~stdatamodels.jwst.datamodels.CubeModel`
+        The input data model.
+
+    Returns
+    -------
+    int_times_utc : `~astropy.time.Time`
+        An array of integration mid-times in MJD UTC.
+    int_times_bjd : `~astropy.time.Time`
+        An array of integration mid-times in BJD_TDB.
+    """
+    # check for the INT_TIMES table extension
+    if datamodel.hasattr("int_times") and datamodel.int_times is not None:
+        nrows = len(datamodel.int_times)
+    else:
+        nrows = 0
+        log.warning("The INT_TIMES table in the input file is missing or empty.")
+
+    # load the INT_TIMES table data
+    if nrows > 0:
+        shape = datamodel.data.shape
+        num_integ = 1
+        if len(shape) > 2:
+            num_integ = shape[0]
+        int_start = datamodel.meta.exposure.integration_start
+        if int_start is None:
+            int_start = 1
+            log.warning(f"INTSTART not found; assuming a value of {int_start}")
+
+        # Columns of integration numbers & times of integration from the
+        # INT_TIMES table.
+        int_num = datamodel.int_times["integration_number"]
+        mid_utc = datamodel.int_times["int_mid_MJD_UTC"]
+        mid_bjd = datamodel.int_times["int_mid_BJD_TDB"]
+        offset = int_start - int_num[0]  # both are one-indexed
+        if offset < 0:
+            log.warning(
+                "Range of integration numbers in science data extends "
+                "outside the range in INT_TIMES table."
+            )
+            log.warning("Can't use INT_TIMES table.")
+            del int_num, mid_utc, mid_bjd
+            nrows = 0  # flag as bad
+        else:
+            log.debug("Times are from the INT_TIMES table")
+            time_arr_utc = mid_utc[offset : offset + num_integ]
+            int_times_utc = Time(time_arr_utc, format="mjd", scale="utc")
+            time_arr_bjd = mid_bjd[offset : offset + num_integ]
+            int_times_bjd = Time(time_arr_bjd, format="mjd", scale="tdb")
+
+    if nrows == 0:
+        # No int_times available.
+        # Compute integration time stamps on the fly
+        log.debug("Times computed from EXPSTART and EFFINTTM")
+        dt = datamodel.meta.exposure.integration_time
+        n_dt = (
+            datamodel.meta.exposure.integration_end - datamodel.meta.exposure.integration_start + 1
+        )
+        dt_arr = np.arange(1, 1 + n_dt) * dt - (dt / 2.0)
+        int_dt = TimeDelta(dt_arr, format="sec")
+        int_times_utc = Time(datamodel.meta.exposure.start_time, format="mjd") + int_dt
+
+        log.warning("INT_TIMES table missing; BJD_TDB times not computed.")
+        int_times_bjd = None
+
+    return int_times_utc, int_times_bjd
 
 
 def _fit_source(data, mask, source_mask, xcenter, ycenter, box_size, fit_psf=False):
