@@ -338,12 +338,6 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
     idx_valid = np.isfinite(flux_order)
     grid_order, flux_order = grid_order[idx_valid], flux_order[idx_valid]
 
-    # import matplotlib.pyplot as plt
-    # fig, ax = plt.subplots(1, 1, figsize=(10, 5))
-    # ax.scatter(grid_order, flux_order, s=1)
-    # ax.set_title(f"Order {order_model.spectral_order} extracted flux")
-    # plt.show()
-
     # Build model of the order
     # Give the identity kernel to the Engine (so no convolution)
     engine = ExtractionEngine(
@@ -808,7 +802,7 @@ class Integration:
             This is used to generate the wavelength grid if wave_grid is None,
             and to estimate the Tikhonov factor if not provided in tikfacs_in.
             If wave_grid is given and the Tikhonov factor for order 1 is provided
-            in tikfacs_in, this is not needed. If either are not provided, this must be given.
+            in tikfacs_in, this is not needed. If either is not provided, this must be given.
         tikfacs_in : dict, optional
             A dictionary with keys "Order 1", "Order 2", and "Order 3" and values
             giving the Tikhonov factor to use for each order. If None (default), the Tikhonov factor
@@ -859,11 +853,9 @@ class Integration:
             threshold=threshold,
             orders=[1, 2],
         )
-        # set the throughputs and kernels in the order models to those used in the engine
-        # these are now np.arrays and sparse matrices respectively, so this avoids re-computing
-        # them in subsequent integrations
+        # set the kernels in the order models to those used in the engine
+        # these are now sparse matrices, so this avoids re-computing them in subsequent integrations
         for i in range(2):
-            # self.order_models[i].throughput = engine.throughput[i]
             self.order_models[i].kernel = engine.kernels[i]
 
         # Find the tikhonov factor for order 1 (and contaminated part of order 2)
@@ -1007,9 +999,9 @@ class Integration:
 
         Parameters
         ----------
-        threshold : float, optional:
+        threshold : float, optional
             The pixels with an aperture[order 2] > `threshold` are considered contaminated
-            and will be masked. Default is 1e-4.
+            and will be masked.
 
         Returns
         -------
@@ -1073,7 +1065,7 @@ class Integration:
         wave_grid : 1d array
             The grid of the pixels boundaries at the native sampling.
         """
-        # Build native grid for each  orders.
+        # Build native grid for each order
         spectral_orders = [2, 1]
         grids_ord = {}
         for sp_ord in spectral_orders:

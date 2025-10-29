@@ -258,9 +258,9 @@ def test_model_image_wavegrid_specified(
 
     # test SossWaveGridModel input
     # the docs on main say this works, but I don't think it does even on main
+    wave_grid_in = SossWaveGridModel()
+    wave_grid_in.wavegrid = np.linspace(1.0, 2.5, 100)
     with pytest.raises(ValueError):
-        wave_grid_in = SossWaveGridModel()
-        wave_grid_in.wavegrid = np.linspace(1.0, 2.5, 100)
         tracemodels, tikfacs_out, logl, wave_grid, spec_list = integration.model_image(
             tikfacs_in=tikfacs_in,
             threshold=1e-4,
