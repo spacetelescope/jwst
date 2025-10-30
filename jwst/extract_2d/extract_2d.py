@@ -97,6 +97,7 @@ def extract2d(
                 grism_objects=grism_objects,
                 reference_files=reference_files,
                 extract_orders=extract_orders,
+                source_ids=source_ids,
                 mmag_extract=mmag_extract,
                 wfss_extract_half_height=wfss_extract_half_height,
                 nbright=nbright,

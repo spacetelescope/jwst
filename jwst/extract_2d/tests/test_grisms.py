@@ -411,7 +411,9 @@ def test_compute_tso_offset_center():
 
 
 @pytest.mark.filterwarnings("ignore: Card is too long")
-def test_extract_wfss_object():
+@pytest.mark.parametrize("nbright", [None, 1, 2])
+@pytest.mark.parametrize("source_ids", [None, [19, 25], 19])
+def test_extract_wfss_object(nbright, source_ids):
     """Test extraction of a WFSS object.
 
     Test extraction of 2 objects into a MultiSlitModel.
@@ -425,18 +427,41 @@ def test_extract_wfss_object():
     wcsimage = create_wfss_image(pupil="GRISMR")
     wcsimage.meta.source_catalog = source_catalog
     refs = get_reference_files(wcsimage)
-    outmodel = extract_grism_objects(wcsimage, reference_files=refs, compute_wavelength=False)
+    outmodel = extract_grism_objects(
+        wcsimage,
+        reference_files=refs,
+        compute_wavelength=False,
+        nbright=nbright,
+        source_ids=source_ids,
+    )
     assert isinstance(outmodel, MultiSlitModel)
-    assert len(outmodel.slits) == 3
+
+    # expected names, source ids depend on inputs
+    if source_ids is None:
+        source_ids = [9, 19, 25]
+    if nbright is None:
+        nbright = 3
+        expected_mag_order = [9, 19, 25]
+    else:
+        # only sorted by magnitude if nbright is used
+        expected_mag_order = [25, 9, 19]
+    if source_ids is not None:
+        expected_mag_order = [sid for sid in expected_mag_order if sid in np.atleast_1d(source_ids)]
+
+    # check the number of sources was as expected
+    n_expected = min(nbright, len(np.atleast_1d(source_ids)))
+    assert len(outmodel.slits) == n_expected
+
+    # Check that the source IDs and names are as expected
     ids = [slit.source_id for slit in outmodel.slits]
-    assert ids == [9, 19, 25]
+    names = [slit.name for slit in outmodel.slits]
+    assert ids == expected_mag_order[:n_expected]
+    assert names == [str(sid) for sid in expected_mag_order[:n_expected]]
 
     # Compare SRCDEC and SRCRA values
-    assert np.isclose(outmodel[0].source_dec, -27.80858320887945)
-    assert np.isclose(outmodel[0].source_ra, 53.13773660029234)
-
-    names = [slit.name for slit in outmodel.slits]
-    assert names == ["9", "19", "25"]
+    if nbright is None and source_ids is None:
+        assert np.isclose(outmodel[0].source_dec, -27.80858320887945)
+        assert np.isclose(outmodel[0].source_ra, 53.13773660029234)
 
     with pytest.raises(TypeError):
         extract_tso_object(wcsimage, reference_files="myspecwcs.asdf")

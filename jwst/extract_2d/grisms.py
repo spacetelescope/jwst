@@ -297,6 +297,7 @@ def extract_grism_objects(
     grism_objects=None,
     reference_files=None,
     extract_orders=None,
+    source_ids=None,
     mmag_extract=None,
     compute_wavelength=True,
     wfss_extract_half_height=None,
@@ -318,6 +319,9 @@ def extract_grism_objects(
 
     extract_orders : int
         Spectral orders to extract
+
+    source_ids : list
+        List of source IDs to extract.
 
     mmag_extract : float
         Sources with magnitudes fainter than this minimum magnitude extraction
@@ -402,6 +406,7 @@ def extract_grism_objects(
                 input_model,
                 reference_files,
                 extract_orders=extract_orders,
+                source_ids=source_ids,
                 mmag_extract=mmag_extract,
                 wfss_extract_half_height=wfss_extract_half_height,
                 nbright=nbright,
