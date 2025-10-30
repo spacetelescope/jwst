@@ -37,6 +37,8 @@ is a rate image or rateints cube instead of a ramp is that a draft rate file is 
 necessary: the scene mask is derived from the input and correction is directly
 applied to the rate image(s).
 
+.. _scene_mask:
+
 Creation of a scene mask
 ------------------------
 One of the key components of the correction is knowing which pixels can
