@@ -5,7 +5,7 @@ AlignConsecutiveMacros: true
 AlignEscapedNewlines: LeftWithLastLine
 AllowAllArgumentsOnNextLine: true
 AlwaysBreakAfterReturnType: None
-AlwaysBreakAfterDefinitionReturnType: TopLevel
+AlwaysBreakAfterDefinitionReturnType: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Inline
@@ -14,7 +14,6 @@ BraceWrapping:
   AfterControlStatement: false
   AfterFunction: true
 BreakBeforeBraces: Custom
-# BreakBeforeBinaryOperators: NonAssignment
 
 ColumnLimit: 100
 
@@ -22,10 +21,13 @@ IndentCaseLabels: true
 IndentWidth: 4
 InsertBraces: true
 
+PenaltyReturnTypeOnItsOwnLine: 1000000
+
 PointerAlignment: Right
 
 ReflowComments: true
 
+SortIncludes: false
 SpaceAfterCStyleCast: true
 SpaceBeforeParens: ControlStatements
 
