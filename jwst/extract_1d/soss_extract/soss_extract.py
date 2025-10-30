@@ -483,7 +483,7 @@ def _do_tiktests(
 
     # Refine across 2 orders of magnitude.
     tikfac = np.log10(tikfac)
-    factors = np.logspace(tikfac - 1, tikfac + 1, 10)
+    factors = np.logspace(tikfac - 2, tikfac + 2, 20)
     tiktests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
     tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
 
@@ -871,6 +871,7 @@ class Integration:
                 self.order_models[:2],
                 global_mask,
                 save_tiktests=save_tiktests,
+                tikfac_log_range=[-4, 4],
             )
             tikfacs_out["Order 1"] = tikfac
             for spec in spec_list:
