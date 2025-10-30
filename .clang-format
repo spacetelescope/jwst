@@ -26,6 +26,8 @@ PointerAlignment: Right
 
 ReflowComments: true
 
+SortIncludes: false
+
 SpaceAfterCStyleCast: true
 SpaceBeforeParens: ControlStatements
 
