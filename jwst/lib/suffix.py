@@ -176,6 +176,8 @@ _calculated_suffixes = {
     "nscleanstep",
     "clean_flicker_noise",
     "cleanflickernoisestep",
+    "picture_frame",
+    "pictureframestep",
     "outlierdetectionstep",
     "groupscalestep",
     "hlspstep",

@@ -29,6 +29,8 @@ The modeled noise is then directly subtracted from each group readout.
 The correction is available for any type of NIRSpec, NIRISS, or NIRCam
 exposure. For MIRI, it is available only for imaging exposures.
 
+.. _scene_mask:
+
 Creation of a scene mask
 ------------------------
 One of the key components of the correction is knowing which pixels can
