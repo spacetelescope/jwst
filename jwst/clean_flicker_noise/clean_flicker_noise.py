@@ -1464,7 +1464,7 @@ def do_correction(
     Parameters
     ----------
     input_model : `~jwst.datamodels.JwstDataModel`
-        Science data to be corrected.
+        Science data to be corrected. Updated in place.
 
     input_dir : str
         Path to the input directory.  Used by sub-steps (e.g. assign_wcs
@@ -1556,8 +1556,6 @@ def do_correction(
     if not _check_input(exp_type, fit_method):
         return input_model, None, None, None, status
 
-    output_model = input_model.copy()
-
     # Get parameters needed for subsequent corrections, as appropriate
     # to the input data
     axis_to_correct, background_method, fit_by_channel, fc = _standardize_parameters(
@@ -1585,7 +1583,7 @@ def do_correction(
     # Check data shapes for 2D, 3D, or 4D inputs
     mismatch, ndim, nints, ngroups = _check_data_shapes(input_model, background_mask)
     if mismatch:
-        return output_model, None, None, None, status
+        return input_model, None, None, None, status
 
     # Close the draft rate model if created - it is no longer needed.
     if image_model is not input_model:
@@ -1597,6 +1595,9 @@ def do_correction(
         background_to_save = np.zeros_like(input_model.data)
     else:
         background_to_save = None
+
+    # Keep a copy of the original input data
+    input_data = input_model.data.copy()
 
     # Loop over integrations and groups (even if there's only 1)
     for i in range(nints):
@@ -1612,13 +1613,13 @@ def do_correction(
 
             # Get the relevant image data
             if ndim == 2:
-                image = input_model.data
+                image = input_data
             elif ndim == 3:
-                image = input_model.data[i]
+                image = input_data[i]
             else:
                 # Ramp data input:
                 # subtract the current group from the next one
-                image = input_model.data[i, j + 1] - input_model.data[i, j]
+                image = input_data[i, j + 1] - input_data[i, j]
                 dq = input_model.groupdq[i, j + 1]
 
                 # Mask any DNU and JUMP pixels
@@ -1646,8 +1647,8 @@ def do_correction(
 
                 # Restore input data to make sure any partial changes
                 # are thrown away
-                output_model.data = input_model.data.copy()
-                return output_model, None, None, None, status
+                input_model.data = input_data
+                return input_model, None, None, None, status
 
             if cleaned_image is None:
                 # Cleaning did not proceed because the image is bad:
@@ -1660,35 +1661,35 @@ def do_correction(
 
             # Store the cleaned image in the output model
             if ndim == 2:
-                output_model.data = cleaned_image
+                input_model.data = cleaned_image
                 if save_background:
                     background_to_save[:] = background
             elif ndim == 3:
-                output_model.data[i] = cleaned_image
+                input_model.data[i] = cleaned_image
                 if save_background:
                     background_to_save[i] = background
             else:
                 # Add the cleaned data diff to the previously cleaned group,
                 # rather than the noisy input group
-                output_model.data[i, j + 1] = output_model.data[i, j] + cleaned_image
+                input_model.data[i, j + 1] = input_model.data[i, j] + cleaned_image
                 if save_background:
                     background_to_save[i, j + 1] = background
 
     # Store the background image in a model, if requested
     if save_background:
-        background_model = _make_intermediate_model(output_model, background_to_save)
+        background_model = _make_intermediate_model(input_model, background_to_save)
     else:
         background_model = None
 
     # Make a fit noise model for diagnostic purposes by
     # diffing the input and output models
     if save_noise:
-        noise_data = output_model.data - input_model.data
-        noise_model = _make_intermediate_model(output_model, noise_data)
+        noise_data = input_model.data - input_data
+        noise_model = _make_intermediate_model(input_model, noise_data)
     else:
         noise_model = None
 
     # Set completion status
     status = "COMPLETE"
 
-    return output_model, mask_model, background_model, noise_model, status
+    return input_model, mask_model, background_model, noise_model, status
