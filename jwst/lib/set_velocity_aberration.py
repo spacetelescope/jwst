@@ -68,12 +68,12 @@ def compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u):
     u_corr : numpy.array([ua0, ua1, ua2])
         Apparent position vector in the moving telescope frame.
     """
-    warnings.warn(
+    msg = (
         "compute_va_effects_vector is deprecated. "
-        "Use stcal.velocity_aberration.compute_va_effects_vector instead.",
-        DeprecationWarning,
-        stacklevel=2,
+        "Use stcal.velocity_aberration.compute_va_effects_vector instead."
     )
+    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    logger.warning(msg)
     return va.compute_va_effects_vector(velocity_x, velocity_y, velocity_z, u)
 
 
@@ -111,12 +111,12 @@ def compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec):
     apparent_dec : float
         Apparent star position in the moving telescope frame.
     """
-    warnings.warn(
+    msg = (
         "compute_va_effects is deprecated. "
-        "Use stcal.velocity_aberration.compute_va_effects instead.",
-        DeprecationWarning,
-        stacklevel=2,
+        "Use stcal.velocity_aberration.compute_va_effects instead."
     )
+    warnings.warn(msg, DeprecationWarning, stacklevel=2)
+    logger.warning(msg)
     return va.compute_va_effects(velocity_x, velocity_y, velocity_z, ra, dec)
 
 
