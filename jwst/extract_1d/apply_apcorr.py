@@ -13,7 +13,7 @@ class ApCorrBase(abc.ABC):
     """Base class for aperture correction classes."""
 
     match_pars = {
-        "MIRI": {"LRS": {"subarray": ["name"]}},
+        "MIRI": {"LRS": {"subarray": ["name"]}, "WFSS": {"subarray": ["name"]}},
         "NIRSPEC": {
             "MSASPEC": {"instrument": ["filter", "grating"]},
             "FIXEDSLIT": {

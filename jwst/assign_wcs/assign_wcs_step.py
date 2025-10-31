@@ -4,6 +4,7 @@ import logging
 from stdatamodels.jwst import datamodels
 
 from jwst.assign_wcs.assign_wcs import load_wcs
+from jwst.assign_wcs.miri import imaging as miri_imaging
 from jwst.assign_wcs.nircam import imaging as nircam_imaging
 from jwst.assign_wcs.niriss import imaging as niriss_imaging
 from jwst.assign_wcs.util import (
@@ -20,7 +21,7 @@ log = logging.getLogger(__name__)
 __all__ = ["AssignWcsStep"]
 
 
-WFSS_TYPES = {"nrc_wfss", "nis_wfss"}
+WFSS_TYPES = {"nrc_wfss", "nis_wfss", "mir_wfss"}
 
 
 class AssignWcsStep(Step):
@@ -160,8 +161,14 @@ class AssignWcsStep(Step):
                 bbox = wcs_bbox_from_shape(result.data.shape)
                 if result_exptype == "nis_wfss":
                     imaging_func = niriss_imaging
-                else:
+                elif result_exptype == "nrc_wfss":
                     imaging_func = nircam_imaging
+                elif result_exptype == "mir_wfss":
+                    imaging_func = miri_imaging
+                    # The current MIRI WFSS specwcs is an best that can be derived using
+                    # limited test data. With specific MIRI WFSS test data the specwsc will
+                    # be updated and likely the sip_max_inv_pix_error increase can be relaxed.
+                    self.sip_max_inv_pix_error = self.sip_max_inv_pix_error * 2
 
                 wfss_imaging_wcs(
                     result,

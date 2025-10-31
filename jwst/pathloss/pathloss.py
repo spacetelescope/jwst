@@ -422,7 +422,7 @@ def do_correction(
         corrections = do_correction_ifu(
             output_model, pathloss_model, inverse, source_type, correction_pars
         )
-    elif exp_type == "MIR_LRS-FIXEDSLIT":
+    elif exp_type in ["MIR_LRS-FIXEDSLIT", "MIR_WFSS"]:
         # only apply correction to LRS fixed-slit if target is point source
         if is_pointsource(output_model.meta.target.source_type):
             corrections = do_correction_lrs(output_model, pathloss_model, user_slit_loc)
