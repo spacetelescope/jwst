@@ -1,0 +1,1 @@
+Replaced the spec2 pipeline call to ``nsclean`` with a call to ``clean_flicker_noise``.

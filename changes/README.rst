@@ -47,7 +47,6 @@ Stage 2
 - ``<PR#>.assign_wcs.rst``
 - ``<PR#>.badpix_selfcal.rst``
 - ``<PR#>.msaflagopen.rst``
-- ``<PR#>.nsclean.rst``
 - ``<PR#>.imprint.rst``
 - ``<PR#>.background.rst``
 - ``<PR#>.extract_2d.rst``

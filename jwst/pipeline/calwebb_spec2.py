@@ -13,6 +13,7 @@ from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.background import background_step
 from jwst.badpix_selfcal import badpix_selfcal_step
 from jwst.barshadow import barshadow_step
+from jwst.clean_flicker_noise import clean_flicker_noise_step
 from jwst.cube_build import cube_build_step
 from jwst.extract_1d import extract_1d_step
 from jwst.extract_2d import extract_2d_step
@@ -22,7 +23,6 @@ from jwst.imprint import imprint_step
 from jwst.lib.exposure_types import is_nrs_ifu_flatlamp, is_nrs_ifu_linelamp, is_nrs_slit_linelamp
 from jwst.master_background import master_background_mos_step
 from jwst.msaflagopen import msaflagopen_step
-from jwst.nsclean import nsclean_step
 from jwst.pathloss import pathloss_step
 from jwst.photom import photom_step
 from jwst.pixel_replace import pixel_replace_step
@@ -57,7 +57,7 @@ class Spec2Pipeline(Pipeline):
     Process JWST spectroscopic exposures from Level 2a to 2b.
 
     Included steps are:
-    assign_wcs, badpix_selfcal, msa_flagging, nsclean, bkg_subtract,
+    assign_wcs, badpix_selfcal, msa_flagging, clean_flicker_noise, bkg_subtract,
     imprint_subtract, extract_2d, master_background_mos, wavecorr,
     flat_field, srctype, straylight, fringe, residual_fringe, pathloss,
     barshadow, wfss_contam, photom, pixel_replace, resample_spec,
@@ -77,7 +77,7 @@ class Spec2Pipeline(Pipeline):
         "assign_wcs": assign_wcs_step.AssignWcsStep,
         "badpix_selfcal": badpix_selfcal_step.BadpixSelfcalStep,
         "msa_flagging": msaflagopen_step.MSAFlagOpenStep,
-        "nsclean": nsclean_step.NSCleanStep,
+        "clean_flicker_noise": clean_flicker_noise_step.CleanFlickerNoiseStep,
         "bkg_subtract": background_step.BackgroundStep,
         "imprint_subtract": imprint_step.ImprintStep,
         "extract_2d": extract_2d_step.Extract2dStep,
@@ -299,30 +299,30 @@ class Spec2Pipeline(Pipeline):
         # apply msa_flagging (flag stuck open shutters for NIRSpec IFU and MOS)
         calibrated = self.msa_flagging.run(calibrated)
 
-        # apply the "nsclean" 1/f correction to NIRSpec images
-        calibrated = self.nsclean.run(calibrated)
+        # apply the 1/f correction to NIRSpec images
+        calibrated = self.clean_flicker_noise.run(calibrated)
 
-        # Apply nsclean to NIRSpec imprint and background members
-        if not self.nsclean.skip:
-            save_results = self.nsclean.save_results
+        # Apply clean_flicker_noise to NIRSpec imprint and background members
+        if not self.clean_flicker_noise.skip:
+            save_results = self.clean_flicker_noise.save_results
 
             for i, imprint_file in enumerate(members_by_type["imprint"]):
                 if save_results:
                     if isinstance(imprint_file, datamodels.JwstDataModel):
-                        self.nsclean.output_file = imprint_file.meta.filename
+                        self.clean_flicker_noise.output_file = imprint_file.meta.filename
                     else:
-                        self.nsclean.output_file = Path(imprint_file).name
-                imprint_nsclean = self.nsclean.run(imprint_file)
-                members_by_type["imprint"][i] = imprint_nsclean
+                        self.clean_flicker_noise.output_file = Path(imprint_file).name
+                imprint_clean = self.clean_flicker_noise.run(imprint_file)
+                members_by_type["imprint"][i] = imprint_clean
 
             for i, bkg_file in enumerate(members_by_type["background"]):
                 if save_results:
                     if isinstance(bkg_file, datamodels.JwstDataModel):
-                        self.nsclean.output_file = bkg_file.meta.filename
+                        self.clean_flicker_noise.output_file = bkg_file.meta.filename
                     else:
-                        self.nsclean.output_file = Path(bkg_file).name
-                bkg_nsclean = self.nsclean.run(bkg_file)
-                members_by_type["background"][i] = bkg_nsclean
+                        self.clean_flicker_noise.output_file = Path(bkg_file).name
+                bkg_clean = self.clean_flicker_noise.run(bkg_file)
+                members_by_type["background"][i] = bkg_clean
 
         # Leakcal subtraction (imprint)  occurs before background subtraction
         # on a per-exposure basis.
@@ -492,16 +492,16 @@ class Spec2Pipeline(Pipeline):
             log.debug('Science data does not allow MSA flagging. Skipping "msa_flagging".')
             self.msa_flagging.skip = True
 
-        # Check for NIRSpec "nsclean" correction. Attempt to apply to
+        # Check for NIRSpec 1/f correction. Attempt to apply to
         # IFU, MOS, FIXEDSLIT, and NRS_BRIGHTOBJ modes, for now.
-        if not self.nsclean.skip and exp_type not in [
+        if not self.clean_flicker_noise.skip and exp_type not in [
             "NRS_MSASPEC",
             "NRS_IFU",
             "NRS_FIXEDSLIT",
             "NRS_BRIGHTOBJ",
         ]:
-            log.debug('Science data does not allow NSClean correction. Skipping "nsclean".')
-            self.nsclean.skip = True
+            log.debug("Science data does not allow 1/f correction. Skipping clean_flicker_noise.")
+            self.clean_flicker_noise.skip = True
 
         # Check for image-to-image background subtraction can be done.
         if not self.bkg_subtract.skip:
