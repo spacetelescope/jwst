@@ -218,6 +218,24 @@ def not_implemented_mode(input_model, ref, slit_y_range=None):  # noqa: ARG001
     log.critical(message)
 
 
+def read_source_catalog(catalog_name):
+    if isinstance(catalog_name, str):
+        if len(catalog_name) == 0:
+            err_text = "Empty catalog filename"
+            log.error(err_text)
+            raise ValueError(err_text)
+        try:
+            return QTable.read(catalog_name, format="ascii.ecsv")
+        except FileNotFoundError as e:
+            log.error(f"Could not find catalog file: {e}")
+            raise FileNotFoundError(f"Could not find catalog: {e}") from None
+    elif isinstance(catalog_name, QTable):
+        return catalog_name
+    err_text = "Need to input string name of catalog or astropy.table.table.QTable instance"
+    log.error(err_text)
+    raise TypeError(err_text)
+
+
 def get_object_info(catalog_name=None):
     """
     Return a list of SkyObjects from the direct image.
@@ -236,22 +254,7 @@ def get_object_info(catalog_name=None):
     objects : list[jwst.transforms.models.SkyObject]
         A list of SkyObject tuples
     """
-    if isinstance(catalog_name, str):
-        if len(catalog_name) == 0:
-            err_text = "Empty catalog filename"
-            log.error(err_text)
-            raise ValueError(err_text)
-        try:
-            catalog = QTable.read(catalog_name, format="ascii.ecsv")
-        except FileNotFoundError as e:
-            log.error(f"Could not find catalog file: {e}")
-            raise FileNotFoundError(f"Could not find catalog: {e}") from None
-    elif isinstance(catalog_name, QTable):
-        catalog = catalog_name
-    else:
-        err_text = "Need to input string name of catalog or astropy.table.table.QTable instance"
-        log.error(err_text)
-        raise TypeError(err_text)
+    catalog = read_source_catalog(catalog_name)
 
     objects = []
 
@@ -299,6 +302,7 @@ def create_grism_bbox(
     reference_files=None,
     mmag_extract=None,
     extract_orders=None,
+    source_ids=None,
     wfss_extract_half_height=None,
     wavelength_range=None,
     nbright=None,
@@ -327,6 +331,8 @@ def create_grism_bbox(
         The list of orders to extract, if specified this will
         override the orders listed in the wavelengthrange reference file.
         If ``None``, the default one in the wavelengthrange reference file is used.
+    source_ids : list, optional
+        List of source IDs to extract.
     wfss_extract_half_height : int, optional
         Cross-dispersion extraction half height in pixels, WFSS mode.
         Overwrites the computed extraction height in ``GrismObject.order_bounding.``
@@ -409,9 +415,10 @@ def create_grism_bbox(
         raise ValueError(err_text)
 
     log.info(f"Getting objects from {input_model.meta.source_catalog}")
+    log.info("Creating bounding boxes for grism objects, rejecting sources fully off-detector")
 
     return _create_grism_bbox(
-        input_model, mmag_extract, wfss_extract_half_height, wavelength_range, nbright
+        input_model, mmag_extract, wfss_extract_half_height, wavelength_range, nbright, source_ids
     )
 
 
@@ -421,6 +428,7 @@ def _create_grism_bbox(
     wfss_extract_half_height=None,
     wavelength_range=None,
     nbright=None,
+    source_ids=None,
 ):
     log.debug(f"Extracting with wavelength_range {wavelength_range}")
 
@@ -575,12 +583,12 @@ def _create_grism_bbox(
 
             if not contained:
                 exclude = True
-                log.info(f"Excluding off-image object: {obj.label}, order {order}")
+                log.debug(f"Excluding off-image object: {obj.label}, order {order}")
             elif contained >= 1:
                 outbox = pts[np.logical_not(inidx)]
                 if len(outbox) > 0:
                     ispartial = True
-                    log.info(f"Partial order on detector for obj: {obj.label} order: {order}")
+                    log.debug(f"Partial order on detector for obj: {obj.label} order: {order}")
 
             if not exclude:
                 order_bounding[order] = ((ymin, ymax), (xmin, xmax))
@@ -606,9 +614,14 @@ def _create_grism_bbox(
                 )
             )
 
+    # Filter by source_ids if provided
+    if source_ids is not None:
+        log.info(f"Filtering catalog to source IDs: {source_ids}")
+        grism_objects = [obj for obj in grism_objects if obj.sid in np.atleast_1d(source_ids)]
+
     # At this point we have a list of grism objects limited to
-    # isophotal_abmag < mmag_extract. We now need to further restrict
-    # the list to the N brightest objects, as given by nbright.
+    # isophotal_abmag < mmag_extract and filtered by source_ids.
+    # We now need to further restrict the list to the N brightest objects, as given by nbright.
     if nbright is None:
         # Include all objects, regardless of brightness
         final_objects = grism_objects

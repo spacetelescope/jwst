@@ -49,7 +49,7 @@ def read_catalog(catalogname):
     return get_object_info(catalogname)
 
 
-def test_create_grism_objects():
+def test_get_object_info():
     source_catalog = get_pkg_data_filename(
         "data/step_SourceCatalogStep_cat.ecsv", package="jwst.assign_wcs.tests"
     )
