@@ -459,6 +459,10 @@ def _apply_bkg_sigma_clip(
     bkg_stat_data = bkg_data[temp_weightmap == 1]
 
     # If there are good data, work out the statistics
+    # maxiters is the maximum number of sigma-clipping iterations to perform or None
+    # to clip until convergence is achieved (i.e., iterate until the last iteration
+    # clips nothing). If convergence is achieved prior to maxiters iterations, the
+    # clipping iterations will stop. The default value is 5.
     if len(bkg_stat_data) > 0:
         bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(
             bkg_stat_data, sigma=bkg_sigma_clip, maxiters=5
