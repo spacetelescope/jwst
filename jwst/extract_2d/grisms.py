@@ -8,7 +8,7 @@ import logging
 import numpy as np
 from astropy.modeling import CompoundModel, bind_bounding_box
 from astropy.modeling.models import Const1D, Mapping, Shift
-from gwcs.utils import _toindex
+from gwcs.utils import to_index
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, SlitModel, WavelengthrangeModel
@@ -480,8 +480,8 @@ def extract_grism_objects(
                 order_model = Const1D(order)
                 order_model.inverse = Const1D(order)
 
-                y_slice = slice(_toindex(ymin), _toindex(ymax) + 1)
-                x_slice = slice(_toindex(xmin), _toindex(xmax) + 1)
+                y_slice = slice(to_index(ymin), to_index(ymax) + 1)
+                x_slice = slice(to_index(xmin), to_index(xmax) + 1)
 
                 ext_data = input_model.data[y_slice, x_slice].copy()
                 ext_err = input_model.err[y_slice, x_slice].copy()
@@ -540,9 +540,9 @@ def extract_grism_objects(
                 # nslit = obj.sid - 1  # catalog id starts at zero
                 new_slit.name = f"{obj.sid}"
                 new_slit.is_extended = obj.is_extended
-                new_slit.xstart = _toindex(xmin) + 1  # fits pixels
+                new_slit.xstart = to_index(xmin) + 1  # fits pixels
                 new_slit.xsize = ext_data.shape[1]
-                new_slit.ystart = _toindex(ymin) + 1  # fits pixels
+                new_slit.ystart = to_index(ymin) + 1  # fits pixels
                 new_slit.ysize = ext_data.shape[0]
                 new_slit.source_xpos = float(obj.xcentroid)
                 new_slit.source_ypos = float(obj.ycentroid)
