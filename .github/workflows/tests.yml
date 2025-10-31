@@ -72,8 +72,8 @@ jobs:
           pytest-results-summary: true
         # `tox` does not currently respect `requires-python` versions when creating testing environments;
         # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
-        - linux: py3-cov-xdist
+        - linux: py313-cov-xdist
           coverage: codecov
           pytest-results-summary: true
-        - macos: py3-xdist
+        - macos: py313-xdist
           pytest-results-summary: true
