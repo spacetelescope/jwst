@@ -42,7 +42,7 @@ def run_spec2(rtdata_module, resource_tracker):
 
 @pytest.fixture(scope="module")
 def run_spec2_nsclean(rtdata_module, resource_tracker):
-    """Run the Spec2Pipeline on a spec2 ASN containing a single exposure"""
+    """Run the Spec2Pipeline with nsclean (via clean_flicker_noise)."""
     rtdata = rtdata_module
 
     # Set up the inputs
@@ -55,8 +55,12 @@ def run_spec2_nsclean(rtdata_module, resource_tracker):
         "step": "calwebb_spec2",
         "args": [
             "--output_file=jw01251004001_03107_00002_nrs1_nsc",
-            "--steps.nsclean.skip=False",
-            "--steps.nsclean.save_results=true",
+            "--steps.clean_flicker_noise.skip=False",
+            "--steps.clean_flicker_noise.save_results=True",
+            "--steps.clean_flicker_noise.fit_method=fft",
+            "--steps.clean_flicker_noise.background_method=None",
+            "--steps.clean_flicker_noise.mask_science_regions=True",
+            "--steps.clean_flicker_noise.n_sigma=5.0",
         ],
     }
 
@@ -80,7 +84,7 @@ def test_spec2(run_spec2, fitsdiff_default_kwargs, suffix):
 
 
 @pytest.mark.slow
-@pytest.mark.parametrize("suffix", ["nsclean", "cal", "s3d", "x1d"])
+@pytest.mark.parametrize("suffix", ["clean_flicker_noise", "cal", "s3d", "x1d"])
 def test_spec2_nsclean(run_spec2_nsclean, fitsdiff_default_kwargs, suffix):
     """Regression test matching output files"""
 
