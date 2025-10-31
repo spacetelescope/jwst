@@ -1,4 +1,4 @@
-.. _picture_frame_reffile:
+.. _pictureframe_reffile:
 
 PICTUREFRAME Reference File
 ---------------------------
