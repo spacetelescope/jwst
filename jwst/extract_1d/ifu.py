@@ -377,6 +377,7 @@ def ifu_extract1d(
     spec.source_type = source_type
     spec.extraction_x = x_center
     spec.extraction_y = y_center
+    spec.position_angle = input_model.meta.aperture.position_angle
 
     if source_type == "POINT" and apcorr_ref_file is not None and apcorr_ref_file != "N/A":
         apcorr_ref_model = read_apcorr_ref(apcorr_ref_file, input_model.meta.exposure.type)
