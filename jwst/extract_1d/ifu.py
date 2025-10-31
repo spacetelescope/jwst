@@ -451,6 +451,45 @@ def get_extract_parameters(ref_file, bkg_sigma_clip):
     return extract_params
 
 
+def _apply_bkg_sigma_clip(
+    bkg_data, temp_weightmap, bmask, bkg_sigma_clip, aperture_type, method, subpixels
+):
+    # pull out the data with coverage in IFU cube. We do not want to use
+    # the edge data that is zero to define the statistics on clipping
+    bkg_stat_data = bkg_data[temp_weightmap == 1]
+
+    # If there are good data, work out the statistics
+    # maxiters is the maximum number of sigma-clipping iterations to perform or None
+    # to clip until convergence is achieved (i.e., iterate until the last iteration
+    # clips nothing). If convergence is achieved prior to maxiters iterations, the
+    # clipping iterations will stop. The default value is 5.
+    if len(bkg_stat_data) > 0:
+        bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(
+            bkg_stat_data, sigma=bkg_sigma_clip, maxiters=5
+        )
+        low = bkg_mean - bkg_sigma_clip * bkg_stddev
+        high = bkg_mean + bkg_sigma_clip * bkg_stddev
+
+        # set up the mask to flag data that should not be used in aperture photometry
+        # Reject data outside the sigma-clipped range
+        maskclip = np.logical_or(bkg_data < low, bkg_data > high)
+
+        # Reject data outside the valid data footprint
+        maskclip = np.logical_or(maskclip, bmask)
+
+        bkg_table = aperture_photometry(
+            bkg_data, aperture_type, mask=maskclip, method=method, subpixels=subpixels
+        )
+    else:
+        # skip sigma clipping
+        bkg_table = aperture_photometry(
+            bkg_data, aperture_type, mask=bmask, method=method, subpixels=subpixels
+        )
+        maskclip = None
+
+    return bkg_table, maskclip
+
+
 def extract_ifu(input_model, source_type, extract_params):
     """
     Perform 1D extraction for IFU data.
@@ -683,11 +722,12 @@ def extract_ifu(input_model, source_type, extract_params):
         y_center = height / 2.0 - 0.5
         theta = 0.0
         subtract_background = False
-        bkg_sigma_clip = extract_params["bkg_sigma_clip"]
+    bkg_sigma_clip = extract_params["bkg_sigma_clip"]
 
     log.debug("IFU 1D extraction parameters:")
     log.debug("  x_center = %s", str(x_center))
     log.debug("  y_center = %s", str(y_center))
+    log.debug("  sigma clip value for background = %s", str(bkg_sigma_clip))
     if source_type == "POINT":
         log.debug("  method = %s", method)
         if method == "subpixel":
@@ -697,7 +737,6 @@ def extract_ifu(input_model, source_type, extract_params):
         log.debug("  height = %s", str(height))
         log.debug("  theta = %s degrees", str(theta))
         log.debug("  subtract_background = %s", str(subtract_background))
-        log.debug("  sigma clip value for background = %s", str(bkg_sigma_clip))
         log.debug("  method = %s", method)
         if method == "subpixel":
             log.debug("  subpixels = %s", str(subpixels))
@@ -805,10 +844,13 @@ def extract_ifu(input_model, source_type, extract_params):
 
         # Point source type of data with defined annulus size
         if subtract_background_plane:
-            bkg_table = aperture_photometry(
-                data[k, :, :], annulus, mask=bmask, method=method, subpixels=subpixels
+            bkg_data = data[k, :, :]
+            bkg_table, _ = _apply_bkg_sigma_clip(
+                bkg_data, temp_weightmap, bmask, bkg_sigma_clip, annulus, method, subpixels
             )
+
             background[k] = float(bkg_table["aperture_sum"][0])
+
             temp_flux[k] = temp_flux[k] - background[k] * normalization
 
             var_poisson_table = aperture_photometry(
@@ -834,27 +876,13 @@ def extract_ifu(input_model, source_type, extract_params):
         # Extended source data - background determined from sigma clipping
         if source_type == "EXTENDED":
             bkg_data = data[k, :, :]
-            # pull out the data with coverage in IFU cube. We do not want to use
-            # the edge data that is zero to define the statistics on clipping
-            bkg_stat_data = bkg_data[temp_weightmap == 1]
+
+            bkg_table, maskclip = _apply_bkg_sigma_clip(
+                bkg_data, temp_weightmap, bmask, bkg_sigma_clip, aperture, method, subpixels
+            )
 
             # If there are good data, work out the statistics
-            if len(bkg_stat_data) > 0:
-                bkg_mean, _, bkg_stddev = stats.sigma_clipped_stats(
-                    bkg_stat_data, sigma=bkg_sigma_clip, maxiters=5
-                )
-                low = bkg_mean - bkg_sigma_clip * bkg_stddev
-                high = bkg_mean + bkg_sigma_clip * bkg_stddev
-
-                # set up the mask to flag data that should not be used in aperture photometry
-                # Reject data outside the sigma-clipped range
-                maskclip = np.logical_or(bkg_data < low, bkg_data > high)
-                # Reject data outside the valid data footprint
-                maskclip = np.logical_or(maskclip, bmask)
-
-                bkg_table = aperture_photometry(
-                    bkg_data, aperture, mask=maskclip, method=method, subpixels=subpixels
-                )
+            if maskclip is not None:
                 background[k] = float(bkg_table["aperture_sum"][0])
                 phot_table = aperture_photometry(
                     temp_weightmap, aperture, mask=maskclip, method=method, subpixels=subpixels
