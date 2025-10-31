@@ -415,6 +415,7 @@ def create_grism_bbox(
         raise ValueError(err_text)
 
     log.info(f"Getting objects from {input_model.meta.source_catalog}")
+    log.info("Creating bounding boxes for grism objects, rejecting sources fully off-detector")
 
     return _create_grism_bbox(
         input_model, mmag_extract, wfss_extract_half_height, wavelength_range, nbright, source_ids
@@ -582,12 +583,12 @@ def _create_grism_bbox(
 
             if not contained:
                 exclude = True
-                log.info(f"Excluding off-image object: {obj.label}, order {order}")
+                log.debug(f"Excluding off-image object: {obj.label}, order {order}")
             elif contained >= 1:
                 outbox = pts[np.logical_not(inidx)]
                 if len(outbox) > 0:
                     ispartial = True
-                    log.info(f"Partial order on detector for obj: {obj.label} order: {order}")
+                    log.debug(f"Partial order on detector for obj: {obj.label} order: {order}")
 
             if not exclude:
                 order_bounding[order] = ((ymin, ymax), (xmin, xmax))

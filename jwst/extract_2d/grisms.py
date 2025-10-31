@@ -413,6 +413,13 @@ def extract_grism_objects(
         ]:
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
+            # force_list coming into the step makes these all strings
+            if source_ids is not None:
+                source_ids = np.atleast_1d(source_ids).astype(int)
+            if source_ras is not None:
+                source_ras = np.atleast_1d(source_ras).astype(float)
+            if source_decs is not None:
+                source_decs = np.atleast_1d(source_decs).astype(float)
             source_ids = radec_to_source_ids(
                 input_model.meta.source_catalog,
                 source_ids,

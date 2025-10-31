@@ -1,4 +1,5 @@
 import pytest
+import stdatamodels.jwst.datamodels as dm
 
 from jwst.regtest.st_fitsdiff import STFITSDiff as FITSDiff
 from jwst.stpipe import Step
@@ -60,3 +61,64 @@ def test_nircam_wfss_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     # Compare the results
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
+
+
+@pytest.fixture
+def run_pipeline_select_sources(rtdata_module):
+    """
+    Run calwebb_spec2 pipeline enabling source selection in extract_2d step.
+
+    Skip background step for runtime.
+    Include wfss_contam step since it occurs downstream of extract_2d.
+    """
+    rtdata = rtdata_module
+
+    # Get the input data; load individual data files first, load ASN file last
+    rtdata.get_data("nircam/wfss/jw01076-o101_t002_nircam_clear-f356w_cat.ecsv")
+    from astropy.table import QTable
+
+    cat = QTable.read(rtdata.input, format="ascii.ecsv")
+    centroid = cat[423]["sky_centroid"]
+
+    rtdata.get_data("nircam/wfss/jw01076-o101_t002_nircam_clear-f356w_segm.fits")
+    rtdata.get_data("nircam/wfss/jw01076-o101_t002_nircam_clear-f356w_i2d.fits")
+    rtdata.get_data("nircam/wfss/jw01076101001_02101_00003_nrcalong_rate.fits")
+    rtdata.get_data("nircam/wfss/jw01076-o101_20220403t120233_spec2_002_asn.json")
+
+    # note wfss_contam mag limit does not affect source ID selection.
+    # just makes the step model fewer sources and thereby run faster
+    args = [
+        "calwebb_spec2",
+        rtdata.input,
+        "--output_file=three_sources_cal.fits",  # avoid clobbering the test above
+        "--steps.extract_1d.output_file=three_sources_x1d.fits",  # avoid clobbering the test above
+        "--steps.bkg_subtract.skip=True",
+        "--steps.extract_2d.source_ids=202, 2157",  # some source ids that are actually on detector
+        f"--steps.extract_2d.source_ras={centroid.ra.value}",  # source id 424
+        f"--steps.extract_2d.source_decs={centroid.dec.value}",
+        "--steps.wfss_contam.skip=False",
+        "--steps.wfss_contam.magnitude_limit=18.0",
+    ]
+
+    Step.from_cmdline(args)
+    return rtdata
+
+
+def test_nircam_wfss_spec2_select_sources(run_pipeline_select_sources):
+    """
+    Test calwebb_spec2 pipeline enabling source selection in extract_2d step.
+
+    Ensure this source selection doesn't cause issues downstream, and that we end up
+    with those sources in the output x1d file.
+    """
+
+    # Run the pipeline and retrieve outputs
+    rtdata = run_pipeline_select_sources
+    output = "three_sources_x1d.fits"
+    rtdata.output = output
+    with dm.open(rtdata.output) as model:
+        assert len(model.spec[0].spec_table) == 3
+        output_ids = model.spec[0].spec_table["SOURCE_ID"]
+        assert 202 in output_ids
+        assert 2157 in output_ids
+        assert 424 in output_ids

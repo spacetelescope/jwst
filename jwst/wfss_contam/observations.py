@@ -1,9 +1,11 @@
 import logging
 import multiprocessing as mp
 import time
+import warnings
 
 import numpy as np
 from astropy.stats import SigmaClip
+from astropy.utils.exceptions import AstropyUserWarning
 from photutils.background import Background2D, MedianBackground
 from stdatamodels.jwst import datamodels
 
@@ -53,15 +55,19 @@ def background_subtract(
         box_size = (int(data.shape[0] / 5), int(data.shape[1] / 5))
     sigma_clip = SigmaClip(sigma=sigma)
     bkg_estimator = MedianBackground()
-    bkg = Background2D(
-        data,
-        box_size,
-        filter_size=filter_size,
-        sigma_clip=sigma_clip,
-        bkg_estimator=bkg_estimator,
-        exclude_percentile=exclude_percentile,
-    )
-    return data - bkg.background
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=AstropyUserWarning, message="Input data contains invalid values"
+        )
+        bkg = Background2D(
+            data,
+            box_size,
+            filter_size=filter_size,
+            sigma_clip=sigma_clip,
+            bkg_estimator=bkg_estimator,
+            exclude_percentile=exclude_percentile,
+        )
+        return data - bkg.background
 
 
 def _select_ids(source_id, all_ids):
