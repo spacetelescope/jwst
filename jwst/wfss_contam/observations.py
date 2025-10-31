@@ -56,9 +56,8 @@ def background_subtract(
     sigma_clip = SigmaClip(sigma=sigma)
     bkg_estimator = MedianBackground()
     with warnings.catch_warnings():
-        warnings.filterwarnings(
-            "ignore", category=AstropyUserWarning, message="Input data contains invalid values"
-        )
+        # there can be multiple different AstropyUserWarning messages here about NaN and Inf values
+        warnings.filterwarnings("ignore", category=AstropyUserWarning)
         bkg = Background2D(
             data,
             box_size,
