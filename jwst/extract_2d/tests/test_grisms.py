@@ -29,6 +29,7 @@ from jwst.extract_2d.grisms import (
     compute_tso_offset_center,
     extract_grism_objects,
     extract_tso_object,
+    radec_to_source_ids,
 )
 
 # Allowed settings for nircam
@@ -408,6 +409,60 @@ def test_compute_tso_offset_center():
     xc, yc = compute_tso_offset_center(image_model, distortion)
     assert np.isclose(yc, 59.929, atol=1e-3)
     assert np.isclose(xc, 961.355, atol=1e-3)
+
+
+@pytest.mark.parametrize("source_ids", [None, 9, [19, 25]])
+def test_radec_to_source_ids(source_ids):
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    # object 9
+    ra1 = 53.13773660029234
+    dec1 = -27.80858320887945
+    # object 19
+    ra2 = 53.153053283691406
+    dec2 = -27.810455322265625
+
+    # single RA/Dec
+    source_ids_1 = radec_to_source_ids(
+        source_catalog, source_ids=source_ids, source_ras=[ra1], source_decs=[dec1]
+    )
+
+    # multiple RA/Dec
+    source_ids_2 = radec_to_source_ids(
+        source_catalog, source_ids=source_ids, source_ras=[ra1, ra2], source_decs=[dec1, dec2]
+    )
+
+    if source_ids == [19, 25]:
+        assert len(source_ids_1) == 3
+        assert len(source_ids_2) == 3
+        np.testing.assert_allclose(source_ids_1, source_ids_2)
+    else:
+        assert len(source_ids_1) == 1
+        assert source_ids_1[0] == 9
+        assert len(source_ids_2) == 2
+        assert 9 in source_ids_2
+        assert 19 in source_ids_2
+
+
+def test_radec_to_source_ids_bad_radec():
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    with pytest.raises(ValueError, match="source_ras and source_decs must have the same length."):
+        radec_to_source_ids(source_catalog, source_ras=[0.0, 0.0], source_decs=[0.0])
+
+
+@pytest.mark.parametrize("source_ids_in", [None, [9, 19], 25])
+def test_radec_to_source_ids_none(source_ids_in):
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    source_ids = radec_to_source_ids(source_catalog, source_ids=source_ids_in)
+    if source_ids_in is None:
+        assert source_ids is None
+    else:
+        np.testing.assert_allclose(source_ids, np.atleast_1d(source_ids_in))
 
 
 @pytest.mark.filterwarnings("ignore: Card is too long")

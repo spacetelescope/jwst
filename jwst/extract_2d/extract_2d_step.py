@@ -15,6 +15,8 @@ class Extract2dStep(Step):
     spec = """
         slit_names = force_list(default=None)   # slits to be extracted
         source_ids = force_list(default=None)     # source ids to be extracted
+        source_ras = force_list(default=None)  # source RAs to be extracted, WFSS only
+        source_decs = force_list(default=None)  # source DECs to be extracted, WFSS only
         extract_orders = int_list(default=None)  # list of orders to extract
         grism_objects = list(default=None)  # list of grism objects to use
         tsgrism_extract_height =  integer(default=None)  # extraction height in pixels, TSGRISM mode
@@ -60,6 +62,8 @@ class Extract2dStep(Step):
                 extract_orders=self.extract_orders,
                 mmag_extract=self.wfss_mmag_extract,
                 nbright=self.wfss_nbright,
+                source_ras=self.source_ras,
+                source_decs=self.source_decs,
             )
 
         return output_model

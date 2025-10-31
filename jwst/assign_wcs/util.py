@@ -218,6 +218,24 @@ def not_implemented_mode(input_model, ref, slit_y_range=None):  # noqa: ARG001
     log.critical(message)
 
 
+def read_source_catalog(catalog_name):
+    if isinstance(catalog_name, str):
+        if len(catalog_name) == 0:
+            err_text = "Empty catalog filename"
+            log.error(err_text)
+            raise ValueError(err_text)
+        try:
+            return QTable.read(catalog_name, format="ascii.ecsv")
+        except FileNotFoundError as e:
+            log.error(f"Could not find catalog file: {e}")
+            raise FileNotFoundError(f"Could not find catalog: {e}") from None
+    elif isinstance(catalog_name, QTable):
+        return catalog_name
+    err_text = "Need to input string name of catalog or astropy.table.table.QTable instance"
+    log.error(err_text)
+    raise TypeError(err_text)
+
+
 def get_object_info(catalog_name=None):
     """
     Return a list of SkyObjects from the direct image.
@@ -236,22 +254,7 @@ def get_object_info(catalog_name=None):
     objects : list[jwst.transforms.models.SkyObject]
         A list of SkyObject tuples
     """
-    if isinstance(catalog_name, str):
-        if len(catalog_name) == 0:
-            err_text = "Empty catalog filename"
-            log.error(err_text)
-            raise ValueError(err_text)
-        try:
-            catalog = QTable.read(catalog_name, format="ascii.ecsv")
-        except FileNotFoundError as e:
-            log.error(f"Could not find catalog file: {e}")
-            raise FileNotFoundError(f"Could not find catalog: {e}") from None
-    elif isinstance(catalog_name, QTable):
-        catalog = catalog_name
-    else:
-        err_text = "Need to input string name of catalog or astropy.table.table.QTable instance"
-        log.error(err_text)
-        raise TypeError(err_text)
+    catalog = read_source_catalog(catalog_name)
 
     objects = []
 

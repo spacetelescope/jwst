@@ -6,6 +6,7 @@ import copy
 import logging
 
 import numpy as np
+from astropy.coordinates import SkyCoord
 from astropy.modeling import CompoundModel, bind_bounding_box
 from astropy.modeling.models import Const1D, Mapping, Shift
 from gwcs.utils import to_index
@@ -298,6 +299,8 @@ def extract_grism_objects(
     reference_files=None,
     extract_orders=None,
     source_ids=None,
+    source_ras=None,
+    source_decs=None,
     mmag_extract=None,
     compute_wavelength=True,
     wfss_extract_half_height=None,
@@ -322,6 +325,14 @@ def extract_grism_objects(
 
     source_ids : list
         List of source IDs to extract.
+
+    source_ras : list[float]
+        Source right ascensions to be processed. The nearest matching source to each RA/DEC pair
+        will be extracted. If both source_ids and source_ras/source_decs are provided,
+        the lists will be combined and their union extracted.
+
+    source_decs : list[float]
+        Source declinations to be processed, must have same length as source_ras.
 
     mmag_extract : float
         Sources with magnitudes fainter than this minimum magnitude extraction
@@ -402,6 +413,12 @@ def extract_grism_objects(
         ]:
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
+            source_ids = radec_to_source_ids(
+                input_model.meta.source_catalog,
+                source_ids,
+                source_ras,
+                source_decs,
+            )
             grism_objects = util.create_grism_bbox(
                 input_model,
                 reference_files,
@@ -696,3 +713,50 @@ def compute_wfss_wavelength(slit):
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
     wavelength = slit.meta.wcs(x, y)[2]
     return wavelength
+
+
+def radec_to_source_ids(catalog, source_ids=None, source_ras=None, source_decs=None):
+    """
+    Convert source RA/Dec lists to source IDs from the catalog.
+
+    If a source_ids list is provided, it will be combined with the
+    source IDs found from the RA/Dec lists to form a union.
+
+    Parameters
+    ----------
+    catalog : str
+        The filename of the source catalog.
+
+    source_ids : list
+        List of source IDs to extract.
+
+    source_ras : list[float]
+        Source right ascensions to be processed. The nearest matching source to each RA/DEC pair
+        will be extracted. If both source_ids and source_ras/source_decs are provided,
+        the lists will be combined and their union extracted.
+
+    source_decs : list[float]
+        Source declinations to be processed, must have same length as source_ras.
+
+    Returns
+    -------
+    source_ids : np.ndarray or None
+        List of unique source IDs to extract.
+    """
+    catalog = util.read_source_catalog(catalog)
+    catalog_coord = catalog["sky_centroid"]
+    if source_ids is None:
+        source_ids = []
+    else:
+        source_ids = np.atleast_1d(source_ids).tolist()
+    if source_ras is not None:
+        if len(source_ras) != len(source_decs):
+            raise ValueError("source_ras and source_decs must have the same length.")
+        for ra, dec in zip(source_ras, source_decs, strict=True):
+            this_coord = SkyCoord(ra=ra, dec=dec, unit="deg")
+            idx, _sep, _dist3d = this_coord.match_to_catalog_sky(catalog_coord)
+            src_id = catalog["label"][idx]
+            source_ids.append(src_id)
+    if source_ids:
+        return np.unique(np.atleast_1d(source_ids))  # return unique IDs only
+    return None

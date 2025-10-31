@@ -19,6 +19,8 @@ def extract2d(
     input_model,
     slit_names=None,
     source_ids=None,
+    source_ras=None,
+    source_decs=None,
     reference_files=None,
     grism_objects=None,
     tsgrism_extract_height=None,
@@ -38,6 +40,10 @@ def extract2d(
         Slit names to be processed.
     source_ids : list containing strings or ints
         Source ids to be processed.
+    source_ras : list[float]
+        Source right ascensions to be processed (has effect for WFSS modes only)
+    source_decs : list[float]
+        Source declinations to be processed (has effect for WFSS modes only)
     reference_files : dict
         Reference files.
     grism_objects : list
@@ -98,6 +104,8 @@ def extract2d(
                 reference_files=reference_files,
                 extract_orders=extract_orders,
                 source_ids=source_ids,
+                source_ras=source_ras,
+                source_decs=source_decs,
                 mmag_extract=mmag_extract,
                 wfss_extract_half_height=wfss_extract_half_height,
                 nbright=nbright,
