@@ -447,6 +447,9 @@ def _create_grism_bbox(
             continue
         if obj.isophotal_abmag >= mmag_extract:
             continue
+        if source_ids is not None:
+            if obj.label not in np.atleast_1d(source_ids):
+                continue
         # could add logic to ignore object if too far off image,
 
         # save the image frame center of the object
@@ -613,11 +616,6 @@ def _create_grism_bbox(
                     isophotal_abmag=obj.isophotal_abmag,
                 )
             )
-
-    # Filter by source_ids if provided
-    if source_ids is not None:
-        log.info(f"Filtering catalog to source IDs: {source_ids}")
-        grism_objects = [obj for obj in grism_objects if obj.sid in np.atleast_1d(source_ids)]
 
     # At this point we have a list of grism objects limited to
     # isophotal_abmag < mmag_extract and filtered by source_ids.
