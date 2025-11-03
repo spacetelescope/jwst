@@ -1,0 +1,2 @@
+For SOSS ATOCA, reuse regularization factor integration-by-integration for well-separated blue part of order 2 and order 3, similar to what was already done for order 1 & 2 combined extraction.
+Improve runtime of SOSS ATOCA extraction; with default options, factor-of-5 improvement for first integration and almost factor-of-2 improvement for subsequent integrations.

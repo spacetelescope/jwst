@@ -45,6 +45,7 @@ def direct_image_with_gradient(tmp_cwd_module, direct_image):  # noqa: ARG001
 
     # obs expects input list of direct image filenames
     model = dm.ImageModel(data=data)
+    model.meta.wcs = create_imaging_wcs("F200W")
     model.save(DIR_IMAGE)
 
     return model

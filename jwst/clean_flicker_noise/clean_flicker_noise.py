@@ -5,7 +5,7 @@ import gwcs
 import numpy as np
 from astropy.stats import SigmaClip, sigma_clipped_stats
 from astropy.utils.exceptions import AstropyUserWarning
-from gwcs.utils import _toindex
+from gwcs.utils import to_index
 from photutils.background import Background2D, MedianBackground
 from scipy.optimize import curve_fit
 from stdatamodels.jwst.datamodels import dqflags
@@ -291,15 +291,15 @@ def mask_slits(input_model, mask):
     log.info("Finding slit/slitlet pixels")
 
     # Get the slits from the WCS object
-    slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slits
+    slits = input_model.meta.wcs.get_transform("gwa", "slit_frame").slit_ids
 
     # Loop over the slits, marking all the pixels within each bounding
     # box as False (do not use) in the mask.
     # Note that for 3D masks (TSO mode), all planes will be set to the same value.
     for slit in slits:
-        slit_wcs = nirspec.nrs_wcs_set_input(input_model, slit.name)
-        xlo, xhi = _toindex(slit_wcs.bounding_box[0])
-        ylo, yhi = _toindex(slit_wcs.bounding_box[1])
+        bbox = input_model.meta.wcs.bounding_box[slit]
+        xlo, xhi = to_index(bbox[0])
+        ylo, yhi = to_index(bbox[1])
         mask[..., ylo:yhi, xlo:xhi] = False
 
     return mask
