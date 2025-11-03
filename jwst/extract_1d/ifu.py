@@ -454,6 +454,34 @@ def get_extract_parameters(ref_file, bkg_sigma_clip):
 def _apply_bkg_sigma_clip(
     bkg_data, temp_weightmap, bmask, bkg_sigma_clip, aperture_type, method, subpixels
 ):
+    """
+    Apply the background sigma_clipping algorithm.
+
+    Parameters
+    ----------
+    bkg_data : ndarray
+        Image at a specific wavelength.
+    temp_weightmap : array
+        Weightmap at a specific wavelength.
+    bmask : array
+        Boolean mask to ignore voxels with no valid data.
+    bkg_sigma_clip : float
+        Background sigma clipping threshold for IFU.
+    aperture_type : array
+        Photutils aperture type array.
+    method : str
+        Extracted parameter from the reference file.
+    subpixels : int
+        Extracted parameter from the reference file.
+
+    Returns
+    -------
+    bkg_table : astropy.tableray
+        Table of the photometry with the columns as in the documentation of
+        photutils.aperture.photometry.aperture_photometry.
+    maskclip : array or None
+        Mask to reject data outside the valid data footprint.
+    """
     # pull out the data with coverage in IFU cube. We do not want to use
     # the edge data that is zero to define the statistics on clipping
     bkg_stat_data = bkg_data[temp_weightmap == 1]
