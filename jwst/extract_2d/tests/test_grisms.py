@@ -429,14 +429,14 @@ def test_extract_wfss_object():
     assert isinstance(outmodel, MultiSlitModel)
     assert len(outmodel.slits) == 3
     ids = [slit.source_id for slit in outmodel.slits]
-    assert ids == [9, 19, 25]
+    assert ids == [25, 9, 19]  # ordered by magnitude
 
     # Compare SRCDEC and SRCRA values
-    assert np.isclose(outmodel[0].source_dec, -27.80858320887945)
-    assert np.isclose(outmodel[0].source_ra, 53.13773660029234)
+    assert np.isclose(outmodel[1].source_dec, -27.80858320887945)
+    assert np.isclose(outmodel[1].source_ra, 53.13773660029234)
 
     names = [slit.name for slit in outmodel.slits]
-    assert names == ["9", "19", "25"]
+    assert names == ["25", "9", "19"]
 
     with pytest.raises(TypeError):
         extract_tso_object(wcsimage, reference_files="myspecwcs.asdf")
