@@ -94,9 +94,9 @@ def run_pipeline_select_sources(rtdata_module):
         "--output_file=four_sources_cal.fits",  # avoid clobbering the test above
         "--steps.extract_1d.output_file=four_sources_x1d.fits",  # avoid clobbering the test above
         "--steps.bkg_subtract.skip=True",
-        "--steps.extract_2d.source_ids=202, 2157",  # some source ids that are actually on detector
-        f"--steps.extract_2d.source_ra={centroid1.ra.value}, {centroid2.ra.value}",
-        f"--steps.extract_2d.source_dec={centroid1.dec.value}, {centroid2.dec.value}",
+        "--steps.extract_2d.source_ids=202,2157",  # some source ids that are actually on detector
+        f"--steps.extract_2d.source_ra={centroid1.ra.value},{centroid2.ra.value}",
+        f"--steps.extract_2d.source_dec={centroid1.dec.value},{centroid2.dec.value}",
         "--steps.wfss_contam.skip=False",
         "--steps.wfss_contam.magnitude_limit=18.0",
     ]
