@@ -299,8 +299,8 @@ def extract_grism_objects(
     reference_files=None,
     extract_orders=None,
     source_ids=None,
-    source_ras=None,
-    source_decs=None,
+    source_ra=None,
+    source_dec=None,
     mmag_extract=None,
     compute_wavelength=True,
     wfss_extract_half_height=None,
@@ -326,13 +326,13 @@ def extract_grism_objects(
     source_ids : list
         List of source IDs to extract.
 
-    source_ras : list[float]
+    source_ra : list[float]
         Source right ascensions to be processed. The nearest matching source to each RA/DEC pair
-        will be extracted. If both source_ids and source_ras/source_decs are provided,
+        will be extracted. If both source_ids and source_ra/source_dec are provided,
         the lists will be combined and their union extracted.
 
-    source_decs : list[float]
-        Source declinations to be processed, must have same length as source_ras.
+    source_dec : list[float]
+        Source declinations to be processed, must have same length as source_ra.
 
     mmag_extract : float
         Sources with magnitudes fainter than this minimum magnitude extraction
@@ -416,15 +416,15 @@ def extract_grism_objects(
             # force_list coming into the step makes these all strings
             if source_ids is not None:
                 source_ids = np.atleast_1d(source_ids).astype(int)
-            if source_ras is not None:
-                source_ras = np.atleast_1d(source_ras).astype(float)
-            if source_decs is not None:
-                source_decs = np.atleast_1d(source_decs).astype(float)
+            if source_ra is not None:
+                source_ra = np.atleast_1d(source_ra).astype(float)
+            if source_dec is not None:
+                source_dec = np.atleast_1d(source_dec).astype(float)
             source_ids = radec_to_source_ids(
                 input_model.meta.source_catalog,
                 source_ids,
-                source_ras,
-                source_decs,
+                source_ra,
+                source_dec,
             )
             grism_objects = util.create_grism_bbox(
                 input_model,
@@ -722,7 +722,7 @@ def compute_wfss_wavelength(slit):
     return wavelength
 
 
-def radec_to_source_ids(catalog, source_ids=None, source_ras=None, source_decs=None):
+def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=None):
     """
     Convert source RA/Dec lists to source IDs from the catalog.
 
@@ -737,13 +737,13 @@ def radec_to_source_ids(catalog, source_ids=None, source_ras=None, source_decs=N
     source_ids : list
         List of source IDs to extract.
 
-    source_ras : list[float]
+    source_ra : list[float]
         Source right ascensions to be processed. The nearest matching source to each RA/DEC pair
-        will be extracted. If both source_ids and source_ras/source_decs are provided,
+        will be extracted. If both source_ids and source_ra/source_dec are provided,
         the lists will be combined and their union extracted.
 
-    source_decs : list[float]
-        Source declinations to be processed, must have same length as source_ras.
+    source_dec : list[float]
+        Source declinations to be processed, must have same length as source_ra.
 
     Returns
     -------
@@ -756,10 +756,10 @@ def radec_to_source_ids(catalog, source_ids=None, source_ras=None, source_decs=N
         source_ids = []
     else:
         source_ids = np.atleast_1d(source_ids).tolist()
-    if source_ras is not None:
-        if len(source_ras) != len(source_decs):
-            raise ValueError("source_ras and source_decs must have the same length.")
-        for ra, dec in zip(source_ras, source_decs, strict=True):
+    if source_ra is not None:
+        if len(source_ra) != len(source_dec):
+            raise ValueError("source_ra and source_dec must have the same length.")
+        for ra, dec in zip(source_ra, source_dec, strict=True):
             this_coord = SkyCoord(ra=ra, dec=dec, unit="deg")
             idx, _sep, _dist3d = this_coord.match_to_catalog_sky(catalog_coord)
             src_id = catalog["label"][idx]

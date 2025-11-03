@@ -425,12 +425,12 @@ def test_radec_to_source_ids(source_ids):
 
     # single RA/Dec
     source_ids_1 = radec_to_source_ids(
-        source_catalog, source_ids=source_ids, source_ras=[ra1], source_decs=[dec1]
+        source_catalog, source_ids=source_ids, source_ra=[ra1], source_dec=[dec1]
     )
 
     # multiple RA/Dec
     source_ids_2 = radec_to_source_ids(
-        source_catalog, source_ids=source_ids, source_ras=[ra1, ra2], source_decs=[dec1, dec2]
+        source_catalog, source_ids=source_ids, source_ra=[ra1, ra2], source_dec=[dec1, dec2]
     )
 
     if source_ids == [19, 25]:
@@ -449,8 +449,8 @@ def test_radec_to_source_ids_bad_radec():
     source_catalog = get_pkg_data_filename(
         "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
     )
-    with pytest.raises(ValueError, match="source_ras and source_decs must have the same length."):
-        radec_to_source_ids(source_catalog, source_ras=[0.0, 0.0], source_decs=[0.0])
+    with pytest.raises(ValueError, match="source_ra and source_dec must have the same length."):
+        radec_to_source_ids(source_catalog, source_ra=[0.0, 0.0], source_dec=[0.0])
 
 
 @pytest.mark.parametrize("source_ids_in", [None, [9, 19], 25])

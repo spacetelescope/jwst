@@ -78,7 +78,8 @@ def run_pipeline_select_sources(rtdata_module):
     from astropy.table import QTable
 
     cat = QTable.read(rtdata.input, format="ascii.ecsv")
-    centroid = cat[423]["sky_centroid"]
+    centroid1 = cat[423]["sky_centroid"]  # source id 424
+    centroid2 = cat[1359]["sky_centroid"]  # source id 1360
 
     rtdata.get_data("nircam/wfss/jw01076-o101_t002_nircam_clear-f356w_segm.fits")
     rtdata.get_data("nircam/wfss/jw01076-o101_t002_nircam_clear-f356w_i2d.fits")
@@ -90,12 +91,12 @@ def run_pipeline_select_sources(rtdata_module):
     args = [
         "calwebb_spec2",
         rtdata.input,
-        "--output_file=three_sources_cal.fits",  # avoid clobbering the test above
-        "--steps.extract_1d.output_file=three_sources_x1d.fits",  # avoid clobbering the test above
+        "--output_file=four_sources_cal.fits",  # avoid clobbering the test above
+        "--steps.extract_1d.output_file=four_sources_x1d.fits",  # avoid clobbering the test above
         "--steps.bkg_subtract.skip=True",
         "--steps.extract_2d.source_ids=202, 2157",  # some source ids that are actually on detector
-        f"--steps.extract_2d.source_ras={centroid.ra.value}",  # source id 424
-        f"--steps.extract_2d.source_decs={centroid.dec.value}",
+        f"--steps.extract_2d.source_ra={centroid1.ra.value}, {centroid2.ra.value}",
+        f"--steps.extract_2d.source_dec={centroid1.dec.value}, {centroid2.dec.value}",
         "--steps.wfss_contam.skip=False",
         "--steps.wfss_contam.magnitude_limit=18.0",
     ]
@@ -114,11 +115,12 @@ def test_nircam_wfss_spec2_select_sources(run_pipeline_select_sources):
 
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline_select_sources
-    output = "three_sources_x1d.fits"
+    output = "four_sources_x1d.fits"
     rtdata.output = output
     with dm.open(rtdata.output) as model:
-        assert len(model.spec[0].spec_table) == 3
+        assert len(model.spec[0].spec_table) == 4
         output_ids = model.spec[0].spec_table["SOURCE_ID"]
         assert 202 in output_ids
         assert 2157 in output_ids
         assert 424 in output_ids
+        assert 1360 in output_ids

@@ -109,7 +109,7 @@ of ``GrismObjects`` outside of these, the ``GrismObject`` itself can be imported
 The dispersion direction will be documented by copying keyword "DISPAXIS"
 (1 = horizontal, 2 = vertical) from the input file to the output cutout.
 
-The ``wfss_mmag_extract``, ``wfss_nbright``, ``source_id``, and ``source_ra`` / ``source_dec``
+The ``wfss_mmag_extract``, ``wfss_nbright``, ``source_ids``, and ``source_ra`` / ``source_dec``
 parameters all affect which objects from a source catalog will be retained for extraction.
 The rejection or retention of objects proceeds as follows:
 
@@ -122,12 +122,12 @@ The rejection or retention of objects proceeds as follows:
    completely outside the field of view of the grism image, it is rejected.
 
 3. The ``source_ra`` and ``source_dec`` parameters are matched to the nearest object
-   in the source catalog, and its ``source_id`` is added to the input ``source_ids`` list
+   in the source catalog, and its ``label`` is added to the input ``source_ids`` list
    (creating the list if ``source_ids`` was not specified).
 
 4. The ``source_ids`` list, which at this stage represents the unique combination of
-   input ``source_ids`` and the sources from RA/Dec selection, is applied.
-   If ``source_ids``, ``source_ras`` and ``source_decs`` are all ``None``,
+   input catalog IDs and the sources from RA/Dec selection, is applied.
+   If ``source_ids``, ``source_ra`` and ``source_dec`` are all ``None``,
    all objects are retained.
 
 5. The list of objects retained after the above filtering steps have been applied is
@@ -326,15 +326,15 @@ Time-Series (TSO) grism spectroscopy:
   int. The cross-dispersion extraction size, in units of pixels. Only applies to TSO
   mode.
 
-``--source_ras``
+``--source_ra``
   list of floats. The RA coordinates (in decimal degrees) of specific sources to extract from
   the source catalog. Only applies to WFSS mode.
 
-``--source_decs``
+``--source_dec``
   list of floats. The Dec coordinates (in decimal degrees) of specific sources to extract from
   the source catalog. Only applies to WFSS mode.
 
-``source_ids`` can be used at the same time as ``source_ras`` and ``source_decs``;
+``source_ids`` can be used at the same time as ``source_ra`` and ``source_dec``;
   duplicates will be filtered out.
 
 ``--wfss_extract_half_height``
