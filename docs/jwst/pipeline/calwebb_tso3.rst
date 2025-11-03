@@ -20,7 +20,7 @@ exposures are shown below:
 +---------------------------------------------------+---------+--------------+---------+
 | calwebb_tso3                                      | Imaging | Spectroscopy | SOSS    |
 +===================================================+=========+==============+=========+
-| :ref:`outlier_detection <outlier_detection_step>` |         | |check|      | |check| |
+| :ref:`outlier_detection <outlier_detection_step>` | |check| | |check|      | |check| |
 +---------------------------------------------------+---------+--------------+---------+
 | :ref:`tso_photometry <tso_photometry_step>`       | |check| |              |         |
 +---------------------------------------------------+---------+--------------+---------+
