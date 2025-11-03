@@ -26,7 +26,7 @@ correction from the group image.
 
 To create the background mask, the step
 uses the process outlined in :ref:`scene_mask`, with the difference that science
-regions are always masked for picture frame processing.
+regions are masked by default for picture frame processing.
 
 After background data is identified, median values are computed over the
 edges (:math:`m_{eref}`) and center (:math:`m_{cref}`) of the reference picture

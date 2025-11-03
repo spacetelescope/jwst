@@ -16,9 +16,10 @@ class PictureFrameStep(Step):
     class_alias = "picture_frame"
 
     spec = """
+        mask_science_regions = boolean(default=True)  # Mask known science regions.
         n_sigma = float(default=2.0)  # Clipping level for non-background signal.
-        save_mask = boolean(default=False)  # Save the created background mask
-        save_correction = boolean(default=False)  # Save the thermal correction data
+        save_mask = boolean(default=False)  # Save the created background mask.
+        save_correction = boolean(default=False)  # Save the thermal correction data.
         skip = boolean(default=True)  # By default, skip the step.
     """  # noqa: E501
 
@@ -80,6 +81,7 @@ class PictureFrameStep(Step):
             output_model, mask_model, correction_model, status = correct_picture_frame(
                 output_model,
                 pictureframe_model,
+                mask_science_regions=self.mask_science_regions,
                 n_sigma=self.n_sigma,
                 input_dir=self.input_dir,
                 save_mask=self.save_mask,

@@ -62,6 +62,7 @@ def _region_masks(background_mask):
 def correct_picture_frame(
     input_model,
     pictureframe_model,
+    mask_science_regions=True,
     n_sigma=2.0,
     input_dir="",
     save_mask=False,
@@ -78,6 +79,10 @@ def correct_picture_frame(
         Science model to be corrected. Updated in place.
     pictureframe_model : `~stdatamodels.jwst.datamodels.PictureFrameModel`
         Picture frame reference model.
+    mask_science_regions : bool, optional
+        Mask regions of the image defined by WCS bounding
+        boxes for slits/slices, as well as any regions known to be
+        affected by failed-open MSA shutters.
     n_sigma : float, optional
         N-sigma rejection level for finding outliers.
     input_dir : str, optional
@@ -138,14 +143,14 @@ def correct_picture_frame(
     # Assign a WCS to the rate file and flag open MSA shutters
     image_model = cfn.post_process_rate(
         image_model,
-        assign_wcs=True,
-        msaflagopen=True,
+        assign_wcs=mask_science_regions,
+        msaflagopen=mask_science_regions,
         input_dir=input_dir,
     )
 
     # Make a background mask from the draft rate file, blocking out science regions
     background_mask = cfn.create_mask(
-        image_model, mask_science_regions=True, n_sigma=n_sigma, single_mask=True
+        image_model, mask_science_regions=mask_science_regions, n_sigma=n_sigma, single_mask=True
     )
     if save_mask:
         mask_model = cfn.make_intermediate_model(image_model, background_mask)
