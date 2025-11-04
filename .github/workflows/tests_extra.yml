@@ -60,6 +60,7 @@ jobs:
         results.xml
       envs: |
         - linux: check-docs-links
+          python-version: '3.13'
         - macos: py311-xdist
           pytest-results-summary: true
         - macos: py312-xdist
