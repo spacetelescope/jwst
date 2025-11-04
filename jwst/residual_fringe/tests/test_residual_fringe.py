@@ -26,15 +26,40 @@ def linear_spectrum(wave):
 
 
 @pytest.fixture()
-def fringed_spectrum(linear_spectrum):
-    """Mock a spectrum with periodic fringe signature."""
+def linear_spectrum_with_peak(linear_spectrum):
+    """Mock a spectrum with a linear continuum and an emission line peak."""
+    # linear flux signal between min and max wavelengths
     wave, flux = linear_spectrum
 
-    # add a sinusoid signal on top of the linear flux
+    x = np.arange(flux.size)
+    xpos = flux.size // 2
+    peak = 0.1 * np.exp(-0.5 * ((x - xpos) / 2) ** 2)
+    flux += peak
+
+    return wave, flux
+
+
+@pytest.fixture()
+def fringe_signature(wave):
+    """Make a sinusoidal fringe signature."""
     amp = 0.01
     period = 0.04
     fringe = amp * np.sin(2 * np.pi * wave / period)
-    return wave, flux + fringe
+    return fringe
+
+
+@pytest.fixture()
+def fringed_spectrum(linear_spectrum, fringe_signature):
+    """Mock a spectrum with periodic fringe signature."""
+    wave, flux = linear_spectrum
+    return wave, flux + fringe_signature
+
+
+@pytest.fixture()
+def fringed_spectrum_with_peak(linear_spectrum_with_peak, fringe_signature):
+    """Mock a spectrum with periodic fringe signature and an emission line peak."""
+    wave, flux = linear_spectrum_with_peak
+    return wave, flux + fringe_signature
 
 
 @pytest.fixture()
@@ -61,6 +86,22 @@ def miri_mrs_model_linear(monkeypatch, linear_spectrum):
 @pytest.fixture()
 def miri_mrs_model_with_fringe(miri_mrs_model_linear, fringed_spectrum):
     wave, flux = fringed_spectrum
+    model_copy = miri_mrs_model_linear.copy()
+    model_copy.data[:, :] = flux[:, None]
+    return model_copy
+
+
+@pytest.fixture()
+def miri_mrs_model_with_peak(miri_mrs_model_linear, linear_spectrum_with_peak):
+    wave, flux = linear_spectrum_with_peak
+    model_copy = miri_mrs_model_linear.copy()
+    model_copy.data[:, :] = flux[:, None]
+    return model_copy
+
+
+@pytest.fixture()
+def miri_mrs_model_with_peak_and_fringe(miri_mrs_model_linear, fringed_spectrum_with_peak):
+    wave, flux = fringed_spectrum_with_peak
     model_copy = miri_mrs_model_linear.copy()
     model_copy.data[:, :] = flux[:, None]
     return model_copy
@@ -117,27 +158,37 @@ def mock_slice_info_long(monkeypatch):
     monkeypatch.setattr(utils, "slice_info", one_slice)
 
 
-def test_rf1d(linear_spectrum, fringed_spectrum):
+@pytest.mark.parametrize(
+    "dataset",
+    [
+        ("linear_spectrum", "fringed_spectrum"),
+        ("linear_spectrum_with_peak", "fringed_spectrum_with_peak"),
+    ],
+)
+def test_rf1d(request, dataset):
     """
     Test the performance of the 1d residual defringe routine.
 
     Input synthetic data mimics a Ch2C spectrum taken from observations
     of bright star 16 CygB.
     """
-    wave, flux = fringed_spectrum
+    spec = request.getfixturevalue(dataset[0])
+    fringed_spec = request.getfixturevalue(dataset[1])
+
+    wave, flux = fringed_spec
     outflux = rf1d(flux, wave, channel=2)
 
     # defringing won't remove the pure sinusoidal fringe completely, but
     # it should be reasonably close to linear and significantly better
     # than no correction
-    expected_flux = linear_spectrum[1]
+    expected_flux = spec[1]
 
-    # corrected output has small diffs from linear on average
+    # corrected output has small diffs from ideal on average
     # (edge effects might be larger)
     relative_diff_output = np.abs(outflux - expected_flux) / expected_flux
     assert np.nanmean(relative_diff_output) < 0.005
 
-    # input diffs from linear are much bigger
+    # input diffs from ideal are much bigger
     relative_diff_input = np.abs(flux - expected_flux) / expected_flux
     assert np.nanmean(relative_diff_input) > 0.01
 
