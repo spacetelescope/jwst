@@ -796,30 +796,30 @@ def wfss(input_model, reference_files):
     -------
     pipeline : list
         The WCS pipeline, suitable for input into `gwcs.WCS`.
-
-    Notes
-    -----
-    The direct image catalog has been created from data corrected for
-    distortion, but the dispersed images have not. This is OK if the trace and
-    dispersion solutions are defined with respect to the distortion-corrected
-    image. The catalog from the combined direct image has object locations in
-    in detector space and the RA DEC of the object on sky.
-
-    The WCS information for the dispersed image  will be
-    used to translate these to pixel locations for each of the objects.
-    The dispersed images will then use their trace information to translate
-    to detector space. The translation is assumed to be one-to-one for purposes
-    of identifying the center of the object trace.
-
-    The extent of the trace for each object is determined where
-    the bottom of the trace starts at t = 0 and the top of the trace ends at t = 1,
-
-    The extraction box is calculated to be the minimum bounding box of the
-    object extent in the segmentation map associated with the direct image.
-    The values of the min and max corners are saved in the photometry
-    catalog in units of RA,DEC so they can be translated to pixels by
-    the dispersed image's imaging wcs.
     """
+    # Notes
+    # -----
+    # The direct image catalog has been created from data corrected for
+    # distortion, but the dispersed images have not. This is OK if the trace and
+    # dispersion solutions are defined with respect to the distortion-corrected
+    # image. The catalog from the combined direct image has object locations in
+    # in detector space and the RA DEC of the object on sky.
+
+    # The WCS information for the dispersed image  will be
+    # used to translate these to pixel locations for each of the objects.
+    # The dispersed images will then use their trace information to translate
+    # to detector space. The translation is assumed to be one-to-one for purposes
+    # of identifying the center of the object trace.
+
+    # The extent of the trace for each object is determined where
+    # the bottom of the trace starts at t = 0 and the top of the trace ends at t = 1,
+
+    # The extraction box is calculated to be the minimum bounding box of the
+    # object extent in the segmentation map associated with the direct image.
+    # The values of the min and max corners are saved in the photometry
+    # catalog in units of RA,DEC so they can be translated to pixels by
+    # the dispersed image's imaging wcs.
+
     if not isinstance(input_model, ImageModel):
         raise TypeError("The input data model must be an ImageModel.")
 
