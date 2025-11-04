@@ -1,0 +1,2 @@
+Allow ``source_ids`` parameter to select from the input catalog for WFSS data.
+Add ``source_ra`` and ``source_dec`` parameters to select objects by sky position for WFSS data.
