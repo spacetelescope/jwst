@@ -8,6 +8,7 @@ import numpy as np
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from astropy.utils.decorators import lazyproperty
 from scipy.interpolate import CubicSpline, UnivariateSpline
+from stcal.ramp_fitting.utils import compute_num_slices
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SossWaveGridModel, dqflags
 
@@ -35,7 +36,6 @@ from jwst.extract_1d.soss_extract.soss_boxextract import (
 )
 from jwst.extract_1d.soss_extract.soss_syscor import make_background_mask, soss_background
 from jwst.lib import pipe_utils
-from jwst.lib.multiprocessing import determine_ncores
 
 log = logging.getLogger(__name__)
 
@@ -1593,8 +1593,12 @@ def run_extract1d(
             )
 
         # Determine number of cores for multiprocessing
-        num_cores = mp.cpu_count()
-        max_cpu = determine_ncores(soss_kwargs.pop("maximum_cores"), num_cores)
+        max_available_cores = mp.cpu_count()
+        max_cpu = compute_num_slices(
+            soss_kwargs.pop("maximum_cores"),
+            nimages - 1,
+            max_available_cores,
+        )
 
         t0 = time.time()
         if max_cpu > 1 and nimages > 1:

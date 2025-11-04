@@ -5,13 +5,13 @@ import multiprocessing
 
 import numpy as np
 from astropy.table import Table
+from stcal.ramp_fitting.utils import compute_num_slices
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import (
     NIRCAMBackwardGrismDispersion,
     NIRISSBackwardGrismDispersion,
 )
 
-from jwst.lib.multiprocessing import determine_ncores
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
 
@@ -392,8 +392,9 @@ def contam_corr(
     contam_model : `~jwst.datamodels.MultiSlitModel`
         Contamination estimate images for each source slit
     """
-    num_cores = multiprocessing.cpu_count()
-    ncpus = determine_ncores(max_cores, num_cores)
+    max_available_cores = multiprocessing.cpu_count()
+    # don't worry about case where nchunks < ncpus; just set nchunks large
+    ncpus = compute_num_slices(max_cores, 1e10, max_available_cores)
 
     # Get the segmentation map and direct image for this grism exposure
     seg_model = datamodels.open(input_model.meta.segmentation_map)
