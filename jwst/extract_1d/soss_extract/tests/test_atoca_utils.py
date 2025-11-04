@@ -498,7 +498,6 @@ def test_webb_kernel_pickleable(webb_kernels, wave_map):
     assert np.allclose(kern_restored.poly, kern.poly)
     assert np.allclose(kern_restored.kernels, kern.kernels)
     assert np.allclose(kern_restored.min_value, kern.min_value)
-    assert kern_restored._bbox == kern._bbox
 
     # Verify the interpolator was recreated and works correctly
     f_ker_after = kern_restored.f_ker(pixels_test, wl_test)

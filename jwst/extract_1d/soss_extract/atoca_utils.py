@@ -838,21 +838,6 @@ class ThroughputInterpolator:
             self.wavelength, self.throughput, k=3, bc_type=("clamped", "clamped")
         )
 
-    def __getstate__(self):  # numpydoc ignore: RT01
-        """Prepare object for pickling by removing unpickleable BSpline."""
-        state = self.__dict__.copy()
-        # Remove the unpickleable BSpline object
-        del state["_interp"]
-        return state
-
-    def __setstate__(self, state):
-        """Restore object after unpickling by recreating BSpline."""
-        self.__dict__.update(state)
-        # Recreate the BSpline interpolator
-        self._interp = make_interp_spline(
-            self.wavelength, self.throughput, k=3, bc_type=("clamped", "clamped")
-        )
-
     def __call__(self, wv):  # numpydoc ignore:RT01
         """Interpolate throughput at given wavelength(s)."""
         wv = np.clip(wv, self.wl_min, self.wl_max)
@@ -989,24 +974,7 @@ class WebbKernel:
         self.wave_center = wave_center
         self.poly = np.array(poly)
 
-        # Store bbox needed to recreate RectBivariateSpline during unpickling
-        self._bbox = bbox
         self.f_ker = RectBivariateSpline(self.pixels, self.wave_center, self.kernels, bbox=bbox)
-
-    def __getstate__(self):  # numpydoc ignore: RT01
-        """Prepare object for pickling by removing unpickleable RectBivariateSpline."""
-        state = self.__dict__.copy()
-        # Remove the unpickleable RectBivariateSpline object
-        del state["f_ker"]
-        return state
-
-    def __setstate__(self, state):
-        """Restore object after unpickling by recreating RectBivariateSpline."""
-        self.__dict__.update(state)
-        # Recreate the RectBivariateSpline interpolator
-        self.f_ker = RectBivariateSpline(
-            self.pixels, self.wave_center, self.kernels, bbox=self._bbox
-        )
 
     def __call__(self, wave, wave_c):
         """
