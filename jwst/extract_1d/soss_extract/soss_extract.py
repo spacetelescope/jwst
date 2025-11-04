@@ -8,7 +8,7 @@ import numpy as np
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from astropy.utils.decorators import lazyproperty
 from scipy.interpolate import CubicSpline, UnivariateSpline
-from stcal.ramp_fitting.utils import compute_num_slices
+from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SossWaveGridModel, dqflags
 
@@ -1178,6 +1178,7 @@ class Integration:
             decont = decontaminated_data[order]
             # Replace bad pixels with trace model
             if (bad_pix == "model") and (order in list(tracemodels.keys())):
+                log.info(f"Replacing bad pixels in {order} with trace model.")
                 # Some pixels might not be modeled by the bad pixel models
                 is_modeled = np.isfinite(tracemodels[order])
                 # Replace bad pixels
@@ -1199,15 +1200,14 @@ class Integration:
                 # Note that they have to be in the extraction region
                 # to ensure that scierr is also valid
                 scimask_ord = np.where(is_modeled, False, self.scimask)
-                log.info(f"Bad pixels in {order} are replaced with trace model.")
 
             else:
-                scimask_ord = self.scimask
-                scierr_ord = self.scierr
-                log.debug(
+                log.info(
                     f"Bad pixels in {order} will be masked instead of modeled: "
                     "Trace model unavailable or not requested."
                 )
+                scimask_ord = self.scimask
+                scierr_ord = self.scierr
 
             # Perform the box extraction and save
             out = box_extract(decont, scierr_ord, scimask_ord, box_w_ord)
@@ -1270,7 +1270,7 @@ def _process_one_integration(
                 f" with {wave_grid.size} points"
             )
         else:
-            log.debug("Using previously computed or user specified wavelength grid.")
+            log.info("Using previously computed or user specified wavelength grid.")
 
         # Model the image.
         try:
@@ -1594,7 +1594,7 @@ def run_extract1d(
 
         # Determine number of cores for multiprocessing
         max_available_cores = mp.cpu_count()
-        max_cpu = compute_num_slices(
+        max_cpu = compute_num_cores(
             soss_kwargs.pop("maximum_cores"),
             nimages - 1,
             max_available_cores,
