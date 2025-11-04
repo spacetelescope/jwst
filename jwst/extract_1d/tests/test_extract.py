@@ -5,10 +5,14 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import polynomial
 from numpy.testing import assert_allclose, assert_equal
+from photutils.aperture import CircularAnnulus, RectangularAperture
+from scipy.interpolate import interp1d
 
 from jwst.datamodels import ModelContainer
 from jwst.extract_1d import extract as ex
+from jwst.extract_1d import ifu
 from jwst.extract_1d import psf_profile as pp
+from jwst.extract_1d.extract_1d_step import Extract1dStep
 
 
 @pytest.fixture()
@@ -1892,3 +1896,79 @@ def test_run_extract1d_continue_error_multislit(monkeypatch, mock_nirspec_mos):
     # no spectra extracted
     assert len(output_model.spec) == 0
     output_model.close()
+
+
+def test_apply_bkg_sigma_clip_point(mock_miri_ifu):
+    mock_miri_ifu.meta.target.source_type = "POINT"
+    bkg_data = mock_miri_ifu.data[0, :, :]
+    temp_weightmap = mock_miri_ifu.weightmap[0, :, :]
+    temp_weightmap[temp_weightmap > 1] = 1
+    shape = np.shape(mock_miri_ifu.data)
+    bmask = np.zeros([shape[1], shape[2]], dtype=bool)
+    bmask[:] = False
+    bmask[np.where(temp_weightmap == 0)] = True
+    bkg_sigma_clip = 3.0
+    step = Extract1dStep()
+    ref_file = step.get_reference_file(mock_miri_ifu, "extract1d")
+    extract_params = ifu.get_extract_parameters(ref_file, bkg_sigma_clip)
+    method = extract_params["method"]
+    subpixels = extract_params["subpixels"]
+    # set the inner and outer arrays
+    wave_extract = extract_params["wavelength"].flatten()
+    inner_bkg = extract_params["inner_bkg"].flatten()
+    outer_bkg = extract_params["outer_bkg"].flatten()
+    # find the wavelength array of the IFU cube
+    x0 = float(shape[2]) / 2.0
+    y0 = float(shape[1]) / 2.0
+    _, _, wavelength = ifu.get_coordinates(mock_miri_ifu, x0, y0)
+    # set a fake scale and interpolate the extraction parameters to the wavelength of the IFU cube
+    scale_arcsec = 0.5 * 3600.00
+    finner = interp1d(wave_extract, inner_bkg, bounds_error=False, fill_value="extrapolate")
+    inner_bkg_match = finner(wavelength) / scale_arcsec
+    fouter = interp1d(wave_extract, outer_bkg, bounds_error=False, fill_value="extrapolate")
+    outer_bkg_match = fouter(wavelength) / scale_arcsec
+    inner_bkg = inner_bkg_match[0]
+    outer_bkg = outer_bkg_match[0]
+    x_center = float(shape[-1]) / 2.0
+    y_center = float(shape[-2]) / 2.0
+    position = (x_center, y_center)
+    annulus = CircularAnnulus(position, r_in=inner_bkg, r_out=outer_bkg)
+
+    bkg_table, maskclip = ifu._apply_bkg_sigma_clip(
+        bkg_data, temp_weightmap, bmask, bkg_sigma_clip, annulus, method, subpixels
+    )
+
+    expected_shape = (shape[1], shape[2])
+    assert np.shape(maskclip) == expected_shape
+    assert float(bkg_table["aperture_sum"][0]) == 0.0
+
+
+def test_apply_bkg_sigma_clip_extended(mock_miri_ifu):
+    bkg_data = mock_miri_ifu.data[0, :, :]
+    temp_weightmap = mock_miri_ifu.weightmap[0, :, :]
+    temp_weightmap[temp_weightmap > 1] = 1
+    shape = np.shape(mock_miri_ifu.data)
+    bmask = np.zeros([shape[1], shape[2]], dtype=bool)
+    bmask[:] = False
+    bmask[np.where(temp_weightmap == 0)] = True
+    bkg_sigma_clip = 3.0
+    step = Extract1dStep()
+    ref_file = step.get_reference_file(mock_miri_ifu, "extract1d")
+    extract_params = ifu.get_extract_parameters(ref_file, bkg_sigma_clip)
+    method = extract_params["method"]
+    subpixels = extract_params["subpixels"]
+    width = float(shape[-1])
+    height = float(shape[-2])
+    x_center = width / 2.0 - 0.5
+    y_center = height / 2.0 - 0.5
+    theta = 0.0
+    position = (x_center, y_center)
+    aperture = RectangularAperture(position, width, height, theta)
+
+    bkg_table, maskclip = ifu._apply_bkg_sigma_clip(
+        bkg_data, temp_weightmap, bmask, bkg_sigma_clip, aperture, method, subpixels
+    )
+
+    expected_shape = (shape[1], shape[2])
+    assert np.shape(maskclip) == expected_shape
+    assert float(bkg_table["aperture_sum"][0]) == 3123750.0
