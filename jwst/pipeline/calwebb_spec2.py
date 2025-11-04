@@ -48,7 +48,7 @@ NRS_SLIT_TYPES = [
 
 GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS"]
-WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIRI_WFSS"]
+WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 
 log = logging.getLogger(__name__)
 
@@ -694,11 +694,6 @@ class Spec2Pipeline(Pipeline):
         JWSTDataModel
             The calibrated data model.
         """
-        # Apply flat-field correction - we do not do this for MIRI WFSS.
-        # After more data is taken we might come back to this. Leaving the
-        # code commented out as a reminder.
-        # calibrated = self.flat_field.run(data)
-
         calibrated = data.copy()
         # Create and save a WFSS e-/sec image, if requested
         if self.save_wfss_esec:
@@ -708,8 +703,13 @@ class Spec2Pipeline(Pipeline):
             self.save_model(wfss_esec, suffix="esec", force=True)
             del wfss_esec
 
+        # More study required on the best approach for flat fielding with MIRI WFSS
+        # It has been left in for testing.
+        # calibrated = self.flat_field.run(calibrated)
+
         # Continue with remaining calibration steps, using the original
         # DN/sec image
+        calibrated = self.flat_field.run(calibrated)
         calibrated = self.extract_2d.run(calibrated)
         calibrated = self.srctype.run(calibrated)
         calibrated = self.pathloss.run(calibrated)
