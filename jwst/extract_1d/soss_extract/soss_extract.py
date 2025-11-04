@@ -1592,9 +1592,6 @@ def run_extract1d(
                 ]
             )
 
-            # if i == 1:
-            #     print(process_args[0][4][0].__dict__)
-
         # Determine number of cores for multiprocessing
         max_available_cores = mp.cpu_count()
         max_cpu = compute_num_slices(
@@ -1606,7 +1603,7 @@ def run_extract1d(
         t0 = time.time()
         if max_cpu > 1 and nimages > 1:
             log.info(f"Using {max_cpu} CPU cores for multiprocessing {nimages - 1} integrations.")
-            ctx = mp.get_context("fork")
+            ctx = mp.get_context("spawn")
             with ctx.Pool(max_cpu) as pool:
                 all_results = pool.starmap(_process_one_integration, process_args)
         else:
