@@ -6,7 +6,7 @@ import logging
 import numpy as np
 from astropy.modeling.models import Shift
 from gwcs import wcstools
-from gwcs.utils import _toindex
+from gwcs.utils import to_index
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms import models as trmodels
 
@@ -288,8 +288,8 @@ def offset_wcs(slit_wcs):
     xlo, xhi, ylo, yhi : tuple of floats
         Indices of the bounding box of the WCS
     """
-    xlo, xhi = _toindex(slit_wcs.bounding_box[0])
-    ylo, yhi = _toindex(slit_wcs.bounding_box[1])
+    xlo, xhi = to_index(slit_wcs.bounding_box[0])
+    ylo, yhi = to_index(slit_wcs.bounding_box[1])
 
     # Add the slit offset to each slit WCS object
     tr = slit_wcs.get_transform("detector", "sca")

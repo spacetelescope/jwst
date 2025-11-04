@@ -1,0 +1,1 @@
+Fix a bug where NaN pixels were included in aperture areas when they shouldn't be
