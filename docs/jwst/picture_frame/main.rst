@@ -49,3 +49,10 @@ in each integration, the cleaning process is:
        correction &= scale * (p - m_{eref}) + m_e
 
 #. Subtract the correction image from the group image.
+
+
+References
+==========
+
+The picture frame correction algorithm is based on work by M. Regan and
+E. Bergeron (in prep).
