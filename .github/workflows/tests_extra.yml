@@ -65,11 +65,11 @@ jobs:
         - macos: py312-xdist
           pytest-results-summary: true
         # TODO: Merge stdevdeps into devdeps
-        - linux: py3-stdevdeps-xdist
+        - linux: py313-stdevdeps-xdist
           pytest-results-summary: true
-        - macos: py3-stdevdeps-xdist
+        - macos: py313-stdevdeps-xdist
           pytest-results-summary: true
-        - linux: py3-devdeps-xdist
+        - linux: py313-devdeps-xdist
           pytest-results-summary: true
-        - macos: py3-devdeps-xdist
+        - macos: py313-devdeps-xdist
           pytest-results-summary: true
