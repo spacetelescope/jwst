@@ -1604,8 +1604,12 @@ def run_extract1d(
         if max_cpu > 1 and nimages > 1:
             log.info(f"Using {max_cpu} CPU cores for multiprocessing {nimages - 1} integrations.")
             ctx = mp.get_context("spawn")
-            with ctx.Pool(max_cpu) as pool:
+            pool = ctx.Pool(max_cpu)
+            try:
                 all_results = pool.starmap(_process_one_integration, process_args)
+            finally:
+                pool.close()
+                pool.join()
         else:
             all_results = [_process_one_integration(*args) for args in process_args]
         t1 = time.time()
