@@ -110,6 +110,9 @@ def run_spec2_wfss(spec2_wfss_asn, monkeypatch, wfss_multispec):
     Step.from_cmdline(args)
 
 
+@pytest.mark.xfail(
+    reason="Reference files for MIRI WFSS mode are not in CRDS yet. Fails on CRDS look up"
+)
 def test_spec2_wfss(run_spec2_wfss):
     """Smoke test to ensure pipeline runs for WFSS input."""
     files_created = os.listdir(".")
