@@ -755,11 +755,11 @@ class Integration:
     def _subtract_bkg(self, do_bkgsub):
         # Perform background correction if requested
         if do_bkgsub:
-            log.info("Applying background subtraction.")
+            log.debug("Applying background subtraction.")
             bkg_mask = make_background_mask(self.scidata, width=40)
             self.scidata_bkg, self.col_bkg = soss_background(self.scidata, self.scimask, bkg_mask)
         else:
-            log.info("Skip background subtraction.")
+            log.debug("Skip background subtraction.")
             self.scidata_bkg = self.scidata.copy()
             self.col_bkg = np.zeros(self.scidata.shape[1])
 
@@ -1170,7 +1170,7 @@ class Integration:
         # Create dictionaries for the output spectra.
         fluxes, fluxerrs, npixels = {}, {}, {}
 
-        log.info("Performing the box extraction.")
+        log.debug("Performing the box extraction.")
 
         # Extract each order from order list
         for order in order_list:
@@ -1204,7 +1204,7 @@ class Integration:
             else:
                 scimask_ord = self.scimask
                 scierr_ord = self.scierr
-                log.info(
+                log.debug(
                     f"Bad pixels in {order} will be masked instead of modeled: "
                     "Trace model unavailable or not requested."
                 )
@@ -1230,6 +1230,8 @@ def _process_one_integration(
     generate_model=True,
     int_num=None,
 ):
+    log.info(f"Processing integration {int_num}")
+
     if tikfacs_in is None:
         tikfacs_in = {"Order 1": None, "Order 2": None, "Order 3": None}
     integration = Integration(
@@ -1268,7 +1270,7 @@ def _process_one_integration(
                 f" with {wave_grid.size} points"
             )
         else:
-            log.info("Using previously computed or user specified wavelength grid.")
+            log.debug("Using previously computed or user specified wavelength grid.")
 
         # Model the image.
         try:
@@ -1311,12 +1313,11 @@ def _process_one_integration(
     data_to_extract = integration.decontaminate_image(tracemodels)
 
     # Use the bad pixel models to perform a de-contaminated extraction.
-    result = integration.extract_image(
+    fluxes, fluxerrs, npixels = integration.extract_image(
         data_to_extract,
         bad_pix=soss_kwargs["bad_pix"],
         tracemodels=tracemodels,
     )
-    fluxes, fluxerrs, npixels = result
 
     # Save trace models for output reference
     for order in tracemodels:
@@ -1330,11 +1331,11 @@ def _process_one_integration(
     for order in fluxes.keys():
         table_size = len(wavelengths[order])
         spec_list_data[order] = {
-            "wavelength": wavelengths[order][:table_size].copy(),
-            "flux": fluxes[order][:table_size].copy(),
-            "flux_error": fluxerrs[order][:table_size].copy(),
-            "background": integration.col_bkg[:table_size].copy(),
-            "npixels": npixels[order][:table_size].copy(),
+            "wavelength": wavelengths[order][:table_size],
+            "flux": fluxes[order][:table_size],
+            "flux_error": fluxerrs[order][:table_size],
+            "background": integration.col_bkg[:table_size],
+            "npixels": npixels[order][:table_size],
             "spectral_order": ORDER_STR_TO_INT[order],
             "int_num": int_num,
         }
@@ -1362,14 +1363,16 @@ def _reconstruct_spec_from_data(spec_data):
     out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
     out_table["WAVELENGTH"] = spec_data["wavelength"]
     out_table["FLUX"] = spec_data["flux"]
-    out_table["FLUX_ERROR"] = spec_data["flux_error"]
-    out_table["BACKGROUND"] = spec_data["background"]
-    out_table["NPIXELS"] = spec_data["npixels"]
+
+    if "flux_error" in spec_data:
+        # Intermediate product candidate spectra coming from do_tiktests don't have these
+        out_table["FLUX_ERROR"] = spec_data["flux_error"]
+        out_table["BACKGROUND"] = spec_data["background"]
+        out_table["NPIXELS"] = spec_data["npixels"]
 
     spec = datamodels.SpecModel(spec_table=out_table)
     spec.spectral_order = spec_data["spectral_order"]
-    if spec_data["int_num"] is not None:
-        spec.int_num = spec_data["int_num"]
+    spec.int_num = spec_data["int_num"]
 
     return spec
 
@@ -1528,7 +1531,6 @@ def run_extract1d(
     else:
         tikfacs_in = None
 
-    log.info("Processing integration 1 to determine optimal parameters.")
     tracemodels, spec_list_data, atoca_list_data, tikfacs_first, wave_grid_first = (
         _process_one_integration(
             scidata,
@@ -1545,8 +1547,12 @@ def run_extract1d(
             int_num=1,
         )
     )
+    log.info(
+        "Tikhonov factors and wavelength grid from first integration "
+        "will be applied to subsequent ones."
+    )
 
-    # Reconstruct SpecModels from raw data
+    # Reconstruct SpecModels from dict
     spec_list = {
         order: _reconstruct_spec_from_data(spec_list_data[order]) for order in spec_list_data
     }
@@ -1559,11 +1565,6 @@ def run_extract1d(
     output_spec_list = {order: [spec_list[order]] for order in spec_list}
 
     if nimages > 1:
-        # Determine number of cores for multiprocessing
-        num_cores = mp.cpu_count()
-        max_cpu = determine_ncores(soss_kwargs.pop("maximum_cores"), num_cores)
-        log.info(f"Using {max_cpu} core(s) for multiprocessing.")
-
         # Build list of arguments for parallel processing
         process_args = []
         for i in range(1, nimages):
@@ -1591,6 +1592,10 @@ def run_extract1d(
                 ]
             )
 
+        # Determine number of cores for multiprocessing
+        num_cores = mp.cpu_count()
+        max_cpu = determine_ncores(soss_kwargs.pop("maximum_cores"), num_cores)
+
         t0 = time.time()
         if max_cpu > 1 and nimages > 1:
             log.info(f"Using {max_cpu} CPU cores for multiprocessing {nimages - 1} integrations.")
@@ -1598,10 +1603,12 @@ def run_extract1d(
             with ctx.Pool(max_cpu) as pool:
                 all_results = pool.starmap(_process_one_integration, process_args)
         else:
-            log.info("Processing integrations serially.")
             all_results = [_process_one_integration(*args) for args in process_args]
         t1 = time.time()
-        log.info(f"Wall clock time for processing {nimages - 1} integrations: {(t1 - t0):.1f} sec")
+        log.info(
+            f"Wall clock time for processing integrations 2 to {nimages} on {max_cpu} cores: "
+            f"{(t1 - t0):.1f} sec"
+        )
 
         # Collect results from parallel processing and reconstruct SpecModels
         for tracemodels, spec_list_data, atoca_list_data, _, _ in all_results:
