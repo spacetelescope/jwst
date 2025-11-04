@@ -6,9 +6,10 @@ import copy
 import logging
 
 import numpy as np
+from astropy.coordinates import SkyCoord
 from astropy.modeling import CompoundModel, bind_bounding_box
 from astropy.modeling.models import Const1D, Mapping, Shift
-from gwcs.utils import _toindex
+from gwcs.utils import to_index
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, SlitModel, WavelengthrangeModel
@@ -297,6 +298,9 @@ def extract_grism_objects(
     grism_objects=None,
     reference_files=None,
     extract_orders=None,
+    source_ids=None,
+    source_ra=None,
+    source_dec=None,
     mmag_extract=None,
     compute_wavelength=True,
     wfss_extract_half_height=None,
@@ -318,6 +322,17 @@ def extract_grism_objects(
 
     extract_orders : int
         Spectral orders to extract
+
+    source_ids : list
+        List of source IDs to extract.
+
+    source_ra : list[float]
+        Source right ascensions to be processed. The nearest matching source to each RA/DEC pair
+        will be extracted. If both source_ids and source_ra/source_dec are provided,
+        the lists will be combined and their union extracted.
+
+    source_dec : list[float]
+        Source declinations to be processed, must have same length as source_ra.
 
     mmag_extract : float
         Sources with magnitudes fainter than this minimum magnitude extraction
@@ -398,10 +413,24 @@ def extract_grism_objects(
         ]:
             raise ValueError("Expected name of wavelengthrange reference file")
         else:
+            # force_list coming into the step makes these all strings
+            if source_ids is not None:
+                source_ids = np.atleast_1d(source_ids).astype(int)
+            if source_ra is not None:
+                source_ra = np.atleast_1d(source_ra).astype(float)
+            if source_dec is not None:
+                source_dec = np.atleast_1d(source_dec).astype(float)
+            source_ids = radec_to_source_ids(
+                input_model.meta.source_catalog,
+                source_ids,
+                source_ra,
+                source_dec,
+            )
             grism_objects = util.create_grism_bbox(
                 input_model,
                 reference_files,
                 extract_orders=extract_orders,
+                source_ids=source_ids,
                 mmag_extract=mmag_extract,
                 wfss_extract_half_height=wfss_extract_half_height,
                 nbright=nbright,
@@ -480,8 +509,8 @@ def extract_grism_objects(
                 order_model = Const1D(order)
                 order_model.inverse = Const1D(order)
 
-                y_slice = slice(_toindex(ymin), _toindex(ymax) + 1)
-                x_slice = slice(_toindex(xmin), _toindex(xmax) + 1)
+                y_slice = slice(to_index(ymin), to_index(ymax) + 1)
+                x_slice = slice(to_index(xmin), to_index(xmax) + 1)
 
                 ext_data = input_model.data[y_slice, x_slice].copy()
                 ext_err = input_model.err[y_slice, x_slice].copy()
@@ -540,9 +569,9 @@ def extract_grism_objects(
                 # nslit = obj.sid - 1  # catalog id starts at zero
                 new_slit.name = f"{obj.sid}"
                 new_slit.is_extended = obj.is_extended
-                new_slit.xstart = _toindex(xmin) + 1  # fits pixels
+                new_slit.xstart = to_index(xmin) + 1  # fits pixels
                 new_slit.xsize = ext_data.shape[1]
-                new_slit.ystart = _toindex(ymin) + 1  # fits pixels
+                new_slit.ystart = to_index(ymin) + 1  # fits pixels
                 new_slit.ysize = ext_data.shape[0]
                 new_slit.source_xpos = float(obj.xcentroid)
                 new_slit.source_ypos = float(obj.ycentroid)
@@ -691,3 +720,50 @@ def compute_wfss_wavelength(slit):
     x, y = grid_from_bounding_box(slit.meta.wcs.bounding_box)
     wavelength = slit.meta.wcs(x, y)[2]
     return wavelength
+
+
+def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=None):
+    """
+    Convert source RA/Dec lists to source IDs from the catalog.
+
+    If a source_ids list is provided, it will be combined with the
+    source IDs found from the RA/Dec lists to form a union.
+
+    Parameters
+    ----------
+    catalog : str
+        The filename of the source catalog.
+
+    source_ids : list
+        List of source IDs to extract.
+
+    source_ra : list[float]
+        Source right ascensions to be processed. The nearest matching source to each RA/DEC pair
+        will be extracted. If both source_ids and source_ra/source_dec are provided,
+        the lists will be combined and their union extracted.
+
+    source_dec : list[float]
+        Source declinations to be processed, must have same length as source_ra.
+
+    Returns
+    -------
+    source_ids : np.ndarray or None
+        List of unique source IDs to extract.
+    """
+    catalog = util.read_source_catalog(catalog)
+    catalog_coord = catalog["sky_centroid"]
+    if source_ids is None:
+        source_ids = []
+    else:
+        source_ids = np.atleast_1d(source_ids).tolist()
+    if source_ra is not None:
+        if len(source_ra) != len(source_dec):
+            raise ValueError("source_ra and source_dec must have the same length.")
+        for ra, dec in zip(source_ra, source_dec, strict=True):
+            this_coord = SkyCoord(ra=ra, dec=dec, unit="deg")
+            idx, _sep, _dist3d = this_coord.match_to_catalog_sky(catalog_coord)
+            src_id = catalog["label"][idx]
+            source_ids.append(src_id)
+    if source_ids:
+        return np.unique(np.atleast_1d(source_ids))  # return unique IDs only
+    return None
