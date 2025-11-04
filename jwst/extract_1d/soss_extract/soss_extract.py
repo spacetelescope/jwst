@@ -1,4 +1,6 @@
 import logging
+import multiprocessing as mp
+import time
 from collections.abc import Callable
 from dataclasses import dataclass
 
@@ -33,6 +35,7 @@ from jwst.extract_1d.soss_extract.soss_boxextract import (
 )
 from jwst.extract_1d.soss_extract.soss_syscor import make_background_mask, soss_background
 from jwst.lib import pipe_utils
+from jwst.lib.multiprocessing import determine_ncores
 
 log = logging.getLogger(__name__)
 
@@ -1288,17 +1291,20 @@ def _process_one_integration(
                 threshold=soss_kwargs["threshold"],
             )
 
-        # Add atoca spectra to multispec for output
-        for i, spec in enumerate(atoca_list):
-            # If it was a test, not the best spectrum,
-            # int_num is already set to 0.
-            if spec.int_num is None and int_num is not None:
-                spec.int_num = int_num
-            atoca_list[i] = spec
+        # Convert atoca_list SpecModels to raw data for pickling
+        atoca_list_data = []
+        for spec in atoca_list:
+            spec_data = {
+                "wavelength": spec.spec_table["WAVELENGTH"].copy(),
+                "flux": spec.spec_table["FLUX"].copy(),
+                "spectral_order": spec.spectral_order,
+                "int_num": int_num if spec.int_num is None else spec.int_num,
+            }
+            atoca_list_data.append(spec_data)
     else:
         # Return empty tracemodels
         tracemodels = {}
-        atoca_list = []
+        atoca_list_data = []
         tikfacs_out = tikfacs_in
 
     # Decontaminate the data using trace models (if tracemodels not empty)
@@ -1319,29 +1325,53 @@ def _process_one_integration(
         model_ord = np.where(np.isfinite(model_ord), model_ord, 0.0)
         tracemodels[order] = model_ord
 
-    # Copy spectral data for each order into the output model.
-    spec_list = {}
+    # Convert spec_list to raw data for pickling
+    spec_list_data = {}
     for order in fluxes.keys():
         table_size = len(wavelengths[order])
+        spec_list_data[order] = {
+            "wavelength": wavelengths[order][:table_size].copy(),
+            "flux": fluxes[order][:table_size].copy(),
+            "flux_error": fluxerrs[order][:table_size].copy(),
+            "background": integration.col_bkg[:table_size].copy(),
+            "npixels": npixels[order][:table_size].copy(),
+            "spectral_order": ORDER_STR_TO_INT[order],
+            "int_num": int_num,
+        }
 
-        out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
-        out_table["WAVELENGTH"] = wavelengths[order][:table_size]
-        out_table["FLUX"] = fluxes[order][:table_size]
-        out_table["FLUX_ERROR"] = fluxerrs[order][:table_size]
-        out_table["DQ"] = np.zeros(table_size)
-        out_table["BACKGROUND"] = integration.col_bkg[:table_size]
-        out_table["NPIXELS"] = npixels[order][:table_size]
+    return tracemodels, spec_list_data, atoca_list_data, tikfacs_out, wave_grid
 
-        spec = datamodels.SpecModel(spec_table=out_table)
 
-        # Add integration number and spectral order
-        spec.spectral_order = ORDER_STR_TO_INT[order]
-        if int_num is not None:
-            spec.int_num = int_num
+def _reconstruct_spec_from_data(spec_data):
+    """
+    Construct a SpecModel from raw data dictionary.
 
-        spec_list[order] = spec
+    This allows passing SpecModel-like objects through multiprocessing.
 
-    return tracemodels, spec_list, atoca_list, tikfacs_out, wave_grid
+    Parameters
+    ----------
+    spec_data : dict
+        Dictionary containing wavelength, flux, and metadata
+
+    Returns
+    -------
+    spec : SpecModel
+        Reconstructed SpecModel
+    """
+    table_size = len(spec_data["wavelength"])
+    out_table = np.zeros(table_size, dtype=datamodels.SpecModel().spec_table.dtype)
+    out_table["WAVELENGTH"] = spec_data["wavelength"]
+    out_table["FLUX"] = spec_data["flux"]
+    out_table["FLUX_ERROR"] = spec_data["flux_error"]
+    out_table["BACKGROUND"] = spec_data["background"]
+    out_table["NPIXELS"] = spec_data["npixels"]
+
+    spec = datamodels.SpecModel(spec_table=out_table)
+    spec.spectral_order = spec_data["spectral_order"]
+    if spec_data["int_num"] is not None:
+        spec.int_num = spec_data["int_num"]
+
+    return spec
 
 
 def run_extract1d(
@@ -1497,38 +1527,10 @@ def run_extract1d(
         tikfacs_in = {"Order 1": soss_kwargs["tikfac"], "Order 2": None, "Order 3": None}
     else:
         tikfacs_in = None
-    tracemodels, spec_list, atoca_list, tikfacs_first, wave_grid_first = _process_one_integration(
-        scidata,
-        scierr,
-        scimask,
-        refmask,
-        order_models,
-        box_weights,
-        wavelengths,
-        soss_kwargs,
-        wave_grid=wave_grid,
-        tikfacs_in=tikfacs_in,
-        generate_model=generate_model,
-        int_num=1,
-    )
-    for atoca_spec in atoca_list:
-        output_atoca.spec.append(atoca_spec)
 
-    # Loop over integrations, applying the same wave_grid and Tikhonov factor
-    all_tracemodels = {order: [tracemodels[order]] for order in tracemodels}
-    output_spec_list = {order: [spec_list[order]] for order in spec_list}
-    for i in range(1, nimages):
-        log.info(f"Processing integration {i + 1} of {nimages}.")
-
-        # Unpack the i-th image, set dtype to float64 and convert DQ to boolean mask.
-        scidata = cube_model.data[i].astype("float64")
-        scierr = cube_model.err[i].astype("float64")
-        scimask = np.bitwise_and(cube_model.dq[i], dqflags.pixel["DO_NOT_USE"]).astype(bool)
-        refmask = bitfield_to_boolean_mask(
-            cube_model.dq[i], ignore_flags=dqflags.pixel["REFERENCE_PIXEL"], flip_bits=True
-        )
-
-        tracemodels, spec_list, atoca_list, _, _ = _process_one_integration(
+    log.info("Processing integration 1 to determine optimal parameters.")
+    tracemodels, spec_list_data, atoca_list_data, tikfacs_first, wave_grid_first = (
+        _process_one_integration(
             scidata,
             scierr,
             scimask,
@@ -1537,17 +1539,80 @@ def run_extract1d(
             box_weights,
             wavelengths,
             soss_kwargs,
-            wave_grid=wave_grid_first,
-            tikfacs_in=tikfacs_first,
+            wave_grid=wave_grid,
+            tikfacs_in=tikfacs_in,
             generate_model=generate_model,
-            int_num=i + 1,
+            int_num=1,
         )
-        for order in tracemodels:
-            all_tracemodels[order].append(tracemodels[order])
-        for order in spec_list:
-            output_spec_list[order].append(spec_list[order])
-        for atoca_spec in atoca_list:
-            output_atoca.spec.append(atoca_spec)
+    )
+
+    # Reconstruct SpecModels from raw data
+    spec_list = {
+        order: _reconstruct_spec_from_data(spec_list_data[order]) for order in spec_list_data
+    }
+    for atoca_spec_data in atoca_list_data:
+        atoca_spec = _reconstruct_spec_from_data(atoca_spec_data)
+        output_atoca.spec.append(atoca_spec)
+
+    # Prepare arguments for processing remaining integrations
+    all_tracemodels = {order: [tracemodels[order]] for order in tracemodels}
+    output_spec_list = {order: [spec_list[order]] for order in spec_list}
+
+    if nimages > 1:
+        # Determine number of cores for multiprocessing
+        num_cores = mp.cpu_count()
+        max_cpu = determine_ncores(soss_kwargs.pop("maximum_cores"), num_cores)
+        log.info(f"Using {max_cpu} core(s) for multiprocessing.")
+
+        # Build list of arguments for parallel processing
+        process_args = []
+        for i in range(1, nimages):
+            scidata_i = cube_model.data[i].astype("float64")
+            scierr_i = cube_model.err[i].astype("float64")
+            scimask_i = np.bitwise_and(cube_model.dq[i], dqflags.pixel["DO_NOT_USE"]).astype(bool)
+            refmask_i = bitfield_to_boolean_mask(
+                cube_model.dq[i], ignore_flags=dqflags.pixel["REFERENCE_PIXEL"], flip_bits=True
+            )
+
+            process_args.append(
+                [
+                    scidata_i,
+                    scierr_i,
+                    scimask_i,
+                    refmask_i,
+                    order_models,
+                    box_weights,
+                    wavelengths,
+                    soss_kwargs,
+                    wave_grid_first,
+                    tikfacs_first,
+                    generate_model,
+                    i + 1,
+                ]
+            )
+
+        t0 = time.time()
+        if max_cpu > 1 and nimages > 1:
+            log.info(f"Using {max_cpu} CPU cores for multiprocessing {nimages - 1} integrations.")
+            ctx = mp.get_context("fork")
+            with ctx.Pool(max_cpu) as pool:
+                all_results = pool.starmap(_process_one_integration, process_args)
+        else:
+            log.info("Processing integrations serially.")
+            all_results = [_process_one_integration(*args) for args in process_args]
+        t1 = time.time()
+        log.info(f"Wall clock time for processing {nimages - 1} integrations: {(t1 - t0):.1f} sec")
+
+        # Collect results from parallel processing and reconstruct SpecModels
+        for tracemodels, spec_list_data, atoca_list_data, _, _ in all_results:
+            for order in tracemodels:
+                all_tracemodels[order].append(tracemodels[order])
+            for order in spec_list_data:
+                spec = _reconstruct_spec_from_data(spec_list_data[order])
+                output_spec_list[order].append(spec)
+            for atoca_spec_data in atoca_list_data:
+                atoca_spec = _reconstruct_spec_from_data(atoca_spec_data)
+                output_atoca.spec.append(atoca_spec)
 
     # Make a TSOSpecModel from the output spec list
     for order in output_spec_list:

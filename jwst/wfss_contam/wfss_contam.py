@@ -11,56 +11,13 @@ from stdatamodels.jwst.transforms.models import (
     NIRISSBackwardGrismDispersion,
 )
 
+from jwst.lib.multiprocessing import determine_ncores
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
 
 log = logging.getLogger(__name__)
 
 __all__ = ["contam_corr"]
-
-
-def determine_multiprocessing_ncores(max_cores, num_cores):
-    """
-    Determine the number of cores to use for multiprocessing.
-
-    Parameters
-    ----------
-    max_cores : str or int
-        Number of cores to use for multiprocessing. If set to 'none'
-        (the default), then no multiprocessing will be done. The other
-        allowable string values are 'quarter', 'half', and 'all', which indicate
-        the fraction of cores to use for multi-proc. The total number of
-        cores includes the SMT cores (Hyper Threading for Intel).
-        If an integer is provided, it will be the exact number of cores used.
-    num_cores : int
-        Number of cores available on the machine
-
-    Returns
-    -------
-    ncpus : int
-        Number of cores to use for multiprocessing
-    """
-    match max_cores:
-        case "none":
-            return 1
-        case None:
-            return 1
-        case "quarter":
-            return num_cores // 4 or 1
-        case "half":
-            return num_cores // 2 or 1
-        case "all":
-            return num_cores
-        case int():
-            if max_cores <= num_cores and max_cores > 0:
-                return max_cores
-            log.warning(
-                f"Requested {max_cores} cores exceeds the number of cores available "
-                "on this machine ({num_cores}). Using all available cores."
-            )
-            return num_cores
-        case _:
-            raise ValueError(f"Invalid value for max_cores: {max_cores}")
 
 
 class UnmatchedSlitIDError(Exception):
@@ -436,7 +393,7 @@ def contam_corr(
         Contamination estimate images for each source slit
     """
     num_cores = multiprocessing.cpu_count()
-    ncpus = determine_multiprocessing_ncores(max_cores, num_cores)
+    ncpus = determine_ncores(max_cores, num_cores)
 
     # Get the segmentation map and direct image for this grism exposure
     seg_model = datamodels.open(input_model.meta.segmentation_map)
