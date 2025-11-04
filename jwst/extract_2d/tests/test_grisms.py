@@ -496,12 +496,9 @@ def test_extract_wfss_object(nbright, source_ids):
         source_ids = [9, 19, 25]
     if nbright is None:
         nbright = 3
-        expected_mag_order = [9, 19, 25]
-    else:
-        # only sorted by magnitude if nbright is used
-        expected_mag_order = [25, 9, 19]
+    expected_ids = [25, 9, 19]  # sorted by magnitude
     if source_ids is not None:
-        expected_mag_order = [sid for sid in expected_mag_order if sid in np.atleast_1d(source_ids)]
+        expected_ids = [sid for sid in expected_ids if sid in np.atleast_1d(source_ids)]
 
     # check the number of sources was as expected
     n_expected = min(nbright, len(np.atleast_1d(source_ids)))
@@ -509,14 +506,15 @@ def test_extract_wfss_object(nbright, source_ids):
 
     # Check that the source IDs and names are as expected
     ids = [slit.source_id for slit in outmodel.slits]
-    names = [slit.name for slit in outmodel.slits]
-    assert ids == expected_mag_order[:n_expected]
-    assert names == [str(sid) for sid in expected_mag_order[:n_expected]]
+    assert ids == expected_ids[:n_expected]  # ordered by magnitude
 
     # Compare SRCDEC and SRCRA values
     if nbright is None and source_ids is None:
-        assert np.isclose(outmodel[0].source_dec, -27.80858320887945)
-        assert np.isclose(outmodel[0].source_ra, 53.13773660029234)
+        assert np.isclose(outmodel[1].source_dec, -27.80858320887945)
+        assert np.isclose(outmodel[1].source_ra, 53.13773660029234)
+
+    names = [slit.name for slit in outmodel.slits]
+    assert names == [str(sid) for sid in expected_ids[:n_expected]]
 
     with pytest.raises(TypeError):
         extract_tso_object(wcsimage, reference_files="myspecwcs.asdf")
