@@ -102,21 +102,23 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
     # different data values to be reported and the abs and rel tolerances
     report = rsplit[from_line:]
     # Remove the max absolute and max relative to pass old astropy version tests
-    end_idx, no_diffs = None, False
-    for idx, line in enumerate(report):
+    no_diffs = False
+    new_report = []
+    for line in report:
         if "No differences found" in line:
             no_diffs = True
             break
-        if "Maximum relative difference" in line:
-            end_idx = idx
-            break
+        elif "Maximum relative difference" in line:
+            continue
+        elif "Maximum absolute difference" in line:
+            continue
+        new_report.append(line)
     if no_diffs:
         if report_pixel_loc_diffs:
             return report, report
         else:
             return report
-    if end_idx is not None:
-        report = report[:end_idx]
+    report = new_report
     if not report_pixel_loc_diffs:
         return report
     else:
@@ -135,7 +137,7 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
             elif "Values in" in line or "Reporting percentages" in line:
                 stidx = True
                 pixidx = False
-            elif "differs" in line or "differ:" in line:
+            elif "differs" in line or "differ:" in line or "Extra column" in line:
                 stidx = False
                 pixidx = True
                 if diffsline:

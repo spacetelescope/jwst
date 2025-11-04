@@ -8,7 +8,7 @@ import warnings
 from itertools import islice
 
 import numpy as np
-from astropy import __version__
+from astropy import __version__ as astropy_version
 from astropy.io.fits.diff import (
     _COL_ATTRS,
     FITSDiff,
@@ -20,6 +20,7 @@ from astropy.io.fits.diff import (
 from astropy.io.fits.hdu.table import _TableLikeHDU
 from astropy.table import Table
 from astropy.utils.diff import diff_values, report_diff_values, where_not_allclose
+from packaging.version import Version
 
 __all__ = [
     "STFITSDiff",
@@ -29,6 +30,76 @@ __all__ = [
     "STRawDataDiff",
     "STTableDataDiff",
 ]
+
+#
+# When we get to the right version, the following items need to be removed:
+# Items                                                         Script where items live
+# ----------------------------------------------------------    -----------------------
+# global variable ASTROPY_LT_7_1_1                              st_fitsdiff.py
+# function where_not_allclose                                   st_fitsdiff.py
+# lines in function report_to_list that pass the abs/rel max    test_stfitsdiff.py
+ASTROPY_LT_7_1_1 = Version(astropy_version) < Version("7.1.1.dev")
+
+if ASTROPY_LT_7_1_1:
+    # This function is for now copied from astropy. We can remove it once jwst updates the
+    # astropy pin that contains this new functionality, i.e. above v.7.1.0.
+    def where_not_allclose(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):  # noqa: no-redef
+        """
+        Return array where values are above tolerances. Include max and min.
+
+        A version of :func:`numpy.allclose` that returns the indices
+        where the two arrays differ, instead of just a boolean value.
+
+        Parameters
+        ----------
+        a, b : array-like
+            Input arrays to compare.
+        rtol, atol : float
+            Relative and absolute tolerances as accepted by
+            :func:`numpy.allclose`.
+        return_maxdiff : bool
+            Return the maximum of absolute and relative differences.
+
+        Returns
+        -------
+        idx : tuple of array
+            Indices where the two arrays differ.
+        max_absolute : float
+            Maximum of absolute difference, returned if ``return_maxdiff=True``.
+        max_relative : float
+            Maximum of relative difference, returned if ``return_maxdiff=True``.
+        """
+        # Create fixed mask arrays to handle INF and NaN; currently INF and NaN
+        # are handled as equivalent
+        a = np.ma.masked_invalid(a)
+        b = np.ma.masked_invalid(b)
+
+        absolute = np.ma.abs(b - a)
+
+        if atol == 0.0 and rtol == 0.0:
+            # Use a faster comparison for the most simple (and common) case
+            thresh = 0
+        else:
+            thresh = atol + rtol * np.abs(b)
+
+        # values invalid in only one of the two arrays should be reported
+        invalid = a.mask ^ b.mask
+        indices = np.where(invalid | (absolute.filled(0) > thresh))
+
+        if return_maxdiff:
+            absolute[invalid] = np.ma.masked
+            finites = ~absolute.mask
+            absolute = absolute.compressed()
+            if len(indices[0]) == 0 or absolute.size == 0:
+                max_absolute = max_relative = 0
+            else:
+                # remove all invalid values before computing max differences
+                relative = absolute / np.abs(b[finites])
+                max_absolute = float(np.max(absolute))
+                max_relative = np.max(relative)
+            return indices, max_absolute, max_relative
+        else:
+            return indices
 
 
 def set_variable_to_empty_list(variable):
@@ -271,7 +342,7 @@ class STFITSDiffBeta(FITSDiff):
         wrapper = textwrap.TextWrapper(initial_indent="  ", subsequent_indent="  ")
 
         self._fileobj.write("\n")
-        self._writeln(f" fitsdiff: {__version__}")
+        self._writeln(f" fitsdiff: {astropy_version}")
         self._writeln(f" a: {self.filenamea}\n b: {self.filenameb}")
 
         if self.ignore_hdus:
@@ -779,7 +850,9 @@ class STImageDataDiff(ImageDataDiff):
                 atol = 0
 
             # Find the indices where the values are not equal
-            diffs = where_not_allclose(self.a, self.b, atol=atol, rtol=rtol)
+            diffs, self.max_absolute, self.max_relative = where_not_allclose(
+                self.a, self.b, atol=atol, rtol=rtol, return_maxdiff=True
+            )
 
             self.diff_total = len(diffs[0])
 
@@ -885,9 +958,6 @@ class STImageDataDiff(ImageDataDiff):
             if not self.diff_pixels:
                 return
 
-            max_relative = 0
-            max_absolute = 0
-
             self._writeln("\n * Pixel indices below are 1-based.")
             for index, values in self.diff_pixels:
                 # Convert to int to avoid np.int64 in list repr.
@@ -902,33 +972,13 @@ class STImageDataDiff(ImageDataDiff):
                     atol=self.atol,
                 )
 
-                # Added by STScI to avoid TypeError: 'numpy.float32' object
-                # cannot be interpreted as an integer
-                if np.isnan(values[0]) or np.isnan(values[1]):
-                    max_relative = 0
-                    max_absolute = 0
-                elif values[0] == 0.0:
-                    max_relative = values[1]
-                    max_absolute = values[1]
-                else:
-                    # Same code as astropy
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore", RuntimeWarning)
-                        rdiff = abs(values[1] - values[0]) / np.abs(values[0])
-                        adiff = float(abs(values[1] - values[0]))
-                    max_relative = max(max_relative, rdiff)
-                    max_absolute = max(max_absolute, adiff)
-
             if self.diff_total > self.numdiffs:
                 self._writeln(" ...")
             self._writeln(
                 f" {self.diff_total} different pixels found ({self.diff_ratio:.2%} different)."
             )
-            self._writeln(
-                f"\n * These values are calculated from the first {self.numdiffs} differences"
-            )
-            self._writeln(f" Maximum relative difference: {max_relative}")
-            self._writeln(f" Maximum absolute difference: {max_absolute}")
+            self._writeln(f" Maximum relative difference: {self.max_relative}")
+            self._writeln(f" Maximum absolute difference: {self.max_absolute}")
 
 
 class STRawDataDiff(STImageDataDiff):
@@ -1420,7 +1470,9 @@ class STTableDataDiff(TableDataDiff):
                 if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
                     arrb.dtype, np.floating
                 ):
-                    diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
+                    diffs, self.max_absolite, self.max_relative = where_not_allclose(
+                        arra, arrb, rtol=self.rtol, atol=self.atol, return_maxdiff=True
+                    )
                 elif "P" in col.format or "Q" in col.format:
                     diffs = (
                         [
