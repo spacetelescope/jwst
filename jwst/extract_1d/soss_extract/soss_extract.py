@@ -1592,6 +1592,9 @@ def run_extract1d(
                 ]
             )
 
+            # if i == 1:
+            #     print(process_args[0][4][0].__dict__)
+
         # Determine number of cores for multiprocessing
         max_available_cores = mp.cpu_count()
         max_cpu = compute_num_slices(
