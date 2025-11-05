@@ -1607,6 +1607,9 @@ def run_extract1d(
             pool = ctx.Pool(max_cpu)
             try:
                 all_results = pool.starmap(_process_one_integration, process_args)
+            except Exception as e:
+                log.error(f"Error during parallel processing: {e}")
+                raise
             finally:
                 pool.close()
                 pool.join()

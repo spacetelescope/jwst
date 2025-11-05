@@ -323,6 +323,9 @@ class Observation:
             pool = ctx.Pool(self.max_cpu)
             try:
                 all_res = pool.starmap(disperse, disperse_args)
+            except Exception as e:
+                log.error(f"Error during parallel processing: {e}")
+                raise
             finally:
                 pool.close()
                 pool.join()
