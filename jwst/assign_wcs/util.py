@@ -7,7 +7,6 @@ import numpy as np
 from astropy.constants import c
 from astropy.coordinates import SkyCoord
 from astropy.modeling import models as astmodels
-from astropy.table import QTable
 from gwcs import WCS
 from gwcs import utils as gwutils
 from gwcs.wcstools import grid_from_bounding_box
@@ -16,7 +15,7 @@ from stdatamodels.jwst.datamodels import MiriLRSSpecwcsModel, WavelengthrangeMod
 from stdatamodels.jwst.transforms.models import GrismObject
 from stpipe.exceptions import StpipeExitException
 
-from jwst.lib.catalog_utils import SkyObject
+from jwst.lib.catalog_utils import SkyObject, read_source_catalog
 
 log = logging.getLogger(__name__)
 
@@ -32,7 +31,6 @@ __all__ = [
     "calc_rotation_matrix",
     "wrap_ra",
     "update_fits_wcsinfo",
-    "read_source_catalog",
 ]
 
 
@@ -217,47 +215,6 @@ def not_implemented_mode(input_model, ref, slit_y_range=None):  # noqa: ARG001
     exp_type = input_model.meta.exposure.type
     message = f"WCS for EXP_TYPE of {exp_type} is not implemented."
     log.critical(message)
-
-
-def read_source_catalog(catalog_name):
-    """
-    Read a source catalog from file or validate an existing QTable.
-
-    Parameters
-    ----------
-    catalog_name : str or `~astropy.table.QTable`
-        Either the filename of a source catalog in ECSV format, or an
-        existing Astropy QTable containing the catalog data.
-
-    Returns
-    -------
-    catalog : `~astropy.table.QTable`
-        The source catalog as a table.
-
-    Raises
-    ------
-    ValueError
-        If an empty filename string is provided.
-    FileNotFoundError
-        If the specified catalog file cannot be found.
-    TypeError
-        If the input is neither a string filename nor a QTable instance.
-    """
-    if isinstance(catalog_name, str):
-        if len(catalog_name) == 0:
-            err_text = "Empty catalog filename"
-            log.error(err_text)
-            raise ValueError(err_text)
-        try:
-            return QTable.read(catalog_name, format="ascii.ecsv")
-        except FileNotFoundError as e:
-            log.error(f"Could not find catalog file: {e}")
-            raise FileNotFoundError(f"Could not find catalog: {e}") from None
-    elif isinstance(catalog_name, QTable):
-        return catalog_name
-    err_text = "Need to input string name of catalog or astropy.table.table.QTable instance"
-    log.error(err_text)
-    raise TypeError(err_text)
 
 
 def get_object_info(catalog_name=None):
