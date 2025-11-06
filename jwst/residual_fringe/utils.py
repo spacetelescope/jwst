@@ -281,15 +281,11 @@ def find_lines(signal, max_amp):
 
     for n, amp in enumerate(u_y):
         max_amp_val = max_amp[u_x[n]]
-        log.debug("find_lines: check if peak above max amp")
         if amp > max_amp_val:
             # peak in x
-            # log.debug("find_lines: flagging neighbours")
             xpeaks = [u_x[n] - 1, u_x[n], u_x[n] + 1]
 
-            # log.debug("find_lines:  find neareast troughs")
             # find nearest troughs
-
             for xp in xpeaks:
                 log.debug(f"find_lines:  checking ind {xp}")
 
@@ -954,7 +950,8 @@ def fit_1d_fringes_bayes_evidence_1d(
     _ = sftr.fit(res_fringes, weights=weights)
     evidence1 = sftr.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
 
-    for _ in range(max_nfringes):
+    for nfringe in range(max_nfringes):
+        log.debug(f"Fitting fringe {nfringe} of {max_nfringes} max")
         # get the scan arrays
         res_fringe_scan = res_fringes_proc[np.where(weights > 1e-05)]
         wavenum_scan = wavenum[np.where(weights > 1e-05)]
@@ -982,15 +979,14 @@ def fit_1d_fringes_bayes_evidence_1d(
             mdl.parameters = pars
             fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0)
             ftr = RobustShell(fitter, domain=10)
-            pars = ftr.fit(res_fringes, weights=weights)
+            ftr.fit(res_fringes, weights=weights)
 
-            # try to get evidence (may fail for large component
-            # fits to noisy data, set to very negative value)
-            try:
-                evidence2 = fitter.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
-            except ValueError:
-                evidence2 = -1e9
-        except RuntimeError:
+            # try to get evidence (may fail with ValueError
+            # for large component fits to noisy data)
+            evidence2 = fitter.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
+        except (ValueError, RuntimeError, np.linalg.LinAlgError) as err:
+            # set evidence to large negative value in case of failure
+            log.debug("Fringe fit failed: %s", str(err))
             evidence2 = -1e9
 
         bayes_factor = evidence2 - evidence1
