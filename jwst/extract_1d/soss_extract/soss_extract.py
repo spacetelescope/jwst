@@ -1602,13 +1602,25 @@ def run_extract1d(
 
         t0 = time.time()
         if max_cpu > 1 and nimages > 1:
-            log.info(f"Using {max_cpu} CPU cores for multiprocessing {nimages - 1} integrations.")
+            log.info(f"Using {max_cpu} CPU cores for multiprocessing {nimages - 1} integrations...")
             ctx = mp.get_context("spawn")
             pool = ctx.Pool(max_cpu)
             try:
-                all_results = pool.starmap(_process_one_integration, process_args)
+                # Submit all jobs and collect AsyncResult objects
+                async_results = []
+                for i, args in enumerate(process_args):
+                    int_num = i + 2  # Integration numbers start at 2 (1 was already processed)
+                    result = pool.apply_async(_process_one_integration, args)
+                    async_results.append((int_num, result))
+
+                # Collect results as they complete
+                all_results = []
+                for int_num, result in async_results:
+                    output = result.get()
+                    log.info(f"Completed processing integration {int_num}.")
+                    all_results.append(output)
             except Exception as e:
-                log.error(f"Error during parallel processing: {e}")
+                log.error(f"Error during parallel processing on integration {int_num}: {e}")
                 raise
             finally:
                 pool.close()
