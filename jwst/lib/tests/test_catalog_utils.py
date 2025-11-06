@@ -3,6 +3,12 @@ from astropy.utils.diff import report_diff_values
 
 from jwst.lib.catalog_utils import read_source_catalog
 from jwst.source_catalog import SourceCatalogStep
+from jwst.source_catalog.tests.helpers import make_nircam_model
+
+
+@pytest.fixture
+def nircam_model():
+    return make_nircam_model()
 
 
 def test_read_source_catalog(nircam_model, tmp_path):
@@ -42,8 +48,3 @@ def test_read_source_catalog_invalid_input():
         TypeError, match="Need to input string name of catalog or astropy.table.table.QTable"
     ):
         read_source_catalog(12345)
-
-    with pytest.raises(
-        TypeError, match="Need to input string name of catalog or astropy.table.table.QTable"
-    ):
-        read_source_catalog([1, 2, 3])

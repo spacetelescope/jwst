@@ -1,11 +1,9 @@
 import numpy as np
-import pytest
 import stdatamodels.jwst.datamodels as dm
 from photutils.datasets import make_gwcs
 
 
-@pytest.fixture
-def nircam_model():
+def make_nircam_model():
     """
     Create a NIRCam ImageModel with synthetic data for testing.
 
@@ -63,8 +61,7 @@ def nircam_model():
     return model
 
 
-@pytest.fixture
-def nircam_model_without_apcorr():
+def make_nircam_model_without_apcorr():
     """
     Create a NIRCam ImageModel without aperture correction.
 

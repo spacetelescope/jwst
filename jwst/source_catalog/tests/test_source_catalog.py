@@ -8,6 +8,17 @@ from astropy.table import QTable
 from numpy.testing import assert_allclose
 
 from jwst.source_catalog import SourceCatalogStep
+from jwst.source_catalog.tests.helpers import make_nircam_model, make_nircam_model_without_apcorr
+
+
+@pytest.fixture
+def nircam_model():
+    return make_nircam_model()
+
+
+@pytest.fixture
+def nircam_model_without_apcorr():
+    return make_nircam_model_without_apcorr()
 
 
 @pytest.mark.parametrize(
