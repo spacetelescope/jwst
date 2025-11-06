@@ -1990,3 +1990,33 @@ def test_apply_bkg_sigma_clip_extended(mock_miri_ifu):
     expected_shape = (shape[1], shape[2])
     assert np.shape(maskclip) == expected_shape
     assert float(bkg_table["aperture_sum"][0]) == 3123750.0
+
+
+def test_apply_bkg_sigma_clip_no_bkg_stat_data(mock_miri_ifu):
+    bkg_data = mock_miri_ifu.data[0, :, :]
+    temp_weightmap = mock_miri_ifu.weightmap[0, :, :]
+    temp_weightmap *= 0.0
+    shape = np.shape(mock_miri_ifu.data)
+    bmask = np.zeros([shape[1], shape[2]], dtype=bool)
+    bmask[:] = False
+    bmask[np.where(temp_weightmap == 0)] = True
+    bkg_sigma_clip = 3.0
+    step = Extract1dStep()
+    ref_file = step.get_reference_file(mock_miri_ifu, "extract1d")
+    extract_params = ifu.get_extract_parameters(ref_file, bkg_sigma_clip)
+    method = extract_params["method"]
+    subpixels = extract_params["subpixels"]
+    width = float(shape[-1])
+    height = float(shape[-2])
+    x_center = width / 2.0 - 0.5
+    y_center = height / 2.0 - 0.5
+    theta = 0.0
+    position = (x_center, y_center)
+    aperture = RectangularAperture(position, width, height, theta)
+
+    bkg_table, maskclip = ifu._apply_bkg_sigma_clip(
+        bkg_data, temp_weightmap, bmask, bkg_sigma_clip, aperture, method, subpixels
+    )
+
+    assert maskclip is None
+    assert float(bkg_table["aperture_sum"][0]) == 0.0
