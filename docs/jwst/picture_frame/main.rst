@@ -29,9 +29,9 @@ uses the process outlined in :ref:`scene_mask`, with the difference that science
 regions are masked by default for picture frame processing.
 
 After background data is identified, median values are computed over the
-edges (:math:`m_{eref}`) and center (:math:`m_{cref}`) of the reference picture
-frame image, at the valid background locations only.  Then, for each group image
-in each integration, the cleaning process is:
+edges (:math:`m_{eref}`) and center (:math:`m_{cref}`) of the picture
+frame reference image, at the valid background locations only.  Then, for each
+group image in each integration, the cleaning process is:
 
 #. Make a difference image (current group – first group) to correct.  The first
    group is left uncorrected.
@@ -40,7 +40,7 @@ in each integration, the cleaning process is:
    of the difference image at valid background locations.
 
 #. Use the median values for the difference image to scale and offset
-   the reference picture frame rate image (:math:`p`):
+   the picture frame reference image (:math:`p`):
 
     .. math::
 
