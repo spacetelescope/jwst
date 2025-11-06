@@ -1002,6 +1002,10 @@ def fit_1d_fringes_bayes_evidence_1d(
         res_fringes_proc = res_fringes.copy() - res_fringe_fit
         nfringes += 1
 
+    # Check for any successful fit
+    if len(fitted_frequencies) == 0:
+        raise ValueError(f"Failed to fit any fringes for frequency {ffreq}")
+
     # create outputs to return
     fitted_frequencies = (1 / np.asarray(fitted_frequencies)) * factor
     peak_freq = fitted_frequencies[0]
@@ -1113,17 +1117,21 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
             res_fringes *= np.where(weights > 1e-07, 1, 1e-08)
 
             # fit the residual fringes
-            res_fringe_fit, wpix_num, opt_nfringes, peak_freq, freq_min, freq_max = (
-                fit_1d_fringes_bayes_evidence_1d(
-                    res_fringes,
-                    weights_feat,
-                    wavenum,
-                    ffreq,
-                    dffreq_vals[n],
-                    max_nfringes_vals[n],
-                    0.001,
+            try:
+                res_fringe_fit, wpix_num, opt_nfringes, peak_freq, freq_min, freq_max = (
+                    fit_1d_fringes_bayes_evidence_1d(
+                        res_fringes,
+                        weights_feat,
+                        wavenum,
+                        ffreq,
+                        dffreq_vals[n],
+                        max_nfringes_vals[n],
+                        0.001,
+                    )
                 )
-            )
+            except ValueError as err:
+                log.warning(str(err))
+                continue
 
             # check for fit blowing up, reset rfc fit to 0, raise a flag
             res_fringe_fit, res_fringe_fit_flag = check_res_fringes(res_fringe_fit, max_amp)

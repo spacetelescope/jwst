@@ -142,6 +142,23 @@ def test_rf1d(linear_spectrum, fringed_spectrum):
     assert np.nanmean(relative_diff_input) > 0.01
 
 
+def test_rf1d_failure(caplog, monkeypatch, fringed_spectrum):
+    """Test that linear algebra errors are caught."""
+
+    def raise_error(*args, **kwargs):
+        raise np.linalg.LinAlgError("Linear algebra error")
+
+    monkeypatch.setattr(np.linalg, "solve", raise_error)
+
+    wave, flux = fringed_spectrum
+    outflux = rf1d(flux, wave, channel=2)
+
+    # Since all fits fail, a warning is logged and the
+    # output is the same as the input
+    assert "Failed to fit any fringes" in caplog.text
+    assert np.allclose(outflux, flux)
+
+
 def test_get_wavemap():
     """
     Test the _get_wavemap function directly.
