@@ -278,6 +278,7 @@ def mock_nirspec_bots_func():
     model.meta.target.source_type = "POINT"
     model.meta.wcsinfo.dispersion_direction = 1
     model.meta.wcs = simple_wcs_func()
+    model.meta.aperture.position_angle = 150.0
 
     model.data = np.arange(10 * 50 * 50, dtype=float).reshape((10, 50, 50))
     model.var_poisson = model.data * 0.02
@@ -489,6 +490,7 @@ def mock_miri_ifu_func():
     model.meta.wcsinfo.dispersion_direction = 2
     model.meta.photometry.pixelarea_steradians = 1.0
     model.meta.wcs = simple_wcs_ifu_func()
+    model.meta.aperture.position_angle = 150.0
 
     model.data = np.arange(10 * 50 * 50, dtype=float).reshape((10, 50, 50))
     model.var_poisson = model.data * 0.02
