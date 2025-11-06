@@ -871,7 +871,8 @@ def extract_ifu(input_model, source_type, extract_params):
         )
         f_var_flat[k] = float(var_flat_table["aperture_sum"][0])
 
-        # Point source type of data with defined annulus size
+        # Point source type of data with defined annulus size,
+        # background determined from sigma clipping
         if subtract_background_plane:
             bkg_data = data[k, :, :]
             bkg_table, _ = _apply_bkg_sigma_clip(
