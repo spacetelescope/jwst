@@ -704,8 +704,7 @@ class Spec2Pipeline(Pipeline):
             del wfss_esec
 
         # More study required on the best approach for flat fielding with MIRI WFSS
-        # It has been left in for testing.
-        # calibrated = self.flat_field.run(calibrated)
+        # For now we are allowing flat fielding. This may change in the future.
 
         # Continue with remaining calibration steps, using the original
         # DN/sec image
