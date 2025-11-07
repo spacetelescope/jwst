@@ -1019,7 +1019,13 @@ def fit_1d_fringes_bayes_evidence_1d(
 
 
 def fit_residual_fringes_1d(
-    flux, wavelength, channel=1, dichroic_only=False, max_amp=None, max_line=None
+    flux,
+    wavelength,
+    channel=1,
+    dichroic_only=False,
+    max_amp=None,
+    max_line=None,
+    ignore_regions=None,
 ):
     """
     Fit residual fringes in 1D.
@@ -1040,6 +1046,10 @@ def fit_residual_fringes_1d(
     max_line : float, optional
         The maximum relative amplitude value to detect an emission line.  If not provided,
         is set to `MAX_LINE_1D`.
+    ignore_regions : list of list of float, optional
+        If provided, data in the wavelengths specified is ignored in the fringe
+        fits. The expected format is a list of [min_region, max_region] values, in
+        input wavelength units.
 
     Returns
     -------
@@ -1061,6 +1071,15 @@ def fit_residual_fringes_1d(
     # and can bias the fringe finding
     weights[usewave > 27.6] = 0
 
+    # Zero out weights for any user-specified regions
+    if ignore_regions is not None:
+        for region in ignore_regions:
+            weights[(usewave > region[0]) & (usewave < region[1])] = 0
+
+    if np.all(weights == 0):
+        log.warning("No good data. Skipping correction.")
+        return flux
+
     # get the maxamp of the fringes
     if max_amp is None:
         max_amp_array = np.full(useflux.shape, MAXAMP_1D)
@@ -1076,7 +1095,7 @@ def fit_residual_fringes_1d(
     env, l_x, l_y, _, _, _ = fit_envelope(np.arange(useflux.shape[0]), useflux)
     mod = np.abs(useflux / env) - 1
 
-    # given signal in mod find location of lines > max_amp
+    # given signal in mod find location of lines > max line amp
     weight_factors = find_lines(mod, max_line_array)
     weights_feat = weights * weight_factors
 

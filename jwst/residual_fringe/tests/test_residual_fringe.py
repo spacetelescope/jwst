@@ -210,6 +210,36 @@ def test_rf1d_failure(caplog, monkeypatch, fringed_spectrum):
     assert np.allclose(outflux, flux)
 
 
+def test_rf1d_ignore_regions(fringed_spectrum_with_peak, linear_spectrum_with_peak):
+    """Test that specified regions are ignored."""
+    wave, flux = fringed_spectrum_with_peak
+    expected_flux = linear_spectrum_with_peak[1]
+
+    # Set tolerance high so the peak is not masked
+    outflux_1 = rf1d(flux, wave, channel=2, max_amp=0.5, max_line=100)
+    relative_diff_1 = np.abs(outflux_1 - expected_flux) / expected_flux
+
+    # Ignore the region containing the peak
+    outflux_2 = rf1d(
+        flux, wave, channel=2, max_amp=0.5, max_line=100, ignore_regions=[[10.86, 10.89]]
+    )
+    relative_diff_2 = np.abs(outflux_2 - expected_flux) / expected_flux
+
+    # The second correction should be better
+    assert np.mean(relative_diff_2) < np.mean(relative_diff_1)
+
+
+def test_rf1d_ignore_all_regions(fringed_spectrum):
+    """Test that ignoring all regions skips correction."""
+    wave, flux = fringed_spectrum
+
+    # Ignore all regions
+    outflux = rf1d(flux, wave, channel=2, ignore_regions=[[0, 100]])
+
+    # Output should be unchanged
+    assert np.allclose(flux, outflux)
+
+
 def test_get_wavemap():
     """
     Test the _get_wavemap function directly.
