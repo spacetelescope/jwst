@@ -95,6 +95,12 @@ class BackgroundStep(Step):
         elif model.meta.exposure.type == "NIS_SOSS":
             # Fetch the background reference filename
             bkg_name = self.get_reference_file(model, "bkg")
+
+            if bkg_name == "N/A":
+                log.warning("No BKG reference file found. Skipping background subtraction.")
+                model.meta.cal_step.bkg_subtract = "SKIPPED"
+                return model
+
             log.info("Using BKG reference file %s", bkg_name)
 
             if self.soss_bkg_percentile is None:
