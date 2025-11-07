@@ -355,7 +355,7 @@ class STFITSDiffBeta(FITSDiff):
 
         self._fileobj.write("\n")
         self._writeln("\n* STScI Custom FITSDiff")
-        self._writeln(f" fitsdiff: {__version__}")
+        self._writeln(f" fitsdiff: {astropy_version}")
         self._writeln(f" a: {self.filenamea}\n b: {self.filenameb}")
 
         if self.ignore_hdus:
