@@ -327,8 +327,8 @@ def find_lines(signal, max_amp):
 
     log.debug(f"find_lines: Found {len(u_x)} peaks, {len(l_x)} troughs")
 
-    # catch any remaining signal higher than the max amplitude
-    weights_factors[signal_check > max_amp] = 0
+    # catch any remaining signal significantly higher than the max amplitude
+    weights_factors[signal_check > 2 * max_amp] = 0
 
     return weights_factors
 
