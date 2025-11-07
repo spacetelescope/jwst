@@ -61,10 +61,6 @@ jobs:
       envs: |
         - linux: check-docs-links
           python-version: '3.13'
-        - macos: py311-xdist
-          pytest-results-summary: true
-        - macos: py312-xdist
-          pytest-results-summary: true
         # TODO: Merge stdevdeps into devdeps
         - linux: py313-stdevdeps-xdist
           pytest-results-summary: true
@@ -74,3 +70,6 @@ jobs:
           pytest-results-summary: true
         - macos: py313-devdeps-xdist
           pytest-results-summary: true
+      fill: true
+      fill_platforms: macos
+      fill_factors: xdist

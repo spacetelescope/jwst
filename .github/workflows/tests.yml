@@ -65,11 +65,6 @@ jobs:
       envs: |
         - linux: py311-oldestdeps-xdist-cov
           pytest-results-summary: true
-        - linux: py311-xdist
-          posargs: -vv
-          pytest-results-summary: true
-        - linux: py312-xdist
-          pytest-results-summary: true
         # `tox` does not currently respect `requires-python` versions when creating testing environments;
         # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
         - linux: py313-cov-xdist
@@ -77,3 +72,6 @@ jobs:
           pytest-results-summary: true
         - macos: py313-xdist
           pytest-results-summary: true
+      fill: true
+      fill_platforms: linux
+      fill_factors: xdist
