@@ -3,6 +3,7 @@ import logging
 import numpy as np
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.clean_flicker_noise import clean_flicker_noise as cfn
 
 __all__ = ["correct_picture_frame"]
@@ -141,12 +142,22 @@ def correct_picture_frame(
             nints = 1
 
     # Assign a WCS to the rate file and flag open MSA shutters
-    image_model = cfn.post_process_rate(
-        image_model,
-        assign_wcs=mask_science_regions,
-        msaflagopen=mask_science_regions,
-        input_dir=input_dir,
-    )
+    try:
+        image_model = cfn.post_process_rate(
+            image_model,
+            assign_wcs=mask_science_regions,
+            msaflagopen=mask_science_regions,
+            input_dir=input_dir,
+        )
+    except NoDataOnDetectorError:
+        log.warning("WCS could not be assigned. Trying again with mask_science_regions=False.")
+        mask_science_regions = False
+        image_model = cfn.post_process_rate(
+            image_model,
+            assign_wcs=False,
+            msaflagopen=False,
+            input_dir=input_dir,
+        )
 
     # Make a background mask from the draft rate file, blocking out science regions
     background_mask = cfn.create_mask(

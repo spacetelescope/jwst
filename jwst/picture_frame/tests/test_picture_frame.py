@@ -3,6 +3,8 @@ import logging
 import numpy as np
 from stdatamodels.jwst import datamodels
 
+from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
+from jwst.assign_wcs.util import NoDataOnDetectorError
 from jwst.clean_flicker_noise.tests.helpers import make_nirspec_fs_model, make_nrs_fs_full_ramp
 from jwst.lib.basic_utils import LoggingContext
 from jwst.picture_frame import picture_frame as pf
@@ -139,3 +141,29 @@ def test_correction_invalid_data(caplog):
     # Mask is calculated and returned: it shows no valid background data to fit
     assert mask is not None
     assert np.all(mask.data == 0)
+
+
+def test_correction_wcs_error(caplog, monkeypatch):
+    pctfrm_model = picture_frame_model()
+    input_model = make_nirspec_fs_model()
+
+    def raise_error(*args):
+        raise NoDataOnDetectorError("test error")
+
+    # Mock an error in assign_wcs
+    monkeypatch.setattr(AssignWcsStep, "process", raise_error)
+
+    # Add a edge region to correct
+    input_model.data[
+        pf.CENTER_REGION[0] : pf.CENTER_REGION[1], pf.CENTER_REGION[0] : pf.CENTER_REGION[1]
+    ] += 0.2
+
+    # Correction should warn but succeed without the WCS assigned
+    with LoggingContext(logging.getLogger("jwst"), level=logging.DEBUG):
+        cleaned, mask, correction, status = pf.correct_picture_frame(
+            input_model.copy(), pctfrm_model
+        )
+    assert "WCS could not be assigned. Trying again with mask_science_regions=False." in caplog.text
+
+    # Flat artifact should be perfectly corrected
+    np.testing.assert_allclose(cleaned.data, 0.0)
