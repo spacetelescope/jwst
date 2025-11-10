@@ -1,0 +1,1 @@
+Make version parsing regex more robust to custom versions.
