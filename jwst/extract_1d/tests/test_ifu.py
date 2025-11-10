@@ -1,7 +1,6 @@
 import numpy as np
 import pytest
 from photutils.aperture import CircularAnnulus, RectangularAperture
-from scipy.interpolate import interp1d
 
 from jwst.extract_1d import ifu
 from jwst.extract_1d.extract_1d_step import Extract1dStep
@@ -36,14 +35,9 @@ def test_apply_bkg_sigma_clip_point(mock_miri_ifu, setup_params):
     x0 = float(shape[2]) / 2.0
     y0 = float(shape[1]) / 2.0
     _, _, wavelength = ifu.get_coordinates(mock_miri_ifu, x0, y0)
-    # set a fake scale and interpolate the extraction parameters to the wavelength of the IFU cube
-    scale_arcsec = 0.5 * 3600.00
-    finner = interp1d(wave_extract, inner_bkg, bounds_error=False, fill_value="extrapolate")
-    inner_bkg_match = finner(wavelength) / scale_arcsec
-    fouter = interp1d(wave_extract, outer_bkg, bounds_error=False, fill_value="extrapolate")
-    outer_bkg_match = fouter(wavelength) / scale_arcsec
-    inner_bkg = inner_bkg_match[0]
-    outer_bkg = outer_bkg_match[0]
+    # set a fake inner and outer radius
+    inner_bkg = 9.4
+    outer_bkg = 12.7
     x_center = float(shape[-1]) / 2.0
     y_center = float(shape[-2]) / 2.0
     position = (x_center, y_center)
@@ -55,7 +49,7 @@ def test_apply_bkg_sigma_clip_point(mock_miri_ifu, setup_params):
 
     expected_shape = (shape[1], shape[2])
     assert np.shape(maskclip) == expected_shape
-    assert float(bkg_table["aperture_sum"][0]) == 0.0
+    assert float(bkg_table["aperture_sum"][0]) == 292332.0
 
 
 def setup_extended(extract_params, shape):
