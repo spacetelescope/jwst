@@ -128,8 +128,8 @@ def create_wfss_wcs():
 
 def traverse_wfss_trace():
     wcsobj = create_wfss_wcs()
-    detector_to_dispersed = wcsobj.get_transform("detector", "dispersed_detector")
-    dispersed_to_detector = wcsobj.get_transform("dispersed_detector", "detector")
+    detector_to_dispersed = wcsobj.get_transform("detector", "grism_detector")
+    dispersed_to_detector = wcsobj.get_transform("grism_detector", "detector")
 
     # check the round trip, grism pixel 100,100, source at 110,110,order 1
     xdis, ydis, xsource, ysource, order_in = (100, 100, 110, 110, 1)

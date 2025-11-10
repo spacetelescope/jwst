@@ -542,11 +542,11 @@ def extract_grism_objects(
                 )
 
                 if input_model.meta.exposure.type.upper() == "MIR_WFSS":
-                    grism_slit = copy.deepcopy(subwcs.dispersed_detector)
+                    grism_slit = copy.deepcopy(subwcs.grism_detector)
                     grism_slit.name = "grism_slit"
                     subwcs.insert_frame(
                         input_frame=grism_slit,
-                        output_frame="dispersed_detector",
+                        output_frame="grism_detector",
                         transform=tr,
                         # input_frame=grism_slit, output_frame="grism_detector", transform=tr
                     )

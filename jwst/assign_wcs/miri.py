@@ -829,7 +829,7 @@ def wfss(input_model, reference_files):
 
     # Create the empty detector as a 2D coordinate frame in pixel units
     gdetector = cf.Frame2D(
-        name="dispersed_detector",
+        name="grism_detector",
         axes_order=(0, 1),
         axes_names=("x_dispersed", "y_dispersed"),
         unit=(u.pix, u.pix),
