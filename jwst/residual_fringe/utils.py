@@ -1042,10 +1042,10 @@ def fit_residual_fringes_1d(
         Fit only dichroic fringes.
     max_amp : float, optional
         The maximum relative amplitude value for fringe correction. If not provided,
-        is set to `MAX_AMP_1D`.
+        is set to `MAXAMP_1D`.
     max_line : float, optional
         The maximum relative amplitude value to detect an emission line.  If not provided,
-        is set to `MAX_LINE_1D`.
+        is set to `MAXLINE_1D`.
     ignore_regions : list of list of float, optional
         If provided, data in the wavelengths specified is ignored in the fringe
         fits. The expected format is a list of [min_region, max_region] values, in
@@ -1090,7 +1090,7 @@ def fit_residual_fringes_1d(
     else:
         max_line_array = np.full(useflux.shape, max_line)
 
-    # find spectral features (env is spline fit of troughs and peaks)
+    # find spectral features (env is spline fit of lower edge of spectrum)
     # smooth the data slightly first to avoid noisy broad lines being missed
     env, l_x, l_y, _, _, _ = fit_envelope(np.arange(useflux.shape[0]), useflux)
     mod = np.abs(useflux / env) - 1
@@ -1168,7 +1168,6 @@ def fit_residual_fringes_1d(
         res_fringe_fit, res_fringe_fit_flag = check_res_fringes(res_fringe_fit, max_amp_array)
 
         # correct for residual fringes
-        _, _, _, env, u_x, u_y = fit_envelope(np.arange(res_fringe_fit.shape[0]), res_fringe_fit)
         rfc_factors = 1 / (res_fringe_fit * (weights > 1e-05).astype(int) + 1)
         proc_data *= rfc_factors
 
