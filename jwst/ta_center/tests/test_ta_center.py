@@ -1,0 +1,273 @@
+import numpy as np
+import pytest
+import stdatamodels.jwst.datamodels as dm
+from astropy.modeling import models
+
+from jwst.ta_center.ta_center_step import (
+    JWST_DIAMETER,
+    PIXSCALE,
+    SlitMask,
+    TACenterStep,
+    _get_wavelength,
+)
+
+
+def _create_slit_mask(image_shape):
+    """
+    Create a slit mask with subpixel accuracy.
+
+    For a rectangular slit aligned with the pixel grid, computes the fractional
+    overlap between each pixel and the slit aperture analytically.
+
+    Parameters
+    ----------
+    image_shape : tuple
+        Shape of the image (ny, nx).
+
+    Returns
+    -------
+    weights : ndarray
+        2D array of fractional pixel coverage values (0.0 to 1.0).
+    """
+    ny, nx = image_shape
+
+    # Create pixel coordinate grids (pixel indices: 0, 1, 2, ...)
+    y_indices, x_indices = np.mgrid[0:ny, 0:nx]
+
+    # Use the callable function to evaluate mask at all pixel positions
+    weights = SlitMask()(x_indices, y_indices)
+
+    return weights
+
+
+def make_slitless_data(wavelength=15.0, offset=(0, 0)):
+    """
+    Make a fake MIRI LRS slitless TAQ verification image.
+
+    Parameters
+    ----------
+    wavelength : float, optional
+        Wavelength in microns.
+    offset : tuple, optional
+        (x,y) offset of the source from the center of the frame in pixels.
+
+    Returns
+    -------
+    data : 2D ndarray
+        Simulated slitless TAQ image.
+    """
+    # Create coordinate grids
+    y, x = np.mgrid[0:100, 0:100]
+
+    # Calculate diffraction-limited Airy disk radius
+    # First zero of Airy disk: theta = 1.22 * lambda / D (in radians)
+    theta_rad = 1.22 * wavelength * 1e-6 / JWST_DIAMETER
+    theta_arcsec = theta_rad * 206265  # radians to arcseconds
+    radius_pixels = theta_arcsec / PIXSCALE  # to pixels
+
+    # Calculate source center position
+    x_center = 50 + offset[0]
+    y_center = 50 + offset[1]
+
+    # Create Airy disk model at diffraction-limited resolution
+    airy = models.AiryDisk2D(amplitude=1000.0, x_0=x_center, y_0=y_center, radius=radius_pixels)
+    data = airy(x, y)
+
+    # # Add some noise
+    noise = np.random.normal(0, 1, data.shape)
+    data += noise
+
+    return data
+
+
+def make_taq_image(make_data_func, filt, offset=(0, 0)):
+    """
+    Generate a TAQ image for testing.
+
+    Parameters
+    ----------
+    make_data_func : function
+        Function to generate the TAQ image data.  Must take in exactly
+        two arguments: wavelength and offset.
+    filt : str
+        Filter name, e.g., 'F560W', 'F770W', etc.
+    offset : tuple, optional
+        (x,y) offset of the source from the center of the frame in pixels.
+
+    Returns
+    -------
+    model : ImageModel
+        Simulated TAQ image model.
+    """
+    wavelength = _get_wavelength(filt)
+    data = make_data_func(wavelength, offset)
+    model = dm.ImageModel()
+    model.data = data
+    model.meta.instrument.filter = filt
+    return model
+
+
+@pytest.fixture
+def slitless_taq_image(tmp_path):
+    model = make_taq_image(make_slitless_data, "F1500W", offset=(2, -3))
+    filepath = tmp_path / "slitless_taq.fits"
+    model.save(filepath)
+    return str(filepath)
+
+
+def make_slit_data(wavelength=15.0, offset=(0, 0)):
+    """
+    Make a fake MIRI LRS slit TAQ verification image.
+
+    The PSF is truncated by the slit edges, simulating what happens in
+    FIXEDSLIT mode observations.
+
+    Parameters
+    ----------
+    wavelength : float, optional
+        Wavelength in microns.
+    offset : tuple, optional
+        (x,y) offset of the source from the center of the frame in pixels.
+
+    Returns
+    -------
+    data : 2D ndarray
+        Simulated slit TAQ image with PSF truncated by slit edges.
+    """
+
+    # Create coordinate grids
+    y, x = np.mgrid[0:100, 0:100]
+
+    # Calculate diffraction-limited Airy disk radius
+    theta_rad = 1.22 * wavelength * 1e-6 / JWST_DIAMETER
+    theta_arcsec = theta_rad * 206265  # radians to arcseconds
+    radius_pixels = theta_arcsec / PIXSCALE  # to pixels
+
+    # Calculate source center position
+    x_center = 50 + offset[0]
+    y_center = 50 + offset[1]
+
+    # Create full Airy disk model
+    airy = models.AiryDisk2D(amplitude=1000.0, x_0=x_center, y_0=y_center, radius=radius_pixels)
+    data_full = airy(x, y)
+
+    # Create slit mask with subpixel accuracy using the same helper as the algorithm
+    slit_weights = _create_slit_mask(
+        data_full.shape,
+    )
+
+    # Apply slit weights to the data (multiply by fractional coverage)
+    data = data_full * slit_weights
+
+    # Add noise only where there's signal (weighted by slit coverage)
+    noise = np.random.normal(0, 1, data.shape)
+    data += noise * slit_weights
+
+    # import matplotlib.pyplot as plt
+    # from matplotlib.colors import LogNorm
+    # fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+    # # Plot 1: Full Airy disk (before slit truncation)
+    # im1 = axes[0].imshow(data_full, cmap='gray', norm=LogNorm(), origin='lower')
+    # axes[0].plot(x_center, y_center, 'r+', markersize=15, markeredgewidth=2)
+    # axes[0].set_title('Full Airy Disk (Pre-Slit)')
+    # axes[0].set_xlabel('X (pixels)')
+    # axes[0].set_ylabel('Y (pixels)')
+    # plt.colorbar(im1, ax=axes[0], label='Counts')
+
+    # # Plot 2: Slit weights (showing fractional pixel coverage)
+    # im2 = axes[1].imshow(slit_weights, cmap='gray', origin='lower', vmin=0, vmax=1)
+    # axes[1].plot(x_center, y_center, 'r+', markersize=15, markeredgewidth=2)
+    # axes[1].set_title('Slit Weights')
+    # axes[1].set_xlabel('X (pixels)')
+    # axes[1].set_ylabel('Y (pixels)')
+    # plt.colorbar(im2, ax=axes[1], label='Coverage Fraction')
+
+    # # Plot 3: Final slit-truncated data with noise
+    # im3 = axes[2].imshow(data, cmap='gray', norm=LogNorm(vmin=1), origin='lower')
+    # axes[2].plot(x_center, y_center, 'r+', markersize=15, markeredgewidth=2, label='True Center')
+    # axes[2].set_title(f'Slit TAQ Image\nOffset: ({offset[0]}, {offset[1]}) pix')
+    # axes[2].set_xlabel('X (pixels)')
+    # axes[2].set_ylabel('Y (pixels)')
+    # axes[2].legend()
+    # plt.colorbar(im3, ax=axes[2], label='Counts')
+
+    # plt.tight_layout()
+    # plt.show()
+
+    return data
+
+
+@pytest.fixture
+def input_model_slit():
+    model = dm.ImageModel()
+    model.meta.target.srctype = "POINT"
+    model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+    model.meta.instrument.filter = "F1500W"
+    return model
+
+
+@pytest.fixture
+def input_model_slitless():
+    model = dm.ImageModel()
+    model.meta.target.srctype = "POINT"
+    model.meta.exposure.type = "MIR_LRS-SLITLESS"
+    model.meta.instrument.filter = "F1500W"
+    return model
+
+
+def test_ta_center_slitless(input_model_slitless, slitless_taq_image):
+    # Run the TA centering algorithm
+    result = TACenterStep.call(input_model_slitless, ta_file=slitless_taq_image)
+    x_center, y_center = result.x_center, result.y_center
+
+    # Expected center position (approximately)
+    expected_x = 50 + 2
+    expected_y = 50 - 3
+
+    # Check that the computed center is close to the expected position
+    assert np.isclose(x_center, expected_x, atol=0.05), (
+        f"X center {x_center} not close to expected {expected_x}"
+    )
+    assert np.isclose(y_center, expected_y, atol=0.05), (
+        f"Y center {y_center} not close to expected {expected_y}"
+    )
+
+
+@pytest.mark.parametrize(
+    "offset",
+    [
+        (0.0, 0.0),  # Perfectly centered
+        (2.0, 0.0),  # Offset to the right
+        (-1.5, 0.0),  # Offset to the left
+        (0.0, 2.5),  # Offset upward
+        (0.0, -2.0),  # Offset downward
+        (1.5, -2.0),  # Offset right and down
+        (-2.0, 1.8),  # Offset left and up
+    ],
+)
+def test_ta_center_slit_parametrized(input_model_slit, offset, tmp_path):
+    """Test TA centering for LRS slit mode with various offsets."""
+
+    # Generate slit data with the specified offset
+    taq_image = make_taq_image(make_slit_data, "F1500W", offset=offset)
+
+    # Save to file
+    filepath = tmp_path / f"slit_taq_{offset[0]}_{offset[1]}.fits"
+    taq_image.save(filepath)
+
+    # Run the TA centering algorithm for slit mode
+    result = TACenterStep.call(input_model_slit, ta_file=str(filepath))
+    x_center, y_center = result.x_center, result.y_center
+    # Expected center position
+    expected_x = 50 + offset[0]
+    expected_y = 50 + offset[1]
+
+    # Check that the computed center is close to the expected position
+    # The slit truncation may cause slightly larger errors, so use slightly larger tolerance
+    assert np.isclose(x_center, expected_x, atol=0.05), (
+        f"Offset {offset}: X center {x_center:.2f} not close to expected {expected_x:.2f}"
+    )
+    assert np.isclose(y_center, expected_y, atol=0.05), (
+        f"Offset {offset}: Y center {y_center:.2f} not close to expected {expected_y:.2f}"
+    )
