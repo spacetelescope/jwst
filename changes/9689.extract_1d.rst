@@ -1,1 +1,0 @@
-Added creating extract_1d products for MIRI WFSS data

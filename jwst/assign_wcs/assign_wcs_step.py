@@ -170,10 +170,8 @@ class AssignWcsStep(Step):
                     # be updated and the sip_max_inv_pix_error floor value might then be removed.
                     if self.sip_max_inv_pix_error < 0.02:
                         self.sip_max_inv_pix_error = 0.02
-                        log.info(
-                            " Changed sip_max_inv_pix_error to 0.02."
-                            // " This is the minimum value of MIRI WFSS allowed"
-                        )
+                        log.info(" Changed sip_max_inv_pix_error to 0.02.")
+                        log.info(" This is the minimum value of MIRI WFSS allowed")
 
                 wfss_imaging_wcs(
                     result,
