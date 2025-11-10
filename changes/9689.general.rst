@@ -1,1 +1,0 @@
-Added support for  MIRI WFSS model to the calwebb_spec2 pipeline
