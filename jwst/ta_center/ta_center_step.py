@@ -2,7 +2,7 @@ import logging
 
 import numpy as np
 import stdatamodels.jwst.datamodels as dm
-from astropy.modeling import custom_model, fitting, models
+from astropy.modeling import Fittable2DModel, fitting, models
 
 from jwst.stpipe import Step
 
@@ -16,11 +16,10 @@ PIXSCALE = 0.11  # arcsec/pixel for MIRI imager
 JWST_DIAMETER = 6.5  # meters
 SLIT_WIDTH_PIXELS = 4.6  # LRS slit width in pixels (0.51 arcsec / 0.11 arcsec/pix)
 SLIT_LENGTH_PIXELS = 42.7  # LRS slit length in pixels (4.7 arcsec / 0.11 arcsec/pix)
-SLIT_CENTER = (50, 50)  # Approximate center of the TA image
 
 
 class TACenterStep(Step):
-    """Perform target acquisition centering analysis."""
+    """Determine position of target source from TA verification image."""
 
     class_alias = "ta_center"
 
@@ -28,7 +27,7 @@ class TACenterStep(Step):
     ta_file = string(default=None). # Target acquisition image file name
     """  # noqa: E501
 
-    # reference_file_types = []
+    reference_file_types = ["specwcs"]
 
     def process(self, step_input):
         """
@@ -49,11 +48,13 @@ class TACenterStep(Step):
             # Work on a copy
             result = input_model.copy()
 
+            # Ensure TA file is provided
             if self.ta_file is None:
                 log.error("No target acquisition file provided. Step will be SKIPPED.")
                 result.meta.cal_step.ta_center = "SKIPPED"
                 return result
 
+            # Check that this is a point source
             if input_model.meta.target.srctype != "POINT":
                 log.error(
                     "TA centering is only implemented for point sources. Step will be SKIPPED."
@@ -61,10 +62,21 @@ class TACenterStep(Step):
                 result.meta.cal_step.ta_center = "SKIPPED"
                 return result
 
+            # Check exposure type
+            exp_type = input_model.meta.exposure.type
+            if exp_type not in ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]:
+                log.error(
+                    "TA centering is only implemented for MIR_LRS-FIXEDSLIT and"
+                    " MIR_LRS-SLITLESS modes. Step will be SKIPPED."
+                )
+                result.meta.cal_step.ta_center = "SKIPPED"
+                return result
+
+            # Read the TA image
             with dm.open(self.ta_file) as ta_model:
                 log.info(f"Performing TA centering using file: {self.ta_file}")
                 ta_image = ta_model.data
-                wavelength = _get_wavelength(input_model.meta.instrument.filter)
+                wavelength = _get_wavelength(ta_model.meta.instrument.filter)
                 if wavelength is None:
                     log.error(
                         "Unknown filter; cannot determine wavelength for TA centering."
@@ -73,17 +85,47 @@ class TACenterStep(Step):
                     result.meta.cal_step.ta_center = "SKIPPED"
                     return result
 
-                # Determine if this is slit or slitless data
-                exp_type = input_model.meta.exposure.type
-                is_slit = exp_type == "MIR_LRS-FIXEDSLIT"
+            # read specwcs to get necessary reference points on detector
+            reffile = self.get_reference_file(input_model, "specwcs")
+            refmodel = dm.MiriLRSSpecwcsModel(reffile)
 
+            is_slit = exp_type == "MIR_LRS-FIXEDSLIT"
             if is_slit:
                 log.info("Fitting Airy disk with slit mask model for LRS FIXEDSLIT mode")
-                # Fit Airy disk multiplied by slit mask
-                x_center, y_center = _fit_airy_disk(ta_image, wavelength, use_slit_model=True)
+
+                ref_center = (refmodel.meta.x_ref, refmodel.meta.y_ref)
+
+                # Create cutout around reference center
+                cutout, cutout_origin = _cutout_center(ta_image, ref_center)
+
+                # Fit on the cutout
+                x_center_cutout, y_center_cutout = _fit_airy_disk(
+                    cutout,
+                    wavelength,
+                    slit_center=ref_center,
+                    cutout_origin=cutout_origin,
+                    use_slit_model=True,
+                )
+
+                # Transform back to full-frame coordinates
+                x_center = x_center_cutout + cutout_origin[0]
+                y_center = y_center_cutout + cutout_origin[1]
             else:
                 log.info("Fitting Airy disk for slitless mode")
-                x_center, y_center = _fit_airy_disk(ta_image, wavelength, use_slit_model=False)
+
+                ref_center = (refmodel.meta.x_ref_slitless, refmodel.meta.y_ref_slitless)
+
+                # Create cutout around reference center
+                cutout, cutout_origin = _cutout_center(ta_image, ref_center)
+
+                # Fit on the cutout
+                x_center_cutout, y_center_cutout = _fit_airy_disk(
+                    cutout, wavelength, use_slit_model=False
+                )
+
+                # Transform back to full-frame coordinates
+                x_center = x_center_cutout + cutout_origin[0]
+                y_center = y_center_cutout + cutout_origin[1]
 
             # Set completion status
             result.x_center = x_center
@@ -93,7 +135,9 @@ class TACenterStep(Step):
         return result
 
 
-def _fit_airy_disk(ta_image, wavelength, weights=None, use_slit_model=False):
+def _fit_airy_disk(
+    ta_image, wavelength, use_slit_model=False, slit_center=None, cutout_origin=None
+):
     """
     Fit an Airy disk model to target acquisition image data.
 
@@ -103,12 +147,15 @@ def _fit_airy_disk(ta_image, wavelength, weights=None, use_slit_model=False):
         2D target acquisition image data.
     wavelength : float
         Wavelength in microns for calculating the Airy disk size.
-    weights : ndarray, optional
-        Weights for fitting. If None, all pixels are weighted equally.
-        Only used when use_slit_model=False.
     use_slit_model : bool, optional
         If True, fit an Airy disk multiplied by the slit mask model.
-        If False, fit a plain Airy disk (optionally with weights).
+        If False, fit a plain Airy disk.
+    slit_center : tuple of float, optional
+        (x_center, y_center) position of the slit center in full-frame coordinates.
+        Required when use_slit_model=True.
+    cutout_origin : tuple of int, optional
+        (x_origin, y_origin) position of the cutout origin in full-frame coordinates.
+        Required when use_slit_model=True to transform slit_center to cutout coordinates.
 
     Returns
     -------
@@ -131,11 +178,14 @@ def _fit_airy_disk(ta_image, wavelength, weights=None, use_slit_model=False):
     amplitude_guess = np.max(ta_image)
 
     if use_slit_model:
+        # Transform slit center to cutout coordinates
+        slit_center_cutout = (slit_center[0] - cutout_origin[0], slit_center[1] - cutout_origin[1])
+
         # Create compound model: Airy disk * slit mask
         airy_init = models.AiryDisk2D(
             amplitude=amplitude_guess, x_0=x_guess, y_0=y_guess, radius=radius_pixels
         )
-        slit_mask_model = SlitMask()
+        slit_mask_model = SlitMask(x_center=slit_center_cutout[0], y_center=slit_center_cutout[1])
         compound_model = airy_init * slit_mask_model
 
         # Fit the compound model to the data
@@ -152,7 +202,7 @@ def _fit_airy_disk(ta_image, wavelength, weights=None, use_slit_model=False):
 
         # Fit the model to the data
         fitter = fitting.LevMarLSQFitter()
-        airy_fit = fitter(airy_init, x, y, ta_image, weights=weights)
+        airy_fit = fitter(airy_init, x, y, ta_image)
         x_center = airy_fit.x_0.value
         y_center = airy_fit.y_0.value
 
@@ -160,53 +210,110 @@ def _fit_airy_disk(ta_image, wavelength, weights=None, use_slit_model=False):
     return x_center, y_center
 
 
-@custom_model
-def SlitMask(x, y):  # noqa: N802
+def _cutout_center(image, center, size=20):
     """
-    Evaluate the slit mask at given (x, y) coordinates.
-
-    Computes the fractional overlap between a pixel at position (x, y) and the
-    slit aperture at subpixel accuracy. The pixel extends from x to x+1 and y to y+1.
-    The custom_model decorator allows this function to be used as a
-    2-D astropy model in fitting.
+    Cut out a small square region from an image centered on a reference position.
 
     Parameters
     ----------
-    x : float or ndarray
-        X coordinate(s) in pixel coordinates (pixel indices).
-    y : float or ndarray
-        Y coordinate(s) in pixel coordinates (pixel indices).
+    image : ndarray
+        2D image array.
+    center : tuple of float
+        (x_center, y_center) position for the center of the cutout.
+    size : int, optional
+        Size of the square cutout in pixels. Default is 20.
 
     Returns
     -------
-    mask_value : float or ndarray
-        Fractional pixel coverage value(s) between 0.0 and 1.0.
+    cutout : ndarray
+        Square cutout of the image.
+    cutout_origin : tuple of int
+        (x_origin, y_origin) position of the lower-left corner of the cutout
+        in the original image coordinates.
     """
-    # Define slit boundaries in pixel coordinates
-    y_min = SLIT_CENTER[1] - SLIT_WIDTH_PIXELS / 2
-    y_max = SLIT_CENTER[1] + SLIT_WIDTH_PIXELS / 2
-    x_min = SLIT_CENTER[0] - SLIT_LENGTH_PIXELS / 2
-    x_max = SLIT_CENTER[0] + SLIT_LENGTH_PIXELS / 2
+    x_center, y_center = center
+    ny, nx = image.shape
 
-    # Pixel extends from (x, y) to (x+1, y+1) in index coordinates
-    # Compute overlap in X direction
-    pixel_x_min = x
-    pixel_x_max = x + 1
-    overlap_x_min = np.maximum(pixel_x_min, x_min)
-    overlap_x_max = np.minimum(pixel_x_max, x_max)
-    overlap_x = np.maximum(0, overlap_x_max - overlap_x_min)
+    # Convert center to integer pixel for cutout boundaries
+    x_center_int = int(np.round(x_center))
+    y_center_int = int(np.round(y_center))
 
-    # Compute overlap in Y direction
-    pixel_y_min = y
-    pixel_y_max = y + 1
-    overlap_y_min = np.maximum(pixel_y_min, y_min)
-    overlap_y_max = np.minimum(pixel_y_max, y_max)
-    overlap_y = np.maximum(0, overlap_y_max - overlap_y_min)
+    # Calculate half-size
+    half_size = size // 2
 
-    # Total fractional coverage
-    mask_value = overlap_x * overlap_y
+    # Calculate cutout boundaries
+    x_min = max(0, x_center_int - half_size)
+    x_max = min(nx, x_center_int + half_size)
+    y_min = max(0, y_center_int - half_size)
+    y_max = min(ny, y_center_int + half_size)
 
-    return mask_value
+    # Extract cutout
+    cutout = image[y_min:y_max, x_min:x_max]
+
+    # Store the origin for coordinate transformation
+    cutout_origin = (x_min, y_min)
+
+    return cutout, cutout_origin
+
+
+class SlitMask(Fittable2DModel):
+    """
+    Model for MIRI LRS slit mask with subpixel accuracy.
+
+    Parameters
+    ----------
+    x_center : float
+        X coordinate of the slit center in pixel coordinates.
+    y_center : float
+        Y coordinate of the slit center in pixel coordinates.
+    """
+
+    n_inputs = 2
+    n_outputs = 1
+
+    def __init__(self, x_center=0.0, y_center=0.0, **kwargs):
+        self._x_center = x_center
+        self._y_center = y_center
+
+        # Define slit boundaries in pixel coordinates
+        self.y_min = self._y_center - SLIT_WIDTH_PIXELS / 2
+        self.y_max = self._y_center + SLIT_WIDTH_PIXELS / 2
+        self.x_min = self._x_center - SLIT_LENGTH_PIXELS / 2
+        self.x_max = self._x_center + SLIT_LENGTH_PIXELS / 2
+
+        super().__init__(**kwargs)
+
+    def evaluate(self, x, y):
+        """
+        Compute the fractional overlap between pixels and the slit aperture at given coordinates.
+
+        Parameters
+        ----------
+        x : float or ndarray
+            X coordinate(s) in pixel coordinates (pixel indices).
+        y : float or ndarray
+            Y coordinate(s) in pixel coordinates (pixel indices).
+
+        Returns
+        -------
+        mask_value : float or ndarray
+            Fractional pixel coverage value(s) between 0.0 and 1.0.
+        """
+        # Pixel extends from (x, y) to (x+1, y+1) in index coordinates
+        # Compute overlap in X direction
+        overlap_x_min = np.maximum(x, self.x_min)
+        overlap_x_max = np.minimum(x + 1, self.x_max)
+        overlap_x = np.maximum(0, overlap_x_max - overlap_x_min)
+
+        # Compute overlap in Y direction
+        overlap_y_min = np.maximum(y, self.y_min)
+        overlap_y_max = np.minimum(y + 1, self.y_max)
+        overlap_y = np.maximum(0, overlap_y_max - overlap_y_min)
+
+        # Total fractional coverage
+        mask_value = overlap_x * overlap_y
+
+        return mask_value
 
 
 def _get_wavelength(filter_name):  # numpydoc ignore=RT01
