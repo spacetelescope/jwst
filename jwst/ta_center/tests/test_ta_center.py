@@ -110,15 +110,29 @@ def make_taq_image(make_data_func, filt, offset=(0, 0)):
     """
     wavelength = _get_wavelength(filt)
     data = make_data_func(wavelength, offset)
+
     model = dm.ImageModel()
     model.data = data
     model.meta.instrument.filter = filt
+
+    # Add subarray metadata (use FULL for now)
+    model.meta.subarray.name = "FULL"
+    model.meta.subarray.xstart = 1  # 1-indexed FITS convention
+    model.meta.subarray.ystart = 1
+    model.meta.subarray.xsize = MIRI_DETECTOR_SHAPE[1]  # nx
+    model.meta.subarray.ysize = MIRI_DETECTOR_SHAPE[0]  # ny
+
     return model
 
 
 @pytest.fixture
 def slitless_taq_image(tmp_path):
     model = make_taq_image(make_slitless_data, "F1500W", offset=(2, -3))
+
+    # Add NaN values near the slitless source position to test that this still works ok
+    model.data[int(Y_REF_SLITLESS) + 5, int(X_REF_SLITLESS) + 3] = np.nan
+    model.data[int(Y_REF_SLITLESS) - 4, int(X_REF_SLITLESS) - 2] = np.inf
+
     filepath = tmp_path / "slitless_taq.fits"
     model.save(filepath)
     return str(filepath)
@@ -221,7 +235,7 @@ def make_slit_data(wavelength=15.0, offset=(0, 0)):
 def _assign_metadata(model):
     """Assign necessary metadata shared between slit and slitless modes for LRS."""
     model.meta.instrument.name = "MIRI"
-    model.meta.target.srctype = "POINT"
+    model.meta.target.source_type = "POINT"
     model.meta.instrument.filter = "F1500W"
     model.meta.instrument.detector = "MIRIMAGE"
 
@@ -267,12 +281,12 @@ def test_ta_center_slitless(input_model_slitless, slitless_taq_image):
     "offset",
     [
         (0.0, 0.0),  # Perfectly centered
-        (2.0, 0.0),  # Offset to the right
-        (-1.5, 0.0),  # Offset to the left
-        (0.0, 2.5),  # Offset upward
-        (0.0, -2.0),  # Offset downward
-        (1.5, -2.0),  # Offset right and down
-        (-2.0, 1.8),  # Offset left and up
+        (4.0, 0.0),  # Offset to the right
+        (-3.0, 0.0),  # Offset to the left
+        (0.0, 7.0),  # Offset upward
+        (0.0, -6.0),  # Offset downward
+        (3.0, -6.0),  # Offset right and down
+        (-4.0, 3.6),  # Offset left and up
     ],
 )
 def test_ta_center_slit(input_model_slit, offset, tmp_path):
@@ -280,6 +294,10 @@ def test_ta_center_slit(input_model_slit, offset, tmp_path):
 
     # Generate slit data with the specified offset
     taq_image = make_taq_image(make_slit_data, "F1500W", offset=offset)
+
+    # Add NaN values near the slit source position to test handling
+    taq_image.data[int(Y_REF_SLIT) + 4, int(X_REF_SLIT) + 2] = np.nan
+    taq_image.data[int(Y_REF_SLIT) - 3, int(X_REF_SLIT) - 4] = np.inf
 
     # Save to file
     filepath = tmp_path / f"slit_taq_{offset[0]}_{offset[1]}.fits"

@@ -14,8 +14,10 @@ log = logging.getLogger(__name__)
 # Constants for MIRI imager and LRS slit dimensions
 PIXSCALE = 0.11  # arcsec/pixel for MIRI imager
 JWST_DIAMETER = 6.5  # meters
-SLIT_WIDTH_PIXELS = 4.6  # LRS slit width in pixels (0.51 arcsec / 0.11 arcsec/pix)
-SLIT_LENGTH_PIXELS = 42.7  # LRS slit length in pixels (4.7 arcsec / 0.11 arcsec/pix)
+# SLIT_WIDTH_PIXELS = 4.6  # LRS slit width in pixels (0.51 arcsec / 0.11 arcsec/pix)
+# SLIT_LENGTH_PIXELS = 42.7  # LRS slit length in pixels (4.7 arcsec / 0.11 arcsec/pix)
+SLITMASK_LL = (302, 295)  # approximate lower-left corner of slit mask
+SLITMASK_UR = (352, 309)  # approximate upper-right corner of slit mask
 
 
 class TACenterStep(Step):
@@ -55,7 +57,7 @@ class TACenterStep(Step):
                 return result
 
             # Check that this is a point source
-            if input_model.meta.target.srctype != "POINT":
+            if input_model.meta.target.source_type != "POINT":
                 log.error(
                     "TA centering is only implemented for point sources. Step will be SKIPPED."
                 )
@@ -89,50 +91,110 @@ class TACenterStep(Step):
             reffile = self.get_reference_file(input_model, "specwcs")
             refmodel = dm.MiriLRSSpecwcsModel(reffile)
 
+            # Get subarray information from TA image
+            subarray_name = ta_model.meta.subarray.name
+            xstart = ta_model.meta.subarray.xstart  # 1-indexed in FITS
+            ystart = ta_model.meta.subarray.ystart  # 1-indexed in FITS
+            log.info(f"TA subarray: {subarray_name}, origin: ({xstart}, {ystart})")
+
             is_slit = exp_type == "MIR_LRS-FIXEDSLIT"
             if is_slit:
                 log.info("Fitting Airy disk with slit mask model for LRS FIXEDSLIT mode")
-
                 ref_center = (refmodel.meta.x_ref, refmodel.meta.y_ref)
-
-                # Create cutout around reference center
-                cutout, cutout_origin = _cutout_center(ta_image, ref_center)
-
-                # Fit on the cutout
-                x_center_cutout, y_center_cutout = _fit_airy_disk(
-                    cutout,
+                x_center, y_center = center_from_ta_image(
+                    ta_image,
                     wavelength,
-                    slit_center=ref_center,
-                    cutout_origin=cutout_origin,
+                    ref_center,
+                    subarray_origin=(xstart, ystart),
                     use_slit_model=True,
                 )
-
-                # Transform back to full-frame coordinates
-                x_center = x_center_cutout + cutout_origin[0]
-                y_center = y_center_cutout + cutout_origin[1]
             else:
                 log.info("Fitting Airy disk for slitless mode")
-
                 ref_center = (refmodel.meta.x_ref_slitless, refmodel.meta.y_ref_slitless)
-
-                # Create cutout around reference center
-                cutout, cutout_origin = _cutout_center(ta_image, ref_center)
-
-                # Fit on the cutout
-                x_center_cutout, y_center_cutout = _fit_airy_disk(
-                    cutout, wavelength, use_slit_model=False
+                x_center, y_center = center_from_ta_image(
+                    ta_image,
+                    wavelength,
+                    ref_center,
+                    subarray_origin=(xstart, ystart),
+                    use_slit_model=False,
                 )
 
-                # Transform back to full-frame coordinates
-                x_center = x_center_cutout + cutout_origin[0]
-                y_center = y_center_cutout + cutout_origin[1]
-
             # Set completion status
+            log.info(f"Fitted center: x={x_center:.2f}, y={y_center:.2f}")
             result.x_center = x_center
             result.y_center = y_center
             result.meta.cal_step.ta_center = "COMPLETE"
 
         return result
+
+
+def center_from_ta_image(
+    ta_image, wavelength, ref_center, subarray_origin=(1, 1), use_slit_model=False
+):
+    """
+    Determine the center of a point source from a TA image.
+
+    Parameters
+    ----------
+    ta_image : ndarray
+        2D target acquisition image data.
+    wavelength : float
+        Wavelength in microns for calculating the Airy disk size.
+    ref_center : tuple of float
+        (x_ref, y_ref) reference center position in full-frame detector coordinates.
+    subarray_origin : tuple of int, optional
+        (xstart, ystart) 1-indexed origin of the subarray in full-frame coordinates.
+        Default is (1, 1) for full frame.
+    use_slit_model : bool, optional
+        If True, fit an Airy disk multiplied by the slit mask model.
+
+    Returns
+    -------
+    x_center : float
+        Fitted x center position in full-frame detector coordinates.
+    y_center : float
+        Fitted y center position in full-frame detector coordinates.
+    """
+    # Transform reference center from full-frame to subarray coordinates
+    # FITS convention: xstart, ystart are 1-indexed
+    # Python/array convention: 0-indexed
+    # ref_center is in 0-indexed detector coordinates
+    ref_center_subarray = (
+        ref_center[0] - (subarray_origin[0] - 1),
+        ref_center[1] - (subarray_origin[1] - 1),
+    )
+
+    log.info(
+        f"Reference center: full-frame=({ref_center[0]:.2f}, {ref_center[1]:.2f}), "
+        f"subarray=({ref_center_subarray[0]:.2f}, {ref_center_subarray[1]:.2f})"
+    )
+
+    # Create cutout around reference center (in subarray coordinates)
+    cutout, cutout_origin = _cutout_center(ta_image, ref_center_subarray)
+
+    # Fit on the cutout
+    x_center_cutout, y_center_cutout = _fit_airy_disk(
+        cutout,
+        wavelength,
+        slit_center=ref_center_subarray,
+        cutout_origin=cutout_origin,
+        use_slit_model=use_slit_model,
+    )
+
+    # Transform back to subarray coordinates
+    x_center_subarray = x_center_cutout + cutout_origin[0]
+    y_center_subarray = y_center_cutout + cutout_origin[1]
+
+    # Transform from subarray to full-frame detector coordinates
+    x_center = x_center_subarray + (subarray_origin[0] - 1)
+    y_center = y_center_subarray + (subarray_origin[1] - 1)
+
+    log.info(
+        f"Fitted center: subarray=({x_center_subarray:.2f}, {y_center_subarray:.2f}), "
+        f"full-frame=({x_center:.2f}, {y_center:.2f})"
+    )
+
+    return x_center, y_center
 
 
 def _fit_airy_disk(
@@ -167,50 +229,55 @@ def _fit_airy_disk(
     # Create coordinate grids
     y, x = np.mgrid[0 : ta_image.shape[0], 0 : ta_image.shape[1]]
 
+    # Filter non-finite values from data
+    mask = np.isfinite(ta_image)
+    if not np.any(mask):
+        log.error("All pixels are non-finite; cannot fit")
+        raise ValueError("All pixels contain non-finite values")
+    log.debug(f"Excluding {np.sum(~mask)} non-finite values from fit")
+
     # Calculate diffraction-limited Airy disk radius
     theta_rad = 1.22 * wavelength * 1e-6 / JWST_DIAMETER
     theta_arcsec = theta_rad * 206265  # radians to arcseconds
     radius_pixels = theta_arcsec / PIXSCALE  # to pixels
 
-    # Initial guess for center (centroid or peak)
-    y_guess = np.sum(y * ta_image) / np.sum(ta_image)
-    x_guess = np.sum(x * ta_image) / np.sum(ta_image)
-    amplitude_guess = np.max(ta_image)
+    # Initial guess for center (centroid of finite values)
+    ta_image_masked = np.where(mask, ta_image, 0.0)
+    y_guess = np.sum(y * ta_image_masked) / np.sum(ta_image_masked)
+    x_guess = np.sum(x * ta_image_masked) / np.sum(ta_image_masked)
+    amplitude_guess = np.max(ta_image[mask])
+
+    # Create initial Airy disk model
+    airy_init = models.AiryDisk2D(
+        amplitude=amplitude_guess, x_0=x_guess, y_0=y_guess, radius=radius_pixels
+    )
+    # Allow radius to vary a bit (0.99 to 1.5 times diffraction limit)
+    airy_init.radius.bounds = (0.99 * radius_pixels, 1.5 * radius_pixels)
 
     if use_slit_model:
-        # Transform slit center to cutout coordinates
+        # Add a model of the slit mask
         slit_center_cutout = (slit_center[0] - cutout_origin[0], slit_center[1] - cutout_origin[1])
-
-        # Create compound model: Airy disk * slit mask
-        airy_init = models.AiryDisk2D(
-            amplitude=amplitude_guess, x_0=x_guess, y_0=y_guess, radius=radius_pixels
-        )
         slit_mask_model = SlitMask(x_center=slit_center_cutout[0], y_center=slit_center_cutout[1])
         compound_model = airy_init * slit_mask_model
 
-        # Fit the compound model to the data
+        # Fit the compound model to filtered data
         fitter = fitting.LevMarLSQFitter()
-        fitted_model = fitter(compound_model, x, y, ta_image)
+        fitted_model = fitter(compound_model, x[mask], y[mask], ta_image[mask])
         # Extract parameters from the left side of the compound model (Airy disk)
         x_center = fitted_model.left.x_0.value
         y_center = fitted_model.left.y_0.value
-    else:
-        # Create initial Airy disk model
-        airy_init = models.AiryDisk2D(
-            amplitude=amplitude_guess, x_0=x_guess, y_0=y_guess, radius=radius_pixels
-        )
 
-        # Fit the model to the data
+    else:
+        # Fit the model to filtered data
         fitter = fitting.LevMarLSQFitter()
-        airy_fit = fitter(airy_init, x, y, ta_image)
+        airy_fit = fitter(airy_init, x[mask], y[mask], ta_image[mask])
         x_center = airy_fit.x_0.value
         y_center = airy_fit.y_0.value
 
-    log.info(f"Fitted center: x={x_center:.2f}, y={y_center:.2f}")
     return x_center, y_center
 
 
-def _cutout_center(image, center, size=20):
+def _cutout_center(image, center, size=40):
     """
     Cut out a small square region from an image centered on a reference position.
 
@@ -275,11 +342,20 @@ class SlitMask(Fittable2DModel):
         self._x_center = x_center
         self._y_center = y_center
 
-        # Define slit boundaries in pixel coordinates
-        self.y_min = self._y_center - SLIT_WIDTH_PIXELS / 2
-        self.y_max = self._y_center + SLIT_WIDTH_PIXELS / 2
-        self.x_min = self._x_center - SLIT_LENGTH_PIXELS / 2
-        self.x_max = self._x_center + SLIT_LENGTH_PIXELS / 2
+        # Calculate offset from reference center to actual slit mask center
+        # SLITMASK_LL and SLITMASK_UR are in full-frame coordinates
+        slitmask_x_center = (SLITMASK_LL[0] + SLITMASK_UR[0]) / 2.0
+        slitmask_y_center = (SLITMASK_LL[1] + SLITMASK_UR[1]) / 2.0
+
+        # Define slit boundaries in pixel coordinates, centered on x_center, y_center
+        # Apply offset from slitmask center
+        offset_x = x_center - slitmask_x_center
+        offset_y = y_center - slitmask_y_center
+
+        self.x_min = SLITMASK_LL[0] + offset_x
+        self.x_max = SLITMASK_UR[0] + offset_x
+        self.y_min = SLITMASK_LL[1] + offset_y
+        self.y_max = SLITMASK_UR[1] + offset_y
 
         super().__init__(**kwargs)
 
@@ -312,6 +388,7 @@ class SlitMask(Fittable2DModel):
 
         # Total fractional coverage
         mask_value = overlap_x * overlap_y
+        mask_value[mask_value == 0.0] = np.nan
 
         return mask_value
 
