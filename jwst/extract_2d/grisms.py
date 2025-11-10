@@ -16,6 +16,7 @@ from stdatamodels.jwst.datamodels import ImageModel, SlitModel, WavelengthrangeM
 from stdatamodels.jwst.transforms.models import IdealToV2V3
 
 from jwst.assign_wcs import util
+from jwst.lib.catalog_utils import read_source_catalog
 
 log = logging.getLogger(__name__)
 
@@ -763,7 +764,7 @@ def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=Non
     source_ids : np.ndarray or None
         List of unique source IDs to extract.
     """
-    catalog = util.read_source_catalog(catalog)
+    catalog = read_source_catalog(catalog)
     catalog_coord = catalog["sky_centroid"]
     if source_ids is None:
         source_ids = []
