@@ -28,7 +28,7 @@ def test_apply_bkg_sigma_clip_point(mock_miri_ifu, setup_params):
     (bkg_data, temp_weightmap, shape, bmask, bkg_sigma_clip, extract_params) = setup_params
     method = extract_params["method"]
     subpixels = extract_params["subpixels"]
-    # set a fake inner and outer radius
+    # set a mock inner and outer radius
     inner_bkg = 9.4
     outer_bkg = 12.7
     x_center = float(shape[-1]) / 2.0
