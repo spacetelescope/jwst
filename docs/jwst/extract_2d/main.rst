@@ -109,9 +109,9 @@ of ``GrismObjects`` outside of these, the ``GrismObject`` itself can be imported
 The dispersion direction will be documented by copying keyword "DISPAXIS"
 (1 = horizontal, 2 = vertical) from the input file to the output cutout.
 
-The ``wfss_mmag_extract`` and ``wfss_nbright`` parameters both affect which objects
-from a source catalog will be retained for extraction. The rejection or retention of
-objects proceeds as follows:
+The ``wfss_mmag_extract``, ``wfss_nbright``, ``source_ids``, and ``source_ra`` / ``source_dec``
+parameters all affect which objects from a source catalog will be retained for extraction.
+The rejection or retention of objects proceeds as follows:
 
 1. As each object is read from the source catalog, they are immediately rejected if
    their ``isophotal_abmag > wfss_mmag_extract``, meaning that only objects brighter than
@@ -121,7 +121,16 @@ objects proceeds as follows:
 2. If the computed footprint (bounding box) of the spectral trace of an object lies
    completely outside the field of view of the grism image, it is rejected.
 
-3. The list of objects retained after the above two filtering steps have been applied is
+3. The ``source_ra`` and ``source_dec`` parameters are matched to the nearest object
+   in the source catalog, and its ``label`` is added to the input ``source_ids`` list
+   (creating the list if ``source_ids`` was not specified).
+
+4. The ``source_ids`` list, which at this stage represents the unique combination of
+   input catalog IDs and the sources from RA/Dec selection, is applied.
+   If ``source_ids``, ``source_ra`` and ``source_dec`` are all ``None``,
+   all objects are retained.
+
+5. The list of objects retained after the above filtering steps have been applied is
    sorted based on ``isophotal_abmag`` (listed for each source in the source catalog) and
    only the brightest ``wfss_nbright`` objects are retained. The default value of
    ``wfss_nbright`` is currently 1000.
@@ -303,7 +312,8 @@ modes. For NIRSpec observations there is one applicable argument:
 
 ``--source_ids``
   source_ids [comma-separated list containing integers or strings] of specific slits to extract.  The default value
-  of None will cause all known slits for the instrument to be extracted.
+  of None will cause all known slits for the instrument to be extracted. For WFSS data, the selected
+  source IDs correspond to the ``label`` column of the source catalog.
 
 ``slit_names`` and ``source_ids`` can be used at the same time, duplicates will be filtered out.
 If either argument is specified, but no valid slits are identified, an error will be
@@ -315,6 +325,17 @@ Time-Series (TSO) grism spectroscopy:
 ``--tsgrism_extract_height``
   int. The cross-dispersion extraction size, in units of pixels. Only applies to TSO
   mode.
+
+``--source_ra``
+  list of floats. The RA coordinates (in decimal degrees) of specific sources to extract from
+  the source catalog. Only applies to WFSS mode.
+
+``--source_dec``
+  list of floats. The Dec coordinates (in decimal degrees) of specific sources to extract from
+  the source catalog. Only applies to WFSS mode.
+
+``source_ids`` can be used at the same time as ``source_ra`` and ``source_dec``;
+  duplicates will be filtered out.
 
 ``--wfss_extract_half_height``
   int. The cross-dispersion half size of the extraction region, in pixels, applied to

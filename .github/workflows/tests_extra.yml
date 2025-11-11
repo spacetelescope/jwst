@@ -45,7 +45,7 @@ jobs:
       context: ${{ steps.context.outputs.context }}
   test:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@930ac90540ecc5f43ba6d3d176efd25cd5f3c6c2 # v2.2.2
+    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@d9b81a07e789d1b1921ab5fe33de2ddcbbd02c3f # v2.3.0
     needs: [ crds_context ]
     with:
       setenv: |
@@ -60,16 +60,17 @@ jobs:
         results.xml
       envs: |
         - linux: check-docs-links
+          python-version: '3.13'
         - macos: py311-xdist
           pytest-results-summary: true
         - macos: py312-xdist
           pytest-results-summary: true
         # TODO: Merge stdevdeps into devdeps
-        - linux: py3-stdevdeps-xdist
+        - linux: py313-stdevdeps-xdist
           pytest-results-summary: true
-        - macos: py3-stdevdeps-xdist
+        - macos: py313-stdevdeps-xdist
           pytest-results-summary: true
-        - linux: py3-devdeps-xdist
+        - linux: py313-devdeps-xdist
           pytest-results-summary: true
-        - macos: py3-devdeps-xdist
+        - macos: py313-devdeps-xdist
           pytest-results-summary: true

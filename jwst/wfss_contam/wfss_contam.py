@@ -4,13 +4,13 @@ import logging
 import multiprocessing
 
 import numpy as np
-from astropy.table import Table
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.transforms.models import (
     NIRCAMBackwardGrismDispersion,
     NIRISSBackwardGrismDispersion,
 )
 
+from jwst.lib.catalog_utils import read_source_catalog
 from jwst.wfss_contam.observations import Observation
 from jwst.wfss_contam.sens1d import get_photom_data
 
@@ -484,7 +484,7 @@ def contam_corr(
     # Read the source catalog to perform magnitude-based source selection later
     # mag limit will be scaled according to order 1 sensitivity
     if magnitude_limit is not None:
-        source_catalog = Table.read(input_model.meta.source_catalog, format="ascii.ecsv")
+        source_catalog = read_source_catalog(input_model.meta.source_catalog)
         order1_wave_response, order1_sens_response = get_photom_data(
             photom, filter_kwd, pupil_kwd, order=1
         )
