@@ -66,7 +66,6 @@ def get_steps():
         ("jwst.step.MasterBackgroundStep", "master_background", False),
         ("jwst.step.MasterBackgroundMosStep", "master_background_mos", False),
         ("jwst.step.MSAFlagOpenStep", "msa_flagging", False),
-        ("jwst.step.NSCleanStep", "nsclean", False),
         ("jwst.step.OutlierDetectionStep", "outlier_detection", False),
         ("jwst.step.PathLossStep", "pathloss", False),
         ("jwst.step.PersistenceStep", "persistence", False),

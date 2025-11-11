@@ -514,11 +514,6 @@ name = 'master_background (spec2 MOS, spec3)'
 showcontent = true
 
 [[tool.towncrier.type]]
-directory = "mrs_imatch"
-name = 'mrs_imatch (spec3)'
-showcontent = true
-
-[[tool.towncrier.type]]
 directory = "msaflagopen"
 name = 'msaflagopen (spec2 IFU, spec2 MOS)'
 showcontent = true
