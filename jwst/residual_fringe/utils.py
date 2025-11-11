@@ -3,6 +3,7 @@ import math
 
 import numpy as np
 import numpy.polynomial.polynomial as poly
+from astropy.stats import sigma_clipped_stats
 from astropy.timeseries import LombScargle
 from BayesicFitting import ConstantModel, Fitter, LevenbergMarquardtFitter, RobustShell, SineModel
 from scipy.interpolate import pchip
@@ -31,6 +32,7 @@ __all__ = [
     "multi_sine",
     "fit_envelope",
     "find_lines",
+    "clip_spectral_features",
     "check_res_fringes",
     "interp_helper",
     "fit_1d_background_complex",
@@ -331,6 +333,30 @@ def find_lines(signal, max_amp):
     weights_factors[signal_check > 2 * max_amp] = 0
 
     return weights_factors
+
+
+def clip_spectral_features(signal, sigma=4.0):
+    """
+    Clip out large spectral features.
+
+    Parameters
+    ----------
+    signal : ndarray
+        Signal data. Input is expected to be the relative difference of the
+        spectrum from a smoothed spline fit to the lower envelope of the spectrum.
+    sigma : float, optional
+        Upper threshold for clipping features.
+
+    Returns
+    -------
+    weights : ndarray
+        1D array matching signal dimensions, containing 0 values
+        for large features and 1 values where no features were
+        detected.
+    """
+    _, med, stddev = sigma_clipped_stats(signal, sigma_lower=np.inf, sigma_upper=sigma)
+    weights = (signal < (med + sigma * stddev)).astype(int)
+    return weights
 
 
 def check_res_fringes(res_fringe_fit, max_amp):
@@ -1024,6 +1050,8 @@ def fit_residual_fringes_1d(
     channel=1,
     dichroic_only=False,
     max_amp=None,
+    clip_features=True,
+    clip_sigma=4.0,
     max_line=None,
     ignore_regions=None,
 ):
@@ -1043,9 +1071,15 @@ def fit_residual_fringes_1d(
     max_amp : float, optional
         The maximum relative amplitude value for fringe correction. If not provided,
         is set to `MAXAMP_1D`.
+    clip_features : bool, optional
+        If True, spectral features are masked via sigma clipping.  If False, they
+        are detected and masked via comparison to the ``max_line`` value.
+    clip_sigma : float, optional
+        If ``clip_features`` is True, then this value is used as the sigma threshold
+        for clipping spectral features.
     max_line : float, optional
         The maximum relative amplitude value to detect an emission line.  If not provided,
-        is set to `MAXLINE_1D`.
+        is set to `MAXLINE_1D`.  Used only if ``clip_features`` is False.
     ignore_regions : list of list of float, optional
         If provided, data in the wavelengths specified is ignored in the fringe
         fits. The expected format is a list of [min_region, max_region] values, in
@@ -1093,10 +1127,13 @@ def fit_residual_fringes_1d(
     # find spectral features (env is spline fit of lower edge of spectrum)
     # smooth the data slightly first to avoid noisy broad lines being missed
     env, l_x, l_y, _, _, _ = fit_envelope(np.arange(useflux.shape[0]), useflux)
-    mod = np.abs(useflux / env) - 1
+    mod = np.abs((useflux - env) / env)
 
-    # given signal in mod find location of lines > max line amp
-    weight_factors = find_lines(mod, max_line_array)
+    # given signal in mod find location of lines
+    if clip_features:
+        weight_factors = clip_spectral_features(mod, sigma=clip_sigma)
+    else:
+        weight_factors = find_lines(mod, max_line_array)
     weights_feat = weights * weight_factors
 
     if dichroic_only is True:
