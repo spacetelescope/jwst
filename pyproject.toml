@@ -26,6 +26,7 @@ dependencies = [
     # "gwcs>=0.26.0",
     "numpy>=1.25",
     "photutils>=2.1.0",
+    "pyyaml",
     "requests>=2.31",
     "scikit-image>=0.21.0",
     "scipy>=1.14.1",
@@ -94,6 +95,7 @@ sdp = [
 ]
 test = [
     "ci-watson>=0.10",
+    "packaging>20.0",
     "pysiaf>=0.13.0",
     "pytest>=6.0.0",
     "pytest-cov>=2.9.0",
