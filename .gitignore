@@ -36,3 +36,4 @@ requirements-min.txt
 .tmp/
 tmp/
 jwst/_version.py
+uv.lock
