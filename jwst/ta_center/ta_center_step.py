@@ -120,7 +120,6 @@ class TACenterStep(Step):
                 )
 
             # Set completion status
-            log.info(f"Fitted center: x={x_center:.2f}, y={y_center:.2f}")
             result.source_xpos = x_center
             result.source_ypos = y_center
             result.meta.cal_step.ta_center = "COMPLETE"

@@ -67,49 +67,58 @@ def get_center(exp_type, input_model, offsets=False):
     imy : float
         Y-location relative to LRS aperture reference point
     """
+    if exp_type not in [
+        "NRS_MSASPEC",
+        "NRS_FIXEDSLIT",
+        "NRS_BRIGHTOBJ",
+        "NRS_IFU",
+        "MIR_LRS-FIXEDSLIT",
+    ]:
+        log.warning(f"get_center not implemented for exp_type {exp_type}")
+        log.warning("Using (0.0, 0.0)")
+        return 0.0, 0.0
+
     if exp_type == "NRS_IFU":
         # Currently assume IFU sources are centered
         return 0.0, 0.0
 
-    elif exp_type in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
-        # MSA centering is specified in the MultiSlit model
-        # "input_model" treated as a slit object
-        try:
-            xcenter = input_model.source_xpos
-            ycenter = input_model.source_ypos
-        except AttributeError:
-            log.warning("Unable to get source center from model")
-            log.warning("Using 0.0, 0.0")
-            xcenter = 0.0
-            ycenter = 0.0
+    # MSA centering is specified in the MultiSlit model
+    # "input_model" treated as a slit object
+    xcenter = getattr(input_model, "source_xpos", None)
+    ycenter = getattr(input_model, "source_ypos", None)
+
+    if exp_type in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
+        if xcenter is not None and ycenter is not None:
+            log.info(f"Using source_xpos, source_ypos = {xcenter, ycenter}")
+            return xcenter, ycenter
+        log.warning("Unable to get source center from model source_xpos, source_ypos")
+        log.warning("Using 0.0, 0.0")
+        xcenter = 0.0
+        ycenter = 0.0
         return xcenter, ycenter
 
-    elif exp_type in ["MIR_LRS-FIXEDSLIT"]:
-        # get slit reference point from wcs object
-        det_to_sky = input_model.meta.wcs.get_transform("detector", "world")
-        sky_to_det = input_model.meta.wcs.get_transform("world", "detector")
-        imx = -det_to_sky.offset_1  # aperture ref point from specwcs
-        imy = -det_to_sky.offset_2
-
+    # only MIR_LRS-FIXEDSLIT left. Get center from target ra, dec
+    # get slit reference point from wcs object
+    det_to_sky = input_model.meta.wcs.get_transform("detector", "world")
+    sky_to_det = input_model.meta.wcs.get_transform("world", "detector")
+    imx = -det_to_sky.offset_1  # aperture ref point from specwcs
+    imy = -det_to_sky.offset_2
+    if xcenter is None or ycenter is None:
         # compute location of target on detector
-        ref_ra, ref_dec, ref_wave = det_to_sky(imx, imy)
+        _ref_ra, _ref_dec, ref_wave = det_to_sky(imx, imy)
         xcenter, ycenter = sky_to_det(
             input_model.meta.target.ra, input_model.meta.target.dec, ref_wave
         )
-        log.debug(f"LRS target location from RA/Dec = {xcenter, ycenter}")
-
-        # compute location relative to LRS aperture reference point
-        xcenter -= imx
-        ycenter -= imy
-        if offsets:
-            return xcenter, ycenter, imx, imy
-        else:
-            return xcenter, ycenter
-
+        log.info(f"LRS target location from RA/Dec = {xcenter, ycenter}")
     else:
-        log.warning(f"No method to get centering for exp_type {exp_type}")
-        log.warning("Using (0.0, 0.0)")
-        return 0.0, 0.0
+        log.info(f"LRS target location from source_xpos, source_ypos = {xcenter, ycenter}")
+
+    # compute location relative to LRS aperture reference point
+    xcenter -= imx
+    ycenter -= imy
+    if offsets:
+        return xcenter, ycenter, imx, imy
+    return xcenter, ycenter
 
 
 def shutter_above_is_closed(shutter_state):
