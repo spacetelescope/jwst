@@ -1,4 +1,4 @@
-import warnings
+import logging
 from datetime import datetime
 from pathlib import Path
 
@@ -13,6 +13,8 @@ from jwst.associations import AssociationNotValidError, load_asn
 from jwst.datamodels.utils import attrs_to_group_id
 
 __all__ = ["ModelLibrary"]
+
+log = logging.getLogger(__name__)
 
 
 class ModelLibrary(AbstractModelLibrary):
@@ -215,11 +217,9 @@ class ModelLibrary(AbstractModelLibrary):
                     idx = i
                     break
             if idx is None:
-                warnings.warn(
+                log.warning(
                     "get_crds_parameters failed to find any science members. "
                     "The first model was used to determine the parameters",
-                    UserWarning,
-                    stacklevel=2,
                 )
                 idx = 0
 
