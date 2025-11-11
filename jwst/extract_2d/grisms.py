@@ -541,21 +541,11 @@ def extract_grism_objects(
                     tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order="F"
                 )
 
-                if input_model.meta.exposure.type.upper() == "MIR_WFSS":
-                    grism_slit = copy.deepcopy(subwcs.grism_detector)
-                    grism_slit.name = "grism_slit"
-                    subwcs.insert_frame(
-                        input_frame=grism_slit,
-                        output_frame="grism_detector",
-                        transform=tr,
-                        # input_frame=grism_slit, output_frame="grism_detector", transform=tr
-                    )
-                else:
-                    grism_slit = copy.deepcopy(subwcs.grism_detector)
-                    grism_slit.name = "grism_slit"
-                    subwcs.insert_frame(
-                        input_frame=grism_slit, output_frame="grism_detector", transform=tr
-                    )
+                grism_slit = copy.deepcopy(subwcs.grism_detector)
+                grism_slit.name = "grism_slit"
+                subwcs.insert_frame(
+                    input_frame=grism_slit, output_frame="grism_detector", transform=tr
+                )
 
                 new_slit = datamodels.SlitModel(
                     data=ext_data,

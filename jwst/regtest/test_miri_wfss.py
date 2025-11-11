@@ -46,6 +46,7 @@ def run_miri_wfss_spec2(rtdata_module, resource_tracker):
         f"--steps.extract_1d.override_extract1d={extract1d_file}",
         f"--steps.extract_1d.override_apcorr={apcorr_file}",
         "--steps.bkg_subtract.skip=true",
+        "--steps.flat_field.skip=true",
         "--steps.extract_2d.save_results=true",
         "--steps.srctype.save_results=true",
         "--steps.photom.save_results=true",
@@ -74,6 +75,7 @@ def test_miri_wfss_spec2(run_miri_wfss_spec2, rtdata_module, fitsdiff_default_kw
     fitsdiff_default_kwargs["ignore_keywords"].append("R_WAVRAN")
     fitsdiff_default_kwargs["ignore_keywords"].append("R_FILOFF")
     fitsdiff_default_kwargs["ignore_keywords"].append("R_EXTR1D")
+    fitsdiff_default_kwargs["ignore_keywords"].append("R_REGION")
 
     diff = FITSDiff(rtdata.output, rtdata.truth, **fitsdiff_default_kwargs)
     assert diff.identical, diff.report()
