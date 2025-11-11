@@ -165,7 +165,8 @@ def mock_slice_info_long(monkeypatch):
         ("linear_spectrum_with_peak", "fringed_spectrum_with_peak"),
     ],
 )
-def test_rf1d(request, dataset):
+@pytest.mark.parametrize("clip_features", [True, False])
+def test_rf1d(request, dataset, clip_features):
     """
     Test the performance of the 1d residual defringe routine.
 
@@ -176,7 +177,7 @@ def test_rf1d(request, dataset):
     fringed_spec = request.getfixturevalue(dataset[1])
 
     wave, flux = fringed_spec
-    outflux = rf1d(flux, wave, channel=2)
+    outflux = rf1d(flux, wave, channel=2, clip_features=clip_features)
 
     # defringing won't remove the pure sinusoidal fringe completely, but
     # it should be reasonably close to linear and significantly better
@@ -216,12 +217,18 @@ def test_rf1d_ignore_regions(fringed_spectrum_with_peak, linear_spectrum_with_pe
     expected_flux = linear_spectrum_with_peak[1]
 
     # Set tolerance high so the peak is not masked
-    outflux_1 = rf1d(flux, wave, channel=2, max_amp=0.5, max_line=100)
+    outflux_1 = rf1d(flux, wave, channel=2, max_amp=0.5, max_line=100, clip_features=False)
     relative_diff_1 = np.abs(outflux_1 - expected_flux) / expected_flux
 
     # Ignore the region containing the peak
     outflux_2 = rf1d(
-        flux, wave, channel=2, max_amp=0.5, max_line=100, ignore_regions=[[10.86, 10.89]]
+        flux,
+        wave,
+        channel=2,
+        max_amp=0.5,
+        max_line=100,
+        clip_features=False,
+        ignore_regions=[[10.86, 10.89]],
     )
     relative_diff_2 = np.abs(outflux_2 - expected_flux) / expected_flux
 
