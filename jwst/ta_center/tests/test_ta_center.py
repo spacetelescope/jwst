@@ -262,7 +262,7 @@ def input_model_slitless():
 def test_ta_center_slitless(input_model_slitless, slitless_taq_image):
     # Run the TA centering algorithm
     result = TACenterStep.call(input_model_slitless, ta_file=slitless_taq_image)
-    x_center, y_center = result.x_center, result.y_center
+    x_center, y_center = result.source_xpos, result.source_ypos
 
     # Expected center position (reference position + offset)
     expected_x = X_REF_SLITLESS + 2
@@ -305,7 +305,7 @@ def test_ta_center_slit(input_model_slit, offset, tmp_path):
 
     # Run the TA centering algorithm for slit mode
     result = TACenterStep.call(input_model_slit, ta_file=str(filepath))
-    x_center, y_center = result.x_center, result.y_center
+    x_center, y_center = result.source_xpos, result.source_ypos
 
     # Expected center position (reference position + offset)
     expected_x = X_REF_SLIT + offset[0]
