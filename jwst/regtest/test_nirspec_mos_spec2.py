@@ -42,7 +42,7 @@ def run_pipeline(rtdata_module, resource_tracker):
 
 @pytest.fixture(scope="module")
 def run_pipeline_nsclean(rtdata_module, resource_tracker):
-    """Run the calwebb_spec2 pipeline on NIRSpec MOS with nsclean."""
+    """Run the calwebb_spec2 pipeline on NIRSpec MOS with nsclean (via clean_flicker_noise)."""
 
     rtdata = rtdata_module
 
@@ -57,8 +57,12 @@ def run_pipeline_nsclean(rtdata_module, resource_tracker):
         "calwebb_spec2",
         rtdata.input,
         "--output_file=jw01345066001_05101_00003_nrs1_nsc",
-        "--steps.nsclean.skip=False",
-        "--steps.nsclean.save_results=True",
+        "--steps.clean_flicker_noise.skip=False",
+        "--steps.clean_flicker_noise.save_results=True",
+        "--steps.clean_flicker_noise.fit_method=fft",
+        "--steps.clean_flicker_noise.background_method=None",
+        "--steps.clean_flicker_noise.mask_science_regions=True",
+        "--steps.clean_flicker_noise.n_sigma=5.0",
     ]
 
     with resource_tracker.track():
@@ -107,7 +111,7 @@ def test_nirspec_mos_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
     assert diff.identical, diff.report()
 
 
-@pytest.mark.parametrize("suffix", ["nsclean", "cal", "s2d", "x1d"])
+@pytest.mark.parametrize("suffix", ["clean_flicker_noise", "cal", "s2d", "x1d"])
 def test_nirspec_mos_spec2_nsclean(run_pipeline_nsclean, fitsdiff_default_kwargs, suffix):
     """Regression test of the calwebb_spec2 pipeline with nsclean."""
 
