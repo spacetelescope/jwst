@@ -3,10 +3,10 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import models
 
+from jwst.pathloss.pathloss import calculate_pathloss_vector
 from jwst.ta_center.ta_center_step import (
     JWST_DIAMETER,
     PIXSCALE,
-    SlitMask,
     TACenterStep,
     _get_wavelength,
 )
@@ -18,35 +18,119 @@ Y_REF_SLITLESS = 829.0
 MIRI_DETECTOR_SHAPE = (1024, 1032)  # (ny, nx) for MIRI imager
 
 
-def _create_slit_mask(image_shape, slit_center):
+@pytest.fixture
+def mock_specwcs_model(tmp_path):
     """
-    Create a slit mask with subpixel accuracy.
+    Create a mock MIRI LRS specwcs reference file.
 
-    For a rectangular slit aligned with the pixel grid, computes the fractional
-    overlap between each pixel and the slit aperture analytically.
-
-    Parameters
-    ----------
-    image_shape : tuple
-        Shape of the image (ny, nx).
-    slit_center : tuple
-        Center position of the slit (x, y) in pixel coordinates.
+    Only contains the metadata needed for TA centering step, not a full specwcs model.
 
     Returns
     -------
-    weights : ndarray
-        2D array of fractional pixel coverage values (0.0 to 1.0).
+    str
+        Path to the saved mock specwcs reference file.
     """
-    ny, nx = image_shape
+    specwcs_model = dm.MiriLRSSpecwcsModel()
 
-    # Create pixel coordinate grids (pixel indices: 0, 1, 2, ...)
-    y_indices, x_indices = np.mgrid[0:ny, 0:nx]
+    # Set the reference positions for slit and slitless modes
+    specwcs_model.meta.x_ref = X_REF_SLIT
+    specwcs_model.meta.y_ref = Y_REF_SLIT
+    specwcs_model.meta.x_ref_slitless = X_REF_SLITLESS
+    specwcs_model.meta.y_ref_slitless = Y_REF_SLITLESS
 
-    # Use the callable function to evaluate mask at all pixel positions
-    slit_mask_model = SlitMask(x_center=slit_center[0], y_center=slit_center[1])
-    weights = slit_mask_model(x_indices, y_indices)
+    # Save the model to a file
+    specwcs_filepath = tmp_path / "mock_specwcs.fits"
+    specwcs_model.save(specwcs_filepath)
 
-    return weights
+    return str(specwcs_filepath)
+
+
+@pytest.fixture
+def mock_pathloss_model(tmp_path):
+    """
+    Create a mock MIRI LRS pathloss reference file.
+
+    Returns
+    -------
+    str
+        Path to the file.
+    """
+    pathloss_model = dm.MirLrsPathlossModel()
+
+    # Define wavelength grid over MIRI LRS wavelength range
+    n_wavelengths = 50
+    wavelengths = np.linspace(5.0, 14.0, n_wavelengths).astype(np.float32)
+
+    # Define spatial grids - slit is long in x, narrow in y
+    n_x = 51
+    n_y = 21
+    x_grid = np.linspace(-2.5, 2.5, n_x)  # arcsec
+    y_grid = np.linspace(-0.5, 0.5, n_y)  # arcsec
+
+    # Define pathloss data. This will be a slight Gaussian drop-off from the center
+    # until +/- 5 pixels in y, then it'll go to zero. Flat in x (along the slit).
+    pathloss_data = np.zeros((n_wavelengths, n_y, n_x), dtype=np.float32)
+    y_offsets = y_grid[:, np.newaxis]  # Shape: (n_y, 1), in arcsec
+    pathloss_2d = np.exp(-2 * y_offsets**2)  # Gaussian in y, broadcast to x
+
+    # apply the cutoff in y direction
+    y_pixel_scale = (y_grid[-1] - y_grid[0]) / (n_y - 1)
+    cutoff_arcsec = 5 * y_pixel_scale  # ~0.25 arcsec
+    pathloss_2d[np.abs(y_offsets) > cutoff_arcsec] = 0.0
+    pathloss_data[:] = pathloss_2d
+
+    # Create the pathloss table as a structured numpy array
+    # The schema requires columns: wavelength (1D), pathloss (2D), pathloss_err (2D)
+    dtype = [
+        ("wavelength", np.float32),
+        ("pathloss", np.float32, (n_y, n_x)),
+        ("pathloss_err", np.float32, (n_y, n_x)),
+    ]
+    pathloss_table = np.zeros(n_wavelengths, dtype=dtype)
+    pathloss_table["wavelength"] = wavelengths
+    pathloss_table["pathloss"] = pathloss_data
+    pathloss_table["pathloss_err"] = np.ones_like(pathloss_data) * 0.01
+    pathloss_model.pathloss_table = pathloss_table
+
+    # Set up wcsinfo
+    pathloss_model.meta.wcsinfo.crpix1 = (n_x + 1) / 2.0  # Reference pixel in x
+    pathloss_model.meta.wcsinfo.crpix2 = (n_y + 1) / 2.0  # Reference pixel in y
+    pathloss_model.meta.wcsinfo.crval1 = 0.0  # Reference value in x (arcsec)
+    pathloss_model.meta.wcsinfo.crval2 = 0.0  # Reference value in y (arcsec)
+
+    # Pixel scale in arcsec/pixel for the spatial dimensions
+    x_pixel_scale = (x_grid[-1] - x_grid[0]) / (n_x - 1)
+    y_pixel_scale = (y_grid[-1] - y_grid[0]) / (n_y - 1)
+    pathloss_model.meta.wcsinfo.cdelt1 = x_pixel_scale
+    pathloss_model.meta.wcsinfo.cdelt2 = y_pixel_scale
+
+    # Save the model to a file
+    pathloss_filepath = tmp_path / "mock_pathloss.fits"
+    pathloss_model.save(pathloss_filepath)
+
+    return str(pathloss_filepath)
+
+
+@pytest.fixture
+def mock_references(monkeypatch, mock_specwcs_model, mock_pathloss_model):
+    """
+    Monkeypatch the get_reference_file method to return mock reference files.
+
+    This allows tests to run without requiring CRDS access, and ensures that
+    these tests won't start breaking if the values in the pathloss reference file
+    are changed in CRDS.
+    """
+
+    def mock_get_reference_file(self, model, reftype):
+        """Mock implementation of get_reference_file."""
+        if reftype == "specwcs":
+            return mock_specwcs_model
+        elif reftype == "pathloss":
+            return mock_pathloss_model
+        else:
+            raise ValueError(f"Unexpected reference type: {reftype}")
+
+    monkeypatch.setattr(TACenterStep, "get_reference_file", mock_get_reference_file)
 
 
 def make_slitless_data(wavelength=15.0, offset=(0, 0)):
@@ -78,42 +162,22 @@ def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     x_center = X_REF_SLITLESS + offset[0]
     y_center = Y_REF_SLITLESS + offset[1]
 
-    # Create Airy disk model at diffraction-limited resolution
+    # Simulate source as an Airy disk model at diffraction-limited resolution
     airy = models.AiryDisk2D(amplitude=1000.0, x_0=x_center, y_0=y_center, radius=radius_pixels)
     data = airy(x, y)
 
-    # # Add some noise
-    noise = np.random.normal(0, 1, data.shape)
+    # Add some noise with fixed seed for reproducibility
+    rng = np.random.default_rng(42)
+    noise = rng.normal(0, 1, data.shape)
     data += noise
 
     return data
 
 
-def make_taq_image(make_data_func, filt, offset=(0, 0)):
-    """
-    Generate a TAQ image for testing.
-
-    Parameters
-    ----------
-    make_data_func : function
-        Function to generate the TAQ image data.  Must take in exactly
-        two arguments: wavelength and offset.
-    filt : str
-        Filter name, e.g., 'F560W', 'F770W', etc.
-    offset : tuple, optional
-        (x,y) offset of the source from the center of the frame in pixels.
-
-    Returns
-    -------
-    model : ImageModel
-        Simulated TAQ image model.
-    """
-    wavelength = _get_wavelength(filt)
-    data = make_data_func(wavelength, offset)
-
+def _make_taq_model(data):
     model = dm.ImageModel()
     model.data = data
-    model.meta.instrument.filter = filt
+    model.meta.instrument.filter = "F1500W"
 
     # Add subarray metadata (use FULL for now)
     model.meta.subarray.name = "FULL"
@@ -127,39 +191,44 @@ def make_taq_image(make_data_func, filt, offset=(0, 0)):
 
 @pytest.fixture
 def slitless_taq_image(tmp_path):
-    model = make_taq_image(make_slitless_data, "F1500W", offset=(2, -3))
+    """Generate a slitless TAQ image for testing."""
+    wavelength = _get_wavelength("F1500W")
+    offset = (2, -3)
+    data = make_slitless_data(wavelength, offset)
 
     # Add NaN values near the slitless source position to test that this still works ok
-    model.data[int(Y_REF_SLITLESS) + 5, int(X_REF_SLITLESS) + 3] = np.nan
-    model.data[int(Y_REF_SLITLESS) - 4, int(X_REF_SLITLESS) - 2] = np.inf
+    data[int(Y_REF_SLITLESS) + 5, int(X_REF_SLITLESS) + 3] = np.nan
+    data[int(Y_REF_SLITLESS) - 4, int(X_REF_SLITLESS) - 2] = np.inf
+
+    model = _make_taq_model(data)
 
     filepath = tmp_path / "slitless_taq.fits"
     model.save(filepath)
     return str(filepath)
 
 
-def make_slit_data(wavelength=15.0, offset=(0, 0)):
+def make_slit_data(offset, pathloss_file):
     """
     Make a fake MIRI LRS slit TAQ verification image.
 
-    The PSF is truncated by the slit edges, simulating what happens in
-    FIXEDSLIT mode observations.
+    The output data are zero everywhere except in the slit region,
+    where all data are weighted according to the pathloss correction.
+    An Airy disk PSF is created at the source position plus offset,
+    noise is added, and then the weights are applied.
 
     Parameters
     ----------
-    wavelength : float, optional
-        Wavelength in microns.
-    offset : tuple, optional
+    offset : tuple
         (x,y) offset of the source from the reference center in pixels.
+    pathloss_file : str
+        Path to the mock pathloss reference file.
 
     Returns
     -------
-    data : 2D ndarray
-        Simulated slit TAQ image with PSF truncated by slit edges.
+    model : ImageModel
+        Simulated slit TAQ image model with PSF weighted by pathloss.
     """
-
-    # Create coordinate grids using full MIRI detector size
-    y, x = np.mgrid[0 : MIRI_DETECTOR_SHAPE[0], 0 : MIRI_DETECTOR_SHAPE[1]]
+    wavelength = _get_wavelength("F1500W")
 
     # Calculate diffraction-limited Airy disk radius
     theta_rad = 1.22 * wavelength * 1e-6 / JWST_DIAMETER
@@ -170,70 +239,58 @@ def make_slit_data(wavelength=15.0, offset=(0, 0)):
     x_center = X_REF_SLIT + offset[0]
     y_center = Y_REF_SLIT + offset[1]
 
-    # Create full Airy disk model
+    # Create Airy disk model on the full detector
+    y, x = np.mgrid[0 : MIRI_DETECTOR_SHAPE[0], 0 : MIRI_DETECTOR_SHAPE[1]]
     airy = models.AiryDisk2D(amplitude=1000.0, x_0=x_center, y_0=y_center, radius=radius_pixels)
     data_full = airy(x, y)
 
-    # Create slit mask with subpixel accuracy using the same helper as the algorithm
-    slit_weights = _create_slit_mask(data_full.shape, slit_center=(X_REF_SLIT, Y_REF_SLIT))
+    # Retrieve the pathloss model
+    pathloss_model = dm.MirLrsPathlossModel(pathloss_file)
+    pathloss_table = pathloss_model.pathloss_table
+    pathloss_wcs = pathloss_model.meta.wcsinfo
 
-    # Apply slit weights to the data (multiply by fractional coverage)
+    # Only calculate pathloss in a region around the slit reference point
+    slit_half_height = 15  # pixels in y direction (cross-dispersion)
+    slit_half_width = 60  # pixels in x direction (along slit)
+    y_min = max(0, int(Y_REF_SLIT - slit_half_height))
+    y_max = min(MIRI_DETECTOR_SHAPE[0], int(Y_REF_SLIT + slit_half_height))
+    x_min = max(0, int(X_REF_SLIT - slit_half_width))
+    x_max = min(MIRI_DETECTOR_SHAPE[1], int(X_REF_SLIT + slit_half_width))
+
+    # Calculate pathloss only in the slit region. calculate_pathloss_vector is unfortunately not vectorized.
+    slit_weights = np.zeros_like(data_full)
+    for i in range(y_min, y_max):
+        for j in range(x_min, x_max):
+            # Calculate offset from reference center in arcsec
+            dx_arcsec = (j - X_REF_SLIT) * PIXSCALE
+            dy_arcsec = (i - Y_REF_SLIT) * PIXSCALE
+
+            _, pathloss_vector, _ = calculate_pathloss_vector(
+                pathloss_table["pathloss"], pathloss_wcs, dx_arcsec, dy_arcsec, calc_wave=False
+            )
+            # Find the wavelength index closest to our wavelength
+            wave_idx = np.argmin(np.abs(pathloss_table["wavelength"] - wavelength))
+            slit_weights[i, j] = pathloss_vector[wave_idx]
+
+    # Add noise
+    rng = np.random.default_rng(42)
+    noise = rng.normal(0, 1, data_full.shape)
+    data_full += noise
+
+    # Apply slit weights to the data (multiply by pathloss correction)
     data = data_full * slit_weights
 
-    # Add noise only where there's signal (weighted by slit coverage)
-    noise = np.random.normal(0, 1, data.shape)
-    data += noise * slit_weights
+    # Add bad values near the slit source position to test their handling
+    data[int(Y_REF_SLIT) + 4, int(X_REF_SLIT) + 2] = np.nan
+    data[int(Y_REF_SLIT) - 3, int(X_REF_SLIT) - 4] = np.inf
 
-    # import matplotlib.pyplot as plt
-    # from matplotlib.colors import LogNorm
-
-    # # Define cutout region around slit center
-    # cutout_size = 60  # pixels on each side
-    # x_min = int(X_REF_SLIT - cutout_size)
-    # x_max = int(X_REF_SLIT + cutout_size)
-    # y_min = int(Y_REF_SLIT - cutout_size)
-    # y_max = int(Y_REF_SLIT + cutout_size)
-
-    # # Create cutouts
-    # data_full_cutout = data_full[y_min:y_max, x_min:x_max]
-    # slit_weights_cutout = slit_weights[y_min:y_max, x_min:x_max]
-    # data_cutout = data[y_min:y_max, x_min:x_max]
-
-    # fig, axes = plt.subplots(1, 3, figsize=(15, 4))
-
-    # # Plot 1: Full Airy disk (before slit truncation)
-    # im1 = axes[0].imshow(data_full_cutout, cmap='gray', norm=LogNorm(), origin='lower', extent=[x_min, x_max, y_min, y_max])
-    # axes[0].plot(x_center, y_center, 'r+', markersize=15, markeredgewidth=2)
-    # axes[0].set_title('Full Airy Disk (Pre-Slit)')
-    # axes[0].set_xlabel('X (pixels)')
-    # axes[0].set_ylabel('Y (pixels)')
-    # plt.colorbar(im1, ax=axes[0], label='Counts')
-
-    # # Plot 2: Slit weights (showing fractional pixel coverage)
-    # im2 = axes[1].imshow(slit_weights_cutout, cmap='gray', origin='lower', vmin=0, vmax=1, extent=[x_min, x_max, y_min, y_max])
-    # axes[1].plot(x_center, y_center, 'r+', markersize=15, markeredgewidth=2)
-    # axes[1].set_title('Slit Weights')
-    # axes[1].set_xlabel('X (pixels)')
-    # axes[1].set_ylabel('Y (pixels)')
-    # plt.colorbar(im2, ax=axes[1], label='Coverage Fraction')
-
-    # # Plot 3: Final slit-truncated data with noise
-    # im3 = axes[2].imshow(data_cutout, cmap='gray', norm=LogNorm(vmin=1), origin='lower', extent=[x_min, x_max, y_min, y_max])
-    # axes[2].plot(x_center, y_center, 'r+', markersize=15, markeredgewidth=2, label='True Center')
-    # axes[2].set_title(f'Slit TAQ Image\nOffset: ({offset[0]}, {offset[1]}) pix')
-    # axes[2].set_xlabel('X (pixels)')
-    # axes[2].set_ylabel('Y (pixels)')
-    # axes[2].legend()
-    # plt.colorbar(im3, ax=axes[2], label='Counts')
-
-    # plt.tight_layout()
-    # plt.show()
-
-    return data
+    model = _make_taq_model(data)
+    return model
 
 
-def _assign_metadata(model):
+def _make_input_model():
     """Assign necessary metadata shared between slit and slitless modes for LRS."""
+    model = dm.ImageModel()
     model.meta.instrument.name = "MIRI"
     model.meta.target.source_type = "POINT"
     model.meta.instrument.filter = "F1500W"
@@ -241,25 +298,36 @@ def _assign_metadata(model):
 
     model.meta.observation.date = "2025-11-10"
     model.meta.observation.time = "12:00:00"
+    return model
 
 
 @pytest.fixture
 def input_model_slit():
-    model = dm.ImageModel()
-    _assign_metadata(model)
+    """
+    Make a mock LRS dataset in slit mode to use as input to the step.
+
+    The data itself are not used by the step; we just need enough metadata to
+    retrieve the appropriate reference files.
+    """
+    model = _make_input_model()
     model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
     return model
 
 
 @pytest.fixture
 def input_model_slitless():
-    model = dm.ImageModel()
-    _assign_metadata(model)
+    """
+    Make a mock LRS dataset in slitless mode to use as input to the step.
+
+    The data itself are not used by the step; we just need enough metadata to
+    retrieve the appropriate reference files.
+    """
+    model = _make_input_model()
     model.meta.exposure.type = "MIR_LRS-SLITLESS"
     return model
 
 
-def test_ta_center_slitless(input_model_slitless, slitless_taq_image):
+def test_ta_center_slitless(input_model_slitless, slitless_taq_image, mock_references):
     # Run the TA centering algorithm
     result = TACenterStep.call(input_model_slitless, ta_file=slitless_taq_image)
     x_center, y_center = result.source_xpos, result.source_ypos
@@ -283,21 +351,22 @@ def test_ta_center_slitless(input_model_slitless, slitless_taq_image):
         (0.0, 0.0),  # Perfectly centered
         (4.0, 0.0),  # Offset to the right
         (-3.0, 0.0),  # Offset to the left
-        (0.0, 7.0),  # Offset upward
-        (0.0, -6.0),  # Offset downward
-        (3.0, -6.0),  # Offset right and down
+        (0.0, 2.9),  # Offset upward
+        (0.0, -3.1),  # Offset downward
+        (3.0, -3.0),  # Offset right and down
         (-4.0, 3.6),  # Offset left and up
     ],
 )
-def test_ta_center_slit(input_model_slit, offset, tmp_path):
-    """Test TA centering for LRS slit mode with various offsets."""
+def test_ta_center_slit(input_model_slit, offset, tmp_path, mock_pathloss_model, mock_references):
+    """
+    Test TA centering for LRS slit mode with various offsets.
+
+    Some offsets are so large the center of the PSF is slightly outside the slit.
+    We need to ensure this case still works reasonably well.
+    """
 
     # Generate slit data with the specified offset
-    taq_image = make_taq_image(make_slit_data, "F1500W", offset=offset)
-
-    # Add NaN values near the slit source position to test handling
-    taq_image.data[int(Y_REF_SLIT) + 4, int(X_REF_SLIT) + 2] = np.nan
-    taq_image.data[int(Y_REF_SLIT) - 3, int(X_REF_SLIT) - 4] = np.inf
+    taq_image = make_slit_data(offset=offset, pathloss_file=mock_pathloss_model)
 
     # Save to file
     filepath = tmp_path / f"slit_taq_{offset[0]}_{offset[1]}.fits"

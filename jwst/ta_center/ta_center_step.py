@@ -382,12 +382,17 @@ class PathlossMask(Fittable2DModel):
         """
         x = np.atleast_1d(x)
         y = np.atleast_1d(y)
-        dx = (x - self.xcenter).flatten()
-        dy = (y - self.ycenter).flatten()
-        loss = np.empty_like(dx)
-        for i in range(len(dx)):
+        # Calculate offsets in arcseconds to pass into calculate_pathloss_vector
+        dx_pixels = (x - self.xcenter).flatten()
+        dy_pixels = (y - self.ycenter).flatten()
+        dx_arcsec = dx_pixels * PIXSCALE
+        dy_arcsec = dy_pixels * PIXSCALE
+        loss = np.empty_like(dx_pixels)
+        # In the future we should vectorize calculate_pathloss_vector to avoid loop.
+        # This isn't preventatively slow, so not a high priority
+        for i in range(len(dx_arcsec)):
             _, pathloss_vector, _is_inside_slit = calculate_pathloss_vector(
-                self.pathloss_data, self.pathloss_wcs, dx[i], dy[i], calc_wave=False
+                self.pathloss_data, self.pathloss_wcs, dx_arcsec[i], dy_arcsec[i], calc_wave=False
             )
             loss[i] = pathloss_vector[self.wave_idx]
         loss = loss.reshape(x.shape)
@@ -410,76 +415,6 @@ class PathlossMask(Fittable2DModel):
         wave_diffs = np.abs(self.pathloss_wave - wavelength)
         wave_index = np.argmin(wave_diffs)
         return wave_index
-
-
-class SlitMask(Fittable2DModel):
-    """
-    Model for MIRI LRS slit mask with subpixel accuracy.
-
-    Parameters
-    ----------
-    x_center : float
-        X coordinate of the slit center in pixel coordinates.
-    y_center : float
-        Y coordinate of the slit center in pixel coordinates.
-    """
-
-    n_inputs = 2
-    n_outputs = 1
-
-    def __init__(self, x_center=0.0, y_center=0.0, **kwargs):
-        self._x_center = x_center
-        self._y_center = y_center
-
-        # Calculate offset from reference center to actual slit mask center
-        # SLITMASK_LL and SLITMASK_UR are in full-frame coordinates
-        slitmask_x_center = (SLITMASK_LL[0] + SLITMASK_UR[0]) / 2.0
-        slitmask_y_center = (SLITMASK_LL[1] + SLITMASK_UR[1]) / 2.0
-
-        # Define slit boundaries in pixel coordinates, centered on x_center, y_center
-        # Apply offset from slitmask center
-        offset_x = x_center - slitmask_x_center
-        offset_y = y_center - slitmask_y_center
-
-        self.x_min = SLITMASK_LL[0] + offset_x
-        self.x_max = SLITMASK_UR[0] + offset_x
-        self.y_min = SLITMASK_LL[1] + offset_y
-        self.y_max = SLITMASK_UR[1] + offset_y
-
-        super().__init__(**kwargs)
-
-    def evaluate(self, x, y):
-        """
-        Compute the fractional overlap between pixels and the slit aperture at given coordinates.
-
-        Parameters
-        ----------
-        x : float or ndarray
-            X coordinate(s) in pixel coordinates (pixel indices).
-        y : float or ndarray
-            Y coordinate(s) in pixel coordinates (pixel indices).
-
-        Returns
-        -------
-        mask_value : float or ndarray
-            Fractional pixel coverage value(s) between 0.0 and 1.0.
-        """
-        # Pixel extends from (x, y) to (x+1, y+1) in index coordinates
-        # Compute overlap in X direction
-        overlap_x_min = np.maximum(x, self.x_min)
-        overlap_x_max = np.minimum(x + 1, self.x_max)
-        overlap_x = np.maximum(0, overlap_x_max - overlap_x_min)
-
-        # Compute overlap in Y direction
-        overlap_y_min = np.maximum(y, self.y_min)
-        overlap_y_max = np.minimum(y + 1, self.y_max)
-        overlap_y = np.maximum(0, overlap_y_max - overlap_y_min)
-
-        # Total fractional coverage
-        mask_value = overlap_x * overlap_y
-        mask_value[mask_value == 0.0] = np.nan
-
-        return mask_value
 
 
 def _get_wavelength(filter_name):  # numpydoc ignore=RT01
