@@ -423,3 +423,43 @@ def test_ta_center_slit(input_model_slit, offset, tmp_path, mock_pathloss_model,
     assert np.isclose(y_center, expected_y, atol=0.05), (
         f"Offset {offset}: Y center {y_center:.2f} not close to expected {expected_y:.2f}"
     )
+
+
+def test_skip_no_ta_file(input_model_slit):
+    """Test that step is skipped when no TA file is provided."""
+    result = TACenterStep.call(input_model_slit, ta_file=None)
+    assert result.meta.cal_step.ta_center == "SKIPPED"
+    assert not result.hasattr("source_xpos")
+    assert not result.hasattr("source_ypos")
+
+
+def test_skip_extended_source(input_model_slit, slitless_taq_image):
+    """Test that step is skipped for extended sources."""
+    input_model_slit.meta.target.source_type = "EXTENDED"
+    result = TACenterStep.call(input_model_slit, ta_file=slitless_taq_image)
+    assert result.meta.cal_step.ta_center == "SKIPPED"
+    assert not result.hasattr("source_xpos")
+    assert not result.hasattr("source_ypos")
+
+
+def test_skip_wrong_exp_type(input_model_slit, slitless_taq_image):
+    """Test that step is skipped for unsupported exposure types."""
+    input_model_slit.meta.exposure.type = "MIR_IMAGE"
+    result = TACenterStep.call(input_model_slit, ta_file=slitless_taq_image)
+    assert result.meta.cal_step.ta_center == "SKIPPED"
+    assert not result.hasattr("source_xpos")
+    assert not result.hasattr("source_ypos")
+
+
+def test_skip_unknown_filter(input_model_slit, slitless_taq_image, tmp_path):
+    """Test that step is skipped for unknown filter."""
+    # Create a TA model with an unknown filter
+    ta_path = tmp_path / "ta_unknown_filter.fits"
+    with dm.open(slitless_taq_image) as ta_model:
+        ta_model.meta.instrument.filter = "N/A"
+        ta_model.save(str(ta_path))
+
+    result = TACenterStep.call(input_model_slit, ta_file=str(ta_path))
+    assert result.meta.cal_step.ta_center == "SKIPPED"
+    assert not result.hasattr("source_xpos")
+    assert not result.hasattr("source_ypos")

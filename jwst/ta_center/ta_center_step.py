@@ -174,7 +174,7 @@ def center_from_ta_image(
     )
 
     log.info(
-        f"Reference center: full-frame=({ref_center[0]:.2f}, {ref_center[1]:.2f}), "
+        f"Reference center (0-indexed): full-frame=({ref_center[0]:.2f}, {ref_center[1]:.2f}), "
         f"subarray=({ref_center_subarray[0]:.2f}, {ref_center_subarray[1]:.2f})"
     )
 
@@ -217,7 +217,7 @@ def center_from_ta_image(
     y_center = y_center_subarray + (subarray_origin[1] - 1)
 
     log.info(
-        f"Fitted center: subarray=({x_center_subarray:.2f}, {y_center_subarray:.2f}), "
+        f"Fitted center (0-indexed): subarray=({x_center_subarray:.2f}, {y_center_subarray:.2f}), "
         f"full-frame=({x_center:.2f}, {y_center:.2f})"
     )
 
