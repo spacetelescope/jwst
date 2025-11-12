@@ -4,6 +4,7 @@ import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import Fittable2DModel, fitting, models
 
+from jwst.pathloss.pathloss import calculate_pathloss_vector
 from jwst.stpipe import Step
 
 __all__ = ["TACenterStep"]
@@ -29,7 +30,7 @@ class TACenterStep(Step):
     ta_file = string(default=None). # Target acquisition image file name
     """  # noqa: E501
 
-    reference_file_types = ["specwcs"]
+    reference_file_types = ["specwcs", "pathloss"]
 
     def process(self, step_input):
         """
@@ -101,23 +102,19 @@ class TACenterStep(Step):
             if is_slit:
                 log.info("Fitting Airy disk with slit mask model for LRS FIXEDSLIT mode")
                 ref_center = (refmodel.meta.x_ref, refmodel.meta.y_ref)
-                x_center, y_center = center_from_ta_image(
-                    ta_image,
-                    wavelength,
-                    ref_center,
-                    subarray_origin=(xstart, ystart),
-                    use_slit_model=True,
-                )
+                pathloss_file = self.get_reference_file(input_model, "pathloss")
             else:
                 log.info("Fitting Airy disk for slitless mode")
                 ref_center = (refmodel.meta.x_ref_slitless, refmodel.meta.y_ref_slitless)
-                x_center, y_center = center_from_ta_image(
-                    ta_image,
-                    wavelength,
-                    ref_center,
-                    subarray_origin=(xstart, ystart),
-                    use_slit_model=False,
-                )
+                pathloss_file = None
+
+            x_center, y_center = center_from_ta_image(
+                ta_image,
+                wavelength,
+                ref_center,
+                subarray_origin=(xstart, ystart),
+                pathloss_file=pathloss_file,
+            )
 
             # Set completion status
             result.source_xpos = x_center
@@ -128,7 +125,7 @@ class TACenterStep(Step):
 
 
 def center_from_ta_image(
-    ta_image, wavelength, ref_center, subarray_origin=(1, 1), use_slit_model=False
+    ta_image, wavelength, ref_center, subarray_origin=(1, 1), pathloss_file=None
 ):
     """
     Determine the center of a point source from a TA image.
@@ -144,8 +141,10 @@ def center_from_ta_image(
     subarray_origin : tuple of int, optional
         (xstart, ystart) 1-indexed origin of the subarray in full-frame coordinates.
         Default is (1, 1) for full frame.
-    use_slit_model : bool, optional
-        If True, fit an Airy disk multiplied by the slit mask model.
+    pathloss_file : str, optional
+        Path to the pathloss reference file for the slit mask model.
+        If provided, fit an Airy disk multiplied by the slit mask model.
+        Otherwise, fit just the Airy disk.
 
     Returns
     -------
@@ -171,13 +170,31 @@ def center_from_ta_image(
     # Create cutout around reference center (in subarray coordinates)
     cutout, cutout_origin = _cutout_center(ta_image, ref_center_subarray)
 
+    if pathloss_file is not None:
+        # Load pathloss reference file for slit mask model
+        pathloss = dm.MirLrsPathlossModel(pathloss_file)
+        pathloss_table = pathloss.pathloss_table
+        pathloss_wcs = pathloss.meta.wcsinfo
+
+        slit_center_cutout = (
+            ref_center_subarray[0] - cutout_origin[0],
+            ref_center_subarray[1] - cutout_origin[1],
+        )
+        pathloss_mask = PathlossMask(
+            pathloss_table,
+            pathloss_wcs,
+            xcenter=slit_center_cutout[0],
+            ycenter=slit_center_cutout[1],
+            wavelength=wavelength,
+        )
+    else:
+        pathloss_mask = None
+
     # Fit on the cutout
     x_center_cutout, y_center_cutout = _fit_airy_disk(
         cutout,
         wavelength,
-        slit_center=ref_center_subarray,
-        cutout_origin=cutout_origin,
-        use_slit_model=use_slit_model,
+        pathloss_model=pathloss_mask,
     )
 
     # Transform back to subarray coordinates
@@ -196,9 +213,7 @@ def center_from_ta_image(
     return x_center, y_center
 
 
-def _fit_airy_disk(
-    ta_image, wavelength, use_slit_model=False, slit_center=None, cutout_origin=None
-):
+def _fit_airy_disk(ta_image, wavelength, pathloss_model=None):
     """
     Fit an Airy disk model to target acquisition image data.
 
@@ -208,15 +223,8 @@ def _fit_airy_disk(
         2D target acquisition image data.
     wavelength : float
         Wavelength in microns for calculating the Airy disk size.
-    use_slit_model : bool, optional
-        If True, fit an Airy disk multiplied by the slit mask model.
-        If False, fit a plain Airy disk.
-    slit_center : tuple of float, optional
-        (x_center, y_center) position of the slit center in full-frame coordinates.
-        Required when use_slit_model=True.
-    cutout_origin : tuple of int, optional
-        (x_origin, y_origin) position of the cutout origin in full-frame coordinates.
-        Required when use_slit_model=True to transform slit_center to cutout coordinates.
+    pathloss_model : Fittable2DModel, optional
+        Pathloss model to multiply the Airy disk by.
 
     Returns
     -------
@@ -253,11 +261,8 @@ def _fit_airy_disk(
     # Allow radius to vary a bit (0.99 to 1.5 times diffraction limit)
     airy_init.radius.bounds = (0.99 * radius_pixels, 1.5 * radius_pixels)
 
-    if use_slit_model:
-        # Add a model of the slit mask
-        slit_center_cutout = (slit_center[0] - cutout_origin[0], slit_center[1] - cutout_origin[1])
-        slit_mask_model = SlitMask(x_center=slit_center_cutout[0], y_center=slit_center_cutout[1])
-        compound_model = airy_init * slit_mask_model
+    if pathloss_model is not None:
+        compound_model = airy_init * pathloss_model
 
         # Fit the compound model to filtered data
         fitter = fitting.LevMarLSQFitter()
@@ -320,6 +325,91 @@ def _cutout_center(image, center, size=40):
     cutout_origin = (x_min, y_min)
 
     return cutout, cutout_origin
+
+
+class PathlossMask(Fittable2DModel):
+    """
+    Model for MIRI LRS pathloss correction.
+
+    This model has no fittable parameters - it's a static mask that depends
+    on the fixed wavelength and source position.
+
+    Parameters
+    ----------
+    pathloss_table : table
+        Pathloss reference table.
+    pathloss_wcs : dict
+        WCS information for the pathloss reference data.
+    xcenter : float
+        X coordinate of the source center in pixel coordinates.
+    ycenter : float
+        Y coordinate of the source center in pixel coordinates.
+    wavelength : float
+        Wavelength in microns.
+    """
+
+    n_inputs = 2
+    n_outputs = 1
+
+    def __init__(self, pathloss_table, pathloss_wcs, xcenter, ycenter, wavelength, **kwargs):
+        self.pathloss_table = pathloss_table
+        self.pathloss_data = pathloss_table["pathloss"]
+        self.pathloss_wave = pathloss_table["wavelength"]
+        self.pathloss_wcs = pathloss_wcs
+
+        self.xcenter = xcenter
+        self.ycenter = ycenter
+        self.wavelength = wavelength
+        self.wave_idx = self._wave_to_idx(wavelength)
+
+        super().__init__(**kwargs)
+
+    def evaluate(self, x, y):
+        """
+        Compute the pathloss correction factor at given coordinates.
+
+        Parameters
+        ----------
+        x : float or np.ndarray
+            X coordinate in pixel coordinates.
+        y : float or np.ndarray
+            Y coordinate in pixel coordinates.
+
+        Returns
+        -------
+        pathloss_value : float or np.ndarray
+            Pathloss correction factor.
+        """
+        x = np.atleast_1d(x)
+        y = np.atleast_1d(y)
+        dx = (x - self.xcenter).flatten()
+        dy = (y - self.ycenter).flatten()
+        loss = np.empty_like(dx)
+        for i in range(len(dx)):
+            _, pathloss_vector, _is_inside_slit = calculate_pathloss_vector(
+                self.pathloss_data, self.pathloss_wcs, dx[i], dy[i], calc_wave=False
+            )
+            loss[i] = pathloss_vector[self.wave_idx]
+        loss = loss.reshape(x.shape)
+        return loss
+
+    def _wave_to_idx(self, wavelength):
+        """
+        Convert wavelength in microns to index in pathloss table.
+
+        Parameters
+        ----------
+        wavelength : float
+            Wavelength in microns.
+
+        Returns
+        -------
+        wave_index : int
+            Index corresponding to the wavelength in the pathloss table.
+        """
+        wave_diffs = np.abs(self.pathloss_wave - wavelength)
+        wave_index = np.argmin(wave_diffs)
+        return wave_index
 
 
 class SlitMask(Fittable2DModel):
