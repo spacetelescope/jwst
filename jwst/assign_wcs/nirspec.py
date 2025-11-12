@@ -17,6 +17,7 @@ from astropy.modeling import bounding_box as mbbox
 from astropy.modeling.models import Const1D, Identity, Mapping, Scale, Tabular1D
 from gwcs import coordinate_frames as cf
 from gwcs import selector
+from gwcs.spectroscopy import AnglesFromGratingEquation3D, WavelengthFromGratingEquation
 from gwcs.wcstools import grid_from_bounding_box
 from stdatamodels.jwst.datamodels import (
     CameraModel,
@@ -32,7 +33,6 @@ from stdatamodels.jwst.datamodels import (
     WavelengthrangeModel,
 )
 from stdatamodels.jwst.transforms.models import (
-    AngleFromGratingEquation,
     DirCos2Unitless,
     Gwa2Slit,
     Logical,
@@ -42,7 +42,6 @@ from stdatamodels.jwst.transforms.models import (
     Slit2Msa,
     Snell,
     Unitless2DirCos,
-    WavelengthFromGratingEquation,
 )
 
 from jwst.assign_wcs import pointing
@@ -1593,7 +1592,13 @@ def angle_from_disperser(disperser, input_model):
     """
     sporder = input_model.meta.wcsinfo.spectral_order
     if input_model.meta.instrument.grating.lower() != "prism":
-        agreq = AngleFromGratingEquation(disperser.groovedensity, sporder, name="alpha_from_greq")
+        # Don't need z coordinate for angle computation so map it out
+        # alpha angle has opposite sign convention in gwcs
+        agreq = (
+            Mapping((0, 1, 2), n_inputs=4)
+            | Identity(1) & Scale(-1) & Identity(1)
+            | AnglesFromGratingEquation3D(disperser.groovedensity, sporder, name="alpha_from_greq")
+        )
         return agreq
 
     system_temperature = input_model.meta.instrument.gwa_tilt
@@ -1637,9 +1642,14 @@ def wavelength_from_disperser(disperser, input_model):
     """
     sporder = input_model.meta.wcsinfo.spectral_order
     if input_model.meta.instrument.grating.lower() != "prism":
-        lgreq = WavelengthFromGratingEquation(
-            disperser.groovedensity, sporder, name="lambda_from_gratingeq"
-        )
+        # Don't need z coordinate for angle computation so map it out
+        lgreq = (
+            Mapping((0, 2), n_inputs=3)
+            | WavelengthFromGratingEquation(
+                disperser.groovedensity, sporder, name="lambda_from_gratingeq"
+            )
+            | Scale(-1)
+        )  # alpha angle has opposite sign convention in gwcs
         return lgreq
 
     lam = np.arange(0.3, 8.005, 0.005) * 1e-6
