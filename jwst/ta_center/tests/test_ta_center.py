@@ -112,7 +112,40 @@ def mock_pathloss_model(tmp_path):
 
 
 @pytest.fixture
-def mock_references(monkeypatch, mock_specwcs_model, mock_pathloss_model):
+def mock_filteroffset_model(tmp_path):
+    """
+    Create a mock MIRI filter offset reference file for testing.
+
+    This contains the column and row offsets for the F1500W filter.
+
+    Returns
+    -------
+    str
+        Path to the saved mock filteroffset reference file.
+    """
+    filteroffset_model = dm.FilteroffsetModel()
+
+    # Set required metadata fields for asdf file to validate
+    filteroffset_model.meta.description = ""
+    filteroffset_model.meta.reftype = "FILTEROFFSET"
+    filteroffset_model.meta.author = ""
+    filteroffset_model.meta.pedigree = ""
+    filteroffset_model.meta.useafter = "2000-01-01T00:00:00"
+    filteroffset_model.meta.instrument.name = "MIRI"
+    filteroffset_model.meta.instrument.detector = "MIRIMAGE"
+
+    # Create filter entry for F1500W with no offset
+    filter_entry = {"filter": "F1500W", "column_offset": 0.0, "row_offset": 0.0, "pupil": "N/A"}
+    filteroffset_model.filters.append(filter_entry)
+
+    # Save to file
+    filteroffset_filepath = tmp_path / "mock_filteroffset.asdf"
+    filteroffset_model.save(filteroffset_filepath)
+    return str(filteroffset_filepath)
+
+
+@pytest.fixture
+def mock_references(monkeypatch, mock_specwcs_model, mock_pathloss_model, mock_filteroffset_model):
     """
     Monkeypatch the get_reference_file method to return mock reference files.
 
@@ -127,6 +160,8 @@ def mock_references(monkeypatch, mock_specwcs_model, mock_pathloss_model):
             return mock_specwcs_model
         elif reftype == "pathloss":
             return mock_pathloss_model
+        elif reftype == "filteroffset":
+            return mock_filteroffset_model
         else:
             raise ValueError(f"Unexpected reference type: {reftype}")
 

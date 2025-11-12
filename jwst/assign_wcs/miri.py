@@ -31,7 +31,7 @@ from jwst.assign_wcs.util import (
 log = logging.getLogger(__name__)
 
 
-__all__ = ["create_pipeline", "imaging", "lrs", "ifu"]
+__all__ = ["create_pipeline", "imaging", "lrs", "ifu", "retrieve_filter_offset"]
 
 
 def create_pipeline(input_model, reference_files):
@@ -120,6 +120,37 @@ def imaging(input_model, reference_files):
     return pipeline
 
 
+def retrieve_filter_offset(filter_offset_model, obsfilter):
+    """
+    Retrieve the filter offset for a given filter from the FilteroffsetModel.
+
+    Parameters
+    ----------
+    filter_offset_model : FilteroffsetModel
+        The filter offset reference model.
+    obsfilter : str
+        The name of the filter used in the observation.
+
+    Returns
+    -------
+    col_offset : float
+        The column offset for the specified filter.
+    row_offset : float
+        The row offset for the specified filter.
+    """
+    filters = filter_offset_model.filters
+
+    col_offset = None
+    row_offset = None
+    for f in filters:
+        if f.filter == obsfilter:
+            col_offset = f.column_offset
+            row_offset = f.row_offset
+            break
+
+    return col_offset, row_offset
+
+
 def imaging_distortion(input_model, reference_files):
     """
     Create the "detector" to "v2v3" transform for the MIRI Imager.
@@ -158,15 +189,7 @@ def imaging_distortion(input_model, reference_files):
     # Add an offset for the filter
     obsfilter = input_model.meta.instrument.filter
     with FilteroffsetModel(reference_files["filteroffset"]) as filter_offset:
-        filters = filter_offset.filters
-
-    col_offset = None
-    row_offset = None
-    for f in filters:
-        if f.filter == obsfilter:
-            col_offset = f.column_offset
-            row_offset = f.row_offset
-            break
+        col_offset, row_offset = retrieve_filter_offset(filter_offset, obsfilter)
 
     if col_offset is not None and row_offset is not None:
         distortion = models.Shift(col_offset) & models.Shift(row_offset) | distortion

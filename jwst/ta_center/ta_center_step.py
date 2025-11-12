@@ -4,6 +4,7 @@ import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import Fittable2DModel, fitting, models
 
+from jwst.assign_wcs.miri import retrieve_filter_offset
 from jwst.pathloss.pathloss import calculate_pathloss_vector
 from jwst.stpipe import Step
 
@@ -30,7 +31,7 @@ class TACenterStep(Step):
     ta_file = string(default=None). # Target acquisition image file name
     """  # noqa: E501
 
-    reference_file_types = ["specwcs", "pathloss"]
+    reference_file_types = ["specwcs", "pathloss", "filteroffset"]
 
     def process(self, step_input):
         """
@@ -115,6 +116,16 @@ class TACenterStep(Step):
                 subarray_origin=(xstart, ystart),
                 pathloss_file=pathloss_file,
             )
+
+            # Apply filter offsets
+            filteroffset_file = self.get_reference_file(ta_model, "filteroffset")
+            with dm.FilteroffsetModel(filteroffset_file) as filteroffset:
+                col_offset, row_offset = retrieve_filter_offset(
+                    filteroffset, ta_model.meta.instrument.filter
+                )
+                log.info(f"Applying filter offsets: column={col_offset}, row={row_offset}")
+                x_center += col_offset
+                y_center += row_offset
 
             # Set completion status
             result.source_xpos = x_center
