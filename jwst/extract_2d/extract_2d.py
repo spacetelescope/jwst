@@ -12,7 +12,7 @@ log = logging.getLogger(__name__)
 
 __all__ = ["extract2d"]
 
-slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM"]
+slitless_modes = ["NIS_WFSS", "NRC_WFSS", "NRC_TSGRISM", "MIR_WFSS"]
 
 
 def extract2d(
@@ -110,7 +110,6 @@ def extract2d(
                 wfss_extract_half_height=wfss_extract_half_height,
                 nbright=nbright,
             )
-
     else:
         log.info(f"EXP_TYPE {exp_type} not supported for extract 2D")
         output_model = input_model.copy()
