@@ -12,12 +12,19 @@ from stdatamodels.jwst.datamodels import (
     DistortionModel,
     DistortionMRSModel,
     FilteroffsetModel,
+    ImageModel,
     MiriLRSSpecwcsModel,
+    MiriWFSSSpecwcsModel,
     RegionsModel,
     SpecwcsModel,
     WavelengthrangeModel,
 )
-from stdatamodels.jwst.transforms.models import IdealToV2V3, MIRI_AB2Slice
+from stdatamodels.jwst.transforms.models import (
+    IdealToV2V3,
+    MIRI_AB2Slice,
+    MIRIWFSSBackwardDispersion,
+    MIRIWFSSForwardDispersion,
+)
 
 from jwst.assign_wcs import pointing
 from jwst.assign_wcs.util import (
@@ -31,7 +38,7 @@ from jwst.assign_wcs.util import (
 log = logging.getLogger(__name__)
 
 
-__all__ = ["create_pipeline", "imaging", "lrs", "ifu"]
+__all__ = ["create_pipeline", "imaging", "lrs", "ifu", "wfss"]
 
 
 def create_pipeline(input_model, reference_files):
@@ -773,6 +780,122 @@ def abl_to_v2v3l(input_model, reference_files):
     return abl2v2v3l
 
 
+def wfss(input_model, reference_files):
+    """
+    Create the WCS pipeline for a MIRI WFSS observation.
+
+    Parameters
+    ----------
+    input_model : ImageModel
+        The input data model.
+    reference_files : dict
+        Mapping between reftype (keys) and reference file name (vals).
+        Requires 'distortion' and 'specwcs' reference files.
+
+    Returns
+    -------
+    pipeline : list
+        The WCS pipeline, suitable for input into `gwcs.WCS`.
+    """
+    # Notes
+    # -----
+    # The direct image catalog has been created from data corrected for
+    # distortion, but the dispersed images have not. This is OK if the trace and
+    # dispersion solutions are defined with respect to the distortion-corrected
+    # image. The catalog from the combined direct image has object locations in
+    # in detector space and the RA DEC of the object on sky.
+
+    # The WCS information for the dispersed image  will be
+    # used to translate these to pixel locations for each of the objects.
+    # The dispersed images will then use their trace information to translate
+    # to detector space. The translation is assumed to be one-to-one for purposes
+    # of identifying the center of the object trace.
+
+    # The extent of the trace for each object is determined where
+    # the bottom of the trace starts at t = 0 and the top of the trace ends at t = 1,
+
+    # The extraction box is calculated to be the minimum bounding box of the
+    # object extent in the segmentation map associated with the direct image.
+    # The values of the min and max corners are saved in the photometry
+    # catalog in units of RA,DEC so they can be translated to pixels by
+    # the dispersed image's imaging wcs.
+
+    if not isinstance(input_model, ImageModel):
+        raise TypeError("The input data model must be an ImageModel.")
+
+    # Make sure this is a WFSS image
+    if "MIR_WFSS" != input_model.meta.exposure.type:
+        raise ValueError("The input exposure is not MIRI WFSS")
+
+    # Create the empty detector as a 2D coordinate frame in pixel units
+    gdetector = cf.Frame2D(
+        name="grism_detector",
+        axes_order=(0, 1),
+        axes_names=("x_dispersed", "y_dispersed"),
+        unit=(u.pix, u.pix),
+    )
+    spec = cf.SpectralFrame(
+        name="spectral", axes_order=(2,), unit=(u.micron,), axes_names=("wavelength",)
+    )
+
+    # Translate the x,y detector-in to x,y detector out coordinates
+    # Get the disperser parameters which are defined as a model for each
+    # spectral order. For MIRI WFSS we only have order = 1.
+    with MiriWFSSSpecwcsModel(reference_files["specwcs"]) as f:
+        dispx = f.dispx
+        dispy = f.dispy
+        displ = f.displ
+        order = f.orders
+        invdispl = f.invdispl
+
+    # ForwardModel: dispersed to direct image, also used to find wavelength
+    det2det = MIRIWFSSForwardDispersion(order, lmodels=displ, xmodels=dispx, ymodels=dispy)
+    # BackwardModel: direct image to dispersed.
+    backward = MIRIWFSSBackwardDispersion(order, lmodels=invdispl, xmodels=dispx, ymodels=dispy)
+    det2det.inverse = backward
+    # Add in the wavelength shift from the velocity dispersion
+    try:
+        velosys = input_model.meta.wcsinfo.velosys
+    except AttributeError:
+        pass
+    if velosys is not None:
+        velocity_corr = velocity_correction(input_model.meta.wcsinfo.velosys)
+        log.info(f"Added Barycentric velocity correction: {velocity_corr[1].amplitude.value}")
+        det2det = (
+            det2det
+            | models.Mapping((0, 1, 2, 3))
+            | models.Identity(2) & velocity_corr & models.Identity(1)
+        )
+
+    # Create the pipeline to construct a WCS object for the whole image
+    # which can translate ra,dec to image frame reference pixels.
+    # This pipeline also needs to be part of the dispersed image wcs pipeline to
+    # go from detector to world coordinates. However, the dispersed image
+    # will be effectively translating pixel->world coordinates in a
+    # manner that gives you the originating pixels ra and dec, not the
+    # pure ra/dec on the sky from the pointing wcs.
+
+    # use the imaging_distortion reference file here
+    image_pipeline = imaging(input_model, reference_files)
+
+    # forward input is (x,y,lam,order) -> x0, y0
+    # backward input needs to be the same ra, dec, lam, order -> x, y
+    wfss_pipeline = [(gdetector, det2det)]
+
+    imagepipe = []
+    world = image_pipeline.pop()[0]
+    world.name = "sky"
+    for cframe, trans in image_pipeline:
+        trans = trans & (models.Identity(2))
+        name = cframe.name
+        cframe.name = name + "spatial"
+        spatial_and_spectral = cf.CompositeFrame([cframe, spec], name=name)
+        imagepipe.append((spatial_and_spectral, trans))
+    imagepipe.append((cf.CompositeFrame([world, spec], name="world"), None))
+    wfss_pipeline.extend(imagepipe)
+    return wfss_pipeline
+
+
 exp_type2transform = {
     "mir_image": imaging,
     "mir_tacq": imaging,
@@ -782,6 +905,7 @@ exp_type2transform = {
     "mir_lrs-fixedslit": lrs,
     "mir_lrs-slitless": lrs,
     "mir_mrs": ifu,
+    "mir_wfss": wfss,
     "mir_flatmrs": not_implemented_mode,
     "mir_flatimage": not_implemented_mode,
     "mir_flat-mrs": not_implemented_mode,

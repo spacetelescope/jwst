@@ -530,15 +530,17 @@ def extract_grism_objects(
                     var_flat = None
 
                 # Add a new transform to the WCS that shifts to the center of the virtual slit
-                # This needs to be separated from the "grism_detector" to "detector" transform
-                # because the un-shifted "grism_detector" to "detector" transform is used
-                # by wfss_contam
+                # This needs to be separated from the "grism_detector"/("dispersed_detector")
+                # to "detector" transform  because the un-shifted "grism_detector" to "detector"
+                # transform is used by wfss_contam
+
                 tr = Mapping((0, 1, 0, 0, 0)) | (
                     Shift(xmin) & Shift(ymin) & xcenter_model & ycenter_model & order_model
                 )
                 bind_bounding_box(
                     tr, util.transform_bbox_from_shape(ext_data.shape, order="F"), order="F"
                 )
+
                 grism_slit = copy.deepcopy(subwcs.grism_detector)
                 grism_slit.name = "grism_slit"
                 subwcs.insert_frame(
@@ -553,6 +555,7 @@ def extract_grism_objects(
                     var_rnoise=var_rnoise,
                     var_flat=var_flat,
                 )
+
                 new_slit.meta.wcsinfo.spectral_order = order
                 new_slit.meta.wcsinfo.dispersion_direction = (
                     input_model.meta.wcsinfo.dispersion_direction
