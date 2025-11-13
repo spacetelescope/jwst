@@ -1058,7 +1058,7 @@ def fit_residual_fringes_1d(
     dichroic_only=False,
     max_amp=None,
     clip_features=True,
-    clip_sigma=4.0,
+    clip_sigma=5.0,
     max_line=None,
     ignore_regions=None,
 ):
