@@ -45,9 +45,10 @@ NRS_SLIT_TYPES = [
     "NRS_AUTOWAVE",
     "NRS_AUTOFLAT",
 ]
-WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
-GRISM_TYPES = ["NRC_TSGRISM"] + WFSS_TYPES
-EXP_TYPES_USING_REFBKGDS = WFSS_TYPES + ["NIS_SOSS"]
+
+GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
+EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS"]
+WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
 
 log = logging.getLogger(__name__)
 
@@ -132,7 +133,6 @@ class Spec2Pipeline(Pipeline):
         self.cube_build.skip_dqflagging = True
         self.cube_build.pipeline = 2
         self.extract_1d.save_results = self.save_results
-
         # Retrieve the input(s)
         asn = self.load_as_level2_asn(data)
         if len(asn["products"]) > 1 and self.output_file is not None:
@@ -231,7 +231,7 @@ class Spec2Pipeline(Pipeline):
                 suffix = "cal"
                 self.extract_1d.suffix = "x1d"
 
-            # Check the datamodel to see if it's a grism image, if so get the catalog
+            # Check the datamodel to see if it's a dispersed image, if so get the catalog
             # name from the asn and record it to the meta
             if exp_type in WFSS_TYPES:
                 try:
@@ -352,6 +352,8 @@ class Spec2Pipeline(Pipeline):
             calibrated = self._process_grism(calibrated)
         elif exp_type == "NRS_MSASPEC":
             calibrated = self._process_nirspec_msa_slits(calibrated)
+        elif exp_type == "MIR_WFSS":
+            calibrated = self._process_miri_wfss(calibrated)
         elif exp_type in NRS_SLIT_TYPES:
             calibrated = self._process_nirspec_slits(calibrated)
         elif exp_type == "NIS_SOSS":
@@ -593,6 +595,48 @@ class Spec2Pipeline(Pipeline):
             )
             self.wfss_contam.skip = True
 
+    def _determine_e_per_sec_image(self, calibrated):
+        """
+        Convert image to e/sec using the gain reference file.
+
+        Parameters
+        ----------
+        calibrated : `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The input science data model.
+
+        Returns
+        -------
+        `~stdatamodels.jwst.datamodels.JwstDataModel`
+            The calibrated data converted to e/sec.
+        """
+        # Find and load the gain reference file that we need
+        gain_filename = self.get_reference_file(calibrated, "gain")
+        log.info("Using GAIN reference file %s", gain_filename)
+        wfss_esec = calibrated.copy()
+
+        with datamodels.GainModel(gain_filename) as gain_model:
+            # Always use the full-frame version of the gain ref file,
+            # even the science data are taken with a subarray
+            gain_image = gain_model.data
+
+            # Compute the simple mean of the gain image, excluding reference pixels.
+            # The gain ref file doesn't have a DQ array that can be used to
+            # mask bad values, so manually exclude NaN's and gain <= 0.
+            gain_image[gain_image <= 0.0] = np.nan
+            mean_gain = np.nanmean(gain_image[4:-4, 4:-4])
+            log.info("mean gain = %s", mean_gain)
+
+            # Apply gain to the intermediate WFSS image
+            mean_gain_sqr = mean_gain**2
+            wfss_esec.data *= mean_gain
+            wfss_esec.var_poisson *= mean_gain_sqr
+            wfss_esec.var_rnoise *= mean_gain_sqr
+            wfss_esec.var_flat *= mean_gain_sqr
+            wfss_esec.err = np.sqrt(
+                wfss_esec.var_poisson + wfss_esec.var_rnoise + wfss_esec.var_flat
+            )
+        return wfss_esec
+
     def _process_grism(self, data):
         """
         Calibrate WFSS & Grism data.
@@ -617,36 +661,10 @@ class Spec2Pipeline(Pipeline):
         # Create and save a WFSS e-/sec image, if requested
         if self.save_wfss_esec:
             log.info("Creating WFSS e-/sec product")
-
-            # Find and load the gain reference file that we need
-            gain_filename = self.get_reference_file(calibrated, "gain")
-            log.info("Using GAIN reference file %s", gain_filename)
-            with datamodels.GainModel(gain_filename) as gain_model:
-                # Always use the full-frame version of the gain ref file,
-                # even the science data are taken with a subarray
-                gain_image = gain_model.data
-
-                # Compute the simple mean of the gain image, excluding reference pixels.
-                # The gain ref file doesn't have a DQ array that can be used to
-                # mask bad values, so manually exclude NaN's and gain <= 0.
-                gain_image[gain_image <= 0.0] = np.nan
-                mean_gain = np.nanmean(gain_image[4:-4, 4:-4])
-                log.info("mean gain = %s", mean_gain)
-
-                # Apply gain to the intermediate WFSS image
-                wfss_esec = calibrated.copy()
-                mean_gain_sqr = mean_gain**2
-                wfss_esec.data *= mean_gain
-                wfss_esec.var_poisson *= mean_gain_sqr
-                wfss_esec.var_rnoise *= mean_gain_sqr
-                wfss_esec.var_flat *= mean_gain_sqr
-                wfss_esec.err = np.sqrt(
-                    wfss_esec.var_poisson + wfss_esec.var_rnoise + wfss_esec.var_flat
-                )
-
-                # Save the WFSS e-/sec image
-                self.save_model(wfss_esec, suffix="esec", force=True)
-                del wfss_esec
+            wfss_esec = self._determine_e_per_sec_image(calibrated)
+            # Save the WFSS e-/sec image
+            self.save_model(wfss_esec, suffix="esec", force=True)
+            del wfss_esec
 
         # Continue with remaining calibration steps, using the original
         # DN/sec image
@@ -657,6 +675,43 @@ class Spec2Pipeline(Pipeline):
         calibrated = self.pathloss.run(calibrated)
         calibrated = self.barshadow.run(calibrated)
         calibrated = self.wfss_contam.run(calibrated)
+        calibrated = self.photom.run(calibrated)
+        return calibrated
+
+    def _process_miri_wfss(self, data):
+        """
+        Calibrate MIRI WFSS  data.
+
+        Determine the order of the steps
+
+        Parameters
+        ----------
+        data : JWSTDataModel
+            The input science data model.
+
+        Returns
+        -------
+        JWSTDataModel
+            The calibrated data model.
+        """
+        calibrated = data.copy()
+        # Create and save a WFSS e-/sec image, if requested
+        if self.save_wfss_esec:
+            log.info("Creating WFSS e-/sec product")
+            wfss_esec = self._determine_e_per_sec_image(calibrated)
+            # Save the WFSS e-/sec image
+            self.save_model(wfss_esec, suffix="esec", force=True)
+            del wfss_esec
+
+        # More study required on the best approach for flat fielding with MIRI WFSS
+        # For now we are allowing flat fielding. This may change in the future.
+
+        # Continue with remaining calibration steps, using the original
+        # DN/sec image
+        calibrated = self.flat_field.run(calibrated)
+        calibrated = self.extract_2d.run(calibrated)
+        calibrated = self.srctype.run(calibrated)
+        calibrated = self.pathloss.run(calibrated)
         calibrated = self.photom.run(calibrated)
         return calibrated
 
