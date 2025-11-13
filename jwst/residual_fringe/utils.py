@@ -186,7 +186,7 @@ def multi_sine(n_sines):
     return mdl
 
 
-def fit_envelope(wavenum, signal):
+def fit_envelope(wavenum, signal, check_extra_neighbors=False):
     """
     Fit the upper and lower envelope of signal using a univariate spline.
 
@@ -196,6 +196,9 @@ def fit_envelope(wavenum, signal):
         Wavenumber values.
     signal : ndarray
         Signal values
+    check_extra_neighbors : bool, optional
+        If True, check two neighboring pixels instead of one, for
+        identifying peaks and troughs.
 
     Returns
     -------
@@ -217,16 +220,20 @@ def fit_envelope(wavenum, signal):
     l_y = [signal[0]]
     u_x = [wavenum[0]]
     u_y = [signal[0]]
-
-    for k in np.arange(1, len(signal) - 1):
-        if (np.sign(signal[k] - signal[k - 1]) == -1) and (
-            (np.sign(signal[k] - signal[k + 1])) == -1
-        ):
+    start = 2 if check_extra_neighbors else 1
+    for k in np.arange(start, len(signal) - start):
+        neighbor_check = [np.sign(signal[k] - signal[k - 1]), np.sign(signal[k] - signal[k + 1])]
+        if check_extra_neighbors:
+            neighbor_check.extend(
+                [np.sign(signal[k] - signal[k - 2]), np.sign(signal[k] - signal[k + 2])]
+            )
+        neighbor_check = np.array(neighbor_check)
+        if np.all(neighbor_check == -1):
+            # add to troughs: pixel is lower than its neighbors
             l_x.append(wavenum[k])
             l_y.append(signal[k])
-        if (np.sign(signal[k] - signal[k - 1]) == 1) and (
-            (np.sign(signal[k] - signal[k + 1])) == 1
-        ):
+        if np.all(neighbor_check == 1):
+            # add to peaks: pixel is higher than its neighbors
             u_x.append(wavenum[k])
             u_y.append(signal[k])
 
@@ -1124,10 +1131,12 @@ def fit_residual_fringes_1d(
     else:
         max_line_array = np.full(useflux.shape, max_line)
 
-    # find spectral features (env is spline fit of lower edge of spectrum)
-    # smooth the data slightly first to avoid noisy broad lines being missed
-    env, l_x, l_y, _, _, _ = fit_envelope(np.arange(useflux.shape[0]), useflux)
-    mod = np.abs((useflux - env) / env)
+    # find spectral features by comparing to a low-order fit to the middle of the spectrum
+    lenv, _, _, uenv, _, _ = fit_envelope(
+        np.arange(useflux.shape[0]), useflux, check_extra_neighbors=True
+    )
+    model = (lenv + uenv) / 2
+    mod = np.abs((useflux - model) / model)
 
     # given signal in mod find location of lines
     if clip_features:
