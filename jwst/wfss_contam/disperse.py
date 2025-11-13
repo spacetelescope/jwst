@@ -63,13 +63,20 @@ def _determine_native_wl_spacing(
     # Convert to x/y in the direct image frame
     x0_xy, y0_xy, _, _ = sky_to_imgxy(x0_sky, y0_sky, 1, order)
     # then convert to x/y in the grism image frame.
-    xwmin, ywmin = imgxy_to_grismxy(x0_xy, y0_xy, wmin, order)
-    xwmax, ywmax = imgxy_to_grismxy(x0_xy, y0_xy, wmax, order)
+
+    # sometimes there is a small mismatch between wmin in wavelengthrange ref file
+    # and the actual min wavelength beyond which the dispersion is defined.
+    # use wmin + small delta to ensure we are within the defined range to determine dlam
+    # We can still use the wavelengthrange defined wmin/wmax to calculate dispersion;
+    # it will be set to NaN outside the defined range later on.
+    delta = 0.05 * (wmax - wmin)
+    xwmin, ywmin = imgxy_to_grismxy(x0_xy, y0_xy, wmin + delta, order)
+    xwmax, ywmax = imgxy_to_grismxy(x0_xy, y0_xy, wmax - delta, order)
     dxw = xwmax - xwmin
     dyw = ywmax - ywmin
 
     # Create list of wavelengths on which to compute dispersed pixels
-    dw = np.abs((wmax - wmin) / (dyw - dxw))
+    dw = np.abs((wmax - wmin - 2 * delta) / (dyw - dxw))
     dlam = np.median(dw / oversample_factor)
     lambdas = np.arange(wmin, wmax + dlam, dlam)
     return lambdas
