@@ -8,6 +8,7 @@ Notes:
 """
 
 import numpy as np
+import pytest
 from astropy.io import fits
 from gwcs import wcs
 from numpy.testing import assert_allclose
@@ -68,6 +69,25 @@ def create_hdul(detector, channel, band):
     return hdul
 
 
+def create_hdu_wfss():
+    hdul = fits.HDUList()
+    phdu = fits.PrimaryHDU()
+    phdu.header["telescop"] = "JWST"
+    phdu.header["filename"] = "test_miri_wfss"
+    phdu.header["instrume"] = "MIRI"
+    phdu.header["detector"] = "MIRIMAGE"
+    phdu.header["filter"] = "P750L"
+    phdu.header["time-obs"] = "8:59:37"
+    phdu.header["date-obs"] = "2017-09-05"
+    phdu.header["exp_type"] = "MIR_WFSS"
+    scihdu = fits.ImageHDU()
+    scihdu.header["EXTNAME"] = "SCI"
+    scihdu.header.update(wcs_kw)
+    hdul.append(phdu)
+    hdul.append(scihdu)
+    return hdul
+
+
 def create_datamodel(hdul):
     im = ImageModel(hdul)
     ref = create_reference_files(im)
@@ -95,6 +115,40 @@ def create_reference_files(datamodel):
         refs[reftype] = step.get_reference_file(datamodel, reftype)
 
     return refs
+
+
+def create_wfss_wcs():
+    hdul = create_hdu_wfss()
+    im = ImageModel(hdul)
+    ref = create_reference_files(im)
+    pipeline = miri.create_pipeline(im, ref)
+    wcsobj = wcs.WCS(pipeline)
+    return wcsobj
+
+
+def traverse_wfss_trace():
+    wcsobj = create_wfss_wcs()
+    detector_to_dispersed = wcsobj.get_transform("detector", "grism_detector")
+    dispersed_to_detector = wcsobj.get_transform("grism_detector", "detector")
+
+    # check the round trip, grism pixel 100,100, source at 110,110,order 1
+    xdis, ydis, xsource, ysource, order_in = (100, 100, 110, 110, 1)
+    x0, y0, lam, order = dispersed_to_detector(xdis, ydis, xsource, ysource, order_in)
+    x, y, xdet, ydet, orderdet = detector_to_dispersed(x0, y0, lam, order)
+
+    assert x0 == xsource
+    assert y0 == ysource
+    assert order == order_in
+    assert xdet == xsource
+    assert ydet == ysource
+    assert orderdet == order_in
+
+
+# Invoke this test when the reference files for MIRI WFSS are in CRDS
+@pytest.mark.xfail(reason="Reference files for MIRI WFSS mode are not in CRDS yet.")
+def test_traverse_wfss():
+    """Make sure the trace polynomials roundtrip."""
+    traverse_wfss_trace()
 
 
 def run_test(model):

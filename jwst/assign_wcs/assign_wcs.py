@@ -67,7 +67,6 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
             input_model.meta.instrument.filter,
             input_model.meta.instrument.pupil,
         )
-
     if instrument.lower() == "nirspec":
         pipeline = mod.create_pipeline(input_model, reference_files, slit_y_range=nrs_slit_y_range)
     else:
@@ -82,6 +81,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
     output_model = input_model.copy()
     wcs = WCS(pipeline)
     output_model.meta.wcs = wcs
+
     if (
         instrument.lower() == "nirspec"
         and output_model.meta.exposure.type.lower() not in IMAGING_TYPES
@@ -101,6 +101,7 @@ def load_wcs(input_model, reference_files=None, nrs_slit_y_range=None, nrs_ifu_s
         "nrs_lamp",
         "nrs_brightobj",
         "nis_soss",
+        "mir_wfss",
     ]
 
     if output_model.meta.exposure.type.lower() not in exclude_types:
