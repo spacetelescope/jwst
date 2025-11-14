@@ -18,11 +18,11 @@ The ``wfss_contam`` step uses the following optional arguments.
   Defaults to ``False``.
 
 ``--maximum_cores``
-  The fraction of available cores that will be
-  used for multi-processing in this step. The default value is 'none' which does not use
-  multi-processing. The other options are 'quarter', 'half', and 'all'. Note that these
-  fractions refer to the total available cores and on most CPUs these include physical
-  and virtual cores.
+  The number of available cores that will be
+  used for multi-processing in this step. The default value is '1', which does not use
+  multi-processing. The other options are either an integer, 'quarter', 'half', or 'all'.
+  Note that these fractions refer to the total available cores and on most CPUs these include
+  physical and virtual cores.
 
 ``--orders``
   A list indicating which grism orders to simulate. The default value is None, which

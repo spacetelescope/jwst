@@ -79,6 +79,9 @@ the number of rows, the number of cores actually used will be no more than the
 number of rows.  This prevents any additional cores from operating on empty
 datasets, which would cause errors during ramp fitting.
 
+See :ref:`multiprocessing` for more details and examples of how to run a pipeline step
+with multiprocessing enabled.
+
 :ref:`Output Products <stcal:ramp_output_products>`
 ---------------------------------------------------
 
