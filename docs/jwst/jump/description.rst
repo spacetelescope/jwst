@@ -77,6 +77,9 @@ available image rows, the number of slices will be reduced to match the number o
 After all the slices have finished processing, the output GROUPDQ cube - containing
 the DQ flags for detected jumps - is reassembled from the slices.
 
+See :ref:`multiprocessing` for more details and examples of how to run a pipeline step
+with multiprocessing enabled.
+
 Subarrays
 ---------
 Full-frame reference files can be used for all science exposures even if the

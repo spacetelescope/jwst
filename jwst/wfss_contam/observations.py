@@ -320,8 +320,15 @@ class Observation:
                 f"{len(self.source_ids)} sources in {len(disperse_args)} chunks."
             )
             ctx = mp.get_context("spawn")
-            with ctx.Pool(self.max_cpu) as mypool:
-                all_res = mypool.starmap(disperse, disperse_args)
+            pool = ctx.Pool(self.max_cpu)
+            try:
+                all_res = pool.starmap(disperse, disperse_args)
+            except Exception as e:
+                log.error(f"Error during parallel processing: {e}")
+                raise
+            finally:
+                pool.close()
+                pool.join()
         else:
             all_res = [disperse(*args) for args in disperse_args]
         t1 = time.time()

@@ -72,6 +72,7 @@ def run_atoca_extras(rtdata_module, resource_tracker):
         "--steps.extract_1d.soss_wave_grid_in=jw01091002001_03101_00001-seg001_wavegrid.fits",
         "--steps.extract_1d.soss_bad_pix=model",
         "--steps.extract_1d.soss_rtol=1.e-3",
+        "--steps.extract_1d.soss_maximum_cores=3",
     ]
     with resource_tracker.track():
         Step.from_cmdline(args)

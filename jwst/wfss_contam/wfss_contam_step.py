@@ -18,7 +18,7 @@ class WfssContamStep(Step):
     spec = """
         save_simulated_image = boolean(default=False)  # Save full-frame simulated image
         save_contam_images = boolean(default=False)  # Save source contam estimates
-        maximum_cores = option('none', 'quarter', 'half', 'all', default='none')
+        maximum_cores = string(default='1')
         skip = boolean(default=True)
         orders = list(default=None)  # Spectral orders to process, e.g. 1, or 1,2,3
         magnitude_limit = float(default=None) # Isophotal AB magnitude limit for sources to be included in the contamination correction
