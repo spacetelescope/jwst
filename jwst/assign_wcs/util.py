@@ -470,12 +470,8 @@ def _create_grism_bbox(
                     obj.sky_bbox_ur.dec.value,
                 ]
             )
-            if input_model.meta.exposure.type.upper() == "MIR_WFSS":
-                x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin], [order])
-                x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax], [order])
-            else:
-                x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order] * 4)
-                x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order] * 4)
+            x1, y1, _, _, _ = sky_to_grism(ra, dec, lmin, order)
+            x2, y2, _, _, _ = sky_to_grism(ra, dec, lmax, order)
 
             xstack = np.hstack([x1, x2])
             ystack = np.hstack([y1, y2])
