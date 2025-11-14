@@ -227,12 +227,11 @@ def fit_envelope(wavenum, signal, check_extra_neighbors=False):
             neighbor_check.extend(
                 [np.sign(signal[k] - signal[k - 2]), np.sign(signal[k] - signal[k + 2])]
             )
-        neighbor_check = np.array(neighbor_check)
-        if np.all(neighbor_check == -1):
+        if all(n == -1 for n in neighbor_check):
             # add to troughs: pixel is lower than its neighbors
             l_x.append(wavenum[k])
             l_y.append(signal[k])
-        if np.all(neighbor_check == 1):
+        elif all(n == 1 for n in neighbor_check):
             # add to peaks: pixel is higher than its neighbors
             u_x.append(wavenum[k])
             u_y.append(signal[k])
