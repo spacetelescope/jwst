@@ -60,9 +60,9 @@ class PictureFrameStep(Step):
             The corrected datamodel, matching the type of the input.
         """
         # Open the input data model
-        # Note: this step can be run either in stage 1 on ramp-type
-        # data or in stage 2 on rate-type data, so it's important
-        # not to provide a specific datamodel to prepare_output.
+        # Note: this step is incorporated in the detector1 pipeline, but it
+        # can be run standalone on either ramp-type or rate-type data, so it's
+        # important not to provide a specific datamodel to prepare_output.
         output_model = self.prepare_output(input_data)
 
         pictureframe_file = self.get_reference_file(output_model, "pictureframe")
