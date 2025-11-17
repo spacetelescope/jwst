@@ -83,7 +83,6 @@ def generate_soss_cube_substrip96(mock_data):
     cube.data = np.array([mock_data[0][SUBSTRIP96_ROWSTART : SUBSTRIP96_ROWSTART + 96, :]] * 10)
     cube.err = np.array([mock_data[1][SUBSTRIP96_ROWSTART : SUBSTRIP96_ROWSTART + 96, :]] * 10)
     cube.dq = np.isnan(cube.data)
-    cube.meta.instrument.name = "NIRISS"
     cube.meta.instrument.filter = "CLEAR"
     cube.meta.instrument.pupil = "GR700XD"
     cube.meta.exposure.type = "NIS_SOSS"
