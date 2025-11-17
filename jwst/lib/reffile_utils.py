@@ -375,30 +375,22 @@ def stripe_read(sci_model, ref_model, attribs):
         Generated sub-model.
     """
     # Get the science model multistripe params
-    nreads1 = sci_model.meta.subarray.multistripe_reads1
-    nskips1 = sci_model.meta.subarray.multistripe_skips1
-    nreads2 = sci_model.meta.subarray.multistripe_reads2
-    nskips2 = sci_model.meta.subarray.multistripe_skips2
-    repeat_stripe = sci_model.meta.subarray.repeat_stripe
-    interleave_reads1 = sci_model.meta.subarray.interleave_reads1
-    superstripe_step = sci_model.meta.subarray.superstripe_step
-    num_superstripe = sci_model.meta.subarray.num_superstripe
-    xsize_sci = sci_model.meta.subarray.xsize
-    ysize_sci = sci_model.meta.subarray.ysize
-    fastaxis = sci_model.meta.subarray.fastaxis
-    slowaxis = sci_model.meta.subarray.slowaxis
-    ngroups = sci_model.meta.exposure.ngroups
+    sci_meta = sci_model.meta
 
     # Get the reference model subarray params
-    sub_model = type(ref_model)()
+    if sci_meta.subarray.num_superstripe > 0:
+        sub_model = datamodels.ReferenceQuadModel()
+    else:
+        sub_model = type(ref_model)()
+
     sub_model.update(ref_model)
     for attrib in attribs:
         ref_array = getattr(ref_model, attrib)
 
         # Apply subarray shape in fastaxis; slowaxis cutouts determined in generate_stripe_array
-        if np.abs(fastaxis) == 1:
+        if np.abs(sci_meta.subarray.fastaxis) == 1:
             faststart_sci = sci_model.meta.subarray.xstart
-            fastsize_sci = xsize_sci
+            fastsize_sci = sci_meta.subarray.xsize
 
             # Get the reference model subarray params
             faststart_ref = ref_model.meta.subarray.xstart
@@ -409,7 +401,7 @@ def stripe_read(sci_model, ref_model, attribs):
             ref_array = ref_array[..., faststart:faststop]
         else:
             faststart_sci = sci_model.meta.subarray.ystart
-            fastsize_sci = ysize_sci
+            fastsize_sci = sci_meta.subarray.ysize
 
             # Get the reference model subarray params
             faststart_ref = ref_model.meta.subarray.ystart
@@ -419,46 +411,13 @@ def stripe_read(sci_model, ref_model, attribs):
             faststop = faststart + fastsize_sci
             ref_array = ref_array[..., faststart:faststop, :]
 
-        tmp = generate_stripe_array(
-            ref_array,
-            xsize_sci,
-            ysize_sci,
-            nreads1,
-            nreads2,
-            nskips1,
-            nskips2,
-            repeat_stripe,
-            interleave_reads1,
-            superstripe_step,
-            num_superstripe,
-            fastaxis,
-            slowaxis,
-            ngroups,
-        )
-        # TODO: breakpoint()
-        # Current bug/issue - need to broadcast multistripe output to match science nints.
-        # Current behavior only builds ref array for one int * n_stripes - broadcast n_stripe
-        # array to nints * n_stripes shape?
+        tmp = generate_stripe_array(ref_array, sci_meta)
+        # breakpoint()
         sub_model[attrib] = tmp
     return sub_model
 
 
-def generate_stripe_array(
-    ref_array,
-    xsize_sci,
-    ysize_sci,
-    nreads1,
-    nreads2,
-    nskips1,
-    nskips2,
-    repeat_stripe,
-    interleave_reads1,
-    superstripe_step,
-    num_superstripe,
-    fastaxis,
-    slowaxis,
-    ngroups,
-):
+def generate_stripe_array(ref_array, sci_meta):
     """
     Generate stripe array.
 
@@ -466,40 +425,30 @@ def generate_stripe_array(
     ----------
     ref_array : np.array
         The scene to be sliced.
-    xsize_sci : int
-        Output shape in x dim.
-    ysize_sci : int
-        Output shape in y dim.
-    nreads1 : int
-        Multistripe header keyword.
-    nreads2 : int
-        Multistripe header keyword.
-    nskips1 : int
-        Multistripe header keyword.
-    nskips2 : int
-        Multistripe header keyword.
-    repeat_stripe : int
-        Multistripe header keyword.
-    interleave_reads1 : int
-        Multistripe header keyword.
-    superstripe_step : int
-        Multistripe header keyword.
-    num_superstripe : int
-        Multistripe header keyword.
-    fastaxis : int
-        The subarray keyword describing
-        the fast readout axis and direction.
-    slowaxis : int
-        The subarray keyword describing
-        the slow readout axis and direction.
-    ngroups : int
-        The number of groups in the science data array.
+    sci_meta : `stdatamodels.properties.ObjectNode`
+        The science datamodel metadata tree.
 
     Returns
     -------
     stripe_out : ndarray
         Generated stripe array.
     """
+    # Extract science metadata
+    nreads1 = sci_meta.subarray.multistripe_reads1
+    nskips1 = sci_meta.subarray.multistripe_skips1
+    nreads2 = sci_meta.subarray.multistripe_reads2
+    nskips2 = sci_meta.subarray.multistripe_skips2
+    repeat_stripe = sci_meta.subarray.repeat_stripe
+    interleave_reads1 = sci_meta.subarray.interleave_reads1
+    superstripe_step = sci_meta.subarray.superstripe_step
+    num_superstripe = sci_meta.subarray.num_superstripe
+    xsize_sci = sci_meta.subarray.xsize
+    ysize_sci = sci_meta.subarray.ysize
+    fastaxis = sci_meta.subarray.fastaxis
+    slowaxis = sci_meta.subarray.slowaxis
+    ngroups = sci_meta.exposure.ngroups
+    nints_sci = sci_meta.exposure.nints
+
     # Transform science data to detector frame
     ref_array = science_detector_frame_transform(ref_array, fastaxis, slowaxis)
     ref_shape = ref_array.shape
@@ -584,12 +533,18 @@ def generate_stripe_array(
         # SUPERSTRIPE MODE
         # First alter subarray shape to broadcast stripe size to fill "full" subarray
         if len(ref_shape) == 2:
-            ref_array = ref_array[np.newaxis, ngroups, :]
+            ref_array = ref_array[np.newaxis, np.newaxis, :].repeat(ngroups, axis=1)
             ref_shape = ref_array.shape
         if len(ref_shape) == 4:
-            nints, _, ysize, xsize = ref_shape
+            nints_ref, _, ysize, xsize = ref_shape
         else:
             raise ValueError(f"Unsupported shape: len(ref_shape) == {len(ref_array.shape)}")
+
+        # If reference file has more integrations than science, only process through
+        # necessary integrations.
+        # If science has more integrations, we'll broadcast the reference arrays to
+        # match the number of arrays in the science frame.
+        nints = np.min(nints_ref, nints_sci)
         stripe_out = np.zeros(
             (nints * num_superstripe, ngroups, slow_size, fast_size), dtype=ref_array.dtype
         )
@@ -655,6 +610,12 @@ def generate_stripe_array(
                         "Stripe readout resulted in mismatched reference array shape "
                         "with respect to science array!"
                     )
+
+        # If multistripe, broadcast arrays into nints copies so that direct application
+        # of the reference array to the science array is possible
+        if num_superstripe > 0:
+            # breakpoint()
+            stripe_out = stripe_out.repeat(nints // num_superstripe, axis=0)
         # Transform from detector frame back to science frame
         stripe_out = detector_science_frame_transform(stripe_out, fastaxis, slowaxis)
 

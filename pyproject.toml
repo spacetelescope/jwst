@@ -31,7 +31,7 @@ dependencies = [
     "scipy>=1.14.1",
     "stdatamodels @ git+https://github.com/tapastro/stdatamodels.git@jp-4097-soss-stripe-subarrays",
     # "stdatamodels>=4.1.0,<4.2.0",
-    "stcal @ git+https://github.com/tapastro/stcal.git@capture_warnings",
+    "stcal @ git+https://github.com/spacetelescope/stcal.git@main",
     # "stcal>=1.15.1,<1.16.0",
     "stpipe @ git+https://github.com/spacetelescope/stpipe.git@main",
     # "stpipe>=0.11.0,<0.12.0",
