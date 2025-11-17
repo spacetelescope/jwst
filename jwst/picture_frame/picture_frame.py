@@ -128,18 +128,18 @@ def correct_picture_frame(
 
     # Make a draft rate file if needed
     if isinstance(input_model, datamodels.RampModel):
+        # Check for single group data: no processing is possible in this case
+        if input_model.data.shape[1] == 1:
+            log.warning("Picture frame correction cannot be performed for single-group data.")
+            log.warning("Processing will be skipped.")
+            return input_model, mask_model, correction_model, status
+
         image_model = cfn.make_rate(input_model)
-        ndim = 4
-        nints, ngroups = input_model.data.shape[:2]
+        is_ramp = True
     else:
         # Input is already a rate or rateints file
         image_model = input_model
-        ndim = input_model.data.ndim
-        ngroups = 1
-        if ndim == 3:  # rateints
-            nints = input_model.data.shape[0]
-        else:  # rate
-            nints = 1
+        is_ramp = False
 
     # Assign a WCS to the rate file and flag open MSA shutters
     try:
@@ -184,41 +184,32 @@ def correct_picture_frame(
     if save_correction:
         input_data_copy = input_model.data.copy()
 
-    # Loop over integrations and groups
-    for i in range(nints):
-        for j in range(ngroups):
-            log.debug(f"Group {j}")
-            if ndim == 2:
-                image = input_model.data
-                zero_group = 0.0
-            elif ndim == 3:
-                image = input_model.data[i]
-                zero_group = 0.0
-            else:  # ramp data input
-                # Skip the zero group
-                if j == 0:
-                    log.debug("Skipping the zero group.")
-                    continue
+    if is_ramp:
+        # Skip processing the zero group, subtract it from each subsequent group
+        zero_group = input_model.data[:, 0]
+        image = input_model.data[:, 1:]
+        image -= zero_group
+    else:
+        # Directly correct each image
+        zero_group = 0.0
+        image = input_model.data
 
-                # Otherwise: subtract the zero group from the current group
-                zero_group = input_model.data[i, 0]
-                image = input_model.data[i, j]
-                image -= zero_group
+    # Compute median values at the center and edges in each image
+    median_center = np.nanmedian(image[..., center_data], axis=-1)
+    median_edge = np.nanmedian(image[..., edge_data], axis=-1)
+    log.debug(f"Median center: {median_center}")
+    log.debug(f"Median edge: {median_edge}")
 
-            # Compute median values at the center and edges
-            median_center = np.nanmedian(image[center_data])
-            median_edge = np.nanmedian(image[edge_data])
-            log.debug(f"Median center: {median_center}")
-            log.debug(f"Median edge: {median_edge}")
+    # Scale reference data and subtract from science data
+    scale = (median_center - median_edge) / (median_center_ref - median_edge_ref)
+    difference = slope - median_edge_ref
+    offset = median_edge
 
-            # Scale reference data and subtract from science data
-            scale = (median_center - median_edge) / (median_center_ref - median_edge_ref)
-            difference = slope - median_edge_ref
-            offset = median_edge
-            correction = scale * difference + offset
+    # Scale and offset are both one value per group/integration; difference is a 2D image
+    correction = scale[..., None, None] * difference[..., :, :] + offset[..., None, None]
 
-            # Add back in the zero group and subtract the correction in place
-            image += zero_group - correction
+    # Add back in the zero group and subtract the correction in place
+    image += zero_group - correction
 
     # Save the correction data if desired
     if save_correction:

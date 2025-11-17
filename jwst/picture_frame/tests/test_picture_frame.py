@@ -167,3 +167,23 @@ def test_correction_wcs_error(caplog, monkeypatch):
 
     # Flat artifact should be perfectly corrected
     np.testing.assert_allclose(cleaned.data, 0.0)
+
+
+def test_correction_single_group(caplog):
+    pctfrm_model = picture_frame_model()
+
+    # Modify ramp data to have a single group
+    input_model = make_nrs_fs_full_ramp()
+    shape = input_model.data.shape
+    input_model.data = input_model.data[0, 0, :, :].reshape(1, 1, shape[-2], shape[-1])
+
+    cleaned, mask, correction, status = pf.correct_picture_frame(
+        input_model.copy(), pctfrm_model, save_correction=True, save_mask=True
+    )
+
+    # Message is logged, correction and mask are None
+    assert "correction cannot be performed for single-group data" in caplog.text
+    np.testing.assert_allclose(cleaned.data, input_model.data)
+    assert status == "SKIPPED"
+    assert correction is None
+    assert mask is None
