@@ -83,6 +83,7 @@ def generate_soss_cube_substrip96(mock_data):
     cube.data = np.array([mock_data[0][SUBSTRIP96_ROWSTART : SUBSTRIP96_ROWSTART + 96, :]] * 10)
     cube.err = np.array([mock_data[1][SUBSTRIP96_ROWSTART : SUBSTRIP96_ROWSTART + 96, :]] * 10)
     cube.dq = np.isnan(cube.data)
+    cube.meta.instrument.name = "NIRISS"
     cube.meta.instrument.filter = "CLEAR"
     cube.meta.instrument.pupil = "GR700XD"
     cube.meta.exposure.type = "NIS_SOSS"
@@ -157,6 +158,17 @@ def test_bkg_fail(monkeypatch, caplog, generate_background_template, generate_so
     assert result is not mock_model
     assert result.meta.cal_step.bkg_subtract == "SKIPPED"
     assert "Template matching failed" in caplog.text
+    assert mock_model.meta.cal_step.bkg_subtract is None
+
+
+def test_bkg_no_reffile(caplog, generate_soss_cube_substrip96):
+    mock_model = generate_soss_cube_substrip96
+
+    result = BackgroundStep.call(mock_model, override_bkg="N/A")
+
+    assert result is not mock_model
+    assert result.meta.cal_step.bkg_subtract == "SKIPPED"
+    assert "No BKG reference file found" in caplog.text
     assert mock_model.meta.cal_step.bkg_subtract is None
 
 
