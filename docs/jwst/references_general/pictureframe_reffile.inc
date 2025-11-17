@@ -3,10 +3,8 @@
 PICTUREFRAME Reference File
 ---------------------------
 
-.. todo: add reference to model when it is merged
-
 :REFTYPE: PICTUREFRAME
-:Data model: PictureFrameModel
+:Data model: `~stdatamodels.jwst.datamodels.PictureFrameModel`
 
 The PICTUREFRAME reference file contains data necessary for removing
 thermal artifacts (the "picture frame" effect) from NIRSpec exposures.
