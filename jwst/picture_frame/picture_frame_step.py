@@ -69,24 +69,23 @@ class PictureFrameStep(Step):
         exp_type = output_model.meta.exposure.type
         if pictureframe_file == "N/A":
             log.warning(f"Picture frame correction is not available for exposure type {exp_type}.")
-            status = "SKIPPED"
-            mask_model = None
-            correction_model = None
-        else:
-            log.info(f"Using PICTUREFRAME reference file: {pictureframe_file}")
-            pictureframe_model = datamodels.PictureFrameModel(pictureframe_file)
+            output_model.meta.cal_step.picture_frame = "SKIPPED"
+            return output_model
 
-            # Correct for the picture frame effect.
-            # The output model is updated in place.
-            output_model, mask_model, correction_model, status = correct_picture_frame(
-                output_model,
-                pictureframe_model,
-                mask_science_regions=self.mask_science_regions,
-                n_sigma=self.n_sigma,
-                input_dir=self.input_dir,
-                save_mask=self.save_mask,
-                save_correction=self.save_correction,
-            )
+        log.info(f"Using PICTUREFRAME reference file: {pictureframe_file}")
+        pictureframe_model = datamodels.PictureFrameModel(pictureframe_file)
+
+        # Correct for the picture frame effect.
+        # The output model is updated in place.
+        output_model, mask_model, correction_model, status = correct_picture_frame(
+            output_model,
+            pictureframe_model,
+            mask_science_regions=self.mask_science_regions,
+            n_sigma=self.n_sigma,
+            input_dir=self.input_dir,
+            save_mask=self.save_mask,
+            save_correction=self.save_correction,
+        )
 
         # Save the mask, if requested
         if self.save_mask and mask_model is not None:

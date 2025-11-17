@@ -27,10 +27,10 @@ def _region_masks(background_mask):
     Returns
     -------
     center_data : ndarray of bool
-        Array matching background mask shape containing True for background pixels
+        Array matching background mask shape; True for background pixels
         in the center region.
     edge_data : ndarray of bool
-        Array matching background mask shape containing True for background pixels
+        Array matching background mask shape; True for background pixels
         in the edge region.
     """
     y, x = np.mgrid[: background_mask.shape[0], : background_mask.shape[1]]
