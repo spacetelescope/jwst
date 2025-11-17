@@ -115,4 +115,56 @@ def test_disperse_order(observation, segmentation_map):
     assert slit.data.shape == (slit.ysize, slit.xsize)
 
     # check for regression by hard-coding one value of slit.data
-    assert np.isclose(slit.data[5, 60], 20.996877670288086)
+    assert np.isclose(slit.data[5, 60], 21.067791)
+
+
+def test_same_result_different_chunks(observation, segmentation_map):
+    """
+    Test that when sources are split into chunks, they have the same result as when not split.
+
+    This covers a bug where sources could have different numerical results when part of a different
+    chunk, because of how the wavelength grid was computed.
+    """
+    obs = copy.deepcopy(observation)
+    order = 1
+    sens_waves = np.linspace(1.708, 2.28, 100)
+    wmin, wmax = np.min(sens_waves), np.max(sens_waves)
+    sens_resp = np.ones_like(sens_waves)
+
+    seg = segmentation_map.data
+    all_ids = np.array(list(set(np.ravel(seg))))
+    source_ids = all_ids[50:55]
+
+    # figure out total number of pixels for these sources and set chunk size accordingly
+    # to make sure a few chunks get made
+    is_selected = np.isin(seg.flatten(), source_ids)
+    max_per_chunk = np.sum(is_selected) // 3
+
+    # Run disperse_order twice: once for reference, once with very small chunks to force splitting
+    obs_reference = copy.deepcopy(obs)
+    obs_reference.disperse_order(order, wmin, wmax, sens_waves, sens_resp, selected_ids=source_ids)
+
+    obs.max_pixels_per_chunk = max_per_chunk
+    obs.disperse_order(order, wmin, wmax, sens_waves, sens_resp, selected_ids=source_ids)
+
+    # Ensure each source ID appears exactly once in final slits
+    slit_source_ids = [slit.source_id for slit in obs.simulated_slits.slits]
+    unique_slit_ids = list(set(slit_source_ids))
+    assert len(slit_source_ids) == len(unique_slit_ids), "Duplicate source IDs found in slits"
+
+    # Verify all slits are identical between reference and test
+    ref_slits = {slit.source_id: slit for slit in obs_reference.simulated_slits.slits}
+    test_slits = {slit.source_id: slit for slit in obs.simulated_slits.slits}
+    for source_id in ref_slits.keys():
+        ref_slit = ref_slits[source_id]
+        test_slit = test_slits[source_id]
+
+        # Bounds and shapes should be identical
+        assert ref_slit.xstart == test_slit.xstart
+        assert ref_slit.ystart == test_slit.ystart
+        assert ref_slit.xsize == test_slit.xsize
+        assert ref_slit.ysize == test_slit.ysize
+
+        # Data should be identical
+        assert ref_slit.data.shape == test_slit.data.shape
+        assert_allclose(ref_slit.data, test_slit.data)
