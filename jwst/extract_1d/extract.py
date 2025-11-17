@@ -42,7 +42,7 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
-WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM"]
+WFSS_EXPTYPES = ["NIS_WFSS", "NRC_WFSS", "NRC_GRISM", "MIR_WFSS"]
 """Exposure types to be regarded as wide-field slitless spectroscopy."""
 
 SRCPOS_EXPTYPES = ["MIR_LRS-FIXEDSLIT", "NRS_FIXEDSLIT", "NRS_MSASPEC", "NRS_BRIGHTOBJ"]
@@ -146,6 +146,7 @@ def read_apcorr_ref(refname, exptype):
     apcorr_model_map = {
         "MIR_LRS-FIXEDSLIT": MirLrsApcorrModel,
         "MIR_LRS-SLITLESS": MirLrsApcorrModel,
+        "MIR_WFSS": MirLrsApcorrModel,
         "MIR_MRS": MirMrsApcorrModel,
         "NRC_GRISM": NrcWfssApcorrModel,
         "NRC_WFSS": NrcWfssApcorrModel,

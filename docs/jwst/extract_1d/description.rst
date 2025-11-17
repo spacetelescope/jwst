@@ -441,12 +441,14 @@ In IFU cube data, 1D extraction is controlled by a different set of EXTRACT1D
 reference file parameters. For point source data, the extraction
 aperture is centered at the RA/Dec target location indicated by the header.
 If the target location is undefined in the header, then the extraction
-region is the  center of the IFU cube. For extended source data, anything specified in the reference file
-or step arguments will be ignored; the entire image will be extracted, and no background subtraction will be done.
+region is the center of the IFU cube. For extended source data, anything
+specified in the reference file or step arguments will be ignored; the entire
+image will be extracted using the rectangular aperture, which will not change with
+wavelength. The background subtraction will be determined with sigma clipping.
 
 For point sources, a circular extraction aperture is used, along with an optional
-circular annulus for background extraction and subtraction. The size of the extraction
-region and the background annulus size varies with wavelength.
+circular annulus for background extraction and subtraction with sigma clipping.
+The size of the extraction region and the background annulus size varies with wavelength.
 The extraction related vectors are found in the asdf extract1d reference file.
 For each element in the ``wavelength`` vector there are three size components: ``radius``, ``inner_bkg``, and
 ``outer_bkg``. The radius vector sets the extraction size; while ``inner_bkg`` and ``outer_bkg`` specify the
@@ -556,3 +558,15 @@ smoothest solution for the flux that fits the observations within the measured u
 The resulting spectral trace solutions are at a higher resolution than the observed data since an oversampled
 wavelength grid is used by the ATOCA algorithm for decontamination. These results are then reconvolved onto the native
 wavelength grid before the 1D spectra for each order are extracted.
+
+
+Multiprocessing
+---------------
+For SOSS data, the extraction can be parallelized over multiple CPU cores by setting the
+``soss_maximum_cores`` parameter. The first integration is always run on a single core in
+order to determine a good Tikhonov regularization parameter and a good adaptive wavelength
+grid for the input dataset. Subsequent integrations are then run in parallel using the
+specified number of CPU cores. If ``soss_maximum_cores`` is set to 1 (the default),
+no multiprocessing will be used.
+See :ref:`multiprocessing` for more details and examples of how to run a pipeline step
+with multiprocessing enabled.

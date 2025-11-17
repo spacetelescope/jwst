@@ -813,6 +813,37 @@ def _adapt_grid(grid, fct, max_grid_size, max_iter=10, rtol=10e-6, atol=1e-6):
     return grid, is_converged
 
 
+class ThroughputInterpolator:
+    """
+    Picklable interpolator for SOSS throughput.
+
+    Parameters
+    ----------
+    wavelength : np.ndarray
+        Wavelength array
+    throughput : np.ndarray
+        Throughput array
+    """
+
+    def __init__(self, wavelength, throughput):
+        self.wavelength = np.sort(wavelength)
+        self.wl_min = np.min(self.wavelength)
+        self.wl_max = np.max(self.wavelength)
+        self.throughput = throughput.copy()
+        # Ensure throughput is zero at endpoints
+        self.throughput[0] = 0.0
+        self.throughput[-1] = 0.0
+        # Create the spline
+        self._interp = make_interp_spline(
+            self.wavelength, self.throughput, k=3, bc_type=("clamped", "clamped")
+        )
+
+    def __call__(self, wv):  # numpydoc ignore:RT01
+        """Interpolate throughput at given wavelength(s)."""
+        wv = np.clip(wv, self.wl_min, self.wl_max)
+        return self._interp(wv)
+
+
 def throughput_soss(wavelength, throughput):
     """
     Create an interpolator for the throughput values.
@@ -826,25 +857,14 @@ def throughput_soss(wavelength, throughput):
 
     Returns
     -------
-    interpolator : callable
-        A function that interpolates the throughput values. Accepts an array
-        of wavelengths and returns the interpolated throughput values.
+    ThroughputInterpolator
+        A callable interpolator that interpolates the throughput values.
 
     Notes
     -----
     Throughput is always zero at min, max of wavelength.
     """
-    wavelength = np.sort(wavelength)
-    wl_min, wl_max = np.min(wavelength), np.max(wavelength)
-    throughput[0] = 0.0
-    throughput[-1] = 0.0
-    interp = make_interp_spline(wavelength, throughput, k=3, bc_type=("clamped", "clamped"))
-
-    def interpolator(wv):
-        wv = np.clip(wv, wl_min, wl_max)
-        return interp(wv)
-
-    return interpolator
+    return ThroughputInterpolator(wavelength, throughput)
 
 
 class WebbKernel:
@@ -954,7 +974,6 @@ class WebbKernel:
         self.wave_center = wave_center
         self.poly = np.array(poly)
 
-        # 2D Interpolate
         self.f_ker = RectBivariateSpline(self.pixels, self.wave_center, self.kernels, bbox=bbox)
 
     def __call__(self, wave, wave_c):
