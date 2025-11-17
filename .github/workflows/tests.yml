@@ -49,7 +49,7 @@ jobs:
     outputs:
       context: ${{ steps.context.outputs.context }}
   test:
-    uses: OpenAstronomy/github-actions-workflows/.github/workflows/tox.yml@d9b81a07e789d1b1921ab5fe33de2ddcbbd02c3f  # v2.3.0
+    uses: zacharyburnett/github-actions-workflows/.github/workflows/tox.yml@supported_pythons
     needs: [ crds_context ]
     with:
       setenv: |
@@ -65,11 +65,6 @@ jobs:
       envs: |
         - linux: py311-oldestdeps-xdist-cov
           pytest-results-summary: true
-        - linux: py311-xdist
-          posargs: -vv
-          pytest-results-summary: true
-        - linux: py312-xdist
-          pytest-results-summary: true
         # `tox` does not currently respect `requires-python` versions when creating testing environments;
         # if this breaks, add an upper pin to `requires-python` and revert this py3 to the latest working version
         - linux: py313-cov-xdist
@@ -77,3 +72,6 @@ jobs:
           pytest-results-summary: true
         - macos: py313-xdist
           pytest-results-summary: true
+      fill: true
+      fill_platforms: linux
+      fill_factors: xdist
