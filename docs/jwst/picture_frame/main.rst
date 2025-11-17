@@ -11,10 +11,16 @@ effect) from calibrated ramp images, after the :ref:`jump <jump_step>` step
 and prior to performing the :ref:`clean_flicker_noise <clean_flicker_noise_step>`
 or the :ref:`ramp_fitting <ramp_fitting_step>` step.
 
-The correction is available for NIRSpec FULL frame exposures only.
 
 The picture frame artifacts are corrected by scaling and subtracting a reference rate
 image, containing only the thermal background, stored in a PICTUREFRAME reference file.
+
+The correction is available for NIRSpec FULL frame exposures only.
+It is incorporated into the :ref:`calwebb_detector1 <calwebb_detector1>` pipeline
+for ramp data, but it may also be called as a standalone step on a ramp or rate exposure.
+The only difference in processing if the input is a rate image or rateints cube instead of
+a ramp is that a draft rate file is not necessary: the scene mask is derived from the
+input and correction is directly applied to the rate image(s).
 
 Correction Algorithm
 --------------------
