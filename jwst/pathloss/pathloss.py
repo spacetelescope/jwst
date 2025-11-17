@@ -6,8 +6,9 @@ import math
 import numpy as np
 import stdatamodels.jwst.datamodels as datamodels
 from gwcs import wcstools
+from stcal.alignment.util import compute_scale
 
-from jwst.assign_wcs import nirspec, util
+from jwst.assign_wcs import nirspec
 from jwst.lib.pipe_utils import match_nans_and_flags
 from jwst.lib.wcs_utils import get_wavelengths
 
@@ -1234,7 +1235,7 @@ def _corrections_for_lrs(data, pathloss, user_slit_loc):
         # +/-0.255 arcsec. Hence, the xcenter coordinate remains the same.
         ra, dec, wav = data.meta.wcs(offset_1, offset_2)
         location = (ra, dec, wav)
-        scale_degrees = util.compute_scale(
+        scale_degrees = compute_scale(
             data.meta.wcs, location, disp_axis=data.meta.wcsinfo.dispersion_direction
         )
         scale_arcsec = scale_degrees * 3600.0
