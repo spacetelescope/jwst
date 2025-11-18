@@ -96,3 +96,16 @@ There is one primary output and two optional outputs from the step:
 3. If the step argument ``--save_contam_images`` is set to `True`, the simulated
    contamination cutouts (the result of step 3 above) are saved to a file.
    See :ref:`wfss_contam_step_args`.
+
+Multiprocessing
+---------------
+The step can make use of multiple CPU cores to speed up the simulation of the
+dispersed spectra. In short, the direct image pixels to be processed are divided into
+chunks that are distributed to the available CPU cores. Each core processes its
+assigned chunk of pixels, and the results are combined into the final full-frame
+simulated grism image.
+The number of cores to use can be set using the step argument ``--maximum_cores``,
+and the maximum number of direct image pixels to be processed at once can be set using the
+step argument ``--max_pixels_per_chunk``; see :ref:`wfss_contam_step_args`.
+See :ref:`multiprocessing` for more details and examples of how to run a pipeline step
+with multiprocessing enabled.

@@ -58,6 +58,7 @@ class Extract1dStep(Step):
     soss_bad_pix = option("model", "masking", default="masking")  # method used to handle bad pixels
     soss_modelname = output_file(default = None)  # Filename for optional model output of traces and pixel weights
     soss_order_3 = boolean(default=True)  # Whether to include spectral order 3 in the extraction for SOSS
+    soss_maximum_cores = string(default='1')  # Number of cores to use for multiprocessing
     """  # noqa: E501
 
     reference_file_types = ["extract1d", "apcorr", "pastasoss", "specprofile", "speckernel", "psf"]
@@ -180,6 +181,7 @@ class Extract1dStep(Step):
         soss_kwargs["wave_grid_out"] = self.soss_wave_grid_out
         soss_kwargs["estimate"] = self.soss_estimate
         soss_kwargs["atoca"] = self.soss_atoca
+        soss_kwargs["maximum_cores"] = self.soss_maximum_cores
         # Set flag to output the model and the tikhonov tests
         soss_kwargs["model"] = True if self.soss_modelname else False
 

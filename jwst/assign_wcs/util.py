@@ -356,12 +356,14 @@ def create_grism_bbox(
     ``wfss_extract_half_height`` can only be applied to point source objects.
     """
     instr_name = input_model.meta.instrument.name
-    if instr_name == "NIRCAM":
+    if instr_name in ["NIRCAM", "MIRI"]:
         filter_name = input_model.meta.instrument.filter
     elif instr_name == "NIRISS":
         filter_name = input_model.meta.instrument.pupil
     else:
-        raise ValueError("create_grism_object works with NIRCAM and NIRISS WFSS exposures only.")
+        raise ValueError(
+            "create_grism_object works with NIRCAM, NIRISS, and MIRI WFSS exposures only."
+        )
 
     if reference_files is None:
         # Get the list of extract_orders and lmin, lmax from wavelength_range.
@@ -381,7 +383,6 @@ def create_grism_bbox(
                 extract_orders = [x[1] for x in ref_extract_orders if x[0] == filter_name].pop()
 
             wavelength_range = f.get_wfss_wavelength_range(filter_name, extract_orders)
-
     if mmag_extract is None:
         mmag_extract = 999.0  # extract all objects, regardless of magnitude
     else:
@@ -415,6 +416,7 @@ def _create_grism_bbox(
 
     # this contains the pure information from the catalog with no translations
     skyobject_list = get_object_info(input_model.meta.source_catalog)
+
     # get the imaging transform to record the center of the object in the image
     # here, image is in the imaging reference frame, before going through the
     # dispersion coefficients
@@ -468,8 +470,8 @@ def _create_grism_bbox(
                     obj.sky_bbox_ur.dec.value,
                 ]
             )
-            x1, y1, _, _, _ = sky_to_grism(ra, dec, [lmin] * 4, [order] * 4)
-            x2, y2, _, _, _ = sky_to_grism(ra, dec, [lmax] * 4, [order] * 4)
+            x1, y1, _, _, _ = sky_to_grism(ra, dec, lmin, order)
+            x2, y2, _, _, _ = sky_to_grism(ra, dec, lmax, order)
 
             xstack = np.hstack([x1, x2])
             ystack = np.hstack([y1, y2])
@@ -1161,7 +1163,6 @@ def update_fits_wcsinfo(
         degree = range(1, _MAX_SIP_DEGREE)
     if inv_degree is None:
         inv_degree = range(1, _MAX_SIP_DEGREE)
-
     hdr = imwcs.to_fits_sip(
         max_pix_error=max_pix_error,
         degree=degree,

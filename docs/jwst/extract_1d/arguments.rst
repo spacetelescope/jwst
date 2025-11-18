@@ -229,3 +229,10 @@ Step Arguments for NIRISS SOSS Data
 ``--soss_order_3``
   Flag to enable including spectral order 3 in the extraction for SOSS.
   Default is `True`.
+
+``--soss_maximum_cores``
+  The number of available cores that will be
+  used for multi-processing in this step. The default value is '1', which does not use
+  multi-processing. The other options are either an integer, 'quarter', 'half', or 'all'.
+  Note that these fractions refer to the total available cores and on most CPUs these include
+  physical and virtual cores.
