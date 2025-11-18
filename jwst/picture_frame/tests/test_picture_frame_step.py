@@ -80,10 +80,8 @@ def test_run_in_pipeline(skip, picture_frame_file):
         assert cleaned.meta.cal_step.picture_frame == "COMPLETE"
 
     # Either way, input model should not be modified
-    # TODO: this needs a fix in the detector1 pipeline code.
-    #  It needs to be updated to use prepare_output.
     assert cleaned is not input_model
-    # assert input_model.meta.cal_step.picture_frame is None
+    assert input_model.meta.cal_step.picture_frame is None
 
     input_model.close()
     cleaned.close()
