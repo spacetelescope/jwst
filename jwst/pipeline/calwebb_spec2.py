@@ -50,6 +50,7 @@ NRS_SLIT_TYPES = [
 GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS"]
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
+TA_VERIFY_TYPES = ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]
 
 log = logging.getLogger(__name__)
 
@@ -248,6 +249,17 @@ class Spec2Pipeline(Pipeline):
                         raise IndexError(
                             "No source catalog specified in association or datamodel"
                         ) from None
+
+            # Check to see if the model is an LRS slit or slitless exposure
+            # and has a TA verification image associated with it.
+            if exp_type in TA_VERIFY_TYPES:
+                try:
+                    ta_verify_file = members_by_type["ta_verify"][0]
+                    log.info(f"Using TA verification image {ta_verify_file}")
+                except IndexError:
+                    pass
+                if str(self.ta_center.ta_file).lower() == "none" or self.ta_center.ta_file is None:
+                    self.ta_center.ta_file = ta_verify_file
 
             # Decide on what steps can actually be accomplished based on the
             # provided input.

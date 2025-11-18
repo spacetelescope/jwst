@@ -460,7 +460,9 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
             [
                 Constraint_Base(),
                 Constraint_Mode(),
-                Constraint_Spectral_Science(exclude_exp_types=["nrs_msaspec", "nrs_fixedslit"]),
+                Constraint_Spectral_Science(
+                    exclude_exp_types=["nrs_msaspec", "nrs_fixedslit", "mir_lrs-slitless"]
+                ),
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
                 Constraint_TSO(),
                 Constraint(
@@ -548,58 +550,72 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     def __init__(self, *args, **kwargs):
         # Setup constraints
         self.constraints = Constraint(
-            [
-                Constraint_Base(),
-                Constraint_Mode(),
-                DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="mir_lrs-fixedslit"),
-                DMSAttrConstraint(
-                    name="patttype",
-                    sources=["patttype"],
-                    value="along-slit-nod",
-                ),
-                SimpleConstraint(
-                    value=True,
-                    test=lambda _value, _item: self.acid.type != "background",
-                    force_unique=False,
-                ),
-                Constraint(
-                    [
-                        Constraint(
-                            [
-                                DMSAttrConstraint(
-                                    name="patt_num",
-                                    sources=["patt_num"],
-                                ),
-                                Constraint_Single_Science(
-                                    self.has_science,
-                                    self.get_exposure_type,
-                                    reprocess_on_match=True,
-                                    work_over=ListCategory.EXISTING,
-                                ),
-                            ]
-                        ),
-                        Constraint(
-                            [
-                                DMSAttrConstraint(
-                                    name="is_current_patt_num",
-                                    sources=["patt_num"],
-                                    value=lambda: "((?!{}).)*".format(
-                                        self.constraints["patt_num"].value
+            Constraint(
+                [
+                    DMSAttrConstraint(
+                        name="image_exp_type",
+                        sources=["exp_type"],
+                        value="mir_taconfirm",
+                    ),
+                    Constraint(
+                        [
+                            Constraint_Base(),
+                            Constraint_Mode(),
+                            DMSAttrConstraint(
+                                name="exp_type", sources=["exp_type"], value="mir_lrs-fixedslit"
+                            ),
+                            DMSAttrConstraint(
+                                name="patttype",
+                                sources=["patttype"],
+                                value="along-slit-nod",
+                            ),
+                            SimpleConstraint(
+                                value=True,
+                                test=lambda _value, _item: self.acid.type != "background",
+                                force_unique=False,
+                            ),
+                            Constraint(
+                                [
+                                    Constraint(
+                                        [
+                                            DMSAttrConstraint(
+                                                name="patt_num",
+                                                sources=["patt_num"],
+                                            ),
+                                            Constraint_Single_Science(
+                                                self.has_science,
+                                                self.get_exposure_type,
+                                                reprocess_on_match=True,
+                                                work_over=ListCategory.EXISTING,
+                                            ),
+                                        ]
                                     ),
-                                ),
-                                SimpleConstraint(
-                                    name="force_match",
-                                    value=None,
-                                    sources=lambda _item: False,
-                                    test=lambda _constraint, _obj: True,
-                                    force_unique=True,
-                                ),
-                            ]
-                        ),
-                    ],
-                    reduce=Constraint.any,
-                ),
-            ]
+                                    Constraint(
+                                        [
+                                            DMSAttrConstraint(
+                                                name="is_current_patt_num",
+                                                sources=["patt_num"],
+                                                value=lambda: "((?!{}).)*".format(
+                                                    self.constraints["patt_num"].value
+                                                ),
+                                            ),
+                                            SimpleConstraint(
+                                                name="force_match",
+                                                value=None,
+                                                sources=lambda _item: False,
+                                                test=lambda _constraint, _obj: True,
+                                                force_unique=True,
+                                            ),
+                                        ]
+                                    ),
+                                ],
+                                reduce=Constraint.any,
+                            ),
+                        ]
+                    ),
+                ]
+            ),
+            reduce=Constraint.any,
         )
 
         # Now check and continue initialization.
