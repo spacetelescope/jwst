@@ -4,8 +4,6 @@ AlignAfterOpenBracket: AlwaysBreak
 AlignConsecutiveMacros: true
 AlignEscapedNewlines: LeftWithLastLine
 AllowAllArgumentsOnNextLine: true
-AlwaysBreakAfterReturnType: None
-AlwaysBreakAfterDefinitionReturnType: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: Inline
@@ -13,15 +11,16 @@ AllowShortFunctionsOnASingleLine: Inline
 BraceWrapping:
   AfterControlStatement: false
   AfterFunction: true
+BreakAfterReturnType: TopLevel
 BreakBeforeBraces: Custom
 
 ColumnLimit: 100
 
+DerivePointerAlignment: false # Right alignment is set below
+
 IndentCaseLabels: true
 IndentWidth: 4
 InsertBraces: true
-
-PenaltyReturnTypeOnItsOwnLine: 1000000
 
 PointerAlignment: Right
 
