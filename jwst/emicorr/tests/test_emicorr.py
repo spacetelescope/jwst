@@ -4,7 +4,7 @@ import warnings
 
 import numpy as np
 import pytest
-from stdatamodels.jwst.datamodels import EmiModel, RampModel
+from stdatamodels.jwst.datamodels import EmiModel, Level1bModel, RampModel
 
 from jwst.emicorr import emicorr, emicorr_step
 from jwst.pipeline import Detector1Pipeline
@@ -177,12 +177,12 @@ def test_run_in_pipeline(skip):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
+    # Check that a default instance has skip set to True
     pipeline_instance = Detector1Pipeline()
-
     assert pipeline_instance.steps["emicorr"]["skip"] == True
 
     # Run the pipeline, omitting steps that are incompatible with our datamodel
-    cleaned = pipeline_instance.call(
+    cleaned = Detector1Pipeline.call(
         input_model,
         steps={
             "emicorr": {"skip": skip},
@@ -215,8 +215,7 @@ def test_emicorrstep_skip_instrument(log_watcher):
     nirmdl.meta.instrument.name = "NIRISS"
 
     watcher = log_watcher("jwst.emicorr.emicorr_step", message="not implemented for instrument")
-    step = emicorr_step.EmiCorrStep()
-    nir_result = step.call(nirmdl, skip=False)
+    nir_result = emicorr_step.EmiCorrStep.call(nirmdl, skip=False)
     watcher.assert_seen()
 
     # expect no change because instrument is not MIRI
@@ -233,8 +232,7 @@ def test_emicorrstep_skip_readpatt(log_watcher):
     input_model = mk_data_mdl(data, "MASK1550", "ANY", "MIRIMAGE")
 
     watcher = log_watcher("jwst.emicorr.emicorr_step", message="not implemented for read pattern")
-    step = emicorr_step.EmiCorrStep()
-    result = step.call(input_model, skip=False)
+    result = emicorr_step.EmiCorrStep.call(input_model, skip=False)
     watcher.assert_seen()
 
     # expect no change because read pattern is not supported
@@ -252,10 +250,9 @@ def test_emicorrstep_skip_no_reffile(monkeypatch, log_watcher):
 
     # mock no reference file found
     monkeypatch.setattr(emicorr_step.EmiCorrStep, "get_reference_file", lambda *args: "N/A")
-    step = emicorr_step.EmiCorrStep()
 
     watcher = log_watcher("jwst.emicorr.emicorr_step", message="No reference file")
-    result = step.call(input_model, skip=False)
+    result = emicorr_step.EmiCorrStep.call(input_model, skip=False)
     watcher.assert_seen()
 
     # expect no change because step is skipped
@@ -273,10 +270,9 @@ def test_emicorrstep_skip_for_failure(monkeypatch, log_watcher):
 
     # mock a failure internal to the correction algorithm
     monkeypatch.setattr(emicorr, "apply_emicorr", lambda *args, **kwargs: None)
-    step = emicorr_step.EmiCorrStep()
 
     watcher = log_watcher("jwst.emicorr.emicorr_step", message="Step skipped")
-    result = step.call(input_model, skip=False)
+    result = emicorr_step.EmiCorrStep.call(input_model, skip=False)
     watcher.assert_seen()
 
     # expect no change because step is skipped
@@ -289,8 +285,7 @@ def test_emicorrstep_skip_for_small_groups(log_watcher):
     input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
 
     watcher = log_watcher("jwst.emicorr.emicorr", message="cannot be performed for ngroups=2")
-    step = emicorr_step.EmiCorrStep()
-    result = step.call(input_model, skip=False)
+    result = emicorr_step.EmiCorrStep.call(input_model, skip=False)
     watcher.assert_seen()
 
     # step is skipped
@@ -307,9 +302,7 @@ def test_emicorrstep_skip_for_small_groups(log_watcher):
 def test_emicorrstep_succeeds(algorithm, subarray):
     data = np.ones((1, 5, 20, 20))
     input_model = mk_data_mdl(data, subarray, "FAST", "MIRIMAGE")
-
-    step = emicorr_step.EmiCorrStep()
-    result = step.call(input_model, skip=False, algorithm=algorithm)
+    result = emicorr_step.EmiCorrStep.call(input_model, skip=False, algorithm=algorithm)
 
     # step completes but we expect no change for flat data
     assert np.all(input_model.data == result.data)
@@ -327,8 +320,7 @@ def test_emicorrstep_user_freq(tmp_path, readpatt):
     input_model.meta.filename = "test.fits"
 
     corr_freq = [218.3]
-    step = emicorr_step.EmiCorrStep()
-    result = step.call(
+    result = emicorr_step.EmiCorrStep.call(
         input_model,
         skip=False,
         onthefly_corr_freq=corr_freq,
@@ -351,11 +343,12 @@ def test_emicorrstep_user_reffile(tmp_path, emicorr_model):
     model_name = str(tmp_path / "emicorr.asdf")
     emicorr_model.save(model_name)
 
-    step = emicorr_step.EmiCorrStep()
     with warnings.catch_warnings():
         # Warning emitted for numpy 1.26 but not numpy 2.2
         warnings.filterwarnings("ignore", message="Polyfit may be poorly conditioned")
-        result = step.call(input_model, skip=False, user_supplied_reffile=model_name)
+        result = emicorr_step.EmiCorrStep.call(
+            input_model, skip=False, user_supplied_reffile=model_name
+        )
 
     # step completes but we expect no change for flat data
     assert np.all(input_model.data == result.data)
@@ -617,3 +610,17 @@ def test_rebin_error():
     data = np.ones(10)
     with pytest.raises(ValueError, match="dimensions must match"):
         emicorr.rebin(data, (10, 10))
+
+
+@pytest.mark.parametrize("algorithm", ["sequential", "joint"])
+def test_level1b(algorithm):
+    data = np.ones((1, 5, 20, 20))
+    input_model = mk_data_mdl(data, "MASK1550", "FAST", "MIRIMAGE")
+    l1b_model = Level1bModel()
+    l1b_model.data = input_model.data.astype(np.uint16)
+    l1b_model.update(input_model)
+
+    with pytest.raises(
+        TypeError, match="The file should be opened as a RampModel before calling the step"
+    ):
+        emicorr_step.EmiCorrStep.call(l1b_model, algorithm=algorithm)
