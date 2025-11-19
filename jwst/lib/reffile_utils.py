@@ -377,6 +377,13 @@ def stripe_read(sci_model, ref_model, attribs):
     # Get the science model multistripe params
     sci_meta = sci_model.meta
 
+    # We need to extract the number of science integrations in this file, which is tangled up with
+    #  - the number of integrations in the exposure
+    #  - the number of superstripes each science integration may be divided between
+    # Substripe data may have 0 for num_superstripe, so we use 1 as the integration divisor
+    num_superstripe = max(getattr(sci_model.meta.subarray, "num_superstripe", 1), 1)
+    sci_nints = sci_model.data.shape[0] // num_superstripe
+
     # Get the reference model subarray params
     if sci_meta.subarray.num_superstripe > 0:
         sub_model = datamodels.ReferenceQuadModel()
@@ -411,13 +418,12 @@ def stripe_read(sci_model, ref_model, attribs):
             faststop = faststart + fastsize_sci
             ref_array = ref_array[..., faststart:faststop, :]
 
-        tmp = generate_stripe_array(ref_array, sci_meta)
-        # breakpoint()
+        tmp = generate_stripe_array(ref_array, sci_meta, sci_nints)
         sub_model[attrib] = tmp
     return sub_model
 
 
-def generate_stripe_array(ref_array, sci_meta):
+def generate_stripe_array(ref_array, sci_meta, sci_nints):
     """
     Generate stripe array.
 
@@ -427,6 +433,9 @@ def generate_stripe_array(ref_array, sci_meta):
         The scene to be sliced.
     sci_meta : `stdatamodels.properties.ObjectNode`
         The science datamodel metadata tree.
+    sci_nints : int
+        The number of science integrations in the science datamodel. Not equivalent to nints when
+        the science exposure is segmented.
 
     Returns
     -------
@@ -447,7 +456,6 @@ def generate_stripe_array(ref_array, sci_meta):
     fastaxis = sci_meta.subarray.fastaxis
     slowaxis = sci_meta.subarray.slowaxis
     ngroups = sci_meta.exposure.ngroups
-    nints_sci = sci_meta.exposure.nints
 
     # Transform science data to detector frame
     ref_array = science_detector_frame_transform(ref_array, fastaxis, slowaxis)
@@ -536,7 +544,7 @@ def generate_stripe_array(ref_array, sci_meta):
             ref_array = ref_array[np.newaxis, np.newaxis, :].repeat(ngroups, axis=1)
             ref_shape = ref_array.shape
         if len(ref_shape) == 4:
-            nints_ref, _, ysize, xsize = ref_shape
+            ref_nints, _, ysize, xsize = ref_shape
         else:
             raise ValueError(f"Unsupported shape: len(ref_shape) == {len(ref_array.shape)}")
 
@@ -544,7 +552,7 @@ def generate_stripe_array(ref_array, sci_meta):
         # necessary integrations.
         # If science has more integrations, we'll broadcast the reference arrays to
         # match the number of arrays in the science frame.
-        nints = np.min(nints_ref, nints_sci)
+        nints = min(ref_nints, sci_nints)
         stripe_out = np.zeros(
             (nints * num_superstripe, ngroups, slow_size, fast_size), dtype=ref_array.dtype
         )
@@ -614,8 +622,7 @@ def generate_stripe_array(ref_array, sci_meta):
         # If multistripe, broadcast arrays into nints copies so that direct application
         # of the reference array to the science array is possible
         if num_superstripe > 0:
-            # breakpoint()
-            stripe_out = stripe_out.repeat(nints // num_superstripe, axis=0)
+            stripe_out = stripe_out.repeat(sci_nints, axis=0)
         # Transform from detector frame back to science frame
         stripe_out = detector_science_frame_transform(stripe_out, fastaxis, slowaxis)
 
