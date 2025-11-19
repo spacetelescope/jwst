@@ -647,10 +647,13 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
             ]
         )
 
+        # TA confirm exposure. just needs correct exp_type
         taconfirm = DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="mir_taconfirm")
 
+        # Combine constraints to allow final asn to contain science, background nods, and TA confirm
         exposures = Constraint([sci, background, taconfirm], reduce=Constraint.any)
 
+        # Base constraints to apply to all exposures
         base_constraints = Constraint(
             [
                 Constraint_Base(),
