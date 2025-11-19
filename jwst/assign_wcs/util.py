@@ -6,6 +6,8 @@ import warnings
 import numpy as np
 from astropy.constants import c
 from astropy.modeling import models as astmodels
+
+# from astropy.coordinates import SkyCoord
 from gwcs import WCS
 from gwcs import utils as gwutils
 from gwcs.wcstools import grid_from_bounding_box
