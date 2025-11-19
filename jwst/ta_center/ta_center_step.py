@@ -153,7 +153,7 @@ class TACenterStep(Step):
         if not len(sci_idx):
             raise ValueError("No science exposure found in the input container.")
         sci_model = container[sci_idx[0]]
-        ta_idx = container.ind_asn_type("ta_verify")
+        ta_idx = container.ind_asn_type("target_acquisition")
         if not len(ta_idx):
             ta_model = None
         else:

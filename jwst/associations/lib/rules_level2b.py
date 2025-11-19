@@ -534,7 +534,7 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
 
 @RegistryMarker.rule
-class Asn_MIRTA(AsnMixin_Lv2Spectral, DMSLevel2bBase):
+class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """
     Level2b MIRI LRS slit/slitless association with TA image.
 
@@ -572,7 +572,7 @@ class Asn_MIRTA(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
         # add base constraint
         self.constraints = Constraint([Constraint_Base(), exposures])
-        super(Asn_MIRTA, self).__init__(*args, **kwargs)
+        super(Asn_MIRLRSTAConfirm, self).__init__(*args, **kwargs)
 
 
 @RegistryMarker.rule
