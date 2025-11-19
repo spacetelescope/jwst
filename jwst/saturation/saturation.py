@@ -64,9 +64,9 @@ def flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, bias_
     else:
         log.info("Extracting reference file subarray to match science data")
         ref_sub_model = reffile_utils.get_subarray_model(output_model, ref_model)
-        sat_thresh = ref_sub_model.data.copy()
-        sat_dq = ref_sub_model.dq.copy()
-        ref_sub_model.close()
+        sat_thresh = ref_sub_model.data
+        sat_dq = ref_sub_model.dq
+        del ref_sub_model
 
     # Enable use of read_pattern specific treatment if selected
     if use_readpatt:
@@ -142,7 +142,7 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, 
         Data model with saturation, A/D floor, and do not use flags set in
         the GROUPDQ array
     """
-    # Create the output model as a copy of the input
+    # Get the DQ array from the output model.  It will be updated in place.
     groupdq = output_model.groupdq
 
     data = output_model.data
@@ -167,11 +167,14 @@ def irs2_flag_saturation(output_model, ref_model, n_pix_grow_sat, use_readpatt, 
         sat_thresh = ref_model.data
         sat_dq = ref_model.dq
     else:
+        # Note: this code is not currently used, since we don't
+        # take IRS2 data in subarray mode. Leaving it here, in case that
+        # changes in the future.
         log.info("Extracting reference file subarray to match science data")
         ref_sub_model = reffile_utils.get_subarray_model(output_model, ref_model)
-        sat_thresh = ref_sub_model.data.copy()
-        sat_dq = ref_sub_model.dq.copy()
-        ref_sub_model.close()
+        sat_thresh = ref_sub_model.data
+        sat_dq = ref_sub_model.dq
+        del ref_sub_model
 
     bias = 0.0
     if bias_model is not None:
