@@ -8,6 +8,7 @@ import numpy as np
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from astropy.utils.decorators import lazyproperty
 from scipy.interpolate import CubicSpline, UnivariateSpline
+from scipy import ndimage
 from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SossWaveGridModel, dqflags
@@ -55,6 +56,21 @@ ORDER_STR_TO_INT = {f"Order {order}": order for order in [1, 2, 3]}
 
 
 __all__ = ["get_ref_file_args", "run_extract1d"]
+
+
+
+class SharedResources:
+    def __init__(self, mederr):
+
+        self.mederr = mederr
+
+        self.Minv = None
+        self.bmat = None
+        self.mask = None
+
+        self.modelengine = None
+        self.orderengines = [None, None, None]
+
 
 
 @dataclass
@@ -306,7 +322,7 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.int_num = 0  # marks this as a test spectrum
 
 
-def _build_tracemodel_order(engine, order_model, f_k, mask):
+def _build_tracemodel_order(engine, order_model, f_k, mask, resources=None):
     """
     Build the trace model for a specific spectral order.
 
@@ -321,6 +337,11 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
     mask : np.ndarray[bool]
         The global mask of pixels to be modeled. Bad pixels in the science data
         should remain unmasked.
+    resources : SharedResources, optional
+        A class that includes matrices and engines used repeatedly
+        across integrations.  If this is provided, the matrices and
+        engines will be added (if they are not already present) or
+        used without recalculation (if they are already present).
 
     Returns
     -------
@@ -343,15 +364,20 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
 
     # Build model of the order
     # Give the identity kernel to the Engine (so no convolution)
-    engine = ExtractionEngine(
-        [order_model.wavemap],
-        [order_model.specprofile],
-        [order_model.throughput],
-        [np.array([1.0])],
-        wave_grid=grid_order,
-        mask_trace_profile=[mask],
-        orders=[order_model.spectral_order],
-    )
+    if resources is not None and resources.orderengines[i_order] is not None:
+        engine = resources.orderengines[i_order]
+    else:
+        engine = ExtractionEngine(
+            [order_model.wavemap],
+            [order_model.specprofile],
+            [order_model.throughput],
+            [np.array([1.0])],
+            wave_grid=grid_order,
+            mask_trace_profile=[mask],
+            orders=[order_model.spectral_order],
+        )
+        if resources is not None:
+            resources.orderengines[i_order] = engine
 
     # Project on detector and save in dictionary
     tracemodel_ord = engine.rebuild(flux_order, fill_value=np.nan)
@@ -784,6 +810,7 @@ class Integration:
         estimate=None,
         tikfacs_in=None,
         threshold=1e-2,
+        resources=None,
     ):
         """
         Extract the uncontaminated spectra of using the ATOCA algorithm.
@@ -814,6 +841,11 @@ class Integration:
             The threshold (between 0 and 1) for determining which pixels to include in the
             extraction. Pixels with a normalized flux contribution from the spectral trace
             above this threshold will be included. Default is 1e-2.
+        resources : SharedResources, optional
+            A class that includes matrices and engines used repeatedly
+            across integrations.  If this is provided, the matrices and
+            engines will be added (if they are not already present) or
+            used without recalculation (if they are already present).
 
         Returns
         -------
@@ -845,17 +877,23 @@ class Integration:
         global_mask = np.all(self.mask_trace_profile, axis=0).astype(bool)
 
         # Initialize the Engine for combined extraction of orders 1 and 2
-        engine = ExtractionEngine(
-            [om.wavemap for om in self.order_models][:2],
-            [om.specprofile for om in self.order_models][:2],
-            [om.throughput for om in self.order_models][:2],
-            [om.kernel for om in self.order_models][:2],
-            wave_grid=wave_grid,
-            mask_trace_profile=self.mask_trace_profile[:2],
-            global_mask=self.scimask,
-            threshold=threshold,
-            orders=[1, 2],
-        )
+        if resources is not None and resources.modelengine is not None:
+            engine = resources.modelengine
+        else:
+            engine = ExtractionEngine(
+                [om.wavemap for om in self.order_models][:2],
+                [om.specprofile for om in self.order_models][:2],
+                [om.throughput for om in self.order_models][:2],
+                [om.kernel for om in self.order_models][:2],
+                wave_grid=wave_grid,
+                mask_trace_profile=self.mask_trace_profile[:2],
+                global_mask=self.scimask,
+                threshold=threshold,
+                orders=[1, 2],
+            )
+            if resources is not None:
+                resources.modelengine = engine
+
         # set the kernels in the order models to those used in the engine
         # these are now sparse matrices, so this avoids re-computing them in subsequent integrations
         for i in range(2):
@@ -886,7 +924,19 @@ class Integration:
 
         # Run the extract method of the Engine.
         log.info("Running extraction engine for overlapping orders 1 & 2...")
-        f_k = engine(self.scidata_bkg, self.scierr, tikhonov=True, factor=tikfacs_out["Order 1"])
+
+        if resources is not None and resources.Minv is None:
+            _Minv, _bmat, _mask = engine.return_matrices(self.scidata_bkg, self.scierr, tikfac=tikfacs_out["Order 1"])
+            resources.Minv = _Minv
+            resources.bmat = _bmat
+            resources.mask = _mask
+
+        if resources is not None:
+            y_over_err = (self.scidata_bkg/resources.mederr)[~resources.mask]
+            f_k = resources.Minv.dot(resources.bmat.T*y_over_err)
+        else:
+            f_k = engine(self.scidata_bkg, self.scierr,
+                         tikhonov=True, factor=tikfacs_out["Order 1"])
 
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
@@ -895,7 +945,8 @@ class Integration:
         tracemodels = {}
         for i_order, _order in enumerate([1, 2]):
             tracemodel_ord, spec_ord = _build_tracemodel_order(
-                engine, self.order_models[i_order], f_k, global_mask
+                engine, self.order_models[i_order], f_k, global_mask,
+                resources
             )
             spec_ord.meta.soss_extract1d.factor = tikfacs_out["Order 1"]
             spec_ord.meta.soss_extract1d.color_range = "RED"
@@ -1229,6 +1280,7 @@ def _process_one_integration(
     tikfacs_in=None,
     generate_model=True,
     int_num=None,
+    resources=None,
 ):
     log.info(f"Processing integration {int_num}")
 
@@ -1279,6 +1331,7 @@ def _process_one_integration(
                 estimate=estimate,
                 tikfacs_in=tikfacs_in,
                 threshold=soss_kwargs["threshold"],
+                resources=resources
             )
         except KernelShapeError:
             # Revert to using kernel functions. This will happen if one integration has
@@ -1508,10 +1561,56 @@ def run_extract1d(
     # Run the first integration to get the Tikhonov factor for the rest
     scidata = cube_model.data[0].astype("float64")
     scierr = cube_model.err[0].astype("float64")
-    scimask = np.bitwise_and(cube_model.dq[0], dqflags.pixel["DO_NOT_USE"]).astype(bool)
+    # Only mask pixels that are bad in *all* integrations
+    scimask = np.all(cube_model.dq & dqflags.pixel["DO_NOT_USE"] != 0, axis=0)
+
     refmask = bitfield_to_boolean_mask(
         cube_model.dq[0], ignore_flags=dqflags.pixel["REFERENCE_PIXEL"], flip_bits=True
     )
+
+    # Pixels that are bad in all integrations
+
+    allbad = np.sum(np.isfinite(cube_model.err) &
+                    np.isfinite(cube_model.data), axis=0) == 0
+
+    # Make a copy of the cube model where bad pixels in any individual
+    # integration are replaced with a running median in time.
+
+    data_nanreplaced = cube_model.data*1.
+    data_infilled = cube_model.data*1.
+
+    # We will use themedian uncertainty throughout the calculation.
+    # Use of the median uncertainty means that the matrices used in
+    # the ATOCA algorithm are shared between all integrations.
+
+    mederr = np.nanmedian(cube_model.err*1., axis=0)
+    meddata = np.nanmedian(data_nanreplaced, axis=0)
+
+    mederr[allbad] = np.inf
+    mederr[refmask] = np.inf
+    meddata[allbad] = 0
+
+    # Fill in values for pixels that are bad in individual integrations
+
+    for i in range(data_nanreplaced.shape[0]):
+        indx = ~np.isfinite(data_nanreplaced[i])
+        data_infilled[i][indx] = meddata[indx]
+
+    # Apply a median filter in time to make the final replacements of
+    # bad pixels in individual integrations.  Use a running median of
+    # 9 time steps for now.
+
+    medfilt = ndimage.median_filter(data_infilled, 9, axes=(0))
+
+    for i in range(data_nanreplaced.shape[0]):
+        indx = ~np.isfinite(data_nanreplaced[i])
+        data_nanreplaced[i][indx] = medfilt[i][indx]
+
+    # For the first integration, we will use the data with no NaNs
+    # and we will use the median uncertainties.
+
+    scidata = data_nanreplaced[0]
+    scierr = mederr
 
     # Pre-compute the weights for box extraction (used in modeling and extraction)
     box_weights, wavelengths = _compute_box_weights(
@@ -1531,26 +1630,68 @@ def run_extract1d(
     else:
         tikfacs_in = None
 
-    tracemodels, spec_list_data, atoca_list_data, tikfacs_first, wave_grid_first = (
-        _process_one_integration(
-            scidata,
-            scierr,
+    _, _, _, tikfacs_first, wave_grid_first = _process_one_integration(
+        scidata,
+        scierr,
+        scimask,
+        refmask,
+        order_models,
+        box_weights,
+        wavelengths,
+        soss_kwargs,
+        wave_grid=wave_grid,
+        tikfacs_in=tikfacs_in,
+        generate_model=generate_model,
+        int_num=1,
+    )
+
+    log.info(
+        "Tikhonov factors and wavelength grid from first integration "
+        "will be applied to subsequent ones."
+    )
+
+    # Create a new object to store shared resources.
+
+    resources = SharedResources(mederr)
+    all_results = []
+
+    t0 = time.time()
+
+    for i in range(nimages):
+
+        scidata_i = data_nanreplaced[i]
+        scierr_i = cube_model.err[i].astype("float64")
+        bad = (~np.isfinite(cube_model.data[i]))|(~np.isfinite(scierr_i))
+
+        # Inflate errors of interpolated values by a factor of 10 over
+        # the median uncertainties across integrations
+        scierr_i[bad] = mederr[bad]*10
+
+        all_results += [_process_one_integration(
+            scidata_i,
+            scierr_i,
             scimask,
             refmask,
             order_models,
             box_weights,
             wavelengths,
             soss_kwargs,
-            wave_grid=wave_grid,
-            tikfacs_in=tikfacs_in,
+            wave_grid=wave_grid_first,
+            tikfacs_in=tikfacs_first,
             generate_model=generate_model,
-            int_num=1,
-        )
-    )
+            int_num=i + 1,
+            resources=resources
+        )]
+
+    t1 = time.time()
     log.info(
-        "Tikhonov factors and wavelength grid from first integration "
-        "will be applied to subsequent ones."
+        f"Wall clock time for processing {nimages} integrations: "
+        f"{(t1 - t0):.1f} sec"
     )
+
+    # Set up the dictionaries of results using the first integration.
+
+    tracemodels, spec_list_data, atoca_list_data, _, _ = all_results[0]
 
     # Reconstruct SpecModels from dict
     spec_list = {
@@ -1561,88 +1702,21 @@ def run_extract1d(
         output_atoca.spec.append(atoca_spec)
 
     # Prepare arguments for processing remaining integrations
+
     all_tracemodels = {order: [tracemodels[order]] for order in tracemodels}
     output_spec_list = {order: [spec_list[order]] for order in spec_list}
 
-    if nimages > 1:
-        # Build list of arguments for parallel processing
-        process_args = []
-        for i in range(1, nimages):
-            scidata_i = cube_model.data[i].astype("float64")
-            scierr_i = cube_model.err[i].astype("float64")
-            scimask_i = np.bitwise_and(cube_model.dq[i], dqflags.pixel["DO_NOT_USE"]).astype(bool)
-            refmask_i = bitfield_to_boolean_mask(
-                cube_model.dq[i], ignore_flags=dqflags.pixel["REFERENCE_PIXEL"], flip_bits=True
-            )
+    # Now add in the rest of the integrations
 
-            process_args.append(
-                [
-                    scidata_i,
-                    scierr_i,
-                    scimask_i,
-                    refmask_i,
-                    order_models,
-                    box_weights,
-                    wavelengths,
-                    soss_kwargs,
-                    wave_grid_first,
-                    tikfacs_first,
-                    generate_model,
-                    i + 1,
-                ]
-            )
-
-        # Determine number of cores for multiprocessing
-        max_available_cores = mp.cpu_count()
-        max_cpu = compute_num_cores(
-            soss_kwargs.pop("maximum_cores"),
-            nimages - 1,
-            max_available_cores,
-        )
-
-        t0 = time.time()
-        if max_cpu > 1 and nimages > 1:
-            log.info(f"Using {max_cpu} CPU cores for multiprocessing {nimages - 1} integrations...")
-            ctx = mp.get_context("spawn")
-            pool = ctx.Pool(max_cpu)
-            try:
-                # Submit all jobs and collect AsyncResult objects
-                async_results = []
-                for i, args in enumerate(process_args):
-                    int_num = i + 2  # Integration numbers start at 2 (1 was already processed)
-                    result = pool.apply_async(_process_one_integration, args)
-                    async_results.append((int_num, result))
-
-                # Collect results as they complete
-                all_results = []
-                for int_num, result in async_results:
-                    output = result.get()
-                    log.info(f"Completed processing integration {int_num}.")
-                    all_results.append(output)
-            except Exception as e:
-                log.error(f"Error during parallel processing on integration {int_num}: {e}")
-                raise
-            finally:
-                pool.close()
-                pool.join()
-        else:
-            all_results = [_process_one_integration(*args) for args in process_args]
-        t1 = time.time()
-        log.info(
-            f"Wall clock time for processing integrations 2 to {nimages} on {max_cpu} cores: "
-            f"{(t1 - t0):.1f} sec"
-        )
-
-        # Collect results from parallel processing and reconstruct SpecModels
-        for tracemodels, spec_list_data, atoca_list_data, _, _ in all_results:
-            for order in tracemodels:
-                all_tracemodels[order].append(tracemodels[order])
-            for order in spec_list_data:
-                spec = _reconstruct_spec_from_data(spec_list_data[order])
-                output_spec_list[order].append(spec)
-            for atoca_spec_data in atoca_list_data:
-                atoca_spec = _reconstruct_spec_from_data(atoca_spec_data)
-                output_atoca.spec.append(atoca_spec)
+    for tracemodels, spec_list_data, atoca_list_data, _, _ in all_results[1:]:
+        for order in tracemodels:
+            all_tracemodels[order].append(tracemodels[order])
+        for order in spec_list_data:
+            spec = _reconstruct_spec_from_data(spec_list_data[order])
+            output_spec_list[order].append(spec)
+        for atoca_spec_data in atoca_list_data:
+            atoca_spec = _reconstruct_spec_from_data(atoca_spec_data)
+            output_atoca.spec.append(atoca_spec)
 
     # Make a TSOSpecModel from the output spec list
     for order in output_spec_list:

@@ -933,6 +933,48 @@ class ExtractionEngine:
 
         return spectrum
 
+
+    def return_matrices(self, data, error, tikfac):
+        """
+        Return the two matrices and mask needed to solve the linear
+        system for the spectrum.
+
+        Parameters
+        ----------
+        data : (N, M) array-like
+            A 2-D array of real values representing the detector image.
+        error : (N, M) array-like
+            Estimate of the error on each pixel`
+            Same shape as `data`.
+        tikfac : float
+            The Tikhonov factor to use
+
+        Returns
+        -------
+        Minv : (N, N) array
+            The inverse of the matrix M in M*f_k=b*(y/err)
+        b_matrix : (N, M) array
+            The matrix b in M*f_k=b*(y/err)
+        mask : (M) array
+            Points of (y/err) to use, i.e., (y/err)[mask]
+
+        """
+        # Build the system to solve
+        b_matrix, _ = self.get_detector_model(data, error)
+
+        # squared tikhonov matrix
+        t_mat = self.tikho_mat
+        t_mat_sq = (t_mat.T).dot(t_mat)
+
+        # squared model matrix
+        A_sq = b_matrix.T.dot(b_matrix)
+
+        M = (A_sq + tikfac**2*t_mat_sq).toarray()
+        Minv = np.linalg.inv(M)
+
+        return Minv, b_matrix, self.mask
+
+
     def _get_lo_hi(self, grid, wave_p, wave_m, mask):
         """
         Find the lowest (lo) and highest (hi) index of wave_grid for each pixels and orders.
