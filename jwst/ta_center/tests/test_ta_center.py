@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
@@ -463,3 +465,53 @@ def test_skip_unknown_filter(input_model_slit, slitless_taq_image, tmp_path):
     assert result.meta.cal_step.ta_center == "SKIPPED"
     assert not result.hasattr("source_xpos")
     assert not result.hasattr("source_ypos")
+
+
+def test_ta_center_from_association(
+    input_model_slit, tmp_cwd, mock_pathloss_model, mock_references
+):
+    """Test TA centering step when run on an association with science and TA exposures."""
+    # Generate slit TA data with a known offset
+    offset = (2.0, -1.5)
+    taq_image = make_slit_data(offset=offset, pathloss_file=mock_pathloss_model)
+
+    # Make an association from the science and TA images
+    sci_fname = "science.fits"
+    input_model_slit.save(sci_fname)
+    ta_fname = "ta_image.fits"
+    taq_image.save(ta_fname)
+    asn = {
+        "asn_type": "spec2",
+        "asn_id": "test_ta",
+        "asn_pool": "pool_id",
+        "products": [
+            {
+                "name": "test_product",
+                "members": [
+                    {"expname": sci_fname, "exptype": "science"},
+                    {"expname": ta_fname, "exptype": "target_acquisition"},
+                ],
+            }
+        ],
+    }
+    asn_fname = "mir_lrs_ta_asn.json"
+    with open(asn_fname, "w") as f:
+        json.dump(asn, f)
+
+    # Run the step on the association
+    result = TACenterStep.call(asn_fname)
+
+    # Check that the result is the science exposure with TA centering applied
+    assert result.meta.cal_step.ta_center == "COMPLETE"
+
+    # Expected center position (reference position + offset)
+    expected_x = X_REF_SLIT + offset[0]
+    expected_y = Y_REF_SLIT + offset[1]
+
+    # Check that the computed center is close to the expected position
+    assert np.isclose(result.source_xpos, expected_x, atol=0.05), (
+        f"X center {result.source_xpos:.2f} not close to expected {expected_x:.2f}"
+    )
+    assert np.isclose(result.source_ypos, expected_y, atol=0.05), (
+        f"Y center {result.source_ypos:.2f} not close to expected {expected_y:.2f}"
+    )
