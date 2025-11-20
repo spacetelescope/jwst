@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 import logging
 
 from stdatamodels.jwst import datamodels
@@ -27,29 +26,27 @@ class ChargeMigrationStep(Step):
 
         Parameters
         ----------
-        step_input : RampModel
+        step_input : `~stdatamodels.jwst.datamodels.RampModel`
             The ramp model on which to detect jumps.
 
         Returns
         -------
-        result : RampModel
+        result : `~stdatamodels.jwst.datamodels.RampModel`
             The flagged ramp model.
         """
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            if input_model.data.shape[1] < 3:  # skip step if only 1 or 2 groups/integration
-                log.info("Too few groups per integration; skipping charge_migration")
+        if result.data.shape[1] < 3:  # skip step if only 1 or 2 groups/integration
+            log.info("Too few groups per integration; skipping charge_migration")
 
-                result.meta.cal_step.charge_migration = "SKIPPED"
-                return result
+            result.meta.cal_step.charge_migration = "SKIPPED"
+            return result
 
-            # Retrieve the parameter value(s)
-            signal_threshold = self.signal_threshold
+        # Retrieve the parameter value(s)
+        signal_threshold = self.signal_threshold
 
-            result = charge_migration.charge_migration(result, signal_threshold)
-            result.meta.cal_step.charge_migration = "COMPLETE"
+        result = charge_migration.charge_migration(result, signal_threshold)
+        result.meta.cal_step.charge_migration = "COMPLETE"
 
         return result
