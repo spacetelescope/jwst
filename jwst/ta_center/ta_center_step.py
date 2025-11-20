@@ -29,6 +29,7 @@ class TACenterStep(Step):
 
     spec = """
     ta_file = string(default=None). # Target acquisition image file name
+    skip = boolean(default=True). # Skip this step by default
     """  # noqa: E501
 
     reference_file_types = ["specwcs", "pathloss", "filteroffset"]
