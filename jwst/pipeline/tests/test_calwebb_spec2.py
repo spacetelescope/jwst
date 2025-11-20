@@ -6,6 +6,7 @@ import pytest
 from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 from jwst.stpipe import Step
+from jwst.ta_center.tests.helpers import make_empty_lrs_model, make_slit_data, make_ta_association
 from jwst.tests.helpers import _help_pytest_warns
 
 INPUT_FILE = "test_rate.fits"
@@ -187,3 +188,49 @@ def test_bsub_deprecated(make_test_rate_file):
         pytest.warns(DeprecationWarning, match="The --save_bsub parameter is deprecated"),
     ):
         Step.from_cmdline(args)
+
+
+@pytest.mark.parametrize("use_asn", [True, False])
+def test_ta_center_logic(use_asn, tmp_cwd):
+    sci_model = make_empty_lrs_model()
+    sci_model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
+
+    if use_asn:
+        ta_model = make_slit_data(offset=(0, 0))
+        step_input = make_ta_association(sci_model, ta_model)
+    else:
+        step_input = sci_model
+
+    result = Spec2Pipeline.call(
+        step_input,
+        steps={
+            "badpix_selfcal": {"skip": True},
+            "msa_flagging": {"skip": True},
+            "clean_flicker_noise": {"skip": True},
+            "bkg_subtract": {"skip": True},
+            "imprint_subtract": {"skip": True},
+            "extract_2d": {"skip": True},
+            "master_background_mos": {"skip": True},
+            "ta_center": {"skip": False},
+            "wavecorr": {"skip": True},
+            "flat_field": {"skip": True},
+            "srctype": {"skip": True},
+            "straylight": {"skip": True},
+            "fringe": {"skip": True},
+            "residual_fringe": {"skip": True},
+            "pathloss": {"skip": True},
+            "barshadow": {"skip": True},
+            "wfss_contam": {"skip": True},
+            "photom": {"skip": True},
+            "pixel_replace": {"skip": True},
+            "resample_spec": {"skip": True},
+            "cube_build": {"skip": True},
+            "extract_1d": {"skip": True},
+        },
+    )
+    status = result[0].meta.cal_step.ta_center
+    if use_asn:
+        assert status == "COMPLETE"
+    else:
+        # TA centering image not provided
+        assert status == "SKIPPED"

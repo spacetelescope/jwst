@@ -257,7 +257,7 @@ class Spec2Pipeline(Pipeline):
                     ta_file = members_by_type["target_acquisition"][0]
                     log.info(f"Using TA verification image {ta_file}")
                 except IndexError:
-                    pass
+                    ta_file = None
                 if str(self.ta_center.ta_file).lower() == "none" or self.ta_center.ta_file is None:
                     self.ta_center.ta_file = ta_file
 

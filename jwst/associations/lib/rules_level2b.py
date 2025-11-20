@@ -316,7 +316,14 @@ class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
                 Constraint_Base(),
                 Constraint_Mode(),
                 Constraint_Spectral_Science(
-                    exclude_exp_types=["nis_wfss", "nrc_wfss", "nrs_fixedslit", "nrs_msaspec"]
+                    exclude_exp_types=[
+                        "nis_wfss",
+                        "nrc_wfss",
+                        "nrs_fixedslit",
+                        "nrs_msaspec",
+                        "mir_lrs-slitless",
+                        "mir_lrs-fixedslit",
+                    ]
                 ),
                 Constraint(
                     [
@@ -461,7 +468,12 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
                 Constraint_Base(),
                 Constraint_Mode(),
                 Constraint_Spectral_Science(
-                    exclude_exp_types=["nrs_msaspec", "nrs_fixedslit", "mir_lrs-slitless"]
+                    exclude_exp_types=[
+                        "nrs_msaspec",
+                        "nrs_fixedslit",
+                        "mir_lrs-slitless",
+                        "mir_lrs-fixedslit",
+                    ]
                 ),
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
                 Constraint_TSO(),
@@ -548,7 +560,14 @@ class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
     def __init__(self, *args, **kwargs):
         # Constrain on lrs fixed-slit/slitless only
-        sci_exposure = Constraint(
+        sci_exposure = Constraint_Single_Science(self.has_science, self.get_exposure_type)
+
+        # background exposures if present
+        bkg_exposure = Constraint_Background()
+
+        # ensure sci and bkg are same mode and correct exposure type
+        scibkg = Constraint([sci_exposure, bkg_exposure], reduce=Constraint.any)
+        scibkg = Constraint(
             [
                 Constraint_Mode(),
                 DMSAttrConstraint(
@@ -556,7 +575,7 @@ class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
                     sources=["exp_type"],
                     value="mir_lrs-slitless|mir_lrs-fixedslit",
                 ),
-                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                scibkg,
             ]
         )
 
@@ -568,7 +587,7 @@ class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
         )
 
         # Combine constraints to allow final asn to contain both
-        exposures = Constraint([sci_exposure, taconfirm], reduce=Constraint.any)
+        exposures = Constraint([scibkg, taconfirm], reduce=Constraint.any)
 
         # add base constraint
         self.constraints = Constraint([Constraint_Base(), exposures])
