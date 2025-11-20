@@ -108,13 +108,18 @@ class TACenterStep(Step):
             ref_center = (refmodel.meta.x_ref_slitless, refmodel.meta.y_ref_slitless)
             pathloss_file = None
 
-        x_center, y_center = center_from_ta_image(
-            ta_image,
-            wavelength,
-            ref_center,
-            subarray_origin=(xstart, ystart),
-            pathloss_file=pathloss_file,
-        )
+        try:
+            x_center, y_center = center_from_ta_image(
+                ta_image,
+                wavelength,
+                ref_center,
+                subarray_origin=(xstart, ystart),
+                pathloss_file=pathloss_file,
+            )
+        except Exception as e:
+            log.error(f"Error during TA centering: {e}. Step will be SKIPPED.")
+            result.meta.cal_step.ta_center = "SKIPPED"
+            return result
 
         # Apply filter offsets
         filteroffset_file = self.get_reference_file(ta_model, "filteroffset")
@@ -150,8 +155,6 @@ class TACenterStep(Step):
             The TA image data model.
         """
         sci_idx = container.ind_asn_type("science")
-        if not len(sci_idx):
-            raise ValueError("No science exposure found in the input container.")
         sci_model = container[sci_idx[0]]
         ta_idx = container.ind_asn_type("target_acquisition")
         if not len(ta_idx):
@@ -276,7 +279,6 @@ def _fit_airy_disk(ta_image, wavelength, pathloss_model=None):
     # Filter non-finite values from data
     mask = np.isfinite(ta_image)
     if not np.any(mask):
-        log.error("All pixels are non-finite; cannot fit")
         raise ValueError("All pixels contain non-finite values")
     log.debug(f"Excluding {np.sum(~mask)} non-finite values from fit")
 

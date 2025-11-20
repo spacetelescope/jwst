@@ -274,7 +274,7 @@ def make_empty_lrs_model():
     return model
 
 
-def make_ta_association(sci_model, ta_model, asn_fname="mir_lrs_ta_asn.json"):
+def make_ta_association(sci_model, ta_model=None, asn_fname="mir_lrs_ta_asn.json"):
     """
     Create an association file for TA centering test.
 
@@ -282,8 +282,8 @@ def make_ta_association(sci_model, ta_model, asn_fname="mir_lrs_ta_asn.json"):
     ----------
     sci_model : ImageModel
         Science exposure model.
-    ta_model : ImageModel
-        Target acquisition exposure model.
+    ta_model : ImageModel or None
+        Target acquisition exposure model. If None, only the science exposure is included.
     asn_fname : str, optional
         Filename for the association file.
 
@@ -293,9 +293,13 @@ def make_ta_association(sci_model, ta_model, asn_fname="mir_lrs_ta_asn.json"):
         Path to the created association file.
     """
     sci_fname = "science.fits"
-    ta_fname = "ta_image.fits"
     sci_model.save(sci_fname)
-    ta_model.save(ta_fname)
+    members = [{"expname": sci_fname, "exptype": "science"}]
+
+    if ta_model is not None:
+        ta_fname = "ta_image.fits"
+        ta_model.save(ta_fname)
+        members.append({"expname": ta_fname, "exptype": "target_acquisition"})
 
     asn = {
         "asn_type": "spec2",
@@ -304,10 +308,7 @@ def make_ta_association(sci_model, ta_model, asn_fname="mir_lrs_ta_asn.json"):
         "products": [
             {
                 "name": "test_product",
-                "members": [
-                    {"expname": sci_fname, "exptype": "science"},
-                    {"expname": ta_fname, "exptype": "target_acquisition"},
-                ],
+                "members": members,
             }
         ],
     }

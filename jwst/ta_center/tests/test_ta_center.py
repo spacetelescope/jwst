@@ -257,7 +257,27 @@ def test_skip_unknown_filter(input_model_slit, slitless_taq_image, tmp_path):
     assert not result.hasattr("source_ypos")
 
 
-def test_ta_center_from_association(input_model_slit, tmp_cwd, mock_references):
+def test_skip_no_finite_pixels(input_model_slit, tmp_path, mock_references, log_watcher):
+    """Test that step raises an error when no finite pixels are present in TA image."""
+    # Create a TA model with all non-finite values
+    data = np.full((101, 101), np.nan)
+    taq_model = make_taq_model(data)
+
+    ta_path = tmp_path / "ta_no_finite.fits"
+    taq_model.save(str(ta_path))
+
+    watcher = log_watcher(
+        "jwst.ta_center.ta_center_step", message="All pixels contain non-finite values"
+    )
+    result = TACenterStep.call(input_model_slit, ta_file=str(ta_path))
+    watcher.assert_seen()
+
+    assert result.meta.cal_step.ta_center == "SKIPPED"
+    assert not result.hasattr("source_xpos")
+    assert not result.hasattr("source_ypos")
+
+
+def test_ta_center_asn(input_model_slit, tmp_cwd, mock_references):
     """Test TA centering step when run on an association with science and TA exposures."""
     # Generate slit TA data with a known offset
     offset = (2.0, -1.5)
@@ -283,3 +303,17 @@ def test_ta_center_from_association(input_model_slit, tmp_cwd, mock_references):
     assert np.isclose(result.source_ypos, expected_y, atol=0.05), (
         f"Y center {result.source_ypos:.2f} not close to expected {expected_y:.2f}"
     )
+
+
+def test_ta_center_asn_no_ta(input_model_slit, tmp_cwd, mock_references):
+    """Test TA centering step when run on an association with no TA exposure."""
+    # Create association with only science exposure
+    asn_fname = make_ta_association(input_model_slit, ta_model=None)
+
+    # Run the step on the association
+    result = TACenterStep.call(asn_fname)
+
+    # Check that the step was skipped
+    assert result.meta.cal_step.ta_center == "SKIPPED"
+    assert not result.hasattr("source_xpos")
+    assert not result.hasattr("source_ypos")
