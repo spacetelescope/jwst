@@ -204,6 +204,8 @@ def test_ta_center_logic(use_asn, tmp_cwd):
     result = Spec2Pipeline.call(
         step_input,
         steps={
+            "assign_wcs": {"skip": False},
+            "ta_center": {"skip": False},
             "badpix_selfcal": {"skip": True},
             "msa_flagging": {"skip": True},
             "clean_flicker_noise": {"skip": True},
@@ -211,7 +213,6 @@ def test_ta_center_logic(use_asn, tmp_cwd):
             "imprint_subtract": {"skip": True},
             "extract_2d": {"skip": True},
             "master_background_mos": {"skip": True},
-            "ta_center": {"skip": False},
             "wavecorr": {"skip": True},
             "flat_field": {"skip": True},
             "srctype": {"skip": True},
