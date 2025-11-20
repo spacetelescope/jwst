@@ -1,7 +1,7 @@
 Description
 ===========
 
-:Class: `jwst.ta_center.TaCenterStep`
+:Class: `jwst.ta_center.TACenterStep`
 :Alias: ta_center
 
 The ``ta_center`` step determines the location of a point source in the detector
