@@ -6,11 +6,8 @@ import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import models
 
 from jwst.pathloss.pathloss import calculate_pathloss_vector
-from jwst.ta_center.ta_center_step import (
-    JWST_DIAMETER,
-    PIXSCALE,
-    _get_wavelength,
-)
+from jwst.ta_center.ta_center import JWST_DIAMETER, PIXSCALE
+from jwst.ta_center.ta_center_step import _get_wavelength
 
 X_REF_SLIT = 326.13
 Y_REF_SLIT = 300.7
