@@ -90,4 +90,38 @@ associations depending on the candidates.
 Association Candidates
 ----------------------
 
-TBD
+At present, two kinds of association candidates are provided by APT for
+association generation:
+
+* "observation" associations:
+
+  * Indicated by the "oNNN" name identifier.
+  * Combine data from within a given observation.
+
+* "candidate" associations:
+
+  * Indicated by the "c1NNN" name identifier.
+  * Combine data across observations (e.g., by subtracting dedicated
+    background observations linked via an APT special requirement).
+    This candidate is further explained below.
+
+The candidate type "candidate" are association candidates created by APT.
+These are associations defined by APT depending on observing modes and
+templates used. These candidates are suggested candidates.
+It is used for combining data across different observations.
+Type of data included:
+
+* Data that should be combined at stage 3 across observations;
+  e.g., coronagraphic science and PSF reference observations,
+  dedicated background observations for some observing modes.
+* All data for a given configuration that has been taken in a mosaic.
+
+Once the proposal is executed, the generator may or may not create all
+suggested candidates. Some possible reasons a candidate is not used include
+but not limited to having no science value, insufficient exposures taken
+due to observatory issues, or duplicate products.
+
+Also see:
+
+* :ref:`asn-jwst-naming`
+* :ref:`asn-level3-techspecs`

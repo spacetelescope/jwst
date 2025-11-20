@@ -14,7 +14,7 @@
 
 > [!WARNING]
 > `jwst` is not yet compatible with python 3.14.
-> 
+>
 > Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
 > this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
 >
@@ -22,7 +22,7 @@
 
 > [!IMPORTANT]
 > JWST requires a C compiler for dependencies.
-> 
+>
 > Linux and MacOS platforms are tested and supported.  Windows is not currently supported.
 
 ## Installation
@@ -272,7 +272,7 @@ the specified context and less than the context for the next release.
 | 1.18.1              | B11.3.1   | 2025.2.1 | 1364         | 2025-06-10 |             | Patch release for B11.3.1                     |
 | 1.18.0              | B11.3     | 2025.2.0 | 1364         | 2025-04-01 | 2025-05-20  | First release for B11.3                       |
 | 1.17.1              | B11.2     | 2025.1.0 | 1321         | 2025-01-02 | 2025-03-05  | Final release candidate for B11.2             |
-| 1.17.0              | B11.2     | 2025.1.0 | 1321         | 2024-12-20 | TBD         | First release candidate for B11.2             |
+| 1.17.0              | B11.2     | 2025.1.0 | 1321         | 2024-12-20 |             | First release candidate for B11.2             |
 | 1.16.1              | B11.1.1   | 2024.3.1 | 1303         | 2024-11-13 | 2024-12-06  | Final release candidate for B11.1             |
 | 1.16.0              | B11.1     | 2024.3.0 | 1298         | 2024-09-20 |             | First release candidate for B11.1             |
 | 1.15.1              | B11.0     | 2024.2.2 | 1293         | 2024-07-08 | 2024-09-12  | Final release candidate for B11.0             |
