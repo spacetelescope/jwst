@@ -1,7 +1,7 @@
 [project]
 name = "jwst"
 description = "Library for calibration of science observations from the James Webb Space Telescope"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.15"
 authors = [
     { name = "JWST calibration pipeline developers" },
 ]
