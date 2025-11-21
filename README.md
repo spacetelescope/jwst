@@ -13,12 +13,8 @@
 ![STScI Logo](docs/_static/stsci_logo.png)
 
 > [!WARNING]
-> `jwst` is not yet compatible with python 3.14.
->
 > Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
 > this can be remedied by downgrading the gwcs version through e.g. `pip install 'gwcs<0.22'`
->
-> Installation on MacOS Mojave 10.14 will fail due to lack of a stable build for dependency ``opencv-python``.
 
 > [!IMPORTANT]
 > JWST requires a C compiler for dependencies.

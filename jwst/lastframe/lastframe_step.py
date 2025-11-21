@@ -29,28 +29,26 @@ class LastFrameStep(Step):
 
         Parameters
         ----------
-        step_input : DataModel
-            Input datamodel to be corrected
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            Input filename or datamodel to be corrected.
 
         Returns
         -------
-        output_model : DataModel
-            Lastframe corrected datamodel
+        output_model : `~stdatamodels.jwst.datamodels.RampModel`
+            Last frame corrected datamodel.
         """
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            # check the data is MIRI data
-            detector = result.meta.instrument.detector
-            if detector[:3] != "MIR":
-                log.warning("Last Frame Correction is only for MIRI data")
-                log.warning("Last frame step will be skipped")
-                result.meta.cal_step.lastframe = "SKIPPED"
-                return result
+        # check the data is MIRI data
+        detector = result.meta.instrument.detector
+        if detector[:3] != "MIR":
+            log.warning("Last Frame Correction is only for MIRI data")
+            log.warning("Last frame step will be skipped")
+            result.meta.cal_step.lastframe = "SKIPPED"
+            return result
 
-            # Do the lastframe correction subtraction
-            result = lastframe_sub.do_correction(result)
+        # Do the lastframe correction subtraction
+        result = lastframe_sub.do_correction(result)
 
         return result
