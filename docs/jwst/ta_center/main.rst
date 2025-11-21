@@ -18,7 +18,7 @@ actual TA verification images when available.
 
 Upon successful completion of this step, the status keyword S_TACNTR will be
 set to "COMPLETE" and the source position will be stored in the output data
-model's ``meta.source_xpos`` and ``meta.source_ypos`` attributes.
+model's ``source_xpos`` and ``source_ypos`` attributes.
 
 When run as part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, the
 step is executed after the :ref:`srctype <srctype_step>` step.
@@ -89,8 +89,8 @@ Step Outputs
 
 The input science exposure is returned unmodified, except with three new attributes:
 
-* ``meta.source_xpos``: The x-coordinate of the source in the full-frame detector
+* ``source_xpos``: The x-coordinate of the source in the full-frame detector
   coordinate system (0-indexed pixels)
-* ``meta.source_ypos``: The y-coordinate of the source in the full-frame detector
+* ``source_ypos``: The y-coordinate of the source in the full-frame detector
   coordinate system (0-indexed pixels)
 * ``meta.cal_step.ta_center`` keyword set to "COMPLETE"
