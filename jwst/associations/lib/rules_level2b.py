@@ -316,7 +316,14 @@ class Asn_Lv2Spec(AsnMixin_Lv2Spectral, AsnMixin_Lv2Imprint, DMSLevel2bBase):
                 Constraint_Base(),
                 Constraint_Mode(),
                 Constraint_Spectral_Science(
-                    exclude_exp_types=["nis_wfss", "nrc_wfss", "nrs_fixedslit", "nrs_msaspec"]
+                    exclude_exp_types=[
+                        "nis_wfss",
+                        "nrc_wfss",
+                        "nrs_fixedslit",
+                        "nrs_msaspec",
+                        "mir_lrs-slitless",
+                        "mir_lrs-fixedslit",
+                    ]
                 ),
                 Constraint(
                     [
@@ -460,7 +467,14 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
             [
                 Constraint_Base(),
                 Constraint_Mode(),
-                Constraint_Spectral_Science(exclude_exp_types=["nrs_msaspec", "nrs_fixedslit"]),
+                Constraint_Spectral_Science(
+                    exclude_exp_types=[
+                        "nrs_msaspec",
+                        "nrs_fixedslit",
+                        "mir_lrs-slitless",
+                        "mir_lrs-fixedslit",
+                    ]
+                ),
                 Constraint_Single_Science(self.has_science, self.get_exposure_type),
                 Constraint_TSO(),
                 Constraint(
@@ -532,6 +546,83 @@ class Asn_Lv2SpecTSO(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
 
 @RegistryMarker.rule
+class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
+    """
+    Level2b MIRI LRS slit/slitless association with TA image.
+
+    Characteristics:
+
+        - Association type: ``spec2``
+        - Pipeline: ``calwebb_spec2``
+        - MIRI Target Acquisition verification exposure
+        - Single science exposure
+    """
+
+    def __init__(self, *args, **kwargs):
+        # single science exposure in LRS slit or slitless mode
+        sci = Constraint(
+            [
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_lrs-slitless|mir_lrs-fixedslit",
+                ),
+            ]
+        )
+
+        # background exposures, only if not a TSO observation
+        not_tso = Constraint(
+            [
+                Constraint_TSO(),
+            ],
+            reduce=Constraint.notany,
+        )
+        bkg = Constraint(
+            [
+                Constraint_Background(),
+                not_tso,
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_lrs-slitless|mir_lrs-fixedslit",
+                ),
+            ]
+        )
+
+        # ensure sci and bkg are same mode
+        scibkg = Constraint([sci, bkg], reduce=Constraint.any)
+        scibkg = Constraint(
+            [
+                Constraint_Mode(),
+                scibkg,
+            ]
+        )
+
+        # taconfirm exposures; ensure sci and taconfirm have same observation number
+        # otherwise can get multiple TA confirms in asn
+        taconfirm = DMSAttrConstraint(
+            name="exp_type",
+            sources=["exp_type"],
+            value="mir_taconfirm",
+        )
+        scita = Constraint([sci, taconfirm], reduce=Constraint.any)
+        scita = Constraint(
+            [
+                DMSAttrConstraint(name="obs_id", sources=["obs_id"]),
+                scita,
+            ]
+        )
+
+        # Combine constraints to allow final asn to contain both
+        exposures = Constraint([scibkg, scita], reduce=Constraint.any)
+
+        # add base constraint for all exposures
+        self.constraints = Constraint([Constraint_Base(), exposures])
+        super(Asn_MIRLRSTAConfirm, self).__init__(*args, **kwargs)
+
+
+@RegistryMarker.rule
 class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """
     Level2b MIRI LRS Fixed Slit background nods Association.
@@ -547,61 +638,81 @@ class Asn_Lv2MIRLRSFixedSlitNod(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
     def __init__(self, *args, **kwargs):
         # Setup constraints
-        self.constraints = Constraint(
+        # science exposure. must have along-slit nod pattern
+        sci = Constraint(
             [
-                Constraint_Base(),
-                Constraint_Mode(),
-                DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="mir_lrs-fixedslit"),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_lrs-fixedslit",
+                ),
+                DMSAttrConstraint(
+                    name="patt_num",
+                    sources=["patt_num"],
+                ),
+                Constraint_Single_Science(
+                    self.has_science,
+                    self.get_exposure_type,
+                    reprocess_on_match=True,
+                    work_over=ListCategory.EXISTING,
+                ),
                 DMSAttrConstraint(
                     name="patttype",
                     sources=["patttype"],
                     value="along-slit-nod",
+                    force_unique=False,
                 ),
+            ]
+        )
+
+        # background exposure. must have different dither pointing index
+        background = Constraint(
+            [
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_lrs-fixedslit",
+                ),
+                DMSAttrConstraint(
+                    name="is_current_patt_num",
+                    sources=["patt_num"],
+                    value=lambda: "((?!{}).)*".format(self.constraints["patt_num"].value),
+                ),
+                SimpleConstraint(
+                    name="force_match",
+                    value=None,
+                    sources=lambda _item: False,
+                    test=lambda _constraint, _obj: True,
+                    force_unique=True,
+                ),
+                DMSAttrConstraint(
+                    name="patttype",
+                    sources=["patttype"],
+                    value="along-slit-nod",
+                    force_unique=False,
+                ),
+            ]
+        )
+
+        # TA confirm exposure. just needs correct exp_type
+        taconfirm = DMSAttrConstraint(name="exp_type", sources=["exp_type"], value="mir_taconfirm")
+
+        # Combine constraints to allow final asn to contain science, background nods, and TA confirm
+        exposures = Constraint([sci, background, taconfirm], reduce=Constraint.any)
+
+        # Base constraints to apply to all exposures
+        base_constraints = Constraint(
+            [
+                Constraint_Base(),
                 SimpleConstraint(
                     value=True,
                     test=lambda _value, _item: self.acid.type != "background",
                     force_unique=False,
                 ),
-                Constraint(
-                    [
-                        Constraint(
-                            [
-                                DMSAttrConstraint(
-                                    name="patt_num",
-                                    sources=["patt_num"],
-                                ),
-                                Constraint_Single_Science(
-                                    self.has_science,
-                                    self.get_exposure_type,
-                                    reprocess_on_match=True,
-                                    work_over=ListCategory.EXISTING,
-                                ),
-                            ]
-                        ),
-                        Constraint(
-                            [
-                                DMSAttrConstraint(
-                                    name="is_current_patt_num",
-                                    sources=["patt_num"],
-                                    value=lambda: "((?!{}).)*".format(
-                                        self.constraints["patt_num"].value
-                                    ),
-                                ),
-                                SimpleConstraint(
-                                    name="force_match",
-                                    value=None,
-                                    sources=lambda _item: False,
-                                    test=lambda _constraint, _obj: True,
-                                    force_unique=True,
-                                ),
-                            ]
-                        ),
-                    ],
-                    reduce=Constraint.any,
-                ),
             ]
         )
 
+        self.constraints = Constraint([base_constraints, exposures])
         # Now check and continue initialization.
         super(Asn_Lv2MIRLRSFixedSlitNod, self).__init__(*args, **kwargs)
 

@@ -85,6 +85,7 @@ def get_steps():
         ("jwst.step.SpectralLeakStep", "spectral_leak", False),
         ("jwst.step.StraylightStep", "straylight", False),
         ("jwst.step.SuperBiasStep", "superbias", False),
+        ("jwst.step.TACenterStep", "ta_center", False),
         ("jwst.step.TSOPhotometryStep", "tso_photometry", False),
         ("jwst.step.TweakRegStep", "tweakreg", False),
         ("jwst.step.ChargeMigrationStep", "charge_migration", False),

@@ -625,6 +625,11 @@ name = 'superbias (detector1 NIR)'
 showcontent = true
 
 [[tool.towncrier.type]]
+directory = "ta_center"
+name = 'ta_center (spec2)'
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "tso_photometry"
 name = 'tso_photometry (tso3)'
 showcontent = true
