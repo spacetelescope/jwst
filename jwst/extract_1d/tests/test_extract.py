@@ -496,7 +496,7 @@ def test_copy_keyword_info(mock_nirspec_fs_one_slit, mock_one_spec):
     }
     for key, value in expected.items():
         setattr(mock_nirspec_fs_one_slit, key, value)
-        assert not hasattr(mock_one_spec, key)
+        assert not mock_one_spec.hasattr(key)
 
     ex.copy_keyword_info(mock_nirspec_fs_one_slit, "slit_name", mock_one_spec)
     assert mock_one_spec.name == "slit_name"
