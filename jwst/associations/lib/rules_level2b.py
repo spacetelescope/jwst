@@ -559,41 +559,53 @@ class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
     """
 
     def __init__(self, *args, **kwargs):
-        # Setup constraints
-        sci = Constraint_Single_Science(self.has_science, self.get_exposure_type)
+        # single science exposure in LRS slit or slitless mode
+        sci = Constraint(
+            [
+                Constraint_Single_Science(self.has_science, self.get_exposure_type),
+                DMSAttrConstraint(
+                    name="exp_type",
+                    sources=["exp_type"],
+                    value="mir_lrs-slitless|mir_lrs-fixedslit",
+                ),
+            ]
+        )
 
-        # background exposures if present, only if not a TSO observation
+        # background exposures, only if not a TSO observation
         not_tso = Constraint(
             [
                 Constraint_TSO(),
             ],
             reduce=Constraint.notany,
         )
-        bkg = Constraint([Constraint_Background(), not_tso])
-
-        # ensure sci and bkg are same mode and exposure type
-        scibkg = Constraint([sci, bkg], reduce=Constraint.any)
-        scibkg = Constraint(
+        bkg = Constraint(
             [
-                Constraint_Mode(),
+                Constraint_Background(),
+                not_tso,
                 DMSAttrConstraint(
                     name="exp_type",
                     sources=["exp_type"],
                     value="mir_lrs-slitless|mir_lrs-fixedslit",
                 ),
+            ]
+        )
+
+        # ensure sci and bkg are same mode
+        scibkg = Constraint([sci, bkg], reduce=Constraint.any)
+        scibkg = Constraint(
+            [
+                Constraint_Mode(),
                 scibkg,
             ]
         )
 
-        # Constrain on taconfirm exposure
+        # taconfirm exposures; ensure sci and taconfirm have same observation number
+        # otherwise can get multiple TA confirms in asn
         taconfirm = DMSAttrConstraint(
             name="exp_type",
             sources=["exp_type"],
             value="mir_taconfirm",
         )
-
-        # ensure sci and taconfirm have same observation number
-        # otherwise can get multiple TA confirm observation in asn for a single science member
         scita = Constraint([sci, taconfirm], reduce=Constraint.any)
         scita = Constraint(
             [
