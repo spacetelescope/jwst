@@ -12,10 +12,10 @@ from photutils.aperture import (
 )
 from photutils.detection import DAOStarFinder
 from scipy.interpolate import interp1d
+from stcal.alignment.util import compute_scale
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
-from jwst.assign_wcs.util import compute_scale
 from jwst.extract_1d import spec_wcs
 from jwst.extract_1d.apply_apcorr import select_apcorr
 from jwst.extract_1d.extract import read_apcorr_ref

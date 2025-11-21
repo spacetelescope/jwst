@@ -18,9 +18,10 @@ from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
 from gwcs import WCS, wcstools
 from gwcs import coordinate_frames as cf
+from stcal.alignment.util import compute_scale, wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
 
-from jwst.assign_wcs.util import compute_scale, wcs_bbox_from_shape, wrap_ra
+from jwst.assign_wcs.util import wrap_ra
 from jwst.datamodels import ModelLibrary
 from jwst.resample import resample_utils
 from jwst.resample.resample import ResampleImage
@@ -1065,6 +1066,7 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
     pixel_scale : float
         The spatial scale in degrees.
     """
+    # from jwst.assign_wcs.util import compute_scale
     # Get the coordinates for the center of the array
     if fiducial is None:
         center_x, center_y = np.mean(wcs.bounding_box, axis=1)

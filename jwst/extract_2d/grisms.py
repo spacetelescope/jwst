@@ -11,6 +11,7 @@ from astropy.modeling import CompoundModel, bind_bounding_box
 from astropy.modeling.models import Const1D, Mapping, Shift
 from gwcs.utils import to_index
 from gwcs.wcstools import grid_from_bounding_box
+from stcal.alignment.util import wcs_bbox_from_shape
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import ImageModel, SlitModel, WavelengthrangeModel
 from stdatamodels.jwst.transforms.models import IdealToV2V3
@@ -264,7 +265,7 @@ def extract_tso_object(
             output_model.var_rnoise = var_rnoise
             output_model.var_flat = var_flat
             output_model.meta.wcs = subwcs
-            output_model.meta.wcs.bounding_box = util.wcs_bbox_from_shape(ext_data.shape)
+            output_model.meta.wcs.bounding_box = wcs_bbox_from_shape(ext_data.shape)
             if compute_wavelength:
                 output_model.wavelength = compute_tso_wavelength_array(output_model)
             output_model.meta.wcsinfo.siaf_yref_sci = 34  # update for the move, vals are the same

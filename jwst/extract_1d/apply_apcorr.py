@@ -2,9 +2,8 @@ import abc
 
 import numpy as np
 from scipy.interpolate import RectBivariateSpline, interp1d
+from stcal.alignment.util import compute_scale
 from stdatamodels.jwst.datamodels import MultiSlitModel
-
-from jwst.assign_wcs.util import compute_scale
 
 __all__ = ["ApCorrBase", "ApCorrPhase", "ApCorrRadial", "ApCorr", "select_apcorr"]
 
