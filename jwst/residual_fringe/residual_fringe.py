@@ -292,6 +292,9 @@ class ResidualFringeCorrection:
                     )
                     col_snr2 = np.where(col_snr > 10, 1, 0)  # hardcoded at snr > 10 for now
 
+                    # Double the max amplitude
+                    col_max_amp *= 2
+
                     # get the in-slice pixel indices for replacing in output later
                     idx = np.where(col_data > 0)
 
@@ -322,8 +325,8 @@ class ResidualFringeCorrection:
 
                     # Use col_snr to ignore noisy pixels:
                     # given signal in mod, find location of
-                    # lines > col_max_amp * 2 (fringe contrast)
-                    weight_factors = utils.find_lines(mod * col_snr2, col_max_amp * 2)
+                    # lines > col_max_amp (fringe contrast)
+                    weight_factors = utils.find_lines(mod * col_snr2, col_max_amp)
                     weights_feat = col_weight * weight_factors
 
                     # account for fringe 2 on broad features in channels 3 and 4
@@ -341,8 +344,8 @@ class ResidualFringeCorrection:
                         )
                         mod = np.abs(col_data / env) - 1
 
-                        # given signal in mod find location of lines > col_max_amp * 2
-                        weight_factors = utils.find_lines(mod, col_max_amp * 2)
+                        # given signal in mod find location of lines > col_max_amp
+                        weight_factors = utils.find_lines(mod, col_max_amp)
                         weights_feat *= weight_factors
 
                     # iterate over the fringe components to fit, initialize other output arrays
