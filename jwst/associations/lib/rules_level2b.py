@@ -560,13 +560,13 @@ class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
 
     def __init__(self, *args, **kwargs):
         # Constrain on lrs fixed-slit/slitless only
-        sci_exposure = Constraint_Single_Science(self.has_science, self.get_exposure_type)
+        sci = Constraint_Single_Science(self.has_science, self.get_exposure_type)
 
         # background exposures if present
-        bkg_exposure = Constraint_Background()
+        bkg = Constraint_Background()
 
         # ensure sci and bkg are same mode and correct exposure type
-        scibkg = Constraint([sci_exposure, bkg_exposure], reduce=Constraint.any)
+        scibkg = Constraint([sci, bkg], reduce=Constraint.any)
         scibkg = Constraint(
             [
                 Constraint_Mode(),
@@ -586,8 +586,18 @@ class Asn_MIRLRSTAConfirm(AsnMixin_Lv2Spectral, DMSLevel2bBase):
             value="mir_taconfirm",
         )
 
+        # ensure sci and taconfirm have same observation number
+        # otherwise can get multiple TA confirm observation in asn for a single science member
+        scita = Constraint([sci, taconfirm], reduce=Constraint.any)
+        scita = Constraint(
+            [
+                DMSAttrConstraint(name="obs_id", sources=["obs_id"]),
+                scita,
+            ]
+        )
+
         # Combine constraints to allow final asn to contain both
-        exposures = Constraint([scibkg, taconfirm], reduce=Constraint.any)
+        exposures = Constraint([scibkg, scita], reduce=Constraint.any)
 
         # add base constraint
         self.constraints = Constraint([Constraint_Base(), exposures])
