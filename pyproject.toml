@@ -545,6 +545,11 @@ name = 'photom (image2, spec2)'
 showcontent = true
 
 [[tool.towncrier.type]]
+directory = "picture_frame"
+name = "picture_frame (detector1)"
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "pixel_replace"
 name = 'pixel_replace (spec2 MOS)'
 showcontent = true

@@ -1,0 +1,1 @@
+Add a new ``picture_frame`` step to the detector1 pipeline to address thermal artifacts in NIRSpec full frame exposures.

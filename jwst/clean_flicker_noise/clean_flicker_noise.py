@@ -38,6 +38,7 @@ __all__ = [
     "fft_clean_full_frame",
     "fft_clean_subarray",
     "median_clean",
+    "make_intermediate_model",
     "do_correction",
 ]
 
@@ -124,9 +125,10 @@ def make_rate(input_model, input_dir="", return_cube=False):
     # Use software default values for parameters
 
     log.info("Creating draft rate file for scene masking")
-    step = RampFitStep()
-    step.input_dir = input_dir
     with disable_logging(level=logging.WARNING):
+        step = RampFitStep()
+        step.input_dir = input_dir
+
         # Note: the copy is currently needed because ramp fit
         # closes the input model when it's done, and we need
         # it to stay open.
@@ -182,25 +184,25 @@ def post_process_rate(
     # If needed, assign a WCS
     if (assign_wcs or msaflagopen) and not hasattr(output_model.meta, "wcs"):
         log.info("Assigning a WCS for scene masking")
-        step = AssignWcsStep()
-        step.input_dir = input_dir
         with disable_logging(level=logging.WARNING):
+            step = AssignWcsStep()
+            step.input_dir = input_dir
             output_model = step.run(output_model)
 
     # If needed, flag open MSA shutters
     if msaflagopen:
         log.info("Flagging failed-open MSA shutters for scene masking")
-        step = MSAFlagOpenStep()
-        step.input_dir = input_dir
         with disable_logging(level=logging.WARNING):
+            step = MSAFlagOpenStep()
+            step.input_dir = input_dir
             output_model = step.run(output_model)
 
     # If needed, draft a flat correction to retrieve non-science areas
     if flat_dq:
         log.info("Retrieving flat DQ values for scene masking")
-        step = FlatFieldStep()
-        step.input_dir = input_dir
         with disable_logging(level=logging.WARNING):
+            step = FlatFieldStep()
+            step.input_dir = input_dir
             flat_corrected_model = step.run(output_model)
 
         # Copy out the flat DQ plane, leave the data as is
@@ -533,8 +535,8 @@ def create_mask(
     if exptype in ["nrs_fixedslit", "nrs_brightobj", "nrs_msaspec"] and mask_science_regions:
         mask = mask_slits(input_model, mask)
 
-    # If IFU or MOS, mask pixels affected by failed-open shutters
-    if mask_science_regions and exptype in ["nrs_ifu", "nrs_msaspec"]:
+    # If NIRSpec, mask pixels affected by failed-open shutters
+    if mask_science_regions and exptype.startswith("nrs"):
         open_pix = input_model.dq & dqflags.pixel["MSA_FAILED_OPEN"]
         mask[open_pix > 0] = False
 
@@ -975,6 +977,38 @@ def median_clean(image, mask, axis_to_correct, fit_by_channel=False):
     return corrected_image
 
 
+def make_intermediate_model(input_model, intermediate_data):
+    """
+    Make a data model to contain intermediate outputs.
+
+    The output model type depends on the shape of the input
+    intermediate data.
+
+    Parameters
+    ----------
+    input_model : `~jwst.datamodels.JwstDataModel`
+        The input data.
+    intermediate_data : array-like
+        The intermediate data to save.
+
+    Returns
+    -------
+    intermediate_model : `~jwst.datamodels.JwstDataModel`
+        A model containing only the intermediate data and top-level
+        metadata matching the input.
+    """
+    if intermediate_data.ndim == 4:
+        intermediate_model = datamodels.RampModel(data=intermediate_data)
+    elif intermediate_data.ndim == 3:
+        intermediate_model = datamodels.CubeModel(data=intermediate_data)
+    else:
+        intermediate_model = datamodels.ImageModel(data=intermediate_data)
+
+    # Copy metadata from input model
+    intermediate_model.update(input_model)
+    return intermediate_model
+
+
 def _check_input(exp_type, fit_method):
     """
     Check for valid input data and options.
@@ -1007,38 +1041,6 @@ def _check_input(exp_type, fit_method):
         return False
 
     return True
-
-
-def _make_intermediate_model(input_model, intermediate_data):
-    """
-    Make a data model to contain intermediate outputs.
-
-    The output model type depends on the shape of the input
-    intermediate data.
-
-    Parameters
-    ----------
-    input_model : `~jwst.datamodels.JwstDataModel`
-        The input data.
-    intermediate_data : array-like
-        The intermediate data to save.
-
-    Returns
-    -------
-    intermediate_model : `~jwst.datamodels.JwstDataModel`
-        A model containing only the intermediate data and top-level
-        metadata matching the input.
-    """
-    if intermediate_data.ndim == 4:
-        intermediate_model = datamodels.RampModel(data=intermediate_data)
-    elif intermediate_data.ndim == 3:
-        intermediate_model = datamodels.CubeModel(data=intermediate_data)
-    else:
-        intermediate_model = datamodels.ImageModel(data=intermediate_data)
-
-    # Copy metadata from input model
-    intermediate_model.update(input_model)
-    return intermediate_model
 
 
 def _standardize_parameters(exp_type, subarray, slowaxis, background_method, fit_by_channel):
@@ -1236,7 +1238,7 @@ def _make_scene_mask(
 
     # Store the mask image in a model, if requested
     if save_mask:
-        mask_model = _make_intermediate_model(image_model, background_mask)
+        mask_model = make_intermediate_model(image_model, background_mask)
     else:
         mask_model = None
 
@@ -1677,7 +1679,7 @@ def do_correction(
 
     # Store the background image in a model, if requested
     if save_background:
-        background_model = _make_intermediate_model(input_model, background_to_save)
+        background_model = make_intermediate_model(input_model, background_to_save)
     else:
         background_model = None
 
@@ -1685,7 +1687,7 @@ def do_correction(
     # diffing the input and output models
     if save_noise:
         noise_data = input_model.data - input_data
-        noise_model = _make_intermediate_model(input_model, noise_data)
+        noise_model = make_intermediate_model(input_model, noise_data)
     else:
         noise_model = None
 

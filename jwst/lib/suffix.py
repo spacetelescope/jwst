@@ -174,6 +174,8 @@ _calculated_suffixes = {
     "spec3pipeline",
     "clean_flicker_noise",
     "cleanflickernoisestep",
+    "picture_frame",
+    "pictureframestep",
     "outlierdetectionstep",
     "groupscalestep",
     "hlspstep",

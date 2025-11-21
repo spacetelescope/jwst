@@ -10,14 +10,13 @@ from jwst.dq_init import dq_init_step
 from jwst.emicorr import emicorr_step
 from jwst.firstframe import firstframe_step
 from jwst.gain_scale import gain_scale_step
-
-# step imports
 from jwst.group_scale import group_scale_step
 from jwst.ipc import ipc_step
 from jwst.jump import jump_step
 from jwst.lastframe import lastframe_step
 from jwst.linearity import linearity_step
 from jwst.persistence import persistence_step
+from jwst.picture_frame import picture_frame_step
 from jwst.ramp_fitting import ramp_fit_step
 from jwst.refpix import refpix_step
 from jwst.reset import reset_step
@@ -39,8 +38,8 @@ class Detector1Pipeline(Pipeline):
     Included steps are:
     group_scale, dq_init, emicorr, saturation, ipc, superbias, refpix, rscd,
     firstframe, lastframe, linearity, dark_current, reset, persistence,
-    charge_migration, jump detection, clean_flicker_noise, ramp_fit,
-    and gain_scale.
+    charge_migration, jump detection, picture_frame, clean_flicker_noise,
+    ramp_fit, and gain_scale.
     """
 
     class_alias = "calwebb_detector1"
@@ -67,6 +66,7 @@ class Detector1Pipeline(Pipeline):
         "persistence": persistence_step.PersistenceStep,
         "charge_migration": charge_migration_step.ChargeMigrationStep,
         "jump": jump_step.JumpStep,
+        "picture_frame": picture_frame_step.PictureFrameStep,
         "clean_flicker_noise": clean_flicker_noise_step.CleanFlickerNoiseStep,
         "ramp_fit": ramp_fit_step.RampFitStep,
         "gain_scale": gain_scale_step.GainScaleStep,
@@ -141,6 +141,9 @@ class Detector1Pipeline(Pipeline):
 
         # apply the jump step
         input_data = self.jump.run(input_data)
+
+        # apply the picture_frame step
+        input_data = self.picture_frame.run(input_data)
 
         # apply the clean_flicker_noise step
         input_data = self.clean_flicker_noise.run(input_data)

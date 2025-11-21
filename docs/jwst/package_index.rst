@@ -45,6 +45,7 @@ Package Index
    pathloss/index.rst
    persistence/index.rst
    photom/index.rst
+   picture_frame/index.rst
    pipeline/index.rst
    pixel_replace/index.rst
    ramp_fitting/index.rst

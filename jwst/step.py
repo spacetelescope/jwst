@@ -37,6 +37,7 @@ from jwst.outlier_detection.outlier_detection_step import OutlierDetectionStep
 from jwst.pathloss.pathloss_step import PathLossStep
 from jwst.persistence.persistence_step import PersistenceStep
 from jwst.photom.photom_step import PhotomStep
+from jwst.picture_frame.picture_frame_step import PictureFrameStep
 from jwst.pixel_replace.pixel_replace_step import PixelReplaceStep
 from jwst.ramp_fitting.ramp_fit_step import RampFitStep
 from jwst.refpix.refpix_step import RefPixStep
@@ -98,6 +99,7 @@ __all__ = [
     "PathLossStep",
     "PersistenceStep",
     "PhotomStep",
+    "PictureFrameStep",
     "PixelReplaceStep",
     "RampFitStep",
     "RefPixStep",
