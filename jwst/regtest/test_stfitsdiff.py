@@ -1,4 +1,4 @@
-"""Tests for STFitsDiff"""
+"""Tests for STFitsDiff."""
 
 import numpy as np
 import pytest
@@ -72,7 +72,7 @@ def mock_rampfiles(tmp_path_factory):
     return truth, keyword_mod, sci_mod, nan_in_sci, diff_exts, diff_dim, tmp_dir
 
 
-def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
+def report_to_list(report, from_line=12, report_pixel_loc_diffs=False):
     """
     Turn the fitsdiff or stfitsdiff report into a comparable list of strings.
 
@@ -130,19 +130,19 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
                 continue
             elif "Pixel indices below are 1-based." in line:
                 continue
+            elif "Found" in line and "table data element(s)" in line:
+                continue
+            elif "(atol, rtol)" in line:
+                continue
             elif "Primary" in line or "Extension" in line:
                 stidx = True
                 pixidx = True
-                diffsline = True
             elif "Values in" in line or "Reporting percentages" in line:
                 stidx = True
                 pixidx = False
             elif "differs" in line or "differ:" in line or "Extra column" in line:
                 stidx = False
                 pixidx = True
-                if diffsline:
-                    pixelreport.insert(idx, "Data contains differences:")
-                    diffsline = False
             if stidx:
                 streport.append(line)
             if pixidx:
@@ -151,10 +151,10 @@ def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
         return streport, pixelreport
 
 
-def test_identical(mock_rampfiles):
+def test_identical(mock_rampfiles, fitsdiff_default_kwargs):
     truth = mock_rampfiles[0]
     apdiff = FITSDiff(truth, truth)
-    diff = STFITSDiff(truth, truth)
+    diff = STFITSDiff(truth, truth, **fitsdiff_default_kwargs)
     assert apdiff.identical, apdiff.report()
     assert diff.identical, diff.report()
 
@@ -169,7 +169,7 @@ def test_filename(mock_rampfiles, fitsdiff_default_kwargs):
     hdu.close()
     diff = STFITSDiff(test1, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=11)
+    report = report_to_list(diff.report(), from_line=12)
     expected_report = [
         "Primary HDU:",
         "Headers contain differences:",
@@ -188,7 +188,7 @@ def test_filename_reversed(mock_rampfiles, fitsdiff_default_kwargs):
     tmp_dir = mock_rampfiles[6]
     diff = STFITSDiff(truth, tmp_dir / "test1.fits", **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=11)
+    report = report_to_list(diff.report(), from_line=12)
     expected_report2 = [
         "Primary HDU:",
         "Headers contain differences:",
@@ -206,7 +206,7 @@ def test_diff_exts(mock_rampfiles, fitsdiff_default_kwargs):
     diff_exts = mock_rampfiles[4]
     apdiff = FITSDiff(diff_exts, truth, **fitsdiff_default_kwargs)
     apresult = apdiff.identical
-    apreport = report_to_list(apdiff.report())
+    apreport = report_to_list(apdiff.report(), from_line=11)
     diff = STFITSDiff(diff_exts, truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
@@ -224,11 +224,12 @@ def test_diff_exts(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
     ]
     expected_report = [
-        "Files contain different numbers of HDUs:",
-        "a: 2, ['ASDF', 'PRIMARY']",
-        "b: 5, ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
+        "Files contain different HDUs:",
+        "a: 2 HDUs: ['ASDF', 'PRIMARY']",
+        "b: 5 HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
         "Common HDUs: ['ASDF', 'PRIMARY']",
-        "Missing HDUs: ['GROUPDQ', 'PIXELDQ', 'SCI']",
+        "HDUs in a but not b: []",
+        "HDUs in b but not a: ['GROUPDQ', 'PIXELDQ', 'SCI']",
         "Primary HDU:",
         "Headers contain differences:",
         "Keyword DATAMODL has different values:",
@@ -253,13 +254,14 @@ def test_rm_sci(mock_rampfiles, fitsdiff_default_kwargs):
     hdu.close()
     diff = STFITSDiff(rmsci, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=11)
+    report = report_to_list(diff.report(), from_line=12)
     expected_report = [
-        "Files contain different numbers of HDUs:",
-        "a: 4, ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY']",
-        "b: 5, ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
+        "Files contain different HDUs:",
+        "a: 4 HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY']",
+        "b: 5 HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY', 'SCI']",
         "Common HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY']",
-        "Missing HDUs: ['SCI']",
+        "HDUs in a but not b: []",
+        "HDUs in b but not a: ['SCI']",
         "No differences found between common HDUs.",
     ]
     assert result is False
@@ -271,7 +273,7 @@ def test_keyword_change(mock_rampfiles, fitsdiff_default_kwargs):
     keyword_mod = mock_rampfiles[1]
     apdiff = FITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
     apresult = apdiff.identical
-    apreport = report_to_list(apdiff.report())
+    apreport = report_to_list(apdiff.report(), from_line=11)
     diff = STFITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
@@ -287,7 +289,7 @@ def test_keyword_change_tol(mock_rampfiles, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["extension_tolerances"] = extension_tolerances
     diff = STFITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=10)
+    report = report_to_list(diff.report(), from_line=11)
     expected_report = [
         "Extension HDU 0 (PRIMARY, 1):",
         "Relative tolerance: 1, Absolute tolerance: 2",
@@ -359,6 +361,7 @@ def test_array_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "a> sci_mod_ramp.fits",
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
+        "Data contains differences:",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -376,7 +379,7 @@ def test_array_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "min        0        0",
         "mean  0.06918  0.06917",
         "std_dev   0.2391    0.239",
-        "Percentages of difference above (tolerance + threshold)",
+        "Percentages of difference above threshold",
         "threshold abs_diff% rel_diff%",
         "--------- --------- ---------",
         "0.1     8.333     8.333",
@@ -412,6 +415,7 @@ def test_array4d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "a> groupdq.fits",
         "b> truth_ramp.fits",
         "Extension HDU 3 (GROUPDQ, 1):",
+        "Data contains differences:",
         "Values in a and b",
         "Quantity   a    b",
         "-------- ----- ---",
@@ -429,7 +433,7 @@ def test_array4d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "min        0        0",
         "mean       14       14",
         "std_dev    57.73    57.73",
-        "Percentages of difference above (tolerance + threshold)",
+        "Percentages of difference above threshold",
         "threshold abs_diff% rel_diff%",
         "--------- --------- ---------",
         "0.1     5.556     5.556",
@@ -466,6 +470,7 @@ def test_array3d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth3d.fits",
         "?  ^^ +",
         "Extension HDU 1 (SCI, 1):",
+        "Data contains differences:",
         "Values in a and b",
         "Quantity   a     b",
         "-------- ------ ---",
@@ -483,7 +488,7 @@ def test_array3d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "min        0      nan",
         "mean   0.1953      nan",
         "std_dev    1.131      nan",
-        "Percentages of difference above (tolerance + threshold)",
+        "Percentages of difference above threshold",
         "threshold abs_diff%",
         "--------- ---------",
         "0.1     3.125",
@@ -521,6 +526,7 @@ def test_array2d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth2d.fits",
         "?  ^^ +",
         "Extension HDU 1 (SCI, 1):",
+        "Data contains differences:",
         "Values in a and b",
         "Quantity   a     b",
         "-------- ------ ---",
@@ -538,7 +544,7 @@ def test_array2d_diffs(mock_rampfiles, fitsdiff_default_kwargs):
         "min        0      nan",
         "mean   0.7813      nan",
         "std_dev    2.158      nan",
-        "Percentages of difference above (tolerance + threshold)",
+        "Percentages of difference above threshold",
         "threshold abs_diff%",
         "--------- ---------",
         "0.1      12.5",
@@ -560,7 +566,7 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["numdiffs"] = 5
     apdiff = FITSDiff(nan_in_sci, truth, **fitsdiff_default_kwargs)
     apresult = apdiff.identical
-    apreport = report_to_list(apdiff.report())
+    apreport = report_to_list(apdiff.report(), from_line=11)
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     diff = STFITSDiff(nan_in_sci, truth, **fitsdiff_default_kwargs)
     result = diff.identical
@@ -574,6 +580,7 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "a> nan_in_sci_ramp.fits",
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
+        "Data contains differences:",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -591,7 +598,7 @@ def test_nan_in_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "min        0        0",
         "mean   0.3334   0.3333",
         "std_dev   0.4715   0.4714",
-        "Percentages of difference above (tolerance + threshold)",
+        "Percentages of difference above threshold",
         "threshold abs_diff% rel_diff%",
         "--------- --------- ---------",
         "0.1        25        25",
@@ -620,13 +627,14 @@ def test_allnan_sci(mock_rampfiles, fitsdiff_default_kwargs):
     hdu.close()
     diff = STFITSDiff(all_sci_nan, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=11)
+    report = report_to_list(diff.report(), from_line=12)
     expected_report = [
         "Extension HDU 1 (SCI, 1):",
         "Headers contain differences:",
         "Keyword BITPIX   has different values:",
         "a> -64",
         "b> -32",
+        "Data contains differences:",
         "Values in a and b",
         "Quantity  a      b",
         "-------- --- ---------",
@@ -644,7 +652,7 @@ def test_allnan_sci(mock_rampfiles, fitsdiff_default_kwargs):
         "min      nan",
         "mean      nan",
         "std_dev      nan",
-        "Percentages of difference above (tolerance + threshold)",
+        "Percentages of difference above threshold",
         "threshold abs_diff% rel_diff%",
         "--------- --------- ---------",
         "0.0       100       100",
@@ -660,7 +668,7 @@ def test_change_sci_atol(mock_rampfiles, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["extension_tolerances"] = {"sci": {"atol": 0.01}}
     diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=10)
+    report = report_to_list(diff.report(), from_line=11)
     # The expected result is False
     # The report should look like this
     expected_report = [
@@ -672,6 +680,7 @@ def test_change_sci_atol(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 1e-05, Absolute tolerance: 0.01",
+        "Data contains differences:",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -689,17 +698,17 @@ def test_change_sci_atol(mock_rampfiles, fitsdiff_default_kwargs):
         "min        0        0",
         "mean  0.06918  0.06917",
         "std_dev   0.2391    0.239",
-        "Percentages of difference above (tolerance + threshold)",
+        "Percentages of difference above threshold",
         "threshold abs_diff% rel_diff%",
         "--------- --------- ---------",
         "0.1     8.333     8.333",
         "0.01     8.333     8.333",
         "0.001     8.333     8.333",
-        "0.0001     8.333     13.89",
-        "1e-05     8.333     13.89",
-        "1e-06     8.333     13.89",
-        "1e-07     8.333     13.89",
-        "0.0     8.333     13.89",
+        "0.0001     13.89     13.89",
+        "1e-05     13.89     13.89",
+        "1e-06     13.89     13.89",
+        "1e-07     13.89     13.89",
+        "0.0     13.89     13.89",
     ]
     assert result is False
     assert report == expected_report
@@ -712,7 +721,7 @@ def test_change_sci_rtol(mock_rampfiles, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["extension_tolerances"] = {1: {"rtol": 0.001}}
     diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=10)
+    report = report_to_list(diff.report(), from_line=11)
     # The expected result is False
     # The report should look like this
     expected_report = [
@@ -724,6 +733,7 @@ def test_change_sci_rtol(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 0.001, Absolute tolerance: 1e-07",
+        "Data contains differences:",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -741,17 +751,17 @@ def test_change_sci_rtol(mock_rampfiles, fitsdiff_default_kwargs):
         "min        0        0",
         "mean  0.06918  0.06917",
         "std_dev   0.2391    0.239",
-        "Percentages of difference above (tolerance + threshold)",
+        "Percentages of difference above threshold",
         "threshold abs_diff% rel_diff%",
         "--------- --------- ---------",
         "0.1     8.333     8.333",
         "0.01     8.333     8.333",
         "0.001     8.333     8.333",
-        "0.0001     13.89     8.333",
-        "1e-05     13.89     8.333",
-        "1e-06     13.89     8.333",
-        "1e-07     13.89     8.333",
-        "0.0     13.89     8.333",
+        "0.0001     13.89     13.89",
+        "1e-05     13.89     13.89",
+        "1e-06     13.89     13.89",
+        "1e-07     13.89     13.89",
+        "0.0     13.89     13.89",
     ]
     assert result is False
     assert report == expected_report
@@ -770,7 +780,7 @@ def test_change_all_tols(mock_rampfiles, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["extension_tolerances"] = extension_tolerances
     diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=10)
+    report = report_to_list(diff.report(), from_line=11)
     # The expected result is False
     # The report should look like this
     expected_report = [
@@ -782,6 +792,7 @@ def test_change_all_tols(mock_rampfiles, fitsdiff_default_kwargs):
         "b> truth_ramp.fits",
         "Extension HDU 1 (SCI, 1):",
         "Relative tolerance: 0.001, Absolute tolerance: 1e-05",
+        "Data contains differences:",
         "Values in a and b",
         "Quantity   a        b",
         "-------- ------ ---------",
@@ -799,17 +810,17 @@ def test_change_all_tols(mock_rampfiles, fitsdiff_default_kwargs):
         "min        0        0",
         "mean  0.06918  0.06917",
         "std_dev   0.2391    0.239",
-        "Percentages of difference above (tolerance + threshold)",
+        "Percentages of difference above threshold",
         "threshold abs_diff% rel_diff%",
         "--------- --------- ---------",
         "0.1     8.333     8.333",
         "0.01     8.333     8.333",
         "0.001     8.333     8.333",
-        "0.0001     13.89     8.333",
-        "1e-05     13.89     8.333",
-        "1e-06     13.89     8.333",
-        "1e-07     13.89     8.333",
-        "0.0     13.89     8.333",
+        "0.0001     13.89     13.89",
+        "1e-05     13.89     13.89",
+        "1e-06     13.89     13.89",
+        "1e-07     13.89     13.89",
+        "0.0     13.89     13.89",
     ]
     assert result is False
     assert report == expected_report
@@ -843,7 +854,7 @@ def test_diff_dim(mock_rampfiles, fitsdiff_default_kwargs):
     diff_dim = mock_rampfiles[5]
     apdiff = FITSDiff(diff_dim, truth, **fitsdiff_default_kwargs)
     apresult = apdiff.identical
-    apreport = report_to_list(apdiff.report())
+    apreport = report_to_list(apdiff.report(), from_line=11)
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     diff = STFITSDiff(diff_dim, truth, **fitsdiff_default_kwargs)
     result = diff.identical
@@ -931,7 +942,7 @@ def test_identical_tables(mock_table):
     truth = mock_table[0]
     apdiff = FITSDiff(truth, truth)
     apresult = apdiff.identical
-    apreport = report_to_list(apdiff.report())
+    apreport = report_to_list(apdiff.report(), from_line=11)
     diff = STFITSDiff(truth, truth)
     result = diff.identical
     report = report_to_list(diff.report())
@@ -944,7 +955,7 @@ def test_table_keyword_change(mock_table, fitsdiff_default_kwargs):
     keyword_mod = mock_table[1]
     apdiff = FITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
     apresult = apdiff.identical
-    apreport = report_to_list(apdiff.report())
+    apreport = report_to_list(apdiff.report(), from_line=11)
     diff = STFITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
@@ -973,7 +984,7 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
     data_mod = mock_table[2]
     apdiff = FITSDiff(data_mod, truth, **fitsdiff_default_kwargs)
     apresult = apdiff.identical
-    apreport = report_to_list(apdiff.report())
+    apreport = report_to_list(apdiff.report(), from_line=11)
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     diff = STFITSDiff(data_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
@@ -987,9 +998,7 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "a> data_mod_x1d.fits",
         "b> truth_x1d.fits",
         "Extension HDU 1 (EXTRACT1D, 1):",
-        "Found 2 different table data element(s). Reporting percentages above respective tolerances:",
-        "- absolute .... 0.1111%",
-        "- relative .... 0%",
+        "Data contains differences:",
         "Values in a and b",
         "col_name zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
@@ -998,6 +1007,11 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "col_name dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
         "FLUX    f8         2      99        1    9.85         2      99       50      49",
+        "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
+        "'BKGD_VAR_RNOISE', 'DQ', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
+        "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
+        "'SB_VAR_FLAT', 'SB_VAR_POISSON', 'SB_VAR_RNOISE', 'SURF_BRIGHT', "
+        "'WAVELENGTH'] are identical",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -1009,7 +1023,7 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
     nan_in_data = mock_table[3]
     apdiff = FITSDiff(nan_in_data, truth, **fitsdiff_default_kwargs)
     apresult = apdiff.identical
-    apreport = report_to_list(apdiff.report())
+    apreport = report_to_list(apdiff.report(), from_line=11)
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     diff = STFITSDiff(nan_in_data, truth, **fitsdiff_default_kwargs)
     result = diff.identical
@@ -1023,9 +1037,7 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "a> nan_in_data_x1d.fits",
         "b> truth_x1d.fits",
         "Extension HDU 1 (EXTRACT1D, 1):",
-        "Found 4 different table data element(s). Reporting percentages above respective tolerances:",
-        "- absolute .... 0.2222%",
-        "- relative .... 0%",
+        "Data contains differences:",
         "Values in a and b",
         "col_name zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
@@ -1033,7 +1045,12 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "Difference stats: abs(b - a)",
         "col_name dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
-        "FLUX    f8        98       1  0.02041  0.1414        98       1  0.02041  0.1414",
+        "FLUX    f8         2       1        1       0         2       1        1       0",
+        "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
+        "'BKGD_VAR_RNOISE', 'DQ', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
+        "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
+        "'SB_VAR_FLAT', 'SB_VAR_POISSON', 'SB_VAR_RNOISE', 'SURF_BRIGHT', "
+        "'WAVELENGTH'] are identical",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -1045,7 +1062,7 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
     nan_column = mock_table[4]
     apdiff = FITSDiff(nan_column, truth, **fitsdiff_default_kwargs)
     apresult = apdiff.identical
-    apreport = report_to_list(apdiff.report())
+    apreport = report_to_list(apdiff.report(), from_line=11)
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     diff = STFITSDiff(nan_column, truth, **fitsdiff_default_kwargs)
     result = diff.identical
@@ -1059,9 +1076,7 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "a> nan_column_x1d.fits",
         "b> truth_x1d.fits",
         "Extension HDU 1 (EXTRACT1D, 1):",
-        "Found 100 different table data element(s). Reporting percentages above respective tolerances:",
-        "- absolute .... 5.556%",
-        "- relative .... 0%",
+        "Data contains differences:",
         "Values in a and b",
         "col_name  zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
@@ -1070,6 +1085,11 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "col_name  dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
         "---------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
         "WAVELENGTH    f8         0       0        0       0         0       0        0       0",
+        "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
+        "'BKGD_VAR_RNOISE', 'DQ', 'FLUX', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
+        "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
+        "'SB_VAR_FLAT', 'SB_VAR_POISSON', 'SB_VAR_RNOISE', 'SURF_BRIGHT'] are "
+        "identical",
     ]
     assert result == apresult
     assert pixelreport == apreport
@@ -1095,6 +1115,7 @@ def test_table_diff_column(mock_table, fitsdiff_default_kwargs):
         "Keyword NAXIS2   has different values:",
         "a> 105",
         "b> 100",
+        "Data contains differences:",
         "Table rows differ:",
         "a: 105",
         "b: 100",
@@ -1110,23 +1131,24 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
     diff_coltype = tmp_dir / "diff_coltype.fits"
 
     arr1 = [[0, 1], [2, 3]]
-    arr2 = [[0, 1], [2, 3]]
+    arr2 = [[0.0, 1.0], [2.0, 3.0]]
     c1 = fits.Column(name="col_1", array=arr1, format="PI(2)")
-    c2 = fits.Column(name="col_2", array=arr2, format="QJ(2)")
+    c2 = fits.Column(name="col_2", array=arr2, format="QD(2)")
     tab = fits.BinTableHDU.from_columns([c1, c2], name="test")
     outfile = fits.HDUList()
     outfile.append(tab)
     outfile.writeto(diff_coltype_truth)
 
     arr1 = [[0, 11], [2, 3]]
-    arr2 = [[0, 1], [2, 13]]
+    arr2 = [[0.0, 1.0], [2.0, 13.0]]
     c1 = fits.Column(name="col_1", array=arr1, format="PI(2)")
-    c2 = fits.Column(name="col_2", array=arr2, format="QJ(2)")
+    c2 = fits.Column(name="col_2", array=arr2, format="QD(2)")
     tab = fits.BinTableHDU.from_columns([c1, c2], name="test")
     outfile = fits.HDUList()
     outfile.append(tab)
     outfile.writeto(diff_coltype)
 
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     diff = STFITSDiff(diff_coltype, diff_coltype_truth, **fitsdiff_default_kwargs)
     result = diff.identical
     report = report_to_list(diff.report())
@@ -1134,9 +1156,9 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
     # The report should look like this
     expected_report = [
         "Extension HDU 1 (TEST, 1):",
-        "Found 2 different table data element(s). Reporting percentages above respective tolerances:",
-        "- absolute .... 50%",
-        "- relative .... 0%",
+        "Data contains differences:",
+        "Found 2 different table data element(s).",
+        "1 failed the (atol, rtol) test",
         "Values in a and b",
         "col_name zeros_a_b nan_a_b no-nan_a_b max_a_b min_a_b mean_a_b",
         "-------- --------- ------- ---------- ------- ------- --------",
@@ -1147,6 +1169,301 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
         "-------- ------ --------- ------- -------- ------- --------- ------- -------- -------",
         "col_1 object         1       0        0       0         0       0        0       0",
         "col_2 object         1       0        0       0         0       0        0       0",
+        "* Pixel indices below are 1-based.",
+        "Column col_1 data differs in row 0:",
+        "at [1]:",
+        "a> 11",
+        "b> 1",
+        "Column col_2 data differs in row 1:",
+        "at [1]:",
+        "a> 13.0",
+        "? -",
+        "b> 3.0",
+        "2 different table data element(s) found (50.00% different).",
     ]
     assert result is False
     assert report == expected_report
+    # Make sure pixels differences aren't reported when report_pixel_loc_diffs isn't True
+    del fitsdiff_default_kwargs["report_pixel_loc_diffs"]
+    diff = STFITSDiff(diff_coltype, diff_coltype_truth, **fitsdiff_default_kwargs)
+    assert "data differs in row" not in report
+
+
+def test_hdulists_different_extnames(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    data_array = np.arange((1000)).reshape((10, 10, 10))
+    a.append(fits.ImageHDU(data=data_array, name="EXTENSION1"))
+    b.append(fits.ImageHDU(data=data_array, name="EXTENSION2"))
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "a: <HDUList object at " in report
+    assert "b: <HDUList object at " in report
+    assert "HDUs in a but not b: ['EXTENSION1']" in report
+    assert "HDUs in b but not a: ['EXTENSION2']" in report
+    assert "No differences found between common HDUs." in report
+
+
+def test_hdulists_with_ignores(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    data_array = np.arange((1000)).reshape((10, 10, 10))
+    a.append(fits.ImageHDU(data=data_array, name="EXTENSION1"))
+    b.append(fits.ImageHDU(data=data_array, name="EXTENSION2"))
+    fitsdiff_default_kwargs["ignore_hdus"].extend(["EXT*"])
+    fitsdiff_default_kwargs["ignore_comments"] = ["EXTNAME"]
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "HDU(s) not to be compared:\n  EXT*\n" in report
+    assert "Keyword(s) whose comments are not to be compared:\n  EXTNAME\n" in report
+
+
+def test_hdus_different_array_sizes(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    data_array = np.arange((1000)).reshape((10, 10, 10))
+    a.append(fits.ImageHDU(data=data_array, name="SCI"))
+    b.append(fits.ImageHDU(data=data_array[:-1, :-1], name="SCI"))
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "Data dimensions differ:" in report
+
+
+def test_hdus_different_headers(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    data_array = np.arange((1000)).reshape((10, 10, 10))
+    hdu1 = fits.ImageHDU(data=data_array)
+    hdu2 = fits.ImageHDU(data=data_array + 1.0)
+    hdu2.header["EXPTIME"] = 10.0
+    hdu1.header["XTENSION"] = "SPECTRUM1"
+    hdu2.header["XTENSION"] = "SPECTRUM2"
+    a.append(hdu1)
+    b.append(hdu2)
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "Extension HDU 1:" in report
+
+
+def test_hdus_1d_arrays(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    hdu1 = fits.hdu.base.NonstandardExtHDU(name="SCI")
+    hdu2 = fits.hdu.base.NonstandardExtHDU(name="SCI")
+    hdu1.header["XTENSION"] = "Spectrum1"
+    hdu2.header["XTENSION"] = "Spectrum1"
+    hdu2.header["EXTLEVEL"] = 2
+    hdu1.data = np.arange(100.0)
+    hdu2.data = np.arange(100.0) + 1.0
+    a.append(hdu1)
+    b.append(hdu2)
+    hdu3 = fits.hdu.base.NonstandardExtHDU(name="ERR")
+    hdu4 = fits.hdu.base.NonstandardExtHDU(name="ERR")
+    hdu3.header["XTENSION"] = "Spectrum2"
+    hdu4.header["XTENSION"] = "Spectrum2"
+    hdu4.header["EXTLEVEL"] = 3
+    hdu3.data = np.arange(100.0)
+    hdu4.data = np.arange(99.0)
+    a.append(hdu3)
+    b.append(hdu4)
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "Extension HDU 1 (SCI, 1)" in report
+    # Earlier version didn't print pixel differences even when report_pixel_loc_diffs was set to True
+    assert "Data differs at" in report
+
+
+def test_hdus_image_zeros_rpl(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    data_array = np.zeros((6, 6), dtype=np.float32)
+    a.append(fits.ImageHDU(data=data_array, name="ZERO"))
+    b.append(fits.ImageHDU(data=data_array, name="ZERO"))
+    data_a = data_array.copy()
+    data_b = data_array.copy()
+    data_a[2:] = 1.0
+    data_b[4:] = 1.0
+    a.append(fits.ImageHDU(data=data_a, name="SCI"))
+    b.append(fits.ImageHDU(data=data_b, name="SCI"))
+    data_a2 = data_array.copy()
+    data_b2 = data_array.copy()
+    data_a2[4:] = 1.0
+    data_b2[2:] = 1.0
+    a.append(fits.ImageHDU(data=data_a2, name="ERR"))
+    b.append(fits.ImageHDU(data=data_b2, name="ERR"))
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "0.1     33.33         0" in report
+    assert "0.1     33.33     33.33" in report
+
+
+def test_hdu_tables_diff_col_numbers():
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    cw = fits.Column(name="WAVELENGTH", format="E", unit="Angstrom")
+    cf = fits.Column(name="FLUX", format="E", unit="erg /s /cm**2 /Angstrom")
+    cd_a = fits.ColDefs([cw, cf])
+    cd_b = fits.ColDefs([cw])
+    table_a = fits.BinTableHDU.from_columns(cd_a, nrows=1)
+    table_b = fits.BinTableHDU.from_columns(cd_b, nrows=1)
+    a.append(table_a)
+    b.append(table_b)
+    diff = STFITSDiff(a, b)
+    report = diff.report()
+    assert "Tables have different number of columns:" in report
+
+
+def test_hdu_tables_ignore_all_fields(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    cw = fits.Column(name="WAVELENGTH", format="E", unit="Angstrom")
+    cf = fits.Column(name="FLUX", format="E", unit="erg /s /cm**2 /Angstrom")
+    cd_a = fits.ColDefs([cw, cf])
+    cd_b = fits.ColDefs([cw])
+    table_a = fits.BinTableHDU.from_columns(cd_a, nrows=100)
+    table_b = fits.BinTableHDU.from_columns(cd_b, nrows=100)
+    table_a.data["WAVELENGTH"] = np.arange(100.0)
+    table_b.data["WAVELENGTH"] = np.arange(100.0) + 1.0
+    a.append(table_a)
+    b.append(table_b)
+    fitsdiff_default_kwargs["ignore_fields"].extend("*")
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "Values in a and b" not in report
+
+
+def test_hdus_tables_ignored_columns(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    cw = fits.Column(name="WAVELENGTH", format="E", unit="Angstrom")
+    cf = fits.Column(name="FLUX", format="E", unit="erg /s /cm**2 /Angstrom")
+    cd_a = fits.ColDefs([cw, cf])
+    cd_b = fits.ColDefs([cw, cf])
+    table_a = fits.BinTableHDU.from_columns(cd_a, nrows=100)
+    table_b = fits.BinTableHDU.from_columns(cd_b, nrows=100)
+    table_a.data["WAVELENGTH"] = np.arange(100.0)
+    table_b.data["WAVELENGTH"] = np.arange(100.0) + 1.0
+    a.append(table_a)
+    b.append(table_b)
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    fitsdiff_default_kwargs["ignore_fields"].extend(["WAVELENGTH"])
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "No differences found." in report
+
+
+def test_hdus_tables_extra_cols_in_b(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    cw = fits.Column(name="WAVELENGTH", format="E", unit="Angstrom")
+    cf = fits.Column(name="FLUX", format="E", unit="erg /s /cm**2 /Angstrom")
+    ce = fits.Column(name="ERROR", format="E")
+    cd_a = fits.ColDefs([cw, cf])
+    cd_b = fits.ColDefs([cw, cf, ce])
+    table_a = fits.BinTableHDU.from_columns(cd_a, nrows=100)
+    table_b = fits.BinTableHDU.from_columns(cd_b, nrows=100)
+    table_a.data["WAVELENGTH"] = np.arange(100.0)
+    table_b.data["WAVELENGTH"] = np.arange(100.0) + 1.0
+    a.append(table_a)
+    b.append(table_b)
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "Extra column ERROR of format E in b" in report
+
+
+def test_hdus_tables_no_rows(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    cw = fits.Column(name="WAVELENGTH", format="E", unit="Angstrom")
+    cf = fits.Column(name="FLUX", format="E", unit="erg /s /cm**2 /Angstrom")
+    ce = fits.Column(name="ERROR", format="E")
+    cd_a = fits.ColDefs([cw, cf, ce])
+    cd_b = fits.ColDefs([cw, cf, ce])
+    table_a = fits.BinTableHDU.from_columns(cd_a)
+    table_b = fits.BinTableHDU.from_columns(cd_b)
+    a.append(table_a)
+    b.append(table_b)
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "No differences found." in report
+
+
+def test_hdus_tables_lowercase_column_names(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    cw = fits.Column(name="WAVELENGTH", format="E", unit="Angstrom")
+    clcw = fits.Column(name="wavelength", format="E", unit="m")
+    cf = fits.Column(name="FLUX", format="E", unit="erg /s /cm**2 /Angstrom")
+    ce = fits.Column(name="ERROR", format="E")
+    cd_a = fits.ColDefs([clcw, cf, ce])
+    cd_b = fits.ColDefs([cw, cf, ce])
+    table_a = fits.BinTableHDU.from_columns(cd_a, nrows=100)
+    table_b = fits.BinTableHDU.from_columns(cd_b, nrows=100)
+    table_a.data["WAVELENGTH"] = np.arange(100.0)
+    table_b.data["wavelength"] = np.arange(100.0) + 1.0
+    a.append(table_a)
+    b.append(table_b)
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "Found 100 different table data element(s)" in report
+
+
+def test_hdus_tables_misc(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    cw = fits.Column(name="WAVELENGTH", format="E", unit="Angstrom")
+    cf = fits.Column(name="FLUX", format="E", unit="erg /s /cm**2 /Angstrom")
+    ce = fits.Column(name="ERROR", format="E")
+    ci = fits.Column(name="INDEX", format="J")
+    cd_a = fits.ColDefs([cw, cf, ce, ci])
+    cd_b = fits.ColDefs([cw, cf, ce, ci])
+    table_a = fits.BinTableHDU.from_columns(cd_a, nrows=100)
+    table_b = fits.BinTableHDU.from_columns(cd_b, nrows=100)
+    table_a.data["WAVELENGTH"] = np.arange(100.0)
+    table_b.data["WAVELENGTH"] = np.arange(100.0)
+    table_b.data["WAVELENGTH"][:5] = np.arange(5) + 1.0
+    table_b.data["WAVELENGTH"][40] = np.nan
+    table_a.data["INDEX"] = np.arange(100)
+    table_b.data["INDEX"] = np.arange(100)
+    table_b.data["INDEX"][:5] = np.arange(5) + 1
+    a.append(table_a)
+    b.append(table_b)
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
+    fitsdiff_default_kwargs["numdiffs"] = -1
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
+    assert "additional difference(s)" not in report
+    fitsdiff_default_kwargs["numdiffs"] = 6
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = False
+    diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
+    report = diff.report()
