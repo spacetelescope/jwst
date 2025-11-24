@@ -30,7 +30,6 @@ __all__ = [
     "velocity_correction",
     "MSAFileError",
     "NoDataOnDetectorError",
-    # "compute_scale",
     "calc_rotation_matrix",
     "wrap_ra",
     "update_fits_wcsinfo",

@@ -1066,7 +1066,6 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
     pixel_scale : float
         The spatial scale in degrees.
     """
-    # from jwst.assign_wcs.util import compute_scale
     # Get the coordinates for the center of the array
     if fiducial is None:
         center_x, center_y = np.mean(wcs.bounding_box, axis=1)
