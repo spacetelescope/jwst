@@ -7,11 +7,11 @@ import pytest
 from astropy.io import fits
 from gwcs.wcstools import grid_from_bounding_box
 from numpy.testing import assert_allclose
+from stcal.alignment.util import compute_scale
 from stcal.resample.utils import build_driz_weight, compute_mean_pixel_area
 from stdatamodels.jwst.datamodels import CubeModel, ImageModel, MultiSlitModel, dqflags
 
 from jwst.assign_wcs import AssignWcsStep
-from jwst.assign_wcs.util import compute_scale
 from jwst.datamodels import ModelContainer, ModelLibrary
 from jwst.exp_to_source import multislit_to_container
 from jwst.extract_2d import Extract2dStep

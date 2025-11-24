@@ -1,0 +1,2 @@
+Replace functions in ``util`` (``compute_scale``, ``wcs_bbox_from_shape``) with equivalent 
+functions in ``stcal.alignment.util``.
