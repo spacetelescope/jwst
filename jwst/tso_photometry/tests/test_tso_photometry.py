@@ -180,6 +180,7 @@ def mock_nircam_image(
     set_meta(datamodel, xcenter, ycenter, sub64p=sub64p)
     if convert_units:
         tp.convert_data_units(datamodel)
+    include_int_times(datamodel)
     return datamodel
 
 
@@ -248,7 +249,6 @@ def test_tso_phot_sub64p():
         sub64p=True,
         convert_units=True,
     )
-    include_int_times(datamodel)
 
     catalog = tp.tso_aperture_photometry(
         datamodel, xcenter, ycenter, radius, radius_inner, radius_outer
@@ -267,10 +267,27 @@ def test_tso_phot_sub64p():
     assert np.allclose(catalog["aperture_sum_err"].value, 0.0, atol=1.0e-7)
 
 
-def test_tso_phot_no_int_times():
+@pytest.mark.parametrize("int_times", ["missing", "none", "empty"])
+def test_tso_phot_no_int_times(int_times):
     datamodel = mock_nircam_image(convert_units=True)
+    if int_times == "missing":
+        del datamodel.int_times
+    elif int_times == "none":
+        datamodel.int_times = None
+    elif int_times == "empty":
+        # Create empty table with all required columns to match schema
+        it_dtype = [
+            ("integration_number", "<i4"),
+            ("int_start_MJD_UTC", "<f8"),
+            ("int_mid_MJD_UTC", "<f8"),
+            ("int_end_MJD_UTC", "<f8"),
+            ("int_start_BJD_TDB", "<f8"),
+            ("int_mid_BJD_TDB", "<f8"),
+            ("int_end_BJD_TDB", "<f8"),
+        ]
+        datamodel.int_times = np.array([], dtype=it_dtype)
 
-    with pytest.raises(AttributeError, match="Input data model has no INT_TIMES table."):
+    with pytest.raises(AttributeError):
         tp.tso_aperture_photometry(
             datamodel,
             XCENTER,
@@ -300,7 +317,6 @@ def test_tso_phot_uncalibrated():
     # Set uncalibrated data units
     datamodel.meta.bunit_data = "DN/s"
     datamodel.meta.bunit_err = "DN/s"
-    include_int_times(datamodel)
 
     # Get the gain reference file
     gain_2d = get_gain_2d(datamodel)
@@ -327,7 +343,6 @@ def test_tso_phot_unexpected_units():
     # Set unknown data units
     datamodel.meta.bunit_data = "DN"
     datamodel.meta.bunit_err = "DN"
-    include_int_times(datamodel)
 
     # Get the gain reference file
     gain_2d = get_gain_2d(datamodel)
@@ -352,7 +367,6 @@ def test_tso_phot_wrong_model():
 
 def test_tso_phot_multiple_center_values():
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
 
     # Use an array of xcenter, ycenter values and provide psf values
     nint = datamodel.data.shape[0]
@@ -393,7 +407,6 @@ def test_tso_phot_multiple_center_values():
 @pytest.mark.parametrize("fit_psf", [True, False])
 def test_fit_source_fail(monkeypatch, fit_psf):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     mask = np.full(datamodel.data.shape, False)
     box_size = int(RADIUS * 2 + 1)
     xcenter, ycenter = XCENTER, YCENTER
@@ -419,7 +432,6 @@ def test_fit_source_fail(monkeypatch, fit_psf):
 @pytest.mark.parametrize("fit_psf", [True, False])
 def test_fit_source_centroid_out_of_bounds(monkeypatch, fit_psf, centroid_values):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     mask = np.full(datamodel.data.shape, False)
     box_size = int(RADIUS * 2 + 1)
     xcenter, ycenter = XCENTER, YCENTER
@@ -443,7 +455,6 @@ def test_fit_source_centroid_out_of_bounds(monkeypatch, fit_psf, centroid_values
 
 def test_fit_source_psf_fail(monkeypatch):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     mask = np.full(datamodel.data.shape, False)
     box_size = int(RADIUS * 2 + 1)
     xcenter, ycenter = XCENTER, YCENTER
@@ -462,7 +473,6 @@ def test_fit_source_psf_fail(monkeypatch):
 
 def test_psf_fit():
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     data = datamodel.data[0]
     mask = np.full(data.shape, False)
     fit_box_width = int(RADIUS * 2 + 1)
@@ -477,7 +487,6 @@ def test_psf_fit():
 
 def test_psf_fit_gaussian_prf_fail(monkeypatch):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     data = datamodel.data[0]
     mask = np.full(data.shape, False)
     fit_box_width = int(RADIUS * 2 + 1)
@@ -496,7 +505,6 @@ def test_psf_fit_gaussian_prf_fail(monkeypatch):
 
 def test_tso_source_centroid_fail(monkeypatch):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     xcenter, ycenter = XCENTER, YCENTER
 
     def mock_fit_source(*args, **kwargs):

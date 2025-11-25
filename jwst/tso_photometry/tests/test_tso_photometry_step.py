@@ -3,7 +3,7 @@ import pytest
 from astropy.table import QTable
 
 from jwst.tso_photometry import tso_photometry_step as tp
-from jwst.tso_photometry.tests.test_tso_photometry import include_int_times, mock_nircam_image
+from jwst.tso_photometry.tests.test_tso_photometry import mock_nircam_image
 
 RADII_FOR_TEST = {"radius": 6.0, "radius_inner": 8.0, "radius_outer": 11.0}
 
@@ -18,7 +18,6 @@ def spot_check_expected_values(datamodel, catalog):
 @pytest.mark.parametrize("missing", ["xref", "yref", "bunit_data", "bunit_err"])
 def test_tsophotometry_step_missing_values(missing):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     if missing == "xref":
         datamodel.meta.wcsinfo.siaf_xref_sci = None
     elif missing == "yref":
@@ -34,7 +33,6 @@ def test_tsophotometry_step_missing_values(missing):
 
 def test_tsophotometry_step_subarray(log_watcher):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     input_copy = datamodel.copy()
 
     watcher = log_watcher(
@@ -54,7 +52,6 @@ def test_tsophotometry_step_subarray(log_watcher):
 
 def test_tsophotometry_step_full_frame(log_watcher):
     datamodel = mock_nircam_image(shape=(7, 2048, 2048))
-    include_int_times(datamodel)
     input_copy = datamodel.copy()
 
     # Gain reference already matches data, no need to extract subarray
@@ -75,7 +72,6 @@ def test_tsophotometry_step_full_frame(log_watcher):
 
 def test_tsophotometry_step_save_catalog(tmp_path, log_watcher):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     datamodel.meta.filename = "test_calints.fits"
 
     watcher = log_watcher(
@@ -97,7 +93,6 @@ def test_tsophotometry_step_save_catalog(tmp_path, log_watcher):
 
 def test_tsophotometry_step_no_centroid():
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
 
     catalog = tp.TSOPhotometryStep.call(datamodel, centroid_source=False, **RADII_FOR_TEST)
 
@@ -108,7 +103,6 @@ def test_tsophotometry_step_no_centroid():
 
 def test_tsophotometry_step_moving_centroid():
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
 
     catalog = tp.TSOPhotometryStep.call(datamodel, moving_centroid=True, **RADII_FOR_TEST)
 
@@ -119,7 +113,6 @@ def test_tsophotometry_step_moving_centroid():
 
 def test_tsophotometry_step_failed_centroid(monkeypatch, log_watcher):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
 
     def mock_centroid(*args, **kwars):
         nan_array = np.full(datamodel.shape[0], np.nan)
@@ -140,7 +133,6 @@ def test_tsophotometry_step_failed_centroid(monkeypatch, log_watcher):
 @pytest.mark.parametrize("box", ["search_box_width", "fit_box_width"])
 def test_tsophotometry_step_odd_boxes(log_watcher, box):
     datamodel = mock_nircam_image()
-    include_int_times(datamodel)
     kwargs = {box: 22}
     kwargs.update(RADII_FOR_TEST)
 
