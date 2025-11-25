@@ -1004,9 +1004,9 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "FLUX       0 0     0 0    100 100       100         1     1e-05         1      1.98         1",
         "Difference stats: abs(b - a)",
-        "col_name dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
-        "-------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
-        "FLUX    f8         2      99        1    9.85         2      99       50      49",
+        "col_name dtype rel_diffs rel_max rel_mean rel_std",
+        "-------- ----- --------- ------- -------- -------",
+        "FLUX    f8         2      99       50      49",
         "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
@@ -1043,9 +1043,9 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "FLUX       2 0     2 0     98 100         1         1         0         1    0.9796         1",
         "Difference stats: abs(b - a)",
-        "col_name dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
-        "-------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
-        "FLUX    f8         2       1        1       0         2       1        1       0",
+        "col_name dtype rel_diffs rel_max rel_mean rel_std",
+        "-------- ----- --------- ------- -------- -------",
+        "FLUX    f8         2       1        1       0",
         "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
@@ -1082,9 +1082,9 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "WAVELENGTH       0 1   100 0      0 100       nan       9.9       nan         0       nan      4.95",
         "Difference stats: abs(b - a)",
-        "col_name  dtype abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
-        "---------- ----- --------- ------- -------- ------- --------- ------- -------- -------",
-        "WAVELENGTH    f8         0       0        0       0         0       0        0       0",
+        "col_name  dtype rel_diffs rel_max rel_mean rel_std",
+        "---------- ----- --------- ------- -------- -------",
+        "WAVELENGTH    f8       100     nan      nan     nan",
         "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
@@ -1130,8 +1130,8 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
     diff_coltype_truth = tmp_dir / "diff_coltype_truth.fits"
     diff_coltype = tmp_dir / "diff_coltype.fits"
 
-    arr1 = [[0, 1], [2, 3]]
-    arr2 = [[0.0, 1.0], [2.0, 3.0]]
+    arr1 = [[0, 1], [2, 3, 4]]
+    arr2 = [[0.0, 1.0], [2.0, 3.0, np.nan, np.nan]]
     c1 = fits.Column(name="col_1", array=arr1, format="PI(2)")
     c2 = fits.Column(name="col_2", array=arr2, format="QD(2)")
     tab = fits.BinTableHDU.from_columns([c1, c2], name="test")
@@ -1139,8 +1139,8 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
     outfile.append(tab)
     outfile.writeto(diff_coltype_truth)
 
-    arr1 = [[0, 11], [2, 3]]
-    arr2 = [[0.0, 1.0], [2.0, 13.0]]
+    arr1 = [[0, 11], [2, 3, 4]]
+    arr2 = [[0.0, 1.0], [np.nan, 23.0, 4.0, np.nan]]
     c1 = fits.Column(name="col_1", array=arr1, format="PI(2)")
     c2 = fits.Column(name="col_2", array=arr2, format="QD(2)")
     tab = fits.BinTableHDU.from_columns([c1, c2], name="test")
@@ -1158,27 +1158,33 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
         "Extension HDU 1 (TEST, 1):",
         "Data contains differences:",
         "Found 2 different table data element(s).",
-        "1 failed the (atol, rtol) test",
+        "2 failed the (atol, rtol) test",
         "Values in a and b",
-        "col_name zeros_a_b nan_a_b no-nan_a_b max_a_b min_a_b mean_a_b",
-        "-------- --------- ------- ---------- ------- ------- --------",
-        "col_1       - -     - -        - -     - -     - -      - -",
-        "col_2       - -     - -        - -     - -     - -      - -",
+        "col_name zeros_a_b nan_a_b no-nan_a_b    max_a_b       min_a_b       mean_a_b",
+        "-------- --------- ------- ---------- ------------- ------------- -------------",
+        "col_1       1 1     0 0        5 5     11      4      0      0      4      2",
+        "col_2       1 1     2 2        4 4     23      3      0      0      7    1.5",
         "Difference stats: abs(b - a)",
-        "col_name dtype  abs_diffs abs_max abs_mean abs_std rel_diffs rel_max rel_mean rel_std",
-        "-------- ------ --------- ------- -------- ------- --------- ------- -------- -------",
-        "col_1 object         1       0        0       0         0       0        0       0",
-        "col_2 object         1       0        0       0         0       0        0       0",
+        "col_name dtype  rel_diffs rel_max rel_mean rel_std",
+        "-------- ------ --------- ------- -------- -------",
+        "col_1 object         1      10       10       0",
+        "col_2 object         1      20       20       0",
         "* Pixel indices below are 1-based.",
         "Column col_1 data differs in row 0:",
         "at [1]:",
         "a> 11",
         "b> 1",
         "Column col_2 data differs in row 1:",
+        "at [0]:",
+        "a> nan",
+        "b> 2.0",
         "at [1]:",
-        "a> 13.0",
+        "a> 23.0",
         "? -",
         "b> 3.0",
+        "at [2]:",
+        "a> 4.0",
+        "b> nan",
         "2 different table data element(s) found (50.00% different).",
     ]
     assert result is False
@@ -1463,7 +1469,68 @@ def test_hdus_tables_misc(fitsdiff_default_kwargs):
     diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
     report = diff.report()
     assert "additional difference(s)" not in report
-    fitsdiff_default_kwargs["numdiffs"] = 6
-    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = False
+
+
+def test_hdus_tables_non_numeric(fitsdiff_default_kwargs):
+    a = fits.HDUList()
+    b = fits.HDUList()
+    a.append(fits.PrimaryHDU())
+    b.append(fits.PrimaryHDU())
+    cw = fits.Column(name="WAVELENGTH", format="E", unit="Angstrom")
+    ci = fits.Column(name="INDEX", format="J")
+    ct = fits.Column(name="NAME", format="10A")
+    cd_a = fits.ColDefs([cw, ci, ct])
+    cd_b = fits.ColDefs([cw, ci, ct])
+    table_a = fits.BinTableHDU.from_columns(cd_a, nrows=10)
+    table_b = fits.BinTableHDU.from_columns(cd_b, nrows=10)
+    table_a.data["WAVELENGTH"] = np.arange(10.0)
+    table_b.data["WAVELENGTH"] = np.arange(10.0)
+    table_b.data["WAVELENGTH"][6:] = 4.0 - np.arange(4.0)
+    table_a.data["INDEX"] = np.arange(10)
+    table_b.data["INDEX"] = np.arange(10)
+    table_b.data["INDEX"][6:] = 4 - np.arange(4)
+    table_a.data["NAME"] = np.array(
+        ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine"]
+    )
+    table_b.data["NAME"] = np.array(
+        ["Zero", "One", "Two", "Three", "Four", "Five", "Four", "Three", "Two", "One"]
+    )
+    a.append(table_a)
+    b.append(table_b)
+    diff = STFITSDiff(a, b)
+    report = diff.report()
+    assert "Column NAME has 4 different non-numeric entries" in report
+    fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
     report = diff.report()
+    assert "12 different table data element(s) found (40.00% different)." in report
+
+
+def test_hdus_table_pq_different_array_sizes(mock_table, fitsdiff_default_kwargs):
+    tmp_dir = mock_table[6]
+    diff_arraysizes_truth = tmp_dir / "diff_arraysizes_truth.fits"
+    diff_arraysizes = tmp_dir / "diff_arraysizes.fits"
+
+    arr1 = [[0, 1], [2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4, 5]]
+    arr2 = [[0.0, 1.0], [2.0, 3.0, np.nan, np.nan]]
+    c1 = fits.Column(name="col_1", array=arr1, format="PI(2)")
+    c2 = fits.Column(name="col_2", array=arr2, format="QD(2)")
+    tab = fits.BinTableHDU.from_columns([c1, c2], name="test")
+    outfile = fits.HDUList()
+    outfile.append(tab)
+    outfile.writeto(diff_arraysizes_truth)
+
+    arr1 = [[0, 11], [2, 3, 4], [1, 2, 3, 4], [1, 2, 3, 4]]
+    arr2 = [[0.0, 1.0], [np.nan, 23.0, 4.0, np.nan]]
+    c1 = fits.Column(name="col_1", array=arr1, format="PI(2)")
+    c2 = fits.Column(name="col_2", array=arr2, format="QD(2)")
+    tab = fits.BinTableHDU.from_columns([c1, c2], name="test")
+    outfile = fits.HDUList()
+    outfile.append(tab)
+    outfile.writeto(diff_arraysizes)
+    diff = STFITSDiff(diff_arraysizes, diff_arraysizes_truth, **fitsdiff_default_kwargs)
+    result = diff.identical
+    report = report_to_list(diff.report())
+    assert result is False
+    assert "Extra column col_1 of format PI(4) in a" in report
+    assert "Extra column col_1 of format PI(5) in b" in report

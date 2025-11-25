@@ -226,12 +226,8 @@ def main():
             exit()
 
     # Find the differences
-    try:
-        diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
-        logger.info(diff.report())
-    except Exception as err:
-        logger.error("\n *** STFitsDiff crashed with the following error: \n")
-        logger.error(err)
+    diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
+    logger.info(diff.report())
 
 
 if __name__ == "__main__":
