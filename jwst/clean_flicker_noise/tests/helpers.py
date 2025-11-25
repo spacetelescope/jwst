@@ -223,8 +223,13 @@ def make_nirspec_fs_model():
     rate_model = datamodels.ImageModel(hdul)
     hdul.close()
 
-    # add the slow axis
+    # add the slow axis and subarray information
     rate_model.meta.subarray.slowaxis = 1
+    rate_model.meta.subarray.fastaxis = 2
+    rate_model.meta.subarray.xstart = 1
+    rate_model.meta.subarray.ystart = 1
+    rate_model.meta.subarray.xsize = 2048
+    rate_model.meta.subarray.ysize = 2048
     return rate_model
 
 
@@ -280,4 +285,29 @@ def make_nircam_rate_model(shape=None):
     model.meta.instrument.pupil = "CLEAR"
     model.meta.exposure.type = "NRC_IMAGE"
     model.meta.subarray.slowaxis = -2
+    return model
+
+
+def make_nrs_fs_full_ramp():
+    shape = (1, 2, 2048, 2048)
+    model = datamodels.RampModel(shape)
+
+    # Make data with a constant rate
+    for group in range(shape[1]):
+        model.data[:, group, :, :] = group
+
+    # Add NIRSpec metadata from a rate model
+    image_model = make_nirspec_fs_model()
+    model.update(image_model)
+    image_model.close()
+
+    # Add ramp information
+    model.meta.exposure.nints = 1
+    model.meta.exposure.ngroups = 2
+    model.meta.exposure.nframes = 1
+    model.meta.exposure.groupgap = 0
+    model.meta.exposure.group_time = 1.0
+    model.meta.exposure.frame_time = 14.5
+    model.meta.exposure.readpatt = "NRS"
+
     return model
