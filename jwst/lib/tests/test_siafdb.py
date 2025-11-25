@@ -106,8 +106,8 @@ def test_create(source, prd, xml_path, exception, jail_environ):
             "MIRIM_TAMRS",
             False,
             siafdb.SIAF(
-                v2_ref=-481.987342,
-                v3_ref=-318.206242,
+                v2_ref=-481.957142,
+                v3_ref=-318.063642,
                 v3yangle=4.83544897,
                 vparity=-1,
                 crpix1=24.5,
@@ -121,8 +121,8 @@ def test_create(source, prd, xml_path, exception, jail_environ):
             "MIRIM_TAMRS",
             True,
             siafdb.SIAF(
-                v2_ref=-481.987342,
-                v3_ref=-318.206242,
+                v2_ref=-481.957142,
+                v3_ref=-318.063642,
                 v3yangle=4.83544897,
                 vparity=-1,
                 crpix1=997.5,
