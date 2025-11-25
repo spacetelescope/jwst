@@ -43,7 +43,7 @@ ASTROPY_LT_7_1_1 = Version(astropy_version) < Version("7.1.1.dev")
 if ASTROPY_LT_7_1_1:
     # This function is for now copied from astropy. We can remove it once jwst updates the
     # astropy pin that contains this new functionality, i.e. above v.7.1.0.
-    def where_not_allclose(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):  # noqa: no-redef
+    def where_not_allclose(a, b, rtol=1e-5, atol=1e-8, return_maxdiff=False):  # noqa: F811
         """
         Return array where values are above tolerances. Include max and min.
 
@@ -208,6 +208,8 @@ class STFITSDiffBeta(FITSDiff):
         self.report_pixel_loc_diffs = report_pixel_loc_diffs
         self.header_tolerances = {}
         self.original_hdu_order = []
+        self.a_not_b = []
+        self.b_not_a = []
         self.expected_extension_tolerances = {}
         if extension_tolerances is not None:
             # Make sure the given dict keys are all upper case
@@ -293,10 +295,8 @@ class STFITSDiffBeta(FITSDiff):
         b_not_a = set(ext_namesb) - set(ext_namesa)
         if a_not_b or b_not_a:
             self.extnames_different = True
-            self.a_not_b = list(a_not_b)
-            self.b_not_a = list(b_not_a)
-            self.a_not_b.sort()
-            self.b_not_a.sort()
+            self.a_not_b = sorted(a_not_b)
+            self.b_not_a = sorted(b_not_a)
             self.diff_hdu_count = (len(self.a), len(self.b))
 
         if self.diff_hdu_count or self.extnames_different:
@@ -1143,10 +1143,6 @@ class STTableDataDiff(TableDataDiff):
             names=(
                 "col_name",
                 "dtype",
-                "abs_diffs",
-                "abs_max",
-                "abs_mean",
-                "abs_std",
                 "rel_diffs",
                 "rel_max",
                 "rel_mean",
@@ -1155,10 +1151,6 @@ class STTableDataDiff(TableDataDiff):
             dtype=(
                 "str",
                 "str",
-                "int32",
-                "float64",
-                "float64",
-                "float64",
                 "float64",
                 "float64",
                 "float64",
@@ -1282,6 +1274,7 @@ class STTableDataDiff(TableDataDiff):
         # Count number of different table elements
         self.different_table_elements = 0
         self.fail_atol_rtol_test = 0
+        self.non_numeric_diff_columns = []
         for col in self.common_columns:
             arra = self.a[col.name]
             arrb = self.b[col.name]
@@ -1290,8 +1283,8 @@ class STTableDataDiff(TableDataDiff):
                     [idx for idx in range(len(arra)) if (np.any(arra[idx] != arrb[idx]))],
                 )
                 n_different = len(different_idx[0])
-                if np.issubdtype(arra[0].dtype, np.floating) and np.issubdtype(
-                    arrb[0].dtype, np.floating
+                if np.issubdtype(arra[0].dtype, np.number) and np.issubdtype(
+                    arrb[0].dtype, np.number
                 ):
                     float_diffs = (
                         [
@@ -1303,9 +1296,7 @@ class STTableDataDiff(TableDataDiff):
                     self.fail_atol_rtol_test += len(float_diffs[0])
             else:
                 n_different = len((np.where(arra != arrb))[0])
-                if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(
-                    arrb.dtype, np.floating
-                ):
+                if np.issubdtype(arra.dtype, np.number) and np.issubdtype(arrb.dtype, np.number):
                     float_diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
                     self.fail_atol_rtol_test += len(float_diffs[0])
             self.different_table_elements += n_different
@@ -1346,32 +1337,33 @@ class STTableDataDiff(TableDataDiff):
             # Calculate the absolute and relative differences
             get_stats = False
             reported = False
-            if np.issubdtype(arra.dtype, np.floating) and np.issubdtype(arrb.dtype, np.floating):
+            if np.issubdtype(arra.dtype, np.number) and np.issubdtype(arrb.dtype, np.number):
                 # Catch the case of a column full of nans
                 nansa = arra[np.isnan(arra)]
                 nansb = arrb[np.isnan(arrb)]
-                if nansa.size != nansb.size:
-                    nonansa = arra[np.isfinite(arra)]
-                    nonansb = arrb[np.isfinite(arrb)]
-                    arramax, arramin, arramean = get_stats_if_nonans(nonansa)
-                    arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
-                    finite_idx = np.isfinite(arra) & np.isfinite(arrb)
-                    absolute_diffs = np.abs(arrb[finite_idx] - arra[finite_idx])
-                    a_idx = np.where(absolute_diffs > self.atol)
-                    r_idx = np.where(absolute_diffs > self.rtol * arrb[finite_idx])
-                    maxa, meana, stda, n_fail_rtol, maxr, meanr, stdr = 0, 0, 0, 0, 0, 0, 0
-                    n_fail_atol = len(a_idx[0])
+                nonansa = arra[np.isfinite(arra)]
+                nonansb = arrb[np.isfinite(arrb)]
+                arramax, arramin, arramean = get_stats_if_nonans(nonansa)
+                arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
+                finite_idx = np.isfinite(arra) & np.isfinite(arrb)
+                n_fail_rtol, maxr, meanr, stdr = 0, 0, 0, 0
+                if finite_idx.any():
+                    r_idx = where_not_allclose(
+                        arra[finite_idx], arrb[finite_idx], self.atol, self.rtol
+                    )
                     n_fail_rtol = len(r_idx[0])
-                    if n_fail_atol > 0:
-                        maxa = np.max(absolute_diffs[a_idx])
-                        meana = np.mean(absolute_diffs[a_idx])
-                        stda = np.std(absolute_diffs[a_idx])
+                    rtol_failures = abs(arra[finite_idx][r_idx] - arrb[finite_idx][r_idx])
                     if n_fail_rtol > 0:
-                        relative_diffs = absolute_diffs[r_idx] / arrb[finite_idx][r_idx]
-                        maxr = np.max(relative_diffs)
-                        meanr = np.mean(relative_diffs)
-                        stdr = np.std(relative_diffs)
-                    # Report the total number of zeros, nans, and no-nan values
+                        maxr = np.max(rtol_failures)
+                        meanr = np.mean(rtol_failures)
+                        stdr = np.std(rtol_failures)
+                else:
+                    n_fail_rtol = arrb.size
+                    maxr = np.nan
+                    meanr = np.nan
+                    stdr = np.nan
+                # Report the total number of zeros, nans, and no-nan values
+                if n_fail_rtol > 0:
                     self.report_zeros_nan.add_row(
                         (
                             col.name,
@@ -1387,10 +1379,6 @@ class STTableDataDiff(TableDataDiff):
                         (
                             col.name,
                             str(arra.dtype).replace(">", ""),
-                            n_fail_atol,
-                            maxa,
-                            meana,
-                            stda,
                             n_fail_rtol,
                             maxr,
                             meanr,
@@ -1402,133 +1390,72 @@ class STTableDataDiff(TableDataDiff):
                         self.diff_total += arrb.size
                         self.rel_diffs += np.nan
                     reported = True
-                else:
-                    nan_idx = np.isnan(arra) | np.isnan(arrb)
-                    anonan = arra[~nan_idx]
-                    bnonan = arrb[~nan_idx]
-                    with warnings.catch_warnings():
-                        warnings.simplefilter("ignore", RuntimeWarning)
-                        diffs = np.abs(bnonan - anonan)
-                    abs_diffs = diffs[diffs > self.atol].size
-                    nozeros = (diffs != 0.0) & (bnonan != 0.0)
-                    rel_values = diffs[nozeros] / np.abs(bnonan[nozeros])
-                    rel_diffs = rel_values[rel_values > self.rtol].size
-                    if abs_diffs == 0 and rel_diffs == 0:
-                        self.identical_columns.append(col.name)
-                    get_stats = True
 
             elif "P" in col.format or "Q" in col.format:
-                diffs = (
-                    [
-                        idx
-                        for idx in range(len(arra))
-                        if not np.allclose(arra[idx], arrb[idx], rtol=self.rtol, atol=self.atol)
-                    ],
-                )
+                zeros_a = np.array([sum(y) for y in [x == 0 for x in arra]]).sum()
+                zeros_b = np.array([sum(y) for y in [x == 0 for x in arrb]]).sum()
+                nans_a = np.array([sum(y) for y in [np.isnan(x) for x in arra]]).sum()
+                nans_b = np.array([sum(y) for y in [np.isnan(x) for x in arrb]]).sum()
+                concatenated_a = arra[0].flatten()
+                for x in arra[1:]:
+                    concatenated_a = np.concatenate((concatenated_a, x.flatten()))
+                concatenated_b = arrb[0].flatten()
+                for x in arrb[1:]:
+                    concatenated_b = np.concatenate((concatenated_b, x.flatten()))
+                nonans_a = concatenated_a[np.isfinite(concatenated_a)]
+                nonans_b = concatenated_b[np.isfinite(concatenated_b)]
+                arramax, arramin, arramean = get_stats_if_nonans(nonans_a)
+                arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonans_b)
+                n_fail_rtol, maxr, meanr, stdr = 0.0, 0.0, 0.0, 0.0
+                finite_idx = np.isfinite(concatenated_a) & np.isfinite(concatenated_b)
+                if finite_idx.any():
+                    r_idx = where_not_allclose(
+                        concatenated_a[finite_idx], concatenated_b[finite_idx], self.atol, self.rtol
+                    )
+                    n_fail_rtol = len(r_idx[0])
+                    rtol_failures = abs(
+                        concatenated_b[finite_idx][r_idx] - concatenated_a[finite_idx][r_idx]
+                    )
+                    if n_fail_rtol > 0:
+                        maxr = np.max(rtol_failures)
+                        meanr = np.mean(rtol_failures)
+                        stdr = np.std(rtol_failures)
                 reported = True
                 self.report_zeros_nan.add_row(
                     (
                         col.name,
-                        "- -",
-                        "- -",
-                        "- -",
-                        "- -",
-                        "- -",
-                        "- -",
+                        f"{zeros_a} {zeros_b}",
+                        f"{nans_a} {nans_b}",
+                        f"{nonans_a.size} {nonans_b.size}",
+                        f"{arramax:>6.2g} {arrbmax:>6.2g}",
+                        f"{arramin:>6.2g} {arrbmin:>6.2g}",
+                        f"{arramean:>6.2g} {arrbmean:>6.2g}",
                     )
                 )
-                abs_diffs = np.array(diffs).size
                 self.report_table.add_row(
                     (
                         col.name,
                         str(arra.dtype).replace(">", ""),
-                        abs_diffs,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
-                        0,
+                        n_fail_rtol,
+                        maxr,
+                        meanr,
+                        stdr,
                     )
                 )
 
                 if not self.report_pixel_loc_diffs:
-                    self.diff_total += abs_diffs
+                    self.diff_total += n_fail_rtol
                     self.rel_diffs += 0
 
+                # Should only get here for text table entries
             if not reported:
-                if get_stats:
-                    sum_diffs = np.any(diffs > (self.atol + self.rtol * np.abs(bnonan)))
-                    if sum_diffs and len(rel_values) > 0:
-                        # Report the total number of zeros, nans, and no-nan values
-                        self.report_zeros_nan.add_row(
-                            (
-                                col.name,
-                                f"{arra[arra == 0.0].size} {arrb[arrb == 0.0].size}",
-                                f"{arra[np.isnan(arra)].size} {arrb[np.isnan(arrb)].size}",
-                                f"{arra[~np.isnan(arra)].size} {arrb[~np.isnan(arrb)].size}",
-                                f"{np.max(anonan):>9.4g} {np.max(bnonan):>9.4g}",
-                                f"{np.min(anonan):>9.4g} {np.min(bnonan):>9.4g}",
-                                f"{np.mean(anonan):>9.4g} {np.mean(bnonan):>9.4g}",
-                            )
-                        )
-
-                        self.report_table.add_row(
-                            (
-                                col.name,
-                                str(arra.dtype).replace(">", ""),
-                                abs_diffs,
-                                np.max(diffs),
-                                np.mean(diffs),
-                                np.std(diffs),
-                                rel_diffs,
-                                np.max(rel_values),
-                                np.mean(rel_values),
-                                np.std(rel_values),
-                            )
-                        )
-
-                        if not self.report_pixel_loc_diffs:
-                            self.diff_total += abs_diffs
-                        self.rel_diffs += rel_diffs
-
-                else:
-                    # Should only get here if not float
-                    diffs = abs(arra - arrb)
-                    diffs_idx = np.where(diffs > 0.0)
+                if not get_stats:
+                    # Should only get here if not numeric
+                    diffs_idx = np.where(arra != arrb)
                     ndiffs = len(diffs_idx[0])
                     if ndiffs > 0:
-                        self.report_zeros_nan.add_row(
-                            (
-                                col.name,
-                                f"{arra[arra == 0.0].size} {arrb[arrb == 0.0].size}",
-                                "0 0",
-                                f"{arra.size} {arrb.size}",
-                                f"{np.max(arra):>9.4g} {np.max(arrb):>9.4g}",
-                                f"{np.min(arra):>9.4g} {np.min(arrb):>9.4g}",
-                                f"{np.mean(arra):>9.4g} {np.mean(arrb):>9.4g}",
-                            )
-                        )
-
-                        # Report the differences per column
-                        self.report_table.add_row(
-                            (
-                                col.name,
-                                str(arra.dtype).replace(">", ""),
-                                ndiffs,
-                                np.max(diffs[diffs_idx]),
-                                np.mean(diffs[diffs_idx]),
-                                np.std(diffs[diffs_idx]),
-                                0,
-                                0,
-                                0,
-                                0,
-                            )
-                        )
-                        if not self.report_pixel_loc_diffs:
-                            self.diff_total += diffs.size
-                            self.rel_diffs += 0
+                        if not np.issubdtype(arra.dtype, np.number):
+                            self.non_numeric_diff_columns.append((col.name, ndiffs))
                     else:
                         self.identical_columns.append(col.name)
 
@@ -1649,6 +1576,14 @@ class STTableDataDiff(TableDataDiff):
         tlines = self.report_table.pformat(max_width=-1)
         for tline in tlines:
             self._writeln(tline)
+
+        if self.non_numeric_diff_columns:
+            self._writeln("\n")
+            for colname, ndiffs in self.non_numeric_diff_columns:
+                if ndiffs > 1:
+                    self._writeln(f"Column {colname} has {ndiffs} different non-numeric entries")
+                else:
+                    self._writeln(f"Column {colname} has {ndiffs} different non-numeric entry")
 
         if self.identical_columns:
             self._writeln(f"\nColumns {self.identical_columns} are identical")
