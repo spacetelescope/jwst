@@ -542,21 +542,7 @@ def populate_time_keywords(input_model, output_model):
     else:
         num_integrations = 1
 
-    if hasattr(input_model, "int_times") and input_model.int_times is not None:
-        nrows = len(input_model.int_times)
-    else:
-        nrows = 0
-
-    if nrows < 1:
-        log.warning(
-            "There is no INT_TIMES table in the input file - "
-            "Making best guess on integration numbers."
-        )
-
-        # Set a simple integration index
-        for spec in output_model.spec:
-            spec.spec_table["INT_NUM"] = np.arange(1, len(spec.spec_table) + 1)
-        return
+    nrows = len(input_model.int_times)
 
     # If we have a single plane (e.g. ImageModel or MultiSlitModel),
     # we will only populate the keywords if the corresponding uncal file
