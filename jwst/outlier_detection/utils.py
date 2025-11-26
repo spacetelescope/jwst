@@ -264,6 +264,13 @@ def median_with_resampling(
                 # update median model's meta with meta from the first model:
                 median_model.update(drizzled_model)
                 median_model.meta.wcs = median_wcs
+                # Certain attributes that represent only one slit get copied over,
+                # but the median model isn't associated with any particular slit.
+                # Delete those.
+                if median_model.hasattr("source_xpos"):
+                    del median_model.source_xpos
+                if median_model.hasattr("source_ypos"):
+                    del median_model.source_ypos
 
         weight_threshold = compute_weight_threshold(drizzled_model.wht, maskpt)
         drizzled_model.data[drizzled_model.wht < weight_threshold] = np.nan
