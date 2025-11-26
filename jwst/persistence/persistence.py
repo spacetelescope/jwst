@@ -126,6 +126,8 @@ class DataSet:
         input_traps_filled,
         flag_pers_cutoff,
         save_persistence,
+        persistence_flagging,
+        persistence_flagging_input,
         trap_density_model,
         trappars_model,
         persat_model,
@@ -154,6 +156,12 @@ class DataSet:
             If True, the persistence that was subtracted will be written
             to an output file.
 
+        persistence_flagging: ndarray
+            Array containing persistence values.
+
+        persistence_flagging_input : bool
+            True if persistence_array was read from an input file.
+
         trap_density_model : image model
             Image (reference file) of the total number of traps per pixel.
 
@@ -171,6 +179,8 @@ class DataSet:
         self.traps_filled = input_traps_filled
         self.flag_pers_cutoff = flag_pers_cutoff
         self.save_persistence = save_persistence
+        self.persistence_flagging = persistence_flagging
+        self.persistence_flagging_input = persistence_flagging_input
         self.output_pers = None
 
         self.trap_density = trap_density_model
@@ -223,8 +233,8 @@ class DataSet:
             log.error("The trappars reference table is empty!")
 
         # Note that this might be a subarray.
-        persistence = np.zeros((shape[-2], shape[-1]), dtype=np.float64)
         (nints, ngroups, ny, nx) = shape
+        persistence = np.zeros((ny, nx), dtype=np.float64)
         t_group = self.output_obj.meta.exposure.group_time
 
         # The trap density image is full-frame, so use it to get the shape of
@@ -232,7 +242,7 @@ class DataSet:
         # rely on that because there might not be an input traps_filled file.
         (det_ny, det_nx) = self.trap_density.data.shape
 
-        is_subarray = (shape[-2] != det_ny) or (shape[-1] != det_nx)
+        is_subarray = (ny != det_ny) or (nx != det_nx)
         if is_subarray:
             log.debug("The input is a subarray.")
         else:
@@ -300,6 +310,9 @@ class DataSet:
         # we can use this tuple of slice objects later, e.g. to update the
         # self.traps_filled data.
         save_slice = self.get_slice(self.traps_filled, self.output_obj)
+        fl_sat = dqflags.pixel["SATURATED"]
+        fl_pers = dqflags.pixel["PERSISTENCE"]
+        gdq = self.output_obj.groupdq
 
         slc = self.get_slice(self.trap_density, self.output_obj)
         if not self.ref_matches_sci(self.trap_density, slc):
@@ -344,6 +357,7 @@ class DataSet:
             # The slope is needed for computing charge captures.
             (grp_slope, slope) = self.compute_slope(integ)
             for group in range(ngroups):
+                # XXX - Saturation persistence
                 persistence[:, :] = 0.0  # initialize
                 for k in range(nfamilies):
                     decay_param_k = self.get_decay_param(par, k)
@@ -375,7 +389,18 @@ class DataSet:
                     self.output_pers.data[integ, group, :, :] = persistence.copy()
                 if persistence.max() >= self.flag_pers_cutoff:
                     mask = np.where(persistence >= self.flag_pers_cutoff)
-                    self.output_obj.pixeldq[mask] |= dqflags.pixel["PERSISTENCE"]
+                    self.output_obj.pixeldq[mask] |= fl_pers
+
+                if self.persistence_flagging_input:
+                    pass
+                    # XXX Inputting a persistence flagging file is not yet implemented.
+                    #     What type of file will it be?
+                    # self.output_obj.groupdq[integ, group, :, :] |= self.persistence_flagging
+                else:
+                    if integ == 0:
+                        # Create a persistence flagging array based on saturation in the first integration.
+                        self.persistence_flagging[gdq & fl_sat] |= fl_pers
+                    self.output_obj.groupdq[integ, group, :, :] |= self.persistence_flagging
 
             # Update traps_filled with the number of traps that captured
             # a charge during the current integration.

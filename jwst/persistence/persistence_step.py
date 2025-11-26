@@ -17,6 +17,7 @@ class PersistenceStep(Step):
 
     spec = """
         input_trapsfilled = string(default="") # Name of the most recent trapsfilled file for the current detector
+        input_persistence = string(default="") # Name of an input persistence file to be used instead of calculating persistence
         flag_pers_cutoff = float(default=40.) # Pixels with persistence correction >= this value in DN will be flagged in the DQ
         save_persistence = boolean(default=False) # Save subtracted persistence to an output file with suffix '_output_pers'
         save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
@@ -47,6 +48,18 @@ class PersistenceStep(Step):
             # Work on a copy
             result = input_model.copy()
 
+            # Get the input persistence file, if any
+            if self.input_persistence == "" or self.input_persistence == "None":
+                nints, ngroups, nrows, ncols = result.data.shape
+                self.persistence_flagging = np.zeros((nrows, ncols), dtype=np.uint32)
+                self.persistence_flagging_input = False
+            else:
+                print("Need to implement opening persistence file.")
+                # XXX Not sure what type of file this will be. Will it contain a datamodel
+                #     or will it contain a basic ndarray (*.npy or *.npz)?
+                self.persistence_flagging = None
+                self.persistence_flagging_input = True
+                raise NotImplementedError("Input persistence file not implemented yet.")
             self.trap_density_filename = self.get_reference_file(input_model, "trapdensity")
             self.trappars_filename = self.get_reference_file(input_model, "trappars")
             self.persat_filename = self.get_reference_file(input_model, "persat")
@@ -87,6 +100,8 @@ class PersistenceStep(Step):
                 traps_filled_model,
                 self.flag_pers_cutoff,
                 self.save_persistence,
+                self.persistence_flagging,
+                self.persistence_flagging_input,
                 trap_density_model,
                 trappars_model,
                 persat_model,
