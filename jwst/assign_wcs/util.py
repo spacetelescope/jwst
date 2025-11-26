@@ -5,12 +5,15 @@ import warnings
 
 import numpy as np
 from astropy.constants import c
-from astropy.coordinates import SkyCoord
 from astropy.modeling import models as astmodels
 from gwcs import WCS
 from gwcs import utils as gwutils
 from gwcs.wcstools import grid_from_bounding_box
-from stcal.alignment.util import compute_s_region_imaging, compute_s_region_keyword
+from stcal.alignment.util import (
+    compute_s_region_imaging,
+    compute_s_region_keyword,
+    wcs_bbox_from_shape,
+)
 from stdatamodels.jwst.datamodels import MiriLRSSpecwcsModel, WavelengthrangeModel
 from stdatamodels.jwst.transforms.models import GrismObject
 from stpipe.exceptions import StpipeExitException
@@ -27,7 +30,6 @@ __all__ = [
     "velocity_correction",
     "MSAFileError",
     "NoDataOnDetectorError",
-    "compute_scale",
     "calc_rotation_matrix",
     "wrap_ra",
     "update_fits_wcsinfo",
@@ -60,66 +62,6 @@ class NoDataOnDetectorError(StpipeExitException):
         # The first argument instructs stpipe CLI tools to exit with status
         # 64 when this exception is raised.
         super().__init__(64, message)
-
-
-def compute_scale(
-    wcs: WCS,
-    fiducial: tuple | np.ndarray,
-    disp_axis: int | None = None,
-    pscale_ratio: float | None = None,
-) -> float:
-    """
-    Compute scaling transform.
-
-    Parameters
-    ----------
-    wcs : `~gwcs.wcs.WCS`
-        Reference WCS object from which to compute a scaling factor.
-    fiducial : tuple
-        Input fiducial of (RA, DEC) or (RA, DEC, Wavelength) used in calculating reference points.
-    disp_axis : int
-        Dispersion axis integer. Assumes the same convention as `wcsinfo.dispersion_direction`
-    pscale_ratio : int
-        Ratio of output pixel scale to input pixel scale.
-
-    Returns
-    -------
-    scale : float
-        Scaling factor for x and y or cross-dispersion direction.
-    """
-    spectral = "SPECTRAL" in wcs.output_frame.axes_type
-
-    if spectral and disp_axis is None:
-        raise ValueError("If input WCS is spectral, a disp_axis must be given")
-
-    with warnings.catch_warnings():
-        warnings.filterwarnings("ignore", "invalid value", RuntimeWarning)
-        crpix = np.array(wcs.invert(*fiducial, with_bounding_box=False))
-
-    delta = np.zeros_like(crpix)
-    spatial_idx = np.where(np.array(wcs.output_frame.axes_type) == "SPATIAL")[0]
-    delta[spatial_idx[0]] = 1
-
-    crpix_with_offsets = np.vstack((crpix, crpix + delta, crpix + np.roll(delta, 1))).T
-    crval_with_offsets = wcs(*crpix_with_offsets, with_bounding_box=False)
-
-    coords = SkyCoord(
-        ra=crval_with_offsets[spatial_idx[0]], dec=crval_with_offsets[spatial_idx[1]], unit="deg"
-    )
-    xscale: float = np.abs(coords[0].separation(coords[1]).value)
-    yscale: float = np.abs(coords[0].separation(coords[2]).value)
-
-    if pscale_ratio is not None:
-        xscale *= pscale_ratio
-        yscale *= pscale_ratio
-
-    if spectral:
-        # Assuming scale doesn't change with wavelength
-        # Assuming disp_axis is consistent with DataModel.meta.wcsinfo.dispersion.direction
-        return yscale if disp_axis == 1 else xscale
-
-    scale: float = np.sqrt(xscale * yscale)
-    return scale
 
 
 def calc_rotation_matrix(roll_ref: float, v3i_yang: float, vparity: int = 1) -> list[float]:
@@ -642,26 +584,6 @@ def transform_bbox_from_shape(shape, order="C"):
     bbox = ((-0.5, shape[-2] - 0.5), (-0.5, shape[-1] - 0.5))
 
     return bbox if order == "C" else bbox[::-1]
-
-
-def wcs_bbox_from_shape(shape):
-    """
-    Create a bounding box from the shape of the data.
-
-    This is appropriate to attach to a wcs object
-
-    Parameters
-    ----------
-    shape : tuple
-        The shape attribute from a `numpy.ndarray` array
-
-    Returns
-    -------
-    bbox : tuple
-        Bounding box in x, y order.
-    """
-    bbox = ((-0.5, shape[-1] - 0.5), (-0.5, shape[-2] - 0.5))
-    return bbox
 
 
 def bounding_box_from_subarray(input_model, order="C"):
