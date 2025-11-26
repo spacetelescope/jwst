@@ -180,11 +180,13 @@ def mock_nircam_image(
     set_meta(datamodel, xcenter, ycenter, sub64p=sub64p)
     if convert_units:
         tp.convert_data_units(datamodel)
+    include_int_times(datamodel)
     return datamodel
 
 
 def test_tso_phot():
-    datamodel = mock_nircam_image(convert_units=True)
+    datamodel = mock_nircam_image()
+    int_times, bjd_times = include_int_times(datamodel)
 
     # add some NaNs to one of the integrations
     # make sure at least one is in the annulus and one in the aperture
@@ -194,15 +196,14 @@ def test_tso_phot():
     data[-1, 50 - 9, 75] = np.nan
     datamodel.data = data
 
-    # Use a larger radius than was used for creating the data.
     catalog = tp.tso_aperture_photometry(
-        datamodel,
-        XCENTER,
-        YCENTER,
-        RADIUS + 1.0,
-        RADIUS_INNER,
-        RADIUS_OUTER,
+        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER
     )
+
+    offset = datamodel.meta.exposure.integration_start - 1
+    slc = slice(offset, offset + datamodel.data.shape[0])
+    assert np.allclose(catalog["MJD"], int_times[slc], atol=1.0e-8)
+    assert np.allclose(catalog["BJD_TDB"], bjd_times[slc], atol=1.0e-8)
 
     assert catalog.meta["instrument"] == datamodel.meta.instrument.name
     assert catalog.meta["filter"] == datamodel.meta.instrument.filter
@@ -266,70 +267,35 @@ def test_tso_phot_sub64p():
     assert np.allclose(catalog["aperture_sum_err"].value, 0.0, atol=1.0e-7)
 
 
-def test_tso_phot_with_int_times():
-    datamodel = mock_nircam_image()
-
-    # Add integration times to the model
-    int_times, bjd_times = include_int_times(datamodel)
-
-    catalog = tp.tso_aperture_photometry(
-        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER
-    )
-
-    offset = datamodel.meta.exposure.integration_start - 1
-    slc = slice(offset, offset + datamodel.data.shape[0])
-    assert np.allclose(catalog["MJD"], int_times[slc], atol=1.0e-8)
-    assert np.allclose(catalog["BJD_TDB"], bjd_times[slc], atol=1.0e-8)
-
-
-def test_tso_phot_int_times_out_of_range():
-    datamodel = mock_nircam_image()
-
-    # Add integration times
-    include_int_times(datamodel)
-
-    # Modify the column of integration numbers so that they extend outside
-    # the range of integration numbers in the science data.  This shouldn't
-    # happen, i.e. this is to test an edge case.
-    int_start = datamodel.meta.exposure.integration_start
-    datamodel.int_times["integration_number"] += 2 * int_start
-
-    catalog = tp.tso_aperture_photometry(
-        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER
-    )
-
-    int_times = np.array(
-        [
-            58704.62853,
-            58704.628655,
-            58704.62878,
-            58704.62890,
-            58704.6290,
-            58704.6291511,
-            58704.629275,
+@pytest.mark.parametrize("int_times", ["missing", "none", "empty"])
+def test_tso_phot_no_int_times(int_times):
+    datamodel = mock_nircam_image(convert_units=True)
+    if int_times == "missing":
+        del datamodel.int_times
+    elif int_times == "none":
+        datamodel.int_times = None
+    elif int_times == "empty":
+        # Create empty table with all required columns to match schema
+        it_dtype = [
+            ("integration_number", "<i4"),
+            ("int_start_MJD_UTC", "<f8"),
+            ("int_mid_MJD_UTC", "<f8"),
+            ("int_end_MJD_UTC", "<f8"),
+            ("int_start_BJD_TDB", "<f8"),
+            ("int_mid_BJD_TDB", "<f8"),
+            ("int_end_BJD_TDB", "<f8"),
         ]
-    )
-    assert np.allclose(catalog["MJD"], int_times, rtol=1.0e-8)
-    assert np.all(np.isnan(catalog["BJD_TDB"]))
+        datamodel.int_times = np.array([], dtype=it_dtype)
 
-
-def test_tso_phot_missing_int_start():
-    datamodel = mock_nircam_image()
-
-    # Add integration times
-    int_times, bjd_times = include_int_times(datamodel)
-
-    # Remove the integration start: it sill be assumed to be 1
-    datamodel.meta.exposure.integration_start = None
-
-    catalog = tp.tso_aperture_photometry(
-        datamodel, XCENTER, YCENTER, RADIUS + 1.0, RADIUS_INNER, RADIUS_OUTER
-    )
-
-    offset = 0
-    slc = slice(offset, offset + datamodel.data.shape[0])
-    assert np.allclose(catalog["MJD"], int_times[slc], atol=1.0e-8)
-    assert np.allclose(catalog["BJD_TDB"], bjd_times[slc], atol=1.0e-8)
+    with pytest.raises(AttributeError):
+        tp.tso_aperture_photometry(
+            datamodel,
+            XCENTER,
+            YCENTER,
+            RADIUS + 1.0,
+            RADIUS_INNER,
+            RADIUS_OUTER,
+        )
 
 
 def test_tso_phot_uncalibrated():

@@ -16,7 +16,7 @@ def run_image3pipeline(rtdata_module):
     args = [
         "calwebb_image3",
         rtdata.input,
-        "--steps.tweakreg.abs_refcat=GAIADR2",
+        "--steps.tweakreg.abs_refcat=GAIADR3",
         "--steps.tweakreg.save_results=True",
         "--steps.tweakreg.output_use_model=True",
     ]
@@ -60,3 +60,45 @@ def test_sourcecat_as_abs_refcat(run_image3pipeline, rtdata_module):
     rtdata.get_asn("nircam/image/level3_F277W_3img_asn.json")
 
     TweakRegStep.call(rtdata.input, abs_refcat=rtdata.output)
+
+
+@pytest.fixture(scope="module", params=["GAIAREFCAT", "GAIADR3"])
+def run_image3pipeline_gaiacat(request, rtdata_module):
+    """Run calwebb_image3 on NIRCam imaging and align to gaia, testing all catalog options."""
+    refcat = request.param
+    rtdata = rtdata_module
+    rtdata.get_asn("nircam/image/level3_F277W_3img_asn.json")
+    args = [
+        "calwebb_image3",
+        rtdata.input,
+        f"--steps.tweakreg.abs_refcat={refcat}",
+        "--steps.tweakreg.save_results=True",
+        "--steps.tweakreg.output_use_model=True",
+    ]
+    Step.from_cmdline(args)
+
+
+@pytest.mark.bigdata
+def test_gaiacat_options(run_image3pipeline_gaiacat, rtdata_module):
+    """Test that all GAIA catalog options work correctly."""
+    rtdata = rtdata_module
+
+    # Check that the pipeline ran successfully by verifying output files exist
+    for root in [
+        "jw01069002001_01101_00001",
+        "jw01069002003_01101_00009",
+        "jw01069002004_01101_00013",
+    ]:
+        rtdata.input = root + "_nrca5_cal.fits"
+        output_crf = root + "_nrca5_a3001_crf.fits"
+        rtdata.output = output_crf
+        rtdata.get_truth("truth/test_nircam_align_to_gaia/" + output_crf)
+
+        with datamodels.open(rtdata.output) as model, datamodels.open(rtdata.truth) as model_truth:
+            grid = grid_from_bounding_box(model.meta.wcs.bounding_box)
+
+            ra, dec = model.meta.wcs(*grid)
+            ra_truth, dec_truth = model_truth.meta.wcs(*grid)
+
+            assert_allclose(ra, ra_truth)
+            assert_allclose(dec, dec_truth)
