@@ -1,0 +1,1 @@
+Drop support for datamodels without int_times table
