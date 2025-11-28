@@ -1071,5 +1071,7 @@ def compute_spectral_pixel_scale(wcs, fiducial=None, disp_axis=1):
         center_x, center_y = np.mean(wcs.bounding_box, axis=1)
         fiducial = wcs(center_x, center_y)
 
-    pixel_scale = compute_scale(wcs, fiducial, disp_axis=disp_axis)
+    with np.errstate(invalid="ignore"):
+        # RuntimeWarning: invalid value encountered in sqrt
+        pixel_scale = compute_scale(wcs, fiducial, disp_axis=disp_axis)
     return float(pixel_scale)
