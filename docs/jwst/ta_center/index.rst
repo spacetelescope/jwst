@@ -1,0 +1,14 @@
+.. _ta_center_step:
+
+=========
+TA Center
+=========
+
+.. toctree::
+   :maxdepth: 1
+
+   main.rst
+   arguments.rst
+   reference_files.rst
+
+.. automodapi:: jwst.ta_center

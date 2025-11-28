@@ -54,6 +54,7 @@ Stage 2
 - ``<PR#>.master_background.rst``
 - ``<PR#>.wavecorr.rst``
 - ``<PR#>.srctype.rst``
+- ``<PR#>.ta_center.rst``
 - ``<PR#>.straylight.rst``
 - ``<PR#>.wfss_contam.rst``
 - ``<PR#>.flatfield.rst``
