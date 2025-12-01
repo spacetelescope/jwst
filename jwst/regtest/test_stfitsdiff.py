@@ -72,7 +72,7 @@ def mock_rampfiles(tmp_path_factory):
     return truth, keyword_mod, sci_mod, nan_in_sci, diff_exts, diff_dim, tmp_dir
 
 
-def report_to_list(report, from_line=12, report_pixel_loc_diffs=False):
+def report_to_list(report, from_line=11, report_pixel_loc_diffs=False):
     """
     Turn the fitsdiff or stfitsdiff report into a comparable list of strings.
 
@@ -96,7 +96,7 @@ def report_to_list(report, from_line=12, report_pixel_loc_diffs=False):
         only returned when report_pixel_loc_diffs is True.
     """
     rsplit = report.split(sep="\n")
-    rsplit = [rs.strip() for rs in rsplit if rs]
+    rsplit = [rs.strip() for rs in rsplit if len(rs) > 0 and "STScI Custom FITSDiff" not in rs]
     # Remove the lines of fits diff version and comparison filenames, as well
     # HDUs, keywords and columns not compared, and the maximum number of
     # different data values to be reported and the abs and rel tolerances
@@ -104,6 +104,7 @@ def report_to_list(report, from_line=12, report_pixel_loc_diffs=False):
     # Remove the max absolute and max relative to pass old astropy version tests
     no_diffs = False
     new_report = []
+    stidx, pixidx = False, False
     for line in report:
         if "No differences found" in line:
             no_diffs = True
@@ -169,7 +170,7 @@ def test_filename(mock_rampfiles, fitsdiff_default_kwargs):
     hdu.close()
     diff = STFITSDiff(test1, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=12)
+    report = report_to_list(diff.report())
     expected_report = [
         "Primary HDU:",
         "Headers contain differences:",
@@ -188,7 +189,7 @@ def test_filename_reversed(mock_rampfiles, fitsdiff_default_kwargs):
     tmp_dir = mock_rampfiles[6]
     diff = STFITSDiff(truth, tmp_dir / "test1.fits", **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=12)
+    report = report_to_list(diff.report())
     expected_report2 = [
         "Primary HDU:",
         "Headers contain differences:",
@@ -254,7 +255,7 @@ def test_rm_sci(mock_rampfiles, fitsdiff_default_kwargs):
     hdu.close()
     diff = STFITSDiff(rmsci, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=12)
+    report = report_to_list(diff.report())
     expected_report = [
         "Files contain different HDUs:",
         "a: 4 HDUs: ['ASDF', 'GROUPDQ', 'PIXELDQ', 'PRIMARY']",
@@ -289,7 +290,7 @@ def test_keyword_change_tol(mock_rampfiles, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["extension_tolerances"] = extension_tolerances
     diff = STFITSDiff(keyword_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=11)
+    report = report_to_list(diff.report(), from_line=10)
     expected_report = [
         "Extension HDU 0 (PRIMARY, 1):",
         "Relative tolerance: 1, Absolute tolerance: 2",
@@ -627,7 +628,7 @@ def test_allnan_sci(mock_rampfiles, fitsdiff_default_kwargs):
     hdu.close()
     diff = STFITSDiff(all_sci_nan, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=12)
+    report = report_to_list(diff.report())
     expected_report = [
         "Extension HDU 1 (SCI, 1):",
         "Headers contain differences:",
@@ -668,7 +669,7 @@ def test_change_sci_atol(mock_rampfiles, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["extension_tolerances"] = {"sci": {"atol": 0.01}}
     diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=11)
+    report = report_to_list(diff.report(), from_line=10)
     # The expected result is False
     # The report should look like this
     expected_report = [
@@ -721,7 +722,7 @@ def test_change_sci_rtol(mock_rampfiles, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["extension_tolerances"] = {1: {"rtol": 0.001}}
     diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=11)
+    report = report_to_list(diff.report(), from_line=10)
     # The expected result is False
     # The report should look like this
     expected_report = [
@@ -780,7 +781,7 @@ def test_change_all_tols(mock_rampfiles, fitsdiff_default_kwargs):
     fitsdiff_default_kwargs["extension_tolerances"] = extension_tolerances
     diff = STFITSDiff(sci_mod, truth, **fitsdiff_default_kwargs)
     result = diff.identical
-    report = report_to_list(diff.report(), from_line=11)
+    report = report_to_list(diff.report(), from_line=10)
     # The expected result is False
     # The report should look like this
     expected_report = [
