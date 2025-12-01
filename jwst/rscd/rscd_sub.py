@@ -18,8 +18,8 @@ def do_correction(output_model, rscd_model):
 
     The number of initial groups to set to 'DO_NOT_USE' is read in from the RSCD reference
     file. The number of groups to skip is integration dependent. The first integration has
-    a value defined in the reference file and the second and higher integrations have a 
-    seperate value in the reference file. 
+    a value defined in the reference file and the second and higher integrations have a
+    separate value in the reference file.
 
     Parameters
     ----------
@@ -44,8 +44,8 @@ def do_correction(output_model, rscd_model):
         output_model.meta.cal_step.rscd = "SKIPPED"
         return output_model
 
-    group_skip_int1 = param["skip_int1"] # integration 1
-    group_skip_int2p = param["skip_int2p"]    # integration 2,  plus higher integrations 
+    group_skip_int1 = param["skip_int1"]  # integration 1
+    group_skip_int2p = param["skip_int2p"]  # integration 2,  plus higher integrations
     output_model = correction_skip_groups(output_model, group_skip_int1, group_skip_int2p)
     return output_model
 
@@ -95,7 +95,7 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     if sci_ngroups <= (group_skip_int1 + 3):
         skip = True
 
-    if sci_ints> 1:
+    if sci_ints > 1:
         if sci_ngroups <= (group_skip_int2p + 3):
             skip = True
     if skip:
@@ -115,13 +115,14 @@ def correction_skip_groups(output, group_skip_int1, group_skip_int2p):
     if sci_int_start != 1:
         drop_int1 = False
 
-    if drop_int1: 
+    if drop_int1:
         output.groupdq[0, 0:group_skip_int1, :, :] = np.bitwise_or(
             output.groupdq[0:, 0:group_skip_int1, :, :], dqflags.group["DO_NOT_USE"]
+        )
+    log.debug(
+        f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip_int1} groups of integration1"
     )
-    log.debug(f"RSCD Sub: adding DO_NOT_USE to GROUPDQ for the first {group_skip_int1} groups of integration1")
 
-    
     int_start = 1
     if sci_int_start != 1:  # we have segmented data
         int_start = 0
@@ -168,9 +169,9 @@ def get_rscd_parameters(input_model, rscd_model):
     for tabdata in rscd_model.rscd_group_skip_table:
         subarray_table = tabdata["subarray"]
         readpatt_table = tabdata["readpatt"]
-        group_skip_table_int2p = tabdata["group_skip"] # integration 2 and higher (+)
+        group_skip_table_int2p = tabdata["group_skip"]  # integration 2 and higher (+)
         group_skip_table_int1 = tabdata["group_skip1"]
-        
+
         if subarray_table == subarray and readpatt_table == readpatt:
             param["skip_int1"] = group_skip_table
             param["skip_int2p"] = group_skip_table  # integration 2 and higher
