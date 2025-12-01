@@ -52,6 +52,7 @@ def get_steps():
         ("jwst.step.Extract1dStep", "extract_1d", False),
         ("jwst.step.Extract2dStep", "extract_2d", False),
         ("jwst.step.FirstFrameStep", "firstframe", False),
+        ("jwst.step.FitProfileStep", "fit_profile", False),
         ("jwst.step.FlatFieldStep", "flat_field", False),
         ("jwst.step.FringeStep", "fringe", False),
         ("jwst.step.GainScaleStep", "gain_scale", False),

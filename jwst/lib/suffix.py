@@ -210,6 +210,8 @@ _calculated_suffixes = {
     "badpixselfcalstep",
     "targcentroidstep",
     "targ_centroid",
+    "fit_profile",
+    "fitprofilestep",
 }
 
 
