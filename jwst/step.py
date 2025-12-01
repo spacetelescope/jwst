@@ -19,6 +19,7 @@ from jwst.emicorr.emicorr_step import EmiCorrStep
 from jwst.extract_1d.extract_1d_step import Extract1dStep
 from jwst.extract_2d.extract_2d_step import Extract2dStep
 from jwst.firstframe.firstframe_step import FirstFrameStep
+from jwst.fit_profile.fit_profile_step import FitProfileStep
 from jwst.flatfield.flat_field_step import FlatFieldStep
 from jwst.fringe.fringe_step import FringeStep
 from jwst.gain_scale.gain_scale_step import GainScaleStep
@@ -81,6 +82,7 @@ __all__ = [
     "Extract1dStep",
     "Extract2dStep",
     "FirstFrameStep",
+    "FitProfileStep",
     "FlatFieldStep",
     "FringeStep",
     "GainScaleStep",

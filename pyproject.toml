@@ -449,6 +449,11 @@ name = 'firstframe (detector1 MIR)'
 showcontent = true
 
 [[tool.towncrier.type]]
+directory = "fit_profile"
+name = "fit_profile (spec2, spec3)"
+showcontent = true
+
+[[tool.towncrier.type]]
 directory = "flatfield"
 name = 'flatfield (image2, spec2)'
 showcontent = true
