@@ -33,7 +33,9 @@ concurrency:
 jobs:
   latest_crds_contexts:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
-    uses: ./.github/workflows/contexts.yml
+    uses: spacetelescope/crds/.github/workflows/contexts.yml@main
+    with:
+      observatory: jwst
   crds_context:
     if: (github.repository == 'spacetelescope/jwst' && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'run extra tests')))
     needs: [ latest_crds_contexts ]
