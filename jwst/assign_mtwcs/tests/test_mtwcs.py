@@ -72,6 +72,31 @@ def test_mt_slitmodel(errtype):
         result.shelve(zero, 0, modify=False)
 
 
+def test_index_with_background():
+    """Cover a bug where background exposures caused indexing errors if they were not listed last."""
+    file_path = get_pkg_data_filename("data/test_mt_asn.json", package="jwst.assign_mtwcs.tests")
+    with datamodels.open(file_path) as model:
+        # insert a background exposure at 0th index of container
+        bkg = model[0].copy()
+        bkg.meta.asn.exptype = "background"
+        model.insert(0, bkg)
+        model.asn_exptypes = ["background", "science", "science"]
+
+        # run the step
+        step = AssignMTWcsStep()
+        result = step.run(model)
+
+    # ensure background exposure did not get MT WCS info but science exposures did
+    assert isinstance(result, ModelLibrary)
+    with result:
+        bkg_exposure = result.borrow(0)
+        sci_exposure_1 = result.borrow(1)
+        assert not bkg_exposure.meta.wcsinfo.hasattr("mt_avra")
+        assert sci_exposure_1.meta.wcsinfo.hasattr("mt_avra")
+        result.shelve(bkg_exposure, 0, modify=False)
+        result.shelve(sci_exposure_1, 1, modify=False)
+
+
 @pytest.mark.parametrize("success", [True, False])
 def test_output_is_not_input(monkeypatch, success):
     """

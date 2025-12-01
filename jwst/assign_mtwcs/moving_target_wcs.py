@@ -54,8 +54,10 @@ def assign_moving_target_wcs(input_models):
             mt_valid = _is_mt_meta_valid(meta)
             if not mt_valid:
                 break
-            mt_ra[i] = meta["meta"]["wcsinfo"]["mt_ra"]
-            mt_dec[i] = meta["meta"]["wcsinfo"]["mt_dec"]
+
+            j = ind.index(i)
+            mt_ra[j] = meta["meta"]["wcsinfo"]["mt_ra"]
+            mt_dec[j] = meta["meta"]["wcsinfo"]["mt_dec"]
 
     # Compute the mean MT RA/Dec over all exposures
     if not mt_valid:
