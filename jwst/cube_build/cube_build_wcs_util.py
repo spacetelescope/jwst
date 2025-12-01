@@ -3,6 +3,7 @@
 import logging
 
 import numpy as np
+from astropy.modeling.models import Identity
 from gwcs import wcstools
 
 from jwst.assign_wcs import nirspec
@@ -58,13 +59,18 @@ def find_corners_miri(input_data, this_channel, instrument_info, coord_system):
     lambda_max : float
         Maximum wavelength
     """
+    # check for oversampled data
+    if "coordinates" in input_data.meta.wcs.available_frames:
+        det2coord = input_data.meta.wcs.get_transform("detector", "coordinates")
+    else:
+        det2coord = Identity(2)
+
     # x,y values for channel - convert to output coordinate system
     # return the min & max of spatial coords and wavelength
-
     xstart, xend = instrument_info.get_miri_slice_endpts(this_channel)
+    xc, yc = det2coord([xstart, xend], [0, 0])
     ysize = input_data.data.shape[0]
-
-    y, x = np.mgrid[:ysize, xstart:xend]
+    y, x = np.mgrid[:ysize, np.floor(xc[0]) : np.ceil(xc[1])]
 
     if coord_system == "internal_cal":
         # coord1 = along slice

@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
+from astropy.modeling.models import Identity
 from astropy.stats import circmean
 from gwcs import wcstools
 from gwcs.utils import to_index
@@ -167,6 +168,12 @@ class IFUCubeData:
         self.overlap_full = 2  # intermediate flag
         self.overlap_hole = dqflags.pixel["DO_NOT_USE"]
         self.overlap_no_coverage = dqflags.pixel["NON_SCIENCE"]
+
+        # check the first input model to determine an input WCS frame
+        if "coordinates" in self.input_models[0].meta.wcs.available_frames:
+            self.input_frame = "coordinates"
+        else:
+            self.input_frame = "detector"
 
     # ________________________________________________________________________________
     def check_ifucube(self):
@@ -847,7 +854,7 @@ class IFUCubeData:
                     # ----------------------------------------------------------------------------
                     if self.instrument == "MIRI":
                         det2ab_transform = input_model.meta.wcs.get_transform(
-                            "detector", "alpha_beta"
+                            self.input_frame, "alpha_beta"
                         )
                         start_region = self.instrument_info.get_start_slice(this_par1)
                         end_region = self.instrument_info.get_end_slice(this_par1)
@@ -904,7 +911,7 @@ class IFUCubeData:
                             x, y = wcstools.grid_from_bounding_box(
                                 slice_wcs.bounding_box, step=(1, 1), center=True
                             )
-                            detector2slicer = slice_wcs.get_transform("detector", "slicer")
+                            detector2slicer = slice_wcs.get_transform(self.input_frame, "slicer")
 
                             result = cube_internal_cal.match_det2cube(
                                 self.instrument,
@@ -1487,10 +1494,19 @@ class IFUCubeData:
             input_model = self.master_table.FileMap[self.instrument][this_a][this_b][0]
 
             if self.instrument == "MIRI":
+                if self.input_frame == "coordinates":
+                    det2coord = input_model.meta.wcs.get_transform("detector", "coordinates")
+                else:
+                    det2coord = Identity(2)
+
                 xstart, xend = self.instrument_info.get_miri_slice_endpts(this_a)
+                xc, _ = det2coord([xstart, xend], [0, 0])
                 ysize = input_model.data.shape[0]
-                y, x = np.mgrid[:ysize, xstart:xend]
-                detector2alpha_beta = input_model.meta.wcs.get_transform("detector", "alpha_beta")
+                y, x = np.mgrid[:ysize, np.floor(xc[0]) : np.ceil(xc[1])]
+
+                detector2alpha_beta = input_model.meta.wcs.get_transform(
+                    self.input_frame, "alpha_beta"
+                )
                 alpha, beta, lam = detector2alpha_beta(x, y)
                 lam_med = np.nanmedian(lam)
                 # pick two alpha, beta values to determine rotation angle
@@ -1507,7 +1523,7 @@ class IFUCubeData:
                 x, y = wcstools.grid_from_bounding_box(
                     slice_wcs.bounding_box, step=(1, 1), center=True
                 )
-                detector2slicer = slice_wcs.get_transform("detector", "slicer")
+                detector2slicer = slice_wcs.get_transform(self.input_frame, "slicer")
                 across, along, lam = detector2slicer(x, y)  # lam ~0 for this transform
                 lam_med = np.nanmedian(lam)
 
@@ -1999,26 +2015,38 @@ class IFUCubeData:
                 input_model.meta.filename,
             )
 
+        # Check for an oversampled input image
+        if self.input_frame == "coordinates":
+            det2coord = input_model.meta.wcs.get_transform("detector", "coordinates")
+        else:
+            det2coord = Identity(2)
+
         # find the slice number of each pixel and fill in slice_det
         ysize, xsize = input_model.data.shape
-        slice_det = np.zeros((ysize, xsize), dtype=int)
-        det2ab_transform = input_model.meta.wcs.get_transform("detector", "alpha_beta")
-        start_region = self.instrument_info.get_start_slice(this_par1)
-        end_region = self.instrument_info.get_end_slice(this_par1)
-        regions = list(range(start_region, end_region + 1))
-        for i in regions:
-            ys, xs = (det2ab_transform.label_mapper.mapper == i).nonzero()
-            xind = to_index(xs)
-            yind = to_index(ys)
-            xind = np.ndarray.flatten(xind)
-            yind = np.ndarray.flatten(yind)
-            slice_det[yind, xind] = i
+        if input_model.hasattr("regions"):
+            # expected for oversampled data
+            slice_det = input_model.regions
+        else:
+            # find the slice number of each pixel and fill in slice_det
+            slice_det = np.zeros((ysize, xsize), dtype=int)
+            det2ab_transform = input_model.meta.wcs.get_transform("detector", "alpha_beta")
+            start_region = self.instrument_info.get_start_slice(this_par1)
+            end_region = self.instrument_info.get_end_slice(this_par1)
+            regions = list(range(start_region, end_region + 1))
+            for i in regions:
+                ys, xs = (det2ab_transform.label_mapper.mapper == i).nonzero()
+                xind = to_index(xs)
+                yind = to_index(ys)
+                xind = np.ndarray.flatten(xind)
+                yind = np.ndarray.flatten(yind)
+                slice_det[yind, xind] = i
 
         # define the x,y detector values of channel to be mapped to desired coordinate system
         xstart, xend = self.instrument_info.get_miri_slice_endpts(this_par1)
-        y, x = np.mgrid[:ysize, xstart:xend]
-        y = np.reshape(y, y.size)
-        x = np.reshape(x, x.size)
+        xc, _ = det2coord([xstart, xend], [0, 0])
+        y, x = np.mgrid[:ysize, xc[0] : xc[1]]
+        y = np.reshape(y, y.size).astype(int)
+        x = np.reshape(x, x.size).astype(int)
 
         # if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
         with warnings.catch_warnings():
@@ -2051,10 +2079,10 @@ class IFUCubeData:
             # Pixel corners
             pixfrac = 1.0
             alpha1, beta, _ = input_model.meta.wcs.transform(
-                "detector", "alpha_beta", x - 0.4999 * pixfrac, y
+                self.input_frame, "alpha_beta", x - 0.4999 * pixfrac, y
             )
             alpha2, _, _ = input_model.meta.wcs.transform(
-                "detector", "alpha_beta", x + 0.4999 * pixfrac, y
+                self.input_frame, "alpha_beta", x + 0.4999 * pixfrac, y
             )
             # Find slice width
             allbetaval = np.unique(beta)
@@ -2162,12 +2190,12 @@ class IFUCubeData:
 
         # determine the slice width using slice 1 and 3
         slice_wcs1 = nirspec.nrs_wcs_set_input(input_model, 0)
-        detector2slicer = slice_wcs1.get_transform("detector", "slicer")
+        detector2slicer = slice_wcs1.get_transform(self.input_frame, "slicer")
         mean_x, mean_y = np.mean(slice_wcs1.bounding_box[0]), np.mean(slice_wcs1.bounding_box[1])
         slice_loc1, _, _ = detector2slicer(mean_x, mean_y)
 
         slice_wcs3 = nirspec.nrs_wcs_set_input(input_model, 2)
-        detector2slicer = slice_wcs3.get_transform("detector", "slicer")
+        detector2slicer = slice_wcs3.get_transform(self.input_frame, "slicer")
         mean_x, mean_y = np.mean(slice_wcs3.bounding_box[0]), np.mean(slice_wcs3.bounding_box[1])
         slice_loc3, _, _ = detector2slicer(mean_x, mean_y)
 
@@ -2200,7 +2228,7 @@ class IFUCubeData:
 
                 # Pixel corners
                 pixfrac = 1.0
-                detector2slicer = slice_wcs.get_transform("detector", "slicer")
+                detector2slicer = slice_wcs.get_transform(self.input_frame, "slicer")
                 slicer2world = slice_wcs.get_transform("slicer", slice_wcs.output_frame)
                 across1, along1, lam1 = detector2slicer(x, y - 0.49 * pixfrac)
                 across2, along2, lam2 = detector2slicer(x, y + 0.49 * pixfrac)
