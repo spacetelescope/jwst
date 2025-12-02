@@ -11,7 +11,14 @@ from scipy.signal import find_peaks
 
 from jwst.assign_wcs.nirspec import nrs_ifu_wcs
 
-__all__ = ["bspline_fit", "fit_2d_spline_profile"]
+__all__ = [
+    "bspline_fit",
+    "fit_2d_spline_profile",
+    "linear_oversample",
+    "fit_all_regions",
+    "oversample_flux",
+    "fit_and_oversample_ifu",
+]
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +56,7 @@ def bspline_fit(
         than the knot spacing by this ratio, then return None instead
         of attempting to fit the data.
     verbose : bool, optional
-        If True, a debug log message is printed for each fitting iteration.
+        If True, a debug log message is generated for each fitting iteration.
 
     Returns
     -------
@@ -177,12 +184,12 @@ def _get_weights_for_fit_scale(ratio, model_fit):
 def fit_2d_spline_profile(
     flux,
     alpha,
+    fit_scale=None,
     lrange=50,
     col_index=None,
     require_ngood=8,
     splinebkpt=36,
     spaceratio=1.2,
-    fit_scale=None,
 ):
     """
     Create a profile from spline fits to a single slit/slice image.
@@ -196,6 +203,8 @@ def fit_2d_spline_profile(
         Input 2D flux image to fit.
     alpha : ndarray
         Alpha coordinates for input flux.
+    fit_scale : ndarray, optional
+        Array of scale values to apply to the input flux before fitting.
     lrange : int, optional
         Local column range for data to include in the fit, to the
         left and right of each input column.
@@ -212,8 +221,6 @@ def fit_2d_spline_profile(
         the tenth-largest spacing in the input ``xvec`` is larger
         than the knot spacing by this ratio, then return None instead
         of attempting to fit the data.
-    fit_scale : ndarray, optional
-        Array of scale values to apply to the input flux before fitting.
 
     Returns
     -------
@@ -352,7 +359,30 @@ def _reindex(xmin, xmax, scale=2.0):
     return new_x, old_x
 
 
-def profile_image(shape, spline_models, spline_scales, slice_map, alpha):
+def _profile_image(shape, spline_models, spline_scales, region_map, alpha):
+    """
+    Evaluate spline models at all pixels to generate a profile image.
+
+    Parameters
+    ----------
+    shape : tuple of int
+        Data shape for the output image.
+    spline_models : dict of `~scipy.interpolate.BSpline`
+        Spline models to evaluate.
+    spline_scales : dict of float
+        Scaling factors for spline models.
+    region_map : ndarray
+        2D image matching shape, indicating valid regions.
+    alpha : ndarray
+        Alpha coordinates for all pixels marked as valid regions.
+
+    Returns
+    -------
+    profile : ndarray
+        2D image containing the scaled spline data fit evaluated at
+        the input alpha coordinates.  Values are NaN where no spline
+        model was available.
+    """
     profile = np.full(shape, np.nan, dtype=np.float32)
     alpha_slice = np.full(shape, np.nan, dtype=np.float32)
     profile_slice = np.full(shape, np.nan, dtype=np.float32)
@@ -362,7 +392,7 @@ def profile_image(shape, spline_models, spline_scales, slice_map, alpha):
         alpha_slice[:] = np.nan
         profile_slice[:] = np.nan
 
-        indx = slice_map == slnum
+        indx = region_map == slnum
         alpha_slice[indx] = alpha[indx]
 
         # loop over columns
@@ -370,7 +400,7 @@ def profile_image(shape, spline_models, spline_scales, slice_map, alpha):
             if i not in splines:
                 continue
 
-            # Spline fit for relevant data
+            # Evaluate the spline model for relevant data
             alpha_col = alpha_slice[:, i]
             valid_alpha = np.isfinite(alpha_col)
             spline_fit = scales[i] * splines[i](alpha_col[valid_alpha])
@@ -381,10 +411,68 @@ def profile_image(shape, spline_models, spline_scales, slice_map, alpha):
     return profile
 
 
-def linear_oversample(data, slice_map, oversample_factor, require_ngood):
-    slice_numbers = np.unique(slice_map)
-    slice_numbers = slice_numbers[np.isfinite(slice_numbers)]
+def _linear_interp(col_y, col_flux, y_interp, edge_limit):
+    """
+    Perform a linear interpolation at one column.
 
+    Parameters
+    ----------
+    col_y : ndarray
+        Y values in the original data for the column.
+    col_flux : ndarray
+        Flux values in the original data for the column.
+    y_interp : ndarray
+        Y values to interpolate to.
+    edge_limit : int
+        If greater than zero, this many pixels at the edges of
+        the interpolated values will be set to NaN.
+
+    Returns
+    -------
+    interpolated_flux : ndarray
+        Interpolated flux array.
+    """
+    valid_data = np.isfinite(col_flux)
+    valid_y = np.isfinite(col_y)
+
+    valid_interp = valid_y & valid_data
+    interpolated_flux = np.interp(y_interp, col_y[valid_interp], col_flux[valid_interp])
+    if edge_limit >= 1:
+        interpolated_flux[0:edge_limit] = np.nan
+        interpolated_flux[-edge_limit:] = np.nan
+
+    # Check for NaNs in the input: they should be preserved in the output
+    closest_pix = np.round(y_interp).astype(int)
+    is_nan = ~np.isfinite(col_flux[closest_pix])
+    interpolated_flux[is_nan] = np.nan
+
+    return interpolated_flux
+
+
+def linear_oversample(data, region_map, oversample_factor, require_ngood):
+    """
+    Oversample the input data with a linear interpolation.
+
+    Linear interpolation is performed for each column in each region in
+    the provided region map.
+
+    Parameters
+    ----------
+    data : ndarray
+        Original data to oversample.
+    region_map : ndarray of int
+        Map indicating valid regions. Values are >0 for pixels in valid
+        regions, 0 otherwise.
+    oversample_factor : float
+        Scaling factor to oversample by.
+    require_ngood : int
+        Minimum number of pixels required in a column to perform an interpolation.
+
+    Returns
+    -------
+    os_data : ndarray
+        The oversampled data array.
+    """
     ysize, xsize = data.shape
     _, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
 
@@ -394,12 +482,13 @@ def linear_oversample(data, slice_map, oversample_factor, require_ngood):
 
     data_slice = np.full_like(data, np.nan)
     y_slice = np.full_like(data, np.nan)
+    slice_numbers = np.unique(region_map[region_map > 0])
     for slnum in slice_numbers:
         data_slice[:] = np.nan
         y_slice[:] = np.nan
 
         # Copy the relevant data for this slice into the holding arrays
-        indx = slice_map == slnum
+        indx = region_map == slnum
         data_slice[indx] = data[indx]
         y_slice[indx] = basey[indx]
 
@@ -417,61 +506,50 @@ def linear_oversample(data, slice_map, oversample_factor, require_ngood):
                 int(col_y[valid_y].min()), int(col_y[valid_y].max()), scale=oversample_factor
             )
 
-            valid_interp = valid_y & valid_data
-            interpval = np.interp(oldy, col_y[valid_interp], col_flux[valid_interp])
-            if edge_limit >= 1:
-                interpval[0:edge_limit] = np.nan
-                interpval[-edge_limit:] = np.nan
-
-            # Check for NaNs in the input: they should be preserved in the output
-            closest_pix = np.round(oldy).astype(int)
-            is_nan = ~np.isfinite(col_flux[closest_pix])
-            interpval[is_nan] = np.nan
-
-            os_data[newy, ii] = interpval
+            os_data[newy, ii] = _linear_interp(col_y, col_flux, oldy, edge_limit)
 
     return os_data
 
 
-def just_fit(
-    flux_orig,
-    alpha_orig,
-    slmap,
-    detector,
-    thresh,
-    slstart=0,
-    slstop=30,
-    lrange=50,
-    require_ngood=8,
-    splinebkpt=36,
-    spaceratio=1.2,
-):
-    ysize, xsize = flux_orig.shape
+def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
+    """
+    Fit a profile to all regions in the flux image.
 
-    # Set up the column fitting order by detector
-    if detector == "NRS1":
-        # For NRS1, start on the left of detector since the tilt wrt pixels is greatest here
-        col_index = range(0, xsize, 1)
-    elif detector == "NRS2":
-        # For NRS2, start on the right of detector since the tilt wrt pixels is greatest here
-        col_index = range(xsize - 1, 0, -1)
-    elif detector.startswith("MIR"):
-        # For MIRI we need to start on the left and run to the middle,
-        # and then on the right to the middle in order to have the middle
-        # section not go too far beyond last good fit
-        col_index = np.concatenate(
-            [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
-        )
-    else:
-        raise ValueError("Unknown detector")
+    Parameters
+    ----------
+    flux : ndarray
+        The flux image to fit.
+    alpha : ndarray
+        Alpha coordinates for all flux values.
+    region_map : ndarray of int
+        Map indicating valid regions. Values are >0 for pixels in valid
+        regions, 0 otherwise.
+    signal_threshold : list of float
+        Threshold values, one per valid region in the region map. If
+        the median peak value across columns in the region is below this
+        threshold, a fit will not be attempted for that region.
+    **fit_kwargs
+        Keyword arguments to pass to the fitting routine (see `fit_2d_spline_profile`).
 
+    Returns
+    -------
+    spline_models : dict
+        Keys are region numbers, values are dicts containing a spline model for
+        each column index in the region. If a spline model could not be fit, the
+        column index number is not present.
+    scales : dict
+        Keys are region numbers, values are dicts containing a floating point scale
+        for each spline model, by column index number. If a spline model could not
+        be fit, the column index number is not present.
+    """
     # Arrays to reset with NaNs for each slice
-    data_slice = np.full_like(flux_orig, np.nan)
-    alpha_slice = np.full_like(flux_orig, np.nan)
+    data_slice = np.full_like(flux, np.nan)
+    alpha_slice = np.full_like(flux, np.nan)
 
     spline_models = {}
     spline_scales = {}
-    for slnum in range(slstart, slstop):
+    slice_numbers = np.unique(region_map[region_map > 0])
+    for slnum in slice_numbers:
         log.info("Fitting slice %s", slnum)
 
         # Reset holding arrays to NaN
@@ -479,9 +557,9 @@ def just_fit(
         alpha_slice[:] = np.nan
 
         # Copy the relevant data for this slice into the holding arrays
-        indx = slmap == slnum
-        data_slice[indx] = flux_orig[indx]
-        alpha_slice[indx] = alpha_orig[indx]
+        indx = region_map == slnum
+        data_slice[indx] = flux[indx]
+        alpha_slice[indx] = alpha[indx]
 
         # A running sum in a given detector column (used for normalization)
         runsum = np.nansum(data_slice, axis=0)
@@ -496,19 +574,12 @@ def just_fit(
 
         # Is medcmax over threshold?  If so do, bspline for this slice.
         dospline = False
-        if medcmax > thresh[slnum]:
+        if medcmax > signal_threshold[slnum - 1]:
             dospline = True
 
         if dospline:
             splines, scales = fit_2d_spline_profile(
-                data_slice,
-                alpha_slice,
-                lrange=lrange,
-                col_index=col_index,
-                require_ngood=require_ngood,
-                splinebkpt=splinebkpt,
-                spaceratio=spaceratio,
-                fit_scale=runsum,
+                data_slice, alpha_slice, fit_scale=runsum, **fit_kwargs
             )
         else:
             splines = {}
@@ -519,26 +590,70 @@ def just_fit(
     return spline_models, spline_scales
 
 
-def just_oversample(
-    flux_orig,
-    alpha_orig,
-    x_os,
-    y_os,
-    alpha_os,
-    slmap,
+def oversample_flux(
+    flux,
+    alpha,
+    region_map,
     spline_models,
     spline_scales,
-    slstart=0,
-    slstop=30,
+    oversample_factor,
+    alpha_os,
     require_ngood=8,
     trimends=False,
     pad=3,
-    splinebkpt=36,
     slopelim=0.1,
     psfoptimal=False,
-    oversample_factor=3,
 ):
-    ysize, xsize = flux_orig.shape
+    """
+    Oversample a flux image from spline models fit to the data.
+
+    Parameters
+    ----------
+    flux : ndarray
+        The flux image to fit.
+    alpha : ndarray
+        Alpha coordinates for all flux values.
+    region_map : ndarray of int
+        Map indicating valid regions. Values are >0 for pixels in valid
+        regions, 0 otherwise.
+    spline_models : dict
+        Keys are region numbers, values are dicts containing a spline model for
+        each column index in the region. If a spline model could not be fit, the
+        column index number is not present.
+    spline_scales : dict
+        Keys are region numbers, values are dicts containing a floating point scale
+        for each spline model, by column index number. If a spline model could not
+        be fit, the column index number is not present.
+    oversample_factor : float
+        Scaling factor to oversample by.
+    alpha_os : ndarray
+        Alpha coordinates for the oversampled array, used to evaluate spline models
+        at every pixel.
+    require_ngood : int, optional
+        Minimum number of pixels required in a column to perform an interpolation.
+    trimends : bool, optional
+        If True, the edges of the evaluated spline fit will be set to NaN.
+    pad : int, optional
+        The number of pixels near peak data to include the spline fit for in
+        the output array.
+    slopelim : float, optional
+        The slope limit in the normalized model fits above which the spline
+        model is considered appropriate. Lower values will use spline fits
+        for fainter sources.
+    psfoptimal : bool, optional
+        If True, residual corrections to the spline model are not included
+        in the oversampled flux.
+
+    Returns
+    -------
+    flux_os : ndarray
+        The oversampled flux array, containing contributions from the evaluated
+        spline models, linear interpolations, and residual corrections.
+    profile : ndarray
+        A spatial profile model, generated from the spline models evaluated at
+        every pixel.
+    """
+    ysize, xsize = flux.shape
     _, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
 
     # Oversampled flux array (linear and bspline to compare)
@@ -549,25 +664,26 @@ def just_oversample(
     flux_os_residual = np.full(os_shape, np.nan)  # Residual corrections
 
     # Arrays to reset with NaNs for each slice
-    data_slice = np.full_like(flux_orig, np.nan)
-    alpha_slice = np.full_like(flux_orig, np.nan)
-    basey_slice = np.full_like(flux_orig, np.nan)
+    data_slice = np.full_like(flux, np.nan)
+    alpha_slice = np.full_like(flux, np.nan)
+    basey_slice = np.full_like(flux, np.nan)
 
     alpha_os_slice = np.full(os_shape, np.nan)
     reset_arrays = [data_slice, basey_slice, alpha_slice, alpha_os_slice]
 
     # Edge limit for trimming ends
     edge_limit = int(oversample_factor)
-
-    for slnum in range(slstart, slstop):
+    slice_numbers = np.unique(region_map[region_map > 0])
+    splinebkpt = None
+    for slnum in slice_numbers:
         # Reset holding arrays to NaN
         for reset_array in reset_arrays:
             reset_array[:] = np.nan
 
         # Copy the relevant data for this slice into the holding arrays
-        indx = slmap == slnum
-        data_slice[indx] = flux_orig[indx]
-        alpha_slice[indx] = alpha_orig[indx]
+        indx = region_map == slnum
+        data_slice[indx] = flux[indx]
+        alpha_slice[indx] = alpha[indx]
         basey_slice[indx] = basey[indx]
 
         # Define an array that will hold all alpha values for this slice where the slope can be high
@@ -593,18 +709,17 @@ def just_oversample(
             )
 
             # Default approach is to do linear interpolation
-            valid_interp = valid_y & valid_data
-            interpval = np.interp(oldy, col_y[valid_interp], col_flux[valid_interp])
-            if edge_limit >= 1:
-                interpval[0:edge_limit] = np.nan
-                interpval[-edge_limit:] = np.nan
-            flux_os_linear[newy, ii] = interpval
+            flux_os_linear[newy, ii] = _linear_interp(col_y, col_flux, oldy, edge_limit)
 
             # Check for a spline fit for this column
             if slnum not in spline_models or ii not in spline_models[slnum]:
                 continue
             spline_model = spline_models[slnum][ii]
             spline_scale = spline_scales[slnum][ii]
+
+            # Get the number of spline breakpoints used from the first real model
+            if splinebkpt is None:
+                splinebkpt = len(np.unique(spline_model.t)) - 1
 
             # Get valid input locations and evaluate the spline
             valid_alpha = np.isfinite(col_alpha)
@@ -629,16 +744,13 @@ def just_oversample(
                 modelslope[0:edge_limit] = 0
                 modelslope[-edge_limit:] = 0
 
-            # Where was the model slope greater than 0.1 in the native binning?
-            highslope = (np.where(modelslope > slopelim))[0]
-
             # Add to our list of alpha values where the slope can be high for this slice
+            # and store the oversampled alpha values to check against later
+            highslope = (np.where(modelslope > slopelim))[0]
             alpha_ptsource = np.append(alpha_ptsource, col_alpha[valid_alpha][highslope])
-
-            # Store the alpha values over sampled points in the old frame for this slice
             alpha_os_slice[newy, ii] = alpha_os[newy, ii]
 
-            # Evaluate the bspline at the alpha for these Y locations
+            # Evaluate the bspline at the oversampled alpha for this column
             oversampled_fit = spline_model(alpha_os[newy, ii]) * spline_scale
             if trimends and edge_limit >= 1:
                 oversampled_fit[0:edge_limit] = np.nan
@@ -650,8 +762,7 @@ def just_oversample(
         # Now look at our list of alpha values where model slopes were high to figure out
         # where traces are and we actually want to use the spline model
         # Don't bother with this if not enough recorded alpha values
-
-        if len(alpha_ptsource) > 50:
+        if len(alpha_ptsource) > 50 and splinebkpt is not None:
             # What is the rough native pixel size in alpha in the columns?
             native_dalpha = np.abs(np.nanmedian(np.diff(alpha_slice, axis=0)))
 
@@ -674,17 +785,10 @@ def just_oversample(
                 )
                 flux_os_bspline_use[indx] = flux_os_bspline_full[indx]
 
-    # Ensure that the simple interpolation didn't fill in any NaNs that it shouldn't.
-    # They should be interpolated either by pixel_replace or the bspline model,
-    # not this step because the simple interpolation algorithm will not be able to
-    # handle them properly.
-    closest_pix = (np.round(y_os).astype(int), np.round(x_os).astype(int))
-    is_nan = ~np.isfinite(flux_orig[*closest_pix])
-    flux_os_linear[is_nan] = np.nan
-
-    # Insert the bspline interpolated values into the final combined oversampled array
+    # Insert the bspline interpolated values into the final combined oversampled array,
+    # starting from the linearly interpolated array
+    flux_os = flux_os_linear
     indx = np.where(np.isfinite(flux_os_bspline_use))
-    flux_os = flux_os_linear.copy()  # Ensure we don't accidentally write into the linear data
     flux_os[indx] = flux_os_bspline_use[indx]
 
     # Unless we're doing a specific psf optimal extraction, add in the residual fit
@@ -702,14 +806,35 @@ def just_oversample(
     return flux_os, flux_os_bspline_full
 
 
-def fit_and_oversample(
-    model, lrange=50, threshsig=10, slopelim=0.1, psfoptimal=False, oversample_factor=1
+def fit_and_oversample_ifu(
+    model, threshsig=10.0, slopelim=0.1, psfoptimal=False, oversample_factor=1.0
 ):
-    # slstart/stop is the slices to work on
-    # pad is the padding for the replacement window
-    # threshsig and slopelim can be useful to decrease if there
-    # are fainter point sources that need to be spline fit too
+    """
+    Fit a spatial profile and optionally oversample an IFU datamodel.
 
+    Parameters
+    ----------
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        The input datamodel, updated in place.
+    threshsig : float
+        The signal threshold sigma for attempting spline fits within a slice region.
+        Higher values will create spline profiles for more slices.
+    slopelim : float
+        The normalized slope threshold for using the spline model in oversampled
+        data.  Lower values will use the spline model for fainter sources.
+    psfoptimal : bool
+        If True, residual corrections to the spline model are not included
+        in the oversampled flux.  This option is generally appropriate for simple
+        isolated point sources only.
+    oversample_factor : float
+        If not 1.0, then the data will be oversampled by this factor.
+
+    Returns
+    -------
+    model : `~stdatamodels.jwst.datamodels.IFUImageModel`
+        The datamodel, updated with a profile image and optionally oversampled
+        arrays.
+    """
     # todo - adapt to non-ifu data
     detector = model.meta.instrument.detector
     if detector.startswith("NRS"):
@@ -719,9 +844,11 @@ def fit_and_oversample(
         splinebkpt = 62
         spaceratio = 1.6
         pad = 2
-        trimends = True  # Trimming ends of the interpolation can help with bad extrapolations
-        slstart, slstop = 0, 30
-        chsplit = np.nan
+        chsplit = None
+        lrange = 50
+
+        # Trimming ends of the interpolation can help with bad extrapolations
+        trimends = True
     elif (detector == "MIRIFUSHORT") | (detector == "MIRIFULONG"):
         mode = "MIRI"
         # Note that MIRI gets rotated internally, so these are FLIPPED from usual orientation
@@ -730,15 +857,16 @@ def fit_and_oversample(
         splinebkpt = 36
         spaceratio = 1.2
         pad = 3
-        trimends = (
-            False  # Trimming ends is bad for MIRI, where dithers place point sources near the ends
-        )
+        lrange = 50
 
+        # Trimming ends is bad for MIRI, where dithers place point sources near the ends
+        trimends = False
+
+        # Detector index for split between channels
+        # todo - use label mapper instead
         if detector == "MIRIFUSHORT":
-            slstart, slstop = 0, 38
             chsplit = 509
         else:
-            slstart, slstop = 0, 28
             chsplit = 489
     else:
         raise ValueError("Unknown detector")
@@ -758,8 +886,17 @@ def fit_and_oversample(
 
         # NIRSpec can sort just by ordering slices by beta
         uqbeta = np.unique(beta_orig[np.isfinite(beta_orig)])
+
         # NIRSpec uses fluxes in normal orientation
         flux_orig = model.data
+
+        # Set up the column fitting order by detector
+        if detector == "NRS1":
+            # For NRS1, start on the left of detector since the tilt wrt pixels is greatest here
+            col_index = range(0, xsize, 1)
+        else:
+            # For NRS2, start on the right of detector since the tilt wrt pixels is greatest here
+            col_index = range(xsize - 1, 0, -1)
     else:
         ifu_wcs = None
         alpha_orig, beta_orig, _ = model.meta.wcs.transform(
@@ -785,11 +922,18 @@ def fit_and_oversample(
         alpha_orig = np.rot90(alpha_orig)
         beta_orig = np.rot90(beta_orig)
 
-    # Make a slice map
-    slmap = np.full((ysize, xsize), np.nan)
-    for ii in range(0, len(uqbeta)):
+        # For MIRI fitting order,  we need to start on the left and run to the middle,
+        # and then on the right to the middle in order to have the middle
+        # section not go too far beyond last good fit
+        col_index = np.concatenate(
+            [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
+        )
+
+    # Make a region map from unique beta values
+    region_map = np.zeros((ysize, xsize), dtype=np.uint32)
+    for ii in range(len(uqbeta)):
         indx = np.where(beta_orig == uqbeta[ii])
-        slmap[indx] = ii
+        region_map[indx] = ii + 1
 
     # Set thresholding for the bspline fitting
     # Do some statistics on the overall cal file
@@ -804,11 +948,11 @@ def fit_and_oversample(
         overall_mean = 0
 
     # Define a per-slice analysis threshold (must be brighter than some level above background)
-    thresh = np.full(len(uqbeta), np.nan)
+    signal_threshold = np.full(len(uqbeta), np.nan)
 
     if mode == "NIRS":
         # For NIRSpec all slices have the same threshold
-        thresh[:] = overall_mean + threshsig * overall_rms
+        signal_threshold[:] = overall_mean + threshsig * overall_rms
 
     else:
         # For MIRI we need each channel to have its own threshold, particularly for Ch3/Ch4
@@ -817,39 +961,36 @@ def fit_and_oversample(
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=AstropyUserWarning)
             ch_mean, _, ch_rms = scs(flux_orig[chsplit:, :])
-        slnum_in_ch = np.unique(slmap[chsplit:, :])
-        for ii in range(0, len(uqbeta)):
-            if ii in slnum_in_ch:
-                thresh[ii] = ch_mean + threshsig * ch_rms
+        slnum_in_ch = np.unique(region_map[chsplit:, :])
+        for slnum in slnum_in_ch[slnum_in_ch > 0]:
+            signal_threshold[slnum - 1] = ch_mean + threshsig * ch_rms
 
         # Ch2/3
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", category=AstropyUserWarning)
             ch_mean, _, ch_rms = scs(flux_orig[0:chsplit, :])
-        slnum_in_ch = np.unique(slmap[0:chsplit, :])
-        for ii in range(0, len(uqbeta)):
-            if ii in slnum_in_ch:
-                thresh[ii] = ch_mean + threshsig * ch_rms
+        slnum_in_ch = np.unique(region_map[0:chsplit, :])
+        for slnum in slnum_in_ch[slnum_in_ch > 0]:
+            signal_threshold[slnum - 1] = ch_mean + threshsig * ch_rms
 
-    spline_models, spline_scales = just_fit(
-        flux_orig,
-        alpha_orig,
-        slmap,
-        detector,
-        thresh,
-        slstart,
-        slstop,
-        lrange,
-        require_ngood,
-        splinebkpt,
-        spaceratio,
+    fit_kwargs = {
+        "lrange": lrange,
+        "col_index": col_index,
+        "require_ngood": require_ngood,
+        "splinebkpt": splinebkpt,
+        "spaceratio": spaceratio,
+    }
+    spline_models, spline_scales = fit_all_regions(
+        flux_orig, alpha_orig, region_map, signal_threshold, **fit_kwargs
     )
 
     # If oversampling is not needed, evaluate the spline models to create the
     # profile image, store it in the model, and return
     # todo - may want to check for psf_optimal param before returning
     if oversample_factor == 1:
-        profile = profile_image(flux_orig.shape, spline_models, spline_scales, slmap, alpha_orig)
+        profile = _profile_image(
+            flux_orig.shape, spline_models, spline_scales, region_map, alpha_orig
+        )
         if mode == "MIRI":
             profile = np.rot90(profile, k=-1)
         model.profile = profile
@@ -889,24 +1030,19 @@ def fit_and_oversample(
         )
 
     log.info("Oversampling the flux array from the fit profile")
-    flux_os, profile = just_oversample(
+    flux_os, profile = oversample_flux(
         flux_orig,
         alpha_orig,
-        x_os,
-        y_os,
-        alpha_os,
-        slmap,
+        region_map,
         spline_models,
         spline_scales,
-        slstart,
-        slstop,
-        require_ngood,
-        trimends,
-        pad,
-        splinebkpt,
-        slopelim,
-        psfoptimal,
         oversample_factor,
+        alpha_os,
+        require_ngood=require_ngood,
+        trimends=trimends,
+        pad=pad,
+        slopelim=slopelim,
+        psfoptimal=psfoptimal,
     )
 
     log.info("Oversampling error and DQ arrays")
@@ -920,7 +1056,7 @@ def fit_and_oversample(
     # Simple linear oversample for the error arrays
     errors_os = []
     for error_array in errors:
-        error_os = linear_oversample(error_array, slmap, oversample_factor, require_ngood)
+        error_os = linear_oversample(error_array, region_map, oversample_factor, require_ngood)
         errors_os.append(error_os)
 
     # Nearest pixel for the dq and regions array
