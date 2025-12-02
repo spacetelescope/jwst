@@ -38,7 +38,7 @@ def miri_slice_limit_coords(wcs, xstart, xend):
         Ending pixel in image coordinates for the slice.
     """
     # check for oversampled data
-    if "coordinates" in wcs.available_frames:
+    if wcs is not None and "coordinates" in wcs.available_frames:
         det2coord = wcs.get_transform("detector", "coordinates")
     else:
         det2coord = Identity(2)
