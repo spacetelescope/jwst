@@ -1,5 +1,4 @@
 from jwst.ami.ami_analyze_step import AmiAnalyzeStep
-from jwst.ami.ami_average_step import AmiAverageStep
 from jwst.ami.ami_normalize_step import AmiNormalizeStep
 from jwst.assign_mtwcs.assign_mtwcs_step import AssignMTWcsStep
 from jwst.assign_wcs.assign_wcs_step import AssignWcsStep
@@ -62,7 +61,6 @@ from jwst.white_light.white_light_step import WhiteLightStep
 
 __all__ = [
     "AmiAnalyzeStep",
-    "AmiAverageStep",
     "AmiNormalizeStep",
     "AssignMTWcsStep",
     "AssignWcsStep",

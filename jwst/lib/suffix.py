@@ -70,7 +70,6 @@ SUFFIXES_TO_ADD = [
 # Suffixes that are discovered but should not be considered.
 # Used by `find_suffixes` to remove undesired values it has found.
 SUFFIXES_TO_DISCARD = [
-    "ami_average",
     "engdblogstep",
     "functionwrapper",
     "pipeline",
@@ -129,7 +128,6 @@ _calculated_suffixes = {
     "guidercdsstep",
     "imprint",
     "resample_spec",
-    "ami_average",
     "white_light",
     "resample",
     "sourcetypestep",
@@ -149,7 +147,6 @@ _calculated_suffixes = {
     "source_catalog",
     "resamplestep",
     "refpix",
-    "amiaveragestep",
     "superbiasstep",
     "dq_init",
     "wfsscontamstep",
