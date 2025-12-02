@@ -7,7 +7,6 @@ import warnings
 import numpy as np
 from astropy import units as u
 from astropy.coordinates import SkyCoord
-from astropy.modeling.models import Identity
 from astropy.stats import circmean
 from gwcs import wcstools
 from gwcs.utils import to_index
@@ -862,7 +861,12 @@ class IFUCubeData:
 
                         for i in regions:
                             log.info("Working on Slice # %d", i)
-                            y, x = (det2ab_transform.label_mapper.mapper == i).nonzero()
+                            if input_model.hasattr("regions"):
+                                # expected for oversampled data
+                                slice_det = input_model.regions
+                            else:
+                                slice_det = det2ab_transform.label_mapper.mapper
+                            y, x = (slice_det == i).nonzero()
 
                             # getting pixel corner - ytop = y + 1 (routine fails for y = 1024)
                             index = np.where(y < 1023)
@@ -1494,15 +1498,12 @@ class IFUCubeData:
             input_model = self.master_table.FileMap[self.instrument][this_a][this_b][0]
 
             if self.instrument == "MIRI":
-                if self.input_frame == "coordinates":
-                    det2coord = input_model.meta.wcs.get_transform("detector", "coordinates")
-                else:
-                    det2coord = Identity(2)
-
                 xstart, xend = self.instrument_info.get_miri_slice_endpts(this_a)
-                xc, _ = det2coord([xstart, xend], [0, 0])
+                xc_start, xc_end = cube_build_wcs_util.miri_slice_limit_coords(
+                    input_model.meta.wcs, xstart, xend
+                )
                 ysize = input_model.data.shape[0]
-                y, x = np.mgrid[:ysize, np.floor(xc[0]) : np.ceil(xc[1])]
+                y, x = np.mgrid[:ysize, xc_start:xc_end]
 
                 detector2alpha_beta = input_model.meta.wcs.get_transform(
                     self.input_frame, "alpha_beta"
@@ -2015,12 +2016,6 @@ class IFUCubeData:
                 input_model.meta.filename,
             )
 
-        # Check for an oversampled input image
-        if self.input_frame == "coordinates":
-            det2coord = input_model.meta.wcs.get_transform("detector", "coordinates")
-        else:
-            det2coord = Identity(2)
-
         # find the slice number of each pixel and fill in slice_det
         ysize, xsize = input_model.data.shape
         if input_model.hasattr("regions"):
@@ -2030,11 +2025,12 @@ class IFUCubeData:
             # find the slice number of each pixel and fill in slice_det
             slice_det = np.zeros((ysize, xsize), dtype=int)
             det2ab_transform = input_model.meta.wcs.get_transform("detector", "alpha_beta")
+            mapper = det2ab_transform.label_mapper.mapper
             start_region = self.instrument_info.get_start_slice(this_par1)
             end_region = self.instrument_info.get_end_slice(this_par1)
             regions = list(range(start_region, end_region + 1))
             for i in regions:
-                ys, xs = (det2ab_transform.label_mapper.mapper == i).nonzero()
+                ys, xs = (mapper == i).nonzero()
                 xind = to_index(xs)
                 yind = to_index(ys)
                 xind = np.ndarray.flatten(xind)
@@ -2043,10 +2039,12 @@ class IFUCubeData:
 
         # define the x,y detector values of channel to be mapped to desired coordinate system
         xstart, xend = self.instrument_info.get_miri_slice_endpts(this_par1)
-        xc, _ = det2coord([xstart, xend], [0, 0])
-        y, x = np.mgrid[:ysize, xc[0] : xc[1]]
-        y = np.reshape(y, y.size).astype(int)
-        x = np.reshape(x, x.size).astype(int)
+        xc_start, xc_end = cube_build_wcs_util.miri_slice_limit_coords(
+            input_model.meta.wcs, xstart, xend
+        )
+        y, x = np.mgrid[:ysize, xc_start:xc_end]
+        y = np.reshape(y, y.size)
+        x = np.reshape(x, x.size)
 
         # if self.coord_system == 'skyalign' or self.coord_system == 'ifualign':
         with warnings.catch_warnings():
