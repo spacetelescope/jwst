@@ -1,6 +1,8 @@
 import logging
 
-from jwst.fit_profile.fit_profile import fit_and_oversample
+from stdatamodels.jwst import datamodels
+
+from jwst.fit_profile.fit_profile import fit_and_oversample_ifu
 from jwst.stpipe import Step
 
 __all__ = ["FitProfileStep"]
@@ -16,7 +18,7 @@ class FitProfileStep(Step):
     spec = """
     threshsig = float(default=10) # Limiting sigma for fitting splines
     slopelim = float(default=0.1) # Slope limit for using splines in oversample
-    oversample = float(default=1) # Use the profile fit to oversample the data by this factor
+    oversample = float(default=1.0) # Use the profile fit to oversample the data by this factor
     # psfoptimal = boolean(default=False)
     """  # noqa: E501
 
@@ -35,7 +37,14 @@ class FitProfileStep(Step):
             The input model, updated with the fit profile.
         """
         output_model = self.prepare_output(input_data)
-        output_model = fit_and_oversample(
+
+        if not isinstance(output_model, datamodels.IFUImageModel):
+            log.warning("The fit_profile step is only implemented for IFU data.")
+            log.warning("Skipping processing for datamodel type %s.", str(output_model))
+            output_model.meta.cal_step.fit_profile = "SKIPPED"
+            return output_model
+
+        output_model = fit_and_oversample_ifu(
             output_model,
             threshsig=self.threshsig,
             slopelim=self.slopelim,
