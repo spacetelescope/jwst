@@ -1076,7 +1076,7 @@ def fit_residual_fringes_1d(
         Fit only dichroic fringes.
     max_amp : float, optional
         The maximum relative amplitude value for fringe correction. If not provided,
-        is set to `MAXAMP_1D`.
+        is set to ``MAXAMP_1D``.
     clip_features : bool, optional
         If True, spectral features are masked via sigma clipping.  If False, they
         are detected and masked via comparison to the ``max_line`` value.
@@ -1085,7 +1085,7 @@ def fit_residual_fringes_1d(
         for clipping spectral features.
     max_line : float, optional
         The maximum relative amplitude value to detect an emission line.  If not provided,
-        is set to `MAXLINE_1D`.  Used only if ``clip_features`` is False.
+        is set to ``MAXLINE_1D``.  Used only if ``clip_features`` is False.
     ignore_regions : list of list of float, optional
         If provided, data in the wavelengths specified is ignored in the fringe
         fits. The expected format is a list of [min_region, max_region] values, in
