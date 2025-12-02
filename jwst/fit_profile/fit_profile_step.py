@@ -50,6 +50,7 @@ class FitProfileStep(Step):
                 model.meta.cal_step.fit_profile = "SKIPPED"
                 continue
 
+            # Update the model in place
             log.info("Fitting profile for %s", model.meta.filename)
             fit_and_oversample_ifu(
                 model,

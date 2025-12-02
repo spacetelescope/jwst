@@ -524,8 +524,8 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
     region_map : ndarray of int
         Map indicating valid regions. Values are >0 for pixels in valid
         regions, 0 otherwise.
-    signal_threshold : list of float
-        Threshold values, one per valid region in the region map. If
+    signal_threshold : dict of float
+        Threshold values for each valid region in the region map. If
         the median peak value across columns in the region is below this
         threshold, a fit will not be attempted for that region.
     **fit_kwargs
@@ -574,7 +574,7 @@ def fit_all_regions(flux, alpha, region_map, signal_threshold, **fit_kwargs):
 
         # Is medcmax over threshold?  If so do, bspline for this slice.
         dospline = False
-        if medcmax > signal_threshold[slnum - 1]:
+        if medcmax > signal_threshold[slnum]:
             dospline = True
 
         if dospline:
@@ -844,7 +844,6 @@ def fit_and_oversample_ifu(
         splinebkpt = 62
         spaceratio = 1.6
         pad = 2
-        chsplit = None
         lrange = 50
 
         # Trimming ends of the interpolation can help with bad extrapolations
@@ -861,34 +860,25 @@ def fit_and_oversample_ifu(
 
         # Trimming ends is bad for MIRI, where dithers place point sources near the ends
         trimends = False
-
-        # Detector index for split between channels
-        # todo - use label mapper instead
-        if detector == "MIRIFUSHORT":
-            chsplit = 509
-        else:
-            chsplit = 489
     else:
         raise ValueError("Unknown detector")
 
     basex, basey = np.meshgrid(np.arange(xsize), np.arange(ysize))
     if mode == "NIRS":
-        beta_orig = np.full((ysize, xsize), np.nan)
         alpha_orig = np.full((ysize, xsize), np.nan)
         ifu_wcs = nrs_ifu_wcs(model)
         for slice_wcs in ifu_wcs:
             x, y = gwcs.wcstools.grid_from_bounding_box(slice_wcs.bounding_box)
-            beta, alpha, _ = slice_wcs.transform("detector", "slicer", x, y)
+            _, alpha, _ = slice_wcs.transform("detector", "slicer", x, y)
             idx = y.astype(int), x.astype(int)
-            beta_orig[*idx] = beta
+
             # Flip alpha so in same direction as increasing Y
             alpha_orig[*idx] = -alpha
 
-        # NIRSpec can sort just by ordering slices by beta
-        uqbeta = np.unique(beta_orig[np.isfinite(beta_orig)])
-
-        # NIRSpec uses fluxes in normal orientation
+        # NIRSpec uses fluxes in normal orientation and
+        # has the region map already stored in the datamodel
         flux_orig = model.data
+        region_map = model.regions
 
         # Set up the column fitting order by detector
         if detector == "NRS1":
@@ -899,28 +889,16 @@ def fit_and_oversample_ifu(
             col_index = range(xsize - 1, 0, -1)
     else:
         ifu_wcs = None
-        alpha_orig, beta_orig, _ = model.meta.wcs.transform(
-            "detector", "alpha_beta", np.rot90(basey, k=1), np.rot90(basex, k=-1)
-        )
+        det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
+        alpha_orig, _, _ = det2ab_transform(np.rot90(basey, k=1), np.rot90(basex, k=-1))
 
-        # todo - consider using label mapper in wcs instead
-        # MIRI needs a more difficult way of sorting slices left to right
-        # respecting channel boundary.
-        # Hack beta of one side of the detector to ensure no overlap with the other
-        beta_orig[:, 0:503] += 10
-        uqbeta = []
-        btemp = beta_orig[500, :]
-        btemp = btemp[np.isfinite(btemp)]
-        for tt in range(0, len(btemp)):
-            if btemp[tt] not in uqbeta:
-                uqbeta = np.append(uqbeta, btemp[tt])
-        uqbeta = np.array(uqbeta)
-        log.debug(f"Found {len(uqbeta)} slices.")
+        # Region map is stored in the transform
+        region_map = det2ab_transform.label_mapper.mapper
 
         # MIRI will rotate all arrays for convenience to line up with NIRSpec convention
         flux_orig = np.rot90(model.data)
         alpha_orig = np.rot90(alpha_orig)
-        beta_orig = np.rot90(beta_orig)
+        region_map = np.rot90(region_map)
 
         # For MIRI fitting order,  we need to start on the left and run to the middle,
         # and then on the right to the middle in order to have the middle
@@ -929,17 +907,11 @@ def fit_and_oversample_ifu(
             [np.arange(0, xsize // 2 + 1), np.arange(xsize - 1, xsize // 2, -1)]
         )
 
-    # Make a region map from unique beta values
-    region_map = np.zeros((ysize, xsize), dtype=np.uint32)
-    for ii in range(len(uqbeta)):
-        indx = np.where(beta_orig == uqbeta[ii])
-        region_map[indx] = ii + 1
-
     # Set thresholding for the bspline fitting
     # Do some statistics on the overall cal file
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", category=AstropyUserWarning)
-        overall_mean, _, overall_rms = scs(flux_orig)
+        overall_mean, _, overall_rms = scs(flux_orig[region_map > 0])
 
     # Need to ensure that the median pixel value isn't negative, because that causes chaos
     # Subtract off that constant
@@ -948,30 +920,25 @@ def fit_and_oversample_ifu(
         overall_mean = 0
 
     # Define a per-slice analysis threshold (must be brighter than some level above background)
-    signal_threshold = np.full(len(uqbeta), np.nan)
-
+    slice_numbers = np.unique(region_map[region_map > 0])
     if mode == "NIRS":
         # For NIRSpec all slices have the same threshold
-        signal_threshold[:] = overall_mean + threshsig * overall_rms
-
+        threshold = overall_mean + threshsig * overall_rms
+        signal_threshold = dict.fromkeys(slice_numbers, threshold)
     else:
         # For MIRI we need each channel to have its own threshold, particularly for Ch3/Ch4
         # since the sky is so much brighter in Ch4
-        # Ch1/4
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=AstropyUserWarning)
-            ch_mean, _, ch_rms = scs(flux_orig[chsplit:, :])
-        slnum_in_ch = np.unique(region_map[chsplit:, :])
-        for slnum in slnum_in_ch[slnum_in_ch > 0]:
-            signal_threshold[slnum - 1] = ch_mean + threshsig * ch_rms
-
-        # Ch2/3
-        with warnings.catch_warnings():
-            warnings.filterwarnings("ignore", category=AstropyUserWarning)
-            ch_mean, _, ch_rms = scs(flux_orig[0:chsplit, :])
-        slnum_in_ch = np.unique(region_map[0:chsplit, :])
-        for slnum in slnum_in_ch[slnum_in_ch > 0]:
-            signal_threshold[slnum - 1] = ch_mean + threshsig * ch_rms
+        signal_threshold = dict.fromkeys(slice_numbers, np.nan)
+        for channel in [100, 200, 300, 400]:
+            ch_data = (region_map >= channel) & (region_map < channel + 100)
+            if not np.any(ch_data):
+                continue
+            with warnings.catch_warnings():
+                warnings.filterwarnings("ignore", category=AstropyUserWarning)
+                ch_mean, _, ch_rms = scs(flux_orig[ch_data])
+            for slnum in slice_numbers:
+                if channel <= slnum < channel + 100:
+                    signal_threshold[slnum] = ch_mean + threshsig * ch_rms
 
     fit_kwargs = {
         "lrange": lrange,
@@ -1063,13 +1030,8 @@ def fit_and_oversample_ifu(
     # todo - update dnu to flux_estimated if no longer nan
     closest_pix = (np.round(y_os).astype(int), np.round(x_os).astype(int))
     dq_os = dq[*closest_pix]
-    regions_os, pathloss_point_os, pathloss_uniform_os = None, None, None
-    if model.hasattr("regions"):
-        regions_os = model.regions[*closest_pix]
-    elif mode == "MIRI":
-        det2ab_transform = model.meta.wcs.get_transform("detector", "alpha_beta")
-        regions = np.rot90(det2ab_transform.label_mapper.mapper)
-        regions_os = regions[*closest_pix]
+    regions_os = region_map[*closest_pix]
+    pathloss_point_os, pathloss_uniform_os = None, None
     if model.hasattr("pathloss_point"):
         pathloss_point_os = model.pathloss_point[*closest_pix]
     if model.hasattr("pathloss_uniform"):
