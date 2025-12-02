@@ -20,7 +20,7 @@ slice_gap[:, 55:75] = 3
 slice_gap[:, 80:] = 4
 
 
-def dummy_wcs(x, y):
+def mock_wcs(x, y):
     """Simple WCS for testing"""
 
     global xcenter, ycenter, shape, slice_gap
@@ -237,7 +237,8 @@ def test_footprint_miri():
     input_model.meta.instrument.band = "SHORT"
 
     input_model.data = np.zeros(shape)
-    input_model.meta.wcs = dummy_wcs
+    input_model.meta.wcs = mock_wcs
+    input_model.meta.wcs.available_frames = ["detector", "world"]
 
     this_channel = "3"
     coord_system = "skyalign"
