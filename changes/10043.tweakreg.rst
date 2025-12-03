@@ -1,0 +1,1 @@
+Add GAIAREFCAT as a supported option for the abs_refcat parameter

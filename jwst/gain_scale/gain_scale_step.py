@@ -28,41 +28,41 @@ class GainScaleStep(Step):
 
         Parameters
         ----------
-        step_input : datamodel
+        step_input : str or `~stdatamodels.jwst.datamodels.ImageModel` \
+                     or `~stdatamodels.jwst.datamodels.CubeModel`
             Input datamodel on which to perform gain scale step.
 
         Returns
         -------
-        result : datamodel
+        result : `~stdatamodels.jwst.datamodels.ImageModel` \
+                 or `~stdatamodels.jwst.datamodels.CubeModel`
             Output datamodel on which the gain scale step has been performed.
         """
         # Open the input data model
-        with datamodels.open(step_input) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        result = self.prepare_output(step_input)
 
-            # Is the gain_factor already populated in the input model?
-            if result.meta.exposure.gain_factor is None:
-                # Try to get the gain factor from the gain reference file
-                gain_filename = self.get_reference_file(result, "gain")
-                if gain_filename != "N/A":
-                    log.info("Using GAIN reference file: %s", gain_filename)
-                    with datamodels.GainModel(gain_filename) as gain_model:
-                        gain_factor = gain_model.meta.exposure.gain_factor
-                else:
-                    gain_factor = None
-
-                # Try to read the GAINFACT keyword value
-                if gain_factor is None:
-                    log.info("GAINFACT not found in gain reference file")
-                    log.info("Step will be skipped")
-                    result.meta.cal_step.gain_scale = "SKIPPED"
-                    return result
-
+        # Is the gain_factor already populated in the input model?
+        if result.meta.exposure.gain_factor is None:
+            # Try to get the gain factor from the gain reference file
+            gain_filename = self.get_reference_file(result, "gain")
+            if gain_filename != "N/A":
+                log.info("Using GAIN reference file: %s", gain_filename)
+                with datamodels.GainModel(gain_filename) as gain_model:
+                    gain_factor = gain_model.meta.exposure.gain_factor
             else:
-                gain_factor = input_model.meta.exposure.gain_factor
+                gain_factor = None
 
-            # Do the scaling
-            result = gain_scale.do_correction(result, gain_factor)
+            # Try to read the GAINFACT keyword value
+            if gain_factor is None:
+                log.info("GAINFACT not found in gain reference file")
+                log.info("Step will be skipped")
+                result.meta.cal_step.gain_scale = "SKIPPED"
+                return result
+
+        else:
+            gain_factor = result.meta.exposure.gain_factor
+
+        # Do the scaling
+        result = gain_scale.do_correction(result, gain_factor)
 
         return result

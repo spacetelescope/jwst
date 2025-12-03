@@ -1,4 +1,3 @@
-#! /usr/bin/env python
 import logging
 
 import numpy as np
@@ -107,15 +106,14 @@ def create_integration_model(input_model, integ_info, int_times):
         The output CubeModel to be returned from the ramp fit step.
     """
     data, dq, var_poisson, var_rnoise, err = integ_info
-    int_model = datamodels.CubeModel(
-        data=np.zeros(data.shape, dtype=np.float32),
-        dq=np.zeros(data.shape, dtype=np.uint32),
-        var_poisson=np.zeros(data.shape, dtype=np.float32),
-        var_rnoise=np.zeros(data.shape, dtype=np.float32),
-        err=np.zeros(data.shape, dtype=np.float32),
-    )
-    int_model.update(input_model)  # ... and add all keys from input
 
+    # Create output datamodel
+    int_model = datamodels.CubeModel(data.shape)
+
+    # ... and add all keys from input
+    int_model.update(input_model)
+
+    # Populate with output arrays
     int_model.data = data
     int_model.dq = dq
     int_model.var_poisson = var_poisson
@@ -186,91 +184,89 @@ class RampFitStep(Step):
 
         Parameters
         ----------
-        step_input : RampModel
-            The input ramp model to fit the ramps.
+        step_input : str or `~stdatamodels.jwst.datamodels.RampModel`
+            The input file name or ramp model to fit the ramps.
 
         Returns
         -------
-        out_model : ImageModel
+        out_model :  `~stdatamodels.jwst.datamodels.ImageModel`
             The output 2-D image model with the fit ramps.
 
-        int_model : CubeModel
+        int_model : `~stdatamodels.jwst.datamodels.CubeModel`
             The output 3-D image model with the fit ramps for each integration.
         """
         # Open the input data model
-        with datamodels.RampModel(step_input) as input_model:
-            # Work on a copy
-            result = input_model.copy()
+        result = self.prepare_output(step_input, open_as_type=datamodels.RampModel)
 
-            max_cores = self.maximum_cores
-            readnoise_filename = self.get_reference_file(result, "readnoise")
-            gain_filename = self.get_reference_file(result, "gain")
+        max_cores = self.maximum_cores
+        readnoise_filename = self.get_reference_file(result, "readnoise")
+        gain_filename = self.get_reference_file(result, "gain")
 
-            ngroups = input_model.data.shape[1]
-            if self.algorithm.upper() == "LIKELY" and ngroups < LIKELY_MIN_NGROUPS:
-                log.info(
-                    f"When selecting the LIKELY ramp fitting algorithm the"
-                    f" ngroups needs to be a minimum of {LIKELY_MIN_NGROUPS},"
-                    f" but ngroups = {ngroups}.  Due to this, the ramp fitting algorithm"
-                    f" is being changed to OLS_C"
-                )
-                self.algorithm = "OLS_C"
-
-            log.info(f"Using READNOISE reference file: {readnoise_filename}")
-            log.info(f"Using GAIN reference file: {gain_filename}")
-
-            with (
-                datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model,
-                datamodels.GainModel(gain_filename) as gain_model,
-            ):
-                # Try to retrieve the gain factor from the gain reference file.
-                # If found, store it in the science model meta data, so that it's
-                # available later in the gain_scale step, which avoids having to
-                # load the gain ref file again in that step.
-                if gain_model.meta.exposure.gain_factor is not None:
-                    result.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
-
-                # Get gain arrays, subarrays if desired.
-                readnoise_2d, gain_2d = get_reference_file_subarrays(
-                    result, readnoise_model, gain_model
-                )
-
-            log.info(f"Using algorithm = {self.algorithm}")
-            log.info(f"Using weighting = {self.weighting}")
-
-            int_times = result.int_times
-
-            # Set the DO_NOT_USE bit in the groupdq values for groups before firstgroup
-            # and groups after lastgroup
-            firstgroup = self.firstgroup
-            lastgroup = self.lastgroup
-            groupdqflags = dqflags.group
-
-            if firstgroup is not None or lastgroup is not None:
-                set_groupdq(firstgroup, lastgroup, ngroups, result.groupdq, groupdqflags)
-
-            # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
-            # ramp fitting arrays for the ImageModel, the CubeModel, and the
-            # RampFitOutputModel.
-            image_info, integ_info, opt_info = ramp_fit.ramp_fit(
-                result,
-                self.save_opt,
-                readnoise_2d,
-                gain_2d,
-                self.algorithm,
-                self.weighting,
-                max_cores,
-                dqflags.pixel,
-                suppress_one_group=self.suppress_one_group,
+        ngroups = result.data.shape[1]
+        if self.algorithm.upper() == "LIKELY" and ngroups < LIKELY_MIN_NGROUPS:
+            log.info(
+                f"When selecting the LIKELY ramp fitting algorithm the"
+                f" ngroups needs to be a minimum of {LIKELY_MIN_NGROUPS},"
+                f" but ngroups = {ngroups}.  Due to this, the ramp fitting algorithm"
+                f" is being changed to OLS_C"
             )
+            self.algorithm = "OLS_C"
+
+        log.info(f"Using READNOISE reference file: {readnoise_filename}")
+        log.info(f"Using GAIN reference file: {gain_filename}")
+
+        with (
+            datamodels.ReadnoiseModel(readnoise_filename) as readnoise_model,
+            datamodels.GainModel(gain_filename) as gain_model,
+        ):
+            # Try to retrieve the gain factor from the gain reference file.
+            # If found, store it in the science model meta data, so that it's
+            # available later in the gain_scale step, which avoids having to
+            # load the gain ref file again in that step.
+            if gain_model.meta.exposure.gain_factor is not None:
+                result.meta.exposure.gain_factor = gain_model.meta.exposure.gain_factor
+
+            # Get gain arrays, subarrays if desired.
+            readnoise_2d, gain_2d = get_reference_file_subarrays(
+                result, readnoise_model, gain_model
+            )
+
+        log.info(f"Using algorithm = {self.algorithm}")
+        log.info(f"Using weighting = {self.weighting}")
+
+        int_times = result.int_times
+
+        # Set the DO_NOT_USE bit in the groupdq values for groups before firstgroup
+        # and groups after lastgroup
+        firstgroup = self.firstgroup
+        lastgroup = self.lastgroup
+        groupdqflags = dqflags.group
+
+        if firstgroup is not None or lastgroup is not None:
+            set_groupdq(firstgroup, lastgroup, ngroups, result.groupdq, groupdqflags)
+
+        # Run ramp_fit(), ignoring all DO_NOT_USE groups, and return the
+        # ramp fitting arrays for the ImageModel, the CubeModel, and the
+        # RampFitOutputModel.
+        image_info, integ_info, opt_info = ramp_fit.ramp_fit(
+            result,
+            self.save_opt,
+            readnoise_2d,
+            gain_2d,
+            self.algorithm,
+            self.weighting,
+            max_cores,
+            dqflags.pixel,
+            suppress_one_group=self.suppress_one_group,
+        )
 
         # Save the OLS_C optional fit product, if it exists.
         if opt_info is not None:
             opt_model = create_optional_results_model(result, opt_info)
             self.save_model(opt_model, "fitopt", output_file=self.opt_name)
 
-        out_model, int_model = None, None
         # Create models from possibly updated info
+        out_model, int_model = None, None
         if image_info is not None and integ_info is not None:
             out_model = create_image_model(result, image_info)
             out_model.meta.bunit_data = "DN/s"
@@ -287,8 +283,10 @@ class RampFitStep(Step):
             int_model.meta.bunit_err = "DN/s"
             int_model.meta.cal_step.ramp_fit = "COMPLETE"
 
-        # Cleanup
-        del result
+        # The ramp model is no longer needed:
+        # delete it if it is not the same as the step input
+        if result is not step_input:
+            del result
 
         return out_model, int_model
 
