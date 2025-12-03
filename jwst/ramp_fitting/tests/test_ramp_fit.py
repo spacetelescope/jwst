@@ -353,7 +353,7 @@ class TestMethods:
 
         # expect SATURATED
         dq = slopes[1]
-        assert dq[50, 51] == GOOD
+        assert dq[50, 51] == SATURATED
 
         # expect SATURATED and DO_NOT_USE, because 1st group is Saturated
         assert dq[50, 52] == SATURATED | DO_NOT_USE
