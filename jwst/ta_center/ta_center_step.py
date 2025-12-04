@@ -42,20 +42,25 @@ class TACenterStep(Step):
         """
         result = self.prepare_output(step_input)
         if isinstance(result, dm.ModelContainer):
+            container = result.copy()
             # Extract science and TA image from container
             result, ta_model = self._ta_image_from_container(result)
             self.ta_file = ta_model
+        else:
+            container = None
 
         # Ensure TA file is provided
         if str(self.ta_file).lower() == "none":
             log.error("No target acquisition file provided. Step will be SKIPPED.")
             result.meta.cal_step.ta_center = "SKIPPED"
+            result = self._rebuild_container(container, result)
             return result
 
         # Check that this is a point source
         if result.meta.target.source_type != "POINT":
             log.error("TA centering is only implemented for point sources. Step will be SKIPPED.")
             result.meta.cal_step.ta_center = "SKIPPED"
+            result = self._rebuild_container(container, result)
             return result
 
         # Check exposure type
@@ -66,6 +71,7 @@ class TACenterStep(Step):
                 " MIR_LRS-SLITLESS modes. Step will be SKIPPED."
             )
             result.meta.cal_step.ta_center = "SKIPPED"
+            result = self._rebuild_container(container, result)
             return result
 
         # Read the TA image
@@ -79,6 +85,7 @@ class TACenterStep(Step):
                     " Step will be SKIPPED."
                 )
                 result.meta.cal_step.ta_center = "SKIPPED"
+                result = self._rebuild_container(container, result)
                 return result
 
         # read specwcs to get necessary reference points on detector
@@ -129,6 +136,8 @@ class TACenterStep(Step):
         result.source_ypos = y_center
         result.meta.cal_step.ta_center = "COMPLETE"
 
+        # Reconstruct the container if needed
+        result = self._rebuild_container(container, result)
         return result
 
     def _ta_image_from_container(self, container):
@@ -155,6 +164,29 @@ class TACenterStep(Step):
         else:
             ta_model = container[ta_idx[0]]
         return sci_model, ta_model
+
+    def _rebuild_container(self, container, updated_sci_model):
+        """
+        Rebuild the container with the updated science model.
+
+        Parameters
+        ----------
+        container : ModelContainer or DataModel
+            The original container if present. If None, the updated science model
+            is returned as is.
+        updated_sci_model : DataModel
+            The updated science data model.
+
+        Returns
+        -------
+        new_container : ModelContainer
+            The rebuilt container with the updated science model.
+        """
+        if container is None:
+            return updated_sci_model
+        sci_idx = container.ind_asn_type("science")
+        container[sci_idx[0]] = updated_sci_model
+        return container
 
 
 def _get_wavelength(filter_name):  # numpydoc ignore=RT01

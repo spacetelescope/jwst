@@ -2,6 +2,7 @@ import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
 
+from jwst.datamodels import ModelContainer
 from jwst.ta_center.ta_center_step import TACenterStep, _get_wavelength
 from jwst.ta_center.tests.helpers import (
     X_REF_SLIT,
@@ -289,19 +290,23 @@ def test_ta_center_asn(input_model_slit, tmp_cwd, mock_references):
     # Run the step on the association
     result = TACenterStep.call(asn_fname)
 
+    assert isinstance(result, ModelContainer)
+    sci_idx = result.ind_asn_type("science")
+    sci_model = result[sci_idx[0]]
+
     # Check that the result is the science exposure with TA centering applied
-    assert result.meta.cal_step.ta_center == "COMPLETE"
+    assert sci_model.meta.cal_step.ta_center == "COMPLETE"
 
     # Expected center position (reference position + offset)
     expected_x = X_REF_SLIT + offset[0]
     expected_y = Y_REF_SLIT + offset[1]
 
     # Check that the computed center is close to the expected position
-    assert np.isclose(result.source_xpos, expected_x, atol=0.05), (
-        f"X center {result.source_xpos:.2f} not close to expected {expected_x:.2f}"
+    assert np.isclose(sci_model.source_xpos, expected_x, atol=0.05), (
+        f"X center {sci_model.source_xpos:.2f} not close to expected {expected_x:.2f}"
     )
-    assert np.isclose(result.source_ypos, expected_y, atol=0.05), (
-        f"Y center {result.source_ypos:.2f} not close to expected {expected_y:.2f}"
+    assert np.isclose(sci_model.source_ypos, expected_y, atol=0.05), (
+        f"Y center {sci_model.source_ypos:.2f} not close to expected {expected_y:.2f}"
     )
 
 
@@ -313,7 +318,11 @@ def test_ta_center_asn_no_ta(input_model_slit, tmp_cwd, mock_references):
     # Run the step on the association
     result = TACenterStep.call(asn_fname)
 
+    assert isinstance(result, ModelContainer)
+    sci_idx = result.ind_asn_type("science")
+    sci_model = result[sci_idx[0]]
+
     # Check that the step was skipped
-    assert result.meta.cal_step.ta_center == "SKIPPED"
-    assert not result.hasattr("source_xpos")
-    assert not result.hasattr("source_ypos")
+    assert sci_model.meta.cal_step.ta_center == "SKIPPED"
+    assert not sci_model.hasattr("source_xpos")
+    assert not sci_model.hasattr("source_ypos")
