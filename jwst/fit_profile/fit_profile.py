@@ -8,8 +8,10 @@ from astropy.stats import sigma_clipped_stats as scs
 from astropy.utils.exceptions import AstropyUserWarning
 from scipy.interpolate import make_lsq_spline
 from scipy.signal import find_peaks
+from stdatamodels.jwst.datamodels import dqflags
 
 from jwst.assign_wcs.nirspec import nrs_ifu_wcs
+from jwst.lib.pipe_utils import match_nans_and_flags
 
 __all__ = [
     "bspline_fit",
@@ -411,7 +413,7 @@ def _profile_image(shape, spline_models, spline_scales, region_map, alpha):
     return profile
 
 
-def _linear_interp(col_y, col_flux, y_interp, edge_limit):
+def _linear_interp(col_y, col_flux, y_interp, edge_limit, preserve_nan=True):
     """
     Perform a linear interpolation at one column.
 
@@ -426,6 +428,8 @@ def _linear_interp(col_y, col_flux, y_interp, edge_limit):
     edge_limit : int
         If greater than zero, this many pixels at the edges of
         the interpolated values will be set to NaN.
+    preserve_nan : bool, optional
+        If True, NaNs in the input will be preserved in the output.
 
     Returns
     -------
@@ -442,14 +446,15 @@ def _linear_interp(col_y, col_flux, y_interp, edge_limit):
         interpolated_flux[-edge_limit:] = np.nan
 
     # Check for NaNs in the input: they should be preserved in the output
-    closest_pix = np.round(y_interp).astype(int)
-    is_nan = ~np.isfinite(col_flux[closest_pix])
-    interpolated_flux[is_nan] = np.nan
+    if preserve_nan:
+        closest_pix = np.round(y_interp).astype(int)
+        is_nan = ~np.isfinite(col_flux[closest_pix])
+        interpolated_flux[is_nan] = np.nan
 
     return interpolated_flux
 
 
-def linear_oversample(data, region_map, oversample_factor, require_ngood):
+def linear_oversample(data, region_map, oversample_factor, require_ngood, preserve_nan=True):
     """
     Oversample the input data with a linear interpolation.
 
@@ -467,6 +472,8 @@ def linear_oversample(data, region_map, oversample_factor, require_ngood):
         Scaling factor to oversample by.
     require_ngood : int
         Minimum number of pixels required in a column to perform an interpolation.
+    preserve_nan : bool, optional
+        If True, NaNs in the input will be preserved in the output.
 
     Returns
     -------
@@ -506,7 +513,9 @@ def linear_oversample(data, region_map, oversample_factor, require_ngood):
                 int(col_y[valid_y].min()), int(col_y[valid_y].max()), scale=oversample_factor
             )
 
-            os_data[newy, ii] = _linear_interp(col_y, col_flux, oldy, edge_limit)
+            os_data[newy, ii] = _linear_interp(
+                col_y, col_flux, oldy, edge_limit, preserve_nan=preserve_nan
+            )
 
     return os_data
 
@@ -1020,14 +1029,7 @@ def fit_and_oversample_ifu(
         errors = [np.rot90(err) for err in errors]
         dq = np.rot90(dq)
 
-    # Simple linear oversample for the error arrays
-    errors_os = []
-    for error_array in errors:
-        error_os = linear_oversample(error_array, region_map, oversample_factor, require_ngood)
-        errors_os.append(error_os)
-
-    # Nearest pixel for the dq and regions array
-    # todo - update dnu to flux_estimated if no longer nan
+    # Nearest pixel interpolation for the dq and regions array
     closest_pix = (np.round(y_os).astype(int), np.round(x_os).astype(int))
     dq_os = dq[*closest_pix]
     regions_os = region_map[*closest_pix]
@@ -1036,6 +1038,25 @@ def fit_and_oversample_ifu(
         pathloss_point_os = model.pathloss_point[*closest_pix]
     if model.hasattr("pathloss_uniform"):
         pathloss_uniform_os = model.pathloss_uniform[*closest_pix]
+
+    # Update the DQ image for pixels that used to be NaN, now replaced by spline interpolation.
+    # Remove the DO_NOT_USE flag, add FLUX_ESTIMATED
+    is_estimated = ~np.isnan(flux_os) & ((dq_os & dqflags.pixel["DO_NOT_USE"]) > 0)
+    dq_os[is_estimated] ^= dqflags.pixel["DO_NOT_USE"]
+    dq_os[is_estimated] |= dqflags.pixel["FLUX_ESTIMATED"]
+
+    # Simple linear oversample for the error arrays
+    errors_os = []
+    for error_array in errors:
+        error_os = linear_oversample(
+            error_array, region_map, oversample_factor, require_ngood, preserve_nan=False
+        )
+
+        # Restore NaNs from the input, except at the estimated locations
+        is_nan = ~np.isfinite(error_array[closest_pix])
+        error_os[is_nan & ~is_estimated] = np.nan
+
+        errors_os.append(error_os)
 
     # Update the wcs for new pixel scale
     scale = oversample_factor
@@ -1097,5 +1118,8 @@ def fit_and_oversample_ifu(
         model.pathloss_point = pathloss_point_os
     if pathloss_uniform_os is not None:
         model.pathloss_uniform = pathloss_uniform_os
+
+    # Make sure NaNs and DO_NOT_USE flags match in all extensions
+    match_nans_and_flags(model)
 
     return model
