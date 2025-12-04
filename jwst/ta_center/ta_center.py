@@ -1,7 +1,9 @@
 import logging
+import warnings
 
 import numpy as np
 from astropy.modeling import Fittable2DModel, fitting, models
+from astropy.utils.exceptions import AstropyUserWarning
 
 import jwst.datamodels as dm
 from jwst.pathloss.pathloss import calculate_pathloss_vector
@@ -206,10 +208,16 @@ def _fit_catch_errors(model_init, x, y, data, mask):
     """
     fitter = fitting.LevMarLSQFitter()
     try:
-        fitted_model = fitter(model_init, x[mask], y[mask], data[mask])
+        with warnings.catch_warnings():
+            warnings.filterwarnings("error", category=AstropyUserWarning)
+            fitted_model = fitter(model_init, x[mask], y[mask], data[mask])
     except TypeError as e:
         if str(e).startswith("Improper input: func input vector length"):
             raise NoFinitePixelsError("Not enough finite pixels for fitting") from e
+    except AstropyUserWarning as e:  # Raised if fit does not converge
+        fit_status = fitter.fit_info["ierr"]
+        msg = fitter.fit_info["message"]
+        raise BadFitError(f"Model fitting failed with status code {fit_status}: {msg}") from e
 
     # Build the model image from the fitted model and compare with the data
     fitted_image = fitted_model(x, y)

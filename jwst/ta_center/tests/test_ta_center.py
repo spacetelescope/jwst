@@ -287,6 +287,24 @@ def test_skip_mostly_nan(input_model_slit, tmp_path, mock_references, log_watche
     _tests_for_skipped_step(result)
 
 
+def test_skip_nonconverge(input_model_slitless, tmp_path, mock_references, log_watcher):
+    """Test that step raises an error when the model fit does not converge."""
+    rng = np.random.default_rng(42)
+    data = rng.choice([0, 10000], size=MIRI_DETECTOR_SHAPE)
+    ta_model = make_ta_model(data)
+
+    ta_path = tmp_path / "ta_nonconverge.fits"
+    ta_model.save(str(ta_path))
+
+    watcher = log_watcher(
+        "jwst.ta_center.ta_center_step", message="Model fitting failed with status code"
+    )
+    result = TACenterStep.call(input_model_slitless, ta_file=str(ta_path))
+    watcher.assert_seen()
+
+    _tests_for_skipped_step(result)
+
+
 def test_skip_bad_fit(input_model_slit, tmp_path, mock_references, log_watcher):
     """Test that step raises an error when the model fit is poor."""
     # Create a TA model with a source far from the reference position
