@@ -28,14 +28,14 @@ class TACenterStep(Step):
 
         Parameters
         ----------
-        step_input : str, `~jwst.datamodels.ModelContainer`, \
+        step_input : str, `~jwst.datamodels.container.ModelContainer`, \
                 `~stdatamodels.jwst.datamodels.ImageModel`, \
                 `~stdatamodels.jwst.datamodels.CubeModel`
             The input data model or association.
 
         Returns
         -------
-        result : `~jwst.datamodels.ModelContainer`, \
+        result : `~jwst.datamodels.container.ModelContainer`, \
                 `~stdatamodels.jwst.datamodels.ImageModel`, \
                 `~stdatamodels.jwst.datamodels.CubeModel`
             The output data model or association with TA centering applied.
