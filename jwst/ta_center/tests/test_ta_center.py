@@ -5,6 +5,7 @@ import stdatamodels.jwst.datamodels as dm
 from jwst.datamodels import ModelContainer
 from jwst.ta_center.ta_center_step import TACenterStep, _get_wavelength
 from jwst.ta_center.tests.helpers import (
+    MIRI_DETECTOR_SHAPE,
     X_REF_SLIT,
     X_REF_SLITLESS,
     Y_REF_SLIT,
@@ -221,27 +222,21 @@ def test_ta_center_slit(input_model_slit, offset, tmp_path, mock_references):
 def test_skip_no_ta_file(input_model_slit):
     """Test that step is skipped when no TA file is provided."""
     result = TACenterStep.call(input_model_slit, ta_file=None)
-    assert result.meta.cal_step.ta_center == "SKIPPED"
-    assert not result.hasattr("source_xpos")
-    assert not result.hasattr("source_ypos")
+    _tests_for_skipped_step(result)
 
 
 def test_skip_extended_source(input_model_slit, slitless_ta_image):
     """Test that step is skipped for extended sources."""
     input_model_slit.meta.target.source_type = "EXTENDED"
     result = TACenterStep.call(input_model_slit, ta_file=slitless_ta_image)
-    assert result.meta.cal_step.ta_center == "SKIPPED"
-    assert not result.hasattr("source_xpos")
-    assert not result.hasattr("source_ypos")
+    _tests_for_skipped_step(result)
 
 
 def test_skip_wrong_exp_type(input_model_slit, slitless_ta_image):
     """Test that step is skipped for unsupported exposure types."""
     input_model_slit.meta.exposure.type = "MIR_IMAGE"
     result = TACenterStep.call(input_model_slit, ta_file=slitless_ta_image)
-    assert result.meta.cal_step.ta_center == "SKIPPED"
-    assert not result.hasattr("source_xpos")
-    assert not result.hasattr("source_ypos")
+    _tests_for_skipped_step(result)
 
 
 def test_skip_unknown_filter(input_model_slit, slitless_ta_image, tmp_path):
@@ -253,9 +248,7 @@ def test_skip_unknown_filter(input_model_slit, slitless_ta_image, tmp_path):
         ta_model.save(str(ta_path))
 
     result = TACenterStep.call(input_model_slit, ta_file=str(ta_path))
-    assert result.meta.cal_step.ta_center == "SKIPPED"
-    assert not result.hasattr("source_xpos")
-    assert not result.hasattr("source_ypos")
+    _tests_for_skipped_step(result)
 
 
 def test_skip_no_finite_pixels(input_model_slit, tmp_path, mock_references, log_watcher):
@@ -273,9 +266,43 @@ def test_skip_no_finite_pixels(input_model_slit, tmp_path, mock_references, log_
     result = TACenterStep.call(input_model_slit, ta_file=str(ta_path))
     watcher.assert_seen()
 
-    assert result.meta.cal_step.ta_center == "SKIPPED"
-    assert not result.hasattr("source_xpos")
-    assert not result.hasattr("source_ypos")
+    _tests_for_skipped_step(result)
+
+
+def test_skip_mostly_nan(input_model_slit, tmp_path, mock_references, log_watcher):
+    """Test that step raises an error when center-finding does not converge."""
+    # Create a TA model with a source far from the reference position
+    data = np.zeros(MIRI_DETECTOR_SHAPE) * np.nan
+    data[int(Y_REF_SLIT) + 1, int(X_REF_SLIT) + 1] = 1
+
+    ta_model = make_ta_model(data)
+
+    ta_path = tmp_path / "ta_nonconverge.fits"
+    ta_model.save(str(ta_path))
+
+    watcher = log_watcher("jwst.ta_center.ta_center_step", message="Not enough finite pixels")
+    result = TACenterStep.call(input_model_slit, ta_file=str(ta_path))
+    watcher.assert_seen()
+
+    _tests_for_skipped_step(result)
+
+
+def test_skip_bad_fit(input_model_slit, tmp_path, mock_references, log_watcher):
+    """Test that step raises an error when the model fit is poor."""
+    # Create a TA model with a source far from the reference position
+    data = np.ones(MIRI_DETECTOR_SHAPE) * -1.0
+    ta_model = make_ta_model(data)
+
+    ta_path = tmp_path / "ta_bad_fit.fits"
+    ta_model.save(str(ta_path))
+
+    watcher = log_watcher(
+        "jwst.ta_center.ta_center_step", message="Fitted model residuals are larger than threshold"
+    )
+    result = TACenterStep.call(input_model_slit, ta_file=str(ta_path))
+    watcher.assert_seen()
+
+    _tests_for_skipped_step(result)
 
 
 def test_ta_center_asn(input_model_slit, tmp_cwd, mock_references):
@@ -323,6 +350,10 @@ def test_ta_center_asn_no_ta(input_model_slit, tmp_cwd, mock_references):
     sci_model = result[sci_idx[0]]
 
     # Check that the step was skipped
-    assert sci_model.meta.cal_step.ta_center == "SKIPPED"
-    assert not sci_model.hasattr("source_xpos")
-    assert not sci_model.hasattr("source_ypos")
+    _tests_for_skipped_step(sci_model)
+
+
+def _tests_for_skipped_step(model):
+    assert model.meta.cal_step.ta_center == "SKIPPED"
+    assert not model.hasattr("source_xpos")
+    assert not model.hasattr("source_ypos")

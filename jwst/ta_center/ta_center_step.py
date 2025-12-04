@@ -3,7 +3,7 @@ import logging
 import jwst.datamodels as dm
 from jwst.assign_wcs.miri import retrieve_filter_offset
 from jwst.stpipe import Step
-from jwst.ta_center.ta_center import NoFinitePixelsError, center_from_ta_image
+from jwst.ta_center.ta_center import BadFitError, NoFinitePixelsError, center_from_ta_image
 
 __all__ = ["TACenterStep"]
 
@@ -116,7 +116,7 @@ class TACenterStep(Step):
                 subarray_origin=(xstart, ystart),
                 pathloss_file=pathloss_file,
             )
-        except NoFinitePixelsError as e:
+        except (NoFinitePixelsError, BadFitError) as e:
             log.error(f"Error during TA centering: {e}. Step will be SKIPPED.")
             result.meta.cal_step.ta_center = "SKIPPED"
             return result

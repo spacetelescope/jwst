@@ -22,6 +22,12 @@ class NoFinitePixelsError(Exception):
     pass
 
 
+class BadFitError(Exception):
+    """Custom exception raised when the model fit does not meet quality criteria."""
+
+    pass
+
+
 def center_from_ta_image(
     ta_image, wavelength, ref_center, subarray_origin=(1, 1), pathloss_file=None
 ):
@@ -162,20 +168,62 @@ def _fit_airy_disk(ta_image, wavelength, pathloss_model=None):
         compound_model = airy_init * pathloss_model
 
         # Fit the compound model to filtered data
-        fitter = fitting.LevMarLSQFitter()
-        fitted_model = fitter(compound_model, x[mask], y[mask], ta_image[mask])
+        fitted_model = _fit_catch_errors(compound_model, x, y, ta_image, mask)
         # Extract parameters from the left side of the compound model (Airy disk)
         x_center = fitted_model.left.x_0.value
         y_center = fitted_model.left.y_0.value
 
     else:
         # Fit the model to filtered data
-        fitter = fitting.LevMarLSQFitter()
-        airy_fit = fitter(airy_init, x[mask], y[mask], ta_image[mask])
-        x_center = airy_fit.x_0.value
-        y_center = airy_fit.y_0.value
+        fitted_model = _fit_catch_errors(airy_init, x, y, ta_image, mask)
+        x_center = fitted_model.x_0.value
+        y_center = fitted_model.y_0.value
 
     return x_center, y_center
+
+
+def _fit_catch_errors(model_init, x, y, data, mask):
+    """
+    Fit a model to data, catching common fitting errors and raising custom types.
+
+    Parameters
+    ----------
+    model_init : Fittable2DModel
+        Initial model to fit.
+    x : ndarray
+        X coordinate grid.
+    y : ndarray
+        Y coordinate grid.
+    data : ndarray
+        2D data array to fit.
+    mask : ndarray
+        Boolean mask array indicating valid data points.
+
+    Returns
+    -------
+    fitted_model : Fittable2DModel
+        Fitted model.
+    """
+    fitter = fitting.LevMarLSQFitter()
+    try:
+        fitted_model = fitter(model_init, x[mask], y[mask], data[mask])
+    except TypeError as e:
+        if str(e).startswith("Improper input: func input vector length"):
+            raise NoFinitePixelsError("Not enough finite pixels for fitting") from e
+
+    # Build the model image from the fitted model and compare with the data
+    fitted_image = fitted_model(x, y)
+    residuals = data - fitted_image
+    residual_std = np.std(residuals[mask])
+    log.info(f"Fit residuals standard deviation: {residual_std:.4f}")
+
+    # Raise an exception if the fit is bad
+    # For now this is extremely generous - need to check what INS wants here
+    data_std = np.std(data[mask])
+    if residual_std > data_std:
+        raise BadFitError("Fitted model residuals are larger than threshold")
+
+    return fitted_model
 
 
 def _cutout_center(image, center, size=40):
