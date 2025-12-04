@@ -5,6 +5,7 @@ import logging
 import math
 
 import numpy as np
+
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import dqflags
 
@@ -127,7 +128,7 @@ class DataSet:
         flag_pers_cutoff,
         save_persistence,
         persistence_flagging,
-        persistence_flagging_input,
+        persistence_flagging_wanted,
         trap_density_model,
         trappars_model,
         persat_model,
@@ -159,7 +160,7 @@ class DataSet:
         persistence_flagging: ndarray
             Array containing persistence values.
 
-        persistence_flagging_input : bool
+        persistence_flagging_wanted : bool
             True if persistence_array was read from an input file.
 
         trap_density_model : image model
@@ -180,7 +181,7 @@ class DataSet:
         self.flag_pers_cutoff = flag_pers_cutoff
         self.save_persistence = save_persistence
         self.persistence_flagging = persistence_flagging
-        self.persistence_flagging_input = persistence_flagging_input
+        self.persistence_flagging_wanted = persistence_flagging_wanted
         self.output_pers = None
 
         self.trap_density = trap_density_model
@@ -391,15 +392,16 @@ class DataSet:
                     mask = np.where(persistence >= self.flag_pers_cutoff)
                     self.output_obj.pixeldq[mask] |= fl_pers
 
-                if self.persistence_flagging_input:
-                    pass
-                    # XXX Inputting a persistence flagging file is not yet implemented.
-                    #     What type of file will it be?
-                    # self.output_obj.groupdq[integ, group, :, :] |= self.persistence_flagging
-                else:
-                    if integ == 0:
+                if self.persistence_flagging_wanted:
+                    if not self.persistence_flagging_supplied and integ == 0:
                         # Create a persistence flagging array based on saturation in the first integration.
                         self.persistence_flagging[gdq & fl_sat] |= fl_pers
+                    else:
+                        # XXX Inputting a persistence flagging file is not yet implemented.
+                        #     What type of file will it be?
+                        # self.output_obj.groupdq[integ, group, :, :] |= self.persistence_flagging
+                        pass
+
                     self.output_obj.groupdq[integ, group, :, :] |= self.persistence_flagging
 
             # Update traps_filled with the number of traps that captured

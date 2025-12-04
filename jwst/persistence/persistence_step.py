@@ -1,5 +1,7 @@
 import logging
 
+import numpy as np
+
 from stdatamodels.jwst import datamodels
 
 from jwst.persistence import persistence
@@ -17,7 +19,7 @@ class PersistenceStep(Step):
 
     spec = """
         input_trapsfilled = string(default="") # Name of the most recent trapsfilled file for the current detector
-        input_persistence = string(default="") # Name of an input persistence file to be used instead of calculating persistence
+        persistence_flag = string(default="") # Name of an input persistence file to be used instead of calculating persistence
         flag_pers_cutoff = float(default=40.) # Pixels with persistence correction >= this value in DN will be flagged in the DQ
         save_persistence = boolean(default=False) # Save subtracted persistence to an output file with suffix '_output_pers'
         save_trapsfilled = boolean(default=True) # Save updated trapsfilled file with suffix '_trapsfilled'
@@ -49,17 +51,35 @@ class PersistenceStep(Step):
             result = input_model.copy()
 
             # Get the input persistence file, if any
-            if self.input_persistence == "" or self.input_persistence == "None":
+            # For now persistence flag can be None, True, or a filename
+            if self.persistence_flag == True:
+                # Persistence flagging is desired, but no existing persistence flagging
+                # provided, so will be created based on current RampModel.
                 nints, ngroups, nrows, ncols = result.data.shape
                 self.persistence_flagging = np.zeros((nrows, ncols), dtype=np.uint32)
-                self.persistence_flagging_input = False
-            else:
+                self.persistence_flagging_wanted = True
+                self.persistence_flagging_supplied = False
+            elif isinstance(self.persistence_flag, np.ndarray):
+                # Persistence flagging is desired and existing flagging is provided
+                # as an ndarray.
+                self.persistence_flagging = self.persistence_flag
+                self.persistence_flagging_wanted = True
+                self.persistence_flagging_supplied = True
+            elif isinstance(self.persistence_flag, str) and len(self.persistence_flag) > 0:
+                # Persistence flagging is desired and existing flagging is provided
+                # through an input file. 
+                # XXX Not sure what the implementation will be. Possibly a new model,
+                #     but also possibly .npy or .npz file.
                 print("Need to implement opening persistence file.")
-                # XXX Not sure what type of file this will be. Will it contain a datamodel
-                #     or will it contain a basic ndarray (*.npy or *.npz)?
-                self.persistence_flagging = None
-                self.persistence_flagging_input = True
+                self.persistence_flagging = None # Get persistence flagging array from file
+                self.persistence_flagging_wanted = True
+                self.persistence_flagging_supplied = True
                 raise NotImplementedError("Input persistence file not implemented yet.")
+            else:
+                self.persistence_flagging = None
+                self.persistence_flagging_wanted = False
+                self.persistence_flagging_supplied = False
+
             self.trap_density_filename = self.get_reference_file(input_model, "trapdensity")
             self.trappars_filename = self.get_reference_file(input_model, "trappars")
             self.persat_filename = self.get_reference_file(input_model, "persat")
@@ -101,7 +121,7 @@ class PersistenceStep(Step):
                 self.flag_pers_cutoff,
                 self.save_persistence,
                 self.persistence_flagging,
-                self.persistence_flagging_input,
+                self.persistence_flagging_wanted,
                 trap_density_model,
                 trappars_model,
                 persat_model,

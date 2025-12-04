@@ -32,7 +32,7 @@ def test_no_nan():
 def test_get_slice(create_sci_model, create_traps_filled_model):
     """Test the get_slice method."""
     # Create empty DataSet
-    ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
+    ds = persistence.DataSet(None, None, 40.0, False, None, False, None, None, None)
     sci = create_sci_model(3, 12, 512, 512, 257, 769)
     tf = create_traps_filled_model(2048, 2048)
     returned_slice = ds.get_slice(tf, sci)
@@ -49,7 +49,7 @@ def test_ref_matches_sci(create_traps_filled_model):
         Fixture that returns a TrapsFilledModel for testing
     """
     # Create empty DataSet
-    ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
+    ds = persistence.DataSet(None, None, 40.0, False, None, False, None, None, None)
     tf = create_traps_filled_model(2048, 2048)
     test_slices = [
         (slice(0, 2048, None), slice(0, 2048, None)),
@@ -68,7 +68,7 @@ def test_get_subarray(create_trap_density_model):
     (trapdensity and persestencesat)
     """
     # Create empty DataSet
-    ds = persistence.DataSet(None, None, 40.0, False, None, None, None)
+    ds = persistence.DataSet(None, None, 40.0, False, None, False, None, None, None)
     td = create_trap_density_model(2048, 2048)
     td.data[256:768, 1024:1536] = 12.0
     subarray = ds.get_subarray(td, (slice(256, 768, None), slice(1024, 1536, None)))
@@ -150,7 +150,7 @@ def test_get_group_info(create_sci_model):
         Fixture that returns a science DataModel for testing
     """
     output_model = create_sci_model(3, 12, 512, 512, 257, 769)
-    ds = persistence.DataSet(output_model, None, 40.0, False, None, None, None)
+    ds = persistence.DataSet(output_model, None, 40.0, False, None, False, None, None, None)
     integration = 1
     ds.get_group_info(integration)
     assert np.allclose(ds.tframe, 10.73677, rtol=1.0e-7, atol=1.0e-7)
@@ -203,6 +203,8 @@ def test_do_all(
         traps_filled_model,
         40.0,
         False,
+        None, # persistence_flagging,
+        False, # persistence_flagging_wanted,
         trap_density_model,
         trappars_model,
         persistencesat_model,
