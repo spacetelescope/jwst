@@ -578,11 +578,8 @@ class Spec2Pipeline(Pipeline):
             log.debug('Science data does not allow fringe correction. Skipping "fringe".')
             self.fringe.skip = True
 
-        if not self.ta_center.skip and exp_type not in [
-            "MIR_LRS-FIXEDSLIT",
-            "MIR_LRS-SLITLESS",
-        ]:
-            log.debug('Science data does not allow ta_center correction. Skipping "ta_center".')
+        if not self.ta_center.skip and exp_type not in TA_TYPES:
+            log.warning('Science data does not allow ta_center correction. Skipping "ta_center".')
             self.ta_center.skip = True
 
         # Apply pathloss correction to MIRI LRS, NIRSpec, and NIRISS SOSS exposures

@@ -79,7 +79,7 @@ def make_pathloss_model():
 
 def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     """
-    Make a fake MIRI LRS slitless TAQ verification image.
+    Make a fake MIRI LRS slitless TA verification image.
 
     Parameters
     ----------
@@ -91,7 +91,7 @@ def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     Returns
     -------
     data : 2D ndarray
-        Simulated slitless TAQ image.
+        Simulated slitless TA image.
     """
     # Create coordinate grids using full MIRI detector size
     y, x = np.mgrid[0 : MIRI_DETECTOR_SHAPE[0], 0 : MIRI_DETECTOR_SHAPE[1]]
@@ -118,7 +118,7 @@ def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     return data
 
 
-def make_taq_model(data):
+def make_ta_model(data):
     """
     Create a MIRI TA verification image model.
 
@@ -154,7 +154,7 @@ def make_taq_model(data):
 
 def make_slit_data(offset):
     """
-    Make a fake MIRI LRS slit TAQ verification image.
+    Make a fake MIRI LRS slit TA verification image.
 
     The output data are zero everywhere except in the slit region,
     where all data are weighted according to the pathloss correction.
@@ -169,7 +169,7 @@ def make_slit_data(offset):
     Returns
     -------
     model : ImageModel
-        Simulated slit TAQ image model with PSF weighted by pathloss.
+        Simulated slit TA image model with PSF weighted by pathloss.
     """
     wavelength = _get_wavelength("F1500W")
 
@@ -228,7 +228,7 @@ def make_slit_data(offset):
     data[int(Y_REF_SLIT) + 4, int(X_REF_SLIT) + 2] = np.nan
     data[int(Y_REF_SLIT) - 3, int(X_REF_SLIT) - 4] = np.inf
 
-    model = make_taq_model(data)
+    model = make_ta_model(data)
     return model
 
 

@@ -13,7 +13,7 @@ from jwst.ta_center.tests.helpers import (
     make_slit_data,
     make_slitless_data,
     make_ta_association,
-    make_taq_model,
+    make_ta_model,
 )
 
 
@@ -111,8 +111,8 @@ def mock_references(monkeypatch, mock_specwcs_model, mock_pathloss_model, mock_f
 
 
 @pytest.fixture
-def slitless_taq_image(tmp_path):
-    """Generate a slitless TAQ image for testing."""
+def slitless_ta_image(tmp_path):
+    """Generate a slitless TA image for testing."""
     wavelength = _get_wavelength("F1500W")
     offset = (2, -3)
     data = make_slitless_data(wavelength, offset)
@@ -121,9 +121,9 @@ def slitless_taq_image(tmp_path):
     data[int(Y_REF_SLITLESS) + 5, int(X_REF_SLITLESS) + 3] = np.nan
     data[int(Y_REF_SLITLESS) - 4, int(X_REF_SLITLESS) - 2] = np.inf
 
-    model = make_taq_model(data)
+    model = make_ta_model(data)
 
-    filepath = tmp_path / "slitless_taq.fits"
+    filepath = tmp_path / "slitless_ta.fits"
     model.save(filepath)
     return str(filepath)
 
@@ -154,9 +154,9 @@ def input_model_slitless():
     return model
 
 
-def test_ta_center_slitless(input_model_slitless, slitless_taq_image, mock_references):
+def test_ta_center_slitless(input_model_slitless, slitless_ta_image, mock_references):
     # Run the TA centering algorithm
-    result = TACenterStep.call(input_model_slitless, ta_file=slitless_taq_image)
+    result = TACenterStep.call(input_model_slitless, ta_file=slitless_ta_image)
     x_center, y_center = result.source_xpos, result.source_ypos
 
     # Expected center position (reference position + offset)
@@ -193,11 +193,11 @@ def test_ta_center_slit(input_model_slit, offset, tmp_path, mock_references):
     """
 
     # Generate slit data with the specified offset
-    taq_image = make_slit_data(offset=offset)
+    ta_image = make_slit_data(offset=offset)
 
     # Save to file
-    filepath = tmp_path / f"slit_taq_{offset[0]}_{offset[1]}.fits"
-    taq_image.save(filepath)
+    filepath = tmp_path / f"slit_ta_{offset[0]}_{offset[1]}.fits"
+    ta_image.save(filepath)
 
     # Run the TA centering algorithm for slit mode
     result = TACenterStep.call(input_model_slit, ta_file=str(filepath))
@@ -225,29 +225,29 @@ def test_skip_no_ta_file(input_model_slit):
     assert not result.hasattr("source_ypos")
 
 
-def test_skip_extended_source(input_model_slit, slitless_taq_image):
+def test_skip_extended_source(input_model_slit, slitless_ta_image):
     """Test that step is skipped for extended sources."""
     input_model_slit.meta.target.source_type = "EXTENDED"
-    result = TACenterStep.call(input_model_slit, ta_file=slitless_taq_image)
+    result = TACenterStep.call(input_model_slit, ta_file=slitless_ta_image)
     assert result.meta.cal_step.ta_center == "SKIPPED"
     assert not result.hasattr("source_xpos")
     assert not result.hasattr("source_ypos")
 
 
-def test_skip_wrong_exp_type(input_model_slit, slitless_taq_image):
+def test_skip_wrong_exp_type(input_model_slit, slitless_ta_image):
     """Test that step is skipped for unsupported exposure types."""
     input_model_slit.meta.exposure.type = "MIR_IMAGE"
-    result = TACenterStep.call(input_model_slit, ta_file=slitless_taq_image)
+    result = TACenterStep.call(input_model_slit, ta_file=slitless_ta_image)
     assert result.meta.cal_step.ta_center == "SKIPPED"
     assert not result.hasattr("source_xpos")
     assert not result.hasattr("source_ypos")
 
 
-def test_skip_unknown_filter(input_model_slit, slitless_taq_image, tmp_path):
+def test_skip_unknown_filter(input_model_slit, slitless_ta_image, tmp_path):
     """Test that step is skipped for unknown filter."""
     # Create a TA model with an unknown filter
     ta_path = tmp_path / "ta_unknown_filter.fits"
-    with dm.open(slitless_taq_image) as ta_model:
+    with dm.open(slitless_ta_image) as ta_model:
         ta_model.meta.instrument.filter = "N/A"
         ta_model.save(str(ta_path))
 
@@ -261,10 +261,10 @@ def test_skip_no_finite_pixels(input_model_slit, tmp_path, mock_references, log_
     """Test that step raises an error when no finite pixels are present in TA image."""
     # Create a TA model with all non-finite values
     data = np.full((101, 101), np.nan)
-    taq_model = make_taq_model(data)
+    ta_model = make_ta_model(data)
 
     ta_path = tmp_path / "ta_no_finite.fits"
-    taq_model.save(str(ta_path))
+    ta_model.save(str(ta_path))
 
     watcher = log_watcher(
         "jwst.ta_center.ta_center_step", message="All pixels contain non-finite values"
@@ -281,10 +281,10 @@ def test_ta_center_asn(input_model_slit, tmp_cwd, mock_references):
     """Test TA centering step when run on an association with science and TA exposures."""
     # Generate slit TA data with a known offset
     offset = (2.0, -1.5)
-    taq_image = make_slit_data(offset=offset)
+    ta_image = make_slit_data(offset=offset)
 
     # Create association
-    asn_fname = make_ta_association(input_model_slit, taq_image)
+    asn_fname = make_ta_association(input_model_slit, ta_image)
 
     # Run the step on the association
     result = TACenterStep.call(asn_fname)

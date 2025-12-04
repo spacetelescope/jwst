@@ -3,7 +3,7 @@ import logging
 import jwst.datamodels as dm
 from jwst.assign_wcs.miri import retrieve_filter_offset
 from jwst.stpipe import Step
-from jwst.ta_center.ta_center import center_from_ta_image
+from jwst.ta_center.ta_center import NoFinitePixelsError, center_from_ta_image
 
 __all__ = ["TACenterStep"]
 
@@ -16,8 +16,8 @@ class TACenterStep(Step):
     class_alias = "ta_center"
 
     spec = """
-    ta_file = string(default=None). # Target acquisition image file name
-    skip = boolean(default=True). # Skip this step by default
+    ta_file = string(default=None)  # Target acquisition image file name
+    skip = boolean(default=True)  # Skip this step by default
     """  # noqa: E501
 
     reference_file_types = ["specwcs", "pathloss", "filteroffset"]
@@ -28,13 +28,17 @@ class TACenterStep(Step):
 
         Parameters
         ----------
-        step_input : file path, ModelContainer, or DataModel
+        step_input : str, `~jwst.datamodels.ModelContainer`, \
+                `~stdatamodels.jwst.datamodels.ImageModel`, \
+                `~stdatamodels.jwst.datamodels.CubeModel`
             The input data model or association.
 
         Returns
         -------
-        result : DataModel
-            The output data model with TA centering applied.
+        result : `~jwst.datamodels.ModelContainer`, \
+                `~stdatamodels.jwst.datamodels.ImageModel`, \
+                `~stdatamodels.jwst.datamodels.CubeModel`
+            The output data model or association with TA centering applied.
         """
         result = self.prepare_output(step_input)
         if isinstance(result, dm.ModelContainer):
@@ -43,7 +47,7 @@ class TACenterStep(Step):
             self.ta_file = ta_model
 
         # Ensure TA file is provided
-        if str(self.ta_file).lower() == "none" or self.ta_file is None:
+        if str(self.ta_file).lower() == "none":
             log.error("No target acquisition file provided. Step will be SKIPPED.")
             result.meta.cal_step.ta_center = "SKIPPED"
             return result
@@ -105,7 +109,7 @@ class TACenterStep(Step):
                 subarray_origin=(xstart, ystart),
                 pathloss_file=pathloss_file,
             )
-        except Exception as e:
+        except NoFinitePixelsError as e:
             log.error(f"Error during TA centering: {e}. Step will be SKIPPED.")
             result.meta.cal_step.ta_center = "SKIPPED"
             return result

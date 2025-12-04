@@ -7,7 +7,6 @@ import jwst.datamodels as dm
 from jwst.pathloss.pathloss import calculate_pathloss_vector
 
 log = logging.getLogger(__name__)
-log.setLevel(logging.DEBUG)
 
 # Constants for MIRI imager and LRS slit dimensions
 PIXSCALE = 0.11  # arcsec/pixel for MIRI imager
@@ -15,6 +14,12 @@ JWST_DIAMETER = 6.5  # meters
 
 
 __all__ = ["center_from_ta_image", "PathlossMask"]
+
+
+class NoFinitePixelsError(Exception):
+    """Custom exception raised when no finite pixels are found in the TA image."""
+
+    pass
 
 
 def center_from_ta_image(
@@ -65,9 +70,9 @@ def center_from_ta_image(
 
     if pathloss_file is not None:
         # Load pathloss reference file for slit mask model
-        pathloss = dm.MirLrsPathlossModel(pathloss_file)
-        pathloss_table = pathloss.pathloss_table
-        pathloss_wcs = pathloss.meta.wcsinfo
+        with dm.MirLrsPathlossModel(pathloss_file) as pathloss:
+            pathloss_table = pathloss.pathloss_table
+            pathloss_wcs = pathloss.meta.wcsinfo
 
         slit_center_cutout = (
             ref_center_subarray[0] - cutout_origin[0],
@@ -132,7 +137,7 @@ def _fit_airy_disk(ta_image, wavelength, pathloss_model=None):
     # Filter non-finite values from data
     mask = np.isfinite(ta_image)
     if not np.any(mask):
-        raise ValueError("All pixels contain non-finite values")
+        raise NoFinitePixelsError("All pixels contain non-finite values")
     log.debug(f"Excluding {np.sum(~mask)} non-finite values from fit")
 
     # Calculate diffraction-limited Airy disk radius
