@@ -102,7 +102,7 @@ def main():
         "--rtol",
         dest="rtol",
         action="store",
-        default=1e-5,
+        default=0.0,
         type=float,
         help="The relative difference to allow when comparing two float values either in "
         "header values, image arrays, or table columns.",
@@ -113,7 +113,7 @@ def main():
         "--atol",
         dest="atol",
         action="store",
-        default=1e-7,
+        default=0.0,
         type=float,
         help="The allowed absolute difference.",
     )
@@ -226,13 +226,8 @@ def main():
             exit()
 
     # Find the differences
-    logger.info("\n* STScI Custom FITSDiff")
-    try:
-        diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
-        logger.info(diff.report())
-    except Exception as err:
-        logger.error("\n *** STFitsDiff crashed with the following error: \n")
-        logger.error(err)
+    diff = STFITSDiff(file_a, file_b, **stfitsdiff_default_kwargs)
+    logger.info(diff.report())
 
 
 if __name__ == "__main__":
