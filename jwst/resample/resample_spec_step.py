@@ -270,6 +270,9 @@ class ResampleSpecStep(Step):
             log.info(f"Updating S_REGION: {s_region}.")
         else:
             update_s_region_spectral(result)
+
+        input_wcs = input_models[0].meta.wcs
+        self._transform_sourcepos(input_wcs, result)
         return result
 
     def update_slit_metadata(self, model):
@@ -304,3 +307,25 @@ class ResampleSpecStep(Step):
             else:
                 if val is not None:
                     setattr(model, attr, val)
+
+    def _transform_sourcepos(self, input_wcs, model):
+        """
+        Transform source_xpos and source_ypos to the resampled image frame.
+
+        Updates are made in-place.
+
+        Parameters
+        ----------
+        model : `~jwst.datamodels.SlitModel`
+            The resampled slit model to update.
+        """
+        if model.hasattr("source_xpos") and model.hasattr("source_ypos"):
+            x_in, y_in = model.source_xpos, model.source_ypos
+            ra_in, dec_in = input_wcs.pixel_to_world(x_in, y_in)
+            x_out, y_out = model.meta.wcs.world_to_pixel(ra_in, dec_in)
+            log.info(
+                "Transforming source_xpos and source_ypos to resampled image frame. "
+                f"New values: ({x_out}, {y_out})"
+            )
+            model.source_xpos = x_out
+            model.source_ypos = y_out
