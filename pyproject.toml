@@ -366,7 +366,7 @@ showcontent = true
 
 [[tool.towncrier.type]]
 directory = "ami"
-name = 'ami_analyze / ami_normalize / ami_average (ami3)'
+name = 'ami_analyze / ami_normalize'
 showcontent = true
 
 [[tool.towncrier.type]]

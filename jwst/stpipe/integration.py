@@ -33,7 +33,6 @@ def get_steps():
         ("jwst.pipeline.Spec3Pipeline", "calwebb_spec3", True),
         ("jwst.pipeline.Tso3Pipeline", "calwebb_tso3", True),
         ("jwst.step.AmiAnalyzeStep", "ami_analyze", False),
-        ("jwst.step.AmiAverageStep", "ami_average", False),
         ("jwst.step.AmiNormalizeStep", "ami_normalize", False),
         ("jwst.step.AssignMTWcsStep", "assign_mtwcs", False),
         ("jwst.step.AssignWcsStep", "assign_wcs", False),
