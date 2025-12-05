@@ -1,0 +1,1 @@
+Catch and ignore a linear algebra error in poorly conditioned fringe fits. Improve emission line detection and masking.
