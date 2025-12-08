@@ -373,6 +373,11 @@ class Spec2Pipeline(Pipeline):
         elif exp_type == "NIS_SOSS":
             calibrated = self._process_niriss_soss(calibrated)
         else:
+            calibrated = datamodels.SlitModel(calibrated)
+            calibrated.xstart = calibrated.meta.subarray.xstart
+            calibrated.ystart = calibrated.meta.subarray.ystart
+            calibrated.xsize = calibrated.meta.subarray.xsize
+            calibrated.ysize = calibrated.meta.subarray.ysize
             calibrated = self._process_common(calibrated)
 
         # Record ASN pool and table names in output
