@@ -43,7 +43,6 @@
 /jwst/master_background/	@penaguerrero @melanieclarke @tapastro
 /jwst/model_blender/		@emolter @braingram @tapastro @melanieclarke
 /jwst/msaflagopen/			@stscirij @melanieclarke @tapastro
-/jwst/nsclean/				@melanieclarke @tapastro
 /jwst/outlier_detection/	@emolter @braingram @tapastro @melanieclarke
 /jwst/pathloss/				@stscirij @melanieclarke @tapastro
 /jwst/persistence/			@tapastro @melanieclarke
