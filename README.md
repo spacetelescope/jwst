@@ -14,7 +14,8 @@
 
 This package processes raw data from the James Webb Space Telescope (JWST), for both imagers and spectrographs,
 and performs a series of calibration steps that result in standard data products usable for science.
-[More information on running this pipeline, including explanations of specific stages and how to obtain reference files, can be found here.](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline)
+More information on running this pipeline, including explanations of specific stages and how to obtain reference files,
+can be found [here](https://jwst-docs.stsci.edu/jwst-science-calibration-pipeline).
 
 > [!WARNING]
 > Installation of `jwst` versions `1.15.1` through `1.16.1` will pull an incompatible version of the `gwcs` dependency -
