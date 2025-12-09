@@ -135,46 +135,6 @@ MacOS:
     conda activate jwstdp-1.16.1
     pip install -r https://ssb.stsci.edu/releases/jwstdp/1.16.1/reqs_macos-stable-deps.txt
 
-
-### Installing for Developers
-
-If you want to be able to work on and test the source code with the `jwst` package,
-the high-level procedure to do this is to first create a conda environment using
-the same procedures outlined above, but then install your personal copy of the
-code overtop of the original code in that environment. Again, this should be done
-in a separate conda environment from any existing environments that you may have
-already installed with released versions of the `jwst` package.
-
-As usual, the first two steps are to create and activate an environment:
-
-    conda create -n <env_name> python=3.12
-    conda activate <env_name>
-
-To install your own copy of the code into that environment, you first need to
-fork and clone the `jwst` repo:
-
-    cd <where you want to put the repo>
-    git clone https://github.com/<your_github_username>/jwst.git
-    cd jwst
-
-*Note: `python setup.py install` and `python setup.py develop` commands do not work.*
-
-Install from your local checked-out copy as an "editable" install:
-
-    pip install -e .
-
-If you want to run the unit or regression tests and/or build the docs, you can make
-sure those dependencies are installed too:
-
-    pip install -e ".[test]"
-    pip install -e ".[docs]"
-    pip install -e ".[test,docs]"
-
-Need other useful packages in your development environment?
-
-    pip install ipython jupyter matplotlib pylint
-
-
 ## Calibration References Data System (CRDS) Setup
 
 **Note: As of November 10, 2022, the process of deprecating the CRDS PUB Server will start.
@@ -395,34 +355,3 @@ Need to parallelize your test runs over all available cores?
 
     pip install pytest-xdist
     pytest -n auto
-
-
-## Regression Tests
-
-Latest regression test results can be found here (STScI staff only):
-
-https://github.com/spacetelescope/RegressionTests/actions/workflows/jwst.yml?query=event%3Aschedule
-
-To run the regression tests on your local machine, get the test dependencies
-and set the environment variable TEST_BIGDATA to our Artifactory server
-(STSci staff members only):
-
-    pip install -e ".[test]"
-    export TEST_BIGDATA=https://bytesalad.stsci.edu/artifactory
-
-To run all the regression tests (except the very slow ones):
-
-    pytest --bigdata jwst/regtest
-
-You can control where the test results are written with the
-`--basetemp=<PATH>` arg to `pytest`.  _NOTE that `pytest` will wipe this directory clean
-for each test session, so make sure it is a scratch area._
-
-If you would like to run a specific test, find its name or ID and use the `-k` option:
-
-    pytest --bigdata jwst/regtest -k nirspec
-
-If developers need to update the truth files in our nightly regression tests,
-there are instructions in the repository wiki.
-
-https://github.com/spacetelescope/jwst/wiki/Maintaining-Regression-Tests
