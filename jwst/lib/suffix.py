@@ -213,6 +213,8 @@ _calculated_suffixes = {
     "emicorr",
     "emicorrstep",
     "badpixselfcalstep",
+    "fit_profile",
+    "fitprofilestep",
 }
 
 
