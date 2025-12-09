@@ -51,7 +51,7 @@
 /jwst/pixel_replace/		@tapastro @melanieclarke
 /jwst/ramp_fitting/			@kmacdonald-stsci @tapastro @melanieclarke
 /jwst/refpix/				@stscirij @melanieclarke @tapastro
-/jwst/regtest/				@melanieclarke @penaguerrero @tapastro
+/jwst/regtest/				@melanieclarke @penaguerrero @tapastro @pllim
 /jwst/resample/				@emolter @melanieclarke @mcara @braingram @tapastro
 /jwst/reset/				@jemorrison @tapastro @melanieclarke
 /jwst/residual_fringe/		@jemorrison @melanieclarke @tapastro
