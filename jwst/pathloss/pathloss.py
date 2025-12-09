@@ -85,14 +85,8 @@ def get_center(exp_type, input_model, offsets=False):
 
     # MSA centering is specified in the MultiSlit model
     # "input_model" treated as a slit object
-    # need the hasattr check to avoid accidentally populating source_xpos, source_ypos
-    # since they are defined in the schema, and schema values auto-populate on access
-    if input_model.hasattr("source_xpos") and input_model.hasattr("source_ypos"):
-        xcenter = getattr(input_model, "source_xpos", None)
-        ycenter = getattr(input_model, "source_ypos", None)
-    else:
-        xcenter = None
-        ycenter = None
+    xcenter = getattr(input_model, "source_xpos", None)
+    ycenter = getattr(input_model, "source_ypos", None)
 
     if exp_type in ["NRS_MSASPEC", "NRS_FIXEDSLIT", "NRS_BRIGHTOBJ"]:
         if xcenter is not None and ycenter is not None:
