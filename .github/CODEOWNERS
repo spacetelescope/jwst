@@ -47,6 +47,7 @@
 /jwst/pathloss/				@stscirij @melanieclarke @tapastro
 /jwst/persistence/			@tapastro @melanieclarke
 /jwst/photom/				@tapastro @melanieclarke
+/jwst/picture_frame/		@tapastro @melanieclarke 
 /jwst/pipeline/				@tapastro @melanieclarke @emolter
 /jwst/pixel_replace/		@tapastro @melanieclarke
 /jwst/ramp_fitting/			@kmacdonald-stsci @tapastro @melanieclarke
