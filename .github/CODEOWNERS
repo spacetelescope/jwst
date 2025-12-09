@@ -65,7 +65,6 @@
 /jwst/stpipe/				@emolter @tapastro @melanieclarke
 /jwst/straylight/			@jemorrison @tapastro @melanieclarke
 /jwst/superbias/			@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/tests/				@emolter @tapastro @melanieclarke
 /jwst/tso_photometry/		@penaguerrero @tapastro @melanieclarke
 /jwst/tweakreg/				@emolter @mcara @tapastro @melanieclarke
 /jwst/wavecorr/				@melanieclarke @tapastro
