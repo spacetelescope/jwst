@@ -1,74 +1,74 @@
 # automatically requests pull request reviews for files matching the given pattern; the last match takes precedence
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# any files not matched below default to maintainers, with @emolter as a backup
-* 							@tapastro @melanieclarke @emolter
+# any files not matched below default to the maintainers team
+* 							@spacetelescope/jwst-pipeline-maintainers
 
 # workflows and automation
-/.github/					@zacharyburnett @jhunkeler @tapastro @melanieclarke @pllim
+/.github/					@zacharyburnett @jhunkeler @pllim
 
 # steps and packages
-/jwst/ami/					@emolter @tapastro @melanieclarke
-/jwst/assign_mtwcs/			@emolter @tapastro @melanieclarke
-/jwst/assign_wcs/			@melanieclarke @jemorrison @tapastro
-/jwst/associations/			@tapastro @stscieisenhamer @melanieclarke
-/jwst/background/			@melanieclarke @tapastro
-/jwst/badpix_selfcal/		@emolter @tapastro @melanieclarke
-/jwst/barshadow/			@stscirij @tapastro @melanieclarke
-/jwst/charge_migration/		@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/clean_flicker_noise/	@melanieclarke @tapastro @melanieclarke 
+/jwst/ami/					@emolter
+/jwst/assign_mtwcs/			@emolter
+/jwst/assign_wcs/			@melanieclarke @jemorrison
+/jwst/associations/			@tapastro @stscieisenhamer
+/jwst/background/			@melanieclarke
+/jwst/badpix_selfcal/		@emolter
+/jwst/barshadow/			@stscirij @melanieclarke
+/jwst/charge_migration/		@kmacdonald-stsci
+/jwst/clean_flicker_noise/	@melanieclarke
 /jwst/combine_1d/			@stscirij @tapastro @melanieclarke
-/jwst/coron/				@tapastro @melanieclarke
-/jwst/cube_build/			@jemorrison @tapastro @melanieclarke
-/jwst/dark_current/			@tapastro @melanieclarke
-/jwst/datamodels/			@emolter @tapastro @melanieclarke
-/jwst/dq_init/				@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/emicorr/				@penaguerrero @melanieclarke @tapastro
-/jwst/engdblog/				@tapastro @pllim @melanieclarke
-/jwst/exp_to_source/		@penaguerrero @melanieclarke @tapastro
-/jwst/extract_1d/			@melanieclarke @emolter @jemorrison @tapastro
-/jwst/extract_2d/			@stscirij @tapastro @melanieclarke
-/jwst/firstframe/			@jemorrison @tapastro @melanieclarke
-/jwst/flatfield/			@jemorrison @stscirij @melanieclarke @tapastro
-/jwst/fringe/				@jemorrison @tapastro @melanieclarke
-/jwst/gain_scale/			@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/group_scale/			@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/guider_cds/			@tapastro @melanieclarke
-/jwst/imprint/				@melanieclarke @tapastro
-/jwst/ipc/					@tapastro @melanieclarke
-/jwst/jump/					@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/lastframe/			@jemorrison @tapastro @melanieclarke
-/jwst/lib/					@pllim @tapastro @melanieclarke
-/jwst/linearity/			@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/master_background/	@penaguerrero @melanieclarke @tapastro
-/jwst/model_blender/		@emolter @braingram @tapastro @melanieclarke
-/jwst/msaflagopen/			@stscirij @melanieclarke @tapastro
-/jwst/outlier_detection/	@emolter @braingram @tapastro @melanieclarke
-/jwst/pathloss/				@stscirij @melanieclarke @tapastro
-/jwst/persistence/			@tapastro @melanieclarke
-/jwst/photom/				@tapastro @melanieclarke
-/jwst/picture_frame/		@tapastro @melanieclarke 
+/jwst/coron/				@tapastro
+/jwst/cube_build/			@jemorrison
+/jwst/dark_current/			@tapastro
+/jwst/datamodels/			@emolter
+/jwst/dq_init/				@kmacdonald-stsci
+/jwst/emicorr/				@penaguerrero @melanieclarke
+/jwst/engdblog/				@tapastro @pllim
+/jwst/exp_to_source/		@penaguerrero @melanieclarke
+/jwst/extract_1d/			@melanieclarke @emolter @jemorrison
+/jwst/extract_2d/			@stscirij @tapastro
+/jwst/firstframe/			@jemorrison
+/jwst/flatfield/			@jemorrison @stscirij @melanieclarke
+/jwst/fringe/				@jemorrison
+/jwst/gain_scale/			@kmacdonald-stsci
+/jwst/group_scale/			@kmacdonald-stsci
+/jwst/guider_cds/			@tapastro
+/jwst/imprint/				@melanieclarke
+/jwst/ipc/					@tapastro
+/jwst/jump/					@kmacdonald-stsci
+/jwst/lastframe/			@jemorrison
+/jwst/lib/					@pllim
+/jwst/linearity/			@kmacdonald-stsci
+/jwst/master_background/	@penaguerrero @melanieclarke
+/jwst/model_blender/		@emolter @braingram
+/jwst/msaflagopen/			@stscirij @melanieclarke
+/jwst/outlier_detection/	@emolter @braingram
+/jwst/pathloss/				@stscirij @melanieclarke
+/jwst/persistence/			@tapastro
+/jwst/photom/				@tapastro
+/jwst/picture_frame/		@tapastro @melanieclarke
 /jwst/pipeline/				@tapastro @melanieclarke @emolter
 /jwst/pixel_replace/		@tapastro @melanieclarke
-/jwst/ramp_fitting/			@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/refpix/				@stscirij @melanieclarke @tapastro
+/jwst/ramp_fitting/			@kmacdonald-stsci
+/jwst/refpix/				@stscirij @melanieclarke
 /jwst/regtest/				@melanieclarke @penaguerrero @tapastro @pllim
-/jwst/resample/				@emolter @melanieclarke @mcara @braingram @tapastro
-/jwst/reset/				@jemorrison @tapastro @melanieclarke
-/jwst/residual_fringe/		@jemorrison @melanieclarke @tapastro
-/jwst/rscd/					@jemorrison @tapastro @melanieclarke
-/jwst/saturation/			@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/scripts/				@penaguerrero @tapastro @melanieclarke
-/jwst/skymatch/				@emolter @mcara @tapastro @melanieclarke
-/jwst/source_catalog/		@emolter @tapastro @melanieclarke
-/jwst/spectral_leak/		@jemorrison @tapastro @melanieclarke
-/jwst/srctype/				@tapastro @penaguerrero @melanieclarke
-/jwst/stpipe/				@emolter @tapastro @melanieclarke
-/jwst/straylight/			@jemorrison @tapastro @melanieclarke
-/jwst/superbias/			@kmacdonald-stsci @tapastro @melanieclarke
-/jwst/tso_photometry/		@penaguerrero @tapastro @melanieclarke
-/jwst/tweakreg/				@emolter @mcara @tapastro @melanieclarke
-/jwst/wavecorr/				@melanieclarke @tapastro
-/jwst/wfs_combine/			@penaguerrero @tapastro @melanieclarke
-/jwst/wfss_contam/			@emolter @tapastro @melanieclarke
-/jwst/white_light/			@penaguerrero @tapastro @melanieclarke
+/jwst/resample/				@emolter @melanieclarke @mcara @braingram
+/jwst/reset/				@jemorrison
+/jwst/residual_fringe/		@jemorrison @melanieclarke
+/jwst/rscd/					@jemorrison
+/jwst/saturation/			@kmacdonald-stsci
+/jwst/scripts/				@penaguerrero
+/jwst/skymatch/				@emolter @mcara
+/jwst/source_catalog/		@emolter
+/jwst/spectral_leak/		@jemorrison
+/jwst/srctype/				@tapastro @penaguerrero
+/jwst/stpipe/				@emolter @tapastro
+/jwst/straylight/			@jemorrison
+/jwst/superbias/			@kmacdonald-stsci
+/jwst/tso_photometry/		@penaguerrero
+/jwst/tweakreg/				@emolter @mcara
+/jwst/wavecorr/				@melanieclarke
+/jwst/wfs_combine/			@penaguerrero
+/jwst/wfss_contam/			@emolter
+/jwst/white_light/			@penaguerrero
