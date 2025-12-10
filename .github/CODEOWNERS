@@ -1,7 +1,7 @@
 # automatically requests pull request reviews for files matching the given pattern; the last match takes precedence
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-# all files
+# any files not matched below default to maintainers, with @emolter as a backup
 * 							@tapastro @melanieclarke @emolter
 
 # workflows and automation
