@@ -49,6 +49,7 @@ NRS_SLIT_TYPES = [
 GRISM_TYPES = ["NRC_TSGRISM", "NIS_WFSS", "NRC_GRISM", "NRC_WFSS"]
 EXP_TYPES_USING_REFBKGDS = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "NIS_SOSS"]
 WFSS_TYPES = ["NIS_WFSS", "NRC_GRISM", "NRC_WFSS", "MIR_WFSS"]
+TA_TYPES = ["MIR_LRS-SLITLESS", "MIR_LRS-FIXEDSLIT"]
 
 log = logging.getLogger(__name__)
 
@@ -877,6 +878,11 @@ class Spec2Pipeline(Pipeline):
         `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model
         """
+        # convert to SlitModel type to hold source xpos, source ypos
+        if data.meta.exposure.type in TA_TYPES:
+            data = datamodels.SlitModel(data)
+            for attr in ["xstart", "ystart", "xsize", "ysize"]:
+                setattr(data, attr, getattr(data.meta.subarray, attr))
         calibrated = self.srctype.run(data)
         calibrated = self.straylight.run(calibrated)
         calibrated = self.flat_field.run(calibrated)
