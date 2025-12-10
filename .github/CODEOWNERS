@@ -16,11 +16,11 @@
 /jwst/assign_mtwcs/			@emolter
 /jwst/assign_wcs/			@melanieclarke @jemorrison
 /jwst/associations/			@tapastro @stscieisenhamer
-/jwst/background/			@melanieclarke
+/jwst/background/			@melanieclarke @penaguerrero
 /jwst/badpix_selfcal/		@emolter
 /jwst/barshadow/			@stscirij @melanieclarke
 /jwst/charge_migration/		@kmacdonald-stsci
-/jwst/clean_flicker_noise/	@melanieclarke
+/jwst/clean_flicker_noise/	@melanieclarke @stscirij
 /jwst/combine_1d/			@stscirij @tapastro @melanieclarke
 /jwst/coron/				@tapastro
 /jwst/cube_build/			@jemorrison
@@ -49,9 +49,9 @@
 /jwst/msaflagopen/			@stscirij @melanieclarke
 /jwst/outlier_detection/	@emolter @braingram
 /jwst/pathloss/				@stscirij @melanieclarke
-/jwst/persistence/			@tapastro
+/jwst/persistence/			@tapastro @kmacdonald-stsci
 /jwst/photom/				@tapastro
-/jwst/picture_frame/		@tapastro @melanieclarke
+/jwst/picture_frame/		@melanieclarke @stscirij 
 /jwst/pipeline/				@tapastro @melanieclarke @emolter
 /jwst/pixel_replace/		@tapastro @melanieclarke
 /jwst/ramp_fitting/			@kmacdonald-stsci
@@ -70,9 +70,9 @@
 /jwst/stpipe/				@emolter @tapastro
 /jwst/straylight/			@jemorrison
 /jwst/superbias/			@kmacdonald-stsci
-/jwst/tso_photometry/		@penaguerrero
+/jwst/tso_photometry/		@emolter @melanieclarke
 /jwst/tweakreg/				@emolter @mcara
 /jwst/wavecorr/				@melanieclarke
 /jwst/wfs_combine/			@penaguerrero
 /jwst/wfss_contam/			@emolter
-/jwst/white_light/			@penaguerrero
+/jwst/white_light/			@penaguerrero @emolter
