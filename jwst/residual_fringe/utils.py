@@ -3,6 +3,7 @@ import math
 
 import numpy as np
 import numpy.polynomial.polynomial as poly
+from astropy.stats import sigma_clipped_stats
 from astropy.timeseries import LombScargle
 from BayesicFitting import ConstantModel, Fitter, LevenbergMarquardtFitter, RobustShell, SineModel
 from scipy.interpolate import pchip
@@ -15,12 +16,23 @@ log = logging.getLogger(__name__)
 # Hard coded parameter, has been selected based on testing but can be changed
 NUM_KNOTS = 80
 
+# Define some constants describing the two central fringe frequencies
+# (primary fringe, and dichroic fringe) and a range around them to search for residual fringes,
+# along with the maximum number of fringes to fit and the max amplitude allowed for those fringes.
+FFREQ_1D = [2.9, 0.4]
+DFFREQ_1D = [1.5, 0.15]
+MAX_NFRINGES_1D = [10, 15]
+MAXLINE_1D = 0.05
+MAXAMP_1D = 0.4
+
+
 __all__ = [
     "slice_info",
     "fill_wavenumbers",
     "multi_sine",
     "fit_envelope",
     "find_lines",
+    "clip_spectral_features",
     "check_res_fringes",
     "interp_helper",
     "fit_1d_background_complex",
@@ -174,7 +186,7 @@ def multi_sine(n_sines):
     return mdl
 
 
-def fit_envelope(wavenum, signal):
+def fit_envelope(wavenum, signal, check_extra_neighbors=False):
     """
     Fit the upper and lower envelope of signal using a univariate spline.
 
@@ -184,6 +196,9 @@ def fit_envelope(wavenum, signal):
         Wavenumber values.
     signal : ndarray
         Signal values
+    check_extra_neighbors : bool, optional
+        If True, check two neighboring pixels instead of one, for
+        identifying peaks and troughs.
 
     Returns
     -------
@@ -205,16 +220,19 @@ def fit_envelope(wavenum, signal):
     l_y = [signal[0]]
     u_x = [wavenum[0]]
     u_y = [signal[0]]
-
-    for k in np.arange(1, len(signal) - 1):
-        if (np.sign(signal[k] - signal[k - 1]) == -1) and (
-            (np.sign(signal[k] - signal[k + 1])) == -1
-        ):
+    start = 2 if check_extra_neighbors else 1
+    for k in np.arange(start, len(signal) - start):
+        neighbor_check = [np.sign(signal[k] - signal[k - 1]), np.sign(signal[k] - signal[k + 1])]
+        if check_extra_neighbors:
+            neighbor_check.extend(
+                [np.sign(signal[k] - signal[k - 2]), np.sign(signal[k] - signal[k + 2])]
+            )
+        if all(n == -1 for n in neighbor_check):
+            # add to troughs: pixel is lower than its neighbors
             l_x.append(wavenum[k])
             l_y.append(signal[k])
-        if (np.sign(signal[k] - signal[k - 1]) == 1) and (
-            (np.sign(signal[k] - signal[k + 1])) == 1
-        ):
+        elif all(n == 1 for n in neighbor_check):
+            # add to peaks: pixel is higher than its neighbors
             u_x.append(wavenum[k])
             u_y.append(signal[k])
 
@@ -261,29 +279,31 @@ def find_lines(signal, max_amp):
     u_y, u_x, l_y, l_x = [], [], [], []
 
     for x in r_x:
+        # check for values near zero
+        if np.allclose(signal_check[x - 1 : x + 2], 0.0):
+            continue
+
+        # pixel is higher than immediate neighbors
         if (np.sign(signal_check[x] - signal_check[x - 1]) == 1) and (
             np.sign(signal_check[x] - signal_check[x + 1]) == 1
         ):
             u_y.append(signal_check[x])
             u_x.append(x)
 
+        # pixel is lower than immediate neighbors
         if (np.sign(signal_check[x] - signal_check[x - 1]) == -1) and (
             np.sign(signal_check[x] - signal_check[x + 1]) == -1
         ):
-            l_y.append(signal[x])
+            l_y.append(signal_check[x])
             l_x.append(x)
 
     for n, amp in enumerate(u_y):
         max_amp_val = max_amp[u_x[n]]
-        log.debug("find_lines: check if peak above max amp")
         if amp > max_amp_val:
             # peak in x
-            # log.debug("find_lines: flagging neighbours")
             xpeaks = [u_x[n] - 1, u_x[n], u_x[n] + 1]
 
-            # log.debug("find_lines:  find neareast troughs")
             # find nearest troughs
-
             for xp in xpeaks:
                 log.debug(f"find_lines:  checking ind {xp}")
 
@@ -313,11 +333,36 @@ def find_lines(signal, max_amp):
                 except IndexError:
                     pass
 
-    log.debug(f"find_lines: Found {len(u_x)} peaks   {len(l_x)} troughs")
-    weights_factors[signal_check > max_amp * 2] = 0  # catch any remaining
-    # weights_factors[signal_check > np.amax(max_amp)] = 0
+    log.debug(f"find_lines: Found {len(u_x)} peaks, {len(l_x)} troughs")
+
+    # catch any remaining signal significantly higher than the max amplitude
+    weights_factors[signal_check > 2 * max_amp] = 0
 
     return weights_factors
+
+
+def clip_spectral_features(signal, sigma=4.0):
+    """
+    Clip out large spectral features.
+
+    Parameters
+    ----------
+    signal : ndarray
+        Signal data. Input is expected to be the relative difference of the
+        spectrum from a smoothed spline fit to the lower envelope of the spectrum.
+    sigma : float, optional
+        Upper threshold for clipping features.
+
+    Returns
+    -------
+    weights : ndarray
+        1D array matching signal dimensions, containing 0 values
+        for large features and 1 values where no features were
+        detected.
+    """
+    _, med, stddev = sigma_clipped_stats(signal, sigma_lower=np.inf, sigma_upper=sigma)
+    weights = (signal < (med + sigma * stddev)).astype(int)
+    return weights
 
 
 def check_res_fringes(res_fringe_fit, max_amp):
@@ -363,7 +408,7 @@ def check_res_fringes(res_fringe_fit, max_amp):
     log.debug(f"check_res_fringes: found {len(node_ind)} nodes")
 
     # find where res_fringes goes above max_amp
-    runaway_rfc = np.argwhere((np.abs(lenv_fit) + np.abs(uenv_fit)) > (max_amp * 2))
+    runaway_rfc = np.argwhere((np.abs(lenv_fit) + np.abs(uenv_fit)) > (max_amp))
 
     # check which signal env the blow ups are located in and set to 1, and set a flag array
     if len(runaway_rfc) > 0:
@@ -788,14 +833,6 @@ def make_knots(flux, nknots=20, weights=None):
 # The below functions were added to enable residual fringe correction
 # in 1D extracted data.
 
-# Define some constants describing the two central fringe frequencies
-# (primary fringe, and dichroic fringe) and a range around them to search for residual fringes,
-# along with the maximum number of fringes to fit and the max amplitude allowed for those fringes.
-FFREQ_1d = [2.9, 0.4]
-DFFREQ_1d = [1.5, 0.15]
-MAX_NFRINGES_1d = [10, 15]
-MAXAMP_1d = 0.2
-
 
 def fit_1d_background_complex_1d(flux, weights, wavenum, ffreq=None):
     """
@@ -948,7 +985,8 @@ def fit_1d_fringes_bayes_evidence_1d(
     _ = sftr.fit(res_fringes, weights=weights)
     evidence1 = sftr.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
 
-    for _ in range(max_nfringes):
+    for nfringe in range(max_nfringes):
+        log.debug(f"Fitting fringe {nfringe} of {max_nfringes} max")
         # get the scan arrays
         res_fringe_scan = res_fringes_proc[np.where(weights > 1e-05)]
         wavenum_scan = wavenum[np.where(weights > 1e-05)]
@@ -976,15 +1014,14 @@ def fit_1d_fringes_bayes_evidence_1d(
             mdl.parameters = pars
             fitter = LevenbergMarquardtFitter(wavenum, mdl, verbose=0)
             ftr = RobustShell(fitter, domain=10)
-            pars = ftr.fit(res_fringes, weights=weights)
+            ftr.fit(res_fringes, weights=weights)
 
-            # try to get evidence (may fail for large component
-            # fits to noisy data, set to very negative value)
-            try:
-                evidence2 = fitter.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
-            except ValueError:
-                evidence2 = -1e9
-        except RuntimeError:
+            # try to get evidence (may fail with ValueError
+            # for large component fits to noisy data)
+            evidence2 = fitter.getEvidence(limits=[-2, 1000], noiseLimits=[0.001, 1])
+        except (ValueError, RuntimeError, np.linalg.LinAlgError) as err:
+            # set evidence to large negative value in case of failure
+            log.debug("Fringe fit failed: %s", str(err))
             evidence2 = -1e9
 
         bayes_factor = evidence2 - evidence1
@@ -1000,6 +1037,10 @@ def fit_1d_fringes_bayes_evidence_1d(
         res_fringes_proc = res_fringes.copy() - res_fringe_fit
         nfringes += 1
 
+    # Check for any successful fit
+    if len(fitted_frequencies) == 0:
+        raise ValueError(f"Failed to fit any fringes for frequency {ffreq}")
+
     # create outputs to return
     fitted_frequencies = (1 / np.asarray(fitted_frequencies)) * factor
     peak_freq = fitted_frequencies[0]
@@ -1009,7 +1050,17 @@ def fit_1d_fringes_bayes_evidence_1d(
     return res_fringe_fit, weighted_pix_num, nfringes, peak_freq, freq_min, freq_max
 
 
-def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, max_amp=None):
+def fit_residual_fringes_1d(
+    flux,
+    wavelength,
+    channel=1,
+    dichroic_only=False,
+    max_amp=None,
+    clip_features=True,
+    clip_sigma=5.0,
+    max_line=None,
+    ignore_regions=None,
+):
     """
     Fit residual fringes in 1D.
 
@@ -1023,8 +1074,22 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
         The MRS spectral channel.
     dichroic_only : bool, optional
         Fit only dichroic fringes.
-    max_amp : ndarray, optional
-        The maximum amplitude array.
+    max_amp : float, optional
+        The maximum relative amplitude value for fringe correction. If not provided,
+        is set to ``MAXAMP_1D``.
+    clip_features : bool, optional
+        If True, spectral features are masked via sigma clipping.  If False, they
+        are detected and masked via comparison to the ``max_line`` value.
+    clip_sigma : float, optional
+        If ``clip_features`` is True, then this value is used as the sigma threshold
+        for clipping spectral features.
+    max_line : float, optional
+        The maximum relative amplitude value to detect an emission line.  If not provided,
+        is set to ``MAXLINE_1D``.  Used only if ``clip_features`` is False.
+    ignore_regions : list of list of float, optional
+        If provided, data in the wavelengths specified is ignored in the fringe
+        fits. The expected format is a list of [min_region, max_region] values, in
+        input wavelength units.
 
     Returns
     -------
@@ -1046,17 +1111,37 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
     # and can bias the fringe finding
     weights[usewave > 27.6] = 0
 
+    # Zero out weights for any user-specified regions
+    if ignore_regions is not None:
+        for region in ignore_regions:
+            weights[(usewave > region[0]) & (usewave < region[1])] = 0
+
+    if np.all(weights == 0):
+        log.warning("No good data. Skipping correction.")
+        return flux
+
     # get the maxamp of the fringes
     if max_amp is None:
-        max_amp = np.ones(useflux.shape) * MAXAMP_1d
+        max_amp_array = np.full(useflux.shape, MAXAMP_1D)
+    else:
+        max_amp_array = np.full(useflux.shape, max_amp)
+    if max_line is None:
+        max_line_array = np.full(useflux.shape, MAXLINE_1D)
+    else:
+        max_line_array = np.full(useflux.shape, max_line)
 
-    # find spectral features (env is spline fit of troughs and peaks)
-    # smooth the data slightly first to avoid noisy broad lines being missed
-    env, l_x, l_y, _, _, _ = fit_envelope(np.arange(useflux.shape[0]), useflux)
-    mod = np.abs(useflux / env) - 1
+    # find spectral features by comparing to a low-order fit to the middle of the spectrum
+    lenv, _, _, uenv, _, _ = fit_envelope(
+        np.arange(useflux.shape[0]), useflux, check_extra_neighbors=True
+    )
+    model = (lenv + uenv) / 2
+    mod = np.abs((useflux - model) / model)
 
-    # given signal in mod find location of lines > col_max_amp * 2
-    weight_factors = find_lines(mod, max_amp * 2)
+    # given signal in mod find location of lines
+    if clip_features:
+        weight_factors = clip_spectral_features(mod, sigma=clip_sigma)
+    else:
+        weight_factors = find_lines(mod, max_line_array)
     weights_feat = weights * weight_factors
 
     if dichroic_only is True:
@@ -1065,21 +1150,21 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
                 "Dichroic fringe should only be removed from channels 3 and 4, stopping!"
             )
 
-        ffreq_vals = [FFREQ_1d[1]]
-        dffreq_vals = [DFFREQ_1d[1]]
-        max_nfringes_vals = [MAX_NFRINGES_1d[1]]
+        ffreq_vals = [FFREQ_1D[1]]
+        dffreq_vals = [DFFREQ_1D[1]]
+        max_nfringes_vals = [MAX_NFRINGES_1D[1]]
 
     else:
         # check the channel and remove second fringe for channels 1 and 2
         if channel == 1 or channel == 2:
-            ffreq_vals = [FFREQ_1d[0]]
-            dffreq_vals = [DFFREQ_1d[0]]
-            max_nfringes_vals = [MAX_NFRINGES_1d[0]]
+            ffreq_vals = [FFREQ_1D[0]]
+            dffreq_vals = [DFFREQ_1D[0]]
+            max_nfringes_vals = [MAX_NFRINGES_1D[0]]
 
         else:
-            ffreq_vals = FFREQ_1d
-            dffreq_vals = DFFREQ_1d
-            max_nfringes_vals = MAX_NFRINGES_1d
+            ffreq_vals = FFREQ_1D
+            dffreq_vals = DFFREQ_1D
+            max_nfringes_vals = MAX_NFRINGES_1D
 
     # BayesicFitting doesn't like 0s at data or weight array edges so set to small value
     useflux[useflux <= 0] = 1e-08
@@ -1095,22 +1180,20 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
         wavenum = fill_wavenumbers(wavenum)
 
     # do the processing
-    proc_arr = [useflux.copy()]
+    proc_data = useflux.copy()
+    for n, ffreq in enumerate(ffreq_vals):
+        log.debug(f"Fitting frequency {n} ({ffreq})")
+        bg_fit, bgindx = fit_1d_background_complex_1d(proc_data, weights_feat, wavenum, ffreq=ffreq)
 
-    for m, proc_data in enumerate(proc_arr):
-        for n, ffreq in enumerate(ffreq_vals):
-            bg_fit, bgindx = fit_1d_background_complex_1d(
-                proc_data, weights_feat, wavenum, ffreq=ffreq
-            )
+        # get the residual fringes as fraction of signal
+        res_fringes = np.divide(
+            proc_data, bg_fit, out=np.full_like(proc_data, 1e-8), where=bg_fit != 0
+        )
+        np.subtract(res_fringes, 1, out=res_fringes, where=res_fringes != 0)
+        res_fringes *= np.where(weights > 1e-07, 1, 1e-08)
 
-            # get the residual fringes as fraction of signal
-            res_fringes = np.divide(
-                proc_data, bg_fit, out=np.zeros_like(proc_data), where=bg_fit != 0
-            )
-            np.subtract(res_fringes, 1, out=res_fringes, where=res_fringes != 0)
-            res_fringes *= np.where(weights > 1e-07, 1, 1e-08)
-
-            # fit the residual fringes
+        # fit the residual fringes
+        try:
             res_fringe_fit, wpix_num, opt_nfringes, peak_freq, freq_min, freq_max = (
                 fit_1d_fringes_bayes_evidence_1d(
                     res_fringes,
@@ -1122,24 +1205,23 @@ def fit_residual_fringes_1d(flux, wavelength, channel=1, dichroic_only=False, ma
                     0.001,
                 )
             )
+        except ValueError as err:
+            log.warning(str(err))
+            continue
 
-            # check for fit blowing up, reset rfc fit to 0, raise a flag
-            res_fringe_fit, res_fringe_fit_flag = check_res_fringes(res_fringe_fit, max_amp)
+        # check for fit blowing up, reset rfc fit to 0, raise a flag
+        res_fringe_fit, res_fringe_fit_flag = check_res_fringes(res_fringe_fit, max_amp_array)
 
-            # correct for residual fringes
-            _, _, _, env, u_x, u_y = fit_envelope(
-                np.arange(res_fringe_fit.shape[0]), res_fringe_fit
-            )
-            rfc_factors = 1 / (res_fringe_fit * (weights > 1e-05).astype(int) + 1)
-            proc_data *= rfc_factors
+        # correct for residual fringes
+        rfc_factors = 1 / (res_fringe_fit * (weights > 1e-05).astype(int) + 1)
+        proc_data *= rfc_factors
 
-            # handle nans or infs that may exist
-            proc_data[proc_data == np.inf] = 0
-            proc_data = np.nan_to_num(proc_data)
-            proc_arr[m] = proc_data
+        # handle nans or infs that may exist
+        proc_data[proc_data == np.inf] = 0
+        proc_data = np.nan_to_num(proc_data)
 
     # Embed output back in a full-size array
     output = flux.copy()
-    output[indx] = proc_arr[0]
+    output[indx] = proc_data
 
     return output

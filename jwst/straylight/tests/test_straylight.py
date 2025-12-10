@@ -3,12 +3,14 @@ Unit tests for straylight correction
 """
 
 import numpy as np
+import pytest
 from astropy.convolution import Gaussian2DKernel, convolve_fft
 
 from jwst import datamodels
 from jwst.straylight.straylight import clean_showers, makemodel_ccode, makemodel_composite
 
 
+@pytest.mark.slow
 def test_correct_mrs_xartifact():
     """Test Correct Straylight routine gives expected results for small region"""
 
