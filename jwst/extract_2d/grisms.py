@@ -720,7 +720,7 @@ def compute_wfss_wavelength(slit):
     return wavelength
 
 
-def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=None):
+def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=None, max_sep=1.0):
     """
     Convert source RA/Dec lists to source IDs from the catalog.
 
@@ -742,6 +742,9 @@ def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=Non
 
     source_dec : list[float]
         Source declinations to be processed, must have same length as source_ra.
+
+    max_sep : float
+        Maximum separation in arcsec to consider a catalog source a match to the provided RA/Dec.
 
     Returns
     -------
@@ -771,7 +774,12 @@ def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=Non
         # find nearest catalog source for each RA/Dec pair
         for ra, dec in zip(source_ra, source_dec, strict=True):
             this_coord = SkyCoord(ra=ra, dec=dec, unit="deg")
-            idx, _sep, _dist3d = this_coord.match_to_catalog_sky(catalog_coord)
+            idx, sep, _dist3d = this_coord.match_to_catalog_sky(catalog_coord)
+            if sep.arcsecond > max_sep:
+                log.warning(
+                    f"No catalog source found within {max_sep} arcsec of RA: {ra}, Dec: {dec}."
+                )
+                continue
             src_id = catalog["label"][idx]
             source_ids.append(src_id)
 
