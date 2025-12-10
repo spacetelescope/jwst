@@ -15,9 +15,9 @@ def run_pipeline(rtdata_module, resource_tracker):
     rtdata = rtdata_module
 
     # Get the input data; load individual data files first, load ASN file last
-    rtdata.get_data("nircam/wfss/jw01076-o101_t002_nircam_clear-f356w_cat.ecsv")
-    rtdata.get_data("nircam/wfss/jw01076101001_02101_00003_nrcalong_rate.fits")
-    rtdata.get_data("nircam/wfss/jw01076-o101_20220403t120233_spec2_002_asn.json")
+    rtdata.get_data("nircam/wfss/jw01076-o103_t001_nircam_clear-f250m_cat.ecsv")
+    rtdata.get_data("nircam/wfss/jw01076103001_02104_00001_nrcblong_rate.fits")
+    rtdata.get_data("nircam/wfss/jw01076-o103_20231023t160322_spec2_00003_asn.json")
 
     # Run the calwebb_spec2 pipeline; save results from intermediate steps
     args = [
@@ -52,7 +52,7 @@ def test_nircam_wfss_spec2(run_pipeline, fitsdiff_default_kwargs, suffix):
 
     # Run the pipeline and retrieve outputs
     rtdata = run_pipeline
-    output = f"jw01076101001_02101_00003_nrcalong_{suffix}.fits"
+    output = f"jw01076103001_02104_00001_nrcblong_{suffix}.fits"
     rtdata.output = output
 
     # Get the truth files
