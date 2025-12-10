@@ -38,7 +38,6 @@ WHITELIGHTSTEP_CRDS_MIRI_PARS = {
 CRDS_ERROR_STRING = "PARS-WITHDEFAULTSSTEP: No parameters found"
 
 
-@pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.parametrize(
     "arg, env_set, expected_fn",
     [
@@ -90,7 +89,6 @@ def test_parameters_from_crds_filename(monkeypatch):
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
 
 
-@pytest.mark.filterwarnings("ignore::ResourceWarning")
 @pytest.mark.parametrize("on_disk_status", [None, True, False])
 def test_parameters_from_crds_association(on_disk_status, monkeypatch):
     """
@@ -113,13 +111,16 @@ def test_parameters_from_crds_association(on_disk_status, monkeypatch):
         "data/single_member_miri_asn.json", package="jwst.stpipe.tests"
     )
 
-    data = single_member_asn
     if on_disk_status is not None:
         with ModelLibrary(single_member_asn, on_disk=on_disk_status) as model_library:
-            data = model_library
+            pars = WhiteLightStep.get_config_from_reference(model_library)
+    else:
+        pars = WhiteLightStep.get_config_from_reference(single_member_asn)
 
-    pars = WhiteLightStep.get_config_from_reference(data)
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
+
+    if on_disk_status is True:
+        model_library._temp_dir.cleanup()  # avoid ResourceWarning
 
 
 @pytest.mark.parametrize("is_list", [True, False])
@@ -133,6 +134,9 @@ def test_parameters_from_crds_listlike(is_list):
         data = data._models
     pars = WhiteLightStep.get_config_from_reference(data)
     assert pars == WHITELIGHTSTEP_CRDS_MIRI_PARS
+
+    for model in data:
+        model.close()
 
 
 @pytest.mark.parametrize("is_list", [True, False])
