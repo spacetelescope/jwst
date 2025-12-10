@@ -7,6 +7,10 @@
 # workflows and automation
 /.github/					@zacharyburnett @jhunkeler @pllim
 
+# IN ADDITION to the code owners defined below, this repository ALSO requires
+# all changes to files in `/jwst/` to ALSO be approved by the maintainers team
+# (this behavior is defined in the repository ruleset at https://github.com/spacetelescope/jwst/settings/rules/7657862)
+ 
 # steps and packages
 /jwst/ami/					@emolter
 /jwst/assign_mtwcs/			@emolter
