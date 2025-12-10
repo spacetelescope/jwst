@@ -6,8 +6,9 @@ Description
 
 Overview
 --------
-The ``picture_frame`` step removes thermal artifacts (the "picture frame"
-effect) from calibrated ramp images, after the :ref:`jump <jump_step>` step
+The ``picture_frame`` step removes thermal artifacts (`the "picture frame"
+effect <https://jwst-docs.stsci.edu/known-issues-with-jwst-data/nirspec-known-issues#NIRSpecKnownIssues-pictureframePictureframeeffect>`) 
+from calibrated ramp images, after the :ref:`jump <jump_step>` step
 and prior to performing the :ref:`clean_flicker_noise <clean_flicker_noise_step>`
 or the :ref:`ramp_fitting <ramp_fitting_step>` step.
 
