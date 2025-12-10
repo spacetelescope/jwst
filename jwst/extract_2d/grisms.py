@@ -414,33 +414,26 @@ def extract_grism_objects(
             "",
         ]:
             raise ValueError("Expected name of wavelengthrange reference file")
-        else:
-            # force_list coming into the step makes these all strings
-            if source_ids is not None:
-                source_ids = np.atleast_1d(source_ids).astype(int)
-            if source_ra is not None:
-                source_ra = np.atleast_1d(source_ra).astype(float)
-            if source_dec is not None:
-                source_dec = np.atleast_1d(source_dec).astype(float)
-            source_ids = radec_to_source_ids(
-                input_model.meta.source_catalog,
-                source_ids,
-                source_ra,
-                source_dec,
-            )
-            grism_objects = util.create_grism_bbox(
-                input_model,
-                reference_files,
-                extract_orders=extract_orders,
-                source_ids=source_ids,
-                mmag_extract=mmag_extract,
-                wfss_extract_half_height=wfss_extract_half_height,
-                nbright=nbright,
-            )
-            log.info(
-                f"Grism object list created from source catalog: \
-                {input_model.meta.source_catalog}"
-            )
+
+        source_ids = radec_to_source_ids(
+            input_model.meta.source_catalog,
+            source_ids,
+            source_ra,
+            source_dec,
+        )
+        grism_objects = util.create_grism_bbox(
+            input_model,
+            reference_files,
+            extract_orders=extract_orders,
+            source_ids=source_ids,
+            mmag_extract=mmag_extract,
+            wfss_extract_half_height=wfss_extract_half_height,
+            nbright=nbright,
+        )
+        log.info(
+            f"Grism object list created from source catalog: \
+            {input_model.meta.source_catalog}"
+        )
 
     if not isinstance(grism_objects, list):
         raise TypeError("Expected input grism objects to be a list")
@@ -760,15 +753,28 @@ def radec_to_source_ids(catalog, source_ids=None, source_ra=None, source_dec=Non
     if source_ids is None:
         source_ids = []
     else:
-        source_ids = np.atleast_1d(source_ids).tolist()
-    if source_ra is not None:
+        # force_list coming into the step makes these all strings
+        source_ids = np.atleast_1d(source_ids).astype(int).tolist()
+
+    # check validity of RA/Dec inputs
+    if source_ra is None and source_dec is not None:
+        raise ValueError("source_ra must be provided if source_dec is provided.")
+    if source_dec is None and source_ra is not None:
+        raise ValueError("source_dec must be provided if source_ra is provided.")
+    if (source_ra is not None) and (source_dec is not None):
+        # force_list coming into the step makes these all strings
+        source_ra = np.atleast_1d(source_ra).astype(float)
+        source_dec = np.atleast_1d(source_dec).astype(float)
         if len(source_ra) != len(source_dec):
             raise ValueError("source_ra and source_dec must have the same length.")
+
+        # find nearest catalog source for each RA/Dec pair
         for ra, dec in zip(source_ra, source_dec, strict=True):
             this_coord = SkyCoord(ra=ra, dec=dec, unit="deg")
             idx, _sep, _dist3d = this_coord.match_to_catalog_sky(catalog_coord)
             src_id = catalog["label"][idx]
             source_ids.append(src_id)
+
     if source_ids:
         return np.unique(np.atleast_1d(source_ids))  # return unique IDs only
     return None

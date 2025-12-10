@@ -445,12 +445,22 @@ def test_radec_to_source_ids(source_ids):
         assert 19 in source_ids_2
 
 
-def test_radec_to_source_ids_bad_radec():
+def test_radec_to_source_ids_radec_length_mismatch():
     source_catalog = get_pkg_data_filename(
         "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
     )
     with pytest.raises(ValueError, match="source_ra and source_dec must have the same length."):
         radec_to_source_ids(source_catalog, source_ra=[0.0, 0.0], source_dec=[0.0])
+
+
+def test_radec_to_source_ids_radec_without_both():
+    source_catalog = get_pkg_data_filename(
+        "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
+    )
+    with pytest.raises(ValueError, match="source_ra must be provided if source_dec is provided."):
+        radec_to_source_ids(source_catalog, source_dec=[0.0])
+    with pytest.raises(ValueError, match="source_dec must be provided if source_ra is provided."):
+        radec_to_source_ids(source_catalog, source_ra=[0.0])
 
 
 @pytest.mark.parametrize("source_ids_in", [None, [9, 19], 25])
