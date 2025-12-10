@@ -92,6 +92,7 @@ def run_detector1_with_likelihood(rtdata_module, resource_tracker):
         "calwebb_detector1",
         rtdata.input,
         "--output_file=jw01345001001_10201_00001_nrca3_likely",
+        "--save_calibrated_ramp=True",
         "--steps.ramp_fit.algorithm=LIKELY",
     ]
     with resource_tracker.track():
