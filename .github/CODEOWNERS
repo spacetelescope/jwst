@@ -12,67 +12,67 @@
 # (this behavior is defined in the repository ruleset at https://github.com/spacetelescope/jwst/settings/rules/7657862)
  
 # steps and packages
-/jwst/ami/					@emolter
-/jwst/assign_mtwcs/			@emolter
-/jwst/assign_wcs/			@melanieclarke @jemorrison
-/jwst/associations/			@tapastro @stscieisenhamer
-/jwst/background/			@melanieclarke @penaguerrero
-/jwst/badpix_selfcal/		@emolter
-/jwst/barshadow/			@stscirij @melanieclarke
-/jwst/charge_migration/		@kmacdonald-stsci
-/jwst/clean_flicker_noise/	@melanieclarke @stscirij
-/jwst/combine_1d/			@stscirij @tapastro @melanieclarke
-/jwst/coron/				@tapastro
-/jwst/cube_build/			@jemorrison
-/jwst/dark_current/			@tapastro
-/jwst/datamodels/			@emolter
-/jwst/dq_init/				@kmacdonald-stsci
-/jwst/emicorr/				@penaguerrero @melanieclarke
-/jwst/engdblog/				@tapastro @pllim
-/jwst/exp_to_source/		@penaguerrero @melanieclarke
-/jwst/extract_1d/			@melanieclarke @emolter @jemorrison
-/jwst/extract_2d/			@stscirij @tapastro
-/jwst/firstframe/			@jemorrison
-/jwst/flatfield/			@jemorrison @stscirij @melanieclarke
-/jwst/fringe/				@jemorrison
-/jwst/gain_scale/			@kmacdonald-stsci
-/jwst/group_scale/			@kmacdonald-stsci
-/jwst/guider_cds/			@tapastro
-/jwst/imprint/				@melanieclarke
-/jwst/ipc/					@tapastro
-/jwst/jump/					@kmacdonald-stsci
-/jwst/lastframe/			@jemorrison
-/jwst/lib/					@pllim
-/jwst/linearity/			@kmacdonald-stsci
-/jwst/master_background/	@penaguerrero @melanieclarke
-/jwst/model_blender/		@emolter @braingram
-/jwst/msaflagopen/			@stscirij @melanieclarke
-/jwst/outlier_detection/	@emolter @braingram
-/jwst/pathloss/				@stscirij @melanieclarke
-/jwst/persistence/			@tapastro @kmacdonald-stsci
-/jwst/photom/				@tapastro
-/jwst/picture_frame/		@melanieclarke @stscirij 
-/jwst/pipeline/				@tapastro @melanieclarke @emolter
-/jwst/pixel_replace/		@tapastro @melanieclarke
-/jwst/ramp_fitting/			@kmacdonald-stsci
-/jwst/refpix/				@stscirij @melanieclarke
-/jwst/regtest/				@melanieclarke @penaguerrero @tapastro @pllim
-/jwst/resample/				@emolter @melanieclarke @mcara @braingram
-/jwst/reset/				@jemorrison
-/jwst/residual_fringe/		@jemorrison @melanieclarke
-/jwst/rscd/					@jemorrison
-/jwst/saturation/			@kmacdonald-stsci
-/jwst/scripts/				@penaguerrero
-/jwst/skymatch/				@emolter @mcara
-/jwst/source_catalog/		@emolter
-/jwst/spectral_leak/		@jemorrison
-/jwst/srctype/				@tapastro @penaguerrero
-/jwst/stpipe/				@emolter @tapastro
-/jwst/straylight/			@jemorrison
-/jwst/superbias/			@kmacdonald-stsci
-/jwst/tso_photometry/		@emolter @melanieclarke
-/jwst/tweakreg/				@emolter @mcara
-/jwst/wavecorr/				@melanieclarke
-/jwst/wfs_combine/			@penaguerrero
-/jwst/wfss_contam/			@emolter
-/jwst/white_light/			@penaguerrero @emolter
+/jwst/ami/					@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/assign_mtwcs/			@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/assign_wcs/			@spacetelescope/jwst-pipeline-maintainers @melanieclarke @jemorrison
+/jwst/associations/			@spacetelescope/jwst-pipeline-maintainers @tapastro @stscieisenhamer
+/jwst/background/			@spacetelescope/jwst-pipeline-maintainers @melanieclarke @penaguerrero
+/jwst/badpix_selfcal/		@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/barshadow/			@spacetelescope/jwst-pipeline-maintainers @stscirij @melanieclarke
+/jwst/charge_migration/		@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/clean_flicker_noise/	@spacetelescope/jwst-pipeline-maintainers @melanieclarke @stscirij
+/jwst/combine_1d/			@spacetelescope/jwst-pipeline-maintainers @stscirij @tapastro @melanieclarke
+/jwst/coron/				@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/cube_build/			@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/dark_current/			@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/datamodels/			@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/dq_init/				@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/emicorr/				@spacetelescope/jwst-pipeline-maintainers @penaguerrero @melanieclarke
+/jwst/engdblog/				@spacetelescope/jwst-pipeline-maintainers @tapastro @pllim
+/jwst/exp_to_source/		@spacetelescope/jwst-pipeline-maintainers @penaguerrero @melanieclarke
+/jwst/extract_1d/			@spacetelescope/jwst-pipeline-maintainers @melanieclarke @emolter @jemorrison
+/jwst/extract_2d/			@spacetelescope/jwst-pipeline-maintainers @stscirij @tapastro
+/jwst/firstframe/			@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/flatfield/			@spacetelescope/jwst-pipeline-maintainers @jemorrison @stscirij @melanieclarke
+/jwst/fringe/				@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/gain_scale/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/group_scale/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/guider_cds/			@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/imprint/				@spacetelescope/jwst-pipeline-maintainers @melanieclarke
+/jwst/ipc/					@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/jump/					@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/lastframe/			@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/lib/					@spacetelescope/jwst-pipeline-maintainers @pllim
+/jwst/linearity/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/master_background/	@spacetelescope/jwst-pipeline-maintainers @penaguerrero @melanieclarke
+/jwst/model_blender/		@spacetelescope/jwst-pipeline-maintainers @emolter @braingram
+/jwst/msaflagopen/			@spacetelescope/jwst-pipeline-maintainers @stscirij @melanieclarke
+/jwst/outlier_detection/	@spacetelescope/jwst-pipeline-maintainers @emolter @braingram
+/jwst/pathloss/				@spacetelescope/jwst-pipeline-maintainers @stscirij @melanieclarke
+/jwst/persistence/			@spacetelescope/jwst-pipeline-maintainers @tapastro @kmacdonald-stsci
+/jwst/photom/				@spacetelescope/jwst-pipeline-maintainers @tapastro
+/jwst/picture_frame/		@spacetelescope/jwst-pipeline-maintainers @melanieclarke @stscirij 
+/jwst/pipeline/				@spacetelescope/jwst-pipeline-maintainers @tapastro @melanieclarke @emolter
+/jwst/pixel_replace/		@spacetelescope/jwst-pipeline-maintainers @tapastro @melanieclarke
+/jwst/ramp_fitting/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/refpix/				@spacetelescope/jwst-pipeline-maintainers @stscirij @melanieclarke
+/jwst/regtest/				@spacetelescope/jwst-pipeline-maintainers @melanieclarke @penaguerrero @tapastro @pllim
+/jwst/resample/				@spacetelescope/jwst-pipeline-maintainers @emolter @melanieclarke @mcara @braingram
+/jwst/reset/				@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/residual_fringe/		@spacetelescope/jwst-pipeline-maintainers @jemorrison @melanieclarke
+/jwst/rscd/					@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/saturation/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/scripts/				@spacetelescope/jwst-pipeline-maintainers @penaguerrero
+/jwst/skymatch/				@spacetelescope/jwst-pipeline-maintainers @emolter @mcara
+/jwst/source_catalog/		@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/spectral_leak/		@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/srctype/				@spacetelescope/jwst-pipeline-maintainers @tapastro @penaguerrero
+/jwst/stpipe/				@spacetelescope/jwst-pipeline-maintainers @emolter @tapastro
+/jwst/straylight/			@spacetelescope/jwst-pipeline-maintainers @jemorrison
+/jwst/superbias/			@spacetelescope/jwst-pipeline-maintainers @kmacdonald-stsci
+/jwst/tso_photometry/		@spacetelescope/jwst-pipeline-maintainers @emolter @melanieclarke
+/jwst/tweakreg/				@spacetelescope/jwst-pipeline-maintainers @emolter @mcara
+/jwst/wavecorr/				@spacetelescope/jwst-pipeline-maintainers @melanieclarke
+/jwst/wfs_combine/			@spacetelescope/jwst-pipeline-maintainers @penaguerrero
+/jwst/wfss_contam/			@spacetelescope/jwst-pipeline-maintainers @emolter
+/jwst/white_light/			@spacetelescope/jwst-pipeline-maintainers @penaguerrero @emolter
