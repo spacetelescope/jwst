@@ -417,11 +417,11 @@ def test_radec_to_source_ids(source_ids):
         "data/step_SourceCatalogStep_cat.ecsv", package="jwst.extract_2d.tests"
     )
     # object 9
-    ra1 = 53.13773660029234
-    dec1 = -27.80858320887945
+    ra1 = 53.1377366
+    dec1 = -27.80858321
     # object 19
-    ra2 = 53.153053283691406
-    dec2 = -27.810455322265625
+    ra2 = 53.15786615
+    dec2 = -27.81442243
 
     # single RA/Dec
     source_ids_1 = radec_to_source_ids(
