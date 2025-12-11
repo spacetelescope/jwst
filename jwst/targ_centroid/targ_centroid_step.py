@@ -101,6 +101,10 @@ class TargCentroidStep(Step):
             result.meta.cal_step.targ_centroid = "SKIPPED"
             return result
 
+        # store TA centering results in output model
+        result.ta_xpos = x_center
+        result.ta_ypos = y_center
+
         # Apply filter offsets
         filteroffset_file = self.get_reference_file(ta_model, "filteroffset")
         with dm.FilteroffsetModel(filteroffset_file) as filteroffset:

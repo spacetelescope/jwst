@@ -900,6 +900,11 @@ class Spec2Pipeline(Pipeline):
         `~stdatamodels.jwst.datamodels.JwstDataModel`
             The calibrated data model
         """
+        if data.meta.exposure.type in TA_TYPES:
+            # convert to SlitModel type to be more in line with other spectroscopic modes
+            data = datamodels.SlitModel(data)
+            for attr in ["xstart", "ystart", "xsize", "ysize"]:
+                setattr(data, attr, getattr(data.meta.subarray, attr))
         calibrated = self.srctype.run(data)
         calibrated = self.targ_centroid.run(calibrated)
         calibrated = self.straylight.run(calibrated)
