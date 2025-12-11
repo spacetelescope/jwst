@@ -6,14 +6,31 @@ import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import models
 
 from jwst.pathloss.pathloss import calculate_pathloss_vector
-from jwst.ta_center.ta_center import JWST_DIAMETER, PIXSCALE
-from jwst.ta_center.ta_center_step import _get_wavelength
 
+# Constants for MIRI imager and LRS slit dimensions
+PIXSCALE = 0.11  # arcsec/pixel for MIRI imager
+JWST_DIAMETER = 6.5  # meters
 X_REF_SLIT = 326.13
 Y_REF_SLIT = 300.7
 X_REF_SLITLESS = 38.5
 Y_REF_SLITLESS = 829.0
 MIRI_DETECTOR_SHAPE = (1024, 1032)  # (ny, nx) for MIRI imager
+
+
+def get_wavelength(filter_name):  # numpydoc ignore=RT01
+    """Map filter name to central wavelength in microns."""
+    filter_wavelengths = {
+        "F560W": 5.6,
+        "F770W": 7.7,
+        "F1000W": 10.0,
+        "F1130W": 11.3,
+        "F1280W": 12.8,
+        "F1500W": 15.0,
+        "F1800W": 18.0,
+        "F2100W": 21.0,
+        "F2550W": 25.5,
+    }
+    return filter_wavelengths.get(filter_name, None)
 
 
 def make_pathloss_model():
@@ -167,7 +184,7 @@ def make_slit_data(offset):
     model : ImageModel
         Simulated slit TA image model with PSF weighted by pathloss.
     """
-    wavelength = _get_wavelength("F1500W")
+    wavelength = get_wavelength("F1500W")
 
     # Calculate diffraction-limited Airy disk radius
     theta_rad = 1.22 * wavelength * 1e-6 / JWST_DIAMETER

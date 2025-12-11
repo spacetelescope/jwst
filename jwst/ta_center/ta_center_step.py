@@ -3,7 +3,7 @@ import logging
 import jwst.datamodels as dm
 from jwst.assign_wcs.miri import retrieve_filter_offset
 from jwst.stpipe import Step
-from jwst.ta_center.ta_center import BadFitError, NoFinitePixelsError, center_from_ta_image
+from jwst.ta_center.ta_center import NoFinitePixelsError, center_from_ta_image
 
 __all__ = ["TACenterStep"]
 
@@ -20,7 +20,7 @@ class TACenterStep(Step):
     skip = boolean(default=True)  # Skip this step by default
     """  # noqa: E501
 
-    reference_file_types = ["specwcs", "pathloss", "filteroffset"]
+    reference_file_types = ["specwcs", "filteroffset"]
 
     def process(self, step_input):
         """
@@ -56,13 +56,6 @@ class TACenterStep(Step):
             result = self._rebuild_container(container, result)
             return result
 
-        # Check that this is a point source
-        if result.meta.target.source_type != "POINT":
-            log.error("TA centering is only implemented for point sources. Step will be SKIPPED.")
-            result.meta.cal_step.ta_center = "SKIPPED"
-            result = self._rebuild_container(container, result)
-            return result
-
         # Check exposure type
         exp_type = result.meta.exposure.type
         if exp_type not in ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]:
@@ -78,15 +71,6 @@ class TACenterStep(Step):
         with dm.open(self.ta_file) as ta_model:
             log.info(f"Performing TA centering using file: {self.ta_file}")
             ta_image = ta_model.data
-            wavelength = _get_wavelength(ta_model.meta.instrument.filter)
-            if wavelength is None:
-                log.error(
-                    "Unknown filter; cannot determine wavelength for TA centering."
-                    " Step will be SKIPPED."
-                )
-                result.meta.cal_step.ta_center = "SKIPPED"
-                result = self._rebuild_container(container, result)
-                return result
 
         # read specwcs to get necessary reference points on detector
         reffile = self.get_reference_file(result, "specwcs")
@@ -102,21 +86,17 @@ class TACenterStep(Step):
         if is_slit:
             log.info("Fitting Airy disk with slit mask model for LRS FIXEDSLIT mode")
             ref_center = (refmodel.meta.x_ref, refmodel.meta.y_ref)
-            pathloss_file = self.get_reference_file(result, "pathloss")
         else:
             log.info("Fitting Airy disk for slitless mode")
             ref_center = (refmodel.meta.x_ref_slitless, refmodel.meta.y_ref_slitless)
-            pathloss_file = None
 
         try:
             x_center, y_center = center_from_ta_image(
                 ta_image,
-                wavelength,
                 ref_center,
                 subarray_origin=(xstart, ystart),
-                pathloss_file=pathloss_file,
             )
-        except (NoFinitePixelsError, BadFitError) as e:
+        except NoFinitePixelsError as e:
             log.error(f"Error during TA centering: {e}. Step will be SKIPPED.")
             result.meta.cal_step.ta_center = "SKIPPED"
             return result
@@ -187,19 +167,3 @@ class TACenterStep(Step):
         sci_idx = container.ind_asn_type("science")
         container[sci_idx[0]] = updated_sci_model
         return container
-
-
-def _get_wavelength(filter_name):  # numpydoc ignore=RT01
-    """Map filter name to central wavelength in microns."""
-    filter_wavelengths = {
-        "F560W": 5.6,
-        "F770W": 7.7,
-        "F1000W": 10.0,
-        "F1130W": 11.3,
-        "F1280W": 12.8,
-        "F1500W": 15.0,
-        "F1800W": 18.0,
-        "F2100W": 21.0,
-        "F2550W": 25.5,
-    }
-    return filter_wavelengths.get(filter_name, None)
