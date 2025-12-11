@@ -213,7 +213,7 @@ _calculated_suffixes = {
     "emicorr",
     "emicorrstep",
     "badpixselfcalstep",
-    "TargCentroidstep",
+    "targcentroidstep",
 }
 
 
