@@ -178,7 +178,7 @@ documentation on each reference file.
 +-------------------------------------------------------+--------------------------------------------------+
 | :ref:`superbias <superbias_step>`                     | :ref:`SUPERBIAS <superbias_reffile>`             |
 +-------------------------------------------------------+--------------------------------------------------+
-| :ref:`ta_center <ta_center_step>`                     |   :ref:`FILTEROFFSET <filteroffset_reffile>`     |
+| :ref:`targ_centroid <targ_centroid_step>`                     |   :ref:`FILTEROFFSET <filteroffset_reffile>`     |
 +                                                       +--------------------------------------------------+
 |                                                       | :ref:`SPECWCS <specwcs_reffile>`                 |
 +                                                       +--------------------------------------------------+
@@ -224,7 +224,7 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`FILTEROFFSET <filteroffset_reffile>`       | :ref:`assign_wcs <assign_wcs_step>`                   |
 +                                                  +-------------------------------------------------------+
-|                                                  | :ref:`ta_center <ta_center_step>`                     |
+|                                                  | :ref:`targ_centroid <targ_centroid_step>`                     |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`FLAT <flat_reffile>`                       | :ref:`clean_flicker_noise <clean_flicker_noise_step>` |
 |                                                  +-------------------------------------------------------+
@@ -270,7 +270,7 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PATHLOSS <pathloss_reffile>`               | :ref:`pathloss <pathloss_step>`                       |
 +                                                  +-------------------------------------------------------+
-|                                                  | :ref:`ta_center <ta_center_step>`                     |
+|                                                  | :ref:`targ_centroid <targ_centroid_step>`                     |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`PERSAT <persat_reffile>`                   | :ref:`persistence <persistence_step>`                 |
 +--------------------------------------------------+-------------------------------------------------------+
@@ -306,7 +306,7 @@ documentation on each reference file.
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`SPECWCS <specwcs_reffile>`                 | :ref:`assign_wcs <assign_wcs_step>`                   |
 +                                                  +-------------------------------------------------------+
-|                                                  | :ref:`ta_center <ta_center_step>`                     |
+|                                                  | :ref:`targ_centroid <targ_centroid_step>`                     |
 +--------------------------------------------------+-------------------------------------------------------+
 | :ref:`SUPERBIAS <superbias_reffile>`             | :ref:`saturation <saturation_step>`                   |
 +                                                  +-------------------------------------------------------+

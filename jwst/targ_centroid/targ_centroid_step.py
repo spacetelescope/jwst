@@ -3,17 +3,17 @@ import logging
 import jwst.datamodels as dm
 from jwst.assign_wcs.miri import retrieve_filter_offset
 from jwst.stpipe import Step
-from jwst.ta_center.ta_center import NoFinitePixelsError, center_from_ta_image
+from jwst.targ_centroid.targ_centroid import NoFinitePixelsError, center_from_ta_image
 
-__all__ = ["TACenterStep"]
+__all__ = ["TargCentroidStep"]
 
 log = logging.getLogger(__name__)
 
 
-class TACenterStep(Step):
+class TargCentroidStep(Step):
     """Determine position of target source from TA verification image."""
 
-    class_alias = "ta_center"
+    class_alias = "targ_centroid"
 
     spec = """
     ta_file = string(default=None)  # Target acquisition image file name
@@ -52,7 +52,7 @@ class TACenterStep(Step):
         # Ensure TA file is provided
         if str(self.ta_file).lower() == "none":
             log.error("No target acquisition file provided. Step will be SKIPPED.")
-            result.meta.cal_step.ta_center = "SKIPPED"
+            result.meta.cal_step.targ_centroid = "SKIPPED"
             result = self._rebuild_container(container, result)
             return result
 
@@ -63,7 +63,7 @@ class TACenterStep(Step):
                 "TA centering is only implemented for MIR_LRS-FIXEDSLIT and"
                 " MIR_LRS-SLITLESS modes. Step will be SKIPPED."
             )
-            result.meta.cal_step.ta_center = "SKIPPED"
+            result.meta.cal_step.targ_centroid = "SKIPPED"
             result = self._rebuild_container(container, result)
             return result
 
@@ -98,7 +98,7 @@ class TACenterStep(Step):
             )
         except NoFinitePixelsError as e:
             log.error(f"Error during TA centering: {e}. Step will be SKIPPED.")
-            result.meta.cal_step.ta_center = "SKIPPED"
+            result.meta.cal_step.targ_centroid = "SKIPPED"
             return result
 
         # Apply filter offsets
@@ -114,7 +114,7 @@ class TACenterStep(Step):
         # Set completion status
         result.source_xpos = x_center
         result.source_ypos = y_center
-        result.meta.cal_step.ta_center = "COMPLETE"
+        result.meta.cal_step.targ_centroid = "COMPLETE"
 
         # Reconstruct the container if needed
         result = self._rebuild_container(container, result)

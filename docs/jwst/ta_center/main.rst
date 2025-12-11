@@ -1,10 +1,10 @@
 Description
 ===========
 
-:Class: `jwst.ta_center.TACenterStep`
-:Alias: ta_center
+:Class: `jwst.targ_centroid.TargCentroidStep`
+:Alias: targ_centroid
 
-The ``ta_center`` step determines the location of a point source in the detector
+The ``targ_centroid`` step determines the location of a point source in the detector
 frame using the target acquisition (TA) verification image. The measured source
 position is used by downstream calibration steps, such as
 :ref:`pathloss <pathloss_step>`, to apply corrections that account
@@ -26,7 +26,7 @@ step is executed after the :ref:`srctype <srctype_step>` step.
 Step Inputs
 -----------
 
-The ``ta_center`` step can accept either:
+The ``targ_centroid`` step can accept either:
 
 * A single science exposure (ImageModel) along with a separate TA verification
   image file specified via the ``ta_file`` parameter, or
@@ -40,7 +40,7 @@ image is also provided, the file specified by ``ta_file`` will take precedence.
 Algorithm
 ---------
 
-The ``ta_center`` step performs the following operations:
+The ``targ_centroid`` step performs the following operations:
 
 #. **Load reference files**: The step retrieves three reference files from CRDS:
 
@@ -93,4 +93,4 @@ The input science exposure is returned unmodified, except with three new attribu
   coordinate system (0-indexed pixels)
 * ``source_ypos``: The y-coordinate of the source in the full-frame detector
   coordinate system (0-indexed pixels)
-* ``meta.cal_step.ta_center`` keyword set to "COMPLETE"
+* ``meta.cal_step.targ_centroid`` keyword set to "COMPLETE"

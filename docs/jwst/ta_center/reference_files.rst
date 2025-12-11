@@ -1,7 +1,7 @@
 Reference Files
 ===============
 
-The ``ta_center`` step uses the following reference file types:
+The ``targ_centroid`` step uses the following reference file types:
 
 ================================================  ====================================================
 REFTYPE                                           Description                       

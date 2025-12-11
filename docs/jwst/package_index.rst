@@ -65,7 +65,7 @@ Package Index
    stpipe/index.rst
    straylight/index.rst
    superbias/index.rst
-   ta_center/index.rst
+   targ_centroid/index.rst
    tso_photometry/index.rst
    tweakreg/index.rst
    wavecorr/index.rst

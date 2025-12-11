@@ -630,8 +630,8 @@ name = 'superbias (detector1 NIR)'
 showcontent = true
 
 [[tool.towncrier.type]]
-directory = "ta_center"
-name = 'ta_center (spec2)'
+directory = "targ_centroid"
+name = 'targ_centroid (spec2)'
 showcontent = true
 
 [[tool.towncrier.type]]

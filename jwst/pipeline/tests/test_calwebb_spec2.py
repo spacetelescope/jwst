@@ -6,7 +6,11 @@ import pytest
 from jwst.datamodels import IFUImageModel  # type: ignore[attr-defined]
 from jwst.pipeline.calwebb_spec2 import Spec2Pipeline
 from jwst.stpipe import Step
-from jwst.ta_center.tests.helpers import make_empty_lrs_model, make_slit_data, make_ta_association
+from jwst.targ_centroid.tests.helpers import (
+    make_empty_lrs_model,
+    make_slit_data,
+    make_ta_association,
+)
 from jwst.tests.helpers import _help_pytest_warns
 
 INPUT_FILE = "test_rate.fits"
@@ -191,7 +195,7 @@ def test_bsub_deprecated(make_test_rate_file):
 
 
 @pytest.mark.parametrize("use_asn", [True, False])
-def test_ta_center_logic(use_asn, tmp_cwd):
+def test_targ_centroid_logic(use_asn, tmp_cwd):
     sci_model = make_empty_lrs_model()
     sci_model.meta.exposure.type = "MIR_LRS-FIXEDSLIT"
 
@@ -205,7 +209,7 @@ def test_ta_center_logic(use_asn, tmp_cwd):
         step_input,
         steps={
             "assign_wcs": {"skip": False},
-            "ta_center": {"skip": False},
+            "targ_centroid": {"skip": False},
             "badpix_selfcal": {"skip": True},
             "msa_flagging": {"skip": True},
             "clean_flicker_noise": {"skip": True},
@@ -229,7 +233,7 @@ def test_ta_center_logic(use_asn, tmp_cwd):
             "extract_1d": {"skip": True},
         },
     )
-    status = result[0].meta.cal_step.ta_center
+    status = result[0].meta.cal_step.targ_centroid
     if use_asn:
         assert status == "COMPLETE"
     else:

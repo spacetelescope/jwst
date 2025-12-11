@@ -3,8 +3,8 @@ import pytest
 import stdatamodels.jwst.datamodels as dm
 
 from jwst.datamodels import ModelContainer
-from jwst.ta_center.ta_center_step import TACenterStep
-from jwst.ta_center.tests.helpers import (
+from jwst.targ_centroid.targ_centroid_step import TargCentroidStep
+from jwst.targ_centroid.tests.helpers import (
     MIRI_DETECTOR_SHAPE,
     X_REF_SLIT,
     X_REF_SLITLESS,
@@ -110,7 +110,7 @@ def mock_references(monkeypatch, mock_specwcs_model, mock_pathloss_model, mock_f
         else:
             raise ValueError(f"Unexpected reference type: {reftype}")
 
-    monkeypatch.setattr(TACenterStep, "get_reference_file", mock_get_reference_file)
+    monkeypatch.setattr(TargCentroidStep, "get_reference_file", mock_get_reference_file)
 
 
 @pytest.fixture
@@ -157,9 +157,9 @@ def input_model_slitless():
     return model
 
 
-def test_ta_center_slitless(input_model_slitless, slitless_ta_image, mock_references):
+def test_targ_centroid_slitless(input_model_slitless, slitless_ta_image, mock_references):
     # Run the TA centering algorithm
-    result = TACenterStep.call(input_model_slitless, ta_file=slitless_ta_image)
+    result = TargCentroidStep.call(input_model_slitless, ta_file=slitless_ta_image)
     x_center, y_center = result.source_xpos, result.source_ypos
 
     # Expected center position (reference position + offset)
@@ -187,7 +187,7 @@ def test_ta_center_slitless(input_model_slitless, slitless_ta_image, mock_refere
         (-4.0, 3.6),  # Offset left and up
     ],
 )
-def test_ta_center_slit(input_model_slit, offset, tmp_path, mock_references):
+def test_targ_centroid_slit(input_model_slit, offset, tmp_path, mock_references):
     """
     Test TA centering for LRS slit mode with various offsets.
 
@@ -203,7 +203,7 @@ def test_ta_center_slit(input_model_slit, offset, tmp_path, mock_references):
     ta_image.save(filepath)
 
     # Run the TA centering algorithm for slit mode
-    result = TACenterStep.call(input_model_slit, ta_file=str(filepath))
+    result = TargCentroidStep.call(input_model_slit, ta_file=str(filepath))
     x_center, y_center = result.source_xpos, result.source_ypos
 
     # Expected center position (reference position + offset)
@@ -222,14 +222,14 @@ def test_ta_center_slit(input_model_slit, offset, tmp_path, mock_references):
 
 def test_skip_no_ta_file(input_model_slit):
     """Test that step is skipped when no TA file is provided."""
-    result = TACenterStep.call(input_model_slit, ta_file=None)
+    result = TargCentroidStep.call(input_model_slit, ta_file=None)
     _tests_for_skipped_step(result)
 
 
 def test_skip_wrong_exp_type(input_model_slit, slitless_ta_image):
     """Test that step is skipped for unsupported exposure types."""
     input_model_slit.meta.exposure.type = "MIR_IMAGE"
-    result = TACenterStep.call(input_model_slit, ta_file=slitless_ta_image)
+    result = TargCentroidStep.call(input_model_slit, ta_file=slitless_ta_image)
     _tests_for_skipped_step(result)
 
 
@@ -245,15 +245,15 @@ def test_skip_mostly_nan(input_model_slit, tmp_path, mock_references, log_watche
     ta_model.save(str(ta_path))
 
     watcher = log_watcher(
-        "jwst.ta_center.ta_center_step", message="Not enough finite pixels in the cutout"
+        "jwst.targ_centroid.targ_centroid_step", message="Not enough finite pixels in the cutout"
     )
-    result = TACenterStep.call(input_model_slit, ta_file=str(ta_path))
+    result = TargCentroidStep.call(input_model_slit, ta_file=str(ta_path))
     watcher.assert_seen()
 
     _tests_for_skipped_step(result)
 
 
-def test_ta_center_asn(input_model_slit, tmp_cwd, mock_references):
+def test_targ_centroid_asn(input_model_slit, tmp_cwd, mock_references):
     """Test TA centering step when run on an association with science and TA exposures."""
     # Generate slit TA data with a known offset
     offset = (2.0, -1.5)
@@ -263,14 +263,14 @@ def test_ta_center_asn(input_model_slit, tmp_cwd, mock_references):
     asn_fname = make_ta_association(input_model_slit, ta_image)
 
     # Run the step on the association
-    result = TACenterStep.call(asn_fname)
+    result = TargCentroidStep.call(asn_fname)
 
     assert isinstance(result, ModelContainer)
     sci_idx = result.ind_asn_type("science")
     sci_model = result[sci_idx[0]]
 
     # Check that the result is the science exposure with TA centering applied
-    assert sci_model.meta.cal_step.ta_center == "COMPLETE"
+    assert sci_model.meta.cal_step.targ_centroid == "COMPLETE"
 
     # Expected center position (reference position + offset)
     expected_x = X_REF_SLIT + offset[0]
@@ -285,13 +285,13 @@ def test_ta_center_asn(input_model_slit, tmp_cwd, mock_references):
     )
 
 
-def test_ta_center_asn_no_ta(input_model_slit, tmp_cwd, mock_references):
+def test_targ_centroid_asn_no_ta(input_model_slit, tmp_cwd, mock_references):
     """Test TA centering step when run on an association with no TA exposure."""
     # Create association with only science exposure
     asn_fname = make_ta_association(input_model_slit, ta_model=None)
 
     # Run the step on the association
-    result = TACenterStep.call(asn_fname)
+    result = TargCentroidStep.call(asn_fname)
 
     assert isinstance(result, ModelContainer)
     sci_idx = result.ind_asn_type("science")
@@ -302,6 +302,6 @@ def test_ta_center_asn_no_ta(input_model_slit, tmp_cwd, mock_references):
 
 
 def _tests_for_skipped_step(model):
-    assert model.meta.cal_step.ta_center == "SKIPPED"
+    assert model.meta.cal_step.targ_centroid == "SKIPPED"
     assert not model.hasattr("source_xpos")
     assert not model.hasattr("source_ypos")

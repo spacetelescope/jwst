@@ -1,4 +1,4 @@
-.. _ta_center_step:
+.. _targ_centroid_step:
 
 =========
 TA Center
@@ -11,4 +11,4 @@ TA Center
    arguments.rst
    reference_files.rst
 
-.. automodapi:: jwst.ta_center
+.. automodapi:: jwst.targ_centroid
