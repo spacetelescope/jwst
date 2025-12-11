@@ -1312,11 +1312,12 @@ class STTableDataDiff(TableDataDiff):
             if np.issubdtype(arra.dtype, np.number) and np.issubdtype(arrb.dtype, np.number):
                 float_diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
                 self.fail_atol_rtol_test += len(float_diffs[0])
-                n_different = len((np.where(arra != arrb))[0])
+                # Find differences while excluding entries where both are NaN
+                bothnans = np.isnan(arra) & np.isnan(arrb)
+                n_different = (arra[~bothnans] != arrb[~bothnans]).sum()
                 if n_different == 0:
                     self.identical_columns.append(col.name)
                     continue
-                # Catch the case of a column full of nans
                 nansa = arra[np.isnan(arra)]
                 nansb = arrb[np.isnan(arrb)]
                 nonansa = arra[np.isfinite(arra)]
@@ -1324,24 +1325,22 @@ class STTableDataDiff(TableDataDiff):
                 arramax, arramin, arramean = get_stats_if_nonans(nonansa)
                 arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
                 finite_idx = np.isfinite(arra) & np.isfinite(arrb)
-                n_fail_rtol, maxr, meanr, stdr = 0, 0, 0, 0
-                if finite_idx.any():
-                    r_idx = where_not_allclose(
+                maxr, meanr, stdr = np.nan, np.nan, np.nan
+                r_idx = where_not_allclose(arra, arrb, self.atol, self.rtol)
+                n_fail_rtol = len(r_idx[0])
+                if n_fail_rtol > 0:
+                    numeric_fail_idx = where_not_allclose(
                         arra[finite_idx], arrb[finite_idx], self.atol, self.rtol
                     )
-                    n_fail_rtol = len(r_idx[0])
-                    rtol_failures = abs(arra[finite_idx][r_idx] - arrb[finite_idx][r_idx])
-                    if n_fail_rtol > 0:
+                    numeric_fail_atol_rtol = len(numeric_fail_idx[0])
+                    if numeric_fail_atol_rtol > 0:
+                        rtol_failures = abs(
+                            arra[finite_idx][numeric_fail_idx] - arrb[finite_idx][numeric_fail_idx]
+                        )
                         maxr = np.max(rtol_failures)
                         meanr = np.mean(rtol_failures)
                         stdr = np.std(rtol_failures)
-                else:
-                    n_fail_rtol = arrb.size
-                    maxr = np.nan
-                    meanr = np.nan
-                    stdr = np.nan
-                # Report the total number of zeros, nans, and no-nan values
-                if n_fail_rtol > 0:
+                    # Report the total number of zeros, nans, and no-nan values
                     self.report_zeros_nan.add_row(
                         (
                             col.name,
@@ -1357,16 +1356,16 @@ class STTableDataDiff(TableDataDiff):
                         (
                             col.name,
                             str(arra.dtype).replace(">", ""),
-                            n_fail_rtol,
+                            numeric_fail_atol_rtol,
                             maxr,
                             meanr,
                             stdr,
                         )
                     )
 
-                    if not self.report_pixel_loc_diffs:
-                        self.diff_total += arrb.size
-                        self.rel_diffs += np.nan
+                if not self.report_pixel_loc_diffs:
+                    self.diff_total += arrb.size
+                    self.rel_diffs += np.nan
 
             elif "P" in col.format or "Q" in col.format:
                 different_idx = (
@@ -1444,8 +1443,7 @@ class STTableDataDiff(TableDataDiff):
                 # Should only get here for text table entries
             else:
                 # Should only get here if not numeric
-                diffs_idx = np.where(arra != arrb)
-                n_different = len(diffs_idx[0])
+                n_different = (arra != arrb).sum()
                 if n_different > 0:
                     if not np.issubdtype(arra.dtype, np.number):
                         self.non_numeric_diff_columns.append((col.name, n_different))
@@ -1562,7 +1560,9 @@ class STTableDataDiff(TableDataDiff):
             self._writeln(tline)
 
         # Print the difference (b - a) stats
-        self._writeln("\nDifference stats: abs(b - a) ")
+        self._writeln(
+            "\nDifference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)"
+        )
         # make sure the format is acceptable
         for colname in self.report_table.columns:
             if colname in ["col_name", "dtype"]:

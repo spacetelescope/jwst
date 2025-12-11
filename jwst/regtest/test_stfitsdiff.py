@@ -1004,7 +1004,7 @@ def test_table_data_mod(mock_table, fitsdiff_default_kwargs):
         "col_name zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "FLUX       0 0     0 0    100 100       100         1     1e-05         1      1.98         1",
-        "Difference stats: abs(b - a)",
+        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
         "col_name dtype rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- -------",
         "FLUX    f8         2      99       50      49",
@@ -1043,7 +1043,7 @@ def test_table_nan_in_data(mock_table, fitsdiff_default_kwargs):
         "col_name zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "-------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "FLUX       2 0     2 0     98 100         1         1         0         1    0.9796         1",
-        "Difference stats: abs(b - a)",
+        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
         "col_name dtype rel_diffs rel_max rel_mean rel_std",
         "-------- ----- --------- ------- -------- -------",
         "FLUX    f8         2       1        1       0",
@@ -1082,10 +1082,10 @@ def test_table_nan_column(mock_table, fitsdiff_default_kwargs):
         "col_name  zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
         "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
         "WAVELENGTH       0 1   100 0      0 100       nan       9.9       nan         0       nan      4.95",
-        "Difference stats: abs(b - a)",
+        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
         "col_name  dtype rel_diffs rel_max rel_mean rel_std",
         "---------- ----- --------- ------- -------- -------",
-        "WAVELENGTH    f8       100     nan      nan     nan",
+        "WAVELENGTH    f8         0     nan      nan     nan",
         "Columns ['BACKGROUND', 'BKGD_ERROR', 'BKGD_VAR_FLAT', 'BKGD_VAR_POISSON', "
         "'BKGD_VAR_RNOISE', 'DQ', 'FLUX', 'FLUX_ERROR', 'FLUX_VAR_FLAT', "
         "'FLUX_VAR_POISSON', 'FLUX_VAR_RNOISE', 'NPIXELS', 'SB_ERROR', "
@@ -1165,7 +1165,7 @@ def test_table_pq_coltype(mock_table, fitsdiff_default_kwargs):
         "-------- --------- ------- ---------- ------------- ------------- -------------",
         "col_1       1 1     0 0        5 5     11      4      0      0      4      2",
         "col_2       1 1     2 2        4 4     23      3      0      0      7    1.5",
-        "Difference stats: abs(b - a)",
+        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
         "col_name dtype  rel_diffs rel_max rel_mean rel_std",
         "-------- ------ --------- ------- -------- -------",
         "col_1 object         1      10       10       0",
@@ -1463,13 +1463,88 @@ def test_hdus_tables_misc(fitsdiff_default_kwargs):
     table_a.data["INDEX"] = np.arange(100)
     table_b.data["INDEX"] = np.arange(100)
     table_b.data["INDEX"][:5] = np.arange(5) + 1
+    table_a.data["ERROR"] = np.arange(100.0)
+    table_b.data["ERROR"] = np.arange(100.0)
+    table_b.data["ERROR"][90:95] = np.nan
+    table_a.data["FLUX"] = np.arange(100.0)
+    table_b.data["FLUX"] = np.arange(100.0)
+    table_b.data["FLUX"][10:20] *= 1.0000001
     a.append(table_a)
     b.append(table_b)
     fitsdiff_default_kwargs["report_pixel_loc_diffs"] = True
     fitsdiff_default_kwargs["numdiffs"] = -1
     diff = STFITSDiff(a, b, **fitsdiff_default_kwargs)
-    report = diff.report()
-    assert "additional difference(s)" not in report
+    report = report_to_list(diff.report())
+    expected_report = [
+        "Extension HDU 1:",
+        "Data contains differences:",
+        "Found 26 different table data element(s).",
+        "16 failed the (atol, rtol) test",
+        "Values in a and b",
+        "col_name  zeros_a_b nan_a_b no-nan_a_b       max_a_b             min_a_b             mean_a_b",
+        "---------- --------- ------- ---------- ------------------- ------------------- -------------------",
+        "ERROR       1 1     0 5     100 95        99        99         0         0      49.5     47.26",
+        "INDEX       1 0     0 0    100 100        99        99         0         1      49.5     49.55",
+        "WAVELENGTH       1 0     0 1     100 99        99        99         0         1      49.5     49.65",
+        "Difference stats for non-NaN diffs that fail the [atol, rtol] test: abs(b - a)",
+        "col_name   dtype  rel_diffs rel_max rel_mean rel_std",
+        "---------- ------- --------- ------- -------- -------",
+        "ERROR float32         0     nan      nan     nan",
+        "INDEX   int32         5       1        1       0",
+        "WAVELENGTH float32         5       1        1       0",
+        "* Pixel indices below are 1-based.",
+        "Column ERROR data differs in row 90:",
+        "a> 90.0",
+        "b> nan",
+        "Column ERROR data differs in row 91:",
+        "a> 91.0",
+        "b> nan",
+        "Column ERROR data differs in row 92:",
+        "a> 92.0",
+        "b> nan",
+        "Column ERROR data differs in row 93:",
+        "a> 93.0",
+        "b> nan",
+        "Column ERROR data differs in row 94:",
+        "a> 94.0",
+        "b> nan",
+        "Column INDEX data differs in row 0:",
+        "a> 0",
+        "b> 1",
+        "Column INDEX data differs in row 1:",
+        "a> 1",
+        "b> 2",
+        "Column INDEX data differs in row 2:",
+        "a> 2",
+        "b> 3",
+        "Column INDEX data differs in row 3:",
+        "a> 3",
+        "b> 4",
+        "Column INDEX data differs in row 4:",
+        "a> 4",
+        "b> 5",
+        "Column WAVELENGTH data differs in row 0:",
+        "a> 0.0",
+        "b> 1.0",
+        "Column WAVELENGTH data differs in row 1:",
+        "a> 1.0",
+        "b> 2.0",
+        "Column WAVELENGTH data differs in row 2:",
+        "a> 2.0",
+        "b> 3.0",
+        "Column WAVELENGTH data differs in row 3:",
+        "a> 3.0",
+        "b> 4.0",
+        "Column WAVELENGTH data differs in row 4:",
+        "a> 4.0",
+        "b> 5.0",
+        "Column WAVELENGTH data differs in row 40:",
+        "a> 40.0",
+        "b> nan",
+        "...",
+        "16 different table data element(s) found (4.00% different).",
+    ]
+    assert report == expected_report
 
 
 def test_hdus_tables_non_numeric(fitsdiff_default_kwargs):
