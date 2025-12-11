@@ -47,8 +47,6 @@ The ``targ_centroid`` step performs the following operations:
    * SPECWCS: Contains the reference position (x_ref, y_ref) for the slit and
      slitless configurations
    * FILTEROFFSET: Provides column and row offsets specific to the observation filter
-   * PATHLOSS: Used for slit observations to weight the model point source by the pathloss
-     response during fitting
 
 #. **Determine reference position**: Based on the SPECWCS reference file metadata,
    the step identifies the expected source location. If the TA verification image
@@ -57,21 +55,9 @@ The ``targ_centroid`` step performs the following operations:
 #. **Extract cutout**: A cutout of the TA verification image is extracted,
    centered on the reference position.
 
-#. **Build source model**: An initial source model is constructed:
-
-   * The model is an Airy disk at approximately diffraction-limited resolution
-   * The initial position is set to the flux-weighted centroid of the cutout region
-   * Free parameters x position, y position, flux amplitude, and Airy
-     disk radius are all allowed to vary during fitting
-
-#. **Apply pathloss weighting** (slit mode only): For slit observations, the
-   source model is multiplied by the pathloss correction at the central wavelength
-   of the observation filter. The pathloss correction ensures the fit accounts for
-   the aperture response, which is relevant at longer wavelengths where the PSF size
-   approaches the slit width.
-
-#. **Fit the model**: The model is fit to the data in the cutout using a
-   least-squares optimizer to determine the best-fit x and y position.
+#. **Find the centroid**: The centroid of the source within the cutout is determined
+   using the photutils ApertureStats.centroid routine. This yields the fitted x and y
+   coordinates of the source in cutout pixel coordinates.
 
 #. **Transform coordinates**: The fitted position is transformed from cutout
    coordinates to full-frame detector coordinates, accounting for any subarray
