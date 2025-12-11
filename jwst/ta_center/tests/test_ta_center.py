@@ -1,6 +1,10 @@
+import warnings
+
 import numpy as np
 import pytest
 import stdatamodels.jwst.datamodels as dm
+from astropy.modeling import fitting
+from astropy.utils.exceptions import AstropyUserWarning
 
 from jwst.datamodels import ModelContainer
 from jwst.ta_center.ta_center_step import TACenterStep, _get_wavelength
@@ -251,24 +255,6 @@ def test_skip_unknown_filter(input_model_slit, slitless_ta_image, tmp_path):
     _tests_for_skipped_step(result)
 
 
-def test_skip_no_finite_pixels(input_model_slit, tmp_path, mock_references, log_watcher):
-    """Test that step raises an error when no finite pixels are present in TA image."""
-    # Create a TA model with all non-finite values
-    data = np.full((101, 101), np.nan)
-    ta_model = make_ta_model(data)
-
-    ta_path = tmp_path / "ta_no_finite.fits"
-    ta_model.save(str(ta_path))
-
-    watcher = log_watcher(
-        "jwst.ta_center.ta_center_step", message="All pixels contain non-finite values"
-    )
-    result = TACenterStep.call(input_model_slit, ta_file=str(ta_path))
-    watcher.assert_seen()
-
-    _tests_for_skipped_step(result)
-
-
 def test_skip_mostly_nan(input_model_slit, tmp_path, mock_references, log_watcher):
     """Test that step raises an error when center-finding does not converge."""
     # Create a TA model with a source far from the reference position
@@ -280,26 +266,41 @@ def test_skip_mostly_nan(input_model_slit, tmp_path, mock_references, log_watche
     ta_path = tmp_path / "ta_nonconverge.fits"
     ta_model.save(str(ta_path))
 
-    watcher = log_watcher("jwst.ta_center.ta_center_step", message="Not enough finite pixels")
+    watcher = log_watcher(
+        "jwst.ta_center.ta_center_step", message="Most or all pixels contain non-finite values"
+    )
     result = TACenterStep.call(input_model_slit, ta_file=str(ta_path))
     watcher.assert_seen()
 
     _tests_for_skipped_step(result)
 
 
-def test_skip_nonconverge(input_model_slitless, tmp_path, mock_references, log_watcher):
-    """Test that step raises an error when the model fit does not converge."""
-    rng = np.random.default_rng(42)
-    data = rng.choice([0, 10000], size=MIRI_DETECTOR_SHAPE)
-    ta_model = make_ta_model(data)
+def test_skip_nonconverge(
+    input_model_slitless, slitless_ta_image, mock_references, log_watcher, monkeypatch
+):
+    """Test that step raises an error when the model fit does not converge.
 
-    ta_path = tmp_path / "ta_nonconverge.fits"
-    ta_model.save(str(ta_path))
+    This test monkeypatches the TRFLSQFitter used by the code under test so
+    that it deterministically issues an AstropyUserWarning indicating
+    non-convergence. The `_fit_catch_errors` helper converts that warning to
+    an exception and raises `BadFitError`, which the step logs and skips.
+    """
+
+    class BadTRF:
+        def __init__(self, *args, **kwargs):
+            # prepare a failure fit_info similar to what the real fitter would set
+            self.fit_info = {"ierr": 5, "message": "maxfev exceeded (simulated)"}
+
+        def __call__(self, model_init, x, y, data, weights=None):
+            warnings.warn(AstropyUserWarning("simulated non-convergence"))
+
+    # Patch the fitter used by the production code
+    monkeypatch.setattr(fitting, "TRFLSQFitter", BadTRF)
 
     watcher = log_watcher(
         "jwst.ta_center.ta_center_step", message="Model fitting failed with status code"
     )
-    result = TACenterStep.call(input_model_slitless, ta_file=str(ta_path))
+    result = TACenterStep.call(input_model_slitless, ta_file=slitless_ta_image)
     watcher.assert_seen()
 
     _tests_for_skipped_step(result)
@@ -308,7 +309,8 @@ def test_skip_nonconverge(input_model_slitless, tmp_path, mock_references, log_w
 def test_skip_bad_fit(input_model_slit, tmp_path, mock_references, log_watcher):
     """Test that step raises an error when the model fit is poor."""
     # Create a TA model with a source far from the reference position
-    data = np.ones(MIRI_DETECTOR_SHAPE) * -1.0
+    rng = np.random.default_rng(42)
+    data = np.ones(MIRI_DETECTOR_SHAPE) * -1.0 * rng.random(MIRI_DETECTOR_SHAPE)
     ta_model = make_ta_model(data)
 
     ta_path = tmp_path / "ta_bad_fit.fits"

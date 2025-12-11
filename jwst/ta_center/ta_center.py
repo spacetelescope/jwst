@@ -3,7 +3,9 @@ import warnings
 
 import numpy as np
 from astropy.modeling import Fittable2DModel, fitting, models
+from astropy.stats import sigma_clip
 from astropy.utils.exceptions import AstropyUserWarning
+from scipy.ndimage import median_filter
 
 import jwst.datamodels as dm
 from jwst.pathloss.pathloss import calculate_pathloss_vector
@@ -130,7 +132,8 @@ def _fit_airy_disk(ta_image, wavelength, pathloss_model=None):
     wavelength : float
         Wavelength in microns for calculating the Airy disk size.
     pathloss_model : Fittable2DModel, optional
-        Pathloss model to multiply the Airy disk by.
+        Pathloss model used to compute fitting weights (not included in the
+        fitted model itself).
 
     Returns
     -------
@@ -144,47 +147,67 @@ def _fit_airy_disk(ta_image, wavelength, pathloss_model=None):
 
     # Filter non-finite values from data
     mask = np.isfinite(ta_image)
-    if not np.any(mask):
-        raise NoFinitePixelsError("All pixels contain non-finite values")
+    if np.sum(mask) < 10:
+        raise NoFinitePixelsError("Most or all pixels contain non-finite values")
     log.debug(f"Excluding {np.sum(~mask)} non-finite values from fit")
+    ta_masked = ta_image[mask]
 
     # Calculate diffraction-limited Airy disk radius
     theta_rad = 1.22 * wavelength * 1e-6 / JWST_DIAMETER
     theta_arcsec = theta_rad * 206265  # radians to arcseconds
     radius_pixels = theta_arcsec / PIXSCALE  # to pixels
 
-    # Initial guess for center (centroid of finite values)
-    ta_image_masked = np.where(mask, ta_image, 0.0)
-    y_guess = np.sum(y * ta_image_masked) / np.sum(ta_image_masked)
-    x_guess = np.sum(x * ta_image_masked) / np.sum(ta_image_masked)
-    amplitude_guess = np.max(ta_image[mask])
+    # Add a uniform background model
+    clipped_data = sigma_clip(ta_masked, sigma=1, maxiters=5, masked=False)
+    clipped_med = np.median(clipped_data)
+    background_init = models.Const2D(amplitude=clipped_med)
+    # bound background model to be within three sigma of guess
+    background_init.amplitude.bounds = (
+        clipped_med - 3 * np.std(ta_masked),
+        clipped_med + 3 * np.std(ta_masked),
+    )
 
     # Create initial Airy disk model
+    # Initial guess for center and amplitude
+    # Do a spatial median filter to remove hot pixels if present, then find location of max
+    filtered_image = median_filter(ta_image, size=3)
+    y_guess, x_guess = np.unravel_index(np.nanargmax(filtered_image), ta_image.shape)
+    # Amplitude guess above background
+    amplitude_guess = ta_image[int(y_guess), int(x_guess)] - clipped_med
+
     airy_init = models.AiryDisk2D(
         amplitude=amplitude_guess, x_0=x_guess, y_0=y_guess, radius=radius_pixels
     )
     # Allow radius to vary a bit (0.99 to 1.5 times diffraction limit)
     airy_init.radius.bounds = (0.99 * radius_pixels, 1.5 * radius_pixels)
+    # Force amplitude positive
+    airy_init.amplitude.bounds = (0.0, None)
+    # Keep x, y center within 5 pixels of centroid guess
+    airy_init.x_0.bounds = (x_guess - 5.0, x_guess + 5.0)
+    airy_init.y_0.bounds = (y_guess - 5.0, y_guess + 5.0)
 
+    # Build model WITHOUT multiplying by the pathloss mask. Use pathloss
+    # only to compute weights for the fitter.
+    compound_model = airy_init + background_init
+
+    weights = None
     if pathloss_model is not None:
-        compound_model = airy_init * pathloss_model
+        # Evaluate the pathloss mask at the valid pixel locations to use
+        # as weights. Keep as 1D array corresponding to data[mask].
+        pw = pathloss_model(x[mask], y[mask])
+        weights = np.atleast_1d(pw).astype(float)
 
-        # Fit the compound model to filtered data
-        fitted_model = _fit_catch_errors(compound_model, x, y, ta_image, mask)
-        # Extract parameters from the left side of the compound model (Airy disk)
-        x_center = fitted_model.left.x_0.value
-        y_center = fitted_model.left.y_0.value
+    # Fit the compound model to filtered data using optional weights
+    fitted_model = _fit_catch_errors(compound_model, x, y, ta_image, mask, weights=weights)
 
-    else:
-        # Fit the model to filtered data
-        fitted_model = _fit_catch_errors(airy_init, x, y, ta_image, mask)
-        x_center = fitted_model.x_0.value
-        y_center = fitted_model.y_0.value
+    # Extract parameters from the Airy disk model (first submodel)
+    x_center = fitted_model[0].x_0.value
+    y_center = fitted_model[0].y_0.value
 
     return x_center, y_center
 
 
-def _fit_catch_errors(model_init, x, y, data, mask):
+def _fit_catch_errors(model_init, x, y, data, mask, weights=None):
     """
     Fit a model to data, catching common fitting errors and raising custom types.
 
@@ -206,11 +229,20 @@ def _fit_catch_errors(model_init, x, y, data, mask):
     fitted_model : Fittable2DModel
         Fitted model.
     """
-    fitter = fitting.LevMarLSQFitter()
+    fitter = fitting.TRFLSQFitter()
     try:
         with warnings.catch_warnings():
             warnings.filterwarnings("error", category=AstropyUserWarning)
-            fitted_model = fitter(model_init, x[mask], y[mask], data[mask])
+            # astropy fitters accept a `weights` keyword matching the shape of
+            # the dependent data vector. If weights is provided it should be
+            # a 1-D array corresponding to data[mask]. Otherwise pass None.
+            fitted_model = fitter(
+                model_init,
+                x[mask],
+                y[mask],
+                data[mask],
+                weights=weights,
+            )
     except TypeError as e:
         if str(e).startswith("Improper input: func input vector length"):
             raise NoFinitePixelsError("Not enough finite pixels for fitting") from e
@@ -224,6 +256,25 @@ def _fit_catch_errors(model_init, x, y, data, mask):
     residuals = data - fitted_image
     residual_std = np.std(residuals[mask])
     log.info(f"Fit residuals standard deviation: {residual_std:.4f}")
+
+    # # Get the fitted center of the Airy disk
+    # xcen, ycen = (fitted_model[0].x_0.value, fitted_model[0].y_0.value)
+    # import matplotlib.pyplot as plt
+    # fig, axes = plt.subplots(1, 4, figsize=(16, 4))
+    # axes[0].imshow(data, origin="lower", cmap="viridis")
+    # axes[0].set_title("TA Image Data")
+    # axes[1].imshow(fitted_image, origin="lower", cmap="viridis")
+    # axes[1].set_title("Fitted Model")
+    # axes[2].imshow(residuals, origin="lower", cmap="viridis")
+    # axes[2].set_title("Residuals")
+    # weights_2d = np.zeros_like(data, dtype=float)
+    # weights_2d[mask] = weights if weights is not None else 1.0
+    # axes[3].imshow(weights_2d, origin="lower", cmap="viridis")
+    # axes[3].set_title("Fit weights (pathloss)")
+    # for ax in axes:
+    #     ax.plot(xcen, ycen, "rx")
+    # plt.tight_layout()
+    # plt.show()
 
     # Raise an exception if the fit is bad
     # For now this is extremely generous - need to check what INS wants here
@@ -338,17 +389,18 @@ class PathlossMask(Fittable2DModel):
         # Calculate offsets in arcseconds to pass into calculate_pathloss_vector
         dx_pixels = (x - self.xcenter).flatten()
         dy_pixels = (y - self.ycenter).flatten()
-        dx_arcsec = dx_pixels * PIXSCALE
-        dy_arcsec = dy_pixels * PIXSCALE
         loss = np.empty_like(dx_pixels)
         # In the future we should vectorize calculate_pathloss_vector to avoid loop.
         # This isn't preventatively slow, so not a high priority
-        for i in range(len(dx_arcsec)):
+        for i in range(len(dx_pixels)):
             _, pathloss_vector, _is_inside_slit = calculate_pathloss_vector(
-                self.pathloss_data, self.pathloss_wcs, dx_arcsec[i], dy_arcsec[i], calc_wave=False
+                self.pathloss_data, self.pathloss_wcs, dx_pixels[i], dy_pixels[i], calc_wave=False
             )
             loss[i] = pathloss_vector[self.wave_idx]
         loss = loss.reshape(x.shape)
+
+        # Normalize to max of 1
+        loss /= np.max(loss)
         return loss
 
     def _wave_to_idx(self, wavelength):

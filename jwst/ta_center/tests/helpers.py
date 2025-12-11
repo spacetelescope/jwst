@@ -34,7 +34,6 @@ def make_pathloss_model():
     # Define spatial grids - slit is long in x, narrow in y
     n_x = 51
     n_y = 21
-    x_grid = np.linspace(-2.5, 2.5, n_x)  # arcsec
     y_grid = np.linspace(-0.5, 0.5, n_y)  # arcsec
 
     # Define pathloss data. This will be a slight Gaussian drop-off from the center
@@ -68,11 +67,8 @@ def make_pathloss_model():
     pathloss_model.meta.wcsinfo.crval1 = 0.0  # Reference value in x (arcsec)
     pathloss_model.meta.wcsinfo.crval2 = 0.0  # Reference value in y (arcsec)
 
-    # Pixel scale in arcsec/pixel for the spatial dimensions
-    x_pixel_scale = (x_grid[-1] - x_grid[0]) / (n_x - 1)
-    y_pixel_scale = (y_grid[-1] - y_grid[0]) / (n_y - 1)
-    pathloss_model.meta.wcsinfo.cdelt1 = x_pixel_scale
-    pathloss_model.meta.wcsinfo.cdelt2 = y_pixel_scale
+    pathloss_model.meta.wcsinfo.cdelt1 = 1  # x_pixel_scale
+    pathloss_model.meta.wcsinfo.cdelt2 = 1  # y_pixel_scale
 
     return pathloss_model
 
