@@ -104,7 +104,7 @@ def _fit_centroid(ta_image):
     # Use a 2-D Gaussian fit to find the centroid
     try:
         x_center_cutout, y_center_cutout = centroid_2dg(cutout, mask=mask)
-    except Exception as e:
+    except ValueError as e:
         raise BadFitError(
             "2D Gaussian centroid fit failed. Check input data and mask. "
             f"Error from fitter was {type(e).__name__}: {e}"
