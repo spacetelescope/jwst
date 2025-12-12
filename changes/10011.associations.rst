@@ -1,0 +1,1 @@
+Add TA verification images to spec2 associations for MIRI LRS fixed-slit and slitless data

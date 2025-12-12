@@ -65,6 +65,7 @@ class MasterBackgroundStep(Step):
                     ModelContainer,
                     datamodels.MultiSlitModel,
                     datamodels.ImageModel,
+                    datamodels.SlitModel,
                     datamodels.IFUImageModel,
                 ),
             ):
@@ -353,12 +354,9 @@ def subtract_2d_background(source, background):
                 slit.dq = np.bitwise_or(slit.dq, slitbg.dq)
 
         # Handle MIRI LRS, MIRI MRS and NIRSpec IFU
-        elif isinstance(model, (datamodels.ImageModel, datamodels.IFUImageModel)):
+        else:
             result.data -= background.data
             result.dq = np.bitwise_or(result.dq, background.dq)
-        else:
-            # Shouldn't get here.
-            raise TypeError(f"Input type {type(model)} is not supported.")
         return result
 
     # Handle containers of many datamodels
@@ -369,13 +367,7 @@ def subtract_2d_background(source, background):
             result.append(_subtract_2d_background(model, bg))
 
     # Handle single datamodels
-    elif isinstance(
-        source, (datamodels.ImageModel, datamodels.IFUImageModel, datamodels.MultiSlitModel)
-    ):
-        result = _subtract_2d_background(source, background)
-
     else:
-        # Shouldn't get here.
-        raise TypeError(f"Input type {type(source)} is not supported.")
+        result = _subtract_2d_background(source, background)
 
     return result
