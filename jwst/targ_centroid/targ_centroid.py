@@ -1,7 +1,7 @@
 import logging
 
 import numpy as np
-from photutils.aperture import ApertureStats, CircularAperture
+from photutils.centroids import centroid_2dg
 from scipy.ndimage import median_filter
 
 log = logging.getLogger(__name__)
@@ -76,7 +76,7 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
 
 def _fit_centroid(ta_image):
     """
-    Compute the centroid of the target acquisition image using aperture photometry.
+    Compute the centroid of the target acquisition image.
 
     Parameters
     ----------
@@ -89,15 +89,19 @@ def _fit_centroid(ta_image):
         Centroid x, y position.
     """
     # Initial guess: spatial median filter to remove hot pixels if present, then find max
-    filtered_image = median_filter(ta_image, size=5)
+    filtered_image = median_filter(ta_image, size=3)
     y_guess, x_guess = np.unravel_index(np.nanargmax(filtered_image), ta_image.shape)
-    phot_aper = CircularAperture([x_guess, y_guess], r=10)
+    # make an even smaller cutout, +/- 8 pixels around the guess position
+    cutout, cutout_origin = _cutout_center(ta_image, (x_guess, y_guess), size=16)
+    mask = ~np.isfinite(cutout)
 
-    # in-fill NaNs using filtered image for aperture stats calculation
-    # aper_stats.centroid cannot handle NaNs
-    ta_image_filled = np.where(np.isfinite(ta_image), ta_image, filtered_image)
-    aper_stats = ApertureStats(ta_image_filled, phot_aper)
-    x_center, y_center = aper_stats.centroid
+    # Use a 2-D Gaussian fit to find the centroid
+    x_center_cutout, y_center_cutout = centroid_2dg(cutout, mask=mask)
+
+    # Transform back to original image coordinates
+    x_center = x_center_cutout + cutout_origin[0]
+    y_center = y_center_cutout + cutout_origin[1]
+
     return x_center, y_center
 
 
@@ -112,7 +116,7 @@ def _cutout_center(image, center, size=40):
     center : tuple of float
         (x_center, y_center) position for the center of the cutout.
     size : int, optional
-        Size of the square cutout in pixels. Default is 20.
+        Size of the square cutout in pixels.
 
     Returns
     -------
