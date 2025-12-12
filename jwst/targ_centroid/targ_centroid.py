@@ -16,6 +16,12 @@ class NoFinitePixelsError(Exception):
     pass
 
 
+class BadFitError(Exception):
+    """Custom exception raised when the model fit does not meet quality criteria."""
+
+    pass
+
+
 def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
     """
     Determine the center of a point source from a TA image.
@@ -96,7 +102,13 @@ def _fit_centroid(ta_image):
     mask = ~np.isfinite(cutout)
 
     # Use a 2-D Gaussian fit to find the centroid
-    x_center_cutout, y_center_cutout = centroid_2dg(cutout, mask=mask)
+    try:
+        x_center_cutout, y_center_cutout = centroid_2dg(cutout, mask=mask)
+    except Exception as e:
+        raise BadFitError(
+            "2D Gaussian centroid fit failed. Check input data and mask. "
+            f"Error from fitter was {type(e).__name__}: {e}"
+        ) from None
 
     # Transform back to original image coordinates
     x_center = x_center_cutout + cutout_origin[0]

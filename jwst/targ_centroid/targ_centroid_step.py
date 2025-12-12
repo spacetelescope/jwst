@@ -3,7 +3,7 @@ import logging
 import jwst.datamodels as dm
 from jwst.assign_wcs.miri import retrieve_filter_offset
 from jwst.stpipe import Step
-from jwst.targ_centroid.targ_centroid import NoFinitePixelsError, center_from_ta_image
+from jwst.targ_centroid.targ_centroid import BadFitError, NoFinitePixelsError, center_from_ta_image
 
 __all__ = ["TargCentroidStep"]
 
@@ -104,7 +104,7 @@ class TargCentroidStep(Step):
                 ref_center,
                 subarray_origin=(xstart, ystart),
             )
-        except NoFinitePixelsError as e:
+        except (NoFinitePixelsError, BadFitError) as e:
             log.error(f"Error during TA centering: {e}. Step will be SKIPPED.")
             result.meta.cal_step.targ_centroid = "SKIPPED"
             return result

@@ -220,6 +220,32 @@ def test_targ_centroid_slit(input_model_slit, offset, tmp_path, mock_references)
     )
 
 
+def test_targ_centroid_flat_flux(input_model_slit, tmp_path, mock_references, log_watcher):
+    """
+    Test TA centering on an image with flat flux (no source).
+
+    The step should still complete without error, but the centroid position
+    may be arbitrary.
+    """
+
+    # Create a flat TA image
+    data = np.full(MIRI_DETECTOR_SHAPE, 1000.0)
+    ta_model = make_ta_model(data)
+
+    # Save to file
+    filepath = tmp_path / "flat_ta.fits"
+    ta_model.save(filepath)
+
+    # Run the TA centering algorithm
+    watcher = log_watcher(
+        "jwst.targ_centroid.targ_centroid_step",
+        message="Initial guess is outside of provided bounds",
+    )
+    result = TargCentroidStep.call(input_model_slit, ta_file=str(filepath))
+    watcher.assert_seen()
+    _tests_for_skipped_step(result)
+
+
 def test_warn_not_point_source(
     input_model_slitless, slitless_ta_image, mock_references, log_watcher
 ):
