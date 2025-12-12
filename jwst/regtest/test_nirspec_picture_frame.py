@@ -31,6 +31,7 @@ def run_pipeline(rtdata_module):
         "--steps.picture_frame.save_results=true",
         "--steps.picture_frame.save_mask=true",
         "--steps.picture_frame.save_correction=true",
+        "--save_calibrated_ramp=True",
     ]
 
     Step.from_cmdline(args)

@@ -161,6 +161,7 @@ def run_detector1_with_likelihood_fitting(rtdata_module, resource_tracker):
         "jwst.pipeline.Detector1Pipeline",
         rtdata_module.input,
         "--output_file=jw01094001002_02107_00001_nis_likely",
+        "--save_calibrated_ramp=True",
         "--steps.ramp_fit.algorithm=LIKELY",
     ]
     with resource_tracker.track():
