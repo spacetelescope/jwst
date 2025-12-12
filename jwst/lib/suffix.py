@@ -31,7 +31,6 @@ logger = logging.getLogger(__name__)
 # add to the result it produces.
 SUFFIXES_TO_ADD = [
     "ami",
-    "amiavg",
     "aminorm",
     "ami-oi",
     "aminorm-oi",
@@ -49,7 +48,6 @@ SUFFIXES_TO_ADD = [
     "mbsub",
     "median",
     "phot",
-    "psf-amiavg",
     "psfalign",
     "psfstack",
     "psfsub",
