@@ -56,6 +56,14 @@ class TargCentroidStep(Step):
             result = self._rebuild_container(container, result)
             return result
 
+        # Check that this is a point source
+        if result.meta.target.source_type != "POINT":
+            log.warning(
+                "TargCentroidStep is only intended for point sources. "
+                f"Input data has source_type={result.meta.target.source_type}. "
+                "Step may not perform as expected."
+            )
+
         # Check exposure type
         exp_type = result.meta.exposure.type
         if exp_type not in ["MIR_LRS-FIXEDSLIT", "MIR_LRS-SLITLESS"]:

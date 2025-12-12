@@ -220,6 +220,21 @@ def test_targ_centroid_slit(input_model_slit, offset, tmp_path, mock_references)
     )
 
 
+def test_warn_not_point_source(
+    input_model_slitless, slitless_ta_image, mock_references, log_watcher
+):
+    """Test that a warning is logged when the source is not a point source, but the step still runs."""
+    input_model_slitless.meta.target.source_type = "EXTENDED"
+
+    watcher = log_watcher(
+        "jwst.targ_centroid.targ_centroid_step",
+        message="TargCentroidStep is only intended for point sources",
+    )
+    result = TargCentroidStep.call(input_model_slitless, ta_file=slitless_ta_image)
+    watcher.assert_seen()
+    assert result.meta.cal_step.targ_centroid == "COMPLETE"
+
+
 def test_skip_no_ta_file(input_model_slit):
     """Test that step is skipped when no TA file is provided."""
     result = TargCentroidStep.call(input_model_slit, ta_file=None)
