@@ -844,11 +844,12 @@ def fit_and_oversample_ifu(
         The datamodel, updated with a profile image and optionally oversampled
         arrays.
     """
-    # todo - adapt to non-ifu data
     detector = model.meta.instrument.detector
     if detector.startswith("NRS"):
         mode = "NIRS"
-        xsize, ysize = 2048, 2048
+        ysize, xsize = model.data.shape
+
+        # Empirical parameters for this mode
         require_ngood = 15
         splinebkpt = 62
         spaceratio = 1.6
@@ -860,7 +861,9 @@ def fit_and_oversample_ifu(
     elif (detector == "MIRIFUSHORT") | (detector == "MIRIFULONG"):
         mode = "MIRI"
         # Note that MIRI gets rotated internally, so these are FLIPPED from usual orientation
-        xsize, ysize = 1024, 1032
+        xsize, ysize = model.data.shape
+
+        # Empirical parameters for this mode
         require_ngood = 8
         splinebkpt = 36
         spaceratio = 1.2
