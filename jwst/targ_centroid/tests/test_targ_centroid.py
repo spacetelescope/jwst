@@ -239,7 +239,7 @@ def test_targ_centroid_flat_flux(input_model_slit, tmp_path, mock_references, lo
     # Run the TA centering algorithm
     watcher = log_watcher(
         "jwst.targ_centroid.targ_centroid_step",
-        message="Initial guess is outside of provided bounds",
+        message="2D Gaussian centroid fit failed",
     )
     result = TargCentroidStep.call(input_model_slit, ta_file=str(filepath))
     watcher.assert_seen()
