@@ -3,7 +3,6 @@ import multiprocessing as mp
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
-
 import numpy as np
 from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from astropy.utils.decorators import lazyproperty
@@ -57,22 +56,6 @@ ORDER_STR_TO_INT = {f"Order {order}": order for order in [1, 2, 3]}
 
 __all__ = ["get_ref_file_args", "run_extract1d"]
 
-
-
-class SharedResources:
-    def __init__(self, mederr):
-
-        self.mederr = mederr
-
-        self.Minv = None
-        self.bmat = None
-        self.mask = None
-
-        self.modelengine = None
-        self.orderengines = [None, None, None]
-
-
-
 @dataclass
 class DetectorModelOrder:
     """
@@ -103,6 +86,23 @@ class DetectorModelOrder:
         ExtractionEngine can use it to generate a kernel at any wavelength grid.
     subarray : str or None
         The name of the subarray used for the extraction.
+    orderengine : ExtractionEngine or None
+        Precomputed extraction engine for this order.  This is intended to be
+        computed for the first integration and stored thereafter.
+    order12engine : ExtractionEngine or Nonr
+        Precomputed extraction engine for orders 1+2.  This is intended to be
+        computed for the first integration and stored thereafter.
+    mederr : np.ndarray or None
+        Median error across integrations
+    Minv : np.ndarray or None
+        Inverse of the design matrix of the regularized least squares problem.
+        Intended to be computed for the first integration and stored thereafter.
+    bmat : np.ndarray or None
+        Matrix of pixel values divided by the median error.
+        Intended to be computed for the first integration and stored thereafter.
+    mask : np.ndarray or None
+        Mask for pixels valid in at least some integrations.
+        Intended to be computed for the first integration and stored thereafter.
     """
 
     spectral_order: int
@@ -114,6 +114,13 @@ class DetectorModelOrder:
     kernel_native: WebbKernel | None = None
     kernel_func: WebbKernel | None = None
     subarray: str | None = None
+
+    orderengine : ExtractionEngine | None = None
+    order12engine : ExtractionEngine | None = None
+    mederr : np.ndarray | None = None
+    Minv : np.ndarray | None = None
+    bmat : np.ndarray | None = None
+    mask : np.ndarray | None = None
 
     @lazyproperty
     def trace(self):
@@ -322,7 +329,7 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.int_num = 0  # marks this as a test spectrum
 
 
-def _build_tracemodel_order(engine, order_model, f_k, mask, resources=None):
+def _build_tracemodel_order(engine, order_model, f_k, mask):
     """
     Build the trace model for a specific spectral order.
 
@@ -337,11 +344,6 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, resources=None):
     mask : np.ndarray[bool]
         The global mask of pixels to be modeled. Bad pixels in the science data
         should remain unmasked.
-    resources : SharedResources, optional
-        A class that includes matrices and engines used repeatedly
-        across integrations.  If this is provided, the matrices and
-        engines will be added (if they are not already present) or
-        used without recalculation (if they are already present).
 
     Returns
     -------
@@ -364,8 +366,10 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, resources=None):
 
     # Build model of the order
     # Give the identity kernel to the Engine (so no convolution)
-    if resources is not None and resources.orderengines[i_order] is not None:
-        engine = resources.orderengines[i_order]
+    # Load a precomputed engine if available.  Otherwise, compute it now
+    # and store it.
+    if order_model.orderengine is not None:
+        engine = order_model.orderengine
     else:
         engine = ExtractionEngine(
             [order_model.wavemap],
@@ -376,8 +380,7 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, resources=None):
             mask_trace_profile=[mask],
             orders=[order_model.spectral_order],
         )
-        if resources is not None:
-            resources.orderengines[i_order] = engine
+        order_model.orderengine = engine
 
     # Project on detector and save in dictionary
     tracemodel_ord = engine.rebuild(flux_order, fill_value=np.nan)
@@ -460,6 +463,7 @@ def _do_tiktests(
     global_mask,
     save_tiktests=False,
     tikfac_log_range=None,
+    niter_refine=3
 ):
     """
     Test a grid of Tikhonov regularization factors to find the most appropriate one.
@@ -487,6 +491,10 @@ def _do_tiktests(
         Logarithmic range around `guess_factor` to search. The default is [-2, 8], which was
         chosen because we are looking for the smoothest (largest-factor) solution that
         still provides a good fit to the data.
+    niter_refine : int
+        Number of times to add two points to the initial grid of trial Tikhonov
+        factors in order to better estimate the optimal factor.
+        Default 3.
 
     Returns
     -------
@@ -506,15 +514,33 @@ def _do_tiktests(
     # Initial pass 8 orders of magnitude with 10 grid points.
     log_guess = np.log10(guess_factor)
     factors = np.logspace(log_guess + tikfac_log_range[0], log_guess + tikfac_log_range[1], 10)
-    all_tests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
-    tikfac = engine.best_tikho_factor(all_tests, fit_mode="all")
+
+    tikho_struct = engine.get_tikho_test_structure(scidata_bkg, scierr)
+    all_tests = engine.get_tikho_tests(tikho_struct, factors)
+    tikfac = engine.best_tikho_factor(all_tests, fit_mode="d_chi2")
     log.info("Coarse grid best tikfac: %.4e", tikfac)
 
-    # Refine across 2 orders of magnitude.
-    tikfac = np.log10(tikfac)
-    factors = np.logspace(tikfac - 2, tikfac + 2, 20)
-    tiktests = engine.get_tikho_tests(factors, scidata_bkg, scierr)
-    tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
+    # Add points in pairs around the current best Tikhonov factor.  Merge
+    # these with the existing structure to refine the estimate.
+
+    for i in range(niter_refine):
+        f = np.sort(all_tests['factors'])
+
+        closest_point = (np.abs(np.log(f) - np.log(tikfac)) ==
+                       np.amin(np.abs(np.log(f) - np.log(tikfac))))
+        j = np.where(closest_point)[0][0]
+        if j == 0:
+            newfac = np.array([f[0]**2 / f[1], np.sqrt(f[0] * f[1])])
+        elif j == len(f) - 1:
+            newfac = np.array([np.sqrt(f[-1] * f[-2]), f[-1]**2 / f[-2]])
+        else:
+            newfac = np.array([np.sqrt(f[j] * f[j-1]), np.sqrt(f[j] * f[j+1])])
+
+        newtest = engine.get_tikho_tests(tikho_struct, newfac)
+        all_tests._merge(newtest)
+        tikfac = engine.best_tikho_factor(all_tests, fit_mode="d_chi2")
+
+    log.info("Final best tikfac: %.4e", tikfac)
 
     spec_list = []
     if save_tiktests:
@@ -535,7 +561,6 @@ def _do_tiktests(
     # reset the kernel, as it is set to an array inside _build_tracemodel_order
     for model in order_models:
         model.kernel_native = model.kernel_func
-    log.info("Found best Tikhonov factor: %.4e", tikfac)
     return tikfac, spec_list
 
 
@@ -810,7 +835,6 @@ class Integration:
         estimate=None,
         tikfacs_in=None,
         threshold=1e-2,
-        resources=None,
     ):
         """
         Extract the uncontaminated spectra of using the ATOCA algorithm.
@@ -841,11 +865,6 @@ class Integration:
             The threshold (between 0 and 1) for determining which pixels to include in the
             extraction. Pixels with a normalized flux contribution from the spectral trace
             above this threshold will be included. Default is 1e-2.
-        resources : SharedResources, optional
-            A class that includes matrices and engines used repeatedly
-            across integrations.  If this is provided, the matrices and
-            engines will be added (if they are not already present) or
-            used without recalculation (if they are already present).
 
         Returns
         -------
@@ -877,8 +896,8 @@ class Integration:
         global_mask = np.all(self.mask_trace_profile, axis=0).astype(bool)
 
         # Initialize the Engine for combined extraction of orders 1 and 2
-        if resources is not None and resources.modelengine is not None:
-            engine = resources.modelengine
+        if self.order_models[0].order12engine is not None:
+            engine = self.order_models[0].order12engine
         else:
             engine = ExtractionEngine(
                 [om.wavemap for om in self.order_models][:2],
@@ -891,8 +910,7 @@ class Integration:
                 threshold=threshold,
                 orders=[1, 2],
             )
-            if resources is not None:
-                resources.modelengine = engine
+            self.order_models[0].order12engine = engine
 
         # set the kernels in the order models to those used in the engine
         # these are now sparse matrices, so this avoids re-computing them in subsequent integrations
@@ -925,18 +943,18 @@ class Integration:
         # Run the extract method of the Engine.
         log.info("Running extraction engine for overlapping orders 1 & 2...")
 
-        if resources is not None and resources.Minv is None:
-            _Minv, _bmat, _mask = engine.return_matrices(self.scidata_bkg, self.scierr, tikfac=tikfacs_out["Order 1"])
-            resources.Minv = _Minv
-            resources.bmat = _bmat
-            resources.mask = _mask
+        # Precompute the inverse of the design matrix and the values divided
+        # by the uncertainties.  This makes the solution of the matrix equation
+        # only a matrix multiplication.
 
-        if resources is not None:
-            y_over_err = (self.scidata_bkg/resources.mederr)[~resources.mask]
-            f_k = resources.Minv.dot(resources.bmat.T*y_over_err)
-        else:
-            f_k = engine(self.scidata_bkg, self.scierr,
-                         tikhonov=True, factor=tikfacs_out["Order 1"])
+        if self.order_models[0].Minv is None:
+            _Minv, _bmat, _mask = engine.precompute_detector_model(self.scidata_bkg, self.scierr, tikfac=tikfacs_out["Order 1"])
+            self.order_models[0].Minv = _Minv
+            self.order_models[0].bmat = _bmat
+            self.order_models[0].mask = _mask
+
+        y_over_err = (self.scidata_bkg / self.order_models[0].mederr)[~self.order_models[0].mask]
+        f_k = self.order_models[0].Minv.dot(self.order_models[0].bmat.T * y_over_err)
 
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
@@ -945,8 +963,7 @@ class Integration:
         tracemodels = {}
         for i_order, _order in enumerate([1, 2]):
             tracemodel_ord, spec_ord = _build_tracemodel_order(
-                engine, self.order_models[i_order], f_k, global_mask,
-                resources
+                engine, self.order_models[i_order], f_k, global_mask
             )
             spec_ord.meta.soss_extract1d.factor = tikfacs_out["Order 1"]
             spec_ord.meta.soss_extract1d.color_range = "RED"
@@ -1280,7 +1297,6 @@ def _process_one_integration(
     tikfacs_in=None,
     generate_model=True,
     int_num=None,
-    resources=None,
 ):
     log.info(f"Processing integration {int_num}")
 
@@ -1330,8 +1346,7 @@ def _process_one_integration(
                 wave_grid,
                 estimate=estimate,
                 tikfacs_in=tikfacs_in,
-                threshold=soss_kwargs["threshold"],
-                resources=resources
+                threshold=soss_kwargs["threshold"]
             )
         except KernelShapeError:
             # Revert to using kernel functions. This will happen if one integration has
@@ -1576,10 +1591,10 @@ def run_extract1d(
     # Make a copy of the cube model where bad pixels in any individual
     # integration are replaced with a running median in time.
 
-    data_nanreplaced = cube_model.data*1.
-    data_infilled = cube_model.data*1.
+    data_nanreplaced = cube_model.data.copy()
+    data_infilled = cube_model.data.copy()
 
-    # We will use themedian uncertainty throughout the calculation.
+    # We will use the median uncertainty throughout the calculation.
     # Use of the median uncertainty means that the matrices used in
     # the ATOCA algorithm are shared between all integrations.
 
@@ -1598,19 +1613,24 @@ def run_extract1d(
 
     # Apply a median filter in time to make the final replacements of
     # bad pixels in individual integrations.  Use a running median of
-    # 9 time steps for now.
+    # 9 time steps as a compromise between precision and time resolution.
 
-    medfilt = ndimage.median_filter(data_infilled, 9, axes=(0))
+    nints = data_nanreplaced.shape[0]
+    medfilt = ndimage.median_filter(data_infilled, min(nints, 9), axes=(0))
 
-    for i in range(data_nanreplaced.shape[0]):
-        indx = ~np.isfinite(data_nanreplaced[i])
-        data_nanreplaced[i][indx] = medfilt[i][indx]
+    indx = ~np.isfinite(data_nanreplaced)
+    data_nanreplaced[indx] = medfilt[indx]
 
     # For the first integration, we will use the data with no NaNs
     # and we will use the median uncertainties.
 
     scidata = data_nanreplaced[0]
     scierr = mederr
+
+    # Store the median error in each order model.
+
+    for om in order_models:
+        om.mederr = mederr
 
     # Pre-compute the weights for box extraction (used in modeling and extraction)
     box_weights, wavelengths = _compute_box_weights(
@@ -1630,8 +1650,17 @@ def run_extract1d(
     else:
         tikfacs_in = None
 
+    # We will define an array suitable for a typical integration.
+    # Use a mean here so that noise averages down even in the face of
+    # real astrophysical variability.
+
+    scidata_typical = np.mean(data_nanreplaced, axis=0)
+    # Force the seed to be the same here for testing and repeatability
+    np.random.seed(42)
+    scidata_typical += np.random.randn(*scierr.shape)*scierr*np.sqrt((nints - 1)/nints)
+
     _, _, _, tikfacs_first, wave_grid_first = _process_one_integration(
-        scidata,
+        scidata_typical,
         scierr,
         scimask,
         refmask,
@@ -1650,9 +1679,6 @@ def run_extract1d(
         "will be applied to subsequent ones."
     )
 
-    # Create a new object to store shared resources.
-
-    resources = SharedResources(mederr)
     all_results = []
 
     t0 = time.time()
@@ -1664,7 +1690,9 @@ def run_extract1d(
         bad = (~np.isfinite(cube_model.data[i]))|(~np.isfinite(scierr_i))
 
         # Inflate errors of interpolated values by a factor of 10 over
-        # the median uncertainties across integrations
+        # the median uncertainties across integrations.  This in intended
+        # to encourage the user not to overinterpret imputed data.
+
         scierr_i[bad] = mederr[bad]*10
 
         all_results += [_process_one_integration(
@@ -1679,8 +1707,7 @@ def run_extract1d(
             wave_grid=wave_grid_first,
             tikfacs_in=tikfacs_first,
             generate_model=generate_model,
-            int_num=i + 1,
-            resources=resources
+            int_num=i + 1
         )]
 
     t1 = time.time()
