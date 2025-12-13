@@ -329,7 +329,7 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.int_num = 0  # marks this as a test spectrum
 
 
-def _build_tracemodel_order(engine, order_model, f_k, mask):
+def _build_tracemodel_order(engine, order_model, f_k, mask, gen_engine=False):
     """
     Build the trace model for a specific spectral order.
 
@@ -344,6 +344,11 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
     mask : np.ndarray[bool]
         The global mask of pixels to be modeled. Bad pixels in the science data
         should remain unmasked.
+    gen_engine : bool
+        Generate engine inside this function?  Alternative is to use or
+        generate the engine already associated with order_model.  This should
+        be True if reconstructing spectra within the Tikhonov tests.
+        Default False
 
     Returns
     -------
@@ -368,9 +373,9 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
     # Give the identity kernel to the Engine (so no convolution)
     # Load a precomputed engine if available.  Otherwise, compute it now
     # and store it.
-    if order_model.orderengine is not None:
+    if order_model.orderengine is not None and not gen_engine:
         engine = order_model.orderengine
-    else:
+    elif not gen_engine:
         engine = ExtractionEngine(
             [order_model.wavemap],
             [order_model.specprofile],
@@ -381,6 +386,16 @@ def _build_tracemodel_order(engine, order_model, f_k, mask):
             orders=[order_model.spectral_order],
         )
         order_model.orderengine = engine
+    else:
+        engine = ExtractionEngine(
+            [order_model.wavemap],
+            [order_model.specprofile],
+            [order_model.throughput],
+            [np.array([1.0])],
+            wave_grid=grid_order,
+            mask_trace_profile=[mask],
+            orders=[order_model.spectral_order]
+        )
 
     # Project on detector and save in dictionary
     tracemodel_ord = engine.rebuild(flux_order, fill_value=np.nan)
@@ -553,7 +568,8 @@ def _do_tiktests(
                 if np.all(~np.isfinite(f_k)):
                     spec_ord = _build_null_spec_table(engine.wave_grid, order)
                 else:
-                    _, spec_ord = _build_tracemodel_order(engine, order_model, f_k, global_mask)
+                    _, spec_ord = _build_tracemodel_order(
+                        engine, order_model, f_k, global_mask, gen_engine=True)
                 _populate_tikho_attr(spec_ord, all_tests, idx, order)
                 spec_list.append(spec_ord)
 
@@ -954,7 +970,6 @@ class Integration:
 
         y_over_err = (self.scidata_bkg / self.order_models[0].mederr)[~self.order_models[0].mask]
         f_k = self.order_models[0].Minv.dot(self.order_models[0].bmat.T * y_over_err)
-
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
         # Model the traces for each order separately.
