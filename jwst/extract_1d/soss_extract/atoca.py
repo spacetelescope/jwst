@@ -975,7 +975,6 @@ class ExtractionEngine:
             The matrix b in M*f_k=b*(y/err)
         mask : (M) array
             Points of (y/err) to use, i.e., (y/err)[mask]
-
         """
 
         # Build the system to solve
