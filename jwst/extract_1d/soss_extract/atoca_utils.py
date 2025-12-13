@@ -12,7 +12,7 @@ import warnings
 
 import numpy as np
 from numpy.polynomial import Polynomial
-from scipy.interpolate import Akima1DInterpolator, RectBivariateSpline, interp1d, make_interp_spline
+from scipy.interpolate import Akima1DInterpolator, RectBivariateSpline, interp1d, make_interp_spline, UnivariateSpline
 from scipy.optimize import brentq, minimize_scalar
 from scipy.sparse import csr_matrix, diags
 from scipy.sparse.linalg import MatrixRankWarning, lsqr, spsolve
@@ -1573,83 +1573,6 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate=True, interp_index=N
 
     return min_fac
 
-
-def _find_intersect(factors, y_val, thresh, interpolate=True, search_range=None):
-    """
-    Find the root of y_val - thresh (so the intersection between thresh and y_val).
-
-    Parameters
-    ----------
-    factors : array[float]
-        1D array of Tikhonov factors for which value array is calculated
-    y_val : array[float]
-        1D array of values.
-    thresh : float
-        Threshold use in 'd_chi2' mode. Find the highest factor where the
-        derivative of the chi2 derivative is below thresh.
-    interpolate : bool, optional, default True
-        If True, use interpolation to find a finer minimum;
-        otherwise, return minimum value in array.
-    search_range : iterable[int], optional, default [0,3]
-        Relative range of grid indices around the value to interpolate.
-
-    Returns
-    -------
-    float
-        Factor corresponding to the best approximation of the intersection point.
-    """
-    if search_range is None:
-        search_range = [0, 3]
-
-    # Only keep finite values
-    idx_finite = np.isfinite(y_val)
-    factors = factors[idx_finite]
-    y_val = y_val[idx_finite]
-
-    # Make sure sorted
-    idx_sort = np.argsort(factors)
-    factors, y_val = factors[idx_sort], y_val[idx_sort]
-
-    # Check if the threshold is reached
-    cond_below = y_val < thresh
-    if cond_below.any():
-        # Find where the threshold is crossed
-        idx_below = np.where(cond_below)[0]
-        # Take the largest index (so the highest factor)
-        idx_below = np.max(idx_below)
-        # If it happens to be the last element of the array...
-        if idx_below == (len(factors) - 1):
-            # ... no need to interpolate
-            interpolate = False
-    else:
-        # Take the lowest factor value
-        idx_below = 0
-        # No interpolation needed
-        interpolate = False
-
-    if interpolate:
-        # Interpolate with log10(factors) to get a finer estimate
-        x_val = np.log10(factors)
-        d_chi2_spl = interp1d(x_val, y_val - thresh, kind="linear")
-
-        # Use index only around the best value
-        max_length = len(y_val)
-        index = _get_interp_idx_array(idx_below, search_range, max_length)
-
-        # Find the root
-        bracket = (x_val[index[0]], x_val[index[-1]])
-        best_val = brentq(d_chi2_spl, *bracket)
-
-        # Back to linear scale
-        best_val = 10.0**best_val
-
-    else:
-        # Simply return the value
-        best_val = factors[idx_below]
-
-    return best_val
-
-
 def _soft_l1(z):
     return 2 * ((1 + z) ** 0.5 - 1)
 
@@ -1699,6 +1622,31 @@ class TikhoTests(dict):
                 self[chi2_type]
             except KeyError:
                 self[chi2_type] = self._compute_chi2(loss)
+
+    def _merge(self, addnl_dict):
+        """
+        Merge an additional dictionary onto the present instance.
+
+        Parameters
+        ----------
+        addnl_dict : dict
+            Dictionary holding arrays for `factors`, `solution`, `error`, `reg`.
+            Will be appended onto the existing arrays using np.hstack or
+            np.vstack, as appropriate.
+
+        The arrays of chi squared values will also need to be recomputed
+        from the expanded arrays.
+        """
+
+        self['factors'] = np.hstack([self['factors'], addnl_dict['factors']])
+        for key in ['error', 'solution', 'reg']:
+            self[key] = np.vstack([self[key], addnl_dict[key]])
+
+        self.n_points = len(self["error"][0].squeeze())
+
+        chi2_loss = {"chi2": "linear", "chi2_soft_l1": "soft_l1", "chi2_cauchy": "cauchy"}
+        for chi2_type, loss in chi2_loss.items():
+            self[chi2_type] = self._compute_chi2(loss)
 
     def _compute_chi2(self, loss):
         """
@@ -1816,30 +1764,36 @@ class TikhoTests(dict):
             best_fac = _minimize_on_grid(factors, y_val)
 
         elif mode == "d_chi2" and n_fac > 1:
-            # Compute the derivative of the chi2
-            factors, y_val = self._get_chi2_derivative()
+            # Compute the derivative of chi2 with respect to log(factor).
+            # Construct a spline, calculate its derivative, and find the
+            # first factor where the derivative equals the adopted threshold.
 
-            # Remove values for the higher factors that
-            # are not already below thresh. If not _find_intersect
-            # would just return the last value of factors.
-            i_last = -1
-            while abs(i_last) <= len(y_val):
-                # Check derivative
-                if y_val[i_last] > thresh:
-                    # Save index in slice
-                    idx = slice(0, i_last)
-                    # break so `else` will be skipped
-                    break
-                # Update index
-                i_last -= 1
+            y = self[key]
+            ok = np.isfinite(y)
+            idx = np.argsort(self["factors"][ok])
 
-            # If all the values were passed without breaking,
-            # do not remove any values
+            # Sorted log(factor) values with valid chi squared.
+            logx = np.log10(self["factors"][ok][idx])
+
+            # Ensure we have enough points for the desired spline order.
+            order = min(3, np.sum(ok) - 1)
+            if order >= 3:
+                spl = Akima1DInterpolator(logx, y[ok][idx], method='makima')
             else:
-                idx = slice(None)
+                spl = UnivariateSpline(logx, y[ok][idx], k=order, s=0)
 
-            # Find intersection with threshold
-            best_fac = _find_intersect(factors[idx], y_val[idx], thresh)
+            # We will generate many points and just pick the first one
+            # that exceeds the threshold.
+
+            logx_oversamp = np.linspace(logx[0], logx[-1], 10000)
+            deriv_vals = spl.derivative()(logx_oversamp)
+
+            if np.any(deriv_vals > thresh):
+                best_fac = 10**np.amin(logx_oversamp[deriv_vals > thresh])
+            # The derivative never exceeded our threshold: use the last point.
+            else:
+                log.warning("dchi2/dlog(factor) never reached the adopted threshold")
+                best_fac = 10**lgx[-1]
 
         elif mode in ["curvature", "d_chi2", "chi2"]:
             best_fac = np.max(self["factors"])
@@ -2007,12 +1961,8 @@ class Tikhonov:
             reg.append(reg_i)
 
             # Print
-            message = f"{i_fac}/{len(factors)}"
+            message = f"{i_fac + 1}/{len(factors)}"
             log.info(message)
-
-        # Final message output
-        message = f"{i_fac + 1}/{len(factors)}"
-        log.info(message)
 
         # Convert to arrays
         sln = np.array(sln)
