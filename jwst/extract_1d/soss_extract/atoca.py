@@ -977,6 +977,7 @@ class ExtractionEngine:
             Points of (y/err) to use, i.e., (y/err)[mask]
 
         """
+
         # Build the system to solve
         b_matrix, _ = self.get_detector_model(data, error)
 
