@@ -660,14 +660,12 @@ class ExtractionEngine:
 
         return factor_guess
 
-    def get_tikho_tests(self, factors, data, error):
+    def get_tikho_test_structure(self, data, error):
         """
-        Test different factors for Tikhonov regularization.
+        Structure to test different factors for Tikhonov regularization.
 
         Parameters
         ----------
-        factors : 1D list or array-like
-            Factors to be tested.
         data : (N, M) array-like
             A 2-D array of real values representing the detector image.
         error : (N, M) array-like
@@ -675,13 +673,33 @@ class ExtractionEngine:
 
         Returns
         -------
-        tests : dict
-            Dictionary of the test results
+        tikho : Tikhonov class
+            Instance of class with matrices pre-computed
+            Suitable for calling get_tikho_tests
         """
         # Build the system to solve
         b_matrix, pix_array = self.get_detector_model(data, error)
 
         tikho = atoca_utils.Tikhonov(b_matrix, pix_array, self.tikho_mat)
+
+        return tikho
+
+    def get_tikho_tests(self, tikho, factors):
+        """
+        Test different factors for Tikhonov regularization.
+
+        Parameters
+        ----------
+        tikho : Tikhonov class
+            Instance of class with matrices pre-computed
+        factors : 1D list or array-like
+            Factors to be tested.
+
+        Returns
+        -------
+        tests : dict
+            Dictionary of the test results
+        """
 
         # Test all factors
         tests = tikho.test_factors(factors)
@@ -932,6 +950,49 @@ class ExtractionEngine:
             spectrum = self._solve(matrix, result)
 
         return spectrum
+
+
+    def precompute_detector_model(self, data, error, tikfac):
+        """
+        Return the two matrices and mask needed to solve the linear
+        system for the spectrum.
+
+        Parameters
+        ----------
+        data : (N, M) array-like
+            A 2-D array of real values representing the detector image.
+        error : (N, M) array-like
+            Estimate of the error on each pixel`
+            Same shape as `data`.
+        tikfac : float
+            The Tikhonov factor to use
+
+        Returns
+        -------
+        Minv : (N, N) array
+            The inverse of the matrix M in M*f_k=b*(y/err)
+        b_matrix : (N, M) array
+            The matrix b in M*f_k=b*(y/err)
+        mask : (M) array
+            Points of (y/err) to use, i.e., (y/err)[mask]
+
+        """
+
+        # Build the system to solve
+        b_matrix, _ = self.get_detector_model(data, error)
+
+        # squared tikhonov matrix
+        t_mat = self.tikho_mat
+        t_mat_sq = (t_mat.T).dot(t_mat)
+
+        # squared model matrix
+        A_sq = b_matrix.T.dot(b_matrix)
+
+        M = (A_sq + tikfac**2*t_mat_sq).toarray()
+        Minv = np.linalg.inv(M)
+
+        return Minv, b_matrix, self.mask
+
 
     def _get_lo_hi(self, grid, wave_p, wave_m, mask):
         """
