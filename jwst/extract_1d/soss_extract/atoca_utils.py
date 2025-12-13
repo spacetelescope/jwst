@@ -1678,29 +1678,6 @@ class TikhoTests(dict):
         # Remove residual dimensions
         return chi2.squeeze()
 
-    def _get_chi2_derivative(self):
-        """
-        Compute derivative of the chi2 with respect to log10(factors).
-
-        Returns
-        -------
-        factors_leftd : array[float]
-            Factors array, shortened to match length of derivative.
-        d_chi2 : array[float]
-            Derivative of chi squared array with respect to log10(factors)
-        """
-        key = self.default_chi2
-
-        # Compute finite derivative
-        fac_log = np.log10(self["factors"])
-        d_chi2 = np.diff(self[key]) / np.diff(fac_log)
-
-        # Update size of factors to fit derivatives
-        # Equivalent to derivative on the left side of the nodes
-        factors_leftd = self["factors"][1:]
-
-        return factors_leftd, d_chi2
-
     def _compute_curvature(self):
         """
         Compute the curvature of the l-curve in log-log space.
@@ -1793,7 +1770,7 @@ class TikhoTests(dict):
             # The derivative never exceeded our threshold: use the last point.
             else:
                 log.warning("dchi2/dlog(factor) never reached the adopted threshold")
-                best_fac = 10**lgx[-1]
+                best_fac = 10**logx[-1]
 
         elif mode in ["curvature", "d_chi2", "chi2"]:
             best_fac = np.max(self["factors"])
