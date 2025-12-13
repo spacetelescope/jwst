@@ -1623,7 +1623,7 @@ class TikhoTests(dict):
             except KeyError:
                 self[chi2_type] = self._compute_chi2(loss)
 
-    def _merge(self, addnl_dict):
+    def merge(self, addnl_dict):
         """
         Merge an additional dictionary onto the present instance.
 

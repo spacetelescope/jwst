@@ -537,7 +537,7 @@ def _do_tiktests(
             newfac = np.array([np.sqrt(f[j] * f[j-1]), np.sqrt(f[j] * f[j+1])])
 
         newtest = engine.get_tikho_tests(tikho_struct, newfac)
-        all_tests._merge(newtest)
+        all_tests.merge(newtest)
         tikfac = engine.best_tikho_factor(all_tests, fit_mode="d_chi2")
 
     log.info("Final best tikfac: %.4e", tikfac)
