@@ -523,7 +523,7 @@ def _do_tiktests(
     # Add points in pairs around the current best Tikhonov factor.  Merge
     # these with the existing structure to refine the estimate.
 
-    for i in range(niter_refine):
+    for _i in range(niter_refine):
         f = np.sort(all_tests['factors'])
 
         closest_point = (np.abs(np.log(f) - np.log(tikfac)) ==
@@ -545,7 +545,6 @@ def _do_tiktests(
     spec_list = []
     if save_tiktests:
         # Save spectra in a list of SingleSpecModels for optional output
-        all_tests = _append_tiktests(all_tests, tiktests)
         for i, order in enumerate(engine.orders):
             order_model = order_models[i]
             for idx, fac in enumerate(all_tests["factors"]):
