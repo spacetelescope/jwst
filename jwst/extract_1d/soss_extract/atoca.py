@@ -660,14 +660,12 @@ class ExtractionEngine:
 
         return factor_guess
 
-    def get_tikho_tests(self, factors, data, error):
+    def get_tikho_test_structure(self, data, error):
         """
-        Test different factors for Tikhonov regularization.
+        Structure to test different factors for Tikhonov regularization.
 
         Parameters
         ----------
-        factors : 1D list or array-like
-            Factors to be tested.
         data : (N, M) array-like
             A 2-D array of real values representing the detector image.
         error : (N, M) array-like
@@ -675,13 +673,33 @@ class ExtractionEngine:
 
         Returns
         -------
-        tests : dict
-            Dictionary of the test results
+        tikho : Tikhonov class
+            Instance of class with matrices pre-computed
+            Suitable for calling get_tikho_tests
         """
         # Build the system to solve
         b_matrix, pix_array = self.get_detector_model(data, error)
 
         tikho = atoca_utils.Tikhonov(b_matrix, pix_array, self.tikho_mat)
+
+        return tikho
+
+    def get_tikho_tests(self, tikho, factors):
+        """
+        Test different factors for Tikhonov regularization.
+
+        Parameters
+        ----------
+        tikho : Tikhonov class
+            Instance of class with matrices pre-computed
+        factors : 1D list or array-like
+            Factors to be tested.
+
+        Returns
+        -------
+        tests : dict
+            Dictionary of the test results
+        """
 
         # Test all factors
         tests = tikho.test_factors(factors)
@@ -934,7 +952,7 @@ class ExtractionEngine:
         return spectrum
 
 
-    def return_matrices(self, data, error, tikfac):
+    def precompute_detector_model(self, data, error, tikfac):
         """
         Return the two matrices and mask needed to solve the linear
         system for the spectrum.
