@@ -1,5 +1,4 @@
 import logging
-import multiprocessing as mp
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -8,7 +7,6 @@ from astropy.nddata.bitmask import bitfield_to_boolean_mask
 from astropy.utils.decorators import lazyproperty
 from scipy.interpolate import CubicSpline, UnivariateSpline
 from scipy import ndimage
-from stcal.multiprocessing import compute_num_cores
 from stdatamodels.jwst import datamodels
 from stdatamodels.jwst.datamodels import SossWaveGridModel, dqflags
 
@@ -94,7 +92,7 @@ class DetectorModelOrder:
         computed for the first integration and stored thereafter.
     mederr : np.ndarray or None
         Median error across integrations
-    Minv : np.ndarray or None
+    m_inv : np.ndarray or None
         Inverse of the design matrix of the regularized least squares problem.
         Intended to be computed for the first integration and stored thereafter.
     bmat : np.ndarray or None
@@ -118,7 +116,7 @@ class DetectorModelOrder:
     orderengine : ExtractionEngine | None = None
     order12engine : ExtractionEngine | None = None
     mederr : np.ndarray | None = None
-    Minv : np.ndarray | None = None
+    m_inv : np.ndarray | None = None
     bmat : np.ndarray | None = None
     mask : np.ndarray | None = None
 
@@ -344,11 +342,12 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, gen_engine=False):
     mask : np.ndarray[bool]
         The global mask of pixels to be modeled. Bad pixels in the science data
         should remain unmasked.
-    gen_engine : bool
+    gen_engine : bool, optional
         Generate engine inside this function?  Alternative is to use or
         generate the engine already associated with order_model.  This should
-        be True if reconstructing spectra within the Tikhonov tests.
-        Default False
+        be True if reconstructing spectra within the Tikhonov tests, and False
+        if using the function within the main integation routine.
+        Default False.
 
     Returns
     -------
@@ -962,14 +961,16 @@ class Integration:
         # by the uncertainties.  This makes the solution of the matrix equation
         # only a matrix multiplication.
 
-        if self.order_models[0].Minv is None:
-            _Minv, _bmat, _mask = engine.precompute_detector_model(self.scidata_bkg, self.scierr, tikfac=tikfacs_out["Order 1"])
-            self.order_models[0].Minv = _Minv
+        if self.order_models[0].m_inv is None:
+            _m_inv, _bmat, _mask = engine.precompute_detector_model(
+                self.scidata_bkg, self.scierr, tikfac=tikfacs_out["Order 1"]
+            )
+            self.order_models[0].m_inv = _m_inv
             self.order_models[0].bmat = _bmat
             self.order_models[0].mask = _mask
 
         y_over_err = (self.scidata_bkg / self.order_models[0].mederr)[~self.order_models[0].mask]
-        f_k = self.order_models[0].Minv.dot(self.order_models[0].bmat.T * y_over_err)
+        f_k = self.order_models[0].m_inv.dot(self.order_models[0].bmat.T * y_over_err)
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
         # Model the traces for each order separately.
@@ -977,7 +978,7 @@ class Integration:
         tracemodels = {}
         for i_order, _order in enumerate([1, 2]):
             tracemodel_ord, spec_ord = _build_tracemodel_order(
-                engine, self.order_models[i_order], f_k, global_mask
+                engine, self.order_models[i_order], f_k, global_mask, gen_engine=False
             )
             spec_ord.meta.soss_extract1d.factor = tikfacs_out["Order 1"]
             spec_ord.meta.soss_extract1d.color_range = "RED"
@@ -1589,7 +1590,6 @@ def run_extract1d(
 
     # Run the first integration to get the Tikhonov factor for the rest
     scidata = cube_model.data[0].astype("float64")
-    scierr = cube_model.err[0].astype("float64")
     # Only mask pixels that are bad in *all* integrations
     scimask = np.all(cube_model.dq & dqflags.pixel["DO_NOT_USE"] != 0, axis=0)
 
@@ -1639,7 +1639,6 @@ def run_extract1d(
     # and we will use the median uncertainties.
 
     scidata = data_nanreplaced[0]
-    scierr = mederr
 
     # Store the median error in each order model.
 
@@ -1670,12 +1669,12 @@ def run_extract1d(
 
     scidata_typical = np.mean(data_nanreplaced, axis=0)
     # Force the seed to be the same here for testing and repeatability
-    np.random.seed(42)
-    scidata_typical += np.random.randn(*scierr.shape)*scierr*np.sqrt((nints - 1)/nints)
+    rng = np.random.default_rng(seed=42)
+    scidata_typical += rng.normal(0, mederr * np.sqrt((nints - 1) / nints))
 
     _, _, _, tikfacs_first, wave_grid_first = _process_one_integration(
         scidata_typical,
-        scierr,
+        mederr,
         scimask,
         refmask,
         order_models,

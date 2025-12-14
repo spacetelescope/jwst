@@ -12,8 +12,8 @@ import warnings
 
 import numpy as np
 from numpy.polynomial import Polynomial
-from scipy.interpolate import Akima1DInterpolator, RectBivariateSpline, interp1d, make_interp_spline, UnivariateSpline
-from scipy.optimize import brentq, minimize_scalar
+from scipy.interpolate import Akima1DInterpolator, RectBivariateSpline, make_interp_spline, UnivariateSpline
+from scipy.optimize import minimize_scalar
 from scipy.sparse import csr_matrix, diags
 from scipy.sparse.linalg import MatrixRankWarning, lsqr, spsolve
 

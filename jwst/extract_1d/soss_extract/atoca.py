@@ -954,8 +954,7 @@ class ExtractionEngine:
 
     def precompute_detector_model(self, data, error, tikfac):
         """
-        Return the two matrices and mask needed to solve the linear
-        system for the spectrum.
+        Return the matrices and mask needed to solve for the spectrum.
 
         Parameters
         ----------
@@ -969,8 +968,8 @@ class ExtractionEngine:
 
         Returns
         -------
-        Minv : (N, N) array
-            The inverse of the matrix M in M*f_k=b*(y/err)
+        design_matrix_inv : (N, N) array
+            The inverse of the design matrix M in M*f_k=b*(y/err)
         b_matrix : (N, M) array
             The matrix b in M*f_k=b*(y/err)
         mask : (M) array
@@ -985,12 +984,13 @@ class ExtractionEngine:
         t_mat_sq = (t_mat.T).dot(t_mat)
 
         # squared model matrix
-        A_sq = b_matrix.T.dot(b_matrix)
+        a_matrix_sq = b_matrix.T.dot(b_matrix)
 
-        M = (A_sq + tikfac**2*t_mat_sq).toarray()
-        Minv = np.linalg.inv(M)
+        # design matrix for the problem
+        design_matrix = (a_matrix_sq + tikfac**2 * t_mat_sq).toarray()
+        design_matrix_inv = np.linalg.inv(design_matrix)
 
-        return Minv, b_matrix, self.mask
+        return design_matrix_inv, b_matrix, self.mask
 
 
     def _get_lo_hi(self, grid, wave_p, wave_m, mask):
