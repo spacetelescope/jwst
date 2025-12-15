@@ -16,9 +16,12 @@ pointing information would be sufficient for accurate pathloss corrections have
 been superseded by in-flight experience, which demonstrates the need to use
 actual TA verification images when available.
 
-Upon successful completion of this step, the status keyword S_TACNTR will be
-set to "COMPLETE" and the source position will be stored in the output data
-model's ``source_xpos`` and ``source_ypos`` attributes.
+Upon successful completion of this step, the status keyword S_TACNTR is
+set to "COMPLETE", the position of the source in the TA verification is stored in
+the model's ``ta_xpos`` and ``ta_ypos`` attributes (FITS keywords TA_XPOS and TA_YPOS),
+and the expected source position in the science exposure, applying any
+necessary filter offset, is stored in the model's
+``source_xpos`` and ``source_ypos`` attributes (FITS keywords SRCXPOS and SRCYPOS).
 
 When run as part of the :ref:`calwebb_spec2 <calwebb_spec2>` pipeline, the
 step is executed after the :ref:`srctype <srctype_step>` step.
@@ -42,7 +45,7 @@ Algorithm
 
 The ``targ_centroid`` step performs the following operations:
 
-#. **Load reference files**: The step retrieves three reference files from CRDS:
+#. **Load reference files**: The step retrieves the following reference files from CRDS:
 
    * SPECWCS: Contains the reference position (x_ref, y_ref) for the slit and
      slitless configurations
@@ -56,17 +59,22 @@ The ``targ_centroid`` step performs the following operations:
    centered on the reference position.
 
 #. **Find the centroid**: The centroid of the source within the cutout is determined
-   using the photutils ApertureStats.centroid routine. This yields the fitted x and y
-   coordinates of the source in cutout pixel coordinates.
+   using the :meth:`~photutils.aperture.aperture.ApertureStats.centroid` routine.
+   This yields the fitted x and y coordinates of the source in
+   cutout pixel coordinates.
 
 #. **Transform coordinates**: The fitted position is transformed from cutout
    coordinates to full-frame detector coordinates, accounting for any subarray
    offsets.
 
+#. **Store TA position**: The measured source position in the TA verification
+   image is stored in the input data model's ``ta_xpos`` and ``ta_ypos``
+   attributes for reference.
+
 #. **Apply filter offsets**: The FILTEROFFSET reference file corrections are
    applied to the final x and y position.
 
-#. **Store results**: The corrected source position is stored in the output
+#. **Store source position**: The corrected source position is stored in the output
    data model's ``source_xpos`` and ``source_ypos`` attributes for use by
    subsequent calibration steps.
 
@@ -75,8 +83,14 @@ Step Outputs
 
 The input science exposure is returned unmodified, except with three new attributes:
 
+* ``ta_xpos``: The x-coordinate of the source in the TA verification image
+  full-frame detector coordinate system (0-indexed pixels)
+* ``ta_ypos``: The y-coordinate of the source in the TA verification image
+  full-frame detector coordinate system (0-indexed pixels)
 * ``source_xpos``: The x-coordinate of the source in the full-frame detector
-  coordinate system (0-indexed pixels)
+  coordinate system (0-indexed pixels). This position differs from ``ta_xpos``
+  because it includes the filter offset correction.
 * ``source_ypos``: The y-coordinate of the source in the full-frame detector
-  coordinate system (0-indexed pixels)
+  coordinate system (0-indexed pixels). This position differs from ``ta_ypos``
+  because it includes the filter offset correction.
 * ``meta.cal_step.targ_centroid`` keyword set to "COMPLETE"

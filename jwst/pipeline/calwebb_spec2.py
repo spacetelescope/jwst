@@ -255,14 +255,11 @@ class Spec2Pipeline(Pipeline):
             if exp_type in TA_TYPES:
                 try:
                     ta_file = members_by_type["target_acquisition"][0]
-                    log.info(f"Using TA verification image {ta_file}")
-                except IndexError:
+                except (IndexError, KeyError):
                     ta_file = None
-                if (
-                    str(self.targ_centroid.ta_file).lower() == "none"
-                    or self.targ_centroid.ta_file is None
-                ):
+                if str(self.targ_centroid.ta_file).lower() == "none":
                     self.targ_centroid.ta_file = ta_file
+                log.info(f"Using TA verification image {self.targ_centroid.ta_file}")
 
             # Decide on what steps can actually be accomplished based on the
             # provided input.

@@ -133,7 +133,7 @@ def retrieve_filter_offset(filter_offset_model, obsfilter):
 
     Parameters
     ----------
-    filter_offset_model : FilteroffsetModel
+    filter_offset_model : `~stdatamodels.jwst.datamodels.FilteroffsetModel`
         The filter offset reference model.
     obsfilter : str
         The name of the filter used in the observation.

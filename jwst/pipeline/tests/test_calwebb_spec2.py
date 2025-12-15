@@ -205,33 +205,13 @@ def test_targ_centroid_logic(use_asn, tmp_cwd):
     else:
         step_input = sci_model
 
+    all_steps = Spec2Pipeline.step_defs.keys()
+    do_steps = {step_name: {"skip": True} for step_name in all_steps}
+    do_steps["assign_wcs"] = {"skip": False}
+    do_steps["targ_centroid"] = {"skip": False}
     result = Spec2Pipeline.call(
         step_input,
-        steps={
-            "assign_wcs": {"skip": False},
-            "targ_centroid": {"skip": False},
-            "badpix_selfcal": {"skip": True},
-            "msa_flagging": {"skip": True},
-            "clean_flicker_noise": {"skip": True},
-            "bkg_subtract": {"skip": True},
-            "imprint_subtract": {"skip": True},
-            "extract_2d": {"skip": True},
-            "master_background_mos": {"skip": True},
-            "wavecorr": {"skip": True},
-            "flat_field": {"skip": True},
-            "srctype": {"skip": True},
-            "straylight": {"skip": True},
-            "fringe": {"skip": True},
-            "residual_fringe": {"skip": True},
-            "pathloss": {"skip": True},
-            "barshadow": {"skip": True},
-            "wfss_contam": {"skip": True},
-            "photom": {"skip": True},
-            "pixel_replace": {"skip": True},
-            "resample_spec": {"skip": True},
-            "cube_build": {"skip": True},
-            "extract_1d": {"skip": True},
-        },
+        steps=do_steps,
     )
     status = result[0].meta.cal_step.targ_centroid
     if use_asn:

@@ -209,6 +209,7 @@ _calculated_suffixes = {
     "emicorrstep",
     "badpixselfcalstep",
     "targcentroidstep",
+    "targ_centroid",
 }
 
 

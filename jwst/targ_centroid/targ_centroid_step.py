@@ -42,7 +42,7 @@ class TargCentroidStep(Step):
         """
         result = self.prepare_output(step_input)
         if isinstance(result, dm.ModelContainer):
-            container = result.copy()
+            container = result
             # Extract science and TA image from container
             result, ta_model = self._ta_image_from_container(result)
             self.ta_file = ta_model
@@ -88,14 +88,12 @@ class TargCentroidStep(Step):
         subarray_name = ta_model.meta.subarray.name
         xstart = ta_model.meta.subarray.xstart  # 1-indexed in FITS
         ystart = ta_model.meta.subarray.ystart  # 1-indexed in FITS
-        log.info(f"TA subarray: {subarray_name}, origin: ({xstart}, {ystart})")
+        log.debug(f"TA subarray: {subarray_name}, origin: ({xstart}, {ystart})")
 
         is_slit = exp_type == "MIR_LRS-FIXEDSLIT"
         if is_slit:
-            log.info("Fitting Airy disk with slit mask model for LRS FIXEDSLIT mode")
             ref_center = (refmodel.meta.x_ref, refmodel.meta.y_ref)
         else:
-            log.info("Fitting Airy disk for slitless mode")
             ref_center = (refmodel.meta.x_ref_slitless, refmodel.meta.y_ref_slitless)
 
         try:
@@ -107,6 +105,7 @@ class TargCentroidStep(Step):
         except (NoFinitePixelsError, BadFitError) as e:
             log.error(f"Error during TA centering: {e}. Step will be SKIPPED.")
             result.meta.cal_step.targ_centroid = "SKIPPED"
+            result = self._rebuild_container(container, result)
             return result
 
         # store TA centering results in output model
@@ -119,7 +118,7 @@ class TargCentroidStep(Step):
             col_offset, row_offset = retrieve_filter_offset(
                 filteroffset, ta_model.meta.instrument.filter
             )
-            log.info(f"Applying filter offsets: column={col_offset}, row={row_offset}")
+            log.debug(f"Applying filter offsets: column={col_offset}, row={row_offset}")
             x_center += col_offset
             y_center += row_offset
 
@@ -127,6 +126,11 @@ class TargCentroidStep(Step):
         result.source_xpos = x_center
         result.source_ypos = y_center
         result.meta.cal_step.targ_centroid = "COMPLETE"
+
+        log.info(
+            f"TA centering complete. Final source position: "
+            f"({result.source_xpos:.2f}, {result.source_ypos:.2f})"
+        )
 
         # Reconstruct the container if needed
         result = self._rebuild_container(container, result)

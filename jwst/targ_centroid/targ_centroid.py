@@ -7,7 +7,7 @@ from scipy.ndimage import median_filter
 log = logging.getLogger(__name__)
 
 
-__all__ = ["center_from_ta_image", "NoFinitePixelsError"]
+__all__ = ["center_from_ta_image", "NoFinitePixelsError", "BadFitError"]
 
 
 class NoFinitePixelsError(Exception):
@@ -41,6 +41,7 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
     x_center, y_center : float
         Fitted x, y center position in full-frame detector coordinates.
     """
+    log.info("Computing centroid of source in TA verification image.")
     # Transform reference center from full-frame to subarray coordinates
     # FITS convention: xstart, ystart are 1-indexed
     # Python/array convention: 0-indexed
@@ -50,7 +51,7 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
         ref_center[1] - (subarray_origin[1] - 1),
     )
 
-    log.info(
+    log.debug(
         f"Reference center (0-indexed): full-frame=({ref_center[0]:.2f}, {ref_center[1]:.2f}), "
         f"subarray=({ref_center_subarray[0]:.2f}, {ref_center_subarray[1]:.2f})"
     )
@@ -72,7 +73,7 @@ def center_from_ta_image(ta_image, ref_center, subarray_origin=(1, 1)):
     x_center = x_center_subarray + (subarray_origin[0] - 1)
     y_center = y_center_subarray + (subarray_origin[1] - 1)
 
-    log.info(
+    log.debug(
         f"Fitted center (0-indexed): subarray=({x_center_subarray:.2f}, {y_center_subarray:.2f}), "
         f"full-frame=({x_center:.2f}, {y_center:.2f})"
     )
