@@ -480,7 +480,6 @@ Table 1.  Keywords Documenting Which Pipeline Steps Have Been Performed.
 
 =========   ========================================
 S_AMIANA    AMI fringe analysis
-S_AMIAVG    AMI fringe averaging
 S_AMINOR    AMI fringe normalization
 S_BARSHA    Bar shadow correction
 S_BKDSUB    Background subtraction

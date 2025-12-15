@@ -59,7 +59,7 @@ where
 
 Example Stage 3 product FITS file names are:
 
- jw87600-a3001_t001_niriss_f480m-nrm_amiavg.fits
+ jw87600-a3001_t001_niriss_f480m-nrm_ami-oi.fits
 
  jw54321-o066_s000123456_nirspec_f170lp_g235m_s2d.fits
 
