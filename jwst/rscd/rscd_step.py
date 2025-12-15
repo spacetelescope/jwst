@@ -25,6 +25,7 @@ class RscdStep(Step):
     class_alias = "rscd"
 
     spec = """
+        bright_use_group1 = boolean(default=False) # do not flag group1 if group3 is saturated
     """  # noqa: E501
 
     reference_file_types = ["rscd"]
@@ -73,7 +74,9 @@ class RscdStep(Step):
         rscd_model = datamodels.RSCDModel(rscd_name)
 
         # Do the rscd correction
-        result = rscd_sub.do_correction(result, rscd_model)
+        result = rscd_sub.do_correction(
+            result, rscd_model, bright_use_group1=self.bright_use_group1
+        )
 
         # Cleanup
         del rscd_model
