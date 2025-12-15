@@ -14,15 +14,26 @@ class FirstFrameStep(Step):
     """
     Set data quality flags for the first group in MIRI ramps.
 
-    If the number of groups is > than 3, the DO_NOT_USE group data
-    quality flag is added to first group.
+    .. deprecated:: 1.21.0
+        The `FirstFrameStep` has been deprecated and will be removed
+        in a future release. Flagging the first grouops  has been added to the RSCD step.
     """
 
     class_alias = "firstframe"
 
     spec = """
-        bright_use_group1 = boolean(default=True) # do not flag group1 if group3 is saturated
+    skip = booelan(default=True) # Do not run this step. 
     """  # noqa: E501
+
+    def __init__(self, *args, **kwargs):
+        deprecation_message = (
+            "'FiristFrameStep' has been deprecated since 1.21.0 and "
+            "will be removed in a future release. Flagging the first group  has been"
+            " added to the RSCD step.  "
+        )
+        warnings.warn(deprecation_message, DeprecationWarning, stacklevel=2)
+        log.warning(deprecation_message)
+        super().__init__(*args, **kwargs)
 
     def process(self, step_input):
         """
