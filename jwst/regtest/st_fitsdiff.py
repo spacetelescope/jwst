@@ -1273,8 +1273,9 @@ class STTableDataDiff(TableDataDiff):
         self.identical_columns = []
         # Count number of different table elements
         self.different_table_elements = 0
-        self.fail_atol_rtol_test = 0
         self.non_numeric_diff_columns = []
+        self.fail_atol_rtol_test = 0
+
         for col in self.common_columns:
             name_lower = col.name.lower()
             if name_lower in ignore_fields:
@@ -1310,9 +1311,19 @@ class STTableDataDiff(TableDataDiff):
 
             # Calculate the absolute and relative differences
             if np.issubdtype(arra.dtype, np.number) and np.issubdtype(arrb.dtype, np.number):
-                float_diffs = where_not_allclose(arra, arrb, rtol=self.rtol, atol=self.atol)
-                self.fail_atol_rtol_test += len(float_diffs[0])
-                # Find differences while excluding entries where both are NaN
+                # First count all entries that fail the atol/rtol test
+                # This includes entries where 1 of (a, b) is NaN or infinite and the other is not
+                # But not entries where both are NaN
+                finitea = np.isfinite(arra)
+                finiteb = np.isfinite(arrb)
+                if self.atol == 0 and self.rtol == 0:
+                    thresh = 0.0
+                else:
+                    thresh = self.atol + self.rtol * np.abs(arrb)
+                diffs = np.abs(arrb - arra)
+                number_that_fail_atol_rtol_test = ((~finitea ^ ~finiteb) | (diffs > thresh)).sum()
+                self.fail_atol_rtol_test += number_that_fail_atol_rtol_test
+                # Find plain differences while excluding entries where both are NaN
                 bothnans = np.isnan(arra) & np.isnan(arrb)
                 n_different = (arra[~bothnans] != arrb[~bothnans]).sum()
                 if n_different == 0:
@@ -1326,9 +1337,7 @@ class STTableDataDiff(TableDataDiff):
                 arrbmax, arrbmin, arrbmean = get_stats_if_nonans(nonansb)
                 finite_idx = np.isfinite(arra) & np.isfinite(arrb)
                 maxr, meanr, stdr = np.nan, np.nan, np.nan
-                r_idx = where_not_allclose(arra, arrb, self.atol, self.rtol)
-                n_fail_rtol = len(r_idx[0])
-                if n_fail_rtol > 0:
+                if number_that_fail_atol_rtol_test > 0:
                     numeric_fail_idx = where_not_allclose(
                         arra[finite_idx], arrb[finite_idx], self.atol, self.rtol
                     )
