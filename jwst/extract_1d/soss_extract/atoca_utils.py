@@ -12,7 +12,7 @@ import warnings
 
 import numpy as np
 from numpy.polynomial import Polynomial
-from scipy.interpolate import Akima1DInterpolator, RectBivariateSpline, make_interp_spline, UnivariateSpline
+from scipy.interpolate import Akima1DInterpolator, RectBivariateSpline, UnivariateSpline, make_interp_spline
 from scipy.optimize import minimize_scalar
 from scipy.sparse import csr_matrix, diags
 from scipy.sparse.linalg import MatrixRankWarning, lsqr, spsolve
