@@ -972,8 +972,6 @@ class ExtractionEngine:
             The inverse of the design matrix M in M*f_k=b*(y/err)
         b_matrix : (N, M) array
             The matrix b in M*f_k=b*(y/err)
-        mask : (M) array
-            Points of (y/err) to use, i.e., (y/err)[mask]
         """
 
         # Build the system to solve
@@ -990,7 +988,7 @@ class ExtractionEngine:
         design_matrix = (a_matrix_sq + tikfac**2 * t_mat_sq).toarray()
         design_matrix_inv = np.linalg.inv(design_matrix)
 
-        return design_matrix_inv, b_matrix, self.mask
+        return design_matrix_inv, b_matrix
 
 
     def _get_lo_hi(self, grid, wave_p, wave_m, mask):

@@ -207,7 +207,7 @@ class DetectorModelOrder:
         return oversample_grid(wave_grid, n_os=n_os)
 
 
-def get_ref_file_args(ref_files, orders_requested=None):
+def get_ref_file_args(ref_files, mederr=None, orders_requested=None):
     """
     Prepare the reference files for the extraction engine.
 
@@ -216,6 +216,10 @@ def get_ref_file_args(ref_files, orders_requested=None):
     ref_files : dict
         A dictionary of the reference file DataModels, along with values
         for the subarray and pwcpos, i.e. the pupil wheel position.
+    mederr : np.ndarray or None, optional
+        If an array, this should be the median uncertainty across integrations.
+        Will be saved as the mederr attribute of each returned detector_model.
+        Default None
     orders_requested : list or None, optional
         A list of the spectral orders requested for extraction.
         If None, all orders in the pastasoss reference file are used.
@@ -303,17 +307,137 @@ def get_ref_file_args(ref_files, orders_requested=None):
         detector_model.kernel = kernel
         detector_model.kernel_native = kernel
         detector_model.kernel_func = kernel
+        detector_model.mederr = mederr
         detector_models.append(detector_model)
 
     return detector_models
 
+def _infill_data_get_mederr(cube_model, scimask, refmask, ninterp=9):
+    """
+    Impute missing data, compute median uncertainty
 
-def _append_tiktests(test_a, test_b):
-    out = {}
-    for key in test_a:
-        out[key] = np.append(test_a[key], test_b[key], axis=0)
+    Parameters
+    ----------
+    cube_model : CubeModel
+        The input DataModel as a CubeModel.
+    scimask : np.ndarray
+        A boolean array that is True for pixels that are bad in *all*
+        integrations
+    refmask : np.ndarray
+        Boolean mask for the reference pixels
+    ninterp : int, optional
+        Number of neighboring images (in time) to use to impute missing data.
+        Used with ndimage.median_filter.  Should be odd.
+        Default 9.
 
-    return out
+    Returns
+    -------
+    data_nanreplaced : np.ndarray
+        Array of shape (nintegrations, ny, nx) with NaNs replaced with the
+        mean of ninterp neighboring images.
+    medarr : np.ndarray
+        Median uncertainty from cube_model.err, excluding NaNs.
+
+    """
+    # Pixels that are bad in all integrations
+
+    allbad = np.sum(np.isfinite(cube_model.err) &
+                    np.isfinite(cube_model.data), axis=0) == 0
+
+    # Make a copy of the cube model where bad pixels in any individual
+    # integration are replaced with a running median in time.
+
+    data_nanreplaced = cube_model.data.copy()
+    data_infilled = cube_model.data.copy()
+
+    # We will use the median uncertainty throughout the calculation.
+    # Use of the median uncertainty means that the matrices used in
+    # the ATOCA algorithm are shared between all integrations.
+
+    mederr = np.nanmedian(cube_model.err*1., axis=0)
+    meddata = np.nanmedian(data_nanreplaced, axis=0)
+
+    mederr[allbad] = np.inf
+    mederr[refmask] = np.inf
+    meddata[allbad] = 0
+
+    # Fill in values for pixels that are bad in individual integrations
+
+    for i in range(data_nanreplaced.shape[0]):
+        indx = ~np.isfinite(data_nanreplaced[i])
+        data_infilled[i][indx] = meddata[indx]
+
+    # Apply a median filter in time to make the final replacements of bad
+    # pixels in individual integrations.  Use a running median of ninterp
+    # time steps as a compromise between precision and time resolution.
+
+    nints = data_nanreplaced.shape[0]
+    medfilt = ndimage.median_filter(data_infilled, min(nints, ninterp), axes=(0))
+
+    indx = ~np.isfinite(data_nanreplaced)
+    data_nanreplaced[indx] = medfilt[indx]
+
+    return data_nanreplaced, mederr
+
+
+def _refine_tikfac(tiktests, tikho_struct, engine, niter_refine=3):
+    """
+    Iteratively refine the optimal Tikhonov regularization factor.
+
+    Parameters
+    ----------
+    tiktests : Tikhonov
+        Dictionary-like object with Tikhonov factors and associated
+        goodness-of-fit quantities
+    tikho_struct : Tikhonov
+        A Tikhonov structure appropriately initialized to enable the
+        calculation of goodness-of-fit metrics for trial Tikhonov factors
+    engine : ExtractionEngine
+        Used to determine the best Tikhonov factor after the goodness-
+        of-fit quantities have been calculated
+    niter_refine : int
+        Number of times to refine the calculation by adding two points.
+        Default 3.
+
+    Returns
+    -------
+    tifac : float
+        The best Tikhonov factor
+
+    This algorithm takes the results of Tikhonov optimization over the
+    initial, coarse grid as input.  It then finds the best factor using
+    the dchi2/dlog(factor) criterion.  It chooses the closest point on
+    the grid, adds two new points on either side of this to increase the
+    resolution (or extends the grid if the best-fit was an endpoint),
+    and recomputes the best Tikhonov factor.  This process is iterated
+    niter_refine times.
+    """
+
+    tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
+
+    for i in range(niter_refine):
+        f = np.sort(tiktests['factors'])
+
+        closest_point = (np.abs(np.log(f) - np.log(tikfac)) ==
+                       np.amin(np.abs(np.log(f) - np.log(tikfac))))
+
+        # Add two points, extrapolating if necessary.
+
+        j = np.where(closest_point)[0][0]
+        if j == 0:
+            newfac = np.array([f[0]**2 / f[1], np.sqrt(f[0] * f[1])])
+        elif j == len(f) - 1:
+            newfac = np.array([np.sqrt(f[-1] * f[-2]), f[-1]**2 / f[-2]])
+        else:
+            newfac = np.array([np.sqrt(f[j] * f[j-1]), np.sqrt(f[j] * f[j+1])])
+
+        # Merge results and recompute the best Tikhonov factor.
+
+        newtest = engine.get_tikho_tests(tikho_struct, newfac)
+        tiktests.merge(newtest)
+        tikfac = engine.best_tikho_factor(tiktests, fit_mode="d_chi2")
+
+    return tikfac, tiktests
 
 
 def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
@@ -327,7 +451,8 @@ def _populate_tikho_attr(spec, tiktests, idx, sp_ord):
     spec.int_num = 0  # marks this as a test spectrum
 
 
-def _build_tracemodel_order(engine, order_model, f_k, mask, gen_engine=False):
+def _build_tracemodel_order(engine, order_model, f_k, mask,
+                            force_recompute_engine=False):
     """
     Build the trace model for a specific spectral order.
 
@@ -342,11 +467,13 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, gen_engine=False):
     mask : np.ndarray[bool]
         The global mask of pixels to be modeled. Bad pixels in the science data
         should remain unmasked.
-    gen_engine : bool, optional
-        Generate engine inside this function?  Alternative is to use or
-        generate the engine already associated with order_model.  This should
-        be True if reconstructing spectra within the Tikhonov tests, and False
-        if using the function within the main integation routine.
+    force_recompute_engine : bool, optional
+        Force the recomputation of the ExtractionEngine inside this function,
+        and prevent it from being saved to the order_model?  Alternative is to
+        use or generate the engine already associated with order_model.  This
+        boolean should be True if reconstructing spectra within the Tikhonov
+        tests, and False if using the function within the main integration
+        routine.  If True, order_model.orderengine will not be modified.
         Default False.
 
     Returns
@@ -370,11 +497,11 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, gen_engine=False):
 
     # Build model of the order
     # Give the identity kernel to the Engine (so no convolution)
-    # Load a precomputed engine if available.  Otherwise, compute it now
-    # and store it.
-    if order_model.orderengine is not None and not gen_engine:
-        engine = order_model.orderengine
-    elif not gen_engine:
+    # Load a precomputed engine if available and a recomputation is not
+    # forced.  Otherwise, compute it now, and store it unless
+    # force_recompute_engine is True.
+
+    if (order_model.orderengine is None) or (force_recompute_engine):
         engine = ExtractionEngine(
             [order_model.wavemap],
             [order_model.specprofile],
@@ -384,17 +511,10 @@ def _build_tracemodel_order(engine, order_model, f_k, mask, gen_engine=False):
             mask_trace_profile=[mask],
             orders=[order_model.spectral_order],
         )
-        order_model.orderengine = engine
+        if not force_recompute_engine:
+            order_model.orderengine = engine
     else:
-        engine = ExtractionEngine(
-            [order_model.wavemap],
-            [order_model.specprofile],
-            [order_model.throughput],
-            [np.array([1.0])],
-            wave_grid=grid_order,
-            mask_trace_profile=[mask],
-            orders=[order_model.spectral_order]
-        )
+        engine = order_model.orderengine
 
     # Project on detector and save in dictionary
     tracemodel_ord = engine.rebuild(flux_order, fill_value=np.nan)
@@ -534,26 +654,10 @@ def _do_tiktests(
     tikfac = engine.best_tikho_factor(all_tests, fit_mode="d_chi2")
     log.info("Coarse grid best tikfac: %.4e", tikfac)
 
-    # Add points in pairs around the current best Tikhonov factor.  Merge
-    # these with the existing structure to refine the estimate.
+    # Refine to a final answer.
 
-    for _i in range(niter_refine):
-        f = np.sort(all_tests['factors'])
-
-        closest_point = (np.abs(np.log(f) - np.log(tikfac)) ==
-                       np.amin(np.abs(np.log(f) - np.log(tikfac))))
-        j = np.where(closest_point)[0][0]
-        if j == 0:
-            newfac = np.array([f[0]**2 / f[1], np.sqrt(f[0] * f[1])])
-        elif j == len(f) - 1:
-            newfac = np.array([np.sqrt(f[-1] * f[-2]), f[-1]**2 / f[-2]])
-        else:
-            newfac = np.array([np.sqrt(f[j] * f[j-1]), np.sqrt(f[j] * f[j+1])])
-
-        newtest = engine.get_tikho_tests(tikho_struct, newfac)
-        all_tests.merge(newtest)
-        tikfac = engine.best_tikho_factor(all_tests, fit_mode="d_chi2")
-
+    tikfac, all_tests = _refine_tikfac(
+        all_tests, tikho_struct, engine, niter_refine=niter_refine)
     log.info("Final best tikfac: %.4e", tikfac)
 
     spec_list = []
@@ -568,7 +672,8 @@ def _do_tiktests(
                     spec_ord = _build_null_spec_table(engine.wave_grid, order)
                 else:
                     _, spec_ord = _build_tracemodel_order(
-                        engine, order_model, f_k, global_mask, gen_engine=True)
+                        engine, order_model, f_k, global_mask,
+                        force_recompute_engine=True)
                 _populate_tikho_attr(spec_ord, all_tests, idx, order)
                 spec_list.append(spec_ord)
 
@@ -962,14 +1067,13 @@ class Integration:
         # only a matrix multiplication.
 
         if self.order_models[0].m_inv is None:
-            _m_inv, _bmat, _mask = engine.precompute_detector_model(
+            _m_inv, _bmat = engine.precompute_detector_model(
                 self.scidata_bkg, self.scierr, tikfac=tikfacs_out["Order 1"]
             )
             self.order_models[0].m_inv = _m_inv
             self.order_models[0].bmat = _bmat
-            self.order_models[0].mask = _mask
 
-        y_over_err = (self.scidata_bkg / self.order_models[0].mederr)[~self.order_models[0].mask]
+        y_over_err = (self.scidata_bkg / self.order_models[0].mederr)[~engine.mask]
         f_k = self.order_models[0].m_inv.dot(self.order_models[0].bmat.T * y_over_err)
         # Create a new instance of the engine for evaluating the trace model.
         # This allows bad pixels and pixels below the threshold to be reconstructed as well.
@@ -978,7 +1082,8 @@ class Integration:
         tracemodels = {}
         for i_order, _order in enumerate([1, 2]):
             tracemodel_ord, spec_ord = _build_tracemodel_order(
-                engine, self.order_models[i_order], f_k, global_mask, gen_engine=False
+                engine, self.order_models[i_order], f_k, global_mask,
+                force_recompute_engine=False
             )
             spec_ord.meta.soss_extract1d.factor = tikfacs_out["Order 1"]
             spec_ord.meta.soss_extract1d.color_range = "RED"
@@ -1585,11 +1690,6 @@ def run_extract1d(
         log.critical(msg)
         raise TypeError(msg)
 
-    # Prepare the reference file arguments.
-    order_models = get_ref_file_args(ref_files, orders_requested=order_list)
-
-    # Run the first integration to get the Tikhonov factor for the rest
-    scidata = cube_model.data[0].astype("float64")
     # Only mask pixels that are bad in *all* integrations
     scimask = np.all(cube_model.dq & dqflags.pixel["DO_NOT_USE"] != 0, axis=0)
 
@@ -1597,58 +1697,19 @@ def run_extract1d(
         cube_model.dq[0], ignore_flags=dqflags.pixel["REFERENCE_PIXEL"], flip_bits=True
     )
 
-    # Pixels that are bad in all integrations
+    # Fill in pixels that are bad or missing in individual integrations,
+    # also compute the median uncertainty across integrations.
 
-    allbad = np.sum(np.isfinite(cube_model.err) &
-                    np.isfinite(cube_model.data), axis=0) == 0
+    scidata, mederr = _infill_data_get_mederr(cube_model, scimask, refmask)
+    nints = scidata.shape[0]
 
-    # Make a copy of the cube model where bad pixels in any individual
-    # integration are replaced with a running median in time.
-
-    data_nanreplaced = cube_model.data.copy()
-    data_infilled = cube_model.data.copy()
-
-    # We will use the median uncertainty throughout the calculation.
-    # Use of the median uncertainty means that the matrices used in
-    # the ATOCA algorithm are shared between all integrations.
-
-    mederr = np.nanmedian(cube_model.err*1., axis=0)
-    meddata = np.nanmedian(data_nanreplaced, axis=0)
-
-    mederr[allbad] = np.inf
-    mederr[refmask] = np.inf
-    meddata[allbad] = 0
-
-    # Fill in values for pixels that are bad in individual integrations
-
-    for i in range(data_nanreplaced.shape[0]):
-        indx = ~np.isfinite(data_nanreplaced[i])
-        data_infilled[i][indx] = meddata[indx]
-
-    # Apply a median filter in time to make the final replacements of
-    # bad pixels in individual integrations.  Use a running median of
-    # 9 time steps as a compromise between precision and time resolution.
-
-    nints = data_nanreplaced.shape[0]
-    medfilt = ndimage.median_filter(data_infilled, min(nints, 9), axes=(0))
-
-    indx = ~np.isfinite(data_nanreplaced)
-    data_nanreplaced[indx] = medfilt[indx]
-
-    # For the first integration, we will use the data with no NaNs
-    # and we will use the median uncertainties.
-
-    scidata = data_nanreplaced[0]
-
-    # Store the median error in each order model.
-
-    for om in order_models:
-        om.mederr = mederr
+    # Prepare the reference file arguments.
+    order_models = get_ref_file_args(ref_files, mederr=mederr, orders_requested=order_list)
 
     # Pre-compute the weights for box extraction (used in modeling and extraction)
     box_weights, wavelengths = _compute_box_weights(
         order_models,
-        scidata.shape,
+        scidata[0].shape,
         width=soss_kwargs["width"],
         orders_requested=order_list,
     )
@@ -1657,17 +1718,19 @@ def run_extract1d(
     if subarray == "SUBSTRIP96":
         box_weights["Order 2"] = np.ones((96, 2048))
 
-    # Process the 0th integration to compute a good Tikhonov factor and adaptive wave_grid
+    # Process a typical integration to compute a good Tikhonov factor and adaptive wave_grid
     if soss_kwargs["tikfac"] is not None:
         tikfacs_in = {"Order 1": soss_kwargs["tikfac"], "Order 2": None, "Order 3": None}
     else:
         tikfacs_in = None
 
-    # We will define an array suitable for a typical integration.
-    # Use a mean here so that noise averages down even in the face of
-    # real astrophysical variability.
+    # We need a representative integration for computing the best Tikhonov
+    # factor.  We will use the mean across integrations so that noise averages
+    # down even in the face of real astrophysical variability.  We will then
+    # add Gaussian error to get the chi squared behavior right, as that is
+    # what the Tikhonov refinement criteria checks for.
 
-    scidata_typical = np.mean(data_nanreplaced, axis=0)
+    scidata_typical = np.mean(scidata, axis=0)
     # Force the seed to be the same here for testing and repeatability
     rng = np.random.default_rng(seed=42)
     scidata_typical += rng.normal(0, mederr * np.sqrt((nints - 1) / nints))
@@ -1688,8 +1751,8 @@ def run_extract1d(
     )
 
     log.info(
-        "Tikhonov factors and wavelength grid from first integration "
-        "will be applied to subsequent ones."
+        "Tikhonov factors and wavelength grid from a representative "
+        "integration will be applied to all integrations."
     )
 
     all_results = []
@@ -1698,7 +1761,6 @@ def run_extract1d(
 
     for i in range(nimages):
 
-        scidata_i = data_nanreplaced[i]
         scierr_i = cube_model.err[i].astype("float64")
         bad = (~np.isfinite(cube_model.data[i]))|(~np.isfinite(scierr_i))
 
@@ -1709,7 +1771,7 @@ def run_extract1d(
         scierr_i[bad] = mederr[bad]*10
 
         all_results += [_process_one_integration(
-            scidata_i,
+            scidata[i],
             scierr_i,
             scimask,
             refmask,
