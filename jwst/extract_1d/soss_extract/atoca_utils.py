@@ -12,7 +12,12 @@ import warnings
 
 import numpy as np
 from numpy.polynomial import Polynomial
-from scipy.interpolate import Akima1DInterpolator, RectBivariateSpline, UnivariateSpline, make_interp_spline
+from scipy.interpolate import (
+    Akima1DInterpolator,
+    RectBivariateSpline,
+    UnivariateSpline,
+    make_interp_spline,
+)
 from scipy.optimize import minimize_scalar
 from scipy.sparse import csr_matrix, diags
 from scipy.sparse.linalg import MatrixRankWarning, lsqr, spsolve
@@ -1573,6 +1578,7 @@ def _minimize_on_grid(factors, val_to_minimize, interpolate=True, interp_index=N
 
     return min_fac
 
+
 def _soft_l1(z):
     return 2 * ((1 + z) ** 0.5 - 1)
 
@@ -1627,19 +1633,18 @@ class TikhoTests(dict):
         """
         Merge an additional dictionary onto the present instance.
 
+        The arrays of chi squared values will also need to be recomputed
+        from the expanded arrays.
+
         Parameters
         ----------
         addnl_dict : dict
             Dictionary holding arrays for `factors`, `solution`, `error`, `reg`.
             Will be appended onto the existing arrays using np.hstack or
             np.vstack, as appropriate.
-
-        The arrays of chi squared values will also need to be recomputed
-        from the expanded arrays.
         """
-
-        self['factors'] = np.hstack([self['factors'], addnl_dict['factors']])
-        for key in ['error', 'solution', 'reg']:
+        self["factors"] = np.hstack([self["factors"], addnl_dict["factors"]])
+        for key in ["error", "solution", "reg"]:
             self[key] = np.vstack([self[key], addnl_dict[key]])
 
         self.n_points = len(self["error"][0].squeeze())
@@ -1755,7 +1760,7 @@ class TikhoTests(dict):
             # Ensure we have enough points for the desired spline order.
             order = min(3, np.sum(ok) - 1)
             if order >= 3:
-                spl = Akima1DInterpolator(logx, y[ok][idx], method='makima')
+                spl = Akima1DInterpolator(logx, y[ok][idx], method="makima")
             else:
                 spl = UnivariateSpline(logx, y[ok][idx], k=order, s=0)
 
@@ -1766,11 +1771,11 @@ class TikhoTests(dict):
             deriv_vals = spl.derivative()(logx_oversamp)
 
             if np.any(deriv_vals > thresh):
-                best_fac = 10**np.amin(logx_oversamp[deriv_vals > thresh])
+                best_fac = 10 ** np.amin(logx_oversamp[deriv_vals > thresh])
             # The derivative never exceeded our threshold: use the last point.
             else:
                 log.warning("dchi2/dlog(factor) never reached the adopted threshold")
-                best_fac = 10**logx[-1]
+                best_fac = 10 ** logx[-1]
 
         elif mode in ["curvature", "d_chi2", "chi2"]:
             best_fac = np.max(self["factors"])
