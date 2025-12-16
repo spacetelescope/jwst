@@ -6,54 +6,15 @@ from jwst.datamodels import ModelContainer
 from jwst.targ_centroid.targ_centroid_step import TargCentroidStep
 from jwst.targ_centroid.tests.helpers import (
     MIRI_DETECTOR_SHAPE,
-    X_REF_SLIT,
-    X_REF_SLITLESS,
-    Y_REF_SLIT,
-    Y_REF_SLITLESS,
+    X_REF,
+    Y_REF,
     get_wavelength,
     make_empty_lrs_model,
-    make_pathloss_model,
     make_slit_data,
     make_slitless_data,
     make_ta_association,
     make_ta_model,
 )
-
-
-@pytest.fixture
-def mock_specwcs_model(tmp_path):
-    """
-    Create a mock MIRI LRS specwcs reference file.
-
-    Only contains the metadata needed for TA centering step, not a full specwcs model.
-
-    Returns
-    -------
-    str
-        Path to the saved mock specwcs reference file.
-    """
-    specwcs_model = dm.MiriLRSSpecwcsModel()
-
-    # Set the reference positions for slit and slitless modes
-    specwcs_model.meta.x_ref = X_REF_SLIT
-    specwcs_model.meta.y_ref = Y_REF_SLIT
-    specwcs_model.meta.x_ref_slitless = X_REF_SLITLESS
-    specwcs_model.meta.y_ref_slitless = Y_REF_SLITLESS
-
-    # Save the model to a file
-    specwcs_filepath = tmp_path / "mock_specwcs.fits"
-    specwcs_model.save(specwcs_filepath)
-
-    return str(specwcs_filepath)
-
-
-@pytest.fixture
-def mock_pathloss_model(tmp_path):
-    # Save the model to a file
-    pathloss_model = make_pathloss_model()
-    pathloss_filepath = tmp_path / "mock_pathloss.fits"
-    pathloss_model.save(pathloss_filepath)
-    return str(pathloss_filepath)
 
 
 @pytest.fixture
@@ -90,7 +51,7 @@ def mock_filteroffset_model(tmp_path):
 
 
 @pytest.fixture
-def mock_references(monkeypatch, mock_specwcs_model, mock_pathloss_model, mock_filteroffset_model):
+def mock_references(monkeypatch, mock_filteroffset_model):
     """
     Monkeypatch the get_reference_file method to return mock reference files.
 
@@ -101,11 +62,7 @@ def mock_references(monkeypatch, mock_specwcs_model, mock_pathloss_model, mock_f
 
     def mock_get_reference_file(self, model, reftype):
         """Mock implementation of get_reference_file."""
-        if reftype == "specwcs":
-            return mock_specwcs_model
-        elif reftype == "pathloss":
-            return mock_pathloss_model
-        elif reftype == "filteroffset":
+        if reftype == "filteroffset":
             return mock_filteroffset_model
         else:
             raise ValueError(f"Unexpected reference type: {reftype}")
@@ -121,8 +78,8 @@ def slitless_ta_image(tmp_path):
     data = make_slitless_data(wavelength, offset)
 
     # Add NaN values near the slitless source position to test that this still works ok
-    data[int(Y_REF_SLITLESS) + 5, int(X_REF_SLITLESS) + 3] = np.nan
-    data[int(Y_REF_SLITLESS) - 4, int(X_REF_SLITLESS) - 2] = np.inf
+    data[int(Y_REF) + 5, int(X_REF) + 3] = np.nan
+    data[int(Y_REF) - 4, int(X_REF) - 2] = np.inf
 
     model = make_ta_model(data)
 
@@ -163,8 +120,8 @@ def test_targ_centroid_slitless(input_model_slitless, slitless_ta_image, mock_re
     x_center, y_center = result.source_xpos, result.source_ypos
 
     # Expected center position (reference position + offset)
-    expected_x = X_REF_SLITLESS + 2
-    expected_y = Y_REF_SLITLESS - 3
+    expected_x = X_REF + 2
+    expected_y = Y_REF - 3
 
     # Check that the computed center is close to the expected position
     assert np.isclose(x_center, expected_x, atol=0.05), (
@@ -207,8 +164,8 @@ def test_targ_centroid_slit(input_model_slit, offset, tmp_path, mock_references)
     x_center, y_center = result.source_xpos, result.source_ypos
 
     # Expected center position (reference position + offset)
-    expected_x = X_REF_SLIT + offset[0]
-    expected_y = Y_REF_SLIT + offset[1]
+    expected_x = X_REF + offset[0]
+    expected_y = Y_REF + offset[1]
 
     # Check that the computed center is close to the expected position
     # The slit truncation may cause slightly larger errors, so use slightly larger tolerance
@@ -278,7 +235,7 @@ def test_skip_mostly_nan(input_model_slit, tmp_path, mock_references, log_watche
     """Test that step raises an error when center-finding does not converge."""
     # Create a TA model with a source far from the reference position
     data = np.zeros(MIRI_DETECTOR_SHAPE) * np.nan
-    data[int(Y_REF_SLIT) + 1, int(X_REF_SLIT) + 1] = 1
+    data[int(Y_REF) + 1, int(X_REF) + 1] = 1
 
     ta_model = make_ta_model(data)
 
@@ -314,8 +271,8 @@ def test_targ_centroid_asn(input_model_slit, tmp_cwd, mock_references):
     assert sci_model.meta.cal_step.targ_centroid == "COMPLETE"
 
     # Expected center position (reference position + offset)
-    expected_x = X_REF_SLIT + offset[0]
-    expected_y = Y_REF_SLIT + offset[1]
+    expected_x = X_REF + offset[0]
+    expected_y = Y_REF + offset[1]
 
     # Check that the computed center is close to the expected position
     assert np.isclose(sci_model.source_xpos, expected_x, atol=0.05), (

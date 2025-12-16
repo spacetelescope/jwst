@@ -198,7 +198,7 @@ class TargCentroidStep(Step):
         """
         if not ta_model.meta.hasattr("wcs"):
             log.info("Assigning WCS to TA verification image.")
-            ta_model = AssignWcsStep.call(ta_model)
+            ta_model = AssignWcsStep.call(ta_model, sip_approx=False)
         if not (
             ta_model.meta.dither.hasattr("dithered_ra")
             and ta_model.meta.dither.hasattr("dithered_dec")

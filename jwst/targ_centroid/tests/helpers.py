@@ -5,15 +5,11 @@ import numpy as np
 import stdatamodels.jwst.datamodels as dm
 from astropy.modeling import models
 
-from jwst.pathloss.pathloss import calculate_pathloss_vector
-
 # Constants for MIRI imager and LRS slit dimensions
 PIXSCALE = 0.11  # arcsec/pixel for MIRI imager
 JWST_DIAMETER = 6.5  # meters
-X_REF_SLIT = 326.13
-Y_REF_SLIT = 300.7
-X_REF_SLITLESS = 38.5
-Y_REF_SLITLESS = 829.0
+X_REF = 326.13  # for these tests we assume same ref position for slit and slitless
+Y_REF = 300.7
 MIRI_DETECTOR_SHAPE = (1024, 1032)  # (ny, nx) for MIRI imager
 
 
@@ -31,63 +27,6 @@ def get_wavelength(filter_name):  # numpydoc ignore=RT01
         "F2550W": 25.5,
     }
     return filter_wavelengths.get(filter_name, None)
-
-
-def make_pathloss_model():
-    """
-    Create a mock MIRI LRS pathloss reference file.
-
-    Returns
-    -------
-    str
-        Path to the file.
-    """
-    pathloss_model = dm.MirLrsPathlossModel()
-
-    # Define wavelength grid over MIRI LRS wavelength range
-    n_wavelengths = 50
-    wavelengths = np.linspace(5.0, 14.0, n_wavelengths).astype(np.float32)
-
-    # Define spatial grids - slit is long in x, narrow in y
-    n_x = 51
-    n_y = 21
-    y_grid = np.linspace(-0.5, 0.5, n_y)  # arcsec
-
-    # Define pathloss data. This will be a slight Gaussian drop-off from the center
-    # until +/- 5 pixels in y, then it'll go to zero. Flat in x (along the slit).
-    pathloss_data = np.zeros((n_wavelengths, n_y, n_x), dtype=np.float32)
-    y_offsets = y_grid[:, np.newaxis]  # Shape: (n_y, 1), in arcsec
-    pathloss_2d = np.exp(-2 * y_offsets**2)  # Gaussian in y, broadcast to x
-
-    # apply the cutoff in y direction
-    y_pixel_scale = (y_grid[-1] - y_grid[0]) / (n_y - 1)
-    cutoff_arcsec = 5 * y_pixel_scale  # ~0.25 arcsec
-    pathloss_2d[np.abs(y_offsets) > cutoff_arcsec] = 0.0
-    pathloss_data[:] = pathloss_2d
-
-    # Create the pathloss table as a structured numpy array
-    # The schema requires columns: wavelength (1D), pathloss (2D), pathloss_err (2D)
-    dtype = [
-        ("wavelength", np.float32),
-        ("pathloss", np.float32, (n_y, n_x)),
-        ("pathloss_err", np.float32, (n_y, n_x)),
-    ]
-    pathloss_table = np.zeros(n_wavelengths, dtype=dtype)
-    pathloss_table["wavelength"] = wavelengths
-    pathloss_table["pathloss"] = pathloss_data
-    pathloss_table["pathloss_err"] = np.ones_like(pathloss_data) * 0.01
-    pathloss_model.pathloss_table = pathloss_table
-
-    # Set up wcsinfo
-    pathloss_model.meta.wcsinfo.crpix1 = (n_x + 1) / 2.0  # Reference pixel in x
-    pathloss_model.meta.wcsinfo.crpix2 = (n_y + 1) / 2.0  # Reference pixel in y
-    pathloss_model.meta.wcsinfo.crval1 = 0.0  # Reference value in x (arcsec)
-    pathloss_model.meta.wcsinfo.crval2 = 0.0  # Reference value in y (arcsec)
-
-    pathloss_model.meta.wcsinfo.cdelt1 = 1  # x_pixel_scale
-    pathloss_model.meta.wcsinfo.cdelt2 = 1  # y_pixel_scale
-
-    return pathloss_model
 
 
 def make_slitless_data(wavelength=15.0, offset=(0, 0)):
@@ -116,8 +55,8 @@ def make_slitless_data(wavelength=15.0, offset=(0, 0)):
     radius_pixels = theta_arcsec / PIXSCALE  # to pixels
 
     # Calculate source center position using slitless reference position
-    x_center = X_REF_SLITLESS + offset[0]
-    y_center = Y_REF_SLITLESS + offset[1]
+    x_center = X_REF + offset[0]
+    y_center = Y_REF + offset[1]
 
     # Simulate source as an Airy disk model at diffraction-limited resolution
     airy = models.AiryDisk2D(amplitude=1000.0, x_0=x_center, y_0=y_center, radius=radius_pixels)
@@ -162,6 +101,23 @@ def make_ta_model(data):
     model.meta.subarray.xsize = MIRI_DETECTOR_SHAPE[1]  # nx
     model.meta.subarray.ysize = MIRI_DETECTOR_SHAPE[0]  # ny
 
+    # add wcsinfo
+    model.meta.wcsinfo.crpix1 = 0
+    model.meta.wcsinfo.crpix2 = 0
+    model.meta.wcsinfo.v2_ref = -414.848
+    model.meta.wcsinfo.v3_ref = -400.426
+    model.meta.wcsinfo.roll_ref = 92.69243893875218
+    model.meta.wcsinfo.ra_ref = 108.63038309653392
+    model.meta.wcsinfo.dec_ref = 13.860413558600543
+    model.meta.wcsinfo.v3yangle = 4.75797
+    model.meta.wcsinfo.vparity = -1
+    model.meta.wcsinfo.crval1 = 108.63038309653392
+    model.meta.wcsinfo.crval2 = 13.860413558600543
+
+    # dither info
+    model.meta.dither.x_offset = 0.0
+    model.meta.dither.y_offset = 0.0
+
     return model
 
 
@@ -192,54 +148,35 @@ def make_slit_data(offset):
     radius_pixels = theta_arcsec / PIXSCALE  # to pixels
 
     # Calculate source center position using slit reference position
-    x_center = X_REF_SLIT + offset[0]
-    y_center = Y_REF_SLIT + offset[1]
+    x_center = X_REF + offset[0]
+    y_center = Y_REF + offset[1]
 
     # Create Airy disk model on the full detector
     y, x = np.mgrid[0 : MIRI_DETECTOR_SHAPE[0], 0 : MIRI_DETECTOR_SHAPE[1]]
     airy = models.AiryDisk2D(amplitude=1000.0, x_0=x_center, y_0=y_center, radius=radius_pixels)
     data_full = airy(x, y)
 
-    # Retrieve the pathloss model
-    pathloss_model = make_pathloss_model()
-    pathloss_table = pathloss_model.pathloss_table
-    pathloss_wcs = pathloss_model.meta.wcsinfo
-
-    # Only calculate pathloss in a region around the slit reference point
-    slit_half_height = 15  # pixels in y direction (cross-dispersion)
+    # Make a slit mask
+    slit_half_height = 8  # pixels in y direction (cross-dispersion) very approximate
     slit_half_width = 60  # pixels in x direction (along slit)
-    y_min = max(0, int(Y_REF_SLIT - slit_half_height))
-    y_max = min(MIRI_DETECTOR_SHAPE[0], int(Y_REF_SLIT + slit_half_height))
-    x_min = max(0, int(X_REF_SLIT - slit_half_width))
-    x_max = min(MIRI_DETECTOR_SHAPE[1], int(X_REF_SLIT + slit_half_width))
-
-    # Calculate pathloss only in the slit region.
-    # calculate_pathloss_vector is unfortunately not vectorized.
-    slit_weights = np.zeros_like(data_full)
-    for i in range(y_min, y_max):
-        for j in range(x_min, x_max):
-            # Calculate offset from reference center in arcsec
-            dx_arcsec = (j - X_REF_SLIT) * PIXSCALE
-            dy_arcsec = (i - Y_REF_SLIT) * PIXSCALE
-
-            _, pathloss_vector, _ = calculate_pathloss_vector(
-                pathloss_table["pathloss"], pathloss_wcs, dx_arcsec, dy_arcsec, calc_wave=False
-            )
-            # Find the wavelength index closest to our wavelength
-            wave_idx = np.argmin(np.abs(pathloss_table["wavelength"] - wavelength))
-            slit_weights[i, j] = pathloss_vector[wave_idx]
+    y_min = max(0, int(Y_REF - slit_half_height))
+    y_max = min(MIRI_DETECTOR_SHAPE[0], int(Y_REF + slit_half_height))
+    x_min = max(0, int(X_REF - slit_half_width))
+    x_max = min(MIRI_DETECTOR_SHAPE[1], int(X_REF + slit_half_width))
+    slit_mask = np.zeros(MIRI_DETECTOR_SHAPE, dtype=bool)
+    slit_mask[y_min:y_max, x_min:x_max] = True
 
     # Add noise
     rng = np.random.default_rng(42)
     noise = rng.normal(0, 1, data_full.shape)
     data_full += noise
 
-    # Apply slit weights to the data (multiply by pathloss correction)
-    data = data_full * slit_weights
+    # Apply slit weights to the data
+    data = data_full * slit_mask
 
     # Add bad values near the slit source position to test their handling
-    data[int(Y_REF_SLIT) + 4, int(X_REF_SLIT) + 2] = np.nan
-    data[int(Y_REF_SLIT) - 3, int(X_REF_SLIT) - 4] = np.inf
+    data[int(Y_REF) + 4, int(X_REF) + 2] = np.nan
+    data[int(Y_REF) - 3, int(X_REF) - 4] = np.inf
 
     model = make_ta_model(data)
     return model
