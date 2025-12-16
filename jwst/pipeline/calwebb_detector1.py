@@ -115,9 +115,6 @@ class Detector1Pipeline(Pipeline):
             input_data = self.dark_current.run(input_data)
             input_data = self.refpix.run(input_data)
 
-            # skip until MIRI team has figured out an algorithm
-            # input_data = self.persistence(input_data)
-
         else:
             # process Near-IR exposures
             log.debug("Processing a Near-IR exposure")
@@ -129,11 +126,6 @@ class Detector1Pipeline(Pipeline):
             input_data = self.superbias.run(input_data)
             input_data = self.refpix.run(input_data)
             input_data = self.linearity.run(input_data)
-
-            # skip persistence for NIRSpec
-            if instrument != "NIRSPEC":
-                input_data = self.persistence.run(input_data)
-
             input_data = self.dark_current.run(input_data)
 
         # apply the charge_migration step
@@ -147,6 +139,10 @@ class Detector1Pipeline(Pipeline):
 
         # apply the clean_flicker_noise step
         input_data = self.clean_flicker_noise.run(input_data)
+
+        # persistence should be between flicker noise and ramp_fit.
+        if instrument != "NIRSPEC" and instrument != "MIRI":
+            input_data = self.persistence.run(input_data)
 
         # save the corrected ramp data, if requested
         if self.save_calibrated_ramp:
