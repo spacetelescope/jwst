@@ -1,7 +1,8 @@
 import logging
 
 import jwst.datamodels as dm
-from jwst.assign_wcs.miri import retrieve_filter_offset
+from jwst.assign_wcs import AssignWcsStep
+from jwst.assign_wcs.miri import retrieve_filter_offset, store_dithered_position
 from jwst.stpipe import Step
 from jwst.targ_centroid.targ_centroid import BadFitError, NoFinitePixelsError, center_from_ta_image
 
@@ -75,26 +76,32 @@ class TargCentroidStep(Step):
             result = self._rebuild_container(container, result)
             return result
 
-        # Read the TA image
+        # # read specwcs to get necessary reference points on detector
+        # # if we always have dither info from TA image, we won't need this at all
+        # reffile = self.get_reference_file(result, "specwcs")
+        # with dm.MiriLRSSpecwcsModel(reffile) as refmodel:
+        #     if exp_type == "MIR_LRS-FIXEDSLIT":
+        #         ref_center = (refmodel.meta.x_ref, refmodel.meta.y_ref)
+        #     else:
+        #         ref_center = (refmodel.meta.x_ref_slitless, refmodel.meta.y_ref_slitless)
+
+        # Read the TA image and extract necessary info
         with dm.open(self.ta_file) as ta_model:
             log.info(f"Performing TA centering using file: {self.ta_file}")
+            # Assign a WCS to the ta_image if not already present
             ta_image = ta_model.data
+            ta_filter = ta_model.meta.instrument.filter
+            filteroffset_file = self.get_reference_file(ta_model, "filteroffset")
 
-        # read specwcs to get necessary reference points on detector
-        reffile = self.get_reference_file(result, "specwcs")
-        refmodel = dm.MiriLRSSpecwcsModel(reffile)
+            # Find expected source position based on reference information
+            ref_center = self._find_dither_position(ta_model)
+            log.debug(f"Reference center on detector (0-indexed): {ref_center}")
 
-        # Get subarray information from TA image
-        subarray_name = ta_model.meta.subarray.name
-        xstart = ta_model.meta.subarray.xstart  # 1-indexed in FITS
-        ystart = ta_model.meta.subarray.ystart  # 1-indexed in FITS
-        log.debug(f"TA subarray: {subarray_name}, origin: ({xstart}, {ystart})")
-
-        is_slit = exp_type == "MIR_LRS-FIXEDSLIT"
-        if is_slit:
-            ref_center = (refmodel.meta.x_ref, refmodel.meta.y_ref)
-        else:
-            ref_center = (refmodel.meta.x_ref_slitless, refmodel.meta.y_ref_slitless)
+            # Get subarray information from TA image
+            subarray_name = ta_model.meta.subarray.name
+            xstart = ta_model.meta.subarray.xstart  # 1-indexed in FITS
+            ystart = ta_model.meta.subarray.ystart  # 1-indexed in FITS
+            log.debug(f"TA subarray: {subarray_name}, origin: ({xstart}, {ystart})")
 
         try:
             x_center, y_center = center_from_ta_image(
@@ -113,11 +120,8 @@ class TargCentroidStep(Step):
         result.ta_ypos = y_center
 
         # Apply filter offsets
-        filteroffset_file = self.get_reference_file(ta_model, "filteroffset")
         with dm.FilteroffsetModel(filteroffset_file) as filteroffset:
-            col_offset, row_offset = retrieve_filter_offset(
-                filteroffset, ta_model.meta.instrument.filter
-            )
+            col_offset, row_offset = retrieve_filter_offset(filteroffset, ta_filter)
             log.debug(f"Applying filter offsets: column={col_offset}, row={row_offset}")
             x_center += col_offset
             y_center += row_offset
@@ -183,3 +187,27 @@ class TargCentroidStep(Step):
         sci_idx = container.ind_asn_type("science")
         container[sci_idx[0]] = updated_sci_model
         return container
+
+    def _find_dither_position(self, ta_model):
+        """
+        Apply dither offsets to the reference center.
+
+        Parameters
+        ----------
+        ta_model : DataModel
+            The TA image data model.
+
+        Returns
+        -------
+        x_center, y_center : float
+            Dithered x, y center position in full-frame detector coordinates.
+        """
+        ta_model = AssignWcsStep.call(ta_model)
+        store_dithered_position(ta_model)
+        dra, ddec = ta_model.meta.dither.dithered_ra, ta_model.meta.dither.dithered_dec
+
+        # translate from arcseconds (SI ideal coordinate frame) to pixels (detector frame)
+        world_to_pixel = ta_model.meta.wcs.get_transform("world", "detector")
+        dither_x, dither_y = world_to_pixel(dra, ddec)
+
+        return dither_x, dither_y

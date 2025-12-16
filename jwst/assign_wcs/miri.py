@@ -997,8 +997,10 @@ def store_dithered_position(input_model):
     )
 
     v23toworld = input_model.meta.wcs.get_transform("v2v3", "world")
-    # v23toworld requires a wavelength along with v2, v3, but value does not affect return
-    dithered_ra, dithered_dec, _ = v23toworld(dithered_v2, dithered_v3, 0.0)
+    # v23toworld requires a wavelength along with v2, v3 for some modes
+    # but value does not affect return
+    dithered_inputs = [dithered_v2, dithered_v3] + [0.0] * (v23toworld.n_inputs - 2)
+    dithered_outputs = v23toworld(*dithered_inputs)
 
-    input_model.meta.dither.dithered_ra = dithered_ra
-    input_model.meta.dither.dithered_dec = dithered_dec
+    input_model.meta.dither.dithered_ra = dithered_outputs[0]
+    input_model.meta.dither.dithered_dec = dithered_outputs[1]
